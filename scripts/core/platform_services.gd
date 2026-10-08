@@ -1,8 +1,8 @@
 class_name PlatformServices
 extends RefCounted
 
-# Local no-op adapter for future platform integrations.
-# Core gameplay should depend on returned payloads, not platform SDK branches.
+# Supported local adapter at the platform-service boundary. External SDKs are
+# deferred; core gameplay depends on returned payloads rather than SDK branches.
 
 var service_name: String = "local"
 

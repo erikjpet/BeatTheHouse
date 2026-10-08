@@ -1,6 +1,9 @@
 class_name MetaItemInteractionViewModel
 extends RefCounted
 
+# Builds the player-facing actions and details for one collection item instance
+# from profile state and immutable item definitions.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")

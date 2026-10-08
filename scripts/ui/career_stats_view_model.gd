@@ -1,6 +1,9 @@
 class_name CareerStatsViewModel
 extends RefCounted
 
+# Builds career totals, route progress, and outcome summaries from immutable
+# profile history for the statistics screen.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")

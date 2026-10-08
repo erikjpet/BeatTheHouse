@@ -1,8 +1,8 @@
 class_name PinballBoards
 extends RefCounted
 
-# Board content for the rebuilt pinball slot feature. Phase 1 exposes Board A
-# only; later phases add Lock & Cascade and Jackpot Works here.
+# Production board content for all three pinball formats: Bumper Alley,
+# Lock & Cascade, and Jackpot Works.
 
 
 static func bumper_alley() -> Dictionary:

@@ -1,6 +1,9 @@
 class_name MetaCollectionService
 extends RefCounted
 
+# Owns profile collection persistence and mutations: item instances, bags,
+# containers, housing/loadouts, trade-ups, pawn sales, and special rewards.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")

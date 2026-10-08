@@ -724,6 +724,35 @@ static func store_environment(map_data: Dictionary, node_id: String, environment
 	return _bump_revision(normalized)
 
 
+# RunState owns an already-normalized map and passes a detached persistence
+# snapshot here. Copy only the containers that change instead of normalizing and
+# deep-copying every other generated room in the map on each local interaction.
+static func store_runtime_environment(map_data: Dictionary, node_id: String, environment_data: Dictionary) -> Dictionary:
+	var target_id := node_id.strip_edges()
+	if map_data.is_empty() or target_id.is_empty() or environment_data.is_empty():
+		return map_data
+	var nodes_value: Variant = map_data.get("nodes", [])
+	if typeof(nodes_value) != TYPE_ARRAY:
+		return map_data
+	var nodes: Array = (nodes_value as Array).duplicate(false)
+	var target_index := -1
+	for index in range(nodes.size()):
+		if typeof(nodes[index]) == TYPE_DICTIONARY and str((nodes[index] as Dictionary).get("id", "")) == target_id:
+			target_index = index
+			break
+	if target_index < 0:
+		return map_data
+	var stored_map := map_data.duplicate(false)
+	var target_node := (nodes[target_index] as Dictionary).duplicate(false)
+	# The caller deliberately transfers this already-detached snapshot. Retaining
+	# it avoids a second full room clone while keeping live environment mutations
+	# isolated from the stored node.
+	target_node["environment"] = environment_data
+	nodes[target_index] = target_node
+	stored_map["nodes"] = nodes
+	return _bump_revision(stored_map)
+
+
 static func enter_node(map_data: Dictionary, node_id: String, environment_data: Dictionary = {}) -> Dictionary:
 	var target_id := node_id.strip_edges()
 	if target_id.is_empty():
@@ -834,6 +863,70 @@ static func unlock_nodes(map_data: Dictionary, node_ids: Array, source: String =
 		nodes[index] = node
 	normalized["nodes"] = nodes
 	return _bump_revision(normalized)
+
+
+# Runtime event rewards operate on an already-normalized authoritative map.
+# Copy only the map envelope, node array, and nodes that actually change so a
+# route reveal does not duplicate every generated environment stored at other
+# world-map nodes. Shop invalidation is folded into the same pass; the older
+# unlock_nodes() API remains the owning/normalizing boundary for external data.
+static func unlock_runtime_nodes(
+	map_data: Dictionary,
+	node_ids: Array,
+	source: String = DISCOVERY_SOURCE_EVENT,
+	refresh_shop_environments: bool = true
+) -> Dictionary:
+	if map_data.is_empty() or node_ids.is_empty():
+		return map_data
+	var unlock_ids := JsonCoerceScript._string_array(node_ids)
+	if unlock_ids.is_empty():
+		return map_data
+	var unlock_lookup: Dictionary = {}
+	for node_id_value in unlock_ids:
+		unlock_lookup[str(node_id_value)] = true
+	var nodes_value: Variant = map_data.get("nodes", [])
+	if typeof(nodes_value) != TYPE_ARRAY:
+		return map_data
+	var source_nodes := nodes_value as Array
+	var nodes := source_nodes.duplicate(false)
+	var clean_source := source.strip_edges().to_lower()
+	if clean_source.is_empty():
+		clean_source = DISCOVERY_SOURCE_EVENT
+	var changed := false
+	for index in range(source_nodes.size()):
+		if typeof(source_nodes[index]) != TYPE_DICTIONARY:
+			continue
+		var source_node := source_nodes[index] as Dictionary
+		if not unlock_lookup.has(str(source_node.get("id", ""))):
+			continue
+		var node := source_node.duplicate(false)
+		if str(node.get("state", STATE_HIDDEN)) != STATE_VISITED and str(node.get("state", STATE_HIDDEN)) != STATE_REVEALED:
+			node["state"] = STATE_REVEALED
+			changed = true
+		if not bool(node.get("seen", false)):
+			node["seen"] = true
+			changed = true
+		if clean_source == DISCOVERY_SOURCE_SPAWN:
+			if not bool(node.get("discovered_at_spawn", false)):
+				node["discovered_at_spawn"] = true
+				changed = true
+		else:
+			if not bool(node.get("unlocked", false)):
+				node["unlocked"] = true
+				changed = true
+		if str(node.get("discovery_source", "")) != clean_source:
+			node["discovery_source"] = clean_source
+			changed = true
+		if refresh_shop_environments and str(node.get("kind", "")).strip_edges().to_lower() == "shop" \
+				and typeof(node.get("environment", {})) == TYPE_DICTIONARY and not (node.get("environment", {}) as Dictionary).is_empty():
+			node["environment"] = {}
+			changed = true
+		nodes[index] = node
+	if not changed:
+		return map_data
+	var result := map_data.duplicate(false)
+	result["nodes"] = nodes
+	return _bump_revision(result)
 
 
 # Makes hidden nodes eligible for the normal neighbor-discovery pass without

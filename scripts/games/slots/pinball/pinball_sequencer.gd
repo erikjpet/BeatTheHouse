@@ -1,6 +1,9 @@
 class_name PinballSequencer
 extends RefCounted
 
+# Reduces low-level pinball events into board-specific locks, multiball,
+# multipliers, jackpots, and ordered player-facing sequence events.
+
 const ItemsScript := preload("res://scripts/games/slots/pinball/pinball_items.gd")
 
 

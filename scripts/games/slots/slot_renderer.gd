@@ -1,6 +1,9 @@
 class_name SlotRenderer
 extends RefCounted
 
+# Procedural renderer for slot cabinets, reels, feature boards, meters, controls,
+# and celebrations, with content-keyed caches that do not own gameplay state.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const CatalogScript := preload("res://scripts/games/slots/slot_catalog.gd")

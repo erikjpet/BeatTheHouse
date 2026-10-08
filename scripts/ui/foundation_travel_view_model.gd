@@ -1,5 +1,8 @@
 extends RefCounted
 
+# Builds world-map and travel-choice projections, including route costs, locks,
+# risk, node visibility, and decision frames, without committing travel.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 

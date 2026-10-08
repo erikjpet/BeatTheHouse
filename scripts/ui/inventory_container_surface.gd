@@ -1,6 +1,9 @@
 class_name InventoryContainerSurface
 extends Control
 
+# Interactive bag/container grid surface that owns focus, hit regions, and
+# responsive animation while consuming an immutable prepared model.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 signal slot_hovered(selection_key: String)

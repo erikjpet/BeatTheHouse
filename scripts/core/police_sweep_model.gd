@@ -1,6 +1,9 @@
 class_name PoliceSweepModel
 extends RefCounted
 
+# Deterministic Police Sweep scheduler and routing model. Mutations require the
+# bound host capability; public status never exposes private future movement.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const SCHEMA_VERSION := 2

@@ -97,6 +97,7 @@ func _run() -> void:
 	_check_attached_action_host_selection()
 	_check_terminal_action_alias_lifecycle()
 	_check_fail_closed_binding()
+	_check_route_endpoint_edge_contact_tolerance()
 	_check_complete_manual_save_and_export(authority)
 
 	_check(base_context_count == 20, "runtime sweep did not visit all 20 reachable base contexts")
@@ -982,6 +983,33 @@ func _check_fail_closed_binding() -> void:
 		if str(error_value).contains("no exact slot instance"):
 			named_error = true
 	_check(named_error, "unmapped scenario visual did not report missing exact authority")
+
+
+func _check_route_endpoint_edge_contact_tolerance() -> void:
+	# Reproduces the Back Alley authoring layout reported by the Environment
+	# Library: the normal rectangles have a gap, while clamping the exit's 104x76
+	# small-screen target to the bottom edge creates a one-pixel seam.
+	var actor_rect := Rect2(677.0, 275.0, 72.0, 80.0)
+	var actor_small := Rect2(661.0, 275.0, 104.0, 80.0)
+	var exit_rect := Rect2(761.0, 358.0, 64.0, 72.0)
+	var edge_contact_exit_small := Rect2(741.0, 354.0, 104.0, 76.0)
+	var edge_contact := [{
+		"identity": "scenario::back_alley_cruiser_parked_exit",
+		"rect": exit_rect,
+		"small_rect": edge_contact_exit_small,
+	}]
+	_check(
+		not ScenarioLayoutResolverScript._expanded_overlaps("scenario::patrol_officer", actor_small, edge_contact)
+			and ScenarioLayoutResolverScript._overlap_identities("scenario::patrol_officer", actor_rect, actor_small, edge_contact).is_empty(),
+		"one-pixel board-edge target clamping incorrectly invalidated the Back Alley patrol route"
+	)
+	var real_overlap := edge_contact.duplicate(true)
+	real_overlap[0]["small_rect"] = Rect2(741.0, 352.0, 104.0, 76.0)
+	_check(
+		ScenarioLayoutResolverScript._expanded_overlaps("scenario::patrol_officer", actor_small, real_overlap)
+			and ScenarioLayoutResolverScript._overlap_identities("scenario::patrol_officer", actor_rect, actor_small, real_overlap) == ["scenario::back_alley_cruiser_parked_exit"],
+		"meaningful expanded route/exit overlap no longer fails closed"
+	)
 
 
 func _check_complete_manual_save_and_export(authority: Dictionary) -> void:

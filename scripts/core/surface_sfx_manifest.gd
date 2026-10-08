@@ -1,6 +1,9 @@
 class_name SurfaceSfxManifest
 extends RefCounted
 
+# Loads and validates semantic surface-audio profiles, then resolves event
+# classes to deterministic sample/voice decisions for the runtime player.
+
 const MANIFEST_PATH := "res://data/audio/surface_sfx_manifest.json"
 const ALLOWED_BUS := "SFX"
 const ALLOWED_STEAL_POLICY := "oldest_same_surface_then_oldest_global"

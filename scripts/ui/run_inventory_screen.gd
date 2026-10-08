@@ -1,6 +1,9 @@
 class_name RunInventoryScreen
 extends Control
 
+# Responsive in-run inventory overlay that owns focus and item selection while
+# FoundationMain authorizes and applies all item actions.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 signal close_requested

@@ -1,6 +1,9 @@
 class_name SealedActionHost
 extends RefCounted
 
+# UI-side adapter that binds a trusted action authority and emits closed surface
+# intents; it cannot create settlement authority from presentation data.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 const GameRitualRuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")

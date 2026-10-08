@@ -443,6 +443,13 @@ func sync_surface_state(surface_state: Dictionary, sync_spec: Dictionary, timing
 				_timing_active(timing, "animation_channel"),
 				_timing_active_id(timing, "animation_channel")
 			)
+		"scratch_dispense_state":
+			sync_scratch_dispense(
+				surface_state,
+				_timing_elapsed(timing, "animation_channel"),
+				_timing_active(timing, "animation_channel"),
+				_timing_active_id(timing, "animation_channel")
+			)
 		"blackjack_table_state":
 			sync_blackjack_state(
 				surface_state,
@@ -1004,6 +1011,36 @@ func sync_pull_tab_dispense(surface_state: Dictionary, elapsed: float, animation
 		var marker := "pull_tab_thud_%s" % str(event.get("ticket_id", event.get("sequence_index", events.find(event_value))))
 		var thud_time := float(maxi(0, int(event.get("start_msec", 0)) + int(event.get("drop_start_msec", 240)))) / 1000.0
 		_trigger(marker, elapsed >= thud_time, "pull_tab_thump", -3.5, 0.96 + float(int(event.get("deal_index", 0))) * 0.035)
+
+
+func sync_scratch_dispense(surface_state: Dictionary, elapsed: float, animation_active: bool, active_id: String) -> void:
+	if not audio_enabled or _running_headless():
+		return
+	if active_id.is_empty():
+		_animation_id = ""
+		_played_markers.clear()
+		return
+	_ensure_players()
+	if active_id != _animation_id:
+		_animation_id = active_id
+		_played_markers.clear()
+	if not animation_active:
+		return
+	var events := JsonCoerceScript._dictionary_array(surface_state.get("scratch_dispense_events", []))
+	for index in range(events.size()):
+		var event: Dictionary = events[index]
+		var key := str(event.get("ticket_id", index))
+		var start := float(maxi(0, int(event.get("start_msec", index * 1500)))) / 1000.0
+		var lift_arrive := float(maxi(0, int(event.get("lift_arrive_msec", 470)))) / 1000.0
+		var pickup := float(maxi(0, int(event.get("pickup_msec", 650)))) / 1000.0
+		var lower_start := float(maxi(0, int(event.get("lower_start_msec", 720)))) / 1000.0
+		var tray_land := float(maxi(0, int(event.get("tray_land_msec", 1360)))) / 1000.0
+		var pitch_step := float(int(event.get("slot", 0)) % 4) * 0.018
+		_trigger("scratch_lift_%s" % key, elapsed >= start, "lever", -6.0, 0.82 + pitch_step)
+		_trigger("scratch_lift_stop_%s" % key, elapsed >= start + lift_arrive, "button", -8.0, 0.88)
+		_trigger("scratch_pick_%s" % key, elapsed >= start + pickup, "paper_peek", -4.8, 0.92 + pitch_step)
+		_trigger("scratch_lower_%s" % key, elapsed >= start + lower_start, "nudge", -6.5, 0.78 + pitch_step)
+		_trigger("scratch_tray_%s" % key, elapsed >= start + tray_land, "pull_tab_thump", -3.2, 0.94 + pitch_step)
 
 
 func sync_blackjack_state(surface_state: Dictionary, deal_elapsed: float, deal_animation_active: bool, deal_active_id: String, payout_elapsed: float, payout_animation_active: bool, payout_active_id: String) -> void:

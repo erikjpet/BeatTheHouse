@@ -3,7 +3,9 @@ extends Control
 
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
-# Draws first-person venue scenes as hard-edged pixel art directly on Godot's canvas.
+# Draws and interacts with first-person venue scenes as hard-edged pixel art.
+# It owns camera/focus animation, object hit regions, selection feedback, and the
+# developer placement overlay, but consumes sealed room geometry from core.
 
 signal object_hovered(object_id: String)
 signal object_focused(object_id: String)
@@ -15,6 +17,7 @@ signal developer_placement_promote_requested
 signal developer_placement_refresh_requested
 signal developer_placement_export_requested(request: Dictionary)
 signal developer_layout_save_requested(request: Dictionary)
+signal developer_slot_layer_requested(request: Dictionary)
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
@@ -33,10 +36,18 @@ const CrapsRoomPropScript := preload("res://scripts/ui/game_props/craps_room_pro
 const BarDiceRoomPropScript := preload("res://scripts/ui/game_props/bar_dice_room_prop.gd")
 const SLOT_COLLECTION_FIELDS := ["fixed_slots", "event_slots", "scenario_slots", "exit_slots"]
 const SLOT_FAMILIES := ["fixed", "event", "scenario", "exit"]
+const SLOT_FILTER_OPTIONS := ["fixed", "event", "scenario", "exit", "all"]
+const SLOT_DRAW_LAYERS := {"behind": -1, "standard": 0, "front": 1}
 const DEVELOPER_PANEL_MARGIN := 8.0
 const DEVELOPER_PANEL_MIN_WIDTH := 320.0
-const DEVELOPER_PANEL_PREFERRED_WIDTH := 520.0
+const DEVELOPER_PANEL_PREFERRED_WIDTH := 552.0
+const DEVELOPER_PANEL_FIXED_HEIGHT := 404.0
 const DEVELOPER_PANEL_RESTORE_MIN_WIDTH := 156.0
+const DEVELOPER_PANEL_FONT_SIZE := 11
+const DEVELOPER_PANEL_CONTROL_HEIGHT := 30.0
+const DEVELOPER_PANEL_FILTER_MIN_WIDTH := 96.0
+const DEVELOPER_PANEL_INFO_HEIGHT := 58.0
+const DEVELOPER_ROUTE_COLLISION_EDGE_TOLERANCE := 1.01
 
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
@@ -123,6 +134,7 @@ const WEB_GRAND_CASINO_IDLE_ANIMATION_FPS := 15.0
 const DEVELOPER_DRAG_REDRAW_INTERVAL_MSEC := 33
 const ITEM_ICON_TEXTURE_CACHE_LIMIT := 32
 const SLOT_PROP_STATIC_LAYER_CACHE_LIMIT := 64
+const CHARACTER_IDLE_PROFILE_CACHE_LIMIT := 768
 const MAX_CONCURRENT_PERSON_TRANSITS := 8
 const PERSON_TRANSIT_SPEED_PIXELS_PER_SEC := 82.0
 const PERSON_TRANSIT_MIN_DURATION_SEC := 0.75
@@ -170,6 +182,7 @@ var scene_objects_by_id_cache: Dictionary = {}
 var active_scene_objects_cache: Array = []
 var behind_counter_scene_objects_cache: Array = []
 var room_front_scene_objects_cache: Array = []
+var room_top_scene_objects_cache: Array = []
 var scene_object_cache_valid := false
 var scene_has_live_actor_routes := false
 var object_label_rect_cache: Dictionary = {}
@@ -178,6 +191,7 @@ var object_labels_and_borders_enabled := true
 var draw_text_width_cache: Dictionary = {}
 var fit_draw_text_cache: Dictionary = {}
 var object_animation_phase_cache: Dictionary = {}
+var character_idle_profile_cache: Dictionary = {}
 var slot_prop_static_layer_cache: Dictionary = {}
 var actor_route_started_at_cache: Dictionary = {}
 var actor_position_receipt_cache: Dictionary = {}
@@ -236,7 +250,7 @@ var room_surface_draw_cache_valid := false
 var developer_placement_panel: PanelContainer
 var developer_placement_panel_shell: VBoxContainer
 var developer_placement_panel_header: HBoxContainer
-var developer_placement_scroll: ScrollContainer
+var developer_placement_content: MarginContainer
 var developer_placement_stack: VBoxContainer
 var developer_placement_minimize_button: Button
 var developer_placement_restore_button: Button
@@ -274,14 +288,17 @@ var developer_slot_overlap_summary_cache: Dictionary = {}
 var developer_slot_overlap_summary_cache_valid := false
 var developer_slot_scene_object_baseline: Array = []
 var developer_slot_scene_object_baseline_valid := false
-var developer_slot_filter_row: HFlowContainer
+var developer_slot_filter_row: HBoxContainer
 var developer_slot_filter_buttons: Dictionary = {}
 var developer_slot_family_button_group: ButtonGroup
-var developer_slot_visibility_row: HFlowContainer
+var developer_slot_visibility_row: HBoxContainer
 var developer_slot_show_empty_button: CheckBox
 var developer_slot_show_reserves_button: CheckBox
 var developer_slot_edit_shared_button: CheckBox
 var developer_slot_context_label: Label
+var developer_slot_layer_row: HBoxContainer
+var developer_slot_layer_buttons: Dictionary = {}
+var developer_slot_layer_button_group: ButtonGroup
 var developer_slot_show_empty_capacity := true
 var developer_slot_show_runtime_reserves := true
 var developer_slot_edit_shared_in_scenario := false
@@ -303,6 +320,7 @@ var developer_slot_family_filters := {
 	"event": false,
 	"scenario": false,
 	"exit": false,
+	"all": false,
 }
 
 
@@ -355,6 +373,8 @@ func set_developer_slot_placement_mode(enabled: bool) -> void:
 		developer_slot_visibility_row.visible = enabled
 	if developer_slot_context_label != null:
 		developer_slot_context_label.visible = enabled
+	if developer_slot_layer_row != null:
+		developer_slot_layer_row.visible = enabled
 	if enabled:
 		# A placement pass must expose every authored coordinate by default. The
 		# owner can still hide capacity temporarily, but a newly opened context
@@ -424,12 +444,12 @@ func developer_slot_placement_snapshot() -> Dictionary:
 
 func set_developer_slot_family_visible(family: String, visible: bool) -> void:
 	var normalized_family := family.strip_edges().to_lower()
-	if normalized_family not in SLOT_FAMILIES:
+	if normalized_family not in SLOT_FILTER_OPTIONS:
 		return
 	# Scenario slots are meaningful only while an exact scenario owns the current
 	# room/layer. Shared runtime reserves remain in the placement map for delivery
 	# and chain binding, but they are not base-room authoring choices.
-	if visible and not _developer_slot_family_available(normalized_family):
+	if visible and normalized_family != "all" and not _developer_slot_family_available(normalized_family):
 		return
 	# Families are tabs, not accumulating checkboxes. Only one lifecycle family
 	# is presented at a time so a room never opens as a wall of every possible
@@ -438,10 +458,25 @@ func set_developer_slot_family_visible(family: String, visible: bool) -> void:
 		return
 	if visible:
 		_ensure_developer_slot_review_context()
-		developer_slot_reviewed_families[normalized_family] = true
+		if normalized_family == "all":
+			for family_value in SLOT_FAMILIES:
+				var reviewed_family := str(family_value)
+				if _developer_slot_family_available(reviewed_family):
+					developer_slot_reviewed_families[reviewed_family] = true
+		else:
+			developer_slot_reviewed_families[normalized_family] = true
 		for family_value in SLOT_FAMILIES:
-			developer_slot_family_filters[str(family_value)] = str(family_value) == normalized_family
-	for family_value in SLOT_FAMILIES:
+			var candidate_family := str(family_value)
+			developer_slot_family_filters[candidate_family] = normalized_family == "all" \
+				and _developer_slot_family_available(candidate_family) \
+				or candidate_family == normalized_family
+		developer_slot_family_filters["all"] = normalized_family == "all"
+		# Choosing a shared family is an explicit request to edit the shared room,
+		# even while a scenario is previewed. Keep the warning toggle synchronized
+		# instead of leaving the selected markers visible but immovable.
+		if _developer_slot_has_active_scenario():
+			set_developer_slot_edit_shared_in_scenario(normalized_family != "scenario")
+	for family_value in SLOT_FILTER_OPTIONS:
 		var candidate_family := str(family_value)
 		var button_value: Variant = developer_slot_filter_buttons.get(candidate_family)
 		if button_value is BaseButton:
@@ -514,11 +549,11 @@ func _configure_developer_slot_context(reset_family: bool) -> void:
 	if developer_slot_edit_shared_button != null:
 		developer_slot_edit_shared_button.visible = developer_slot_placement_mode and exact_scenario
 		developer_slot_edit_shared_button.set_pressed_no_signal(developer_slot_edit_shared_in_scenario)
-	for family_value in SLOT_FAMILIES:
+	for family_value in SLOT_FILTER_OPTIONS:
 		var family := str(family_value)
 		var button_value: Variant = developer_slot_filter_buttons.get(family)
 		if button_value is BaseButton:
-			var available := _developer_slot_family_available(family)
+			var available := family == "all" or _developer_slot_family_available(family)
 			(button_value as BaseButton).visible = available
 			(button_value as BaseButton).disabled = not available
 	if not reset_family:
@@ -530,6 +565,10 @@ func _configure_developer_slot_context(reset_family: bool) -> void:
 		var button_value: Variant = developer_slot_filter_buttons.get(family)
 		if button_value is BaseButton:
 			(button_value as BaseButton).set_pressed_no_signal(family == preferred_family)
+	developer_slot_family_filters["all"] = false
+	var all_button_value: Variant = developer_slot_filter_buttons.get("all")
+	if all_button_value is BaseButton:
+		(all_button_value as BaseButton).set_pressed_no_signal(false)
 	developer_slot_selected_id = ""
 	developer_slot_hovered_id = ""
 	developer_slot_review_context_key = _developer_slot_snapshot_context_key(foundation_snapshot)
@@ -692,15 +731,24 @@ func _ensure_developer_placement_panel() -> void:
 	developer_placement_panel = PanelContainer.new()
 	developer_placement_panel.name = "DeveloperPlacementPanel"
 	developer_placement_panel.position = Vector2.ONE * DEVELOPER_PANEL_MARGIN
-	developer_placement_panel.custom_minimum_size = Vector2(DEVELOPER_PANEL_MIN_WIDTH, 0.0)
+	developer_placement_panel.custom_minimum_size = Vector2.ZERO
 	developer_placement_panel.mouse_filter = Control.MOUSE_FILTER_PASS
+	developer_placement_panel.clip_contents = true
 	developer_placement_panel.visible = false
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color("#090b18f2")
+	panel_style.border_color = Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.82)
+	panel_style.set_border_width_all(2)
+	panel_style.set_corner_radius_all(4)
+	for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
+		panel_style.set_content_margin(side, 8.0)
+	developer_placement_panel.add_theme_stylebox_override("panel", panel_style)
 	add_child(developer_placement_panel)
 
 	developer_placement_restore_button = Button.new()
 	developer_placement_restore_button.name = "RestoreDeveloperPlacementPanel"
-	developer_placement_restore_button.text = "Restore Placement Menu"
-	developer_placement_restore_button.custom_minimum_size = Vector2(DEVELOPER_PANEL_RESTORE_MIN_WIDTH, 44.0)
+	developer_placement_restore_button.text = "Placement Menu"
+	developer_placement_restore_button.custom_minimum_size = Vector2(DEVELOPER_PANEL_RESTORE_MIN_WIDTH, DEVELOPER_PANEL_CONTROL_HEIGHT)
 	developer_placement_restore_button.tooltip_text = "Restore the placement menu. (F2)"
 	developer_placement_restore_button.visible = false
 	developer_placement_restore_button.pressed.connect(_restore_developer_placement_panel)
@@ -711,94 +759,104 @@ func _ensure_developer_placement_panel() -> void:
 	developer_placement_panel_shell.mouse_filter = Control.MOUSE_FILTER_PASS
 	developer_placement_panel_shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	developer_placement_panel_shell.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	developer_placement_panel_shell.add_theme_constant_override("separation", 5)
+	developer_placement_panel_shell.add_theme_constant_override("separation", 4)
 	developer_placement_panel.add_child(developer_placement_panel_shell)
 
 	developer_placement_panel_header = HBoxContainer.new()
 	developer_placement_panel_header.name = "DeveloperPlacementPanelHeader"
-	developer_placement_panel_header.alignment = BoxContainer.ALIGNMENT_END
 	developer_placement_panel_header.mouse_filter = Control.MOUSE_FILTER_PASS
+	developer_placement_panel_header.custom_minimum_size.y = DEVELOPER_PANEL_CONTROL_HEIGHT
+	developer_placement_panel_header.add_theme_constant_override("separation", 6)
 	developer_placement_panel_shell.add_child(developer_placement_panel_header)
+	var panel_title := Label.new()
+	panel_title.name = "DeveloperPlacementPanelTitle"
+	panel_title.text = "SLOT PLACEMENT"
+	panel_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	panel_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel_title.add_theme_color_override("font_color", C_CYAN)
+	developer_placement_panel_header.add_child(panel_title)
 	developer_placement_minimize_button = Button.new()
 	developer_placement_minimize_button.name = "MinimizeDeveloperPlacementPanel"
-	developer_placement_minimize_button.text = "Minimize"
-	developer_placement_minimize_button.custom_minimum_size = Vector2(112.0, 44.0)
+	developer_placement_minimize_button.text = "Hide (F2)"
+	developer_placement_minimize_button.custom_minimum_size = Vector2(112.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
 	developer_placement_minimize_button.tooltip_text = "Hide this menu so objects underneath it can be selected. (F2 restores it.)"
 	developer_placement_minimize_button.pressed.connect(_minimize_developer_placement_panel)
 	developer_placement_panel_header.add_child(developer_placement_minimize_button)
 
-	developer_placement_scroll = ScrollContainer.new()
-	developer_placement_scroll.name = "DeveloperPlacementScroll"
-	developer_placement_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	developer_placement_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	developer_placement_scroll.follow_focus = true
-	developer_placement_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	developer_placement_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	developer_placement_panel_shell.add_child(developer_placement_scroll)
+	developer_placement_content = MarginContainer.new()
+	developer_placement_content.name = "DeveloperPlacementContent"
+	developer_placement_content.mouse_filter = Control.MOUSE_FILTER_PASS
+	developer_placement_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_placement_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	developer_placement_panel_shell.add_child(developer_placement_content)
 
 	developer_placement_stack = VBoxContainer.new()
 	developer_placement_stack.name = "DeveloperPlacementStack"
 	developer_placement_stack.mouse_filter = Control.MOUSE_FILTER_PASS
 	developer_placement_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	developer_placement_stack.add_theme_constant_override("separation", 5)
-	developer_placement_scroll.add_child(developer_placement_stack)
-	developer_placement_stack.minimum_size_changed.connect(_queue_developer_placement_panel_layout)
+	developer_placement_stack.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	developer_placement_stack.add_theme_constant_override("separation", 4)
+	developer_placement_content.add_child(developer_placement_stack)
 	var stack := developer_placement_stack
-	developer_placement_label = Label.new()
-	developer_placement_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	developer_placement_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	developer_placement_label.text = "Placement mode: drag an object; release to keep its room position."
-	stack.add_child(developer_placement_label)
 
-	developer_slot_filter_row = HFlowContainer.new()
+	developer_slot_filter_row = HBoxContainer.new()
 	developer_slot_filter_row.name = "SlotFamilyFilters"
-	developer_slot_filter_row.add_theme_constant_override("h_separation", 4)
-	developer_slot_filter_row.add_theme_constant_override("v_separation", 4)
+	developer_slot_filter_row.custom_minimum_size.y = DEVELOPER_PANEL_CONTROL_HEIGHT
+	developer_slot_filter_row.add_theme_constant_override("separation", 4)
 	developer_slot_filter_row.visible = developer_slot_placement_mode
 	stack.add_child(developer_slot_filter_row)
-	var filter_label := Label.new()
-	filter_label.text = "Family:"
-	filter_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	developer_slot_filter_row.add_child(filter_label)
 	developer_slot_family_button_group = ButtonGroup.new()
 	developer_slot_family_button_group.allow_unpress = false
-	for family_value in SLOT_FAMILIES:
+	for family_value in SLOT_FILTER_OPTIONS:
 		var family := str(family_value)
 		var button := Button.new()
 		button.name = "%sSlots" % family.capitalize()
-		button.text = family.capitalize()
+		button.text = "All" if family == "all" else family.capitalize()
 		button.toggle_mode = true
 		button.button_group = developer_slot_family_button_group
 		button.button_pressed = bool(developer_slot_family_filters.get(family, true))
-		button.tooltip_text = "Show only %s.* authoring slots." % family
+		button.custom_minimum_size = Vector2(DEVELOPER_PANEL_FILTER_MIN_WIDTH, DEVELOPER_PANEL_CONTROL_HEIGHT)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.size_flags_stretch_ratio = 1.0
+		button.tooltip_text = "Show every available slot family together." if family == "all" else "Show only %s.* authoring slots." % family
 		button.add_theme_color_override("font_color", _developer_slot_family_color(family))
 		button.toggled.connect(_on_developer_slot_family_filter_toggled.bind(family))
 		developer_slot_filter_buttons[family] = button
 		developer_slot_filter_row.add_child(button)
 
-	developer_slot_visibility_row = HFlowContainer.new()
+	developer_slot_visibility_row = HBoxContainer.new()
 	developer_slot_visibility_row.name = "SlotVisibilityFilters"
-	developer_slot_visibility_row.add_theme_constant_override("h_separation", 8)
-	developer_slot_visibility_row.add_theme_constant_override("v_separation", 4)
+	developer_slot_visibility_row.custom_minimum_size.y = DEVELOPER_PANEL_CONTROL_HEIGHT
+	developer_slot_visibility_row.add_theme_constant_override("separation", 4)
 	developer_slot_visibility_row.visible = developer_slot_placement_mode
 	stack.add_child(developer_slot_visibility_row)
 	developer_slot_show_empty_button = CheckBox.new()
 	developer_slot_show_empty_button.name = "ShowEmptyCapacity"
-	developer_slot_show_empty_button.text = "Empty capacity"
+	developer_slot_show_empty_button.text = "Empty slots"
+	developer_slot_show_empty_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_slot_show_empty_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_slot_show_empty_button.size_flags_stretch_ratio = 1.0
 	developer_slot_show_empty_button.button_pressed = developer_slot_show_empty_capacity
 	developer_slot_show_empty_button.tooltip_text = "Show unused capacity in the active family. Required missing positions stay visible."
 	developer_slot_show_empty_button.toggled.connect(set_developer_slot_show_empty_capacity)
 	developer_slot_visibility_row.add_child(developer_slot_show_empty_button)
 	developer_slot_show_reserves_button = CheckBox.new()
 	developer_slot_show_reserves_button.name = "ShowRuntimeReserves"
-	developer_slot_show_reserves_button.text = "Runtime reserves"
+	developer_slot_show_reserves_button.text = "Reserves"
+	developer_slot_show_reserves_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_slot_show_reserves_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_slot_show_reserves_button.size_flags_stretch_ratio = 1.0
 	developer_slot_show_reserves_button.button_pressed = developer_slot_show_runtime_reserves
 	developer_slot_show_reserves_button.tooltip_text = "Show positions reserved for delivery and other runtime-injected content."
 	developer_slot_show_reserves_button.toggled.connect(set_developer_slot_show_runtime_reserves)
 	developer_slot_visibility_row.add_child(developer_slot_show_reserves_button)
 	developer_slot_edit_shared_button = CheckBox.new()
 	developer_slot_edit_shared_button.name = "EditSharedRoomSlots"
-	developer_slot_edit_shared_button.text = "Edit shared room slots (resets room progress)"
+	developer_slot_edit_shared_button.text = "Shared room"
+	developer_slot_edit_shared_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_slot_edit_shared_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_slot_edit_shared_button.size_flags_stretch_ratio = 1.0
 	developer_slot_edit_shared_button.button_pressed = developer_slot_edit_shared_in_scenario
 	developer_slot_edit_shared_button.tooltip_text = "Exact scenarios normally lock room-shared fixed, event, reserve, and exit positions. Enable only to deliberately change the base room; doing so resets completion for that room and all of its scenarios."
 	developer_slot_edit_shared_button.toggled.connect(set_developer_slot_edit_shared_in_scenario)
@@ -808,67 +866,143 @@ func _ensure_developer_placement_panel() -> void:
 	developer_slot_context_label = Label.new()
 	developer_slot_context_label.name = "SlotPreviewContext"
 	developer_slot_context_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	developer_slot_context_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	developer_slot_context_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	developer_slot_context_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	developer_slot_context_label.custom_minimum_size.y = DEVELOPER_PANEL_INFO_HEIGHT
+	developer_slot_context_label.max_lines_visible = 4
 	developer_slot_context_label.visible = developer_slot_placement_mode
 	stack.add_child(developer_slot_context_label)
+
+	developer_placement_label = Label.new()
+	developer_placement_label.name = "PlacementSelectionSummary"
+	developer_placement_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	developer_placement_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	developer_placement_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	developer_placement_label.custom_minimum_size.y = DEVELOPER_PANEL_INFO_HEIGHT
+	developer_placement_label.max_lines_visible = 4
+	developer_placement_label.text = "PLACEMENT\nNo marker selected\nDrag a marker to reposition it.\nLock saves the pending position."
+	stack.add_child(developer_placement_label)
+
+	developer_slot_layer_row = HBoxContainer.new()
+	developer_slot_layer_row.name = "SlotDrawLayers"
+	developer_slot_layer_row.custom_minimum_size.y = DEVELOPER_PANEL_CONTROL_HEIGHT
+	developer_slot_layer_row.add_theme_constant_override("separation", 4)
+	developer_slot_layer_row.tooltip_text = "Choose whether occupants of this slot draw behind, within, or in front of normal room objects."
+	developer_slot_layer_row.visible = developer_slot_placement_mode
+	stack.add_child(developer_slot_layer_row)
+	developer_slot_layer_button_group = ButtonGroup.new()
+	developer_slot_layer_button_group.allow_unpress = false
+	for layer_name_value in ["behind", "standard", "front"]:
+		var layer_name := str(layer_name_value)
+		var layer_button := Button.new()
+		layer_button.name = "%sDrawLayer" % layer_name.capitalize()
+		layer_button.text = layer_name.capitalize()
+		layer_button.toggle_mode = true
+		layer_button.button_group = developer_slot_layer_button_group
+		layer_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+		layer_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		layer_button.size_flags_stretch_ratio = 1.0
+		layer_button.disabled = true
+		layer_button.tooltip_text = "%s draw layer (%d). Higher layers appear above lower layers." % [layer_name.capitalize(), int(SLOT_DRAW_LAYERS.get(layer_name, 0))]
+		layer_button.toggled.connect(_on_developer_slot_layer_toggled.bind(layer_name))
+		developer_slot_layer_buttons[layer_name] = layer_button
+		developer_slot_layer_row.add_child(layer_button)
+
+	var layout_actions := HBoxContainer.new()
+	layout_actions.name = "LayoutActions"
+	layout_actions.custom_minimum_size.y = DEVELOPER_PANEL_CONTROL_HEIGHT
+	layout_actions.add_theme_constant_override("separation", 4)
+	stack.add_child(layout_actions)
 	developer_layout_save_next_button = Button.new()
 	developer_layout_save_next_button.name = "SaveAndLoadNextLayout"
 	developer_layout_save_next_button.text = "Save & Load Next Missing"
-	developer_layout_save_next_button.custom_minimum_size = Vector2(0.0, 38.0)
+	developer_layout_save_next_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
 	developer_layout_save_next_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_layout_save_next_button.size_flags_stretch_ratio = 1.0
 	developer_layout_save_next_button.tooltip_text = "Save this reviewed layout, then immediately generate the next missing environment/scenario layout."
 	developer_layout_save_next_button.visible = developer_slot_placement_mode
 	developer_layout_save_next_button.pressed.connect(_save_and_load_next_developer_slot_layout)
-	stack.add_child(developer_layout_save_next_button)
+	layout_actions.add_child(developer_layout_save_next_button)
 	developer_layout_save_button = Button.new()
 	developer_layout_save_button.name = "SaveCurrentLayout"
 	developer_layout_save_button.text = "Save Current Layout"
-	developer_layout_save_button.custom_minimum_size = Vector2(0.0, 32.0)
+	developer_layout_save_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
 	developer_layout_save_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_layout_save_button.size_flags_stretch_ratio = 1.0
 	developer_layout_save_button.tooltip_text = "Save every active slot position for this exact environment and scenario layout, then update completion coverage."
 	developer_layout_save_button.visible = developer_slot_placement_mode
 	developer_layout_save_button.pressed.connect(_save_current_developer_slot_layout)
-	stack.add_child(developer_layout_save_button)
+	layout_actions.add_child(developer_layout_save_button)
 
 	var actions := HBoxContainer.new()
-	actions.add_theme_constant_override("separation", 5)
+	actions.name = "PlacementActions"
+	actions.custom_minimum_size.y = DEVELOPER_PANEL_CONTROL_HEIGHT
+	actions.add_theme_constant_override("separation", 4)
 	stack.add_child(actions)
 	developer_placement_lock_button = Button.new()
 	developer_placement_lock_button.text = "Lock"
+	developer_placement_lock_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_placement_lock_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_placement_lock_button.size_flags_stretch_ratio = 1.0
 	developer_placement_lock_button.tooltip_text = "Save the current object or four-family slot position."
 	developer_placement_lock_button.pressed.connect(_lock_active_developer_placement)
 	actions.add_child(developer_placement_lock_button)
 	var cancel_button := Button.new()
+	cancel_button.name = "CancelPlacement"
 	cancel_button.text = "Cancel"
+	cancel_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	cancel_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cancel_button.size_flags_stretch_ratio = 1.0
 	cancel_button.pressed.connect(_cancel_active_developer_placement_preview)
 	actions.add_child(cancel_button)
 	developer_placement_reset_button = Button.new()
 	developer_placement_reset_button.text = "Reset"
+	developer_placement_reset_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_placement_reset_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_placement_reset_button.size_flags_stretch_ratio = 1.0
 	developer_placement_reset_button.tooltip_text = "Remove the local override for this room/object pair."
 	developer_placement_reset_button.pressed.connect(_reset_active_developer_placement)
 	actions.add_child(developer_placement_reset_button)
 	var project_actions := HBoxContainer.new()
+	project_actions.name = "ProjectActions"
 	project_actions.mouse_filter = Control.MOUSE_FILTER_PASS
-	project_actions.add_theme_constant_override("separation", 5)
+	project_actions.custom_minimum_size.y = DEVELOPER_PANEL_CONTROL_HEIGHT
+	project_actions.add_theme_constant_override("separation", 4)
 	stack.add_child(project_actions)
 	developer_placement_promote_button = Button.new()
 	developer_placement_promote_button.name = "SavePlacementToProject"
 	developer_placement_promote_button.text = "Save to Project"
+	developer_placement_promote_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
 	developer_placement_promote_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_placement_promote_button.size_flags_stretch_ratio = 1.0
 	developer_placement_promote_button.tooltip_text = "Lock the pending position and promote all locked positions into a writable source checkout."
 	developer_placement_promote_button.pressed.connect(_save_active_developer_placement_to_project)
 	developer_placement_promote_button.visible = not PersistencePathsScript.distribution_build()
 	project_actions.add_child(developer_placement_promote_button)
 	developer_placement_export_button = Button.new()
 	developer_placement_export_button.name = "ExportPlacementReport"
-	developer_placement_export_button.text = "Export Placement Report"
+	developer_placement_export_button.text = "Export Report"
+	developer_placement_export_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
 	developer_placement_export_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_placement_export_button.size_flags_stretch_ratio = 1.0
 	developer_placement_export_button.tooltip_text = "Lock the pending position and export the complete effective placement authority to a shareable JSON report. Works from an EXE build."
 	developer_placement_export_button.pressed.connect(_export_active_developer_placement_report)
-	stack.add_child(developer_placement_export_button)
+	project_actions.add_child(developer_placement_export_button)
+	_apply_developer_panel_fixed_metrics(developer_placement_panel)
+	_apply_developer_panel_fixed_metrics(developer_placement_restore_button)
 	_sync_developer_placement_panel_visibility()
 	_update_developer_placement_panel()
 	_queue_developer_placement_panel_layout()
+
+
+func _apply_developer_panel_fixed_metrics(node: Node) -> void:
+	var control := node as Control
+	if control != null and (control is Label or control is BaseButton):
+		control.add_theme_font_size_override("font_size", DEVELOPER_PANEL_FONT_SIZE)
+	if control is BaseButton:
+		control.custom_minimum_size.y = DEVELOPER_PANEL_CONTROL_HEIGHT
+	for child in node.get_children():
+		_apply_developer_panel_fixed_metrics(child)
 
 
 func _developer_placement_mode_active() -> bool:
@@ -919,8 +1053,10 @@ func _queue_developer_placement_panel_layout() -> void:
 
 func _layout_developer_placement_panel() -> void:
 	developer_placement_panel_layout_queued = false
-	if developer_placement_panel == null or developer_placement_scroll == null or developer_placement_stack == null:
+	if developer_placement_panel == null or developer_placement_content == null or developer_placement_stack == null:
 		return
+	_apply_developer_panel_fixed_metrics(developer_placement_panel)
+	_apply_developer_panel_fixed_metrics(developer_placement_restore_button)
 	var available_size := Vector2(
 		maxf(0.0, size.x - DEVELOPER_PANEL_MARGIN * 2.0),
 		maxf(0.0, size.y - DEVELOPER_PANEL_MARGIN * 2.0)
@@ -928,27 +1064,20 @@ func _layout_developer_placement_panel() -> void:
 	if available_size.x <= 0.0 or available_size.y <= 0.0:
 		return
 	if developer_placement_restore_button != null:
-		var restore_minimum := developer_placement_restore_button.get_combined_minimum_size()
 		var restore_size := Vector2(
-			minf(maxf(DEVELOPER_PANEL_RESTORE_MIN_WIDTH, restore_minimum.x), available_size.x),
-			minf(maxf(44.0, restore_minimum.y), available_size.y)
+			minf(DEVELOPER_PANEL_RESTORE_MIN_WIDTH, available_size.x),
+			minf(DEVELOPER_PANEL_CONTROL_HEIGHT, available_size.y)
 		)
 		developer_placement_restore_button.size = restore_size
 		developer_placement_restore_button.position = Vector2(
 			maxf(DEVELOPER_PANEL_MARGIN, size.x - DEVELOPER_PANEL_MARGIN - restore_size.x),
 			DEVELOPER_PANEL_MARGIN
 		)
-	var minimum_width := minf(DEVELOPER_PANEL_MIN_WIDTH, available_size.x)
-	var panel_style := developer_placement_panel.get_theme_stylebox("panel")
-	var panel_padding := panel_style.get_minimum_size() if panel_style != null else Vector2.ZERO
-	var content_minimum := developer_placement_stack.get_combined_minimum_size()
-	var header_minimum := developer_placement_panel_header.get_combined_minimum_size()
-	var shell_separation := float(developer_placement_panel_shell.get_theme_constant("separation"))
-	var desired_width := minf(DEVELOPER_PANEL_PREFERRED_WIDTH, available_size.x)
-	var desired_height := minf(header_minimum.y + shell_separation + content_minimum.y + panel_padding.y, available_size.y)
+	var panel_width := minf(maxf(DEVELOPER_PANEL_MIN_WIDTH, DEVELOPER_PANEL_PREFERRED_WIDTH), available_size.x)
+	var panel_height := minf(DEVELOPER_PANEL_FIXED_HEIGHT, available_size.y)
 	developer_placement_panel.position = Vector2.ONE * DEVELOPER_PANEL_MARGIN
-	developer_placement_panel.custom_minimum_size = Vector2(minimum_width, 0.0)
-	developer_placement_panel.size = Vector2(maxf(minimum_width, desired_width), maxf(1.0, desired_height))
+	developer_placement_panel.custom_minimum_size = Vector2.ZERO
+	developer_placement_panel.size = Vector2(maxf(1.0, panel_width), maxf(1.0, panel_height))
 
 
 func _on_developer_slot_family_filter_toggled(pressed: bool, family: String) -> void:
@@ -976,6 +1105,8 @@ func _update_developer_placement_panel() -> void:
 			developer_slot_visibility_row.visible = true
 		if developer_slot_context_label != null:
 			developer_slot_context_label.visible = true
+		if developer_slot_layer_row != null:
+			developer_slot_layer_row.visible = true
 		_update_developer_slot_placement_panel()
 		return
 	if developer_slot_filter_row != null:
@@ -984,6 +1115,8 @@ func _update_developer_placement_panel() -> void:
 		developer_slot_visibility_row.visible = false
 	if developer_slot_context_label != null:
 		developer_slot_context_label.visible = false
+	if developer_slot_layer_row != null:
+		developer_slot_layer_row.visible = false
 	var object_data := _scene_object(selected_object_id)
 	if object_data.is_empty():
 		developer_placement_label.text = "Placement mode: drag an object; release to keep it. Right-click or Escape cancels. F2 hides this panel."
@@ -1014,6 +1147,7 @@ func _update_developer_placement_panel() -> void:
 
 func _update_developer_slot_placement_panel() -> void:
 	var review_status := _developer_slot_review_status()
+	var progress := _copy_dictionary(foundation_snapshot.get("developer_placement_progress", {}))
 	_update_developer_slot_filter_labels()
 	var review_ready := bool(review_status.get("ready", false))
 	if developer_layout_save_button != null:
@@ -1022,51 +1156,52 @@ func _update_developer_slot_placement_panel() -> void:
 		developer_layout_save_next_button.disabled = not review_ready
 	var preview_context := _developer_slot_preview_context()
 	if developer_slot_context_label != null:
-		var context_lines: Array[String] = [
-			str(preview_context.get("label", "Active preview: no scenario")),
-		]
+		var context_name := str(preview_context.get("label", "No active scenario")).trim_prefix("Active preview: ")
+		var layout_id := str(progress.get("layout_id", "")).strip_edges()
+		if not layout_id.is_empty():
+			context_name = layout_id
+		var context_lines: Array[String] = ["CONTEXT | %s" % context_name]
 		if _developer_slot_has_active_scenario():
 			if developer_slot_edit_shared_in_scenario:
-				context_lines.append("Scope: SCENARIO-LOCAL + ROOM-SHARED editing (shared changes reset this room's saved progress)")
+				context_lines.append("SCOPE | Scenario + shared room (room progress resets)")
 			else:
-				context_lines.append("Scope: SCENARIO-LOCAL editing; ROOM-SHARED markers are locked reference")
+				context_lines.append("SCOPE | Scenario slots; shared room is locked")
 		else:
-			context_lines.append("Scope: ROOM-SHARED editing; these positions apply to every scenario in this room")
+			context_lines.append("SCOPE | Shared room; applies to every scenario")
 		var reviewed_families: Array = review_status.get("reviewed", [])
 		var missing_review_families: Array = review_status.get("missing", [])
-		if missing_review_families.is_empty():
-			context_lines.append("Review: READY TO SAVE (%s)" % ", ".join(reviewed_families))
-		else:
-			context_lines.append("Review: visit every TODO family before saving | TODO: %s" % ", ".join(missing_review_families))
+		var review_line := "REVIEW | READY | %s" % ", ".join(reviewed_families)
+		if not missing_review_families.is_empty():
+			review_line = "REVIEW | TODO | %s" % ", ".join(missing_review_families)
 		var overlap_summary := _developer_slot_overlap_summary()
+		var issue_parts: Array[String] = []
 		var active_overlap_count := int(overlap_summary.get("active_count", 0))
 		if active_overlap_count > 0:
-			context_lines.append("WARNING: %d active overlap(s): %s" % [
-				active_overlap_count,
-				", ".join((overlap_summary.get("active_pairs", []) as Array).slice(0, 3)),
-			])
+			issue_parts.append("%d active overlap(s)" % active_overlap_count)
 		var alternative_overlap_count := int(overlap_summary.get("alternative_count", 0))
 		if alternative_overlap_count > 0:
-			context_lines.append("Allowed alternatives: %d inactive/mutually-exclusive overlap(s); these do not block saving" % alternative_overlap_count)
+			issue_parts.append("%d allowed alternative(s)" % alternative_overlap_count)
 		var hidden_detail_count := _developer_slot_hidden_detail_count()
 		if hidden_detail_count > 0:
-			context_lines.append("CHECK: %d authored marker(s) hidden by capacity filters; Save still includes their current positions" % hidden_detail_count)
-		var progress := _copy_dictionary(foundation_snapshot.get("developer_placement_progress", {}))
+			issue_parts.append("%d hidden marker(s)" % hidden_detail_count)
+		if not issue_parts.is_empty():
+			review_line += " | %s" % ", ".join(issue_parts)
+		context_lines.append(review_line)
+		var progress_line := "PROGRESS | Local draft"
 		if not progress.is_empty():
 			var saved_label := "SAVED" if bool(progress.get("saved", false)) else "NOT SAVED"
-			context_lines.append("Layout: %s | %s" % [
-				str(progress.get("layout_id", "current")),
+			progress_line = "PROGRESS | %s | %d/%d saved | %d left" % [
 				saved_label,
-			])
-			context_lines.append("Progress: %d/%d saved | %d remaining" % [
 				int(progress.get("saved_layout_count", 0)),
 				int(progress.get("expected_layout_count", 0)),
 				int(progress.get("missing_layout_count", 0)),
-			])
+			]
 			var next_missing := str(progress.get("next_missing_layout_id", "")).strip_edges()
 			if not next_missing.is_empty() and not bool(progress.get("complete", false)):
-				context_lines.append("Next missing: %s" % next_missing)
+				progress_line += " | Next: %s" % next_missing
+		context_lines.append(progress_line)
 		developer_slot_context_label.text = "\n".join(context_lines)
+		developer_slot_context_label.tooltip_text = "\n".join(context_lines)
 	var family := _developer_slot_active_family()
 	var family_counts := _developer_slot_family_counts(family)
 	var count_summary := "%s %d/%d shown" % [
@@ -1080,15 +1215,14 @@ func _update_developer_slot_placement_panel() -> void:
 		slot = _developer_slot(developer_slot_hovered_id)
 		showing_hover = not slot.is_empty()
 	if slot.is_empty():
-		var visibility_summary := "occupied preview"
+		_sync_developer_slot_layer_buttons({}, false)
+		var visibility_summary := "Occupied slots"
 		if developer_slot_show_empty_capacity:
-			visibility_summary = "empty capacity shown"
+			visibility_summary = "Empty slots shown"
 		if developer_slot_show_runtime_reserves:
-			visibility_summary += "; runtime reserves shown"
-		developer_placement_label.text = "Slot placement | %s\n%s. Hover for its name and details; select or drag to move it." % [
-			count_summary,
-			visibility_summary.capitalize(),
-		]
+			visibility_summary += " | Reserves shown"
+		developer_placement_label.text = "SELECTION | %s\nNo slot selected\n%s\nHover or drag a marker to inspect it." % [count_summary, visibility_summary]
+		developer_placement_label.tooltip_text = "Select or drag a visible slot marker to inspect and reposition it."
 		developer_placement_lock_button.disabled = true
 		developer_placement_reset_button.disabled = true
 		return
@@ -1096,6 +1230,7 @@ func _update_developer_slot_placement_panel() -> void:
 	family = _developer_slot_family(slot)
 	var scope_label := "SCENARIO-LOCAL" if _developer_slot_scope(slot) == "scenario_local" else "ROOM-SHARED"
 	var editable := _developer_slot_is_editable(slot)
+	_sync_developer_slot_layer_buttons(slot, not showing_hover and editable)
 	var kind := str(slot.get("kind", family))
 	var placement_class := str(slot.get("footprint_class", "unknown"))
 	var support := str(slot.get("support_id", "free"))
@@ -1103,12 +1238,6 @@ func _update_developer_slot_placement_panel() -> void:
 	var primary_label := _developer_slot_primary_label(slot)
 	var occupancy := "Empty capacity" if occupants.is_empty() else "Occupant: %s" % ", ".join(occupants)
 	var known_claimants := _developer_slot_claimant_labels(slot)
-	var claimant_summary := ""
-	if not known_claimants.is_empty():
-		var shown_claimants := known_claimants.slice(0, mini(3, known_claimants.size()))
-		claimant_summary = "\nKnown roles: %s" % ", ".join(shown_claimants)
-		if known_claimants.size() > shown_claimants.size():
-			claimant_summary += " +%d" % (known_claimants.size() - shown_claimants.size())
 	var slot_state := _developer_slot_state(slot)
 	var requirement := "required" if bool(slot_state.get("required", false)) else "optional capacity"
 	if _developer_slot_is_runtime_reserve(slot):
@@ -1116,28 +1245,91 @@ func _update_developer_slot_placement_panel() -> void:
 		requirement = "runtime reserve" if reserve_reason.is_empty() else "runtime reserve: %s" % reserve_reason
 	var warnings: Array = slot_state.get("warnings", [])
 	var status_text := "hover preview" if showing_hover else "unchanged"
+	var draw_layer_label := _developer_slot_draw_layer_label(_developer_slot_draw_layer(slot))
 	if developer_slot_pending_rect.has_area():
 		status_text = "position %.0f, %.0f" % [developer_slot_pending_position.x, developer_slot_pending_position.y]
 		if not developer_slot_overlap_ids.is_empty():
-			status_text += "; advisory overlap: %s" % ", ".join(developer_slot_overlap_ids.slice(0, mini(3, developer_slot_overlap_ids.size())))
+			status_text += "; %s overlap: %s" % [
+				"blocked route" if not developer_slot_valid else "advisory",
+				", ".join(developer_slot_overlap_ids.slice(0, mini(3, developer_slot_overlap_ids.size()))),
+			]
 	if not warnings.is_empty():
 		status_text += "; WARNING: %s" % "; ".join(warnings)
-	developer_placement_label.text = "%s | %s\n%s\n%s | %s | %s / %s\n%s | %s | %s | %s%s" % [
+	developer_placement_label.text = "%s | %s | %s\n%s\n%s | %s | %s\n%s | %s | %s | %s" % [
 		str(foundation_snapshot.get("archetype_id", environment_id)),
 		str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", "main"))),
+		count_summary,
 		primary_label,
 		slot_id,
 		"%s%s" % [scope_label, " / LOCKED" if not editable else ""],
-		family if kind == family else "%s:%s" % [family, kind],
-		placement_class,
+		"%s / %s" % [family if kind == family else "%s:%s" % [family, kind], placement_class],
 		occupancy,
-		support,
+		"Layer: %s" % draw_layer_label,
 		requirement,
 		status_text,
-		claimant_summary,
 	]
+	var tooltip_lines: Array[String] = [
+		primary_label,
+		"Slot: %s" % slot_id,
+		"Scope: %s" % scope_label,
+		"Class: %s | Support: %s" % [placement_class, support],
+		"Draw layer: %s" % draw_layer_label,
+		occupancy,
+		"Status: %s" % status_text,
+	]
+	if not known_claimants.is_empty():
+		tooltip_lines.append("Known roles: %s" % ", ".join(known_claimants))
+	developer_placement_label.tooltip_text = "\n".join(tooltip_lines)
 	developer_placement_lock_button.disabled = showing_hover or not editable or not developer_slot_pending_rect.has_area() or not developer_slot_valid
 	developer_placement_reset_button.disabled = showing_hover or not editable
+
+
+func _developer_slot_draw_layer(slot: Dictionary) -> int:
+	if slot.has("draw_layer"):
+		return clampi(int(slot.get("draw_layer", 0)), -1, 1)
+	return -1 if str(slot.get("footprint_class", "")) == "behind_counter_person" else 0
+
+
+func _developer_slot_draw_layer_label(layer: int) -> String:
+	match clampi(layer, -1, 1):
+		-1: return "Behind"
+		1: return "Front"
+		_: return "Standard"
+
+
+func _sync_developer_slot_layer_buttons(slot: Dictionary, editable: bool) -> void:
+	var active_layer := _developer_slot_draw_layer(slot) if not slot.is_empty() else 99
+	for layer_name_value in SLOT_DRAW_LAYERS.keys():
+		var layer_name := str(layer_name_value)
+		var button_value: Variant = developer_slot_layer_buttons.get(layer_name)
+		if not (button_value is BaseButton):
+			continue
+		var button := button_value as BaseButton
+		button.disabled = slot.is_empty() or not editable
+		button.set_pressed_no_signal(active_layer == int(SLOT_DRAW_LAYERS.get(layer_name, 0)))
+
+
+func _on_developer_slot_layer_toggled(pressed: bool, layer_name: String) -> void:
+	if not pressed or not SLOT_DRAW_LAYERS.has(layer_name):
+		return
+	var slot := _developer_slot(developer_slot_selected_id)
+	if slot.is_empty() or not _developer_slot_is_editable(slot):
+		_sync_developer_slot_layer_buttons(slot, false)
+		return
+	var request := {
+		"environment": _developer_slot_environment(),
+		"slot_id": developer_slot_selected_id,
+		"layer": int(SLOT_DRAW_LAYERS.get(layer_name, 0)),
+		"_slot_layer_handled": false,
+		"_slot_layer_persisted": false,
+	}
+	developer_slot_layer_requested.emit(request)
+	if bool(request.get("_slot_layer_handled", false)) and not bool(request.get("_slot_layer_persisted", false)):
+		_sync_developer_slot_layer_buttons(slot, true)
+		return
+	_invalidate_developer_placement_geometry_caches()
+	_update_developer_placement_panel()
+	queue_redraw()
 
 
 func _lock_active_developer_placement() -> void:
@@ -1522,6 +1714,7 @@ func debug_soak_snapshot() -> Dictionary:
 		"draw_text_width_cache_size": draw_text_width_cache.size(),
 		"fit_draw_text_cache_size": fit_draw_text_cache.size(),
 		"object_animation_phase_cache_size": object_animation_phase_cache.size(),
+		"character_idle_profile_cache_size": character_idle_profile_cache.size(),
 		"slot_prop_static_layer_cache_size": slot_prop_static_layer_cache.size(),
 		"actor_route_started_at_cache_size": actor_route_started_at_cache.size(),
 		"actor_route_time": actor_route_time,
@@ -2298,6 +2491,8 @@ func _ensure_developer_slot_cache() -> void:
 
 
 func _developer_slot_active_family() -> String:
+	if bool(developer_slot_family_filters.get("all", false)):
+		return "all"
 	for family_value in SLOT_FAMILIES:
 		var family := str(family_value)
 		if bool(developer_slot_family_filters.get(family, false)):
@@ -2365,7 +2560,7 @@ func _developer_slot_family_counts(family: String) -> Dictionary:
 	var visible := 0
 	for slot_value in _developer_slots(true):
 		var slot := slot_value as Dictionary
-		if _developer_slot_family(slot) != family:
+		if family != "all" and _developer_slot_family(slot) != family:
 			continue
 		total += 1
 		if _developer_slot_visible_by_detail(slot):
@@ -2375,23 +2570,31 @@ func _developer_slot_family_counts(family: String) -> Dictionary:
 
 func _update_developer_slot_filter_labels() -> void:
 	var required_review_families := _developer_slot_required_review_families()
-	for family_value in SLOT_FAMILIES:
+	var family_labels := {
+		"fixed": "Fixed",
+		"event": "Events",
+		"scenario": "Scenario",
+		"exit": "Exits",
+		"all": "All",
+	}
+	for family_value in SLOT_FILTER_OPTIONS:
 		var family := str(family_value)
 		var button_value: Variant = developer_slot_filter_buttons.get(family)
 		if not (button_value is BaseButton):
 			continue
-		var available := _developer_slot_family_available(family)
+		var available := family == "all" or _developer_slot_family_available(family)
 		(button_value as BaseButton).visible = available
 		(button_value as BaseButton).disabled = not available
 		var counts := _developer_slot_family_counts(family)
-		var review_suffix := ""
-		if required_review_families.has(family):
-			review_suffix = " Reviewed" if bool(developer_slot_reviewed_families.get(family, false)) else " TODO"
-		(button_value as BaseButton).text = "%s %d/%d%s" % [
+		var review_status := "All available families" if family == "all" else "Optional"
+		if family != "all" and required_review_families.has(family):
+			review_status = "Reviewed" if bool(developer_slot_reviewed_families.get(family, false)) else "TODO"
+		(button_value as BaseButton).text = str(family_labels.get(family, family.capitalize()))
+		(button_value as BaseButton).tooltip_text = "%s slots: %d/%d shown. Review: %s." % [
 			family.capitalize(),
 			int(counts.get("visible", 0)),
 			int(counts.get("total", 0)),
-			review_suffix,
+			review_status,
 		]
 
 
@@ -2992,15 +3195,67 @@ func _validate_developer_slot_placement_preview(refresh_panel: bool = true) -> v
 		return
 	# Manual placement is the one opportunity to inspect future capacity. Warn
 	# against every authored marker in this exact context, including currently
-	# empty and injected-content reserves. The warning remains advisory so an
-	# intentional alternate-stage overlap is still authorable.
+	# empty and injected-content reserves. Ordinary alternative-stage overlap is
+	# advisory, but a live route endpoint must remain usable at its expanded
+	# small-screen size or scenario finalization would reject the room later.
 	for slot_value in _developer_slots(true):
 		var slot := slot_value as Dictionary
 		var slot_id := str(slot.get("id", ""))
-		if slot_id != developer_slot_selected_id and developer_slot_pending_rect.intersects(_developer_slot_rect(slot)):
+		if slot_id == developer_slot_selected_id:
+			continue
+		var other_rect := _developer_slot_rect(slot)
+		if developer_slot_pending_rect.intersects(other_rect):
 			developer_slot_overlap_ids.append(slot_id)
+		var route_sensitive := _developer_slot_is_route_endpoint(developer_slot_selected_id) \
+				or _developer_slot_is_route_endpoint(slot_id)
+		if route_sensitive \
+				and (_developer_slot_is_context_active(slot) or _developer_slot_is_route_endpoint(slot_id)) \
+				and _developer_slot_rects_meaningfully_intersect(
+					_developer_slot_expanded_rect(developer_slot_pending_rect),
+					_developer_slot_expanded_rect(other_rect)
+				):
+			if not developer_slot_overlap_ids.has(slot_id):
+				developer_slot_overlap_ids.append(slot_id)
+			developer_slot_valid = false
 	if refresh_panel:
 		_update_developer_placement_panel()
+
+
+func _developer_slot_is_route_endpoint(slot_id: String) -> bool:
+	if slot_id.is_empty():
+		return false
+	for route_value in _array_view(_developer_placement_surface_map().get("actor_routes", [])):
+		if typeof(route_value) != TYPE_DICTIONARY:
+			continue
+		var route := route_value as Dictionary
+		if slot_id in [
+			str(route.get("start_slot_id", "")),
+			str(route.get("end_slot_id", "")),
+			str(route.get("reduced_motion_slot_id", "")),
+		]:
+			return true
+	return false
+
+
+func _developer_slot_expanded_rect(rect: Rect2) -> Rect2:
+	if not rect.has_area():
+		return Rect2()
+	var minimum := Vector2(SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE)
+	var expanded_size := Vector2(maxf(rect.size.x, minimum.x), maxf(rect.size.y, minimum.y))
+	var expanded := Rect2(rect.get_center() - expanded_size * 0.5, expanded_size)
+	expanded.position = Vector2(
+		clampf(expanded.position.x, 0.0, float(BOARD_SIZE.x) - expanded.size.x),
+		clampf(expanded.position.y, 0.0, float(BOARD_SIZE.y) - expanded.size.y)
+	)
+	return expanded
+
+
+func _developer_slot_rects_meaningfully_intersect(left: Rect2, right: Rect2) -> bool:
+	if not left.has_area() or not right.has_area() or not left.intersects(right):
+		return false
+	var overlap := left.intersection(right)
+	return overlap.size.x > DEVELOPER_ROUTE_COLLISION_EDGE_TOLERANCE \
+		and overlap.size.y > DEVELOPER_ROUTE_COLLISION_EDGE_TOLERANCE
 
 
 func _developer_slot_placement_request() -> Dictionary:
@@ -4438,33 +4693,74 @@ func _draw_named_character(id: String, foot: Vector2, scale_value: float, role: 
 	var hair: Color = style["hair"]
 	var jacket: Color = style["jacket"]
 	var accent: Color = style["accent"]
-	var sway := sin(flicker * float(style["tempo"]) + float(style["phase"])) * 2.0
-	var pos := foot + Vector2(sway, 0)
+	var idle_profile := _character_idle_profile("named:%s" % id, role, style)
+	var idle_state := _character_idle_state(idle_profile, flicker)
+	var pose := str(idle_state.get("pose", "idle"))
+	var pos := foot + Vector2(float(idle_state.get("sway", 0.0)), float(idle_state.get("bob", 0.0)))
+	var head_shift := Vector2(float(idle_state.get("head_x", 0.0)), float(idle_state.get("head_y", 0.0))) * scale_value
 	var head := Rect2(pos + Vector2(-10, -66) * scale_value, Vector2(20, 20) * scale_value)
+	head.position += head_shift
 	var body := Rect2(pos + Vector2(-17, -46) * scale_value, Vector2(34, 44) * scale_value)
 	var shoulder_y := pos.y - 38 * scale_value
 	draw_rect(Rect2(pos.x - 18 * scale_value, pos.y - 6 * scale_value, 36 * scale_value, 4 * scale_value), Color(0.0, 0.0, 0.0, 0.36))
 	draw_rect(body, Color("#06070c"))
 	draw_rect(Rect2(body.position + Vector2(3, 4) * scale_value, body.size - Vector2(6, 7) * scale_value), jacket)
-	draw_rect(Rect2(pos + Vector2(-23, -36) * scale_value, Vector2(8, 35) * scale_value), Color("#05060a"))
-	draw_rect(Rect2(pos + Vector2(15, -36) * scale_value, Vector2(8, 35) * scale_value), Color("#05060a"))
+	var gesture_amount := float(idle_state.get("gesture_amount", 0.0))
+	_draw_named_character_arm(pos, scale_value, accent, skin, pose, true, gesture_amount)
+	_draw_named_character_arm(pos, scale_value, accent, skin, pose, false, gesture_amount)
 	draw_rect(head, skin)
 	draw_rect(Rect2(head.position + Vector2(0, 0), Vector2(head.size.x, 7 * scale_value)), hair)
-	draw_rect(Rect2(head.position + Vector2(4, 9) * scale_value, Vector2(4, 3) * scale_value), Color("#05060a"))
-	draw_rect(Rect2(head.position + Vector2(13, 9) * scale_value, Vector2(4, 3) * scale_value), Color("#05060a"))
-	var nose_x := head.position.x - 2.0 * scale_value if facing == "left" else head.end.x
+	var eye_offset := float(idle_state.get("eye_offset", 0.0)) * scale_value
+	var left_eye := head.position + Vector2(4, 9) * scale_value + Vector2(eye_offset, 0.0)
+	var right_eye := head.position + Vector2(13, 9) * scale_value + Vector2(eye_offset, 0.0)
+	var eye_height := 1.0 if bool(idle_state.get("blink", false)) else 3.0
+	draw_rect(Rect2(left_eye, Vector2(4, eye_height) * scale_value), Color("#05060a"))
+	draw_rect(Rect2(right_eye, Vector2(4, eye_height) * scale_value), Color("#05060a"))
+	var effective_facing := facing
+	if pose == "lookaround":
+		effective_facing = "left" if float(idle_state.get("eye_offset", 0.0)) < 0.0 else "right"
+	var nose_x := head.position.x - 2.0 * scale_value if effective_facing == "left" else head.end.x
 	draw_rect(Rect2(nose_x, head.position.y + 12.0 * scale_value, 3.0 * scale_value, 3.0 * scale_value), skin)
 	draw_rect(Rect2(pos + Vector2(-15, -48) * scale_value, Vector2(30, 5) * scale_value), accent)
 	draw_line(Vector2(pos.x - 24 * scale_value, shoulder_y), Vector2(pos.x + 24 * scale_value, shoulder_y), Color(accent.r, accent.g, accent.b, 0.45), maxf(1.0, 3.0 * scale_value))
+	var prop_lift := -2.0 * float(idle_state.get("gesture_amount", 0.0)) * scale_value
 	match role:
 		"watcher", "bouncer", "pit_boss":
-			draw_rect(Rect2(pos + Vector2(14, -55) * scale_value, Vector2(10, 4) * scale_value), C_PINK)
+			draw_rect(Rect2(pos + Vector2(14, -55) * scale_value + Vector2(0.0, prop_lift), Vector2(10, 4) * scale_value), C_PINK)
 		"dealer":
-			_card_back(Rect2(pos + Vector2(-25, -26) * scale_value, Vector2(16, 22) * scale_value))
+			_card_back(Rect2(pos + Vector2(-25, -26) * scale_value + Vector2(0.0, prop_lift), Vector2(16, 22) * scale_value))
 		"bartender", "attendant", "clerk":
-			draw_rect(Rect2(pos + Vector2(16, -24) * scale_value, Vector2(7, 16) * scale_value), C_AMBER)
+			draw_rect(Rect2(pos + Vector2(16, -24) * scale_value + Vector2(0.0, prop_lift), Vector2(7, 16) * scale_value), C_AMBER)
 		"regular", "fixer":
-			draw_rect(Rect2(pos + Vector2(-25, -20) * scale_value, Vector2(16, 5) * scale_value), C_CYAN)
+			draw_rect(Rect2(pos + Vector2(-25, -20) * scale_value + Vector2(0.0, prop_lift), Vector2(16, 5) * scale_value), C_CYAN)
+
+
+func _draw_named_character_arm(pos: Vector2, scale_value: float, accent: Color, skin: Color, pose: String, left: bool, gesture_amount: float) -> void:
+	var side := -1.0 if left else 1.0
+	var shoulder := pos + Vector2(side * 18.0, -37.0) * scale_value
+	var resting_hand := pos + Vector2(side * 22.0, -8.0) * scale_value
+	var hand := resting_hand
+	match pose:
+		"arms_folded":
+			hand = pos + Vector2(-side * 9.0, -27.0) * scale_value
+		"chin_touch":
+			if not left:
+				hand = pos + Vector2(8.0, -52.0) * scale_value
+		"pocket_check":
+			if left:
+				hand = pos + Vector2(-9.0, -16.0) * scale_value
+		"adjust_cuff":
+			hand = pos + Vector2(-side * 5.0, -21.0 if left else -25.0) * scale_value
+		"counter_tap", "card_check":
+			hand = pos + Vector2(side * 14.0, -19.0 if left else -16.0) * scale_value
+		"shoulder_roll":
+			hand = pos + Vector2(side * (28.0 if left else 18.0), -19.0 if left else -11.0) * scale_value
+		"lookaround":
+			hand = pos + Vector2(side * 24.0, -13.0) * scale_value
+	hand = resting_hand.lerp(hand, clampf(gesture_amount, 0.0, 1.0))
+	draw_line(shoulder, hand, Color("#05060a"), maxf(2.0, 7.0 * scale_value))
+	draw_line(shoulder, hand, Color(accent.r, accent.g, accent.b, 0.30), maxf(1.0, 2.0 * scale_value))
+	draw_rect(Rect2(hand - Vector2(2.5, 2.0) * scale_value, Vector2(5.0, 5.0) * scale_value), skin)
 
 
 func _draw_rival_cheater(rival: Dictionary, foot: Vector2) -> void:
@@ -4507,22 +4803,22 @@ func _draw_rival_cheater_tell(tell: String, idle_phase: int, foot: Vector2) -> v
 
 func _character_style(id: String) -> Dictionary:
 	var styles := {
-		"mara": {"skin": Color("#d9a36a"), "hair": Color("#271018"), "jacket": Color("#24404a"), "accent": C_CYAN, "tempo": 1.0, "phase": 0.2},
-		"alley_merchant": {"skin": Color("#9c684f"), "hair": Color("#241910"), "jacket": Color("#28301f"), "accent": C_AMBER, "tempo": 0.75, "phase": 1.5},
-		"motel_clerk": {"skin": Color("#c99572"), "hair": Color("#1c2630"), "jacket": Color("#30404a"), "accent": C_TEAL, "tempo": 0.8, "phase": 2.8},
-		"silas": {"skin": Color("#b77a62"), "hair": Color("#19151f"), "jacket": Color("#1d2535"), "accent": C_PURPLE_2, "tempo": 1.15, "phase": 0.9},
-		"vince": {"skin": Color("#a66a50"), "hair": Color("#06070c"), "jacket": Color("#34102b"), "accent": C_PINK, "tempo": 1.6, "phase": 2.1},
-		"lena": {"skin": Color("#c98665"), "hair": Color("#161025"), "jacket": Color("#273344"), "accent": C_AMBER, "tempo": 1.3, "phase": 0.7},
-		"june": {"skin": Color("#d0a07c"), "hair": Color("#332010"), "jacket": Color("#21363a"), "accent": C_TEAL, "tempo": 0.9, "phase": 1.8},
-		"marco": {"skin": Color("#bd7b5d"), "hair": Color("#0f0b0a"), "jacket": Color("#3d2142"), "accent": C_ORANGE, "tempo": 1.1, "phase": 2.5},
-		"rafi": {"skin": Color("#b7755c"), "hair": Color("#08090e"), "jacket": Color("#2f1a18"), "accent": C_YELLOW, "tempo": 1.4, "phase": 0.4},
-		"dot": {"skin": Color("#dfb28d"), "hair": Color("#551b42"), "jacket": Color("#26315a"), "accent": C_PINK_2, "tempo": 1.8, "phase": 1.0},
-		"nell": {"skin": Color("#c48968"), "hair": Color("#513315"), "jacket": Color("#27384f"), "accent": C_YELLOW, "tempo": 0.8, "phase": 1.4},
-		"sable": {"skin": Color("#b87a63"), "hair": Color("#05060a"), "jacket": Color("#1b2f2a"), "accent": C_TEAL, "tempo": 0.7, "phase": 2.0},
-		"ox": {"skin": Color("#8f5a48"), "hair": Color("#05060a"), "jacket": Color("#11131f"), "accent": C_ORANGE, "tempo": 0.55, "phase": 0.0},
-		"rourke": {"skin": Color("#d1a072"), "hair": Color("#ede0b5"), "jacket": Color("#161017"), "accent": C_PINK, "tempo": 0.65, "phase": 1.2},
-		"iris": {"skin": Color("#cca17e"), "hair": Color("#2b1630"), "jacket": Color("#20203c"), "accent": C_CYAN, "tempo": 0.85, "phase": 2.6},
-		"sal": {"skin": Color("#bf8366"), "hair": Color("#1b1210"), "jacket": Color("#24212a"), "accent": C_YELLOW, "tempo": 0.60, "phase": 1.7},
+		"mara": {"skin": Color("#d9a36a"), "hair": Color("#271018"), "jacket": Color("#24404a"), "accent": C_CYAN, "tempo": 1.0, "phase": 0.2, "idle_primary": "counter_tap", "idle_secondary": "lookaround"},
+		"alley_merchant": {"skin": Color("#9c684f"), "hair": Color("#241910"), "jacket": Color("#28301f"), "accent": C_AMBER, "tempo": 0.75, "phase": 1.5, "idle_primary": "pocket_check", "idle_secondary": "chin_touch"},
+		"motel_clerk": {"skin": Color("#c99572"), "hair": Color("#1c2630"), "jacket": Color("#30404a"), "accent": C_TEAL, "tempo": 0.8, "phase": 2.8, "idle_primary": "adjust_cuff", "idle_secondary": "lookaround"},
+		"silas": {"skin": Color("#b77a62"), "hair": Color("#19151f"), "jacket": Color("#1d2535"), "accent": C_PURPLE_2, "tempo": 1.15, "phase": 0.9, "idle_primary": "chin_touch", "idle_secondary": "card_check"},
+		"vince": {"skin": Color("#a66a50"), "hair": Color("#06070c"), "jacket": Color("#34102b"), "accent": C_PINK, "tempo": 1.6, "phase": 2.1, "idle_primary": "shoulder_roll", "idle_secondary": "lookaround"},
+		"lena": {"skin": Color("#c98665"), "hair": Color("#161025"), "jacket": Color("#273344"), "accent": C_AMBER, "tempo": 1.3, "phase": 0.7, "idle_primary": "lookaround", "idle_secondary": "adjust_cuff"},
+		"june": {"skin": Color("#d0a07c"), "hair": Color("#332010"), "jacket": Color("#21363a"), "accent": C_TEAL, "tempo": 0.9, "phase": 1.8, "idle_primary": "card_check", "idle_secondary": "arms_folded"},
+		"marco": {"skin": Color("#bd7b5d"), "hair": Color("#0f0b0a"), "jacket": Color("#3d2142"), "accent": C_ORANGE, "tempo": 1.1, "phase": 2.5, "idle_primary": "pocket_check", "idle_secondary": "shoulder_roll"},
+		"rafi": {"skin": Color("#b7755c"), "hair": Color("#08090e"), "jacket": Color("#2f1a18"), "accent": C_YELLOW, "tempo": 1.4, "phase": 0.4, "idle_primary": "counter_tap", "idle_secondary": "arms_folded"},
+		"dot": {"skin": Color("#dfb28d"), "hair": Color("#551b42"), "jacket": Color("#26315a"), "accent": C_PINK_2, "tempo": 1.8, "phase": 1.0, "idle_primary": "adjust_cuff", "idle_secondary": "shoulder_roll"},
+		"nell": {"skin": Color("#c48968"), "hair": Color("#513315"), "jacket": Color("#27384f"), "accent": C_YELLOW, "tempo": 0.8, "phase": 1.4, "idle_primary": "chin_touch", "idle_secondary": "lookaround"},
+		"sable": {"skin": Color("#b87a63"), "hair": Color("#05060a"), "jacket": Color("#1b2f2a"), "accent": C_TEAL, "tempo": 0.7, "phase": 2.0, "idle_primary": "arms_folded", "idle_secondary": "pocket_check"},
+		"ox": {"skin": Color("#8f5a48"), "hair": Color("#05060a"), "jacket": Color("#11131f"), "accent": C_ORANGE, "tempo": 0.55, "phase": 0.0, "idle_primary": "arms_folded", "idle_secondary": "shoulder_roll"},
+		"rourke": {"skin": Color("#d1a072"), "hair": Color("#ede0b5"), "jacket": Color("#161017"), "accent": C_PINK, "tempo": 0.65, "phase": 1.2, "idle_primary": "chin_touch", "idle_secondary": "adjust_cuff"},
+		"iris": {"skin": Color("#cca17e"), "hair": Color("#2b1630"), "jacket": Color("#20203c"), "accent": C_CYAN, "tempo": 0.85, "phase": 2.6, "idle_primary": "card_check", "idle_secondary": "lookaround"},
+		"sal": {"skin": Color("#bf8366"), "hair": Color("#1b1210"), "jacket": Color("#24212a"), "accent": C_YELLOW, "tempo": 0.60, "phase": 1.7, "idle_primary": "counter_tap", "idle_secondary": "pocket_check"},
 	}
 	return styles.get(id, styles["mara"])
 
@@ -4633,21 +4929,25 @@ func _draw_scene_objects() -> void:
 	if scene_has_live_actor_routes:
 		_rebuild_object_label_rect_cache(objects)
 	var behind_counter := behind_counter_scene_objects_cache
-	var room_front := room_front_scene_objects_cache
+	var room_standard := room_front_scene_objects_cache
+	var room_front := room_top_scene_objects_cache
 	if not scene_object_cache_valid:
 		behind_counter = []
+		room_standard = []
 		room_front = []
 		for object_value in objects:
 			var object_data := object_value as Dictionary
-			if str(object_data.get("placement_class", "")) == "behind_counter_person":
-				behind_counter.append(object_data)
-			else:
-				room_front.append(object_data)
-	# Counter staff and their shadows are painted before the exact foreground
-	# fixture faces. Everyone else remains in normal deterministic room order.
+			match _scene_object_draw_layer(object_data):
+				-1: behind_counter.append(object_data)
+				1: room_front.append(object_data)
+				_: room_standard.append(object_data)
+	# The three authored layers are strict: counter fronts separate Behind from
+	# Standard, and Front is painted last above every lower object layer.
 	for object_value in behind_counter:
 		_draw_scene_object_body(object_value as Dictionary)
 	_draw_room_foreground_occluders(behind_counter)
+	for object_value in room_standard:
+		_draw_scene_object_body(object_value as Dictionary)
 	for object_value in room_front:
 		_draw_scene_object_body(object_value as Dictionary)
 	# Labels and focus affordances stay above fixtures and remain fully usable.
@@ -4829,16 +5129,37 @@ func _draw_scenario_actor(rect: Rect2, object_data: Dictionary, active: bool) ->
 	var behavior := str(object_data.get("behavior", "idle"))
 	var pose := str(object_data.get("pose", "idle"))
 	var accent := C_ORANGE if behavior in ["guard", "fight", "flee"] else C_TEAL
-	var center := rect.get_center()
+	var object_id := str(object_data.get("id", object_data.get("source_id", "scenario_actor")))
+	var idle_profile := _character_idle_profile("object:%s/scenario" % object_id, behavior)
+	var idle_state := _character_idle_state(idle_profile, flicker)
+	var idle_pose := str(idle_state.get("pose", "idle")) if pose in ["", "idle", "watch", "watching"] else pose
+	var center := rect.get_center() + Vector2(float(idle_state.get("sway", 0.0)), float(idle_state.get("bob", 0.0)))
 	var head_radius := clampf(rect.size.x * 0.15, 6.0, 12.0)
-	draw_circle(Vector2(center.x, rect.position.y + head_radius + 4.0), head_radius, C_SOFT.darkened(0.15))
+	var head_center := Vector2(center.x, rect.position.y + head_radius + 4.0 + float(idle_state.get("bob", 0.0))) + Vector2(float(idle_state.get("head_x", 0.0)), float(idle_state.get("head_y", 0.0)))
+	draw_circle(head_center, head_radius, C_SOFT.darkened(0.15))
 	var body_top := rect.position.y + head_radius * 2.0 + 6.0
 	var body := Rect2(Vector2(center.x - rect.size.x * 0.20, body_top), Vector2(rect.size.x * 0.40, maxf(16.0, rect.end.y - body_top - 8.0)))
 	draw_rect(body, accent.darkened(0.42))
 	draw_rect(body, accent.lightened(0.15) if active else accent, false, 2.0)
 	var arm_y := body.position.y + body.size.y * 0.38
 	var arm_spread := rect.size.x * (0.38 if pose in ["fight", "warning"] else 0.28)
-	draw_line(Vector2(center.x - arm_spread, arm_y), Vector2(center.x + arm_spread, arm_y), accent, 3.0)
+	var gesture_amount := float(idle_state.get("gesture_amount", 0.0))
+	var left_hand_y := arm_y
+	var right_hand_y := arm_y
+	match idle_pose:
+		"arms_folded", "card_check", "adjust_cuff":
+			arm_spread = lerpf(arm_spread, rect.size.x * 0.12, gesture_amount)
+			left_hand_y += 5.0 * gesture_amount
+			right_hand_y -= 2.0 * gesture_amount
+		"chin_touch":
+			right_hand_y -= head_radius * 2.2 * gesture_amount
+		"pocket_check", "counter_tap":
+			left_hand_y += 8.0 * gesture_amount
+		"shoulder_roll":
+			left_hand_y -= 6.0 * gesture_amount
+			right_hand_y += 5.0 * gesture_amount
+	draw_line(Vector2(center.x, arm_y), Vector2(center.x - arm_spread, left_hand_y), accent, 3.0)
+	draw_line(Vector2(center.x, arm_y), Vector2(center.x + arm_spread, right_hand_y), accent, 3.0)
 	if behavior in ["guard", "watch", "patrol"]:
 		_neon_text("EYE", Vector2(center.x - 10.0, rect.end.y - 4.0), 8, C_WHITE)
 
@@ -5096,6 +5417,7 @@ func _rebuild_scene_object_cache() -> void:
 	active_scene_objects_cache = _ordered_scene_objects()
 	behind_counter_scene_objects_cache = []
 	room_front_scene_objects_cache = []
+	room_top_scene_objects_cache = []
 	scene_object_cache_valid = true
 	_rebuild_object_label_rect_cache(active_scene_objects_cache)
 	scene_objects_by_id_cache = {}
@@ -5114,10 +5436,10 @@ func _rebuild_scene_object_cache() -> void:
 		if typeof(object_value) != TYPE_DICTIONARY:
 			continue
 		var object_data: Dictionary = object_value
-		if str(object_data.get("placement_class", "")) == "behind_counter_person":
-			behind_counter_scene_objects_cache.append(object_data)
-		else:
-			room_front_scene_objects_cache.append(object_data)
+		match _scene_object_draw_layer(object_data):
+			-1: behind_counter_scene_objects_cache.append(object_data)
+			1: room_top_scene_objects_cache.append(object_data)
+			_: room_front_scene_objects_cache.append(object_data)
 		var object_id := str(object_data.get("id", ""))
 		if not object_id.is_empty():
 			scene_objects_by_id_cache[object_id] = object_data
@@ -7466,6 +7788,15 @@ func _scene_object_z_key(object_data: Dictionary) -> int:
 	return int(object_data.get("source_order", 0))
 
 
+func _scene_object_draw_layer(object_data: Dictionary) -> int:
+	var slot_id := str(object_data.get("slot_id", "")).strip_edges()
+	if not slot_id.is_empty():
+		var slot := _developer_slot(slot_id)
+		if not slot.is_empty():
+			return _developer_slot_draw_layer(slot)
+	return -1 if str(object_data.get("placement_class", "")) == "behind_counter_person" else 0
+
+
 func _scenario_layout_evidence(objects: Array) -> Dictionary:
 	var entries: Array = []
 	var digests: Dictionary = {}
@@ -8126,6 +8457,162 @@ func _prune_object_animation_phase_cache() -> void:
 		var key := str(key_value)
 		if not bool(active_keys.get(key, false)):
 			object_animation_phase_cache.erase(key)
+	for profile_key_value in character_idle_profile_cache.keys():
+		var profile_key := str(profile_key_value)
+		if not profile_key.begins_with("object:"):
+			continue
+		var object_key := profile_key.trim_prefix("object:").get_slice("/", 0)
+		if not bool(active_keys.get(object_key, false)):
+			character_idle_profile_cache.erase(profile_key_value)
+
+
+func _stable_character_animation_hash(value: String, salt: int = 0) -> int:
+	var hash_value := 97 + salt * 131
+	for index in range(value.length()):
+		hash_value = int(fposmod(float(hash_value * 37 + value.unicode_at(index) + salt), 1000003.0))
+	return hash_value
+
+
+func _character_idle_gestures_for_role(role: String) -> Array:
+	match role.to_lower():
+		"watcher", "bouncer", "pit_boss", "guard", "security":
+			return ["arms_folded", "lookaround", "shoulder_roll", "chin_touch"]
+		"dealer", "card_dealer", "croupier":
+			return ["card_check", "adjust_cuff", "lookaround", "counter_tap"]
+		"bartender", "attendant", "clerk", "cashier", "vendor":
+			return ["counter_tap", "adjust_cuff", "lookaround", "chin_touch"]
+		"regular", "fixer", "patron", "customer", "guest":
+			return ["pocket_check", "chin_touch", "lookaround", "arms_folded", "shoulder_roll"]
+		"runner", "messenger", "lookout":
+			return ["lookaround", "pocket_check", "shoulder_roll", "counter_tap"]
+		_:
+			return ["lookaround", "adjust_cuff", "chin_touch", "pocket_check", "arms_folded", "counter_tap", "shoulder_roll"]
+
+
+func _character_idle_profile(identity: String, role: String, authored: Dictionary = {}) -> Dictionary:
+	var normalized_identity := identity.strip_edges()
+	if normalized_identity.is_empty():
+		normalized_identity = "anonymous"
+	var cache_key := "%s|%s" % [normalized_identity, role.to_lower()]
+	if character_idle_profile_cache.has(cache_key):
+		return character_idle_profile_cache.get(cache_key, {})
+	var hash_a := _stable_character_animation_hash(cache_key, 11)
+	var hash_b := _stable_character_animation_hash(cache_key, 29)
+	var hash_c := _stable_character_animation_hash(cache_key, 47)
+	var gestures := _character_idle_gestures_for_role(role)
+	var primary := str(authored.get("idle_primary", gestures[hash_a % gestures.size()]))
+	var secondary := str(authored.get("idle_secondary", gestures[hash_b % gestures.size()]))
+	if secondary == primary:
+		secondary = str(gestures[(hash_b + 1) % gestures.size()])
+	var authored_tempo := float(authored.get("tempo", 0.0))
+	var authored_phase := float(authored.get("phase", -1.0))
+	var profile := {
+		"identity": normalized_identity,
+		"signature": "%s:%d:%d:%d" % [normalized_identity, hash_a, hash_b, hash_c],
+		"primary_pose": primary,
+		"secondary_pose": secondary,
+		"tempo": authored_tempo if authored_tempo > 0.0 else 0.72 + float(hash_a % 47) / 100.0,
+		"phase": authored_phase if authored_phase >= 0.0 else float(hash_b % 628) / 100.0,
+		"cycle_duration": 6.8 + float(hash_c % 420) / 100.0,
+		"primary_start": 0.32 + float(hash_a % 13) / 100.0,
+		"primary_duration": 0.12 + float(hash_b % 7) / 100.0,
+		"secondary_start": 0.68 + float(hash_c % 10) / 100.0,
+		"secondary_duration": 0.11 + float(hash_a % 8) / 100.0,
+		"sway_amount": 0.35 + float(hash_b % 130) / 100.0,
+		"sway_tempo": 0.38 + float(hash_c % 42) / 100.0,
+		"bob_amount": 0.22 + float(hash_a % 85) / 100.0,
+		"breath_tempo": 0.72 + float(hash_b % 55) / 100.0,
+		"eye_range": 0.18 + float(hash_c % 68) / 100.0,
+		"eye_tempo": 0.22 + float(hash_a % 49) / 100.0,
+		"blink_period": 3.4 + float(hash_b % 390) / 100.0,
+		"blink_offset": float(hash_c % 300) / 100.0,
+		"double_blink": hash_a % 5 == 0,
+	}
+	if character_idle_profile_cache.size() >= CHARACTER_IDLE_PROFILE_CACHE_LIMIT:
+		character_idle_profile_cache.clear()
+	character_idle_profile_cache[cache_key] = profile
+	return profile
+
+
+func _character_idle_state(profile: Dictionary, clock: float) -> Dictionary:
+	if reduce_motion:
+		return {"pose": "idle", "gesture_amount": 0.0, "sway": 0.0, "bob": 0.0, "head_x": 0.0, "head_y": 0.0, "eye_offset": 0.0, "blink": false}
+	var tempo := float(profile.get("tempo", 1.0))
+	var phase := float(profile.get("phase", 0.0))
+	var cycle_duration := maxf(4.0, float(profile.get("cycle_duration", 8.0)))
+	var animation_clock := clock * tempo + phase
+	var cycle_position := fposmod(animation_clock, cycle_duration) / cycle_duration
+	var pose := "idle"
+	var gesture_amount := 0.0
+	var primary_start := float(profile.get("primary_start", 0.38))
+	var primary_duration := float(profile.get("primary_duration", 0.16))
+	var secondary_start := float(profile.get("secondary_start", 0.72))
+	var secondary_duration := float(profile.get("secondary_duration", 0.14))
+	if cycle_position >= primary_start and cycle_position < primary_start + primary_duration:
+		pose = str(profile.get("primary_pose", "lookaround"))
+		gesture_amount = sin(((cycle_position - primary_start) / primary_duration) * PI)
+	elif cycle_position >= secondary_start and cycle_position < secondary_start + secondary_duration:
+		pose = str(profile.get("secondary_pose", "adjust_cuff"))
+		gesture_amount = sin(((cycle_position - secondary_start) / secondary_duration) * PI)
+	var eye_offset := sin(clock * float(profile.get("eye_tempo", 0.5)) + phase * 0.7) * float(profile.get("eye_range", 0.5))
+	if pose == "lookaround":
+		eye_offset += lerpf(-0.8, 0.8, gesture_amount)
+	var blink_position := fposmod(clock + float(profile.get("blink_offset", 0.0)), float(profile.get("blink_period", 4.5)))
+	var blinking := blink_position < 0.11
+	if bool(profile.get("double_blink", false)):
+		blinking = blinking or (blink_position > 0.22 and blink_position < 0.31)
+	var head_x := 0.0
+	var head_y := sin(clock * float(profile.get("breath_tempo", 1.0)) * 0.53 + phase) * 0.24
+	match pose:
+		"chin_touch":
+			head_x = gesture_amount * 0.8
+			head_y += gesture_amount * 0.7
+		"shoulder_roll":
+			head_x = -gesture_amount * 0.7
+		"counter_tap", "card_check":
+			head_y += gesture_amount * 0.8
+		"lookaround":
+			head_x = signf(eye_offset) * gesture_amount * 0.8
+	return {
+		"pose": pose,
+		"gesture_amount": gesture_amount,
+		"sway": sin(clock * float(profile.get("sway_tempo", 0.55)) + phase) * float(profile.get("sway_amount", 1.0)),
+		"bob": sin(clock * float(profile.get("breath_tempo", 1.0)) + phase) * float(profile.get("bob_amount", 0.6)),
+		"head_x": head_x,
+		"head_y": head_y,
+		"eye_offset": eye_offset,
+		"blink": blinking,
+	}
+
+
+func _character_actor_identity(object_data: Dictionary, actor: Dictionary, member: Dictionary, member_index: int) -> String:
+	var object_id := str(object_data.get("id", object_data.get("source_id", object_data.get("icon_key", "character")))).strip_edges()
+	var model: Dictionary = member.get("model", {}) if typeof(member.get("model", {})) == TYPE_DICTIONARY else {}
+	var member_id := ""
+	for candidate in [member.get("character_id", ""), member.get("id", ""), member.get("name", ""), model.get("id", ""), model.get("name", "")]:
+		member_id = str(candidate).strip_edges()
+		if not member_id.is_empty():
+			break
+	if member_id.is_empty():
+		member_id = str(actor.get("character_id", actor.get("id", "member_%d" % member_index))).strip_edges()
+	return "object:%s/member:%d:%s" % [object_id, member_index, member_id]
+
+
+func debug_character_idle_profile(object_data: Dictionary, member_index: int = 0) -> Dictionary:
+	var actor: Dictionary = object_data.get("character_actor", {}) if typeof(object_data.get("character_actor", {})) == TYPE_DICTIONARY else {}
+	var members: Array = actor.get("members", []) if typeof(actor.get("members", [])) == TYPE_ARRAY else []
+	var member: Dictionary = members[member_index] if member_index >= 0 and member_index < members.size() and typeof(members[member_index]) == TYPE_DICTIONARY else {}
+	var identity := _character_actor_identity(object_data, actor, member, member_index)
+	var role := str(member.get("role", actor.get("role", "staff")))
+	return _character_idle_profile(identity, role).duplicate(true)
+
+
+func debug_named_character_idle_profile(character_id: String, role: String) -> Dictionary:
+	return _character_idle_profile("named:%s" % character_id, role, _character_style(character_id)).duplicate(true)
+
+
+func debug_character_idle_state(profile: Dictionary, clock: float) -> Dictionary:
+	return _character_idle_state(profile, clock).duplicate(true)
 
 
 func _draw_character_actor(rect: Rect2, object_data: Dictionary) -> void:
@@ -8135,37 +8622,17 @@ func _draw_character_actor(rect: Rect2, object_data: Dictionary) -> void:
 	var members: Array = actor.get("members", []) if typeof(actor.get("members", [])) == TYPE_ARRAY else []
 	var portrait_count := clampi(int(actor.get("portrait_count", maxi(1, members.size()))), 1, 3)
 	var faceless := str(actor.get("presentation", "")) == "faceless_silhouette"
-	var phase := _object_animation_phase(object_data)
-	var animation_clock := phase if reduce_motion else flicker + phase
 	var width_requirement := 54.0 + float(portrait_count - 1) * 38.0
 	var base_scale := clampf(minf(rect.size.y / 86.0, rect.size.x / width_requirement), 0.42, 0.74)
 	var foot_y := rect.end.y - 2.0
 	if portrait_count >= 2:
 		var left_member: Dictionary = members[1] if members.size() > 1 and typeof(members[1]) == TYPE_DICTIONARY else {}
-		TableGameVisualsScript._draw_table_character(
-			self,
-			_character_actor_style(left_member, actor, faceless, animation_clock + 0.7),
-			Vector2(rect.position.x + rect.size.x * 0.30, foot_y - 1.0),
-			base_scale * 0.82 * _character_actor_scale(left_member),
-			animation_clock + 0.7
-		)
+		_draw_character_actor_member(object_data, actor, left_member, 1, faceless, Vector2(rect.position.x + rect.size.x * 0.30, foot_y - 1.0), base_scale * 0.82 * _character_actor_scale(left_member))
 	if portrait_count >= 3:
 		var right_member: Dictionary = members[2] if members.size() > 2 and typeof(members[2]) == TYPE_DICTIONARY else {}
-		TableGameVisualsScript._draw_table_character(
-			self,
-			_character_actor_style(right_member, actor, faceless, animation_clock + 1.4),
-			Vector2(rect.position.x + rect.size.x * 0.70, foot_y - 1.0),
-			base_scale * 0.82 * _character_actor_scale(right_member),
-			animation_clock + 1.4
-		)
+		_draw_character_actor_member(object_data, actor, right_member, 2, faceless, Vector2(rect.position.x + rect.size.x * 0.70, foot_y - 1.0), base_scale * 0.82 * _character_actor_scale(right_member))
 	var lead_member: Dictionary = members[0] if not members.is_empty() and typeof(members[0]) == TYPE_DICTIONARY else {}
-	TableGameVisualsScript._draw_table_character(
-		self,
-		_character_actor_style(lead_member, actor, faceless, animation_clock),
-		Vector2(rect.position.x + rect.size.x * 0.50, foot_y),
-		base_scale * _character_actor_scale(lead_member),
-		animation_clock
-	)
+	_draw_character_actor_member(object_data, actor, lead_member, 0, faceless, Vector2(rect.position.x + rect.size.x * 0.50, foot_y), base_scale * _character_actor_scale(lead_member))
 	# Talk events keep their person in the room while the authored event badge
 	# identifies why that person is selectable (rumor, offer, warning, and so on).
 	var event_icon := _texture_for_asset_path(str(object_data.get("asset_path", "")))
@@ -8175,9 +8642,17 @@ func _draw_character_actor(rect: Rect2, object_data: Dictionary) -> void:
 		_draw_live_texture_icon(event_icon, icon_rect, object_data, C_CYAN_2, object_labels_and_borders_enabled and str(object_data.get("id", "")) == selected_object_id, bool(object_data.get("disabled", false)))
 
 
-func _character_actor_style(member: Dictionary, actor: Dictionary, faceless: bool, clock: float) -> Dictionary:
+func _draw_character_actor_member(object_data: Dictionary, actor: Dictionary, member: Dictionary, member_index: int, faceless: bool, foot: Vector2, scale_value: float) -> void:
+	var role := str(member.get("role", actor.get("role", "staff")))
+	var identity := _character_actor_identity(object_data, actor, member, member_index)
+	var idle_profile := _character_idle_profile(identity, role)
+	var idle_state := _character_idle_state(idle_profile, flicker)
+	var animated_foot := foot + Vector2(float(idle_state.get("sway", 0.0)), float(idle_state.get("bob", 0.0)))
+	TableGameVisualsScript._draw_table_character(self, _character_actor_style(member, actor, faceless, idle_state), animated_foot, scale_value, flicker)
+
+
+func _character_actor_style(member: Dictionary, actor: Dictionary, faceless: bool, idle_state: Dictionary) -> Dictionary:
 	var model: Dictionary = member.get("model", {}) if typeof(member.get("model", {})) == TYPE_DICTIONARY else {}
-	var cycle := fposmod(clock, 4.2) / 4.2
 	return {
 		"name": "",
 		"skin": C_DARK_3 if faceless else _character_actor_color(model, "skin_color", Color("#c49371")),
@@ -8185,9 +8660,13 @@ func _character_actor_style(member: Dictionary, actor: Dictionary, faceless: boo
 		"jacket": C_SHADOW if faceless else _character_actor_color(model, "jacket_color", _character_actor_color(actor, "jacket_color", C_BLUE)),
 		"accent": C_SOFT if faceless else _character_actor_color(model, "accent_color", C_CYAN_2),
 		"role": str(member.get("role", actor.get("role", "staff"))),
-		"pose": "watching" if fposmod(clock, 2.8) > 1.9 else "idle",
-		"eye_offset": 0.0 if reduce_motion else sin(clock * 0.72) * 0.55,
-		"blink": false if reduce_motion else cycle > 0.92 and cycle < 0.975,
+		"pose": str(idle_state.get("pose", "idle")),
+		"gesture_amount": float(idle_state.get("gesture_amount", 0.0)),
+		"eye_offset": float(idle_state.get("eye_offset", 0.0)),
+		"blink": bool(idle_state.get("blink", false)),
+		"head_x": float(idle_state.get("head_x", 0.0)),
+		"head_y": float(idle_state.get("head_y", 0.0)),
+		"sway_amount": 0.0,
 		"holding_card": false,
 		"silhouette": str(model.get("silhouette", actor.get("silhouette", "coat"))),
 		"faceless": faceless,

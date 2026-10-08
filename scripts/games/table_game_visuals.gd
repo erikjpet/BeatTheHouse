@@ -160,12 +160,14 @@ static func draw_dealer_station(surface, state: Dictionary, label_override: Stri
 	var attention_rect: Rect2 = occupied_rects[1]
 	var danger_rect: Rect2 = occupied_rects[2]
 	var panel_rect: Rect2 = occupied_rects[3]
+	var character_foot: Vector2 = status_layout.get("character_foot", Vector2(450, 156)) if typeof(status_layout.get("character_foot", Vector2(450, 156))) == TYPE_VECTOR2 else Vector2(450, 156)
+	var character_scale := clampf(float(status_layout.get("character_scale", 1.06)), 0.50, 1.40)
 	surface.draw_rect(station_rect, Color("#0b0d16"))
 	surface.draw_rect(station_rect, Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.18), false, 1)
 	if low_detail:
-		_draw_static_character(surface, Vector2(450, 156), 1.06, attention_color, Color("#1b2230"), str(state.get("dealer_name", profile.get("name", "Dealer"))))
+		_draw_static_character(surface, character_foot, character_scale, attention_color, Color("#1b2230"), str(state.get("dealer_name", profile.get("name", "Dealer"))))
 	else:
-		_draw_dealer_gaze(surface, focus, Vector2(450, 91))
+		_draw_dealer_gaze(surface, focus, character_foot + Vector2(0, -65) * character_scale)
 		_draw_table_character(surface, {
 			"name": str(state.get("dealer_name", profile.get("name", "Dealer"))),
 			"skin": Color("#d8b18a"),
@@ -178,7 +180,7 @@ static func draw_dealer_station(surface, state: Dictionary, label_override: Stri
 			"blink": blink,
 			"holding_card": bool(state.get("dealer_holding_card", false)),
 			"uniform_accent": str(profile.get("uniform_accent", "")),
-		}, Vector2(450, 156), 1.06, idle)
+		}, character_foot, character_scale, idle)
 	var meter := clampi(int(focus.get("attention_meter", 0)), 0, 100)
 	_draw_status_meter(surface, attention_rect, meter, "dealer %s" % str(focus.get("status", "watching")), C_PINK if meter >= 70 else C_YELLOW if meter >= 42 else C_TEAL)
 	_draw_status_meter(surface, danger_rect, int(focus.get("peek_danger", 0)), str(focus.get("gaze_phase", "read")).left(20), attention_color)
@@ -200,6 +202,7 @@ static func _dealer_layout_rect(status_layout: Dictionary, key: String, fallback
 static func draw_table_patrons(surface, state: Dictionary, positions: Array = []) -> void:
 	var patrons := _dictionary_array_view(state.get("patrons", []))
 	var seat_positions := positions if not positions.is_empty() else DEFAULT_PATRON_POSITIONS
+	var compact_overlays := str(state.get("patron_overlay_mode", "")) == "compact"
 	if _surface_low_detail_idle(surface):
 		for i in range(patrons.size()):
 			var patron: Dictionary = patrons[i]
@@ -210,10 +213,14 @@ static func draw_table_patrons(surface, state: Dictionary, positions: Array = []
 			var accent := C_PINK if watching else C_TEAL if covered else C_SOFT
 			_draw_static_character(surface, base_pos + Vector2(0, 52), 0.86, accent, _patron_jacket_color(patron), str(patron.get("name", "Seat")))
 			var risk_width := clampf(float(risk) / 60.0, 0.0, 1.0) * 46.0
-			surface.draw_rect(Rect2(base_pos.x - 28, base_pos.y + 61, 56, 5), Color("#070810"))
-			surface.draw_rect(Rect2(base_pos.x - 28, base_pos.y + 61, risk_width, 5), accent)
+			var risk_y := base_pos.y + (88.0 if compact_overlays else 61.0)
+			surface.draw_rect(Rect2(base_pos.x - 28, risk_y, 56, 5), Color("#070810"))
+			surface.draw_rect(Rect2(base_pos.x - 28, risk_y, risk_width, 5), accent)
 			_draw_patron_chip_stack(surface, base_pos + Vector2(30, 42), clampi(int(patron.get("chip_stack", 0)) / 20, 1, 4), accent)
-			draw_patron_wager_badge(surface, state, patron, base_pos, i)
+			if compact_overlays:
+				surface.surface_label(str(patron.get("behavior", patron.get("mood", "watching"))).left(12), base_pos + Vector2(-30, 76), 9, accent)
+			if not compact_overlays:
+				draw_patron_wager_badge(surface, state, patron, base_pos, i)
 		return
 	for i in range(patrons.size()):
 		var patron: Dictionary = patrons[i]
@@ -244,16 +251,19 @@ static func draw_table_patrons(surface, state: Dictionary, positions: Array = []
 			"holding_card": false,
 			"silhouette": str(patron.get("silhouette", "coat")),
 		}, pos + Vector2(0, 52), 0.86, character_clock)
-		if tell_active:
+		if tell_active and not compact_overlays:
 			_draw_neon_panel(surface, Rect2(pos.x - 36, pos.y - 46, 72, 20), accent, 0.22)
 			surface.surface_label(str(patron.get("tell", "watching")).left(11), pos + Vector2(-30, -32), 8, accent)
 			surface.draw_line(pos + Vector2(0, -24), Vector2(450, 284), Color(accent.r, accent.g, accent.b, 0.18), 1.0)
 		var risk_width := clampf(float(risk) / 60.0, 0.0, 1.0) * 46.0
-		surface.draw_rect(Rect2(pos.x - 28, pos.y + 61, 56, 5), Color("#070810"))
-		surface.draw_rect(Rect2(pos.x - 28, pos.y + 61, risk_width, 5), accent)
-		surface.surface_label(str(patron.get("behavior", ("%d" % risk) if watching else str(patron.get("mood", "")).left(7))).left(12), pos + Vector2(-30, 78), 9, accent)
+		var risk_y := pos.y + (88.0 if compact_overlays else 61.0)
+		surface.draw_rect(Rect2(pos.x - 28, risk_y, 56, 5), Color("#070810"))
+		surface.draw_rect(Rect2(pos.x - 28, risk_y, risk_width, 5), accent)
+		var annotation := str(patron.get("tell", "watching")) if compact_overlays and tell_active else str(patron.get("behavior", ("%d" % risk) if watching else str(patron.get("mood", "")).left(7)))
+		surface.surface_label(annotation.left(12), pos + Vector2(-30, 78), 9, accent)
 		_draw_patron_chip_stack(surface, pos + Vector2(30, 42), clampi(int(patron.get("chip_stack", 0)) / 20, 1, 4), accent)
-		draw_patron_wager_badge(surface, state, patron, pos, i)
+		if not compact_overlays:
+			draw_patron_wager_badge(surface, state, patron, pos, i)
 
 
 static func _surface_low_detail_idle(surface) -> bool:
@@ -451,7 +461,8 @@ static func _draw_status_meter(surface, rect: Rect2, value: int, label: String, 
 	surface.draw_rect(rect, Color("#080a12"))
 	surface.draw_rect(Rect2(rect.position, Vector2(rect.size.x * float(clamped) / 100.0, rect.size.y)), accent)
 	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.22), false, 1)
-	surface.surface_label(label.left(26), rect.position + Vector2(0, -4), 9, accent)
+	var label_limit := clampi(int(floor(rect.size.x / 6.0)), 4, 26)
+	surface.surface_label(label.left(label_limit), rect.position + Vector2(0, -4), 9, accent)
 
 
 static func closest_chip(value: int, denominations: Array) -> int:
@@ -507,17 +518,22 @@ static func _draw_table_character(surface, style: Dictionary, foot: Vector2, sca
 	var jacket: Color = style.get("jacket", Color("#1d2030")) if typeof(style.get("jacket", Color("#1d2030"))) == TYPE_COLOR else Color("#1d2030")
 	var pose := str(style.get("pose", "idle"))
 	var faceless := bool(style.get("faceless", false))
-	var sway := sin(clock * 1.8) * 2.0 * scale_value
+	var sway_amount := float(style.get("sway_amount", 2.0))
+	var sway_tempo := float(style.get("sway_tempo", 1.8))
+	var idle_phase := float(style.get("idle_phase", 0.0))
+	var sway := sin(clock * sway_tempo + idle_phase) * sway_amount * scale_value
 	var lean := 4.0 * scale_value if pose == "snitch" else -4.0 * scale_value if pose == "covered" or pose == "lookaway" else 0.0
-	var pos := foot + Vector2(sway + lean, 0)
-	var head := Rect2(pos + Vector2(-12, -78) * scale_value, Vector2(24, 24) * scale_value)
+	var pos := foot + Vector2(sway + lean, float(style.get("body_bob", 0.0)) * scale_value)
+	var head_shift := Vector2(float(style.get("head_x", 0.0)), float(style.get("head_y", 0.0))) * scale_value
+	var head := Rect2(pos + Vector2(-12, -78) * scale_value + head_shift, Vector2(24, 24) * scale_value)
 	var body := Rect2(pos + Vector2(-23, -54) * scale_value, Vector2(46, 52) * scale_value)
 	surface.draw_rect(Rect2(pos.x - 25 * scale_value, pos.y - 6 * scale_value, 50 * scale_value, 5 * scale_value), Color(0, 0, 0, 0.34))
 	surface.draw_rect(body, Color("#05060a"))
 	surface.draw_rect(Rect2(body.position + Vector2(4, 5) * scale_value, body.size - Vector2(8, 9) * scale_value), jacket)
 	surface.draw_rect(Rect2(pos + Vector2(-18, -56) * scale_value, Vector2(36, 6) * scale_value), accent)
-	_draw_character_arm(surface, pos, scale_value, accent, pose, true, skin)
-	_draw_character_arm(surface, pos, scale_value, accent, pose, false, skin)
+	var gesture_amount := clampf(float(style.get("gesture_amount", 1.0)), 0.0, 1.0)
+	_draw_character_arm(surface, pos, scale_value, accent, pose, true, skin, gesture_amount)
+	_draw_character_arm(surface, pos, scale_value, accent, pose, false, skin, gesture_amount)
 	surface.draw_rect(head, skin)
 	surface.draw_rect(Rect2(head.position, Vector2(head.size.x, 8 * scale_value)), hair)
 	if not faceless:
@@ -536,10 +552,11 @@ static func _draw_table_character(surface, style: Dictionary, foot: Vector2, sca
 		surface.surface_label(name.left(10), pos + Vector2(-26, 10) * scale_value, int(10 * scale_value), accent)
 
 
-static func _draw_character_arm(surface, pos: Vector2, scale_value: float, accent: Color, pose: String, left: bool, hand_color: Color = Color("#c49371")) -> void:
+static func _draw_character_arm(surface, pos: Vector2, scale_value: float, accent: Color, pose: String, left: bool, hand_color: Color = Color("#c49371"), gesture_amount: float = 1.0) -> void:
 	var side := -1.0 if left else 1.0
 	var shoulder := pos + Vector2(side * 24, -45) * scale_value
-	var hand := pos + Vector2(side * 42, -22) * scale_value
+	var resting_hand := pos + Vector2(side * 42, -22) * scale_value
+	var hand := resting_hand
 	if pose == "snitch":
 		hand = pos + Vector2(side * 34, -58) * scale_value
 	elif pose == "covered":
@@ -548,6 +565,24 @@ static func _draw_character_arm(surface, pos: Vector2, scale_value: float, accen
 		hand = pos + Vector2(side * 36, -30) * scale_value
 	elif pose == "watching" and left:
 		hand = pos + Vector2(side * 30, -18) * scale_value
+	elif pose == "arms_folded":
+		hand = pos + Vector2(-side * 10, -31) * scale_value
+	elif pose == "chin_touch" and not left:
+		hand = pos + Vector2(9, -66) * scale_value
+	elif pose == "pocket_check" and left:
+		hand = pos + Vector2(-10, -18) * scale_value
+	elif pose == "adjust_cuff":
+		hand = pos + Vector2(-side * 6, -27 if left else -31) * scale_value
+	elif pose == "counter_tap":
+		hand = pos + Vector2(side * 18, -17 if left else -14) * scale_value
+	elif pose == "card_check":
+		hand = pos + Vector2(side * 13, -29) * scale_value
+	elif pose == "shoulder_roll":
+		hand = pos + Vector2(side * (48 if left else 32), -30 if left else -15) * scale_value
+	elif pose == "lookaround":
+		hand = pos + Vector2(side * 38, -20) * scale_value
+	if pose not in ["snitch", "covered", "lookaway", "watching"]:
+		hand = resting_hand.lerp(hand, gesture_amount)
 	surface.draw_line(shoulder, hand, Color("#05060a"), maxf(2.0, 6.0 * scale_value))
 	surface.draw_line(shoulder, hand, Color(accent.r, accent.g, accent.b, 0.42), maxf(1.0, 2.0 * scale_value))
 	surface.draw_rect(Rect2(hand + Vector2(-3, -2) * scale_value, Vector2(6, 6) * scale_value), hand_color)

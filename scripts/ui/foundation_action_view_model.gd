@@ -1,5 +1,8 @@
 extends RefCounted
 
+# Builds player-safe game/event action projections for FoundationMain, including
+# surface state, result feedback, risk copy, stake ranges, and choices.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 

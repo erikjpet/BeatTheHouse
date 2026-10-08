@@ -1,6 +1,9 @@
 class_name VideoPokerRenderer
 extends RefCounted
 
+# Draws the three video-poker cabinet identities, paytables, hands, controls,
+# ritual animation, and holdout cues from player-safe surface state.
+
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const PlayingCardRendererScript := preload("res://scripts/games/playing_card_renderer.gd")
 

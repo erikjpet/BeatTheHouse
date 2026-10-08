@@ -3,7 +3,9 @@ extends RefCounted
 
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
-# One generated location, regardless of venue type.
+# One deterministic generated location regardless of venue type. It combines
+# archetype content, games/services/items/events, layered scenarios, semantic
+# inventory, object manifests, and sealed placement bindings for persistence.
 
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const ScenarioOperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")

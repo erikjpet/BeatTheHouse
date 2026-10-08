@@ -4,7 +4,9 @@ extends RefCounted
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 const ItemEffectScript := preload("res://scripts/core/item_effect.gd")
 
-# Loads and validates README-defined foundation content packs.
+# Loads, validates, indexes, and exposes the immutable JSON content catalog.
+# Start-menu loading is intentionally partial; the first run/load boundary fills
+# the complete game, world, scenario, audio, tutorial, and collection catalog.
 
 const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")

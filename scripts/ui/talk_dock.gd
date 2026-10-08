@@ -1,6 +1,9 @@
 class_name TalkDock
 extends Control
 
+# Conversation dock for speaker portraits, queued dialogue/choices, hotkeys,
+# animation, and a stable reserved room footprint.
+
 signal choice_requested(event_id: String, choice_id: String)
 signal occupied_rect_changed(rect: Rect2)
 signal conversation_active_changed(active: bool)

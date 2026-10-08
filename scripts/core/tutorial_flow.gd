@@ -1,6 +1,9 @@
 class_name TutorialFlow
 extends RefCounted
 
+# Pure tutorial policy and recovery helpers: challenge recognition, lesson
+# gates, environment timing, completion checks, and shipped-save repair.
+
 const CHALLENGE_ID := "tutorial_first_card"
 const LESSON_SCOPE := "tutorial_run"
 const INVITATION_FLAG := "grand_casino_invite"

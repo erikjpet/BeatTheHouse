@@ -1,6 +1,9 @@
 class_name EnvironmentHeader
 extends PanelContainer
 
+# Renders the room title, scenario/weather/time context, and responsive header
+# state from an immutable environment snapshot.
+
 const CONFIG_PATH := "res://data/ui/environment_ui.json"
 const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const MIN_TEXT_TITLE_SIZE := 14

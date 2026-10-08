@@ -1,6 +1,9 @@
 class_name ItemFoundPopup
 extends Control
 
+# Queued item-acquisition popup with explicit dismissal, responsive layout, and
+# a read-only snapshot used by tests and the host UI.
+
 signal display_started(item_id: String)
 signal display_finished
 

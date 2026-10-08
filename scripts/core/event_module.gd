@@ -3,7 +3,8 @@ extends RefCounted
 
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
-# Data-backed event contract for conditional run consequences.
+# Data-backed event contract for trigger checks, player choices, conversations,
+# consequences, follow-ups, character chains, and shared ActionResult deltas.
 
 const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
 const CharacterChainModelScript := preload("res://scripts/core/character_chain_model.gd")
@@ -299,7 +300,14 @@ func can_trigger(run_state: RunState, environment: Dictionary, context: Dictiona
 
 
 # Applies simple event consequences to the run.
-func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "") -> Dictionary:
+func resolve(
+	run_state: RunState,
+	environment: Dictionary,
+	choice_id: String = "",
+	external_rollback_owner: bool = false,
+	profile_stages: bool = false
+) -> Dictionary:
+	var profile_started_usec := Time.get_ticks_usec() if profile_stages else 0
 	# Resolution is an authority boundary, not merely a UI convenience. A stale
 	# module reference or copied pre-resolution environment must not replay an
 	# event. Triggered/talk events are authorized by the host queue; ordinary
@@ -427,7 +435,14 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 		result["world_sequence_owner_token"] = str(sequence_schedule.get("owner_token", ""))
 		apply_event_result(run_state, result)
 		return result
-	apply_event_result(run_state, result)
+	var apply_started_usec := Time.get_ticks_usec() if profile_stages else 0
+	apply_event_result(run_state, result, external_rollback_owner, profile_stages)
+	if profile_stages:
+		var timing: Dictionary = result.get("debug_event_resolve_usec", {}) if typeof(result.get("debug_event_resolve_usec", {})) == TYPE_DICTIONARY else {}
+		timing["resolve_before_apply"] = apply_started_usec - profile_started_usec
+		timing["apply_total"] = Time.get_ticks_usec() - apply_started_usec
+		timing["total"] = Time.get_ticks_usec() - profile_started_usec
+		result["debug_event_resolve_usec"] = timing
 	if get_id() == "crew_favor_delivery":
 		run_state.resolve_crew_favor_delivery_job(choice_key, {"success": consequences})
 	return result
@@ -457,13 +472,23 @@ func _schedule_choice_world_sequence(run_state: RunState, selected_choice: Dicti
 
 
 # Applies a shared event result and records event-specific outcomes.
-func apply_event_result(run_state: RunState, result: Dictionary) -> void:
+func apply_event_result(run_state: RunState, result: Dictionary, external_rollback_owner: bool = false, profile_stages: bool = false) -> void:
 	if run_state == null or not bool(result.get("ok", false)):
 		return
-	var rollback_run := run_state.to_dict()
-	var rollback_environment := run_state.current_environment.duplicate(true)
-	var rollback_world_map := run_state.world_map.duplicate(true)
-	var rollback_room_states := run_state.grand_casino_room_states.duplicate(true)
+	var profile_started_usec := Time.get_ticks_usec() if profile_stages else 0
+	var profile_stage_started_usec := profile_started_usec
+	var profile_timing: Dictionary = {}
+	# Foundation already owns a complete lifecycle rollback for player-facing
+	# event resolution. Reusing it avoids serializing a mature run and cloning all
+	# stored world-map rooms again before a simple response can begin. Direct
+	# model callers retain this module-owned rollback by leaving the flag false.
+	var rollback_run := run_state.to_dict() if not external_rollback_owner else {}
+	var rollback_environment := run_state.current_environment.duplicate(true) if not external_rollback_owner else {}
+	var rollback_world_map := run_state.world_map.duplicate(true) if not external_rollback_owner else {}
+	var rollback_room_states := run_state.grand_casino_room_states.duplicate(true) if not external_rollback_owner else {}
+	if profile_stages:
+		profile_timing["rollback"] = Time.get_ticks_usec() - profile_stage_started_usec
+		profile_stage_started_usec = Time.get_ticks_usec()
 	var deltas: Dictionary = result.get("deltas", {})
 	var debt_settlement := JsonCoerceScript._copy_dict(deltas.get("discounted_debt_settlement", {}))
 	if not debt_settlement.is_empty():
@@ -515,12 +540,18 @@ func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 			if str(pre_hook.get("type", "")) == "crew_heist":
 				for public_key in ["cost", "forced", "run_ended"]:
 					if service_result.has(public_key): result[public_key] = service_result.get(public_key)
-	var advance_result := run_state.advance_environment_turns(1)
+	var advance_result := run_state.advance_environment_turns_with_external_rollback(1) \
+		if external_rollback_owner else run_state.advance_environment_turns(1)
+	if profile_stages:
+		profile_timing["pre_hooks"] = profile_stage_started_usec - profile_started_usec - int(profile_timing.get("rollback", 0))
+		profile_timing["advance_turn"] = Time.get_ticks_usec() - profile_stage_started_usec
+		profile_stage_started_usec = Time.get_ticks_usec()
 	if not bool(advance_result.get("ok", false)):
-		run_state.from_dict(rollback_run)
-		run_state.current_environment = rollback_environment
-		run_state.world_map = rollback_world_map
-		run_state.grand_casino_room_states = rollback_room_states
+		if not external_rollback_owner:
+			run_state.from_dict(rollback_run)
+			run_state.current_environment = rollback_environment
+			run_state.world_map = rollback_world_map
+			run_state.grand_casino_room_states = rollback_room_states
 		var advance_errors: Array = advance_result.get("errors", []) if typeof(advance_result.get("errors", [])) == TYPE_ARRAY else []
 		result["ok"] = false
 		result["message"] = str(advance_errors[0]) if not advance_errors.is_empty() else "The event boundary could not advance safely."
@@ -535,6 +566,9 @@ func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 			and str(run_state.current_environment.get("travel_lock_source", "")) != "police_sweep":
 		run_state.current_environment["travel_lock_remaining"] = 0
 	GameModule.apply_result(run_state, result)
+	if profile_stages:
+		profile_timing["apply_shared_result"] = Time.get_ticks_usec() - profile_stage_started_usec
+		profile_stage_started_usec = Time.get_ticks_usec()
 	# Recruitment aftermath is committed from this exact resolved event result,
 	# before resolve_event removes the live placement. The host derives member,
 	# path and outcome; consequence payloads never write Crew state directly.
@@ -546,7 +580,9 @@ func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 		var hook_data := JsonCoerceScript._copy_dict(hook)
 		match str(hook_data.get("type", "")):
 			"resolve_event":
-				run_state.resolve_event(str(hook_data.get("event_id", "")))
+				var membership_result := run_state.resolve_event(str(hook_data.get("event_id", "")), profile_stages)
+				if profile_stages and not membership_result.is_empty():
+					result["debug_event_membership_usec"] = JsonCoerceScript._copy_dict(membership_result.get("debug_membership_usec", {}))
 			"trigger_event":
 				_apply_trigger_event_hook(run_state, result, hook_data)
 			"hear_rumor":
@@ -563,12 +599,22 @@ func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 				)
 			"crew_switch_reveal", "crew_lucky_collection", "crew_knuckles_stash", "crew_knuckles_retrieve", "crew_job_accept", "crew_practice_rig", "crew_stake_loss_choice", "crew_collection_choice", "crew_rook_ride", "crew_heist":
 				pass
+	if profile_stages:
+		profile_timing["event_hooks"] = Time.get_ticks_usec() - profile_stage_started_usec
+		profile_stage_started_usec = Time.get_ticks_usec()
 	CharacterChainModelScript.apply_to_environment(run_state, run_state.current_environment)
+	if profile_stages:
+		profile_timing["character_chain"] = Time.get_ticks_usec() - profile_stage_started_usec
+		profile_stage_started_usec = Time.get_ticks_usec()
 	run_state.scenario_publish_event_result(result)
 	# The event action already advanced the authoritative world boundary above.
 	# Consume its correlated scenario fact on that same boundary so an accepted
 	# choice cannot leave sequence aftermath pending until another player action.
 	run_state.scenario_flush_facts()
+	if profile_stages:
+		profile_timing["scenario_publish"] = Time.get_ticks_usec() - profile_stage_started_usec
+		profile_timing["apply_measured_total"] = Time.get_ticks_usec() - profile_started_usec
+		result["debug_event_resolve_usec"] = profile_timing
 
 
 # Returns a no-op event result for invalid choices.

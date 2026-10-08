@@ -1,6 +1,9 @@
 class_name RunReportScreen
 extends Control
 
+# Responsive terminal run-report screen for route, economy, Heat, collections,
+# ending details, and timeline replay.
+
 signal new_run_requested
 signal home_requested
 signal copy_seed_requested(seed: String)

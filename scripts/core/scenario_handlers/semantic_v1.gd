@@ -1,5 +1,8 @@
 extends RefCounted
 
+# Default scenario extension adapter for semantic-v1 packages. It validates and
+# forwards the closed command shape expected by ScenarioSequenceRuntime.
+
 
 func extension_id() -> String:
 	return "semantic_v1"

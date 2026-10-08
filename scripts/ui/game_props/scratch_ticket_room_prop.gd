@@ -1,6 +1,9 @@
 class_name ScratchTicketRoomProp
 extends RefCounted
 
+# Lightweight room-scale Scratch Ticket machine painter with full and low-detail
+# paths; the playable machine surface is owned by ScratchTicketsGame.
+
 const KitScript := preload("res://scripts/ui/game_props/game_prop_kit.gd")
 const EMPTY_STATE: Dictionary = {}
 const EMPTY_ROWS: Array = []

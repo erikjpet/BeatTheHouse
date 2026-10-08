@@ -1,6 +1,9 @@
 class_name FoundationHudBar
 extends PanelContainer
 
+# Main run HUD for money, bankroll, time, Heat, debt, and status feedback,
+# including compact layout and reduced-motion behavior.
+
 signal time_requested
 
 const SegmentedMeterScript := preload("res://scripts/ui/segmented_meter.gd")

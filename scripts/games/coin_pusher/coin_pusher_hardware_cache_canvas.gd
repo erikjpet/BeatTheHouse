@@ -1,5 +1,8 @@
 extends "res://scripts/ui/game_surface_canvas.gd"
 
+# Retained child canvas for Coin Pusher apparatus and cabinet hardware; gameplay
+# state and input remain owned by the parent production surface.
+
 var hardware_renderer: RefCounted
 var hardware_state: Dictionary = {}
 

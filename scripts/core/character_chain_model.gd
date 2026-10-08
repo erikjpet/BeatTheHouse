@@ -39,7 +39,8 @@ static func apply_to_environment(run_state: RunState, environment: Dictionary) -
 		_ensure_run_anchors(run_state)
 	if bool(run_state.story_flags.get("chain06_dave_last_stop", false)):
 		_ensure_dave_true_rumor(run_state)
-	var event_ids := JsonCoerceScript._string_array(environment.get("event_ids", []))
+	var previous_event_ids := JsonCoerceScript._string_array(environment.get("event_ids", []))
+	var event_ids := previous_event_ids.duplicate()
 	var prior_ids := JsonCoerceScript._string_array(environment.get(INJECTED_EVENT_IDS_KEY, []))
 	for prior_id in prior_ids:
 		event_ids.erase(prior_id)
@@ -54,12 +55,15 @@ static func apply_to_environment(run_state: RunState, environment: Dictionary) -
 			injected.append(event_id)
 			if not event_ids.has(event_id):
 				event_ids.append(event_id)
-	if not injected.is_empty() or not prior_ids.is_empty():
-		environment[INJECTED_EVENT_IDS_KEY] = injected
+	if injected != prior_ids or event_ids != previous_event_ids:
+		if injected.is_empty():
+			environment.erase(INJECTED_EVENT_IDS_KEY)
+		else:
+			environment[INJECTED_EVENT_IDS_KEY] = injected
 		environment["event_ids"] = event_ids
 		# Chain beats are projected after the base room layout exists. Reconcile
-		# their physical icons immediately so saving and restoring cannot add a
-		# rectangle that was absent from the pre-save environment.
+		# physical icons only when that projection actually changes; ordinary event
+		# resolution must not rebuild identical room geometry.
 		environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(environment)
 	_apply_cass_environment_effects(run_state, environment)
 	_apply_rourke_staff_register(run_state, environment)

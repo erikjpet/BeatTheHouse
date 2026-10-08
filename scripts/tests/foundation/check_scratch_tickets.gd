@@ -81,7 +81,7 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	if not _surface_harness_has_action(compact_harness, "scratch_compact_machine") or not _surface_harness_has_action(compact_harness, "scratch_compact_ticket"):
 		failures.append("Scratch Tickets small-screen mode labels compact tabs without drawing both tab controls.")
 	var art_features: Array = surface.get("scratch_machine_art_features", []) if typeof(surface.get("scratch_machine_art_features", [])) == TYPE_ARRAY else []
-	for feature in ["floor_unit", "jackpot_marquee", "glass_stock_rows", "branded_side_panel", "selection_buttons", "dispensing_tray"]:
+	for feature in ["floor_unit", "jackpot_marquee", "glass_stock_rows", "touch_selection_console", "foil_pack_display", "tap_payment_reader", "selection_buttons", "motorized_lift_rails", "moving_pickup_shelf", "dispensing_tray"]:
 		if not art_features.has(feature):
 			failures.append("Scratch vending-machine art contract is missing %s." % feature)
 	var harness := SurfaceHarness.new()
@@ -243,13 +243,32 @@ func _check_scratch_purchase_and_input(game: GameModule, run_state: RunState, en
 	var purchase_transaction: Dictionary = purchase_ritual.get("transaction", {}) if typeof(purchase_ritual.get("transaction", {})) == TYPE_DICTIONARY else {}
 	if str(purchase_transaction.get("kind", "")) != "purchase" or int(purchase_transaction.get("price", 0)) != int(purchase.get("stake", 0)):
 		failures.append("Scratch purchase did not persist its exact counter handover transaction.")
+	var purchased_machine: Dictionary = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+	var tray := _dict_array(purchased_machine.get("tray_stack", []))
+	var dispense_events := _dict_array(purchase_surface.get("scratch_dispense_events", []))
+	if tray.size() != 1 or not (purchased_machine.get("active_ticket", {}) as Dictionary).is_empty():
+		failures.append("Scratch purchase bypassed the physical output tray.")
+	if dispense_events.size() != 1 or int((dispense_events[0] as Dictionary).get("duration_msec", 0)) != 1500:
+		failures.append("Scratch dispenser did not schedule one 1.5-second lift cycle per ticket.")
+	var purchase_harness := SurfaceHarness.new()
+	purchase_harness.setup(purchase_surface)
+	game.draw_surface(purchase_harness, purchase_surface, {"contract_harness": true})
+	if not _surface_harness_has_action(purchase_harness, "scratch_collect_tray"):
+		failures.append("Scratch output tray did not expose its collect interaction after dispensing.")
 	var result_ticket: Dictionary = purchase.get("scratch_ticket", {}) if typeof(purchase.get("scratch_ticket", {})) == TYPE_DICTIONARY else {}
 	if result_ticket.has("latex_mask") or result_ticket.has("scratch_regions"):
 		failures.append("Scratch ticket purchase duplicated its live foil mask into the action result.")
-	var ticket: Dictionary = ((environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {}) as Dictionary).get("active_ticket", {})
+	var ticket: Dictionary = tray[0] if not tray.is_empty() else {}
 	var initial_mask: Array = ticket.get("latex_mask", []) if typeof(ticket.get("latex_mask", [])) == TYPE_ARRAY else []
 	if not initial_mask.is_empty() or not _dict_array(ticket.get("scratch_regions", [])).is_empty():
 		failures.append("Scratch ticket purchase eagerly allocated its high-resolution foil before presentation.")
+	var collect := game.surface_action_command("scratch_collect_tray", 0, false, buy_command.get("ui_state", {}), run_state, environment)
+	if not bool(collect.get("environment_changed", false)):
+		failures.append("Scratch tray collection did not commit the ticket to the play area.")
+	purchased_machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+	ticket = purchased_machine.get("active_ticket", {})
+	if ticket.is_empty() or not _dict_array(purchased_machine.get("tray_stack", [])).is_empty():
+		failures.append("Scratch tray collection did not move its ticket onto the scratch surface.")
 	var original_mask := (ticket.get("latex_mask", []) as Array).duplicate()
 	var begin := game.surface_pointer_command("scratch_scrub", 0, "begin", Vector2(400, 160), {}, run_state, environment)
 	game.surface_pointer_command("scratch_scrub", 0, "end", Vector2(400, 160), begin.get("ui_state", {}), run_state, environment)
@@ -712,8 +731,17 @@ func _check_scratch_result_and_queue_flow(game: GameModule, failures: Array) -> 
 	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
 	if run_state.bankroll != before - expected_price * 3:
 		failures.append("Scratch multi-buy did not charge N times the ticket price.")
-	if _dict_array(machine.get("pending_queue", [])).size() != 2 or (machine.get("active_ticket", {}) as Dictionary).is_empty():
-		failures.append("Scratch multi-buy did not leave one active ticket plus a queued stack.")
+	if _dict_array(machine.get("tray_stack", [])).size() != 3 or not (machine.get("active_ticket", {}) as Dictionary).is_empty():
+		failures.append("Scratch multi-buy did not leave all purchased tickets in the delivery tray.")
+	var dispensing_surface := game.surface_state(run_state, environment, buy.get("ui_state", {}))
+	var dispense_channels: Array = dispensing_surface.get("surface_animation_channels", [])
+	var dispense_channel: Dictionary = dispense_channels[0] if not dispense_channels.is_empty() and typeof(dispense_channels[0]) == TYPE_DICTIONARY else {}
+	if int(dispense_channel.get("duration_msec", 0)) != 4500 or _dict_array(dispensing_surface.get("scratch_dispense_events", [])).size() != 3:
+		failures.append("Scratch multi-buy did not schedule three complete 1.5-second dispense cycles.")
+	game.surface_action_command("scratch_collect_tray", 0, false, buy.get("ui_state", {}), run_state, environment)
+	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+	if _dict_array(machine.get("pending_queue", [])).size() != 2 or (machine.get("active_ticket", {}) as Dictionary).is_empty() or not _dict_array(machine.get("tray_stack", [])).is_empty():
+		failures.append("Scratch tray collection did not leave one active ticket plus a queued stack.")
 	var first_id := str((machine.get("active_ticket", {}) as Dictionary).get("id", ""))
 	var scratch_all_command := game.surface_action_command("scratch_all", 0, false, {}, run_state, environment)
 	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
@@ -849,12 +877,12 @@ func _check_scratch_save_restore(game: GameModule, failures: Array) -> void:
 	run_state.store_current_world_node_environment()
 	var save_data := run_state.to_dict()
 	var saved_machine: Dictionary = (save_data.get("current_environment", {}).get("game_states", {}) as Dictionary).get("scratch_tickets", {})
-	if saved_machine.has("active_ticket") or saved_machine.has("pending_queue"):
+	if saved_machine.has("active_ticket") or saved_machine.has("tray_stack") or saved_machine.has("pending_queue"):
 		failures.append("Scratch save duplicated player-owned tickets inside the current environment snapshot.")
 	var saved_nodes: Array = (save_data.get("world_map", {}) as Dictionary).get("nodes", [])
 	var saved_node_environment: Dictionary = (saved_nodes[0] as Dictionary).get("environment", {}) if not saved_nodes.is_empty() else {}
 	var saved_node_machine: Dictionary = (saved_node_environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
-	if saved_node_machine.has("active_ticket") or saved_node_machine.has("pending_queue"):
+	if saved_node_machine.has("active_ticket") or saved_node_machine.has("tray_stack") or saved_node_machine.has("pending_queue"):
 		failures.append("Scratch save duplicated player-owned tickets inside a stored world-map environment.")
 	# Simulate a pre-fix save: completed masks existed in the portable pile and
 	# the entire player-owned machine was duplicated in the world-map node.
@@ -891,7 +919,7 @@ func _check_scratch_save_restore(game: GameModule, failures: Array) -> void:
 	var migrated_node: Dictionary = ((restored.world_map.get("nodes", []) as Array)[0] as Dictionary)
 	var migrated_node_environment: Dictionary = migrated_node.get("environment", {})
 	var migrated_node_machine: Dictionary = (migrated_node_environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
-	if migrated_node_machine.has("active_ticket") or migrated_node_machine.has("pending_queue") or migrated_node_machine.has("loser_pile"):
+	if migrated_node_machine.has("active_ticket") or migrated_node_machine.has("tray_stack") or migrated_node_machine.has("pending_queue") or migrated_node_machine.has("loser_pile"):
 		failures.append("Scratch save migration retained duplicate player-owned state in the world-map node.")
 
 
@@ -1815,8 +1843,8 @@ func _check_scratch_single_remaining_purchase(game: GameModule, failures: Array)
 	game.resolve_with_context("buy_scratch_ticket", int(buy.get("set_stake", 0)), run_state, environment, _scratch_rng("single-left-buy"), buy.get("ui_state", {}))
 	var updated_machine: Dictionary = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
 	var updated_stock := _dict_array(updated_machine.get("stock", []))
-	if updated_stock.is_empty() or int((updated_stock[0] as Dictionary).get("remaining", -1)) != 0 or (updated_machine.get("active_ticket", {}) as Dictionary).is_empty():
-		failures.append("Scratch one-remaining purchase did not consume the final ticket and set it active.")
+	if updated_stock.is_empty() or int((updated_stock[0] as Dictionary).get("remaining", -1)) != 0 or _dict_array(updated_machine.get("tray_stack", [])).size() != 1 or not (updated_machine.get("active_ticket", {}) as Dictionary).is_empty():
+		failures.append("Scratch one-remaining purchase did not consume the final ticket into the output tray.")
 
 
 func _check_scratch_rtp(game: GameModule, failures: Array) -> void:
@@ -1946,7 +1974,8 @@ func _check_scratch_portable_state(game: GameModule, failures: Array) -> void:
 	game.resolve_with_context("buy_scratch_ticket", int(buy.get("set_stake", 0)), run_state, environment, _scratch_rng("portable-buy"), buy.get("ui_state", {}))
 	if not run_state.inventory.has(RunState.SCRATCH_TICKET_PILE_ITEM_ID):
 		failures.append("Scratch purchase did not retain the portable ticket-pile flow.")
-	var ticket: Dictionary = run_state.portable_ticket_state("scratch_tickets", environment).get("active_ticket", {})
+	var portable_tray := _dict_array(run_state.portable_ticket_state("scratch_tickets", environment).get("tray_stack", []))
+	var ticket: Dictionary = portable_tray[0] if not portable_tray.is_empty() else {}
 	if str(ticket.get("origin_key", "")).is_empty() or not bool(ticket.get("outcome_fixed_at_purchase", false)):
 		failures.append("Portable scratch ticket lost its origin or fixed outcome.")
 

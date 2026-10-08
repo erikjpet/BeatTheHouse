@@ -1,6 +1,9 @@
 class_name CoinPusherSolver
 extends RefCounted
 
+# Deterministic fixed-point body solver for Coin Pusher platforms, contacts,
+# support transfer, sleeping, terminal tray/gutter events, and compact snapshots.
+
 const SCHEMA := "coin_pusher_machine_v3"
 const VERSION := 3
 const FIXED_HZ := 60

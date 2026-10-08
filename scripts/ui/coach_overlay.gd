@@ -1,6 +1,9 @@
 class_name CoachOverlay
 extends Control
 
+# Runtime tutorial overlay that tracks lessons, seen state, live anchors,
+# dialogue reconciliation, input gating, and reduced-motion presentation.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 signal lesson_seen(lesson_id: String)

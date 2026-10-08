@@ -7,7 +7,10 @@ const CrewRunFacadeScript := preload("res://scripts/core/crew_run_facade.gd")
 const GrandCasinoRunFacadeScript := preload("res://scripts/core/grand_casino_run_facade.gd")
 const DeliveryRunFacadeScript := preload("res://scripts/core/delivery_run_facade.gd")
 
-# Source of truth for one active run in the foundation path.
+# Source of truth for one active run: deterministic RNG/time, economy, Heat,
+# inventory, debt, world/environment persistence, story/scenario/Crew progress,
+# terminal status, and compact save payloads. UI code must mutate it only through
+# the public domain/action boundaries below.
 # Crew API (hidden, within-run state): crew_trust(member) reads trust;
 # crew_rank(member) derives rank; crew_add_trust(member, amount, reason) mutates it;
 # crew_standing() derives shared gates; grievance_add(entry) writes The Turn ledger;
@@ -290,7 +293,7 @@ const PORTABLE_TICKET_ITEM_IDS := {
 }
 const PORTABLE_TICKET_PLAYER_FIELDS := {
 	"pull_tabs": ["tray_stack", "ticket_stack", "winner_pile", "loser_pile", "loser_archive_count"],
-	"scratch_tickets": ["active_ticket", "pending_queue", "winner_pile", "loser_pile", "loser_archive_count", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"],
+	"scratch_tickets": ["active_ticket", "tray_stack", "pending_queue", "winner_pile", "loser_pile", "loser_archive_count", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"],
 }
 const PORTABLE_PULL_TAB_LOSER_RECEIPT_LIMIT := 10
 const PORTABLE_SCRATCH_TICKET_LOSER_RECEIPT_LIMIT := 5
@@ -1642,8 +1645,118 @@ func prepare_current_environment_object_membership_for_publication() -> Dictiona
 				var main_errors := JsonCoerceScript._copy_array(main_reconciled.get("errors", []))
 				return {"ok": false, "errors": main_errors, "manifest": reconciled.get("manifest", {})}
 			stored_environment = main_floor
-	world_map = WorldMap.store_environment(world_map, node_id, _environment_for_persistent_storage(stored_environment))
+	world_map = WorldMap.store_runtime_environment(
+		world_map,
+		node_id,
+		_environment_for_persistent_storage(stored_environment)
+	)
 	reconciled["stored_world_node_id"] = node_id
+	return reconciled
+
+
+# Consuming an ordinary event removes one already-bound room object. Preserve all
+# unaffected immutable bindings instead of repacking the entire room. Complex
+# aliasing and any mutation that adds physical membership retain the full seam.
+func prepare_resolved_event_membership_for_publication(event_id: String, profile_stages: bool = false) -> Dictionary:
+	var profile_started_usec := Time.get_ticks_usec()
+	var profile_stage_started_usec := profile_started_usec
+	var profile_timing: Dictionary = {}
+	var clean_event_id := event_id.strip_edges()
+	if clean_event_id.is_empty() or current_environment.is_empty() \
+			or is_layered_environment() or _is_grand_casino_environment(current_environment):
+		return prepare_current_environment_object_membership_for_publication()
+	var prior_manifest := JsonCoerceScript._copy_dict(current_environment.get("object_manifest", {}))
+	var prior_rows := JsonCoerceScript._copy_array(prior_manifest.get("rows", []))
+	var prior_physical_ids: Dictionary = {}
+	var resolved_binding_ids: Dictionary = {}
+	for row_value in prior_rows:
+		if typeof(row_value) != TYPE_DICTIONARY:
+			continue
+		var row := row_value as Dictionary
+		if not bool(row.get("active", true)) or not bool(row.get("physical", true)):
+			continue
+		var instance_id := str(row.get("instance_object_id", "")).strip_edges()
+		var presentation_id := str(row.get("presentation_object_id", row.get("object_id", instance_id))).strip_edges()
+		if not instance_id.is_empty():
+			prior_physical_ids[instance_id] = true
+		if not presentation_id.is_empty():
+			prior_physical_ids[presentation_id] = true
+		if str(row.get("family", "")) == "event" and str(row.get("source_id", "")).strip_edges() == clean_event_id:
+			if not instance_id.is_empty():
+				resolved_binding_ids[instance_id] = true
+			if not presentation_id.is_empty():
+				resolved_binding_ids[presentation_id] = true
+	if profile_stages:
+		profile_timing["prior_manifest"] = Time.get_ticks_usec() - profile_stage_started_usec
+		profile_stage_started_usec = Time.get_ticks_usec()
+
+	_sync_all_runtime_object_manifest_entries(current_environment)
+	var manifest := EnvironmentInstance.reconcile_object_manifest(current_environment)
+	if profile_stages:
+		profile_timing["manifest_reconcile"] = Time.get_ticks_usec() - profile_stage_started_usec
+		profile_stage_started_usec = Time.get_ticks_usec()
+	var live_physical_ids: Dictionary = {}
+	for row_value in JsonCoerceScript._copy_array(manifest.get("rows", [])):
+		if typeof(row_value) != TYPE_DICTIONARY:
+			continue
+		var row := row_value as Dictionary
+		if not bool(row.get("active", true)) or not bool(row.get("physical", true)):
+			continue
+		var instance_id := str(row.get("instance_object_id", "")).strip_edges()
+		var presentation_id := str(row.get("presentation_object_id", row.get("object_id", instance_id))).strip_edges()
+		if not instance_id.is_empty():
+			live_physical_ids[instance_id] = true
+		if not presentation_id.is_empty():
+			live_physical_ids[presentation_id] = true
+	# A contact becoming ambient, a triggered event, or another runtime projector
+	# can add membership at the same boundary. Such additions require normal slot
+	# selection and therefore use the complete authoritative reconciliation.
+	for physical_id_value in live_physical_ids.keys():
+		if not prior_physical_ids.has(physical_id_value):
+			return prepare_current_environment_object_membership_for_publication()
+
+	var layout := JsonCoerceScript._copy_dict(current_environment.get("layout", {}))
+	var bindings := JsonCoerceScript._copy_dict(layout.get("slot_bindings", {}))
+	var object_rects := JsonCoerceScript._copy_dict(layout.get("object_rects", {}))
+	var overflow_ids := JsonCoerceScript._string_array(layout.get("slot_overflow_ids", []))
+	var binding_changed := false
+	for binding_id_value in resolved_binding_ids.keys():
+		var binding_id := str(binding_id_value)
+		if live_physical_ids.has(binding_id):
+			continue
+		binding_changed = bindings.has(binding_id) or object_rects.has(binding_id) or overflow_ids.has(binding_id) or binding_changed
+		bindings.erase(binding_id)
+		object_rects.erase(binding_id)
+		overflow_ids.erase(binding_id)
+	if binding_changed:
+		overflow_ids.sort()
+		layout["slot_bindings"] = bindings
+		layout["object_rects"] = object_rects
+		layout["slot_overflow_ids"] = overflow_ids
+		layout["slot_binding_digest"] = EnvironmentSlotBinderScript.binding_digest(bindings)
+		# The retained bindings are authoritative now; force the next explicit layout
+		# generation to refresh its optimization signature without doing that work on
+		# the player's pickup frame.
+		layout.erase("grounding_signature")
+		current_environment["layout"] = layout
+	if profile_stages:
+		profile_timing["binding_release"] = Time.get_ticks_usec() - profile_stage_started_usec
+		profile_stage_started_usec = Time.get_ticks_usec()
+
+	var reconciled := {
+		"ok": true,
+		"errors": [],
+		"manifest": JsonCoerceScript._copy_dict(manifest),
+	}
+	# The live current_environment is authoritative and is serialized directly.
+	# Its world-map node is a revisit cache that set_environment() always refreshes
+	# before departure, so cloning the whole room into that cache on the pickup
+	# frame is redundant and was the largest remaining part of this hitch.
+	reconciled["storage_deferred_until_departure"] = true
+	if profile_stages:
+		profile_timing["defer_storage"] = Time.get_ticks_usec() - profile_stage_started_usec
+		profile_timing["total"] = Time.get_ticks_usec() - profile_started_usec
+		reconciled["debug_membership_usec"] = profile_timing
 	return reconciled
 
 
@@ -8591,6 +8704,7 @@ func portable_ticket_pile_summary(item_id: String) -> Dictionary:
 					if int(ticket_data.get("revealed_count", 0)) < rows.size():
 						unplayed_count += 1
 			else:
+				unplayed_count += _portable_ticket_array_size(state.get("tray_stack", []))
 				var active := JsonCoerceScript._copy_dict(state.get("active_ticket", {}))
 				if not active.is_empty():
 					unplayed_count += 1
@@ -11990,6 +12104,24 @@ func advance_environment_turns(amount: int = 1, profile_stages: bool = false) ->
 	return result
 
 
+# A higher lifecycle transaction can own rollback for the whole player action.
+# In that case, do not create and publish a second detached RunState merely for
+# the scenario turn nested inside it; a rejection is restored by that owner.
+func advance_environment_turns_with_external_rollback(amount: int = 1, profile_stages: bool = false) -> Dictionary:
+	if current_environment.is_empty() or is_terminal():
+		return {"ok": true, "applied": false, "errors": []}
+	var profile_started_usec := Time.get_ticks_usec() if profile_stages else 0
+	var result := _advance_environment_turns_candidate(amount)
+	if profile_stages:
+		result["debug_turn_transaction_usec"] = {
+			"candidate_create": 0,
+			"candidate_advance": Time.get_ticks_usec() - profile_started_usec,
+			"publish": 0,
+			"total": Time.get_ticks_usec() - profile_started_usec,
+		}
+	return result
+
+
 # Executes the complete turn against a graph that shares no mutable roots with
 # the live RunState. The caller either discards this object or publishes it as a
 # single graph-consistent tuple through _publish_environment_turn_candidate().
@@ -13227,9 +13359,9 @@ func _debt_story_entry(entry_type: String, debt_data: Dictionary, message: Strin
 
 
 # Marks an environment event as resolved.
-func resolve_event(event_id: String) -> void:
+func resolve_event(event_id: String, profile_stages: bool = false) -> Dictionary:
 	if current_environment.is_empty() or event_id.is_empty():
-		return
+		return {}
 	var resolved: Array = current_environment.get("resolved_event_ids", [])
 	if not resolved.has(event_id):
 		resolved.append(event_id)
@@ -13253,7 +13385,7 @@ func resolve_event(event_id: String) -> void:
 	# Seal the matching layout and durable room aliases at this same boundary. A
 	# consumed event-family object releases its rectangle; an event-shaped fixed
 	# fixture keeps its guaranteed room presence while losing only its live action.
-	prepare_current_environment_object_membership_for_publication()
+	return prepare_resolved_event_membership_for_publication(event_id, profile_stages)
 
 
 func set_story_flag(flag_id: String, value: Variant = true) -> void:
@@ -13531,9 +13663,11 @@ func add_next_archetypes(archetype_ids: Array) -> void:
 	current_environment["next_archetypes"] = next_ids
 	unlocked_travel = _unique_strings(unlocked_travel + clean_ids)
 	if has_world_map():
-		world_map = WorldMap.unlock_nodes(world_map, clean_ids, WorldMap.DISCOVERY_SOURCE_EVENT)
-		world_map = WorldMap.refresh_shop_node_environments(world_map, clean_ids)
-	current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
+		# The live map is already normalized. Reveal only the requested nodes and
+		# retain stored environments at every unrelated node instead of cloning the
+		# complete world twice. Travel availability does not alter room geometry, so
+		# the current layout remains valid and must not be regenerated here.
+		world_map = WorldMap.unlock_runtime_nodes(world_map, clean_ids, WorldMap.DISCOVERY_SOURCE_EVENT, true)
 
 
 # Replaces current environment travel targets.
@@ -13544,9 +13678,7 @@ func set_next_archetypes(archetype_ids: Array) -> void:
 	current_environment["next_archetypes"] = clean_ids
 	unlocked_travel = _unique_strings(unlocked_travel + clean_ids)
 	if has_world_map():
-		world_map = WorldMap.unlock_nodes(world_map, clean_ids, WorldMap.DISCOVERY_SOURCE_EVENT)
-		world_map = WorldMap.refresh_shop_node_environments(world_map, clean_ids)
-	current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
+		world_map = WorldMap.unlock_runtime_nodes(world_map, clean_ids, WorldMap.DISCOVERY_SOURCE_EVENT, true)
 
 
 # Returns whether the current run is over.
@@ -15158,7 +15290,7 @@ static func _portable_ticket_state_count(kind: String, state: Dictionary) -> int
 	if kind == "scratch_tickets" and not JsonCoerceScript._copy_dict(state.get("active_ticket", {})).is_empty():
 		count += 1
 	if kind == "scratch_tickets":
-		count += _portable_ticket_array_size(state.get("pending_queue", []))
+		count += _portable_ticket_array_size(state.get("tray_stack", [])) + _portable_ticket_array_size(state.get("pending_queue", []))
 	return count
 
 

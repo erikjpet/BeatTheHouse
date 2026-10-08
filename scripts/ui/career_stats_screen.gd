@@ -1,6 +1,9 @@
 class_name CareerStatsScreen
 extends VBoxContainer
 
+# Responsive career-statistics screen that renders a prepared model and exposes
+# a deterministic layout snapshot; it never edits profile history.
+
 signal close_requested
 
 const CareerStatsViewModelScript := preload("res://scripts/ui/career_stats_view_model.gd")

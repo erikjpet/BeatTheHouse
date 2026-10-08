@@ -1,5 +1,8 @@
 extends RefCounted
 
+# Constructs and wires the persistent start/run Control hierarchy used by
+# FoundationMain; behavior and state transitions remain in their owners.
+
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 
 
@@ -562,6 +565,7 @@ static func build_run_screen(host: Variant) -> void:
 	host.environment_canvas.developer_placement_refresh_requested.connect(host._on_developer_placement_refresh_requested)
 	host.environment_canvas.developer_placement_export_requested.connect(host._on_developer_placement_export_requested)
 	host.environment_canvas.developer_layout_save_requested.connect(host._on_developer_layout_save_requested)
+	host.environment_canvas.developer_slot_layer_requested.connect(host._on_developer_slot_layer_requested)
 	visual_stack.add_child(host.environment_canvas)
 	host.game_surface_canvas = host.GameSurfaceCanvasScript.new()
 	if host.game_surface_canvas.has_method("bind_surface_audio_authority"):

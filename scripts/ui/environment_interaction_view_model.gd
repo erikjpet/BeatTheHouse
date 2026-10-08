@@ -1,6 +1,9 @@
 class_name EnvironmentInteractionViewModel
 extends RefCounted
 
+# Converts sealed room/runtime records into deduplicated player-safe objects,
+# hit geometry, risk summaries, and travel copy for the environment canvas.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")

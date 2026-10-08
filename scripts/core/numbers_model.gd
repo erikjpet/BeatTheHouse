@@ -1,6 +1,9 @@
 class_name NumbersModel
 extends RefCounted
 
+# Deterministic Numbers-game world model with host-capability-gated mutation,
+# schedule advancement, public status, and compact persistence.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const CONFIG_PATH := "res://data/crew/numbers.json"

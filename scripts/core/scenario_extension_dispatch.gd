@@ -1,6 +1,9 @@
 class_name ScenarioExtensionDispatch
 extends RefCounted
 
+# Allowlists scenario extension adapters and dispatches authenticated command
+# and render preparation without granting extensions direct host authority.
+
 const BASE_EXTENSION_ID := "semantic_v1"
 const HANDLER_ROOT := "res://scripts/core/scenario_handlers"
 const RENDERER_ROOT := "res://scripts/ui/scenario_renderers"

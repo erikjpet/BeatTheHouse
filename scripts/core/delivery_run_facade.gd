@@ -1,6 +1,9 @@
 class_name DeliveryRunFacade
 extends RefCounted
 
+# RunState-bound service that owns delivery lifecycle commands while delegating
+# deterministic state transitions and validation to DeliveryRunModel.
+
 const DeliveryRunModelScript := preload("res://scripts/core/delivery_run_model.gd")
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 

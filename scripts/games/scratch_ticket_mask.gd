@@ -1,6 +1,9 @@
 class_name ScratchTicketMask
 extends RefCounted
 
+# Owns high-resolution scratch-mask creation, interpolated brush mutation,
+# completion tests, reveal-all, and safe compaction after a ticket is settled.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const RegionModelScript := preload("res://scripts/games/scratch_ticket_region_model.gd")

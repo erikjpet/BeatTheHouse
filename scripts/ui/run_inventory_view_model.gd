@@ -1,6 +1,9 @@
 class_name RunInventoryViewModel
 extends RefCounted
 
+# Builds the in-run inventory model, including active slots, quantities,
+# condition/effects, usable actions, and selection identity.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 

@@ -1,6 +1,9 @@
 class_name Craps06EnvironmentBinding
 extends RefCounted
 
+# Validates Craps ritual/environment bindings and applies only authenticated
+# committed table responses to their owning scenario context.
+
 const CONFIG_PATH := "res://data/games/rituals/craps06_3_environment_bindings.json"
 const RITUAL_PATH := "res://data/games/rituals/craps06_3_sequences.json"
 const HostTransactionScript := preload("res://scripts/core/scenario_host_transaction.gd")

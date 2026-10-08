@@ -1,6 +1,9 @@
 class_name JackpotRidgeVariation
 extends RefCounted
 
+# Cabinet-specific Jackpot Ridge logic for stroke cycles, goals, multipliers,
+# tolerance bands, feature events, and award settlement.
+
 
 static func initial_state(config: Dictionary, rng: RngStream, lane_count: int, cell_count: int) -> Dictionary:
 	var schedule: Array = []

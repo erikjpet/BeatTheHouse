@@ -1,6 +1,9 @@
 class_name BarDiceRoomProp
 extends RefCounted
 
+# Lightweight room-scale Bar Dice table painter with full and low-detail paths;
+# wagers, patrons, and dice state remain in BarDiceGame.
+
 const KitScript := preload("res://scripts/ui/game_props/game_prop_kit.gd")
 const EMPTY_STATE: Dictionary = {}
 const C_WOOD := Color("#3a2619")

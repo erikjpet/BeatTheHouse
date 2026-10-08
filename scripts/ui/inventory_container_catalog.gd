@@ -1,6 +1,9 @@
 class_name InventoryContainerCatalog
 extends RefCounted
 
+# Loads and validates authored bag/container layouts, capacities, presentations,
+# and slot rectangles used by both inventory rules and the surface.
+
 const CATALOG_PATH := "res://data/ui/inventory_containers.json"
 const ITEMS_PATH := "res://data/items/items.json"
 const REQUIRED_TYPES := ["bag", "backpack", "suitcase", "trunk", "loose_carry", "home_storage"]

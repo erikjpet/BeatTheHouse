@@ -1,6 +1,9 @@
 class_name FunctionOptions
 extends RefCounted
 
+# Typed callable-option wrappers used to pass optional behavior without sentinel
+# lambdas or untyped dictionaries at core authority boundaries.
+
 
 class SlotSpinResultOptions extends RefCounted:
 	var values: Dictionary

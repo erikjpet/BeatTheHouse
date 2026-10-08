@@ -1,6 +1,9 @@
 class_name WebAudioBridge
 extends RefCounted
 
+# JavaScript/WebAudio bridge for unlock, prewarm, one-shots, loops, and music
+# stems; native builds safely report the bridge as unavailable.
+
 static var _ensured := false
 static var _bridge_interface: Variant = null
 static var _last_music_payload_key := ""

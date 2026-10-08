@@ -1,6 +1,9 @@
 class_name CoachViewModel
 extends RefCounted
 
+# Pure tutorial/coach projection logic for trigger matching, live anchors,
+# bubble placement, allowed input, and completion recognition.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const ANCHOR_KINDS := ["interactable_object", "hud_element", "surface_action", "none"]

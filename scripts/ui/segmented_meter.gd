@@ -1,6 +1,9 @@
 class_name SegmentedMeter
 extends Control
 
+# Reusable segmented progress/pressure meter with optional feedback pulse and
+# a deterministic snapshot for UI validation.
+
 const SEGMENT_COUNT := 10
 const VALUE_MIN := 0.0
 const VALUE_MAX := 100.0

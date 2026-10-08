@@ -1,6 +1,9 @@
 class_name SlotPresentation
 extends RefCounted
 
+# Normalizes persistent slot state into player-safe full and realtime surface
+# projections while leaving resolution and mutation to SlotResolver.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const StateScript := preload("res://scripts/games/slots/slot_machine_state.gd")

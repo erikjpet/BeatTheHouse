@@ -1,6 +1,9 @@
 class_name GrandCasinoRunFacade
 extends RefCounted
 
+# RunState-bound API for Grand Casino rooms, chips, Cage services, Players Card
+# progress, Rourke pressure, duel flow, endings, and persistent rewards.
+
 const ROURKE_MOVE_EVALUATION_ACTIONS := 3
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 

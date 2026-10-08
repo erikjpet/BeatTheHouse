@@ -1,6 +1,9 @@
 class_name FoundationHudViewModel
 extends RefCounted
 
+# Pure HUD projection for clock, run status, objectives, boss-floor guidance,
+# debt, inventory, housing, save state, and pressure meters.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const CLOCK_DISPLAY_STEP_MINUTES := 15

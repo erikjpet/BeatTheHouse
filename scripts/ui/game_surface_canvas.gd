@@ -3,8 +3,10 @@ extends Control
 
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
-# Hosts the active gambling surface. Game-specific drawing lives in the active
-# GameModule; this canvas only owns scaling, hit regions, overlays, and input.
+# Hosts the active gambling surface. Game-specific drawing/state lives in the
+# active GameModule; this canvas owns scaling, hit regions, pointer capture,
+# autonomous animation channels, retained layers, shared overlays, and audio/UI
+# signal delivery. Redraw scheduling never depends on pointer movement.
 
 signal surface_action(action: String, index: int, confirm_requested: bool)
 signal surface_action_blocked(action: String, reason: String)

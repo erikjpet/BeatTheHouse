@@ -1,14 +1,15 @@
 # Current Game State
 
-Current release handoff: 2026-10-05 against the published
-`v0.6.0-pre.5` candidate. Focused placement-panel checks cover its urgent
-owner-workflow repair; broader candidate verification continues.
+Current release handoff: 2026-10-08 against the feature-complete 0.6 source on
+`main`. The downloadable `v0.6.0-pre.5` candidate predates the final game and
+performance refinements described here.
 
-Status: **PLAYABLE 0.6 TESTING PRERELEASE / OWNER PLACEMENT PASS PENDING.**
+Status: **FEATURE-COMPLETE 0.6 SOURCE / OWNER PLACEMENT PASS PENDING.**
 
 Project and export metadata identify `0.6.0`. Version `0.5.1` remains the
-latest stable release; `v0.6.0-pre.5` is the current downloadable Windows
-testing prerelease. Final stable qualification remains separate.
+latest stable release; `v0.6.0-pre.5` is the latest downloadable Windows
+testing prerelease. The manual placement procedure, post-promotion validation,
+final packages, and owner publication remain separate from feature completion.
 
 ## Player experience
 
@@ -53,16 +54,16 @@ real surface interaction rather than placeholder result buttons.
 
 | Game | Current implemented depth |
 | --- | --- |
-| Scratch Tickets | Seven ticket identities, fixed-at-purchase results, layered background/icon/foil rendering, interpolated scratching, piles, discard, and collection-print payoff |
+| Scratch Tickets | Seven ticket identities, fixed-at-purchase results, layered ticket art, interpolated scratching, piles/discard/collection payoff, and a physical vending cabinet with a 1.5-second lift-shelf dispense into a clickable output tray |
 | Pull Tabs | Finite deals, ticket windows, persistent deal state, detector scan, and item interactions |
 | Slots | Generated Pinball/Buffalo machines, fixed bet ladder, nudge, autoplay, family features, jackpots, and stuck-state coverage |
-| Bar Dice | Ship, Captain, Crew with patrons, pots, cargo scoring, and timed loaded-toss/palmed-swap actions |
+| Bar Dice | Ship, Captain, Crew with patrons, pots, cargo scoring, timed loaded-toss/palmed-swap actions, and a fixed non-overlapping 1280x720 table/control layout |
 | Blackjack | Shoe state, hit/stand/split/double/surrender, side bets, counting, hole-card peek, surveillance, and the Rourke duel host |
 | Baccarat | Player/Banker/Tie and pair bets, commission, squeeze/shoe state, shoe reading, and edge sorting |
 | Craps | Casino and street tables, 40 reachable wager types, interruption/refund state, derived edges, and million-roll verification |
 | Roulette | Inside/outside chip placement, full wheel resolution, recent history, wheel reading, and past-post timing |
-| Crew Hold'em | Six-handed no-limit Hold'em, dealer choreography, conserved pots, hidden-card authority, five nights, and seven persistent opponents |
-| Video Poker | Multiple rule sets, denomination/coin ladder, hold/draw, recommendation support, mark-holds, and bounded double-up |
+| Crew Hold'em | Six-handed no-limit Hold'em, automatic paced opponent turns, personality-shaped but fallible tells, player-projected tells, dealer/muck fold cleanup, conserved pots, hidden-card authority, five nights, and seven persistent opponents |
+| Video Poker | Three authored Jacks or Better/Deuces Wild/Double Double Bonus cabinets, one to three hands, denomination/coin ladder, hold/draw, recommendation support, mark-holds, and bounded double-up |
 | Coin Pusher | Three deterministic native/Web-parity cabinets with physical trays, nozzles, cups, heavy objects, goals, persistence, and conservation checks |
 
 ## World, scenarios, and progression
@@ -92,6 +93,9 @@ real surface interaction rather than placeholder result buttons.
 - Main scene: `res://scenes/main.tscn`; host:
   `res://scripts/ui/foundation_main.gd`.
 - Native and Web use the same deterministic simulation contracts.
+- Environment and game surfaces retain autonomous no-input animation scheduling;
+  redraw work is cached/bounded without depending on mouse movement, hover, or
+  selection.
 - The Coin Pusher native GDExtension is present, identity-checked, and parity
   tested; Web uses its supported fallback path.
 - Native/Web SFX use the shared 22.05 kHz contract and thirteen surface
@@ -102,11 +106,23 @@ real surface interaction rather than placeholder result buttons.
 
 ## Verification state
 
-The prerelease-3 placement baseline passed its source and runtime gates, and the
-prerelease-4 repair set remains the placement-authority baseline. Prerelease 5
-adds an urgent owner-workflow correction and is published after focused
-placement-panel checks; broader verification is being completed against that
-exact candidate:
+The feature-complete source includes the established prerelease placement
+baseline plus the subsequent game-flow, animation-liveness, event-latency, and
+surface-performance work. `v0.6.0-pre.5` remains the last published test
+package, so its exact evidence is preserved separately from the newer source:
+
+- Hold'em opponents now act automatically after readable, variable thinking
+  intervals; their five tell emotions mix hand pressure with personality and
+  intentional ambiguity, and folded player cards clear through the muck flow;
+- Scratch Tickets now use a detailed vending surface with a timed physical
+  lift/pick/lower dispense, machine audio, and tray-to-play interaction;
+- Bar Dice uses fixed, non-overlapping regions for its patrons, dice, rules,
+  paytable, timer, and controls;
+- environment, placement, and game animations continue without pointer input,
+  including while placement overlays are open;
+- event activation and common object-loading, dragging, slot-move, and
+  post-action paths use bounded caches and deferred work to reduce visible
+  stalls without suppressing animation;
 
 - the placement panel has a visible minimize control, and minimizing removes
   the entire large panel from hit testing so covered room objects and slots can
@@ -175,5 +191,5 @@ report for promotion into committed coordinates.
    build/source identity, and placement-authority hashes.
 3. Re-run the placement/runtime gates after promoting those artistic
    coordinates.
-4. Complete the remaining owner playtest and normal-play ending confirmations
-   before deciding on the final stable 0.6 release.
+4. Produce and launch-check the final Windows/Web artifacts, then publish only
+   after explicit owner approval.

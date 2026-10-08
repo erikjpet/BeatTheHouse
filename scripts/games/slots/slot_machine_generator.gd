@@ -1,6 +1,9 @@
 class_name SlotMachineGenerator
 extends RefCounted
 
+# Deterministically builds complete slot-machine definitions and initial state
+# from authored format/family/math/bonus/skin identities and run RNG.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const MathScript := preload("res://scripts/games/slots/slot_rng_math.gd")

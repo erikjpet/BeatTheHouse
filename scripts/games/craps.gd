@@ -1,6 +1,9 @@
 class_name CrapsGame
 extends GameModule
 
+# Production casino/street Craps host. It owns table persistence, sealed action
+# routing, surface interaction, rituals, advantage play, and rules projection.
+
 const CrapsRulesScript := preload("res://scripts/games/craps/craps_rules.gd")
 const CrapsSurfaceViewModelScript := preload("res://scripts/games/craps/craps_surface_view_model.gd")
 const TableGameVisualsScript := preload("res://scripts/games/table_game_visuals.gd")

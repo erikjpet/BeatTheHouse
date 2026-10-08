@@ -1,5 +1,11 @@
 # perf06_1 Performance and Platform Report
 
+> 2026-10-08 current-source note: this report remains historical measurement
+> evidence. The replacement placement architecture and later cache/bounded-work
+> performance passes are present in the feature-complete 0.6 source. The active
+> release-authoring task is the manual 75-context placement pass, not the parked
+> Phase 4 sequence described below.
+
 > 2026-09-16 update: a later reduced, non-binding pre-placement pass retained
 > two measured shared-renderer allocation reductions. Its before/after tables,
 > preserved red rows, and parity evidence are recorded in

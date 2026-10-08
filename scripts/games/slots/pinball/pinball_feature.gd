@@ -1,6 +1,9 @@
 class_name PinballFeature
 extends RefCounted
 
+# Bridges slot bonus state to cached PinballSim sessions, presentation refresh,
+# timed controls, previews, settlement, save boundaries, and debug evidence.
+
 const BoardsScript := preload("res://scripts/games/slots/pinball/pinball_boards.gd")
 const BoardScript := preload("res://scripts/games/slots/pinball/pinball_board.gd")
 const SimScript := preload("res://scripts/games/slots/pinball/pinball_sim.gd")

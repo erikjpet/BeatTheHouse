@@ -1,6 +1,9 @@
 class_name DeliveryRunModel
 extends RefCounted
 
+# Pure state model for multi-stage delivery jobs: construction, normalization,
+# physical projection, checkpoints, cargo, timing, and terminal validation.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const SCHEMA_VERSION := 3

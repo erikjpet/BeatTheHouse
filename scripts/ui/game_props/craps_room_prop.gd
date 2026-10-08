@@ -1,6 +1,9 @@
 class_name CrapsRoomProp
 extends RefCounted
 
+# Lightweight room-scale Craps table painter with full and low-detail paths;
+# playable table rules and input stay in CrapsGame.
+
 const KitScript := preload("res://scripts/ui/game_props/game_prop_kit.gd")
 const EMPTY_STATE: Dictionary = {}
 const C_FELT := Color("#147653")

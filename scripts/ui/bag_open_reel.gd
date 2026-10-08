@@ -1,6 +1,9 @@
 class_name BagOpenReel
 extends Control
 
+# Animated collection-bag opening surface. It owns reel timing and responsive
+# rendering while reward creation remains outside the UI.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 signal close_requested

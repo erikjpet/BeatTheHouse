@@ -1,6 +1,9 @@
 class_name SlotResolver
 extends RefCounted
 
+# Authoritative slot action resolver for spins, nudges, payouts, economy deltas,
+# feature entry/steps, completion metrics, and deterministic animation plans.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const MathScript := preload("res://scripts/games/slots/slot_rng_math.gd")

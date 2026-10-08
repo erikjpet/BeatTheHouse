@@ -1,6 +1,9 @@
 class_name CageAtmViewModel
 extends RefCounted
 
+# Projects Cage ATM balances and inline chip/cash actions without applying the
+# underlying Grand Casino transaction.
+
 const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.gd")
 
 

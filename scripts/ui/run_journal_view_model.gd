@@ -1,6 +1,9 @@
 class_name RunJournalViewModel
 extends RefCounted
 
+# Projects run history into categorized journal rows, concise summaries, and
+# stable visual tones without changing the history ledger.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")

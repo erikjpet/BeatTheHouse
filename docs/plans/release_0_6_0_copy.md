@@ -2,9 +2,9 @@
 
 Status: **DRAFT — OWNER APPROVAL REQUIRED. DO NOT POST OR UPLOAD.**
 
-Prepared from `main` on 2026-09-24. Refresh the final-build facts, artifact
-names, links, ending confirmations, audio status, and approved screenshots after
-the room and ending lanes close. This draft intentionally describes a single
+Refreshed from the feature-complete 0.6 source on 2026-10-08. Refresh the final
+artifact names, links, placement confirmation, and approved screenshots after
+the manual room-placement lane closes. This draft intentionally describes a single
 Crew heist route without claiming that every authored plan variant is release-
 qualified. It does not reveal hidden scenario state, Crew loyalties, rigged
 draws, unrevealed tickets, or other private run information.
@@ -61,12 +61,16 @@ you handled the earlier ones.
 The roster now covers eleven full game modules. Casino and street Craps offer
 distinct tables and a wide wager set. Three deterministic Coin Pusher cabinets
 have their own goals and live trays. The Crew's back-room game is six-handed
-no-limit Hold'em with persistent opponents and readable personalities.
+no-limit Hold'em: persistent opponents act at a readable pace, sometimes take
+longer over a decision, and show personality-shaped tells that reward attention
+without giving away their cards.
 
 The existing games grew deeper too. Slots carry Pinball and Buffalo feature
 families, table games have stronger dealing and settlement rituals, and Pull
 Tabs can show a rare yellow glimmer on an eligible unrevealed ticket without
-changing its fixed contents, odds, or payout.
+changing its fixed contents, odds, or payout. Scratch Tickets now come from a
+physical vending cabinet: its shelf lifts to a pack, lowers the ticket into the
+tray, and waits for the player to collect it into the play area.
 
 ### Three ways through the Grand Casino
 
@@ -105,6 +109,8 @@ targets; the Web build uses a single-threaded delivery path.
 - A connected Crew campaign and Grand Casino heist route.
 - Three Grand Casino endings: clean, Rourke, and Crew.
 - Eleven full games, including Craps, Coin Pusher, and Crew Hold'em.
+- Automatic Hold'em opponents with readable, imperfect personality tells.
+- A physical Scratch Ticket vending, dispense, tray, and play flow.
 - Fixed, art-aligned room layouts with grounded people and props.
 - Conversation-first person events, clearer live rumors, and safer Blackjack
   count presentation.
@@ -242,7 +248,9 @@ six-handed Crew Hold'em, Linda's complete Players Card ladder, Rourke's staged
 back-room showdown, and a Crew heist ending. Person events now begin as real
 conversations, live rumors carry a useful public cue, and Blackjack shows only
 the player's recorded count while counted-shoe choices wait for valid current
-information.
+information. Hold'em patrons make their own paced decisions and show fallible
+personality tells, while the rebuilt Scratch Ticket cabinet visibly dispenses
+each purchase into a tray before play.
 
 Windows and Web are the supported release targets. Beat the House is a
 single-player game with simulated gambling only: no real-money wagering, cash
@@ -288,6 +296,10 @@ games, and choose your way through the Grand Casino.
 
 - Eleven full modules now include casino/street Craps, three distinct Coin
   Pusher cabinets, and six-handed no-limit Crew Hold'em.
+- Hold'em patrons act automatically and expose subtle, fallible emotional tells
+  shaped by both pressure and personality.
+- The Scratch Ticket machine now has a physical lift-shelf dispense and
+  tray-to-play interaction.
 - A rare Pull Tab glimmer adds tension without changing any ticket outcome,
   odds, or payout.
 - Best media: one approved shot that clearly reads as Craps, Coin Pusher, or
@@ -308,7 +320,8 @@ games, and choose your way through the Grand Casino.
   games, and ending progress.
 - Career and run-report support for the expanded routes.
 - Scratch Ticket handling and collection-print payoff, deeper Pinball and
-  Buffalo machines, and full table-game presentation.
+  Buffalo machines, a non-overlapping Bar Dice surface, and full table-game
+  presentation.
 - Native/Web audio delivery with thirteen surface sound profiles.
 
 ### Under the hood
@@ -349,6 +362,11 @@ approval. Simulated gambling only; no real-money wagering or prizes.
   showdown, and the Crew heist.
 - Expanded the roster to eleven full games with Craps, Coin Pusher, and Crew
   Hold'em.
+- Made Hold'em patrons act automatically with variable decision timing and
+  subtle, personality-shaped tells; folded cards now clear through the dealer.
+- Rebuilt the Scratch Ticket vending cabinet with a timed physical dispense,
+  machine sound, output tray, and tray-to-play collection.
+- Reworked Bar Dice into a fixed, non-overlapping table and control layout.
 - Rebuilt room layouts around fixed, art-aligned places for people, games,
   items, and props.
 - Added a rare Pull Tab glimmer without changing ticket outcomes, odds, or
@@ -365,14 +383,14 @@ approval. Simulated gambling only; no real-money wagering or prizes.
 | Version and targets | `project.godot`, export presets, README; 0.6.0 for Windows/Web | Pending |
 | Living Town and room claims | Current README, scenario data, reset room status | Pending |
 | Crew and heist wording | Current Crew implementation; deliberately claims one route, not both plan variants | Pending |
-| New-game roster | Current eleven-game README/data roster | Pending |
+| New-game roster | `docs/game_reference.md` and the current eleven-game data roster | Pending |
 | Owner-requested fixes | `docs/plans/rw06_5_owner_gameplay_fixes_report.md` | Pending |
 | Safety wording | Active content style guide | Pending |
-| Ending claims | Implemented on `main`; final normal-play confirmations still pending | Pending |
+| Ending claims | Implemented in the feature-complete source; owner approval of public wording remains pending | Pending |
 | Audio wording | Current README; refresh after final audio sign-off | Pending |
 | Screenshots | None approved or attached | Pending |
 | Trial artifacts | Add local paths after Lane D export and launch confirmation | Pending |
-| Final artifacts and hashes | Produced only after room/ending closure | Pending |
+| Final artifacts and hashes | Produced only after manual room-placement closure | Pending |
 | Pre-upload copy approval | Owner decision required | Pending |
 | Upload and public URLs | Owner-only action after final handoff | Pending |
 

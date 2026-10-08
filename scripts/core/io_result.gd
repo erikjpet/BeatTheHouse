@@ -1,6 +1,9 @@
 class_name IoResult
 extends RefCounted
 
+# Small uniform success/failure result type for filesystem and persistence
+# boundaries, including shape assertions used by tests and callers.
+
 const KeysScript := preload("res://scripts/core/keys.gd")
 
 const KEY_OK := KeysScript.OK

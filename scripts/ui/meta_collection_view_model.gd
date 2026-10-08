@@ -1,6 +1,9 @@
 class_name MetaCollectionViewModel
 extends RefCounted
 
+# Projects collection definitions and profile inventory into grouped,
+# filter-ready browser rows without mutating persistent collection state.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")

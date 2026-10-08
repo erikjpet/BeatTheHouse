@@ -1,6 +1,9 @@
 class_name CrapsRules
 extends RefCounted
 
+# Pure Craps rules engine for wager validation, dice resolution, point travel,
+# take-down/refund behavior, true odds, and exact payoff calculations.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 

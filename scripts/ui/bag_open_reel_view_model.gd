@@ -1,6 +1,9 @@
 class_name BagOpenReelViewModel
 extends RefCounted
 
+# Produces deterministic bag-opening reel cards, landing result, timing, and
+# showcase identities from an already-authorized reward.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")

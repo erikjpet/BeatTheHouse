@@ -1,5 +1,8 @@
 extends "res://scripts/ui/game_surface_canvas.gd"
 
+# Retained child canvas for immutable Coin Pusher cabinet art. It replays only
+# cached draw commands; the parent surface continues to own live input regions.
+
 signal static_cache_drawn
 
 var static_renderer: RefCounted

@@ -1,6 +1,9 @@
 class_name CollectionItemResolver
 extends RefCounted
 
+# Loads collection/item definitions and resolves their effects, presentation,
+# and validation through one cached, read-only catalog boundary.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const StaticDataCacheScript := preload("res://scripts/core/static_data_cache.gd")

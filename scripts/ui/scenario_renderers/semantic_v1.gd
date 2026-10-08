@@ -1,5 +1,8 @@
 extends RefCounted
 
+# Default scenario render-extension adapter. It prepares semantic-v1 projection
+# data but does not draw, mutate RunState, or bypass sealed scenario authority.
+
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
 
 

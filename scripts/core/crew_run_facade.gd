@@ -1,6 +1,9 @@
 class_name CrewRunFacade
 extends RefCounted
 
+# RunState-bound public API for Crew relationships, jobs, poker observations,
+# coordinated plays, heist planning, and their exactly-once consequences.
+
 const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")

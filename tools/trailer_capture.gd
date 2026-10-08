@@ -37,6 +37,7 @@ const GAME_ACTIONS := {
 	],
 	"scratch_tickets": [
 		["scratch_buy"],
+		["scratch_collect_tray"],
 		["scratch_all", "scratch_scrub", "scratch_reveal"],
 	],
 	"bar_dice": [

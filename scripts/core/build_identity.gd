@@ -1,6 +1,9 @@
 class_name BuildIdentity
 extends RefCounted
 
+# Reads and caches the shipped build manifest, then exposes validated version
+# and telemetry identity without giving callers mutable manifest authority.
+
 const MANIFEST_PATH := "res://build_manifest.json"
 const DEVELOPMENT_VERSION := "0.6.0"
 const REQUIRED_FIELDS := [

@@ -156,11 +156,10 @@ func _run() -> void:
 	canvas.call("_update_developer_placement_panel")
 	_check(
 		canvas.developer_slot_context_label != null
-			and canvas.developer_slot_context_label.text.contains("corner_store::corner_store_lotto_fever | NOT SAVED")
-			and canvas.developer_slot_context_label.text.contains("SCENARIO-LOCAL editing")
-			and canvas.developer_slot_context_label.text.contains("ROOM-SHARED markers are locked")
-			and canvas.developer_slot_context_label.text.contains("Progress: 12/75 saved | 63 remaining")
-			and canvas.developer_slot_context_label.text.contains("Next missing:"),
+			and canvas.developer_slot_context_label.text.contains("CONTEXT | corner_store::corner_store_lotto_fever")
+			and canvas.developer_slot_context_label.text.contains("SCOPE | Scenario slots; shared room is locked")
+			and canvas.developer_slot_context_label.text.contains("PROGRESS | NOT SAVED | 12/75 saved | 63 left")
+			and canvas.developer_slot_context_label.text.contains("Next: corner_store::corner_store_lotto_fever"),
 		"Slot placement mode must keep the exact context, saved state, coverage, and next missing layout visible."
 	)
 	_check(
@@ -249,47 +248,66 @@ func _run() -> void:
 	var panel_rect := canvas.developer_placement_panel.get_rect()
 	_check(available_rect.encloses(panel_rect), "The placement panel must remain clamped inside a 900x430 environment canvas at maximum accessibility scale.")
 	_check(
+		is_equal_approx(panel_rect.size.x, PixelSceneCanvasScript.DEVELOPER_PANEL_PREFERRED_WIDTH)
+			and is_equal_approx(panel_rect.size.y, PixelSceneCanvasScript.DEVELOPER_PANEL_FIXED_HEIGHT),
+		"The slot placement menu must keep its fixed authored size instead of growing with content (actual %s)." % panel_rect.size
+	)
+	_check(
 		canvas.developer_placement_panel.get_global_rect().encloses(canvas.developer_placement_minimize_button.get_global_rect())
-			and not canvas.developer_placement_scroll.is_ancestor_of(canvas.developer_placement_minimize_button),
-		"Minimize must remain in a fixed header instead of scrolling out of reach."
+			and not canvas.developer_placement_content.is_ancestor_of(canvas.developer_placement_minimize_button),
+		"Minimize must remain in the fixed placement-menu header."
 	)
 	canvas.developer_placement_minimize_button.pressed.emit()
 	await process_frame
 	var restore_rect := canvas.developer_placement_restore_button.get_rect()
 	_check(
 		available_rect.encloses(restore_rect)
-			and restore_rect.size.y >= 52.0
+			and is_equal_approx(restore_rect.size.y, PixelSceneCanvasScript.DEVELOPER_PANEL_CONTROL_HEIGHT)
 			and not panel_rect.intersects(restore_rect),
-		"Restore must remain a reachable, low-obstruction control at 900x430 and maximum text scale."
+		"Restore must remain a fixed, low-obstruction control at 900x430."
 	)
 	canvas.developer_placement_restore_button.pressed.emit()
 	await process_frame
-	var scroll := canvas.developer_placement_scroll
-	var vertical_scroll := scroll.get_v_scroll_bar()
-	var horizontal_scroll := scroll.get_h_scroll_bar()
 	_check(
-		vertical_scroll.visible and vertical_scroll.max_value > vertical_scroll.page,
-		"An overflowing accessibility layout must expose a usable vertical scrollbar."
+		canvas.developer_placement_panel.find_children("*", "ScrollContainer", true, false).is_empty(),
+		"The fixed slot placement menu must not contain a scroll viewport or scrollbar."
 	)
-	_check(not horizontal_scroll.visible and scroll.scroll_horizontal == 0, "Wrapped placement controls must not require horizontal scrolling.")
-	var scroll_rect := scroll.get_global_rect()
+	var panel_global_rect := canvas.developer_placement_panel.get_global_rect()
+	var fixed_controls := _visible_controls(canvas.developer_placement_panel)
+	for control_value in fixed_controls:
+		var control := control_value as Control
+		if control is Label or control is BaseButton:
+			_check(
+				control.get_theme_font_size("font_size") == PixelSceneCanvasScript.DEVELOPER_PANEL_FONT_SIZE,
+				"Every placement-menu text element must use the same fixed font size."
+			)
+		if control is BaseButton:
+			_check(
+				is_equal_approx(control.size.y, PixelSceneCanvasScript.DEVELOPER_PANEL_CONTROL_HEIGHT),
+				"Every visible placement-menu control must use the same fixed height."
+			)
+		_check(panel_global_rect.encloses(control.get_global_rect()), "Every visible placement-menu element must remain inside the fixed panel.")
+	_check(
+		canvas.developer_slot_context_label.text.split("\n").size() == 4
+			and canvas.developer_placement_label.text.split("\n").size() <= 4,
+		"Placement context and selection summaries must remain bounded to the fixed four-line design."
+	)
+	var family_button_size := Vector2.ZERO
 	for button_value in canvas.developer_slot_filter_buttons.values():
 		var button := button_value as BaseButton
+		if not button.visible:
+			continue
+		if family_button_size.is_equal_approx(Vector2.ZERO):
+			family_button_size = button.size
 		_check(
-			button.custom_minimum_size.y >= 52.0
-				and button.get_global_rect().position.x >= scroll_rect.position.x - 0.5
-				and button.get_global_rect().end.x <= scroll_rect.end.x + 0.5,
-			"Every family filter must wrap within the scroll viewport and retain its 52px touch target."
+			button.size.is_equal_approx(family_button_size),
+			"Every family filter must use the same fixed dimensions (expected %s, got %s for %s)." % [family_button_size, button.size, button.name]
 		)
-	scroll.ensure_control_visible(canvas.developer_layout_save_button)
-	await process_frame
-	_check(scroll.get_global_rect().encloses(canvas.developer_layout_save_button.get_global_rect()), "Save Current Layout must be reachable by scrolling at maximum accessibility scale.")
-	scroll.ensure_control_visible(canvas.developer_placement_export_button)
-	await process_frame
-	_check(scroll.get_global_rect().encloses(canvas.developer_placement_export_button.get_global_rect()), "Export Placement Report must be reachable by scrolling at maximum accessibility scale.")
-	canvas.developer_placement_export_button.grab_focus()
-	await process_frame
-	_check(scroll.get_global_rect().encloses(canvas.developer_placement_export_button.get_global_rect()), "Keyboard focus must keep the final placement action inside the scroll viewport.")
+	_check(
+		panel_global_rect.encloses(canvas.developer_layout_save_button.get_global_rect())
+			and panel_global_rect.encloses(canvas.developer_placement_export_button.get_global_rect()),
+		"Save and export actions must remain simultaneously visible without scrolling."
+	)
 	var all_slots: Array = canvas.call("_developer_slots", true)
 	var initial_request: Dictionary = canvas.call("_developer_full_slot_layout_request")
 	var initial_positions: Dictionary = initial_request.get("full_positions", {})
@@ -379,6 +397,16 @@ func _capture_layout(request: Dictionary) -> void:
 
 func _capture_reset(_request: Dictionary) -> void:
 	reset_request_count += 1
+
+
+func _visible_controls(node: Node) -> Array[Control]:
+	var controls: Array[Control] = []
+	for child in node.get_children():
+		var control := child as Control
+		if control != null and control.is_visible_in_tree():
+			controls.append(control)
+		controls.append_array(_visible_controls(child))
+	return controls
 
 
 func _apply_maximum_accessibility_fixture(node: Node) -> void:

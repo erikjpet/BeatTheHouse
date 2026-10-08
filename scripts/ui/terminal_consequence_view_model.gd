@@ -1,6 +1,9 @@
 class_name TerminalConsequenceViewModel
 extends RefCounted
 
+# Projects terminal and significant nonterminal results into consequence cards,
+# pressure summaries, and environment feedback without mutating the run.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 

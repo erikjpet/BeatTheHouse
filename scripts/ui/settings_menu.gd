@@ -1,7 +1,9 @@
 class_name SettingsMenu
 extends VBoxContainer
 
-# Settings screen; edits a draft before applying.
+# Settings screen with apply/cancel draft semantics. It owns accessibility,
+# display/audio/gameplay preferences and launches the game/environment libraries;
+# persistent writes remain in UserSettings and the host.
 
 signal back_requested
 signal cancel_requested

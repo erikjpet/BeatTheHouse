@@ -1,6 +1,9 @@
 class_name ScenarioSequenceRolloutManifest
 extends RefCounted
 
+# Canonical rollout census for the 55 production scenario sequences and the
+# exact package/sequence identities release validation expects.
+
 const EXPECTED_COUNT := 55
 const CATALOG_IDS := [
 	"back_alley_cruiser_parked", "back_alley_fence_night", "back_alley_nothing_moving", "back_alley_street_craps",

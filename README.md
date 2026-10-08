@@ -10,9 +10,9 @@ run state forward.
 
 Versions 0.2.0 through 0.3.3 are historical source releases; 0.4.0 was an Act 1
 candidate tag that was not published before development continued. Version
-0.5.1 is the latest stable owner-published release. The latest testing build is
-the GitHub prerelease `v0.6.0-pre.5`; current `main` remains the stamped 0.6.0
-release-preparation line. It keeps the Act 1 foundation and adds the Living Town,
+0.5.1 is the latest stable owner-published release. The latest downloadable
+testing build is the GitHub prerelease `v0.6.0-pre.5`; current `main` is the
+feature-complete, version-stamped 0.6.0 source line. It keeps the Act 1 foundation and adds the Living Town,
 55 persistent room scenarios, the Crew campaign, eleven depth-complete game
 modules, expanded tutorial and audio coverage, and a reworked four-room Grand
 Casino endgame with a living Rourke, chips and Cage economy, Linda's
@@ -23,11 +23,12 @@ The 0.6.0 source is playable and uses a four-family placement model across 21
 source maps plus 55 compact scenario-specific layouts. Twenty source maps are
 reachable base layouts; the unlayered Punchline parent is template-only. The
 complete manual authoring pass therefore has 75 contexts: 20 no-scenario
-layouts plus one layout per valid map/scenario combination. Release qualification is still in
-progress: the room set awaits final owner positioning and the three ending
-routes are completing their normal-play confirmations. Project and export
-metadata are stamped `0.6.0`; `v0.6.0-pre.5` provides the current Windows
-testing package. The `v0.5.1` tag and GitHub Release identify the final corrected
+layouts plus one layout per valid map/scenario combination. The game feature set
+is complete for 0.6; the remaining source-authoring task is final owner
+positioning, export/import of the approved schema-3 placement report, and its
+focused post-promotion validation. Project and export metadata are stamped
+`0.6.0`; `v0.6.0-pre.5` remains the latest downloadable Windows testing package
+and predates the feature-complete source. The `v0.5.1` tag and GitHub Release identify the final corrected
 0.5 playtest baseline; `v0.5.0` remains the immutable original release boundary.
 Beat the House is not a real-money gambling product. It has no real-money
 wagering, cash prizes, gambling monetization, or store credentials checked into
@@ -41,9 +42,9 @@ the repository.
 | Main scene | `res://scenes/main.tscn` |
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
 | Published release line | 0.5.1 stable; `v0.6.0-pre.5` is the latest GitHub testing prerelease |
-| Release-prep version | 0.6.0 in project and platform export metadata |
-| Active planning target | Owner room repositioning and normal-play ending confirmations before the final stable Windows/Web handoff |
-| Current release readiness | Playable, version-stamped, and packaged as prerelease 5; focused placement-panel checks cover the urgent owner-workflow repair, while broader candidate verification continues |
+| Source version | 0.6.0 in project and platform export metadata |
+| Active planning target | Complete the manual 75-context slot-placement pass, promote the approved coordinates, and produce the final Windows/Web handoff |
+| Current release readiness | Feature-complete and version-stamped in source; manual placement, focused post-promotion validation, final packaging, and owner publication remain |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer by default; Windows uses Godot compatibility/OpenGL to avoid the native Vulkan/OBS crash path seen in local WER reports |
 | Input model | Single pointer interaction with mouse/touch parity |
@@ -219,19 +220,21 @@ rendering details.
 
 | Game | Family | Module | Cheat actions | Current behavior |
 | --- | --- | --- | --- | --- |
-| Scratch Tickets | lottery | `scripts/games/scratch_tickets.gd` | none | Seven generated-art ticket faces with separate background/icon/foil renderers, high-resolution interpolated scratching, intentional drag-to-bin discard, visible win/dud piles, fixed-at-purchase outcomes, compact settled receipts, and collection-print payoff |
+| Scratch Tickets | novelty | `scripts/games/scratch_tickets.gd` | none | Seven generated-art ticket faces, fixed-at-purchase outcomes, interpolated scratching, discard and win/dud filing, collection payoff, plus a detailed vending cabinet whose lift shelf dispenses each ticket into a clickable tray in about 1.5 seconds |
 | Pull Tabs | novelty | `scripts/games/pull_tabs.gd` | `tab_detector_scan` | Counter-sold finite deals, ticket windows, row/deal state, detector and tarot interactions, counter redemption, and voiced suspicious-cashout follow-up |
 | Slot | slots | `scripts/games/slot.gd` | `nudge` | Generated Pinball/Buffalo machines, fixed bet ladder, reel-shift nudge, autoplay, feature bonuses, and bonus-stuck watchdog coverage |
-| Bar Dice | dice | `scripts/games/bar_dice.gd` | `loaded_toss`, `palmed_swap` | Ship, Captain, Crew as a bar-top table game with patrons, cargo scoring, carryover pots, and skill-timed dice cheats |
+| Bar Dice | dice | `scripts/games/bar_dice.gd` | `loaded_toss`, `palmed_swap` | Ship, Captain, Crew as a fixed-layout bar-top table with patrons, cargo scoring, carryover pots, readable rules/paytable/timer panels, and skill-timed dice cheats |
 | Blackjack | cards | `scripts/games/blackjack.gd` | `peek_hole_card`, `count_cards` | Shoe blackjack with hit/stand/split/double, side bets, count challenge, and hole-card peek heat |
 | Baccarat | cards | `scripts/games/baccarat.gd` | `read_baccarat_shoe`, `edge_sort` | Mini-baccarat with Player/Banker/Tie/pair bets, commission, shoe state, read-shoe, and edge-sort play |
 | Roulette | wheel | `scripts/games/roulette.gd` | `read_wheel_bias`, `past_post` | Full roulette layout with inside/outside bets, chip placement, wheel spin, payout animation, wheel-read, and past-post timing |
-| Video Poker | cards | `scripts/games/video_poker.gd` | `mark_holds` | Multi-game video poker with bet, hold, draw, double-up, and mark-hold cheat action |
-| Coin Pusher | novelty | `scripts/games/coin_pusher.gd` | machine-specific advantage actions | Three deterministic physics-backed cabinets with live trays, cabinet goals, persistence, and native/Web parity coverage |
-| Craps | dice | `scripts/games/craps.gd` | table-specific advantage actions | Full-table and street variants with 40 reachable wager types, derived house edges, and million-roll verification |
-| Crew Hold'em | cards | `scripts/games/crew_draw_poker.gd` | read/bluff actions | Six-handed no-limit Hold'em with a Crew dealer, animated dealing/chips, distinct persistent opponent personalities, and hidden-card authority |
+| Video Poker | cards | `scripts/games/video_poker.gd` | `mark_holds` | Three cabinets—9/6 Jacks or Better, Double Deuces, and Triple Double Bonus—with 1-5 coin betting, one to three hands, hold/draw, double-up, recommendations, and mark-hold play |
+| Coin Pusher | coin_pusher | `scripts/games/coin_pusher.gd` | `nudge_machine` | Three deterministic physics-backed cabinets with live trays, cabinet goals, persistence, and native/Web parity coverage |
+| Craps | dice | `scripts/games/craps.gd` | `dice_setting`, `dice_switching` | Full-table and street variants with 40 reachable wager types, derived house edges, and million-roll verification |
+| Crew Hold'em | cards | `scripts/games/crew_draw_poker.gd` | none; tells are surface play | Six-handed no-limit Hold'em with automatic paced opponent turns, five personality-shaped tell emotions, player-projected tells, dealer/muck fold cleanup, animated cards/chips, persistent opponents, and hidden-card authority |
 
-Shared table-game visuals live in `scripts/games/table_game_visuals.gd`.
+Shared table-game visuals live in `scripts/games/table_game_visuals.gd`. The
+maintained source-backed roster, actions, mechanics, and complete inventory of
+all 47 game scripts are in `docs/game_reference.md`.
 
 ## Slot System
 
@@ -269,6 +272,9 @@ Buffalo supports free games, Hold and Spin, wheel/monster feature paths, Gold
 Buffalo collection/conversion, must-hit meter data, and jackpot tiers.
 
 ## Runtime Architecture
+
+The maintained ownership, mutation, scheduling, and source-navigation guide is
+`docs/code_reference.md`. The table below lists the primary entry points.
 
 | Path | Responsibility |
 | --- | --- |
@@ -408,9 +414,9 @@ The wrappers resolve Godot in this order:
 
 ## Validation
 
-The current product summary is `docs/current_game_state.md`; the canonical 0.6
-execution state is `docs/todo/README_0_6_board.md`. The September 14 integration
-audit is a dated custody snapshot, not the latest product verdict. Release
+The current product summary is `docs/current_game_state.md`; the canonical game
+roster and source inventory are in `docs/game_reference.md`. The old 0.6 task
+boards and September integration audits are dated custody snapshots, not the latest product verdict. Release
 ledgers through 0.5.1 are historical evidence for published source boundaries;
 they are not evidence that current 0.6 `main` is ready to ship. The primary
 headless commands are:
@@ -436,6 +442,8 @@ powershell -ExecutionPolicy Bypass -File tools\ui05_surface_coverage_check.ps1
 powershell -ExecutionPolicy Bypass -File tools\ui05_token_adoption_check.ps1
 powershell -ExecutionPolicy Bypass -File tools\ui05_popup_fit_check.ps1
 powershell -ExecutionPolicy Bypass -File tools\ui05_asset_pipeline_check.ps1
+powershell -ExecutionPolicy Bypass -File tools\code_documentation_check.ps1
+powershell -ExecutionPolicy Bypass -File tools\game_documentation_check.ps1
 ```
 
 Current integration evidence and remaining work (verified 2026-10-04):
@@ -483,8 +491,10 @@ historical context only. For Act 1 historical work, use
 ## Documentation
 
 The README is the public top-level implementation spec. `docs/README.md`
-explains document authority, and `docs/current_game_state.md` is the maintained
-internal product snapshot. The `docs/plans/` folder mixes active design locks,
+explains document authority, `docs/current_game_state.md` is the maintained
+internal product snapshot, and `docs/game_reference.md` is the complete
+source-backed 0.6 game reference. `docs/code_reference.md` explains runtime
+ownership and the production comment contract. The `docs/plans/` folder mixes active design locks,
 dated evidence, shipped-release ledgers, and historical context:
 
 - `CHANGELOG.md` - public release changelog for shipped releases and candidate
@@ -563,9 +573,9 @@ before store submission.
 
 ## Known Release Limitations
 
-- Current 0.6.0 `main` is in release preparation, not yet owner-cleared. Final
-  room approval, all three normal-play ending confirmations, the separate final
-  qualification pass, and final artifact handoff still remain.
+- Current 0.6.0 source is feature-complete but not yet owner-published. The
+  manual 75-context room-placement pass, coordinate promotion, focused
+  post-promotion validation, final artifact handoff, and owner approval remain.
 - Tutorial pointer overlays can partially cover the center of the action they
   describe. The merged player path remains operable through the exposed part of
   the target, but the composition can be polished during the owner's manual

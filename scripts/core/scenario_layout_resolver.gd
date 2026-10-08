@@ -17,6 +17,11 @@ const MIN_SCENE_SIZE := Vector2(16.0, 16.0)
 const DEFAULT_SCENE_SIZE := Vector2(48.0, 48.0)
 const DEFAULT_ACTOR_SIZE := Vector2(72.0, 80.0)
 const COLLISION_RATIO := 0.65
+# Small-screen hit targets are expanded and then clamped inside the board. At a
+# room edge that clamp can move a target back over an otherwise separate object
+# by one pixel. Treat that seam as edge contact, while preserving fail-closed
+# validation for any overlap with real depth on both axes.
+const COLLISION_EDGE_TOLERANCE := 1.01
 const LABEL_MAX_LENGTH := 64
 const PROMPT_MAX_LENGTH := 240
 const LABEL_HEIGHT := 15.0
@@ -1015,14 +1020,13 @@ static func _validate_actor_routes(actors: Dictionary, obstacles: Array, occupie
 			errors.append("Scenario actor %s route endpoint cannot stage its full bounds inside the room." % identity)
 			continue
 		var endpoint_small := _expanded_rect(endpoint_rect, SMALL_SCREEN_TARGET)
-		var actor_start_rect := _pixel_rect(_dict(actor.get("normalized_hit_rect", {})))
-		var actor_small_start_rect := _pixel_rect(_dict(actor.get("small_screen_rect", {})))
-		var endpoint_label := _translated_label_rect(_pixel_rect(_dict(actor.get("label_rect", {}))), actor_start_rect, endpoint_rect)
-		var endpoint_small_label := _translated_label_rect(_pixel_rect(_dict(actor.get("small_screen_label_rect", {}))), actor_small_start_rect, endpoint_small)
+		# Labels are resolved as presentation geometry after route motion. They may
+		# temporarily share space with another object without making the actor's
+		# authored route physically invalid; only the actor body is collision
+		# authority here. Including translated label rectangles caused valid routes
+		# to fail with an empty collision-identity list.
 		if _substantially_overlaps(identity, endpoint_rect, occupied) \
-				or _expanded_overlaps(identity, endpoint_small, occupied) \
-				or endpoint_label.has_area() and _substantially_overlaps(identity, endpoint_label, occupied) \
-				or endpoint_small_label.has_area() and _expanded_overlaps(identity, endpoint_small_label, occupied):
+				or _expanded_overlaps(identity, endpoint_small, occupied):
 			errors.append("Scenario actor %s route endpoint collides in normal or expanded small-screen layout at %s with %s." % [identity, str(endpoint), JSON.stringify(_overlap_identities(identity, endpoint_rect, endpoint_small, occupied))])
 
 
@@ -1677,7 +1681,7 @@ static func _expanded_overlaps(identity: String, rect: Rect2, occupied: Array) -
 		var other: Rect2 = occupied_record.get("small_rect", Rect2())
 		if not other.has_area():
 			other = _expanded_rect(occupied_record.get("rect", Rect2()), SMALL_SCREEN_TARGET)
-		if rect.intersects(other) and rect.intersection(other).get_area() > 0.01:
+		if _meaningfully_intersects(rect, other):
 			return true
 	return false
 
@@ -1693,10 +1697,19 @@ static func _overlap_identities(identity: String, rect: Rect2, small_rect: Rect2
 		var other_small: Rect2 = occupied_record.get("small_rect", Rect2())
 		if not other_small.has_area():
 			other_small = _expanded_rect(other_rect, SMALL_SCREEN_TARGET)
-		if (other_rect.has_area() and rect.intersects(other_rect)) or (other_small.has_area() and small_rect.intersects(other_small)):
+		if (other_rect.has_area() and _meaningfully_intersects(rect, other_rect)) \
+				or (other_small.has_area() and _meaningfully_intersects(small_rect, other_small)):
 			result.append(other_identity)
 	result.sort()
 	return result
+
+
+static func _meaningfully_intersects(left: Rect2, right: Rect2) -> bool:
+	if not left.has_area() or not right.has_area() or not left.intersects(right):
+		return false
+	var overlap := left.intersection(right)
+	return overlap.size.x > COLLISION_EDGE_TOLERANCE \
+		and overlap.size.y > COLLISION_EDGE_TOLERANCE
 
 
 static func _overlap_count(authority: Dictionary, rect_key: String, environment: Dictionary = {}) -> int:

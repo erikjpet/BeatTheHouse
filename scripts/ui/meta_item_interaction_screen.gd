@@ -1,6 +1,9 @@
 class_name MetaItemInteractionScreen
 extends Control
 
+# Modal collection-item detail/action screen. It owns selection and responsive
+# layout while all profile mutations remain in the calling service.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 signal close_requested

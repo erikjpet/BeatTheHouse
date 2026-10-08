@@ -1,6 +1,9 @@
 class_name TownState
 extends RefCounted
 
+# Persistent deterministic town simulation for conditions, schedules,
+# progressive meters, generation overrides, and action-time advancement.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const CONDITIONS_PATH := "res://data/town/conditions.json"

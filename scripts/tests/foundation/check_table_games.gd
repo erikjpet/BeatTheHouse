@@ -1715,6 +1715,13 @@ func _check_crew_poker_dealer_and_animation_contract(game: GameModule, failures:
 	player_fold_after["player_active"] = false
 	if bool(game.call("_resting_hole_cards_visible", player_fold_after, "player")):
 		failures.append("Crew poker redrew the player's hidden cards after folding them to the dealer.")
+	var player_fold_environment := run_state.current_environment.duplicate(true)
+	var player_fold_states: Dictionary = player_fold_environment.get("game_states", {}).duplicate(true)
+	player_fold_states["crew_draw_poker"] = player_fold_after
+	player_fold_environment["game_states"] = player_fold_states
+	var player_fold_surface := game.surface_state(run_state, player_fold_environment, {})
+	if bool(game.call("_resting_hole_cards_visible", player_fold_surface, "player")):
+		failures.append("Crew poker surface projection lost the player's folded state and redrew returned cards.")
 	var showdown_before := street_after.duplicate(true)
 	showdown_before["phase"] = "river"
 	showdown_before["community_cards"] = [{"rank": 3, "suit": 0, "deck": 0}, {"rank": 7, "suit": 1, "deck": 0}, {"rank": 11, "suit": 2, "deck": 0}, {"rank": 12, "suit": 3, "deck": 0}, {"rank": 14, "suit": 0, "deck": 0}]
@@ -7573,10 +7580,11 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 	var dealer_station_rects: Array = bar_layout.get("dealer_station_rects", []) if typeof(bar_layout.get("dealer_station_rects", [])) == TYPE_ARRAY else []
 	var patron_exclusion_rects: Array = bar_layout.get("patron_exclusion_rects", []) if typeof(bar_layout.get("patron_exclusion_rects", [])) == TYPE_ARRAY else []
 	var patron_safe_rects: Array = bar_layout.get("patron_safe_rects", []) if typeof(bar_layout.get("patron_safe_rects", [])) == TYPE_ARRAY else []
+	var content_zone_rects: Array = bar_layout.get("content_zone_rects", []) if typeof(bar_layout.get("content_zone_rects", [])) == TYPE_ARRAY else []
 	if text_panel_rects.size() < 2 or patron_safe_rects.size() < 2:
 		failures.append("Bar Dice surface did not expose text-panel and player-safe layout metadata.")
-	if opponent_panel_rects.size() != 3:
-		failures.append("Bar Dice surface did not expose all three Rail Cups panel rectangles.")
+	if opponent_panel_rects.size() != 4:
+		failures.append("Bar Dice surface did not expose all four compact Rail Cups panel rectangles.")
 	if dealer_station_rects.size() < 4:
 		failures.append("Bar Dice surface did not expose the dealer station and all status-widget rectangles.")
 	if patron_exclusion_rects.size() != text_panel_rects.size() + opponent_panel_rects.size() + dealer_station_rects.size():
@@ -7587,8 +7595,8 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 		if panel_rect.size.x <= 0.0 or panel_rect.size.y <= 0.0 or panel_rect.position.x < 0.0 or panel_rect.position.y < 0.0 or panel_rect.end.x > game_board.end.x or panel_rect.end.y > game_board.end.y:
 			failures.append("Bar Dice text panel is outside the game board: %s." % str(panel_rect))
 		var panel_id := str((panel_value as Dictionary).get("id", "")) if typeof(panel_value) == TYPE_DICTIONARY else ""
-		if panel_id == "rules" and panel_rect.size.y >= 64.0:
-			failures.append("Bar Dice rules panel stayed too large after the compact layout pass.")
+		if panel_id == "rules" and (panel_rect.size.y > 86.0 or panel_rect.size.x < 300.0):
+			failures.append("Bar Dice rules panel does not preserve its readable, bounded two-column layout.")
 	for occupied_value in patron_exclusion_rects:
 		var occupied_rect := _layout_rect_from_dict(occupied_value)
 		if occupied_rect.size.x <= 0.0 or occupied_rect.size.y <= 0.0 or occupied_rect.position.x < 0.0 or occupied_rect.position.y < 0.0 or occupied_rect.end.x > game_board.end.x or occupied_rect.end.y > game_board.end.y:
@@ -7606,6 +7614,18 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 			var patron_b := _layout_rect_from_dict(patron_safe_rects[j])
 			if patron_a.intersects(patron_b):
 				failures.append("Bar Dice table player regions overlap: %s intersects %s." % [str(patron_a), str(patron_b)])
+	if content_zone_rects.size() < 10:
+		failures.append("Bar Dice surface did not expose all major non-overlapping UI zones.")
+	for i in range(content_zone_rects.size()):
+		var zone_a := _layout_rect_from_dict(content_zone_rects[i])
+		if not game_board.encloses(zone_a):
+			failures.append("Bar Dice UI zone is outside the game board: %s." % str(zone_a))
+		for j in range(i + 1, content_zone_rects.size()):
+			var zone_b := _layout_rect_from_dict(content_zone_rects[j])
+			if zone_a.intersects(zone_b):
+				var zone_a_id := str((content_zone_rects[i] as Dictionary).get("id", "zone_%d" % i))
+				var zone_b_id := str((content_zone_rects[j] as Dictionary).get("id", "zone_%d" % j))
+				failures.append("Bar Dice UI zones overlap: %s intersects %s." % [zone_a_id, zone_b_id])
 	if (surface.get("dice_legend", []) as Array).size() < 3:
 		failures.append("Bar Dice surface did not expose locked/suggested/selected dice legend data.")
 	if not _surface_blocks_action_while(surface, "bar_dice_select", "bar_dice_tumble") or not _surface_blocks_action_while(surface, "bar_dice_shake", "bar_dice_tumble"):
@@ -7619,6 +7639,7 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 	var bar_dice_harness := SurfaceHarness.new()
 	bar_dice_harness.setup(surface)
 	game.draw_surface(bar_dice_harness, surface, {"contract_harness": true})
+	_check_surface_hit_layout(bar_dice_harness, "Bar Dice idle surface", failures)
 	var bar_dice_roll_hit := _surface_harness_first_hit(bar_dice_harness, "bar_dice_roll", 0)
 	_check_canvas_hit_dispatch(surface, bar_dice_roll_hit.get("rect", Rect2()), "bar_dice_roll", 0, "Bar Dice roll canvas dispatch", failures)
 	var highest_stake_index := (surface.get("stake_ladder", []) as Array).size() - 1

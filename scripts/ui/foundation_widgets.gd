@@ -1,6 +1,9 @@
 class_name FoundationWidgets
 extends RefCounted
 
+# Shared constructors for consistently themed panels, labels, buttons, detail
+# rows, and card controls used by the Foundation UI.
+
 const ACCESSIBILITY_BASE_FONT_META := "accessibility_base_font_size"
 const ACCESSIBILITY_BASE_COLOR_META := "accessibility_base_font_color"
 const DEFAULT_CONTROL_FONT_SIZE := VisualStyle.TYPE_BODY

@@ -1,6 +1,9 @@
 class_name ScenarioSequenceRuntime
 extends RefCounted
 
+# Authoritative data-driven scenario state machine: normalization, command
+# preparation/application, fact queues, phase transitions, and terminal cleanup.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")

@@ -1,6 +1,9 @@
 class_name EnvironmentPlacement
 extends RefCounted
 
+# Resolves authored fixed, event, scenario, and exit slot geometry, including
+# developer overrides and exact scenario-local placement authority.
+
 const SURFACE_MAP_PATH := "res://data/environments/placement_surfaces.json"
 const SCENARIO_LAYOUT_PATH := "res://data/environments/scenario_slot_layouts.json"
 const DeveloperPlacementStoreScript := preload("res://scripts/core/developer_placement_store.gd")
@@ -419,10 +422,16 @@ static func _with_developer_slots(environment: Dictionary, surface_data: Diction
 # it is not an activation step for the local authoring session.
 static func _with_runtime_slot_geometry(environment: Dictionary, surface_data: Dictionary) -> Dictionary:
 	var overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "slot_positions")
-	if overrides.is_empty():
+	var layer_overrides := DeveloperPlacementStoreScript.slot_layer_overrides(environment)
+	if overrides.is_empty() and layer_overrides.is_empty():
 		return surface_data
-	var result := _with_slot_geometry(surface_data, overrides)
-	result["developer_slot_positions"] = overrides.duplicate(true)
+	var result := _with_slot_geometry(surface_data, overrides) if not overrides.is_empty() else surface_data
+	if not layer_overrides.is_empty():
+		result = _with_slot_layers(result, layer_overrides)
+	if not overrides.is_empty():
+		result["developer_slot_positions"] = overrides.duplicate(true)
+	if not layer_overrides.is_empty():
+		result["developer_slot_layers"] = layer_overrides.duplicate(true)
 	return result
 
 
@@ -471,6 +480,33 @@ static func _with_slot_geometry(surface_data: Dictionary, overrides: Dictionary)
 			collection_changed = true
 		if collection_changed:
 			result[field] = translated
+	return result
+
+
+static func _with_slot_layers(surface_data: Dictionary, overrides: Dictionary) -> Dictionary:
+	if overrides.is_empty():
+		return surface_data
+	var result := surface_data.duplicate(false)
+	for field in SLOT_COLLECTIONS.values():
+		var source_slots := _array(surface_data.get(field, []))
+		var layered: Array = []
+		var collection_changed := false
+		for slot_value in source_slots:
+			if typeof(slot_value) != TYPE_DICTIONARY:
+				layered.append(slot_value)
+				continue
+			var source_slot := slot_value as Dictionary
+			var slot_id := str(source_slot.get("id", "")).strip_edges()
+			if slot_id.is_empty() or not overrides.has(slot_id):
+				layered.append(source_slot)
+				continue
+			var draw_layer := clampi(int(overrides.get(slot_id, 0)), -1, 1)
+			var slot := source_slot.duplicate(false)
+			slot["draw_layer"] = draw_layer
+			layered.append(slot)
+			collection_changed = true
+		if collection_changed:
+			result[field] = layered
 	return result
 
 

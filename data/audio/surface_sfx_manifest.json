@@ -192,11 +192,11 @@
       "hidden_state_policy": "public_fact_or_transition_op_only", "selection_seed_salt": "scratch_counter",
       "variation_pitch_steps": [-0.03, 0.0, 0.02], "variation_volume_db_steps": [-0.6, 0.0, 0.3],
       "event_classes": {
-        "ticket_dispenser": "pull_tab_thump", "scratch": "scratch_paper_foley_loop", "ticket_peel": "paper_peel",
+        "ticket_dispenser": "button", "ticket_navigation": "paper_peek", "scratch": "scratch_paper_foley_loop", "ticket_peel": "paper_peel",
         "paper_peel": "paper_peel", "scratch_box_pop": "scratch_box_pop", "redemption": "payout", "refusal": "lose", "ticket_win": "payout"
       },
       "visual_counterparts": {
-        "ticket_dispenser": "scratch.machine_tray", "scratch": "scratch.cleared_mask", "ticket_peel": "scratch.ticket_reveal",
+        "ticket_dispenser": "scratch.machine_lift", "ticket_navigation": "scratch.tray_collection", "scratch": "scratch.cleared_mask", "ticket_peel": "scratch.ticket_reveal",
         "paper_peel": "scratch.file_motion", "scratch_box_pop": "scratch.revealed_region", "redemption": "scratch.redemption",
         "refusal": "scratch.refusal", "ticket_win": "scratch.payout"
       }

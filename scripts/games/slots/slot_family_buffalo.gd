@@ -1,6 +1,9 @@
 class_name SlotFamilyBuffalo
 extends RefCounted
 
+# Buffalo-family ways math and bonus lifecycle, including free games, Hold and
+# Spin, wheel/monster paths, Gold Buffalo conversion, meters, and jackpots.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const MathScript := preload("res://scripts/games/slots/slot_rng_math.gd")

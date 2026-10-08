@@ -530,6 +530,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"raise_count": int(state.get("raise_count", 0)),
 		"raise_cap": -1,
 		"player_stack": int(state.get("player_stack", 0)),
+		"player_active": bool(state.get("player_active", true)),
 		"player_all_in": bool(state.get("player_all_in", false)),
 		"dealer_actor": str(state.get("dealer_actor", "")),
 		"small_blind_actor": str(state.get("small_blind_actor", "")),

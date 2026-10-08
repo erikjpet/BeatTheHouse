@@ -1,6 +1,9 @@
 class_name SlotFamilyPinball
 extends RefCounted
 
+# Pinball-family reel math and feature adapter: outcome tables, payouts, nudges,
+# feature opening, and delegation to the live pinball runtime.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const MathScript := preload("res://scripts/games/slots/slot_rng_math.gd")

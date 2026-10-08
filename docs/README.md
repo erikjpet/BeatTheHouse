@@ -7,24 +7,32 @@ current game.
 
 ## Current authority
 
-- `../README.md` — public project overview, setup, architecture, game roster,
-  exports, validation, and current limitations.
+- `../README.md` — public project overview, setup, architecture, exports,
+  validation, and current limitations.
 - `current_game_state.md` — maintained internal summary of current `main`, its
-  content inventory, implemented gameplay systems, verification state, and
-  open release blockers.
-- `todo/README_0_6_board.md` — canonical 0.6 execution state and dependency
-  order.
+  content inventory, implemented systems, verification state, and remaining
+  release procedure.
+- `game_reference.md` — source-backed authority for the 11-game roster, current
+  behavior, catalog actions, and all 47 scripts under `scripts/games/`.
+- `code_reference.md` — maintained runtime ownership, source navigation, and
+  production code-comment contract.
+- `plans/release_0_6_0_copy.md` — maintained draft of public 0.6 release copy;
+  it remains owner-gated and must not be posted before approval.
 - `plans/0.6_living_world_roadmap.md` — owner-approved 0.6 design intent.
 - `plans/content_style_guide.md`, `plans/0.5_voice_bible.md`, and
   `plans/0.6_voice_bible_world_register.md` — current player-facing copy and
   voice rules.
 
 When these disagree about implemented behavior, current code/data and passing
-tests win. Record the discrepancy on the active board instead of silently
-rewriting dated evidence.
+tests win. Correct maintained references, but preserve dated evidence and its
+recorded source boundary.
 
 ## Maintained feature references
 
+- `code_reference.md` — architecture boundaries, common change traces, and the
+  standard enforced for module/function context comments.
+- `game_reference.md` — complete 0.6 game roster, mechanics, actions, source
+  modules, supporting scripts, and data inventory.
 - `character_authoring.md` — reusable character and encounter authoring.
 - `plans/world_map_design.md` — seeded persistent travel graph contract.
 - `plans/grand_casino_endgame_design.md` — Act 1 Grand Casino ending contract.
@@ -46,7 +54,11 @@ rewriting dated evidence.
 - `plans/tutorial_completion_report.md` — original tutorial evidence with 0.6
   addenda and the remaining human-only gate.
 - `plans/perf06_1_performance_platform_report.md` — historical non-binding
-  Phase 3 ledger and current boundary for the parked binding Phase 4 run.
+  Phase 3 ledger. It is retained as measured evidence, not the current release
+  boundary or a description of the later accepted performance work.
+- `plans/code_deprecation_unused_audit_2026-10-08.md` — current source-backed
+  inventory of unreachable code, unreferenced function islands, retained
+  compatibility seams, and staged cleanup recommendations.
 
 ## Historical records
 
@@ -70,5 +82,8 @@ commit ids and accepted board rows remain the durable disposition record.
 
 Files under `todo/` are claimable only when their own status and the active
 board say so. A `PARKED` prompt is prepared work, not permission to execute it.
-At the current boundary, room/scenario composition must be corrected before the
-binding performance, playtest, balance, voice, and release sequence resumes.
+The old 0.6 boards are historical unless their own release-week override says
+otherwise. At the current boundary, 0.6 is feature-complete in source. The one
+remaining authoring task is the manual 75-context environment slot-placement
+procedure, followed by coordinate promotion, focused validation, final
+packaging, and explicit owner publication.

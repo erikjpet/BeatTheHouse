@@ -15,9 +15,10 @@ const MusicFloatPcmStreamScript := preload("res://scripts/ui/music_float_pcm_str
 const MusicLayerChoreographyScript := preload("res://scripts/ui/music_layer_choreography.gd")
 const MusicOutcomeDirectorModelScript := preload("res://scripts/ui/music_outcome_director_model.gd")
 
-# Procedural background music for the foundation UI.
-# The synth shape is ported from the old baseline: generated PCM WAV themes,
-# cached per room/heat profile, played through the Music bus.
+# Adaptive music runtime for procedural beds and authored synchronized stems.
+# It owns manifest delivery, room/Heat arrangements, phrase/bar choreography,
+# outcome cues, feature layers, cache lifetime, WebAudio delivery, and Music-bus
+# playback while keeping deterministic selection in focused model helpers.
 
 const MUSIC_BUS := "Music"
 const SFX_BUS := "SFX"

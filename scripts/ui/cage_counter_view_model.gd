@@ -1,6 +1,9 @@
 class_name CageCounterViewModel
 extends RefCounted
 
+# Builds Linda/Cage service rows, Players Card progress, chip exchange, comps,
+# and clean-route review copy from Grand Casino state.
+
 const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.gd")
 
 

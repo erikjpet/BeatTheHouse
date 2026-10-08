@@ -1,6 +1,9 @@
 class_name CoinPusherGame
 extends GameModule
 
+# Production host for Quarter Falls, Jackpot Ridge, and The Vault Drop. It owns
+# durable cabinet state, live-session scheduling, actions, settlement, and UI.
+
 var _generation_timing_enabled := false
 var _last_generation_timing_usec: Dictionary = {}
 

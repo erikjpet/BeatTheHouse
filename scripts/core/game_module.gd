@@ -49,6 +49,7 @@ func set_transient_state_key_context(state_key: String) -> void:
 	_transient_state_key_context = state_key.strip_edges()
 
 
+# Returns the host-selected fixture key used for the current read/action only.
 func transient_state_key_context() -> String:
 	return _transient_state_key_context
 
@@ -62,6 +63,8 @@ func gameplay_model() -> String:
 	return GAMEPLAY_MODEL_FULL_SIMULATION if model == GAMEPLAY_MODEL_FULL_SIMULATION else GAMEPLAY_MODEL_GENERIC_ODDS
 
 
+# Convenience predicate for hosts choosing between generic odds and a complete
+# module-owned surface/state lifecycle.
 func is_full_simulation() -> bool:
 	return gameplay_model() == GAMEPLAY_MODEL_FULL_SIMULATION
 
@@ -198,6 +201,8 @@ func host_action_rollback_snapshot(_action_id: String, _run_state: RunState, _en
 	return {}
 
 
+# Restores a module-provided rollback capsule after the host rejects publication.
+# Returning false asks the host to use its conservative whole-run fallback.
 func restore_host_action_rollback(_snapshot: Dictionary, _run_state: RunState, _environment: Dictionary) -> bool:
 	return false
 
@@ -249,6 +254,7 @@ func surface_action_uses_lightweight_ui_state(_surface_action: String) -> bool:
 	return false
 
 
+# Declares the retained UI keys required by lightweight surface action commands.
 func surface_action_ui_state_keys() -> Array:
 	return []
 
@@ -274,22 +280,30 @@ func checkpoint_surface_ui_state_for_save_requires_ui_state() -> bool:
 	return true
 
 
+# Reports whether the module has reached a durable state safe for Foundation's
+# normal save path; continuous simulations can hold this false while settling.
 func foundation_save_ready(_run_state: RunState, _environment: Dictionary) -> bool:
 	return true
 
 
+# Selects the bounded multi-frame exit-settlement protocol instead of immediate
+# checkpointing for a dense continuous simulation.
 func requires_chunked_exit_settle(_run_state: RunState, _environment: Dictionary) -> bool:
 	return false
 
 
+# Starts module-owned chunked settlement and returns progress metadata for the
+# host. The default is already complete.
 func begin_chunked_exit_settle(_run_state: RunState, _environment: Dictionary) -> Dictionary:
 	return {"started": false, "done": true}
 
 
+# Advances at most tick_budget settlement steps and reports completion/progress.
 func advance_chunked_exit_settle(_run_state: RunState, _environment: Dictionary, _tick_budget: int = 8) -> Dictionary:
 	return {"done": true, "ticks": 0}
 
 
+# Publishes the final durable checkpoint after chunked settlement completes.
 func finalize_chunked_exit_settle(_run_state: RunState, _environment: Dictionary) -> void:
 	pass
 
@@ -321,10 +335,14 @@ func surface_auto_tick_may_be_active(_retained_ui_state: Dictionary) -> bool:
 	return true
 
 
+# Exact due predicate for automatic surface commands. It is evaluated without
+# making animation liveness depend on pointer input.
 func surface_needs_auto_tick(_ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> bool:
 	return false
 
 
+# Declares the retained UI keys required by the automatic surface due predicate
+# and command when lightweight state is enabled.
 func surface_auto_tick_state_keys() -> Array:
 	return []
 
@@ -342,6 +360,7 @@ func surface_realtime_uses_lightweight_ui_state() -> bool:
 	return false
 
 
+# Declares the retained UI keys required to build a lightweight realtime patch.
 func surface_realtime_ui_state_keys() -> Array:
 	return []
 
@@ -361,10 +380,14 @@ func foreground_blocks_environment_runtime(_run_state: RunState, _environment: D
 	return false
 
 
+# Indicates whether a still-playing foreground presentation also suspends that
+# fixture's background runtime to prevent double advancement.
 func foreground_blocks_environment_runtime_during_surface_presentation() -> bool:
 	return false
 
 
+# Returns one host-normalized automatic command when due; it does not apply the
+# result itself.
 func surface_auto_action_command(_ui_state: Dictionary, _run_state: RunState, _environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:
 	return {"handled": false}
 
@@ -382,10 +405,12 @@ func environment_runtime_enabled() -> bool:
 	return false
 
 
+# Returns the player-safe current background-runtime projection for this fixture.
 func environment_runtime_state(_run_state: RunState, _environment: Dictionary) -> Dictionary:
 	return {}
 
 
+# Cheap exact predicate used by the scheduler at or after the declared due time.
 func environment_runtime_needs_tick(_run_state: RunState, _environment: Dictionary, _now_msec: int) -> bool:
 	return false
 
@@ -397,6 +422,8 @@ func environment_runtime_next_due_msec(run_state: RunState, environment: Diction
 	return now_msec if environment_runtime_needs_tick(run_state, environment, now_msec) else -1
 
 
+# Advances one background-runtime boundary and returns a host-normalized patch or
+# action request; modules must not perform unrelated RunState work here.
 func environment_runtime_tick(_run_state: RunState, _environment: Dictionary, _rng: RngStream, _now_msec: int) -> Dictionary:
 	return {"handled": false}
 
@@ -523,6 +550,8 @@ static func surface_animation_channel(channel_id: String, active_id: String = ""
 	return channel
 
 
+# Normalizes the semantic audio profile, deterministic selection seed, action
+# cues, and state-sync values consumed by SfxPlayer.
 static func surface_audio_spec(payload: Dictionary = {}) -> Dictionary:
 	var spec := payload.duplicate(true)
 	spec["profile_id"] = str(spec.get("profile_id", "default"))
@@ -532,10 +561,14 @@ static func surface_audio_spec(payload: Dictionary = {}) -> Dictionary:
 	return spec
 
 
+# Returns and, when requested, starts the shared between-round timer stored in
+# the mutable table dictionary.
 static func table_round_timer_status(table: Dictionary, now_msec: int, label: String = "Next round", duration_msec: int = TABLE_ROUND_START_DELAY_MSEC, auto_start: bool = true) -> Dictionary:
 	return _table_round_timer_status_impl(table, now_msec, label, duration_msec, auto_start, true)
 
 
+# Read-only timer projection; unlike table_round_timer_status, it never writes a
+# missing start timestamp into the table.
 static func table_round_timer_status_peek(table: Dictionary, now_msec: int, label: String = "Next round", duration_msec: int = TABLE_ROUND_START_DELAY_MSEC, auto_start: bool = true) -> Dictionary:
 	return _table_round_timer_status_impl(table, now_msec, label, duration_msec, auto_start, false)
 
@@ -562,6 +595,7 @@ static func _table_round_timer_status_impl(table: Dictionary, now_msec: int, lab
 	}
 
 
+# Clears the shared timer or restarts it from an explicit monotonic timestamp.
 static func reset_table_round_timer(table: Dictionary, now_msec: int = 0) -> void:
 	if now_msec > 0:
 		table["table_round_timer_started_msec"] = now_msec
@@ -569,6 +603,8 @@ static func reset_table_round_timer(table: Dictionary, now_msec: int = 0) -> voi
 		table["table_round_timer_started_msec"] = 0
 
 
+# Selects the host-provided presentation clock when available, otherwise the
+# deterministic RunState simulation clock; it never returns zero.
 static func deterministic_time_msec(run_state: RunState, ui_state: Dictionary = {}) -> int:
 	if ui_state.has("surface_time_msec"):
 		return maxi(1, int(ui_state.get("surface_time_msec", 0)))
@@ -603,6 +639,8 @@ static func surface_command(payload: Dictionary = {}, zero_copy_transient: bool 
 	return command
 
 
+# Reads one animation channel from the host status, accepting either indexed
+# status dictionaries or the original channel array shape.
 static func surface_animation_status(surface_status: Dictionary, channel_id: String) -> Dictionary:
 	var animations := _copy_dict(surface_status.get("surface_animations", surface_status.get("surface_animation_status", {})))
 	var status := _copy_dict(animations.get(channel_id, {}))
@@ -617,6 +655,8 @@ static func surface_animation_status(surface_status: Dictionary, channel_id: Str
 	return status
 
 
+# Orders and clamps timing windows so perfect is contained by good, which is
+# contained by close.
 static func normalize_skill_timing_windows(perfect_msec: int, good_msec: int, close_msec: int, min_perfect_msec: int = 1) -> Dictionary:
 	var perfect := maxi(maxi(1, min_perfect_msec), perfect_msec)
 	var good := maxi(perfect, good_msec)
@@ -628,6 +668,8 @@ static func normalize_skill_timing_windows(perfect_msec: int, good_msec: int, cl
 	}
 
 
+# Grades an absolute timing distance against normalized windows and returns the
+# shared grade, accuracy, distance, and effective windows.
 static func skill_timing_grade_from_distance(distance_msec: int, perfect_msec: int, good_msec: int, close_msec: int, min_perfect_msec: int = 1) -> Dictionary:
 	var windows := normalize_skill_timing_windows(perfect_msec, good_msec, close_msec, min_perfect_msec)
 	var distance := maxi(0, distance_msec)
@@ -652,10 +694,12 @@ static func skill_timing_grade_from_distance(distance_msec: int, perfect_msec: i
 	}
 
 
+# True for grades that apply the attempted advantage rather than a complete miss.
 static func skill_grade_applies(grade: String) -> bool:
 	return grade == "perfect" or grade == "good" or grade == "partial"
 
 
+# Builds the stable shared outcome key for a game-specific skill prefix/grade.
 static func skill_outcome_for_grade(prefix: String, grade: String, fallback_grade: String = "miss") -> String:
 	var resolved_grade := grade if not grade.is_empty() else fallback_grade
 	return "%s_%s" % [prefix, resolved_grade]
@@ -679,6 +723,8 @@ static func build_owned_action_result(payload: Dictionary = {}) -> Dictionary:
 	return _build_action_result(payload, true)
 
 
+# Fast path for trusted action-local payloads already known to contain only the
+# canonical result-delta vocabulary.
 static func build_canonical_owned_action_result(payload: Dictionary = {}) -> Dictionary:
 	# Hot paths that construct only canonical delta keys can transfer ownership
 	# directly. The normal public builder remains fail-safe for untrusted shapes.
@@ -837,6 +883,8 @@ static func set_result_message(result: Dictionary, message: String) -> Dictionar
 	return updated
 
 
+# Copies patrons and marks the TalkDock-focused patron as visibly speaking and
+# watching without mutating the module's stored patron array.
 static func patrons_with_talk_focus(patrons: Array, focused_speaker_value: Variant) -> Array:
 	var focused_speaker := _copy_dict(focused_speaker_value)
 	if focused_speaker.is_empty() or str(focused_speaker.get("role", "")) != "patron":
@@ -861,6 +909,8 @@ static func patrons_with_talk_focus(patrons: Array, focused_speaker_value: Varia
 	return result
 
 
+# Returns the player-facing wager currency for this game/context; Grand Casino
+# chip games use chips and all other contexts use cash.
 static func presentation_currency_for_game(run_state: RunState, game_id: String, environment: Dictionary = {}) -> String:
 	if run_state != null and run_state.grand_casino_game_uses_chips(game_id, environment):
 		return "chips"

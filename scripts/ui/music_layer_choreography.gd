@@ -1,6 +1,9 @@
 class_name MusicLayerChoreography
 extends RefCounted
 
+# Pure bar/phrase choreography for adaptive music recipes, stem stages, fills,
+# and timeline snapshots consumed by the procedural music player.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const ROLE_ORDER := ["pad", "bass", "bass_dark", "lead", "drums_low", "drums_high", "drums_high_double", "tension", "texture"]

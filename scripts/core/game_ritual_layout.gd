@@ -1,6 +1,9 @@
 class_name GameRitualLayout
 extends RefCounted
 
+# Validates data-driven ritual layout definitions and compiles their declared
+# pointer regions into deterministic surface hit geometry.
+
 const Z_LAYERS := ["background", "gameplay", "actors", "effects", "hud"]
 
 

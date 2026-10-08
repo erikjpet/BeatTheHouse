@@ -7,7 +7,10 @@ const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_sema
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 const BuildIdentityScript := preload("res://scripts/core/build_identity.gd")
 
-# Thin UI shell for the README foundation runtime.
+# Top-level application orchestrator. It owns screen/modal lifecycle, run and
+# profile session wiring, action routing, game/environment entry, save/recovery,
+# travel, tutorials, terminal presentation, and stable test snapshots. Domain
+# rules remain in core models/services and concrete GameModules.
 
 const DEFAULT_SEED := "FOUNDATION-UI-SEED"
 const GENERATED_RUN_START_ATTEMPTS := 8
@@ -3354,8 +3357,18 @@ func resolve_event_choice(event_id: String, choice_id: String, lifecycle_rollbac
 	var was_triggered_popup := popup_type == "triggered_event"
 	var return_to_game_after_event := _event_resolution_returns_to_active_game(popup_type, event_context)
 	var inventory_before := _run_inventory_id_set()
-	var event_rollback := lifecycle_rollback if not lifecycle_rollback.is_empty() else _foundation_lifecycle_snapshot()
-	var result := event_module.resolve(run_state, event_environment, choice_id)
+	var caller_owns_event_rollback := not lifecycle_rollback.is_empty()
+	var event_rollback := lifecycle_rollback if caller_owns_event_rollback else _foundation_lifecycle_snapshot()
+	# This method always owns a complete lifecycle rollback, either supplied by
+	# the deferred room response or captured above. Let EventModule reuse that
+	# owner instead of cloning the entire run and every stored map room again.
+	var result := event_module.resolve(run_state, event_environment, choice_id, true)
+	if not bool(result.get("ok", false)):
+		if not caller_owns_event_rollback:
+			_restore_foundation_lifecycle_snapshot(event_rollback)
+			_show_message(str(result.get("message", "The event could not be resolved safely.")))
+			_refresh_after_foundation_lifecycle_rollback(event_rollback)
+		return result
 	var result_deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
 	var layer_discovery: Dictionary = result_deltas.get("environment_layer_discovery", {}) if typeof(result_deltas.get("environment_layer_discovery", {})) == TYPE_DICTIONARY else {}
 	var discovered_layer_id := str(layer_discovery.get("layer_id", "")).strip_edges()
@@ -15510,7 +15523,10 @@ func _show_interactable_event_popup(event_id: String) -> bool:
 			continue
 		var choice: Dictionary = choice_value
 		has_explicit_dismissal = has_explicit_dismissal or bool(choice.get("dismissal", false))
-		var choice_callback := Callable(self, "_dismiss_interactable_event_popup") if bool(choice.get("dismissal", false)) else Callable(self, "resolve_event_choice").bind(event_id, str(choice.get("id", "")))
+		# Route popup buttons through the same deferred transaction as inline room
+		# responses. This acknowledges the click before the event boundary, shares
+		# one rollback owner, and keeps tutorial action completion consistent.
+		var choice_callback := Callable(self, "_dismiss_interactable_event_popup") if bool(choice.get("dismissal", false)) else Callable(self, "_activate_event_response_action").bind("event_response:%s:%s" % [event_id, str(choice.get("id", ""))])
 		_add_wager_confirmation_card(
 			str(choice.get("label", choice.get("id", ""))),
 			str(choice.get("text", "")),
@@ -17173,6 +17189,27 @@ func _on_developer_placement_reset_requested(request: Dictionary) -> void:
 		_show_message(str(refresh_result.get("error", "The placement reset was saved, but this room could not refresh it yet.")))
 		return
 	_show_message("Placement reset to authored data.")
+
+
+func _on_developer_slot_layer_requested(request: Dictionary) -> void:
+	request["_slot_layer_handled"] = true
+	request["_slot_layer_persisted"] = false
+	var environment := JsonCoerceScript._copy_dict(request.get("environment", {}))
+	var result := DeveloperPlacementStoreScript.save_slot_layer(
+		environment,
+		str(request.get("slot_id", "")),
+		int(request.get("layer", 0))
+	)
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("error", "Could not save that slot layer.")))
+		return
+	request["_slot_layer_persisted"] = true
+	var refresh_result := _refresh_developer_authored_environment()
+	if not bool(refresh_result.get("ok", false)):
+		_show_message(str(refresh_result.get("error", "The slot layer was saved, but this room could not refresh it yet.")))
+		return
+	var layer_name := "Behind" if int(request.get("layer", 0)) < 0 else "Front" if int(request.get("layer", 0)) > 0 else "Standard"
+	_show_message("%s now uses the %s draw layer." % [str(request.get("slot_id", "Slot")), layer_name])
 
 
 func _on_developer_placement_promote_requested() -> void:

@@ -1,5 +1,8 @@
 extends RefCounted
 
+# Orchestrates environment interaction records across sealed base geometry,
+# scenario projection, dynamic hooks, services, games, homes, and travel exits.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")

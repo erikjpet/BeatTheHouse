@@ -1,6 +1,9 @@
 class_name CoinPusherRenderer
 extends RefCounted
 
+# Prepares and draws player-safe Coin Pusher cabinet projections, splitting
+# retained static/hardware layers from bounded live platform and body batches.
+
 const CoinPusherSolverAPIScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const DESIGN_SIZE := Vector2(900, 430)
 const CABINET_RECT := Rect2(34, 18, 832, 400)

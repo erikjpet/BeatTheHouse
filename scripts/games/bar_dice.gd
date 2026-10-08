@@ -51,38 +51,46 @@ const PALMED_SWAP_ACTION_ID := "palmed_swap"
 const CONSOLE_Y := 344.0
 const CONSOLE_SELECT_BUTTON_WIDTHS := [108.0, 108.0, 100.0, 100.0]
 const CONSOLE_ROLL_BUTTON_WIDTHS := [108.0, 124.0, 116.0]
-const RULES_PANEL_RECT := Rect2(556, 218, 300, 58)
-const PAYTABLE_PANEL_RECT := Rect2(556, 282, 190, 50)
-const ROUND_TIMER_RECT := Rect2(752, 282, 116, 50)
+const RULES_PANEL_RECT := Rect2(560, 198, 312, 82)
+const PAYTABLE_PANEL_RECT := Rect2(560, 286, 198, 50)
+const ROUND_TIMER_RECT := Rect2(764, 286, 108, 50)
 const BAR_DICE_GUIDANCE_RECT := Rect2(452, CONSOLE_Y + 61, 432, 20)
-const RULES_PANEL_LINE_LIMIT := 47
+const RULES_PANEL_LINE_LIMIT := 30
 const BAR_DICE_RITUAL_PHASES := ["agree_wager", "cover", "shake", "throw", "reveal", "call", "settle"]
 const BAR_DICE_PROPOSAL_REQUIRES_APPLY_KEY := "bar_dice_proposal_requires_apply"
 const BAR_DICE_SURFACE_INTENT_KEY := "bar_dice_surface_intent"
 const BAR_DICE_SURFACE_INTENT_INDEX_KEY := "bar_dice_surface_intent_index"
 
-const PLAYER_DICE_ORIGIN := Vector2(262, 214)
+const PLAYER_DICE_ORIGIN := Vector2(268, 246)
 const DIE_SIZE := Vector2(38, 38)
 const DIE_SPACING := 46.0
-const OPPONENT_DIE_SIZE := Vector2(22, 22)
-const OPPONENT_DIE_SPACING := 29.0
-const MAX_VISIBLE_OPPONENT_ROWS := 3
+const OPPONENT_DIE_SIZE := Vector2(16, 16)
+const OPPONENT_DIE_SPACING := 21.0
+const MAX_VISIBLE_OPPONENT_ROWS := 4
 const OPPONENT_DICE_ORIGINS := [
-	Vector2(76, 204),
-	Vector2(76, 254),
-	Vector2(76, 304),
+	Vector2(68, 210),
+	Vector2(68, 243),
+	Vector2(68, 276),
+	Vector2(68, 309),
 ]
+const OPPONENT_PANEL_OFFSET := Vector2(-8, -12)
+const OPPONENT_PANEL_SIZE := Vector2(184, 32)
+const PLAYER_CONTENT_RECT := Rect2(260, 234, 286, 104)
+const OPPONENT_CONTENT_RECT := Rect2(60, 198, 184, 131)
+const CONSOLE_CONTENT_RECT := Rect2(0, CONSOLE_Y, 900, 86)
 const BAR_PATRON_POSITIONS := [
-	Vector2(94, 84),
-	Vector2(236, 70),
-	Vector2(660, 70),
-	Vector2(808, 84),
+	Vector2(94, 104),
+	Vector2(236, 104),
+	Vector2(660, 104),
+	Vector2(808, 104),
 ]
 const BAR_DICE_DEALER_STATUS_LAYOUT := {
-	"station": Rect2(352, 54, 196, 154),
-	"attention_meter": Rect2(360, 164, 180, 9),
-	"danger_meter": Rect2(360, 178, 180, 6),
-	"status_panel": Rect2(360, 188, 180, 16),
+	"station": Rect2(344, 84, 212, 108),
+	"character_foot": Vector2(450, 174),
+	"character_scale": 0.92,
+	"attention_meter": Rect2(352, 200, 92, 7),
+	"danger_meter": Rect2(456, 200, 92, 7),
+	"status_panel": Rect2(352, 216, 196, 16),
 }
 const DICE_GOAL_LABELS := ["SHIP 6", "CAPTAIN 5", "CREW 4", "CARGO"]
 
@@ -450,8 +458,10 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"dealer_profile": _copy_dict(state.get("dealer_profile", {})),
 		"dealer_attention_pressure": 8 if phase == "select" else 4,
 		"patrons": patrons,
+		"patron_overlay_mode": "compact",
 		"rail_bettors": patrons,
 		"patron_wager_action": "bar_dice_rail_bet",
+		"rail_wager_controls_visible": ritual_phase in ["agree_wager", "settle"],
 		"snitch_pressure": _patron_snitch_pressure(patrons),
 		"suspicion_level": run_state.suspicion_level() if run_state != null else 0,
 		"stake_ladder": _int_array(state.get("stake_ladder", [])),
@@ -2690,20 +2700,20 @@ func _bar_dice_turn_guide(phase: String, player_score: Dictionary, reroll: Array
 func _bar_dice_rules_panel_lines(phase: String, guide: Dictionary, explainer: Dictionary) -> Array:
 	var lines: Array = []
 	if phase == "select":
-		lines.append("Goal: make 6 Ship, 5 Captain, 4 Crew.")
-		lines.append("Then cargo dice decide the pot.")
-		lines.append("Pink rerolls; teal locks; plain stays.")
-		lines.append("SHAKE marked dice only; SETTLE compares.")
+		lines.append("6 Ship · 5 Captain · 4 Crew")
+		lines.append("Last two dice score cargo.")
+		lines.append("Pink rerolls · teal locks.")
+		lines.append("SHAKE picks · SETTLE scores.")
 	elif phase == "settled":
-		lines.append("6-5-4 locks first; last two dice are cargo.")
-		lines.append("High cargo wins; tied cargo carries the pot.")
-		lines.append(str(guide.get("selection", explainer.get("summary", ""))))
-		lines.append("Roll again or press a clean win.")
+		lines.append("6-5-4 locks before cargo.")
+		lines.append("High cargo wins; ties carry.")
+		lines.append(str(guide.get("selection", explainer.get("summary", ""))).left(RULES_PANEL_LINE_LIMIT))
+		lines.append("Roll again or press a win.")
 	else:
-		lines.append("Goal: make 6 Ship, 5 Captain, 4 Crew.")
-		lines.append("High cargo wins after all three lock.")
-		lines.append("Pick ante, then ROLL CUP for choices.")
-		lines.append("AUTO-PLAY skips choices; ties carry the pot.")
+		lines.append("6 Ship · 5 Captain · 4 Crew")
+		lines.append("High cargo wins after 6-5-4.")
+		lines.append("Pick ante, then ROLL CUP.")
+		lines.append("AUTO-PLAY skips choices.")
 	return _compact_text_lines(lines, RULES_PANEL_LINE_LIMIT)
 
 
@@ -2720,11 +2730,11 @@ func _bar_dice_action_buttons(phase: String, remaining_shakes: int, reroll: Arra
 	var buttons: Array = []
 	if phase == "select":
 		var suggested_count := suggested.size()
-		var shake_label := "SHAKE PINK DICE" if not reroll.is_empty() else "SHAKE AMBER DICE"
-		var shake_detail := "Reroll selected only" if not reroll.is_empty() else "Reroll suggestions"
-		var shake_button_detail := "%s; %d left" % [shake_detail, remaining_shakes]
+		var shake_label := "SHAKE DICE"
+		var shake_detail := "Reroll picks" if not reroll.is_empty() else "Reroll hints"
+		var shake_button_detail := "%s · %d left" % [shake_detail, remaining_shakes]
 		if reroll.is_empty():
-			shake_button_detail = "Reroll %d suggested; %d left" % [suggested_count, remaining_shakes]
+			shake_button_detail = "Reroll %d · %d left" % [suggested_count, remaining_shakes]
 		buttons.append({
 			"action": "bar_dice_shake",
 			"index": 0,
@@ -2736,13 +2746,13 @@ func _bar_dice_action_buttons(phase: String, remaining_shakes: int, reroll: Arra
 		buttons.append({
 			"action": "bar_dice_resolve",
 			"index": 0,
-			"label": "SETTLE CURRENT",
-			"detail": "Compare shown dice",
+			"label": "SETTLE",
+			"detail": "Compare dice",
 			"accent": "yellow",
 			"enabled": true,
 		})
 		var load_action := "bar_dice_release" if loaded_armed else "bar_dice_load"
-		var load_label := "RELEASE THROW" if loaded_armed else "CHEAT LOAD DIE"
+		var load_label := "RELEASE" if loaded_armed else "LOAD DIE"
 		var load_detail := "Hit %s band" % _word_single(int(controlled_roll.get("desired_face", 6))) if loaded_armed else "Time controlled roll"
 		var grade := str(controlled_roll.get("skill_grade", ""))
 		if loaded_armed and not grade.is_empty():
@@ -2759,8 +2769,8 @@ func _bar_dice_action_buttons(phase: String, remaining_shakes: int, reroll: Arra
 		buttons.append({
 			"action": "bar_dice_palm",
 			"index": 0,
-			"label": "SWAP NOW" if palm_armed else "CHEAT PALM SWAP",
-			"detail": "Lock the weak die" if palm_armed else "Time one hidden swap",
+			"label": "SWAP NOW" if palm_armed else "PALM SWAP",
+			"detail": "Lock weak die" if palm_armed else "Time weak die",
 			"accent": "orange",
 			"enabled": true,
 			"selected": palm_armed and str(palmed_swap.get("skill_grade", "")).is_empty(),
@@ -2797,13 +2807,13 @@ func _bar_dice_action_buttons(phase: String, remaining_shakes: int, reroll: Arra
 func _bar_dice_ritual_action_buttons(ritual_phase: String, ordinary_buttons: Array) -> Array:
 	match ritual_phase:
 		"cover":
-			return [{"action":"bar_dice_ack_cover","index":0,"label":"TAKE THE COVER","detail":"Cash stays on the bar","accent":"amber","enabled":true}]
+			return [{"action":"bar_dice_ack_cover","index":0,"label":"TAKE COVER","detail":"Cash on bar","accent":"amber","enabled":true}]
 		"throw":
-			return [{"action":"bar_dice_throw","index":0,"label":"SLAM THE CUP","detail":"Commit this shown hand","accent":"pink","enabled":true}]
+			return [{"action":"bar_dice_throw","index":0,"label":"SLAM CUP","detail":"Commit hand","accent":"pink","enabled":true}]
 		"reveal":
-			return [{"action":"bar_dice_reveal","index":0,"label":"LIFT THE CUP","detail":"No dice reroll here","accent":"teal","enabled":true}]
+			return [{"action":"bar_dice_reveal","index":0,"label":"LIFT CUP","detail":"Reveal dice","accent":"teal","enabled":true}]
 		"call":
-			return [{"action":"bar_dice_ack_call","index":0,"label":"CALL IT","detail":"Settle the exact covered wager","accent":"yellow","enabled":true}]
+			return [{"action":"bar_dice_ack_call","index":0,"label":"CALL IT","detail":"Settle wager","accent":"yellow","enabled":true}]
 	return ordinary_buttons
 
 
@@ -3120,8 +3130,8 @@ func _bar_dice_surface_amount(state: Dictionary, amount: int) -> String:
 func _draw_bar_room(surface, state: Dictionary) -> void:
 	TableVisualsScript.draw_room(surface, state, "BAR DICE", "%s / %s" % [str(state.get("bar_name", "bar top")), str(state.get("edge_label", "Bar Rake"))])
 	var ritual_phase := str(state.get("bar_dice_ritual_phase", "agree_wager")).replace("_", " ").to_upper()
-	surface.surface_label("%s  ·  OPP %s" % [ritual_phase, _bar_dice_surface_amount(state, int(state.get("opponent_available_cash", 0)))], Vector2(520, 34), 10, C_SOFT)
-	surface.surface_label("COVER %s  ·  AT RISK %s  ·  RETURNED %s" % [_bar_dice_surface_amount(state, int(state.get("covered_total", 0))), _bar_dice_surface_amount(state, int(state.get("at_risk_total", 0))), _bar_dice_surface_amount(state, int(state.get("returned_stake", 0)))], Vector2(520, 52), 9, C_AMBER)
+	surface.surface_label(("%s  ·  OPP %s" % [ritual_phase, _bar_dice_surface_amount(state, int(state.get("opponent_available_cash", 0)))]).left(29), Vector2(344, 38), 8, C_SOFT)
+	surface.surface_label(("COV %s  ·  RISK %s  ·  RET %s" % [_bar_dice_surface_amount(state, int(state.get("covered_total", 0))), _bar_dice_surface_amount(state, int(state.get("at_risk_total", 0))), _bar_dice_surface_amount(state, int(state.get("returned_stake", 0)))]).left(34), Vector2(344, 56), 7, C_AMBER)
 
 
 func _draw_bar_top(surface, _state: Dictionary) -> void:
@@ -3143,11 +3153,8 @@ func _draw_dice_rows(surface, state: Dictionary) -> void:
 	var suggested := _draw_array_view(state.get("suggested_reroll", []))
 	var scoring := _draw_array_view(state.get("scoring_indices", []))
 	var animated := _draw_array_view(state.get("animated_dice_indices", []))
-	var guide := _draw_dict_view(state.get("bar_dice_turn_guide", {}))
 	_draw_opponent_dice_rows(surface, state)
-	surface.surface_label("YOUR CUP", Vector2(262, 204), 12, C_TEAL)
-	if phase == "select":
-		surface.surface_label(str(guide.get("selection", "Pink rerolls; plain dice stay.")).left(64), Vector2(262, 194), 8, C_SOFT)
+	surface.surface_label("YOUR CUP", Vector2(268, 238), 10, C_TEAL)
 	_draw_dice_row(FunctionOptions.DiceRowOptions.from({
 		"surface": surface, "values": player, "start": PLAYER_DICE_ORIGIN, "reroll": reroll,
 		"suggested": suggested, "scoring": scoring, "hidden": false, "die_size": DIE_SIZE,
@@ -3156,12 +3163,17 @@ func _draw_dice_rows(surface, state: Dictionary) -> void:
 	}))
 	if phase == "select":
 		_add_dice_row_hits(surface, player, PLAYER_DICE_ORIGIN, "bar_dice_select", DIE_SIZE, DIE_SPACING)
-		_draw_dice_goal_strip(surface, state, Vector2(262, 266))
-	_draw_legend_row(surface, state, Vector2(262, 306))
+	var cheat_meter_visible := bool(state.get("loaded_armed", false)) or bool(state.get("palm_armed", false))
+	if phase == "select" and not cheat_meter_visible:
+		var remaining := int(state.get("remaining_shakes", 0))
+		var score_summary := "%s  ·  %d shake%s left" % [str(state.get("player_blurb", "Cup open")), remaining, "" if remaining == 1 else "s"]
+		surface.surface_label(score_summary.left(39), Vector2(268, 302), 7, C_SOFT)
+		_draw_dice_goal_strip(surface, state, Vector2(268, 312))
 	if bool(state.get("loaded_armed", false)):
-		_draw_controlled_roll_meter(surface, state, Vector2(262, 282))
+		_draw_controlled_roll_meter(surface, state, Vector2(268, 302))
 	if bool(state.get("palm_armed", false)):
-		_draw_palmed_swap_meter(surface, state, Vector2(262, 282))
+		_draw_palmed_swap_meter(surface, state, Vector2(268, 302))
+	_draw_legend_row(surface, state, Vector2(268, 338 if phase == "select" else 326))
 
 
 func _draw_controlled_roll_meter(surface, state: Dictionary, pos: Vector2) -> void:
@@ -3215,25 +3227,38 @@ func _draw_opponent_dice_rows(surface, state: Dictionary) -> void:
 	var rows := _draw_array_view(state.get("opponent_rows", []))
 	if rows.is_empty():
 		return
-	surface.surface_label("RAIL CUPS", Vector2(76, 134), 9, C_PINK_2)
+	var wager_controls_visible := bool(state.get("rail_wager_controls_visible", false))
+	var wager_action := str(state.get("patron_wager_action", ""))
 	for i in range(mini(rows.size(), MAX_VISIBLE_OPPONENT_ROWS)):
 		var row: Dictionary = rows[i]
 		var origin: Vector2 = OPPONENT_DICE_ORIGINS[i]
 		var accent := C_YELLOW if bool(row.get("winning", false)) else C_PINK_2
-		var panel := Rect2(origin + Vector2(-8, -14), Vector2(164, 48))
+		var panel := Rect2(origin + OPPONENT_PANEL_OFFSET, OPPONENT_PANEL_SIZE)
 		surface.draw_rect(panel, Color("#130c18"))
 		surface.draw_rect(panel, Color(accent.r, accent.g, accent.b, 0.18), false, 1)
-		surface.surface_label(str(row.get("name", "Rail")).to_upper().left(10), origin + Vector2(0, -5), 7, accent)
+		surface.surface_label(str(row.get("name", "Rail")).to_upper().left(10), origin + Vector2(0, -4), 6, accent)
 		var detail := str(row.get("banter", "")).strip_edges()
 		if detail.is_empty():
 			detail = str(row.get("blurb", "Cup ready"))
-		surface.surface_label(detail.left(15), origin + Vector2(78, -5), 6, C_AMBER)
+		if not wager_controls_visible:
+			surface.surface_label(detail.left(13), origin + Vector2(78, -4), 6, C_AMBER)
 		_draw_dice_row(FunctionOptions.DiceRowOptions.from({
-			"surface": surface, "values": _draw_array_view(row.get("dice", [])), "start": origin + Vector2(0, 7),
+			"surface": surface, "values": _draw_array_view(row.get("dice", [])), "start": origin + Vector2(0, 3),
 			"reroll": [], "suggested": [], "scoring": _draw_array_view(row.get("scoring_indices", [])),
 			"hidden": false, "die_size": OPPONENT_DIE_SIZE, "die_spacing": OPPONENT_DIE_SPACING,
 			"rolling_indices": [], "show_keep_labels": false, "compact": true,
 		}))
+		if wager_controls_visible and not wager_action.is_empty():
+			var patron_index := int(row.get("turn_order", i))
+			_draw_rail_choice(surface, Rect2(origin + Vector2(108, 3), Vector2(30, 16)), "WITH", wager_action, patron_index, C_TEAL)
+			_draw_rail_choice(surface, Rect2(origin + Vector2(142, 3), Vector2(30, 16)), "FADE", wager_action, patron_index + 100, C_PINK)
+
+
+func _draw_rail_choice(surface, rect: Rect2, label: String, action: String, index: int, accent: Color) -> void:
+	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.18))
+	surface.draw_rect(rect, accent, false, 1)
+	surface.surface_label_centered(label, rect.grow(-1), 6, accent)
+	surface.surface_add_exact_hit(rect, action, index)
 
 
 func _draw_dice_row(options: FunctionOptions.DiceRowOptions) -> void:
@@ -3309,7 +3334,7 @@ func _draw_die(surface, rect: Rect2, value: int, marked: bool, suggested: bool, 
 	elif show_keep_label:
 		status = "KEEP"
 		status_color = C_SOFT
-	if not status.is_empty():
+	if not status.is_empty() and not compact:
 		surface.surface_label_centered(status, Rect2(rect.position + Vector2(-2, rect.size.y + 2), Vector2(rect.size.x + 4, 10)), 6 if compact else 7, status_color)
 
 
@@ -3383,14 +3408,16 @@ func _draw_explainer(surface, state: Dictionary) -> void:
 	_draw_neon_panel(surface, rect, C_AMBER, 0.14)
 	var title := str(guide.get("title", explainer.get("title", "How to play"))).to_upper()
 	surface.surface_label(title.left(22), rect.position + Vector2(10, 13), 9, C_YELLOW)
-	surface.surface_label("POT %s" % _bar_dice_surface_amount(state, int(explainer.get("pot", 0))), rect.position + Vector2(232, 13), 8, C_TEAL)
-	surface.surface_label("RAKE %s" % _bar_dice_surface_amount(state, int(explainer.get("rake", 0))), rect.position + Vector2(232, 25), 8, C_PINK_2)
 	var lines := _panel_string_lines(state.get("bar_dice_rules_lines", []))
-	var y := rect.position.y + 27.0
+	var y := rect.position.y + 29.0
 	for i in range(mini(lines.size(), 4)):
 		var color := C_SOFT if i == 0 else C_WHITE if i == 1 else C_AMBER if i == 2 else C_TEAL
-		surface.surface_label(str(lines[i]), Vector2(rect.position.x + 10.0, y + float(i) * 9.0), 6, color)
-	surface.surface_label("CARGO %d" % int(explainer.get("cargo", 0)), rect.position + Vector2(232, 40), 8, C_YELLOW)
+		surface.surface_label(str(lines[i]).left(RULES_PANEL_LINE_LIMIT), Vector2(rect.position.x + 10.0, y + float(i) * 12.0), 6, color)
+	var metric_x := rect.end.x - 88.0
+	surface.draw_line(Vector2(metric_x - 8.0, rect.position.y + 20.0), Vector2(metric_x - 8.0, rect.end.y - 8.0), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.18), 1)
+	surface.surface_label(("POT %s" % _bar_dice_surface_amount(state, int(explainer.get("pot", 0)))).left(13), Vector2(metric_x, rect.position.y + 29.0), 7, C_TEAL)
+	surface.surface_label(("RAKE %s" % _bar_dice_surface_amount(state, int(explainer.get("rake", 0)))).left(13), Vector2(metric_x, rect.position.y + 47.0), 7, C_PINK_2)
+	surface.surface_label(("CARGO %d" % int(explainer.get("cargo", 0))).left(13), Vector2(metric_x, rect.position.y + 65.0), 7, C_YELLOW)
 
 
 func _draw_paytable(surface, state: Dictionary) -> void:
@@ -3419,7 +3446,10 @@ func _draw_legend_row(surface, state: Dictionary, pos: Vector2) -> void:
 
 
 func _draw_round_timer(surface, state: Dictionary) -> void:
-	TableVisualsScript.draw_round_timer_panel(surface, state.get("table_round_timer", {}), ROUND_TIMER_RECT, C_TEAL)
+	var timer := _draw_dict_view(state.get("table_round_timer", {})).duplicate(true)
+	if not timer.is_empty():
+		timer["label"] = "ROUND"
+	TableVisualsScript.draw_round_timer_panel(surface, timer, ROUND_TIMER_RECT, C_TEAL)
 
 
 func _draw_console(surface, state: Dictionary) -> void:
@@ -3458,8 +3488,27 @@ func _draw_console(surface, state: Dictionary) -> void:
 		var settlement_text := str(state.get("result_settlement_text", PlayerTextScript.format_settlement_delta(str(state.get("wager_currency", "cash")), delta)))
 		surface.surface_label_centered("%s  Heat %+d" % [settlement_text, heat], BAR_DICE_GUIDANCE_RECT, 11, color)
 	else:
-		var prompt := str(guide.get("shake_hint", "Roll, mark dice, shake, then settle."))
-		surface.surface_label_centered(prompt, BAR_DICE_GUIDANCE_RECT, 9, C_SOFT)
+		var prompt := _bar_dice_console_prompt(state, phase, guide)
+		surface.surface_label_centered(prompt, BAR_DICE_GUIDANCE_RECT, 8, C_SOFT)
+
+
+func _bar_dice_console_prompt(state: Dictionary, phase: String, _guide: Dictionary) -> String:
+	match str(state.get("bar_dice_ritual_phase", "agree_wager")):
+		"cover":
+			return "Opponent covers. Confirm to take the cup."
+		"throw":
+			return "Throw the cup when ready."
+		"reveal":
+			return "Lift the cup to reveal both hands."
+		"call":
+			return "Call the result and settle the pot."
+	if bool(state.get("loaded_armed", false)):
+		return "Release inside the target band."
+	if bool(state.get("palm_armed", false)):
+		return "Stop the palm track on the weak die."
+	if phase == "select":
+		return "Mark dice, SHAKE chosen dice, or SETTLE this cup."
+	return "Choose an ante. ROLL CUP plays step by step."
 
 
 func _draw_chip_ladder(surface, state: Dictionary, phase: String) -> void:
@@ -3481,10 +3530,10 @@ func _draw_table_button(surface, rect: Rect2, label: String, action: String, ind
 	surface.draw_rect(rect, C_WHITE if selected else accent, false, 2 if selected else 1)
 	var text_color := accent if enabled else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.45)
 	if detail.is_empty():
-		surface.surface_label_centered(label.left(18), rect.grow(-4), 9, text_color)
+		surface.surface_label_centered(label.left(18), rect.grow(-4), 8 if label.length() <= 12 else 7, text_color)
 	else:
-		surface.surface_label_centered(label.left(18), Rect2(rect.position + Vector2(4, 8), Vector2(rect.size.x - 8.0, 13)), 8, text_color)
-		surface.surface_label_centered(detail.left(22), Rect2(rect.position + Vector2(4, 25), Vector2(rect.size.x - 8.0, 11)), 7, text_color)
+		surface.surface_label_centered(label.left(18), Rect2(rect.position + Vector2(4, 8), Vector2(rect.size.x - 8.0, 13)), 8 if label.length() <= 12 else 7, text_color)
+		surface.surface_label_centered(detail.left(20), Rect2(rect.position + Vector2(4, 25), Vector2(rect.size.x - 8.0, 11)), 6, text_color)
 	if enabled:
 		surface.surface_add_exact_hit(rect, action, index)
 
@@ -3517,6 +3566,16 @@ func _bar_dice_layout_snapshot() -> Dictionary:
 	var text_panel_rects := _bar_dice_text_panel_regions()
 	var opponent_panel_rects := _bar_dice_opponent_panel_rects()
 	var dealer_station_rects := _bar_dice_dealer_station_rects()
+	var content_zone_rects := [
+		_rect_payload(OPPONENT_CONTENT_RECT, "rail_cups"),
+		_rect_payload(PLAYER_CONTENT_RECT, "player_cup"),
+		_rect_payload(CONSOLE_CONTENT_RECT, "console"),
+	]
+	for panel_value in text_panel_rects:
+		if str((panel_value as Dictionary).get("id", "")) != "console_guidance":
+			content_zone_rects.append(panel_value)
+	content_zone_rects.append_array(dealer_station_rects)
+	content_zone_rects.append_array(_bar_dice_patron_safe_rects())
 	return {
 		"rules_panel": _rect_payload(RULES_PANEL_RECT),
 		"paytable_panel": _rect_payload(PAYTABLE_PANEL_RECT),
@@ -3527,6 +3586,7 @@ func _bar_dice_layout_snapshot() -> Dictionary:
 		"dealer_station_rects": dealer_station_rects,
 		"patron_exclusion_rects": text_panel_rects + opponent_panel_rects + dealer_station_rects,
 		"patron_safe_rects": _bar_dice_patron_safe_rects(),
+		"content_zone_rects": content_zone_rects,
 	}
 
 
@@ -3542,7 +3602,7 @@ func _bar_dice_text_panel_regions() -> Array:
 func _bar_dice_opponent_panel_rects() -> Array:
 	var rects: Array = []
 	for i in range(MAX_VISIBLE_OPPONENT_ROWS):
-		rects.append(_rect_payload(Rect2(OPPONENT_DICE_ORIGINS[i] + Vector2(-8, -14), Vector2(164, 48)), "rail_cup_%d" % i))
+		rects.append(_rect_payload(Rect2(OPPONENT_DICE_ORIGINS[i] + OPPONENT_PANEL_OFFSET, OPPONENT_PANEL_SIZE), "rail_cup_%d" % i))
 	return rects
 
 
@@ -3559,7 +3619,7 @@ func _bar_dice_patron_safe_rects() -> Array:
 	var rects: Array = []
 	for i in range(mini(BAR_PATRON_POSITIONS.size(), 4)):
 		var pos: Vector2 = BAR_PATRON_POSITIONS[i]
-		rects.append(_rect_payload(Rect2(pos + Vector2(-50, -54), Vector2(142, 158)), "patron_%d" % i))
+		rects.append(_rect_payload(Rect2(pos + Vector2(-50, -22), Vector2(142, 116)), "patron_%d" % i))
 	return rects
 
 

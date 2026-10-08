@@ -1,6 +1,9 @@
 class_name SlotCatalog
 extends RefCounted
 
+# Read-only access to authored slot formats, symbols, skins, math variants,
+# families, bonuses, and machine-definition lookup helpers.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const StateScript := preload("res://scripts/games/slots/slot_machine_state.gd")

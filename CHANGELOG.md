@@ -2,11 +2,44 @@
 
 All notable public release changes for Beat the House are recorded here.
 
-## 0.6.0 - Release preparation
+## 0.6.0 - Feature-complete source
 
-Status: **version-stamped on `main`; `v0.6.0-pre.5` is the current GitHub
-testing prerelease, while final stable qualification remains pending.** Project
-and platform export metadata read `0.6.0`.
+Status: **feature-complete and version-stamped in source; `v0.6.0-pre.5` remains
+the latest GitHub testing prerelease, while the manual environment placement
+procedure and final stable handoff remain pending.** Project and platform export
+metadata read `0.6.0`.
+
+### Feature-complete source update (2026-10-08)
+
+- Reworks Back-Room Hold'em so patrons take paced automatic turns with variable
+  thinking time. Five personality-shaped tell emotions provide imperfect
+  information rather than exposing private cards, and the player can project a
+  tell in return. Folded player cards now leave through the dealer/muck
+  animation before disappearing.
+- Rebuilds the Scratch Ticket vending surface around a detailed physical
+  cabinet. A lift shelf picks and lowers each ticket in about 1.5 seconds with
+  machine audio, the ticket lands in an output tray, and selecting the tray
+  moves it into the play area.
+- Gives Bar Dice a fixed 1280x720 composition with separate patron, dice,
+  rules, paytable, timer, and control regions so its interface no longer stacks
+  labels or buttons over active play.
+- Restores autonomous animation scheduling across environments, placement
+  tools, and game surfaces. Animations remain live without mouse movement and
+  while overlays are open; performance work reduces scheduled-frame cost with
+  caches, retained layers, bounded updates, and deferred post-action work.
+- Reduces event-activation, object-loading, slot-dragging, slot-placement, and
+  post-move stalls, including the previously visible counter-phone and parking-
+  lot-note spikes, without suppressing game or room animation.
+- Tightens environment generation and placement authoring: inactive scenario
+  slots are excluded from no-scenario rooms, event slots without any possible
+  claimant are pruned, all slot families can be selected together, fixed event
+  and exit slots remain movable in scenario contexts, and each object exposes
+  one of three explicit draw layers.
+- Adds broader per-character idle variation so room and table figures do not
+  all repeat the same gesture cadence.
+- Declares the 11-game 0.6 feature set complete. The remaining authoring work is
+  the manual 75-context slot-placement pass, schema-3 report promotion, and
+  focused post-promotion validation before final packaging.
 
 ### Pre-release 5 (2026-10-05)
 
@@ -168,10 +201,10 @@ and platform export metadata read `0.6.0`.
 
 ### Release-preparation notes
 
-- Final owner positioning and normal-play confirmations for the clean, cheat,
-  and Crew/heist win screens remain outside this prerelease entry.
-- The final qualification pass and stable Windows/Web archives happen after
-  those closures. Prerelease 3 is a testing build, not the final 0.6 release.
+- Final owner positioning remains outside the feature-complete source boundary.
+- The focused post-promotion validation and stable Windows/Web archives happen
+  after those coordinates land. All prerelease packages are testing builds,
+  not the final 0.6 release.
 
 ## 0.5.1 - Released (2026-08-13)
 

@@ -1,6 +1,9 @@
 class_name CoinPusherRoomProp
 extends RefCounted
 
+# Lightweight room-scale Coin Pusher cabinet painter with full and low-detail
+# paths; it does not advance the live solver.
+
 const KitScript := preload("res://scripts/ui/game_props/game_prop_kit.gd")
 const EMPTY_STATE: Dictionary = {}
 const C_CYAN := Color("#58ead9")

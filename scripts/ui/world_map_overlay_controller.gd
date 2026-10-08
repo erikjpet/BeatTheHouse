@@ -1,6 +1,9 @@
 class_name WorldMapOverlayController
 extends RefCounted
 
+# Coordinates the world-map overlay's nodes, selection, buttons, responsive
+# layout, and canvas snapshot; travel authority stays with FoundationMain.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 signal refresh_requested()

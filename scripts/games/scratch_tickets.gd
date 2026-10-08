@@ -1,6 +1,9 @@
 class_name ScratchTicketsGame
 extends GameModule
 
+# Production Scratch Ticket host: deterministic stock/outcomes, physical vending
+# and tray flow, free-form masks, filing/discard, redemption, and collection.
+
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const RegionModelScript := preload("res://scripts/games/scratch_ticket_region_model.gd")
 const BackgroundRendererScript := preload("res://scripts/games/scratch_ticket_background_renderer.gd")
@@ -22,10 +25,11 @@ const SETTLE_ACTION := "settle_scratch_ticket"
 const REVEAL_ACTION := "scratch_reveal"
 const FILE_TICKET_ACTION := "scratch_file_ticket"
 const DISCARD_TICKET_ACTION := "scratch_discard"
+const COLLECT_TRAY_ACTION := "scratch_collect_tray"
 const DISPENSE_CHANNEL := "scratch_ticket_dispense"
 const FILE_CHANNEL := "scratch_ticket_file"
 const SWEEP_CHANNEL := "scratch_box_pop"
-const DISPENSE_DURATION_MSEC := 760
+const DISPENSE_DURATION_MSEC := 1500
 const FILE_DURATION_MSEC := 620
 const SWEEP_DURATION_MSEC := 220
 const SCRATCH_AUDIO_LOOP := "scratch_paper_foley_loop"
@@ -67,7 +71,7 @@ const HELD_TICKET_TYPE_ID := ""
 const ACTIVE_TICKET_TYPE_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "crossword_corner", "bonus_bingo", "high_roller_holdem", "golden_vault"]
 const DISCARD_ARM_DISTANCE := 120.0
 const DISCARD_DROP_DISTANCE := 190.0
-const MACHINE_STATE_VERSION := 5
+const MACHINE_STATE_VERSION := 6
 const REGION_LAYOUT_VERSION := RegionModelScript.LAYOUT_VERSION
 const CROSSWORD_LAYOUT_SLOTS := [
 	{"dir": "across", "x": 2, "y": 3, "length": 5},
@@ -202,11 +206,14 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		# settlement latency depend on allocating a 49,152-sample render mask.
 		_ensure_ticket_regions(active_ticket)
 	var stock := _stock_view(machine)
+	var tray := _dictionary_array(machine.get("tray_stack", []))
 	var queue := _dictionary_array(machine.get("pending_queue", []))
 	var crumbs := _dictionary_array(ui_state.get("scratch_crumbs", []))
 	var discovered := _active_discovered_ticket_types(_string_array(run_state.narrative_flags.get("scratch_ticket_types_discovered", [])) if run_state != null else [])
 	var collection_complete := discovered.size() >= COLLECTION_TOTAL
 	var last_dispense_id := str(machine.get("last_dispense_id", ""))
+	var dispense_events := _scratch_dispense_event_array(machine.get("last_dispense_events", []))
+	var dispense_duration_msec := _scratch_dispense_duration_msec(dispense_events)
 	var last_file_id := str(machine.get("last_file_id", ""))
 	var reduce_motion := _reduce_motion_enabled(ui_state)
 	var compact_mode := _small_screen_enabled(ui_state)
@@ -240,6 +247,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_restock_schedule_public": false,
 		"scratch_scalper_present": bool(machine.get("scalper_present", false)),
 		"scratch_ticket": active_ticket,
+		"scratch_tray_stack": tray,
+		"scratch_tray_count": tray.size(),
 		"scratch_queue": queue,
 		"scratch_queue_count": queue.size(),
 		"scratch_result_ready": result_ready,
@@ -255,7 +264,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_last_settled_ticket": _copy_dict(machine.get("last_settled_ticket", {})),
 		"scratch_last_settled_pile": str(machine.get("last_settled_pile", "")),
 		"scratch_machine_style": "physical_lottery_vending_cabinet",
-		"scratch_machine_art_features": ["floor_unit", "jackpot_marquee", "glass_stock_rows", "branded_side_panel", "selection_buttons", "dispensing_tray", "waste_basket", "cabinet_lighting"],
+		"scratch_machine_art_features": ["floor_unit", "jackpot_marquee", "glass_stock_rows", "touch_selection_console", "foil_pack_display", "tap_payment_reader", "selection_buttons", "motorized_lift_rails", "moving_pickup_shelf", "dispensing_tray", "waste_basket", "cabinet_lighting"],
 		"scratch_ticket_face_style": "strict_three_layer_printed_ticket",
 		"scratch_ticket_render_layers": _ticket_render_layers(active_ticket),
 		"scratch_foil_style_id": _ticket_foil_style_id(active_ticket),
@@ -264,6 +273,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_discard_interaction": "Deliberately drag the ticket into the highlighted basket opening.",
 		"scratch_discard_available": not active_ticket.is_empty(),
 		"scratch_dispense_animation": not last_dispense_id.is_empty(),
+		"scratch_dispense_events": dispense_events,
 		"scratch_crumbs": crumbs,
 		"scratch_drag_active": bool(ui_state.get("scratch_drag_active", false)),
 		"scratch_last_pointer": ui_state.get("scratch_last_pointer", Vector2.ZERO),
@@ -291,9 +301,12 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_penalty_shields": int(machine.get("penalty_shields_remaining", 0)),
 		"scratch_rules": "%s Winners wait for the sales counter." % _ticket_play_label(str(active_ticket.get("type_id", "")), _dict_ref(active_ticket.get("mechanic", {}))) if not active_ticket.is_empty() else _machine_empty_rules(machine, stock),
 		"surface_animation_channels": [
-			GameModule.surface_animation_channel(DISPENSE_CHANNEL, last_dispense_id, DISPENSE_DURATION_MSEC, int(machine.get("dispense_started_msec", 0)), {"metadata": {"ticket_id": str(active_ticket.get("id", "")), "slot": int(machine.get("last_dispense_slot", 0))}}),
+			GameModule.surface_animation_channel(DISPENSE_CHANNEL, last_dispense_id, dispense_duration_msec, int(machine.get("dispense_started_msec", 0)), {"clock_source": "presentation", "metadata": {"event_count": dispense_events.size(), "ticket_id": str(machine.get("last_ticket_id", "")), "slot": int(machine.get("last_dispense_slot", 0))}}),
 			GameModule.surface_animation_channel(FILE_CHANNEL, last_file_id, FILE_DURATION_MSEC, int(machine.get("file_started_msec", 0)), {"metadata": {"pile": str(machine.get("last_settled_pile", ""))}}),
 			GameModule.surface_animation_channel(SWEEP_CHANNEL, str(machine.get("last_sweep_id", "")), sweep_duration, int(machine.get("sweep_started_msec", 0)), {"metadata": {"region": str(machine.get("last_sweep_section", ""))}}),
+		],
+		"surface_action_blocks": [
+			{"actions": ["scratch_buy", COLLECT_TRAY_ACTION], "while_animation": DISPENSE_CHANNEL},
 		],
 		"surface_ui_protected_regions": [
 			{"x": MACHINE_RECT.position.x, "y": MACHINE_RECT.position.y, "w": MACHINE_RECT.size.x, "h": MACHINE_RECT.size.y},
@@ -303,7 +316,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_audio": GameModule.surface_audio_spec({
 			"profile_id": "scratch_ticket_machine",
 			"selection_seed": run_state.seed_value if run_state != null else 1,
-			"action_cues": {BUY_ACTION: "ticket_dispenser", SCRATCH_ALL_ACTION: "ticket_peel", FILE_TICKET_ACTION: "paper_peel", SCRATCH_POP_CUE: SCRATCH_POP_CUE},
+			"action_cues": {BUY_ACTION: "ticket_dispenser", COLLECT_TRAY_ACTION: "ticket_navigation", SCRATCH_ALL_ACTION: "ticket_peel", FILE_TICKET_ACTION: "paper_peel", SCRATCH_POP_CUE: SCRATCH_POP_CUE},
+			"state_sync": {
+				"method": "scratch_dispense_state",
+				"animation_channel": DISPENSE_CHANNEL,
+			},
 		}),
 	})
 
@@ -324,13 +341,11 @@ func draw_surface(surface, state: Dictionary, render_context: Dictionary = {}) -
 		else:
 			_draw_ticket(surface, state, render_context)
 			_draw_surface_hud(surface, state)
-			_draw_dispense_animation(surface, state)
 			_draw_file_animation(surface, state)
 	else:
 		MachineRendererScript.draw(surface, state, MACHINE_RECT)
 		_draw_ticket(surface, state, render_context)
 		_draw_surface_hud(surface, state)
-		_draw_dispense_animation(surface, state)
 		_draw_file_animation(surface, state)
 	return true
 
@@ -371,7 +386,7 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 			var next_state := ui_state.duplicate(true)
 			next_state["scratch_stock_index"] = stock_index
 			next_state["scratch_buy_quantity"] = quantity
-			next_state["scratch_compact_tab"] = "ticket"
+			next_state["scratch_compact_tab"] = "machine"
 			return GameModule.surface_command({
 				"ui_state": next_state,
 				"action_id": BUY_ACTION,
@@ -380,6 +395,8 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 				"set_stake": price * quantity,
 				"selected_index": stock_index,
 			})
+		COLLECT_TRAY_ACTION:
+			return _collect_scratch_tray(machine, ui_state, run_state, environment)
 		SCRATCH_ALL_ACTION:
 			var active_ticket := _dict_ref(machine.get("active_ticket", {}))
 			if active_ticket.is_empty():
@@ -847,10 +864,8 @@ func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary
 	var xray_capacity := maxi(0, run_state.item_effect_total("scratch_peek_cells", get_family()) if run_state != null else 0)
 	var tarot_strength := maxi(0, run_state.item_effect_total("scratch_fortune_hint", get_family()) if run_state != null else 0)
 	var shield_capacity := maxi(0, run_state.item_effect_total("scratch_penalty_shields", get_family()) if run_state != null else 0)
-	var queue := _dictionary_array(machine.get("pending_queue", []))
+	var tray := _dictionary_array(machine.get("tray_stack", []))
 	var purchased_tickets: Array = []
-	var active_value: Variant = machine.get("active_ticket", {})
-	var has_active_ticket := typeof(active_value) == TYPE_DICTIONARY and not (active_value as Dictionary).is_empty()
 	for offset in range(quantity):
 		var purchase_number := first_purchase_number + offset
 		var ticket_rng := rng if quantity == 1 and rng != null else (rng.fork("scratch-purchase:%d" % purchase_number) if rng != null else _seeded_rng("scratch-purchase:%d" % purchase_number))
@@ -862,25 +877,22 @@ func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary
 			ticket["fortune_tier"] = _fortune_tier(ticket)
 		_reserve_penalty_shields(ticket, shield_capacity)
 		purchased_tickets.append(ticket)
-		if not has_active_ticket:
-			# Keep the transaction compact. surface_state initializes the visible
-			# ticket before its first rendered frame; queued tickets stay compact
-			# until they reach the table.
-			machine["active_ticket"] = ticket
-			machine["penalty_shields_remaining"] = shield_capacity
-			has_active_ticket = true
-		else:
-			queue.append(ticket)
+		# Purchased stock belongs to the physical delivery tray until the player
+		# collects it. Outcomes remain fixed here, but no scratch mask is allocated
+		# and no ticket can be played through the moving mechanism.
+		tray.append(ticket)
 	slot["remaining"] = maxi(0, int(slot.get("remaining", 0)) - quantity)
 	stock[stock_index] = slot
 	machine["stock"] = stock
-	machine["pending_queue"] = queue
+	machine["tray_stack"] = tray
 	machine["purchased_count"] = first_purchase_number + quantity - 1
 	var first_ticket: Dictionary = purchased_tickets[0] if not purchased_tickets.is_empty() else {}
 	machine["last_ticket_id"] = str(first_ticket.get("id", ""))
-	machine["last_dispense_id"] = "scratch-dispense:%s" % str(first_ticket.get("id", first_purchase_number))
+	var dispense_started_msec := GameModule.deterministic_time_msec(run_state, ui_state)
+	machine["last_dispense_id"] = "scratch-dispense:%s:%d" % [str(first_ticket.get("id", first_purchase_number)), dispense_started_msec]
 	machine["last_dispense_slot"] = stock_index
-	machine["dispense_started_msec"] = GameModule.deterministic_time_msec(run_state, ui_state)
+	machine["dispense_started_msec"] = dispense_started_msec
+	machine["last_dispense_events"] = _scratch_dispense_events_for_tickets(purchased_tickets, stock_index)
 	machine["last_counter_transaction"] = {
 		"kind": "purchase",
 		"phase": "handover",
@@ -892,7 +904,7 @@ func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary
 		"completed": true,
 	}
 	_write_machine_state(environment, machine, run_state, false)
-	var message := "%s%s paid for now. Scratch one at a time." % [str(first_ticket.get("display_name", "A scratch ticket")), " x%d" % quantity if quantity > 1 else ""]
+	var message := "%s%s paid for. Let the lift finish, then click the delivery tray." % [str(first_ticket.get("display_name", "A scratch ticket")), " x%d" % quantity if quantity > 1 else ""]
 	if not _dictionary_array(first_ticket.get("xray_peeks", [])).is_empty():
 		message += " X-Ray Glasses ghost %d symbols through the coating." % _dictionary_array(first_ticket.get("xray_peeks", [])).size()
 	if not str(first_ticket.get("fortune_tier", "")).is_empty():
@@ -969,6 +981,38 @@ func _compact_purchase_receipt(ticket: Dictionary) -> Dictionary:
 	receipt["luck_modifier"] = int(ticket.get("luck_modifier", 0))
 	receipt["mask_compacted"] = true
 	return receipt
+
+
+func _collect_scratch_tray(machine: Dictionary, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	var tray := _dictionary_array(machine.get("tray_stack", []))
+	if tray.is_empty():
+		return GameModule.surface_command({"message": "The delivery tray is empty."})
+	var queue := _dictionary_array(machine.get("pending_queue", []))
+	var active := _dict_ref(machine.get("active_ticket", {}))
+	var collected_count := tray.size()
+	if active.is_empty():
+		active = tray.pop_front()
+		machine["active_ticket"] = active
+		machine["penalty_shields_remaining"] = maxi(0, int(active.get("lucky_penny_assist", 0)))
+	for ticket_value in tray:
+		if typeof(ticket_value) == TYPE_DICTIONARY:
+			queue.append(ticket_value)
+	machine["tray_stack"] = []
+	machine["pending_queue"] = queue
+	machine["last_counter_transaction"] = {
+		"kind": "tray_collection",
+		"phase": "play",
+		"ticket_count": collected_count,
+		"completed": true,
+	}
+	_write_machine_state(environment, machine, run_state)
+	var next_state := ui_state.duplicate(true)
+	next_state["scratch_compact_tab"] = "ticket"
+	return GameModule.surface_command({
+		"ui_state": next_state,
+		"environment_changed": true,
+		"message": "You lift %d ticket%s from the tray into the play area." % [collected_count, "" if collected_count == 1 else "s"],
+	})
 
 
 func _resolve_reveal(run_state: RunState, environment: Dictionary, rng: RngStream, settle: bool, discard_unfinished: bool = false) -> Dictionary:
@@ -1048,7 +1092,7 @@ func _resolve_reveal(run_state: RunState, environment: Dictionary, rng: RngStrea
 		"environment_id": str(environment.get("id", "")),
 		"message": message,
 	})
-	result["defer_bankroll_zero_failure"] = not _dict_ref(machine.get("active_ticket", {})).is_empty() or not _dictionary_array(machine.get("pending_queue", [])).is_empty() or _pending_payout(machine) > 0
+	result["defer_bankroll_zero_failure"] = not _dictionary_array(machine.get("tray_stack", [])).is_empty() or not _dict_ref(machine.get("active_ticket", {})).is_empty() or not _dictionary_array(machine.get("pending_queue", [])).is_empty() or _pending_payout(machine) > 0
 	result["scratch_discarded_unfinished"] = discard_unfinished
 	result["scratch_discard_preserved_winner"] = discard_unfinished and payout > 0
 	result["suppress_music_outcome"] = settle
@@ -1143,6 +1187,8 @@ func _scratch_counter_ritual(machine: Dictionary, active_ticket: Dictionary, run
 		phase = "redemption_ready"
 	elif not active_ticket.is_empty():
 		phase = "file" if bool(active_ticket.get("result_ready", false)) else "play"
+	elif not _dictionary_array(machine.get("tray_stack", [])).is_empty():
+		phase = "handover"
 	elif str(transaction.get("phase", "")) == "handover":
 		phase = "handover"
 	var staff_state := "idle"
@@ -1276,6 +1322,7 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 			"unique_object_priority": 130,
 		}],
 		"active_ticket": {},
+		"tray_stack": [],
 		"pending_queue": [],
 		"winner_pile": [],
 		"loser_pile": [],
@@ -1287,6 +1334,7 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 		"last_dispense_id": "",
 		"last_dispense_slot": 0,
 		"dispense_started_msec": 0,
+		"last_dispense_events": [],
 		"last_settled_ticket": {},
 		"last_settled_pile": "",
 		"last_file_id": "",
@@ -2052,8 +2100,8 @@ func _draw_ticket(surface, state: Dictionary, render_context: Dictionary = {}) -
 	_draw_counter_mat(surface)
 	_draw_result_piles(surface, state)
 	_draw_queue_stack(surface, state)
-	if ticket.is_empty() or bool(surface.surface_animation_active(DISPENSE_CHANNEL)):
-		_draw_empty_ticket_outline(surface)
+	if ticket.is_empty():
+		_draw_empty_ticket_outline(surface, state)
 		return
 	var render_rect := active_ticket_rect
 	if bool(state.get("scratch_drag_active", false)):
@@ -2123,10 +2171,12 @@ func _draw_result_pile(surface, tickets: Array, rect: Rect2, winner: bool, total
 	surface.surface_label_centered(label, badge, 7, C_WHITE)
 
 
-func _draw_empty_ticket_outline(surface) -> void:
+func _draw_empty_ticket_outline(surface, state: Dictionary) -> void:
 	surface.draw_rect(active_ticket_rect, Color(0.0, 0.0, 0.0, 0.16))
 	surface.draw_rect(active_ticket_rect, Color("#7d6249"), false, 2)
-	surface.surface_label_centered("SELECT A STOCKED ROW", active_ticket_rect, 11, C_SOFT)
+	var tray_count := int(state.get("scratch_tray_count", 0))
+	var copy := "CLICK THE MACHINE TRAY" if tray_count > 0 else "SELECT A STOCKED ROW"
+	surface.surface_label_centered(copy, active_ticket_rect, 11, C_YELLOW if tray_count > 0 else C_SOFT)
 
 
 func _draw_surface_hud(surface, state: Dictionary) -> void:
@@ -2171,23 +2221,6 @@ func _draw_mini_scratch_ticket(surface, ticket: Dictionary, rect: Rect2, alpha: 
 	surface.surface_label(str(ticket.get("display_name", "TICKET")).to_upper().left(12), rect.position + Vector2(4, minf(16.0, rect.size.y * 0.44)), 6, Color(ink.r, ink.g, ink.b, alpha))
 	for mark in range(3):
 		surface.draw_circle(rect.position + Vector2(rect.size.x * (0.35 + mark * 0.20), rect.size.y * 0.72), maxf(2.0, rect.size.y * 0.08), Color(accent.r, accent.g, accent.b, 0.45 * alpha))
-
-
-func _draw_dispense_animation(surface, state: Dictionary) -> void:
-	if not bool(surface.surface_animation_active(DISPENSE_CHANNEL)):
-		return
-	var ticket := _dict_ref(state.get("scratch_ticket", {}))
-	if ticket.is_empty():
-		return
-	var slot := clampi(int(surface.surface_animation_metadata(DISPENSE_CHANNEL).get("slot", 0)), 0, 6)
-	var progress := _ease_out_cubic(surface.surface_animation_progress(DISPENSE_CHANNEL))
-	var source := MACHINE_RECT.position + Vector2(178, 94 + slot * 32)
-	var chute := MACHINE_RECT.position + Vector2(104, 380)
-	var target := active_ticket_rect.get_center()
-	var position := source.lerp(chute, clampf(progress * 2.0, 0.0, 1.0)) if progress < 0.5 else chute.lerp(target, clampf((progress - 0.5) * 2.0, 0.0, 1.0))
-	var size := Vector2(74, 48).lerp(active_ticket_rect.size * 0.82, progress)
-	_draw_mini_scratch_ticket(surface, ticket, Rect2(position - size * 0.5, size), 1.0)
-	surface.draw_rect(Rect2(position - size * 0.5, size).grow(3), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.25 * (1.0 - progress)), false, 3)
 
 
 func _draw_file_animation(surface, state: Dictionary) -> void:
@@ -2252,6 +2285,9 @@ func _stock_view(machine: Dictionary) -> Array:
 
 
 func _machine_empty_rules(machine: Dictionary, stock: Array) -> String:
+	var tray_count := _dictionary_array(machine.get("tray_stack", [])).size()
+	if tray_count > 0:
+		return "%d delivered ticket%s waiting. Click the machine tray to move %s into the play area." % [tray_count, "" if tray_count == 1 else "s", "it" if tray_count == 1 else "them"]
 	for slot_value in stock:
 		if typeof(slot_value) == TYPE_DICTIONARY and int((slot_value as Dictionary).get("remaining", 0)) > 0:
 			return "Buy a ticket, scratch each silver box, then file the result."
@@ -2421,6 +2457,16 @@ func _clear_machine_stock(machine: Dictionary) -> int:
 
 
 func _eligible_scalper_gift_ticket(machine: Dictionary) -> Dictionary:
+	var tray := _dictionary_array(machine.get("tray_stack", []))
+	for index in range(tray.size()):
+		var ticket: Dictionary = tray[index]
+		if _ticket_is_unscratched(ticket):
+			return {
+				"source": "tray_stack",
+				"index": index,
+				"ticket_id": str(ticket.get("id", "")),
+				"ticket_name": str(ticket.get("display_name", "Scratch Ticket")),
+			}
 	var queue := _dictionary_array(machine.get("pending_queue", []))
 	for index in range(queue.size()):
 		var ticket: Dictionary = queue[index]
@@ -2444,6 +2490,15 @@ func _eligible_scalper_gift_ticket(machine: Dictionary) -> Dictionary:
 
 func _consume_scalper_gift_ticket(machine: Dictionary, eligible: Dictionary) -> Dictionary:
 	var source := str(eligible.get("source", ""))
+	if source == "tray_stack":
+		var tray := _dictionary_array(machine.get("tray_stack", []))
+		var tray_index := int(eligible.get("index", -1))
+		if tray_index < 0 or tray_index >= tray.size() or not _ticket_is_unscratched(tray[tray_index] as Dictionary):
+			return {}
+		var consumed_tray_ticket: Dictionary = tray[tray_index]
+		tray.remove_at(tray_index)
+		machine["tray_stack"] = tray
+		return consumed_tray_ticket
 	if source == "pending_queue":
 		var queue := _dictionary_array(machine.get("pending_queue", []))
 		var index := int(eligible.get("index", -1))
@@ -2535,7 +2590,9 @@ func _ticket_play_label(type_id: String, _mechanic: Dictionary) -> String:
 func _normalize_machine_state(machine: Dictionary, run_state: RunState = null) -> void:
 	if _machine_state_is_current(machine):
 		return
-	var needs_upgrade := int(machine.get("version", 1)) < MACHINE_STATE_VERSION or not machine.has("pending_queue")
+	var needs_upgrade := int(machine.get("version", 1)) < MACHINE_STATE_VERSION or not machine.has("tray_stack") or not machine.has("pending_queue")
+	if not machine.has("tray_stack"):
+		machine["tray_stack"] = []
 	if not machine.has("pending_queue"):
 		machine["pending_queue"] = []
 	if not machine.has("winner_pile"):
@@ -2550,7 +2607,7 @@ func _normalize_machine_state(machine: Dictionary, run_state: RunState = null) -
 			_ensure_ticket_regions(active)
 		machine["active_ticket"] = active
 	if needs_upgrade:
-		for field in ["pending_queue", "winner_pile", "loser_pile"]:
+		for field in ["tray_stack", "pending_queue", "winner_pile", "loser_pile"]:
 			var tickets := _dictionary_array(machine.get(field, []))
 			for index in range(tickets.size()):
 				var ticket: Dictionary = tickets[index]
@@ -2574,6 +2631,7 @@ func _normalize_machine_state(machine: Dictionary, run_state: RunState = null) -
 			slot["release_availability"] = "active"
 		stock[index] = slot
 	machine["stock"] = stock
+	machine["last_dispense_events"] = _scratch_dispense_event_array(machine.get("last_dispense_events", []))
 	var phase_fallback := posmod(RunState.text_to_seed(str(machine.get("stock_stream_key", "scratch-restock"))), RESTOCK_INTERVAL_MINUTES)
 	var phase := clampi(int(machine.get("restock_phase_minute", phase_fallback)), 0, RESTOCK_INTERVAL_MINUTES - 1)
 	var current_absolute_minute := maxi(0, run_state.game_clock_minutes) if run_state != null else maxi(0, int(machine.get("stock_day", 0)) * 1440)
@@ -2608,7 +2666,7 @@ func _machine_state_is_current(machine: Dictionary) -> bool:
 		return false
 	if str(machine.get("schema", "")) != "scratch_ticket_machine_state":
 		return false
-	for field in ["stock", "pending_queue", "winner_pile", "loser_pile"]:
+	for field in ["stock", "tray_stack", "pending_queue", "winner_pile", "loser_pile"]:
 		if typeof(machine.get(field, null)) != TYPE_ARRAY:
 			return false
 	for slot_value in machine.get("stock", []) as Array:
@@ -2717,7 +2775,7 @@ func _write_machine_state(environment: Dictionary, machine: Dictionary, run_stat
 	if normalize_before_write:
 		_normalize_machine_state(machine, run_state)
 	var portable := RunState.compact_portable_ticket_state(get_id(), _portable_ticket_player_state(machine), false)
-	for field in ["active_ticket", "pending_queue", "winner_pile", "loser_pile", "loser_archive_count", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"]:
+	for field in ["active_ticket", "tray_stack", "pending_queue", "winner_pile", "loser_pile", "loser_archive_count", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"]:
 		if portable.has(field):
 			machine[field] = portable[field]
 	var states := _game_states_for_write(environment)
@@ -2764,7 +2822,7 @@ func _sync_portable_ticket_state(run_state: RunState, environment: Dictionary, m
 			portable = run_state.portable_ticket_state(get_id(), environment)
 	if portable.is_empty():
 		return
-	for field in ["active_ticket", "pending_queue", "winner_pile", "loser_pile", "loser_archive_count", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"]:
+	for field in ["active_ticket", "tray_stack", "pending_queue", "winner_pile", "loser_pile", "loser_archive_count", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"]:
 		if portable.has(field):
 			machine[field] = portable[field]
 	_normalize_machine_state(machine, run_state)
@@ -2776,7 +2834,7 @@ func _merge_portable_ticket_state_readonly(run_state: RunState, environment: Dic
 	var portable := run_state.portable_ticket_state(get_id(), environment)
 	if portable.is_empty():
 		return
-	for field in ["active_ticket", "pending_queue", "winner_pile", "loser_pile", "loser_archive_count", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"]:
+	for field in ["active_ticket", "tray_stack", "pending_queue", "winner_pile", "loser_pile", "loser_archive_count", "pending_penalty", "penalty_shields_remaining", "last_settled_ticket", "last_settled_pile", "last_file_id", "file_started_msec", "last_sweep_id", "last_sweep_section", "sweep_started_msec"]:
 		if portable.has(field):
 			var value: Variant = portable[field]
 			if typeof(value) == TYPE_DICTIONARY:
@@ -2791,6 +2849,7 @@ func _merge_portable_ticket_state_readonly(run_state: RunState, environment: Dic
 func _portable_ticket_player_state(machine: Dictionary) -> Dictionary:
 	return {
 		"active_ticket": machine.get("active_ticket", {}),
+		"tray_stack": machine.get("tray_stack", []),
 		"pending_queue": machine.get("pending_queue", []),
 		"winner_pile": machine.get("winner_pile", []),
 		"loser_pile": machine.get("loser_pile", []),
@@ -2808,7 +2867,7 @@ func _portable_ticket_player_state(machine: Dictionary) -> Dictionary:
 
 
 func _portable_ticket_count(state: Dictionary) -> int:
-	return (0 if _dict_ref(state.get("active_ticket", {})).is_empty() else 1) + _dictionary_array(state.get("pending_queue", [])).size() + _dictionary_array(state.get("winner_pile", [])).size() + _dictionary_array(state.get("loser_pile", [])).size() + maxi(0, int(state.get("loser_archive_count", 0)))
+	return (0 if _dict_ref(state.get("active_ticket", {})).is_empty() else 1) + _dictionary_array(state.get("tray_stack", [])).size() + _dictionary_array(state.get("pending_queue", [])).size() + _dictionary_array(state.get("winner_pile", [])).size() + _dictionary_array(state.get("loser_pile", [])).size() + maxi(0, int(state.get("loser_archive_count", 0)))
 
 
 func _stamp_ticket_origin(ticket: Dictionary, environment: Dictionary) -> void:
@@ -2824,7 +2883,7 @@ func _stamp_machine_ticket_origins(machine: Dictionary, environment: Dictionary)
 	var active_value: Variant = machine.get("active_ticket", {})
 	if typeof(active_value) == TYPE_DICTIONARY:
 		_stamp_ticket_origin(active_value as Dictionary, environment)
-	for field in ["pending_queue", "winner_pile", "loser_pile"]:
+	for field in ["tray_stack", "pending_queue", "winner_pile", "loser_pile"]:
 		for ticket_value in _dictionary_array(machine.get(field, [])):
 			_stamp_ticket_origin(ticket_value as Dictionary, environment)
 
@@ -2995,11 +3054,70 @@ func _small_screen_enabled(ui_state: Dictionary) -> bool:
 
 
 func _scratch_animation_channels(machine: Dictionary, reduce_motion: bool) -> Array:
+	var dispense_events := _scratch_dispense_event_array(machine.get("last_dispense_events", []))
 	return [
-		GameModule.surface_animation_channel(DISPENSE_CHANNEL, str(machine.get("last_dispense_id", "")), DISPENSE_DURATION_MSEC, int(machine.get("dispense_started_msec", 0)), {"metadata": {"ticket_id": str(_dict_ref(machine.get("active_ticket", {})).get("id", "")), "slot": int(machine.get("last_dispense_slot", 0))}}),
+		GameModule.surface_animation_channel(DISPENSE_CHANNEL, str(machine.get("last_dispense_id", "")), _scratch_dispense_duration_msec(dispense_events), int(machine.get("dispense_started_msec", 0)), {"clock_source": "presentation", "metadata": {"event_count": dispense_events.size(), "ticket_id": str(machine.get("last_ticket_id", "")), "slot": int(machine.get("last_dispense_slot", 0))}}),
 		GameModule.surface_animation_channel(FILE_CHANNEL, str(machine.get("last_file_id", "")), FILE_DURATION_MSEC, int(machine.get("file_started_msec", 0)), {"metadata": {"pile": str(machine.get("last_settled_pile", ""))}}),
 		GameModule.surface_animation_channel(SWEEP_CHANNEL, str(machine.get("last_sweep_id", "")), 0 if reduce_motion else SWEEP_DURATION_MSEC, int(machine.get("sweep_started_msec", 0)), {"metadata": {"region": str(machine.get("last_sweep_section", ""))}}),
 	]
+
+
+func _scratch_dispense_events_for_tickets(tickets: Array, stock_index: int) -> Array:
+	var result: Array = []
+	for index in range(tickets.size()):
+		if typeof(tickets[index]) != TYPE_DICTIONARY:
+			continue
+		var ticket: Dictionary = tickets[index]
+		result.append({
+			"ticket_id": str(ticket.get("id", "")),
+			"ticket": _scratch_ticket_animation_payload(ticket),
+			"slot": stock_index,
+			"sequence_index": index,
+			"start_msec": index * DISPENSE_DURATION_MSEC,
+			"duration_msec": DISPENSE_DURATION_MSEC,
+			"lift_arrive_msec": 470,
+			"pickup_msec": 650,
+			"lower_start_msec": 720,
+			"tray_land_msec": 1360,
+		})
+	return result
+
+
+func _scratch_ticket_animation_payload(ticket: Dictionary) -> Dictionary:
+	# The moving paper needs only its public print identity. Keep the fixed prize,
+	# mechanic result, and item hints out of the presentation/audio event stream.
+	return {
+		"id": str(ticket.get("id", "")),
+		"type_id": str(ticket.get("type_id", "")),
+		"display_name": str(ticket.get("display_name", "Scratch Ticket")),
+		"size_id": str(ticket.get("size_id", "medium_square")),
+		"face": _copy_dict(ticket.get("face", {})),
+	}
+
+
+func _scratch_dispense_event_array(value: Variant) -> Array:
+	var result: Array = []
+	if typeof(value) != TYPE_ARRAY:
+		return result
+	for event_value in value as Array:
+		if typeof(event_value) != TYPE_DICTIONARY:
+			continue
+		var event := (event_value as Dictionary).duplicate(true)
+		event["slot"] = clampi(int(event.get("slot", 0)), 0, maxi(0, ACTIVE_TICKET_TYPE_IDS.size() - 1))
+		event["start_msec"] = maxi(0, int(event.get("start_msec", result.size() * DISPENSE_DURATION_MSEC)))
+		event["duration_msec"] = DISPENSE_DURATION_MSEC
+		result.append(event)
+	return result
+
+
+func _scratch_dispense_duration_msec(events: Array) -> int:
+	if events.is_empty():
+		return DISPENSE_DURATION_MSEC
+	var duration := DISPENSE_DURATION_MSEC
+	for event_value in events:
+		if typeof(event_value) == TYPE_DICTIONARY:
+			duration = maxi(duration, int((event_value as Dictionary).get("start_msec", 0)) + DISPENSE_DURATION_MSEC)
+	return duration
 
 
 func _crumbs_for_segment(from: Vector2, to: Vector2, erased_samples: int) -> Array:

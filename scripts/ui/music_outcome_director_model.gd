@@ -1,6 +1,9 @@
 class_name MusicOutcomeDirectorModel
 extends RefCounted
 
+# Pure adaptive-music decision model that normalizes outcome events and selects
+# quantized cues, boundaries, and reverb without controlling audio nodes.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const OUTCOME_CLASSES := ["small_win", "loss", "big_win", "feature_start", "feature_end", "neutral", "push"]

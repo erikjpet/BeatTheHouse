@@ -2224,9 +2224,10 @@ func _check_scratch_ticket_selected_slot_purchase(app: Control) -> bool:
 	canvas.call("_gui_input", mouse_event)
 	await process_frame
 	var purchased_machine: Dictionary = game.call("_ensure_machine_state", run_state, run_state.current_environment, false)
-	var active_ticket: Dictionary = purchased_machine.get("active_ticket", {}) if typeof(purchased_machine.get("active_ticket", {})) == TYPE_DICTIONARY else {}
-	if active_ticket.is_empty() or str(active_ticket.get("type_id", "")) != selected_type_id:
-		push_error("Clicking scratch vending row 2 resolved against stale row 1 state: expected=%s actual=%s." % [selected_type_id, str(active_ticket.get("type_id", ""))])
+	var tray_stack: Array = purchased_machine.get("tray_stack", []) if typeof(purchased_machine.get("tray_stack", [])) == TYPE_ARRAY else []
+	var tray_ticket: Dictionary = tray_stack[0] if not tray_stack.is_empty() and typeof(tray_stack[0]) == TYPE_DICTIONARY else {}
+	if tray_ticket.is_empty() or str(tray_ticket.get("type_id", "")) != selected_type_id:
+		push_error("Clicking scratch vending row 2 dispensed the stale row 1 ticket: expected=%s actual=%s." % [selected_type_id, str(tray_ticket.get("type_id", ""))])
 		return false
 	if run_state.bankroll != bankroll_before - selected_price:
 		push_error("Scratch vending row 2 charged $%d instead of $%d." % [bankroll_before - run_state.bankroll, selected_price])

@@ -1,6 +1,9 @@
 class_name WagerConfirmationController
 extends RefCounted
 
+# Owns the pending UI state for high-risk/all-in wager confirmation without
+# resolving or charging the wager itself.
+
 signal confirm_requested()
 signal cancel_requested()
 

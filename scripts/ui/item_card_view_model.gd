@@ -1,6 +1,9 @@
 class_name ItemCardViewModel
 extends RefCounted
 
+# Normalizes an item definition/instance into reusable card text, badges,
+# condition, quantity, risk, and collection presentation.
+
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 
 

@@ -1,6 +1,9 @@
 class_name ScratchTicketBackgroundRenderer
 extends RefCounted
 
+# Paints ticket paper, panels, labels, and authored background regions beneath
+# symbols and foil without reading hidden prize authority.
+
 const RegionModelScript := preload("res://scripts/games/scratch_ticket_region_model.gd")
 const CROSSWORD_GRID_RECT := Rect2(0.06, 0.32, 0.50, 0.48)
 const CROSSWORD_GRID_COLUMNS := 11

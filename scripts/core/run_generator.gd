@@ -4,7 +4,9 @@ extends RefCounted
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 const GameModuleRegistryScript := preload("res://scripts/core/game_module_registry.gd")
 
-# Builds deterministic environments from library data.
+# Builds and installs deterministic starting/travel environments from content,
+# WorldMap state, challenges, scenarios, game fixtures, and placement authority.
+# Installation is atomic and exposes explicit rollback/failure evidence.
 
 const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino_showdown_model.gd")
 const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")

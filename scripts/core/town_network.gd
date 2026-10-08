@@ -1,6 +1,9 @@
 class_name TownNetwork
 extends RefCounted
 
+# Coordinates the generated WorldMap with town schedules and seeded scenario
+# assignment, including detached travel previews and snapshot/restore.
+
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const RUMORS_PATH := "res://data/town/rumors.json"

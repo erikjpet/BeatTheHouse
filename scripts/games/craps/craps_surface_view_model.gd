@@ -1,6 +1,9 @@
 class_name CrapsSurfaceViewModel
 extends RefCounted
 
+# Converts authoritative Craps table state into stable, player-safe bet targets,
+# working-bet rows, history rows, and other renderer-ready values.
+
 
 static func bet_targets(table: Dictionary, rules: Dictionary) -> Array:
 	var point := int(table.get("point", 0))
