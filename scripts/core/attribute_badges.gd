@@ -270,14 +270,6 @@ static func for_lender(lender: Dictionary) -> Array:
 			_add_badge(badges, _badge("debt", "loan", "bad", "Debt contract"))
 	_append_delta_badges(badges, _definition_effect(source))
 	return _filtered_badges(badges)
-
-
-static func from_deltas(deltas: Dictionary) -> Array:
-	var badges: Array = []
-	_append_delta_badges(badges, deltas)
-	return _filtered_badges(badges)
-
-
 static func palette_token_for_badge(badge: Dictionary) -> String:
 	var glyph_id := str(badge.get("glyph_id", "")).strip_edges()
 	var glyph := glyph_definition(glyph_id)

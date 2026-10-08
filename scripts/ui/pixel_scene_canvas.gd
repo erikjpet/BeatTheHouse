@@ -4821,14 +4821,6 @@ func _character_style(id: String) -> Dictionary:
 		"sal": {"skin": Color("#bf8366"), "hair": Color("#1b1210"), "jacket": Color("#24212a"), "accent": C_YELLOW, "tempo": 0.60, "phase": 1.7, "idle_primary": "counter_tap", "idle_secondary": "pocket_check"},
 	}
 	return styles.get(id, styles["mara"])
-
-
-func _draw_watch_camera(pos: Vector2, accent: Color) -> void:
-	draw_rect(Rect2(pos + Vector2(-20, -10), Vector2(40, 20)), Color("#05060a"))
-	draw_rect(Rect2(pos + Vector2(-8, -5), Vector2(16, 10)), C_SHADOW)
-	draw_rect(Rect2(pos + Vector2(-3, -3), Vector2(6, 6)), accent)
-
-
 func _draw_interactable_light(rect: Rect2, accent: Color, selected: bool) -> void:
 	var alpha := 0.14 + absf(sin(flicker * 2.4 + rect.position.x * 0.02)) * 0.08
 	if selected:
@@ -6217,15 +6209,6 @@ func _grand_casino_staffing_snapshot() -> Dictionary:
 		return {}
 	var value: Variant = foundation_snapshot.get("grand_casino_staffing", {})
 	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
-
-
-func _grand_casino_staff_member(role_id: String) -> Dictionary:
-	var staffing := _grand_casino_staffing_snapshot()
-	var assignments: Dictionary = staffing.get("assignments", {}) if typeof(staffing.get("assignments", {})) == TYPE_DICTIONARY else {}
-	var value: Variant = assignments.get(role_id, {})
-	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
-
-
 func _selected_object_info_snapshot() -> Dictionary:
 	var info := _selected_object_info()
 	if info.is_empty():
@@ -7100,13 +7083,6 @@ func _draw_text_width(text: String, font: Font, font_size: int) -> float:
 		draw_text_width_cache.clear()
 	draw_text_width_cache[cache_key] = width
 	return width
-
-
-func _clear_draw_text_caches() -> void:
-	draw_text_width_cache = {}
-	fit_draw_text_cache = {}
-
-
 func _clamp_rect_to_visible(rect: Rect2, visible_rect: Rect2) -> Rect2:
 	var x := clampf(rect.position.x, visible_rect.position.x, visible_rect.end.x - rect.size.x)
 	var y := clampf(rect.position.y, visible_rect.position.y, visible_rect.end.y - rect.size.y)

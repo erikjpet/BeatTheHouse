@@ -676,22 +676,6 @@ static func play_stream(stream: AudioStream, stream_id: String, volume_db: float
 		return false
 	_mark_pcm_registered(payload)
 	return true
-
-
-static func prewarm_stream(stream: AudioStream, stream_id: String) -> bool:
-	if not available() or not _bridge_ready():
-		return false
-	var payload := _stream_payload(stream, stream_id, 0.0, 1.0, "", false)
-	if payload.is_empty():
-		return false
-	var payload_json := JSON.stringify(payload)
-	_record_bridge_call("register_pcm", payload_json.length())
-	if not bool(_bridge_interface.registerPcm(payload_json)):
-		return false
-	_mark_pcm_registered(payload)
-	return true
-
-
 static func stop_loop(loop_id: String) -> void:
 	if not available():
 		return
@@ -823,18 +807,6 @@ static func stop_music(group_id: String = "") -> void:
 	var payload_json := JSON.stringify(payload)
 	_record_bridge_call("stop_music", payload_json.length())
 	_bridge_interface.stopMusic(payload_json)
-
-
-static func dispose_pcm(keys: Array) -> Dictionary:
-	if keys.is_empty() or not _bridge_ready():
-		return _tracked_pcm_stats()
-	var payload := JSON.stringify({"keys": keys})
-	_record_bridge_call("dispose_pcm", payload.length())
-	var result := _parse_bridge_pcm_result(_bridge_interface.disposePcm(payload))
-	_sync_registered_pcm_from_result(result)
-	return result
-
-
 static func clear_inactive_pcm() -> Dictionary:
 	if not available() or not _bridge_ready():
 		return _tracked_pcm_stats()

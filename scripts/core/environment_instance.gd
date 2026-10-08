@@ -1199,17 +1199,6 @@ static func _game_layout_entries(environment_data: Dictionary) -> Array:
 			})
 			layout_index += 1
 	return entries
-
-
-static func _layout_spot_count(layout: Dictionary, spot_field: String) -> int:
-	if spot_field.is_empty():
-		return 0
-	var spots: Variant = layout.get(spot_field, [])
-	if typeof(spots) != TYPE_ARRAY:
-		return 0
-	return (spots as Array).size()
-
-
 static func _active_object_layout_entries(environment_data: Dictionary, surface_map: Dictionary) -> Array:
 	var entries: Array = []
 	entries.append_array(_game_layout_entries(environment_data))

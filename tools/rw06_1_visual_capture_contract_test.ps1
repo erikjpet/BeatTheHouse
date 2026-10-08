@@ -512,14 +512,6 @@ function Get-ExactOwnedResidualIdentityRecords {
 }
 
 
-function Get-ExactOwnedResidualPids {
-    param([object]$RootIdentity, [string[]]$BaselineIdentityKeys, [Collections.Generic.List[object]]$RetainedRecords, [string[]]$AllowedPaths)
-    return @(
-        Get-ExactOwnedResidualIdentityRecords $RootIdentity $BaselineIdentityKeys $RetainedRecords $AllowedPaths |
-            ForEach-Object { [int]$_.pid } |
-            Sort-Object -Unique
-    )
-}
 
 
 function Get-AuthoritativeOwnedResidualIdentityRecords {

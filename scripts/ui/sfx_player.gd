@@ -1197,28 +1197,6 @@ func stop_all() -> void:
 
 func preview_event_stream(event_id: String) -> AudioStreamWAV:
 	return _event_stream(event_id)
-
-
-func debug_event_delivery_has_signal(event_id: String) -> bool:
-	var normalized := _normalized_event_id(event_id)
-	if normalized.is_empty():
-		return false
-	# Exercise the exact delivery path and inspect the complete waveform. Sparse
-	# diegetic impulses must not be mistaken for missing assets by subsampling.
-	return _pcm_stream_has_signal(_event_stream(normalized))
-
-
-func _pcm_stream_has_signal(stream: AudioStreamWAV) -> bool:
-	if stream == null or stream.data.is_empty():
-		return false
-	if stream.format != AudioStreamWAV.FORMAT_16_BITS:
-		return true
-	for offset in range(0, stream.data.size() - 1, 2):
-		if stream.data.decode_s16(offset) != 0:
-			return true
-	return false
-
-
 func render_event_master_stream(event_id: String) -> AudioStreamWAV:
 	return _synthesized_event_stream(_normalized_event_id(event_id))
 

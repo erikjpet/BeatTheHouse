@@ -2084,21 +2084,6 @@ static func _canonical_string_values(value: Variant) -> bool:
 		if item.is_empty() or item != item.strip_edges() or seen.has(item): return false
 		seen[item] = true
 	return true
-
-
-static func _valid_receipt_id(value: String) -> bool:
-	var text := value.strip_edges()
-	if text.is_empty():
-		return false
-	var parts := text.split(":", false)
-	if parts.size() < 2:
-		return false
-	for part_value in parts:
-		if not _valid_id(str(part_value)):
-			return false
-	return true
-
-
 static func _valid_receipt_component(value: String) -> bool:
 	var text := value.strip_edges()
 	if text.is_empty() or text.length() > MAX_TEXT_LENGTH:

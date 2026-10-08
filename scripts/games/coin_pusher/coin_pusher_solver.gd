@@ -2186,17 +2186,6 @@ static func _integrate_axis(body: Dictionary, position_key: String, velocity_key
 	var whole := _divi(total, FIXED_HZ)
 	body[position_key] = int(body.get(position_key, 0)) + whole
 	body[remainder_key] = total - whole * FIXED_HZ
-
-
-static func _total_mass(bodies: Array) -> int:
-	var total := 0
-	for body_value in bodies:
-		var body: Dictionary = body_value
-		if not bool(body.get("sleeping", false)):
-			total += maxi(1, int(body.get("mass", FP)))
-	return total
-
-
 static func _apply_surface_friction(body: Dictionary, coefficient: int) -> void:
 	var keep := clampi(FP - _divi(coefficient, 8), 0, FP)
 	body["vx"] = _divi(int(body.get("vx", 0)) * keep, FP)
@@ -2263,21 +2252,6 @@ static func _wake_nearby(bodies: Array, x: int, y: int, radius: int, excluded_id
 		var dy := int(body.get("y", 0)) - y
 		if dx * dx + dy * dy <= radius_sq:
 			_wake(body)
-
-
-static func _position_clear(bodies: Array, x: int, y: int, minimum: int) -> bool:
-	var minimum_sq := minimum * minimum
-	for body_value in bodies:
-		var body: Dictionary = body_value
-		if int(body.get("z", 0)) > DECK_Z + SUPPORT_VERTICAL_TOLERANCE:
-			continue
-		var dx := int(body.get("x", 0)) - x
-		var dy := int(body.get("y", 0)) - y
-		if dx * dx + dy * dy < minimum_sq:
-			return false
-	return true
-
-
 static func _z_bands_overlap(left: Dictionary, right: Dictionary) -> bool:
 	var left_base := int(left.get("z", 0))
 	var right_base := int(right.get("z", 0))

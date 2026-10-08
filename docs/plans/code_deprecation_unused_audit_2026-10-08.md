@@ -1,10 +1,40 @@
-# Deprecated and Unused Code Audit
+# Deprecated and Unused Code Audit and Cleanup
 
-Audited 2026-10-08 against the feature-complete 0.6 working source.
+Audited and cleaned 2026-10-08 against the feature-complete 0.6 source. The
+pre-cleanup source is preserved in Git commit `9c7cc0f2`.
 
-This is an identification report, not a deletion patch. It distinguishes code
-that is unreachable or has no repository caller from compatibility code that is
-still exercised by saves, tests, snapshots, or runtime dispatch.
+The cleanup removed the code proven unreachable or unreferenced while retaining
+compatibility code still exercised by saves, tests, snapshots, or runtime
+dispatch. The candidate inventories below record the pre-cleanup evidence and
+their former line numbers; they are intentionally retained as release audit
+history rather than a description of the current source layout.
+
+## Cleanup result
+
+- Removed the one unreachable retired start-screen implementation.
+- Removed all 105 production functions in the identified unused call islands:
+  51 core, 15 game, and 39 UI functions.
+- Removed all 13 unused active-tool helpers: nine PowerShell and four Python.
+- Removed the three orphan `.gd.uid` workspace artifacts.
+- Re-scanned the production source after deletion. No uniquely named production
+  function remains without an external reference, apart from Godot's
+  `_unhandled_key_input` virtual callback.
+- Preserved every live migration, save-repair, dynamic-contract, and
+  compatibility path listed later in this report.
+
+## Cleanup verification
+
+- Baseline-to-cleanup declaration comparison confirms exactly 105 production
+  functions were removed; no neighboring production function is missing.
+- Godot's full editor scan parses all production scripts cleanly.
+- `health06_1_dead_code_contract_test.ps1` and
+  `health06_1_dead_code_contract.gd` pass, including the orphan-UID check.
+- The focused scenario-engine contract passes with zero failures, and the
+  all-game-module contract passes with zero failures.
+- The no-pointer animation-liveness release gate passes after removal of the
+  unused surface redraw-demand query.
+- PowerShell and Python parse checks pass for every modified tool, and both code
+  documentation checks pass for all production modules and game files.
 
 ## Scope and method
 
@@ -30,18 +60,18 @@ public candidates require a focused test before removal.
 
 | Finding | Count | Disposition |
 | --- | ---: | --- |
-| Confirmed unreachable production blocks | 1 | Remove |
-| Production functions in unused call islands | 105 | Review/remove in focused groups |
+| Confirmed unreachable production blocks | 1 | Removed |
+| Production functions in unused call islands | 105 | Removed |
 | Unreferenced roots among those functions | 85 | No active repository caller |
 | Helpers reachable only from an unused root | 20 | Remove with their root |
 | Private candidates | 55 | Highest-confidence function removals |
 | Public/static candidates | 50 | Internal API review before removal |
 | Orphan production GDScript modules | 0 | No action |
-| Orphan `.gd.uid` artifacts | 3 | Remove generated leftovers |
+| Orphan `.gd.uid` artifacts | 3 | Removed generated leftovers |
 | Constant-false production branches | 0 | No action |
 | Unused/unreachable warning suppressions | 0 | No action |
-| Active PowerShell function candidates | 9 | Tool cleanup |
-| Active Python function candidates | 4 | Tool cleanup |
+| Active PowerShell function candidates | 9 | Removed |
+| Active Python function candidates | 4 | Removed |
 
 Production candidates by area are 51 core functions, 15 game functions, and 39
 UI functions. No production script is orphaned: every module has a path,
@@ -68,10 +98,10 @@ and returns on line 11, so the old panel, intro, challenge, settings, career,
 inventory, collection, developer-library, and exit-button construction below
 that return can never execute. The live replacement starts at line 169.
 
-This is the clearest removal: delete the unreachable block while retaining the
-call to `_build_redesigned_start_screen()`. Re-run the start-screen compile/UI
-check afterward because the dead block still contains callable strings that can
-otherwise make unrelated methods appear referenced during textual audits.
+The unreachable block was deleted while retaining the call to
+`_build_redesigned_start_screen()`. Removing its stale callable strings also
+prevents them from making unrelated methods appear referenced in future textual
+audits.
 
 ## Highest-value unused groups
 
@@ -146,7 +176,7 @@ its declaration. A listed caller is itself part of this unused island.
 | `visual_style.gd` | `type_size:187` |
 | `web_audio_bridge.gd` | `prewarm_stream:681`, `dispose_pcm:828` |
 
-## Active tool candidates
+## Removed active-tool candidates
 
 These do not ship in the game, but they add maintenance surface.
 
@@ -194,18 +224,12 @@ Do not remove these merely because their names say legacy/compatibility:
   `tools/rw06_1_apply_hand_authored_slots.py` is read by the static placement
   validator. Both refuse obsolete schema-v1 mutation under slot schema v2.
 
-## Recommended cleanup order
+## Completed cleanup sequence
 
-1. Remove the unreachable start-screen block and run the focused start/menu UI
-   compile check.
-2. Remove private unused roots and their exclusive helpers in small domain
-   groups, beginning with scenario validation, WorldMap path helpers, delivery
-   reflow, and the old Hold'em decision method.
-3. Review the 50 public/static candidates as internal API. Remove those with no
-   planned caller; explicitly mark any intentionally reserved API instead of
-   leaving it indistinguishable from dead code.
-4. Remove the 13 active-tool helpers, then run only their owning source-contract
-   or generator checks.
-5. Keep live compatibility paths until the oldest supported save/snapshot
-   boundary is formally retired. Archive the two retired slot-authoring tools
-   only after moving the static validator's remaining source assertion.
+1. Removed the unreachable start-screen block.
+2. Removed private unused roots and their exclusive helpers by domain.
+3. Reviewed and removed the public/static candidates with no supported caller.
+4. Removed the 13 unused active-tool helpers and parsed their owning scripts.
+5. Retained live compatibility paths until their supported save/snapshot
+   boundary is formally retired. The two slot-authoring tools remain for the
+   reproducibility and static-validation reasons documented above.

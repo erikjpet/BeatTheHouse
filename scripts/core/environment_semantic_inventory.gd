@@ -1273,17 +1273,6 @@ static func _semantic_position(value: Variant) -> Array:
 	var board := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
 	if x < 0.0 or y < 0.0 or x > board.x or y > board.y: return []
 	return [x, y]
-
-
-static func _semantic_ids(value: Variant) -> Array:
-	var source: Array = (value as Dictionary).keys() if typeof(value) == TYPE_DICTIONARY else _array(value)
-	var result: Array = []
-	for item_value in source:
-		var item := str(_dict(item_value).get("id", "")) if typeof(item_value) == TYPE_DICTIONARY else str(item_value)
-		if _safe_id(item) == item and not item.is_empty() and not result.has(item): result.append(item)
-	return result
-
-
 static func _ids(value: Variant) -> Array:
 	var result: Array = []
 	for item in _array(value):

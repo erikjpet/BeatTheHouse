@@ -1904,16 +1904,6 @@ static func _label_rect(rect: Rect2, label: String) -> Rect2:
 	if y < 16.0:
 		y = rect.end.y + LABEL_GAP
 	return _clamp_label_inside_board(Rect2(Vector2(rect.get_center().x - width * 0.5, y), Vector2(width, LABEL_HEIGHT)))
-
-
-static func _translated_label_rect(label_rect: Rect2, start_rect: Rect2, target_rect: Rect2) -> Rect2:
-	if not label_rect.has_area() or not start_rect.has_area() or not target_rect.has_area():
-		return Rect2()
-	var translated := label_rect
-	translated.position += target_rect.get_center() - start_rect.get_center()
-	return _clamp_label_inside_board(translated)
-
-
 static func _clamp_label_inside_board(rect: Rect2) -> Rect2:
 	var margin := 16.0
 	var position := Vector2(
@@ -1960,26 +1950,6 @@ static func _resolve_center(environment: Dictionary, anchor_id: String, zone_id:
 			if index >= 0 and index < spots.size():
 				return _point(spots[index])
 	return Vector2(-1.0, -1.0)
-
-
-static func _zone_rect(environment: Dictionary, zone_id: String) -> Rect2:
-	if zone_id.is_empty():
-		return Rect2()
-	return _rect_from_semantic_bounds(_dict(_dict(environment.get("semantic_zones", {})).get(zone_id, {})).get("bounds", []))
-
-
-static func _rect_from_semantic_bounds(value: Variant) -> Rect2:
-	var values := _array(value)
-	if values.size() < 4:
-		return Rect2()
-	return Rect2(float(values[0]), float(values[1]), float(values[2]), float(values[3]))
-
-
-static func _resolve_route_center(environment: Dictionary, semantic_state: Dictionary, route_id: String) -> Vector2:
-	var result := _resolve_route_center_result(environment, semantic_state, route_id)
-	return result.get("center", Vector2(-1.0, -1.0)) if bool(result.get("ok", false)) else Vector2(-1.0, -1.0)
-
-
 static func _resolve_route_center_result(environment: Dictionary, semantic_state: Dictionary, route_id: String) -> Dictionary:
 	var parsed := OperationRegistryScript.parse_owned_identity(route_id)
 	var raw_alias := route_id.strip_edges()
@@ -2072,13 +2042,6 @@ static func _record_pixel_rect(record: Dictionary) -> Rect2:
 static func _record_small_rect(record: Dictionary) -> Rect2:
 	var authored := _normalized_or_pixel_rect(record.get("small_screen_rect", {}))
 	return authored if authored.has_area() else _expanded_rect(_record_pixel_rect(record), SMALL_SCREEN_TARGET)
-
-
-static func _record_label_rect(record: Dictionary, small_screen: bool = false) -> Rect2:
-	var key := "small_screen_label_rect" if small_screen else "label_rect"
-	return _normalized_or_pixel_rect(record.get(key, {}))
-
-
 static func _normalized_or_pixel_rect(value: Variant) -> Rect2:
 	var rect := _rect(value)
 	if not _finite_point(rect.position) or not _finite_point(rect.size) or rect.size.x <= 0.0 or rect.size.y <= 0.0:

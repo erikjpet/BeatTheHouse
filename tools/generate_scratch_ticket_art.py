@@ -67,9 +67,6 @@ class TicketArt:
     legend: dict[str, int]
 
 
-def hex_color(value: str, alpha: int = 255) -> tuple[int, int, int, int]:
-    value = value.strip().lstrip("#")
-    return (int(value[0:2], 16), int(value[2:4], 16), int(value[4:6], 16), alpha)
 
 
 def mix(a: tuple[int, int, int, int], b: tuple[int, int, int, int], t: float) -> tuple[int, int, int, int]:

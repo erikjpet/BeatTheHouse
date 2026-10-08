@@ -182,22 +182,6 @@ static func role(id: String, fallback: Color = WHITE) -> Color:
 static func spacing(step: int) -> int:
 	var scale := [0, SPACE_1, SPACE_2, SPACE_3, SPACE_4, SPACE_5, SPACE_6, SPACE_7, SPACE_8, SPACE_9]
 	return int(scale[clampi(step, 0, scale.size() - 1)])
-
-
-static func type_size(step: String) -> int:
-	match step:
-		"micro": return TYPE_MICRO
-		"caption": return TYPE_CAPTION
-		"small": return TYPE_SMALL
-		"body": return TYPE_BODY
-		"body_large": return TYPE_BODY_LARGE
-		"subhead": return TYPE_SUBHEAD
-		"heading": return TYPE_HEADING
-		"title": return TYPE_TITLE
-		"display": return TYPE_DISPLAY
-	return TYPE_BODY
-
-
 static func accessible_color(value: Color) -> Color:
 	return accessible_color_for_mode(value, high_contrast_enabled)
 

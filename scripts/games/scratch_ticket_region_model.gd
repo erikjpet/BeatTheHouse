@@ -72,12 +72,6 @@ static func rect_for(region: Dictionary, art_frame: Rect2, field: String = "art_
 static func art_size(type_id: String) -> Vector2:
 	var source: Dictionary = _data().get("source_art", {}).get(type_id, {})
 	return Vector2(float(source.get("w", 1)), float(source.get("h", 1)))
-
-
-static func art_file(type_id: String) -> String:
-	return ART_ROOT + str(_data().get("source_art", {}).get(type_id, {}).get("file", ""))
-
-
 static func source_sha256(type_id: String) -> String:
 	return str(_data().get("source_art", {}).get(type_id, {}).get("sha256", ""))
 

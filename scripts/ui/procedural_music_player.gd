@@ -3240,12 +3240,6 @@ func live_mix_fingerprint(profile: Dictionary) -> String:
 		"volume": snappedf(float(profile.get("volume", 0.26)), 0.0001),
 	}
 	return JSON.stringify(_canonical_cache_value(identity)).sha256_text()
-
-
-func profile_fingerprint(profile: Dictionary) -> String:
-	return JSON.stringify(_canonical_cache_value(profile)).sha256_text()
-
-
 func _canonical_cache_value(value: Variant) -> Variant:
 	if typeof(value) == TYPE_DICTIONARY:
 		var source := value as Dictionary

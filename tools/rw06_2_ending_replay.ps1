@@ -1341,9 +1341,6 @@ function Wait-ForSessionExit {
 }
 
 
-function Refresh-Look {
-    $null = Invoke-BridgeCommand -Command 'look' -Intent 'observe the current player surface' -ObservationOnly
-}
 
 
 function Get-Buttons {

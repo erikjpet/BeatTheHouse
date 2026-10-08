@@ -2126,15 +2126,6 @@ static func _lifecycle_outcome(definition: Dictionary, policy: String) -> String
 		if aftermath.has(str(candidate_value)):
 			return str(candidate_value)
 	return ""
-
-
-static func _append_runtime_error(state: Dictionary, message: String) -> void:
-	var errors := _bounded_strings(state.get("runtime_errors", []), 32)
-	if not message.strip_edges().is_empty() and not errors.has(message):
-		errors.append(message)
-	state["runtime_errors"] = _bounded_strings(errors, 32)
-
-
 static func _normalize_expiry_counts(value: Variant) -> Dictionary:
 	var source := _dict(value)
 	var result: Dictionary = {}
@@ -2368,15 +2359,6 @@ static func _resolved_branch_ids(records: Array) -> Array:
 		if not phase_id.is_empty() and not branch_id.is_empty():
 			_append_unique(result, "%s:%s" % [phase_id, branch_id])
 	return result
-
-
-static func _resolved_branch_outcomes(records: Array) -> Array:
-	var result: Array = []
-	for record_value in records:
-		_append_unique(result, str(_dict(record_value).get("terminal_outcome", "")))
-	return result
-
-
 static func _normalized_event_correlations(value: Variant, event_choices: Dictionary = {}) -> Array:
 	var result: Array = []
 	var seen: Dictionary = {}

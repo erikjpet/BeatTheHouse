@@ -3441,46 +3441,6 @@ function ConvertTo-DirectoryGuardCloseEvidence {
 }
 
 
-function Close-OwnedCacheGuardChecked {
-    param(
-        $State,
-        [ValidateSet('deleted_closed', 'preserved_closed', 'test_closed')]
-        [string]$Disposition,
-        [switch]$ForceReportedFailureForTest
-    )
-    if ($null -eq $State -or $null -eq $State.root_guard_owner) {
-        throw 'Checked cache-custody close requires one transferred native owner receipt.'
-    }
-    if ([int]$State.custody_release_count -ne 0 -or $null -ne $State.custody_release_receipt) {
-        throw 'Checked cache-custody close rejected a double release or double transfer.'
-    }
-    $owner = $State.root_guard_owner
-    try {
-        $nativeClose = [Rw06FileIdentityNative]::CloseDirectoryGuardChecked(
-            $owner,
-            $Disposition,
-            [bool]$ForceReportedFailureForTest
-        )
-        $State.custody_release_receipt = ConvertTo-DirectoryGuardCloseEvidence -CloseReceipt $nativeClose
-        $State.custody_release_count = 1
-        $State.custody_transition = $Disposition
-        return $State.custody_release_receipt
-    }
-    catch {
-        if ($null -ne $owner.CloseReceipt) {
-            $State.custody_release_receipt = ConvertTo-DirectoryGuardCloseEvidence -CloseReceipt $owner.CloseReceipt
-            $State.custody_release_count = 1
-            if ([bool]$owner.NativeCloseSucceeded) {
-                $State.custody_transition = $Disposition + '_reported_failure'
-            }
-            else {
-                $State.custody_transition = $Disposition + '_native_failure'
-            }
-        }
-        $_.Exception.Data['owned_creation_state'] = $State
-        throw
-    }
-}
 
 
 function Initialize-ExclusiveOwnedCacheRoot {

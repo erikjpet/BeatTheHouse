@@ -341,12 +341,6 @@ static func cargo(state_value: Variant) -> Dictionary:
 		"status": str(physical.get("cargo_state", CARGO_NONE)),
 		"node_id": str(physical.get("cargo_node_id", "")),
 	}
-
-
-static func chase_verbs() -> Array:
-	return ["move", "wait", "duck"]
-
-
 static func bind_legacy_position(state_value: Variant, host_node_id: String) -> Dictionary:
 	var state := normalize_state(state_value)
 	var clean_node := host_node_id.strip_edges()
@@ -717,16 +711,6 @@ static func _all_targets_delivered(state: Dictionary) -> bool:
 		if typeof(target_value) != TYPE_DICTIONARY or str((target_value as Dictionary).get("status", "pending")) != "delivered":
 			return false
 	return true
-
-
-static func _next_pending_target_index(state: Dictionary) -> int:
-	var targets := JsonCoerceScript._copy_array(state.get("targets", []))
-	for index in range(targets.size()):
-		if str(JsonCoerceScript._copy_dict(targets[index]).get("status", "pending")) == "pending":
-			return index
-	return -1
-
-
 static func _record_physical_position(state_value: Dictionary, node_id: String, verb: String) -> Dictionary:
 	var state := state_value.duplicate(true)
 	var depth := JsonCoerceScript._copy_dict(state.get("depth_state", {}))

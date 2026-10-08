@@ -50,15 +50,6 @@ static func build(open_result: Dictionary, possible_definitions: Array, reduce_m
 		"contents": contents,
 		"rarity_colors": _rarity_color_map(),
 	}
-
-
-static func snap_to_complete(model: Dictionary) -> Dictionary:
-	var snapshot := model.duplicate(true)
-	snapshot["spin_duration_sec"] = 0.0
-	snapshot["reduce_motion"] = true
-	return snapshot
-
-
 static func landing_card(model: Dictionary) -> Dictionary:
 	var sequence := JsonCoerceScript._dictionary_array(model.get("sequence", []))
 	var index := int(model.get("landing_index", LANDING_INDEX))

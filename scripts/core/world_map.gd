@@ -992,29 +992,6 @@ static func discover_spawn_open_neighbors(map_data: Dictionary, source_node_ids:
 		return normalized
 	normalized["nodes"] = nodes
 	return _bump_revision(normalized)
-
-
-static func refresh_shop_node_environments(map_data: Dictionary, node_ids: Array) -> Dictionary:
-	if node_ids.is_empty():
-		return normalize(map_data)
-	var normalized := normalize(map_data)
-	var refresh_ids := JsonCoerceScript._string_array(node_ids)
-	var nodes: Array = normalized.get("nodes", [])
-	for index in range(nodes.size()):
-		if typeof(nodes[index]) != TYPE_DICTIONARY:
-			continue
-		var node: Dictionary = nodes[index]
-		var node_id := str(node.get("id", ""))
-		if not refresh_ids.has(node_id):
-			continue
-		if str(node.get("kind", "")).strip_edges().to_lower() != "shop":
-			continue
-		node["environment"] = {}
-		nodes[index] = node
-	normalized["nodes"] = nodes
-	return _bump_revision(normalized)
-
-
 static func mark_home_lost(map_data: Dictionary, node_id: String) -> Dictionary:
 	var target_id := node_id.strip_edges()
 	if target_id.is_empty():
@@ -1978,18 +1955,6 @@ static func _ensure_visible_neighbor_target(result: Array, source_id: String, ta
 	elif not normalized_result.is_empty():
 		normalized_result[normalized_result.size() - 1] = target_id
 	return normalized_result
-
-
-static func _travel_candidate_entries(map_data: Dictionary, source_id: String, visited_only: bool, enabled_lookup: Dictionary = {}) -> Array:
-	var visible_data := _visible_ids_and_lookup(map_data)
-	var visible_ids: Array = visible_data.get("ids", [])
-	var visible_lookup: Dictionary = visible_data.get("lookup", {})
-	var node_lookup := _node_lookup(map_data)
-	var edge_lookup := _edge_lookup(map_data)
-	var visited_path := JsonCoerceScript._string_array(map_data.get("visited_path", []))
-	return _travel_candidate_entries_prepared(map_data, source_id, visited_only, enabled_lookup, visible_ids, visible_lookup, node_lookup, edge_lookup, visited_path)
-
-
 static func _travel_candidate_entries_prepared(map_data: Dictionary, source_id: String, visited_only: bool, enabled_lookup: Dictionary, visible_ids: Array, visible_lookup: Dictionary, node_lookup: Dictionary, edge_lookup: Dictionary, visited_path: Array) -> Array:
 	var entries: Array = []
 	for target_id_value in visible_ids:
@@ -2149,58 +2114,6 @@ static func _reconstruct_path(previous_by_id: Dictionary, source_id: String, tar
 	if path.is_empty() or str(path[0]) != source_id:
 		return []
 	return path
-
-
-static func _path_distance_blocks(map_data: Dictionary, path: Array) -> int:
-	var blocks := 0
-	for edge in _path_edges(map_data, path):
-		var edge_data: Dictionary = edge
-		blocks += maxi(1, int(edge_data.get("distance_blocks", 1)))
-	return maxi(1, blocks)
-
-
-static func _path_base_cost(map_data: Dictionary, path: Array) -> int:
-	var total := 0
-	for edge in _path_edges(map_data, path):
-		var edge_data: Dictionary = edge
-		total += maxi(0, int(edge_data.get("base_cost", edge_data.get("cost", 0))))
-	return total
-
-
-static func _path_cost(map_data: Dictionary, path: Array) -> int:
-	var total := 0
-	for edge in _path_edges(map_data, path):
-		var edge_data: Dictionary = edge
-		total += maxi(0, int(edge_data.get("cost", edge_data.get("base_cost", 0))))
-	return total
-
-
-static func _path_risk_decay(map_data: Dictionary, path: Array, band: String) -> int:
-	var risk_decay := _risk_decay_for_band(band)
-	for edge in _path_edges(map_data, path):
-		var edge_data: Dictionary = edge
-		risk_decay = maxi(risk_decay, int(edge_data.get("risk_decay", 0)))
-	return clampi(risk_decay, 0, 100)
-
-
-static func _route_edge_id(map_data: Dictionary, path: Array) -> String:
-	if path.size() == 2:
-		var direct_edge := edge_between(map_data, str(path[0]), str(path[1]))
-		if not direct_edge.is_empty():
-			return str(direct_edge.get("id", _edge_id(str(path[0]), str(path[1]))))
-	return "path:%s" % "->".join(path)
-
-
-static func _path_edges(map_data: Dictionary, path: Array) -> Array:
-	var edges: Array = []
-	for index in range(path.size() - 1):
-		var edge := edge_between(map_data, str(path[index]), str(path[index + 1]))
-		if edge.is_empty():
-			return []
-		edges.append(edge)
-	return edges
-
-
 static func _path_distance_blocks_prepared(edge_lookup: Dictionary, path: Array) -> int:
 	var blocks := 0
 	for index in range(path.size() - 1):

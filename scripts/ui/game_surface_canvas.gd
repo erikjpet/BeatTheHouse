@@ -1609,16 +1609,6 @@ func _needs_continuous_redraw() -> bool:
 
 func _surface_animation_liveness_active() -> bool:
 	return _surface_main_animation_redraw_active()
-
-
-func _surface_animation_redraw_demand() -> Dictionary:
-	var main := _surface_main_animation_redraw_active()
-	return {
-		"main": main,
-		"handoff": _surface_animation_handoff_active(),
-	}
-
-
 func _surface_main_animation_redraw_active() -> bool:
 	if reduce_motion:
 		return false

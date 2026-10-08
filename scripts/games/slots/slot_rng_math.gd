@@ -176,24 +176,6 @@ static func payline_cells_from(reel_count: int, row_count: int, line_index: int,
 		var reel_index := safe_start + offset
 		cells.append({"reel": reel_index, "row": int(rows[reel_index])})
 	return cells
-
-
-static func random_payline_cells(reel_count: int, row_count: int, count: int, rng: RngStream) -> Array:
-	var safe_reels := maxi(1, reel_count)
-	var safe_rows := maxi(1, row_count)
-	var target_count := mini(maxi(1, count), safe_reels)
-	var start_reel := rng.randi_range(0, maxi(0, safe_reels - target_count))
-	var line_index := rng.randi_range(0, payline_count(safe_rows) - 1)
-	return payline_cells_from(safe_reels, safe_rows, line_index, start_reel, target_count)
-
-
-static func grid_to_string(grid: Array) -> String:
-	var columns: Array = []
-	for column_value in grid:
-		columns.append(",".join(JsonCoerceScript._string_array(column_value)))
-	return "|".join(columns)
-
-
 static func normalize_weight_table(table: Array, target_total: int) -> Array:
 	var total := 0
 	for entry_value in table:

@@ -226,12 +226,6 @@ static func delivery_matches(ledger: Dictionary, request_key: String, action_id:
 	if not bool(issued.get("ok", false)):
 		return issued
 	return {"ok": true, "delivery": pending.duplicate(true)}
-
-
-static func cancel_delivery(ledger: Dictionary, delivery: Dictionary) -> Dictionary:
-	return _cancel_delivery(ledger, delivery, true)
-
-
 static func cancel_delivery_cow(ledger: Dictionary, delivery: Dictionary) -> Dictionary:
 	return _cancel_delivery(ledger, delivery, false)
 
@@ -326,12 +320,6 @@ static func receipt_for(delivery: Dictionary, table_binding: String, result: Dic
 		"rng_fingerprint": rng_fingerprint,
 		"result_fingerprint": result_fingerprint(result),
 	}
-
-
-static func valid_receipt(receipt: Variant, pending: Variant, result: Dictionary, table_binding: String) -> bool:
-	return _valid_receipt(receipt, pending, table_binding, result_fingerprint(result))
-
-
 static func valid_receipt_with_result_fingerprint(receipt: Variant, pending: Variant, table_binding: String, verified_result_fingerprint: String) -> bool:
 	# Multi-fixture rooms must inspect more than one table, but the authoritative
 	# result is identical for every candidate. Hash it once at the caller and keep
@@ -361,12 +349,6 @@ static func _valid_receipt(receipt: Variant, pending: Variant, table_binding: St
 
 static func commit_response(ledger: Dictionary, delivery: Dictionary, response: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String, checkpoint_fingerprint: String, active_replay_limit: int = ACTIVE_REPLAY_LIMIT) -> Dictionary:
 	return _commit_response(ledger, delivery, response, proposal_fingerprint, run_fingerprint, rng_fingerprint, checkpoint_fingerprint, true, active_replay_limit)
-
-
-static func commit_response_cow(ledger: Dictionary, delivery: Dictionary, response: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String, checkpoint_fingerprint: String, active_replay_limit: int = ACTIVE_REPLAY_LIMIT) -> Dictionary:
-	return _commit_response(ledger, delivery, response, proposal_fingerprint, run_fingerprint, rng_fingerprint, checkpoint_fingerprint, false, active_replay_limit)
-
-
 static func commit_response_cow_with_result_fingerprint(ledger: Dictionary, delivery: Dictionary, response: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String, checkpoint_fingerprint: String, verified_result_fingerprint: String, active_replay_limit: int = ACTIVE_REPLAY_LIMIT) -> Dictionary:
 	# The host calls this immediately after receipt_for() fingerprints the same
 	# response. Receipt metadata is excluded from that digest, so committing can

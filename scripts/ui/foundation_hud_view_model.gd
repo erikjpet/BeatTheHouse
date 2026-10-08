@@ -196,47 +196,6 @@ static func meta_status_model(home: Dictionary) -> Dictionary:
 		"housing_label": housing_label,
 		"location_id": str(home.get("location_id", "")),
 	}
-
-
-static func next_objective_option(run_state: RunState, data: Dictionary) -> Dictionary:
-	if run_state == null:
-		return {}
-	var pressure: Dictionary = data.get("pressure", {})
-	var pressure_state := str(pressure.get("state", ""))
-	if pressure_state == "victory":
-		return objective_for_object("menu", "main_menu", "return to the menu or start fresh", true, data.get("player_facing_text", Callable()))
-	if pressure_state == "failed":
-		return objective_for_object("menu", "main_menu", "return to the menu to continue or start over", true, data.get("player_facing_text", Callable()))
-	var objective: Dictionary = data.get("demo_objective", {})
-	var state := objective_presentation_state(pressure, objective)
-	if bool(objective.get("players_card_ready_to_claim", false)):
-		if str(run_state.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
-			return objective_for_object("casino_fixture", "casino_fixture:cage_counter", "settle any marker and claim the next tier from Linda", true, data.get("player_facing_text", Callable()))
-		return objective_for_object("travel", "travel:grand_casino_cage", "enter the Cage to settle or claim the next tier", true, data.get("player_facing_text", Callable()))
-	var state_option := next_objective_option_for_state(state, objective, data.get("player_facing_text", Callable()))
-	if not state_option.is_empty():
-		return state_option
-	if bool(data.get("current_game_active", false)):
-		return {"hint": "choose stake and press for the objective" if bool(data.get("objective_needs_play", false)) else "choose stake and click a game-surface action", "object_type": "game_surface", "object_id": "", "enabled": true}
-	if bool(data.get("objective_needs_play", false)) and bool(data.get("has_enabled_game", false)):
-		return objective_for_object("game", "", "play for the boss-floor target", true, data.get("player_facing_text", Callable()))
-	for candidate in [
-		_candidate(data.get("event_option", {}), "event", "event:", "answer the local event"),
-		_candidate(data.get("item_offer", {}), "item", "item:", "inspect useful gear"),
-		_candidate(data.get("service_option", {}), "service", "service:", "use a local service"),
-		_candidate(data.get("lender_option", {}), "lender", "lender:", "consider lender help"),
-		_candidate(data.get("travel_choice", {}), "travel", "travel:", "choose where to go next"),
-	]:
-		if not candidate.is_empty():
-			return objective_for_object(str(candidate.get("object_type", "")), str(candidate.get("object_id", "")), str(candidate.get("hint", "")), true, data.get("player_facing_text", Callable()))
-	if bool(data.get("has_enabled_game", false)):
-		return objective_for_object("game", "", "play a visible game", true, data.get("player_facing_text", Callable()))
-	var locked: Dictionary = data.get("locked_travel", {})
-	if not locked.is_empty():
-		return objective_for_object("travel", "travel:%s" % str(locked.get("id", "")), str(locked.get("disabled_reason", "routes are locked for now")), false, data.get("player_facing_text", Callable()))
-	return objective_for_object("menu", "main_menu", "return to the menu or inspect the room", true, data.get("player_facing_text", Callable()))
-
-
 static func hud_goal_text(run_state: RunState, pressure: Dictionary, objective: Dictionary, player_facing_text: Callable) -> String:
 	return hud_short(objective_goal_text(run_state, pressure, objective), 54, player_facing_text).replace("Double-click it to win.", "double-click to win.")
 
@@ -389,13 +348,6 @@ static func hud_run_status_text(run_state: RunState, pressure: Dictionary) -> St
 
 static func hud_save_text(has_save: bool, status: String, player_facing_text: Callable) -> String:
 	return "Autosave %s · %s" % [("on" if has_save else "pending").capitalize(), hud_short("current run" if status.is_empty() else status, 24, player_facing_text)]
-
-
-static func hud_meter(value: int, maximum: int, width: int) -> String:
-	var filled := clampi(roundi(float(clampi(value, 0, maximum)) / float(maximum) * float(width)), 0, width) if maximum > 0 and width > 0 else 0
-	return "%d/%d (%d of %d segments)" % [clampi(value, 0, maximum), maximum, filled, width]
-
-
 static func hud_short(text: String, max_length: int, player_facing_text: Callable) -> String:
 	var cleaned := _call_string(player_facing_text, text).strip_edges()
 	if cleaned.length() <= max_length: return cleaned

@@ -64,12 +64,6 @@ static func prepare_render(definition: Dictionary, environment: Dictionary, proj
 		return {"schema_version": 1, "ok": false, "errors": contract_errors, "visual_objects": [], "interaction_overlays": []}
 	response["renderer_id"] = extension_id
 	return response
-
-
-static func extension_paths(extension_id: String) -> Dictionary:
-	return {"handler": _handler_path(extension_id), "renderer": _renderer_path(extension_id)}
-
-
 static func _validate_extension(path: String, extension_id: String, method_name: String, kind: String) -> Array:
 	var loaded := _load_extension(path, extension_id, method_name, kind)
 	return _array(loaded.get("errors", [])) if not bool(loaded.get("ok", false)) else []

@@ -342,18 +342,6 @@ func _read_run_state_from_path(path: String) -> Dictionary:
 	var run_state := RunState.new()
 	run_state.from_dict(run_data)
 	return {"exists": true, "loadable": true, "run_state": run_state}
-
-
-func _rotate_primary_to_backup(primary_path: String, backup_path: String) -> Error:
-	var primary_absolute := ProjectSettings.globalize_path(primary_path)
-	var backup_absolute := ProjectSettings.globalize_path(backup_path)
-	if FileAccess.file_exists(backup_absolute):
-		var remove_error := DirAccess.remove_absolute(backup_absolute)
-		if remove_error != OK:
-			return remove_error
-	return DirAccess.rename_absolute(primary_absolute, backup_absolute)
-
-
 func _primary_fingerprint_is_trusted(slot_id: String, path: String) -> bool:
 	if not trusted_primary_fingerprints.has(slot_id):
 		return false
@@ -372,14 +360,6 @@ func _file_fingerprint(path: String) -> String:
 	if not FileAccess.file_exists(path):
 		return ""
 	return "%d:%d" % [FileAccess.get_modified_time(path), FileAccess.get_size(path)]
-
-
-func _remove_absolute_if_exists(absolute_path: String) -> Error:
-	if not FileAccess.file_exists(absolute_path):
-		return OK
-	return DirAccess.remove_absolute(absolute_path)
-
-
 func _load_outcome(slot_id: String, outcome: String, primary: Dictionary, backup: Dictionary) -> Dictionary:
 	return {
 		"outcome": outcome,

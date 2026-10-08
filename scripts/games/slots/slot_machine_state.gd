@@ -60,19 +60,6 @@ static func write_machine(environment: Dictionary, game_id: String, machine: Dic
 	states[game_id] = normalize(machine)
 	environment["game_states"] = states
 	_bump_environment_runtime_revision(environment)
-
-
-static func write_owned_machine(environment: Dictionary, game_id: String, machine: Dictionary) -> void:
-	# Resolution paths already own read_machine()'s copy. Preserve every
-	# canonical normalization and compaction below without first cloning the
-	# entire nested machine a second time.
-	var states_value: Variant = environment.get("game_states", {})
-	var states: Dictionary = (states_value as Dictionary).duplicate(false) if typeof(states_value) == TYPE_DICTIONARY else {}
-	states[game_id] = normalize_owned(machine)
-	environment["game_states"] = states
-	_bump_environment_runtime_revision(environment)
-
-
 # Resolution owns its mutable values and borrows definition-cache arrays. Keep
 # those immutable arrays shared instead of normalizing/copying them again.
 static func write_runtime_machine(environment: Dictionary, game_id: String, machine: Dictionary) -> void:
@@ -202,26 +189,6 @@ static func set_selected_bet_by_index(machine: Dictionary, index: int) -> Dictio
 	var safe_index := clampi(index, 0, BET_OPTIONS.size() - 1)
 	var option: Dictionary = BET_OPTIONS[safe_index]
 	return set_selected_bet(machine, str(option.get("id", "bet_2")))
-
-
-static func per_bet_bucket(machine: Dictionary, bet_id: String) -> Dictionary:
-	var bonus_state: Dictionary = _normalize_bonus_state(machine.get("bonus_state", {}))
-	var buckets: Dictionary = JsonCoerceScript._copy_dict(bonus_state.get("per_bet", {}))
-	if not buckets.has(bet_id) or typeof(buckets.get(bet_id)) != TYPE_DICTIONARY:
-		buckets[bet_id] = _default_per_bet_bucket()
-	bonus_state["per_bet"] = buckets
-	machine["bonus_state"] = bonus_state
-	return (buckets[bet_id] as Dictionary).duplicate(true)
-
-
-static func set_per_bet_bucket(machine: Dictionary, bet_id: String, bucket: Dictionary) -> void:
-	var bonus_state: Dictionary = _normalize_bonus_state(machine.get("bonus_state", {}))
-	var buckets: Dictionary = JsonCoerceScript._copy_dict(bonus_state.get("per_bet", {}))
-	buckets[bet_id] = _normalize_per_bet_bucket(bucket)
-	bonus_state["per_bet"] = buckets
-	machine["bonus_state"] = bonus_state
-
-
 static func seeded_buffalo_bonus_state(rng: RngStream) -> Dictionary:
 	var per_bet: Dictionary = {}
 	for option_value in BET_OPTIONS:
@@ -322,21 +289,6 @@ static func _normalize_per_bet_bucket(value: Variant) -> Dictionary:
 		BUFFALO_GRAND_PRIZE_INITIAL_MULTIPLIER_KEY: maxi(0, int(bucket.get(BUFFALO_GRAND_PRIZE_INITIAL_MULTIPLIER_KEY, 0))),
 		BUFFALO_GRAND_PRIZE_SPINS_KEY: maxi(0, int(bucket.get(BUFFALO_GRAND_PRIZE_SPINS_KEY, 0))),
 	}
-
-
-static func _default_per_bet_bucket() -> Dictionary:
-	return {
-		"gold_buffalo_heads": 0,
-		"gold_buffalo_max_seen": 0,
-		"must_hit_meter": 100,
-		"must_hit_ready": false,
-		"feature_completion_count": 0,
-		BUFFALO_GRAND_PRIZE_STATE_KEY: 0,
-		BUFFALO_GRAND_PRIZE_INITIAL_MULTIPLIER_KEY: 0,
-		BUFFALO_GRAND_PRIZE_SPINS_KEY: 0,
-	}
-
-
 static func _normalize_active_bonus(value: Variant) -> Dictionary:
 	var active: Dictionary = JsonCoerceScript._copy_dict(value)
 	if active.is_empty():

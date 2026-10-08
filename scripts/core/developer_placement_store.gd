@@ -95,47 +95,11 @@ static func slot_overrides(environment: Dictionary, field: String = "slot_positi
 	return result
 
 
-static func project_slot_overrides(environment: Dictionary, field: String = "slot_positions") -> Dictionary:
-	if field not in POSITION_FIELDS:
-		return {}
-	_ensure_loaded()
-	return _room_slot_overrides(_project_rooms, environment, field)
-
-
 static func user_slot_overrides(environment: Dictionary, field: String = "slot_positions") -> Dictionary:
 	if field not in POSITION_FIELDS:
 		return {}
 	_ensure_loaded()
 	return _room_slot_overrides(_user_rooms, environment, field)
-
-
-static func shared_slot_overrides(environment: Dictionary, field: String = "slot_positions") -> Dictionary:
-	if field not in POSITION_FIELDS:
-		return {}
-	_ensure_loaded()
-	var key := room_key(environment)
-	var result := _positions(_dict(_project_rooms.get(key, {})).get(field, {})).duplicate(true)
-	result.merge(_positions(_dict(_user_rooms.get(key, {})).get(field, {})), true)
-	return result
-
-
-static func scenario_slot_overrides(
-	environment: Dictionary,
-	scenario_id: String = "",
-	field: String = "slot_positions"
-) -> Dictionary:
-	if field not in POSITION_FIELDS:
-		return {}
-	_ensure_loaded()
-	var clean_scenario_id := scenario_id.strip_edges()
-	if clean_scenario_id.is_empty():
-		clean_scenario_id = active_scenario_id(environment)
-	if clean_scenario_id.is_empty():
-		return {}
-	var key := room_key(environment)
-	var result := _scenario_positions(_project_rooms, key, clean_scenario_id, field)
-	result.merge(_scenario_positions(_user_rooms, key, clean_scenario_id, field), true)
-	return result
 
 
 static func slot_layer_overrides(environment: Dictionary) -> Dictionary:
@@ -1055,23 +1019,6 @@ static func _slot_scope(key: String, scenario_id: String, slot_id: String) -> St
 		return "scenario_missing"
 	var exact_layout_id := "%s::%s" % [key, scenario_id]
 	return "scenario" if bool(_dict(_scenario_slot_ids_by_layout.get(exact_layout_id, {})).get(slot_id, false)) else "unsupported"
-
-
-static func _runtime_reserve_slot(key: String, slot_id: String) -> bool:
-	_ensure_catalog()
-	return bool(_dict(_runtime_reserve_ids_by_room.get(key, {})).get(slot_id, false))
-
-
-# Maps with no catalog scenario have only one authoring context. Their legacy
-# scenario-family capacity belongs to that base room, just like an explicit
-# runtime reserve, so it must remain movable and exportable without inventing
-# a fake scenario layout.
-static func _shared_scenario_slot(key: String, slot_id: String) -> bool:
-	_ensure_catalog()
-	return slot_id.begins_with("scenario.") \
-		and bool(_dict(_shared_slot_ids_by_room.get(key, {})).get(slot_id, false))
-
-
 static func _supported_slot_id(slot_id: String) -> bool:
 	return slot_id.get_slice(".", 0) in ["fixed", "event", "scenario", "exit"]
 

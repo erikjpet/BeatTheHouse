@@ -84,12 +84,6 @@ static func expected_runtime_paths() -> Array[String]:
 	for portrait_id in PORTRAIT_IDS:
 		paths.append("%s/%s.png" % [PORTRAIT_ROOT, portrait_id])
 	return paths
-
-
-static func clear_cache() -> void:
-	_cache.clear()
-
-
 static func fallback_for_test(kind: String, key: String) -> Texture2D:
 	var size := Vector2i(64, 64)
 	if kind == "title":

@@ -2191,17 +2191,6 @@ func _begin_presented_bankroll_hold(_result: Dictionary, _before_bankroll: int, 
 	# Money is authoritative as soon as the deterministic action settles. Result
 	# animations may continue, but they must never hold the visible wallet back.
 	_clear_presented_bankroll_hold()
-
-
-func _result_uses_game_bankroll_presentation(result: Dictionary) -> bool:
-	if current_game == null:
-		return false
-	var result_game_id := str(result.get("game_id", result.get("source_id", "")))
-	if not result_game_id.is_empty() and result_game_id != current_game.get_id():
-		return false
-	return bool(result.get("surface_embeds_outcomes", false)) or _current_game_embeds_result_feedback()
-
-
 func _sync_presented_bankroll_to_actual() -> void:
 	if run_state != null:
 		presented_bankroll_value = run_state.bankroll
@@ -8436,12 +8425,6 @@ func _request_game_module_script_prewarm() -> void:
 		if game_module_script_prewarm_requests.has(module_path):
 			continue
 		_queue_script_prewarm_request(game_module_script_prewarm_requests, module_path)
-
-
-func _poll_game_module_script_prewarm() -> void:
-	_poll_script_prewarm_worker()
-
-
 func _cache_game_module_script(module_path: String, module_script: Script) -> void:
 	game_module_script_cache[module_path] = module_script
 	if generator != null:
@@ -16174,12 +16157,6 @@ func _generated_object_interaction_rect(object_id: String) -> Rect2:
 
 func _interaction_rect(object_type: String, index: int) -> Rect2:
 	return EnvironmentInteractionViewModelScript.interaction_rect_for_object("", object_type, index, _current_environment_layout())
-
-
-func _layout_spot_to_board_position(value: Variant) -> Vector2:
-	return EnvironmentInteractionViewModelScript.layout_spot_to_board_position(value)
-
-
 func _current_environment_layout() -> Dictionary:
 	if run_state == null:
 		return {}

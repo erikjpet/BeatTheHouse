@@ -1698,34 +1698,6 @@ func _public_action_history(value: Variant) -> Array:
 			row.erase(private_key)
 		result.append(row)
 	return result
-
-
-func _adaptive_npc_action(member_id: String, cards: Array, phase: String, facing_raise: bool, public_memory: Dictionary, rng: RngStream) -> String:
-	var profile := CrewPokerModelScript.policy(member_id)
-	var score := CrewPokerModelScript.evaluate_hand(cards)
-	var category := int(score.get("category", 0))
-	var strength := category * 12 + clampi(int(score.get("high", 0)) - 8, 0, 6)
-	var table: Dictionary = public_memory.get("table", {}) if typeof(public_memory.get("table", {})) == TYPE_DICTIONARY else {}
-	var player: Dictionary = public_memory.get(PLAYER_ID, {}) if typeof(public_memory.get(PLAYER_ID, {})) == TYPE_DICTIONARY else {}
-	var self_memory: Dictionary = public_memory.get(member_id, {}) if typeof(public_memory.get(member_id, {})) == TYPE_DICTIONARY else {}
-	# These bounded deltas consume only the authenticated public action ledger.
-	# Each authored profile retains its distinct base policy and the one-roll RNG contract.
-	var pressure := clampi(int(table.get("raises", 0)) + int(player.get("raises", 0)) - int(self_memory.get("raises", 0)), -3, 6)
-	var swing_pressure := clampi(abs(int(table.get("session_swing", 0))) / 10, 0, 6)
-	var tightness := clampi(int(profile.get("tightness", 50)) + pressure * 2, 1, 99)
-	var aggression := clampi(int(profile.get("aggression", 50)) + int(self_memory.get("folds", 0)) * 2 - pressure + swing_pressure, 1, 99)
-	var bluff := clampi(int(profile.get("bluff", 20)) + int(player.get("folds", 0)) * 3 - pressure, 0, 99)
-	var roll: int = rng.randi_range(1, 100)
-	if facing_raise and category == 0 and roll <= clampi(tightness - 25, 8, 72):
-		return "fold"
-	var raise_chance := clampi(int(float(aggression) / 3.0) + strength + (int(float(bluff) / 2.0) if category == 0 else 0) - (10 if phase == "before" else 0), 4, 88)
-	if roll <= raise_chance:
-		return "raise"
-	if facing_raise and roll >= clampi(118 - tightness + strength, 30, 94):
-		return "fold"
-	return "call"
-
-
 func _active_actor_ids(state: Dictionary) -> Array:
 	var result: Array = []
 	if bool(state.get("player_active", true)):
@@ -2084,39 +2056,6 @@ func _prepare_animation_draw_cache(state: Dictionary) -> void:
 
 func environment_object_state(_run_state: RunState, _environment: Dictionary) -> Dictionary:
 	return {"prop": "card_table", "label": "Back-Room Hold'em", "status": "The crew is seated around a live Texas Hold'em table."}
-
-
-func interrupt_for_room_scenario(_run_state: RunState, environment: Dictionary, disposition: String, reason: String) -> Dictionary:
-	# This is deliberately a pure proposal seam. Caller strings never authorize a
-	# live table mutation or refund. ScenarioHostTransaction must atomically commit
-	# the exact replacement table/account effects; pause/resume remain held until
-	# that host integration supplies a real command source.
-	var state := _table_state(environment)
-	var live := ["before", "draw", "after", "preflop", "flop", "turn", "river", "paused"].has(str(state.get("phase", "idle")))
-	if not live or not ["pause", "resume", "abort"].has(disposition):
-		return {"ok": false, "authoritative": false, "proposal_only": true, "bankroll_delta": 0, "message": "That interruption boundary is not legal now."}
-	return {
-		"ok": false,
-		"authoritative": false,
-		"proposal_only": true,
-		"requires_host_transaction": true,
-		"authority_gap": "host_room_interrupt_authority_unavailable",
-		"bankroll_delta": 0,
-		"proposal": {
-			"kind": "interruption",
-			"producer_id": "poker",
-			"game_id": get_id(),
-			"table_id": get_id(),
-			"disposition": disposition,
-			"reason_id": reason.strip_edges(),
-			"session_index": int(state.get("session_index", 0)),
-			"action_ordinal": int(state.get("action_ordinal", 0)),
-			"refund_amount": maxi(0, int(state.get("player_contribution", 0))) if disposition == "abort" else 0,
-		},
-		"message": "The room host must commit this interruption atomically.",
-	}
-
-
 static func scripted_session(seed: int, member_id: String, force_showdown: bool = true) -> Dictionary:
 	# QA helper: every call is independently reproducible and exposes only test
 	# facts. Runtime UI never invokes this seam.

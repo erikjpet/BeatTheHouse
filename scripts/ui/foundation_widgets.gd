@@ -100,18 +100,6 @@ static func style_selected_button(button_node: Button) -> void:
 	button_node.add_theme_stylebox_override("normal", VisualStyle.state_box("selected"))
 	button_node.add_theme_stylebox_override("hover", VisualStyle.state_box("focus"))
 	button_node.add_theme_stylebox_override("pressed", VisualStyle.state_box("armed"))
-
-
-static func style_focusable(control: Control, selected: bool = false, armed: bool = false) -> void:
-	var button_node := control as Button
-	if button_node == null:
-		return
-	button_node.add_theme_stylebox_override("normal", VisualStyle.state_box("armed" if armed else "selected" if selected else "normal"))
-	button_node.add_theme_stylebox_override("hover", VisualStyle.state_box("hover"))
-	button_node.add_theme_stylebox_override("focus", VisualStyle.state_box("focus"))
-	button_node.add_theme_stylebox_override("pressed", VisualStyle.state_box("armed"))
-
-
 static func stat_chip(icon: Texture2D, label_text: String, value_text: String) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", VisualStyle.SPACE_2)
@@ -145,24 +133,6 @@ static func icon_label_row(icon: Texture2D, text_value: String, muted: bool = fa
 	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(text)
 	return row
-
-
-static func tab_bar(entries: Array, selected_id: String, callback: Callable) -> HBoxContainer:
-	var tabs := HBoxContainer.new()
-	tabs.add_theme_constant_override("separation", VisualStyle.SPACE_2)
-	for entry_value in entries:
-		if typeof(entry_value) != TYPE_DICTIONARY:
-			continue
-		var entry: Dictionary = entry_value
-		var entry_id := str(entry.get("id", ""))
-		var tab := variant_button(str(entry.get("label", entry_id.capitalize())), callback.bind(entry_id))
-		tab.toggle_mode = true
-		tab.button_pressed = entry_id == selected_id
-		style_focusable(tab, tab.button_pressed)
-		tabs.add_child(tab)
-	return tabs
-
-
 static func tooltip(text_value: String) -> PanelContainer:
 	var panel_node := panel_container(VisualStyle.role("surface_overlay"), VisualStyle.role("focus"))
 	panel_node.custom_minimum_size.x = VisualStyle.TOOLTIP_MAX_WIDTH

@@ -695,21 +695,6 @@ static func layout_spot_field_name(object_type: String) -> String:
 		"meta_trade_up": return "home_trade_up_spots"
 		"meta_pawn_counter": return "pawn_counter_spots"
 	return ""
-
-
-static func layout_spot_to_board_position(value: Variant) -> Vector2:
-	if typeof(value) == TYPE_VECTOR2:
-		return value as Vector2
-	if typeof(value) == TYPE_VECTOR2I:
-		var point := value as Vector2i
-		return Vector2(float(point.x), float(point.y))
-	if typeof(value) == TYPE_ARRAY and (value as Array).size() >= 2:
-		return Vector2(float((value as Array)[0]), float((value as Array)[1]))
-	if typeof(value) == TYPE_DICTIONARY:
-		return Vector2(float((value as Dictionary).get("x", -1.0)), float((value as Dictionary).get("y", -1.0)))
-	return Vector2(-1.0, -1.0)
-
-
 static func normalized_interaction_rect(object_type: String, index: int) -> Rect2:
 	var board_size := Vector2(VisualStyleScript.ENVIRONMENT_BOARD_SIZE)
 	var center := Vector2(0.5, 0.5)

@@ -213,21 +213,6 @@ static func apply_overlay_readonly(definition: Dictionary, catalog: Dictionary =
 	var authoring_value: Variant = overlay.get("authoring", {})
 	result["sequence_authoring"] = (authoring_value as Dictionary).duplicate(true) if typeof(authoring_value) == TYPE_DICTIONARY else {}
 	return result
-
-
-static func legacy_scenario_ids(path: String = LEGACY_CATALOG_PATH) -> Array:
-	var failures: Array = []
-	var source := _parse_dictionary(path, failures)
-	var result: Array = []
-	for archetype_value in source.keys():
-		for definition_value in _array(source.get(archetype_value, [])):
-			var scenario_id := str(_dict(definition_value).get("id", "")).strip_edges()
-			if _valid_id(scenario_id) and not result.has(scenario_id):
-				result.append(scenario_id)
-	result.sort()
-	return result
-
-
 static func legacy_definition(scenario_id: String, path: String = LEGACY_CATALOG_PATH, catalog: Dictionary = {}) -> Dictionary:
 	var wanted := scenario_id.strip_edges()
 	if wanted.is_empty():
@@ -240,12 +225,6 @@ static func legacy_definition(scenario_id: String, path: String = LEGACY_CATALOG
 			if str(definition.get("id", "")) == wanted:
 				return apply_overlay(definition, catalog)
 	return {}
-
-
-static func clear_default_cache() -> void:
-	_default_catalog_cache = {}
-
-
 static func default_catalog_snapshot() -> Dictionary:
 	return _default_catalog().duplicate(true)
 

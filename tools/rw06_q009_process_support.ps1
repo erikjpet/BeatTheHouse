@@ -1442,11 +1442,6 @@ function Get-Q009HeldFinalPath {
     return [IO.Path]::GetFullPath([Q009ExactFileSystemNative]::GetFinalPathFromHeldHandle($CustodyCell,$Slot))
 }
 
-function Get-Q009SafeHandleFinalPath {
-    param([Microsoft.Win32.SafeHandles.SafeFileHandle]$Handle)
-    Initialize-Q009ExactFileSystemType
-    return [IO.Path]::GetFullPath([Q009ExactFileSystemNative]::GetFinalPathFromSafeHandle($Handle))
-}
 
 function Get-Q009HeldFileDescription {
     param([object]$CustodyCell,[string]$Slot,[string]$Path)
@@ -2832,15 +2827,6 @@ function Get-ExactOwnedProcessResidualPids {
     return @($residuals | Sort-Object -Unique)
 }
 
-function Get-ExactOwnedGodotResidualPids {
-    param(
-        [object]$RootIdentity,
-        [string[]]$BaselineIdentityKeys,
-        [System.Collections.Generic.List[object]]$RetainedDescendantRecords,
-        [switch]$ForceEnumerationFailureForTest
-    )
-    return @(Get-ExactOwnedProcessResidualPids -RootIdentity $RootIdentity -BaselineIdentityKeys $BaselineIdentityKeys -RetainedDescendantRecords $RetainedDescendantRecords -ForceEnumerationFailureForTest:$ForceEnumerationFailureForTest)
-}
 
 function ConvertTo-WindowsCommandLineArgument {
     param([AllowEmptyString()][string]$Value)

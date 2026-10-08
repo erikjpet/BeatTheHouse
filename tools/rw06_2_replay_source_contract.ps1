@@ -662,15 +662,6 @@ function Get-PowerShellFunctionAst {
 }
 
 
-function Get-PowerShellFunctionSource {
-    param(
-        [Parameter(Mandatory = $true)]$Analysis,
-        [Parameter(Mandatory = $true)][string]$Name
-    )
-    $functionAst = Get-PowerShellFunctionAst -Analysis $Analysis -Name $Name
-    if ($null -ceq $functionAst) { return '' }
-    return [string]$functionAst.Extent.Text
-}
 
 
 function Get-PowerShellTopLevelSource {

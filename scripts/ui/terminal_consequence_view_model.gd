@@ -120,46 +120,6 @@ static func consequence_cards(run_state: RunState, context: Dictionary) -> Array
 		cards.append({"title": "Story", "tone": "story", "lines": story_card_lines(message, story_messages)})
 	cards.append({"title": "Next", "tone": "next", "lines": next_action_lines(bool(context.get("current_game_active", false)), travel_choices)})
 	return cards
-
-
-static func environment_result_feedback(result: Dictionary, message: String, current_game_embeds_result: bool, max_chars: int, player_facing_text: Callable) -> Dictionary:
-	if current_game_embeds_result:
-		return {"visible": false}
-	var deltas: Dictionary = result.get("deltas", {})
-	var bankroll_delta := int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
-	var suspicion_delta := int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0)))
-	if message.strip_edges().is_empty() and bankroll_delta == 0 and suspicion_delta == 0:
-		return {"visible": false}
-	return {
-		"visible": true,
-		"anchor": "environment_panel_top_right",
-		"interaction_kind": "informational_result",
-		"dismissible": true,
-		"title": "Result",
-		"text": environment_result_feedback_text(message, bankroll_delta, suspicion_delta, max_chars, player_facing_text),
-		"message": message,
-		"bankroll_delta": bankroll_delta,
-		"suspicion_delta": suspicion_delta,
-		"object_id": outcome_object_id(result),
-		"result": result.duplicate(true),
-	}
-
-
-static func environment_result_feedback_text(message: String, bankroll_delta: int, suspicion_delta: int, max_chars: int, player_facing_text: Callable) -> String:
-	var base := str(player_facing_text.call(message) if not player_facing_text.is_null() else message).strip_edges()
-	if base.is_empty():
-		base = "Outcome recorded."
-	var delta_parts: Array[String] = []
-	if bankroll_delta != 0:
-		delta_parts.append("$%+d" % bankroll_delta)
-	if suspicion_delta != 0:
-		delta_parts.append("Heat %+d" % suspicion_delta)
-	if delta_parts.is_empty():
-		return base.left(max_chars)
-	var suffix := "  %s" % " / ".join(delta_parts)
-	return ("%s%s" % [base.left(maxi(12, max_chars - suffix.length())), suffix]).left(max_chars)
-
-
 static func result_is_visible_consequence(result: Dictionary, recent_message: String = "") -> bool:
 	if result.is_empty() or ["game_enter", "game_actions"].has(str(result.get("type", ""))):
 		return false
@@ -290,94 +250,6 @@ static func next_action_lines(current_game_active: bool, travel_choices: Array) 
 	var lines: Array = ["Keep playing, change your stake, or go back to the environment." if current_game_active else "Choose a game, check events, review items, or save the run."]
 	if not travel_choices.is_empty(): lines.append("Travel is available when you are ready to move on.")
 	return lines
-
-
-static func suspicion_cue_view_list(run_state: RunState, label_from_id: Callable) -> Array:
-	var result: Array = []
-	var cues: Array = run_state.suspicion.get("cues", [])
-	for index in range(cues.size() - 1, -1, -1):
-		if typeof(cues[index]) != TYPE_DICTIONARY: continue
-		var cue: Dictionary = cues[index]
-		var amount := int(cue.get("amount", 0))
-		var label := _call_label(label_from_id, str(cue.get("id", "cue")).replace(":", " "))
-		if amount > 0: result.append("%s notices you (%+d heat)" % [label.left(36), amount])
-		elif amount < 0: result.append("%s eases pressure (%+d heat)" % [label.left(36), amount])
-		else: result.append(label.left(44))
-		if result.size() >= 2: break
-	return result
-
-
-static func security_cue_view_list(run_state: RunState) -> Array:
-	var result: Array = []
-	for cue in JsonCoerceScript._copy_array(run_state.current_environment.get("suspicion_cues", [])):
-		if not str(cue).is_empty(): result.append(str(cue))
-	return result
-
-
-static func inventory_view_list(run_state: RunState, library: ContentLibrary, label_from_id: Callable) -> Array:
-	var result: Array = []
-	for item_id in JsonCoerceScript._string_array(run_state.inventory):
-		var definition := library.item(item_id) if library != null else {}
-		result.append(str(definition.get("display_name", _call_label(label_from_id, item_id))) if not definition.is_empty() else _call_label(label_from_id, item_id))
-	return result
-
-
-static func debt_view_list(run_state: RunState, label_from_id: Callable) -> Array:
-	var result: Array = []
-	for value in JsonCoerceScript._copy_array(run_state.debt):
-		if typeof(value) == TYPE_DICTIONARY: result.append(debt_entry_view_line(value as Dictionary, label_from_id))
-	return result
-
-
-static func debt_entry_view_line(data: Dictionary, label_from_id: Callable) -> String:
-	var label := _call_label(label_from_id, str(data.get("lender_id", data.get("id", "debt"))))
-	var balance := int(data.get("balance", 0))
-	var status := _call_label(label_from_id, str(data.get("status", "active")))
-	var schedule := debt_schedule_text(data)
-	match str(data.get("debt_kind", "cash")):
-		"favor": return "%s wants %d favor%s, %s (%s)" % [label, balance, "" if balance == 1 else "s", schedule, status]
-		"pawn": return "%s holds %s; borrowed %d, buy-back %d, %s (%s)" % [label, str(data.get("collateral_item_name", data.get("collateral_item_id", "collateral"))), maxi(0, int(data.get("principal", balance))), balance, schedule, status]
-	return "%s balance %d, %s (%s)" % [label, balance, schedule, status]
-
-
-static func debt_schedule_text(data: Dictionary) -> String:
-	var status := str(data.get("status", "active"))
-	if status == "favor_due": return "favor due now"
-	if status == "overdue":
-		var pressure := int(data.get("next_pressure_turns", 0))
-		return "next pressure in %d turn%s" % [pressure, "" if pressure == 1 else "s"] if pressure > 0 else "overdue now"
-	var turns := int(data.get("turns_remaining", data.get("deadline_turns", 0)))
-	return "due now" if turns <= 0 else "due in %d turn%s" % [turns, "" if turns == 1 else "s"]
-
-
-static func flag_view_list(run_state: RunState, label_from_id: Callable) -> Array:
-	var result: Array = []
-	for key in run_state.narrative_flags.keys():
-		if flag_value_is_visible(run_state.narrative_flags[key]): result.append(_call_label(label_from_id, str(key)))
-	result.sort()
-	return result
-
-
-static func flag_value_is_visible(value: Variant) -> bool:
-	match typeof(value):
-		TYPE_BOOL: return value
-		TYPE_INT: return int(value) != 0
-		TYPE_FLOAT: return not is_zero_approx(float(value))
-		TYPE_STRING: return not str(value).strip_edges().is_empty()
-		TYPE_ARRAY: return not (value as Array).is_empty()
-		TYPE_DICTIONARY: return not (value as Dictionary).is_empty()
-	return value != null
-
-
-static func story_message_view_list(run_state: RunState, library: ContentLibrary, label_from_id: Callable, player_facing_text: Callable, game_display_name: Callable) -> Array:
-	var result: Array = []
-	for index in range(run_state.story_log.size() - 1, -1, -1):
-		if typeof(run_state.story_log[index]) != TYPE_DICTIONARY: continue
-		result.append(story_entry_label(run_state.story_log[index] as Dictionary, library, label_from_id, player_facing_text, game_display_name))
-		if result.size() >= 3: break
-	return result
-
-
 static func story_entry_label(entry: Dictionary, _library: ContentLibrary, label_from_id: Callable, player_facing_text: Callable, game_display_name: Callable) -> String:
 	var message := str(player_facing_text.call(str(entry.get("message", ""))) if not player_facing_text.is_null() else entry.get("message", ""))
 	if not message.is_empty(): return message
@@ -388,18 +260,6 @@ static func story_entry_label(entry: Dictionary, _library: ContentLibrary, label
 		"travel": return "Traveled to %s" % str(entry.get("to_environment_name", entry.get("to_archetype_id", "destination")))
 		"event": return "Event: %s" % str(entry.get("event_id", entry.get("id", "event")))
 	return _call_label(label_from_id, str(entry.get("type", "story")))
-
-
-static func result_from_story_log(entries: Array, library: ContentLibrary, label_from_id: Callable, player_facing_text: Callable, game_display_name: Callable) -> Dictionary:
-	for index in range(entries.size() - 1, -1, -1):
-		if typeof(entries[index]) != TYPE_DICTIONARY: continue
-		var entry: Dictionary = entries[index]
-		var message := str(entry.get("message", ""))
-		if message.is_empty(): message = story_entry_label(entry, library, label_from_id, player_facing_text, game_display_name)
-		return GameModule.build_action_result({"ok": true, "type": str(entry.get("type", "story_summary")), "source_id": str(entry.get("id", entry.get("game_id", entry.get("item_id", "")))), "action_id": str(entry.get("action_id", "")), "bankroll_delta": int(entry.get("bankroll_delta", 0)), "suspicion_delta": int(entry.get("suspicion_delta", 0)), "deltas": {"bankroll_delta": int(entry.get("bankroll_delta", 0)), "suspicion_delta": int(entry.get("suspicion_delta", 0)), "messages": [message], "ended": bool(entry.get("ended", false))}, "message": message, "environment_id": str(entry.get("environment_id", ""))})
-	return {}
-
-
 static func outcome_object_id(result: Dictionary) -> String:
 	if result.is_empty(): return ""
 	match str(result.get("type", "")):

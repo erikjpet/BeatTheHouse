@@ -1109,13 +1109,6 @@ static func _edge_id(a: String, b: String) -> String:
 	if left < right:
 		return "%s--%s" % [left, right]
 	return "%s--%s" % [right, left]
-
-
-static func cursor_for_action(timeline: Dictionary, action_index: int) -> Dictionary:
-	var max_action := maxi(1, int(timeline.get("max_action_index", 1)))
-	return cursor_for_progress(timeline, clampf(float(action_index) / float(max_action), 0.0, 1.0))
-
-
 static func cursor_for_progress(timeline: Dictionary, progress: float) -> Dictionary:
 	var clamped := clampf(progress, 0.0, 1.0)
 	var max_action := maxi(1, int(timeline.get("max_action_index", 1)))

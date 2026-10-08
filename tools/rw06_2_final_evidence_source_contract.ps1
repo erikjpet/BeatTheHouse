@@ -246,20 +246,6 @@ function Replace-FunctionSourceOnce {
 }
 
 
-function Replace-SourceRegexOnce {
-    param(
-        [Parameter(Mandatory = $true)][string]$Source,
-        [Parameter(Mandatory = $true)][string]$Pattern,
-        [Parameter(Mandatory = $true)][string]$Replacement
-    )
-    $matches = @([regex]::Matches($Source, $Pattern))
-    if ($matches.Count -ne 1) {
-        throw "Expected one regex source mutation target but found $($matches.Count): $Pattern"
-    }
-    $match = $matches[0]
-    return $Source.Substring(0, $match.Index) + $Replacement +
-        $Source.Substring($match.Index + $match.Length)
-}
 
 
 function Get-UniqueTopLevelOrderedHashtable {
@@ -382,22 +368,6 @@ function Replace-TopLevelHashtableValue {
 }
 
 
-function Add-TopLevelHashtableEntry {
-    param(
-        [Parameter(Mandatory = $true)][string]$Source,
-        [Parameter(Mandatory = $true)][string]$VariableName,
-        [Parameter(Mandatory = $true)][string]$EntrySource
-    )
-    $analysis = ConvertTo-PowerShellAnalysis -Source $Source
-    if ($analysis.parse_errors.Count -ne 0) {
-        throw "Cannot mutate invalid PowerShell source for '$VariableName'."
-    }
-    $table = Get-UniqueTopLevelOrderedHashtable -Analysis $analysis -VariableName $VariableName
-    if ($null -eq $table) { throw "Hostile fixture could not find unique ordered table '$VariableName'." }
-    $insertOffset = $table.Extent.EndOffset - 1
-    $insertion = "`r`n    $EntrySource`r`n"
-    return $Source.Substring(0, $insertOffset) + $insertion + $Source.Substring($insertOffset)
-}
 
 
 function Assert-HostileMutationRejected {

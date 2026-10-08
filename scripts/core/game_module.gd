@@ -637,24 +637,6 @@ static func surface_command(payload: Dictionary = {}, zero_copy_transient: bool 
 		command["stake_multiplier"] = int(command.get("stake_multiplier", 1))
 	command["message"] = str(command.get("message", ""))
 	return command
-
-
-# Reads one animation channel from the host status, accepting either indexed
-# status dictionaries or the original channel array shape.
-static func surface_animation_status(surface_status: Dictionary, channel_id: String) -> Dictionary:
-	var animations := _copy_dict(surface_status.get("surface_animations", surface_status.get("surface_animation_status", {})))
-	var status := _copy_dict(animations.get(channel_id, {}))
-	if status.is_empty():
-		var channels := _copy_array(surface_status.get("surface_animation_channels", []))
-		for channel_value in channels:
-			if typeof(channel_value) != TYPE_DICTIONARY:
-				continue
-			var channel: Dictionary = channel_value
-			if str(channel.get("id", "")) == channel_id:
-				return channel.duplicate(true)
-	return status
-
-
 # Orders and clamps timing windows so perfect is contained by good, which is
 # contained by close.
 static func normalize_skill_timing_windows(perfect_msec: int, good_msec: int, close_msec: int, min_perfect_msec: int = 1) -> Dictionary:
@@ -870,19 +852,6 @@ static func normalize_skill_cheat_contract(result: Dictionary, payload: Dictiona
 	deltas["story_log"] = normalized_story
 	result["deltas"] = deltas
 	return result
-
-
-# Keeps top-level and delta messages synchronized when a module decorates output.
-static func set_result_message(result: Dictionary, message: String) -> Dictionary:
-	var updated := result.duplicate(true)
-	var deltas := _normalize_result_deltas(updated.get("deltas", {}))
-	updated["message"] = message
-	deltas["messages"] = [] if message.is_empty() else [message]
-	updated["deltas"] = deltas
-	updated["messages"] = _copy_array(deltas["messages"])
-	return updated
-
-
 # Copies patrons and marks the TalkDock-focused patron as visibly speaking and
 # watching without mutating the module's stored patron array.
 static func patrons_with_talk_focus(patrons: Array, focused_speaker_value: Variant) -> Array:

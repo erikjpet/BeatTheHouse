@@ -846,13 +846,6 @@ static func _offer(value: Variant, source_id: String, presentation_id: String) -
 
 static func _transition_present(value: Variant, source_id: String) -> bool:
 	return _record_present(value, "target_layer_id", source_id)
-
-
-static func _route_present(environment: Dictionary, source_id: String) -> bool:
-	if _exact_id(environment.get("travel_hooks", []), source_id) or _exact_id(environment.get("next_archetypes", []), source_id): return true
-	return _exact_id(_dict(environment.get("local_narrative_flags", {})).get("casino_room_targets", []), source_id)
-
-
 static func _ordinary_route_present(environment: Dictionary, source_id: String) -> bool:
 	return _exact_id(environment.get("travel_hooks", []), source_id) or _exact_id(environment.get("next_archetypes", []), source_id)
 

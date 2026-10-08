@@ -137,66 +137,6 @@ def _centered_text(
     )
 
 
-def _draw_backdrop(image: Image.Image, accent: tuple[int, int, int, int], seed: int) -> None:
-    draw = ImageDraw.Draw(image, "RGBA")
-    width, height = image.size
-    rng = random.Random(seed)
-
-    draw.rectangle((0, 0, width, height), fill=BLACK)
-    draw.rectangle(
-        (width * 0.055, height * 0.09, width * 0.945, height * 0.91),
-        fill=PANEL,
-        outline=(accent[0], accent[1], accent[2], 210),
-        width=max(3, width // 420),
-    )
-    draw.rectangle(
-        (width * 0.075, height * 0.125, width * 0.925, height * 0.875),
-        outline=(CYAN[0], CYAN[1], CYAN[2], 75),
-        width=max(2, width // 650),
-    )
-
-    horizon = int(height * 0.68)
-    for lane in range(-4, 5):
-        start_x = width // 2 + lane * width // 16
-        end_x = width // 2 + lane * width // 3
-        lane_color = [PINK, CYAN, YELLOW, PURPLE][(lane + 4) % 4]
-        draw.line(
-            (start_x, horizon, end_x, height),
-            fill=(lane_color[0], lane_color[1], lane_color[2], 42),
-            width=max(2, width // 600),
-        )
-    for row in range(7):
-        y = horizon + int((row / 6) ** 1.7 * (height - horizon))
-        draw.line((0, y, width, y), fill=(CYAN[0], CYAN[1], CYAN[2], 28), width=2)
-
-    for _ in range(max(24, width // 36)):
-        x = rng.randrange(int(width * 0.07), int(width * 0.93))
-        y = rng.randrange(int(height * 0.13), int(height * 0.84))
-        color = rng.choice((PINK, CYAN, YELLOW, PURPLE))
-        size = rng.choice((2, 3, 4, 7))
-        draw.rectangle((x, y, x + size, y + size), fill=(color[0], color[1], color[2], 85))
-
-    chip_radius = max(34, width // 24)
-    chip_y = int(height * 0.50)
-    for chip_x, chip_color in (
-        (int(width * 0.12), PINK),
-        (int(width * 0.88), CYAN),
-    ):
-        draw.ellipse(
-            (chip_x - chip_radius, chip_y - chip_radius, chip_x + chip_radius, chip_y + chip_radius),
-            fill=(chip_color[0], chip_color[1], chip_color[2], 20),
-            outline=(chip_color[0], chip_color[1], chip_color[2], 130),
-            width=max(3, width // 420),
-        )
-        inner = int(chip_radius * 0.64)
-        draw.ellipse(
-            (chip_x - inner, chip_y - inner, chip_x + inner, chip_y + inner),
-            outline=(chip_color[0], chip_color[1], chip_color[2], 90),
-            width=max(2, width // 700),
-        )
-
-    for y in range(0, height, max(4, height // 270)):
-        draw.line((0, y, width, y), fill=(0, 0, 0, 32), width=1)
 
 
 def _render_card(

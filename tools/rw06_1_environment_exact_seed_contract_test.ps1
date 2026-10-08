@@ -1425,10 +1425,6 @@ function Get-ExactRemoteCandidateRefs {
     return @(Select-ExactRemoteCandidateRefs $rows $Commit)
 }
 
-function Test-PushedCandidate {
-    param([string]$Commit,[string]$CandidateRoot)
-    return @(Get-ExactRemoteCandidateRefs $Commit $CandidateRoot).Count -gt 0
-}
 
 function Assert-PinnedFilesStable {
     param(
