@@ -1,8 +1,7 @@
 # rw06 RESET step 2 — Three implementation lanes (implementation only)
 
-Status: TODO. Self-contained. Launch **three** agents with this file, each told
-its lane: **A**, **B** or **C**. Start only after
-`docs/todo/rw06_reset_status.md` exists on `main` (consolidation done).
+Status: **HISTORICAL / COMPLETED — DO NOT LAUNCH.** The reset lanes were a dated
+recovery workflow and are superseded by the feature-complete source on `main`.
 
 ## Owner rules (binding, override every older prompt)
 

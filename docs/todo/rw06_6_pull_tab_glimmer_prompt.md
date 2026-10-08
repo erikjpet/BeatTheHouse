@@ -1,5 +1,9 @@
 # rw06_6 — pull-tab yellow glimmer
 
+Status: **HISTORICAL / IMPLEMENTED — DO NOT LAUNCH.** The presentation-only
+glimmer is in current `main` and retains fixed ticket contents, odds, and
+payouts.
+
 You own the narrow Q-014 pull-tab presentation feature for Beat the House 0.6.0.
 Work only on a dedicated `codex/rw06_6-pull-tab-glimmer` branch and
 `D:\Projects\Beat-The-House-worktrees\rw06_6-pull-tab-glimmer` worktree based

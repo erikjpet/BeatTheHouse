@@ -1,9 +1,16 @@
 # 0.6 Release Week — plan and scoreboard
 
+Status: **HISTORICAL ORCHESTRATION LEDGER — CLOSED AS AN ACTIVE BOARD.** Do not
+claim or resume rows from this file. Its dated row states and evidence remain
+unchanged as release-history provenance; they do not describe current `main`.
+The current boundary is recorded in `../current_game_state.md`: feature work is
+complete, the owner placement pass remains, and `rw06_4` begins only after the
+approved schema-3 coordinates are promoted and validated.
+
 Created 2026-09-22 by the owner and PM. Target: 0.6.0 upload-ready artifact handoff by **2026-09-29**.
-This page replaces the "Current owner-directed sequence" on
-`README_0_6_board.md`. Anything not on this page ships in 0.6.1 and is listed in
-`../plans/0.6.1_backlog.md`, so no idea is dropped.
+This page replaced the former "Current owner-directed sequence" on
+`README_0_6_board.md` during that dated release-week attempt. Deferred scope is
+still preserved in `../plans/0.6.1_backlog.md`.
 
 ## What 0.6 means
 

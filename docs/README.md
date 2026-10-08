@@ -57,8 +57,8 @@ recorded source boundary.
   Phase 3 ledger. It is retained as measured evidence, not the current release
   boundary or a description of the later accepted performance work.
 - `plans/code_deprecation_unused_audit_2026-10-08.md` — current source-backed
-  inventory of unreachable code, unreferenced function islands, retained
-  compatibility seams, and staged cleanup recommendations.
+  record of the completed unreachable/unused-code cleanup, its verification,
+  and the compatibility seams deliberately retained.
 
 ## Historical records
 
@@ -80,10 +80,23 @@ commit ids and accepted board rows remain the durable disposition record.
 
 ## Active work
 
-Files under `todo/` are claimable only when their own status and the active
-board say so. A `PARKED` prompt is prepared work, not permission to execute it.
-The old 0.6 boards are historical unless their own release-week override says
-otherwise. At the current boundary, 0.6 is feature-complete in source. The one
-remaining authoring task is the manual 75-context environment slot-placement
-procedure, followed by coordinate promotion, focused validation, final
-packaging, and explicit owner publication.
+Files under `todo/` are claimable only when their own status and this guide say
+they are current. A `PARKED` prompt is prepared work, not permission to execute
+it. The old 0.6 boards, release-week scoreboard, reset prompts, lane queue, and
+final-assignment files are historical ledgers even though they remain in
+`todo/` to preserve links and append-only evidence.
+
+At the current pre-placement boundary, 0.6 is feature-complete and versioned in
+source. The remaining sequence is deliberately narrow:
+
+1. the owner completes the 75-context environment placement pass;
+2. the returned schema-3 report is promoted and receives focused placement and
+   runtime validation;
+3. the exact candidate receives final Windows/Web packaging checks; and
+4. publication occurs only after explicit owner approval.
+
+Use `current_game_state.md` for the current boundary,
+`plans/environment_scenario_layout_breakdown.md` for placement,
+`plans/release_0_6_0_copy.md` for the pre-placement public-copy draft, and
+`todo/rw06_4_release_gate_ship_prompt.md` only after placement promotion is
+complete.

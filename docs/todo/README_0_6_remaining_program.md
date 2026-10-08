@@ -2,14 +2,15 @@
 
 Status: **HISTORICAL OPERATING PAGE — DO NOT RELAUNCH THE THREE FAMILY
 INTEGRATORS.** Their recovered product payloads were reconciled through PR #21.
-Current execution state and the safe closeout order are recorded in
-`docs/plans/0.6_todo_state_audit_2026-08-31.md` and the active board. The text
-below is retained as program-design history; any instruction to launch a
-family integrator is superseded.
+Its dated execution state is recorded in
+`docs/plans/0.6_todo_state_audit_2026-08-31.md` and the now-closed boards. The
+text below is retained as program-design history; any instruction to launch a
+family integrator is superseded. Use `../current_game_state.md` for current
+release state.
 
 Created: 2026-08-25. Program design:
-`docs/plans/0.6_remaining_work_program.md`. Execution state stays on
-`docs/todo/README_0_6_board.md`, which is still the single source of truth.
+`docs/plans/0.6_remaining_work_program.md`. The board named below was the source
+of truth for that dated program, not for current `main`.
 
 This page is for the project manager. It says what to launch, when, and what to
 do while it runs. The agents get the prompts; the PM gets this.

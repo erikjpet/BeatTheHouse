@@ -1,5 +1,9 @@
 # Owner Questions — the only channel between agents and the owner
 
+Status: **CURRENT ONLY FOR FINAL PLACEMENT/RELEASE APPROVALS.** Earlier numbered
+questions are historical decisions. Add a new entry only when the current
+placement promotion or `rw06_4` release gate genuinely requires owner input.
+
 **Canonical copy:** `D:\Projects\Beat-The-House\docs\todo\rw06_owner_questions.md`
 (the primary checkout). Always read and edit that absolute path, even when you
 work in a worktree. Worktree or `origin/main` copies may be stale.

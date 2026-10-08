@@ -1,11 +1,18 @@
 # rw06_4 — 0.6.0 release gate and artifact handoff
 
-Status: TODO. Self-contained. Launch with this file only.
-Depends on rw06_1, rw06_2, rw06_3, rw06_5 and rw06_6 being DONE **and** the
-owner's required start-to-finish playthrough being complete with every blocking
-note handled. This replaces `release06_1_ship_prompt.md` (archived) with the
-owner-approved smaller gate. The larger gates are listed in
-`docs/plans/0.6.1_backlog.md`.
+Status: **PREPARED / BLOCKED ON OWNER PLACEMENT — DO NOT LAUNCH YET.** Current
+`main` is feature-complete and version-stamped. The older rw06 implementation
+rows are historical and no longer entry dependencies. Begin this gate only
+after all of the following are true:
+
+1. the owner completes the 75-context placement pass;
+2. the returned schema-3 coordinates are promoted into project authority;
+3. focused placement/runtime validation passes on the promoted source; and
+4. the owner confirms that blocking playthrough notes are closed and approves
+   freezing a release candidate.
+
+This is the prepared final packaging/handoff gate. The larger deferred gates
+remain listed in `docs/plans/0.6.1_backlog.md`.
 
 ## Owner questions (binding for every agent)
 
@@ -56,8 +63,8 @@ gates and rebuild.
 
 ## Gate (all on one frozen candidate commit)
 
-1. The scoreboard records the completed owner start-to-finish run and the
-   disposition of every blocking note.
+1. The final release checklist records the completed owner start-to-finish run,
+   placement promotion, and disposition of every blocking note.
 2. `tools/validate_project.ps1`
 3. `tools/check_godot.ps1 -Suite Smoke -RequireGodot`, including performance
    smoke budgets at current values.
@@ -85,8 +92,8 @@ Mobile (Android/iOS) is not in 0.6.0.
 
 ## Release records
 
-- Set the version to `0.6.0` in `project.godot`, export presets, README and
-  CHANGELOG.
+- Confirm that the existing `0.6.0` version remains aligned in `project.godot`,
+  export presets, README, and CHANGELOG.
 - Fill these templates, and have the owner approve the copy:
   - `docs/todo/release06_1_release_checklist_template.md`
   - `release06_1_final_rc_evidence_template.md`
@@ -118,8 +125,8 @@ Mobile (Android/iOS) is not in 0.6.0.
 
 ## Finish
 
-- Scoreboard: every gate item row set to green or red with an evidence path,
-  plus a history line.
+- Final release checklist: every gate item set to green or red with an evidence
+  path and a dated history entry.
 - Report to the owner the candidate hash, zip paths and SHA-256 hashes, and
   which owner gate is waiting.
 - Work in a worktree branch, fast-forward `main` and push; never force-push.

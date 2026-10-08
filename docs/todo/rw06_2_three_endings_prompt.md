@@ -1,8 +1,8 @@
 # rw06_2 — Three endings, start to finish, through the real UI
 
-Status: TODO. Self-contained. Launch with this file only.
-Depends on rw06_0 being DONE. Runs in parallel with rw06_1, with a final pass
-after rw06_1 lands.
+Status: **HISTORICAL / IMPLEMENTED — DO NOT LAUNCH.** All three ending routes
+are present in the feature-complete source. Current finalization is limited to
+owner placement, focused validation, packaging, and publication approval.
 
 ## Goal
 

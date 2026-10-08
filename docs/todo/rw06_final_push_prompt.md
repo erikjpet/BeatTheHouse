@@ -1,8 +1,8 @@
 # rw06 FINAL PUSH — shared prompt for every lane (2026-09-25)
 
-Self-contained. It replaces every older rw06 prompt's process rules. Every lane
-(A, B, C, and any new one) runs this same prompt and pulls work from the queue
-in `docs/todo/rw06_final_queue.md` until the queue is empty.
+Status: **HISTORICAL / SUPERSEDED — DO NOT LAUNCH.** This was the shared process
+for the dated final-lane push. The queue is closed; current state lives in
+`../current_game_state.md`.
 
 ## Goal
 

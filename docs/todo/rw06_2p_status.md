@@ -1,3 +1,9 @@
+# rw06_2p historical status ledger
+
+Status: **HISTORICAL SNAPSHOT — NOT CURRENT RELEASE STATE.** The partial states
+below are retained verbatim as peer-lane evidence and are superseded by the
+feature-complete source summarized in `../current_game_state.md`.
+
 Endings: clean partial (post-change replay waits on rw06_1) | cheat partial (route hardened; live proof pending) | heist partial (Q-013A/Q-017A successor admission repair in engine-free review; live proof pending)
 Replay script: prior Q-017A checkpoint `247f7c02` and status mirror `542e0e64` are WITHDRAWN/NON-EVIDENCE; fail-closed successor is not yet promoted
 Balance (rw06_3): in progress | Grand invitation package and exact focused gate GREEN; live ending curves pending

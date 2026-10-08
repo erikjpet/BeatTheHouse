@@ -7,7 +7,8 @@ and data.
 
 ## Source inventory
 
-Production GDScript under `scripts/` contains 212 modules:
+Production GDScript under `scripts/` contains 212 modules and 11,258 functions
+after the final unused-code cleanup:
 
 | Area | Files | Responsibility |
 | --- | ---: | --- |

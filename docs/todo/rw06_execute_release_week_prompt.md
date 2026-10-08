@@ -1,6 +1,8 @@
 # rw06 — Release-week execution agent (orchestrator)
 
-Status: TODO. Self-contained. Launch with this file only.
+Status: **HISTORICAL / SUPERSEDED — DO NOT LAUNCH.** The release-week board and
+its dated target are closed. Use `rw06_4_release_gate_ship_prompt.md` only after
+the current owner placement report is promoted and validated.
 
 You own getting Beat the House 0.6.0 from its current state to an upload-ready
 artifact handoff by **2026-09-29**. You do this by executing the release-week rows in order. You may

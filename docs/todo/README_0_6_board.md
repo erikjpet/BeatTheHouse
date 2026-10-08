@@ -1,10 +1,11 @@
 # 0.6 Active Task Board — The Living Town & The Crew
 
-> **Release-week override (2026-09-22):** Active execution state and the
-> current owner-directed sequence now live in
-> [`README_0_6_release_week.md`](README_0_6_release_week.md). This legacy board
-> remains historical design and execution context; its older claim sequence is
-> not active.
+> **Historical board:** This legacy board and its later
+> [`README_0_6_release_week.md`](README_0_6_release_week.md) override are both
+> closed as active coordination sources. Preserve their row history, but do not
+> claim work from either file. Use `../current_game_state.md` for current state
+> and `environment_scenario_slot_instance_rework.md` for the remaining owner
+> placement handoff.
 
 Created: 2026-08-13 · Binding design contract:
 `docs/plans/0.6_living_world_roadmap.md` (v4, owner-approved).
@@ -53,8 +54,9 @@ Use these distinctions when choosing work:
 
 The dated file-by-file reconciliation is preserved at
 `docs/plans/0.6_todo_state_audit_2026-08-31.md`; its September 3 addenda are
-historical inputs, not the current execution order. The current owner-directed
-sequence is maintained near the end of this board.
+historical inputs, not the current execution order. Any owner-directed sequence
+later in this board is likewise historical; current state is maintained in
+`../current_game_state.md`.
 
 ## Playtest findings intake
 

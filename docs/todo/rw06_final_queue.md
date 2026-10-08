@@ -1,5 +1,9 @@
 # rw06 final queue
 
+Status: **HISTORICAL / CLOSED — DO NOT CLAIM ROWS.** The table is preserved as
+the final-lane work ledger. Later feature-complete source and the current
+pre-placement boundary supersede any row that still says `IN PROGRESS`.
+
 Rules: `rw06_final_push_prompt.md`. Claim by putting your lane in Owner and setting State to IN PROGRESS. Edit only your own rows. Never claim a task whose Needs are not DONE.
 
 | ID | Task | Needs | Owner | State | Notes |

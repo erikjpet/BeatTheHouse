@@ -527,6 +527,9 @@ dated evidence, shipped-release ledgers, and historical context:
   player-facing copy rules for Act 1 content.
 - `docs/plans/dead_code_audit_report.md` - a historical July 2026 cleanup audit;
   use current source/reference scans rather than its old line numbers.
+- `docs/plans/code_deprecation_unused_audit_2026-10-08.md` - the completed final
+  0.6 unused-code audit, removal inventory, compatibility decisions, and
+  focused verification record.
 - `docs/plans/skill_based_cheating_methods_plan.md` - the shared
   skill-cheat design contract and cross-game method matrix.
 - `docs/plans/world_map_design.md` - the world-map route/progression design
@@ -611,10 +614,11 @@ before store submission.
 
 ## Cleanup Policy
 
-The repository has exactly two durable branches: `main` for accepted work and
-`codex/wip-0.6-consolidated` for explicitly deferred work. Do not leave a task
-on its own durable branch; land it on `main`, consolidate it into the WIP
-branch, or delete it after review.
+The durable-branch policy reserves `main` for accepted work and
+`codex/wip-0.6-consolidated` for explicitly deferred work. Topic branches are
+temporary: land them on `main`, consolidate them into the WIP branch, or delete
+them after review. Final release cleanup must not leave an abandoned topic
+branch presented as maintained product state.
 
 Keep the repository focused on runnable source, current specs, source assets, and
 intentional documentation. Do not commit generated Godot caches, import products,

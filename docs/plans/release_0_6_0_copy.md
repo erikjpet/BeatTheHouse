@@ -1,13 +1,15 @@
 # Beat the House 0.6.0 release copy
 
-Status: **DRAFT — OWNER APPROVAL REQUIRED. DO NOT POST OR UPLOAD.**
+Status: **PRE-PLACEMENT FINAL DRAFT — OWNER APPROVAL REQUIRED. DO NOT POST OR
+UPLOAD.**
 
-Refreshed from the feature-complete 0.6 source on 2026-10-08. Refresh the final
-artifact names, links, placement confirmation, and approved screenshots after
-the manual room-placement lane closes. This draft intentionally describes a single
-Crew heist route without claiming that every authored plan variant is release-
-qualified. It does not reveal hidden scenario state, Crew loyalties, rigged
-draws, unrevealed tickets, or other private run information.
+Refreshed from the feature-complete, post-cleanup 0.6 source on 2026-10-08. The
+feature wording is current; after the manual room-placement lane closes, fill
+only the final artifact names, links, placement confirmation, and approved
+screenshots. This draft intentionally describes a single Crew heist route
+without claiming that every authored plan variant is release-qualified. It does
+not reveal hidden scenario state, Crew loyalties, rigged draws, unrevealed
+tickets, or other private run information.
 
 Public safety line for every destination:
 

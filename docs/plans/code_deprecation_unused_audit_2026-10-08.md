@@ -79,16 +79,16 @@ UI functions. No production script is orphaned: every module has a path,
 points are registered with Godot and every parsed file-local helper has another
 native reference.
 
-The repository health check does find three UID sidecars whose scripts no
-longer exist:
+The pre-cleanup repository health check found three UID sidecars whose scripts
+no longer existed:
 
 - `scripts/ui/room_action_list.gd.uid`;
 - `scripts/tests/rw06_1_overflow_action_ui_contract.gd.uid`;
 - `scripts/tests/foundation/postfix06_2_environment_composition_contract.gd.uid`.
 
-All three are ignored/untracked generated files rather than Git-tracked source,
-but they are still stale workspace artifacts and currently make
-`health06_1_dead_code_contract_test.ps1` fail its CH-22 orphan check.
+All three were ignored/untracked generated files rather than Git-tracked
+source. They were removed from the workspace, and
+`health06_1_dead_code_contract_test.ps1` now passes its CH-22 orphan check.
 
 ## Confirmed unreachable block
 

@@ -123,6 +123,9 @@ package, so its exact evidence is preserved separately from the newer source:
 - event activation and common object-loading, dragging, slot-move, and
   post-action paths use bounded caches and deferred work to reduce visible
   stalls without suppressing animation;
+- the final source-hygiene pass removed 105 unreferenced production functions,
+  13 unused tool helpers, one unreachable menu implementation, and three stale
+  UID sidecars while preserving live save migrations and compatibility paths;
 
 - the placement panel has a visible minimize control, and minimizing removes
   the entire large panel from hit testing so covered room objects and slots can

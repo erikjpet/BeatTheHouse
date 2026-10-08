@@ -1,9 +1,9 @@
 # 0.6 Discovery & Decision Log - through 2026-08-26
 
-Companion to [the active 0.6 task board](README_0_6_board.md). This file
-contains the historical Discovery & Decision Log moved verbatim by
-`board06_1`. Future scope discoveries, deviations and decisions append
-here; task state, protocol and owner questions remain on the active board.
+Historical companion to [the closed 0.6 task board](README_0_6_board.md). This
+file contains the Discovery & Decision Log moved verbatim by `board06_1`.
+Preserve it as dated evidence; it is not a current task-state or release
+authority.
 
 Preserved entries: **174**; current entries: **183**. Use the exact find token
 below to jump to a row's history.

@@ -37,6 +37,9 @@ metadata read `0.6.0`.
   one of three explicit draw layers.
 - Adds broader per-character idle variation so room and table figures do not
   all repeat the same gesture cadence.
+- Removes 105 unreferenced production functions, 13 unused tool helpers, one
+  unreachable retired menu implementation, and three stale script-ID sidecars.
+  Live save migrations and compatibility contracts remain intact.
 - Declares the 11-game 0.6 feature set complete. The remaining authoring work is
   the manual 75-context slot-placement pass, schema-3 report promotion, and
   focused post-promotion validation before final packaging.

@@ -1,8 +1,8 @@
 # rw06_3 — Balance on the three ending routes
 
-Status: TODO. Self-contained. Launch with this file only. Timebox: 1 day.
-Depends on rw06_2's routes and `docs/plans/rw06_2_routes/economy_notes.md`
-existing. Use the owner's run notes on the scoreboard if they are present.
+Status: **HISTORICAL / IMPLEMENTED — DO NOT LAUNCH.** The three ending routes
+and their accepted 0.6 balance are incorporated into current `main`; later
+tuning ideas are preserved in `../plans/0.6.1_backlog.md`.
 
 ## Goal
 

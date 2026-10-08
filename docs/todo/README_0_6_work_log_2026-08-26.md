@@ -1,10 +1,9 @@
 # 0.6 Work Log - through 2026-08-26
 
-Companion to [the active 0.6 task board](README_0_6_board.md). This file
-contains the historical Work Log moved verbatim by
-`board06_1`. Future
-claim, block, completion and unblock entries append here; task state and
-the binding protocol remain on the active board.
+Historical companion to [the closed 0.6 task board](README_0_6_board.md). This
+file contains the Work Log moved verbatim by `board06_1`. Preserve its dated
+claim, block, completion, and unblock entries; current state lives in
+`../current_game_state.md`.
 
 Preserved entries: **124**; current entries: **135**. Use the exact find token
 below to jump to a row's history.

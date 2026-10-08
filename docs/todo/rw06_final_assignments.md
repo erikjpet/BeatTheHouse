@@ -1,7 +1,8 @@
 # 0.6.0 final assignments — AUTHORITATIVE (owner, 2026-09-26)
 
-This file is the only source of direction for Lanes A, B, C and D. It replaces
-all queue notes, handoffs and messages between lanes.
+Status: **HISTORICAL FINAL-LANE INSTRUCTIONS — NO LONGER ACTIVE.** This file was
+the source of direction for Lanes A, B, C, and D at its dated boundary. Preserve
+it as evidence; do not create or resume lanes from it.
 
 ## Absolute rules
 

@@ -1,7 +1,7 @@
 # rw06 RESET step 1 — Consolidate everything onto main
 
-Status: TODO. Self-contained. Launch with this file only. Run it ALONE: all
-other agents must be stopped first.
+Status: **HISTORICAL / COMPLETED — DO NOT LAUNCH.** The consolidation outcome
+is recorded in `rw06_reset_status.md`; later source is already on `main`.
 
 ## Why
 

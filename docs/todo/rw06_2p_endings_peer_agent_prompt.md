@@ -1,6 +1,7 @@
 # rw06_2p — Endings and balance peer agent
 
-Status: TODO. Self-contained. Launch with this file only.
+Status: **HISTORICAL / SUPERSEDED — DO NOT LAUNCH.** The peer lane has ended;
+its route and balance outcomes are incorporated into current `main`.
 
 You are a **peer** of the release orchestrator (a separate agent running
 `rw06_execute_release_week_prompt.md`). You own two rows end to end:
