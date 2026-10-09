@@ -720,6 +720,19 @@ static func _manifest_label(value: String) -> String:
 	return clean.replace("_", " ").capitalize()
 
 
+static func _attached_room_action_label(source: Dictionary, action: Dictionary) -> String:
+	# Sal is one visible character hosting both the shop merchant and pawn-lender
+	# aliases. Preserve that single physical object while naming the two services
+	# by what they actually do instead of exposing generic Talk / Use actions.
+	var object_id := str(source.get("object_id", "")).strip_edges()
+	var binding_source_id := str(source.get("slot_binding_source_id", "")).strip_edges()
+	if object_id == "lender:sals_pawn_counter":
+		return "Pawn Items"
+	if object_id == "shopkeeper:merchant" and binding_source_id == "staff:pawn_counter_sal":
+		return "Sell Items"
+	return str(action.get("label", action.get("id", "Use"))).strip_edges()
+
+
 static func _attach_action_only_records(records: Array, deferred_exact_action_hosts: Dictionary = {}) -> Array:
 	var room_records: Array = []
 	var action_only: Array = []
@@ -764,7 +777,7 @@ static func _attach_action_only_records(records: Array, deferred_exact_action_ho
 				continue
 			attached.append({
 				"key": key,
-				"label": str(action.get("label", action.get("id", "Use"))).strip_edges(),
+				"label": _attached_room_action_label(source, action),
 				"enabled": action_is_enabled(source, action),
 				"disabled_reason": str(action.get("disabled_reason", source.get("disabled_reason", "Unavailable."))),
 				"record": source.duplicate(true),
@@ -2402,7 +2415,12 @@ static func hook_interactable_objects(host: Variant, object_type: String, option
 		if bool(option.get("hidden", false)) and presence != "fixture":
 			continue
 		var supported := bool(option.get("mutation_supported", false))
-		var enabled = bool(option.get("enabled", supported)) and not run_failed_without_recovery
+		var lender_definition: Dictionary = host.library.lender(hook_id) if object_type == host.CONTEXT_MODE_LENDER else {}
+		# A pawn counter is an inventory interface, not a one-shot loan action. It
+		# must remain openable with empty pockets so players can inspect the counter,
+		# redeem existing tickets, or return after their carried inventory changes.
+		var is_pawn_counter := str(lender_definition.get("lender_type", "")) == "pawn"
+		var enabled = (bool(option.get("enabled", supported)) or is_pawn_counter) and not run_failed_without_recovery
 		var disabled_reason = "" if enabled else failed_reason if run_failed_without_recovery else str(option.get("disabled_reason", option.get("status", "Display-only.")))
 		var availability_class := str(option.get("availability_class", RunState.AVAILABILITY_AVAILABLE))
 		var category := str(option.get("category", ""))
@@ -2411,7 +2429,6 @@ static func hook_interactable_objects(host: Variant, object_type: String, option
 		var visual_type := "drink" if object_type == host.CONTEXT_MODE_SERVICE and category == "alcohol" else object_type
 		var character_actor: Dictionary = {}
 		if object_type == host.CONTEXT_MODE_LENDER:
-			var lender_definition: Dictionary = host.library.lender(hook_id)
 			var lender_speaker: Dictionary = lender_definition.get("speaker", {}) if typeof(lender_definition.get("speaker", {})) == TYPE_DICTIONARY else {}
 			if str(lender_definition.get("lender_type", "")) != "family_phone" and not lender_speaker.is_empty() and bool(lender_speaker.get("environment_actor", true)):
 				character_actor = host._resolve_character_speaker(

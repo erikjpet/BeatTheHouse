@@ -216,6 +216,87 @@ func _run() -> void:
 	run_state = app.get("run_state")
 	_check(bool(second.get("ok", false)) and str(run_state.current_environment.get("archetype_id", "")) == "corner_store", "The in-room selector must replace the current practice environment.")
 	_check(run_state.bankroll == 777 and run_state.inventory == [{"id": "lucky_keychain"}], "Player money and inventory must carry into later practice environments.")
+	var corner_leave_opened := bool(app.call("activate_interactable_object", "travel:leave"))
+	await _settle(2)
+	_check(corner_leave_opened and menu.is_visible_in_tree(), "The corner-store practice exit must reopen the Environment Library.")
+	_select_metadata(archetypes, "pawn_shop")
+	app.call("_on_environment_test_archetype_selected", archetypes.selected)
+	_select_metadata(app.get("environment_test_scenario_option") as OptionButton, "__none")
+	var pawn_shop_result: Dictionary = app.call("start_environment_test_session")
+	await _settle(3)
+	run_state = app.get("run_state") as RunState
+	_check(
+		bool(pawn_shop_result.get("ok", false))
+			and run_state != null
+			and str(run_state.current_environment.get("archetype_id", "")) == "pawn_shop",
+		"The Environment Library must spawn Sal's pawn shop."
+	)
+	run_state.inventory = []
+	run_state.add_item("creased_luck_card")
+	app.call("_refresh")
+	await _settle(3)
+	var sal: Dictionary = app.call("_interactable_object", "staff:pawn_counter_sal")
+	var sal_action_labels: Array[String] = []
+	var sell_action_key := ""
+	for descriptor_value in sal.get("attached_room_actions", []):
+		if typeof(descriptor_value) == TYPE_DICTIONARY:
+			var descriptor := descriptor_value as Dictionary
+			var descriptor_label := str(descriptor.get("label", ""))
+			sal_action_labels.append(descriptor_label)
+			if descriptor_label == "Sell Items":
+				sell_action_key = str(descriptor.get("key", ""))
+	_check(
+		not sal.is_empty() and sal_action_labels.has("Pawn Items") and not sell_action_key.is_empty(),
+		"The single visible Sal object must expose clearly named pawn and merchant actions: labels=%s" % str(sal_action_labels)
+	)
+	var sal_sale_opened := bool(app.call("_activate_attached_room_action", "staff:pawn_counter_sal", sell_action_key))
+	await _settle(2)
+	var sale_snapshot: Dictionary = app.call("current_run_inventory_snapshot")
+	_check(
+		sal_sale_opened and bool(sale_snapshot.get("visible", false)) and str(sale_snapshot.get("mode", "")) == "merchant_sale",
+		"Sal's Sell Items action must open the merchant-sale interface."
+	)
+	app.call("close_run_inventory")
+	await _settle(1)
+	var sal_opened := bool(app.call("activate_interactable_object", "staff:pawn_counter_sal"))
+	await _settle(2)
+	var pawn_snapshot: Dictionary = app.call("current_run_inventory_snapshot")
+	var pawn_item_available := false
+	for item_value in pawn_snapshot.get("items", []):
+		if typeof(item_value) != TYPE_DICTIONARY:
+			continue
+		var item := item_value as Dictionary
+		if str(item.get("id", "")) == "creased_luck_card" and str(item.get("pawn_action", "")) == "pawn":
+			pawn_item_available = true
+			break
+	_check(
+		sal_opened
+			and bool(pawn_snapshot.get("visible", false))
+			and str(pawn_snapshot.get("mode", "")) == "pawn_counter"
+			and str(pawn_snapshot.get("container_id", "")) == "sals_pawn_counter"
+			and pawn_item_available,
+		"Activating Sal must open his pawn counter with carried pawnable items available: opened=%s visible=%s mode=%s container=%s item=%s" % [
+			sal_opened,
+			pawn_snapshot.get("visible", false),
+			pawn_snapshot.get("mode", ""),
+			pawn_snapshot.get("container_id", ""),
+			pawn_item_available,
+		]
+	)
+	var pawn_bankroll_before := run_state.bankroll
+	app.call("_pawn_counter_pawn_item", "sals_pawn_counter", "creased_luck_card")
+	await _settle(3)
+	pawn_snapshot = app.call("current_run_inventory_snapshot")
+	_check(
+		run_state.bankroll > pawn_bankroll_before
+			and not run_state.inventory.has("creased_luck_card")
+			and not run_state.pawn_tickets_for_lender("sals_pawn_counter").is_empty()
+			and bool(pawn_snapshot.get("visible", false))
+			and str(pawn_snapshot.get("mode", "")) == "pawn_counter",
+		"Sal must accept a pawn transaction and keep the refreshed pawn counter open."
+	)
+	app.call("close_run_inventory")
+	await _settle(1)
 	app.call("return_to_main_menu")
 	await _settle(2)
 	_check(app.get("run_state") == null and not bool(app.get("dev_environment_test_mode")), "Leaving environment practice must return cleanly to the main menu.")

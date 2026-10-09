@@ -5970,6 +5970,10 @@ func open_pawn_counter(lender_id: String = "") -> bool:
 		return false
 	if _guard_player_input_route(false, "lender:%s" % lender_id):
 		return false
+	return _open_pawn_counter_after_input_guard(lender_id)
+
+
+func _open_pawn_counter_after_input_guard(lender_id: String = "") -> bool:
 	_refresh_run_action_service()
 	if lender_id.strip_edges().is_empty():
 		lender_id = _first_current_pawn_lender_id()
@@ -5978,6 +5982,8 @@ func open_pawn_counter(lender_id: String = "") -> bool:
 		_show_message("Pawn counter is not available.")
 		_refresh()
 		return false
+	selected_lender_hook_id = lender_id
+	selected_lender_hook_label = str(option.get("display_name", lender_id))
 	_open_run_inventory_popup("pawn_counter", lender_id)
 	_refresh()
 	return true
@@ -5988,7 +5994,7 @@ func _pawn_counter_pawn_item(lender_id: String, item_id: String) -> void:
 	var resolved := run_action_service.pawn_inventory_item(item_id, lender_id)
 	if not bool(resolved.get("ok", false)):
 		_show_message(str(resolved.get("message", "Could not pawn that item.")))
-		open_pawn_counter(lender_id)
+		_open_pawn_counter_after_input_guard(lender_id)
 		return
 	var result: Dictionary = resolved.get("result", {}) if typeof(resolved.get("result", {})) == TYPE_DICTIONARY else {}
 	# Pawn transactions happen outside a game result surface. Clear any stale
@@ -6003,23 +6009,21 @@ func _pawn_counter_pawn_item(lender_id: String, item_id: String) -> void:
 	if _apply_post_action_environment_interrupt("lender"):
 		_refresh()
 		return
-	open_pawn_counter(lender_id)
+	_open_pawn_counter_after_input_guard(lender_id)
 
 
 func _pawn_counter_redeem_ticket(lender_id: String, debt_id: String) -> void:
 	if run_state == null:
 		return
-	if _guard_player_input_route():
-		return
 	var result := run_state.repay_debt(debt_id)
 	if not bool(result.get("ok", false)):
 		_show_message(str(result.get("message", "Could not redeem that ticket.")))
-		open_pawn_counter(lender_id)
+		_open_pawn_counter_after_input_guard(lender_id)
 		return
 	_sync_presented_bankroll_to_actual()
 	_show_message(str(result.get("message", "Ticket redeemed.")))
 	_autosave_foundation_run("Autosaved.")
-	open_pawn_counter(lender_id)
+	_open_pawn_counter_after_input_guard(lender_id)
 
 
 func use_game_environment_hook(game_id: String, hook_id: String, action_id: String = "") -> bool:
@@ -14475,17 +14479,46 @@ func _activate_attached_room_action(target_object_id: String, action_key: String
 			return _activate_event_object(source_id)
 		CONTEXT_MODE_ITEM:
 			return _select_item_offer_after_input_guard(source_id) and _apply_item_offer_after_input_guard(source_id)
+		CONTEXT_MODE_SHOPKEEPER:
+			return open_shopkeeper_sale_page()
 		CONTEXT_MODE_SERVICE:
 			return select_service_hook(source_id) and confirm_selected_service_hook()
 		CONTEXT_MODE_LENDER:
 			if _lender_is_pawn_counter(source_id):
-				select_lender_hook(source_id)
 				return open_pawn_counter(source_id)
 			return select_lender_hook(source_id) and confirm_selected_lender_hook()
 		CONTEXT_MODE_TRAVEL:
 			return select_travel_option(source_id) and confirm_selected_travel()
 	var emit_object_id := str(action.get("emit_object_id", "")).strip_edges()
 	return activate_interactable_object(emit_object_id) if not emit_object_id.is_empty() else false
+
+
+func _attached_pawn_lender_id(object_data: Dictionary) -> String:
+	# The authored pawn-shop layout intentionally folds the merchant and lender
+	# aliases into one physical Sal character. Treat that host as the pawn counter
+	# on primary activation while retaining both explicit attached actions.
+	if str(object_data.get("object_id", "")).strip_edges() != "staff:pawn_counter_sal":
+		return ""
+	for descriptor_value in JsonCoerceScript._copy_array(object_data.get("attached_room_actions", [])):
+		var descriptor := JsonCoerceScript._copy_dict(descriptor_value)
+		var record := JsonCoerceScript._copy_dict(descriptor.get("record", {}))
+		if str(record.get("object_type", "")).strip_edges() != CONTEXT_MODE_LENDER:
+			continue
+		var action := JsonCoerceScript._copy_dict(descriptor.get("action", {}))
+		var lender_id := str(action.get("source_id", action.get("hook_id", record.get("source_id", "")))).strip_edges()
+		if not lender_id.is_empty() and _lender_is_pawn_counter(lender_id):
+			return lender_id
+	# Manifest identities are the durable contract for a consolidated fixed host.
+	# Keep primary activation working even if a transient live action projection
+	# is being rebuilt while the player's inventory changes.
+	for action_id_value in JsonCoerceScript._copy_array(object_data.get("action_ids", object_data.get("manifest_action_ids", []))):
+		var action_id := str(action_id_value).strip_edges()
+		if not action_id.begins_with("lender:"):
+			continue
+		var lender_id := action_id.trim_prefix("lender:")
+		if _lender_is_pawn_counter(lender_id):
+			return lender_id
+	return ""
 
 
 func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, caller_rollback: Dictionary) -> bool:
@@ -14568,6 +14601,9 @@ func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, ca
 		_show_message(disabled_reason)
 		_refresh()
 		return false
+	var attached_pawn_lender_id := _attached_pawn_lender_id(object_data)
+	if not attached_pawn_lender_id.is_empty():
+		return _open_pawn_counter_after_input_guard(attached_pawn_lender_id)
 	if bool(object_data.get("delivery_handoff_direct", false)):
 		var handoff_node_id := str(object_data.get("delivery_handoff_node_id", "")).strip_edges()
 		if handoff_node_id.is_empty():
@@ -14641,8 +14677,7 @@ func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, ca
 			return false
 		CONTEXT_MODE_LENDER:
 			if _lender_is_pawn_counter(source_id):
-				select_lender_hook(source_id)
-				return open_pawn_counter(source_id)
+				return _open_pawn_counter_after_input_guard(source_id)
 			if select_lender_hook(source_id):
 				return confirm_selected_lender_hook()
 			return false
