@@ -3343,6 +3343,7 @@ def main() -> int:
         and all(position is not None for position in grand_machine_positions)
         and len({position[1] for position in grand_machine_positions if position is not None}) == 1
         and all(hit is not None for hit in grand_machine_hits)
+        and all(hit[2:] == (110.0, 72.0) for hit in grand_machine_hits if hit is not None)
         and all(
             grand_machine_positions[index] is not None
             and grand_machine_positions[index + 1] is not None
@@ -3358,13 +3359,15 @@ def main() -> int:
         "grand_casino: five generated machine positions must remain an aligned, expanded-target-safe named row",
     )
     grand_table_ids = [str(grand_categories.get(f"game_spots:{index}", "")) for index in range(5, 7)]
+    grand_table_hits = [rect(grand_base_slots.get(slot_id, {}).get("hit_rect")) for slot_id in grand_table_ids]
     check.require(
         grand_table_ids == ["base.game_table_left", "base.game_table_right"]
         and grand_base_slots.get(grand_table_ids[0], {}).get("footprint_class") == "surface_item"
         and grand_base_slots.get(grand_table_ids[0], {}).get("support_id") == "left_table_felt"
         and grand_base_slots.get(grand_table_ids[1], {}).get("footprint_class") == "surface_item"
-        and grand_base_slots.get(grand_table_ids[1], {}).get("support_id") == "right_table_felt",
-        "grand_casino: both generated card-table positions must remain tied to the visible left/right table art",
+        and grand_base_slots.get(grand_table_ids[1], {}).get("support_id") == "right_table_felt"
+        and all(hit is not None and hit[2:] == (72.0, 48.0) for hit in grand_table_hits),
+        "grand_casino: both generated card-table positions must retain standard size and remain tied to the visible left/right table art",
     )
     grand_preferences = grand_map.get("object_slot_ids", {}) if isinstance(grand_map.get("object_slot_ids"), dict) else {}
     check.require(

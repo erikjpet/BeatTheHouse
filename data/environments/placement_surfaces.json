@@ -25923,10 +25923,10 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            134.0,
-            94.0,
-            44.0,
-            48.0
+            101.0,
+            82.0,
+            110.0,
+            72.0
           ],
           "label_anchor": [
             170.0,
@@ -25952,10 +25952,10 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            290.0,
-            94.0,
-            44.0,
-            48.0
+            257.0,
+            82.0,
+            110.0,
+            72.0
           ],
           "label_anchor": [
             312.0,
@@ -25981,10 +25981,10 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            446.0,
-            94.0,
-            44.0,
-            48.0
+            413.0,
+            82.0,
+            110.0,
+            72.0
           ],
           "label_anchor": [
             468.0,
@@ -26010,10 +26010,10 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            602.0,
-            94.0,
-            44.0,
-            48.0
+            569.0,
+            82.0,
+            110.0,
+            72.0
           ],
           "label_anchor": [
             624.0,
@@ -26041,10 +26041,10 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            722.0,
-            94.0,
-            44.0,
-            48.0
+            689.0,
+            82.0,
+            110.0,
+            72.0
           ],
           "label_anchor": [
             744.0,
@@ -26070,9 +26070,9 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            196.0,
+            182.0,
             210.0,
-            44.0,
+            72.0,
             48.0
           ],
           "label_anchor": [
@@ -26099,9 +26099,9 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            660.0,
+            646.0,
             210.0,
-            44.0,
+            72.0,
             48.0
           ],
           "label_anchor": [
