@@ -18,6 +18,7 @@ signal developer_placement_refresh_requested
 signal developer_placement_export_requested(request: Dictionary)
 signal developer_layout_save_requested(request: Dictionary)
 signal developer_slot_layer_requested(request: Dictionary)
+signal developer_slot_scale_requested(request: Dictionary)
 signal developer_placement_undo_requested(request: Dictionary)
 signal developer_slot_placement_shortcut_toggled(enabled: bool)
 
@@ -41,6 +42,9 @@ const SLOT_COLLECTION_FIELDS := ["fixed_slots", "event_slots", "scenario_slots",
 const SLOT_FAMILIES := ["fixed", "event", "scenario", "exit"]
 const SLOT_FILTER_OPTIONS := ["fixed", "event", "scenario", "exit", "all"]
 const SLOT_DRAW_LAYERS := {"behind": -1, "standard": 0, "front": 1}
+const SLOT_OBJECT_SCALE_MIN := 0.5
+const SLOT_OBJECT_SCALE_MAX := 2.0
+const SLOT_OBJECT_SCALE_STEP := 0.1
 const GRAND_CASINO_FIXED_GAME_VISUAL_SIZES := {
 	"fixed.game_machine_1": Vector2(110.0, 72.0),
 	"fixed.game_machine_2": Vector2(110.0, 72.0),
@@ -315,6 +319,9 @@ var developer_slot_context_label: Label
 var developer_slot_layer_row: HBoxContainer
 var developer_slot_layer_buttons: Dictionary = {}
 var developer_slot_layer_button_group: ButtonGroup
+var developer_slot_scale_decrease_button: Button
+var developer_slot_scale_reset_button: Button
+var developer_slot_scale_increase_button: Button
 var developer_slot_show_empty_capacity := true
 var developer_slot_show_runtime_reserves := true
 var developer_slot_edit_shared_in_scenario := false
@@ -445,10 +452,12 @@ func developer_placement_snapshot() -> Dictionary:
 
 func developer_slot_placement_snapshot() -> Dictionary:
 	var review_status := _developer_slot_review_status()
+	var selected_slot := _developer_slot(developer_slot_selected_id)
 	return {
 		"enabled": developer_slot_placement_mode,
 		"panel_minimized": developer_placement_panel_minimized,
 		"selected_slot_id": developer_slot_selected_id,
+		"selected_object_scale": _developer_slot_object_scale(selected_slot) if not selected_slot.is_empty() else 1.0,
 		"dragging": developer_slot_dragging,
 		"pending": developer_slot_pending_rect.has_area(),
 		"valid": developer_slot_valid,
@@ -940,6 +949,38 @@ func _ensure_developer_placement_panel() -> void:
 		layer_button.toggled.connect(_on_developer_slot_layer_toggled.bind(layer_name))
 		developer_slot_layer_buttons[layer_name] = layer_button
 		developer_slot_layer_row.add_child(layer_button)
+	var size_label := Label.new()
+	size_label.name = "SlotObjectSizeLabel"
+	size_label.text = "Size"
+	size_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	size_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	size_label.custom_minimum_size = Vector2(34.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	size_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	developer_slot_layer_row.add_child(size_label)
+	developer_slot_scale_decrease_button = Button.new()
+	developer_slot_scale_decrease_button.name = "DecreaseSlotObjectSize"
+	developer_slot_scale_decrease_button.text = "-"
+	developer_slot_scale_decrease_button.custom_minimum_size = Vector2(38.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_slot_scale_decrease_button.tooltip_text = "Make the selected slot's object 10% smaller."
+	developer_slot_scale_decrease_button.disabled = true
+	developer_slot_scale_decrease_button.pressed.connect(_adjust_developer_slot_scale.bind(-SLOT_OBJECT_SCALE_STEP))
+	developer_slot_layer_row.add_child(developer_slot_scale_decrease_button)
+	developer_slot_scale_reset_button = Button.new()
+	developer_slot_scale_reset_button.name = "ResetSlotObjectSize"
+	developer_slot_scale_reset_button.text = "100%"
+	developer_slot_scale_reset_button.custom_minimum_size = Vector2(58.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_slot_scale_reset_button.tooltip_text = "Current object size. Press to restore 100%."
+	developer_slot_scale_reset_button.disabled = true
+	developer_slot_scale_reset_button.pressed.connect(_set_developer_slot_scale.bind(1.0))
+	developer_slot_layer_row.add_child(developer_slot_scale_reset_button)
+	developer_slot_scale_increase_button = Button.new()
+	developer_slot_scale_increase_button.name = "IncreaseSlotObjectSize"
+	developer_slot_scale_increase_button.text = "+"
+	developer_slot_scale_increase_button.custom_minimum_size = Vector2(38.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_slot_scale_increase_button.tooltip_text = "Make the selected slot's object 10% larger."
+	developer_slot_scale_increase_button.disabled = true
+	developer_slot_scale_increase_button.pressed.connect(_adjust_developer_slot_scale.bind(SLOT_OBJECT_SCALE_STEP))
+	developer_slot_layer_row.add_child(developer_slot_scale_increase_button)
 
 	var layout_actions := HBoxContainer.new()
 	layout_actions.name = "LayoutActions"
@@ -1249,6 +1290,7 @@ func _update_developer_slot_placement_panel() -> void:
 		showing_hover = not slot.is_empty()
 	if slot.is_empty():
 		_sync_developer_slot_layer_buttons({}, false)
+		_sync_developer_slot_scale_buttons({}, false)
 		var visibility_summary := "Occupied slots"
 		if developer_slot_show_empty_capacity:
 			visibility_summary = "Empty slots shown"
@@ -1264,6 +1306,7 @@ func _update_developer_slot_placement_panel() -> void:
 	var scope_label := "SCENARIO-LOCAL" if _developer_slot_scope(slot) == "scenario_local" else "ROOM-SHARED"
 	var editable := _developer_slot_is_editable(slot)
 	_sync_developer_slot_layer_buttons(slot, not showing_hover and editable)
+	_sync_developer_slot_scale_buttons(slot, not showing_hover and editable)
 	var kind := str(slot.get("kind", family))
 	var placement_class := str(slot.get("footprint_class", "unknown"))
 	var support := str(slot.get("support_id", "free"))
@@ -1279,6 +1322,7 @@ func _update_developer_slot_placement_panel() -> void:
 	var warnings: Array = slot_state.get("warnings", [])
 	var status_text := "hover preview" if showing_hover else "unchanged"
 	var draw_layer_label := _developer_slot_draw_layer_label(_developer_slot_draw_layer(slot))
+	var object_scale_percent := int(round(_developer_slot_object_scale(slot) * 100.0))
 	if developer_slot_pending_rect.has_area():
 		status_text = "position %.0f, %.0f" % [developer_slot_pending_position.x, developer_slot_pending_position.y]
 		if not developer_slot_overlap_ids.is_empty():
@@ -1288,7 +1332,7 @@ func _update_developer_slot_placement_panel() -> void:
 			]
 	if not warnings.is_empty():
 		status_text += "; WARNING: %s" % "; ".join(warnings)
-	developer_placement_label.text = "%s | %s | %s\n%s\n%s | %s | %s\n%s | %s | %s | %s" % [
+	developer_placement_label.text = "%s | %s | %s\n%s\n%s | %s | %s\n%s | %s | Size: %d%% | %s | %s" % [
 		str(foundation_snapshot.get("archetype_id", environment_id)),
 		str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", "main"))),
 		count_summary,
@@ -1298,6 +1342,7 @@ func _update_developer_slot_placement_panel() -> void:
 		"%s / %s" % [family if kind == family else "%s:%s" % [family, kind], placement_class],
 		occupancy,
 		"Layer: %s" % draw_layer_label,
+		object_scale_percent,
 		requirement,
 		status_text,
 	]
@@ -1307,6 +1352,7 @@ func _update_developer_slot_placement_panel() -> void:
 		"Scope: %s" % scope_label,
 		"Class: %s | Support: %s" % [placement_class, support],
 		"Draw layer: %s" % draw_layer_label,
+		"Object size: %d%%" % object_scale_percent,
 		occupancy,
 		"Status: %s" % status_text,
 	]
@@ -1340,6 +1386,56 @@ func _sync_developer_slot_layer_buttons(slot: Dictionary, editable: bool) -> voi
 		var button := button_value as BaseButton
 		button.disabled = slot.is_empty() or not editable
 		button.set_pressed_no_signal(active_layer == int(SLOT_DRAW_LAYERS.get(layer_name, 0)))
+
+
+func _developer_slot_object_scale(slot: Dictionary) -> float:
+	return clampf(float(slot.get("object_scale", 1.0)), SLOT_OBJECT_SCALE_MIN, SLOT_OBJECT_SCALE_MAX)
+
+
+func _sync_developer_slot_scale_buttons(slot: Dictionary, editable: bool) -> void:
+	var has_slot := not slot.is_empty()
+	var scale := _developer_slot_object_scale(slot) if has_slot else 1.0
+	if developer_slot_scale_decrease_button != null:
+		developer_slot_scale_decrease_button.disabled = not has_slot or not editable or scale <= SLOT_OBJECT_SCALE_MIN + 0.001
+	if developer_slot_scale_increase_button != null:
+		developer_slot_scale_increase_button.disabled = not has_slot or not editable or scale >= SLOT_OBJECT_SCALE_MAX - 0.001
+	if developer_slot_scale_reset_button != null:
+		developer_slot_scale_reset_button.text = "%d%%" % int(round(scale * 100.0))
+		developer_slot_scale_reset_button.disabled = not has_slot or not editable or is_equal_approx(scale, 1.0)
+
+
+func _adjust_developer_slot_scale(delta: float) -> void:
+	var slot := _developer_slot(developer_slot_selected_id)
+	if slot.is_empty():
+		return
+	_set_developer_slot_scale(_developer_slot_object_scale(slot) + delta)
+
+
+func _set_developer_slot_scale(scale: float) -> void:
+	var slot := _developer_slot(developer_slot_selected_id)
+	if slot.is_empty() or not _developer_slot_is_editable(slot):
+		_sync_developer_slot_scale_buttons(slot, false)
+		return
+	var normalized_scale := snappedf(clampf(scale, SLOT_OBJECT_SCALE_MIN, SLOT_OBJECT_SCALE_MAX), SLOT_OBJECT_SCALE_STEP)
+	if is_equal_approx(normalized_scale, _developer_slot_object_scale(slot)):
+		_sync_developer_slot_scale_buttons(slot, true)
+		return
+	var request := {
+		"environment": _developer_slot_environment(),
+		"slot_id": developer_slot_selected_id,
+		"scale": normalized_scale,
+		"_undo_context_key": _developer_slot_snapshot_context_key(foundation_snapshot),
+		"_slot_scale_handled": false,
+		"_slot_scale_persisted": false,
+	}
+	developer_slot_scale_requested.emit(request)
+	if bool(request.get("_slot_scale_handled", false)) and not bool(request.get("_slot_scale_persisted", false)):
+		_sync_developer_slot_scale_buttons(slot, true)
+		return
+	_record_developer_placement_undo(request)
+	_invalidate_developer_placement_geometry_caches()
+	_update_developer_placement_panel()
+	queue_redraw()
 
 
 func _on_developer_slot_layer_toggled(pressed: bool, layer_name: String) -> void:
@@ -2813,6 +2909,16 @@ func _developer_slot_rect(slot: Dictionary) -> Rect2:
 	return Rect2(position - Vector2(22.0, 22.0), Vector2(44.0, 44.0))
 
 
+func _developer_slot_visual_rect(slot: Dictionary, base_rect: Rect2 = Rect2()) -> Rect2:
+	var authored_rect := _developer_slot_rect(slot)
+	var rect := base_rect if base_rect.has_area() else authored_rect
+	var scale := _developer_slot_object_scale(slot)
+	if not rect.has_area() or is_equal_approx(scale, 1.0):
+		return rect
+	var anchor := _developer_slot_position(slot) + rect.position - authored_rect.position
+	return Rect2(anchor + (rect.position - anchor) * scale, rect.size * scale)
+
+
 func _developer_slot_position(slot: Dictionary) -> Vector2:
 	var slot_id := str(slot.get("id", "")).strip_edges()
 	var cached_value: Variant = developer_slot_positions_by_id_cache.get(slot_id)
@@ -3082,7 +3188,7 @@ func _developer_slot_state(slot: Dictionary, comparison_slots: Array = []) -> Di
 		warnings.append("required occupant missing")
 	if occupants.size() > 1:
 		warnings.append("multiple occupants")
-	var slot_rect := _developer_slot_rect(slot)
+	var slot_rect := _developer_slot_visual_rect(slot)
 	var diagnose_overlap := slot_id == developer_slot_selected_id or _developer_slot_is_context_active(slot)
 	if diagnose_overlap:
 		var slots_to_compare := comparison_slots if not comparison_slots.is_empty() else _developer_slot_overlap_candidates(slot_id)
@@ -3092,7 +3198,7 @@ func _developer_slot_state(slot: Dictionary, comparison_slots: Array = []) -> Di
 			if other_id != slot_id \
 					and _developer_slot_is_context_active(slot) \
 					and _developer_slot_is_context_active(other) \
-					and slot_rect.intersects(_developer_slot_rect(other)):
+					and slot_rect.intersects(_developer_slot_visual_rect(other)):
 				warnings.append("overlaps %s" % other_id)
 				break
 	for occupant_value in occupants:
@@ -3145,10 +3251,10 @@ func _developer_slot_overlap_summary() -> Dictionary:
 	for left_index in range(slots.size()):
 		var left := slots[left_index] as Dictionary
 		var left_id := str(left.get("id", ""))
-		var left_rect := _developer_slot_rect(left)
+		var left_rect := _developer_slot_visual_rect(left)
 		for right_index in range(left_index + 1, slots.size()):
 			var right := slots[right_index] as Dictionary
-			if not left_rect.intersects(_developer_slot_rect(right)):
+			if not left_rect.intersects(_developer_slot_visual_rect(right)):
 				continue
 			var right_id := str(right.get("id", ""))
 			var pair_label := "%s / %s" % [left_id, right_id]
@@ -3182,13 +3288,14 @@ func _developer_slot_id_at_local_position(local_position: Vector2) -> String:
 	var board_position := _local_to_board_position(local_position)
 	var selected := _developer_slot(developer_slot_selected_id)
 	if not selected.is_empty():
-		var selected_rect := developer_slot_pending_rect if developer_slot_pending_rect.has_area() else _developer_slot_rect(selected)
+		var selected_base_rect := developer_slot_pending_rect if developer_slot_pending_rect.has_area() else _developer_slot_rect(selected)
+		var selected_rect := _developer_slot_visual_rect(selected, selected_base_rect)
 		if selected_rect.has_point(board_position):
 			return developer_slot_selected_id
 	var slots := _developer_slots()
 	for index in range(slots.size() - 1, -1, -1):
 		var slot := slots[index] as Dictionary
-		if _developer_slot_rect(slot).has_point(board_position):
+		if _developer_slot_visual_rect(slot).has_point(board_position):
 			return str(slot.get("id", ""))
 	return ""
 
@@ -3345,7 +3452,9 @@ func _flush_developer_drag_redraw() -> void:
 
 
 func _validate_developer_slot_placement_preview(refresh_panel: bool = true) -> void:
-	developer_slot_valid = developer_slot_pending_rect.has_area() and Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)).encloses(developer_slot_pending_rect)
+	var selected_slot := _developer_slot(developer_slot_selected_id)
+	var selected_visual_rect := _developer_slot_visual_rect(selected_slot, developer_slot_pending_rect) if not selected_slot.is_empty() else Rect2()
+	developer_slot_valid = selected_visual_rect.has_area() and Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)).encloses(selected_visual_rect)
 	developer_slot_overlap_ids.clear()
 	if not developer_slot_valid:
 		if refresh_panel:
@@ -3361,15 +3470,15 @@ func _validate_developer_slot_placement_preview(refresh_panel: bool = true) -> v
 		var slot_id := str(slot.get("id", ""))
 		if slot_id == developer_slot_selected_id:
 			continue
-		var other_rect := _developer_slot_rect(slot)
-		if developer_slot_pending_rect.intersects(other_rect):
+		var other_rect := _developer_slot_visual_rect(slot)
+		if selected_visual_rect.intersects(other_rect):
 			developer_slot_overlap_ids.append(slot_id)
 		var route_sensitive := _developer_slot_is_route_endpoint(developer_slot_selected_id) \
 				or _developer_slot_is_route_endpoint(slot_id)
 		if route_sensitive \
 				and (_developer_slot_is_context_active(slot) or _developer_slot_is_route_endpoint(slot_id)) \
 				and _developer_slot_rects_meaningfully_intersect(
-					_developer_slot_expanded_rect(developer_slot_pending_rect),
+					_developer_slot_expanded_rect(selected_visual_rect),
 					_developer_slot_expanded_rect(other_rect)
 				):
 			if not developer_slot_overlap_ids.has(slot_id):
@@ -3778,9 +3887,10 @@ func _draw_developer_slot_overlay() -> void:
 		var row := row_value as Dictionary
 		var slot := row.get("slot", {}) as Dictionary
 		var slot_id := str(slot.get("id", ""))
-		var rect := _developer_slot_rect(slot)
+		var base_rect := _developer_slot_rect(slot)
 		if slot_id == developer_slot_selected_id and developer_slot_pending_rect.has_area():
-			rect = developer_slot_pending_rect
+			base_rect = developer_slot_pending_rect
+		var rect := _developer_slot_visual_rect(slot, base_rect)
 		var family := _developer_slot_family(slot)
 		var color := _developer_slot_family_color(family)
 		var selected := slot_id == developer_slot_selected_id
@@ -7710,14 +7820,15 @@ func _update_drunk_distortion_protected_rects() -> void:
 # their natural dimensions and are anchored to the slot's physical contact.
 func _natural_model_rect_for_object(object_data: Dictionary) -> Rect2:
 	var slot_rect := _board_rect_for_object(object_data)
+	var object_scale := _scene_object_slot_scale(object_data)
 	if bool(object_data.get("fixed_slot_geometry", false)):
 		var fixed_visual_rect := _grand_casino_fixed_game_visual_rect(object_data, slot_rect)
 		if fixed_visual_rect.has_area():
-			return fixed_visual_rect
-		return slot_rect
+			return _scaled_slotted_object_rect(fixed_visual_rect, object_data, object_scale)
+		return _scaled_slotted_object_rect(slot_rect, object_data, object_scale)
 	if bool(object_data.get("scenario_layout_resolved", false)):
-		return slot_rect
-	var model_size := _natural_model_size_for_object(object_data)
+		return _scaled_slotted_object_rect(slot_rect, object_data, object_scale)
+	var model_size := _natural_model_size_for_object(object_data) * object_scale
 	if small_screen_mode and bool(object_data.get("interactive", true)):
 		model_size.x = maxf(model_size.x, SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE.x)
 		model_size.y = maxf(model_size.y, SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE.y)
@@ -7733,6 +7844,27 @@ func _natural_model_rect_for_object(object_data: Dictionary) -> Rect2:
 	if placement_class not in ["wall_mounted", "hanging", "doorway"]:
 		center.y = slot_rect.end.y - model_size.y * 0.5
 	return Rect2(center - model_size * 0.5, model_size)
+
+
+func _scene_object_slot_scale(object_data: Dictionary) -> float:
+	var slot_id := str(object_data.get("slot_id", "")).strip_edges()
+	if slot_id.is_empty():
+		return 1.0
+	var slot := _developer_slot(slot_id)
+	return _developer_slot_object_scale(slot) if not slot.is_empty() else 1.0
+
+
+func _scaled_slotted_object_rect(rect: Rect2, object_data: Dictionary, scale: float) -> Rect2:
+	if not rect.has_area() or is_equal_approx(scale, 1.0):
+		return rect
+	var slot_id := str(object_data.get("slot_id", "")).strip_edges()
+	var slot := _developer_slot(slot_id)
+	var anchor := rect.get_center()
+	if not slot.is_empty():
+		anchor = _developer_slot_position(slot)
+		if developer_slot_placement_mode and slot_id == developer_slot_selected_id and developer_slot_pending_rect.has_area():
+			anchor = developer_slot_pending_position
+	return Rect2(anchor + (rect.position - anchor) * scale, rect.size * scale)
 
 
 func _grand_casino_fixed_game_visual_rect(object_data: Dictionary, slot_rect: Rect2) -> Rect2:
@@ -7868,7 +8000,13 @@ func _board_rect_for_object(object_data: Dictionary) -> Rect2:
 func _interaction_rect_for_object(object_data: Dictionary) -> Rect2:
 	if bool(object_data.get("person_transit_active", false)):
 		return Rect2()
-	return _natural_model_rect_for_object(object_data)
+	var rect := _natural_model_rect_for_object(object_data)
+	if not bool(object_data.get("interactive", true)) or not rect.has_area() \
+			or is_equal_approx(_scene_object_slot_scale(object_data), 1.0):
+		return rect
+	var minimum := EnvironmentSlotBinderScript.MIN_INTERACTIVE_TARGET
+	var hit_size := Vector2(maxf(rect.size.x, minimum.x), maxf(rect.size.y, minimum.y))
+	return Rect2(rect.get_center() - hit_size * 0.5, hit_size)
 
 
 func _actor_route_position(object_data: Dictionary) -> Vector2:

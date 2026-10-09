@@ -17417,6 +17417,32 @@ func _on_developer_slot_layer_requested(request: Dictionary) -> void:
 	_show_message("%s now uses the %s draw layer." % [str(request.get("slot_id", "Slot")), layer_name])
 
 
+func _on_developer_slot_scale_requested(request: Dictionary) -> void:
+	request["_slot_scale_handled"] = true
+	request["_slot_scale_persisted"] = false
+	var environment := JsonCoerceScript._copy_dict(request.get("environment", {}))
+	var undo_record := _developer_placement_undo_record(
+		environment,
+		"Resize %s" % str(request.get("slot_id", "slot"))
+	)
+	var result := DeveloperPlacementStoreScript.save_slot_scale(
+		environment,
+		str(request.get("slot_id", "")),
+		float(request.get("scale", 1.0))
+	)
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("error", "Could not save that object size.")))
+		return
+	request["_slot_scale_persisted"] = true
+	if not undo_record.is_empty():
+		request["_placement_undo_record"] = undo_record
+	var refresh_result := _refresh_developer_authored_environment()
+	if not bool(refresh_result.get("ok", false)):
+		_show_message(str(refresh_result.get("error", "The object size was saved, but this room could not refresh it yet.")))
+		return
+	_show_message("%s object size is now %d%%." % [str(request.get("slot_id", "Slot")), int(round(float(request.get("scale", 1.0)) * 100.0))])
+
+
 func _developer_placement_undo_record(environment: Dictionary, label: String) -> Dictionary:
 	var state := DeveloperPlacementStoreScript.capture_user_room_state(environment)
 	if state.is_empty():

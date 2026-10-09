@@ -17,6 +17,7 @@ var locked_requests: Array[Dictionary] = []
 var export_request_count := 0
 var exported_pending_request: Dictionary = {}
 var slot_layer_request: Dictionary = {}
+var slot_scale_request: Dictionary = {}
 var slot_shortcut_states: Array[bool] = []
 var placement_undo_request_count := 0
 
@@ -192,6 +193,15 @@ func _check_slot_geometry_export_and_promotion(user_path: String, project_path: 
 			and not bool(invalid_layer_rejected.get("ok", true)),
 		"Slot draw layers must persist in shared and exact-scenario scopes and reject values outside the three authored layers: %s / %s / %s" % [fixed_layer_saved, scenario_layer_saved, invalid_layer_rejected]
 	)
+	var fixed_scale_saved := DeveloperPlacementStoreScript.save_slot_scale(environment, "fixed.item_shop_1", 1.2)
+	var scenario_scale_saved := DeveloperPlacementStoreScript.save_slot_scale(scenario_environment, LOCAL_SCENARIO_SURFACE_1, 0.8)
+	var invalid_scale_rejected := DeveloperPlacementStoreScript.save_slot_scale(environment, "fixed.item_shop_1", 2.1)
+	_check(
+		bool(fixed_scale_saved.get("ok", false)) \
+			and bool(scenario_scale_saved.get("ok", false)) \
+			and not bool(invalid_scale_rejected.get("ok", true)),
+		"Slot object scales must persist in shared and exact-scenario scopes and remain bounded from 50%% to 200%%: %s / %s / %s" % [fixed_scale_saved, scenario_scale_saved, invalid_scale_rejected]
+	)
 	var rejected_unscoped_scenario := DeveloperPlacementStoreScript.save_position(
 		environment,
 		"slot_positions",
@@ -221,6 +231,11 @@ func _check_slot_geometry_export_and_promotion(user_path: String, project_path: 
 			and int(_slot(scenario_local, LOCAL_SCENARIO_SURFACE_1).get("draw_layer", 99)) == 1,
 		"Effective placement maps must apply shared and scenario-specific slot draw layers before rendering."
 	)
+	_check(
+		is_equal_approx(float(_slot(normal_local, "fixed.item_shop_1").get("object_scale", 0.0)), 1.2) \
+			and is_equal_approx(float(_slot(scenario_local, LOCAL_SCENARIO_SURFACE_1).get("object_scale", 0.0)), 0.8),
+		"Effective placement maps must apply shared and scenario-specific object scales before rendering."
+	)
 	_check(_slot_position(_slot(authoring_local, "fixed.item_shop_1")).is_equal_approx(fixed_target), "Authoring view must load the local fixed-slot edit.")
 	_check(_slot_position(_slot(authoring_local, "event.standing_person_1")).is_equal_approx(event_target), "Authoring view must load the local event-slot edit.")
 	_check(_slot_position(_slot(scenario_authoring_local, LOCAL_SCENARIO_SURFACE_1)).is_equal_approx(scenario_target), "Authoring view must load the local scenario-instance edit.")
@@ -243,6 +258,11 @@ func _check_slot_geometry_export_and_promotion(user_path: String, project_path: 
 		int(_slot(EnvironmentPlacementScript.surface_map(environment), "fixed.item_shop_1").get("draw_layer", 99)) == -1 \
 			and int(_slot(EnvironmentPlacementScript.surface_map(scenario_environment), LOCAL_SCENARIO_SURFACE_1).get("draw_layer", 99)) == 1,
 		"Slot draw-layer choices must survive a durable reload."
+	)
+	_check(
+		is_equal_approx(float(_slot(EnvironmentPlacementScript.surface_map(environment), "fixed.item_shop_1").get("object_scale", 0.0)), 1.2) \
+			and is_equal_approx(float(_slot(EnvironmentPlacementScript.surface_map(scenario_environment), LOCAL_SCENARIO_SURFACE_1).get("object_scale", 0.0)), 0.8),
+		"Slot object-size choices must survive a durable reload."
 	)
 	var other_environment := {"archetype_id": "bar"}
 	_check(_slot(EnvironmentPlacementScript.authoring_surface_map(other_environment), "fixed.item_shop_1").is_empty(), "A slot edit must not leak into another environment.")
@@ -322,10 +342,12 @@ func _check_slot_geometry_export_and_promotion(user_path: String, project_path: 
 	var corner_report: Dictionary = report_rooms.get("corner_store", {})
 	var corner_slots: Dictionary = corner_report.get("slot_positions", {})
 	var corner_layers: Dictionary = corner_report.get("slot_layers", {})
+	var corner_scales: Dictionary = corner_report.get("slot_scales", {})
 	var corner_layouts: Dictionary = corner_report.get("scenario_layouts", {})
 	var lotto_report: Dictionary = corner_layouts.get("corner_store_lotto_fever", {})
 	var lotto_slots: Dictionary = lotto_report.get("slot_positions", {})
 	var lotto_layers: Dictionary = lotto_report.get("slot_layers", {})
+	var lotto_scales: Dictionary = lotto_report.get("slot_scales", {})
 	var club_report: Dictionary = report_rooms.get("small_underground_casino:club", {})
 	var club_slots: Dictionary = club_report.get("slot_positions", {})
 	var report_coverage: Dictionary = (report_data as Dictionary).get("coverage", {})
@@ -341,6 +363,8 @@ func _check_slot_geometry_export_and_promotion(user_path: String, project_path: 
 			and _reported_position(club_slots, "fixed.door_right_lower").is_equal_approx(club_target)
 			and int(corner_layers.get("fixed.item_shop_1", 99)) == -1
 			and int(lotto_layers.get(LOCAL_SCENARIO_SURFACE_1, 99)) == 1
+			and is_equal_approx(float(corner_scales.get("fixed.item_shop_1", 0.0)), 1.2)
+			and is_equal_approx(float(lotto_scales.get(LOCAL_SCENARIO_SURFACE_1, 0.0)), 0.8)
 			and int(report_coverage.get("expected_layout_count", 0)) == 75
 			and int(report_coverage.get("saved_layout_count", -1)) == 0
 			and str(report_metadata.get("schema", "")) == "beat_the_house.environment_placement_report/v1"
@@ -349,7 +373,7 @@ func _check_slot_geometry_export_and_promotion(user_path: String, project_path: 
 			and not str(report_metadata.get("scenario_slot_layouts_sha256", "")).is_empty()
 			and int(report_metadata.get("effective_slot_count", -1)) == 6
 			and int(report_metadata.get("local_slot_count", -1)) == 5,
-		"The schema-v3 report must separate shared and exact scenario coordinates, preserve layered room keys, include source-bound metadata, and include 75-layout coverage."
+		"The schema-v3 report must separate shared and exact scenario coordinates, preserve object layers and sizes, retain layered room keys, include source-bound metadata, and include 75-layout coverage."
 	)
 	_check(FileAccess.get_file_as_bytes(user_path) == user_bytes_before_export, "Exporting must not mutate or clear the active machine-local placement data.")
 
@@ -360,6 +384,7 @@ func _check_slot_geometry_export_and_promotion(user_path: String, project_path: 
 	var promoted_base := _slot(normal_promoted, "fixed.item_shop_1")
 	_check(_slot_position(promoted_base).is_equal_approx(fixed_target), "Promoted slot geometry must become normal generation authority.")
 	_check(int(promoted_base.get("draw_layer", 99)) == -1, "Promoted slot draw layers must become normal generation authority.")
+	_check(is_equal_approx(float(promoted_base.get("object_scale", 0.0)), 1.2), "Promoted slot object sizes must become normal generation authority.")
 
 	var binding := EnvironmentSlotBinderScript.bind_base_layout(
 		{
@@ -436,6 +461,10 @@ func _check_catalog_drift_recovery(user_path: String) -> void:
 					"fixed.home_sleep": 1,
 					"fixed.retired_fixture": -1,
 				},
+				"slot_scales": {
+					"fixed.home_sleep": 1.3,
+					"fixed.retired_fixture": 0.7,
+				},
 				"scenario_layouts": {
 					"retired_scenario": {
 						"saved": true,
@@ -463,13 +492,18 @@ func _check_catalog_drift_recovery(user_path: String) -> void:
 	var recovered_layers := DeveloperPlacementStoreScript.slot_layer_overrides(
 		{"archetype_id": "house"}
 	)
+	var recovered_scales := DeveloperPlacementStoreScript.slot_scale_overrides(
+		{"archetype_id": "house"}
+	)
 	_check(
 		bool(DeveloperPlacementStoreScript.last_user_load_outcome.get("recovered_catalog_drift", false))
 			and _reported_position(recovered_positions, "fixed.home_sleep").is_equal_approx(Vector2(321.0, 123.0))
 			and not recovered_positions.has("fixed.retired_fixture")
 			and int(recovered_layers.get("fixed.home_sleep", 0)) == 1
+			and is_equal_approx(float(recovered_scales.get("fixed.home_sleep", 0.0)), 1.3)
+			and not recovered_scales.has("fixed.retired_fixture")
 			and not DeveloperPlacementStoreScript.layout_saved({"archetype_id": "house"}),
-		"Catalog changes must retain known primary coordinates and layers instead of rolling back to an older valid backup, while invalidating only incomplete review state."
+		"Catalog changes must retain known primary coordinates, layers, and object sizes instead of rolling back to an older valid backup, while invalidating only incomplete review state."
 	)
 	for path in [user_path, "%s.bak" % user_path]:
 		if FileAccess.file_exists(path):
@@ -829,6 +863,7 @@ func _check_canvas_contract() -> void:
 	canvas.developer_placement_lock_requested.connect(_capture_lock_request)
 	canvas.developer_placement_export_requested.connect(_capture_export_request)
 	canvas.developer_slot_layer_requested.connect(_persist_slot_layer_request)
+	canvas.developer_slot_scale_requested.connect(_persist_slot_scale_request)
 	canvas.developer_placement_undo_requested.connect(_persist_placement_undo_request)
 	canvas.developer_slot_placement_shortcut_toggled.connect(_capture_slot_shortcut_state)
 	canvas.environment_id = "grand_casino"
@@ -1197,6 +1232,28 @@ func _check_canvas_contract() -> void:
 			and int(canvas.call("_scene_object_draw_layer", canvas.call("_scene_object", "item:fixture"))) == previous_item_shop_layer,
 		"Ctrl+Z must durably undo the latest slot layer edit and immediately restore the room view."
 	)
+	var scale_before := float(canvas.developer_slot_placement_snapshot().get("selected_object_scale", 1.0))
+	var visual_before: Rect2 = canvas.call("_natural_model_rect_for_object", canvas.call("_scene_object", "item:fixture"))
+	_check(canvas.developer_slot_scale_increase_button != null and not canvas.developer_slot_scale_increase_button.disabled, "Selecting an editable slot must enable its object-size controls.")
+	if canvas.developer_slot_scale_increase_button != null:
+		canvas.developer_slot_scale_increase_button.pressed.emit()
+	var scale_after := float(canvas.developer_slot_placement_snapshot().get("selected_object_scale", 1.0))
+	var visual_after: Rect2 = canvas.call("_natural_model_rect_for_object", canvas.call("_scene_object", "item:fixture"))
+	_check(
+		str(slot_scale_request.get("slot_id", "")) == "fixed.item_shop_1" \
+			and scale_after > scale_before \
+			and visual_after.size.x > visual_before.size.x \
+			and visual_after.size.y > visual_before.size.y,
+		"The plus control must durably enlarge the selected slot occupant and update the room immediately."
+	)
+	canvas.call("_handle_developer_slot_placement_input", undo_key)
+	var visual_undone: Rect2 = canvas.call("_natural_model_rect_for_object", canvas.call("_scene_object", "item:fixture"))
+	_check(
+		placement_undo_request_count == 2 \
+			and is_equal_approx(float(canvas.developer_slot_placement_snapshot().get("selected_object_scale", 0.0)), scale_before) \
+			and visual_undone.size.is_equal_approx(visual_before.size),
+		"Ctrl+Z must durably undo the latest object-size edit and restore its prior rendered size."
+	)
 	canvas.call("_cancel_developer_slot_placement_preview")
 	occupied_slot = canvas.call("_developer_slot", "fixed.item_shop_1")
 	occupied_rect = canvas.call("_developer_slot_rect", occupied_slot)
@@ -1357,6 +1414,25 @@ func _persist_slot_layer_request(request: Dictionary) -> void:
 	if bool(result.get("ok", false)):
 		request["_placement_undo_record"] = {
 			"label": "Test layer change",
+			"state": state,
+		}
+
+
+func _persist_slot_scale_request(request: Dictionary) -> void:
+	slot_scale_request = request.duplicate(true)
+	request["_slot_scale_handled"] = true
+	var state := DeveloperPlacementStoreScript.capture_user_room_state(
+		request.get("environment", {}) as Dictionary
+	)
+	var result := DeveloperPlacementStoreScript.save_slot_scale(
+		request.get("environment", {}) as Dictionary,
+		str(request.get("slot_id", "")),
+		float(request.get("scale", 1.0))
+	)
+	request["_slot_scale_persisted"] = bool(result.get("ok", false))
+	if bool(result.get("ok", false)):
+		request["_placement_undo_record"] = {
+			"label": "Test scale change",
 			"state": state,
 		}
 

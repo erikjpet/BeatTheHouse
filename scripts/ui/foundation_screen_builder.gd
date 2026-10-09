@@ -411,6 +411,7 @@ static func build_run_screen(host: Variant) -> void:
 	host.environment_canvas.developer_placement_export_requested.connect(host._on_developer_placement_export_requested)
 	host.environment_canvas.developer_layout_save_requested.connect(host._on_developer_layout_save_requested)
 	host.environment_canvas.developer_slot_layer_requested.connect(host._on_developer_slot_layer_requested)
+	host.environment_canvas.developer_slot_scale_requested.connect(host._on_developer_slot_scale_requested)
 	host.environment_canvas.developer_placement_undo_requested.connect(host._on_developer_placement_undo_requested)
 	host.environment_canvas.developer_slot_placement_shortcut_toggled.connect(host._on_developer_slot_placement_shortcut_toggled)
 	visual_stack.add_child(host.environment_canvas)

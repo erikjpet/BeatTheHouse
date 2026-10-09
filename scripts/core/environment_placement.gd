@@ -408,12 +408,18 @@ static func authoring_surface_map(environment: Dictionary) -> Dictionary:
 # changes placement inputs only; it never touches run state, visibility, or RNG.
 static func _with_developer_slots(environment: Dictionary, surface_data: Dictionary) -> Dictionary:
 	var slot_overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "slot_positions")
-	if slot_overrides.is_empty():
+	var scale_overrides := DeveloperPlacementStoreScript.slot_scale_overrides(environment)
+	if slot_overrides.is_empty() and scale_overrides.is_empty():
 		return surface_data
 	# Never modify the cached authored surface map. A local override must remain
 	# scoped to its room and must disappear immediately when Reset clears it.
-	var result := _with_slot_geometry(surface_data, slot_overrides)
-	result["developer_slot_positions"] = slot_overrides.duplicate(true)
+	var result := _with_slot_geometry(surface_data, slot_overrides) if not slot_overrides.is_empty() else surface_data
+	if not scale_overrides.is_empty():
+		result = _with_slot_scales(result, scale_overrides)
+	if not slot_overrides.is_empty():
+		result["developer_slot_positions"] = slot_overrides.duplicate(true)
+	if not scale_overrides.is_empty():
+		result["developer_slot_scales"] = scale_overrides.duplicate(true)
 	return result
 
 
@@ -423,15 +429,20 @@ static func _with_developer_slots(environment: Dictionary, surface_data: Diction
 static func _with_runtime_slot_geometry(environment: Dictionary, surface_data: Dictionary) -> Dictionary:
 	var overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "slot_positions")
 	var layer_overrides := DeveloperPlacementStoreScript.slot_layer_overrides(environment)
-	if overrides.is_empty() and layer_overrides.is_empty():
+	var scale_overrides := DeveloperPlacementStoreScript.slot_scale_overrides(environment)
+	if overrides.is_empty() and layer_overrides.is_empty() and scale_overrides.is_empty():
 		return surface_data
 	var result := _with_slot_geometry(surface_data, overrides) if not overrides.is_empty() else surface_data
 	if not layer_overrides.is_empty():
 		result = _with_slot_layers(result, layer_overrides)
+	if not scale_overrides.is_empty():
+		result = _with_slot_scales(result, scale_overrides)
 	if not overrides.is_empty():
 		result["developer_slot_positions"] = overrides.duplicate(true)
 	if not layer_overrides.is_empty():
 		result["developer_slot_layers"] = layer_overrides.duplicate(true)
+	if not scale_overrides.is_empty():
+		result["developer_slot_scales"] = scale_overrides.duplicate(true)
 	return result
 
 
@@ -507,6 +518,36 @@ static func _with_slot_layers(surface_data: Dictionary, overrides: Dictionary) -
 			collection_changed = true
 		if collection_changed:
 			result[field] = layered
+	return result
+
+
+# Visual scale is independent of authored interaction and support geometry. The
+# renderer applies it around the slot's stable contact point, while binding and
+# accessibility continue to use the reviewed hit rectangle.
+static func _with_slot_scales(surface_data: Dictionary, overrides: Dictionary) -> Dictionary:
+	if overrides.is_empty():
+		return surface_data
+	var result := surface_data.duplicate(false)
+	for field in SLOT_COLLECTIONS.values():
+		var source_slots := _array(surface_data.get(field, []))
+		var scaled: Array = []
+		var collection_changed := false
+		for slot_value in source_slots:
+			if typeof(slot_value) != TYPE_DICTIONARY:
+				scaled.append(slot_value)
+				continue
+			var source_slot := slot_value as Dictionary
+			var slot_id := str(source_slot.get("id", "")).strip_edges()
+			if slot_id.is_empty() or not overrides.has(slot_id):
+				scaled.append(source_slot)
+				continue
+			var scale := clampf(float(overrides.get(slot_id, 1.0)), DeveloperPlacementStoreScript.SLOT_SCALE_MIN, DeveloperPlacementStoreScript.SLOT_SCALE_MAX)
+			var slot := source_slot.duplicate(false)
+			slot["object_scale"] = scale
+			scaled.append(slot)
+			collection_changed = true
+		if collection_changed:
+			result[field] = scaled
 	return result
 
 
