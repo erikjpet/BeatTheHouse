@@ -414,6 +414,7 @@ var environment_clock_fractional_minutes := 0.0
 var stored_grand_casino_runtime_last_msec := -100000
 var dev_game_test_mode := false
 var dev_environment_test_mode := false
+var environment_test_refresh_counter := 0
 var meta_session_active := false
 var meta_session_location_id: String = ""
 var meta_last_panel_message: String = ""
@@ -837,6 +838,9 @@ func _input(event: InputEvent) -> void:
 		if procedural_music_player != null and procedural_music_player.has_method("web_audio_user_gesture"):
 			procedural_music_player.web_audio_user_gesture()
 		_schedule_web_audio_unlock_refresh()
+	if _handle_environment_test_refresh_hotkey(event):
+		get_viewport().set_input_as_handled()
+		return
 	if modal_focus_scope != null and bool(modal_focus_scope.call("handle_input", event)):
 		get_viewport().set_input_as_handled()
 		return
@@ -10557,6 +10561,43 @@ func _environment_test_condition_overrides(candidate: RunState, generation_key: 
 			if check != null and check.button_pressed:
 				selected_happenings.append(happening_id)
 		result["happenings"] = selected_happenings
+	return result
+
+
+# F5 is a practice-room authoring convenience, never a run command. Reusing the
+# retained Environment Library selectors preserves the chosen scenario, layer,
+# weather, calendar, and town-event modes while a new seed rebuilds the room.
+func _handle_environment_test_refresh_hotkey(event: InputEvent) -> bool:
+	var key_event := event as InputEventKey
+	if key_event == null or not key_event.pressed or key_event.echo or key_event.keycode != KEY_F5:
+		return false
+	if not _can_refresh_environment_test_session():
+		return false
+	return bool(_refresh_environment_test_session_with_random_seed().get("ok", false))
+
+
+func _can_refresh_environment_test_session() -> bool:
+	return _is_environment_test_session() \
+		and current_screen == SCREEN_ENVIRONMENT \
+		and run_state != null \
+		and not run_state.current_environment.is_empty() \
+		and (environment_test_overlay == null or not environment_test_overlay.visible)
+
+
+func _refresh_environment_test_session_with_random_seed() -> Dictionary:
+	if not _can_refresh_environment_test_session():
+		return {"ok": false, "errors": ["F5 refresh is available only inside an Environment Library room."]}
+	environment_test_refresh_counter += 1
+	var refresh_seed := "ENVIRONMENT-F5-%d-%d-%d" % [
+		int(Time.get_unix_time_from_system() * 1000.0),
+		Time.get_ticks_usec(),
+		environment_test_refresh_counter,
+	]
+	if environment_test_seed_input != null:
+		environment_test_seed_input.text = refresh_seed
+	var result := start_environment_test_session()
+	if bool(result.get("ok", false)):
+		_show_message("Environment refreshed with a new random seed. Press F5 to reroll again.")
 	return result
 
 

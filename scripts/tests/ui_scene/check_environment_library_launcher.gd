@@ -180,6 +180,23 @@ func _run() -> void:
 	_check(environment_canvas != null and bool(environment_canvas.developer_slot_placement_snapshot().get("enabled", false)), "The room spawned from Settings > Environment Library must open with slot placement mode active.")
 	_check(str(run_state.current_environment.get("archetype_id", "")) == "bar", "The live UI must install the selected environment.")
 	_check(str((run_state.current_environment.get("town_conditions", {}) as Dictionary).get("weather", "")) == "rain", "The live UI must apply exact condition controls.")
+	var first_seed := run_state.seed_text
+	var first_scenario_selection := _selected_metadata(app.get("environment_test_scenario_option") as OptionButton)
+	var refresh_event := InputEventKey.new()
+	refresh_event.keycode = KEY_F5
+	refresh_event.pressed = true
+	app.call("_input", refresh_event)
+	await _settle(4)
+	run_state = app.get("run_state") as RunState
+	_check(
+		run_state != null
+			and run_state.seed_text != first_seed
+			and run_state.seed_text.begins_with("ENVIRONMENT-PRACTICE-v1:ENVIRONMENT-F5-")
+			and str(run_state.current_environment.get("archetype_id", "")) == "bar"
+			and _selected_metadata(app.get("environment_test_scenario_option") as OptionButton) == first_scenario_selection
+			and str((run_state.current_environment.get("town_conditions", {}) as Dictionary).get("weather", "")) == "rain",
+		"F5 in an Environment Library room must reroll the seed while preserving the selected room, scenario configuration, and conditions."
+	)
 	run_state.bankroll = 777
 	run_state.inventory = [{"id": "lucky_keychain"}]
 	var leave_opened := bool(app.call("activate_interactable_object", "travel:leave"))
@@ -202,6 +219,13 @@ func _run() -> void:
 	app.call("return_to_main_menu")
 	await _settle(2)
 	_check(app.get("run_state") == null and not bool(app.get("dev_environment_test_mode")), "Leaving environment practice must return cleanly to the main menu.")
+	var inactive_seed_text := (app.get("environment_test_seed_input") as LineEdit).text
+	app.call("_input", refresh_event)
+	await _settle(1)
+	_check(
+		app.get("run_state") == null and (app.get("environment_test_seed_input") as LineEdit).text == inactive_seed_text,
+		"F5 outside an Environment Library room must remain inert and must not start or reroll a normal run."
+	)
 	_finish()
 
 
