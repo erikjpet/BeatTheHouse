@@ -182,11 +182,7 @@ func _run() -> void:
 	_check(str((run_state.current_environment.get("town_conditions", {}) as Dictionary).get("weather", "")) == "rain", "The live UI must apply exact condition controls.")
 	var first_seed := run_state.seed_text
 	var first_scenario_selection := _selected_metadata(app.get("environment_test_scenario_option") as OptionButton)
-	var refresh_event := InputEventKey.new()
-	refresh_event.keycode = KEY_F5
-	refresh_event.pressed = true
-	app.call("_input", refresh_event)
-	await _settle(4)
+	await _send_key(KEY_F5, 4)
 	run_state = app.get("run_state") as RunState
 	_check(
 		run_state != null
@@ -199,19 +195,11 @@ func _run() -> void:
 	)
 	var f5_seed := run_state.seed_text
 	environment_canvas.set_developer_slot_placement_mode(false)
-	var blocked_random_event := InputEventKey.new()
-	blocked_random_event.keycode = KEY_F9
-	blocked_random_event.pressed = true
-	app.call("_input", blocked_random_event)
-	await _settle(2)
+	await _send_key(KEY_F9, 2)
 	run_state = app.get("run_state") as RunState
 	_check(run_state.seed_text == f5_seed, "F9 must not replace a room while environment slot placement mode is disabled.")
 	environment_canvas.set_developer_slot_placement_mode(true)
-	var random_event := InputEventKey.new()
-	random_event.keycode = KEY_F9
-	random_event.pressed = true
-	app.call("_input", random_event)
-	await _settle(5)
+	await _send_key(KEY_F9, 5)
 	run_state = app.get("run_state") as RunState
 	var random_archetype_id := str(run_state.current_environment.get("archetype_id", ""))
 	var random_scenario_id := _selected_metadata(app.get("environment_test_scenario_option") as OptionButton)
@@ -222,6 +210,16 @@ func _run() -> void:
 			and random_scenario_id not in ["", "__default", "__none"]
 			and str(run_state.current_environment.get("scenario_id", "")) == random_scenario_id,
 		"F9 in slot placement mode must load a different random environment with one of its compatible exact scenarios."
+	)
+	var random_seed := run_state.seed_text
+	await _send_key(KEY_F5, 5)
+	run_state = app.get("run_state") as RunState
+	_check(
+		run_state.seed_text != random_seed
+			and run_state.seed_text.begins_with("ENVIRONMENT-PRACTICE-v1:ENVIRONMENT-F5-")
+			and str(run_state.current_environment.get("archetype_id", "")) == random_archetype_id
+			and str(run_state.current_environment.get("scenario_id", "")) == random_scenario_id,
+		"F5 must remain live after F9 and rebuild the same random environment/scenario context with a fresh seed."
 	)
 	run_state.bankroll = 777
 	run_state.inventory = [{"id": "lucky_keychain"}]
@@ -327,8 +325,7 @@ func _run() -> void:
 	await _settle(2)
 	_check(app.get("run_state") == null and not bool(app.get("dev_environment_test_mode")), "Leaving environment practice must return cleanly to the main menu.")
 	var inactive_seed_text := (app.get("environment_test_seed_input") as LineEdit).text
-	app.call("_input", refresh_event)
-	await _settle(1)
+	await _send_key(KEY_F5, 1)
 	_check(
 		app.get("run_state") == null and (app.get("environment_test_seed_input") as LineEdit).text == inactive_seed_text,
 		"F5 outside an Environment Library room must remain inert and must not start or reroll a normal run."
@@ -383,6 +380,23 @@ func _metadata_ids(option: OptionButton) -> Array[String]:
 func _settle(frames: int) -> void:
 	for _frame in range(frames):
 		await process_frame
+
+
+# Exercises the same window input route used by a physical function key rather
+# than directly calling the application's input callback.
+func _send_key(keycode: Key, settle_frames: int = 1) -> void:
+	var pressed := InputEventKey.new()
+	pressed.keycode = keycode
+	pressed.physical_keycode = keycode
+	pressed.pressed = true
+	root.push_input(pressed, true)
+	await process_frame
+	var released := InputEventKey.new()
+	released.keycode = keycode
+	released.physical_keycode = keycode
+	released.pressed = false
+	root.push_input(released, true)
+	await _settle(settle_frames)
 
 
 func _check(condition: bool, message: String) -> void:

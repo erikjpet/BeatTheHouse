@@ -10575,29 +10575,47 @@ func _environment_test_condition_overrides(candidate: RunState, generation_key: 
 # retained Environment Library selectors preserves the chosen scenario, layer,
 # weather, calendar, and town-event modes while a new seed rebuilds the room.
 func _handle_environment_test_refresh_hotkey(event: InputEvent) -> bool:
-	var key_event := event as InputEventKey
-	if key_event == null or not key_event.pressed or key_event.echo or key_event.keycode != KEY_F5:
+	if not _environment_test_hotkey_pressed(event, KEY_F5):
 		return false
 	if not _can_refresh_environment_test_session():
 		return false
-	return bool(_refresh_environment_test_session_with_random_seed().get("ok", false))
+	var result := _refresh_environment_test_session_with_random_seed()
+	if not bool(result.get("ok", false)):
+		var errors := JsonCoerceScript._copy_array(result.get("errors", []))
+		_show_message(str(errors[0]) if not errors.is_empty() else "The environment could not be refreshed.")
+	# Consume an eligible F5 even when generation reports an error. Allowing the
+	# same key event to continue made a failed refresh look like no input at all.
+	return true
 
 
 # F9 advances placement authors to a different environment and one of that
 # environment's exact scenarios. It is intentionally unavailable in normal
 # runs and while slot placement mode is off.
 func _handle_environment_test_random_scenario_hotkey(event: InputEvent) -> bool:
-	var key_event := event as InputEventKey
-	if key_event == null or not key_event.pressed or key_event.echo or key_event.keycode != KEY_F9:
+	if not _environment_test_hotkey_pressed(event, KEY_F9):
 		return false
 	if not _can_load_random_environment_test_scenario():
 		return false
-	return bool(_load_random_environment_test_scenario().get("ok", false))
+	var result := _load_random_environment_test_scenario()
+	if not bool(result.get("ok", false)):
+		var errors := JsonCoerceScript._copy_array(result.get("errors", []))
+		_show_message(str(errors[0]) if not errors.is_empty() else "A random placement room could not be loaded.")
+	return true
+
+
+# Function keys may arrive as a logical keycode or only as a physical keycode,
+# depending on the keyboard layout and Windows input path.
+func _environment_test_hotkey_pressed(event: InputEvent, expected_keycode: Key) -> bool:
+	var key_event := event as InputEventKey
+	return key_event != null \
+		and key_event.pressed \
+		and not key_event.echo \
+		and (key_event.keycode == expected_keycode or key_event.physical_keycode == expected_keycode)
 
 
 func _can_refresh_environment_test_session() -> bool:
 	return _is_environment_test_session() \
-		and current_screen == SCREEN_ENVIRONMENT \
+		and current_screen != SCREEN_START \
 		and run_state != null \
 		and not run_state.current_environment.is_empty() \
 		and (environment_test_overlay == null or not environment_test_overlay.visible)
@@ -10681,11 +10699,14 @@ func _refresh_environment_test_session_with_random_seed() -> Dictionary:
 		Time.get_ticks_usec(),
 		environment_test_refresh_counter,
 	]
+	var previous_seed := environment_test_seed_input.text if environment_test_seed_input != null else ""
 	if environment_test_seed_input != null:
 		environment_test_seed_input.text = refresh_seed
 	var result := start_environment_test_session()
 	if bool(result.get("ok", false)):
 		_show_message("Environment refreshed with a new random seed. Press F5 to reroll again.")
+	elif environment_test_seed_input != null:
+		environment_test_seed_input.text = previous_seed
 	return result
 
 
