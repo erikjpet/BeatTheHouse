@@ -6,7 +6,6 @@ extends RefCounted
 
 const CONFIG_PATH := "res://data/games/rituals/craps06_3_environment_bindings.json"
 const RITUAL_PATH := "res://data/games/rituals/craps06_3_sequences.json"
-const HostTransactionScript := preload("res://scripts/core/scenario_host_transaction.gd")
 const InventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const SequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")

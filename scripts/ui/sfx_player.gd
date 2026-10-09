@@ -17,7 +17,6 @@ signal music_cue_requested(cue_id: String, context: Dictionary)
 signal audio_status_changed(message: String)
 
 const SFX_BUS := "SFX"
-const SURFACE_SFX_MANIFEST_PATH := "res://data/audio/surface_sfx_manifest.json"
 const SAMPLE_RATE := 22050
 const TELEPHONE_SAMPLE_RATE := 4000
 const WEB_DELIVERY_ROOT := "res://assets/audio/sfx_web"

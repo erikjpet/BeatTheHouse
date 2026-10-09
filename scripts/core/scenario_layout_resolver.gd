@@ -28,7 +28,6 @@ const LABEL_HEIGHT := 15.0
 const LABEL_GAP := 4.0
 const LABEL_MAX_WIDTH := 126.0
 const WALK_LANE := Rect2(16.0, 378.0, 868.0, 36.0)
-const ROUTE_BEHAVIORS := ["patrol", "flee", "depart"]
 const LAYOUT_SPOT_FIELDS := {
 	"game": "game_spots",
 	"event": "event_spots",

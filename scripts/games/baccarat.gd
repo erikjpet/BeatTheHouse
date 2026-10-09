@@ -13,7 +13,6 @@ const RuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 const ActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 
 const C_DARK := VisualStyleScript.DARK
-const C_DARK_2 := VisualStyleScript.DARK_2
 const C_PINK := VisualStyleScript.PINK
 const C_PINK_2 := VisualStyleScript.PINK_2
 const C_CYAN := VisualStyleScript.CYAN

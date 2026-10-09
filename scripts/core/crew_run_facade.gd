@@ -49,24 +49,9 @@ var crew_grievance_sequence: int:
 var crew_job_sequence: int:
 	get: return job_sequence
 	set(value): job_sequence = value
-var crew_job_host_capability: RefCounted:
-	get: return job_host_capability
-	set(value): job_host_capability = value
-var crew_recruitment_host_capability: RefCounted:
-	get: return recruitment_host_capability
-	set(value): recruitment_host_capability = value
-var crew_heist_host_capability: RefCounted:
-	get: return heist_host_capability
-	set(value): heist_host_capability = value
 var crew_heist_private_capsule: String:
 	get: return heist_private_capsule
 	set(value): heist_private_capsule = value
-var crew_heist_private_fingerprint: String:
-	get: return heist_private_fingerprint
-	set(value): heist_private_fingerprint = value
-var crew_private_authority_id: String:
-	get: return private_authority_id
-	set(value): private_authority_id = value
 var crew_pattern_memory: Dictionary:
 	get: return pattern_memory
 	set(value): pattern_memory = value

@@ -7,13 +7,11 @@ extends RefCounted
 const KitScript := preload("res://scripts/ui/game_props/game_prop_kit.gd")
 const EMPTY_STATE: Dictionary = {}
 const C_FELT := Color("#147653")
-const C_FELT_DARK := Color("#0b3c2f")
 const C_RAIL := Color("#47251a")
 const C_GOLD := Color("#e8bd54")
 const C_CHALK := Color("#e4dcc8")
 const C_PAVEMENT := Color("#272b2d")
 const C_RED := Color("#d04455")
-const C_CYAN := Color("#57d8de")
 
 
 static func draw(canvas: CanvasItem, rect: Rect2, object_data: Dictionary, accent: Color, selected: bool, disabled: bool, flicker: float) -> void:

@@ -56,7 +56,6 @@ var _detail_panel: PanelContainer
 var _detail_scroll: ScrollContainer
 var _title_label: Label
 var _summary_label: Label
-var _item_grid: GridContainer
 var _detail_box: VBoxContainer
 var _close_button: Button
 var _empty_label: Label

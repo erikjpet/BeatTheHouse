@@ -3,8 +3,6 @@ extends RefCounted
 
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
-signal travel_requested(location_id: String)
-signal popup_action_requested(action_id: String, payload: Dictionary)
 
 const CONTEXT_MODE_TRAVEL := "travel"
 const CONTEXT_MODE_HOME_CONTAINER := "home_container"
@@ -23,7 +21,6 @@ const META_LOCATION_START_RUN := "start_run"
 
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
-const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")

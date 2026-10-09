@@ -44,21 +44,6 @@ const FACT_REQUIRED_FIELDS := {
 	"world_boundary": ["amount", "action_index"],
 	"scenario_command": ["command_id", "receipt_id"],
 }
-const FACT_FIELD_TYPES := {
-	"game_result": {"game_id": TYPE_STRING, "action_id": TYPE_STRING, "won": TYPE_BOOL, "ended": TYPE_BOOL, "bankroll_delta": TYPE_INT, "chips_delta": TYPE_INT, "applied_heat_delta": TYPE_INT},
-	"event_result": {"event_id": TYPE_STRING, "choice_id": TYPE_STRING, "resolution_id": TYPE_STRING, "resolved": TYPE_BOOL, "ok": TYPE_BOOL},
-	"service_result": {"kind": TYPE_STRING, "service_id": TYPE_STRING, "ok": TYPE_BOOL, "action_id": TYPE_STRING},
-	"travel_departed": {"source_id": TYPE_STRING, "target_id": TYPE_STRING, "travel_kind": TYPE_STRING},
-	"travel_arrived": {"source_id": TYPE_STRING, "target_id": TYPE_STRING, "travel_kind": TYPE_STRING},
-	"crew_changed": {"member_id": TYPE_STRING, "change": TYPE_STRING, "value": -1},
-	"crew_job_changed": {"job_id": TYPE_STRING, "definition_id": TYPE_STRING, "member_id": TYPE_STRING, "status": TYPE_STRING, "outcome": TYPE_STRING},
-	"heat_changed": {"previous": TYPE_INT, "current": TYPE_INT, "applied_delta": TYPE_INT, "source": TYPE_STRING},
-	"heat_band_changed": {"previous_band": TYPE_STRING, "current_band": TYPE_STRING, "current": TYPE_INT, "source": TYPE_STRING},
-	"town_transition": {"action_index": TYPE_INT, "weather": TYPE_STRING, "day_type": TYPE_STRING, "happening_ids": TYPE_ARRAY},
-	"sweep_changed": {"action_index": TYPE_INT, "node_id": TYPE_STRING, "segment_index": TYPE_INT, "active": TYPE_BOOL},
-	"world_boundary": {"amount": TYPE_INT, "action_index": TYPE_INT},
-	"scenario_command": {"command_id": TYPE_STRING, "receipt_id": TYPE_STRING},
-}
 const FACT_PAYLOAD_TYPES := {
 	"game_result": {"game_id": "string", "action_id": "string", "won": "bool", "ended": "bool", "bankroll_delta": "int", "chips_delta": "int", "applied_heat_delta": "int"},
 	"event_result": {"event_id": "string", "choice_id": "string", "resolution_id": "string", "resolved": "bool", "ok": "bool"},

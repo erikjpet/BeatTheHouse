@@ -104,7 +104,6 @@ const ENVIRONMENT_RUNTIME_STATE_KEY_CACHE_LIMIT := 64
 const RUN_ITEM_ICON_TEXTURE_CACHE_LIMIT := 64
 const RESULT_FEEDBACK_WIDTH := 340.0
 const RESULT_FEEDBACK_HEIGHT := 72.0
-const RESULT_FEEDBACK_MAX_CHARS := 64
 const MAIN_MENU_COLLAPSED_SIZE := Vector2(1200, 680)
 const MAIN_MENU_EXPANDED_SIZE := Vector2(1100, 620)
 const MAIN_MENU_VIEWPORT_MARGIN := Vector2(32, 24)
@@ -119,10 +118,6 @@ const EVENT_CHOICE_TEXT_MAX_LINES := 2
 const EVENT_CHOICE_SUMMARY_MAX_LINES := 3
 const EVENT_CHOICE_TEXT_MIN_HEIGHT := 34.0
 const EVENT_CHOICE_SUMMARY_MIN_HEIGHT := 48.0
-const RUN_INVENTORY_POPUP_SIZE := Vector2(1120, 620)
-const RUN_INVENTORY_POPUP_MARGIN := 12.0
-const WORLD_MAP_NODE_BUTTON_POOL_SIZE := 12
-const WORLD_MAP_DETAIL_BADGE_CELL_POOL_SIZE := 10
 const GAME_SURFACE_UI_PREFERENCE_KEYS := [
 	"selected_chip",
 	"selected_stake",
@@ -147,7 +142,6 @@ const FoundationWidgetsScript := preload("res://scripts/ui/foundation_widgets.gd
 const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
-const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
 const CareerStatsScreenScript := preload("res://scripts/ui/career_stats_screen.gd")
 const FoundationScreenBuilderScript := preload("res://scripts/ui/foundation_screen_builder.gd")
 const MetaSessionControllerScript := preload("res://scripts/ui/meta_session_controller.gd")
@@ -157,7 +151,6 @@ const NullPerfSinkScript := preload("res://scripts/ui/null_perf_sink.gd")
 const SealedActionHostScript := preload("res://scripts/ui/sealed_action_host.gd")
 const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
-const GameRitualRuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const ItemEffectScript := preload("res://scripts/core/item_effect.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
@@ -418,8 +411,6 @@ var environment_test_refresh_counter := 0
 var meta_session_active := false
 var meta_session_location_id: String = ""
 var meta_last_panel_message: String = ""
-var meta_interactable_object_view_cache: Array = []
-var meta_interactable_object_view_cache_key := ""
 var show_game_library_launcher := true
 var autosave_slot_id := AUTOSAVE_SLOT
 var pending_autosave := false
@@ -597,13 +588,6 @@ var bag_open_reel
 var meta_item_interaction_mode := ""
 var selected_meta_item_key := ""
 var meta_trade_selected_instance_ids: Array = []
-var run_inventory_panel: PanelContainer
-var run_inventory_items_scroll: ScrollContainer
-var run_inventory_detail_panel: PanelContainer
-var run_inventory_title_label: Label
-var run_inventory_summary_label: Label
-var run_inventory_list: GridContainer
-var run_inventory_detail_box: VBoxContainer
 var run_journal_overlay: Control
 var run_journal_panel: PanelContainer
 var run_journal_header: Control
@@ -623,8 +607,6 @@ var world_map_title_label: Label
 var world_map_detail_popup: PanelContainer
 var world_map_detail_label: Label
 var world_map_badge_slot: VBoxContainer
-var world_map_badge_row: HFlowContainer
-var world_map_badge_cells: Array = []
 var world_map_confirm_button: Button
 var world_map_close_button: Button
 var world_map_overlay_controller
@@ -633,7 +615,6 @@ var modal_focus_scope: RefCounted = ModalFocusScopeScript.new()
 var wager_confirmation_controller
 var selected_world_map_node_id: String = ""
 var world_map_button_ids: Array = []
-var world_map_button_layout_size := Vector2(-1.0, -1.0)
 var world_map_button_relayout_deferred := false
 var travel_target_ids_cache_key: String = ""
 var travel_target_ids_cache: Array = []

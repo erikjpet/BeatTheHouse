@@ -5,7 +5,6 @@ const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const LAYOUT_VERSION := 11
 const REGION_DATA_PATH := "res://data/games/scratch_ticket_regions.json"
-const ART_ROOT := "res://assets/art/scratch_tickets/layers/"
 const MECHANIC_INSET_CELLS := 1.0
 const MASK_COLUMNS := 256.0
 const MASK_ROWS := 192.0

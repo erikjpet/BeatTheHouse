@@ -11,7 +11,6 @@ signal music_outcome_scheduled(event: Dictionary)
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangement_selector.gd")
 const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
-const MusicFloatPcmStreamScript := preload("res://scripts/ui/music_float_pcm_stream.gd")
 const MusicLayerChoreographyScript := preload("res://scripts/ui/music_layer_choreography.gd")
 const MusicOutcomeDirectorModelScript := preload("res://scripts/ui/music_outcome_director_model.gd")
 
@@ -85,7 +84,6 @@ const MUSIC_FX_LERP_KEYS := [
 	"room_scale",
 ]
 const MUSIC_STEM_ROLES := ["pad", "bass", "lead", "drums_low", "drums_high", "tension", "texture"]
-const MUSIC_STEM_VARIANT_ROLES := ["bass_dark", "drums_high_double"]
 const MUSIC_STEM_PLAYBACK_ROLES := ["pad", "bass", "bass_dark", "lead", "drums_low", "drums_high", "drums_high_double", "tension", "texture"]
 const MUSIC_MIX_LERP_KEYS := ["pad", "bass", "bass_dark", "lead", "drums_low", "drums_high", "drums_high_double", "tension", "texture"]
 const MUSIC_MIX_QUANTIZED_KEYS := ["bass", "bass_dark", "lead", "drums_high_double", "tension"]
@@ -150,17 +148,6 @@ const WEB_AUDIO_MUSIC_BED_SAMPLE_RATE := 22050
 const WEB_AUDIO_RENDER_STRIDE_FRAMES := 2
 const WEB_AUDIO_WORKER_YIELD_SOURCE_FRAMES := 8192
 const WEB_AUDIO_WORKER_YIELD_USEC := 100
-const WEB_MIXDOWN_ROLE_WEIGHTS := {
-	"pad": 0.74,
-	"bass": 0.52,
-	"bass_dark": 0.42,
-	"lead": 0.46,
-	"drums_low": 0.42,
-	"drums_high": 0.36,
-	"drums_high_double": 0.22,
-	"tension": 0.64,
-	"texture": 0.38,
-}
 const SCALE_MINOR := [0, 2, 3, 5, 7, 8, 10]
 const SCALE_DORIAN := [0, 2, 3, 5, 7, 9, 10]
 const SCALE_PHRYGIAN := [0, 1, 3, 5, 7, 8, 10]

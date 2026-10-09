@@ -5,10 +5,8 @@ extends RefCounted
 
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
-const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
 const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
-const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 const EnvironmentObjectManifestScript := preload("res://scripts/core/environment_object_manifest.gd")

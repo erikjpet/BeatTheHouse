@@ -8,7 +8,6 @@ const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
 const C_PINK := VisualStyleScript.PINK
-const C_PINK_2 := VisualStyleScript.PINK_2
 const C_CYAN := VisualStyleScript.CYAN
 const C_TEAL := VisualStyleScript.TEAL
 const C_YELLOW := VisualStyleScript.YELLOW

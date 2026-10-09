@@ -6,10 +6,6 @@ extends RefCounted
 
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
-signal refresh_requested()
-signal message_requested(text: String)
-signal travel_requested(target_id: String, label: String, choice: Dictionary)
-signal meta_travel_requested(target_id: String)
 signal node_pressed(node_id: String)
 
 const WORLD_MAP_NODE_BUTTON_POOL_SIZE := 24

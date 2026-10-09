@@ -7,7 +7,6 @@ extends RefCounted
 const C_WHITE := Color("#f7f1df")
 const C_SOFT := Color("#9aa1ad")
 const C_SHADOW := Color("#05060a")
-const C_YELLOW := Color("#f3ca52")
 
 
 static func phase(object_data: Dictionary) -> float:

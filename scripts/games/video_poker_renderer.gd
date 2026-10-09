@@ -15,8 +15,6 @@ const CONTROL_DECK := Rect2(30, 462, 900, 62)
 const MAX_COIN_COUNT := 5
 const HAND_SIZE := 5
 
-const C_DARK := VisualStyleScript.DARK
-const C_PINK := VisualStyleScript.PINK
 const C_CYAN := VisualStyleScript.CYAN
 const C_TEAL := VisualStyleScript.TEAL
 const C_YELLOW := VisualStyleScript.YELLOW
