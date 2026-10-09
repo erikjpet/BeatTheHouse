@@ -831,6 +831,26 @@ func _check_canvas_contract() -> void:
 	canvas.developer_slot_layer_requested.connect(_persist_slot_layer_request)
 	canvas.developer_placement_undo_requested.connect(_persist_placement_undo_request)
 	canvas.developer_slot_placement_shortcut_toggled.connect(_capture_slot_shortcut_state)
+	canvas.environment_id = "grand_casino"
+	var grand_game_objects: Array = canvas.call("_objects_from_interactable_records", [{
+		"object_id": "game:slot",
+		"object_type": "game",
+		"visual_type": "game",
+		"slot_id": "fixed.game_machine_1",
+		"slot_family": "fixed",
+		"placement_class": "wall_mounted",
+		"fixed_slot_geometry": true,
+		"normalized_rect": {"x": 134.0 / 900.0, "y": 94.0 / 430.0, "w": 44.0 / 900.0, "h": 48.0 / 430.0},
+	}])
+	var grand_game_object: Dictionary = grand_game_objects[0] if not grand_game_objects.is_empty() else {}
+	var grand_game_anchor: Rect2 = canvas.call("_board_rect_for_object", grand_game_object)
+	var grand_game_visual: Rect2 = canvas.call("_natural_model_rect_for_object", grand_game_object)
+	_check(
+		grand_game_anchor.size.is_equal_approx(Vector2(44.0, 48.0))
+			and grand_game_visual.size.is_equal_approx(Vector2(110.0, 72.0))
+			and grand_game_visual.get_center().is_equal_approx(grand_game_anchor.get_center()),
+		"Grand Casino game artwork must use full cabinet scale without changing or offsetting its compact placement anchor."
+	)
 	var stale_canvas_object_id := "scenario::stale_canvas_visual"
 	var stale_canvas_objects: Array = canvas.call("_objects_from_foundation_snapshot", {
 		"archetype_id": "corner_store",

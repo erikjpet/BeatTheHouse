@@ -41,6 +41,15 @@ const SLOT_COLLECTION_FIELDS := ["fixed_slots", "event_slots", "scenario_slots",
 const SLOT_FAMILIES := ["fixed", "event", "scenario", "exit"]
 const SLOT_FILTER_OPTIONS := ["fixed", "event", "scenario", "exit", "all"]
 const SLOT_DRAW_LAYERS := {"behind": -1, "standard": 0, "front": 1}
+const GRAND_CASINO_FIXED_GAME_VISUAL_SIZES := {
+	"fixed.game_machine_1": Vector2(110.0, 72.0),
+	"fixed.game_machine_2": Vector2(110.0, 72.0),
+	"fixed.game_machine_3": Vector2(110.0, 72.0),
+	"fixed.game_machine_4": Vector2(110.0, 72.0),
+	"fixed.game_machine_5": Vector2(110.0, 72.0),
+	"fixed.game_table_left": Vector2(72.0, 48.0),
+	"fixed.game_table_right": Vector2(72.0, 48.0),
+}
 const DEVELOPER_PANEL_MARGIN := 8.0
 const DEVELOPER_PANEL_MIN_WIDTH := 320.0
 const DEVELOPER_PANEL_PREFERRED_WIDTH := 552.0
@@ -7693,13 +7702,20 @@ func _update_drunk_distortion_protected_rects() -> void:
 	drunk_distortion_overlay.set_ui_protected_rects(protected_rects)
 
 
-# Sealed fixed/scenario rectangles are exact draw, interaction, and label
-# authority. Legacy and otherwise unslotted room models retain their natural
-# dimensions and are anchored to the slot's physical contact.
+# Sealed fixed/scenario rectangles are normally exact draw, interaction, and
+# label authority. Grand Casino's compact game anchors deliberately keep their
+# collision/layout footprint separate from their larger cabinet/table artwork;
+# enlarging the authority rectangles makes the shared room resolver relocate
+# otherwise valid placements. Legacy and otherwise unslotted room models retain
+# their natural dimensions and are anchored to the slot's physical contact.
 func _natural_model_rect_for_object(object_data: Dictionary) -> Rect2:
 	var slot_rect := _board_rect_for_object(object_data)
-	if bool(object_data.get("fixed_slot_geometry", false)) \
-			or bool(object_data.get("scenario_layout_resolved", false)):
+	if bool(object_data.get("fixed_slot_geometry", false)):
+		var fixed_visual_rect := _grand_casino_fixed_game_visual_rect(object_data, slot_rect)
+		if fixed_visual_rect.has_area():
+			return fixed_visual_rect
+		return slot_rect
+	if bool(object_data.get("scenario_layout_resolved", false)):
 		return slot_rect
 	var model_size := _natural_model_size_for_object(object_data)
 	if small_screen_mode and bool(object_data.get("interactive", true)):
@@ -7717,6 +7733,19 @@ func _natural_model_rect_for_object(object_data: Dictionary) -> Rect2:
 	if placement_class not in ["wall_mounted", "hanging", "doorway"]:
 		center.y = slot_rect.end.y - model_size.y * 0.5
 	return Rect2(center - model_size * 0.5, model_size)
+
+
+func _grand_casino_fixed_game_visual_rect(object_data: Dictionary, slot_rect: Rect2) -> Rect2:
+	if environment_id != "grand_casino" or str(object_data.get("type", "")) != "game":
+		return Rect2()
+	var slot_id := str(object_data.get("slot_id", ""))
+	var visual_size_value: Variant = GRAND_CASINO_FIXED_GAME_VISUAL_SIZES.get(slot_id, Vector2.ZERO)
+	if typeof(visual_size_value) != TYPE_VECTOR2:
+		return Rect2()
+	var visual_size := visual_size_value as Vector2
+	if visual_size.x <= 0.0 or visual_size.y <= 0.0:
+		return Rect2()
+	return Rect2(slot_rect.get_center() - visual_size * 0.5, visual_size)
 
 
 func _natural_model_size_for_object(object_data: Dictionary) -> Vector2:
