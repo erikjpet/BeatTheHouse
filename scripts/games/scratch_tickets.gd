@@ -2240,11 +2240,6 @@ func _draw_file_animation(surface, state: Dictionary) -> void:
 	_draw_mini_scratch_ticket(surface, ticket, Rect2(position - size * 0.5, size), 1.0 - progress * 0.35)
 
 
-func _ease_out_cubic(value: float) -> float:
-	var inverse := 1.0 - clampf(value, 0.0, 1.0)
-	return 1.0 - inverse * inverse * inverse
-
-
 func _ease_in_out_cubic(value: float) -> float:
 	var t := clampf(value, 0.0, 1.0)
 	return 4.0 * t * t * t if t < 0.5 else 1.0 - pow(-2.0 * t + 2.0, 3.0) * 0.5

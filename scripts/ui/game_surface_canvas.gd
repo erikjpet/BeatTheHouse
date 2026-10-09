@@ -2254,13 +2254,6 @@ func _surface_action_summary(action: Dictionary, kind: String) -> String:
 	return " / ".join(parts)
 
 
-func _vector_from_dict(value: Variant, fallback: Vector2 = Vector2.ZERO) -> Vector2:
-	if typeof(value) != TYPE_DICTIONARY:
-		return fallback
-	var data: Dictionary = value as Dictionary
-	return Vector2(float(data.get("x", fallback.x)), float(data.get("y", fallback.y)))
-
-
 func _first_dictionary(value: Array) -> Dictionary:
 	for entry in value:
 		if typeof(entry) == TYPE_DICTIONARY:

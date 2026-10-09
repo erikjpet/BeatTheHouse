@@ -3483,7 +3483,7 @@ func _ambient_pcm_data_range(context: Dictionary, start_frame: int, frame_count:
 	var render_stride := maxi(1, AMBIENT_RENDER_STRIDE_FRAMES)
 	# Pull immutable synthesis parameters out of the dictionary once. The preview
 	# renderer visits hundreds of thousands of frames, so repeating these typed
-	# dictionary conversions in _write_ambient_frame dominated headless startup.
+	# dictionary conversions for every frame dominated headless startup.
 	var step_period := float(context.get("step_period", 0.36))
 	var beat_period := float(context.get("beat_period", 0.72))
 	var phrase_steps := int(context.get("phrase_steps", BASE_PHRASE_STEPS))
@@ -4359,70 +4359,6 @@ func _ambient_generation_context(profile: Dictionary) -> Dictionary:
 		"texture_seed": texture_seed,
 		"variation_seed": variation_seed,
 	}
-
-
-func _write_ambient_frame(data: PackedByteArray, context: Dictionary, frame_index: int) -> void:
-	var step_period := float(context.get("step_period", 0.36))
-	var beat_period := float(context.get("beat_period", 0.72))
-	var phrase_steps := int(context.get("phrase_steps", BASE_PHRASE_STEPS))
-	var phrase_count := int(context.get("phrase_count", DEFAULT_ARRANGEMENT_PHRASES))
-	var total_steps := int(context.get("total_steps", 32))
-	var duration := float(context.get("duration", step_period * float(total_steps)))
-	var root_midi := int(context.get("root_midi", 45))
-	var danger := float(context.get("danger", 0.5))
-	var volume := float(context.get("volume", 0.22))
-	var pad_gain := float(context.get("pad_gain", 0.38))
-	var bass_gain := float(context.get("bass_gain", 0.20))
-	var lead_gain := float(context.get("lead_gain", 0.08))
-	var drum_gain := float(context.get("drum_gain", 0.07))
-	var texture_gain := float(context.get("texture_gain", 0.45))
-	var heartbeat_gain := float(context.get("heartbeat_gain", 0.02))
-	var siren_gain := float(context.get("siren_gain", 0.0))
-	var scale: Array = context.get("scale", SCALE_MINOR)
-	var progression_degrees: Array = context.get("progression_degrees", DEFAULT_PROGRESSION)
-	var chord_roots: Array = context.get("chord_roots", [0])
-	var chord_voicings: Array = context.get("chord_voicings", [])
-	var motif: Array = context.get("motif", DEFAULT_MOTIF)
-	var palette: Dictionary = context.get("instrument_palette", {}) as Dictionary
-	var swing_amount := float(context.get("swing_amount", 0.0))
-	var answer_transform := str(context.get("answer_transform", "inversion"))
-	var bridge_phrase_index := int(context.get("bridge_phrase_index", 2))
-	var texture_kind := str(context.get("texture_kind", "fluorescent"))
-	var texture_rate := float(context.get("texture_rate", 0.33))
-	var texture_seed := int(context.get("texture_seed", 0))
-	var variation_seed := int(context.get("variation_seed", texture_seed))
-	var humanize_seed := int(context.get("humanize_seed", variation_seed))
-	var t := float(frame_index) / float(SAMPLE_RATE)
-	var step_index := int(t / step_period) % total_steps
-	var step_local := fposmod(t, step_period)
-	var phrase_index := int(step_index / phrase_steps) % maxi(1, phrase_count)
-	var phrase_step := step_index % phrase_steps
-	var bar_index := int(phrase_step / 8) % maxi(1, chord_roots.size())
-	var beat_step := phrase_step % 8
-	var chord_root := root_midi + int(chord_roots[bar_index])
-	var chord_voicing: Array = []
-	if not chord_voicings.is_empty():
-		chord_voicing = chord_voicings[bar_index % chord_voicings.size()] as Array
-	var phrase_energy := _phrase_energy(phrase_index, phrase_count, danger)
-	var fill_amount := _phrase_fill_amount(phrase_step, phrase_index, phrase_count, phrase_energy)
-	var pad := _music_pad_voiced(root_midi, chord_voicing, chord_root, t, palette) * pad_gain * lerpf(0.94, 1.06, phrase_energy)
-	var bass := 0.0
-	var bass_offset := _bass_offset_for_step(scale, progression_degrees, chord_roots, bar_index, beat_step, phrase_index, phrase_count, variation_seed)
-	if bass_offset > -900:
-		bass = _music_bass(_midi_freq(root_midi + bass_offset), step_local) * bass_gain * lerpf(0.92, 1.13, phrase_energy) * _palette_value(palette, "bass_weight", 1.0)
-	var lead := 0.0
-	var lead_offset := _lead_offset_for_step(scale, progression_degrees, motif, bar_index, phrase_step, phrase_index, phrase_count, variation_seed, answer_transform, bridge_phrase_index)
-	if lead_offset > -900:
-		var lead_local := _swing_step_local(beat_step, step_local, step_period, swing_amount)
-		lead = _music_lead(_midi_freq(root_midi + lead_offset), lead_local, palette) * lead_gain * lerpf(0.70, 1.28, phrase_energy) * _step_humanization(humanize_seed, phrase_step, phrase_index, 0.08)
-	var drum_local := _swing_step_local(beat_step, step_local, step_period, swing_amount)
-	var drums := _music_drums(beat_step, drum_local, step_period, frame_index + texture_seed, phrase_index, phrase_count, variation_seed, fill_amount, palette) * drum_gain * _step_humanization(humanize_seed + 29, phrase_step, phrase_index, 0.10)
-	var heartbeat := _heartbeat_shape(fposmod(t, beat_period), beat_period) * heartbeat_gain
-	var texture := _ambient_texture_sample(texture_kind, texture_rate, t, frame_index, texture_seed) * texture_gain
-	var siren := _music_siren(t) * siren_gain
-	var loop_edge := _loop_edge_envelope(t, duration)
-	var mixed := (pad + bass + lead + drums + heartbeat + texture + siren) * volume * loop_edge
-	_write_i16(data, frame_index * PCM_BYTES_PER_FRAME, _soft_limit(mixed))
 
 
 func _ambient_stream_from_data(data: PackedByteArray, frames: int) -> AudioStreamWAV:

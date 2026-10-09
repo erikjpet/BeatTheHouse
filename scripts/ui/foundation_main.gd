@@ -16341,8 +16341,6 @@ func _generated_object_interaction_rect(object_id: String) -> Rect2:
 	return EnvironmentInteractionViewModelScript.rect_from_dict((object_rects as Dictionary).get(object_id, {})) if typeof(object_rects) == TYPE_DICTIONARY and (object_rects as Dictionary).has(object_id) else Rect2()
 
 
-func _interaction_rect(object_type: String, index: int) -> Rect2:
-	return EnvironmentInteractionViewModelScript.interaction_rect_for_object("", object_type, index, _current_environment_layout())
 func _current_environment_layout() -> Dictionary:
 	if run_state == null:
 		return {}
@@ -16363,10 +16361,6 @@ func _current_environment_layout() -> Dictionary:
 	if typeof(archetype_layout) != TYPE_DICTIONARY:
 		return {}
 	return archetype_layout as Dictionary
-
-
-func _normalized_interaction_rect(object_type: String, index: int) -> Rect2:
-	return EnvironmentInteractionViewModelScript.normalized_interaction_rect(object_type, index)
 
 
 func _rect_to_dict(rect: Rect2) -> Dictionary:
@@ -20685,21 +20679,6 @@ func _container_item_option(item_id: String) -> Dictionary:
 	}
 
 
-func _storable_inventory_item_ids() -> Array:
-	var result: Array = []
-	if run_state == null:
-		return result
-	for item_value in run_state.inventory:
-		# Meta-collection instances are already mirrored by the read-only loadout
-		# container and cannot be transferred through the string-id home API.
-		if typeof(item_value) == TYPE_DICTIONARY:
-			continue
-		var item_id := _inventory_value_id(item_value)
-		if _container_item_option(item_id).is_empty():
-			result.append(item_id)
-	return result
-
-
 func _home_container_by_id(container_id: String) -> Dictionary:
 	if run_state == null:
 		return {}
@@ -20758,11 +20737,6 @@ func _refresh_active_item_slot() -> void:
 	active_item_button.text = "Use: %s" % compact_name
 	active_item_button.tooltip_text = "%s\n%s\nClick to use this active item." % [display_name, str(item.get("description", "Use active item."))]
 	active_item_button.icon = _run_item_texture_for_asset_path(str(item.get("asset_path", "")))
-
-
-func _item_sale_price(item_definition: Dictionary) -> int:
-	_refresh_run_action_service()
-	return run_action_service.item_sale_price(item_definition)
 
 
 func _shopkeeper_available() -> bool:

@@ -8563,20 +8563,6 @@ func _draw_card(surface, card_value: Variant, pos: Vector2, scale: float = 1.0) 
 	PlayingCardRendererScript.draw_card(surface, card_value, Rect2(pos, Vector2(42, 60) * scale))
 
 
-func _rank_text(rank: int) -> String:
-	match rank:
-		RANK_ACE:
-			return "A"
-		13:
-			return "K"
-		12:
-			return "Q"
-		11:
-			return "J"
-		_:
-			return str(rank)
-
-
 func _same_suit(cards: Array) -> bool:
 	if cards.is_empty():
 		return false
