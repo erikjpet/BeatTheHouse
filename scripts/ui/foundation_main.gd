@@ -146,7 +146,7 @@ const CareerStatsScreenScript := preload("res://scripts/ui/career_stats_screen.g
 const FoundationScreenBuilderScript := preload("res://scripts/ui/foundation_screen_builder.gd")
 const MetaSessionControllerScript := preload("res://scripts/ui/meta_session_controller.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
-const PerfTelemetryOverlayScript := preload("res://scripts/ui/perf_telemetry_overlay.gd")
+const PERF_TELEMETRY_OVERLAY_PATH := "res://scripts/ui/perf_telemetry_overlay.gd"
 const NullPerfSinkScript := preload("res://scripts/ui/null_perf_sink.gd")
 const SealedActionHostScript := preload("res://scripts/ui/sealed_action_host.gd")
 const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
@@ -556,7 +556,7 @@ var procedural_music_player: ProceduralMusicPlayer
 var environment_sfx_player: Node
 var _game_surface_audio_authority := RefCounted.new()
 var _environment_audio_authority := RefCounted.new()
-var perf_telemetry_overlay: PerfTelemetryOverlay
+var perf_telemetry_overlay: Variant = null
 var _foundation_perf_sink: Variant = NullPerfSinkScript.new()
 var _sealed_action_host: RefCounted
 var boot_telemetry_events: Array = []
@@ -1097,12 +1097,25 @@ func _consume_run_ui_script_prewarm_result(script_path: String) -> Variant:
 
 
 func _initialize_perf_telemetry() -> void:
-	if perf_telemetry_overlay != null or not PerfTelemetryOverlayScript.runtime_enabled():
+	if perf_telemetry_overlay != null or not _perf_telemetry_requested():
 		return
-	perf_telemetry_overlay = PerfTelemetryOverlayScript.new()
+	var overlay_script: Script = load(PERF_TELEMETRY_OVERLAY_PATH)
+	if overlay_script == null or not bool(overlay_script.call("runtime_enabled")):
+		return
+	perf_telemetry_overlay = overlay_script.new()
 	add_child(perf_telemetry_overlay)
 	perf_telemetry_overlay.configure(self)
 	_foundation_perf_sink = perf_telemetry_overlay
+
+
+# Every telemetry switch is a bth_perf* command-line token or web query key.
+# Normal boots skip compiling the diagnostics overlay; the overlay's own
+# runtime_enabled() still makes the exact decision once it is requested.
+func _perf_telemetry_requested() -> bool:
+	for arg_value in OS.get_cmdline_user_args():
+		if str(arg_value).find("bth_perf") != -1:
+			return true
+	return OS.has_feature("web") and str(JavaScriptBridge.eval("window.location.search", true)).find("bth_perf") != -1
 
 
 # Compile checks use this to verify the active scene is on the foundation path.
@@ -7390,7 +7403,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		return {"ok": false, "errors": ["Travel is already in progress."]}
 	# This stage clock exists only for an explicitly enabled performance probe.
 	# Normal travel skips timestamp reads and publishes no diagnostics.
-	var perf_corner_store_timing := perf_telemetry_overlay != null \
+	var perf_corner_store_timing: bool = perf_telemetry_overlay != null \
 		and perf_telemetry_overlay.travel_stage_timing_enabled(target_id)
 	var perf_corner_store_total_started_usec := Time.get_ticks_usec() if perf_corner_store_timing else 0
 	var perf_corner_store_stage_started_usec := perf_corner_store_total_started_usec
