@@ -838,6 +838,9 @@ func _input(event: InputEvent) -> void:
 		if procedural_music_player != null and procedural_music_player.has_method("web_audio_user_gesture"):
 			procedural_music_player.web_audio_user_gesture()
 		_schedule_web_audio_unlock_refresh()
+	if _handle_environment_test_random_scenario_hotkey(event):
+		get_viewport().set_input_as_handled()
+		return
 	if _handle_environment_test_refresh_hotkey(event):
 		get_viewport().set_input_as_handled()
 		return
@@ -10580,12 +10583,93 @@ func _handle_environment_test_refresh_hotkey(event: InputEvent) -> bool:
 	return bool(_refresh_environment_test_session_with_random_seed().get("ok", false))
 
 
+# F9 advances placement authors to a different environment and one of that
+# environment's exact scenarios. It is intentionally unavailable in normal
+# runs and while slot placement mode is off.
+func _handle_environment_test_random_scenario_hotkey(event: InputEvent) -> bool:
+	var key_event := event as InputEventKey
+	if key_event == null or not key_event.pressed or key_event.echo or key_event.keycode != KEY_F9:
+		return false
+	if not _can_load_random_environment_test_scenario():
+		return false
+	return bool(_load_random_environment_test_scenario().get("ok", false))
+
+
 func _can_refresh_environment_test_session() -> bool:
 	return _is_environment_test_session() \
 		and current_screen == SCREEN_ENVIRONMENT \
 		and run_state != null \
 		and not run_state.current_environment.is_empty() \
 		and (environment_test_overlay == null or not environment_test_overlay.visible)
+
+
+# Requires the live canvas state rather than only the saved setting so F9 stops
+# immediately when F1 has temporarily disabled slot placement.
+func _can_load_random_environment_test_scenario() -> bool:
+	return _can_refresh_environment_test_session() \
+		and environment_canvas != null \
+		and bool(environment_canvas.developer_slot_placement_snapshot().get("enabled", false))
+
+
+# Chooses environments uniformly, then chooses one compatible exact scenario
+# within the selected environment. Environments without authored scenarios are
+# omitted because F9 promises both a random environment and a random scenario.
+func _load_random_environment_test_scenario() -> Dictionary:
+	if not _can_load_random_environment_test_scenario():
+		return {"ok": false, "errors": ["F9 random loading is available only in Environment Library slot placement mode."]}
+	_ensure_full_content_library_loaded()
+	var current_archetype_id := str(run_state.current_environment.get("archetype_id", "")).strip_edges()
+	var candidates: Array[Dictionary] = []
+	for definition_value in library.environment_archetypes:
+		if typeof(definition_value) != TYPE_DICTIONARY:
+			continue
+		var archetype_id := str((definition_value as Dictionary).get("id", "")).strip_edges()
+		if archetype_id.is_empty():
+			continue
+		var scenario_ids: Array[String] = []
+		for scenario_value in library.scenarios_for_archetype(archetype_id):
+			if typeof(scenario_value) != TYPE_DICTIONARY:
+				continue
+			var scenario_id := str((scenario_value as Dictionary).get("id", "")).strip_edges()
+			if not scenario_id.is_empty():
+				scenario_ids.append(scenario_id)
+		if not scenario_ids.is_empty():
+			candidates.append({"archetype_id": archetype_id, "scenario_ids": scenario_ids})
+	if candidates.is_empty():
+		return {"ok": false, "errors": ["No environment has an authored scenario available."]}
+	var different_environment_candidates: Array[Dictionary] = []
+	for candidate in candidates:
+		if str(candidate.get("archetype_id", "")) != current_archetype_id:
+			different_environment_candidates.append(candidate)
+	if not different_environment_candidates.is_empty():
+		candidates = different_environment_candidates
+	environment_test_refresh_counter += 1
+	var random_stamp := "%d-%d-%d" % [
+		int(Time.get_unix_time_from_system() * 1000.0),
+		Time.get_ticks_usec(),
+		environment_test_refresh_counter,
+	]
+	var rng := RandomNumberGenerator.new()
+	rng.seed = random_stamp.hash()
+	var selection := candidates[rng.randi_range(0, candidates.size() - 1)]
+	var selected_archetype_id := str(selection.get("archetype_id", ""))
+	var compatible_scenario_ids := JsonCoerceScript._copy_array(selection.get("scenario_ids", []))
+	var selected_scenario_id := str(compatible_scenario_ids[rng.randi_range(0, compatible_scenario_ids.size() - 1)])
+	if not _environment_test_select_id(environment_test_archetype_option, selected_archetype_id):
+		return {"ok": false, "errors": ["The random environment could not be selected."]}
+	_refresh_environment_test_identity_options()
+	if not _environment_test_select_id(environment_test_scenario_option, selected_scenario_id):
+		return {"ok": false, "errors": ["The random scenario could not be selected for its environment."]}
+	_sync_environment_test_layer_to_scenario()
+	if environment_test_seed_input != null:
+		environment_test_seed_input.text = "ENVIRONMENT-F9-%s" % random_stamp
+	var result := start_environment_test_session()
+	if bool(result.get("ok", false)):
+		_show_message("Random placement room: %s / %s. Press F9 for another." % [
+			str(run_state.current_environment.get("display_name", selected_archetype_id.replace("_", " ").capitalize())),
+			_environment_test_scenario_name(selected_scenario_id),
+		])
+	return result
 
 
 func _refresh_environment_test_session_with_random_seed() -> Dictionary:

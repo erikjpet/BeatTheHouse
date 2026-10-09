@@ -49,9 +49,11 @@ metadata read `0.6.0`.
   claimant are pruned, all slot families can be selected together, fixed event
   and exit slots remain movable in scenario contexts, and each object exposes
   one of three explicit draw layers. F1 now toggles slot placement mode itself,
-  while F2 continues to hide or restore its panel. The resulting live authority contains 521
-  raw source/template positions, 368 reachable room-shared positions, and 604
-  scenario-local positions for 972 unique manual entries.
+  F2 continues to hide or restore its panel, and F9 loads a random environment
+  with a compatible exact scenario during Environment Library placement. The
+  resulting live authority contains 521 raw source/template positions, 368
+  reachable room-shared positions, and 604 scenario-local positions for 972
+  unique manual entries.
 - Restores game capacity mistakenly removed during slot consolidation. Pull
   Tabs again appears as a physical machine in the Bar, Gas Station Casino,
   Jazz Club, and Grand Casino, and the Gas Station again exposes all three of

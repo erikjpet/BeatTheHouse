@@ -213,7 +213,10 @@ project-writing control and export the schema-3 report as
 `BeatTheHouse_environment_slot_placement_changes.json`. A report verification
 and import workflow checks source provenance, complete layout coverage, and
 placement-authority hashes before coordinates are promoted into committed
-data. The generated per-environment checklist is
+data. While working inside an Environment Library placement room, F9 loads a
+different random environment with one of its compatible authored scenarios and
+a fresh practice seed; it has no effect outside slot placement mode or in a
+normal run. The generated per-environment checklist is
 `docs/plans/environment_scenario_layout_breakdown.md`.
 
 Environment Library sessions are deliberately repair-safe. Practice rooms do

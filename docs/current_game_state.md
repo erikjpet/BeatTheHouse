@@ -140,6 +140,9 @@ package, so its exact evidence is preserved separately from the newer source:
   keyboard-parity shortcut;
 - F1 toggles slot placement mode itself and synchronizes the live Settings
   preference and checkbox;
+- F9 loads a different random environment and one of its compatible exact
+  scenarios while inside an Environment Library slot-placement room; it is
+  disabled in normal runs and whenever slot placement mode is off;
 - the minimized state survives context advances and resets when placement mode
   is exited;
 
