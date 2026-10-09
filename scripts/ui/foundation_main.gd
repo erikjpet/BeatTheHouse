@@ -373,6 +373,17 @@ var presented_bankroll_release_screen := ""
 var presented_bankroll_started_msec := 0
 var financial_hud_dirty := false
 var financial_hud_refresh_callable: Callable
+# Per-frame work is routed through _timed(); binding each step once keeps the
+# idle frame free of Callable allocations when telemetry is disabled.
+var _process_frame_delta := 0.0
+var _apply_run_screen_layout_callable: Callable
+var _advance_run_game_clock_callable: Callable
+var _advance_game_surface_frame_callable: Callable
+var _advance_game_surface_automation_callable: Callable
+var _advance_game_surface_realtime_callable: Callable
+var _advance_presented_bankroll_callable: Callable
+var _advance_environment_game_runtime_callable: Callable
+var _flush_pending_autosave_callable: Callable
 var pending_active_item_id: String = ""
 var run_inventory_popup_mode: String = ""
 var run_inventory_context_container_id: String = ""
@@ -707,6 +718,14 @@ const WEB_AUDIO_UNLOCK_REFRESH_DELAY_SECONDS := 0.20
 func _init() -> void:
 	_sealed_action_host = SealedActionHostScript.new(self)
 	financial_hud_refresh_callable = Callable(self, "_refresh_financial_hud_if_dirty")
+	_apply_run_screen_layout_callable = Callable(self, "_apply_run_screen_layout")
+	_advance_run_game_clock_callable = Callable(self, "_advance_run_game_clock_for_frame")
+	_advance_game_surface_frame_callable = Callable(self, "_advance_game_surface_frame")
+	_advance_game_surface_automation_callable = Callable(self, "_advance_game_surface_automation")
+	_advance_game_surface_realtime_callable = Callable(self, "_advance_game_surface_realtime_state")
+	_advance_presented_bankroll_callable = Callable(self, "_advance_presented_bankroll")
+	_advance_environment_game_runtime_callable = Callable(self, "_advance_environment_game_runtime")
+	_flush_pending_autosave_callable = Callable(self, "_flush_pending_autosave_if_ready")
 
 
 func _ready() -> void:
@@ -745,23 +764,24 @@ func _process(delta: float) -> void:
 	_sync_simulation_pause_owners()
 	_foundation_perf_sink.call("begin_foundation_frame")
 	if run_layout_dirty:
-		_timed("layout", Callable(self, "_apply_run_screen_layout")) # SA2_PER_FRAME_OK: scoped timer removes a duplicated hot path and is performance-gated.
-	_timed("environment_runtime", Callable(self, "_advance_run_game_clock").bind(delta)) # SA2_PER_FRAME_OK: scoped timer removes a duplicated hot path and is performance-gated.
+		_timed("layout", _apply_run_screen_layout_callable)
+	_process_frame_delta = delta
+	_timed("environment_runtime", _advance_run_game_clock_callable)
 	if current_screen == SCREEN_GAME:
-		_timed("snapshot_builds", Callable(self, "_advance_game_surface_frame")) # SA2_PER_FRAME_OK: scoped timer removes a duplicated hot path and is performance-gated.
+		_timed("snapshot_builds", _advance_game_surface_frame_callable)
 	if financial_hud_dirty:
 		_timed("snapshot_builds", financial_hud_refresh_callable)
 	if presented_bankroll_hold_active:
-		_timed("snapshot_builds", Callable(self, "_advance_presented_bankroll")) # SA2_PER_FRAME_OK: scoped timer removes a duplicated hot path and is performance-gated.
+		_timed("snapshot_builds", _advance_presented_bankroll_callable)
 	if (current_screen == SCREEN_ENVIRONMENT or current_screen == SCREEN_GAME) and not meta_session_active:
-		_timed("environment_runtime", Callable(self, "_advance_environment_game_runtime")) # SA2_PER_FRAME_OK: scoped timer removes a duplicated hot path and is performance-gated.
+		_timed("environment_runtime", _advance_environment_game_runtime_callable)
 	if pending_autosave or (save_service != null and save_service.async_save_in_flight()):
-		_timed("autosave_flush", Callable(self, "_flush_pending_autosave_if_ready")) # SA2_PER_FRAME_OK: scoped timer removes a duplicated hot path and is performance-gated.
+		_timed("autosave_flush", _flush_pending_autosave_callable)
 
 
 func _advance_game_surface_frame() -> void:
-	_timed("surface_automation", Callable(self, "_advance_game_surface_automation"))
-	_timed("surface_realtime", Callable(self, "_advance_game_surface_realtime_state"))
+	_timed("surface_automation", _advance_game_surface_automation_callable)
+	_timed("surface_realtime", _advance_game_surface_realtime_callable)
 
 
 func _timed(name: String, operation: Callable) -> void:
@@ -771,6 +791,10 @@ func _timed(name: String, operation: Callable) -> void:
 	var started_usec := Time.get_ticks_usec()
 	operation.call()
 	_foundation_perf_sink.call("record_foundation_subsystem_usec", name, Time.get_ticks_usec() - started_usec)
+
+
+func _advance_run_game_clock_for_frame() -> void:
+	_advance_run_game_clock(_process_frame_delta)
 
 
 func _advance_run_game_clock(delta: float) -> void:
