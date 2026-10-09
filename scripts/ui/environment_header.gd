@@ -7,12 +7,14 @@ extends PanelContainer
 const CONFIG_PATH := "res://data/ui/environment_ui.json"
 const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const MIN_TEXT_TITLE_SIZE := 14
+const SITUATION_LINE_HEIGHT := VisualStyle.TYPE_CAPTION + VisualStyle.SPACE_2
 
 static var _config_cache: Dictionary = {}
 
 var title_art: TextureRect
 var accessible_title: Label
 var blurb_label: Label
+var situation_slot: Control
 var situation_label: Label
 var goal_label: Label
 var options_row: HBoxContainer
@@ -125,12 +127,20 @@ func _build() -> void:
 	blurb_label.max_lines_visible = 1
 	blurb_label.clip_text = true
 	copy_stack.add_child(blurb_label)
+	# Reserve the scenario subline even when it is empty. Showing scenario text
+	# must not change this header's minimum height or move the room canvas.
+	situation_slot = Control.new()
+	situation_slot.custom_minimum_size = Vector2(VisualStyle.FLEXIBLE_SIZE, SITUATION_LINE_HEIGHT)
+	situation_slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	situation_slot.clip_contents = true
+	copy_stack.add_child(situation_slot)
 	situation_label = FoundationWidgets.muted_label("", VisualStyle.TYPE_CAPTION)
 	situation_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	situation_label.max_lines_visible = 1
 	situation_label.clip_text = true
 	situation_label.visible = false
-	copy_stack.add_child(situation_label)
+	situation_slot.add_child(situation_label)
+	situation_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	goal_label = FoundationWidgets.label("", VisualStyle.TYPE_SMALL)
 	goal_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	goal_label.clip_text = true

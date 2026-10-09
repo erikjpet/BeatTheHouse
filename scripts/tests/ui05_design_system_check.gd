@@ -142,12 +142,18 @@ func _run() -> void:
 	var header: EnvironmentHeader = EnvironmentHeaderScript.new()
 	root.add_child(header)
 	await process_frame
+	header.render({"archetype_id": "grand_casino_cage", "display_name": "Grand Casino Cage"}, "Settle the marker.")
+	await process_frame
+	var header_height_without_situation := header.get_combined_minimum_size().y
 	header.render(
 		{"archetype_id": "grand_casino_cage", "display_name": "Grand Casino Cage"},
 		"Settle the marker.",
 		"EVERY DRAWER GETS COUNTED."
 	)
+	await process_frame
+	var header_height_with_situation := header.get_combined_minimum_size().y
 	var header_snapshot := header.current_snapshot()
+	_check(is_equal_approx(header_height_with_situation, header_height_without_situation), "Scenario text changed the fixed environment header height.")
 	_check(str(header_snapshot.get("archetype_id", "")) == "grand_casino_cage", "Environment header lost its archetype identity.")
 	_check(str(header_snapshot.get("situation", "")) == "EVERY DRAWER GETS COUNTED.", "Environment header did not project the current situation beneath the location blurb.")
 	_check(bool(header_snapshot.get("situation_visible", false)), "Environment header hid the current situation subline.")
