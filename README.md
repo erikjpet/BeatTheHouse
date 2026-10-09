@@ -121,7 +121,7 @@ The current environment pack contains:
 | `bar` | casino | 1 | Low-stakes gambling room |
 | `gas_station_casino` | casino | 1 | Low-stakes gambling room |
 | `jazz_club` | shop | 1 | Rare late-1960s music room with trio services, pull tabs, and rare musician rewards |
-| `small_underground_casino` | casino | 1 | Larger room with Grand Casino route access |
+| `small_underground_casino` | club | 1 | Layered comedy-club, hidden-casino, and Crew-room venue with Grand Casino route access |
 | `kitty_cat_lounge` | casino | 2 | Velvet-rope lounge with a house wheel, champagne pressure, and paid heat management |
 | `delta_queen` | casino | 2 | Riverboat mid-stakes rung with scheduled boarding and temporary travel lock |
 | `beach` | recovery | 2 | Low Tide Beach route environment and recovery stop |
@@ -186,13 +186,16 @@ when its claimant stays in one place; objects that coexist or deliberately move
 between phases retain separate positions within that scenario. Games,
 items, people, and illustrated props occupy art-aligned places, while abstract
 actions attach to tangible hosts instead of adding room markers. Pull Tabs are
-counter merchandise sold and redeemed through each venue's existing bartender,
-clerk, or host desk.
+played from a physical machine in the Bar, Gas Station Casino, Jazz Club, and
+Grand Casino; help and redemption remain attached to each venue's existing
+bartender, clerk, or host desk instead of creating duplicate staff objects.
 
 The owner placement workflow lives under **Settings > Environment Library**.
-It exposes one slot family at a time, defaults empty capacity and runtime
-reserves visible for the exhaustive pass, and provides toggles to hide either
-when temporary visual clutter is unhelpful. Occupied markers identify the
+It exposes four equal-size single-family tabs plus an **All** view, defaults
+empty capacity and runtime reserves visible for the exhaustive pass, and
+provides toggles to hide either when temporary visual clutter is unhelpful.
+The selected slot can be assigned to the **Behind**, **Standard**, or **Front**
+draw layer; higher layers appear above lower ones. Occupied markers identify the
 object they contain when selected or hovered so the room remains readable, and
 layered scenarios stay locked to their authored room. The audited runtime
 maximum is 16 occupied objects in one layout, below the guarded limit of 20.
@@ -202,15 +205,27 @@ to the next unfinished context, while progress shows the saved and missing
 counts until all 75 contexts are complete. The placement panel has a visible
 minimize control; minimizing removes the entire large panel from hit testing so
 room objects and slots underneath it can be selected. A small restore button
-brings back every panel control, and F2 provides the same toggle as a keyboard
-shortcut. The minimized state survives context advances but resets when
-placement mode is exited. Packaged builds hide the
+brings back every panel control, and F2 provides the same panel toggle as a
+keyboard shortcut. F1 toggles slot placement mode itself on or off and keeps
+the saved Settings preference synchronized. The minimized state survives
+context advances but resets when placement mode is exited. Packaged builds hide the
 project-writing control and export the schema-3 report as
 `BeatTheHouse_environment_slot_placement_changes.json`. A report verification
 and import workflow checks source provenance, complete layout coverage, and
 placement-authority hashes before coordinates are promoted into committed
 data. The generated per-environment checklist is
 `docs/plans/environment_scenario_layout_breakdown.md`.
+
+Environment Library sessions are deliberately repair-safe. Practice rooms do
+not end because the venue closes or an ordinary run-terminal condition fires,
+and placement/access validation reports a warning without refusing to open the
+room. This keeps a broken scenario or obstructed access lane loadable so its
+objects can be repositioned and saved.
+
+The ordinary Settings menu also provides **Object labels and borders**. It is
+enabled by default and keeps selected/hovered descriptions subtle and close to
+their object outline. Turning it off hides those labels and borders without
+disabling object selection, details, or interaction.
 
 ## Games
 
@@ -229,7 +244,7 @@ rendering details.
 | Roulette | wheel | `scripts/games/roulette.gd` | `read_wheel_bias`, `past_post` | Full roulette layout with inside/outside bets, chip placement, wheel spin, payout animation, wheel-read, and past-post timing |
 | Video Poker | cards | `scripts/games/video_poker.gd` | `mark_holds` | Three cabinets—9/6 Jacks or Better, Double Deuces, and Triple Double Bonus—with 1-5 coin betting, one to three hands, hold/draw, double-up, recommendations, and mark-hold play |
 | Coin Pusher | coin_pusher | `scripts/games/coin_pusher.gd` | `nudge_machine` | Three deterministic physics-backed cabinets with live trays, cabinet goals, persistence, and native/Web parity coverage |
-| Craps | dice | `scripts/games/craps.gd` | `dice_setting`, `dice_switching` | Full-table and street variants with 40 reachable wager types, derived house edges, and million-roll verification |
+| Craps | dice | `scripts/games/craps.gd` | `dice_setting`, `dice_switching` | Full-table and street variants with 40 reachable wager types, derived house edges, million-roll verification, and a dedicated pavement-circle room object for Street Craps |
 | Crew Hold'em | cards | `scripts/games/crew_draw_poker.gd` | none; tells are surface play | Six-handed no-limit Hold'em with automatic paced opponent turns, five personality-shaped tell emotions, player-projected tells, dealer/muck fold cleanup, animated cards/chips, persistent opponents, and hidden-card authority |
 
 Shared table-game visuals live in `scripts/games/table_game_visuals.gd`. The
@@ -366,7 +381,7 @@ Master/Music/SFX bus gains. The native authored masters remain unchanged.
 ```text
 assets/                  PNG art used by environment, event, item, game, and UI presentation
 data/                    JSON content packs, reusable character identities/pools, and art manifest
-docs/plans/              Active Act 1 board, release ledgers, design locks, and historical plans
+docs/plans/              Maintained design references, generated guides, dated evidence, and historical plans
 scenes/main.tscn          Active Godot scene wired to FoundationMain
 scripts/core/             Runtime state, content loading, generation, result application, save/load
 scripts/games/            Full-simulation game modules
@@ -446,15 +461,18 @@ powershell -ExecutionPolicy Bypass -File tools\code_documentation_check.ps1
 powershell -ExecutionPolicy Bypass -File tools\game_documentation_check.ps1
 ```
 
-Current integration evidence and remaining work (verified 2026-10-04):
+Current placement authority and carried-forward integration evidence (static
+authority refreshed 2026-10-08):
 
 - All 21 source maps and 55 exact scenario layouts pass the migration, ledger,
   schema, naming, family, and generated-guide checks. The reachable authoring
   set is exactly 20 base rooms plus 55 scenarios.
-- The maintained runtime audit generates all 75 contexts across six seeds,
-  validates 4,221 room objects, rejects missing or duplicate occupancy and
-  occupied hit-region overlap, and guards a maximum of 20 room objects; the
-  observed maximum is 16.
+- The current engine-free static audit validates 4,627 active physical bindings
+  plus 825 attached/nonphysical bindings across 767 reachable snapshots, with
+  zero missing authority, overflow, duplicate occupancy, or fixed/scenario
+  conflicts. The prerelease runtime audit separately covered all 75 contexts
+  across six seeds and observed a maximum of 16 occupied room objects against
+  the guarded limit of 20.
 - Placement persistence, complete-layout coverage, report export, scenario
   isolation, Environment Library launch, and both placement editors pass their
   focused engine checks. Shared edits correctly invalidate every affected
@@ -535,8 +553,9 @@ dated evidence, shipped-release ledgers, and historical context:
 - `docs/plans/world_map_design.md` - the world-map route/progression design
   lock.
 - `docs/plans/music_system_rework_plan.md` and
-  `docs/plans/music_listening_pass.md` - parked post-0.3 music planning and
-  listening-check context.
+  `docs/plans/music_listening_pass.md` - the implemented adaptive-music
+  architecture and its completed listening reference; historical pre-rework
+  sections remain as rationale.
 - `docs/archive/0.2/plans/0.2_release_checklist.md` - the shipped 0.2.0 release readiness
   checklist, including validation evidence and known blockers.
 - `docs/archive/0.3/plans/0.3_release_checklist.md` - the shipped 0.3.0 readiness ledger.
@@ -573,6 +592,13 @@ the `v0.6.0-pre.5` GitHub prerelease was explicitly requested. Trial packages
 are not final release artifacts. Android
 signing and iOS team/signature values still require real project credentials
 before store submission.
+
+After the approved placement report is promoted, the release sequence is:
+freeze and commit the candidate, run the focused placement/runtime gates plus
+the final release checks, build and launch-check both packages, publish the
+exact source and artifacts, then update the project website to the final
+`v0.6.0` asset and confirmed itch.io URL. The website must not advertise a
+trial or dirty-tree artifact as the stable release.
 
 ## Known Release Limitations
 

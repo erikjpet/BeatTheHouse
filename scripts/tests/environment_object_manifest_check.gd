@@ -81,6 +81,7 @@ func _run() -> void:
 	_check_delivery_runtime_hosts(library)
 	_check_numbers_runtime_hosts(library)
 	_check_grand_living_runtime_hosts(library)
+	_check_guest_legend_shared_action_hosts()
 	_check_controller_fail_closed_membership()
 	if _failures.is_empty():
 		print("ENVIRONMENT OBJECT MANIFEST CHECK maps=%d variants=%d rows=%d roundtrips=%d jazz_hosts=6 lottery_counters=4 ok=true" % [
@@ -432,8 +433,12 @@ func _check_lottery_counter_hosts(library: ContentLibrary) -> void:
 		"jazz_club": "shopkeeper:merchant",
 		"grand_casino": "casino_fixture:host_desk",
 	}
-	var base_counter_actions := [
-		"game:pull_tabs",
+	var expected_pull_tab_slots := {
+		"gas_station_casino": "fixed.random_game_2",
+		"jazz_club": "fixed.pulltab_game",
+		"grand_casino": "fixed.game_machine_5",
+	}
+	var counter_service_actions := [
 		"dialogue:pull_tab_clerk",
 		"game_hook:pull_tabs:ticket_redeemer",
 	]
@@ -464,14 +469,17 @@ func _check_lottery_counter_hosts(library: ContentLibrary) -> void:
 		var manifest := _dict(environment.get("object_manifest", {}))
 		var host_row := _active_manifest_row(manifest, host_id)
 		_check(not host_row.is_empty(), label, "is missing its configured physical counter host %s" % host_id)
-		var expected_actions := base_counter_actions.duplicate()
+		var expected_actions := counter_service_actions.duplicate()
 		if archetype_id == "gas_station_casino":
 			expected_actions.append("game_hook:scratch_tickets:scratch_ticket_clerk")
 		for action_id_value in expected_actions:
 			var action_id := str(action_id_value)
 			_check(_array(host_row.get("action_ids", [])).has(action_id), label, "%s does not own counter action %s" % [host_id, action_id])
+		_check(not _array(host_row.get("action_ids", [])).has("game:pull_tabs"), label, "%s incorrectly owns the physical Pull Tabs launch action" % host_id)
+		var pull_tabs_row := _active_manifest_row(manifest, "game:pull_tabs")
+		_check(not pull_tabs_row.is_empty(), label, "is missing its physical Pull Tabs machine")
+		_check(bool(pull_tabs_row.get("active", false)) and bool(pull_tabs_row.get("physical", false)), label, "Pull Tabs is not active physical inventory")
 		for forbidden_id in [
-			"game:pull_tabs",
 			"dialogue:pull_tab_clerk",
 			"game_hook:pull_tabs:ticket_redeemer",
 			"game_hook:scratch_tickets:scratch_ticket_clerk",
@@ -479,8 +487,23 @@ func _check_lottery_counter_hosts(library: ContentLibrary) -> void:
 			_check(_active_manifest_row(manifest, forbidden_id).is_empty(), label, "created duplicate physical row %s" % forbidden_id)
 		var bindings := _dict(_dict(environment.get("layout", {})).get("slot_bindings", {}))
 		_check(bindings.has(host_id), label, "%s lost its physical slot binding" % host_id)
-		for forbidden_id in ["game:pull_tabs", "dialogue:pull_tab_clerk", "game_hook:pull_tabs:ticket_redeemer", "game_hook:scratch_tickets:scratch_ticket_clerk"]:
+		_check(bindings.has("game:pull_tabs"), label, "Pull Tabs did not consume its physical placement slot")
+		if expected_pull_tab_slots.has(archetype_id):
+			_check(str(_dict(bindings.get("game:pull_tabs", {})).get("slot_id", "")) == str(expected_pull_tab_slots.get(archetype_id, "")), label, "Pull Tabs did not bind to its reviewed machine slot")
+		else:
+			_check(str(_dict(bindings.get("game:pull_tabs", {})).get("slot_id", "")).begins_with("fixed.random_game_"), label, "Pull Tabs did not bind to the Bar game bank")
+		for forbidden_id in ["dialogue:pull_tab_clerk", "game_hook:pull_tabs:ticket_redeemer", "game_hook:scratch_tickets:scratch_ticket_clerk"]:
 			_check(not bindings.has(forbidden_id), label, "%s incorrectly consumed its own placement slot" % forbidden_id)
+		if archetype_id == "gas_station_casino":
+			var physical_game_slots: Dictionary = {}
+			for game_id_value in selected_game_ids:
+				var game_object_id := "game:%s" % str(game_id_value)
+				var game_binding := _dict(bindings.get(game_object_id, {}))
+				_check(not game_binding.is_empty(), label, "%s is missing its physical game binding" % game_object_id)
+				var game_slot_id := str(game_binding.get("slot_id", ""))
+				_check(not physical_game_slots.has(game_slot_id), label, "%s shares occupied slot %s" % [game_object_id, game_slot_id])
+				physical_game_slots[game_slot_id] = true
+			_check(physical_game_slots.size() == 3, label, "must expose all three selected machines")
 		if archetype_id in ["bar", "gas_station_casino", "grand_casino"]:
 			var unstocked := _generated_environment(library, archetype_id)
 			var unstocked_game_ids := _array(unstocked.get("game_ids", []))
@@ -490,8 +513,10 @@ func _check_lottery_counter_hosts(library: ContentLibrary) -> void:
 			unstocked_states.erase("pull_tabs")
 			unstocked["game_states"] = unstocked_states
 			unstocked["layout"] = EnvironmentInstanceScript.ensure_generated_layout(unstocked, library)
-			var unstocked_host := _active_manifest_row(_dict(unstocked.get("object_manifest", {})), host_id)
-			for action_id_value in base_counter_actions:
+			var unstocked_manifest := _dict(unstocked.get("object_manifest", {}))
+			var unstocked_host := _active_manifest_row(unstocked_manifest, host_id)
+			_check(_active_manifest_row(unstocked_manifest, "game:pull_tabs").is_empty(), "%s unstocked counter" % archetype_id, "created an unstocked Pull Tabs machine")
+			for action_id_value in counter_service_actions:
 				var action_id := str(action_id_value)
 				_check(not _array(unstocked_host.get("action_ids", [])).has(action_id), "%s unstocked counter" % archetype_id, "%s advertised unavailable counter action %s" % [host_id, action_id])
 		if archetype_id == "gas_station_casino":
@@ -1075,6 +1100,119 @@ func _check_grand_living_runtime_hosts(library: ContentLibrary) -> void:
 	var rourke_binding := _assert_runtime_membership(run_state.current_environment, "grand_living:rourke", "event", true, "Grand living-floor hosts")
 	var rival_binding := _assert_runtime_membership(run_state.current_environment, "grand_living:rival:runtime_rival_fixture", "event", true, "Grand living-floor hosts")
 	_check(not str(rourke_binding.get("slot_id", "")).is_empty() and str(rourke_binding.get("slot_id", "")) != str(rival_binding.get("slot_id", "")), "Grand living-floor hosts", "Rourke and rival did not bind distinct event slots")
+
+
+func _check_guest_legend_shared_action_hosts() -> void:
+	const GUEST_ID := "scenario::jazz_club_guest_legend_guest_legend"
+	const SAFE_EXIT_ID := "scenario::jazz_club_guest_legend_safe_exit"
+	const TIP_ID := "event:scenario_guest_legend_tip"
+	const REFUSE_ID := "refuse_jazz_club_guest_legend"
+	var label := "Guest Legend shared action hosts"
+	var guest_row := {
+		"instance_object_id": GUEST_ID,
+		"presentation_object_id": GUEST_ID,
+		"family": "scenario",
+		"source_kind": "scenario_projection",
+		"source_id": "jazz_club_guest_legend_guest_legend",
+		"object_type": "scenario_actor",
+		"placement_class": "standing_person",
+		"active": true,
+		"physical": true,
+		"action_ids": [REFUSE_ID],
+	}
+	var safe_exit_row := {
+		"instance_object_id": SAFE_EXIT_ID,
+		"presentation_object_id": SAFE_EXIT_ID,
+		"family": "scenario",
+		"source_kind": "scenario_projection",
+		"source_id": "jazz_club_guest_legend_safe_exit",
+		"object_type": "scenario_sequence",
+		"placement_class": "doorway",
+		"active": true,
+		"physical": true,
+		"action_ids": [REFUSE_ID],
+	}
+	var tip_row := {
+		"instance_object_id": TIP_ID,
+		"presentation_object_id": TIP_ID,
+		"family": "event",
+		"source_kind": "event",
+		"source_id": "scenario_guest_legend_tip",
+		"object_type": "event",
+		"placement_class": "floor_fixture",
+		"active": true,
+		"physical": true,
+		"action_ids": ["inspect_event_choices"],
+	}
+	var records := [{
+		"object_id": GUEST_ID,
+		"object_type": "scenario_actor",
+		"placement_class": "standing_person",
+		"presentation_mode": "room",
+		"visible": true,
+		"interactive": true,
+		"scenario_sequence_actions": [{"id": REFUSE_ID, "label": "Refuse the task"}],
+	}, {
+		"object_id": SAFE_EXIT_ID,
+		"object_type": "scenario_sequence",
+		"placement_class": "doorway",
+		"presentation_mode": "room",
+		"visible": true,
+		"interactive": true,
+		"scenario_sequence_actions": [{"id": REFUSE_ID, "label": "Refuse the task"}],
+	}, {
+		"object_id": TIP_ID,
+		"object_type": "event",
+		"placement_class": "floor_fixture",
+		"presentation_mode": "overflow",
+		"slot_binding_source_id": GUEST_ID,
+		"visible": true,
+		"interactive": true,
+		"available_actions": [{"id": "inspect_event_choices", "label": "Tip the Guest Legend"}],
+	}]
+	var proof := {
+		"ok": true,
+		"errors": [],
+		"layout_authority": {"slot_bindings": {}, "object_rects": {}},
+	}
+	for rows_value in [
+		[guest_row, safe_exit_row, tip_row],
+		[tip_row, safe_exit_row, guest_row],
+	]:
+		var environment := {
+			"scenario_id": "jazz_club_guest_legend",
+			"scenario_render_snapshot": {
+				"ok": true,
+				"scenario_id": "jazz_club_guest_legend",
+				"visual_objects": [],
+			},
+			"object_manifest": {"rows": (rows_value as Array).duplicate(true)},
+		}
+		var joined := EnvironmentInteractionControllerScript._join_object_manifest(
+			records,
+			environment,
+			false,
+			proof
+		)
+		var guest := _record_by_id(joined, GUEST_ID)
+		var safe_exit := _record_by_id(joined, SAFE_EXIT_ID)
+		var tip := _record_by_id(joined, TIP_ID)
+		_check(str(guest.get("slot_binding_source_id", "")).is_empty(), label, "shared refusal rebound the physical guest to another host")
+		_check(str(safe_exit.get("slot_binding_source_id", "")).is_empty(), label, "shared refusal rebound the physical safe exit to another host")
+		_check(str(tip.get("slot_binding_source_id", "")) == GUEST_ID, label, "manifest inference replaced the tip's explicit Guest Legend host")
+		var attached := EnvironmentInteractionControllerScript._attach_action_only_records(joined)
+		guest = _record_by_id(attached, GUEST_ID)
+		safe_exit = _record_by_id(attached, SAFE_EXIT_ID)
+		_check(not guest.is_empty() and str(guest.get("presentation_mode", "")) == "room", label, "physical guest disappeared during action attachment")
+		_check(not safe_exit.is_empty() and str(safe_exit.get("presentation_mode", "")) == "room", label, "physical safe exit disappeared during action attachment")
+		_check(_record_by_id(attached, TIP_ID).is_empty(), label, "tip remained a standalone overflow record")
+		var tip_attached_to_guest := false
+		for descriptor_value in _array(guest.get("attached_room_actions", [])):
+			var source := _dict(_dict(descriptor_value).get("record", {}))
+			if str(source.get("object_id", "")) == TIP_ID:
+				tip_attached_to_guest = true
+				break
+		_check(tip_attached_to_guest, label, "tip did not attach to the visible Guest Legend actor")
 
 
 func _check_controller_fail_closed_membership() -> void:

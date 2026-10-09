@@ -24,7 +24,9 @@ const CURRENT_MARKER_CORE := Color("#5df2a2")
 const CURRENT_MARKER_LABEL_BG := Color("#05060a", 0.90)
 const CURRENT_MARKER_LABEL_TEXT := Color("#ffffff")
 const CURRENT_MARKER_LABEL_FONT_SIZE := 11
-const DESTINATION_LABEL_SIZE := Vector2(96.0, 18.0)
+const DESTINATION_LABEL_FONT_SIZE := 9
+const DESTINATION_LABEL_PADDING := Vector2(6.0, 3.0)
+const DESTINATION_LABEL_EDGE_MARGIN := 4.0
 const TEXTURE_CACHE_MAX_ENTRIES := 128
 
 var snapshot: Dictionary = {}
@@ -258,6 +260,10 @@ func local_visual_rect_for_node(node_id: String) -> Rect2:
 	var visual_rect := Rect2(center - Vector2(radius, radius), Vector2(radius * 2.0, radius * 2.0))
 	if current:
 		visual_rect = visual_rect.merge(_current_node_label_rect(center))
+	else:
+		var node: Dictionary = nodes_by_id_cache.get(node_id, {})
+		if bool(node.get("travel_target", false)) or node_id == str(snapshot.get("selected_node_id", "")):
+			visual_rect = visual_rect.merge(_destination_node_label_rect(center, node))
 	return visual_rect
 
 
@@ -600,17 +606,44 @@ func _draw_current_node_ring(pos: Vector2, radius: float) -> void:
 
 
 func _draw_destination_node_label(pos: Vector2, node: Dictionary, color: Color) -> void:
-	var label := str(node.get("label", node.get("display_name", str(node.get("id", "")).replace("_", " ").capitalize()))).strip_edges().left(20)
+	var label := _destination_node_label(node)
 	if label.is_empty():
 		return
-	var label_pos := pos + Vector2(-DESTINATION_LABEL_SIZE.x * 0.5, MARKER_RADIUS + 7.0)
-	if label_pos.y + DESTINATION_LABEL_SIZE.y > size.y - 4.0:
-		label_pos.y = pos.y - MARKER_RADIUS - DESTINATION_LABEL_SIZE.y - 7.0
-	label_pos.x = clampf(label_pos.x, 4.0, maxf(4.0, size.x - DESTINATION_LABEL_SIZE.x - 4.0))
-	var rect := Rect2(label_pos, DESTINATION_LABEL_SIZE)
+	var font := ThemeDB.fallback_font
+	var rect := _destination_node_label_rect(pos, node)
 	draw_rect(rect, Color("#05060a", 0.84))
 	draw_rect(rect, Color(color.r, color.g, color.b, 0.76), false, 1.0)
-	draw_string(ThemeDB.fallback_font, rect.position + Vector2(4.0, 12.0), label, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 8.0, 9, Color("#ffffff", 0.92))
+	var baseline := rect.position + Vector2(
+		DESTINATION_LABEL_PADDING.x,
+		DESTINATION_LABEL_PADDING.y + font.get_ascent(DESTINATION_LABEL_FONT_SIZE)
+	)
+	draw_string(font, baseline, label, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - DESTINATION_LABEL_PADDING.x * 2.0, DESTINATION_LABEL_FONT_SIZE, Color("#ffffff", 0.92))
+
+
+func _destination_node_label_rect(pos: Vector2, node: Dictionary) -> Rect2:
+	var label := _destination_node_label(node)
+	if label.is_empty():
+		return Rect2()
+	var font := ThemeDB.fallback_font
+	var text_size := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1.0, DESTINATION_LABEL_FONT_SIZE)
+	var label_size := Vector2(
+		ceilf(text_size.x + DESTINATION_LABEL_PADDING.x * 2.0),
+		ceilf(maxf(text_size.y, font.get_height(DESTINATION_LABEL_FONT_SIZE)) + DESTINATION_LABEL_PADDING.y * 2.0)
+	)
+	label_size.x = minf(label_size.x, maxf(1.0, size.x - DESTINATION_LABEL_EDGE_MARGIN * 2.0))
+	var label_pos := pos + Vector2(-label_size.x * 0.5, MARKER_RADIUS + 7.0)
+	if label_pos.y + label_size.y > size.y - DESTINATION_LABEL_EDGE_MARGIN:
+		label_pos.y = pos.y - MARKER_RADIUS - label_size.y - 7.0
+	label_pos.x = clampf(
+		label_pos.x,
+		DESTINATION_LABEL_EDGE_MARGIN,
+		maxf(DESTINATION_LABEL_EDGE_MARGIN, size.x - label_size.x - DESTINATION_LABEL_EDGE_MARGIN)
+	)
+	return Rect2(Vector2(roundf(label_pos.x), roundf(label_pos.y)), label_size)
+
+
+func _destination_node_label(node: Dictionary) -> String:
+	return str(node.get("label", node.get("display_name", str(node.get("id", "")).replace("_", " ").capitalize()))).strip_edges()
 
 
 func _draw_current_node_pin(pos: Vector2, node: Dictionary) -> void:

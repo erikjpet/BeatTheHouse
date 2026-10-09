@@ -157,6 +157,8 @@ func _check_craps_street_variant(game: GameModule, library: ContentLibrary, fail
 	var street_room_visual: Dictionary = street_room_state.get("visual_state", {}) if typeof(street_room_state.get("visual_state", {})) == TYPE_DICTIONARY else {}
 	if str(street_room_visual.get("variant", "")) != "street_craps" or not street_room_visual.has("dispersed"):
 		failures.append("Street Craps room prop did not publish the chalk-circle variant and dispersed state.")
+	if str(street_room_state.get("environment_prop", "")) != "street_craps_circle" or str(street_room_state.get("display_name", "")) != "Street Craps":
+		failures.append("Street Craps did not select its dedicated alley-floor object identity.")
 	var street_harness := SurfaceHarness.new()
 	street_harness.setup(surface)
 	game.draw_surface(street_harness, surface, {"contract_harness": true})

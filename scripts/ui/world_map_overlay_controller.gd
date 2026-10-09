@@ -559,9 +559,13 @@ func _add_node_buttons(snapshot: Dictionary) -> void:
 		var in_view := _node_is_in_canvas_view(node_id)
 		button.visible = in_view
 		button.disabled = not in_view
-		button.tooltip_text = str(node.get("label", node_id))
-		button.text = str(node.get("label", node_id))
-		button.accessibility_name = button.text
+		var label := _node_label(node, node_id)
+		button.tooltip_text = label
+		# The canvas owns the visible, bordered nameplate below the icon. This
+		# pooled Button is only its hit/focus target; drawing its text here places
+		# a duplicate location name across the icon itself.
+		button.text = ""
+		button.accessibility_name = label
 		button.set_meta("node_id", node_id)
 		button.name = "WorldMapNode_%s" % node_id
 		index += 1
@@ -588,9 +592,10 @@ func _position_node_buttons(snapshot: Dictionary) -> void:
 		var in_view := _node_is_in_canvas_view(node_id)
 		button.visible = in_view
 		button.disabled = not in_view
-		button.tooltip_text = str(node.get("label", node_id))
-		button.text = str(node.get("label", node_id))
-		button.accessibility_name = button.text
+		var label := _node_label(node, node_id)
+		button.tooltip_text = label
+		button.text = ""
+		button.accessibility_name = label
 		button.set_meta("node_id", node_id)
 		button.name = "WorldMapNode_%s" % node_id
 		index += 1
@@ -605,6 +610,10 @@ func _node_button_position(node_id: String, node: Dictionary) -> Vector2:
 	if nodes_layer != null and nodes_layer.size.x > 0.0 and nodes_layer.size.y > 0.0 and nodes_layer.has_method("local_position_for_node"):
 		center = nodes_layer.call("local_position_for_node", node_id) as Vector2
 	return center
+
+
+func _node_label(node: Dictionary, node_id: String) -> String:
+	return str(node.get("label", node.get("display_name", node_id.replace("_", " ").capitalize()))).strip_edges()
 
 
 func _node_is_in_canvas_view(node_id: String) -> bool:

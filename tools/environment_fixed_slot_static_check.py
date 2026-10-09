@@ -110,7 +110,6 @@ V2_EVENT_CAPACITY_TARGETS = {
     "house": {},
 }
 PULL_TABS_HOST_ACTION_IDS = {
-    "game:pull_tabs",
     "game_hook:pull_tabs:ticket_redeemer",
     "dialogue:pull_tab_clerk",
 }
@@ -2321,11 +2320,11 @@ def main_v2(
     }:
         check.require(action_id in jazz_action_ids, f"jazz_club: fixed hosts do not attach {action_id}")
     check.require(
-        len(values(jazz.get("fixed_slots"))) == 9
+        len(values(jazz.get("fixed_slots"))) == 10
         and len(values(jazz.get("event_slots"))) == 3
         and len(values(jazz.get("scenario_slots"))) == 12
         and len(values(jazz.get("exit_slots"))) == 1,
-        "jazz_club: reviewed fixed/event/scenario/exit counts must be 9/3/12/1",
+        "jazz_club: reviewed fixed/event/scenario/exit counts must be 10/3/12/1",
     )
     check.require(
         {
@@ -2336,19 +2335,19 @@ def main_v2(
         "jazz_club: only the real right-upper travel exit may remain",
     )
 
-    retired_pull_tabs_slots = {
-        "bar": {"fixed.ticket_redeemer", "fixed.random_game_3"},
+    retired_counter_service_slots = {
+        "bar": {"fixed.ticket_redeemer"},
         "gas_station_casino": {
             "fixed.service_lottery_desk", "fixed.service_refreshment_shelf",
-            "fixed.random_game_2", "fixed.event_control_rail",
+            "fixed.event_control_rail",
         },
         "jazz_club": {
-            "fixed.pulltab_game", "fixed.event_pull_tabs_sign",
+            "fixed.event_pull_tabs_sign",
             "fixed.random_game_1", "fixed.service_bar",
         },
-        "grand_casino": {"fixed.ticket_redeemer", "fixed.game_machine_5"},
+        "grand_casino": {"fixed.ticket_redeemer"},
     }
-    for map_id, retired_ids in retired_pull_tabs_slots.items():
+    for map_id, retired_ids in retired_counter_service_slots.items():
         map_data = maps_by_id.get(map_id, {})
         fixed_ids = {
             str(slot.get("id", ""))
@@ -2357,7 +2356,7 @@ def main_v2(
         }
         check.require(
             fixed_ids.isdisjoint(retired_ids),
-            f"{map_id}: retained standalone Pull Tabs capacity {sorted(fixed_ids & retired_ids)}",
+            f"{map_id}: retained retired standalone counter-service capacity {sorted(fixed_ids & retired_ids)}",
         )
         declarations = [
             declaration
@@ -2370,7 +2369,7 @@ def main_v2(
                 & PULL_TABS_HOST_ACTION_IDS
                 for declaration in declarations
             ),
-            f"{map_id}: Pull Tabs actions must be merged by runtime only",
+            f"{map_id}: Pull Tabs clerk/redeemer actions must be merged by runtime only",
         )
         for action_id in PULL_TABS_HOST_ACTION_IDS:
             check.require(
@@ -2379,7 +2378,7 @@ def main_v2(
                     action_id not in map_data.get(f"{family}_object_slot_ids", {})
                     for family in V2_FAMILIES
                 ),
-                f"{map_id}: {action_id} must be fixed-owned without standalone geometry",
+                f"{map_id}: {action_id} must be counter-owned without standalone geometry",
             )
 
     required_host_slots = {
@@ -2534,19 +2533,22 @@ def main_v2(
             "game_spots:1": "fixed.game_machine_2",
             "game_spots:2": "fixed.game_machine_3",
             "game_spots:3": "fixed.game_machine_4",
-            "game_spots:4": "fixed.game_table_left",
-            "game_spots:5": "fixed.game_table_right",
+            "game_spots:4": "fixed.game_machine_5",
+            "game_spots:5": "fixed.game_table_left",
+            "game_spots:6": "fixed.game_table_right",
         },
-        "grand_casino: six game categories must skip the retired Pull Tabs machine",
+        "grand_casino: seven game categories must include the physical Pull Tabs machine",
     )
     expected_game_categories = {
         "bar": {
             "game_spots:0": "fixed.random_game_1",
             "game_spots:1": "fixed.random_game_2",
+            "game_spots:2": "fixed.random_game_3",
         },
         "gas_station_casino": {
-            "game_spots:0": "fixed.random_game_1",
-            "game_spots:1": "fixed.game_scratch_tickets",
+            "game_spots:0": "fixed.random_game_2",
+            "game_spots:1": "fixed.random_game_1",
+            "game_spots:2": "fixed.game_scratch_tickets",
         },
     }
     for map_id, expected in expected_game_categories.items():
@@ -2569,10 +2571,20 @@ def main_v2(
             ).get(object_id) == "fixed.random_game_1",
             f"gas_station_casino: {object_id} must share fixed.random_game_1",
         )
+    expected_pull_tab_slots = {
+        "gas_station_casino": "fixed.random_game_2",
+        "jazz_club": "fixed.pulltab_game",
+        "grand_casino": "fixed.game_machine_5",
+    }
+    for map_id, slot_id in expected_pull_tab_slots.items():
+        check.require(
+            maps_by_id.get(map_id, {}).get("fixed_object_slot_ids", {}).get("game:pull_tabs") == slot_id,
+            f"{map_id}: physical Pull Tabs must use {slot_id}",
+        )
     expected_game_spots = {
-        "bar": [[136, 202], [322, 202]],
-        "gas_station_casino": [[482, 254], [578, 160]],
-        "jazz_club": [],
+        "bar": [[136, 202], [322, 202], [812, 202]],
+        "gas_station_casino": [[386, 160], [482, 254], [578, 160]],
+        "jazz_club": [[815, 216]],
     }
     for map_id, expected in expected_game_spots.items():
         check.require(
@@ -2582,8 +2594,8 @@ def main_v2(
         )
     check.require(
         values(archetypes.get("grand_casino", {}).get("layout", {}).get("game_spots"))
-        == [[85, 150], [220, 150], [355, 150], [525, 150], [825, 150], [600, 260]],
-        "grand_casino: layout must expose the six non-Pull-Tabs physical game positions",
+        == [[85, 150], [220, 150], [355, 150], [525, 150], [675, 150], [825, 150], [600, 260]],
+        "grand_casino: layout must expose all seven physical game positions",
     )
     descriptive_fixed_ids = {
         "corner_store": {"lender:the_crew": "fixed.crew_group"},

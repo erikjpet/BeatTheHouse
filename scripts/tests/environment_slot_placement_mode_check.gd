@@ -17,6 +17,8 @@ var locked_requests: Array[Dictionary] = []
 var export_request_count := 0
 var exported_pending_request: Dictionary = {}
 var slot_layer_request: Dictionary = {}
+var slot_shortcut_states: Array[bool] = []
+var placement_undo_request_count := 0
 
 
 func _init() -> void:
@@ -47,6 +49,7 @@ func _run() -> void:
 	DeveloperPlacementStoreScript.reload()
 
 	await _check_settings_contract()
+	_check_catalog_drift_recovery(user_path)
 	_check_slot_geometry_export_and_promotion(user_path, project_path, report_path)
 	await _check_canvas_contract()
 	_check_distribution_report_path(distribution_root)
@@ -107,6 +110,14 @@ func _check_settings_contract() -> void:
 	)
 	menu.call("_on_apply")
 	_check(restored.developer_slot_placement_mode, "Applying Settings must enable slot placement mode.")
+	menu.sync_developer_slot_placement_mode(false)
+	_check(
+		not restored.developer_slot_placement_mode
+			and not menu.draft.developer_slot_placement_mode
+			and menu.developer_slot_placement_mode.text.begins_with("[ ]"),
+		"A live shortcut change must synchronize the saved setting, open draft, and Settings checkbox."
+	)
+	menu.sync_developer_slot_placement_mode(true)
 	menu.queue_free()
 	await process_frame
 
@@ -408,6 +419,62 @@ func _check_slot_geometry_export_and_promotion(user_path: String, project_path: 
 	)
 	DeveloperPlacementStoreScript.reload()
 	_check(_slot_position(_slot(EnvironmentPlacementScript.surface_map(environment), "fixed.item_shop_1")).is_equal_approx(fixed_target), "A promoted slot must survive local reset and reload.")
+
+
+func _check_catalog_drift_recovery(user_path: String) -> void:
+	var file := FileAccess.open(user_path, FileAccess.WRITE)
+	file.store_string(JSON.stringify({
+		"schema_version": DeveloperPlacementStoreScript.SCHEMA_VERSION,
+		"rooms": {
+			"house": {
+				"base_saved": true,
+				"slot_positions": {
+					"fixed.home_sleep": [321.0, 123.0],
+					"fixed.retired_fixture": [1.0, 2.0],
+				},
+				"slot_layers": {
+					"fixed.home_sleep": 1,
+					"fixed.retired_fixture": -1,
+				},
+				"scenario_layouts": {
+					"retired_scenario": {
+						"saved": true,
+						"slot_positions": {"scenario.retired_actor": [4.0, 5.0]},
+					},
+				},
+			},
+		},
+	}, "\t"))
+	file.close()
+	var backup_file := FileAccess.open("%s.bak" % user_path, FileAccess.WRITE)
+	backup_file.store_string(JSON.stringify({
+		"schema_version": DeveloperPlacementStoreScript.SCHEMA_VERSION,
+		"rooms": {
+			"apartment": {
+				"slot_positions": {"fixed.home_sleep": [9.0, 9.0]},
+			},
+		},
+	}, "\t"))
+	backup_file.close()
+	DeveloperPlacementStoreScript.reload()
+	var recovered_positions := DeveloperPlacementStoreScript.user_slot_overrides(
+		{"archetype_id": "house"}
+	)
+	var recovered_layers := DeveloperPlacementStoreScript.slot_layer_overrides(
+		{"archetype_id": "house"}
+	)
+	_check(
+		bool(DeveloperPlacementStoreScript.last_user_load_outcome.get("recovered_catalog_drift", false))
+			and _reported_position(recovered_positions, "fixed.home_sleep").is_equal_approx(Vector2(321.0, 123.0))
+			and not recovered_positions.has("fixed.retired_fixture")
+			and int(recovered_layers.get("fixed.home_sleep", 0)) == 1
+			and not DeveloperPlacementStoreScript.layout_saved({"archetype_id": "house"}),
+		"Catalog changes must retain known primary coordinates and layers instead of rolling back to an older valid backup, while invalidating only incomplete review state."
+	)
+	for path in [user_path, "%s.bak" % user_path]:
+		if FileAccess.file_exists(path):
+			DirAccess.remove_absolute(path)
+	DeveloperPlacementStoreScript.reload()
 
 
 func _check_complete_layout_storage(user_path: String, project_path: String) -> void:
@@ -758,9 +825,12 @@ func _check_canvas_contract() -> void:
 	canvas.size = Vector2(900.0, 430.0)
 	root.add_child(canvas)
 	await process_frame
+	canvas.set_developer_slot_placement_shortcut_enabled(true)
 	canvas.developer_placement_lock_requested.connect(_capture_lock_request)
 	canvas.developer_placement_export_requested.connect(_capture_export_request)
 	canvas.developer_slot_layer_requested.connect(_persist_slot_layer_request)
+	canvas.developer_placement_undo_requested.connect(_persist_placement_undo_request)
+	canvas.developer_slot_placement_shortcut_toggled.connect(_capture_slot_shortcut_state)
 	var stale_canvas_object_id := "scenario::stale_canvas_visual"
 	var stale_canvas_objects: Array = canvas.call("_objects_from_foundation_snapshot", {
 		"archetype_id": "corner_store",
@@ -801,6 +871,16 @@ func _check_canvas_contract() -> void:
 		}],
 	}
 	canvas.render_environment_snapshot(corner_snapshot)
+	await _send_key(KEY_F1)
+	_check(
+		bool(canvas.developer_slot_placement_snapshot().get("enabled", false)) and slot_shortcut_states == [true],
+		"F1 must enable slot placement and report the live setting change."
+	)
+	await _send_key(KEY_F1)
+	_check(
+		not bool(canvas.developer_slot_placement_snapshot().get("enabled", true)) and slot_shortcut_states == [true, false],
+		"A second F1 press must disable slot placement."
+	)
 	canvas.set_developer_slot_placement_mode(true)
 	await process_frame
 	_check(canvas.developer_placement_export_button != null and canvas.developer_placement_export_button.text == "Export Report", "The placement overlay must expose an explicit EXE-safe report action.")
@@ -1071,6 +1151,9 @@ func _check_canvas_contract() -> void:
 	var baseline_object_rect: Rect2 = canvas.call("_board_rect_for_object", canvas.call("_scene_object", "item:fixture"))
 	canvas.call("_begin_developer_slot_placement_drag", occupied_rect.get_center())
 	var front_layer_button := canvas.developer_slot_layer_buttons.get("front") as BaseButton
+	var previous_item_shop_layer := int(DeveloperPlacementStoreScript.slot_layer_overrides(
+		corner_snapshot
+	).get("fixed.item_shop_1", 0))
 	_check(front_layer_button != null and not front_layer_button.disabled, "Selecting an editable slot must enable all three draw-layer controls.")
 	if front_layer_button != null:
 		front_layer_button.toggled.emit(true)
@@ -1079,6 +1162,20 @@ func _check_canvas_contract() -> void:
 			and int(slot_layer_request.get("layer", 99)) == 1 \
 			and int(canvas.call("_scene_object_draw_layer", canvas.call("_scene_object", "item:fixture"))) == 1,
 		"The Front control must persist the selected slot at the highest draw layer and immediately affect object ordering."
+	)
+	var undo_key := InputEventKey.new()
+	undo_key.keycode = KEY_Z
+	undo_key.ctrl_pressed = true
+	undo_key.pressed = true
+	canvas.call("_handle_developer_slot_placement_input", undo_key)
+	_check(
+		placement_undo_request_count == 1 \
+			and int(canvas.developer_slot_placement_snapshot().get("undo_count", -1)) == 0 \
+			and int(DeveloperPlacementStoreScript.slot_layer_overrides(
+				corner_snapshot
+			).get("fixed.item_shop_1", 0)) == previous_item_shop_layer \
+			and int(canvas.call("_scene_object_draw_layer", canvas.call("_scene_object", "item:fixture"))) == previous_item_shop_layer,
+		"Ctrl+Z must durably undo the latest slot layer edit and immediately restore the room view."
 	)
 	canvas.call("_cancel_developer_slot_placement_preview")
 	occupied_slot = canvas.call("_developer_slot", "fixed.item_shop_1")
@@ -1208,15 +1305,50 @@ func _capture_export_request(request: Dictionary) -> void:
 	exported_pending_request = request.duplicate(true)
 
 
+func _capture_slot_shortcut_state(enabled: bool) -> void:
+	slot_shortcut_states.append(enabled)
+
+
+func _send_key(keycode: Key) -> void:
+	var pressed := InputEventKey.new()
+	pressed.keycode = keycode
+	pressed.pressed = true
+	root.push_input(pressed, true)
+	await process_frame
+	var released := InputEventKey.new()
+	released.keycode = keycode
+	released.pressed = false
+	root.push_input(released, true)
+	await process_frame
+
+
 func _persist_slot_layer_request(request: Dictionary) -> void:
 	slot_layer_request = request.duplicate(true)
 	request["_slot_layer_handled"] = true
+	var state := DeveloperPlacementStoreScript.capture_user_room_state(
+		request.get("environment", {}) as Dictionary
+	)
 	var result := DeveloperPlacementStoreScript.save_slot_layer(
 		request.get("environment", {}) as Dictionary,
 		str(request.get("slot_id", "")),
 		int(request.get("layer", 0))
 	)
 	request["_slot_layer_persisted"] = bool(result.get("ok", false))
+	if bool(result.get("ok", false)):
+		request["_placement_undo_record"] = {
+			"label": "Test layer change",
+			"state": state,
+		}
+
+
+func _persist_placement_undo_request(request: Dictionary) -> void:
+	placement_undo_request_count += 1
+	request["_placement_undo_handled"] = true
+	var record: Dictionary = request.get("undo_record", {})
+	var result := DeveloperPlacementStoreScript.restore_user_room_state(
+		(record.get("state", {}) as Dictionary)
+	)
+	request["_placement_undo_persisted"] = bool(result.get("ok", false))
 
 
 func _slot(surface_map: Dictionary, slot_id: String) -> Dictionary:

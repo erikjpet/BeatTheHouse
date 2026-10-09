@@ -5563,6 +5563,7 @@
         "event:town_rumor_staff": "behind_counter_person",
         "game:bar_dice": "surface_item",
         "game:coin_pusher": "surface_item",
+        "game:pull_tabs": "surface_item",
         "game:slot": "surface_item",
         "numbers:silas": "standing_person",
         "service:house_drink": "surface_item"
@@ -6506,6 +6507,35 @@
           ],
           "facing": "none",
           "priority": 20,
+          "zone_id": "room",
+          "support_id": "bar_counter",
+          "walk_lane_ids": [],
+          "occupancy_required": false
+        },
+        {
+          "id": "fixed.random_game_3",
+          "kind": "fixed",
+          "pos": [
+            314.0,
+            178.0
+          ],
+          "footprint_class": "surface_item",
+          "physical_role": "Random game",
+          "occupant_ids": [],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [
+            278.0,
+            130.0,
+            72.0,
+            48.0
+          ],
+          "label_anchor": [
+            314.0,
+            176.0
+          ],
+          "facing": "none",
+          "priority": 30,
           "zone_id": "room",
           "support_id": "bar_counter",
           "walk_lane_ids": [],
@@ -7561,7 +7591,8 @@
       "fixed_category_slot_ids": {
         "numbers_spots:0": "fixed.numbers_book",
         "game_spots:0": "fixed.random_game_1",
-        "game_spots:1": "fixed.random_game_2"
+        "game_spots:1": "fixed.random_game_2",
+        "game_spots:2": "fixed.random_game_3"
       },
       "event_category_slot_ids": {
         "event_spots:2": "event.standing_person_1",
@@ -7654,6 +7685,7 @@
         "gas_station_trucker_convoy_tail_rig": "ground_marker",
         "game:scratch_tickets": "floor_fixture",
         "game:coin_pusher": "floor_fixture",
+        "game:pull_tabs": "floor_fixture",
         "event:parking_lot_tip": "ground_marker",
         "service:house_drink": "surface_item",
         "game:slot": "floor_fixture",
@@ -8526,6 +8558,37 @@
           ],
           "facing": "none",
           "priority": 10,
+          "zone_id": "center",
+          "support_id": "stage",
+          "walk_lane_ids": [],
+          "occupancy_required": false
+        },
+        {
+          "id": "fixed.random_game_2",
+          "kind": "fixed",
+          "pos": [
+            374.0,
+            240.0
+          ],
+          "footprint_class": "floor_fixture",
+          "physical_role": "Pull Tabs machine",
+          "occupant_ids": [
+            "game:pull_tabs"
+          ],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [
+            328.0,
+            176.0,
+            92.0,
+            64.0
+          ],
+          "label_anchor": [
+            374.0,
+            272.0
+          ],
+          "facing": "none",
+          "priority": 15,
           "zone_id": "center",
           "support_id": "stage",
           "walk_lane_ids": [],
@@ -9540,6 +9603,7 @@
       ],
       "fixed_object_slot_ids": {
         "character:nell": "fixed.staff_nell",
+        "game:pull_tabs": "fixed.random_game_2",
         "game:scratch_tickets": "fixed.game_scratch_tickets",
         "numbers:book": "fixed.numbers_book",
         "service:house_drink": "fixed.service_house_drink",
@@ -9564,8 +9628,9 @@
       },
       "fixed_category_slot_ids": {
         "numbers_spots:0": "fixed.numbers_book",
-        "game_spots:0": "fixed.random_game_1",
-        "game_spots:1": "fixed.game_scratch_tickets"
+        "game_spots:0": "fixed.random_game_2",
+        "game_spots:1": "fixed.random_game_1",
+        "game_spots:2": "fixed.game_scratch_tickets"
       },
       "event_category_slot_ids": {},
       "scenario_category_slot_ids": {},
@@ -15795,6 +15860,7 @@
       "pack_doorways": true,
       "class_overrides": {
         "event:town_rumor_staff": "behind_counter_person",
+        "game:pull_tabs": "wall_mounted",
         "service:listen_to_jazz": "ground_marker",
         "service:jazz_sax_round": "surface_item",
         "service:jazz_cello_round": "surface_item",
@@ -16377,6 +16443,37 @@
         "jazz_club_union_trouble_unbuilt_stage": "room_surface"
       },
       "fixed_slots": [
+        {
+          "id": "fixed.pulltab_game",
+          "kind": "fixed",
+          "pos": [
+            688.0,
+            24.0
+          ],
+          "footprint_class": "wall_mounted",
+          "physical_role": "Pull Tabs machine",
+          "occupant_ids": [
+            "game:pull_tabs"
+          ],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [
+            648.0,
+            0.0,
+            80.0,
+            48.0
+          ],
+          "label_anchor": [
+            688.0,
+            26.0
+          ],
+          "facing": "none",
+          "priority": 10,
+          "zone_id": "room",
+          "support_id": "wall",
+          "walk_lane_ids": [],
+          "occupancy_required": false
+        },
         {
           "id": "fixed.staff_bartender",
           "kind": "fixed",
@@ -17217,7 +17314,8 @@
       ],
       "fixed_object_slot_ids": {
         "shopkeeper:merchant": "fixed.staff_bartender",
-        "character:dot": "fixed.patron_dot"
+        "character:dot": "fixed.patron_dot",
+        "game:pull_tabs": "fixed.pulltab_game"
       },
       "event_object_slot_ids": {
         "numbers:silas": "event.standing_person_3"
@@ -17233,7 +17331,8 @@
       "fixed_category_slot_ids": {
         "shopkeeper_spots:0": "fixed.staff_bartender",
         "item_spots:0": "fixed.item_shop_1",
-        "item_spots:1": "fixed.item_shop_2"
+        "item_spots:1": "fixed.item_shop_2",
+        "game_spots:0": "fixed.pulltab_game"
       },
       "event_category_slot_ids": {
         "numbers_silas_spots:0": "event.standing_person_3"
@@ -24943,6 +25042,7 @@
         "game:slot": "wall_mounted",
         "game:slot:2": "wall_mounted",
         "game:slot:3": "wall_mounted",
+        "game:pull_tabs": "wall_mounted",
         "game:video_poker": "wall_mounted",
         "grand_casino_audit_night_lead_auditor": "standing_person",
         "grand_casino_audit_night_open_exit_marker": "wall_mounted",
@@ -25921,6 +26021,37 @@
           ],
           "facing": "none",
           "priority": 40,
+          "zone_id": "room",
+          "support_id": "wall",
+          "walk_lane_ids": [],
+          "occupancy_required": false
+        },
+        {
+          "id": "fixed.game_machine_5",
+          "kind": "fixed",
+          "pos": [
+            744.0,
+            118.0
+          ],
+          "footprint_class": "wall_mounted",
+          "physical_role": "Pull Tabs machine",
+          "occupant_ids": [
+            "game:pull_tabs"
+          ],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [
+            722.0,
+            94.0,
+            44.0,
+            48.0
+          ],
+          "label_anchor": [
+            744.0,
+            154.0
+          ],
+          "facing": "none",
+          "priority": 50,
           "zone_id": "room",
           "support_id": "wall",
           "walk_lane_ids": [],
@@ -27028,7 +27159,8 @@
         "event:recruitment_bishop": "fixed.patron_bishop",
         "staff:grand_casino_host": "fixed.staff_host",
         "event:scenario_audit_roster": "fixed.event_audit_roster",
-        "service:house_drink": "fixed.service_house_drink"
+        "service:house_drink": "fixed.service_house_drink",
+        "game:pull_tabs": "fixed.game_machine_5"
       },
       "event_object_slot_ids": {
         "event:chain06_cass_first_contact": "event.behind_counter_person_1",
@@ -27052,8 +27184,9 @@
         "game_spots:1": "fixed.game_machine_2",
         "game_spots:2": "fixed.game_machine_3",
         "game_spots:3": "fixed.game_machine_4",
-        "game_spots:4": "fixed.game_table_left",
-        "game_spots:5": "fixed.game_table_right"
+        "game_spots:4": "fixed.game_machine_5",
+        "game_spots:5": "fixed.game_table_left",
+        "game_spots:6": "fixed.game_table_right"
       },
       "event_category_slot_ids": {
         "event_spots:0": "event.behind_counter_person_1",

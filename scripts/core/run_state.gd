@@ -3258,6 +3258,13 @@ func world_sequence_finalize_base_semantics(interactable_records: Array, library
 
 
 func scenario_finalize_installed_environment(library: ContentLibrary, layout_context: Dictionary = {}) -> Dictionary:
+	# Environment practice is the authoring/repair surface. UI refreshes rebuild
+	# their own layout context, so derive this permission from the installed room
+	# marker on every pass instead of relying on one generator call to carry it.
+	var narrative_flags := JsonCoerceScript._copy_dict(current_environment.get("local_narrative_flags", {}))
+	if bool(narrative_flags.get("environment_test_session", false)):
+		layout_context = layout_context.duplicate(true)
+		layout_context["authoring_preview"] = true
 	var definition := _scenario_sequence_definition_readonly()
 	if not ScenarioSequenceSchemaScript.is_sequence(definition):
 		return {"ok": true, "inactive": true, "errors": []}

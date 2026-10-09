@@ -697,8 +697,8 @@ func _check_world_map_keyboard_contract() -> void:
 		failures.append("BTH-028: world-map fixture did not expose both destination buttons.")
 	else:
 		for button in buttons:
-			if button.focus_mode == Control.FOCUS_NONE or button.text.strip_edges().is_empty() or button.accessibility_name.strip_edges().is_empty():
-				failures.append("BTH-028: a world-map destination is not focusable with visible and accessible identity text.")
+			if button.focus_mode == Control.FOCUS_NONE or not button.text.is_empty() or button.accessibility_name.strip_edges().is_empty() or button.tooltip_text.strip_edges().is_empty():
+				failures.append("BTH-028: a world-map destination hit target is not text-free, focusable, and accessibly named.")
 				break
 		if not controller.has_method("focus_first_available"):
 			failures.append("BTH-028: world-map controller has no deterministic keyboard entry focus.")

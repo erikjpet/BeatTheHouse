@@ -60,7 +60,7 @@ real surface interaction rather than placeholder result buttons.
 | Bar Dice | Ship, Captain, Crew with patrons, pots, cargo scoring, timed loaded-toss/palmed-swap actions, and a fixed non-overlapping 1280x720 table/control layout |
 | Blackjack | Shoe state, hit/stand/split/double/surrender, side bets, counting, hole-card peek, surveillance, and the Rourke duel host |
 | Baccarat | Player/Banker/Tie and pair bets, commission, squeeze/shoe state, shoe reading, and edge sorting |
-| Craps | Casino and street tables, 40 reachable wager types, interruption/refund state, derived edges, and million-roll verification |
+| Craps | Casino and street play, 40 reachable wager types, interruption/refund state, derived edges, million-roll verification, and a dedicated chalk-circle alley object instead of a casino table in Street Craps environments |
 | Roulette | Inside/outside chip placement, full wheel resolution, recent history, wheel reading, and past-post timing |
 | Crew Hold'em | Six-handed no-limit Hold'em, automatic paced opponent turns, personality-shaped but fallible tells, player-projected tells, dealer/muck fold cleanup, conserved pots, hidden-card authority, five nights, and seven persistent opponents |
 | Video Poker | Three authored Jacks or Better/Deuces Wild/Double Double Bonus cabinets, one to three hands, denomination/coin ladder, hold/draw, recommendation support, mark-holds, and bounded double-up |
@@ -96,6 +96,9 @@ real surface interaction rather than placeholder result buttons.
 - Environment and game surfaces retain autonomous no-input animation scheduling;
   redraw work is cached/bounded without depending on mouse movement, hover, or
   selection.
+- The persistent **Object labels and borders** setting controls subtle
+  selected/hovered room labels and outlines without changing hit testing or
+  interaction availability.
 - The Coin Pusher native GDExtension is present, identity-checked, and parity
   tested; Web uses its supported fallback path.
 - Native/Web SFX use the shared 22.05 kHz contract and thirteen surface
@@ -130,8 +133,13 @@ package, so its exact evidence is preserved separately from the newer source:
 - the placement panel has a visible minimize control, and minimizing removes
   the entire large panel from hit testing so covered room objects and slots can
   be selected;
+- the fixed, scrollbar-free placement panel uses consistent control/type sizing,
+  four single-family filters plus **All**, and **Behind**/**Standard**/**Front**
+  draw-layer controls for the selected slot;
 - a small restore button brings back all panel controls, with F2 retained as a
   keyboard-parity shortcut;
+- F1 toggles slot placement mode itself and synchronizes the live Settings
+  preference and checkbox;
 - the minimized state survives context advances and resets when placement mode
   is exited;
 
@@ -146,15 +154,18 @@ package, so its exact evidence is preserved separately from the newer source:
   export path;
 - the returned-report workflow verifies source provenance, all-layout coverage,
   and placement-authority hashes before import.
+- Environment Library practice sessions ignore closing-time and normal
+  run-terminal exits, and validation warnings do not block a malformed or
+  obstructed room from loading for repair.
 
 The established placement baseline includes:
 
 - 21 source maps validate with four closed slot families and no dangling
   mapping, duplicate map-local ID, duplicate exact rectangle, or provable
   fixed/exit orphan;
-- the audited raw/template census is 565 positions (175 fixed, 144 event, 213
-  scenario-source, 33 exit), yielding 395 reachable shared positions plus 604
-  exact scenario positions for 999 unique manual entries;
+- the audited raw/template census is 521 positions (179 fixed, 98 event, 211
+  scenario-source, 33 exit), yielding 368 reachable shared positions plus 604
+  exact scenario positions for 972 unique manual entries;
 - 20 reachable base layouts plus 55 exact scenario layouts produce the complete
   75-context owner checklist; the raw Punchline parent remains source-only;
 - 55 exact scenario layouts contain 604 independently movable scenario slots;
@@ -176,6 +187,9 @@ The established placement baseline includes:
 - hidden-casino game capacity is now two floor-fixture positions, so Blackjack
   can no longer fall through to the Numbers Book; variable Kitty games and
   Punchline games/lenders remain pooled rather than ID-positioned.
+- Pull Tabs retains a physical machine in the Bar, Gas Station Casino, Jazz
+  Club, and Grand Casino while help/redemption stays attached to existing
+  staff; the Gas Station again exposes all three selected machine positions.
 
 The old room-composition failures are closed by the scenario-local layout
 authority and post-migration cleanup. The remaining room work is artistic:

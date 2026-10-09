@@ -401,6 +401,25 @@ func _sync() -> void:
 	_apply_accessibility_settings()
 
 
+# Reconciles a live F1 placement-mode change without discarding other draft
+# settings that may currently be open and unsaved.
+func sync_developer_slot_placement_mode(enabled: bool) -> void:
+	if settings != null:
+		settings.developer_slot_placement_mode = enabled
+		if enabled:
+			settings.developer_placement_mode = false
+	if draft != null:
+		draft.developer_slot_placement_mode = enabled
+		if enabled:
+			draft.developer_placement_mode = false
+	if developer_slot_placement_mode != null:
+		developer_slot_placement_mode.set_pressed_no_signal(enabled)
+		_update_check_label(developer_slot_placement_mode, enabled)
+	if enabled and developer_placement_mode != null:
+		developer_placement_mode.set_pressed_no_signal(false)
+		_update_check_label(developer_placement_mode, false)
+
+
 # Updates percentage text beside sliders.
 func _labels() -> void:
 	master_text.text = "%d%%" % int(master.value)

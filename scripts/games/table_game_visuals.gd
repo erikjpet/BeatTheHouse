@@ -481,8 +481,9 @@ static func _draw_table_character(surface, style: Dictionary, foot: Vector2, sca
 	surface.draw_rect(Rect2(body.position + Vector2(4, 5) * scale_value, body.size - Vector2(8, 9) * scale_value), jacket)
 	surface.draw_rect(Rect2(pos + Vector2(-18, -56) * scale_value, Vector2(36, 6) * scale_value), accent)
 	var gesture_amount := clampf(float(style.get("gesture_amount", 1.0)), 0.0, 1.0)
-	_draw_character_arm(surface, pos, scale_value, accent, pose, true, skin, gesture_amount)
-	_draw_character_arm(surface, pos, scale_value, accent, pose, false, skin, gesture_amount)
+	var gesture_side := int(style.get("gesture_side", 0))
+	_draw_character_arm(surface, pos, scale_value, accent, pose, true, skin, gesture_amount, gesture_side)
+	_draw_character_arm(surface, pos, scale_value, accent, pose, false, skin, gesture_amount, gesture_side)
 	surface.draw_rect(head, skin)
 	surface.draw_rect(Rect2(head.position, Vector2(head.size.x, 8 * scale_value)), hair)
 	if not faceless:
@@ -501,8 +502,13 @@ static func _draw_table_character(surface, style: Dictionary, foot: Vector2, sca
 		surface.surface_label(name.left(10), pos + Vector2(-26, 10) * scale_value, int(10 * scale_value), accent)
 
 
-static func _draw_character_arm(surface, pos: Vector2, scale_value: float, accent: Color, pose: String, left: bool, hand_color: Color = Color("#c49371"), gesture_amount: float = 1.0) -> void:
+static func _draw_character_arm(surface, pos: Vector2, scale_value: float, accent: Color, pose: String, left: bool, hand_color: Color = Color("#c49371"), gesture_amount: float = 1.0, gesture_side: int = 0) -> void:
 	var side := -1.0 if left else 1.0
+	var active_side := (left and gesture_side < 0) or (not left and gesture_side >= 0)
+	if gesture_side == 0:
+		# Preserve the historical hand choice for game-surface callers that do
+		# not opt into the environment idle routine's left/right variation.
+		active_side = left if pose == "pocket_check" else not left
 	var shoulder := pos + Vector2(side * 24, -45) * scale_value
 	var resting_hand := pos + Vector2(side * 42, -22) * scale_value
 	var hand := resting_hand
@@ -516,10 +522,10 @@ static func _draw_character_arm(surface, pos: Vector2, scale_value: float, accen
 		hand = pos + Vector2(side * 30, -18) * scale_value
 	elif pose == "arms_folded":
 		hand = pos + Vector2(-side * 10, -31) * scale_value
-	elif pose == "chin_touch" and not left:
-		hand = pos + Vector2(9, -66) * scale_value
-	elif pose == "pocket_check" and left:
-		hand = pos + Vector2(-10, -18) * scale_value
+	elif pose == "chin_touch" and active_side:
+		hand = pos + Vector2(side * 9, -66) * scale_value
+	elif pose == "pocket_check" and active_side:
+		hand = pos + Vector2(side * 10, -18) * scale_value
 	elif pose == "adjust_cuff":
 		hand = pos + Vector2(-side * 6, -27 if left else -31) * scale_value
 	elif pose == "counter_tap":
@@ -530,6 +536,16 @@ static func _draw_character_arm(surface, pos: Vector2, scale_value: float, accen
 		hand = pos + Vector2(side * (48 if left else 32), -30 if left else -15) * scale_value
 	elif pose == "lookaround":
 		hand = pos + Vector2(side * 38, -20) * scale_value
+	elif pose == "head_scratch" and active_side:
+		hand = pos + Vector2(side * 11, -72) * scale_value
+	elif pose == "stretch":
+		hand = pos + Vector2(side * 48, -63) * scale_value
+	elif pose == "hand_on_hip" and active_side:
+		hand = pos + Vector2(side * 17, -25) * scale_value
+	elif pose == "wrist_check":
+		hand = pos + Vector2(-side * (3 if active_side else 11), -34 if active_side else -30) * scale_value
+	elif pose == "rub_hands":
+		hand = pos + Vector2(side * 5, -29) * scale_value
 	if pose not in ["snitch", "covered", "lookaway", "watching"]:
 		hand = resting_hand.lerp(hand, gesture_amount)
 	surface.draw_line(shoulder, hand, Color("#05060a"), maxf(2.0, 6.0 * scale_value))

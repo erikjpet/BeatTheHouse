@@ -13,7 +13,7 @@ after the final unused-code cleanup:
 | Area | Files | Responsibility |
 | --- | ---: | --- |
 | `scripts/core/` | 88 | Deterministic state, content, generation, scenarios, actions, persistence, placement, economy, Crew, and endgame rules |
-| `scripts/ui/` | 77 | Application flow, view models, canvases, input, accessibility, dialogue/tutorial UI, audio, and presentation |
+| `scripts/ui/` | 78 | Application flow, view models, canvases, input, accessibility, dialogue/tutorial UI, audio, and presentation |
 | `scripts/games/` | 47 | Eleven playable modules plus shared renderers and game-specific simulation/support code |
 
 Tests under `scripts/tests/` and active tools under `tools/` are executable

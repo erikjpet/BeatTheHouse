@@ -316,7 +316,10 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	var final_authority_errors := _array(final_authority_proof.get("errors", []))
 	if not final_authority_errors.is_empty():
 		host.run_state.set("current_environment", entry_environment)
-		return _fail_closed_room_records(result, "final object authority preflight failed")
+		return _fail_closed_room_records(
+			result,
+			"final object authority preflight failed: %s" % JSON.stringify(final_authority_errors)
+		)
 	result = _join_object_manifest(result, host.run_state.current_environment, false, final_authority_proof)
 	result = _attach_delivery_handoff_to_contact(host, result)
 	result = _attach_action_only_records(result)
@@ -344,6 +347,7 @@ static func _join_object_manifest(records: Array, environment: Dictionary, synth
 	var scenario_snapshot_present := EnvironmentObjectManifestScript.has_causal_scenario_renderer_snapshot(environment)
 	var result := records.duplicate(true)
 	var record_indices: Dictionary = {}
+	var physical_manifest_ids: Dictionary = {}
 	for index in range(result.size()):
 		var record := _dict(result[index])
 		var record_id := str(record.get("object_id", "")).strip_edges()
@@ -366,6 +370,11 @@ static func _join_object_manifest(records: Array, environment: Dictionary, synth
 			presentation_id = manifest_object_id
 		if manifest_object_id.is_empty() or presentation_id.is_empty():
 			continue
+		# Manifest action ids describe actions owned by this physical host; they are
+		# not globally unique. Remember every tangible identity up front so a shared
+		# command id cannot turn one physical host into an alias of another.
+		physical_manifest_ids[manifest_object_id] = true
+		physical_manifest_ids[presentation_id] = true
 		var host_index := int(record_indices.get(presentation_id, record_indices.get(manifest_object_id, -1)))
 		var direct_delivery_contact := family == "scenario" \
 				and str(row.get("spot_field", "")) == "runtime_object_manifest_entries" \
@@ -384,6 +393,7 @@ static func _join_object_manifest(records: Array, environment: Dictionary, synth
 			var record_id := str(record.get("object_id", "")).strip_edges()
 			if not record_id.is_empty() and not record_indices.has(record_id):
 				record_indices[record_id] = index
+	var action_host_candidates_by_index: Dictionary = {}
 	for row_value in manifest_rows:
 		var row := _dict(row_value)
 		if row.is_empty() or not bool(row.get("active", true)) or not bool(row.get("physical", true)):
@@ -416,11 +426,37 @@ static func _join_object_manifest(records: Array, environment: Dictionary, synth
 			if index == host_index:
 				continue
 			var source := _dict(result[index])
+			# Exact scenario/service attachment is authored authority. The manifest
+			# join may corroborate it, but must never replace it based on a command id
+			# that another host can legitimately share (for example a refusal action).
+			var existing_binding_source_id := str(source.get("slot_binding_source_id", "")).strip_edges()
+			if not existing_binding_source_id.is_empty():
+				if existing_binding_source_id == presentation_id:
+					source["manifest_action_host_id"] = manifest_object_id
+					result[index] = source
+				continue
+			var source_object_id := str(source.get("object_id", "")).strip_edges()
+			if physical_manifest_ids.has(source_object_id):
+				continue
 			if not _record_matches_manifest_action(source, action_ids):
 				continue
-			source["slot_binding_source_id"] = presentation_id
-			source["manifest_action_host_id"] = manifest_object_id
-			result[index] = source
+			var candidates := _dict(action_host_candidates_by_index.get(index, {}))
+			candidates[presentation_id] = manifest_object_id
+			action_host_candidates_by_index[index] = candidates
+	# Inference is safe only for a nonphysical action alias with one manifest
+	# owner. Ambiguous aliases remain unattached so the authoritative final pass
+	# reports the content error instead of silently choosing whichever row ran last.
+	for index_value in action_host_candidates_by_index.keys():
+		var index := int(index_value)
+		var candidates := _dict(action_host_candidates_by_index.get(index_value, {}))
+		if candidates.size() != 1 or index < 0 or index >= result.size():
+			continue
+		var presentation_ids := candidates.keys()
+		var presentation_id := str(presentation_ids[0])
+		var source := _dict(result[index])
+		source["slot_binding_source_id"] = presentation_id
+		source["manifest_action_host_id"] = str(candidates.get(presentation_id, ""))
+		result[index] = source
 	return result
 
 
@@ -705,6 +741,12 @@ static func _attach_action_only_records(records: Array, deferred_exact_action_ho
 			continue
 		var target_index := _attached_action_target_index(room_records, source)
 		if target_index < 0:
+			# Scenario composition can retain a self-hosted visual record and also
+			# surface its action alias during the same refresh. If the visible record
+			# already carries every action, the alias has nothing left to attach and
+			# is not an orphan. Keep warnings for genuinely missing hosts/actions.
+			if _visible_room_record_already_carries_actions(room_records, source, actions):
+				continue
 			if not _missing_action_host_warning_deferred(source, deferred_exact_action_hosts):
 				push_warning("Room action %s has no visible room object to attach to." % str(source.get("object_id", "unknown")))
 			continue
@@ -734,6 +776,40 @@ static func _attach_action_only_records(records: Array, deferred_exact_action_ho
 			target["decorative"] = false
 		room_records[target_index] = target
 	return room_records
+
+
+static func _visible_room_record_already_carries_actions(records: Array, source: Dictionary, source_actions: Array) -> bool:
+	var source_object_id := str(source.get("object_id", "")).strip_edges()
+	if source_object_id.is_empty() or source_actions.is_empty():
+		return false
+	var required_action_ids: Dictionary = {}
+	for action_value in source_actions:
+		var action := _dict(action_value)
+		var action_id := str(action.get("emit_object_id", action.get("id", ""))).strip_edges()
+		if not action_id.is_empty():
+			required_action_ids[action_id] = true
+	if required_action_ids.is_empty():
+		return false
+	for record_value in records:
+		var record := _dict(record_value)
+		if str(record.get("object_id", "")).strip_edges() != source_object_id \
+				or not bool(record.get("visible", true)) \
+				or str(record.get("presentation_mode", "room")) != "room":
+			continue
+		var carried_action_ids: Dictionary = {}
+		for action_value in action_entries_for_record(record):
+			var action := _dict(action_value)
+			var action_id := str(action.get("emit_object_id", action.get("id", ""))).strip_edges()
+			if not action_id.is_empty():
+				carried_action_ids[action_id] = true
+		var complete := true
+		for action_id_value in required_action_ids.keys():
+			if not carried_action_ids.has(action_id_value):
+				complete = false
+				break
+		if complete:
+			return true
+	return false
 
 
 static func _missing_action_host_warning_deferred(source: Dictionary, deferred_exact_action_hosts: Dictionary) -> bool:

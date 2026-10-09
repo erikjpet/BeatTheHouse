@@ -6,6 +6,7 @@ extends Control
 
 signal new_run_requested
 signal home_requested
+signal main_menu_requested
 signal copy_seed_requested(seed: String)
 signal bag_claim_requested(marker_id: String)
 signal take_home_item_claim_requested(item_id: String)
@@ -51,6 +52,7 @@ var seed_label: Label
 var button_row: HBoxContainer
 var new_run_button: Button
 var home_button: Button
+var main_menu_button: Button
 var _built := false
 
 
@@ -370,6 +372,10 @@ func _build() -> void:
 	home_button = _action_button("Home")
 	home_button.pressed.connect(func() -> void: home_requested.emit())
 	button_row.add_child(home_button)
+	main_menu_button = _action_button("Main Menu")
+	main_menu_button.tooltip_text = "Return to the main menu."
+	main_menu_button.pressed.connect(func() -> void: main_menu_requested.emit())
+	button_row.add_child(main_menu_button)
 	var copy_seed := _action_button("Copy Seed")
 	copy_seed.pressed.connect(func() -> void: copy_seed_requested.emit(str(report_model.get("seed", ""))))
 	button_row.add_child(copy_seed)
@@ -619,6 +625,7 @@ func _update_reward_navigation_lock() -> void:
 	var pending := _reward_selection_pending()
 	new_run_button.disabled = pending
 	home_button.disabled = pending
+	main_menu_button.disabled = pending
 
 
 func _render_debts(rows_value: Variant) -> void:
@@ -640,7 +647,7 @@ func debug_layout_snapshot() -> Dictionary:
 	var rects := {}
 	for key in section_panels.keys():
 		rects[str(key)] = (section_panels[key] as Control).get_rect()
-	return {"size": size, "section_rects": rects, "button_rect": button_row.get_rect(), "small_screen_mode": small_screen_mode, "reduce_motion": reduce_motion, "replay_progress": replay_progress, "replay_clock_text": replay_clock_label.text, "timeline_install_count": timeline_install_count, "timeline_heat_sample_count": timeline_canvas.heat_samples.size(), "timeline_environment_band_count": timeline_canvas.environment_bands.size(), "map_snapshot_node_count": (map_canvas.snapshot.get("nodes", []) as Array).size(), "map_replay_keyframe_count": map_canvas.replay_keyframes.size(), "map_replay_segment_count": map_canvas.replay_segments.size(), "has_scroll_container": _has_scroll_container(self), "release_ledger_text": _release_ledger_text(), "release_ledger_line_count": maxi(0, release_ledger_rows.get_child_count() - 1), "release_ledger_rect": release_ledger_rows.get_global_rect(), "result_panel_rect": (section_panels.get("result") as Control).get_global_rect(), "bag_reward_visible": bag_reward_row.visible, "bag_reward_pending": bag_claim_button.visible, "bag_reward_choice_count": bag_reward_selector.item_count, "take_home_item_reward_visible": take_home_item_reward_row.visible, "take_home_item_reward_pending": take_home_item_claim_button.visible, "take_home_item_reward_choice_count": take_home_item_reward_selector.item_count, "take_home_item_reward_label": take_home_item_reward_label.text, "meta_reward_visible": outcome_meta_reward.visible, "meta_reward_text": outcome_meta_reward.text, "new_run_disabled": new_run_button.disabled, "home_disabled": home_button.disabled}
+	return {"size": size, "section_rects": rects, "button_rect": button_row.get_rect(), "small_screen_mode": small_screen_mode, "reduce_motion": reduce_motion, "replay_progress": replay_progress, "replay_clock_text": replay_clock_label.text, "timeline_install_count": timeline_install_count, "timeline_heat_sample_count": timeline_canvas.heat_samples.size(), "timeline_environment_band_count": timeline_canvas.environment_bands.size(), "map_snapshot_node_count": (map_canvas.snapshot.get("nodes", []) as Array).size(), "map_replay_keyframe_count": map_canvas.replay_keyframes.size(), "map_replay_segment_count": map_canvas.replay_segments.size(), "has_scroll_container": _has_scroll_container(self), "release_ledger_text": _release_ledger_text(), "release_ledger_line_count": maxi(0, release_ledger_rows.get_child_count() - 1), "release_ledger_rect": release_ledger_rows.get_global_rect(), "result_panel_rect": (section_panels.get("result") as Control).get_global_rect(), "bag_reward_visible": bag_reward_row.visible, "bag_reward_pending": bag_claim_button.visible, "bag_reward_choice_count": bag_reward_selector.item_count, "take_home_item_reward_visible": take_home_item_reward_row.visible, "take_home_item_reward_pending": take_home_item_claim_button.visible, "take_home_item_reward_choice_count": take_home_item_reward_selector.item_count, "take_home_item_reward_label": take_home_item_reward_label.text, "meta_reward_visible": outcome_meta_reward.visible, "meta_reward_text": outcome_meta_reward.text, "new_run_disabled": new_run_button.disabled, "home_disabled": home_button.disabled, "main_menu_disabled": main_menu_button.disabled, "main_menu_text": main_menu_button.text}
 
 
 func _release_ledger_text() -> String:

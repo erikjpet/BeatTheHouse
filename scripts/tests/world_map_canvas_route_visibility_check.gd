@@ -21,6 +21,7 @@ func _init() -> void:
 
 func _run() -> void:
 	_check_run_map_location_visibility_contract()
+	_check_destination_nameplates_fit_text()
 	await _check_zoomed_route_geometry_survives()
 	await _check_scroll_zoom_and_drag_pan()
 	await _check_overlay_routes_navigation_events()
@@ -41,6 +42,16 @@ func _check_run_map_location_visibility_contract() -> void:
 	_check(not FoundationTravelViewModelScript.world_map_node_should_render(host, revealed_seen, false, false), "Seen but unvisited locations should stay hidden when they are not currently travelable.")
 	_check(FoundationTravelViewModelScript.world_map_node_should_render(host, revealed_seen, false, true), "An unvisited location should appear while it is a currently travelable destination.")
 	_check(FoundationTravelViewModelScript.world_map_node_should_render(host, visited, false, false), "A visited location should remain visible when it is no longer reachable from the current stop.")
+
+
+func _check_destination_nameplates_fit_text() -> void:
+	var canvas: WorldMapCanvas = WorldMapCanvasScript.new()
+	canvas.size = Vector2(540.0, 390.0)
+	var short_rect: Rect2 = canvas.call("_destination_node_label_rect", Vector2(270.0, 180.0), {"id": "bar", "label": "Bar"})
+	var long_rect: Rect2 = canvas.call("_destination_node_label_rect", Vector2(270.0, 180.0), {"id": "underground", "label": "Small Underground Casino"})
+	_check(short_rect.has_area() and long_rect.has_area(), "Destination nameplates must produce visible bordered bounds.")
+	_check(long_rect.size.x > short_rect.size.x, "Destination nameplate borders must measure their location text instead of using one fixed width.")
+	canvas.free()
 
 
 func _check_zoomed_route_geometry_survives() -> void:
@@ -139,6 +150,8 @@ func _check_overlay_routes_navigation_events() -> void:
 			break
 	_check(test_button != null, "Travel-map overlay did not create a clickable location target.")
 	if test_button != null:
+		_check(test_button.text.is_empty(), "The invisible map hit target rendered duplicate location text over its icon.")
+		_check(not test_button.accessibility_name.strip_edges().is_empty() and not test_button.tooltip_text.strip_edges().is_empty(), "The text-free map hit target lost its accessible location identity.")
 		_check(test_button.get_signal_connection_list("mouse_entered").is_empty(), "Map location target still has a hover-selection callback.")
 		test_button.mouse_entered.emit()
 		await process_frame

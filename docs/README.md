@@ -19,7 +19,7 @@ current game.
 - `plans/release_0_6_0_copy.md` — maintained draft of public 0.6 release copy;
   it remains owner-gated and must not be posted before approval.
 - `plans/0.6_living_world_roadmap.md` — owner-approved 0.6 design intent.
-- `plans/content_style_guide.md`, `plans/0.5_voice_bible.md`, and
+- `plans/content_style_guide.md`, `archive/0.5/plans/0.5_voice_bible.md`, and
   `plans/0.6_voice_bible_world_register.md` — current player-facing copy and
   voice rules.
 
@@ -34,6 +34,13 @@ recorded source boundary.
 - `game_reference.md` — complete 0.6 game roster, mechanics, actions, source
   modules, supporting scripts, and data inventory.
 - `character_authoring.md` — reusable character and encounter authoring.
+- `todo/environment_scenario_slot_instance_rework.md` — implemented
+  four-family/scenario-instance placement contract and current owner handoff.
+- `todo/environment_slot_placement_mode.md` — implemented placement-tool,
+  persistence, report, and promotion workflow.
+- `plans/environment_scenario_layout_breakdown.md` — generated 75-context
+  placement checklist; regenerate it whenever either placement authority
+  changes and require its `--check` mode before committing.
 - `plans/world_map_design.md` — seeded persistent travel graph contract.
 - `plans/grand_casino_endgame_design.md` — Act 1 Grand Casino ending contract.
 - `plans/coin_pusher_v3_machine_rework_plan.md` — implemented binding design

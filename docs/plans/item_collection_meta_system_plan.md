@@ -132,9 +132,9 @@ flavor).
 ## 6. Meta persistence (implemented; original proposal corrected)
 
 - New `scripts/core/meta_collection_service.gd` owning
-  `user://meta_collection.json`: schema-versioned, atomic write (pattern:
-  scripts/core/user_settings.gd:6,67), corruption-tolerant normalize-on-load
-  (RunState discipline).
+  `user://meta_collection.json`: schema-versioned, atomic write following the
+  `UserSettings.load()`/`save()` persistence pattern, with
+  corruption-tolerant normalize-on-load behavior (RunState discipline).
 - Holds: unopened bags, owned item instances (itemdef + instance id + four
   floats), gold balance, backpack loadout, meta-home state (housing, container
   furniture, placements), collection progress, trade-up/sale history.

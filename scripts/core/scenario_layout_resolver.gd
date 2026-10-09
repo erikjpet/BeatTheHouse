@@ -425,6 +425,7 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 	var audit := {
 		"active": true,
 		"valid": true,
+		"gameplay_valid": true,
 		"visual_count": mini(visual_count, MAX_VISUALS),
 		"collision_adjustment_count": collision_adjustments,
 		"board_size": _size_snapshot(BOARD_SIZE),
@@ -446,6 +447,30 @@ static func resolve(base_records: Array, projection: Dictionary, environment: Di
 		"deterministic_z_order": true,
 	}
 	if not errors.is_empty():
+		# The Environment Library is also the repair surface for authored slot
+		# geometry. Keep the fully resolved authority available there so an
+		# obstructing object can be selected, moved, and saved. This exception is
+		# explicit in the trusted layout context; production rooms continue to
+		# reject the same findings below.
+		if bool(context.get("authoring_preview", false)):
+			audit["authoring_preview"] = true
+			audit["gameplay_valid"] = false
+			audit["authoring_error_count"] = errors.size()
+			audit["authoring_errors"] = errors.duplicate(true)
+			for error_value in errors:
+				var warning := str(error_value).strip_edges()
+				if not warning.is_empty() and not warnings.has(warning):
+					warnings.append(warning)
+			return {
+				"ok": true,
+				"projection": resolved_projection,
+				"errors": [],
+				"warnings": warnings,
+				"layout_authority": authority,
+				"layout_authority_digest": authority_digest,
+				"fallback_authority": _fallback_authority(),
+				"layout_audit": audit,
+			}
 		return _failed_result(resolved_projection, errors, warnings, audit)
 	return {
 		"ok": true,
@@ -1835,7 +1860,7 @@ static func _guard_unique_base_record_slots(base_records: Array, environment: Di
 static func _validate_layout_context(context: Dictionary, errors: Array) -> void:
 	if context.is_empty():
 		return
-	for key in ["small_screen_mode", "reduce_motion", "production_canvas"]:
+	for key in ["small_screen_mode", "reduce_motion", "production_canvas", "authoring_preview"]:
 		if context.has(key) and typeof(context.get(key)) != TYPE_BOOL:
 			errors.append("Scenario production layout setting %s must be boolean." % key)
 	var overlay := _context_overlay_rect(context)

@@ -32,6 +32,15 @@ static func _evaluate(run_state: RunState, library: ContentLibrary, include_reco
 		result["reason"] = run_state.run_failure_reason
 		result["message"] = run_state.run_failure_message
 		return result
+	# Environment Library rooms always expose a practice-only Leave interaction.
+	# That exit is intentionally not a world-map route, so the normal stranded
+	# scan cannot discover it from travel_hooks. Treat the stamped practice room
+	# as recoverable before evaluating bankroll, heat, or wager availability; a
+	# placement/debug session must never become a terminal career run.
+	if _is_environment_test_session(run_state):
+		result["travel_available"] = true
+		result["recovery_available"] = true
+		return result
 	if run_state.suspicion_level() >= 100:
 		if run_state.grand_casino_heat_reroute_available():
 			return result
@@ -82,6 +91,13 @@ static func _evaluate(run_state: RunState, library: ContentLibrary, include_reco
 	return result
 
 
+static func _is_environment_test_session(run_state: RunState) -> bool:
+	if run_state == null or run_state.current_environment.is_empty():
+		return false
+	var flags: Dictionary = run_state.current_environment.get("local_narrative_flags", {}) if typeof(run_state.current_environment.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
+	return bool(flags.get("environment_test_session", false))
+
+
 static func evaluate_and_apply(run_state: RunState, library: ContentLibrary = null) -> Dictionary:
 	return _evaluate_and_apply(run_state, library, false)
 
@@ -91,7 +107,7 @@ static func evaluate_terminal_and_apply(run_state: RunState, library: ContentLib
 
 
 static func _evaluate_and_apply(run_state: RunState, library: ContentLibrary, terminal_only: bool) -> Dictionary:
-	if run_state != null:
+	if run_state != null and not _is_environment_test_session(run_state):
 		run_state.handle_grand_casino_heat_reroute("terminal_evaluator")
 	var result := evaluate_terminal(run_state, library) if terminal_only else evaluate(run_state, library)
 	if run_state == null or not bool(result.get("failed", false)):

@@ -23,6 +23,20 @@ metadata read `0.6.0`.
 - Gives Bar Dice a fixed 1280x720 composition with separate patron, dice,
   rules, paytable, timer, and control regions so its interface no longer stacks
   labels or buttons over active play.
+- Gives the Street Craps variant its own low-profile alley object: a chalk
+  circle, loose dice, cash, pavement marks, and players' feet replace the
+  casino Craps table while preserving the same game activation.
+- Keeps Environment Library sessions non-terminal. Practice rooms ignore
+  closing-time and ordinary run-terminal exits; rooms without a wagerable game,
+  including The Punchline's public comedy-club layer, recognize the practice
+  Leave interaction instead of routing to Stranded. Placement/access warnings
+  no longer prevent a broken layout from loading for repair.
+- Adds a direct Main Menu button to the completed-run report alongside New Run
+  and Home, while retaining the required earned-reward selection lock.
+- Removes duplicate location names drawn over world-map icons and sizes each
+  bordered destination nameplate to its actual text instead of a fixed width.
+- Raises both flanking members of The Crew's three-person environment object to
+  the normal character scale so the trio no longer appears undersized.
 - Restores autonomous animation scheduling across environments, placement
   tools, and game surfaces. Animations remain live without mouse movement and
   while overlays are open; performance work reduces scheduled-frame cost with
@@ -34,7 +48,14 @@ metadata read `0.6.0`.
   slots are excluded from no-scenario rooms, event slots without any possible
   claimant are pruned, all slot families can be selected together, fixed event
   and exit slots remain movable in scenario contexts, and each object exposes
-  one of three explicit draw layers.
+  one of three explicit draw layers. F1 now toggles slot placement mode itself,
+  while F2 continues to hide or restore its panel. The resulting live authority contains 521
+  raw source/template positions, 368 reachable room-shared positions, and 604
+  scenario-local positions for 972 unique manual entries.
+- Restores game capacity mistakenly removed during slot consolidation. Pull
+  Tabs again appears as a physical machine in the Bar, Gas Station Casino,
+  Jazz Club, and Grand Casino, and the Gas Station again exposes all three of
+  its selected machines; counter staff retain help and redemption actions.
 - Adds broader per-character idle variation so room and table figures do not
   all repeat the same gesture cadence.
 - Removes 105 unreferenced production functions, 13 unused tool helpers, one

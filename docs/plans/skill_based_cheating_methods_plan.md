@@ -15,22 +15,22 @@ retaining these authority and result fields.
 
 ## Source Check
 
-The plan was cross-checked against these current implementation points:
+The plan was cross-checked against these current implementation points. Stable
+symbols are named instead of line numbers so routine source movement does not
+make this reference stale:
 
-- `scripts/games/blackjack.gd:4188` starts the count challenge, `:4406` syncs
-  icons, and `:4489` finalizes the challenge.
-- `scripts/games/blackjack.gd:745` finalizes an unanswered count before
-  settlement; `:772` selects `legal`, `risky`, or `cheat`; `:803` records the
-  pit-boss fields.
-- `scripts/core/game_module.gd:68` builds cheat action rows with
-  security/pit-boss pressure; `:311` defines the current skill action kinds;
-  `:386` normalizes skill-cheat result fields; `:471` applies result deltas and
-  calls Grand Casino result recording.
-- `scripts/core/run_state.gd:409` applies alcohol heat scaling; `:473` exposes
-  `security_risk_bonus`; `:492` exposes `security_action_pressure`; `:733`
-  records Grand Casino game evidence; `:1462` exposes `pit_boss_watch_status`.
-- `docs/plans/grand_casino_endgame_design.md:155` defines cheat evidence, and
-  `:173` defines staff attention sources.
+- `scripts/games/blackjack.gd` owns `_start_count_challenge()`,
+  `_sync_count_challenge_icons()`, `_finalize_count_challenge()`, settlement
+  preview/finalization, and `_persist_counter_surveillance()`.
+- `scripts/core/game_module.gd` exposes `cheat_actions()`, recognizes the
+  `cheat`/`risky`/`advantage` action kinds, normalizes them through
+  `normalize_skill_cheat_contract()`, and applies authoritative results through
+  `apply_result()`.
+- `scripts/core/run_state.gd` owns `alcohol_adjusted_suspicion_delta()`,
+  `security_risk_bonus()`, `security_action_pressure()`,
+  `record_grand_casino_game_result()`, and `pit_boss_watch_status()`.
+- `docs/plans/grand_casino_endgame_design.md` defines cheat evidence under
+  **Living Rourke and Rival Cheaters** and staff attention in the same contract.
 - Current non-blackjack paths include graded video-poker holdout and Bar Dice
   controlled-roll challenges, Roulette past posting and wheel reading,
   Baccarat shoe reading and edge-sort memory, Pull Tab detector/tarot paths,

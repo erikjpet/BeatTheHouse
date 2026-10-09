@@ -60,12 +60,13 @@ you handled the earlier ones.
 
 ### New games and machines
 
-The roster now covers eleven full game modules. Casino and street Craps offer
-distinct tables and a wide wager set. Three deterministic Coin Pusher cabinets
-have their own goals and live trays. The Crew's back-room game is six-handed
-no-limit Hold'em: persistent opponents act at a readable pace, sometimes take
-longer over a decision, and show personality-shaped tells that reward attention
-without giving away their cards.
+The roster now covers eleven full game modules. Casino Craps uses its full felt
+table, while Street Craps uses a low-profile chalk circle, loose dice, cash,
+and players' feet in the alley. Both share a wide wager set. Three deterministic
+Coin Pusher cabinets have their own goals and live trays. The Crew's back-room
+game is six-handed no-limit Hold'em: persistent opponents act at a readable
+pace, sometimes take longer over a decision, and show personality-shaped tells
+that reward attention without giving away their cards.
 
 The existing games grew deeper too. Slots carry Pinball and Buffalo feature
 families, table games have stronger dealing and settlement rituals, and Pull
@@ -73,6 +74,12 @@ Tabs can show a rare yellow glimmer on an eligible unrevealed ticket without
 changing its fixed contents, odds, or payout. Scratch Tickets now come from a
 physical vending cabinet: its shelf lifts to a pack, lowers the ticket into the
 tray, and waits for the player to collect it into the play area.
+
+Pull Tabs remains a physical machine in each venue that carries it, while help
+and redemption stay with the existing bartender, clerk, or host desk. Room and
+game animation continues without pointer movement, and the recent performance
+pass reduces event, object-loading, dragging, and post-action stalls without
+turning those idle scenes off.
 
 ### Three ways through the Grand Casino
 
@@ -369,10 +376,16 @@ approval. Simulated gambling only; no real-money wagering or prizes.
 - Rebuilt the Scratch Ticket vending cabinet with a timed physical dispense,
   machine sound, output tray, and tray-to-play collection.
 - Reworked Bar Dice into a fixed, non-overlapping table and control layout.
+- Gave Street Craps a dedicated alley-floor object instead of displaying a
+  casino table in the street.
 - Rebuilt room layouts around fixed, art-aligned places for people, games,
   items, and props.
+- Restored physical Pull Tabs machines and the Gas Station's full three-machine
+  capacity while keeping clerk and redemption services on existing staff.
 - Added a rare Pull Tab glimmer without changing ticket outcomes, odds, or
   payouts.
+- Added a Main Menu route to the completed-run report, simplified world-map
+  destination labels, and kept room/game animation live without mouse input.
 - Improved person conversations, live rumors, Blackjack count readability,
   teaching, sound response, and run reports.
 - Preserved the seeded simulation, save/Continue support, and hidden-information
@@ -393,6 +406,7 @@ approval. Simulated gambling only; no real-money wagering or prizes.
 | Screenshots | None approved or attached | Pending |
 | Trial artifacts | Add local paths after Lane D export and launch confirmation | Pending |
 | Final artifacts and hashes | Produced only after manual room-placement closure | Pending |
+| Project website | Point latest play at the exact final `v0.6.0` Web asset filename, replace the itch placeholder, rebuild, test, and deploy only after publication | Pending |
 | Pre-upload copy approval | Owner decision required | Pending |
 | Upload and public URLs | Owner-only action after final handoff | Pending |
 

@@ -18,6 +18,8 @@ signal developer_placement_refresh_requested
 signal developer_placement_export_requested(request: Dictionary)
 signal developer_layout_save_requested(request: Dictionary)
 signal developer_slot_layer_requested(request: Dictionary)
+signal developer_placement_undo_requested(request: Dictionary)
+signal developer_slot_placement_shortcut_toggled(enabled: bool)
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
@@ -33,6 +35,7 @@ const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd
 const CoinPusherRoomPropScript := preload("res://scripts/ui/game_props/coin_pusher_room_prop.gd")
 const ScratchTicketRoomPropScript := preload("res://scripts/ui/game_props/scratch_ticket_room_prop.gd")
 const CrapsRoomPropScript := preload("res://scripts/ui/game_props/craps_room_prop.gd")
+const StreetCrapsCirclePropScript := preload("res://scripts/ui/game_props/street_craps_circle_prop.gd")
 const BarDiceRoomPropScript := preload("res://scripts/ui/game_props/bar_dice_room_prop.gd")
 const SLOT_COLLECTION_FIELDS := ["fixed_slots", "event_slots", "scenario_slots", "exit_slots"]
 const SLOT_FAMILIES := ["fixed", "event", "scenario", "exit"]
@@ -48,6 +51,7 @@ const DEVELOPER_PANEL_CONTROL_HEIGHT := 30.0
 const DEVELOPER_PANEL_FILTER_MIN_WIDTH := 96.0
 const DEVELOPER_PANEL_INFO_HEIGHT := 58.0
 const DEVELOPER_ROUTE_COLLISION_EDGE_TOLERANCE := 1.01
+const DEVELOPER_PLACEMENT_UNDO_LIMIT := 64
 
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
@@ -135,6 +139,8 @@ const DEVELOPER_DRAG_REDRAW_INTERVAL_MSEC := 33
 const ITEM_ICON_TEXTURE_CACHE_LIMIT := 32
 const SLOT_PROP_STATIC_LAYER_CACHE_LIMIT := 64
 const CHARACTER_IDLE_PROFILE_CACHE_LIMIT := 768
+const CHARACTER_IDLE_GESTURE_SEGMENT_COUNT := 12
+const CHARACTER_IDLE_BLINK_SEGMENT_COUNT := 10
 const MAX_CONCURRENT_PERSON_TRANSITS := 8
 const PERSON_TRANSIT_SPEED_PIXELS_PER_SEC := 82.0
 const PERSON_TRANSIT_MIN_DURATION_SEC := 0.75
@@ -263,6 +269,7 @@ var developer_placement_promote_button: Button
 var developer_layout_save_button: Button
 var developer_layout_save_next_button: Button
 var developer_slot_placement_mode := false
+var developer_slot_placement_shortcut_enabled := false
 var developer_slot_selected_id := ""
 var developer_slot_dragging := false
 var developer_slot_drag_offset := Vector2.ZERO
@@ -307,6 +314,8 @@ var developer_slot_context_change_locking := false
 var developer_placement_panel_layout_queued := false
 var developer_slot_review_context_key := ""
 var developer_slot_reviewed_families: Dictionary = {}
+var developer_placement_undo_context_key := ""
+var developer_placement_undo_stack: Array[Dictionary] = []
 var scene_object_cache_rebuild_count := 0
 var developer_slot_cache_rebuild_count := 0
 var developer_placement_panel_update_count := 0
@@ -346,6 +355,9 @@ func set_developer_placement_mode(enabled: bool) -> void:
 	if not enabled:
 		_finish_developer_placement_edit()
 	developer_placement_mode = enabled
+	_clear_developer_placement_undo_history(
+		_developer_slot_snapshot_context_key(foundation_snapshot) if enabled else ""
+	)
 	_ensure_developer_placement_panel()
 	_sync_developer_placement_panel_visibility()
 	_update_developer_placement_panel()
@@ -366,6 +378,9 @@ func set_developer_slot_placement_mode(enabled: bool) -> void:
 		_finish_developer_slot_placement_edit()
 		developer_slot_selected_id = ""
 	developer_slot_placement_mode = enabled
+	_clear_developer_placement_undo_history(
+		_developer_slot_snapshot_context_key(foundation_snapshot) if enabled else ""
+	)
 	_invalidate_developer_placement_geometry_caches()
 	if developer_slot_filter_row != null:
 		developer_slot_filter_row.visible = enabled
@@ -398,6 +413,12 @@ func set_developer_slot_placement_mode(enabled: bool) -> void:
 		_flush_deferred_developer_placement_authority()
 
 
+# Enables the F1 shortcut only on the live authoring canvas. Decorative room
+# canvases intentionally leave this disabled so they cannot open placement UI.
+func set_developer_slot_placement_shortcut_enabled(enabled: bool) -> void:
+	developer_slot_placement_shortcut_enabled = enabled
+
+
 func developer_placement_snapshot() -> Dictionary:
 	return {
 		"enabled": developer_placement_mode,
@@ -409,6 +430,7 @@ func developer_placement_snapshot() -> Dictionary:
 		"surface_id": developer_placement_surface_id,
 		"overlap_ids": developer_placement_overlap_ids.duplicate(),
 		"request": _developer_placement_request(),
+		"undo_count": _developer_placement_undo_count(),
 	}
 
 
@@ -439,6 +461,7 @@ func developer_slot_placement_snapshot() -> Dictionary:
 		"marker_label_ids": _developer_slot_label_ids(),
 		"overlap_summary": _developer_slot_overlap_summary(),
 		"request": _developer_slot_placement_request(),
+		"undo_count": _developer_placement_undo_count(),
 	}
 
 
@@ -770,7 +793,8 @@ func _ensure_developer_placement_panel() -> void:
 	developer_placement_panel_shell.add_child(developer_placement_panel_header)
 	var panel_title := Label.new()
 	panel_title.name = "DeveloperPlacementPanelTitle"
-	panel_title.text = "SLOT PLACEMENT"
+	panel_title.text = "SLOT PLACEMENT (F1)"
+	panel_title.tooltip_text = "Ctrl+Z undoes the latest placement change in this layout."
 	panel_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	panel_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	panel_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -1320,6 +1344,7 @@ func _on_developer_slot_layer_toggled(pressed: bool, layer_name: String) -> void
 		"environment": _developer_slot_environment(),
 		"slot_id": developer_slot_selected_id,
 		"layer": int(SLOT_DRAW_LAYERS.get(layer_name, 0)),
+		"_undo_context_key": _developer_slot_snapshot_context_key(foundation_snapshot),
 		"_slot_layer_handled": false,
 		"_slot_layer_persisted": false,
 	}
@@ -1327,6 +1352,7 @@ func _on_developer_slot_layer_toggled(pressed: bool, layer_name: String) -> void
 	if bool(request.get("_slot_layer_handled", false)) and not bool(request.get("_slot_layer_persisted", false)):
 		_sync_developer_slot_layer_buttons(slot, true)
 		return
+	_record_developer_placement_undo(request)
 	_invalidate_developer_placement_geometry_caches()
 	_update_developer_placement_panel()
 	queue_redraw()
@@ -1367,14 +1393,18 @@ func _export_active_developer_placement_report() -> void:
 			if not developer_slot_valid:
 				return
 			request = _developer_slot_placement_request()
+			request["_undo_context_key"] = _developer_slot_snapshot_context_key(foundation_snapshot)
 			clear_developer_slot_placement_preview()
 	else:
 		if developer_placement_pending_rect.has_area():
 			if not developer_placement_valid:
 				return
 			request = _developer_placement_request()
+			request["_undo_context_key"] = _developer_slot_snapshot_context_key(foundation_snapshot)
 			clear_developer_placement_preview()
 	developer_placement_export_requested.emit(request)
+	if not request.is_empty():
+		_record_developer_placement_undo(request)
 
 
 func _save_and_load_next_developer_slot_layout() -> void:
@@ -1403,6 +1433,7 @@ func _save_current_developer_slot_layout(load_next_missing: bool = false) -> voi
 		request["full_positions"] = full_positions
 		request["slot_count"] = full_positions.size()
 	request["load_next_missing"] = load_next_missing
+	request["_undo_context_key"] = _developer_slot_snapshot_context_key(foundation_snapshot)
 	request["reviewed_families"] = (review_status.get("reviewed", []) as Array).duplicate()
 	var render_generation := environment_snapshot_render_generation
 	developer_slot_dragging = false
@@ -1411,6 +1442,8 @@ func _save_current_developer_slot_layout(load_next_missing: bool = false) -> voi
 		_update_developer_placement_panel()
 		queue_redraw()
 		return
+	if not load_next_missing:
+		_record_developer_placement_undo(request)
 	if environment_snapshot_render_generation == render_generation:
 		clear_developer_slot_placement_preview(false, false)
 		developer_placement_authority_dirty = true
@@ -1547,6 +1580,7 @@ func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 	foundation_snapshot = snapshot
 	if previous_slot_context != next_slot_context:
 		developer_placement_authority_dirty = false
+		_clear_developer_placement_undo_history(next_slot_context)
 	_invalidate_developer_placement_geometry_caches()
 	var archetype_id := str(foundation_snapshot.get("archetype_id", foundation_snapshot.get("id", environment_id)))
 	var visual_context: Dictionary = foundation_snapshot.get("visual_context", {}) if typeof(foundation_snapshot.get("visual_context", {})) == TYPE_DICTIONARY else {}
@@ -1620,6 +1654,89 @@ func _developer_slot_snapshot_context_key(snapshot: Dictionary) -> String:
 	var map_id := "%s:%s" % [archetype_id, layer_id] if not layer_id.is_empty() else archetype_id
 	var scenario_id := EnvironmentPlacementScript.active_scenario_id(snapshot)
 	return "%s::%s" % [map_id, scenario_id if not scenario_id.is_empty() else "base"]
+
+
+func _clear_developer_placement_undo_history(context_key: String = "") -> void:
+	developer_placement_undo_stack.clear()
+	developer_placement_undo_context_key = context_key
+
+
+func _developer_placement_undo_count() -> int:
+	var context_key := _developer_slot_snapshot_context_key(foundation_snapshot)
+	return developer_placement_undo_stack.size() \
+		if context_key == developer_placement_undo_context_key else 0
+
+
+func _record_developer_placement_undo(request: Dictionary) -> void:
+	var record_value: Variant = request.get("_placement_undo_record", {})
+	if typeof(record_value) != TYPE_DICTIONARY or (record_value as Dictionary).is_empty():
+		return
+	var context_key := str(request.get(
+		"_undo_context_key",
+		_developer_slot_snapshot_context_key(foundation_snapshot)
+	)).strip_edges()
+	if context_key.is_empty() \
+			or context_key != _developer_slot_snapshot_context_key(foundation_snapshot):
+		return
+	if developer_placement_undo_context_key != context_key:
+		_clear_developer_placement_undo_history(context_key)
+	var record := (record_value as Dictionary).duplicate(true)
+	record["context_key"] = context_key
+	while developer_placement_undo_stack.size() >= DEVELOPER_PLACEMENT_UNDO_LIMIT:
+		developer_placement_undo_stack.pop_front()
+	developer_placement_undo_stack.append(record)
+
+
+func _developer_placement_undo_shortcut_pressed(event: InputEvent) -> bool:
+	if not (event is InputEventKey):
+		return false
+	var key_event := event as InputEventKey
+	return key_event.pressed \
+		and not key_event.echo \
+		and key_event.ctrl_pressed \
+		and (key_event.keycode == KEY_Z or key_event.physical_keycode == KEY_Z)
+
+
+func _undo_developer_placement_change() -> void:
+	# A keyboard nudge is not durable until it is locked. Undoing it should simply
+	# discard that preview rather than consume an earlier saved edit.
+	if developer_slot_placement_mode and developer_slot_pending_rect.has_area():
+		var slot_preview_changed := not developer_slot_original_rect.has_area() \
+				or not developer_slot_pending_rect.position.is_equal_approx(developer_slot_original_rect.position)
+		clear_developer_slot_placement_preview()
+		if slot_preview_changed:
+			return
+	if developer_placement_mode and developer_placement_pending_rect.has_area():
+		var object_preview_changed := not developer_placement_original_rect.has_area() \
+				or not developer_placement_pending_rect.position.is_equal_approx(developer_placement_original_rect.position) \
+				or not developer_placement_pending_rect.size.is_equal_approx(developer_placement_original_rect.size)
+		clear_developer_placement_preview()
+		if object_preview_changed:
+			return
+	var context_key := _developer_slot_snapshot_context_key(foundation_snapshot)
+	if developer_placement_undo_context_key != context_key:
+		_clear_developer_placement_undo_history(context_key)
+	if developer_placement_undo_stack.is_empty():
+		_update_developer_placement_panel()
+		return
+	var record: Dictionary = developer_placement_undo_stack.back().duplicate(true)
+	var request := {
+		"undo_record": record,
+		"_placement_undo_handled": false,
+		"_placement_undo_persisted": false,
+	}
+	var render_generation := environment_snapshot_render_generation
+	developer_placement_undo_requested.emit(request)
+	if not bool(request.get("_placement_undo_handled", false)) \
+			or not bool(request.get("_placement_undo_persisted", false)):
+		return
+	developer_placement_undo_stack.pop_back()
+	if environment_snapshot_render_generation == render_generation:
+		developer_placement_authority_dirty = true
+		_invalidate_developer_placement_geometry_caches()
+		_apply_authoring_slot_positions_to_scene_objects()
+		_update_developer_placement_panel()
+		queue_redraw()
 
 
 func settle_person_transits() -> void:
@@ -2085,17 +2202,35 @@ func _gui_input(event: InputEvent) -> void:
 
 
 # Buttons inside the placement menu own keyboard focus while they are used.
-# F2 must still reach the menu toggle in that state, including when focus has
-# moved to the sibling Restore button after minimizing.
+# F1 must still toggle slot mode, and F2 must still reach the menu toggle when
+# focus has moved to the sibling Restore button after minimizing.
 func _unhandled_key_input(event: InputEvent) -> void:
+	if not (event is InputEventKey):
+		return
+	var key_event := event as InputEventKey
+	if not key_event.pressed or key_event.echo:
+		return
+	if key_event.keycode == KEY_F1 and developer_slot_placement_shortcut_enabled and is_visible_in_tree():
+		var enabled := not developer_slot_placement_mode
+		set_developer_slot_placement_mode(enabled)
+		developer_slot_placement_shortcut_toggled.emit(enabled)
+		get_viewport().set_input_as_handled()
+		return
 	if not _developer_placement_mode_active():
 		return
-	if event is InputEventKey and (event as InputEventKey).pressed and not (event as InputEventKey).echo and (event as InputEventKey).keycode == KEY_F2:
+	if _developer_placement_undo_shortcut_pressed(key_event):
+		_undo_developer_placement_change()
+		get_viewport().set_input_as_handled()
+		return
+	if key_event.keycode == KEY_F2:
 		_toggle_developer_placement_panel_minimized()
 		get_viewport().set_input_as_handled()
 
 
 func _handle_developer_placement_input(event: InputEvent) -> bool:
+	if _developer_placement_undo_shortcut_pressed(event):
+		_undo_developer_placement_change()
+		return true
 	if event is InputEventKey and (event as InputEventKey).pressed and not (event as InputEventKey).echo and (event as InputEventKey).keycode == KEY_F2:
 		_toggle_developer_placement_panel_minimized()
 		return true
@@ -2328,11 +2463,13 @@ func _lock_developer_placement() -> void:
 		return
 	var request := _developer_placement_request()
 	request["defer_refresh"] = true
+	request["_undo_context_key"] = _developer_slot_snapshot_context_key(foundation_snapshot)
 	var render_generation := environment_snapshot_render_generation
 	clear_developer_placement_preview(false, false)
 	developer_placement_lock_requested.emit(request)
 	if _developer_placement_lock_failed(request):
 		return
+	_record_developer_placement_undo(request)
 	if environment_snapshot_render_generation == render_generation:
 		developer_placement_authority_dirty = true
 		_invalidate_developer_placement_geometry_caches()
@@ -2372,6 +2509,11 @@ func _developer_placement_lock_failed(request: Dictionary) -> bool:
 		and not bool(request.get("_placement_lock_persisted", false))
 
 
+func _developer_placement_reset_failed(request: Dictionary) -> bool:
+	return bool(request.get("_placement_reset_handled", false)) \
+		and not bool(request.get("_placement_reset_persisted", false))
+
+
 func _apply_saved_developer_placement(request: Dictionary) -> void:
 	var object_id := str(request.get("object_id", "")).strip_edges()
 	if object_id.is_empty() or object_id != selected_object_id:
@@ -2395,8 +2537,12 @@ func _reset_developer_placement() -> void:
 	if request.is_empty():
 		return
 	var render_generation := environment_snapshot_render_generation
+	request["_undo_context_key"] = _developer_slot_snapshot_context_key(foundation_snapshot)
 	clear_developer_placement_preview(false, false)
 	developer_placement_reset_requested.emit(request)
+	if _developer_placement_reset_failed(request):
+		return
+	_record_developer_placement_undo(request)
 	if environment_snapshot_render_generation == render_generation:
 		_invalidate_developer_placement_geometry_caches()
 		_update_developer_placement_panel()
@@ -3039,6 +3185,9 @@ func _developer_slot_id_at_local_position(local_position: Vector2) -> String:
 
 
 func _handle_developer_slot_placement_input(event: InputEvent) -> bool:
+	if _developer_placement_undo_shortcut_pressed(event):
+		_undo_developer_placement_change()
+		return true
 	if event is InputEventKey and (event as InputEventKey).pressed and not (event as InputEventKey).echo and (event as InputEventKey).keycode == KEY_F2:
 		_toggle_developer_placement_panel_minimized()
 		return true
@@ -3295,11 +3444,13 @@ func _lock_developer_slot_placement() -> void:
 		return
 	var request := _developer_slot_placement_request()
 	request["defer_refresh"] = true
+	request["_undo_context_key"] = _developer_slot_snapshot_context_key(foundation_snapshot)
 	var render_generation := environment_snapshot_render_generation
 	clear_developer_slot_placement_preview(false, false)
 	developer_placement_lock_requested.emit(request)
 	if _developer_placement_lock_failed(request):
 		return
+	_record_developer_placement_undo(request)
 	# Normal locks deliberately defer the authoritative room rebuild. Apply the
 	# saved surface map locally, while still avoiding duplicate work if a custom
 	# host rendered a fresh snapshot synchronously.
@@ -3338,8 +3489,12 @@ func _reset_developer_slot_placement() -> void:
 	if request.is_empty():
 		return
 	var render_generation := environment_snapshot_render_generation
+	request["_undo_context_key"] = _developer_slot_snapshot_context_key(foundation_snapshot)
 	clear_developer_slot_placement_preview(false, false)
 	developer_placement_reset_requested.emit(request)
+	if _developer_placement_reset_failed(request):
+		return
+	_record_developer_placement_undo(request)
 	if environment_snapshot_render_generation == render_generation:
 		developer_placement_authority_dirty = true
 		_invalidate_developer_placement_geometry_caches()
@@ -4706,8 +4861,9 @@ func _draw_named_character(id: String, foot: Vector2, scale_value: float, role: 
 	draw_rect(body, Color("#06070c"))
 	draw_rect(Rect2(body.position + Vector2(3, 4) * scale_value, body.size - Vector2(6, 7) * scale_value), jacket)
 	var gesture_amount := float(idle_state.get("gesture_amount", 0.0))
-	_draw_named_character_arm(pos, scale_value, accent, skin, pose, true, gesture_amount)
-	_draw_named_character_arm(pos, scale_value, accent, skin, pose, false, gesture_amount)
+	var gesture_side := int(idle_state.get("gesture_side", 1))
+	_draw_named_character_arm(pos, scale_value, accent, skin, pose, true, gesture_amount, gesture_side)
+	_draw_named_character_arm(pos, scale_value, accent, skin, pose, false, gesture_amount, gesture_side)
 	draw_rect(head, skin)
 	draw_rect(Rect2(head.position + Vector2(0, 0), Vector2(head.size.x, 7 * scale_value)), hair)
 	var eye_offset := float(idle_state.get("eye_offset", 0.0)) * scale_value
@@ -4735,8 +4891,9 @@ func _draw_named_character(id: String, foot: Vector2, scale_value: float, role: 
 			draw_rect(Rect2(pos + Vector2(-25, -20) * scale_value + Vector2(0.0, prop_lift), Vector2(16, 5) * scale_value), C_CYAN)
 
 
-func _draw_named_character_arm(pos: Vector2, scale_value: float, accent: Color, skin: Color, pose: String, left: bool, gesture_amount: float) -> void:
+func _draw_named_character_arm(pos: Vector2, scale_value: float, accent: Color, skin: Color, pose: String, left: bool, gesture_amount: float, gesture_side: int) -> void:
 	var side := -1.0 if left else 1.0
+	var active_side := (left and gesture_side < 0) or (not left and gesture_side >= 0)
 	var shoulder := pos + Vector2(side * 18.0, -37.0) * scale_value
 	var resting_hand := pos + Vector2(side * 22.0, -8.0) * scale_value
 	var hand := resting_hand
@@ -4744,11 +4901,11 @@ func _draw_named_character_arm(pos: Vector2, scale_value: float, accent: Color, 
 		"arms_folded":
 			hand = pos + Vector2(-side * 9.0, -27.0) * scale_value
 		"chin_touch":
-			if not left:
-				hand = pos + Vector2(8.0, -52.0) * scale_value
+			if active_side:
+				hand = pos + Vector2(side * 8.0, -52.0) * scale_value
 		"pocket_check":
-			if left:
-				hand = pos + Vector2(-9.0, -16.0) * scale_value
+			if active_side:
+				hand = pos + Vector2(side * 9.0, -16.0) * scale_value
 		"adjust_cuff":
 			hand = pos + Vector2(-side * 5.0, -21.0 if left else -25.0) * scale_value
 		"counter_tap", "card_check":
@@ -4757,6 +4914,18 @@ func _draw_named_character_arm(pos: Vector2, scale_value: float, accent: Color, 
 			hand = pos + Vector2(side * (28.0 if left else 18.0), -19.0 if left else -11.0) * scale_value
 		"lookaround":
 			hand = pos + Vector2(side * 24.0, -13.0) * scale_value
+		"head_scratch":
+			if active_side:
+				hand = pos + Vector2(side * 9.0, -58.0) * scale_value
+		"stretch":
+			hand = pos + Vector2(side * 31.0, -49.0) * scale_value
+		"hand_on_hip":
+			if active_side:
+				hand = pos + Vector2(side * 13.0, -20.0) * scale_value
+		"wrist_check":
+			hand = pos + Vector2(-side * (2.0 if active_side else 8.0), -27.0 if active_side else -24.0) * scale_value
+		"rub_hands":
+			hand = pos + Vector2(side * 4.0, -23.0) * scale_value
 	hand = resting_hand.lerp(hand, clampf(gesture_amount, 0.0, 1.0))
 	draw_line(shoulder, hand, Color("#05060a"), maxf(2.0, 7.0 * scale_value))
 	draw_line(shoulder, hand, Color(accent.r, accent.g, accent.b, 0.30), maxf(1.0, 2.0 * scale_value))
@@ -5136,6 +5305,7 @@ func _draw_scenario_actor(rect: Rect2, object_data: Dictionary, active: bool) ->
 	var arm_y := body.position.y + body.size.y * 0.38
 	var arm_spread := rect.size.x * (0.38 if pose in ["fight", "warning"] else 0.28)
 	var gesture_amount := float(idle_state.get("gesture_amount", 0.0))
+	var gesture_side := int(idle_state.get("gesture_side", 1))
 	var left_hand_y := arm_y
 	var right_hand_y := arm_y
 	match idle_pose:
@@ -5150,6 +5320,25 @@ func _draw_scenario_actor(rect: Rect2, object_data: Dictionary, active: bool) ->
 		"shoulder_roll":
 			left_hand_y -= 6.0 * gesture_amount
 			right_hand_y += 5.0 * gesture_amount
+		"head_scratch":
+			if gesture_side < 0:
+				left_hand_y -= head_radius * 2.4 * gesture_amount
+			else:
+				right_hand_y -= head_radius * 2.4 * gesture_amount
+		"stretch":
+			arm_spread = lerpf(arm_spread, rect.size.x * 0.46, gesture_amount)
+			left_hand_y -= head_radius * 1.35 * gesture_amount
+			right_hand_y -= head_radius * 1.35 * gesture_amount
+		"hand_on_hip":
+			arm_spread = lerpf(arm_spread, rect.size.x * 0.16, gesture_amount)
+			if gesture_side < 0:
+				left_hand_y += 7.0 * gesture_amount
+			else:
+				right_hand_y += 7.0 * gesture_amount
+		"wrist_check", "rub_hands":
+			arm_spread = lerpf(arm_spread, rect.size.x * 0.08, gesture_amount)
+			left_hand_y += 2.0 * gesture_amount
+			right_hand_y -= 1.0 * gesture_amount
 	draw_line(Vector2(center.x, arm_y), Vector2(center.x - arm_spread, left_hand_y), accent, 3.0)
 	draw_line(Vector2(center.x, arm_y), Vector2(center.x + arm_spread, right_hand_y), accent, 3.0)
 	if behavior in ["guard", "watch", "patrol"]:
@@ -6106,6 +6295,9 @@ func _production_game_prop(object_data: Dictionary) -> String:
 	if source_id == "scratch_tickets":
 		return "scratch_ticket_room"
 	if source_id == "craps":
+		var visual: Dictionary = object_data.get("visual_state", {}) if typeof(object_data.get("visual_state", {})) == TYPE_DICTIONARY else {}
+		if authored == "street_craps_circle" or str(visual.get("variant", "")) == "street_craps":
+			return "street_craps_circle"
 		return "craps_room"
 	if source_id == "bar_dice":
 		return "bar_dice_room"
@@ -8452,17 +8644,82 @@ func _stable_character_animation_hash(value: String, salt: int = 0) -> int:
 func _character_idle_gestures_for_role(role: String) -> Array:
 	match role.to_lower():
 		"watcher", "bouncer", "pit_boss", "guard", "security":
-			return ["arms_folded", "lookaround", "shoulder_roll", "chin_touch"]
+			return ["arms_folded", "lookaround", "shoulder_roll", "chin_touch", "hand_on_hip", "neck_stretch", "wrist_check", "weight_shift"]
 		"dealer", "card_dealer", "croupier":
-			return ["card_check", "adjust_cuff", "lookaround", "counter_tap"]
+			return ["card_check", "adjust_cuff", "lookaround", "counter_tap", "wrist_check", "rub_hands", "neck_stretch", "weight_shift"]
 		"bartender", "attendant", "clerk", "cashier", "vendor":
-			return ["counter_tap", "adjust_cuff", "lookaround", "chin_touch"]
+			return ["counter_tap", "adjust_cuff", "lookaround", "chin_touch", "wrist_check", "rub_hands", "stretch", "weight_shift"]
 		"regular", "fixer", "patron", "customer", "guest":
-			return ["pocket_check", "chin_touch", "lookaround", "arms_folded", "shoulder_roll"]
+			return ["pocket_check", "chin_touch", "lookaround", "arms_folded", "shoulder_roll", "head_scratch", "stretch", "hand_on_hip", "weight_shift"]
 		"runner", "messenger", "lookout":
-			return ["lookaround", "pocket_check", "shoulder_roll", "counter_tap"]
+			return ["lookaround", "pocket_check", "shoulder_roll", "counter_tap", "wrist_check", "neck_stretch", "weight_shift", "stretch"]
 		_:
-			return ["lookaround", "adjust_cuff", "chin_touch", "pocket_check", "arms_folded", "counter_tap", "shoulder_roll"]
+			return ["lookaround", "adjust_cuff", "chin_touch", "pocket_check", "arms_folded", "counter_tap", "shoulder_roll", "head_scratch", "stretch", "hand_on_hip", "wrist_check", "rub_hands", "neck_stretch", "weight_shift"]
+
+
+func _append_unique_character_idle_pose(poses: Array, pose: String) -> void:
+	var normalized_pose := pose.strip_edges()
+	if not normalized_pose.is_empty() and not poses.has(normalized_pose):
+		poses.append(normalized_pose)
+
+
+func _character_idle_pose_choices(role: String, authored: Dictionary, hash_a: int, hash_b: int, hash_c: int) -> Array:
+	var role_gestures: Array = _character_idle_gestures_for_role(role)
+	var poses: Array = []
+	var primary := str(authored.get("idle_primary", role_gestures[hash_a % role_gestures.size()]))
+	var secondary := str(authored.get("idle_secondary", role_gestures[hash_b % role_gestures.size()]))
+	_append_unique_character_idle_pose(poses, primary)
+	_append_unique_character_idle_pose(poses, secondary)
+	_append_unique_character_idle_pose(poses, str(authored.get("idle_tertiary", "")))
+	var role_offset := hash_c % role_gestures.size()
+	for index in range(role_gestures.size()):
+		_append_unique_character_idle_pose(poses, str(role_gestures[(role_offset + index) % role_gestures.size()]))
+	return poses
+
+
+func _build_character_idle_gesture_events(cache_key: String, poses: Array, segment_duration: float) -> Array:
+	var events: Array = []
+	var previous_pose := ""
+	for index in range(CHARACTER_IDLE_GESTURE_SEGMENT_COUNT):
+		var pose_hash := _stable_character_animation_hash(cache_key, 83 + index * 37)
+		var timing_hash := _stable_character_animation_hash(cache_key, 149 + index * 53)
+		var pose_index := index if index < poses.size() else pose_hash % poses.size()
+		var pose := str(poses[pose_index])
+		# Occasional empty segments create natural long pauses without requiring
+		# mutable RNG or making the result depend on draw order.
+		if index >= poses.size() and pose_hash % 6 == 0:
+			pose = ""
+		elif pose == previous_pose and poses.size() > 1:
+			pose = str(poses[(pose_index + 1 + pose_hash % (poses.size() - 1)) % poses.size()])
+		if not pose.is_empty():
+			previous_pose = pose
+		var duration_fraction := float(timing_hash % 1000) / 999.0
+		var start_fraction := float(_stable_character_animation_hash(cache_key, 211 + index * 71) % 1000) / 999.0
+		var duration := 0.68 + duration_fraction * 0.92
+		var start_span := maxf(0.0, segment_duration - duration - 0.80)
+		var start := 0.35 + start_fraction * start_span
+		events.append({
+			"pose": pose,
+			"start": start,
+			"duration": duration,
+			"side": -1 if pose_hash % 2 == 0 else 1,
+		})
+	return events
+
+
+func _build_character_idle_blink_events(cache_key: String, segment_duration: float) -> Array:
+	var events: Array = []
+	for index in range(CHARACTER_IDLE_BLINK_SEGMENT_COUNT):
+		var blink_hash := _stable_character_animation_hash(cache_key, 307 + index * 43)
+		var start_fraction := float(_stable_character_animation_hash(cache_key, 401 + index * 61) % 1000) / 999.0
+		var duration := 0.075 + float(blink_hash % 45) / 1000.0
+		var start_span := maxf(0.0, segment_duration - duration - 0.72)
+		events.append({
+			"start": 0.18 + start_fraction * start_span,
+			"duration": duration,
+			"double": blink_hash % 6 == 0,
+		})
+	return events
 
 
 func _character_idle_profile(identity: String, role: String, authored: Dictionary = {}) -> Dictionary:
@@ -8475,34 +8732,49 @@ func _character_idle_profile(identity: String, role: String, authored: Dictionar
 	var hash_a := _stable_character_animation_hash(cache_key, 11)
 	var hash_b := _stable_character_animation_hash(cache_key, 29)
 	var hash_c := _stable_character_animation_hash(cache_key, 47)
-	var gestures := _character_idle_gestures_for_role(role)
-	var primary := str(authored.get("idle_primary", gestures[hash_a % gestures.size()]))
-	var secondary := str(authored.get("idle_secondary", gestures[hash_b % gestures.size()]))
-	if secondary == primary:
-		secondary = str(gestures[(hash_b + 1) % gestures.size()])
+	var hash_d := _stable_character_animation_hash(cache_key, 67)
+	var gesture_poses := _character_idle_pose_choices(role, authored, hash_a, hash_b, hash_c)
+	var gesture_segment_duration := 4.15 + float(hash_d % 245) / 100.0
+	var gesture_events := _build_character_idle_gesture_events(cache_key, gesture_poses, gesture_segment_duration)
+	var blink_segment_duration := 3.15 + float(hash_c % 245) / 100.0
+	var blink_events := _build_character_idle_blink_events(cache_key, blink_segment_duration)
+	var primary_event: Dictionary = gesture_events[0]
+	var secondary_event: Dictionary = gesture_events[1]
+	var gesture_cycle_duration := gesture_segment_duration * float(gesture_events.size())
 	var authored_tempo := float(authored.get("tempo", 0.0))
 	var authored_phase := float(authored.get("phase", -1.0))
 	var profile := {
 		"identity": normalized_identity,
-		"signature": "%s:%d:%d:%d" % [normalized_identity, hash_a, hash_b, hash_c],
-		"primary_pose": primary,
-		"secondary_pose": secondary,
+		"signature": "%s:%d:%d:%d:%d" % [normalized_identity, hash_a, hash_b, hash_c, hash_d],
+		"primary_pose": str(gesture_poses[0]),
+		"secondary_pose": str(gesture_poses[1]),
+		"gesture_poses": gesture_poses,
+		"gesture_events": gesture_events,
+		"gesture_segment_duration": gesture_segment_duration,
 		"tempo": authored_tempo if authored_tempo > 0.0 else 0.72 + float(hash_a % 47) / 100.0,
 		"phase": authored_phase if authored_phase >= 0.0 else float(hash_b % 628) / 100.0,
-		"cycle_duration": 6.8 + float(hash_c % 420) / 100.0,
-		"primary_start": 0.32 + float(hash_a % 13) / 100.0,
-		"primary_duration": 0.12 + float(hash_b % 7) / 100.0,
-		"secondary_start": 0.68 + float(hash_c % 10) / 100.0,
-		"secondary_duration": 0.11 + float(hash_a % 8) / 100.0,
+		"cycle_duration": gesture_cycle_duration,
+		# Preserve the old profile fields for debug consumers while the live
+		# sampler uses the richer per-segment routine above.
+		"primary_start": float(primary_event.get("start", 0.0)) / gesture_cycle_duration,
+		"primary_duration": float(primary_event.get("duration", 0.0)) / gesture_cycle_duration,
+		"secondary_start": (gesture_segment_duration + float(secondary_event.get("start", 0.0))) / gesture_cycle_duration,
+		"secondary_duration": float(secondary_event.get("duration", 0.0)) / gesture_cycle_duration,
 		"sway_amount": 0.35 + float(hash_b % 130) / 100.0,
 		"sway_tempo": 0.38 + float(hash_c % 42) / 100.0,
+		"sway_secondary_amount": 0.08 + float(hash_d % 34) / 100.0,
+		"sway_secondary_tempo": 0.14 + float(hash_a % 23) / 100.0,
 		"bob_amount": 0.22 + float(hash_a % 85) / 100.0,
 		"breath_tempo": 0.72 + float(hash_b % 55) / 100.0,
+		"bob_secondary_amount": 0.04 + float(hash_c % 18) / 100.0,
+		"bob_secondary_tempo": 0.18 + float(hash_d % 29) / 100.0,
 		"eye_range": 0.18 + float(hash_c % 68) / 100.0,
 		"eye_tempo": 0.22 + float(hash_a % 49) / 100.0,
-		"blink_period": 3.4 + float(hash_b % 390) / 100.0,
+		"blink_events": blink_events,
+		"blink_segment_duration": blink_segment_duration,
+		"blink_period": blink_segment_duration,
 		"blink_offset": float(hash_c % 300) / 100.0,
-		"double_blink": hash_a % 5 == 0,
+		"double_blink": hash_a % 6 == 0,
 	}
 	if character_idle_profile_cache.size() >= CHARACTER_IDLE_PROFILE_CACHE_LIMIT:
 		character_idle_profile_cache.clear()
@@ -8512,48 +8784,101 @@ func _character_idle_profile(identity: String, role: String, authored: Dictionar
 
 func _character_idle_state(profile: Dictionary, clock: float) -> Dictionary:
 	if reduce_motion:
-		return {"pose": "idle", "gesture_amount": 0.0, "sway": 0.0, "bob": 0.0, "head_x": 0.0, "head_y": 0.0, "eye_offset": 0.0, "blink": false}
+		return {"pose": "idle", "gesture_amount": 0.0, "gesture_side": 1, "sway": 0.0, "bob": 0.0, "head_x": 0.0, "head_y": 0.0, "eye_offset": 0.0, "blink": false}
 	var tempo := float(profile.get("tempo", 1.0))
 	var phase := float(profile.get("phase", 0.0))
-	var cycle_duration := maxf(4.0, float(profile.get("cycle_duration", 8.0)))
 	var animation_clock := clock * tempo + phase
-	var cycle_position := fposmod(animation_clock, cycle_duration) / cycle_duration
 	var pose := "idle"
 	var gesture_amount := 0.0
-	var primary_start := float(profile.get("primary_start", 0.38))
-	var primary_duration := float(profile.get("primary_duration", 0.16))
-	var secondary_start := float(profile.get("secondary_start", 0.72))
-	var secondary_duration := float(profile.get("secondary_duration", 0.14))
-	if cycle_position >= primary_start and cycle_position < primary_start + primary_duration:
-		pose = str(profile.get("primary_pose", "lookaround"))
-		gesture_amount = sin(((cycle_position - primary_start) / primary_duration) * PI)
-	elif cycle_position >= secondary_start and cycle_position < secondary_start + secondary_duration:
-		pose = str(profile.get("secondary_pose", "adjust_cuff"))
-		gesture_amount = sin(((cycle_position - secondary_start) / secondary_duration) * PI)
+	var gesture_side := 1
+	var gesture_events_value: Variant = profile.get("gesture_events", [])
+	if typeof(gesture_events_value) == TYPE_ARRAY and not (gesture_events_value as Array).is_empty():
+		var gesture_events: Array = gesture_events_value
+		var gesture_segment_duration := maxf(2.0, float(profile.get("gesture_segment_duration", 5.0)))
+		var gesture_schedule_position := fposmod(animation_clock, gesture_segment_duration * float(gesture_events.size()))
+		var gesture_event_index := clampi(int(floor(gesture_schedule_position / gesture_segment_duration)), 0, gesture_events.size() - 1)
+		var gesture_segment_position := fposmod(gesture_schedule_position, gesture_segment_duration)
+		var gesture_event: Dictionary = gesture_events[gesture_event_index] if typeof(gesture_events[gesture_event_index]) == TYPE_DICTIONARY else {}
+		var gesture_start := float(gesture_event.get("start", 0.0))
+		var gesture_duration := maxf(0.01, float(gesture_event.get("duration", 1.0)))
+		var event_pose := str(gesture_event.get("pose", "")).strip_edges()
+		if not event_pose.is_empty() and gesture_segment_position >= gesture_start and gesture_segment_position < gesture_start + gesture_duration:
+			pose = event_pose
+			gesture_side = int(gesture_event.get("side", 1))
+			gesture_amount = sin(((gesture_segment_position - gesture_start) / gesture_duration) * PI)
+	else:
+		var cycle_duration := maxf(4.0, float(profile.get("cycle_duration", 8.0)))
+		var cycle_position := fposmod(animation_clock, cycle_duration) / cycle_duration
+		var primary_start := float(profile.get("primary_start", 0.38))
+		var primary_duration := float(profile.get("primary_duration", 0.16))
+		var secondary_start := float(profile.get("secondary_start", 0.72))
+		var secondary_duration := float(profile.get("secondary_duration", 0.14))
+		if cycle_position >= primary_start and cycle_position < primary_start + primary_duration:
+			pose = str(profile.get("primary_pose", "lookaround"))
+			gesture_amount = sin(((cycle_position - primary_start) / primary_duration) * PI)
+		elif cycle_position >= secondary_start and cycle_position < secondary_start + secondary_duration:
+			pose = str(profile.get("secondary_pose", "adjust_cuff"))
+			gesture_amount = sin(((cycle_position - secondary_start) / secondary_duration) * PI)
 	var eye_offset := sin(clock * float(profile.get("eye_tempo", 0.5)) + phase * 0.7) * float(profile.get("eye_range", 0.5))
 	if pose == "lookaround":
-		eye_offset += lerpf(-0.8, 0.8, gesture_amount)
-	var blink_position := fposmod(clock + float(profile.get("blink_offset", 0.0)), float(profile.get("blink_period", 4.5)))
-	var blinking := blink_position < 0.11
-	if bool(profile.get("double_blink", false)):
-		blinking = blinking or (blink_position > 0.22 and blink_position < 0.31)
+		eye_offset += float(gesture_side) * gesture_amount * 0.9
+	var blinking := false
+	var blink_events_value: Variant = profile.get("blink_events", [])
+	if typeof(blink_events_value) == TYPE_ARRAY and not (blink_events_value as Array).is_empty():
+		var blink_events: Array = blink_events_value
+		var blink_segment_duration := maxf(1.0, float(profile.get("blink_segment_duration", 4.5)))
+		var blink_schedule_position := fposmod(clock + float(profile.get("blink_offset", 0.0)), blink_segment_duration * float(blink_events.size()))
+		var blink_event_index := clampi(int(floor(blink_schedule_position / blink_segment_duration)), 0, blink_events.size() - 1)
+		var blink_segment_position := fposmod(blink_schedule_position, blink_segment_duration)
+		var blink_event: Dictionary = blink_events[blink_event_index] if typeof(blink_events[blink_event_index]) == TYPE_DICTIONARY else {}
+		var blink_start := float(blink_event.get("start", 0.0))
+		var blink_duration := maxf(0.04, float(blink_event.get("duration", 0.10)))
+		blinking = blink_segment_position >= blink_start and blink_segment_position < blink_start + blink_duration
+		if bool(blink_event.get("double", false)):
+			var double_start := blink_start + blink_duration + 0.13
+			blinking = blinking or (blink_segment_position >= double_start and blink_segment_position < double_start + blink_duration * 0.92)
+	else:
+		var blink_position := fposmod(clock + float(profile.get("blink_offset", 0.0)), float(profile.get("blink_period", 4.5)))
+		blinking = blink_position < 0.11
+		if bool(profile.get("double_blink", false)):
+			blinking = blinking or (blink_position > 0.22 and blink_position < 0.31)
 	var head_x := 0.0
 	var head_y := sin(clock * float(profile.get("breath_tempo", 1.0)) * 0.53 + phase) * 0.24
 	match pose:
 		"chin_touch":
-			head_x = gesture_amount * 0.8
+			head_x = float(gesture_side) * gesture_amount * 0.8
 			head_y += gesture_amount * 0.7
 		"shoulder_roll":
-			head_x = -gesture_amount * 0.7
+			head_x = -float(gesture_side) * gesture_amount * 0.7
 		"counter_tap", "card_check":
 			head_y += gesture_amount * 0.8
 		"lookaround":
-			head_x = signf(eye_offset) * gesture_amount * 0.8
+			head_x = float(gesture_side) * gesture_amount * 0.8
+		"head_scratch":
+			head_x = float(gesture_side) * gesture_amount * 0.65
+			head_y += gesture_amount * 0.45
+		"stretch":
+			head_y -= gesture_amount * 0.9
+		"hand_on_hip", "weight_shift":
+			head_x = float(gesture_side) * gesture_amount * 0.55
+		"wrist_check", "rub_hands":
+			head_y += gesture_amount * 0.45
+		"neck_stretch":
+			head_x = float(gesture_side) * gesture_amount * 1.0
+			head_y += gesture_amount * 0.30
+	var sway := sin(clock * float(profile.get("sway_tempo", 0.55)) + phase) * float(profile.get("sway_amount", 1.0))
+	sway += sin(clock * float(profile.get("sway_secondary_tempo", 0.24)) + phase * 1.73) * float(profile.get("sway_secondary_amount", 0.2))
+	var bob := sin(clock * float(profile.get("breath_tempo", 1.0)) + phase) * float(profile.get("bob_amount", 0.6))
+	bob += sin(clock * float(profile.get("bob_secondary_tempo", 0.32)) + phase * 1.31) * float(profile.get("bob_secondary_amount", 0.1))
+	if pose == "weight_shift":
+		sway += float(gesture_side) * gesture_amount * 1.25
+		bob += gesture_amount * 0.25
 	return {
 		"pose": pose,
 		"gesture_amount": gesture_amount,
-		"sway": sin(clock * float(profile.get("sway_tempo", 0.55)) + phase) * float(profile.get("sway_amount", 1.0)),
-		"bob": sin(clock * float(profile.get("breath_tempo", 1.0)) + phase) * float(profile.get("bob_amount", 0.6)),
+		"gesture_side": gesture_side,
+		"sway": sway,
+		"bob": bob,
 		"head_x": head_x,
 		"head_y": head_y,
 		"eye_offset": eye_offset,
@@ -8591,6 +8916,11 @@ func debug_character_idle_state(profile: Dictionary, clock: float) -> Dictionary
 	return _character_idle_state(profile, clock).duplicate(true)
 
 
+func debug_character_actor_scales(object_data: Dictionary, rect: Rect2 = Rect2(0.0, 0.0, 104.0, 78.0)) -> Array:
+	var actor: Dictionary = object_data.get("character_actor", {}) if typeof(object_data.get("character_actor", {})) == TYPE_DICTIONARY else {}
+	return _character_actor_member_scales(rect, object_data, actor).duplicate()
+
+
 func _draw_character_actor(rect: Rect2, object_data: Dictionary) -> void:
 	var actor: Dictionary = object_data.get("character_actor", {}) if typeof(object_data.get("character_actor", {})) == TYPE_DICTIONARY else {}
 	if actor.is_empty():
@@ -8598,17 +8928,16 @@ func _draw_character_actor(rect: Rect2, object_data: Dictionary) -> void:
 	var members: Array = actor.get("members", []) if typeof(actor.get("members", [])) == TYPE_ARRAY else []
 	var portrait_count := clampi(int(actor.get("portrait_count", maxi(1, members.size()))), 1, 3)
 	var faceless := str(actor.get("presentation", "")) == "faceless_silhouette"
-	var width_requirement := 54.0 + float(portrait_count - 1) * 38.0
-	var base_scale := clampf(minf(rect.size.y / 86.0, rect.size.x / width_requirement), 0.42, 0.74)
+	var member_scales := _character_actor_member_scales(rect, object_data, actor)
 	var foot_y := rect.end.y - 2.0
 	if portrait_count >= 2:
 		var left_member: Dictionary = members[1] if members.size() > 1 and typeof(members[1]) == TYPE_DICTIONARY else {}
-		_draw_character_actor_member(object_data, actor, left_member, 1, faceless, Vector2(rect.position.x + rect.size.x * 0.30, foot_y - 1.0), base_scale * 0.82 * _character_actor_scale(left_member))
+		_draw_character_actor_member(object_data, actor, left_member, 1, faceless, Vector2(rect.position.x + rect.size.x * 0.30, foot_y - 1.0), float(member_scales[1]))
 	if portrait_count >= 3:
 		var right_member: Dictionary = members[2] if members.size() > 2 and typeof(members[2]) == TYPE_DICTIONARY else {}
-		_draw_character_actor_member(object_data, actor, right_member, 2, faceless, Vector2(rect.position.x + rect.size.x * 0.70, foot_y - 1.0), base_scale * 0.82 * _character_actor_scale(right_member))
+		_draw_character_actor_member(object_data, actor, right_member, 2, faceless, Vector2(rect.position.x + rect.size.x * 0.70, foot_y - 1.0), float(member_scales[2]))
 	var lead_member: Dictionary = members[0] if not members.is_empty() and typeof(members[0]) == TYPE_DICTIONARY else {}
-	_draw_character_actor_member(object_data, actor, lead_member, 0, faceless, Vector2(rect.position.x + rect.size.x * 0.50, foot_y), base_scale * _character_actor_scale(lead_member))
+	_draw_character_actor_member(object_data, actor, lead_member, 0, faceless, Vector2(rect.position.x + rect.size.x * 0.50, foot_y), float(member_scales[0]))
 	# Talk events keep their person in the room while the authored event badge
 	# identifies why that person is selectable (rumor, offer, warning, and so on).
 	var event_icon := _texture_for_asset_path(str(object_data.get("asset_path", "")))
@@ -8618,11 +8947,40 @@ func _draw_character_actor(rect: Rect2, object_data: Dictionary) -> void:
 		_draw_live_texture_icon(event_icon, icon_rect, object_data, C_CYAN_2, object_labels_and_borders_enabled and str(object_data.get("id", "")) == selected_object_id, bool(object_data.get("disabled", false)))
 
 
+func _character_actor_member_scales(rect: Rect2, object_data: Dictionary, actor: Dictionary) -> Array:
+	var members: Array = actor.get("members", []) if typeof(actor.get("members", [])) == TYPE_ARRAY else []
+	var portrait_count := clampi(int(actor.get("portrait_count", maxi(1, members.size()))), 1, 3)
+	var width_requirement := 54.0 + float(portrait_count - 1) * 38.0
+	var base_scale := clampf(minf(rect.size.y / 86.0, rect.size.x / width_requirement), 0.42, 0.74)
+	var full_size_group := portrait_count >= 3 and _character_actor_is_crew_group(object_data, actor)
+	var scales: Array = []
+	for member_index in range(portrait_count):
+		var member: Dictionary = members[member_index] if member_index < members.size() and typeof(members[member_index]) == TYPE_DICTIONARY else {}
+		var depth_scale := 1.0 if member_index == 0 or full_size_group else 0.82
+		scales.append(base_scale * depth_scale * _character_actor_scale(member))
+	return scales
+
+
+func _character_actor_is_crew_group(object_data: Dictionary, actor: Dictionary) -> bool:
+	return str(actor.get("character_pool_id", "")).strip_edges() == "crew_regulars" \
+		or str(actor.get("character_identity_key", "")).strip_edges() == "the_crew" \
+		or str(object_data.get("source_id", "")).strip_edges() == "the_crew" \
+		or str(object_data.get("id", "")).strip_edges() == "lender:the_crew"
+
+
 func _draw_character_actor_member(object_data: Dictionary, actor: Dictionary, member: Dictionary, member_index: int, faceless: bool, foot: Vector2, scale_value: float) -> void:
 	var role := str(member.get("role", actor.get("role", "staff")))
 	var identity := _character_actor_identity(object_data, actor, member, member_index)
 	var idle_profile := _character_idle_profile(identity, role)
 	var idle_state := _character_idle_state(idle_profile, flicker)
+	var semantic_pose := str(member.get("pose", actor.get("pose", object_data.get("pose", "idle")))).strip_edges()
+	if semantic_pose.is_empty():
+		semantic_pose = "idle"
+	if semantic_pose not in ["idle", "watch", "watching"]:
+		# Authored work/fight/movement poses communicate scenario state and must
+		# not be replaced by a decorative scratch, stretch, or pocket check.
+		idle_state["pose"] = semantic_pose
+		idle_state["gesture_amount"] = 1.0
 	var animated_foot := foot + Vector2(float(idle_state.get("sway", 0.0)), float(idle_state.get("bob", 0.0)))
 	TableGameVisualsScript._draw_table_character(self, _character_actor_style(member, actor, faceless, idle_state), animated_foot, scale_value, flicker)
 
@@ -8638,6 +8996,7 @@ func _character_actor_style(member: Dictionary, actor: Dictionary, faceless: boo
 		"role": str(member.get("role", actor.get("role", "staff"))),
 		"pose": str(idle_state.get("pose", "idle")),
 		"gesture_amount": float(idle_state.get("gesture_amount", 0.0)),
+		"gesture_side": int(idle_state.get("gesture_side", 1)),
 		"eye_offset": float(idle_state.get("eye_offset", 0.0)),
 		"blink": bool(idle_state.get("blink", false)),
 		"head_x": float(idle_state.get("head_x", 0.0)),
@@ -8816,11 +9175,16 @@ func _draw_game_prop(rect: Rect2, object_data: Dictionary, selected: bool) -> vo
 		_draw_low_detail_game_prop(rect, object_data, accent, disabled)
 		_draw_game_runtime_badge(rect, object_data, accent)
 		return
-	_draw_interactable_light(rect, accent, selected)
+	# The street circle is painted directly on the alley floor. The generic
+	# fixture spotlight/base would make its chalk ring read as another table.
+	if prop != "street_craps_circle":
+		_draw_interactable_light(rect, accent, selected)
 	if prop == "coin_pusher_room":
 		CoinPusherRoomPropScript.draw(self, rect, object_data, accent, selected, disabled, flicker)
 	elif prop == "scratch_ticket_room":
 		ScratchTicketRoomPropScript.draw(self, rect, object_data, accent, selected, disabled, flicker)
+	elif prop == "street_craps_circle":
+		StreetCrapsCirclePropScript.draw(self, rect, object_data, accent, selected, disabled, flicker)
 	elif prop == "craps_room":
 		CrapsRoomPropScript.draw(self, rect, object_data, accent, selected, disabled, flicker)
 	elif prop == "bar_dice_room":
@@ -8845,6 +9209,9 @@ func _draw_game_prop(rect: Rect2, object_data: Dictionary, selected: bool) -> vo
 
 func _draw_low_detail_game_prop(rect: Rect2, object_data: Dictionary, accent: Color, disabled: bool = false) -> void:
 	var prop := str(object_data.get("prop", "card_table"))
+	if prop == "street_craps_circle":
+		StreetCrapsCirclePropScript.draw_low_detail(self, rect, object_data, accent, disabled, flicker)
+		return
 	var base_alpha := 0.18 if disabled else 0.30
 	draw_rect(Rect2(rect.position + Vector2(rect.size.x * 0.12, rect.size.y * 0.82), Vector2(rect.size.x * 0.76, 4)), Color(accent.r, accent.g, accent.b, base_alpha))
 	if prop == "coin_pusher_room":

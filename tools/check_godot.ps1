@@ -881,8 +881,10 @@ function Invoke-EnvironmentSlotVerificationGates {
     Invoke-GodotScript -Name "environment_slot_runtime_audit" -ScriptPath "res://scripts/tests/environment_slot_runtime_audit_check.gd" -StageTimeoutSec 600
     Invoke-GodotScript -Name "environment_slot_placement_mode" -ScriptPath "res://scripts/tests/environment_slot_placement_mode_check.gd" -StageTimeoutSec 180
     Invoke-GodotScript -Name "animation_liveness_without_pointer" -ScriptPath "res://scripts/tests/animation_liveness_without_pointer_check.gd" -StageTimeoutSec 120
+    Invoke-GodotScript -Name "environment_character_idle_variety" -ScriptPath "res://scripts/tests/environment_character_idle_variety_check.gd" -StageTimeoutSec 120
     Invoke-GodotScript -Name "environment_test_mode" -ScriptPath "res://scripts/tests/environment_test_mode_check.gd" -StageTimeoutSec 180
     Invoke-GodotScript -Name "environment_library_launcher" -ScriptPath "res://scripts/tests/ui_scene/check_environment_library_launcher.gd" -StageTimeoutSec 180
+    Invoke-GodotScript -Name "environment_library_guest_legend_action_hosts" -ScriptPath "res://scripts/tests/ui_scene/check_environment_library_guest_legend_action_hosts.gd" -StageTimeoutSec 180
     Invoke-GodotScript -Name "developer_layout_save_ui" -ScriptPath "res://scripts/tests/developer_layout_save_ui_check.gd" -StageTimeoutSec 120
     Invoke-GodotScript -Name "developer_placement_mode" -ScriptPath "res://scripts/tests/developer_placement_mode_check.gd" -StageTimeoutSec 180
     Invoke-GodotScript -Name "shop_item_row" -ScriptPath "res://tools/shop_item_row_check.gd" -StageTimeoutSec 120

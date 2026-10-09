@@ -53,10 +53,10 @@ The current data split is deliberate:
   20-base/55-scenario owner checklist and slot inventory. It is a guide, not
   another authority.
 
-The post-audit raw shared source contains 565 authored positions: 175 fixed,
-144 event, 213 scenario-source, and 33 exit. Of the 213 shared scenario
-positions, 69
-are explicit runtime reserves. Catalog scenario contexts replace the former
+The post-audit raw shared source contains 517 authored positions: 175 fixed,
+98 event, 211 scenario-source, and 33 exit. Of the 211 shared scenario
+positions, 69 are explicit runtime reserves. Catalog scenario contexts replace
+the former
 ordinary map-wide scenario bank with their exact local bank and append the
 room's runtime reserves. The seven reachable no-catalog maps persist their effective
 ordinary scenario slots at room scope rather than beneath a fabricated
@@ -124,8 +124,10 @@ the 604 local slots.
 
 - [x] Continue using the existing Environment slot placement mode rather than
   introducing a second editor.
-- [x] Show only one family tab at a time while keeping all active slots
-  available to full-layout save.
+- [x] Provide focused single-family tabs plus an explicit **All** view while
+  keeping every active slot available to full-layout save.
+- [x] Allow the selected slot to use the **Behind**, **Standard**, or **Front**
+  draw layer without changing its family or identity.
 - [x] Preserve explicit Empty capacity and Runtime reserves visibility
   controls.
 - [x] Add a prominent **Save Current Layout** action.
@@ -142,9 +144,10 @@ the 604 local slots.
   layouts; exclude the non-playable layered parent template.
 - [x] Auto-select and lock a scenario's authored Punchline layer so an exact
   scenario cannot accidentally be saved against the wrong room.
-- [x] Keep the placement panel scrollable and reachable at small window sizes,
-  with actual scenario occupant names, saved/remaining progress, and the next
-  missing layout visible in the workflow.
+- [x] Keep the placement panel fixed and scrollbar-free within the supported
+  viewport, with consistent control/type sizing, actual scenario occupant
+  names, saved/remaining progress, and the next missing layout visible in the
+  workflow.
 - [x] Keep **Save to Project** for writable source checkouts.
 - [x] Keep **Export Placement Report** for packaged builds, with schema-3
   room/scenario separation and a complete coverage snapshot.

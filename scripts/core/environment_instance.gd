@@ -1181,14 +1181,8 @@ static func _game_layout_entries(environment_data: Dictionary) -> Array:
 	var entries: Array = []
 	var layout := JsonCoerceScript._copy_dict(environment_data.get("layout", {}))
 	var fixture_counts := JsonCoerceScript._copy_dict(layout.get("game_fixture_counts", {}))
-	var counter_sale_game_ids := _lottery_counter_game_ids(environment_data, "sale_game_ids")
 	var layout_index := 0
 	for game_id in JsonCoerceScript._string_array(environment_data.get("game_ids", [])):
-		# Counter merchandise is still a complete game surface, but its room entry
-		# is an action owned by the existing cashier/bartender rather than a second
-		# physical machine. This also keeps it from consuming a placement slot.
-		if counter_sale_game_ids.has(game_id):
-			continue
 		var fixture_count := maxi(1, int(fixture_counts.get(game_id, 1)))
 		for fixture_index in range(fixture_count):
 			entries.append({
@@ -1467,11 +1461,22 @@ static func _attach_lottery_counter_manifest_actions(entries: Array, environment
 	if host_object_id.is_empty():
 		return
 	var selected_game_ids := JsonCoerceScript._string_array(environment_data.get("game_ids", []))
+	var physical_object_ids: Dictionary = {}
+	for entry_value in entries:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			continue
+		var physical_object_id := str((entry_value as Dictionary).get("object_id", "")).strip_edges()
+		if not physical_object_id.is_empty():
+			physical_object_ids[physical_object_id] = true
 	var action_ids: Array = []
 	for game_id in JsonCoerceScript._string_array(counter.get("sale_game_ids", [])):
 		if not selected_game_ids.has(game_id):
 			continue
-		action_ids.append("game:%s" % game_id)
+		# A stocked machine owns its own launch action. The counter only inherits
+		# the sale action in legacy/custom rooms that truly have no physical row.
+		var game_object_id := "game:%s" % game_id
+		if not physical_object_ids.has(game_object_id):
+			action_ids.append(game_object_id)
 	for game_id in JsonCoerceScript._string_array(counter.get("service_game_ids", [])):
 		if not selected_game_ids.has(game_id):
 			continue

@@ -1022,6 +1022,10 @@
         [
           322,
           202
+        ],
+        [
+          812,
+          202
         ]
       ],
       "event_spots": [
@@ -1288,6 +1292,10 @@
     "objective_hint": "Paper pays fast. The ceiling counts faster.",
     "layout": {
       "game_spots": [
+        [
+          386,
+          160
+        ],
         [
           482,
           254
@@ -2033,7 +2041,12 @@
     ],
     "layout": {
       "prioritize_service_spots": true,
-      "game_spots": [],
+      "game_spots": [
+        [
+          815,
+          216
+        ]
+      ],
       "shopkeeper_spots": [
         [
           642,
@@ -3532,6 +3545,10 @@
         ],
         [
           525,
+          150
+        ],
+        [
+          675,
           150
         ],
         [

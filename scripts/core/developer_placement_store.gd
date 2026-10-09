@@ -109,6 +109,55 @@ static func slot_layer_overrides(environment: Dictionary) -> Dictionary:
 	return result
 
 
+# Captures the complete machine-local room record before one placement edit.
+# Restoring the room as a unit also restores completion shadows exactly, which a
+# coordinate-only undo cannot do after shared geometry invalidates scenarios.
+static func capture_user_room_state(environment: Dictionary) -> Dictionary:
+	_ensure_loaded()
+	var key := room_key(environment)
+	if key.is_empty():
+		return {}
+	return {
+		"room_key": key,
+		"had_room": _user_rooms.has(key),
+		"room": _dict(_user_rooms.get(key, {})).duplicate(true),
+	}
+
+
+static func restore_user_room_state(state: Dictionary) -> Dictionary:
+	_ensure_loaded()
+	var raw_key := str(state.get("room_key", ""))
+	var key := raw_key.strip_edges()
+	var had_room := bool(state.get("had_room", false))
+	var room_value: Variant = state.get("room", {})
+	if raw_key != key \
+			or key.is_empty() \
+			or not _surface_map_ids.has(key) \
+			or not _expected_base_layout_ids.has("%s::%s" % [key, BASE_LAYOUT_ID]) \
+			or (had_room and (typeof(room_value) != TYPE_DICTIONARY or not _room_payload_valid(room_value as Dictionary, key))):
+		return {"ok": false, "error": "The placement undo record is no longer valid."}
+	var previous_had_room := _user_rooms.has(key)
+	var previous_room := _dict(_user_rooms.get(key, {})).duplicate(true)
+	if had_room:
+		_user_rooms[key] = (room_value as Dictionary).duplicate(true)
+	else:
+		_user_rooms.erase(key)
+	var save_error := _write_payload(user_path(), _user_rooms)
+	if save_error != OK:
+		if previous_had_room:
+			_user_rooms[key] = previous_room
+		else:
+			_user_rooms.erase(key)
+	else:
+		_authority_revision += 1
+	return {
+		"ok": save_error == OK,
+		"error": "" if save_error == OK else "Could not save the restored placement state.",
+		"path": user_path(),
+		"room_key": key,
+	}
+
+
 static func save_slot_layer(environment: Dictionary, slot_id: String, layer: int) -> Dictionary:
 	var key := room_key(environment)
 	var clean_id := slot_id.strip_edges()
@@ -846,12 +895,140 @@ static func _read_rooms(path: String) -> Dictionary:
 		path,
 		func(payload: Dictionary) -> bool: return _placement_payload_valid(payload)
 	)
+	if not bool(result.get("ok", false)) or str(result.get("outcome", "")) != "loaded-primary":
+		# A placement catalog can legitimately gain or retire slots between
+		# authoring sessions. Do not turn that expected catalog drift into an
+		# all-or-nothing loss of the user's still-valid coordinates. The strict
+		# validator remains the write boundary; this read-only recovery path drops
+		# identities that no longer exist and clears completion markers when a new
+		# required identity is missing. Prefer a recoverable primary to an older
+		# strictly-valid backup so catalog changes cannot silently roll back edits.
+		var raw_result := DurableStoreScript.read_json(path)
+		if bool(raw_result.get("ok", false)) \
+				and str(raw_result.get("outcome", "")) == "loaded-primary":
+			var recovered_payload := _payload_recovered_for_catalog(
+				_dict(raw_result.get("data", {}))
+			)
+			if not recovered_payload.is_empty() and _placement_payload_valid(recovered_payload):
+				var recovery_outcome := raw_result.duplicate(true)
+				recovery_outcome["recovered_catalog_drift"] = true
+				recovery_outcome["strict_outcome"] = str(result.get("outcome", ""))
+				return {
+					"rooms": _dict(recovered_payload.get("rooms", {})).duplicate(true),
+					"outcome": recovery_outcome,
+				}
 	if not bool(result.get("ok", false)):
 		return {"rooms": {}, "outcome": result}
 	return {
 		"rooms": _dict(_dict(result.get("data", {})).get("rooms", {})).duplicate(true),
 		"outcome": result,
 	}
+
+
+static func _payload_recovered_for_catalog(payload: Dictionary) -> Dictionary:
+	_ensure_catalog()
+	if int(payload.get("schema_version", 0)) != SCHEMA_VERSION \
+			or typeof(payload.get("rooms", {})) != TYPE_DICTIONARY:
+		return {}
+	var recovered_rooms: Dictionary = {}
+	for room_key_value in _dict(payload.get("rooms", {})).keys():
+		var raw_room_key := str(room_key_value)
+		var key := raw_room_key.strip_edges()
+		if raw_room_key != key \
+				or key.is_empty() \
+				or not _surface_map_ids.has(key) \
+				or not _expected_base_layout_ids.has("%s::%s" % [key, BASE_LAYOUT_ID]):
+			continue
+		var room_value: Variant = _dict(payload.get("rooms", {})).get(room_key_value)
+		if typeof(room_value) != TYPE_DICTIONARY:
+			continue
+		var source_room := room_value as Dictionary
+		var recovered_room: Dictionary = {}
+		var expected_shared := _dict(_shared_slot_ids_by_room.get(key, {}))
+		var shared_positions := _catalog_positions(
+			source_room.get("slot_positions", {}), expected_shared
+		)
+		var shared_layers := _catalog_layers(
+			source_room.get(SLOT_LAYER_FIELD, {}), expected_shared
+		)
+		if not shared_positions.is_empty():
+			recovered_room["slot_positions"] = shared_positions
+		if not shared_layers.is_empty():
+			recovered_room[SLOT_LAYER_FIELD] = shared_layers
+		if typeof(source_room.get("base_saved", null)) == TYPE_BOOL:
+			recovered_room["base_saved"] = bool(source_room.get("base_saved", false)) \
+					and _position_ids_match(shared_positions, expected_shared)
+
+		var recovered_layouts: Dictionary = {}
+		for scenario_value in _dict(source_room.get("scenario_layouts", {})).keys():
+			var raw_scenario_id := str(scenario_value)
+			var scenario_id := raw_scenario_id.strip_edges()
+			var exact_layout_id := "%s::%s" % [key, scenario_id]
+			if raw_scenario_id != scenario_id \
+					or scenario_id.is_empty() \
+					or not _scenario_slot_ids_by_layout.has(exact_layout_id):
+				continue
+			var layout_value: Variant = _dict(source_room.get("scenario_layouts", {})).get(scenario_value)
+			if typeof(layout_value) != TYPE_DICTIONARY:
+				continue
+			var source_layout := layout_value as Dictionary
+			var expected_scenario := _dict(_scenario_slot_ids_by_layout.get(exact_layout_id, {}))
+			var scenario_positions := _catalog_positions(
+				source_layout.get("slot_positions", {}), expected_scenario
+			)
+			var scenario_layers := _catalog_layers(
+				source_layout.get(SLOT_LAYER_FIELD, {}), expected_scenario
+			)
+			var recovered_layout: Dictionary = {}
+			if not scenario_positions.is_empty():
+				recovered_layout["slot_positions"] = scenario_positions
+			if not scenario_layers.is_empty():
+				recovered_layout[SLOT_LAYER_FIELD] = scenario_layers
+			if typeof(source_layout.get("saved", null)) == TYPE_BOOL:
+				recovered_layout["saved"] = bool(source_layout.get("saved", false)) \
+						and _position_ids_match(shared_positions, expected_shared) \
+						and _position_ids_match(scenario_positions, expected_scenario)
+			if not recovered_layout.is_empty():
+				recovered_layouts[scenario_id] = recovered_layout
+		if not recovered_layouts.is_empty():
+			recovered_room["scenario_layouts"] = recovered_layouts
+		if not recovered_room.is_empty():
+			recovered_rooms[key] = recovered_room
+	return {"schema_version": SCHEMA_VERSION, "rooms": recovered_rooms}
+
+
+static func _catalog_positions(value: Variant, expected_ids: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	if typeof(value) != TYPE_DICTIONARY:
+		return result
+	for slot_value in (value as Dictionary).keys():
+		var raw_slot_id := str(slot_value)
+		var slot_id := raw_slot_id.strip_edges()
+		if raw_slot_id != slot_id or slot_id.is_empty() or not expected_ids.has(slot_id):
+			continue
+		var normalized := _normalized_position((value as Dictionary).get(slot_value))
+		if not normalized.is_empty():
+			result[slot_id] = normalized
+	return result
+
+
+static func _catalog_layers(value: Variant, expected_ids: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	if typeof(value) != TYPE_DICTIONARY:
+		return result
+	for slot_value in (value as Dictionary).keys():
+		var raw_slot_id := str(slot_value)
+		var slot_id := raw_slot_id.strip_edges()
+		var layer_value: Variant = (value as Dictionary).get(slot_value)
+		if raw_slot_id != slot_id \
+				or slot_id.is_empty() \
+				or not expected_ids.has(slot_id) \
+				or not _numeric(layer_value) \
+				or not is_equal_approx(float(layer_value), roundf(float(layer_value))) \
+				or int(layer_value) not in SLOT_LAYER_VALUES:
+			continue
+		result[slot_id] = int(layer_value)
+	return result
 
 
 static func _write_payload(path: String, rooms: Dictionary, extra_fields: Dictionary = {}) -> Error:

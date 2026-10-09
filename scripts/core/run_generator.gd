@@ -99,6 +99,7 @@ func environment_test_result(run_state: RunState, request: Dictionary) -> Dictio
 	var installed := _install_environment_with_rollback(run_state, environment_data, _travel_rollback_snapshot(run_state))
 	if not bool(installed.get("ok", false)):
 		return installed
+	var warnings := JsonCoerceScript._copy_array(installed.get("warnings", []))
 	var layer_id := str(request.get("layer_id", "")).strip_edges()
 	if layer_id.is_empty():
 		var installed_scenario_id := str(run_state.current_environment.get("scenario_id", "")).strip_edges()
@@ -108,7 +109,12 @@ func environment_test_result(run_state: RunState, request: Dictionary) -> Dictio
 		var layer_result := _install_environment_test_layer(run_state, layer_id)
 		if not bool(layer_result.get("ok", false)):
 			return {"ok": false, "errors": [str(layer_result.get("message", "The selected starting area could not be entered."))]}
-	return {"ok": true, "errors": [], "environment": run_state.current_environment.duplicate(true)}
+		warnings = JsonCoerceScript._copy_array(layer_result.get("warnings", []))
+	if not warnings.is_empty():
+		run_state.current_environment["environment_test_layout_warnings"] = warnings.duplicate(true)
+	else:
+		run_state.current_environment.erase("environment_test_layout_warnings")
+	return {"ok": true, "errors": [], "warnings": warnings, "environment": run_state.current_environment.duplicate(true)}
 
 
 func _install_environment_test_layer(run_state: RunState, layer_id: String) -> Dictionary:
@@ -133,7 +139,7 @@ func _install_environment_test_layer(run_state: RunState, layer_id: String) -> D
 	if not bool(finalized.get("ok", false)):
 		var errors := JsonCoerceScript._copy_array(finalized.get("errors", []))
 		return {"ok": false, "message": str(errors[0]) if not errors.is_empty() else "The selected starting area could not be finalized."}
-	return {"ok": true, "layer_id": target_id}
+	return {"ok": true, "layer_id": target_id, "warnings": JsonCoerceScript._copy_array(finalized.get("warnings", []))}
 
 
 # Travel callers already hold the exact atomic rollback snapshot. Reuse it so
@@ -173,7 +179,13 @@ func _install_environment_with_rollback(run_state: RunState, environment_data: D
 		if restore_on_failure:
 			_restore_travel_snapshot(run_state, rollback)
 		return {"ok": false, "applied": true, "errors": JsonCoerceScript._copy_array(finalized.get("errors", []))}
-	return {"ok": true, "applied": true, "inactive": bool(finalized.get("inactive", false)), "errors": []}
+	return {
+		"ok": true,
+		"applied": true,
+		"inactive": bool(finalized.get("inactive", false)),
+		"warnings": JsonCoerceScript._copy_array(finalized.get("warnings", [])),
+		"errors": [],
+	}
 
 
 func _trusted_scenario_install_data(run_state: RunState, environment_data: Dictionary) -> Dictionary:

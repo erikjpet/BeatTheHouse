@@ -27,7 +27,8 @@ music paths inside `scripts/ui/sfx_player.gd`, and the audio bus graph.
   swaps wait for phrase breakpoints.
 - **Input surface (narrow):** exactly two inputs — the environment's
   `music_profile` and heat quantized to 10 bands. One call site
-  (`foundation_main.gd:3354`). Every heat-band crossing re-bakes and swaps an
+  (`FoundationMain._update_procedural_music()` in the historical
+  implementation). Every heat-band crossing re-bakes and swaps an
   entirely new song.
 - **Second, disconnected music system:** slot feature music
   (`bonus_music_pinball`/`bonus_music_buffalo`) is baked separately inside

@@ -395,6 +395,7 @@ static func build_run_screen(host: Variant) -> void:
 	visual_stack.add_child(host.summary_label)
 	host._build_run_report_screen(visual_stack)
 	host.environment_canvas = PixelSceneCanvasScript.new()
+	host.environment_canvas.set_developer_slot_placement_shortcut_enabled(true)
 	host.environment_canvas.clip_contents = true
 	host.environment_canvas.custom_minimum_size = host.ENVIRONMENT_CANVAS_MIN_SIZE
 	host.environment_canvas.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -410,6 +411,8 @@ static func build_run_screen(host: Variant) -> void:
 	host.environment_canvas.developer_placement_export_requested.connect(host._on_developer_placement_export_requested)
 	host.environment_canvas.developer_layout_save_requested.connect(host._on_developer_layout_save_requested)
 	host.environment_canvas.developer_slot_layer_requested.connect(host._on_developer_slot_layer_requested)
+	host.environment_canvas.developer_placement_undo_requested.connect(host._on_developer_placement_undo_requested)
+	host.environment_canvas.developer_slot_placement_shortcut_toggled.connect(host._on_developer_slot_placement_shortcut_toggled)
 	visual_stack.add_child(host.environment_canvas)
 	host.game_surface_canvas = host.GameSurfaceCanvasScript.new()
 	if host.game_surface_canvas.has_method("bind_surface_audio_authority"):

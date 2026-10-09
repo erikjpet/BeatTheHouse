@@ -1,7 +1,8 @@
 # Environment Library debug mode
 
-Status: IMPLEMENTED - focused validation passed
-Branch: `codex/environment-library-debug-mode`
+Status: **IMPLEMENTED ON `main` — HISTORICAL IMPLEMENTATION RECORD.**
+Original branch: `codex/environment-library-debug-mode` (historical provenance;
+do not treat it as the current source boundary).
 
 ## Goal
 

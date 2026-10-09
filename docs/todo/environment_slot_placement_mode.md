@@ -31,11 +31,15 @@ mode contract.
 ## Product contract
 
 - Expose a separate **Environment slot placement mode** toggle under Settings
-  > Developer.
+  > Developer. F1 toggles that live mode on or off from the environment view,
+  persists the preference, and keeps the Settings draft and checkbox in sync.
+  F2 remains the independent hide/restore shortcut for the placement panel.
 - Keep object-placement mode and slot-placement mode mutually exclusive.
-- Open base contexts on `fixed` and exact contexts on `scenario`; present `fixed`, `event`, `scenario`,
-  and `exit` as mutually exclusive family tabs with distinct colors. Switching
-  tabs replaces the prior overlay instead of accumulating markers.
+- Open base contexts on `fixed` and exact contexts on `scenario`; present
+  `fixed`, `event`, `scenario`, and `exit` as equal-size single-family tabs
+  with distinct colors, plus a final **All** tab that deliberately shows every
+  available family together. Switching back to a single family replaces the
+  combined overlay.
 - Default **Empty capacity** and **Runtime reserves** on during the exhaustive
   placement pass so no authored coordinate is silently skipped. The toggles
   may still reduce temporary visual clutter, and the panel warns when they
@@ -51,7 +55,13 @@ mode contract.
   advance, or otherwise mutate scenario state.
 - Allow pointer dragging and keyboard nudging on the canonical 900x430 room
   plane. Moving a slot translates its position, hit rectangle, and label
-  anchor without changing its size, family, or identity.
+  anchor without changing its size, family, or identity. The selected slot can
+  also use one of three explicit draw layers—**Behind**, **Standard**, or
+  **Front**—and higher layers render above lower layers.
+- Keep the placement controls in one fixed, no-scroll panel that fits the
+  supported viewport. Family, visibility, layer, and action controls retain
+  consistent height, type size, and equal-width grouping rather than resizing
+  per label or context.
 - Save local slot edits durably, reset individual local edits, and promote all
   local edits into the project placement override file through the existing
   developer placement workflow.
@@ -124,7 +134,7 @@ runtime change.
 
 ## Validation
 
-- Settings persistence and mutual exclusion.
+- Settings persistence, F1 shortcut synchronization, and mutual exclusion.
 - Context-aware default tab, exclusive family tabs, complete empty/reserve visibility,
   occupant-first labels, stable secondary IDs, active scenario/phase context,
   selection, and family legend.
@@ -143,24 +153,25 @@ runtime change.
 
 ## Verification coverage
 
-- `environment_slot_placement_mode_check.gd` covers Settings
-  persistence and mutual exclusion, context-aware default presentation, exclusive
-  family tabs, empty/reserve controls, occupant-first labeling, active
+- `scripts/tests/environment_slot_placement_mode_check.gd` covers Settings
+  persistence, F1 enable/disable synchronization, mutual exclusion, context-aware default presentation,
+  single-family/All filters, empty/reserve controls, occupant-first labeling, active
   scenario/phase context, all four slot families, empty-slot editing,
   context-aware overlaps, map/layer scoping, preview restoration, durable
   reload, complete report export, reset, promotion, and future-object binding.
-- `developer_layout_save_ui_check.gd` covers the prominent full-layout action,
+- `scripts/tests/developer_layout_save_ui_check.gd` covers the prominent full-layout action,
   pending-drag lock ordering, and slot-mode-only visibility.
-- `scenario_slot_layout_check.gd` covers catalog scenario isolation, base
+- `scripts/tests/scenario_slot_layout_check.gd` covers catalog scenario isolation, base
   filtering, runtime reserves, no-catalog behavior, and exact layout
   composition.
-- `environment_fixed_slot_static_check.py` validates the post-audit raw
-  565-position source/template census (175 fixed, 144 event, 213 scenario,
+- `tools/environment_fixed_slot_static_check.py` validates the post-audit raw
+  517-position source/template census (175 fixed, 98 event, 211 scenario,
   33 exit), all 21
   maps, the 55 exact scenario banks and their 604 local slots, and reachable
   active snapshots.
 - Serialization, environment-library, launcher, and full-project validation
   remain part of the release gate.
-- `environment_scenario_layout_breakdown.md` is the current auditable handoff
-  for all 75 reachable contexts. `environment_slot_consolidation_breakdown.md` remains a
-  raw migration/source-template reference only for scenario placement.
+- `docs/plans/environment_scenario_layout_breakdown.md` is the current
+  auditable handoff for all 75 reachable contexts.
+  `docs/plans/environment_slot_consolidation_breakdown.md` remains a raw
+  migration/source-template reference only for scenario placement.

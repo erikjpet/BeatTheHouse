@@ -970,6 +970,8 @@ func environment_object_state(run_state: RunState, environment: Dictionary) -> D
 		elif int(table.get("point", 0)) != 0:
 			status_label = "POINT %d" % int(table.get("point", 0))
 		return {
+			"display_name": "Street Craps",
+			"environment_prop": "street_craps_circle",
 			"status_label": status_label,
 			"status_detail": "Cash returned; gone for tonight" if dispersed else "$%d-$%d · Pass / Don't Pass" % [int(table.get("table_minimum", 0)), int(table.get("table_maximum", 0))],
 			"active": not dispersed,
@@ -986,6 +988,7 @@ func environment_object_state(run_state: RunState, environment: Dictionary) -> D
 			},
 		}
 	return {
+		"environment_prop": "craps_room",
 		"status_label": "POINT %d" % int(table.get("point", 0)) if int(table.get("point", 0)) != 0 else "COME-OUT",
 		"status_detail": "Table energy %d" % int(table.get("table_energy", 0)),
 		"active": true,

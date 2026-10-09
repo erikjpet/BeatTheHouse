@@ -306,6 +306,14 @@ static func _check_observable_action_consequence(failures: Array) -> void:
 		}, "game", 0))
 		if str(game_hint.get("prop", "")) != str(expectation[1]):
 			failures.append("Production room prop mapping does not distinguish game %s." % source_id)
+	var street_craps_hint := _dict(canvas.call("_apply_draw_hints", {
+		"source_id": "craps",
+		"visual_key": "dice",
+		"prop": "street_craps_circle",
+		"visual_state": {"variant": "street_craps"},
+	}, "game", 0))
+	if str(street_craps_hint.get("prop", "")) != "street_craps_circle":
+		failures.append("Street Craps reused the casino table room prop instead of its dedicated pavement circle.")
 	var acknowledgement := EnvironmentInteractionViewModelScript.accepted_scenario_action_acknowledgement(
 		{"label": "Public observer rail", "local_state": {"traitor": true, "grievance": 2, "rigged_draw": true, "unrevealed_turn": 7}},
 		{"id": "set_local_private", "label": "Open the public rail", "handler": "set_local", "inputs": {"key": "traitor", "value": true}}

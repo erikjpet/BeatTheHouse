@@ -2,8 +2,10 @@ extends SceneTree
 
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
 
 var failures: Array[String] = []
 
@@ -57,6 +59,38 @@ func _run() -> void:
 	var flags: Dictionary = first_environment.get("local_narrative_flags", {})
 	var rects: Dictionary = (first_environment.get("layout", {}) as Dictionary).get("object_rects", {})
 	_check(bool(flags.get("environment_test_session", false)) and rects.has("travel:leave"), "Every practice room must expose the Environment Library exit object.")
+
+	var repair_request := request.duplicate(true)
+	repair_request["archetype_id"] = "delta_queen"
+	repair_request["scenario_id"] = "delta_queen_wedding_charter"
+	repair_request["layer_id"] = ""
+	repair_request["generation_key"] = "layout-repair|delta-queen|wedding-charter"
+	repair_request["condition_overrides"] = {}
+	var repair_state := _practice_state("layout-repair", repair_request)
+	var repair_preview := RunGeneratorScript.new(library).environment_test_result(repair_state, repair_request)
+	# Authored positions are repaired over time, so the test must not rely on one
+	# named scenario remaining invalid forever. Supply a deliberately out-of-bounds
+	# overlay reservation to exercise the same authoring-preview recovery boundary.
+	var repair_refresh := repair_state.scenario_finalize_installed_environment(library, {
+		"production_canvas": true,
+		"reserved_overlay_board_rect": {"x": -1.0, "y": 0.0, "w": 100.0, "h": 100.0},
+	})
+	var repair_environment := JsonCoerceScript._copy_dict(repair_state.current_environment)
+	var repair_warnings := JsonCoerceScript._copy_array(repair_refresh.get("warnings", []))
+	var repair_snapshot := JsonCoerceScript._copy_dict(repair_environment.get("scenario_render_snapshot", {}))
+	var found_rope := false
+	for visual_value in JsonCoerceScript._copy_array(repair_snapshot.get("visual_objects", [])):
+		if str(JsonCoerceScript._copy_dict(visual_value).get("semantic_identity", "")) == "scenario::delta_queen_wedding_charter_ceremony_rope":
+			found_rope = true
+			break
+	_check(bool(repair_preview.get("ok", false)), "An Environment Library room with repairable scenario layout findings must still load.")
+	_check(bool(repair_refresh.get("ok", false)), "An Environment Library repair preview must survive later UI layout refreshes.")
+	_check(not repair_warnings.is_empty(), "A repair preview must preserve its layout findings as visible warnings.")
+	_check(found_rope, "A rejected scenario obstacle must remain rendered so placement mode can move it.")
+	_check(
+		bool(JsonCoerceScript._copy_dict(repair_environment.get("scenario_layout_audit", {})).get("authoring_preview", false)),
+		"Repair-preview layout authority must be explicitly marked as authoring-only."
+	)
 
 	var normal_seed_state := RunStateScript.new()
 	normal_seed_state.start_new("repeatable")
@@ -125,10 +159,34 @@ func _run() -> void:
 			no_scenario_projection_rows.append(str(row.get("instance_object_id", row.get("object_id", ""))))
 	_check(no_scenario_projection_rows.is_empty(), "Base / No Scenario generated scenario presentation objects: %s" % JSON.stringify(no_scenario_projection_rows))
 
+	var club_request := request.duplicate(true)
+	club_request["archetype_id"] = "small_underground_casino"
+	club_request["scenario_id"] = "__none"
+	club_request["layer_id"] = "club"
+	club_request["generation_key"] = "punchline-club-terminal-guard"
+	var club_state := _practice_state("punchline-club")
+	var club_result := RunGeneratorScript.new(library).environment_test_result(club_state, club_request)
+	_check(bool(club_result.get("ok", false)), "The Punchline comedy-club layer must generate for Environment Library practice.")
+	club_state.bankroll = 0
+	club_state.suspicion = {"level": 100, "cues": [], "local_levels": {}}
+	var terminal_result := RunTerminalEvaluatorScript.evaluate_terminal_and_apply(club_state, library)
+	_check(
+		club_state.run_status == RunStateScript.RUN_STATUS_ACTIVE
+			and not bool(terminal_result.get("failed", false))
+			and bool(terminal_result.get("recovery_available", false)),
+		"Loading The Punchline from the Environment Library must keep the practice session active instead of routing to Stranded."
+	)
+
 	_finish()
 
 
 func _generate(library: ContentLibrary, visible_seed: String, request: Dictionary) -> Dictionary:
+	var run_state := _practice_state(visible_seed, request)
+	var generator := RunGeneratorScript.new(library)
+	return generator.environment_test_result(run_state, request)
+
+
+func _practice_state(visible_seed: String, request: Dictionary = {}) -> RunState:
 	var run_state := RunStateScript.new()
 	var domain_seed := "ENVIRONMENT-PRACTICE-v1:%s" % visible_seed
 	var scenario_id := str(request.get("scenario_id", "__default"))
@@ -137,8 +195,7 @@ func _generate(library: ContentLibrary, visible_seed: String, request: Dictionar
 		modifiers["scenario_pins"] = {str(request.get("archetype_id", "")): scenario_id}
 	run_state.start_new(domain_seed, RunStateScript.custom_challenge("environment_practice", domain_seed, modifiers))
 	run_state.bankroll = 100000
-	var generator := RunGeneratorScript.new(library)
-	return generator.environment_test_result(run_state, request)
+	return run_state
 
 
 func _check(condition: bool, message: String) -> void:

@@ -10654,8 +10654,12 @@ func start_environment_test_session() -> Dictionary:
 		run_screen.visible = true
 	_commit_foundation_coach_attention(rollback)
 	_refresh()
-	_show_message("Environment practice: %s" % str(run_state.current_environment.get("display_name", archetype_id.replace("_", " ").capitalize())))
-	return {"ok": true, "errors": [], "environment": run_state.current_environment.duplicate(true)}
+	var warnings := JsonCoerceScript._copy_array(result.get("warnings", []))
+	var practice_message := "Environment practice: %s" % str(run_state.current_environment.get("display_name", archetype_id.replace("_", " ").capitalize()))
+	if not warnings.is_empty():
+		practice_message += " — loaded for repair with placement warning: %s" % str(warnings[0])
+	_show_message(practice_message)
+	return {"ok": true, "errors": [], "warnings": warnings, "environment": run_state.current_environment.duplicate(true)}
 
 
 func _game_test_spin_group(label_text: String, target_id: String) -> VBoxContainer:
@@ -10921,6 +10925,7 @@ func _build_run_report_screen(parent: BoxContainer) -> void:
 	run_report_screen.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	run_report_screen.new_run_requested.connect(_on_run_report_new_run_requested)
 	run_report_screen.home_requested.connect(_on_run_report_home_requested)
+	run_report_screen.main_menu_requested.connect(_on_run_report_main_menu_requested)
 	run_report_screen.copy_seed_requested.connect(_on_run_report_copy_seed_requested)
 	run_report_screen.bag_claim_requested.connect(claim_victory_collection_bag)
 	run_report_screen.take_home_item_claim_requested.connect(claim_victory_container_item)
@@ -16870,6 +16875,13 @@ func _on_run_report_home_requested() -> void:
 	open_collection_browser()
 
 
+func _on_run_report_main_menu_requested() -> void:
+	if _terminal_reward_selection_pending():
+		_show_message("Choose and store each earned reward before leaving the run report.")
+		return
+	return_to_main_menu()
+
+
 func _complete_tutorial_profile() -> bool:
 	if profile_inventory == null:
 		_initialize_profile_inventory()
@@ -17107,6 +17119,20 @@ func _on_settings_applied() -> void:
 		_refresh_world_header()
 
 
+# Persists the F1 slot-mode toggle and mirrors it into Settings while the
+# canvas has already applied the visual/editor state for immediate feedback.
+func _on_developer_slot_placement_shortcut_toggled(enabled: bool) -> void:
+	if user_settings == null:
+		return
+	user_settings.developer_slot_placement_mode = enabled
+	if enabled:
+		user_settings.developer_placement_mode = false
+	if settings_menu != null:
+		settings_menu.sync_developer_slot_placement_mode(enabled)
+	if user_settings.save() != OK:
+		_show_message("Slot placement mode changed, but Settings could not be saved.")
+
+
 func _on_settings_game_library_requested() -> void:
 	if settings_menu != null:
 		settings_menu.apply_draft("Settings saved; opening Game Library.")
@@ -17131,6 +17157,10 @@ func _on_developer_placement_lock_requested(request: Dictionary) -> void:
 	request["_placement_lock_handled"] = true
 	request["_placement_lock_persisted"] = false
 	var environment := JsonCoerceScript._copy_dict(request.get("environment", {}))
+	var undo_record := _developer_placement_undo_record(
+		environment,
+		"Move %s" % str(request.get("slot_id", "placement"))
+	)
 	var result := DeveloperPlacementStoreScript.save_position(
 		environment,
 		str(request.get("field", "slot_positions")),
@@ -17142,6 +17172,8 @@ func _on_developer_placement_lock_requested(request: Dictionary) -> void:
 		_render_foundation_snapshots()
 		return
 	request["_placement_lock_persisted"] = true
+	if not undo_record.is_empty():
+		request["_placement_undo_record"] = undo_record
 	if bool(request.get("defer_refresh", false)):
 		return
 	var refresh_result := _refresh_developer_authored_environment()
@@ -17152,7 +17184,13 @@ func _on_developer_placement_lock_requested(request: Dictionary) -> void:
 
 
 func _on_developer_placement_reset_requested(request: Dictionary) -> void:
+	request["_placement_reset_handled"] = true
+	request["_placement_reset_persisted"] = false
 	var environment := JsonCoerceScript._copy_dict(request.get("environment", {}))
+	var undo_record := _developer_placement_undo_record(
+		environment,
+		"Reset %s" % str(request.get("slot_id", "placement"))
+	)
 	var result := DeveloperPlacementStoreScript.clear_position(
 		environment,
 		str(request.get("field", "slot_positions")),
@@ -17161,6 +17199,9 @@ func _on_developer_placement_reset_requested(request: Dictionary) -> void:
 	if not bool(result.get("ok", false)):
 		_show_message(str(result.get("error", "Could not reset that placement.")))
 		return
+	request["_placement_reset_persisted"] = true
+	if not undo_record.is_empty():
+		request["_placement_undo_record"] = undo_record
 	var refresh_result := _refresh_developer_authored_environment()
 	if not bool(refresh_result.get("ok", false)):
 		_show_message(str(refresh_result.get("error", "The placement reset was saved, but this room could not refresh it yet.")))
@@ -17172,6 +17213,10 @@ func _on_developer_slot_layer_requested(request: Dictionary) -> void:
 	request["_slot_layer_handled"] = true
 	request["_slot_layer_persisted"] = false
 	var environment := JsonCoerceScript._copy_dict(request.get("environment", {}))
+	var undo_record := _developer_placement_undo_record(
+		environment,
+		"Change %s layer" % str(request.get("slot_id", "slot"))
+	)
 	var result := DeveloperPlacementStoreScript.save_slot_layer(
 		environment,
 		str(request.get("slot_id", "")),
@@ -17181,12 +17226,41 @@ func _on_developer_slot_layer_requested(request: Dictionary) -> void:
 		_show_message(str(result.get("error", "Could not save that slot layer.")))
 		return
 	request["_slot_layer_persisted"] = true
+	if not undo_record.is_empty():
+		request["_placement_undo_record"] = undo_record
 	var refresh_result := _refresh_developer_authored_environment()
 	if not bool(refresh_result.get("ok", false)):
 		_show_message(str(refresh_result.get("error", "The slot layer was saved, but this room could not refresh it yet.")))
 		return
 	var layer_name := "Behind" if int(request.get("layer", 0)) < 0 else "Front" if int(request.get("layer", 0)) > 0 else "Standard"
 	_show_message("%s now uses the %s draw layer." % [str(request.get("slot_id", "Slot")), layer_name])
+
+
+func _developer_placement_undo_record(environment: Dictionary, label: String) -> Dictionary:
+	var state := DeveloperPlacementStoreScript.capture_user_room_state(environment)
+	if state.is_empty():
+		return {}
+	return {
+		"label": label,
+		"state": state,
+	}
+
+
+func _on_developer_placement_undo_requested(request: Dictionary) -> void:
+	request["_placement_undo_handled"] = true
+	request["_placement_undo_persisted"] = false
+	var record := JsonCoerceScript._copy_dict(request.get("undo_record", {}))
+	var state := JsonCoerceScript._copy_dict(record.get("state", {}))
+	var result := DeveloperPlacementStoreScript.restore_user_room_state(state)
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("error", "Could not undo that placement change.")))
+		return
+	request["_placement_undo_persisted"] = true
+	var refresh_result := _refresh_developer_authored_environment()
+	if not bool(refresh_result.get("ok", false)):
+		_show_message(str(refresh_result.get("error", "The change was undone, but this room could not refresh it yet.")))
+		return
+	_show_message("Undid: %s." % str(record.get("label", "placement change")))
 
 
 func _on_developer_placement_promote_requested() -> void:
@@ -17218,6 +17292,10 @@ func _on_developer_layout_save_requested(request: Dictionary) -> void:
 	request["_developer_layout_save_handled"] = true
 	request["_developer_layout_save_persisted"] = false
 	var environment := JsonCoerceScript._copy_dict(request.get("environment", {}))
+	var undo_record := _developer_placement_undo_record(
+		environment,
+		"Save %s" % DeveloperPlacementStoreScript.layout_id(environment)
+	)
 	var positions := JsonCoerceScript._copy_dict(request.get("full_positions", {}))
 	var result := DeveloperPlacementStoreScript.save_layout(
 		environment,
@@ -17228,6 +17306,8 @@ func _on_developer_layout_save_requested(request: Dictionary) -> void:
 		_show_message(str(result.get("error", "Could not save the current environment layout.")))
 		return
 	request["_developer_layout_save_persisted"] = true
+	if not undo_record.is_empty():
+		request["_placement_undo_record"] = undo_record
 	var coverage := DeveloperPlacementStoreScript.coverage_snapshot()
 	var missing_value: Variant = coverage.get("missing_layout_ids", [])
 	var missing_count := (missing_value as Array).size() if typeof(missing_value) == TYPE_ARRAY else 0
@@ -17269,6 +17349,10 @@ func _on_developer_placement_export_requested(pending_request: Dictionary) -> vo
 	var refresh_warning := ""
 	if not pending_request.is_empty():
 		var environment := JsonCoerceScript._copy_dict(pending_request.get("environment", {}))
+		var undo_record := _developer_placement_undo_record(
+			environment,
+			"Move %s" % str(pending_request.get("slot_id", "placement"))
+		)
 		var save_result := DeveloperPlacementStoreScript.save_position(
 			environment,
 			str(pending_request.get("field", "slot_positions")),
@@ -17279,6 +17363,8 @@ func _on_developer_placement_export_requested(pending_request: Dictionary) -> vo
 			_show_message(str(save_result.get("error", "Could not lock the pending placement, so no report was exported.")))
 			_render_foundation_snapshots()
 			return
+		if not undo_record.is_empty():
+			pending_request["_placement_undo_record"] = undo_record
 		var refresh_result := _refresh_developer_authored_environment()
 		if not bool(refresh_result.get("ok", false)):
 			refresh_warning = str(refresh_result.get("error", "The placement was saved, but this room could not refresh it yet."))

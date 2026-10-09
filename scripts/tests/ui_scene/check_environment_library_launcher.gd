@@ -148,6 +148,23 @@ func _run() -> void:
 	_select_metadata(layered_scenario, "__none")
 	app.call("_on_environment_test_scenario_selected", layered_scenario.selected)
 	_check(not layered_area.disabled, "Base / No Scenario must leave layered starting areas selectable.")
+	_select_metadata(layered_area, "club")
+	var punchline_result: Dictionary = app.call("start_environment_test_session")
+	await _settle(3)
+	run_state = app.get("run_state") as RunState
+	_check(
+		bool(punchline_result.get("ok", false))
+			and run_state != null
+			and run_state.run_status == RunState.RUN_STATUS_ACTIVE
+			and str(app.get("current_screen")) == "ENVIRONMENT",
+		"Loading The Punchline comedy club from the Environment Library must remain in the active environment instead of routing to Stranded."
+	)
+	var punchline_leave_opened := bool(app.call("activate_interactable_object", "travel:leave"))
+	await _settle(2)
+	_check(
+		punchline_leave_opened and overlay != null and overlay.visible and menu.is_visible_in_tree(),
+		"The Punchline practice exit must return to the Environment Library."
+	)
 	_select_metadata(archetypes, "bar")
 	app.call("_on_environment_test_archetype_selected", archetypes.selected)
 	_select_metadata(app.get("environment_test_scenario_option") as OptionButton, "__none")
