@@ -3059,10 +3059,10 @@ func _check_environment_game_pool_distribution(library: ContentLibrary, failures
 
 func _check_physical_game_fixture_capacity(library: ContentLibrary, failures: Array) -> void:
 	var expected_counts := {
-		"bar": {"logical": 3, "rendered": 2},
-		"gas_station_casino": {"logical": 3, "rendered": 2},
-		"jazz_club": {"logical": 1, "rendered": 0},
-		"grand_casino": {"logical": 5, "rendered": 6},
+		"bar": {"logical": 3, "rendered": 3},
+		"gas_station_casino": {"logical": 3, "rendered": 3},
+		"jazz_club": {"logical": 1, "rendered": 1},
+		"grand_casino": {"logical": 5, "rendered": 7},
 		"grand_casino_high_limit": {"logical": 4, "rendered": 4},
 		"grand_casino_back_room": {"logical": 2, "rendered": 2},
 	}
@@ -3080,13 +3080,10 @@ func _check_physical_game_fixture_capacity(library: ContentLibrary, failures: Ar
 		var layout := JsonCoerceScript._copy_dict(environment.get("layout", {}))
 		var fixture_counts := JsonCoerceScript._copy_dict(layout.get("game_fixture_counts", {}))
 		var logical_count := JsonCoerceScript._raw_string_array(environment.get("game_ids", [])).size()
-		var local_flags := JsonCoerceScript._copy_dict(environment.get("local_narrative_flags", {}))
-		var lottery_counter := JsonCoerceScript._copy_dict(local_flags.get("lottery_counter", {}))
-		var counter_sale_game_ids := JsonCoerceScript._raw_string_array(lottery_counter.get("sale_game_ids", []))
+		# Lottery-counter games are stocked as physical machines too; the counter
+		# only keeps clerk help and redemption services for them.
 		var rendered_count := 0
 		for game_id in JsonCoerceScript._raw_string_array(environment.get("game_ids", [])):
-			if counter_sale_game_ids.has(game_id):
-				continue
 			rendered_count += maxi(1, int(fixture_counts.get(game_id, 1)))
 		var authored_capacity := JsonCoerceScript._copy_array(layout.get("game_spots", [])).size()
 		var expected := JsonCoerceScript._copy_dict(expected_counts.get(room_id, {}))
@@ -3122,7 +3119,8 @@ func _check_physical_game_fixture_capacity(library: ContentLibrary, failures: Ar
 		if not object_rects.has(required_id):
 			failures.append("Grand Casino production-order layout regression is missing %s." % required_id)
 	var counter_host_id := "casino_fixture:host_desk"
-	var forbidden_counter_objects := ["game:pull_tabs", "dialogue:pull_tab_clerk", "game_hook:pull_tabs:ticket_redeemer"]
+	var counter_machine_id := "game:pull_tabs"
+	var forbidden_counter_objects := ["dialogue:pull_tab_clerk", "game_hook:pull_tabs:ticket_redeemer"]
 	var slot_bindings := JsonCoerceScript._copy_dict(main_layout.get("slot_bindings", {}))
 	var overflow_ids := JsonCoerceScript._copy_array(main_layout.get("slot_overflow_ids", []))
 	var counter_host_binding := JsonCoerceScript._copy_dict(slot_bindings.get(counter_host_id, {}))
@@ -3130,6 +3128,8 @@ func _check_physical_game_fixture_capacity(library: ContentLibrary, failures: Ar
 			or overflow_ids.has(counter_host_id) \
 			or not object_rects.has(counter_host_id):
 		failures.append("Grand Casino Pull Tabs counter lost its authenticated host-desk room binding.")
+	if not object_rects.has(counter_machine_id):
+		failures.append("Grand Casino Pull Tabs machine is missing its physical room object.")
 	for forbidden_id_value in forbidden_counter_objects:
 		var forbidden_id := str(forbidden_id_value)
 		if object_rects.has(forbidden_id) or slot_bindings.has(forbidden_id):
@@ -3143,10 +3143,13 @@ func _check_physical_game_fixture_capacity(library: ContentLibrary, failures: Ar
 		if bool(row.get("active", true)) and str(row.get("presentation_object_id", row.get("presentation_id", ""))) == counter_host_id:
 			counter_host_row = row
 			break
+	var counter_host_actions := JsonCoerceScript._copy_array(counter_host_row.get("action_ids", []))
 	for action_id_value in forbidden_counter_objects:
 		var action_id := str(action_id_value)
-		if not JsonCoerceScript._copy_array(counter_host_row.get("action_ids", [])).has(action_id):
+		if not counter_host_actions.has(action_id):
 			failures.append("Grand Casino host desk does not own Pull Tabs counter action %s." % action_id)
+	if counter_host_actions.has(counter_machine_id):
+		failures.append("Grand Casino host desk still owns the launch action of the stocked Pull Tabs machine.")
 	var object_ids := object_rects.keys()
 	for index in range(object_ids.size()):
 		var object_id := str(object_ids[index])

@@ -3437,10 +3437,7 @@ func _draw_legend_row(surface, state: Dictionary, pos: Vector2) -> void:
 
 
 func _draw_round_timer(surface, state: Dictionary) -> void:
-	var timer := _draw_dict_view(state.get("table_round_timer", {})).duplicate(true)
-	if not timer.is_empty():
-		timer["label"] = "ROUND"
-	TableVisualsScript.draw_round_timer_panel(surface, timer, ROUND_TIMER_RECT, C_TEAL)
+	TableVisualsScript.draw_round_timer_panel(surface, state.get("table_round_timer", {}), ROUND_TIMER_RECT, C_TEAL, "ROUND")
 
 
 func _draw_console(surface, state: Dictionary) -> void:
