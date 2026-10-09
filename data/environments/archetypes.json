@@ -2681,13 +2681,15 @@
     "game_pool": [
       "roulette",
       "slot",
+      "video_poker",
       "bar_dice"
     ],
     "required_game_ids": [
-      "roulette"
+      "roulette",
+      "bar_dice"
     ],
     "game_count": [
-      2,
+      3,
       3
     ],
     "item_pool": [

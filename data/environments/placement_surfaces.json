@@ -17476,6 +17476,7 @@
         "event:scenario_buyout_rope": "doorway",
         "game:bar_dice": "surface_item",
         "game:roulette": "surface_item",
+        "game:video_poker": "floor_fixture",
         "kitty_cat_lounge_amateur_night_amateur_signup": "surface_item",
         "kitty_cat_lounge_amateur_night_judging_desk": "floor_fixture",
         "kitty_cat_lounge_amateur_night_task_0": "wall_mounted",
@@ -17535,6 +17536,10 @@
           220
         ],
         "game:slot": [
+          690,
+          280
+        ],
+        "game:video_poker": [
           690,
           280
         ],
@@ -19672,6 +19677,7 @@
         "game:bar_dice": "fixed",
         "game:roulette": "fixed",
         "game:slot": "fixed",
+        "game:video_poker": "fixed",
         "item:foil_sleeve": "fixed",
         "item:xray_glasses": "fixed",
         "lender:the_crew": "fixed",

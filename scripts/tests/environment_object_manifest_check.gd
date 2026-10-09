@@ -68,6 +68,7 @@ func _run() -> void:
 			_check_runtime_variant(archetype, str(layer_id_value), library)
 	_check_tutorial_home_item_manifest(library)
 	_check_category_family_authority(library)
+	_check_kitty_cat_random_machine(library)
 	_check_jazz_guarantees()
 	_check_lottery_counter_hosts(library)
 	_check_pawn_sal_host(library)
@@ -331,6 +332,40 @@ func _check_category_family_authority(library: ContentLibrary) -> void:
 		EnvironmentInstanceScript.reconcile_object_manifest(restored, library)
 	var restored_binding: Dictionary = _dict(_dict(_dict(restored.get("layout", {})).get("slot_bindings", {})).get("game:slot", {}))
 	_check(not restored.is_empty() and EnvironmentInstanceScript.object_manifest_errors(restored).is_empty() and str(restored_binding.get("slot_id", "")) == "fixed.game_slot", "category family authority", "JSON roundtrip lost category-authorized manifest/binding authority")
+
+
+func _check_kitty_cat_random_machine(library: ContentLibrary) -> void:
+	var label := "Kitty Cat Lounge random machine"
+	var archetype := library.environment_archetype("kitty_cat_lounge")
+	_check(not archetype.is_empty(), label, "is missing its environment archetype")
+	if archetype.is_empty():
+		return
+	var required_games := _array(archetype.get("required_game_ids", []))
+	_check(required_games.has("roulette") and required_games.has("bar_dice"), label, "does not preserve both table games")
+	var game_count := _array(archetype.get("game_count", []))
+	_check(game_count.size() == 2 and int(game_count[0]) == 3 and int(game_count[1]) == 3, label, "does not request exactly two tables and one machine")
+	var seen_machine_ids: Dictionary = {}
+	for sample_index in range(32):
+		var rng := RngStreamScript.new()
+		var seed_label := "%s:%d" % [label, sample_index]
+		rng.configure(RngStreamScript.derive_seed(902_806, 902_806, seed_label))
+		var environment := EnvironmentInstanceScript.from_archetype(archetype, sample_index, rng, library).to_dict()
+		var game_ids := _array(environment.get("game_ids", []))
+		_check(game_ids.size() == 3 and game_ids.has("roulette") and game_ids.has("bar_dice"), label, "generated an incomplete three-game floor for sample %d: %s" % [sample_index, str(game_ids)])
+		var selected_machine_ids: Array = []
+		for machine_id in ["slot", "video_poker"]:
+			if game_ids.has(machine_id):
+				selected_machine_ids.append(machine_id)
+				seen_machine_ids[machine_id] = true
+		_check(selected_machine_ids.size() == 1, label, "must generate exactly one Slot or Video Poker machine for sample %d: %s" % [sample_index, str(game_ids)])
+		if selected_machine_ids.size() != 1:
+			continue
+		var object_id := "game:%s" % str(selected_machine_ids[0])
+		var layout := _dict(environment.get("layout", {}))
+		var binding := _dict(_dict(layout.get("slot_bindings", {})).get(object_id, {}))
+		_check(str(binding.get("slot_id", "")) == "fixed.machine_game_1", label, "%s did not use the lounge machine position" % object_id)
+		_check(str(binding.get("placement_class", "")) == "floor_fixture", label, "%s did not render as a full-size machine" % object_id)
+	_check(seen_machine_ids.has("slot") and seen_machine_ids.has("video_poker"), label, "did not produce both machine variants across deterministic samples")
 
 
 func _check_manifest_and_bindings(label: String, environment: Dictionary) -> void:
