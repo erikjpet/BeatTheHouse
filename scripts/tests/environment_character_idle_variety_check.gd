@@ -195,6 +195,55 @@ func _run() -> void:
 		_fail("Named environment characters do not have enough distinct authored idle routines.")
 		return
 
+	var passive_scenario_characters := [
+		{
+			"id": "scenario::beach_storm_coming_late_swimmer",
+			"interaction_type": "scenario_actor",
+			"character_actor": {
+				"role": "idle",
+				"pose": "waiting",
+				"members": [{"role": "idle", "pose": "waiting", "model": {}}],
+			},
+		},
+		{
+			"id": "scenario::beach_storm_coming_lifeguard",
+			"interaction_type": "scenario_actor",
+			"character_actor": {
+				"role": "guard",
+				"pose": "working",
+				"members": [{"role": "guard", "pose": "working", "model": {}}],
+			},
+		},
+	]
+	var scenario_routine_signatures := {}
+	for object_data in passive_scenario_characters:
+		var profile: Dictionary = canvas.call("debug_character_idle_profile", object_data, 0)
+		scenario_routine_signatures[_routine_signature(profile)] = true
+		var observed_poses := {}
+		var saw_body_motion := false
+		for sample_index in range(901):
+			var idle_state: Dictionary = canvas.call("debug_character_actor_idle_state", object_data, 0, float(sample_index) * 0.20)
+			var pose := str(idle_state.get("pose", "idle"))
+			if pose != "idle":
+				observed_poses[pose] = true
+			saw_body_motion = saw_body_motion or absf(float(idle_state.get("sway", 0.0))) > 0.1 or absf(float(idle_state.get("bob", 0.0))) > 0.1
+		if observed_poses.size() < 5 or not saw_body_motion:
+			_fail("Passive scenario character lost its idle routine: %s poses=%s" % [object_data["id"], str(observed_poses.keys())])
+			return
+	if scenario_routine_signatures.size() != passive_scenario_characters.size():
+		_fail("Late Swimmer and Lifeguard received the same scenario idle routine.")
+		return
+	var active_lifeguard: Dictionary = (passive_scenario_characters[1] as Dictionary).duplicate(true)
+	var active_lifeguard_actor := active_lifeguard["character_actor"] as Dictionary
+	active_lifeguard_actor["pose"] = "signaling"
+	var active_lifeguard_members := active_lifeguard_actor["members"] as Array
+	var active_lifeguard_member := active_lifeguard_members[0] as Dictionary
+	active_lifeguard_member["pose"] = "signaling"
+	var active_lifeguard_state: Dictionary = canvas.call("debug_character_actor_idle_state", active_lifeguard, 0, 19.0)
+	if str(active_lifeguard_state.get("pose", "")) != "signaling" or not is_equal_approx(float(active_lifeguard_state.get("gesture_amount", 0.0)), 1.0):
+		_fail("An active Lifeguard signaling pose was incorrectly replaced by an idle gesture.")
+		return
+
 	canvas.set("reduce_motion", true)
 	var reduced_profile: Dictionary = canvas.call("debug_named_character_idle_profile", "mara", "staff")
 	var reduced_state: Dictionary = canvas.call("debug_character_idle_state", reduced_profile, 19.0)

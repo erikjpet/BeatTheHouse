@@ -8945,6 +8945,13 @@ func debug_character_idle_state(profile: Dictionary, clock: float) -> Dictionary
 	return _character_idle_state(profile, clock).duplicate(true)
 
 
+func debug_character_actor_idle_state(object_data: Dictionary, member_index: int, clock: float) -> Dictionary:
+	var actor: Dictionary = object_data.get("character_actor", {}) if typeof(object_data.get("character_actor", {})) == TYPE_DICTIONARY else {}
+	var members: Array = actor.get("members", []) if typeof(actor.get("members", [])) == TYPE_ARRAY else []
+	var member: Dictionary = members[member_index] if member_index >= 0 and member_index < members.size() and typeof(members[member_index]) == TYPE_DICTIONARY else {}
+	return _character_actor_member_idle_state(object_data, actor, member, member_index, clock).duplicate(true)
+
+
 func debug_character_actor_scales(object_data: Dictionary, rect: Rect2 = Rect2(0.0, 0.0, 104.0, 78.0)) -> Array:
 	var actor: Dictionary = object_data.get("character_actor", {}) if typeof(object_data.get("character_actor", {})) == TYPE_DICTIONARY else {}
 	return _character_actor_member_scales(rect, object_data, actor).duplicate()
@@ -8997,19 +9004,41 @@ func _character_actor_is_crew_group(object_data: Dictionary, actor: Dictionary) 
 		or str(object_data.get("id", "")).strip_edges() == "lender:the_crew"
 
 
-func _draw_character_actor_member(object_data: Dictionary, actor: Dictionary, member: Dictionary, member_index: int, faceless: bool, foot: Vector2, scale_value: float) -> void:
+func _scenario_actor_pose_allows_idle_routine(object_data: Dictionary, role: String, semantic_pose: String) -> bool:
+	var interaction_type := str(object_data.get("interaction_type", object_data.get("type", ""))).strip_edges()
+	if interaction_type != "scenario_actor":
+		return semantic_pose in ["", "idle", "watch", "watching"]
+	# Scenario phases commonly keep people in passive semantic states for several
+	# minutes. Those labels must not freeze the character's generated idle routine.
+	# Explicit action poses remain authoritative while the action is being shown.
+	if role.to_lower() not in ["idle", "watch", "guard", "work"]:
+		return false
+	if semantic_pose.begins_with("aftermath_"):
+		return true
+	return semantic_pose in [
+		"", "idle", "watch", "watching", "waiting", "working", "observing",
+		"arrival", "awaiting_choice", "waiting_on_choice", "watching_return", "finished", "relieved",
+	]
+
+
+func _character_actor_member_idle_state(object_data: Dictionary, actor: Dictionary, member: Dictionary, member_index: int, clock: float) -> Dictionary:
 	var role := str(member.get("role", actor.get("role", "staff")))
 	var identity := _character_actor_identity(object_data, actor, member, member_index)
 	var idle_profile := _character_idle_profile(identity, role)
-	var idle_state := _character_idle_state(idle_profile, flicker)
+	var idle_state := _character_idle_state(idle_profile, clock)
 	var semantic_pose := str(member.get("pose", actor.get("pose", object_data.get("pose", "idle")))).strip_edges()
 	if semantic_pose.is_empty():
 		semantic_pose = "idle"
-	if semantic_pose not in ["idle", "watch", "watching"]:
+	if not _scenario_actor_pose_allows_idle_routine(object_data, role, semantic_pose):
 		# Authored work/fight/movement poses communicate scenario state and must
 		# not be replaced by a decorative scratch, stretch, or pocket check.
 		idle_state["pose"] = semantic_pose
 		idle_state["gesture_amount"] = 1.0
+	return idle_state
+
+
+func _draw_character_actor_member(object_data: Dictionary, actor: Dictionary, member: Dictionary, member_index: int, faceless: bool, foot: Vector2, scale_value: float) -> void:
+	var idle_state := _character_actor_member_idle_state(object_data, actor, member, member_index, flicker)
 	var animated_foot := foot + Vector2(float(idle_state.get("sway", 0.0)), float(idle_state.get("bob", 0.0)))
 	TableGameVisualsScript._draw_table_character(self, _character_actor_style(member, actor, faceless, idle_state), animated_foot, scale_value, flicker)
 
