@@ -2268,7 +2268,8 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 		failures.append("World map snapshot leaked hidden node data at start: %s." % ", ".join(initial_leaks))
 	if not _world_map_snapshot_icons_match_positions(run_a.world_map, snapshot):
 		failures.append("World map snapshot icons did not preserve generated node positions.")
-	var travel_targets := WorldMapScript.travel_target_ids(run_a.world_map, start_node_id)
+	# Room travel hooks use production's capped list, which omits venues closed on arrival.
+	var travel_targets: Array = generator.call("_world_travel_target_ids", run_a, run_a.world_map, start_node_id)
 	if travel_targets.is_empty():
 		failures.append("World map should expose at least one capped travel target from the start node.")
 	if travel_targets.size() > WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT:
@@ -3887,6 +3888,8 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 			failures.append("Jazz Club event %s triggered outside the jazz club archetype." % event_id)
 	var after_hours_event := EventModule.new()
 	after_hours_event.setup(library.event("jazz_after_hours_invitation"), library)
+	# Triggered talk events resolve only from the host queue, as production enqueues them.
+	jazz_event_run.enqueue_triggered_event("jazz_after_hours_invitation", "jazz_club_foundation", event_context, {"presentation": "talk"})
 	var shades_result := after_hours_event.resolve(jazz_event_run, jazz_event_run.current_environment, "take_the_shades")
 	if not bool(shades_result.get("ok", false)):
 		failures.append("Jazz after-hours invitation cover-item choice did not resolve.")
@@ -4103,7 +4106,11 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 		failures.append("Drummer holder did not award the legend glasses after two listened sets.")
 
 	run_state.add_suspicion("jazz_heat_fixture", 25, "behavior", false, {"environment_id": str(run_state.current_environment.get("id", ""))})
-	var heat_before_glasses := run_state.suspicion_level()
+	# Service hooks resolve after their action boundary, which may apply ordinary
+	# turn heat decay first; the glasses clear all heat left at that point.
+	var glasses_boundary_oracle := run_state.detached_host_action_candidate()
+	glasses_boundary_oracle.advance_environment_turns(1)
+	var heat_before_glasses := glasses_boundary_oracle.suspicion_level()
 	var glasses_option := resolver.hook_option("service", "show_drummer_glasses")
 	if not bool(glasses_option.get("enabled", false)):
 		failures.append("Legend glasses service did not appear when heat was present.")
