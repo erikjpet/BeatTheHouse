@@ -39,6 +39,8 @@ that pass's method could not see.
 | Callable allocations per idle `_process` frame | 6–8 | 0 |
 | Images packaged into every export but never loaded | 17 (1.1 MB) | 0 |
 | Foundation smoke failures on `main` | 8 | 0 |
+| Failing test jobs (excluding smoke), all slot-placement or environment after this branch | 13 | 7 |
+| Save/load round-trip bugs | 3 | 0 |
 | Production GDScript lines | 223,666 | 223,022 |
 | Production functions with no caller anywhere | 14 | 0 |
 | Unused top-level consts/vars/signals (excluding `keys.gd`) | 85 | 0 |
@@ -255,21 +257,34 @@ foundation contracts, the UI-scene checks, `shop_item_row_check`, and
 | Result | Jobs |
 | --- | ---: |
 | Pass on both | 94 |
-| Fail on `main`, pass on branch | 0 |
+| Fail on `main`, pass on branch | 6 |
 | Pass on `main`, fail on branch | 0 |
-| Fail on both, with identical failure messages | 13 |
+| Fail on both | 7 |
 
-- **Fixed by this branch.** The 8 smoke/content failures on `main` (6 stale
-  capacity assertions and 2 per-frame tripwires) are resolved. They also
-  disappear from the `contracts`, `games`, and `systems` aggregates.
-- **Timing flake.** One smoke check is timing-based (Slot Buffalo feature
-  music must cold-load within 100 ms). It exceeded the budget only while both
-  suites shared the CPU, and passes when smoke runs alone (0 failures).
-- **Still failing on both.** The 13 jobs that fail on both branches fail
-  identically. They include the `contracts`, `games`, and `systems`
-  aggregates, `collection_meta_check`, `environment_slot_runtime_audit_check`,
-  `person_departure_semantics_check`, five standalone contracts, and the UI
-  scene compile run. They are not addressed here; see §7.
+- **Fixed by this branch.**
+  - Smoke: the 8 smoke/content failures on `main` (6 stale capacity
+    assertions and 2 per-frame tripwires) are resolved.
+  - Five red jobs now pass: `collection_meta_check`,
+    `person_departure_semantics_check`, `game06_2_repeated_reprieve_contract`,
+    `scenario_uniqueness_pair_precompute_contract`, and
+    `scenario_validation_memo_contract`.
+  - `systems` falls from 182 to 131 failures: `t4_7_event_interaction_model`,
+    `t6_7_visibility_event_cadence` and `time_open_hours_foundation` now pass,
+    and SB.3, world map and Jazz Club keep only placement failures.
+  - See *Failing-job investigation*.
+- **Still failing.** Seven jobs still fail:
+  - the `contracts`, `games`, and `systems` aggregates
+  - `environment_slot_runtime_audit_check`
+  - `env06_6_full_contract`
+  - `env06_8_environment_readability_check`
+  - the UI-scene `compile_run_menu_and_game_flows` run
+
+  Every remaining failure comes from slot placement, except two that come from
+  this environment: the Linux build has no Coin Pusher native solver, and one
+  check depends on timing. The `contracts` aggregate is unchanged at 10 checks.
+- **Timing check.** One smoke check depends on timing: Slot Buffalo feature
+  music must cold-load within 100 ms. It exceeded the budget only while
+  several suites shared the CPU. It passed in the final run.
 - **AGENTS.md gate.** The required
   `animation_liveness_without_pointer_check.gd` passes after every
   scheduling-related commit.
