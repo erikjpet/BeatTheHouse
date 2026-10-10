@@ -1022,6 +1022,9 @@ func _finish() -> void:
 	quit(1)
 
 
+# DurableStore recovers a missing primary from its rotated backup, so a fresh
+# fixture store must remove every generation, not just the primary file.
 func _remove_user_file(path: String) -> void:
-	if FileAccess.file_exists(path):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(path))
+	for generation_path in [path, DurableStore.backup_path(path)]:
+		if FileAccess.file_exists(generation_path):
+			DirAccess.remove_absolute(ProjectSettings.globalize_path(generation_path))
