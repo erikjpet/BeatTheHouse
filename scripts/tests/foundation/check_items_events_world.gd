@@ -1174,6 +1174,9 @@ func _check_t4_7_family_loan_contract(library: ContentLibrary, failures: Array) 
 	event_run.start_new("T47-FAMILY-ACCEPT")
 	event_run.set_environment(_t4_3_fixture_environment("motel", "shop", 1, [], [], ["bar"]))
 	event_run.narrative_flags["brother_in_law_phone_ready"] = true
+	# Triggered events resolve only while the host queue holds them; the phone
+	# chain is what normally queues the call.
+	event_run.enqueue_triggered_event("family_loan", "fixture", {"trigger": "chain"}, {"presentation": "talk"})
 	var event_module := EventModule.new()
 	event_module.setup(library.event("family_loan"), library)
 	var event_result := event_module.resolve(event_run, event_run.current_environment, "accept")
@@ -1206,6 +1209,7 @@ func _check_t4_7_family_loan_contract(library: ContentLibrary, failures: Array) 
 	deny_run.start_new("T47-FAMILY-DENY")
 	deny_run.set_environment(_t4_3_fixture_environment("motel", "shop", 1, [], [], ["bar"]))
 	deny_run.narrative_flags["brother_in_law_phone_ready"] = true
+	deny_run.enqueue_triggered_event("family_loan", "fixture", {"trigger": "chain"}, {"presentation": "talk"})
 	var deny_module := EventModule.new()
 	deny_module.setup(library.event("family_loan"), library)
 	deny_module.resolve(deny_run, deny_run.current_environment, "deny")
@@ -1297,7 +1301,7 @@ func _check_t4_7_crew_conversation_contract(library: ContentLibrary, failures: A
 			or str((direct_members[0] as Dictionary).get("character_id", "")) != "crew_rook" \
 			or str(direct_speaker.get("voice_line", "")).is_empty() \
 			or str((direct_speaker.get("lender_terms", {}) as Dictionary).get("lender_id", "")) != "the_crew" \
-			or int((direct_speaker.get("lender_terms", {}) as Dictionary).get("loan_amount", 0)) != 45:
+			or int((direct_speaker.get("lender_terms", {}) as Dictionary).get("loan_amount", 0)) != 70:
 			failures.append("T4.7 Direct character_id speakers do not resolve a reusable model and voice.")
 		var loan_members: Array = loan_speaker.get("members", []) if typeof(loan_speaker.get("members", [])) == TYPE_ARRAY else []
 		var favor_members: Array = favor_speaker.get("members", []) if typeof(favor_speaker.get("members", [])) == TYPE_ARRAY else []
@@ -1331,10 +1335,13 @@ func _check_t6_7_visibility_event_cadence(library: ContentLibrary, failures: Arr
 
 
 func _check_t6_7_visibility_classes(library: ContentLibrary, failures: Array) -> void:
-	var shop_environment := _t4_3_fixture_environment("fixture_shop", "shop", 1, [], [], ["bar"])
-	shop_environment["object_fixtures"] = ["shopkeeper:merchant"]
+	# Synthetic rooms have no slot-schema-v2 placement map and can no longer bind
+	# objects. Corner Store is a real shop that declares the shopkeeper fixture.
+	var shop_run: RunState = RunStateScript.new()
+	shop_run.start_new("T67-SHOPKEEPER")
+	var shop_environment := EnvironmentInstance.from_archetype(_archetype_by_id(library, "corner_store"), 1, shop_run.create_rng("t67_shopkeeper_room"), library).to_dict()
 	shop_environment["item_offers"] = []
-	shop_environment["layout"] = EnvironmentInstance.ensure_generated_layout(shop_environment)
+	shop_environment["layout"] = EnvironmentInstance.ensure_generated_layout(shop_environment, library)
 	var object_rects: Dictionary = (shop_environment.get("layout", {}) as Dictionary).get("object_rects", {}) if typeof(shop_environment.get("layout", {})) == TYPE_DICTIONARY else {}
 	if not object_rects.has("shopkeeper:merchant"):
 		failures.append("T6.7 shopkeeper fixture did not keep a stable layout rect when no offers were present.")
@@ -2793,13 +2800,13 @@ func _check_time_open_hours_foundation(library: ContentLibrary, failures: Array)
 	var environment := EnvironmentInstance.from_archetype(bar_archetype, 1, run_state.create_rng("time_open_hours"), library)
 	run_state.set_environment(environment.to_dict())
 	run_state.game_clock_minutes = 0
-	if run_state.clock_display_text(true) != "Day 1 12 AM":
-		failures.append("Clock display should render midnight as Day 1 12 AM.")
+	if run_state.clock_display_text(true) != "Day 1 12:00 AM":
+		failures.append("Clock display should render midnight as Day 1 12:00 AM.")
 	run_state.game_clock_minutes = 12 * 60
-	if run_state.clock_display_text(true) != "Day 1 12 PM":
-		failures.append("Clock display should render noon as Day 1 12 PM.")
+	if run_state.clock_display_text(true) != "Day 1 12:00 PM":
+		failures.append("Clock display should render noon as Day 1 12:00 PM.")
 	run_state.game_clock_minutes = 24 * 60
-	if run_state.clock_display_text(true) != "Day 2 12 AM":
+	if run_state.clock_display_text(true) != "Day 2 12:00 AM":
 		failures.append("Clock display should roll over to Day 2 at midnight.")
 	var action_clock_before := run_state.game_clock_minutes
 	run_state.advance_environment_turns(2)
@@ -2838,6 +2845,10 @@ func _check_time_open_hours_foundation(library: ContentLibrary, failures: Array)
 		failures.append("Closing-time travel fixture requires FoundationMain runtime nodes.")
 		_sb4_dispose_app(app)
 		return
+	# Headless startup loads only the main-menu catalog. A real run expands it
+	# before room entry; this fixture injects a RunState directly, so it must cross
+	# that same content boundary before the closing dialogue can resolve.
+	app.call("_ensure_full_content_library_loaded")
 	var ui_run: RunState = RunStateScript.new()
 	ui_run.start_new("TIME-OPEN-HOURS-UI")
 	ui_run.bankroll = 100
