@@ -887,6 +887,11 @@ static func _fingerprint(value: Variant) -> String:
 
 
 static func _canonical(value: Variant) -> Variant:
+	# Saves round-trip through JSON, which turns every int into a float. Seal
+	# integral numbers in one form so a restored room reproduces the digests it
+	# was saved with; otherwise retention rejects the saved scenario rows.
+	if typeof(value) == TYPE_FLOAT and is_finite(value) and absf(value) < 9007199254740992.0 and value == floorf(value):
+		return int(value)
 	if typeof(value) == TYPE_DICTIONARY:
 		var source := value as Dictionary
 		var keys := source.keys()

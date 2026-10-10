@@ -2318,21 +2318,29 @@ static func _normalized_fact_receipt_records(value: Variant) -> Array:
 	var result := _normalized_integer_record_fields(value, ["cause_ordinal", "flush_batch_ordinal", "flush_boundary_serial"])
 	for record_value in result:
 		var record := record_value as Dictionary
-		var envelope := _dict(record.get("envelope", {})).duplicate(true)
-		for integer_field in ["schema_version", "producer_serial", "boundary_serial"]:
-			var raw: Variant = envelope.get(integer_field)
-			if typeof(raw) == TYPE_FLOAT and is_finite(float(raw)) and is_equal_approx(float(raw), floor(float(raw))):
-				envelope[integer_field] = int(raw)
-		var payload := _dict(envelope.get("payload", {})).duplicate(true)
-		var payload_types := _dict(FACT_PAYLOAD_TYPES.get(str(envelope.get("fact_type", "")), {}))
-		for field_value in payload_types.keys():
-			var field := str(field_value)
-			var raw: Variant = payload.get(field)
-			if str(payload_types.get(field, "")) == "int" and typeof(raw) == TYPE_FLOAT and is_finite(float(raw)) and is_equal_approx(float(raw), floor(float(raw))):
-				payload[field] = int(raw)
-		envelope["payload"] = payload
-		record["envelope"] = envelope
+		record["envelope"] = _integral_fact_fields(_dict(record.get("envelope", {})))
 	return result
+
+
+# Persisted facts round-trip through JSON, which turns every int into a float.
+# Restore the integer envelope and payload fields before exact-type validation.
+static func _integral_fact_fields(source: Dictionary) -> Dictionary:
+	var envelope := source.duplicate(true)
+	for integer_field in ["schema_version", "producer_serial", "boundary_serial", "ingress_serial"]:
+		var raw: Variant = envelope.get(integer_field)
+		if typeof(raw) == TYPE_FLOAT and is_finite(float(raw)) and is_equal_approx(float(raw), floor(float(raw))):
+			envelope[integer_field] = int(raw)
+	if envelope.has("payload") and typeof(envelope.get("payload")) != TYPE_DICTIONARY:
+		return envelope
+	var payload := _dict(envelope.get("payload", {})).duplicate(true)
+	var payload_types := _dict(FACT_PAYLOAD_TYPES.get(str(envelope.get("fact_type", "")), {}))
+	for field_value in payload_types.keys():
+		var field := str(field_value)
+		var raw: Variant = payload.get(field)
+		if str(payload_types.get(field, "")) == "int" and typeof(raw) == TYPE_FLOAT and is_finite(float(raw)) and is_equal_approx(float(raw), floor(float(raw))):
+			payload[field] = int(raw)
+	envelope["payload"] = payload
+	return envelope
 
 
 static func _resolved_branch_ids(records: Array) -> Array:
@@ -2381,7 +2389,7 @@ static func _normalized_fact_queue(value: Variant, state: Dictionary) -> Array:
 	var seen: Dictionary = {}
 	for fact_value in _array(value):
 		if typeof(fact_value) != TYPE_DICTIONARY: continue
-		var queued := (fact_value as Dictionary).duplicate(true)
+		var queued := _integral_fact_fields(fact_value as Dictionary)
 		if typeof(queued.get("ingress_serial")) != TYPE_INT or int(queued.get("ingress_serial", 0)) < 1: continue
 		var envelope := _without_ingress(queued)
 		if not OperationRegistryScript.validate_bounded_variant("persisted scenario fact", envelope).is_empty() or not validate_fact(state, envelope).is_empty(): continue

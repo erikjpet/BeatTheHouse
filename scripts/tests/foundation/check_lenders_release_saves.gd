@@ -14,6 +14,7 @@ const StaffBlackjackGameScript := preload("res://scripts/games/blackjack.gd")
 const StaffBaccaratGameScript := preload("res://scripts/games/baccarat.gd")
 const StaffRouletteGameScript := preload("res://scripts/games/roulette.gd")
 const StaffBarDiceGameScript := preload("res://scripts/games/bar_dice.gd")
+const SaveFuzzTableGameAuthorityDriverScript := preload("res://scripts/tests/foundation/table_game_authority_test_driver.gd")
 const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
 const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
 const MusicLayerChoreographyScript := preload("res://scripts/ui/music_layer_choreography.gd")
@@ -5831,6 +5832,9 @@ func _save_load_fuzz_travel(generator: RunGenerator, run_state: RunState, failur
 		var status := run_state.travel_route_status(route)
 		if not bool(status.get("available", false)):
 			continue
+		# Production travel only offers destinations that are open on arrival.
+		if not generator._world_target_is_available(run_state, run_state.world_map, current_node_id, target_id):
+			continue
 		var cost := maxi(0, int(status.get("cost", route.get("cost", 0))))
 		var travel_heat := run_state.begin_travel_suspicion_decay(route, target_id)
 		var arrived := HarnessProductionFidelityScript.travel_and_finalize(generator, run_state, target_id, false, generator.library, failures, "save/load fuzz arrival %s" % target_id)
@@ -5877,6 +5881,11 @@ func _save_load_fuzz_play_game(library: ContentLibrary, run_state: RunState, act
 			var result: Dictionary = game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, rng, {})
 			if bool(result.get("ok", false)):
 				GameModule.apply_result(run_state, result, rng)
+				return true
+			# Sealed games such as Bar Dice reject the legacy observer path and
+			# settle only through the production Foundation host.
+			if bool(result.get("sealed_action_authoritative", false)) \
+					and bool(SaveFuzzTableGameAuthorityDriverScript.resolve(game, action_id, stake, run_state, run_state.current_environment).get("ok", false)):
 				return true
 	return false
 
@@ -5929,8 +5938,11 @@ func _save_load_checkpoint(library: ContentLibrary, run_state: RunState, label: 
 	var after_json := JSON.stringify(after_snapshot)
 	if after_json != before_json:
 		failures.append("SB.3 %s RunState to_dict -> from_dict -> to_dict was not byte-identical at %s." % [label, _save_load_first_mismatch(before_snapshot, after_snapshot)])
+	# Load the second clone from persisted JSON text exactly like the first and
+	# like a real save. The canonical snapshot dictionary stores integral floats
+	# as ints, which no save file can contain.
 	var second: RunState = RunStateScript.new()
-	second.from_dict(after_snapshot)
+	second.from_dict(JSON.parse_string(after_json) as Dictionary)
 	if JSON.stringify(_save_load_canonical_run_snapshot(second.to_dict())) != after_json:
 		failures.append("SB.3 %s RunState normalization was not idempotent on the second load." % label)
 	var after_signature := _save_load_action_signature(library, restored, failures)
@@ -6266,28 +6278,13 @@ func _check_save_load_world_event_lender_midstates(library: ContentLibrary, fail
 	if lender_definition.is_empty():
 		failures.append("SB.3 lender mid-schedule fixture could not find lender content.")
 	else:
-		var lender_run: RunState = RunStateScript.new()
-		lender_run.start_new("SB3-LENDER-MID", RunState.custom_challenge("sb3_lender", "SB3-LENDER-MID", {"starting_bankroll": 500}))
-		lender_run.set_environment({
-			"id": "sb3_lender_room",
-			"display_name": "SB3 Lender Room",
-			"kind": "casino",
-			"archetype_id": "sb3_lender_fixture",
-			"game_ids": ["video_poker"],
-			"game_states": {},
-			"economic_profile": {"stake_floor": 1, "stake_ceiling": 20},
-			"security_profile": {},
-			"lender_hooks": [str(lender_definition.get("id", ""))],
-			"layout": {},
-		})
-		var video_poker_game: GameModule = _load_surface_contract_game(library, "video_poker", failures)
-		if video_poker_game != null:
-			var game_states := JsonCoerceScript._copy_dict(lender_run.current_environment.get("game_states", {}))
-			game_states["video_poker"] = video_poker_game.generate_environment_state(lender_run, lender_run.current_environment, lender_run.create_rng("sb3_lender_video_poker_state"))
-			lender_run.current_environment["game_states"] = game_states
-		var resolver: RunActionService = RunActionServiceScript.new()
-		resolver.setup(library, lender_run)
-		var lender_result := resolver.use_hook("lender", str(lender_definition.get("id", "")))
+		# Synthetic empty layouts are no longer legal environment state; open the
+		# debt in the shared real slot-schema-v2 lender room.
+		var lender_id := str(lender_definition.get("id", ""))
+		var lender_fixture := _lender_fixture(library, "SB3-LENDER-MID", [lender_id], [], [])
+		var lender_run: RunState = lender_fixture.get("run_state", null)
+		var resolver: RunActionService = lender_fixture.get("resolver", null)
+		var lender_result := resolver.use_hook("lender", lender_id)
 		if not bool(lender_result.get("ok", false)) or lender_run.debt.is_empty():
 			failures.append("SB.3 lender mid-schedule fixture could not open debt.")
 		else:
