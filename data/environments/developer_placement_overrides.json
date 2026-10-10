@@ -110,11 +110,11 @@
 					}
 				},
 				"back_alley_fence_night": {
-					"saved": false,
+					"saved": true,
 					"slot_positions": {
 						"scenario.local_doorway_1": [
-							868.0,
-							354.0
+							789.0,
+							430.0
 						],
 						"scenario.local_floor_fixture_1": [
 							696.0,
@@ -125,8 +125,8 @@
 							424.0
 						],
 						"scenario.local_standing_person_1": [
-							620.0,
-							427.0
+							657.0,
+							351.0
 						],
 						"scenario.local_standing_person_2": [
 							527.0,
@@ -159,7 +159,7 @@
 					}
 				},
 				"back_alley_nothing_moving": {
-					"saved": false,
+					"saved": true,
 					"slot_positions": {
 						"scenario.local_doorway_1": [
 							794.0,
@@ -170,8 +170,8 @@
 							301.0
 						],
 						"scenario.local_ground_marker_1": [
-							61.0,
-							292.0
+							138.0,
+							302.0
 						],
 						"scenario.local_ground_marker_2": [
 							627.0,
@@ -191,7 +191,7 @@
 						],
 						"scenario.local_surface_item_1": [
 							215.0,
-							294.0
+							301.0
 						]
 					}
 				},
@@ -247,28 +247,28 @@
 					265.0
 				],
 				"event.standing_person_1": [
-					189.0,
-					422.0
+					573.0,
+					430.0
 				],
 				"event.standing_person_2": [
-					190.0,
-					422.0
+					456.0,
+					340.0
 				],
 				"event.standing_person_3": [
-					190.0,
-					422.0
+					530.0,
+					338.0
 				],
 				"event.standing_person_4": [
-					190.0,
-					421.0
+					358.0,
+					428.0
 				],
 				"event.standing_person_5": [
-					194.0,
-					423.0
+					427.0,
+					430.0
 				],
 				"event.standing_person_6": [
-					191.0,
-					424.0
+					499.0,
+					430.0
 				],
 				"exit.right_upper": [
 					866.0,
@@ -1149,6 +1149,63 @@
 		"gas_station_casino": {
 			"base_saved": false,
 			"scenario_layouts": {
+				"gas_station_road_crew_payday": {
+					"saved": true,
+					"slot_positions": {
+						"scenario.local_doorway_1": [
+							792.0,
+							400.0
+						],
+						"scenario.local_floor_fixture_1": [
+							158.0,
+							108.0
+						],
+						"scenario.local_floor_fixture_2": [
+							414.0,
+							328.0
+						],
+						"scenario.local_floor_fixture_3": [
+							474.0,
+							122.0
+						],
+						"scenario.local_standing_person_1": [
+							52.0,
+							336.0
+						],
+						"scenario.local_standing_person_2": [
+							172.0,
+							416.0
+						],
+						"scenario.local_standing_person_3": [
+							589.0,
+							430.0
+						],
+						"scenario.local_surface_item_1": [
+							228.0,
+							232.0
+						],
+						"scenario.local_surface_item_2": [
+							844.0,
+							96.0
+						],
+						"scenario.local_surface_item_3": [
+							292.0,
+							328.0
+						],
+						"scenario.local_surface_item_4": [
+							305.0,
+							231.0
+						],
+						"scenario.local_surface_item_5": [
+							844.0,
+							200.0
+						],
+						"scenario.local_wall_item_1": [
+							765.0,
+							62.0
+						]
+					}
+				},
 				"gas_station_tour_bus_stop": {
 					"saved": false,
 					"slot_positions": {
@@ -1201,8 +1258,8 @@
 			},
 			"slot_positions": {
 				"event.doorway_1": [
-					32.0,
-					215.0
+					35.0,
+					213.0
 				],
 				"event.ground_marker_1": [
 					370.0,
@@ -1221,8 +1278,8 @@
 					305.0
 				],
 				"event.standing_person_4": [
-					860.0,
-					414.0
+					866.0,
+					341.0
 				],
 				"event.standing_person_5": [
 					565.0,
@@ -1237,12 +1294,16 @@
 					249.0
 				],
 				"fixed.numbers_book": [
-					690.0,
+					686.0,
 					84.0
 				],
 				"fixed.random_game_1": [
 					459.0,
 					196.0
+				],
+				"fixed.random_game_2": [
+					458.0,
+					262.0
 				],
 				"fixed.service_house_drink": [
 					571.0,
@@ -1637,6 +1698,157 @@
 				]
 			}
 		},
+		"kitty_cat_lounge": {
+			"base_saved": false,
+			"scenario_layouts": {
+				"kitty_cat_lounge_amateur_night": {
+					"saved": true,
+					"slot_positions": {
+						"scenario.local_doorway_1": [
+							800.0,
+							394.0
+						],
+						"scenario.local_floor_fixture_1": [
+							452.0,
+							215.0
+						],
+						"scenario.local_floor_fixture_2": [
+							231.0,
+							430.0
+						],
+						"scenario.local_ground_marker_1": [
+							452.0,
+							207.0
+						],
+						"scenario.local_standing_person_1": [
+							366.0,
+							217.0
+						],
+						"scenario.local_standing_person_2": [
+							146.0,
+							430.0
+						],
+						"scenario.local_standing_person_3": [
+							316.0,
+							430.0
+						],
+						"scenario.local_surface_item_1": [
+							392.0,
+							427.0
+						],
+						"scenario.local_surface_item_2": [
+							392.0,
+							428.0
+						],
+						"scenario.local_wall_item_1": [
+							473.0,
+							406.0
+						],
+						"scenario.local_wall_item_2": [
+							68.0,
+							430.0
+						]
+					}
+				}
+			},
+			"slot_positions": {
+				"event.doorway_1": [
+					868.0,
+					319.0
+				],
+				"event.seated_person_1": [
+					636.0,
+					265.0
+				],
+				"event.standing_person_1": [
+					190.0,
+					356.0
+				],
+				"event.standing_person_2": [
+					257.0,
+					356.0
+				],
+				"event.standing_person_3": [
+					356.0,
+					356.0
+				],
+				"event.standing_person_4": [
+					422.0,
+					356.0
+				],
+				"event.standing_person_5": [
+					545.0,
+					357.0
+				],
+				"exit.left_lower": [
+					868.0,
+					394.0
+				],
+				"fixed.crew_group": [
+					52.0,
+					348.0
+				],
+				"fixed.event_grand_casino_invite": [
+					713.0,
+					256.0
+				],
+				"fixed.item_shop_1": [
+					645.0,
+					131.0
+				],
+				"fixed.item_shop_2": [
+					720.0,
+					132.0
+				],
+				"fixed.machine_game_1": [
+					551.0,
+					211.0
+				],
+				"fixed.patron_dot": [
+					866.0,
+					267.0
+				],
+				"fixed.service_house_drink": [
+					795.0,
+					133.0
+				],
+				"fixed.service_kitty_champagne": [
+					465.0,
+					314.0
+				],
+				"fixed.staff_bar": [
+					712.0,
+					207.0
+				],
+				"fixed.staff_merchant": [
+					795.0,
+					207.0
+				],
+				"fixed.table_game_1": [
+					761.0,
+					356.0
+				],
+				"fixed.table_game_2": [
+					634.0,
+					197.0
+				],
+				"scenario.floor_fixture_3": [
+					302.0,
+					358.0
+				],
+				"scenario.standing_person_3": [
+					108.0,
+					88.0
+				],
+				"scenario.wall_item_3": [
+					220.0,
+					60.0
+				]
+			},
+			"slot_scales": {
+				"fixed.table_game_1": 1.9
+			}
+		},
 		"motel": {
 			"base_saved": false,
 			"scenario_layouts": {
@@ -1646,6 +1858,115 @@
 						"scenario.local_doorway_1": [
 							646.0,
 							68.0
+						]
+					}
+				},
+				"motel_stakeout": {
+					"saved": true,
+					"slot_positions": {
+						"scenario.local_doorway_1": [
+							223.0,
+							394.0
+						],
+						"scenario.local_doorway_2": [
+							789.0,
+							430.0
+						],
+						"scenario.local_doorway_3": [
+							32.0,
+							193.0
+						],
+						"scenario.local_floor_fixture_1": [
+							140.0,
+							428.0
+						],
+						"scenario.local_floor_fixture_2": [
+							701.0,
+							430.0
+						],
+						"scenario.local_ground_marker_1": [
+							788.0,
+							176.0
+						],
+						"scenario.local_ground_marker_2": [
+							628.0,
+							240.0
+						],
+						"scenario.local_hanging_item_1": [
+							305.0,
+							86.0
+						],
+						"scenario.local_standing_person_1": [
+							854.0,
+							340.0
+						],
+						"scenario.local_standing_person_2": [
+							51.0,
+							421.0
+						],
+						"scenario.local_surface_item_1": [
+							741.0,
+							88.0
+						],
+						"scenario.local_surface_item_2": [
+							493.0,
+							107.0
+						],
+						"scenario.local_wall_item_1": [
+							40.0,
+							229.0
+						]
+					}
+				},
+				"motel_weekly_rates": {
+					"saved": true,
+					"slot_layers": {
+						"scenario.local_standing_person_1": -1.0
+					},
+					"slot_positions": {
+						"scenario.local_doorway_1": [
+							32.0,
+							182.0
+						],
+						"scenario.local_doorway_2": [
+							792.0,
+							430.0
+						],
+						"scenario.local_floor_fixture_1": [
+							50.0,
+							362.0
+						],
+						"scenario.local_floor_fixture_2": [
+							154.0,
+							428.0
+						],
+						"scenario.local_standing_person_1": [
+							524.0,
+							204.0
+						],
+						"scenario.local_standing_person_2": [
+							236.0,
+							430.0
+						],
+						"scenario.local_surface_item_1": [
+							46.0,
+							291.0
+						],
+						"scenario.local_surface_item_2": [
+							599.0,
+							181.0
+						],
+						"scenario.local_surface_item_3": [
+							139.0,
+							294.0
+						],
+						"scenario.local_wall_item_1": [
+							139.0,
+							294.0
+						],
+						"scenario.local_wall_item_2": [
+							62.0,
+							426.0
 						]
 					}
 				}
@@ -1712,7 +2033,7 @@
 					258.0
 				],
 				"fixed.patron_marco": [
-					219.0,
+					224.0,
 					229.0
 				],
 				"fixed.service_house_drink": [
@@ -1728,12 +2049,12 @@
 					272.0
 				],
 				"scenario.floor_fixture_3": [
-					486.0,
-					342.0
+					401.0,
+					430.0
 				],
 				"scenario.standing_person_4": [
-					508.0,
-					260.0
+					308.0,
+					430.0
 				],
 				"scenario.wall_item_2": [
 					58.0,
@@ -1803,6 +2124,198 @@
 				"scenario.wall_item_1": [
 					748.0,
 					393.0
+				]
+			}
+		},
+		"pawn_shop": {
+			"base_saved": false,
+			"scenario_layouts": {
+				"pawn_shop_sals_mood": {
+					"saved": true,
+					"slot_layers": {
+						"scenario.local_floor_fixture_2": -1.0,
+						"scenario.local_standing_person_1": -1.0
+					},
+					"slot_positions": {
+						"scenario.local_doorway_1": [
+							868.0,
+							321.0
+						],
+						"scenario.local_floor_fixture_1": [
+							383.0,
+							422.0
+						],
+						"scenario.local_floor_fixture_2": [
+							268.0,
+							302.0
+						],
+						"scenario.local_floor_fixture_3": [
+							286.0,
+							424.0
+						],
+						"scenario.local_standing_person_1": [
+							366.0,
+							286.0
+						],
+						"scenario.local_surface_item_1": [
+							366.0,
+							203.0
+						],
+						"scenario.local_surface_item_2": [
+							448.0,
+							339.0
+						],
+						"scenario.local_surface_item_3": [
+							198.0,
+							425.0
+						],
+						"scenario.local_surface_item_4": [
+							82.0,
+							309.0
+						]
+					}
+				}
+			},
+			"slot_layers": {
+				"event.standing_person_1": -1.0
+			},
+			"slot_positions": {
+				"event.standing_person_1": [
+					448.0,
+					212.0
+				],
+				"event.standing_person_2": [
+					707.0,
+					307.0
+				],
+				"event.standing_person_3": [
+					780.0,
+					307.0
+				],
+				"exit.door_right_lower": [
+					868.0,
+					394.0
+				],
+				"fixed.game_slot": [
+					537.0,
+					269.0
+				],
+				"fixed.item_shop_1": [
+					117.0,
+					127.0
+				],
+				"fixed.item_shop_2": [
+					199.0,
+					127.0
+				],
+				"fixed.item_shop_3": [
+					117.0,
+					182.0
+				],
+				"fixed.item_shop_4": [
+					199.0,
+					183.0
+				],
+				"fixed.item_shop_5": [
+					722.0,
+					182.0
+				],
+				"fixed.item_shop_6": [
+					808.0,
+					181.0
+				],
+				"fixed.staff_pawn_counter": [
+					448.0,
+					286.0
+				],
+				"scenario.floor_fixture_2": [
+					146.0,
+					420.0
+				],
+				"scenario.standing_person_2": [
+					551.0,
+					429.0
+				],
+				"scenario.wall_item_2": [
+					237.0,
+					338.0
+				]
+			}
+		},
+		"small_underground_casino:club": {
+			"base_saved": true,
+			"slot_positions": {
+				"event.standing_person_1": [
+					212.0,
+					329.0
+				],
+				"event.standing_person_2": [
+					282.0,
+					356.0
+				],
+				"event.standing_person_3": [
+					353.0,
+					385.0
+				],
+				"event.standing_person_4": [
+					425.0,
+					394.0
+				],
+				"event.standing_person_5": [
+					498.0,
+					393.0
+				],
+				"event.standing_person_6": [
+					568.0,
+					368.0
+				],
+				"event.standing_person_7": [
+					634.0,
+					349.0
+				],
+				"event.standing_person_8": [
+					702.0,
+					315.0
+				],
+				"exit.door_side": [
+					848.0,
+					136.0
+				],
+				"exit.left_lower": [
+					868.0,
+					394.0
+				],
+				"fixed.ambient_stage": [
+					449.0,
+					177.0
+				],
+				"fixed.door_right_lower": [
+					848.0,
+					211.0
+				],
+				"fixed.numbers_book": [
+					560.0,
+					201.0
+				],
+				"fixed.service_stage": [
+					339.0,
+					203.0
+				],
+				"fixed.staff_ox": [
+					777.0,
+					247.0
+				],
+				"scenario.floor_fixture_3": [
+					222.0,
+					142.0
+				],
+				"scenario.standing_person_4": [
+					448.0,
+					248.0
+				],
+				"scenario.wall_item_1": [
+					40.0,
+					24.0
 				]
 			}
 		}
