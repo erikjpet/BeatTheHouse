@@ -57,6 +57,11 @@ Each row is one commit on the branch, in order.
 | Remove unused art that shipped in every export | 7 superseded `*_background_v2.png` scratch backgrounds (the repo's own generator calls them "Legacy … unused"), the v1 foil tile, 7 early reveal symbols with no renderer mapping, the unused wide world-map background, and the 0.3.3 promo image. | The export filter is `all_resources`, so these 1.1 MB were in every Windows, Web, and Android package. |
 | Stop allocating Callables in FoundationMain._process | Per-frame steps are bound once in `_init`. | `NullPerfSink` promises that normal play pays no instrumentation cost, but every frame still built 6–8 `Callable`s, one of them bound. |
 | Load the performance overlay only when requested | FoundationMain no longer preloads the 3,952-line `PerfTelemetryOverlay` debug overlay or types a member as it. A cheap `bth_perf` argument/query pre-check gates a lazy `load()`. | Cuts about 1.3 s (17%) from FoundationMain's headless boot compile. This matters most on the Web build, which the code already stages for startup latency. |
+| Fix five stale or platform-bound test fixtures | `collection_meta_check` removes the rotated backup as well as the primary store. `person_departure_semantics_check` uses the current interaction and record shapes. The tutorial cadence fixture masks placement-authority digests. The uniqueness pair precompute and validation memo contracts hash a canonical form that does not depend on the platform's float formatting. | Five red jobs on `main` were stale expectations, not product defects. See *Failing-job investigation*. |
+| Fix save/load round-trip bugs and stale SB.3 fuzz fixtures | Object manifest digests treat integral floats as ints. The scenario fact queue restores integer fields before exact-type validation. The coin pusher `feature_item_seed` stays within 53 bits. The SB.3 fuzz fixtures are updated. | Three real save bugs: every load threw away a room's saved scenario rows, dropped pending scenario facts, and re-rolled the coin pusher's feature items. |
+| Update stale T4.7, T6.7 and open-hours test fixtures | Queue triggered events before resolving them, expect the Crew's current $70 terms, use a real Corner Store room, expect the minute-bearing clock text, and load the full catalog before the closing-time dialogue. | Stale tests only. |
+| Copy Blackjack gesture actions into the surface payload | `_blackjack_ritual_projection` returns a copy of `BLACKJACK_GESTURE_ACTIONS`. | The payload handed out a read-only constant array, so any caller that edited its copy hit "Array is in read-only state". |
+| Restore the Jazz Club evening-start rate and update stale Jazz fixtures | The Jazz Club start-offer head start in `world_map.gd` changes from 0.75 to 0.6. The after-hours invitation is queued before it resolves, and the Legend glasses expectation accounts for boundary heat decay. | The Pawn Shop joined the start shop pool and is open at dusk, so Jazz fell to about 17% of evening starts, against a 20% contract. 0.6 restores about 22%, the rate before the Pawn Shop. **This is a tuning change for the owner to confirm.** |
 
 ## Findings
 
@@ -221,12 +226,11 @@ Godot was also importing everything in these folders. That is fixed with
 
 ### 7. Test and tooling health
 
-- **`main` is red.** Beyond the 8 smoke failures fixed here, the baseline
-  `contracts` suite on `main` reports failures in several checks (for example
-  `crew_recruitment_contract` 63, `crew_heist_contract` 8,
-  `scenario_semantic_hidden_contract_1` 8, and `content` 8). These are
-  pre-existing and identical before and after this branch; see
-  *Validation*.
+- **`main` is red.** On `main`, 13 test jobs fail beyond the 8 smoke failures
+  fixed here. Every failure was traced to a root cause. Most were stale tests
+  or save bugs and are fixed on this branch. The rest come from slot placement,
+  which is being reworked, or from this Linux container. See *Failing-job
+  investigation*.
 - **Windows-only harness.** `tools/check_godot.ps1` and
   `tools/validate_project.ps1` depend on `Get-CimInstance Win32_Process` and
   on Windows URI semantics, so they cannot run on Linux, macOS, or Linux CI.
@@ -274,6 +278,108 @@ foundation contracts, the UI-scene checks, `shop_item_row_check`, and
   pass, and `health06_1_scoped_telemetry_contract_test.ps1` passes under
   `pwsh`.
 
+## Failing-job investigation
+
+Each failure in the 13 red jobs was reproduced on its own, traced to a root
+cause, and put in one of the classes below. Every one of them already failed
+on `main`; none was introduced by this branch.
+
+### Production bugs (fixed)
+
+| Where | Defect | Fix |
+| --- | --- | --- |
+| `environment_object_manifest.gd` `_canonical` | Source digests and row fingerprints depended on whether a number was an int or a float. A JSON save turns every int into a float, so retention rejected a restored room's saved scenario rows on every load, and the manifest revision went up each time. | Integral floats are sealed as ints. |
+| `scenario_sequence_runtime.gd` `_normalized_fact_queue` | Exact `TYPE_INT` checks on JSON-loaded serials and payload fields made it drop every pending scenario fact on load, without a receipt. | One `_integral_fact_fields` helper restores the integer fields for both the queue and the receipts. |
+| `coin_pusher.gd` `_assign_feature_items` | `feature_item_seed` was a full 64-bit hash. As a JSON double it lost precision, so a reloaded machine assigned different feature items. | The seed is masked to 53 bits. |
+| `blackjack.gd` `_blackjack_ritual_projection` | The surface payload contained the read-only constant `BLACKJACK_GESTURE_ACTIONS`. | It returns a copy. |
+| `world_map.gd` Jazz Club start rank | After the Pawn Shop joined the start shop pool, Jazz appeared at about 17% of evening starts, below the 20% contract. The comment says the head start exists to keep that rate. | The head start changes from 0.75 to 0.6 (about 22%). This is a tuning decision for the owner to confirm. |
+
+### Stale tests (fixed)
+
+Production had changed on purpose, but these tests had not been updated.
+
+- `collection_meta_check`: DurableStore recovers a missing primary from its
+  `.bak` file, so the fixture now removes both files.
+- `person_departure_semantics_check`: the stub interaction and record now use
+  the current fields (`host_kind`, `verbs`, `slot_id`).
+- `game06_2_repeated_reprieve_contract` (inherits the tutorial cadence
+  fixture): the expected fingerprint now masks placement-authority digests.
+- `scenario_uniqueness_pair_precompute_contract` and
+  `scenario_validation_memo_contract`: the expected authority hash depended on
+  how the C runtime formats floats, so it differed between Windows and Linux.
+  Both contracts now hash a canonical form that converts floats to scaled
+  integers.
+- SB.3 save/load fuzz:
+  - The second clone now loads from JSON text, like a real save.
+  - The lender fixture uses a real slot-schema-v2 room.
+  - Travel skips destinations that are closed on arrival, as production travel
+    does.
+  - Bar Dice settles through the Foundation sealed host, because its legacy
+    `resolve_with_context` now intentionally rejects.
+- T4.7 family loan and Jazz after-hours invitation: a triggered event resolves
+  only while it is queued (`event_module.gd:316`), so both are now queued first.
+- T4.7 Crew speaker: the test now expects the current $70 loan.
+- T6.7 shopkeeper: the test uses a real Corner Store room, because synthetic
+  rooms cannot bind objects any more.
+- Open hours:
+  - The test expects the canonical clock text ("Day 1 12:00 AM").
+  - The test loads the full content catalog before the closing-time dialogue,
+    because headless startup loads only the main-menu catalog.
+- Jazz Legend glasses: the hook resolves after its action boundary, which can
+  apply one ordinary heat decay first. The expectation now accounts for it.
+- World map: the travel-hook assertion now compares against production's
+  hours-filtered target list.
+
+### Slot placement (not changed; being reworked)
+
+- Scenario obstacles or interactions block the mandatory player access lane:
+  - `gas_station_tour_bus_stop` (restroom queue)
+  - `delta_queen_wedding_charter` (ceremony rope)
+  - `delta_queen_fog_delay`
+  - `grand_casino_audit_night`
+
+  These cause every `env06_8 paired observer`, souvenir, Crew heist, Plan A and
+  SB.3 travel failure. They also cause the crew_bishop fallback-recruitment
+  failure.
+- Back Alley `late_shift_discount` and Grand Casino `comped_suite_offer` have
+  no free `event.behind_counter_person` slot. The second causes the "Crew heist
+  live-table membership could not be reconciled" failure.
+- The motel travel node has no authenticated slot binding (SB.3 lender
+  continuation).
+- Validated finalization "fixed-slot labels distinct" failure, and object
+  overlaps in Gas Station, Jazz Club and Back Alley street craps.
+- Missing service placements in the Jazz Club, objects outside their room zone,
+  and Pull Tabs counter-ownership expectations.
+- `env06_6_full_contract`, `env06_8_environment_readability_check`,
+  `environment_slot_runtime_audit_check`, and `compile_run_menu_and_game_flows`
+  (prop overlaps).
+- Crew-ignoring golden snapshots (`crew_recruitment_contract`):
+  - Across all checkpoints of both seeds, 17,845 values differ, all inside
+    environment payloads.
+  - About 17,245 of them are placement material: slot bindings, object rects,
+    game spots, manifest rows, and scenario layout authority.
+  - The remainder comes from intentional state changes: Scratch Tickets machine
+    state v6 (`9c7cc0f`) and the coin pusher seed mask above.
+  - Re-record the goldens once placement settles.
+
+### Environment (not changed)
+
+- The Coin Pusher V3 native solver backend is unavailable. The GDExtension is
+  not built for Linux, so the 300-body frame-headroom contract cannot run here.
+- Slot Buffalo cold-load music budget (100 ms): the check depends on timing and
+  exceeds the budget only when CPU is contended. It passes when it runs alone.
+
+### Follow-ups found during the investigation
+
+- Crew voice lines in `data/characters/characters.json` still say
+  "forty-five" and "two favors". The live terms are $70 and one favor.
+- `crew_recruitment_contract.gd:654` and `run_state.gd:2397` drop the
+  underlying install errors, so placement failures show up as `[]` or as a
+  generic "live-table membership" message.
+- The base `tutorial_dialogue_trigger_cadence_check.gd` is not run by the
+  harness; only its subclass is. It now stops at "Pal started the next table
+  lesson before the finite hand animation finished."
+
 ## Not changed (owner decisions)
 
 1. Remove or relocate `branding/` WAV/MP4 masters (391 MB) and
@@ -284,7 +390,9 @@ foundation contracts, the UI-scene checks, `shop_item_row_check`, and
 3. Replace the `keys.gd` ≥40 count contract with a used-keys assertion.
 4. Add export exclusions for non-runtime data and source art.
 5. Port the PowerShell harness to cross-platform PowerShell, or add a Linux
-   runner, and triage the red `contracts` suite on `main`.
+   runner.
+6. Confirm the Jazz Club start-rate tuning (0.75 → 0.6), and re-record the
+   Crew-ignoring goldens after the placement rework.
 
 ## Appendix A — Production scripts, file by file
 
