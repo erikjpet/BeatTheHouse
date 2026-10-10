@@ -1119,7 +1119,7 @@ func _blackjack_ritual_projection(run_state: RunState, environment: Dictionary, 
 		"energy_tier": energy_tier,
 		"heat": heat,
 		"action_states": _blackjack_ritual_action_states(spec, phase_id),
-		"gesture_actions": BLACKJACK_GESTURE_ACTIONS,
+		"gesture_actions": BLACKJACK_GESTURE_ACTIONS.duplicate(),
 	}
 
 
