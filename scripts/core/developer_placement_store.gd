@@ -36,6 +36,7 @@ const SLOT_SCALE_FIELD := "slot_scales"
 const SLOT_SCALE_MIN := 0.5
 const SLOT_SCALE_MAX := 2.0
 const SHARED_SLOT_FAMILIES := ["fixed", "event", "exit"]
+const SLOT_FIELDS := ["slot_positions", SLOT_LAYER_FIELD, SLOT_SCALE_FIELD]
 
 static var _loaded := false
 static var _authority_revision := 0
@@ -107,15 +108,15 @@ static func user_slot_overrides(environment: Dictionary, field: String = "slot_p
 
 static func slot_layer_overrides(environment: Dictionary) -> Dictionary:
 	_ensure_loaded()
-	var result := _room_slot_layers(_project_rooms, environment)
-	result.merge(_room_slot_layers(_user_rooms, environment), true)
+	var result := _room_slot_overrides(_project_rooms, environment, SLOT_LAYER_FIELD)
+	result.merge(_room_slot_overrides(_user_rooms, environment, SLOT_LAYER_FIELD), true)
 	return result
 
 
 static func slot_scale_overrides(environment: Dictionary) -> Dictionary:
 	_ensure_loaded()
-	var result := _room_slot_scales(_project_rooms, environment)
-	result.merge(_room_slot_scales(_user_rooms, environment), true)
+	var result := _room_slot_overrides(_project_rooms, environment, SLOT_SCALE_FIELD)
+	result.merge(_room_slot_overrides(_user_rooms, environment, SLOT_SCALE_FIELD), true)
 	return result
 
 
@@ -169,66 +170,26 @@ static func restore_user_room_state(state: Dictionary) -> Dictionary:
 
 
 static func save_slot_layer(environment: Dictionary, slot_id: String, layer: int) -> Dictionary:
-	var key := room_key(environment)
-	var clean_id := slot_id.strip_edges()
-	if key.is_empty() or clean_id.is_empty() or layer not in SLOT_LAYER_VALUES:
+	if layer not in SLOT_LAYER_VALUES:
 		return {"ok": false, "error": "Placement slot and layer must be valid."}
-	var scenario_id := active_scenario_id(environment)
-	var scope := _slot_scope(key, scenario_id, clean_id)
-	if scope == "scenario_missing":
-		return {"ok": false, "error": "Scenario-specific placement requires an active scenario."}
-	if scope == "unsupported":
-		return {"ok": false, "error": "Unsupported placement slot family."}
-	_ensure_loaded()
-	var had_previous_room := _user_rooms.has(key)
-	var previous_room := _dict(_user_rooms.get(key, {}))
-	var room := previous_room.duplicate(true)
-	if scope == "shared":
-		var layers := _layers(room.get(SLOT_LAYER_FIELD, {})).duplicate(true)
-		var changed := int(layers.get(clean_id, 99)) != layer
-		layers[clean_id] = layer
-		room[SLOT_LAYER_FIELD] = layers
-		if changed:
-			room = _invalidate_shared_layout_completion(key, room)
-	else:
-		var layouts := _dict(room.get("scenario_layouts", {})).duplicate(true)
-		var scenario_layout := _dict(layouts.get(scenario_id, {})).duplicate(true)
-		var layers := _layers(scenario_layout.get(SLOT_LAYER_FIELD, {})).duplicate(true)
-		var changed := int(layers.get(clean_id, 99)) != layer
-		layers[clean_id] = layer
-		scenario_layout[SLOT_LAYER_FIELD] = layers
-		if changed:
-			scenario_layout["saved"] = false
-		layouts[scenario_id] = scenario_layout
-		room["scenario_layouts"] = layouts
-	_user_rooms[key] = room
-	var save_error := _write_payload(user_path(), _user_rooms)
-	if save_error != OK:
-		if had_previous_room:
-			_user_rooms[key] = previous_room
-		else:
-			_user_rooms.erase(key)
-	else:
-		_authority_revision += 1
-	return {
-		"ok": save_error == OK,
-		"error": "" if save_error == OK else "Could not save the slot draw layer.",
-		"path": user_path(),
-		"room_key": key,
-		"scenario_id": scenario_id if scope == "scenario" else "",
-		"scope": scope,
-		"slot_id": clean_id,
-		"layer": layer,
-	}
+	return _save_slot_attribute(environment, slot_id, SLOT_LAYER_FIELD, layer)
 
 
 static func save_slot_scale(environment: Dictionary, slot_id: String, scale: float) -> Dictionary:
+	var normalized_scale := snappedf(scale, 0.01)
+	if not is_finite(scale) or normalized_scale < SLOT_SCALE_MIN or normalized_scale > SLOT_SCALE_MAX:
+		return {"ok": false, "error": "Placement slot and scale must be valid."}
+	return _save_slot_attribute(environment, slot_id, SLOT_SCALE_FIELD, normalized_scale)
+
+
+# Draw layer and object scale are independent per-slot presentation fields
+# with identical shared/scenario scoping, completion invalidation and rollback.
+static func _save_slot_attribute(environment: Dictionary, slot_id: String, field: String, value: Variant) -> Dictionary:
+	var is_layer := field == SLOT_LAYER_FIELD
 	var key := room_key(environment)
 	var clean_id := slot_id.strip_edges()
-	var normalized_scale := snappedf(scale, 0.01)
-	if key.is_empty() or clean_id.is_empty() or not is_finite(scale) \
-			or normalized_scale < SLOT_SCALE_MIN or normalized_scale > SLOT_SCALE_MAX:
-		return {"ok": false, "error": "Placement slot and scale must be valid."}
+	if key.is_empty() or clean_id.is_empty():
+		return {"ok": false, "error": "Placement slot and %s must be valid." % ("layer" if is_layer else "scale")}
 	var scenario_id := active_scenario_id(environment)
 	var scope := _slot_scope(key, scenario_id, clean_id)
 	if scope == "scenario_missing":
@@ -240,19 +201,19 @@ static func save_slot_scale(environment: Dictionary, slot_id: String, scale: flo
 	var previous_room := _dict(_user_rooms.get(key, {}))
 	var room := previous_room.duplicate(true)
 	if scope == "shared":
-		var scales := _scales(room.get(SLOT_SCALE_FIELD, {})).duplicate(true)
-		var changed := not is_equal_approx(float(scales.get(clean_id, 1.0)), normalized_scale)
-		scales[clean_id] = normalized_scale
-		room[SLOT_SCALE_FIELD] = scales
+		var values := _dict(room.get(field, {})).duplicate(true)
+		var changed := _slot_attribute_changed(is_layer, values.get(clean_id, null), value)
+		values[clean_id] = value
+		room[field] = values
 		if changed:
 			room = _invalidate_shared_layout_completion(key, room)
 	else:
 		var layouts := _dict(room.get("scenario_layouts", {})).duplicate(true)
 		var scenario_layout := _dict(layouts.get(scenario_id, {})).duplicate(true)
-		var scales := _scales(scenario_layout.get(SLOT_SCALE_FIELD, {})).duplicate(true)
-		var changed := not is_equal_approx(float(scales.get(clean_id, 1.0)), normalized_scale)
-		scales[clean_id] = normalized_scale
-		scenario_layout[SLOT_SCALE_FIELD] = scales
+		var values := _dict(scenario_layout.get(field, {})).duplicate(true)
+		var changed := _slot_attribute_changed(is_layer, values.get(clean_id, null), value)
+		values[clean_id] = value
+		scenario_layout[field] = values
 		if changed:
 			scenario_layout["saved"] = false
 		layouts[scenario_id] = scenario_layout
@@ -266,16 +227,23 @@ static func save_slot_scale(environment: Dictionary, slot_id: String, scale: flo
 			_user_rooms.erase(key)
 	else:
 		_authority_revision += 1
-	return {
+	var result := {
 		"ok": save_error == OK,
-		"error": "" if save_error == OK else "Could not save the slot object scale.",
+		"error": "" if save_error == OK else "Could not save the slot %s." % ("draw layer" if is_layer else "object scale"),
 		"path": user_path(),
 		"room_key": key,
 		"scenario_id": scenario_id if scope == "scenario" else "",
 		"scope": scope,
 		"slot_id": clean_id,
-		"scale": normalized_scale,
 	}
+	result["layer" if is_layer else "scale"] = value
+	return result
+
+
+static func _slot_attribute_changed(is_layer: bool, previous: Variant, value: Variant) -> bool:
+	if is_layer:
+		return previous == null or int(previous) != int(value)
+	return not is_equal_approx(1.0 if previous == null else float(previous), float(value))
 
 
 # Single-slot edits remain available for drag locking. They mark the affected
@@ -305,7 +273,7 @@ static func save_position(
 	var normalized := [snappedf(position.x, 1.0), snappedf(position.y, 1.0)]
 	if scope == "shared":
 		var previous_effective := _effective_shared_positions(key, room, field)
-		var slots := _positions(room.get(field, {})).duplicate(true)
+		var slots := _dict(room.get(field, {})).duplicate(true)
 		slots[clean_id] = normalized
 		room[field] = slots
 		if previous_effective != _effective_shared_positions(key, room, field):
@@ -314,7 +282,7 @@ static func save_position(
 	else:
 		var layouts := _dict(room.get("scenario_layouts", {})).duplicate(true)
 		var scenario_layout := _dict(layouts.get(scenario_id, {})).duplicate(true)
-		var slots := _positions(scenario_layout.get(field, {})).duplicate(true)
+		var slots := _dict(scenario_layout.get(field, {})).duplicate(true)
 		var previous_effective := _effective_scenario_positions(
 			key, scenario_id, slots, field
 		)
@@ -371,7 +339,7 @@ static func clear_position(environment: Dictionary, field: String, object_id: St
 	var room := previous_room.duplicate(false)
 	if scope == "shared":
 		var previous_effective := _effective_shared_positions(key, room, field)
-		var slots := _positions(room.get(field, {})).duplicate(true)
+		var slots := _dict(room.get(field, {})).duplicate(true)
 		slots.erase(clean_id)
 		if slots.is_empty():
 			room.erase(field)
@@ -384,7 +352,7 @@ static func clear_position(environment: Dictionary, field: String, object_id: St
 		var layouts := _dict(room.get("scenario_layouts", {})).duplicate(true)
 		var scenario_layout := _dict(layouts.get(scenario_id, {})).duplicate(true)
 		var had_completion_shadow := scenario_layout.has("saved")
-		var slots := _positions(scenario_layout.get(field, {})).duplicate(true)
+		var slots := _dict(scenario_layout.get(field, {})).duplicate(true)
 		slots.erase(clean_id)
 		if slots.is_empty():
 			scenario_layout.erase(field)
@@ -496,10 +464,10 @@ static func save_layout(
 	var had_previous_room := _user_rooms.has(key)
 	var previous_room := _dict(_user_rooms.get(key, {}))
 	var room := previous_room.duplicate(false)
-	var previous_shared_positions := _positions(
+	var previous_shared_positions := _dict(
 		_dict(_project_rooms.get(key, {})).get(field, {})
 	).duplicate(true)
-	previous_shared_positions.merge(_positions(room.get(field, {})), true)
+	previous_shared_positions.merge(_dict(room.get(field, {})), true)
 	var shared_positions_changed := previous_shared_positions != shared_positions
 	if shared_positions.is_empty():
 		room.erase(field)
@@ -632,7 +600,7 @@ static func _reconcile_project_completion_shadows(
 		var scenario_differs := _scenario_geometry_differs_from_project(
 			key,
 			scenario_id,
-			_positions(scenario_layout.get(field, {})),
+			_dict(scenario_layout.get(field, {})),
 			field
 		)
 		var exact_layout_id := "%s::%s" % [key, scenario_id]
@@ -667,7 +635,7 @@ static func _shared_geometry_differs_from_project(
 	room: Dictionary,
 	field: String = "slot_positions"
 ) -> bool:
-	var project_positions := _positions(
+	var project_positions := _dict(
 		_dict(_project_rooms.get(key, {})).get(field, {})
 	)
 	return _effective_shared_positions(key, room, field) != project_positions
@@ -678,10 +646,10 @@ static func _effective_shared_positions(
 	room: Dictionary,
 	field: String = "slot_positions"
 ) -> Dictionary:
-	var result := _positions(
+	var result := _dict(
 		_dict(_project_rooms.get(key, {})).get(field, {})
 	).duplicate(true)
-	result.merge(_positions(room.get(field, {})), true)
+	result.merge(_dict(room.get(field, {})), true)
 	return result
 
 
@@ -712,53 +680,7 @@ static func _effective_scenario_positions(
 
 static func promote_user_overrides() -> Dictionary:
 	_ensure_loaded()
-	var merged := _project_rooms.duplicate(true)
-	var authored_keys := _user_rooms.keys()
-	authored_keys.sort()
-	for key_value in authored_keys:
-		var key := str(key_value)
-		var room := _dict(merged.get(key, {})).duplicate(true)
-		var authored_room := _dict(_user_rooms.get(key, {}))
-		var slots := _positions(room.get("slot_positions", {})).duplicate(true)
-		slots.merge(_positions(authored_room.get("slot_positions", {})), true)
-		if not slots.is_empty():
-			room["slot_positions"] = slots
-		var slot_layers := _layers(room.get(SLOT_LAYER_FIELD, {})).duplicate(true)
-		slot_layers.merge(_layers(authored_room.get(SLOT_LAYER_FIELD, {})), true)
-		if not slot_layers.is_empty():
-			room[SLOT_LAYER_FIELD] = slot_layers
-		var slot_scales := _scales(room.get(SLOT_SCALE_FIELD, {})).duplicate(true)
-		slot_scales.merge(_scales(authored_room.get(SLOT_SCALE_FIELD, {})), true)
-		if not slot_scales.is_empty():
-			room[SLOT_SCALE_FIELD] = slot_scales
-		if authored_room.has("base_saved"):
-			room["base_saved"] = bool(authored_room.get("base_saved", false))
-		var layouts := _dict(room.get("scenario_layouts", {})).duplicate(true)
-		var authored_layouts := _dict(authored_room.get("scenario_layouts", {}))
-		var scenario_ids := authored_layouts.keys()
-		scenario_ids.sort()
-		for scenario_value in scenario_ids:
-			var scenario_id := str(scenario_value)
-			var scenario_layout := _dict(layouts.get(scenario_id, {})).duplicate(true)
-			var authored_layout := _dict(authored_layouts.get(scenario_id, {}))
-			var scenario_slots := _positions(scenario_layout.get("slot_positions", {})).duplicate(true)
-			scenario_slots.merge(_positions(authored_layout.get("slot_positions", {})), true)
-			if not scenario_slots.is_empty():
-				scenario_layout["slot_positions"] = scenario_slots
-			var scenario_layers := _layers(scenario_layout.get(SLOT_LAYER_FIELD, {})).duplicate(true)
-			scenario_layers.merge(_layers(authored_layout.get(SLOT_LAYER_FIELD, {})), true)
-			if not scenario_layers.is_empty():
-				scenario_layout[SLOT_LAYER_FIELD] = scenario_layers
-			var scenario_scales := _scales(scenario_layout.get(SLOT_SCALE_FIELD, {})).duplicate(true)
-			scenario_scales.merge(_scales(authored_layout.get(SLOT_SCALE_FIELD, {})), true)
-			if not scenario_scales.is_empty():
-				scenario_layout[SLOT_SCALE_FIELD] = scenario_scales
-			if authored_layout.has("saved"):
-				scenario_layout["saved"] = bool(authored_layout.get("saved", false))
-			layouts[scenario_id] = scenario_layout
-		if not layouts.is_empty():
-			room["scenario_layouts"] = layouts
-		merged[key] = room
+	var merged := _merged_effective_rooms()
 	var output_path := project_path()
 	var save_error := _write_payload(output_path, merged)
 	if save_error == OK:
@@ -1019,21 +941,8 @@ static func _payload_recovered_for_catalog(payload: Dictionary) -> Dictionary:
 		var source_room := room_value as Dictionary
 		var recovered_room: Dictionary = {}
 		var expected_shared := _dict(_shared_slot_ids_by_room.get(key, {}))
-		var shared_positions := _catalog_positions(
-			source_room.get("slot_positions", {}), expected_shared
-		)
-		var shared_layers := _catalog_layers(
-			source_room.get(SLOT_LAYER_FIELD, {}), expected_shared
-		)
-		var shared_scales := _catalog_scales(
-			source_room.get(SLOT_SCALE_FIELD, {}), expected_shared
-		)
-		if not shared_positions.is_empty():
-			recovered_room["slot_positions"] = shared_positions
-		if not shared_layers.is_empty():
-			recovered_room[SLOT_LAYER_FIELD] = shared_layers
-		if not shared_scales.is_empty():
-			recovered_room[SLOT_SCALE_FIELD] = shared_scales
+		_recover_slot_fields(recovered_room, source_room, expected_shared)
+		var shared_positions := _dict(recovered_room.get("slot_positions", {}))
 		if typeof(source_room.get("base_saved", null)) == TYPE_BOOL:
 			recovered_room["base_saved"] = bool(source_room.get("base_saved", false)) \
 					and _position_ids_match(shared_positions, expected_shared)
@@ -1052,22 +961,9 @@ static func _payload_recovered_for_catalog(payload: Dictionary) -> Dictionary:
 				continue
 			var source_layout := layout_value as Dictionary
 			var expected_scenario := _dict(_scenario_slot_ids_by_layout.get(exact_layout_id, {}))
-			var scenario_positions := _catalog_positions(
-				source_layout.get("slot_positions", {}), expected_scenario
-			)
-			var scenario_layers := _catalog_layers(
-				source_layout.get(SLOT_LAYER_FIELD, {}), expected_scenario
-			)
-			var scenario_scales := _catalog_scales(
-				source_layout.get(SLOT_SCALE_FIELD, {}), expected_scenario
-			)
 			var recovered_layout: Dictionary = {}
-			if not scenario_positions.is_empty():
-				recovered_layout["slot_positions"] = scenario_positions
-			if not scenario_layers.is_empty():
-				recovered_layout[SLOT_LAYER_FIELD] = scenario_layers
-			if not scenario_scales.is_empty():
-				recovered_layout[SLOT_SCALE_FIELD] = scenario_scales
+			_recover_slot_fields(recovered_layout, source_layout, expected_scenario)
+			var scenario_positions := _dict(recovered_layout.get("slot_positions", {}))
 			if typeof(source_layout.get("saved", null)) == TYPE_BOOL:
 				recovered_layout["saved"] = bool(source_layout.get("saved", false)) \
 						and _position_ids_match(shared_positions, expected_shared) \
@@ -1081,7 +977,14 @@ static func _payload_recovered_for_catalog(payload: Dictionary) -> Dictionary:
 	return {"schema_version": SCHEMA_VERSION, "rooms": recovered_rooms}
 
 
-static func _catalog_positions(value: Variant, expected_ids: Dictionary) -> Dictionary:
+static func _recover_slot_fields(target: Dictionary, source: Dictionary, expected_ids: Dictionary) -> void:
+	for field in SLOT_FIELDS:
+		var values := _catalog_slot_field(source.get(field, {}), expected_ids, field)
+		if not values.is_empty():
+			target[field] = values
+
+
+static func _catalog_slot_field(value: Variant, expected_ids: Dictionary, field: String) -> Dictionary:
 	var result: Dictionary = {}
 	if typeof(value) != TYPE_DICTIONARY:
 		return result
@@ -1090,43 +993,9 @@ static func _catalog_positions(value: Variant, expected_ids: Dictionary) -> Dict
 		var slot_id := raw_slot_id.strip_edges()
 		if raw_slot_id != slot_id or slot_id.is_empty() or not expected_ids.has(slot_id):
 			continue
-		var normalized := _normalized_position((value as Dictionary).get(slot_value))
-		if not normalized.is_empty():
+		var normalized: Variant = _normalized_slot_value(field, (value as Dictionary).get(slot_value))
+		if typeof(normalized) != TYPE_NIL:
 			result[slot_id] = normalized
-	return result
-
-
-static func _catalog_layers(value: Variant, expected_ids: Dictionary) -> Dictionary:
-	var result: Dictionary = {}
-	if typeof(value) != TYPE_DICTIONARY:
-		return result
-	for slot_value in (value as Dictionary).keys():
-		var raw_slot_id := str(slot_value)
-		var slot_id := raw_slot_id.strip_edges()
-		var layer_value: Variant = (value as Dictionary).get(slot_value)
-		if raw_slot_id != slot_id \
-				or slot_id.is_empty() \
-				or not expected_ids.has(slot_id) \
-				or not _numeric(layer_value) \
-				or not is_equal_approx(float(layer_value), roundf(float(layer_value))) \
-				or int(layer_value) not in SLOT_LAYER_VALUES:
-			continue
-		result[slot_id] = int(layer_value)
-	return result
-
-
-static func _catalog_scales(value: Variant, expected_ids: Dictionary) -> Dictionary:
-	var result: Dictionary = {}
-	if typeof(value) != TYPE_DICTIONARY:
-		return result
-	for slot_value in (value as Dictionary).keys():
-		var raw_slot_id := str(slot_value)
-		var slot_id := raw_slot_id.strip_edges()
-		var scale_value: Variant = (value as Dictionary).get(slot_value)
-		if raw_slot_id != slot_id or slot_id.is_empty() or not expected_ids.has(slot_id) \
-				or not _scale_valid(scale_value):
-			continue
-		result[slot_id] = snappedf(float(scale_value), 0.01)
 	return result
 
 
@@ -1168,16 +1037,13 @@ static func _placement_payload_valid(payload: Dictionary) -> bool:
 
 static func _room_payload_valid(room: Dictionary, key: String) -> bool:
 	for field_value in room.keys():
-		if str(field_value) not in ["slot_positions", SLOT_LAYER_FIELD, SLOT_SCALE_FIELD, "base_saved", "scenario_layouts"]:
+		if str(field_value) not in SLOT_FIELDS and str(field_value) not in ["base_saved", "scenario_layouts"]:
 			return false
 	if room.has("base_saved") and typeof(room.get("base_saved")) != TYPE_BOOL:
 		return false
-	if room.has("slot_positions") and not _positions_valid(room.get("slot_positions"), key):
-		return false
-	if room.has(SLOT_LAYER_FIELD) and not _layers_valid(room.get(SLOT_LAYER_FIELD), key):
-		return false
-	if room.has(SLOT_SCALE_FIELD) and not _scales_valid(room.get(SLOT_SCALE_FIELD), key):
-		return false
+	for field in SLOT_FIELDS:
+		if room.has(field) and not _slot_field_valid(room.get(field), key, "", field):
+			return false
 	if bool(room.get("base_saved", false)) \
 			and not _position_ids_match(room.get("slot_positions", {}), _dict(_shared_slot_ids_by_room.get(key, {}))):
 		return false
@@ -1194,16 +1060,13 @@ static func _room_payload_valid(room: Dictionary, key: String) -> bool:
 			return false
 		var scenario_layout := layout_value as Dictionary
 		for field_value in scenario_layout.keys():
-			if str(field_value) not in ["slot_positions", SLOT_LAYER_FIELD, SLOT_SCALE_FIELD, "saved"]:
+			if str(field_value) not in SLOT_FIELDS and str(field_value) != "saved":
 				return false
 		if scenario_layout.has("saved") and typeof(scenario_layout.get("saved")) != TYPE_BOOL:
 			return false
-		if scenario_layout.has("slot_positions") and not _positions_valid(scenario_layout.get("slot_positions"), key, scenario_id):
-			return false
-		if scenario_layout.has(SLOT_LAYER_FIELD) and not _layers_valid(scenario_layout.get(SLOT_LAYER_FIELD), key, scenario_id):
-			return false
-		if scenario_layout.has(SLOT_SCALE_FIELD) and not _scales_valid(scenario_layout.get(SLOT_SCALE_FIELD), key, scenario_id):
-			return false
+		for field in SLOT_FIELDS:
+			if scenario_layout.has(field) and not _slot_field_valid(scenario_layout.get(field), key, scenario_id, field):
+				return false
 		if bool(scenario_layout.get("saved", false)):
 			if not _position_ids_match(room.get("slot_positions", {}), _dict(_shared_slot_ids_by_room.get(key, {}))):
 				return false
@@ -1212,7 +1075,7 @@ static func _room_payload_valid(room: Dictionary, key: String) -> bool:
 	return true
 
 
-static func _positions_valid(value: Variant, key: String, scenario_id: String = "") -> bool:
+static func _slot_field_valid(value: Variant, key: String, scenario_id: String, field: String) -> bool:
 	if typeof(value) != TYPE_DICTIONARY:
 		return false
 	var expected_scope := "shared" if scenario_id.is_empty() else "scenario"
@@ -1221,44 +1084,28 @@ static func _positions_valid(value: Variant, key: String, scenario_id: String = 
 		var slot_id := raw_slot_id.strip_edges()
 		if raw_slot_id != slot_id or slot_id.is_empty() or _slot_scope(key, scenario_id, slot_id) != expected_scope:
 			return false
-		if _normalized_position((value as Dictionary).get(slot_value)).is_empty():
+		if typeof(_normalized_slot_value(field, (value as Dictionary).get(slot_value))) == TYPE_NIL:
 			return false
 	return true
 
 
-static func _layers_valid(value: Variant, key: String, scenario_id: String = "") -> bool:
-	if typeof(value) != TYPE_DICTIONARY:
-		return false
-	var expected_scope := "shared" if scenario_id.is_empty() else "scenario"
-	for slot_value in (value as Dictionary).keys():
-		var raw_slot_id := str(slot_value)
-		var slot_id := raw_slot_id.strip_edges()
-		var layer_value: Variant = (value as Dictionary).get(slot_value)
-		if raw_slot_id != slot_id or slot_id.is_empty() or _slot_scope(key, scenario_id, slot_id) != expected_scope:
-			return false
-		if not _numeric(layer_value) \
-				or not is_equal_approx(float(layer_value), roundf(float(layer_value))) \
-				or int(layer_value) not in SLOT_LAYER_VALUES:
-			return false
-	return true
-
-
-static func _scales_valid(value: Variant, key: String, scenario_id: String = "") -> bool:
-	if typeof(value) != TYPE_DICTIONARY:
-		return false
-	var expected_scope := "shared" if scenario_id.is_empty() else "scenario"
-	for slot_value in (value as Dictionary).keys():
-		var raw_slot_id := str(slot_value)
-		var slot_id := raw_slot_id.strip_edges()
-		if raw_slot_id != slot_id or slot_id.is_empty() or _slot_scope(key, scenario_id, slot_id) != expected_scope:
-			return false
-		if not _scale_valid((value as Dictionary).get(slot_value)):
-			return false
-	return true
+# Canonical stored value for one per-slot field, or null when the value is not
+# valid for that field. Load validation, catalog recovery, and export share it.
+static func _normalized_slot_value(field: String, value: Variant) -> Variant:
+	if field == SLOT_LAYER_FIELD:
+		if not _numeric(value) \
+				or not is_equal_approx(float(value), roundf(float(value))) \
+				or int(value) not in SLOT_LAYER_VALUES:
+			return null
+		return int(value)
+	if field == SLOT_SCALE_FIELD:
+		return snappedf(float(value), 0.01) if _scale_valid(value) else null
+	var position := _normalized_position(value)
+	return null if position.is_empty() else position
 
 
 static func _position_ids_match(value: Variant, expected_ids: Dictionary) -> bool:
-	var positions := _positions(value)
+	var positions := _dict(value)
 	if positions.size() != expected_ids.size():
 		return false
 	for slot_id_value in expected_ids.keys():
@@ -1270,33 +1117,11 @@ static func _position_ids_match(value: Variant, expected_ids: Dictionary) -> boo
 static func _room_slot_overrides(rooms: Dictionary, environment: Dictionary, field: String) -> Dictionary:
 	var key := room_key(environment)
 	var room := _dict(rooms.get(key, {}))
-	var result := _positions(room.get(field, {})).duplicate(true)
+	var result := _dict(room.get(field, {})).duplicate(true)
 	var scenario_id := active_scenario_id(environment)
 	if not scenario_id.is_empty():
 		var scenario_layout := _dict(_dict(room.get("scenario_layouts", {})).get(scenario_id, {}))
-		result.merge(_positions(scenario_layout.get(field, {})), true)
-	return result
-
-
-static func _room_slot_layers(rooms: Dictionary, environment: Dictionary) -> Dictionary:
-	var key := room_key(environment)
-	var room := _dict(rooms.get(key, {}))
-	var result := _layers(room.get(SLOT_LAYER_FIELD, {})).duplicate(true)
-	var scenario_id := active_scenario_id(environment)
-	if not scenario_id.is_empty():
-		var scenario_layout := _dict(_dict(room.get("scenario_layouts", {})).get(scenario_id, {}))
-		result.merge(_layers(scenario_layout.get(SLOT_LAYER_FIELD, {})), true)
-	return result
-
-
-static func _room_slot_scales(rooms: Dictionary, environment: Dictionary) -> Dictionary:
-	var key := room_key(environment)
-	var room := _dict(rooms.get(key, {}))
-	var result := _scales(room.get(SLOT_SCALE_FIELD, {})).duplicate(true)
-	var scenario_id := active_scenario_id(environment)
-	if not scenario_id.is_empty():
-		var scenario_layout := _dict(_dict(room.get("scenario_layouts", {})).get(scenario_id, {}))
-		result.merge(_scales(scenario_layout.get(SLOT_SCALE_FIELD, {})), true)
+		result.merge(_dict(scenario_layout.get(field, {})), true)
 	return result
 
 
@@ -1308,7 +1133,7 @@ static func _scenario_positions(
 ) -> Dictionary:
 	var room := _dict(rooms.get(key, {}))
 	var scenario_layout := _dict(_dict(room.get("scenario_layouts", {})).get(scenario_id, {}))
-	return _positions(scenario_layout.get(field, {})).duplicate(true)
+	return _dict(scenario_layout.get(field, {})).duplicate(true)
 
 
 static func _slot_scope(key: String, scenario_id: String, slot_id: String) -> String:
@@ -1425,24 +1250,7 @@ static func _merged_effective_rooms() -> Dictionary:
 		var key := str(key_value)
 		var room := _dict(merged.get(key, {})).duplicate(true)
 		var authored_room := _dict(_user_rooms.get(key, {}))
-		var slots := _positions(room.get("slot_positions", {})).duplicate(true)
-		slots.merge(_positions(authored_room.get("slot_positions", {})), true)
-		if slots.is_empty():
-			room.erase("slot_positions")
-		else:
-			room["slot_positions"] = slots
-		var slot_layers := _layers(room.get(SLOT_LAYER_FIELD, {})).duplicate(true)
-		slot_layers.merge(_layers(authored_room.get(SLOT_LAYER_FIELD, {})), true)
-		if slot_layers.is_empty():
-			room.erase(SLOT_LAYER_FIELD)
-		else:
-			room[SLOT_LAYER_FIELD] = slot_layers
-		var slot_scales := _scales(room.get(SLOT_SCALE_FIELD, {})).duplicate(true)
-		slot_scales.merge(_scales(authored_room.get(SLOT_SCALE_FIELD, {})), true)
-		if slot_scales.is_empty():
-			room.erase(SLOT_SCALE_FIELD)
-		else:
-			room[SLOT_SCALE_FIELD] = slot_scales
+		_merge_slot_fields(room, authored_room)
 		if authored_room.has("base_saved"):
 			room["base_saved"] = bool(authored_room.get("base_saved", false))
 		var layouts := _dict(room.get("scenario_layouts", {})).duplicate(true)
@@ -1453,24 +1261,7 @@ static func _merged_effective_rooms() -> Dictionary:
 			var scenario_id := str(scenario_value)
 			var scenario_layout := _dict(layouts.get(scenario_id, {})).duplicate(true)
 			var authored_layout := _dict(authored_layouts.get(scenario_id, {}))
-			var scenario_slots := _positions(scenario_layout.get("slot_positions", {})).duplicate(true)
-			scenario_slots.merge(_positions(authored_layout.get("slot_positions", {})), true)
-			if scenario_slots.is_empty():
-				scenario_layout.erase("slot_positions")
-			else:
-				scenario_layout["slot_positions"] = scenario_slots
-			var scenario_layers := _layers(scenario_layout.get(SLOT_LAYER_FIELD, {})).duplicate(true)
-			scenario_layers.merge(_layers(authored_layout.get(SLOT_LAYER_FIELD, {})), true)
-			if scenario_layers.is_empty():
-				scenario_layout.erase(SLOT_LAYER_FIELD)
-			else:
-				scenario_layout[SLOT_LAYER_FIELD] = scenario_layers
-			var scenario_scales := _scales(scenario_layout.get(SLOT_SCALE_FIELD, {})).duplicate(true)
-			scenario_scales.merge(_scales(authored_layout.get(SLOT_SCALE_FIELD, {})), true)
-			if scenario_scales.is_empty():
-				scenario_layout.erase(SLOT_SCALE_FIELD)
-			else:
-				scenario_layout[SLOT_SCALE_FIELD] = scenario_scales
+			_merge_slot_fields(scenario_layout, authored_layout)
 			if authored_layout.has("saved"):
 				scenario_layout["saved"] = bool(authored_layout.get("saved", false))
 			layouts[scenario_id] = scenario_layout
@@ -1485,6 +1276,18 @@ static func _merged_effective_rooms() -> Dictionary:
 	return merged
 
 
+# Overlays every authored per-slot field onto an owned room or scenario layout
+# record, dropping fields that end up empty.
+static func _merge_slot_fields(target: Dictionary, authored: Dictionary) -> void:
+	for field in SLOT_FIELDS:
+		var values := _dict(target.get(field, {})).duplicate(true)
+		values.merge(_dict(authored.get(field, {})), true)
+		if values.is_empty():
+			target.erase(field)
+		else:
+			target[field] = values
+
+
 static func _exportable_rooms(source_rooms: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
 	var room_keys := source_rooms.keys()
@@ -1495,15 +1298,7 @@ static func _exportable_rooms(source_rooms: Dictionary) -> Dictionary:
 			continue
 		var source_room := _dict(source_rooms.get(key_value, {}))
 		var room: Dictionary = {}
-		var slots := _sanitized_positions(source_room.get("slot_positions", {}))
-		if not slots.is_empty():
-			room["slot_positions"] = slots
-		var slot_layers := _sanitized_layers(source_room.get(SLOT_LAYER_FIELD, {}))
-		if not slot_layers.is_empty():
-			room[SLOT_LAYER_FIELD] = slot_layers
-		var slot_scales := _sanitized_scales(source_room.get(SLOT_SCALE_FIELD, {}))
-		if not slot_scales.is_empty():
-			room[SLOT_SCALE_FIELD] = slot_scales
+		_copy_sanitized_slot_fields(room, source_room, false)
 		if source_room.has("base_saved"):
 			room["base_saved"] = bool(source_room.get("base_saved", false))
 		var source_layouts := _dict(source_room.get("scenario_layouts", {}))
@@ -1516,15 +1311,7 @@ static func _exportable_rooms(source_rooms: Dictionary) -> Dictionary:
 				continue
 			var source_layout := _dict(source_layouts.get(scenario_value, {}))
 			var scenario_layout: Dictionary = {}
-			var scenario_slots := _sanitized_positions(source_layout.get("slot_positions", {}), true)
-			if not scenario_slots.is_empty():
-				scenario_layout["slot_positions"] = scenario_slots
-			var scenario_layers := _sanitized_layers(source_layout.get(SLOT_LAYER_FIELD, {}), true)
-			if not scenario_layers.is_empty():
-				scenario_layout[SLOT_LAYER_FIELD] = scenario_layers
-			var scenario_scales := _sanitized_scales(source_layout.get(SLOT_SCALE_FIELD, {}), true)
-			if not scenario_scales.is_empty():
-				scenario_layout[SLOT_SCALE_FIELD] = scenario_scales
+			_copy_sanitized_slot_fields(scenario_layout, source_layout, true)
 			if source_layout.has("saved"):
 				scenario_layout["saved"] = bool(source_layout.get("saved", false))
 			if not scenario_layout.is_empty():
@@ -1536,9 +1323,16 @@ static func _exportable_rooms(source_rooms: Dictionary) -> Dictionary:
 	return result
 
 
-static func _sanitized_positions(value: Variant, scenario_only: bool = false) -> Dictionary:
+static func _copy_sanitized_slot_fields(target: Dictionary, source: Dictionary, scenario_only: bool) -> void:
+	for field in SLOT_FIELDS:
+		var values := _sanitized_slot_field(source.get(field, {}), field, scenario_only)
+		if not values.is_empty():
+			target[field] = values
+
+
+static func _sanitized_slot_field(value: Variant, field: String, scenario_only: bool) -> Dictionary:
 	var result: Dictionary = {}
-	var source := _positions(value)
+	var source := _dict(value)
 	var slot_ids := source.keys()
 	slot_ids.sort()
 	for slot_value in slot_ids:
@@ -1547,41 +1341,9 @@ static func _sanitized_positions(value: Variant, scenario_only: bool = false) ->
 			continue
 		if scenario_only and not slot_id.begins_with("scenario."):
 			continue
-		var position := _normalized_position(source.get(slot_value))
-		if not position.is_empty():
-			result[slot_id] = position
-	return result
-
-
-static func _sanitized_layers(value: Variant, scenario_only: bool = false) -> Dictionary:
-	var result: Dictionary = {}
-	var source := _layers(value)
-	var slot_ids := source.keys()
-	slot_ids.sort()
-	for slot_value in slot_ids:
-		var slot_id := str(slot_value).strip_edges()
-		var layer := int(source.get(slot_value, 99))
-		if slot_id.is_empty() or not _supported_slot_id(slot_id) or layer not in SLOT_LAYER_VALUES:
-			continue
-		if scenario_only and not slot_id.begins_with("scenario."):
-			continue
-		result[slot_id] = layer
-	return result
-
-
-static func _sanitized_scales(value: Variant, scenario_only: bool = false) -> Dictionary:
-	var result: Dictionary = {}
-	var source := _scales(value)
-	var slot_ids := source.keys()
-	slot_ids.sort()
-	for slot_value in slot_ids:
-		var slot_id := str(slot_value).strip_edges()
-		var scale_value: Variant = source.get(slot_value)
-		if slot_id.is_empty() or not _supported_slot_id(slot_id) or not _scale_valid(scale_value):
-			continue
-		if scenario_only and not slot_id.begins_with("scenario."):
-			continue
-		result[slot_id] = snappedf(float(scale_value), 0.01)
+		var normalized: Variant = _normalized_slot_value(field, source.get(slot_value))
+		if typeof(normalized) != TYPE_NIL:
+			result[slot_id] = normalized
 	return result
 
 
@@ -1623,9 +1385,9 @@ static func _slot_count(rooms: Dictionary) -> int:
 	var result := 0
 	for room_value in rooms.values():
 		var room := _dict(room_value)
-		result += _positions(room.get("slot_positions", {})).size()
+		result += _dict(room.get("slot_positions", {})).size()
 		for layout_value in _dict(room.get("scenario_layouts", {})).values():
-			result += _positions(_dict(layout_value).get("slot_positions", {})).size()
+			result += _dict(_dict(layout_value).get("slot_positions", {})).size()
 	return result
 
 
@@ -1661,18 +1423,6 @@ static func _scale_valid(value: Variant) -> bool:
 		return false
 	var scale := float(value)
 	return is_finite(scale) and scale >= SLOT_SCALE_MIN and scale <= SLOT_SCALE_MAX
-
-
-static func _positions(value: Variant) -> Dictionary:
-	return value if typeof(value) == TYPE_DICTIONARY else {}
-
-
-static func _layers(value: Variant) -> Dictionary:
-	return value if typeof(value) == TYPE_DICTIONARY else {}
-
-
-static func _scales(value: Variant) -> Dictionary:
-	return value if typeof(value) == TYPE_DICTIONARY else {}
 
 
 static func _array(value: Variant) -> Array:

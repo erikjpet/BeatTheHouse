@@ -14,8 +14,6 @@ const SCHEMA_VERSION := 1
 const DEFAULT_HORIZON := 240
 const RUMOR_CLASS_SCENARIO := "scenario"
 const RUMOR_CLASS_CONDITION := "town_condition"
-const RUMOR_CLASS_PUSHER := "pusher_pile"
-const RUMOR_CLASS_NUMBERS := "numbers_whisper"
 const RUMOR_CLASS_SWEEP := "sweep_sighting"
 
 static var _rumor_data_cache: Dictionary = {}

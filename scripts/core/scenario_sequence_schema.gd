@@ -1670,14 +1670,6 @@ static func _contains_error(errors: Array, needle: String) -> bool:
 	return false
 
 
-static func _valid_semantic_object_id(value: String) -> bool:
-	var parts := value.split(":", false)
-	if parts.is_empty() or parts.size() > 2: return false
-	for part in parts:
-		if not _valid_id(str(part)): return false
-	return true
-
-
 static func _validate_tags_and_exceptions(label: String, authored: Dictionary, errors: Array) -> void:
 	if JsonCoerceScript._unique_string_array(authored.get("mechanic_tags", [])).is_empty() or str(authored.get("sequence_signature", "")).strip_edges().is_empty():
 		errors.append("%s requires mechanic_tags and an authored sequence_signature." % label)

@@ -2389,11 +2389,13 @@ func _safe_pusher_item_pool(run_state: RunState) -> Array:
 func _assign_feature_items(machine: Dictionary, run_state: RunState, environment: Dictionary) -> void:
 	var seed := int(machine.get("feature_item_seed", 0))
 	if seed == 0:
-		seed = JsonCoerceScript._overflow_stable_hash("pusher_items:%s:%s:%s" % [
+		# The seed is saved, and JSON numbers are doubles: keep it within 53 bits so
+		# a loaded machine assigns the same feature items.
+		seed = maxi(1, JsonCoerceScript._overflow_stable_hash("pusher_items:%s:%s:%s" % [
 			str(run_state.seed_text if run_state != null else "fallback"),
 			_environment_node_id(run_state, environment),
 			str(machine.get("variation_id", "quarter_falls")),
-		])
+		]) & 0x1FFFFFFFFFFFFF)
 		machine["feature_item_seed"] = seed
 	_assign_feature_items_from_pool(machine, _safe_pusher_item_pool(run_state), seed)
 

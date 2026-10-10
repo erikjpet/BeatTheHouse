@@ -12,7 +12,6 @@ const SequenceSchemaScript := preload("res://scripts/core/scenario_sequence_sche
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 
 const CONTAINER_KEY := "world_sequence_instances"
-const CONTAINER_SCHEMA_VERSION := 1
 const REGISTRATION_SCHEMA_VERSION := 1
 const RESERVED_ENVIRONMENT_OWNER_TOKEN := "scenario::environment::active::primary"
 const SOURCE_DOMAINS := ["crew", "world"]

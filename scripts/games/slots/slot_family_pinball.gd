@@ -210,14 +210,6 @@ func _feature_ball_budget(machine: Dictionary, stake: int, mode: String, step_bo
 	return mini(7, 5 + mini(1, step_bonus))
 
 
-func _default_launch_power(mode: String, rng: RngStream) -> int:
-	if mode == "lane_multiball":
-		return rng.randi_range(54, 66)
-	if mode == "video_feature":
-		return rng.randi_range(62, 76)
-	return rng.randi_range(68, 82)
-
-
 func _session_cap(stake: int, mode: String, feature_scale: float) -> int:
 	var multiplier := 11.5
 	if mode == "lane_multiball":

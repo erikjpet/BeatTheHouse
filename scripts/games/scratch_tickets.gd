@@ -12,10 +12,8 @@ const FoilRendererScript := preload("res://scripts/games/scratch_ticket_foil_ren
 const MaskScript := preload("res://scripts/games/scratch_ticket_mask.gd")
 const MachineRendererScript := preload("res://scripts/games/scratch_ticket_machine_renderer.gd")
 const SURFACE_DESIGN_SIZE := Vector2(VisualStyleScript.GAME_BOARD_SIZE)
-const C_DARK := VisualStyleScript.DARK
 const C_WHITE := VisualStyleScript.WHITE
 const C_SOFT := VisualStyleScript.SOFT
-const C_CYAN := VisualStyleScript.CYAN
 const C_YELLOW := VisualStyleScript.YELLOW
 const C_PINK := VisualStyleScript.PINK
 const BUY_ACTION := "buy_scratch_ticket"
@@ -42,28 +40,24 @@ const SCALPER_DIALOGUE_OBLIVIOUS_ID := "scratch_ticket_scalper_oblivious"
 const RESTOCK_INTERVAL_MINUTES := 180
 const RESTOCK_ZERO_PERCENT := 50
 const RESTOCK_ONE_PERCENT := 40
-const RESTOCK_TWO_PERCENT := 10
 const SCALPER_VISIT_CHANCE_PERCENT := 30
 const SCALPER_KNOWS_CHANCE_PERCENT := 50
 const SCALPER_RESTOCK_ARRIVAL_CHANCE_PERCENT := 20
 const SCALPER_GIFT_REWARD_CHANCE_PERCENT := 33
 const SCALPER_GIFT_HEAT_REDUCTION := 8
 const SCALPER_GIFT_ACTION_ID := "give_unscratched_ticket"
-const SCALPER_GIFT_DIALOGUE_IDS := [SCALPER_DIALOGUE_KNOWS_ID, SCALPER_DIALOGUE_OBLIVIOUS_ID]
 const SCALPER_LOW_TIER_MAX_SALE_PRICE := 8
 const SCALPER_LOW_TIER_ITEM_CLASSES := ["permanent", "temporary"]
 const PRACTICE_STOCK_COUNT := 100
 const MACHINE_RECT := Rect2(18, 13, 278, 404)
 const PLAY_SURFACE_RECT := Rect2(306, 48, 586, 370)
 const DEFAULT_TICKET_RECT := Rect2(422, 54, 354, 356)
-const DEFAULT_SCRATCH_RECT := Rect2(444, 169, 310, 176)
 const STATUS_HUD_RECT := Rect2(306, 8, 460, 34)
 const WIN_PILE_RECT := Rect2(318, 184, 82, 54)
 const LOSS_PILE_RECT := Rect2(318, 292, 82, 54)
 const BIG_WIN_THRESHOLD := 100
 const COLLECTION_TOTAL := 6
 const DEFAULT_BRUSH_RADIUS := 15.0
-const DEFAULT_PASS_REMOVAL := 0.66
 const DEFAULT_SWEEP_THRESHOLD := 0.80
 const DEFAULT_MASK_COLUMNS := MaskScript.MASK_COLUMNS
 const DEFAULT_MASK_ROWS := MaskScript.MASK_ROWS
@@ -2238,11 +2232,6 @@ func _draw_file_animation(surface, state: Dictionary) -> void:
 	var position := source.lerp(target, progress)
 	var size := active_ticket_rect.size.lerp(Vector2(54, 38), progress)
 	_draw_mini_scratch_ticket(surface, ticket, Rect2(position - size * 0.5, size), 1.0 - progress * 0.35)
-
-
-func _ease_out_cubic(value: float) -> float:
-	var inverse := 1.0 - clampf(value, 0.0, 1.0)
-	return 1.0 - inverse * inverse * inverse
 
 
 func _ease_in_out_cubic(value: float) -> float:

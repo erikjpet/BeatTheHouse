@@ -30,7 +30,6 @@ const EVENT_SPAWNER := 18
 
 const SENSOR_SKILL := 1
 const SENSOR_SLINGSHOT := 2
-const SENSOR_LAUNCHER := 3
 const SENSOR_MULTIPLIER := 4
 const SENSOR_TARGET := 5
 const SENSOR_GATE := 6

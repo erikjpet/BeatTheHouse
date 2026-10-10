@@ -2016,8 +2016,10 @@ static func _travel_candidate_entries_prepared(map_data: Dictionary, source_id: 
 		var initial_variance_rank := absi(hash("%s|%s|%s" % [str(map_data.get("seed_text", "")), source_id, target_id]))
 		if target_id == JAZZ_CLUB_ID:
 			# Preserve the club's uncommon evening-start appearance while the
-			# larger daytime shop pool gains the Pawn Shop.
-			initial_variance_rank = int(float(initial_variance_rank) * 0.75)
+			# larger daytime shop pool gains the Pawn Shop. The Pawn Shop is still
+			# open at dusk, so the club needs this head start to keep its earlier
+			# rate of roughly one evening start in five.
+			initial_variance_rank = int(float(initial_variance_rank) * 0.6)
 		entries.append({
 			"id": target_id,
 			"kind": str(node.get("kind", "")).strip_edges().to_lower(),

@@ -104,7 +104,6 @@ const ENVIRONMENT_RUNTIME_STATE_KEY_CACHE_LIMIT := 64
 const RUN_ITEM_ICON_TEXTURE_CACHE_LIMIT := 64
 const RESULT_FEEDBACK_WIDTH := 340.0
 const RESULT_FEEDBACK_HEIGHT := 72.0
-const RESULT_FEEDBACK_MAX_CHARS := 64
 const MAIN_MENU_COLLAPSED_SIZE := Vector2(1200, 680)
 const MAIN_MENU_EXPANDED_SIZE := Vector2(1100, 620)
 const MAIN_MENU_VIEWPORT_MARGIN := Vector2(32, 24)
@@ -119,10 +118,6 @@ const EVENT_CHOICE_TEXT_MAX_LINES := 2
 const EVENT_CHOICE_SUMMARY_MAX_LINES := 3
 const EVENT_CHOICE_TEXT_MIN_HEIGHT := 34.0
 const EVENT_CHOICE_SUMMARY_MIN_HEIGHT := 48.0
-const RUN_INVENTORY_POPUP_SIZE := Vector2(1120, 620)
-const RUN_INVENTORY_POPUP_MARGIN := 12.0
-const WORLD_MAP_NODE_BUTTON_POOL_SIZE := 12
-const WORLD_MAP_DETAIL_BADGE_CELL_POOL_SIZE := 10
 const GAME_SURFACE_UI_PREFERENCE_KEYS := [
 	"selected_chip",
 	"selected_stake",
@@ -147,17 +142,15 @@ const FoundationWidgetsScript := preload("res://scripts/ui/foundation_widgets.gd
 const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
-const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
 const CareerStatsScreenScript := preload("res://scripts/ui/career_stats_screen.gd")
 const FoundationScreenBuilderScript := preload("res://scripts/ui/foundation_screen_builder.gd")
 const MetaSessionControllerScript := preload("res://scripts/ui/meta_session_controller.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
-const PerfTelemetryOverlayScript := preload("res://scripts/ui/perf_telemetry_overlay.gd")
+const PERF_TELEMETRY_OVERLAY_PATH := "res://scripts/ui/perf_telemetry_overlay.gd"
 const NullPerfSinkScript := preload("res://scripts/ui/null_perf_sink.gd")
 const SealedActionHostScript := preload("res://scripts/ui/sealed_action_host.gd")
 const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
-const GameRitualRuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const ItemEffectScript := preload("res://scripts/core/item_effect.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
@@ -380,6 +373,17 @@ var presented_bankroll_release_screen := ""
 var presented_bankroll_started_msec := 0
 var financial_hud_dirty := false
 var financial_hud_refresh_callable: Callable
+# Per-frame work is routed through _timed(); binding each step once keeps the
+# idle frame free of Callable allocations when telemetry is disabled.
+var _process_frame_delta := 0.0
+var _apply_run_screen_layout_callable: Callable
+var _advance_run_game_clock_callable: Callable
+var _advance_game_surface_frame_callable: Callable
+var _advance_game_surface_automation_callable: Callable
+var _advance_game_surface_realtime_callable: Callable
+var _advance_presented_bankroll_callable: Callable
+var _advance_environment_game_runtime_callable: Callable
+var _flush_pending_autosave_callable: Callable
 var pending_active_item_id: String = ""
 var run_inventory_popup_mode: String = ""
 var run_inventory_context_container_id: String = ""
@@ -418,8 +422,6 @@ var environment_test_refresh_counter := 0
 var meta_session_active := false
 var meta_session_location_id: String = ""
 var meta_last_panel_message: String = ""
-var meta_interactable_object_view_cache: Array = []
-var meta_interactable_object_view_cache_key := ""
 var show_game_library_launcher := true
 var autosave_slot_id := AUTOSAVE_SLOT
 var pending_autosave := false
@@ -554,7 +556,7 @@ var procedural_music_player: ProceduralMusicPlayer
 var environment_sfx_player: Node
 var _game_surface_audio_authority := RefCounted.new()
 var _environment_audio_authority := RefCounted.new()
-var perf_telemetry_overlay: PerfTelemetryOverlay
+var perf_telemetry_overlay: Variant = null
 var _foundation_perf_sink: Variant = NullPerfSinkScript.new()
 var _sealed_action_host: RefCounted
 var boot_telemetry_events: Array = []
@@ -597,13 +599,6 @@ var bag_open_reel
 var meta_item_interaction_mode := ""
 var selected_meta_item_key := ""
 var meta_trade_selected_instance_ids: Array = []
-var run_inventory_panel: PanelContainer
-var run_inventory_items_scroll: ScrollContainer
-var run_inventory_detail_panel: PanelContainer
-var run_inventory_title_label: Label
-var run_inventory_summary_label: Label
-var run_inventory_list: GridContainer
-var run_inventory_detail_box: VBoxContainer
 var run_journal_overlay: Control
 var run_journal_panel: PanelContainer
 var run_journal_header: Control
@@ -623,8 +618,6 @@ var world_map_title_label: Label
 var world_map_detail_popup: PanelContainer
 var world_map_detail_label: Label
 var world_map_badge_slot: VBoxContainer
-var world_map_badge_row: HFlowContainer
-var world_map_badge_cells: Array = []
 var world_map_confirm_button: Button
 var world_map_close_button: Button
 var world_map_overlay_controller
@@ -633,7 +626,6 @@ var modal_focus_scope: RefCounted = ModalFocusScopeScript.new()
 var wager_confirmation_controller
 var selected_world_map_node_id: String = ""
 var world_map_button_ids: Array = []
-var world_map_button_layout_size := Vector2(-1.0, -1.0)
 var world_map_button_relayout_deferred := false
 var travel_target_ids_cache_key: String = ""
 var travel_target_ids_cache: Array = []
@@ -726,6 +718,14 @@ const WEB_AUDIO_UNLOCK_REFRESH_DELAY_SECONDS := 0.20
 func _init() -> void:
 	_sealed_action_host = SealedActionHostScript.new(self)
 	financial_hud_refresh_callable = Callable(self, "_refresh_financial_hud_if_dirty")
+	_apply_run_screen_layout_callable = Callable(self, "_apply_run_screen_layout")
+	_advance_run_game_clock_callable = Callable(self, "_advance_run_game_clock_for_frame")
+	_advance_game_surface_frame_callable = Callable(self, "_advance_game_surface_frame")
+	_advance_game_surface_automation_callable = Callable(self, "_advance_game_surface_automation")
+	_advance_game_surface_realtime_callable = Callable(self, "_advance_game_surface_realtime_state")
+	_advance_presented_bankroll_callable = Callable(self, "_advance_presented_bankroll")
+	_advance_environment_game_runtime_callable = Callable(self, "_advance_environment_game_runtime")
+	_flush_pending_autosave_callable = Callable(self, "_flush_pending_autosave_if_ready")
 
 
 func _ready() -> void:
@@ -764,23 +764,24 @@ func _process(delta: float) -> void:
 	_sync_simulation_pause_owners()
 	_foundation_perf_sink.call("begin_foundation_frame")
 	if run_layout_dirty:
-		_timed("layout", Callable(self, "_apply_run_screen_layout")) # SA2_PER_FRAME_OK: scoped timer removes a duplicated hot path and is performance-gated.
-	_timed("environment_runtime", Callable(self, "_advance_run_game_clock").bind(delta)) # SA2_PER_FRAME_OK: scoped timer removes a duplicated hot path and is performance-gated.
+		_timed("layout", _apply_run_screen_layout_callable)
+	_process_frame_delta = delta
+	_timed("environment_runtime", _advance_run_game_clock_callable)
 	if current_screen == SCREEN_GAME:
-		_timed("snapshot_builds", Callable(self, "_advance_game_surface_frame")) # SA2_PER_FRAME_OK: scoped timer removes a duplicated hot path and is performance-gated.
+		_timed("snapshot_builds", _advance_game_surface_frame_callable)
 	if financial_hud_dirty:
 		_timed("snapshot_builds", financial_hud_refresh_callable)
 	if presented_bankroll_hold_active:
-		_timed("snapshot_builds", Callable(self, "_advance_presented_bankroll")) # SA2_PER_FRAME_OK: scoped timer removes a duplicated hot path and is performance-gated.
+		_timed("snapshot_builds", _advance_presented_bankroll_callable)
 	if (current_screen == SCREEN_ENVIRONMENT or current_screen == SCREEN_GAME) and not meta_session_active:
-		_timed("environment_runtime", Callable(self, "_advance_environment_game_runtime")) # SA2_PER_FRAME_OK: scoped timer removes a duplicated hot path and is performance-gated.
+		_timed("environment_runtime", _advance_environment_game_runtime_callable)
 	if pending_autosave or (save_service != null and save_service.async_save_in_flight()):
-		_timed("autosave_flush", Callable(self, "_flush_pending_autosave_if_ready")) # SA2_PER_FRAME_OK: scoped timer removes a duplicated hot path and is performance-gated.
+		_timed("autosave_flush", _flush_pending_autosave_callable)
 
 
 func _advance_game_surface_frame() -> void:
-	_timed("surface_automation", Callable(self, "_advance_game_surface_automation"))
-	_timed("surface_realtime", Callable(self, "_advance_game_surface_realtime_state"))
+	_timed("surface_automation", _advance_game_surface_automation_callable)
+	_timed("surface_realtime", _advance_game_surface_realtime_callable)
 
 
 func _timed(name: String, operation: Callable) -> void:
@@ -790,6 +791,10 @@ func _timed(name: String, operation: Callable) -> void:
 	var started_usec := Time.get_ticks_usec()
 	operation.call()
 	_foundation_perf_sink.call("record_foundation_subsystem_usec", name, Time.get_ticks_usec() - started_usec)
+
+
+func _advance_run_game_clock_for_frame() -> void:
+	_advance_run_game_clock(_process_frame_delta)
 
 
 func _advance_run_game_clock(delta: float) -> void:
@@ -1092,12 +1097,25 @@ func _consume_run_ui_script_prewarm_result(script_path: String) -> Variant:
 
 
 func _initialize_perf_telemetry() -> void:
-	if perf_telemetry_overlay != null or not PerfTelemetryOverlayScript.runtime_enabled():
+	if perf_telemetry_overlay != null or not _perf_telemetry_requested():
 		return
-	perf_telemetry_overlay = PerfTelemetryOverlayScript.new()
+	var overlay_script: Script = load(PERF_TELEMETRY_OVERLAY_PATH)
+	if overlay_script == null or not bool(overlay_script.call("runtime_enabled")):
+		return
+	perf_telemetry_overlay = overlay_script.new()
 	add_child(perf_telemetry_overlay)
 	perf_telemetry_overlay.configure(self)
 	_foundation_perf_sink = perf_telemetry_overlay
+
+
+# Every telemetry switch is a bth_perf* command-line token or web query key.
+# Normal boots skip compiling the diagnostics overlay; the overlay's own
+# runtime_enabled() still makes the exact decision once it is requested.
+func _perf_telemetry_requested() -> bool:
+	for arg_value in OS.get_cmdline_user_args():
+		if str(arg_value).find("bth_perf") != -1:
+			return true
+	return OS.has_feature("web") and str(JavaScriptBridge.eval("window.location.search", true)).find("bth_perf") != -1
 
 
 # Compile checks use this to verify the active scene is on the foundation path.
@@ -7385,7 +7403,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		return {"ok": false, "errors": ["Travel is already in progress."]}
 	# This stage clock exists only for an explicitly enabled performance probe.
 	# Normal travel skips timestamp reads and publishes no diagnostics.
-	var perf_corner_store_timing := perf_telemetry_overlay != null \
+	var perf_corner_store_timing: bool = perf_telemetry_overlay != null \
 		and perf_telemetry_overlay.travel_stage_timing_enabled(target_id)
 	var perf_corner_store_total_started_usec := Time.get_ticks_usec() if perf_corner_store_timing else 0
 	var perf_corner_store_stage_started_usec := perf_corner_store_total_started_usec
@@ -16341,8 +16359,6 @@ func _generated_object_interaction_rect(object_id: String) -> Rect2:
 	return EnvironmentInteractionViewModelScript.rect_from_dict((object_rects as Dictionary).get(object_id, {})) if typeof(object_rects) == TYPE_DICTIONARY and (object_rects as Dictionary).has(object_id) else Rect2()
 
 
-func _interaction_rect(object_type: String, index: int) -> Rect2:
-	return EnvironmentInteractionViewModelScript.interaction_rect_for_object("", object_type, index, _current_environment_layout())
 func _current_environment_layout() -> Dictionary:
 	if run_state == null:
 		return {}
@@ -16363,10 +16379,6 @@ func _current_environment_layout() -> Dictionary:
 	if typeof(archetype_layout) != TYPE_DICTIONARY:
 		return {}
 	return archetype_layout as Dictionary
-
-
-func _normalized_interaction_rect(object_type: String, index: int) -> Rect2:
-	return EnvironmentInteractionViewModelScript.normalized_interaction_rect(object_type, index)
 
 
 func _rect_to_dict(rect: Rect2) -> Dictionary:
@@ -20685,21 +20697,6 @@ func _container_item_option(item_id: String) -> Dictionary:
 	}
 
 
-func _storable_inventory_item_ids() -> Array:
-	var result: Array = []
-	if run_state == null:
-		return result
-	for item_value in run_state.inventory:
-		# Meta-collection instances are already mirrored by the read-only loadout
-		# container and cannot be transferred through the string-id home API.
-		if typeof(item_value) == TYPE_DICTIONARY:
-			continue
-		var item_id := _inventory_value_id(item_value)
-		if _container_item_option(item_id).is_empty():
-			result.append(item_id)
-	return result
-
-
 func _home_container_by_id(container_id: String) -> Dictionary:
 	if run_state == null:
 		return {}
@@ -20758,11 +20755,6 @@ func _refresh_active_item_slot() -> void:
 	active_item_button.text = "Use: %s" % compact_name
 	active_item_button.tooltip_text = "%s\n%s\nClick to use this active item." % [display_name, str(item.get("description", "Use active item."))]
 	active_item_button.icon = _run_item_texture_for_asset_path(str(item.get("asset_path", "")))
-
-
-func _item_sale_price(item_definition: Dictionary) -> int:
-	_refresh_run_action_service()
-	return run_action_service.item_sale_price(item_definition)
 
 
 func _shopkeeper_available() -> bool:

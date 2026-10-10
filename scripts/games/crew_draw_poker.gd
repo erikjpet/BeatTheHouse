@@ -15,7 +15,6 @@ const STATE_SCHEMA := "crew_draw_table"
 const STATE_VERSION := 5
 const PLAYER_ID := "player"
 const C_DARK := VisualStyleScript.DARK
-const C_DARK_2 := VisualStyleScript.DARK_2
 const C_PINK := VisualStyleScript.PINK
 const C_CYAN := VisualStyleScript.CYAN
 const C_TEAL := VisualStyleScript.TEAL

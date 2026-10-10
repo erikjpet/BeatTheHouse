@@ -87,7 +87,6 @@ const ENVIRONMENT_BOARD_SIZE := ArtContractsScript.ENVIRONMENT_BOARD_SIZE
 const GAME_BOARD_SIZE := ArtContractsScript.GAME_BOARD_SIZE
 const ICON_SIZE := ArtContractsScript.ICON_SIZE
 const UI_BORDER_WIDTH := 2
-const UI_FONT_NAMES := ["Courier New", "Consolas", "monospace"]
 
 # 0.5 design tokens. Runtime UI code consumes these names instead of
 # inventing local measurements or state colors.
@@ -109,7 +108,6 @@ const TYPE_BODY_LARGE := 14
 const TYPE_SUBHEAD := 16
 const TYPE_HEADING := 18
 const TYPE_TITLE := 24
-const TYPE_DISPLAY := 38
 
 const RADIUS_NONE := 0
 const FLEXIBLE_SIZE := 0.0
@@ -119,7 +117,6 @@ const BORDER_FOCUS := 3
 const TOUCH_TARGET := 44.0
 const ICON_SMALL := Vector2(24, 24)
 const ICON_MEDIUM := Vector2(32, 32)
-const ICON_LARGE := Vector2(48, 48)
 const HUD_METER_SIZE := Vector2(168, 18)
 const HUD_METER_COMPACT_SIZE := Vector2(112, 14)
 const HUD_TIME_WIDGET_SIZE := Vector2(150, 56)
@@ -128,15 +125,11 @@ const HUD_WATCH_BEZEL_WIDTH := 2.0
 const HUD_WATCH_TICK_WIDTH := 1.0
 const HUD_WATCH_HAND_WIDTH := 2.0
 const HUD_LAST_DELTA_ALPHA := 0.58
-const ENVIRONMENT_TITLE_SIZE := Vector2(320, 54)
 const ENVIRONMENT_TITLE_COMPACT_SIZE := Vector2(260, 42)
 const TOOLTIP_MAX_WIDTH := 320.0
 const POPUP_MIN_WIDTH := 280.0
 const POPUP_MAX_WIDTH := 560.0
 const POPUP_MAX_HEIGHT_RATIO := 0.72
-const MOTION_QUICK := 0.12
-const MOTION_STANDARD := 0.18
-const MOTION_SLOW := 0.28
 const TYPEWRITER_CHARACTERS_PER_SECOND := 42.0
 const TALK_BADGE_WIDTH := 54.0
 const TALK_COLLAPSE_WIDTH := 72.0

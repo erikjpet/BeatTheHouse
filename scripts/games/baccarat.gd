@@ -13,7 +13,6 @@ const RuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 const ActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 
 const C_DARK := VisualStyleScript.DARK
-const C_DARK_2 := VisualStyleScript.DARK_2
 const C_PINK := VisualStyleScript.PINK
 const C_PINK_2 := VisualStyleScript.PINK_2
 const C_CYAN := VisualStyleScript.CYAN
@@ -3795,20 +3794,6 @@ func _draw_card_back(surface, pos: Vector2, scale: float = 1.0) -> void:
 	PlayingCardRendererScript.draw_card_back(surface, Rect2(pos, CARD_SIZE * scale))
 
 
-func _rank_text(rank: int) -> String:
-	match rank:
-		14:
-			return "A"
-		13:
-			return "K"
-		12:
-			return "Q"
-		11:
-			return "J"
-		_:
-			return str(rank)
-
-
 func _draw_table_button(surface, rect: Rect2, label: String, action: String, index: int, accent: Color, enabled: bool = true, selected: bool = false) -> void:
 	var hovered: bool = bool(surface.surface_region_hovered(action, index))
 	var color := accent if enabled else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.30)
@@ -3896,20 +3881,6 @@ func _style_accent(style: Dictionary) -> Color:
 	if typeof(accent_value) == TYPE_COLOR:
 		return accent_value
 	return C_CYAN
-
-
-func _patron_seat_position(index: int) -> Vector2:
-	match index:
-		0:
-			return Vector2(156, 186)
-		1:
-			return Vector2(742, 184)
-		2:
-			return Vector2(224, 334)
-		3:
-			return Vector2(676, 334)
-		_:
-			return Vector2(94, 286)
 
 
 func _target_color(target_id: String) -> Color:

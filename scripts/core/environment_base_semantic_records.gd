@@ -938,13 +938,6 @@ static func _action_inputs(actions: Array) -> Array:
 	return result
 
 
-static func _action_ids(actions: Array) -> Array:
-	var result: Array = []
-	for action_value in actions: result.append(str((action_value as Dictionary).get("id", "")))
-	result.sort()
-	return result
-
-
 static func _canonical_id(value: String) -> bool:
 	if value != value.strip_edges() or value.is_empty(): return false
 	for index in range(value.length()):

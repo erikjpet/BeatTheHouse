@@ -44,21 +44,6 @@ const FACT_REQUIRED_FIELDS := {
 	"world_boundary": ["amount", "action_index"],
 	"scenario_command": ["command_id", "receipt_id"],
 }
-const FACT_FIELD_TYPES := {
-	"game_result": {"game_id": TYPE_STRING, "action_id": TYPE_STRING, "won": TYPE_BOOL, "ended": TYPE_BOOL, "bankroll_delta": TYPE_INT, "chips_delta": TYPE_INT, "applied_heat_delta": TYPE_INT},
-	"event_result": {"event_id": TYPE_STRING, "choice_id": TYPE_STRING, "resolution_id": TYPE_STRING, "resolved": TYPE_BOOL, "ok": TYPE_BOOL},
-	"service_result": {"kind": TYPE_STRING, "service_id": TYPE_STRING, "ok": TYPE_BOOL, "action_id": TYPE_STRING},
-	"travel_departed": {"source_id": TYPE_STRING, "target_id": TYPE_STRING, "travel_kind": TYPE_STRING},
-	"travel_arrived": {"source_id": TYPE_STRING, "target_id": TYPE_STRING, "travel_kind": TYPE_STRING},
-	"crew_changed": {"member_id": TYPE_STRING, "change": TYPE_STRING, "value": -1},
-	"crew_job_changed": {"job_id": TYPE_STRING, "definition_id": TYPE_STRING, "member_id": TYPE_STRING, "status": TYPE_STRING, "outcome": TYPE_STRING},
-	"heat_changed": {"previous": TYPE_INT, "current": TYPE_INT, "applied_delta": TYPE_INT, "source": TYPE_STRING},
-	"heat_band_changed": {"previous_band": TYPE_STRING, "current_band": TYPE_STRING, "current": TYPE_INT, "source": TYPE_STRING},
-	"town_transition": {"action_index": TYPE_INT, "weather": TYPE_STRING, "day_type": TYPE_STRING, "happening_ids": TYPE_ARRAY},
-	"sweep_changed": {"action_index": TYPE_INT, "node_id": TYPE_STRING, "segment_index": TYPE_INT, "active": TYPE_BOOL},
-	"world_boundary": {"amount": TYPE_INT, "action_index": TYPE_INT},
-	"scenario_command": {"command_id": TYPE_STRING, "receipt_id": TYPE_STRING},
-}
 const FACT_PAYLOAD_TYPES := {
 	"game_result": {"game_id": "string", "action_id": "string", "won": "bool", "ended": "bool", "bankroll_delta": "int", "chips_delta": "int", "applied_heat_delta": "int"},
 	"event_result": {"event_id": "string", "choice_id": "string", "resolution_id": "string", "resolved": "bool", "ok": "bool"},
@@ -2333,21 +2318,29 @@ static func _normalized_fact_receipt_records(value: Variant) -> Array:
 	var result := _normalized_integer_record_fields(value, ["cause_ordinal", "flush_batch_ordinal", "flush_boundary_serial"])
 	for record_value in result:
 		var record := record_value as Dictionary
-		var envelope := _dict(record.get("envelope", {})).duplicate(true)
-		for integer_field in ["schema_version", "producer_serial", "boundary_serial"]:
-			var raw: Variant = envelope.get(integer_field)
-			if typeof(raw) == TYPE_FLOAT and is_finite(float(raw)) and is_equal_approx(float(raw), floor(float(raw))):
-				envelope[integer_field] = int(raw)
-		var payload := _dict(envelope.get("payload", {})).duplicate(true)
-		var payload_types := _dict(FACT_PAYLOAD_TYPES.get(str(envelope.get("fact_type", "")), {}))
-		for field_value in payload_types.keys():
-			var field := str(field_value)
-			var raw: Variant = payload.get(field)
-			if str(payload_types.get(field, "")) == "int" and typeof(raw) == TYPE_FLOAT and is_finite(float(raw)) and is_equal_approx(float(raw), floor(float(raw))):
-				payload[field] = int(raw)
-		envelope["payload"] = payload
-		record["envelope"] = envelope
+		record["envelope"] = _integral_fact_fields(_dict(record.get("envelope", {})))
 	return result
+
+
+# Persisted facts round-trip through JSON, which turns every int into a float.
+# Restore the integer envelope and payload fields before exact-type validation.
+static func _integral_fact_fields(source: Dictionary) -> Dictionary:
+	var envelope := source.duplicate(true)
+	for integer_field in ["schema_version", "producer_serial", "boundary_serial", "ingress_serial"]:
+		var raw: Variant = envelope.get(integer_field)
+		if typeof(raw) == TYPE_FLOAT and is_finite(float(raw)) and is_equal_approx(float(raw), floor(float(raw))):
+			envelope[integer_field] = int(raw)
+	if envelope.has("payload") and typeof(envelope.get("payload")) != TYPE_DICTIONARY:
+		return envelope
+	var payload := _dict(envelope.get("payload", {})).duplicate(true)
+	var payload_types := _dict(FACT_PAYLOAD_TYPES.get(str(envelope.get("fact_type", "")), {}))
+	for field_value in payload_types.keys():
+		var field := str(field_value)
+		var raw: Variant = payload.get(field)
+		if str(payload_types.get(field, "")) == "int" and typeof(raw) == TYPE_FLOAT and is_finite(float(raw)) and is_equal_approx(float(raw), floor(float(raw))):
+			payload[field] = int(raw)
+	envelope["payload"] = payload
+	return envelope
 
 
 static func _resolved_branch_ids(records: Array) -> Array:
@@ -2396,7 +2389,7 @@ static func _normalized_fact_queue(value: Variant, state: Dictionary) -> Array:
 	var seen: Dictionary = {}
 	for fact_value in _array(value):
 		if typeof(fact_value) != TYPE_DICTIONARY: continue
-		var queued := (fact_value as Dictionary).duplicate(true)
+		var queued := _integral_fact_fields(fact_value as Dictionary)
 		if typeof(queued.get("ingress_serial")) != TYPE_INT or int(queued.get("ingress_serial", 0)) < 1: continue
 		var envelope := _without_ingress(queued)
 		if not OperationRegistryScript.validate_bounded_variant("persisted scenario fact", envelope).is_empty() or not validate_fact(state, envelope).is_empty(): continue

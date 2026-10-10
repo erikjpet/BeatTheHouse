@@ -28,7 +28,6 @@ const OBJECT_MANIFEST_ROW_KEYS := ["instance_object_id", "presentation_object_id
 const NORMALIZED_RECT_KEYS := ["x", "y", "w", "h"]
 const HIT_BOUNDS_KEYS := ["w", "h"]
 const HOME_PROFILE_AUTHORITY_KEYS := ["status", "bed", "place"]
-const DIAGNOSTIC_CODES := ["possible_only", "wrong_collection", "wrong_owner", "layer_mismatch", "unknown_target"]
 const SOURCE_KINDS := ["environment_archetype", "scenario_selection", "environment_instance", "environment_instance_ui", "environment_event", "environment_declaration"]
 
 

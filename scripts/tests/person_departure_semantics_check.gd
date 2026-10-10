@@ -15,9 +15,14 @@ class DeliveryRunStub:
 	}
 
 	func delivery_physical_interactions() -> Array:
+		# Mirrors DeliveryRunFacade._delivery_physical_host: packages are identified
+		# by host kind, not by verb.
 		return [{
-			"object_id": "delivery:pickup:gas_station_casino",
+			"object_id": "delivery:package:gas_station_casino",
+			"host_kind": "package",
+			"node_id": "gas_station_casino",
 			"verb": "pickup",
+			"verbs": ["pickup"],
 			"label": "Take the package",
 			"cargo_label": "Crew package",
 			"message": "Take the package from this room.",
@@ -69,7 +74,9 @@ func _run() -> void:
 	root.add_child(holder)
 	var canvas: Control = PixelSceneCanvasScript.new()
 	holder.add_child(canvas)
-	var person := _record("dialogue:person", "character", "standing_person", 0.30)
+	# People walk to the exit along authored walk lanes, so the fixture person
+	# occupies a real Gas Station event slot on the public lane.
+	var person := _record("dialogue:person", "character", "standing_person", 0.30, "event.standing_person_1")
 	var legacy_package := _record("delivery:pickup:legacy", "prop", "standing_person", 0.62)
 	var base_room := _room([person])
 	canvas.call("render_environment_snapshot", base_room)
@@ -107,8 +114,9 @@ func _room(objects: Array) -> Dictionary:
 	}
 
 
-func _record(object_id: String, visual_type: String, placement_class: String, center_x: float) -> Dictionary:
+func _record(object_id: String, visual_type: String, placement_class: String, center_x: float, slot_id: String = "") -> Dictionary:
 	return {
+		"slot_id": slot_id,
 		"object_id": object_id,
 		"object_type": "dialogue" if visual_type == "character" else "delivery",
 		"visual_type": visual_type,

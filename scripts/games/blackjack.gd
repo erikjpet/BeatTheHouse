@@ -13,7 +13,6 @@ const RuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 const ActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 const ShowdownDuelProjectionScript := preload("res://scripts/core/grand_casino_duel_ritual_projection.gd")
 const C_DARK := VisualStyleScript.DARK
-const C_DARK_2 := VisualStyleScript.DARK_2
 const C_PINK := VisualStyleScript.PINK
 const C_PINK_2 := VisualStyleScript.PINK_2
 const C_CYAN := VisualStyleScript.CYAN
@@ -1120,7 +1119,7 @@ func _blackjack_ritual_projection(run_state: RunState, environment: Dictionary, 
 		"energy_tier": energy_tier,
 		"heat": heat,
 		"action_states": _blackjack_ritual_action_states(spec, phase_id),
-		"gesture_actions": BLACKJACK_GESTURE_ACTIONS,
+		"gesture_actions": BLACKJACK_GESTURE_ACTIONS.duplicate(),
 	}
 
 
@@ -8561,20 +8560,6 @@ func _dealer_view(dealer_cards: Array, reveal_hole: bool) -> Array:
 
 func _draw_card(surface, card_value: Variant, pos: Vector2, scale: float = 1.0) -> void:
 	PlayingCardRendererScript.draw_card(surface, card_value, Rect2(pos, Vector2(42, 60) * scale))
-
-
-func _rank_text(rank: int) -> String:
-	match rank:
-		RANK_ACE:
-			return "A"
-		13:
-			return "K"
-		12:
-			return "Q"
-		11:
-			return "J"
-		_:
-			return str(rank)
 
 
 func _same_suit(cards: Array) -> bool:

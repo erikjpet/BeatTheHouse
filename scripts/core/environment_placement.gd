@@ -404,25 +404,6 @@ static func authoring_surface_map(environment: Dictionary) -> Dictionary:
 	return surface_map(environment)
 
 
-# Applies developer-authored positions as the final authored slot layer. This
-# changes placement inputs only; it never touches run state, visibility, or RNG.
-static func _with_developer_slots(environment: Dictionary, surface_data: Dictionary) -> Dictionary:
-	var slot_overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "slot_positions")
-	var scale_overrides := DeveloperPlacementStoreScript.slot_scale_overrides(environment)
-	if slot_overrides.is_empty() and scale_overrides.is_empty():
-		return surface_data
-	# Never modify the cached authored surface map. A local override must remain
-	# scoped to its room and must disappear immediately when Reset clears it.
-	var result := _with_slot_geometry(surface_data, slot_overrides) if not slot_overrides.is_empty() else surface_data
-	if not scale_overrides.is_empty():
-		result = _with_slot_scales(result, scale_overrides)
-	if not slot_overrides.is_empty():
-		result["developer_slot_positions"] = slot_overrides.duplicate(true)
-	if not scale_overrides.is_empty():
-		result["developer_slot_scales"] = scale_overrides.duplicate(true)
-	return result
-
-
 # A locked reusable-slot edit is runtime authority on this machine immediately.
 # Save to Project controls whether that same authority ships in future builds;
 # it is not an activation step for the local authoring session.
@@ -432,11 +413,7 @@ static func _with_runtime_slot_geometry(environment: Dictionary, surface_data: D
 	var scale_overrides := DeveloperPlacementStoreScript.slot_scale_overrides(environment)
 	if overrides.is_empty() and layer_overrides.is_empty() and scale_overrides.is_empty():
 		return surface_data
-	var result := _with_slot_geometry(surface_data, overrides) if not overrides.is_empty() else surface_data
-	if not layer_overrides.is_empty():
-		result = _with_slot_layers(result, layer_overrides)
-	if not scale_overrides.is_empty():
-		result = _with_slot_scales(result, scale_overrides)
+	var result := _with_slot_overrides(surface_data, overrides, layer_overrides, scale_overrides)
 	if not overrides.is_empty():
 		result["developer_slot_positions"] = overrides.duplicate(true)
 	if not layer_overrides.is_empty():
@@ -446,109 +423,62 @@ static func _with_runtime_slot_geometry(environment: Dictionary, surface_data: D
 	return result
 
 
-# A slot move is a rigid translation. Its stable id, class, size, support and
-# priority remain authored authority while its contact point, hit rectangle and
-# label anchor move together.
-static func _with_slot_geometry(surface_data: Dictionary, overrides: Dictionary) -> Dictionary:
-	if overrides.is_empty():
-		return surface_data
+# Applies position, draw-layer and visual-scale overrides in one pass over the
+# slot collections. A slot move is a rigid translation: its stable id, class,
+# size, support and priority remain authored authority while its contact
+# point, hit rectangle and label anchor move together. Visual scale is
+# independent of interaction and support geometry; the renderer applies it
+# around the stable contact point while binding and accessibility keep the
+# reviewed hit rectangle.
+static func _with_slot_overrides(surface_data: Dictionary, positions: Dictionary, layers: Dictionary, scales: Dictionary) -> Dictionary:
 	# Surface maps are immutable runtime authority. Keep their large shared maps,
 	# routes, and unmodified slot records by reference; a local override only
-	# needs copy-on-write ownership of the collection and slot it translates.
+	# needs copy-on-write ownership of the collection and slot it changes.
 	var result := surface_data.duplicate(false)
 	for field in SLOT_COLLECTIONS.values():
 		var source_slots := _array(surface_data.get(field, []))
-		var translated: Array = []
+		var updated: Array = []
 		var collection_changed := false
 		for slot_value in source_slots:
 			if typeof(slot_value) != TYPE_DICTIONARY:
-				translated.append(slot_value)
+				updated.append(slot_value)
 				continue
 			var source_slot := slot_value as Dictionary
 			var slot_id := str(source_slot.get("id", "")).strip_edges()
-			if slot_id.is_empty() or not overrides.has(slot_id):
-				translated.append(source_slot)
-				continue
-			var original := _number_pair(source_slot.get("pos", []))
-			var target := _vector(overrides.get(slot_id, []))
-			if not is_finite(target.x) or not is_finite(target.y):
-				translated.append(source_slot)
+			if slot_id.is_empty() or not (positions.has(slot_id) or layers.has(slot_id) or scales.has(slot_id)):
+				updated.append(source_slot)
 				continue
 			var slot := source_slot.duplicate(false)
-			var delta := target - original
-			slot["pos"] = [target.x, target.y]
-			var hit_values := _array(slot.get("hit_rect", [])).duplicate()
-			if hit_values.size() >= 4:
-				hit_values[0] = float(hit_values[0]) + delta.x
-				hit_values[1] = float(hit_values[1]) + delta.y
-				slot["hit_rect"] = hit_values
-			var label_values := _array(slot.get("label_anchor", [])).duplicate()
-			if label_values.size() >= 2:
-				label_values[0] = float(label_values[0]) + delta.x
-				label_values[1] = float(label_values[1]) + delta.y
-				slot["label_anchor"] = label_values
-			translated.append(slot)
-			collection_changed = true
+			var slot_changed := positions.has(slot_id) and _translate_slot(slot, _vector(positions.get(slot_id, [])))
+			if layers.has(slot_id):
+				slot["draw_layer"] = clampi(int(layers.get(slot_id, 0)), -1, 1)
+				slot_changed = true
+			if scales.has(slot_id):
+				slot["object_scale"] = clampf(float(scales.get(slot_id, 1.0)), DeveloperPlacementStoreScript.SLOT_SCALE_MIN, DeveloperPlacementStoreScript.SLOT_SCALE_MAX)
+				slot_changed = true
+			updated.append(slot if slot_changed else source_slot)
+			collection_changed = collection_changed or slot_changed
 		if collection_changed:
-			result[field] = translated
+			result[field] = updated
 	return result
 
 
-static func _with_slot_layers(surface_data: Dictionary, overrides: Dictionary) -> Dictionary:
-	if overrides.is_empty():
-		return surface_data
-	var result := surface_data.duplicate(false)
-	for field in SLOT_COLLECTIONS.values():
-		var source_slots := _array(surface_data.get(field, []))
-		var layered: Array = []
-		var collection_changed := false
-		for slot_value in source_slots:
-			if typeof(slot_value) != TYPE_DICTIONARY:
-				layered.append(slot_value)
-				continue
-			var source_slot := slot_value as Dictionary
-			var slot_id := str(source_slot.get("id", "")).strip_edges()
-			if slot_id.is_empty() or not overrides.has(slot_id):
-				layered.append(source_slot)
-				continue
-			var draw_layer := clampi(int(overrides.get(slot_id, 0)), -1, 1)
-			var slot := source_slot.duplicate(false)
-			slot["draw_layer"] = draw_layer
-			layered.append(slot)
-			collection_changed = true
-		if collection_changed:
-			result[field] = layered
-	return result
-
-
-# Visual scale is independent of authored interaction and support geometry. The
-# renderer applies it around the slot's stable contact point, while binding and
-# accessibility continue to use the reviewed hit rectangle.
-static func _with_slot_scales(surface_data: Dictionary, overrides: Dictionary) -> Dictionary:
-	if overrides.is_empty():
-		return surface_data
-	var result := surface_data.duplicate(false)
-	for field in SLOT_COLLECTIONS.values():
-		var source_slots := _array(surface_data.get(field, []))
-		var scaled: Array = []
-		var collection_changed := false
-		for slot_value in source_slots:
-			if typeof(slot_value) != TYPE_DICTIONARY:
-				scaled.append(slot_value)
-				continue
-			var source_slot := slot_value as Dictionary
-			var slot_id := str(source_slot.get("id", "")).strip_edges()
-			if slot_id.is_empty() or not overrides.has(slot_id):
-				scaled.append(source_slot)
-				continue
-			var scale := clampf(float(overrides.get(slot_id, 1.0)), DeveloperPlacementStoreScript.SLOT_SCALE_MIN, DeveloperPlacementStoreScript.SLOT_SCALE_MAX)
-			var slot := source_slot.duplicate(false)
-			slot["object_scale"] = scale
-			scaled.append(slot)
-			collection_changed = true
-		if collection_changed:
-			result[field] = scaled
-	return result
+static func _translate_slot(slot: Dictionary, target: Vector2) -> bool:
+	if not is_finite(target.x) or not is_finite(target.y):
+		return false
+	var delta := target - _number_pair(slot.get("pos", []))
+	slot["pos"] = [target.x, target.y]
+	var hit_values := _array(slot.get("hit_rect", [])).duplicate()
+	if hit_values.size() >= 4:
+		hit_values[0] = float(hit_values[0]) + delta.x
+		hit_values[1] = float(hit_values[1]) + delta.y
+		slot["hit_rect"] = hit_values
+	var label_values := _array(slot.get("label_anchor", [])).duplicate()
+	if label_values.size() >= 2:
+		label_values[0] = float(label_values[0]) + delta.x
+		label_values[1] = float(label_values[1]) + delta.y
+		slot["label_anchor"] = label_values
+	return true
 
 
 # Preserves authored geometry whenever its class contact already rests on a

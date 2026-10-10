@@ -8,7 +8,6 @@ const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
 const C_PINK := VisualStyleScript.PINK
-const C_PINK_2 := VisualStyleScript.PINK_2
 const C_CYAN := VisualStyleScript.CYAN
 const C_TEAL := VisualStyleScript.TEAL
 const C_YELLOW := VisualStyleScript.YELLOW
@@ -277,7 +276,7 @@ static func draw_patron_wager_badge(surface, state: Dictionary, patron: Dictiona
 		surface.surface_add_hit(fade_rect, action, index + 100)
 
 
-static func draw_round_timer_panel(surface, timer_value: Variant, rect: Rect2, accent: Color = C_YELLOW) -> void:
+static func draw_round_timer_panel(surface, timer_value: Variant, rect: Rect2, accent: Color = C_YELLOW, label_override: String = "") -> void:
 	if typeof(timer_value) != TYPE_DICTIONARY:
 		return
 	var timer: Dictionary = timer_value as Dictionary
@@ -294,7 +293,7 @@ static func draw_round_timer_panel(surface, timer_value: Variant, rect: Rect2, a
 	var warning := bool(timer.get("warning", false)) or (started_msec > 0 and remaining_msec <= TABLE_ROUND_WARNING_MSEC)
 	var color := C_PINK if warning else accent
 	_draw_neon_panel(surface, rect, color, 0.16 if warning else 0.11)
-	var label := str(timer.get("label", "Next round")).to_upper().left(20)
+	var label := (label_override if not label_override.is_empty() else str(timer.get("label", "Next round"))).to_upper().left(20)
 	var seconds := maxi(0, int(ceil(float(remaining_msec) / 1000.0)))
 	surface.surface_label(label, rect.position + Vector2(8, 13), 8, C_SOFT)
 	surface.surface_label("%02ds" % seconds, rect.position + Vector2(rect.size.x - 44.0, 15), 14, color)

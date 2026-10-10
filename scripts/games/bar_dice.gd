@@ -11,7 +11,6 @@ const ActionAuthorityScript := preload("res://scripts/core/blackjack_action_auth
 const RitualProjectionScript := preload("res://scripts/core/bar_dice_ritual_projection.gd")
 
 const C_DARK := VisualStyleScript.DARK
-const C_DARK_2 := VisualStyleScript.DARK_2
 const C_PINK := VisualStyleScript.PINK
 const C_PINK_2 := VisualStyleScript.PINK_2
 const C_CYAN := VisualStyleScript.CYAN
@@ -133,13 +132,6 @@ const EDGE_PAYOUT_PERCENT := {
 	"standard": 66,
 	"sharp": 70,
 }
-const CATEGORY_RANK := {
-	"not_qualified": 0,
-	"ship_only": 10,
-	"ship_captain": 20,
-	"ship_captain_crew": 50,
-	"perfect_cargo": 70,
-}
 const CATEGORY_LABEL := {
 	"not_qualified": "No Ship",
 	"ship_only": "Ship Only",
@@ -148,7 +140,6 @@ const CATEGORY_LABEL := {
 	"perfect_cargo": "Midnight Cargo",
 }
 const DIE_WORD := {1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six"}
-const DIE_WORD_PLURAL := {1: "Ones", 2: "Twos", 3: "Threes", 4: "Fours", 5: "Fives", 6: "Sixes"}
 const MEMORABLE_REGULAR := {
 	"id": "knucklebones_nell",
 	"name": "Knucklebones Nell",
@@ -3446,10 +3437,7 @@ func _draw_legend_row(surface, state: Dictionary, pos: Vector2) -> void:
 
 
 func _draw_round_timer(surface, state: Dictionary) -> void:
-	var timer := _draw_dict_view(state.get("table_round_timer", {})).duplicate(true)
-	if not timer.is_empty():
-		timer["label"] = "ROUND"
-	TableVisualsScript.draw_round_timer_panel(surface, timer, ROUND_TIMER_RECT, C_TEAL)
+	TableVisualsScript.draw_round_timer_panel(surface, state.get("table_round_timer", {}), ROUND_TIMER_RECT, C_TEAL, "ROUND")
 
 
 func _draw_console(surface, state: Dictionary) -> void:

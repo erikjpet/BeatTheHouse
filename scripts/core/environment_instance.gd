@@ -19,7 +19,6 @@ const EnvironmentObjectManifestScript := preload("res://scripts/core/environment
 
 const GENERATED_LAYOUT_VERSION := 15
 const ENVIRONMENT_LAYER_SCHEMA_VERSION := 1
-const OBJECT_MANIFEST_SCHEMA_VERSION := EnvironmentObjectManifestScript.SCHEMA_VERSION
 const EMPTY_MUSIC_NOTE := -999
 const SALS_PAWN_COUNTER_ID := "sals_pawn_counter"
 const PAWN_SHOP_ARCHETYPE_ID := "pawn_shop"

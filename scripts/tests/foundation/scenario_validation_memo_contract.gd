@@ -6,10 +6,8 @@ const Registry := preload("res://scripts/core/scenario_operation_registry.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const Schema := preload("res://scripts/core/scenario_sequence_schema.gd")
-
-# Integrated environment/scenario work after ENV-06.7 legitimately expanded
-# the authored signatures and eliminated the remaining similarity warnings.
-const PRODUCTION_AUTHORITY_SHA256 := "ee75bc1283da25c3f61b993fee5ce5f8ec3086d8d2377a88dac6fd1e90359e69"
+# The precompute contract owns the platform-independent authority baseline.
+const PrecomputeContractScript := preload("res://scripts/tests/foundation/scenario_uniqueness_pair_precompute_contract.gd")
 
 
 class RejectingRegistry:
@@ -39,7 +37,7 @@ func _init() -> void:
 	library.load(true)
 	var load_elapsed_ms := float(Time.get_ticks_usec() - load_started_usec) / 1000.0
 	var authority: Dictionary = library.scenario_sequence_catalog.get("uniqueness_audit", {})
-	if JSON.stringify(authority).sha256_text() != PRODUCTION_AUTHORITY_SHA256 or (authority.get("pairs", []) as Array).size() != 1485:
+	if PrecomputeContractScript.canonical_authority_text(authority).sha256_text() != PrecomputeContractScript.PRODUCTION_AUTHORITY_SHA256 or (authority.get("pairs", []) as Array).size() != 1485:
 		failures.append("Validation memo changed the exact production uniqueness authority.")
 	var load_stats := Schema._successful_validation_memo_stats_for_tests()
 	if int(load_stats.get("entries", 0)) <= 0 or int(load_stats.get("entries", 0)) > Schema.SUCCESSFUL_VALIDATION_MEMO_MAX_ENTRIES or int(load_stats.get("hits", 0)) < 55:

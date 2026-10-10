@@ -26,18 +26,12 @@ const C_DARK_2 := VisualStyleScript.DARK_2
 const C_PANEL := VisualStyleScript.DARK_3
 const C_PINK := VisualStyleScript.PINK
 const C_PINK_2 := VisualStyleScript.PINK_2
-const C_HOT := VisualStyleScript.HOT
 const C_CYAN := VisualStyleScript.CYAN
 const C_TEAL := VisualStyleScript.TEAL
 const C_YELLOW := VisualStyleScript.YELLOW
-const C_AMBER := VisualStyleScript.AMBER
-const C_PURPLE := VisualStyleScript.PURPLE
-const C_PURPLE_2 := VisualStyleScript.PURPLE_2
 const C_ORANGE := VisualStyleScript.ORANGE
 const C_WHITE := VisualStyleScript.WHITE
 const C_SOFT := VisualStyleScript.SOFT
-const C_SHADOW := VisualStyleScript.SHADOW
-const C_BLUE := VisualStyleScript.BLUE
 const BOARD_SIZE := VisualStyleScript.GAME_BOARD_SIZE
 const SLOT_BOARD_SIZE := Vector2(960, 540)
 const MIN_SURFACE_TOUCH_HIT_SIZE := Vector2(44.0, 44.0)
@@ -2252,13 +2246,6 @@ func _surface_action_summary(action: Dictionary, kind: String) -> String:
 	elif kind == "cheat":
 		parts.append("heat risk")
 	return " / ".join(parts)
-
-
-func _vector_from_dict(value: Variant, fallback: Vector2 = Vector2.ZERO) -> Vector2:
-	if typeof(value) != TYPE_DICTIONARY:
-		return fallback
-	var data: Dictionary = value as Dictionary
-	return Vector2(float(data.get("x", fallback.x)), float(data.get("y", fallback.y)))
 
 
 func _first_dictionary(value: Array) -> Dictionary:
