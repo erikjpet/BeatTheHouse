@@ -2212,6 +2212,11 @@ func local_position_for_selected_info_action_button(action_index: int = 0) -> Ve
 
 
 func _gui_input(event: InputEvent) -> void:
+	# Placement owns ordinary room input, but its safe exit must remain usable so
+	# an author can leave the current room without first disabling the tool.
+	if _developer_placement_mode_active() and _handle_developer_placement_safe_exit_input(event):
+		accept_event()
+		return
 	if developer_slot_placement_mode and _handle_developer_slot_placement_input(event):
 		accept_event()
 		return
@@ -2300,6 +2305,70 @@ func _gui_input(event: InputEvent) -> void:
 		return
 	if event is InputEventScreenDrag:
 		_set_hovered_object(object_id_at_local_position((event as InputEventScreenDrag).position))
+
+
+# The placement overlay normally consumes every pointer/key event. Keep the
+# Environment Library's Leave object on a small two-step interaction contract:
+# the first click selects it, and another click (or Enter) activates it. Holding
+# Shift bypasses this exception so the underlying exit slot can still be moved.
+func _handle_developer_placement_safe_exit_input(event: InputEvent) -> bool:
+	const SAFE_EXIT_OBJECT_ID := "travel:leave"
+	var active_drag := developer_slot_dragging or developer_placement_dragging
+	var pending_edit := developer_slot_pending_rect.has_area() or developer_placement_pending_rect.has_area()
+	if event.is_action_pressed("ui_accept") \
+			and selected_object_id == SAFE_EXIT_OBJECT_ID \
+			and not active_drag \
+			and not pending_edit:
+		object_activated.emit(SAFE_EXIT_OBJECT_ID)
+		return true
+	var local_position := Vector2.ZERO
+	var pressed := false
+	var bypass_for_placement := false
+	if event is InputEventMouseMotion:
+		if active_drag:
+			return false
+		var motion := event as InputEventMouseMotion
+		if motion.shift_pressed:
+			return false
+		if not _developer_safe_exit_has_local_point(motion.position):
+			return false
+		_set_hovered_object(SAFE_EXIT_OBJECT_ID)
+		return true
+	if event is InputEventMouseButton:
+		var mouse := event as InputEventMouseButton
+		if mouse.button_index != MOUSE_BUTTON_LEFT:
+			return false
+		local_position = mouse.position
+		pressed = mouse.pressed
+		bypass_for_placement = mouse.shift_pressed
+	elif event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		local_position = touch.position
+		pressed = touch.pressed
+	else:
+		return false
+	if bypass_for_placement or not _developer_safe_exit_has_local_point(local_position):
+		return false
+	if not pressed:
+		return true
+	var activate := selected_object_id == SAFE_EXIT_OBJECT_ID
+	if developer_slot_placement_mode:
+		_finish_developer_slot_placement_edit()
+	elif developer_placement_mode:
+		_finish_developer_placement_edit()
+	set_selected_object(SAFE_EXIT_OBJECT_ID, false)
+	object_focused.emit(SAFE_EXIT_OBJECT_ID)
+	if activate:
+		object_activated.emit(SAFE_EXIT_OBJECT_ID)
+	return true
+
+
+func _developer_safe_exit_has_local_point(local_position: Vector2) -> bool:
+	var safe_exit := _scene_object("travel:leave")
+	return not safe_exit.is_empty() \
+		and bool(safe_exit.get("interactive", true)) \
+		and bool(safe_exit.get("visible", true)) \
+		and _interaction_rect_for_object(safe_exit).has_point(_local_to_board_position(local_position))
 
 
 # Buttons inside the placement menu own keyboard focus while they are used.

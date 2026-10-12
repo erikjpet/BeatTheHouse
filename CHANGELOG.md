@@ -50,7 +50,8 @@ metadata read `0.6.0`.
   and exit slots remain movable in scenario contexts, and each object exposes
   one of three explicit draw layers. F1 now toggles slot placement mode itself,
   F2 continues to hide or restore its panel, and F9 loads a random environment
-  with a compatible exact scenario during Environment Library placement. The
+  with a compatible exact scenario from any active Environment Library room.
+  The Leave object remains selectable and usable while placement mode is on. The
   resulting live authority contains 521 raw source/template positions, 368
   reachable room-shared positions, and 604 scenario-local positions for 972
   unique manual entries.

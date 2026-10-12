@@ -10606,9 +10606,10 @@ func _handle_environment_test_refresh_hotkey(event: InputEvent) -> bool:
 	return true
 
 
-# F9 advances placement authors to a different environment and one of that
-# environment's exact scenarios. It is intentionally unavailable in normal
-# runs and while slot placement mode is off.
+# F9 advances Environment Library users to a different environment and one of
+# that environment's exact scenarios. It remains unavailable in normal runs,
+# but it must not depend on the canvas' transient placement toggle: authors may
+# temporarily use F1 while reviewing a room and still expect F9 to reroll it.
 func _handle_environment_test_random_scenario_hotkey(event: InputEvent) -> bool:
 	if not _environment_test_hotkey_pressed(event, KEY_F9):
 		return false
@@ -10639,12 +10640,8 @@ func _can_refresh_environment_test_session() -> bool:
 		and (environment_test_overlay == null or not environment_test_overlay.visible)
 
 
-# Requires the live canvas state rather than only the saved setting so F9 stops
-# immediately when F1 has temporarily disabled slot placement.
 func _can_load_random_environment_test_scenario() -> bool:
-	return _can_refresh_environment_test_session() \
-		and environment_canvas != null \
-		and bool(environment_canvas.developer_slot_placement_snapshot().get("enabled", false))
+	return _can_refresh_environment_test_session()
 
 
 # Chooses environments uniformly, then chooses one compatible exact scenario
@@ -10652,7 +10649,7 @@ func _can_load_random_environment_test_scenario() -> bool:
 # omitted because F9 promises both a random environment and a random scenario.
 func _load_random_environment_test_scenario() -> Dictionary:
 	if not _can_load_random_environment_test_scenario():
-		return {"ok": false, "errors": ["F9 random loading is available only in Environment Library slot placement mode."]}
+		return {"ok": false, "errors": ["F9 random loading is available only inside an Environment Library room."]}
 	_ensure_full_content_library_loaded()
 	var current_archetype_id := str(run_state.current_environment.get("archetype_id", "")).strip_edges()
 	var candidates: Array[Dictionary] = []

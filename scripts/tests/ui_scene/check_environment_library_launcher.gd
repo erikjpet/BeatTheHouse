@@ -195,9 +195,15 @@ func _run() -> void:
 	)
 	var f5_seed := run_state.seed_text
 	environment_canvas.set_developer_slot_placement_mode(false)
-	await _send_key(KEY_F9, 2)
+	await _send_key(KEY_F9, 5)
 	run_state = app.get("run_state") as RunState
-	_check(run_state.seed_text == f5_seed, "F9 must not replace a room while environment slot placement mode is disabled.")
+	var random_without_placement_archetype_id := str(run_state.current_environment.get("archetype_id", ""))
+	_check(
+		run_state.seed_text != f5_seed
+			and run_state.seed_text.begins_with("ENVIRONMENT-PRACTICE-v1:ENVIRONMENT-F9-")
+			and random_without_placement_archetype_id != "bar",
+		"F9 must load a different random Environment Library room even when slot placement was temporarily disabled with F1."
+	)
 	environment_canvas.set_developer_slot_placement_mode(true)
 	await _send_key(KEY_F9, 5)
 	run_state = app.get("run_state") as RunState
@@ -205,7 +211,7 @@ func _run() -> void:
 	var random_scenario_id := _selected_metadata(app.get("environment_test_scenario_option") as OptionButton)
 	_check(
 		run_state.seed_text.begins_with("ENVIRONMENT-PRACTICE-v1:ENVIRONMENT-F9-")
-			and random_archetype_id != "bar"
+			and random_archetype_id != random_without_placement_archetype_id
 			and random_archetype_id == _selected_metadata(archetypes)
 			and random_scenario_id not in ["", "__default", "__none"]
 			and str(run_state.current_environment.get("scenario_id", "")) == random_scenario_id,
@@ -223,10 +229,16 @@ func _run() -> void:
 	)
 	run_state.bankroll = 777
 	run_state.inventory = [{"id": "lucky_keychain"}]
-	var leave_opened := bool(app.call("activate_interactable_object", "travel:leave"))
+	await _click_environment_object(environment_canvas, "travel:leave")
+	_check(
+		str(app.get("selected_object_id")) == "travel:leave"
+			and not (app.get("environment_test_overlay") as Control).visible,
+		"The first Leave click in slot placement mode must select the exit without moving its placement slot."
+	)
+	await _click_environment_object(environment_canvas, "travel:leave")
 	await _settle(2)
 	overlay = app.get("environment_test_overlay") as Control
-	_check(leave_opened and overlay != null and overlay.visible and menu.is_visible_in_tree(), "The practice Leave object must reopen the Environment Library instead of the travel map.")
+	_check(overlay != null and overlay.visible and menu.is_visible_in_tree(), "A selected Leave object must reopen the Environment Library while slot placement mode remains active.")
 	_check(
 		_selected_metadata(archetypes) == random_archetype_id
 			and _selected_metadata(app.get("environment_test_scenario_option") as OptionButton) == random_scenario_id,
@@ -397,6 +409,24 @@ func _send_key(keycode: Key, settle_frames: int = 1) -> void:
 	released.pressed = false
 	root.push_input(released, true)
 	await _settle(settle_frames)
+
+
+func _click_environment_object(canvas: PixelSceneCanvas, object_id: String) -> void:
+	var target := canvas.global_rect_for_object(object_id).get_center()
+	var pressed := InputEventMouseButton.new()
+	pressed.button_index = MOUSE_BUTTON_LEFT
+	pressed.position = target
+	pressed.global_position = target
+	pressed.pressed = true
+	root.push_input(pressed, true)
+	await process_frame
+	var released := InputEventMouseButton.new()
+	released.button_index = MOUSE_BUTTON_LEFT
+	released.position = target
+	released.global_position = target
+	released.pressed = false
+	root.push_input(released, true)
+	await _settle(2)
 
 
 func _check(condition: bool, message: String) -> void:
