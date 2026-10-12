@@ -1,5 +1,9 @@
 # rw06_2 Pit Boss ending route — first-pass replay
 
+> **Historical verification notes — not the player walkthrough.** For the
+> current, seed-independent route and recovery policy, use
+> [0.6.0 Complete Ending Runbook](../0.6.0_ending_walkthrough.md).
+
 Status: **IMPLEMENTED; QUALIFYING LIVE RUN PENDING rw06_1/rw06_5**
 Implementation checkpoint: peer branch `codex/rw06_2-prep` at `5e9f2a14`
 Canonical terminal route: `pit_boss_showdown`

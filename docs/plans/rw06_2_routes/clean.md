@@ -1,5 +1,9 @@
 # rw06_2 clean ending route — first-pass replay
 
+> **Historical verification notes — not the player walkthrough.** For the
+> current, seed-independent route and recovery policy, use
+> [0.6.0 Complete Ending Runbook](../0.6.0_ending_walkthrough.md).
+
 Status: **PROBE 29 CONFIRMED GRAND DEFICIT; DATA-ONLY INVITATION REPAIR PENDING REPLAY**
 Working base: current rw06_2 peer branch;
 qualifying evidence waits for rw06_1 to land.

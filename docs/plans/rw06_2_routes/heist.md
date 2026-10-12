@@ -1,5 +1,10 @@
 # rw06_2 Crew heist ending route — first-pass replay
 
+> **Historical verification notes — not the player walkthrough.** This file
+> contains obsolete Crew-rank/setup assumptions. For the current,
+> seed-independent route and recovery policy, use
+> [0.6.0 Complete Ending Runbook](../0.6.0_ending_walkthrough.md).
+
 Status: **Q-013A/Q-017A CALLER-OWNED STATIC CANDIDATE HELD; NO QUALIFYING EVIDENCE**
 Last integrated canonical baseline: `d60c5d928f6ca4d973f158410816a00de55f87d3`
 Current-main gate: `37fdf371` (or its successor) must be an ancestor of the
