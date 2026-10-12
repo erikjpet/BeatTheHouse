@@ -849,6 +849,17 @@ func _check_resolved_event_lifecycle(library: ContentLibrary) -> void:
 	var stale_join := EnvironmentInteractionControllerScript._join_object_manifest([], stale_environment, true)
 	_check(_record_by_id(stale_join, object_id).is_empty(), "resolved event manifest", "stale manifest synthesis resurrected %s" % object_id)
 
+	# The same presentation boundary applies before resolution: the manifest owns
+	# an eligible event's identity and geometry, but only the live event option
+	# owns its current presence. A condition-gated event therefore cannot appear
+	# as an enabled-looking, zero-action object merely because its row is authored.
+	var unavailable_environment := _ordinary_event_environment.duplicate(true)
+	unavailable_environment["resolved_event_ids"] = []
+	var unavailable_join := EnvironmentInteractionControllerScript._join_object_manifest([], unavailable_environment, true)
+	var unavailable_record := _record_by_id(unavailable_join, object_id)
+	_check(not unavailable_record.is_empty(), "resolved event manifest", "manifest did not retain placement authority for unavailable event %s" % object_id)
+	_check(not bool(unavailable_record.get("visible", true)) and not bool(unavailable_record.get("enabled", true)) and not bool(unavailable_record.get("interactive", true)), "resolved event manifest", "missing live membership exposed unavailable event %s as a live room action" % object_id)
+
 	var run_state := RunStateScript.new()
 	run_state.current_environment = _ordinary_event_environment.duplicate(true)
 	var original_revision := int(original_manifest.get("revision", 0))
@@ -1091,8 +1102,15 @@ func _check_numbers_runtime_hosts(library: ContentLibrary) -> void:
 	_assert_runtime_membership(nonvenue, "numbers:book", "fixed", false, "Numbers non-venue")
 
 	var punchline_back_room := _generated_environment(library, "small_underground_casino", "back_room")
+	var punchline_events := _array(punchline_back_room.get("event_ids", []))
+	if not punchline_events.has("town_rumor_staff"):
+		punchline_events.append("town_rumor_staff")
+		punchline_back_room["event_ids"] = punchline_events
 	run_state.current_environment = punchline_back_room
-	run_state.reconcile_environment_object_membership(punchline_back_room)
+	var back_room_result := run_state.reconcile_environment_object_membership(punchline_back_room)
+	_check(bool(back_room_result.get("ok", false)), "Punchline back-room room plane", "membership failed: %s" % JSON.stringify(back_room_result.get("errors", [])))
+	_check(_array(_dict(punchline_back_room.get("layout", {})).get("placement_errors", [])).is_empty(), "Punchline back-room room plane", "an ordinary live host forced the whole room into overflow")
+	_assert_runtime_membership(punchline_back_room, "event:town_rumor_staff", "event", true, "Punchline back-room rumor staff")
 	_assert_runtime_membership(punchline_back_room, "numbers:book", "fixed", false, "Punchline back-room desk")
 
 	var silas_environment := _generated_environment(library, "bar")

@@ -269,6 +269,39 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 			or str(restored_live_table_binding.get("slot_family", "")) != "scenario":
 		failures.append("Plan A save/load did not rebuild the trusted Live Table physical projection.")
 	HarnessProductionFidelityScript.finalize_arrival(mid_window, library, failures, "Plan A restored live-table window")
+	# If a presentation refresh invalidates only the derived proof, the durable
+	# room event order must reconstruct the same immutable seal. The Grand room's
+	# authored event order is intentionally non-alphabetical, while the Crew Live
+	# Table is a post-seal runtime event that must remain outside that proof.
+	var invalidated_live_table := RunStateScript.new()
+	invalidated_live_table.from_dict(mid_window.to_dict())
+	var invalidated_expected_digest := str(invalidated_live_table.current_environment.get("scenario_semantic_digest", ""))
+	var invalidated_event_choice_order := _dict(_dict(_dict(invalidated_live_table.current_environment.get("scenario_sequence_state", {})).get("semantic_state", {})).get("event_choices", {})).keys()
+	var invalidated_routes := _array(invalidated_live_table.current_environment.get("next_archetypes", []))
+	for route_id in ["jazz_club", "small_underground_casino"]:
+		if not invalidated_routes.has(route_id):
+			invalidated_routes.append(route_id)
+	invalidated_live_table.current_environment["next_archetypes"] = invalidated_routes
+	for key in ["scenario_semantic_ready", "scenario_semantic_inventory", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot", "scenario_sequence_projection"]:
+		invalidated_live_table.current_environment.erase(key)
+	invalidated_live_table.current_environment["scenario_restore_pending_trusted_rebuild"] = true
+	var invalidated_rebuild := invalidated_live_table.scenario_finalize_installed_environment(library)
+	if not bool(invalidated_rebuild.get("ok", false)) \
+			or str(invalidated_live_table.current_environment.get("scenario_semantic_digest", "")) != invalidated_expected_digest \
+			or not invalidated_live_table._scenario_semantic_ready() \
+			or _dict(_dict(_dict(invalidated_live_table.current_environment.get("scenario_sequence_state", {})).get("semantic_state", {})).get("event_choices", {})).keys() != invalidated_event_choice_order:
+		failures.append("Plan A's invalidated save-shaped Live Table window could not reconstruct its original scenario seal: %s" % JSON.stringify(invalidated_rebuild.get("errors", [])))
+	# Event resolution owns the same trusted repair. A player can return from a
+	# sealed Blackjack action (or resume a save) and immediately answer Bishop;
+	# that public choice must not strand behind renderer-owned proof.
+	var pending_live_table := RunStateScript.new()
+	pending_live_table.from_dict(mid_window.to_dict())
+	if pending_live_table._scenario_semantic_ready():
+		failures.append("Plan A's save-shaped Live Table fixture did not begin with trusted scenario rebuild pending.")
+	else:
+		var pending_choice := live_table.resolve(pending_live_table, pending_live_table.current_environment, "go_hold")
+		if not bool(pending_choice.get("ok", false)) or not pending_live_table._scenario_semantic_ready():
+			failures.append("Plan A's first post-restore Live Table choice did not rebuild and retain trusted scenario semantics: %s" % str(pending_choice.get("message", "")))
 	if _choice_ids(live_table.choices(run, run.current_environment)).has("distraction_sit"):
 		failures.append("Plan A allowed its second decision before the first live-table round boundary.")
 	var expected_choices := [["go_hold", "distraction_sit"], ["distraction_sit", "exit_dock"], ["exit_dock", "begin_getaway"]]

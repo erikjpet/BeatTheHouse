@@ -2870,6 +2870,30 @@ function Complete-PublicDelivery {
             }
             continue
         }
+        # Hold deliveries use one stable authored sightline object whose
+        # public action list owns wait, signal, and break_hold. Drive the
+        # visible Hold Sightline action on that object just like pickup and
+        # handoff hosts; the separate button/overflow branches below remain
+        # compatibility paths for older layouts.
+        $holdHost = Find-CanvasObjectByPrefix -Prefix 'delivery:hold:'
+        if ($null -cne $holdHost) {
+            $holdHostId = [string](Get-Value $holdHost @('semantic_id') '')
+            $null = Open-SemanticObject `
+                -SemanticId $holdHostId `
+                -PreferredActions @('Hold Sightline', 'wait') `
+                -Intent "${Intent}: hold the marked sightline"
+            Wait-Frames -Frames 8
+            if ($StopAfterResolution) {
+                $remainingHoldHost = Find-CanvasObjectByPrefix -Prefix 'delivery:hold:'
+                $remainingSpatialHold = @(Get-Array (Get-Value $script:LastObservation @('spatial', 'objects') @()) | Where-Object {
+                    [string](Get-Value $_ @('object_id') '') -ceq "delivery:hold:$currentNodeId" -and
+                    [bool](Get-Value $_ @('visible') $false) -and
+                    [bool](Get-Value $_ @('enabled') $false)
+                })
+                if ($null -ceq $remainingHoldHost -and $remainingSpatialHold.Count -ceq 0) { return }
+            }
+            continue
+        }
         if ($null -cne (Find-Button -Text 'Hold Sightline')) {
             $null = Click-Button -Text 'Hold Sightline' -Intent "${Intent}: hold the marked sightline"
             Wait-Frames -Frames 8
@@ -3859,6 +3883,9 @@ function Enter-BlackjackTable {
         return
     }
     Enter-GrandRoom -Room main
+    if (-not (Reveal-SemanticObjectByPublicRefocus -TargetSemanticId 'game:blackjack')) {
+        throw 'No bounded real room-focus click made the public Blackjack table fully visible.'
+    }
     $null = Open-SemanticObject -SemanticId 'game:blackjack' -PreferredActions @('Enter', 'Play') -Intent 'sit at the visible blackjack table'
     Wait-Frames -Frames 12
     if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'GAME' -or
@@ -4392,7 +4419,11 @@ function Play-OneBlackjackRound {
         }
         if ($null -cne (Find-GameAction -Action 'blackjack_deal')) {
             $null = Invoke-GameAction -Action 'blackjack_deal' -Intent 'deal the next blackjack hand at the visible wager'
-			$roundStarted = $true
+            $phaseAfterDeal = [string](Get-Value $script:LastObservation @('game', 'phase') '')
+            if ($phaseAfterDeal -ceq 'betting') {
+                throw 'The visible Blackjack Deal control did not start a new hand.'
+            }
+            $roundStarted = $true
             Wait-Frames -Frames 30
             continue
         }
@@ -4918,25 +4949,12 @@ function Invoke-CheatEndingRoute {
             throw 'Visible cheating ended the run before Rourke exposed the showdown route.'
         }
         Leave-GameSurface
-        $renderedHeat = Get-RenderedHudInteger -Name heat_level -Context 'Cheat showdown pressure after leaving Blackjack'
-        if ($renderedHeat -ge 70 -and
-            $null -eq (Find-CanvasObject -SemanticId 'event:the_house_calls') -and
-            $null -ne (Find-CanvasObject -SemanticId 'event:comped_suite_offer')) {
-            Invoke-EventObjectChoice `
-                -EventId 'comped_suite_offer' `
-                -ChoiceId 'take_comp' `
-                -Intent 'accept the visibly watched suite offer and force Rourke to answer the pressure'
-            Wait-Frames -Frames 10 -Intent 'let the visible suite-offer pressure settle'
-        }
-        if ($renderedHeat -ge 70 -and
-            $null -eq (Find-CanvasObject -SemanticId 'event:the_house_calls') -and
-            $null -ne (Find-CanvasObject -SemanticId 'event:chain06_rourke_noticed')) {
-            Invoke-EventObjectChoice `
-                -EventId 'chain06_rourke_noticed' `
-                -ChoiceId 'let_the_check_pass' `
-                -Intent 'let the visible floor check pass and advance Rourke''s watched pressure'
-            Wait-Frames -Frames 10 -Intent 'let the visible Rourke notice settle into the house call'
-        }
+        # The current ordinary heat route calls Rourke at 85 with staff
+        # attention, or unconditionally at 95. Older replay logic treated 70 as
+        # the threshold and diverted into unrelated one-shot room events. Apart
+        # from being stale, that policy could consume the Rourke-noticed chain
+        # instead of applying another visible table action. Keep building public
+        # watched-cheat pressure until the actual House Calls action appears.
         if ($null -cne (Find-CanvasObject -SemanticId 'event:the_house_calls')) {
             Open-EventObject -EventId 'the_house_calls' -Intent "answer Rourke's visible back-room call"
             $showdownCallOpened = $true

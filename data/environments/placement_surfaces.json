@@ -2416,6 +2416,37 @@
       ],
       "event_slots": [
         {
+          "id": "event.behind_counter_person_1",
+          "kind": "event",
+          "pos": [
+            644.0,
+            208.0
+          ],
+          "footprint_class": "behind_counter_person",
+          "physical_role": "Counter staff",
+          "occupant_ids": [
+            "event:late_shift_discount"
+          ],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [
+            608.0,
+            136.0,
+            72.0,
+            72.0
+          ],
+          "label_anchor": [
+            644.0,
+            130.0
+          ],
+          "facing": "front",
+          "priority": 80,
+          "zone_id": "right",
+          "support_id": "right_crate_counter",
+          "walk_lane_ids": [],
+          "occupancy_required": false
+        },
+        {
           "id": "event.ground_marker_1",
           "kind": "event",
           "pos": [
@@ -3094,6 +3125,7 @@
       },
       "event_object_slot_ids": {
         "event:back_alley_offer": "event.floor_fixture_1",
+        "event:late_shift_discount": "event.behind_counter_person_1",
         "event:parking_lot_tip": "event.ground_marker_1"
       },
       "scenario_object_slot_ids": {
@@ -3132,6 +3164,7 @@
         "lender:the_crew": "fixed",
         "service:house_drink": "fixed",
         "shopkeeper:merchant": "fixed",
+        "event:late_shift_discount": "event",
         "event:parking_lot_tip": "event",
         "lender:street_lender": "fixed",
         "character:vince": "fixed",
@@ -15645,6 +15678,37 @@
           "support_id": "floor",
           "walk_lane_ids": [],
           "occupancy_required": false
+        },
+        {
+          "id": "event.behind_counter_person_1",
+          "kind": "event",
+          "pos": [
+            126.0,
+            236.0
+          ],
+          "footprint_class": "behind_counter_person",
+          "physical_role": "Numbers desk staff",
+          "occupant_ids": [
+            "event:town_rumor_staff"
+          ],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [
+            90.0,
+            164.0,
+            72.0,
+            72.0
+          ],
+          "label_anchor": [
+            126.0,
+            158.0
+          ],
+          "facing": "none",
+          "priority": 80,
+          "zone_id": "room",
+          "support_id": "numbers_desk",
+          "walk_lane_ids": [],
+          "occupancy_required": false
         }
       ],
       "scenario_slots": [
@@ -15817,7 +15881,8 @@
         "environment_layer:ambient": "fixed.ambient_rook"
       },
       "event_object_slot_ids": {
-        "numbers:silas": "event.standing_person_6"
+        "numbers:silas": "event.standing_person_6",
+        "event:town_rumor_staff": "event.behind_counter_person_1"
       },
       "scenario_object_slot_ids": {},
       "exit_object_slot_ids": {
@@ -15845,6 +15910,7 @@
         "event:numbers_desk": "fixed",
         "game:crew_draw_poker": "fixed",
         "numbers:silas": "event",
+        "event:town_rumor_staff": "event",
         "environment_layer:ambient": "fixed",
         "environment_layer:casino": "exit",
         "travel:leave": "exit"
@@ -26295,7 +26361,6 @@
           "physical_role": "Counter staff",
           "occupant_ids": [
             "event:chain06_cass_first_contact",
-            "event:comped_suite_offer",
             "event:the_house_calls"
           ],
           "runtime_reserve": false,
@@ -26309,6 +26374,39 @@
           "label_anchor": [
             512.0,
             276.0
+          ],
+          "facing": "front",
+          "priority": 80,
+          "zone_id": "room",
+          "support_id": "cocktail_service",
+          "walk_lane_ids": [
+            "lane.public"
+          ],
+          "occupancy_required": false
+        },
+        {
+          "id": "event.behind_counter_person_2",
+          "kind": "event",
+          "pos": [
+            622.0,
+            242.0
+          ],
+          "footprint_class": "behind_counter_person",
+          "physical_role": "Casino host",
+          "occupant_ids": [
+            "event:comped_suite_offer"
+          ],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [
+            600.0,
+            170.0,
+            44.0,
+            72.0
+          ],
+          "label_anchor": [
+            622.0,
+            164.0
           ],
           "facing": "front",
           "priority": 80,

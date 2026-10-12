@@ -3430,8 +3430,15 @@ func _scenario_persisted_base_event_ids(environment: Dictionary) -> Dictionary:
 		var event_id := identity.trim_prefix("event::event:")
 		if available.has(event_id):
 			baseline[event_id] = true
-	var result := baseline.keys()
-	result.sort()
+	# Source collection order is part of the sealed inventory digest. Preserve the
+	# authenticated members in their durable room order; sorting this set made a
+	# proof-invalidated save unable to reconstruct an otherwise unchanged seal.
+	var result: Array = []
+	for source in [JsonCoerceScript._copy_array(environment.get("event_ids", [])), JsonCoerceScript._copy_array(environment.get("resolved_event_ids", []))]:
+		for event_id_value in source:
+			var event_id := str(event_id_value).strip_edges()
+			if baseline.has(event_id) and not result.has(event_id):
+				result.append(event_id)
 	return {"authenticated": true, "event_ids": result}
 
 
@@ -3701,6 +3708,25 @@ func _scenario_prior_sealed_inventory_for_current_layer(newly_sealed: Dictionary
 		else:
 			prior_interactions.append(record)
 	var prior_environment := semantic_environment.duplicate(false)
+	# World-map progression can append trusted routes after the room's immutable
+	# scenario seal was created. Saves omit the large inventory body, but the
+	# durable sequence semantic state retains the exact sealed target identities.
+	# Reconstruct only that prior world-route union; the resulting inventory still
+	# has to match the persisted digest exactly before it is accepted.
+	var prior_semantic := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(current_environment.get("scenario_sequence_state", {})).get("semantic_state", {}))
+	var prior_target_inventory := JsonCoerceScript._copy_dict(prior_semantic.get("target_inventory", {}))
+	var prior_world_routes: Array[String] = []
+	for route_identity_value in JsonCoerceScript._copy_array(prior_target_inventory.get("routes", [])):
+		var route_identity := str(route_identity_value).strip_edges()
+		if not route_identity.begins_with("base::world:"):
+			continue
+		var route_id := route_identity.trim_prefix("base::world:")
+		if not route_id.is_empty() and not prior_world_routes.has(route_id):
+			prior_world_routes.append(route_id)
+	if not prior_world_routes.is_empty():
+		prior_world_routes.sort()
+		prior_environment["travel_hooks"] = []
+		prior_environment["next_archetypes"] = prior_world_routes
 	var prior_layout := JsonCoerceScript._copy_dict(prior_environment.get("layout", {}))
 	var prior_rects := JsonCoerceScript._copy_dict(prior_layout.get("object_rects", {}))
 	for presentation_id in excluded_presentation_ids:
@@ -3743,6 +3769,19 @@ func _scenario_refresh_source_matches_prior(prior_source: Dictionary, next_sourc
 		if not presentation_id.is_empty():
 			comparable_rects.erase(presentation_id)
 	comparable_next["layout_object_rects"] = comparable_rects
+	# Discovery can append catalog-validated world routes after the room seal.
+	# The prior-seal reconstruction above proves the exact original route union;
+	# ignore only additive live routes here, never a missing or rewritten member.
+	if prior_source.has("route_ids") or comparable_next.has("route_ids"):
+		var prior_route_ids := JsonCoerceScript._copy_array(prior_source.get("route_ids", []))
+		var next_route_ids := JsonCoerceScript._copy_array(comparable_next.get("route_ids", []))
+		var additive_routes_only := true
+		for route_id_value in prior_route_ids:
+			if not next_route_ids.has(route_id_value):
+				additive_routes_only = false
+				break
+		if additive_routes_only:
+			comparable_next["route_ids"] = prior_route_ids
 	return JSON.stringify(prior_source) == JSON.stringify(comparable_next)
 
 
@@ -4064,7 +4103,12 @@ func _scenario_base_producer_context() -> Dictionary:
 
 
 func _invalidate_scenario_semantic_proof(message: String) -> Dictionary:
-	for key in ["scenario_semantic_ready", "scenario_semantic_inventory", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_sealed_producer_context", "scenario_semantic_action_digest", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot"]:
+	# The sealed producer context is durable authority, not part of the derived
+	# semantic proof. Retain it when a presentation/layout refresh fails so the
+	# next trusted rebuild can authenticate the same immutable baseline. Erasing it
+	# here left otherwise-valid rooms permanently unable to cross a game-action
+	# boundary after one transient refresh failure.
+	for key in ["scenario_semantic_ready", "scenario_semantic_inventory", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot"]:
 		current_environment.erase(key)
 	# Proof invalidation is not a causal gameplay boundary. Preserve the durable
 	# journal exactly and block live ingress; cleanup may only be written by the

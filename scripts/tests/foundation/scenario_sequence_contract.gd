@@ -1780,10 +1780,11 @@ static func _check_lifecycle_finalization(library: ContentLibrary, failures: Arr
 	for key in ["scenario_semantic_ready", "scenario_semantic_inventory", "scenario_base_interactions", "scenario_base_actors"]: mismatch.current_environment.erase(key)
 	mismatch.current_environment["scenario_semantic_digest"] = "forged_digest"
 	var mismatch_before := mismatch.current_environment.duplicate(true)
+	var mismatch_sealed_producer_context := _dict(mismatch.current_environment.get("scenario_sealed_producer_context", {}))
 	var mismatch_result := mismatch.scenario_finalize_base_semantics([presentation], library)
 	var mismatch_semantic_after := _dict(_dict(mismatch.current_environment.get("scenario_sequence_state", {})).get("semantic_state", {}))
 	var mismatch_semantic_before := _dict(_dict(mismatch_before.get("scenario_sequence_state", {})).get("semantic_state", {}))
-	if bool(mismatch_result.get("ok", true)) or bool(mismatch.current_environment.get("scenario_semantic_ready", false)) or mismatch.current_environment.has("scenario_semantic_inventory") or JSON.stringify(mismatch_semantic_after) != JSON.stringify(mismatch_semantic_before):
+	if bool(mismatch_result.get("ok", true)) or bool(mismatch.current_environment.get("scenario_semantic_ready", false)) or mismatch.current_environment.has("scenario_semantic_inventory") or JSON.stringify(mismatch_semantic_after) != JSON.stringify(mismatch_semantic_before) or JSON.stringify(mismatch.current_environment.get("scenario_sealed_producer_context", {})) != JSON.stringify(mismatch_sealed_producer_context):
 		failures.append("Digest-mismatched finalization exposed partial semantic authorization.")
 	var hostile_proof_references := [
 		{"label": "matching digest with wrong version", "version": valid_proof_version + 1, "digest": valid_proof_digest},

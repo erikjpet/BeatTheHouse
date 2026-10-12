@@ -308,6 +308,21 @@ func resolve(
 	profile_stages: bool = false
 ) -> Dictionary:
 	var profile_started_usec := Time.get_ticks_usec() if profile_stages else 0
+	# Loaded saves and sealed game transactions can leave renderer-owned scenario
+	# proof pending its trusted rebuild while the durable causal state remains
+	# valid. An event choice immediately following a game must repair that
+	# non-causal seal before its environment-turn preflight, just as other shared
+	# player-action boundaries do. Never attempt to authorize the event when the
+	# exact current room cannot be finalized.
+	if run_state != null and run_state.scenario_sequence_present() and not run_state._scenario_semantic_ready():
+		var finalized := run_state.scenario_finalize_installed_environment(
+			content_library,
+			JsonCoerceScript._copy_dict(run_state.current_environment.get("scenario_layout_context", {}))
+		)
+		if not bool(finalized.get("ok", false)):
+			var finalization_errors := JsonCoerceScript._copy_array(finalized.get("errors", []))
+			var finalization_message := str(finalization_errors[0]) if not finalization_errors.is_empty() else "Dynamic room sequence semantic records could not be finalized."
+			return _empty_result(choice_id, environment, finalization_message)
 	# Resolution is an authority boundary, not merely a UI convenience. A stale
 	# module reference or copied pre-resolution environment must not replay an
 	# event. Triggered/talk events are authorized by the host queue; ordinary

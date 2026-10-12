@@ -2552,6 +2552,14 @@ function New-ExclusiveEvidenceDirectory {
     }
     Assert-Match $runner '(?s)\$invocationRoot\s*=\s*New-ExclusiveEvidenceDirectory\s+-Path.*?\$script:RunRoot\s*=\s*New-ExclusiveEvidenceDirectory\s+-Path' 'Both invocation and per-run evidence roots must use exclusive non-reusing creation.'
 
+    Assert-Match $runner '(?s)function\s+Complete-PublicDelivery.*?Find-CanvasObjectByPrefix\s+-Prefix\s+''delivery:hold:''.*?Open-SemanticObject.*?-PreferredActions\s+@\(''Hold Sightline'',\s*''wait''\)' 'Public delivery completion must drive the stable visible sightline host through its Hold Sightline action.'
+    Assert-Match $runner '(?s)function\s+Complete-PublicDelivery.*?\$remainingHoldHost\s*=\s*Find-CanvasObjectByPrefix\s+-Prefix\s+''delivery:hold:''.*?\$remainingSpatialHold.*?if\s*\(\$null\s+-ceq\s+\$remainingHoldHost\s+-and\s+\$remainingSpatialHold\.Count\s+-ceq\s+0\)\s*\{\s*return\s*\}' 'A resolved sightline hold must return immediately instead of re-entering the completed target room.'
+    Assert-Match $runner '(?s)function\s+Enter-BlackjackTable.*?Reveal-SemanticObjectByPublicRefocus\s+-TargetSemanticId\s+''game:blackjack''.*?Open-SemanticObject\s+-SemanticId\s+''game:blackjack''' 'Blackjack entry must use bounded public refocus before opening a table obscured by the prior Count decision card.'
+    $hostileMissingHoldHost = $runner.Replace("Find-CanvasObjectByPrefix -Prefix 'delivery:hold:'", "Find-CanvasObjectByPrefix -Prefix 'delivery:wait:'")
+    if ($hostileMissingHoldHost -ceq $runner -or [regex]::IsMatch($hostileMissingHoldHost, '(?s)function\s+Complete-PublicDelivery.*?Find-CanvasObjectByPrefix\s+-Prefix\s+''delivery:hold:''.*?Open-SemanticObject.*?-PreferredActions\s+@\(''Hold Sightline'',\s*''wait''\)', [Text.RegularExpressions.RegexOptions]::IgnoreCase)) {
+        Add-Failure 'A delivery replay hostile that ignores the canonical visible hold host did not fail closed.'
+    }
+
     if (-not (Test-CleanSilverPersistenceSource -Source $runner)) {
         Add-Failure 'Clean Save/Continue must retain the exact rendered Silver-to-Gold Cage ledger and its public controls before and after process exit.'
     }

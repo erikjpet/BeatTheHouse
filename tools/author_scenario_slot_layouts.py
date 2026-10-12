@@ -58,6 +58,27 @@ EXACT_POSITION_RECT_OVERRIDES: dict[tuple[str, str, str], list[float]] = {
         "grand_casino_convention_crowd",
         "grand_casino_convention_crowd_table_block|grand_work_object_left|center|",
     ): [700.0, 150.0, 44.0, 44.0],
+    (
+        "grand_casino",
+        "grand_casino_audit_night",
+        "grand_casino_audit_night_audit_barrier|grand_scenario_top_800_low|background|",
+    ): [720.0, 150.0, 68.0, 58.0],
+    (
+        "grand_casino",
+        "grand_casino_audit_night",
+        "grand_casino_audit_night_audit_barrier|grand_work_object_left|center|",
+    ): [520.0, 180.0, 68.0, 58.0],
+}
+
+# Preserve reviewed donor geometry when a newly added shared slot changes the
+# otherwise equally valid compact-bank matching.  This keeps unrelated layouts
+# stable while still allowing the collision resolver to find their final rect.
+EXACT_POSITION_SOURCE_SLOT_OVERRIDES: dict[tuple[str, str, str], str] = {
+    (
+        "bar",
+        "bar_payday_rush",
+        "bar_payday_rush_aftermath_orders_spilled_prop||background|",
+    ): "fixed.numbers_book",
 }
 
 # These event records are actions attached to an already tangible room host.
@@ -1360,6 +1381,60 @@ def clone_slot(
     return slot
 
 
+def apply_exact_source_slot_overrides(
+    bank_geometry: dict[tuple[str, int], dict[str, Any]],
+    bank_nodes: dict[tuple[str, int], list[dict[str, Any]]],
+    fallback_templates: dict[str, list[dict[str, Any]]],
+    map_id: str,
+    scenario_id: str,
+) -> None:
+    matched: set[tuple[str, str, str]] = set()
+    for bank_key, nodes in bank_nodes.items():
+        authority = {
+            (map_id, scenario_id, str(node.get("position_key", "")).strip()): source_id
+            for node in nodes
+            if (
+                source_id := EXACT_POSITION_SOURCE_SLOT_OVERRIDES.get(
+                    (map_id, scenario_id, str(node.get("position_key", "")).strip())
+                )
+            )
+        }
+        source_ids = set(authority.values())
+        if len(source_ids) > 1:
+            raise ValueError(
+                f"{map_id}/{scenario_id}: one compact slot has conflicting exact source overrides"
+            )
+        if not source_ids:
+            continue
+        placement_class = bank_key[0]
+        source_id = next(iter(source_ids))
+        source = next(
+            (
+                copy.deepcopy(template)
+                for template in fallback_templates.get(placement_class, [])
+                if str(template.get("_source_slot_id", "")) == source_id
+            ),
+            None,
+        )
+        if source is None:
+            raise ValueError(
+                f"{map_id}/{scenario_id}: exact source slot {source_id} is unavailable"
+            )
+        source["_synthetic_geometry"] = True
+        bank_geometry[bank_key] = source
+        matched.update(authority)
+    expected = {
+        key
+        for key in EXACT_POSITION_SOURCE_SLOT_OVERRIDES
+        if key[:2] == (map_id, scenario_id)
+    }
+    if matched != expected:
+        raise ValueError(
+            f"{map_id}/{scenario_id}: exact source overrides did not resolve: "
+            f"{sorted(expected - matched)}"
+        )
+
+
 def _rect_intersects(left: list[float], right: list[float]) -> bool:
     return not (
         left[0] + left[2] <= right[0]
@@ -1752,11 +1827,12 @@ def build_layout(
     # the authored room zone.  The owner can therefore place each local marker
     # once without moving it between semantic areas as phases change.
     add_zone_mismatch_conflicts(nodes, conflicts)
+    fallback_templates = geometry_templates_by_class(surface)
     assigned_colors, bank_geometry = assign_geometry(
         nodes,
         conflicts,
         source_slots_by_class(surface),
-        geometry_templates_by_class(surface),
+        fallback_templates,
         f"{map_id}/{scenario_id}",
     )
     authored_slots: list[dict[str, Any]] = []
@@ -1771,6 +1847,13 @@ def build_layout(
     for node_key, color in assigned_colors.items():
         placement_class = str(nodes[node_key].get("placement_class", ""))
         bank_nodes[(placement_class, color)].append(nodes[node_key])
+    apply_exact_source_slot_overrides(
+        bank_geometry,
+        bank_nodes,
+        fallback_templates,
+        map_id,
+        scenario_id,
+    )
     bank_slot_ids: dict[tuple[str, int], str] = {}
     class_ordinals: dict[str, int] = defaultdict(int)
     for priority, bank_key in enumerate(sorted(bank_nodes), start=1):

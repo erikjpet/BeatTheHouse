@@ -631,6 +631,7 @@ static func _manifest_host_record(row: Dictionary, manifest_object_id: String, p
 	var person := EnvironmentPlacementScript.is_person_class(placement_class)
 	var object_type := str(row.get("object_type", metadata.get("object_type", "character" if person else "fixture"))).strip_edges()
 	var visual_type := str(row.get("visual_type", metadata.get("visual_type", "character" if person else "prop"))).strip_edges()
+	var missing_event_host := object_type == "event" or presentation_id.begins_with("event:")
 	var label := str(row.get("label", metadata.get("label", metadata.get("display_name", metadata.get("name", ""))))).strip_edges()
 	if label.is_empty():
 		label = _manifest_label(render_key if not render_key.is_empty() else presentation_id)
@@ -643,10 +644,17 @@ static func _manifest_host_record(row: Dictionary, manifest_object_id: String, p
 		"label": label,
 		"short_description": str(metadata.get("description", metadata.get("short_description", label))),
 		"presence": "fixed" if family == "fixed" else family,
-		"interactive": not action_ids.is_empty(),
-		"decorative": action_ids.is_empty(),
-		"enabled": true,
-		"visible": true,
+		# A manifest row seals where a physical host belongs; it is not live
+		# gameplay authority for whether that host currently has an action. Missing
+		# live event records (for example The House Calls before Rourke actually
+		# calls) must therefore begin inert. Exact live/action records restore or
+		# attach availability later in the same projection pass.
+		"interactive": false if missing_event_host else not action_ids.is_empty(),
+		"decorative": true if missing_event_host else action_ids.is_empty(),
+		"enabled": false if missing_event_host else true,
+		"disabled_reason": "No action is currently available." if missing_event_host else "",
+		"visible": family != "event" if missing_event_host else true,
+		"manifest_live_membership_missing_event": missing_event_host,
 		"presentation_mode": "room",
 		"slot_id": str(row.get("exact_slot_id", "")),
 		"slot_family": family,
@@ -785,7 +793,17 @@ static func _attach_action_only_records(records: Array, deferred_exact_action_ho
 		if not attached.is_empty():
 			target["interactive"] = true
 			target["decorative"] = false
-		room_records[target_index] = target
+			if bool(target.get("manifest_live_membership_missing_event", false)):
+				target["visible"] = true
+				var attached_enabled := false
+				for attached_value in attached:
+					if bool(_dict(attached_value).get("enabled", false)):
+						attached_enabled = true
+						break
+				target["enabled"] = attached_enabled
+				if attached_enabled:
+					target["disabled_reason"] = ""
+			room_records[target_index] = target
 	return room_records
 
 

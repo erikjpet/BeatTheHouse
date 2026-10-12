@@ -269,8 +269,10 @@ static func for_instance(environment: Dictionary, library: Variant = null, base_
 		var row := _dict(row_value)
 		var family := str(row.get("family", "")).strip_edges()
 		var owned_projection := str(row.get("source_kind", "")) == "scenario_projection"
+		var runtime_projection := not str(row.get("runtime_owner", "")).strip_edges().is_empty() \
+				or str(row.get("spot_field", "")) == "runtime_object_manifest_entries"
 		if not bool(row.get("active", false)) or not bool(row.get("physical", false)) \
-				or family == "scenario" or owned_projection:
+				or family == "scenario" or owned_projection or runtime_projection:
 			continue
 		var presentation_id := str(row.get("presentation_object_id", row.get("object_id", ""))).strip_edges()
 		var instance_object_id := str(row.get("instance_object_id", "")).strip_edges()
@@ -1375,9 +1377,15 @@ static func _object_manifest_authority(environment: Dictionary) -> Dictionary:
 	var rows: Array = []
 	for row_value in _array(manifest.get("rows", [])):
 		var row := _dict(row_value)
+		# Runtime-owned rows are live projections of already-authenticated RunState
+		# authorities (Crew residency, delivery position, Numbers, Rourke, rivals).
+		# Sealing them into the immutable room-scenario baseline made an ordinary
+		# movement look like semantic tampering on the next action boundary.
 		if not bool(row.get("active", false)) or not bool(row.get("physical", false)) \
 				or str(row.get("family", "")) == "scenario" \
-				or str(row.get("source_kind", "")) == "scenario_projection":
+				or str(row.get("source_kind", "")) == "scenario_projection" \
+				or not str(row.get("runtime_owner", "")).strip_edges().is_empty() \
+				or str(row.get("spot_field", "")) == "runtime_object_manifest_entries":
 			continue
 		rows.append(_manifest_semantic_row(row))
 	rows.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:

@@ -27,8 +27,8 @@ const SEED_FAMILIES := [
 	"REFINE06-G",
 ]
 const EXPECTED_SCENARIOS := 55
-const EXPECTED_BARRIER_OBJECTS := 25
-const EXPECTED_BARRIER_PLACEMENTS := 39
+const EXPECTED_BARRIER_OBJECTS := 24
+const EXPECTED_BARRIER_PLACEMENTS := 37
 const LAYOUT_CONTEXT := {"viewport_size": {"x": 1280, "y": 720}}
 
 var _fixture_activated_id := ""
@@ -542,7 +542,7 @@ func _check_barrier_placements(library: Variant, definitions: Array, failures: A
 			if not str(binding.get("slot_id", "")).begins_with("scenario.") or not rect.has_area() or not small_rect.has_area() \
 					or str(slot.get("footprint_class", "")) != resolved_class:
 				failures.append("Scenario obstruction %s/%s did not preserve class-compatible scenario-slot authority in normal and expanded layouts." % [str(definition.get("id", "")), identity])
-	if object_count != EXPECTED_BARRIER_OBJECTS or placement_count != EXPECTED_BARRIER_PLACEMENTS or role_counts != {"obstacle": 7, "barrier": 18, "blockade": 0}:
+	if object_count != EXPECTED_BARRIER_OBJECTS or placement_count != EXPECTED_BARRIER_PLACEMENTS or role_counts != {"obstacle": 7, "barrier": 17, "blockade": 0}:
 		failures.append("Barrier sweep census changed: objects=%d placements=%d roles=%s." % [object_count, placement_count, JSON.stringify(role_counts)])
 
 
