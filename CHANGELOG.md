@@ -51,7 +51,8 @@ metadata read `0.6.0`.
   one of three explicit draw layers. F1 now toggles slot placement mode itself,
   F2 continues to hide or restore its panel, and F9 loads a random environment
   with a compatible exact scenario from any active Environment Library room.
-  The Leave object remains selectable and usable while placement mode is on. The
+  The Leave object remains selectable and draggable while placement mode is on,
+  while double-click or Enter still uses it to leave the room. The
   resulting live authority contains 521 raw source/template positions, 368
   reachable room-shared positions, and 604 scenario-local positions for 972
   unique manual entries.

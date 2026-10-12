@@ -229,16 +229,24 @@ func _run() -> void:
 	)
 	run_state.bankroll = 777
 	run_state.inventory = [{"id": "lucky_keychain"}]
-	await _click_environment_object(environment_canvas, "travel:leave")
+	environment_canvas.set_developer_slot_family_visible("exit", true)
+	var leave_view := environment_canvas.interactable_object_view("travel:leave")
+	var leave_slot_id := str(leave_view.get("slot_id", ""))
+	var leave_center_before := environment_canvas.global_rect_for_object("travel:leave").get_center()
+	await _drag_environment_object(environment_canvas, "travel:leave", Vector2(-12.0, 0.0))
+	var leave_center_after := environment_canvas.global_rect_for_object("travel:leave").get_center()
+	var leave_placement := environment_canvas.developer_slot_placement_snapshot()
 	_check(
-		str(app.get("selected_object_id")) == "travel:leave"
+		not leave_slot_id.is_empty()
+			and str(leave_placement.get("selected_slot_id", "")) == leave_slot_id
+			and leave_center_after.distance_to(leave_center_before) > 0.5
 			and not (app.get("environment_test_overlay") as Control).visible,
-		"The first Leave click in slot placement mode must select the exit without moving its placement slot."
+		"Leave must remain selectable and draggable through its normal exit slot while placement mode is active."
 	)
-	await _click_environment_object(environment_canvas, "travel:leave")
+	await _double_click_environment_object(environment_canvas, "travel:leave")
 	await _settle(2)
 	overlay = app.get("environment_test_overlay") as Control
-	_check(overlay != null and overlay.visible and menu.is_visible_in_tree(), "A selected Leave object must reopen the Environment Library while slot placement mode remains active.")
+	_check(overlay != null and overlay.visible and menu.is_visible_in_tree(), "Double-clicking Leave must reopen the Environment Library while slot placement mode remains active.")
 	_check(
 		_selected_metadata(archetypes) == random_archetype_id
 			and _selected_metadata(app.get("environment_test_scenario_option") as OptionButton) == random_scenario_id,
@@ -411,13 +419,40 @@ func _send_key(keycode: Key, settle_frames: int = 1) -> void:
 	await _settle(settle_frames)
 
 
-func _click_environment_object(canvas: PixelSceneCanvas, object_id: String) -> void:
+func _drag_environment_object(canvas: PixelSceneCanvas, object_id: String, delta: Vector2) -> void:
+	var start := canvas.global_rect_for_object(object_id).get_center()
+	var target := start + delta
+	var pressed := InputEventMouseButton.new()
+	pressed.button_index = MOUSE_BUTTON_LEFT
+	pressed.position = start
+	pressed.global_position = start
+	pressed.pressed = true
+	root.push_input(pressed, true)
+	await process_frame
+	var motion := InputEventMouseMotion.new()
+	motion.position = target
+	motion.global_position = target
+	motion.relative = delta
+	motion.button_mask = MOUSE_BUTTON_MASK_LEFT
+	root.push_input(motion, true)
+	await process_frame
+	var released := InputEventMouseButton.new()
+	released.button_index = MOUSE_BUTTON_LEFT
+	released.position = target
+	released.global_position = target
+	released.pressed = false
+	root.push_input(released, true)
+	await _settle(4)
+
+
+func _double_click_environment_object(canvas: PixelSceneCanvas, object_id: String) -> void:
 	var target := canvas.global_rect_for_object(object_id).get_center()
 	var pressed := InputEventMouseButton.new()
 	pressed.button_index = MOUSE_BUTTON_LEFT
 	pressed.position = target
 	pressed.global_position = target
 	pressed.pressed = true
+	pressed.double_click = true
 	root.push_input(pressed, true)
 	await process_frame
 	var released := InputEventMouseButton.new()

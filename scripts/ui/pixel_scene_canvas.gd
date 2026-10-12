@@ -1328,6 +1328,8 @@ func _update_developer_slot_placement_panel() -> void:
 			]
 	if not warnings.is_empty():
 		status_text += "; WARNING: %s" % "; ".join(warnings)
+	if _developer_slot_contains_object(slot_id, "travel:leave"):
+		status_text += "; drag to move / double-click or Enter to use"
 	developer_placement_label.text = "%s | %s | %s\n%s\n%s | %s | %s\n%s | %s | Size: %d%% | %s | %s" % [
 		str(foundation_snapshot.get("archetype_id", environment_id)),
 		str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", "main"))),
@@ -2307,59 +2309,39 @@ func _gui_input(event: InputEvent) -> void:
 		_set_hovered_object(object_id_at_local_position((event as InputEventScreenDrag).position))
 
 
-# The placement overlay normally consumes every pointer/key event. Keep the
-# Environment Library's Leave object on a small two-step interaction contract:
-# the first click selects it, and another click (or Enter) activates it. Holding
-# Shift bypasses this exception so the underlying exit slot can still be moved.
+# The placement overlay keeps ordinary click/drag ownership of Leave so its
+# exit slot remains selectable and movable. A deliberate double-click (or Enter
+# after selecting its slot/object) uses the exit without disabling placement.
 func _handle_developer_placement_safe_exit_input(event: InputEvent) -> bool:
 	const SAFE_EXIT_OBJECT_ID := "travel:leave"
 	var active_drag := developer_slot_dragging or developer_placement_dragging
 	var pending_edit := developer_slot_pending_rect.has_area() or developer_placement_pending_rect.has_area()
 	if event.is_action_pressed("ui_accept") \
-			and selected_object_id == SAFE_EXIT_OBJECT_ID \
+			and _developer_safe_exit_is_selected() \
 			and not active_drag \
 			and not pending_edit:
+		object_focused.emit(SAFE_EXIT_OBJECT_ID)
 		object_activated.emit(SAFE_EXIT_OBJECT_ID)
 		return true
+	if active_drag:
+		return false
 	var local_position := Vector2.ZERO
-	var pressed := false
-	var bypass_for_placement := false
-	if event is InputEventMouseMotion:
-		if active_drag:
-			return false
-		var motion := event as InputEventMouseMotion
-		if motion.shift_pressed:
-			return false
-		if not _developer_safe_exit_has_local_point(motion.position):
-			return false
-		_set_hovered_object(SAFE_EXIT_OBJECT_ID)
-		return true
 	if event is InputEventMouseButton:
 		var mouse := event as InputEventMouseButton
-		if mouse.button_index != MOUSE_BUTTON_LEFT:
+		if mouse.button_index != MOUSE_BUTTON_LEFT or not mouse.pressed or not mouse.double_click:
 			return false
 		local_position = mouse.position
-		pressed = mouse.pressed
-		bypass_for_placement = mouse.shift_pressed
 	elif event is InputEventScreenTouch:
 		var touch := event as InputEventScreenTouch
+		if not touch.pressed or not touch.double_tap:
+			return false
 		local_position = touch.position
-		pressed = touch.pressed
 	else:
 		return false
-	if bypass_for_placement or not _developer_safe_exit_has_local_point(local_position):
+	if not _developer_safe_exit_has_local_point(local_position):
 		return false
-	if not pressed:
-		return true
-	var activate := selected_object_id == SAFE_EXIT_OBJECT_ID
-	if developer_slot_placement_mode:
-		_finish_developer_slot_placement_edit()
-	elif developer_placement_mode:
-		_finish_developer_placement_edit()
-	set_selected_object(SAFE_EXIT_OBJECT_ID, false)
 	object_focused.emit(SAFE_EXIT_OBJECT_ID)
-	if activate:
-		object_activated.emit(SAFE_EXIT_OBJECT_ID)
+	object_activated.emit(SAFE_EXIT_OBJECT_ID)
 	return true
 
 
@@ -2369,6 +2351,12 @@ func _developer_safe_exit_has_local_point(local_position: Vector2) -> bool:
 		and bool(safe_exit.get("interactive", true)) \
 		and bool(safe_exit.get("visible", true)) \
 		and _interaction_rect_for_object(safe_exit).has_point(_local_to_board_position(local_position))
+
+
+func _developer_safe_exit_is_selected() -> bool:
+	if developer_slot_placement_mode:
+		return _developer_slot_contains_object(developer_slot_selected_id, "travel:leave")
+	return developer_placement_mode and selected_object_id == "travel:leave"
 
 
 # Buttons inside the placement menu own keyboard focus while they are used.
@@ -3021,6 +3009,16 @@ func _developer_slot_occupant_records(slot_id: String) -> Array:
 		if str(object_data.get("slot_id", "")) == slot_id:
 			occupants.append(object_data)
 	return occupants
+
+
+func _developer_slot_contains_object(slot_id: String, object_id: String) -> bool:
+	if slot_id.is_empty() or object_id.is_empty():
+		return false
+	for object_value in _developer_slot_occupant_records(slot_id):
+		if typeof(object_value) == TYPE_DICTIONARY \
+				and str((object_value as Dictionary).get("id", "")) == object_id:
+			return true
+	return false
 
 
 func _developer_slot_primary_label(slot: Dictionary) -> String:
