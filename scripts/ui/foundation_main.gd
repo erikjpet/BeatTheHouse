@@ -15,6 +15,7 @@ const BuildIdentityScript := preload("res://scripts/core/build_identity.gd")
 const DEFAULT_SEED := "FOUNDATION-UI-SEED"
 const GENERATED_RUN_START_ATTEMPTS := 8
 const AUTOSAVE_SLOT := "foundation_ui_autosave"
+const TERMINAL_RESUME_CHECKPOINT_FLAG := "terminal_resume_checkpoint_saved"
 const RELEASE_MENU_FRAMING := "Fictional casino roguelike. Simulated gambling only; no real-money wagering or cash prizes."
 const ACTION_CATEGORY_GAMES := "games"
 const ACTION_CATEGORY_EVENTS := "events"
@@ -6454,9 +6455,13 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	environment_runtime_active_keys_scratch.clear()
 	environment_runtime_scheduler.clear()
 	run_state = loaded
-	var recovered_broken_environment := not _environment_is_playable(run_state)
-	var broken_environment_requires_map := recovered_broken_environment and not _recover_unplayable_environment()
-	if broken_environment_requires_map:
+	var loaded_terminal := run_state.is_terminal()
+	var recovered_broken_environment := false
+	var broken_environment_requires_map := false
+	if not loaded_terminal:
+		recovered_broken_environment = not _environment_is_playable(run_state)
+		broken_environment_requires_map = recovered_broken_environment and not _recover_unplayable_environment()
+	if loaded_terminal or broken_environment_requires_map:
 		current_game = null
 	else:
 		_set_active_game_binding()
@@ -6484,12 +6489,23 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	clear_interaction_focus()
 	var loaded_from_backup := str(load_result.get("outcome", "")) == SaveService.LOAD_OUTCOME_BACKUP
 	autosave_loadable_available = true
-	save_status_message = "Loaded backup save." if loaded_from_backup else "Loaded run."
-	_set_current_screen(SCREEN_TRAVEL if broken_environment_requires_map else SCREEN_ENVIRONMENT)
+	if loaded_terminal:
+		save_status_message = "Loaded completed backup." if loaded_from_backup else "Loaded completed run."
+	else:
+		save_status_message = "Loaded backup save." if loaded_from_backup else "Loaded run."
 	if procedural_music_player != null:
 		procedural_music_player.sync_authored_arrangement_state(run_state.music_arrangement_state)
 		procedural_music_player.sync_adaptive_tempo_state(run_state.music_tempo_state)
 		procedural_music_player.sync_music_choreography_state(run_state.music_choreography_state)
+	if loaded_terminal:
+		run_report_model = {}
+		run_report_model_key = ""
+		if run_state.run_status == RunState.RUN_STATUS_ENDED:
+			_route_ended_run_if_needed()
+		else:
+			_route_failed_run_if_needed()
+		return true
+	_set_current_screen(SCREEN_TRAVEL if broken_environment_requires_map else SCREEN_ENVIRONMENT)
 	if broken_environment_requires_map:
 		_show_message("That saved room was incomplete. Choose a safe destination on the map.")
 	else:
@@ -19343,12 +19359,17 @@ func _route_ended_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 		tutorial_exit_saved = _clear_tutorial_resume_slot()
 	_clear_terminal_interaction_state()
 	_set_current_screen(SCREEN_VICTORY)
-	_present_terminal_run_screen()
 	_record_challenge_completion_if_needed()
+	var terminal_checkpoint_saved := _save_terminal_resume_checkpoint()
+	_present_terminal_run_screen()
 	var message := str(terminal_result.get("message", "")).strip_edges()
 	if message.is_empty():
 		message = str(_run_report_outcome_snapshot().get("how", "The run is complete."))
-	_show_message(message if tutorial_exit_saved else "The lesson ended, but its profile completion could not be saved.")
+	if not tutorial_exit_saved:
+		message = "The lesson ended, but its profile completion could not be saved."
+	elif not terminal_checkpoint_saved:
+		message = "%s The completed run could not be saved to the Resume Slot." % message
+	_show_message(message)
 	if _tutorial_bronze_home_handoff_ready() and not tutorial_meta_home_handoff_scheduled:
 		tutorial_meta_home_handoff_scheduled = true
 		call_deferred("_enter_tutorial_meta_home_handoff")
@@ -19392,12 +19413,36 @@ func _route_failed_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 		tutorial_exit_saved = _clear_tutorial_resume_slot()
 	_clear_terminal_interaction_state()
 	_set_current_screen(SCREEN_FAILURE)
+	var terminal_checkpoint_saved := _save_terminal_resume_checkpoint()
 	_present_terminal_run_screen()
 	var message := run_state.run_failure_message
 	if message.strip_edges().is_empty():
 		message = str(terminal_result.get("message", "The run is over."))
-	_show_message(message if tutorial_exit_saved else "The lesson ended, but its profile completion could not be saved.")
+	if not tutorial_exit_saved:
+		message = "The lesson ended, but its profile completion could not be saved."
+	elif not terminal_checkpoint_saved:
+		message = "%s The completed run could not be saved to the Resume Slot." % message
+	_show_message(message)
 	return true
+
+
+func _save_terminal_resume_checkpoint() -> bool:
+	if run_state == null or not run_state.is_terminal():
+		return false
+	# Tutorials intentionally clear their Resume Slot after awarding the starter
+	# profile state. Practice and meta sessions follow their existing no-save rule.
+	if run_state.is_tutorial_run() or dev_game_test_mode or _is_meta_session():
+		return true
+	if bool(run_state.narrative_flags.get(TERMINAL_RESUME_CHECKPOINT_FLAG, false)):
+		return true
+	run_state.narrative_flags[TERMINAL_RESUME_CHECKPOINT_FLAG] = true
+	_mark_autosave_dirty()
+	if _write_foundation_run_save("Completed run saved.", true):
+		return true
+	# Leave a failed checkpoint eligible for retry if another terminal refresh or
+	# the main-menu transition gets a later chance to write it.
+	run_state.narrative_flags.erase(TERMINAL_RESUME_CHECKPOINT_FLAG)
+	return false
 
 
 func _present_terminal_run_screen() -> void:
