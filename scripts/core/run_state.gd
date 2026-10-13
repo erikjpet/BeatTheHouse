@@ -11181,19 +11181,21 @@ func rumor_facts(fact_class: String = "") -> Array:
 	return town_state.rumor_facts(fact_class) if town_state != null else []
 
 
-func rumors_for_venue(node_id: String, speaker_side: String, count: int = 1, rng: RngStream = null) -> Array:
-	return town_state.rumors_for_venue(node_id, speaker_side, count, rng) if town_state != null else []
+func rumors_for_venue(node_id: String, speaker_side: String, count: int = 1, rng: RngStream = null, fact_class: String = "") -> Array:
+	return town_state.rumors_for_venue(node_id, speaker_side, count, rng, fact_class) if town_state != null else []
 
 
-func hear_rumor(rumor_id: String) -> Dictionary:
+func hear_rumor(rumor_id: String, retain_environment_rumor: bool = false) -> Dictionary:
 	if town_state == null:
 		return {}
 	var heard: Dictionary = {}
+	var delivered_rumor: Dictionary = {}
 	for rumor_value in JsonCoerceScript._copy_array(current_environment.get("town_rumors", [])):
 		if typeof(rumor_value) != TYPE_DICTIONARY:
 			continue
 		var rumor: Dictionary = rumor_value
 		if str(rumor.get("id", "")) == rumor_id or str(rumor.get("fact_id", "")) == rumor_id:
+			delivered_rumor = rumor.duplicate(true)
 			heard = town_state.hear_rendered_rumor(rumor)
 			break
 	if heard.is_empty():
@@ -11208,6 +11210,8 @@ func hear_rumor(rumor_id: String) -> Dictionary:
 		if typeof(rumor_value) == TYPE_DICTIONARY and str((rumor_value as Dictionary).get("id", "")) == str(heard.get("id", "")):
 			continue
 		remaining.append(rumor_value)
+	if retain_environment_rumor and not delivered_rumor.is_empty():
+		remaining.append(delivered_rumor)
 	current_environment["town_rumors"] = remaining
 	var fact := rumor_fact(str(heard.get("fact_id", "")))
 	var payload := JsonCoerceScript._copy_dict(fact.get("payload", {}))
@@ -11457,7 +11461,13 @@ func _apply_town_rumor_generation_context(environment_data: Dictionary, rng: Rng
 		return
 	var rumors := JsonCoerceScript._copy_array(environment_data.get("town_rumors", []))
 	if rumors.is_empty():
-		rumors = rumors_for_venue(node_id, _town_speaker_side(str(environment_data.get("archetype_id", node_id))), 1, rng)
+		var speaker_side := _town_speaker_side(str(environment_data.get("archetype_id", node_id)))
+		# Word from Across Town is a destination lead. Prefer a live scenario fact
+		# so the named place always comes with its current situation, while retaining
+		# the broader rumor fallback for worlds with no eligible scenario lead.
+		rumors = rumors_for_venue(node_id, speaker_side, 1, rng, "scenario")
+		if rumors.is_empty():
+			rumors = rumors_for_venue(node_id, speaker_side, 1, rng)
 	environment_data["town_rumors"] = rumors
 	if rumors.is_empty():
 		return

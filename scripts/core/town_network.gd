@@ -251,12 +251,15 @@ func rumor_facts(fact_class: String = "") -> Array:
 	return result
 
 
-func rumors_for_venue(node_id: String, speaker_side: String, count: int = 1, rng: RngStream = null) -> Array:
+func rumors_for_venue(node_id: String, speaker_side: String, count: int = 1, rng: RngStream = null, fact_class: String = "") -> Array:
 	var clean_node := node_id.strip_edges()
+	var clean_class := fact_class.strip_edges().to_lower()
 	var candidates: Array = []
 	for fact in rumor_facts():
 		var target_node_id := str(fact.get("target_node_id", ""))
 		if target_node_id.is_empty() or target_node_id == clean_node or heard_by_node.has(target_node_id):
+			continue
+		if not clean_class.is_empty() and str(fact.get("class", "")) != clean_class:
 			continue
 		if _rumor_fact_is_true(fact):
 			candidates.append(fact)

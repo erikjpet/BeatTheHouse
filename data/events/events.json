@@ -3407,6 +3407,7 @@
     "conditions": {
       "requires_available_rumor": true
     },
+    "retain_rumor_after_delivery": true,
     "payload": {
       "summary": "Word has traveled from another room.",
       "rumor_importance_line": "Worth knowing before you choose your next room.",
@@ -3416,9 +3417,7 @@
           "label": "Listen",
           "text": "The word reaches you clean.",
           "consequence_summary": "Map preview gains what you heard",
-          "consequences": {
-            "resolve_event": true
-          }
+          "consequences": {}
         }
       ]
     }

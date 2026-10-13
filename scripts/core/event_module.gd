@@ -522,7 +522,10 @@ func apply_event_result(run_state: RunState, result: Dictionary, external_rollba
 		var service_result: Dictionary = {}
 		match str(pre_hook.get("type", "")):
 			"hear_rumor":
-				run_state.hear_rumor(str(pre_hook.get("rumor_id", "")))
+				run_state.hear_rumor(
+					str(pre_hook.get("rumor_id", "")),
+					bool(pre_hook.get("retain_environment_rumor", false))
+				)
 			"crew_switch_reveal":
 				service_result = run_state.crew_switch_reveal_node(str(pre_hook.get("node_id", "")))
 			"crew_knuckles_stash":
@@ -732,7 +735,11 @@ func _consequence_deltas(consequences: Dictionary, story_entry: Dictionary, mess
 		deltas["event_hooks"].append(trigger_event)
 	var hear_rumor_id := str(consequences.get("hear_rumor_id", "")).strip_edges()
 	if not hear_rumor_id.is_empty():
-		deltas["event_hooks"].append({"type": "hear_rumor", "rumor_id": hear_rumor_id})
+		deltas["event_hooks"].append({
+			"type": "hear_rumor",
+			"rumor_id": hear_rumor_id,
+			"retain_environment_rumor": bool(definition.get("retain_rumor_after_delivery", false)),
+		})
 	return deltas
 
 

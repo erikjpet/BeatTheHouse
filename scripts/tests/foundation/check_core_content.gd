@@ -1981,15 +1981,37 @@ func _check_connected_town_foundation(library: ContentLibrary, failures: Array) 
 			return
 		seeded_bar = run_state.scenario_for_node("bar")
 	var scenario_rumor: Dictionary = {}
-	for rumor_value in run_state.rumors_for_venue("corner_store", "street", 64):
+	var scenario_rumors := run_state.rumors_for_venue("corner_store", "street", 64, null, "scenario")
+	for rumor_value in scenario_rumors:
 		if typeof(rumor_value) != TYPE_DICTIONARY:
 			continue
 		var rumor: Dictionary = rumor_value
+		if str(rumor.get("class", "")) != "scenario":
+			failures.append("Scenario-filtered town leads included a non-scenario rumor.")
+			return
 		if str(rumor.get("class", "")) == "scenario" and str(rumor.get("target_node_id", "")) == "bar":
 			scenario_rumor = rumor
 			break
 	if scenario_rumor.is_empty() or not run_state.town_state.rumor_trace_is_live(scenario_rumor):
 		failures.append("Scenario rumor did not carry a truth_trace resolving to live seeded state.")
+		return
+	if str(scenario_rumor.get("source_id", "")) != str(seeded_bar.get("id", "")) \
+			or not str(scenario_rumor.get("line", "")).contains(str(seeded_bar.get("display_name", ""))):
+		failures.append("Scenario rumor did not identify the current scenario at its named destination.")
+		return
+	var generated_rumor_host := {
+		"id": "scenario_rumor_preference_fixture",
+		"archetype_id": "corner_store",
+		"world_node_id": "corner_store",
+		"event_ids": [],
+		"resolved_event_ids": [],
+	}
+	run_state.apply_town_living_world_context(generated_rumor_host)
+	var generated_rumors := JsonCoerceScript._copy_array(generated_rumor_host.get("town_rumors", []))
+	if generated_rumors.is_empty() \
+			or str(JsonCoerceScript._copy_dict(generated_rumors[0]).get("class", "")) != "scenario" \
+			or not JsonCoerceScript._raw_string_array(generated_rumor_host.get("event_ids", [])).has("town_rumor_staff"):
+		failures.append("Word from Across Town generation did not prefer a live scenario hint.")
 		return
 	# Exercise the events in a dedicated base-room host. Adding fixture events to
 	# the generated active scenario would correctly invalidate its sealed semantic
@@ -2055,13 +2077,21 @@ func _check_connected_town_foundation(library: ContentLibrary, failures: Array) 
 		failures.append("Dave's existing bus delivery did not render a placeholder-free data-driven where-he's-been reference.")
 	var rumor_result := rumor_event.resolve(restored_rumor_run, restored_rumor_run.current_environment, "listen")
 	restored_rumor_run.complete_talk_event_resolution("town_rumor_staff")
-	var duplicate_rumor_result := rumor_event.resolve(restored_rumor_run, restored_rumor_run.current_environment, "listen")
 	var heard := restored_rumor_run.heard_rumor_for_node("bar")
 	run_state = restored_rumor_run
 	if not bool(rumor_result.get("ok", false)):
 		failures.append("Staff rumor event could not resolve through the existing event surface.")
-	if bool(duplicate_rumor_result.get("ok", false)) or not restored_rumor_run.pending_talk_event("town_rumor_staff").is_empty():
-		failures.append("Staff rumor conversation resolved more than once or survived its completed TalkDock choice.")
+	var retained_rumors := JsonCoerceScript._copy_array(restored_rumor_run.current_environment.get("town_rumors", []))
+	var retained_rumor := false
+	for rumor_value in retained_rumors:
+		if typeof(rumor_value) == TYPE_DICTIONARY and str((rumor_value as Dictionary).get("id", "")) == str(scenario_rumor.get("id", "")):
+			retained_rumor = true
+			break
+	if JsonCoerceScript._raw_string_array(restored_rumor_run.current_environment.get("resolved_event_ids", [])).has("town_rumor_staff") \
+			or not retained_rumor \
+			or not rumor_event.can_trigger(restored_rumor_run, restored_rumor_run.current_environment) \
+			or not restored_rumor_run.pending_talk_event("town_rumor_staff").is_empty():
+		failures.append("Listening to Word from Across Town removed its staff object or failed to close only the completed conversation.")
 	var heard_node := WorldMapScript.node_metadata_by_id(run_state.world_map, "bar")
 	if heard.is_empty() or JsonCoerceScript._copy_dict(heard_node.get("heard", {})).is_empty() or bool(heard_node.get("scouted", false)):
 		failures.append("Hearing a rumor did not write the distinct heard-tier map payload without granting full scouting.")

@@ -352,8 +352,8 @@ func rumor_facts(fact_class: String = "") -> Array:
 	return living_world.rumor_facts(fact_class) if living_world != null else []
 
 
-func rumors_for_venue(node_id: String, speaker_side: String, count: int = 1, rng: RngStream = null) -> Array:
-	return living_world.rumors_for_venue(node_id, speaker_side, count, rng) if living_world != null else []
+func rumors_for_venue(node_id: String, speaker_side: String, count: int = 1, rng: RngStream = null, fact_class: String = "") -> Array:
+	return living_world.rumors_for_venue(node_id, speaker_side, count, rng, fact_class) if living_world != null else []
 
 
 func hear_rumor(rumor_id: String) -> Dictionary:
