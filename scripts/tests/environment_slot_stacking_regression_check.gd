@@ -19,8 +19,9 @@ func _run() -> void:
 	_test_presentation_alias_replaces_source()
 	_test_family_isolation()
 	_test_renderer_suppresses_duplicate_slot()
+	_test_consumed_item_slot_stays_reserved()
 	if _failures.is_empty():
-		print("ENVIRONMENT STACKING CHECK cases=7 duplicate_slots=0 overflow=0 family_crossovers=0 ok=true")
+		print("ENVIRONMENT STACKING CHECK cases=8 duplicate_slots=0 overflow=0 family_crossovers=0 item_reflows=0 ok=true")
 		quit(0)
 		return
 	for failure in _failures:
@@ -166,6 +167,75 @@ func _test_renderer_suppresses_duplicate_slot() -> void:
 	var objects: Array = canvas.call("_objects_from_interactable_records", [alpha, beta])
 	_check(objects.size() == 1 and str(_dict(objects[0]).get("id", "")) == "alpha", "The render boundary accepted two objects in one slot.")
 	canvas.free()
+
+
+func _test_consumed_item_slot_stays_reserved() -> void:
+	var environment := {
+		"id": "stable_item_slots",
+		"archetype_id": "corner_store",
+		"kind": "shop",
+		"item_offers": [
+			{"id": "alpha"},
+			{"id": "beta"},
+			{"id": "gamma"},
+		],
+	}
+	var surface_map := EnvironmentPlacementScript.surface_map(environment)
+	var first := _authored_slot(surface_map, "fixed.item_shop_1")
+	var second := _authored_slot(surface_map, "fixed.item_shop_2")
+	var third := _authored_slot(surface_map, "fixed.item_shop_3")
+	var fourth := _authored_slot(surface_map, "fixed.item_shop_4")
+	if first.is_empty() or second.is_empty() or third.is_empty() or fourth.is_empty():
+		_check(false, "Corner Store item-slot stability fixture is missing its authored shelf slots.")
+		return
+	var initial_bindings := {
+		"item:alpha": _binding("item:alpha", first),
+		"item:beta": _binding("item:beta", second),
+		"item:gamma": _binding("item:gamma", third),
+	}
+	environment["layout"] = _authority(surface_map, initial_bindings)
+	var remaining_records := [
+		_item_record("beta"),
+		_item_record("gamma"),
+	]
+	environment["item_offers"] = [{"id": "beta"}, {"id": "gamma"}]
+	var after_pickup := EnvironmentSlotBinderScript.bind_base_records(environment, remaining_records, initial_bindings, {})
+	_check(bool(after_pickup.get("ok", false)), "Removing an item could not preserve the remaining shelf authority: %s" % JSON.stringify(after_pickup.get("errors", [])))
+	var after_bindings := _dict(after_pickup.get("slot_bindings", {}))
+	_check(str(_dict(after_bindings.get("item:alpha", {})).get("slot_id", "")) == "fixed.item_shop_1", "The acquired item's spawn slot was not retained as a dormant reservation.")
+	_check(str(_dict(after_bindings.get("item:beta", {})).get("slot_id", "")) == "fixed.item_shop_2", "The first remaining item moved into the acquired item's slot.")
+	_check(str(_dict(after_bindings.get("item:gamma", {})).get("slot_id", "")) == "fixed.item_shop_3", "The second remaining item changed its spawn position.")
+	_check(not _dict(after_pickup.get("object_rects", {})).has("item:alpha"), "The acquired item retained visible room geometry.")
+
+	var after_layout := _dict(after_pickup.get("validated_candidate_layout", {}))
+	environment["layout"] = after_layout
+	environment["item_offers"] = [{"id": "beta"}, {"id": "gamma"}, {"id": "delta"}]
+	var with_late_item := EnvironmentSlotBinderScript.bind_base_records(
+		environment,
+		[_item_record("beta"), _item_record("gamma"), _item_record("delta")],
+		after_bindings,
+		{}
+	)
+	_check(bool(with_late_item.get("ok", false)), "A later item could not bind around the dormant pickup slot: %s" % JSON.stringify(with_late_item.get("errors", [])))
+	var late_bindings := _dict(with_late_item.get("slot_bindings", {}))
+	_check(str(_dict(late_bindings.get("item:beta", {})).get("slot_id", "")) == "fixed.item_shop_2", "A later spawn moved an existing item from its original slot.")
+	_check(str(_dict(late_bindings.get("item:gamma", {})).get("slot_id", "")) == "fixed.item_shop_3", "A later spawn moved the final existing item from its original slot.")
+	_check(str(_dict(late_bindings.get("item:delta", {})).get("slot_id", "")) == "fixed.item_shop_4", "A later spawn reused the acquired item's reserved location.")
+
+
+func _item_record(item_id: String) -> Dictionary:
+	return {
+		"object_id": "item:%s" % item_id,
+		"object_type": "item",
+		"visual_type": "item",
+		"source_id": item_id,
+		"family": "fixed",
+		"slot_family": "fixed",
+		"placement_class": "shop_item",
+		"active": true,
+		"visible": true,
+		"interactive": true,
+	}
 
 
 func _authority(surface_map: Dictionary, bindings: Dictionary) -> Dictionary:

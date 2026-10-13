@@ -696,11 +696,20 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 		if object_rects.has(source_id):
 			object_rects[alias_id] = _dict(object_rects.get(source_id, {}))
 			object_rects.erase(source_id)
-	# This refresh is the complete live inventory. Drop resolved identities so their
-	# slots become available, while preserving existing abstract action rows.
+	# This refresh is the complete live inventory. Most resolved identities release
+	# their slots. Items are different: once merchandise or a pickup has appeared
+	# in the room, its slot remains a dormant reservation after acquisition. That
+	# keeps every neighboring item at its spawn position instead of compacting the
+	# shelf into the newly empty location during a later reconciliation.
+	var retained_binding_ids := current_record_ids.duplicate(true)
 	for binding_id_value in bindings.keys():
 		var binding_id := str(binding_id_value)
 		if not current_record_ids.has(binding_id):
+			var dormant_binding := _dict(bindings.get(binding_id_value, {}))
+			if _binding_reserves_consumed_item_slot(binding_id, dormant_binding):
+				retained_binding_ids[binding_id] = true
+				object_rects.erase(binding_id)
+				continue
 			bindings.erase(binding_id_value)
 			object_rects.erase(binding_id)
 			continue
@@ -726,7 +735,7 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 		elif requires_room and existing_mode == PRESENTATION_OVERFLOW:
 			bindings.erase(binding_id_value)
 			object_rects.erase(binding_id)
-	var guarded_existing := guard_unique_slot_bindings(bindings, current_record_ids, initial_occupancy, room_slots, "persisted base layout")
+	var guarded_existing := guard_unique_slot_bindings(bindings, retained_binding_ids, initial_occupancy, room_slots, "persisted base layout")
 	bindings = _dict(guarded_existing.get("slot_bindings", bindings))
 	var occupied := _dict(guarded_existing.get("occupied_slots", initial_occupancy))
 	warnings.append_array(_array(guarded_existing.get("warnings", [])))
@@ -814,7 +823,7 @@ static func bind_base_records(environment: Dictionary, records: Array, existing_
 		var slot_id := str(slot.get("id", ""))
 		occupied[slot_id] = object_id
 		bindings[object_id] = _room_binding(object_id, placement_class, slot_family, slot)
-	var guarded_final := guard_unique_slot_bindings(bindings, current_record_ids, initial_occupancy, room_slots, "base layout finalization")
+	var guarded_final := guard_unique_slot_bindings(bindings, retained_binding_ids, initial_occupancy, room_slots, "base layout finalization")
 	bindings = _dict(guarded_final.get("slot_bindings", bindings))
 	occupied = _dict(guarded_final.get("occupied_slots", occupied))
 	warnings.append_array(_array(guarded_final.get("warnings", [])))
@@ -2016,6 +2025,13 @@ static func _normalize_base_placement_class(environment: Dictionary, entry: Dict
 	if placement_class == "shop_item" and class_override != "shop_item" and _shop_item_order(environment, shop_identity) < 0:
 		return "surface_item"
 	return placement_class
+
+
+static func _binding_reserves_consumed_item_slot(identity: String, binding: Dictionary) -> bool:
+	if not identity.begins_with("item:") and not identity.begins_with("cage_gift_item:"):
+		return false
+	return str(binding.get("presentation_mode", "")) == PRESENTATION_ROOM \
+		and str(binding.get("placement_class", "")) in ["shop_item", "surface_item"]
 
 
 static func _slot_meets_minimum(slot: Dictionary, minimum_size: Vector2) -> bool:
