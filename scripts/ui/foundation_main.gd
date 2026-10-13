@@ -67,6 +67,8 @@ const GAME_SURFACE_REALTIME_REFRESH_INTERVAL_MSEC := 16
 const AUTOSAVE_INTERACTION_DEBOUNCE_MSEC := 250
 const AUTOSAVE_GAME_INTERACTION_DEBOUNCE_MSEC := 400
 const AUTOSAVE_MAX_DEFER_MSEC := 1500
+const ENVIRONMENT_RUNTIME_AUTOSAVE_DEBOUNCE_MSEC := 4000
+const ENVIRONMENT_RUNTIME_AUTOSAVE_MAX_DEFER_MSEC := 6000
 const AUTOSAVE_RETRY_BASE_MSEC := 1000
 const AUTOSAVE_RETRY_MAX_MSEC := 30000
 const AUTOSAVE_TRANSIENT_RETRY_LIMIT := 5
@@ -2387,7 +2389,16 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 		game.set_transient_state_key_context(previous_state_key_context)
 		_advance_alcohol_absorption()
 		var autosave_started_usec := Time.get_ticks_usec()
-		_autosave_foundation_run("Autosaved.")
+		if current_game == null:
+			# A running world cabinet can settle several spins while the player is
+			# watching the room. Coalesce those generations into one detached save
+			# snapshot; capturing the entire late-run graph after every reel result
+			# caused the visible cadence hitch even though file I/O was asynchronous.
+			_queue_environment_runtime_autosave()
+		else:
+			# An open game may own surface checkpoint state, so retain the ordinary
+			# immediate preparation boundary for the foreground presentation.
+			_autosave_foundation_run("Autosaved.")
 		environment_runtime_last_timing_usec = {
 			"schedule": schedule_finished_usec - frame_started_usec,
 			"resolve": resolve_finished_usec - resolve_started_usec,
@@ -2558,7 +2569,7 @@ func _commit_offscreen_environment_runtime_command(_environment_data: Dictionary
 		last_environment_runtime_result = _environment_runtime_result_receipt(result)
 	# Offscreen spins have no surface state to checkpoint. Queueing directly
 	# coalesces all three cabinets into one async save without touching the frame.
-	_queue_pending_autosave("Autosaved.", 1)
+	_queue_environment_runtime_autosave()
 	environment_runtime_last_timing_usec = {
 		"schedule": schedule_finished_usec - frame_started_usec,
 		"resolve": resolve_finished_usec - resolve_started_usec,
@@ -6267,7 +6278,16 @@ func _poll_async_foundation_save() -> void:
 		save_status_label.text = _save_status_text()
 
 
-func _queue_pending_autosave(status_text: String, defer_frames: int) -> void:
+func _queue_environment_runtime_autosave() -> void:
+	_queue_pending_autosave(
+		"Autosaved.",
+		1,
+		ENVIRONMENT_RUNTIME_AUTOSAVE_DEBOUNCE_MSEC,
+		ENVIRONMENT_RUNTIME_AUTOSAVE_MAX_DEFER_MSEC
+	)
+
+
+func _queue_pending_autosave(status_text: String, defer_frames: int, debounce_override_msec: int = -1, max_defer_override_msec: int = -1) -> void:
 	var now_msec := Time.get_ticks_msec()
 	if not pending_autosave or pending_autosave_first_queued_msec <= 0:
 		pending_autosave_first_queued_msec = now_msec
@@ -6279,8 +6299,9 @@ func _queue_pending_autosave(status_text: String, defer_frames: int) -> void:
 	# though capture itself is asynchronous. Giving rapid table actions a short
 	# quiet window coalesces them instead of making serialization contend with
 	# input, animation, and audio after every click.
-	var debounce_msec := AUTOSAVE_GAME_INTERACTION_DEBOUNCE_MSEC if current_screen == SCREEN_GAME else AUTOSAVE_INTERACTION_DEBOUNCE_MSEC
-	var max_deadline_msec := pending_autosave_first_queued_msec + AUTOSAVE_MAX_DEFER_MSEC
+	var debounce_msec := debounce_override_msec if debounce_override_msec >= 0 else AUTOSAVE_GAME_INTERACTION_DEBOUNCE_MSEC if current_screen == SCREEN_GAME else AUTOSAVE_INTERACTION_DEBOUNCE_MSEC
+	var max_defer_msec := max_defer_override_msec if max_defer_override_msec >= 0 else AUTOSAVE_MAX_DEFER_MSEC
+	var max_deadline_msec := pending_autosave_first_queued_msec + max_defer_msec
 	pending_autosave_not_before_msec = mini(now_msec + debounce_msec, max_deadline_msec)
 	save_status_message = "Autosave pending."
 	# Async generation state is player-visible HUD state. Keep the rendered label

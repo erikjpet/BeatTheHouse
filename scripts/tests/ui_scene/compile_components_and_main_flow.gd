@@ -1330,6 +1330,17 @@ func _check_talk_dock_component() -> bool:
 		parent.queue_free()
 		push_error("TalkDock let unrelated room props move a selected left-side actor conversation away from bottom-right: %s." % str(protected_focus_snapshot))
 		return false
+	# A selected object near the lower center can overlap every bottom footprint.
+	# Keep the conversation on the bottom and preserve its object-driven side;
+	# vertical escape to the top makes the dock appear detached from the room.
+	dock.locked_layout_side = "left"
+	dock.set_avoid_global_rect(Rect2(400, 520, 150, 110), "fixture:lower-center-left-focus", 475.0)
+	await process_frame
+	var crowded_bottom_snapshot := dock.current_snapshot()
+	if str(crowded_bottom_snapshot.get("layout_side", "")) != "right" or str(crowded_bottom_snapshot.get("layout_vertical", "")) != "bottom" or not bool(crowded_bottom_snapshot.get("anchored_bottom", false)):
+		parent.queue_free()
+		push_error("TalkDock escaped to the top instead of staying bottom-anchored beside the selected object: %s." % str(crowded_bottom_snapshot))
+		return false
 	dock.set_avoid_global_rect(Rect2(1050, 520, 150, 110), "fixture:right-focus")
 	await process_frame
 	var right_focus_snapshot := dock.current_snapshot()

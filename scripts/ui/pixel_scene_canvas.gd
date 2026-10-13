@@ -54,6 +54,12 @@ const GRAND_CASINO_FIXED_GAME_VISUAL_SIZES := {
 	"fixed.game_table_left": Vector2(72.0, 48.0),
 	"fixed.game_table_right": Vector2(72.0, 48.0),
 }
+const SLOT_MACHINE_WORLD_VISUAL_SIZES := {
+	"classic_3_reel": Vector2(116.0, 88.0),
+	"line_5x3": Vector2(142.0, 112.0),
+	"video_feature": Vector2(148.0, 120.0),
+}
+const SLOT_MACHINE_COMPACT_SCALE_FLOOR := 0.82
 const DEVELOPER_PANEL_MARGIN := 8.0
 const DEVELOPER_PANEL_MIN_WIDTH := 320.0
 const DEVELOPER_PANEL_PREFERRED_WIDTH := 552.0
@@ -149,6 +155,7 @@ const WEB_GRAND_CASINO_IDLE_ANIMATION_FPS := 15.0
 const DEVELOPER_DRAG_REDRAW_INTERVAL_MSEC := 33
 const ITEM_ICON_TEXTURE_CACHE_LIMIT := 32
 const SLOT_PROP_STATIC_LAYER_CACHE_LIMIT := 64
+const SLOT_PROP_PREVIEW_LAYER_CACHE_LIMIT := 64
 const CHARACTER_IDLE_PROFILE_CACHE_LIMIT := 768
 const CHARACTER_IDLE_GESTURE_SEGMENT_COUNT := 12
 const CHARACTER_IDLE_BLINK_SEGMENT_COUNT := 10
@@ -208,6 +215,8 @@ var fit_draw_text_cache: Dictionary = {}
 var object_animation_phase_cache: Dictionary = {}
 var character_idle_profile_cache: Dictionary = {}
 var slot_prop_static_layer_cache: Dictionary = {}
+var slot_prop_preview_layer_cache: Dictionary = {}
+var slot_prop_preview_layer_rebuild_count := 0
 var actor_route_started_at_cache: Dictionary = {}
 var actor_position_receipt_cache: Dictionary = {}
 var actor_position_route_room_key := ""
@@ -1936,6 +1945,8 @@ func debug_soak_snapshot() -> Dictionary:
 		"object_animation_phase_cache_size": object_animation_phase_cache.size(),
 		"character_idle_profile_cache_size": character_idle_profile_cache.size(),
 		"slot_prop_static_layer_cache_size": slot_prop_static_layer_cache.size(),
+		"slot_prop_preview_layer_cache_size": slot_prop_preview_layer_cache.size(),
+		"slot_prop_preview_layer_rebuild_count": slot_prop_preview_layer_rebuild_count,
 		"actor_route_started_at_cache_size": actor_route_started_at_cache.size(),
 		"actor_route_time": actor_route_time,
 		"background_texture_loaded": background_texture != null,
@@ -1964,6 +1975,7 @@ func reset_performance_counters() -> void:
 	developer_slot_overlay_cache_rebuild_count = 0
 	developer_slot_overlap_audit_count = 0
 	object_label_layout_rebuild_count = 0
+	slot_prop_preview_layer_rebuild_count = 0
 
 
 func performance_live_status() -> Dictionary:
@@ -2083,8 +2095,12 @@ func apply_interactable_object_state_patch(object_id: String, object_state: Dict
 			continue
 		interaction_record["status_summary"] = str(object_state.get("status_summary", ""))
 		interaction_record["state_badge"] = str(object_state.get("state_badge", ""))
-		interaction_record["runtime_state"] = runtime_state.duplicate(true)
-		interaction_record["visual_state"] = visual_state.duplicate(true)
+		# Both canvas projections treat these dictionaries as immutable. Reuse the
+		# one detached copy so an autoplay result does not recursively copy the reel,
+		# win-cell, bonus, and timeline payload a second time on the presentation
+		# frame.
+		interaction_record["runtime_state"] = runtime_state
+		interaction_record["visual_state"] = visual_state
 		patched = true
 		break
 	if patched:
@@ -7884,6 +7900,9 @@ func _update_drunk_distortion_protected_rects() -> void:
 func _natural_model_rect_for_object(object_data: Dictionary) -> Rect2:
 	var slot_rect := _board_rect_for_object(object_data)
 	var object_scale := _scene_object_slot_scale(object_data)
+	var slot_machine_visual_rect := _slot_machine_world_visual_rect(object_data, slot_rect, object_scale)
+	if slot_machine_visual_rect.has_area():
+		return slot_machine_visual_rect
 	if bool(object_data.get("fixed_slot_geometry", false)):
 		var fixed_visual_rect := _grand_casino_fixed_game_visual_rect(object_data, slot_rect)
 		if fixed_visual_rect.has_area():
@@ -7907,6 +7926,43 @@ func _natural_model_rect_for_object(object_data: Dictionary) -> Rect2:
 	if placement_class not in ["wall_mounted", "hanging", "doorway"]:
 		center.y = slot_rect.end.y - model_size.y * 0.5
 	return Rect2(center - model_size * 0.5, model_size)
+
+
+# Slot anchors remain compact layout authority, but the displayed cabinet needs
+# enough room for its actual reel format. A 5x3 or feature cabinet cannot be
+# squeezed into the classic 3-reel silhouette without erasing the live result it
+# is meant to showcase. Developer scales below 1.0 stay useful but ease toward a
+# legibility floor instead of collapsing the reel cells to a few pixels.
+func _slot_machine_world_visual_rect(object_data: Dictionary, slot_rect: Rect2, object_scale: float) -> Rect2:
+	var visual := _slot_prop_visual_state(object_data)
+	var format_id := str(visual.get("machine_format", "")).strip_edges().to_lower()
+	if format_id.is_empty():
+		return Rect2()
+	var visual_size_value: Variant = SLOT_MACHINE_WORLD_VISUAL_SIZES.get(format_id, Vector2.ZERO)
+	var visual_size: Vector2 = visual_size_value if typeof(visual_size_value) == TYPE_VECTOR2 else Vector2.ZERO
+	if visual_size.x <= 0.0 or visual_size.y <= 0.0:
+		var reel_count := maxi(3, int(visual.get("reel_count", 3)))
+		var row_count := maxi(1, int(visual.get("row_count", 1)))
+		visual_size = Vector2(116.0 + float(maxi(0, reel_count - 3)) * 13.0, 88.0 + float(maxi(0, row_count - 1)) * 12.0)
+	var reel_overflow := maxi(0, int(visual.get("reel_count", 3)) - (3 if format_id == "classic_3_reel" else 5))
+	var row_overflow := maxi(0, int(visual.get("row_count", 1)) - (1 if format_id == "classic_3_reel" else 3))
+	visual_size += Vector2(float(reel_overflow) * 10.0, float(row_overflow) * 10.0)
+	var effective_scale := object_scale
+	if object_scale < 1.0:
+		effective_scale = lerpf(SLOT_MACHINE_COMPACT_SCALE_FLOOR, 1.0, clampf((object_scale - SLOT_OBJECT_SCALE_MIN) / (1.0 - SLOT_OBJECT_SCALE_MIN), 0.0, 1.0))
+	visual_size *= effective_scale
+	var placement_class := str(object_data.get("placement_class", "")).strip_edges()
+	if placement_class.is_empty():
+		placement_class = EnvironmentPlacementScript.classify(
+			object_data,
+			str(object_data.get("interaction_type", object_data.get("type", ""))),
+			str(object_data.get("id", "")),
+			str(object_data.get("prop", object_data.get("icon_key", "")))
+		)
+	var center := slot_rect.get_center()
+	if placement_class not in ["wall_mounted", "hanging", "doorway"]:
+		center.y = slot_rect.end.y - visual_size.y * 0.5
+	return Rect2(center - visual_size * 0.5, visual_size)
 
 
 func _scene_object_slot_scale(object_data: Dictionary) -> float:
@@ -10215,12 +10271,13 @@ func _draw_pull_tab_machine_prop(rect: Rect2, object_data: Dictionary, accent: C
 
 func _draw_slot_cabinet_prop(rect: Rect2, object_data: Dictionary, accent: Color, selected: bool, disabled: bool = false) -> void:
 	var static_layer := _slot_prop_static_layer(rect, object_data, accent)
+	var preview_layer := _slot_prop_preview_layer(object_data)
 	var phase := float(static_layer.get("phase", 0.0))
 	var profile: Dictionary = static_layer.get("profile", {})
 	var runtime := _slot_prop_runtime_state(object_data)
-	var preview := _slot_prop_preview_state(object_data)
-	var preview_phase := str(preview.get("phase", "idle"))
-	var live_preview := bool(preview.get("active", false)) or ["spinning", "win", "near_miss", "bonus", "nudge_chain"].has(preview_phase)
+	var preview: Dictionary = preview_layer.get("preview", {})
+	var preview_phase := str(preview_layer.get("phase", "idle"))
+	var live_preview := bool(preview_layer.get("active", false)) or ["spinning", "win", "near_miss", "bonus", "nudge_chain"].has(preview_phase)
 	var pulse_speed := 4.8 if preview_phase == "spinning" else 4.1 if live_preview else 3.5 if selected else 2.1
 	var pulse := 0.38 + absf(sin(flicker * pulse_speed + phase * TAU)) * (0.34 if live_preview else 0.30 if selected else 0.14)
 	var safe: Rect2 = static_layer.get("safe", rect)
@@ -10255,7 +10312,7 @@ func _draw_slot_cabinet_prop(rect: Rect2, object_data: Dictionary, accent: Color
 	draw_rect(screen, Color("#03040a"))
 	draw_rect(Rect2(screen.position + Vector2(2, 2), screen.size - Vector2(4, 4)), Color("#06080f"))
 	draw_rect(screen, Color(slot_light.r, slot_light.g, slot_light.b, 0.16 + pulse * 0.08), false, 1)
-	_draw_slot_prop_reels(screen, reel_count, row_count, profile, glass, phase, preview)
+	_draw_slot_prop_reels(screen, reel_count, row_count, profile, glass, phase, preview_layer)
 	_draw_slot_prop_nudge_chain_overlay(screen, preview, profile, phase, pulse)
 	if video_feature:
 		_draw_slot_prop_feature_panel(feature_panel, profile, pulse, phase, preview)
@@ -10295,6 +10352,13 @@ func _slot_prop_static_layer(rect: Rect2, object_data: Dictionary, fallback_acce
 	# Spin previews are animated independently and can be large. Key this static
 	# cabinet geometry only by the profile fields it actually consumes.
 	var visual := _slot_prop_visual_state(object_data)
+	var cached_value: Variant = slot_prop_static_layer_cache.get(object_id, {})
+	if typeof(cached_value) == TYPE_DICTIONARY:
+		var retained := cached_value as Dictionary
+		if is_same(retained.get("visual_ref", {}), visual) \
+				and retained.get("rect", Rect2()) == rect \
+				and retained.get("fallback_accent", Color.TRANSPARENT) == fallback_accent:
+			return retained
 	var signature := hash([
 		rect,
 		fallback_accent,
@@ -10306,10 +10370,10 @@ func _slot_prop_static_layer(rect: Rect2, object_data: Dictionary, fallback_acce
 		visual.get("row_count", null),
 		visual.get("cabinet_palette", {}),
 	])
-	var cached_value: Variant = slot_prop_static_layer_cache.get(object_id, {})
 	if typeof(cached_value) == TYPE_DICTIONARY:
 		var cached := cached_value as Dictionary
 		if int(cached.get("signature", -1)) == signature:
+			cached["visual_ref"] = visual
 			return cached
 	var profile := _slot_prop_profile(object_data, fallback_accent)
 	var phase := float(abs(hash(object_id)) % 1000) / 1000.0
@@ -10333,6 +10397,9 @@ func _slot_prop_static_layer(rect: Rect2, object_data: Dictionary, fallback_acce
 	var feature_strip := Rect2(body.position + Vector2(body.size.x * 0.18, body.size.y * (0.60 if classic else 0.66)), Vector2(body.size.x * 0.64, body.size.y * (0.08 if classic else 0.05)))
 	var layer := {
 		"signature": signature,
+		"visual_ref": visual,
+		"rect": rect,
+		"fallback_accent": fallback_accent,
 		"phase": phase,
 		"profile": profile,
 		"safe": safe,
@@ -10352,6 +10419,49 @@ func _slot_prop_static_layer(rect: Rect2, object_data: Dictionary, fallback_acce
 	if slot_prop_static_layer_cache.size() >= SLOT_PROP_STATIC_LAYER_CACHE_LIMIT and not slot_prop_static_layer_cache.has(object_id):
 		slot_prop_static_layer_cache.erase(slot_prop_static_layer_cache.keys()[0])
 	slot_prop_static_layer_cache[object_id] = layer
+	return layer
+
+
+# Decodes a newly published slot preview once. The environment canvas continues
+# redrawing autonomously for neon, reels, and cabinet motion, but steady frames
+# reuse the grid reference and a compact per-reel win mask instead of copying and
+# rescanning the preview payload for every visible cell.
+func _slot_prop_preview_layer(object_data: Dictionary) -> Dictionary:
+	var object_id := str(object_data.get("id", object_data.get("label", "generated_machine")))
+	var preview := _slot_prop_preview_state(object_data)
+	var cached_value: Variant = slot_prop_preview_layer_cache.get(object_id, {})
+	if typeof(cached_value) == TYPE_DICTIONARY:
+		var cached := cached_value as Dictionary
+		if is_same(cached.get("preview_ref", {}), preview):
+			return cached
+	var grid_value: Variant = preview.get("grid", [])
+	var grid: Array = grid_value as Array if typeof(grid_value) == TYPE_ARRAY else []
+	var reel_count := maxi(grid.size(), maxi(0, int(preview.get("reel_count", 0))))
+	var win_row_masks := PackedInt32Array()
+	win_row_masks.resize(reel_count)
+	var win_cells_value: Variant = preview.get("win_cells", [])
+	if typeof(win_cells_value) == TYPE_ARRAY:
+		for cell_value in win_cells_value as Array:
+			if typeof(cell_value) != TYPE_DICTIONARY:
+				continue
+			var cell := cell_value as Dictionary
+			var reel_index := int(cell.get("reel", -1))
+			var row_index := int(cell.get("row", -1))
+			if reel_index < 0 or reel_index >= win_row_masks.size() or row_index < 0 or row_index >= 31:
+				continue
+			win_row_masks[reel_index] = win_row_masks[reel_index] | (1 << row_index)
+	var layer := {
+		"preview_ref": preview,
+		"preview": preview,
+		"grid": grid,
+		"win_row_masks": win_row_masks,
+		"phase": str(preview.get("phase", "idle")),
+		"active": bool(preview.get("active", false)),
+	}
+	if slot_prop_preview_layer_cache.size() >= SLOT_PROP_PREVIEW_LAYER_CACHE_LIMIT and not slot_prop_preview_layer_cache.has(object_id):
+		slot_prop_preview_layer_cache.erase(slot_prop_preview_layer_cache.keys()[0])
+	slot_prop_preview_layer_cache[object_id] = layer
+	slot_prop_preview_layer_rebuild_count += 1
 	return layer
 
 
@@ -10544,11 +10654,11 @@ func _draw_slot_prop_topper(topper: Rect2, profile: Dictionary, pulse: float, ph
 		draw_string(font, topper.position + Vector2(4.0, topper.size.y * 0.66), _fit_draw_text(title, font, title_size, topper.size.x - 8.0), HORIZONTAL_ALIGNMENT_CENTER, topper.size.x - 8.0, title_size, C_YELLOW)
 
 
-func _draw_slot_prop_reels(screen: Rect2, reel_count: int, row_count: int, profile: Dictionary, glass: Color, phase: float, preview: Dictionary = {}) -> void:
+func _draw_slot_prop_reels(screen: Rect2, reel_count: int, row_count: int, profile: Dictionary, glass: Color, phase: float, preview_layer: Dictionary = {}) -> void:
 	var family := str(profile.get("family", ""))
 	var accent_color: Color = profile.get("accent", C_PINK)
 	var light_color: Color = profile.get("light", C_CYAN)
-	var preview_phase := str(preview.get("phase", "idle"))
+	var preview_phase := str(preview_layer.get("phase", "idle"))
 	var spin_active := preview_phase == "spinning"
 	var reel_gap := maxf(1.0, screen.size.x * 0.020)
 	var reel_w := (screen.size.x - reel_gap * float(reel_count + 1)) / float(reel_count)
@@ -10563,20 +10673,20 @@ func _draw_slot_prop_reels(screen: Rect2, reel_count: int, row_count: int, profi
 				var scroll := fposmod(flicker * (42.0 + float(i) * 5.0), cell_h)
 				for band in range(3):
 					var symbol_rect := Rect2(reel.position + Vector2(reel.size.x * 0.18, reel.size.y * 0.06 + float(band) * cell_h - scroll), Vector2(reel.size.x * 0.64, cell_h * 0.70))
-					_draw_slot_prop_symbol(symbol_rect, _slot_prop_preview_symbol(preview, i, band), family, i + band, phase, false)
+					_draw_slot_prop_symbol(symbol_rect, _slot_prop_preview_symbol(preview_layer, i, band), family, i + band, phase, false)
 			else:
 				var symbol := Rect2(reel.position + reel.size * 0.22, reel.size * 0.56)
-				_draw_slot_prop_symbol(symbol, _slot_prop_preview_symbol(preview, i, 0), family, i, phase, _slot_prop_preview_cell_highlight(preview, i, 0))
+				_draw_slot_prop_symbol(symbol, _slot_prop_preview_symbol(preview_layer, i, 0), family, i, phase, _slot_prop_preview_cell_highlight(preview_layer, i, 0))
 		else:
 			var cell_gap := maxf(1.0, reel.size.y * 0.035)
 			var cell_h := (reel.size.y - cell_gap * float(row_count + 1)) / float(row_count)
 			var scroll := fposmod(flicker * (38.0 + float(i) * 4.0), cell_h + cell_gap) if spin_active else 0.0
 			for row in range(row_count):
 				var cell := Rect2(reel.position + Vector2(reel.size.x * 0.18, cell_gap + float(row) * (cell_h + cell_gap) - scroll), Vector2(reel.size.x * 0.64, cell_h))
-				var symbol_id := _slot_prop_preview_symbol(preview, i, row + (1 if spin_active else 0))
+				var symbol_id := _slot_prop_preview_symbol(preview_layer, i, row + (1 if spin_active else 0))
 				if symbol_id == "BLANK" and row == 1:
 					symbol_id = "BUFFALO" if family == "buffalo" and i % 2 == 0 else "BALL"
-				var highlight := _slot_prop_preview_cell_highlight(preview, i, row)
+				var highlight := _slot_prop_preview_cell_highlight(preview_layer, i, row)
 				_draw_slot_prop_symbol(cell, symbol_id, family, i + row * 7, phase, highlight)
 			if spin_active:
 				draw_rect(reel, Color(light_color.r, light_color.g, light_color.b, 0.10 + absf(sin(flicker * 10.0 + float(i))) * 0.12))
@@ -10669,11 +10779,9 @@ func _draw_slot_prop_symbol(rect: Rect2, symbol: String, family: String, index: 
 		draw_string(font, rect.position + Vector2(1.0, rect.size.y * 0.68), _fit_draw_text(label, font, label_size, rect.size.x - 2.0), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 2.0, label_size, Color("#070812"))
 
 
-func _slot_prop_preview_symbol(preview: Dictionary, reel_index: int, row_index: int) -> String:
-	var grid_value: Variant = preview.get("grid", [])
-	if typeof(grid_value) != TYPE_ARRAY:
-		return "BLANK"
-	var grid: Array = grid_value as Array
+func _slot_prop_preview_symbol(preview_layer: Dictionary, reel_index: int, row_index: int) -> String:
+	var grid_value: Variant = preview_layer.get("grid", [])
+	var grid: Array = grid_value as Array if typeof(grid_value) == TYPE_ARRAY else []
 	if grid.is_empty():
 		return "BLANK"
 	var safe_reel := posmod(reel_index, grid.size())
@@ -10685,14 +10793,13 @@ func _slot_prop_preview_symbol(preview: Dictionary, reel_index: int, row_index: 
 	return str(column[posmod(row_index, column.size())])
 
 
-func _slot_prop_preview_cell_highlight(preview: Dictionary, reel_index: int, row_index: int) -> bool:
-	for cell_value in JsonCoerceScript._copy_array(preview.get("win_cells", [])):
-		if typeof(cell_value) != TYPE_DICTIONARY:
-			continue
-		var cell: Dictionary = cell_value
-		if int(cell.get("reel", -1)) == reel_index and int(cell.get("row", -1)) == row_index:
-			return true
-	return false
+func _slot_prop_preview_cell_highlight(preview_layer: Dictionary, reel_index: int, row_index: int) -> bool:
+	var masks_value: Variant = preview_layer.get("win_row_masks", PackedInt32Array())
+	if typeof(masks_value) != TYPE_PACKED_INT32_ARRAY:
+		return false
+	var masks := masks_value as PackedInt32Array
+	return reel_index >= 0 and reel_index < masks.size() and row_index >= 0 and row_index < 31 \
+		and (masks[reel_index] & (1 << row_index)) != 0
 
 
 func _draw_slot_prop_feature_strip(strip: Rect2, profile: Dictionary, pulse: float, phase: float, preview: Dictionary = {}) -> void:

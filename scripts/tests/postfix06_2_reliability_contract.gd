@@ -73,6 +73,7 @@ func _run() -> void:
 	var user_args := OS.get_cmdline_user_args()
 	_check_feature_pcm_budget()
 	if not user_args.has("--only-audio"):
+		_check_environment_runtime_autosave_coalescing()
 		await _check_permanent_autosave_failure()
 		await _check_inflight_new_generation_after_permanent_failure()
 		await _check_transient_autosave_backoff()
@@ -120,6 +121,35 @@ func _check_feature_pcm_budget() -> void:
 		_expect(int(cleared_policy.get("bytes", -1)) == 0, "RP-006 boundary %d: shared PCM telemetry retained bytes after run cleanup." % boundary_index)
 	_check_feature_pcm_lru_style_switch(player)
 	player.free()
+
+
+func _check_environment_runtime_autosave_coalescing() -> void:
+	var app := FoundationMainScript.new()
+	var started_msec := Time.get_ticks_msec()
+	app.call("_queue_environment_runtime_autosave")
+	var first_queued_msec := int(app.get("pending_autosave_first_queued_msec"))
+	var first_deadline_msec := int(app.get("pending_autosave_not_before_msec"))
+	_expect(
+		bool(app.get("pending_autosave"))
+			and int(app.get("autosave_dirty_generation")) == 1
+			and first_deadline_msec - started_msec >= 3500
+			and first_deadline_msec - started_msec <= 6100,
+		"World slot autoplay did not defer its full-run snapshot into a coalescing window."
+	)
+	app.call("_queue_environment_runtime_autosave")
+	var repeated_deadline_msec := int(app.get("pending_autosave_not_before_msec"))
+	_expect(
+		int(app.get("pending_autosave_first_queued_msec")) == first_queued_msec
+			and int(app.get("autosave_dirty_generation")) == 2
+			and repeated_deadline_msec <= first_queued_msec + 6000,
+		"Repeated world slot results did not coalesce under one bounded autosave deadline."
+	)
+	app.call("_queue_pending_autosave", "Player action.", 1)
+	_expect(
+		int(app.get("pending_autosave_not_before_msec")) <= Time.get_ticks_msec() + 1600,
+		"A player action did not pull a pending world-autoplay checkpoint back to the normal save deadline."
+	)
+	app.free()
 
 
 func _check_feature_pcm_lru_style_switch(player: ProceduralMusicPlayer) -> void:

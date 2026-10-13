@@ -886,6 +886,80 @@ func _check_canvas_contract() -> void:
 			and grand_game_visual.get_center().is_equal_approx(grand_game_anchor.get_center()),
 		"Grand Casino game artwork must use full cabinet scale without changing or offsetting its compact placement anchor."
 	)
+	var classic_slot_object := grand_game_object.duplicate(true)
+	classic_slot_object["visual_state"] = {
+		"machine_family": "pinball",
+		"machine_format": "classic_3_reel",
+		"reel_count": 3,
+		"row_count": 1,
+	}
+	var line_slot_object := grand_game_object.duplicate(true)
+	line_slot_object["visual_state"] = {
+		"machine_family": "buffalo",
+		"machine_format": "line_5x3",
+		"reel_count": 5,
+		"row_count": 3,
+	}
+	var feature_slot_object := grand_game_object.duplicate(true)
+	feature_slot_object["visual_state"] = {
+		"machine_family": "pinball",
+		"machine_format": "video_feature",
+		"reel_count": 5,
+		"row_count": 3,
+	}
+	var classic_slot_visual: Rect2 = canvas.call("_natural_model_rect_for_object", classic_slot_object)
+	var line_slot_visual: Rect2 = canvas.call("_natural_model_rect_for_object", line_slot_object)
+	var feature_slot_visual: Rect2 = canvas.call("_natural_model_rect_for_object", feature_slot_object)
+	_check(
+		classic_slot_visual.size.is_equal_approx(Vector2(116.0, 88.0))
+			and line_slot_visual.size.is_equal_approx(Vector2(142.0, 112.0))
+			and feature_slot_visual.size.is_equal_approx(Vector2(148.0, 120.0))
+			and classic_slot_visual.get_center().is_equal_approx(grand_game_anchor.get_center())
+			and line_slot_visual.get_center().is_equal_approx(grand_game_anchor.get_center())
+			and feature_slot_visual.get_center().is_equal_approx(grand_game_anchor.get_center()),
+		"World slot cabinets must select a readable footprint from the live 3-reel, 5x3, or feature format while retaining the compact placement anchor."
+	)
+	var compact_feature_visual: Rect2 = canvas.call("_slot_machine_world_visual_rect", feature_slot_object, grand_game_anchor, 0.5)
+	_check(
+		compact_feature_visual.size.is_equal_approx(Vector2(148.0, 120.0) * 0.82)
+			and compact_feature_visual.get_center().is_equal_approx(grand_game_anchor.get_center()),
+		"The smallest authored slot scale must retain a legible feature-cabinet design and its placement anchor."
+	)
+	var live_preview_object := feature_slot_object.duplicate(true)
+	live_preview_object["id"] = "game:slot:preview-cache"
+	(live_preview_object["visual_state"] as Dictionary)["slot_preview"] = {
+		"active": true,
+		"phase": "win",
+		"reel_count": 5,
+		"row_count": 3,
+		"grid": [["7", "BAR", "CHERRY"], ["7", "BAR", "CHERRY"], ["7", "BAR", "CHERRY"], ["BALL", "BAR", "CHERRY"], ["BALL", "BAR", "CHERRY"]],
+		"win_cells": [{"reel": 0, "row": 0}, {"reel": 1, "row": 0}, {"reel": 2, "row": 0}],
+	}
+	canvas.reset_performance_counters()
+	var retained_preview_layer: Dictionary = canvas.call("_slot_prop_preview_layer", live_preview_object)
+	canvas.call("_slot_prop_preview_layer", live_preview_object)
+	var retained_preview_stats := canvas.debug_soak_snapshot()
+	_check(
+		int(retained_preview_stats.get("slot_prop_preview_layer_rebuild_count", -1)) == 1
+			and str(canvas.call("_slot_prop_preview_symbol", retained_preview_layer, 1, 0)) == "7"
+			and bool(canvas.call("_slot_prop_preview_cell_highlight", retained_preview_layer, 2, 0))
+			and not bool(canvas.call("_slot_prop_preview_cell_highlight", retained_preview_layer, 4, 0)),
+		"Autoplay world rendering must retain one decoded preview layer across animation frames without changing symbols or win highlights."
+	)
+	var next_visual_state := (live_preview_object.get("visual_state", {}) as Dictionary).duplicate(true)
+	var next_preview := (next_visual_state.get("slot_preview", {}) as Dictionary).duplicate(true)
+	next_preview["phase"] = "spinning"
+	next_preview["win_cells"] = []
+	next_visual_state["slot_preview"] = next_preview
+	live_preview_object["visual_state"] = next_visual_state
+	var next_preview_layer: Dictionary = canvas.call("_slot_prop_preview_layer", live_preview_object)
+	var next_preview_stats := canvas.debug_soak_snapshot()
+	_check(
+		int(next_preview_stats.get("slot_prop_preview_layer_rebuild_count", -1)) == 2
+			and str(next_preview_layer.get("phase", "")) == "spinning"
+			and not bool(canvas.call("_slot_prop_preview_cell_highlight", next_preview_layer, 2, 0)),
+		"A published autoplay result must rebuild only its retained preview layer and clear stale win highlights."
+	)
 	var stale_canvas_object_id := "scenario::stale_canvas_visual"
 	var stale_canvas_objects: Array = canvas.call("_objects_from_foundation_snapshot", {
 		"archetype_id": "corner_store",

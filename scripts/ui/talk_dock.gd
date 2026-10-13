@@ -558,7 +558,7 @@ func set_avoid_global_rect(next_rect: Rect2, boundary_key: String = "", focus_x_
 		layout_boundary_key = clean_boundary_key
 	var placement := _best_protected_layout(_side_for_new_boundary(next_rect, focus_x_hint))
 	var next_side := str(placement.get("side", locked_layout_side))
-	var next_vertical := str(placement.get("vertical", locked_layout_vertical))
+	var next_vertical := "bottom"
 	if next_side != locked_layout_side or next_vertical != locked_layout_vertical:
 		if next_side != locked_layout_side:
 			layout_side_change_count += 1
@@ -571,15 +571,12 @@ func _best_protected_layout(preferred_side: String) -> Dictionary:
 	var other_side := "right" if preferred_side == "left" else "left"
 	var candidates := [
 		{"side": preferred_side, "vertical": "bottom"},
-		{"side": preferred_side, "vertical": "top"},
 		{"side": other_side, "vertical": "bottom"},
-		{"side": other_side, "vertical": "top"},
 	]
 	var best: Dictionary = candidates[0]
 	var best_score := INF
 	var best_focus_overlap := INF
 	var best_side_penalty := 2
-	var best_vertical_penalty := 2
 	for candidate_value in candidates:
 		var candidate: Dictionary = candidate_value
 		var layout := _expanded_layout_rects_for(str(candidate.get("side", "left")), str(candidate.get("vertical", "bottom")), true)
@@ -591,23 +588,18 @@ func _best_protected_layout(preferred_side: String) -> Dictionary:
 		for protected_rect in protected_global_rects:
 			if footprint.intersects(protected_rect):
 				score += footprint.intersection(protected_rect).get_area()
-		# With a live selected object, conversation placement follows the player's
-		# focus first: avoid it, use the opposite horizontal side, and stay at the
-		# bottom. The environment reserve then reflows other room objects around the
-		# chosen dock. This prevents unrelated scenario props from sending a lender's
-		# conversation to the top of the screen while their actor is selected below.
+		# Conversation placement is always bottom-anchored. A live selected object
+		# still chooses the horizontal side, while the environment reserve reflows
+		# other room objects around the chosen dock.
 		var side_penalty := 0 if str(candidate.get("side", "left")) == preferred_side else 1
-		var vertical_penalty := 0 if str(candidate.get("vertical", "bottom")) == "bottom" else 1
 		var better := score < best_score
 		if avoid_global_rect.has_area():
 			better = focus_overlap < best_focus_overlap \
 				or (is_equal_approx(focus_overlap, best_focus_overlap) and side_penalty < best_side_penalty) \
-				or (is_equal_approx(focus_overlap, best_focus_overlap) and side_penalty == best_side_penalty and vertical_penalty < best_vertical_penalty) \
-				or (is_equal_approx(focus_overlap, best_focus_overlap) and side_penalty == best_side_penalty and vertical_penalty == best_vertical_penalty and score < best_score)
+				or (is_equal_approx(focus_overlap, best_focus_overlap) and side_penalty == best_side_penalty and score < best_score)
 		if better:
 			best_focus_overlap = focus_overlap
 			best_side_penalty = side_penalty
-			best_vertical_penalty = vertical_penalty
 			best_score = score
 			best = candidate
 			if not avoid_global_rect.has_area() and is_zero_approx(score):
@@ -1160,6 +1152,7 @@ func _speaker_display_name() -> String:
 func _position_panel() -> void:
 	if panel == null:
 		return
+	locked_layout_vertical = "bottom"
 	if body_label != null:
 		body_label.max_lines_visible = 10 if _compact_layout_enabled() else 4
 	var previous_panel_rect := Rect2(panel.position, panel.size)
@@ -1175,7 +1168,7 @@ func _position_panel() -> void:
 		)
 		panel.size = collapsed_size
 		var collapsed_x := VIEWPORT_MARGIN.x if locked_layout_side == "left" else maxf(VIEWPORT_MARGIN.x, size.x - collapsed_size.x - VIEWPORT_MARGIN.x)
-		var collapsed_y := VIEWPORT_MARGIN.y if locked_layout_vertical == "top" else maxf(VIEWPORT_MARGIN.y, size.y - collapsed_size.y - VIEWPORT_MARGIN.y)
+		var collapsed_y := maxf(VIEWPORT_MARGIN.y, size.y - collapsed_size.y - VIEWPORT_MARGIN.y)
 		panel.position = Vector2(collapsed_x, collapsed_y)
 		_record_layout_position_change(previous_panel_rect, previous_portrait_rect)
 		_notify_occupied_rect_changed()
@@ -1192,10 +1185,10 @@ func _position_panel() -> void:
 
 
 func _expanded_layout_rects(reserve_maximum_capacity: bool) -> Dictionary:
-	return _expanded_layout_rects_for(locked_layout_side, locked_layout_vertical, reserve_maximum_capacity)
+	return _expanded_layout_rects_for(locked_layout_side, "bottom", reserve_maximum_capacity)
 
 
-func _expanded_layout_rects_for(side: String, vertical: String, reserve_maximum_capacity: bool) -> Dictionary:
+func _expanded_layout_rects_for(side: String, _vertical: String, reserve_maximum_capacity: bool) -> Dictionary:
 	var compact_layout := _compact_layout_enabled()
 	var available_size := Vector2(
 		maxf(280.0, size.x - VIEWPORT_MARGIN.x * 2.0),
@@ -1210,7 +1203,7 @@ func _expanded_layout_rects_for(side: String, vertical: String, reserve_maximum_
 	var portrait_x := VIEWPORT_MARGIN.x + 12.0
 	if side == "right":
 		portrait_x = maxf(VIEWPORT_MARGIN.x, size.x - portrait_size.x - VIEWPORT_MARGIN.x - 12.0)
-	var portrait_y := VIEWPORT_MARGIN.y if vertical == "top" else maxf(VIEWPORT_MARGIN.y, size.y - portrait_size.y - VIEWPORT_MARGIN.y)
+	var portrait_y := maxf(VIEWPORT_MARGIN.y, size.y - portrait_size.y - VIEWPORT_MARGIN.y)
 	var portrait_rect := Rect2(
 		Vector2(portrait_x, portrait_y),
 		portrait_size
@@ -1231,7 +1224,7 @@ func _expanded_layout_rects_for(side: String, vertical: String, reserve_maximum_
 	if side == "right":
 		panel_left = portrait_rect.position.x - panel_size.x + 12.0
 	panel_left = clampf(panel_left, VIEWPORT_MARGIN.x, maxf(VIEWPORT_MARGIN.x, size.x - panel_size.x - VIEWPORT_MARGIN.x))
-	var panel_y := VIEWPORT_MARGIN.y if vertical == "top" else maxf(VIEWPORT_MARGIN.y, size.y - panel_size.y - VIEWPORT_MARGIN.y)
+	var panel_y := maxf(VIEWPORT_MARGIN.y, size.y - panel_size.y - VIEWPORT_MARGIN.y)
 	var panel_rect := Rect2(Vector2(panel_left, panel_y), panel_size)
 	return {
 		"portrait_rect": portrait_rect,
@@ -1246,7 +1239,7 @@ func _reconsider_current_placement() -> void:
 	if next_side != locked_layout_side:
 		layout_side_change_count += 1
 	locked_layout_side = next_side
-	locked_layout_vertical = str(placement.get("vertical", locked_layout_vertical))
+	locked_layout_vertical = "bottom"
 
 
 func _estimated_body_line_count(panel_width: float) -> int:
