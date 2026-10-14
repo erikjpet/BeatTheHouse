@@ -31,7 +31,11 @@ static func tuning() -> Dictionary:
 	return _dictionary(data().get("tuning", {})).duplicate(true)
 
 
-static func apply_to_environment(run_state: RunState, environment: Dictionary) -> void:
+static func apply_to_environment(
+	run_state: RunState,
+	environment: Dictionary,
+	library: ContentLibrary = null
+) -> void:
 	if run_state == null or environment.is_empty():
 		return
 	if bool(run_state.story_flags.get("chain06_sal_item_taken", false)) \
@@ -64,7 +68,11 @@ static func apply_to_environment(run_state: RunState, environment: Dictionary) -
 		# Chain beats are projected after the base room layout exists. Reconcile
 		# physical icons only when that projection actually changes; ordinary event
 		# resolution must not rebuild identical room geometry.
-		environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(environment)
+		# Runtime beat handoffs need the incoming event's placement metadata just as
+		# initial room generation does. Without the library, a person can be
+		# misclassified as a floor fixture; strict venues then reject the binding and
+		# deliberately clear the whole derived room layout.
+		environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(environment, library)
 	_apply_cass_environment_effects(run_state, environment)
 	_apply_rourke_staff_register(run_state, environment)
 

@@ -620,7 +620,7 @@ func apply_event_result(run_state: RunState, result: Dictionary, external_rollba
 	if profile_stages:
 		profile_timing["event_hooks"] = Time.get_ticks_usec() - profile_stage_started_usec
 		profile_stage_started_usec = Time.get_ticks_usec()
-	CharacterChainModelScript.apply_to_environment(run_state, run_state.current_environment)
+	CharacterChainModelScript.apply_to_environment(run_state, run_state.current_environment, content_library)
 	if profile_stages:
 		profile_timing["character_chain"] = Time.get_ticks_usec() - profile_stage_started_usec
 		profile_stage_started_usec = Time.get_ticks_usec()
