@@ -2,7 +2,15 @@ extends SceneTree
 
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
+const BlackjackGameScript := preload("res://scripts/games/blackjack.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
+
+
+class LowDetailSurfaceProbe:
+	extends RefCounted
+
+	func surface_low_detail_idle() -> bool:
+		return true
 
 
 func _initialize() -> void:
@@ -47,6 +55,9 @@ func _run() -> void:
 		"game_id": "animation_liveness_game",
 		"surface_renderer": "blackjack",
 		"surface_animates_idle": true,
+		"surface_native_low_detail_idle": true,
+		"surface_native_idle_animation_fps": 15.0,
+		"between_hands": true,
 		"reduce_motion": false,
 	})
 	game_canvas.call("reset_performance_counters")
@@ -59,6 +70,23 @@ func _run() -> void:
 			or not bool(game_end.get("surface_animation_liveness_active", false)) \
 			or int(game_end.get("surface_animation_redraw_count", 0)) <= int(game_start.get("surface_animation_redraw_count", 0)):
 		push_error("Game-surface animation stopped without pointer input.")
+		quit(1)
+		return
+	if not bool(game_canvas.call("surface_low_detail_idle")):
+		push_error("Blackjack between-hand liveness no longer preserves its measured low-detail redraw cadence.")
+		quit(1)
+		return
+	if not is_equal_approx(float(game_canvas.call("surface_idle_animation_fps")), 15.0):
+		push_error("Blackjack between-hand liveness no longer uses its 15 FPS native idle cadence.")
+		quit(1)
+		return
+	var blackjack = BlackjackGameScript.new()
+	if bool(blackjack.call("_blackjack_character_cast_uses_low_detail", LowDetailSurfaceProbe.new(), {"between_hands": true})):
+		push_error("Blackjack between-hand liveness replaced its animated character cast with static stand-ins.")
+		quit(1)
+		return
+	if not bool(blackjack.call("_blackjack_character_cast_uses_low_detail", LowDetailSurfaceProbe.new(), {"between_hands": false})):
+		push_error("Blackjack discarded its low-detail cast outside the between-hand regression boundary.")
 		quit(1)
 		return
 

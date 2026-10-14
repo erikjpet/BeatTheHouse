@@ -3244,7 +3244,7 @@ func _draw_blackjack_table(surface, surface_state: Dictionary) -> void:
 func _draw_dealer_station(surface, surface_state: Dictionary) -> void:
 	var focus: Dictionary = _dealer_focus_for_surface_state(surface, surface_state)
 	var profile: Dictionary = surface_state.get("dealer_profile", {}) if typeof(surface_state.get("dealer_profile", {})) == TYPE_DICTIONARY else {}
-	var low_detail := TableVisualsScript._surface_low_detail_idle(surface)
+	var low_detail := _blackjack_character_cast_uses_low_detail(surface, surface_state)
 	var looking_away := bool(focus.get("lookaway_active", false))
 	var peek_window := bool(focus.get("peek_window_open", looking_away))
 	var blink := bool(focus.get("blink", false))
@@ -3288,7 +3288,7 @@ func _draw_dealer_station(surface, surface_state: Dictionary) -> void:
 func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 	var patrons: Array = surface_state.get("patrons", []) if typeof(surface_state.get("patrons", [])) == TYPE_ARRAY else []
 	var clock := TableVisualsScript._surface_clock(surface)
-	if TableVisualsScript._surface_low_detail_idle(surface):
+	if _blackjack_character_cast_uses_low_detail(surface, surface_state):
 		for i in range(patrons.size()):
 			if typeof(patrons[i]) != TYPE_DICTIONARY:
 				continue
@@ -3358,6 +3358,16 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 		_draw_patron_hand(surface, surface_state, patron, i)
 		surface.surface_label("cover", pos + Vector2(-18, 92), 8, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.62))
 		surface.surface_add_invisible_hit(Rect2(pos.x - 34, pos.y - 24, 68, 94), "blackjack_patron_cover", i)
+
+
+func _blackjack_character_cast_uses_low_detail(surface, surface_state: Dictionary) -> bool:
+	if not TableVisualsScript._surface_low_detail_idle(surface):
+		return false
+	# Keep the 12/15 FPS idle cadence for an inexpensive between-hand scene, but
+	# do not replace its cast with static stand-ins. The articulated renderer uses
+	# the same autonomous surface clock, so the dealer and every patron stay alive
+	# while the player reads the result or prepares the next wager.
+	return not bool(surface_state.get("between_hands", false))
 
 
 func _draw_patron_hand(surface, surface_state: Dictionary, patron: Dictionary, patron_index: int) -> void:
