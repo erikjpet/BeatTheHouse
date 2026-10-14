@@ -4689,7 +4689,7 @@
   },
   {
     "id": "chain06_rourke_named", "display_name": "Named", "type": "security", "interaction_mode": "interactable", "scopes": ["boss"],
-    "asset_path": "res://assets/art/events/pit_boss_sweep.png", "icon_key": "parking_note", "environment_prop": "paper_note", "start_summary": "A dealer says Rourke without moving his mouth.", "trigger": {"type": "manual"},
+    "asset_path": "res://assets/art/events/pit_boss_sweep.png", "icon_key": "parking_note", "environment_prop": "paper_note", "placement_class": "wall_mounted", "start_summary": "A dealer says Rourke without moving his mouth.", "trigger": {"type": "manual"},
     "conditions": {"archetype_ids": ["grand_casino"], "pressure_band": {"min_suspicion": 30, "min_bankroll": 160}, "requires_story_flags": {"chain06_rourke_noticed": true}, "missing_story_flags": ["chain06_rourke_named"]},
     "payload": {"summary": "A dealer says Rourke without moving his mouth.", "choices": [{"id": "keep_the_name", "label": "Keep the name", "text": "The house provides a name for the attention.", "consequences": {"story_flags_set": {"chain06_rourke_named": true}, "resolve_event": true}}]}
   },

@@ -46,6 +46,7 @@ static func apply_to_environment(
 	var previous_event_ids := JsonCoerceScript._string_array(environment.get("event_ids", []))
 	var event_ids := previous_event_ids.duplicate()
 	var prior_ids := JsonCoerceScript._string_array(environment.get(INJECTED_EVENT_IDS_KEY, []))
+	var layout_reconcile_required := false
 	for prior_id in prior_ids:
 		event_ids.erase(prior_id)
 	var injected: Array = []
@@ -65,16 +66,19 @@ static func apply_to_environment(
 		else:
 			environment[INJECTED_EVENT_IDS_KEY] = injected
 		environment["event_ids"] = event_ids
-		# Chain beats are projected after the base room layout exists. Reconcile
-		# physical icons only when that projection actually changes; ordinary event
-		# resolution must not rebuild identical room geometry.
-		# Runtime beat handoffs need the incoming event's placement metadata just as
-		# initial room generation does. Without the library, a person can be
-		# misclassified as a floor fixture; strict venues then reject the binding and
-		# deliberately clear the whole derived room layout.
-		environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(environment, library)
+		layout_reconcile_required = true
 	_apply_cass_environment_effects(run_state, environment)
+	var prior_ambient_line := str(environment.get(INJECTED_AMBIENT_LINE_KEY, ""))
 	_apply_rourke_staff_register(run_state, environment)
+	if str(environment.get(INJECTED_AMBIENT_LINE_KEY, "")) != prior_ambient_line:
+		layout_reconcile_required = true
+	if layout_reconcile_required:
+		# Chain beats and their ambient register are projected after the base room
+		# exists. Seal both mutations together so the manifest cannot describe the
+		# incoming beat while the layout still reflects the outgoing presentation.
+		# Runtime handoffs need catalog metadata just as initial generation does;
+		# otherwise strict venues can reject the new binding and clear the room.
+		environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(environment, library)
 
 
 static func advance(run_state: RunState, amount: int) -> void:

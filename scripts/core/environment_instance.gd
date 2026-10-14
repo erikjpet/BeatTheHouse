@@ -1120,14 +1120,18 @@ static func _event_placement_hints(event_ids: Array, library: ContentLibrary, en
 			"physical_person": not speaker.is_empty() and bool(speaker.get("environment_actor", true)),
 			"role": speaker_role,
 		}
+		var authored_placement_class := str(definition.get("placement_class", "")).strip_edges()
+		if authored_placement_class in EnvironmentPlacementScript.CLASSES:
+			hint["placement_class"] = authored_placement_class
 		var counter_staff: bool = visual_prop in ["clerk_counter", "host_station"] \
 				or event_id == "town_rumor_staff" and str(environment_data.get("archetype_id", "")) == "bar"
-		if has_counters and counter_staff and speaker_role in ["staff", "clerk", "cashier", "dealer", "vendor"]:
+		if not hint.has("placement_class") and has_counters and counter_staff \
+				and speaker_role in ["staff", "clerk", "cashier", "dealer", "vendor"]:
 			hint["placement_class"] = "behind_counter_person"
-		elif has_seats and str(environment_data.get("archetype_id", "")) == "bar" \
+		elif not hint.has("placement_class") and has_seats and str(environment_data.get("archetype_id", "")) == "bar" \
 				and visual_prop in ["bar_patron", "patron", "patron_talk", "rowdy_patron"]:
 			hint["placement_class"] = "seated_person"
-		elif not str(speaker.get("character_id", "")).strip_edges().is_empty():
+		elif not hint.has("placement_class") and not str(speaker.get("character_id", "")).strip_edges().is_empty():
 			hint["placement_class"] = "standing_person"
 		result["event:%s" % event_id] = hint
 	return result
@@ -1282,11 +1286,15 @@ static func _active_object_layout_entries(environment_data: Dictionary, surface_
 static func _environment_layer_layout_entries(environment_data: Dictionary) -> Array:
 	var entries: Array = []
 	var index := 0
-	if not str(environment_data.get("layer_ambient_line", "")).strip_edges().is_empty():
+	var ambient_line := str(environment_data.get("layer_ambient_line", "")).strip_edges()
+	var ambient_prop := str(environment_data.get("layer_ambient_prop", "")).strip_edges()
+	# Some systems add ambient narration without introducing a tangible room
+	# actor. Only authored visual props own physical manifest/slot authority.
+	if not ambient_line.is_empty() and not ambient_prop.is_empty():
 		entries.append({
 			"object_id": "environment_layer:ambient",
 			"object_type": "environment_layer",
-			"visual_prop": str(environment_data.get("layer_ambient_prop", "")).strip_edges(),
+			"visual_prop": ambient_prop,
 			"label": str(environment_data.get("layer_ambient_label", "")).strip_edges(),
 			"index": index,
 			"spot_field": "layer_spots",
