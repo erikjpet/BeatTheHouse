@@ -341,8 +341,14 @@ func _audit_binding(sample_id: String, entries: Array, slots_by_id: Dictionary, 
 			)
 			continue
 		var current_rect := rect_value as Rect2
+		var slot_family := str(room_binding.get("slot_family", "")).strip_edges().to_lower()
 		for prior_value in occupied_geometry:
 			var prior := _dict(prior_value)
+			# Exact scenario slots may intentionally share room geometry. The runtime
+			# preserves distinct slot ownership and deterministic z-order, so this is
+			# not a binding failure. Base-only overlaps remain release-gated below.
+			if slot_family == "scenario" or str(prior.get("slot_family", "")) == "scenario":
+				continue
 			var prior_rect: Rect2 = prior.get("rect", Rect2())
 			if current_rect.intersects(prior_rect):
 				var prior_slot_id := str(prior.get("slot_id", ""))
@@ -359,7 +365,7 @@ func _audit_binding(sample_id: String, entries: Array, slots_by_id: Dictionary, 
 						object_id,
 					]
 				)
-		occupied_geometry.append({"object_id": object_id, "slot_id": slot_id, "rect": current_rect})
+		occupied_geometry.append({"object_id": object_id, "slot_id": slot_id, "slot_family": slot_family, "rect": current_rect})
 	if sample_room_objects > max_room_objects:
 		max_room_objects = sample_room_objects
 		max_room_objects_sample = sample_id

@@ -92,7 +92,7 @@ func _run() -> void:
 		"rect": Rect2(700.0, 250.0, 20.0, 15.0),
 		"small_rect": Rect2(700.0, 250.0, 20.0, 15.0),
 	}], {}, label_only_errors)
-	var body_collision_errors: Array = []
+	var body_overlap_errors: Array = []
 	ScenarioLayoutResolverScript._validate_actor_routes({
 		"scenario::patrol_officer": {
 			"present": true,
@@ -108,12 +108,12 @@ func _run() -> void:
 		"identity": "fixed::physical_obstacle",
 		"rect": Rect2(700.0, 300.0, 20.0, 15.0),
 		"small_rect": Rect2(700.0, 300.0, 20.0, 15.0),
-	}], {}, body_collision_errors)
+	}], {}, body_overlap_errors)
 	if bool(resolved.get("ok", false)) \
 			and edge_contact_allowed \
 			and real_overlap_rejected \
 			and label_only_errors.is_empty() \
-			and not body_collision_errors.is_empty():
+			and body_overlap_errors.is_empty():
 		print("BACK_ALLEY_ROUTE_ENDPOINT_CHECK PASS")
 		quit(0)
 		return
@@ -125,6 +125,6 @@ func _run() -> void:
 		push_error("Placement preview accepted a meaningful routed-slot collision.")
 	for error_value in label_only_errors:
 		push_error("Label-only route contact was treated as a physical collision: %s" % str(error_value))
-	if body_collision_errors.is_empty():
-		push_error("A genuine route-body collision no longer failed closed.")
+	for error_value in body_overlap_errors:
+		push_error("A scenario route endpoint overlap was still treated as an error: %s" % str(error_value))
 	quit(1)

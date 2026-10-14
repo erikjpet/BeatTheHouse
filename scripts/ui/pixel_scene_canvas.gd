@@ -3541,9 +3541,9 @@ func _validate_developer_slot_placement_preview(refresh_panel: bool = true) -> v
 		return
 	# Manual placement is the one opportunity to inspect future capacity. Warn
 	# against every authored marker in this exact context, including currently
-	# empty and injected-content reserves. Ordinary alternative-stage overlap is
-	# advisory, but a live route endpoint must remain usable at its expanded
-	# small-screen size or scenario finalization would reject the room later.
+	# empty and injected-content reserves. Scenario-local overlap is always
+	# advisory: deterministic draw order and overlap cycling keep those objects
+	# usable. Shared route endpoints retain the stricter obstruction check.
 	for slot_value in _developer_slots(true):
 		var slot := slot_value as Dictionary
 		var slot_id := str(slot.get("id", ""))
@@ -3554,7 +3554,8 @@ func _validate_developer_slot_placement_preview(refresh_panel: bool = true) -> v
 			developer_slot_overlap_ids.append(slot_id)
 		var route_sensitive := _developer_slot_is_route_endpoint(developer_slot_selected_id) \
 				or _developer_slot_is_route_endpoint(slot_id)
-		if route_sensitive \
+		if not _developer_slot_overlap_is_allowed(selected_slot, slot) \
+				and route_sensitive \
 				and (_developer_slot_is_context_active(slot) or _developer_slot_is_route_endpoint(slot_id)) \
 				and _developer_slot_rects_meaningfully_intersect(
 					_developer_slot_expanded_rect(selected_visual_rect),
@@ -3565,6 +3566,11 @@ func _validate_developer_slot_placement_preview(refresh_panel: bool = true) -> v
 			developer_slot_valid = false
 	if refresh_panel:
 		_update_developer_placement_panel()
+
+
+func _developer_slot_overlap_is_allowed(selected_slot: Dictionary, other_slot: Dictionary) -> bool:
+	return _developer_slot_scope(selected_slot) == "scenario_local" \
+		or _developer_slot_scope(other_slot) == "scenario_local"
 
 
 func _developer_slot_is_route_endpoint(slot_id: String) -> bool:
@@ -6333,9 +6339,20 @@ func _object_layout_footprint(object_data: Dictionary, position: Vector2) -> Rec
 	return _clamp_board_rect(footprint)
 
 
+func _scene_object_is_scenario_owned(object_data: Dictionary) -> bool:
+	var object_id := str(object_data.get("id", ""))
+	var object_type := str(object_data.get("type", "")).to_lower()
+	return str(object_data.get("owner_namespace", "")).to_lower() == "scenario" \
+		or object_id.begins_with("scenario::") \
+		or str(object_data.get("slot_family", "")).to_lower() == "scenario" \
+		or object_type == "scenario" \
+		or object_type.begins_with("scenario_")
+
+
 func _scene_object_layout_snapshot(objects: Array) -> Dictionary:
 	var entries: Array = []
 	var overlaps: Array = []
+	var allowed_overlaps: Array = []
 	for index in range(objects.size()):
 		if typeof(objects[index]) != TYPE_DICTIONARY:
 			continue
@@ -6351,6 +6368,7 @@ func _scene_object_layout_snapshot(objects: Array) -> Dictionary:
 			"label_rect": _rect_to_snapshot(_resolved_label_rect_for_object(object_data, object_rect)),
 			"z_order": int(object_data.get("scenario_z_order", object_data.get("source_order", index))),
 			"layout_authority_identity": str(object_data.get("scenario_layout_authority_identity", "")),
+			"scenario_owned": _scene_object_is_scenario_owned(object_data),
 			"actor_route_stage": _copy_dictionary(object_data.get("actor_route_stage", {})),
 			"actor_route_position": _actor_route_position(object_data),
 		}
@@ -6363,15 +6381,22 @@ func _scene_object_layout_snapshot(objects: Array) -> Dictionary:
 				var intersection := a_rect.intersection(b_rect)
 				var area := maxf(0.0, intersection.size.x) * maxf(0.0, intersection.size.y)
 				if area > OBJECT_LAYOUT_MAX_OVERLAP_AREA:
-					overlaps.append({
+					var overlap := {
 						"a": str((entries[a] as Dictionary).get("id", "")),
 						"b": str((entries[b] as Dictionary).get("id", "")),
 						"area": area,
-					})
+					}
+					if bool((entries[a] as Dictionary).get("scenario_owned", false)) \
+							or bool((entries[b] as Dictionary).get("scenario_owned", false)):
+						allowed_overlaps.append(overlap)
+					else:
+						overlaps.append(overlap)
 	return {
 		"objects": entries,
 		"overlap_count": overlaps.size(),
 		"overlaps": overlaps,
+		"allowed_overlap_count": allowed_overlaps.size(),
+		"allowed_overlaps": allowed_overlaps,
 		"gap": OBJECT_LAYOUT_GAP,
 		"margin": OBJECT_LAYOUT_MARGIN,
 		"small_screen_mode": small_screen_mode,

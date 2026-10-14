@@ -1008,7 +1008,7 @@ func _check_route_endpoint_edge_contact_tolerance() -> void:
 	_check(
 		ScenarioLayoutResolverScript._expanded_overlaps("scenario::patrol_officer", actor_small, real_overlap)
 			and ScenarioLayoutResolverScript._overlap_identities("scenario::patrol_officer", actor_rect, actor_small, real_overlap) == ["scenario::back_alley_cruiser_parked_exit"],
-		"meaningful expanded route/exit overlap no longer fails closed"
+		"meaningful expanded route/exit overlap disappeared from layout audit diagnostics"
 	)
 
 

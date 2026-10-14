@@ -285,6 +285,12 @@ func _check_overlapping_play_selection(canvas: PixelSceneCanvas) -> void:
 	var overlap_position := Vector2(120.0, 350.0)
 	var hit_ids: Array = canvas.call("_object_ids_at_local_position", overlap_position)
 	_check(hit_ids.size() == 3 and hit_ids.has("event:town_rumor_staff") and hit_ids.has("scenario::darts_scorer") and hit_ids.has("travel:leave"), "Normal play hit testing must retain event, scenario, and travel controls at an authored overlap.")
+	var object_layout: Dictionary = canvas.call("_scene_object_layout_snapshot", canvas.call("_active_scene_objects"))
+	_check(
+		int(object_layout.get("allowed_overlap_count", -1)) == 2 \
+			and int(object_layout.get("overlap_count", -1)) == 1,
+		"Scenario-owned overlap must remain visible in diagnostics without becoming a room-layout error."
+	)
 	canvas.call("_focus_object_at_local_position", overlap_position)
 	var first_selected := canvas.selected_object_id
 	canvas.call("_focus_object_at_local_position", overlap_position)

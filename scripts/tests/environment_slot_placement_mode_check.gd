@@ -1209,6 +1209,11 @@ func _check_canvas_contract() -> void:
 		"Shared slots must not expose technical runtime identities as secondary Known roles."
 	)
 	_check(
+		bool(canvas.call("_developer_slot_overlap_is_allowed", future_phase_slot, fixed_slot))
+			and not bool(canvas.call("_developer_slot_overlap_is_allowed", fixed_slot, shared_chain_fixture)),
+		"Scenario-local slot overlap must be advisory while overlap between two room-shared slots remains protected."
+	)
+	_check(
 		str(canvas.call("_developer_slot_claimant_label", "meta_sal_shelf:0", "")) == "Sal's Shelf Slot 1",
 		"Changing pawn-shop stock must leave each shared shelf position with a clear owner-facing name."
 	)
