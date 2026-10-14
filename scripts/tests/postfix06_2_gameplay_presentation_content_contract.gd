@@ -118,10 +118,10 @@ func _load_game_definitions() -> void:
 		game_definitions[str(definition.get("id", ""))] = definition
 
 
-# GP-PF-003: stage a real pending authority delivery for every shared provider,
-# then exercise the provider's real retry and cancel commands. The separate
-# mismatch assertion keeps Foundation's pre-host identity check on the same
-# neutral/provider-aware player-text boundary.
+# GP-PF-003: stage a real pending authority delivery for every shared provider.
+# Providers with explicit recovery controls exercise retry/cancel; Blackjack
+# instead proves that its automatic rollback is silent. The separate mismatch
+# assertion keeps the remaining providers on the provider-aware text boundary.
 func _check_shared_sealed_action_copy() -> void:
 	for provider_value in SEALED_PROVIDERS:
 		var provider := provider_value as Dictionary
@@ -163,6 +163,14 @@ func _check_shared_sealed_action_copy() -> void:
 		var contract: Dictionary = game.sealed_action_authority_contract()
 		var retry_actions: Array = contract.get("retry_surface_actions", []) if typeof(contract.get("retry_surface_actions", [])) == TYPE_ARRAY else []
 		var cancel_actions: Array = contract.get("cancel_surface_actions", []) if typeof(contract.get("cancel_surface_actions", [])) == TYPE_ARRAY else []
+		if bool(contract.get("automatic_pending_recovery", false)):
+			if not retry_actions.is_empty() or not cancel_actions.is_empty():
+				failures.append("GP-PF-003: %s still exposes manual retry/cancel authority commands." % provider_id)
+			var recovered: Dictionary = host.call("_sealed_action_host_rollback_pending_delivery")
+			if not bool(recovered.get("handled", false)) or not str(recovered.get("message", "")).is_empty():
+				failures.append("GP-PF-003: %s did not recover its pending delivery silently: %s" % [provider_id, JSON.stringify(recovered)])
+			host.free()
+			continue
 		if retry_actions.is_empty() or cancel_actions.is_empty():
 			failures.append("GP-PF-003: %s lost its retry/cancel authority commands." % provider_id)
 			host.free()

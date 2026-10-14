@@ -1308,6 +1308,10 @@ func _enter_game_after_input_guard(clean_game_id: String, clean_state_key: Strin
 	current_game = game_module
 	current_game_state_key = clean_state_key
 	current_game.set_transient_state_key_context(clean_state_key)
+	if _current_game_uses_action_authority() and bool(action_authority_contract.get("automatic_pending_recovery", false)):
+		var entry_recovery := _sealed_action_host_rollback_pending_delivery()
+		if not bool(entry_recovery.get("ok", false)):
+			push_error("Blackjack could not restore its prior table state on entry: %s" % str(entry_recovery.get("diagnostic_detail", entry_recovery.get("error_code", "unknown"))))
 	_invalidate_environment_runtime_schedule(run_state.current_environment)
 	_sync_presented_bankroll_to_actual()
 	selected_action_category = ACTION_CATEGORY_GAMES
@@ -1825,6 +1829,11 @@ func _sealed_action_host_restored_candidate(snapshot: Dictionary, layout_context
 func _sealed_action_host_publish(candidate: RunState) -> bool:
 	_sealed_action_host.bind(self)
 	return _sealed_action_host._sealed_action_host_publish(candidate)
+
+
+func _sealed_action_host_rollback_pending_delivery() -> Dictionary:
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_rollback_pending_delivery()
 
 
 func _sealed_action_host_rejection(error_code: String, message: String, request_key: String = "") -> Dictionary:
@@ -12883,9 +12892,11 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		return
 	if current_action_uses_authority and not authority_delivery.is_empty():
 		if str(authority_delivery.get("action_id", "")) != action_id:
-			_show_message(PlayerTextScript.resolve("sealed_action.mismatch", {
+			_sealed_action_host_rollback_pending_delivery()
+			var mismatch_message := PlayerTextScript.resolve("sealed_action.stale") if bool(action_authority_contract.get("automatic_pending_recovery", false)) else PlayerTextScript.resolve("sealed_action.mismatch", {
 				"provider_label": current_game.get_display_name(),
-			}))
+			})
+			_show_message(mismatch_message)
 			_refresh()
 			return
 		# A synchronous prepared handoff already owns the fully validated candidate,
@@ -12896,6 +12907,7 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 			if not early_replay.is_empty():
 				if early_replay.has(resolved_action_authority_script.HOST_REPLAY_KEY) and _sealed_action_host_present_cached_replay(early_replay):
 					return
+				_sealed_action_host_rollback_pending_delivery()
 				_show_message(str(early_replay.get("message", PlayerTextScript.resolve("sealed_action.failed_closed"))))
 				_refresh()
 				return
@@ -12997,6 +13009,13 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	if debug_coin_pusher_host:
 		debug_host_timing["host_module_resolve"] = Time.get_ticks_usec() - debug_host_stage_started_usec
 		debug_host_stage_started_usec = Time.get_ticks_usec()
+	if current_action_uses_authority and not bool(result.get("ok", false)):
+		var automatic_recovery := _sealed_action_host_rollback_pending_delivery()
+		if not bool(automatic_recovery.get("ok", false)):
+			push_error("Blackjack could not restore its prior table state after a rejected action: %s" % str(automatic_recovery.get("diagnostic_detail", automatic_recovery.get("error_code", "unknown"))))
+		elif bool(automatic_recovery.get("handled", false)):
+			result["ui_state"] = automatic_recovery.get("ui_state", {})
+			result["preserve_surface_ui_state"] = true
 	if resolved_action_authority_script != null and result.has(resolved_action_authority_script.HOST_REPLAY_KEY):
 		if not _sealed_action_host_present_cached_replay(result):
 			result = _sealed_action_host_rejection("invalid_cache", "Sealed action replay did not match the canonical committed response.", str(result.get(resolved_action_authority_script.HOST_REQUEST_KEY, "")))
@@ -13323,6 +13342,11 @@ func _pending_wager_sealed_cancel_command() -> Dictionary:
 	var pending: Dictionary = ledger.get("pending_delivery", {}) if typeof(ledger.get("pending_delivery", {})) == TYPE_DICTIONARY else {}
 	if pending.is_empty():
 		return {}
+	if bool(action_authority_contract.get("automatic_pending_recovery", false)):
+		var automatic_recovery := _sealed_action_host_rollback_pending_delivery()
+		if bool(automatic_recovery.get("handled", false)):
+			automatic_recovery["message"] = "All-in wager canceled. Choose a smaller stake or another action."
+		return automatic_recovery
 	var cancel_actions: Array = action_authority_contract.get("cancel_surface_actions", []) if typeof(action_authority_contract.get("cancel_surface_actions", [])) == TYPE_ARRAY else []
 	if cancel_actions.is_empty() or str(cancel_actions[0]).is_empty():
 		return _sealed_action_host_rejection("invalid_intent", "The sealed provider has no cancellation action.", str(pending.get("request_key", "")))

@@ -273,6 +273,8 @@ func _sealed_action_host_in_place_session_intent(surface_action: String, index: 
 			return _sealed_action_host_rejection("internal_fail_closed", "The live table session could not be initialized.")
 		_sealed_action_host_store_ledger(_foundation.run_state, ledger)
 	if not (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
+		if _sealed_action_host_automatic_pending_recovery_enabled():
+			return {"_sealed_action_host_requires_transaction": true}
 		return _sealed_action_host_rejection("pending_delivery", "Retry or cancel the pending Blackjack action before changing the table.")
 	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
 	if surface_time_msec >= 0:
@@ -334,6 +336,54 @@ func _sealed_action_host_publish(candidate: RunState) -> bool:
 	return true
 
 
+func _sealed_action_host_automatic_pending_recovery_enabled() -> bool:
+	return bool(_foundation.action_authority_contract.get("automatic_pending_recovery", false))
+
+
+func _sealed_action_host_rollback_pending_candidate(candidate: RunState, ledger: Dictionary) -> Dictionary:
+	var pending_value: Variant = ledger.get("pending_delivery", {})
+	var pending: Dictionary = pending_value as Dictionary if typeof(pending_value) == TYPE_DICTIONARY else {}
+	if pending.is_empty():
+		return {"ok": true, "handled": false, "ledger": ledger}
+	var rolled_back: Dictionary = _foundation.ActionAuthorityScript.cancel_delivery_cow(ledger, pending)
+	if not bool(rolled_back.get("ok", false)):
+		return rolled_back
+	var restored_ledger: Dictionary = rolled_back.get("ledger", ledger)
+	_sealed_action_host_store_ledger(candidate, restored_ledger)
+	return {
+		"ok": true,
+		"handled": true,
+		"ledger": restored_ledger,
+		"ui_state": (restored_ledger.get("session", {}) as Dictionary).duplicate(true),
+	}
+
+
+# Restores the table snapshot that preceded a failed delivery without exposing
+# the authority protocol as a player choice. The original error still reaches
+# the normal result message; only the internal pending state is cleared here.
+func _sealed_action_host_rollback_pending_delivery() -> Dictionary:
+	if not _sealed_action_host_automatic_pending_recovery_enabled() or _foundation.run_state == null:
+		return {"ok": true, "handled": false}
+	var candidate := _sealed_action_host_transaction_candidate()
+	if candidate == null:
+		return _sealed_action_host_rejection("internal_fail_closed", "The prior table state could not be restored.")
+	var ledger := _sealed_action_host_ledger(candidate, true)
+	if ledger.is_empty():
+		return _sealed_action_host_rejection("internal_fail_closed", "The prior table state could not be read.")
+	var recovery := _sealed_action_host_rollback_pending_candidate(candidate, ledger)
+	if not bool(recovery.get("ok", false)):
+		return _sealed_action_host_rejection(str(recovery.get("error_code", "receipt_content_conflict")), "The prior table state did not match the pending action.")
+	if not bool(recovery.get("handled", false)):
+		return {"ok": true, "handled": false}
+	if not _sealed_action_host_publish(candidate):
+		return _sealed_action_host_rejection("internal_fail_closed", "The prior table state could not be published.")
+	return GameModule.surface_command({
+		"ok": true,
+		"handled": true,
+		"ui_state": recovery.get("ui_state", {}),
+	}, true)
+
+
 func _sealed_action_host_rejection(error_code: String, message: String, request_key: String = "") -> Dictionary:
 	var message_key := PlayerTextScript.sealed_action_message_key(error_code)
 	var rejection := {
@@ -384,40 +434,47 @@ func _sealed_action_host_surface_intent_impl(surface_action: String, index: int,
 	_sealed_action_host_store_ledger(candidate, ledger)
 	var pending: Dictionary = ledger.get("pending_delivery", {})
 	if not pending.is_empty():
-		var retry_surface_actions: Array = _foundation.action_authority_contract.get("retry_surface_actions", [])
-		var cancel_surface_actions: Array = _foundation.action_authority_contract.get("cancel_surface_actions", [])
-		if surface_action in retry_surface_actions:
-			var retry_message_params := _sealed_action_host_player_text_params()
-			return GameModule.surface_command({
-				"handled": true,
-				"action_id": str(pending.get("action_id", "")),
-				"action_kind": "legal",
-				"direct_resolve": true,
-				"skip_stake_validation": true,
-				"set_stake": int(pending.get("stake", 0)),
-				"ui_state": (ledger.get("session", {}) as Dictionary).duplicate(true),
-				"_sealed_action_host_delivery": pending.duplicate(true),
-				"message": PlayerTextScript.resolve("sealed_action.retrying", retry_message_params),
-				"message_key": "sealed_action.retrying",
-				"message_params": retry_message_params,
-			})
-		if surface_action in cancel_surface_actions:
-			var cancelled: Dictionary = _foundation.ActionAuthorityScript.cancel_delivery_cow(ledger, pending)
-			if not bool(cancelled.get("ok", false)):
-				return _sealed_action_host_rejection(str(cancelled.get("error_code", "receipt_content_conflict")), "Blackjack cancellation did not match the pending action.", str(pending.get("request_key", "")))
-			var cancelled_ledger: Dictionary = cancelled.get("ledger", ledger)
-			_sealed_action_host_store_ledger(candidate, cancelled_ledger)
-			if not _sealed_action_host_publish(candidate):
-				return _sealed_action_host_rejection("internal_fail_closed", "Blackjack cancellation could not restore the pre-delivery session.", str(pending.get("request_key", "")))
-			var cancel_message_params := _sealed_action_host_player_text_params()
-			return GameModule.surface_command({
-				"handled": true,
-				"ui_state": (cancelled_ledger.get("session", {}) as Dictionary).duplicate(true),
-				"message": PlayerTextScript.resolve("sealed_action.cancelled", cancel_message_params),
-				"message_key": "sealed_action.cancelled",
-				"message_params": cancel_message_params,
-			})
-		return _sealed_action_host_rejection("pending_delivery", "Retry or cancel the pending Blackjack action before changing the table.", str(pending.get("request_key", "")))
+		if _sealed_action_host_automatic_pending_recovery_enabled():
+			var recovery := _sealed_action_host_rollback_pending_candidate(candidate, ledger)
+			if not bool(recovery.get("ok", false)):
+				return _sealed_action_host_rejection(str(recovery.get("error_code", "receipt_content_conflict")), "The prior table state did not match the pending action.", str(pending.get("request_key", "")))
+			ledger = recovery.get("ledger", ledger)
+			pending = {}
+		else:
+			var retry_surface_actions: Array = _foundation.action_authority_contract.get("retry_surface_actions", [])
+			var cancel_surface_actions: Array = _foundation.action_authority_contract.get("cancel_surface_actions", [])
+			if surface_action in retry_surface_actions:
+				var retry_message_params := _sealed_action_host_player_text_params()
+				return GameModule.surface_command({
+					"handled": true,
+					"action_id": str(pending.get("action_id", "")),
+					"action_kind": "legal",
+					"direct_resolve": true,
+					"skip_stake_validation": true,
+					"set_stake": int(pending.get("stake", 0)),
+					"ui_state": (ledger.get("session", {}) as Dictionary).duplicate(true),
+					"_sealed_action_host_delivery": pending.duplicate(true),
+					"message": PlayerTextScript.resolve("sealed_action.retrying", retry_message_params),
+					"message_key": "sealed_action.retrying",
+					"message_params": retry_message_params,
+				})
+			if surface_action in cancel_surface_actions:
+				var cancelled: Dictionary = _foundation.ActionAuthorityScript.cancel_delivery_cow(ledger, pending)
+				if not bool(cancelled.get("ok", false)):
+					return _sealed_action_host_rejection(str(cancelled.get("error_code", "receipt_content_conflict")), "Blackjack cancellation did not match the pending action.", str(pending.get("request_key", "")))
+				var cancelled_ledger: Dictionary = cancelled.get("ledger", ledger)
+				_sealed_action_host_store_ledger(candidate, cancelled_ledger)
+				if not _sealed_action_host_publish(candidate):
+					return _sealed_action_host_rejection("internal_fail_closed", "Blackjack cancellation could not restore the pre-delivery session.", str(pending.get("request_key", "")))
+				var cancel_message_params := _sealed_action_host_player_text_params()
+				return GameModule.surface_command({
+					"handled": true,
+					"ui_state": (cancelled_ledger.get("session", {}) as Dictionary).duplicate(true),
+					"message": PlayerTextScript.resolve("sealed_action.cancelled", cancel_message_params),
+					"message_key": "sealed_action.cancelled",
+					"message_params": cancel_message_params,
+				})
+			return _sealed_action_host_rejection("pending_delivery", "Retry or cancel the pending Blackjack action before changing the table.", str(pending.get("request_key", "")))
 	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
 	var recovery_session := session.duplicate(true)
 	if surface_time_msec >= 0:
@@ -482,7 +539,12 @@ func _sealed_action_host_pointer_intent(surface_action: String, index: int, phas
 		return _sealed_action_host_rejection("invalid_intent", "Table pointer intent is unavailable.")
 	var ledger := _sealed_action_host_ledger(candidate, true)
 	if not (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
-		return _sealed_action_host_rejection("pending_delivery", "Retry or cancel the pending table action before changing the ceremony.")
+		if not _sealed_action_host_automatic_pending_recovery_enabled():
+			return _sealed_action_host_rejection("pending_delivery", "Retry or cancel the pending table action before changing the ceremony.")
+		var recovery := _sealed_action_host_rollback_pending_candidate(candidate, ledger)
+		if not bool(recovery.get("ok", false)):
+			return _sealed_action_host_rejection(str(recovery.get("error_code", "receipt_content_conflict")), "The prior table state did not match the pending action.")
+		ledger = recovery.get("ledger", ledger)
 	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
 	for transient_key in ["surface_time_msec", "surface_presentation_time_msec", "drunk_scaled_surface_time_msec", "reduce_motion"]:
 		if ui_state.has(transient_key):
@@ -513,7 +575,12 @@ func _sealed_action_host_auto_intent(surface_time_msec: int) -> Dictionary:
 		return _sealed_action_host_rejection("invalid_intent", "Blackjack auto action intent is unavailable.")
 	var ledger := _sealed_action_host_ledger(candidate, true)
 	if not (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
-		return {}
+		if not _sealed_action_host_automatic_pending_recovery_enabled():
+			return {}
+		var recovery := _sealed_action_host_rollback_pending_candidate(candidate, ledger)
+		if not bool(recovery.get("ok", false)):
+			return _sealed_action_host_rejection(str(recovery.get("error_code", "receipt_content_conflict")), "The prior table state did not match the pending action.")
+		ledger = recovery.get("ledger", ledger)
 	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
 	var recovery_session := session.duplicate(true)
 	# Automatic actions are a new presentation boundary, not a continuation of

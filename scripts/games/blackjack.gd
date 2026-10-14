@@ -183,8 +183,11 @@ func sealed_action_authority_contract() -> Dictionary:
 		"host_auto_tick_method": ActionAuthorityScript.HOST_AUTO_TICK_METHOD,
 		"surface_intent_key": ActionAuthorityScript.SURFACE_INTENT_KEY,
 		"surface_intent_index_key": ActionAuthorityScript.SURFACE_INTENT_INDEX_KEY,
-		"retry_surface_actions": ActionAuthorityScript.RETRY_SURFACE_ACTIONS.duplicate(),
-		"cancel_surface_actions": [ActionAuthorityScript.CANCEL_SURFACE_ACTION],
+		# Failed deliveries restore the prior table automatically. Blackjack never
+		# asks the player to understand or operate the transaction recovery layer.
+		"automatic_pending_recovery": true,
+		"retry_surface_actions": [],
+		"cancel_surface_actions": [],
 		"proposal_requires_apply_key": ActionAuthorityScript.PROPOSAL_REQUIRES_APPLY_KEY,
 		"authoritative_result_marker": "",
 		"place_bet_action": ActionAuthorityScript.PLACE_BET_ACTION,
@@ -772,8 +775,6 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var total_wager_cost := _wager_cost_from_session(selected_stake, session, table, run_state)
 	var shoe_remaining_value := _shoe_remaining(table)
 	var shoe_label_value := str(table.get("shoe_label", CardShoeScript.shoe_label(int(table.get("deck_count", 6)))))
-	var authority_ledger: Dictionary = table.get("_blackjack_action_authority", {}) if typeof(table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
-	var pending_delivery: Dictionary = authority_ledger.get("pending_delivery", {}) if typeof(authority_ledger.get("pending_delivery", {})) == TYPE_DICTIONARY else {}
 	var spec := GameModule.surface_spec({
 		"surface_renderer": "blackjack",
 		"wager_currency": wager_currency,
@@ -982,24 +983,6 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 			},
 		}),
 	})
-	if not pending_delivery.is_empty():
-		spec["blackjack_host_pending_delivery"] = pending_delivery.duplicate(true)
-		spec["blackjack_host_retry_available"] = true
-		spec["blackjack_host_cancel_available"] = true
-		spec["table_notice"] = "A sealed action is waiting. Retry it or cancel back to the prior table state."
-		spec["can_deal"] = false
-		spec["can_hit"] = false
-		spec["can_stand"] = false
-		spec["can_double"] = false
-		spec["can_split"] = false
-		spec["can_surrender"] = false
-		spec["surface_action_bindings"] = {
-			"legal": {"action": "blackjack_retry_pending", "index": 0},
-			"cheat": {"action": "blackjack_cancel_pending", "index": 0},
-			"surface_stake_down": {"action": "blackjack_cancel_pending", "index": 0},
-			"surface_stake_up": {"action": "blackjack_retry_pending", "index": 0},
-			"surface_stake_max": {"action": "blackjack_retry_pending", "index": 0},
-		}
 	if not _is_rourke_duel(run_state, environment):
 		spec["ritual_contract"] = BLACKJACK_RITUAL_CONTRACT
 		spec["ritual_id"] = BLACKJACK_RITUAL_ID
@@ -3774,11 +3757,6 @@ func _draw_chip_rack(surface, surface_state: Dictionary) -> void:
 func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 	var panel := Rect2(586, BJ_CONSOLE_Y + 8.0, 292, BJ_CONSOLE_H - 16.0)
 	TableVisualsScript._draw_neon_panel(surface, panel, C_CYAN, 0.10)
-	if bool(surface_state.get("blackjack_host_retry_available", false)):
-		surface.surface_label("SEALED ACTION", panel.position + Vector2(10, 15), 10, C_YELLOW)
-		_draw_table_button(surface, Rect2(panel.position.x + 14, panel.position.y + 28, 132, 38), "RETRY", "blackjack_retry_pending", 0, C_YELLOW, true, surface.surface_native_action_selected("blackjack_retry_pending"))
-		_draw_table_button(surface, Rect2(panel.position.x + 154, panel.position.y + 28, 112, 38), "CANCEL", "blackjack_cancel_pending", 0, C_SOFT, bool(surface_state.get("blackjack_host_cancel_available", false)))
-		return
 	if bool(surface_state.get("boss_duel_active", false)):
 		_draw_rourke_duel_actions(surface, surface_state, panel)
 		return

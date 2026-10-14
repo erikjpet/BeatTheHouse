@@ -44,8 +44,6 @@ const HOST_ENVIRONMENT_TURN_SUSPICION_DELTA_KEY := "blackjack_host_environment_t
 const HOST_REPLAY_KEY := "blackjack_host_replay"
 const SKIP_ENVIRONMENT_TURN_KEY := "sealed_action_skip_environment_turn"
 const PLACE_BET_ACTION := "blackjack_place_bet"
-const RETRY_SURFACE_ACTIONS := ["blackjack_retry_pending", "blackjack_deal"]
-const CANCEL_SURFACE_ACTION := "blackjack_cancel_pending"
 
 const LEDGER_KEYS := [
 	"boundary_ordinal",
