@@ -1481,8 +1481,24 @@ func _draw_blackjack_ritual_layer(surface, surface_state: Dictionary) -> void:
 			pit_actor = actor
 			break
 	if bool(pit_actor.get("visible", false)):
+		var pit_clock := TableVisualsScript._surface_clock(surface) + 1.7
+		var pit_motion := _blackjack_between_hand_character_motion(pit_clock, 0.64)
 		var pit_pos := Vector2(826, 226 if energy_tier == "hot" else 202)
-		_draw_static_table_character(surface, pit_pos, 0.70, accent, Color("#261827"), "PIT", -2.0, false)
+		var pit_style := {
+			"name": "PIT",
+			"skin": Color("#c49371"),
+			"hair": Color("#171022"),
+			"jacket": Color("#261827"),
+			"accent": accent,
+			"pose": ["wrist_check", "arms_folded", "lookaround"][int(pit_motion.get("gesture_index", 0))],
+			"eye_offset": -2.0,
+			"body_bob": float(pit_motion.get("body_bob", 0.0)),
+			"head_x": float(pit_motion.get("head_x", 0.0)),
+			"head_y": float(pit_motion.get("head_y", 0.0)),
+			"gesture_amount": float(pit_motion.get("gesture_amount", 0.0)),
+			"gesture_side": int(pit_motion.get("gesture_side", 0)),
+		}
+		_draw_table_character(surface, pit_style, pit_pos, 0.70, pit_clock)
 		surface.draw_line(Vector2(790, 230), Vector2(858, 230), Color(accent.r, accent.g, accent.b, 0.48), 3.0)
 	var discard_state := "empty"
 	for object_value in _draw_array_view(projection.get("scene_objects", [])):
@@ -3266,7 +3282,16 @@ func _draw_dealer_station(surface, surface_state: Dictionary) -> void:
 		draw_dealer_character_style["jacket"] = Color("#1b2230")
 		draw_dealer_character_style["accent"] = attention_color
 		draw_dealer_character_style["role"] = "dealer"
-		draw_dealer_character_style["pose"] = "lookaway" if peek_window else "watching"
+		var dealer_pose := "lookaway" if peek_window else "watching"
+		if _blackjack_between_hand_cast_active(surface_state) and not peek_window:
+			var dealer_motion := _blackjack_between_hand_character_motion(idle, float(int(profile.get("blink_offset", 0))) / 3700.0)
+			dealer_pose = ["counter_tap", "card_check", "wrist_check"][int(dealer_motion.get("gesture_index", 0))]
+			draw_dealer_character_style["body_bob"] = float(dealer_motion.get("body_bob", 0.0))
+			draw_dealer_character_style["head_x"] = float(dealer_motion.get("head_x", 0.0))
+			draw_dealer_character_style["head_y"] = float(dealer_motion.get("head_y", 0.0))
+			draw_dealer_character_style["gesture_amount"] = float(dealer_motion.get("gesture_amount", 0.0))
+			draw_dealer_character_style["gesture_side"] = int(dealer_motion.get("gesture_side", 0))
+		draw_dealer_character_style["pose"] = dealer_pose
 		draw_dealer_character_style["eye_offset"] = eye_offset
 		draw_dealer_character_style["blink"] = blink
 		draw_dealer_character_style["holding_card"] = surface.surface_animation_active(DEAL_ANIMATION_CHANNEL)
@@ -3330,6 +3355,7 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 		var threshold := int(patron.get("snitch_threshold", 30))
 		var tell_active := watching and (risk >= threshold or (phase > 0.58 and phase < 0.82))
 		var accent := C_PINK if watching else C_TEAL if covered else C_SOFT
+		var patron_motion := _blackjack_between_hand_character_motion(patron_clock, float(i) * 0.37)
 		draw_patron_character_style.clear()
 		draw_patron_character_style["name"] = str(patron.get("name", "Seat"))
 		draw_patron_character_style["skin"] = Color("#c49371")
@@ -3337,7 +3363,15 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 		draw_patron_character_style["jacket"] = TableVisualsScript._patron_jacket_color(patron)
 		draw_patron_character_style["accent"] = accent
 		draw_patron_character_style["role"] = "patron"
-		draw_patron_character_style["pose"] = "covered" if covered else "snitch" if watching else "idle"
+		var patron_pose := "covered" if covered else "snitch" if tell_active else "idle"
+		if _blackjack_between_hand_cast_active(surface_state) and not covered and not tell_active:
+			patron_pose = ["chin_touch", "adjust_cuff", "rub_hands"][int(patron_motion.get("gesture_index", 0))]
+			draw_patron_character_style["body_bob"] = float(patron_motion.get("body_bob", 0.0))
+			draw_patron_character_style["head_x"] = float(patron_motion.get("head_x", 0.0))
+			draw_patron_character_style["head_y"] = float(patron_motion.get("head_y", 0.0))
+			draw_patron_character_style["gesture_amount"] = float(patron_motion.get("gesture_amount", 0.0))
+			draw_patron_character_style["gesture_side"] = int(patron_motion.get("gesture_side", 0))
+		draw_patron_character_style["pose"] = patron_pose
 		draw_patron_character_style["eye_offset"] = -2.0 if covered else 2.0 if watching else 0.0
 		draw_patron_character_style["blink"] = phase > 0.92
 		draw_patron_character_style["holding_card"] = false
@@ -3363,11 +3397,59 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 func _blackjack_character_cast_uses_low_detail(surface, surface_state: Dictionary) -> bool:
 	if not TableVisualsScript._surface_low_detail_idle(surface):
 		return false
-	# Keep the 12/15 FPS idle cadence for an inexpensive between-hand scene, but
-	# do not replace its cast with static stand-ins. The articulated renderer uses
-	# the same autonomous surface clock, so the dealer and every patron stay alive
-	# while the player reads the result or prepares the next wager.
-	return not bool(surface_state.get("between_hands", false))
+	# Keep the 12/15 FPS idle cadence for an inexpensive no-hand scene, but do not
+	# replace its cast with static stand-ins. "between_hands" is deliberately
+	# narrower than the actual wagering phase (for example before the first hand
+	# or while a lightweight wager patch is landing), so phase is the durable
+	# boundary for deciding whether every visible character must remain articulated.
+	return not _blackjack_between_hand_cast_active(surface_state)
+
+
+func _blackjack_between_hand_cast_active(surface_state: Dictionary) -> bool:
+	return bool(surface_state.get("between_hands", false)) or str(surface_state.get("phase", "")) == "betting"
+
+
+func _blackjack_between_hand_character_motion(clock: float, phase_offset: float = 0.0) -> Dictionary:
+	# Each gesture returns to its resting pose before the next one is selected, so
+	# the low-cadence cast moves continuously without popping between arm poses.
+	var gesture_clock := maxf(0.0, clock) / 2.8 + phase_offset
+	var gesture_phase := fposmod(gesture_clock, 1.0)
+	var breath_clock := maxf(0.0, clock) * 2.15 + phase_offset * TAU
+	return {
+		"body_bob": sin(breath_clock) * 1.35,
+		"head_x": sin(breath_clock * 0.47) * 0.8,
+		"head_y": sin(breath_clock + 0.72) * 0.9,
+		"gesture_amount": sin(gesture_phase * PI),
+		"gesture_index": posmod(int(floor(gesture_clock)), 3),
+		"gesture_side": -1 if posmod(int(floor(gesture_clock)), 2) == 0 else 1,
+	}
+
+
+func surface_motion_signature(surface, surface_state: Dictionary) -> Dictionary:
+	var clock := TableVisualsScript._surface_clock(surface)
+	var dealer_motion := _blackjack_between_hand_character_motion(clock)
+	var patron_signatures: Array = []
+	var patrons: Array = surface_state.get("patrons", []) if typeof(surface_state.get("patrons", [])) == TYPE_ARRAY else []
+	for patron_index in range(patrons.size()):
+		if typeof(patrons[patron_index]) != TYPE_DICTIONARY:
+			continue
+		var patron: Dictionary = patrons[patron_index]
+		var patron_clock := clock + float(int(patron.get("animation_offset", 0))) / 1000.0
+		var motion := _blackjack_between_hand_character_motion(patron_clock, float(patron_index) * 0.37)
+		patron_signatures.append([
+			int(round(float(motion.get("body_bob", 0.0)) * 1000.0)),
+			int(round(float(motion.get("head_x", 0.0)) * 1000.0)),
+			int(round(float(motion.get("gesture_amount", 0.0)) * 1000.0)),
+		])
+	return {
+		"between_hand_cast_active": _blackjack_between_hand_cast_active(surface_state),
+		"dealer_motion": [
+			int(round(float(dealer_motion.get("body_bob", 0.0)) * 1000.0)),
+			int(round(float(dealer_motion.get("head_x", 0.0)) * 1000.0)),
+			int(round(float(dealer_motion.get("gesture_amount", 0.0)) * 1000.0)),
+		],
+		"patron_motion": patron_signatures,
+	}
 
 
 func _draw_patron_hand(surface, surface_state: Dictionary, patron: Dictionary, patron_index: int) -> void:
@@ -3764,21 +3846,25 @@ func _draw_rourke_duel_hud(surface, surface_state: Dictionary) -> void:
 func _draw_showdown_duel_room_staging(surface, surface_state: Dictionary) -> void:
 	var projection := _draw_dict_view(surface_state.get("showdown_duel_projection", {}))
 	if projection.is_empty(): return
+	var clock := TableVisualsScript._surface_clock(surface)
 	var room := _draw_dict_view(projection.get("room_state", {}))
 	var crowd_state := str(room.get("crowd_state", "full"))
 	var crowd_count := 8 if crowd_state == "full" else 5 if crowd_state == "thinning" else 7 if crowd_state in ["celebrating", "hostile"] else 0
 	var crowd_color := C_ORANGE if crowd_state == "hostile" else C_YELLOW if crowd_state == "celebrating" else C_SOFT
 	for index in range(crowd_count):
-		var x := 76.0 + float(index) * 106.0
-		var y := 104.0 + (8.0 if index % 2 == 0 else 0.0)
+		var crowd_phase := clock * (1.55 + float(index % 3) * 0.12) + float(index) * 0.83
+		var x := 76.0 + float(index) * 106.0 + sin(crowd_phase * 0.53) * 1.5
+		var y := 104.0 + (8.0 if index % 2 == 0 else 0.0) + sin(crowd_phase) * 2.0
 		surface.draw_circle(Vector2(x, y), 5.0, Color(crowd_color.r, crowd_color.g, crowd_color.b, 0.42))
 		surface.draw_rect(Rect2(x - 4.0, y + 5.0, 8.0, 13.0), Color(crowd_color.r, crowd_color.g, crowd_color.b, 0.25))
 	var security_state := str(room.get("security_state", "low"))
 	var security_count := 2 if security_state == "high" else 1 if security_state == "present" else 0
 	for index in range(security_count):
-		var guard_x := 688.0 + float(index) * 46.0
-		surface.draw_rect(Rect2(guard_x, 88, 18, 34), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.28))
-		surface.draw_circle(Vector2(guard_x + 9.0, 83.0), 7.0, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.42))
+		var guard_phase := clock * 1.32 + float(index) * 1.9
+		var guard_x := 688.0 + float(index) * 46.0 + sin(guard_phase * 0.41) * 1.2
+		var guard_y := 88.0 + sin(guard_phase) * 1.4
+		surface.draw_rect(Rect2(guard_x, guard_y, 18, 34), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.28))
+		surface.draw_circle(Vector2(guard_x + 9.0, guard_y - 5.0), 7.0, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.42))
 	if crowd_count > 0:
 		surface.surface_label(crowd_state.replace("_", " ").to_upper(), Vector2(36, 112), 8, crowd_color)
 
@@ -4056,15 +4142,18 @@ func _draw_table_character(surface, style: Dictionary, foot: Vector2, scale_valu
 	var pose := str(style.get("pose", "idle"))
 	var sway := sin(clock * 1.8) * 2.0 * scale_value
 	var lean := 4.0 * scale_value if pose == "snitch" else -4.0 * scale_value if pose == "covered" or pose == "lookaway" else 0.0
-	var pos := foot + Vector2(sway + lean, 0)
-	var head := Rect2(pos + Vector2(-12, -78) * scale_value, Vector2(24, 24) * scale_value)
+	var pos := foot + Vector2(sway + lean, float(style.get("body_bob", 0.0)) * scale_value)
+	var head_shift := Vector2(float(style.get("head_x", 0.0)), float(style.get("head_y", 0.0))) * scale_value
+	var head := Rect2(pos + Vector2(-12, -78) * scale_value + head_shift, Vector2(24, 24) * scale_value)
 	var body := Rect2(pos + Vector2(-23, -54) * scale_value, Vector2(46, 52) * scale_value)
 	surface.draw_rect(Rect2(pos.x - 25 * scale_value, pos.y - 6 * scale_value, 50 * scale_value, 5 * scale_value), Color(0, 0, 0, 0.34))
 	surface.draw_rect(body, Color("#05060a"))
 	surface.draw_rect(Rect2(body.position + Vector2(4, 5) * scale_value, body.size - Vector2(8, 9) * scale_value), jacket)
 	surface.draw_rect(Rect2(pos + Vector2(-18, -56) * scale_value, Vector2(36, 6) * scale_value), accent)
-	TableVisualsScript._draw_character_arm(surface, pos, scale_value, accent, pose, true)
-	TableVisualsScript._draw_character_arm(surface, pos, scale_value, accent, pose, false)
+	var gesture_amount := clampf(float(style.get("gesture_amount", 1.0)), 0.0, 1.0)
+	var gesture_side := int(style.get("gesture_side", 0))
+	TableVisualsScript._draw_character_arm(surface, pos, scale_value, accent, pose, true, skin, gesture_amount, gesture_side)
+	TableVisualsScript._draw_character_arm(surface, pos, scale_value, accent, pose, false, skin, gesture_amount, gesture_side)
 	surface.draw_rect(head, skin)
 	surface.draw_rect(Rect2(head.position, Vector2(head.size.x, 8 * scale_value)), hair)
 	TableVisualsScript._draw_character_face(surface, head, scale_value, float(style.get("eye_offset", 0.0)), bool(style.get("blink", false)), pose)

@@ -49,22 +49,31 @@ func _run() -> void:
 	game_canvas.size = Vector2(VisualStyleScript.GAME_BOARD_SIZE)
 	root.add_child(game_canvas)
 	await process_frame
+	var blackjack = BlackjackGameScript.new()
+	game_canvas.call("set_game_module", blackjack)
 	game_canvas.process_mode = Node.PROCESS_MODE_DISABLED
 	game_canvas.set_process(false)
 	game_canvas.call("render_game_snapshot", {
 		"game_id": "animation_liveness_game",
 		"surface_renderer": "blackjack",
+		"surface_renderer_opaque": true,
 		"surface_animates_idle": true,
 		"surface_native_low_detail_idle": true,
 		"surface_native_idle_animation_fps": 15.0,
+		"phase": "betting",
 		"between_hands": true,
+		"dealer_name": "Liveness Dealer",
+		"dealer_profile": {"blink_offset": 0},
+		"patrons": [{"name": "Liveness Patron", "animation_offset": 320, "watching_player": false}],
 		"reduce_motion": false,
 	})
 	game_canvas.call("reset_performance_counters")
 	var game_start: Dictionary = game_canvas.call("current_view_snapshot")
+	var cast_start: Dictionary = game_canvas.call("debug_surface_motion_sample")
 	for _frame_index in range(24):
 		await process_frame
 	var game_end: Dictionary = game_canvas.call("current_view_snapshot")
+	var cast_end: Dictionary = game_canvas.call("debug_surface_motion_sample")
 	if game_canvas.process_mode != Node.PROCESS_MODE_PAUSABLE \
 			or not game_canvas.is_processing() \
 			or not bool(game_end.get("surface_animation_liveness_active", false)) \
@@ -80,13 +89,22 @@ func _run() -> void:
 		push_error("Blackjack between-hand liveness no longer uses its 15 FPS native idle cadence.")
 		quit(1)
 		return
-	var blackjack = BlackjackGameScript.new()
 	if bool(blackjack.call("_blackjack_character_cast_uses_low_detail", LowDetailSurfaceProbe.new(), {"between_hands": true})):
 		push_error("Blackjack between-hand liveness replaced its animated character cast with static stand-ins.")
 		quit(1)
 		return
+	if bool(blackjack.call("_blackjack_character_cast_uses_low_detail", LowDetailSurfaceProbe.new(), {"phase": "betting", "between_hands": false})):
+		push_error("Blackjack wagering-phase liveness still depended on the narrower between_hands marker.")
+		quit(1)
+		return
 	if not bool(blackjack.call("_blackjack_character_cast_uses_low_detail", LowDetailSurfaceProbe.new(), {"between_hands": false})):
 		push_error("Blackjack discarded its low-detail cast outside the between-hand regression boundary.")
+		quit(1)
+		return
+	if not bool(cast_start.get("between_hand_cast_active", false)) \
+			or JSON.stringify(cast_start.get("dealer_motion", [])) == JSON.stringify(cast_end.get("dealer_motion", [])) \
+			or JSON.stringify(cast_start.get("patron_motion", [])) == JSON.stringify(cast_end.get("patron_motion", [])):
+		push_error("Blackjack dealer or patron motion did not advance autonomously between hands.")
 		quit(1)
 		return
 
