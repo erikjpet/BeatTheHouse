@@ -113,6 +113,38 @@ static func bind_base_layout(environment: Dictionary, active_entries: Array, sha
 	if not scenario_id.is_empty():
 		warning_scope += "/%s" % scenario_id
 	var entries := active_entries.duplicate()
+	var current_entry_ids: Dictionary = {}
+	for entry_value in entries:
+		var current_entry := _dict_view(entry_value)
+		var current_entry_id := str(current_entry.get("object_id", current_entry.get("presentation_object_id", ""))).strip_edges()
+		if not current_entry_id.is_empty():
+			current_entry_ids[current_entry_id] = true
+	# A membership change invalidates the generated-layout signature, but it must
+	# not invalidate positions already shown to the player. Authenticate the prior
+	# envelope, then seed its item bindings before placing anything new. Acquired
+	# items retain a geometry-free reservation; surviving items retain both their
+	# identity and exact authored slot.
+	var dormant_item_ids: Dictionary = {}
+	var prior_authority := validate_base_layout_authority(environment, entries, true)
+	if bool(prior_authority.get("ok", false)):
+		var prior_bindings := _dict_view(prior_authority.get("slot_bindings", {}))
+		for identity_value in prior_bindings.keys():
+			var identity := str(identity_value).strip_edges()
+			var prior_binding := _dict(prior_bindings.get(identity_value, {}))
+			if not _binding_reserves_consumed_item_slot(identity, prior_binding):
+				continue
+			bindings[identity] = prior_binding
+			if not current_entry_ids.has(identity):
+				dormant_item_ids[identity] = true
+	if not bindings.is_empty():
+		var retained_item_ids: Dictionary = {}
+		for identity_value in bindings.keys():
+			retained_item_ids[str(identity_value)] = true
+		var guarded_items := guard_unique_slot_bindings(bindings, retained_item_ids, initial_occupancy, room_slots, "%s retained item positions" % warning_scope)
+		bindings = _dict(guarded_items.get("slot_bindings", bindings))
+		occupied = _dict(guarded_items.get("occupied_slots", initial_occupancy))
+		warnings.append_array(_array(guarded_items.get("warnings", [])))
+		errors.append_array(_array(guarded_items.get("errors", [])))
 	var entry_sort_keys: Dictionary = {}
 	for entry_value in entries:
 		var sortable_entry := _dict_view(entry_value)
@@ -195,6 +227,8 @@ static func bind_base_layout(environment: Dictionary, active_entries: Array, sha
 	warnings.append_array(_array(guarded.get("warnings", [])))
 	errors.append_array(_array(guarded.get("errors", [])))
 	object_rects = _object_rects_from_bindings(bindings)
+	for identity_value in dormant_item_ids.keys():
+		object_rects.erase(identity_value)
 	_replace_dictionary(shared_occupancy, occupied)
 	return {
 		"ok": errors.is_empty(),
@@ -231,7 +265,12 @@ static func validate_base_layout_authority(
 			errors.append("Persisted base slot authority is missing %s." % key)
 	if not errors.is_empty():
 		return {"ok": false, "errors": errors}
-	if typeof(layout.get("slot_schema_version")) != TYPE_INT or int(layout.get("slot_schema_version", 0)) != SLOT_SCHEMA_VERSION:
+	var schema_version_value: Variant = layout.get("slot_schema_version")
+	var schema_version_is_integer := typeof(schema_version_value) == TYPE_INT \
+			or typeof(schema_version_value) == TYPE_FLOAT \
+			and is_finite(float(schema_version_value)) \
+			and is_equal_approx(float(schema_version_value), floor(float(schema_version_value)))
+	if not schema_version_is_integer or int(schema_version_value) != SLOT_SCHEMA_VERSION:
 		errors.append("Persisted base slot authority has an invalid schema version.")
 	var context_surface_value: Variant = validation_context.get("surface_map")
 	var surface_map := _dict_view(context_surface_value) \
@@ -1664,7 +1703,14 @@ static func _slot_preference(
 				return {"slot_id": str(instance_object_preferences.get(clean_object_key, "")).strip_edges(), "exact": true, "source": "scenario_instance_object_slot_ids"}
 	var explicit := str(entry.get("exact_slot_id", "")).strip_edges()
 	if not explicit.is_empty():
-		return {"slot_id": explicit, "exact": family in ["fixed", "exit"] or family == "scenario" and bool(surface_map.get("scenario_layout_scoped", false)), "source": "entry.exact_slot_id"}
+		var exact := family in ["fixed", "exit"] or family == "scenario" and bool(surface_map.get("scenario_layout_scoped", false))
+		# Legacy persisted rows and direct binding callers can carry the numbered
+		# shop-row category as exact_slot_id. After another item is consumed that
+		# ordinal may point at a reserved slot; it remains a preference, not authority
+		# to displace the item that originally spawned there.
+		if exact and _item_slot_preference_comes_from_category(surface_map, family, entry, object_id, explicit):
+			exact = false
+		return {"slot_id": explicit, "exact": exact, "source": "entry.exact_slot_id"}
 	var carried := str(entry.get("slot_id", "")).strip_edges()
 	if not carried.is_empty():
 		return {"slot_id": carried, "exact": family in ["fixed", "exit"], "source": "entry.slot_id"}
@@ -1701,6 +1747,18 @@ static func _slot_preference(
 		if category_preferences.has(category_key):
 			return {"slot_id": str(category_preferences.get(category_key, "")).strip_edges(), "exact": false, "source": "%s_category_slot_ids" % family}
 	return {"slot_id": "", "exact": false, "source": "deterministic_family_order"}
+
+
+static func _item_slot_preference_comes_from_category(surface_map: Dictionary, family: String, entry: Dictionary, object_id: String, slot_id: String) -> bool:
+	if str(entry.get("placement_class", "")) != "shop_item" \
+			or not object_id.begins_with("item:") and not object_id.begins_with("cage_gift_item:"):
+		return false
+	var spot_field := str(entry.get("spot_field", entry.get("layout_spot_field", ""))).strip_edges()
+	if spot_field.is_empty():
+		return false
+	var spot_index := int(entry.get("index", entry.get("layout_index", 0)))
+	var category_key := "%s:%d" % [spot_field, spot_index]
+	return str(_dict_view(surface_map.get("%s_category_slot_ids" % family, {})).get(category_key, "")).strip_edges() == slot_id
 
 
 static func _surface_map_errors(surface_map: Dictionary) -> Array:

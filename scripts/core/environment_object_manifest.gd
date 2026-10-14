@@ -294,11 +294,10 @@ static func _row_from_entry(environment: Dictionary, entry: Dictionary, family: 
 	var exact_slot_id := ""
 	# Merchandise fills stable numbered capacity by its live row ordinal. Item
 	# identity is deliberately not an exact placement authority because stock is
-	# selected per generated room and may change after purchases.
-	if placement_class == "shop_item":
-		var category_key := "%s:%d" % [str(entry.get("spot_field", "")), int(entry.get("index", 0))]
-		exact_slot_id = str(_dict(surface_map.get("%s_category_slot_ids" % family, {})).get(category_key, "")).strip_edges()
-	if exact_slot_id.is_empty():
+	# selected per generated room and may change after purchases. The binder still
+	# derives that category slot as the initial preference, while the manifest keeps
+	# it non-exact so a surviving item can retain its original reserved position.
+	if placement_class != "shop_item":
 		exact_slot_id = _exact_slot_preference(surface_map, family, presentation_id, presentation_id, str(source.get("source_id", "")))
 	var render_key := str(entry.get("render_key", entry.get("visual_type", entry.get("visual_prop", object_type)))).strip_edges()
 	var action_ids := _strings(entry.get("action_ids", [presentation_id]))

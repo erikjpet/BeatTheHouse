@@ -1,6 +1,7 @@
 extends SceneTree
 
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
+const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 
@@ -20,8 +21,9 @@ func _run() -> void:
 	_test_family_isolation()
 	_test_renderer_suppresses_duplicate_slot()
 	_test_consumed_item_slot_stays_reserved()
+	_test_generated_layout_preserves_spawned_item_slots()
 	if _failures.is_empty():
-		print("ENVIRONMENT STACKING CHECK cases=8 duplicate_slots=0 overflow=0 family_crossovers=0 item_reflows=0 ok=true")
+		print("ENVIRONMENT STACKING CHECK cases=9 duplicate_slots=0 overflow=0 family_crossovers=0 item_reflows=0 ok=true")
 		quit(0)
 		return
 	for failure in _failures:
@@ -221,6 +223,50 @@ func _test_consumed_item_slot_stays_reserved() -> void:
 	_check(str(_dict(late_bindings.get("item:beta", {})).get("slot_id", "")) == "fixed.item_shop_2", "A later spawn moved an existing item from its original slot.")
 	_check(str(_dict(late_bindings.get("item:gamma", {})).get("slot_id", "")) == "fixed.item_shop_3", "A later spawn moved the final existing item from its original slot.")
 	_check(str(_dict(late_bindings.get("item:delta", {})).get("slot_id", "")) == "fixed.item_shop_4", "A later spawn reused the acquired item's reserved location.")
+
+
+func _test_generated_layout_preserves_spawned_item_slots() -> void:
+	var environment := {
+		"id": "stable_generated_item_slots",
+		"archetype_id": "corner_store",
+		"kind": "shop",
+		"item_offers": [
+			{"id": "alpha"},
+			{"id": "beta"},
+			{"id": "gamma"},
+		],
+	}
+	environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(environment)
+	var initial_layout := _dict(environment.get("layout", {}))
+	var initial_bindings := _dict(initial_layout.get("slot_bindings", {}))
+	var alpha_slot := str(_dict(initial_bindings.get("item:alpha", {})).get("slot_id", ""))
+	var beta_slot := str(_dict(initial_bindings.get("item:beta", {})).get("slot_id", ""))
+	var gamma_slot := str(_dict(initial_bindings.get("item:gamma", {})).get("slot_id", ""))
+	_check(not alpha_slot.is_empty() and not beta_slot.is_empty() and not gamma_slot.is_empty(), "Generated-layout fixture did not place all three initial items.")
+	environment["item_offers"] = [{"id": "beta"}, {"id": "gamma"}]
+	environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(environment)
+	var refreshed_layout := _dict(environment.get("layout", {}))
+	var refreshed_bindings := _dict(refreshed_layout.get("slot_bindings", {}))
+	_check(str(_dict(refreshed_bindings.get("item:alpha", {})).get("slot_id", "")) == alpha_slot, "Generated layout discarded the acquired item's spawn-slot reservation.")
+	_check(str(_dict(refreshed_bindings.get("item:beta", {})).get("slot_id", "")) == beta_slot, "Generated layout moved the first surviving item after acquisition.")
+	_check(str(_dict(refreshed_bindings.get("item:gamma", {})).get("slot_id", "")) == gamma_slot, "Generated layout moved the second surviving item after acquisition.")
+	_check(not _dict(refreshed_layout.get("object_rects", {})).has("item:alpha"), "Generated layout kept visible geometry for the acquired item reservation.")
+	var persisted_value: Variant = JSON.parse_string(JSON.stringify(environment))
+	_check(typeof(persisted_value) == TYPE_DICTIONARY, "Stable generated item slots did not survive JSON persistence.")
+	var restored_environment := EnvironmentInstanceScript.from_dict(_dict(persisted_value)).to_dict()
+	var restored_bindings := _dict(_dict(restored_environment.get("layout", {})).get("slot_bindings", {}))
+	_check(str(_dict(restored_bindings.get("item:alpha", {})).get("slot_id", "")) == alpha_slot, "Save/load discarded the acquired item's spawn-slot reservation.")
+	_check(str(_dict(restored_bindings.get("item:beta", {})).get("slot_id", "")) == beta_slot, "Save/load moved the first surviving item.")
+	_check(str(_dict(restored_bindings.get("item:gamma", {})).get("slot_id", "")) == gamma_slot, "Save/load moved the second surviving item.")
+	restored_environment["item_offers"] = [{"id": "beta"}, {"id": "gamma"}, {"id": "delta"}]
+	restored_environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(restored_environment)
+	var late_layout := _dict(restored_environment.get("layout", {}))
+	var late_bindings := _dict(late_layout.get("slot_bindings", {}))
+	var delta_slot := str(_dict(late_bindings.get("item:delta", {})).get("slot_id", ""))
+	_check(str(_dict(late_bindings.get("item:alpha", {})).get("slot_id", "")) == alpha_slot, "A later generated spawn reused the acquired item's reservation.")
+	_check(str(_dict(late_bindings.get("item:beta", {})).get("slot_id", "")) == beta_slot, "A later generated spawn moved the first existing item.")
+	_check(str(_dict(late_bindings.get("item:gamma", {})).get("slot_id", "")) == gamma_slot, "A later generated spawn moved the second existing item.")
+	_check(not delta_slot.is_empty() and delta_slot not in [alpha_slot, beta_slot, gamma_slot], "A later generated spawn did not use a new free item slot.")
 
 
 func _item_record(item_id: String) -> Dictionary:
