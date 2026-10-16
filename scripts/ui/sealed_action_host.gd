@@ -189,14 +189,25 @@ func _sealed_action_host_detached() -> RunState:
 	return candidate if bool(finalized.get("ok", false)) else null
 
 
-func _sealed_action_host_can_commit_in_place() -> bool:
-	return _foundation.run_state != null \
-		and bool(_foundation.action_authority_contract.get("in_place_nonrejecting_commit", false)) \
-		and _foundation.run_state.host_action_in_place_commit_safe()
+func _sealed_action_host_can_commit_in_place(action_id: String = "") -> bool:
+	if _foundation.run_state == null \
+			or not bool(_foundation.action_authority_contract.get("in_place_nonrejecting_commit", false)) \
+			or not _foundation.run_state.host_action_in_place_commit_safe():
+		return false
+	# A derived host may override the environment-turn publication seam to reject
+	# or audit commits. Preserve its detached rollback boundary; the production
+	# Foundation host is the only host whose no-scenario turn is non-rejecting.
+	var host_script: Script = _foundation.get_script()
+	if host_script == null or host_script.resource_path != "res://scripts/ui/foundation_main.gd":
+		return false
+	var predicate := StringName(_foundation.action_authority_contract.get("in_place_nonrejecting_commit_predicate_method", &""))
+	return predicate.is_empty() or (_foundation.current_game != null \
+			and _foundation.current_game.has_method(predicate) \
+			and bool(_foundation.current_game.call(predicate, action_id, _foundation.run_state, _foundation.run_state.current_environment)))
 
 
-func _sealed_action_host_transaction_candidate() -> RunState:
-	return _foundation.run_state if _sealed_action_host_can_commit_in_place() else _sealed_action_host_detached()
+func _sealed_action_host_transaction_candidate(action_id: String = "") -> RunState:
+	return _foundation.run_state if _sealed_action_host_can_commit_in_place(action_id) else _sealed_action_host_detached()
 
 
 func _sealed_action_host_delivery_stake(command: Dictionary, session: Dictionary) -> int:
@@ -325,11 +336,11 @@ func _sealed_action_host_restored_candidate(snapshot: Dictionary, layout_context
 	return candidate
 
 
-func _sealed_action_host_publish(candidate: RunState) -> bool:
+func _sealed_action_host_publish(candidate: RunState, action_id: String = "") -> bool:
 	if candidate == null or _foundation.run_state == null:
 		return false
 	if candidate == _foundation.run_state:
-		return _sealed_action_host_can_commit_in_place()
+		return _sealed_action_host_can_commit_in_place(action_id)
 	if not _foundation.run_state.publish_host_action_candidate(candidate):
 		return false
 	_foundation._set_active_game_binding(_foundation.current_game.get_id() if _foundation.current_game != null else "")
@@ -421,7 +432,7 @@ func _sealed_action_host_surface_intent_impl(surface_action: String, index: int,
 		var in_place_command := _sealed_action_host_in_place_session_intent(surface_action, index, confirm_requested, surface_time_msec)
 		if not bool(in_place_command.get("_sealed_action_host_requires_transaction", false)):
 			return in_place_command
-	var candidate := _sealed_action_host_transaction_candidate()
+	var candidate := _sealed_action_host_transaction_candidate(surface_action)
 	if candidate == null:
 		return _sealed_action_host_rejection("internal_fail_closed", "Sealed table semantics could not be rebuilt.")
 	var ledger := _sealed_action_host_ledger(candidate, true)
@@ -464,7 +475,7 @@ func _sealed_action_host_surface_intent_impl(surface_action: String, index: int,
 					return _sealed_action_host_rejection(str(cancelled.get("error_code", "receipt_content_conflict")), "Blackjack cancellation did not match the pending action.", str(pending.get("request_key", "")))
 				var cancelled_ledger: Dictionary = cancelled.get("ledger", ledger)
 				_sealed_action_host_store_ledger(candidate, cancelled_ledger)
-				if not _sealed_action_host_publish(candidate):
+				if not _sealed_action_host_publish(candidate, surface_action):
 					return _sealed_action_host_rejection("internal_fail_closed", "Blackjack cancellation could not restore the pre-delivery session.", str(pending.get("request_key", "")))
 				var cancel_message_params := _sealed_action_host_player_text_params()
 				return GameModule.surface_command({
@@ -519,7 +530,7 @@ func _sealed_action_host_surface_intent_impl(surface_action: String, index: int,
 			command[_foundation.ActionAuthorityScript.HOST_BOUNDARY_ORDINAL_KEY] = int(delivery.get("boundary_ordinal", 0))
 			command["_sealed_action_host_delivery"] = delivery.duplicate(true)
 	_sealed_action_host_store_ledger(candidate, ledger)
-	if not _sealed_action_host_publish(candidate):
+	if not _sealed_action_host_publish(candidate, surface_action):
 		return _sealed_action_host_rejection("internal_fail_closed", "Blackjack host could not publish the staged action.")
 	if command.has("_sealed_action_host_delivery"):
 		command["_sealed_action_host_prepared"] = {
@@ -534,7 +545,7 @@ func _sealed_action_host_surface_intent_impl(surface_action: String, index: int,
 
 
 func _sealed_action_host_pointer_intent(surface_action: String, index: int, phase: String, board_position: Vector2, ui_state: Dictionary) -> Dictionary:
-	var candidate := _sealed_action_host_transaction_candidate()
+	var candidate := _sealed_action_host_transaction_candidate(surface_action)
 	if candidate == null:
 		return _sealed_action_host_rejection("invalid_intent", "Table pointer intent is unavailable.")
 	var ledger := _sealed_action_host_ledger(candidate, true)
@@ -554,7 +565,7 @@ func _sealed_action_host_pointer_intent(surface_action: String, index: int, phas
 		var next_session: Dictionary = command.get("ui_state", session) if typeof(command.get("ui_state", session)) == TYPE_DICTIONARY else session
 		ledger = _foundation.ActionAuthorityScript.stage_session_cow(ledger, next_session)
 	_sealed_action_host_store_ledger(candidate, ledger)
-	if not _sealed_action_host_publish(candidate):
+	if not _sealed_action_host_publish(candidate, surface_action):
 		return _sealed_action_host_rejection("internal_fail_closed", "Table pointer intent could not be persisted.")
 	return command
 
@@ -629,7 +640,7 @@ func _sealed_action_host_auto_intent(surface_time_msec: int) -> Dictionary:
 func _sealed_action_host_preview_wager_cost(action_id: String, stake: int) -> int:
 	if not _foundation._current_game_uses_action_authority() or _foundation.run_state == null or action_id.is_empty():
 		return 0
-	var candidate := _sealed_action_host_transaction_candidate()
+	var candidate := _sealed_action_host_transaction_candidate(action_id)
 	if candidate == null:
 		return 0
 	var ledger := _sealed_action_host_ledger(candidate, true)
@@ -682,7 +693,10 @@ func _sealed_action_host_replay_request(delivery_claim: Dictionary) -> Dictionar
 
 func _sealed_action_host_prepare_delivery(action_id: String, stake: int, delivery_claim: Dictionary = {}) -> Dictionary:
 	var requested_key := str(delivery_claim.get("request_key", ""))
-	var candidate := _sealed_action_host_transaction_candidate()
+	# Direct/retry callers do not carry the synchronous surface preflight that
+	# proves a production no-scenario boundary. Keep those paths detached for
+	# failure atomicity; the live surface path supplies its prepared candidate.
+	var candidate := _sealed_action_host_detached()
 	if candidate == null:
 		return _sealed_action_host_rejection("internal_fail_closed", "Blackjack host could not create a detached delivery.", requested_key)
 	var ledger := _sealed_action_host_ledger(candidate, true)
@@ -716,7 +730,7 @@ func _sealed_action_host_prepare_delivery(action_id: String, stake: int, deliver
 	ledger = issued.get("ledger", ledger)
 	_sealed_action_host_store_ledger(candidate, ledger)
 	# Delivery identity is durable before any RNG, funding, or game proposal work.
-	if not _sealed_action_host_publish(candidate):
+	if not _sealed_action_host_publish(candidate, action_id):
 		return _sealed_action_host_rejection("internal_fail_closed", "Blackjack delivery could not be persisted.")
 	# Publishing the durable pending delivery transfers candidate collection roots
 	# into the live RunState. Reusing that candidate would let apply_result append
@@ -965,7 +979,10 @@ func _sealed_action_host_expand_proposal_ledger(full_input: Dictionary, compact_
 		if typeof(output_value) != typeof(input_value):
 			return {}
 		if typeof(output_value) in [TYPE_DICTIONARY, TYPE_ARRAY]:
-			if GameRitualRuntimeScript.canonical_fingerprint(output_value) != GameRitualRuntimeScript.canonical_fingerprint(input_value):
+			# Both ledgers are trusted in-memory products and structural proposal replay
+			# already matched the complete output. Exact recursive comparison preserves
+			# the closed boundary without serializing the card session twice more.
+			if not output_value.recursive_equal(input_value, 64):
 				return {}
 		elif output_value != input_value:
 			return {}
@@ -1053,7 +1070,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		candidate = _sealed_action_host_detached()
 	if candidate == null:
 		return _sealed_action_host_rejection("internal_fail_closed", "Sealed table semantics could not be rebuilt.", request_key)
-	var commits_in_place = candidate == _foundation.run_state and _sealed_action_host_can_commit_in_place()
+	var commits_in_place = candidate == _foundation.run_state and _sealed_action_host_can_commit_in_place(action_id)
 	# prepare_delivery validated this ledger and either observed an already durable
 	# pending delivery or published the newly issued one. Keep a top-level local
 	# copy for the remaining copy-on-write stages.
@@ -1373,7 +1390,7 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 	_sealed_action_host_store_ledger(proposed_candidate, proposed_ledger)
 	if has_runtime_checkpoint and not bool(_foundation.current_game.call(runtime_restore_method, accepted_runtime_checkpoint)):
 		return _sealed_action_host_rejection("internal_fail_closed", "Game runtime could not publish the accepted transaction.", request_key)
-	if not _sealed_action_host_publish(proposed_candidate):
+	if not _sealed_action_host_publish(proposed_candidate, action_id):
 		if has_runtime_checkpoint:
 			_foundation.current_game.call(runtime_restore_method, runtime_checkpoint)
 		return _sealed_action_host_rejection("internal_fail_closed", "Blackjack host could not publish the accepted transaction.", request_key)

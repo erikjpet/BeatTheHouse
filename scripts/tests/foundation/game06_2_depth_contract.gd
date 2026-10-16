@@ -73,6 +73,7 @@ func _run() -> void:
 	game.setup(definition, library)
 	_check_generic_null_authority_provider()
 	_check_contract(game)
+	_check_action_stutter_routing(game)
 	_check_declared_projection_ids(game)
 	_check_phase_projection(game)
 	_check_itemized_accounting(game)
@@ -220,6 +221,46 @@ func _check_contract(game: GameModule) -> void:
 			_check(str(equivalent.get("target_selection", "")) in ["focus", "cycle", "direct"], "Gesture %s %s equivalent has no canonical target selection." % [str(gesture.get("id", "unknown")), input_kind])
 	var persistence: Dictionary = contract.get("ritual_persistence", {}) if typeof(contract.get("ritual_persistence", {})) == TYPE_DICTIONARY else {}
 	_check(persistence.get("save_boundaries", []) == ["wagering", "initial_deal", "player_turn", "dealer_procedure", "settlement"], "Not every Blackjack action phase is a declared save boundary.")
+	var authority_contract: Dictionary = game.sealed_action_authority_contract()
+	_check(int(authority_contract.get("active_replay_limit", 0)) == 2, "Blackjack did not retain its bounded two-response replay window.")
+	_check(bool(authority_contract.get("in_place_nonrejecting_commit", false)), "Ordinary Blackjack actions lost their no-scenario in-place commit optimization.")
+	_check(str(authority_contract.get("in_place_nonrejecting_commit_predicate_method", "")) == "_blackjack_in_place_commit_allowed", "Blackjack in-place commits are no longer action allowlisted.")
+
+
+func _check_action_stutter_routing(game: GameModule) -> void:
+	var fixture := _fixture(game, "GAME06-2-ACTION-STUTTER", 62)
+	var run: RunState = fixture.get("run")
+	var environment: Dictionary = fixture.get("environment", {})
+	var table: Dictionary = game.call("_table_state_preview", run, environment)
+	var active_hand := {
+		"cards": [{"rank": 10, "suit": 0, "deck": 0}, {"rank": 8, "suit": 1, "deck": 0}],
+		"wager_multiplier": 1,
+		"stood": false,
+		"doubled": false,
+		"split": false,
+	}
+	var single_hand := {
+		"selected_stake": 5,
+		"locked_stake": 5,
+		"player_hands": [active_hand.duplicate(true)],
+		"active_hand_index": 0,
+		"dealer_cards": [{"rank": 9, "suit": 2, "deck": 0}, {"rank": 7, "suit": 3, "deck": 0}],
+		"moves_made": false,
+		"split_count": 0,
+	}
+	_check(bool(game.call("_blackjack_decision_will_settle", "blackjack_stand", single_hand, table, run)), "A final-hand Stand still takes the duplicate session preflight path.")
+	_check(bool(game.call("_blackjack_decision_will_settle", "blackjack_double", single_hand, table, run)), "A final-hand Double still takes the duplicate session preflight path.")
+	_check(bool(game.call("_blackjack_decision_will_settle", "blackjack_surrender", single_hand, table, run)), "A valid Surrender still takes the duplicate session preflight path.")
+	var split_hands := single_hand.duplicate(true)
+	(split_hands.get("player_hands", []) as Array).append(active_hand.duplicate(true))
+	_check(not bool(game.call("_blackjack_decision_will_settle", "blackjack_stand", split_hands, table, run)), "A nonterminal split-hand Stand bypassed the lightweight session path.")
+	_check(not bool(game.call("_blackjack_in_place_commit_allowed", "play_basic", run, environment)), "Blackjack first-entry normalization incorrectly entered the in-place commit path.")
+	_seed_authority_session(game, run, environment, single_hand)
+	_check(bool(game.call("_blackjack_in_place_commit_allowed", "play_basic", run, environment)), "Ordinary Blackjack settlement lost its in-place allowlist entry.")
+	_check(not bool(game.call("_blackjack_in_place_commit_allowed", "peek_hole_card", run, environment)), "Blackjack Peek incorrectly entered the ordinary in-place commit path.")
+	var host := _authority_host(game, run, 5)
+	_check(not bool(host.call("_sealed_action_host_in_place_session_intent_allowed", "blackjack_stand")), "A final-hand Stand was still executed through the duplicate session preflight.")
+	_check(host.call("_sealed_action_host_transaction_candidate", "blackjack_stand") == run, "A synchronous ordinary Stand still cloned the accumulated run before settlement.")
 
 
 func _check_declared_projection_ids(game: GameModule) -> void:
@@ -680,7 +721,8 @@ func _check_legacy_replay_window_convergence(game: GameModule) -> void:
 	var converged: Dictionary = converged_table.get(BlackjackActionAuthorityScript.LEDGER_KEY, {})
 	var converged_order: Array = converged.get("request_order", [])
 	_check(not BlackjackActionAuthorityScript.validate_persisted_ledger(converged, binding, restored.blackjack_authority_checkpoint_fingerprint()).is_empty(), "Historical Blackjack replay window did not converge to a valid bounded ledger.")
-	_check(converged_order.size() == BlackjackActionAuthorityScript.ACTIVE_REPLAY_LIMIT and (converged.get("journal", []) as Array).size() == BlackjackActionAuthorityScript.ACTIVE_REPLAY_LIMIT, "First post-load commit did not converge replay cache and journal to the active bound.")
+	var active_replay_limit := int(game.sealed_action_authority_contract().get("active_replay_limit", BlackjackActionAuthorityScript.ACTIVE_REPLAY_LIMIT))
+	_check(converged_order.size() == active_replay_limit and (converged.get("journal", []) as Array).size() == active_replay_limit, "First post-load commit did not converge replay cache and journal to the provider's active bound.")
 	var legacy_cache: Dictionary = legacy.get("request_cache", {})
 	var oldest_delivery: Dictionary = ((legacy_cache.get(oldest_key, {}) as Dictionary).get("response", {}) as Dictionary).get(BlackjackActionAuthorityScript.HOST_DELIVERY_KEY, {})
 	var newest_delivery: Dictionary = ((legacy_cache.get(newest_key, {}) as Dictionary).get("response", {}) as Dictionary).get(BlackjackActionAuthorityScript.HOST_DELIVERY_KEY, {})

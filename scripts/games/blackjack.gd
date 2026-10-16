@@ -180,6 +180,15 @@ func sealed_action_authority_contract() -> Dictionary:
 		"compact_authority_evidence_method": &"_blackjack_authority_evidence",
 		"compact_authority_evidence_predicate_method": &"_blackjack_compact_authority_allowed",
 		"trusted_candidate_structural_replay_match": true,
+		# The current response and its predecessor cover synchronous duplicate input
+		# and automatic recovery. Retaining four complete two-boundary hands made every
+		# later click re-hash old shoes, hands, patrons, and animation payloads.
+		"active_replay_limit": 2,
+		# Ordinary Deal and terminal hand controls run on an exact, independently
+		# replayed table candidate. When no scenario turn can reject, publish that
+		# accepted table directly instead of cloning the accumulated run around it.
+		"in_place_nonrejecting_commit": true,
+		"in_place_nonrejecting_commit_predicate_method": &"_blackjack_in_place_commit_allowed",
 		"host_auto_tick_method": ActionAuthorityScript.HOST_AUTO_TICK_METHOD,
 		"surface_intent_key": ActionAuthorityScript.SURFACE_INTENT_KEY,
 		"surface_intent_index_key": ActionAuthorityScript.SURFACE_INTENT_INDEX_KEY,
@@ -2140,8 +2149,6 @@ func _blackjack_in_place_session_surface_patch(session: Dictionary, run_state: R
 func _blackjack_in_place_session_intent_allowed(surface_action: String, run_state: RunState, environment: Dictionary) -> bool:
 	if run_state == null or _is_rourke_duel(run_state, environment):
 		return false
-	if surface_action != BLACKJACK_SETTLE_ACTION:
-		return true
 	var table := _peek_table_state(environment)
 	var ledger_value: Variant = table.get(BLACKJACK_HOST_LEDGER_KEY, null)
 	if typeof(ledger_value) != TYPE_DICTIONARY:
@@ -2150,6 +2157,13 @@ func _blackjack_in_place_session_intent_allowed(surface_action: String, run_stat
 	if typeof(session_value) != TYPE_DICTIONARY:
 		return true
 	var session := session_value as Dictionary
+	if surface_action != BLACKJACK_SETTLE_ACTION:
+		# A decision that will finish the last live hand must cross the wager/result
+		# boundary. Send it there immediately instead of first executing the same
+		# decision as a session-only preview and then throwing that work away.
+		if _blackjack_decision_will_settle(surface_action, session, table, run_state):
+			return false
+		return true
 	# Only the non-economic reveal/wait variants use the cheap session path. Once
 	# the reveal exists, route the click directly to the sealed payout transaction
 	# instead of running the same command once as a preflight and then again there.
@@ -2158,6 +2172,35 @@ func _blackjack_in_place_session_intent_allowed(surface_action: String, run_stat
 	if bool(session.get("presentation_timing_enforced", false)) and _deal_presentation_active(session):
 		return true
 	return _count_settlement_preview_required(session)
+
+
+func _blackjack_decision_will_settle(surface_action: String, session: Dictionary, table: Dictionary, run_state: RunState) -> bool:
+	if not _has_dealt_hand(session):
+		return false
+	if _dealer_has_blackjack(_card_array(session.get("dealer_cards", []))):
+		return surface_action in ["blackjack_hit", "blackjack_stand", "blackjack_double", "blackjack_split"]
+	if surface_action == "blackjack_surrender":
+		return _can_surrender(session, table)
+	if not surface_action in ["blackjack_stand", "blackjack_double"]:
+		return false
+	var active_index := int(session.get("active_hand_index", 0))
+	var hands_value: Variant = session.get("player_hands", [])
+	if typeof(hands_value) != TYPE_ARRAY:
+		return false
+	var hands := hands_value as Array
+	if active_index < 0 or active_index >= hands.size():
+		return false
+	for hand_index in range(hands.size()):
+		if hand_index == active_index:
+			continue
+		var hand_value: Variant = hands[hand_index]
+		if typeof(hand_value) != TYPE_DICTIONARY:
+			return false
+		var hand := hand_value as Dictionary
+		if not bool(hand.get("stood", false)) and _hand_total(_card_array(hand.get("cards", []))) < 21:
+			return false
+	var stake := maxi(1, int(session.get("locked_stake", session.get("selected_stake", 1))))
+	return _can_stand(session) if surface_action == "blackjack_stand" else _can_double(session, table, stake, run_state)
 
 
 func _rourke_duel_surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -2328,6 +2371,25 @@ func _blackjack_compact_authority_allowed(candidate: RunState, action_id: String
 	return not _is_rourke_duel(candidate, candidate.current_environment)
 
 
+func _blackjack_in_place_commit_allowed(action_id: String, run_state: RunState, environment: Dictionary) -> bool:
+	if run_state == null or _is_rourke_duel(run_state, environment):
+		return false
+	var table := _peek_table_state(environment)
+	var ledger_value: Variant = table.get(BLACKJACK_HOST_LEDGER_KEY, null)
+	if typeof(ledger_value) != TYPE_DICTIONARY or not bool((ledger_value as Dictionary).get("initialized", false)):
+		# First entry also normalizes the persisted table/authority boundary. Keep that
+		# one-time setup detached so save/retry callers can reconstruct it exactly.
+		return false
+	# These are the only surface/provider ids that can reach an ordinary wager or
+	# completed-hand settlement. Crew actions and Pal's tutorial Peek keep the full
+	# detached transaction because they may mutate broader RunState collections.
+	return action_id in [
+		"blackjack_deal", BLACKJACK_SETTLE_ACTION, "blackjack_hit", "blackjack_stand",
+		"blackjack_double", "blackjack_split", "blackjack_surrender",
+		BLACKJACK_CHARGED_DEAL_ACTION, "play_basic",
+	]
+
+
 func _blackjack_authority_evidence(candidate: RunState, action_id: String, stake: int, ui_state: Dictionary = {}) -> Dictionary:
 	if not _blackjack_compact_authority_allowed(candidate, action_id, stake, ui_state):
 		return {}
@@ -2371,8 +2433,6 @@ func _blackjack_authority_evidence(candidate: RunState, action_id: String, stake
 	return {
 		"version": 1,
 		"game_id": get_id(),
-		"action_id": action_id,
-		"stake": maxi(0, stake),
 		"account_checkpoint": candidate.action_authority_checkpoint_fingerprint(),
 		"bankroll": candidate.bankroll,
 		"grand_casino_chips": candidate.grand_casino_chips,
@@ -2400,7 +2460,6 @@ func _blackjack_authority_evidence(candidate: RunState, action_id: String, stake
 		"rourke_facing": candidate.rourke_facing,
 		"rourke_off_floor_actions": candidate.rourke_off_floor_actions,
 		"environment": environment_evidence,
-		"ui_state": ui_state,
 	}
 
 

@@ -1786,14 +1786,14 @@ func _sealed_action_host_detached() -> RunState:
 	return _sealed_action_host._sealed_action_host_detached()
 
 
-func _sealed_action_host_can_commit_in_place() -> bool:
+func _sealed_action_host_can_commit_in_place(action_id: String = "") -> bool:
 	_sealed_action_host.bind(self)
-	return _sealed_action_host._sealed_action_host_can_commit_in_place()
+	return _sealed_action_host._sealed_action_host_can_commit_in_place(action_id)
 
 
-func _sealed_action_host_transaction_candidate() -> RunState:
+func _sealed_action_host_transaction_candidate(action_id: String = "") -> RunState:
 	_sealed_action_host.bind(self)
-	return _sealed_action_host._sealed_action_host_transaction_candidate()
+	return _sealed_action_host._sealed_action_host_transaction_candidate(action_id)
 
 
 func _sealed_action_host_delivery_stake(command: Dictionary, session: Dictionary) -> int:
@@ -1826,9 +1826,9 @@ func _sealed_action_host_restored_candidate(snapshot: Dictionary, layout_context
 	return _sealed_action_host._sealed_action_host_restored_candidate(snapshot, layout_context, trusted_environment)
 
 
-func _sealed_action_host_publish(candidate: RunState) -> bool:
+func _sealed_action_host_publish(candidate: RunState, action_id: String = "") -> bool:
 	_sealed_action_host.bind(self)
-	return _sealed_action_host._sealed_action_host_publish(candidate)
+	return _sealed_action_host._sealed_action_host_publish(candidate, action_id)
 
 
 func _sealed_action_host_rollback_pending_delivery() -> Dictionary:
