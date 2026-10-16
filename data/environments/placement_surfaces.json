@@ -14004,6 +14004,35 @@
           "occupancy_required": false
         },
         {
+          "id": "fixed.game_floor_3",
+          "kind": "fixed",
+          "pos": [
+            396.0,
+            152.0
+          ],
+          "footprint_class": "floor_fixture",
+          "physical_role": "Random game table",
+          "occupant_ids": [],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [
+            350.0,
+            88.0,
+            92.0,
+            64.0
+          ],
+          "label_anchor": [
+            396.0,
+            82.0
+          ],
+          "facing": "none",
+          "priority": 20,
+          "zone_id": "room",
+          "support_id": "floor",
+          "walk_lane_ids": [],
+          "occupancy_required": false
+        },
+        {
           "id": "fixed.lender_person_1",
           "kind": "fixed",
           "pos": [
@@ -15022,6 +15051,7 @@
         "numbers_spots:0": "fixed.numbers_book",
         "game_spots:0": "fixed.game_floor_1",
         "game_spots:1": "fixed.game_floor_2",
+        "game_spots:2": "fixed.game_floor_3",
         "service_spots:0": "fixed.service_house_drink",
         "lender_spots:0": "fixed.lender_group_1",
         "lender_spots:1": "fixed.lender_person_1"

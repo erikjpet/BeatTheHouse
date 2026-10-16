@@ -1,5 +1,5 @@
 {
-  "baseline_sha256": "e1126644451b2e9dd864fc86011c8ac2ed321159702a7aabeff6672523571447",
+  "baseline_sha256": "f4a3e0e0d3c504fb9e166ffe94393c53417eb89d4fe9f01d76609939cf91d760",
   "canonical_fields": {
     "visual_context": {
       "perspective": "first_person",
@@ -40,7 +40,7 @@
       "cashout_tone": "private"
     },
     "game_pool": ["slot", "blackjack", "video_poker"],
-    "game_count": [2, 2],
+    "game_count": [3, 3],
     "item_pool": [],
     "item_count": [0, 0],
     "event_pool": ["rowdy_regular", "machine_jam", "side_door", "heat_at_exit", "suspicious_patron", "rival_counter", "counter_payoff", "snitch_reputation", "the_collector", "lay_low_booth", "door_bribe", "lucky_streak_temptation", "crew_favor_delivery"],

@@ -85,6 +85,8 @@ static func _check_l2_baseline(layers: Dictionary, failures: Array) -> void:
 			failures.append("Punchline L2 changed pre-rework canonical field %s (baseline %s)." % [field_name, str(baseline.get("baseline_sha256", "missing"))])
 	if _array(casino.get("game_pool", [])) != ["slot", "blackjack", "video_poker"] or int(_dict(casino.get("economic_profile", {})).get("stake_floor", -1)) != 10:
 		failures.append("Punchline L2 gameplay pool/stakes no longer match the shipped underground venue.")
+	if _array(casino.get("required_game_ids", [])) != ["slot", "blackjack", "video_poker"]:
+		failures.append("Punchline L2 must guarantee its slot, blackjack, and video-poker machines on every generated run.")
 
 
 static func _check_generation_and_tutorial(library: ContentLibrary, archetype: Dictionary, failures: Array) -> void:
@@ -126,12 +128,19 @@ static func _check_generation_and_tutorial(library: ContentLibrary, archetype: D
 	var casino_object_rects := _dict(_dict(normal_run.current_environment.get("layout", {})).get("object_rects", {}))
 	var casino_bindings := _dict(_dict(normal_run.current_environment.get("layout", {})).get("slot_bindings", {}))
 	var casino_game_ids := _array(normal_run.current_environment.get("game_ids", []))
-	var casino_games_grounded := casino_game_ids.size() == 2
+	var casino_games_grounded := casino_game_ids == ["slot", "blackjack", "video_poker"]
 	for game_id_value in casino_game_ids:
 		casino_games_grounded = casino_games_grounded and casino_object_rects.has("game:%s" % str(game_id_value))
 	if not casino_games_grounded or str(_dict(casino_bindings.get("numbers:book", {})).get("presentation_mode", "")) != "room" \
 			or not casino_object_rects.has("numbers:book") or _layout_overlap_count(casino_object_rects) != 0:
-		failures.append("Punchline casino did not compose its two release games and physical Numbers book on one collision-free layout plane.")
+		failures.append("Punchline casino did not compose its slot, blackjack, video-poker, and physical Numbers book on one collision-free layout plane.")
+	for seed_index in range(32):
+		var seed_run := RunStateScript.new()
+		seed_run.start_new("PUNCHLINE-REQUIRED-GAMES-%02d" % seed_index)
+		var seeded_casino := EnvironmentInstanceScript.from_archetype_layer(archetype, "casino", 2, seed_run.create_rng("punchline"), library).to_dict()
+		if _array(seeded_casino.get("game_ids", [])) != ["slot", "blackjack", "video_poker"]:
+			failures.append("Punchline casino omitted a required slot, blackjack, or video-poker game for deterministic seed %02d." % seed_index)
+			break
 	var tutorial_config := library.challenge_config_for("tutorial_first_card", "IGNORED")
 	var tutorial_run := RunStateScript.new()
 	tutorial_run.start_new("PUNCHLINE-TUTORIAL", tutorial_config)

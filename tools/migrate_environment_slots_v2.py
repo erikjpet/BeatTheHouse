@@ -2895,10 +2895,9 @@ def _normalize_fixed_game_authority(maps: dict[str, dict[str, Any]]) -> None:
                 maps[map_id], source_slot_id, target_slot_id
             )
 
-    # The hidden Punchline casino generates exactly two games from a three-game
-    # pool.  Both positions are floor fixtures owned by ordinal capacity.  The
-    # former surface-item middle row caused Blackjack to fall through to the
-    # Numbers Book; it is now retired rather than treated as game capacity.
+    # The hidden Punchline casino generates all three games in its pool.  Each
+    # position is a floor fixture owned by ordinal capacity, so game identities
+    # remain independent from placement authority.
     casino = maps["small_underground_casino:casino"]
     if _slot_by_id(casino, "fixed.random_game_3") is not None:
         _rename_slot_and_references(
@@ -2922,13 +2921,35 @@ def _normalize_fixed_game_authority(maps: dict[str, dict[str, Any]]) -> None:
     second_floor.update({
         "pos": [468.0, 70.0],
         "footprint_class": "floor_fixture",
-        "physical_role": "Game floor position 2",
+        "physical_role": "Random game table",
         "hit_rect": [422.0, 6.0, 92.0, 64.0],
         "label_anchor": [407.0, 26.0],
         "facing": "none",
         "priority": 130,
         "zone_id": "room",
         "support_id": "stage",
+        "walk_lane_ids": [],
+        "occupancy_required": False,
+    })
+    third_floor = _slot_by_id(casino, "fixed.game_floor_3")
+    if third_floor is None:
+        third_floor = {}
+        casino.setdefault("fixed_slots", []).append(third_floor)
+    third_floor.update({
+        "id": "fixed.game_floor_3",
+        "kind": "fixed",
+        "pos": [396.0, 152.0],
+        "footprint_class": "floor_fixture",
+        "physical_role": "Random game table",
+        "occupant_ids": [],
+        "runtime_reserve": False,
+        "reserve_reason": "",
+        "hit_rect": [350.0, 88.0, 92.0, 64.0],
+        "label_anchor": [396.0, 82.0],
+        "facing": "none",
+        "priority": 20,
+        "zone_id": "room",
+        "support_id": "floor",
         "walk_lane_ids": [],
         "occupancy_required": False,
     })
@@ -2944,6 +2965,7 @@ def _normalize_fixed_game_authority(maps: dict[str, dict[str, Any]]) -> None:
     casino_categories.update({
         "game_spots:0": "fixed.game_floor_1",
         "game_spots:1": "fixed.game_floor_2",
+        "game_spots:2": "fixed.game_floor_3",
         "service_spots:0": "fixed.service_house_drink",
         "lender_spots:0": "fixed.lender_group_1",
         "lender_spots:1": "fixed.lender_person_1",
@@ -2960,8 +2982,9 @@ def _normalize_fixed_game_authority(maps: dict[str, dict[str, Any]]) -> None:
         "fixed.staff_dealer": 0,
         "fixed.game_floor_1": 1,
         "fixed.game_floor_2": 2,
-        "fixed.lender_person_1": 3,
-        "fixed.lender_group_1": 4,
+        "fixed.game_floor_3": 3,
+        "fixed.lender_person_1": 4,
+        "fixed.lender_group_1": 5,
     }
     casino["fixed_slots"] = sorted(
         casino.get("fixed_slots", []) or [],
@@ -5871,6 +5894,7 @@ def validate(
     } == {
         "game_spots:0": "fixed.game_floor_1",
         "game_spots:1": "fixed.game_floor_2",
+        "game_spots:2": "fixed.game_floor_3",
         "service_spots:0": "fixed.service_house_drink",
         "lender_spots:0": "fixed.lender_group_1",
         "lender_spots:1": "fixed.lender_person_1",
@@ -5882,7 +5906,7 @@ def validate(
         assert object_id not in casino.get("fixed_object_slot_ids", {}), (
             f"Punchline casino {object_id} must stay ID-independent"
         )
-    for slot_id in ("fixed.game_floor_1", "fixed.game_floor_2"):
+    for slot_id in ("fixed.game_floor_1", "fixed.game_floor_2", "fixed.game_floor_3"):
         slot = _slot_by_id(casino, slot_id)
         assert slot is not None and slot.get("footprint_class") == "floor_fixture", (
             f"Punchline casino {slot_id} must be floor-game capacity"

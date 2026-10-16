@@ -2670,6 +2670,7 @@ def main_v2(
         casino_pool_categories == {
             "game_spots:0": "fixed.game_floor_1",
             "game_spots:1": "fixed.game_floor_2",
+            "game_spots:2": "fixed.game_floor_3",
             "service_spots:0": "fixed.service_house_drink",
             "lender_spots:0": "fixed.lender_group_1",
             "lender_spots:1": "fixed.lender_person_1",
@@ -2689,7 +2690,7 @@ def main_v2(
         for slot in values(casino.get("fixed_slots"))
         if isinstance(slot, dict)
     }
-    for slot_id in ("fixed.game_floor_1", "fixed.game_floor_2"):
+    for slot_id in ("fixed.game_floor_1", "fixed.game_floor_2", "fixed.game_floor_3"):
         check.require(
             casino_slots.get(slot_id, {}).get("footprint_class") == "floor_fixture",
             f"small_underground_casino:casino: {slot_id} must be floor-game capacity",

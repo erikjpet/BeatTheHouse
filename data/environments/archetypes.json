@@ -1898,7 +1898,8 @@
           "cashout_tone": "private"
         },
         "game_pool": ["slot", "blackjack", "video_poker"],
-        "game_count": [2, 2],
+        "required_game_ids": ["slot", "blackjack", "video_poker"],
+        "game_count": [3, 3],
         "item_pool": [],
         "item_count": [0, 0],
         "event_pool": ["rowdy_regular", "machine_jam", "side_door", "heat_at_exit", "suspicious_patron", "rival_counter", "counter_payoff", "snitch_reputation", "the_collector", "lay_low_booth", "door_bribe", "lucky_streak_temptation", "crew_favor_delivery"],
