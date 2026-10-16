@@ -27299,7 +27299,7 @@
       "event_object_slot_ids": {
         "event:chain06_cass_first_contact": "event.behind_counter_person_1",
         "event:chain06_rourke_noticed": "event.wall_item_1",
-        "event:comped_suite_offer": "event.behind_counter_person_1",
+        "event:comped_suite_offer": "event.behind_counter_person_2",
         "event:the_house_calls": "event.behind_counter_person_1"
       },
       "scenario_object_slot_ids": {

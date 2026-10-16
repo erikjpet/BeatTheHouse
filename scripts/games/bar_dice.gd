@@ -188,6 +188,12 @@ func sealed_action_authority_contract() -> Dictionary:
 		"trusted_candidate_first_proposal_owns_transaction": true,
 		"compact_authority_evidence_method": &"_bar_dice_authority_evidence",
 		"trusted_candidate_structural_replay_match": true,
+		"lightweight_resolution_candidate": true,
+		# The replay candidate is fully detached before the accepted proposal runs.
+		# Its first execution can therefore fork only the table shell: any nested
+		# writes remain inside the already-private transaction candidate, while the
+		# independently deep replay still proves the complete result.
+		"trusted_candidate_shallow_machine_detach": true,
 		# With no authored scenario or injected rollback fixture, the host's turn
 		# boundary cannot reject. Publish the replay-validated table directly instead
 		# of cloning and reconciling the complete run around every throw.
@@ -1511,7 +1517,19 @@ func _dice_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 func _dice_state_preview(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var stored: Variant = game_states.get(get_id(), {})
-	var state: Dictionary = (stored as Dictionary).duplicate(true) if typeof(stored) == TYPE_DICTIONARY and not (stored as Dictionary).is_empty() else _fallback_state(run_state, environment)
+	var has_stored_state := typeof(stored) == TYPE_DICTIONARY and not (stored as Dictionary).is_empty()
+	# Current tables are immutable to preview callers. Detach only their outer
+	# shell because the assignment refresh below replaces top-level values and
+	# never edits retained patrons/results in place. Older schemas still take the
+	# conservative deep path before normalization.
+	var stored_state := stored as Dictionary if has_stored_state else {}
+	var state: Dictionary
+	if not has_stored_state:
+		state = _fallback_state(run_state, environment)
+	elif _state_is_current(stored_state):
+		state = stored_state.duplicate(false)
+	else:
+		state = stored_state.duplicate(true)
 	_apply_grand_casino_bartender_assignment(state, run_state, environment, true)
 	return state if _state_is_current(state) else _normalize_state(state)
 

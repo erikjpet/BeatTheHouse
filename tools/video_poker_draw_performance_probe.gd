@@ -202,7 +202,16 @@ func _finish(evidence: Dictionary) -> void:
 		"failures": failures,
 		"evidence": evidence,
 	}, "\t"))
-	if app != null:
-		app.free()
-	await process_frame
+	# DRAW and double-up publish through deferred incremental refreshes. Let that
+	# queue cross its normal frame boundary before releasing the scene so the
+	# probe does not resume a valid refresh coroutine on a freed Main instance.
+	if app != null and is_instance_valid(app):
+		for _drain_frame in range(16):
+			if not bool(app.get("deferred_embedded_refresh_pending")) \
+					and not bool(app.get("game_exit_settle_active")):
+				break
+			await process_frame
+		app.queue_free()
+		app = null
+		await _settle(4)
 	quit(0 if failures.is_empty() else 1)

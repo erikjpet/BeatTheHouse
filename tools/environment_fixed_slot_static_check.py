@@ -88,20 +88,20 @@ V2_SCENARIO_CAPACITY_TARGETS = {
 }
 V2_EVENT_CAPACITY_TARGETS = {
     "corner_store": {"behind_counter_person": 2, "standing_person": 1, "ground_marker": 1},
-    "back_alley": {"ground_marker": 1, "floor_fixture": 1, "standing_person": 6},
+    "back_alley": {"behind_counter_person": 1, "ground_marker": 1, "floor_fixture": 1, "standing_person": 6},
     "motel": {"behind_counter_person": 1, "ground_marker": 1, "standing_person": 4},
     "bar": {"behind_counter_person": 1, "standing_person": 5, "doorway": 1},
     "gas_station_casino": {"doorway": 1, "ground_marker": 1, "standing_person": 5},
     "small_underground_casino": {},
     "small_underground_casino:club": {"standing_person": 8},
     "small_underground_casino:casino": {"behind_counter_person": 1, "standing_person": 8},
-    "small_underground_casino:back_room": {"standing_person": 6},
+    "small_underground_casino:back_room": {"standing_person": 6, "behind_counter_person": 1},
     "jazz_club": {"standing_person": 3},
     "kitty_cat_lounge": {"seated_person": 1, "doorway": 1, "standing_person": 5},
     "delta_queen": {"seated_person": 1, "doorway": 1, "behind_counter_person": 1, "standing_person": 6},
     "beach": {"standing_person": 1},
     "pawn_shop": {"standing_person": 3},
-    "grand_casino": {"behind_counter_person": 1, "wall_mounted": 1, "standing_person": 7},
+    "grand_casino": {"behind_counter_person": 2, "wall_mounted": 1, "standing_person": 7},
     "grand_casino_high_limit": {"standing_person": 6},
     "grand_casino_back_room": {"standing_person": 5},
     "grand_casino_cage": {},
@@ -2268,8 +2268,8 @@ def main_v2(
     check.require(placement.get("schema_version") == 3, "placement_surfaces.json schema_version must be 3")
     check.require(placement.get("slot_schema_version") == 2, "placement_surfaces.json slot_schema_version must be 2")
     check.require(
-        sum(sum(class_counts.values()) for class_counts in V2_EVENT_CAPACITY_TARGETS.values()) == 98,
-        "producer-backed event capacity matrix must contain exactly 98 rows",
+        sum(sum(class_counts.values()) for class_counts in V2_EVENT_CAPACITY_TARGETS.values()) == 101,
+        "producer-backed event capacity matrix must contain exactly 101 rows",
     )
     check.require(board_raw is not None and board_raw[0] > 0 and board_raw[1] > 0, "invalid placement board_size")
     board = board_raw or (900.0, 430.0)

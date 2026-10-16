@@ -7812,7 +7812,8 @@ func _bar_dice_resolve_with_reroll(game: GameModule, seed_text: String, reroll: 
 	host.call("_sealed_action_host_surface_intent", "bar_dice_throw", 0, false)
 	host.call("_sealed_action_host_surface_intent", "bar_dice_reveal", 0, false)
 	var call_command: Dictionary = host.call("_sealed_action_host_surface_intent", "bar_dice_ack_call", 0, false)
-	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", "roll", 10, call_command.get("_sealed_action_host_delivery", {}))
+	var prepared: Dictionary = call_command.get("_sealed_action_host_prepared", {}) if typeof(call_command.get("_sealed_action_host_prepared", {})) == TYPE_DICTIONARY else {}
+	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", "roll", 10, call_command.get("_sealed_action_host_delivery", {}), prepared)
 	host.free()
 	return result
 
@@ -8354,7 +8355,8 @@ func _check_bar_dice_save_load_mid_round(game: GameModule, failures: Array) -> v
 	restored_host.call("_sealed_action_host_surface_intent", "bar_dice_throw", 0, false)
 	restored_host.call("_sealed_action_host_surface_intent", "bar_dice_reveal", 0, false)
 	var call_command: Dictionary = restored_host.call("_sealed_action_host_surface_intent", "bar_dice_ack_call", 0, false)
-	var result: Dictionary = restored_host.call("_sealed_action_host_resolve_intent", "roll", 10, call_command.get("_sealed_action_host_delivery", {}))
+	var prepared: Dictionary = call_command.get("_sealed_action_host_prepared", {}) if typeof(call_command.get("_sealed_action_host_prepared", {})) == TYPE_DICTIONARY else {}
+	var result: Dictionary = restored_host.call("_sealed_action_host_resolve_intent", "roll", 10, call_command.get("_sealed_action_host_delivery", {}), prepared)
 	restored_host.free()
 	if not bool(result.get("ok", false)) or (result.get("bar_dice_player_dice", []) as Array).size() != 5:
 		failures.append("Bar Dice restored mid-round state could not resolve a valid table round.")

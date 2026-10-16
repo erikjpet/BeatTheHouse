@@ -3288,8 +3288,25 @@ function Invoke-GrandFarePublicCashEvent {
     }
     Restore-EnvironmentSurfaceAfterTravelResult
     Close-WorldMap
-    if ([bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false) -or
-        [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)) {
+
+    # A generated casino stop can surface its unavoidable staff beat while the
+    # route is opening and closing the map. Preserve the fare bankroll by using
+    # the exact rendered "Keep your cash" response, then resume recovery. Keep
+    # this allow-list deliberately narrow so an unrelated modal still stops the
+    # run instead of being answered speculatively.
+    $eventVisible = [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false)
+    $talkVisible = [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)
+    $talkEventId = [string](Get-Value $script:LastObservation @('talk', 'event_id') '')
+    if (-not $eventVisible -and $talkVisible -and $talkEventId -ceq 'staff_shift_tip' -and
+        'save_cash' -cin @(Get-VisibleChoiceIds)) {
+        $null = Choose-VisibleChoice `
+            -ChoiceId 'save_cash' `
+            -Intent 'keep the visible staff-shift cash while recovering Grand fare'
+        Wait-Frames -Frames 10
+        $eventVisible = [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false)
+        $talkVisible = [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)
+    }
+    if ($eventVisible -or $talkVisible) {
         throw 'Grand fare cash recovery refuses to act through another visible modal.'
     }
 
@@ -4256,6 +4273,35 @@ function Resolve-BlackjackRouteEventPopup {
 }
 
 
+function Ensure-CleanBlackjackWagerFunding {
+    if ($Ending -cne 'clean') { return }
+    if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'GAME' -or
+        [string](Get-Value $script:LastObservation @('game', 'game_id') '') -cne 'blackjack') {
+        throw 'Clean blackjack funding recovery requires the visible Blackjack surface.'
+    }
+    $phase = Get-ExactReplayString -InputObject $script:LastObservation -Path @('game', 'phase') -Context 'Clean blackjack funding phase'
+    if ($phase -cne 'betting') { return }
+
+    $minimum = Get-ExactReplayInt32 -InputObject $script:LastObservation -Path @('game', 'stake_min') -Context 'Clean blackjack funding minimum'
+    $chips = Get-RenderedHudInteger -Name chips -Context 'Clean blackjack funding chips'
+    if ($chips -ge $minimum) { return }
+
+    # Cash and Grand chips are deliberately separate public balances. When a
+    # losing segment drains the loose chip stack, follow the documented player
+    # recovery through Linda instead of pressing an unaffordable Deal control.
+    # Buying chips preserves the cash-plus-chips segment total used by the card
+    # ladder, so this does not manufacture progress or bypass a tier gate.
+    Leave-GameSurface
+    Ensure-GrandCasinoChips -Minimum $minimum
+    Enter-BlackjackTable
+
+    $restoredChips = Get-RenderedHudInteger -Name chips -Context 'Recovered clean blackjack funding chips'
+    if ($restoredChips -lt $minimum) {
+        throw "Clean blackjack Cage recovery left $restoredChips chips below the visible table minimum $minimum."
+    }
+}
+
+
 function Play-OneBlackjackRound {
     param(
         [switch]$UseVisibleCheat,
@@ -4264,6 +4310,7 @@ function Play-OneBlackjackRound {
         [string]$CleanStakeMode = 'unchanged'
     )
     Enter-BlackjackTable
+    Ensure-CleanBlackjackWagerFunding
     if ($UseHeistStake) {
         Ensure-BlackjackStakeRange -Minimum 8 -Maximum 30
     }
@@ -4274,6 +4321,7 @@ function Play-OneBlackjackRound {
         Set-CleanBlackjackStake -Mode $CleanStakeMode
     }
     $beforeHand = [int](Get-Value $script:LastObservation @('game', 'boss_hand_number') 0)
+    $beforeOutcome = [string](Get-Value $script:LastObservation @('game', 'outcome_message') '')
     $roundStarted = [string](Get-Value $script:LastObservation @('game', 'phase') '') -cne 'betting'
 
     # A full hand can cross several intentionally paced presentation windows
@@ -4283,6 +4331,23 @@ function Play-OneBlackjackRound {
         if (Test-PublicTerminalSurface) { return }
         $eventVisible = [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false)
         $talkVisible = [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)
+        $popupType = [string](Get-Value $script:LastObservation @('screen', 'overlay_state', 'event_choice_popup_type') '')
+        if ($eventVisible -and $popupType -ceq 'wager_confirmation') {
+            if ($Ending -ceq 'clean') {
+                $null = Click-Button `
+                    -Text 'Change Stake' `
+                    -Intent 'decline the visible run-ending all-in wager on the Clean route'
+                Wait-Frames -Frames 12 -Intent 'return from the all-in warning to the visible Blackjack wager controls'
+                Set-CleanBlackjackStake -Mode minimum
+            }
+            else {
+                $null = Click-Button `
+                    -Text 'Confirm Bet' `
+                    -Intent 'confirm the visible Blackjack all-in wager'
+                Wait-Frames -Frames 30 -Intent 'let the confirmed Blackjack wager enter the live hand'
+            }
+            continue
+        }
         if ($eventVisible -and (@('clean', 'cheat', 'heist') -ccontains $Ending)) {
             if ($Ending -ceq 'heist') {
                 $null = Resolve-BlackjackRouteEventPopup -PreferCooling
@@ -4350,6 +4415,9 @@ function Play-OneBlackjackRound {
         $bossHandNow = [int](Get-Value $script:LastObservation @('game', 'boss_hand_number') 0)
         $outcomeNow = [string](Get-Value $script:LastObservation @('game', 'outcome_message') '')
         $phaseNow = [string](Get-Value $script:LastObservation @('game', 'phase') '')
+        if (-not $roundStarted -and $phaseNow -cne 'betting') {
+            $roundStarted = $true
+        }
         $cleanWagerControlsReady = $Ending -cne 'clean' -or $null -ne (Find-GameAction -Action 'blackjack_deal')
         if (($bossHandNow -gt $beforeHand) -or
             ($roundStarted -and -not [string]::IsNullOrWhiteSpace($outcomeNow) -and
@@ -4419,13 +4487,24 @@ function Play-OneBlackjackRound {
         }
         if ($null -cne (Find-GameAction -Action 'blackjack_deal')) {
             $null = Invoke-GameAction -Action 'blackjack_deal' -Intent 'deal the next blackjack hand at the visible wager'
-            $phaseAfterDeal = [string](Get-Value $script:LastObservation @('game', 'phase') '')
-            if ($phaseAfterDeal -ceq 'betting') {
-                throw 'The visible Blackjack Deal control did not start a new hand.'
-            }
-            $roundStarted = $true
             Wait-Frames -Frames 30
-            continue
+            $phaseAfterDeal = [string](Get-Value $script:LastObservation @('game', 'phase') '')
+            $outcomeAfterDeal = [string](Get-Value $script:LastObservation @('game', 'outcome_message') '')
+            if ($phaseAfterDeal -cne 'betting') {
+                $roundStarted = $true
+                continue
+            }
+            if (-not [string]::IsNullOrWhiteSpace($outcomeAfterDeal) -and $outcomeAfterDeal -cne $beforeOutcome) {
+                return
+            }
+            # Exact-capacity wagers are sealed by the production action host.
+            # During that bounded delivery window Deal disappears and may be
+            # replaced by Retry; the next loop iteration owns that public state.
+            if ($null -eq (Find-GameAction -Action 'blackjack_deal') -or
+                $null -ne (Find-GameAction -Action 'blackjack_retry_pending')) {
+                continue
+            }
+            throw 'The visible Blackjack Deal control did not start a new hand.'
         }
         Wait-Frames -Frames 20
     }

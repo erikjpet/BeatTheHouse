@@ -2746,10 +2746,14 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	# prefilled occupancy claim; this refreshes the generated Bar record while all
 	# route, RNG, story, economy, clock, and world-map routing values remain
 	# unchanged. The embedded Bar record still refreshes the world-map digest.
+	# The reviewed Pull Tabs capacity and ending-route counter hosts are likewise
+	# geometry/manifest-only changes; the focused replay below retained every
+	# route, economy, clock, Heat, RNG, and story field while refreshing Bar and
+	# its embedded world-map record.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "48b61aa8f7e9122df377233749b97502b462ce243e0d20a0c7fcc24173dc34ff",
+		"current_environment_sha256": "eead09f7d93ebdbcd89ac4c8d10df72e6c8982fb38640481a6e25287258e6002",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "7ddb7685efb21e45979ea10ab89e660d99c6e891",
@@ -2760,7 +2764,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0257877551b37226fd62316ee2af5e047a27387fbb87d5acfa0273d1366a0e81",
-		"world_map_sha256": "01a617af5731398366b7df9b068b15d412fb8a052f5de257810df3054adb0a84",
+		"world_map_sha256": "9774ac78e0e45e6a318401d82ef0946c0a8ad2ce843a57952d38bdbf11c43c3b",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):

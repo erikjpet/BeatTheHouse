@@ -99,13 +99,13 @@
 							688.0,
 							260.0
 						],
-						"scenario.local_standing_person_1": [
-							580.0,
-							347.0
-						],
-						"scenario.local_standing_person_2": [
-							350.0,
-							348.0
+					"scenario.local_standing_person_1": [
+						580.0,
+						358.0
+					],
+					"scenario.local_standing_person_2": [
+						350.0,
+						358.0
 						]
 					}
 				},
@@ -237,14 +237,14 @@
 					}
 				}
 			},
-			"slot_positions": {
-				"event.floor_fixture_1": [
-					142.0,
-					238.0
-				],
-				"event.ground_marker_1": [
-					761.0,
-					265.0
+		"slot_positions": {
+			"event.floor_fixture_1": [
+				624.0,
+				370.0
+			],
+			"event.ground_marker_1": [
+				44.0,
+				412.0
 				],
 				"event.standing_person_1": [
 					573.0,
@@ -294,41 +294,41 @@
 					809.0,
 					108.0
 				],
-				"fixed.item_shop_1": [
-					324.0,
-					191.0
-				],
-				"fixed.item_shop_2": [
-					411.0,
-					192.0
-				],
-				"fixed.item_shop_3": [
-					495.0,
-					192.0
-				],
-				"fixed.item_shop_4": [
-					580.0,
-					192.0
-				],
-				"fixed.lender_street_lender": [
-					52.0,
-					306.0
-				],
-				"fixed.patron_lena": [
-					119.0,
-					411.0
-				],
-				"fixed.patron_vince": [
-					36.0,
-					400.0
+			"fixed.item_shop_1": [
+				350.0,
+				112.0
+			],
+			"fixed.item_shop_2": [
+				470.0,
+				112.0
+			],
+			"fixed.item_shop_3": [
+				350.0,
+				192.0
+			],
+			"fixed.item_shop_4": [
+				470.0,
+				192.0
+			],
+			"fixed.lender_street_lender": [
+				44.0,
+				292.0
+			],
+			"fixed.patron_lena": [
+				500.0,
+				358.0
+			],
+			"fixed.patron_vince": [
+				388.0,
+				370.0
 				],
 				"fixed.service_house_drink": [
 					661.0,
 					166.0
 				],
-				"fixed.staff_merchant": [
-					808.0,
-					187.0
+			"fixed.staff_merchant": [
+				810.0,
+				208.0
 				],
 				"scenario.floor_fixture_3": [
 					854.0,
@@ -830,9 +830,9 @@
 							153.0,
 							404.0
 						],
-						"scenario.local_floor_fixture_3": [
-							167.0,
-							415.0
+					"scenario.local_floor_fixture_3": [
+						267.0,
+						216.0
 						],
 						"scenario.local_standing_person_1": [
 							125.0,
@@ -1025,7 +1025,7 @@
 		"delta_queen": {
 			"base_saved": false,
 			"scenario_layouts": {
-				"delta_queen_captains_invitational": {
+			"delta_queen_captains_invitational": {
 					"saved": false,
 					"slot_positions": {
 						"scenario.local_behind_counter_person_1": [
@@ -1080,9 +1080,18 @@
 							518.0,
 							289.0
 						]
-					}
-				},
-				"delta_queen_wedding_charter": {
+				}
+			},
+			"delta_queen_fog_delay": {
+				"saved": false,
+				"slot_positions": {
+					"scenario.local_doorway_2": [
+						864.0,
+						176.0
+					]
+				}
+			},
+			"delta_queen_wedding_charter": {
 					"saved": false,
 					"slot_layers": {
 						"scenario.local_floor_fixture_1": 1.0,
@@ -1452,9 +1461,9 @@
 							238.0,
 							284.0
 						],
-						"scenario.local_ground_marker_1": [
-							155.0,
-							420.0
+					"scenario.local_ground_marker_1": [
+						176.0,
+						296.0
 						],
 						"scenario.local_ground_marker_2": [
 							240.0,
@@ -1568,13 +1577,13 @@
 							864.0,
 							352.0
 						],
-						"scenario.local_floor_fixture_1": [
-							116.0,
-							328.0
-						],
-						"scenario.local_floor_fixture_2": [
-							541.0,
-							429.0
+					"scenario.local_floor_fixture_1": [
+						554.0,
+						238.0
+					],
+					"scenario.local_floor_fixture_2": [
+						754.0,
+						208.0
 						],
 						"scenario.local_ground_marker_1": [
 							126.0,
@@ -1732,10 +1741,10 @@
 			"slot_layers": {
 				"fixed.staff_host": -1.0
 			},
-			"slot_positions": {
-				"event.behind_counter_person_1": [
-					416.0,
-					344.0
+		"slot_positions": {
+			"event.behind_counter_person_1": [
+				512.0,
+				354.0
 				],
 				"event.behind_counter_person_2": [
 					462.0,
@@ -1793,9 +1802,9 @@
 					279.0,
 					39.0
 				],
-				"fixed.fixture_host_desk": [
-					369.0,
-					316.0
+			"fixed.fixture_host_desk": [
+				388.0,
+				366.0
 				],
 				"fixed.game_machine_1": [
 					140.0,
@@ -1833,9 +1842,9 @@
 					831.0,
 					178.0
 				],
-				"fixed.staff_host": [
-					316.0,
-					356.0
+			"fixed.staff_host": [
+				450.0,
+				350.0
 				],
 				"scenario.floor_fixture_2": [
 					22.0,
@@ -2356,9 +2365,9 @@
 							804.0,
 							394.0
 						],
-						"scenario.local_doorway_2": [
-							250.0,
-							387.0
+					"scenario.local_doorway_2": [
+						859.0,
+						84.0
 						],
 						"scenario.local_floor_fixture_1": [
 							168.0,
@@ -2405,13 +2414,13 @@
 							24.0,
 							394.0
 						],
-						"scenario.local_floor_fixture_1": [
-							649.0,
-							418.0
-						],
-						"scenario.local_floor_fixture_2": [
-							744.0,
-							419.0
+					"scenario.local_floor_fixture_1": [
+						426.0,
+						358.0
+					],
+					"scenario.local_floor_fixture_2": [
+						206.0,
+						360.0
 						],
 						"scenario.local_floor_fixture_3": [
 							230.0,
@@ -2452,14 +2461,14 @@
 					}
 				}
 			},
-			"slot_positions": {
-				"event.doorway_1": [
-					868.0,
-					319.0
+		"slot_positions": {
+			"event.doorway_1": [
+				859.0,
+				300.0
 				],
 				"event.seated_person_1": [
-					636.0,
-					265.0
+					358.0,
+					234.0
 				],
 				"event.standing_person_1": [
 					190.0,
@@ -2481,57 +2490,57 @@
 					545.0,
 					357.0
 				],
-				"exit.left_lower": [
-					868.0,
-					394.0
+			"exit.left_lower": [
+				36.0,
+				356.0
 				],
 				"fixed.crew_group": [
-					52.0,
-					348.0
+					532.0,
+					358.0
 				],
-				"fixed.event_grand_casino_invite": [
-					713.0,
-					256.0
+			"fixed.event_grand_casino_invite": [
+				146.0,
+				196.0
+			],
+			"fixed.item_shop_1": [
+				640.0,
+				96.0
+			],
+			"fixed.item_shop_2": [
+				760.0,
+				96.0
+			],
+			"fixed.machine_game_1": [
+				742.0,
+				358.0
+			],
+			"fixed.patron_dot": [
+				250.0,
+				234.0
+			],
+			"fixed.service_house_drink": [
+				164.0,
+				264.0
 				],
-				"fixed.item_shop_1": [
-					645.0,
-					131.0
-				],
-				"fixed.item_shop_2": [
-					720.0,
-					132.0
-				],
-				"fixed.machine_game_1": [
-					551.0,
-					211.0
-				],
-				"fixed.patron_dot": [
-					866.0,
-					267.0
-				],
-				"fixed.service_house_drink": [
-					795.0,
-					133.0
-				],
-				"fixed.service_kitty_champagne": [
-					465.0,
-					314.0
-				],
-				"fixed.staff_bar": [
-					712.0,
-					207.0
-				],
-				"fixed.staff_merchant": [
-					795.0,
-					207.0
-				],
-				"fixed.table_game_1": [
-					761.0,
-					356.0
-				],
-				"fixed.table_game_2": [
-					634.0,
-					197.0
+			"fixed.service_kitty_champagne": [
+				620.0,
+				242.0
+			],
+			"fixed.staff_bar": [
+				720.0,
+				194.0
+			],
+			"fixed.staff_merchant": [
+				816.0,
+				230.0
+			],
+			"fixed.table_game_1": [
+				312.0,
+				122.0
+			],
+			"fixed.table_game_2": [
+				620.0,
+				174.0
 				],
 				"scenario.floor_fixture_3": [
 					302.0,
@@ -2577,9 +2586,9 @@
 							32.0,
 							193.0
 						],
-						"scenario.local_floor_fixture_1": [
-							140.0,
-							428.0
+					"scenario.local_floor_fixture_1": [
+						166.0,
+						342.0
 						],
 						"scenario.local_floor_fixture_2": [
 							701.0,
@@ -2638,9 +2647,9 @@
 							118.0,
 							317.0
 						],
-						"scenario.local_floor_fixture_2": [
-							53.0,
-							422.0
+					"scenario.local_floor_fixture_2": [
+						422.0,
+						248.0
 						],
 						"scenario.local_floor_fixture_3": [
 							150.0,
@@ -3054,29 +3063,29 @@
 					537.0,
 					269.0
 				],
-				"fixed.item_shop_1": [
-					117.0,
-					127.0
-				],
-				"fixed.item_shop_2": [
-					199.0,
-					127.0
-				],
-				"fixed.item_shop_3": [
-					117.0,
-					182.0
-				],
-				"fixed.item_shop_4": [
-					199.0,
-					183.0
-				],
-				"fixed.item_shop_5": [
-					722.0,
-					182.0
-				],
-				"fixed.item_shop_6": [
-					808.0,
-					181.0
+			"fixed.item_shop_1": [
+				76.0,
+				70.0
+			],
+			"fixed.item_shop_2": [
+				180.0,
+				70.0
+			],
+			"fixed.item_shop_3": [
+				284.0,
+				70.0
+			],
+			"fixed.item_shop_4": [
+				388.0,
+				70.0
+			],
+			"fixed.item_shop_5": [
+				492.0,
+				70.0
+			],
+			"fixed.item_shop_6": [
+				596.0,
+				70.0
 				],
 				"fixed.staff_pawn_counter": [
 					448.0,

@@ -28,6 +28,21 @@ const LIVE_AVAILABILITY_ACTION_FIELDS := [
 const LIVE_RENDER_FIELDS := [
 	"visible", "presentation_required", "presentation_mode", "hovered", "focused", "selected",
 ]
+const LIVE_SLOT_VISUAL_STATE_FIELDS := [
+	"machine_family", "machine_format", "machine_key", "cabinet_variant_id",
+	"cabinet_identity", "cabinet_title", "cabinet_material", "cabinet_topper_style",
+	"cabinet_motion_style", "cabinet_background_path", "cabinet_palette", "feature_name",
+	"pay_model", "reel_count", "row_count", "last_classification", "last_payout",
+	"free_spins", "active_bonus_family", "slot_preview",
+]
+const LIVE_SLOT_RUNTIME_STATE_FIELDS := [
+	"active", "status_label", "status_summary", "spin_count",
+	"slot_autoplay_active", "slot_bonus_active", "slot_pending_feature",
+	"slot_pending_feature_alert", "slot_bonus_family", "slot_feature_audio_cue",
+	"slot_feature_audio_volume_db", "slot_free_spins", "slot_last_payout",
+	"slot_last_classification", "slot_preview_phase", "slot_preview_caption",
+	"slot_nudge_chain_active",
+]
 
 
 static func _service_options_with_exact_hosts(options: Array, action_hosts: Dictionary) -> Array:
@@ -1062,6 +1077,7 @@ static func restore_live_presentation_fields(projected_records: Array, live_reco
 			for field in LIVE_PRESENTATION_FIELDS + LIVE_AVAILABILITY_ACTION_FIELDS + LIVE_RENDER_FIELDS:
 				if live.has(field):
 					record[field] = _duplicate_variant(live.get(field))
+			_restore_live_slot_visual_state(record, live)
 			# Live base actions replace their stale sealed snapshot. Authenticated
 			# scenario augments remain additive and must still resolve by token.
 			if live.has("inline_actions") and not scenario_augmented_inline_actions.is_empty():
@@ -1072,6 +1088,30 @@ static func restore_live_presentation_fields(projected_records: Array, live_reco
 				record["inline_actions"] = reconciled_inline_actions
 		result.append(record)
 	return result
+
+
+# Scenario semantics may add role/state/appearance to a base fixture, but those
+# generic fields cannot replace a Slot cabinet's public machine identity. Restore
+# only the bounded environment projection emitted by SlotGame; arbitrary visual
+# or runtime state remains outside the live-presentation allowlist.
+static func _restore_live_slot_visual_state(record: Dictionary, live: Dictionary) -> void:
+	if str(record.get("object_type", "")) != "game" or str(record.get("source_id", "")) != "slot":
+		return
+	var live_runtime := _dict(live.get("runtime_state", {}))
+	var restored_runtime := _dict(record.get("runtime_state", {})).duplicate(true)
+	for field in LIVE_SLOT_RUNTIME_STATE_FIELDS:
+		if live_runtime.has(field):
+			restored_runtime[field] = _duplicate_variant(live_runtime.get(field))
+	if not restored_runtime.is_empty():
+		record["runtime_state"] = restored_runtime
+	var live_visual := _dict(live.get("visual_state", {}))
+	if live_visual.is_empty():
+		return
+	var restored_visual := _dict(record.get("visual_state", {})).duplicate(true)
+	for field in LIVE_SLOT_VISUAL_STATE_FIELDS:
+		if live_visual.has(field):
+			restored_visual[field] = _duplicate_variant(live_visual.get(field))
+	record["visual_state"] = restored_visual
 
 
 static func _requires_live_membership(record: Dictionary) -> bool:

@@ -25,7 +25,9 @@ const BLACKJACK_FIXTURE_CHALLENGE := {
 # behavior; the gameplay assertions below remain the one-shot authority.
 # Shared placement data is not a fixture input: its whole-catalog digests are
 # masked so slot-placement edits elsewhere cannot move this baseline.
-const BLACKJACK_FIXTURE_BASELINE_SHA256 := "1fbba1671abd0dd551663906e57f9e880909a622e2df6e075da6bf6c6b161ad2"
+# The current save normalizer was independently replayed twice at zero Heat;
+# refresh the private-capsule-normalized fingerprint without changing behavior.
+const BLACKJACK_FIXTURE_BASELINE_SHA256 := "fbf5f57b1111a90bb650c5d8668eda8c90404b596c5ecbf91ca8a015acf44700"
 const PLACEMENT_AUTHORITY_DIGEST_KEYS := ["grounding_signature", "slot_map_digest", "source_digest", "object_manifest_digest"]
 const NORMALIZED_PLACEMENT_DIGEST := "placement-authority-digest"
 const BLACKJACK_DEFINITION_SHA256 := "4a684c890b00bf03082af3f95a37369336302d1a51e668d9f325a158ca47dfa3"

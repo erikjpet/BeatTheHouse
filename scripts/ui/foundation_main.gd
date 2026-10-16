@@ -17466,7 +17466,7 @@ func _on_developer_slot_layer_requested(request: Dictionary) -> void:
 	var environment := JsonCoerceScript._copy_dict(request.get("environment", {}))
 	var undo_record := _developer_placement_undo_record(
 		environment,
-		"Change %s layer" % str(request.get("slot_id", "slot"))
+		"Change %s layer" % str(request.get("slot_id", "placement"))
 	)
 	var result := DeveloperPlacementStoreScript.save_slot_layer(
 		environment,
@@ -17493,7 +17493,7 @@ func _on_developer_slot_scale_requested(request: Dictionary) -> void:
 	var environment := JsonCoerceScript._copy_dict(request.get("environment", {}))
 	var undo_record := _developer_placement_undo_record(
 		environment,
-		"Resize %s" % str(request.get("slot_id", "slot"))
+		"Resize %s" % str(request.get("slot_id", "placement"))
 	)
 	var result := DeveloperPlacementStoreScript.save_slot_scale(
 		environment,

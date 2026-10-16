@@ -40,6 +40,24 @@ function Test-FinitePlacementCoordinate {
     return -not [double]::IsNaN($number) -and -not [double]::IsInfinity($number)
 }
 
+function Test-PlacementSlotLayer {
+    param([AllowNull()][object]$Value)
+    if (-not (Test-FinitePlacementCoordinate $Value)) {
+        return $false
+    }
+    $number = [double]$Value
+    return $number -eq [math]::Truncate($number) -and $number -ge -1.0 -and $number -le 1.0
+}
+
+function Test-PlacementSlotScale {
+    param([AllowNull()][object]$Value)
+    if (-not (Test-FinitePlacementCoordinate $Value)) {
+        return $false
+    }
+    $number = [double]$Value
+    return $number -ge 0.5 -and $number -le 2.0
+}
+
 function Test-ExactJsonString {
     param([AllowNull()][object]$Value)
     return $null -ne $Value -and $Value -is [string]
@@ -1153,7 +1171,11 @@ try {
             $failures.Add("Developer placement override coverage must be an object when present.")
         }
         $allowedPlacementFields = [System.Collections.Generic.HashSet[string]]::new(
-            [string[]]@("slot_positions", "base_saved", "scenario_layouts"),
+            [string[]]@("slot_positions", "slot_layers", "slot_scales", "base_saved", "scenario_layouts"),
+            [System.StringComparer]::Ordinal
+        )
+        $allowedScenarioPlacementFields = [System.Collections.Generic.HashSet[string]]::new(
+            [string[]]@("slot_positions", "slot_layers", "slot_scales", "saved"),
             [System.StringComparer]::Ordinal
         )
         foreach ($roomProperty in $placementOverrides.rooms.PSObject.Properties) {
@@ -1198,7 +1220,7 @@ try {
                                 }
                                 continue
                             }
-                            if (-not [string]::Equals($layoutField.Name, "slot_positions", [System.StringComparison]::Ordinal) -or -not (Test-JsonObjectRoot $layoutField.Value)) {
+                            if (-not $allowedScenarioPlacementFields.Contains($layoutField.Name) -or -not (Test-JsonObjectRoot $layoutField.Value)) {
                                 $failures.Add("Developer placement scenario layout $($roomProperty.Name)/$($scenarioProperty.Name) has an unsupported field: $($layoutField.Name)")
                                 continue
                             }
@@ -1206,15 +1228,25 @@ try {
                                 if (-not $scenarioPlacementSlots[$layoutKey].Contains($slotProperty.Name)) {
                                     $failures.Add("Developer placement scenario layout $($roomProperty.Name)/$($scenarioProperty.Name) contains an unauthorised slot: $($slotProperty.Name)")
                                 }
-                                $coordinates = @($slotProperty.Value)
-                                if ($coordinates.Count -ne 2) {
-                                    $failures.Add("Developer placement $($roomProperty.Name)/scenario_layouts/$($scenarioProperty.Name)/slot_positions/$($slotProperty.Name) must contain exactly two coordinates.")
-                                    continue
-                                }
-                                foreach ($coordinate in $coordinates) {
-                                    if (-not (Test-FinitePlacementCoordinate $coordinate)) {
-                                        $failures.Add("Developer placement $($roomProperty.Name)/scenario_layouts/$($scenarioProperty.Name)/slot_positions/$($slotProperty.Name) contains a non-finite coordinate.")
+                                if ([string]::Equals($layoutField.Name, "slot_positions", [System.StringComparison]::Ordinal)) {
+                                    $coordinates = @($slotProperty.Value)
+                                    if ($coordinates.Count -ne 2) {
+                                        $failures.Add("Developer placement $($roomProperty.Name)/scenario_layouts/$($scenarioProperty.Name)/slot_positions/$($slotProperty.Name) must contain exactly two coordinates.")
+                                        continue
                                     }
+                                    foreach ($coordinate in $coordinates) {
+                                        if (-not (Test-FinitePlacementCoordinate $coordinate)) {
+                                            $failures.Add("Developer placement $($roomProperty.Name)/scenario_layouts/$($scenarioProperty.Name)/slot_positions/$($slotProperty.Name) contains a non-finite coordinate.")
+                                        }
+                                    }
+                                }
+                                elseif ([string]::Equals($layoutField.Name, "slot_layers", [System.StringComparison]::Ordinal)) {
+                                    if (-not (Test-PlacementSlotLayer $slotProperty.Value)) {
+                                        $failures.Add("Developer placement $($roomProperty.Name)/scenario_layouts/$($scenarioProperty.Name)/slot_layers/$($slotProperty.Name) must be -1, 0, or 1.")
+                                    }
+                                }
+                                elseif (-not (Test-PlacementSlotScale $slotProperty.Value)) {
+                                    $failures.Add("Developer placement $($roomProperty.Name)/scenario_layouts/$($scenarioProperty.Name)/slot_scales/$($slotProperty.Name) must be between 0.5 and 2.0.")
                                 }
                             }
                         }
@@ -1232,22 +1264,32 @@ try {
                     continue
                 }
                 if (-not (Test-JsonObjectRoot $fieldProperty.Value)) {
-                    $failures.Add("Developer placement room $($roomProperty.Name) slot_positions must be an object.")
+                    $failures.Add("Developer placement room $($roomProperty.Name) $($fieldProperty.Name) must be an object.")
                     continue
                 }
                 foreach ($slotProperty in $fieldProperty.Value.PSObject.Properties) {
                     if (-not $sharedPlacementSlots[$roomProperty.Name].Contains($slotProperty.Name)) {
                         $failures.Add("Developer placement room $($roomProperty.Name) contains an unauthorised shared slot: $($slotProperty.Name)")
                     }
-                    $coordinates = @($slotProperty.Value)
-                    if ($coordinates.Count -ne 2) {
-                        $failures.Add("Developer placement $($roomProperty.Name)/$($fieldProperty.Name)/$($slotProperty.Name) must contain exactly two coordinates.")
-                        continue
-                    }
-                    foreach ($coordinate in $coordinates) {
-                        if (-not (Test-FinitePlacementCoordinate $coordinate)) {
-                            $failures.Add("Developer placement $($roomProperty.Name)/$($fieldProperty.Name)/$($slotProperty.Name) contains a non-finite coordinate.")
+                    if ([string]::Equals($fieldProperty.Name, "slot_positions", [System.StringComparison]::Ordinal)) {
+                        $coordinates = @($slotProperty.Value)
+                        if ($coordinates.Count -ne 2) {
+                            $failures.Add("Developer placement $($roomProperty.Name)/$($fieldProperty.Name)/$($slotProperty.Name) must contain exactly two coordinates.")
+                            continue
                         }
+                        foreach ($coordinate in $coordinates) {
+                            if (-not (Test-FinitePlacementCoordinate $coordinate)) {
+                                $failures.Add("Developer placement $($roomProperty.Name)/$($fieldProperty.Name)/$($slotProperty.Name) contains a non-finite coordinate.")
+                            }
+                        }
+                    }
+                    elseif ([string]::Equals($fieldProperty.Name, "slot_layers", [System.StringComparison]::Ordinal)) {
+                        if (-not (Test-PlacementSlotLayer $slotProperty.Value)) {
+                            $failures.Add("Developer placement $($roomProperty.Name)/slot_layers/$($slotProperty.Name) must be -1, 0, or 1.")
+                        }
+                    }
+                    elseif (-not (Test-PlacementSlotScale $slotProperty.Value)) {
+                        $failures.Add("Developer placement $($roomProperty.Name)/slot_scales/$($slotProperty.Name) must be between 0.5 and 2.0.")
                     }
                 }
             }

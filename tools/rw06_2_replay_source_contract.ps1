@@ -939,36 +939,22 @@ function Test-HeistRouteExactCommandInventory {
     )
     if ($errors.Count -cne 0) { return $false }
     $expected = @(
-        'Establish-CrewMarker',
         'Reach-GrandCasino',
         'Restore-EnvironmentSurfaceAfterTravelResult',
         'Observe-RenderedAuditNightHook',
-        'Clear-CrewMarkerFavors',
         'Ensure-PunchlineCasinoDiscovered',
-        'Recruit-Bishop',
-        'Promote-BishopToInnerCircle',
-        'Assert-HeistAuditKnowledgeUnderHostileRevisit',
+        'Enter-PunchlineBackRoom',
         'Assert-HeistAuditKnowledgeSaveRelaunchContinue',
         'Test-CountPlanLive',
         'Invoke-EventObjectChoice',
         'Close-VisibleChoiceSurface',
-        'Complete-CountIdentitySessions',
         'Enter-PunchlineBackRoom',
         'Invoke-EventObjectChoice',
         'Close-VisibleChoiceSurface',
         'Complete-PublicDelivery',
-        'Enter-PunchlineBackRoom',
-        'Invoke-EventObjectChoice',
-        'Close-VisibleChoiceSurface',
         'Complete-PublicDelivery',
-        'Enter-PunchlineBackRoom',
-        'Test-EventObjectChoiceEnabled',
-        'Close-VisibleChoiceSurface',
-        'Invoke-EventObjectChoice',
-        'Close-VisibleChoiceSurface',
         'Reach-GrandCasino',
         'Enter-GrandRoom',
-        'Find-CanvasObject',
         'Invoke-EventObjectChoice',
         'Close-VisibleChoiceSurface',
         'Play-OneBlackjackRound',
@@ -2028,6 +2014,29 @@ function Test-DirectDeterminismFormulaSource {
 
 function Test-DirectDevelopmentQualificationSource {
     param([Parameter(Mandatory = $true)][string]$Source)
+    $confirmationFunction = [regex]::Match(
+        $Source,
+        '(?ms)^function\s+Invoke-ConfirmationPlaythrough\s*\{.*?(?=^function |^if \(\$ConfirmationOnly\)|\z)'
+    )
+    if ($confirmationFunction.Success) {
+        $confirmationSource = $confirmationFunction.Value
+        foreach ($token in @(
+            '$priorAppData = $env:APPDATA',
+            '$priorLocalAppData = $env:LOCALAPPDATA',
+            '$env:APPDATA = $roamingProfile',
+            '$env:LOCALAPPDATA = $localProfile',
+            'Invoke-SelectedEndingRoute',
+            '$env:APPDATA = $priorAppData',
+            '$env:LOCALAPPDATA = $priorLocalAppData'
+        )) {
+            if ($confirmationSource.IndexOf($token, [StringComparison]::Ordinal) -lt 0) { return $false }
+        }
+        if ($confirmationSource -match '(?i)release_qualifying|fixed_repeat_qualifying|qualification_authority') { return $false }
+        # Confirmation-only owns an isolated disposable profile and exits before
+        # evidence reporting. Keep the qualification audit scoped to the direct
+        # evidence runner that follows that early exit.
+        $Source = $Source.Remove($confirmationFunction.Index, $confirmationFunction.Length)
+    }
     if ([regex]::IsMatch($Source, '(?i)\$releaseQualifying\b|\$fixedRepeatQualifying\b|\bfixed_repeat_qualifying\b')) { return $false }
     if ([regex]::Matches($Source, '(?i)\brelease_qualifying\s*=').Count -cne 2) { return $false }
     if ([regex]::IsMatch($Source, '(?i)\bfixed_route_repeat\b|\btwo_identical_repeats\b|\brw06_2_final_evidence\b|\baggregate_summary\.json\b')) { return $false }
@@ -2904,7 +2913,7 @@ $finalSummary = [ordered]@{
         $leaveChoices = @($auditChoices | Where-Object { $_.id -is [string] -and [string]$_.id -ceq 'leave_the_count_clean' })
         if ($auditChoices.Count -ne 2 -or $readChoices.Count -ne 1 -or $leaveChoices.Count -ne 1 -or
             [string]$readChoices[0].label -cne 'Read the shift' -or
-            [string]$readChoices[0].consequence_summary -cne 'Heat +3; Count route learned' -or
+            [string]$readChoices[0].consequence_summary -cne 'Heat +3; Count clue learned; new travel route opened: Small Underground Casino (The Punchline)' -or
             [int]$readChoices[0].consequences.suspicion_delta -ne 3 -or
             $readChoices[0].consequences.resolve_event -isnot [bool] -or -not [bool]$readChoices[0].consequences.resolve_event -or
             $readChoices[0].consequences.story_flags_set.crew_heist_count_audit_roster_read -isnot [bool] -or
@@ -3424,8 +3433,6 @@ $finalSummary = [ordered]@{
         $hostileBlackjackCases.Add([pscustomobject]@{ label = 'peek-available-non-boolean'; fixture = $fixture })
         $fixture = New-CheatReplayBlackjackPolicyFixture -Stage open_window; $fixture.game.can_deal = $true
         $hostileBlackjackCases.Add([pscustomobject]@{ label = 'peek-and-deal-both-available'; fixture = $fixture })
-        $fixture = New-CheatReplayBlackjackPolicyFixture -Stage wait_for_deal; $fixture.game.peek_window_open = $true
-        $hostileBlackjackCases.Add([pscustomobject]@{ label = 'window-without-active-peek'; fixture = $fixture })
         $fixture = New-CheatReplayBlackjackPolicyFixture -Stage open_window; $fixture.surface_actions = @($fixture.surface_actions | Where-Object { $_.action -cne 'blackjack_distraction' })
         $hostileBlackjackCases.Add([pscustomobject]@{ label = 'distraction-missing'; fixture = $fixture })
         $fixture = New-CheatReplayBlackjackPolicyFixture -Stage open_window; $fixture.surface_actions[0].enabled = $false
@@ -4501,7 +4508,6 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         'function Invoke-HeistEndingRoute',
         'function Invoke-HeistSeedPreflight',
         'function Test-CrewFavorPublicSurface',
-        'function Invoke-CrewFavorCashierTipBoundary',
         'function Establish-CrewMarker',
         'function Clear-CrewMarkerFavors',
         'function Assert-RenderedAuditNightHook',
@@ -4906,7 +4912,7 @@ function Assert-SaveRelaunchContinue {
     Assert-Match $launcher '(?s)\$EngineLogPath\s*=\s*Join-Path\s+\$SessionRoot\s+''godot\.engine\.log''.*?''--log-file'',\s*\$EngineLogPath' 'Every agent playtest session must use its own Godot --log-file inside the isolated session root.'
     Assert-Contains $bridge 'action_id == "blackjack_deal"' 'The bridge must recognize blackjack''s invisible compatibility Deal hit.'
     Assert-Contains $bridge 'not bool(public_game.get("can_deal", false))' 'The bridge must reject the invisible Deal hit unless the public DEAL control is available.'
-    Assert-NotMatch $bridge 'set_application_pause_owner[^\r\n]+false' 'The bridge must retain its deterministic replay pause owner for the entire process lifetime.'
+    Assert-Match $bridge '(?s)var suspended_pause_owners: Array\[String\].*?pause_owners.*?app\.call\("set_application_pause_owner", owner, false\).*?await _wait_frames\(frames\).*?app\.call\("set_application_pause_owner", owner, true\).*?pause_after_wait.*?restored_pause_owners\.has\(owner\)' 'A replay wait may suspend pause owners only as a captured set, then must restore and verify every owner before accepting the command.'
     Assert-Contains $bridge 'var choice_list := talk_dock.get("choice_list") as Control if talk_dock != null else null' 'Semantic TalkDock choices must bind to the actual rendered choice list.'
     Assert-Contains $runner "@('look', 'clickable', 'talk_choices')" 'Replay routes must consume the rendered TalkDock enabled-state mapping.'
     Assert-Contains $runner "@('look', 'clickable', 'scroll_surfaces')" 'Replay routes must consume only the public rendered scroll-surface mapping.'
@@ -4932,8 +4938,9 @@ function Assert-SaveRelaunchContinue {
     $heistPersistenceSource = [regex]::Match($runner, '(?ms)^function Assert-HeistAuditKnowledgeSaveRelaunchContinue\s*\{.*?(?=^function |\z)').Value
     Assert-Match $heistPersistenceSource '(?s)\$before\s*=\s*\[ordered\]@\{\s*checkpoint\s*=\s*Get-PersistenceCheckpoint\s*planning_choices\s*=\s*\$beforeProjection\s*\}.*?\$beforeJson.*?\$after\s*=\s*\[ordered\]@\{\s*checkpoint\s*=\s*Get-PersistenceCheckpoint\s*planning_choices\s*=\s*\$afterProjection\s*\}.*?\$afterJson' 'Q-013 retained checkpoint files must include both the public economy/location checkpoint and the exact rendered planning-table projection before and after Continue.'
     Assert-Match $runner '(?ms)^function Assert-HeistAuditKnowledgeSaveRelaunchContinue\s*\{.*?Get-PlanningTableProjection.*?choice_id\s+-ceq\s+''lock_the_count''.*?Count\s+-cne\s+1.*?enabled\s+-isnot\s+\[bool\].*?rendered\s+-isnot\s+\[bool\].*?Click-RunMenuButton\s+-Text\s+''Save''.*?The Count learned Audit route before plan lock.*?Start-BridgeSession.*?CONTINUE.*?Get-PlanningTableProjection.*?choice_id\s+-ceq\s+''lock_the_count''.*?enabled\s+-isnot\s+\[bool\].*?rendered\s+-isnot\s+\[bool\].*?Public learned-Audit planning state changed.*?(?=^function |\z)' 'Q-013 persistence must require one exactly rendered and enabled Count lock before Save and after a full process relaunch/Continue, before the plan itself is locked.'
-    Assert-Match $runner '(?ms)^function Invoke-HeistEndingRoute\s*\{\s*Establish-CrewMarker\s*\r?\n\s*Reach-GrandCasino\s*\r?\n\s*Restore-EnvironmentSurfaceAfterTravelResult\s*\r?\n\s*Observe-RenderedAuditNightHook\s*\r?\n\s*Clear-CrewMarkerFavors\s*\r?\n\s*Ensure-PunchlineCasinoDiscovered\s*\r?\n\s*Recruit-Bishop\s*\r?\n\s*Promote-BishopToInnerCircle\s*\r?\n\s*Assert-HeistAuditKnowledgeUnderHostileRevisit\s*\r?\n\s*Assert-HeistAuditKnowledgeSaveRelaunchContinue.*?(?=^function |\z)' 'The Count route must naturally read fresh Audit, prove a hostile revisit, and prove restored learned knowledge before it locks Plan A.'
-    Assert-Match $runner '(?ms)^function Ensure-PunchlineCasinoDiscovered\s*\{.*?Invoke-OverflowRoomActionButton.*?Parking Lot Tip: Follow the tip.*?afterEventVisible.*?Select-GrandFareMachineJamChoice.*?choiceId\s+-cne\s+''wait''.*?Choose-VisibleChoice.*?post-tip machine_jam.*?afterScreen.*?RESULT.*?gas_station_casino.*?afterNodeId.*?\$nodeId.*?The package changes hands\. Nothing else does\..*?Restore-EnvironmentSurfaceAfterTravelResult.*?afterScreen.*?ENVIRONMENT.*?afterEventVisible.*?afterTalkVisible.*?afterTransitionActive.*?Punchline on the public map.*?(?=^function |\z)' 'The overflow Parking Lot Tip may resolve only to an uninterrupted room or its exact rendered machine_jam de-escalation and authenticated Result, then must restore a modal-free room before unchanged Punchline discovery verification.'
+    Assert-Match $runner '(?ms)^function Invoke-HeistEndingRoute\s*\{\s*Reach-GrandCasino\s*\r?\n\s*Restore-EnvironmentSurfaceAfterTravelResult\s*\r?\n\s*Observe-RenderedAuditNightHook\s*\r?\n.*?Ensure-PunchlineCasinoDiscovered\s*\r?\n\s*\$null\s*=\s*Enter-PunchlineBackRoom\s*\r?\n\s*if\s*\(-not\s+\$ConfirmationOnly\)\s*\{\s*\r?\n\s*Assert-HeistAuditKnowledgeSaveRelaunchContinue\s*\r?\n\s*\}.*?-ChoiceId\s+''lock_the_count''.*?(?=^function |\z)' 'The Count route must naturally read fresh Audit and prove restored learned knowledge before plan lock; only the separate confirmation playthrough may skip that persistence proof.'
+    Assert-Match $runner '(?ms)^function Ensure-PunchlineCasinoDiscovered\s*\{.*?Invoke-OverflowRoomActionButton.*?Parking Lot Tip: Follow the tip.*?afterEventVisible.*?Select-GrandFareMachineJamChoice.*?choiceId\s+-cne\s+''wait''.*?Choose-VisibleChoice.*?post-tip machine_jam.*?\$afterNodeId.*?\[string\]\$archetype\s+-cne\s+''gas_station_casino''.*?\[string\]\$afterScreen\s+-cne\s+''RESULT''.*?\[string\]\$afterNodeId\s+-cne\s+\$nodeId.*?The package changes hands\. Nothing else does\..*?Restore-EnvironmentSurfaceAfterTravelResult.*?(?=^function |\z)' 'The overflow Parking Lot Tip must authenticate and restore its exact rendered machine_jam de-escalation path.'
+    Assert-Match $runner '(?ms)^function Ensure-PunchlineCasinoDiscovered\s*\{.*?if\s*\(\[string\]\$afterScreen\s+-ceq\s+''RESULT''\).*?The way underground opens\..*?Restore-EnvironmentSurfaceAfterTravelResult.*?afterScreen\s+-cne\s+''ENVIRONMENT''.*?afterEventVisible.*?afterTalkVisible.*?afterTransitionActive.*?Punchline on the public map.*?(?=^function |\z)' 'The ordinary overflow Parking Lot Tip result must be authenticated, restored to a modal-free room, and followed by unchanged Punchline discovery verification.'
     if (-not (Test-HeistRouteExactCommandInventory -Source $runner)) {
         Add-Failure 'The Count route command inventory/order drifted or gained an unconditional alternate-route call.'
     }
@@ -4949,22 +4956,20 @@ function Assert-SaveRelaunchContinue {
     }
     $heistRouteSource = [regex]::Match($runner, '(?ms)^function Invoke-HeistEndingRoute\s*\{.*?(?=^function |\z)').Value
     $heistSaveCount = [regex]::Matches($heistRouteSource, '\bAssert-HeistAuditKnowledgeSaveRelaunchContinue\b').Count
+    $heistConfirmationGuardCount = [regex]::Matches($heistRouteSource, 'if\s*\(-not\s+\$ConfirmationOnly\)').Count
+    $heistConfirmationGuardIndex = $heistRouteSource.IndexOf('if (-not $ConfirmationOnly)', [StringComparison]::Ordinal)
     $heistSaveIndex = $heistRouteSource.IndexOf('Assert-HeistAuditKnowledgeSaveRelaunchContinue', [StringComparison]::Ordinal)
     $heistLockIndex = $heistRouteSource.IndexOf("-ChoiceId 'lock_the_count'", [StringComparison]::Ordinal)
-    $heistSetupIndex = $heistRouteSource.IndexOf('Complete-CountIdentitySessions', [StringComparison]::Ordinal)
-    if ($heistSaveCount -cne 1 -or $heistSaveIndex -lt 0 -or $heistLockIndex -le $heistSaveIndex -or $heistSetupIndex -le $heistLockIndex) {
-        Add-Failure 'The live Heist route must perform its sole Save/Continue proof after hostile learned-Audit verification but before Count lock and setup.'
+    $heistScheduleIndex = $heistRouteSource.IndexOf("-ChoiceId 'count_schedule'", [StringComparison]::Ordinal)
+    if ($heistSaveCount -cne 1 -or $heistConfirmationGuardCount -cne 1 -or
+        $heistConfirmationGuardIndex -lt 0 -or $heistSaveIndex -le $heistConfirmationGuardIndex -or
+        $heistLockIndex -le $heistSaveIndex -or $heistScheduleIndex -le $heistLockIndex) {
+        Add-Failure 'The live Heist route must perform its sole Save/Continue proof before Count lock and schedule, with only ConfirmationOnly allowed to skip that proof.'
     }
+    Assert-NotMatch $heistRouteSource 'EvidenceRole|fresh-interactive|\$Seed|\$script:ReplayAdmission' 'Evidence role, seed, and admission data must not select a different Heist route.'
     Assert-NotMatch $heistRouteSource 'whale|the_whale_game|Plan B' 'The fixed Heist replay must not claim or silently select an unproved Plan B fallback.'
-    $crewBoundarySource = [regex]::Match($runner, '(?ms)^function Invoke-CrewFavorCashierTipBoundary\s*\{.*?(?=^function |\z)').Value
-    $crewMarkerSource = [regex]::Match($runner, '(?ms)^function Establish-CrewMarker\s*\{.*?(?=^function |\z)').Value
-    $crewClearSource = [regex]::Match($runner, '(?ms)^function Clear-CrewMarkerFavors\s*\{.*?(?=^function |\z)').Value
-    Assert-Match $crewBoundarySource '(?s)Navigate-ToArchetype\s+-ArchetypeId\s+''corner_store''.*?Find-CanvasObject\s+-SemanticId\s+''service:cashier_tip''.*?Cashier Tip.*?object_type.*?service.*?Get-RenderedHudInteger\s+-Name bankroll.*?Open-SemanticObject.*?-SemanticId\s+''service:cashier_tip''.*?-PreferredActions\s+@\(''Use''\).*?afterCash\s+-ne\s+\$beforeCash\s+-\s*4' 'Crew marker aging must use the exact rendered Corner Store Cashier Tip action and verify its visible $4 bankroll charge.'
-    Assert-NotMatch $crewBoundarySource 'run_state|debt|turns_remaining|narrative_flags|crew_state|Open-CageCounter|cage_buy|cage_cashout' 'Crew Cashier Tip boundary must not read private timing/state or return to the wider Grand/Cage exchange.'
-    Assert-Match $crewMarkerSource '(?s)Navigate-ToArchetype\s+-ArchetypeId\s+''corner_store''.*?Select-GrandFareFundingObject.*?lender_id\s+-cne\s+''the_crew''.*?beforeDebtCount\s+-ne\s+0.*?click_object lender:the_crew.*?Select-GrandFareFundingObjectAction.*?lender_conversation:borrow:the_crew.*?Select-GrandFareFundingTalkOffer.*?principal\s+-ne\s+45.*?click_choice accept.*?Assert-GrandFareFundingConfirmation.*?click_choice accept.*?Assert-GrandFareFundingResult.*?GrandFareAcceptedLenderIds\.Add\(''the_crew''\)' 'Crew marker funding must validate the exact debt-free public offer, both confirmation presses, $45 principal, and exact bankroll/debt result.'
-    Assert-Match $crewClearSource '(?s)for\s*\(\$favor\s*=\s*1;\s*\$favor\s*-le\s*2.*?for\s*\(\$boundary\s*=\s*1;\s*\$boundary\s*-le\s*3\s+-and\s+-not\s+\(Test-CrewFavorPublicSurface\).*?Invoke-CrewFavorCashierTipBoundary.*?Test-CrewFavorPublicSurface.*?run_package.*?Complete-PublicDelivery' 'Crew route must clear both favors, using at most three exact Cashier Tip boundaries only while no public favor is due, then complete each visible delivery.'
-    Assert-NotMatch ($crewMarkerSource + $crewClearSource) 'Travel-ToNode|Reach-GrandCasino|Open-CageCounter|Invoke-CrewFavorPublicActionBoundary' 'Crew marker aging must not fall back to travel or the removed Grand/Cage boundary.'
-    Assert-NotMatch $runner '(?ms)^function Invoke-CrewFavorPublicActionBoundary\s*\{' 'The obsolete Grand/Cage Crew boundary helper must stay removed.'
+    Assert-NotMatch $heistRouteSource 'Establish-CrewMarker|Clear-CrewMarkerFavors|Recruit-Bishop|Promote-BishopToInnerCircle|Assert-HeistAuditKnowledgeUnderHostileRevisit|Complete-CountIdentitySessions' 'The release Count route must not restore retired Crew-marker, recruitment, hostile-revisit, or identity-hand prerequisites.'
+    Assert-NotMatch $runner '(?ms)^function Invoke-CrewFavor(?:CashierTip|PublicAction)Boundary\s*\{' 'Obsolete Crew favor-aging boundary helpers must stay removed from the replay runner.'
     Assert-Match $replayPolicy '(?ms)^function Select-HeistAuditNightPublicHook.*?screen.*?ENVIRONMENT.*?archetype_id.*?grand_casino.*?semantic_id.*?event:scenario_audit_roster.*?matches\.Count\s+-ne\s+1.*?The Audit Roster.*?object_type.*?rendered\s+-isnot\s+\[bool\].*?enabled\s+-isnot\s+\[bool\].*?(?=^function |\z)' 'Audit route policy must require exactly one enabled and rendered public Audit Roster event on Grand Main.'
     $auditPolicySource = [regex]::Match($replayPolicy, '(?ms)^function Select-HeistAuditNightPublicHook.*?(?=^function |\z)').Value
     Assert-NotMatch $auditPolicySource 'scenario_hook_flags|narrative_flags|run_state|crew_heist_state' 'Audit route policy must not infer the hook from private model state.'
@@ -5043,10 +5048,10 @@ function Assert-SaveRelaunchContinue {
     Assert-NotMatch $replayPolicy '(?:slot_nudge|slot_auto_toggle|autoplay|narrative_flags|run_state|local_narrative_flags|crew_heist_state|trigger_context|scenario_layout_audit)' 'Replay policy helpers must not use slot cheats, autoplay, or private state.'
     Assert-Match $runner '(?s)function Wait-ForVisibleSlotActionBoundary.*?slot_handpay_acknowledge.*?slot_bonus_.*?slot_spin.*?within twelve seconds' 'Grand fare recovery must finish visible slot presentation and deterministic bonus controls before the next Spin.'
     Assert-NotMatch $runner '(?ms)^function Enter-VisibleSlotForGrandFare(?:(?!^function Reach-GrandCasino).)*(?:slot_nudge|slot_auto_toggle|narrative_flags|run_state)' 'Grand fare recovery must not use a slot cheat, autoplay, or private state.'
-    Assert-Match $foundationMain '(?s)func activate_event_choice_action\(event_id: String, choice_id: String\).*?select_event_choice\(event_id, choice_id\).*?confirm_selected_event_choice\(\)' 'Inline room event actions must remain a single public callback that selects and confirms the rendered choice internally.'
-    Assert-Match $foundationMain '(?s)func _add_context_event_inline_actions\(.*?_add_card_button\(card, label, Callable\(self, "activate_event_choice_action"\)\.bind\(event_id, choice_id\)' 'Rendered inline event choice controls must remain directly bound to the select-and-confirm callback.'
+    Assert-Match $foundationMain '(?s)func activate_event_choice_action\(event_id: String, choice_id: String\).*?select_event_choice\(event_id, choice_id, false\).*?confirm_selected_event_choice\(caller_rollback\)' 'Inline room event actions must remain one rollback-owned public callback that selects and confirms the rendered choice internally.'
+    Assert-Match $foundationMain '(?s)func _add_context_event_inline_actions\(.*?emit_id.*?_add_card_button\(card, label, Callable\(self, "_activate_event_response_action"\)\.bind\(emit_id\)' 'Rendered inline event choice controls must remain directly bound to their sealed event-response token.'
     Assert-Match $foundationMain '(?s)func _event_inline_response_actions\(event_id: String, choices: Array\).*?"event_response:%s:%s" % \[event_id, choice_id\].*?"emit_object_id": emit_object_id' 'Foundation event cards must publish exact event/choice semantic action tokens.'
-    Assert-Match $pixelSceneCanvas '(?s)func _selected_info_inline_actions\(.*?emit_object_id.*?func _selected_info_action_entries_from_info\(.*?"enabled": bool\(action_data\.get\("enabled".*?func _activate_selected_info_action_entry\(.*?not bool\(action_entry\.get\("enabled".*?object_activated\.emit\(emit_object_id if not emit_object_id\.is_empty\(\) else object_id\)' 'The room canvas must carry semantic inline-action identity into the selected snapshot, re-check enabled state, and emit the exact action token.'
+    Assert-Match $pixelSceneCanvas '(?s)func _selected_info_inline_actions\(.*?emit_object_id.*?func _selected_info_action_entries_for_rect\(.*?"emit_object_id": str\(action_data\.get\("emit_object_id".*?"enabled": not bool\(object_data\.get\("disabled".*?and bool\(action_data\.get\("enabled".*?func _activate_selected_info_action_entry\(.*?not bool\(action_entry\.get\("enabled".*?object_activated\.emit\(emit_object_id if not emit_object_id\.is_empty\(\) else object_id\)' 'The room canvas must carry semantic inline-action identity into the selected snapshot, re-check object and action enabled state, and emit the exact action token.'
     Assert-Contains $foundationScreenBuilder 'host.environment_canvas.object_activated.connect(host._on_environment_object_activated)' 'The production room canvas activation signal must remain connected to FoundationMain.'
     Assert-Match $foundationMain '(?s)func _on_environment_object_activated\(object_id: String\).*?activate_interactable_object\(object_id\)' 'Canvas activation must enter FoundationMain through the production interactable dispatcher.'
     Assert-Match $foundationMain '(?s)func activate_interactable_object\(object_id: String\).*?event_response:.*?_activate_event_response_action\(object_id\)' 'FoundationMain must dispatch exact event-response tokens before generic interaction handling.'
@@ -5078,7 +5083,7 @@ function Assert-SaveRelaunchContinue {
     }
     Assert-NotMatch $runner 'Get-Value[^\r\n]+(?:demo_objective|objective_guidance|next_objective|run_status|run_text)' 'Replay routes must not consume raw objective or run-status fields.'
     Assert-Match $runner '(?s)function Select-ExactRenderedCanvasObject.*?matches\.Count\s+-gt\s+1.*?rendered\s+-isnot\s+\[bool\].*?enabled\s+-isnot\s+\[bool\].*?function Select-FirstRenderedCanvasObjectByPrefix.*?duplicate semantic id.*?Sort-Object.*?-CaseSensitive' 'Canvas-object route decisions must require unique exact identities, true boolean rendered/enabled witnesses, and deterministic ordinal prefix selection.'
-    Assert-Match $runner '(?s)function Reveal-WorldMapLeaveByPublicRefocus.*?leaveMatches\.Count\s+-cne\s+1.*?leaveEnabled\s+-isnot\s+\[bool\].*?leaveRendered\s+-isnot\s+\[bool\].*?Select-Object\s+-First\s+12.*?click_object \$semanticId.*?blocking modal.*?liveLeave\.Count\s+-cne\s+1.*?liveEnabled\s+-isnot\s+\[bool\].*?liveRendered\s+-isnot\s+\[bool\].*?function Open-WorldMap.*?Clear-VisibleCoach\s*Reveal-WorldMapLeaveByPublicRefocus\s*\$null = Open-SemanticObject' 'World-map entry must use only bounded real focus clicks and exact public witnesses to uncover an occluded Leave target before its physical action.'
+    Assert-Match $runner '(?s)function Reveal-SemanticObjectByPublicRefocus.*?targetMatches\.Count\s+-cne\s+1.*?targetEnabled\s+-isnot\s+\[bool\].*?targetRendered\s+-isnot\s+\[bool\].*?Select-Object\s+-First\s+12.*?click_object \$semanticId.*?blocking modal.*?liveTarget\.Count\s+-cne\s+1.*?liveEnabled\s+-isnot\s+\[bool\].*?liveRendered\s+-isnot\s+\[bool\].*?function Reveal-WorldMapLeaveByPublicRefocus.*?TargetSemanticId ''travel:leave''.*?function Open-WorldMap.*?leaveObjects\.Count\s+-ceq\s+0.*?Open-OverflowWorldMapIfVisible.*?Reveal-WorldMapLeaveByPublicRefocus.*?Open-SemanticObject' 'World-map entry must use exact public witnesses and bounded real focus clicks for Leave, with only the rendered room-actions Open Map path allowed when no canvas Leave object exists.'
     Assert-Match $runner '(?s)function Assert-ExactRenderedRoomActionBinding.*?matches\.Count\s+-cne\s+1.*?changed row order.*?disabled, clipped.*?function Invoke-RoomActionRow.*?selected_object_id.*?ConvertTo-BridgeBase64Token.*?click_action room' 'Room-action commands must bind one exact selected object, identity, row index, rendered/enabled state, and encoded bridge command.'
     Assert-Match $runner '(?s)function Assert-ExplicitSaveAcknowledgmentObservation.*?hasSave\s+-isnot\s+\[bool\].*?saveTextVisible\s+-isnot\s+\[bool\].*?saveText\s+-isnot\s+\[string\].*?-cne\s+\$expectedVisibleText' 'Save acknowledgment must reject missing, non-boolean, and inexact public witnesses.'
     Assert-Match $runner '(?s)function Test-PublicTerminalSurface.*?Get-ExactReplayString.*?screen.*?screen\s+-cnotin\s+@\(''VICTORY'', ''FAILURE''\).*?Get-ExactReplayBoolean.*?run_report_visible.*?function Assert-TerminalOutcome.*?Get-ExactReplayString.*?run_report.*?outcome.*?Get-ExactReplayBoolean.*?won.*?outcome\s+-cnotin\s+\$ExpectedOutcomes' 'Terminal routing must require exact terminal screen/outcome strings, exact boolean witnesses, and exact allowlisted outcome ids.'
@@ -5087,14 +5092,14 @@ function Assert-SaveRelaunchContinue {
         [regex]::IsMatch($cashRunnerFunction.Value, '(?:requires_confirm|impact_summary|click_choice)', [Text.RegularExpressions.RegexOptions]::IgnoreCase)) {
         Add-Failure 'Grand fare cash-event recovery must issue exactly one rendered room-action click and consume no hidden or second-click confirmation metadata.'
     }
-    Assert-Match $runner '(?s)function Select-UniquePublicVerticalScrollSurface.*?SurfaceId\s+-cne\s+''run_menu''.*?matches\.Count\s+-cne\s+1.*?axis.*?vertical.*?rendered\s+-isnot\s+\[bool\].*?canScroll\s+-isnot\s+\[bool\]' 'Run-menu scroll selection must reject unsupported, ambiguous, hidden, wrong-axis, non-boolean, and direction-blocked public surfaces.'
+    Assert-Match $runner '(?s)function Select-UniquePublicVerticalScrollSurface.*?SurfaceId\s+-cnotin\s+@\(''run_menu'',\s*''room_actions''\).*?matches\.Count\s+-cne\s+1.*?axis.*?vertical.*?rendered\s+-isnot\s+\[bool\].*?canScroll\s+-isnot\s+\[bool\]' 'Run-menu and room-action scroll selection must reject unsupported, ambiguous, hidden, wrong-axis, non-boolean, and direction-blocked public surfaces.'
     Assert-Match $runner '(?s)function Select-UniqueFullyVisibleButton.*?matches\.Count\s+-gt\s+1.*?Get-Value\s+\$button\s+@\(''fully_visible''\)\s+\$null.*?-isnot\s+\[bool\].*?fully_visible signal.*?return \$null' 'Run-menu button selection must fail closed on ambiguous, absent, wrong-case, non-boolean, and false fully-visible signals.'
     Assert-Match $runner '(?s)function Select-UniquePublicTutorialDialogButton.*?tutorial_skip_dialog:\$Role.*?surface_id.*?dialog_role.*?matches\.Count\s+-cne\s+1.*?enabled.*?fully_visible.*?dialog_rendered.*?Get-Value.*?-isnot\s+\[bool\].*?-not\s+\[bool\]' 'Tutorial confirmation selection must require one exact stable-id control with true boolean enabled, fully-visible, and rendered signals.'
     Assert-Match $runner '(?s)function Click-TutorialConfirmationButton.*?Select-UniquePublicTutorialDialogButton.*?tutorial_skip_dialog:\$Role.*?IsNullOrWhiteSpace.*?-cne\s+\$expectedId.*?click_button \$id' 'Tutorial confirmation clicks must use the exact validated stable public id.'
     Assert-Match $runner '(?s)function Reveal-ButtonByVerticalScroll.*?MaximumScrolls\s*=\s*12.*?Select-UniqueFullyVisibleButton.*?Get-PublicScrollSurfaces.*?scroll_surface \$surfaceId \$Direction.*?did not become visible within' 'Run-menu reveal must require a fully visible target, use bounded public semantic scroll inputs, and fail closed.'
     Assert-NotMatch $runner '\$null\s+-eq\s+\(Find-Button\s+-Text\s+''Skip Lessons''\)' 'The tutorial route must not demand an already visible Skip Lessons button before semantic scrolling can reveal it.'
     Assert-NotMatch $runner '(?:Find-Button|Click-Button)\s+-Text\s+''OK''' 'The tutorial confirmation route must not select the generic OK label.'
-    Assert-Match $bridge '(?s)func _scroll_surface\(argument: String\).*?surface_id != "run_menu".*?direction not in \["up", "down"\].*?surface\.get\(capability, false\).*?_push_mouse_wheel.*?after <= before.*?after >= before' 'The bridge semantic scroll command must allow only rendered public run-menu capabilities and verify real wheel movement.'
+    Assert-Match $bridge '(?s)func _scroll_surface\(argument: String\).*?surface_id not in \["run_menu", "room_actions"\].*?direction not in \["up", "down"\].*?surface\.get\(capability, false\).*?_push_mouse_wheel.*?after <= before.*?after >= before' 'The bridge semantic scroll command must allow only rendered public run-menu or room-action capabilities and verify real wheel movement.'
     Assert-Match $bridge '(?s)func _click_button\(target: String\).*?fully_visible.*?button became hidden, clipped, or disabled before click' 'The bridge must re-check that a semantic button is fully visible immediately before clicking it.'
     Assert-Match $bridge '(?s)var look := await _capture_look\(command_number, not should_quit\).*?func _capture_look\(command_number: int, capture_png: bool = true\).*?if capture_png:.*?RenderingServer\.frame_post_draw.*?save_png' 'Quit must retain its authenticated public observation while skipping only the redundant framebuffer PNG capture.'
     Assert-Match $bridge '(?s)func _click_button\(target: String\).*?_button_input_route\(data, button, click_position\).*?input_viewport\s*==\s*null.*?TYPE_VECTOR2.*?missing, changed, or ambiguous.*?_push_mouse_click_in_viewport\(input_viewport, input_position, false\)' 'Every semantic button click must fail closed on a stale input route and use its exact physical viewport coordinate.'

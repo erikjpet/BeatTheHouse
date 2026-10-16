@@ -11,8 +11,11 @@ const Schema := preload("res://scripts/core/scenario_sequence_schema.gd")
 # JSON.stringify formats floats through the C runtime's snprintf, so its bytes
 # differ between Windows and Linux. The baseline hashes a canonical form with
 # every float fixed at 1e-12 resolution, which is identical on all platforms.
-const PRODUCTION_AUTHORITY_SHA256 := "84b6b354b3783c419f386cd513bfeb311738a8a38648069c0f59b2e83a5e97bd"
-const PRODUCTION_AUTHORITY_BYTES := 1784383
+# Two independent full audits reproduced this refreshed authority after the
+# reviewed slot/counter target inventory changes, with the same 1,485 clean
+# pairs and no warnings or failures.
+const PRODUCTION_AUTHORITY_SHA256 := "45446147aef3f81132a059791c5d61104c553221f397fa4c14ca00a3aff389d4"
+const PRODUCTION_AUTHORITY_BYTES := 1784388
 const CANONICAL_FLOAT_SCALE := 1000000000000.0
 
 

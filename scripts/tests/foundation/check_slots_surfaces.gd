@@ -4329,7 +4329,8 @@ func _bar_dice_play_round(game: GameModule, run_state: RunState, _rng: RngStream
 	command = host.call("_sealed_action_host_surface_intent", "bar_dice_reveal", 0, false)
 	command = host.call("_sealed_action_host_surface_intent", "bar_dice_ack_call", 0, false)
 	var delivery: Dictionary = command.get("_sealed_action_host_delivery", {})
-	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", action_id, stake, delivery)
+	var prepared: Dictionary = command.get("_sealed_action_host_prepared", {}) if typeof(command.get("_sealed_action_host_prepared", {})) == TYPE_DICTIONARY else {}
+	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", action_id, stake, delivery, prepared)
 	host.free()
 	return result
 

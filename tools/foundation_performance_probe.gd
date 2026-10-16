@@ -8,6 +8,7 @@ extends SceneTree
 # justified commit because smooth-but-frozen and live-but-slow both fail release.
 
 const MainScene := preload("res://scenes/main.tscn")
+const RunStateScript := preload("res://scripts/core/run_state.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const PerfTelemetryOverlayScript := preload("res://scripts/ui/perf_telemetry_overlay.gd")
@@ -25,6 +26,16 @@ const DEFAULT_SEED_PREFIX := "FOUNDATION-PERF"
 const DEFAULT_RUN_COUNT := 8
 const DEFAULT_FRAMES_PER_SURFACE := 120
 const DEFAULT_RESOLVE_SAMPLE_COUNT := 48
+const GENERATED_GAME_HOME_ARCHETYPES := [
+	"bar",
+	"gas_station_casino",
+	"kitty_cat_lounge",
+	"delta_queen",
+	"jazz_club",
+	"grand_casino",
+	"gas_station_casino",
+	"kitty_cat_lounge",
+]
 const SCRATCH_POINTER_SAMPLE_COUNT := 60
 const SCRATCH_POINTER_BUDGET := {"avg_ms": 0.75, "p95_ms": 1.5, "max_ms": 5.0}
 const LOW_END_SCALE_FACTOR := 10.2
@@ -170,6 +181,7 @@ var resolve_observations: Array = []
 var budget_headroom_checks: Array = []
 var renderer_coverage := {}
 var game_surface_coverage := {}
+var generated_game_environment_count := 0
 var resolve_coverage := {}
 var scratch_pointer_checked := false
 var new_surface_coverage := {}
@@ -237,21 +249,35 @@ func _run() -> void:
 
 
 func _probe_seed(seed: String, run_index: int) -> void:
-	app.call("start_foundation_run", seed)
+	var home_archetype_id := str(GENERATED_GAME_HOME_ARCHETYPES[run_index % GENERATED_GAME_HOME_ARCHETYPES.size()])
+	var challenge := RunStateScript.custom_challenge(
+		"foundation_performance_generated_%02d" % run_index,
+		seed,
+		{"home_archetype_id": home_archetype_id}
+	)
+	if not bool(app.call("start_foundation_run", seed, challenge, false)):
+		failures.append("Seed %s could not start its generated %s performance room." % [seed, home_archetype_id])
+		return
 	await _settle(3)
 	var environment_snapshot: Dictionary = app.call("current_environment_view_snapshot")
 	await _probe_environment_focus(seed, run_index, str(environment_snapshot.get("id", "")))
 	var game_ids := _string_array(environment_snapshot.get("game_ids", []))
 	if game_ids.is_empty():
-		warnings.append("Seed %s did not generate any games." % seed)
+		failures.append("Seed %s generated %s without any in-run games; practice fallback is not accepted as generated-room coverage." % [seed, home_archetype_id])
 		return
+	generated_game_environment_count += 1
 	for game_id in game_ids:
 		await _probe_game(seed, run_index, str(environment_snapshot.get("id", "")), game_id)
 
 
 func _probe_default_environment_focus_smoke() -> void:
 	var focus_seed := "%s-focus" % seed_prefix
-	app.call("start_foundation_run", focus_seed)
+	var challenge := RunStateScript.custom_challenge(
+		"foundation_performance_focus",
+		focus_seed,
+		{"home_archetype_id": "small_underground_casino"}
+	)
+	app.call("start_foundation_run", focus_seed, challenge, false)
 	await _settle(3)
 	var environment_snapshot: Dictionary = app.call("current_environment_view_snapshot")
 	await _probe_environment_focus(focus_seed, -1, str(environment_snapshot.get("id", "")))
@@ -848,9 +874,16 @@ func _coin_pusher_free_controls_present(surface_state: Dictionary) -> bool:
 
 
 func _probe_casino_slot_preview_coverage() -> void:
-	app.call("start_game_test_session", "slot")
-	await _settle(4)
-	app.call("back_to_environment")
+	var seed := "%s-slot-preview" % seed_prefix
+	var challenge := RunStateScript.custom_challenge(
+		"foundation_performance_slot_preview",
+		seed,
+		{
+			"home_archetype_id": "small_underground_casino",
+			"environment_layer_overrides": {"small_underground_casino": "casino"},
+		}
+	)
+	app.call("start_foundation_run", seed, challenge, false)
 	await _settle(4)
 	var environment_snapshot: Dictionary = app.call("current_environment_view_snapshot")
 	var environment_id := str(environment_snapshot.get("id", "practice_slot"))
@@ -861,7 +894,7 @@ func _probe_casino_slot_preview_coverage() -> void:
 	var visual_state: Dictionary = game_object.get("visual_state", {}) if typeof(game_object.get("visual_state", {})) == TYPE_DICTIONARY else {}
 	casino_slot_preview_checked = game_ids.has("slot") and not game_object.is_empty()
 	observations.append({
-		"seed": "practice:slot_preview",
+		"seed": seed,
 		"run_index": -1,
 		"environment_id": environment_id,
 		"game_id": "slot",
@@ -873,9 +906,9 @@ func _probe_casino_slot_preview_coverage() -> void:
 		"visual_state": visual_state,
 	})
 	if not casino_slot_preview_checked:
-		failures.append("Performance probe did not sample a casino room slot preview.")
+		failures.append("Performance probe did not sample a generated casino room slot preview.")
 	if kind != "casino":
-		warnings.append("Slot preview practice room kind was %s, expected casino-like coverage." % kind)
+		failures.append("Generated slot preview room kind was %s, expected casino coverage." % kind)
 
 
 func _probe_grand_casino_living_floor_idle() -> void:
@@ -2103,6 +2136,7 @@ func _write_report() -> void:
 		"seed_prefix": seed_prefix,
 		"renderer_coverage": renderer_coverage,
 		"game_surface_coverage": game_surface_coverage,
+		"generated_game_environment_count": generated_game_environment_count,
 		"resolve_coverage": resolve_coverage,
 		"scratch_pointer_checked": scratch_pointer_checked,
 		"scratch_pointer_budget": SCRATCH_POINTER_BUDGET,

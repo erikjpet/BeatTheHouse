@@ -1206,7 +1206,15 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 		var direct_full_candidate = uses_compact_authority_evidence or first_proposal_owns_transaction
 		var structural_replay_match = uses_compact_authority_evidence \
 				and bool(provider_contract.get("trusted_candidate_structural_replay_match", false))
-		var replay_source: RunState = candidate.detached_host_action_candidate(_sealed_action_host_state_key()) if first_proposal_owns_transaction else (candidate.detached_host_resolution_candidate(_sealed_action_host_state_key(), shallow_machine_detach) if uses_compact_authority_evidence else candidate)
+		var lightweight_resolution_candidate := bool(provider_contract.get("lightweight_resolution_candidate", false))
+		var replay_source: RunState
+		if first_proposal_owns_transaction:
+			# Providers that only mutate their bound table do not need a second copy
+			# of the complete run graph. The machine remains deeply detached for the
+			# independent replay; unrelated collections are read-only aliases.
+			replay_source = candidate.detached_host_resolution_candidate(_sealed_action_host_state_key(), false) if lightweight_resolution_candidate else candidate.detached_host_action_candidate(_sealed_action_host_state_key())
+		else:
+			replay_source = candidate.detached_host_resolution_candidate(_sealed_action_host_state_key(), shallow_machine_detach) if uses_compact_authority_evidence else candidate
 		var first_bundle := _sealed_action_host_candidate_proposal(candidate_resolve_method, action_id, stake, first_source, compact_input_ledger, compact_proposal_input, compact_input_fingerprint, session, direct_full_candidate, uses_compact_authority_evidence)
 		if has_runtime_checkpoint and not bool(_foundation.current_game.call(runtime_restore_method, runtime_checkpoint)):
 			return _sealed_action_host_rejection("invalid_proposal", "Game runtime could not be restored for sealed replay.", request_key)

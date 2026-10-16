@@ -363,14 +363,14 @@ PULL_TABS_HOST_ACTION_IDS = (
 # 270-row catch-all scenario bank with 213 deliberate positions across all 21
 # maps without treating producers outside the snapshot replay as exclusive.
 SCENARIO_CAPACITY_TARGETS: dict[str, dict[str, int]] = {
-    "corner_store": {"standing_person": 4, "doorway": 1, "wall_mounted": 2, "floor_fixture": 2, "surface_item": 1, "behind_counter_person": 1},
+    "corner_store": {"standing_person": 4, "doorway": 1, "wall_mounted": 2, "floor_fixture": 2, "surface_item": 1},
     "back_alley": {"standing_person": 4, "doorway": 1, "wall_mounted": 1, "floor_fixture": 3, "surface_item": 2, "ground_marker": 1},
     "motel": {"standing_person": 4, "behind_counter_person": 1, "floor_fixture": 3, "wall_mounted": 2, "doorway": 3, "hanging": 1, "surface_item": 1},
     "bar": {"floor_fixture": 4, "doorway": 1, "standing_person": 4, "surface_item": 2, "behind_counter_person": 2, "wall_mounted": 2, "seated_person": 2, "ground_marker": 1},
     "gas_station_casino": {"wall_mounted": 3, "standing_person": 5, "doorway": 3, "surface_item": 1, "ground_marker": 1, "behind_counter_person": 1, "floor_fixture": 2, "group": 2},
     "small_underground_casino": {"doorway": 1, "surface_item": 1, "floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
     "small_underground_casino:club": {"floor_fixture": 3, "standing_person": 4, "doorway": 2, "surface_item": 2, "group": 1, "ground_marker": 1, "wall_mounted": 1},
-    "small_underground_casino:casino": {"floor_fixture": 3, "standing_person": 3, "doorway": 2, "seated_person": 1, "wall_mounted": 3, "surface_item": 1, "ground_marker": 1},
+    "small_underground_casino:casino": {"floor_fixture": 3, "standing_person": 3, "doorway": 1, "seated_person": 1, "wall_mounted": 3, "surface_item": 1, "ground_marker": 1},
     "small_underground_casino:back_room": {"floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
     "jazz_club": {"standing_person": 3, "floor_fixture": 3, "doorway": 1, "wall_mounted": 2, "surface_item": 1, "seated_person": 1, "ground_marker": 1},
     "kitty_cat_lounge": {"standing_person": 3, "surface_item": 1, "floor_fixture": 3, "doorway": 2, "wall_mounted": 3, "seated_person": 1, "ground_marker": 1},
@@ -391,20 +391,20 @@ SCENARIO_CAPACITY_TARGETS: dict[str, dict[str, int]] = {
 # inventory; category-only, scenario-only, and template-parent rows are omitted.
 EVENT_CAPACITY_TARGETS: dict[str, dict[str, int]] = {
     "corner_store": {"behind_counter_person": 2, "standing_person": 1, "ground_marker": 1},
-    "back_alley": {"ground_marker": 1, "floor_fixture": 1, "standing_person": 6},
+    "back_alley": {"behind_counter_person": 1, "ground_marker": 1, "floor_fixture": 1, "standing_person": 6},
     "motel": {"behind_counter_person": 1, "ground_marker": 1, "standing_person": 4},
     "bar": {"behind_counter_person": 1, "standing_person": 5, "doorway": 1},
     "gas_station_casino": {"doorway": 1, "ground_marker": 1, "standing_person": 5},
     "small_underground_casino": {},
     "small_underground_casino:club": {"standing_person": 8},
     "small_underground_casino:casino": {"behind_counter_person": 1, "standing_person": 8},
-    "small_underground_casino:back_room": {"standing_person": 6},
+    "small_underground_casino:back_room": {"standing_person": 6, "behind_counter_person": 1},
     "jazz_club": {"standing_person": 3},
     "kitty_cat_lounge": {"seated_person": 1, "doorway": 1, "standing_person": 5},
     "delta_queen": {"seated_person": 1, "doorway": 1, "behind_counter_person": 1, "standing_person": 6},
     "beach": {"standing_person": 1},
     "pawn_shop": {"standing_person": 3},
-    "grand_casino": {"behind_counter_person": 1, "wall_mounted": 1, "standing_person": 7},
+    "grand_casino": {"behind_counter_person": 2, "wall_mounted": 1, "standing_person": 7},
     "grand_casino_high_limit": {"standing_person": 6},
     "grand_casino_back_room": {"standing_person": 5},
     "grand_casino_cage": {},
@@ -3376,38 +3376,34 @@ def _attach_actions_to_fixed_host(
 
 
 def _retire_pull_tabs_standalone_rows(maps: dict[str, dict[str, Any]]) -> None:
-    """Put Pull Tabs, redemption, and help on each venue's staffed counter."""
+    """Retire obsolete helper rows while preserving the playable machine."""
 
     retired_slot_ids = {
         "bar": (
             "fixed.ticket_redeemer",
-            "fixed.random_game_3",
         ),
         "gas_station_casino": (
             "fixed.service_lottery_desk",
             "fixed.service_refreshment_shelf",
-            "fixed.random_game_2",
             "fixed.event_control_rail",
         ),
         "jazz_club": (
-            "fixed.pulltab_game",
             "fixed.event_pull_tabs_sign",
             "fixed.random_game_1",
             "fixed.service_bar",
         ),
         "grand_casino": (
             "fixed.ticket_redeemer",
-            "fixed.game_machine_5",
         ),
     }
     dynamic_actions = {
-        "bar": PULL_TABS_HOST_ACTION_IDS,
+        "bar": PULL_TABS_HOST_ACTION_IDS[1:],
         "gas_station_casino": (
-            *PULL_TABS_HOST_ACTION_IDS,
+            *PULL_TABS_HOST_ACTION_IDS[1:],
             "game_hook:scratch_tickets:scratch_ticket_clerk",
         ),
-        "jazz_club": PULL_TABS_HOST_ACTION_IDS,
-        "grand_casino": PULL_TABS_HOST_ACTION_IDS,
+        "jazz_club": PULL_TABS_HOST_ACTION_IDS[1:],
+        "grand_casino": PULL_TABS_HOST_ACTION_IDS[1:],
     }
     for map_id, action_ids in dynamic_actions.items():
         map_data = maps[map_id]
@@ -3467,6 +3463,56 @@ def _retire_pull_tabs_standalone_rows(maps: dict[str, dict[str, Any]]) -> None:
             if str(preferences.get(claimant, "")) in retired_exits:
                 preferences.pop(claimant, None)
 
+    pull_tabs_game_rows = {
+        "bar": {
+            "id": "fixed.random_game_3", "kind": "fixed", "pos": [314.0, 178.0],
+            "footprint_class": "surface_item", "physical_role": "Random game", "occupant_ids": [],
+            "runtime_reserve": False, "reserve_reason": "", "hit_rect": [278.0, 130.0, 72.0, 48.0],
+            "label_anchor": [314.0, 176.0], "facing": "none", "priority": 30, "zone_id": "room",
+            "support_id": "bar_counter", "walk_lane_ids": [], "occupancy_required": False,
+        },
+        "gas_station_casino": {
+            "id": "fixed.random_game_2", "kind": "fixed", "pos": [374.0, 240.0],
+            "footprint_class": "floor_fixture", "physical_role": "Pull Tabs machine", "occupant_ids": ["game:pull_tabs"],
+            "runtime_reserve": False, "reserve_reason": "", "hit_rect": [328.0, 176.0, 92.0, 64.0],
+            "label_anchor": [374.0, 272.0], "facing": "none", "priority": 15, "zone_id": "center",
+            "support_id": "stage", "walk_lane_ids": [], "occupancy_required": False,
+        },
+        "jazz_club": {
+            "id": "fixed.pulltab_game", "kind": "fixed", "pos": [688.0, 24.0],
+            "footprint_class": "wall_mounted", "physical_role": "Pull Tabs machine", "occupant_ids": ["game:pull_tabs"],
+            "runtime_reserve": False, "reserve_reason": "", "hit_rect": [648.0, 0.0, 80.0, 48.0],
+            "label_anchor": [688.0, 26.0], "facing": "none", "priority": 10, "zone_id": "room",
+            "support_id": "wall", "walk_lane_ids": [], "occupancy_required": False,
+        },
+        "grand_casino": {
+            "id": "fixed.game_machine_5", "kind": "fixed", "pos": [744.0, 118.0],
+            "footprint_class": "wall_mounted", "physical_role": "Pull Tabs machine", "occupant_ids": ["game:pull_tabs"],
+            "runtime_reserve": False, "reserve_reason": "", "hit_rect": [722.0, 94.0, 44.0, 48.0],
+            "label_anchor": [744.0, 154.0], "facing": "none", "priority": 50, "zone_id": "room",
+            "support_id": "wall", "walk_lane_ids": [], "occupancy_required": False,
+        },
+    }
+    for map_id, slot_template in pull_tabs_game_rows.items():
+        map_data = maps[map_id]
+        slot_id = str(slot_template["id"])
+        placement_class = str(slot_template["footprint_class"])
+        target_slot = _slot_by_id(map_data, slot_id)
+        if target_slot is None:
+            map_data.setdefault("fixed_slots", []).append(copy.deepcopy(slot_template))
+        else:
+            target_slot.clear()
+            target_slot.update(copy.deepcopy(slot_template))
+        if map_id == "bar":
+            _remove_object_slot_assignment(map_data, "game:pull_tabs")
+        else:
+            _assign_object_slot(map_data, "fixed", "game:pull_tabs", slot_id)
+        map_data.setdefault("object_family_ids", {})["game:pull_tabs"] = "fixed"
+        map_data.setdefault("class_overrides", {})["game:pull_tabs"] = placement_class
+        map_data.setdefault("object_slot_positions", {}).pop("game:pull_tabs", None)
+
+    maps["jazz_club"].setdefault("fixed_category_slot_ids", {})["game_spots:0"] = "fixed.pulltab_game"
+
     bar_categories = maps["bar"].get("fixed_category_slot_ids", {})
     if isinstance(bar_categories, dict):
         for category_id in list(bar_categories):
@@ -3475,20 +3521,24 @@ def _retire_pull_tabs_standalone_rows(maps: dict[str, dict[str, Any]]) -> None:
         bar_categories.update({
             "game_spots:0": "fixed.random_game_1",
             "game_spots:1": "fixed.random_game_2",
+            "game_spots:2": "fixed.random_game_3",
         })
 
     gas = maps["gas_station_casino"]
     for object_id in ("game:coin_pusher", "game:slot", "game:video_poker"):
         _assign_object_slot(gas, "fixed", object_id, "fixed.random_game_1")
         gas.setdefault("class_overrides", {})[object_id] = "floor_fixture"
+    _assign_object_slot(gas, "fixed", "game:pull_tabs", "fixed.random_game_2")
+    gas.setdefault("class_overrides", {})["game:pull_tabs"] = "floor_fixture"
     gas_categories = gas.get("fixed_category_slot_ids", {})
     if isinstance(gas_categories, dict):
         for category_id in list(gas_categories):
             if str(category_id).startswith("game_spots:"):
                 gas_categories.pop(category_id, None)
         gas_categories.update({
-            "game_spots:0": "fixed.random_game_1",
-            "game_spots:1": "fixed.game_scratch_tickets",
+            "game_spots:0": "fixed.random_game_2",
+            "game_spots:1": "fixed.random_game_1",
+            "game_spots:2": "fixed.game_scratch_tickets",
         })
 
     # Grand's fifth machine was the standalone Pull Tabs fixture.  Keep the
@@ -3505,6 +3555,7 @@ def _retire_pull_tabs_standalone_rows(maps: dict[str, dict[str, Any]]) -> None:
                 "fixed.game_machine_2",
                 "fixed.game_machine_3",
                 "fixed.game_machine_4",
+                "fixed.game_machine_5",
                 "fixed.game_table_left",
                 "fixed.game_table_right",
             )
@@ -4395,6 +4446,257 @@ def _uses_canonical_reusable_slot_ids(payload: dict[str, Any]) -> bool:
     )
 
 
+def _normalize_ending_route_event_capacity(
+    maps: dict[str, dict[str, Any]],
+) -> None:
+    """Provision the distinct counter hosts required by the three Act 1 routes."""
+
+    specifications = (
+        (
+            "back_alley",
+            "event:late_shift_discount",
+            {
+                "id": "event.behind_counter_person_1",
+                "kind": "event",
+                "pos": [644.0, 208.0],
+                "footprint_class": "behind_counter_person",
+                "physical_role": "Counter staff",
+                "occupant_ids": [],
+                "runtime_reserve": False,
+                "reserve_reason": "",
+                "hit_rect": [608.0, 136.0, 72.0, 72.0],
+                "label_anchor": [644.0, 130.0],
+                "facing": "front",
+                "priority": 80,
+                "zone_id": "right",
+                "support_id": "right_crate_counter",
+                "walk_lane_ids": [],
+                "occupancy_required": False,
+            },
+        ),
+        (
+            "small_underground_casino:back_room",
+            "event:town_rumor_staff",
+            {
+                "id": "event.behind_counter_person_1",
+                "kind": "event",
+                "pos": [126.0, 236.0],
+                "footprint_class": "behind_counter_person",
+                "physical_role": "Numbers desk staff",
+                "occupant_ids": [],
+                "runtime_reserve": False,
+                "reserve_reason": "",
+                "hit_rect": [90.0, 164.0, 72.0, 72.0],
+                "label_anchor": [126.0, 158.0],
+                "facing": "none",
+                "priority": 80,
+                "zone_id": "room",
+                "support_id": "numbers_desk",
+                "walk_lane_ids": [],
+                "occupancy_required": False,
+            },
+        ),
+        (
+            "grand_casino",
+            "event:comped_suite_offer",
+            {
+                "id": "event.behind_counter_person_2",
+                "kind": "event",
+                "pos": [622.0, 242.0],
+                "footprint_class": "behind_counter_person",
+                "physical_role": "Casino host",
+                "occupant_ids": [],
+                "runtime_reserve": False,
+                "reserve_reason": "",
+                "hit_rect": [600.0, 170.0, 44.0, 72.0],
+                "label_anchor": [622.0, 164.0],
+                "facing": "front",
+                "priority": 80,
+                "zone_id": "room",
+                "support_id": "cocktail_service",
+                "walk_lane_ids": ["lane.public"],
+                "occupancy_required": False,
+            },
+        ),
+    )
+    for map_id, object_id, slot_template in specifications:
+        map_data = maps[map_id]
+        slot_id = str(slot_template["id"])
+        for slot in map_data.get("event_slots", []) or []:
+            if not isinstance(slot, dict):
+                continue
+            slot["occupant_ids"] = [
+                value for value in slot.get("occupant_ids", []) or []
+                if str(value) != object_id
+            ]
+        target_slot = _slot_by_id(map_data, slot_id)
+        reviewed_slot = copy.deepcopy(slot_template)
+        reviewed_slot["occupant_ids"] = [object_id]
+        if target_slot is None:
+            map_data.setdefault("event_slots", []).append(reviewed_slot)
+        else:
+            target_slot.clear()
+            target_slot.update(reviewed_slot)
+        map_data.setdefault("event_object_slot_ids", {})[object_id] = slot_id
+        map_data.setdefault("object_family_ids", {})[object_id] = "event"
+
+
+def _normalize_release_recipe_drift(maps: dict[str, dict[str, Any]]) -> None:
+    """Reproduce reviewed release authority that post-dates the legacy source."""
+
+    corner = maps["corner_store"]
+    _remove_object_slot_assignment(corner, "event:scenario_delivery_day_stock")
+    corner.setdefault("class_overrides", {}).pop("event:scenario_delivery_day_stock", None)
+    corner.setdefault("object_slot_positions", {}).pop("event:scenario_delivery_day_stock", None)
+
+    casino = maps["small_underground_casino:casino"]
+    for object_id in (
+        "event:scenario_greased_week_window",
+        "event:scenario_new_muscle_door",
+    ):
+        _remove_object_slot_assignment(casino, object_id)
+        casino.setdefault("class_overrides", {}).pop(object_id, None)
+        casino.setdefault("object_slot_positions", {}).pop(object_id, None)
+    casino.setdefault("object_slot_positions", {})["event:scenario_greased_week_window"] = [700, 0]
+    casino.setdefault("class_overrides", {}).pop("event:rowdy_regular", None)
+    casino_door = _slot_by_id(casino, "scenario.doorway_1")
+    if casino_door is not None:
+        casino_door.update({
+            "pos": [36.0, 264.0],
+            "occupant_ids": [
+                "punchline_greased_week_safe_exit",
+                "punchline_high_stakes_night_safe_exit",
+                "punchline_new_muscle_safe_exit",
+            ],
+            "hit_rect": [4.0, 228.0, 64.0, 72.0],
+            "label_anchor": [36.0, 222.0],
+            "facing": "right",
+            "support_id": "left_exit",
+        })
+
+    reviewed_positions = {
+        "small_underground_casino": {
+            "scenario.standing_person_1": ([460.0, 296.0], [424.0, 216.0, 72.0, 80.0], [460.0, 210.0]),
+        },
+        "kitty_cat_lounge": {
+            "event.standing_person_4": ([244.0, 170.0], [212.0, 88.0, 64.0, 82.0], [244.0, 82.0]),
+            "scenario.standing_person_3": ([108.0, 88.0], [72.0, 8.0, 72.0, 80.0], [108.0, 2.0]),
+        },
+    }
+    for map_id, slot_specs in reviewed_positions.items():
+        for slot_id, (pos, hit_rect, label_anchor) in slot_specs.items():
+            slot = _slot_by_id(maps[map_id], slot_id)
+            if slot is not None:
+                slot["pos"] = pos
+                slot["hit_rect"] = hit_rect
+                slot["label_anchor"] = label_anchor
+
+    kitty = maps["kitty_cat_lounge"]
+    kitty.setdefault("object_family_ids", {})["game:video_poker"] = "fixed"
+    kitty.setdefault("class_overrides", {})["game:video_poker"] = "floor_fixture"
+    kitty.setdefault("object_slot_positions", {})["game:video_poker"] = [690, 280]
+
+    reviewed_orders = {
+        ("gas_station_casino", "fixed"): (
+            "fixed.random_game_1", "fixed.random_game_2", "fixed.game_scratch_tickets",
+            "fixed.numbers_book", "fixed.service_house_drink", "fixed.staff_nell",
+        ),
+        ("jazz_club", "fixed"): (
+            "fixed.pulltab_game", "fixed.staff_bartender", "fixed.band_stage",
+            "fixed.musician_sax", "fixed.musician_drummer", "fixed.item_shop_1",
+            "fixed.item_shop_2", "fixed.musician_cello", "fixed.tip_jar_band",
+            "fixed.patron_dot",
+        ),
+        ("small_underground_casino:casino", "scenario"): (
+            "scenario.surface_item_1", "scenario.floor_fixture_1", "scenario.floor_fixture_2",
+            "scenario.ground_marker_1", "scenario.seated_person_1", "scenario.standing_person_1",
+            "scenario.standing_person_2", "scenario.wall_item_1", "scenario.wall_item_2",
+            "scenario.wall_item_3", "scenario.doorway_1", "scenario.standing_person_3",
+            "scenario.floor_fixture_3",
+        ),
+    }
+    for (map_id, family), slot_ids in reviewed_orders.items():
+        slots = [
+            slot for slot in maps[map_id].get(f"{family}_slots", []) or []
+            if isinstance(slot, dict)
+        ]
+        by_id = {str(slot.get("id", "")): slot for slot in slots}
+        ordered = [by_id[slot_id] for slot_id in slot_ids if slot_id in by_id]
+        selected = set(slot_ids)
+        maps[map_id][f"{family}_slots"] = ordered + [
+            slot for slot in slots if str(slot.get("id", "")) not in selected
+        ]
+
+    reviewed_mapping_orders = {
+        ("motel", "object_family_ids"): (
+            "event:call_brother_in_law", "event:chain06_dave_last_stop", "event:chain06_dave_same_bus",
+            "event:parking_lot_tip", "event:scenario_stakeout_watch_or_leave", "event:scenario_wedding_overflow_hallway",
+            "event:town_rumor_staff", "item:extra_ball_token", "item:lucky_ladies_compact", "item:payment_calendar",
+            "item:split_reel_note", "item:tarot_card", "numbers:book", "service:house_drink", "shopkeeper:merchant",
+            "numbers:silas", "lender:motel_friend", "character:june", "character:marco",
+            "event:chain06_nico_weekly_door", "travel:leave",
+        ),
+        ("bar", "object_family_ids"): (
+            "event:rowdy_regular", "event:scenario_dead_tuesday_regular", "event:scenario_lock_in_private_game",
+            "event:scenario_wake_route_story", "event:side_door", "event:town_rumor_staff", "numbers:book",
+            "numbers:silas", "service:house_drink", "staff:bar_bartender", "character:dot",
+            "event:recruitment_knuckles", "game:pull_tabs", "game_hook:pull_tabs:ticket_redeemer",
+            "dialogue:pull_tab_clerk", "travel:leave",
+        ),
+        ("gas_station_casino", "fixed_object_slot_ids"): (
+            "character:nell", "game:pull_tabs", "game:scratch_tickets", "numbers:book", "service:house_drink",
+            "game:coin_pusher", "game:slot", "game:video_poker",
+        ),
+        ("gas_station_casino", "object_family_ids"): (
+            "event:chain06_dave_last_stop", "event:chain06_dave_same_bus", "event:scenario_graveyard_maintenance",
+            "event:scenario_tour_bus_ticket_rush", "event:scenario_trucker_convoy_route", "event:side_door",
+            "game:coin_pusher", "game:scratch_tickets", "numbers:book", "service:house_drink",
+            "event:parking_lot_tip", "game:video_poker", "game:slot", "dialogue:scratch_ticket_scalper",
+            "character:nell", "game:pull_tabs", "game_hook:pull_tabs:ticket_redeemer", "dialogue:pull_tab_clerk",
+            "game_hook:scratch_tickets:scratch_ticket_clerk", "travel:leave",
+        ),
+        ("small_underground_casino:casino", "object_slot_positions"): (
+            "environment_layer:back_room", "environment_layer:club", "event:scenario_greased_week_window",
+            "event:town_rumor_staff", "game:slot", "lender:the_crew", "numbers:book", "numbers:silas",
+            "service:house_drink", "service:punchline_private_table",
+        ),
+        ("jazz_club", "object_family_ids"): (
+            "event:scenario_recording_night_tape", "event:scenario_rent_party_hat", "event:scenario_union_trouble_line",
+            "event:town_rumor_staff", "numbers:silas", "service:house_drink", "service:jazz_band_tip_jar",
+            "service:jazz_cello_round", "service:jazz_drummer_round", "service:jazz_sax_round",
+            "service:listen_to_jazz", "shopkeeper:merchant", "character:dot", "game:pull_tabs",
+            "game_hook:pull_tabs:ticket_redeemer", "dialogue:pull_tab_clerk", "travel:leave",
+        ),
+        ("pawn_shop", "object_family_ids"): (
+            "event:chain06_sal_estate_item", "event:chatty_clerk", "event:scenario_sals_mood_read",
+            "event:scenario_serial_check_hot_goods", "event:town_rumor_staff", "game:slot", "item:sal_shelf_0",
+            "item:sal_shelf_1", "item:sal_shelf_2", "item:sal_shelf_3", "item:sal_shelf_4", "item:sal_shelf_5",
+            "item:xray_glasses", "meta_sal_shelf:0", "meta_sal_shelf:1", "meta_sal_shelf:2",
+            "meta_sal_shelf:3", "meta_sal_shelf:4", "meta_sal_shelf:5", "staff:pawn_counter_sal",
+            "travel:leave", "shopkeeper:merchant", "lender:sals_pawn_counter", "meta_pawn_counter:sell", "meta_sal:talk",
+        ),
+        ("grand_casino", "object_family_ids"): (
+            "casino_fixture:host_desk", "event:chain06_cass_first_contact", "event:chain06_rourke_noticed",
+            "event:comped_suite_offer", "event:recruitment_bishop", "event:scenario_audit_roster",
+            "event:scenario_convention_badge", "event:scenario_gala_cover", "event:the_house_calls",
+            "service:house_drink", "staff:grand_casino_host", "event:heist_live_table", "game:pull_tabs",
+            "game_hook:pull_tabs:ticket_redeemer", "dialogue:pull_tab_clerk", "travel:grand_casino_back_room",
+            "travel:grand_casino_cage", "travel:grand_casino_high_limit", "travel:leave", "event:town_rumor_staff",
+        ),
+    }
+    for (map_id, field), key_order in reviewed_mapping_orders.items():
+        mapping = maps[map_id].get(field, {})
+        if not isinstance(mapping, dict):
+            continue
+        ordered_mapping = {
+            key: mapping[key] for key in key_order if key in mapping
+        }
+        for key, value in mapping.items():
+            if key not in ordered_mapping:
+                ordered_mapping[key] = value
+        maps[map_id][field] = ordered_mapping
+
+
 def _apply_slot_consolidation(payload: dict[str, Any]) -> None:
     maps = {
         str(map_data.get("id", "")): map_data
@@ -4478,6 +4780,13 @@ def _apply_slot_consolidation(payload: dict[str, Any]) -> None:
     # them after a fresh legacy conversion has completed that deterministic
     # rename, while remaining byte-idempotent for already canonical v2 data.
     _normalize_reviewed_slot_geometry(maps)
+    # Some consolidation stages remove legacy rows before their canonical game
+    # ownership is known. Restore the one playable Pull Tabs machine per venue
+    # after those stages, while leaving obsolete help/redemption rows retired.
+    _retire_pull_tabs_standalone_rows(maps)
+    _normalize_release_recipe_drift(maps)
+    _normalize_ending_route_event_capacity(maps)
+    _normalize_slot_occupancy_metadata(payload)
     _normalize_slot_field_order(payload)
 
 
@@ -4931,6 +5240,9 @@ def apply_capacity_repairs(payload: dict[str, Any]) -> None:
     _normalize_direct_interaction_spacing(maps)
     _normalize_reviewed_output_order(maps)
     _normalize_runtime_person_spacing(maps)
+    # Keep the reviewed ending-route hosts at their exact release geometry.
+    # Generic spacing above must not move these late additions afterward.
+    _normalize_ending_route_event_capacity(maps)
     _apply_slot_consolidation(payload)
 
 
@@ -5113,7 +5425,7 @@ def validate(
     assert isinstance(maps, list) and len(maps) == 21
     assert sum(
         sum(class_counts.values()) for class_counts in EVENT_CAPACITY_TARGETS.values()
-    ) == 98, "reviewed producer-backed event capacity total drift"
+    ) == 101, "reviewed producer-backed event capacity total drift"
     if baseline_objects is None:
         baseline_objects = baseline_objects_by_map()
     if required_events is None:
@@ -5709,19 +6021,24 @@ def validate(
         assert slot is not None and bool(slot.get("occupancy_required", False)), f"{map_id} required fixed declaration {object_id} lacks required capacity"
 
     pull_tabs_retired_slots = {
-        "bar": {"fixed.ticket_redeemer", "fixed.random_game_3"},
+        "bar": {"fixed.ticket_redeemer"},
         "gas_station_casino": {
             "fixed.service_lottery_desk",
             "fixed.service_refreshment_shelf",
-            "fixed.random_game_2",
             "fixed.event_control_rail",
         },
         "jazz_club": {
-            "fixed.pulltab_game", "fixed.event_pull_tabs_sign",
+            "fixed.event_pull_tabs_sign",
             "fixed.random_game_1",
             "fixed.service_bar",
         },
-        "grand_casino": {"fixed.ticket_redeemer", "fixed.game_machine_5"},
+        "grand_casino": {"fixed.ticket_redeemer"},
+    }
+    pull_tabs_game_slots = {
+        "bar": "fixed.random_game_3",
+        "gas_station_casino": "fixed.random_game_2",
+        "jazz_club": "fixed.pulltab_game",
+        "grand_casino": "fixed.game_machine_5",
     }
     for map_id, retired_ids in pull_tabs_retired_slots.items():
         map_data = maps[map_id]
@@ -5744,7 +6061,19 @@ def validate(
             & set(PULL_TABS_HOST_ACTION_IDS)
             for declaration in declarations
         ), f"{map_id} hard-codes Pull Tabs actions on a fixed declaration"
-        for action_id in PULL_TABS_HOST_ACTION_IDS:
+        game_slot_id = pull_tabs_game_slots[map_id]
+        assert game_slot_id in fixed_ids, f"{map_id} lost playable Pull Tabs capacity"
+        assert map_data.get("object_family_ids", {}).get("game:pull_tabs") == "fixed", (
+            f"{map_id} game:pull_tabs lost fixed ownership"
+        )
+        assert map_data.get("class_overrides", {}).get("game:pull_tabs") in {
+            "surface_item", "floor_fixture", "wall_mounted"
+        }, f"{map_id} game:pull_tabs lost its physical presentation class"
+        if map_id == "bar":
+            assert map_data.get("fixed_category_slot_ids", {}).get("game_spots:2") == game_slot_id
+        else:
+            assert map_data.get("fixed_object_slot_ids", {}).get("game:pull_tabs") == game_slot_id
+        for action_id in PULL_TABS_HOST_ACTION_IDS[1:]:
             assert map_data.get("object_family_ids", {}).get(action_id) == "fixed", (
                 f"{map_id} {action_id} lost fixed runtime-host ownership"
             )
@@ -5781,9 +6110,10 @@ def validate(
         "game_spots:1": "fixed.game_machine_2",
         "game_spots:2": "fixed.game_machine_3",
         "game_spots:3": "fixed.game_machine_4",
-        "game_spots:4": "fixed.game_table_left",
-        "game_spots:5": "fixed.game_table_right",
-    }, "grand_casino game category rows no longer match its six physical games"
+        "game_spots:4": "fixed.game_machine_5",
+        "game_spots:5": "fixed.game_table_left",
+        "game_spots:6": "fixed.game_table_right",
+    }, "grand_casino game category rows no longer match its seven physical games"
     grand = maps["grand_casino"]
     convention_override = grand.get("scenario_overrides", {}).get(
         "grand_casino_convention_crowd", {}
@@ -5807,7 +6137,8 @@ def validate(
     } == {
         "game_spots:0": "fixed.random_game_1",
         "game_spots:1": "fixed.random_game_2",
-    }, "bar game categories must expose only its two non-Pull-Tabs games"
+        "game_spots:2": "fixed.random_game_3",
+    }, "bar game categories must expose its three playable game rows"
     assert {
         key: value
         for key, value in maps["gas_station_casino"].get(
@@ -5815,9 +6146,10 @@ def validate(
         ).items()
         if str(key).startswith("game_spots:")
     } == {
-        "game_spots:0": "fixed.random_game_1",
-        "game_spots:1": "fixed.game_scratch_tickets",
-    }, "gas_station_casino game categories must expose optional game plus Scratch"
+        "game_spots:0": "fixed.random_game_2",
+        "game_spots:1": "fixed.random_game_1",
+        "game_spots:2": "fixed.game_scratch_tickets",
+    }, "gas_station_casino game categories must expose Pull Tabs, optional game, and Scratch"
     for object_id in ("game:coin_pusher", "game:slot", "game:video_poker"):
         assert maps["gas_station_casino"].get("fixed_object_slot_ids", {}).get(
             object_id
@@ -5995,7 +6327,6 @@ def validate(
         "back_alley": 6,
         "gas_station_casino": 5,
         "bar": 5,
-        "small_underground_casino": 8,
         "small_underground_casino:club": 8,
         "small_underground_casino:casino": 8,
         "small_underground_casino:back_room": 6,
@@ -6016,7 +6347,7 @@ def validate(
     for map_id, count in {
         "motel": 4,
         "jazz_club": 3,
-        "kitty_cat_lounge": 6,
+        "kitty_cat_lounge": 5,
         "delta_queen": 6,
         "pawn_shop": 3,
     }.items():

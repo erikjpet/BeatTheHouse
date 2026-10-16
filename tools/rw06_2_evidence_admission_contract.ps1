@@ -622,7 +622,7 @@ function Test-Q017SourceShape {
         [ref]$heistRouteErrors
     )
     if ($heistRouteErrors.Count -ne 0) { return $false }
-    $allowedHeistRouteVariables = @('choiceId', 'decisions', 'null', 'round')
+    $allowedHeistRouteVariables = @('choiceId', 'ConfirmationOnly', 'decisions', 'null', 'round')
     $heistRouteVariables = @($heistRouteAst.FindAll({
         param($node)
         return $node -is [Management.Automation.Language.VariableExpressionAst]
@@ -631,36 +631,22 @@ function Test-Q017SourceShape {
         if ($variableName -cnotin $allowedHeistRouteVariables) { return $false }
     }
     $expectedHeistRouteCommands = @(
-        'Establish-CrewMarker',
         'Reach-GrandCasino',
         'Restore-EnvironmentSurfaceAfterTravelResult',
         'Observe-RenderedAuditNightHook',
-        'Clear-CrewMarkerFavors',
         'Ensure-PunchlineCasinoDiscovered',
-        'Recruit-Bishop',
-        'Promote-BishopToInnerCircle',
-        'Assert-HeistAuditKnowledgeUnderHostileRevisit',
+        'Enter-PunchlineBackRoom',
         'Assert-HeistAuditKnowledgeSaveRelaunchContinue',
         'Test-CountPlanLive',
         'Invoke-EventObjectChoice',
         'Close-VisibleChoiceSurface',
-        'Complete-CountIdentitySessions',
         'Enter-PunchlineBackRoom',
         'Invoke-EventObjectChoice',
         'Close-VisibleChoiceSurface',
         'Complete-PublicDelivery',
-        'Enter-PunchlineBackRoom',
-        'Invoke-EventObjectChoice',
-        'Close-VisibleChoiceSurface',
         'Complete-PublicDelivery',
-        'Enter-PunchlineBackRoom',
-        'Test-EventObjectChoiceEnabled',
-        'Close-VisibleChoiceSurface',
-        'Invoke-EventObjectChoice',
-        'Close-VisibleChoiceSurface',
         'Reach-GrandCasino',
         'Enter-GrandRoom',
-        'Find-CanvasObject',
         'Invoke-EventObjectChoice',
         'Close-VisibleChoiceSurface',
         'Play-OneBlackjackRound',

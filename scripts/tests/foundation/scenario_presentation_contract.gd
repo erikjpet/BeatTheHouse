@@ -30,6 +30,7 @@ static func check(failures: Array) -> void:
 	_check_fail_closed_presentation(failures)
 	_check_live_event_presentation_restoration(failures)
 	_check_live_base_record_reconciliation(failures)
+	_check_live_slot_variation_restoration(failures)
 
 
 static func _check_live_event_presentation_restoration(failures: Array) -> void:
@@ -69,6 +70,55 @@ static func _check_live_event_presentation_restoration(failures: Array) -> void:
 		failures.append("Scenario finalization restored a direct Word from Across Town response instead of the conversation-first actor/icon presentation.")
 	if str(restored.get("confirm_action_id", "")) != "inspect_event_choices" or str(restored.get("focus_rect", {})) != str(sealed.get("focus_rect", {})):
 		failures.append("Live event presentation restoration overwrote sealed interaction authority.")
+
+
+static func _check_live_slot_variation_restoration(failures: Array) -> void:
+	var fixtures := [
+		{"object_id": "game:slot", "identity": "em_bumper_drop", "format": "classic_3_reel", "family": "pinball", "marker": "bumpers", "reels": 3, "rows": 1},
+		{"object_id": "game:slot:2", "identity": "ways", "format": "line_5x3", "family": "buffalo", "marker": "sunset", "reels": 5, "rows": 3},
+		{"object_id": "game:slot:3", "identity": "full_table", "format": "video_feature", "family": "pinball", "marker": "table", "reels": 5, "rows": 3},
+	]
+	var canvas = PixelSceneCanvasScript.new()
+	for fixture_value in fixtures:
+		var fixture := _dict(fixture_value)
+		var object_id := str(fixture.get("object_id", ""))
+		var live_visual := {
+			"machine_family": str(fixture.get("family", "")),
+			"machine_format": str(fixture.get("format", "")),
+			"machine_key": "%s:fixture" % str(fixture.get("format", "")),
+			"cabinet_variant_id": "fixture_palette",
+			"cabinet_identity": str(fixture.get("identity", "")),
+			"cabinet_title": str(fixture.get("identity", "")).replace("_", " ").capitalize(),
+			"cabinet_palette": {"primary": "#112233", "accent": "#44aaff"},
+			"reel_count": int(fixture.get("reels", 3)),
+			"row_count": int(fixture.get("rows", 1)),
+			"slot_preview": {"phase": "win", "grid": [["7"]], "win_cells": [{"reel": 0, "row": 0}]},
+			"private_token": "PRIVATE_SLOT_VISUAL",
+		}
+		var live := {
+			"object_id": object_id,
+			"object_type": "game",
+			"source_id": "slot",
+			"owner_namespace": "base",
+			"stable_object_id": object_id,
+			"visual_state": live_visual,
+		}
+		var projected := live.duplicate(true)
+		projected["visual_state"] = {"role": "fixture", "state": "present", "appearance": "machine"}
+		var restored_records := EnvironmentInteractionControllerScript.restore_live_presentation_fields([projected], [live])
+		var restored := _dict(restored_records[0] if not restored_records.is_empty() else {})
+		var restored_visual := _dict(restored.get("visual_state", {}))
+		var profile := _dict(canvas.call("_slot_prop_profile", restored, Color.WHITE))
+		if str(restored_visual.get("cabinet_identity", "")) != str(fixture.get("identity", "")) \
+				or str(restored_visual.get("machine_format", "")) != str(fixture.get("format", "")) \
+				or str(profile.get("identity", "")) != str(fixture.get("identity", "")) \
+				or str(profile.get("format_id", "")) != str(fixture.get("format", "")) \
+				or str(profile.get("marker", "")) != str(fixture.get("marker", "")):
+			failures.append("Scenario live reconciliation replaced Slot variation %s with the generic cabinet." % object_id)
+		if not restored_visual.has("slot_preview") or not restored_visual.has("role") \
+				or restored_visual.has("private_token") or JSON.stringify(restored_visual).contains("PRIVATE_SLOT_VISUAL"):
+			failures.append("Scenario live reconciliation did not preserve the bounded Slot preview/semantic fields for %s." % object_id)
+	canvas.free()
 
 
 static func _check_live_base_record_reconciliation(failures: Array) -> void:
