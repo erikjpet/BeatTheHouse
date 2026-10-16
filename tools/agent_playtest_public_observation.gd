@@ -87,6 +87,12 @@ static func transition_summary(before_value: Variant, after_value: Variant, comm
 	# notice public dialogue, action, card, feedback, and map changes too.
 	var before_fingerprint := fingerprint(before_observation)
 	var after_fingerprint := fingerprint(after_observation)
+	var before_economy_rendered := bool(before.get("bankroll_rendered", false)) \
+		and bool(before.get("chips_rendered", false)) \
+		and bool(before.get("heat_rendered", false))
+	var after_economy_rendered := bool(after.get("bankroll_rendered", false)) \
+		and bool(after.get("chips_rendered", false)) \
+		and bool(after.get("heat_rendered", false))
 	return {
 		"command": command,
 		"input_emitted": accepted,
@@ -97,9 +103,11 @@ static func transition_summary(before_value: Variant, after_value: Variant, comm
 		"location_changed": str(before.get("location_id", "")) != str(after.get("location_id", "")),
 		"modal_changed": str(before.get("event_id", "")) != str(after.get("event_id", "")) \
 			or str(before.get("talk_event_id", "")) != str(after.get("talk_event_id", "")),
-		"economy_changed": int(before.get("bankroll", 0)) != int(after.get("bankroll", 0)) \
-			or int(before.get("chips", 0)) != int(after.get("chips", 0)),
-		"heat_changed": int(before.get("heat", 0)) != int(after.get("heat", 0)),
+		"economy_changed": before_economy_rendered and after_economy_rendered \
+			and (int(before.get("bankroll", 0)) != int(after.get("bankroll", 0)) \
+			or int(before.get("chips", 0)) != int(after.get("chips", 0))),
+		"heat_changed": before_economy_rendered and after_economy_rendered \
+			and int(before.get("heat", 0)) != int(after.get("heat", 0)),
 	}
 
 
@@ -219,10 +227,11 @@ static func _environment(source: Dictionary) -> Dictionary:
 	# Environment is identity/label context only. Rendered room objects come from
 	# room_canvas/clickable metadata, progress comes from the HUD, and the map is
 	# admitted only through screen.world_map while its overlay is rendered. Raw
-	# event/resolution lists and option catalogs are model state, not observation.
+	# event/resolution lists, option catalogs, and the exact environment clock/open
+	# projection are model state, not observation. The latter is not rendered by
+	# the room canvas; player-facing time belongs to the structured HUD.
 	return _scalars(source, [
 		"id", "archetype_id", "world_node_id", "display_name", "kind", "tier",
-		"clock_text", "venue_open_status", "venue_open_status_text",
 	])
 
 

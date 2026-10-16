@@ -4304,7 +4304,10 @@ func _refresh_talk_dock() -> void:
 		option = option.duplicate(true)
 		option["summary"] = summary_override
 	var voice_line := str(entry_speaker.get("voice_line", "")).strip_edges()
-	var authored_guide_dialogue := bool(option.get("authored_guide_dialogue", false)) or (dialogue_id == "linda_cage_services" and run_state.is_tutorial_run())
+	# Linda's service pages are live account ledgers: their summaries expose the
+	# current cash, chips, card progress, and comps. A randomized greeting must
+	# never replace those exact values, including after save/continue.
+	var authored_guide_dialogue := bool(option.get("authored_guide_dialogue", false)) or dialogue_id == "linda_cage_services"
 	# Dynamic dialogue summaries can contain exact run-state information such as
 	# Vince's next scratch-machine restock. Never replace that information with
 	# a generic randomized character bark.

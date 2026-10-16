@@ -93,6 +93,7 @@ $script:LastObservation = $null
 $script:ActionCount = 0
 $script:TraceOrdinal = 0
 $script:LastMoneySignature = ''
+$script:LastRenderedEconomy = $null
 $script:MidpointSaved = $false
 $script:OwnedSessionPid = 0
 $script:OwnedSessionStartUtcTicks = 0L
@@ -677,6 +678,39 @@ function Get-RenderedHudInteger {
 }
 
 
+function Get-RenderedEconomyProjection {
+    param(
+        [Parameter(Mandatory = $true)]$Observation,
+        [Parameter(Mandatory = $true)][string]$Context
+    )
+    $checkpoint = Get-ExactReplayPsCustomObject -InputObject $Observation -Path @('checkpoint') -Context "$Context checkpoint"
+    $bankrollRendered = Get-ExactReplayBoolean -InputObject $checkpoint -Path @('bankroll_rendered') -Context "$Context bankroll render witness"
+    $chipsRendered = Get-ExactReplayBoolean -InputObject $checkpoint -Path @('chips_rendered') -Context "$Context chips render witness"
+    $heatRendered = Get-ExactReplayBoolean -InputObject $checkpoint -Path @('heat_rendered') -Context "$Context heat render witness"
+    $renderedCount = @(@($bankrollRendered, $chipsRendered, $heatRendered) | Where-Object { $_ }).Count
+    if ($renderedCount -ceq 0) {
+        return $null
+    }
+    if ($renderedCount -cne 3) {
+        # Tutorial and non-Grand layouts intentionally omit the chip counter.
+        # Retain a final checkpoint only after the complete three-value HUD is
+        # simultaneously visible; never fill an absent value with a hidden 0.
+        return $null
+    }
+    $bankroll = Get-ExactReplayInt32 -InputObject $checkpoint -Path @('bankroll') -Context "$Context bankroll"
+    $chips = Get-ExactReplayInt32 -InputObject $checkpoint -Path @('chips') -Context "$Context chips"
+    $heat = Get-ExactReplayInt32 -InputObject $checkpoint -Path @('heat') -Context "$Context heat"
+    if ($bankroll -lt 0 -or $chips -lt 0 -or $heat -lt 0) {
+        throw "$Context exposed a negative rendered economy value."
+    }
+    return [pscustomobject][ordered]@{
+        bankroll = $bankroll
+        chips = $chips
+        heat = $heat
+    }
+}
+
+
 function Test-PublicTerminalSurface {
     $screen = Get-ExactReplayString -InputObject $script:LastObservation -Path @('screen', 'screen') -Context 'Public terminal screen'
     if ($screen -cnotin @('VICTORY', 'FAILURE')) { return $false }
@@ -966,16 +1000,18 @@ function Assert-HealthyResult {
     }
     Assert-NoForbiddenObservationKey -Value $observation
     $gameId = Get-ExactReplayString -InputObject $observation -Path @('game', 'game_id') -Context "Public game id after '$Command'" -AllowMissing
+    $surfaceRenderer = Get-ExactReplayString -InputObject $observation -Path @('game', 'surface_renderer') -Context "Public game renderer after '$Command'" -AllowMissing
     $terminalOutcomeKey = Get-ExactReplayString -InputObject $observation -Path @('checkpoint', 'terminal_outcome_key') -Context "Terminal outcome after '$Command'" -AllowMissing
     $isTerminalObservation = -not [string]::IsNullOrWhiteSpace($terminalOutcomeKey)
-    $holeVisible = if ($gameId -ceq 'blackjack' -and -not $isTerminalObservation) {
+    $isLiveBlackjackSurface = $gameId -ceq 'blackjack' -and $surfaceRenderer -ceq 'blackjack' -and -not $isTerminalObservation
+    $holeVisible = if ($isLiveBlackjackSurface) {
         Get-ExactReplayBoolean -InputObject $observation -Path @('game', 'dealer_hole_visible') -Context "Blackjack dealer-hole witness after '$Command'"
     }
     else {
         Get-ExactReplayBoolean -InputObject $observation -Path @('game', 'dealer_hole_visible') -Context "Dealer-hole witness after '$Command'" -AllowMissing
     }
     $dealerCards = Get-ExactReplayObjectArray -InputObject $observation -Path @('game', 'dealer_cards') -ElementType PSCustomObject -Context "Public dealer cards after '$Command'"
-    if ($gameId -ceq 'blackjack' -and -not $isTerminalObservation -and -not $holeVisible -and $dealerCards.Count -cne 0) {
+    if ($isLiveBlackjackSurface -and -not $holeVisible -and $dealerCards.Count -cne 0) {
         throw "Blackjack dealer cards escaped before the public reveal after '$Command'."
     }
 }
@@ -1136,15 +1172,20 @@ function Write-ActionEvidence {
     $record = New-CanonicalRecord -Result $Result -Intent $Intent
     Add-Content -LiteralPath $script:TranscriptPath -Value ($record | ConvertTo-Json -Depth 40 -Compress) -Encoding utf8
 
-    $checkpoint = $record.checkpoint
-    $moneySignature = "$($checkpoint.bankroll)|$($checkpoint.chips)|$($checkpoint.heat)"
+    $observation = Get-ExactReplayPsCustomObject -InputObject $Result -Path @('look', 'observable') -Context "Rendered economy observation for '$Intent'"
+    $economy = Get-RenderedEconomyProjection -Observation $observation -Context "Rendered economy for '$Intent'"
+    if ($null -ceq $economy) {
+        return
+    }
+    $script:LastRenderedEconomy = $economy
+    $moneySignature = "$($economy.bankroll)|$($economy.chips)|$($economy.heat)"
     if ($moneySignature -cne $script:LastMoneySignature) {
         $money = [ordered]@{
             action = $script:ActionCount
             intent = $Intent
-            bankroll = $checkpoint.bankroll
-            chips = $checkpoint.chips
-            heat = $checkpoint.heat
+            bankroll = $economy.bankroll
+            chips = $economy.chips
+            heat = $economy.heat
         }
         Add-Content -LiteralPath $script:MoneyCurvePath -Value ($money | ConvertTo-Json -Compress) -Encoding utf8
         $script:LastMoneySignature = $moneySignature
@@ -4691,16 +4732,29 @@ function Assert-ExplicitSaveAcknowledgmentObservation {
         [Parameter(Mandatory = $true)]$Observation,
         [Parameter(Mandatory = $true)][string]$Milestone
     )
-    $hasSave = Get-Value $Observation @('screen', 'run_menu', 'has_save') $null
     $saveTextVisible = Get-Value $Observation @('status_hud', 'save_text_visible') $null
     $saveText = Get-Value $Observation @('status_hud', 'save_text') $null
     $separator = " $([char]0x00B7) "
     $acknowledgment = 'Saved to Resume Slot.'
     $expectedVisibleText = "Autosave On$separator$acknowledgment"
-    if ($hasSave -isnot [bool] -or -not [bool]$hasSave -or
-        $saveTextVisible -isnot [bool] -or -not [bool]$saveTextVisible -or
+    if ($saveTextVisible -isnot [bool] -or -not [bool]$saveTextVisible -or
         $saveText -isnot [string] -or [string]$saveText -cne $expectedVisibleText) {
-        throw "The explicit Save at $Milestone did not render the exact success acknowledgment '$acknowledgment' (found '$saveText', visible=$saveTextVisible, has_save=$hasSave)."
+        throw "The explicit Save at $Milestone did not render the exact success acknowledgment '$acknowledgment' (found '$saveText', visible=$saveTextVisible)."
+    }
+    return $true
+}
+
+
+function Assert-RunMenuSaveSlotObservation {
+    param(
+        [Parameter(Mandatory = $true)]$Observation,
+        [Parameter(Mandatory = $true)][string]$Milestone
+    )
+    $runMenuVisible = Get-Value $Observation @('screen', 'run_menu_visible') $null
+    $hasSave = Get-Value $Observation @('screen', 'run_menu', 'has_save') $null
+    if ($runMenuVisible -isnot [bool] -or -not [bool]$runMenuVisible -or
+        $hasSave -isnot [bool] -or -not [bool]$hasSave) {
+        throw "The reopened run menu at $Milestone did not expose the exact saved-slot witness (visible=$runMenuVisible, has_save=$hasSave)."
     }
     return $true
 }
@@ -4731,7 +4785,9 @@ function Assert-SaveRelaunchContinue {
     $beforeJson = $before | ConvertTo-Json -Depth 10 -Compress
     $null = Click-Button -Text 'Menu' -Intent "open the run menu at the $Milestone persistence checkpoint"
     $null = Click-RunMenuButton -Text 'Save' -RevealDirection up -Intent "save the run through the visible run menu at $Milestone"
-    Assert-ExplicitSaveAcknowledged -Milestone $Milestone
+    $null = Assert-ExplicitSaveAcknowledged -Milestone $Milestone
+    $null = Click-Button -Text 'Menu' -Intent "reopen the run menu after the explicit save at $Milestone"
+    $null = Assert-RunMenuSaveSlotObservation -Observation $script:LastObservation -Milestone $Milestone
     $null = Click-RunMenuButton -Text 'Main Menu' -RevealDirection down -Intent 'return to the main menu after the explicit save'
     if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'START') {
         throw "Main Menu did not return to the start screen after saving."
@@ -4789,8 +4845,11 @@ function Assert-TerminalOutcome {
 
 function Write-FinalPublicCheckpoint {
     # A terminal wait/look is observation-only and therefore is not written by
-    # Write-ActionEvidence. Take one final authenticated public observation and
-    # persist its outcome and visible economy explicitly into both hash streams.
+    # Write-ActionEvidence. Take one final authenticated public observation,
+    # bind it to the last fully rendered pre-terminal HUD economy, and persist
+    # both into the transcript and money-curve hash streams. The terminal report
+    # intentionally replaces the normal HUD, so hidden zero placeholders are
+    # never treated as player-visible terminal economy.
     $result = Invoke-BridgeCommand -Command 'look' -Intent 'capture the final public terminal checkpoint' -ObservationOnly
     $outcome = Assert-TerminalOutcome
     $observation = Get-ExactReplayPsCustomObject -InputObject $result -Path @('look', 'observable') -Context 'Final public observation'
@@ -4803,6 +4862,7 @@ function Write-FinalPublicCheckpoint {
     if ($observedSeed -cne $Seed) {
         throw "Terminal run report seed '$observedSeed' did not exactly match requested fixed seed '$Seed'."
     }
+    Assert-ExactReplayPsCustomObject -Value $script:LastRenderedEconomy -Context 'Last rendered pre-terminal economy checkpoint'
     $final = [ordered]@{
         schema_version = 1
         record_kind = 'final_public_checkpoint'
@@ -4811,9 +4871,9 @@ function Write-FinalPublicCheckpoint {
         won = $true
         public_fingerprint = $publicFingerprint
         checkpoint_fingerprint = $checkpointFingerprint
-        bankroll = Get-RenderedHudInteger -Name bankroll -Context 'Final terminal checkpoint'
-        chips = Get-RenderedHudInteger -Name chips -Context 'Final terminal checkpoint'
-        heat = Get-RenderedHudInteger -Name heat_level -Context 'Final terminal checkpoint'
+        bankroll = Get-ExactReplayInt32 -InputObject $script:LastRenderedEconomy -Path @('bankroll') -Context 'Final checkpoint last rendered bankroll'
+        chips = Get-ExactReplayInt32 -InputObject $script:LastRenderedEconomy -Path @('chips') -Context 'Final checkpoint last rendered chips'
+        heat = Get-ExactReplayInt32 -InputObject $script:LastRenderedEconomy -Path @('heat') -Context 'Final checkpoint last rendered heat'
     }
     $finalObject = [pscustomobject]$final
     Assert-ExactFinalPublicCheckpoint -Checkpoint $finalObject -ExpectedSeed $Seed -Context 'Final public checkpoint'
@@ -6862,6 +6922,7 @@ function Invoke-BridgeTransportRegression {
     $script:ActionCount = 0
     $script:TraceOrdinal = 0
     $script:LastMoneySignature = ''
+    $script:LastRenderedEconomy = $null
     $script:MidpointSaved = $false
     $script:OwnedSessionPid = 0
     $script:OwnedSessionStartUtcTicks = 0L
@@ -7326,7 +7387,6 @@ function Invoke-SemanticScrollRegression {
     function New-SaveAcknowledgmentRegressionObservation {
         $separator = " $([char]0x00B7) "
         return [pscustomobject]@{
-            screen = [pscustomobject]@{ run_menu = [pscustomobject]@{ has_save = $true } }
             status_hud = [pscustomobject]@{
                 save_text_visible = $true
                 save_text = "Autosave On${separator}Saved to Resume Slot."
@@ -7340,8 +7400,6 @@ function Invoke-SemanticScrollRegression {
         $failures.Add("Valid exact save acknowledgment fixture threw: $($_.Exception.Message)")
     }
     $saveHostileFixtures = @(
-        [pscustomobject]@{ label = 'has-save-string'; mutate = { param($observation) $observation.screen.run_menu.has_save = 'true' } },
-        [pscustomobject]@{ label = 'has-save-number'; mutate = { param($observation) $observation.screen.run_menu.has_save = 1 } },
         [pscustomobject]@{ label = 'visible-string'; mutate = { param($observation) $observation.status_hud.save_text_visible = 'true' } },
         [pscustomobject]@{ label = 'visible-missing'; mutate = { param($observation) $observation.status_hud.PSObject.Properties.Remove('save_text_visible') } },
         [pscustomobject]@{ label = 'text-case'; mutate = { param($observation) $observation.status_hud.save_text = $observation.status_hud.save_text.Replace('Saved', 'saved') } }
@@ -7359,6 +7417,41 @@ function Invoke-SemanticScrollRegression {
         }
         if (-not $threw) {
             $failures.Add("Hostile save-acknowledgment fixture '$($fixture.label)' did not fail closed.")
+        }
+    }
+    function New-RunMenuSaveSlotRegressionObservation {
+        return [pscustomobject]@{
+            screen = [pscustomobject]@{
+                run_menu_visible = $true
+                run_menu = [pscustomobject]@{ has_save = $true }
+            }
+        }
+    }
+    try {
+        $null = Assert-RunMenuSaveSlotObservation -Observation (New-RunMenuSaveSlotRegressionObservation) -Milestone 'fixture'
+    }
+    catch {
+        $failures.Add("Valid exact run-menu save-slot fixture threw: $($_.Exception.Message)")
+    }
+    $saveSlotHostileFixtures = @(
+        [pscustomobject]@{ label = 'menu-visible-string'; mutate = { param($observation) $observation.screen.run_menu_visible = 'true' } },
+        [pscustomobject]@{ label = 'menu-visible-false'; mutate = { param($observation) $observation.screen.run_menu_visible = $false } },
+        [pscustomobject]@{ label = 'has-save-string'; mutate = { param($observation) $observation.screen.run_menu.has_save = 'true' } },
+        [pscustomobject]@{ label = 'has-save-number'; mutate = { param($observation) $observation.screen.run_menu.has_save = 1 } }
+    )
+    foreach ($fixture in $saveSlotHostileFixtures) {
+        $observation = New-RunMenuSaveSlotRegressionObservation
+        $mutator = $fixture.mutate
+        $null = & $mutator $observation
+        $threw = $false
+        try {
+            $null = Assert-RunMenuSaveSlotObservation -Observation $observation -Milestone 'fixture'
+        }
+        catch {
+            $threw = $true
+        }
+        if (-not $threw) {
+            $failures.Add("Hostile run-menu save-slot fixture '$($fixture.label)' did not fail closed.")
         }
     }
 
@@ -7432,6 +7525,8 @@ function Invoke-SemanticScrollRegression {
         hostile_room_action_fixtures = $roomActionHostileFixtures.Count
         valid_save_acknowledgment_fixtures = 1
         hostile_save_acknowledgment_fixtures = $saveHostileFixtures.Count
+        valid_save_slot_fixtures = 1
+        hostile_save_slot_fixtures = $saveSlotHostileFixtures.Count
         valid_terminal_fixtures = 1
         hostile_terminal_fixtures = $terminalHostileFixtures.Count
         failures = @($failures)
@@ -7551,6 +7646,7 @@ function Invoke-ConfirmationPlaythrough {
     $script:ActionCount = 0
     $script:TraceOrdinal = 0
     $script:LastMoneySignature = ''
+    $script:LastRenderedEconomy = $null
     $script:MidpointSaved = $false
     $script:OwnedSessionPid = 0
     $script:OwnedSessionStartUtcTicks = 0L

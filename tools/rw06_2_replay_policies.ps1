@@ -1206,7 +1206,7 @@ function Select-GrandFareCashEventChoice {
     }
     elseif ($EventId -ceq 'scenario_wedding_overflow_hallway') {
         $choiceId = 'take_the_hallway_seat'
-        $expectedObjectLabel = 'Hallway Table'
+        $expectedObjectLabel = 'Hallway Card Table'
         $expectedChoices = @(
             [pscustomobject]@{ id = 'take_the_hallway_seat'; label = 'Take the hallway seat' },
             [pscustomobject]@{ id = 'step_over_the_coolers'; label = 'Step over the coolers' }

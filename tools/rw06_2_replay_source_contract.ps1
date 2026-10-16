@@ -412,7 +412,7 @@ function New-GrandFareCashEventPolicyFixture {
 
     $isWedding = $Kind -ceq 'wedding'
     $eventId = if ($isWedding) { 'scenario_wedding_overflow_hallway' } else { 'back_alley_offer' }
-    $eventLabel = if ($isWedding) { 'Hallway Table' } else { 'Back Alley Offer' }
+    $eventLabel = if ($isWedding) { 'Hallway Card Table' } else { 'Back Alley Offer' }
     $choiceId = if ($isWedding) { 'take_the_hallway_seat' } else { 'take_cash' }
     $choiceLabel = if ($isWedding) { 'Take the hallway seat' } else { 'Take the cash' }
     $otherChoiceId = if ($isWedding) { 'step_over_the_coolers' } else { 'walk' }
@@ -1677,6 +1677,8 @@ function Assert-ExactSemanticScrollReport {
         'hostile_room_action_fixtures',
         'valid_save_acknowledgment_fixtures',
         'hostile_save_acknowledgment_fixtures',
+        'valid_save_slot_fixtures',
+        'hostile_save_slot_fixtures',
         'valid_terminal_fixtures',
         'hostile_terminal_fixtures',
         'failures',
@@ -1706,7 +1708,9 @@ function Assert-ExactSemanticScrollReport {
         valid_room_action_fixtures = 1
         hostile_room_action_fixtures = 6
         valid_save_acknowledgment_fixtures = 1
-        hostile_save_acknowledgment_fixtures = 5
+        hostile_save_acknowledgment_fixtures = 3
+        valid_save_slot_fixtures = 1
+        hostile_save_slot_fixtures = 4
         valid_terminal_fixtures = 1
         hostile_terminal_fixtures = 4
     }
@@ -2116,6 +2120,7 @@ function Test-ReplayExactEvidenceTypeSource {
         'Assert-ExactReplayRunSummary',
         'Assert-ExactReplayFinalSummary',
         'Get-RenderedHudInteger',
+        'Get-RenderedEconomyProjection',
         'Test-PublicTerminalSurface',
         'Assert-ReplayPauseOwnership',
         'Assert-HealthyResult',
@@ -2177,7 +2182,7 @@ function Test-ReplayExactEvidenceTypeSource {
     }
 
     foreach ($name in @(
-        'Get-RenderedHudInteger', 'Test-PublicTerminalSurface', 'Assert-ReplayPauseOwnership',
+        'Get-RenderedHudInteger', 'Get-RenderedEconomyProjection', 'Test-PublicTerminalSurface', 'Assert-ReplayPauseOwnership',
         'Assert-HealthyResult', 'New-CanonicalRecord', 'Get-CleanSilverPlayersCardProjection',
         'Get-PersistenceCheckpoint', 'Assert-TerminalOutcome', 'Write-FinalPublicCheckpoint',
         'Get-PlanningTableProjection', 'Assert-ExactFinalPublicCheckpoint',
@@ -2189,6 +2194,9 @@ function Test-ReplayExactEvidenceTypeSource {
     $groups = @(
         [pscustomobject]@{ fn = 'Get-RenderedHudInteger'; getter = 'Get-ExactReplayBoolean'; input = '-InputObject $script:LastObservation'; paths = @("@('status_hud', `$witnessName)"); extra = '' },
         [pscustomobject]@{ fn = 'Get-RenderedHudInteger'; getter = 'Get-ExactReplayInt32'; input = '-InputObject $script:LastObservation'; paths = @("@('status_hud', `$Name)"); extra = '' },
+        [pscustomobject]@{ fn = 'Get-RenderedEconomyProjection'; getter = 'Get-ExactReplayPsCustomObject'; input = '-InputObject $Observation'; paths = @("@('checkpoint')"); extra = '' },
+        [pscustomobject]@{ fn = 'Get-RenderedEconomyProjection'; getter = 'Get-ExactReplayBoolean'; input = '-InputObject $checkpoint'; paths = @("@('bankroll_rendered')", "@('chips_rendered')", "@('heat_rendered')"); extra = '' },
+        [pscustomobject]@{ fn = 'Get-RenderedEconomyProjection'; getter = 'Get-ExactReplayInt32'; input = '-InputObject $checkpoint'; paths = @("@('bankroll')", "@('chips')", "@('heat')"); extra = '' },
         [pscustomobject]@{ fn = 'Test-PublicTerminalSurface'; getter = 'Get-ExactReplayString'; input = '-InputObject $script:LastObservation'; paths = @("@('screen', 'screen')"); extra = '' },
         [pscustomobject]@{ fn = 'Test-PublicTerminalSurface'; getter = 'Get-ExactReplayBoolean'; input = '-InputObject $script:LastObservation'; paths = @("@('screen', 'run_report_visible')"); extra = '' },
         [pscustomobject]@{ fn = 'Assert-ReplayPauseOwnership'; getter = 'Get-ExactReplayObjectArray'; input = '-InputObject $Snapshot'; paths = @("@('pause_owners')"); extra = '-ElementType String' },
@@ -2197,7 +2205,7 @@ function Test-ReplayExactEvidenceTypeSource {
         [pscustomobject]@{ fn = 'Assert-HealthyResult'; getter = 'Get-ExactReplayString'; input = '-InputObject $Result'; paths = @("@('reason')", "@('look', 'png_error')"); extra = '' },
         [pscustomobject]@{ fn = 'Assert-HealthyResult'; getter = 'Get-ExactReplayObjectArray'; input = '-InputObject $Result'; paths = @("@('log_alerts')"); extra = '-ElementType String' },
         [pscustomobject]@{ fn = 'Assert-HealthyResult'; getter = 'Get-ExactReplayPsCustomObject'; input = '-InputObject $Result'; paths = @("@('replay_pause_before')", "@('look', 'replay_pause')", "@('look', 'observable')", "@('trace')"); extra = '' },
-        [pscustomobject]@{ fn = 'Assert-HealthyResult'; getter = 'Get-ExactReplayString'; input = '-InputObject $observation'; paths = @("@('schema')", "@('privacy', 'policy')", "@('game', 'game_id')"); extra = '' },
+        [pscustomobject]@{ fn = 'Assert-HealthyResult'; getter = 'Get-ExactReplayString'; input = '-InputObject $observation'; paths = @("@('schema')", "@('privacy', 'policy')", "@('game', 'game_id')", "@('game', 'surface_renderer')"); extra = '' },
         [pscustomobject]@{ fn = 'Assert-HealthyResult'; getter = 'Get-ExactReplayInt32'; input = '-InputObject $observation'; paths = @("@('schema_version')"); extra = '' },
         [pscustomobject]@{ fn = 'Assert-HealthyResult'; getter = 'Get-ExactReplayString'; input = '-InputObject $trace'; paths = @("@('command')"); extra = '' },
         [pscustomobject]@{ fn = 'Assert-HealthyResult'; getter = 'Get-ExactReplayBoolean'; input = '-InputObject $trace'; paths = @("@('input_emitted')"); extra = '' },
@@ -2679,7 +2687,7 @@ $finalSummary = [ordered]@{
         [pscustomobject]@{ name = 'healthy trace command bypass'; needle = '$traceCommand = Get-ExactReplayString'; replacement = '$traceCommand = Get-Value' },
         [pscustomobject]@{ name = 'healthy dealer-card array bypass'; needle = '$dealerCards = Get-ExactReplayObjectArray'; replacement = '$dealerCards = Get-Array' },
         [pscustomobject]@{ name = 'canonical command string bypass'; needle = 'command = Get-ExactReplayString -InputObject $Result'; replacement = 'command = Get-Value -InputObject $Result' },
-        [pscustomobject]@{ name = 'canonical checkpoint Int32 bypass'; needle = 'bankroll = Get-ExactReplayInt32 -InputObject $checkpoint'; replacement = 'bankroll = Get-Value -InputObject $checkpoint' },
+        [pscustomobject]@{ name = 'canonical checkpoint Int32 bypass'; function = 'New-CanonicalRecord'; needle = 'bankroll = Get-ExactReplayInt32 -InputObject $checkpoint'; replacement = 'bankroll = Get-Value -InputObject $checkpoint' },
         [pscustomobject]@{ name = 'canonical dealer boolean bypass'; needle = 'dealer_hole_visible = Get-ExactReplayBoolean -InputObject $game'; replacement = 'dealer_hole_visible = Get-Value -InputObject $game' },
         [pscustomobject]@{ name = 'canonical player-hands array bypass'; needle = 'player_hands = Get-ExactReplayObjectArray -InputObject $game'; replacement = 'player_hands = Get-Array -InputObject $game' },
         [pscustomobject]@{ name = 'Clean choice-id array bypass'; needle = '$choiceIds = Get-ExactReplayObjectArray'; replacement = '$choiceIds = Get-Array' },
@@ -4912,7 +4920,7 @@ function Assert-SaveRelaunchContinue {
     Assert-Match $launcher '(?s)\$EngineLogPath\s*=\s*Join-Path\s+\$SessionRoot\s+''godot\.engine\.log''.*?''--log-file'',\s*\$EngineLogPath' 'Every agent playtest session must use its own Godot --log-file inside the isolated session root.'
     Assert-Contains $bridge 'action_id == "blackjack_deal"' 'The bridge must recognize blackjack''s invisible compatibility Deal hit.'
     Assert-Contains $bridge 'not bool(public_game.get("can_deal", false))' 'The bridge must reject the invisible Deal hit unless the public DEAL control is available.'
-    Assert-Match $bridge '(?s)var suspended_pause_owners: Array\[String\].*?pause_owners.*?app\.call\("set_application_pause_owner", owner, false\).*?await _wait_frames\(frames\).*?app\.call\("set_application_pause_owner", owner, true\).*?pause_after_wait.*?restored_pause_owners\.has\(owner\)' 'A replay wait may suspend pause owners only as a captured set, then must restore and verify every owner before accepting the command.'
+    Assert-Match $bridge '(?s)var suspended_pause_owners: Array\[String\].*?pause_owners.*?owner\s*==\s*REPLAY_PAUSE_OWNER.*?continue.*?app\.call\("set_application_pause_owner", owner, false\).*?await _wait_frames\(frames\).*?app\.call\("set_application_pause_owner", owner, true\).*?pause_after_wait.*?not suspended_pause_owners\.has\(REPLAY_PAUSE_OWNER\).*?restored_pause_owners\.has\(owner\)' 'A replay wait must retain deterministic replay pause ownership, suspend only captured lifecycle owners, then restore and verify every suspended owner before accepting the command.'
     Assert-Contains $bridge 'var choice_list := talk_dock.get("choice_list") as Control if talk_dock != null else null' 'Semantic TalkDock choices must bind to the actual rendered choice list.'
     Assert-Contains $runner "@('look', 'clickable', 'talk_choices')" 'Replay routes must consume the rendered TalkDock enabled-state mapping.'
     Assert-Contains $runner "@('look', 'clickable', 'scroll_surfaces')" 'Replay routes must consume only the public rendered scroll-surface mapping.'
@@ -5041,7 +5049,7 @@ function Assert-SaveRelaunchContinue {
     Assert-Match $replayPolicy '(?s)function Assert-GrandFareFundingResult.*?bankroll_rendered.*?expectedBankrollLong.*?Get-GrandFarePublicDebtCount.*?afterDebtCount\s+-ne\s+\$beforeDebtCount\s+\+\s+1.*?exact disclosed terms.*?exact positive bankroll delta' 'The shared funding policy must verify exact rendered bankroll, one additional rendered debt indicator, and Result feedback bound to the disclosed terms and delta.'
     Assert-Match $replayPolicy '(?s)function Get-Rw062ExactPublicPropertyMatches.*?Name\s+-ceq.*?function Get-Rw062RequiredPublicProperty.*?properties\.Count\s+-ne\s+1' 'Critical replay-policy schema keys must be matched by exact property-name casing.'
     Assert-Match $replayPolicy '(?s)function Select-GrandFareFundingObject.*?-cnotmatch.*?StartsWith\(''lender:'', \[StringComparison\]::Ordinal\).*?-cnotin.*?function Select-GrandFareFundingObjectAction.*?-cne ''Use''.*?IsNullOrEmpty' 'Grand fare lender schema matching must remain case-sensitive for world ids, lender prefixes/suffixes, object types, the Use label, and blank compatibility identities.'
-    Assert-Match $replayPolicy '(?s)function Select-GrandFareCashEventChoice.*?back_alley_offer.*?Back Alley Offer.*?Small cash.*?scenario_wedding_overflow_hallway.*?Hallway Table.*?pays out.*?function Assert-GrandFareCashEventResult.*?strictly positive public HUD bankroll delta' 'The shared cash-event policy must strictly allowlist exact rendered event objects/actions and require only the positive public HUD result promised by their visible copy.'
+    Assert-Match $replayPolicy '(?s)function Select-GrandFareCashEventChoice.*?back_alley_offer.*?Back Alley Offer.*?Small cash.*?scenario_wedding_overflow_hallway.*?Hallway Card Table.*?pays out.*?function Assert-GrandFareCashEventResult.*?strictly positive public HUD bankroll delta' 'The shared cash-event policy must strictly allowlist exact rendered event objects/actions and require only the positive public HUD result promised by their visible copy.'
     Assert-Match $replayPolicy '(?s)function Assert-GrandFareCashEventResult.*?Cash change: \+\{1\}\..*?\$\+\{1\} / Heat \+\{2\}.*?feedbackText -cne \$expectedFeedback' 'Cash-event result verification must bind Foundation''s exact cash settlement sentence and compact rendered cash/heat deltas.'
     Assert-NotMatch $replayPolicy '(?ms)^function (?:Select|Assert)-GrandFare(?:Funding|CashEvent).*?(?=^function |\z).*?impact_summary' 'New Grand-fare lender/cash policies must not consume undisplayed impact_summary metadata.'
     Assert-NotMatch $runner '(?ms)^function Invoke-GrandFarePublic(?:FundingOffer|CashEvent).*?(?=^function |\z).*?impact_summary' 'New Grand-fare runner paths must not consume undisplayed impact_summary metadata.'
@@ -5085,7 +5093,10 @@ function Assert-SaveRelaunchContinue {
     Assert-Match $runner '(?s)function Select-ExactRenderedCanvasObject.*?matches\.Count\s+-gt\s+1.*?rendered\s+-isnot\s+\[bool\].*?enabled\s+-isnot\s+\[bool\].*?function Select-FirstRenderedCanvasObjectByPrefix.*?duplicate semantic id.*?Sort-Object.*?-CaseSensitive' 'Canvas-object route decisions must require unique exact identities, true boolean rendered/enabled witnesses, and deterministic ordinal prefix selection.'
     Assert-Match $runner '(?s)function Reveal-SemanticObjectByPublicRefocus.*?targetMatches\.Count\s+-cne\s+1.*?targetEnabled\s+-isnot\s+\[bool\].*?targetRendered\s+-isnot\s+\[bool\].*?Select-Object\s+-First\s+12.*?click_object \$semanticId.*?blocking modal.*?liveTarget\.Count\s+-cne\s+1.*?liveEnabled\s+-isnot\s+\[bool\].*?liveRendered\s+-isnot\s+\[bool\].*?function Reveal-WorldMapLeaveByPublicRefocus.*?TargetSemanticId ''travel:leave''.*?function Open-WorldMap.*?leaveObjects\.Count\s+-ceq\s+0.*?Open-OverflowWorldMapIfVisible.*?Reveal-WorldMapLeaveByPublicRefocus.*?Open-SemanticObject' 'World-map entry must use exact public witnesses and bounded real focus clicks for Leave, with only the rendered room-actions Open Map path allowed when no canvas Leave object exists.'
     Assert-Match $runner '(?s)function Assert-ExactRenderedRoomActionBinding.*?matches\.Count\s+-cne\s+1.*?changed row order.*?disabled, clipped.*?function Invoke-RoomActionRow.*?selected_object_id.*?ConvertTo-BridgeBase64Token.*?click_action room' 'Room-action commands must bind one exact selected object, identity, row index, rendered/enabled state, and encoded bridge command.'
-    Assert-Match $runner '(?s)function Assert-ExplicitSaveAcknowledgmentObservation.*?hasSave\s+-isnot\s+\[bool\].*?saveTextVisible\s+-isnot\s+\[bool\].*?saveText\s+-isnot\s+\[string\].*?-cne\s+\$expectedVisibleText' 'Save acknowledgment must reject missing, non-boolean, and inexact public witnesses.'
+    Assert-Match $runner '(?s)function Assert-ExplicitSaveAcknowledgmentObservation.*?saveTextVisible\s+-isnot\s+\[bool\].*?saveText\s+-isnot\s+\[string\].*?-cne\s+\$expectedVisibleText.*?function Assert-RunMenuSaveSlotObservation.*?runMenuVisible\s+-isnot\s+\[bool\].*?hasSave\s+-isnot\s+\[bool\]' 'Save acknowledgment and reopened-menu slot checks must reject missing, non-boolean, and inexact public witnesses.'
+    Assert-Match $runner '(?s)Assert-ExplicitSaveAcknowledged\s+-Milestone\s+\$Milestone.*?Click-Button\s+-Text\s+''Menu''.*?Assert-RunMenuSaveSlotObservation.*?Click-RunMenuButton\s+-Text\s+''Main Menu''' 'Explicit save persistence must authenticate the visible acknowledgment, reopen the menu, authenticate the saved slot, and only then return to Main Menu.'
+    Assert-Match $runner '(?s)function Assert-HealthyResult.*?surfaceRenderer\s*=\s*Get-ExactReplayString.*?surface_renderer.*?isLiveBlackjackSurface\s*=\s*\$gameId\s+-ceq\s+''blackjack''\s+-and\s+\$surfaceRenderer\s+-ceq\s+''blackjack''.*?if\s*\(\$isLiveBlackjackSurface\).*?dealer_hole_visible.*?if\s*\(\$isLiveBlackjackSurface\s+-and\s+-not\s+\$holeVisible' 'Dealer-hole privacy must require exact witnesses only from the live blackjack renderer, not a persisted blackjack result card.'
+    Assert-Match $runner '(?s)function Write-ActionEvidence.*?Get-RenderedEconomyProjection.*?if\s*\(\$null\s+-ceq\s+\$economy\)\s*\{\s*return\s*\}.*?LastRenderedEconomy\s*=\s*\$economy.*?moneySignature.*?function Write-FinalPublicCheckpoint.*?Last rendered pre-terminal economy checkpoint.*?Get-ExactReplayInt32\s+-InputObject\s+\$script:LastRenderedEconomy' 'Money curves and final checkpoints must retain only the last fully rendered pre-terminal HUD economy when the terminal report replaces the HUD.'
     Assert-Match $runner '(?s)function Test-PublicTerminalSurface.*?Get-ExactReplayString.*?screen.*?screen\s+-cnotin\s+@\(''VICTORY'', ''FAILURE''\).*?Get-ExactReplayBoolean.*?run_report_visible.*?function Assert-TerminalOutcome.*?Get-ExactReplayString.*?run_report.*?outcome.*?Get-ExactReplayBoolean.*?won.*?outcome\s+-cnotin\s+\$ExpectedOutcomes' 'Terminal routing must require exact terminal screen/outcome strings, exact boolean witnesses, and exact allowlisted outcome ids.'
     $cashRunnerFunction = [regex]::Match($runner, '(?ms)^function Invoke-GrandFarePublicCashEvent\s*\{.*?(?=^function |\z)')
     if (-not $cashRunnerFunction.Success -or [regex]::Matches($cashRunnerFunction.Value, '\bInvoke-RoomActionRow\b').Count -ne 1 -or
@@ -5214,7 +5225,8 @@ function Assert-SaveRelaunchContinue {
             'hostile_confirmation_fixtures', 'valid_canvas_object_fixtures',
             'hostile_canvas_object_fixtures', 'valid_room_action_fixtures',
             'hostile_room_action_fixtures', 'valid_save_acknowledgment_fixtures',
-            'hostile_save_acknowledgment_fixtures', 'valid_terminal_fixtures',
+            'hostile_save_acknowledgment_fixtures', 'valid_save_slot_fixtures',
+            'hostile_save_slot_fixtures', 'valid_terminal_fixtures',
             'hostile_terminal_fixtures'
         )
         foreach ($name in $semanticIntFields) {

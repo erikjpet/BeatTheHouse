@@ -203,14 +203,16 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 					reason = "frames must be between 0 and 3600"
 				else:
 					# This isolated process can retain the production focus-out owner
-					# because its window is intentionally unattended. Suspend the exact
-					# application-lifecycle owners seen at the command boundary so a
-					# normal wait advances presentation clocks, then restore all of them.
+					# because its window is intentionally unattended. Suspend only the
+					# captured lifecycle owners so a normal wait advances presentation
+					# clocks, while retaining REPLAY_PAUSE_OWNER to freeze the run clock
+					# and autonomous simulation deterministically. Canvas presentation
+					# clocks remain live while their simulation activity is paused.
 					# Modal pause owners remain inside FoundationMain and are untouched.
 					var suspended_pause_owners: Array[String] = []
 					for owner_value in _array(pause_before.get("pause_owners", [])):
 						var owner := str(owner_value).strip_edges()
-						if owner.is_empty() or suspended_pause_owners.has(owner):
+						if owner.is_empty() or owner == REPLAY_PAUSE_OWNER or suspended_pause_owners.has(owner):
 							continue
 						suspended_pause_owners.append(owner)
 						app.call("set_application_pause_owner", owner, false)
@@ -220,7 +222,8 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 						app.call("set_application_pause_owner", owner, true)
 					await process_frame
 					var pause_after_wait := _replay_pause_snapshot()
-					accepted = _replay_pause_is_valid(pause_after_wait)
+					accepted = _replay_pause_is_valid(pause_after_wait) \
+						and not suspended_pause_owners.has(REPLAY_PAUSE_OWNER)
 					var restored_pause_owners := _array(pause_after_wait.get("pause_owners", []))
 					for owner in suspended_pause_owners:
 						accepted = accepted and restored_pause_owners.has(owner)

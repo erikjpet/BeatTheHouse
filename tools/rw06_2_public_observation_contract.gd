@@ -46,6 +46,22 @@ func _check_hidden_state_redaction() -> void:
 		_check(not public_environment.has(raw_environment_key), "Public environment leaked raw model key %s." % raw_environment_key)
 	var public_screen_map := _dict(_dict(public_a.get("screen", {})).get("world_map", {}))
 	_check(_array(public_screen_map.get("nodes", [])).size() == 1, "The rendered screen world map was removed with the raw environment map.")
+	var ambient_clock_a := hidden_a.duplicate(true)
+	var ambient_environment_a := _dict(ambient_clock_a.get("environment", {}))
+	ambient_environment_a["clock_text"] = "Day 1 12:48 PM"
+	ambient_environment_a["venue_open_status"] = {"open": true, "minutes_until_close": 12}
+	ambient_environment_a["venue_open_status_text"] = "Open for 12 more minutes"
+	ambient_clock_a["environment"] = ambient_environment_a
+	var ambient_clock_b := ambient_clock_a.duplicate(true)
+	var ambient_environment_b := _dict(ambient_clock_b.get("environment", {}))
+	ambient_environment_b["clock_text"] = "Day 1 12:49 PM"
+	ambient_environment_b["venue_open_status"] = {"open": true, "minutes_until_close": 11}
+	ambient_environment_b["venue_open_status_text"] = "Open for 11 more minutes"
+	ambient_clock_b["environment"] = ambient_environment_b
+	var ambient_public_a := PublicObservation.sanitize(ambient_clock_a)
+	var ambient_public_b := PublicObservation.sanitize(ambient_clock_b)
+	_check(PublicObservation.fingerprint(ambient_public_a) == PublicObservation.fingerprint(ambient_public_b), "Unrendered ambient environment timing made replay traces nondeterministic.")
+	_check(not JSON.stringify(ambient_public_a).contains("12:48 PM") and not JSON.stringify(ambient_public_a).contains("12 more minutes"), "Unrendered ambient environment timing escaped into public observation.")
 	var closed_map_host := hidden_a.duplicate(true)
 	var closed_map_screen := _dict(closed_map_host.get("screen", {}))
 	closed_map_screen["world_map_overlay_visible"] = false
@@ -240,6 +256,16 @@ func _check_hidden_state_redaction() -> void:
 	_check(not unrendered_public_hud.has("bankroll") and not unrendered_public_hud.has("chips") and not unrendered_public_hud.has("heat_level"), "Unrendered HUD values escaped their false witnesses.")
 	_check(not unrendered_public_hud.has("save_text") and not _dict(unrendered_public_hud.get("debt_indicator", {})).has("tooltip"), "Unrendered save/debt text escaped its false witness.")
 	_check(PublicObservation.fingerprint(unrendered_public_a) == PublicObservation.fingerprint(unrendered_public_b), "Raw HUD mutations with false rendered witnesses altered the public trace.")
+	var hidden_hud_transition := PublicObservation.transition_summary(public_a, unrendered_public_a, "terminal", true)
+	_check(not bool(hidden_hud_transition.get("economy_changed", true)) and not bool(hidden_hud_transition.get("heat_changed", true)), "Hiding the HUD was misreported as an economy or heat mutation.")
+	var changed_economy_host := hidden_a.duplicate(true)
+	var changed_economy_hud := _dict(changed_economy_host.get("status_hud", {}))
+	changed_economy_hud["bankroll"] = 899
+	changed_economy_hud["chips"] = 151
+	changed_economy_hud["heat_level"] = 2
+	changed_economy_host["status_hud"] = changed_economy_hud
+	var changed_economy_transition := PublicObservation.transition_summary(public_a, PublicObservation.sanitize(changed_economy_host), "wager", true)
+	_check(bool(changed_economy_transition.get("economy_changed", false)) and bool(changed_economy_transition.get("heat_changed", false)), "A fully rendered economy and heat mutation lost its transition witnesses.")
 
 	var malformed_hud_host := hidden_a.duplicate(true)
 	malformed_hud_host["status_hud"] = {
@@ -421,6 +447,7 @@ func _check_bridge_source_contract() -> void:
 	_check(not source.contains("var observable := Fidelity.observable_host_snapshot(app)"), "Bridge still publishes a raw host observation.")
 	_check(not source.contains("var copy := action.duplicate(true)"), "Bridge clickable metadata still duplicates raw action dictionaries.")
 	_check(source.contains('const REPLAY_PAUSE_OWNER := "agent_replay"'), "Bridge is missing deterministic action-boundary pause ownership.")
+	_check(source.contains("owner == REPLAY_PAUSE_OWNER"), "Bridge waits can release deterministic replay pause ownership and advance simulation time.")
 	_check(source.contains('screen["run_report_visible"]'), "Bridge does not witness the rendered RunReport control.")
 	_check(source.contains('start_menu["seed_text_committed"]'), "Bridge does not distinguish an entered seed from a generated menu seed.")
 	for command in ["focus_field", "set_field", "click_map", "click_choice", "click_inventory"]:

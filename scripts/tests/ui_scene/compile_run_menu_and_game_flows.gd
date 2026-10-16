@@ -3633,6 +3633,12 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 	if str(ready_card.get("tier", "")) != "Silver" or str(ready_card.get("progress", "")).find("Gold") == -1 or (ready_cage_model.get("comp_actions", []) as Array).size() != 2:
 		push_error("Ready Cage counter did not expose exact Gold progress, benefits, and comp controls.")
 		return false
+	var ready_linda_entry: Dictionary = high_roller_run.pending_talk_event("dialogue:linda_cage_services")
+	app.call("_resolve_dialogue_choice", ready_linda_entry, "open_card")
+	var ready_card_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	if not str(ready_card_talk.get("summary", "")).begins_with("Silver. Gold:"):
+		push_error("Linda's rendered Players Card page replaced its live Silver-to-Gold ledger with a generic voice line.")
+		return false
 	while not high_roller_run.next_pending_talk_event().is_empty():
 		high_roller_run.complete_talk_event_resolution(str(high_roller_run.next_pending_talk_event().get("event_id", "")))
 	app.call("_refresh_talk_dock")
