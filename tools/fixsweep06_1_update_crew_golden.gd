@@ -3,6 +3,7 @@ extends SceneTree
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const CrewIgnoredGoldenProbeScript := preload("res://scripts/tests/foundation/crew_ignored_golden_probe.gd")
 const TARGET := "res://scripts/tests/fixtures/crew06_5_ignored_run_baseline.json"
+const BASELINE_ID := "release-0.6-authored-placement-overlap-clearance-v1"
 const EXPECTED_SEEDS := ["CREW-IGNORED-GOLDEN-A", "CREW-IGNORED-GOLDEN-B"]
 const EXPECTED_CHECKPOINTS := [
 	"initial_bar",
@@ -72,11 +73,11 @@ func _run() -> void:
 
 	var document: Dictionary = (existing_value as Dictionary).duplicate(true)
 	document["capture"] = (capture_a as Dictionary).duplicate(true)
-	document["baseline_commit"] = "environment-slot-family-manifest-v2"
+	document["baseline_commit"] = BASELINE_ID
 	var provenance: Dictionary = document.get("provenance", {}) if typeof(document.get("provenance", {})) == TYPE_DICTIONARY else {}
-	provenance["change_commit"] = "environment-slot-family-manifest-v2"
-	provenance["reason"] = "The completed fixed, event, scenario, and exit migration intentionally adds durable object-manifest ownership and independent coexistence capacity to generated and persisted rooms without changing Crew state."
-	provenance["proof"] = "Both fixed Crew-ignored seeds were recaptured through all five production checkpoints after the final slot-family manifest and capacity corrections; the contract still requires exact normalized bytes and hashes, inactive world-sequence no-ops, and zero Crew trust."
+	provenance["change_commit"] = BASELINE_ID
+	provenance["reason"] = "The release-candidate placement review moved four authored interaction slots only far enough to clear occupied hit rectangles; the serialized room geometry changed without changing Crew state or progression."
+	provenance["proof"] = "Both fixed Crew-ignored seeds were recaptured twice through all five production checkpoints after overlap clearance; the updater requires byte-identical twin captures, inactive ambient and world-sequence no-ops, and zero Crew trust before writing."
 	document["provenance"] = provenance
 	var file := FileAccess.open(TARGET, FileAccess.WRITE)
 	if file == null:
