@@ -192,6 +192,14 @@ namespace BeatTheHouse.Q009
             return DateTime.FromFileTimeUtc(fileTime);
         }
 
+        private static DateTime QueryPreciseUtc()
+        {
+            NativeMethods.FILETIME now;
+            NativeMethods.GetSystemTimePreciseAsFileTime(out now);
+            long fileTime = unchecked(((long)now.dwHighDateTime << 32) | now.dwLowDateTime);
+            return DateTime.FromFileTimeUtc(fileTime);
+        }
+
         private static string QueryNativeImagePath(IntPtr process)
         {
             StringBuilder value = new StringBuilder(32768);
@@ -223,7 +231,7 @@ namespace BeatTheHouse.Q009
             DateTime managedRootStartUtc = DateTime.MinValue;
             string managedRootProcessName = String.Empty;
             string launchedImagePath = String.Empty;
-            DateTime lowerUtc = DateTime.UtcNow;
+            DateTime lowerUtc = QueryPreciseUtc();
             try
             {
                 NativeMethods.SECURITY_ATTRIBUTES inheritable = new NativeMethods.SECURITY_ATTRIBUTES();
@@ -265,7 +273,7 @@ namespace BeatTheHouse.Q009
                 startup.hStdOutput = stdoutWrite;
                 startup.hStdError = stderrWrite;
                 StringBuilder mutableCommandLine = new StringBuilder(commandLine);
-                lowerUtc = DateTime.UtcNow;
+                lowerUtc = QueryPreciseUtc();
                 if (!NativeMethods.CreateProcess(
                         applicationPath, mutableCommandLine, IntPtr.Zero, IntPtr.Zero, true,
                         0x00000004u | 0x08000000u | 0x00000400u,
@@ -293,18 +301,36 @@ namespace BeatTheHouse.Q009
                 IntPtr managedProcessHandle = managedProcess.Handle;
                 if (managedProcessHandle == IntPtr.Zero || managedProcess.Id != unchecked((int)pi.dwProcessId))
                     throw new InvalidOperationException("Managed root wrapper did not bind the suspended native PID.");
-                managedRootStartUtc = managedProcess.StartTime.ToUniversalTime();
                 managedRootProcessName = managedProcess.ProcessName;
                 DateTime nativeRootStartUtc = QueryNativeProcessStartUtc(pi.hProcess);
-                DateTime identityUpperUtc = DateTime.UtcNow;
-                if (managedRootStartUtc.Ticks != nativeRootStartUtc.Ticks ||
-                    nativeRootStartUtc < lowerUtc || nativeRootStartUtc > identityUpperUtc ||
-                    String.IsNullOrWhiteSpace(managedRootProcessName))
-                    throw new InvalidOperationException("Managed root identity did not match the exact suspended native handle.");
+                DateTime managedHandleStartUtc = QueryNativeProcessStartUtc(managedProcessHandle);
+                string managedHandleImagePath = QueryNativeImagePath(managedProcessHandle);
+                DateTime identityUpperUtc = QueryPreciseUtc();
+                // Process.StartTime is occasionally rounded differently from
+                // GetProcessTimes even while both wrappers refer to this exact
+                // suspended process. Compare the two independently held native
+                // handles instead; the original CreateProcess handle keeps the
+                // process object alive, so PID reuse cannot enter this proof.
+                bool nativeTimesMatch = managedHandleStartUtc.Ticks == nativeRootStartUtc.Ticks;
+                bool nativeImagesMatch = String.Equals(managedHandleImagePath, launchedImagePath, StringComparison.OrdinalIgnoreCase);
+                bool nativeStartInBounds = nativeRootStartUtc >= lowerUtc && nativeRootStartUtc <= identityUpperUtc;
+                bool managedNamePresent = !String.IsNullOrWhiteSpace(managedRootProcessName);
+                if (!nativeTimesMatch || !nativeImagesMatch || !nativeStartInBounds || !managedNamePresent)
+                    throw new InvalidOperationException(
+                        "Managed root identity did not match the exact suspended native handle: " +
+                        "native_times_match=" + nativeTimesMatch +
+                        ", native_images_match=" + nativeImagesMatch +
+                        ", native_start_in_bounds=" + nativeStartInBounds +
+                        ", managed_name_present=" + managedNamePresent +
+                        ", native_start_ticks=" + nativeRootStartUtc.Ticks +
+                        ", managed_handle_start_ticks=" + managedHandleStartUtc.Ticks +
+                        ", lower_ticks=" + lowerUtc.Ticks +
+                        ", upper_ticks=" + identityUpperUtc.Ticks + ".");
+                managedRootStartUtc = nativeRootStartUtc;
 
                 if (NativeMethods.ResumeThread(pi.hThread) == UInt32.MaxValue)
                     throw new Win32Exception(Marshal.GetLastWin32Error(), "ResumeThread failed.");
-                DateTime upperUtc = DateTime.UtcNow;
+                DateTime upperUtc = QueryPreciseUtc();
                 NativeMethods.CloseHandle(pi.hThread); pi.hThread = IntPtr.Zero;
                 if (forcePostWrapperSetupFailure)
                 {
@@ -459,6 +485,7 @@ namespace BeatTheHouse.Q009
         [DllImport("kernel32.dll", SetLastError = true)] internal static extern bool TerminateJobObject(IntPtr job, uint exitCode);
         [DllImport("kernel32.dll", SetLastError = true)] internal static extern bool TerminateProcess(IntPtr process, uint exitCode);
         [DllImport("kernel32.dll", SetLastError = true)] internal static extern bool GetProcessTimes(IntPtr process, out FILETIME creation, out FILETIME exit, out FILETIME kernel, out FILETIME user);
+        [DllImport("kernel32.dll")] internal static extern void GetSystemTimePreciseAsFileTime(out FILETIME systemTime);
         [DllImport("kernel32.dll", SetLastError = true)] internal static extern bool GetExitCodeProcess(IntPtr process, out uint exitCode);
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] internal static extern bool QueryFullProcessImageName(IntPtr process, uint flags, StringBuilder path, ref uint size);
         [DllImport("kernel32.dll", SetLastError = true)] internal static extern uint WaitForSingleObject(IntPtr handle, uint milliseconds);
