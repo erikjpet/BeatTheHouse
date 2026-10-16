@@ -4638,6 +4638,8 @@ func _push_mouse_wheel(position: Vector2, button_index: int) -> void:
         'return PublicObservation.sanitize(snapshot)',
         'const REPLAY_PAUSE_OWNER := "agent_replay"',
         'const SHUTDOWN_DRAIN_FRAMES := 12',
+        'app.set("continuous_environment_clock_enabled", false)',
+        'func _replay_ambient_clock_is_frozen() -> bool:',
         'app.call("set_application_pause_owner", REPLAY_PAUSE_OWNER, true)',
         '"replay_pause": ready_pause',
         '"replay_pause_before": pause_before',
@@ -4920,7 +4922,7 @@ function Assert-SaveRelaunchContinue {
     Assert-Match $launcher '(?s)\$EngineLogPath\s*=\s*Join-Path\s+\$SessionRoot\s+''godot\.engine\.log''.*?''--log-file'',\s*\$EngineLogPath' 'Every agent playtest session must use its own Godot --log-file inside the isolated session root.'
     Assert-Contains $bridge 'action_id == "blackjack_deal"' 'The bridge must recognize blackjack''s invisible compatibility Deal hit.'
     Assert-Contains $bridge 'not bool(public_game.get("can_deal", false))' 'The bridge must reject the invisible Deal hit unless the public DEAL control is available.'
-    Assert-Match $bridge '(?s)var suspended_pause_owners: Array\[String\].*?pause_owners.*?owner\s*==\s*REPLAY_PAUSE_OWNER.*?continue.*?app\.call\("set_application_pause_owner", owner, false\).*?await _wait_frames\(frames\).*?app\.call\("set_application_pause_owner", owner, true\).*?pause_after_wait.*?not suspended_pause_owners\.has\(REPLAY_PAUSE_OWNER\).*?restored_pause_owners\.has\(owner\)' 'A replay wait must retain deterministic replay pause ownership, suspend only captured lifecycle owners, then restore and verify every suspended owner before accepting the command.'
+    Assert-Match $bridge '(?s)var suspended_pause_owners: Array\[String\].*?pause_owners.*?app\.call\("set_application_pause_owner", owner, false\).*?await _wait_frames\(frames\).*?app\.call\("set_application_pause_owner", owner, true\).*?pause_after_wait.*?_replay_ambient_clock_is_frozen\(\).*?restored_pause_owners\.has\(owner\)' 'A replay wait must suspend pause owners only as a captured set, keep the ambient world clock frozen, then restore and verify every owner before accepting the command.'
     Assert-Contains $bridge 'var choice_list := talk_dock.get("choice_list") as Control if talk_dock != null else null' 'Semantic TalkDock choices must bind to the actual rendered choice list.'
     Assert-Contains $runner "@('look', 'clickable', 'talk_choices')" 'Replay routes must consume the rendered TalkDock enabled-state mapping.'
     Assert-Contains $runner "@('look', 'clickable', 'scroll_surfaces')" 'Replay routes must consume only the public rendered scroll-surface mapping.'

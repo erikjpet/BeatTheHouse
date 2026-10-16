@@ -46,6 +46,15 @@ func _boot() -> void:
 		push_error("Production host does not expose replay pause ownership.")
 		quit(2)
 		return
+	# Ambient wall-clock advancement depends on host frame duration and would make
+	# identical action replays arrive a minute apart. Freeze only that continuous
+	# source. Explicit production boundaries (travel, services, game actions) still
+	# advance run time normally, and wait commands can still settle game automation.
+	app.set("continuous_environment_clock_enabled", false)
+	if not _replay_ambient_clock_is_frozen():
+		push_error("Could not freeze nondeterministic ambient replay clock advancement.")
+		quit(2)
+		return
 	app.call("set_application_pause_owner", REPLAY_PAUSE_OWNER, true)
 	await process_frame
 	var ready_pause := _replay_pause_snapshot()
@@ -120,7 +129,9 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 	var reason := ""
 	var detail: Dictionary = {}
 	var should_quit := false
-	if not _replay_pause_is_valid(pause_before):
+	if not _replay_ambient_clock_is_frozen():
+		reason = "deterministic replay ambient clock freeze was lost before command"
+	elif not _replay_pause_is_valid(pause_before):
 		reason = "deterministic replay pause ownership was lost before command"
 	elif raw.is_empty():
 		reason = "empty command"
@@ -203,16 +214,16 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 					reason = "frames must be between 0 and 3600"
 				else:
 					# This isolated process can retain the production focus-out owner
-					# because its window is intentionally unattended. Suspend only the
-					# captured lifecycle owners so a normal wait advances presentation
-					# clocks, while retaining REPLAY_PAUSE_OWNER to freeze the run clock
-					# and autonomous simulation deterministically. Canvas presentation
-					# clocks remain live while their simulation activity is paused.
+					# because its window is intentionally unattended. Suspend the exact
+					# application-lifecycle owners seen at the command boundary so a
+					# normal wait advances presentation clocks and autonomous game
+					# settlement, then restore all of them. The separately frozen ambient
+					# world clock prevents frame-duration drift during this window.
 					# Modal pause owners remain inside FoundationMain and are untouched.
 					var suspended_pause_owners: Array[String] = []
 					for owner_value in _array(pause_before.get("pause_owners", [])):
 						var owner := str(owner_value).strip_edges()
-						if owner.is_empty() or owner == REPLAY_PAUSE_OWNER or suspended_pause_owners.has(owner):
+						if owner.is_empty() or suspended_pause_owners.has(owner):
 							continue
 						suspended_pause_owners.append(owner)
 						app.call("set_application_pause_owner", owner, false)
@@ -223,7 +234,7 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 					await process_frame
 					var pause_after_wait := _replay_pause_snapshot()
 					accepted = _replay_pause_is_valid(pause_after_wait) \
-						and not suspended_pause_owners.has(REPLAY_PAUSE_OWNER)
+						and _replay_ambient_clock_is_frozen()
 					var restored_pause_owners := _array(pause_after_wait.get("pause_owners", []))
 					for owner in suspended_pause_owners:
 						accepted = accepted and restored_pause_owners.has(owner)
@@ -1260,6 +1271,10 @@ func _replay_pause_is_valid(snapshot: Dictionary) -> bool:
 		and bool(snapshot.get("simulation_paused", false)) \
 		and bool(snapshot.get("environment_canvas_paused", false)) \
 		and bool(snapshot.get("game_canvas_paused", false))
+
+
+func _replay_ambient_clock_is_frozen() -> bool:
+	return app != null and not bool(app.get("continuous_environment_clock_enabled"))
 
 
 func _visible_buttons() -> Array:
