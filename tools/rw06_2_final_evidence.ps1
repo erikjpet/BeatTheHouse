@@ -3336,24 +3336,46 @@ function Assert-TerminalResultShape {
 
 
 function Get-ManifestArtifactPaths {
-    $profilePrefixes = [Collections.Generic.List[string]]::new()
+    $profileRoots = [Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
     foreach ($runIndex in 1..2) {
         $runRoot = Join-Path $EvidenceRoot ('run-{0:D2}' -f $runIndex)
         foreach ($profileName in @('profile_roaming', 'profile_local')) {
-            $profilePrefixes.Add(([IO.Path]::GetFullPath((Join-Path $runRoot $profileName))).TrimEnd('\') + '\')
+            $null = $profileRoots.Add(
+                ([IO.Path]::GetFullPath((Join-Path $runRoot $profileName))).TrimEnd('\')
+            )
         }
     }
-    $paths = @(Get-ChildItem -LiteralPath $EvidenceRoot -Recurse -File -ErrorAction Stop | Where-Object {
-        $candidate = [IO.Path]::GetFullPath($_.FullName)
-        $insideProfile = $false
-        foreach ($prefix in $profilePrefixes) {
-            if ($candidate.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) {
-                $insideProfile = $true
-                break
+    # Do not recurse into isolated Godot profiles and filter them afterward.
+    # Shader caches can contain Windows paths beyond the legacy MAX_PATH limit,
+    # and only the explicit inventory/autosave artifacts below belong in the
+    # aggregate manifest. Prune those roots before descent instead.
+    $manifestCandidates = [Collections.Generic.List[string]]::new()
+    $pendingDirectories = [Collections.Generic.Stack[string]]::new()
+    $pendingDirectories.Push([IO.Path]::GetFullPath($EvidenceRoot))
+    $manifestPath = [IO.Path]::GetFullPath($ManifestPath)
+    while ($pendingDirectories.Count -gt 0) {
+        $directory = $pendingDirectories.Pop()
+        foreach ($entry in @(Get-ChildItem -LiteralPath $directory -Force -ErrorAction Stop)) {
+            $candidate = [IO.Path]::GetFullPath($entry.FullName)
+            if ($entry -is [IO.DirectoryInfo]) {
+                if ($profileRoots.Contains($candidate.TrimEnd('\'))) {
+                    continue
+                }
+                if (($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+                    throw "Aggregate evidence contains an unexpected directory reparse point: $candidate"
+                }
+                $pendingDirectories.Push($candidate)
+                continue
+            }
+            if ($entry -isnot [IO.FileInfo]) {
+                throw "Aggregate evidence contains an unexpected filesystem object: $candidate"
+            }
+            if ($candidate -cne $manifestPath) {
+                $manifestCandidates.Add($candidate)
             }
         }
-        -not $insideProfile -and $candidate -cne [IO.Path]::GetFullPath($ManifestPath)
-    } | Select-Object -ExpandProperty FullName)
+    }
+    $paths = @($manifestCandidates)
     foreach ($proof in @($script:RunProofs)) {
         foreach ($name in @('godot.stdout.log', 'godot.stderr.log', 'godot.engine.log')) {
             $path = Join-Path ([string]$proof.session_root) $name
@@ -3568,7 +3590,7 @@ catch {
 }
 finally {
     try {
-        if ((Get-OwnedSurvivors).Count -ne 0) {
+        if (@(Get-OwnedSurvivors).Count -ne 0) {
             Stop-AllOwnedProcesses
         }
     }
