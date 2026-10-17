@@ -490,16 +490,27 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 			var second_patch: Dictionary = game.surface_realtime_state_patch(run_state, run_state.current_environment, {"surface_time_msec": 1100}, first_patch)
 			var motor_continued := int(second_patch.get("coin_pusher_ticks_advanced", 0)) > 0 \
 					and int((live_machine.get("simulation", {}) as Dictionary).get("tick", -2)) > tick_before_save
+			# Non-game detail panels hide this canvas while preserving the active game
+			# session. They must release renderer-owned viewport caches, then rebind and
+			# rebuild the exact surface when GAME becomes visible again.
+			probe.call("_set_current_screen", "ITEMS")
+			probe.call("_render_foundation_snapshots")
+			var hidden_surface_host_released: bool = canvas.get("surface_game_module") == null
+			probe.call("_set_current_screen", "GAME")
+			probe.call("_render_foundation_snapshots")
+			var visible_surface_host_rebound: bool = canvas.get("surface_game_module") == game \
+					and str((canvas.call("realtime_surface_state") as Dictionary).get("game_id", "")) == "coin_pusher"
 			var transient_clean := not serialized_before.contains("\"simulation\"") \
 					and not serialized_before.contains("live_session") \
 					and not serialized_after.contains("\"simulation\"") \
 					and not serialized_after.contains("live_session") \
 					and not serialized_after.contains("accumulator_units") \
 					and not serialized_after.contains("input_trace")
-			var live_loop_passed := pricing_passed and opening_snapshot_exact and still_live_after_save and motor_continued and transient_clean \
+			var live_loop_passed := pricing_passed and opening_snapshot_exact and still_live_after_save and motor_continued \
+					and hidden_surface_host_released and visible_surface_host_rebound and transient_clean \
 					and not game.foundation_save_ready(run_state, run_state.current_environment)
 			if not live_loop_passed:
-				push_error("Coin Pusher live DROP was frozen by autosave or leaked transient solver state: still_live=%s motor=%s clean=%s ready=%s durable=%s." % [still_live_after_save, motor_continued, transient_clean, game.foundation_save_ready(run_state, run_state.current_environment), serialized_after])
+				push_error("Coin Pusher live DROP was frozen by autosave, retained its hidden render host, or leaked transient solver state: still_live=%s motor=%s hidden_release=%s rebound=%s clean=%s ready=%s durable=%s." % [still_live_after_save, motor_continued, hidden_surface_host_released, visible_surface_host_rebound, transient_clean, game.foundation_save_ready(run_state, run_state.current_environment), serialized_after])
 			if bool(live_simulation.get("skill_stop_engaged", false)):
 				canvas.emit_signal("surface_action", "coin_pusher_skill_stop", 0, false)
 			canvas.emit_signal("surface_action", "coin_pusher_skill_stop", 0, false)

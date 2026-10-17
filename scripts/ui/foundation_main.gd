@@ -16041,7 +16041,11 @@ func _render_foundation_snapshots() -> void:
 	if environment_canvas != null and environment_visible:
 		_render_environment_canvas_snapshot()
 	if game_surface_canvas != null:
-		game_surface_canvas.set_game_module(current_game)
+		# Item/service/lender detail panels can remain inside an active game session,
+		# but the game canvas is hidden there. Release renderer-owned viewport caches
+		# until the player returns to GAME; the module simulation remains live and the
+		# normal game snapshot rebuilds the identical presentation on re-entry.
+		game_surface_canvas.set_game_module(current_game if game_visible else null)
 		if game_visible:
 			# A realtime module's first boundary is an entry anchor, not a gameplay
 			# tick. Apply it before the initial render so the module clock, host
