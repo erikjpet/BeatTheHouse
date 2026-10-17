@@ -1002,7 +1002,7 @@ $admissionAnalysis = [pscustomobject][ordered]@{
     parameters = @()
 }
 $launcherTopLevel = Get-ExecutableTopLevelSource -Analysis $launcher
-$expectedLauncherStructuralSha256 = 'A4DE01037A466B5A75B6C38DF00F32093784DA6299DFC57A07FBA266732F4B03'
+$expectedLauncherStructuralSha256 = '8E4406D082743366BA172D080DA243FCC39EE312B1F766115FD3AA23652163E5'
 $expectedLauncherFunctionHashes = [ordered]@{
     'Get-FailureMessage' = 'B9697A70DF70DBEC0D0AE3D97284DBF4F18D6B9EBC6339730B1404B084D8AC37'
     'Add-TerminalFailure' = 'B10F2F4D8C162E94A2AA23ACE9B2C08271894D706A677638362C06E0940CC208'
@@ -1064,7 +1064,7 @@ $expectedLauncherFunctionHashes = [ordered]@{
     'Assert-RetainedHeistPreflightArtifact' = '8CC887199A43141E3588EF145B96804BB14C468A5773832C8042D238343AB42A'
     'Assert-OneRunJsonShapes' = '072C4D460BCD6F631201CB2BA684C713CE80DA63FA5A62D51BED4A7E2C812600'
     'Assert-FinalCheckpointJsonShapes' = '1EB1B3F6DD8548ECC01007E358638D9D652FE1F19D5A5D050CBACB969F875A94'
-    'Assert-PersistenceCoreCheckpointShape' = '1331909FB2E32657C4D03DD974BC46937668F12F2911CFC159CA1C5F1B2E0E8A'
+    'Assert-PersistenceCoreCheckpointShape' = '67BA6ACFDAEFEFACB80735CDC419ACB23A24062BD8D3173B334970776F91A1E9'
     'Assert-SaveContinueCheckpointJsonShape' = 'D6C83A4FB02C4C67DD969564CBC2FA7A3EDAE3A736D640AE2826083A5DCE9346'
     'Assert-OneRunEvidence' = 'D520EAD962B6EE9C3918B1F0A46E973C66BD61046A578BDB3F2B8DA8C71D132C'
     'Invoke-OneFixedRun' = 'F6584D0938229D19D83567E8A83FCDA7AF86291196070A08F4CA89BE31079FF3'
@@ -2691,9 +2691,9 @@ $exactTypeValidator = {
     ))) { return $false }
     if (-not (Test-TokensInOrder -Source $persistenceCoreShapes -Needles @(
         'Assert-LocalExactPropertyNames', "'location_id', 'location_archetype', 'world_node_id'",
-        "'game_id', 'game_phase'", '$value -isnot [string]',
+        "'chips_rendered', 'heat'", "'game_id', 'game_phase'", '$value -isnot [string]',
         "'bankroll', 'chips', 'heat', 'boss_hand_number', 'boss_player_stack', 'boss_rourke_stack'",
-        '$value -isnot [int32]'
+        '$value -isnot [int32]', "@('chips_rendered')", '$chipsRendered -isnot [bool]'
     ))) { return $false }
     if (-not (Test-TokensInOrder -Source $saveContinueShapes -Needles @(
         "-Expected @('checkpoint', 'planning_choices')", "-Expected @('checkpoint', 'clean_players_card')",
@@ -3905,7 +3905,8 @@ try {
     $saveContinueCheckpoint = [pscustomobject][ordered]@{
         checkpoint = [pscustomobject][ordered]@{
             location_id = 'grand_casino'; location_archetype = 'grand_casino_back_room'
-            world_node_id = 'grand_casino'; bankroll = [int32]100; chips = [int32]50; heat = [int32]1
+            world_node_id = 'grand_casino'; bankroll = [int32]100; chips = [int32]50
+            chips_rendered = $true; heat = [int32]1
             game_id = ''; game_phase = ''; boss_hand_number = [int32]0
             boss_player_stack = [int32]0; boss_rourke_stack = [int32]0
         }
@@ -3994,6 +3995,7 @@ try {
     }
     $coreStringFields = @('location_id', 'location_archetype', 'world_node_id', 'game_id', 'game_phase')
     $coreIntFields = @('bankroll', 'chips', 'heat', 'boss_hand_number', 'boss_player_stack', 'boss_rourke_stack')
+    $coreBoolFields = @('chips_rendered')
     foreach ($hostileCore in @($null, 'checkpoint-scalar', [ordered]@{}, [object[]]@('checkpoint'), [object[]]@(,([object[]]@('checkpoint'))))) {
         $runtimeHostileCaseCount++
         $copy = $saveContinueCheckpoint | ConvertTo-Json -Depth 20 -Compress | ConvertFrom-Json
@@ -4014,9 +4016,12 @@ try {
     if (-not (Test-Throws { Assert-SaveContinueCheckpointJsonShape -Checkpoint $coreReordered -Label 'reordered core checkpoint' })) {
         Add-Failure -Message 'Save/Continue checkpoint validator accepted reordered core-checkpoint keys.'
     }
-    foreach ($field in @($coreStringFields + $coreIntFields)) {
+    foreach ($field in @($coreStringFields + $coreIntFields + $coreBoolFields)) {
         $hostileValues = if ($field -cin $coreStringFields) {
             @($null, [pscustomobject]@{}, [object[]]@('value'), [int32]1)
+        }
+        elseif ($field -cin $coreBoolFields) {
+            @($null, [pscustomobject]@{}, [object[]]@($true), 'true', [int32]1)
         }
         else {
             @($null, [pscustomobject]@{}, [object[]]@([int32]1), '1', [int64]1, [double]1, [decimal]1, [uint32]1)

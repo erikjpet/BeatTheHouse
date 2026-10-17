@@ -1909,8 +1909,8 @@ function Assert-PersistenceCoreCheckpointShape {
     )
     Assert-LocalExactPropertyNames -InputObject $Checkpoint -Expected @(
         'location_id', 'location_archetype', 'world_node_id', 'bankroll', 'chips',
-        'heat', 'game_id', 'game_phase', 'boss_hand_number', 'boss_player_stack',
-        'boss_rourke_stack'
+        'chips_rendered', 'heat', 'game_id', 'game_phase', 'boss_hand_number',
+        'boss_player_stack', 'boss_rourke_stack'
     ) -Label $Label
     foreach ($name in @('location_id', 'location_archetype', 'world_node_id', 'game_id', 'game_phase')) {
         $value = Get-ExactValueNoEnumerate $Checkpoint @($name) $null
@@ -1923,6 +1923,10 @@ function Assert-PersistenceCoreCheckpointShape {
         if ($value -isnot [int32] -or [int]$value -lt 0) {
             throw "$Label field '$name' is not one exact nonnegative Int32."
         }
+    }
+    $chipsRendered = Get-ExactValueNoEnumerate $Checkpoint @('chips_rendered') $null
+    if ($chipsRendered -isnot [bool]) {
+        throw "$Label field 'chips_rendered' is not one exact Boolean."
     }
 }
 
