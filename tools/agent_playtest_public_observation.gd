@@ -7,6 +7,12 @@ extends RefCounted
 
 const SCHEMA := "beat_the_house.agent_public_observation"
 const SCHEMA_VERSION := 1
+const TRANSIENT_TRACE_SURFACE_ACTIONS := [
+	"blackjack_wager_place_gesture",
+	"blackjack_cut_gesture",
+	"blackjack_wave_gesture",
+	"blackjack_tap_gesture",
+]
 
 
 static func sanitize(raw_value: Variant) -> Dictionary:
@@ -135,6 +141,15 @@ static func _trace_projection(value: Variant) -> Dictionary:
 	var game := _dict(result.get("game", {}))
 	game.erase("peek_window_open")
 	result["game"] = game
+	var game_canvas := _dict(result.get("game_canvas", {}))
+	var stable_surface_actions: Array = []
+	for action_value in _array(game_canvas.get("surface_hit_actions", [])):
+		var action := _dict(action_value)
+		if TRANSIENT_TRACE_SURFACE_ACTIONS.has(str(action.get("action", ""))):
+			continue
+		stable_surface_actions.append(action)
+	game_canvas["surface_hit_actions"] = stable_surface_actions
+	result["game_canvas"] = game_canvas
 	return result
 
 

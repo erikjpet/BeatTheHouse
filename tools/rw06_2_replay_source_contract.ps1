@@ -4860,6 +4860,8 @@ function Assert-SaveRelaunchContinue {
         'spatial.erase("hover_target_id")',
         'room_canvas.erase("hovered_object_id")',
         'game.erase("peek_window_open")',
+        'TRANSIENT_TRACE_SURFACE_ACTIONS',
+        'stable_surface_actions.append(action)',
         '"dealer_hole_visible"',
         '"dealer_up_card"',
         'var map_rendered := _is_true_bool(source.get("world_map_overlay_visible", false))',

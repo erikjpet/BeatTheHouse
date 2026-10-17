@@ -407,6 +407,13 @@ func _check_hidden_state_redaction() -> void:
 	var transient_room_a := _dict(transient_a.get("room_canvas", {}))
 	transient_room_a["hovered_object_id"] = "game:blackjack"
 	transient_a["room_canvas"] = transient_room_a
+	transient_a["game_canvas"] = {
+		"game_id": "blackjack",
+		"surface_hit_actions": [
+			{"action": "blackjack_cut_gesture", "index": 0, "enabled": true},
+			{"action": "surface_back", "index": -1, "enabled": true},
+		],
+	}
 	var transient_b := transient_a.duplicate(true)
 	var transient_game_b := _dict(transient_b.get("game", {}))
 	transient_game_b["peek_window_open"] = false
@@ -417,6 +424,12 @@ func _check_hidden_state_redaction() -> void:
 	var transient_room_b := _dict(transient_b.get("room_canvas", {}))
 	transient_room_b["hovered_object_id"] = "casino_fixture:cage_counter"
 	transient_b["room_canvas"] = transient_room_b
+	transient_b["game_canvas"] = {
+		"game_id": "blackjack",
+		"surface_hit_actions": [
+			{"action": "surface_back", "index": -1, "enabled": true},
+		],
+	}
 	var transient_public_a := PublicObservation.sanitize(transient_a)
 	var transient_public_b := PublicObservation.sanitize(transient_b)
 	_check(bool(_dict(transient_public_a.get("game", {})).get("peek_window_open", false)), "Live public observation removed the dealer peek-window decision cue.")
@@ -424,6 +437,17 @@ func _check_hidden_state_redaction() -> void:
 	var transient_transition := PublicObservation.transition_summary(transient_public_a, transient_public_b, "look", true)
 	_check(str(transient_transition.get("before_fingerprint", "")) == str(transient_transition.get("after_fingerprint", "")), "Animation or pointer ephemera altered deterministic replay identity.")
 	_check(not bool(transient_transition.get("public_state_changed", true)), "Animation or pointer ephemera reported a seeded public-state transition.")
+	_check(_array(_dict(transient_public_a.get("game_canvas", {})).get("surface_hit_actions", [])).size() == 2, "Live public observation removed a rendered blackjack pointer gesture.")
+	var stable_action_changed := transient_b.duplicate(true)
+	stable_action_changed["game_canvas"] = {
+		"game_id": "blackjack",
+		"surface_hit_actions": [
+			{"action": "blackjack_hit", "index": 0, "enabled": true},
+			{"action": "surface_back", "index": -1, "enabled": true},
+		],
+	}
+	var stable_action_transition := PublicObservation.transition_summary(transient_public_b, PublicObservation.sanitize(stable_action_changed), "look", true)
+	_check(str(stable_action_transition.get("before_fingerprint", "")) != str(stable_action_transition.get("after_fingerprint", "")), "A stable rendered game action failed to alter deterministic replay identity.")
 
 	var serialized := JSON.stringify(public_a)
 	for secret in [
