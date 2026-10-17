@@ -6826,7 +6826,9 @@ function Assert-HeistAuditKnowledgeSaveRelaunchContinue {
     Close-VisibleChoiceSurface
     $null = Click-Button -Text 'Menu' -Intent 'open the run menu after proving learned Audit knowledge on the hostile revisit'
     $null = Click-RunMenuButton -Text 'Save' -RevealDirection up -Intent 'save the naturally learned Count route before locking the plan'
-    Assert-ExplicitSaveAcknowledged -Milestone 'The Count learned Audit route before plan lock'
+    $null = Assert-ExplicitSaveAcknowledged -Milestone 'The Count learned Audit route before plan lock'
+    $null = Click-Button -Text 'Menu' -Intent 'reopen the run menu after saving the learned Count route'
+    $null = Assert-RunMenuSaveSlotObservation -Observation $script:LastObservation -Milestone 'The Count learned Audit route before plan lock'
     $null = Click-RunMenuButton -Text 'Main Menu' -RevealDirection down -Intent 'return to the main menu after saving the learned Count route'
     if ([string](Get-Value $script:LastObservation @('screen', 'screen') '') -cne 'START') {
         throw 'Main Menu did not visibly return the learned Count checkpoint to START before relaunch.'
