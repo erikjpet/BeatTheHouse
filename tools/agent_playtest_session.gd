@@ -1317,6 +1317,12 @@ func _advance_replay_presentation(frames: int, pause_before: Dictionary) -> Dict
 		app.call("set_application_pause_owner", owner, true)
 	app.call("set_application_pause_owner", "focus_out", false)
 	await process_frame
+	# A deferred run-UI stage can construct pause-aware canvases during the
+	# restoration frame. Reassert the same owners after that frame so those new
+	# surfaces inherit the already-active command-boundary pause before sampling.
+	for owner in suspended_pause_owners:
+		app.call("set_application_pause_owner", owner, true)
+	app.call("set_application_pause_owner", "focus_out", false)
 	var pause_after := _replay_pause_snapshot()
 	var restored_pause_owners := _array(pause_after.get("pause_owners", []))
 	var loading_settled := not _replay_visible_spatial_loading(_public_observation())

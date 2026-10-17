@@ -506,6 +506,7 @@ func _check_bridge_source_contract() -> void:
 	_check(source.contains("func _advance_replay_presentation("), "Bridge is missing its controlled presentation-frame advance boundary.")
 	_check(source.contains("func _replay_visible_spatial_loading(observation: Dictionary) -> bool:"), "Bridge is missing its visible spatial-loading classifier.")
 	_check(source.contains('not bool(screen.get("has_run", false)) or str(screen.get("screen", "")) == "START"'), "Bridge can still mistake dormant start-menu spatial prewarm for visible loading.")
+	_check(source.contains("surfaces inherit the already-active command-boundary pause before sampling"), "Bridge does not resynchronize pause ownership after deferred surfaces are constructed.")
 	_check(source.contains('app.call("set_application_pause_owner", "focus_out", false)'), "Bridge does not normalize volatile OS focus ownership during controlled presentation frames.")
 	_check(source.contains('get("loading", false)'), "Bridge does not hold authenticated command capture until the visible spatial loading state settles.")
 	_check(source.contains('reason = "deterministic replay pause ownership was not restored after input settlement"'), "Bridge does not fail closed when post-input pause ownership is lost.")
