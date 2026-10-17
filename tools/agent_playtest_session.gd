@@ -8,6 +8,7 @@ const Fidelity := preload("res://scripts/tests/foundation/harness_production_fid
 const PublicObservation := preload("res://tools/agent_playtest_public_observation.gd")
 const REPLAY_PAUSE_OWNER := "agent_replay"
 const SHUTDOWN_DRAIN_FRAMES := 12
+const POST_INPUT_SETTLE_FRAMES := 4
 
 var app: Control
 var session_name := "session"
@@ -129,6 +130,7 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 	var reason := ""
 	var detail: Dictionary = {}
 	var should_quit := false
+	var verb := ""
 	if not _replay_ambient_clock_is_frozen():
 		reason = "deterministic replay ambient clock freeze was lost before command"
 	elif not _replay_pause_is_valid(pause_before):
@@ -136,7 +138,7 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 	elif raw.is_empty():
 		reason = "empty command"
 	else:
-		var verb := raw.get_slice(" ", 0).to_lower()
+		verb = raw.get_slice(" ", 0).to_lower()
 		var argument := raw.substr(verb.length()).strip_edges()
 		match verb:
 			"look":
@@ -250,6 +252,37 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 				should_quit = true
 			_:
 				reason = "unknown command: %s" % verb
+	if accepted and not should_quit and verb not in ["", "look", "wait"]:
+		# Input handlers can queue visible object removal, selection-state changes,
+		# and retained-canvas rebuilds for an unpaused presentation frame. Advance a
+		# fixed cadence with the ambient clock still frozen, then reacquire the exact
+		# command-boundary pause owners before authenticating the post-input state.
+		var settle_pause_owners: Array[String] = []
+		for owner_value in _array(pause_before.get("pause_owners", [])):
+			var owner := str(owner_value).strip_edges()
+			if owner.is_empty() or settle_pause_owners.has(owner):
+				continue
+			settle_pause_owners.append(owner)
+			app.call("set_application_pause_owner", owner, false)
+		await process_frame
+		await _wait_frames(POST_INPUT_SETTLE_FRAMES)
+		for owner in settle_pause_owners:
+			app.call("set_application_pause_owner", owner, true)
+		await process_frame
+		var pause_after_settle := _replay_pause_snapshot()
+		var settle_valid := _replay_pause_is_valid(pause_after_settle) \
+			and _replay_ambient_clock_is_frozen()
+		var restored_settle_owners := _array(pause_after_settle.get("pause_owners", []))
+		for owner in settle_pause_owners:
+			settle_valid = settle_valid and restored_settle_owners.has(owner)
+		if not settle_valid:
+			accepted = false
+			reason = "deterministic replay pause ownership was not restored after input settlement"
+		detail["presentation_settle"] = {
+			"frames": POST_INPUT_SETTLE_FRAMES,
+			"pause_restored": settle_valid,
+			"suspended_pause_owners": settle_pause_owners,
+		}
 	await _wait_frames(4)
 	# Quit still publishes its final authenticated public observation, but it does
 	# not need another framebuffer copy. Skipping that redundant PNG prevents a

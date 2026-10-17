@@ -498,8 +498,11 @@ func _check_bridge_source_contract() -> void:
 	_check(not source.contains("var observable := Fidelity.observable_host_snapshot(app)"), "Bridge still publishes a raw host observation.")
 	_check(not source.contains("var copy := action.duplicate(true)"), "Bridge clickable metadata still duplicates raw action dictionaries.")
 	_check(source.contains('const REPLAY_PAUSE_OWNER := "agent_replay"'), "Bridge is missing deterministic action-boundary pause ownership.")
+	_check(source.contains("const POST_INPUT_SETTLE_FRAMES := 4"), "Bridge is missing its fixed post-input presentation-settle cadence.")
 	_check(source.contains('app.set("continuous_environment_clock_enabled", false)'), "Bridge does not freeze nondeterministic ambient replay clock advancement.")
 	_check(source.contains("_replay_ambient_clock_is_frozen()"), "Bridge commands do not guard their ambient replay clock freeze.")
+	_check(source.contains('verb not in ["", "look", "wait"]'), "Bridge does not distinguish input commands from observation/wait commands before presentation settlement.")
+	_check(source.contains('reason = "deterministic replay pause ownership was not restored after input settlement"'), "Bridge does not fail closed when post-input pause ownership is lost.")
 	_check(source.contains('screen["run_report_visible"]'), "Bridge does not witness the rendered RunReport control.")
 	_check(source.contains('start_menu["seed_text_committed"]'), "Bridge does not distinguish an entered seed from a generated menu seed.")
 	for command in ["focus_field", "set_field", "click_map", "click_choice", "click_inventory"]:
