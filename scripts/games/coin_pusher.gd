@@ -67,8 +67,15 @@ func defers_embedded_action_presentation_refresh(run_state: RunState, _environme
 func host_action_rollback_snapshot(action_id: String, run_state: RunState, environment: Dictionary) -> Dictionary:
 	if action_id != DROP_ACTION or run_state == null or run_state.grand_casino_game_uses_chips(get_id(), environment):
 		return {}
-	var machine := _ensure_live_machine(run_state, environment)
 	var cache_key := _live_key(run_state, environment)
+	var identity_generation := int(_live_machine_generations.get(cache_key, 0))
+	# A compact token is valid only for an already-live, generation-bound cabinet.
+	# In particular, never advertise compact recovery during the exit handoff,
+	# where _ensure_live_machine() intentionally projects durable state without
+	# installing a live cache entry. The host will retain its complete fallback.
+	if not _live_machines.has(cache_key) or identity_generation <= 0:
+		return {}
+	var machine: Dictionary = _live_machines[cache_key]
 	if str(machine.get("variation_id", "quarter_falls")) != "quarter_falls":
 		return {}
 	var shell: Dictionary = {}
@@ -85,7 +92,7 @@ func host_action_rollback_snapshot(action_id: String, run_state: RunState, envir
 		"game_id": get_id(),
 		"action_id": action_id,
 		"cache_key": cache_key,
-		"identity_generation": int(_live_machine_generations.get(cache_key, 0)),
+		"identity_generation": identity_generation,
 		"shell": shell,
 		"motor_target_rate_present": simulation.has("motor_target_rate_fp"),
 		"motor_target_rate_fp": int(simulation.get("motor_target_rate_fp", 0)),
@@ -164,6 +171,11 @@ func _record_host_rollback_failure(snapshot: Dictionary, current_key: String, re
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
+	# A lifecycle reset can abandon the final rendered exit handoff after its live
+	# cabinet has already been removed. A new authoritative entry owns a fresh
+	# session and must never inherit that stale exit-only latch.
+	if _exit_settle_active:
+		cancel_chunked_exit_settle()
 	# Surface entry is presentation-only. Machine normalization, rumor updates,
 	# and staff-watch consequences belong to generation/action boundaries.
 	var busy := _machine_busy(environment)
@@ -988,6 +1000,14 @@ func finalize_chunked_exit_settle(run_state: RunState, environment: Dictionary) 
 	var key := _live_key(run_state, environment)
 	_live_machines.erase(key)
 	_live_machine_generations.erase(key)
+	_exit_settle_active = false
+
+
+func cancel_chunked_exit_settle() -> void:
+	# Cancellation crosses a run/session authority boundary, so no transient
+	# cabinet from the abandoned session may survive into the replacement run.
+	_live_machines.clear()
+	_live_machine_generations.clear()
 	_exit_settle_active = false
 
 

@@ -23,6 +23,45 @@ function Use-ConsoleGodot {
     return $Path
 }
 
+function Invoke-SoakGodot {
+    param([string]$Executable)
+    $startInfo = New-Object System.Diagnostics.ProcessStartInfo
+    $startInfo.FileName = $Executable
+    $startInfo.Arguments = "--headless --path `"$root`" --script `"res://tools/foundation_soak_probe.gd`""
+    $startInfo.UseShellExecute = $false
+    $startInfo.RedirectStandardOutput = $true
+    $startInfo.RedirectStandardError = $true
+    $startInfo.CreateNoWindow = $true
+    $process = New-Object System.Diagnostics.Process
+    $process.StartInfo = $startInfo
+    [void]$process.Start()
+    $stdoutTask = $process.StandardOutput.ReadToEndAsync()
+    $stderrTask = $process.StandardError.ReadToEndAsync()
+    $process.WaitForExit()
+    [void]$stdoutTask.Wait(5000)
+    [void]$stderrTask.Wait(5000)
+    $stdoutText = $stdoutTask.Result
+    $stderrText = $stderrTask.Result
+    if (-not [string]::IsNullOrEmpty($stdoutText)) {
+        [Console]::Out.Write($stdoutText)
+    }
+    if (-not [string]::IsNullOrEmpty($stderrText)) {
+        [Console]::Error.Write($stderrText)
+    }
+    $issues = @($stderrText -split "`r?`n" | Where-Object {
+        $_ -match '^\s*(SCRIPT ERROR|ERROR|WARNING):'
+    })
+    $exitCode = [int]$process.ExitCode
+    if ($exitCode -eq 0 -and $issues.Count -gt 0) {
+        $exitCode = 127
+        [Console]::Error.WriteLine("Foundation soak rejected $($issues.Count) Godot stderr issue line(s) despite native exit code 0.")
+    }
+    return [pscustomobject]@{
+        ExitCode = $exitCode
+        StderrIssues = $issues
+    }
+}
+
 if ($env:GODOT_BIN) {
     $godot = $env:GODOT_BIN
 }
@@ -64,8 +103,8 @@ try {
     $env:BTH_DEVELOPER_PLACEMENT_PATH = Join-Path $root (".tmp\foundation_soak_isolated_developer_placements_{0}.json" -f $PID)
     $env:BTH_PROJECT_PLACEMENT_PATH = ''
     $consoleGodot = Use-ConsoleGodot $godot
-    & $consoleGodot --headless --path $root --script "res://tools/foundation_soak_probe.gd"
-    exit $LASTEXITCODE
+    $soakResult = Invoke-SoakGodot -Executable $consoleGodot
+    exit $soakResult.ExitCode
 }
 finally {
     $env:BTH_SOAK_MINUTES = $oldMinutes

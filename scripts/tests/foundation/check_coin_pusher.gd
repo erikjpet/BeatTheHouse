@@ -2603,6 +2603,20 @@ func _check_pusher_v3_production_integration_boundaries(library: ContentLibrary,
 			or var_to_bytes(rollback_environment.get("game_states", {})) != durable_rollback_before \
 			or live_rollback_after != live_rollback_before:
 		failures.append("Coin Pusher compact host rollback did not restore the exact durable/live DROP boundary: supported=%s applied=%s restored=%s durable=%s live=%s." % [bool(rollback_token.get("supported", false)), rollback_applied, rollback_restored, var_to_bytes(rollback_environment.get("game_states", {})) == durable_rollback_before, JSON.stringify(live_rollback_after)])
+	# A lifecycle transition can interrupt the final presentation frame after the
+	# live cache was removed but before finalization cleared the exit latch. Such a
+	# projection cannot claim a generation-bound compact token, and the next
+	# authoritative entry must repair the abandoned transient lifecycle.
+	rollback_game.set("_exit_settle_active", true)
+	(rollback_game.get("_live_machines") as Dictionary).clear()
+	(rollback_game.get("_live_machine_generations") as Dictionary).clear()
+	var stale_exit_token := rollback_game.host_action_rollback_snapshot("drop_quarter", run_state, rollback_environment)
+	rollback_game.enter(run_state, rollback_environment)
+	var recovered_live: Dictionary = rollback_game.get("_live_machines")
+	var recovered_generations: Dictionary = rollback_game.get("_live_machine_generations")
+	if bool(stale_exit_token.get("supported", false)) or bool(rollback_game.get("_exit_settle_active")) \
+			or not recovered_live.has(rollback_key) or int(recovered_generations.get(rollback_key, 0)) <= 0:
+		failures.append("Coin Pusher stale exit lifecycle advertised an invalid compact token or did not recover on authoritative entry: token=%s active=%s live=%s generations=%s." % [JSON.stringify(stale_exit_token), bool(rollback_game.get("_exit_settle_active")), JSON.stringify(recovered_live.keys()), JSON.stringify(recovered_generations)])
 
 
 func _check_pusher_v3_items_alarm_and_rumor(library: ContentLibrary, failures: Array) -> void:

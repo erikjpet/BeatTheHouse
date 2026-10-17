@@ -534,6 +534,7 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 				# must be able to cancel safely.
 				probe.set("current_game", game)
 				probe.set("game_exit_settle_active", true)
+				game.set("_exit_settle_active", true)
 				probe.call_deferred("_finish_chunked_game_exit")
 				await process_frame
 				var lifecycle_exit_started := bool(probe.get("game_exit_settle_active"))
@@ -542,6 +543,7 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 					await process_frame
 				lifecycle_abort_passed = lifecycle_exit_started \
 						and not bool(probe.get("game_exit_settle_active")) \
+						and not bool(game.get("_exit_settle_active")) \
 						and probe.get("current_game") == null \
 						and probe.get("run_state") == null \
 						and str(probe.get("current_screen")) == "START"

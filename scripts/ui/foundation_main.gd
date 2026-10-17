@@ -2888,6 +2888,13 @@ func _reset_game_surface_runtime_state(checkpoint_source: bool = true) -> void:
 	_invalidate_deferred_embedded_action_refresh()
 	if checkpoint_source:
 		_checkpoint_current_game_surface_ui_state()
+	# A broader lifecycle transition owns this reset. Cancel a partially rendered
+	# chunked exit synchronously, before current_game/run_state can be replaced and
+	# before another session can enter the cached module on the same frame.
+	if game_exit_settle_active:
+		if current_game != null:
+			current_game.cancel_chunked_exit_settle()
+		game_exit_settle_active = false
 	if current_game != null:
 		current_game.set_transient_state_key_context("")
 	if game_surface_canvas != null:
