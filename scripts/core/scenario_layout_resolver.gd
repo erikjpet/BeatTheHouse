@@ -697,6 +697,7 @@ static func _interaction_shell_for_target(identity: String, scenes: Dictionary, 
 		return {
 			"owner_namespace": str(semantic.get("owner_namespace", "")),
 			"stable_object_id": str(semantic.get("stable_object_id", "")),
+			"presentation_object_id": identity,
 			"label": str(semantic.get("label", "Room contact")),
 			"prompt": str(semantic.get("description", "Choose an action.")),
 			"enabled": bool(semantic.get("enabled", true)),

@@ -106,7 +106,15 @@ class AuditFoundationTravelHost:
 		return ""
 
 	func _travel_target_ids() -> Array:
-		return view_model_script.travel_target_ids(self)
+		var production_ids: Array = view_model_script.travel_target_ids(self)
+		var flags_value: Variant = run_state.current_environment.get("local_narrative_flags", {})
+		var flags: Dictionary = flags_value if typeof(flags_value) == TYPE_DICTIONARY else {}
+		var local_room_ids: Array = flags.get("casino_room_targets", []) if typeof(flags.get("casino_room_targets", [])) == TYPE_ARRAY else []
+		var world_ids: Array = []
+		for target_id in production_ids:
+			if not local_room_ids.has(target_id):
+				world_ids.append(target_id)
+		return world_ids
 
 	func _travel_choice(target_id: String, known_target_ids: Array) -> Dictionary:
 		return view_model_script.travel_choice(self, target_id, known_target_ids)
@@ -119,6 +127,7 @@ var travel_records: Array = []
 var run_summaries: Array = []
 var failures: Array = []
 var warnings: Array = []
+var travel_choice_routes: Dictionary = {}
 
 
 func _init() -> void:
@@ -282,6 +291,7 @@ func _unique_seed(prefix: String, run_index: int, entropy: RandomNumberGenerator
 func _simulate_run(run_index: int, seed: String, visits_per_run: int, attempt_id: String, require_attempt_id: bool) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new(seed)
+	travel_choice_routes = {}
 	var crew_state_before_json := _crew_state_json(run_state)
 	var path_rng := run_state.create_rng("environment_generation_audit_path")
 	var seed_binding := _seed_binding(run_state, seed)
@@ -1176,8 +1186,8 @@ func _runtime_scenario_layout_receipt(environment: Dictionary, live_semantic_rea
 			and _copy_dict(sealed.get("small_screen_rect", {})).is_empty()
 		var sealed_geometry_valid := sealed_room_geometry_valid or sealed_overflow_valid
 		var base_geometry_matches_seal := base_record_sealed \
-			and JSON.stringify(base_record.get("normalized_rect", {})) == JSON.stringify(sealed.get("normalized_hit_rect", {})) \
-			and JSON.stringify(base_record.get("small_screen_rect", {})) == JSON.stringify(sealed.get("small_screen_rect", {}))
+			and _serialized_rects_match(base_record.get("normalized_rect", {}), sealed.get("normalized_hit_rect", {})) \
+			and _serialized_rects_match(base_record.get("small_screen_rect", {}), sealed.get("small_screen_rect", {}))
 		# The layout audit's reachable_interaction_ids covers semantic interactions
 		# only. Ordinary/base controls have a separate closed reachability proof:
 		# their exact stamped record must match the sealed room/overflow authority.
@@ -1366,6 +1376,28 @@ func _serialized_rect_has_positive_area(rect: Dictionary) -> bool:
 	return is_finite(x) and is_finite(y) and is_finite(width) and is_finite(height) \
 		and x >= 0.0 and y >= 0.0 and width > 0.0 and height > 0.0 \
 		and x + width <= 1.00001 and y + height <= 1.00001
+
+
+func _serialized_rects_match(left_value: Variant, right_value: Variant) -> bool:
+	if typeof(left_value) != TYPE_DICTIONARY or typeof(right_value) != TYPE_DICTIONARY:
+		return false
+	var left: Dictionary = left_value
+	var right: Dictionary = right_value
+	if left.is_empty() or right.is_empty():
+		return left.is_empty() and right.is_empty()
+	if left.size() != 4 or right.size() != 4:
+		return false
+	for key in ["x", "y", "w", "h"]:
+		if not left.has(key) or not right.has(key) \
+				or typeof(left.get(key)) not in [TYPE_INT, TYPE_FLOAT] \
+				or typeof(right.get(key)) not in [TYPE_INT, TYPE_FLOAT]:
+			return false
+		var left_number := float(left.get(key))
+		var right_number := float(right.get(key))
+		if not is_finite(left_number) or not is_finite(right_number) \
+				or not is_equal_approx(left_number, right_number):
+			return false
+	return true
 
 
 func _native_diagnostic_totals() -> Dictionary:
@@ -2005,8 +2037,25 @@ func _travel_choices(run_state: RunState, include_hidden: bool) -> Array:
 			"travel_lock_remaining": int(production_choice.get("travel_lock_remaining", 0)),
 			"availability_turn": int(production_choice.get("availability_turn", -1)),
 		}
+		var exact_route := _copy_dict(production_choice.get("route", {}))
+		if exact_route.is_empty():
+			var missing_route_message := "Production travel choice omitted its exact route for %s at %s." % [
+				str(target_id), run_state.current_world_node_id()
+			]
+			if not failures.has(missing_route_message):
+				failures.append(missing_route_message)
+		else:
+			travel_choice_routes[_travel_choice_route_key(run_state, choice)] = exact_route
 		choices.append(choice)
 	return choices
+
+
+func _travel_choice_route_key(run_state: RunState, choice: Dictionary) -> String:
+	return "%s|%s|%s" % [
+		str(run_state.current_environment.get("id", "")),
+		run_state.current_world_node_id(),
+		_json_sha256(choice),
+	]
 
 
 func _current_travel_lock_remaining(run_state: RunState) -> int:
@@ -2027,12 +2076,18 @@ func _travel_to(
 	var target_id := str(choice.get("id", ""))
 	var source_id := run_state.current_world_node_id()
 	var admitted_targets_before := _travel_target_ids(run_state)
-	var route := generator.world_route_for_target(run_state, target_id)
+	var route := _copy_dict(travel_choice_routes.get(_travel_choice_route_key(run_state, choice), {}))
+	if route.is_empty():
+		failures.append("Selected production travel choice lost its exact route before confirmation for %s at %s." % [target_id, source_id])
 	var previous_environment := run_state.current_environment.duplicate(true)
 	var previous_bankroll := run_state.bankroll
 	var previous_heat := run_state.suspicion_level()
 	var route_risk := run_state.travel_route_risk(route, target_id)
 	var travel_heat := run_state.begin_travel_suspicion_decay(route, target_id)
+	# Contextual fares belong to departure. Recomputing after destination install
+	# evaluates free_from_archetypes against the wrong room and can charge a route
+	# that the production choice correctly presented as free.
+	var departure_route_status := run_state.travel_route_status(route)
 	var admitted_targets_after_heat := _travel_target_ids(run_state)
 	var arrival := HarnessProductionFidelityScript.travel_and_finalize(
 		# This choice came from the same capped route catalog and availability
@@ -2070,7 +2125,7 @@ func _travel_to(
 		}
 	var travel_decay := run_state.finish_travel_suspicion_decay(travel_heat)
 	var destination_name := str(run_state.current_environment.get("display_name", target_id))
-	var result := _travel_result(run_state, target_id, destination_name, route, previous_environment, run_state.current_environment, travel_decay, route_risk)
+	var result := _travel_result(run_state, target_id, destination_name, route, previous_environment, run_state.current_environment, travel_decay, route_risk, departure_route_status)
 	GameModule.apply_result(run_state, result)
 	return {
 		"ok": true,
@@ -2094,7 +2149,7 @@ func _travel_to(
 		"from_archetype_id": str(previous_environment.get("archetype_id", "")),
 		"to_environment_id": str(run_state.current_environment.get("id", "")),
 		"to_archetype_id": str(run_state.current_environment.get("archetype_id", "")),
-		"cost": int(choice.get("cost", 0)),
+		"cost": int(departure_route_status.get("cost", 0)),
 		"bankroll_before": previous_bankroll,
 		"bankroll_after": run_state.bankroll,
 		"suspicion_before": previous_heat,
@@ -2124,8 +2179,8 @@ func _scenario_state_diagnostic(environment: Dictionary) -> Dictionary:
 	}
 
 
-func _travel_result(run_state: RunState, target_id: String, destination_name: String, route: Dictionary, previous_environment: Dictionary, destination_environment: Dictionary, travel_decay: Dictionary, route_risk: Dictionary) -> Dictionary:
-	var route_status := run_state.travel_route_status(route)
+func _travel_result(run_state: RunState, target_id: String, destination_name: String, route: Dictionary, previous_environment: Dictionary, destination_environment: Dictionary, travel_decay: Dictionary, route_risk: Dictionary, departure_route_status: Dictionary) -> Dictionary:
+	var route_status := departure_route_status.duplicate(true)
 	var cost := int(route_status.get("cost", 0))
 	var suspicion_delta := int(route_status.get("suspicion_delta", 0))
 	var risk_bankroll_delta := int(route_risk.get("bankroll_delta", 0)) if bool(route_risk.get("triggered", false)) else 0
@@ -2246,11 +2301,6 @@ func _qualifying_world_travel_contract_holds(run_state: RunState) -> bool:
 		issues.append("forced closing-time walk presentation is outside this audit")
 	if run_state != null and run_state.travel_option_bonus() != 0:
 		issues.append("the fixed three-card evidence schema requires zero travel-option bonus")
-	if run_state != null:
-		var local_flags_value: Variant = run_state.current_environment.get("local_narrative_flags", {})
-		var local_flags: Dictionary = local_flags_value if typeof(local_flags_value) == TYPE_DICTIONARY else {}
-		if not _string_array(local_flags.get("casino_room_targets", [])).is_empty():
-			issues.append("local casino-room door presentation is outside this world-route audit")
 	if issues.is_empty():
 		return true
 	var node_id := run_state.current_world_node_id() if run_state != null else "missing-run"

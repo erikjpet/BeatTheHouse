@@ -192,7 +192,6 @@ function Get-Q009EnvironmentAuditTravelSourceIssues {
             _local_parent_home_door_travel_choice='return {}'
             _closing_time_blocks_environment_actions='return false'
             _closing_time_walk_fallback_target_id='return ""'
-            _travel_target_ids='return view_model_script.travel_target_ids(self)'
             _travel_choice='return view_model_script.travel_choice(self, target_id, known_target_ids)'
         }
         foreach($methodName in @($hostMethodReturns.Keys)){
@@ -200,6 +199,8 @@ function Get-Q009EnvironmentAuditTravelSourceIssues {
             $expectedReturn=[string]$hostMethodReturns[$methodName]
             if([regex]::Matches($methodExtent,'(?m)^\t\treturn[ \t]+').Count-ne1-or[regex]::Matches($methodExtent,'(?m)^\t\t'+[regex]::Escape($expectedReturn)+'[ \t]*$').Count-ne1){[void]$issues.Add("production Foundation host adapter method was not exact: $methodName")}
         }
+        $hostTargets=Get-Q009GdScriptNestedFunctionExtent $foundationHost '_travel_target_ids'
+        if([regex]::Matches($hostTargets,'view_model_script\.travel_target_ids\(self\)').Count-ne1-or-not$hostTargets.Contains('flags.get("casino_room_targets", [])')-or-not$hostTargets.Contains('if not local_room_ids.has(target_id)')-or[regex]::Matches($hostTargets,'(?m)^\t\treturn world_ids[ \t]*$').Count-ne1){[void]$issues.Add('production Foundation target adapter did not isolate world routes from local casino-room doors')}
         foreach($preloadLine in @(
             'const FoundationTravelViewModelScript := preload("res://scripts/ui/foundation_travel_view_model.gd")',
             'const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")',
@@ -216,14 +217,15 @@ function Get-Q009EnvironmentAuditTravelSourceIssues {
         if([regex]::IsMatch($Source,'(?m)^[ \t]*(?:record\["travel_after_events"\][ \t]*=|var[ \t]+travel_initial[ \t]*:=)[ \t]*_travel_choices\(run_state, true\)')){[void]$issues.Add('qualifying evidence admits hidden routes')}
         if([regex]::Matches($targets,'(?m)^\tif not _qualifying_world_travel_contract_holds\(run_state\):[ \t]*$').Count-ne1-or[regex]::Matches($targets,'(?m)^\t\treturn \[\][ \t]*$').Count-ne1-or[regex]::Matches($targets,'(?m)^\treturn _production_foundation_travel_host\(run_state\)\._travel_target_ids\(\)[ \t]*$').Count-ne1-or[regex]::Matches($targets,'(?m)^\t+return[ \t]+').Count-ne2-or$targets.Contains('WorldMapScript.travel_target_ids')-or$targets.Contains('generator._world_travel_target_ids')){[void]$issues.Add('world target catalog bypasses the exact production Foundation view or its overlay guard')}
         if([regex]::Matches($productionHost,'(?m)^\treturn[ \t]+').Count-ne1-or[regex]::Matches($productionHost,'(?ms)^\treturn AuditFoundationTravelHost\.new\([ \t]*\r?\n\t\tFoundationTravelViewModelScript,[ \t]*\r?\n\t\tWorldMapScript,[ \t]*\r?\n\t\tTutorialFlowScript,[ \t]*\r?\n\t\tAttributeBadgesScript,[ \t]*\r?\n\t\trun_state,[ \t]*\r?\n\t\tgenerator,[ \t]*\r?\n\t\tlibrary[ \t]*\r?\n\t\)[ \t]*$').Count-ne1){[void]$issues.Add('production Foundation travel host was not constructed in exact order from the shipped collaborators and run state')}
-        if([regex]::Matches($choices,'(?m)^\tvar target_ids := _travel_target_ids\(run_state\)[ \t]*$').Count-ne1-or[regex]::Matches($choices,'(?m)^\tvar production_host := _production_foundation_travel_host\(run_state\)[ \t]*$').Count-ne1-or[regex]::Matches($choices,'(?m)^\t\tvar production_choice: Dictionary = production_host\._travel_choice\(str\(target_id\), target_ids\)[ \t]*$').Count-ne1-or[regex]::Matches($choices,'(?m)^\t\t\t"enabled": bool\(production_choice\.get\("enabled", false\)\),[ \t]*$').Count-ne1-or$choices.Contains('generator._world_target_is_available')){[void]$issues.Add('travel choice projection bypasses the production Foundation choice')}
+        if([regex]::Matches($choices,'(?m)^\tvar target_ids := _travel_target_ids\(run_state\)[ \t]*$').Count-ne1-or[regex]::Matches($choices,'(?m)^\tvar production_host := _production_foundation_travel_host\(run_state\)[ \t]*$').Count-ne1-or[regex]::Matches($choices,'(?m)^\t\tvar production_choice: Dictionary = production_host\._travel_choice\(str\(target_id\), target_ids\)[ \t]*$').Count-ne1-or[regex]::Matches($choices,'(?m)^\t\t\t"enabled": bool\(production_choice\.get\("enabled", false\)\),[ \t]*$').Count-ne1-or[regex]::Matches($choices,'(?m)^\t\t\ttravel_choice_routes\[_travel_choice_route_key\(run_state, choice\)\] = exact_route[ \t]*$').Count-ne1-or$choices.Contains('generator._world_target_is_available')){[void]$issues.Add('travel choice projection bypasses the production Foundation choice or loses its exact route')}
         foreach($required in @(
             'not run_state.has_world_map()','run_state.is_tutorial_run()','run_state.narrative_flags.get("_meta_home_session", false)','run_state.delivery_has_active_run()',
-            'run_state.closing_time_forced_travel_required()','run_state.travel_option_bonus() != 0',
-            '_string_array(local_flags.get("casino_room_targets", [])).is_empty()'
+            'run_state.closing_time_forced_travel_required()','run_state.travel_option_bonus() != 0'
         )){if(-not$overlay.Contains($required)){[void]$issues.Add("qualifying overlay guard omitted: $required")}}
         if([regex]::Matches($overlay,'(?m)^\t\t\tfailures\.append\(message\)[ \t]*$').Count-ne1-or[regex]::Matches($overlay,'(?m)^\t+return[ \t]+').Count-ne2-or[regex]::Matches($overlay,'(?m)^\t\treturn true[ \t]*$').Count-ne1-or[regex]::Matches($overlay,'(?m)^\treturn false[ \t]*$').Count-ne1){[void]$issues.Add('overlay violation is not bound to the exact qualifying failure control flow')}
         if([regex]::Matches($travel,'_travel_target_ids\(run_state\)').Count-ne2){[void]$issues.Add('pre/post-heat travel admission witnesses bypass the constrained production target catalog')}
+        if([regex]::Matches($travel,'(?m)^\tvar route := _copy_dict\(travel_choice_routes\.get\(_travel_choice_route_key\(run_state, choice\), \{\}\)\)[ \t]*$').Count-ne1-or$travel.Contains('generator.world_route_for_target')){[void]$issues.Add('travel confirmation regenerated or lost the exact production-selected route')}
+        if([regex]::Matches($travel,'(?m)^\tvar departure_route_status := run_state\.travel_route_status\(route\)[ \t]*$').Count-ne1-or[regex]::Matches($travel,'_travel_result\(run_state, target_id, destination_name, route, previous_environment, run_state\.current_environment, travel_decay, route_risk, departure_route_status\)').Count-ne1){[void]$issues.Add('travel confirmation did not bind the fare to the departure context')}
     }catch{[void]$issues.Add($_.Exception.Message)}
     return @($issues)
 }
@@ -2456,6 +2458,12 @@ function New-ProfileEnvironment {
     $profileIdentity=New-Q009ExactOwnedDirectory $ProfileRoot
     $paths=[ordered]@{APPDATA=(Join-Path $ProfileRoot 'AppData\Roaming');LOCALAPPDATA=(Join-Path $ProfileRoot 'AppData\Local');XDG_DATA_HOME=(Join-Path $ProfileRoot 'xdg\data');XDG_CACHE_HOME=(Join-Path $ProfileRoot 'xdg\cache');XDG_CONFIG_HOME=(Join-Path $ProfileRoot 'xdg\config')}
     foreach($path in $paths.Values){Assert-NoReparsePathChain $OwnedRoot $path;[void][IO.Directory]::CreateDirectory($path);Assert-NoReparsePathChain $OwnedRoot $path}
+    # Windows resolves Godot's user:// root through the Known Folders API, which
+    # is not guaranteed to honor a child process's APPDATA override. Pin the
+    # developer-only placement files explicitly so a machine-local authoring
+    # overlay can never alter release qualification.
+    $paths.BTH_DEVELOPER_PLACEMENT_PATH=Join-Path $ProfileRoot 'developer_environment_placements.json'
+    $paths.BTH_DEVELOPER_PLACEMENT_REPORT_PATH=Join-Path $ProfileRoot 'environment_slot_placement_changes.json'
     $owner=[ordered]@{run_context_sha256=[string]$RunContext.context_sha256;profile_root_identity=$profileIdentity;environment_keys=[object[]]@($paths.Keys)}
     $chain=New-Q009OwnedChildManifestChainHead -RootPath $ProfileRoot -RootIdentity $profileIdentity -AttemptId ([string]$RunContext.attempt_id) -Boundary 'profile_initialized_before_process' -OwnerKind profile_creator -OwnerReceipt $owner
     return [ordered]@{environment=$paths;root_path=[IO.Path]::GetFullPath($ProfileRoot).TrimEnd('\','/');root_identity=$profileIdentity;initial_manifest_chain=$chain}
@@ -3350,6 +3358,9 @@ function Invoke-ValidateOnlySelfTest {
             Assert-LauncherContract (-not[regex]::IsMatch($runtimeSource,'\.WaitForExit\(\s*\)')) 'unbounded wait present'
             Assert-LauncherContract (-not[regex]::IsMatch($runtimeSource,'(?im)^\s*Remove-Item\b')) 'path-based Remove-Item present in qualifying runtime'
             $runtimeTokens=$null;$runtimeParseErrors=$null;$runtimeAst=[Management.Automation.Language.Parser]::ParseInput($runtimeSource,[ref]$runtimeTokens,[ref]$runtimeParseErrors);Assert-LauncherContract ($runtimeParseErrors.Count-eq0) 'runtime source without self-test did not parse'
+            $profileFunctions=@($runtimeAst.FindAll({param($node)$node-is[Management.Automation.Language.FunctionDefinitionAst]-and$node.Name-ceq'New-ProfileEnvironment'},$true));Assert-LauncherContract ($profileFunctions.Count-eq1) 'profile environment function extent was not unique'
+            $profileSource=$profileFunctions[0].Extent.Text
+            foreach($profilePin in @('$paths.BTH_DEVELOPER_PLACEMENT_PATH=Join-Path $ProfileRoot ''developer_environment_placements.json''','$paths.BTH_DEVELOPER_PLACEMENT_REPORT_PATH=Join-Path $ProfileRoot ''environment_slot_placement_changes.json''')){Assert-LauncherContract ([regex]::Matches($profileSource,[regex]::Escape($profilePin)).Count-eq1) "profile environment omitted exact developer-placement isolation: $profilePin"}
             $capabilityFunctions=@($runtimeAst.FindAll({param($node)$node-is[Management.Automation.Language.FunctionDefinitionAst]-and$node.Name-ceq'Invoke-Q009SentinelFilesystemCapabilityProbe'},$true));Assert-LauncherContract ($capabilityFunctions.Count-eq1) 'sentinel capability function extent was not unique'
             $capabilityExtent=$capabilityFunctions[0].Extent;$runtimeWithoutCapability=$runtimeSource.Substring(0,$capabilityExtent.StartOffset)+$runtimeSource.Substring($capabilityExtent.EndOffset)
             Assert-LauncherContract (-not[regex]::IsMatch($runtimeWithoutCapability,'(?i)\[(?:System\.)?IO\.(?:File|Directory)\]::Delete\s*\(')) 'path-based File/Directory delete escaped the isolated sentinel-denial capability hostile'

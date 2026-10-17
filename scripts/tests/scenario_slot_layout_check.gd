@@ -70,6 +70,14 @@ func _init() -> void:
 
 
 func _run() -> void:
+	# Keep the runtime sweep bound to committed placement authority. On Windows,
+	# Godot may resolve user:// through Known Folders even when a parent process
+	# supplies an isolated APPDATA directory.
+	var isolated_user_path := ProjectSettings.globalize_path("res://.tmp/scenario_slot_layout_check/runtime_empty_user.json")
+	if FileAccess.file_exists(isolated_user_path):
+		DirAccess.remove_absolute(isolated_user_path)
+	OS.set_environment(DeveloperPlacementStoreScript.USER_PATH_ENV, isolated_user_path)
+	DeveloperPlacementStoreScript.reload()
 	var placement := _read_json(PLACEMENT_PATH)
 	var authority := _read_json(LAYOUT_PATH)
 	var maps := _rows_by_id(_array(placement.get("maps", [])), "id")
@@ -98,6 +106,7 @@ func _run() -> void:
 	_check_terminal_action_alias_lifecycle()
 	_check_fail_closed_binding()
 	_check_route_endpoint_edge_contact_tolerance()
+	_check_gas_station_tour_bus_access_lane()
 	_check_complete_manual_save_and_export(authority)
 
 	_check(base_context_count == 20, "runtime sweep did not visit all 20 reachable base contexts")
@@ -729,6 +738,22 @@ func _check_attached_action_host_selection() -> void:
 		tray_target == tray_identity,
 		"Lift First Tray attached to %s instead of the tangible Carrying Tray" % tray_target
 	)
+	var tray_shell := ScenarioLayoutResolverScript._interaction_shell_for_target(
+		tray_identity,
+		{
+			tray_identity: {
+				"owner_namespace": "scenario",
+				"stable_object_id": "bar_payday_rush_carrying_tray",
+				"label": "Carrying tray",
+			},
+		},
+		{},
+		[]
+	)
+	_check(
+		str(tray_shell.get("presentation_object_id", "")) == tray_identity,
+		"An abstract action host shell did not retain its exact scenario presentation identity."
+	)
 
 	var darts_surface := EnvironmentPlacementScript.surface_map(
 		_environment_for_map("bar", "bar_darts_league_night")
@@ -1009,6 +1034,22 @@ func _check_route_endpoint_edge_contact_tolerance() -> void:
 		ScenarioLayoutResolverScript._expanded_overlaps("scenario::patrol_officer", actor_small, real_overlap)
 			and ScenarioLayoutResolverScript._overlap_identities("scenario::patrol_officer", actor_rect, actor_small, real_overlap) == ["scenario::back_alley_cruiser_parked_exit"],
 		"meaningful expanded route/exit overlap disappeared from layout audit diagnostics"
+	)
+
+
+func _check_gas_station_tour_bus_access_lane() -> void:
+	var surface := EnvironmentPlacementScript.surface_map(
+		_environment_for_map("gas_station_casino", "gas_station_tour_bus_stop")
+	)
+	var scenario_slots := _slots_by_id(_array(surface.get("scenario_slots", [])))
+	var event_slots := _slots_by_id(_array(surface.get("event_slots", [])))
+	var driver := _dict(scenario_slots.get("scenario.local_standing_person_1", {}))
+	var side_door := _dict(event_slots.get("event.doorway_1", {}))
+	var driver_rect := EnvironmentSlotBinderScript.rect_from_binding({"slot": driver})
+	var door_rect := EnvironmentSlotBinderScript.rect_from_binding({"slot": side_door})
+	_check(
+		driver_rect.has_area() and door_rect.has_area() and not driver_rect.intersects(door_rect),
+		"Gas Station tour-bus driver overlaps the side-door interaction authority."
 	)
 
 
