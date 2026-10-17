@@ -397,6 +397,33 @@ func _check_hidden_state_redaction() -> void:
 	var private_transition := PublicObservation.transition_summary(public_a, public_b, "look", true)
 	_check(str(private_transition.get("before_fingerprint", "")) == str(private_transition.get("after_fingerprint", "")), "Private twin observations altered the authenticated public trace.")
 	_check(not bool(private_transition.get("public_state_changed", true)), "Private twin observations reported a public transition.")
+	var transient_a := hidden_a.duplicate(true)
+	var transient_game_a := _dict(transient_a.get("game", {}))
+	transient_game_a["peek_window_open"] = true
+	transient_a["game"] = transient_game_a
+	var transient_spatial_a := _dict(transient_a.get("spatial", {}))
+	transient_spatial_a["hover_target_id"] = "game:blackjack"
+	transient_a["spatial"] = transient_spatial_a
+	var transient_room_a := _dict(transient_a.get("room_canvas", {}))
+	transient_room_a["hovered_object_id"] = "game:blackjack"
+	transient_a["room_canvas"] = transient_room_a
+	var transient_b := transient_a.duplicate(true)
+	var transient_game_b := _dict(transient_b.get("game", {}))
+	transient_game_b["peek_window_open"] = false
+	transient_b["game"] = transient_game_b
+	var transient_spatial_b := _dict(transient_b.get("spatial", {}))
+	transient_spatial_b["hover_target_id"] = "casino_fixture:cage_counter"
+	transient_b["spatial"] = transient_spatial_b
+	var transient_room_b := _dict(transient_b.get("room_canvas", {}))
+	transient_room_b["hovered_object_id"] = "casino_fixture:cage_counter"
+	transient_b["room_canvas"] = transient_room_b
+	var transient_public_a := PublicObservation.sanitize(transient_a)
+	var transient_public_b := PublicObservation.sanitize(transient_b)
+	_check(bool(_dict(transient_public_a.get("game", {})).get("peek_window_open", false)), "Live public observation removed the dealer peek-window decision cue.")
+	_check(str(_dict(transient_public_a.get("spatial", {})).get("hover_target_id", "")) == "game:blackjack", "Live public observation removed the pointer hover target.")
+	var transient_transition := PublicObservation.transition_summary(transient_public_a, transient_public_b, "look", true)
+	_check(str(transient_transition.get("before_fingerprint", "")) == str(transient_transition.get("after_fingerprint", "")), "Animation or pointer ephemera altered deterministic replay identity.")
+	_check(not bool(transient_transition.get("public_state_changed", true)), "Animation or pointer ephemera reported a seeded public-state transition.")
 
 	var serialized := JSON.stringify(public_a)
 	for secret in [

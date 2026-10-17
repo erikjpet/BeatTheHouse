@@ -85,8 +85,8 @@ static func transition_summary(before_value: Variant, after_value: Variant, comm
 	# Authenticate the complete allowlisted player surface. The canonical
 	# checkpoint remains the compact persistence comparison, while the trace must
 	# notice public dialogue, action, card, feedback, and map changes too.
-	var before_fingerprint := fingerprint(before_observation)
-	var after_fingerprint := fingerprint(after_observation)
+	var before_fingerprint := trace_fingerprint(before_observation)
+	var after_fingerprint := trace_fingerprint(after_observation)
 	var before_economy_rendered := bool(before.get("bankroll_rendered", false)) \
 		and bool(before.get("chips_rendered", false)) \
 		and bool(before.get("heat_rendered", false))
@@ -113,6 +113,29 @@ static func transition_summary(before_value: Variant, after_value: Variant, comm
 
 static func fingerprint(value: Variant) -> String:
 	return JSON.stringify(_canonical(value)).sha256_text()
+
+
+static func trace_fingerprint(value: Variant) -> String:
+	return fingerprint(_trace_projection(value))
+
+
+static func _trace_projection(value: Variant) -> Dictionary:
+	var result := _dict(value).duplicate(true)
+	# Preserve live observations for input decisions, but do not make replay
+	# identity depend on the cursor's resting target or a continuously animated
+	# blackjack gaze phase. Neither field is seeded state, and both can differ at
+	# the same semantic action boundary solely because rendered frames take a
+	# different amount of wall-clock time.
+	var spatial := _dict(result.get("spatial", {}))
+	spatial.erase("hover_target_id")
+	result["spatial"] = spatial
+	var room_canvas := _dict(result.get("room_canvas", {}))
+	room_canvas.erase("hovered_object_id")
+	result["room_canvas"] = room_canvas
+	var game := _dict(result.get("game", {}))
+	game.erase("peek_window_open")
+	result["game"] = game
+	return result
 
 
 static func _screen(source: Dictionary) -> Dictionary:
