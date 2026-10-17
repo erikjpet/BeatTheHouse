@@ -5,6 +5,7 @@ extends SceneTree
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
+const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
 const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
@@ -613,6 +614,7 @@ func _arrival_receipt(
 	var installed_archetype_id := str(installed_identity_shape.get("archetype_id", "")).strip_edges()
 	var installed_world_node_id := str(installed_identity_shape.get("world_node_id", "")).strip_edges()
 	var installed_scenario_id := str(installed_identity_shape.get("scenario_id", "")).strip_edges()
+	var installed_active_scenario_id := EnvironmentPlacementScript.active_scenario_id(installed_environment)
 	var travel_environment_id := str(travel_identity_shape.get("environment_id", "")).strip_edges()
 	var travel_archetype_id := str(travel_identity_shape.get("archetype_id", "")).strip_edges()
 	var travel_world_node_id := str(travel_identity_shape.get("world_node_id", "")).strip_edges()
@@ -666,7 +668,7 @@ func _arrival_receipt(
 	if finalization_inactive:
 		runtime_layout_valid = not bool(runtime_layout.get("semantic_ready", false)) \
 			and not bool(runtime_layout.get("live_semantic_ready", false)) \
-			and installed_scenario_id.is_empty() \
+			and installed_active_scenario_id.is_empty() \
 			and str(runtime_layout.get("semantic_digest", "")).is_empty() \
 			and str(runtime_layout.get("semantic_action_digest", "")).is_empty() \
 			and int(runtime_layout.get("authority_count", 0)) == 0 \
@@ -865,7 +867,7 @@ func _finalization_receipt(finalization: Dictionary, _environment: Dictionary) -
 func _environment_projection_binding(environment: Dictionary) -> Dictionary:
 	var identity_shape := _environment_identity_shape(environment)
 	var identity_shape_valid := not identity_shape.is_empty()
-	var scenario_id := str(identity_shape.get("scenario_id", "")).strip_edges()
+	var scenario_id := EnvironmentPlacementScript.active_scenario_id(environment)
 	var semantic_ready := bool(environment.get("scenario_semantic_ready", false))
 	var inventory_version := int(environment.get("scenario_semantic_inventory_version", 0))
 	var semantic_digest := str(environment.get("scenario_semantic_digest", ""))
@@ -1017,7 +1019,7 @@ func _independent_live_projection_binding(run_state: RunState) -> Dictionary:
 	if identity_shape.is_empty():
 		return {"active": false, "canonical_valid": false, "fingerprint": ""}
 	if not run_state._scenario_semantic_ready():
-		var inactive_valid := str(identity_shape.get("scenario_id", "")).strip_edges().is_empty()
+		var inactive_valid := EnvironmentPlacementScript.active_scenario_id(environment).is_empty()
 		return {
 			"active": false,
 			"canonical_valid": inactive_valid,
@@ -1992,6 +1994,16 @@ func _pick_travel_choice(run_state: RunState, path_rng: RngStream) -> Dictionary
 			grand_choices.append(choice)
 	if not grand_choices.is_empty():
 		return (grand_choices[0] as Dictionary).duplicate(true)
+	# A low-bankroll no-game audit must conserve its remaining travel budget so
+	# it can exercise the full six-arrival contract. This selects only an exact,
+	# enabled production choice; normal player travel rules are unchanged.
+	if run_state.bankroll <= 30:
+		var cheapest: Dictionary = enabled[0]
+		for choice_value in enabled:
+			var candidate: Dictionary = choice_value
+			if int(candidate.get("cost", 0)) < int(cheapest.get("cost", 0)):
+				cheapest = candidate
+		return cheapest.duplicate(true)
 	return (enabled[path_rng.randi_range(0, enabled.size() - 1)] as Dictionary).duplicate(true)
 
 

@@ -56,8 +56,8 @@ $foundationTravelPath = Join-Path $projectRoot ($foundationTravelRelativePath.Re
 $tutorialFlowPath = Join-Path $projectRoot ($tutorialFlowRelativePath.Replace('/', '\'))
 $attributeBadgesPath = Join-Path $projectRoot ($attributeBadgesRelativePath.Replace('/', '\'))
 $projectCacheRoot = Join-Path $projectRoot '.godot'
-$expectedManifestSha256 = 'AC351C1CC81CA202291D6E7E653461EEF8CCB564478B8E6014817DEA28671C6E'
-$expectedManifestBlob = '71c8ba5485f8466e63851dc348be25183997fcf1'
+$expectedManifestSha256 = 'A2298B05C92D820782421A0DA6CB85AC6AF903557A73F4416C4B85E7150058B6'
+$expectedManifestBlob = '8c032dba485297d9b19b000b90141dd347483833'
 $generationSeedPrefix = 'RW06-1-GENERATION-100-0060'
 $inactiveIndependentProjectionFingerprint = '78b558bd2357fbe7ad52804fb3af1b8664b23db096b1deb22d215dde25b152bf'
 
@@ -72,12 +72,12 @@ $historicalRows = @(
     'POSTFIX-UIENV-073-140575119|bar|bar_fight_night|scenario_fight_night_swing_bet||scenario::bar_fight_night_safe_exit|',
     'POSTFIX-UIENV-093-397681310|bar|bar_fight_night|scenario_fight_night_swing_bet||scenario::bar_fight_night_safe_exit|',
     'POSTFIX-UIENV-098-1674379668|bar|bar_fight_night|scenario_fight_night_swing_bet||scenario::bar_fight_night_safe_exit|',
-    'POSTFIX-UIENV-007-2898334884|gas_station_casino|gas_station_road_crew_payday|scenario_road_crew_payday_pool|side_door|scenario::gas_station_road_crew_payday_station|event::event:side_door',
-    'POSTFIX-UIENV-008-2688401675|gas_station_casino|gas_station_road_crew_payday|scenario_road_crew_payday_pool|side_door|scenario::gas_station_road_crew_payday_station|event::event:side_door',
-    'POSTFIX-UIENV-018-2408131097|gas_station_casino|gas_station_road_crew_payday|scenario_road_crew_payday_pool|side_door|scenario::gas_station_road_crew_payday_station|event::event:side_door',
-    'POSTFIX-UIENV-033-405233240|gas_station_casino|gas_station_road_crew_payday|scenario_road_crew_payday_pool|side_door|scenario::gas_station_road_crew_payday_station|event::event:side_door',
-    'POSTFIX-UIENV-082-1306411836|gas_station_casino|gas_station_road_crew_payday|scenario_road_crew_payday_pool|side_door|scenario::gas_station_road_crew_payday_station|event::event:side_door',
-    'POSTFIX-UIENV-092-1191177531|gas_station_casino|gas_station_road_crew_payday|scenario_road_crew_payday_pool|side_door|scenario::gas_station_road_crew_payday_station|event::event:side_door',
+    'POSTFIX-UIENV-007-2898334884|gas_station_casino|gas_station_road_crew_payday|scenario_road_crew_payday_pool|side_door|scenario::gas_station_road_crew_payday_stake_envelope|event::event:side_door',
+    'POSTFIX-UIENV-008-2688401675|gas_station_casino|gas_station_road_crew_payday|scenario_road_crew_payday_pool|side_door|scenario::gas_station_road_crew_payday_stake_envelope|event::event:side_door',
+    'POSTFIX-UIENV-018-2408131097|gas_station_casino|gas_station_road_crew_payday|scenario_road_crew_payday_pool|side_door|scenario::gas_station_road_crew_payday_stake_envelope|event::event:side_door',
+    'POSTFIX-UIENV-033-405233240|gas_station_casino|gas_station_road_crew_payday|scenario_road_crew_payday_pool|side_door|scenario::gas_station_road_crew_payday_stake_envelope|event::event:side_door',
+    'POSTFIX-UIENV-082-1306411836|gas_station_casino|gas_station_road_crew_payday|scenario_road_crew_payday_pool|side_door|scenario::gas_station_road_crew_payday_stake_envelope|event::event:side_door',
+    'POSTFIX-UIENV-092-1191177531|gas_station_casino|gas_station_road_crew_payday|scenario_road_crew_payday_pool|side_door|scenario::gas_station_road_crew_payday_stake_envelope|event::event:side_door',
     'POSTFIX-UIENV-061-1987792568|corner_store|corner_store_dead_shift|scenario_dead_shift_rumor|town_rumor_staff|scenario::corner_store_dead_shift_exit|event::event:town_rumor_staff',
     'POSTFIX-UIENV-062-84881432|corner_store|corner_store_dead_shift|scenario_dead_shift_rumor|town_rumor_staff|scenario::corner_store_dead_shift_exit|event::event:town_rumor_staff',
     'POSTFIX-UIENV-087-3894813921|corner_store|corner_store_dead_shift|scenario_dead_shift_rumor|town_rumor_staff|scenario::corner_store_dead_shift_exit|event::event:town_rumor_staff',
@@ -169,10 +169,14 @@ function Get-Q009EnvironmentAuditTravelSourceIssues {
         $simulate=Get-Q009GdScriptTopLevelFunctionExtent $Source '_simulate_run'
         $record=Get-Q009GdScriptTopLevelFunctionExtent $Source '_record_environment'
         $choices=Get-Q009GdScriptTopLevelFunctionExtent $Source '_travel_choices'
+        $picker=Get-Q009GdScriptTopLevelFunctionExtent $Source '_pick_travel_choice'
         $targets=Get-Q009GdScriptTopLevelFunctionExtent $Source '_travel_target_ids'
         $productionHost=Get-Q009GdScriptTopLevelFunctionExtent $Source '_production_foundation_travel_host'
         $overlay=Get-Q009GdScriptTopLevelFunctionExtent $Source '_qualifying_world_travel_contract_holds'
         $travel=Get-Q009GdScriptTopLevelFunctionExtent $Source '_travel_to'
+        $arrival=Get-Q009GdScriptTopLevelFunctionExtent $Source '_arrival_receipt'
+        $projection=Get-Q009GdScriptTopLevelFunctionExtent $Source '_environment_projection_binding'
+        $independentProjection=Get-Q009GdScriptTopLevelFunctionExtent $Source '_independent_live_projection_binding'
         $hostStart=$Source.IndexOf('class AuditFoundationTravelHost:',[StringComparison]::Ordinal)
         $hostEnd=$Source.IndexOf('var library: ContentLibrary',$hostStart,[StringComparison]::Ordinal)
         if($hostStart-lt0-or$hostEnd-le$hostStart-or$Source.IndexOf('class AuditFoundationTravelHost:',$hostStart+1,[StringComparison]::Ordinal)-ge0){throw 'production travel host adapter extent was not exact and unique'}
@@ -202,6 +206,7 @@ function Get-Q009EnvironmentAuditTravelSourceIssues {
         $hostTargets=Get-Q009GdScriptNestedFunctionExtent $foundationHost '_travel_target_ids'
         if([regex]::Matches($hostTargets,'view_model_script\.travel_target_ids\(self\)').Count-ne1-or-not$hostTargets.Contains('flags.get("casino_room_targets", [])')-or-not$hostTargets.Contains('if not local_room_ids.has(target_id)')-or[regex]::Matches($hostTargets,'(?m)^\t\treturn world_ids[ \t]*$').Count-ne1){[void]$issues.Add('production Foundation target adapter did not isolate world routes from local casino-room doors')}
         foreach($preloadLine in @(
+            'const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")',
             'const FoundationTravelViewModelScript := preload("res://scripts/ui/foundation_travel_view_model.gd")',
             'const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")',
             'const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")'
@@ -218,6 +223,8 @@ function Get-Q009EnvironmentAuditTravelSourceIssues {
         if([regex]::Matches($targets,'(?m)^\tif not _qualifying_world_travel_contract_holds\(run_state\):[ \t]*$').Count-ne1-or[regex]::Matches($targets,'(?m)^\t\treturn \[\][ \t]*$').Count-ne1-or[regex]::Matches($targets,'(?m)^\treturn _production_foundation_travel_host\(run_state\)\._travel_target_ids\(\)[ \t]*$').Count-ne1-or[regex]::Matches($targets,'(?m)^\t+return[ \t]+').Count-ne2-or$targets.Contains('WorldMapScript.travel_target_ids')-or$targets.Contains('generator._world_travel_target_ids')){[void]$issues.Add('world target catalog bypasses the exact production Foundation view or its overlay guard')}
         if([regex]::Matches($productionHost,'(?m)^\treturn[ \t]+').Count-ne1-or[regex]::Matches($productionHost,'(?ms)^\treturn AuditFoundationTravelHost\.new\([ \t]*\r?\n\t\tFoundationTravelViewModelScript,[ \t]*\r?\n\t\tWorldMapScript,[ \t]*\r?\n\t\tTutorialFlowScript,[ \t]*\r?\n\t\tAttributeBadgesScript,[ \t]*\r?\n\t\trun_state,[ \t]*\r?\n\t\tgenerator,[ \t]*\r?\n\t\tlibrary[ \t]*\r?\n\t\)[ \t]*$').Count-ne1){[void]$issues.Add('production Foundation travel host was not constructed in exact order from the shipped collaborators and run state')}
         if([regex]::Matches($choices,'(?m)^\tvar target_ids := _travel_target_ids\(run_state\)[ \t]*$').Count-ne1-or[regex]::Matches($choices,'(?m)^\tvar production_host := _production_foundation_travel_host\(run_state\)[ \t]*$').Count-ne1-or[regex]::Matches($choices,'(?m)^\t\tvar production_choice: Dictionary = production_host\._travel_choice\(str\(target_id\), target_ids\)[ \t]*$').Count-ne1-or[regex]::Matches($choices,'(?m)^\t\t\t"enabled": bool\(production_choice\.get\("enabled", false\)\),[ \t]*$').Count-ne1-or[regex]::Matches($choices,'(?m)^\t\t\ttravel_choice_routes\[_travel_choice_route_key\(run_state, choice\)\] = exact_route[ \t]*$').Count-ne1-or$choices.Contains('generator._world_target_is_available')){[void]$issues.Add('travel choice projection bypasses the production Foundation choice or loses its exact route')}
+        if([regex]::Matches($picker,'(?m)^\tif run_state\.bankroll <= 30:[ \t]*$').Count-ne1-or[regex]::Matches($picker,'(?m)^\t\t\tif int\(candidate\.get\("cost", 0\)\) < int\(cheapest\.get\("cost", 0\)\):[ \t]*$').Count-ne1-or[regex]::Matches($picker,'(?m)^\t\treturn cheapest\.duplicate\(true\)[ \t]*$').Count-ne1){[void]$issues.Add('low-bankroll audit traversal no longer conserves an exact enabled production fare')}
+        if([regex]::Matches($projection,'(?m)^\tvar scenario_id := EnvironmentPlacementScript\.active_scenario_id\(environment\)[ \t]*$').Count-ne1-or[regex]::Matches($independentProjection,'(?m)^\t\tvar inactive_valid := EnvironmentPlacementScript\.active_scenario_id\(environment\)\.is_empty\(\)[ \t]*$').Count-ne1-or[regex]::Matches($arrival,'(?m)^\tvar installed_active_scenario_id := EnvironmentPlacementScript\.active_scenario_id\(installed_environment\)[ \t]*$').Count-ne1-or[regex]::Matches($arrival,'(?m)^\t\t\tand installed_active_scenario_id\.is_empty\(\)[ \t]*\\[ \t]*$').Count-ne1){[void]$issues.Add('inactive layered-scenario evidence bypasses the active visual-layer resolver')}
         foreach($required in @(
             'not run_state.has_world_map()','run_state.is_tutorial_run()','run_state.narrative_flags.get("_meta_home_session", false)','run_state.delivery_has_active_run()',
             'run_state.closing_time_forced_travel_required()','run_state.travel_option_bonus() != 0'
@@ -252,12 +259,12 @@ function Test-ExactSha256 {
 }
 
 $travelChoiceKeys = @(
-    'id','label','kind','tier','enabled','hidden','disabled_reason','cost','risk','distance',
-    'risk_decay','suspicion_delta','risk_text','risk_event','unlock_conditions',
-    'travel_lock_remaining','availability_turn'
+    'availability_turn','cost','disabled_reason','distance','enabled','hidden','id','kind','label',
+    'risk','risk_decay','risk_event','risk_text','suspicion_delta','tier',
+    'travel_lock_remaining','unlock_conditions'
 )
 
-$travelRiskEventKeys=@('id','label','chance_percent','bankroll_delta','suspicion_delta','message')
+$travelRiskEventKeys=@('bankroll_delta','chance_percent','id','label','message','suspicion_delta')
 
 function ConvertTo-Q009CanonicalJsonValue {
     param([AllowNull()][object]$Value)
@@ -687,7 +694,7 @@ function Test-ExactArrivalStatus {
     if ($inactive) {
         return (Test-ExactBoolean $Arrival.runtime_scenario_layout.semantic_ready $false) -and
             (Test-ExactBoolean $Arrival.runtime_scenario_layout.live_semantic_ready $false) -and
-            (Test-ExactJsonStringValue $Arrival.runtime_scenario_layout.scenario_id '')
+            (Test-ExactJsonStringPair $Arrival.runtime_scenario_layout.scenario_id $Arrival.installed_scenario_id -AllowEmpty)
     }
     return (Test-ExactBoolean $Arrival.runtime_scenario_layout.semantic_ready $true) -and
         (Test-ExactBoolean $Arrival.runtime_scenario_layout.live_semantic_ready $true) -and
@@ -2725,7 +2732,7 @@ function Add-SelfTestResult {
 
 function New-CrossBindingSelfTestFixture {
     $attempt='attempt-selftest';$seed='seed-selftest'
-    $newChoice={param([string]$Id,[bool]$Enabled=$true)[pscustomobject][ordered]@{id=$Id;label=$Id;kind='casino';tier=1;enabled=$Enabled;hidden=$false;disabled_reason=if($Enabled){''}else{'Locked'};cost=0;risk='';distance='near';risk_decay=0;suspicion_delta=0;risk_text='';risk_event=[pscustomobject][ordered]@{};unlock_conditions=[object[]]@();travel_lock_remaining=0;availability_turn=-1}}
+    $newChoice={param([string]$Id,[bool]$Enabled=$true)[pscustomobject][ordered]@{availability_turn=-1;cost=0;disabled_reason=if($Enabled){''}else{'Locked'};distance='near';enabled=$Enabled;hidden=$false;id=$Id;kind='casino';label=$Id;risk='';risk_decay=0;risk_event=[pscustomobject][ordered]@{};risk_text='';suspicion_delta=0;tier=1;travel_lock_remaining=0;unlock_conditions=[object[]]@()}}
     $run=[pscustomobject][ordered]@{run_index=0;attempt_id=$attempt;seed=$seed;requested_seed_text=$seed;seed_text=$seed;seed_value=7;challenge_key='standard|seed-selftest';challenge_id='standard';challenge_mode='standard';derived_seed_value=7;expected_challenge_key='standard|seed-selftest';expected_seed_value=7;seed_binding_valid=$true;attempt_id_required=$true;final_seed_binding=$null;final_seed_binding_valid=$true;final_seed_binding_satisfied=$true;attempt_binding_satisfied=$true;post_event_seed_binding_count=6;visited=[object[]]@();initial_arrival_receipt=$null}
     $tuple={param([switch]$Required)[pscustomobject][ordered]@{attempt_id=$attempt;attempt_id_required=if($Required){$true}else{$false};requested_seed_text=$seed;seed_text=$seed;seed_value=7;challenge_key='standard|seed-selftest';challenge_id='standard';challenge_mode='standard';challenge_seed_text=$seed;challenge_daily_id='';challenge_hidden_seed=$false;challenge_modifier_count=0;derived_seed_value=7;expected_challenge_key='standard|seed-selftest';expected_seed_value=7;seed_binding_valid=$true}}
     $run.final_seed_binding=&$tuple -Required

@@ -1082,6 +1082,15 @@
 						]
 				}
 			},
+			"delta_queen_engine_trouble": {
+				"saved": false,
+				"slot_positions": {
+					"scenario.local_doorway_2": [
+						32.0,
+						175.0
+					]
+				}
+			},
 			"delta_queen_fog_delay": {
 				"saved": false,
 				"slot_positions": {
@@ -1430,7 +1439,7 @@
 						],
 						"scenario.local_wall_item_2": [
 							91.0,
-							157.0
+							153.0
 						],
 						"scenario.local_wall_item_3": [
 							744.0,
@@ -2712,8 +2721,8 @@
 							428.0
 						],
 						"scenario.local_standing_person_1": [
-							524.0,
-							204.0
+							270.0,
+							310.0
 						],
 						"scenario.local_standing_person_2": [
 							236.0,

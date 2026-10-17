@@ -107,6 +107,7 @@ func _run() -> void:
 	_check_fail_closed_binding()
 	_check_route_endpoint_edge_contact_tolerance()
 	_check_gas_station_tour_bus_access_lane()
+	_check_historical_scenario_overlap_regressions()
 	_check_complete_manual_save_and_export(authority)
 
 	_check(base_context_count == 20, "runtime sweep did not visit all 20 reachable base contexts")
@@ -1051,6 +1052,50 @@ func _check_gas_station_tour_bus_access_lane() -> void:
 		driver_rect.has_area() and door_rect.has_area() and not driver_rect.intersects(door_rect),
 		"Gas Station tour-bus driver overlaps the side-door interaction authority."
 	)
+
+
+func _check_historical_scenario_overlap_regressions() -> void:
+	var cases := [
+		{
+			"map_id": "motel",
+			"scenario_id": "motel_weekly_rates",
+			"scenario_slot_id": "scenario.local_standing_person_1",
+			"other_slot_group": "event_slots",
+			"other_slot_id": "event.behind_counter_person_1",
+			"message": "Motel weekly-rates landlord overlaps the front-desk staff authority.",
+		},
+		{
+			"map_id": "delta_queen",
+			"scenario_id": "delta_queen_engine_trouble",
+			"scenario_slot_id": "scenario.local_doorway_2",
+			"other_slot_group": "fixed_slots",
+			"other_slot_id": "fixed.game_blackjack",
+			"message": "Delta Queen engine-trouble exit overlaps the blackjack table authority.",
+		},
+		{
+			"map_id": "gas_station_casino",
+			"scenario_id": "gas_station_storm_shelter",
+			"scenario_slot_id": "scenario.local_wall_item_2",
+			"other_slot_group": "event_slots",
+			"other_slot_id": "event.doorway_1",
+			"message": "Gas Station storm shutters overlap the side-door interaction authority.",
+		},
+	]
+	for case_value in cases:
+		var case := _dict(case_value)
+		var surface := EnvironmentPlacementScript.surface_map(
+			_environment_for_map(str(case.get("map_id", "")), str(case.get("scenario_id", "")))
+		)
+		var scenario_slots := _slots_by_id(_array(surface.get("scenario_slots", [])))
+		var other_slots := _slots_by_id(_array(surface.get(str(case.get("other_slot_group", "")), [])))
+		var scenario_slot := _dict(scenario_slots.get(str(case.get("scenario_slot_id", "")), {}))
+		var other_slot := _dict(other_slots.get(str(case.get("other_slot_id", "")), {}))
+		var scenario_rect := EnvironmentSlotBinderScript.rect_from_binding({"slot": scenario_slot})
+		var other_rect := EnvironmentSlotBinderScript.rect_from_binding({"slot": other_slot})
+		_check(
+			scenario_rect.has_area() and other_rect.has_area() and not scenario_rect.intersects(other_rect),
+			str(case.get("message", "historical scenario overlap regression"))
+		)
 
 
 func _check_complete_manual_save_and_export(authority: Dictionary) -> void:
