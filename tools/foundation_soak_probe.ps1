@@ -53,10 +53,16 @@ if (-not $godot) {
 $oldMinutes = $env:BTH_SOAK_MINUTES
 $oldActions = $env:BTH_SOAK_ACTIONS_PER_SAMPLE
 $oldSeedPrefix = $env:BTH_SOAK_SEED_PREFIX
+$oldDeveloperPlacementPath = $env:BTH_DEVELOPER_PLACEMENT_PATH
+$oldProjectPlacementPath = $env:BTH_PROJECT_PLACEMENT_PATH
 try {
     $env:BTH_SOAK_MINUTES = [string]$SimMinutes
     $env:BTH_SOAK_ACTIONS_PER_SAMPLE = [string]$ActionsPerSample
     $env:BTH_SOAK_SEED_PREFIX = $SeedPrefix
+    # The release soak qualifies repository placement authority, not the
+    # operator's live placement-mode session or an inherited project override.
+    $env:BTH_DEVELOPER_PLACEMENT_PATH = Join-Path $root (".tmp\foundation_soak_isolated_developer_placements_{0}.json" -f $PID)
+    $env:BTH_PROJECT_PLACEMENT_PATH = ''
     $consoleGodot = Use-ConsoleGodot $godot
     & $consoleGodot --headless --path $root --script "res://tools/foundation_soak_probe.gd"
     exit $LASTEXITCODE
@@ -65,4 +71,6 @@ finally {
     $env:BTH_SOAK_MINUTES = $oldMinutes
     $env:BTH_SOAK_ACTIONS_PER_SAMPLE = $oldActions
     $env:BTH_SOAK_SEED_PREFIX = $oldSeedPrefix
+    $env:BTH_DEVELOPER_PLACEMENT_PATH = $oldDeveloperPlacementPath
+    $env:BTH_PROJECT_PLACEMENT_PATH = $oldProjectPlacementPath
 }

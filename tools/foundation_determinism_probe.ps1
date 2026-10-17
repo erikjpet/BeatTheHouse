@@ -101,6 +101,7 @@ $oldSeedStart = $env:BTH_DETERMINISM_SEED_START
 $oldSeedPrefix = $env:BTH_DETERMINISM_SEED_PREFIX
 $oldOutput = $env:BTH_DETERMINISM_OUTPUT
 $oldDeveloperPlacementPath = $env:BTH_DEVELOPER_PLACEMENT_PATH
+$oldProjectPlacementPath = $env:BTH_PROJECT_PLACEMENT_PATH
 try {
     $env:BTH_DETERMINISM_SEED_COUNT = [string]$SeedCount
     $env:BTH_DETERMINISM_SEED_START = [string]$SeedStart
@@ -108,6 +109,7 @@ try {
     # Release determinism qualifies checked-in placement authority. Never let a
     # developer's live user:// placement session change a seed's room geometry.
     $env:BTH_DEVELOPER_PLACEMENT_PATH = Join-Path $outputDir ("isolated_developer_placements_{0}.json" -f $PID)
+    $env:BTH_PROJECT_PLACEMENT_PATH = ''
 
     $env:BTH_DETERMINISM_OUTPUT = $runA
     $runAResult = Invoke-DeterminismGodot
@@ -127,6 +129,7 @@ finally {
     $env:BTH_DETERMINISM_SEED_PREFIX = $oldSeedPrefix
     $env:BTH_DETERMINISM_OUTPUT = $oldOutput
     $env:BTH_DEVELOPER_PLACEMENT_PATH = $oldDeveloperPlacementPath
+    $env:BTH_PROJECT_PLACEMENT_PATH = $oldProjectPlacementPath
 }
 
 $a = Get-Content -Raw -LiteralPath $runAPath | ConvertFrom-Json
