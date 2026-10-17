@@ -4035,7 +4035,8 @@ function Invoke-VisibleCheatIfAvailable {
     for ($transition = 0; $transition -lt 3; $transition++) {
         $selection = Select-CheatReplayBlackjackCheatAction `
             -Game (Get-Value $script:LastObservation @('game') $null) `
-            -SurfaceActions @(Get-GameActions)
+            -SurfaceActions @(Get-GameActions) `
+            -WindowOpenedByReplay $openedWindow
         switch ([string]$selection.stage) {
             'wait_for_deal' { return $false }
             'complete' { return $false }

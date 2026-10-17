@@ -288,7 +288,8 @@ function Select-CheatReplayDuelCheckpointAction {
 function Select-CheatReplayBlackjackCheatAction {
     param(
         [Parameter(Mandatory = $true)]$Game,
-        [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$SurfaceActions
+        [Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$SurfaceActions,
+        [Parameter(Mandatory = $true)][bool]$WindowOpenedByReplay
     )
 
     $peekAvailable = Get-Rw062RequiredPublicProperty -InputObject $Game -Name 'peek_available' -Context 'Blackjack public game state'
@@ -342,7 +343,10 @@ function Select-CheatReplayBlackjackCheatAction {
         return [pscustomobject][ordered]@{ stage = 'wait_for_deal'; action = ''; index = -1 }
     }
 
-    if (-not [bool]$peekWindowOpen) {
+    # A naturally open gaze phase is wall-clock presentation state. Always use
+    # the visible Distraction control once so repeated evidence follows the same
+    # semantic action sequence before Peek.
+    if (-not $WindowOpenedByReplay) {
         $distractions = @(Get-Rw062PublicSurfaceActionMatches -SurfaceActions $SurfaceActions -Action 'blackjack_distraction')
         if ($distractions.Count -eq 0) {
             throw "Published 'peek_hole_card' is available, but no rendered Distraction control can open its public window."
@@ -363,6 +367,10 @@ function Select-CheatReplayBlackjackCheatAction {
         }
         $selected = @($validated | Sort-Object -Property index)[0]
         return [pscustomobject][ordered]@{ stage = 'open_window'; action = 'blackjack_distraction'; index = [int]$selected.index }
+    }
+
+    if (-not [bool]$peekWindowOpen) {
+        throw 'The replay-authored Distraction control lost its public Peek window before Peek.'
     }
 
     $peekControls = @(Get-Rw062PublicSurfaceActionMatches -SurfaceActions $SurfaceActions -Action 'blackjack_peek')

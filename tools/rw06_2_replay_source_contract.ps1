@@ -609,6 +609,7 @@ function New-CheatReplayBlackjackPolicyFixture {
             [pscustomobject]@{ action = 'blackjack_distraction'; index = 0; enabled = $true },
             [pscustomobject]@{ action = 'blackjack_peek'; index = 0; enabled = $true }
         )
+        window_opened_by_replay = $Stage -ceq 'peek'
         expected_stage = $Stage
         expected_index = if ($Stage -ceq 'open_window' -or $Stage -ceq 'peek') { 0 } else { -1 }
     }
@@ -3421,7 +3422,7 @@ $finalSummary = [ordered]@{
         $cheatBlackjackValidFixtures = $validBlackjackCases.Count
         foreach ($fixture in $validBlackjackCases) {
             try {
-                $selection = Select-CheatReplayBlackjackCheatAction -Game $fixture.game -SurfaceActions @($fixture.surface_actions)
+                $selection = Select-CheatReplayBlackjackCheatAction -Game $fixture.game -SurfaceActions @($fixture.surface_actions) -WindowOpenedByReplay ([bool]$fixture.window_opened_by_replay)
                 if ([string]$selection.stage -cne [string]$fixture.expected_stage -or
                     [int]$selection.index -ne [int]$fixture.expected_index) {
                     Add-Failure "Valid Cheat Blackjack fixture '$($fixture.expected_stage)' selected the wrong public transition."
@@ -3458,7 +3459,7 @@ $finalSummary = [ordered]@{
         foreach ($case in $hostileBlackjackCases) {
             $threw = $false
             try {
-                $null = Select-CheatReplayBlackjackCheatAction -Game $case.fixture.game -SurfaceActions @($case.fixture.surface_actions)
+                $null = Select-CheatReplayBlackjackCheatAction -Game $case.fixture.game -SurfaceActions @($case.fixture.surface_actions) -WindowOpenedByReplay ([bool]$case.fixture.window_opened_by_replay)
             }
             catch { $threw = $true }
             if (-not $threw) {
@@ -5146,12 +5147,12 @@ function Assert-SaveRelaunchContinue {
     Assert-NotMatch $runner '\.\s*(?:call|set)\s*\(' 'Replay runner must not call or mutate Godot objects directly.'
     Assert-NotMatch $sanitizer '"(?:turns|game_ids|event_ids|resolved_event_ids|service_ids|travel_hooks|event_options|travel_choices|item_offers|service_options|lender_options|interactable_objects)"' 'Public sanitizer must not admit raw environment model lists or option catalogs.'
     Assert-Match $sanitizer '(?s)static func _talk\(.*?typewriter_active.*?typeof\(typewriter_value\) == TYPE_BOOL' 'Public TalkDock observation must retain its exact visible typewriter-state witness while rejecting non-boolean values.'
-    Assert-Match $runner '(?s)function Invoke-VisibleCheatIfAvailable.*?Select-CheatReplayBlackjackCheatAction.*?''open_window''.*?blackjack_distraction.*?peek_window_open.*?''peek''.*?blackjack_peek.*?dealer_hole_visible' 'Cheat replay must bind published peek_hole_card policy to the rendered Distraction -> open window -> Peek sequence and exact public completion witness.'
+    Assert-Match $runner '(?s)function Invoke-VisibleCheatIfAvailable.*?Select-CheatReplayBlackjackCheatAction.*?-WindowOpenedByReplay\s+\$openedWindow.*?''open_window''.*?blackjack_distraction.*?peek_window_open.*?''peek''.*?blackjack_peek.*?dealer_hole_visible' 'Cheat replay must bind published peek_hole_card policy to the deterministic rendered Distraction -> open window -> Peek sequence and exact public completion witness.'
     Assert-Match $replayPolicy '(?s)function Get-Rw062RequiredPublicPropertyDescriptor.*?PSCustomObject.*?Properties.*?Count\s+-ne\s+1.*?return\s+\$properties\[0\]' 'Rourke checkpoint policy must read exact property descriptors without scalar enumeration.'
     Assert-Match $replayPolicy '(?s)function Select-CheatReplayDuelCheckpointAction.*?game_id.*?phase.*?boss_duel_active.*?boss_hand_number.*?can_deal.*?blackjack.*?betting.*?SurfaceActions\s+-isnot\s+\[object\[\]\].*?blackjack_deal.*?\$index\s+-ne\s+0.*?\$dealRows\.Count\s+-ne\s+1' 'Rourke checkpoint policy must require exact active/dealable pre-hand-one state and one enabled index-zero Deal action.'
     Assert-Match $runner '(?s)function Assert-SaveRelaunchContinue.*?Assert-CheatRourkeDuelBeforeHandOne\s+-Context\s+''before Save''.*?\$before\s*=\s*\[ordered\].*?Click-Button\s+-Text\s+''CONTINUE''.*?Clear-VisibleCoach.*?Assert-CheatRourkeDuelBeforeHandOne\s+-Context\s+''after relaunch and Continue''.*?\$after\s*=\s*\[ordered\]' 'Cheat replay must prove the exact duel Deal surface both before Save and immediately after Continue.'
     Assert-NotMatch $runner '\$preferred\s*=\s*@\(''blackjack_distraction'',\s*''blackjack_peek''\)' 'Cheat replay must not return after the old control-id preference loop before performing Peek.'
-    Assert-Match $replayPolicy '(?s)function Select-CheatReplayBlackjackCheatAction.*?''peek_hole_card''.*?''blackjack_distraction''.*?''blackjack_peek''' 'Cheat replay policy must distinguish the published semantic cheat id from the two rendered control ids.'
+    Assert-Match $replayPolicy '(?s)function Select-CheatReplayBlackjackCheatAction.*?WindowOpenedByReplay.*?''peek_hole_card''.*?if \(-not \$WindowOpenedByReplay\).*?''blackjack_distraction''.*?''blackjack_peek''' 'Cheat replay policy must distinguish the published semantic cheat id from the two rendered control ids and require its own Distraction boundary before Peek.'
     Assert-Match $replayPolicy '(?s)function Select-CheatReplayPostPeekTransition.*?phase.*?''barred''.*?heat_rendered.*?heat_level.*?-lt\s+70.*?surface_back.*?Count\s+-ne\s+1.*?enabled.*?index.*?-ne\s+-1.*?leave_for_showdown' 'Post-Peek policy must require exact public barred phase, rendered showdown Heat, and one enabled surface_back binding.'
     Assert-Match $runner '(?s)\$peekApplied\s*=\s*Invoke-VisibleCheatIfAvailable.*?Select-CheatReplayPostPeekTransition.*?leave_for_showdown.*?return.*?blackjack_settle' 'A successfully applied Peek must inspect and escape a public barred showdown state before settlement.'
     Assert-Match $runner '(?s)function Invoke-PublicBossCalloutIfShown.*?Select-CheatReplayBossCalloutAction.*?stage\s+-cne\s+''call''.*?blackjack_boss_callout.*?Wait-Frames.*?if\s*\(Test-PublicTerminalSurface\)\s*\{\s*return\s*\}.*?boss_callout_used' 'Rourke replay must accept an immediate exact terminal surface after the physical callout, otherwise require the post-deal rendered used witness.'
