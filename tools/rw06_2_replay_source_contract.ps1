@@ -2453,6 +2453,12 @@ function Test-ReplayExactEvidenceTypeSource {
     )) {
         if ($Source.IndexOf($token, [StringComparison]::Ordinal) -lt 0) { return $false }
     }
+
+    $openCageCounter = [regex]::Match($Source, '(?ms)^function\s+Open-CageCounter\s*\{.*?(?=^function |\z)').Value
+    if ([string]::IsNullOrWhiteSpace($openCageCounter) -or
+        $openCageCounter.IndexOf('Wait-ForFullyRenderedTalkSurface -Intent "Linda''s Cage counter services"', [StringComparison]::Ordinal) -lt 0) {
+        return $false
+    }
     if (-not [regex]::IsMatch(
             [string]$functionSources['New-CanonicalRecord'],
             '(?m)^\s*\$talkTypewriterPresent\s*=\s*Test-ReplayPathPresent\s+-InputObject\s+\$talk\s+-Path\s+@\(''typewriter_active''\)(?=\s|$)'

@@ -3891,6 +3891,7 @@ function Open-CageCounter {
     if (-not [bool](Get-Value $script:LastObservation @('talk', 'visible') $false)) {
         throw "Linda's Cage counter did not expose its visible dialogue choices."
     }
+    Wait-ForFullyRenderedTalkSurface -Intent "Linda's Cage counter services"
 }
 
 
