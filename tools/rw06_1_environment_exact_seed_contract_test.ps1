@@ -2274,7 +2274,11 @@ function Invoke-ExclusiveProcessPhase {
     if($null-eq$result){
         throw ('Owned process completion produced no exact closed receipt: '+$completionError)
     }
-    if(@($result.owned_artifact_manifests).Count-ne@($completionArtifactRoots).Count-or@($result.owned_artifact_manifests|Where-Object{[string]$_.role-ceq'phase_output'}).Count-ne1){throw 'Owned process completion omitted or duplicated a declared terminal artifact manifest'}
+    $observedArtifactManifests=@($result.owned_artifact_manifests);$expectedArtifactRequests=@($completionArtifactRoots)
+    if($observedArtifactManifests.Count-ne$expectedArtifactRequests.Count-or@($observedArtifactManifests|Where-Object{[string]$_.role-ceq'phase_output'}).Count-ne1){
+        $expectedRoles=@($expectedArtifactRequests|ForEach-Object{[string]$_.role})-join',';$observedRoles=@($observedArtifactManifests|ForEach-Object{[string]$_.role})-join','
+        throw "Owned process completion omitted or duplicated a declared terminal artifact manifest: expected=$($expectedArtifactRequests.Count) [$expectedRoles] observed=$($observedArtifactManifests.Count) [$observedRoles] completion_error=$([string]$result.error)"
+    }
     $residuals=@(Get-ExactOwnedProcessResidualPids -RootIdentity $started.process_identity -BaselineIdentityKeys @($baselineGodotIdentities|ForEach-Object{[string]$_.key}) -RetainedDescendantRecords $started.retained_descendant_records)
     Register-ProcessCustodyCleanup $ProcessCustody ($residuals.Count-eq0)
     $allPaths=@($stdoutPath,$stderrPath)+@($AdditionalLogPaths)+@($AdditionalArtifactPaths);$combined='';$artifacts=[System.Collections.Generic.List[object]]::new()
