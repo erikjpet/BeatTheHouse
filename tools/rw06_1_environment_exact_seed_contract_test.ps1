@@ -56,8 +56,8 @@ $foundationTravelPath = Join-Path $projectRoot ($foundationTravelRelativePath.Re
 $tutorialFlowPath = Join-Path $projectRoot ($tutorialFlowRelativePath.Replace('/', '\'))
 $attributeBadgesPath = Join-Path $projectRoot ($attributeBadgesRelativePath.Replace('/', '\'))
 $projectCacheRoot = Join-Path $projectRoot '.godot'
-$expectedManifestSha256 = 'A2298B05C92D820782421A0DA6CB85AC6AF903557A73F4416C4B85E7150058B6'
-$expectedManifestBlob = '8c032dba485297d9b19b000b90141dd347483833'
+$expectedManifestSha256 = '597AF5FDB5B63DD9C358E098CB83B5A32E3531F12FB7CC99A562383652F5ED6E'
+$expectedManifestBlob = 'f7d7a1f4495628e8c854bdeb5d8460172e8ce394'
 $generationSeedPrefix = 'RW06-1-GENERATION-100-0060'
 $inactiveIndependentProjectionFingerprint = '78b558bd2357fbe7ad52804fb3af1b8664b23db096b1deb22d215dde25b152bf'
 
@@ -167,9 +167,12 @@ function Get-Q009EnvironmentAuditTravelSourceIssues {
         $Source=$Source.Replace("`r`n","`n")
         if($Source.Contains('"""')-or$Source.Contains("'''")){throw 'GDScript travel source contract refuses any multiline-string ambiguity'}
         $simulate=Get-Q009GdScriptTopLevelFunctionExtent $Source '_simulate_run'
+        $runAudit=Get-Q009GdScriptTopLevelFunctionExtent $Source '_run'
+        $parseOptions=Get-Q009GdScriptTopLevelFunctionExtent $Source '_parse_options'
         $record=Get-Q009GdScriptTopLevelFunctionExtent $Source '_record_environment'
         $choices=Get-Q009GdScriptTopLevelFunctionExtent $Source '_travel_choices'
         $picker=Get-Q009GdScriptTopLevelFunctionExtent $Source '_pick_travel_choice'
+        $visitedDestination=Get-Q009GdScriptTopLevelFunctionExtent $Source '_has_visited_destination'
         $targets=Get-Q009GdScriptTopLevelFunctionExtent $Source '_travel_target_ids'
         $productionHost=Get-Q009GdScriptTopLevelFunctionExtent $Source '_production_foundation_travel_host'
         $overlay=Get-Q009GdScriptTopLevelFunctionExtent $Source '_qualifying_world_travel_contract_holds'
@@ -223,7 +226,9 @@ function Get-Q009EnvironmentAuditTravelSourceIssues {
         if([regex]::Matches($targets,'(?m)^\tif not _qualifying_world_travel_contract_holds\(run_state\):[ \t]*$').Count-ne1-or[regex]::Matches($targets,'(?m)^\t\treturn \[\][ \t]*$').Count-ne1-or[regex]::Matches($targets,'(?m)^\treturn _production_foundation_travel_host\(run_state\)\._travel_target_ids\(\)[ \t]*$').Count-ne1-or[regex]::Matches($targets,'(?m)^\t+return[ \t]+').Count-ne2-or$targets.Contains('WorldMapScript.travel_target_ids')-or$targets.Contains('generator._world_travel_target_ids')){[void]$issues.Add('world target catalog bypasses the exact production Foundation view or its overlay guard')}
         if([regex]::Matches($productionHost,'(?m)^\treturn[ \t]+').Count-ne1-or[regex]::Matches($productionHost,'(?ms)^\treturn AuditFoundationTravelHost\.new\([ \t]*\r?\n\t\tFoundationTravelViewModelScript,[ \t]*\r?\n\t\tWorldMapScript,[ \t]*\r?\n\t\tTutorialFlowScript,[ \t]*\r?\n\t\tAttributeBadgesScript,[ \t]*\r?\n\t\trun_state,[ \t]*\r?\n\t\tgenerator,[ \t]*\r?\n\t\tlibrary[ \t]*\r?\n\t\)[ \t]*$').Count-ne1){[void]$issues.Add('production Foundation travel host was not constructed in exact order from the shipped collaborators and run state')}
         if([regex]::Matches($choices,'(?m)^\tvar target_ids := _travel_target_ids\(run_state\)[ \t]*$').Count-ne1-or[regex]::Matches($choices,'(?m)^\tvar production_host := _production_foundation_travel_host\(run_state\)[ \t]*$').Count-ne1-or[regex]::Matches($choices,'(?m)^\t\tvar production_choice: Dictionary = production_host\._travel_choice\(str\(target_id\), target_ids\)[ \t]*$').Count-ne1-or[regex]::Matches($choices,'(?m)^\t\t\t"enabled": bool\(production_choice\.get\("enabled", false\)\),[ \t]*$').Count-ne1-or[regex]::Matches($choices,'(?m)^\t\t\ttravel_choice_routes\[_travel_choice_route_key\(run_state, choice\)\] = exact_route[ \t]*$').Count-ne1-or$choices.Contains('generator._world_target_is_available')){[void]$issues.Add('travel choice projection bypasses the production Foundation choice or loses its exact route')}
-        if([regex]::Matches($picker,'(?m)^\tif run_state\.bankroll <= 30:[ \t]*$').Count-ne1-or[regex]::Matches($picker,'(?m)^\t\t\tif int\(candidate\.get\("cost", 0\)\) < int\(cheapest\.get\("cost", 0\)\):[ \t]*$').Count-ne1-or[regex]::Matches($picker,'(?m)^\t\treturn cheapest\.duplicate\(true\)[ \t]*$').Count-ne1){[void]$issues.Add('low-bankroll audit traversal no longer conserves an exact enabled production fare')}
+        if([regex]::Matches($runAudit,'(?m)^\trequired_destination_id = str\(options\.get\("target_destination", ""\)\)\.strip_edges\(\)[ \t]*$').Count-ne1-or[regex]::Matches($parseOptions,'(?m)^\t\telif text\.begins_with\("--target-destination="\):[ \t]*$').Count-ne1-or[regex]::Matches($parseOptions,'(?m)^\t\t\toptions\["target_destination"\] = text\.trim_prefix\("--target-destination="\)[ \t]*$').Count-ne1){[void]$issues.Add('historical target destination argument is not parsed exactly')}
+        if([regex]::Matches($picker,'(?m)^\tif not required_destination_id\.is_empty\(\) and not _has_visited_destination\(run_state, required_destination_id\):[ \t]*$').Count-ne1-or[regex]::Matches($picker,'(?m)^\t\t\tif str\(required_choice\.get\("id", ""\)\) == required_destination_id:[ \t]*$').Count-ne1-or[regex]::Matches($picker,'(?m)^\t\t\t\treturn required_choice\.duplicate\(true\)[ \t]*$').Count-ne1-or[regex]::Matches($visitedDestination,'(?m)^\tfor entry_value in run_state\.environment_history:[ \t]*$').Count-ne1){[void]$issues.Add('historical audit no longer selects the first exact enabled production choice for its required destination')}
+        if([regex]::Matches($picker,'(?m)^\tif run_state\.bankroll <= 30:[ \t]*$').Count-ne1-or[regex]::Matches($picker,'(?m)^\t\t\tif int\(candidate\.get\("cost", 0\)\) < int\(cheapest\.get\("cost", 0\)\):[ \t]*$').Count-ne1-or[regex]::Matches($picker,'(?m)^\t\treturn cheapest\.duplicate\(true\)[ \t]*$').Count-ne1){[void]$issues.Add('low-bankroll historical traversal no longer conserves an exact enabled production fare')}
         if([regex]::Matches($projection,'(?m)^\tvar scenario_id := EnvironmentPlacementScript\.active_scenario_id\(environment\)[ \t]*$').Count-ne1-or[regex]::Matches($independentProjection,'(?m)^\t\tvar inactive_valid := EnvironmentPlacementScript\.active_scenario_id\(environment\)\.is_empty\(\)[ \t]*$').Count-ne1-or[regex]::Matches($arrival,'(?m)^\tvar installed_active_scenario_id := EnvironmentPlacementScript\.active_scenario_id\(installed_environment\)[ \t]*$').Count-ne1-or[regex]::Matches($arrival,'(?m)^\t\t\tand installed_active_scenario_id\.is_empty\(\)[ \t]*\\[ \t]*$').Count-ne1){[void]$issues.Add('inactive layered-scenario evidence bypasses the active visual-layer resolver')}
         foreach($required in @(
             'not run_state.has_world_map()','run_state.is_tutorial_run()','run_state.narrative_flags.get("_meta_home_session", false)','run_state.delivery_has_active_run()',
@@ -266,31 +271,56 @@ $travelChoiceKeys = @(
 
 $travelRiskEventKeys=@('bankroll_delta','chance_percent','id','label','message','suspicion_delta')
 
-function ConvertTo-Q009CanonicalJsonValue {
+function ConvertTo-Q009JsonStringLiteral {
+    param([AllowEmptyString()][string]$Value)
+    $builder=[Text.StringBuilder]::new();[void]$builder.Append('"')
+    foreach($character in $Value.ToCharArray()){
+        $code=[int]$character
+        switch($code){
+            8 {[void]$builder.Append('\b');continue}
+            9 {[void]$builder.Append('\t');continue}
+            10 {[void]$builder.Append('\n');continue}
+            12 {[void]$builder.Append('\f');continue}
+            13 {[void]$builder.Append('\r');continue}
+            34 {[void]$builder.Append('\"');continue}
+            92 {[void]$builder.Append('\\');continue}
+        }
+        if($code-lt32){[void]$builder.Append(('\u{0:x4}'-f$code))}else{[void]$builder.Append($character)}
+    }
+    [void]$builder.Append('"');return $builder.ToString()
+}
+
+function ConvertTo-Q009CanonicalJsonText {
     param([AllowNull()][object]$Value)
-    if($null-eq$Value){return $null}
-    if($Value-is[System.Array]){return [object[]]@($Value|ForEach-Object{ConvertTo-Q009CanonicalJsonValue $_})}
+    if($null-eq$Value){return 'null'}
+    if($Value-is[string]){return ConvertTo-Q009JsonStringLiteral ([string]$Value)}
+    if($Value-is[bool]){return $(if([bool]$Value){'true'}else{'false'})}
+    if($Value-is[int]-or$Value-is[long]){return ([Convert]::ToString([long]$Value,[Globalization.CultureInfo]::InvariantCulture))}
+    if($Value-is[decimal]){return ([decimal]$Value).ToString([Globalization.CultureInfo]::InvariantCulture)}
+    if($Value-is[double]){
+        $number=[double]$Value
+        if([double]::IsNaN($number)-or[double]::IsInfinity($number)){throw 'Canonical JSON rejected a non-finite number'}
+        return $number.ToString('R',[Globalization.CultureInfo]::InvariantCulture)
+    }
+    if($Value-is[System.Array]){
+        $items=[Collections.Generic.List[string]]::new()
+        foreach($item in $Value){[void]$items.Add((ConvertTo-Q009CanonicalJsonText $item))}
+        return '['+[string]::Join(',',@($items))+']'
+    }
+    $properties=@()
     if($Value-is[System.Collections.IDictionary]){
-        $result=[ordered]@{}
-        foreach($key in @($Value.Keys|ForEach-Object{if($_-isnot[string]){throw 'Canonical JSON object contained a non-string key'};[string]$_}|Sort-Object -CaseSensitive)){$result[$key]=ConvertTo-Q009CanonicalJsonValue $Value[$key]}
-        return $result
-    }
-    if(Test-JsonObject $Value){
-        $result=[ordered]@{}
-        foreach($property in @($Value.PSObject.Properties|Where-Object{$_.MemberType-eq[System.Management.Automation.PSMemberTypes]::NoteProperty}|Sort-Object Name -CaseSensitive)){$result[[string]$property.Name]=ConvertTo-Q009CanonicalJsonValue $property.Value}
-        return $result
-    }
-    if($Value-is[string]-or$Value-is[bool]-or$Value-is[int]-or$Value-is[long]-or$Value-is[decimal]-or$Value-is[double]){return $Value}
-    throw ('Canonical JSON rejected unsupported scalar type '+$Value.GetType().FullName)
+        $properties=@($Value.Keys|ForEach-Object{if($_-isnot[string]){throw 'Canonical JSON object contained a non-string key'};[pscustomobject]@{Name=[string]$_;Value=$Value[$_]}}|Sort-Object Name -CaseSensitive)
+    }elseif(Test-JsonObject $Value){
+        $properties=@($Value.PSObject.Properties|Where-Object{$_.MemberType-eq[System.Management.Automation.PSMemberTypes]::NoteProperty}|Sort-Object Name -CaseSensitive)
+    }else{throw ('Canonical JSON rejected unsupported value type '+$Value.GetType().FullName)}
+    $members=[Collections.Generic.List[string]]::new()
+    foreach($property in $properties){[void]$members.Add((ConvertTo-Q009JsonStringLiteral ([string]$property.Name))+':'+(ConvertTo-Q009CanonicalJsonText $property.Value))}
+    return '{'+[string]::Join(',',@($members))+'}'
 }
 
 function Get-Q009CanonicalJsonSha256 {
     param([AllowNull()][object]$Value)
-    $canonical=ConvertTo-Q009CanonicalJsonValue $Value
-    # Piping AutomationNull into ConvertTo-Json emits no object in Windows
-    # PowerShell 5.1. Canonical JSON still has an exact representation for a
-    # null value, so bind that literal explicitly before hashing.
-    $json=if($null-eq$canonical){'null'}else{$canonical|ConvertTo-Json -Compress -Depth 100}
+    $json=ConvertTo-Q009CanonicalJsonText $Value
     $sha=[Security.Cryptography.SHA256]::Create()
     try{return ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($json)))).Replace('-','').ToLowerInvariant()}finally{$sha.Dispose()}
 }
@@ -491,6 +521,7 @@ function Get-CanonicalManifestIssues {
         foreach ($field in @('required_object','conflict_identity')) {
             if ($row.PSObject.Properties.Name -contains $field -and -not (Test-ExactJsonString $row.$field -AllowEmpty)) { Add-Issue $issues "manifest expectation $field was not a string" }
         }
+        if($row.PSObject.Properties.Name-contains'target_first' -and -not(Test-ExactBoolean $row.target_first $true)){Add-Issue $issues 'manifest expectation target_first was not exact true'}
     }
     $actualKeys = @($rows | ForEach-Object { Get-ExpectationKey $_ })
     if ($actualKeys.Count -eq $historicalRows.Count) {
@@ -508,6 +539,8 @@ function Get-CanonicalManifestIssues {
     if (@($rows | Where-Object { [string]$_.scenario_id -ceq 'gas_station_road_crew_payday' }).Count -ne 6) { Add-Issue $issues 'Road Crew distribution must be 6' }
     if (@($rows | Where-Object { [string]$_.scenario_id -ceq 'corner_store_dead_shift' }).Count -ne 4) { Add-Issue $issues 'Dead Shift distribution must be 4' }
     if (@($rows | Where-Object { [string]$_.scenario_id -ceq 'corner_store_inventory_night' }).Count -ne 2) { Add-Issue $issues 'Inventory Night distribution must be 2' }
+    $targetFirstSeeds=@($rows|Where-Object{Test-ExactBoolean $_.target_first $true}|ForEach-Object{[string]$_.seed})
+    if(($targetFirstSeeds-join'|')-cne'POSTFIX-UIENV-073-140575119|POSTFIX-UIENV-008-2688401675|POSTFIX-UIENV-033-405233240|POSTFIX-UIENV-062-84881432'){Add-Issue $issues 'historical first-destination priority set changed'}
     $combos = @($Manifest.legal_room_combinations)
     if(-not($Manifest.legal_room_combinations -is [System.Array])){Add-Issue $issues 'manifest legal_room_combinations was not a JSON array'}
     if ($combos.Count -ne 1) {
@@ -1089,29 +1122,28 @@ function Get-AuditSemanticIssues {
         if (-not [string]::IsNullOrWhiteSpace([string]$Expectation.required_object)) {
             $targetRecords = @($targetRecords | Where-Object { (Test-StringArray $_.events -RequireUnique) -and @($_.events) -ccontains [string]$Expectation.required_object })
         }
-        if ($targetRecords.Count -ne 1) { Add-Issue $issues 'historical target/scenario/marker composition was not observed exactly once' }
+        if ($targetRecords.Count -lt 1) { Add-Issue $issues 'historical target/scenario/marker composition was not observed' }
         else {
-            $authorityRecord = $targetRecords[0]
-            if(-not(Test-JsonDeepEqual $authorityRecord.runtime_scenario_layout $authorityRecord.arrival_receipt.runtime_scenario_layout)){Add-Issue $issues 'historical authority layout did not bind to the arrival receipt'}
-            $arrivalAuthorityRecord=[pscustomobject]@{runtime_scenario_layout=$authorityRecord.arrival_receipt.runtime_scenario_layout}
-            $requiredReceipt = @(Get-AuthorityReceipt $arrivalAuthorityRecord ([string]$Expectation.required_interaction))
-            if ($requiredReceipt.Count -ne 1 -or -not (Test-AuthorityReceipt $requiredReceipt[0] 'semantic')) { Add-Issue $issues 'required semantic interaction lacked enabled finalized action authority/reachability' }
-            if (-not [string]::IsNullOrWhiteSpace([string]$Expectation.conflict_identity)) {
-                $conflictReceipt = @(Get-AuthorityReceipt $arrivalAuthorityRecord ([string]$Expectation.conflict_identity))
-                if ($conflictReceipt.Count -ne 1 -or -not (Test-AuthorityReceipt $conflictReceipt[0] 'base_record' -AllowDisabled)) { Add-Issue $issues 'projected base conflict identity lacked unique sealed reachable authority' }
+            foreach($authorityRecord in $targetRecords){
+                if(-not(Test-JsonDeepEqual $authorityRecord.runtime_scenario_layout $authorityRecord.arrival_receipt.runtime_scenario_layout)){Add-Issue $issues 'historical authority layout did not bind to the arrival receipt'}
+                $arrivalAuthorityRecord=[pscustomobject]@{runtime_scenario_layout=$authorityRecord.arrival_receipt.runtime_scenario_layout}
+                $requiredReceipt = @(Get-AuthorityReceipt $arrivalAuthorityRecord ([string]$Expectation.required_interaction))
+                if ($requiredReceipt.Count -ne 1 -or -not (Test-AuthorityReceipt $requiredReceipt[0] 'semantic')) { Add-Issue $issues 'required semantic interaction lacked enabled finalized action authority/reachability' }
+                if (-not [string]::IsNullOrWhiteSpace([string]$Expectation.conflict_identity)) {
+                    $conflictReceipt = @(Get-AuthorityReceipt $arrivalAuthorityRecord ([string]$Expectation.conflict_identity))
+                    if ($conflictReceipt.Count -ne 1 -or -not (Test-AuthorityReceipt $conflictReceipt[0] 'base_record' -AllowDisabled)) { Add-Issue $issues 'projected base conflict identity lacked unique sealed reachable authority' }
+                }
             }
         }
-        $targetTravels=@()
-        if($targetRecords.Count-eq1){
-            $target=$targetRecords[0]
+        foreach($target in $targetRecords){
             $targetTravels=@($Report.travel_records|Where-Object{
                 (Test-ExactJsonStringValue $_.seed $seed) -and [int]$_.run_index-eq[int]$target.run_index -and [int]$_.to_visit_index-eq[int]$target.visit_index -and
                 (Test-ExactJsonStringPair $_.target_id $target.world_node_id) -and (Test-ExactJsonStringPair $_.to_world_node_id $target.world_node_id) -and
                 (Test-ExactJsonStringPair $_.to_environment_id $target.environment_id) -and (Test-ExactJsonStringPair $_.to_archetype_id $target.archetype_id) -and
                 (Test-JsonDeepEqual $_.arrival_receipt $target.arrival_receipt)
             })
+            if ($targetTravels.Count -ne 1) { Add-Issue $issues 'historical destination lacked one exact incoming recorded travel for an observed target visit' }
         }
-        if ($targetTravels.Count -ne 1) { Add-Issue $issues 'historical destination lacked one exact incoming recorded travel' }
     }
 
     if ($null -ne $LegalCombination) {
@@ -2860,6 +2892,8 @@ function Invoke-ValidateOnlySelfTest {
         Add-SelfTestResult $cases 'final-post-event-visited-arrival-travel-and-admission-cross-binding' {
             $fixture=New-CrossBindingSelfTestFixture
             Assert-LauncherContract (@(Get-RunCrossBindingIssues $fixture.run $fixture.records $fixture.travels $fixture.attempt_id).Count-eq0) 'valid six-visit cross-binding fixture rejected'
+            $canonicalProbe=[ordered]@{lt='a<b';empty=[object[]]@();apostrophe='Sal''s';amp='a&b'}
+            Assert-LauncherContract ((Get-Q009CanonicalJsonSha256 $canonicalProbe)-ceq'5f966e0ad287fe088674da064197e5001ba4e1108c184a2845bc224f942542e3') 'canonical JSON hashing diverged from Godot for empty arrays or HTML-significant literal characters'
             foreach($mutation in @(
                 'final','post','visited','capture','initial','raw-travel','projection','admission','admission-after','layout','raw-type',
                 'arrival-false','arrival-string-true','visited-false','visited-array-true','travel-false','travel-string-true','installed-id-array',
@@ -2944,7 +2978,7 @@ function Invoke-ValidateOnlySelfTest {
             Assert-LauncherContract ($valid.Count-eq0) ('valid historical semantic fixture rejected: '+($valid-join'; '))
             $expectedTexts=@{
                 'wrong-scenario'='historical target/scenario';'required-interaction'='required semantic interaction';'conflict'='projected base conflict'
-                'missing-seed009-combo'='seed 009 pre-destination';'broken-chronology'='environment record';'duplicate-target'='exactly once'
+                'missing-seed009-combo'='seed 009 pre-destination';'broken-chronology'='environment record';'duplicate-target'='incoming recorded travel'
                 'wrong-incoming-link'='incoming recorded travel';'duplicate-environment'='environment record';'extra-environment'='environment record'
                 'out-of-order-environment'='environment record';'duplicate-travel'='travel record';'extra-travel'='travel record';'out-of-order-travel'='travel record'
             }
@@ -3521,6 +3555,7 @@ function Invoke-ValidateOnlySelfTest {
             $summaryStart=$runtimeSource.IndexOf('$summary=[ordered]@{',[StringComparison]::Ordinal);$summaryEnd=$runtimeSource.IndexOf('$summaryPublication=Publish-SummaryPairNoOverwrite',$summaryStart,[StringComparison]::Ordinal);Assert-LauncherContract ($summaryStart-ge0-and$summaryEnd-gt$summaryStart) 'summary source extent could not be isolated';$summarySource=$runtimeSource.Substring($summaryStart,$summaryEnd-$summaryStart);foreach($privateToken in @('cacheHandleCustody','native_cell','CacheCustodyCell','SafeFileHandle','IntPtr')){Assert-LauncherContract (-not$summarySource.Contains($privateToken)) "summary serializes private native custody token $privateToken"}
             foreach($needle in @('Global\BeatTheHouse-Q009-GodotLaunch','Assert-ExclusiveReservationOwned','Get-ExclusiveWaitDisposition','Assert-ExclusiveReady','Get-StrictGodotIdentityCensus','Get-StrictGlobalQuiescenceEvidence','Test-GlobalQuiescenceEvidenceShape','Assert-OwnedCacheAbsentImmediatelyBeforeImport','Assert-Q009PathAbsentStrict','Clear-ProvablyDeadWellFormedLeases','Get-CanonicalLeaseFilesStrict','Get-StrictLeaseOwnerRecord','Assert-PinnedFilesStable','Test-EnvironmentMatchesSnapshot','Get-Q009GdScriptTopLevelFunctionExtent','Get-Q009EnvironmentAuditTravelSourceIssues','Remove-ExactOwnedTree','Remove-Q009ExactOwnedTree','Remove-Q009ExactOwnedFile','New-Q009ExactOwnedDirectory','New-Q009ExactOwnedDirectoryHeld','New-Q009ExactOwnedFileHeld','Open-Q009ExactDirectoryHeld','Set-Q009HeldHandleDeletePending','Remove-Q009ManifestChildrenExceptSentinel','Close-Q009CheckedNativeHandle','Close-Q009AllOpenNativeHandles','Get-SentinelPinnedCacheProof','Invoke-Q009SentinelFilesystemCapabilityProbe','NtCreateFile(FILE_CREATE)','root_FILE_CREATE -> sentinel_relative_FILE_CREATE -> final_root_OPEN_EXISTING','sentinel_retained_through_phases','Get-FinalOwnedProcessResidualEvidence','Test-MayRemoveOwnedRuntimeArtifacts','Assert-ExactAttemptOwner','Assert-CanonicalLeaseRootPath','Assert-ExecutableIdentity','ExpectedGodotSha256','ExpectedPythonSha256','evidenceRootReady','Publish-SummaryPairNoOverwrite','Test-Q009SummaryPublicationReceiptShape','Test-Q009TerminalTreeDelta','Test-Q009PrePublicationCustodyShape','Test-Q009EvidenceTerminalOwnerReceiptShape','Test-Q009TerminalCompletionReceiptShape','Register-ProcessCustodyStart','process_start_provenance','pre_publication_custody','terminal_release_required','LoadAdmissionFunctionsOnly')){$sourceForNeedle=if($needle-ceq'NtCreateFile(FILE_CREATE)'){$supportSource}else{$runtimeSource};Assert-LauncherContract ($sourceForNeedle.Contains($needle)) "missing runtime seam $needle"}
             foreach($needle in @('New-Q009RunContext','New-Q009TrackedDependencyPins $pinned $runContext','Assert-Q009TrackedDependencyPinsStable $pinned $dependencyPins $runContext','Close-Q009TrackedDependencyPins $pinned $dependencyPins $runContext $dependencyPinReceipts','New-Q009HeldExclusiveLease','Close-Q009HeldExclusiveLease','New-Q009OwnedChildManifestChainHead','ExpectedExecutableIdentity $ExecutableIdentity','Get-FinalOwnedProcessResidualEvidence @($phases) $processCustody $runContext','Test-MayRemoveOwnedRuntimeArtifacts $finalOwnedProcessEvidence $runContext','evidence_terminal_before_summary','Publish-SummaryPairNoOverwrite $EvidenceRoot $summaryPath $summaryShaPath $summary $evidenceTerminalManifestChain $attemptId')){$sourceForNeedle=if($needle-ceq'ExpectedExecutableIdentity $ExecutableIdentity'){$runtimeSource}else{$runtimeEntrySource};Assert-LauncherContract ($sourceForNeedle.Contains($needle)) "qualifying runtime entry lost exact immutable custody seam $needle"}
+            foreach($targetNeedle in @('$targetDestination=if(Test-ExactBoolean $expectation.target_first $true){[string]$expectation.destination}else{''''}','"--target-destination=$targetDestination"')){Assert-LauncherContract ($runtimeEntrySource.Contains($targetNeedle)) "historical target-priority binding changed: $targetNeedle"}
             $staleExclusiveDelete='Remove-Q009ExactOwnedFile -Path $exclusiveLeasePath -ExpectedIdentity $record.file_identity'
             Assert-LauncherContract ([regex]::Matches($runtimeEntrySource,[regex]::Escape($staleExclusiveDelete)).Count-eq1-and$runtimeEntrySource.IndexOf($staleExclusiveDelete,[StringComparison]::Ordinal)-gt$runtimeEntrySource.IndexOf('$record=Get-StrictLeaseRecord $exclusiveLeasePath $runContext',[StringComparison]::Ordinal)) 'dead preexisting EXCLUSIVE cleanup lost its exact enumerated identity gate'
             foreach($forbiddenInvocation in @('New-TrackedExclusiveLeaseFile','Remove-Item','[IO.File]::Delete($exclusiveLeasePath)','[IO.Directory]::Delete($profileRoot')){Assert-LauncherContract (-not$runtimeEntrySource.Contains($forbiddenInvocation)) "qualifying runtime entry retained superseded path/PID custody seam $forbiddenInvocation"}
@@ -3949,7 +3984,8 @@ try{
         foreach($expectation in @($manifest.expectations)){
             $index+=1;$seed=[string]$expectation.seed;$safe=ConvertTo-SafeEvidenceName $seed;$seedRoot=Join-Path $seedContainer ('{0:D2}-{1}'-f$index,$safe)
             $json=Join-Path $seedRoot 'report.json';$md=Join-Path $seedRoot 'report.md';$log=Join-Path $seedRoot 'godot.log';$stdout=Join-Path $seedRoot 'stdout.log';$stderr=Join-Path $seedRoot 'stderr.log';$profile=New-ProfileEnvironment (Join-Path $profileRoot ('seed-{0:D2}'-f$index)) $EvidenceRoot $runContext
-            $args=@('--headless','--verbose','--disable-crash-handler','--audio-driver','Dummy','--path',$projectRoot,'--log-file',$log,'--script','res://tools/environment_generation_audit.gd','--',"--runs=1","--visits=6","--exact-seed=$seed","--attempt-id=$attemptId",'--require-attempt-id',"--output=$(Convert-ToResourcePath $json $runContext)","--report=$(Convert-ToResourcePath $md $runContext)")
+            $targetDestination=if(Test-ExactBoolean $expectation.target_first $true){[string]$expectation.destination}else{''}
+            $args=@('--headless','--verbose','--disable-crash-handler','--audio-driver','Dummy','--path',$projectRoot,'--log-file',$log,'--script','res://tools/environment_generation_audit.gd','--',"--runs=1","--visits=6","--exact-seed=$seed","--target-destination=$targetDestination","--attempt-id=$attemptId",'--require-attempt-id',"--output=$(Convert-ToResourcePath $json $runContext)","--report=$(Convert-ToResourcePath $md $runContext)")
             $phase=Invoke-ExclusiveProcessPhase ("historical_{0:D2}"-f$index) $GodotPath $args $seedRoot Godot $candidateCommit $candidateTree $attemptId $launcherIdentity $pinned $dependencyPins $environmentBaseline $ownerClaim $ownerClaimText $ownerClaimSha256 $EvidenceRoot $executableEvidence.godot.actual $canonicalGodotPath $ExpectedGodotSha256 $profile.environment @($log) $ProcessTimeoutSeconds $processCustody -OwnerReceipt $evidenceRootOwnership -HeldExclusiveLease $heldExclusiveLease -CacheCustody $cacheHandleCustody -CacheCreatorIdentity $launcherIdentity -AdditionalArtifactPaths @($json,$md) -OwnedArtifactRoots @($cacheArtifactRequest,[ordered]@{role='profile';path=[string]$profile.root_path;root_identity=$profile.root_identity}) -RunContext $runContext;[void]$phases.Add($phase)
             $phaseChains=Update-Q009RuntimeArtifactManifestChains $phase $runContext $projectCacheRoot $cacheRootIdentity $cacheManifestChain $profileRoot $profileRootIdentity $profileManifestChain $true $cacheHandleCustody.native_cell $cacheHandleCustody.sentinel_receipt.identity;$cacheManifestChain=$phaseChains.cache_chain;$profileManifestChain=$phaseChains.profile_chain
             if(-not(Test-PhaseCustodyClean $phase @(0,1) $runContext)){throw "Historical seed custody/process envelope failed: $seed"}

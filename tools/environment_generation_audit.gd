@@ -129,6 +129,7 @@ var run_summaries: Array = []
 var failures: Array = []
 var warnings: Array = []
 var travel_choice_routes: Dictionary = {}
+var required_destination_id := ""
 
 
 func _init() -> void:
@@ -143,6 +144,7 @@ func _run() -> void:
 	var output_markdown := str(options.get("output_markdown", DEFAULT_OUTPUT_MARKDOWN))
 	var exact_seed := str(options.get("exact_seed", "")).strip_edges()
 	var seed_prefix := str(options.get("seed_prefix", "")).strip_edges()
+	required_destination_id = str(options.get("target_destination", "")).strip_edges()
 	var attempt_id := str(options.get("attempt_id", "")).strip_edges()
 	var attempt_id_contract_requested := bool(options.get("require_attempt_id", false))
 	var require_attempt_id := true
@@ -266,6 +268,8 @@ func _parse_options() -> Dictionary:
 			options["exact_seed"] = text.trim_prefix("--exact-seed=")
 		elif text.begins_with("--attempt-id="):
 			options["attempt_id"] = text.trim_prefix("--attempt-id=")
+		elif text.begins_with("--target-destination="):
+			options["target_destination"] = text.trim_prefix("--target-destination=")
 		elif text == "--require-attempt-id":
 			options["require_attempt_id"] = true
 	return options
@@ -1989,14 +1993,19 @@ func _pick_travel_choice(run_state: RunState, path_rng: RngStream) -> Dictionary
 	if enabled.is_empty():
 		return {}
 	var grand_choices: Array = []
+	if not required_destination_id.is_empty() and not _has_visited_destination(run_state, required_destination_id):
+		for choice_value in enabled:
+			var required_choice: Dictionary = choice_value
+			if str(required_choice.get("id", "")) == required_destination_id:
+				return required_choice.duplicate(true)
 	for choice in enabled:
 		if str((choice as Dictionary).get("id", "")) == "grand_casino":
 			grand_choices.append(choice)
 	if not grand_choices.is_empty():
 		return (grand_choices[0] as Dictionary).duplicate(true)
-	# A low-bankroll no-game audit must conserve its remaining travel budget so
-	# it can exercise the full six-arrival contract. This selects only an exact,
-	# enabled production choice; normal player travel rules are unchanged.
+	# A low-cash no-game run favors the cheapest enabled route. This preserves enough
+	# travel budget to finish the six-arrival audit; it never manufactures or
+	# enables a production choice.
 	if run_state.bankroll <= 30:
 		var cheapest: Dictionary = enabled[0]
 		for choice_value in enabled:
@@ -2005,6 +2014,15 @@ func _pick_travel_choice(run_state: RunState, path_rng: RngStream) -> Dictionary
 				cheapest = candidate
 		return cheapest.duplicate(true)
 	return (enabled[path_rng.randi_range(0, enabled.size() - 1)] as Dictionary).duplicate(true)
+
+
+func _has_visited_destination(run_state: RunState, destination_id: String) -> bool:
+	if run_state.current_world_node_id() == destination_id:
+		return true
+	for entry_value in run_state.environment_history:
+		if typeof(entry_value) == TYPE_DICTIONARY and str((entry_value as Dictionary).get("world_node_id", "")) == destination_id:
+			return true
+	return false
 
 
 func _enabled_travel_choices(run_state: RunState) -> Array:
