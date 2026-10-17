@@ -1685,6 +1685,12 @@ func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 	# a canvas disabled by a prior lifecycle/test owner without waiting for input.
 	_arm_animation_heartbeat()
 	environment_snapshot_render_generation += 1
+	# Ambient clock ticks can rebuild the room snapshot while the selected
+	# object's complete presentation record remains identical. Retain that old
+	# record by reference so the camera target is only refreshed when an input to
+	# its composition actually changed; the rebuilt scene array does not mutate
+	# the outgoing dictionary.
+	var previous_camera_focus_source := _camera_focus_source()
 	var previous_slot_context := _developer_slot_snapshot_context_key(foundation_snapshot)
 	var next_slot_context := _developer_slot_snapshot_context_key(snapshot)
 	_preserve_developer_slot_edit_before_context_change(snapshot)
@@ -1739,8 +1745,9 @@ func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 	# Same-context refreshes remain non-committing. Exact context transitions have
 	# already retained a valid changed nudge above, against the outgoing layout.
 	_update_developer_placement_panel()
-	_invalidate_camera_target()
-	_update_camera_target_if_needed()
+	if camera_target_dirty or previous_camera_focus_source != _camera_focus_source():
+		_invalidate_camera_target()
+		_update_camera_target_if_needed()
 	queue_redraw()
 	view_geometry_changed.emit()
 
@@ -7530,6 +7537,23 @@ func _visible_board_rect() -> Rect2:
 
 func _invalidate_camera_target() -> void:
 	camera_target_dirty = true
+
+
+func _camera_focus_source() -> Dictionary:
+	if selected_object_id.is_empty():
+		return {"selected_object_id": ""}
+	var object_data := _scene_object(selected_object_id)
+	var slot_data := {}
+	if not object_data.is_empty():
+		var slot_id := str(object_data.get("slot_id", "")).strip_edges()
+		if not slot_id.is_empty():
+			slot_data = _developer_slot(slot_id)
+	return {
+		"selected_object_id": selected_object_id,
+		"environment_id": environment_id,
+		"object": object_data,
+		"slot": slot_data,
+	}
 
 
 func _update_camera_target_if_needed() -> void:

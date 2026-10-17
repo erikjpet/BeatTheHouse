@@ -1373,7 +1373,7 @@ func _check_talk_dock_component() -> bool:
 	environment_canvas.size = parent.size
 	parent.add_child(environment_canvas)
 	environment_canvas.call("set_reserved_overlay_rect", reserved_rect)
-	environment_canvas.call("render_environment_snapshot", {
+	var environment_canvas_snapshot := {
 		"id": "talk_dock_clearance_fixture",
 		"display_name": "Talk Dock Clearance Fixture",
 		"interactable_objects": [{
@@ -1385,7 +1385,8 @@ func _check_talk_dock_component() -> bool:
 			"enabled": true,
 			"normalized_rect": {"x": 0.12, "y": 0.70, "w": 0.14, "h": 0.16},
 		}],
-	})
+	}
+	environment_canvas.call("render_environment_snapshot", environment_canvas_snapshot)
 	await process_frame
 	var clearance_snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
 	var repositioned_ids: Array = clearance_snapshot.get("overlay_repositioned_object_ids", []) if typeof(clearance_snapshot.get("overlay_repositioned_object_ids", [])) == TYPE_ARRAY else []
@@ -1469,6 +1470,16 @@ func _check_talk_dock_component() -> bool:
 		return false
 	var camera_refresh_count := int(focused_snapshot.get("camera_target_refresh_count", -1))
 	var stable_camera_offset: Vector2 = focused_snapshot.get("camera_offset", Vector2.ZERO)
+	var ambient_refresh_snapshot := environment_canvas_snapshot.duplicate(true)
+	ambient_refresh_snapshot["ambient_clock_tick"] = 1
+	environment_canvas.call("render_environment_snapshot", ambient_refresh_snapshot)
+	var ambient_focus_snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
+	if int(ambient_focus_snapshot.get("camera_target_refresh_count", -2)) != camera_refresh_count \
+			or not (ambient_focus_snapshot.get("target_camera_offset", Vector2.INF) as Vector2).is_equal_approx(focused_snapshot.get("target_camera_offset", Vector2.ZERO) as Vector2):
+		environment_canvas.queue_free()
+		parent.queue_free()
+		push_error("Unrelated ambient snapshot refresh recalculated a stable focused camera target: %s." % str(ambient_focus_snapshot))
+		return false
 	for _idle_frame in range(120):
 		environment_canvas.call("set_reserved_overlay_rect", reserved_rect)
 		environment_canvas.call("_process", 1.0 / 60.0)
