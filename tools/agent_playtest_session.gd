@@ -9,6 +9,7 @@ const PublicObservation := preload("res://tools/agent_playtest_public_observatio
 const REPLAY_PAUSE_OWNER := "agent_replay"
 const SHUTDOWN_DRAIN_FRAMES := 12
 const POST_INPUT_SETTLE_FRAMES := 4
+const MAX_LOADING_SETTLE_FRAMES := 120
 
 var app: Control
 var session_name := "session"
@@ -221,6 +222,8 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 						reason = "deterministic replay pause ownership was not restored after wait"
 					detail = {
 						"frames": frames,
+						"advanced_frames": advance.get("advanced_frames", 0),
+						"loading_settled": advance.get("loading_settled", false),
 						"pause_restored": accepted,
 						"suspended_pause_owners": advance.get("suspended_pause_owners", []),
 						"volatile_focus_owner_normalized": advance.get("volatile_focus_owner_normalized", false),
@@ -242,6 +245,8 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 			reason = "deterministic replay pause ownership was not restored after input settlement"
 		detail["presentation_settle"] = {
 			"frames": POST_INPUT_SETTLE_FRAMES,
+			"advanced_frames": settle.get("advanced_frames", 0),
+			"loading_settled": settle.get("loading_settled", false),
 			"pause_restored": settle_valid,
 			"suspended_pause_owners": settle.get("suspended_pause_owners", []),
 			"volatile_focus_owner_normalized": settle.get("volatile_focus_owner_normalized", false),
@@ -1290,8 +1295,11 @@ func _advance_replay_presentation(frames: int, pause_before: Dictionary) -> Dict
 			continue
 		if not suspended_pause_owners.has(owner):
 			suspended_pause_owners.append(owner)
-	var advance_frames := maxi(1, frames)
-	for _frame in range(advance_frames):
+	var minimum_frames := maxi(1, frames)
+	var maximum_frames := maxi(minimum_frames, MAX_LOADING_SETTLE_FRAMES)
+	var advanced_frames := 0
+	while advanced_frames < minimum_frames \
+			or (advanced_frames < maximum_frames and bool(_dict(_public_observation().get("spatial", {})).get("loading", false))):
 		var live_pause := _replay_pause_snapshot()
 		for owner_value in _array(live_pause.get("pause_owners", [])):
 			var owner := str(owner_value).strip_edges()
@@ -1304,18 +1312,23 @@ func _advance_replay_presentation(frames: int, pause_before: Dictionary) -> Dict
 			app.call("set_application_pause_owner", owner, false)
 		app.call("set_application_pause_owner", "focus_out", false)
 		await process_frame
+		advanced_frames += 1
 	for owner in suspended_pause_owners:
 		app.call("set_application_pause_owner", owner, true)
 	app.call("set_application_pause_owner", "focus_out", false)
 	await process_frame
 	var pause_after := _replay_pause_snapshot()
 	var restored_pause_owners := _array(pause_after.get("pause_owners", []))
+	var loading_settled := not bool(_dict(_public_observation().get("spatial", {})).get("loading", false))
 	var restored := _replay_pause_is_valid(pause_after) \
-		and _replay_ambient_clock_is_frozen()
+		and _replay_ambient_clock_is_frozen() \
+		and loading_settled
 	for owner in suspended_pause_owners:
 		restored = restored and restored_pause_owners.has(owner)
 	return {
 		"ok": restored,
+		"advanced_frames": advanced_frames,
+		"loading_settled": loading_settled,
 		"suspended_pause_owners": suspended_pause_owners,
 		"volatile_focus_owner_normalized": volatile_focus_owner_normalized,
 	}
