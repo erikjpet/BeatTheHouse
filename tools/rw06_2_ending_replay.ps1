@@ -4516,6 +4516,19 @@ function Play-OneBlackjackRound {
             }
             $phase = [string](Get-Value $script:LastObservation @('game', 'phase') '')
         }
+        if ($phase -ceq 'settling') {
+            # Completed Blackjack hands are normally settled by the production
+            # surface's automatic tick once the finite card presentation ends.
+            # Frame duration varies with host load, so a fixed frame wait can
+            # expose Settle on one repeat while another repeat has already
+            # advanced to betting. Observe that public presentation-only state
+            # until its normal automatic boundary completes; Wait-Frames is not
+            # recorded as a player action, keeping the replay input trace exact.
+            Wait-Frames `
+                -Frames 12 `
+                -Intent 'wait for the visibly completed blackjack hand to settle automatically'
+            continue
+        }
         if ($null -cne (Find-GameAction -Action 'blackjack_settle')) {
             $null = Invoke-GameAction -Action 'blackjack_settle' -Intent 'settle the publicly completed blackjack hand'
             Wait-Frames -Frames 12
