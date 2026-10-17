@@ -93,6 +93,7 @@ function Read-PowerShellSource {
         path = $Path
         source = Get-Content -Raw -LiteralPath $Path -Encoding utf8
         ast = $ast
+        parse_errors = @($parseErrors)
         parameters = @($ast.ParamBlock.Parameters | ForEach-Object { $_.Name.VariablePath.UserPath })
     }
 }
@@ -1001,7 +1002,7 @@ $admissionAnalysis = [pscustomobject][ordered]@{
     parameters = @()
 }
 $launcherTopLevel = Get-ExecutableTopLevelSource -Analysis $launcher
-$expectedLauncherStructuralSha256 = '4B7278C63C2D508ADDA2BAC459EAE430345289D239A818AF38744A34B5790272'
+$expectedLauncherStructuralSha256 = 'A4DE01037A466B5A75B6C38DF00F32093784DA6299DFC57A07FBA266732F4B03'
 $expectedLauncherFunctionHashes = [ordered]@{
     'Get-FailureMessage' = 'B9697A70DF70DBEC0D0AE3D97284DBF4F18D6B9EBC6339730B1404B084D8AC37'
     'Add-TerminalFailure' = 'B10F2F4D8C162E94A2AA23ACE9B2C08271894D706A677638362C06E0940CC208'
@@ -1012,7 +1013,7 @@ $expectedLauncherFunctionHashes = [ordered]@{
     'Get-ExactPidArray' = '722EC4B5995523F991FB3B17B39C8CA248FAF77788EE5CFCAB0CB0E6F12387EE'
     'Assert-FixedReplayAdmission' = '195E1CE704BD7AB68228A1665F550F1DB8293D53B35497B55AAE6299BBE586DF'
     'Get-GitValue' = '04DC697E72A632E7B36A7BB98162BBD3F5FA42498E0EF9FB765697944666283F'
-    'Get-Sha256' = 'EF7958AD8CD27EC60D4AB2FF4D71B01476DFCE67DE1554B9C5BB84104CCC2479'
+    'Get-Sha256' = 'BA2CCF64BF150CC85A7E55735000D02B820144BE377B0846A1E646C2B64BC042'
     'Test-ExactPsCustomObject' = 'C130DD450462849C0ADFA53D6191512438E4011191C80218D53F4FF65E44B34C'
     'Assert-LocalExactPropertyNames' = '092454AD9D05ED8F6C04C6081B361F23B63930622A51D28D021D0988D3C80BF7'
     'ConvertFrom-ExactJsonObjectText' = '1F1F21C3C9DE95A2FCC8C7C89875A00107AB114337BAEBFA4CB9691E4BC5FDDA'
@@ -1043,7 +1044,7 @@ $expectedLauncherFunctionHashes = [ordered]@{
     'Test-OwnedExclusiveLease' = 'B96D566226145916ECDA5B178F1A5CD2526EDAA84703EC2CE29573E522534CF1'
     'Assert-ExclusiveAdmission' = '079DF12B4FBCE47F7B8058F7FECDB24E77916C615B5622952D4C5C4AC762613E'
     'Assert-OwnedExclusiveReservation' = '4ABFA5A68421E53192D7B67B1137F036F5FDE427F9D234370ACE308461871DD7'
-    'Wait-ExclusiveDrain' = '307C28FF308A2742BF3F10EEC48DC24CAF31AB15F6A66D893DB415FBAD3190C0'
+    'Wait-ExclusiveDrain' = '82EDD1D4EDEC594814E20337E6C5E0DA21AB89725776B91EDB711610DA826B1B'
     'New-OwnedExclusiveLease' = '636F3B4CA4FAB99429DC4112AA728AC8F5C97BD6632D9C72FC75B32C526910BD'
     'Get-LiveSurvivorPids' = 'E0B97CD5C1AFB7E8C9D43D147CDBFAB09878B20568CAC1164064FC4CFFF8C45F'
     'Test-LauncherCustodyLease' = 'BB54740D4C950B9587CAE715944A78CE162DC3232B1CF850EC9C09158D434D08'
@@ -1080,7 +1081,7 @@ $expectedLauncherFunctionHashes = [ordered]@{
     'Assert-TerminalMetadataShape' = '7CEC1B8BA539BE1AD99000F4A5921D05D18393B5228A4FED6414FD4F1ECECEDF'
     'Assert-TerminalManifestShape' = 'CCA61C53896C48C49E5EEC1118A01B31C14085657BC1A840AA5AD8E2EE1D2D9E'
     'Assert-TerminalResultShape' = '1737385AD2EB980066CA08F7BEA3EAABB0D2AD602AB1357EACF6E75A731606DB'
-    'Get-ManifestArtifactPaths' = '1A7D40786877603FDBF6A28810C98EA8F7B9871783C244A6A61C3F4CB2A7E396'
+    'Get-ManifestArtifactPaths' = '4E1B8DB8A43D7F69D4DA85714E3003366C79DB10EB79221250DFB7A6DBBEBF10'
     'Assert-ManifestArtifactHash' = '20CC4329CFDB43FDEE30A6901140056753D5C9C7FADF34083DA77D3FA722C4C5'
     'Assert-FixedRunManifestArtifactBindings' = 'E3B55E2F31ACF58D3226237D3E68A95E5233BDD9F4FE505BB38185EAC555FE1F'
 }
@@ -2149,7 +2150,7 @@ $snapshotBindingValidator = {
 }
 $replayExecutionBindingValidator = {
     param($analysis)
-    if ($analysis.source -match '(?i)\$(?:[A-Za-z]+:)?ReplayTool\b|\b(?:SessionState|PSVariable|ExecutionContext)\b') {
+    if ($analysis.source -match '(?i)\$(?:[A-Za-z]+:)?ReplayTool\b|\bVariable\s*:\s*ReplayTool\b|\b(?:SessionState|PSVariable|ExecutionContext)\b') {
         return $false
     }
     if (@($analysis.ast.FindAll({
@@ -2345,7 +2346,7 @@ Assert-True -Condition ([bool](& $immutableLauncherValidator $launcher)) `
     -Message 'Final launcher structural identity or exact function-body authority drifted.'
 Assert-HostileMutationRejected -Name 'launcher-structural-identity-drift' -Validator $immutableLauncherValidator -Mutate {
     param($source)
-    Replace-SourceOnce -Source $source `
+    Replace-FunctionSourceOnce -Source $source -FunctionName 'Get-ValidatedReplayToolPath' `
         -Needle "throw 'The exact checked-in replay tool is missing.'" `
         -Replacement "throw 'The checked-in replay tool is missing.'"
 }

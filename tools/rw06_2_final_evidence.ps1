@@ -35,9 +35,11 @@ $ExpectedOutcomes = @{
     heist = @('heist_clean_sweep', 'heist_out_hot', 'heist_somebody_got_pinched')
 }
 $Seed = [string]$FixedSeeds[$Ending]
-$Stamp = Get-Date -Format 'yyyyMMdd-HHmmss'
 $Nonce = [Guid]::NewGuid().ToString('N').Substring(0, 8)
-$EvidenceRoot = Join-Path $Worktree ".tmp\rw06_2\final_fixed\$Ending-$Stamp-$PID-$Nonce"
+# Keep the isolated Windows profile roots short. Godot appends long renderer
+# cache keys below APPDATA, and a descriptive aggregate path can otherwise
+# cross the legacy MAX_PATH boundary during a save/relaunch checkpoint.
+$EvidenceRoot = Join-Path $Worktree ".tmp\r6\$Ending-$PID-$Nonce"
 $LeasePath = Join-Path $LeaseRoot 'EXCLUSIVE.lease'
 $LauncherSnapshotPath = Join-Path $EvidenceRoot 'launcher.invoked.ps1'
 $AggregateSummaryPath = Join-Path $EvidenceRoot 'aggregate_summary.json'
@@ -279,7 +281,20 @@ function Get-Sha256 {
     if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
         throw "Required evidence file is missing: $Path"
     }
-    return (Microsoft.PowerShell.Utility\Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash.ToLowerInvariant()
+    $stream = [IO.File]::Open(
+        $Path,
+        [IO.FileMode]::Open,
+        [IO.FileAccess]::Read,
+        [IO.FileShare]::ReadWrite
+    )
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try {
+        return ([BitConverter]::ToString($sha.ComputeHash($stream))).Replace('-', '').ToLowerInvariant()
+    }
+    finally {
+        $sha.Dispose()
+        $stream.Dispose()
+    }
 }
 
 
