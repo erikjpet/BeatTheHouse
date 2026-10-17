@@ -1299,7 +1299,7 @@ func _advance_replay_presentation(frames: int, pause_before: Dictionary) -> Dict
 	var maximum_frames := maxi(minimum_frames, MAX_LOADING_SETTLE_FRAMES)
 	var advanced_frames := 0
 	while advanced_frames < minimum_frames \
-			or (advanced_frames < maximum_frames and bool(_dict(_public_observation().get("spatial", {})).get("loading", false))):
+			or (advanced_frames < maximum_frames and _replay_visible_spatial_loading(_public_observation())):
 		var live_pause := _replay_pause_snapshot()
 		for owner_value in _array(live_pause.get("pause_owners", [])):
 			var owner := str(owner_value).strip_edges()
@@ -1319,7 +1319,7 @@ func _advance_replay_presentation(frames: int, pause_before: Dictionary) -> Dict
 	await process_frame
 	var pause_after := _replay_pause_snapshot()
 	var restored_pause_owners := _array(pause_after.get("pause_owners", []))
-	var loading_settled := not bool(_dict(_public_observation().get("spatial", {})).get("loading", false))
+	var loading_settled := not _replay_visible_spatial_loading(_public_observation())
 	var restored := _replay_pause_is_valid(pause_after) \
 		and _replay_ambient_clock_is_frozen() \
 		and loading_settled
@@ -1332,6 +1332,16 @@ func _advance_replay_presentation(frames: int, pause_before: Dictionary) -> Dict
 		"suspended_pause_owners": suspended_pause_owners,
 		"volatile_focus_owner_normalized": volatile_focus_owner_normalized,
 	}
+
+
+func _replay_visible_spatial_loading(observation: Dictionary) -> bool:
+	# The deferred room controls can still be compiling while the player uses the
+	# start menu. That work is intentionally invisible there and must not turn an
+	# otherwise-settled menu click into a failed spatial-loading boundary.
+	var screen := _dict(observation.get("screen", {}))
+	if not bool(screen.get("has_run", false)) or str(screen.get("screen", "")) == "START":
+		return false
+	return bool(_dict(observation.get("spatial", {})).get("loading", false))
 
 
 func _visible_buttons() -> Array:
