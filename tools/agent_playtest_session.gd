@@ -215,37 +215,15 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 				if frames < 0 or frames > 3600:
 					reason = "frames must be between 0 and 3600"
 				else:
-					# This isolated process can retain the production focus-out owner
-					# because its window is intentionally unattended. Suspend the exact
-					# application-lifecycle owners seen at the command boundary so a
-					# normal wait advances presentation clocks and autonomous game
-					# settlement, then restore all of them. The separately frozen ambient
-					# world clock prevents frame-duration drift during this window.
-					# Modal pause owners remain inside FoundationMain and are untouched.
-					var suspended_pause_owners: Array[String] = []
-					for owner_value in _array(pause_before.get("pause_owners", [])):
-						var owner := str(owner_value).strip_edges()
-						if owner.is_empty() or suspended_pause_owners.has(owner):
-							continue
-						suspended_pause_owners.append(owner)
-						app.call("set_application_pause_owner", owner, false)
-					await process_frame
-					await _wait_frames(frames)
-					for owner in suspended_pause_owners:
-						app.call("set_application_pause_owner", owner, true)
-					await process_frame
-					var pause_after_wait := _replay_pause_snapshot()
-					accepted = _replay_pause_is_valid(pause_after_wait) \
-						and _replay_ambient_clock_is_frozen()
-					var restored_pause_owners := _array(pause_after_wait.get("pause_owners", []))
-					for owner in suspended_pause_owners:
-						accepted = accepted and restored_pause_owners.has(owner)
+					var advance := await _advance_replay_presentation(frames, pause_before)
+					accepted = bool(advance.get("ok", false))
 					if not accepted:
 						reason = "deterministic replay pause ownership was not restored after wait"
 					detail = {
 						"frames": frames,
 						"pause_restored": accepted,
-						"suspended_pause_owners": suspended_pause_owners,
+						"suspended_pause_owners": advance.get("suspended_pause_owners", []),
+						"volatile_focus_owner_normalized": advance.get("volatile_focus_owner_normalized", false),
 					}
 			"quit":
 				accepted = true
@@ -256,32 +234,17 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 		# Input handlers can queue visible object removal, selection-state changes,
 		# and retained-canvas rebuilds for an unpaused presentation frame. Advance a
 		# fixed cadence with the ambient clock still frozen, then reacquire the exact
-		# command-boundary pause owners before authenticating the post-input state.
-		var settle_pause_owners: Array[String] = []
-		for owner_value in _array(pause_before.get("pause_owners", [])):
-			var owner := str(owner_value).strip_edges()
-			if owner.is_empty() or settle_pause_owners.has(owner):
-				continue
-			settle_pause_owners.append(owner)
-			app.call("set_application_pause_owner", owner, false)
-		await process_frame
-		await _wait_frames(POST_INPUT_SETTLE_FRAMES)
-		for owner in settle_pause_owners:
-			app.call("set_application_pause_owner", owner, true)
-		await process_frame
-		var pause_after_settle := _replay_pause_snapshot()
-		var settle_valid := _replay_pause_is_valid(pause_after_settle) \
-			and _replay_ambient_clock_is_frozen()
-		var restored_settle_owners := _array(pause_after_settle.get("pause_owners", []))
-		for owner in settle_pause_owners:
-			settle_valid = settle_valid and restored_settle_owners.has(owner)
+		# stable command-boundary pause owners before authenticating the post-input state.
+		var settle := await _advance_replay_presentation(POST_INPUT_SETTLE_FRAMES, pause_before)
+		var settle_valid := bool(settle.get("ok", false))
 		if not settle_valid:
 			accepted = false
 			reason = "deterministic replay pause ownership was not restored after input settlement"
 		detail["presentation_settle"] = {
 			"frames": POST_INPUT_SETTLE_FRAMES,
 			"pause_restored": settle_valid,
-			"suspended_pause_owners": settle_pause_owners,
+			"suspended_pause_owners": settle.get("suspended_pause_owners", []),
+			"volatile_focus_owner_normalized": settle.get("volatile_focus_owner_normalized", false),
 		}
 	await _wait_frames(4)
 	# Quit still publishes its final authenticated public observation, but it does
@@ -1308,6 +1271,54 @@ func _replay_pause_is_valid(snapshot: Dictionary) -> bool:
 
 func _replay_ambient_clock_is_frozen() -> bool:
 	return app != null and not bool(app.get("continuous_environment_clock_enabled"))
+
+
+func _advance_replay_presentation(frames: int, pause_before: Dictionary) -> Dictionary:
+	# Window focus belongs to the operator/OS and can change while this unattended
+	# bridge is processing a command. It must not decide how many presentation
+	# frames actually advance. Preserve every stable lifecycle owner, continuously
+	# clear any owner that appears during the bounded advance, and let the replay
+	# owner reacquire the deterministic command boundary afterward.
+	var suspended_pause_owners: Array[String] = []
+	var volatile_focus_owner_normalized := false
+	for owner_value in _array(pause_before.get("pause_owners", [])):
+		var owner := str(owner_value).strip_edges()
+		if owner.is_empty():
+			continue
+		if owner == "focus_out":
+			volatile_focus_owner_normalized = true
+			continue
+		if not suspended_pause_owners.has(owner):
+			suspended_pause_owners.append(owner)
+	var advance_frames := maxi(1, frames)
+	for _frame in range(advance_frames):
+		var live_pause := _replay_pause_snapshot()
+		for owner_value in _array(live_pause.get("pause_owners", [])):
+			var owner := str(owner_value).strip_edges()
+			if owner.is_empty():
+				continue
+			if owner == "focus_out":
+				volatile_focus_owner_normalized = true
+			elif not suspended_pause_owners.has(owner):
+				suspended_pause_owners.append(owner)
+			app.call("set_application_pause_owner", owner, false)
+		app.call("set_application_pause_owner", "focus_out", false)
+		await process_frame
+	for owner in suspended_pause_owners:
+		app.call("set_application_pause_owner", owner, true)
+	app.call("set_application_pause_owner", "focus_out", false)
+	await process_frame
+	var pause_after := _replay_pause_snapshot()
+	var restored_pause_owners := _array(pause_after.get("pause_owners", []))
+	var restored := _replay_pause_is_valid(pause_after) \
+		and _replay_ambient_clock_is_frozen()
+	for owner in suspended_pause_owners:
+		restored = restored and restored_pause_owners.has(owner)
+	return {
+		"ok": restored,
+		"suspended_pause_owners": suspended_pause_owners,
+		"volatile_focus_owner_normalized": volatile_focus_owner_normalized,
+	}
 
 
 func _visible_buttons() -> Array:
