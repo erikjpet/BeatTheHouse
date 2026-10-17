@@ -275,7 +275,11 @@ static func sealed_renderer_snapshot(layout_result: Dictionary) -> Dictionary:
 		"errors": [],
 		"presentation_mode": "passive" if sealed_passive else "active",
 		"sealed_passive": sealed_passive,
-		"warnings": _array(layout_result.get("warnings", [])),
+		# Placement diagnostics are useful while resolving the room, but they are
+		# not draw or hit-test authority. Keeping them in the sealed renderer made
+		# an otherwise identical projection fingerprint depend on whether a
+		# diagnostic reconciliation had already run.
+		"warnings": [],
 		"visual_objects": visuals,
 		"interaction_overlays": _ordered_semantic_values(_dict(semantic_state.get("interactions", {}))),
 		"services": _ordered_semantic_values(_dict(semantic_state.get("services", {}))),

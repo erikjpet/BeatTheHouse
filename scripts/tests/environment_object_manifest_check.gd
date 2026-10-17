@@ -8,6 +8,7 @@ const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const EnvironmentInteractionControllerScript := preload("res://scripts/ui/environment_interaction_controller.gd")
+const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
 const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
 
 const FAMILIES := ["fixed", "event", "scenario", "exit"]
@@ -970,15 +971,25 @@ func _check_contextual_runtime_membership(library: ContentLibrary) -> void:
 		"active": true,
 		"lost": false,
 		"home_archetype_id": "motel_room",
-		"home_node_id": "motel_room_runtime_fixture",
+		"home_node_id": "motel_room",
 		"parent_archetype_id": "motel",
 		"display_name": "Motel Room",
 	}
 	home_run.current_environment = _generated_environment(library, "motel")
 	var home_reconciled := home_run.reconcile_environment_object_membership(home_run.current_environment)
 	_check(bool(home_reconciled.get("ok", false)), "parent-home exit", "failed membership reconciliation: %s" % JSON.stringify(home_reconciled.get("errors", [])))
-	var home_binding := _assert_runtime_membership(home_run.current_environment, "travel:motel_room_runtime_fixture", "exit", true, "parent-home exit")
+	var home_binding := _assert_runtime_membership(home_run.current_environment, "travel:motel_room", "exit", true, "parent-home exit")
 	_check(str(home_binding.get("slot_id", "")) == "exit.motel_room", "parent-home exit", "the conditional room entrance did not use its clearly named exit.motel_room reserve")
+	var home_authority := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(home_run.current_environment, library)
+	var home_stamped := EnvironmentBaseSemanticRecordsScript.stamp_interactable_records(_array(home_authority.get("records", [])), home_run.current_environment, library)
+	var stamped_parent_door: Dictionary = {}
+	for record_value in _array(home_stamped.get("records", [])):
+		var record := _dict(record_value)
+		if str(record.get("object_id", record.get("presentation_object_id", ""))) == "travel:motel_room":
+			stamped_parent_door = record
+			break
+	_check(bool(home_authority.get("ok", false)) and bool(home_stamped.get("ok", false)), "parent-home exit", "the exact runtime parent door failed semantic source authorization: %s / %s" % [JSON.stringify(home_authority.get("errors", [])), JSON.stringify(home_stamped.get("errors", []))])
+	_check(str(stamped_parent_door.get("source_field", "")) == "runtime_object_manifest_entries", "parent-home exit", "the exact runtime parent door did not retain its closed runtime source authority")
 	var restored_home := RunStateScript.new()
 	restored_home.from_dict(home_run.to_dict())
 	_check(str(restored_home.home_state.get("parent_archetype_id", "")) == "motel", "parent-home exit", "save normalization dropped parent_archetype_id")

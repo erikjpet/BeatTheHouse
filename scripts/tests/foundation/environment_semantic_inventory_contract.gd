@@ -90,6 +90,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_diagnostic_messages(library, failures)
 	_check_static_golden_examples(library, failures)
 	_check_manifest_scene_provenance(library, failures)
+	_check_runtime_projection_geometry_exclusion(library, failures)
 	_check_exact_optional_absence(library, failures)
 	_check_exact_fixture_distinctions(library, failures)
 	_check_exact_collision_and_geometry(library, failures)
@@ -1354,6 +1355,38 @@ static func _check_manifest_scene_provenance(library: ContentLibrary, failures: 
 	forged["digest"] = EnvironmentSemanticInventoryScript._digest(forged)
 	if EnvironmentSemanticInventoryScript.validate(forged).is_empty():
 		failures.append("A correctly rehashed manifest scene object admitted an unauthorized nested provenance payload.")
+
+
+static func _check_runtime_projection_geometry_exclusion(library: ContentLibrary, failures: Array) -> void:
+	var environment := _exact_environment()
+	var runtime_id := "travel:motel_room"
+	environment["scenario_sequence_base_layout_object_rects"] = _dict(environment["layout"]["object_rects"])
+	environment["scenario_sequence_base_layout_object_rects"][runtime_id] = {"x": 0.7, "y": 0.1, "w": 0.1, "h": 0.2}
+	environment["layout"]["object_rects"][runtime_id] = {"x": 0.7, "y": 0.1, "w": 0.1, "h": 0.2}
+	environment["object_manifest"] = {
+		"schema_version": 2,
+		"environment_id": str(environment.get("id", "")),
+		"archetype_id": str(environment.get("archetype_id", "")),
+		"layer_id": "",
+		"rows": [{
+			"instance_object_id": "runtime:home_return_exit:%s" % runtime_id,
+			"presentation_object_id": runtime_id,
+			"object_id": runtime_id,
+			"family": "exit",
+			"runtime_owner": "home_return_exit",
+			"spot_field": "runtime_object_manifest_entries",
+			"active": true,
+			"physical": true,
+		}],
+	}
+	var inventory := EnvironmentSemanticInventoryScript.for_instance(environment, library)
+	var source := _dict(inventory.get("source_provenance", {}))
+	var rects := _dict(source.get("layout_object_rects", {}))
+	var exact := EnvironmentSemanticInventoryScript.exact_collections(inventory)
+	if not EnvironmentSemanticInventoryScript.validate(inventory).is_empty() \
+			or rects.has(runtime_id) or not rects.has("game:slot") \
+			or _array(exact.get("scene_objects", [])).has("base::%s" % runtime_id):
+		failures.append("Runtime-owned parent-door geometry entered immutable scenario inventory authority: %s" % JSON.stringify(inventory))
 
 
 static func _check_exact_fixture_distinctions(library: ContentLibrary, failures: Array) -> void:

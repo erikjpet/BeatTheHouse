@@ -5167,6 +5167,8 @@ func _check_grand_casino_locked_route_ui(library: ContentLibrary, delta: Diction
 			break
 	if hidden_node_id.is_empty():
 		failures.append("Grand Casino unaffordable-map fixture did not retain an unrevealed node for privacy coverage.")
+	elif unaffordable_target_ids.has(hidden_node_id):
+		failures.append("Public travel targets retained hidden node %s even though no travel choice could be rendered for it." % hidden_node_id)
 	var unaffordable_map_snapshot: Dictionary = app.call("_world_map_snapshot")
 	var unaffordable_grand_node: Dictionary = {}
 	var hidden_node_rendered := false

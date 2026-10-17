@@ -2003,16 +2003,24 @@ func _pick_travel_choice(run_state: RunState, path_rng: RngStream) -> Dictionary
 			grand_choices.append(choice)
 	if not grand_choices.is_empty():
 		return (grand_choices[0] as Dictionary).duplicate(true)
-	# A low-cash no-game run favors the cheapest enabled route. This preserves enough
-	# travel budget to finish the six-arrival audit; it never manufactures or
-	# enables a production choice.
-	if run_state.bankroll <= 30:
-		var cheapest: Dictionary = enabled[0]
+	# A low-cash no-game run favors the enabled route with the smallest possible
+	# bankroll loss. Fare alone is insufficient because a cheaper risky route can
+	# immediately bankrupt an otherwise healthy audit run. This never manufactures
+	# or enables a production choice.
+	if run_state.bankroll <= 40:
+		var safest: Dictionary = enabled[0]
+		var safest_risk_event := _copy_dict(safest.get("risk_event", {}))
+		var safest_loss := int(safest.get("cost", 0)) + maxi(0, -int(safest_risk_event.get("bankroll_delta", 0)))
 		for choice_value in enabled:
 			var candidate: Dictionary = choice_value
-			if int(candidate.get("cost", 0)) < int(cheapest.get("cost", 0)):
-				cheapest = candidate
-		return cheapest.duplicate(true)
+			var candidate_risk_event := _copy_dict(candidate.get("risk_event", {}))
+			var candidate_loss := int(candidate.get("cost", 0)) + maxi(0, -int(candidate_risk_event.get("bankroll_delta", 0)))
+			if candidate_loss < safest_loss \
+					or candidate_loss == safest_loss and int(candidate.get("cost", 0)) < int(safest.get("cost", 0)) \
+					or candidate_loss == safest_loss and int(candidate.get("cost", 0)) == int(safest.get("cost", 0)) and str(candidate.get("id", "")) < str(safest.get("id", "")):
+				safest = candidate
+				safest_loss = candidate_loss
+		return safest.duplicate(true)
 	return (enabled[path_rng.randi_range(0, enabled.size() - 1)] as Dictionary).duplicate(true)
 
 

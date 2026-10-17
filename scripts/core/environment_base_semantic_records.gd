@@ -63,16 +63,12 @@ static func authoritative_interactable_records(environment: Dictionary, library:
 			"travel":
 				if source_id == "leave":
 					definition = {"display_name": "Leave"}
+				elif _parent_home_door_authorized(environment, library, source_id, object_id):
+					definition = _dict(library.call("environment_archetype", source_id))
 				elif _casino_room_target_authorized(environment, library, source_id, object_id):
 					definition = _dict(library.call("environment_archetype", source_id))
 				else:
 					definition = _dict(library.call("route", source_id)) if library.has_method("route") else {}
-				# A parent-home door (for example the Motel lobby's door back to a
-				# Motel Room home) targets a home archetype, not a catalog route.
-				if definition.is_empty() and library.has_method("environment_archetype"):
-					var home_target := _dict(library.call("environment_archetype", source_id))
-					if str(home_target.get("kind", "")) == "home":
-						definition = home_target
 		if definition.is_empty():
 			errors.append("authoritative base semantic source %s is not catalog-backed." % object_id)
 			continue
@@ -495,7 +491,10 @@ static func _identity_for_record(source: Dictionary, environment: Dictionary, li
 			if str(source.get("object_type", "")) != "dialogue" or not _record_present(environment.get(source_field, []), "member_id", source_id): return {}
 		"travel":
 			var room_target := _exact_id(_dict(environment.get("local_narrative_flags", {})).get("casino_room_targets", []), source_id)
-			if room_target:
+			if _parent_home_door_authorized(environment, library, source_id, presentation_id):
+				source_field = "runtime_object_manifest_entries"
+				if str(source.get("object_type", "")) != "travel": return {}
+			elif room_target:
 				source_field = "local_narrative_flags.casino_room_targets"
 				if str(source.get("object_type", "")) != "travel" or presentation_id != "travel:%s" % source_id or not _casino_room_target_authorized(environment, library, source_id, presentation_id): return {}
 			else:
@@ -848,6 +847,28 @@ static func _transition_present(value: Variant, source_id: String) -> bool:
 	return _record_present(value, "target_layer_id", source_id)
 static func _ordinary_route_present(environment: Dictionary, source_id: String) -> bool:
 	return _exact_id(environment.get("travel_hooks", []), source_id) or _exact_id(environment.get("next_archetypes", []), source_id)
+
+
+static func _parent_home_door_authorized(environment: Dictionary, library: Variant, source_id: String, presentation_id: String) -> bool:
+	if source_id.is_empty() or presentation_id != "travel:%s" % source_id \
+			or not _library_has(library, "environment_archetype", source_id):
+		return false
+	var home_target := _dict(library.call("environment_archetype", source_id))
+	if str(home_target.get("kind", "")) != "home":
+		return false
+	for entry_value in _array(environment.get("runtime_object_manifest_entries", [])):
+		var entry := _dict(entry_value)
+		if str(entry.get("runtime_owner", "")) == "home_return_exit" \
+				and str(entry.get("object_id", entry.get("presentation_object_id", ""))) == presentation_id \
+				and str(entry.get("presentation_object_id", entry.get("object_id", ""))) == presentation_id \
+				and str(entry.get("object_type", "")) == "travel" \
+				and str(entry.get("source_id", "")) == source_id \
+				and str(entry.get("slot_family", "")) == "exit" \
+				and str(entry.get("spot_field", "")) == "runtime_object_manifest_entries" \
+				and bool(entry.get("active", false)) and bool(entry.get("physical", false)) \
+				and _ids(entry.get("action_ids", [])) == ["enter_room"]:
+			return true
+	return false
 
 
 static func _casino_room_target_authorized(environment: Dictionary, library: Variant, source_id: String, presentation_id: String) -> bool:

@@ -1445,23 +1445,27 @@ static func _base_layout_object_rects(environment: Dictionary) -> Dictionary:
 	var layout := _dict(environment.get("layout", {}))
 	var source: Variant = environment.get("scenario_sequence_base_layout_object_rects", layout.get("object_rects", {}))
 	var result := _dict(source).duplicate(true)
-	var scenario_presentations: Dictionary = {}
+	var transient_presentations: Dictionary = {}
 	for row_value in _array(_dict(environment.get("object_manifest", {})).get("rows", [])):
 		var row := _dict(row_value)
 		var presentation_id := str(row.get("presentation_object_id", row.get("object_id", ""))).strip_edges()
 		# Scenario-owned projection geometry never enters immutable base inventory.
+		# Runtime-owned geometry is likewise a live projection of separately
+		# authenticated RunState authority and may appear or disappear on revisit.
 		# Exact hosted catalog actions have no physical row/rectangle at all; their
 		# interaction-only authority is authenticated separately in for_instance().
 		if str(row.get("source_kind", "")) == "scenario_projection" \
-				or str(row.get("family", "")) == "scenario" and presentation_id.contains("::"):
+				or str(row.get("family", "")) == "scenario" and presentation_id.contains("::") \
+				or not str(row.get("runtime_owner", "")).strip_edges().is_empty() \
+				or str(row.get("spot_field", "")) == "runtime_object_manifest_entries":
 			if not presentation_id.is_empty():
-				scenario_presentations[presentation_id] = true
+				transient_presentations[presentation_id] = true
 	for presentation_id_value in _dict(layout.get("slot_bindings", {})).keys():
 		var presentation_id := str(presentation_id_value)
 		var binding := _dict(_dict(layout.get("slot_bindings", {})).get(presentation_id_value, {}))
 		if str(binding.get("slot_family", binding.get("kind", ""))) == "scenario" and presentation_id.contains("::"):
-			scenario_presentations[presentation_id] = true
-	for presentation_id_value in scenario_presentations.keys():
+			transient_presentations[presentation_id] = true
+	for presentation_id_value in transient_presentations.keys():
 		result.erase(presentation_id_value)
 	return result
 

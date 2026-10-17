@@ -543,6 +543,9 @@ static func _check_fixed_slot_renderer_authority(failures: Array) -> void:
 	var resolved := ScenarioLayoutResolverScript.resolve([], projection, environment)
 	var repeated := ScenarioLayoutResolverScript.resolve([], projection, environment)
 	var renderer := ScenarioLayoutResolverScript.sealed_renderer_snapshot(resolved)
+	var diagnostic_resolved := resolved.duplicate(true)
+	diagnostic_resolved["warnings"] = ["developer placement diagnostic"]
+	var diagnostic_renderer := ScenarioLayoutResolverScript.sealed_renderer_snapshot(diagnostic_resolved)
 	var projection_semantic := _dict(_dict(resolved.get("projection", {})).get("semantic_state", {}))
 	var semantic_scene_objects := _dict(projection_semantic.get("scene_objects", {}))
 	var semantic := _dict(semantic_scene_objects.get(identity, {}))
@@ -554,6 +557,7 @@ static func _check_fixed_slot_renderer_authority(failures: Array) -> void:
 	var semantic_rect := _dict(_dict(semantic).get("normalized_hit_rect", {}))
 	var authority_rect := _dict(authority.get("normalized_hit_rect", {}))
 	if not bool(authored.get("ok", false)) or not bool(resolved.get("ok", false)) or not bool(repeated.get("ok", false)) or not bool(renderer.get("ok", false)) \
+			or diagnostic_renderer != renderer or not _array(renderer.get("warnings", [])).is_empty() \
 			or bool(semantic.get("collision_adjusted", true)) or str(semantic.get("presentation_mode", "")) != "room" \
 			or str(semantic.get("slot_id", "")) != str(authored_binding.get("slot_id", "")) \
 			or semantic_rect != authority_rect or _dict(visual.get("normalized_rect", {})) != authority_rect \

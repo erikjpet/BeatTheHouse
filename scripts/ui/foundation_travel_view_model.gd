@@ -470,8 +470,28 @@ static func travel_target_ids(host: Variant) -> Array:
 			result.append(local_target_id)
 	result = host.TutorialFlowScript.travel_target_ids(host.run_state, result)
 	result = _retain_delivery_next_hops(host, result, total_target_limit)
+	result = _remove_hidden_world_targets(host, result)
 	host.travel_target_ids_cache_key = cache_key
 	host.travel_target_ids_cache = result.duplicate()
+	return result
+
+
+static func _remove_hidden_world_targets(host: Variant, target_ids: Array) -> Array:
+	# Local room doors do not have a world route. Every world target, however,
+	# must pass the same visibility gate used by travel_choice(); otherwise the
+	# public target list can advertise a choice that the view model omits.
+	var result: Array = []
+	for target_id_value in target_ids:
+		var target_id := str(target_id_value).strip_edges()
+		if target_id.is_empty() or result.has(target_id):
+			continue
+		if not host._local_parent_home_door_travel_choice(target_id).is_empty():
+			result.append(target_id)
+			continue
+		var route: Dictionary = host._world_route_for_target(target_id)
+		if route.is_empty() or bool(host.run_state.travel_route_status(route).get("hidden", false)):
+			continue
+		result.append(target_id)
 	return result
 
 
