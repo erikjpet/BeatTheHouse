@@ -141,6 +141,14 @@ static func _trace_projection(value: Variant) -> Dictionary:
 	var game := _dict(result.get("game", {}))
 	game.erase("peek_window_open")
 	result["game"] = game
+	# TalkDock's typewriter remains live between commands by design. Keep its
+	# exact visible phase in the observation, but do not let host frame timing
+	# change replay identity after the same semantic dialogue node is rendered.
+	var talk := _dict(result.get("talk", {}))
+	talk.erase("body_complete")
+	talk.erase("typewriter_active")
+	talk.erase("summary")
+	result["talk"] = talk
 	var game_canvas := _dict(result.get("game_canvas", {}))
 	var stable_surface_actions: Array = []
 	for action_value in _array(game_canvas.get("surface_hit_actions", [])):

@@ -449,6 +449,38 @@ func _check_hidden_state_redaction() -> void:
 	var stable_action_transition := PublicObservation.transition_summary(transient_public_b, PublicObservation.sanitize(stable_action_changed), "look", true)
 	_check(str(stable_action_transition.get("before_fingerprint", "")) != str(stable_action_transition.get("after_fingerprint", "")), "A stable rendered game action failed to alter deterministic replay identity.")
 
+	var revealing_talk := transient_public_b.duplicate(true)
+	revealing_talk["talk"] = {
+		"visible": true,
+		"expanded": true,
+		"render_valid": true,
+		"body_complete": false,
+		"typewriter_active": true,
+		"event_id": "dialogue:linda_cage_services",
+		"choice_ids": ["open_chips", "leave_counter"],
+	}
+	var completed_talk := revealing_talk.duplicate(true)
+	completed_talk["talk"] = {
+		"visible": true,
+		"expanded": true,
+		"render_valid": true,
+		"body_complete": true,
+		"typewriter_active": false,
+		"summary": "Linda waits behind the cage counter.",
+		"event_id": "dialogue:linda_cage_services",
+		"choice_ids": ["open_chips", "leave_counter"],
+	}
+	_check(PublicObservation.fingerprint(revealing_talk) != PublicObservation.fingerprint(completed_talk), "Live public observation lost the visible TalkDock reveal phase.")
+	var talk_reveal_transition := PublicObservation.transition_summary(revealing_talk, completed_talk, "look", true)
+	_check(str(talk_reveal_transition.get("before_fingerprint", "")) == str(talk_reveal_transition.get("after_fingerprint", "")), "Autonomous TalkDock typewriter progress altered deterministic replay identity.")
+	_check(not bool(talk_reveal_transition.get("public_state_changed", true)), "Autonomous TalkDock typewriter progress reported a seeded public-state transition.")
+	var different_talk := completed_talk.duplicate(true)
+	var different_talk_surface := _dict(different_talk.get("talk", {}))
+	different_talk_surface["event_id"] = "dialogue:linda_card_services"
+	different_talk["talk"] = different_talk_surface
+	var stable_talk_transition := PublicObservation.transition_summary(completed_talk, different_talk, "look", true)
+	_check(str(stable_talk_transition.get("before_fingerprint", "")) != str(stable_talk_transition.get("after_fingerprint", "")), "A stable rendered TalkDock dialogue change failed to alter deterministic replay identity.")
+
 	var serialized := JSON.stringify(public_a)
 	for secret in [
 		"SECRET_HOLE_A", "SECRET_SHOE_A", "SECRET_BRANCH_A", "SECRET_ROLL_A",
