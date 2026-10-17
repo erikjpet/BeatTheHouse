@@ -4685,12 +4685,24 @@ function Get-CleanSilverPlayersCardProjection {
 
 function Get-PersistenceCheckpoint {
     $game = Get-ExactReplayPsCustomObject -InputObject $script:LastObservation -Path @('game') -Context 'Persistence checkpoint game projection'
+    $chipsRendered = Get-ExactReplayBoolean `
+        -InputObject $script:LastObservation `
+        -Path @('status_hud', 'chips_rendered') `
+        -Context 'Persistence checkpoint rendered HUD chips witness'
+    $chips = $null
+    if ($chipsRendered) {
+        $chips = Get-RenderedHudInteger -Name chips -Context 'Persistence checkpoint'
+    }
+    elseif (Test-ReplayPathPresent -InputObject $script:LastObservation -Path @('status_hud', 'chips') -Context 'Persistence checkpoint hidden HUD chips value') {
+        throw 'Persistence checkpoint exposed a chip value without a rendered public witness.'
+    }
     return [ordered]@{
         location_id = Get-ExactReplayString -InputObject $script:LastObservation -Path @('environment', 'id') -Context 'Persistence checkpoint location id'
         location_archetype = Get-ExactReplayString -InputObject $script:LastObservation -Path @('environment', 'archetype_id') -Context 'Persistence checkpoint location archetype'
         world_node_id = Get-ExactReplayString -InputObject $script:LastObservation -Path @('environment', 'world_node_id') -Context 'Persistence checkpoint world node id'
         bankroll = Get-RenderedHudInteger -Name bankroll -Context 'Persistence checkpoint'
-        chips = Get-RenderedHudInteger -Name chips -Context 'Persistence checkpoint'
+        chips = $chips
+        chips_rendered = $chipsRendered
         heat = Get-RenderedHudInteger -Name heat_level -Context 'Persistence checkpoint'
         game_id = Get-ExactReplayString -InputObject $game -Path @('game_id') -Context 'Persistence checkpoint game id' -AllowMissing
         game_phase = Get-ExactReplayString -InputObject $game -Path @('phase') -Context 'Persistence checkpoint game phase' -AllowMissing

@@ -2246,6 +2246,7 @@ function Test-ReplayExactEvidenceTypeSource {
         [pscustomobject]@{ fn = 'Get-CleanSilverPlayersCardProjection'; getter = 'Get-ExactReplayBoolean'; input = '-InputObject $choice'; paths = @("@('enabled')"); extra = '' },
         [pscustomobject]@{ fn = 'Get-CleanSilverPlayersCardProjection'; getter = 'Get-ExactReplayString'; input = '-InputObject $script:LastObservation'; paths = @("@('environment', 'archetype_id')"); extra = '' },
         [pscustomobject]@{ fn = 'Get-PersistenceCheckpoint'; getter = 'Get-ExactReplayPsCustomObject'; input = '-InputObject $script:LastObservation'; paths = @("@('game')"); extra = '' },
+        [pscustomobject]@{ fn = 'Get-PersistenceCheckpoint'; getter = 'Get-ExactReplayBoolean'; input = '-InputObject $script:LastObservation'; paths = @("@('status_hud', 'chips_rendered')"); extra = '' },
         [pscustomobject]@{ fn = 'Get-PersistenceCheckpoint'; getter = 'Get-ExactReplayString'; input = '-InputObject $script:LastObservation'; paths = @("@('environment', 'id')", "@('environment', 'archetype_id')", "@('environment', 'world_node_id')"); extra = '' },
         [pscustomobject]@{ fn = 'Get-PersistenceCheckpoint'; getter = 'Get-ExactReplayString'; input = '-InputObject $game'; paths = @("@('game_id')", "@('phase')"); extra = '' },
         [pscustomobject]@{ fn = 'Get-PersistenceCheckpoint'; getter = 'Get-ExactReplayInt32'; input = '-InputObject $game'; paths = @("@('boss_hand_number')", "@('boss_player_stack')", "@('boss_rourke_stack')"); extra = '' },
@@ -2458,6 +2459,14 @@ function Test-ReplayExactEvidenceTypeSource {
     if ([string]::IsNullOrWhiteSpace($openCageCounter) -or
         $openCageCounter.IndexOf('Wait-ForFullyRenderedTalkSurface -Intent "Linda''s Cage counter services"', [StringComparison]::Ordinal) -lt 0) {
         return $false
+    }
+    $persistenceCheckpoint = [string]$functionSources['Get-PersistenceCheckpoint']
+    foreach ($token in @(
+        "elseif (Test-ReplayPathPresent -InputObject `$script:LastObservation -Path @('status_hud', 'chips')",
+        "throw 'Persistence checkpoint exposed a chip value without a rendered public witness.'",
+        'chips_rendered = $chipsRendered'
+    )) {
+        if ($persistenceCheckpoint.IndexOf($token, [StringComparison]::Ordinal) -lt 0) { return $false }
     }
     if (-not [regex]::IsMatch(
             [string]$functionSources['New-CanonicalRecord'],
@@ -2699,6 +2708,7 @@ $finalSummary = [ordered]@{
         [pscustomobject]@{ name = 'canonical player-hands array bypass'; needle = 'player_hands = Get-ExactReplayObjectArray -InputObject $game'; replacement = 'player_hands = Get-Array -InputObject $game' },
         [pscustomobject]@{ name = 'Clean choice-id array bypass'; needle = '$choiceIds = Get-ExactReplayObjectArray'; replacement = '$choiceIds = Get-Array' },
         [pscustomobject]@{ name = 'Clean location string bypass'; needle = '$locationArchetype = Get-ExactReplayString'; replacement = '$locationArchetype = Get-Value' },
+        [pscustomobject]@{ name = 'persistence chips render witness bypass'; function = 'Get-PersistenceCheckpoint'; needle = '$chipsRendered = Get-ExactReplayBoolean'; replacement = '$chipsRendered = Get-Value' },
         [pscustomobject]@{ name = 'persistence boss-hand Int32 bypass'; needle = "boss_hand_number = Get-ExactReplayInt32 -InputObject `$game -Path @('boss_hand_number') -Context 'Persistence checkpoint boss hand number' -AllowMissing"; replacement = "boss_hand_number = Get-Value -InputObject `$game -Path @('boss_hand_number') -Context 'Persistence checkpoint boss hand number' -AllowMissing" },
         [pscustomobject]@{ name = 'terminal outcome string bypass'; needle = '$outcome = Get-ExactReplayString -InputObject $script:LastObservation'; replacement = '$outcome = Get-Value -InputObject $script:LastObservation' },
         [pscustomobject]@{ name = 'final observed-seed string bypass'; needle = '$observedSeed = Get-ExactReplayString -InputObject $observation'; replacement = '$observedSeed = Get-Value -InputObject $observation' },
