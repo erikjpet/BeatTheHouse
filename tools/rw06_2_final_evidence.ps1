@@ -1162,8 +1162,11 @@ function Wait-ExclusiveDrain {
             Assert-OwnedExclusiveReservation
             $normalLeases = @(Get-ChildItem -LiteralPath $LeaseRoot -Filter '*.lease' -File -ErrorAction Stop | Where-Object { $_.Name -cne 'EXCLUSIVE.lease' })
             $godotProcesses = @(Get-GodotProcesses)
-            $lastNormalLeaseNames = @($normalLeases.Name)
-            $lastGodotPids = @($godotProcesses.ProcessId)
+            # StrictMode rejects member enumeration on an empty array. Project
+            # through the collection so the drained case remains an exact
+            # empty Object[] instead of failing before source custody begins.
+            $lastNormalLeaseNames = @($normalLeases | ForEach-Object { [string]$_.Name })
+            $lastGodotPids = @($godotProcesses | ForEach-Object { [int]$_.ProcessId })
             if ($normalLeases.Count -eq 0 -and $godotProcesses.Count -eq 0) {
                 Assert-ExclusiveAdmission -AllowOwnedLease
                 return
