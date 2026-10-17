@@ -24,6 +24,12 @@ class EnvironmentSlotMigrationV2Tests(unittest.TestCase):
     def _current_payload(self) -> dict:
         return json.loads(MIGRATION.PLACEMENT_PATH.read_text(encoding="utf-8"))
 
+    def test_canonical_text_bytes_are_checkout_independent(self) -> None:
+        self.assertEqual(
+            MIGRATION._canonical_text_bytes(b"first\r\nsecond\rthird\nfourth"),
+            b"first\nsecond\nthird\nfourth",
+        )
+
     def test_required_events_follow_layer_merge_semantics(self) -> None:
         archetypes = [{
             "id": "fixture",

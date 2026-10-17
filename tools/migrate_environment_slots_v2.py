@@ -6424,6 +6424,11 @@ def _sha256(payload: bytes) -> str:
     return hashlib.sha256(payload).hexdigest()
 
 
+def _canonical_text_bytes(payload: bytes) -> bytes:
+    """Return checkout-independent bytes for tracked UTF-8 text inputs."""
+    return payload.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
 def _resolved_git_commit(ref: str) -> str:
     revision = subprocess.run(
         ["git", "rev-parse", "--verify", f"{ref}^{{commit}}"],
@@ -7083,7 +7088,7 @@ def legacy_ledger_payload(mode: str, explicit_source_ref: str = "") -> dict[str,
     )
     if traced is None:
         raise RuntimeError("legacy trace was not captured")
-    final_bytes = PLACEMENT_PATH.read_bytes()
+    final_bytes = _canonical_text_bytes(PLACEMENT_PATH.read_bytes())
     final_payload = load_json(PLACEMENT_PATH)
     difference = _first_payload_difference(converted, final_payload)
     if difference:
@@ -7337,7 +7342,7 @@ def consolidation_ledger_payload(
         raise RuntimeError(
             f"pinned consolidation source at {source_revision} is not slot schema v2"
         )
-    final_bytes = PLACEMENT_PATH.read_bytes()
+    final_bytes = _canonical_text_bytes(PLACEMENT_PATH.read_bytes())
     final_payload = _json_blob(final_bytes, relative)
     if not isinstance(final_payload, dict):
         raise RuntimeError("working placement authority is not an object")

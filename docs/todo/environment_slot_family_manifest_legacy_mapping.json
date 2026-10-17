@@ -41,7 +41,7 @@
   },
   "final": {
     "path": "data/environments/placement_surfaces.json",
-    "sha256": "b1c45fa762519f0417bcb5db2d6995e8639d0d38576022025a4fcc9f5cbbc742",
+    "sha256": "b1e9b7204393edc67dad846fa92c8089dd9a9cc81d7bc6ed2f194bff81eb39ee",
     "schema_version": 3,
     "slot_schema_version": 2
   },

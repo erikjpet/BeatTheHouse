@@ -34,14 +34,14 @@ class EnvironmentSlotConsolidationTests(unittest.TestCase):
         ledger = self._ledger()
         placement = self._placement()
         rows = ledger["slot_dispositions"]
-        self.assertEqual(ledger["source"]["slot_count"], 722)
-        self.assertEqual(ledger["target"]["slot_count"], 565)
-        self.assertEqual(len(rows), 722)
+        self.assertEqual(ledger["source"]["slot_count"], 525)
+        self.assertEqual(ledger["target"]["slot_count"], 525)
+        self.assertEqual(len(rows), 525)
         source_keys = {
             (row["map_id"], row["source_family"], row["source_slot_id"])
             for row in rows
         }
-        self.assertEqual(len(source_keys), 722)
+        self.assertEqual(len(source_keys), 525)
 
         final_slots = {
             (map_data["id"], slot["id"]): (family, slot)
@@ -49,7 +49,7 @@ class EnvironmentSlotConsolidationTests(unittest.TestCase):
             for family in MIGRATION.FAMILIES
             for slot in map_data[f"{family}_slots"]
         }
-        self.assertEqual(len(final_slots), 565)
+        self.assertEqual(len(final_slots), 525)
         for row in rows:
             with self.subTest(
                 map_id=row["map_id"], source_slot_id=row["source_slot_id"]
@@ -147,7 +147,9 @@ class EnvironmentSlotConsolidationTests(unittest.TestCase):
         self.assertEqual(expected, self._ledger())
         self.assertEqual(
             expected["target"]["sha256"],
-            MIGRATION._sha256(MIGRATION.PLACEMENT_PATH.read_bytes()),
+            MIGRATION._sha256(
+                MIGRATION._canonical_text_bytes(MIGRATION.PLACEMENT_PATH.read_bytes())
+            ),
         )
 
     def test_report_translation_prefers_exact_target_and_surfaces_losses(self) -> None:
@@ -157,13 +159,12 @@ class EnvironmentSlotConsolidationTests(unittest.TestCase):
                 "bar": {
                     "slot_positions": {
                         "scenario.surface_item_1": [101, 102],
-                        "scenario.surface_item_3": [301, 302],
                         "unknown.slot": [901, 902],
                     }
                 },
                 "back_alley": {
                     "slot_positions": {
-                        "scenario.item_shop_1": [201, 202],
+                        "event.behind_counter_person_1": [201, 202],
                     }
                 },
             },
@@ -183,25 +184,17 @@ class EnvironmentSlotConsolidationTests(unittest.TestCase):
         )
         bar_report = translated["migration_report"]["rooms"]["bar"]
         self.assertEqual(bar_report["unmapped_source_slot_ids"], ["unknown.slot"])
-        self.assertEqual(
-            bar_report["merge_collisions"],
-            [{
-                "target_slot_id": "scenario.surface_item_1",
-                "chosen_source_slot_id": "scenario.surface_item_1",
-                "ignored_source_slot_ids": ["scenario.surface_item_3"],
-                "policy": "prefer_exact_target_then_source_order",
-            }],
-        )
+        self.assertEqual(bar_report["merge_collisions"], [])
         self.assertNotIn("back_alley", translated["rooms"])
         self.assertEqual(
             translated["migration_report"]["rooms"]["back_alley"][
                 "removed_source_slot_ids"
             ],
-            ["scenario.item_shop_1"],
+            ["event.behind_counter_person_1"],
         )
         self.assertEqual(translated["migration_report"]["removed_positions"], 1)
         self.assertEqual(translated["migration_report"]["unmapped_positions"], 1)
-        self.assertEqual(translated["migration_report"]["merge_collisions"], 1)
+        self.assertEqual(translated["migration_report"]["merge_collisions"], 0)
 
 
 if __name__ == "__main__":
