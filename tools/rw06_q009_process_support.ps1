@@ -1904,7 +1904,8 @@ function New-Q009ClosedArtifactManifestReceipt {
     if(-not(Test-Q009RunContextShape $RunContext)){throw 'Closed-process artifact capture requires one exact run context'}
     if(-not(Test-ProcessIdentityProofShape $ProcessIdentity)){throw 'Closed-process artifact capture requires the exact owned process identity'}
     if(-not(Test-Q009FileSystemIdentityMatch $Request.root_identity)){throw "Closed-process artifact root was missing or replaced: $($Request.path)"}
-    $manifest=if($Request.PSObject.Properties.Name-contains'held_file_custody'){
+    $hasHeldAuthority=Test-Q009ExactPublicReceiptKeys $Request @('role','path','root_identity','held_file_custody','held_file_slot','held_file_identity')
+    $manifest=if($hasHeldAuthority){
         Get-Q009ExactOwnedTreeManifest ([string]$Request.path) $Request.held_file_custody ([string]$Request.held_file_slot) $Request.held_file_identity
     }else{Get-Q009ExactOwnedTreeManifest ([string]$Request.path)}
     if(-not(Test-Q009ExactOwnedTreeManifestShape $manifest $Request.root_identity)){throw "Closed-process artifact manifest was malformed: $($Request.path)"}
