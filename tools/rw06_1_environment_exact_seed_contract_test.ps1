@@ -56,7 +56,7 @@ $foundationTravelPath = Join-Path $projectRoot ($foundationTravelRelativePath.Re
 $tutorialFlowPath = Join-Path $projectRoot ($tutorialFlowRelativePath.Replace('/', '\'))
 $attributeBadgesPath = Join-Path $projectRoot ($attributeBadgesRelativePath.Replace('/', '\'))
 $projectCacheRoot = Join-Path $projectRoot '.godot'
-$expectedManifestSha256 = '329A72D408FB6C8D60FF17B326D3F7A9DE443513160A56290B478F2CC5D5F73F'
+$expectedManifestSha256 = 'AC351C1CC81CA202291D6E7E653461EEF8CCB564478B8E6014817DEA28671C6E'
 $expectedManifestBlob = '71c8ba5485f8466e63851dc348be25183997fcf1'
 $generationSeedPrefix = 'RW06-1-GENERATION-100-0060'
 $inactiveIndependentProjectionFingerprint = '78b558bd2357fbe7ad52804fb3af1b8664b23db096b1deb22d215dde25b152bf'
@@ -464,7 +464,7 @@ function Get-ExpectationKey {
 function Get-CanonicalManifestIssues {
     param(
         [object]$Manifest,
-        [string]$RawSha256 = $expectedManifestSha256,
+        [string]$CanonicalSha256 = $expectedManifestSha256,
         [string]$GitBlob = $expectedManifestBlob,
         [switch]$SkipIdentity
     )
@@ -520,10 +520,21 @@ function Get-CanonicalManifestIssues {
         ) { Add-Issue $issues 'seed 009 legal-room combination changed' }
     }
     if (-not $SkipIdentity) {
-        if ($RawSha256 -cne $expectedManifestSha256) { Add-Issue $issues 'manifest raw SHA-256 changed' }
+        if ($CanonicalSha256 -cne $expectedManifestSha256) { Add-Issue $issues 'manifest canonical text SHA-256 changed' }
         if ($GitBlob -cne $expectedManifestBlob) { Add-Issue $issues 'manifest Git blob changed' }
     }
     return @($issues)
+}
+
+function Get-CanonicalTextSha256 {
+    param([string]$Path)
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { throw "Missing text file for canonical SHA-256: $Path" }
+    $text = [System.IO.File]::ReadAllText($Path)
+    $canonicalText = $text.Replace("`r`n", "`n").Replace("`r", "`n")
+    $bytes = [System.Text.UTF8Encoding]::new($false).GetBytes($canonicalText)
+    $sha256 = [System.Security.Cryptography.SHA256]::Create()
+    try { return ([System.BitConverter]::ToString($sha256.ComputeHash($bytes))).Replace('-', '') }
+    finally { $sha256.Dispose() }
 }
 
 function Read-JsonFileStrict {
@@ -2804,7 +2815,7 @@ function Invoke-ValidateOnlySelfTest {
         $selfTestRunContext=New-Q009RunContext -AttemptId $selfTestAttemptId -CandidateCommit ('a'*40) -CandidateTree ('b'*40) -LauncherIdentity $selfTestLauncherIdentity -CanonicalLeaseRoot $selfTestLeaseRoot -WorkingDirectory $tempRoot -ProjectRoot $projectRoot -LaunchMutexName ('Local\BeatTheHouse-Q009-selftest-'+[guid]::NewGuid().ToString('N'))
         $selfTestOwnerReceipt=[ordered]@{scope='ValidateOnly';attempt_id=[string]$selfTestAttemptId;run_context_sha256=[string]$selfTestRunContext.context_sha256;launcher_identity=$selfTestLauncherIdentity;root_identity=$tempRootIdentity}
         $selfTestExecutableIdentity=Get-ExecutableIdentity (Join-Path $PSHOME 'powershell.exe')
-        Add-SelfTestResult $cases 'manifest-exact-order-distribution-and-identity' { $m=Read-JsonFileStrict $manifestPath;$rawHash=(Get-FileHash -LiteralPath $manifestPath -Algorithm SHA256).Hash;$blob=(&git -C $projectRoot hash-object -- $manifestPath).Trim();Assert-LauncherContract ($LASTEXITCODE-eq0-and-not[string]::IsNullOrWhiteSpace($blob)) 'manifest Git blob identity could not be read';$i=@(Get-CanonicalManifestIssues $m $rawHash $blob);Assert-LauncherContract ($i.Count -eq 0) ($i -join '; ') }
+        Add-SelfTestResult $cases 'manifest-exact-order-distribution-and-identity' { $m=Read-JsonFileStrict $manifestPath;$canonicalHash=Get-CanonicalTextSha256 $manifestPath;$blob=(&git -C $projectRoot hash-object -- $manifestPath).Trim();Assert-LauncherContract ($LASTEXITCODE-eq0-and-not[string]::IsNullOrWhiteSpace($blob)) 'manifest Git blob identity could not be read';$i=@(Get-CanonicalManifestIssues $m $canonicalHash $blob);Assert-LauncherContract ($i.Count -eq 0) ($i -join '; ');$lfProbe=Join-Path $tempRoot 'manifest-lf-probe.txt';$crlfProbe=Join-Path $tempRoot 'manifest-crlf-probe.txt';[IO.File]::WriteAllText($lfProbe,"one`ntwo`n",[Text.UTF8Encoding]::new($false));[IO.File]::WriteAllText($crlfProbe,"one`r`ntwo`r`n",[Text.UTF8Encoding]::new($false));Assert-LauncherContract ((Get-CanonicalTextSha256 $lfProbe)-ceq(Get-CanonicalTextSha256 $crlfProbe)) 'canonical manifest hash changed across LF and CRLF checkouts' }
         Add-SelfTestResult $cases 'manifest-substitution-order-extra-types-and-safe-name-collision' { $m=Read-JsonFileStrict $manifestPath|ConvertTo-Json -Depth 20|ConvertFrom-Json;$tmp=$m.expectations[0];$m.expectations[0]=$m.expectations[1];$m.expectations[1]=$tmp;Assert-LauncherContract (@(Get-CanonicalManifestIssues $m -SkipIdentity).Count -gt 0) 'order substitution accepted';$m=Read-JsonFileStrict $manifestPath|ConvertTo-Json -Depth 20|ConvertFrom-Json;$m.expectations[1].seed='POSTFIX/UIENV';$m.expectations[2].seed='POSTFIX?UIENV';Assert-LauncherContract (@(Get-CanonicalManifestIssues $m -SkipIdentity).Count -gt 0) 'safe-name collision accepted';$m=Read-JsonFileStrict $manifestPath|ConvertTo-Json -Depth 20|ConvertFrom-Json;$m.schema_version='2';Assert-LauncherContract (@(Get-CanonicalManifestIssues $m -SkipIdentity).Count -gt 0) 'wrong manifest scalar type accepted';$m=Read-JsonFileStrict $manifestPath|ConvertTo-Json -Depth 20|ConvertFrom-Json;$m.expectations=@($m.expectations)+@($m.expectations[0]);Assert-LauncherContract (@(Get-CanonicalManifestIssues $m -SkipIdentity).Count -gt 0) 'extra/duplicate manifest row accepted';foreach($mutation in @('source-array','row-seed-array','row-interaction-array','combo-phase-array')){$m=Read-JsonFileStrict $manifestPath|ConvertTo-Json -Depth 20|ConvertFrom-Json;switch($mutation){'source-array'{$m.source=[object[]]@([string]$m.source)}'row-seed-array'{$m.expectations[0].seed=[object[]]@([string]$m.expectations[0].seed)}'row-interaction-array'{$m.expectations[0].required_interaction=[object[]]@([string]$m.expectations[0].required_interaction)}'combo-phase-array'{$m.legal_room_combinations[0].phase_id=[object[]]@([string]$m.legal_room_combinations[0].phase_id)}};Assert-LauncherContract (@(Get-CanonicalManifestIssues $m -SkipIdentity).Count-gt0) "manifest one-element string array accepted: $mutation"} }
         Add-SelfTestResult $cases 'authority-conflict-and-seed009-combination-shapes' { $good=[pscustomobject]@{authority_branch='semantic';authority_valid=$true;reachable=$true;presentation_required=$true;presentation_visible=$true;presentation_interactive=$true;runtime_visible=$true;runtime_interactive=$true;exact_sealed_authority=$true;sealed_geometry_valid=$true;action_authority_member=$true;action_authority_valid=$true;semantic_interaction_member=$true;semantic_interaction_present=$true;semantic_interaction_sealed=$true;semantic_reachable=$true;base_reachable=$false;base_action_authority_member=$false;reachability_basis='layout_audit_room';runtime_enabled=$true;action_authority_present=$true;actionable=$true;raw_action_count=1;enabled_action_count=1;enabled_action_ids=@('use');presentation_mode='room';disabled_authority_valid=$false;disabled_reason=''};Assert-LauncherContract (Test-AuthorityReceipt $good 'semantic') 'valid semantic authority rejected';Assert-LauncherContract (-not(Test-AuthorityReceipt $good 'base_record')) 'wrong branch accepted';$good.semantic_interaction_sealed=$false;Assert-LauncherContract (-not(Test-AuthorityReceipt $good 'semantic')) 'unsealed semantic authority accepted';$good.semantic_interaction_sealed=$true;$good.runtime_visible=$false;Assert-LauncherContract (-not(Test-AuthorityReceipt $good 'semantic')) 'hidden authority accepted' }
         Add-SelfTestResult $cases 'base-authority-enabled-disabled-and-seal-geometry' { $base=[pscustomobject]@{authority_branch='base_record';authority_valid=$true;reachable=$true;presentation_required=$true;presentation_visible=$true;presentation_interactive=$true;runtime_visible=$true;runtime_interactive=$true;exact_sealed_authority=$true;sealed_geometry_valid=$true;action_authority_member=$true;action_authority_valid=$true;semantic_interaction_member=$false;base_record_present=$true;base_record_sealed=$true;base_geometry_matches_seal=$true;base_action_authority_member=$true;base_reachable=$true;semantic_reachable=$false;reachability_basis='sealed_base_room';runtime_enabled=$true;action_authority_present=$true;actionable=$true;raw_action_count=1;enabled_action_count=1;enabled_action_ids=@('use');presentation_mode='room';disabled_authority_valid=$false;disabled_reason=''};Assert-LauncherContract (Test-AuthorityReceipt $base 'base_record') 'valid enabled base authority rejected';$base.runtime_enabled=$false;$base.action_authority_present=$false;$base.actionable=$false;$base.raw_action_count=0;$base.enabled_action_count=0;$base.enabled_action_ids=[object[]]@();$base.disabled_authority_valid=$true;$base.disabled_reason='Requires a live event state.';Assert-LauncherContract (Test-AuthorityReceipt $base 'base_record' -AllowDisabled) 'valid disabled-with-reason base authority rejected';Assert-LauncherContract (-not(Test-AuthorityReceipt $base 'base_record')) 'disabled base authority accepted without AllowDisabled';$base.disabled_reason='';Assert-LauncherContract (-not(Test-AuthorityReceipt $base 'base_record' -AllowDisabled)) 'disabled base authority without reason accepted';$base.disabled_reason='Requires a live event state.';$base.base_geometry_matches_seal=$false;Assert-LauncherContract (-not(Test-AuthorityReceipt $base 'base_record' -AllowDisabled)) 'base geometry drift accepted' }
@@ -3712,7 +3723,7 @@ exit $ExitCode
         hashes=[ordered]@{
             launcher_sha256=(Get-FileHash $PSCommandPath -Algorithm SHA256).Hash;launcher_git_blob=(&git -C $projectRoot hash-object -- $PSCommandPath).Trim()
             support_sha256=(Get-FileHash $supportPath -Algorithm SHA256).Hash;support_git_blob=(&git -C $projectRoot hash-object -- $supportPath).Trim()
-            manifest_sha256=(Get-FileHash $manifestPath -Algorithm SHA256).Hash;manifest_git_blob=(&git -C $projectRoot hash-object -- $manifestPath).Trim()
+            manifest_sha256=(Get-CanonicalTextSha256 $manifestPath);manifest_git_blob=(&git -C $projectRoot hash-object -- $manifestPath).Trim()
             audit_gd_sha256=(Get-FileHash $auditPath -Algorithm SHA256).Hash;audit_gd_git_blob=(&git -C $projectRoot hash-object -- $auditPath).Trim()
             static_checker_sha256=(Get-FileHash $staticCheckerPath -Algorithm SHA256).Hash;static_checker_git_blob=(&git -C $projectRoot hash-object -- $staticCheckerPath).Trim()
             scenario_catalog_sha256=(Get-FileHash $scenarioPath -Algorithm SHA256).Hash;scenario_catalog_git_blob=(&git -C $projectRoot hash-object -- $scenarioPath).Trim()
@@ -3796,7 +3807,7 @@ try{
     $exactRemoteRefs=@(Get-ExactRemoteCandidateRefs $candidateCommit $projectRoot);if($exactRemoteRefs.Count-eq0){throw 'Exact candidate is not the exact tip of a non-symbolic origin remote-tracking ref'}
     $requiredTrackedFiles=[ordered]@{launcher=$launcherRelativePath;support=$supportRelativePath;manifest=$manifestRelativePath;audit_gd=$auditRelativePath;static_checker=$staticRelativePath;scenario_catalog=$scenarioRelativePath;fidelity_helper=$fidelityRelativePath;foundation_travel_view_model=$foundationTravelRelativePath;tutorial_flow=$tutorialFlowRelativePath;attribute_badges=$attributeBadgesRelativePath}
     foreach($entry in $requiredTrackedFiles.GetEnumerator()){$pinned[$entry.Key]=Get-TrackedFileIdentity $projectRoot $candidateCommit $entry.Value}
-    $manifest=Read-JsonFileStrict $manifestPath;$manifestIssues=@(Get-CanonicalManifestIssues $manifest $pinned.manifest.sha256 $pinned.manifest.git_blob);if($manifestIssues.Count){throw ($manifestIssues -join '; ')}
+    $manifest=Read-JsonFileStrict $manifestPath;$manifestCanonicalSha256=Get-CanonicalTextSha256 $manifestPath;$manifestIssues=@(Get-CanonicalManifestIssues $manifest $manifestCanonicalSha256 $pinned.manifest.git_blob);if($manifestIssues.Count){throw ($manifestIssues -join '; ')}
     Assert-ExactAttemptOwner $ownerClaim $ownerClaimText $ownerClaimSha256 $EvidenceRoot $evidenceRootOwnership
     Assert-CanonicalLeaseRootBootstrap -Path $leaseRoot
     $runContext=New-Q009RunContext -AttemptId $attemptId -CandidateCommit $candidateCommit -CandidateTree $candidateTree -LauncherIdentity $launcherIdentity -CanonicalLeaseRoot $leaseRoot -WorkingDirectory $projectRoot -ProjectRoot $projectRoot -LaunchMutexName $launchMutexName -NativeExitSentinel $nativeExitSentinel
