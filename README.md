@@ -8,43 +8,53 @@ Bar Dice, Craps, Blackjack, Baccarat, Roulette, Video Poker, and the Crew's
 back-room Hold'em game. Every win, cheat, drink, loan, and bad exit pushes the
 run state forward.
 
-Versions 0.2.0 through 0.3.3 are historical source releases; 0.4.0 was an Act 1
-candidate tag that was not published before development continued. Version
-0.5.1 is the latest stable owner-published release. The latest downloadable
-testing build is the GitHub prerelease `v0.6.0-pre.5`; current `main` is the
-feature-complete, version-stamped 0.6.0 source line. It keeps the Act 1 foundation and adds the Living Town,
+**0.6 is the current release.** It includes the Act 1 foundation, the Living Town,
 55 persistent room scenarios, the Crew campaign, eleven depth-complete game
 modules, expanded tutorial and audio coverage, and a reworked four-room Grand
 Casino endgame with a living Rourke, chips and Cage economy, Linda's
 Bronze/Silver/Gold Players Card ladder, four-phase showdown, heads-up Blackjack
 duel, and persistent card/chip meta rewards.
 
-The 0.6.0 source is playable and uses a four-family placement model across 21
-source maps plus 55 compact scenario-specific layouts. Twenty source maps are
-reachable base layouts; the unlayered Punchline parent is template-only. The
-complete manual authoring pass therefore has 75 contexts: 20 no-scenario
-layouts plus one layout per valid map/scenario combination. The game feature set
-is complete for 0.6; the remaining source-authoring task is final owner
-positioning, export/import of the approved schema-3 placement report, and its
-focused post-promotion validation. Project and export metadata are stamped
-`0.6.0`; `v0.6.0-pre.5` remains the latest downloadable Windows testing package
-and predates the feature-complete source. The `v0.5.1` tag and GitHub Release identify the final corrected
-0.5 playtest baseline; `v0.5.0` remains the immutable original release boundary.
+The current room placements are accepted as the 0.6 release baseline. Windows,
+Web, and source packages are available from the
+[official 0.6 release](https://github.com/erikjpet/BeatTheHouse/releases/tag/v0.6.0).
+
 Beat the House is not a real-money gambling product. It has no real-money
 wagering, cash prizes, gambling monetization, or store credentials checked into
 the repository.
+
+## Download 0.6
+
+| Download | Contents |
+| --- | --- |
+| [Windows](https://github.com/erikjpet/BeatTheHouse/releases/download/v0.6.0/BeatTheHouse-0.6.0-windows-x64.zip) | Runnable 64-bit EXE and its required native DLL |
+| [Web](https://github.com/erikjpet/BeatTheHouse/releases/download/v0.6.0/BeatTheHouse-0.6.0-web.zip) | Browser build with `index.html` at the ZIP root |
+| [Source](https://github.com/erikjpet/BeatTheHouse/releases/download/v0.6.0/BeatTheHouse-0.6.0-source.zip) | Source, runtime assets, native code, build tools, tests, and documentation |
+| [Checksums](https://github.com/erikjpet/BeatTheHouse/releases/download/v0.6.0/SHA256SUMS.txt) | SHA-256 hashes for the release files |
+
+Extract the entire Windows ZIP and run `BeatTheHouse.exe`; keep the native DLL
+beside it. Serve the Web build over HTTP or upload its ZIP to a browser-game
+host. For local Web play, run `python -m http.server 8000` in the extracted Web
+folder and open `http://localhost:8000`.
+
+Release packages contain no player saves, inventory, collection progress,
+settings, or authority keys. Fresh profiles start with no saved run to Continue.
+Existing local and browser saves remain in their separate user storage.
+Intentional regression-save fixtures are source-only and excluded from game
+packages. Build provenance, test results, and qualification limits accompany the
+[release downloads](https://github.com/erikjpet/BeatTheHouse/releases/tag/v0.6.0).
 
 ## Current Implementation
 
 | Area | Current state |
 | --- | --- |
-| Engine | Godot 4.x project with Godot 4.6 project feature metadata |
+| Engine | Godot project; use the pinned engine installed by `tools/install_godot.ps1` |
 | Main scene | `res://scenes/main.tscn` |
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
-| Published release line | 0.5.1 stable; `v0.6.0-pre.5` is the latest GitHub testing prerelease |
-| Source version | 0.6.0 in project and platform export metadata |
-| Active planning target | Complete the manual 75-context slot-placement pass, promote the approved coordinates, and produce the final Windows/Web handoff |
-| Current release readiness | Feature-complete and version-stamped in source; manual placement, focused post-promotion validation, final packaging, and owner publication remain |
+| Published release | [0.6](https://github.com/erikjpet/BeatTheHouse/releases/tag/v0.6.0), with Windows, Web, and source downloads |
+| Source line | 0.6, stamped consistently in project and export metadata |
+| Placement baseline | Current room and scenario placements accepted for 0.6 |
+| Release verification | Normal ending routes, save/relaunch, migration, determinism, soak, package audits, and native Windows performance Smoke completed; details accompany the downloads |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer by default; Windows uses Godot compatibility/OpenGL to avoid the native Vulkan/OBS crash path seen in local WER reports |
 | Input model | Single pointer interaction with mouse/touch parity |
@@ -433,11 +443,9 @@ The wrappers resolve Godot in this order:
 ## Validation
 
 The current product summary is `docs/current_game_state.md`; the canonical game
-roster and source inventory are in `docs/game_reference.md`. The old 0.6 task
-boards and September integration audits are dated custody snapshots, not the latest product verdict. Release
-ledgers through 0.5.1 are historical evidence for published source boundaries;
-they are not evidence that current 0.6 `main` is ready to ship. The primary
-headless commands are:
+roster and source inventory are in `docs/game_reference.md`. The 0.6 release
+includes its build provenance, verification report, and evidence archive with
+the downloads. The primary headless commands are:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1
@@ -480,9 +488,9 @@ authority refreshed 2026-10-08):
   isolation, Environment Library launch, and both placement editors pass their
   focused engine checks. Shared edits correctly invalidate every affected
   completion marker until the room is saved or reset.
-- The remaining room work is the owner's artistic 75-context placement pass.
-  The generated checklist and in-game saved/missing counter define that pass;
-  the exported schema-3 report is the permanent-coordinate handoff.
+- The owner accepted the current placements for 0.6. The checklist, in-game
+  saved/missing counter, and schema-3 report remain available for future
+  playtest-driven adjustments.
 
 Other targeted wrappers live in `tools/`: slot cabinet visual QA, environment
 generation audit, performance probe, mouse playtests, and game seed audits.
@@ -500,84 +508,24 @@ while the full suite reserves up to 1800 seconds. Killing the parent PowerShell
 early can leave Godot children writing `user://` logs, which has reproduced
 Windows native access-violation dialogs on later runs.
 
-For shipped 0.2.0 release evidence, use the tracked checklist at
-`docs/archive/0.2/plans/0.2_release_checklist.md`. For shipped 0.3.0 evidence, use
-`docs/archive/0.3/plans/0.3_release_checklist.md`. For shipped 0.3.1 evidence, use
-`docs/archive/0.3/plans/0.3.1_release_checklist.md`. For the completed 0.3.2 internal
-readiness ledger, use `docs/archive/0.3/plans/0.3.2_release_checklist.md`. For the
-unpublished 0.4 candidate, use `docs/archive/0.4/plans/0.4_release_checklist.md` as
-historical context only. For Act 1 historical work, use
-`docs/plans/act_one_feature_complete_task_board.md`.
-
 ## Documentation
 
-The README is the public top-level implementation spec. `docs/README.md`
-explains document authority, `docs/current_game_state.md` is the maintained
-internal product snapshot, and `docs/game_reference.md` is the complete
-source-backed 0.6 game reference. `docs/code_reference.md` explains runtime
-ownership and the production comment contract. The `docs/plans/` folder mixes active design locks,
-dated evidence, shipped-release ledgers, and historical context:
-
-- `CHANGELOG.md` - public release changelog for shipped releases and candidate
-  notes.
-- `docs/archive/0.5/plans/0.5_release_checklist.md` - historical 0.5 source-prep and release
-  readiness ledger.
-- `docs/archive/0.5/plans/0.5_source_completion_record.md` - historical owner
-  source-completion decision, final playtest scope, validation, and publication
-  boundary for 0.5.
-- `docs/archive/0.5/plans/0.5_publish_copy.md` - paste-ready itch.io and GitHub release
-  copy for 0.5.0 after owner approval.
-- `docs/archive/0.5/plans/0.5.0_devlog_post.md` - ready-to-post 0.5.0 devlog and social carousel plan.
-- `docs/archive/0.5/plans/0.5_prerelease_playtest_report.md` - 0.5 prerelease playtest
-  findings and closure evidence.
-- `docs/plans/tutorial_completion_report.md` - tutorial requirement table,
-  real-interface route matrix, 0.6 addenda, and explicit TUT-N17 handoff.
-- `docs/archive/0.5/plans/0.5_performance_audit.md` - historical 0.5 native/Web performance,
-  liveness, memory-soak, Scratch Ticket compaction, and Web audio evidence.
-- `docs/plans/act_one_feature_complete_task_board.md` - the historical Act 1
-  implementation board, retained for decisions and landing evidence.
-- `docs/plans/pinball_feature_rework_plan.md`,
-  `docs/plans/pinball_feel_reference.md` - the shipped pinball feature
-  contract and feel targets. Use these with the live slot stack when touching
-  pinball or shared slot release work.
-- `docs/plans/grand_casino_endgame_design.md` - the authoritative Grand Casino
-  endgame design lock (four rooms, chips/Cage, Linda's card ladder, living
-  Rourke, four-phase showdown, duel outcome ladder, meta rewards, and canonical
-  ids).
-- `docs/plans/content_style_guide.md` - the active release voice and
-  player-facing copy rules for Act 1 content.
-- `docs/plans/dead_code_audit_report.md` - a historical July 2026 cleanup audit;
-  use current source/reference scans rather than its old line numbers.
-- `docs/plans/code_deprecation_unused_audit_2026-10-08.md` - the completed final
-  0.6 unused-code audit, removal inventory, compatibility decisions, and
-  focused verification record.
-- `docs/plans/skill_based_cheating_methods_plan.md` - the shared
-  skill-cheat design contract and cross-game method matrix.
-- `docs/plans/world_map_design.md` - the world-map route/progression design
-  lock.
-- `docs/plans/music_system_rework_plan.md` and
-  `docs/plans/music_listening_pass.md` - the implemented adaptive-music
-  architecture and its completed listening reference; historical pre-rework
-  sections remain as rationale.
-- `docs/archive/0.2/plans/0.2_release_checklist.md` - the shipped 0.2.0 release readiness
-  checklist, including validation evidence and known blockers.
-- `docs/archive/0.3/plans/0.3_release_checklist.md` - the shipped 0.3.0 readiness ledger.
-- `docs/archive/0.3/plans/0.3.1_release_checklist.md` - the shipped 0.3.1 hardening
-  release ledger, including performance/stability evidence and package hashes.
-- `docs/archive/0.3/plans/0.3.2_release_checklist.md` - the completed 0.3.2 low-end/web
-  cleanup release ledger, including gate evidence and package hashes.
-- `docs/archive/0.3/plans/0.3.3_publish_copy.md` - paste-ready itch.io, GitHub release,
-  and devlog copy for the 0.3.3 public patch.
-- `docs/archive/0.4/plans/0.4_act1_completion_plan.md` - the implemented 0.4 scope and
-  historical candidate evidence.
-- `docs/archive/0.4/plans/0.4_release_checklist.md` - the 0.4 package/readiness ledger,
-  retained as historical context.
-- `docs/archive/0.4/plans/0.4_publish_copy.md` - historical paste-ready itch.io, GitHub,
-  and devlog copy prepared for the unpublished 0.4.0 candidate.
-
-For current slot implementation work, use the slot stack listed in this README
-and the pinball docs above rather than older file names referenced inside
-historical release evidence.
+- [Current game state](docs/current_game_state.md) — maintained product summary.
+- [Game reference](docs/game_reference.md) — source-backed roster, actions, and mechanics.
+- [Code reference](docs/code_reference.md) — runtime ownership and production code guide.
+- [Documentation index](docs/README.md) — document organization and authority.
+- [Changelog](CHANGELOG.md) — detailed changes.
+- [Release review](docs/releases/0.6.0_candidate_review.md) — accepted placements,
+  save restoration repair, snapshot review, and fresh-release data audit.
+- [Grand Casino design](docs/plans/grand_casino_endgame_design.md) — rooms,
+  chips/Cage, Linda's card ladder, Rourke, showdown, and rewards.
+- [World map design](docs/plans/world_map_design.md) — travel and progression.
+- [Content style guide](docs/plans/content_style_guide.md) — player-facing copy.
+- [Pinball implementation](docs/plans/pinball_feature_rework_plan.md) and
+  [feel targets](docs/plans/pinball_feel_reference.md) — slot feature contracts.
+- [Cheating methods](docs/plans/skill_based_cheating_methods_plan.md) — shared
+  skill-cheat design and cross-game methods.
+- [Music architecture](docs/plans/music_system_rework_plan.md) — adaptive audio.
 
 ## Export Targets
 
@@ -589,42 +537,27 @@ historical release evidence.
 | iOS | iOS | `builds/ios/BeatTheHouse.zip` |
 
 `tools/export_itch.ps1` packages the Web and Windows presets into upload-ready
-zips after Godot export templates are installed. Project and export preset
-versions are stamped `0.6.0`. Publication requires explicit owner authorization;
-the `v0.6.0-pre.5` GitHub prerelease was explicitly requested. Trial packages
-are not final release artifacts. Android
-signing and iOS team/signature values still require real project credentials
-before store submission.
-
-After the approved placement report is promoted, the release sequence is:
-freeze and commit the candidate, run the focused placement/runtime gates plus
-the final release checks, build and launch-check both packages, publish the
-exact source and artifacts, then update the project website to the final
-`v0.6.0` asset and confirmed itch.io URL. The website must not advertise a
-trial or dirty-tree artifact as the stable release.
+ZIPs after the matching Godot export templates and native libraries are
+installed. The official 0.6 tag identifies the verified game source; its
+packages and build identities are attached to the GitHub release. README and
+other documentation updates on `main` can follow that immutable source tag.
+Android signing and iOS team/signature values require project credentials
+before store submission. itch.io publication is separate from GitHub Releases.
 
 ## Known Release Limitations
 
-- Current 0.6.0 source is feature-complete but not yet owner-published. The
-  manual 75-context room-placement pass, coordinate promotion, focused
-  post-promotion validation, final artifact handoff, and owner approval remain.
 - Tutorial pointer overlays can partially cover the center of the action they
   describe. The merged player path remains operable through the exposed part of
-  the target, but the composition can be polished during the owner's manual
-  room-placement pass.
+  the target; further composition adjustments can follow playtesting.
 - The Web export is intentionally single-threaded. Procedural music is generated
   deterministically at build time into compact Web beds, so browser startup and
   playback no longer depend on PThreads or main-thread synthesis. Cross-origin
   isolation headers remain supported but are not required by the shipped build.
-- The historical TUT-N17 plan requested five cold players, including two
-  without Blackjack knowledge. Any remaining sample gap must be recorded as an
-  accepted limitation or completed before the public package release.
 - The local collection schema still carries `draft: true`. Its browser groups
   entries and exposes tier/float detail, but dedicated sort/filter controls,
   Steam Inventory, and community-market integration remain deferred.
 - itch.io publishing remains an owner-only action using the upload-ready Web
   and Windows zips produced locally by `tools/export_itch.ps1`.
-- itch.io package publishing remains separate from the GitHub source release.
 - Android and iOS store submission require real signing/team credentials.
 
 ## Design Rules
