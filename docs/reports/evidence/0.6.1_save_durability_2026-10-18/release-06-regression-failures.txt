@@ -1,0 +1,15 @@
+ERROR: Deferred manual Save dismissed the menu as if it were durable.
+ERROR: BTH061-STABILITY-B Main Menu did not finish a durable exit.
+ERROR: BTH061-STABILITY-B rolled back the paid drop's cash.
+ERROR: BTH061-STABILITY-B lost settled machine/tray authority.
+ERROR: BTH061-STABILITY-B Continue restored older cash.
+ERROR: Deferred manual Save dismissed the menu as if it were durable.
+ERROR: BTH061-STABILITY-D Main Menu did not finish a durable exit.
+ERROR: BTH061-STABILITY-D rolled back the paid drop's cash.
+ERROR: BTH061-STABILITY-D lost settled machine/tray authority.
+ERROR: BTH061-STABILITY-D Continue restored older cash.
+ERROR: Main Menu discarded the unsaved live run.
+ERROR: New Run discarded a terminal run after its checkpoint failed.
+ERROR: Rejected navigation lost the settling run.
+ERROR: Forced save reported success for unsettled state.
+ERROR: Synchronous ERR_BUSY reported a durable save.

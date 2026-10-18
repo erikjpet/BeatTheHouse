@@ -1,0 +1,127 @@
+{
+  "date": "2026-10-18",
+  "fix_commit": "ead68563a3fe2a5c548144b4e42681f74abd16ef",
+  "fix_tree": "bac48ca09a50a7e8fa6f1440cb9f97c157e8d12c",
+  "runtime_source_sha256": "2b1e263737f4a34241415481f1c5a80f629e43cd186aedf0cff382bfc1833b46",
+  "release_baseline": "v0.6.0 / a095414b20cdb3570e06b367c621be43e0256109",
+  "regression_checks_passed": 7,
+  "same_regression_on_release_06": {
+    "exit_code": 1,
+    "assertion_failures": 15,
+    "gdscript_errors": 0
+  },
+  "web_paid_drop_cases": [
+    {
+      "seed": "BTH061-STABILITY-B",
+      "cabinet": "Quarter Falls",
+      "input": "normal mouse input; B cabinet entered with the supported Enter key after inspection",
+      "before_drop": {
+        "seed": "BTH061-STABILITY-B",
+        "cash": 97,
+        "clock_minutes": 773,
+        "rng_state": 1989494952,
+        "packed_state_sha256": "dcd1820f95d1a9d29223eaef68b460dfbc1277b7d57b9ccdb339479663f7ae75",
+        "save_file_sha256": "0faf965a36ff4d0583cb5f43b2a16024abbfda45d2a9aea02c6075e5bae7a0fa"
+      },
+      "after_main_menu": {
+        "seed": "BTH061-STABILITY-B",
+        "cash": 96,
+        "clock_minutes": 785,
+        "rng_state": 1989494952,
+        "packed_state_sha256": "86f8794bc09bb28db976cd64132c6aa1eda2185a9f1d4a3dee31d5e53cf79472",
+        "save_file_sha256": "b7271f19bda2b76a5df48de46a60042f97f4193fcb49a391174a0bd2fd574a20"
+      },
+      "after_full_browser_restart_continue": {
+        "seed": "BTH061-STABILITY-B",
+        "cash": 96,
+        "clock_minutes": 785,
+        "rng_state": 1989494952,
+        "packed_state_sha256": "86f8794bc09bb28db976cd64132c6aa1eda2185a9f1d4a3dee31d5e53cf79472",
+        "save_file_sha256": "b7271f19bda2b76a5df48de46a60042f97f4193fcb49a391174a0bd2fd574a20"
+      },
+      "observed_paid_cash": 96,
+      "observed_continue_cash": 96
+    },
+    {
+      "seed": "BTH061-STABILITY-D",
+      "cabinet": "Quarter Falls",
+      "input": "normal mouse input; B cabinet entered with the supported Enter key after inspection",
+      "before_drop": {
+        "seed": "BTH061-STABILITY-D",
+        "cash": 97,
+        "clock_minutes": 836,
+        "rng_state": 253256873,
+        "packed_state_sha256": "a1da9fc1a4594eaa5ba9e1c834960880bef02e1d7229e31f31c7e2a6da4a6a26",
+        "save_file_sha256": "a31f6da12480288c34035095987652d69790f72f8ded4e72d3fac9a98b6514e9"
+      },
+      "after_main_menu": {
+        "seed": "BTH061-STABILITY-D",
+        "cash": 96,
+        "clock_minutes": 844,
+        "rng_state": 253256873,
+        "packed_state_sha256": "e3227fc3be9b597de4768735659d432436a2914b0bd928422dd3c73857ef281a",
+        "save_file_sha256": "9c3ce6c9301794d2c956503e0097152d74bed7025003d3f841ac9b75fd2b65ab"
+      },
+      "after_full_browser_restart_continue": {
+        "seed": "BTH061-STABILITY-D",
+        "cash": 96,
+        "clock_minutes": 844,
+        "rng_state": 253256873,
+        "packed_state_sha256": "e3227fc3be9b597de4768735659d432436a2914b0bd928422dd3c73857ef281a",
+        "save_file_sha256": "9c3ce6c9301794d2c956503e0097152d74bed7025003d3f841ac9b75fd2b65ab"
+      },
+      "observed_paid_cash": 96,
+      "observed_continue_cash": 96
+    }
+  ],
+  "windows": {
+    "environment": "Windows x64 export under Wine 11, Xvfb, software-rendered; not a physical Windows GPU qualification",
+    "genuine_06_save_continue": {
+      "seed": "RUN-20261018-024200-003",
+      "observed_cash": 88,
+      "last_saved_play": "Video Poker, Draw",
+      "persisted": {
+        "seed": "RUN-20261018-024200-003",
+        "cash": 88,
+        "clock_minutes": 1158,
+        "rng_state": 899940545,
+        "packed_state_sha256": "480a54d2414b0a8050ef1c03438dcb6a8fce61e57f8d32d5ad189d8c075f5ce8",
+        "save_file_sha256": "c623f2b6d7a0807b52a39f0f056b5e26e7115b09c438327e1ad0a9ac247dd1c4"
+      }
+    },
+    "real_wm_close_newer_run_save": {
+      "seed": "BTH061-STABILITY-B",
+      "cash": 100,
+      "clock_minutes": 801,
+      "rng_state": 522389586,
+      "packed_state_sha256": "0dacfd77ffb25bff4276dcbd3b634dc3dda0636632b5edbd5c5e28d4013c7b1f",
+      "save_file_sha256": "cd5a249b7c65e690985b24569e08c412c3324249eea85591ba9b31c279e8659a"
+    },
+    "restarted_continue_observed_cash": 100,
+    "real_close_during_paid_pusher": false
+  },
+  "storage_fault_regression": {
+    "isolated_save_directory_replaced_by_regular_file": true,
+    "boundaries": [
+      "Main Menu",
+      "in-game Exit",
+      "native close notification",
+      "run-report Home",
+      "terminal New Run",
+      "Main Menu during yielded cabinet Leave"
+    ],
+    "same_live_state_retained": true,
+    "retained_primary_and_backup_hashes_unchanged": true,
+    "restored_storage_save_retry_and_continue": true
+  },
+  "limitations": [
+    "0.6.1 release checklist remains open; these are two confirmed root-cause fixes and adjacent navigation protections.",
+    "Source regression compares complete parsed machine/tray authority and RNG; it does not use a refreshed golden hash.",
+    "Only Quarter Falls has the normal-input paid-drop package retests in this batch.",
+    "Fault injection is a production-source lifecycle check, not a claim of a healthy exported-storage failure.",
+    "Positive Exit/close-notification source probes passed on Linux/Windows, but reported an ObjectDB leak at immediate fixture shutdown; they are not clean-shutdown qualification.",
+    "Windows candidate launch reports the existing Xvfb DRI3 software-rendering warning. Web staging regenerated missing UID sidecars; Windows export reported absent Android build-tools. Exports succeeded.",
+    "Browser context closure aborted one in-flight PCK request; no GDScript/page error was reported.",
+    "No performance improvement, full meta-inventory migration qualification, final package audit, or release readiness is claimed."
+  ]
+}
