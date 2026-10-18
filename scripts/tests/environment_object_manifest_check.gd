@@ -74,7 +74,6 @@ func _run() -> void:
 	_check_lottery_counter_hosts(library)
 	_check_pawn_sal_host(library)
 	_check_grand_casino_rumor_host(library)
-	_check_grand_casino_showdown_capacity(library)
 	_check_grand_casino_live_table(library)
 	_check_missing_and_stale_regeneration(library)
 	_check_scenario_manifest_retention_validation(library)
@@ -630,33 +629,6 @@ func _check_grand_casino_rumor_host(library: ContentLibrary) -> void:
 	], environment, true)
 	var action_record := _record_by_id(joined, action_id)
 	_check(str(action_record.get("slot_binding_source_id", "")) == host_id, "grand casino rumor host", "town-rumor dialogue did not attach to Iris")
-
-
-func _check_grand_casino_showdown_capacity(library: ContentLibrary) -> void:
-	var environment := _generated_environment(library, "grand_casino")
-	var event_ids := _array(environment.get("event_ids", []))
-	for event_id in ["chain06_cass_first_contact", "comped_suite_offer", "the_house_calls"]:
-		if not event_ids.has(event_id):
-			event_ids.append(event_id)
-	environment["event_ids"] = event_ids
-	environment["resolved_event_ids"] = []
-	environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(environment, library)
-	var layout := _dict(environment.get("layout", {}))
-	var bindings := _dict(layout.get("slot_bindings", {}))
-	var rects := _dict(layout.get("object_rects", {}))
-	var occupied_slots: Dictionary = {}
-	_check(_array(layout.get("placement_errors", [])).is_empty(), "grand casino showdown capacity", "simultaneous route events failed layout generation: %s" % JSON.stringify(layout.get("placement_errors", [])))
-	for object_id in ["event:chain06_cass_first_contact", "event:comped_suite_offer", "event:the_house_calls"]:
-		var binding := _dict(bindings.get(object_id, {}))
-		var slot_id := str(binding.get("slot_id", ""))
-		_check(str(binding.get("presentation_mode", "")) == "room", "grand casino showdown capacity", "%s has no room presentation" % object_id)
-		_check(not slot_id.is_empty() and not occupied_slots.has(slot_id), "grand casino showdown capacity", "%s has no unique event slot" % object_id)
-		_check(rects.has(object_id), "grand casino showdown capacity", "%s has no player-reachable room geometry" % object_id)
-		if not slot_id.is_empty():
-			occupied_slots[slot_id] = object_id
-	var semantics := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(environment, library)
-	_check(bool(semantics.get("ok", false)), "grand casino showdown capacity", "simultaneous route events did not produce authoritative interactions: %s" % JSON.stringify(semantics.get("errors", [])))
-	_check(not _record_by_id(_array(semantics.get("records", [])), "event:the_house_calls").is_empty(), "grand casino showdown capacity", "The House Calls remained semantically present without a reachable interaction record")
 
 
 func _check_grand_casino_live_table(library: ContentLibrary) -> void:

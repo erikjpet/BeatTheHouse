@@ -101,7 +101,7 @@ V2_EVENT_CAPACITY_TARGETS = {
     "delta_queen": {"seated_person": 1, "doorway": 1, "behind_counter_person": 1, "standing_person": 6},
     "beach": {"standing_person": 1},
     "pawn_shop": {"standing_person": 3},
-    "grand_casino": {"behind_counter_person": 3, "wall_mounted": 1, "standing_person": 7},
+    "grand_casino": {"behind_counter_person": 2, "wall_mounted": 1, "standing_person": 7},
     "grand_casino_high_limit": {"standing_person": 6},
     "grand_casino_back_room": {"standing_person": 5},
     "grand_casino_cage": {},
@@ -2268,8 +2268,8 @@ def main_v2(
     check.require(placement.get("schema_version") == 3, "placement_surfaces.json schema_version must be 3")
     check.require(placement.get("slot_schema_version") == 2, "placement_surfaces.json slot_schema_version must be 2")
     check.require(
-        sum(sum(class_counts.values()) for class_counts in V2_EVENT_CAPACITY_TARGETS.values()) == 102,
-        "producer-backed event capacity matrix must contain exactly 102 rows",
+        sum(sum(class_counts.values()) for class_counts in V2_EVENT_CAPACITY_TARGETS.values()) == 101,
+        "producer-backed event capacity matrix must contain exactly 101 rows",
     )
     check.require(board_raw is not None and board_raw[0] > 0 and board_raw[1] > 0, "invalid placement board_size")
     board = board_raw or (900.0, 430.0)

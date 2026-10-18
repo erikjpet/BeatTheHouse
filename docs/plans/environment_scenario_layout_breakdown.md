@@ -1618,14 +1618,14 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>864, 348</code> | <code>right_exit</code> | Clear exit | Exact scenario |
-| <code>scenario.local_floor_fixture_1</code> | Delegation Cart Block | <code>floor_fixture</code> | <code>542, 268</code> | <code>manual_placement_required</code> | Delegation Cart Block | Provisional geometry |
-| <code>scenario.local_floor_fixture_2</code> | Reserved machine banks | <code>floor_fixture</code> | <code>638, 328</code> | <code>manual_placement_required</code> | Reserved machine banks | Provisional geometry |
+| <code>scenario.local_floor_fixture_1</code> | Delegation Cart Block | <code>floor_fixture</code> | <code>686, 332</code> | <code>manual_placement_required</code> | Delegation Cart Block | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Reserved machine banks | <code>floor_fixture</code> | <code>790, 328</code> | <code>manual_placement_required</code> | Reserved machine banks | Provisional geometry |
 | <code>scenario.local_floor_fixture_3</code> | Delegation Cart Block | <code>floor_fixture</code> | <code>722, 194</code> | <code>manual_placement_required</code> | Delegation Cart Block | Provisional geometry |
 | <code>scenario.local_ground_marker_1</code> | Stacked reservation cards | <code>ground_marker</code> | <code>214, 332</code> | <code>manual_placement_required</code> | Stacked reservation cards | Provisional geometry |
 | <code>scenario.local_group_1</code> | Scenario alternatives: Badge delegations / Floor attendant | <code>group</code> | <code>156, 334</code> | <code>manual_placement_required</code> | Badge delegations<br>Floor attendant | Provisional geometry |
 | <code>scenario.local_group_2</code> | Scenario alternatives: Convention coordinator / Disguised delegate | <code>group</code> | <code>276, 334</code> | <code>manual_placement_required</code> | Convention coordinator<br>Disguised delegate | Provisional geometry |
 | <code>scenario.local_standing_person_1</code> | Coordinator | <code>standing_person</code> | <code>334, 328</code> | <code>manual_placement_required</code> | Coordinator | Provisional geometry |
-| <code>scenario.local_standing_person_2</code> | Coordinator | <code>standing_person</code> | <code>590, 328</code> | <code>manual_placement_required</code> | Coordinator | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Coordinator | <code>standing_person</code> | <code>614, 328</code> | <code>manual_placement_required</code> | Coordinator | Provisional geometry |
 | <code>scenario.local_wall_item_1</code> | Convention booking board | <code>wall_mounted</code> | <code>56, 112</code> | <code>manual_placement_required</code> | Convention booking board | Provisional geometry |
 | <code>scenario.local_wall_item_2</code> | Spare convention badges | <code>wall_mounted</code> | <code>256, 48</code> | <code>manual_placement_required</code> | Spare convention badges | Provisional geometry |
 | <code>scenario.local_wall_item_3</code> | Color-coded schedule board | <code>wall_mounted</code> | <code>400, 96</code> | <code>manual_placement_required</code> | Color-coded schedule board | Provisional geometry |
@@ -1640,11 +1640,11 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | --- | --- | --- | --- | --- | --- | --- |
 | <code>scenario.local_doorway_1</code> | Clear exit | <code>doorway</code> | <code>864, 348</code> | <code>right_exit</code> | Clear exit | Exact scenario |
 | <code>scenario.local_floor_fixture_1</code> | Stalled Stage Lift | <code>floor_fixture</code> | <code>694, 332</code> | <code>manual_placement_required</code> | Stalled Stage Lift | Provisional geometry |
-| <code>scenario.local_floor_fixture_2</code> | Stalled Stage Lift | <code>floor_fixture</code> | <code>638, 328</code> | <code>manual_placement_required</code> | Stalled Stage Lift | Provisional geometry |
-| <code>scenario.local_floor_fixture_3</code> | Coiled queue ropes | <code>floor_fixture</code> | <code>726, 220</code> | <code>manual_placement_required</code> | Coiled queue ropes | Provisional geometry |
+| <code>scenario.local_floor_fixture_2</code> | Stalled Stage Lift | <code>floor_fixture</code> | <code>790, 328</code> | <code>manual_placement_required</code> | Stalled Stage Lift | Provisional geometry |
+| <code>scenario.local_floor_fixture_3</code> | Coiled queue ropes | <code>floor_fixture</code> | <code>726, 268</code> | <code>manual_placement_required</code> | Coiled queue ropes | Provisional geometry |
 | <code>scenario.local_ground_marker_1</code> | Raised stage lift | <code>ground_marker</code> | <code>214, 332</code> | <code>manual_placement_required</code> | Raised stage lift | Provisional geometry |
-| <code>scenario.local_standing_person_1</code> | Host | <code>standing_person</code> | <code>590, 328</code> | <code>manual_placement_required</code> | Host | Provisional geometry |
-| <code>scenario.local_standing_person_2</code> | Stagehand | <code>standing_person</code> | <code>542, 280</code> | <code>manual_placement_required</code> | Stagehand | Provisional geometry |
+| <code>scenario.local_standing_person_1</code> | Host | <code>standing_person</code> | <code>614, 328</code> | <code>manual_placement_required</code> | Host | Provisional geometry |
+| <code>scenario.local_standing_person_2</code> | Stagehand | <code>standing_person</code> | <code>566, 328</code> | <code>manual_placement_required</code> | Stagehand | Provisional geometry |
 | <code>scenario.local_standing_person_3</code> | Scenario alternatives: Accepted gala guest / Host | <code>standing_person</code> | <code>334, 328</code> | <code>manual_placement_required</code> | Accepted gala guest<br>Host | Provisional geometry |
 | <code>scenario.local_standing_person_4</code> | Scenario alternatives: Lift operator / Stagehand | <code>standing_person</code> | <code>156, 328</code> | <code>manual_placement_required</code> | Lift operator<br>Stagehand | Provisional geometry |
 | <code>scenario.local_standing_person_5</code> | Gala verifier | <code>standing_person</code> | <code>276, 328</code> | <code>manual_placement_required</code> | Gala verifier | Provisional geometry |
