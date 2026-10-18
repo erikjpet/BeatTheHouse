@@ -732,6 +732,7 @@ func _init() -> void:
 
 
 func _ready() -> void:
+	get_tree().auto_accept_quit = false
 	boot_start_msec = Time.get_ticks_msec()
 	boot_telemetry_events = []
 	_mark_boot_event("engine_ready_start", {"autoload_count": _project_autoload_count()})
@@ -887,15 +888,8 @@ func _notification(what: int) -> void:
 		_layout_settings_overlay()
 		if _event_choice_popup_is_visible():
 			call_deferred("_position_event_choice_popup")
-	elif what == NOTIFICATION_WM_CLOSE_REQUEST and run_state != null and not _is_meta_session():
-		# Window-manager exits are durability boundaries just like the in-game
-		# Exit action. A worker generation is joined and the newest state is
-		# written atomically before Godot accepts the close request.
-		if run_state.is_tutorial_run():
-			_complete_tutorial_profile()
-			_clear_tutorial_resume_slot()
-		else:
-			_autosave_foundation_run("Saved before exit.", true)
+	elif what == NOTIFICATION_WM_CLOSE_REQUEST:
+		exit_game()
 
 
 func _exit_tree() -> void:
@@ -6179,7 +6173,7 @@ func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = 
 	if current_game != null and not current_game.foundation_save_ready(run_state, run_state.current_environment):
 		_mark_autosave_dirty()
 		save_status_message = "Save waits for the live machine to settle." if force else status_text
-		return true
+		return not force
 	# Capture the completed action while it is still the active context. This is
 	# deliberately separate from JSON serialization/disk I/O: a later deferred
 	# flush must not mutate RunState during an unrelated hover/focus frame.
@@ -6247,7 +6241,7 @@ func _write_foundation_run_save(status_text: String = "Autosaved.", synchronous:
 		return true
 	if error == ERR_BUSY:
 		_record_autosave_failure(error, "save_service_busy", requested_generation)
-		return true
+		return not synchronous
 	_record_autosave_failure(error, "save_start_failed", requested_generation)
 	return false
 
@@ -6584,7 +6578,10 @@ func save_run_from_menu() -> void:
 		_show_message("No active run to save.")
 		_refresh_run_menu()
 		return
-	_autosave_foundation_run("Saved to Resume Slot.", true)
+	if not _autosave_foundation_run("Saved to Resume Slot.", true):
+		_show_message(save_status_message)
+		_refresh()
+		return
 	_clear_input_guard_modal_state()
 	_refresh()
 
@@ -17119,10 +17116,10 @@ func _on_run_report_new_run_requested() -> void:
 	if _terminal_reward_selection_pending():
 		_show_message("Choose and store each earned reward before leaving the run report.")
 		return
+	if not _save_foundation_run_before_leaving("Completed run saved."):
+		return
 	if run_state != null and run_state.is_tutorial_run() and run_state.run_status == RunState.RUN_STATUS_FAILED:
 		start_tutorial_run()
-		return
-	if run_state != null and run_state.is_tutorial_run() and not _complete_tutorial_profile():
 		return
 	start_generated_foundation_run()
 
@@ -17132,12 +17129,12 @@ func _on_run_report_home_requested() -> void:
 		_show_message("Choose and store each earned reward before leaving the run report.")
 		return
 	if run_state != null and run_state.is_tutorial_run() and run_state.run_status == RunState.RUN_STATUS_FAILED:
-		if not _complete_tutorial_profile():
+		if not _save_foundation_run_before_leaving("Lesson completion saved."):
 			return
 		start_generated_foundation_run()
 		return
-	return_to_main_menu()
-	open_collection_browser()
+	if return_to_main_menu():
+		open_collection_browser()
 
 
 func _on_run_report_main_menu_requested() -> void:
@@ -17214,22 +17211,38 @@ func _apply_meta_collection_loadout_to_run() -> void:
 	run_state.invalidate_inventory_effect_cache()
 
 
-func return_to_main_menu() -> void:
+func _save_foundation_run_before_leaving(status_text: String) -> bool:
+	if run_state == null or _is_meta_session() or dev_game_test_mode:
+		return true
+	if run_state.is_tutorial_run():
+		return _complete_tutorial_profile() and _clear_tutorial_resume_slot()
+	# Keep the active state key until the machine has published its settled
+	# authority. A failed write must leave that state available for retry.
+	_invalidate_deferred_embedded_action_refresh()
+	var settling_game := current_game
+	var was_settling := game_exit_settle_active
+	game_exit_settle_active = false
+	_checkpoint_current_game_surface_ui_state()
+	if current_game != null and not current_game.foundation_save_ready(run_state, run_state.current_environment):
+		# A live machine may exist before a retained UI projection is installed.
+		current_game.checkpoint_surface_ui_state({}, run_state, run_state.current_environment)
+	if was_settling and settling_game != null:
+		settling_game.cancel_chunked_exit_settle()
+	if _autosave_foundation_run(status_text, true):
+		return true
+	_show_message("Could not save the run. Your run is still open; choose Save to retry.")
+	_refresh()
+	return false
+
+
+func return_to_main_menu() -> bool:
 	if _is_meta_session():
 		_exit_meta_session()
-		return
+		return true
 	if _all_in_result_terminal_check_is_pending():
 		_evaluate_run_terminal_state(true)
-	var leaving_tutorial := run_state != null and run_state.is_tutorial_run() and not dev_game_test_mode
-	if leaving_tutorial:
-		if not _complete_tutorial_profile():
-			return
-		# A tutorial Resume Slot would make the main Play action continue the old
-		# lesson instead of beginning the player's first normal generated run.
-		if not _clear_tutorial_resume_slot():
-			return
-	elif run_state != null and not dev_game_test_mode:
-		_autosave_foundation_run("Autosaved before main menu.", true)
+	if not _save_foundation_run_before_leaving("Autosaved before main menu."):
+		return false
 	_clear_run_audio_caches()
 	pending_all_in_result_terminal_check = false
 	_finish_conclusion_animation()
@@ -17272,6 +17285,7 @@ func return_to_main_menu() -> void:
 	close_settings_menu()
 	_restore_main_menu_surface_visibility()
 	_refresh_start_screen()
+	return true
 
 
 func _clear_run_audio_caches() -> void:
@@ -17306,14 +17320,10 @@ func _restore_main_menu_surface_visibility() -> void:
 
 
 func exit_game() -> void:
+	if not _save_foundation_run_before_leaving("Autosaved before exit."):
+		return
 	_reset_game_surface_runtime_state()
 	_set_active_game_binding()
-	if run_state != null:
-		if run_state.is_tutorial_run():
-			if not _complete_tutorial_profile() or not _clear_tutorial_resume_slot():
-				return
-		else:
-			_autosave_foundation_run("Autosaved before exit.", true)
 	get_tree().quit()
 
 

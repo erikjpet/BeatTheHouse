@@ -1589,6 +1589,7 @@ switch ($suiteKey) {
         Invoke-GodotScript -Name "roulette_audio_audit" -ScriptPath "res://tools/roulette_audio_audit.gd" -StageTimeoutSec 120
     }
     "audit" {
+        Invoke-GodotScript -Name "save_navigation_durability" -ScriptPath "res://scripts/tests/save_navigation_durability_check.gd" -StageTimeoutSec 180
         Invoke-EnvironmentSlotVerificationGates
         Invoke-GameReworkVerificationGates
         Invoke-GodotScript -Name "environment_grounding_contract" -ScriptPath "res://tools/environment_grounding_contract.gd" -StageTimeoutSec 120
@@ -1600,6 +1601,7 @@ switch ($suiteKey) {
         Invoke-GodotScript -Name "roulette_audio_audit" -ScriptPath "res://tools/roulette_audio_audit.gd" -StageTimeoutSec 120
     }
     "full" {
+        Invoke-GodotScript -Name "save_navigation_durability" -ScriptPath "res://scripts/tests/save_navigation_durability_check.gd" -StageTimeoutSec 180
         Invoke-StandaloneContracts
         Invoke-Perf06ContractChecks -SuiteLabel "full"
         Invoke-FoundationSuite -FoundationSuite "all" -StageTimeoutSec (Get-StageTimeout "foundation_all")
