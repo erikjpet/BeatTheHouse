@@ -238,24 +238,6 @@ Resume: rw06_2 replaces the seed only after exact fresh-profile preflight. If A,
 Answer:
 A
 
-### Q-025 · rw06_4 · Owner placement and start-to-finish playthrough closure
-Status: OPEN
-Asked: release orchestrator, 2026-10-17
-Question: Do you confirm that the 75-context placement pass and the required start-to-finish owner playthrough are complete, and that every blocking note from them is closed on the frozen 0.6.0 source candidate `27304381`?
-Options: A) Confirm both gates are complete with no open blockers (recommended)  B) Blocking work remains; list each blocker in Answer
-Resume: If A, change only this Status line to RESOLVED and continue the separately recorded final-source approval gate. If B, keep packaging blocked, repair each listed blocker, freeze a new candidate and rerun every affected source gate.
-Answer:
-
-### Q-026 · rw06_4 · Final source approval before packaging
-Status: WITHDRAWN — source changed before answer
-Asked: release orchestrator, 2026-10-17
-Question: Do you approve exact source candidate `27304381` for final Windows and Web packaging? Its required validator, Smoke retry, Contract, three ending replays, all 37 v0.5.1 migrations, 10-seed determinism probe, 180-minute simulated soak, and both idle-animation liveness checks pass. The first Smoke attempt had one non-reproducing Baccarat timing overage; an unchanged full retry passed all 10 stages, while three isolated reruns kept Baccarat under budget and exposed two unrelated one-sample host-scheduling outliers.
-Options: A) Approve `27304381` for packaging after Q-025 is resolved (recommended)  B) Hold source approval; explain the required follow-up in Answer
-Resume: If A and Q-025 is RESOLVED, change only this Status line to RESOLVED and build both exact packages without `-Push`. If B, keep packaging blocked and do not alter, tag, upload or publish the candidate.
-Answer:
-
-Withdrawal: The independent-profile ending qualifier exposed a strict-mode launch-lock bug before any qualifying route began. The narrow repair was committed as `be5dd305`; Q-026 cannot approve the superseded `27304381` candidate. A fresh final-source question will follow only after the repaired candidate completes every required gate.
-
 ### Q-014 · rw06_6 · Pull-tab yellow glimmer
 Status: ANSWERED
 Asked: owner directive, 2026-09-23
