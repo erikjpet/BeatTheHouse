@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width="1122" height="1402" viewBox="0 0 1122 1402">
+  <defs>
+    <linearGradient id="bottomFade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#02040a" stop-opacity="0"/>
+      <stop offset="1" stop-color="#02040a" stop-opacity="0.96"/>
+    </linearGradient>
+    <linearGradient id="featureRibbon" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#08111d"/>
+      <stop offset="0.5" stop-color="#17091d"/>
+      <stop offset="1" stop-color="#08111d"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="5" stdDeviation="5" flood-color="#000000" flood-opacity="0.78"/>
+    </filter>
+    <clipPath id="scenarioOne"><path d="M48 477 H438 L335 793 H48 Z"/></clipPath>
+    <clipPath id="scenarioTwo"><path d="M434 477 H791 L689 793 H332 Z"/></clipPath>
+    <clipPath id="scenarioThree"><path d="M787 477 H1074 V793 H686 Z"/></clipPath>
+    <clipPath id="coinPusher"><rect x="48" y="850" width="500" height="159" rx="5"/></clipPath>
+    <clipPath id="scratchTickets"><rect x="574" y="850" width="500" height="159" rx="5"/></clipPath>
+    <clipPath id="craps"><rect x="48" y="1050" width="500" height="159" rx="5"/></clipPath>
+    <clipPath id="holdem"><rect x="574" y="1050" width="500" height="159" rx="5"/></clipPath>
+  </defs>
+
+  <!-- Approved neon-noir format and atmospheric background. -->
+  <image x="0" y="0" width="1122" height="1402" preserveAspectRatio="none"
+         xlink:href="../../review_artifacts/promo_0_6/neon_poster_background.png"/>
+
+  <!-- Fresh scenario captures from the current working tree. -->
+  <rect x="44" y="474" width="1034" height="322" rx="9" fill="#030711"/>
+  <image x="48" y="477" width="390" height="316" preserveAspectRatio="xMidYMid slice"
+         clip-path="url(#scenarioOne)" xlink:href="../../review_artifacts/promo_0_6/current_scenarios/delta_queen_wedding_charter.png"/>
+  <image x="332" y="477" width="459" height="316" preserveAspectRatio="xMidYMid slice"
+         clip-path="url(#scenarioTwo)" xlink:href="../../review_artifacts/promo_0_6/current_scenarios/beach_storm_coming.png"/>
+  <image x="686" y="477" width="388" height="316" preserveAspectRatio="xMidYMid slice"
+         clip-path="url(#scenarioThree)" xlink:href="../../review_artifacts/promo_0_6/current_scenarios/grand_casino_audit_night.png"/>
+  <path d="M48 720 H358 L335 793 H48 Z" fill="url(#bottomFade)" clip-path="url(#scenarioOne)"/>
+  <path d="M356 720 H713 L689 793 H332 Z" fill="url(#bottomFade)" clip-path="url(#scenarioTwo)"/>
+  <path d="M710 720 H1074 V793 H686 Z" fill="url(#bottomFade)" clip-path="url(#scenarioThree)"/>
+  <path d="M438 477 L335 793" stroke="#00f5ff" stroke-width="6"/>
+  <path d="M791 477 L689 793" stroke="#00f5ff" stroke-width="6"/>
+  <text x="202" y="770" text-anchor="middle" fill="#ffe45c" font-family="Arial Black, Bahnschrift, sans-serif" font-size="24" filter="url(#shadow)">WEDDING CHARTER</text>
+  <text x="533" y="770" text-anchor="middle" fill="#00f5ff" font-family="Arial Black, Bahnschrift, sans-serif" font-size="24" filter="url(#shadow)">BEACH STORM</text>
+  <text x="894" y="770" text-anchor="middle" fill="#ff4fa3" font-family="Arial Black, Bahnschrift, sans-serif" font-size="24" filter="url(#shadow)">CASINO AUDIT</text>
+
+  <!-- Four equal current-build gameplay panels. Scratch Tickets is intentionally compact. -->
+  <rect x="40" y="812" width="516" height="205" rx="14" fill="#050812" stroke="#ffe45c" stroke-width="4"/>
+  <rect x="48" y="821" width="500" height="36" rx="6" fill="#090b14" stroke="#ffe45c" stroke-width="2"/>
+  <text x="66" y="846" fill="#ffe45c" font-family="Arial Black, Bahnschrift, sans-serif" font-size="21">COIN PUSHER</text>
+  <text x="530" y="846" text-anchor="end" fill="#ffffff" font-family="Bahnschrift, Arial, sans-serif" font-size="13" font-weight="700">LIVE PHYSICS + PRIZE RIDERS</text>
+  <image x="48" y="850" width="500" height="159" preserveAspectRatio="xMidYMid slice"
+         clip-path="url(#coinPusher)" xlink:href="../../review_artifacts/promo_0_6/current_coin_pusher/01_normal_pile_rider_live_1280x720.png"/>
+
+  <rect x="566" y="812" width="516" height="205" rx="14" fill="#050812" stroke="#00f5ff" stroke-width="4"/>
+  <rect x="574" y="821" width="500" height="36" rx="6" fill="#090b14" stroke="#00f5ff" stroke-width="2"/>
+  <text x="592" y="846" fill="#00f5ff" font-family="Arial Black, Bahnschrift, sans-serif" font-size="21">SCRATCH TICKETS</text>
+  <text x="1056" y="846" text-anchor="end" fill="#ffe45c" font-family="Bahnschrift, Arial, sans-serif" font-size="13" font-weight="700">CARD VAULT + 7 GAMES</text>
+  <image x="574" y="850" width="500" height="159" preserveAspectRatio="xMidYMid slice"
+         clip-path="url(#scratchTickets)" xlink:href="../../review_artifacts/promo_0_6/current_scratch_ticket_play.png"/>
+
+  <rect x="40" y="1012" width="516" height="205" rx="14" fill="#050812" stroke="#00f5ff" stroke-width="4"/>
+  <rect x="48" y="1021" width="500" height="36" rx="6" fill="#090b14" stroke="#00f5ff" stroke-width="2"/>
+  <text x="66" y="1046" fill="#00f5ff" font-family="Arial Black, Bahnschrift, sans-serif" font-size="21">CRAPS</text>
+  <text x="530" y="1046" text-anchor="end" fill="#ffe45c" font-family="Bahnschrift, Arial, sans-serif" font-size="13" font-weight="700">FULL-TABLE ACTION</text>
+  <image x="48" y="1050" width="500" height="159" preserveAspectRatio="xMidYMid slice"
+         clip-path="url(#craps)" xlink:href="../../review_artifacts/promo_0_6/current_craps_table.png"/>
+
+  <rect x="566" y="1012" width="516" height="205" rx="14" fill="#050812" stroke="#ff2d78" stroke-width="4"/>
+  <rect x="574" y="1021" width="500" height="36" rx="6" fill="#090b14" stroke="#ff2d78" stroke-width="2"/>
+  <text x="592" y="1046" fill="#ff6eb4" font-family="Arial Black, Bahnschrift, sans-serif" font-size="21">BACK-ROOM HOLD'EM</text>
+  <text x="1056" y="1046" text-anchor="end" fill="#ffe45c" font-family="Bahnschrift, Arial, sans-serif" font-size="13" font-weight="700">CREW TELLS + TABLE TALK</text>
+  <image x="574" y="1050" width="500" height="159" preserveAspectRatio="xMidYMid slice"
+         clip-path="url(#holdem)" xlink:href="../../review_artifacts/promo_0_6/current_back_room_holdem.png"/>
+
+  <!-- Compact breadth ribbon for the rest of the 0.6 update. -->
+  <rect x="41" y="1226" width="1040" height="38" rx="16" fill="url(#featureRibbon)" stroke="#ff2d78" stroke-width="3"/>
+  <text x="561" y="1251" text-anchor="middle" fill="#ffffff" font-family="Arial Black, Bahnschrift, sans-serif" font-size="14.5" letter-spacing="0.35">
+    CREW HEIST ENDING <tspan fill="#00f5ff">•</tspan> WEATHER + RUMORS <tspan fill="#ffe45c">•</tspan> POLICE SWEEPS <tspan fill="#ff6eb4">•</tspan> DEEPER NPCs <tspan fill="#00f5ff">•</tspan> TUTORIAL <tspan fill="#ffe45c">•</tspan> MUSIC + SFX <tspan fill="#ff6eb4">•</tspan> RUN REPORTS
+  </text>
+
+  <!-- Reassert the approved outer frame. -->
+  <rect x="11" y="10" width="1100" height="1381" rx="45" fill="none" stroke="#ff1682" stroke-width="7"/>
+  <rect x="25" y="23" width="1072" height="1354" rx="34" fill="none" stroke="#00eef2" stroke-width="5"/>
+</svg>
