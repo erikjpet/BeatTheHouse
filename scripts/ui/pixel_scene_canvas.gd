@@ -54,12 +54,6 @@ const GRAND_CASINO_FIXED_GAME_VISUAL_SIZES := {
 	"fixed.game_table_left": Vector2(72.0, 48.0),
 	"fixed.game_table_right": Vector2(72.0, 48.0),
 }
-const SLOT_MACHINE_WORLD_VISUAL_SIZES := {
-	"classic_3_reel": Vector2(116.0, 88.0),
-	"line_5x3": Vector2(142.0, 112.0),
-	"video_feature": Vector2(148.0, 120.0),
-}
-const SLOT_MACHINE_COMPACT_SCALE_FLOOR := 0.82
 const DEVELOPER_PANEL_MARGIN := 8.0
 const DEVELOPER_PANEL_MIN_WIDTH := 320.0
 const DEVELOPER_PANEL_PREFERRED_WIDTH := 552.0
@@ -7941,17 +7935,16 @@ func _update_drunk_distortion_protected_rects() -> void:
 
 
 # Sealed fixed/scenario rectangles are normally exact draw, interaction, and
-# label authority. Grand Casino's compact game anchors deliberately keep their
-# collision/layout footprint separate from their larger cabinet/table artwork;
-# enlarging the authority rectangles makes the shared room resolver relocate
-# otherwise valid placements. Legacy and otherwise unslotted room models retain
-# their natural dimensions and are anchored to the slot's physical contact.
+# label authority. This includes every slot-machine format: reel geometry changes
+# the cabinet's internal art, never its authored world footprint. Grand Casino's
+# compact game anchors deliberately keep their collision/layout footprint
+# separate from their reviewed cabinet/table artwork; enlarging the authority
+# rectangles makes the shared room resolver relocate otherwise valid placements.
+# Legacy and otherwise unslotted room models retain their natural dimensions and
+# are anchored to the slot's physical contact.
 func _natural_model_rect_for_object(object_data: Dictionary) -> Rect2:
 	var slot_rect := _board_rect_for_object(object_data)
 	var object_scale := _scene_object_slot_scale(object_data)
-	var slot_machine_visual_rect := _slot_machine_world_visual_rect(object_data, slot_rect, object_scale)
-	if slot_machine_visual_rect.has_area():
-		return slot_machine_visual_rect
 	if bool(object_data.get("fixed_slot_geometry", false)):
 		var fixed_visual_rect := _grand_casino_fixed_game_visual_rect(object_data, slot_rect)
 		if fixed_visual_rect.has_area():
@@ -7975,43 +7968,6 @@ func _natural_model_rect_for_object(object_data: Dictionary) -> Rect2:
 	if placement_class not in ["wall_mounted", "hanging", "doorway"]:
 		center.y = slot_rect.end.y - model_size.y * 0.5
 	return Rect2(center - model_size * 0.5, model_size)
-
-
-# Slot anchors remain compact layout authority, but the displayed cabinet needs
-# enough room for its actual reel format. A 5x3 or feature cabinet cannot be
-# squeezed into the classic 3-reel silhouette without erasing the live result it
-# is meant to showcase. Developer scales below 1.0 stay useful but ease toward a
-# legibility floor instead of collapsing the reel cells to a few pixels.
-func _slot_machine_world_visual_rect(object_data: Dictionary, slot_rect: Rect2, object_scale: float) -> Rect2:
-	var visual := _slot_prop_visual_state(object_data)
-	var format_id := str(visual.get("machine_format", "")).strip_edges().to_lower()
-	if format_id.is_empty():
-		return Rect2()
-	var visual_size_value: Variant = SLOT_MACHINE_WORLD_VISUAL_SIZES.get(format_id, Vector2.ZERO)
-	var visual_size: Vector2 = visual_size_value if typeof(visual_size_value) == TYPE_VECTOR2 else Vector2.ZERO
-	if visual_size.x <= 0.0 or visual_size.y <= 0.0:
-		var reel_count := maxi(3, int(visual.get("reel_count", 3)))
-		var row_count := maxi(1, int(visual.get("row_count", 1)))
-		visual_size = Vector2(116.0 + float(maxi(0, reel_count - 3)) * 13.0, 88.0 + float(maxi(0, row_count - 1)) * 12.0)
-	var reel_overflow := maxi(0, int(visual.get("reel_count", 3)) - (3 if format_id == "classic_3_reel" else 5))
-	var row_overflow := maxi(0, int(visual.get("row_count", 1)) - (1 if format_id == "classic_3_reel" else 3))
-	visual_size += Vector2(float(reel_overflow) * 10.0, float(row_overflow) * 10.0)
-	var effective_scale := object_scale
-	if object_scale < 1.0:
-		effective_scale = lerpf(SLOT_MACHINE_COMPACT_SCALE_FLOOR, 1.0, clampf((object_scale - SLOT_OBJECT_SCALE_MIN) / (1.0 - SLOT_OBJECT_SCALE_MIN), 0.0, 1.0))
-	visual_size *= effective_scale
-	var placement_class := str(object_data.get("placement_class", "")).strip_edges()
-	if placement_class.is_empty():
-		placement_class = EnvironmentPlacementScript.classify(
-			object_data,
-			str(object_data.get("interaction_type", object_data.get("type", ""))),
-			str(object_data.get("id", "")),
-			str(object_data.get("prop", object_data.get("icon_key", "")))
-		)
-	var center := slot_rect.get_center()
-	if placement_class not in ["wall_mounted", "hanging", "doorway"]:
-		center.y = slot_rect.end.y - visual_size.y * 0.5
-	return Rect2(center - visual_size * 0.5, visual_size)
 
 
 func _scene_object_slot_scale(object_data: Dictionary) -> float:
