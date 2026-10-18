@@ -141,6 +141,13 @@ static func _trace_projection(value: Variant) -> Dictionary:
 	var game := _dict(result.get("game", {}))
 	game.erase("peek_window_open")
 	result["game"] = game
+	# The save label is player-visible and remains in the live observation, but
+	# pending/completed acknowledgments settle on asynchronous filesystem timing.
+	# They do not describe a different game state and must not split fixed replays.
+	var status_hud := _dict(result.get("status_hud", {}))
+	status_hud.erase("save_text_visible")
+	status_hud.erase("save_text")
+	result["status_hud"] = status_hud
 	# TalkDock's typewriter remains live between commands by design. Keep its
 	# exact visible phase in the observation, but do not let host frame timing
 	# change replay identity after the same semantic dialogue node is rendered.
