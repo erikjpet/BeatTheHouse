@@ -2,6 +2,16 @@
 
 All notable public release changes for Beat the House are recorded here.
 
+## 0.6.1 - Unreleased stability fixes
+
+- Preserves paid Coin Pusher drops and settled machine progress when returning
+  to Main Menu or closing the game.
+- Keeps the current run open when its final save fails, including native window
+  close and run-report Home/New Run navigation. Saving can be retried after
+  storage recovers; deferred or busy saves no longer count as durable success.
+- Keeps Run Menu open when a manual save is still waiting for a live machine
+  to settle, and cancels obsolete exit/HUD work before recovery.
+
 ## 0.6.0 - Feature-complete source
 
 Status: **release-ready and version-stamped in source. The owner accepted
