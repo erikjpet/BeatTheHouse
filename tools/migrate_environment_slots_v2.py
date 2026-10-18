@@ -404,7 +404,7 @@ EVENT_CAPACITY_TARGETS: dict[str, dict[str, int]] = {
     "delta_queen": {"seated_person": 1, "doorway": 1, "behind_counter_person": 1, "standing_person": 6},
     "beach": {"standing_person": 1},
     "pawn_shop": {"standing_person": 3},
-    "grand_casino": {"behind_counter_person": 2, "wall_mounted": 1, "standing_person": 7},
+    "grand_casino": {"behind_counter_person": 3, "wall_mounted": 1, "standing_person": 7},
     "grand_casino_high_limit": {"standing_person": 6},
     "grand_casino_back_room": {"standing_person": 5},
     "grand_casino_cage": {},
@@ -4518,6 +4518,28 @@ def _normalize_ending_route_event_capacity(
                 "occupancy_required": False,
             },
         ),
+        (
+            "grand_casino",
+            "event:the_house_calls",
+            {
+                "id": "event.behind_counter_person_3",
+                "kind": "event",
+                "pos": [780.0, 294.0],
+                "footprint_class": "behind_counter_person",
+                "physical_role": "Pit boss",
+                "occupant_ids": [],
+                "runtime_reserve": False,
+                "reserve_reason": "",
+                "hit_rect": [744.0, 222.0, 72.0, 72.0],
+                "label_anchor": [780.0, 204.0],
+                "facing": "front",
+                "priority": 85,
+                "zone_id": "right",
+                "support_id": "right_table_felt",
+                "walk_lane_ids": ["lane.public"],
+                "occupancy_required": False,
+            },
+        ),
     )
     for map_id, object_id, slot_template in specifications:
         map_data = maps[map_id]
@@ -4537,6 +4559,22 @@ def _normalize_ending_route_event_capacity(
         else:
             target_slot.clear()
             target_slot.update(reviewed_slot)
+        if slot_id == "event.behind_counter_person_3":
+            event_slots = map_data.setdefault("event_slots", [])
+            target_slot = _slot_by_id(map_data, slot_id)
+            if target_slot is None:
+                raise ValueError(f"{map_id}: failed to provision {slot_id}")
+            event_slots.remove(target_slot)
+            previous_index = next(
+                (
+                    index
+                    for index, slot in enumerate(event_slots)
+                    if isinstance(slot, dict)
+                    and str(slot.get("id", "")) == "event.behind_counter_person_2"
+                ),
+                len(event_slots) - 1,
+            )
+            event_slots.insert(previous_index + 1, target_slot)
         map_data.setdefault("event_object_slot_ids", {})[object_id] = slot_id
         map_data.setdefault("object_family_ids", {})[object_id] = "event"
 
@@ -5425,7 +5463,7 @@ def validate(
     assert isinstance(maps, list) and len(maps) == 21
     assert sum(
         sum(class_counts.values()) for class_counts in EVENT_CAPACITY_TARGETS.values()
-    ) == 101, "reviewed producer-backed event capacity total drift"
+    ) == 102, "reviewed producer-backed event capacity total drift"
     if baseline_objects is None:
         baseline_objects = baseline_objects_by_map()
     if required_events is None:

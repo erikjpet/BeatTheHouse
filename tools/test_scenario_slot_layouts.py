@@ -358,9 +358,10 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
             rects = [tuple(float(value) for value in values(slot.get("hit_rect"))) for slot in base_slots]
             self.assertEqual(len(ids), len(set(ids)), f"{map_id} repeats a base slot id")
             self.assertEqual(len(rects), len(set(rects)), f"{map_id} repeats base slot geometry")
+            reviewed_total_capacity = 31 if map_id == "grand_casino" else 30
             self.assertLessEqual(
                 len(base_slots),
-                30,
+                reviewed_total_capacity,
                 f"{map_id} exceeds the reviewed total base-layout capacity",
             )
             for family, family_slots in slots_by_family.items():

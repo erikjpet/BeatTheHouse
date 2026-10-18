@@ -20442,8 +20442,8 @@
           "id": "scenario.local_floor_fixture_1",
           "kind": "scenario",
           "pos": [
-            686.0,
-            332.0
+            542.0,
+            268.0
           ],
           "footprint_class": "floor_fixture",
           "physical_role": "Delegation Cart Block",
@@ -20453,14 +20453,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            664.0,
-            288.0,
+            520.0,
+            224.0,
             44.0,
             44.0
           ],
           "label_anchor": [
-            686.0,
-            282.0
+            542.0,
+            218.0
           ],
           "facing": "none",
           "priority": 2,
@@ -20492,7 +20492,7 @@
           "id": "scenario.local_floor_fixture_2",
           "kind": "scenario",
           "pos": [
-            790.0,
+            638.0,
             328.0
           ],
           "footprint_class": "floor_fixture",
@@ -20503,13 +20503,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            768.0,
+            616.0,
             248.0,
             44.0,
             80.0
           ],
           "label_anchor": [
-            790.0,
+            638.0,
             242.0
           ],
           "facing": "none",
@@ -20817,7 +20817,7 @@
           "id": "scenario.local_standing_person_2",
           "kind": "scenario",
           "pos": [
-            614.0,
+            590.0,
             328.0
           ],
           "footprint_class": "standing_person",
@@ -20828,13 +20828,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            592.0,
+            568.0,
             248.0,
             44.0,
             80.0
           ],
           "label_anchor": [
-            614.0,
+            590.0,
             242.0
           ],
           "facing": "front",
@@ -21225,7 +21225,7 @@
           "id": "scenario.local_floor_fixture_2",
           "kind": "scenario",
           "pos": [
-            790.0,
+            638.0,
             328.0
           ],
           "footprint_class": "floor_fixture",
@@ -21236,13 +21236,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            768.0,
+            616.0,
             248.0,
             44.0,
             80.0
           ],
           "label_anchor": [
-            790.0,
+            638.0,
             242.0
           ],
           "facing": "none",
@@ -21279,7 +21279,7 @@
           "kind": "scenario",
           "pos": [
             726.0,
-            268.0
+            220.0
           ],
           "footprint_class": "floor_fixture",
           "physical_role": "Coiled queue ropes",
@@ -21290,13 +21290,13 @@
           "reserve_reason": "",
           "hit_rect": [
             704.0,
-            224.0,
+            176.0,
             44.0,
             44.0
           ],
           "label_anchor": [
             726.0,
-            218.0
+            170.0
           ],
           "facing": "none",
           "priority": 4,
@@ -21381,7 +21381,7 @@
           "id": "scenario.local_standing_person_1",
           "kind": "scenario",
           "pos": [
-            614.0,
+            590.0,
             328.0
           ],
           "footprint_class": "standing_person",
@@ -21392,13 +21392,13 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            592.0,
+            568.0,
             248.0,
             44.0,
             80.0
           ],
           "label_anchor": [
-            614.0,
+            590.0,
             242.0
           ],
           "facing": "front",
@@ -21436,8 +21436,8 @@
           "id": "scenario.local_standing_person_2",
           "kind": "scenario",
           "pos": [
-            566.0,
-            328.0
+            542.0,
+            280.0
           ],
           "footprint_class": "standing_person",
           "physical_role": "Stagehand",
@@ -21447,14 +21447,14 @@
           "runtime_reserve": false,
           "reserve_reason": "",
           "hit_rect": [
-            544.0,
-            248.0,
+            520.0,
+            200.0,
             44.0,
             80.0
           ],
           "label_anchor": [
-            566.0,
-            242.0
+            542.0,
+            194.0
           ],
           "facing": "front",
           "priority": 7,
