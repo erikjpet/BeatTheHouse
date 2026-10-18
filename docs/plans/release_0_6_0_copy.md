@@ -3,7 +3,7 @@
 Status: **PRE-PLACEMENT FINAL DRAFT — OWNER APPROVAL REQUIRED. DO NOT POST OR
 UPLOAD.**
 
-Refreshed from the feature-complete, post-cleanup 0.6 source on 2026-10-08. The
+Refreshed from the feature-complete, post-cleanup 0.6 source on 2026-10-18. The
 feature wording is current; after the manual room-placement lane closes, fill
 only the final artifact names, links, placement confirmation, and approved
 screenshots. This draft intentionally describes a single Crew heist route
@@ -165,49 +165,77 @@ Survive debt, Heat, a living town, and three paths through the Grand Casino.
 
 ### Long description
 
-**The town remembers tonight.**
+▌ BEAT THE HOUSE
 
-Beat the House is a single-player casino roguelike about surviving a debt-and-
-Heat spiral across low-stakes rooms and the Grand Casino. Build a seeded run,
-buy risky items, take loans and services, travel between venues, and decide how
-far you are willing to push your luck.
+Beat the House is a casino roguelike about surviving one bad run through the wrong side of town.
 
-**A living town**
+Start nearly broke in low-stakes rooms, scrape together a bankroll, dodge Heat from the house, manage debts to dangerous people, and push your luck toward the Grand Casino. The city runs on its own clock: venues open and close around you, rooms remember what happened there, and the run keeps moving whether you are ready or not. Every run is seeded and deterministic, built from procedural venues, games, items, services, lenders, events, and 55 persistent Tonight scenarios. The odds are never kind, but every risk has a readable upside and a consequence waiting behind it.
 
-Fifty-five persistent Tonight scenarios bring changing people, pressure,
-rumors, routes, Police Sweeps, and aftermath to the city's rooms. Return visits
-remember what happened. Fixed, art-aligned layouts keep staff, games, shop
-items, and props grounded in the places where they belong.
+▌JOIN DISCORD
 
-**The Crew path**
+[https://discord.gg/uDsZgbGY6](https://discord.gg/uDsZgbGY6)
 
-Build trust through deliveries, Numbers work, recruitment, and coordinated
-table plays. The Crew remembers favors and grudges, and one route can carry a
-heist plan into the Grand Casino. You can also leave the Crew alone and build
-your run another way.
+▌PLAY FULL-SIMULATION CASINO GAMES
 
-**Eleven full games**
+Eleven playable casino games, each with its own rules, state, controls, and pressure points:
 
-Play Scratch Tickets, Pull Tabs, Slots, Coin Pusher, Bar Dice, Craps,
-Blackjack, Baccarat, Roulette, Video Poker, and the Crew's back-room Hold'em
-game. Each game owns its own surface, rules, actions, animation, and
-consequences inside the larger run.
+Scratch Tickets: seven themed tickets with fixed-at-purchase outcomes, free-form scratching, collection discoveries, redemption, and a physical vending cabinet that dispenses each purchase into its tray.
 
-**Three Grand Casino endings**
+Pull Tabs: finite deals, sealed ticket windows, staged tab-peel reveals, a rare glimmer on eligible tickets, and item interactions that never change the contents already inside.
 
-Climb Linda's Players Card ladder and leave Gold. Walk into Rourke's back room
-and survive the house's pressure. Or bring the Crew's plan to the casino and
-live with the result. Every route grows out of the same run: your bankroll,
-Heat, access, relationships, and choices.
+Slots: generated Pinball and Buffalo machines with free games, Hold and Spin, wheels, jackpots, autoplay, and a physics-driven pinball bonus with flippers, nudging, tilt, skill shots, and multiball.
 
-**Built for repeatable runs**
+Coin Pusher: three deterministic, physics-backed cabinets with live piles, moving pushers, prize goals, machine-specific features, and risky nudges.
 
-Seeded generation, persistent rooms, save and Continue support, eleven deep
-game modules, expanded lessons, stronger room presentation, and responsive
-sound make each route readable without giving away what is still hidden.
+Bar Dice: Ship, Captain, and Crew rounds with keep-and-reroll decisions against bar patrons with their own personalities.
 
-Beat the House uses simulated gambling only. There is no real-money wagering,
-no cash prize, and no gambling monetization.
+Craps: casino and street variants with 40 reachable wager types, point play, working and hopping bets, odds, dice control, and full roll resolution.
+
+Blackjack: shoe play with hit, stand, split, double, surrender, side bets, count pressure, and risky hole-card peeks.
+
+Baccarat: mini-baccarat with Player, Banker, Tie, pair bets, shoe state, roads, squeeze reveals, and commission.
+
+Roulette: a full betting layout with inside and outside bets, chip placement, rebet, recent numbers, and live wheel resolution.
+
+Video Poker: multiple variants with one to three hands, betting, holding, drawing, double-up, and advantage tools.
+
+Crew Hold'em: six-handed no-limit poker with persistent opponents, paced decisions, side pots, and subtle, personality-shaped tells that can be wrong.
+
+▌BUILD A LIFE BETWEEN RUNS
+
+Every run starts and ends at home. Walk through your own place and upgrade from a back-alley squat to a motel room, an apartment, and finally a house. Stash finds in storage, open collection bags, and build a loadout of favorites to carry into the next run. Spare finds sell for gold at Sal's Pawn Shop, and gold buys the next roof over your head.
+
+▌PLAN YOUR ROUTE
+
+Travel on a persistent world map with fog of war and a day-night cycle. Every venue keeps its own hours: the bar pours until 3 AM, the corner store opens early, and a room that closes around you will put you on the street mid-run. Scout routes before you pay for them, take cheap roads that might get you shaken down, and return to venues that remember the state you left them in. Tonight scenarios can change the people, pressure, rumors, routes, Police Sweeps, and aftermath waiting in each room.
+
+Climb from corner stores, bars, gas-station casinos, and motels through the Kitty Cat Lounge and the Delta Queen riverboat, unwind at the beach, hear a set at the Blue Note, or hunt for bargains and quick cash at Sal's Pawn Shop. The underground shortcut still runs toward the Grand Casino, but money alone will not open its doors: someone inside has to hand you an invitation first.
+
+▌SURVIVE THE RUN
+
+Buy, use, and sell 89 items: contraband, consumables, security tools, travel gear, lucky charms, and game-specific tricks. Items combine into distinct builds, whether you want to play as a clean grinder, an advantage player, a cheat specialist, a drunk gambler, or a debt surfer. Borrow from five very different lenders, from a family phone call to Sal's pawn counter, where you can borrow cash by putting your items up as collateral until you buy them back.
+
+Room events can open doors, burn you, save you, or leave you with a choice you will regret. Some sit in the room waiting to be touched. Others walk up and force the issue. The music listens too. It blurs when you drink, distorts when Heat climbs, and tightens when the pit boss starts watching.
+
+Eight authored challenge runs and daily seeded runs wrap the same arc in new constraints.
+
+▌WORK WITH THE CREW
+
+The Crew is a connected campaign, not just another lender. Build trust through deliveries and Numbers work, recruit specialists, join coordinated table plays, and deal with the consequences when the police lean on the room. Favors, refusals, and grudges carry forward. Follow the route far enough and you can bring a Crew heist plan into the Grand Casino for a third way out—or ignore them and build your run another way.
+
+▌CHEAT WHEN YOU DARE
+
+Cheating is optional, but temptation is part of the run, and now it takes skill. Time a holdout swap in Video Poker, control a Bar Dice roll, past-post a Roulette chip after the ball settles, edge-sort a Baccarat shoe, count the Blackjack deck, set or switch the dice in Craps, nudge a reel one stop, or risk rocking a Coin Pusher cabinet. Alcohol dulls your timing. Contraband sharpens it. Push too hard and Heat climbs toward police capture, house pressure, or a back-room reckoning.
+
+▌BEAT THE GRAND CASINO
+
+Earn your invitation at the city's bigger rooms, reach the Grand Casino, and win one of three ways: climb Linda's Bronze, Silver, and Gold ladder and cash out clean with a Players Card; survive the walk to Pit Boss Rourke's back room, his interrogation, and a five-hand heads-up Blackjack showdown when the house decides you have gone too far; or carry the Crew's heist plan through the casino and live with the result.
+
+Lose by going broke, getting stranded, getting captured, losing the showdown, or walking away before the house takes everything.
+
+---------------------------------------------------------------------------------------------------------
+
+Beat the House is a roguelike about gambling. It is not a real-money gambling product. There is no real-money play, no purchasable in-game currency, no cash prizes, and no gambling monetization.
 
 ### Highlights
 

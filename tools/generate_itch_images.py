@@ -1,178 +1,401 @@
-"""Generate itch.io page images (banner, background, embed background) that
-match Beat the House's dark-neon palette. Colors mirror scripts/ui/visual_style.gd.
+"""Generate the version 0.6 itch.io storefront and theme artwork.
 
-Outputs PNGs to builds/itch/images/ (gitignored) ready to upload on itch.io:
-  banner.png      1920x480   - page header image
-  background.png  1920x1080  - page background (kept dark/low-contrast for readability)
-  embed_bg.png    1920x1080  - background behind the game embed frame
+The theme deliberately uses the live 0.6 visual tokens and real 0.6 captures:
+near-black/navy surfaces, cyan interaction lines, magenta pressure accents,
+yellow focus marks, hard pixel edges, and restrained scanlines.
+
+Outputs to branding/itch/0.6/:
+  01_cover_logo.png             630x500   (storefront cover)
+  06_logo_background.png        1280x720  (full gallery splash)
+  00_itch_banner.png            1920x480  (displayed by itch at 960x240)
+  00_itch_page_background.png   3840x2160 (4K-safe, centered, fixed, no-repeat)
+  00_itch_embed_background.png  1600x900  (matches the configured game frame)
 """
 
 from pathlib import Path
-import random
+import hashlib
+import json
 
 import numpy as np
-from PIL import Image, ImageDraw, ImageFilter, ImageFont, ImageEnhance
+from PIL import Image, ImageDraw, ImageEnhance, ImageFilter
+
 
 ROOT = Path(__file__).resolve().parents[1]
 ART = ROOT / "assets" / "art"
-OUT = ROOT / "builds" / "itch" / "images"
+BRANDING = ROOT / "branding"
+OUT = BRANDING / "itch" / "0.6"
 OUT.mkdir(parents=True, exist_ok=True)
 
-random.seed(7)
-np.random.seed(7)
+CAPTURE_BLUE_NOTE = OUT / "02_environment_blue_note.png"
+CAPTURE_GRAND_CASINO = OUT / "03_environment_grand_casino.png"
+LOGO = ART / "ui" / "beat_the_house_logo.png"
 
 
-def rgb(hex_value):
-    hex_value = hex_value.lstrip("#")
-    return tuple(int(hex_value[i:i + 2], 16) for i in (0, 2, 4))
+def rgb(value: str) -> tuple[int, int, int]:
+    value = value.lstrip("#")
+    return tuple(int(value[i : i + 2], 16) for i in (0, 2, 4))
 
 
-BG = rgb("#05060a")
-CORE = rgb("#10152a")
+DARK = rgb("#05060a")
+DARK_2 = rgb("#0b0b18")
+DARK_3 = rgb("#101427")
 PINK = rgb("#ff2d78")
+PINK_2 = rgb("#ff6eb4")
 CYAN = rgb("#00f5ff")
+CYAN_2 = rgb("#0096a6")
 TEAL = rgb("#00ffd5")
-PURPLE2 = rgb("#c44dff")
+YELLOW = rgb("#ffe45c")
 AMBER = rgb("#ffb32d")
-ORANGE = rgb("#ff6a27")
 SOFT = rgb("#d8e8ea")
-NEONS = [PINK, CYAN, TEAL, PURPLE2, AMBER, ORANGE]
-
-FONT_BOLD = "C:/Windows/Fonts/arialbd.ttf"
 
 
-def radial_base(w, h, inner, outer, cx=0.5, cy=0.5, power=1.3):
-    yy, xx = np.mgrid[0:h, 0:w].astype(np.float32)
-    dx = xx - cx * w
-    dy = yy - cy * h
-    d = np.sqrt(dx * dx + dy * dy)
-    d /= d.max()
-    t = np.clip(d ** power, 0, 1)[..., None]
-    inner = np.array(inner, np.float32)
-    outer = np.array(outer, np.float32)
-    return inner * (1 - t) + outer * t
+def load_capture(path: Path, fallback: str) -> Image.Image:
+    if path.exists():
+        return Image.open(path).convert("RGBA")
+    return Image.open(ART / "environments" / f"{fallback}.png").convert("RGBA")
 
 
-def to_img(arr):
-    return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGB").convert("RGBA")
+def cover(image: Image.Image, size: tuple[int, int], *, pixel: bool = True) -> Image.Image:
+    width, height = size
+    scale = max(width / image.width, height / image.height)
+    result = image.resize(
+        (round(image.width * scale), round(image.height * scale)),
+        Image.Resampling.NEAREST if pixel else Image.Resampling.LANCZOS,
+    )
+    left = (result.width - width) // 2
+    top = (result.height - height) // 2
+    return result.crop((left, top, left + width, top + height))
 
 
-def add_noise(img, amt=2):
-    arr = np.asarray(img).astype(np.int16)
-    noise = np.random.randint(-amt, amt + 1, arr[..., :3].shape)
-    arr[..., :3] = np.clip(arr[..., :3] + noise, 0, 255)
-    return Image.fromarray(arr.astype(np.uint8), img.mode)
+def scene_only(image: Image.Image) -> Image.Image:
+    """Remove the 0.6 HUD while retaining the in-game environment view."""
+    if image.width >= 1200 and image.height >= 700:
+        return image.crop((0, 126, image.width, image.height))
+    return image
 
 
-def glow_layer(size, draws, blur):
-    layer = Image.new("RGBA", size, (0, 0, 0, 0))
-    d = ImageDraw.Draw(layer)
-    for fn in draws:
-        fn(d)
-    return layer.filter(ImageFilter.GaussianBlur(blur))
+def darken(image: Image.Image, amount: float, saturation: float = 0.9) -> Image.Image:
+    image = ImageEnhance.Color(image.convert("RGB")).enhance(saturation)
+    image = ImageEnhance.Brightness(image).enhance(amount)
+    return image.convert("RGBA")
 
 
-def bokeh(size, n, radii, alpha_range, seed=1):
-    rnd = random.Random(seed)
-    w, h = size
-    layer = Image.new("RGBA", size, (0, 0, 0, 0))
-    d = ImageDraw.Draw(layer)
-    for _ in range(n):
-        x, y = rnd.randint(0, w), rnd.randint(0, h)
-        r = rnd.randint(*radii)
-        c = rnd.choice(NEONS)
-        a = rnd.randint(*alpha_range)
-        d.ellipse([x - r, y - r, x + r, y + r], fill=c + (a,))
-    return layer.filter(ImageFilter.GaussianBlur(6))
+def gradient_base(size: tuple[int, int], top: tuple[int, int, int], bottom: tuple[int, int, int]) -> Image.Image:
+    width, height = size
+    y = np.linspace(0.0, 1.0, height, dtype=np.float32)[:, None, None]
+    top_array = np.array(top, dtype=np.float32)[None, None, :]
+    bottom_array = np.array(bottom, dtype=np.float32)[None, None, :]
+    row = top_array * (1.0 - y) + bottom_array * y
+    data = np.repeat(row, width, axis=1).astype(np.uint8)
+    return Image.fromarray(data, "RGB").convert("RGBA")
 
 
-def tracked_width(font, text, tracking):
-    return sum(font.getlength(ch) + tracking for ch in text) - tracking
+def add_radial_glow(
+    image: Image.Image,
+    center: tuple[int, int],
+    radius: tuple[int, int],
+    color: tuple[int, int, int],
+    alpha: int,
+    blur: int,
+) -> None:
+    glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(glow)
+    cx, cy = center
+    rx, ry = radius
+    draw.ellipse((cx - rx, cy - ry, cx + rx, cy + ry), fill=color + (alpha,))
+    image.alpha_composite(glow.filter(ImageFilter.GaussianBlur(blur)))
 
 
-def draw_tracked(draw, pos, text, font, fill, tracking):
-    x, y = pos
-    for ch in text:
-        draw.text((x, y), ch, font=font, fill=fill)
-        x += font.getlength(ch) + tracking
+def add_scanlines(image: Image.Image, alpha: int = 16, spacing: int = 4) -> None:
+    lines = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(lines)
+    for y in range(0, image.height, spacing):
+        draw.line((0, y, image.width, y), fill=(0, 0, 0, alpha), width=1)
+    image.alpha_composite(lines)
 
 
-def game_scene(name, w, h, darken=0.5):
-    """Load a real environment scene, scale to cover w x h, darken + vignette."""
-    im = Image.open(ART / "environments" / f"{name}.png").convert("RGB")
-    scale = max(w / im.width, h / im.height)
-    im = im.resize((int(im.width * scale + 0.999), int(im.height * scale + 0.999)), Image.NEAREST)
-    left, top = (im.width - w) // 2, (im.height - h) // 2
-    im = ImageEnhance.Brightness(im.crop((left, top, left + w, top + h))).enhance(darken)
-    vig = radial_base(w, h, (255, 255, 255), (58, 58, 70), power=1.5) / 255.0
-    arr = np.asarray(im).astype(np.float32) * vig
-    return Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGB").convert("RGBA")
+def add_neon_line(
+    image: Image.Image,
+    points: list[tuple[int, int]],
+    color: tuple[int, int, int],
+    width: int = 2,
+    alpha: int = 255,
+) -> None:
+    glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    glow_draw = ImageDraw.Draw(glow)
+    glow_draw.line(points, fill=color + (min(alpha, 180),), width=max(6, width * 4), joint="curve")
+    image.alpha_composite(glow.filter(ImageFilter.GaussianBlur(max(5, width * 3))))
+    ImageDraw.Draw(image).line(points, fill=color + (alpha,), width=width, joint="curve")
 
 
-def make_banner():
-    w, h = 1920, 480
-    img = game_scene("grand_casino", w, h, darken=0.55)
-    img = Image.alpha_composite(img, glow_layer(
-        (w, h), [lambda d: d.rounded_rectangle([w / 2 - 620, h * 0.20, w / 2 + 620, h * 0.80],
-                                               radius=60, fill=(4, 5, 11, 205))], 55))
-
-    title_font = ImageFont.truetype(FONT_BOLD, 132)
-    title, tr = "BEAT THE HOUSE", 12
-    tw = tracked_width(title_font, title, tr)
-    tx, ty = (w - tw) / 2, h * 0.30
-
-    img = Image.alpha_composite(img, glow_layer(
-        (w, h), [lambda d: draw_tracked(d, (tx, ty), title, title_font, CYAN + (150,), tr)], 34))
-    img = Image.alpha_composite(img, glow_layer(
-        (w, h), [lambda d: draw_tracked(d, (tx, ty), title, title_font, PINK + (255,), tr)], 16))
-    d = ImageDraw.Draw(img)
-    draw_tracked(d, (tx, ty), title, title_font, SOFT + (255,), tr)
-
-    ry = ty + 170
-    img = Image.alpha_composite(img, glow_layer(
-        (w, h), [lambda dd: dd.line([(w / 2 - 240, ry), (w / 2 + 240, ry)], fill=PINK + (255,), width=4)], 5))
-    d = ImageDraw.Draw(img)
-    d.line([(w / 2 - 240, ry), (w / 2 + 240, ry)], fill=PINK + (255,), width=2)
-    d.ellipse([w / 2 - 246, ry - 5, w / 2 - 236, ry + 5], fill=CYAN + (255,))
-    d.ellipse([w / 2 + 236, ry - 5, w / 2 + 246, ry + 5], fill=CYAN + (255,))
-
-    add_noise(img.convert("RGB")).save(OUT / "banner.png")
+def add_pixel_icon(image: Image.Image, name: str, position: tuple[int, int], scale: int, alpha: int) -> None:
+    icon = Image.open(ART / "games" / f"{name}.png").convert("RGBA")
+    icon = icon.resize((icon.width * scale, icon.height * scale), Image.Resampling.NEAREST)
+    icon.putalpha(icon.getchannel("A").point(lambda value: value * alpha // 255))
+    image.alpha_composite(icon, position)
 
 
-def make_background():
-    w, h = 1920, 1080
-    img = to_img(radial_base(w, h, rgb("#0a0e1e"), rgb("#040409"), cy=0.4, power=1.5))
-    img = Image.alpha_composite(img, glow_layer((w, h), [
-        lambda d: d.line([(-100, 220), (w * 0.62, -120)], fill=PINK + (48,), width=130),
-        lambda d: d.line([(w * 0.5, h + 120), (w + 120, h * 0.4)], fill=CYAN + (42,), width=150),
-    ], 130))
-    img = Image.alpha_composite(img, bokeh((w, h), 28, (4, 15), (14, 38), seed=9))
-
-    vig = radial_base(w, h, (255, 255, 255), (66, 66, 78), power=1.6) / 255.0
-    arr = np.asarray(img)[..., :3].astype(np.float32) * vig
-    img = Image.fromarray(np.clip(arr, 0, 255).astype(np.uint8), "RGB")
-    add_noise(img).save(OUT / "background.png")
+def fitted_logo(maximum_size: tuple[int, int]) -> Image.Image:
+    """Load the exact transparent logo used by the in-game main menu."""
+    logo = Image.open(LOGO).convert("RGBA")
+    scale = min(maximum_size[0] / logo.width, maximum_size[1] / logo.height)
+    return logo.resize(
+        (round(logo.width * scale), round(logo.height * scale)),
+        Image.Resampling.LANCZOS,
+    )
 
 
-def make_embed_bg():
-    w, h = 1920, 1080
-    img = to_img(radial_base(w, h, rgb("#080a12"), rgb("#04040a"), power=1.7))
-    img = Image.alpha_composite(img, glow_layer(
-        (w, h), [lambda d: d.ellipse([w * 0.5 - 620, h * 0.5 - 380, w * 0.5 + 620, h * 0.5 + 380], fill=TEAL + (30,))], 170))
-    img = Image.alpha_composite(img, glow_layer(
-        (w, h), [lambda d: d.ellipse([w * 0.5 - 440, h * 0.5 - 290, w * 0.5 + 440, h * 0.5 + 290], fill=CYAN + (20,))], 150))
+def composite_logo_with_glow(
+    image: Image.Image,
+    logo: Image.Image,
+    position: tuple[int, int],
+    glow_color: tuple[int, int, int] = CYAN,
+    glow_alpha: int = 92,
+    blur: int = 22,
+) -> None:
+    glow = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    silhouette = Image.new("RGBA", logo.size, glow_color + (0,))
+    silhouette.putalpha(logo.getchannel("A").point(lambda value: value * glow_alpha // 255))
+    glow.alpha_composite(silhouette, position)
+    image.alpha_composite(glow.filter(ImageFilter.GaussianBlur(blur)))
+    image.alpha_composite(logo, position)
 
-    fw, fh = 1320, 770
-    fx, fy = (w - fw) / 2, (h - fh) / 2
-    img = Image.alpha_composite(img, glow_layer(
-        (w, h), [lambda d: d.rounded_rectangle([fx, fy, fx + fw, fy + fh], radius=18, outline=PINK + (70,), width=4)], 7))
-    add_noise(img.convert("RGB")).save(OUT / "embed_bg.png")
+
+def add_center_scrim(
+    image: Image.Image,
+    box: tuple[int, int, int, int],
+    alpha: int,
+    blur: int,
+) -> None:
+    scrim = Image.new("RGBA", image.size, (0, 0, 0, 0))
+    ImageDraw.Draw(scrim).rectangle(box, fill=DARK + (alpha,))
+    image.alpha_composite(scrim.filter(ImageFilter.GaussianBlur(blur)))
+
+
+def edge_scene_layer(source: Image.Image, size: tuple[int, int], side: str) -> Image.Image:
+    width, height = size
+    panel = cover(scene_only(source), size)
+    panel = darken(panel, 0.30, 0.78)
+    alpha = Image.new("L", size)
+    alpha_pixels = np.zeros((height, width), dtype=np.uint8)
+    ramp = np.linspace(205, 0, width, dtype=np.uint8)
+    if side == "right":
+        ramp = ramp[::-1]
+    alpha_pixels[:] = ramp
+    alpha = Image.fromarray(alpha_pixels, "L")
+    panel.putalpha(alpha)
+    return panel
+
+
+def make_cover_photo() -> Path:
+    size = (630, 500)
+    source = scene_only(load_capture(CAPTURE_GRAND_CASINO, "grand_casino"))
+    image = darken(cover(source, size), 0.48, 0.84)
+    image.alpha_composite(Image.new("RGBA", size, DARK + (58,)))
+    add_radial_glow(image, (315, 238), (270, 190), CYAN, 32, 66)
+    add_radial_glow(image, (315, 285), (230, 165), PINK, 34, 62)
+    add_center_scrim(image, (20, 84, 610, 376), 128, 24)
+
+    logo = fitted_logo((590, 255))
+    logo_position = ((size[0] - logo.width) // 2, 118)
+    composite_logo_with_glow(image, logo, logo_position, CYAN, 92, 16)
+
+    add_pixel_icon(image, "cards", (71, 392), 2, 205)
+    add_pixel_icon(image, "roulette", (283, 392), 2, 220)
+    add_pixel_icon(image, "dice", (495, 392), 2, 205)
+    add_neon_line(image, [(0, 14), (630, 14)], PINK, 3, 245)
+    add_neon_line(image, [(0, 486), (630, 486)], CYAN, 2, 225)
+    add_scanlines(image, alpha=10, spacing=4)
+
+    output = OUT / "01_cover_logo.png"
+    image.convert("RGB").save(output, optimize=True)
+    return output
+
+
+def make_logo_background() -> Path:
+    size = (1280, 720)
+    source = scene_only(load_capture(CAPTURE_GRAND_CASINO, "grand_casino"))
+    image = darken(cover(source, size), 0.46, 0.82)
+    image.alpha_composite(Image.new("RGBA", size, DARK + (62,)))
+    add_radial_glow(image, (640, 330), (510, 300), CYAN, 34, 105)
+    add_radial_glow(image, (640, 385), (430, 245), PINK, 32, 95)
+    add_center_scrim(image, (98, 100, 1182, 620), 126, 38)
+
+    logo = fitted_logo((1080, 430))
+    logo_position = ((size[0] - logo.width) // 2, 145)
+    composite_logo_with_glow(image, logo, logo_position, CYAN, 96, 24)
+
+    add_neon_line(image, [(0, 18), (1280, 18)], PINK, 4, 245)
+    add_neon_line(image, [(0, 702), (1280, 702)], CYAN, 3, 230)
+    add_scanlines(image, alpha=11, spacing=4)
+
+    output = OUT / "06_logo_background.png"
+    image.convert("RGB").save(output, optimize=True)
+    return output
+
+
+def update_gallery_manifest(cover: Path, logo_background: Path) -> None:
+    manifest_path = OUT / "manifest.json"
+    if not manifest_path.exists():
+        return
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    captures = manifest.setdefault("captures", [])
+
+    def entry(path: Path, caption: str) -> dict:
+        with Image.open(path) as image:
+            width, height = image.size
+        return {
+            "caption": caption,
+            "file": path.name,
+            "height": height,
+            "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
+            "width": width,
+        }
+
+    replacements = {
+        cover.name: entry(cover, "Beat the House 0.6 storefront cover using the in-game logo"),
+        logo_background.name: entry(logo_background, "Full Beat the House logo over the Grand Casino"),
+    }
+    updated = []
+    for capture in captures:
+        filename = capture.get("file", "")
+        updated.append(replacements.pop(filename, capture))
+    updated.extend(replacements.values())
+    manifest["captures"] = updated
+    manifest_path.write_text(json.dumps(manifest, indent="\t") + "\n", encoding="utf-8")
+
+
+def make_banner() -> Path:
+    size = (1920, 480)
+    source = scene_only(load_capture(CAPTURE_GRAND_CASINO, "grand_casino"))
+    image = darken(cover(source, size), 0.42, 0.82)
+
+    # Quiet the center behind the marquee while retaining the current casino at the edges.
+    shade = Image.new("RGBA", size, (0, 0, 0, 0))
+    draw = ImageDraw.Draw(shade)
+    draw.rectangle((0, 0, size[0], size[1]), fill=DARK + (54,))
+    draw.rectangle((320, 20, 1600, 460), fill=DARK + (135,))
+    image.alpha_composite(shade.filter(ImageFilter.GaussianBlur(28)))
+    add_radial_glow(image, (960, 220), (560, 190), CYAN, 24, 80)
+    add_radial_glow(image, (960, 265), (460, 160), PINK, 24, 72)
+
+    logo = fitted_logo((1180, 446))
+    logo_position = ((size[0] - logo.width) // 2, (size[1] - logo.height) // 2)
+    composite_logo_with_glow(image, logo, logo_position, CYAN, 88, 20)
+
+    add_neon_line(image, [(0, 16), (1920, 16)], PINK, 3, 245)
+    add_neon_line(image, [(0, 464), (1920, 464)], CYAN, 2, 210)
+    add_scanlines(image, alpha=10, spacing=4)
+
+    output = OUT / "00_itch_banner.png"
+    image.convert("RGB").save(output, optimize=True)
+    return output
+
+
+def make_page_background() -> Path:
+    # itch.io renders page backgrounds at native size and does not offer a
+    # background-size: cover control. A 4K canvas therefore avoids exposed
+    # edges on common wide and high-DPI displays while remaining centered.
+    size = (3840, 2160)
+    blue_note = darken(cover(scene_only(load_capture(CAPTURE_BLUE_NOTE, "jazz_club")), size), 0.34, 0.76)
+    grand_casino = darken(cover(scene_only(load_capture(CAPTURE_GRAND_CASINO, "grand_casino")), size), 0.34, 0.76)
+
+    # Blend two real 0.6 rooms across the full canvas so there are no hard
+    # side panels or visible crop boundaries at different browser widths.
+    blend_mask_data = np.zeros((size[1], size[0]), dtype=np.uint8)
+    blend_ramp = np.clip((np.arange(size[0], dtype=np.float32) - 1280.0) / 1280.0, 0.0, 1.0)
+    blend_mask_data[:] = np.round(blend_ramp * 255.0).astype(np.uint8)
+    scene = Image.composite(grand_casino, blue_note, Image.fromarray(blend_mask_data, "L"))
+    image = gradient_base(size, DARK_3, DARK)
+    image = Image.blend(image, scene, 0.78)
+
+    add_radial_glow(image, (790, 500), (720, 760), PINK, 46, 240)
+    add_radial_glow(image, (3050, 640), (760, 860), CYAN, 44, 250)
+    add_radial_glow(image, (1920, 560), (1080, 760), rgb("#142044"), 48, 260)
+
+    # The live itch page has a 1600px game frame. This 1840px quiet corridor
+    # allows for page padding and remains useful when the viewport is cropped.
+    x = np.arange(size[0], dtype=np.float32)
+    distance = np.abs(x - size[0] / 2.0)
+    quiet = 1.0 - np.clip((distance - 920.0) / 520.0, 0.0, 1.0)
+    corridor_alpha = np.round(quiet * 190.0 + 10.0).astype(np.uint8)
+    corridor_alpha = np.repeat(corridor_alpha[None, :], size[1], axis=0)
+    corridor = Image.new("RGBA", size, DARK + (255,))
+    corridor.putalpha(Image.fromarray(corridor_alpha, "L"))
+    image.alpha_composite(corridor)
+
+    # Fade all four outer edges into the configured BG color, so displays
+    # larger than 4K still transition cleanly instead of showing a hard seam.
+    edge_x = np.minimum(np.arange(size[0]), np.arange(size[0])[::-1]).astype(np.float32)
+    edge_y = np.minimum(np.arange(size[1]), np.arange(size[1])[::-1]).astype(np.float32)
+    fade_x = 1.0 - np.clip(edge_x / 260.0, 0.0, 1.0)
+    fade_y = 1.0 - np.clip(edge_y / 220.0, 0.0, 1.0)
+    edge_fade = np.maximum(fade_y[:, None], fade_x[None, :])
+    edge_alpha = np.round(edge_fade * 208.0).astype(np.uint8)
+    edge_layer = Image.new("RGBA", size, DARK + (255,))
+    edge_layer.putalpha(Image.fromarray(edge_alpha, "L"))
+    image.alpha_composite(edge_layer)
+
+    # Low-contrast pixel motifs live well outside the 1600px content area.
+    add_neon_line(image, [(120, 290), (720, 290), (720, 510), (920, 510)], PINK, 4, 172)
+    add_neon_line(image, [(3720, 290), (3120, 290), (3120, 510), (2920, 510)], CYAN, 4, 172)
+    add_neon_line(image, [(3720, 1650), (3120, 1650), (3120, 1870), (2920, 1870)], CYAN, 4, 138)
+    add_pixel_icon(image, "roulette", (760, 520), 8, 112)
+    add_pixel_icon(image, "cards", (720, 1460), 7, 82)
+    add_pixel_icon(image, "slot", (2824, 520), 8, 108)
+    add_pixel_icon(image, "dice", (2940, 1490), 7, 80)
+
+    details = ImageDraw.Draw(image)
+    for px, py, color in [
+        (210, 160, YELLOW), (610, 910, CYAN), (930, 1890, PINK_2),
+        (2910, 690, AMBER), (3410, 1110, TEAL), (3690, 1990, YELLOW),
+    ]:
+        details.rectangle((px, py, px + 9, py + 9), fill=color + (145,))
+        details.rectangle((px - 6, py + 4, px + 15, py + 5), fill=color + (72,))
+    add_scanlines(image, alpha=12, spacing=4)
+
+    output = OUT / "00_itch_page_background.png"
+    image.convert("RGB").save(output, optimize=True)
+    return output
+
+
+def make_embed_background() -> Path:
+    # The live itch page declares a 1600x900 game frame, so this image must match it.
+    size = (1600, 900)
+    source = scene_only(load_capture(CAPTURE_GRAND_CASINO, "grand_casino"))
+    image = darken(cover(source, size), 0.48, 0.84)
+    image.alpha_composite(Image.new("RGBA", size, DARK + (72,)))
+    add_radial_glow(image, (800, 450), (470, 270), CYAN, 34, 115)
+
+    focus = Image.new("RGBA", size, (0, 0, 0, 0))
+    focus_draw = ImageDraw.Draw(focus)
+    focus_draw.rectangle((560, 320, 1040, 580), fill=DARK + (150,), outline=CYAN + (170,), width=2)
+    focus_draw.rectangle((576, 336, 1024, 564), outline=PINK + (130,), width=2)
+    image.alpha_composite(focus.filter(ImageFilter.GaussianBlur(5)))
+    image.alpha_composite(focus)
+
+    logo = fitted_logo((660, 250))
+    logo_position = ((size[0] - logo.width) // 2, 50)
+    composite_logo_with_glow(image, logo, logo_position, PINK, 72, 20)
+
+    add_neon_line(image, [(0, 12), (1600, 12)], PINK, 3, 235)
+    add_neon_line(image, [(0, 888), (1600, 888)], CYAN, 2, 220)
+    add_scanlines(image, alpha=13, spacing=4)
+
+    output = OUT / "00_itch_embed_background.png"
+    image.convert("RGB").save(output, optimize=True)
+    return output
+
+
+def main() -> None:
+    cover = make_cover_photo()
+    logo_background = make_logo_background()
+    outputs = [cover, logo_background, make_banner(), make_page_background(), make_embed_background()]
+    update_gallery_manifest(cover, logo_background)
+    for path in outputs:
+        with Image.open(path) as image:
+            print(f"{path.relative_to(ROOT)}  {image.width}x{image.height}  {path.stat().st_size // 1024} KB")
 
 
 if __name__ == "__main__":
-    make_banner()
-    make_background()
-    make_embed_bg()
-    for p in sorted(OUT.glob("*.png")):
-        print(f"  {p.relative_to(ROOT)}  ({p.stat().st_size // 1024} KB)")
-    print(f"Done. Images in: {OUT}")
+    main()

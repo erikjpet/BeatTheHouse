@@ -1,0 +1,56 @@
+{
+	"captures": [
+		{
+			"caption": "Beat the House 0.6 storefront cover using the in-game logo",
+			"file": "01_cover_logo.png",
+			"height": 500,
+			"sha256": "413ff4a38cea59e9b3cd641f7bdea6758699a4f41e5924f8000d3e562edf7540",
+			"width": 630
+		},
+		{
+			"caption": "Blue Note jazz club at night",
+			"file": "02_environment_blue_note.png",
+			"height": 720,
+			"sha256": "8e2a499b6f203b73777f9db5862cf47e237b72950e5f07bddf58b99346798309",
+			"width": 1280
+		},
+		{
+			"caption": "Grand Casino main floor at night",
+			"file": "03_environment_grand_casino.png",
+			"height": 720,
+			"sha256": "8bec2124547a325dd395aaf4a4c87ce49eded0f3a533d916bceeaeede2ba5b4c",
+			"width": 1280
+		},
+		{
+			"caption": "Blackjack hand after a live hit",
+			"file": "04_blackjack_in_action.png",
+			"height": 720,
+			"sha256": "59051dc19b3e4ea6c23999e9e96b8f91cd056dba4b1ec15912762ef7ef4d359a",
+			"width": 1280
+		},
+		{
+			"caption": "Roulette wheel spinning with three active bets",
+			"file": "05_roulette_live_spin.png",
+			"height": 720,
+			"sha256": "13a4e10033db4fa23ce7b6deba41f7feaf66f78d8c74bfcbc18060d4b3212367",
+			"width": 1280
+		},
+		{
+			"caption": "Full Beat the House logo over the Grand Casino",
+			"file": "06_logo_background.png",
+			"height": 720,
+			"sha256": "7d5e0278a239271c2c431d352c6e452c4b13e9b9d1a0e1fd9a318f2fb4e07d8a",
+			"width": 1280
+		}
+	],
+	"cover_size": [
+		630,
+		500
+	],
+	"gameplay_capture_size": [
+		1280,
+		720
+	],
+	"seed": "ITCH-0.6-GALLERY",
+	"version": "0.6.0"
+}
