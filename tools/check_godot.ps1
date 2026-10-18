@@ -1567,6 +1567,7 @@ switch ($suiteKey) {
             "fixture_contracts"
         ) -StageTimeoutSec 180
         Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath (Get-UiSceneSplitRunnerPath) -StageTimeoutSec 240
+        Invoke-GodotScript -Name "cold_continue_room_projection" -ScriptPath "res://scripts/tests/cold_continue_room_projection_contract.gd" -StageTimeoutSec 120
         Invoke-GodotScript -Name "game_library_launchers" -ScriptPath "res://scripts/tests/ui_scene/check_game_library_launchers.gd" -StageTimeoutSec 180
         Invoke-GodotScript -Name "dave_bus_encounter" -ScriptPath "res://scripts/tests/ui_scene/check_dave_bus_encounter.gd" -StageTimeoutSec 120
         Invoke-GodotScript -Name "roulette_audio_audit" -ScriptPath "res://tools/roulette_audio_audit.gd" -StageTimeoutSec 120

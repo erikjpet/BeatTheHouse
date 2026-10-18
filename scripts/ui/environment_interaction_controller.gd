@@ -213,9 +213,17 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		"closing_time_locked": host._closing_time_blocks_environment_actions(),
 		"closing_time_reason": host._closing_time_disabled_reason(),
 	}))
-	var initial_authority_proof := _object_manifest_join_proof(host.run_state.current_environment)
+	# A cold save intentionally omits renderer caches. Authenticate its durable
+	# envelope for this provisional base pass. The existing production finalizers
+	# rebuild scenario/world projections below, and the complete strict proof must
+	# pass before the completed room can be published.
+	var restoring_saved_projection := bool(entry_environment.get("scenario_restore_pending_trusted_rebuild", false)) \
+			and not entry_environment.has("scenario_layout_audit") \
+			and not entry_environment.has("scenario_render_snapshot") \
+			and not entry_environment.has("scenario_sequence_projection")
+	var initial_authority_proof := _object_manifest_join_proof(host.run_state.current_environment, not restoring_saved_projection)
 	var initial_authority_errors := _array(initial_authority_proof.get("errors", []))
-	if not initial_authority_errors.is_empty():
+	if not bool(initial_authority_proof.get("ok", false)) or not initial_authority_errors.is_empty():
 		# Preparing semantic projections is allowed to populate transient context,
 		# but an unauthenticated object/slot envelope must never reach the binder.
 		# Restore the exact entry state and expose only a non-spatial failure surface.
@@ -278,16 +286,22 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		layout_context["base_occupied_records"] = _base_layout_reservations(trusted_base_result, layout)
 		layout_context["slot_occupancy"] = room_slot_occupancy.duplicate(true)
 	if not bool(preparation.get("ok", false)):
+		if restoring_saved_projection:
+			return _fail_pending_restore(host, entry_environment, result, _array(preparation.get("errors", [])))
 		var preparation_failure := projection_failure_result(result, _array(preparation.get("errors", [])))
 		var committed_preparation_failure := committed_projection_status_result(host.run_state, preparation_failure, trusted_base_result)
 		return _attach_action_only_records(_array(committed_preparation_failure.get("records", trusted_base_result)))
 	if not bool(world_preparation.get("ok", false)):
+		if restoring_saved_projection:
+			return _fail_pending_restore(host, entry_environment, result, _array(world_preparation.get("errors", [])))
 		var world_preparation_failure := projection_failure_result(result, _array(world_preparation.get("errors", [])))
 		var committed_world_preparation_failure := committed_projection_status_result(host.run_state, world_preparation_failure, trusted_base_result)
 		return _attach_action_only_records(_array(committed_world_preparation_failure.get("records", trusted_base_result)))
 	if scenario_active:
 		var finalized: Dictionary = _dict(host.run_state.scenario_finalize_installed_environment(host.library, layout_context))
 		if not bool(finalized.get("ok", false)):
+			if restoring_saved_projection:
+				return _fail_pending_restore(host, entry_environment, result, _array(finalized.get("errors", [])))
 			var finalization_failure := projection_failure_result(result, _array(finalized.get("errors", [])), _dict(finalized.get("layout_audit", {})))
 			var committed_finalization_failure := committed_projection_status_result(host.run_state, finalization_failure, trusted_base_result)
 			return _attach_action_only_records(_array(committed_finalization_failure.get("records", trusted_base_result)))
@@ -306,6 +320,8 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	elif world_sequence_active:
 		var world_finalized: Dictionary = _dict(host.run_state.world_sequence_finalize_base_semantics(result, host.library, layout_context))
 		if not bool(world_finalized.get("ok", false)):
+			if restoring_saved_projection:
+				return _fail_pending_restore(host, entry_environment, result, _array(world_finalized.get("errors", [])))
 			var world_finalization_failure := projection_failure_result(result, _array(world_finalized.get("errors", [])), _dict(world_finalized.get("layout_audit", {})))
 			var committed_world_finalization_failure := committed_projection_status_result(host.run_state, world_finalization_failure, trusted_base_result)
 			return _attach_action_only_records(_array(committed_world_finalization_failure.get("records", trusted_base_result)))
@@ -337,6 +353,11 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	result = _attach_delivery_handoff_to_contact(host, result)
 	result = _attach_action_only_records(result)
 	return result
+
+
+static func _fail_pending_restore(host: Variant, entry_environment: Dictionary, records: Array, errors: Array) -> Array:
+	host.run_state.set("current_environment", entry_environment)
+	return _fail_closed_room_records(records, "Saved room projection could not be rebuilt: %s" % JSON.stringify(errors))
 
 
 static func _join_object_manifest(records: Array, environment: Dictionary, synthesize_missing_hosts: bool, validated_proof: Dictionary = {}) -> Array:
@@ -477,7 +498,7 @@ static func _object_manifest_join_errors(environment: Dictionary) -> Array:
 	return _array(_object_manifest_join_proof(environment).get("errors", []))
 
 
-static func _object_manifest_join_proof(environment: Dictionary) -> Dictionary:
+static func _object_manifest_join_proof(environment: Dictionary, require_renderer_proofs: bool = true) -> Dictionary:
 	var errors: Array = []
 	var manifest := _dict(environment.get("object_manifest", {}))
 	var manifest_rows := _array(manifest.get("rows", []))
@@ -503,7 +524,7 @@ static func _object_manifest_join_proof(environment: Dictionary) -> Dictionary:
 		_dict(layout_authority.get("slot_bindings", {}))
 	))
 	if not scenario_rows.is_empty():
-		var scenario_authority_result := _validated_manifest_scenario_authority(environment)
+		var scenario_authority_result := _validated_manifest_scenario_authority(environment, require_renderer_proofs)
 		errors.append_array(_array(scenario_authority_result.get("errors", [])))
 		if bool(scenario_authority_result.get("ok", false)):
 			errors.append_array(_manifest_layout_correlation_errors(
@@ -517,7 +538,7 @@ static func _object_manifest_join_proof(environment: Dictionary) -> Dictionary:
 	}
 
 
-static func _validated_manifest_scenario_authority(environment: Dictionary) -> Dictionary:
+static func _validated_manifest_scenario_authority(environment: Dictionary, require_renderer_proofs: bool = true) -> Dictionary:
 	var errors: Array = []
 	var authority := _dict(environment.get("scenario_layout_authority", {}))
 	var digest := str(environment.get("scenario_layout_authority_digest", ""))
@@ -528,11 +549,11 @@ static func _validated_manifest_scenario_authority(environment: Dictionary) -> D
 		errors.append("Scenario manifest rows have no sealed scenario layout authority.")
 	elif digest.length() != 64 or _layout_authority_digest(authority) != digest:
 		errors.append("Scenario manifest layout authority digest is invalid.")
-	if not bool(audit.get("valid", false)) or str(audit.get("authority_digest", "")) != digest:
+	if require_renderer_proofs and (not bool(audit.get("valid", false)) or str(audit.get("authority_digest", "")) != digest):
 		errors.append("Scenario manifest layout audit does not match its sealed authority.")
-	if not bool(snapshot.get("ok", false)) or str(snapshot.get("layout_authority_digest", "")) != digest:
+	if require_renderer_proofs and (not bool(snapshot.get("ok", false)) or str(snapshot.get("layout_authority_digest", "")) != digest):
 		errors.append("Scenario manifest renderer snapshot does not match its sealed authority.")
-	if str(projection_semantic.get("layout_authority_digest", "")) != digest:
+	if require_renderer_proofs and str(projection_semantic.get("layout_authority_digest", "")) != digest:
 		errors.append("Scenario manifest semantic projection does not match its sealed authority.")
 	return {
 		"ok": errors.is_empty(),
