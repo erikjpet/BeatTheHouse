@@ -1002,7 +1002,7 @@ $admissionAnalysis = [pscustomobject][ordered]@{
     parameters = @()
 }
 $launcherTopLevel = Get-ExecutableTopLevelSource -Analysis $launcher
-$expectedLauncherStructuralSha256 = '8E4406D082743366BA172D080DA243FCC39EE312B1F766115FD3AA23652163E5'
+$expectedLauncherStructuralSha256 = '3199B84297292533D300A0FA36A2590E1AFE28398D56754AF7D208C67C7A9714'
 $expectedLauncherFunctionHashes = [ordered]@{
     'Get-FailureMessage' = 'B9697A70DF70DBEC0D0AE3D97284DBF4F18D6B9EBC6339730B1404B084D8AC37'
     'Add-TerminalFailure' = 'B10F2F4D8C162E94A2AA23ACE9B2C08271894D706A677638362C06E0940CC208'

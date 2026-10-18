@@ -2766,10 +2766,14 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	# exact candidate replay again changed only the generated Bar record and the
 	# world map that embeds it; every scalar, route, RNG, and story value below
 	# remained byte-identical.
+	# Independent release replays with pinned Godot 4.6 and a freshly built native
+	# solver reproduced these hashes on Linux and Windows. A full state comparison
+	# with 637a8f8 found only removal of numbers:book and numbers:silas from immutable
+	# base geometry; see docs/releases/0.6.0_candidate_review.md.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "2139fa062987285594312e62f9ab66a7b674a1ef0053c362b6ff90cd4617f577",
+		"current_environment_sha256": "e1cc608becb41f2fb66b1c90bdc6aba220dae8a74db04dfb9013c8875399a423",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "7ddb7685efb21e45979ea10ab89e660d99c6e891",
@@ -2780,7 +2784,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0257877551b37226fd62316ee2af5e047a27387fbb87d5acfa0273d1366a0e81",
-		"world_map_sha256": "7bc7e3cf8e916bd666d2c555fe07deecb2be92232f7a291fe3f8488f95311a0d",
+		"world_map_sha256": "4b0c6eead861f6365d757658eafb9b4445046f1ae9e189d52b78521c0ca00895",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
