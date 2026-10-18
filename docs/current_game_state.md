@@ -1,15 +1,18 @@
 # Current Game State
 
-Current release handoff: 2026-10-08 against the feature-complete 0.6 source on
-`main`. The downloadable `v0.6.0-pre.5` candidate predates the final game and
-performance refinements described here.
+Current release handoff: 2026-10-18. The owner accepted the current committed
+placement coordinates as the 0.6 release baseline and authorized final release
+testing and packaging. The downloadable `v0.6.0-pre.5` candidate predates the
+final game and performance refinements described here.
 
-Status: **FEATURE-COMPLETE 0.6 SOURCE / OWNER PLACEMENT PASS PENDING.**
+Status: **FEATURE-COMPLETE 0.6 SOURCE / PLACEMENT ACCEPTED / RELEASE CHECKS IN PROGRESS.**
 
 Project and export metadata identify `0.6.0`. Version `0.5.1` remains the
 latest stable release; `v0.6.0-pre.5` is the latest downloadable Windows
-testing prerelease. The manual placement procedure, post-promotion validation,
-final packages, and owner publication remain separate from feature completion.
+testing prerelease. Final validation, packages, and owner publication remain
+separate from feature completion. Placement SAVED/TODO authoring flags are not
+a remaining release-approval gate. Later playtest feedback may justify specific
+coordinate changes and their affected checks.
 
 ## Player experience
 
@@ -194,22 +197,15 @@ The established placement baseline includes:
   Club, and Grand Casino while help/redemption stays attached to existing
   staff; the Gas Station again exposes all three selected machine positions.
 
-The old room-composition failures are closed by the scenario-local layout
-authority and post-migration cleanup. The remaining room work is artistic:
-the owner will position the audited slots and return the complete schema-3
-report for promotion into committed coordinates.
+The owner accepted the current coordinates on 2026-10-18. The current layout is
+the release baseline; another complete artistic placement pass is not required.
 
 ## Remaining release sequence
 
-1. Complete the 75-context pass in **Settings > Environment Library**, using
-   **Load Next Missing**, the SAVED/TODO labels, and the exact scenario layer
-   selection. Base contexts edit room-shared positions; exact scenarios open
-   on their local Scenario tab with shared positions locked by default.
-2. Export `BeatTheHouse_environment_slot_placement_changes.json` from the
-   packaged build and provide it for promotion into project authority. The
-   self-contained report includes all effective positions, 75-layout coverage,
-   build/source identity, and placement-authority hashes.
-3. Re-run the placement/runtime gates after promoting those artistic
-   coordinates.
-4. Produce and launch-check the final Windows/Web artifacts, then publish only
-   after explicit owner approval.
+1. Review and freeze the 0.6 candidate while preserving the accepted placement.
+2. Complete the essential gameplay, persistence, stability, and placement checks
+   on that candidate. The release owner runs these checks in their environment;
+   the separate worker owns 0.6.1 stability discovery and implementation.
+3. Produce source, Windows, and Web ZIPs and verify the actual packaged outputs.
+4. Deliver the packages, checksums, results, and any remaining limitations. The
+   owner performs all uploads; no agent publishes or uploads a release.

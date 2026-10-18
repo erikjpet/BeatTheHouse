@@ -1007,7 +1007,7 @@ $expectedLauncherFunctionHashes = [ordered]@{
     'Get-FailureMessage' = 'B9697A70DF70DBEC0D0AE3D97284DBF4F18D6B9EBC6339730B1404B084D8AC37'
     'Add-TerminalFailure' = 'B10F2F4D8C162E94A2AA23ACE9B2C08271894D706A677638362C06E0940CC208'
     'Get-ExactValue' = '4BC165881385D770A902C7261CE8E6A8CD9BBDC5E17637F81B290E92F9046AEC'
-    'Get-ExactValueNoEnumerate' = '07225A75D9EE8E854C94F610A69A7BFB82BAA2766DDCAA09B5CCEB52DB9CFFE0'
+    'Get-ExactValueNoEnumerate' = '12D447F55FD76B1EF0FDCAABAE71A6F02F1FEBE8F1703FF20F949B927868D384'
     'Test-ExactStringArray' = '0DE6452771AB4E370B9402DE004D8040F0D36D4ED3212EA0A35E3C3293B8B3EF'
     'Get-ExactPositivePid' = '41841AF6568C7704AB2701B3B249AB58642C33F255D98905AC5A71FC6FAE78A6'
     'Get-ExactPidArray' = '722EC4B5995523F991FB3B17B39C8CA248FAF77788EE5CFCAB0CB0E6F12387EE'
@@ -1064,7 +1064,7 @@ $expectedLauncherFunctionHashes = [ordered]@{
     'Assert-RetainedHeistPreflightArtifact' = '8CC887199A43141E3588EF145B96804BB14C468A5773832C8042D238343AB42A'
     'Assert-OneRunJsonShapes' = '072C4D460BCD6F631201CB2BA684C713CE80DA63FA5A62D51BED4A7E2C812600'
     'Assert-FinalCheckpointJsonShapes' = '1EB1B3F6DD8548ECC01007E358638D9D652FE1F19D5A5D050CBACB969F875A94'
-    'Assert-PersistenceCoreCheckpointShape' = '67BA6ACFDAEFEFACB80735CDC419ACB23A24062BD8D3173B334970776F91A1E9'
+    'Assert-PersistenceCoreCheckpointShape' = '9CE71590FABFBF56F9ED3E542473F110A6C983E23BF87E28DD95B722D05848E2'
     'Assert-SaveContinueCheckpointJsonShape' = 'D6C83A4FB02C4C67DD969564CBC2FA7A3EDAE3A736D640AE2826083A5DCE9346'
     'Assert-OneRunEvidence' = 'D520EAD962B6EE9C3918B1F0A46E973C66BD61046A578BDB3F2B8DA8C71D132C'
     'Invoke-OneFixedRun' = 'F6584D0938229D19D83567E8A83FCDA7AF86291196070A08F4CA89BE31079FF3'
@@ -2692,8 +2692,9 @@ $exactTypeValidator = {
     if (-not (Test-TokensInOrder -Source $persistenceCoreShapes -Needles @(
         'Assert-LocalExactPropertyNames', "'location_id', 'location_archetype', 'world_node_id'",
         "'chips_rendered', 'heat'", "'game_id', 'game_phase'", '$value -isnot [string]',
-        "'bankroll', 'chips', 'heat', 'boss_hand_number', 'boss_player_stack', 'boss_rourke_stack'",
-        '$value -isnot [int32]', "@('chips_rendered')", '$chipsRendered -isnot [bool]'
+        "'bankroll', 'heat', 'boss_hand_number', 'boss_player_stack', 'boss_rourke_stack'",
+        '$value -isnot [int32]', "@('chips_rendered')", '$chipsRendered -isnot [bool]',
+        "@('chips')", 'if ($chipsRendered)', '$chips -isnot [int32]', 'elseif ($null -ne $chips)'
     ))) { return $false }
     if (-not (Test-TokensInOrder -Source $saveContinueShapes -Needles @(
         "-Expected @('checkpoint', 'planning_choices')", "-Expected @('checkpoint', 'clean_players_card')",
@@ -3992,6 +3993,20 @@ try {
     $checkpointReordered = New-ReorderedContractObject -InputObject (ConvertTo-ContractClone -InputObject $saveContinueCheckpoint)
     if (-not (Test-Throws { Assert-SaveContinueCheckpointJsonShape -Checkpoint $checkpointReordered -Label 'reordered Heist checkpoint root' })) {
         Add-Failure -Message 'Save/Continue checkpoint validator accepted reordered Heist root keys.'
+    }
+    $hiddenChipsCheckpoint = $saveContinueCheckpoint | ConvertTo-Json -Depth 20 -Compress | ConvertFrom-Json
+    $hiddenChipsCheckpoint.checkpoint.chips_rendered = $false
+    $hiddenChipsCheckpoint.checkpoint.chips = $null
+    $runtimeValidCaseCount++
+    if (Test-Throws { Assert-SaveContinueCheckpointJsonShape -Checkpoint $hiddenChipsCheckpoint -Label 'hidden chip counter' }) {
+        Add-Failure -Message 'Save/Continue checkpoint validator rejected an absent chip counter with a null chip value.'
+    }
+    foreach ($hiddenChipValue in @([int32]0, [int32]50, '50')) {
+        $runtimeHostileCaseCount++
+        $hiddenChipsCheckpoint.checkpoint.chips = $hiddenChipValue
+        if (-not (Test-Throws { Assert-SaveContinueCheckpointJsonShape -Checkpoint $hiddenChipsCheckpoint -Label 'hidden chip value' })) {
+            Add-Failure -Message 'Save/Continue checkpoint validator accepted a chip value without a rendered counter.'
+        }
     }
     $coreStringFields = @('location_id', 'location_archetype', 'world_node_id', 'game_id', 'game_phase')
     $coreIntFields = @('bankroll', 'chips', 'heat', 'boss_hand_number', 'boss_player_stack', 'boss_rourke_stack')

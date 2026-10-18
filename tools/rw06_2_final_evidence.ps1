@@ -131,14 +131,12 @@ function Get-ExactValueNoEnumerate {
     $current = $InputObject
     foreach ($segment in $Path) {
         if ($null -eq $current) {
-            Write-Output -NoEnumerate $Default
-            return
+            return ,$Default
         }
         if ($current -is [Collections.IDictionary]) {
             $matches = @($current.Keys | Where-Object { [string]$_ -ceq $segment })
             if ($matches.Count -eq 0) {
-                Write-Output -NoEnumerate $Default
-                return
+                return ,$Default
             }
             if ($matches.Count -ne 1) { throw "Ambiguous exact property '$segment'." }
             $current = $current[$matches[0]]
@@ -146,18 +144,18 @@ function Get-ExactValueNoEnumerate {
         else {
             $properties = @($current.PSObject.Properties | Where-Object { $_.Name -ceq $segment })
             if ($properties.Count -eq 0) {
-                Write-Output -NoEnumerate $Default
-                return
+                return ,$Default
             }
             if ($properties.Count -ne 1) { throw "Ambiguous exact property '$segment'." }
             $current = $properties[0].Value
         }
     }
     if ($null -eq $current) {
-        Write-Output -NoEnumerate $Default
-        return
+        return ,$Default
     }
-    Write-Output -NoEnumerate $current
+    # Preserve scalar types as well as arrays across Windows PowerShell and
+    # PowerShell 7; Write-Output -NoEnumerate can wrap scalars in List[object].
+    return ,$current
 }
 
 
@@ -1918,7 +1916,7 @@ function Assert-PersistenceCoreCheckpointShape {
             throw "$Label field '$name' is not one exact string."
         }
     }
-    foreach ($name in @('bankroll', 'chips', 'heat', 'boss_hand_number', 'boss_player_stack', 'boss_rourke_stack')) {
+    foreach ($name in @('bankroll', 'heat', 'boss_hand_number', 'boss_player_stack', 'boss_rourke_stack')) {
         $value = Get-ExactValueNoEnumerate $Checkpoint @($name) $null
         if ($value -isnot [int32] -or [int]$value -lt 0) {
             throw "$Label field '$name' is not one exact nonnegative Int32."
@@ -1927,6 +1925,15 @@ function Assert-PersistenceCoreCheckpointShape {
     $chipsRendered = Get-ExactValueNoEnumerate $Checkpoint @('chips_rendered') $null
     if ($chipsRendered -isnot [bool]) {
         throw "$Label field 'chips_rendered' is not one exact Boolean."
+    }
+    $chips = Get-ExactValueNoEnumerate $Checkpoint @('chips') $null
+    if ($chipsRendered) {
+        if ($chips -isnot [int32] -or [int]$chips -lt 0) {
+            throw "$Label rendered chips are not one exact nonnegative Int32."
+        }
+    }
+    elseif ($null -ne $chips) {
+        throw "$Label exposed chips without a rendered public witness."
     }
 }
 

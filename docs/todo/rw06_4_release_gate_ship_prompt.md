@@ -1,15 +1,15 @@
 # rw06_4 — 0.6.0 release gate and artifact handoff
 
-Status: **PREPARED / BLOCKED ON OWNER PLACEMENT — DO NOT LAUNCH YET.** Current
-`main` is feature-complete and version-stamped. The older rw06 implementation
-rows are historical and no longer entry dependencies. Begin this gate only
-after all of the following are true:
+Status: **AUTHORIZED / IN PROGRESS — 2026-10-18.** The owner accepted the current
+placement baseline and authorized the release owner to select and land the
+necessary changes, run the essential checks in their own environment, and
+produce the final source, Windows, and Web deliverables. Another full artistic
+placement pass is not a prerequisite. Existing SAVED/TODO flags remain authoring
+metadata for later playtest adjustments.
 
-1. the owner completes the 75-context placement pass;
-2. the returned schema-3 coordinates are promoted into project authority;
-3. focused placement/runtime validation passes on the promoted source; and
-4. the owner confirms that blocking playthrough notes are closed and approves
-   freezing a release candidate.
+The separate worker is responsible for 0.6.1 stability and seeded route testing;
+its results do not replace the release owner's independent checks. The older
+rw06 implementation rows are historical and are not entry dependencies.
 
 This is the prepared final packaging/handoff gate. The larger deferred gates
 remain listed in `docs/plans/0.6.1_backlog.md`.
