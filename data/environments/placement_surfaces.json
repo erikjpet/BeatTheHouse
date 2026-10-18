@@ -26390,8 +26390,7 @@
           "footprint_class": "behind_counter_person",
           "physical_role": "Counter staff",
           "occupant_ids": [
-            "event:chain06_cass_first_contact",
-            "event:the_house_calls"
+            "event:chain06_cass_first_contact"
           ],
           "runtime_reserve": false,
           "reserve_reason": "",
@@ -26442,6 +26441,39 @@
           "priority": 80,
           "zone_id": "room",
           "support_id": "cocktail_service",
+          "walk_lane_ids": [
+            "lane.public"
+          ],
+          "occupancy_required": false
+        },
+        {
+          "id": "event.behind_counter_person_3",
+          "kind": "event",
+          "pos": [
+            780.0,
+            294.0
+          ],
+          "footprint_class": "behind_counter_person",
+          "physical_role": "Pit boss",
+          "occupant_ids": [
+            "event:the_house_calls"
+          ],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [
+            744.0,
+            222.0,
+            72.0,
+            72.0
+          ],
+          "label_anchor": [
+            780.0,
+            204.0
+          ],
+          "facing": "front",
+          "priority": 85,
+          "zone_id": "right",
+          "support_id": "right_table_felt",
           "walk_lane_ids": [
             "lane.public"
           ],
@@ -27300,7 +27332,7 @@
         "event:chain06_cass_first_contact": "event.behind_counter_person_1",
         "event:chain06_rourke_noticed": "event.wall_item_1",
         "event:comped_suite_offer": "event.behind_counter_person_2",
-        "event:the_house_calls": "event.behind_counter_person_1"
+        "event:the_house_calls": "event.behind_counter_person_3"
       },
       "scenario_object_slot_ids": {
         "event:scenario_convention_badge": "scenario.wall_item_1",
