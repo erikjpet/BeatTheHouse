@@ -4696,6 +4696,12 @@ func scenario_enqueue_fact(fact_type: String, producer: String, payload: Diction
 	var definition := _scenario_sequence_definition_readonly()
 	if not ScenarioSequenceSchemaScript.is_sequence(definition):
 		return {"ok": false, "inactive": true, "errors": []}
+	# Public game/town/heat publishers broadcast at shared action boundaries. A
+	# room sequence owns only its authored subscriptions; retaining every unrelated
+	# broadcast exhausts the finite causal journal and can eventually reject normal
+	# play in a long-lived room without adding any replayable scenario cause.
+	if not _scenario_observes_fact_type(fact_type):
+		return {"ok": true, "inactive": false, "ignored": true, "errors": []}
 	if not _scenario_semantic_ready():
 		return {"ok": false, "errors": ["Dynamic room sequence semantic records are not finalized."]}
 	var state_value: Variant = current_environment.get("scenario_sequence_state", {})
@@ -4734,6 +4740,20 @@ func scenario_enqueue_fact(fact_type: String, producer: String, payload: Diction
 		payload
 	)
 	return ScenarioEngineScript.enqueue_sequence_fact(current_environment, definition, typed_fact)
+
+
+func _scenario_observes_fact_type(fact_type: String) -> bool:
+	var clean_fact_type := fact_type.strip_edges()
+	if clean_fact_type.is_empty():
+		return false
+	var definition := _scenario_sequence_definition_readonly()
+	if not ScenarioSequenceSchemaScript.is_sequence(definition):
+		return false
+	for subscription_value in JsonCoerceScript._copy_array(ScenarioSequenceSchemaScript.sequence(definition).get("fact_subscriptions", [])):
+		var subscribed_type := str((subscription_value as Dictionary).get("fact_type", "")) if typeof(subscription_value) == TYPE_DICTIONARY else str(subscription_value)
+		if subscribed_type.strip_edges() == clean_fact_type:
+			return true
+	return false
 
 
 func scenario_flush_facts(boundary_serial: int = -1) -> Dictionary:
@@ -12138,7 +12158,9 @@ func _scenario_preflight_environment_turn(amount: int) -> Dictionary:
 	var state: Dictionary = state_value as Dictionary if typeof(state_value) == TYPE_DICTIONARY else {}
 	if state.is_empty():
 		return {"ok": false, "inactive": false, "errors": ["Dynamic room sequence turn preflight requires initialized causal state."]}
-	var required_causes := 1
+	if str(state.get("status", "")) != ScenarioSequenceRuntimeScript.STATUS_ACTIVE:
+		return {"ok": true, "inactive": true, "errors": []}
+	var required_causes := 1 if _scenario_observes_fact_type("world_boundary") else 0
 	var uses_expiry := _scenario_sequence_uses_expiry_boundary("town_action")
 	if uses_expiry and not bool(state.get("expired", false)):
 		required_causes += 1

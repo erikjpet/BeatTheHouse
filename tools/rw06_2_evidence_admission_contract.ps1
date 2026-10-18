@@ -622,7 +622,7 @@ function Test-Q017SourceShape {
         [ref]$heistRouteErrors
     )
     if ($heistRouteErrors.Count -ne 0) { return $false }
-    $allowedHeistRouteVariables = @('choiceId', 'ConfirmationOnly', 'decisions', 'null', 'round')
+    $allowedHeistRouteVariables = @('choiceId', 'ConfirmationOnly', 'decisions', 'false', 'null', 'round', 'script:LastObservation')
     $heistRouteVariables = @($heistRouteAst.FindAll({
         param($node)
         return $node -is [Management.Automation.Language.VariableExpressionAst]
@@ -649,6 +649,8 @@ function Test-Q017SourceShape {
         'Enter-GrandRoom',
         'Invoke-EventObjectChoice',
         'Close-VisibleChoiceSurface',
+        'Get-Value',
+        'Resolve-BlackjackRouteEventPopup',
         'Play-OneBlackjackRound',
         'Leave-GameSurface',
         'Invoke-EventObjectChoice',
