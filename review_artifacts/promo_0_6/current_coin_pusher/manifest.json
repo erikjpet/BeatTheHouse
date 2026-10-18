@@ -1,0 +1,85 @@
+{
+	"capture_size": {
+		"height": 720,
+		"width": 1280
+	},
+	"captures": [
+		{
+			"animation_redraw_count": 3,
+			"body_count": 154,
+			"continuous_redraw_active": true,
+			"distinct_x_count": 140,
+			"distinct_y_count": 45,
+			"expected_reduce_motion": false,
+			"file": "01_normal_pile_rider_live_1280x720.png",
+			"id": "normal_pile_rider_live",
+			"motion_after": {
+				"face_y": 60802,
+				"liveness_ticks": 20,
+				"phase_fp": 128820,
+				"physics_body_checksum": 925753272,
+				"rider_checksum": 1239343821
+			},
+			"motion_before": {
+				"face_y": 60973,
+				"liveness_ticks": 12,
+				"phase_fp": 123276,
+				"physics_body_checksum": 1179822677,
+				"rider_checksum": 1239343821
+			},
+			"reduce_motion": false,
+			"rider_count": 4,
+			"saved": true,
+			"solver_advanced": true,
+			"solver_ticks_after": 24,
+			"solver_ticks_before": 12,
+			"state_valid": true,
+			"surface_renderer": "coin_pusher"
+		},
+		{
+			"animation_redraw_count": 0,
+			"body_count": 154,
+			"continuous_redraw_active": false,
+			"distinct_x_count": 140,
+			"distinct_y_count": 45,
+			"expected_reduce_motion": true,
+			"file": "02_reduced_motion_live_1280x720.png",
+			"id": "reduced_motion_live",
+			"motion_after": {
+				"face_y": 59137,
+				"liveness_ticks": 37,
+				"phase_fp": 145592,
+				"physics_body_checksum": 1503606881,
+				"rider_checksum": 1239343821
+			},
+			"motion_before": {
+				"face_y": 60226,
+				"liveness_ticks": 28,
+				"phase_fp": 136592,
+				"physics_body_checksum": 522042360,
+				"rider_checksum": 1239343821
+			},
+			"reduce_motion": true,
+			"rider_count": 4,
+			"saved": true,
+			"solver_advanced": true,
+			"solver_ticks_after": 37,
+			"solver_ticks_before": 28,
+			"state_valid": true,
+			"surface_renderer": "coin_pusher"
+		}
+	],
+	"deterministic_presentation_flicker": 0.75,
+	"environment_id": "coin_pusher_visual_capture",
+	"fixture": "Quarter Falls canonical visual QA",
+	"passed": true,
+	"reduced_motion_proof_passed": true,
+	"required_capture_count": 2,
+	"required_capture_ids": [
+		"normal_pile_rider_live",
+		"reduced_motion_live"
+	],
+	"saved_capture_count": 2,
+	"seed": "QUARTER-FALLS-VISUAL-CAPTURE",
+	"valid_capture_count": 2
+}

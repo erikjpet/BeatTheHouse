@@ -1,0 +1,7708 @@
+{
+	"beach_bonfire_night": {
+		"archetype_id": "beach",
+		"canvas_object_layout": {
+			"allowed_overlap_count": 0,
+			"allowed_overlaps": [],
+			"deterministic_z_order": true,
+			"gap": 8.0,
+			"label_layout": {
+				"default_label_overlap_count": 0,
+				"default_object_overlap_count": 0,
+				"detached_label_count": 0,
+				"enabled": true,
+				"label_count": 3,
+				"max_owner_gap": 2.0,
+				"moved_count": 0,
+				"overlap_policy": "bounded_tether",
+				"owner_tether_limit": 28.0,
+				"resolved_label_overlap_count": 0,
+				"resolved_object_overlap_count": 0
+			},
+			"margin": 16.0,
+			"objects": [
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.35,
+						"h": 80.0,
+						"w": 108.0,
+						"x": 107.0,
+						"y": 145.0
+					},
+					"id": "game:slot",
+					"interaction_rect": {
+						"aspect_ratio": 1.31818181818182,
+						"h": 88.0,
+						"w": 116.0,
+						"x": 103.0,
+						"y": 129.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 137.0,
+						"y": 112.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.31818181818182,
+						"h": 88.0,
+						"w": 116.0,
+						"x": 103.0,
+						"y": 129.0
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 0
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.963855421686747,
+						"h": 83.0,
+						"w": 80.0,
+						"x": 679.0,
+						"y": 331.0
+					},
+					"id": "service:beach_sand_pile",
+					"interaction_rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 687.0,
+						"y": 339.0
+					},
+					"label_rect": {
+						"aspect_ratio": 4.28000081380208,
+						"h": 15.0,
+						"w": 64.2000122070313,
+						"x": 686.900024414063,
+						"y": 322.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 687.0,
+						"y": 339.0
+					},
+					"scenario_owned": false,
+					"type": "service",
+					"z_order": 2
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.875,
+						"h": 64.0,
+						"w": 56.0,
+						"x": 828.0,
+						"y": 350.0
+					},
+					"id": "travel:leave",
+					"interaction_rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 358.0
+					},
+					"label_rect": {
+						"aspect_ratio": 2.66666666666667,
+						"h": 15.0,
+						"w": 40.0,
+						"x": 844.0,
+						"y": 341.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 358.0
+					},
+					"scenario_owned": false,
+					"type": "travel",
+					"z_order": 1
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": [],
+			"small_screen_mode": false
+		},
+		"canvas_scenario_presentation": {
+			"crowd_density": "dense",
+			"lighting_key": "bonfire",
+			"palette_tint": "#f77f00",
+			"signage_line": "DRIFTWOOD BURNS. STORIES STAY."
+		},
+		"environment_header": {
+			"accessible_title": "Low Tide Beach",
+			"archetype_id": "beach",
+			"blurb": "Open air sees to the heat. Detours still charge.",
+			"compact": true,
+			"configured_option_count": 3,
+			"data_path": "res://data/ui/environment_ui.json",
+			"fallback_ready": true,
+			"goal": "",
+			"guidance_visible": false,
+			"option_count": 0,
+			"situation": "DRIFTWOOD BURNS. STORIES STAY.",
+			"situation_visible": true,
+			"title_texture": "res://assets/art/ui/environment_titles/beach.png"
+		},
+		"environment_object_rects": {
+			"game:slot": {
+				"h": 0.148837209302326,
+				"w": 0.102222222222222,
+				"x": 0.127777777777778,
+				"y": 0.355813953488372
+			},
+			"service:beach_sand_pile": {
+				"h": 0.167441860465116,
+				"w": 0.0711111111111111,
+				"x": 0.763333333333333,
+				"y": 0.788372093023256
+			},
+			"travel:leave": {
+				"h": 0.167441860465116,
+				"w": 0.0711111111111111,
+				"x": 0.928888888888889,
+				"y": 0.832558139534884
+			}
+		},
+		"event_ids": [
+			"scenario_bonfire_story"
+		],
+		"file": "beach_bonfire_night.png",
+		"layout_stress_fixture": "",
+		"passed": true,
+		"scenario_presentation": {
+			"crowd_density": "dense",
+			"lighting_key": "bonfire",
+			"palette_tint": "#f77f00",
+			"signage_line": "DRIFTWOOD BURNS. STORIES STAY."
+		},
+		"size": [
+			1280,
+			720
+		],
+		"stake_ceiling": 60,
+		"stake_floor": 10
+	},
+	"beach_storm_coming": {
+		"archetype_id": "beach",
+		"canvas_object_layout": {
+			"allowed_overlap_count": 0,
+			"allowed_overlaps": [],
+			"deterministic_z_order": true,
+			"gap": 8.0,
+			"label_layout": {
+				"default_label_overlap_count": 0,
+				"default_object_overlap_count": 0,
+				"detached_label_count": 0,
+				"enabled": true,
+				"label_count": 4,
+				"max_owner_gap": 2.0,
+				"moved_count": 0,
+				"overlap_policy": "bounded_tether",
+				"owner_tether_limit": 28.0,
+				"resolved_label_overlap_count": 0,
+				"resolved_object_overlap_count": 0
+			},
+			"margin": 16.0,
+			"objects": [
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.35,
+						"h": 80.0,
+						"w": 108.0,
+						"x": 107.0,
+						"y": 145.0
+					},
+					"id": "game:slot",
+					"interaction_rect": {
+						"aspect_ratio": 1.31818181818182,
+						"h": 88.0,
+						"w": 116.0,
+						"x": 103.0,
+						"y": 129.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 137.0,
+						"y": 112.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.31818181818182,
+						"h": 88.0,
+						"w": 116.0,
+						"x": 103.0,
+						"y": 129.0
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 0
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.916666520966447,
+						"h": 96.0000152587891,
+						"w": 88.0,
+						"x": 718.0,
+						"y": 205.999984741211
+					},
+					"id": "event:scenario_storm_stranger",
+					"interaction_rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 726.0,
+						"y": 213.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 4.84615384615385,
+						"h": 26.0,
+						"w": 126.0,
+						"x": 699.0,
+						"y": 185.999984741211
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 726.0,
+						"y": 213.999984741211
+					},
+					"scenario_owned": true,
+					"type": "event",
+					"z_order": 1
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.963855421686747,
+						"h": 83.0,
+						"w": 80.0,
+						"x": 679.0,
+						"y": 331.0
+					},
+					"id": "service:beach_sand_pile",
+					"interaction_rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 687.0,
+						"y": 339.0
+					},
+					"label_rect": {
+						"aspect_ratio": 4.28000081380208,
+						"h": 15.0,
+						"w": 64.2000122070313,
+						"x": 686.900024414063,
+						"y": 322.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 687.0,
+						"y": 339.0
+					},
+					"scenario_owned": false,
+					"type": "service",
+					"z_order": 3
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.875,
+						"h": 64.0,
+						"w": 56.0,
+						"x": 828.0,
+						"y": 350.0
+					},
+					"id": "travel:leave",
+					"interaction_rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 358.0
+					},
+					"label_rect": {
+						"aspect_ratio": 2.66666666666667,
+						"h": 15.0,
+						"w": 40.0,
+						"x": 844.0,
+						"y": 341.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 358.0
+					},
+					"scenario_owned": false,
+					"type": "travel",
+					"z_order": 2
+				}
+			],
+			"overlap_count": 0,
+			"overlaps": [],
+			"small_screen_mode": false
+		},
+		"canvas_scenario_presentation": {
+			"crowd_density": "empty",
+			"lighting_key": "storm_coming",
+			"palette_tint": "#415a77",
+			"signage_line": "TIDE UP. ONE STRANGER LEFT."
+		},
+		"environment_header": {
+			"accessible_title": "Low Tide Beach",
+			"archetype_id": "beach",
+			"blurb": "Open air sees to the heat. Detours still charge.",
+			"compact": true,
+			"configured_option_count": 3,
+			"data_path": "res://data/ui/environment_ui.json",
+			"fallback_ready": true,
+			"goal": "",
+			"guidance_visible": false,
+			"option_count": 0,
+			"situation": "TIDE UP. ONE STRANGER LEFT.",
+			"situation_visible": true,
+			"title_texture": "res://assets/art/ui/environment_titles/beach.png"
+		},
+		"environment_object_rects": {
+			"event:scenario_storm_stranger": {
+				"h": 0.186046511627907,
+				"w": 0.08,
+				"x": 0.806666666666667,
+				"y": 0.497674418604651
+			},
+			"game:slot": {
+				"h": 0.148837209302326,
+				"w": 0.102222222222222,
+				"x": 0.127777777777778,
+				"y": 0.355813953488372
+			},
+			"service:beach_sand_pile": {
+				"h": 0.167441860465116,
+				"w": 0.0711111111111111,
+				"x": 0.763333333333333,
+				"y": 0.788372093023256
+			},
+			"travel:leave": {
+				"h": 0.167441860465116,
+				"w": 0.0711111111111111,
+				"x": 0.928888888888889,
+				"y": 0.832558139534884
+			}
+		},
+		"event_ids": [
+			"scenario_storm_stranger"
+		],
+		"file": "beach_storm_coming.png",
+		"layout_stress_fixture": "",
+		"passed": true,
+		"scenario_presentation": {
+			"crowd_density": "empty",
+			"lighting_key": "storm_coming",
+			"palette_tint": "#415a77",
+			"signage_line": "TIDE UP. ONE STRANGER LEFT."
+		},
+		"size": [
+			1280,
+			720
+		],
+		"stake_ceiling": 60,
+		"stake_floor": 10
+	},
+	"delta_queen_engine_trouble": {
+		"archetype_id": "delta_queen",
+		"canvas_object_layout": {
+			"allowed_overlap_count": 0,
+			"allowed_overlaps": [],
+			"deterministic_z_order": true,
+			"gap": 8.0,
+			"label_layout": {
+				"default_label_overlap_count": 0,
+				"default_object_overlap_count": 7,
+				"detached_label_count": 0,
+				"enabled": true,
+				"label_count": 15,
+				"max_owner_gap": 2.0,
+				"moved_count": 4,
+				"overlap_policy": "bounded_tether",
+				"owner_tether_limit": 28.0,
+				"resolved_label_overlap_count": 0,
+				"resolved_object_overlap_count": 1
+			},
+			"margin": 16.0,
+			"objects": [
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.34999987125398,
+						"h": 80.0000076293945,
+						"w": 108.0,
+						"x": 596.999938964844,
+						"y": 81.9999923706055
+					},
+					"id": "service:house_drink",
+					"interaction_rect": {
+						"aspect_ratio": 1.4375,
+						"h": 64.0,
+						"w": 92.0,
+						"x": 604.999938964844,
+						"y": 89.9999923706055
+					},
+					"label_rect": {
+						"aspect_ratio": 5.05333251953125,
+						"h": 15.0,
+						"w": 75.7999877929688,
+						"x": 613.099914550781,
+						"y": 72.9999923706055
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.4375,
+						"h": 64.0,
+						"w": 92.0,
+						"x": 604.999938964844,
+						"y": 89.9999923706055
+					},
+					"scenario_owned": false,
+					"type": "drink",
+					"z_order": 11
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.375,
+						"h": 64.0,
+						"w": 88.0,
+						"x": 771.000061035156,
+						"y": 94.0
+					},
+					"id": "item:feature_magnet",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 779.000061035156,
+						"y": 102.0
+					},
+					"label_rect": {
+						"aspect_ratio": 6.21333414713542,
+						"h": 15.0,
+						"w": 93.2000122070313,
+						"x": 768.400085449219,
+						"y": 85.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 779.000061035156,
+						"y": 102.0
+					},
+					"scenario_owned": false,
+					"type": "item",
+					"z_order": 7
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.37499983608725,
+						"h": 64.0000076293945,
+						"w": 88.0,
+						"x": 694.0,
+						"y": 94.9999923706055
+					},
+					"id": "item:bag",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 702.0,
+						"y": 102.999992370605
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 714.0,
+						"y": 85.9999923706055
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 702.0,
+						"y": 102.999992370605
+					},
+					"scenario_owned": false,
+					"type": "item",
+					"z_order": 6
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.35,
+						"h": 80.0,
+						"w": 108.0,
+						"x": 504.0,
+						"y": 102.0
+					},
+					"id": "game:video_poker",
+					"interaction_rect": {
+						"aspect_ratio": 1.4375,
+						"h": 64.0,
+						"w": 92.0,
+						"x": 512.0,
+						"y": 110.0
+					},
+					"label_rect": {
+						"aspect_ratio": 5.05333251953125,
+						"h": 15.0,
+						"w": 75.7999877929688,
+						"x": 520.099975585938,
+						"y": 93.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.4375,
+						"h": 64.0,
+						"w": 92.0,
+						"x": 512.0,
+						"y": 110.0
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 2
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.0,
+						"h": 88.0,
+						"w": 88.0,
+						"x": 329.999969482422,
+						"y": 100.999984741211
+					},
+					"id": "staff:delta_right_table_dealer",
+					"interaction_rect": {
+						"aspect_ratio": 1.0,
+						"h": 72.0,
+						"w": 72.0,
+						"x": 337.999969482422,
+						"y": 108.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 349.999969482422,
+						"y": 91.9999847412109
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0,
+						"h": 72.0,
+						"w": 72.0,
+						"x": 337.999969482422,
+						"y": 108.999984741211
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 14
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.0,
+						"h": 88.0,
+						"w": 88.0,
+						"x": 418.0,
+						"y": 102.999984741211
+					},
+					"id": "shopkeeper:merchant",
+					"interaction_rect": {
+						"aspect_ratio": 1.0,
+						"h": 72.0,
+						"w": 72.0,
+						"x": 426.0,
+						"y": 110.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 5.05333455403646,
+						"h": 15.0,
+						"w": 75.8000183105469,
+						"x": 424.100006103516,
+						"y": 93.9999847412109
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0,
+						"h": 72.0,
+						"w": 72.0,
+						"x": 426.0,
+						"y": 110.999984741211
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 8
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.916666666666667,
+						"h": 96.0,
+						"w": 88.0,
+						"x": 147.0,
+						"y": 108.0
+					},
+					"id": "staff:delta_deck_boss",
+					"interaction_rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 155.0,
+						"y": 116.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 167.0,
+						"y": 99.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 155.0,
+						"y": 116.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 13
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.05,
+						"h": 80.0,
+						"w": 84.0,
+						"x": 601.0,
+						"y": 165.0
+					},
+					"id": "event:rowdy_regular",
+					"interaction_rect": {
+						"aspect_ratio": 1.0625,
+						"h": 64.0,
+						"w": 68.0,
+						"x": 609.0,
+						"y": 173.0
+					},
+					"label_rect": {
+						"aspect_ratio": 5.82666829427083,
+						"h": 15.0,
+						"w": 87.4000244140625,
+						"x": 599.299987792969,
+						"y": 239.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0625,
+						"h": 64.0,
+						"w": 68.0,
+						"x": 609.0,
+						"y": 173.0
+					},
+					"scenario_owned": false,
+					"type": "event",
+					"z_order": 4
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.35,
+						"h": 80.0,
+						"w": 108.0,
+						"x": 53.0,
+						"y": 167.0
+					},
+					"id": "game:blackjack",
+					"interaction_rect": {
+						"aspect_ratio": 1.4375,
+						"h": 64.0,
+						"w": 92.0,
+						"x": 61.0,
+						"y": 175.0
+					},
+					"label_rect": {
+						"aspect_ratio": 4.28000030517578,
+						"h": 15.0,
+						"w": 64.2000045776367,
+						"x": 74.9000015258789,
+						"y": 158.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.4375,
+						"h": 64.0,
+						"w": 92.0,
+						"x": 61.0,
+						"y": 175.0
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 0
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.375,
+						"h": 64.0,
+						"w": 88.0,
+						"x": 237.0,
+						"y": 176.999984741211
+					},
+					"id": "game:roulette",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 72.0,
+						"w": 108.0,
+						"x": 227.0,
+						"y": 160.999969482422
+					},
+					"label_rect": {
+						"aspect_ratio": 3.8933339436849,
+						"h": 15.0,
+						"w": 58.4000091552734,
+						"x": 251.800003051758,
+						"y": 143.999969482422
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 72.0,
+						"w": 108.0,
+						"x": 227.0,
+						"y": 160.999969482422
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 1
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.49999952316284,
+						"h": 64.0,
+						"w": 95.9999694824219,
+						"x": 420.000030517578,
+						"y": 196.0
+					},
+					"id": "event:grand_casino_invite",
+					"interaction_rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 48.0,
+						"w": 80.0,
+						"x": 428.000030517578,
+						"y": 204.0
+					},
+					"label_rect": {
+						"aspect_ratio": 4.84615267240084,
+						"h": 26.0,
+						"w": 125.999969482422,
+						"x": 405.000030517578,
+						"y": 254.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 48.0,
+						"w": 80.0,
+						"x": 428.000030517578,
+						"y": 204.0
+					},
+					"scenario_owned": false,
+					"type": "event",
+					"z_order": 3
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.04999979972843,
+						"h": 80.0000152587891,
+						"w": 84.0,
+						"x": 151.0,
+						"y": 213.999984741211
+					},
+					"id": "lender:the_crew",
+					"interaction_rect": {
+						"aspect_ratio": 1.0625,
+						"h": 96.0,
+						"w": 102.0,
+						"x": 142.0,
+						"y": 189.999969482422
+					},
+					"label_rect": {
+						"aspect_ratio": 3.8933339436849,
+						"h": 15.0,
+						"w": 58.4000091552734,
+						"x": 163.800003051758,
+						"y": 287.999969482422
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0625,
+						"h": 96.0,
+						"w": 102.0,
+						"x": 142.0,
+						"y": 189.999969482422
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 12
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.816326530612245,
+						"h": 98.0,
+						"w": 80.0,
+						"x": 235.000030517578,
+						"y": 209.0
+					},
+					"id": "event:chain06_dave_same_bus",
+					"interaction_rect": {
+						"aspect_ratio": 0.780487804878049,
+						"h": 82.0,
+						"w": 64.0,
+						"x": 243.000030517578,
+						"y": 217.0
+					},
+					"label_rect": {
+						"aspect_ratio": 6.98666585286458,
+						"h": 15.0,
+						"w": 104.799987792969,
+						"x": 222.600036621094,
+						"y": 301.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.780487804878049,
+						"h": 82.0,
+						"w": 64.0,
+						"x": 243.000030517578,
+						"y": 217.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 5
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.999999046325684,
+						"h": 64.0,
+						"w": 63.9999389648438,
+						"x": 820.000061035156,
+						"y": 295.0
+					},
+					"id": "service:riverboat_deck_walk",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 828.000061035156,
+						"y": 303.0
+					},
+					"label_rect": {
+						"aspect_ratio": 4.24666341145833,
+						"h": 15.0,
+						"w": 63.699951171875,
+						"x": 820.300048828125,
+						"y": 286.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 828.000061035156,
+						"y": 303.0
+					},
+					"scenario_owned": false,
+					"type": "service",
+					"z_order": 10
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.875,
+						"h": 64.0,
+						"w": 56.0,
+						"x": 828.0,
+						"y": 350.0
+					},
+					"id": "travel:leave",
+					"interaction_rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 358.0
+					},
+					"label_rect": {
+						"aspect_ratio": 2.66666666666667,
+						"h": 15.0,
+						"w": 40.0,
+						"x": 844.0,
+						"y": 341.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 358.0
+					},
+					"scenario_owned": false,
+					"type": "travel",
+					"z_order": 9
+				}
+			],
+			"overlap_count": 9,
+			"overlaps": [
+				{
+					"a": "service:house_drink",
+					"area": 703.996177672874,
+					"b": "item:bag"
+				},
+				{
+					"a": "service:house_drink",
+					"area": 900.003662109375,
+					"b": "game:video_poker"
+				},
+				{
+					"a": "item:feature_magnet",
+					"area": 692.99623870803,
+					"b": "item:bag"
+				},
+				{
+					"a": "game:video_poker",
+					"area": 158.000030517578,
+					"b": "shopkeeper:merchant"
+				},
+				{
+					"a": "game:video_poker",
+					"area": 187.0,
+					"b": "event:rowdy_regular"
+				},
+				{
+					"a": "staff:delta_deck_boss",
+					"area": 518.0,
+					"b": "game:blackjack"
+				},
+				{
+					"a": "game:blackjack",
+					"area": 330.000152587891,
+					"b": "lender:the_crew"
+				},
+				{
+					"a": "game:roulette",
+					"area": 2495.99978637649,
+					"b": "event:chain06_dave_same_bus"
+				},
+				{
+					"a": "service:riverboat_deck_walk",
+					"area": 504.0,
+					"b": "travel:leave"
+				}
+			],
+			"small_screen_mode": false
+		},
+		"canvas_scenario_presentation": {
+			"crowd_density": "dense",
+			"lighting_key": "engine_trouble",
+			"palette_tint": "#6c757d",
+			"signage_line": "ANCHORED. ENGINE CREW BELOW."
+		},
+		"environment_header": {
+			"accessible_title": "River Queen Riverboat Casino",
+			"archetype_id": "delta_queen",
+			"blurb": "Brass, velvet, river tables, practiced courtesy.",
+			"compact": true,
+			"configured_option_count": 4,
+			"data_path": "res://data/ui/environment_ui.json",
+			"fallback_ready": true,
+			"goal": "",
+			"guidance_visible": false,
+			"option_count": 0,
+			"situation": "ANCHORED. ENGINE CREW BELOW.",
+			"situation_visible": true,
+			"title_texture": "res://assets/art/ui/environment_titles/delta_queen.png"
+		},
+		"environment_object_rects": {
+			"event:chain06_dave_same_bus": {
+				"h": 0.190697674418605,
+				"w": 0.0711111111111111,
+				"x": 0.27,
+				"y": 0.504651162790698
+			},
+			"event:grand_casino_invite": {
+				"h": 0.111627906976744,
+				"w": 0.0888888888888889,
+				"x": 0.475555555555556,
+				"y": 0.474418604651163
+			},
+			"event:rowdy_regular": {
+				"h": 0.148837209302326,
+				"w": 0.0755555555555556,
+				"x": 0.676666666666667,
+				"y": 0.402325581395349
+			},
+			"game:blackjack": {
+				"h": 0.148837209302326,
+				"w": 0.102222222222222,
+				"x": 0.0677777777777778,
+				"y": 0.406976744186047
+			},
+			"game:roulette": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.272222222222222,
+				"y": 0.430232558139535
+			},
+			"game:video_poker": {
+				"h": 0.148837209302326,
+				"w": 0.102222222222222,
+				"x": 0.568888888888889,
+				"y": 0.255813953488372
+			},
+			"item:bag": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.78,
+				"y": 0.23953488372093
+			},
+			"item:feature_magnet": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.865555555555556,
+				"y": 0.237209302325581
+			},
+			"lender:the_crew": {
+				"h": 0.148837209302326,
+				"w": 0.0755555555555556,
+				"x": 0.176666666666667,
+				"y": 0.516279069767442
+			},
+			"service:house_drink": {
+				"h": 0.148837209302326,
+				"w": 0.102222222222222,
+				"x": 0.672222222222222,
+				"y": 0.209302325581395
+			},
+			"service:riverboat_deck_walk": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.92,
+				"y": 0.704651162790698
+			},
+			"shopkeeper:merchant": {
+				"h": 0.167441860465116,
+				"w": 0.08,
+				"x": 0.473333333333333,
+				"y": 0.258139534883721
+			},
+			"staff:delta_deck_boss": {
+				"h": 0.186046511627907,
+				"w": 0.08,
+				"x": 0.172222222222222,
+				"y": 0.269767441860465
+			},
+			"staff:delta_right_table_dealer": {
+				"h": 0.167441860465116,
+				"w": 0.08,
+				"x": 0.375555555555556,
+				"y": 0.253488372093023
+			},
+			"travel:leave": {
+				"h": 0.167441860465116,
+				"w": 0.0711111111111111,
+				"x": 0.928888888888889,
+				"y": 0.832558139534884
+			}
+		},
+		"event_ids": [
+			"scenario_engine_trouble_repairs",
+			"grand_casino_invite",
+			"rowdy_regular"
+		],
+		"file": "delta_queen_engine_trouble.png",
+		"layout_stress_fixture": "",
+		"passed": false,
+		"scenario_presentation": {
+			"crowd_density": "dense",
+			"lighting_key": "engine_trouble",
+			"palette_tint": "#6c757d",
+			"signage_line": "ANCHORED. ENGINE CREW BELOW."
+		},
+		"size": [
+			1280,
+			720
+		],
+		"stake_ceiling": 85,
+		"stake_floor": 15
+	},
+	"delta_queen_wedding_charter": {
+		"archetype_id": "delta_queen",
+		"canvas_object_layout": {
+			"allowed_overlap_count": 0,
+			"allowed_overlaps": [],
+			"deterministic_z_order": true,
+			"gap": 8.0,
+			"label_layout": {
+				"default_label_overlap_count": 2,
+				"default_object_overlap_count": 8,
+				"detached_label_count": 0,
+				"enabled": true,
+				"label_count": 15,
+				"max_owner_gap": 15.0,
+				"moved_count": 5,
+				"overlap_policy": "bounded_tether",
+				"owner_tether_limit": 28.0,
+				"resolved_label_overlap_count": 0,
+				"resolved_object_overlap_count": 1
+			},
+			"margin": 16.0,
+			"objects": [
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.34999987125398,
+						"h": 80.0000076293945,
+						"w": 108.0,
+						"x": 596.999938964844,
+						"y": 81.9999923706055
+					},
+					"id": "service:house_drink",
+					"interaction_rect": {
+						"aspect_ratio": 1.4375,
+						"h": 64.0,
+						"w": 92.0,
+						"x": 604.999938964844,
+						"y": 89.9999923706055
+					},
+					"label_rect": {
+						"aspect_ratio": 5.05333251953125,
+						"h": 15.0,
+						"w": 75.7999877929688,
+						"x": 613.099914550781,
+						"y": 72.9999923706055
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.4375,
+						"h": 64.0,
+						"w": 92.0,
+						"x": 604.999938964844,
+						"y": 89.9999923706055
+					},
+					"scenario_owned": false,
+					"type": "drink",
+					"z_order": 11
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.375,
+						"h": 64.0,
+						"w": 88.0,
+						"x": 771.000061035156,
+						"y": 94.0
+					},
+					"id": "item:chip_slide_wax",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 779.000061035156,
+						"y": 102.0
+					},
+					"label_rect": {
+						"aspect_ratio": 6.21333414713542,
+						"h": 15.0,
+						"w": 93.2000122070313,
+						"x": 768.400085449219,
+						"y": 85.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 779.000061035156,
+						"y": 102.0
+					},
+					"scenario_owned": false,
+					"type": "item",
+					"z_order": 7
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.37499983608725,
+						"h": 64.0000076293945,
+						"w": 88.0,
+						"x": 694.0,
+						"y": 94.9999923706055
+					},
+					"id": "item:freds_poker_hat",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 702.0,
+						"y": 102.999992370605
+					},
+					"label_rect": {
+						"aspect_ratio": 6.98666585286458,
+						"h": 15.0,
+						"w": 104.799987792969,
+						"x": 685.599975585938,
+						"y": 166.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 702.0,
+						"y": 102.999992370605
+					},
+					"scenario_owned": false,
+					"type": "item",
+					"z_order": 6
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.35,
+						"h": 80.0,
+						"w": 108.0,
+						"x": 504.0,
+						"y": 102.0
+					},
+					"id": "game:video_poker",
+					"interaction_rect": {
+						"aspect_ratio": 1.4375,
+						"h": 64.0,
+						"w": 92.0,
+						"x": 512.0,
+						"y": 110.0
+					},
+					"label_rect": {
+						"aspect_ratio": 5.05333251953125,
+						"h": 15.0,
+						"w": 75.7999877929688,
+						"x": 520.099975585938,
+						"y": 93.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.4375,
+						"h": 64.0,
+						"w": 92.0,
+						"x": 512.0,
+						"y": 110.0
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 2
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.0,
+						"h": 88.0,
+						"w": 88.0,
+						"x": 329.999969482422,
+						"y": 100.999984741211
+					},
+					"id": "staff:delta_right_table_dealer",
+					"interaction_rect": {
+						"aspect_ratio": 1.0,
+						"h": 72.0,
+						"w": 72.0,
+						"x": 337.999969482422,
+						"y": 108.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 349.999969482422,
+						"y": 91.9999847412109
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0,
+						"h": 72.0,
+						"w": 72.0,
+						"x": 337.999969482422,
+						"y": 108.999984741211
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 14
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.0,
+						"h": 88.0,
+						"w": 88.0,
+						"x": 418.0,
+						"y": 102.999984741211
+					},
+					"id": "shopkeeper:merchant",
+					"interaction_rect": {
+						"aspect_ratio": 1.0,
+						"h": 72.0,
+						"w": 72.0,
+						"x": 426.0,
+						"y": 110.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 5.05333455403646,
+						"h": 15.0,
+						"w": 75.8000183105469,
+						"x": 424.100006103516,
+						"y": 93.9999847412109
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0,
+						"h": 72.0,
+						"w": 72.0,
+						"x": 426.0,
+						"y": 110.999984741211
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 8
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.916666666666667,
+						"h": 96.0,
+						"w": 88.0,
+						"x": 147.0,
+						"y": 108.0
+					},
+					"id": "staff:delta_deck_boss",
+					"interaction_rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 155.0,
+						"y": 116.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 167.0,
+						"y": 99.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 155.0,
+						"y": 116.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 13
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.05,
+						"h": 80.0,
+						"w": 84.0,
+						"x": 601.0,
+						"y": 165.0
+					},
+					"id": "event:rowdy_regular",
+					"interaction_rect": {
+						"aspect_ratio": 1.0625,
+						"h": 64.0,
+						"w": 68.0,
+						"x": 609.0,
+						"y": 173.0
+					},
+					"label_rect": {
+						"aspect_ratio": 5.82666829427083,
+						"h": 15.0,
+						"w": 87.4000244140625,
+						"x": 599.299987792969,
+						"y": 239.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0625,
+						"h": 64.0,
+						"w": 68.0,
+						"x": 609.0,
+						"y": 173.0
+					},
+					"scenario_owned": false,
+					"type": "event",
+					"z_order": 3
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.35,
+						"h": 80.0,
+						"w": 108.0,
+						"x": 53.0,
+						"y": 167.0
+					},
+					"id": "game:blackjack",
+					"interaction_rect": {
+						"aspect_ratio": 1.4375,
+						"h": 64.0,
+						"w": 92.0,
+						"x": 61.0,
+						"y": 175.0
+					},
+					"label_rect": {
+						"aspect_ratio": 4.28000030517578,
+						"h": 15.0,
+						"w": 64.2000045776367,
+						"x": 74.9000015258789,
+						"y": 158.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.4375,
+						"h": 64.0,
+						"w": 92.0,
+						"x": 61.0,
+						"y": 175.0
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 0
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.375,
+						"h": 64.0,
+						"w": 88.0,
+						"x": 237.0,
+						"y": 176.999984741211
+					},
+					"id": "game:roulette",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 72.0,
+						"w": 108.0,
+						"x": 227.0,
+						"y": 160.999969482422
+					},
+					"label_rect": {
+						"aspect_ratio": 3.8933339436849,
+						"h": 15.0,
+						"w": 58.4000091552734,
+						"x": 251.800003051758,
+						"y": 143.999969482422
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 72.0,
+						"w": 108.0,
+						"x": 227.0,
+						"y": 160.999969482422
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 1
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.49999952316284,
+						"h": 64.0,
+						"w": 95.9999694824219,
+						"x": 420.000030517578,
+						"y": 196.0
+					},
+					"id": "event:grand_casino_invite",
+					"interaction_rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 48.0,
+						"w": 80.0,
+						"x": 428.000030517578,
+						"y": 204.0
+					},
+					"label_rect": {
+						"aspect_ratio": 4.84615267240084,
+						"h": 26.0,
+						"w": 125.999969482422,
+						"x": 405.000030517578,
+						"y": 254.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 48.0,
+						"w": 80.0,
+						"x": 428.000030517578,
+						"y": 204.0
+					},
+					"scenario_owned": false,
+					"type": "event",
+					"z_order": 4
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.04999979972843,
+						"h": 80.0000152587891,
+						"w": 84.0,
+						"x": 151.0,
+						"y": 213.999984741211
+					},
+					"id": "lender:the_crew",
+					"interaction_rect": {
+						"aspect_ratio": 1.0625,
+						"h": 96.0,
+						"w": 102.0,
+						"x": 142.0,
+						"y": 189.999969482422
+					},
+					"label_rect": {
+						"aspect_ratio": 3.8933339436849,
+						"h": 15.0,
+						"w": 58.4000091552734,
+						"x": 163.800003051758,
+						"y": 287.999969482422
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0625,
+						"h": 96.0,
+						"w": 102.0,
+						"x": 142.0,
+						"y": 189.999969482422
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 12
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.816326530612245,
+						"h": 98.0,
+						"w": 80.0,
+						"x": 235.000030517578,
+						"y": 209.0
+					},
+					"id": "event:chain06_dave_same_bus",
+					"interaction_rect": {
+						"aspect_ratio": 0.780487804878049,
+						"h": 82.0,
+						"w": 64.0,
+						"x": 243.000030517578,
+						"y": 217.0
+					},
+					"label_rect": {
+						"aspect_ratio": 6.98666585286458,
+						"h": 15.0,
+						"w": 104.799987792969,
+						"x": 222.600036621094,
+						"y": 301.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.780487804878049,
+						"h": 82.0,
+						"w": 64.0,
+						"x": 243.000030517578,
+						"y": 217.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 5
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.999999046325684,
+						"h": 64.0,
+						"w": 63.9999389648438,
+						"x": 820.000061035156,
+						"y": 295.0
+					},
+					"id": "service:riverboat_deck_walk",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 828.000061035156,
+						"y": 303.0
+					},
+					"label_rect": {
+						"aspect_ratio": 4.24666341145833,
+						"h": 15.0,
+						"w": 63.699951171875,
+						"x": 820.300048828125,
+						"y": 286.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 828.000061035156,
+						"y": 303.0
+					},
+					"scenario_owned": false,
+					"type": "service",
+					"z_order": 10
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.875,
+						"h": 64.0,
+						"w": 56.0,
+						"x": 828.0,
+						"y": 350.0
+					},
+					"id": "travel:leave",
+					"interaction_rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 358.0
+					},
+					"label_rect": {
+						"aspect_ratio": 2.66666666666667,
+						"h": 15.0,
+						"w": 40.0,
+						"x": 844.0,
+						"y": 341.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 358.0
+					},
+					"scenario_owned": false,
+					"type": "travel",
+					"z_order": 9
+				}
+			],
+			"overlap_count": 9,
+			"overlaps": [
+				{
+					"a": "service:house_drink",
+					"area": 703.996177672874,
+					"b": "item:freds_poker_hat"
+				},
+				{
+					"a": "service:house_drink",
+					"area": 900.003662109375,
+					"b": "game:video_poker"
+				},
+				{
+					"a": "item:chip_slide_wax",
+					"area": 692.99623870803,
+					"b": "item:freds_poker_hat"
+				},
+				{
+					"a": "game:video_poker",
+					"area": 158.000030517578,
+					"b": "shopkeeper:merchant"
+				},
+				{
+					"a": "game:video_poker",
+					"area": 187.0,
+					"b": "event:rowdy_regular"
+				},
+				{
+					"a": "staff:delta_deck_boss",
+					"area": 518.0,
+					"b": "game:blackjack"
+				},
+				{
+					"a": "game:blackjack",
+					"area": 330.000152587891,
+					"b": "lender:the_crew"
+				},
+				{
+					"a": "game:roulette",
+					"area": 2495.99978637649,
+					"b": "event:chain06_dave_same_bus"
+				},
+				{
+					"a": "service:riverboat_deck_walk",
+					"area": 504.0,
+					"b": "travel:leave"
+				}
+			],
+			"small_screen_mode": false
+		},
+		"canvas_scenario_presentation": {
+			"crowd_density": "packed",
+			"lighting_key": "wedding",
+			"palette_tint": "#fefae0",
+			"signage_line": "CHARTERED. EVERYBODY'S FAMILY."
+		},
+		"environment_header": {
+			"accessible_title": "River Queen Riverboat Casino",
+			"archetype_id": "delta_queen",
+			"blurb": "Brass, velvet, river tables, practiced courtesy.",
+			"compact": true,
+			"configured_option_count": 4,
+			"data_path": "res://data/ui/environment_ui.json",
+			"fallback_ready": true,
+			"goal": "",
+			"guidance_visible": false,
+			"option_count": 0,
+			"situation": "CHARTERED. EVERYBODY'S FAMILY.",
+			"situation_visible": true,
+			"title_texture": "res://assets/art/ui/environment_titles/delta_queen.png"
+		},
+		"environment_object_rects": {
+			"event:chain06_dave_same_bus": {
+				"h": 0.190697674418605,
+				"w": 0.0711111111111111,
+				"x": 0.27,
+				"y": 0.504651162790698
+			},
+			"event:grand_casino_invite": {
+				"h": 0.111627906976744,
+				"w": 0.0888888888888889,
+				"x": 0.475555555555556,
+				"y": 0.474418604651163
+			},
+			"event:rowdy_regular": {
+				"h": 0.148837209302326,
+				"w": 0.0755555555555556,
+				"x": 0.676666666666667,
+				"y": 0.402325581395349
+			},
+			"game:blackjack": {
+				"h": 0.148837209302326,
+				"w": 0.102222222222222,
+				"x": 0.0677777777777778,
+				"y": 0.406976744186047
+			},
+			"game:roulette": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.272222222222222,
+				"y": 0.430232558139535
+			},
+			"game:video_poker": {
+				"h": 0.148837209302326,
+				"w": 0.102222222222222,
+				"x": 0.568888888888889,
+				"y": 0.255813953488372
+			},
+			"item:chip_slide_wax": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.865555555555556,
+				"y": 0.237209302325581
+			},
+			"item:freds_poker_hat": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.78,
+				"y": 0.23953488372093
+			},
+			"lender:the_crew": {
+				"h": 0.148837209302326,
+				"w": 0.0755555555555556,
+				"x": 0.176666666666667,
+				"y": 0.516279069767442
+			},
+			"service:house_drink": {
+				"h": 0.148837209302326,
+				"w": 0.102222222222222,
+				"x": 0.672222222222222,
+				"y": 0.209302325581395
+			},
+			"service:riverboat_deck_walk": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.92,
+				"y": 0.704651162790698
+			},
+			"shopkeeper:merchant": {
+				"h": 0.167441860465116,
+				"w": 0.08,
+				"x": 0.473333333333333,
+				"y": 0.258139534883721
+			},
+			"staff:delta_deck_boss": {
+				"h": 0.186046511627907,
+				"w": 0.08,
+				"x": 0.172222222222222,
+				"y": 0.269767441860465
+			},
+			"staff:delta_right_table_dealer": {
+				"h": 0.167441860465116,
+				"w": 0.08,
+				"x": 0.375555555555556,
+				"y": 0.253488372093023
+			},
+			"travel:leave": {
+				"h": 0.167441860465116,
+				"w": 0.0711111111111111,
+				"x": 0.928888888888889,
+				"y": 0.832558139534884
+			}
+		},
+		"event_ids": [
+			"rowdy_regular",
+			"grand_casino_invite",
+			"scenario_wedding_best_man"
+		],
+		"file": "delta_queen_wedding_charter.png",
+		"layout_stress_fixture": "",
+		"passed": false,
+		"scenario_presentation": {
+			"crowd_density": "packed",
+			"lighting_key": "wedding",
+			"palette_tint": "#fefae0",
+			"signage_line": "CHARTERED. EVERYBODY'S FAMILY."
+		},
+		"size": [
+			1280,
+			720
+		],
+		"stake_ceiling": 90,
+		"stake_floor": 10
+	},
+	"grand_casino_audit_night": {
+		"archetype_id": "grand_casino",
+		"canvas_object_layout": {
+			"allowed_overlap_count": 0,
+			"allowed_overlaps": [],
+			"deterministic_z_order": true,
+			"gap": 8.0,
+			"label_layout": {
+				"default_label_overlap_count": 4,
+				"default_object_overlap_count": 14,
+				"detached_label_count": 0,
+				"enabled": true,
+				"label_count": 19,
+				"max_owner_gap": 28.0,
+				"moved_count": 9,
+				"overlap_policy": "bounded_tether",
+				"owner_tether_limit": 28.0,
+				"resolved_label_overlap_count": 1,
+				"resolved_object_overlap_count": 2
+			},
+			"margin": 16.0,
+			"objects": [
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.74545454545455,
+						"h": 55.0,
+						"w": 96.0,
+						"x": 231.0,
+						"y": 16.0
+					},
+					"id": "event:scenario_audit_roster",
+					"interaction_rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 48.0,
+						"w": 80.0,
+						"x": 239.0,
+						"y": 15.0
+					},
+					"label_rect": {
+						"aspect_ratio": 6.98666788736979,
+						"h": 15.0,
+						"w": 104.800018310547,
+						"x": 226.600006103516,
+						"y": 65.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 48.0,
+						"w": 80.0,
+						"x": 239.0,
+						"y": 15.0
+					},
+					"scenario_owned": false,
+					"type": "event",
+					"z_order": 7
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.875,
+						"h": 80.0,
+						"w": 70.0,
+						"x": 16.0,
+						"y": 95.0
+					},
+					"id": "travel:grand_casino_cage",
+					"interaction_rect": {
+						"aspect_ratio": 1.0,
+						"h": 64.0,
+						"w": 64.0,
+						"x": 14.0000038146973,
+						"y": 103.0
+					},
+					"label_rect": {
+						"aspect_ratio": 5.68666687011719,
+						"h": 15.0,
+						"w": 85.3000030517578,
+						"x": 16.0,
+						"y": 86.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0,
+						"h": 64.0,
+						"w": 64.0,
+						"x": 14.0000038146973,
+						"y": 103.0
+					},
+					"scenario_owned": false,
+					"type": "travel",
+					"z_order": 12
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.9375,
+						"h": 64.0,
+						"w": 60.0,
+						"x": 801.0,
+						"y": 121.999984741211
+					},
+					"id": "service:house_drink",
+					"interaction_rect": {
+						"aspect_ratio": 0.916666666666667,
+						"h": 48.0,
+						"w": 44.0,
+						"x": 809.0,
+						"y": 129.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 5.05333251953125,
+						"h": 15.0,
+						"w": 75.7999877929688,
+						"x": 793.099975585938,
+						"y": 99.9999847412109
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.916666666666667,
+						"h": 48.0,
+						"w": 44.0,
+						"x": 809.0,
+						"y": 129.999984741211
+					},
+					"scenario_owned": false,
+					"type": "drink",
+					"z_order": 14
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.9375,
+						"h": 64.0,
+						"w": 60.0,
+						"x": 732.0,
+						"y": 125.000015258789
+					},
+					"id": "game:pull_tabs",
+					"interaction_rect": {
+						"aspect_ratio": 1.52777777777778,
+						"h": 72.0,
+						"w": 110.0,
+						"x": 707.0,
+						"y": 121.000015258789
+					},
+					"label_rect": {
+						"aspect_ratio": 4.28000081380208,
+						"h": 15.0,
+						"w": 64.2000122070313,
+						"x": 729.900024414063,
+						"y": 78.0000152587891
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.52777777777778,
+						"h": 72.0,
+						"w": 110.0,
+						"x": 707.0,
+						"y": 121.000015258789
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 4
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.9375,
+						"h": 64.0,
+						"w": 60.0,
+						"x": 264.0,
+						"y": 125.000015258789
+					},
+					"id": "game:slot:2",
+					"interaction_rect": {
+						"aspect_ratio": 1.16393442622951,
+						"h": 122.0,
+						"w": 142.0,
+						"x": 223.0,
+						"y": 96.0000152587891
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 270.0,
+						"y": 79.0000152587891
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.16393442622951,
+						"h": 122.0,
+						"w": 142.0,
+						"x": 223.0,
+						"y": 96.0000152587891
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 1
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.9375,
+						"h": 64.0,
+						"w": 60.0,
+						"x": 420.0,
+						"y": 125.000015258789
+					},
+					"id": "game:slot:3",
+					"interaction_rect": {
+						"aspect_ratio": 1.12857142857143,
+						"h": 140.0,
+						"w": 158.0,
+						"x": 371.0,
+						"y": 87.0000152587891
+					},
+					"label_rect": {
+						"aspect_ratio": 5.44000040690104,
+						"h": 15.0,
+						"w": 81.6000061035156,
+						"x": 409.200012207031,
+						"y": 70.0000152587891
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.12857142857143,
+						"h": 140.0,
+						"w": 158.0,
+						"x": 371.0,
+						"y": 87.0000152587891
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 2
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.9375,
+						"h": 64.0,
+						"w": 60.0,
+						"x": 576.0,
+						"y": 125.000015258789
+					},
+					"id": "game:video_poker",
+					"interaction_rect": {
+						"aspect_ratio": 1.52777777777778,
+						"h": 72.0,
+						"w": 110.0,
+						"x": 551.0,
+						"y": 121.000015258789
+					},
+					"label_rect": {
+						"aspect_ratio": 5.05333251953125,
+						"h": 15.0,
+						"w": 75.7999877929688,
+						"x": 568.099975585938,
+						"y": 104.000015258789
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.52777777777778,
+						"h": 72.0,
+						"w": 110.0,
+						"x": 551.0,
+						"y": 121.000015258789
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 3
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.9375,
+						"h": 64.0,
+						"w": 60.0,
+						"x": 110.0,
+						"y": 125.999984741211
+					},
+					"id": "game:slot",
+					"interaction_rect": {
+						"aspect_ratio": 1.31818181818182,
+						"h": 88.0,
+						"w": 116.0,
+						"x": 82.0,
+						"y": 113.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 6.98666636149089,
+						"h": 15.0,
+						"w": 104.799995422363,
+						"x": 87.5999984741211,
+						"y": 70.9999847412109
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.31818181818182,
+						"h": 88.0,
+						"w": 116.0,
+						"x": 82.0,
+						"y": 113.999984741211
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 0
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.775,
+						"h": 80.0,
+						"w": 62.0,
+						"x": 16.0,
+						"y": 183.0
+					},
+					"id": "travel:grand_casino_high_limit",
+					"interaction_rect": {
+						"aspect_ratio": 1.0,
+						"h": 64.0,
+						"w": 64.0,
+						"x": 6.0,
+						"y": 191.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.26923076923077,
+						"h": 26.0,
+						"w": 85.0,
+						"x": 16.0,
+						"y": 283.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0,
+						"h": 64.0,
+						"w": 64.0,
+						"x": 6.0,
+						"y": 191.0
+					},
+					"scenario_owned": false,
+					"type": "travel",
+					"z_order": 10
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.7,
+						"h": 80.0,
+						"w": 56.0,
+						"x": 828.0,
+						"y": 185.0
+					},
+					"id": "travel:grand_casino_back_room",
+					"interaction_rect": {
+						"aspect_ratio": 1.0,
+						"h": 64.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 193.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.03846153846154,
+						"h": 26.0,
+						"w": 79.0,
+						"x": 805.0,
+						"y": 259.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0,
+						"h": 64.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 193.0
+					},
+					"scenario_owned": false,
+					"type": "travel",
+					"z_order": 11
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.916666812366933,
+						"h": 95.9999847412109,
+						"w": 88.0,
+						"x": 262.999969482422,
+						"y": 187.000015258789
+					},
+					"id": "grand_living:rourke",
+					"interaction_rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 270.999969482422,
+						"y": 195.000015258789
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 282.999969482422,
+						"y": 290.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 270.999969482422,
+						"y": 195.000015258789
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 18
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.9166664414936,
+						"h": 96.0000152587891,
+						"w": 87.9999923706055,
+						"x": 78.0000076293945,
+						"y": 192.999984741211
+					},
+					"id": "grand_living:rival:rival_cheater_d1_2",
+					"interaction_rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 86.0000076293945,
+						"y": 200.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 3.1999994913737,
+						"h": 15.0,
+						"w": 47.9999923706055,
+						"x": 98.0000076293945,
+						"y": 309.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 86.0000076293945,
+						"y": 200.999984741211
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 17
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.937500223517471,
+						"h": 63.9999847412109,
+						"w": 60.0,
+						"x": 649.000061035156,
+						"y": 221.000015258789
+					},
+					"id": "game:blackjack",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 86.3999938964844,
+						"w": 129.599990844727,
+						"x": 614.200134277344,
+						"y": 190.600036621094
+					},
+					"label_rect": {
+						"aspect_ratio": 4.28000081380208,
+						"h": 15.0,
+						"w": 64.2000122070313,
+						"x": 646.900146484375,
+						"y": 279.000030517578
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 86.3999938964844,
+						"w": 129.599990844727,
+						"x": 614.200134277344,
+						"y": 190.600036621094
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 5
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.9375,
+						"h": 64.0,
+						"w": 60.0,
+						"x": 185.0,
+						"y": 225.0
+					},
+					"id": "game:craps",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 96.0,
+						"w": 144.0,
+						"x": 143.0,
+						"y": 185.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 191.0,
+						"y": 168.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 96.0,
+						"w": 144.0,
+						"x": 143.0,
+						"y": 185.0
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 6
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.681818181818182,
+						"h": 88.0,
+						"w": 60.0,
+						"x": 420.0,
+						"y": 270.0
+					},
+					"id": "staff:grand_casino_host",
+					"interaction_rect": {
+						"aspect_ratio": 0.611111111111111,
+						"h": 72.0,
+						"w": 44.0,
+						"x": 428.0,
+						"y": 278.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 426.0,
+						"y": 261.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.611111111111111,
+						"h": 72.0,
+						"w": 44.0,
+						"x": 428.0,
+						"y": 278.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 15
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.0,
+						"h": 88.0,
+						"w": 88.0,
+						"x": 170.0,
+						"y": 273.0
+					},
+					"id": "event:recruitment_bishop",
+					"interaction_rect": {
+						"aspect_ratio": 1.0,
+						"h": 72.0,
+						"w": 72.0,
+						"x": 178.0,
+						"y": 281.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 190.0,
+						"y": 355.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0,
+						"h": 72.0,
+						"w": 72.0,
+						"x": 178.0,
+						"y": 281.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 8
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.916666666666667,
+						"h": 96.0,
+						"w": 88.0,
+						"x": 537.0,
+						"y": 275.0
+					},
+					"id": "grand_living:rival:rival_cheater_d1_1",
+					"interaction_rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 545.0,
+						"y": 283.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 557.0,
+						"y": 266.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 545.0,
+						"y": 283.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 16
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.0,
+						"h": 60.0,
+						"w": 60.0,
+						"x": 358.0,
+						"y": 314.0
+					},
+					"id": "casino_fixture:host_desk",
+					"interaction_rect": {
+						"aspect_ratio": 1.0,
+						"h": 44.0,
+						"w": 44.0,
+						"x": 366.0,
+						"y": 322.0
+					},
+					"label_rect": {
+						"aspect_ratio": 4.27999877929688,
+						"h": 15.0,
+						"w": 64.1999816894531,
+						"x": 355.899993896484,
+						"y": 305.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0,
+						"h": 44.0,
+						"w": 44.0,
+						"x": 366.0,
+						"y": 322.0
+					},
+					"scenario_owned": false,
+					"type": "casino_fixture",
+					"z_order": 9
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.07142857142857,
+						"h": 56.0,
+						"w": 60.0,
+						"x": 824.0,
+						"y": 358.0
+					},
+					"id": "travel:leave",
+					"interaction_rect": {
+						"aspect_ratio": 1.0,
+						"h": 64.0,
+						"w": 64.0,
+						"x": 832.0,
+						"y": 366.0
+					},
+					"label_rect": {
+						"aspect_ratio": 2.93333333333333,
+						"h": 15.0,
+						"w": 44.0,
+						"x": 840.0,
+						"y": 349.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0,
+						"h": 64.0,
+						"w": 64.0,
+						"x": 832.0,
+						"y": 366.0
+					},
+					"scenario_owned": false,
+					"type": "travel",
+					"z_order": 13
+				}
+			],
+			"overlap_count": 3,
+			"overlaps": [
+				{
+					"a": "service:house_drink",
+					"area": 32.9994964599609,
+					"b": "travel:grand_casino_back_room"
+				},
+				{
+					"a": "game:slot:2",
+					"area": 120.0,
+					"b": "grand_living:rourke"
+				},
+				{
+					"a": "game:craps",
+					"area": 960.0,
+					"b": "event:recruitment_bishop"
+				}
+			],
+			"small_screen_mode": false
+		},
+		"canvas_scenario_presentation": {
+			"crowd_density": "medium",
+			"lighting_key": "audit",
+			"palette_tint": "#e5e5e5",
+			"signage_line": "EVERY DRAWER GETS COUNTED."
+		},
+		"environment_header": {
+			"accessible_title": "Grand Casino",
+			"archetype_id": "grand_casino",
+			"blurb": "Clean play, loud money, shortcuts noted.",
+			"compact": true,
+			"configured_option_count": 4,
+			"data_path": "res://data/ui/environment_ui.json",
+			"fallback_ready": true,
+			"goal": "",
+			"guidance_visible": false,
+			"option_count": 0,
+			"situation": "EVERY DRAWER GETS COUNTED.",
+			"situation_visible": true,
+			"title_texture": "res://assets/art/ui/environment_titles/grand_casino.png"
+		},
+		"environment_object_rects": {
+			"casino_fixture:host_desk": {
+				"h": 0.102325581395349,
+				"w": 0.0488888888888889,
+				"x": 0.406666666666667,
+				"y": 0.748837209302326
+			},
+			"event:recruitment_bishop": {
+				"h": 0.167441860465116,
+				"w": 0.08,
+				"x": 0.197777777777778,
+				"y": 0.653488372093023
+			},
+			"event:scenario_audit_roster": {
+				"h": 0.111627906976744,
+				"w": 0.0888888888888889,
+				"x": 0.265555555555556,
+				"y": 0.0348837209302326
+			},
+			"game:blackjack": {
+				"h": 0.111627906976744,
+				"w": 0.0488888888888889,
+				"x": 0.73,
+				"y": 0.532558139534884
+			},
+			"game:craps": {
+				"h": 0.111627906976744,
+				"w": 0.0488888888888889,
+				"x": 0.214444444444444,
+				"y": 0.541860465116279
+			},
+			"game:pull_tabs": {
+				"h": 0.111627906976744,
+				"w": 0.0488888888888889,
+				"x": 0.822222222222222,
+				"y": 0.309302325581395
+			},
+			"game:slot": {
+				"h": 0.111627906976744,
+				"w": 0.0488888888888889,
+				"x": 0.131111111111111,
+				"y": 0.311627906976744
+			},
+			"game:slot:2": {
+				"h": 0.111627906976744,
+				"w": 0.0488888888888889,
+				"x": 0.302222222222222,
+				"y": 0.309302325581395
+			},
+			"game:slot:3": {
+				"h": 0.111627906976744,
+				"w": 0.0488888888888889,
+				"x": 0.475555555555556,
+				"y": 0.309302325581395
+			},
+			"game:video_poker": {
+				"h": 0.111627906976744,
+				"w": 0.0488888888888889,
+				"x": 0.648888888888889,
+				"y": 0.309302325581395
+			},
+			"grand_living:rival:rival_cheater_d1_1": {
+				"h": 0.186046511627907,
+				"w": 0.08,
+				"x": 0.605555555555556,
+				"y": 0.658139534883721
+			},
+			"grand_living:rival:rival_cheater_d1_2": {
+				"h": 0.186046511627907,
+				"w": 0.08,
+				"x": 0.0955555555555556,
+				"y": 0.467441860465116
+			},
+			"grand_living:rourke": {
+				"h": 0.186046511627907,
+				"w": 0.08,
+				"x": 0.301111111111111,
+				"y": 0.453488372093023
+			},
+			"service:house_drink": {
+				"h": 0.111627906976744,
+				"w": 0.0488888888888889,
+				"x": 0.898888888888889,
+				"y": 0.302325581395349
+			},
+			"staff:grand_casino_host": {
+				"h": 0.167441860465116,
+				"w": 0.0488888888888889,
+				"x": 0.475555555555556,
+				"y": 0.646511627906977
+			},
+			"travel:grand_casino_back_room": {
+				"h": 0.148837209302326,
+				"w": 0.0711111111111111,
+				"x": 0.928888888888889,
+				"y": 0.448837209302326
+			},
+			"travel:grand_casino_cage": {
+				"h": 0.148837209302326,
+				"w": 0.0711111111111111,
+				"x": 0.0155555555555556,
+				"y": 0.23953488372093
+			},
+			"travel:grand_casino_high_limit": {
+				"h": 0.148837209302326,
+				"w": 0.0711111111111111,
+				"x": 0.00666666666666667,
+				"y": 0.444186046511628
+			},
+			"travel:leave": {
+				"h": 0.148837209302326,
+				"w": 0.0711111111111111,
+				"x": 0.924444444444444,
+				"y": 0.851162790697674
+			}
+		},
+		"event_ids": [
+			"scenario_audit_roster",
+			"recruitment_bishop"
+		],
+		"file": "grand_casino_audit_night.png",
+		"layout_stress_fixture": "",
+		"passed": false,
+		"scenario_presentation": {
+			"crowd_density": "medium",
+			"lighting_key": "audit",
+			"palette_tint": "#e5e5e5",
+			"signage_line": "EVERY DRAWER GETS COUNTED."
+		},
+		"size": [
+			1280,
+			720
+		],
+		"stake_ceiling": 35,
+		"stake_floor": 5
+	},
+	"grand_casino_gala_night": {
+		"archetype_id": "grand_casino",
+		"canvas_object_layout": {
+			"allowed_overlap_count": 0,
+			"allowed_overlaps": [],
+			"deterministic_z_order": true,
+			"gap": 8.0,
+			"label_layout": {
+				"default_label_overlap_count": 4,
+				"default_object_overlap_count": 14,
+				"detached_label_count": 0,
+				"enabled": true,
+				"label_count": 19,
+				"max_owner_gap": 28.0,
+				"moved_count": 9,
+				"overlap_policy": "bounded_tether",
+				"owner_tether_limit": 28.0,
+				"resolved_label_overlap_count": 1,
+				"resolved_object_overlap_count": 2
+			},
+			"margin": 16.0,
+			"objects": [
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.74545454545455,
+						"h": 55.0,
+						"w": 96.0,
+						"x": 231.0,
+						"y": 16.0
+					},
+					"id": "event:scenario_audit_roster",
+					"interaction_rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 48.0,
+						"w": 80.0,
+						"x": 239.0,
+						"y": 15.0
+					},
+					"label_rect": {
+						"aspect_ratio": 6.98666788736979,
+						"h": 15.0,
+						"w": 104.800018310547,
+						"x": 226.600006103516,
+						"y": 65.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 48.0,
+						"w": 80.0,
+						"x": 239.0,
+						"y": 15.0
+					},
+					"scenario_owned": false,
+					"type": "event",
+					"z_order": 8
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.875,
+						"h": 80.0,
+						"w": 70.0,
+						"x": 16.0,
+						"y": 95.0
+					},
+					"id": "travel:grand_casino_cage",
+					"interaction_rect": {
+						"aspect_ratio": 1.0,
+						"h": 64.0,
+						"w": 64.0,
+						"x": 14.0000038146973,
+						"y": 103.0
+					},
+					"label_rect": {
+						"aspect_ratio": 5.68666687011719,
+						"h": 15.0,
+						"w": 85.3000030517578,
+						"x": 16.0,
+						"y": 86.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0,
+						"h": 64.0,
+						"w": 64.0,
+						"x": 14.0000038146973,
+						"y": 103.0
+					},
+					"scenario_owned": false,
+					"type": "travel",
+					"z_order": 12
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.9375,
+						"h": 64.0,
+						"w": 60.0,
+						"x": 801.0,
+						"y": 121.999984741211
+					},
+					"id": "service:house_drink",
+					"interaction_rect": {
+						"aspect_ratio": 0.916666666666667,
+						"h": 48.0,
+						"w": 44.0,
+						"x": 809.0,
+						"y": 129.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 5.05333251953125,
+						"h": 15.0,
+						"w": 75.7999877929688,
+						"x": 793.099975585938,
+						"y": 99.9999847412109
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.916666666666667,
+						"h": 48.0,
+						"w": 44.0,
+						"x": 809.0,
+						"y": 129.999984741211
+					},
+					"scenario_owned": false,
+					"type": "drink",
+					"z_order": 14
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.9375,
+						"h": 64.0,
+						"w": 60.0,
+						"x": 732.0,
+						"y": 125.000015258789
+					},
+					"id": "game:pull_tabs",
+					"interaction_rect": {
+						"aspect_ratio": 1.52777777777778,
+						"h": 72.0,
+						"w": 110.0,
+						"x": 707.0,
+						"y": 121.000015258789
+					},
+					"label_rect": {
+						"aspect_ratio": 4.28000081380208,
+						"h": 15.0,
+						"w": 64.2000122070313,
+						"x": 729.900024414063,
+						"y": 78.0000152587891
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.52777777777778,
+						"h": 72.0,
+						"w": 110.0,
+						"x": 707.0,
+						"y": 121.000015258789
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 4
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.9375,
+						"h": 64.0,
+						"w": 60.0,
+						"x": 264.0,
+						"y": 125.000015258789
+					},
+					"id": "game:slot:2",
+					"interaction_rect": {
+						"aspect_ratio": 1.16393442622951,
+						"h": 122.0,
+						"w": 142.0,
+						"x": 223.0,
+						"y": 96.0000152587891
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 270.0,
+						"y": 79.0000152587891
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.16393442622951,
+						"h": 122.0,
+						"w": 142.0,
+						"x": 223.0,
+						"y": 96.0000152587891
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 1
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.9375,
+						"h": 64.0,
+						"w": 60.0,
+						"x": 420.0,
+						"y": 125.000015258789
+					},
+					"id": "game:slot:3",
+					"interaction_rect": {
+						"aspect_ratio": 1.12857142857143,
+						"h": 140.0,
+						"w": 158.0,
+						"x": 371.0,
+						"y": 87.0000152587891
+					},
+					"label_rect": {
+						"aspect_ratio": 5.44000040690104,
+						"h": 15.0,
+						"w": 81.6000061035156,
+						"x": 409.200012207031,
+						"y": 70.0000152587891
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.12857142857143,
+						"h": 140.0,
+						"w": 158.0,
+						"x": 371.0,
+						"y": 87.0000152587891
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 2
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.9375,
+						"h": 64.0,
+						"w": 60.0,
+						"x": 576.0,
+						"y": 125.000015258789
+					},
+					"id": "game:video_poker",
+					"interaction_rect": {
+						"aspect_ratio": 1.52777777777778,
+						"h": 72.0,
+						"w": 110.0,
+						"x": 551.0,
+						"y": 121.000015258789
+					},
+					"label_rect": {
+						"aspect_ratio": 5.05333251953125,
+						"h": 15.0,
+						"w": 75.7999877929688,
+						"x": 568.099975585938,
+						"y": 104.000015258789
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.52777777777778,
+						"h": 72.0,
+						"w": 110.0,
+						"x": 551.0,
+						"y": 121.000015258789
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 3
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.9375,
+						"h": 64.0,
+						"w": 60.0,
+						"x": 110.0,
+						"y": 125.999984741211
+					},
+					"id": "game:slot",
+					"interaction_rect": {
+						"aspect_ratio": 1.31818181818182,
+						"h": 88.0,
+						"w": 116.0,
+						"x": 82.0,
+						"y": 113.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 6.98666636149089,
+						"h": 15.0,
+						"w": 104.799995422363,
+						"x": 87.5999984741211,
+						"y": 70.9999847412109
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.31818181818182,
+						"h": 88.0,
+						"w": 116.0,
+						"x": 82.0,
+						"y": 113.999984741211
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 0
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.775,
+						"h": 80.0,
+						"w": 62.0,
+						"x": 16.0,
+						"y": 183.0
+					},
+					"id": "travel:grand_casino_high_limit",
+					"interaction_rect": {
+						"aspect_ratio": 1.0,
+						"h": 64.0,
+						"w": 64.0,
+						"x": 6.0,
+						"y": 191.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.26923076923077,
+						"h": 26.0,
+						"w": 85.0,
+						"x": 16.0,
+						"y": 283.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0,
+						"h": 64.0,
+						"w": 64.0,
+						"x": 6.0,
+						"y": 191.0
+					},
+					"scenario_owned": false,
+					"type": "travel",
+					"z_order": 10
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.7,
+						"h": 80.0,
+						"w": 56.0,
+						"x": 828.0,
+						"y": 185.0
+					},
+					"id": "travel:grand_casino_back_room",
+					"interaction_rect": {
+						"aspect_ratio": 1.0,
+						"h": 64.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 193.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.03846153846154,
+						"h": 26.0,
+						"w": 79.0,
+						"x": 805.0,
+						"y": 259.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0,
+						"h": 64.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 193.0
+					},
+					"scenario_owned": false,
+					"type": "travel",
+					"z_order": 11
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.916666812366933,
+						"h": 95.9999847412109,
+						"w": 88.0,
+						"x": 262.999969482422,
+						"y": 187.000015258789
+					},
+					"id": "grand_living:rourke",
+					"interaction_rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 270.999969482422,
+						"y": 195.000015258789
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 282.999969482422,
+						"y": 290.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 270.999969482422,
+						"y": 195.000015258789
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 19
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.9166664414936,
+						"h": 96.0000152587891,
+						"w": 87.9999923706055,
+						"x": 78.0000076293945,
+						"y": 192.999984741211
+					},
+					"id": "grand_living:rival:rival_cheater_d1_2",
+					"interaction_rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 86.0000076293945,
+						"y": 200.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 3.1999994913737,
+						"h": 15.0,
+						"w": 47.9999923706055,
+						"x": 98.0000076293945,
+						"y": 309.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 86.0000076293945,
+						"y": 200.999984741211
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 18
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.937500223517471,
+						"h": 63.9999847412109,
+						"w": 60.0,
+						"x": 649.000061035156,
+						"y": 221.000015258789
+					},
+					"id": "game:blackjack",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 86.3999938964844,
+						"w": 129.599990844727,
+						"x": 614.200134277344,
+						"y": 190.600036621094
+					},
+					"label_rect": {
+						"aspect_ratio": 4.28000081380208,
+						"h": 15.0,
+						"w": 64.2000122070313,
+						"x": 646.900146484375,
+						"y": 279.000030517578
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 86.3999938964844,
+						"w": 129.599990844727,
+						"x": 614.200134277344,
+						"y": 190.600036621094
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 5
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.9375,
+						"h": 64.0,
+						"w": 60.0,
+						"x": 185.0,
+						"y": 225.0
+					},
+					"id": "game:craps",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 96.0,
+						"w": 144.0,
+						"x": 143.0,
+						"y": 185.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 191.0,
+						"y": 168.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 96.0,
+						"w": 144.0,
+						"x": 143.0,
+						"y": 185.0
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 6
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.681818181818182,
+						"h": 88.0,
+						"w": 60.0,
+						"x": 420.0,
+						"y": 270.0
+					},
+					"id": "staff:grand_casino_host",
+					"interaction_rect": {
+						"aspect_ratio": 0.611111111111111,
+						"h": 72.0,
+						"w": 44.0,
+						"x": 428.0,
+						"y": 278.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 426.0,
+						"y": 261.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.611111111111111,
+						"h": 72.0,
+						"w": 44.0,
+						"x": 428.0,
+						"y": 278.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 15
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.0,
+						"h": 88.0,
+						"w": 88.0,
+						"x": 170.0,
+						"y": 273.0
+					},
+					"id": "event:recruitment_bishop",
+					"interaction_rect": {
+						"aspect_ratio": 1.0,
+						"h": 72.0,
+						"w": 72.0,
+						"x": 178.0,
+						"y": 281.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 190.0,
+						"y": 355.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0,
+						"h": 72.0,
+						"w": 72.0,
+						"x": 178.0,
+						"y": 281.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 7
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.916666666666667,
+						"h": 96.0,
+						"w": 88.0,
+						"x": 537.0,
+						"y": 275.0
+					},
+					"id": "grand_living:rival:rival_cheater_d1_1",
+					"interaction_rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 545.0,
+						"y": 283.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 557.0,
+						"y": 266.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 545.0,
+						"y": 283.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 17
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.0,
+						"h": 60.0,
+						"w": 60.0,
+						"x": 358.0,
+						"y": 314.0
+					},
+					"id": "casino_fixture:host_desk",
+					"interaction_rect": {
+						"aspect_ratio": 1.0,
+						"h": 44.0,
+						"w": 44.0,
+						"x": 366.0,
+						"y": 322.0
+					},
+					"label_rect": {
+						"aspect_ratio": 4.27999877929688,
+						"h": 15.0,
+						"w": 64.1999816894531,
+						"x": 355.899993896484,
+						"y": 305.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0,
+						"h": 44.0,
+						"w": 44.0,
+						"x": 366.0,
+						"y": 322.0
+					},
+					"scenario_owned": false,
+					"type": "casino_fixture",
+					"z_order": 9
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.07142857142857,
+						"h": 56.0,
+						"w": 60.0,
+						"x": 824.0,
+						"y": 358.0
+					},
+					"id": "travel:leave",
+					"interaction_rect": {
+						"aspect_ratio": 1.0,
+						"h": 64.0,
+						"w": 64.0,
+						"x": 832.0,
+						"y": 366.0
+					},
+					"label_rect": {
+						"aspect_ratio": 2.93333333333333,
+						"h": 15.0,
+						"w": 44.0,
+						"x": 840.0,
+						"y": 349.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0,
+						"h": 64.0,
+						"w": 64.0,
+						"x": 832.0,
+						"y": 366.0
+					},
+					"scenario_owned": false,
+					"type": "travel",
+					"z_order": 13
+				}
+			],
+			"overlap_count": 3,
+			"overlaps": [
+				{
+					"a": "service:house_drink",
+					"area": 32.9994964599609,
+					"b": "travel:grand_casino_back_room"
+				},
+				{
+					"a": "game:slot:2",
+					"area": 120.0,
+					"b": "grand_living:rourke"
+				},
+				{
+					"a": "game:craps",
+					"area": 960.0,
+					"b": "event:recruitment_bishop"
+				}
+			],
+			"small_screen_mode": false
+		},
+		"canvas_scenario_presentation": {
+			"crowd_density": "packed",
+			"lighting_key": "gala",
+			"palette_tint": "#ffd60a",
+			"signage_line": "THE HOUSE WELCOMES GENEROSITY."
+		},
+		"environment_header": {
+			"accessible_title": "Grand Casino",
+			"archetype_id": "grand_casino",
+			"blurb": "Clean play, loud money, shortcuts noted.",
+			"compact": true,
+			"configured_option_count": 4,
+			"data_path": "res://data/ui/environment_ui.json",
+			"fallback_ready": true,
+			"goal": "",
+			"guidance_visible": false,
+			"option_count": 0,
+			"situation": "THE HOUSE WELCOMES GENEROSITY.",
+			"situation_visible": true,
+			"title_texture": "res://assets/art/ui/environment_titles/grand_casino.png"
+		},
+		"environment_object_rects": {
+			"casino_fixture:host_desk": {
+				"h": 0.102325581395349,
+				"w": 0.0488888888888889,
+				"x": 0.406666666666667,
+				"y": 0.748837209302326
+			},
+			"event:recruitment_bishop": {
+				"h": 0.167441860465116,
+				"w": 0.08,
+				"x": 0.197777777777778,
+				"y": 0.653488372093023
+			},
+			"event:scenario_audit_roster": {
+				"h": 0.111627906976744,
+				"w": 0.0888888888888889,
+				"x": 0.265555555555556,
+				"y": 0.0348837209302326
+			},
+			"event:the_house_calls": {
+				"h": 0.167441860465116,
+				"w": 0.0488888888888889,
+				"x": 0.544444444444444,
+				"y": 0.655813953488372
+			},
+			"game:blackjack": {
+				"h": 0.111627906976744,
+				"w": 0.0488888888888889,
+				"x": 0.73,
+				"y": 0.532558139534884
+			},
+			"game:craps": {
+				"h": 0.111627906976744,
+				"w": 0.0488888888888889,
+				"x": 0.214444444444444,
+				"y": 0.541860465116279
+			},
+			"game:pull_tabs": {
+				"h": 0.111627906976744,
+				"w": 0.0488888888888889,
+				"x": 0.822222222222222,
+				"y": 0.309302325581395
+			},
+			"game:slot": {
+				"h": 0.111627906976744,
+				"w": 0.0488888888888889,
+				"x": 0.131111111111111,
+				"y": 0.311627906976744
+			},
+			"game:slot:2": {
+				"h": 0.111627906976744,
+				"w": 0.0488888888888889,
+				"x": 0.302222222222222,
+				"y": 0.309302325581395
+			},
+			"game:slot:3": {
+				"h": 0.111627906976744,
+				"w": 0.0488888888888889,
+				"x": 0.475555555555556,
+				"y": 0.309302325581395
+			},
+			"game:video_poker": {
+				"h": 0.111627906976744,
+				"w": 0.0488888888888889,
+				"x": 0.648888888888889,
+				"y": 0.309302325581395
+			},
+			"grand_living:rival:rival_cheater_d1_1": {
+				"h": 0.186046511627907,
+				"w": 0.08,
+				"x": 0.605555555555556,
+				"y": 0.658139534883721
+			},
+			"grand_living:rival:rival_cheater_d1_2": {
+				"h": 0.186046511627907,
+				"w": 0.08,
+				"x": 0.0955555555555556,
+				"y": 0.467441860465116
+			},
+			"grand_living:rourke": {
+				"h": 0.186046511627907,
+				"w": 0.08,
+				"x": 0.301111111111111,
+				"y": 0.453488372093023
+			},
+			"service:house_drink": {
+				"h": 0.111627906976744,
+				"w": 0.0488888888888889,
+				"x": 0.898888888888889,
+				"y": 0.302325581395349
+			},
+			"staff:grand_casino_host": {
+				"h": 0.167441860465116,
+				"w": 0.0488888888888889,
+				"x": 0.475555555555556,
+				"y": 0.646511627906977
+			},
+			"travel:grand_casino_back_room": {
+				"h": 0.148837209302326,
+				"w": 0.0711111111111111,
+				"x": 0.928888888888889,
+				"y": 0.448837209302326
+			},
+			"travel:grand_casino_cage": {
+				"h": 0.148837209302326,
+				"w": 0.0711111111111111,
+				"x": 0.0155555555555556,
+				"y": 0.23953488372093
+			},
+			"travel:grand_casino_high_limit": {
+				"h": 0.148837209302326,
+				"w": 0.0711111111111111,
+				"x": 0.00666666666666667,
+				"y": 0.444186046511628
+			},
+			"travel:leave": {
+				"h": 0.148837209302326,
+				"w": 0.0711111111111111,
+				"x": 0.924444444444444,
+				"y": 0.851162790697674
+			}
+		},
+		"event_ids": [
+			"recruitment_bishop",
+			"scenario_audit_roster",
+			"the_house_calls",
+			"scenario_gala_cover"
+		],
+		"file": "grand_casino_gala_night.png",
+		"layout_stress_fixture": "",
+		"passed": false,
+		"scenario_presentation": {
+			"crowd_density": "packed",
+			"lighting_key": "gala",
+			"palette_tint": "#ffd60a",
+			"signage_line": "THE HOUSE WELCOMES GENEROSITY."
+		},
+		"size": [
+			1280,
+			720
+		],
+		"stake_ceiling": 35,
+		"stake_floor": 5
+	},
+	"jazz_club_guest_legend": {
+		"archetype_id": "jazz_club",
+		"canvas_object_layout": {
+			"allowed_overlap_count": 0,
+			"allowed_overlaps": [],
+			"deterministic_z_order": true,
+			"gap": 8.0,
+			"label_layout": {
+				"default_label_overlap_count": 1,
+				"default_object_overlap_count": 3,
+				"detached_label_count": 0,
+				"enabled": true,
+				"label_count": 11,
+				"max_owner_gap": 15.0,
+				"moved_count": 4,
+				"overlap_policy": "bounded_tether",
+				"owner_tether_limit": 28.0,
+				"resolved_label_overlap_count": 0,
+				"resolved_object_overlap_count": 0
+			},
+			"margin": 16.0,
+			"objects": [
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.916666666666667,
+						"h": 96.0,
+						"w": 88.0,
+						"x": 351.0,
+						"y": 96.0
+					},
+					"id": "musician:jazz_cello",
+					"interaction_rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 359.0,
+						"y": 104.0
+					},
+					"label_rect": {
+						"aspect_ratio": 5.44000040690104,
+						"h": 15.0,
+						"w": 81.6000061035156,
+						"x": 354.200012207031,
+						"y": 87.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 359.0,
+						"y": 104.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 8
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.916666666666667,
+						"h": 96.0,
+						"w": 88.0,
+						"x": 187.0,
+						"y": 96.0
+					},
+					"id": "musician:jazz_sax",
+					"interaction_rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 195.0,
+						"y": 104.0
+					},
+					"label_rect": {
+						"aspect_ratio": 4.66666666666667,
+						"h": 15.0,
+						"w": 70.0,
+						"x": 196.0,
+						"y": 87.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 195.0,
+						"y": 104.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 10
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.916666666666667,
+						"h": 96.0,
+						"w": 88.0,
+						"x": 271.0,
+						"y": 96.9999847412109
+					},
+					"id": "musician:jazz_drummer",
+					"interaction_rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 279.0,
+						"y": 104.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 3.50666707356771,
+						"h": 15.0,
+						"w": 52.6000061035156,
+						"x": 288.700012207031,
+						"y": 87.9999847412109
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 279.0,
+						"y": 104.999984741211
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 9
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.375,
+						"h": 64.0,
+						"w": 88.0,
+						"x": 790.0,
+						"y": 129.0
+					},
+					"id": "item:ledger_pencil",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 798.0,
+						"y": 137.0
+					},
+					"label_rect": {
+						"aspect_ratio": 5.82666829427083,
+						"h": 15.0,
+						"w": 87.4000244140625,
+						"x": 790.299987792969,
+						"y": 107.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 798.0,
+						"y": 137.0
+					},
+					"scenario_owned": false,
+					"type": "item",
+					"z_order": 1
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.5,
+						"h": 64.0,
+						"w": 96.0,
+						"x": 566.0,
+						"y": 130.999984741211
+					},
+					"id": "game:pull_tabs",
+					"interaction_rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 48.0,
+						"w": 80.0,
+						"x": 574.0,
+						"y": 138.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 4.28000081380208,
+						"h": 15.0,
+						"w": 64.2000122070313,
+						"x": 581.900024414063,
+						"y": 121.999984741211
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 48.0,
+						"w": 80.0,
+						"x": 574.0,
+						"y": 138.999984741211
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 0
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.375,
+						"h": 64.0,
+						"w": 88.0,
+						"x": 646.000061035156,
+						"y": 130.999984741211
+					},
+					"id": "item:lucky_penny",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 654.000061035156,
+						"y": 138.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 5.05333251953125,
+						"h": 15.0,
+						"w": 75.7999877929688,
+						"x": 652.100036621094,
+						"y": 108.999984741211
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 654.000061035156,
+						"y": 138.999984741211
+					},
+					"scenario_owned": false,
+					"type": "item",
+					"z_order": 2
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.916666666666667,
+						"h": 96.0,
+						"w": 88.0,
+						"x": 718.0,
+						"y": 118.999984741211
+					},
+					"id": "shopkeeper:merchant",
+					"interaction_rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 726.0,
+						"y": 126.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 3.8933349609375,
+						"h": 15.0,
+						"w": 58.4000244140625,
+						"x": 732.799987792969,
+						"y": 208.999984741211
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 726.0,
+						"y": 126.999984741211
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 3
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.75,
+						"h": 96.0,
+						"w": 72.0,
+						"x": 812.0,
+						"y": 181.0
+					},
+					"id": "character:dot",
+					"interaction_rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 820.0,
+						"y": 189.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 832.0,
+						"y": 271.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 820.0,
+						"y": 189.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 7
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.37500032782562,
+						"h": 63.9999847412109,
+						"w": 88.0,
+						"x": 307.0,
+						"y": 221.000015258789
+					},
+					"id": "fixture:jazz_band_stage",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 315.0,
+						"y": 229.000015258789
+					},
+					"label_rect": {
+						"aspect_ratio": 4.27999877929688,
+						"h": 15.0,
+						"w": 64.1999816894531,
+						"x": 318.899993896484,
+						"y": 212.000015258789
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 315.0,
+						"y": 229.000015258789
+					},
+					"scenario_owned": false,
+					"type": "fixture",
+					"z_order": 6
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.37500032782562,
+						"h": 63.9999847412109,
+						"w": 88.0,
+						"x": 227.0,
+						"y": 221.000015258789
+					},
+					"id": "service:jazz_band_tip_jar",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 235.0,
+						"y": 229.000015258789
+					},
+					"label_rect": {
+						"aspect_ratio": 5.43999938964844,
+						"h": 15.0,
+						"w": 81.5999908447266,
+						"x": 230.199996948242,
+						"y": 212.000015258789
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 235.0,
+						"y": 229.000015258789
+					},
+					"scenario_owned": false,
+					"type": "service",
+					"z_order": 5
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.875,
+						"h": 64.0,
+						"w": 56.0,
+						"x": 828.0,
+						"y": 350.0
+					},
+					"id": "travel:leave",
+					"interaction_rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 358.0
+					},
+					"label_rect": {
+						"aspect_ratio": 2.66666666666667,
+						"h": 15.0,
+						"w": 40.0,
+						"x": 844.0,
+						"y": 341.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 358.0
+					},
+					"scenario_owned": false,
+					"type": "travel",
+					"z_order": 4
+				}
+			],
+			"overlap_count": 7,
+			"overlaps": [
+				{
+					"a": "musician:jazz_cello",
+					"area": 760.000122070313,
+					"b": "musician:jazz_drummer"
+				},
+				{
+					"a": "musician:jazz_sax",
+					"area": 380.000061035156,
+					"b": "musician:jazz_drummer"
+				},
+				{
+					"a": "item:ledger_pencil",
+					"area": 1024.0,
+					"b": "shopkeeper:merchant"
+				},
+				{
+					"a": "item:ledger_pencil",
+					"area": 792.0,
+					"b": "character:dot"
+				},
+				{
+					"a": "game:pull_tabs",
+					"area": 1023.99609375,
+					"b": "item:lucky_penny"
+				},
+				{
+					"a": "item:lucky_penny",
+					"area": 1024.00390625,
+					"b": "shopkeeper:merchant"
+				},
+				{
+					"a": "fixture:jazz_band_stage",
+					"area": 511.999877929688,
+					"b": "service:jazz_band_tip_jar"
+				}
+			],
+			"small_screen_mode": false
+		},
+		"canvas_scenario_presentation": {
+			"crowd_density": "packed",
+			"lighting_key": "guest_legend",
+			"palette_tint": "#ffd166",
+			"signage_line": "ONE MORE CHAIR ON STAGE."
+		},
+		"environment_header": {
+			"accessible_title": "After Hours Jazz Club",
+			"archetype_id": "jazz_club",
+			"blurb": "The band bends the room. Timing is provided.",
+			"compact": true,
+			"configured_option_count": 4,
+			"data_path": "res://data/ui/environment_ui.json",
+			"fallback_ready": true,
+			"goal": "",
+			"guidance_visible": false,
+			"option_count": 0,
+			"situation": "ONE MORE CHAIR ON STAGE.",
+			"situation_visible": true,
+			"title_texture": "res://assets/art/ui/environment_titles/jazz_club.png"
+		},
+		"environment_object_rects": {
+			"character:dot": {
+				"h": 0.186046511627907,
+				"w": 0.08,
+				"x": 0.911111111111111,
+				"y": 0.43953488372093
+			},
+			"fixture:jazz_band_stage": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.35,
+				"y": 0.532558139534884
+			},
+			"game:pull_tabs": {
+				"h": 0.111627906976744,
+				"w": 0.0888888888888889,
+				"x": 0.637777777777778,
+				"y": 0.323255813953488
+			},
+			"item:ledger_pencil": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.886666666666667,
+				"y": 0.318604651162791
+			},
+			"item:lucky_penny": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.726666666666667,
+				"y": 0.323255813953488
+			},
+			"musician:jazz_cello": {
+				"h": 0.186046511627907,
+				"w": 0.08,
+				"x": 0.398888888888889,
+				"y": 0.241860465116279
+			},
+			"musician:jazz_drummer": {
+				"h": 0.186046511627907,
+				"w": 0.08,
+				"x": 0.31,
+				"y": 0.244186046511628
+			},
+			"musician:jazz_sax": {
+				"h": 0.186046511627907,
+				"w": 0.08,
+				"x": 0.216666666666667,
+				"y": 0.241860465116279
+			},
+			"service:jazz_band_tip_jar": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.261111111111111,
+				"y": 0.532558139534884
+			},
+			"shopkeeper:merchant": {
+				"h": 0.186046511627907,
+				"w": 0.08,
+				"x": 0.806666666666667,
+				"y": 0.295348837209302
+			},
+			"travel:leave": {
+				"h": 0.167441860465116,
+				"w": 0.0711111111111111,
+				"x": 0.928888888888889,
+				"y": 0.832558139534884
+			}
+		},
+		"event_ids": [
+			"scenario_guest_legend_tip"
+		],
+		"file": "jazz_club_guest_legend.png",
+		"layout_stress_fixture": "",
+		"passed": false,
+		"scenario_presentation": {
+			"crowd_density": "packed",
+			"lighting_key": "guest_legend",
+			"palette_tint": "#ffd166",
+			"signage_line": "ONE MORE CHAIR ON STAGE."
+		},
+		"size": [
+			1280,
+			720
+		],
+		"stake_ceiling": 0,
+		"stake_floor": 0
+	},
+	"jazz_club_recording_night": {
+		"archetype_id": "jazz_club",
+		"canvas_object_layout": {
+			"allowed_overlap_count": 0,
+			"allowed_overlaps": [],
+			"deterministic_z_order": true,
+			"gap": 8.0,
+			"label_layout": {
+				"default_label_overlap_count": 1,
+				"default_object_overlap_count": 2,
+				"detached_label_count": 0,
+				"enabled": true,
+				"label_count": 10,
+				"max_owner_gap": 15.0,
+				"moved_count": 3,
+				"overlap_policy": "bounded_tether",
+				"owner_tether_limit": 28.0,
+				"resolved_label_overlap_count": 0,
+				"resolved_object_overlap_count": 0
+			},
+			"margin": 16.0,
+			"objects": [
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.916666666666667,
+						"h": 96.0,
+						"w": 88.0,
+						"x": 351.0,
+						"y": 96.0
+					},
+					"id": "musician:jazz_cello",
+					"interaction_rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 359.0,
+						"y": 104.0
+					},
+					"label_rect": {
+						"aspect_ratio": 5.44000040690104,
+						"h": 15.0,
+						"w": 81.6000061035156,
+						"x": 354.200012207031,
+						"y": 87.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 359.0,
+						"y": 104.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 7
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.916666666666667,
+						"h": 96.0,
+						"w": 88.0,
+						"x": 187.0,
+						"y": 96.0
+					},
+					"id": "musician:jazz_sax",
+					"interaction_rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 195.0,
+						"y": 104.0
+					},
+					"label_rect": {
+						"aspect_ratio": 4.66666666666667,
+						"h": 15.0,
+						"w": 70.0,
+						"x": 196.0,
+						"y": 87.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 195.0,
+						"y": 104.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 9
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.916666666666667,
+						"h": 96.0,
+						"w": 88.0,
+						"x": 271.0,
+						"y": 96.9999847412109
+					},
+					"id": "musician:jazz_drummer",
+					"interaction_rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 279.0,
+						"y": 104.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 3.50666707356771,
+						"h": 15.0,
+						"w": 52.6000061035156,
+						"x": 288.700012207031,
+						"y": 87.9999847412109
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 279.0,
+						"y": 104.999984741211
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 8
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.375,
+						"h": 64.0,
+						"w": 88.0,
+						"x": 790.0,
+						"y": 129.0
+					},
+					"id": "item:split_reel_note",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 798.0,
+						"y": 137.0
+					},
+					"label_rect": {
+						"aspect_ratio": 6.6,
+						"h": 15.0,
+						"w": 99.0,
+						"x": 784.5,
+						"y": 107.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 798.0,
+						"y": 137.0
+					},
+					"scenario_owned": false,
+					"type": "item",
+					"z_order": 1
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.5,
+						"h": 64.0,
+						"w": 96.0,
+						"x": 566.0,
+						"y": 130.999984741211
+					},
+					"id": "game:pull_tabs",
+					"interaction_rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 48.0,
+						"w": 80.0,
+						"x": 574.0,
+						"y": 138.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 4.28000081380208,
+						"h": 15.0,
+						"w": 64.2000122070313,
+						"x": 581.900024414063,
+						"y": 121.999984741211
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.66666666666667,
+						"h": 48.0,
+						"w": 80.0,
+						"x": 574.0,
+						"y": 138.999984741211
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 0
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.916666666666667,
+						"h": 96.0,
+						"w": 88.0,
+						"x": 718.0,
+						"y": 118.999984741211
+					},
+					"id": "shopkeeper:merchant",
+					"interaction_rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 726.0,
+						"y": 126.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 3.8933349609375,
+						"h": 15.0,
+						"w": 58.4000244140625,
+						"x": 732.799987792969,
+						"y": 208.999984741211
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 726.0,
+						"y": 126.999984741211
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 2
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.75,
+						"h": 96.0,
+						"w": 72.0,
+						"x": 812.0,
+						"y": 181.0
+					},
+					"id": "character:dot",
+					"interaction_rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 820.0,
+						"y": 189.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 832.0,
+						"y": 271.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 820.0,
+						"y": 189.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 6
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.37500032782562,
+						"h": 63.9999847412109,
+						"w": 88.0,
+						"x": 307.0,
+						"y": 221.000015258789
+					},
+					"id": "fixture:jazz_band_stage",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 315.0,
+						"y": 229.000015258789
+					},
+					"label_rect": {
+						"aspect_ratio": 4.27999877929688,
+						"h": 15.0,
+						"w": 64.1999816894531,
+						"x": 318.899993896484,
+						"y": 212.000015258789
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 315.0,
+						"y": 229.000015258789
+					},
+					"scenario_owned": false,
+					"type": "fixture",
+					"z_order": 5
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.37500032782562,
+						"h": 63.9999847412109,
+						"w": 88.0,
+						"x": 227.0,
+						"y": 221.000015258789
+					},
+					"id": "service:jazz_band_tip_jar",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 235.0,
+						"y": 229.000015258789
+					},
+					"label_rect": {
+						"aspect_ratio": 5.43999938964844,
+						"h": 15.0,
+						"w": 81.5999908447266,
+						"x": 230.199996948242,
+						"y": 212.000015258789
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 235.0,
+						"y": 229.000015258789
+					},
+					"scenario_owned": false,
+					"type": "service",
+					"z_order": 4
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.875,
+						"h": 64.0,
+						"w": 56.0,
+						"x": 828.0,
+						"y": 350.0
+					},
+					"id": "travel:leave",
+					"interaction_rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 358.0
+					},
+					"label_rect": {
+						"aspect_ratio": 2.66666666666667,
+						"h": 15.0,
+						"w": 40.0,
+						"x": 844.0,
+						"y": 341.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 358.0
+					},
+					"scenario_owned": false,
+					"type": "travel",
+					"z_order": 3
+				}
+			],
+			"overlap_count": 5,
+			"overlaps": [
+				{
+					"a": "musician:jazz_cello",
+					"area": 760.000122070313,
+					"b": "musician:jazz_drummer"
+				},
+				{
+					"a": "musician:jazz_sax",
+					"area": 380.000061035156,
+					"b": "musician:jazz_drummer"
+				},
+				{
+					"a": "item:split_reel_note",
+					"area": 1024.0,
+					"b": "shopkeeper:merchant"
+				},
+				{
+					"a": "item:split_reel_note",
+					"area": 792.0,
+					"b": "character:dot"
+				},
+				{
+					"a": "fixture:jazz_band_stage",
+					"area": 511.999877929688,
+					"b": "service:jazz_band_tip_jar"
+				}
+			],
+			"small_screen_mode": false
+		},
+		"canvas_scenario_presentation": {
+			"crowd_density": "sparse",
+			"lighting_key": "recording",
+			"palette_tint": "#8ecae6",
+			"signage_line": "QUIET FLOOR. TAPE ROLLING."
+		},
+		"environment_header": {
+			"accessible_title": "After Hours Supper Club",
+			"archetype_id": "jazz_club",
+			"blurb": "The band bends the room. Timing is provided.",
+			"compact": true,
+			"configured_option_count": 4,
+			"data_path": "res://data/ui/environment_ui.json",
+			"fallback_ready": true,
+			"goal": "",
+			"guidance_visible": false,
+			"option_count": 0,
+			"situation": "QUIET FLOOR. TAPE ROLLING.",
+			"situation_visible": true,
+			"title_texture": "res://assets/art/ui/environment_titles/jazz_club.png"
+		},
+		"environment_object_rects": {
+			"character:dot": {
+				"h": 0.186046511627907,
+				"w": 0.08,
+				"x": 0.911111111111111,
+				"y": 0.43953488372093
+			},
+			"fixture:jazz_band_stage": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.35,
+				"y": 0.532558139534884
+			},
+			"game:pull_tabs": {
+				"h": 0.111627906976744,
+				"w": 0.0888888888888889,
+				"x": 0.637777777777778,
+				"y": 0.323255813953488
+			},
+			"item:split_reel_note": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.886666666666667,
+				"y": 0.318604651162791
+			},
+			"musician:jazz_cello": {
+				"h": 0.186046511627907,
+				"w": 0.08,
+				"x": 0.398888888888889,
+				"y": 0.241860465116279
+			},
+			"musician:jazz_drummer": {
+				"h": 0.186046511627907,
+				"w": 0.08,
+				"x": 0.31,
+				"y": 0.244186046511628
+			},
+			"musician:jazz_sax": {
+				"h": 0.186046511627907,
+				"w": 0.08,
+				"x": 0.216666666666667,
+				"y": 0.241860465116279
+			},
+			"service:jazz_band_tip_jar": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.261111111111111,
+				"y": 0.532558139534884
+			},
+			"shopkeeper:merchant": {
+				"h": 0.186046511627907,
+				"w": 0.08,
+				"x": 0.806666666666667,
+				"y": 0.295348837209302
+			},
+			"travel:leave": {
+				"h": 0.167441860465116,
+				"w": 0.0711111111111111,
+				"x": 0.928888888888889,
+				"y": 0.832558139534884
+			}
+		},
+		"event_ids": [
+			"scenario_recording_night_tape"
+		],
+		"file": "jazz_club_recording_night.png",
+		"layout_stress_fixture": "",
+		"passed": false,
+		"scenario_presentation": {
+			"crowd_density": "sparse",
+			"lighting_key": "recording",
+			"palette_tint": "#8ecae6",
+			"signage_line": "QUIET FLOOR. TAPE ROLLING."
+		},
+		"size": [
+			1280,
+			720
+		],
+		"stake_ceiling": 0,
+		"stake_floor": 0
+	},
+	"kitty_cat_lounge_amateur_night": {
+		"archetype_id": "kitty_cat_lounge",
+		"canvas_object_layout": {
+			"allowed_overlap_count": 0,
+			"allowed_overlaps": [],
+			"deterministic_z_order": true,
+			"gap": 8.0,
+			"label_layout": {
+				"default_label_overlap_count": 0,
+				"default_object_overlap_count": 0,
+				"detached_label_count": 0,
+				"enabled": true,
+				"label_count": 0,
+				"max_owner_gap": 0.0,
+				"moved_count": 0,
+				"overlap_policy": "bounded_tether",
+				"owner_tether_limit": 28.0,
+				"resolved_label_overlap_count": 0,
+				"resolved_object_overlap_count": 0
+			},
+			"margin": 16.0,
+			"objects": [],
+			"overlap_count": 0,
+			"overlaps": [],
+			"small_screen_mode": false
+		},
+		"canvas_scenario_presentation": {
+			"crowd_density": "packed",
+			"lighting_key": "amateur",
+			"palette_tint": "#ff70a6",
+			"signage_line": "FIRST TIMERS. EASY APPLAUSE."
+		},
+		"environment_header": {
+			"accessible_title": "Kitty Cat Lounge",
+			"archetype_id": "kitty_cat_lounge",
+			"blurb": "Soft booths, attentive eyes, serious tables.",
+			"compact": true,
+			"configured_option_count": 4,
+			"data_path": "res://data/ui/environment_ui.json",
+			"fallback_ready": true,
+			"goal": "",
+			"guidance_visible": false,
+			"option_count": 0,
+			"situation": "FIRST TIMERS. EASY APPLAUSE.",
+			"situation_visible": true,
+			"title_texture": "res://assets/art/ui/environment_titles/kitty_cat_lounge.png"
+		},
+		"environment_object_rects": {
+			"character:dot": {
+				"h": 0.148837209302326,
+				"w": 0.0755555555555556,
+				"x": 0.24,
+				"y": 0.395348837209302
+			},
+			"event:grand_casino_invite": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.122222222222222,
+				"y": 0.344186046511628
+			},
+			"game:bar_dice": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.648888888888889,
+				"y": 0.293023255813954
+			},
+			"game:roulette": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.306666666666667,
+				"y": 0.172093023255814
+			},
+			"game:slot": {
+				"h": 0.148837209302326,
+				"w": 0.102222222222222,
+				"x": 0.773333333333333,
+				"y": 0.683720930232558
+			},
+			"item:pawn_receipt_sleeve": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.671111111111111,
+				"y": 0.111627906976744
+			},
+			"item:rubber_pegs": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.804444444444444,
+				"y": 0.111627906976744
+			},
+			"lender:the_crew": {
+				"h": 0.181395348837209,
+				"w": 0.115555555555556,
+				"x": 0.533333333333333,
+				"y": 0.651162790697674
+			},
+			"service:house_drink": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.142222222222222,
+				"y": 0.502325581395349
+			},
+			"service:kitty_champagne": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.648888888888889,
+				"y": 0.451162790697674
+			},
+			"shopkeeper:merchant": {
+				"h": 0.167441860465116,
+				"w": 0.08,
+				"x": 0.866666666666667,
+				"y": 0.367441860465116
+			},
+			"staff:kitty_bar_host": {
+				"h": 0.167441860465116,
+				"w": 0.08,
+				"x": 0.76,
+				"y": 0.283720930232558
+			},
+			"travel:leave": {
+				"h": 0.167441860465116,
+				"w": 0.0711111111111111,
+				"x": 0.00444444444444444,
+				"y": 0.744186046511628
+			}
+		},
+		"event_ids": [
+			"scenario_amateur_night_applause",
+			"grand_casino_invite"
+		],
+		"file": "kitty_cat_lounge_amateur_night.png",
+		"layout_stress_fixture": "",
+		"passed": true,
+		"scenario_presentation": {
+			"crowd_density": "packed",
+			"lighting_key": "amateur",
+			"palette_tint": "#ff70a6",
+			"signage_line": "FIRST TIMERS. EASY APPLAUSE."
+		},
+		"size": [
+			1280,
+			720
+		],
+		"stake_ceiling": 55,
+		"stake_floor": 5
+	},
+	"kitty_cat_lounge_buyout": {
+		"archetype_id": "kitty_cat_lounge",
+		"canvas_object_layout": {
+			"allowed_overlap_count": 0,
+			"allowed_overlaps": [],
+			"deterministic_z_order": true,
+			"gap": 8.0,
+			"label_layout": {
+				"default_label_overlap_count": 0,
+				"default_object_overlap_count": 0,
+				"detached_label_count": 0,
+				"enabled": true,
+				"label_count": 0,
+				"max_owner_gap": 0.0,
+				"moved_count": 0,
+				"overlap_policy": "bounded_tether",
+				"owner_tether_limit": 28.0,
+				"resolved_label_overlap_count": 0,
+				"resolved_object_overlap_count": 0
+			},
+			"margin": 16.0,
+			"objects": [],
+			"overlap_count": 0,
+			"overlaps": [],
+			"small_screen_mode": false
+		},
+		"canvas_scenario_presentation": {
+			"crowd_density": "dense",
+			"lighting_key": "buyout",
+			"palette_tint": "#9b5de5",
+			"signage_line": "PRIVATE NAME. PRIVATE ROOM."
+		},
+		"environment_header": {
+			"accessible_title": "Kitty Cat Lounge",
+			"archetype_id": "kitty_cat_lounge",
+			"blurb": "Soft booths, attentive eyes, serious tables.",
+			"compact": true,
+			"configured_option_count": 4,
+			"data_path": "res://data/ui/environment_ui.json",
+			"fallback_ready": true,
+			"goal": "",
+			"guidance_visible": false,
+			"option_count": 0,
+			"situation": "PRIVATE NAME. PRIVATE ROOM.",
+			"situation_visible": true,
+			"title_texture": "res://assets/art/ui/environment_titles/kitty_cat_lounge.png"
+		},
+		"environment_object_rects": {
+			"character:dot": {
+				"h": 0.148837209302326,
+				"w": 0.0755555555555556,
+				"x": 0.24,
+				"y": 0.395348837209302
+			},
+			"event:grand_casino_invite": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.122222222222222,
+				"y": 0.344186046511628
+			},
+			"event:side_door": {
+				"h": 0.167441860465116,
+				"w": 0.0711111111111111,
+				"x": 0.918888888888889,
+				"y": 0.613953488372093
+			},
+			"game:bar_dice": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.648888888888889,
+				"y": 0.293023255813954
+			},
+			"game:roulette": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.306666666666667,
+				"y": 0.172093023255814
+			},
+			"game:video_poker": {
+				"h": 0.148837209302326,
+				"w": 0.102222222222222,
+				"x": 0.773333333333333,
+				"y": 0.683720930232558
+			},
+			"item:split_reel_note": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.671111111111111,
+				"y": 0.111627906976744
+			},
+			"lender:the_crew": {
+				"h": 0.181395348837209,
+				"w": 0.115555555555556,
+				"x": 0.533333333333333,
+				"y": 0.651162790697674
+			},
+			"service:house_drink": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.142222222222222,
+				"y": 0.502325581395349
+			},
+			"service:kitty_champagne": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.648888888888889,
+				"y": 0.451162790697674
+			},
+			"shopkeeper:merchant": {
+				"h": 0.167441860465116,
+				"w": 0.08,
+				"x": 0.866666666666667,
+				"y": 0.367441860465116
+			},
+			"staff:kitty_bar_host": {
+				"h": 0.167441860465116,
+				"w": 0.08,
+				"x": 0.76,
+				"y": 0.283720930232558
+			},
+			"travel:leave": {
+				"h": 0.167441860465116,
+				"w": 0.0711111111111111,
+				"x": 0.00444444444444444,
+				"y": 0.744186046511628
+			}
+		},
+		"event_ids": [
+			"side_door",
+			"scenario_buyout_rope",
+			"grand_casino_invite"
+		],
+		"file": "kitty_cat_lounge_buyout.png",
+		"layout_stress_fixture": "",
+		"passed": true,
+		"scenario_presentation": {
+			"crowd_density": "dense",
+			"lighting_key": "buyout",
+			"palette_tint": "#9b5de5",
+			"signage_line": "PRIVATE NAME. PRIVATE ROOM."
+		},
+		"size": [
+			1280,
+			720
+		],
+		"stake_ceiling": 160,
+		"stake_floor": 30
+	},
+	"pawn_shop_estate_lot_day": {
+		"archetype_id": "pawn_shop",
+		"canvas_object_layout": {
+			"allowed_overlap_count": 1,
+			"allowed_overlaps": [
+				{
+					"a": "item:roadside_map",
+					"area": 54.0008239746094,
+					"b": "item:false_bottom_cup"
+				}
+			],
+			"deterministic_z_order": true,
+			"gap": 8.0,
+			"label_layout": {
+				"default_label_overlap_count": 2,
+				"default_object_overlap_count": 3,
+				"detached_label_count": 0,
+				"enabled": true,
+				"label_count": 12,
+				"max_owner_gap": 28.0,
+				"moved_count": 5,
+				"overlap_policy": "bounded_tether",
+				"owner_tether_limit": 28.0,
+				"resolved_label_overlap_count": 0,
+				"resolved_object_overlap_count": 1
+			},
+			"margin": 16.0,
+			"objects": [
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.41935483870968,
+						"h": 62.0,
+						"w": 88.0,
+						"x": 135.999984741211,
+						"y": 16.0
+					},
+					"id": "item:coin_return_shim",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 143.999984741211,
+						"y": 22.0
+					},
+					"label_rect": {
+						"aspect_ratio": 6.98666737874349,
+						"h": 15.0,
+						"w": 104.800010681152,
+						"x": 127.599983215332,
+						"y": 72.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 143.999984741211,
+						"y": 22.0
+					},
+					"scenario_owned": false,
+					"type": "item",
+					"z_order": 3
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.41935483870968,
+						"h": 62.0,
+						"w": 88.0,
+						"x": 344.0,
+						"y": 16.0
+					},
+					"id": "item:cold_quarters",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 352.0,
+						"y": 22.0
+					},
+					"label_rect": {
+						"aspect_ratio": 5.82666625976563,
+						"h": 15.0,
+						"w": 87.3999938964844,
+						"x": 344.299987792969,
+						"y": 72.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 352.0,
+						"y": 22.0
+					},
+					"scenario_owned": false,
+					"type": "item",
+					"z_order": 5
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.41935483870968,
+						"h": 62.0,
+						"w": 88.0,
+						"x": 448.0,
+						"y": 16.0
+					},
+					"id": "item:coolers_cufflinks",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 456.0,
+						"y": 22.0
+					},
+					"label_rect": {
+						"aspect_ratio": 7.76000162760417,
+						"h": 15.0,
+						"w": 116.400024414063,
+						"x": 433.799987792969,
+						"y": 72.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 456.0,
+						"y": 22.0
+					},
+					"scenario_owned": false,
+					"type": "item",
+					"z_order": 6
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.41935483870968,
+						"h": 62.0,
+						"w": 88.0,
+						"x": 240.0,
+						"y": 16.0
+					},
+					"id": "item:payment_calendar",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 248.0,
+						"y": 22.0
+					},
+					"label_rect": {
+						"aspect_ratio": 6.98666788736979,
+						"h": 15.0,
+						"w": 104.800018310547,
+						"x": 231.600006103516,
+						"y": 98.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 248.0,
+						"y": 22.0
+					},
+					"scenario_owned": false,
+					"type": "item",
+					"z_order": 4
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.41935483870968,
+						"h": 62.0,
+						"w": 88.0,
+						"x": 32.0,
+						"y": 16.0
+					},
+					"id": "item:rubber_pegs",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 40.0,
+						"y": 22.0
+					},
+					"label_rect": {
+						"aspect_ratio": 5.05333353678385,
+						"h": 15.0,
+						"w": 75.8000030517578,
+						"x": 38.0999984741211,
+						"y": 72.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 40.0,
+						"y": 22.0
+					},
+					"scenario_owned": false,
+					"type": "item",
+					"z_order": 2
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.41935483870968,
+						"h": 62.0,
+						"w": 88.0,
+						"x": 552.000061035156,
+						"y": 16.0
+					},
+					"id": "item:splitter_token",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 560.000061035156,
+						"y": 22.0
+					},
+					"label_rect": {
+						"aspect_ratio": 6.21333414713542,
+						"h": 15.0,
+						"w": 93.2000122070313,
+						"x": 549.400085449219,
+						"y": 98.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 560.000061035156,
+						"y": 22.0
+					},
+					"scenario_owned": false,
+					"type": "item",
+					"z_order": 7
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.375,
+						"h": 64.0,
+						"w": 88.0,
+						"x": 597.0,
+						"y": 127.0
+					},
+					"id": "item:roadside_map",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 605.0,
+						"y": 135.0
+					},
+					"label_rect": {
+						"aspect_ratio": 5.43999837239583,
+						"h": 15.0,
+						"w": 81.5999755859375,
+						"x": 600.200012207031,
+						"y": 118.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 605.0,
+						"y": 135.0
+					},
+					"scenario_owned": true,
+					"type": "item",
+					"z_order": 8
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.375,
+						"h": 64.0,
+						"w": 88.0,
+						"x": 722.0,
+						"y": 189.000015258789
+					},
+					"id": "event:chain06_sal_estate_item",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 730.0,
+						"y": 197.000015258789
+					},
+					"label_rect": {
+						"aspect_ratio": 4.66666666666667,
+						"h": 15.0,
+						"w": 70.0,
+						"x": 731.0,
+						"y": 180.000015258789
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 730.0,
+						"y": 197.000015258789
+					},
+					"scenario_owned": true,
+					"type": "event",
+					"z_order": 1
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.375,
+						"h": 64.0,
+						"w": 88.0,
+						"x": 631.0,
+						"y": 189.999984741211
+					},
+					"id": "item:false_bottom_cup",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 639.0,
+						"y": 197.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 6.98666585286458,
+						"h": 15.0,
+						"w": 104.799987792969,
+						"x": 622.599975585938,
+						"y": 247.999984741211
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 639.0,
+						"y": 197.999984741211
+					},
+					"scenario_owned": true,
+					"type": "item",
+					"z_order": 9
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.35,
+						"h": 80.0,
+						"w": 108.0,
+						"x": 483.0,
+						"y": 197.0
+					},
+					"id": "game:slot",
+					"interaction_rect": {
+						"aspect_ratio": 1.12857142857143,
+						"h": 140.0,
+						"w": 158.0,
+						"x": 458.0,
+						"y": 129.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 513.0,
+						"y": 271.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.12857142857143,
+						"h": 140.0,
+						"w": 158.0,
+						"x": 458.0,
+						"y": 129.0
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 0
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.9999998266047,
+						"h": 88.0000152587891,
+						"w": 88.0,
+						"x": 403.999969482422,
+						"y": 205.999984741211
+					},
+					"id": "staff:pawn_counter_sal",
+					"interaction_rect": {
+						"aspect_ratio": 1.0,
+						"h": 72.0,
+						"w": 72.0,
+						"x": 411.999969482422,
+						"y": 213.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 423.999969482422,
+						"y": 288.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0,
+						"h": 72.0,
+						"w": 72.0,
+						"x": 411.999969482422,
+						"y": 213.999984741211
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 11
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.875,
+						"h": 64.0,
+						"w": 56.0,
+						"x": 828.0,
+						"y": 350.0
+					},
+					"id": "travel:leave",
+					"interaction_rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 358.0
+					},
+					"label_rect": {
+						"aspect_ratio": 2.66666666666667,
+						"h": 15.0,
+						"w": 40.0,
+						"x": 844.0,
+						"y": 341.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 358.0
+					},
+					"scenario_owned": false,
+					"type": "travel",
+					"z_order": 10
+				}
+			],
+			"overlap_count": 1,
+			"overlaps": [
+				{
+					"a": "game:slot",
+					"area": 638.997970580589,
+					"b": "staff:pawn_counter_sal"
+				}
+			],
+			"small_screen_mode": false
+		},
+		"canvas_scenario_presentation": {
+			"crowd_density": "dense",
+			"lighting_key": "estate_lot",
+			"palette_tint": "#bc6c25",
+			"signage_line": "ONE OWNER. ONE CHANCE."
+		},
+		"environment_header": {
+			"accessible_title": "Sal's Pawn Shop",
+			"archetype_id": "pawn_shop",
+			"blurb": "Cash, repairs, second chances. All behind glass.",
+			"compact": true,
+			"configured_option_count": 4,
+			"data_path": "res://data/ui/environment_ui.json",
+			"fallback_ready": true,
+			"goal": "",
+			"guidance_visible": false,
+			"option_count": 0,
+			"situation": "ONE OWNER. ONE CHANCE.",
+			"situation_visible": true,
+			"title_texture": "res://assets/art/ui/environment_titles/pawn_shop.png"
+		},
+		"environment_object_rects": {
+			"event:chain06_sal_estate_item": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.811111111111111,
+				"y": 0.458139534883721
+			},
+			"game:slot": {
+				"h": 0.148837209302326,
+				"w": 0.102222222222222,
+				"x": 0.545555555555556,
+				"y": 0.476744186046512
+			},
+			"item:coin_return_shim": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.16,
+				"y": 0.0511627906976744
+			},
+			"item:cold_quarters": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.391111111111111,
+				"y": 0.0511627906976744
+			},
+			"item:coolers_cufflinks": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.506666666666667,
+				"y": 0.0511627906976744
+			},
+			"item:false_bottom_cup": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.71,
+				"y": 0.46046511627907
+			},
+			"item:payment_calendar": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.275555555555556,
+				"y": 0.0511627906976744
+			},
+			"item:roadside_map": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.672222222222222,
+				"y": 0.313953488372093
+			},
+			"item:rubber_pegs": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.0444444444444444,
+				"y": 0.0511627906976744
+			},
+			"item:splitter_token": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.622222222222222,
+				"y": 0.0511627906976744
+			},
+			"staff:pawn_counter_sal": {
+				"h": 0.167441860465116,
+				"w": 0.08,
+				"x": 0.457777777777778,
+				"y": 0.497674418604651
+			},
+			"travel:leave": {
+				"h": 0.167441860465116,
+				"w": 0.0711111111111111,
+				"x": 0.928888888888889,
+				"y": 0.832558139534884
+			}
+		},
+		"event_ids": [
+			"scenario_estate_lot_provenance"
+		],
+		"file": "pawn_shop_estate_lot_day.png",
+		"layout_stress_fixture": "",
+		"passed": false,
+		"scenario_presentation": {
+			"crowd_density": "dense",
+			"lighting_key": "estate_lot",
+			"palette_tint": "#bc6c25",
+			"signage_line": "ONE OWNER. ONE CHANCE."
+		},
+		"size": [
+			1280,
+			720
+		],
+		"stake_ceiling": 0,
+		"stake_floor": 0
+	},
+	"pawn_shop_serial_check_day": {
+		"archetype_id": "pawn_shop",
+		"canvas_object_layout": {
+			"allowed_overlap_count": 0,
+			"allowed_overlaps": [],
+			"deterministic_z_order": true,
+			"gap": 8.0,
+			"label_layout": {
+				"default_label_overlap_count": 1,
+				"default_object_overlap_count": 2,
+				"detached_label_count": 0,
+				"enabled": true,
+				"label_count": 10,
+				"max_owner_gap": 28.0,
+				"moved_count": 2,
+				"overlap_policy": "bounded_tether",
+				"owner_tether_limit": 28.0,
+				"resolved_label_overlap_count": 0,
+				"resolved_object_overlap_count": 0
+			},
+			"margin": 16.0,
+			"objects": [
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.41935483870968,
+						"h": 62.0,
+						"w": 88.0,
+						"x": 344.0,
+						"y": 16.0
+					},
+					"id": "item:backpack",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 352.0,
+						"y": 22.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.89333292643229,
+						"h": 15.0,
+						"w": 58.3999938964844,
+						"x": 358.799987792969,
+						"y": 72.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 352.0,
+						"y": 22.0
+					},
+					"scenario_owned": false,
+					"type": "item",
+					"z_order": 5
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.41935483870968,
+						"h": 62.0,
+						"w": 88.0,
+						"x": 240.0,
+						"y": 16.0
+					},
+					"id": "item:instant_coffee",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 248.0,
+						"y": 22.0
+					},
+					"label_rect": {
+						"aspect_ratio": 6.21333211263021,
+						"h": 15.0,
+						"w": 93.1999816894531,
+						"x": 237.399993896484,
+						"y": 72.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 248.0,
+						"y": 22.0
+					},
+					"scenario_owned": false,
+					"type": "item",
+					"z_order": 4
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.41935483870968,
+						"h": 62.0,
+						"w": 88.0,
+						"x": 448.0,
+						"y": 16.0
+					},
+					"id": "item:ledger_pencil",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 456.0,
+						"y": 22.0
+					},
+					"label_rect": {
+						"aspect_ratio": 5.82666829427083,
+						"h": 15.0,
+						"w": 87.4000244140625,
+						"x": 448.299987792969,
+						"y": 72.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 456.0,
+						"y": 22.0
+					},
+					"scenario_owned": false,
+					"type": "item",
+					"z_order": 6
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.41935483870968,
+						"h": 62.0,
+						"w": 88.0,
+						"x": 135.999984741211,
+						"y": 16.0
+					},
+					"id": "item:lucky_bar_napkin",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 143.999984741211,
+						"y": 22.0
+					},
+					"label_rect": {
+						"aspect_ratio": 6.98666737874349,
+						"h": 15.0,
+						"w": 104.800010681152,
+						"x": 127.599983215332,
+						"y": 72.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 143.999984741211,
+						"y": 22.0
+					},
+					"scenario_owned": false,
+					"type": "item",
+					"z_order": 3
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.41935483870968,
+						"h": 62.0,
+						"w": 88.0,
+						"x": 32.0,
+						"y": 16.0
+					},
+					"id": "item:lucky_ladies_compact",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 40.0,
+						"y": 22.0
+					},
+					"label_rect": {
+						"aspect_ratio": 4.73076923076923,
+						"h": 26.0,
+						"w": 123.0,
+						"x": 16.0,
+						"y": 98.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 40.0,
+						"y": 22.0
+					},
+					"scenario_owned": false,
+					"type": "item",
+					"z_order": 2
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.41935483870968,
+						"h": 62.0,
+						"w": 88.0,
+						"x": 552.000061035156,
+						"y": 16.0
+					},
+					"id": "item:magnet_cup",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 560.000061035156,
+						"y": 22.0
+					},
+					"label_rect": {
+						"aspect_ratio": 4.66666666666667,
+						"h": 15.0,
+						"w": 70.0,
+						"x": 561.000061035156,
+						"y": 72.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 560.000061035156,
+						"y": 22.0
+					},
+					"scenario_owned": false,
+					"type": "item",
+					"z_order": 7
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.816326530612245,
+						"h": 98.0,
+						"w": 80.0,
+						"x": 407.999969482422,
+						"y": 122.0
+					},
+					"id": "event:chatty_clerk",
+					"interaction_rect": {
+						"aspect_ratio": 0.780487804878049,
+						"h": 82.0,
+						"w": 64.0,
+						"x": 415.999969482422,
+						"y": 130.0
+					},
+					"label_rect": {
+						"aspect_ratio": 5.44000040690104,
+						"h": 15.0,
+						"w": 81.6000061035156,
+						"x": 407.199981689453,
+						"y": 113.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.780487804878049,
+						"h": 82.0,
+						"w": 64.0,
+						"x": 415.999969482422,
+						"y": 130.0
+					},
+					"scenario_owned": false,
+					"type": "event",
+					"z_order": 1
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.35,
+						"h": 80.0,
+						"w": 108.0,
+						"x": 483.0,
+						"y": 197.0
+					},
+					"id": "game:slot",
+					"interaction_rect": {
+						"aspect_ratio": 1.12857142857143,
+						"h": 140.0,
+						"w": 158.0,
+						"x": 458.0,
+						"y": 129.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 513.0,
+						"y": 112.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.12857142857143,
+						"h": 140.0,
+						"w": 158.0,
+						"x": 458.0,
+						"y": 129.0
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 0
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.9999998266047,
+						"h": 88.0000152587891,
+						"w": 88.0,
+						"x": 403.999969482422,
+						"y": 205.999984741211
+					},
+					"id": "staff:pawn_counter_sal",
+					"interaction_rect": {
+						"aspect_ratio": 1.0,
+						"h": 72.0,
+						"w": 72.0,
+						"x": 411.999969482422,
+						"y": 213.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 423.999969482422,
+						"y": 288.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0,
+						"h": 72.0,
+						"w": 72.0,
+						"x": 411.999969482422,
+						"y": 213.999984741211
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 9
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.875,
+						"h": 64.0,
+						"w": 56.0,
+						"x": 828.0,
+						"y": 350.0
+					},
+					"id": "travel:leave",
+					"interaction_rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 358.0
+					},
+					"label_rect": {
+						"aspect_ratio": 2.66666666666667,
+						"h": 15.0,
+						"w": 40.0,
+						"x": 844.0,
+						"y": 341.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 358.0
+					},
+					"scenario_owned": false,
+					"type": "travel",
+					"z_order": 8
+				}
+			],
+			"overlap_count": 3,
+			"overlaps": [
+				{
+					"a": "event:chatty_clerk",
+					"area": 114.999298095703,
+					"b": "game:slot"
+				},
+				{
+					"a": "event:chatty_clerk",
+					"area": 1120.00122070313,
+					"b": "staff:pawn_counter_sal"
+				},
+				{
+					"a": "game:slot",
+					"area": 638.997970580589,
+					"b": "staff:pawn_counter_sal"
+				}
+			],
+			"small_screen_mode": false
+		},
+		"canvas_scenario_presentation": {
+			"crowd_density": "sparse",
+			"lighting_key": "serial_check",
+			"palette_tint": "#8d99ae",
+			"signage_line": "THE BOOK IS OPEN. HANDS OFF."
+		},
+		"environment_header": {
+			"accessible_title": "Sal's Pawn Shop",
+			"archetype_id": "pawn_shop",
+			"blurb": "Cash, repairs, second chances. All behind glass.",
+			"compact": true,
+			"configured_option_count": 4,
+			"data_path": "res://data/ui/environment_ui.json",
+			"fallback_ready": true,
+			"goal": "",
+			"guidance_visible": false,
+			"option_count": 0,
+			"situation": "THE BOOK IS OPEN. HANDS OFF.",
+			"situation_visible": true,
+			"title_texture": "res://assets/art/ui/environment_titles/pawn_shop.png"
+		},
+		"environment_object_rects": {
+			"event:chatty_clerk": {
+				"h": 0.190697674418605,
+				"w": 0.0711111111111111,
+				"x": 0.462222222222222,
+				"y": 0.302325581395349
+			},
+			"game:slot": {
+				"h": 0.148837209302326,
+				"w": 0.102222222222222,
+				"x": 0.545555555555556,
+				"y": 0.476744186046512
+			},
+			"item:backpack": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.391111111111111,
+				"y": 0.0511627906976744
+			},
+			"item:instant_coffee": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.275555555555556,
+				"y": 0.0511627906976744
+			},
+			"item:ledger_pencil": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.506666666666667,
+				"y": 0.0511627906976744
+			},
+			"item:lucky_bar_napkin": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.16,
+				"y": 0.0511627906976744
+			},
+			"item:lucky_ladies_compact": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.0444444444444444,
+				"y": 0.0511627906976744
+			},
+			"item:magnet_cup": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.622222222222222,
+				"y": 0.0511627906976744
+			},
+			"staff:pawn_counter_sal": {
+				"h": 0.167441860465116,
+				"w": 0.08,
+				"x": 0.457777777777778,
+				"y": 0.497674418604651
+			},
+			"travel:leave": {
+				"h": 0.167441860465116,
+				"w": 0.0711111111111111,
+				"x": 0.928888888888889,
+				"y": 0.832558139534884
+			}
+		},
+		"event_ids": [
+			"chatty_clerk",
+			"scenario_serial_check_hot_goods"
+		],
+		"file": "pawn_shop_serial_check_day.png",
+		"layout_stress_fixture": "",
+		"passed": false,
+		"scenario_presentation": {
+			"crowd_density": "sparse",
+			"lighting_key": "serial_check",
+			"palette_tint": "#8d99ae",
+			"signage_line": "THE BOOK IS OPEN. HANDS OFF."
+		},
+		"size": [
+			1280,
+			720
+		],
+		"stake_ceiling": 0,
+		"stake_floor": 0
+	},
+	"punchline_high_stakes_night": {
+		"archetype_id": "small_underground_casino",
+		"canvas_object_layout": {
+			"allowed_overlap_count": 0,
+			"allowed_overlaps": [],
+			"deterministic_z_order": true,
+			"gap": 8.0,
+			"label_layout": {
+				"default_label_overlap_count": 1,
+				"default_object_overlap_count": 4,
+				"detached_label_count": 0,
+				"enabled": true,
+				"label_count": 14,
+				"max_owner_gap": 28.0,
+				"moved_count": 4,
+				"overlap_policy": "bounded_tether",
+				"owner_tether_limit": 28.0,
+				"resolved_label_overlap_count": 0,
+				"resolved_object_overlap_count": 1
+			},
+			"margin": 16.0,
+			"objects": [
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.909090987906975,
+						"h": 87.9999923706055,
+						"w": 80.0,
+						"x": 798.0,
+						"y": 62.0000076293945
+					},
+					"id": "environment_layer:back_room",
+					"interaction_rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 806.0,
+						"y": 70.0000076293945
+					},
+					"label_rect": {
+						"aspect_ratio": 6.17333170572917,
+						"h": 15.0,
+						"w": 92.5999755859375,
+						"x": 791.400024414063,
+						"y": 53.0000076293945
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 806.0,
+						"y": 70.0000076293945
+					},
+					"scenario_owned": false,
+					"type": "environment_layer",
+					"z_order": 5
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.909090987906975,
+						"h": 87.9999923706055,
+						"w": 80.0,
+						"x": 730.0,
+						"y": 62.0000076293945
+					},
+					"id": "environment_layer:club",
+					"interaction_rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 738.0,
+						"y": 70.0000076293945
+					},
+					"label_rect": {
+						"aspect_ratio": 5.05333251953125,
+						"h": 15.0,
+						"w": 75.7999877929688,
+						"x": 732.099975585938,
+						"y": 27.0000076293945
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 738.0,
+						"y": 70.0000076293945
+					},
+					"scenario_owned": false,
+					"type": "environment_layer",
+					"z_order": 4
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.375,
+						"h": 64.0,
+						"w": 88.0,
+						"x": 546.000061035156,
+						"y": 82.0
+					},
+					"id": "service:house_drink",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 554.000061035156,
+						"y": 90.0
+					},
+					"label_rect": {
+						"aspect_ratio": 5.05333251953125,
+						"h": 15.0,
+						"w": 75.7999877929688,
+						"x": 552.100036621094,
+						"y": 73.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 554.000061035156,
+						"y": 90.0
+					},
+					"scenario_owned": false,
+					"type": "drink",
+					"z_order": 9
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.916666739516794,
+						"h": 95.9999923706055,
+						"w": 88.0,
+						"x": 446.0,
+						"y": 72.0000076293945
+					},
+					"id": "character:ox",
+					"interaction_rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 454.0,
+						"y": 80.0000076293945
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 466.0,
+						"y": 63.0000076293945
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 454.0,
+						"y": 80.0000076293945
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 12
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.35000012874605,
+						"h": 79.9999923706055,
+						"w": 108.0,
+						"x": 342.0,
+						"y": 80.0000076293945
+					},
+					"id": "game:video_poker",
+					"interaction_rect": {
+						"aspect_ratio": 1.4375,
+						"h": 64.0,
+						"w": 92.0,
+						"x": 350.0,
+						"y": 88.0000076293945
+					},
+					"label_rect": {
+						"aspect_ratio": 5.05333455403646,
+						"h": 15.0,
+						"w": 75.8000183105469,
+						"x": 358.100006103516,
+						"y": 71.0000076293945
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.4375,
+						"h": 64.0,
+						"w": 92.0,
+						"x": 350.0,
+						"y": 88.0000076293945
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 2
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.375,
+						"h": 64.0,
+						"w": 88.0,
+						"x": 650.0,
+						"y": 92.0
+					},
+					"id": "numbers:book",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 658.0,
+						"y": 100.0
+					},
+					"label_rect": {
+						"aspect_ratio": 4.84615384615385,
+						"h": 26.0,
+						"w": 126.0,
+						"x": 631.0,
+						"y": 150.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 658.0,
+						"y": 100.0
+					},
+					"scenario_owned": false,
+					"type": "numbers",
+					"z_order": 6
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.0,
+						"h": 88.0,
+						"w": 88.0,
+						"x": 265.0,
+						"y": 111.0
+					},
+					"id": "staff:underground_dealer",
+					"interaction_rect": {
+						"aspect_ratio": 1.0,
+						"h": 72.0,
+						"w": 72.0,
+						"x": 273.0,
+						"y": 119.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 285.0,
+						"y": 102.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0,
+						"h": 72.0,
+						"w": 72.0,
+						"x": 273.0,
+						"y": 119.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 13
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.35000019073486,
+						"h": 80.0,
+						"w": 108.000015258789,
+						"x": 155.999984741211,
+						"y": 118.0
+					},
+					"id": "game:slot",
+					"interaction_rect": {
+						"aspect_ratio": 1.31818185758985,
+						"h": 105.600006103516,
+						"w": 139.200012207031,
+						"x": 140.399978637695,
+						"y": 84.3999938964844
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 185.999984741211,
+						"y": 67.3999938964844
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.31818185758985,
+						"h": 105.600006103516,
+						"w": 139.200012207031,
+						"x": 140.399978637695,
+						"y": 84.3999938964844
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 0
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.909090909090909,
+						"h": 88.0,
+						"w": 80.0,
+						"x": 763.0,
+						"y": 139.0
+					},
+					"id": "event:side_door",
+					"interaction_rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 771.0,
+						"y": 147.0
+					},
+					"label_rect": {
+						"aspect_ratio": 4.28000081380208,
+						"h": 15.0,
+						"w": 64.2000122070313,
+						"x": 770.900024414063,
+						"y": 221.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 771.0,
+						"y": 147.0
+					},
+					"scenario_owned": false,
+					"type": "event",
+					"z_order": 3
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.0,
+						"h": 88.0,
+						"w": 88.0,
+						"x": 383.0,
+						"y": 169.0
+					},
+					"id": "lender:street_lender",
+					"interaction_rect": {
+						"aspect_ratio": 1.0,
+						"h": 72.0,
+						"w": 72.0,
+						"x": 391.0,
+						"y": 177.0
+					},
+					"label_rect": {
+						"aspect_ratio": 4.66666666666667,
+						"h": 15.0,
+						"w": 70.0,
+						"x": 392.0,
+						"y": 160.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.0,
+						"h": 72.0,
+						"w": 72.0,
+						"x": 391.0,
+						"y": 177.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 10
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.35,
+						"h": 80.0,
+						"w": 108.0,
+						"x": 20.0,
+						"y": 190.0
+					},
+					"id": "game:blackjack",
+					"interaction_rect": {
+						"aspect_ratio": 1.4375,
+						"h": 64.0,
+						"w": 92.0,
+						"x": 28.0,
+						"y": 198.0
+					},
+					"label_rect": {
+						"aspect_ratio": 4.27999979654948,
+						"h": 15.0,
+						"w": 64.1999969482422,
+						"x": 41.9000015258789,
+						"y": 181.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.4375,
+						"h": 64.0,
+						"w": 92.0,
+						"x": 28.0,
+						"y": 198.0
+					},
+					"scenario_owned": false,
+					"type": "game",
+					"z_order": 1
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.05319213867188,
+						"h": 94.0,
+						"w": 99.0000610351563,
+						"x": 784.999938964844,
+						"y": 212.0
+					},
+					"id": "lender:the_crew",
+					"interaction_rect": {
+						"aspect_ratio": 1.33333333333333,
+						"h": 78.0,
+						"w": 104.0,
+						"x": 792.999938964844,
+						"y": 220.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.8933349609375,
+						"h": 15.0,
+						"w": 58.4000244140625,
+						"x": 815.799926757813,
+						"y": 300.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.33333333333333,
+						"h": 78.0,
+						"w": 104.0,
+						"x": 792.999938964844,
+						"y": 220.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 11
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.816326530612245,
+						"h": 98.0,
+						"w": 80.0,
+						"x": 95.0,
+						"y": 280.0
+					},
+					"id": "numbers:silas",
+					"interaction_rect": {
+						"aspect_ratio": 0.780487804878049,
+						"h": 82.0,
+						"w": 64.0,
+						"x": 103.0,
+						"y": 288.0
+					},
+					"label_rect": {
+						"aspect_ratio": 4.66666666666667,
+						"h": 15.0,
+						"w": 70.0,
+						"x": 100.0,
+						"y": 271.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.780487804878049,
+						"h": 82.0,
+						"w": 64.0,
+						"x": 103.0,
+						"y": 288.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 7
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.875,
+						"h": 64.0,
+						"w": 56.0,
+						"x": 828.0,
+						"y": 350.0
+					},
+					"id": "travel:leave",
+					"interaction_rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 358.0
+					},
+					"label_rect": {
+						"aspect_ratio": 2.66666666666667,
+						"h": 15.0,
+						"w": 40.0,
+						"x": 844.0,
+						"y": 341.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 358.0
+					},
+					"scenario_owned": false,
+					"type": "travel",
+					"z_order": 8
+				}
+			],
+			"overlap_count": 7,
+			"overlaps": [
+				{
+					"a": "environment_layer:back_room",
+					"area": 1055.99990844727,
+					"b": "environment_layer:club"
+				},
+				{
+					"a": "environment_layer:back_room",
+					"area": 495.0,
+					"b": "event:side_door"
+				},
+				{
+					"a": "environment_layer:club",
+					"area": 464.0,
+					"b": "numbers:book"
+				},
+				{
+					"a": "environment_layer:club",
+					"area": 517.0,
+					"b": "event:side_door"
+				},
+				{
+					"a": "character:ox",
+					"area": 319.999969482422,
+					"b": "game:video_poker"
+				},
+				{
+					"a": "game:video_poker",
+					"area": 539.0,
+					"b": "staff:underground_dealer"
+				},
+				{
+					"a": "event:side_door",
+					"area": 870.000915527344,
+					"b": "lender:the_crew"
+				}
+			],
+			"small_screen_mode": false
+		},
+		"canvas_scenario_presentation": {
+			"crowd_density": "dense",
+			"lighting_key": "high_stakes",
+			"palette_tint": "#7209b7",
+			"signage_line": "REAL MONEY. CREW RULES."
+		},
+		"environment_header": {
+			"accessible_title": "The Punchline",
+			"archetype_id": "small_underground_casino",
+			"blurb": "Low tables, loose rules, and the hush below the stage.",
+			"compact": true,
+			"configured_option_count": 4,
+			"data_path": "res://data/ui/environment_ui.json",
+			"fallback_ready": true,
+			"goal": "",
+			"guidance_visible": false,
+			"option_count": 0,
+			"situation": "REAL MONEY. CREW RULES.",
+			"situation_visible": true,
+			"title_texture": ""
+		},
+		"environment_object_rects": {
+			"character:ox": {
+				"h": 0.186046511627907,
+				"w": 0.08,
+				"x": 0.504444444444444,
+				"y": 0.186046511627907
+			},
+			"environment_layer:back_room": {
+				"h": 0.167441860465116,
+				"w": 0.0711111111111111,
+				"x": 0.895555555555556,
+				"y": 0.162790697674419
+			},
+			"environment_layer:club": {
+				"h": 0.167441860465116,
+				"w": 0.0711111111111111,
+				"x": 0.82,
+				"y": 0.162790697674419
+			},
+			"event:side_door": {
+				"h": 0.167441860465116,
+				"w": 0.0711111111111111,
+				"x": 0.856666666666667,
+				"y": 0.341860465116279
+			},
+			"game:blackjack": {
+				"h": 0.148837209302326,
+				"w": 0.102222222222222,
+				"x": 0.0311111111111111,
+				"y": 0.46046511627907
+			},
+			"game:slot": {
+				"h": 0.148837209302326,
+				"w": 0.102222222222222,
+				"x": 0.182222222222222,
+				"y": 0.293023255813954
+			},
+			"game:video_poker": {
+				"h": 0.148837209302326,
+				"w": 0.102222222222222,
+				"x": 0.388888888888889,
+				"y": 0.204651162790698
+			},
+			"lender:street_lender": {
+				"h": 0.167441860465116,
+				"w": 0.08,
+				"x": 0.434444444444444,
+				"y": 0.411627906976744
+			},
+			"lender:the_crew": {
+				"h": 0.181395348837209,
+				"w": 0.115555555555556,
+				"x": 0.881111111111111,
+				"y": 0.511627906976744
+			},
+			"numbers:book": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.731111111111111,
+				"y": 0.232558139534884
+			},
+			"numbers:silas": {
+				"h": 0.190697674418605,
+				"w": 0.0711111111111111,
+				"x": 0.114444444444444,
+				"y": 0.669767441860465
+			},
+			"service:house_drink": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.615555555555556,
+				"y": 0.209302325581395
+			},
+			"staff:underground_dealer": {
+				"h": 0.167441860465116,
+				"w": 0.08,
+				"x": 0.303333333333333,
+				"y": 0.276744186046512
+			},
+			"travel:leave": {
+				"h": 0.167441860465116,
+				"w": 0.0711111111111111,
+				"x": 0.928888888888889,
+				"y": 0.832558139534884
+			}
+		},
+		"event_ids": [
+			"side_door",
+			"scenario_punchline_high_stakes_table"
+		],
+		"file": "punchline_high_stakes_night.png",
+		"layout_stress_fixture": "",
+		"passed": false,
+		"scenario_presentation": {
+			"crowd_density": "dense",
+			"lighting_key": "high_stakes",
+			"palette_tint": "#7209b7",
+			"signage_line": "REAL MONEY. CREW RULES."
+		},
+		"size": [
+			1280,
+			720
+		],
+		"stake_ceiling": 140,
+		"stake_floor": 25
+	},
+	"punchline_open_mic_night": {
+		"archetype_id": "small_underground_casino",
+		"canvas_object_layout": {
+			"allowed_overlap_count": 0,
+			"allowed_overlaps": [],
+			"deterministic_z_order": true,
+			"gap": 8.0,
+			"label_layout": {
+				"default_label_overlap_count": 0,
+				"default_object_overlap_count": 1,
+				"detached_label_count": 0,
+				"enabled": true,
+				"label_count": 8,
+				"max_owner_gap": 2.0,
+				"moved_count": 1,
+				"overlap_policy": "bounded_tether",
+				"owner_tether_limit": 28.0,
+				"resolved_label_overlap_count": 0,
+				"resolved_object_overlap_count": 0
+			},
+			"margin": 16.0,
+			"objects": [
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.863636363636364,
+						"h": 88.0,
+						"w": 76.0,
+						"x": 808.0,
+						"y": 92.0
+					},
+					"id": "environment_layer:casino",
+					"interaction_rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 816.0,
+						"y": 100.0
+					},
+					"label_rect": {
+						"aspect_ratio": 6.08666585286458,
+						"h": 15.0,
+						"w": 91.2999877929688,
+						"x": 792.700012207031,
+						"y": 83.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 816.0,
+						"y": 100.0
+					},
+					"scenario_owned": false,
+					"type": "prop",
+					"z_order": 7
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.35,
+						"h": 80.0,
+						"w": 108.0,
+						"x": 395.0,
+						"y": 105.0
+					},
+					"id": "environment_layer:ambient",
+					"interaction_rect": {
+						"aspect_ratio": 1.4375,
+						"h": 64.0,
+						"w": 92.0,
+						"x": 403.0,
+						"y": 113.0
+					},
+					"label_rect": {
+						"aspect_ratio": 6.6,
+						"h": 15.0,
+						"w": 99.0,
+						"x": 399.5,
+						"y": 96.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.4375,
+						"h": 64.0,
+						"w": 92.0,
+						"x": 403.0,
+						"y": 113.0
+					},
+					"scenario_owned": false,
+					"type": "environment_layer",
+					"z_order": 1
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.375,
+						"h": 64.0,
+						"w": 88.0,
+						"x": 516.0,
+						"y": 144.999984741211
+					},
+					"id": "numbers:book",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 524.0,
+						"y": 152.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 4.84615384615385,
+						"h": 26.0,
+						"w": 126.0,
+						"x": 497.0,
+						"y": 124.999984741211
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 524.0,
+						"y": 152.999984741211
+					},
+					"scenario_owned": false,
+					"type": "numbers",
+					"z_order": 2
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 1.375,
+						"h": 64.0,
+						"w": 88.0,
+						"x": 295.0,
+						"y": 147.0
+					},
+					"id": "service:punchline_two_drink_minimum",
+					"interaction_rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 303.0,
+						"y": 155.0
+					},
+					"label_rect": {
+						"aspect_ratio": 7.37333374023437,
+						"h": 15.0,
+						"w": 110.600006103516,
+						"x": 283.700012207031,
+						"y": 138.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 1.5,
+						"h": 48.0,
+						"w": 72.0,
+						"x": 303.0,
+						"y": 155.0
+					},
+					"scenario_owned": false,
+					"type": "drink",
+					"z_order": 5
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.916666666666667,
+						"h": 96.0,
+						"w": 88.0,
+						"x": 733.0,
+						"y": 159.0
+					},
+					"id": "staff:punchline_bouncer",
+					"interaction_rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 741.0,
+						"y": 167.0
+					},
+					"label_rect": {
+						"aspect_ratio": 3.2,
+						"h": 15.0,
+						"w": 48.0,
+						"x": 753.0,
+						"y": 150.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.9,
+						"h": 80.0,
+						"w": 72.0,
+						"x": 741.0,
+						"y": 167.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 6
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.863636363636364,
+						"h": 88.0,
+						"w": 76.0,
+						"x": 808.0,
+						"y": 166.999984741211
+					},
+					"id": "event:side_door",
+					"interaction_rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 816.0,
+						"y": 174.999984741211
+					},
+					"label_rect": {
+						"aspect_ratio": 4.28000081380208,
+						"h": 15.0,
+						"w": 64.2000122070313,
+						"x": 815.900024414063,
+						"y": 248.999984741211
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 816.0,
+						"y": 174.999984741211
+					},
+					"scenario_owned": false,
+					"type": "event",
+					"z_order": 0
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.816326530612245,
+						"h": 98.0,
+						"w": 80.0,
+						"x": 172.0,
+						"y": 239.0
+					},
+					"id": "numbers:silas",
+					"interaction_rect": {
+						"aspect_ratio": 0.780487804878049,
+						"h": 82.0,
+						"w": 64.0,
+						"x": 180.0,
+						"y": 247.0
+					},
+					"label_rect": {
+						"aspect_ratio": 4.66666666666667,
+						"h": 15.0,
+						"w": 70.0,
+						"x": 177.0,
+						"y": 230.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.780487804878049,
+						"h": 82.0,
+						"w": 64.0,
+						"x": 180.0,
+						"y": 247.0
+					},
+					"scenario_owned": false,
+					"type": "character",
+					"z_order": 3
+				},
+				{
+					"actor_route_position": "(-1.0, -1.0)",
+					"actor_route_stage": {
+
+					},
+					"footprint": {
+						"aspect_ratio": 0.875,
+						"h": 64.0,
+						"w": 56.0,
+						"x": 828.0,
+						"y": 350.0
+					},
+					"id": "travel:leave",
+					"interaction_rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 358.0
+					},
+					"label_rect": {
+						"aspect_ratio": 2.66666666666667,
+						"h": 15.0,
+						"w": 40.0,
+						"x": 844.0,
+						"y": 341.0
+					},
+					"layout_authority_identity": "",
+					"rect": {
+						"aspect_ratio": 0.888888888888889,
+						"h": 72.0,
+						"w": 64.0,
+						"x": 836.0,
+						"y": 358.0
+					},
+					"scenario_owned": false,
+					"type": "travel",
+					"z_order": 4
+				}
+			],
+			"overlap_count": 3,
+			"overlaps": [
+				{
+					"a": "environment_layer:casino",
+					"area": 273.0,
+					"b": "staff:punchline_bouncer"
+				},
+				{
+					"a": "environment_layer:casino",
+					"area": 988.001159667969,
+					"b": "event:side_door"
+				},
+				{
+					"a": "staff:punchline_bouncer",
+					"area": 1144.0,
+					"b": "event:side_door"
+				}
+			],
+			"small_screen_mode": false
+		},
+		"canvas_scenario_presentation": {
+			"crowd_density": "sparse",
+			"lighting_key": "open_mic",
+			"palette_tint": "#9d4edd",
+			"signage_line": "FIVE MINUTES. NO PROMISES."
+		},
+		"environment_header": {
+			"accessible_title": "The Punchline",
+			"archetype_id": "small_underground_casino",
+			"blurb": "A tired stage, a two-drink minimum, and a plain side door.",
+			"compact": true,
+			"configured_option_count": 4,
+			"data_path": "res://data/ui/environment_ui.json",
+			"fallback_ready": true,
+			"goal": "",
+			"guidance_visible": false,
+			"option_count": 0,
+			"situation": "FIVE MINUTES. NO PROMISES.",
+			"situation_visible": true,
+			"title_texture": ""
+		},
+		"environment_object_rects": {
+			"environment_layer:ambient": {
+				"h": 0.148837209302326,
+				"w": 0.102222222222222,
+				"x": 0.447777777777778,
+				"y": 0.262790697674419
+			},
+			"environment_layer:casino": {
+				"h": 0.167441860465116,
+				"w": 0.0711111111111111,
+				"x": 0.906666666666667,
+				"y": 0.232558139534884
+			},
+			"event:side_door": {
+				"h": 0.167441860465116,
+				"w": 0.0711111111111111,
+				"x": 0.906666666666667,
+				"y": 0.406976744186047
+			},
+			"numbers:book": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.582222222222222,
+				"y": 0.355813953488372
+			},
+			"numbers:silas": {
+				"h": 0.190697674418605,
+				"w": 0.0711111111111111,
+				"x": 0.2,
+				"y": 0.574418604651163
+			},
+			"service:punchline_two_drink_minimum": {
+				"h": 0.111627906976744,
+				"w": 0.08,
+				"x": 0.336666666666667,
+				"y": 0.36046511627907
+			},
+			"staff:punchline_bouncer": {
+				"h": 0.186046511627907,
+				"w": 0.08,
+				"x": 0.823333333333333,
+				"y": 0.388372093023256
+			},
+			"travel:leave": {
+				"h": 0.167441860465116,
+				"w": 0.0711111111111111,
+				"x": 0.928888888888889,
+				"y": 0.832558139534884
+			}
+		},
+		"event_ids": [
+			"side_door",
+			"scenario_open_mic_signup"
+		],
+		"file": "punchline_open_mic_night.png",
+		"layout_stress_fixture": "",
+		"passed": false,
+		"scenario_presentation": {
+			"crowd_density": "sparse",
+			"lighting_key": "open_mic",
+			"palette_tint": "#9d4edd",
+			"signage_line": "FIVE MINUTES. NO PROMISES."
+		},
+		"size": [
+			1280,
+			720
+		],
+		"stake_ceiling": 0,
+		"stake_floor": 0
+	}
+}
