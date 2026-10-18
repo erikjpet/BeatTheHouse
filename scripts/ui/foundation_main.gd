@@ -17570,7 +17570,11 @@ func _on_developer_placement_promote_requested() -> void:
 	if not bool(refresh_result.get("ok", false)):
 		_show_message(str(refresh_result.get("error", "The placements were saved, but this room could not refresh them yet.")))
 		return
-	_show_message("Locked placements saved to %s." % str(result.get("path", "project data")))
+	var message := "Locked placements saved to %s." % str(result.get("path", "project data"))
+	var warning := str(result.get("warning", "")).strip_edges()
+	if not warning.is_empty():
+		message += " %s" % warning
+	_show_message(message)
 
 
 func _on_developer_placement_refresh_requested() -> void:

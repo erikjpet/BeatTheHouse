@@ -378,7 +378,17 @@ func _check_slot_geometry_export_and_promotion(user_path: String, project_path: 
 	_check(FileAccess.get_file_as_bytes(user_path) == user_bytes_before_export, "Exporting must not mutate or clear the active machine-local placement data.")
 
 	var promoted := DeveloperPlacementStoreScript.promote_user_overrides()
-	_check(bool(promoted.get("ok", false)) and FileAccess.file_exists(project_path), "Save to Project must promote locked slot edits.")
+	_check(
+		bool(promoted.get("ok", false))
+			and bool(promoted.get("local_cleared", false))
+			and FileAccess.file_exists(project_path),
+		"Save to Project must promote locked slot edits and consume the machine-local shadow."
+	)
+	var local_after_promotion: Dictionary = JSON.parse_string(FileAccess.get_file_as_string(user_path))
+	_check(
+		(local_after_promotion.get("rooms", {}) as Dictionary).is_empty(),
+		"A promoted local snapshot must not remain able to mask later project or Web-build placement changes."
+	)
 	DeveloperPlacementStoreScript.reload()
 	var normal_promoted := EnvironmentPlacementScript.surface_map(environment)
 	var promoted_base := _slot(normal_promoted, "fixed.item_shop_1")
@@ -421,8 +431,8 @@ func _check_slot_geometry_export_and_promotion(user_path: String, project_path: 
 		bool(reexported.get("ok", false))
 			and (refreshed_corner.get("slot_positions", {}) as Dictionary).has("fixed.item_shop_1")
 			and int(reexported.get("slot_count", 0)) == 6
-			and int(reexported.get("local_slot_count", -1)) == 4,
-		"Re-exporting must retain committed effective authority while separately reporting the current local-change count."
+			and int(reexported.get("local_slot_count", -1)) == 0,
+		"Re-exporting must retain committed effective authority without reviving the consumed local shadow."
 	)
 	for slot_id in ["event.standing_person_1", "exit.safe_right"]:
 		DeveloperPlacementStoreScript.clear_position(environment, "slot_positions", slot_id)
