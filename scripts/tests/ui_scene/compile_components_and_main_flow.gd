@@ -2761,10 +2761,15 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	# geometry/manifest-only changes; the focused replay below retained every
 	# route, economy, clock, Heat, RNG, and story field while refreshing Bar and
 	# its embedded world-map record.
+	# Release qualification then removed transient runtime-owned geometry from
+	# immutable base inventory and normalized sealed renderer diagnostics. The
+	# exact candidate replay again changed only the generated Bar record and the
+	# world map that embeds it; every scalar, route, RNG, and story value below
+	# remained byte-identical.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "0079ff76ef6001bac9903cf9b676d1d4f8136f0ce562bed32eace4404a512dce",
+		"current_environment_sha256": "c8f5026f114f26bc2ac08332f8fd1147225a04037082f203e1725428eba38eaa",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "7ddb7685efb21e45979ea10ab89e660d99c6e891",
@@ -2775,7 +2780,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0257877551b37226fd62316ee2af5e047a27387fbb87d5acfa0273d1366a0e81",
-		"world_map_sha256": "80646956de478869efe9de81c2bdb1e6310a9d613846687fc930d88ab91430cd",
+		"world_map_sha256": "0c0a561ec38552a804198213a945e760646fb21111eef6eeaf5fa31b12420e9e",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
