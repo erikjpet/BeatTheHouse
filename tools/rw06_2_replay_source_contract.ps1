@@ -958,6 +958,8 @@ function Test-HeistRouteExactCommandInventory {
         'Enter-GrandRoom',
         'Invoke-EventObjectChoice',
         'Close-VisibleChoiceSurface',
+        'Get-Value',
+        'Resolve-BlackjackRouteEventPopup',
         'Play-OneBlackjackRound',
         'Leave-GameSurface',
         'Invoke-EventObjectChoice',
@@ -1855,6 +1857,42 @@ function Test-CheatReplayBarredPeekExitOrder {
         $functionMatch.Value,
         '(?s)\$peekApplied\s*=\s*Invoke-VisibleCheatIfAvailable.*?Select-CheatReplayPostPeekTransition.*?stage\s+-ceq\s+''leave_for_showdown''\)\s*\{\s*return\s*\}.*?Find-GameAction\s+-Action\s+''blackjack_settle''.*?Invoke-PublicBlackjackDecision'
     )
+}
+
+function Test-BlackjackPostDealWagerConfirmationOrder {
+    param([Parameter(Mandatory = $true)][string]$Source)
+
+    $functionMatch = [regex]::Match($Source, '(?ms)^function Play-OneBlackjackRound\s*\{.*?(?=^function |\z)')
+    if (-not $functionMatch.Success) { return $false }
+    $body = $functionMatch.Value
+    $postDealPhaseIndex = $body.IndexOf('$phaseAfterDeal =', [StringComparison]::Ordinal)
+    $confirmationIndex = $body.IndexOf('$eventAfterDeal =', [StringComparison]::Ordinal)
+    $confirmationBranchIndex = $body.IndexOf('if ($eventAfterDeal -and $popupTypeAfterDeal -ceq ''wager_confirmation'') {', [StringComparison]::Ordinal)
+    $inertDealThrowIndex = $body.IndexOf('throw ''The visible Blackjack Deal control did not start a new hand.''', [StringComparison]::Ordinal)
+    if ($postDealPhaseIndex -lt 0 -or $confirmationIndex -le $postDealPhaseIndex -or
+        $confirmationBranchIndex -le $confirmationIndex -or $inertDealThrowIndex -le $confirmationBranchIndex) {
+        return $false
+    }
+    $confirmationBranch = $body.Substring($confirmationBranchIndex, $inertDealThrowIndex - $confirmationBranchIndex)
+    return $confirmationBranch.IndexOf('continue', [StringComparison]::Ordinal) -ge 0
+}
+
+function Test-BlackjackSettlingFallbackOrder {
+    param([Parameter(Mandatory = $true)][string]$Source)
+
+    $functionMatch = [regex]::Match($Source, '(?ms)^function Play-OneBlackjackRound\s*\{.*?(?=^function |\z)')
+    if (-not $functionMatch.Success) { return $false }
+    $body = $functionMatch.Value
+    $settlingIndex = $body.IndexOf("if (`$phase -ceq 'settling') {", [StringComparison]::Ordinal)
+    $settleActionIndex = $body.IndexOf("Find-GameAction -Action 'blackjack_settle'", [StringComparison]::Ordinal)
+    $settleClickIndex = $body.IndexOf("Invoke-GameAction -Action 'blackjack_settle'", [StringComparison]::Ordinal)
+    $automaticWaitIndex = $body.IndexOf("wait for the visibly completed blackjack hand to settle automatically", [StringComparison]::Ordinal)
+    $decisionIndex = $body.IndexOf("`$hitAction = Find-GameAction", [StringComparison]::Ordinal)
+    return $settlingIndex -ge 0 -and
+        $settleActionIndex -gt $settlingIndex -and
+        $settleClickIndex -gt $settleActionIndex -and
+        $automaticWaitIndex -gt $settleClickIndex -and
+        $decisionIndex -gt $automaticWaitIndex
 }
 
 function Test-PersistenceCheckpointWriteSequence {
@@ -3559,6 +3597,12 @@ $finalSummary = [ordered]@{
     }
     if (-not (Test-CheatReplayBarredPeekExitOrder -Source $runner)) {
         Add-Failure 'Play-OneBlackjackRound must inspect the public post-Peek barred transition and return before settlement or Hit/Stand.'
+    }
+    if (-not (Test-BlackjackPostDealWagerConfirmationOrder -Source $runner)) {
+        Add-Failure 'Play-OneBlackjackRound must route a visible post-Deal wager confirmation back through its public modal handler before raising the inert-Deal error.'
+    }
+    if (-not (Test-BlackjackSettlingFallbackOrder -Source $runner)) {
+        Add-Failure 'Play-OneBlackjackRound must use a rendered Settle control before falling back to autonomous settling waits and later decision handling.'
     }
 
     $bossCalloutPolicyCommand = Get-Command 'Select-CheatReplayBossCalloutAction' -ErrorAction SilentlyContinue

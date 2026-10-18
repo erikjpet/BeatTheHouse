@@ -287,6 +287,7 @@ static func check(library: ContentLibrary, failures: Array, scene_tree: SceneTre
 	_check_mutually_exclusive_branch_cleanup(failures)
 	_check_handler_reducer_contracts(failures)
 	_check_serialized_fact_ingress(failures)
+	_check_run_state_fact_subscription_routing(failures)
 	_check_atomic_runtime_failures(failures)
 	_check_sequence_persistence_seam(failures)
 	_check_lifecycle_policy_matrix(failures)
@@ -2873,6 +2874,34 @@ static func _check_serialized_fact_ingress(failures: Array) -> void:
 		failures.append("Terminal branch did not produce persistent aftermath status.")
 	elif bool(SequenceRuntimeScript.enqueue_fact(_dict(aftermath.get("state", {})), definition, SequenceRuntimeScript.fact("world_boundary", "scenario", "bar_node", "post:cleanup", 2, 5, _fact_payload("world_boundary"))).get("ok", true)):
 		failures.append("Scenario fact ingress remained open after terminal cleanup/aftermath.")
+
+
+static func _check_run_state_fact_subscription_routing(failures: Array) -> void:
+	var definition := _fixture_definition()
+	var run_state: RunState = RunStateScript.new()
+	run_state.current_environment = {
+		"id": "fact_subscription_room",
+		"archetype_id": "bar",
+		"world_node_id": "bar_node",
+		"scenario_sequence_definition": definition,
+		"scenario_sequence_state": {},
+	}
+	if not run_state._scenario_observes_fact_type("heat_changed") or run_state._scenario_observes_fact_type("world_boundary"):
+		failures.append("RunState fact routing did not match the sequence's authored subscription set.")
+	var before := JSON.stringify(run_state.current_environment)
+	for fact_index in range(SequenceRuntimeScript.MAX_RECEIPTS + 16):
+		var ignored := run_state.scenario_enqueue_fact(
+			"world_boundary",
+			"scenario",
+			{"amount": 1, "action_index": fact_index},
+			"unsubscribed:world:%d" % fact_index,
+			"bar_node"
+		)
+		if not bool(ignored.get("ok", false)) or bool(ignored.get("inactive", true)) or not bool(ignored.get("ignored", false)):
+			failures.append("RunState rejected or retained an unsubscribed public fact at index %d." % fact_index)
+			break
+	if JSON.stringify(run_state.current_environment) != before:
+		failures.append("Unsubscribed public facts mutated the room sequence or consumed causal capacity.")
 
 
 static func _check_handler_reducer_contracts(failures: Array) -> void:

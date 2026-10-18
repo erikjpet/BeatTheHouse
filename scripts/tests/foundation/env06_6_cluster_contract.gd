@@ -26,6 +26,7 @@ func _run() -> void:
 		"runtime":
 			ScenarioSequenceContractScript._check_handler_reducer_contracts(failures)
 			ScenarioSequenceContractScript._check_serialized_fact_ingress(failures)
+			ScenarioSequenceContractScript._check_run_state_fact_subscription_routing(failures)
 			ScenarioSequenceContractScript._check_atomic_runtime_failures(failures)
 		"persistence":
 			ScenarioSequenceContractScript._check_sequence_persistence_seam(failures)

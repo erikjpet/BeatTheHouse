@@ -4530,6 +4530,12 @@ function Play-OneBlackjackRound {
             return
         }
         if ($phase -ceq 'settling') {
+            $settleAction = Find-GameAction -Action 'blackjack_settle'
+            if ($null -cne $settleAction) {
+                $null = Invoke-GameAction -Action 'blackjack_settle' -Intent 'settle the publicly completed blackjack hand'
+                Wait-Frames -Frames 12
+                continue
+            }
             # Completed Blackjack hands are normally settled by the production
             # surface's automatic tick once the finite card presentation ends.
             # Frame duration varies with host load, so a fixed frame wait can
@@ -4540,11 +4546,6 @@ function Play-OneBlackjackRound {
             Wait-Frames `
                 -Frames 12 `
                 -Intent 'wait for the visibly completed blackjack hand to settle automatically'
-            continue
-        }
-        if ($null -cne (Find-GameAction -Action 'blackjack_settle')) {
-            $null = Invoke-GameAction -Action 'blackjack_settle' -Intent 'settle the publicly completed blackjack hand'
-            Wait-Frames -Frames 12
             continue
         }
         $hitAction = Find-GameAction -Action 'blackjack_hit'
@@ -4572,6 +4573,15 @@ function Play-OneBlackjackRound {
             }
             if (-not [string]::IsNullOrWhiteSpace($outcomeAfterDeal) -and $outcomeAfterDeal -cne $beforeOutcome) {
                 return
+            }
+            # The all-in warning is an intentional result of pressing Deal,
+            # while the covered table can still expose that same Deal target
+            # behind the modal. Let the next loop iteration resolve the public
+            # wager confirmation before deciding that the control was inert.
+            $eventAfterDeal = [bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false)
+            $popupTypeAfterDeal = [string](Get-Value $script:LastObservation @('screen', 'overlay_state', 'event_choice_popup_type') '')
+            if ($eventAfterDeal -and $popupTypeAfterDeal -ceq 'wager_confirmation') {
+                continue
             }
             # Exact-capacity wagers are sealed by the production action host.
             # During that bounded delivery window Deal disappears and may be
@@ -6936,6 +6946,13 @@ function Invoke-HeistEndingRoute {
         $choiceId = $decisions[$round]
         Invoke-EventObjectChoice -EventId 'heist_live_table' -ChoiceId $choiceId -Intent "take the visible Count decision $choiceId before live round $($round + 1)"
         Close-VisibleChoiceSurface
+        # A live-table choice is an ordinary action boundary and may surface
+        # Eye in the Sky before the Blackjack table opens. Resolve that exact
+        # public interruption through the existing cooling path instead of
+        # asking Grand-room normalization to ignore a visible modal.
+        if ([bool](Get-Value $script:LastObservation @('event_popup', 'visible') $false)) {
+            $null = Resolve-BlackjackRouteEventPopup -PreferCooling
+        }
         Play-OneBlackjackRound -UseHeistStake
         Leave-GameSurface
     }
