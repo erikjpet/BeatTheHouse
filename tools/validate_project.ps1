@@ -70,6 +70,24 @@ function Assert-ExactJsonString {
     }
 }
 
+function Get-Rw061CanonicalTextSha256FromBytes {
+    param([byte[]]$Bytes)
+    if ($null -eq $Bytes) {
+        throw "Canonical text hashing requires a byte array."
+    }
+    $strictUtf8 = [Text.UTF8Encoding]::new($false, $true)
+    $text = $strictUtf8.GetString($Bytes)
+    $canonicalText = $text.Replace("`r`n", "`n").Replace("`r", "`n")
+    $canonicalBytes = [Text.UTF8Encoding]::new($false).GetBytes($canonicalText)
+    $hasher = [Security.Cryptography.SHA256]::Create()
+    try {
+        return ([BitConverter]::ToString($hasher.ComputeHash($canonicalBytes))).Replace('-', '')
+    }
+    finally {
+        $hasher.Dispose()
+    }
+}
+
 function Get-Rw061GdScriptTopLevelFunctionExtent {
     param([string]$Source,[string]$FunctionName)
     if([string]::IsNullOrWhiteSpace($Source)-or$FunctionName-cnotmatch'^[A-Za-z_][A-Za-z0-9_]*$'){throw 'rw06_1 validator GDScript function lookup requires one exact identifier and nonempty source'}
@@ -3090,7 +3108,12 @@ try {
         $expectedExactSeedHashes = [ordered]@{
             launcher_sha256 = [string]$exactSeedLauncherPinReceipt.sha256
             support_sha256 = [string]$exactSeedSupportPinReceipt.sha256
-            manifest_sha256 = [string]$exactSeedDependencyPinReceipts.manifest.sha256
+            # The launcher deliberately reports a canonical-LF text hash for
+            # this cross-platform manifest. Bind that value to the bytes held
+            # by the validator instead of comparing it to their checkout-EOL
+            # raw hash; the separate Git-blob check still binds repository
+            # content identity.
+            manifest_sha256 = Get-Rw061CanonicalTextSha256FromBytes ([byte[]]$exactSeedDependencyPins.manifest.bytes)
             audit_gd_sha256 = [string]$exactSeedDependencyPinReceipts.audit.sha256
             static_checker_sha256 = [string]$exactSeedDependencyPinReceipts.static_checker.sha256
             scenario_catalog_sha256 = [string]$exactSeedDependencyPinReceipts.scenario_catalog.sha256

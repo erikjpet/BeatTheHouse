@@ -107,15 +107,7 @@ class AuditFoundationTravelHost:
 		return ""
 
 	func _travel_target_ids() -> Array:
-		var production_ids: Array = view_model_script.travel_target_ids(self)
-		var flags_value: Variant = run_state.current_environment.get("local_narrative_flags", {})
-		var flags: Dictionary = flags_value if typeof(flags_value) == TYPE_DICTIONARY else {}
-		var local_room_ids: Array = flags.get("casino_room_targets", []) if typeof(flags.get("casino_room_targets", [])) == TYPE_ARRAY else []
-		var world_ids: Array = []
-		for target_id in production_ids:
-			if not local_room_ids.has(target_id):
-				world_ids.append(target_id)
-		return world_ids
+		return view_model_script.travel_target_ids(self)
 
 	func _travel_choice(target_id: String, known_target_ids: Array) -> Dictionary:
 		return view_model_script.travel_choice(self, target_id, known_target_ids)
@@ -2327,6 +2319,11 @@ func _production_foundation_travel_host(run_state: RunState) -> AuditFoundationT
 
 func _qualifying_world_travel_contract_holds(run_state: RunState) -> bool:
 	var issues: Array = []
+	var local_flags: Dictionary = {}
+	if run_state != null:
+		var local_flags_value: Variant = run_state.current_environment.get("local_narrative_flags", {})
+		if typeof(local_flags_value) == TYPE_DICTIONARY:
+			local_flags = local_flags_value
 	if run_state == null or not run_state.has_world_map():
 		issues.append("a generated world map is required")
 	if run_state != null and run_state.is_tutorial_run():
@@ -2339,6 +2336,8 @@ func _qualifying_world_travel_contract_holds(run_state: RunState) -> bool:
 		issues.append("forced closing-time walk presentation is outside this audit")
 	if run_state != null and run_state.travel_option_bonus() != 0:
 		issues.append("the fixed three-card evidence schema requires zero travel-option bonus")
+	if not _string_array(local_flags.get("casino_room_targets", [])).is_empty():
+		issues.append("local casino-room doors are outside this world-route audit")
 	if issues.is_empty():
 		return true
 	var node_id := run_state.current_world_node_id() if run_state != null else "missing-run"

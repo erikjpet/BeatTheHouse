@@ -199,6 +199,7 @@ function Get-Q009EnvironmentAuditTravelSourceIssues {
             _local_parent_home_door_travel_choice='return {}'
             _closing_time_blocks_environment_actions='return false'
             _closing_time_walk_fallback_target_id='return ""'
+            _travel_target_ids='return view_model_script.travel_target_ids(self)'
             _travel_choice='return view_model_script.travel_choice(self, target_id, known_target_ids)'
         }
         foreach($methodName in @($hostMethodReturns.Keys)){
@@ -206,8 +207,6 @@ function Get-Q009EnvironmentAuditTravelSourceIssues {
             $expectedReturn=[string]$hostMethodReturns[$methodName]
             if([regex]::Matches($methodExtent,'(?m)^\t\treturn[ \t]+').Count-ne1-or[regex]::Matches($methodExtent,'(?m)^\t\t'+[regex]::Escape($expectedReturn)+'[ \t]*$').Count-ne1){[void]$issues.Add("production Foundation host adapter method was not exact: $methodName")}
         }
-        $hostTargets=Get-Q009GdScriptNestedFunctionExtent $foundationHost '_travel_target_ids'
-        if([regex]::Matches($hostTargets,'view_model_script\.travel_target_ids\(self\)').Count-ne1-or-not$hostTargets.Contains('flags.get("casino_room_targets", [])')-or-not$hostTargets.Contains('if not local_room_ids.has(target_id)')-or[regex]::Matches($hostTargets,'(?m)^\t\treturn world_ids[ \t]*$').Count-ne1){[void]$issues.Add('production Foundation target adapter did not isolate world routes from local casino-room doors')}
         foreach($preloadLine in @(
             'const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")',
             'const FoundationTravelViewModelScript := preload("res://scripts/ui/foundation_travel_view_model.gd")',
@@ -232,7 +231,7 @@ function Get-Q009EnvironmentAuditTravelSourceIssues {
         if([regex]::Matches($projection,'(?m)^\tvar scenario_id := EnvironmentPlacementScript\.active_scenario_id\(environment\)[ \t]*$').Count-ne1-or[regex]::Matches($independentProjection,'(?m)^\t\tvar inactive_valid := EnvironmentPlacementScript\.active_scenario_id\(environment\)\.is_empty\(\)[ \t]*$').Count-ne1-or[regex]::Matches($arrival,'(?m)^\tvar installed_active_scenario_id := EnvironmentPlacementScript\.active_scenario_id\(installed_environment\)[ \t]*$').Count-ne1-or[regex]::Matches($arrival,'(?m)^\t\t\tand installed_active_scenario_id\.is_empty\(\)[ \t]*\\[ \t]*$').Count-ne1){[void]$issues.Add('inactive layered-scenario evidence bypasses the active visual-layer resolver')}
         foreach($required in @(
             'not run_state.has_world_map()','run_state.is_tutorial_run()','run_state.narrative_flags.get("_meta_home_session", false)','run_state.delivery_has_active_run()',
-            'run_state.closing_time_forced_travel_required()','run_state.travel_option_bonus() != 0'
+            'run_state.closing_time_forced_travel_required()','run_state.travel_option_bonus() != 0','_string_array(local_flags.get("casino_room_targets", [])).is_empty()'
         )){if(-not$overlay.Contains($required)){[void]$issues.Add("qualifying overlay guard omitted: $required")}}
         if([regex]::Matches($overlay,'(?m)^\t\t\tfailures\.append\(message\)[ \t]*$').Count-ne1-or[regex]::Matches($overlay,'(?m)^\t+return[ \t]+').Count-ne2-or[regex]::Matches($overlay,'(?m)^\t\treturn true[ \t]*$').Count-ne1-or[regex]::Matches($overlay,'(?m)^\treturn false[ \t]*$').Count-ne1){[void]$issues.Add('overlay violation is not bound to the exact qualifying failure control flow')}
         if([regex]::Matches($travel,'_travel_target_ids\(run_state\)').Count-ne2){[void]$issues.Add('pre/post-heat travel admission witnesses bypass the constrained production target catalog')}
@@ -3567,6 +3566,8 @@ function Invoke-ValidateOnlySelfTest {
             Assert-LauncherContract (@(Get-Q009EnvironmentAuditTravelSourceIssues $misScoped).Count-gt0) 'function-scoped route contract accepted the post-event producer in another function'
             $missingDeliveryGuard=$auditSource.Replace('if run_state != null and run_state.delivery_has_active_run():','if run_state != null and false:')
             Assert-LauncherContract (@(Get-Q009EnvironmentAuditTravelSourceIssues $missingDeliveryGuard).Count-gt0) 'function-scoped route contract accepted a missing delivery-overlay exclusion'
+            $missingLocalDoorGuard=$auditSource.Replace('if not _string_array(local_flags.get("casino_room_targets", [])).is_empty():','if false:')
+            Assert-LauncherContract (@(Get-Q009EnvironmentAuditTravelSourceIssues $missingLocalDoorGuard).Count-gt0) 'function-scoped route contract accepted a missing local-door overlay exclusion'
             $manualCatalog=$auditSource.Replace('return _production_foundation_travel_host(run_state)._travel_target_ids()','return WorldMapScript.travel_target_ids(run_state.world_map, run_state.current_world_node_id(), 2, 3, [])')
             Assert-LauncherContract (@(Get-Q009EnvironmentAuditTravelSourceIssues $manualCatalog).Count-gt0) 'function-scoped route contract accepted a hand-built target catalog'
             $extraEarlyReturn=$auditSource.Replace('func _travel_target_ids(run_state: RunState) -> Array:',"func _travel_target_ids(run_state: RunState) -> Array:`n`treturn []")
