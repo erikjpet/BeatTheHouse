@@ -3,11 +3,11 @@ branding/social/0.6.0_devlog_6_promotional_post.md	main	35829f05	Completed capti
 branding/social/0.6.0_devlog_6_promotional_post.png	main	35829f05	Completed poster; original bytes preserved.
 branding/social/0.6.0_devlog_6_promotional_post.svg	main	35829f05	Editable poster; eight local image references resolve.
 data/environments/developer_placement_overrides.json	main	aeed3a1a	New House Calls lock matches existing accepted position; all old values preserved.
-data/environments/scenario_slot_layouts.json	wip		Seven Convention/Gala coordinate experiments lack direct normal-play reproduction.
+data/environments/scenario_slot_layouts.json	retired-history		All seven experimental coordinates are superseded by shipped manual overrides; no effective player-layout improvement.
 docs/plans/0.6_consolidated_branch_manifest.tsv	wip-custody		Historical branch inventory; all 359 tips retained in two-branch ancestry.
-docs/plans/0.6_consolidated_wip_handoff.md	wip-custody		Continuation and preservation instructions belong to WIP.
-docs/plans/environment_scenario_layout_breakdown.md	split	aeed3a1a	House Calls slot/count correction landed; seven experimental coordinate rows remain WIP.
-docs/todo/environment_slot_family_manifest_legacy_mapping.json	wip-retired		Historical migration/hash expectations not refreshed; no game fix.
+docs/plans/0.6_consolidated_wip_handoff.md	wip-custody		Archive/recovery instructions belong to WIP; no pending player improvement remains from this set.
+docs/plans/environment_scenario_layout_breakdown.md	main-plus-retired-history	aeed3a1a	House Calls slot/count correction landed; seven superseded experimental coordinate rows retired.
+docs/todo/environment_slot_family_manifest_legacy_mapping.json	retired-history		Regenerated historical migration/hash evidence adds no player benefit; original experiment preserved only in history.
 docs/todo/rw06_owner_questions.md	retired-history		Superseded Q-025/Q-026 removed from active WIP; original c3d73c25 retained.
 review_artifacts/promo_0_6/current_back_room_holdem.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
 review_artifacts/promo_0_6/current_coin_pusher/01_normal_pile_rider_live_1280x720.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
@@ -32,11 +32,11 @@ review_artifacts/promo_0_6/current_scenarios/report.json	main	bd0bf164	Completed
 review_artifacts/promo_0_6/current_scratch_ticket_play.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
 review_artifacts/promo_0_6/neon_poster_background.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
 review_artifacts/promo_0_6/scratch_ticket_machine_current.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
-scripts/core/run_state.gd	wip-diagnostic		Failure logging only; no demonstrated gameplay repair.
-scripts/core/scenario_layout_resolver.gd	wip-diagnostic		Lane logging only; no demonstrated gameplay repair.
-scripts/tests/environment_object_manifest_check.gd	wip-retired		Preserved automation investigation; no test expansion or landing.
-scripts/ui/pixel_scene_canvas.gd	wip		Slot-footprint alternative removes accepted preview sizes and legibility floor.
-tools/environment_fixed_slot_static_check.py	wip-retired		Preserved validator experiment; no production behavior change.
-tools/environment_generation_audit.gd	wip-diagnostic		Diagnostic filters and shape logging; investigation material.
-tools/migrate_environment_slots_v2.py	wip-retired		Preserved migration experiment; not needed to run current production data.
-tools/test_scenario_slot_layouts.py	wip-retired		Preserved test expectation experiment; no production behavior change.
+scripts/core/run_state.gd	retired-history		Prints failure details before unchanged failure return; no player-visible repair.
+scripts/core/scenario_layout_resolver.gd	retired-history		Prints lane geometry before unchanged error; no player-visible repair.
+scripts/tests/environment_object_manifest_check.gd	retired-history		Capacity assertion covers the already-landed House Calls fix; stopped automation lane stays closed.
+scripts/ui/pixel_scene_canvas.gd	retired-history		Rejected broad rendering alternative removes accepted readable preview sizes and legibility floor.
+tools/environment_fixed_slot_static_check.py	retired-history		Authoring capacity bookkeeping adds no playable behavior; investigation retired.
+tools/environment_generation_audit.gd	retired-history		Seed filters and full-shape logs served the stopped investigation; no runtime improvement.
+tools/migrate_environment_slots_v2.py	retired-history		Maintenance recipe is unnecessary for correct shipped data and can rewrite provisional geometry.
+tools/test_scenario_slot_layouts.py	retired-history		Capacity expectation reflects an existing fix; no player-facing implementation remains.
