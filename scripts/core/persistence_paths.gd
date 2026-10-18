@@ -5,6 +5,13 @@ extends RefCounted
 # Keep this root stable so saves created by an installed build survive updates.
 const DISTRIBUTION_FEATURE := "distribution_build"
 const DISTRIBUTION_ROOT := "user://distribution"
+# Browser storage survives itch upload replacements and is keyed by the page
+# origin/project, not by the exported files.  The original distribution root
+# therefore exposed 0.6 to saves, home progression, settings, and developer
+# placement data left by pre-release web builds.  Keep the current public web
+# line in its own epoch: the first launch is clean, while data created by this
+# line still persists across ordinary reloads and compatible updates.
+const WEB_DISTRIBUTION_ROOT := "user://distribution/web_0_6_1"
 const DISTRIBUTION_ROOT_ENV := "BTH_DISTRIBUTION_DATA_ROOT"
 const DISTRIBUTION_FEATURE_ENV := "BTH_DISTRIBUTION_BUILD"
 
@@ -18,7 +25,9 @@ static func distribution_root() -> String:
 	var override := _normalized_distribution_root(OS.get_environment(DISTRIBUTION_ROOT_ENV))
 	if _distribution_root_valid(override):
 		return override
-	return DISTRIBUTION_ROOT if distribution_build() else ""
+	if not distribution_build():
+		return ""
+	return WEB_DISTRIBUTION_ROOT if OS.has_feature("web") else DISTRIBUTION_ROOT
 
 
 static func _normalized_distribution_root(value: String) -> String:
