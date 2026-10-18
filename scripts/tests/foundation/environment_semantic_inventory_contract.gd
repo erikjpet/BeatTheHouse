@@ -7,6 +7,7 @@ const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/enviro
 const EnvironmentObjectManifestScript := preload("res://scripts/core/environment_object_manifest.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
+const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 
 const RECORD_KEYS := ["collection", "owner_namespace", "stable_object_id", "owned_identity", "presentation_object_id", "availability", "source_kind", "source_field", "source_record_id", "record"]
 
@@ -1363,6 +1364,13 @@ static func _check_runtime_projection_geometry_exclusion(library: ContentLibrary
 	environment["scenario_sequence_base_layout_object_rects"] = _dict(environment["layout"]["object_rects"])
 	environment["scenario_sequence_base_layout_object_rects"][runtime_id] = {"x": 0.7, "y": 0.1, "w": 0.1, "h": 0.2}
 	environment["layout"]["object_rects"][runtime_id] = {"x": 0.7, "y": 0.1, "w": 0.1, "h": 0.2}
+	environment["runtime_object_manifest_entries"] = [{
+		"object_id": runtime_id,
+		"runtime_owner": "home_return_exit",
+		"spot_field": "runtime_object_manifest_entries",
+		"active": true,
+		"physical": true,
+	}]
 	environment["object_manifest"] = {
 		"schema_version": 2,
 		"environment_id": str(environment.get("id", "")),
@@ -1387,6 +1395,16 @@ static func _check_runtime_projection_geometry_exclusion(library: ContentLibrary
 			or rects.has(runtime_id) or not rects.has("game:slot") \
 			or _array(exact.get("scene_objects", [])).has("base::%s" % runtime_id):
 		failures.append("Runtime-owned parent-door geometry entered immutable scenario inventory authority: %s" % JSON.stringify(inventory))
+	var unreconciled := environment.duplicate(true)
+	unreconciled["object_manifest"]["rows"] = []
+	var unreconciled_inventory := EnvironmentSemanticInventoryScript.for_instance(unreconciled, library)
+	if _dict(_dict(unreconciled_inventory.get("source_provenance", {})).get("layout_object_rects", {})).has(runtime_id):
+		failures.append("An unreconciled runtime projection entered immutable scenario layout provenance.")
+	var entry_environment := environment.duplicate(true)
+	entry_environment.erase("scenario_sequence_base_layout_object_rects")
+	ScenarioEngineScript._capture_sequence_baseline(entry_environment)
+	if _dict(entry_environment.get("scenario_sequence_base_layout_object_rects", {})).has(runtime_id):
+		failures.append("Scenario entry captured a runtime-owned occupant in its immutable layout baseline.")
 
 
 static func _check_exact_fixture_distinctions(library: ContentLibrary, failures: Array) -> void:

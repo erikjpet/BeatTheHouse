@@ -4516,6 +4516,19 @@ function Play-OneBlackjackRound {
             }
             $phase = [string](Get-Value $script:LastObservation @('game', 'phase') '')
         }
+        # Presentation-only waits and callouts above can carry an automatically
+        # settled hand across the settling -> betting boundary inside this same
+        # loop iteration. Re-check completion before inspecting controls; without
+        # this boundary the replay mistakes the next-hand Deal button for work
+        # still required by the hand it just finished.
+        $bossHandAfterPresentation = [int](Get-Value $script:LastObservation @('game', 'boss_hand_number') 0)
+        $outcomeAfterPresentation = [string](Get-Value $script:LastObservation @('game', 'outcome_message') '')
+        $wagerControlsAfterPresentation = $Ending -cne 'clean' -or $null -ne (Find-GameAction -Action 'blackjack_deal')
+        if (($bossHandAfterPresentation -gt $beforeHand) -or
+            ($roundStarted -and -not [string]::IsNullOrWhiteSpace($outcomeAfterPresentation) -and
+                $phase -ceq 'betting' -and $wagerControlsAfterPresentation)) {
+            return
+        }
         if ($phase -ceq 'settling') {
             # Completed Blackjack hands are normally settled by the production
             # surface's automatic tick once the finite card presentation ends.
@@ -4539,6 +4552,13 @@ function Play-OneBlackjackRound {
         if ($null -ne $hitAction -or $null -ne $standAction) {
             Invoke-PublicBlackjackDecision
             Wait-Frames -Frames 24
+            continue
+        }
+        if ($roundStarted -and $phase -cne 'betting') {
+            # The canvas may finish its between-hands draw one presentation frame
+            # before the semantic phase snapshot catches up. Do not treat that
+            # next-hand Deal control as unfinished work for the current hand.
+            Wait-Frames -Frames 12 -Intent 'wait for the completed blackjack hand semantic phase to match the rendered table'
             continue
         }
         if ($null -cne (Find-GameAction -Action 'blackjack_deal')) {

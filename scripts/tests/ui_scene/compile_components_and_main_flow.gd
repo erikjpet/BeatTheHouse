@@ -2769,7 +2769,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "c8f5026f114f26bc2ac08332f8fd1147225a04037082f203e1725428eba38eaa",
+		"current_environment_sha256": "2139fa062987285594312e62f9ab66a7b674a1ef0053c362b6ff90cd4617f577",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
 		"provenance_commit": "7ddb7685efb21e45979ea10ab89e660d99c6e891",
@@ -2780,7 +2780,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0257877551b37226fd62316ee2af5e047a27387fbb87d5acfa0273d1366a0e81",
-		"world_map_sha256": "0c0a561ec38552a804198213a945e760646fb21111eef6eeaf5fa31b12420e9e",
+		"world_map_sha256": "7bc7e3cf8e916bd666d2c555fe07deecb2be92232f7a291fe3f8488f95311a0d",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):

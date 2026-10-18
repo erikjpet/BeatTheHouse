@@ -238,7 +238,7 @@ func _execute_command(raw: String, command_number: int) -> Dictionary:
 		# and retained-canvas rebuilds for an unpaused presentation frame. Advance a
 		# fixed cadence with the ambient clock still frozen, then reacquire the exact
 		# stable command-boundary pause owners before authenticating the post-input state.
-		var settle := await _advance_replay_presentation(POST_INPUT_SETTLE_FRAMES, pause_before)
+		var settle := await _advance_replay_presentation(POST_INPUT_SETTLE_FRAMES, pause_before, true)
 		var settle_valid := bool(settle.get("ok", false))
 		if not settle_valid:
 			accepted = false
@@ -1278,7 +1278,7 @@ func _replay_ambient_clock_is_frozen() -> bool:
 	return app != null and not bool(app.get("continuous_environment_clock_enabled"))
 
 
-func _advance_replay_presentation(frames: int, pause_before: Dictionary) -> Dictionary:
+func _advance_replay_presentation(frames: int, pause_before: Dictionary, settle_automatic_blackjack: bool = false) -> Dictionary:
 	# Window focus belongs to the operator/OS and can change while this unattended
 	# bridge is processing a command. It must not decide how many presentation
 	# frames actually advance. Preserve every stable lifecycle owner, continuously
@@ -1298,8 +1298,13 @@ func _advance_replay_presentation(frames: int, pause_before: Dictionary) -> Dict
 	var minimum_frames := maxi(1, frames)
 	var maximum_frames := maxi(minimum_frames, MAX_LOADING_SETTLE_FRAMES)
 	var advanced_frames := 0
-	while advanced_frames < minimum_frames \
-			or (advanced_frames < maximum_frames and _replay_visible_spatial_loading(_public_observation())):
+	while advanced_frames < maximum_frames:
+		var observation := _public_observation()
+		var minimum_pending := advanced_frames < minimum_frames
+		var loading_pending := _replay_visible_spatial_loading(observation)
+		var blackjack_pending := settle_automatic_blackjack and _replay_automatic_blackjack_settlement_pending(observation)
+		if not minimum_pending and not loading_pending and not blackjack_pending:
+			break
 		var live_pause := _replay_pause_snapshot()
 		for owner_value in _array(live_pause.get("pause_owners", [])):
 			var owner := str(owner_value).strip_edges()
@@ -1338,6 +1343,16 @@ func _advance_replay_presentation(frames: int, pause_before: Dictionary) -> Dict
 		"suspended_pause_owners": suspended_pause_owners,
 		"volatile_focus_owner_normalized": volatile_focus_owner_normalized,
 	}
+
+
+func _replay_automatic_blackjack_settlement_pending(observation: Dictionary) -> bool:
+	var game := _dict(observation.get("game", {}))
+	if str(game.get("game_id", "")) != "blackjack" or str(game.get("phase", "")) != "settling":
+		return false
+	# The guided table deliberately exposes manual settlement while Coach is
+	# present. Every other settling phase is driven by Blackjack's autonomous tick;
+	# sample that action only after the tick reaches its stable betting projection.
+	return not bool(_dict(observation.get("coach", {})).get("visible", false))
 
 
 func _replay_visible_spatial_loading(observation: Dictionary) -> bool:
@@ -1727,6 +1742,10 @@ func _game_surface_actions(canvas: Control, public_game: Dictionary = {}) -> Arr
 	if canvas == null or not canvas.visible or not canvas.has_method("current_view_snapshot"):
 		return []
 	var snapshot: Dictionary = canvas.call("current_view_snapshot")
+	# State patches and the draw that rebuilds their hit geometry are separate
+	# presentation boundaries. Never combine fresh state with prior-frame targets.
+	if not bool(snapshot.get("surface_hit_regions_current", false)):
+		return []
 	var result: Array = []
 	for value in _array(snapshot.get("surface_hit_actions", [])):
 		var action := value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
@@ -1736,11 +1755,11 @@ func _game_surface_actions(canvas: Control, public_game: Dictionary = {}) -> Arr
 		# Blackjack keeps an intentionally invisible Deal hit region while a hand
 		# is active so keyboard/controller focus can retain its stable binding.
 		# That compatibility region is not a rendered player control and must never
-		# become an agent action. Admit Deal only when the public game projection
-		# says the visible DEAL control is currently available.
+		# become an agent action. Its explicit visibility metadata stays coherent with
+		# the hit-region generation even when surface state advances before redraw.
 		if str(public_game.get("game_id", "")) == "blackjack" \
 				and action_id == "blackjack_deal" \
-				and not bool(public_game.get("can_deal", false)):
+				and (not bool(public_game.get("can_deal", false)) or bool(action.get("invisible", false))):
 			continue
 		result.append({
 			"action": action_id,

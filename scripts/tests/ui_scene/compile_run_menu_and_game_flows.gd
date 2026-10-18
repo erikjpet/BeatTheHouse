@@ -4250,10 +4250,17 @@ func _check_game_surface_touch_hit_policy() -> bool:
 	root.add_child(touch_canvas)
 	touch_canvas.call("surface_add_hit", Rect2(12, 12, 12, 16), "surface_stake_up")
 	touch_canvas.call("surface_add_exact_hit", Rect2(40, 40, 12, 16), "dense_board_probe")
+	touch_canvas.call("surface_add_invisible_hit", Rect2(64, 40, 12, 16), "invisible_focus_probe")
 	var snapshot: Dictionary = touch_canvas.call("current_view_snapshot")
 	var regions: Array = snapshot.get("surface_hit_actions", [])
 	var control_rect := _surface_hit_rect(regions, "surface_stake_up")
 	var dense_rect := _surface_hit_rect(regions, "dense_board_probe")
+	var invisible_focus_tagged := false
+	for region_value in regions:
+		if typeof(region_value) == TYPE_DICTIONARY \
+				and str((region_value as Dictionary).get("action", "")) == "invisible_focus_probe":
+			invisible_focus_tagged = bool((region_value as Dictionary).get("invisible", false))
+			break
 	var touch_activation := {"count": 0, "action": "", "confirm_requested": false}
 	touch_canvas.connect("surface_action", func(action: String, _index: int, confirm_requested: bool) -> void:
 		touch_activation["count"] = int(touch_activation.get("count", 0)) + 1
@@ -4281,6 +4288,9 @@ func _check_game_surface_touch_hit_policy() -> bool:
 		return false
 	if absf(dense_rect.size.x - 12.0) > 0.001 or absf(dense_rect.size.y - 16.0) > 0.001:
 		push_error("Dense game-board hit regions should keep exact geometry to avoid overlapping betting grids.")
+		return false
+	if not invisible_focus_tagged:
+		push_error("Invisible compatibility hit regions must remain distinguishable from drawn player controls in public snapshots.")
 		return false
 	if int(touch_activation.get("count", 0)) != 1 or str(touch_activation.get("action", "")) != "surface_stake_up" or not bool(touch_activation.get("confirm_requested", false)):
 		push_error("Game surface touch input did not activate the expected hit region exactly once.")

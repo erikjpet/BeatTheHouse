@@ -1460,6 +1460,17 @@ static func _base_layout_object_rects(environment: Dictionary) -> Dictionary:
 				or str(row.get("spot_field", "")) == "runtime_object_manifest_entries":
 			if not presentation_id.is_empty():
 				transient_presentations[presentation_id] = true
+	# Baseline capture can run before the durable manifest has been reconciled.
+	# Consult the trusted runtime projection input as well so an actor present on
+	# sequence entry cannot become immutable room geometry after it walks away.
+	for entry_value in _array(environment.get("runtime_object_manifest_entries", [])):
+		var entry := _dict(entry_value)
+		if str(entry.get("runtime_owner", "")).strip_edges().is_empty() \
+				and str(entry.get("spot_field", "")) != "runtime_object_manifest_entries":
+			continue
+		var presentation_id := str(entry.get("presentation_object_id", entry.get("object_id", ""))).strip_edges()
+		if not presentation_id.is_empty():
+			transient_presentations[presentation_id] = true
 	for presentation_id_value in _dict(layout.get("slot_bindings", {})).keys():
 		var presentation_id := str(presentation_id_value)
 		var binding := _dict(_dict(layout.get("slot_bindings", {})).get(presentation_id_value, {}))

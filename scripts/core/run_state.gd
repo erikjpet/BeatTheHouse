@@ -1764,10 +1764,28 @@ func prepare_resolved_event_membership_for_publication(event_id: String, profile
 # Owner-specific projectors replace only their own rows so independent systems
 # can share one deterministic manifest input without erasing each other.
 func _sync_all_runtime_object_manifest_entries(environment: Dictionary) -> bool:
+	var prior_entries := JsonCoerceScript._copy_array(environment.get("runtime_object_manifest_entries", []))
 	var changed := _sync_contextual_runtime_object_manifest_entries(environment)
 	changed = _sync_numbers_runtime_object_manifest_entries(environment) or changed
 	changed = _sync_crew_heist_runtime_object_manifest_entries(environment) or changed
 	changed = _sync_grand_casino_runtime_object_manifest_entries(environment) or changed
+	# Repair baselines captured by older builds while a runtime occupant was
+	# visible. Include both sides of the projection update so an actor that leaves
+	# on this boundary cannot reappear as immutable scenario geometry.
+	if environment.has("scenario_sequence_base_layout_object_rects"):
+		var baseline_rects := JsonCoerceScript._copy_dict(environment.get("scenario_sequence_base_layout_object_rects", {}))
+		var repaired := false
+		for entry_value in prior_entries + JsonCoerceScript._copy_array(environment.get("runtime_object_manifest_entries", [])):
+			var entry := JsonCoerceScript._copy_dict(entry_value)
+			if str(entry.get("runtime_owner", "")).strip_edges().is_empty() \
+					and str(entry.get("spot_field", "")) != "runtime_object_manifest_entries":
+				continue
+			var presentation_id := str(entry.get("presentation_object_id", entry.get("object_id", ""))).strip_edges()
+			if not presentation_id.is_empty() and baseline_rects.erase(presentation_id):
+				repaired = true
+		if repaired:
+			environment["scenario_sequence_base_layout_object_rects"] = baseline_rects
+			changed = true
 	return changed
 
 

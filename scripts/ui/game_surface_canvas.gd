@@ -55,6 +55,8 @@ var background_texture: Texture2D
 var use_external_background := false
 var flicker: float = 0.0
 var hit_regions: Array = []
+var surface_state_revision := 0
+var hit_region_state_revision := -1
 var hovered_surface_action: String = ""
 var hovered_surface_index: int = -1
 var captured_surface_action: String = ""
@@ -167,6 +169,8 @@ func clear_runtime_state() -> void:
 	background_texture = null
 	use_external_background = false
 	hit_regions = []
+	surface_state_revision += 1
+	hit_region_state_revision = -1
 	hovered_surface_action = ""
 	hovered_surface_index = -1
 	captured_surface_action = ""
@@ -205,6 +209,7 @@ func render_game_snapshot(snapshot: Dictionary) -> void:
 	uses_foundation_snapshot = true
 	surface_render_elapsed_sec = 0.0
 	view_data = snapshot.duplicate(false)
+	surface_state_revision += 1
 	# Patch-routing metadata is never renderer state. Entry assembly can merge a
 	# module patch before this boundary, so consume it defensively here as well as
 	# in apply_surface_state_patch().
@@ -237,6 +242,7 @@ func apply_surface_state_patch(patch: Dictionary) -> void:
 		if str(key) == "surface_defer_patch_redraw":
 			continue
 		view_data[key] = patch[key]
+	surface_state_revision += 1
 	state = view_data
 	if patch.has("surface_time_msec"):
 		surface_simulation_clock_msec = float(state.get("surface_time_msec", surface_simulation_clock_msec))
@@ -302,6 +308,7 @@ func current_view_snapshot() -> Dictionary:
 		"small_screen_mode": small_screen_mode,
 		"minimum_touch_hit_size": SmallScreenPolicyScript.surface_hit_size(small_screen_mode, MIN_SURFACE_TOUCH_HIT_SIZE),
 		"surface_hit_actions": _hit_region_snapshots(),
+		"surface_hit_regions_current": hit_region_state_revision == surface_state_revision,
 		"outcome_message": str(state.get("outcome_message", state.get("result_message", ""))),
 		"outcome_bankroll_delta": int(state.get("outcome_bankroll_delta", state.get("bankroll_delta", 0))),
 		"outcome_suspicion_delta": int(state.get("outcome_suspicion_delta", state.get("suspicion_delta", 0))),
@@ -845,7 +852,7 @@ func surface_add_hit(rect: Rect2, action: String, index: int = -1, expand_touch_
 
 
 func surface_add_invisible_hit(rect: Rect2, action: String, index: int = -1, expand_touch_hit: bool = true) -> void:
-	hit_regions.append({"rect": _touch_hit_rect(rect, expand_touch_hit), "action": action, "index": index})
+	hit_regions.append({"rect": _touch_hit_rect(rect, expand_touch_hit), "action": action, "index": index, "invisible": true})
 
 
 func surface_add_exact_hit(rect: Rect2, action: String, index: int = -1) -> void:
@@ -1415,6 +1422,7 @@ func _draw() -> void:
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	_update_drunk_distortion_protected_rects()
 	_ensure_snapshot_proxy_hit_regions()
+	hit_region_state_revision = surface_state_revision
 	_notify_hit_region_geometry_changed()
 	_record_draw_performance(draw_started_usec)
 
@@ -1884,6 +1892,7 @@ func _hit_region_snapshots() -> Array:
 			"action": str(region.get("action", "")),
 			"index": int(region.get("index", -1)),
 			"rect": rect,
+			"invisible": bool(region.get("invisible", false)),
 		})
 	return snapshots
 

@@ -1094,7 +1094,10 @@ static func _capture_sequence_baseline(environment: Dictionary) -> void:
 	if not environment.has("scenario_sequence_base_game_modifiers"):
 		environment["scenario_sequence_base_game_modifiers"] = JsonCoerceScript._copy_dict(environment.get("scenario_game_modifiers", {}))
 	if not environment.has("scenario_sequence_base_layout_object_rects"):
-		environment["scenario_sequence_base_layout_object_rects"] = JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(environment.get("layout", {})).get("object_rects", {}))
+		# Runtime-owned occupants can already be present when a room sequence starts.
+		# They are not immutable room authority, so never capture their geometry in
+		# the baseline that survives after the occupant moves away.
+		environment["scenario_sequence_base_layout_object_rects"] = EnvironmentSemanticInventoryScript._base_layout_object_rects(environment)
 
 
 static func _materialize_sequence_services_games_routes(environment: Dictionary, projection: Dictionary) -> void:
