@@ -4,12 +4,18 @@ All notable public release changes for Beat the House are recorded here.
 
 ## 0.6.0 - Feature-complete source
 
-Status: **feature-complete and version-stamped in source. The owner accepted
-the current environment placements as the 0.6 baseline on 2026-10-18. Final
-release verification and packaging are in progress; `v0.6.0-pre.5` remains the
-latest published testing prerelease.** Project and platform export metadata
+Status: **release-ready and version-stamped in source. The owner accepted
+the current environment placements as the 0.6 baseline on 2026-10-18. Windows,
+Web, source packaging, normal ending routes and native Windows performance
+Smoke have been verified. The owner authorized the official `v0.6.0` tag;
+distribution uploads remain a separate owner action.** Project and platform export metadata
 read `0.6.0`. Further placement tuning and seed-based stability work belong to
 0.6.1 unless they expose a demonstrated release blocker.
+
+- Removes 25 historical generated test saves/profile files from documentation
+  evidence before the official tag. Runnable packages contain no player saves,
+  inventories, progress, settings or authority keys. Intentional source-only
+  regression fixtures remain excluded from both game builds.
 
 ### Feature-complete source update (2026-10-08)
 
