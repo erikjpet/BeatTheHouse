@@ -1,0 +1,29 @@
+{
+	"active_cash_before_menu": 97,
+	"baseline_saved": true,
+	"kind": "production_lifecycle_with_isolated_storage_fault",
+	"loaded_original_save": true,
+	"original_cash": 100,
+	"reloaded_cash": 100,
+	"reproduced": true,
+	"run_discarded_after_failed_save": true,
+	"save_directory_displaced": 0,
+	"save_directory_restored": 0,
+	"save_outcome": {
+		"data": {
+
+		},
+		"error": 12,
+		"error_code": "temporary_open_failed",
+		"message": "Temporary Open Failed",
+		"ok": false,
+		"outcome": "nothing-loadable",
+		"slot_id": "foundation_ui_autosave"
+	},
+	"seed": "BTH061-SAVE-FAILURE",
+	"selected": true,
+	"source_commit": "a095414b20cdb3570e06b367c621be43e0256109",
+	"started": true,
+	"status_message": "Autosave failed. Retry from Run Menu or after another action.",
+	"traveled": true
+}
