@@ -2319,11 +2319,6 @@ func _production_foundation_travel_host(run_state: RunState) -> AuditFoundationT
 
 func _qualifying_world_travel_contract_holds(run_state: RunState) -> bool:
 	var issues: Array = []
-	var local_flags: Dictionary = {}
-	if run_state != null:
-		var local_flags_value: Variant = run_state.current_environment.get("local_narrative_flags", {})
-		if typeof(local_flags_value) == TYPE_DICTIONARY:
-			local_flags = local_flags_value
 	if run_state == null or not run_state.has_world_map():
 		issues.append("a generated world map is required")
 	if run_state != null and run_state.is_tutorial_run():
@@ -2336,8 +2331,6 @@ func _qualifying_world_travel_contract_holds(run_state: RunState) -> bool:
 		issues.append("forced closing-time walk presentation is outside this audit")
 	if run_state != null and run_state.travel_option_bonus() != 0:
 		issues.append("the fixed three-card evidence schema requires zero travel-option bonus")
-	if not _string_array(local_flags.get("casino_room_targets", [])).is_empty():
-		issues.append("local casino-room doors are outside this world-route audit")
 	if issues.is_empty():
 		return true
 	var node_id := run_state.current_world_node_id() if run_state != null else "missing-run"
