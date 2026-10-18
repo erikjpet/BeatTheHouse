@@ -3582,6 +3582,17 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	if has_expected_version and (typeof(current_environment.get("scenario_semantic_inventory_version")) != TYPE_INT or typeof(current_environment.get("scenario_semantic_digest")) != TYPE_STRING or expected_version <= 0 or expected_digest != expected_digest.strip_edges() or expected_digest.is_empty()):
 		return _invalidate_scenario_semantic_proof("scenario semantic inventory proof reference is malformed; explicit migration is required")
 	if has_expected_version and (expected_version != next_version or expected_digest != next_digest):
+		printerr("SCENARIO_INVENTORY_DIAGNOSTIC scenario=%s expected_version=%d next_version=%d expected_digest=%s next_digest=%s new_source=%s prior_source=%s semantic_events=%s semantic_resolved=%s semantic_routes=%s semantic_next=%s interaction_ids=%s actor_ids=%s" % [
+			definition_id, expected_version, next_version, expected_digest, next_digest,
+			JSON.stringify(JsonCoerceScript._copy_dict(sealed.get("source_provenance", {}))),
+			JSON.stringify(JsonCoerceScript._copy_dict(prior_sealed.get("source_provenance", {}))),
+			JSON.stringify(JsonCoerceScript._copy_array(semantic_environment.get("event_ids", []))),
+			JSON.stringify(JsonCoerceScript._copy_array(semantic_environment.get("resolved_event_ids", []))),
+			JSON.stringify(JsonCoerceScript._copy_array(semantic_environment.get("travel_hooks", []))),
+			JSON.stringify(JsonCoerceScript._copy_array(semantic_environment.get("next_archetypes", []))),
+			JSON.stringify(interactions.map(func(value: Variant) -> String: return str(JsonCoerceScript._copy_dict(value).get("presentation_object_id", "")))),
+			JSON.stringify(actors.map(func(value: Variant) -> String: return str(JsonCoerceScript._copy_dict(value).get("stable_object_id", "")))),
+		])
 		return _invalidate_scenario_semantic_proof("scenario semantic inventory version or digest changed; explicit migration is required")
 	if proof_ready:
 		# Identity/origin digest stability deliberately permits current presentation

@@ -997,6 +997,7 @@ static func _validate_visual_access(scenes: Dictionary, actors: Dictionary, obst
 			var small_rect := _pixel_rect(_dict(semantic.get("small_screen_rect", {})))
 			var role := str(semantic.get("role", "")).to_lower()
 			if role in ["obstacle", "barrier", "blockade"] and (rect.intersects(WALK_LANE) or small_rect.intersects(WALK_LANE)):
+				print("LANE_DIAGNOSTIC identity=%s rect=%s small=%s slot=%s scenario=%s map=%s" % [identity, rect, small_rect, str(semantic.get("slot_id", "")), str(environment.get("scenario_id", "")), str(_dict(EnvironmentPlacementScript.surface_map(environment)).get("id", ""))])
 				errors.append("Scenario obstacle %s blocks the mandatory player access lane in normal or expanded small-screen layout." % identity)
 	if not obstacles.is_empty() and not _room_path_reachable(obstacles):
 		errors.append("Scenario obstruction leaves no reachable route from the player access lane into the room.")

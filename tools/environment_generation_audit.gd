@@ -136,6 +136,8 @@ func _run() -> void:
 	var output_json := str(options.get("output_json", DEFAULT_OUTPUT_JSON))
 	var output_markdown := str(options.get("output_markdown", DEFAULT_OUTPUT_MARKDOWN))
 	var exact_seed := str(options.get("exact_seed", "")).strip_edges()
+	var diagnostic_run_index := int(options.get("diagnostic_run_index", -1))
+	var diagnostic_seeds := str(options.get("diagnostic_seeds", "")).split(",", false)
 	var seed_prefix := str(options.get("seed_prefix", "")).strip_edges()
 	required_destination_id = str(options.get("target_destination", "")).strip_edges()
 	var attempt_id := str(options.get("attempt_id", "")).strip_edges()
@@ -151,6 +153,8 @@ func _run() -> void:
 		seed_prefix = _random_seed_prefix()
 	if not exact_seed.is_empty():
 		run_count = 1
+	elif not diagnostic_seeds.is_empty():
+		run_count = diagnostic_seeds.size()
 
 	library = ContentLibraryScript.new()
 	library.load()
@@ -164,9 +168,9 @@ func _run() -> void:
 	entropy.randomize()
 	var used_seeds := {}
 	for run_index in range(run_count):
-		var seed := exact_seed if not exact_seed.is_empty() else _unique_seed(seed_prefix, run_index, entropy, used_seeds)
+		var seed := exact_seed if not exact_seed.is_empty() else (str(diagnostic_seeds[run_index]) if not diagnostic_seeds.is_empty() else _unique_seed(seed_prefix, run_index, entropy, used_seeds))
 		print("ENVIRONMENT_GENERATION_AUDIT RUN %d/%d seed=%s" % [run_index + 1, run_count, seed])
-		_simulate_run(run_index, seed, visits_per_run, attempt_id, require_attempt_id)
+		_simulate_run(diagnostic_run_index if diagnostic_run_index >= 0 else run_index, seed, visits_per_run, attempt_id, require_attempt_id)
 		print("ENVIRONMENT_GENERATION_AUDIT RUN_COMPLETE %d/%d" % [run_index + 1, run_count])
 
 	var aggregate := _build_aggregate(run_count, visits_per_run, seed_prefix)
@@ -259,6 +263,10 @@ func _parse_options() -> Dictionary:
 			options["seed_prefix"] = text.trim_prefix("--seed-prefix=")
 		elif text.begins_with("--exact-seed="):
 			options["exact_seed"] = text.trim_prefix("--exact-seed=")
+		elif text.begins_with("--diagnostic-run-index="):
+			options["diagnostic_run_index"] = int(text.trim_prefix("--diagnostic-run-index="))
+		elif text.begins_with("--diagnostic-seeds="):
+			options["diagnostic_seeds"] = text.trim_prefix("--diagnostic-seeds=")
 		elif text.begins_with("--attempt-id="):
 			options["attempt_id"] = text.trim_prefix("--attempt-id=")
 		elif text.begins_with("--target-destination="):
@@ -646,6 +654,19 @@ func _arrival_receipt(
 			or (not finalization_inactive \
 				and bool(independent_projection_binding.get("active", false)) \
 				and str(independent_projection_binding.get("fingerprint", "")) == str(installed_projection_binding.get("resolved_projection_fingerprint", ""))))
+	if bool(independent_projection_binding.get("canonical_valid", false)) \
+			and str(independent_projection_binding.get("fingerprint", "")) != str(installed_projection_binding.get("resolved_projection_fingerprint", "")):
+		printerr("ENVIRONMENT_GENERATION_AUDIT PROJECTION_SHAPE_MISMATCH scenario=%s independent=%s installed=%s raw=%s trusted=%s recomputed=%s independent_shape=%s installed_shape=%s independent_renderer=%s installed_renderer=%s" % [
+			installed_scenario_id, str(independent_projection_binding.get("fingerprint", "")),
+			str(installed_projection_binding.get("resolved_projection_fingerprint", "")),
+			str(independent_projection_binding.get("raw_projection_sha256", "")),
+			str(independent_projection_binding.get("trusted_layout_input_digest", "")),
+			str(independent_projection_binding.get("recomputed_layout_input_digest", "")),
+			JSON.stringify(_copy_dict(independent_projection_binding.get("resolved_projection_shape", {}))),
+			JSON.stringify(_copy_dict(installed_projection_binding.get("resolved_projection_shape", {}))),
+			JSON.stringify(_copy_dict(independent_projection_binding.get("renderer_snapshot", {}))),
+			JSON.stringify(_copy_dict(installed_projection_binding.get("renderer_snapshot", {}))),
+		])
 	var installed_projection_binding_valid := bool(installed_projection_binding.get("canonical_valid", false))
 	var live_projection_binding_valid := bool(live_projection_binding.get("canonical_valid", false))
 	var installed_live_projection_binding_valid := installed_projection_binding_valid \
@@ -980,6 +1001,8 @@ func _environment_projection_binding(environment: Dictionary) -> Dictionary:
 		"layout_authority_digest": authority_digest,
 		"canonical_layout_authority_digest": canonical_authority_digest,
 		"resolved_projection_fingerprint": _json_sha256(resolved_projection_shape) if identity_shape_valid else "",
+		"resolved_projection_shape": resolved_projection_shape,
+		"renderer_snapshot": renderer,
 		"finalization_fingerprint": _json_sha256(finalization_shape) if identity_shape_valid else "",
 		"finalization_fingerprint_with_renderer": _json_sha256(finalization_shape_with_renderer) if identity_shape_valid else "",
 		"fingerprint": _json_sha256(full_shape) if identity_shape_valid else "",
@@ -1068,10 +1091,24 @@ func _independent_live_projection_binding(run_state: RunState) -> Dictionary:
 		and str(renderer.get("layout_authority_digest", "")) == authority_digest \
 		and trusted_layout_input_digest.length() == 64 \
 		and trusted_layout_input_digest == recomputed_layout_input_digest
+	if not canonical_valid:
+		var stored_projection := _copy_dict(environment.get("scenario_sequence_projection", {}))
+		printerr("ENVIRONMENT_GENERATION_AUDIT PROJECTION_DIAGNOSTIC_V2 scenario=%s trusted=%s recomputed=%s stored_recomputed=%s raw_projection=%s stored_projection=%s base_records=%s layout_context=%s authority=%s audit=%s projection_authority=%s renderer=%s renderer_authority=%s" % [
+			str(environment.get("scenario_id", "")), trusted_layout_input_digest, recomputed_layout_input_digest,
+			ScenarioEngineScript._sequence_layout_input_digest(environment, stored_projection), _json_sha256(raw_projection),
+			_json_sha256(stored_projection), _json_sha256(_copy_array(environment.get("scenario_layout_base_records", []))),
+			_json_sha256(_copy_dict(environment.get("scenario_layout_context", {}))),
+			str(_layout_authority_digest(authority) == authority_digest), str(bool(audit.get("valid", false))),
+			str(str(projection_semantic.get("layout_authority_digest", "")) == authority_digest), str(bool(renderer.get("ok", false))),
+			str(str(renderer.get("layout_authority_digest", "")) == authority_digest),
+		])
 	return {
 		"active": true,
 		"canonical_valid": canonical_valid,
 		"fingerprint": _json_sha256(shape),
+		"resolved_projection_shape": shape,
+		"renderer_snapshot": renderer,
+		"raw_projection_sha256": _json_sha256(raw_projection),
 		"trusted_layout_input_digest": trusted_layout_input_digest,
 		"recomputed_layout_input_digest": recomputed_layout_input_digest,
 	}
