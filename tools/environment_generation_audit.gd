@@ -17,6 +17,7 @@ const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 
 const DEFAULT_RUN_COUNT := 100
 const DEFAULT_VISITS_PER_RUN := 6
+const AUDIT_TRAVEL_BANKROLL_FLOOR := 1000
 const DEFAULT_OUTPUT_JSON := "res://.tmp/environment_generation_audit/report.json"
 const DEFAULT_OUTPUT_MARKDOWN := "res://.tmp/environment_generation_audit/report.md"
 
@@ -321,6 +322,8 @@ func _simulate_run(run_index: int, seed: String, visits_per_run: int, attempt_id
 		"initial_arrival_receipt": {},
 		"stopped_reason": "completed",
 		"start_bankroll": run_state.bankroll,
+		"authored_start_bankroll": run_state.bankroll,
+		"audit_travel_bankroll_floor": AUDIT_TRAVEL_BANKROLL_FLOOR,
 		"end_bankroll": run_state.bankroll,
 		"end_suspicion": run_state.suspicion_level(),
 		"events_resolved": 0,
@@ -352,6 +355,14 @@ func _simulate_run(run_index: int, seed: String, visits_per_run: int, attempt_id
 		_finalize_run_evidence(run_summary, visits_per_run)
 		run_summaries.append(run_summary)
 		return
+	# Home generation authoritatively applies its authored starting-cash range.
+	# Preserve that result in evidence, then fund this travel-only harness so a
+	# valid six-arrival generation sample cannot be cut short merely because it
+	# deliberately does not play a money-making game between rooms.
+	run_summary["authored_start_bankroll"] = run_state.bankroll
+	run_state.bankroll = maxi(run_state.bankroll, AUDIT_TRAVEL_BANKROLL_FLOOR)
+	run_summary["start_bankroll"] = run_state.bankroll
+	run_summary["end_bankroll"] = run_state.bankroll
 	_audit_world_map_beach_delta(run_state.world_map, seed)
 
 	for visit_index in range(visits_per_run):
