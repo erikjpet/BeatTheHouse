@@ -44,8 +44,6 @@ const HOST_ENVIRONMENT_TURN_SUSPICION_DELTA_KEY := "blackjack_host_environment_t
 const HOST_REPLAY_KEY := "blackjack_host_replay"
 const SKIP_ENVIRONMENT_TURN_KEY := "sealed_action_skip_environment_turn"
 const PLACE_BET_ACTION := "blackjack_place_bet"
-const RETRY_SURFACE_ACTIONS := ["blackjack_retry_pending", "blackjack_deal"]
-const CANCEL_SURFACE_ACTION := "blackjack_cancel_pending"
 
 const LEDGER_KEYS := [
 	"boundary_ordinal",
@@ -226,12 +224,6 @@ static func delivery_matches(ledger: Dictionary, request_key: String, action_id:
 	if not bool(issued.get("ok", false)):
 		return issued
 	return {"ok": true, "delivery": pending.duplicate(true)}
-
-
-static func cancel_delivery(ledger: Dictionary, delivery: Dictionary) -> Dictionary:
-	return _cancel_delivery(ledger, delivery, true)
-
-
 static func cancel_delivery_cow(ledger: Dictionary, delivery: Dictionary) -> Dictionary:
 	return _cancel_delivery(ledger, delivery, false)
 
@@ -326,9 +318,16 @@ static func receipt_for(delivery: Dictionary, table_binding: String, result: Dic
 		"rng_fingerprint": rng_fingerprint,
 		"result_fingerprint": result_fingerprint(result),
 	}
+static func valid_receipt_with_result_fingerprint(receipt: Variant, pending: Variant, table_binding: String, verified_result_fingerprint: String) -> bool:
+	# Multi-fixture rooms must inspect more than one table, but the authoritative
+	# result is identical for every candidate. Hash it once at the caller and keep
+	# the same closed-shape and exact pending-receipt checks for every table.
+	if not _fingerprint(verified_result_fingerprint):
+		return false
+	return _valid_receipt(receipt, pending, table_binding, verified_result_fingerprint)
 
 
-static func valid_receipt(receipt: Variant, pending: Variant, result: Dictionary, table_binding: String) -> bool:
+static func _valid_receipt(receipt: Variant, pending: Variant, table_binding: String, verified_result_fingerprint: String) -> bool:
 	if typeof(receipt) != TYPE_DICTIONARY or typeof(pending) != TYPE_DICTIONARY:
 		return false
 	var provided: Dictionary = receipt
@@ -343,23 +342,26 @@ static func valid_receipt(receipt: Variant, pending: Variant, result: Dictionary
 		and _fingerprint(provided.get("proposal_fingerprint")) \
 		and _fingerprint(provided.get("run_fingerprint")) \
 		and _fingerprint(provided.get("rng_fingerprint")) \
-		and str(provided.get("result_fingerprint", "")) == result_fingerprint(result)
+		and str(provided.get("result_fingerprint", "")) == verified_result_fingerprint
 
 
 static func commit_response(ledger: Dictionary, delivery: Dictionary, response: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String, checkpoint_fingerprint: String, active_replay_limit: int = ACTIVE_REPLAY_LIMIT) -> Dictionary:
 	return _commit_response(ledger, delivery, response, proposal_fingerprint, run_fingerprint, rng_fingerprint, checkpoint_fingerprint, true, active_replay_limit)
+static func commit_response_cow_with_result_fingerprint(ledger: Dictionary, delivery: Dictionary, response: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String, checkpoint_fingerprint: String, verified_result_fingerprint: String, active_replay_limit: int = ACTIVE_REPLAY_LIMIT) -> Dictionary:
+	# The host calls this immediately after receipt_for() fingerprints the same
+	# response. Receipt metadata is excluded from that digest, so committing can
+	# reuse the verified binding without serializing the dense presentation again.
+	if not _fingerprint(verified_result_fingerprint):
+		return {}
+	return _commit_response(ledger, delivery, response, proposal_fingerprint, run_fingerprint, rng_fingerprint, checkpoint_fingerprint, false, active_replay_limit, verified_result_fingerprint)
 
 
-static func commit_response_cow(ledger: Dictionary, delivery: Dictionary, response: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String, checkpoint_fingerprint: String, active_replay_limit: int = ACTIVE_REPLAY_LIMIT) -> Dictionary:
-	return _commit_response(ledger, delivery, response, proposal_fingerprint, run_fingerprint, rng_fingerprint, checkpoint_fingerprint, false, active_replay_limit)
-
-
-static func _commit_response(ledger: Dictionary, delivery: Dictionary, response: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String, checkpoint_fingerprint: String, isolate_nested_values: bool, active_replay_limit: int) -> Dictionary:
+static func _commit_response(ledger: Dictionary, delivery: Dictionary, response: Dictionary, proposal_fingerprint: String, run_fingerprint: String, rng_fingerprint: String, checkpoint_fingerprint: String, isolate_nested_values: bool, active_replay_limit: int, verified_result_fingerprint: String = "") -> Dictionary:
 	# Copy on write: prior cache entries and journal records are immutable. Clone
 	# only the containers changed by this commit and the new response payload.
 	var next := ledger.duplicate(isolate_nested_values)
 	var request_key := str(delivery.get("request_key", ""))
-	var result_hash := result_fingerprint(response)
+	var result_hash := verified_result_fingerprint if not verified_result_fingerprint.is_empty() else result_fingerprint(response)
 	var cache: Dictionary = next.get("request_cache", {}) if isolate_nested_values else (ledger.get("request_cache", {}) as Dictionary).duplicate(false)
 	var order: Array = next.get("request_order", []) if isolate_nested_values else (ledger.get("request_order", []) as Array).duplicate()
 	var replay_limit := clampi(active_replay_limit, 1, ACTIVE_REPLAY_LIMIT)
@@ -441,7 +443,10 @@ static func _valid_cache_entry(value: Variant, request_key: String, table_bindin
 			or typeof(entry.get("response", null)) != TYPE_DICTIONARY:
 		return false
 	var response: Dictionary = entry.get("response", {})
-	if str(entry.get("result_fingerprint", "")) != result_fingerprint(response) \
+	# Hash the hostile cached response exactly once. The same digest validates both
+	# the cache entry and its embedded apply receipt below.
+	var response_result_fingerprint := result_fingerprint(response)
+	if str(entry.get("result_fingerprint", "")) != response_result_fingerprint \
 			or str(response.get("blackjack_host_request_key", "")) != request_key \
 			or str(response.get("blackjack_host_content_fingerprint", "")) != str(entry.get("result_fingerprint", "")):
 		return false
@@ -465,7 +470,7 @@ static func _valid_cache_entry(value: Variant, request_key: String, table_bindin
 	for receipt_key in ["boundary_ordinal", "intent_fingerprint", "proposal_fingerprint", "recovery_session_fingerprint", "request_key", "result_fingerprint", "rng_fingerprint", "run_fingerprint", "stake", "trusted_context_fingerprint"]:
 		if receipt.get(receipt_key) != entry.get(receipt_key):
 			return false
-	return valid_receipt(receipt, receipt, response, str(receipt.get("table_binding", "")))
+	return _valid_receipt(receipt, receipt, str(receipt.get("table_binding", "")), response_result_fingerprint)
 
 
 static func _binding_matches_response(table_binding: String, response: Dictionary) -> bool:

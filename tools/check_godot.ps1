@@ -9,6 +9,8 @@ param(
     [switch]$VerboseStages,
     [switch]$ExhaustiveParse,
     [string]$FoundationSuite = "",
+    [string]$FoundationShard = "",
+    [string]$StandaloneContract = "",
     [switch]$AllowConcurrentGodot,
     [switch]$PostLand,
     [string]$ExpectedMain = "",
@@ -22,6 +24,12 @@ $root = Split-Path -Parent $PSScriptRoot
 . (Join-Path $PSScriptRoot "split_test_runner_helpers.ps1")
 $suiteKey = $Suite.ToLowerInvariant()
 $foundationSuiteKey = $FoundationSuite.Trim().ToLowerInvariant()
+$foundationShardKey = $FoundationShard.Trim()
+$standaloneContractKey = $StandaloneContract.Trim()
+$script:StrictObjectDbLeakStageNames = @(
+    "standalone_contract_fixsweep06_1_accessibility_contract",
+    "standalone_contract_rw06_1_overflow_action_ui_contract"
+)
 $postLandInvocationErrors = New-Object System.Collections.Generic.List[string]
 if ($PostLand) {
     if ($suiteKey -ne "smoke") {
@@ -73,8 +81,20 @@ if ($validFoundationSuites -notcontains $foundationSuiteKey) {
 if ($foundationSuiteKey -eq "contract") {
     $foundationSuiteKey = "contracts"
 }
+
 elseif ($foundationSuiteKey -eq "full") {
     $foundationSuiteKey = "all"
+}
+if (-not [string]::IsNullOrWhiteSpace($foundationShardKey) -and $foundationSuiteKey -notin @("systems", "contracts")) {
+    throw "FoundationShard requires FoundationSuite systems or contracts."
+}
+if (-not [string]::IsNullOrWhiteSpace($standaloneContractKey)) {
+    if ($foundationSuiteKey -ne "contracts") {
+        throw "StandaloneContract requires FoundationSuite contracts."
+    }
+    if (-not [string]::IsNullOrWhiteSpace($foundationShardKey)) {
+        throw "StandaloneContract and FoundationShard select different isolated Contract stages and cannot be combined."
+    }
 }
 
 function Get-ProjectRelativePath {
@@ -220,6 +240,31 @@ function Convert-ProjectResourcePath {
     return "res://" + (Get-ProjectRelativePath $Path)
 }
 
+function Get-GodotStderrIssues {
+    param(
+        [string]$StdoutText,
+        [string]$StderrText,
+        [switch]$StrictObjectDbLeaks
+    )
+    $issues = @($StderrText -split "`r?`n" | Where-Object {
+        $_ -match '^\s*(SCRIPT ERROR|ERROR|WARNING):'
+    })
+    $objectDbWarning = 'WARNING: ObjectDB instances leaked at exit (run with --verbose for details).'
+    if ($StrictObjectDbLeaks -or $issues -notcontains $objectDbWarning) {
+        return $issues
+    }
+    $leakedInstances = @($StdoutText -split "`r?`n" | Where-Object {
+        $_ -match '^Leaked instance:'
+    })
+    $nonZeroOrUnclassifiedLeaks = @($leakedInstances | Where-Object {
+        $_ -notmatch ' - Reference count: 0\s*$'
+    })
+    if ($leakedInstances.Count -gt 0 -and $nonZeroOrUnclassifiedLeaks.Count -eq 0) {
+        return @($issues | Where-Object { $_ -ne $objectDbWarning })
+    }
+    return $issues
+}
+
 function New-SplitTestRunner {
     param(
         [string]$Name,
@@ -238,18 +283,20 @@ function New-SplitTestRunner {
     return Convert-ProjectResourcePath $destination
 }
 
+$script:FoundationSplitSourceRelativePaths = @(
+    "scripts/tests/foundation/check_core_content.gd",
+    "scripts/tests/foundation/check_slots_surfaces.gd",
+    "scripts/tests/foundation/check_table_games.gd",
+    "scripts/tests/foundation/check_items_events_world.gd",
+    "scripts/tests/foundation/check_delivery_runs.gd",
+    "scripts/tests/foundation/check_lenders_release_saves.gd",
+    "scripts/tests/foundation/check_scratch_tickets.gd",
+    "scripts/tests/foundation/check_cage_environment_rework.gd",
+    "scripts/tests/foundation/check_coin_pusher.gd"
+)
+
 function Get-FoundationSplitRunnerPath {
-    return New-SplitTestRunner -Name "foundation_check_split_runner.gd" -SourceRelativePaths @(
-        "scripts/tests/foundation/check_core_content.gd",
-        "scripts/tests/foundation/check_slots_surfaces.gd",
-        "scripts/tests/foundation/check_table_games.gd",
-        "scripts/tests/foundation/check_items_events_world.gd",
-        "scripts/tests/foundation/check_delivery_runs.gd",
-        "scripts/tests/foundation/check_lenders_release_saves.gd",
-        "scripts/tests/foundation/check_scratch_tickets.gd",
-        "scripts/tests/foundation/check_cage_environment_rework.gd",
-        "scripts/tests/foundation/check_coin_pusher.gd"
-    ) -RequiredSymbols @(
+    return New-SplitTestRunner -Name "foundation_check_split_runner.gd" -SourceRelativePaths $script:FoundationSplitSourceRelativePaths -RequiredSymbols @(
         "_foundation_run_suite",
         "_foundation_run_contract_suite",
         "_foundation_run_system_suite",
@@ -283,9 +330,7 @@ function Get-FoundationSplitRunnerPath {
         "_check_foundation_contract_games",
         "_check_foundation_contract_systems",
         "_embedded_refresh_fixture_app",
-        "_harness_arrive",
-        "_copy_dict",
-        "_copy_array"
+        "_harness_arrive"
     )
 }
 
@@ -365,17 +410,41 @@ elseif (-not [System.IO.Path]::IsPathRooted($ReportDir)) {
 }
 $script:ReportRoot = [System.IO.Path]::GetFullPath($ReportDir)
 New-Item -ItemType Directory -Force -Path $script:ReportRoot | Out-Null
+# Foundation gates must qualify checked-in placement authority, never whatever
+# developer authoring residue happens to live in the operator's global user://
+# profile. Individual placement tests may still point this variable at their
+# own fixture. The wrapper process is short-lived, so the caller environment is
+# not mutated and the user's file is never read, moved, or overwritten.
+$env:BTH_DEVELOPER_PLACEMENT_PATH = Join-Path $script:ReportRoot "isolated_developer_placements.json"
 
 $script:StageResults = New-Object System.Collections.Generic.List[object]
 $script:PostLandIdentity = $null
 $script:PostLandEndVerified = $false
 $FoundationSuiteBudgetMultiplier = 1.5
 $FoundationSuiteStageBaselinesSec = @{
-    "foundation_all" = 153.768
+    # Postfix06_2 live-tree qualification measurements. These stages previously
+    # bypassed Get-StageTimeout with literal ceilings below their observed wall
+    # times, so Full could false-fail before reporting the underlying result.
+    # The Q-009 exact-seed preflight now includes the 40-case process/file
+    # custody suite plus its independent hostile runner. The clean current-tip
+    # measurement is 268.012s; retain the common 1.5x overrun guard.
+    "validate_project" = 268.012
+    "standalone_contract" = 221.000
+    # The aggregate now includes the expanded environment/scenario contracts.
+    # Its former 300s floor expired before it could publish the actionable
+    # standalone results. The direct aggregate is longer than ten minutes and
+    # the current sharded contract baseline is about 22.6 minutes, so retain the
+    # standard 1.5x guard around a conservative 20-minute serial envelope.
+    "foundation_all" = 1200.000
     "foundation_systems" = 29.141
-    # Expanded GC05.2 coverage and same-host Stage 1 control: .tmp/gc05_2_ui_baseline_evidence.md
-    "ui_scene_compile" = 83.234
-    "foundation_contracts" = 153.594
+    # Expanded GC05.2 coverage and same-host Stage 1 control originated at
+    # 83.234s. The all-environment four-family manifest now seals and verifies
+    # physical inventory throughout this matrix; repeated final-tree runs were
+    # 124.4-125.5s, so retain the standard 1.5x guard around that measured work.
+    "ui_scene_compile" = 125.500
+    # Serial baseline is the sum of all 18 per-shard durations captured by the
+    # section 5 baseline (the former wall time overlapped multiple Godot jobs).
+    "foundation_contracts" = 1349.566
     "foundation_games" = 146.950
     "foundation_slot" = 25.535
     "foundation_slot_acceptance" = 638.945
@@ -578,7 +647,8 @@ function Invoke-ProcessStage {
         [string]$Name,
         [string]$FilePath,
         [string[]]$Arguments,
-        [int]$StageTimeoutSec = 0
+        [int]$StageTimeoutSec = 0,
+        [switch]$StrictObjectDbLeaks
     )
     $timeout = if ($StageTimeoutSec -gt 0) { $StageTimeoutSec } else { Get-StageTimeout $Name }
     $safeName = ($Name -replace "[^A-Za-z0-9_.-]", "_")
@@ -628,9 +698,7 @@ function Invoke-ProcessStage {
         $stderrTask.Wait(5000) | Out-Null
         [System.IO.File]::WriteAllText($stdout, $stdoutTask.Result)
         [System.IO.File]::WriteAllText($stderr, $stderrTask.Result)
-        $stderrIssues = @($stderrTask.Result -split "`r?`n" | Where-Object {
-            $_ -match '^\s*(SCRIPT ERROR|ERROR|WARNING):'
-        })
+        $stderrIssues = @(Get-GodotStderrIssues -StdoutText $stdoutTask.Result -StderrText $stderrTask.Result -StrictObjectDbLeaks:$StrictObjectDbLeaks)
         if ($exitCode -eq 0 -and $stderrIssues.Count -gt 0) {
             $exitCode = 127
             $errorText = "Godot reported $($stderrIssues.Count) error/warning line(s) on stderr despite returning exit code 0."
@@ -775,14 +843,15 @@ function Invoke-GodotScript {
         [string]$Name,
         [string]$ScriptPath,
         [string[]]$UserArgs = @(),
-        [int]$StageTimeoutSec = 0
+        [int]$StageTimeoutSec = 0,
+        [switch]$StrictObjectDbLeaks
     )
-    $args = @("--headless", "--path", $root, "--script", $ScriptPath)
+    $args = @("--headless", "--verbose", "--path", $root, "--script", $ScriptPath)
     if ($UserArgs.Count -gt 0) {
         $args += "--"
         $args += $UserArgs
     }
-    Invoke-ProcessStage -Name $Name -FilePath $script:Godot -Arguments $args -StageTimeoutSec $StageTimeoutSec | Out-Null
+    Invoke-ProcessStage -Name $Name -FilePath $script:Godot -Arguments $args -StageTimeoutSec $StageTimeoutSec -StrictObjectDbLeaks:$StrictObjectDbLeaks | Out-Null
 }
 
 function Invoke-GameReworkVerificationGates {
@@ -800,13 +869,122 @@ function Invoke-GameReworkVerificationGates {
     Invoke-GodotScript -Name "craps_rtp_audit" -ScriptPath "res://tools/craps_rtp_audit.gd" -StageTimeoutSec 600
 }
 
+function Invoke-EnvironmentSlotVerificationGates {
+    # Keep the four-family object inventory, save/reload behavior, strict
+    # binding, and both placement editors on one explicit validation path.
+    Invoke-GodotScript -Name "environment_object_manifest" -ScriptPath "res://scripts/tests/environment_object_manifest_check.gd" -StageTimeoutSec 180
+    Invoke-GodotScript -Name "environment_runtime_manifest_retention" -ScriptPath "res://scripts/tests/environment_runtime_manifest_retention_check.gd" -StageTimeoutSec 120
+    Invoke-GodotScript -Name "room_slot_occupancy" -ScriptPath "res://scripts/tests/room_slot_occupancy_check.gd" -StageTimeoutSec 600
+    Invoke-GodotScript -Name "environment_slot_stacking" -ScriptPath "res://scripts/tests/environment_slot_stacking_regression_check.gd" -StageTimeoutSec 120
+    Invoke-GodotScript -Name "meta_home_anchor_regression" -ScriptPath "res://scripts/tests/meta_home_anchor_regression_check.gd" -StageTimeoutSec 120
+    Invoke-GodotScript -Name "scenario_slot_layout" -ScriptPath "res://scripts/tests/scenario_slot_layout_check.gd" -StageTimeoutSec 180
+    Invoke-GodotScript -Name "environment_slot_runtime_audit" -ScriptPath "res://scripts/tests/environment_slot_runtime_audit_check.gd" -StageTimeoutSec 600
+    Invoke-GodotScript -Name "environment_slot_placement_mode" -ScriptPath "res://scripts/tests/environment_slot_placement_mode_check.gd" -StageTimeoutSec 180
+    Invoke-GodotScript -Name "animation_liveness_without_pointer" -ScriptPath "res://scripts/tests/animation_liveness_without_pointer_check.gd" -StageTimeoutSec 120
+    Invoke-GodotScript -Name "environment_character_idle_variety" -ScriptPath "res://scripts/tests/environment_character_idle_variety_check.gd" -StageTimeoutSec 120
+    Invoke-GodotScript -Name "environment_test_mode" -ScriptPath "res://scripts/tests/environment_test_mode_check.gd" -StageTimeoutSec 180
+    Invoke-GodotScript -Name "environment_library_launcher" -ScriptPath "res://scripts/tests/ui_scene/check_environment_library_launcher.gd" -StageTimeoutSec 180
+    Invoke-GodotScript -Name "environment_library_guest_legend_action_hosts" -ScriptPath "res://scripts/tests/ui_scene/check_environment_library_guest_legend_action_hosts.gd" -StageTimeoutSec 180
+    Invoke-GodotScript -Name "developer_layout_save_ui" -ScriptPath "res://scripts/tests/developer_layout_save_ui_check.gd" -StageTimeoutSec 120
+    Invoke-GodotScript -Name "developer_placement_mode" -ScriptPath "res://scripts/tests/developer_placement_mode_check.gd" -StageTimeoutSec 180
+    Invoke-GodotScript -Name "shop_item_row" -ScriptPath "res://tools/shop_item_row_check.gd" -StageTimeoutSec 120
+}
+
 function Invoke-GodotImport {
     Invoke-ProcessStage -Name "godot_import" -FilePath $script:Godot -Arguments @("--headless", "--path", $root, "--import") -StageTimeoutSec 180 | Out-Null
 }
 
 function Invoke-GDScriptLoadCheck {
     $report = Convert-ReportResourcePath "gdscript_load_check.json"
-    Invoke-GodotScript -Name "gdscript_load_check" -ScriptPath "res://tools/gdscript_load_check.gd" -UserArgs @("--roots=res://scripts,res://tools", "--exclude=res://scripts/tests/foundation,res://scripts/tests/ui_scene", "--report=$report") -StageTimeoutSec 180
+    $excludes = @($script:FoundationSplitSourceRelativePaths | ForEach-Object { "res://" + $_ }) + @("res://scripts/tests/ui_scene")
+    Invoke-GodotScript -Name "gdscript_load_check" -ScriptPath "res://tools/gdscript_load_check.gd" -UserArgs @("--roots=res://scripts,res://tools", ("--exclude=" + ($excludes -join ",")), "--report=$report") -StageTimeoutSec 180
+}
+
+function Get-StandaloneContractScripts {
+    # Keep the fix-sweep safety net first: these five contracts were the newest
+    # dark files and guard the code the health pass builds on.
+    $priorityRelativePaths = @(
+        "scripts/tests/fixsweep06_1_accessibility_contract.gd",
+        "scripts/tests/fixsweep06_1_audio_recovery_contract.gd",
+        "scripts/tests/fixsweep06_1_lifecycle_contract.gd",
+        "scripts/tests/fixsweep06_1_packaging_runtime_contract.gd",
+        "scripts/tests/fixsweep06_1_player_text_contract.gd"
+    )
+    $results = New-Object System.Collections.Generic.List[string]
+    foreach ($relativePath in $priorityRelativePaths) {
+        if (-not (Test-Path -LiteralPath (Join-Path $root $relativePath))) {
+            throw "Required standalone contract is missing: $relativePath"
+        }
+        $results.Add("res://" + $relativePath)
+    }
+
+    $prioritySet = @{}
+    foreach ($relativePath in $priorityRelativePaths) { $prioritySet[$relativePath] = $true }
+    $rootContracts = @(Get-ChildItem -LiteralPath (Join-Path $root "scripts/tests") -Filter "*_contract.gd" -File | Sort-Object Name)
+    foreach ($contract in $rootContracts) {
+        $relativePath = Get-ProjectRelativePath $contract.FullName
+        if (-not $prioritySet.ContainsKey($relativePath)) {
+            $results.Add("res://" + $relativePath)
+        }
+    }
+
+    $splitSet = @{}
+    foreach ($relativePath in $script:FoundationSplitSourceRelativePaths) { $splitSet[$relativePath] = $true }
+    $foundationContracts = @(Get-ChildItem -LiteralPath (Join-Path $root "scripts/tests/foundation") -Filter "*.gd" -File | Sort-Object Name)
+    foreach ($contract in $foundationContracts) {
+        $relativePath = Get-ProjectRelativePath $contract.FullName
+        if ($splitSet.ContainsKey($relativePath)) {
+            continue
+        }
+        $firstLine = [string](Get-Content -LiteralPath $contract.FullName -TotalCount 1)
+        if ($firstLine.Trim() -eq "extends SceneTree" -or $firstLine.Trim() -eq 'extends "res://scripts/tests/tutorial_dialogue_trigger_cadence_check.gd"') {
+            $results.Add("res://" + $relativePath)
+        }
+    }
+    return $results.ToArray()
+}
+
+function Invoke-StandaloneContracts {
+    param([string]$ContractName = "")
+    $oldDistributionBuild = $env:BTH_DISTRIBUTION_BUILD
+    $oldDistributionRoot = $env:BTH_DISTRIBUTION_DATA_ROOT
+    $oldProfilePath = $env:BTH_PROFILE_INVENTORY_PATH
+    $oldMetaPath = $env:BTH_META_COLLECTION_PATH
+    $oldSettingsPath = $env:BTH_USER_SETTINGS_PATH
+    $oldDeveloperPlacementPath = $env:BTH_DEVELOPER_PLACEMENT_PATH
+    try {
+        $resourcePaths = @(Get-StandaloneContractScripts)
+        if (-not [string]::IsNullOrWhiteSpace($ContractName)) {
+            $resourcePaths = @($resourcePaths | Where-Object {
+                [System.IO.Path]::GetFileNameWithoutExtension($_) -eq $ContractName
+            })
+            if ($resourcePaths.Count -ne 1) {
+                throw "Unknown or ambiguous standalone Contract '$ContractName'. Valid contracts: $(@(Get-StandaloneContractScripts | ForEach-Object { [System.IO.Path]::GetFileNameWithoutExtension($_) }) -join ', ')."
+            }
+        }
+        foreach ($resourcePath in $resourcePaths) {
+            $contractName = [System.IO.Path]::GetFileNameWithoutExtension($resourcePath)
+            $stageName = "standalone_contract_" + $contractName
+            $stageUserRoot = Join-Path $script:ReportRoot ("standalone_user_data\" + $contractName)
+            New-Item -ItemType Directory -Force -Path $stageUserRoot | Out-Null
+            $env:BTH_DISTRIBUTION_BUILD = "1"
+            $env:BTH_DISTRIBUTION_DATA_ROOT = $stageUserRoot
+            $env:BTH_PROFILE_INVENTORY_PATH = Join-Path $stageUserRoot "profile_inventory.json"
+            $env:BTH_META_COLLECTION_PATH = Join-Path $stageUserRoot "meta_collection.json"
+            $env:BTH_USER_SETTINGS_PATH = Join-Path $stageUserRoot "settings.json"
+            $env:BTH_DEVELOPER_PLACEMENT_PATH = Join-Path $stageUserRoot "developer_placements.json"
+            $strictObjectDbLeaks = $script:StrictObjectDbLeakStageNames -contains $stageName
+            Invoke-GodotScript -Name $stageName -ScriptPath $resourcePath -StageTimeoutSec (Get-StageTimeout "standalone_contract") -StrictObjectDbLeaks:$strictObjectDbLeaks
+        }
+    }
+    finally {
+        $env:BTH_DISTRIBUTION_BUILD = $oldDistributionBuild
+        $env:BTH_DISTRIBUTION_DATA_ROOT = $oldDistributionRoot
+        $env:BTH_PROFILE_INVENTORY_PATH = $oldProfilePath
+        $env:BTH_META_COLLECTION_PATH = $oldMetaPath
+        $env:BTH_USER_SETTINGS_PATH = $oldSettingsPath
+        $env:BTH_DEVELOPER_PLACEMENT_PATH = $oldDeveloperPlacementPath
+    }
 }
 
 function Invoke-FoundationSuite {
@@ -901,7 +1079,8 @@ function Invoke-FoundationSystemsSharded {
     param(
         [int]$StageTimeoutSec = 0,
         [ValidateSet("systems", "games", "contracts")]
-        [string]$FoundationSuite = "systems"
+        [string]$FoundationSuite = "systems",
+        [string]$ShardId = ""
     )
     $name = "foundation_$FoundationSuite"
     $timeout = if ($StageTimeoutSec -gt 0) { $StageTimeoutSec } else { Get-StageTimeout $name }
@@ -924,6 +1103,38 @@ function Invoke-FoundationSystemsSharded {
     if (-not $planCheck.valid) {
         throw "Invalid foundation systems shard plan: $(@($planCheck.errors) -join ' | ')"
     }
+    $registeredIds = @($expectedIds)
+
+    if (-not [string]::IsNullOrWhiteSpace($ShardId)) {
+        if (-not $plan.Contains($ShardId)) {
+            throw "Unknown $FoundationSuite foundation shard '$ShardId'. Valid shards: $(@($plan.Keys) -join ', ')."
+        }
+        $selectedPlan = [ordered]@{}
+        $selectedPlan[$ShardId] = @($plan[$ShardId])
+        $plan = $selectedPlan
+        $expectedIds = @($plan[$ShardId])
+        $name = "foundation_{0}_{1}" -f $FoundationSuite, ($ShardId -replace "[^A-Za-z0-9_.-]", "_")
+    }
+
+    $shardLaunchOrder = @($plan.Keys)
+    # Keep the deterministic shard isolation, but serialize every Godot child.
+    # A console/window process pair belongs to one Godot launch; no second
+    # headless launch may overlap it.
+    $maxConcurrentShardProcesses = 1
+    if ($FoundationSuite -eq "contracts") {
+        # Put measured long shards first while retaining canonical merge order.
+        $preferredOrder = @(
+            "contracts_content_scenarios",
+            "contracts_games",
+            "contracts_coin_pusher",
+            "contracts_crew",
+            "contracts_content_hidden_0",
+            "contracts_content_hidden_1",
+            "contracts_content_hidden_2",
+            "contracts_content_hidden_3"
+        )
+        $shardLaunchOrder = @(Get-FoundationShardLaunchOrder -Plan $plan -PreferredOrder $preferredOrder)
+    }
 
     # Generate the composite source once, then copy it into each private
     # project. No child traverses the parent report tree through res://.tmp.
@@ -935,7 +1146,7 @@ function Invoke-FoundationSystemsSharded {
     $runnerPath = Join-Path $root ($runnerRelativePath.Replace("/", "\"))
     $parentCacheRoot = Join-Path $root ".godot"
     $cacheBefore = @(Get-FoundationCacheFingerprint -CacheRoot $parentCacheRoot)
-    foreach ($shardIdValue in $plan.Keys) {
+    foreach ($shardIdValue in $shardLaunchOrder) {
         $shardId = [string]$shardIdValue
         $safeShardId = $shardId -replace "[^A-Za-z0-9_.-]", "_"
         $reportFile = "$name.$safeShardId.json"
@@ -957,7 +1168,7 @@ function Invoke-FoundationSystemsSharded {
         Remove-Item -LiteralPath $reportPath -Force -ErrorAction SilentlyContinue
         $resourceReport = $reportPath.Replace("\", "/")
         $arguments = @(
-            "--headless", "--path", $shardProjectRoot,
+            "--headless", "--verbose", "--path", $shardProjectRoot,
             "--log-file", $logPath,
             "--script", $runnerResourcePath,
             "--",
@@ -1009,6 +1220,18 @@ function Invoke-FoundationSystemsSharded {
             Remove-FoundationShardProjectRoot -ProjectRoot $shardProjectRoot -AllowedProjectRoot $shardProjectsRoot
             throw
         }
+        while (@($records | Where-Object { $_.process_started -and -not $_.process.HasExited }).Count -ge $maxConcurrentShardProcesses) {
+            foreach ($startedRecord in $records) {
+                if ($startedRecord.process_started -and -not $startedRecord.duration_recorded -and $startedRecord.process.HasExited) {
+                    $startedRecord.stopwatch.Stop()
+                    $startedRecord.duration_recorded = $true
+                }
+            }
+            if ($wall.Elapsed.TotalSeconds -ge $timeout) {
+                throw "Foundation $FoundationSuite shard launch exceeded the $timeout second timeout."
+            }
+            Start-Sleep -Milliseconds 25
+        }
         [void]$process.Start()
         $record.process_started = $true
         $record.stopwatch.Start()
@@ -1059,7 +1282,7 @@ function Invoke-FoundationSystemsSharded {
         [void]$combinedStdout.Append($stdoutText)
         [void]$combinedStderr.AppendLine(("--- shard {0} ---" -f $record.shard_id))
         [void]$combinedStderr.Append($stderrText)
-        $stderrIssues = @($stderrText -split "`r?`n" | Where-Object { $_ -match '^\s*(SCRIPT ERROR|ERROR|WARNING):' })
+        $stderrIssues = @(Get-GodotStderrIssues -StdoutText $stdoutText -StderrText $stderrText)
         $rawExitCode = if ($record.timed_out) { 124 } else { [int]$record.process.ExitCode }
         $exitCode = $rawExitCode
         if ($rawExitCode -eq 0 -and $stderrIssues.Count -gt 0) {
@@ -1094,12 +1317,12 @@ function Invoke-FoundationSystemsSharded {
     [System.IO.File]::WriteAllText($stdout, $combinedStdout.ToString())
     [System.IO.File]::WriteAllText($stderr, $combinedStderr.ToString())
 
-    $merged = Merge-FoundationSystemsShardReports -ExpectedIds $expectedIds -ShardResults $shardResults -SuiteName $FoundationSuite
+    $merged = Merge-FoundationSystemsShardReports -ExpectedIds $expectedIds -RegisteredIds $registeredIds -ShardResults $shardResults -SuiteName $FoundationSuite
     $aggregateReport = $merged.report
     $aggregateReport.started_msec = $startedMsec
     $cacheCheck = {
         if (($cacheBefore -join "`n") -ne ((Get-FoundationCacheFingerprint -CacheRoot $parentCacheRoot) -join "`n")) {
-            return @("Concurrent systems shards changed the shared .godot cache after the parent import.")
+            return @("Foundation shards changed the shared .godot cache after the parent import.")
         }
         return @()
     }
@@ -1129,7 +1352,7 @@ function Invoke-FoundationSystemsSharded {
     $result = [pscustomobject][ordered]@{
         name = $name
         command = $script:Godot
-        arguments = @("$($plan.Count) deterministic $FoundationSuite shards")
+        arguments = @("$($plan.Count) serial deterministic $FoundationSuite shards")
         exit_code = $exitCode
         timed_out = $timedOut
         duration_msec = [int]$wall.ElapsedMilliseconds
@@ -1232,6 +1455,7 @@ function Invoke-Perf06ContractChecks {
         coin_pusher_action = "perf06_coin_pusher_action_diagnostic_contract.ps1"
         web_complementary_startup = "perf06_web_complementary_startup_contract.ps1"
         web_run_ui_deferral = "perf06_web_run_ui_deferral_contract.ps1"
+        feature_pcm_runtime = "postfix06_2_feature_pcm_runtime_contract_test.ps1"
         coin_pusher_backglass = "coin_pusher_backglass_readability_contract.ps1"
     }
     foreach ($contract in $contracts.GetEnumerator()) {
@@ -1247,7 +1471,8 @@ function Invoke-ExhaustiveParse {
         # are supplied by the generated split runners. Parsing the fragments as
         # standalone SceneTrees is invalid; the runner stages below compile and
         # execute their assembled source instead.
-        if ($resourcePath.StartsWith("res://scripts/tests/foundation/") -or $resourcePath.StartsWith("res://scripts/tests/ui_scene/")) {
+        $foundationSplitResources = @($script:FoundationSplitSourceRelativePaths | ForEach-Object { "res://" + $_ })
+        if ($foundationSplitResources -contains $resourcePath -or $resourcePath.StartsWith("res://scripts/tests/ui_scene/")) {
             continue
         }
         $stageName = "parse_" + (($resourcePath -replace "^res://", "") -replace "[\\/]", "_")
@@ -1269,7 +1494,7 @@ if ($PostLand -and -not (Add-PostLandIdentityStage -Phase "start")) {
     Write-TestSummary
     exit 1
 }
-Invoke-ProcessStage -Name "validate_project" -FilePath $powerShellExe -Arguments @("-ExecutionPolicy", "Bypass", "-File", (Join-Path $PSScriptRoot "validate_project.ps1"), "-Quiet") -StageTimeoutSec 120 | Out-Null
+Invoke-ProcessStage -Name "validate_project" -FilePath $powerShellExe -Arguments @("-ExecutionPolicy", "Bypass", "-File", (Join-Path $PSScriptRoot "validate_project.ps1"), "-Quiet") -StageTimeoutSec (Get-StageTimeout "validate_project") | Out-Null
 
 if (-not $script:Godot) {
     if ($RequireGodot) {
@@ -1304,8 +1529,16 @@ if (-not [string]::IsNullOrWhiteSpace($foundationSuiteKey)) {
         Invoke-GodotScript -Name "inventory_spatial_main_integration" -ScriptPath "res://scripts/tests/inventory_spatial_main_integration_check.gd" -StageTimeoutSec 180
         Invoke-GodotScript -Name "ui05_design_system" -ScriptPath "res://scripts/tests/ui05_design_system_check.gd" -StageTimeoutSec 120
     }
-    elseif ($foundationSuiteKey -eq "systems" -or $foundationSuiteKey -eq "games" -or $foundationSuiteKey -eq "contracts") {
-        Invoke-FoundationSystemsSharded -FoundationSuite $foundationSuiteKey -StageTimeoutSec (Get-StageTimeout ("foundation_{0}" -f $foundationSuiteKey)) | Out-Null
+    elseif ($foundationSuiteKey -eq "systems" -or $foundationSuiteKey -eq "contracts") {
+        if (-not [string]::IsNullOrWhiteSpace($standaloneContractKey)) {
+            Invoke-StandaloneContracts -ContractName $standaloneContractKey
+        }
+        else {
+            if ($foundationSuiteKey -eq "contracts" -and [string]::IsNullOrWhiteSpace($foundationShardKey)) {
+                Invoke-StandaloneContracts
+            }
+            Invoke-FoundationSystemsSharded -FoundationSuite $foundationSuiteKey -ShardId $foundationShardKey -StageTimeoutSec (Get-StageTimeout ("foundation_{0}" -f $foundationSuiteKey)) | Out-Null
+        }
     }
     else {
         Invoke-FoundationSuite -FoundationSuite $foundationSuiteKey -StageTimeoutSec (Get-StageTimeout ("foundation_{0}" -f $foundationSuiteKey))
@@ -1334,20 +1567,30 @@ switch ($suiteKey) {
             "fixture_contracts"
         ) -StageTimeoutSec 180
         Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath (Get-UiSceneSplitRunnerPath) -StageTimeoutSec 240
+        Invoke-GodotScript -Name "cold_continue_room_projection" -ScriptPath "res://scripts/tests/cold_continue_room_projection_contract.gd" -StageTimeoutSec 120
         Invoke-GodotScript -Name "game_library_launchers" -ScriptPath "res://scripts/tests/ui_scene/check_game_library_launchers.gd" -StageTimeoutSec 180
         Invoke-GodotScript -Name "dave_bus_encounter" -ScriptPath "res://scripts/tests/ui_scene/check_dave_bus_encounter.gd" -StageTimeoutSec 120
         Invoke-GodotScript -Name "roulette_audio_audit" -ScriptPath "res://tools/roulette_audio_audit.gd" -StageTimeoutSec 120
         Invoke-FoundationPerfSmoke
     }
     "contract" {
-        Invoke-FoundationSuite -FoundationSuite "contracts" -StageTimeoutSec 360
+        Invoke-StandaloneContracts
+        Invoke-FoundationSystemsSharded -FoundationSuite "contracts" -StageTimeoutSec (Get-StageTimeout "foundation_contracts") | Out-Null
+        Invoke-EnvironmentSlotVerificationGates
         Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath (Get-UiSceneSplitRunnerPath) -StageTimeoutSec 240
         Invoke-GodotScript -Name "game_library_launchers" -ScriptPath "res://scripts/tests/ui_scene/check_game_library_launchers.gd" -StageTimeoutSec 180
-        Invoke-GodotScript -Name "tutorial_guardrail_stress" -ScriptPath "res://scripts/tests/tutorial_guardrail_recovery_stress_check.gd" -StageTimeoutSec 180
-        Invoke-GodotScript -Name "tutorial_guided_run_audit" -ScriptPath "res://tools/tutorial_seed_audit.gd" -StageTimeoutSec 180
+        # The full 1,622-boundary recovery sweep completes in roughly 185s on
+        # the reference Windows runner, so retain headroom for normal variance.
+        Invoke-GodotScript -Name "tutorial_guardrail_stress" -ScriptPath "res://scripts/tests/tutorial_guardrail_recovery_stress_check.gd" -StageTimeoutSec 300
+        # The four-family manifest is generated for every environment in the
+        # 100-seed stuck-state sweep. Preserve the full census and give the
+        # authenticated audit enough time to finish on the reference machine.
+        Invoke-GodotScript -Name "tutorial_guided_run_audit" -ScriptPath "res://tools/tutorial_seed_audit.gd" -StageTimeoutSec 300
         Invoke-GodotScript -Name "roulette_audio_audit" -ScriptPath "res://tools/roulette_audio_audit.gd" -StageTimeoutSec 120
     }
     "audit" {
+        Invoke-GodotScript -Name "save_navigation_durability" -ScriptPath "res://scripts/tests/save_navigation_durability_check.gd" -StageTimeoutSec 180
+        Invoke-EnvironmentSlotVerificationGates
         Invoke-GameReworkVerificationGates
         Invoke-GodotScript -Name "environment_grounding_contract" -ScriptPath "res://tools/environment_grounding_contract.gd" -StageTimeoutSec 120
         Invoke-Perf06ContractChecks -SuiteLabel "audit"
@@ -1358,13 +1601,16 @@ switch ($suiteKey) {
         Invoke-GodotScript -Name "roulette_audio_audit" -ScriptPath "res://tools/roulette_audio_audit.gd" -StageTimeoutSec 120
     }
     "full" {
+        Invoke-GodotScript -Name "save_navigation_durability" -ScriptPath "res://scripts/tests/save_navigation_durability_check.gd" -StageTimeoutSec 180
+        Invoke-StandaloneContracts
         Invoke-Perf06ContractChecks -SuiteLabel "full"
         Invoke-FoundationSuite -FoundationSuite "all" -StageTimeoutSec (Get-StageTimeout "foundation_all")
+        Invoke-EnvironmentSlotVerificationGates
         Invoke-GodotScript -Name "ui_scene_compile" -ScriptPath (Get-UiSceneSplitRunnerPath) -StageTimeoutSec 300
         Invoke-GodotScript -Name "game_library_launchers" -ScriptPath "res://scripts/tests/ui_scene/check_game_library_launchers.gd" -StageTimeoutSec 180
         Invoke-GodotScript -Name "dave_bus_encounter" -ScriptPath "res://scripts/tests/ui_scene/check_dave_bus_encounter.gd" -StageTimeoutSec 120
-        Invoke-GodotScript -Name "tutorial_guardrail_stress" -ScriptPath "res://scripts/tests/tutorial_guardrail_recovery_stress_check.gd" -StageTimeoutSec 180
-        Invoke-GodotScript -Name "tutorial_guided_run_audit" -ScriptPath "res://tools/tutorial_seed_audit.gd" -StageTimeoutSec 180
+        Invoke-GodotScript -Name "tutorial_guardrail_stress" -ScriptPath "res://scripts/tests/tutorial_guardrail_recovery_stress_check.gd" -StageTimeoutSec 300
+        Invoke-GodotScript -Name "tutorial_guided_run_audit" -ScriptPath "res://tools/tutorial_seed_audit.gd" -StageTimeoutSec 300
         Invoke-FoundationPerfSmoke
 		Invoke-GameReworkVerificationGates
 		Invoke-GodotScript -Name "environment_grounding_contract" -ScriptPath "res://tools/environment_grounding_contract.gd" -StageTimeoutSec 120

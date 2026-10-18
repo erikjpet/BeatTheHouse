@@ -1,6 +1,12 @@
-Status: PARKED COMPANION TEMPLATE - `release06_1` only; not independently claimable
-Board row: existing `release06_1` (no new row)
+Status: PARKED COMPANION TEMPLATE - populate only from `rw06_4`; not independently claimable
+Board row: existing `rw06_4` (no new row)
 Destination: `docs/plans/0.6_pre_release_audit.md`
+
+> **RW06 EXECUTION NOTE (2026-09-24):** For 0.6.0 release week, audit only the
+> slim exact-candidate gate in `rw06_4_release_gate_ship_prompt.md`. Record the
+> superseded parity/full 11-game/broad-balance/soaks B-C/aggregate fields as
+> `DEFERRED TO 0.6.1`; do not convert them back into release blockers. Soak A
+> and every rw06_4 gate remain mandatory.
 
 # Beat the House 0.6 Pre-Release Audit - Template
 
@@ -41,16 +47,17 @@ release; it cannot waive a gate or approve on the owner's behalf.
 | --- | --- | --- | --- |
 | | | | |
 
-Include validation, complete Foundation systems/UI, determinism, native/Web
-parity, performance with nonzero liveness floors, accessibility/visual, save/
-migration, soak, balance distributions and end-to-end paths.
+Include every rw06_4 slim gate: validation, Smoke, zero-failure Contract,
+three-ending replay, migration, determinism, soak A, idle-liveness, packaged
+audits and packaged manual smoke. List the superseded larger matrix separately
+as deferred rather than silently omitting it.
 
 ## Findings and owner decisions
 
 - Open release blockers:
-- Owner-approved `DEFER_0.7` limitations:
+- Owner-approved `DEFERRED TO 0.6.1` limitations:
 - Pending design decisions:
-- Source/package/publish gate state:
+- Source/copy/package/handoff and owner-upload gate state:
 
 ## Binding gap-closure plan
 

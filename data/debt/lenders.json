@@ -124,15 +124,15 @@
     },
     "description": "No interest. Only favors.",
     "debt_profile": {
-      "principal_min": 35,
-      "principal_max": 55,
-      "loan_amount": 45,
+      "principal_min": 70,
+      "principal_max": 70,
+      "loan_amount": 70,
       "interest_rate": 0.0,
       "deadline_turns": 2,
-      "favor_count": 2,
+      "favor_count": 1,
       "default_consequence": "crew_favor_due",
       "refuse_consequence": "crew_convert_to_cash",
-      "cash_conversion_balance_per_favor": 45,
+      "cash_conversion_balance_per_favor": 70,
       "cash_conversion_interest_rate": 0.35
     },
     "consequences": [

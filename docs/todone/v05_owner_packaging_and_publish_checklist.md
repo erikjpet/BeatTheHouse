@@ -56,7 +56,7 @@ GitHub integration branch on 2026-08-12.
 
 - [x] Update README/CHANGELOG from development to published status.
 - [ ] Record commit, tag, URLs, timestamps, hashes, approval, and limitations in
-  `docs/plans/0.5_release_checklist.md`.
+  `docs/archive/0.5/plans/0.5_release_checklist.md`.
 - [ ] Add an execution record and archive this checklist.
 - [ ] Mark the 0.5 queue complete only when no active blocker remains.
 

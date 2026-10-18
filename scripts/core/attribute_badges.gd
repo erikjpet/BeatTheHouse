@@ -1,6 +1,8 @@
 class_name AttributeBadges
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Read-only translator from content dictionaries to shared attribute badge rows.
 
 const GLYPH_REGISTRY_PATH := "res://data/art/attribute_glyphs.json"
@@ -27,17 +29,13 @@ static func validation_errors() -> Array:
 
 
 static func glyph_ids() -> Array:
-	var ids := _string_array(_glyphs().keys())
+	var ids := JsonCoerceScript._string_array(_glyphs().keys())
 	ids.sort()
 	return ids
 
 
 static func glyph_definition(glyph_id: String) -> Dictionary:
-	var glyphs := _glyphs()
-	var value: Variant = glyphs.get(glyph_id, {})
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
+	return _glyph_definition_ref(glyph_id).duplicate(true)
 
 
 static func class_badge(kind: String, class_id: String) -> Dictionary:
@@ -100,7 +98,7 @@ static func for_route(route: Dictionary, route_risk: Dictionary = {}) -> Array:
 	var source := route.duplicate(true)
 	var risk_event := route_risk.duplicate(true)
 	if risk_event.is_empty():
-		risk_event = _copy_dict(source.get("risk_event", {}))
+		risk_event = JsonCoerceScript._copy_dict(source.get("risk_event", {}))
 	var badges: Array = []
 	var risk := str(source.get("risk", "")).strip_edges().to_lower()
 	badges.append(class_badge("route", risk))
@@ -145,7 +143,7 @@ static func for_world_map_detail(environment_kind: String, route: Dictionary = {
 		return _filtered_badges(badges)
 	var cooling_percent := clampi(int(route.get("risk_decay", 0)), 0, 100)
 	var route_heat := int(route.get("suspicion_delta", 0))
-	var risk_event := _copy_dict(route.get("risk_event", {}))
+	var risk_event := JsonCoerceScript._copy_dict(route.get("risk_event", {}))
 	var event_heat := int(risk_event.get("suspicion_delta", 0))
 	var event_chance := clampi(int(risk_event.get("chance_percent", 0)), 0, 100)
 	var value_parts: Array[String] = []
@@ -172,7 +170,9 @@ static func for_world_map_detail(environment_kind: String, route: Dictionary = {
 
 
 static func for_item(item: Dictionary) -> Array:
-	var source := item.duplicate(true)
+	# Item definitions are only inspected while producing new badge values. Keep
+	# the caller's definition read-only instead of recursively cloning it here.
+	var source := item
 	var badges: Array = []
 	var item_class := str(source.get("item_class", source.get("class", source.get("item_type", "")))).strip_edges().to_lower()
 	badges.append(class_badge("item", item_class))
@@ -221,7 +221,8 @@ static func item_game_affinity_id(item: Dictionary) -> String:
 
 static func item_game_affinity_label(item: Dictionary) -> String:
 	var game_id := item_game_affinity_id(item)
-	var labels: Dictionary = _item_game_affinity_config().get("game_labels", {}) if typeof(_item_game_affinity_config().get("game_labels", {})) == TYPE_DICTIONARY else {}
+	var config := _item_game_affinity_config()
+	var labels: Dictionary = config.get("game_labels", {}) if typeof(config.get("game_labels", {})) == TYPE_DICTIONARY else {}
 	return str(labels.get(game_id, game_id.replace("_", " ").capitalize()))
 
 
@@ -231,14 +232,14 @@ static func for_event_choice(choice: Dictionary) -> Array:
 	var event_type := str(source.get("event_type", source.get("type", ""))).strip_edges().to_lower()
 	if not event_type.is_empty():
 		badges.append(class_badge("event", event_type))
-	var consequences := _copy_dict(source.get("consequences", source.get("effects", source.get("deltas", {}))))
+	var consequences := JsonCoerceScript._copy_dict(source.get("consequences", source.get("effects", source.get("deltas", {}))))
 	_append_delta_badges(badges, consequences)
-	var check := _copy_dict(source.get("check", consequences.get("check", {})))
+	var check := JsonCoerceScript._copy_dict(source.get("check", consequences.get("check", {})))
 	if not check.is_empty():
 		var chance := int(check.get("chance_percent", check.get("base_chance", check.get("chance", 0))))
 		if chance > 0:
 			_add_badge(badges, _badge("win_chance", "%d%%" % chance, _badge_polarity("win_chance", chance), "Check chance"))
-		var success := _copy_dict(check.get("success_consequences", {}))
+		var success := JsonCoerceScript._copy_dict(check.get("success_consequences", {}))
 		if not success.is_empty():
 			_append_delta_badges(badges, success)
 	return _filtered_badges(badges)
@@ -260,7 +261,7 @@ static func for_lender(lender: Dictionary) -> Array:
 	var badges: Array = []
 	var lender_type := str(source.get("lender_type", source.get("category", ""))).strip_edges().to_lower()
 	badges.append(class_badge("lender", lender_type))
-	var debt_profile := _copy_dict(source.get("debt_profile", source.get("debt", {})))
+	var debt_profile := JsonCoerceScript._copy_dict(source.get("debt_profile", source.get("debt", {})))
 	if not debt_profile.is_empty():
 		var amount := int(debt_profile.get("principal", debt_profile.get("amount", debt_profile.get("bankroll_delta", 0))))
 		if amount != 0:
@@ -269,14 +270,6 @@ static func for_lender(lender: Dictionary) -> Array:
 			_add_badge(badges, _badge("debt", "loan", "bad", "Debt contract"))
 	_append_delta_badges(badges, _definition_effect(source))
 	return _filtered_badges(badges)
-
-
-static func from_deltas(deltas: Dictionary) -> Array:
-	var badges: Array = []
-	_append_delta_badges(badges, deltas)
-	return _filtered_badges(badges)
-
-
 static func palette_token_for_badge(badge: Dictionary) -> String:
 	var glyph_id := str(badge.get("glyph_id", "")).strip_edges()
 	var glyph := glyph_definition(glyph_id)
@@ -309,24 +302,24 @@ static func _append_delta_badges(badges: Array, deltas: Dictionary) -> void:
 	if heat_cooldown_actions > 0 and heat_cooldown_per_action > 0:
 		_add_badge(badges, _badge("time_actions", "%da" % heat_cooldown_actions, "good", "Heat cooldown duration"))
 		_add_badge(badges, _badge("suspicion", "-%d/a" % heat_cooldown_per_action, "good", "Heat cooldown per action"))
-	var debt_changes := _copy_array(deltas.get("debt_changes", []))
+	var debt_changes := JsonCoerceScript._copy_array(deltas.get("debt_changes", []))
 	if deltas.has("debt"):
-		debt_changes.append(_copy_dict(deltas.get("debt", {})))
+		debt_changes.append(JsonCoerceScript._copy_dict(deltas.get("debt", {})))
 	if not debt_changes.is_empty():
 		_add_badge(badges, _badge("debt", "+%d" % debt_changes.size(), "bad", "Debt change"))
-	var inventory_add := _copy_array(deltas.get("inventory_add", []))
+	var inventory_add := JsonCoerceScript._copy_array(deltas.get("inventory_add", []))
 	if not inventory_add.is_empty():
 		_add_badge(badges, _badge("inventory", "+%d" % inventory_add.size(), "good", "Item gained"))
-	var inventory_remove := _copy_array(deltas.get("inventory_remove", []))
+	var inventory_remove := JsonCoerceScript._copy_array(deltas.get("inventory_remove", []))
 	if not inventory_remove.is_empty():
 		_add_badge(badges, _badge("inventory", "-%d" % inventory_remove.size(), "bad", "Item removed"))
-	var travel_hooks := _copy_array(deltas.get("travel_hooks_add", []))
+	var travel_hooks := JsonCoerceScript._copy_array(deltas.get("travel_hooks_add", []))
 	for route_id in _single_or_array_strings(deltas.get("unlock_travel_route", deltas.get("unlock_travel_routes", []))):
 		if not travel_hooks.has(route_id):
 			travel_hooks.append(route_id)
 	if not travel_hooks.is_empty():
 		_add_badge(badges, _badge("class_route", "+%d" % travel_hooks.size(), "good", "Route unlocked"))
-	var story_flags := _copy_dict(deltas.get("story_flags_set", {}))
+	var story_flags := JsonCoerceScript._copy_dict(deltas.get("story_flags_set", {}))
 	var single_story_flag := str(deltas.get("set_story_flag", "")).strip_edges()
 	if not single_story_flag.is_empty():
 		story_flags[single_story_flag] = true
@@ -343,9 +336,11 @@ static func _append_effect_badges(badges: Array, effect: Dictionary) -> void:
 	_add_delta_badge(badges, "suspicion", int(effect.get("cheat_suspicion_delta", 0)), "Cheat heat change")
 	if bool(effect.get("active_item", false)) or str(effect.get("active_mode", "")).strip_edges() != "":
 		_add_badge(badges, _badge("time_actions", "use", "neutral", "Active item"))
+	if int(effect.get("travel_option_bonus", 0)) > 0:
+		_add_badge(badges, _badge("class_route", "+%d" % int(effect.get("travel_option_bonus", 0)), "good", "Travel options"))
 	if int(effect.get("travel_scouting_level", 0)) > 0:
 		_add_badge(badges, _badge("distance", "scout", "good", "Travel scouting"))
-	var families := _copy_dict(effect.get("families", {}))
+	var families := JsonCoerceScript._copy_dict(effect.get("families", {}))
 	for family_value in families.values():
 		if typeof(family_value) == TYPE_DICTIONARY:
 			_append_family_effect_badges(badges, family_value as Dictionary)
@@ -370,7 +365,9 @@ static func _item_game_affinity_config() -> Dictionary:
 	var value: Variant = _registry.get("item_game_affinity", {})
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}
-	return (value as Dictionary).duplicate(true)
+	# Private badge builders treat registry data as immutable. Returning the
+	# registry-owned branch avoids several whole-config copies for every item.
+	return value as Dictionary
 
 
 static func _alias_game_id(raw_id: String, aliases: Dictionary) -> String:
@@ -413,7 +410,7 @@ static func _definition_effect(definition: Dictionary) -> Dictionary:
 	for key in ["deltas", "result_delta", "result_deltas", "effect", "consequences"]:
 		var value: Variant = definition.get(key, {})
 		if typeof(value) == TYPE_DICTIONARY and not (value as Dictionary).is_empty():
-			return (value as Dictionary).duplicate(true)
+			return value as Dictionary
 	return {}
 
 
@@ -437,7 +434,7 @@ static func _filtered_badges(badges: Array) -> Array:
 			continue
 		var badge: Dictionary = badge_value
 		var glyph_id := str(badge.get("glyph_id", "")).strip_edges()
-		if glyph_id.is_empty() or glyph_definition(glyph_id).is_empty():
+		if glyph_id.is_empty() or _glyph_definition_ref(glyph_id).is_empty():
 			continue
 		var key := "%s|%s|%s" % [glyph_id, str(badge.get("value_text", "")), str(badge.get("polarity", ""))]
 		if seen.has(key):
@@ -449,7 +446,7 @@ static func _filtered_badges(badges: Array) -> Array:
 
 static func _badge(glyph_id: String, value_text: String, polarity: String, tooltip: String = "") -> Dictionary:
 	var clean_id := glyph_id.strip_edges()
-	if clean_id.is_empty() or glyph_definition(clean_id).is_empty():
+	if clean_id.is_empty() or _glyph_definition_ref(clean_id).is_empty():
 		return {}
 	return {
 		"glyph_id": clean_id,
@@ -462,7 +459,7 @@ static func _badge(glyph_id: String, value_text: String, polarity: String, toolt
 static func _badge_polarity(glyph_id: String, value: int) -> String:
 	if value == 0:
 		return "neutral"
-	var glyph := glyph_definition(glyph_id)
+	var glyph := _glyph_definition_ref(glyph_id)
 	var rule := str(glyph.get("polarity", "neutral"))
 	if rule == "positive_good":
 		return "good" if value > 0 else "bad"
@@ -474,7 +471,7 @@ static func _badge_polarity(glyph_id: String, value: int) -> String:
 
 
 static func _glyph_label(glyph_id: String) -> String:
-	var glyph := glyph_definition(glyph_id)
+	var glyph := _glyph_definition_ref(glyph_id)
 	return str(glyph.get("label", glyph_id))
 
 
@@ -615,6 +612,11 @@ static func _glyphs() -> Dictionary:
 	return value as Dictionary
 
 
+static func _glyph_definition_ref(glyph_id: String) -> Dictionary:
+	var value: Variant = _glyphs().get(glyph_id, {})
+	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
+
+
 static func _class_badges() -> Dictionary:
 	_ensure_registry()
 	var value: Variant = _registry.get("class_badges", {})
@@ -623,31 +625,8 @@ static func _class_badges() -> Dictionary:
 	return value as Dictionary
 
 
-static func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
-
-
-static func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		var text := str(entry).strip_edges()
-		if not text.is_empty():
-			result.append(text)
-	return result
-
-
 static func _single_or_array_strings(value: Variant) -> Array:
 	if typeof(value) == TYPE_ARRAY:
-		return _string_array(value)
+		return JsonCoerceScript._string_array(value)
 	var text := str(value).strip_edges()
 	return [] if text.is_empty() else [text]

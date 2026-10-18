@@ -1,6 +1,13 @@
 class_name CareerStatsViewModel
 extends RefCounted
 
+# Builds career totals, route progress, and outcome summaries from immutable
+# profile history for the statistics screen.
+
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
+
 const REQUIRED_GAME_DEFINITIONS := [
 	{"id": "craps", "label": "Craps"},
 	{"id": "coin_pusher", "label": "Quarter Falls"},
@@ -9,11 +16,13 @@ const REQUIRED_GAME_DEFINITIONS := [
 
 
 static func build(profile_inventory: ProfileInventory) -> Dictionary:
-	var daily := _copy_dict(profile_inventory.daily_runs if profile_inventory != null else {})
-	var lifetime := _copy_dict(profile_inventory.lifetime_stats if profile_inventory != null else {})
+	var daily := JsonCoerceScript._copy_dict(profile_inventory.daily_runs if profile_inventory != null else {})
+	var lifetime := JsonCoerceScript._copy_dict(profile_inventory.lifetime_stats if profile_inventory != null else {})
 	var challenges := profile_inventory.completed_challenge_rows() if profile_inventory != null else []
-	var history := _copy_array(profile_inventory.run_history if profile_inventory != null else [])
-	var victories := _copy_dict(lifetime.get("victories_per_route", {}))
+	# The screen renders eight compact rows. Ask the profile for exactly that
+	# projection instead of recursively copying all retained run records first.
+	var history := profile_inventory.recent_run_history(8) if profile_inventory != null else []
+	var victories := JsonCoerceScript._copy_dict(lifetime.get("victories_per_route", {}))
 	var total_runs := int(lifetime.get("total_runs", 0))
 	var total_victories := 0
 	for count_value in victories.values():
@@ -85,7 +94,7 @@ static func _completed_route_count(routes: Array) -> int:
 
 
 static func _release_ledger(lifetime: Dictionary) -> Array:
-	var release := _copy_dict(lifetime.get(ProfileInventory.RELEASE_REPORTING_KEY, {}))
+	var release := JsonCoerceScript._copy_dict(lifetime.get(ProfileInventory.RELEASE_REPORTING_KEY, {}))
 	return [
 		{
 			"id": "crew",
@@ -112,7 +121,7 @@ static func _release_ledger(lifetime: Dictionary) -> Array:
 				{"label": "Rig routes used", "value": str(int(release.get("numbers_rig_runs", 0)))},
 			],
 		},
-		{"id": "games", "title": "Games", "rows": _game_rows(_copy_dict(lifetime.get("games_played", {})))},
+		{"id": "games", "title": "Games", "rows": _game_rows(JsonCoerceScript._copy_dict(lifetime.get("games_played", {})))},
 		{
 			"id": "deliveries",
 			"title": "Deliveries",
@@ -159,13 +168,14 @@ static func _history_rows(history: Array, limit: int = 8) -> Array:
 	var rows: Array = []
 	var count := mini(history.size(), limit)
 	for index in range(count):
-		var entry := _copy_dict(history[index])
+		var entry := JsonCoerceScript._copy_dict(history[index])
 		rows.append({
 			"date": str(entry.get("completed_date", "")),
 			"outcome": _outcome_text(entry),
 			"bankroll": "$%d" % int(entry.get("final_bankroll", 0)),
 			"day": "Day %d" % int(entry.get("day_count", 1)),
-			"actions": "%d actions" % int(entry.get("duration_actions", 0)),
+			"actions": PlayerTextScript.count_text("action", int(entry.get("duration_actions", 0))),
+			"duration_actions": int(entry.get("duration_actions", 0)),
 			"score": int(entry.get("score", 0)),
 			"won": str(entry.get("outcome", "")) == "victory",
 		})
@@ -175,7 +185,7 @@ static func _history_rows(history: Array, limit: int = 8) -> Array:
 static func _challenge_rows(challenges: Array) -> Array:
 	var rows: Array = []
 	for challenge_value in challenges:
-		var challenge := _copy_dict(challenge_value)
+		var challenge := JsonCoerceScript._copy_dict(challenge_value)
 		var title := str(challenge.get("title", challenge.get("flag", "Challenge"))).strip_edges()
 		if title.is_empty():
 			title = "Challenge"
@@ -192,11 +202,3 @@ static func _outcome_text(entry: Dictionary) -> String:
 	if route.is_empty() or route == outcome:
 		return outcome
 	return "%s - %s" % [outcome, route]
-
-
-static func _copy_dict(value: Variant) -> Dictionary:
-	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
-
-
-static func _copy_array(value: Variant) -> Array:
-	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []

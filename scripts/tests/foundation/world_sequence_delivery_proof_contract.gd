@@ -117,6 +117,9 @@ func _check_shared_definition(entry: Dictionary, failures: Array) -> void:
 	if scene_ops.size() != 1 or str(_dict(scene_ops[0]).get("owner_namespace", "")) != "crew" \
 			or str(_dict(scene_ops[0]).get("stable_object_id", "")) != "package_handoff":
 		failures.append("Crew favor proof lacks its crew-owned physical handoff scene object.")
+	elif str(_dict(_dict(scene_ops[0]).get("object", {})).get("slot_family", "")) != "event" \
+			or str(_dict(_dict(scene_ops[0]).get("object", {})).get("placement_class", "")) != "standing_person":
+		failures.append("Crew favor handoff must consume shared event standing-person capacity in every destination room.")
 	if interaction_ops.size() != 1 or str(_dict(interaction_ops[0]).get("owner_namespace", "")) != "crew":
 		failures.append("Crew favor proof lacks its crew-owned handoff interaction.")
 	else:
@@ -396,6 +399,19 @@ func _check_target_handoff(run_state: RunState, library: ContentLibrary, token: 
 	if not bool(arrival.get("ok", false)) or not bool(arrival.get("handoff_ready", false)):
 		failures.append("Production delivery did not reach its real public handoff boundary: %s." % JSON.stringify(arrival))
 		return
+	var pre_mount_owner := run_state.delivery_world_sequence_owner_for_presentation(target_node_id)
+	var direct_manifest_contact := false
+	for entry_value in _array(run_state.current_environment.get("runtime_object_manifest_entries", [])):
+		var entry := _dict(entry_value)
+		if str(entry.get("runtime_owner", "")) == "delivery_contact" \
+				or str(entry.get("object_id", "")).begins_with("delivery:handoff:"):
+			direct_manifest_contact = true
+			break
+	var pre_mount_producer := run_state._scenario_base_producer_context()
+	if pre_mount_owner != token or direct_manifest_contact \
+			or not str(pre_mount_producer.get("delivery_handoff_node_id", "")).is_empty():
+		failures.append("Eligible Crew handoff owner did not suppress the direct-contact fallback before mount: owner=%s manifest=%s producer=%s." % [pre_mount_owner, JSON.stringify(run_state.current_environment.get("runtime_object_manifest_entries", [])), JSON.stringify(pre_mount_producer)])
+		return
 	var finalized := _finalize_delivery_target(run_state, library)
 	if not bool(finalized.get("ok", false)):
 		failures.append("Crew favor sequence did not mount after exact-target semantic finalization: %s." % JSON.stringify(finalized))
@@ -404,6 +420,23 @@ func _check_target_handoff(run_state: RunState, library: ContentLibrary, token: 
 	var semantic := _dict(projection.get("semantic_state", {}))
 	var interactions := _dict(semantic.get("interactions", {}))
 	var handoff := _dict(interactions.get("crew::package_handoff", {}))
+	# Room-actions removal attaches an abstract handoff command to its visible
+	# destination contact. Accept only that exact attached owner/stable-id pair,
+	# and retain the owner token from the authenticated action itself.
+	if handoff.is_empty():
+		for interaction_value in interactions.values():
+			var candidate := _dict(interaction_value)
+			for action_value in _array(candidate.get("available_actions", [])):
+				var action := _dict(action_value)
+				if str(action.get("attached_owner_namespace", "")) != "crew" \
+						or str(action.get("attached_stable_object_id", "")) != "package_handoff":
+					continue
+				handoff = candidate.duplicate(true)
+				handoff["available_actions"] = [action.duplicate(true)]
+				handoff["world_sequence_owner_token"] = str(action.get("world_sequence_owner_token", ""))
+				break
+			if not handoff.is_empty():
+				break
 	if str(handoff.get("world_sequence_owner_token", "")) != token:
 		failures.append("Composed target-room handoff is not routed by its exact owner-scoped sequence token: %s." % JSON.stringify(handoff))
 	if run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", target_node_id) != token:
@@ -412,20 +445,15 @@ func _check_target_handoff(run_state: RunState, library: ContentLibrary, token: 
 	var heat_at_command := run_state.suspicion_level()
 	var actions := _array(handoff.get("available_actions", []))
 	var handoff_action := _dict(actions[0]) if not actions.is_empty() else {}
-	var command := run_state.world_sequence_command(
-		token,
-		"make_handoff",
-		"proof:crew_favor:handoff",
-		{},
-		"crew",
-		"package_handoff",
-		{"crew::package_handoff": true},
-		str(handoff_action.get("action_origin_owner_namespace", "")),
-		str(handoff_action.get("action_origin_stable_object_id", "")),
-		str(handoff_action.get("action_origin_receipt_key", "")),
-		str(handoff_action.get("action_origin_boundary_id", "")),
-		str(handoff_action.get("action_origin_fingerprint", ""))
-	)
+	var command := run_state.world_sequence_command(FunctionOptions.world_sequence_command(token, "make_handoff", "proof:crew_favor:handoff", {
+		"payload": {}, "owner_namespace": "crew", "stable_object_id": "package_handoff",
+		"host_interaction_availability": {"crew::package_handoff": true},
+		"action_origin_owner_namespace": str(handoff_action.get("action_origin_owner_namespace", "")),
+		"action_origin_stable_object_id": str(handoff_action.get("action_origin_stable_object_id", "")),
+		"action_origin_receipt_key": str(handoff_action.get("action_origin_receipt_key", "")),
+		"action_origin_boundary_id": str(handoff_action.get("action_origin_boundary_id", "")),
+		"action_origin_fingerprint": str(handoff_action.get("action_origin_fingerprint", "")),
+	}))
 	if not bool(command.get("ok", false)):
 		failures.append("Authenticated Crew favor handoff command failed: %s." % JSON.stringify(command))
 		return
@@ -459,7 +487,10 @@ func _check_target_handoff(run_state: RunState, library: ContentLibrary, token: 
 	var consumed := run_state.world_sequence_consume_delivery_outcome(token, receipt_id, target_node_id)
 	if not bool(consumed.get("ok", false)) or not run_state.world_sequence_pending_outcomes(token).is_empty():
 		failures.append("Crew favor delivered outcome did not acknowledge and clean up through the generic lifecycle seam.")
-	var replay_command := run_state.world_sequence_command(token, "make_handoff", "proof:crew_favor:handoff", {}, "crew", "package_handoff", {"crew::package_handoff": true})
+	var replay_command := run_state.world_sequence_command(FunctionOptions.world_sequence_command(token, "make_handoff", "proof:crew_favor:handoff", {
+		"payload": {}, "owner_namespace": "crew", "stable_object_id": "package_handoff",
+		"host_interaction_availability": {"crew::package_handoff": true},
+	}))
 	var replay_owner := run_state.delivery_complete_handoff(target_node_id)
 	if bool(replay_owner.get("ok", false)) or run_state.bankroll != bankroll_before + 22 or run_state.suspicion_level() != heat_before + 4:
 		failures.append("Crew favor replay applied the owning delivery result more than once: command=%s owner=%s." % [JSON.stringify(replay_command), JSON.stringify(replay_owner)])
@@ -569,15 +600,15 @@ func _prepared_delivery_outcome(library: ContentLibrary, seed: String, failures:
 		return base_fixture
 	var actions := _array(handoff.get("available_actions", []))
 	var action := _dict(actions[0]) if not actions.is_empty() else {}
-	var command := run_state.world_sequence_command(
-		token, "make_handoff", "proof:p1:%s:handoff" % seed.to_lower().replace("-", "_"), {}, "crew", "package_handoff",
-		{"crew::package_handoff": true},
-		str(action.get("action_origin_owner_namespace", "")),
-		str(action.get("action_origin_stable_object_id", "")),
-		str(action.get("action_origin_receipt_key", "")),
-		str(action.get("action_origin_boundary_id", "")),
-		str(action.get("action_origin_fingerprint", ""))
-	)
+	var command := run_state.world_sequence_command(FunctionOptions.world_sequence_command(token, "make_handoff", "proof:p1:%s:handoff" % seed.to_lower().replace("-", "_"), {
+		"payload": {}, "owner_namespace": "crew", "stable_object_id": "package_handoff",
+		"host_interaction_availability": {"crew::package_handoff": true},
+		"action_origin_owner_namespace": str(action.get("action_origin_owner_namespace", "")),
+		"action_origin_stable_object_id": str(action.get("action_origin_stable_object_id", "")),
+		"action_origin_receipt_key": str(action.get("action_origin_receipt_key", "")),
+		"action_origin_boundary_id": str(action.get("action_origin_boundary_id", "")),
+		"action_origin_fingerprint": str(action.get("action_origin_fingerprint", "")),
+	}))
 	var preview := run_state.world_sequence_preview_delivery_outcome(token, "delivered")
 	var pending := run_state.world_sequence_pending_outcomes(token)
 	if not bool(command.get("ok", false)) or not bool(preview.get("ok", false)) or not pending.is_empty():
@@ -858,6 +889,27 @@ func _production_run(library: ContentLibrary, seed: String) -> RunState:
 		"turns": 0,
 		"resolved_event_ids": [],
 	}
+	# The release offer is backed by the shipped $70 one-favor Crew marker.
+	# Preserve that debt authority so the success checkpoint can prove it clears
+	# the favor atomically with the delivery rewards.
+	run_state.add_debt({
+		"id": "the_crew_marker",
+		"lender_id": RunState.CREW_LENDER_ID,
+		"lender_name": "The Crew",
+		"balance": 1,
+		"principal": 70,
+		"debt_kind": "favor",
+		"status": "favor_due",
+		"deadline_turns": 2,
+		"turns_remaining": 0,
+		"interest_rate": 0.0,
+		"loan_count": 1,
+		"default_consequence": "crew_favor_due",
+		"refuse_consequence": "crew_convert_to_cash",
+		"cash_conversion_balance_per_favor": 70,
+		"cash_conversion_interest_rate": 0.35,
+	})
+	run_state.narrative_flags["crew_favor_pending"] = true
 	# `crew_favor_delivery` is a triggered event in production. Exercise the
 	# real host queue instead of relying on the pre-authority fixture shortcut
 	# where the narrative flag alone made a copied EventModule resolvable.

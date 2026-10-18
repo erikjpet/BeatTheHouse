@@ -1,6 +1,11 @@
 class_name SlotPresentation
 extends RefCounted
 
+# Normalizes persistent slot state into player-safe full and realtime surface
+# projections while leaving resolution and mutation to SlotResolver.
+
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const StateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
 const CatalogScript := preload("res://scripts/games/slots/slot_catalog.gd")
 const PinballFeatureScript := preload("res://scripts/games/slots/pinball/pinball_feature.gd")
@@ -61,7 +66,7 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 	)
 	var skin: Dictionary = catalog.skin_for_machine(machine, definition)
 	var timeline: Array = _reel_timeline(machine)
-	var nudge_offer: Dictionary = _copy_dict(machine.get("last_nudge_offer", {}))
+	var nudge_offer: Dictionary = JsonCoerceScript._copy_dict(machine.get("last_nudge_offer", {}))
 	var nudge_timing: Dictionary = _nudge_chain_timing_state(nudge_offer, ui_state)
 	var nudge_available := not nudge_offer.is_empty() and bool(nudge_timing.get("available", false))
 	var nudge_chain_id := str(nudge_offer.get("event_id", "")) if str(nudge_offer.get("type", "")) == "coin_chain" else ""
@@ -141,15 +146,15 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 		],
 		"slot_reel_count": int(machine.get("reel_count", 3)),
 		"slot_row_count": int(machine.get("row_count", 1)),
-		"slot_grid": _copy_array(machine.get("last_grid", [])),
-		"slot_previous_grid": _copy_array(machine.get("last_previous_grid", [])),
-		"slot_reel_stops": _copy_array(machine.get("reel_stops", [])),
+		"slot_grid": JsonCoerceScript._copy_array(machine.get("last_grid", [])),
+		"slot_previous_grid": JsonCoerceScript._copy_array(machine.get("last_previous_grid", [])),
+		"slot_reel_stops": JsonCoerceScript._copy_array(machine.get("reel_stops", [])),
 		# Reel strips are immutable definition data. Surface state borrows the
 		# shared array; renderers and snapshots must treat it as read-only.
 		"slot_reel_strips": machine.get("reel_strips", []),
 		"slot_reel_stop_times": _reel_stop_times(machine),
 		"slot_reel_timeline": timeline,
-		"slot_animation_plan": _copy_dict(machine.get("slot_animation_plan", {})),
+		"slot_animation_plan": JsonCoerceScript._copy_dict(machine.get("slot_animation_plan", {})),
 		"slot_animation_id": animation_id,
 		"slot_animation_duration_msec": animation_duration,
 		"slot_visual_time_msec": surface_time_msec,
@@ -175,7 +180,7 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 		"slot_previous_result_message": _previous_surface_message(machine),
 		"spin_count": int(machine.get("spin_count", 0)),
 		"slot_spin_count": int(machine.get("spin_count", 0)),
-		"slot_win_cells": _copy_array(machine.get("slot_win_cells", [])),
+		"slot_win_cells": JsonCoerceScript._copy_array(machine.get("slot_win_cells", [])),
 		"slot_win_symbol": str(machine.get("slot_win_symbol", "")),
 		"slot_win_count": int(machine.get("slot_win_count", 0)),
 		"slot_win_kind": str(machine.get("slot_win_kind", "none")),
@@ -184,22 +189,22 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 		"slot_win_amount": int(machine.get("slot_win_amount", machine.get("last_payout", 0))),
 		"slot_win_reason": str(machine.get("slot_win_reason", "")),
 		"slot_celebration_tier": str(machine.get("slot_celebration_tier", "none")),
-		"slot_tease_events": _copy_array(machine.get("last_tease_events", [])),
+		"slot_tease_events": JsonCoerceScript._copy_array(machine.get("last_tease_events", [])),
 		"slot_nudge_available": nudge_available,
 		"slot_nudge_tease_window_active": bool(nudge_timing.get("window_active", false)),
-		"slot_nudge_tease_window_msec": _copy_dict(nudge_timing.get("window_msec", {})),
+		"slot_nudge_tease_window_msec": JsonCoerceScript._copy_dict(nudge_timing.get("window_msec", {})),
 		"slot_nudge_tease_input_msec": int(nudge_timing.get("input_msec", -1)),
 		"slot_nudge_tease_level": int(nudge_offer.get("coin_count", nudge_offer.get("visible_coin_count", 0))),
 		"slot_nudge_tease_outcome_hint": str(nudge_timing.get("hint", "")),
 		"slot_nudge_applied": _last_tease_was_nudge(machine),
-		"slot_nudge_chain": _copy_dict(nudge_timing.get("chain", {})),
+		"slot_nudge_chain": JsonCoerceScript._copy_dict(nudge_timing.get("chain", {})),
 		"slot_nudge_chain_active": nudge_available and str(nudge_offer.get("type", "")) == "coin_chain",
 		"slot_nudge_chain_event_id": nudge_chain_id,
 		"slot_nudge_chain_elapsed_msec": int(nudge_timing.get("input_msec", -1)),
 		"slot_nudge_chain_active_index": int(nudge_offer.get("active_index", 0)),
 		"slot_nudge_chain_collected_count": int(nudge_offer.get("collected_count", 0)),
 		"slot_nudge_chain_banked_payout": int(nudge_offer.get("banked_payout", 0)),
-		"slot_nudge_chain_coins": _copy_array(nudge_offer.get("coins", [])),
+		"slot_nudge_chain_coins": JsonCoerceScript._copy_array(nudge_offer.get("coins", [])),
 		"slot_nudge_chain_last_grade": str(nudge_offer.get("last_grade", "")),
 		"slot_nudge_chain_last_award": int(nudge_offer.get("last_award", 0)),
 		"slot_nudge_chain_last_spawned": bool(nudge_offer.get("last_spawned", false)),
@@ -237,7 +242,7 @@ func realtime_state_patch(machine: Dictionary, run_state: RunState, ui_state: Di
 	# complete takeover spec keeps the first pinball frame visual and interactive
 	# state atomic instead of leaving a pinball scene inside the old cabinet.
 	if str(stored_active_bonus.get("family", "")) == "pinball" and bool(stored_active_bonus.get("active", false)) and not bool(stored_active_bonus.get("complete", false)) and not trigger_reveal_pending:
-		return _pinball_active_surface_state(machine, stored_active_bonus, run_state, surface_time_msec, ui_state)
+		return _pinball_active_surface_state(machine, stored_active_bonus, run_state, surface_time_msec, ui_state, current_surface_state)
 	var active_bonus := _display_active_bonus(machine, stored_active_bonus, surface_time_msec, trigger_reveal_pending)
 	active_bonus = _with_pinball_alert_metadata(active_bonus, machine)
 	if str(active_bonus.get("family", "")) == "pinball" and bool(active_bonus.get("active", false)):
@@ -250,6 +255,12 @@ func realtime_state_patch(machine: Dictionary, run_state: RunState, ui_state: Di
 	var feature_family := str(active_bonus.get("family", ""))
 	return {
 		"surface_realtime_state_refresh": true,
+		# The canvas scheduler already owns Slot's visible cadence: active reel and
+		# feature channels draw at 60 fps, while Web attract mode intentionally uses
+		# its declared low-detail idle cadence. This 16 ms presentation patch only
+		# advances read-only state; requesting another redraw here bypassed that
+		# scheduler and repainted the complete idle cabinet every browser frame.
+		"surface_defer_patch_redraw": true,
 		"slot_visual_time_msec": surface_time_msec,
 		"slot_attract_phase": _attract_phase(surface_time_msec, skin),
 		"slot_bonus_trigger_reveal_pending": trigger_reveal_pending,
@@ -267,12 +278,15 @@ func realtime_state_patch(machine: Dictionary, run_state: RunState, ui_state: Di
 		"slot_active_bonus_active": feature_active,
 		"slot_autoplay_active": bool(machine.get("slot_autoplay_active", false)),
 		"slot_free_spins": int(machine.get("free_spins", 0)),
-		"bankroll": run_state.wager_capacity_for_game("slot") if run_state != null else int(current_surface_state.get("bankroll", 0)),
-		"suspicion_level": run_state.suspicion_level() if run_state != null else int(current_surface_state.get("suspicion_level", 0)),
+		# Host money and pressure cannot change inside this presentation-only tick;
+		# action boundaries replace them atomically. Reuse the canonical projection
+		# instead of rebuilding wager capacity and suspicion aggregation every 100 ms.
+		"bankroll": int(current_surface_state.get("bankroll", 0)),
+		"suspicion_level": int(current_surface_state.get("suspicion_level", 0)),
 	}
 
 
-func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary, run_state: RunState, surface_time_msec: int, ui_state: Dictionary) -> Dictionary:
+func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary, run_state: RunState, surface_time_msec: int, ui_state: Dictionary, current_surface_state: Dictionary = {}) -> Dictionary:
 	var live: Dictionary = PinballFeatureScript.surface_refresh(active_bonus, surface_time_msec)
 	live = _with_pinball_alert_metadata(live, machine)
 	live["pinball_launch_meter"] = _pinball_launch_meter(live, surface_time_msec)
@@ -281,6 +295,35 @@ func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary
 	var pinball_cues_value: Variant = pinball_scene.get("audio_cues", [])
 	if typeof(pinball_cues_value) == TYPE_ARRAY:
 		pinball_cues = pinball_cues_value as Array
+	# The first reveal must replace the reel cabinet atomically. Once that
+	# takeover is installed, subsequent ticks only replace live simulation and
+	# audio fields; rebuilding the static skin, bindings, and channel metadata is
+	# pure allocation churn and makes the feature's physics frames more uneven.
+	if str(current_surface_state.get("slot_cabinet_identity", "")) == "pinball":
+		var surface_audio: Dictionary = current_surface_state.get("surface_audio", {}) if typeof(current_surface_state.get("surface_audio", {})) == TYPE_DICTIONARY else {}
+		var realtime_audio := surface_audio.duplicate(false)
+		realtime_audio["feature_cues"] = pinball_cues
+		var realtime_message := "Bonus active: %s." % str(live.get("mode", "feature")).replace("_", " ").capitalize()
+		return {
+			"surface_realtime_state_refresh": true,
+			# The installed slot_feature channel keeps live Pinball at 60 fps. Let
+			# that scheduler consume the newest simulation patch instead of queueing
+			# a duplicate redraw from the realtime refresh path.
+			"surface_defer_patch_redraw": true,
+			"slot_visual_time_msec": surface_time_msec,
+			"slot_bonus_trigger_reveal_pending": false,
+			"slot_bonus_trigger_revealed": true,
+			"slot_feature_scene": pinball_scene,
+			"slot_bonus_total": int(live.get("feature_total", live.get("pending_award", 0))),
+			"slot_active_bonus": live,
+			"slot_active_bonus_active": true,
+			"surface_audio": realtime_audio,
+			"result_message": realtime_message,
+			"outcome_message": realtime_message,
+			"has_recent_outcome": true,
+			"bankroll": int(current_surface_state.get("bankroll", 0)),
+			"suspicion_level": int(current_surface_state.get("suspicion_level", 0)),
+		}
 	var animation_id := str(machine.get("slot_animation_id", "pinball:live"))
 	var feature_channel := {
 		"id": "slot_feature",
@@ -448,7 +491,7 @@ func _display_active_bonus(machine: Dictionary, active_bonus: Dictionary, surfac
 	var replay: Dictionary = _copy_dict_shallow(machine.get("last_bonus_replay", {}))
 	if replay.is_empty() or not ["pinball", "buffalo"].has(str(replay.get("family", ""))):
 		return _pinball_display_bonus(live, surface_time_msec)
-	var plan: Dictionary = _copy_dict(machine.get("slot_animation_plan", {}))
+	var plan: Dictionary = JsonCoerceScript._copy_dict(machine.get("slot_animation_plan", {}))
 	var plan_duration := maxi(0, int(plan.get("feature_duration_msec", 0)))
 	if plan_duration <= 0:
 		return _pinball_display_bonus(live, surface_time_msec)
@@ -490,13 +533,13 @@ func _trigger_bonus_reveal_pending(machine: Dictionary, active_bonus: Dictionary
 
 
 func _trigger_bonus_reveal_msec(machine: Dictionary) -> int:
-	var plan: Dictionary = _copy_dict(machine.get("slot_animation_plan", {}))
-	var timeline: Array = _copy_array(plan.get("reel_timeline", machine.get("slot_reel_timeline", [])))
+	var plan: Dictionary = JsonCoerceScript._copy_dict(machine.get("slot_animation_plan", {}))
+	var timeline: Array = JsonCoerceScript._copy_array(plan.get("reel_timeline", machine.get("slot_reel_timeline", [])))
 	if timeline.is_empty():
 		return 0
 	var reveal_msec := 0
 	for entry_value in timeline:
-		var entry: Dictionary = _copy_dict(entry_value)
+		var entry: Dictionary = JsonCoerceScript._copy_dict(entry_value)
 		reveal_msec = maxi(reveal_msec, int(ceil(float(entry.get("settle_end", entry.get("stop_time", 0.0))) * 1000.0)))
 	return reveal_msec + SLOT_RESULT_REVEAL_BEAT_MSEC
 
@@ -504,9 +547,7 @@ func _trigger_bonus_reveal_msec(machine: Dictionary) -> int:
 func _surface_spin_elapsed_msec(ui_state: Dictionary, expected_active_id: String = "", missing_value: int = -1) -> int:
 	if int(ui_state.get("slot_tease_input_msec", -1)) >= 0:
 		return int(ui_state.get("slot_tease_input_msec", -1))
-	var runtime: Dictionary = _copy_dict(ui_state.get("surface_runtime_status", {}))
-	var animations: Dictionary = _copy_dict(runtime.get("surface_animations", {}))
-	var spin: Dictionary = _copy_dict(animations.get("slot_spin", {}))
+	var spin := _surface_animation_status_view(ui_state, "slot_spin")
 	if spin.is_empty():
 		return missing_value
 	# The action boundary snapshot is built before the canvas installs the new
@@ -535,9 +576,9 @@ func _nudge_chain_timing_state(offer: Dictionary, ui_state: Dictionary) -> Dicti
 		var legacy := _nudge_timing_state(offer, ui_state)
 		legacy["chain"] = {}
 		return legacy
-	var coins: Array = _copy_array(offer.get("coins", []))
+	var coins: Array = JsonCoerceScript._copy_array(offer.get("coins", []))
 	var active_index := clampi(int(offer.get("active_index", 0)), 0, maxi(0, coins.size() - 1))
-	var active_coin: Dictionary = _copy_dict(coins[active_index]) if active_index < coins.size() else {}
+	var active_coin: Dictionary = JsonCoerceScript._copy_dict(coins[active_index]) if active_index < coins.size() else {}
 	var input_msec := _surface_nudge_chain_elapsed_msec(ui_state)
 	var window: Dictionary = _nudge_chain_window_for_surface(offer, active_coin, input_msec)
 	var distance := int(window.get("distance_msec", 9999))
@@ -571,9 +612,7 @@ func _nudge_chain_timing_state(offer: Dictionary, ui_state: Dictionary) -> Dicti
 func _surface_nudge_chain_elapsed_msec(ui_state: Dictionary) -> int:
 	if int(ui_state.get("slot_nudge_chain_input_msec", -1)) >= 0:
 		return int(ui_state.get("slot_nudge_chain_input_msec", -1))
-	var runtime: Dictionary = _copy_dict(ui_state.get("surface_runtime_status", {}))
-	var animations: Dictionary = _copy_dict(runtime.get("surface_animations", {}))
-	var chain: Dictionary = _copy_dict(animations.get("slot_nudge_chain", {}))
+	var chain := _surface_animation_status_view(ui_state, "slot_nudge_chain")
 	if not chain.is_empty():
 		return maxi(0, int(round(float(chain.get("elapsed", 0.0)) * 1000.0)))
 	if int(ui_state.get("slot_tease_input_msec", -1)) >= 0:
@@ -603,7 +642,7 @@ func _nudge_chain_window_for_surface(offer: Dictionary, coin: Dictionary, input_
 func _nudge_timing_state(offer: Dictionary, ui_state: Dictionary) -> Dictionary:
 	if offer.is_empty():
 		return {"available": false, "window_active": false, "input_msec": -1, "window_msec": {}, "hint": ""}
-	var window: Dictionary = _copy_dict(offer.get("skill_window_msec", {}))
+	var window: Dictionary = JsonCoerceScript._copy_dict(offer.get("skill_window_msec", {}))
 	var start_msec := maxi(0, int(window.get("start", 0)))
 	var end_msec := maxi(start_msec, int(window.get("end", 0)))
 	var perfect_msec := clampi(int(window.get("perfect", start_msec)), start_msec, end_msec)
@@ -627,10 +666,21 @@ func _nudge_timing_state(offer: Dictionary, ui_state: Dictionary) -> Dictionary:
 
 
 func _surface_spin_active(ui_state: Dictionary) -> bool:
-	var runtime: Dictionary = _copy_dict(ui_state.get("surface_runtime_status", {}))
-	var animations: Dictionary = _copy_dict(runtime.get("surface_animations", {}))
-	var spin: Dictionary = _copy_dict(animations.get("slot_spin", {}))
+	var spin := _surface_animation_status_view(ui_state, "slot_spin")
 	return bool(spin.get("active", false))
+
+
+func _surface_animation_status_view(ui_state: Dictionary, channel_id: String) -> Dictionary:
+	# Realtime status is a host-owned snapshot used read-only by presentation.
+	# Borrow the requested channel instead of cloning the whole status tree.
+	var runtime_value: Variant = ui_state.get("surface_runtime_status", {})
+	if typeof(runtime_value) != TYPE_DICTIONARY:
+		return {}
+	var animations_value: Variant = (runtime_value as Dictionary).get("surface_animations", {})
+	if typeof(animations_value) != TYPE_DICTIONARY:
+		return {}
+	var channel_value: Variant = (animations_value as Dictionary).get(channel_id, {})
+	return channel_value if typeof(channel_value) == TYPE_DICTIONARY else {}
 
 
 func _bet_options(selected_bet: Dictionary) -> Array:
@@ -646,11 +696,11 @@ func _bet_options(selected_bet: Dictionary) -> Array:
 
 
 func _reel_stop_times(machine: Dictionary) -> Array:
-	var stored: Array = _copy_array(machine.get("slot_reel_stop_times", []))
+	var stored: Array = JsonCoerceScript._copy_array(machine.get("slot_reel_stop_times", []))
 	if not stored.is_empty():
 		return stored
-	var plan: Dictionary = _copy_dict(machine.get("slot_animation_plan", {}))
-	var plan_stops: Array = _copy_array(plan.get("reel_stop_times", []))
+	var plan: Dictionary = JsonCoerceScript._copy_dict(machine.get("slot_animation_plan", {}))
+	var plan_stops: Array = JsonCoerceScript._copy_array(plan.get("reel_stop_times", []))
 	if not plan_stops.is_empty():
 		return plan_stops
 	var count := maxi(1, int(machine.get("reel_count", 3)))
@@ -662,11 +712,11 @@ func _reel_stop_times(machine: Dictionary) -> Array:
 
 
 func _reel_timeline(machine: Dictionary) -> Array:
-	var stored: Array = _copy_array(machine.get("slot_reel_timeline", []))
+	var stored: Array = JsonCoerceScript._copy_array(machine.get("slot_reel_timeline", []))
 	if not stored.is_empty():
 		return stored
-	var plan: Dictionary = _copy_dict(machine.get("slot_animation_plan", {}))
-	var plan_timeline: Array = _copy_array(plan.get("reel_timeline", []))
+	var plan: Dictionary = JsonCoerceScript._copy_dict(machine.get("slot_animation_plan", {}))
+	var plan_timeline: Array = JsonCoerceScript._copy_array(plan.get("reel_timeline", []))
 	if not plan_timeline.is_empty():
 		return plan_timeline
 	var count := maxi(1, int(machine.get("reel_count", 3)))
@@ -702,7 +752,7 @@ func _attract_phase(surface_time_msec: int, skin: Dictionary) -> Dictionary:
 func _bonus_start_time(machine: Dictionary) -> float:
 	if machine.has("slot_bonus_start_time"):
 		return float(machine.get("slot_bonus_start_time", 0.0))
-	var plan: Dictionary = _copy_dict(machine.get("slot_animation_plan", {}))
+	var plan: Dictionary = JsonCoerceScript._copy_dict(machine.get("slot_animation_plan", {}))
 	if plan.has("bonus_start_time"):
 		return float(plan.get("bonus_start_time", 0.0))
 	var stops: Array = _reel_stop_times(machine)
@@ -717,7 +767,7 @@ func _feature_channel_duration_msec(machine: Dictionary, active_bonus: Dictionar
 	var active_duration := maxi(0, int(active_bonus.get("animation_duration_msec", 0)))
 	if active_duration > 0:
 		return _cap_buffalo_feature_duration(active_bonus, active_duration)
-	var plan: Dictionary = _copy_dict(machine.get("slot_animation_plan", {}))
+	var plan: Dictionary = JsonCoerceScript._copy_dict(machine.get("slot_animation_plan", {}))
 	var plan_duration := maxi(0, int(plan.get("feature_duration_msec", 0)))
 	if plan_duration > 0:
 		return _cap_buffalo_feature_duration(active_bonus, plan_duration)
@@ -742,16 +792,16 @@ func _buffalo_grand_prize(machine: Dictionary, active_bonus: Dictionary, selecte
 	var active_grand := maxi(0, int(active_bonus.get("grand_prize", 0)))
 	if active_grand > 0:
 		return active_grand
-	var bonus_state: Dictionary = _copy_dict(machine.get("bonus_state", {}))
-	var buckets: Dictionary = _copy_dict(bonus_state.get("per_bet", {}))
+	var bonus_state: Dictionary = JsonCoerceScript._copy_dict(machine.get("bonus_state", {}))
+	var buckets: Dictionary = JsonCoerceScript._copy_dict(bonus_state.get("per_bet", {}))
 	var bet_id := str(selected_bet.get("id", active_bonus.get("bet_id", "bet_2")))
-	var bucket: Dictionary = _copy_dict(buckets.get(bet_id, {}))
+	var bucket: Dictionary = JsonCoerceScript._copy_dict(buckets.get(bet_id, {}))
 	var stored := maxi(0, int(bucket.get("buffalo_grand_prize", 0)))
 	if stored > 0:
 		return stored
-	var ladder: Dictionary = _copy_dict(active_bonus.get("jackpot_ladder", {}))
-	for tier_value in _copy_array(ladder.get("tiers", [])):
-		var tier: Dictionary = _copy_dict(tier_value)
+	var ladder: Dictionary = JsonCoerceScript._copy_dict(active_bonus.get("jackpot_ladder", {}))
+	for tier_value in JsonCoerceScript._copy_array(ladder.get("tiers", [])):
+		var tier: Dictionary = JsonCoerceScript._copy_dict(tier_value)
 		if str(tier.get("id", "")) == "grand":
 			var ladder_award := maxi(0, int(tier.get("award", 0)))
 			if ladder_award > 0:
@@ -767,7 +817,7 @@ func _audio_cues(machine: Dictionary) -> Array:
 	]
 	for index in range(stops.size()):
 		cues.append({"phase": "reel_stop", "cue_id": "slot_reel_stop_%d" % index, "time_sec": float(stops[index]), "reel_index": index, "marker": "reel_stop_%d" % index})
-	var plan: Dictionary = _copy_dict(machine.get("slot_animation_plan", {}))
+	var plan: Dictionary = JsonCoerceScript._copy_dict(machine.get("slot_animation_plan", {}))
 	var tease_coin_count := int(plan.get("tease_coin_count", 0))
 	if tease_coin_count > 0:
 		var first_reel := clampi(int(plan.get("tease_first_coin_reel", 0)), 0, maxi(0, stops.size() - 1))
@@ -778,11 +828,11 @@ func _audio_cues(machine: Dictionary) -> Array:
 			var second_reel := clampi(int(plan.get("tease_second_coin_reel", first_reel + 1)), 0, maxi(0, stops.size() - 1))
 			var second_time := float(stops[second_reel]) if second_reel >= 0 and second_reel < stops.size() else first_time + 0.42
 			cues.append({"phase": "double_gold_coin_tease", "cue_id": "double_gold_coin_tease", "time_sec": second_time, "marker": "double_gold_coin_tease", "volume_db": 2.0, "pitch": 1.03})
-	var chain_offer: Dictionary = _copy_dict(machine.get("last_nudge_offer", {}))
+	var chain_offer: Dictionary = JsonCoerceScript._copy_dict(machine.get("last_nudge_offer", {}))
 	if str(chain_offer.get("type", "")) == "coin_chain":
 		var active_index := int(chain_offer.get("active_index", 0))
-		var coins: Array = _copy_array(chain_offer.get("coins", []))
-		var active_coin: Dictionary = _copy_dict(coins[active_index]) if active_index >= 0 and active_index < coins.size() else {}
+		var coins: Array = JsonCoerceScript._copy_array(chain_offer.get("coins", []))
+		var active_coin: Dictionary = JsonCoerceScript._copy_dict(coins[active_index]) if active_index >= 0 and active_index < coins.size() else {}
 		var cycle := maxi(1, int(chain_offer.get("peek_cycle_msec", 1200)))
 		var ready_msec := maxi(0, int(active_coin.get("ready_msec", chain_offer.get("first_ready_msec", 0))))
 		var apex_sec := float(ready_msec + cycle / 2) / 1000.0
@@ -794,8 +844,8 @@ func _audio_cues(machine: Dictionary) -> Array:
 			if bool(chain_offer.get("last_spawned", false)):
 				cues.append({"phase": "nudge_chain_spawn", "cue_id": "double_gold_coin_tease", "time_sec": collect_sec + 0.08, "marker": "nudge_chain_spawn_%d" % active_index, "volume_db": 1.4, "pitch": 1.06 + float(active_index) * 0.035})
 	else:
-		for event_value in _copy_array(machine.get("last_tease_events", [])):
-			var event: Dictionary = _copy_dict(event_value)
+		for event_value in JsonCoerceScript._copy_array(machine.get("last_tease_events", [])):
+			var event: Dictionary = JsonCoerceScript._copy_dict(event_value)
 			if str(event.get("type", "")) == "nudge_coin_chain" and str(event.get("skill_outcome", "")) == "clean_miss":
 				cues.append({"phase": "nudge_chain_break", "cue_id": "lose", "time_sec": 0.0, "marker": "nudge_chain_break_%d" % int(event.get("coin_index", 0)), "volume_db": -3.0, "pitch": 0.86})
 	var classification := str(machine.get("last_classification", ""))
@@ -821,8 +871,8 @@ func _feature_scene(active_bonus: Dictionary) -> Dictionary:
 		"pending_award": int(active_bonus.get("pending_award", 0)),
 		"feature_total": int(active_bonus.get("feature_total", active_bonus.get("pending_award", 0))),
 		"display_mode": str(active_bonus.get("display_mode", active_bonus.get("mode", ""))),
-		"choices": _copy_array(active_bonus.get("choices", [])),
-		"history": [] if str(active_bonus.get("family", "")) == "pinball" else _copy_array(active_bonus.get("history", [])),
+		"choices": JsonCoerceScript._copy_array(active_bonus.get("choices", [])),
+		"history": [] if str(active_bonus.get("family", "")) == "pinball" else JsonCoerceScript._copy_array(active_bonus.get("history", [])),
 		"audio_cues": [
 			{"phase": "feature_transition", "cue_id": "slot_bonus_transition", "time_sec": 0.1, "marker": "feature_transition"},
 		],
@@ -972,13 +1022,13 @@ func _buffalo_feature_scene(active_bonus: Dictionary) -> Dictionary:
 		{"id": "play", "start_msec": 900, "duration_msec": maxi(720, total_steps * 720)},
 		{"id": "celebration", "start_msec": 900 + maxi(720, total_steps * 720), "duration_msec": 900},
 	]
-	var collection_meter: Dictionary = _copy_dict(active_bonus.get("collection_meter", {}))
+	var collection_meter: Dictionary = JsonCoerceScript._copy_dict(active_bonus.get("collection_meter", {}))
 	if collection_meter.is_empty():
 		var cycle := maxi(0, int(active_bonus.get("coins_since_retrigger", 0)))
 		collection_meter = {"value": cycle, "threshold": 3, "cycle": cycle, "total": maxi(0, int(active_bonus.get("coins_collected", 0))), "coin_total": maxi(0, int(active_bonus.get("coin_total", 0)))}
-	var fill_meter: Dictionary = _copy_dict(active_bonus.get("fill_meter", {}))
+	var fill_meter: Dictionary = JsonCoerceScript._copy_dict(active_bonus.get("fill_meter", {}))
 	if fill_meter.is_empty():
-		var locks: Array = _copy_array(active_bonus.get("locks", []))
+		var locks: Array = JsonCoerceScript._copy_array(active_bonus.get("locks", []))
 		var max_cells := maxi(1, int(active_bonus.get("max_cells", maxi(1, locks.size()))))
 		fill_meter = {"locked": locks.size(), "max": max_cells, "ratio": float(locks.size()) / float(max_cells)}
 	return {
@@ -994,17 +1044,17 @@ func _buffalo_feature_scene(active_bonus: Dictionary) -> Dictionary:
 			"pitch": 1.0 + clampf(float(step_index) / float(total_steps + 1), 0.0, 0.12),
 		},
 		"stampede": {"active": true, "intensity": clampf(float(step_index + 1) / float(total_steps + 1), 0.0, 1.0)},
-		"jackpot_ladder": _copy_dict(active_bonus.get("jackpot_ladder", {})),
+		"jackpot_ladder": JsonCoerceScript._copy_dict(active_bonus.get("jackpot_ladder", {})),
 		"trophy_pick": {
 			"active": bool(active_bonus.get("trophy_pick_active", false)),
-			"choices": _copy_array(active_bonus.get("trophy_choices", active_bonus.get("choices", []))),
-			"reveals": _copy_array(active_bonus.get("trophy_reveals", [])),
+			"choices": JsonCoerceScript._copy_array(active_bonus.get("trophy_choices", active_bonus.get("choices", []))),
+			"reveals": JsonCoerceScript._copy_array(active_bonus.get("trophy_reveals", [])),
 			"selected_path": str(active_bonus.get("trophy_selected_path", active_bonus.get("selected_path", ""))),
 		},
 		"collection_meter": collection_meter,
 		"fill_meter": fill_meter,
-		"collected_coins": _copy_array(active_bonus.get("collected_coins", [])),
-		"last_collected_coins": _copy_array(active_bonus.get("last_collected_coins", [])),
+		"collected_coins": JsonCoerceScript._copy_array(active_bonus.get("collected_coins", [])),
+		"last_collected_coins": JsonCoerceScript._copy_array(active_bonus.get("last_collected_coins", [])),
 		"coins_collected": maxi(0, int(active_bonus.get("coins_collected", 0))),
 		"coins_since_retrigger": maxi(0, int(active_bonus.get("coins_since_retrigger", 0))),
 		"coin_total": maxi(0, int(active_bonus.get("coin_total", 0))),
@@ -1012,7 +1062,7 @@ func _buffalo_feature_scene(active_bonus: Dictionary) -> Dictionary:
 		"coin_collect_awarded": bool(active_bonus.get("coin_collect_awarded", false)),
 		"last_retrigger_grant": maxi(0, int(active_bonus.get("last_retrigger_grant", 0))),
 		"spin_win_total": maxi(0, int(active_bonus.get("spin_win_total", active_bonus.get("feature_total", 0)))),
-		"last_lock_events": _copy_array(active_bonus.get("last_lock_events", [])),
+		"last_lock_events": JsonCoerceScript._copy_array(active_bonus.get("last_lock_events", [])),
 		"audio_cues": _buffalo_feature_audio_cues(active_bonus, mode, phases),
 	}
 
@@ -1023,13 +1073,13 @@ func _buffalo_feature_audio_cues(active_bonus: Dictionary, mode: String, phases:
 		{"phase": "buffalo_drums", "cue_id": "bonus_step_buffalo", "time_sec": 0.72, "marker": "buffalo_drums"},
 	]
 	if mode == "hold_and_spin":
-		var locks: Array = _copy_array(active_bonus.get("locks", []))
+		var locks: Array = JsonCoerceScript._copy_array(active_bonus.get("locks", []))
 		for index in range(mini(locks.size(), 8)):
 			cues.append({"phase": "coin_slam", "cue_id": "bonus_step_buffalo", "time_sec": 0.95 + float(index) * 0.10, "marker": "coin_slam_%d" % index, "pitch": 0.88 + float(index) * 0.025})
 		if _buffalo_fill_ratio(active_bonus) >= 1.0:
 			cues.append({"phase": "grand_roar", "cue_id": "jackpot_buffalo", "time_sec": 1.34, "marker": "grand_roar"})
 	elif mode == "free_games":
-		for index in range(mini(_copy_array(active_bonus.get("last_collected_coins", [])).size(), 8)):
+		for index in range(mini(JsonCoerceScript._copy_array(active_bonus.get("last_collected_coins", [])).size(), 8)):
 			cues.append({"phase": "coin_collect", "cue_id": "bonus_step_buffalo", "time_sec": 0.95 + float(index) * 0.08, "marker": "free_coin_%d" % index, "pitch": 1.0 + float(index) * 0.025})
 		if int(active_bonus.get("last_retrigger_grant", 0)) > 0:
 			cues.append({"phase": "retrigger", "cue_id": "bonus_total_buffalo", "time_sec": 1.18, "marker": "free_games_retrigger"})
@@ -1045,16 +1095,16 @@ func _buffalo_feature_audio_cues(active_bonus: Dictionary, mode: String, phases:
 
 
 func _buffalo_fill_ratio(active_bonus: Dictionary) -> float:
-	var meter: Dictionary = _copy_dict(active_bonus.get("fill_meter", {}))
+	var meter: Dictionary = JsonCoerceScript._copy_dict(active_bonus.get("fill_meter", {}))
 	if not meter.is_empty():
 		return clampf(float(meter.get("ratio", 0.0)), 0.0, 1.0)
-	var locks: Array = _copy_array(active_bonus.get("locks", []))
+	var locks: Array = JsonCoerceScript._copy_array(active_bonus.get("locks", []))
 	var max_cells := maxi(1, int(active_bonus.get("max_cells", maxi(1, locks.size()))))
 	return clampf(float(locks.size()) / float(max_cells), 0.0, 1.0)
 
 
 func _last_tease_was_nudge(machine: Dictionary) -> bool:
-	for event_value in _copy_array(machine.get("last_tease_events", [])):
+	for event_value in JsonCoerceScript._copy_array(machine.get("last_tease_events", [])):
 		if typeof(event_value) == TYPE_DICTIONARY and (str((event_value as Dictionary).get("type", "")) == "nudge_shift" or str((event_value as Dictionary).get("type", "")) == "nudge_coin_chain"):
 			return true
 	return false
@@ -1067,6 +1117,9 @@ func _surface_machine_view(machine: Dictionary) -> Dictionary:
 func _slot_surface_spec(payload: Dictionary = {}) -> Dictionary:
 	var spec := payload.duplicate(false)
 	spec["surface_renderer"] = str(spec.get("surface_renderer", spec.get("renderer", "result")))
+	# SlotRenderer always paints the complete 960x540 design surface before any
+	# cabinet layer. Let the shared canvas skip its hidden striped backdrop.
+	spec["surface_renderer_opaque"] = bool(spec.get("surface_renderer_opaque", true))
 	spec["surface_life"] = str(spec.get("surface_life", spec.get("surface_renderer", "result")))
 	spec["surface_cast"] = str(spec.get("surface_cast", "none"))
 	spec["surface_controls_native"] = bool(spec.get("surface_controls_native", false))
@@ -1076,24 +1129,24 @@ func _slot_surface_spec(payload: Dictionary = {}) -> Dictionary:
 	spec["surface_realtime_state_refresh"] = bool(spec.get("surface_realtime_state_refresh", false))
 	spec["surface_embeds_outcomes"] = bool(spec.get("surface_embeds_outcomes", false))
 	spec["surface_suppresses_game_result_burst"] = bool(spec.get("surface_suppresses_game_result_burst", false))
-	spec["surface_action_bindings"] = _copy_dict(spec.get("surface_action_bindings", {}))
-	spec["native_selected_surface_actions"] = _copy_array(spec.get("native_selected_surface_actions", []))
+	spec["surface_action_bindings"] = JsonCoerceScript._copy_dict(spec.get("surface_action_bindings", {}))
+	spec["native_selected_surface_actions"] = JsonCoerceScript._copy_array(spec.get("native_selected_surface_actions", []))
 	if bool(spec.get("surface_animation_channels_normalized", false)):
 		spec["surface_animation_channels"] = _copy_array_shallow(spec.get("surface_animation_channels", []))
 	else:
 		spec["surface_animation_channels"] = GameModule._normalize_surface_animation_channels(spec.get("surface_animation_channels", []))
 	spec.erase("surface_animation_channels_normalized")
 	spec["surface_audio"] = _copy_dict_shallow(spec.get("surface_audio", {}))
-	spec["surface_action_blocks"] = _copy_array(spec.get("surface_action_blocks", []))
-	spec["surface_state_labels"] = _copy_array(spec.get("surface_state_labels", []))
-	spec["surface_result_display"] = _copy_dict(spec.get("surface_result_display", {}))
+	spec["surface_action_blocks"] = JsonCoerceScript._copy_array(spec.get("surface_action_blocks", []))
+	spec["surface_state_labels"] = JsonCoerceScript._copy_array(spec.get("surface_state_labels", []))
+	spec["surface_result_display"] = JsonCoerceScript._copy_dict(spec.get("surface_result_display", {}))
 	return spec
 
 
 func _surface_bonus_steps(active_bonus: Dictionary) -> Array:
 	if str(active_bonus.get("family", "")) == "pinball":
 		return []
-	return _copy_array(active_bonus.get("history", []))
+	return JsonCoerceScript._copy_array(active_bonus.get("history", []))
 
 
 func _copy_dict_shallow(value: Variant) -> Dictionary:
@@ -1102,19 +1155,7 @@ func _copy_dict_shallow(value: Variant) -> Dictionary:
 	return (value as Dictionary).duplicate(false)
 
 
-func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
 func _copy_array_shallow(value: Variant) -> Array:
 	if typeof(value) != TYPE_ARRAY:
 		return []
 	return (value as Array).duplicate(false)
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)

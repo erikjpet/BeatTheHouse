@@ -14,7 +14,7 @@ Copy everything below this line into the agent.
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript casino
 roguelike (Web/itch.io + Windows, 1280×720). This is the CLOSING slice of
 the 0.5 Grand Casino rework; the binding design contract is
-`docs/plans/0.5_grand_casino_rework_plan.md` (sections 9 + engineering
+`docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` (sections 9 + engineering
 constraints) and the canonical-id contract is
 `docs/plans/grand_casino_endgame_design.md`. Requires slices 1-8 landed —
 verify each by code inspection before starting and report anything

@@ -1,6 +1,8 @@
 class_name SlotRngMath
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Stateless deterministic helpers for slot generation and spin projection.
 
 
@@ -32,7 +34,7 @@ static func weighted_pick(entries: Array, rng: RngStream) -> Dictionary:
 static func pick_reel_stops(reel_strips: Array, rng: RngStream) -> Array:
 	var stops: Array = []
 	for strip_value in reel_strips:
-		var strip: Array = _string_array(strip_value)
+		var strip: Array = JsonCoerceScript._string_array(strip_value)
 		if strip.is_empty():
 			stops.append(0)
 		else:
@@ -45,7 +47,7 @@ static func project_grid(reel_strips: Array, stops: Array, reel_count: int, row_
 	for reel_index in range(maxi(1, reel_count)):
 		var strip: Array = []
 		if reel_index < reel_strips.size():
-			strip = _string_array(reel_strips[reel_index])
+			strip = JsonCoerceScript._string_array(reel_strips[reel_index])
 		if strip.is_empty():
 			strip = ["BLANK"]
 		var stop := int(stops[reel_index]) if reel_index < stops.size() else 0
@@ -174,31 +176,61 @@ static func payline_cells_from(reel_count: int, row_count: int, line_index: int,
 		var reel_index := safe_start + offset
 		cells.append({"reel": reel_index, "row": int(rows[reel_index])})
 	return cells
+static func normalize_weight_table(table: Array, target_total: int) -> Array:
+	var total := 0
+	for entry_value in table:
+		total += maxi(0, int((entry_value as Dictionary).get("weight", 0)))
+	var delta := target_total - total
+	for index in range(table.size()):
+		var entry: Dictionary = table[index]
+		if str(entry.get("id", "")) == "zero_loss":
+			entry["weight"] = maxi(0, int(entry.get("weight", 0)) + delta)
+			table[index] = entry
+			break
+	return table
 
 
-static func random_payline_cells(reel_count: int, row_count: int, count: int, rng: RngStream) -> Array:
-	var safe_reels := maxi(1, reel_count)
-	var safe_rows := maxi(1, row_count)
-	var target_count := mini(maxi(1, count), safe_reels)
-	var start_reel := rng.randi_range(0, maxi(0, safe_reels - target_count))
-	var line_index := rng.randi_range(0, payline_count(safe_rows) - 1)
-	return payline_cells_from(safe_reels, safe_rows, line_index, start_reel, target_count)
+static func limit_symbol_count(grid: Array, symbol_id: String, max_count: int, protected_cells: Dictionary) -> void:
+	var seen := 0
+	for reel_index in range(grid.size()):
+		if typeof(grid[reel_index]) != TYPE_ARRAY:
+			continue
+		var column: Array = grid[reel_index]
+		for row_index in range(column.size()):
+			if str(column[row_index]) != symbol_id:
+				continue
+			seen += 1
+			if seen > max_count and not bool(protected_cells.get("%d:%d" % [reel_index, row_index], false)):
+				column[row_index] = "BLANK"
+		grid[reel_index] = column
 
 
-static func grid_to_string(grid: Array) -> String:
-	var columns: Array = []
-	for column_value in grid:
-		columns.append(",".join(_string_array(column_value)))
-	return "|".join(columns)
+static func protected_cell_lookup(cells: Array) -> Dictionary:
+	var lookup := {}
+	for cell_value in cells:
+		var cell: Dictionary = cell_value if typeof(cell_value) == TYPE_DICTIONARY else {}
+		lookup["%d:%d" % [int(cell.get("reel", -1)), int(cell.get("row", -1))]] = true
+	return lookup
 
 
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		result.append(str(entry))
-	return result
+static func first_unprotected_cell(cells: Array, protected_cells: Dictionary) -> Dictionary:
+	var index := cells.size() - 1
+	while index >= 0:
+		var cell: Dictionary = cells[index] if typeof(cells[index]) == TYPE_DICTIONARY else {}
+		if not bool(protected_cells.get("%d:%d" % [int(cell.get("reel", -1)), int(cell.get("row", -1))], false)):
+			return cell.duplicate(true)
+		index -= 1
+	return {}
+
+
+static func all_cells_protected(cells: Array, protected_cells: Dictionary) -> bool:
+	if cells.is_empty():
+		return false
+	for cell_value in cells:
+		var cell: Dictionary = cell_value if typeof(cell_value) == TYPE_DICTIONARY else {}
+		if not bool(protected_cells.get("%d:%d" % [int(cell.get("reel", -1)), int(cell.get("row", -1))], false)):
+			return false
+	return true
 
 
 static func _payline_rows(reel_count: int, row_count: int, line_index: int) -> Array:

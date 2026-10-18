@@ -16,7 +16,7 @@ roguelike (Web/itch.io + Windows, 1280×720). Data-driven content; seeded
 RNG via `RngStream` forks; day rollover already exists in the clock
 system (`run_state.gd` day rollover helpers). This file is
 self-contained; the binding design contract is
-`docs/plans/0.5_grand_casino_rework_plan.md` section 4 — read it first.
+`docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` section 4 — read it first.
 Requires slices 1-3 landed; re-verify their actual code.
 
 ## Task

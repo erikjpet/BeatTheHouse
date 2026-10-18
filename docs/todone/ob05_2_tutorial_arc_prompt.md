@@ -13,7 +13,7 @@ Copy everything below this line into the agent.
 
 You are working in `D:\Projects\Beat-The-House`, a Godot 4.6 GDScript casino
 roguelike (Web/itch.io + Windows, 1280×720). This file is self-contained;
-the binding design contract is `docs/plans/0.5_onboarding_tutorial_plan.md`
+the binding design contract is `docs/archive/0.5/plans/0.5_onboarding_tutorial_plan.md`
 Part 2 — read it first. REQUIRES: onboarding slice 1 (Coach engine) and
 the gc05 Grand Casino queue landed (invite gate, chips, Linda exist).
 Re-verify actual code; code reality wins.

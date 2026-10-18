@@ -652,6 +652,7 @@
                       "patron_pose_changed": "The tray now rests in front of the mourning regular, its broken seal showing that the remembrance was delivered."
                     },
                     "enabled": true,
+                    "icon_key": "room_refreshment",
                     "label": "Remembrance tray",
                     "role": "memorial",
                     "state": "sealed",
@@ -1390,7 +1391,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "0bcddbdca4534dececbd725b651b692d8d71ea6427cb7f1086570a2f43873ed6"
+        "sequence_signature": "6b6abe2ac6d46712cfed857b4cc3cbbd00826a953d0c48bb59466eb067459c6f"
       }
     },
     {

@@ -1,6 +1,8 @@
 class_name ProceduralMusicPlayer
 extends Node
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 signal authored_phrase_event(event: Dictionary)
 signal authored_arrangement_selected(selection: Dictionary)
 signal authored_transition_notice(event: Dictionary)
@@ -9,13 +11,13 @@ signal music_outcome_scheduled(event: Dictionary)
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const MusicArrangementSelectorScript := preload("res://scripts/ui/music_arrangement_selector.gd")
 const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
-const MusicFloatPcmStreamScript := preload("res://scripts/ui/music_float_pcm_stream.gd")
 const MusicLayerChoreographyScript := preload("res://scripts/ui/music_layer_choreography.gd")
 const MusicOutcomeDirectorModelScript := preload("res://scripts/ui/music_outcome_director_model.gd")
 
-# Procedural background music for the foundation UI.
-# The synth shape is ported from the old baseline: generated PCM WAV themes,
-# cached per room/heat profile, played through the Music bus.
+# Adaptive music runtime for procedural beds and authored synchronized stems.
+# It owns manifest delivery, room/Heat arrangements, phrase/bar choreography,
+# outcome cues, feature layers, cache lifetime, WebAudio delivery, and Music-bus
+# playback while keeping deterministic selection in focused model helpers.
 
 const MUSIC_BUS := "Music"
 const SFX_BUS := "SFX"
@@ -82,7 +84,6 @@ const MUSIC_FX_LERP_KEYS := [
 	"room_scale",
 ]
 const MUSIC_STEM_ROLES := ["pad", "bass", "lead", "drums_low", "drums_high", "tension", "texture"]
-const MUSIC_STEM_VARIANT_ROLES := ["bass_dark", "drums_high_double"]
 const MUSIC_STEM_PLAYBACK_ROLES := ["pad", "bass", "bass_dark", "lead", "drums_low", "drums_high", "drums_high_double", "tension", "texture"]
 const MUSIC_MIX_LERP_KEYS := ["pad", "bass", "bass_dark", "lead", "drums_low", "drums_high", "drums_high_double", "tension", "texture"]
 const MUSIC_MIX_QUANTIZED_KEYS := ["bass", "bass_dark", "lead", "drums_high_double", "tension"]
@@ -140,23 +141,13 @@ const FEATURE_DELIVERY_STINGERS := {
 }
 const AUTHORED_MANIFEST_CACHE_LIMIT := 32
 const MUSIC_MIN_VOLUME_DB := -80.0
+const PCM_CACHE_DEFAULT_BUDGET_BYTES := 64 * 1024 * 1024
 const WEB_AUDIO_MUSIC_STEM_MAX_PCM_BYTES := 8388608
 const WEB_AUDIO_MUSIC_BED_SECONDS := 30.0
 const WEB_AUDIO_MUSIC_BED_SAMPLE_RATE := 22050
 const WEB_AUDIO_RENDER_STRIDE_FRAMES := 2
 const WEB_AUDIO_WORKER_YIELD_SOURCE_FRAMES := 8192
 const WEB_AUDIO_WORKER_YIELD_USEC := 100
-const WEB_MIXDOWN_ROLE_WEIGHTS := {
-	"pad": 0.74,
-	"bass": 0.52,
-	"bass_dark": 0.42,
-	"lead": 0.46,
-	"drums_low": 0.42,
-	"drums_high": 0.36,
-	"drums_high_double": 0.22,
-	"tension": 0.64,
-	"texture": 0.38,
-}
 const SCALE_MINOR := [0, 2, 3, 5, 7, 8, 10]
 const SCALE_DORIAN := [0, 2, 3, 5, 7, 9, 10]
 const SCALE_PHRYGIAN := [0, 1, 3, 5, 7, 8, 10]
@@ -175,11 +166,18 @@ var _ambient_primer_cache: Dictionary = {}
 var _ambient_instant_cache: Dictionary = {}
 var _web_music_bed_cache: Dictionary = {}
 var _ambient_profile_cache: Dictionary = {}
+var _pcm_cache_budget_bytes := PCM_CACHE_DEFAULT_BUDGET_BYTES
+var _pcm_cache_entry_bytes: Dictionary = {}
+var _pcm_cache_entry_raw_bytes: Dictionary = {}
+var _pcm_cache_entry_encoded_bytes: Dictionary = {}
+var _pcm_cache_lru: Array[String] = []
+var _pcm_cache_eviction_count := 0
 var _current_cache_key: String = ""
 var _current_web_music_bed_cache_key: String = ""
 var _current_web_music_bed_stem_key: String = ""
 var _current_stream_is_primer: bool = false
 var _current_music_context: Dictionary = {}
+var _current_live_mix_profile: Dictionary = {}
 var _pending_cache_key: String = ""
 var _transition_target_cache_key: String = ""
 var _transition_target_profile: Dictionary = {}
@@ -216,6 +214,8 @@ var _authored_manifest_entries_loaded := false
 var _feature_stem_players: Dictionary = {}
 var _feature_stinger_players: Array = []
 var _feature_stem_cache: Dictionary = {}
+var _current_feature_cache_key: String = ""
+var _pending_feature_cache_key: String = ""
 var _current_feature_stem_set: Dictionary = {}
 var _current_feature_music_id: String = ""
 var _feature_mix_target: Dictionary = {}
@@ -334,7 +334,15 @@ func _exit_tree() -> void:
 	_ambient_primer_cache.clear()
 	_ambient_instant_cache.clear()
 	_web_music_bed_cache.clear()
+	_feature_stem_cache.clear()
 	_ambient_profile_cache.clear()
+	_pcm_cache_entry_bytes.clear()
+	_pcm_cache_entry_raw_bytes.clear()
+	_pcm_cache_entry_encoded_bytes.clear()
+	_pcm_cache_lru.clear()
+	WebAudioBridgeScript.set_shared_pcm_budget(_pcm_cache_budget_bytes, 0)
+	_current_feature_cache_key = ""
+	_pending_feature_cache_key = ""
 	_authored_manifest_cache.clear()
 	_authored_manifest_cache_order.clear()
 	_authored_manifest_entries_cache.clear()
@@ -364,14 +372,213 @@ func debug_soak_snapshot() -> Dictionary:
 		"pending_cache_key": _pending_cache_key,
 		"thread_cache_key": _thread_cache_key,
 		"last_authored_boundary_applied_cache_key": _last_authored_boundary_applied_cache_key,
+		"pcm_cache_bytes": _pcm_cache_total_bytes(),
+		"pcm_cache_budget_bytes": _pcm_cache_budget_bytes,
+		"pcm_cache_eviction_count": _pcm_cache_eviction_count,
 	}
 
 
+func pcm_cache_policy_snapshot() -> Dictionary:
+	var shared_policy := WebAudioBridgeScript.shared_pcm_policy_snapshot()
+	return {
+		"budget_bytes": _pcm_cache_budget_bytes,
+		"bytes": _pcm_cache_total_bytes(),
+		"raw_bytes": _pcm_cache_entry_map_total(_pcm_cache_entry_raw_bytes),
+		"encoded_bytes": _pcm_cache_entry_map_total(_pcm_cache_entry_encoded_bytes),
+		"keys": _pcm_cache_lru.duplicate(),
+		"entry_bytes": _pcm_cache_entry_bytes.duplicate(true),
+		"entry_raw_bytes": _pcm_cache_entry_raw_bytes.duplicate(true),
+		"entry_encoded_bytes": _pcm_cache_entry_encoded_bytes.duplicate(true),
+		"protected_keys": _pcm_cache_protected_keys().keys(),
+		"eviction_count": _pcm_cache_eviction_count,
+		"web_decoded_bytes": int(shared_policy.get("web_decoded_bytes", 0)),
+		"combined_bytes": int(shared_policy.get("combined_pcm_bytes", _pcm_cache_total_bytes())),
+		"combined_budget_bytes": int(shared_policy.get("combined_pcm_budget_bytes", _pcm_cache_budget_bytes)),
+		"combined_within_budget": bool(shared_policy.get("combined_pcm_within_budget", false)),
+	}
+
+
+func clear_run_scoped_caches() -> void:
+	# Menu music is the sole shared hot set. Run-owned PCM is released at both
+	# run boundaries so a long page lifetime cannot accumulate every visited room.
+	var keep: Dictionary = {}
+	for key_value in _ambient_profile_cache.keys():
+		var key := str(key_value)
+		var profile: Dictionary = _ambient_profile_cache.get(key, {}) as Dictionary
+		if str(profile.get("environment_id", "")) == "main_menu_tour":
+			keep[key] = true
+	if not _current_cache_key.is_empty() and not keep.has(_current_cache_key):
+		stop()
+	elif not _current_feature_cache_key.is_empty():
+		stop_feature_music()
+	_pending_feature_cache_key = ""
+	for key_value in _all_pcm_cache_keys():
+		var key := str(key_value)
+		if not keep.has(key):
+			_evict_pcm_cache_key(key)
+	_rebuild_pcm_cache_accounting()
+	WebAudioBridgeScript.clear_inactive_pcm()
+	_enforce_pcm_cache_budget()
+
+
+func debug_configure_pcm_cache_budget(byte_budget: int) -> void:
+	_pcm_cache_budget_bytes = maxi(1, byte_budget)
+	_enforce_pcm_cache_budget()
+
+
+func debug_store_pcm_cache_entry(cache_key: String, byte_count: int, menu_hot: bool = false) -> void:
+	var wav := AudioStreamWAV.new()
+	var bytes := PackedByteArray()
+	bytes.resize(maxi(1, byte_count))
+	wav.data = bytes
+	wav.format = AudioStreamWAV.FORMAT_8_BITS
+	_store_pcm_cache_entry("full", cache_key, {"stems": {"pad": wav}})
+	_remember_profile(cache_key, {"environment_id": "main_menu_tour" if menu_hot else "debug_run"})
+
+
+func _store_pcm_cache_entry(domain: String, cache_key: String, value: Dictionary) -> void:
+	match domain:
+		"primer":
+			_ambient_primer_cache[cache_key] = value
+		"instant":
+			_ambient_instant_cache[cache_key] = value
+		"web":
+			_web_music_bed_cache[cache_key] = value
+		"feature":
+			_feature_stem_cache[cache_key] = value
+		_:
+			_ambient_stream_cache[cache_key] = value
+	_touch_pcm_cache_key(cache_key)
+	_recalculate_pcm_cache_key_bytes(cache_key)
+	_enforce_pcm_cache_budget()
+
+
+func _touch_pcm_cache_key(cache_key: String) -> void:
+	_pcm_cache_lru.erase(cache_key)
+	_pcm_cache_lru.append(cache_key)
+
+
+func _recalculate_pcm_cache_key_bytes(cache_key: String) -> void:
+	var seen: Dictionary = {}
+	var retained := {"raw_bytes": 0, "encoded_bytes": 0}
+	for cache in [_ambient_stream_cache, _ambient_primer_cache, _ambient_instant_cache, _web_music_bed_cache, _feature_stem_cache]:
+		if cache.has(cache_key):
+			_pcm_variant_retained_bytes(cache.get(cache_key), seen, retained)
+	var raw_bytes := int(retained.get("raw_bytes", 0))
+	var encoded_bytes := int(retained.get("encoded_bytes", 0))
+	var total := raw_bytes + encoded_bytes
+	if total > 0:
+		_pcm_cache_entry_bytes[cache_key] = total
+		_pcm_cache_entry_raw_bytes[cache_key] = raw_bytes
+		_pcm_cache_entry_encoded_bytes[cache_key] = encoded_bytes
+	else:
+		_pcm_cache_entry_bytes.erase(cache_key)
+		_pcm_cache_entry_raw_bytes.erase(cache_key)
+		_pcm_cache_entry_encoded_bytes.erase(cache_key)
+
+
+func _pcm_variant_retained_bytes(value: Variant, seen: Dictionary, retained: Dictionary) -> void:
+	if value is AudioStreamWAV:
+		var wav := value as AudioStreamWAV
+		var instance_id := wav.get_instance_id()
+		if seen.has(instance_id):
+			return
+		seen[instance_id] = true
+		retained["raw_bytes"] = int(retained.get("raw_bytes", 0)) + wav.data.size()
+		var encoded := str(wav.get_meta(WebAudioBridgeScript.PCM_BASE64_META, ""))
+		if not encoded.is_empty():
+			retained["encoded_bytes"] = int(retained.get("encoded_bytes", 0)) + encoded.to_utf8_buffer().size()
+		return
+	if value is PackedByteArray:
+		retained["raw_bytes"] = int(retained.get("raw_bytes", 0)) + (value as PackedByteArray).size()
+		return
+	if typeof(value) == TYPE_DICTIONARY:
+		for nested in (value as Dictionary).values():
+			_pcm_variant_retained_bytes(nested, seen, retained)
+		return
+	if typeof(value) == TYPE_ARRAY:
+		for nested in (value as Array):
+			_pcm_variant_retained_bytes(nested, seen, retained)
+
+
+func _pcm_cache_total_bytes() -> int:
+	return _pcm_cache_entry_map_total(_pcm_cache_entry_bytes)
+
+
+func _pcm_cache_entry_map_total(entries: Dictionary) -> int:
+	var total := 0
+	for value in entries.values():
+		total += int(value)
+	return total
+
+
+func _pcm_cache_protected_keys() -> Dictionary:
+	var protected: Dictionary = {}
+	for key in [_current_cache_key, _current_web_music_bed_cache_key, _current_feature_cache_key, _pending_feature_cache_key, _pending_cache_key, _transition_target_cache_key, _deferred_transition_cache_key, _thread_cache_key, _queued_generation_cache_key]:
+		if not str(key).is_empty():
+			protected[str(key)] = true
+	return protected
+
+
+func _enforce_pcm_cache_budget() -> void:
+	var protected := _pcm_cache_protected_keys()
+	var shared_policy := WebAudioBridgeScript.set_shared_pcm_budget(_pcm_cache_budget_bytes, _pcm_cache_total_bytes())
+	while _pcm_cache_total_bytes() > _pcm_cache_budget_bytes \
+			or int(shared_policy.get("combined_pcm_bytes", _pcm_cache_total_bytes())) > _pcm_cache_budget_bytes:
+		var victim := ""
+		for key in _pcm_cache_lru:
+			if not protected.has(key):
+				victim = key
+				break
+		if victim.is_empty():
+			break
+		_evict_pcm_cache_key(victim)
+		_pcm_cache_eviction_count += 1
+		shared_policy = WebAudioBridgeScript.set_shared_pcm_budget(_pcm_cache_budget_bytes, _pcm_cache_total_bytes())
+	shared_policy = WebAudioBridgeScript.set_shared_pcm_budget(_pcm_cache_budget_bytes, _pcm_cache_total_bytes())
+	if _pcm_cache_total_bytes() > _pcm_cache_budget_bytes \
+			or int(shared_policy.get("combined_pcm_bytes", _pcm_cache_total_bytes())) > _pcm_cache_budget_bytes:
+		# A single active composition may exceed the budget; it remains protected
+		# until playback moves, at which point the next insertion/clear evicts it.
+		return
+
+
+func _evict_pcm_cache_key(cache_key: String) -> void:
+	_ambient_stream_cache.erase(cache_key)
+	_ambient_primer_cache.erase(cache_key)
+	_ambient_instant_cache.erase(cache_key)
+	_web_music_bed_cache.erase(cache_key)
+	_feature_stem_cache.erase(cache_key)
+	_ambient_profile_cache.erase(cache_key)
+	_pcm_cache_entry_bytes.erase(cache_key)
+	_pcm_cache_entry_raw_bytes.erase(cache_key)
+	_pcm_cache_entry_encoded_bytes.erase(cache_key)
+	_pcm_cache_lru.erase(cache_key)
+
+
+func _all_pcm_cache_keys() -> Array[String]:
+	var result: Array[String] = []
+	for cache in [_ambient_stream_cache, _ambient_primer_cache, _ambient_instant_cache, _web_music_bed_cache, _feature_stem_cache]:
+		for key_value in cache.keys():
+			var key := str(key_value)
+			if not result.has(key):
+				result.append(key)
+	return result
+
+
+func _rebuild_pcm_cache_accounting() -> void:
+	_pcm_cache_entry_bytes.clear()
+	_pcm_cache_entry_raw_bytes.clear()
+	_pcm_cache_entry_encoded_bytes.clear()
+	var keys := _all_pcm_cache_keys()
+	for key in keys:
+		_recalculate_pcm_cache_key_bytes(key)
+	for index in range(_pcm_cache_lru.size() - 1, -1, -1):
+		if not keys.has(_pcm_cache_lru[index]):
+			_pcm_cache_lru.remove_at(index)
+
+
 # Starts or updates the generated theme for the current environment.
-func play_for_environment(environment: Dictionary, heat_level: int) -> void:
-	play_for_environment_state(environment, heat_level, {})
-
-
 # A generated overture that moves through the sound vocabulary used by the
 # game's rooms while preserving a single memorable menu motif.
 func play_main_menu_theme() -> void:
@@ -409,6 +616,7 @@ func play_for_environment_state(environment: Dictionary, heat_level: int, music_
 		return
 	_ensure_stem_players()
 	var profile := _music_profile_from_environment(environment, heat_level)
+	_set_live_mix_profile(profile)
 	var cache_key := _ambient_cache_key(profile)
 	if WebAudioBridgeScript.available():
 		# Authored WAV masters use a deterministic desktop decoder. Opening and
@@ -437,7 +645,7 @@ func play_for_environment_state(environment: Dictionary, heat_level: int, music_
 		cache_key = "%s:selection:%s" % [cache_key, str(authored_stem_set.get("selection_key", "base"))]
 	_remember_profile(cache_key, profile)
 	if not authored_stem_set.is_empty():
-		_ambient_stream_cache[cache_key] = authored_stem_set
+		_store_pcm_cache_entry("full", cache_key, authored_stem_set)
 		if _pending_restore_matches_authored_stem_set(authored_stem_set):
 			_apply_pending_authored_arrangement_restore(cache_key, authored_stem_set)
 			return
@@ -549,10 +757,13 @@ func stop() -> void:
 		_ambient_player.stream = null
 		_ambient_player.pitch_scale = 1.0
 	_current_music_context = {}
+	_current_live_mix_profile = {}
 	_current_stem_set = {}
 	_current_stem_stage = ""
 	_current_feature_stem_set = {}
 	_current_feature_music_id = ""
+	_current_feature_cache_key = ""
+	_pending_feature_cache_key = ""
 	_feature_stinger_pending = []
 	_feature_stinger_history = []
 	_stinger_last_target_by_cue = {}
@@ -605,7 +816,7 @@ func music_theory_snapshot_for_environment(environment: Dictionary, heat_level: 
 		"arrangement_form": str(context.get("arrangement_form", "")),
 		"bridge_phrase_index": int(context.get("bridge_phrase_index", 0)),
 		"answer_transform": str(context.get("answer_transform", "")),
-		"instrument_palette": _copy_dict(context.get("instrument_palette", {})),
+		"instrument_palette": JsonCoerceScript._copy_dict(context.get("instrument_palette", {})),
 		"palette_id": str(context.get("palette_id", "")),
 	}
 
@@ -668,7 +879,7 @@ func music_stem_manifest_snapshot_for_environment(environment: Dictionary, heat_
 		cache_key = "%s:selection:%s" % [cache_key, str(authored.get("selection_key", "base"))]
 		var authored_manifest := _stem_manifest_from_contract(authored)
 		authored_manifest["cache_key"] = cache_key
-		authored_manifest["cache_key_uses_heat"] = not (_copy_dict(authored.get("selected_variants", {}))).is_empty()
+		authored_manifest["cache_key_uses_heat"] = not (JsonCoerceScript._copy_dict(authored.get("selected_variants", {}))).is_empty()
 		authored_manifest["music_state"] = _normalize_music_mix_input(_music_fx_state_from_environment(environment, heat_level, music_state))
 		return authored_manifest
 	var context := _ambient_generation_context(profile)
@@ -697,7 +908,7 @@ func music_mix_snapshot(music_state: Dictionary = {}, playback_position: float =
 		"target": _music_mix_public_vector(target),
 		"live": _music_mix_public_vector(_music_mix_live if not _music_mix_live.is_empty() else _neutral_music_mix_vector()),
 		"applied_target": _music_mix_public_vector(_music_mix_applied_target if not _music_mix_applied_target.is_empty() else _neutral_music_mix_vector()),
-		"pending": _copy_dict(_music_mix_pending),
+		"pending": JsonCoerceScript._copy_dict(_music_mix_pending),
 		"source": str(_current_stem_set.get("source", "procedural" if _current_stem_set.is_empty() else "")),
 		"stage": _current_stem_stage,
 		"cache_key": _current_cache_key,
@@ -721,7 +932,9 @@ func update_feature_music_state(feature_state: Dictionary) -> void:
 			_current_feature_music_id = music_id
 			if audio_enabled and not _running_headless():
 				_ensure_feature_stem_players()
-				_play_feature_stem_set(_feature_stem_set_for_input(input), 0.0)
+				if not _play_feature_stem_set(_feature_stem_set_for_input(input), 0.0):
+					# A failed handoff must remain retryable on the next state update.
+					_current_feature_music_id = ""
 	else:
 		_current_feature_music_id = ""
 
@@ -729,6 +942,8 @@ func update_feature_music_state(feature_state: Dictionary) -> void:
 func stop_feature_music() -> void:
 	_current_feature_music_id = ""
 	_current_feature_stem_set = {}
+	_current_feature_cache_key = ""
+	_pending_feature_cache_key = ""
 	var retained_outcomes: Array = []
 	for pending_value in _feature_stinger_pending:
 		if typeof(pending_value) != TYPE_DICTIONARY:
@@ -740,6 +955,7 @@ func stop_feature_music() -> void:
 	_stinger_last_target_by_cue = {}
 	_stop_feature_stem_players()
 	_stop_feature_stinger_players()
+	_enforce_pcm_cache_budget()
 	if _music_choreography_recipe.is_empty():
 		_reset_feature_mix()
 	else:
@@ -785,11 +1001,11 @@ func music_feature_snapshot(feature_state: Dictionary = {}, playback_position: f
 		"target": _feature_mix_public_vector(target),
 		"live": _feature_mix_public_vector(_feature_mix_live if not _feature_mix_live.is_empty() else _neutral_feature_mix_vector()),
 		"applied_target": _feature_mix_public_vector(_feature_mix_applied_target if not _feature_mix_applied_target.is_empty() else _neutral_feature_mix_vector()),
-		"pending": _copy_dict(_feature_mix_pending),
+		"pending": JsonCoerceScript._copy_dict(_feature_mix_pending),
 		"active_music_id": _current_feature_music_id,
 		"stem_manifest": _stem_manifest_from_contract(_current_feature_stem_set),
-		"pending_stingers": _copy_array(_feature_stinger_pending),
-		"stinger_history": _copy_array(_feature_stinger_history),
+		"pending_stingers": JsonCoerceScript._copy_array(_feature_stinger_pending),
+		"stinger_history": JsonCoerceScript._copy_array(_feature_stinger_history),
 		"bar_seconds": _music_director_bar_seconds(),
 		"beat_seconds": _music_director_step_seconds(),
 		"headless": _running_headless(),
@@ -804,7 +1020,7 @@ func music_transition_policy_snapshot_for_environment(environment: Dictionary, h
 	var context := _ambient_generation_context(_music_profile_from_environment(environment, heat_level))
 	var step_period := float(context.get("step_period", 0.36))
 	var authored := _authored_stem_set_from_profile(_music_profile_from_environment(environment, heat_level), _music_mix_input_snapshot)
-	var transitions := _copy_dict(authored.get("transitions", {}))
+	var transitions := JsonCoerceScript._copy_dict(authored.get("transitions", {}))
 	return {
 		"deferred_stream_changes": true,
 		"break_steps": TRANSITION_BREAK_STEPS,
@@ -842,7 +1058,7 @@ func music_event_envelope_snapshot(music_state: Dictionary = {}, playback_positi
 	var transport_beat := position / maxf(0.001, _music_director_bar_seconds() / 4.0)
 	var effective := _music_state_with_event_envelope_at_beat(_last_music_state if music_state.is_empty() else music_state, transport_beat)
 	return {
-		"envelope": _copy_dict(_music_event_envelope),
+		"envelope": JsonCoerceScript._copy_dict(_music_event_envelope),
 		"event_token": _last_big_win_event_token,
 		"active": bool(effective.get("big_win", false)),
 		"bars_remaining": int(effective.get("big_win_bars_remaining", 0)),
@@ -858,7 +1074,7 @@ func schedule_music_outcome_event(event_value: Dictionary) -> Dictionary:
 	if token.is_empty():
 		return {"accepted": false, "reason": "missing_event_token", "controls_blocked": false, "authoritative_state_resolved": true}
 	if _music_outcome_tokens.has(token):
-		var duplicate := _copy_dict(_music_outcome_tokens.get(token, {}))
+		var duplicate := JsonCoerceScript._copy_dict(_music_outcome_tokens.get(token, {}))
 		duplicate["accepted"] = false
 		duplicate["deduplicated"] = true
 		duplicate["reason"] = "duplicate_event_token"
@@ -936,7 +1152,7 @@ func schedule_music_outcome_event(event_value: Dictionary) -> Dictionary:
 		"outcome_class": str(event.get("outcome_class", "neutral")),
 		"target_transport_beat": target_beat,
 		"volume_db": float(cue.get("volume_db", -3.0)),
-		"reverb_pulse": _copy_dict(cue.get("reverb_pulse", {})),
+		"reverb_pulse": JsonCoerceScript._copy_dict(cue.get("reverb_pulse", {})),
 	})
 	if str(event.get("outcome_class", "")) == "big_win":
 		_last_big_win_event_token = token
@@ -963,15 +1179,15 @@ func music_outcome_director_snapshot(transport_beat: float = -1.0) -> Dictionary
 	var effective := _music_state_with_event_envelope_at_beat(_last_music_state, beat)
 	return {
 		"transport_beat": snappedf(beat, 0.000001),
-		"last_schedule": _copy_dict(_music_outcome_last_schedule),
-		"pending": _copy_array(_feature_stinger_pending),
-		"history": _copy_array(_music_outcome_history),
-		"stinger_history": _copy_array(_feature_stinger_history),
+		"last_schedule": JsonCoerceScript._copy_dict(_music_outcome_last_schedule),
+		"pending": JsonCoerceScript._copy_array(_feature_stinger_pending),
+		"history": JsonCoerceScript._copy_array(_music_outcome_history),
+		"stinger_history": JsonCoerceScript._copy_array(_feature_stinger_history),
 		"deduplicated_token_count": _music_outcome_tokens.size(),
 		"deduplicated_token_limit": MUSIC_OUTCOME_TOKEN_LIMIT,
 		"voice_limit": MUSIC_STINGER_PLAYER_COUNT,
 		"pending_voice_limit": MUSIC_STINGER_PENDING_LIMIT,
-		"reverb_envelope": _copy_dict(_music_outcome_reverb_envelope),
+		"reverb_envelope": JsonCoerceScript._copy_dict(_music_outcome_reverb_envelope),
 		"reverb_send": snappedf(reverb_level, 0.000001),
 		"reverb_send_limit": MUSIC_OUTCOME_REVERB_MAX_SEND,
 		"shared_full_mix_reverb": false,
@@ -996,11 +1212,6 @@ func _consume_music_events(music_state: Dictionary, playback_position: float) ->
 		"result_time": music_state.get("result_time", 0),
 		"transport_beat": transport_beat,
 	})
-
-
-func _music_state_with_event_envelope(music_state: Dictionary, playback_position: float) -> Dictionary:
-	var transport_beat := maxf(0.0, playback_position) / maxf(0.001, _music_director_bar_seconds() / 4.0)
-	return _music_state_with_event_envelope_at_beat(music_state, transport_beat)
 
 
 func _music_state_with_event_envelope_at_beat(music_state: Dictionary, transport_beat: float) -> Dictionary:
@@ -1074,7 +1285,7 @@ func _advance_authored_arrangement() -> void:
 	var next_section := str(arrangement[posmod(current_bar + 1, arrangement.size())]).to_upper()
 	if current_section == next_section:
 		return
-	var profile := _copy_dict(_ambient_profile_cache.get(_current_cache_key, {}))
+	var profile := JsonCoerceScript._copy_dict(_ambient_profile_cache.get(_current_cache_key, {}))
 	if profile.is_empty():
 		return
 	var selection_state := _last_music_state.duplicate(true)
@@ -1088,7 +1299,7 @@ func _advance_authored_arrangement() -> void:
 	if next_cache_key == _current_cache_key or next_cache_key == _deferred_transition_cache_key:
 		return
 	_remember_profile(next_cache_key, profile)
-	_ambient_stream_cache[next_cache_key] = next_stem_set
+	_store_pcm_cache_entry("full", next_cache_key, next_stem_set)
 	_transition_target_cache_key = next_cache_key
 	_transition_target_profile = profile.duplicate(true)
 	_set_deferred_transition_stem_set(next_cache_key, next_stem_set)
@@ -1244,8 +1455,8 @@ static func _phrase_slot_music_position(stem_set: Dictionary, phrase_slot: int) 
 
 
 func _configure_adaptive_tempo(profile: Dictionary, stem_set: Dictionary = {}) -> void:
-	var track_profile := _copy_dict(stem_set.get("adaptive_tempo", {}))
-	var environment_profile := _copy_dict(profile.get("adaptive_tempo", {}))
+	var track_profile := JsonCoerceScript._copy_dict(stem_set.get("adaptive_tempo", {}))
+	var environment_profile := JsonCoerceScript._copy_dict(profile.get("adaptive_tempo", {}))
 	var combined := track_profile
 	combined.merge(environment_profile, true)
 	var base_fallback := float(stem_set.get("bpm", profile.get("bpm", 82.0)))
@@ -1462,7 +1673,7 @@ func _configure_music_choreography(profile: Dictionary, stem_set: Dictionary = {
 	if restored:
 		_music_choreography_visit_bar = maxi(0, int(_pending_music_choreography_restore.get("visit_bar", 0)))
 		_music_choreography_last_fill_bar = int(_pending_music_choreography_restore.get("last_fill_bar", -9999))
-		_music_choreography_transition = _copy_dict(_pending_music_choreography_restore.get("scheduled_transition", {}))
+		_music_choreography_transition = JsonCoerceScript._copy_dict(_pending_music_choreography_restore.get("scheduled_transition", {}))
 		_music_choreography_feature_release_bar = int(_pending_music_choreography_restore.get("feature_release_bar", -1))
 		_music_choreography_role_target = _normalized_choreography_role_gains(_pending_music_choreography_restore.get("role_target", {}))
 		_music_choreography_role_live = _normalized_choreography_role_gains(_pending_music_choreography_restore.get("role_live", {}))
@@ -1535,14 +1746,14 @@ func _plan_upcoming_music_choreography_transition() -> void:
 	candidate_boundaries.sort()
 	for boundary in candidate_boundaries:
 		var requests: Array = []
-		var recipe_state := _copy_dict(_current_stem_set.get("recipe_state", {}))
-		var sections := _copy_array(_current_stem_set.get("harmony_recipe_sections", []))
+		var recipe_state := JsonCoerceScript._copy_dict(_current_stem_set.get("recipe_state", {}))
+		var sections := JsonCoerceScript._copy_array(_current_stem_set.get("harmony_recipe_sections", []))
 		var source_section := str(recipe_state.get("harmonic_section", "")).to_upper()
 		var destination_section := source_section
 		if boundary == phrase_boundary and not sections.is_empty():
 			destination_section = str(sections[posmod(int(recipe_state.get("cursor", 0)) + 1, sections.size())]).to_upper()
 			if destination_section != source_section:
-				var section_progressions := _copy_dict(_current_stem_set.get("harmony_section_progressions", {}))
+				var section_progressions := JsonCoerceScript._copy_dict(_current_stem_set.get("harmony_section_progressions", {}))
 				requests.append({
 					"id": "section_%s_to_%s_%d" % [source_section, destination_section, boundary],
 					"kind": "section",
@@ -1563,12 +1774,12 @@ func _plan_upcoming_music_choreography_transition() -> void:
 					"source_section": source_section,
 					"destination_section": destination_section,
 					"destination_progression_id": str(_current_stem_set.get("progression_id", "")),
-					"change_roles": _copy_array(next_stage.get("change_roles", [])),
+					"change_roles": JsonCoerceScript._copy_array(next_stage.get("change_roles", [])),
 					"lead_in_bars": default_lead,
 				})
 		if requests.is_empty():
 			continue
-		var fill_metadata := _copy_dict(_current_stem_set.get("fill_metadata", {}))
+		var fill_metadata := JsonCoerceScript._copy_dict(_current_stem_set.get("fill_metadata", {}))
 		var resolution := MusicLayerChoreographyScript.resolve_fill_request(fill_metadata, requests, default_lead)
 		var cooldown := int(_music_choreography_recipe.get("fill_cooldown_bars", 4))
 		if str(resolution.get("request_kind", "")) != "section" and boundary - _music_choreography_last_fill_bar < cooldown:
@@ -1690,7 +1901,7 @@ func _update_music_choreography_debug_snapshot() -> void:
 
 
 func _normalized_choreography_role_gains(value: Variant) -> Dictionary:
-	var source := _copy_dict(value)
+	var source := JsonCoerceScript._copy_dict(value)
 	var result := {}
 	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
 		var role := str(role_value)
@@ -1962,10 +2173,21 @@ func _apply_music_mix_vector(vector: Dictionary, _force: bool) -> void:
 
 func _music_role_volume_db_map(vector: Dictionary) -> Dictionary:
 	var duck := clampf(float(_feature_mix_live.get("venue_duck", 0.0)), 0.0, 0.82)
+	var ambience := clampf(float(_current_live_mix_profile.get("ambience", 0.7)), 0.0, 1.0)
+	var volume_scale := clampf(float(_current_live_mix_profile.get("volume", 0.26)) / 0.26, 0.0, 2.0)
 	var result := {}
 	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
 		var role := str(role_value)
 		var gain := clampf(float(vector.get(role, 0.0)), 0.0, 1.35)
+		gain *= volume_scale
+		if role == "pad":
+			gain *= lerpf(0.34, 0.50, ambience) / lerpf(0.34, 0.50, 0.7)
+		elif role == "lead":
+			gain *= lerpf(1.0, 0.74, ambience) / lerpf(1.0, 0.74, 0.7)
+		elif role.begins_with("drums"):
+			gain *= lerpf(1.0, 0.68, ambience) / lerpf(1.0, 0.68, 0.7)
+		elif role == "texture":
+			gain *= lerpf(0.34, 0.78, ambience) / lerpf(0.34, 0.78, 0.7)
 		gain *= clampf(float(_music_choreography_role_live.get(role, 1.0)), 0.0, 1.0)
 		if role == "pad":
 			gain *= lerpf(1.0, 0.42, duck)
@@ -1975,6 +2197,15 @@ func _music_role_volume_db_map(vector: Dictionary) -> Dictionary:
 			gain *= lerpf(1.0, 0.78, duck)
 		result[role] = _gain_to_db(gain)
 	return result
+
+
+func _set_live_mix_profile(profile: Dictionary) -> void:
+	_current_live_mix_profile = {
+		"ambience": clampf(float(profile.get("ambience", 0.7)), 0.0, 1.0),
+		"volume": maxf(0.0, float(profile.get("volume", 0.26))),
+	}
+	if not _stem_players.is_empty():
+		_apply_music_mix_vector(_music_mix_live if not _music_mix_live.is_empty() else _neutral_music_mix_vector(), true)
 
 
 func _update_music_mix_state(music_state: Dictionary) -> void:
@@ -2355,11 +2586,11 @@ static func _merge_authored_send_preferences(matrix: Dictionary, stem_set: Dicti
 func _apply_music_send_matrix(matrix: Dictionary, stem_set: Dictionary, players: Dictionary, feature: bool) -> void:
 	if _running_headless() or WebAudioBridgeScript.available():
 		return
-	var stems := _copy_dict(stem_set.get("stems", {}))
+	var stems := JsonCoerceScript._copy_dict(stem_set.get("stems", {}))
 	var phase_group := "feature_sends" if feature else "venue_sends"
 	for effect_value in MUSIC_SEND_EFFECT_ORDER:
 		var effect_key := str(effect_value)
-		var role_sends := _copy_dict(matrix.get(effect_key, {}))
+		var role_sends := JsonCoerceScript._copy_dict(matrix.get(effect_key, {}))
 		for role_value in MUSIC_STEM_PLAYBACK_ROLES:
 			var role := str(role_value)
 			var key := "%s:%s" % [effect_key, role]
@@ -2396,6 +2627,13 @@ func _stop_music_send_players(players: Dictionary, clear_streams: bool) -> void:
 
 func _play_audio_player(player: AudioStreamPlayer, source_position_seconds: float = 0.0, phase_group: String = "") -> void:
 	_float_pcm_player_states.erase(player.get_instance_id())
+	# Web music is delivered exclusively by WebAudioBridge. Keep a final guard
+	# here so no future caller can route a long stream into Godot 4.6's
+	# no-threads AudioWorklet path, whose MessagePort can grow until OOM.
+	if WebAudioBridgeScript.available():
+		player.stop()
+		player.stream = null
+		return
 	player.pitch_scale = _live_playback_pitch_scale()
 	if not (player.stream is MusicFloatPcmStream):
 		player.play(maxf(0.0, source_position_seconds))
@@ -2892,9 +3130,9 @@ static func _room_scale_from_visual_context(visual: Dictionary, environment: Dic
 
 
 func _music_profile_from_environment(environment: Dictionary, heat_level: int) -> Dictionary:
-	var source := _copy_dict(environment.get("music_profile", {}))
-	var visual := _copy_dict(environment.get("visual_context", {}))
-	var security := _copy_dict(environment.get("security_profile", {}))
+	var source := JsonCoerceScript._copy_dict(environment.get("music_profile", {}))
+	var visual := JsonCoerceScript._copy_dict(environment.get("visual_context", {}))
+	var security := JsonCoerceScript._copy_dict(environment.get("security_profile", {}))
 	var mood := str(environment.get("mood", ""))
 	var theme := str(source.get("theme", ""))
 	if theme.is_empty():
@@ -2907,15 +3145,15 @@ func _music_profile_from_environment(environment: Dictionary, heat_level: int) -
 	var base_safety := clampf(float(source.get("safety", _safety_from_security(security))), 0.0, 1.0)
 	var effective_safety := base_safety
 	var base_bpm := float(source.get("bpm", _theme_bpm(theme)))
-	var adaptive_tempo := _copy_dict(source.get("adaptive_tempo", {}))
+	var adaptive_tempo := JsonCoerceScript._copy_dict(source.get("adaptive_tempo", {}))
 	var bpm := clampf(float(adaptive_tempo.get("base_bpm", base_bpm)), 58.0, 180.0) if bool(adaptive_tempo.get("enabled", false)) else clampf(base_bpm + (1.0 - base_safety) * 3.0, 58.0, 112.0)
 	var palette_id := str(source.get("palette_id", _theme_texture(theme))).strip_edges()
 	if palette_id.is_empty():
 		palette_id = _theme_texture(theme)
-	var seed := _stable_hash("%s:%s:%d" % [
+	var seed := JsonCoerceScript._stable_hash_allow_zero("%s:%s:%d" % [
 		str(environment.get("archetype_id", "")),
 		theme,
-		_stable_hash(palette_id),
+		JsonCoerceScript._stable_hash_allow_zero(palette_id),
 	])
 
 	var profile := {
@@ -2924,6 +3162,7 @@ func _music_profile_from_environment(environment: Dictionary, heat_level: int) -
 		"theme": theme,
 		"palette_id": palette_id,
 		"authored_track_id": str(source.get("authored_track_id", "")).strip_edges(),
+		"generated_signature": str(source.get("generated_signature", "")).strip_edges(),
 		"mood": mood,
 		"mode": str(source.get("mode", _theme_mode(theme))).to_lower(),
 		"texture": str(source.get("texture", _theme_texture(theme))),
@@ -2939,7 +3178,8 @@ func _music_profile_from_environment(environment: Dictionary, heat_level: int) -
 		"volume": float(source.get("volume", 0.26)),
 		"arrangement_phrases": clampi(int(source.get("arrangement_phrases", DEFAULT_ARRANGEMENT_PHRASES)), MIN_ARRANGEMENT_PHRASES, MAX_ARRANGEMENT_PHRASES),
 		"adaptive_tempo": adaptive_tempo,
-		"layer_choreography": _copy_dict(source.get("layer_choreography", {})),
+		"layer_choreography": JsonCoerceScript._copy_dict(source.get("layer_choreography", {})),
+		"swing_amount": float(source.get("swing_amount", _theme_swing_amount(theme))),
 	}
 	profile["progression"] = _number_array(source.get("progression", _theme_progression(theme)), _theme_progression(theme))
 	profile["motif"] = _number_array(source.get("motif", _theme_motif(theme)), _theme_motif(theme))
@@ -2948,13 +3188,60 @@ func _music_profile_from_environment(environment: Dictionary, heat_level: int) -
 
 func _ambient_cache_key(profile: Dictionary) -> String:
 	var authored_track_id := str(profile.get("authored_track_id", ""))
-	return "stem:%d:%s:%s:%s:%s" % [
+	return "stem:%d:%s:%s:%s" % [
 		AMBIENT_VERSION,
 		str(profile.get("archetype_id", "")),
-		str(profile.get("theme", "")),
-		str(profile.get("palette_id", "")),
 		authored_track_id if not authored_track_id.is_empty() else "procedural",
+		composition_fingerprint(profile),
 	]
+
+
+func composition_fingerprint(profile: Dictionary) -> String:
+	# Only values that affect decoded PCM belong here. Ambience and volume are
+	# applied as live gains below, so weather can remix a cached composition.
+	var identity := {
+		"archetype_id": str(profile.get("archetype_id", "")),
+		"theme": str(profile.get("theme", "")),
+		"palette_id": str(profile.get("palette_id", "")),
+		"authored_track_id": str(profile.get("authored_track_id", "")),
+		"generated_signature": str(profile.get("generated_signature", "")),
+		"mode": str(profile.get("mode", "")),
+		"texture": str(profile.get("texture", "")),
+		"texture_rate": snappedf(float(profile.get("texture_rate", 0.0)), 0.0001),
+		"texture_seed": int(profile.get("texture_seed", 0)),
+		"bpm": snappedf(float(profile.get("bpm", 0.0)), 0.0001),
+		"root_midi": int(profile.get("root_midi", 0)),
+		"safety": snappedf(float(profile.get("safety", 0.0)), 0.0001),
+		"heat_pressure": snappedf(float(profile.get("heat_pressure", 0.0)), 0.0001),
+		"arrangement_phrases": int(profile.get("arrangement_phrases", 0)),
+		"swing_amount": snappedf(float(profile.get("swing_amount", 0.0)), 0.0001),
+		"progression": profile.get("progression", []),
+		"motif": profile.get("motif", []),
+	}
+	return JSON.stringify(_canonical_cache_value(identity)).sha256_text()
+
+
+func live_mix_fingerprint(profile: Dictionary) -> String:
+	var identity := {
+		"ambience": snappedf(float(profile.get("ambience", 0.7)), 0.0001),
+		"volume": snappedf(float(profile.get("volume", 0.26)), 0.0001),
+	}
+	return JSON.stringify(_canonical_cache_value(identity)).sha256_text()
+func _canonical_cache_value(value: Variant) -> Variant:
+	if typeof(value) == TYPE_DICTIONARY:
+		var source := value as Dictionary
+		var keys := source.keys()
+		keys.sort_custom(func(left: Variant, right: Variant) -> bool: return str(left) < str(right))
+		var result := {}
+		for key in keys:
+			result[str(key)] = _canonical_cache_value(source.get(key))
+		return result
+	if typeof(value) == TYPE_ARRAY:
+		var result: Array = []
+		for nested in (value as Array):
+			result.append(_canonical_cache_value(nested))
+		return result
+	return value
 
 
 func _ambient_music_stream(profile: Dictionary) -> AudioStreamWAV:
@@ -3119,12 +3406,12 @@ func _apply_generated_ambient_data(result: Dictionary) -> void:
 		return
 	var stage := str(result.get("stage", AMBIENT_STAGE_FULL))
 	if stage == AMBIENT_STAGE_WEB:
-		_web_music_bed_cache[cache_key] = stem_set
+		_store_pcm_cache_entry("web", cache_key, stem_set)
 		_pending_cache_key = ""
-		_play_web_full_bed(_copy_dict(result.get("profile", {})), cache_key)
+		_play_web_full_bed(JsonCoerceScript._copy_dict(result.get("profile", {})), cache_key)
 		return
 	if stage == AMBIENT_STAGE_PRIMER:
-		_ambient_primer_cache[cache_key] = stem_set
+		_store_pcm_cache_entry("primer", cache_key, stem_set)
 		_play_primer_stem_set(cache_key, stem_set)
 		var profile: Dictionary = result.get("profile", {})
 		if profile.is_empty():
@@ -3132,7 +3419,7 @@ func _apply_generated_ambient_data(result: Dictionary) -> void:
 			return
 		_start_ambient_generation(profile, cache_key, token, AMBIENT_STAGE_FULL)
 		return
-	_ambient_stream_cache[cache_key] = stem_set
+	_store_pcm_cache_entry("full", cache_key, stem_set)
 	_accept_full_stem_set(cache_key, stem_set)
 
 
@@ -3183,7 +3470,7 @@ func _ambient_pcm_data_range(context: Dictionary, start_frame: int, frame_count:
 	var render_stride := maxi(1, AMBIENT_RENDER_STRIDE_FRAMES)
 	# Pull immutable synthesis parameters out of the dictionary once. The preview
 	# renderer visits hundreds of thousands of frames, so repeating these typed
-	# dictionary conversions in _write_ambient_frame dominated headless startup.
+	# dictionary conversions for every frame dominated headless startup.
 	var step_period := float(context.get("step_period", 0.36))
 	var beat_period := float(context.get("beat_period", 0.72))
 	var phrase_steps := int(context.get("phrase_steps", BASE_PHRASE_STEPS))
@@ -3273,20 +3560,6 @@ func _procedural_stem_contract_from_context(profile: Dictionary, context: Dictio
 			"loop_end": frames,
 			"frames": frames,
 		}
-	var contract := _stem_set_contract("procedural", stems, float(context.get("bpm", profile.get("bpm", 82.0))), int(context.get("bars", 1)), frames, str(profile.get("palette_id", "")), {}, stage)
-	contract["step_period"] = float(context.get("step_period", 0.36))
-	contract["profile"] = profile.duplicate(true)
-	return contract
-
-
-func _procedural_stem_set_from_context(profile: Dictionary, context: Dictionary, stage: String, token: int = -1) -> Dictionary:
-	var frames := int(context.get("frames", 0))
-	if frames <= 0:
-		return {}
-	var stem_data := _ambient_stem_pcm_data(context, token)
-	if stem_data.is_empty():
-		return {}
-	var stems := _streams_from_stem_data(stem_data, frames)
 	var contract := _stem_set_contract("procedural", stems, float(context.get("bpm", profile.get("bpm", 82.0))), int(context.get("bars", 1)), frames, str(profile.get("palette_id", "")), {}, stage)
 	contract["step_period"] = float(context.get("step_period", 0.36))
 	contract["profile"] = profile.duplicate(true)
@@ -3445,6 +3718,8 @@ func _remember_profile(cache_key: String, profile: Dictionary) -> void:
 	if cache_key.is_empty() or profile.is_empty():
 		return
 	_ambient_profile_cache[cache_key] = profile.duplicate(true)
+	if _pcm_cache_entry_bytes.has(cache_key):
+		_touch_pcm_cache_key(cache_key)
 
 
 func _should_defer_music_change(cache_key: String) -> bool:
@@ -3528,7 +3803,7 @@ func _poll_breakpoint_transition() -> void:
 
 
 func _build_transition_plan(destination_stem_set: Dictionary, playback_position: float) -> Dictionary:
-	var transitions := _copy_dict(destination_stem_set.get("transitions", _current_stem_set.get("transitions", {})))
+	var transitions := JsonCoerceScript._copy_dict(destination_stem_set.get("transitions", _current_stem_set.get("transitions", {})))
 	var quantize := str(transitions.get("quantize", "phrase")).strip_edges().to_lower()
 	var bar_seconds := _music_director_bar_seconds()
 	var quantum := _music_director_step_seconds() * 2.0 if quantize == "beat" else bar_seconds
@@ -3553,9 +3828,9 @@ func _build_transition_plan(destination_stem_set: Dictionary, playback_position:
 func _play_transition_fill(fill_id: String) -> void:
 	if fill_id.is_empty():
 		return
-	var fills := _copy_dict(_current_stem_set.get("fills", {}))
+	var fills := JsonCoerceScript._copy_dict(_current_stem_set.get("fills", {}))
 	if not fills.has(fill_id):
-		fills = _copy_dict(_deferred_transition_stem_set.get("fills", {}))
+		fills = JsonCoerceScript._copy_dict(_deferred_transition_stem_set.get("fills", {}))
 	var stream: AudioStream = fills.get(fill_id, null)
 	if stream == null:
 		return
@@ -3588,6 +3863,7 @@ func _remember_current_music_context(cache_key: String) -> void:
 		_current_music_context = {}
 		return
 	_current_music_context = _ambient_generation_context(profile)
+	_set_live_mix_profile(profile)
 
 
 func _play_instant_stem_bed(profile: Dictionary, cache_key: String) -> void:
@@ -3597,7 +3873,7 @@ func _play_instant_stem_bed(profile: Dictionary, cache_key: String) -> void:
 		_request_web_music_bed_generation(profile, cache_key)
 		return
 	if not _ambient_instant_cache.has(cache_key):
-		_ambient_instant_cache[cache_key] = _instant_bed_stem_set(profile)
+		_store_pcm_cache_entry("instant", cache_key, _instant_bed_stem_set(profile))
 	_play_primer_stem_set(cache_key, _ambient_instant_cache[cache_key])
 
 
@@ -3693,13 +3969,6 @@ func _play_web_full_bed(profile: Dictionary, cache_key: String) -> void:
 	_play_stem_set(stem_set, 0.0, AMBIENT_STAGE_FULL)
 
 
-func _instant_bed_stream(profile: Dictionary) -> AudioStreamWAV:
-	var context := _ambient_generation_context(profile)
-	var frames := maxi(1, int(INSTANT_BED_SECONDS * float(SAMPLE_RATE)))
-	var data := _instant_bed_pcm_data(context, frames)
-	return _ambient_stream_from_data(data, frames)
-
-
 func _instant_bed_stem_set(profile: Dictionary) -> Dictionary:
 	var context := _ambient_generation_context(profile)
 	var frames := maxi(1, int(INSTANT_BED_SECONDS * float(SAMPLE_RATE)))
@@ -3740,9 +4009,9 @@ func _authored_web_mixdown_source_from_profile(profile: Dictionary) -> Dictionar
 	var entry := _authored_track_entry(track_id)
 	if entry.is_empty() or not _authored_track_entry_valid(entry):
 		return {}
-	var music_state := _copy_dict(profile.get("_web_authored_selection_state", {}))
+	var music_state := JsonCoerceScript._copy_dict(profile.get("_web_authored_selection_state", {}))
 	var selection := MusicArrangementSelectorScript.select(entry, profile, music_state)
-	var selected_stems := _copy_dict(selection.get("stems", {}))
+	var selected_stems := JsonCoerceScript._copy_dict(selection.get("stems", {}))
 	var loop_frames := _authored_playback_loop_frames(entry)
 	var stems := {}
 	for role_value in selected_stems.keys():
@@ -3877,80 +4146,6 @@ func _web_music_bed_pcm_data(context: Dictionary, frames: int, sample_rate: int,
 	return data
 
 
-func _web_music_mixdown_stem_set(profile: Dictionary, source_stem_set: Dictionary, token: int = -1) -> Dictionary:
-	if not _stem_set_contract_valid(source_stem_set):
-		return {}
-	var source_sample_rate := _stem_set_source_sample_rate(source_stem_set)
-	var source_loop_frames := int(source_stem_set.get("loop_frames", 0))
-	var source_seconds := float(source_loop_frames) / float(source_sample_rate)
-	if source_seconds <= 0.0:
-		return {}
-	var sample_rate := maxi(1, WEB_AUDIO_MUSIC_BED_SAMPLE_RATE)
-	var max_frames := maxi(1, int(WEB_AUDIO_MUSIC_STEM_MAX_PCM_BYTES / PCM_BYTES_PER_FRAME))
-	var target_seconds := clampf(source_seconds, 1.0, WEB_AUDIO_MUSIC_BED_SECONDS)
-	var frames := mini(max_frames, maxi(1, int(target_seconds * float(sample_rate))))
-	var data := _web_music_mixdown_pcm_data(source_stem_set, frames, sample_rate, token)
-	if data.is_empty():
-		return {}
-	var stems := {
-		"pad": _ambient_stream_from_data_with_rate(data, frames, sample_rate),
-	}
-	var bpm := float(source_stem_set.get("bpm", profile.get("bpm", 82.0)))
-	var step_period := _step_period_from_bpm(bpm)
-	var bars := maxi(1, int(ceil((float(frames) / float(sample_rate)) / maxf(step_period * float(STEPS_PER_BAR), 0.001))))
-	var contract := _stem_set_contract("web_mixdown", stems, bpm, bars, frames, str(source_stem_set.get("palette_id", profile.get("palette_id", ""))), {}, AMBIENT_STAGE_PRIMER)
-	contract["step_period"] = step_period
-	contract["profile"] = profile.duplicate(true)
-	contract["sample_rate"] = sample_rate
-	contract["track_id"] = "web_mixdown_%s_%s_%s" % [
-		str(profile.get("archetype_id", "environment")),
-		str(source_stem_set.get("source", "")),
-		str(source_stem_set.get("palette_id", profile.get("palette_id", ""))),
-	]
-	contract["web_bridge_bed"] = true
-	contract["web_bridge_mixdown"] = true
-	return contract
-
-
-func _web_music_mixdown_pcm_data(source_stem_set: Dictionary, frames: int, sample_rate: int, token: int = -1) -> PackedByteArray:
-	var data := _empty_pcm(frames)
-	var stems_value: Variant = source_stem_set.get("stems", {})
-	if typeof(stems_value) != TYPE_DICTIONARY:
-		return data
-	var stems: Dictionary = stems_value
-	var safe_rate := maxi(1, sample_rate)
-	var render_stride := maxi(1, WEB_AUDIO_RENDER_STRIDE_FRAMES)
-	var i := 0
-	while i < frames:
-		if token > 0 and i % GENERATION_CANCEL_CHECK_FRAMES == 0 and _generation_was_cancelled(token):
-			return PackedByteArray()
-		if token > 0 and i > 0 and i % WEB_AUDIO_WORKER_YIELD_SOURCE_FRAMES == 0:
-			OS.delay_usec(WEB_AUDIO_WORKER_YIELD_USEC)
-			if _generation_was_cancelled(token):
-				return PackedByteArray()
-		var t := float(i) / float(safe_rate)
-		var mixed := 0.0
-		var total_weight := 0.0
-		for role_value in MUSIC_STEM_PLAYBACK_ROLES:
-			var role := str(role_value)
-			var stream_value: Variant = stems.get(role, null)
-			if not (stream_value is AudioStreamWAV):
-				continue
-			var weight := float(WEB_MIXDOWN_ROLE_WEIGHTS.get(role, 0.0))
-			if weight <= 0.0:
-				continue
-			mixed += _wav_sample_mono_at_time(stream_value as AudioStreamWAV, t) * weight
-			total_weight += weight
-		if total_weight > 1.25:
-			mixed /= total_weight * 0.82
-		var sample := _soft_limit(mixed * 0.84)
-		var repeat_count := mini(render_stride, frames - i)
-		for repeat_index in range(repeat_count):
-			_write_i16(data, (i + repeat_index) * PCM_BYTES_PER_FRAME, sample)
-		i += render_stride
-	return data
-
-
 func _stem_set_source_sample_rate(stem_set: Dictionary) -> int:
 	var explicit_rate := int(stem_set.get("sample_rate", 0))
 	if explicit_rate > 0:
@@ -3963,81 +4158,6 @@ func _stem_set_source_sample_rate(stem_set: Dictionary) -> int:
 			if stream_value is AudioStreamWAV:
 				return maxi(1, (stream_value as AudioStreamWAV).mix_rate)
 	return SAMPLE_RATE
-
-
-func _wav_sample_mono_at_time(wav: AudioStreamWAV, time_seconds: float) -> float:
-	return _wav_sample_mono_at_frame(wav, maxf(0.0, time_seconds) * float(maxi(1, wav.mix_rate)))
-
-
-func _wav_sample_mono_at_frame(wav: AudioStreamWAV, frame_position: float) -> float:
-	var frame_count := _wav_frame_count(wav)
-	if frame_count <= 0:
-		return 0.0
-	var loop_begin := clampi(int(wav.loop_begin), 0, maxi(0, frame_count - 1))
-	var loop_end := int(wav.loop_end)
-	if loop_end <= loop_begin:
-		loop_end = frame_count
-	loop_end = clampi(loop_end, loop_begin + 1, frame_count)
-	var loop_length := maxi(1, loop_end - loop_begin)
-	var local_position := fposmod(frame_position - float(loop_begin), float(loop_length)) + float(loop_begin)
-	var frame_a := clampi(int(floor(local_position)), loop_begin, loop_end - 1)
-	var frame_b := frame_a + 1
-	if frame_b >= loop_end:
-		frame_b = loop_begin
-	var blend := clampf(local_position - floor(local_position), 0.0, 1.0)
-	return lerpf(_wav_frame_mono_sample(wav, frame_a), _wav_frame_mono_sample(wav, frame_b), blend)
-
-
-func _wav_frame_count(wav: AudioStreamWAV) -> int:
-	var channels := 2 if wav.stereo else 1
-	return int(wav.data.size() / maxi(1, channels * PCM_BYTES_PER_FRAME))
-
-
-func _wav_frame_mono_sample(wav: AudioStreamWAV, frame_index: int) -> float:
-	var channels := 2 if wav.stereo else 1
-	var byte_index := frame_index * channels * PCM_BYTES_PER_FRAME
-	var left := _read_i16_float(wav.data, byte_index)
-	if channels <= 1:
-		return left
-	var right := _read_i16_float(wav.data, byte_index + PCM_BYTES_PER_FRAME)
-	return (left + right) * 0.5
-
-
-func _read_i16_float(data: PackedByteArray, byte_index: int) -> float:
-	if byte_index < 0 or byte_index + 1 >= data.size():
-		return 0.0
-	var sample := int(data[byte_index]) | (int(data[byte_index + 1]) << 8)
-	if sample >= 32768:
-		sample -= 65536
-	return clampf(float(sample) / 32768.0, -1.0, 1.0)
-
-
-func _instant_bed_pcm_data(context: Dictionary, frames: int) -> PackedByteArray:
-	var root_midi := int(context.get("root_midi", 45))
-	var chord_roots: Array = context.get("chord_roots", [0])
-	var chord_voicings: Array = context.get("chord_voicings", [])
-	var palette: Dictionary = context.get("instrument_palette", {}) as Dictionary
-	var chord_root := root_midi
-	if not chord_roots.is_empty():
-		chord_root += int(chord_roots[0])
-	var chord_voicing: Array = []
-	if not chord_voicings.is_empty():
-		chord_voicing = chord_voicings[0] as Array
-	var volume := float(context.get("volume", 0.22)) * 0.82
-	var pad_gain := float(context.get("pad_gain", 0.38))
-	var texture_gain := float(context.get("texture_gain", 0.45)) * 0.72
-	var texture_kind := str(context.get("texture_kind", "fluorescent"))
-	var texture_rate := float(context.get("texture_rate", 0.33))
-	var texture_seed := int(context.get("texture_seed", 0))
-	var data := PackedByteArray()
-	data.resize(maxi(0, frames * PCM_BYTES_PER_FRAME))
-	for i in range(frames):
-		var t := float(i) / float(SAMPLE_RATE)
-		var loop_edge := _loop_edge_envelope(t, INSTANT_BED_SECONDS)
-		var pad := _music_pad_voiced(root_midi, chord_voicing, chord_root, t, palette) * pad_gain
-		var texture := _ambient_texture_sample(texture_kind, texture_rate, t, i, texture_seed) * texture_gain
-		_write_i16(data, i * PCM_BYTES_PER_FRAME, _soft_limit((pad + texture) * volume * loop_edge))
-	return data
 
 
 func _instant_bed_stem_pcm_data(context: Dictionary, frames: int) -> Dictionary:
@@ -4160,10 +4280,12 @@ func _ambient_generation_context(profile: Dictionary) -> Dictionary:
 	var frames := int(duration * SAMPLE_RATE)
 	var root_midi := int(profile.get("root_midi", 45))
 	var safety := clampf(float(profile.get("safety", 0.5)), 0.0, 1.0)
-	var ambience := clampf(float(profile.get("ambience", 0.7)), 0.0, 1.0)
+	# Ambience and output volume are live mix axes. Keeping their neutral values
+	# in rendered PCM lets weather/scenario remixes reuse the same decoded stems.
+	var ambience := 0.7
 	var heat_pressure := clampf(float(profile.get("heat_pressure", 0.0)), 0.0, 1.0)
 	var danger := 1.0 - safety
-	var volume := float(profile.get("volume", 0.26)) * lerpf(0.82, 1.0, ambience)
+	var volume := 0.26 * lerpf(0.82, 1.0, ambience)
 	var pad_gain := lerpf(0.34, 0.50, ambience) * lerpf(0.96, 1.08, safety)
 	var bass_gain := lerpf(0.16, 0.29, danger)
 	var lead_gain := lerpf(0.055, 0.12, safety) * lerpf(1.0, 0.74, ambience)
@@ -4179,7 +4301,7 @@ func _ambient_generation_context(profile: Dictionary) -> Dictionary:
 	var texture_kind := str(profile.get("texture", "fluorescent"))
 	var texture_rate := float(profile.get("texture_rate", 0.33))
 	var texture_seed := int(profile.get("texture_seed", 0))
-	var variation_seed := int(profile.get("texture_seed", 0)) + _stable_hash("%s:%s" % [str(profile.get("theme", "")), str(profile.get("palette_id", ""))]) % 4099
+	var variation_seed := int(profile.get("texture_seed", 0)) + JsonCoerceScript._stable_hash_allow_zero("%s:%s" % [str(profile.get("theme", "")), str(profile.get("palette_id", ""))]) % 4099
 	var theme := str(profile.get("theme", texture_kind))
 	var palette := _theme_instrument_palette(theme)
 	var swing_amount := clampf(float(profile.get("swing_amount", _theme_swing_amount(theme))), 0.0, 0.22)
@@ -4224,70 +4346,6 @@ func _ambient_generation_context(profile: Dictionary) -> Dictionary:
 		"texture_seed": texture_seed,
 		"variation_seed": variation_seed,
 	}
-
-
-func _write_ambient_frame(data: PackedByteArray, context: Dictionary, frame_index: int) -> void:
-	var step_period := float(context.get("step_period", 0.36))
-	var beat_period := float(context.get("beat_period", 0.72))
-	var phrase_steps := int(context.get("phrase_steps", BASE_PHRASE_STEPS))
-	var phrase_count := int(context.get("phrase_count", DEFAULT_ARRANGEMENT_PHRASES))
-	var total_steps := int(context.get("total_steps", 32))
-	var duration := float(context.get("duration", step_period * float(total_steps)))
-	var root_midi := int(context.get("root_midi", 45))
-	var danger := float(context.get("danger", 0.5))
-	var volume := float(context.get("volume", 0.22))
-	var pad_gain := float(context.get("pad_gain", 0.38))
-	var bass_gain := float(context.get("bass_gain", 0.20))
-	var lead_gain := float(context.get("lead_gain", 0.08))
-	var drum_gain := float(context.get("drum_gain", 0.07))
-	var texture_gain := float(context.get("texture_gain", 0.45))
-	var heartbeat_gain := float(context.get("heartbeat_gain", 0.02))
-	var siren_gain := float(context.get("siren_gain", 0.0))
-	var scale: Array = context.get("scale", SCALE_MINOR)
-	var progression_degrees: Array = context.get("progression_degrees", DEFAULT_PROGRESSION)
-	var chord_roots: Array = context.get("chord_roots", [0])
-	var chord_voicings: Array = context.get("chord_voicings", [])
-	var motif: Array = context.get("motif", DEFAULT_MOTIF)
-	var palette: Dictionary = context.get("instrument_palette", {}) as Dictionary
-	var swing_amount := float(context.get("swing_amount", 0.0))
-	var answer_transform := str(context.get("answer_transform", "inversion"))
-	var bridge_phrase_index := int(context.get("bridge_phrase_index", 2))
-	var texture_kind := str(context.get("texture_kind", "fluorescent"))
-	var texture_rate := float(context.get("texture_rate", 0.33))
-	var texture_seed := int(context.get("texture_seed", 0))
-	var variation_seed := int(context.get("variation_seed", texture_seed))
-	var humanize_seed := int(context.get("humanize_seed", variation_seed))
-	var t := float(frame_index) / float(SAMPLE_RATE)
-	var step_index := int(t / step_period) % total_steps
-	var step_local := fposmod(t, step_period)
-	var phrase_index := int(step_index / phrase_steps) % maxi(1, phrase_count)
-	var phrase_step := step_index % phrase_steps
-	var bar_index := int(phrase_step / 8) % maxi(1, chord_roots.size())
-	var beat_step := phrase_step % 8
-	var chord_root := root_midi + int(chord_roots[bar_index])
-	var chord_voicing: Array = []
-	if not chord_voicings.is_empty():
-		chord_voicing = chord_voicings[bar_index % chord_voicings.size()] as Array
-	var phrase_energy := _phrase_energy(phrase_index, phrase_count, danger)
-	var fill_amount := _phrase_fill_amount(phrase_step, phrase_index, phrase_count, phrase_energy)
-	var pad := _music_pad_voiced(root_midi, chord_voicing, chord_root, t, palette) * pad_gain * lerpf(0.94, 1.06, phrase_energy)
-	var bass := 0.0
-	var bass_offset := _bass_offset_for_step(scale, progression_degrees, chord_roots, bar_index, beat_step, phrase_index, phrase_count, variation_seed)
-	if bass_offset > -900:
-		bass = _music_bass(_midi_freq(root_midi + bass_offset), step_local) * bass_gain * lerpf(0.92, 1.13, phrase_energy) * _palette_value(palette, "bass_weight", 1.0)
-	var lead := 0.0
-	var lead_offset := _lead_offset_for_step(scale, progression_degrees, motif, bar_index, phrase_step, phrase_index, phrase_count, variation_seed, answer_transform, bridge_phrase_index)
-	if lead_offset > -900:
-		var lead_local := _swing_step_local(beat_step, step_local, step_period, swing_amount)
-		lead = _music_lead(_midi_freq(root_midi + lead_offset), lead_local, palette) * lead_gain * lerpf(0.70, 1.28, phrase_energy) * _step_humanization(humanize_seed, phrase_step, phrase_index, 0.08)
-	var drum_local := _swing_step_local(beat_step, step_local, step_period, swing_amount)
-	var drums := _music_drums(beat_step, drum_local, step_period, frame_index + texture_seed, phrase_index, phrase_count, variation_seed, fill_amount, palette) * drum_gain * _step_humanization(humanize_seed + 29, phrase_step, phrase_index, 0.10)
-	var heartbeat := _heartbeat_shape(fposmod(t, beat_period), beat_period) * heartbeat_gain
-	var texture := _ambient_texture_sample(texture_kind, texture_rate, t, frame_index, texture_seed) * texture_gain
-	var siren := _music_siren(t) * siren_gain
-	var loop_edge := _loop_edge_envelope(t, duration)
-	var mixed := (pad + bass + lead + drums + heartbeat + texture + siren) * volume * loop_edge
-	_write_i16(data, frame_index * PCM_BYTES_PER_FRAME, _soft_limit(mixed))
 
 
 func _ambient_stream_from_data(data: PackedByteArray, frames: int) -> AudioStreamWAV:
@@ -4361,17 +4419,32 @@ func _feature_stem_set_for_input(input: Dictionary) -> Dictionary:
 		bpm = 96.0
 	var style := _feature_music_style(cue_id)
 	var palette_id := "%s_feature" % style
-	var cache_key := "feature:%d:%s:%s:%0.2f" % [AMBIENT_VERSION, cue_id, str(base_profile.get("palette_id", "")), bpm]
-	if _feature_stem_cache.has(cache_key):
-		return (_feature_stem_cache.get(cache_key, {}) as Dictionary).duplicate(true)
 	# Feature outcomes are known before the reels start. Baking their multi-stem
 	# PCM here used to block that first jackpot/bonus spin for several seconds.
-	# Load the deterministic delivery stems instead; procedural synthesis remains
-	# only as a development fallback when an asset is missing.
+	# Delivery PCM is physically identical for every cue/palette/BPM request of a
+	# style, so retain one shared pack per style and overlay contextual metadata.
+	var delivery_cache_key := "feature_delivery:%d:%s" % [AMBIENT_VERSION, style]
+	if _feature_stem_cache.has(delivery_cache_key):
+		_pending_feature_cache_key = delivery_cache_key
+		_touch_pcm_cache_key(delivery_cache_key)
+		return _feature_contract_for_context(
+			_feature_stem_cache.get(delivery_cache_key, {}) as Dictionary,
+			cue_id,
+			palette_id
+		)
 	var delivered := _delivered_feature_stem_set(style, cue_id, palette_id)
 	if not delivered.is_empty():
-		_feature_stem_cache[cache_key] = delivered.duplicate(true)
-		return delivered
+		delivered["pcm_cache_key"] = delivery_cache_key
+		_pending_feature_cache_key = delivery_cache_key
+		_store_pcm_cache_entry("feature", delivery_cache_key, delivered.duplicate(true))
+		return _feature_contract_for_context(delivered, cue_id, palette_id)
+	# Procedural synthesis remains a development fallback when a delivery asset
+	# is missing. Unlike delivered packs, its BPM/root alter the PCM identity.
+	var cache_key := "feature_fallback:%d:%s:%s:%0.2f" % [AMBIENT_VERSION, style, str(base_profile.get("palette_id", "")), bpm]
+	if _feature_stem_cache.has(cache_key):
+		_pending_feature_cache_key = cache_key
+		_touch_pcm_cache_key(cache_key)
+		return (_feature_stem_cache.get(cache_key, {}) as Dictionary).duplicate(true)
 	var bars := 2
 	var step_period := _step_period_from_bpm(bpm)
 	var frames := maxi(1, int(step_period * float(STEPS_PER_BAR * bars) * float(SAMPLE_RATE)))
@@ -4388,8 +4461,20 @@ func _feature_stem_set_for_input(input: Dictionary) -> Dictionary:
 		"palette_id": palette_id,
 		"root_midi": root_midi,
 	}
-	_feature_stem_cache[cache_key] = contract.duplicate(true)
+	contract["pcm_cache_key"] = cache_key
+	_pending_feature_cache_key = cache_key
+	_store_pcm_cache_entry("feature", cache_key, contract.duplicate(true))
 	return contract
+
+
+func _feature_contract_for_context(cached: Dictionary, cue_id: String, palette_id: String) -> Dictionary:
+	var result := cached.duplicate(true)
+	result["palette_id"] = palette_id
+	result["delivery_cue_id"] = cue_id
+	var profile: Dictionary = (result.get("profile", {}) as Dictionary).duplicate(true)
+	profile["palette_id"] = palette_id
+	result["profile"] = profile
+	return result
 
 
 func _delivered_feature_stem_set(style: String, cue_id: String, palette_id: String) -> Dictionary:
@@ -4486,36 +4571,48 @@ func _load_pcm_delivery_stream(path: String, loop_enabled: bool) -> AudioStreamW
 func _load_feature_stem_pack(path: String) -> Dictionary:
 	if not FileAccess.file_exists(path):
 		return {}
-	var bytes := FileAccess.get_file_as_bytes(path)
-	if bytes.size() < 18 or bytes.slice(0, 4).get_string_from_ascii() != "BTHM" or int(bytes[4]) != 1 or int(bytes[5]) != 1:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
 		return {}
-	var role_count := int(bytes[6])
-	var sample_rate := bytes.decode_u32(8)
-	var frames := bytes.decode_u32(12)
+	var header := file.get_buffer(16)
+	if header.size() != 16 or header.slice(0, 4).get_string_from_ascii() != "BTHM" or int(header[4]) != 1 or int(header[5]) != 1:
+		file.close()
+		return {}
+	var role_count := int(header[6])
+	var sample_rate := header.decode_u32(8)
+	var frames := header.decode_u32(12)
 	var role_bytes := frames * PCM_BYTES_PER_FRAME
-	if role_count != MUSIC_STEM_ROLES.size() or sample_rate <= 0 or frames <= 0 or bytes.size() != 16 + role_bytes * role_count:
+	if role_count != MUSIC_STEM_ROLES.size() or sample_rate <= 0 or frames <= 0 or file.get_length() != 16 + role_bytes * role_count:
+		file.close()
 		return {}
 	var stems := {}
 	for role_index in range(role_count):
+		var pcm := file.get_buffer(role_bytes)
+		if pcm.size() != role_bytes:
+			file.close()
+			return {}
 		var stream := AudioStreamWAV.new()
 		stream.format = AudioStreamWAV.FORMAT_16_BITS
 		stream.mix_rate = sample_rate
-		var start := 16 + role_index * role_bytes
-		stream.data = bytes.slice(start, start + role_bytes)
+		stream.data = pcm
 		stream.loop_mode = AudioStreamWAV.LOOP_FORWARD
 		stream.loop_begin = 0
 		stream.loop_end = frames
 		stems[str(MUSIC_STEM_ROLES[role_index])] = stream
+	file.close()
 	return stems
 
 
-func _play_feature_stem_set(stem_set: Dictionary, resume_position: float) -> void:
+func _play_feature_stem_set(stem_set: Dictionary, resume_position: float) -> bool:
 	if _feature_stem_players.is_empty() or not _stem_set_contract_valid(stem_set):
-		return
+		_pending_feature_cache_key = ""
+		_enforce_pcm_cache_budget()
+		return false
 	var stems: Dictionary = stem_set.get("stems", {}) as Dictionary
 	var safe_position := maxf(0.0, resume_position)
 	var role_volumes := _feature_role_volume_db_map(_feature_mix_live if not _feature_mix_live.is_empty() else _neutral_feature_mix_vector())
 	var web_audio_playback := WebAudioBridgeScript.available()
+	var native_handoff_count := 0
 	for role_value in MUSIC_STEM_PLAYBACK_ROLES:
 		var role := str(role_value)
 		var player: AudioStreamPlayer = _feature_stem_players.get(role, null)
@@ -4529,6 +4626,20 @@ func _play_feature_stem_set(stem_set: Dictionary, resume_position: float) -> voi
 			continue
 		player.stream = stream
 		player.volume_db = float(role_volumes.get(role, MUSIC_MIN_VOLUME_DB))
+		native_handoff_count += 1
+	var web_played := false
+	if web_audio_playback and _web_audio_stem_set_bridge_allowed(stem_set, "feature", AMBIENT_STAGE_FULL):
+		web_played = WebAudioBridgeScript.play_music_stems(
+			"feature",
+			_web_stem_set_key(stem_set, AMBIENT_STAGE_FULL, "feature"),
+			stem_set,
+			role_volumes,
+			safe_position
+		)
+	if (web_audio_playback and not web_played) or (not web_audio_playback and native_handoff_count <= 0):
+		_pending_feature_cache_key = ""
+		_enforce_pcm_cache_budget()
+		return false
 	if not web_audio_playback:
 		for role_value in MUSIC_STEM_PLAYBACK_ROLES:
 			var role := str(role_value)
@@ -4537,10 +4648,16 @@ func _play_feature_stem_set(stem_set: Dictionary, resume_position: float) -> voi
 				continue
 			_play_audio_player(player, safe_position, "feature_stems")
 	_current_feature_stem_set = stem_set.duplicate(true)
+	_current_feature_cache_key = str(stem_set.get("pcm_cache_key", ""))
+	_pending_feature_cache_key = ""
+	if not _current_feature_cache_key.is_empty():
+		_touch_pcm_cache_key(_current_feature_cache_key)
+	_enforce_pcm_cache_budget()
 	_stop_music_send_players(_feature_send_players, true)
-	if _web_audio_stem_set_bridge_allowed(stem_set, "feature", AMBIENT_STAGE_FULL):
-		WebAudioBridgeScript.play_music_stems("feature", _web_stem_set_key(stem_set, AMBIENT_STAGE_FULL, "feature"), stem_set, role_volumes, safe_position)
 	_apply_feature_mix_vector(_feature_mix_live if not _feature_mix_live.is_empty() else _neutral_feature_mix_vector(), true)
+	if web_audio_playback:
+		return web_played
+	return native_handoff_count > 0
 
 
 func _stop_feature_stem_players() -> void:
@@ -4741,7 +4858,7 @@ func _apply_outcome_stingers_for_transport(transport_beat: float, play_audio: bo
 
 
 func _activate_music_outcome_reverb(pending: Dictionary, target_beat: float) -> bool:
-	var pulse := _copy_dict(pending.get("reverb_pulse", {}))
+	var pulse := JsonCoerceScript._copy_dict(pending.get("reverb_pulse", {}))
 	if pulse.is_empty():
 		return false
 	var outcome_class := str(pending.get("outcome_class", "neutral"))
@@ -4928,27 +5045,27 @@ func _stem_manifest_from_contract(stem_set: Dictionary) -> Dictionary:
 		"sample_rate": int(stem_set.get("sample_rate", SAMPLE_RATE)),
 		"channels": int(stem_set.get("channels", 1)),
 		"bit_depth": int(stem_set.get("bit_depth", 16)),
-		"delivery_files": _copy_array(stem_set.get("delivery_files", [])),
-		"source_audio_format": _copy_dict(stem_set.get("source_audio_format", {})),
-		"playback_audio_format": _copy_dict(stem_set.get("playback_audio_format", {})),
-		"preferred_dsp_sends": _copy_dict(stem_set.get("preferred_dsp_sends", {})),
+		"delivery_files": JsonCoerceScript._copy_array(stem_set.get("delivery_files", [])),
+		"source_audio_format": JsonCoerceScript._copy_dict(stem_set.get("source_audio_format", {})),
+		"playback_audio_format": JsonCoerceScript._copy_dict(stem_set.get("playback_audio_format", {})),
+		"preferred_dsp_sends": JsonCoerceScript._copy_dict(stem_set.get("preferred_dsp_sends", {})),
 		"float_pcm_precision": float_pcm_precision,
 		"selection_key": str(stem_set.get("selection_key", "base")),
-		"selected_variants": _copy_dict(stem_set.get("selected_variants", {})),
-		"selected_role_epochs": _copy_dict(stem_set.get("selected_role_epochs", {})),
-		"selected_tags": _copy_array(stem_set.get("selected_tags", [])),
-		"selection_context": _copy_dict(stem_set.get("selection_context", {})),
+		"selected_variants": JsonCoerceScript._copy_dict(stem_set.get("selected_variants", {})),
+		"selected_role_epochs": JsonCoerceScript._copy_dict(stem_set.get("selected_role_epochs", {})),
+		"selected_tags": JsonCoerceScript._copy_array(stem_set.get("selected_tags", [])),
+		"selection_context": JsonCoerceScript._copy_dict(stem_set.get("selection_context", {})),
 		"compatibility_set_id": str(stem_set.get("compatibility_set_id", "")),
 		"progression_id": str(stem_set.get("progression_id", "")),
-		"recipe_state": _copy_dict(stem_set.get("recipe_state", {})),
+		"recipe_state": JsonCoerceScript._copy_dict(stem_set.get("recipe_state", {})),
 		"recipe_id": str(stem_set.get("recipe_id", "")),
 		"phrase_index": int(stem_set.get("phrase_index", 0)),
 		"cycle_index": int(stem_set.get("cycle_index", 0)),
-		"excluded_candidates": _copy_array(stem_set.get("excluded_candidates", [])),
-		"transitions": _copy_dict(stem_set.get("transitions", {})),
-		"stinger_metadata": _copy_dict(stem_set.get("stinger_metadata", {})),
-		"stinger_loop_modes": _audio_stream_loop_mode_snapshot(_copy_dict(stem_set.get("stingers", {}))),
-		"fill_loop_modes": _audio_stream_loop_mode_snapshot(_copy_dict(stem_set.get("fills", {}))),
+		"excluded_candidates": JsonCoerceScript._copy_array(stem_set.get("excluded_candidates", [])),
+		"transitions": JsonCoerceScript._copy_dict(stem_set.get("transitions", {})),
+		"stinger_metadata": JsonCoerceScript._copy_dict(stem_set.get("stinger_metadata", {})),
+		"stinger_loop_modes": _audio_stream_loop_mode_snapshot(JsonCoerceScript._copy_dict(stem_set.get("stingers", {}))),
+		"fill_loop_modes": _audio_stream_loop_mode_snapshot(JsonCoerceScript._copy_dict(stem_set.get("fills", {}))),
 		"step_period": snappedf(float(stem_set.get("step_period", _step_period_from_bpm(float(stem_set.get("bpm", 82.0))))), 0.0001),
 		"player_count": _stem_players.size(),
 	}
@@ -5044,43 +5161,19 @@ func _web_audio_stem_set_pcm_bytes(stem_set: Dictionary) -> int:
 		if not (stream_value is AudioStreamWAV):
 			continue
 		var stream := stream_value as AudioStreamWAV
-		if not _web_audio_wav_has_signal(stream):
+		if not WebAudioBridgeScript.wav_has_signal(stream):
 			continue
 		total += stream.data.size()
 	return total
 
 
-func _web_audio_wav_has_signal(wav: AudioStreamWAV) -> bool:
-	var data := wav.data
-	var size := data.size()
-	if size <= 0:
-		return false
-	var edge_count := mini(size, 256)
-	for index in range(edge_count):
-		if int(data[index]) != 0:
-			return true
-	var suffix_start := maxi(edge_count, size - 256)
-	for index in range(suffix_start, size):
-		if int(data[index]) != 0:
-			return true
-	var interior_count := suffix_start - edge_count
-	if interior_count <= 0:
-		return false
-	var sample_count := mini(256, interior_count)
-	var step := maxi(1, int(interior_count / sample_count))
-	var index := edge_count
-	var checked := 0
-	while index < suffix_start and checked < sample_count:
-		if int(data[index]) != 0:
-			return true
-		index += step
-		checked += 1
-	return false
-
-
 func _web_stem_set_key(stem_set: Dictionary, stage: String, group_id: String) -> String:
 	var profile: Dictionary = stem_set.get("profile", {}) as Dictionary
 	var identity := str(stem_set.get("track_id", profile.get("palette_id", stem_set.get("palette_id", group_id)))).strip_edges()
+	# Feature context labels change for every outcome, but the decoded PCM is the
+	# shared physical delivery pack. Keep the Web key on that physical identity.
+	if group_id == "feature" and not str(stem_set.get("pcm_cache_key", "")).is_empty():
+		identity = str(stem_set.get("pcm_cache_key", ""))
 	if identity.is_empty():
 		identity = group_id
 	return "%s:%s:%s:%s:%d:%d" % [
@@ -5115,13 +5208,13 @@ func _authored_stem_set_from_profile(profile: Dictionary, music_state: Dictionar
 	var cache_key := "authored:%s:%s" % [track_id, selection_key]
 	if _authored_manifest_cache.has(cache_key):
 		var cached := (_authored_manifest_cache.get(cache_key, {}) as Dictionary).duplicate(true)
-		cached["recipe_state"] = _copy_dict(selection.get("recipe_state", {}))
-		cached["selected_role_epochs"] = _copy_dict(selection.get("selected_role_epochs", {}))
-		cached["selection_context"] = _copy_dict(selection.get("selection_context", {}))
+		cached["recipe_state"] = JsonCoerceScript._copy_dict(selection.get("recipe_state", {}))
+		cached["selected_role_epochs"] = JsonCoerceScript._copy_dict(selection.get("selected_role_epochs", {}))
+		cached["selection_context"] = JsonCoerceScript._copy_dict(selection.get("selection_context", {}))
 		cached["recipe_id"] = str((cached.get("recipe_state", {}) as Dictionary).get("recipe_id", ""))
 		var cached_cursor := int((cached.get("recipe_state", {}) as Dictionary).get("cursor", -1)) if typeof(cached.get("recipe_state", {})) == TYPE_DICTIONARY else -1
 		var cached_recipe := MusicArrangementSelectorScript.recipe_definition(entry, str((cached.get("recipe_state", {}) as Dictionary).get("recipe_id", "")) if typeof(cached.get("recipe_state", {})) == TYPE_DICTIONARY else "")
-		var cached_recipe_length := maxi(1, _copy_array(cached_recipe.get("sections", [])).size())
+		var cached_recipe_length := maxi(1, JsonCoerceScript._copy_array(cached_recipe.get("sections", [])).size())
 		cached["phrase_index"] = posmod(maxi(0, cached_cursor), cached_recipe_length)
 		cached["cycle_index"] = maxi(0, cached_cursor) / cached_recipe_length
 		cached["harmony_recipe_id"] = str(cached_recipe.get("id", ""))
@@ -5129,7 +5222,7 @@ func _authored_stem_set_from_profile(profile: Dictionary, music_state: Dictionar
 		cached["harmony_recipe_length"] = cached_recipe_length
 		cached["harmony_visit_id"] = str((cached.get("recipe_state", {}) as Dictionary).get("visit_id", ""))
 		cached["harmony_last_phrase_event_index"] = int((cached.get("recipe_state", {}) as Dictionary).get("last_phrase_event_index", -1))
-		cached["excluded_candidates"] = _copy_array(selection.get("excluded_candidates", []))
+		cached["excluded_candidates"] = JsonCoerceScript._copy_array(selection.get("excluded_candidates", []))
 		return cached
 	var stems_value: Variant = selection.get("stems", {})
 	if typeof(stems_value) != TYPE_DICTIONARY:
@@ -5158,40 +5251,40 @@ func _authored_stem_set_from_profile(profile: Dictionary, music_state: Dictionar
 	contract["channels"] = int(entry.get("channels", 1))
 	contract["bit_depth"] = int(entry.get("bit_depth", 16))
 	contract["profile"] = profile.duplicate(true)
-	contract["adaptive_tempo"] = _copy_dict(entry.get("adaptive_tempo", {}))
+	contract["adaptive_tempo"] = JsonCoerceScript._copy_dict(entry.get("adaptive_tempo", {}))
 	var delivery_snapshot := _authored_delivery_snapshot(entry, stems_data)
-	contract["delivery_files"] = _copy_array(delivery_snapshot.get("files", []))
-	contract["source_audio_format"] = _copy_dict(delivery_snapshot.get("source_audio_format", {}))
-	contract["playback_audio_format"] = _copy_dict(delivery_snapshot.get("playback_audio_format", {}))
-	contract["preferred_dsp_sends"] = _copy_dict(delivery_snapshot.get("preferred_dsp_sends", {}))
+	contract["delivery_files"] = JsonCoerceScript._copy_array(delivery_snapshot.get("files", []))
+	contract["source_audio_format"] = JsonCoerceScript._copy_dict(delivery_snapshot.get("source_audio_format", {}))
+	contract["playback_audio_format"] = JsonCoerceScript._copy_dict(delivery_snapshot.get("playback_audio_format", {}))
+	contract["preferred_dsp_sends"] = JsonCoerceScript._copy_dict(delivery_snapshot.get("preferred_dsp_sends", {}))
 	contract["selection_key"] = selection_key
-	contract["selected_variants"] = _copy_dict(selection.get("selected_variants", {}))
-	contract["selected_role_epochs"] = _copy_dict(selection.get("selected_role_epochs", {}))
-	contract["selected_tags"] = _copy_array(selection.get("selected_tags", []))
-	contract["selection_context"] = _copy_dict(selection.get("selection_context", {}))
+	contract["selected_variants"] = JsonCoerceScript._copy_dict(selection.get("selected_variants", {}))
+	contract["selected_role_epochs"] = JsonCoerceScript._copy_dict(selection.get("selected_role_epochs", {}))
+	contract["selected_tags"] = JsonCoerceScript._copy_array(selection.get("selected_tags", []))
+	contract["selection_context"] = JsonCoerceScript._copy_dict(selection.get("selection_context", {}))
 	contract["compatibility_set_id"] = str(selection.get("compatibility_set_id", ""))
 	contract["progression_id"] = str(selection.get("progression_id", ""))
-	contract["recipe_state"] = _copy_dict(selection.get("recipe_state", {}))
+	contract["recipe_state"] = JsonCoerceScript._copy_dict(selection.get("recipe_state", {}))
 	contract["recipe_id"] = str((contract.get("recipe_state", {}) as Dictionary).get("recipe_id", ""))
 	var recipe_cursor := int((contract.get("recipe_state", {}) as Dictionary).get("cursor", -1)) if typeof(contract.get("recipe_state", {})) == TYPE_DICTIONARY else -1
 	var recipe := MusicArrangementSelectorScript.recipe_definition(entry, str((contract.get("recipe_state", {}) as Dictionary).get("recipe_id", "")) if typeof(contract.get("recipe_state", {})) == TYPE_DICTIONARY else "")
-	var recipe_length := maxi(1, _copy_array(recipe.get("sections", [])).size())
+	var recipe_length := maxi(1, JsonCoerceScript._copy_array(recipe.get("sections", [])).size())
 	contract["phrase_index"] = posmod(maxi(0, recipe_cursor), recipe_length)
 	contract["cycle_index"] = maxi(0, recipe_cursor) / recipe_length
 	contract["harmony_recipe_id"] = str(recipe.get("id", ""))
 	contract["harmony_phrase_bars"] = maxi(1, int(recipe.get("phrase_bars", 4)))
 	contract["harmony_recipe_length"] = recipe_length
-	contract["harmony_recipe_sections"] = _copy_array(recipe.get("sections", []))
+	contract["harmony_recipe_sections"] = JsonCoerceScript._copy_array(recipe.get("sections", []))
 	contract["harmony_section_progressions"] = _authored_section_progressions(entry)
 	contract["harmony_visit_id"] = str((contract.get("recipe_state", {}) as Dictionary).get("visit_id", ""))
 	contract["harmony_last_phrase_event_index"] = int((contract.get("recipe_state", {}) as Dictionary).get("last_phrase_event_index", -1))
-	contract["excluded_candidates"] = _copy_array(selection.get("excluded_candidates", []))
-	contract["transitions"] = _copy_dict(entry.get("transitions", {}))
-	contract["stinger_metadata"] = _copy_dict(entry.get("stingers", {}))
-	contract["fill_metadata"] = _copy_dict(entry.get("fills", {}))
-	contract["layer_choreography"] = _copy_dict(entry.get("layer_choreography", {}))
-	contract["authored_arrangement"] = _copy_array(entry.get("arrangement", []))
-	contract["fills"] = _authored_one_shots(track_id, _copy_dict(entry.get("fills", {})))
+	contract["excluded_candidates"] = JsonCoerceScript._copy_array(selection.get("excluded_candidates", []))
+	contract["transitions"] = JsonCoerceScript._copy_dict(entry.get("transitions", {}))
+	contract["stinger_metadata"] = JsonCoerceScript._copy_dict(entry.get("stingers", {}))
+	contract["fill_metadata"] = JsonCoerceScript._copy_dict(entry.get("fills", {}))
+	contract["layer_choreography"] = JsonCoerceScript._copy_dict(entry.get("layer_choreography", {}))
+	contract["authored_arrangement"] = JsonCoerceScript._copy_array(entry.get("arrangement", []))
+	contract["fills"] = _authored_one_shots(track_id, JsonCoerceScript._copy_dict(entry.get("fills", {})))
 	contract["step_period"] = _step_period_from_bpm(float(contract.get("bpm", 82.0)))
 	_store_authored_manifest_cache(cache_key, contract)
 	return contract
@@ -5220,12 +5313,12 @@ static func _authored_section_progressions(entry: Dictionary) -> Dictionary:
 func _notify_authored_arrangement_selection(track_id: String, selection: Dictionary) -> void:
 	if str(selection.get("compatibility_set_id", "")).is_empty():
 		return
-	var recipe_state := _copy_dict(selection.get("recipe_state", {}))
+	var recipe_state := JsonCoerceScript._copy_dict(selection.get("recipe_state", {}))
 	var notice := "%s|%s|%d|%s" % [track_id, str(recipe_state.get("visit_id", "")), int(recipe_state.get("cursor", -1)), str(selection.get("selection_key", ""))]
 	if notice == _last_arrangement_selection_notice:
 		return
 	_last_arrangement_selection_notice = notice
-	authored_arrangement_selected.emit({"track_id": track_id, "selected_variant_ids": _copy_dict(selection.get("selection_memory_ids", {})), "selected_role_epochs": _copy_dict(selection.get("selection_memory_epochs", {})), "selection_key": str(selection.get("selection_key", ""))})
+	authored_arrangement_selected.emit({"track_id": track_id, "selected_variant_ids": JsonCoerceScript._copy_dict(selection.get("selection_memory_ids", {})), "selected_role_epochs": JsonCoerceScript._copy_dict(selection.get("selection_memory_epochs", {})), "selection_key": str(selection.get("selection_key", ""))})
 
 
 func _store_authored_manifest_cache(cache_key: String, contract: Dictionary) -> void:
@@ -5335,7 +5428,7 @@ func _authored_track_entry_valid(entry: Dictionary) -> bool:
 	if typeof(stems_value) != TYPE_DICTIONARY:
 		return false
 	var stems: Dictionary = stems_value
-	var stem_banks := _copy_dict(entry.get("stem_banks", {}))
+	var stem_banks := JsonCoerceScript._copy_dict(entry.get("stem_banks", {}))
 	if stems.is_empty() and stem_banks.is_empty():
 		return false
 	for role_value in stems.keys():
@@ -5349,7 +5442,7 @@ func _authored_track_entry_valid(entry: Dictionary) -> bool:
 		if not MUSIC_STEM_PLAYBACK_ROLES.has(str(role_value)):
 			return false
 		var bank_value: Variant = stem_banks.get(role_value)
-		var variants: Array = bank_value as Array if typeof(bank_value) == TYPE_ARRAY else _copy_array((bank_value as Dictionary).get("variants", [])) if typeof(bank_value) == TYPE_DICTIONARY else []
+		var variants: Array = bank_value as Array if typeof(bank_value) == TYPE_ARRAY else JsonCoerceScript._copy_array((bank_value as Dictionary).get("variants", [])) if typeof(bank_value) == TYPE_DICTIONARY else []
 		if variants.is_empty():
 			return false
 		for variant_value in variants:
@@ -6614,22 +6707,3 @@ static func _copy_array_static(value: Variant) -> Array:
 	if typeof(value) != TYPE_ARRAY:
 		return []
 	return (value as Array).duplicate(true)
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return value.duplicate(true)
-
-
-func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return value.duplicate(true)
-
-
-func _stable_hash(text: String) -> int:
-	var value := 2166136261
-	for index in range(text.length()):
-		value = int((value ^ text.unicode_at(index)) * 16777619) & 0x7fffffff
-	return value

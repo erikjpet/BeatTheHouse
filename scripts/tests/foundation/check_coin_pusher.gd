@@ -47,6 +47,7 @@ func _check_coin_pusher_contract(library: ContentLibrary, failures: Array) -> vo
 	_check_pusher_v3_ridge_physical_contract(library, failures)
 	_check_pusher_v3_vault_physical_contract(library, failures)
 	_check_pusher_v3_live_loop_and_persistence(machine_definition, failures)
+	_check_pusher_v3_reentry_motor_liveness(machine_definition, failures)
 	_check_pusher_v3_production_rail_drag(library, failures)
 	_check_pusher_v3_all_variation_migrations(library, failures)
 	_check_pusher_v3_v2_production_migration(library, failures)
@@ -2014,6 +2015,49 @@ func _check_pusher_v3_input_trace_determinism(machine: Dictionary, failures: Arr
 		failures.append("Coin Pusher V3 native and integer reference kernels diverged for the same tick-stamped trace.")
 
 
+func _check_pusher_v3_reentry_motor_liveness(machine: Dictionary, failures: Array) -> void:
+	var definitions := {
+		"quarter_falls": machine,
+		"jackpot_ridge": (machine.get("machines", {}) as Dictionary).get("jackpot_ridge", machine),
+		"vault_drop": (machine.get("machines", {}) as Dictionary).get("vault_drop", machine),
+	}
+	for variation_id_value in definitions:
+		var variation_id := str(variation_id_value)
+		var definition: Dictionary = definitions[variation_id] if typeof(definitions[variation_id]) == TYPE_DICTIONARY else machine
+		var reopened := {
+			"variation_id": variation_id,
+			"simulation": CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-REENTRY-%s" % variation_id), definition, 24),
+			"variation_state": {},
+			"motor_started": true,
+			"locked_down": false,
+		}
+		var simulation: Dictionary = reopened["simulation"]
+		# A compact snapshot legitimately parks the absent cabinet at target zero.
+		# Opening it must reconcile that persisted target with its running state.
+		simulation["motor_rate_fp"] = 0
+		simulation["motor_target_rate_fp"] = 0
+		var phase_before := int(simulation.get("phase_fp", 0))
+		CoinPusherLiveSessionScript.begin(reopened, definition, 18800 + variation_id.length(), true)
+		CoinPusherLiveSessionScript.advance(reopened, 1000)
+		for now_msec in [1100, 1200, 1300, 1400]:
+			CoinPusherLiveSessionScript.advance(reopened, now_msec)
+		var run_rate := int(simulation.get("motor_run_rate_fp", CoinPusherSolverScript.FP))
+		if not bool(reopened.get("motor_started", false)) \
+				or int(simulation.get("motor_target_rate_fp", 0)) != run_rate \
+				or int(simulation.get("motor_rate_fp", 0)) <= 0 \
+				or int(simulation.get("phase_fp", 0)) == phase_before:
+			failures.append("Coin Pusher %s reopened with a running session but a parked motor: %s." % [variation_id, JSON.stringify(CoinPusherSolverScript.canonical_digest(simulation))])
+	var locked := {
+		"simulation": CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-REENTRY-LOCKED"), machine, 0),
+		"variation_state": {},
+		"motor_started": true,
+		"locked_down": true,
+	}
+	CoinPusherLiveSessionScript.begin(locked, machine, 18899, true)
+	if bool(locked.get("motor_started", true)) or int((locked["simulation"] as Dictionary).get("motor_target_rate_fp", -1)) != 0:
+		failures.append("Coin Pusher locked cabinet incorrectly restarted its motor on re-entry.")
+
+
 func _check_pusher_v3_live_loop_and_persistence(machine: Dictionary, failures: Array) -> void:
 	var live_machine := {"simulation": CoinPusherSolverScript.create_machine(_pusher_v3_rng("PUSHER-V3-LIVE"), machine, 40), "variation_state": {}, "tell_rung": 0, "alarm_tolerance_remaining": 7, "locked_down": false}
 	CoinPusherLiveSessionScript.begin(live_machine, machine, 117)
@@ -2538,19 +2582,41 @@ func _check_pusher_v3_production_integration_boundaries(library: ContentLibrary,
 	var rollback_token := rollback_game.host_action_rollback_snapshot("drop_quarter", run_state, rollback_environment)
 	var rollback_result := rollback_game.resolve_with_context("drop_quarter", 1, run_state, rollback_environment, _pusher_v3_rng("PUSHER-V3-ROLLBACK-DROP"), {})
 	var rollback_applied := bool(rollback_result.get("ok", false)) and (rollback_live.get("drop_queue", []) as Array).size() == 1
+	# Replacement-on-write is legal for the live cache and is exactly the shape
+	# seen when a rejected host boundary rebinds the cabinet. A compact token is
+	# keyed by semantic cabinet identity, never Dictionary object identity.
+	var rollback_key := str(rollback_token.get("cache_key", rollback_game.call("_live_key", run_state, rollback_environment)))
+	var rebound_live := rollback_live.duplicate(true)
+	(rollback_game.get("_live_machines") as Dictionary)[rollback_key] = rebound_live
 	var rollback_restored := rollback_game.restore_host_action_rollback(rollback_token, run_state, rollback_environment)
+	var rebound_simulation: Dictionary = rebound_live.get("simulation", {})
+	var rebound_session: Dictionary = rebound_live.get("live_session", {})
 	var live_rollback_after := {
-		"action_count": int(rollback_live.get("action_count", 0)),
-		"drop_queue": (rollback_live.get("drop_queue", []) as Array).duplicate(true),
-		"motor_started": bool(rollback_live.get("motor_started", false)),
-		"motor_target_rate_fp": int(rollback_simulation.get("motor_target_rate_fp", 0)),
-		"durable_ready": bool(rollback_session.get("durable_ready", false)),
-		"durable_dirty": bool(rollback_session.get("durable_dirty", false)),
+		"action_count": int(rebound_live.get("action_count", 0)),
+		"drop_queue": (rebound_live.get("drop_queue", []) as Array).duplicate(true),
+		"motor_started": bool(rebound_live.get("motor_started", false)),
+		"motor_target_rate_fp": int(rebound_simulation.get("motor_target_rate_fp", 0)),
+		"durable_ready": bool(rebound_session.get("durable_ready", false)),
+		"durable_dirty": bool(rebound_session.get("durable_dirty", false)),
 	}
-	if not bool(rollback_token.get("supported", false)) or not rollback_applied or not rollback_restored \
+	if not bool(rollback_token.get("supported", false)) or rollback_key.is_empty() or not rollback_token.has("identity_generation") or not rollback_applied or not rollback_restored \
 			or var_to_bytes(rollback_environment.get("game_states", {})) != durable_rollback_before \
 			or live_rollback_after != live_rollback_before:
 		failures.append("Coin Pusher compact host rollback did not restore the exact durable/live DROP boundary: supported=%s applied=%s restored=%s durable=%s live=%s." % [bool(rollback_token.get("supported", false)), rollback_applied, rollback_restored, var_to_bytes(rollback_environment.get("game_states", {})) == durable_rollback_before, JSON.stringify(live_rollback_after)])
+	# A lifecycle transition can interrupt the final presentation frame after the
+	# live cache was removed but before finalization cleared the exit latch. Such a
+	# projection cannot claim a generation-bound compact token, and the next
+	# authoritative entry must repair the abandoned transient lifecycle.
+	rollback_game.set("_exit_settle_active", true)
+	(rollback_game.get("_live_machines") as Dictionary).clear()
+	(rollback_game.get("_live_machine_generations") as Dictionary).clear()
+	var stale_exit_token := rollback_game.host_action_rollback_snapshot("drop_quarter", run_state, rollback_environment)
+	rollback_game.enter(run_state, rollback_environment)
+	var recovered_live: Dictionary = rollback_game.get("_live_machines")
+	var recovered_generations: Dictionary = rollback_game.get("_live_machine_generations")
+	if bool(stale_exit_token.get("supported", false)) or bool(rollback_game.get("_exit_settle_active")) \
+			or not recovered_live.has(rollback_key) or int(recovered_generations.get(rollback_key, 0)) <= 0:
+		failures.append("Coin Pusher stale exit lifecycle advertised an invalid compact token or did not recover on authoritative entry: token=%s active=%s live=%s generations=%s." % [JSON.stringify(stale_exit_token), bool(rollback_game.get("_exit_settle_active")), JSON.stringify(recovered_live.keys()), JSON.stringify(recovered_generations)])
 
 
 func _check_pusher_v3_items_alarm_and_rumor(library: ContentLibrary, failures: Array) -> void:
@@ -2591,6 +2657,11 @@ func _check_pusher_v3_items_alarm_and_rumor(library: ContentLibrary, failures: A
 	live["alarm_tolerance_remaining"] = maxi(2, (effective_tolerance * 2) / 3) + 1
 	var trace_before_nudge := ((live.get("live_session", {}) as Dictionary).get("input_trace", []) as Array).size()
 	var nudge_result := game.resolve_with_context("nudge_machine", 0, run_state, environment, _pusher_v3_rng("PUSHER-V3-ITEMS-NUDGE"), {"coin_pusher_force": "tap", "coin_pusher_direction": "right"})
+	var nudge_audio_cue := str(nudge_result.get("surface_audio_cue", ""))
+	var nudge_audio_event := SurfaceSfxManifest.select_event("coin_pusher", nudge_audio_cue, run_state.seed_value, 0)
+	if nudge_audio_cue != "tell_chirp" or str(nudge_audio_event.get("event_id", "")) != "coin_pusher_chirp":
+		failures.append("Coin Pusher V3 nudge did not emit a resolvable tell-chirp event class: class=%s event=%s." % [nudge_audio_cue, str(nudge_audio_event.get("event_id", ""))])
+		return
 	var trace: Array = (live.get("live_session", {}) as Dictionary).get("input_trace", []) if typeof((live.get("live_session", {}) as Dictionary).get("input_trace", [])) == TYPE_ARRAY else []
 	var nudge_input: Dictionary = trace.back() if trace.size() > trace_before_nudge and typeof(trace.back()) == TYPE_DICTIONARY else {}
 	if int(nudge_input.get("x", 0)) <= 1200 or str(nudge_input.get("kind", "")) != "nudge":
@@ -2682,10 +2753,12 @@ func _check_pusher_v3_items_alarm_and_rumor(library: ContentLibrary, failures: A
 	var suspicion_before_alarm := run_state.suspicion_level()
 	run_state.set_environment(environment)
 	var alarm_result := game.resolve_with_context("nudge_machine", 0, run_state, environment, _pusher_v3_rng("PUSHER-V3-ALARM"), {"coin_pusher_force": "slam", "coin_pusher_direction": "front"})
+	var alarm_audio_cue := str(alarm_result.get("surface_audio_cue", ""))
+	var alarm_audio_event := SurfaceSfxManifest.select_event("coin_pusher", alarm_audio_cue, run_state.seed_value, 0)
 	GameModule.apply_result(run_state, alarm_result)
 	run_state.record_reputation_from_result(alarm_result, alarm_result.get("deltas", {}))
-	if not bool(live.get("locked_down", false)) or str(alarm_result.get("surface_audio_cue", "")) != "coin_pusher_alarm" or (game.get("_live_machines") as Dictionary).is_empty():
-		failures.append("Coin Pusher V3 hard alarm ejected the player or failed to night-lock/audio-signal in place.")
+	if not bool(live.get("locked_down", false)) or alarm_audio_cue != "alarm" or str(alarm_audio_event.get("event_id", "")) != "coin_pusher_alarm" or (game.get("_live_machines") as Dictionary).is_empty():
+		failures.append("Coin Pusher V3 hard alarm ejected the player or failed to emit a resolvable alarm event class in place: class=%s event=%s." % [alarm_audio_cue, str(alarm_audio_event.get("event_id", ""))])
 		return
 	CoinPusherSolverScript.step_ticks(simulation, {"motor_enabled": false}, 24)
 	var locked_surface := game.surface_state(run_state, environment)
@@ -2881,27 +2954,6 @@ func _pusher_v3_body(state: Dictionary, id: String) -> Dictionary:
 		if str(body.get("id", "")) == id:
 			return body
 	return {}
-
-
-func _check_pusher_v3_impact_measurements(result: Dictionary, body_id: String, expected_support: String, failures: Array) -> void:
-	var impact := {}
-	for event_value in result.get("events", []):
-		var event: Dictionary = event_value
-		if str(event.get("kind", "")) == "impact" and str(event.get("body_id", "")) == body_id:
-			impact = event
-			break
-	if impact.is_empty():
-		failures.append("Coin Pusher V3 did not emit a physical impact event for the %s landing fixture." % expected_support)
-		return
-	if str(impact.get("support", "")) != expected_support \
-			or not impact.has("fall_height") \
-			or not impact.has("impact_speed") \
-			or not ["soft", "hard"].has(str(impact.get("impact_class", ""))) \
-			or not impact.has("stack_depth") \
-			or int(impact.get("fall_height", 0)) <= 0 \
-			or int(impact.get("impact_speed", 0)) <= 0 \
-			or int(impact.get("stack_depth", -1)) < 0:
-		failures.append("Coin Pusher V3 %s impact omitted valid height/speed/class/stack evidence: %s" % [expected_support, JSON.stringify(impact)])
 
 
 func _check_pusher_v3_real_weight_gravity(machine: Dictionary, failures: Array) -> void:

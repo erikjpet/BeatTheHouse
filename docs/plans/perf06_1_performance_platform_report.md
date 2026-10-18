@@ -1,12 +1,25 @@
 # perf06_1 Performance and Platform Report
 
+> 2026-10-08 current-source note: this report remains historical measurement
+> evidence. The replacement placement architecture and later cache/bounded-work
+> performance passes are present in the feature-complete 0.6 source. The active
+> release-authoring task is the manual 75-context placement pass, not the parked
+> Phase 4 sequence described below.
+
+> 2026-09-16 update: a later reduced, non-binding pre-placement pass retained
+> two measured shared-renderer allocation reductions. Its before/after tables,
+> preserved red rows, and parity evidence are recorded in
+> `docs/plans/perf06_1_preplacement_optimization_2026-09-16.md`. It does not
+> change this report's historical Phase 3 status or supply binding Phase 4
+> evidence.
+
 Status: HISTORICAL NON-BINDING PHASE 3 LEDGER — tooling is on `main`; binding Phase 4 waits for accepted placement.
 
 The retained rehearsal began from pushed `origin/main` commit `c570f2ce6fafa4212292f8b129ca08f2e9e1e954`. `fix06_31` later landed, but the owner rejected the subsequent reusable-slot/fixture placement experiment. Only a future exact pushed candidate containing an accepted replacement placement design may supply binding figures.
 
 ## Harness recovery and review
 
-The six named harness artifacts on `origin/main` were byte-identical to the historical `codex/perf06-final-run` tree: `docs/plans/perf06_1_final_runtime_runbook.md`, `docs/plans/perf06_1_static_harness_review.md`, `tools/perf06_binding_preflight.ps1`, `tools/perf06_phase_qualification_contract.ps1`, `tools/perf06_capture_quiescence.ps1`, and `tools/perf06_matrix_contract.ps1`. That retired task branch was later deleted during the two-branch custody cleanup.
+The six named harness artifacts on `origin/main` were byte-identical to the historical `codex/perf06-final-run` tree: `docs/plans/perf06_1_final_runtime_runbook.md`, `docs/plans/perf06_1_static_harness_review.md`, `tools/archive/perf06/perf06_binding_preflight.ps1`, `tools/archive/perf06/perf06_phase_qualification_contract.ps1`, `tools/archive/perf06/perf06_capture_quiescence.ps1`, and `tools/archive/perf06/perf06_matrix_contract.ps1`. That retired task branch was later deleted during the two-branch custody cleanup.
 
 The historical `[UNREVIEWED]` changes `92bb16f5` and `618d0033` were read and verified on 2026-09-11. Their hostile-fixture suites pass and demonstrate rejection of nonignored untracked files, staged and unstaged changes, occupied ports, below-floor idle liveness, forged static-zero authority, missing active progress, published timing overruns, missing witness custody, wrong sequencing, and mutable evidence destinations:
 
@@ -87,7 +100,7 @@ The published table remains unchanged. Its structural contract and both native/W
 
 ## Optimizations
 
-None. No product code, behavior, RNG, economy, payout, feel, timing rule, budget, or liveness floor has been changed by this row. Phase 3 changes are evidence-harness fixes only.
+None were made by this historical Phase 3 row; its changes were evidence-harness fixes only. A later 2026-09-16 non-binding pass reduced common table-renderer deep copies and cached a five-scalar Coin Pusher render projection. That later work changed no behavior, RNG, economy, payout, feel, timing rule, budget, or liveness floor and is documented separately in `docs/plans/perf06_1_preplacement_optimization_2026-09-16.md`.
 
 ## Historical comparator handling
 

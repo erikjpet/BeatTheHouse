@@ -1,6 +1,8 @@
 class_name CollectionDropService
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Run-boundary bridge: run code records pending markers, this service turns
 # terminal run outcomes into meta collection grants.
 
@@ -24,6 +26,8 @@ const SAL_STOCK_PROCESSED_FLAG := "_sal_resale_stock_processed"
 const SAL_STOCK_SUMMARY_FLAG := "_sal_resale_stock_summary"
 const HIGH_HEAT_CLEAN_ESCAPE_THRESHOLD := 65
 const HIGH_HEAT_CLEAN_ESCAPE_CHANCE_PERCENT := 35
+
+var _collection_item_resolver: Variant = CollectionItemResolverScript.new()
 
 
 func stock_sal_after_success(run_state: RunState, meta_collection_service: Variant) -> Dictionary:
@@ -80,9 +84,9 @@ func apply_terminal_special_outcome(run_state: RunState, meta_collection_service
 		return {
 			"ok": true,
 			"mutated": false,
-			"card_reward": _copy_dict(run_state.narrative_flags.get(PLAYERS_CARD_REWARD_FLAG, {})),
-			"chips_reward": _copy_dict(run_state.narrative_flags.get(GRAND_CASINO_CHIPS_REWARD_FLAG, {})),
-			"destroyed_cards": _copy_array(run_state.narrative_flags.get(PLAYERS_CARD_DESTROYED_FLAG, [])),
+			"card_reward": JsonCoerceScript._copy_dict(run_state.narrative_flags.get(PLAYERS_CARD_REWARD_FLAG, {})),
+			"chips_reward": JsonCoerceScript._copy_dict(run_state.narrative_flags.get(GRAND_CASINO_CHIPS_REWARD_FLAG, {})),
+			"destroyed_cards": JsonCoerceScript._copy_array(run_state.narrative_flags.get(PLAYERS_CARD_DESTROYED_FLAG, [])),
 		}
 	var result := {"ok": true, "mutated": false, "card_reward": {}, "chips_reward": {}, "destroyed_cards": []}
 	var modifiers := run_state.challenge_modifiers()
@@ -91,14 +95,14 @@ func apply_terminal_special_outcome(run_state: RunState, meta_collection_service
 		if bool(run_state.narrative_flags.get(MetaCollectionServiceScript.FAILURE_DECAY_FLAG, false)):
 			run_state.narrative_flags[SPECIAL_OUTCOME_PROCESSED_FLAG] = true
 			return result
-		var carried_ids := _copy_array(modifiers.get("meta_collection_carried_instance_ids", []))
+		var carried_ids := JsonCoerceScript._copy_array(modifiers.get("meta_collection_carried_instance_ids", []))
 		var consequences: Array = meta_collection_service.apply_failure_decay(carried_ids, "%s|failure" % run_state.seed_text)
 		var destroyed_cards: Array = []
 		for consequence_value in consequences:
-			var consequence := _copy_dict(consequence_value)
+			var consequence := JsonCoerceScript._copy_dict(consequence_value)
 			if str(consequence.get("item_class", "")) != CollectionItemResolverScript.ITEM_CLASS_PLAYERS_CARD or not bool(consequence.get("destroyed_forever", false)):
 				continue
-			var stamp := _copy_dict(consequence.get("instance_data", {}))
+			var stamp := JsonCoerceScript._copy_dict(consequence.get("instance_data", {}))
 			destroyed_cards.append({
 				"instance_id": int(consequence.get("instance_id", 0)),
 				"display_name": "Grand Casino Players Card",
@@ -170,7 +174,7 @@ func apply_terminal_special_outcome(run_state: RunState, meta_collection_service
 				result["chips_reward"] = chip_reward
 				result["mutated"] = true
 		if prestige:
-			var card_ids := _copy_array(modifiers.get("grand_casino_prestige_card_instance_ids", []))
+			var card_ids := JsonCoerceScript._copy_array(modifiers.get("grand_casino_prestige_card_instance_ids", []))
 			var prestige_result := {
 				"active": true,
 				"status": "retained",
@@ -211,7 +215,7 @@ func ensure_run_end_pending_bags(run_state: RunState, profile_inventory: Variant
 			if roll <= HIGH_HEAT_CLEAN_ESCAPE_CHANCE_PERCENT:
 				markers.append(_roll_bag_marker(run_state, "high_heat_clean_escape", "heat_%d" % run_state.suspicion_level(), rng))
 	for marker_value in markers:
-		var marker := _copy_dict(marker_value)
+		var marker := JsonCoerceScript._copy_dict(marker_value)
 		if not marker.is_empty():
 			run_state.add_pending_bag_marker(marker)
 	run_state.narrative_flags[EVALUATED_FLAG] = true
@@ -228,13 +232,13 @@ func flush_pending_bags(run_state: RunState, meta_collection_service: Variant) -
 		run_state.narrative_flags[GRANTS_FLAG] = []
 		run_state.narrative_flags[FLUSHED_FLAG] = true
 		return {"ok": true, "granted": [], "summary_lines": []}
-	var existing_lines := _copy_array(run_state.narrative_flags.get(GRANTS_FLAG, []))
+	var existing_lines := JsonCoerceScript._copy_array(run_state.narrative_flags.get(GRANTS_FLAG, []))
 	if bool(run_state.narrative_flags.get(FLUSHED_FLAG, false)):
 		return {"ok": true, "granted": [], "summary_lines": existing_lines}
 	var markers := run_state.pending_bag_markers()
 	var granted: Array = []
 	for marker_value in markers:
-		var marker := _enriched_marker(_copy_dict(marker_value))
+		var marker := _enriched_marker(JsonCoerceScript._copy_dict(marker_value))
 		var bagdef_id := int(marker.get("bagdef_id", -1))
 		if bagdef_id < 0:
 			continue
@@ -262,7 +266,7 @@ func flush_selected_pending_bag(run_state: RunState, meta_collection_service: Va
 		run_state.narrative_flags[GRANTS_FLAG] = []
 		run_state.narrative_flags[FLUSHED_FLAG] = true
 		return {"ok": true, "granted": [], "summary_lines": [], "message": "Collection bag rewards are only extracted after a victory."}
-	var existing_lines := _copy_array(run_state.narrative_flags.get(GRANTS_FLAG, []))
+	var existing_lines := JsonCoerceScript._copy_array(run_state.narrative_flags.get(GRANTS_FLAG, []))
 	if bool(run_state.narrative_flags.get(FLUSHED_FLAG, false)):
 		return {"ok": true, "granted": [], "summary_lines": existing_lines, "message": "A bag was already brought home."}
 	var selected_id := marker_id.strip_edges()
@@ -270,7 +274,7 @@ func flush_selected_pending_bag(run_state: RunState, meta_collection_service: Va
 		return {"ok": false, "granted": [], "summary_lines": [], "message": "Choose a bag to bring home."}
 	var selected_marker := {}
 	for marker_value in run_state.pending_bag_markers():
-		var marker := _enriched_marker(_copy_dict(marker_value))
+		var marker := _enriched_marker(JsonCoerceScript._copy_dict(marker_value))
 		if str(marker.get("marker_id", "")) == selected_id:
 			selected_marker = marker
 			break
@@ -299,7 +303,7 @@ func flush_selected_pending_bag(run_state: RunState, meta_collection_service: Va
 func summary_lines_for_markers(markers: Array) -> Array:
 	var lines: Array = []
 	for marker_value in markers:
-		var marker := _enriched_marker(_copy_dict(marker_value))
+		var marker := _enriched_marker(JsonCoerceScript._copy_dict(marker_value))
 		if marker.is_empty():
 			continue
 		var display_name := str(marker.get("display_name", "Collection Bag")).strip_edges()
@@ -325,21 +329,20 @@ func marker_from_static_bag(bagdef_id: int, source: String, source_id: String, r
 
 
 func _roll_bag_marker(run_state: RunState, source: String, source_id: String, rng: RngStream) -> Dictionary:
-	var resolver: Variant = CollectionItemResolverScript.new()
-	var collections: Array = resolver.collections()
+	var collections: Array = _collection_item_resolver.collections()
 	if collections.is_empty():
 		return {}
 	var collection_index := rng.randi_range(0, collections.size() - 1)
-	var collection := _copy_dict(collections[collection_index])
+	var collection := JsonCoerceScript._copy_dict(collections[collection_index])
 	var rolled_tier := _roll_tier(collection, rng)
 	var tier_bonus_steps := maxi(0, int(run_state.challenge_modifiers().get("meta_collection_drop_tier_bonus_steps", 0)))
 	var tier := _promote_tier(rolled_tier, tier_bonus_steps)
 	var collection_id := str(collection.get("id", ""))
-	var bag_defs: Array = resolver.bag_item_definitions(collection_id, tier)
+	var bag_defs: Array = _collection_item_resolver.bag_item_definitions(collection_id, tier)
 	if bag_defs.is_empty():
 		return {}
 	var bag_index := rng.randi_range(0, bag_defs.size() - 1)
-	var bag := _copy_dict(bag_defs[bag_index])
+	var bag := JsonCoerceScript._copy_dict(bag_defs[bag_index])
 	var bagdef_id := int(bag.get("itemdef_id", -1))
 	var seed_text := "%s|%s|%s|%s|%d|%d" % [
 		run_state.seed_text,
@@ -362,7 +365,7 @@ func _roll_bag_marker(run_state: RunState, source: String, source_id: String, rn
 
 
 func _roll_tier(collection: Dictionary, rng: RngStream) -> String:
-	var drop_table := _copy_dict(collection.get("drop_table", {}))
+	var drop_table := JsonCoerceScript._copy_dict(collection.get("drop_table", {}))
 	var tiers: Array = []
 	var total_weight := 0
 	for tier_value in CollectionItemResolverScript.TIERS:
@@ -377,7 +380,7 @@ func _roll_tier(collection: Dictionary, rng: RngStream) -> String:
 	var roll := rng.randi_range(1, total_weight)
 	var running := 0
 	for entry_value in tiers:
-		var entry := _copy_dict(entry_value)
+		var entry := JsonCoerceScript._copy_dict(entry_value)
 		running += int(entry.get("weight", 0))
 		if roll <= running:
 			return str(entry.get("tier", "blue"))
@@ -394,7 +397,7 @@ func _promote_tier(tier: String, bonus_steps: int) -> String:
 func _players_card_stamp(run_state: RunState) -> Dictionary:
 	var timeline: Array = []
 	for entry_value in run_state.story_log:
-		var entry := _copy_dict(entry_value)
+		var entry := JsonCoerceScript._copy_dict(entry_value)
 		if str(entry.get("type", "")) != "grand_casino_players_card_tier":
 			continue
 		timeline.append({
@@ -435,11 +438,10 @@ func _run_drop_rng(run_state: RunState) -> RngStream:
 func _enriched_marker(marker: Dictionary) -> Dictionary:
 	if marker.is_empty():
 		return {}
-	var resolver: Variant = CollectionItemResolverScript.new()
-	var bag: Dictionary = resolver.bag_definition(int(marker.get("bagdef_id", -1)))
+	var bag: Dictionary = _collection_item_resolver.bag_definition(int(marker.get("bagdef_id", -1)))
 	if bag.is_empty():
 		return marker
-	var collection: Dictionary = resolver.collection_definition(str(bag.get("collection_id", marker.get("collection_id", ""))))
+	var collection: Dictionary = _collection_item_resolver.collection_definition(str(bag.get("collection_id", marker.get("collection_id", ""))))
 	var enriched := marker.duplicate(true)
 	enriched["schema_version"] = 1
 	enriched["bagdef_id"] = int(bag.get("itemdef_id", marker.get("bagdef_id", -1)))
@@ -467,17 +469,3 @@ func _profile_has_challenge_completion(profile_inventory: Variant, completion_fl
 	if profile_inventory == null or completion_flag.strip_edges().is_empty():
 		return false
 	return bool(profile_inventory.has_challenge_completion(completion_flag))
-
-
-static func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	var dictionary: Dictionary = value
-	return dictionary.duplicate(true)
-
-
-static func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	var array: Array = value
-	return array.duplicate(true)

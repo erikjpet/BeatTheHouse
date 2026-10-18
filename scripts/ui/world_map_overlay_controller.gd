@@ -1,16 +1,17 @@
 class_name WorldMapOverlayController
 extends RefCounted
 
-signal refresh_requested()
-signal message_requested(text: String)
-signal travel_requested(target_id: String, label: String, choice: Dictionary)
-signal meta_travel_requested(target_id: String)
+# Coordinates the world-map overlay's nodes, selection, buttons, responsive
+# layout, and canvas snapshot; travel authority stays with FoundationMain.
+
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 signal node_pressed(node_id: String)
 
 const WORLD_MAP_NODE_BUTTON_POOL_SIZE := 24
 const WORLD_MAP_DETAIL_BADGE_CELL_POOL_SIZE := 6
 const WORLD_MAP_POPUP_ICON_GAP := 12.0
-const VisualStyle := preload("res://scripts/ui/visual_style.gd")
+const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
@@ -24,6 +25,7 @@ var detail_popup: PanelContainer
 var detail_label: Label
 var badge_slot: VBoxContainer
 var confirm_button: Button
+var close_button: Button
 var badge_row: HFlowContainer
 var badge_cells: Array = []
 var button_ids: Array = []
@@ -54,7 +56,7 @@ func clear_selection() -> void:
 	detail_badges_key = "__unset__"
 
 
-func configure_nodes(overlay_node: Control, holder_node: Control, nodes_layer_node: Control, title_node: Label, detail_popup_node: PanelContainer, detail_node: Label, badge_slot_node: VBoxContainer, confirm_node: Button) -> void:
+func configure_nodes(overlay_node: Control, holder_node: Control, nodes_layer_node: Control, title_node: Label, detail_popup_node: PanelContainer, detail_node: Label, badge_slot_node: VBoxContainer, confirm_node: Button, close_node: Button = null) -> void:
 	_clear_pressed_node()
 	overlay = overlay_node
 	holder = holder_node
@@ -64,6 +66,7 @@ func configure_nodes(overlay_node: Control, holder_node: Control, nodes_layer_no
 	detail_label = detail_node
 	badge_slot = badge_slot_node
 	confirm_button = confirm_node
+	close_button = close_node
 	if confirm_button != null:
 		var down_callback := Callable(self, "_on_confirm_button_down")
 		var up_callback := Callable(self, "_on_confirm_button_up")
@@ -75,6 +78,7 @@ func configure_nodes(overlay_node: Control, holder_node: Control, nodes_layer_no
 		holder.mouse_default_cursor_shape = Control.CURSOR_ARROW
 		holder.tooltip_text = "Scroll to zoom. Drag to move. Click empty space to reset."
 	_apply_small_screen_button_sizes()
+	_refresh_spatial_focus_neighbors()
 
 
 func set_small_screen_mode(enabled: bool) -> void:
@@ -96,13 +100,6 @@ func show_overlay() -> void:
 	overlay.move_to_front()
 
 
-func hide_overlay() -> void:
-	_clear_pressed_node()
-	confirm_button_press_active = false
-	if overlay != null:
-		overlay.visible = false
-
-
 func reset_button_layout() -> void:
 	button_layout_size = Vector2(-1.0, -1.0)
 
@@ -110,18 +107,6 @@ func reset_button_layout() -> void:
 func apply_title(text: String) -> void:
 	if title_label != null:
 		title_label.text = text
-
-
-func apply_detail(text: String, badges: Array, confirm_enabled: bool) -> void:
-	if detail_label != null:
-		detail_label.text = text
-	set_confirm_enabled(confirm_enabled)
-	set_detail_badges(badges)
-
-
-func set_confirm_enabled(enabled: bool) -> void:
-	if confirm_button != null:
-		confirm_button.disabled = not enabled
 
 
 func sync_canvas_snapshot(snapshot: Dictionary, snapshot_key: String) -> void:
@@ -143,6 +128,7 @@ func sync_node_buttons(snapshot: Dictionary) -> void:
 		button_layout_size = layer_size
 	else:
 		_position_node_buttons(snapshot)
+	_refresh_spatial_focus_neighbors()
 
 
 func clear_node_buttons() -> void:
@@ -155,6 +141,8 @@ func clear_node_buttons() -> void:
 		button.visible = false
 		button.disabled = true
 		button.tooltip_text = ""
+		button.text = ""
+		button.accessibility_name = ""
 		button.set_meta("node_id", "")
 		button.name = "WorldMapNodePool_%02d" % index
 	button_ids = []
@@ -163,7 +151,7 @@ func clear_node_buttons() -> void:
 
 func node_ids(snapshot: Dictionary) -> Array:
 	var ids: Array = []
-	for node_value in _copy_array(snapshot.get("nodes", [])):
+	for node_value in JsonCoerceScript._copy_array(snapshot.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
 		var node: Dictionary = node_value
@@ -231,14 +219,14 @@ func position_detail_popup(snapshot: Dictionary) -> void:
 	var holder_size := holder.size
 	if holder_size.x <= 0.0 or holder_size.y <= 0.0:
 		holder_size = Vector2(800, 430)
-	detail_popup.custom_minimum_size = Vector2(340.0, VisualStyle.FLEXIBLE_SIZE)
+	detail_popup.custom_minimum_size = Vector2(340.0, VisualStyleScript.FLEXIBLE_SIZE)
 	var content_minimum := detail_popup.get_combined_minimum_size()
 	var popup_size := FoundationWidgetsScript.autosize_popup(detail_popup, holder_size, content_minimum)
 	detail_popup.visible = true
 	var center := holder_size * 0.5
 	if nodes_layer != null and nodes_layer.has_method("local_position_for_node") and bool(nodes_layer.call("node_is_in_view", node_id)):
 		center = nodes_layer.call("local_position_for_node", node_id) as Vector2
-	var margin := float(VisualStyle.SPACE_5)
+	var margin := float(VisualStyleScript.SPACE_5)
 	var icon_rect := _node_visual_holder_rect(node_id)
 	if not icon_rect.has_area():
 		icon_rect = Rect2(center - Vector2(22.0, 22.0), Vector2(44.0, 44.0))
@@ -347,7 +335,7 @@ func set_detail_badges(badges_value: Variant) -> void:
 	if badge_slot == null:
 		return
 	_ensure_detail_badge_pool()
-	var badges := _copy_array(badges_value)
+	var badges := JsonCoerceScript._copy_array(badges_value)
 	detail_badges_snapshot = badges.duplicate(true)
 	var should_show := not badges.is_empty()
 	var badges_key := JSON.stringify(badges)
@@ -400,6 +388,14 @@ func handle_holder_gui_input(event: InputEvent) -> bool:
 					clear_selection()
 					_reset_to_authored_map_view()
 				return true
+			elif not pressed_node_id.is_empty():
+				# A node can move out of view while the map camera settles between
+				# pointer-down and pointer-up. Godot then drops the moving Button's
+				# release signals, but the stationary holder still receives release.
+				# Defer just like button_up so the Button's normal pressed signal gets
+				# the first chance; the activation serial then prevents a duplicate.
+				call_deferred("_finish_pressed_node")
+				return true
 	if event is InputEventMouseMotion and _navigation_drag_in_progress():
 		var moved := bool(nodes_layer.call("update_navigation_drag", (event as InputEventMouseMotion).position))
 		if moved:
@@ -422,6 +418,9 @@ func handle_holder_gui_input(event: InputEvent) -> bool:
 			else:
 				clear_selection()
 				_reset_to_authored_map_view()
+			return true
+		elif not pressed_node_id.is_empty():
+			call_deferred("_finish_pressed_node")
 			return true
 	if event is InputEventScreenDrag and _navigation_drag_in_progress():
 		var touch_moved := bool(nodes_layer.call("update_navigation_drag", (event as InputEventScreenDrag).position))
@@ -537,7 +536,7 @@ func _add_node_buttons(snapshot: Dictionary) -> void:
 		return
 	_ensure_node_button_pool()
 	var index := 0
-	for node_value in _copy_array(snapshot.get("nodes", [])):
+	for node_value in JsonCoerceScript._copy_array(snapshot.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
 		var node: Dictionary = node_value
@@ -556,7 +555,13 @@ func _add_node_buttons(snapshot: Dictionary) -> void:
 		var in_view := _node_is_in_canvas_view(node_id)
 		button.visible = in_view
 		button.disabled = not in_view
-		button.tooltip_text = str(node.get("label", node_id))
+		var label := _node_label(node, node_id)
+		button.tooltip_text = label
+		# The canvas owns the visible, bordered nameplate below the icon. This
+		# pooled Button is only its hit/focus target; drawing its text here places
+		# a duplicate location name across the icon itself.
+		button.text = ""
+		button.accessibility_name = label
 		button.set_meta("node_id", node_id)
 		button.name = "WorldMapNode_%s" % node_id
 		index += 1
@@ -567,7 +572,7 @@ func _position_node_buttons(snapshot: Dictionary) -> void:
 		return
 	_ensure_node_button_pool()
 	var index := 0
-	for node_value in _copy_array(snapshot.get("nodes", [])):
+	for node_value in JsonCoerceScript._copy_array(snapshot.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
 		var node: Dictionary = node_value
@@ -583,7 +588,10 @@ func _position_node_buttons(snapshot: Dictionary) -> void:
 		var in_view := _node_is_in_canvas_view(node_id)
 		button.visible = in_view
 		button.disabled = not in_view
-		button.tooltip_text = str(node.get("label", node_id))
+		var label := _node_label(node, node_id)
+		button.tooltip_text = label
+		button.text = ""
+		button.accessibility_name = label
 		button.set_meta("node_id", node_id)
 		button.name = "WorldMapNode_%s" % node_id
 		index += 1
@@ -598,6 +606,10 @@ func _node_button_position(node_id: String, node: Dictionary) -> Vector2:
 	if nodes_layer != null and nodes_layer.size.x > 0.0 and nodes_layer.size.y > 0.0 and nodes_layer.has_method("local_position_for_node"):
 		center = nodes_layer.call("local_position_for_node", node_id) as Vector2
 	return center
+
+
+func _node_label(node: Dictionary, node_id: String) -> String:
+	return str(node.get("label", node.get("display_name", node_id.replace("_", " ").capitalize()))).strip_edges()
 
 
 func _node_is_in_canvas_view(node_id: String) -> bool:
@@ -622,7 +634,7 @@ func _ensure_detail_badge_pool() -> void:
 		cell.mouse_filter = Control.MOUSE_FILTER_STOP
 		cell.mouse_default_cursor_shape = Control.CURSOR_ARROW
 		cell.custom_minimum_size = Vector2(24.0, 22.0)
-		cell.add_theme_stylebox_override("panel", _badge_cell_style(VisualStyle.CYAN_2))
+		cell.add_theme_stylebox_override("panel", _badge_cell_style(VisualStyleScript.CYAN_2))
 		var cell_box := HBoxContainer.new()
 		cell_box.add_theme_constant_override("separation", 3)
 		cell.add_child(cell_box)
@@ -676,7 +688,7 @@ func _update_detail_badge_cells(badges: Array) -> void:
 			label.text = ""
 			label.visible = false
 			continue
-		var accent := VisualStyle.color(AttributeBadgesScript.palette_token_for_badge(badge), VisualStyle.CYAN_2)
+		var accent := VisualStyleScript.color(AttributeBadgesScript.palette_token_for_badge(badge), VisualStyleScript.CYAN_2)
 		var detail_text := _badge_tooltip_text(badge)
 		cell.visible = true
 		cell.tooltip_text = detail_text
@@ -685,13 +697,13 @@ func _update_detail_badge_cells(badges: Array) -> void:
 		icon.texture = AttributeBadgeRowScript.texture_for_badge(badge, 16, false)
 		label.text = detail_text
 		label.visible = false
-		label.add_theme_color_override("font_color", VisualStyle.accessible_color(accent))
+		label.add_theme_color_override("font_color", VisualStyleScript.accessible_color(accent))
 
 
 func _badge_cell_style(accent: Color) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(accent.r, accent.g, accent.b, 0.12)
-	style.border_color = VisualStyle.accessible_color(accent)
+	style.border_color = VisualStyleScript.accessible_color(accent)
 	style.border_width_left = 1
 	style.border_width_top = 1
 	style.border_width_right = 1
@@ -726,7 +738,10 @@ func _hit_button(callback: Callable) -> Button:
 	var button := Button.new()
 	button.text = ""
 	button.flat = true
-	button.focus_mode = Control.FOCUS_NONE
+	button.focus_mode = Control.FOCUS_ALL
+	button.clip_text = true
+	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	button.add_theme_font_size_override("font_size", 8)
 	button.mouse_filter = Control.MOUSE_FILTER_PASS
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -770,6 +785,82 @@ func _ensure_node_button_pool() -> void:
 		button.button_down.connect(Callable(self, "_on_pool_button_down").bind(index))
 		button.button_up.connect(Callable(self, "_on_pool_button_up").bind(index))
 		nodes_layer.add_child(button)
+
+
+func focus_first_available(fallback: Control = null) -> bool:
+	var preferred: Button = null
+	for index in range(WORLD_MAP_NODE_BUTTON_POOL_SIZE):
+		var button := _pool_button(index)
+		if button == null or not button.is_visible_in_tree() or button.disabled:
+			continue
+		if preferred == null:
+			preferred = button
+		if str(button.get_meta("node_id", "")) == selected_node_id:
+			preferred = button
+			break
+	if preferred != null:
+		preferred.grab_focus()
+		return true
+	if fallback != null and fallback.is_visible_in_tree() and fallback.focus_mode != Control.FOCUS_NONE:
+		fallback.grab_focus()
+		return true
+	return false
+
+
+func focus_controls() -> Array[Control]:
+	var controls: Array[Control] = []
+	for index in range(WORLD_MAP_NODE_BUTTON_POOL_SIZE):
+		var button := _pool_button(index)
+		if button != null and button.is_visible_in_tree() and not button.disabled:
+			controls.append(button)
+	if confirm_button != null and confirm_button.is_visible_in_tree() and not confirm_button.disabled:
+		controls.append(confirm_button)
+	if close_button != null and close_button.is_visible_in_tree() and not close_button.disabled:
+		controls.append(close_button)
+	return controls
+
+
+func refresh_focus_neighbors() -> void:
+	_refresh_spatial_focus_neighbors()
+
+
+func _refresh_spatial_focus_neighbors() -> void:
+	var buttons: Array[Button] = []
+	for index in range(WORLD_MAP_NODE_BUTTON_POOL_SIZE):
+		var button := _pool_button(index)
+		if button != null and button.visible and not button.disabled:
+			buttons.append(button)
+	for button in buttons:
+		button.focus_neighbor_left = _focus_neighbor_path(button, buttons, Vector2.LEFT)
+		button.focus_neighbor_right = _focus_neighbor_path(button, buttons, Vector2.RIGHT)
+		button.focus_neighbor_top = _focus_neighbor_path(button, buttons, Vector2.UP)
+		button.focus_neighbor_bottom = _focus_neighbor_path(button, buttons, Vector2.DOWN)
+	var ring := focus_controls()
+	for index in range(ring.size()):
+		var control := ring[index]
+		var next: Control = ring[posmod(index + 1, ring.size())]
+		var previous: Control = ring[posmod(index - 1, ring.size())]
+		control.focus_next = control.get_path_to(next)
+		control.focus_previous = control.get_path_to(previous)
+
+
+func _focus_neighbor_path(source: Button, candidates: Array[Button], direction: Vector2) -> NodePath:
+	var source_center := source.position + source.size * 0.5
+	var best: Button = null
+	var best_score := INF
+	for candidate in candidates:
+		if candidate == source:
+			continue
+		var delta := candidate.position + candidate.size * 0.5 - source_center
+		var forward := delta.dot(direction)
+		if forward <= 0.5:
+			continue
+		var cross := absf(delta.cross(direction))
+		var score := forward + cross * 2.0
+		if score < best_score:
+			best_score = score
+			best = candidate
+	return source.get_path_to(best) if best != null else NodePath()
 
 
 func _pool_button(index: int) -> Button:
@@ -897,7 +988,3 @@ func _confirm_result(action: String, target_id: String, label: String, choice: D
 		"selected_travel_target_id": selected_travel_target_id,
 		"selected_travel_label": selected_travel_label,
 	}
-
-
-func _copy_array(value: Variant) -> Array:
-	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []

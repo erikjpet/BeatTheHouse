@@ -32,7 +32,7 @@ their requirements are folded in below). Do not look for them.
 
 ## Read first
 
-- `docs/plans/0.4_act1_completion_plan.md`
+- `docs/archive/0.4/plans/0.4_act1_completion_plan.md`
 - `docs/plans/item_collection_meta_system_plan.md` (rev 2)
 - `docs/todone/item_meta_p0_collections_schema_prompt.md` +
   `docs/todone/item_meta_p1_bag_drops_prompt.md` execution records

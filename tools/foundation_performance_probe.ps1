@@ -79,6 +79,7 @@ $oldCandidateCommit = $env:BTH_PERF_CANDIDATE_COMMIT
 $oldProfileManifestSha256 = $env:BTH_PERF_PROFILE_MANIFEST_SHA256
 $oldEvidenceProfile = $env:BTH_PERF_EVIDENCE_PROFILE
 $oldNativePluginSha256 = $env:BTH_PERF_NATIVE_PLUGIN_SHA256
+$oldErrorActionPreference = $ErrorActionPreference
 try {
     $env:BTH_PERF_RUNS = [string]$RunCount
     $env:BTH_PERF_FRAMES = [string]$FramesPerSurface
@@ -94,10 +95,15 @@ try {
     $env:BTH_PERF_PROFILE_MANIFEST_SHA256 = $ProfileManifestSha256
     if ($EvidenceProfile) { $env:BTH_PERF_EVIDENCE_PROFILE = $EvidenceProfile }
     $env:BTH_PERF_NATIVE_PLUGIN_SHA256 = $nativePluginHash
+    # Godot may emit non-fatal shutdown diagnostics on stderr. Preserve them in
+    # the console, but use the process exit code as the probe authority.
+    $ErrorActionPreference = "Continue"
     & $consoleGodot --headless --path $root --script "res://tools/foundation_performance_probe.gd"
-    exit $LASTEXITCODE
+    $godotExitCode = $LASTEXITCODE
+    exit $godotExitCode
 }
 finally {
+    $ErrorActionPreference = $oldErrorActionPreference
     $env:BTH_PERF_RUNS = $oldRuns
     $env:BTH_PERF_FRAMES = $oldFrames
     $env:BTH_PERF_RESOLVE_SAMPLES = $oldResolveSamples

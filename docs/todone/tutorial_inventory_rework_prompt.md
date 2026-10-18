@@ -91,7 +91,7 @@ The run inventory screen reads poorly. Rework its layout for clarity:
 ## Part 2 — Description redo (voice)
 
 Rewrite every item description in the neo-noir voice of
-`docs/plans/0.5_voice_bible.md`: one short, characterful line that conveys what
+`docs/archive/0.5/plans/0.5_voice_bible.md`: one short, characterful line that conveys what
 the thing *is to you*, not a spec. The glyphs/badges carry the numbers — prose
 must not restate effect values ("+2 luck for 3 turns" as words is banned).
 Every item gets a distinct line; no mechanical dumps, no duplicated phrasing

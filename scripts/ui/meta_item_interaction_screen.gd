@@ -1,6 +1,11 @@
 class_name MetaItemInteractionScreen
 extends Control
 
+# Modal collection-item detail/action screen. It owns selection and responsive
+# layout while all profile mutations remain in the calling service.
+
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 signal close_requested
 signal selection_changed(selection_key: String)
 signal action_requested(action_id: String, payload: Dictionary)
@@ -22,34 +27,44 @@ var _panel: PanelContainer
 var _body: BoxContainer
 var _title_label: Label
 var _summary_label: Label
+var _search_input: LineEdit
+var _search_status_label: Label
 var _surface: InventoryContainerSurface
 var _detail_panel: PanelContainer
 var _detail_box: VBoxContainer
 var _close_button: Button
 var _focus_return_target: Control
+var modal_focus_scope: RefCounted
+var _search_query := ""
+var _visible_item_count := 0
 
 
 func _init() -> void:
 	_build()
 
 
-func configure(texture_provider: Callable) -> void:
+func configure(texture_provider: Callable, focus_scope: RefCounted = null) -> void:
 	_texture_provider = texture_provider
+	modal_focus_scope = focus_scope
 	_surface.configure(texture_provider, CatalogScript.load_catalog())
 
 
 func open(model: Dictionary) -> void:
-	if not visible:
+	if modal_focus_scope == null and not visible:
 		var focus_owner := get_viewport().gui_get_focus_owner() if get_viewport() != null else null
 		if focus_owner is Control and focus_owner != self and not is_ancestor_of(focus_owner):
 			_focus_return_target = focus_owner as Control
 	visible = true
 	update_model(model)
 	move_to_front()
+	if modal_focus_scope != null:
+		modal_focus_scope.call("push_scope", self, _close_button)
 	if not selected_key().is_empty():
 		_surface.focus_selection(selected_key(), false)
 	else:
 		_close_button.grab_focus()
+	if modal_focus_scope != null:
+		modal_focus_scope.call("refresh_scope", self, _close_button)
 	_position_popup()
 	call_deferred("_position_popup")
 
@@ -58,18 +73,28 @@ func update_model(model: Dictionary) -> void:
 	_model = model.duplicate(true)
 	_title_label.text = str(_model.get("title", "Inventory"))
 	_summary_label.text = str(_model.get("summary", ""))
-	_surface.update_model(_model)
+	_apply_search()
 	_render_detail()
 	_position_popup()
+	if visible and modal_focus_scope != null:
+		modal_focus_scope.call("refresh_scope", self, _close_button)
 
 
 func close() -> void:
 	var was_visible := visible
+	if was_visible and modal_focus_scope != null:
+		modal_focus_scope.call("pop_scope", self)
 	visible = false
 	_model = {}
+	_search_query = ""
+	_visible_item_count = 0
+	if _search_input != null:
+		_search_input.set_block_signals(true)
+		_search_input.text = ""
+		_search_input.set_block_signals(false)
 	_surface.update_model({})
 	FoundationWidgets.clear(_detail_box)
-	if was_visible:
+	if was_visible and modal_focus_scope == null:
 		call_deferred("_restore_previous_focus")
 
 
@@ -87,6 +112,10 @@ func is_open() -> bool:
 
 func selected_key() -> String:
 	return _surface.selected_key()
+
+
+func visible_item_count() -> int:
+	return _visible_item_count
 
 
 func set_small_screen_mode(enabled: bool) -> void:
@@ -110,7 +139,7 @@ func layout_snapshot() -> Dictionary:
 		"detail_rect": _detail_panel.get_global_rect() if _detail_panel != null else Rect2(),
 		"surface": _surface.layout_snapshot() if _surface != null else {},
 		"selected_key": selected_key(),
-		"item_count": _dictionary_array(_model.get("items", [])).size(),
+		"item_count": JsonCoerceScript._dictionary_array(_model.get("items", [])).size(),
 		"small_screen_mode": _small_screen_mode,
 		"reduced_motion": _reduced_motion,
 	}
@@ -143,6 +172,23 @@ func _build() -> void:
 	_summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	FoundationWidgets.set_control_font_color(_summary_label, VisualStyle.CYAN)
 	stack.add_child(_summary_label)
+	var browser_row := HBoxContainer.new()
+	browser_row.add_theme_constant_override("separation", 8)
+	stack.add_child(browser_row)
+	_search_input = LineEdit.new()
+	_search_input.placeholder_text = "Search names, effects, collection, tier, or location..."
+	_search_input.tooltip_text = "Search every item currently available in this inventory view."
+	_search_input.clear_button_enabled = true
+	_search_input.custom_minimum_size = Vector2(280, FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	_search_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	FoundationWidgets.set_control_font_color(_search_input, VisualStyle.WHITE)
+	_search_input.add_theme_stylebox_override("normal", VisualStyle.pixel_box(Color(VisualStyle.role("surface_raised"), 0.98), VisualStyle.TEAL, VisualStyle.BORDER_STANDARD))
+	_search_input.add_theme_stylebox_override("focus", VisualStyle.pixel_box(Color(VisualStyle.role("surface_overlay"), 0.98), VisualStyle.CYAN, VisualStyle.BORDER_STANDARD))
+	_search_input.text_changed.connect(_on_search_changed)
+	browser_row.add_child(_search_input)
+	_search_status_label = FoundationWidgets.muted_label("", 11)
+	_search_status_label.custom_minimum_size.x = 110
+	browser_row.add_child(_search_status_label)
 	_body = BoxContainer.new()
 	_body.vertical = false
 	_body.add_theme_constant_override("separation", 10)
@@ -194,6 +240,22 @@ func _render_detail() -> void:
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	FoundationWidgets.set_control_font_color(title, VisualStyle.YELLOW)
 	header.add_child(title)
+	var effect_lines := JsonCoerceScript._copy_array(item.get("effect_lines", []))
+	var effect_summary := str(item.get("effect_summary", "")).strip_edges()
+	if not effect_lines.is_empty() or not effect_summary.is_empty():
+		_add_detail_heading("Effect")
+		if effect_lines.is_empty():
+			_add_detail_copy(effect_summary)
+		else:
+			for effect_line_value in effect_lines:
+				var effect_line := str(effect_line_value).strip_edges()
+				if not effect_line.is_empty():
+					_add_detail_copy("• %s" % effect_line)
+	var use_instructions := str(item.get("use_instructions", "")).strip_edges()
+	if not use_instructions.is_empty():
+		_add_detail_heading("How to use")
+		_add_detail_copy(use_instructions)
+	_add_detail_heading("Item details")
 	FoundationWidgets.add_detail_row(_detail_box, "Where", str(item.get("storage_source", "stored")).replace("_", " ").capitalize())
 	FoundationWidgets.add_detail_row(_detail_box, "Stack", str(card.get("stack_text", "+1")))
 	FoundationWidgets.add_detail_row(_detail_box, "Affinity", str(card.get("affinity_label", "General")))
@@ -224,9 +286,80 @@ func _render_detail() -> void:
 		FoundationWidgets.add_detail_row(_detail_box, "Unavailable", disabled_reason, true)
 	if str(_model.get("mode", "")) == "meta_sale" and bool(item.get("sale_eligible", false)):
 		_render_sale_breakdown(item)
-	for action_value in _dictionary_array(item.get("actions", [])):
+	for action_value in JsonCoerceScript._dictionary_array(item.get("actions", [])):
 		_add_action(action_value)
 	_add_global_actions()
+
+
+func _apply_search() -> void:
+	var all_items := JsonCoerceScript._dictionary_array(_model.get("items", []))
+	var visible_items: Array = []
+	var query := _search_query.strip_edges().to_lower()
+	for item_value in all_items:
+		var item: Dictionary = item_value
+		if query.is_empty() or _item_search_text(item).contains(query):
+			visible_items.append(item)
+	var filtered := _model.duplicate(true)
+	filtered["items"] = visible_items
+	_visible_item_count = visible_items.size()
+	var containers := JsonCoerceScript._dictionary_array(filtered.get("containers", []))
+	if not containers.is_empty():
+		var container: Dictionary = containers[0]
+		var visible_keys := {}
+		for item_value in visible_items:
+			visible_keys[str((item_value as Dictionary).get("selection_key", ""))] = true
+		var slots: Array = []
+		for slot_value in JsonCoerceScript._dictionary_array(container.get("slots", [])):
+			var slot: Dictionary = slot_value
+			if visible_keys.has(str(slot.get("selection_key", ""))):
+				slots.append(slot)
+		container["slots"] = slots
+		containers[0] = container
+		filtered["containers"] = containers
+	var selected := str(filtered.get("selected_key", ""))
+	var selection_visible := false
+	for item_value in visible_items:
+		if str((item_value as Dictionary).get("selection_key", "")) == selected:
+			selection_visible = true
+			break
+	if not selection_visible:
+		filtered["selected_key"] = str((visible_items[0] as Dictionary).get("selection_key", "")) if not visible_items.is_empty() else ""
+	_surface.update_model(filtered)
+	if _search_status_label != null:
+		_search_status_label.text = "%d of %d" % [visible_items.size(), all_items.size()]
+
+
+func _item_search_text(item: Dictionary) -> String:
+	return " ".join([
+		str(item.get("display_name", "")),
+		str(item.get("description", "")),
+		str(item.get("effect_summary", "")),
+		str(item.get("use_instructions", "")),
+		str(item.get("collection_display_name", "")),
+		str(item.get("tier", "")),
+		str(item.get("storage_source", "")),
+		str(item.get("group_label", "")),
+	]).to_lower()
+
+
+func _on_search_changed(value: String) -> void:
+	_search_query = value
+	_apply_search()
+	_render_detail()
+
+
+func _add_detail_heading(text: String) -> void:
+	var heading := FoundationWidgets.label(text.to_upper(), 12)
+	FoundationWidgets.set_control_font_color(heading, VisualStyle.AMBER)
+	_detail_box.add_child(heading)
+
+
+func _add_detail_copy(text: String) -> void:
+	var copy := FoundationWidgets.label(text, 12)
+	copy.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	FoundationWidgets.set_control_font_color(copy, VisualStyle.WHITE)
+	_detail_box.add_child(copy)
 
 
 func _render_sale_breakdown(item: Dictionary) -> void:
@@ -246,14 +379,14 @@ func _render_sale_breakdown(item: Dictionary) -> void:
 
 
 func _add_global_actions() -> void:
-	var trade_summary := _dictionary_array(_model.get("trade_summary", []))
+	var trade_summary := JsonCoerceScript._dictionary_array(_model.get("trade_summary", []))
 	if not trade_summary.is_empty():
 		var heading := FoundationWidgets.label("Trade Inputs", 13)
 		FoundationWidgets.set_control_font_color(heading, VisualStyle.CYAN)
 		_detail_box.add_child(heading)
 		for row in trade_summary:
 			FoundationWidgets.add_detail_row(_detail_box, "#%d" % int(row.get("position", 0)), "%s · %s" % [str(row.get("display_name", "Item")), str(row.get("tier", "")).capitalize()])
-	for action_value in _dictionary_array(_model.get("global_actions", [])):
+	for action_value in JsonCoerceScript._dictionary_array(_model.get("global_actions", [])):
 		_add_action(action_value)
 
 
@@ -261,7 +394,7 @@ func _add_action(action: Dictionary) -> void:
 	var enabled := bool(action.get("enabled", true))
 	var label := str(action.get("label", action.get("id", "Action")))
 	if enabled:
-		FoundationWidgets.add_card_button(_detail_box, label, Callable(self, "_emit_action").bind(str(action.get("id", "")), _copy_dict(action.get("payload", {}))), false, true)
+		FoundationWidgets.add_card_button(_detail_box, label, Callable(self, "_emit_action").bind(str(action.get("id", "")), JsonCoerceScript._copy_dict(action.get("payload", {}))), false, true)
 	else:
 		FoundationWidgets.add_detail_row(_detail_box, label, str(action.get("disabled_reason", "Unavailable")), true)
 
@@ -316,17 +449,3 @@ func _texture(path: String) -> Texture2D:
 			return provided as Texture2D
 	var loaded: Variant = load(path)
 	return loaded as Texture2D if loaded is Texture2D else null
-
-
-func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value as Array:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append((entry as Dictionary).duplicate(true))
-	return result
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}

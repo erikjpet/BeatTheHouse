@@ -1,6 +1,9 @@
 class_name WagerConfirmationController
 extends RefCounted
 
+# Owns the pending UI state for high-risk/all-in wager confirmation without
+# resolving or charging the wager itself.
+
 signal confirm_requested()
 signal cancel_requested()
 
@@ -55,10 +58,6 @@ func pending_state() -> Dictionary:
 		"source_game_id": pending_source_game_id,
 		"source_game_state_key": pending_source_game_state_key,
 	}
-
-
-func has_pending() -> bool:
-	return not pending_action_id.is_empty()
 
 
 func clear() -> void:

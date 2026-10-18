@@ -2,6 +2,266 @@
 
 All notable public release changes for Beat the House are recorded here.
 
+## 0.6.1 - Unreleased stability fixes
+
+- Preserves paid Coin Pusher drops and settled machine progress when returning
+  to Main Menu or closing the game.
+- Keeps the current run open when its final save fails, including native window
+  close and run-report Home/New Run navigation. Saving can be retried after
+  storage recovers; deferred or busy saves no longer count as durable success.
+- Keeps Run Menu open when a manual save is still waiting for a live machine
+  to settle, and cancels obsolete exit/HUD work before recovery.
+
+## 0.6.0 - Feature-complete source
+
+Status: **release-ready and version-stamped in source. The owner accepted
+the current environment placements as the 0.6 baseline on 2026-10-18. Windows,
+Web, source packaging, normal ending routes and native Windows performance
+Smoke have been verified. The owner authorized the official `v0.6.0` tag;
+distribution uploads remain a separate owner action.** Project and platform export metadata
+read `0.6.0`. Further placement tuning and seed-based stability work belong to
+0.6.1 unless they expose a demonstrated release blocker.
+
+- Removes 25 historical generated test saves/profile files from documentation
+  evidence before the official tag. Runnable packages contain no player saves,
+  inventories, progress, settings or authority keys. Intentional source-only
+  regression fixtures remain excluded from both game builds.
+
+### Feature-complete source update (2026-10-08)
+
+- Reworks Back-Room Hold'em so patrons take paced automatic turns with variable
+  thinking time. Five personality-shaped tell emotions provide imperfect
+  information rather than exposing private cards, and the player can project a
+  tell in return. Folded player cards now leave through the dealer/muck
+  animation before disappearing.
+- Rebuilds the Scratch Ticket vending surface around a detailed physical
+  cabinet. A lift shelf picks and lowers each ticket in about 1.5 seconds with
+  machine audio, the ticket lands in an output tray, and selecting the tray
+  moves it into the play area.
+- Gives Bar Dice a fixed 1280x720 composition with separate patron, dice,
+  rules, paytable, timer, and control regions so its interface no longer stacks
+  labels or buttons over active play.
+- Gives the Street Craps variant its own low-profile alley object: a chalk
+  circle, loose dice, cash, pavement marks, and players' feet replace the
+  casino Craps table while preserving the same game activation.
+- Keeps Environment Library sessions non-terminal. Practice rooms ignore
+  closing-time and ordinary run-terminal exits; rooms without a wagerable game,
+  including The Punchline's public comedy-club layer, recognize the practice
+  Leave interaction instead of routing to Stranded. Placement/access warnings
+  no longer prevent a broken layout from loading for repair.
+- Adds a direct Main Menu button to the completed-run report alongside New Run
+  and Home, while retaining the required earned-reward selection lock.
+- Removes duplicate location names drawn over world-map icons and sizes each
+  bordered destination nameplate to its actual text instead of a fixed width.
+- Raises both flanking members of The Crew's three-person environment object to
+  the normal character scale so the trio no longer appears undersized.
+- Restores autonomous animation scheduling across environments, placement
+  tools, and game surfaces. Animations remain live without mouse movement and
+  while overlays are open; performance work reduces scheduled-frame cost with
+  caches, retained layers, bounded updates, and deferred post-action work.
+- Reduces event-activation, object-loading, slot-dragging, slot-placement, and
+  post-move stalls, including the previously visible counter-phone and parking-
+  lot-note spikes, without suppressing game or room animation.
+- Tightens environment generation and placement authoring: inactive scenario
+  slots are excluded from no-scenario rooms, event slots without any possible
+  claimant are pruned, all slot families can be selected together, fixed event
+  and exit slots remain movable in scenario contexts, and each object exposes
+  one of three explicit draw layers. F1 now toggles slot placement mode itself,
+  F2 continues to hide or restore its panel, and F9 loads a random environment
+  with a compatible exact scenario from any active Environment Library room.
+  The Leave object remains selectable and draggable while placement mode is on,
+  while double-click or Enter still uses it to leave the room. The
+  resulting live authority contains 521 raw source/template positions, 368
+  reachable room-shared positions, and 604 scenario-local positions for 972
+  unique manual entries.
+- Restores game capacity mistakenly removed during slot consolidation. Pull
+  Tabs again appears as a physical machine in the Bar, Gas Station Casino,
+  Jazz Club, and Grand Casino, and the Gas Station again exposes all three of
+  its selected machines; counter staff retain help and redemption actions.
+- Adds broader per-character idle variation so room and table figures do not
+  all repeat the same gesture cadence.
+- Removes 105 unreferenced production functions, 13 unused tool helpers, one
+  unreachable retired menu implementation, and three stale script-ID sidecars.
+  Live save migrations and compatibility contracts remain intact.
+- Declares the 11-game 0.6 feature set complete. The remaining authoring work is
+  the manual 75-context slot-placement pass, schema-3 report promotion, and
+  focused post-promotion validation before final packaging.
+
+### Pre-release 5 (2026-10-05)
+
+- Adds a visible minimize control to the placement panel. While minimized, the
+  entire large panel is removed from hit testing so room objects and slots that
+  it covered can be selected normally without disrupting the panel's buttons.
+- Keeps a small restore button available to bring back every panel control and
+  retains F2 as the keyboard-parity shortcut for the same toggle.
+- Preserves the minimized state while advancing between placement contexts and
+  resets it when placement mode is exited, so later sessions reopen with the
+  full workflow visible.
+- Publishes the urgent Windows `v0.6.0-pre.5` owner-workflow candidate after
+  focused placement-panel checks. Broader candidate verification continues
+  after publication; final stable qualification remains separate.
+
+### Pre-release 4 (2026-10-05)
+
+- Removes dead and unreachable room positions, repairs misleading claimant
+  labels, and gives all 55 scenario layouts collision-free initial geometry so
+  the owner's pass starts from a usable composition.
+- Keeps placement views readable by showing detailed marker labels only for
+  the selected or hovered object, while retaining overlap warnings and the
+  four-family editing model.
+- Requires deliberate review of every nonempty family before a base layout can
+  be marked complete, and adds **Save & Load Next Missing** for a direct
+  save-and-advance pass through the 75 contexts.
+- Hides **Save to Project** in packaged builds so downloadable candidates only
+  write the portable placement report.
+- Adds a report verification and import workflow that checks source provenance,
+  complete layout coverage, and placement-authority hashes before returned
+  schema-3 coordinates can become committed authority.
+- Publishes the Windows `v0.6.0-pre.4` candidate for the owner's placement pass.
+  Broad verification is being completed against that published candidate.
+
+### Pre-release 3 (2026-10-04)
+
+- Completes the post-migration slot review across all 75 playable layout
+  contexts. The raw source/template authority is now 565 positions (175 fixed,
+  144 event, 213 scenario-source, and 33 exit), while the 55 exact scenario
+  layouts contain 604 independently movable scenario-local positions. Together
+  with 395 reachable room-shared positions, the manual pass covers 999 unique
+  placements.
+- Removes the remaining dead travel, home-fixture, service, lender, and game
+  rows; aligns shop positions with generator maxima; and gives guaranteed or
+  footprint-pooled content accurate fixed IDs. It retains one clearly named
+  `exit.motel_room` reserve for the return door created by active motel-room
+  ownership and keeps the three Grand Casino subroom Leave exits used by the
+  world-map UI. No provable fixed/exit orphan, duplicate ID, duplicate exact
+  rectangle, or dangling mapping remains.
+- Fixes hidden-casino Blackjack falling through to the Numbers Book by replacing
+  the mixed-footprint bank with two true floor-game positions. Kitty's variable
+  games and the hidden casino's variable games/lenders now remain ID-independent
+  while respecting their physical footprints.
+- Adds a permanent 75-context runtime audit. Six deterministic seeds per
+  context verify 450 generated rooms, sealed and recomputed bindings, manifest
+  authority, single-slot occupancy, and non-overlapping occupied hit regions.
+  The larger review sweep covered 1,200 generated layouts with the same clean
+  result. The maintained audit observes a maximum of 16 occupied room objects
+  and fails if any generated layout exceeds the reviewed limit of 20.
+- Tightens the owner workflow with an Environment Library, one-click **Load
+  Next Missing** traversal, clear SAVED/TODO progress, family tabs, actual
+  claimant labels, and automatic locking to an exact scenario's authored
+  Punchline area. Shared room positions remain visible but locked during exact
+  scenario placement unless the owner explicitly enables shared editing and
+  accepts that the room's saved progress will be reset.
+- Fixes object-drag placement so the visible rectangle's top-left is translated
+  to the slot's authored anchor before persistence; reloading now preserves the
+  exact visual location selected by the owner.
+- Publishes a downloadable Windows testing archive and checksums from the exact
+  `v0.6.0-pre.3` source commit. The 75-layout artistic placement pass remains
+  intentionally owner-driven and exports a complete, self-contained report
+  with build/source identity and placement-authority hashes.
+
+### Pre-release 2 (2026-10-03)
+
+- Consolidates all 21 environment maps and 55 scenarios into 659 authored
+  positions: 214 permanent `fixed`, 147 optional `event`, 222 reusable
+  `scenario`, and 76 real `exit` positions. The rework removes 63 redundant or
+  misleading positions without reducing verified simultaneous capacity.
+- Reworks manual placement around one family at a time, occupant-first labels,
+  scenario/phase context, hidden empty and runtime-reserve capacity, and
+  context-aware overlap warnings. Packaged builds can export every local edit
+  for translation back into committed placement data.
+- Moves Pull Tabs into each venue's existing bartender, sales counter, clerk,
+  or host desk as counter merchandise. Buying, help, and redemption no longer
+  create a separate lottery clerk or machine in the room.
+- Preserves all Pull Tab cashout, suspicion, counterfeit, scrutiny, and Heat
+  calculations, while suspicious redemptions now trigger a contextual staff
+  exchange after the mechanical result is applied exactly once.
+- Publishes a downloadable Windows testing archive and checksums from the exact
+  `v0.6.0-pre.2` source commit. Fresh runs are expected; legacy save migration
+  is intentionally outside this prerelease.
+
+### Added
+
+- Adds 55 persistent Living Town scenarios with visible room objectives,
+  actors, props, phases, actions, aftermath, save/revisit state, and hidden-state
+  boundaries across five authored environment packages.
+- Adds the connected Crew campaign: trust and grievances, deliveries, Numbers,
+  recruitment and jobs, five coordinated table plays, Police Sweep responses,
+  a Grand Casino heist route, and a confrontation that can reshape the Crew.
+- Expands the catalog to eleven full games with physical casino/street Craps,
+  deterministic three-cabinet Coin Pusher V3, and six-handed back-room no-limit
+  Hold'em alongside the existing Act 1 games.
+- Adds game-wide table/machine ritual vocabulary, per-game depth interactions,
+  stateful patrons and dealers, readable correction paths, and stronger
+  save/replay/hidden-information contracts.
+- Adds thirteen manifest-driven surface SFX profiles plus adaptive music fills,
+  phrase choreography, outcome accents, and native/Web delivery parity.
+- Expands the teaching catalog to 66 lessons covering current world, scenario,
+  Crew, Craps, Coin Pusher, poker, and Police Sweep systems.
+- Adds a Scratch Ticket scalper trade, deterministic mid-visit people, career
+  and run-report surfacing, and expanded room/game prop identities.
+- Adds a rare yellow glimmer that can briefly pick out an eligible unrevealed
+  high-tier Pull Tab while preserving the machine's fixed outcomes and odds.
+
+### Changed
+
+- Replaces each map-wide generic scenario pool with 55 compact, context-local
+  scenario banks. Each environment/scenario combination now owns independently
+  movable role slots while mutually exclusive phases and outcomes reuse the
+  same local capacity.
+- Adds **Save Current Layout** and schema-3 placement reports for the complete
+  75-context owner pass (20 reachable no-scenario rooms plus 55 scenario
+  layouts), with the raw layered Punchline parent explicitly excluded as a
+  non-playable source template and
+  explicit saved/missing coverage in both editor and packaged builds.
+- Validates full-layout saves against the exact authored slot inventory,
+  merges committed and local coverage correctly, and prevents retained
+  layer-specific scenarios from claiming another floor's placement layout.
+- Reworks rooms around the explicit `fixed`, `event`, `scenario`, and `exit`
+  placement families. Games, shop items, people, and illustrated props occupy
+  art-aligned places, abstract scenario work attaches to tangible hosts, and
+  counter art properly occludes staff stationed behind it.
+- Adds three Grand Casino ending routes: Linda's Bronze-to-Gold Players Card
+  climb, Rourke's walk/pat-down/interrogation/duel sequence, and a Crew heist.
+- Deepens every game without changing established economic authority: Baccarat
+  and Roulette table rituals, Blackjack surveillance and sealed settlement,
+  Bar Dice patrons/pots, Video Poker machine rhythm, Scratch and Pull Tab
+  handling, Buffalo/Pinball features, Craps wagers, Crew Hold'em personalities,
+  and Coin Pusher physics goals.
+- Moves accepted performance telemetry, allocation guards, low-end launchers,
+  fail-closed aggregate runners, and owner-evidence custody tooling onto `main`.
+- Consolidates shared gameplay, renderer, slot-math, and audio helpers and
+  removes deprecated or unreachable runtime code while preserving behavior.
+
+### Fixed
+
+- Integrates the September playtest repair series across game entry/exit,
+  wagers and refunds, map/travel flow, dialogue, inventory, tutorial recovery,
+  room feedback, and deterministic test teardown.
+- Restores stable native Coin Pusher GDExtension discovery and exact runtime
+  identity checks after fresh builds/worktrees.
+- Fixes numerous environment grounding, object classification, route,
+  interaction, and visual-feedback defects found by production-host playtests.
+- Makes person events open as conversations before choices resolve, gives live
+  town rumors a concrete player-facing cue, and shows only the player's recorded
+  Blackjack count while count-dependent Cass choices wait for a current shoe.
+
+### Release-preparation notes
+
+- Final owner positioning remains outside the feature-complete source boundary.
+- The focused post-promotion validation and stable Windows/Web archives happen
+  after those coordinates land. All prerelease packages are testing builds,
+  not the final 0.6 release.
+
+## 0.5.1 - Released (2026-08-13)
+
+Status: **latest published release.** This corrected the original 0.5.0
+playtest baseline without opening the 0.6 feature line.
+
+- Finalized the accumulated 0.5 playtest repairs and release assets.
+- Closed release-gate regressions and tutorial recovery issues.
+- Completed the 0.5.1 UI gate and recorded the exact release execution at the
+  annotated `v0.5.1` tag.
+
 ## 0.5.0 - Released (2026-08-12)
 
 Status: **official GitHub release.** The owner approved the accumulated 0.5
@@ -158,9 +418,9 @@ authoritative boundary for all work completed before 0.5.
   keeping the fixed ante inside the duel stacks instead of charging the
   player's ordinary cash or casino chips again at settlement.
 
-Current evidence is recorded in `docs/plans/0.5_pre_release_audit.md`,
-`docs/plans/tutorial_completion_report.md`, `docs/plans/0.5_performance_audit.md`, and
-`docs/plans/0.5_release_checklist.md`. No final release approval is claimed
+Current evidence is recorded in `docs/archive/0.5/plans/0.5_pre_release_audit.md`,
+`docs/plans/tutorial_completion_report.md`, `docs/archive/0.5/plans/0.5_performance_audit.md`, and
+`docs/archive/0.5/plans/0.5_release_checklist.md`. No final release approval is claimed
 until the human, owner, packaging, and publishing gates close.
 
 ## 0.4.0 - Unpublished Act 1 candidate
@@ -235,7 +495,7 @@ artifacts remain a separate operator action.
 ## 0.3.2 - Internal release closure
 
 0.3.2 closed the low-end and web cleanup line. Its release ledger is
-`docs/plans/0.3.2_release_checklist.md`. The packaged 0.3.2 zips should not be
+`docs/archive/0.3/plans/0.3.2_release_checklist.md`. The packaged 0.3.2 zips should not be
 uploaded because post-close playtest hotfixes are included in the 0.3.3 patch
 cut instead.
 

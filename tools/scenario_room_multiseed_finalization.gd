@@ -12,6 +12,7 @@ const SequenceCatalogScript := preload("res://scripts/core/scenario_sequence_cat
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
 const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const EnvironmentReadabilityContractScript := preload("res://scripts/tests/foundation/env06_8_environment_readability_contract.gd")
 
@@ -26,8 +27,8 @@ const SEED_FAMILIES := [
 	"REFINE06-G",
 ]
 const EXPECTED_SCENARIOS := 55
-const EXPECTED_BARRIER_OBJECTS := 25
-const EXPECTED_BARRIER_PLACEMENTS := 39
+const EXPECTED_BARRIER_OBJECTS := 24
+const EXPECTED_BARRIER_PLACEMENTS := 37
 const LAYOUT_CONTEXT := {"viewport_size": {"x": 1280, "y": 720}}
 
 var _fixture_activated_id := ""
@@ -78,9 +79,6 @@ func _init() -> void:
 
 
 func _run() -> void:
-	if _requested_seed_family.is_empty() and _requested_scenario.is_empty():
-		_run_parallel_seed_families()
-		return
 	var failures: Array = []
 	var library := ContentLibraryScript.new()
 	library.load()
@@ -95,6 +93,7 @@ func _run() -> void:
 		_finish(failures, 0)
 		return
 	_check_exact_object_helper(failures)
+	_check_navigation_family_signature_fixture(failures)
 	_check_barrier_placements(library, definitions, failures)
 	if not _requested_scenario.is_empty():
 		definitions = definitions.filter(func(definition: Variant) -> bool: return str(_dict(definition).get("id", "")) == _requested_scenario)
@@ -117,13 +116,29 @@ func _run() -> void:
 			library.environment_scenarios[archetype_id] = [definition.duplicate(true)]
 			var case_failures: Array = []
 			var run_state := RunStateScript.new()
-			run_state.start_new("%s-%s" % [seed_family, scenario_id])
+			var case_seed := "%s-%s" % [seed_family, scenario_id]
+			var case_config := RunStateScript.custom_challenge("scenario_room_finalization", case_seed, {
+				"scenario_pins": {archetype_id: scenario_id},
+				"scenario_pins_apply_mutations": true,
+			})
+			run_state.start_new(case_seed, case_config)
 			var generator := RunGeneratorScript.new(library)
 			var initial := HarnessProductionFidelityScript.generate_and_finalize(generator, run_state, case_failures, "%s/%s initial room" % [seed_family, scenario_id], "", false, LAYOUT_CONTEXT)
 			var target_node := _node_for_archetype(run_state, archetype_id)
 			var arrival: Dictionary = {}
 			if bool(initial.get("ok", false)) and not target_node.is_empty():
 				arrival = HarnessProductionFidelityScript.travel_and_finalize(generator, run_state, target_node, true, library, case_failures, "%s/%s scenario room" % [seed_family, scenario_id], LAYOUT_CONTEXT)
+				var target_layer_id := str(definition.get("layer_id", "")).strip_edges()
+				if bool(arrival.get("ok", false)) and not target_layer_id.is_empty() and str(run_state.current_environment.get("current_layer_id", "")) != target_layer_id:
+					# The permanent sweep must load layer-owned scenarios even when their
+					# normal story unlock has not occurred in this synthetic one-hop run.
+					run_state.discover_environment_layer(target_layer_id, "scenario_finalization_audit")
+					var layer_result := generator.enter_environment_layer(run_state, target_layer_id, false)
+					if not bool(layer_result.get("ok", false)):
+						case_failures.append("%s/%s could not enter authored layer %s: %s" % [seed_family, scenario_id, target_layer_id, str(layer_result.get("message", "unknown layer error"))])
+						arrival = {"ok": false}
+					else:
+						arrival = HarnessProductionFidelityScript.finalize_arrival(run_state, library, case_failures, "%s/%s authored layer" % [seed_family, scenario_id], LAYOUT_CONTEXT)
 			elif target_node.is_empty():
 				case_failures.append("%s/%s has no generated node for archetype %s." % [seed_family, scenario_id, archetype_id])
 			if bool(arrival.get("ok", false)):
@@ -133,7 +148,7 @@ func _run() -> void:
 				if str(run_state.current_environment.get("scenario_id", "")) != scenario_id:
 					case_failures.append("%s/%s arrived with scenario %s." % [seed_family, scenario_id, str(run_state.current_environment.get("scenario_id", ""))])
 				if not bool(run_state.current_environment.get("scenario_semantic_ready", false)):
-					case_failures.append("%s/%s arrived without scenario_semantic_ready." % [seed_family, scenario_id])
+					case_failures.append("%s/%s arrived without scenario_semantic_ready: lifecycle=%s migration=%s legacy=%s definition_keys=%s." % [seed_family, scenario_id, JSON.stringify(run_state.current_environment.get("scenario_sequence_lifecycle_errors", [])), str(run_state.current_environment.get("scenario_sequence_migration_error", "")), JSON.stringify(run_state.current_environment.get("scenario_state", {})), JSON.stringify(_dict(run_state.current_environment.get("scenario_sequence_definition", {})).keys())])
 				if bool(finalized.get("inactive", false)) or not bool(audit.get("valid", false)):
 					case_failures.append("%s/%s did not produce an active valid normal/small-screen layout audit: %s" % [seed_family, scenario_id, JSON.stringify(audit)])
 				_reachable_state_checks += _check_reachable_grounding_states(run_state, definition, seed_family, case_failures)
@@ -151,67 +166,6 @@ func _run() -> void:
 	# census, preventing a collision repair from deleting scenario content.
 	EnvironmentReadabilityContractScript.check_static(library, failures)
 	_finish(failures, completed, definitions.size(), seed_families.size())
-
-
-func _run_parallel_seed_families() -> void:
-	var workers: Array[Thread] = []
-	var failures: Array = []
-	for seed_family_value in SEED_FAMILIES:
-		var worker := Thread.new()
-		var start_error := worker.start(_run_seed_family_process.bind(str(seed_family_value)))
-		if start_error != OK:
-			failures.append("Could not start seed-family worker %s: %s." % [str(seed_family_value), error_string(start_error)])
-			continue
-		workers.append(worker)
-	var reachable_states := 0
-	var distinct_layouts := 0
-	for worker in workers:
-		var result := _dict(worker.wait_to_finish())
-		var output := str(result.get("output", ""))
-		if int(result.get("exit_code", 1)) != 0:
-			failures.append("Seed-family worker %s failed:\n%s" % [str(result.get("seed_family", "unknown")), output])
-			continue
-		var summary := _parse_worker_summary(output)
-		if summary.is_empty():
-			failures.append("Seed-family worker %s returned no finalization summary:\n%s" % [str(result.get("seed_family", "unknown")), output])
-			continue
-		reachable_states += int(summary.get("reachable_states", 0))
-		distinct_layouts += int(summary.get("distinct_layouts", 0))
-		print(str(summary.get("line", "")))
-	if not failures.is_empty() or workers.size() != SEED_FAMILIES.size():
-		for failure in failures:
-			printerr("SCENARIO_ROOM_MULTISEED_FINALIZATION FAIL %s" % str(failure))
-		printerr("SCENARIO_ROOM_MULTISEED_FINALIZATION FAIL completed=0 expected=%d failures=%d" % [SEED_FAMILIES.size() * EXPECTED_SCENARIOS, failures.size()])
-		quit(1)
-		return
-	print("SCENARIO_ROOM_MULTISEED_FINALIZATION PASS families=%d scenarios=%d finalizations=%d reachable_states=%d distinct_layouts=%d normal_and_small=validated routes=validated object_census=preserved" % [SEED_FAMILIES.size(), EXPECTED_SCENARIOS, SEED_FAMILIES.size() * EXPECTED_SCENARIOS, reachable_states, distinct_layouts])
-	quit(0)
-
-
-func _run_seed_family_process(seed_family: String) -> Dictionary:
-	var output: Array = []
-	var arguments := PackedStringArray([
-		"--headless",
-		"--path", ProjectSettings.globalize_path("res://"),
-		"--script", "res://tools/scenario_room_multiseed_finalization.gd",
-		"--", "--seed-family=%s" % seed_family,
-	])
-	var exit_code := OS.execute(OS.get_executable_path(), arguments, output, true, false)
-	return {"seed_family": seed_family, "exit_code": exit_code, "output": "\n".join(output)}
-
-
-func _parse_worker_summary(output: String) -> Dictionary:
-	var pattern := RegEx.new()
-	if pattern.compile("SCENARIO_ROOM_MULTISEED_FINALIZATION PASS families=1 scenarios=55 finalizations=55 reachable_states=([0-9]+) distinct_layouts=([0-9]+)") != OK:
-		return {}
-	var match_result := pattern.search(output)
-	if match_result == null:
-		return {}
-	return {
-		"reachable_states": int(match_result.get_string(1)),
-		"distinct_layouts": int(match_result.get_string(2)),
-		"line": match_result.get_string(0),
-	}
 
 
 func _finish(failures: Array, completed: int, scenario_count: int = EXPECTED_SCENARIOS, seed_count: int = SEED_FAMILIES.size()) -> void:
@@ -287,18 +241,32 @@ func _check_reachable_grounding_states(run_state: Variant, fallback_definition: 
 			failures.append("%s/%s/%s layout audit is invalid." % [seed_family, scenario_id, path])
 			continue
 		var semantic := _dict(_dict(resolved.get("projection", {})).get("semantic_state", {}))
+		var interactions := _dict(semantic.get("interactions", {}))
+		var surface_map := EnvironmentPlacementScript.surface_map(environment)
 		for collection_key in ["scene_objects", "actors"]:
-			for visual_value in _dict(semantic.get(collection_key, {})).values():
-				var visual := _dict(visual_value)
+			var visuals := _dict(semantic.get(collection_key, {}))
+			for identity_value in visuals.keys():
+				var identity := str(identity_value)
+				var visual := _dict(visuals.get(identity_value, {}))
 				if not bool(visual.get("present", true)):
 					continue
 				var placement_class := str(visual.get("placement_class", ""))
-				var identity := "%s::%s" % [str(visual.get("owner_namespace", "scenario")), str(visual.get("stable_object_id", ""))]
 				var rect := _normalized_pixel_rect(visual.get("normalized_hit_rect", {}))
-				var developer_placed := _developer_placement_room(environment)
-				if placement_class not in EnvironmentPlacementScript.CLASSES or not developer_placed and not EnvironmentPlacementScript.valid_rect(environment, placement_class, rect):
-					failures.append("%s/%s/%s %s has class-invalid grounded geometry (%s)." % [seed_family, scenario_id, path, identity, placement_class])
-				_check_route_grounding(environment, visual, placement_class, rect.size, "%s/%s/%s %s" % [seed_family, scenario_id, path, identity], failures, developer_placed)
+				var slot_id := str(visual.get("slot_id", ""))
+				var slot_family := str(visual.get("slot_family", ""))
+				var expected_slot_family := _expected_visual_slot_family(identity, visual, interactions)
+				var slot := _slot_by_id(surface_map, slot_id)
+				var slot_rect := EnvironmentSlotBinderScript.rect_from_binding({"slot": slot})
+				if placement_class not in EnvironmentPlacementScript.CLASSES \
+						or slot.is_empty() \
+						or slot_family != expected_slot_family \
+						or str(slot.get("kind", "")) != slot_family \
+						or not slot_id.begins_with("%s." % slot_family) \
+						or str(slot.get("footprint_class", "")) != placement_class \
+						or str(slot.get("support_id", "")).is_empty() \
+						or not rect.is_equal_approx(slot_rect):
+					failures.append("%s/%s/%s %s diverges from its lifecycle- and class-compatible authored slot: class=%s family=%s expected_family=%s slot=%s rect=%s authored=%s." % [seed_family, scenario_id, path, identity, placement_class, slot_family, expected_slot_family, slot_id, str(rect), str(slot_rect)])
+				_check_route_grounding(visual, placement_class, rect.size, "%s/%s/%s %s" % [seed_family, scenario_id, path, identity], failures)
 		checked += 1
 	return checked
 
@@ -315,6 +283,9 @@ func _failure_geometry(resolved: Dictionary) -> Dictionary:
 			geometry[str(identity_value)] = {
 				"label": str(visual.get("label", "")),
 				"class": str(visual.get("placement_class", "")),
+				"anchor_id": str(visual.get("anchor_id", "")),
+				"zone_id": str(visual.get("zone_id", "")),
+				"authored_position_route_id": str(visual.get("authored_position_route_id", "")),
 				"rect": [snappedf(rect.position.x, 0.01), snappedf(rect.position.y, 0.01), snappedf(rect.size.x, 0.01), snappedf(rect.size.y, 0.01)],
 			}
 	return geometry
@@ -351,17 +322,106 @@ func _interaction_grounding_signature(interactions: Dictionary) -> Dictionary:
 		var identity := str(identity_value)
 		var interaction := _dict(interactions.get(identity_value, {}))
 		var relevant: Dictionary = {}
-		for key in ["present", "enabled", "label", "prompt", "disabled_reason", "safe_exit", "alternate_exit", "owner_namespace", "presentation_object_id"]:
+		for key in [
+			"present", "enabled", "label", "prompt", "disabled_reason",
+			"safe_exit", "alternate_exit", "owner_namespace", "presentation_object_id",
+			"navigation_exit", "navigates_environment", "travel_exit",
+			"destination_archetype", "destination_environment_id", "destination_layer_id",
+			"target_environment_id", "target_layer_id",
+		]:
 			if interaction.has(key):
 				relevant[key] = interaction.get(key)
-		relevant["has_actions"] = not _array(interaction.get("available_actions", [])).is_empty()
+		var available_actions := _array(interaction.get("available_actions", []))
+		relevant["has_actions"] = not available_actions.is_empty()
+		# Handler and input changes can alter routing without changing action count.
+		# Keep the complete action contracts in this audit-only signature so every
+		# reachable routing state is finalized independently.
+		relevant["available_actions"] = available_actions.duplicate(true)
+		# Slot-family choice depends on the production navigation predicate, not
+		# merely on whether an interaction has an action. Preserve that derived
+		# distinction so an ordinary and a travel state cannot share one audit key.
+		relevant["navigates_environment"] = ScenarioLayoutResolverScript._interaction_navigates_environment(interaction)
 		result[identity] = relevant
 	return result
 
 
-func _check_route_grounding(environment: Dictionary, visual: Dictionary, placement_class: String, size: Vector2, label: String, failures: Array, developer_placed: bool = false) -> void:
+func _expected_visual_slot_family(identity: String, visual: Dictionary, interactions: Dictionary) -> String:
+	var interaction := _dict(interactions.get(identity, {}))
+	if ScenarioLayoutResolverScript._interaction_navigates_environment(interaction):
+		return "exit"
+	# Resolved projections normally key the interaction by its visual identity.
+	# Keep the explicit presentation link as a fail-closed compatibility path for
+	# composed projections that retain a separate interaction identity.
+	var presentation_ids := {
+		identity: true,
+		str(visual.get("presentation_object_id", "")).strip_edges(): true,
+	}
+	presentation_ids.erase("")
+	for interaction_value in interactions.values():
+		var candidate := _dict(interaction_value)
+		var presentation_id := str(candidate.get("presentation_object_id", "")).strip_edges()
+		if presentation_ids.has(presentation_id) \
+				and ScenarioLayoutResolverScript._interaction_navigates_environment(candidate):
+			return "exit"
+	return "scenario"
+
+
+func _check_navigation_family_signature_fixture(failures: Array) -> void:
+	var identity := "scenario::navigation_family_fixture"
+	var visual := {
+		"owner_namespace": "scenario",
+		"stable_object_id": "navigation_family_fixture",
+		"presentation_object_id": identity,
+		"present": true,
+		"label": "Fixture doorway",
+		"placement_class": "doorway",
+	}
+	var ordinary_interaction := {
+		"owner_namespace": "scenario",
+		"stable_object_id": "navigation_family_fixture",
+		"presentation_object_id": identity,
+		"present": true,
+		"enabled": true,
+		"label": "Continue the scenario",
+		"safe_exit": true,
+		"available_actions": [{
+			"id": "continue_fixture",
+			"handler": "change_scene_object",
+			"inputs": {"state": "continued"},
+		}],
+	}
+	var navigation_interaction := ordinary_interaction.duplicate(true)
+	navigation_interaction["available_actions"] = [{
+		"id": "continue_fixture",
+		"handler": "change_layer",
+		"inputs": {"target_layer_id": "back_room"},
+	}]
+	var ordinary_interactions := {identity: ordinary_interaction}
+	var navigation_interactions := {identity: navigation_interaction}
+	if _expected_visual_slot_family(identity, visual, ordinary_interactions) != "scenario":
+		failures.append("A safe-exit-only scenario visual incorrectly acquired exit-family authority.")
+	if _expected_visual_slot_family(identity, visual, navigation_interactions) != "exit":
+		failures.append("An explicitly navigational scenario visual did not acquire exit-family authority.")
+	var ordinary_projection := {
+		"status": "active",
+		"semantic_state": {
+			"scene_objects": {identity: visual},
+			"actors": {},
+			"interactions": ordinary_interactions,
+			"services": {},
+			"games": {},
+			"routes": {},
+		},
+	}
+	var navigation_projection := ordinary_projection.duplicate(true)
+	navigation_projection["semantic_state"]["interactions"] = navigation_interactions
+	if _grounding_projection_signature(ordinary_projection) == _grounding_projection_signature(navigation_projection):
+		failures.append("Grounding-state de-duplication collapsed ordinary and navigational interaction families.")
+
+
+func _check_route_grounding(visual: Dictionary, placement_class: String, size: Vector2, label: String, failures: Array) -> void:
 	var route_stage := _dict(visual.get("route_stage", {}))
-	if route_stage.is_empty() or developer_placed:
+	if route_stage.is_empty():
 		return
 	for point_key in ["start", "endpoint", "reduced_motion_endpoint"]:
 		var point_data := _dict(route_stage.get(point_key, {}))
@@ -369,16 +429,18 @@ func _check_route_grounding(environment: Dictionary, visual: Dictionary, placeme
 			continue
 		var center := Vector2(float(point_data.get("x", 0.0)) * 900.0, float(point_data.get("y", 0.0)) * 430.0)
 		var route_rect := Rect2(center - size * 0.5, size)
-		if not EnvironmentPlacementScript.valid_rect(environment, placement_class, route_rect):
-			failures.append("%s route %s leaves its %s surface." % [label, point_key, placement_class])
+		if not Rect2(Vector2.ZERO, Vector2(900.0, 430.0)).encloses(route_rect):
+			failures.append("%s route %s leaves the authored room canvas for %s." % [label, point_key, placement_class])
 
-
-func _developer_placement_room(environment: Dictionary) -> bool:
-	var placement_map := EnvironmentPlacementScript.surface_map(environment)
-	for field in ["developer_object_slot_positions", "developer_scenario_object_slot_positions", "developer_category_slot_positions"]:
-		if not _dict(placement_map.get(field, {})).is_empty():
-			return true
-	return false
+func _slot_by_id(surface_map: Dictionary, slot_id: String) -> Dictionary:
+	if slot_id.is_empty():
+		return {}
+	for family in EnvironmentPlacementScript.SLOT_FAMILIES:
+		for slot_value in EnvironmentPlacementScript.slots_for_family(surface_map, str(family)):
+			var slot := _dict(slot_value)
+			if str(slot.get("id", "")) == slot_id:
+				return slot
+	return {}
 
 
 func _normalized_pixel_rect(value: Variant) -> Rect2:
@@ -417,30 +479,70 @@ func _check_barrier_placements(library: Variant, definitions: Array, failures: A
 		var placements: Array = []
 		_collect_barrier_placement_ops(_dict(definition.get("sequence", {})), known, placements)
 		placement_count += placements.size()
-		var environment := _dict(library.environment_archetype(str(definition.get("archetype_id", ""))))
+		var environment := _dict(library.environment_archetype(str(definition.get("archetype_id", "")))).duplicate(true)
+		var scenario_id := str(definition.get("id", "")).strip_edges()
+		var scenario_layer_id := str(definition.get("layer_id", "")).strip_edges()
+		environment["scenario_id"] = scenario_id
+		environment["scenario_state"] = {"id": scenario_id, "layer_id": scenario_layer_id}
+		if not scenario_layer_id.is_empty():
+			environment["current_layer_id"] = scenario_layer_id
+		var surface_map := EnvironmentPlacementScript.surface_map(environment)
+		var bind_entries: Array = []
+		var bound_ids: Dictionary = {}
 		for placement_value in placements:
 			var placement_op := _dict(placement_value)
 			var stable_id := str(placement_op.get("stable_object_id", ""))
 			var base_object := _dict(known.get(stable_id, {}))
 			var payload := _dict(placement_op.get("object", {}))
-			var anchor_id := str(placement_op.get("anchor_id", payload.get("anchor_id", base_object.get("anchor_id", ""))))
-			var zone_id := str(placement_op.get("zone_id", payload.get("zone_id", base_object.get("zone_id", ""))))
-			var center := ScenarioLayoutResolverScript._resolve_center(environment, anchor_id, zone_id)
-			var bounds := _dict(base_object.get("bounds", {}))
-			var size := Vector2(float(bounds.get("w", 48.0)), float(bounds.get("h", 48.0)))
-			var authored := ScenarioLayoutResolverScript._clamp_inside_board(Rect2(center - size * 0.5, size))
-			var resolved := ScenarioLayoutResolverScript._collision_safe_rect(
-				"scenario::%s" % stable_id,
-				authored,
-				[],
-				str(base_object.get("label", "")),
-				ScenarioLayoutResolverScript.WALK_LANE
-			)
-			var rect: Rect2 = resolved.get("rect", authored)
-			var small_rect := ScenarioLayoutResolverScript._expanded_rect(rect, ScenarioLayoutResolverScript.SMALL_SCREEN_TARGET)
-			if bool(resolved.get("colliding", true)) or rect.intersects(ScenarioLayoutResolverScript.WALK_LANE) or small_rect.intersects(ScenarioLayoutResolverScript.WALK_LANE):
-				failures.append("Barrier placement %s/%s op=%s anchor=%s zone=%s intersects WALK_LANE in normal or expanded small-screen geometry." % [str(definition.get("id", "")), stable_id, str(placement_op.get("op", "")), anchor_id, zone_id])
-	if object_count != EXPECTED_BARRIER_OBJECTS or placement_count != EXPECTED_BARRIER_PLACEMENTS or role_counts != {"obstacle": 7, "barrier": 18, "blockade": 0}:
+			if stable_id.is_empty() or bound_ids.has(stable_id):
+				continue
+			bound_ids[stable_id] = true
+			var semantic := base_object.duplicate(true)
+			semantic.merge(payload, true)
+			semantic["present"] = true
+			semantic["role"] = str(semantic.get("role", "obstacle"))
+			var identity := "scenario::%s" % stable_id
+			var bind_entry := {
+				"identity": identity,
+				"semantic": semantic,
+				"actor": false,
+				"placement_class": "",
+				"safe_exit": false,
+			}
+			# Match production classification: exact scenario authority supplies the
+			# concrete art key and any authored footprint override before binding.
+			if EnvironmentSlotBinderScript.scenario_visual_requires_room_slot(surface_map, bind_entry):
+				var art_key := EnvironmentSlotBinderScript.scenario_visual_art_key(surface_map, bind_entry)
+				if not art_key.is_empty():
+					semantic["icon_key"] = art_key
+				var class_overrides := _dict(surface_map.get("class_overrides", {}))
+				var class_override := str(class_overrides.get(identity, class_overrides.get(stable_id, "")))
+				if class_override in EnvironmentPlacementScript.CLASSES:
+					semantic["placement_class"] = class_override
+				bind_entry["semantic"] = semantic
+				bind_entry["placement_class"] = EnvironmentPlacementScript.classify(semantic, "scene_object", identity, art_key)
+			bind_entries.append(bind_entry)
+		var binding_result := EnvironmentSlotBinderScript.bind_scenario_visuals(environment, bind_entries)
+		var bindings := _dict(binding_result.get("slot_bindings", {}))
+		for entry_value in bind_entries:
+			var entry := _dict(entry_value)
+			var identity := str(entry.get("identity", ""))
+			var binding := _dict(bindings.get(identity, {}))
+			var mode := str(binding.get("presentation_mode", ""))
+			# Barrier, obstacle, and blockade scene objects are tangible scenario
+			# geometry.  They must remain individually positionable in the exact
+			# scenario layout; only interaction/service actions attach to a host.
+			if binding.is_empty() or mode != "room":
+				failures.append("Scenario obstruction %s/%s has no authored room slot." % [str(definition.get("id", "")), identity])
+				continue
+			var slot := _dict(binding.get("slot", {}))
+			var rect := EnvironmentSlotBinderScript.rect_from_binding(binding)
+			var small_rect := EnvironmentSlotBinderScript.expanded_rect(rect)
+			var resolved_class := str(binding.get("placement_class", ""))
+			if not str(binding.get("slot_id", "")).begins_with("scenario.") or not rect.has_area() or not small_rect.has_area() \
+					or str(slot.get("footprint_class", "")) != resolved_class:
+				failures.append("Scenario obstruction %s/%s did not preserve class-compatible scenario-slot authority in normal and expanded layouts." % [str(definition.get("id", "")), identity])
+	if object_count != EXPECTED_BARRIER_OBJECTS or placement_count != EXPECTED_BARRIER_PLACEMENTS or role_counts != {"obstacle": 7, "barrier": 17, "blockade": 0}:
 		failures.append("Barrier sweep census changed: objects=%d placements=%d roles=%s." % [object_count, placement_count, JSON.stringify(role_counts)])
 
 

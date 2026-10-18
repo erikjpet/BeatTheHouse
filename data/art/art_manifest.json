@@ -33,7 +33,7 @@
     "back_alley": {"path": "res://assets/art/environments/back_alley.png", "brief": "rain alley, folding table, bare bulb, watchers, wet neon pavement"},
     "motel": {"path": "res://assets/art/environments/motel.png", "brief": "motel room, CRT static, card table, neon sign outside"},
     "bar": {"path": "res://assets/art/environments/bar.png", "brief": "dive bar, mirrored bottles, pool table, video poker, patrons"},
-    "jazz_club": {"path": "res://assets/art/environments/jazz_club.png", "brief": "late-1960s jazz club, amber stage, smoky tables, trio players, bar pull-tab machine"},
+    "jazz_club": {"path": "res://assets/art/environments/jazz_club.png", "brief": "late-1960s jazz club, amber stage, smoky tables, trio players, pull-tab merchandise displayed at the bar"},
     "gas_station_casino": {"path": "res://assets/art/environments/gas_station_casino.png", "brief": "converted gas station, slot rows, cage counter, highway view"},
     "small_underground_casino": {"path": "res://assets/art/environments/small_underground_casino.png", "brief": "basement casino, green felt tables, bouncer, string lights"},
     "punchline_club": {"path": "res://assets/art/environments/punchline_club.png", "brief": "legitimate under-attended comedy club, tired stage, cheap tables, side bar, plain door, no gambling signifiers"},

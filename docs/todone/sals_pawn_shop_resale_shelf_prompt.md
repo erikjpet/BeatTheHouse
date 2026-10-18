@@ -49,7 +49,7 @@ or return Sal's room to a menu.
 
 Read completely before editing:
 
-1. `docs/plans/0.5_sals_pawn_shop_resale_shelf_plan.md` — binding specification.
+1. `docs/archive/0.5/plans/0.5_sals_pawn_shop_resale_shelf_plan.md` — binding specification.
 2. `docs/plans/item_collection_meta_system_plan.md` — upstream collection model;
    this prompt supersedes its conflicting pawn-value assumptions only.
 3. `docs/plans/content_style_guide.md` — binding dialogue/copy rules.

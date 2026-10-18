@@ -339,10 +339,7 @@
     "game_pool": [
       "coin_pusher"
     ],
-    "game_count": [
-      0,
-      1
-    ],
+    "game_count": 1,
     "item_pool": [
       "creased_luck_card",
       "instant_coffee",
@@ -763,10 +760,6 @@
         [
           480,
           260
-        ],
-        [
-          620,
-          92
         ]
       ],
       "event_spots": [
@@ -1249,7 +1242,17 @@
       "delta_queen"
     ],
     "local_narrative_flags": {
-      "first_gambling_stop": true
+      "first_gambling_stop": true,
+      "lottery_counter": {
+        "host_object_id": "staff:bar_bartender",
+        "staff_label": "Rafi",
+        "sale_game_ids": [
+          "pull_tabs"
+        ],
+        "service_game_ids": [
+          "pull_tabs"
+        ]
+      }
     },
     "moods": [
       "noisy",
@@ -1499,7 +1502,18 @@
       "kitty_cat_lounge"
     ],
     "local_narrative_flags": {
-      "roadside_games": true
+      "roadside_games": true,
+      "lottery_counter": {
+        "host_object_id": "character:nell",
+        "staff_label": "Nell",
+        "sale_game_ids": [
+          "pull_tabs"
+        ],
+        "service_game_ids": [
+          "pull_tabs",
+          "scratch_tickets"
+        ]
+      }
     },
     "moods": [
       "bright",
@@ -1855,6 +1869,7 @@
           "event_spots": [[84, 86], [410, 96], [220, 300], [410, 300], [620, 300]],
           "service_spots": [[78, 220]],
           "lender_spots": [[790, 300], [84, 300]],
+          "layer_spots": [[410, 380], [710, 380]],
           "travel_spots": [[820, 86], [820, 380], [676, 82], [520, 380], [250, 380], [84, 380]]
         },
         "security_profile": {
@@ -1883,12 +1898,13 @@
           "cashout_tone": "private"
         },
         "game_pool": ["slot", "blackjack", "video_poker"],
+        "required_game_ids": ["slot", "blackjack", "video_poker"],
         "game_count": [3, 3],
         "item_pool": [],
         "item_count": [0, 0],
         "event_pool": ["rowdy_regular", "machine_jam", "side_door", "heat_at_exit", "suspicious_patron", "rival_counter", "counter_payoff", "snitch_reputation", "the_collector", "lay_low_booth", "door_bribe", "lucky_streak_temptation", "crew_favor_delivery"],
         "event_scopes": ["casino"],
-        "event_count": [2, 4],
+        "event_count": [1, 1],
         "service_pool": ["house_drink"],
         "lender_hooks": ["the_crew", "street_lender"],
         "lender_count": [1, 2],
@@ -1908,10 +1924,10 @@
             "description": "A private door behind the tables.",
             "requires_discovered": true,
             "access_paths": [
-              {"method": "crew_rank", "min_crew_rank": "made"},
+              {"method": "crew_rank", "min_crew_rank": "stranger"},
               {"method": "rook_escort", "flags_any": ["rook_escort_punchline_back_room"]}
             ],
-            "locked_reason": "Rook keeps this door for made company."
+            "locked_reason": "Rook keeps this door for people who know where to knock."
           }
         ]
       },
@@ -2421,7 +2437,17 @@
     ],
     "local_narrative_flags": {
       "jazz_club": true,
-      "rare_music_room": true
+      "rare_music_room": true,
+      "lottery_counter": {
+        "host_object_id": "shopkeeper:merchant",
+        "staff_label": "Bartender",
+        "sale_game_ids": [
+          "pull_tabs"
+        ],
+        "service_game_ids": [
+          "pull_tabs"
+        ]
+      }
     },
     "moods": [
       "amber",
@@ -2544,10 +2570,6 @@
         [
           700,
           72
-        ],
-        [
-          500,
-          176
         ]
       ],
       "shopkeeper_spots": [
@@ -2660,13 +2682,15 @@
     "game_pool": [
       "roulette",
       "slot",
+      "video_poker",
       "bar_dice"
     ],
     "required_game_ids": [
-      "roulette"
+      "roulette",
+      "bar_dice"
     ],
     "game_count": [
-      2,
+      3,
       3
     ],
     "item_pool": [
@@ -2866,10 +2890,6 @@
         [
           600,
           300
-        ],
-        [
-          760,
-          92
         ]
       ],
       "shopkeeper_spots": [
@@ -3502,7 +3522,7 @@
       "players_card_suite_rest_minutes": 240,
       "players_card_suite_heat_recovery": 12,
       "players_card_suite_drunk_recovery": 24,
-      "showdown_heat_threshold": 70,
+      "showdown_heat_threshold": 85,
       "forced_showdown_heat_threshold": 95,
       "showdown_event_id": "the_house_calls",
       "high_roller_event_id": "high_roller_cashout",
@@ -3751,7 +3771,13 @@
       "lay_low_booth",
       "door_bribe",
       "lucky_streak_temptation",
-      "crew_favor_delivery"
+      "crew_favor_delivery",
+      "recruitment_bishop",
+      "scenario_audit_roster"
+    ],
+    "required_event_ids": [
+      "recruitment_bishop",
+      "scenario_audit_roster"
     ],
     "event_scopes": [
       "boss"
@@ -3777,6 +3803,16 @@
       "casino_room_travel_minutes": 5,
       "casino_chip_cash_rate": 1,
       "casino_high_limit_buy_in": 60,
+      "lottery_counter": {
+        "host_object_id": "casino_fixture:host_desk",
+        "staff_label": "Host Desk Attendant",
+        "sale_game_ids": [
+          "pull_tabs"
+        ],
+        "service_game_ids": [
+          "pull_tabs"
+        ]
+      },
       "grand_casino_staff_rotation": {
         "rotation_chance_percent": 50,
         "memory_high_heat_threshold": 50,
@@ -3936,7 +3972,7 @@
       "players_card_suite_rest_minutes": 240,
       "players_card_suite_heat_recovery": 12,
       "players_card_suite_drunk_recovery": 24,
-      "showdown_heat_threshold": 70,
+      "showdown_heat_threshold": 85,
       "forced_showdown_heat_threshold": 95,
       "showdown_event_id": "the_house_calls",
       "high_roller_event_id": "high_roller_cashout",
@@ -3987,10 +4023,13 @@
       ],
       "travel_spots": [
         [
-          808,
+          650,
           350
         ]
       ]
+    },
+    "semantic_zones": {
+      "center": {"bounds": [280, 90, 340, 280]}
     },
     "security_profile": {
       "strictness": "boss",
@@ -4155,7 +4194,7 @@
       "players_card_suite_rest_minutes": 240,
       "players_card_suite_heat_recovery": 12,
       "players_card_suite_drunk_recovery": 24,
-      "showdown_heat_threshold": 70,
+      "showdown_heat_threshold": 85,
       "forced_showdown_heat_threshold": 95,
       "showdown_event_id": "the_house_calls",
       "high_roller_event_id": "high_roller_cashout",
@@ -4188,6 +4227,9 @@
           350
         ]
       ]
+    },
+    "semantic_zones": {
+      "center": {"bounds": [280, 90, 340, 280]}
     },
     "security_profile": {
       "strictness": "boss",
@@ -4336,7 +4378,7 @@
       "players_card_suite_rest_minutes": 240,
       "players_card_suite_heat_recovery": 12,
       "players_card_suite_drunk_recovery": 24,
-      "showdown_heat_threshold": 70,
+      "showdown_heat_threshold": 85,
       "forced_showdown_heat_threshold": 95,
       "showdown_event_id": "the_house_calls",
       "high_roller_event_id": "high_roller_cashout",
@@ -4350,19 +4392,19 @@
       "item_spots": [
         [
           99,
-          155
+          178
         ],
         [
-          185,
-          155
+          199,
+          178
         ],
         [
           99,
-          199
+          238
         ],
         [
-          185,
-          199
+          199,
+          238
         ]
       ],
       "casino_fixture_spots": [
@@ -4383,10 +4425,13 @@
       ],
       "travel_spots": [
         [
-          824,
+          680,
           350
         ]
       ]
+    },
+    "semantic_zones": {
+      "center": {"bounds": [280, 90, 340, 280]}
     },
     "security_profile": {
       "strictness": "boss",

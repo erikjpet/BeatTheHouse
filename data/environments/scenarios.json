@@ -911,6 +911,7 @@
       "id": "grand_casino_audit_night", "archetype_id": "grand_casino", "display_name": "Audit Night", "weight": 7,
       "mutations": {
         "staff_set": ["audit_team", "nervous_cage_staff"], "patron_set": ["quiet_floor"], "event_pool_add": ["scenario_audit_roster"],
+        "travel_hooks_add": ["small_underground_casino"],
         "game_modifier_hooks": {"comp_texture": "strict", "floor_heat": "nervous"},
         "music_profile_override": {"bpm": 66, "ambience": 0.72, "texture": "counting_room"},
         "presentation": {"palette_tint": "#e5e5e5", "lighting_key": "audit", "crowd_density": "medium", "signage_line": "EVERY DRAWER GETS COUNTED."},

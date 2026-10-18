@@ -1,6 +1,9 @@
 class_name WebAudioBridge
 extends RefCounted
 
+# JavaScript/WebAudio bridge for unlock, prewarm, one-shots, loops, and music
+# stems; native builds safely report the bridge as unavailable.
+
 static var _ensured := false
 static var _bridge_interface: Variant = null
 static var _last_music_payload_key := ""
@@ -13,8 +16,12 @@ static var _call_counts: Dictionary = {}
 static var _payload_bytes := 0
 static var _preencoded_payload_hits := 0
 static var _synchronous_payload_encodes := 0
+static var _shared_pcm_owner_bytes := 0
+static var _shared_pcm_budget_bytes := 64 * 1024 * 1024
+static var _bridge_pcm_budget_bytes := 64 * 1024 * 1024
 
-const WEB_AUDIO_VERSION := 9
+const WEB_AUDIO_VERSION := 12
+const WEB_PCM_CACHE_BUDGET_BYTES := 64 * 1024 * 1024
 const WEB_AUDIO_MIN_BUFFER_SAMPLE_RATE := 3000
 const PCM_BASE64_META: StringName = &"_bth_web_pcm_base64"
 const WEB_MASTER_GAIN := 0.72
@@ -29,7 +36,8 @@ const WEB_MUSIC_STEM_ROLES := ["pad", "bass", "bass_dark", "lead", "drums_low", 
 
 const WEB_AUDIO_SCRIPT := """
 (function () {
-	var BRIDGE_VERSION = 9;
+	var BRIDGE_VERSION = 12;
+	var PCM_BUDGET_BYTES = 67108864;
 	if (window.BTHWebAudio && window.BTHWebAudio.version === BRIDGE_VERSION) {
 		return true;
 	}
@@ -156,13 +164,27 @@ const WEB_AUDIO_SCRIPT := """
 		if (!entry) {
 			return;
 		}
-		stopNode(entry.source);
+		entry.ended = true;
+		var source = entry.source;
+		var gain = entry.gain;
+		if (source) {
+			// Break the AudioBufferSourceNode -> onended -> entry -> source
+			// cycle before releasing a stopped node. Chromium can otherwise keep
+			// the source and its AudioBuffer alive well past a room transition.
+			try {
+				source.onended = null;
+			} catch (_error) {
+			}
+		}
+		stopNode(source);
 		try {
-			if (entry.gain) {
-				entry.gain.disconnect();
+			if (gain) {
+				gain.disconnect();
 			}
 		} catch (_error) {
 		}
+		entry.source = null;
+		entry.gain = null;
 	}
 	window.BTHWebAudio = {
 		version: BRIDGE_VERSION,
@@ -174,10 +196,25 @@ const WEB_AUDIO_SCRIPT := """
 		sfxBus: null,
 		musicBus: null,
 		pcmBuffers: {},
+		pcmMeta: {},
+		pcmSerial: 0,
+		pcmBudgetBytes: PCM_BUDGET_BYTES,
 		sfxLoops: {},
 		sfxOneShots: [],
 		musicGroups: {},
 		unlocked: false,
+		pruneEndedOneShots: function () {
+			var retained = [];
+			for (var index = 0; index < this.sfxOneShots.length; index += 1) {
+				var entry = this.sfxOneShots[index];
+				if (!entry || entry.ended) {
+					stopEntry(entry);
+					continue;
+				}
+				retained.push(entry);
+			}
+			this.sfxOneShots = retained;
+		},
 		ensure: function () {
 			var AudioCtor = window.AudioContext || window.webkitAudioContext;
 			if (!AudioCtor) {
@@ -223,7 +260,80 @@ const WEB_AUDIO_SCRIPT := """
 			}
 			return true;
 		},
-		registerPcm: function (payload) {
+		activePcmKeys: function () {
+			this.pruneEndedOneShots();
+			var active = {};
+			for (var loopId in this.sfxLoops) {
+				if (Object.prototype.hasOwnProperty.call(this.sfxLoops, loopId) && this.sfxLoops[loopId] && !this.sfxLoops[loopId].ended) active[this.sfxLoops[loopId].key] = true;
+			}
+			for (var shotIndex = 0; shotIndex < this.sfxOneShots.length; shotIndex += 1) {
+				var shot = this.sfxOneShots[shotIndex];
+				if (shot && !shot.ended) active[shot.key] = true;
+			}
+			for (var groupId in this.musicGroups) {
+				if (!Object.prototype.hasOwnProperty.call(this.musicGroups, groupId)) continue;
+				var keys = this.musicGroups[groupId].keys || [];
+				for (var keyIndex = 0; keyIndex < keys.length; keyIndex += 1) active[keys[keyIndex]] = true;
+			}
+			return active;
+		},
+		pcmStats: function () {
+			var keys = Object.keys(this.pcmBuffers);
+			var bytes = 0;
+			for (var index = 0; index < keys.length; index += 1) bytes += Number((this.pcmMeta[keys[index]] || {}).bytes || 0);
+			return JSON.stringify({ count: keys.length, bytes: bytes, budget_bytes: this.pcmBudgetBytes, keys: keys });
+		},
+		touchPcm: function (key) {
+			if (!this.pcmMeta[key]) return;
+			this.pcmSerial += 1;
+			this.pcmMeta[key].lastUsed = this.pcmSerial;
+		},
+		disposePcm: function (payload) {
+			payload = parsePayload(payload, {});
+			var requested = Array.isArray(payload) ? payload : (Array.isArray(payload.keys) ? payload.keys : []);
+			var active = this.activePcmKeys();
+			var removed = [];
+			for (var index = 0; index < requested.length; index += 1) {
+				var key = String(requested[index] || "");
+				if (!key || active[key] || !this.pcmBuffers[key]) continue;
+				delete this.pcmBuffers[key];
+				delete this.pcmMeta[key];
+				removed.push(key);
+			}
+			return JSON.stringify({ removed_keys: removed, stats: JSON.parse(this.pcmStats()) });
+		},
+		clearInactivePcm: function () {
+			var active = this.activePcmKeys();
+			var inactive = Object.keys(this.pcmBuffers).filter(function (key) { return !active[key]; });
+			return this.disposePcm({ keys: inactive });
+		},
+		setPcmBudget: function (payload) {
+			payload = parsePayload(payload, {});
+			this.pcmBudgetBytes = Math.max(0, Math.floor(Number(payload.budget_bytes || 0)));
+			return this.evictPcm(Array.isArray(payload.protected_keys) ? payload.protected_keys : []);
+		},
+		evictPcm: function (protectedKeys) {
+			var protectedSet = this.activePcmKeys();
+			protectedKeys = Array.isArray(protectedKeys) ? protectedKeys : [];
+			for (var protectIndex = 0; protectIndex < protectedKeys.length; protectIndex += 1) protectedSet[String(protectedKeys[protectIndex] || "")] = true;
+			var stats = JSON.parse(this.pcmStats());
+			while (stats.bytes > this.pcmBudgetBytes) {
+				var victim = "";
+				var oldest = Number.MAX_SAFE_INTEGER;
+				var keys = Object.keys(this.pcmBuffers);
+				for (var index = 0; index < keys.length; index += 1) {
+					var key = keys[index];
+					var age = Number((this.pcmMeta[key] || {}).lastUsed || 0);
+					if (!protectedSet[key] && age < oldest) { victim = key; oldest = age; }
+				}
+				if (!victim) break;
+				delete this.pcmBuffers[victim];
+				delete this.pcmMeta[victim];
+				stats = JSON.parse(this.pcmStats());
+			}
+			return this.pcmStats();
+		},
+		registerPcm: function (payload, protectedKeys) {
 			payload = parsePayload(payload, {});
 			if (!this.ensure()) {
 				return false;
@@ -233,6 +343,7 @@ const WEB_AUDIO_SCRIPT := """
 				return false;
 			}
 			if (this.pcmBuffers[key]) {
+				this.touchPcm(key);
 				return true;
 			}
 			if (!payload.data) {
@@ -240,6 +351,12 @@ const WEB_AUDIO_SCRIPT := """
 			}
 			try {
 				this.pcmBuffers[key] = payload.codec === "bth_ima_adpcm4" ? decodeBthImaAdpcm(payload, this.ctx) : decodePcm16(payload, this.ctx);
+				this.pcmSerial += 1;
+				var decoded = this.pcmBuffers[key];
+				this.pcmMeta[key] = { bytes: decoded.length * decoded.numberOfChannels * 4, lastUsed: this.pcmSerial };
+				var pending = Array.isArray(protectedKeys) ? protectedKeys.slice() : [];
+				pending.push(key);
+				this.evictPcm(pending);
 			} catch (error) {
 				console.error("BTH Web Audio PCM decode failed:", error);
 				return false;
@@ -254,7 +371,7 @@ const WEB_AUDIO_SCRIPT := """
 			// suspended: Chromium logs and schedules each rejected attempt on the
 			// main thread. A cabinet loop may be queued silently before unlock so it
 			// begins at the correct phase when the user's first gesture resumes audio.
-			if (!this.ensure() || (!this.unlocked && !payload.loop) || !this.registerPcm(payload)) {
+			if (!this.ensure() || (!this.unlocked && !payload.loop) || !this.registerPcm(payload, [String(payload.key || "")])) {
 				return false;
 			}
 			var ctx = this.ctx;
@@ -270,9 +387,7 @@ const WEB_AUDIO_SCRIPT := """
 			var profileId = String(payload.profile_id || "");
 			var maxVoices = Math.max(1, Math.min(10, Number(payload.max_voices || 10) | 0));
 			var globalMaxVoices = 10;
-			this.sfxOneShots = this.sfxOneShots.filter(function (candidate) {
-				return candidate && !candidate.ended;
-			});
+			this.pruneEndedOneShots();
 			if (!isLoop && profileId) {
 				var sameProfile = this.sfxOneShots.filter(function (candidate) {
 					return candidate.profileId === profileId;
@@ -311,9 +426,13 @@ const WEB_AUDIO_SCRIPT := """
 			if (loopId) {
 				this.stopLoop(loopId);
 			}
-			var entry = { source: source, gain: gain, key: key, profileId: profileId, ended: false };
+			var entry = { source: source, gain: gain, key: key, profileId: profileId, ended: false, paused: false, pitch: source.playbackRate.value, outputGain: gain.gain.value };
 			source.onended = function () {
 				entry.ended = true;
+				try {
+					source.disconnect();
+				} catch (_error) {
+				}
 				try {
 					gain.disconnect();
 				} catch (_error) {
@@ -321,6 +440,9 @@ const WEB_AUDIO_SCRIPT := """
 				if (loopId && window.BTHWebAudio && window.BTHWebAudio.sfxLoops[loopId] === entry) {
 					delete window.BTHWebAudio.sfxLoops[loopId];
 				}
+				source.onended = null;
+				entry.source = null;
+				entry.gain = null;
 			};
 			if (loopId) {
 				this.sfxLoops[loopId] = entry;
@@ -337,6 +459,24 @@ const WEB_AUDIO_SCRIPT := """
 			}
 			stopEntry(this.sfxLoops[loopId]);
 			delete this.sfxLoops[loopId];
+			return true;
+		},
+		setLoopPaused: function (loopId, paused) {
+			loopId = String(loopId || "");
+			var entry = this.sfxLoops[loopId];
+			if (!entry || !entry.source || !entry.gain || entry.ended) {
+				return false;
+			}
+			paused = !!paused;
+			if (entry.paused === paused) {
+				return true;
+			}
+			entry.paused = paused;
+			var now = this.ctx.currentTime;
+			entry.source.playbackRate.cancelScheduledValues(now);
+			entry.gain.gain.cancelScheduledValues(now);
+			entry.source.playbackRate.setValueAtTime(paused ? 0 : Number(entry.pitch || 1), now);
+			entry.gain.gain.setValueAtTime(paused ? 0 : Number(entry.outputGain || 0), now);
 			return true;
 		},
 		playMusicStems: function (payload) {
@@ -358,12 +498,14 @@ const WEB_AUDIO_SCRIPT := """
 				sources: {},
 				gains: {},
 				startedAt: ctx.currentTime,
-				position: Math.max(0, Number(payload.position || 0))
+				position: Math.max(0, Number(payload.position || 0)),
+				keys: []
 			};
+			var pendingKeys = stems.map(function (stem) { return String((stem || {}).key || ""); });
 			for (var index = 0; index < stems.length; index += 1) {
 				var stem = stems[index] || {};
 				var role = String(stem.role || "");
-				if (!role || !this.registerPcm(stem)) {
+				if (!role || !this.registerPcm(stem, pendingKeys)) {
 					continue;
 				}
 				var buffer = this.pcmBuffers[String(stem.key || "")];
@@ -383,6 +525,7 @@ const WEB_AUDIO_SCRIPT := """
 				var offset = buffer.duration > 0 ? group.position % buffer.duration : 0;
 				group.sources[role] = source;
 				group.gains[role] = gain;
+				group.keys.push(String(stem.key || ""));
 				source.start(0, offset);
 			}
 			if (!Object.keys(group.sources).length) {
@@ -491,6 +634,10 @@ static func ensure() -> void:
 		JavaScriptBridge.eval(WEB_AUDIO_SCRIPT, true)
 		_ensured = true
 	_bridge_interface = JavaScriptBridge.get_interface("BTHWebAudio")
+	if _bridge_interface != null:
+		var budget_payload := JSON.stringify({"budget_bytes": _bridge_pcm_budget_bytes, "protected_keys": []})
+		_record_bridge_call("set_pcm_budget", budget_payload.length())
+		_bridge_interface.setPcmBudget(budget_payload)
 
 
 static func _bridge_ready() -> bool:
@@ -529,22 +676,6 @@ static func play_stream(stream: AudioStream, stream_id: String, volume_db: float
 		return false
 	_mark_pcm_registered(payload)
 	return true
-
-
-static func prewarm_stream(stream: AudioStream, stream_id: String) -> bool:
-	if not available() or not _bridge_ready():
-		return false
-	var payload := _stream_payload(stream, stream_id, 0.0, 1.0, "", false)
-	if payload.is_empty():
-		return false
-	var payload_json := JSON.stringify(payload)
-	_record_bridge_call("register_pcm", payload_json.length())
-	if not bool(_bridge_interface.registerPcm(payload_json)):
-		return false
-	_mark_pcm_registered(payload)
-	return true
-
-
 static func stop_loop(loop_id: String) -> void:
 	if not available():
 		return
@@ -555,6 +686,16 @@ static func stop_loop(loop_id: String) -> void:
 		return
 	_record_bridge_call("stop_loop", safe_loop_id.length())
 	_bridge_interface.stopLoop(safe_loop_id)
+
+
+static func set_loop_paused(loop_id: String, paused: bool) -> bool:
+	if not available() or not _bridge_ready():
+		return false
+	var safe_loop_id := loop_id.strip_edges()
+	if safe_loop_id.is_empty():
+		return false
+	_record_bridge_call("pause_loop" if paused else "resume_loop", safe_loop_id.length())
+	return bool(_bridge_interface.setLoopPaused(safe_loop_id, paused))
 
 
 static func play_music_stems(group_id: String, stem_set_key: String, stem_set: Dictionary, role_volume_db: Dictionary, resume_position: float) -> bool:
@@ -583,7 +724,7 @@ static func play_music_stems(group_id: String, stem_set_key: String, stem_set: D
 		if not (stream_value is AudioStream):
 			continue
 		var stream := stream_value as AudioStream
-		if stream is AudioStreamWAV and not _wav_has_signal(stream as AudioStreamWAV):
+		if stream is AudioStreamWAV and not wav_has_signal(stream as AudioStreamWAV):
 			continue
 		var payload := _stream_payload(stream, "%s:%s:%s" % [safe_group_id, safe_stem_key, role], float(role_volume_db.get(role, -80.0)), 1.0, "", true)
 		if payload.is_empty():
@@ -666,19 +807,54 @@ static func stop_music(group_id: String = "") -> void:
 	var payload_json := JSON.stringify(payload)
 	_record_bridge_call("stop_music", payload_json.length())
 	_bridge_interface.stopMusic(payload_json)
+static func clear_inactive_pcm() -> Dictionary:
+	if not available() or not _bridge_ready():
+		return _tracked_pcm_stats()
+	_record_bridge_call("clear_inactive_pcm", 0)
+	var result := _parse_bridge_pcm_result(_bridge_interface.clearInactivePcm())
+	_sync_registered_pcm_from_result(result)
+	return result
 
 
+# Coordinates the bridge's decoded AudioBuffer LRU with the raw/base64 owner.
+# The caller reports its retained bytes and the browser receives only the
+# remaining portion of the one process-wide PCM ceiling.
+static func set_shared_pcm_budget(total_budget_bytes: int, owner_retained_bytes: int) -> Dictionary:
+	_shared_pcm_budget_bytes = maxi(1, total_budget_bytes)
+	_shared_pcm_owner_bytes = clampi(owner_retained_bytes, 0, _shared_pcm_budget_bytes)
+	_bridge_pcm_budget_bytes = maxi(0, _shared_pcm_budget_bytes - _shared_pcm_owner_bytes)
+	if available() and _bridge_ready():
+		var payload := JSON.stringify({
+			"budget_bytes": _bridge_pcm_budget_bytes,
+			# The JavaScript LRU derives protection from live loops, one-shots, and
+			# music groups. Supplying stale GDScript registrations here would make
+			# inactive decoded buffers unevictable.
+			"protected_keys": [],
+		})
+		_record_bridge_call("set_pcm_budget", payload.length())
+		var result := _parse_bridge_pcm_result(_bridge_interface.setPcmBudget(payload))
+		_sync_registered_pcm_from_result(result)
+	return shared_pcm_policy_snapshot()
+
+
+static func shared_pcm_policy_snapshot() -> Dictionary:
+	var bridge := _actual_pcm_stats()
+	var bridge_bytes := int(bridge.get("bytes", 0))
+	var combined_bytes := _shared_pcm_owner_bytes + bridge_bytes
+	return {
+		"shared_pcm_owner_bytes": _shared_pcm_owner_bytes,
+		"web_decoded_bytes": bridge_bytes,
+		"combined_pcm_bytes": combined_bytes,
+		"combined_pcm_budget_bytes": _shared_pcm_budget_bytes,
+		"combined_pcm_within_budget": combined_bytes <= _shared_pcm_budget_bytes,
+		"web_decoded_budget_bytes": int(bridge.get("budget_bytes", _bridge_pcm_budget_bytes)),
+		"web_decoded_actual": bool(bridge.get("actual", false)),
+	}
 static func reset_debug_stats() -> void:
 	_call_counts = {}
 	_payload_bytes = 0
 	_preencoded_payload_hits = 0
 	_synchronous_payload_encodes = 0
-	_last_music_payload_key = ""
-	_last_music_mix_keys = {}
-	_last_music_mix_msec = {}
-	_registered_pcm_keys = {}
-	_active_music_groups = {}
-	_last_bus_levels_key = ""
 
 
 static func _sync_output_levels() -> void:
@@ -707,6 +883,8 @@ static func _audio_bus_linear(bus_name: String) -> float:
 
 
 static func debug_stats() -> Dictionary:
+	var pcm := _actual_pcm_stats()
+	var shared := shared_pcm_policy_snapshot()
 	return {
 		"available": available(),
 		"ensured": _ensured,
@@ -714,7 +892,15 @@ static func debug_stats() -> Dictionary:
 		"payload_bytes": _payload_bytes,
 		"preencoded_payload_hits": _preencoded_payload_hits,
 		"synchronous_payload_encodes": _synchronous_payload_encodes,
-		"registered_pcm_count": _registered_pcm_keys.size(),
+		"registered_pcm_count": int(pcm.get("count", _registered_pcm_keys.size())),
+		"registered_pcm_bytes": int(pcm.get("bytes", 0)),
+		"registered_pcm_keys": (pcm.get("keys", []) as Array).duplicate(),
+		"pcm_budget_bytes": int(pcm.get("budget_bytes", _bridge_pcm_budget_bytes)),
+		"pcm_diagnostics_actual": bool(pcm.get("actual", false)),
+		"shared_pcm_owner_bytes": int(shared.get("shared_pcm_owner_bytes", 0)),
+		"combined_pcm_bytes": int(shared.get("combined_pcm_bytes", 0)),
+		"combined_pcm_budget_bytes": int(shared.get("combined_pcm_budget_bytes", _shared_pcm_budget_bytes)),
+		"combined_pcm_within_budget": bool(shared.get("combined_pcm_within_budget", false)),
 		"active_music_group_count": _active_music_groups.size(),
 	}
 
@@ -744,6 +930,14 @@ static func mix_contract_snapshot() -> Dictionary:
 		"script_has_music_stems": WEB_AUDIO_SCRIPT.find("playMusicStems") >= 0 and WEB_AUDIO_SCRIPT.find("setMusicMix") >= 0,
 		"script_syncs_user_bus_levels": WEB_AUDIO_SCRIPT.find("setBusLevels") >= 0 and WEB_AUDIO_SCRIPT.find("this.musicBus.gain.setTargetAtTime") >= 0 and WEB_AUDIO_SCRIPT.find("this.sfxBus.gain.setTargetAtTime") >= 0,
 		"script_has_loop_stop": WEB_AUDIO_SCRIPT.find("stopLoop") >= 0,
+		"script_has_loop_pause_resume": WEB_AUDIO_SCRIPT.find("setLoopPaused") >= 0 and WEB_AUDIO_SCRIPT.find("playbackRate.setValueAtTime(paused ? 0") >= 0,
+		"script_has_pcm_byte_lru": WEB_AUDIO_SCRIPT.find("pcmBudgetBytes") >= 0 and WEB_AUDIO_SCRIPT.find("evictPcm") >= 0 and WEB_AUDIO_SCRIPT.find("lastUsed") >= 0,
+		"script_has_pcm_disposal": WEB_AUDIO_SCRIPT.find("disposePcm") >= 0 and WEB_AUDIO_SCRIPT.find("clearInactivePcm") >= 0,
+		"script_releases_stopped_nodes": WEB_AUDIO_SCRIPT.find("source.onended = null") >= 0 \
+			and WEB_AUDIO_SCRIPT.find("entry.source = null") >= 0 \
+			and WEB_AUDIO_SCRIPT.find("pruneEndedOneShots") >= 0,
+		"diagnostics_report_actual_pcm": WEB_AUDIO_SCRIPT.find("pcmStats") >= 0 and WEB_AUDIO_SCRIPT.find("decoded.length * decoded.numberOfChannels * 4") >= 0,
+		"pcm_budget_bytes": WEB_PCM_CACHE_BUDGET_BYTES,
 		"script_has_global_sfx_cap": WEB_AUDIO_SCRIPT.find("var globalMaxVoices = 10") >= 0 \
 			and WEB_AUDIO_SCRIPT.find("this.sfxOneShots.length >= globalMaxVoices") >= 0,
 		"script_requires_explicit_one_shot_unlock": WEB_AUDIO_SCRIPT.find("(!this.unlocked && !payload.loop)") >= 0 \
@@ -824,10 +1018,100 @@ static func prepare_pcm_stream_for_bridge(stream: AudioStream) -> bool:
 
 static func _mark_pcm_registered(payload: Dictionary) -> void:
 	if payload.has("data"):
-		_registered_pcm_keys[str(payload.get("key", ""))] = true
+		_registered_pcm_keys[str(payload.get("key", ""))] = maxi(0, int(payload.get("frames", 0))) * maxi(1, int(payload.get("channels", 1))) * 4
 
 
-static func _wav_has_signal(wav: AudioStreamWAV) -> bool:
+static func _tracked_pcm_stats() -> Dictionary:
+	var bytes := 0
+	for value in _registered_pcm_keys.values():
+		bytes += int(value)
+	return {
+		"count": _registered_pcm_keys.size(),
+		"bytes": bytes,
+		"budget_bytes": _bridge_pcm_budget_bytes,
+		"keys": _registered_pcm_keys.keys(),
+		"actual": false,
+	}
+
+
+static func _actual_pcm_stats() -> Dictionary:
+	if not available() or not _bridge_ready():
+		return _tracked_pcm_stats()
+	var parsed := _parse_bridge_pcm_result(_bridge_interface.pcmStats())
+	return _validated_actual_pcm_stats(parsed.get("stats", parsed))
+
+
+static func _validated_actual_pcm_stats(value: Variant) -> Dictionary:
+	if typeof(value) != TYPE_DICTIONARY:
+		return _tracked_pcm_stats()
+	var stats := value as Dictionary
+	for field in ["count", "bytes", "budget_bytes", "keys"]:
+		if not stats.has(field):
+			return _tracked_pcm_stats()
+	if not _valid_nonnegative_integer(stats.get("count")) \
+		or not _valid_nonnegative_integer(stats.get("bytes")) \
+		or not _valid_nonnegative_integer(stats.get("budget_bytes")) \
+		or typeof(stats.get("keys")) != TYPE_ARRAY:
+		return _tracked_pcm_stats()
+	var count := int(stats.get("count"))
+	var byte_count := int(stats.get("bytes"))
+	var budget_bytes := int(stats.get("budget_bytes"))
+	if budget_bytes != _bridge_pcm_budget_bytes:
+		return _tracked_pcm_stats()
+	if (count == 0) != (byte_count == 0):
+		return _tracked_pcm_stats()
+	var retained_keys: Dictionary = {}
+	for key_value in (stats.get("keys") as Array):
+		if typeof(key_value) != TYPE_STRING:
+			return _tracked_pcm_stats()
+		var key := str(key_value)
+		if key.is_empty() or retained_keys.has(key):
+			return _tracked_pcm_stats()
+		retained_keys[key] = true
+	if retained_keys.size() != count:
+		return _tracked_pcm_stats()
+	var keys: Array = retained_keys.keys()
+	keys.sort()
+	return {
+		"count": count,
+		"bytes": byte_count,
+		"budget_bytes": budget_bytes,
+		"keys": keys,
+		"actual": true,
+	}
+
+
+static func _valid_nonnegative_integer(value: Variant) -> bool:
+	if not [TYPE_INT, TYPE_FLOAT].has(typeof(value)):
+		return false
+	var numeric := float(value)
+	return numeric >= 0.0 and numeric == floor(numeric) and numeric <= 9007199254740991.0
+
+
+static func _parse_bridge_pcm_result(value: Variant) -> Dictionary:
+	var parsed: Variant = value
+	if typeof(value) == TYPE_STRING:
+		parsed = JSON.parse_string(str(value))
+	if typeof(parsed) != TYPE_DICTIONARY:
+		return {}
+	return (parsed as Dictionary).duplicate(true)
+
+
+static func _sync_registered_pcm_from_result(result: Dictionary) -> void:
+	var stats := _validated_actual_pcm_stats(result.get("stats", result))
+	if not bool(stats.get("actual", false)):
+		return
+	var keys_value: Variant = stats.get("keys", [])
+	if typeof(keys_value) != TYPE_ARRAY:
+		return
+	var retained: Dictionary = {}
+	for key_value in (keys_value as Array):
+		var key := str(key_value)
+		retained[key] = int(_registered_pcm_keys.get(key, 0))
+	_registered_pcm_keys = retained
+
+
+static func wav_has_signal(wav: AudioStreamWAV) -> bool:
 	var data := wav.data
 	var size := data.size()
 	if size <= 0:

@@ -36,7 +36,7 @@ All five are test/tool harness changes. **No product/runtime code was modified.*
 Verify each against the reasoning below before you commit; if you disagree with
 one, say so in your report rather than silently reverting it.
 
-1. `tools/env06_8_unlabeled_contact_sheet_probe.gd`
+1. `tools/archive/env06_8/env06_8_unlabeled_contact_sheet_probe.gd`
    Two single-line function bodies (`func …() -> void: pass`) were expanded onto
    their own lines. **Why:** `tools/function_census.ps1:160` builds each function
    body as a line slice; a single-line body yields an empty slice, which

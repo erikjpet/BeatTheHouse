@@ -1,6 +1,9 @@
 class_name VideoPokerRenderer
 extends RefCounted
 
+# Draws the three video-poker cabinet identities, paytables, hands, controls,
+# ritual animation, and holdout cues from player-safe surface state.
+
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const PlayingCardRendererScript := preload("res://scripts/games/playing_card_renderer.gd")
 
@@ -12,8 +15,6 @@ const CONTROL_DECK := Rect2(30, 462, 900, 62)
 const MAX_COIN_COUNT := 5
 const HAND_SIZE := 5
 
-const C_DARK := VisualStyleScript.DARK
-const C_PINK := VisualStyleScript.PINK
 const C_CYAN := VisualStyleScript.CYAN
 const C_TEAL := VisualStyleScript.TEAL
 const C_YELLOW := VisualStyleScript.YELLOW
@@ -21,6 +22,15 @@ const C_AMBER := VisualStyleScript.AMBER
 const C_ORANGE := VisualStyleScript.ORANGE
 const C_WHITE := VisualStyleScript.WHITE
 const C_SOFT := VisualStyleScript.SOFT
+const GUIDANCE_STEPS := ["1  SET BET", "2  DEAL", "3  TAP CARDS TO HOLD", "4  DRAW", "5  AUTO PAY"]
+const SINGLE_HAND_LAYOUT := [Rect2(54, 270, 852, 170)]
+const DOUBLE_HAND_LAYOUT := [Rect2(54, 270, 420, 170), Rect2(486, 270, 420, 170)]
+const TRIPLE_HAND_LAYOUT := [Rect2(54, 270, 420, 81), Rect2(486, 270, 420, 81), Rect2(270, 359, 420, 81)]
+
+var _palette_cache_key := ""
+var _palette_cache: Dictionary = {}
+var _paytable_cache_fingerprint := 0
+var _paytable_cache_rows: Array = []
 
 
 func draw(surface, state: Dictionary, _context: Dictionary = {}) -> bool:
@@ -85,14 +95,24 @@ func _draw_machine_ritual_layer(surface, state: Dictionary, palette: Dictionary)
 
 
 func _palette(state: Dictionary) -> Dictionary:
-	return {
-		"primary": Color(str(state.get("cabinet_primary", "#19d6ff"))),
-		"secondary": Color(str(state.get("cabinet_secondary", "#ff4fd8"))),
-		"body": Color(str(state.get("cabinet_body", "#111a2b"))),
-		"glass": Color(str(state.get("cabinet_glass", "#071323"))),
-		"button": Color(str(state.get("cabinet_button", "#1ac8ff"))),
-		"trim": Color(str(state.get("cabinet_trim", "#f7ef75"))),
-	}
+	var primary := str(state.get("cabinet_primary", "#19d6ff"))
+	var secondary := str(state.get("cabinet_secondary", "#ff4fd8"))
+	var body := str(state.get("cabinet_body", "#111a2b"))
+	var glass := str(state.get("cabinet_glass", "#071323"))
+	var button := str(state.get("cabinet_button", "#1ac8ff"))
+	var trim := str(state.get("cabinet_trim", "#f7ef75"))
+	var cache_key := "|".join([primary, secondary, body, glass, button, trim])
+	if cache_key != _palette_cache_key:
+		_palette_cache_key = cache_key
+		_palette_cache = {
+			"primary": Color(primary),
+			"secondary": Color(secondary),
+			"body": Color(body),
+			"glass": Color(glass),
+			"button": Color(button),
+			"trim": Color(trim),
+		}
+	return _palette_cache
 
 
 func _draw_authored_cabinet(surface, state: Dictionary, palette: Dictionary) -> void:
@@ -193,7 +213,7 @@ func _draw_marquee(surface, state: Dictionary, palette: Dictionary) -> void:
 
 
 func _draw_paytable(surface, state: Dictionary, palette: Dictionary) -> void:
-	var rows: Array = state.get("paytable_rows", [])
+	var rows := _paytable_render_rows(state.get("paytable_rows", []))
 	var active_coin := clampi(int(state.get("coin_count", 1)), 1, MAX_COIN_COUNT)
 	var win_keys: Array = state.get("winning_pay_keys", [])
 	var primary: Color = palette["primary"]
@@ -214,7 +234,7 @@ func _draw_paytable(surface, state: Dictionary, palette: Dictionary) -> void:
 		else:
 			surface.surface_label_centered(str(coin), Rect2(col_rect.position, Vector2(col_rect.size.x, title_h)), 9, C_SOFT)
 	for row_index in range(rows.size()):
-		var row: Dictionary = rows[row_index] if typeof(rows[row_index]) == TYPE_DICTIONARY else {}
+		var row: Dictionary = rows[row_index]
 		var row_key := str(row.get("key", ""))
 		var y := PAYTABLE.position.y + title_h + 2.0 + float(row_index) * row_h
 		var row_rect := Rect2(PAYTABLE.position.x + 6, y, PAYTABLE.size.x - 12, row_h)
@@ -227,11 +247,32 @@ func _draw_paytable(surface, state: Dictionary, palette: Dictionary) -> void:
 			surface.draw_rect(row_rect, C_YELLOW, false, 2)
 		elif row_index % 2 == 0:
 			surface.draw_rect(row_rect, Color(primary.r, primary.g, primary.b, 0.045))
-		surface.surface_label(str(row.get("label", "")).to_upper().left(28), Vector2(row_rect.position.x + 5, row_rect.position.y + row_h - 1), row_font, C_YELLOW if winning else C_SOFT)
+		surface.surface_label(str(row.get("label", "")), Vector2(row_rect.position.x + 5, row_rect.position.y + row_h - 1), row_font, C_YELLOW if winning else C_SOFT)
+		var values: Array = row["values"]
+		for coin in range(1, 6):
+			var cell := Rect2(PAYTABLE.position.x + label_w + float(coin - 1) * col_w, y, col_w - 2, row_h)
+			surface.surface_label_centered(values[coin - 1], cell, row_font, C_YELLOW if winning or coin == active_coin else secondary.lightened(0.24))
+
+
+func _paytable_render_rows(source: Variant) -> Array:
+	var rows: Array = source if typeof(source) == TYPE_ARRAY else []
+	var fingerprint := hash(rows)
+	if fingerprint == _paytable_cache_fingerprint and _paytable_cache_rows.size() == rows.size():
+		return _paytable_cache_rows
+	_paytable_cache_fingerprint = fingerprint
+	_paytable_cache_rows = []
+	for row_value in rows:
+		var row: Dictionary = row_value if typeof(row_value) == TYPE_DICTIONARY else {}
+		var values: Array = []
 		for coin in range(1, 6):
 			var value := int(row.get("max_mult", row.get("mult", 0))) * coin if coin == 5 and row.has("max_mult") else int(row.get("mult", 0)) * coin
-			var cell := Rect2(PAYTABLE.position.x + label_w + float(coin - 1) * col_w, y, col_w - 2, row_h)
-			surface.surface_label_centered(str(value), cell, row_font, C_YELLOW if winning or coin == active_coin else secondary.lightened(0.24))
+			values.append(str(value))
+		_paytable_cache_rows.append({
+			"key": str(row.get("key", "")),
+			"label": str(row.get("label", "")).to_upper().left(28),
+			"values": values,
+		})
+	return _paytable_cache_rows
 
 
 func _draw_hands(surface, state: Dictionary, palette: Dictionary) -> void:
@@ -249,7 +290,11 @@ func _draw_hands(surface, state: Dictionary, palette: Dictionary) -> void:
 		var panel: Rect2 = layouts[hand_index]
 		var cards: Array = display_hands[hand_index] if hand_index < display_hands.size() and typeof(display_hands[hand_index]) == TYPE_ARRAY else []
 		var result: Dictionary = hand_results[hand_index] if hand_index < hand_results.size() and typeof(hand_results[hand_index]) == TYPE_DICTIONARY else {}
-		_draw_hand_panel(surface, state, palette, panel, cards, result, holds, drawn_indices, hand_index, hand_count, phase, flip_active, flip_progress)
+		_draw_hand_panel(FunctionOptions.VideoPokerHandPanelOptions.from({
+			"surface": surface, "state": state, "palette": palette, "panel": panel, "cards": cards,
+			"result": result, "holds": holds, "drawn_indices": drawn_indices, "hand_index": hand_index,
+			"hand_count": hand_count, "phase": phase, "flip_active": flip_active, "flip_progress": flip_progress,
+		}))
 
 
 func _draw_guidance(surface, state: Dictionary, palette: Dictionary) -> void:
@@ -267,44 +312,42 @@ func _draw_guidance(surface, state: Dictionary, palette: Dictionary) -> void:
 		surface.draw_rect(strip, C_YELLOW, false, 2)
 		surface.surface_label_centered(result_detail.left(128), strip.grow(-3), 9, C_YELLOW)
 		return
-	var steps := ["1  SET BET", "2  DEAL", "3  TAP CARDS TO HOLD", "4  DRAW", "5  AUTO PAY"]
 	var active := 1
 	if phase == "hold":
 		active = 2
-	var step_w := strip.size.x / float(steps.size())
-	for index in range(steps.size()):
+	var step_w := strip.size.x / float(GUIDANCE_STEPS.size())
+	for index in range(GUIDANCE_STEPS.size()):
 		var rect := Rect2(strip.position.x + float(index) * step_w, strip.position.y, step_w - 3, strip.size.y)
 		if index == active:
 			surface.draw_rect(rect, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.20))
 			surface.draw_rect(rect, C_YELLOW, false, 2)
-			surface.surface_label_centered(steps[index], rect.grow(-3), 9, C_YELLOW)
+			surface.surface_label_centered(GUIDANCE_STEPS[index], rect.grow(-3), 9, C_YELLOW)
 		else:
-			surface.surface_label_centered(steps[index], rect.grow(-3), 8, Color(primary.r, primary.g, primary.b, 0.58))
+			surface.surface_label_centered(GUIDANCE_STEPS[index], rect.grow(-3), 8, Color(primary.r, primary.g, primary.b, 0.58))
 
 
 func _hand_layouts(hand_count: int) -> Array:
-	var area := Rect2(PLAYFIELD.position + Vector2(12, 38), Vector2(PLAYFIELD.size.x - 24, PLAYFIELD.size.y - 48))
 	if hand_count <= 1:
-		return [area]
+		return SINGLE_HAND_LAYOUT
 	if hand_count == 2:
-		var gap := 12.0
-		var width := (area.size.x - gap) * 0.5
-		return [
-			Rect2(area.position, Vector2(width, area.size.y)),
-			Rect2(area.position + Vector2(width + gap, 0), Vector2(width, area.size.y)),
-		]
-	var gap_x := 12.0
-	var gap_y := 8.0
-	var width := (area.size.x - gap_x) * 0.5
-	var height := (area.size.y - gap_y) * 0.5
-	return [
-		Rect2(area.position, Vector2(width, height)),
-		Rect2(area.position + Vector2(width + gap_x, 0), Vector2(width, height)),
-		Rect2(Vector2(area.position.x + (area.size.x - width) * 0.5, area.position.y + height + gap_y), Vector2(width, height)),
-	]
+		return DOUBLE_HAND_LAYOUT
+	return TRIPLE_HAND_LAYOUT
 
 
-func _draw_hand_panel(surface, state: Dictionary, palette: Dictionary, panel: Rect2, cards: Array, result: Dictionary, holds: Array, drawn_indices: Array, hand_index: int, hand_count: int, phase: String, flip_active: bool, flip_progress: float) -> void:
+func _draw_hand_panel(options: FunctionOptions.VideoPokerHandPanelOptions) -> void:
+	var surface = options.values.get("surface")
+	var state: Dictionary = options.values.get("state", {})
+	var palette: Dictionary = options.values.get("palette", {})
+	var panel: Rect2 = options.values.get("panel", Rect2())
+	var cards: Array = options.values.get("cards", [])
+	var result: Dictionary = options.values.get("result", {})
+	var holds: Array = options.values.get("holds", [])
+	var drawn_indices: Array = options.values.get("drawn_indices", [])
+	var hand_index := int(options.values.get("hand_index", 0))
+	var hand_count := int(options.values.get("hand_count", 1))
+	var phase := str(options.values.get("phase", "idle"))
+	var flip_active := bool(options.values.get("flip_active", false))
+	var flip_progress := float(options.values.get("flip_progress", 0.0))
 	var primary: Color = palette["primary"]
 	var secondary: Color = palette["secondary"]
 	var recommended_holds: Array = state.get("recommended_holds", [])
@@ -398,8 +441,11 @@ func _draw_controls(surface, state: Dictionary, palette: Dictionary) -> void:
 	var meters := Rect2(704, y, 212, 40)
 	surface.draw_rect(meters, Color("#02050b"))
 	surface.draw_rect(meters, trim.darkened(0.25), false, 2)
-	surface.surface_label("CASH $%d    WIN $%d" % [int(state.get("bankroll", 0)), int(state.get("win_credits", 0))], Vector2(meters.position.x + 8, meters.position.y + 15), 9, C_YELLOW)
-	surface.surface_label("BET $%d (%d COIN/HAND)" % [wager, coins], Vector2(meters.position.x + 8, meters.position.y + 31), 9, C_CYAN)
+	var account_balance_text := str(state.get("account_balance_text", "CASH $%d" % int(state.get("bankroll", 0))))
+	var win_amount_text := str(state.get("win_amount_text", "$%d" % int(state.get("win_credits", 0))))
+	var bet_amount_text := str(state.get("bet_amount_text", "$%d" % wager))
+	surface.surface_label("%s    WIN %s" % [account_balance_text, win_amount_text], Vector2(meters.position.x + 8, meters.position.y + 15), 9, C_YELLOW)
+	surface.surface_label("BET %s (%d COIN/HAND)" % [bet_amount_text, coins], Vector2(meters.position.x + 8, meters.position.y + 31), 9, C_CYAN)
 
 
 func _button(surface, rect: Rect2, label: String, action: String, index: int, accent: Color, enabled: bool) -> void:

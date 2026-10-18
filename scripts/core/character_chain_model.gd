@@ -1,6 +1,8 @@
 class_name CharacterChainModel
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Data-driven, run-local sequencing support for optional character chains.
 # Progress remains authoritative in RunState.story_flags; this model only
 # selects deterministic world anchors and projects eligible event fixtures.
@@ -22,14 +24,18 @@ static func data() -> Dictionary:
 
 
 static func chains() -> Array:
-	return _dictionary_array(data().get("chains", []))
+	return JsonCoerceScript._dictionary_array(data().get("chains", []))
 
 
 static func tuning() -> Dictionary:
 	return _dictionary(data().get("tuning", {})).duplicate(true)
 
 
-static func apply_to_environment(run_state: RunState, environment: Dictionary) -> void:
+static func apply_to_environment(
+	run_state: RunState,
+	environment: Dictionary,
+	library: ContentLibrary = null
+) -> void:
 	if run_state == null or environment.is_empty():
 		return
 	if bool(run_state.story_flags.get("chain06_sal_item_taken", false)) \
@@ -37,13 +43,15 @@ static func apply_to_environment(run_state: RunState, environment: Dictionary) -
 		_ensure_run_anchors(run_state)
 	if bool(run_state.story_flags.get("chain06_dave_last_stop", false)):
 		_ensure_dave_true_rumor(run_state)
-	var event_ids := _string_array(environment.get("event_ids", []))
-	var prior_ids := _string_array(environment.get(INJECTED_EVENT_IDS_KEY, []))
+	var previous_event_ids := JsonCoerceScript._string_array(environment.get("event_ids", []))
+	var event_ids := previous_event_ids.duplicate()
+	var prior_ids := JsonCoerceScript._string_array(environment.get(INJECTED_EVENT_IDS_KEY, []))
+	var layout_reconcile_required := false
 	for prior_id in prior_ids:
 		event_ids.erase(prior_id)
 	var injected: Array = []
 	for chain in chains():
-		for beat in _dictionary_array(chain.get("beats", [])):
+		for beat in JsonCoerceScript._dictionary_array(chain.get("beats", [])):
 			if not _placement_matches(_dictionary(beat.get("placement", {})), environment):
 				continue
 			var event_id := str(beat.get("event_id", "")).strip_edges()
@@ -52,15 +60,25 @@ static func apply_to_environment(run_state: RunState, environment: Dictionary) -
 			injected.append(event_id)
 			if not event_ids.has(event_id):
 				event_ids.append(event_id)
-	if not injected.is_empty() or not prior_ids.is_empty():
-		environment[INJECTED_EVENT_IDS_KEY] = injected
+	if injected != prior_ids or event_ids != previous_event_ids:
+		if injected.is_empty():
+			environment.erase(INJECTED_EVENT_IDS_KEY)
+		else:
+			environment[INJECTED_EVENT_IDS_KEY] = injected
 		environment["event_ids"] = event_ids
-		# Chain beats are projected after the base room layout exists. Reconcile
-		# their physical icons immediately so saving and restoring cannot add a
-		# rectangle that was absent from the pre-save environment.
-		environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(environment)
+		layout_reconcile_required = true
 	_apply_cass_environment_effects(run_state, environment)
+	var prior_ambient_line := str(environment.get(INJECTED_AMBIENT_LINE_KEY, ""))
 	_apply_rourke_staff_register(run_state, environment)
+	if str(environment.get(INJECTED_AMBIENT_LINE_KEY, "")) != prior_ambient_line:
+		layout_reconcile_required = true
+	if layout_reconcile_required:
+		# Chain beats and their ambient register are projected after the base room
+		# exists. Seal both mutations together so the manifest cannot describe the
+		# incoming beat while the layout still reflects the outgoing presentation.
+		# Runtime handoffs need catalog metadata just as initial generation does;
+		# otherwise strict venues can reject the new binding and clear the room.
+		environment["layout"] = EnvironmentInstanceScript.ensure_generated_layout(environment, library)
 
 
 static func advance(run_state: RunState, amount: int) -> void:
@@ -92,7 +110,7 @@ static func contextualize_choice(event_id: String, choice_data: Dictionary, run_
 	var resolved := choice_data.duplicate(true)
 	if event_id == "chain06_trio_rent_payoff":
 		var memory := trio_gift_memory(run_state)
-		var names := _string_array(memory.get("names", []))
+		var names := JsonCoerceScript._string_array(memory.get("names", []))
 		var phrase := "the nights you stayed" if names.is_empty() else ", ".join(names)
 		resolved["text"] = str(resolved.get("text", "")).replace("{gift_memory}", phrase)
 		resolved["trio_gift_memory"] = memory
@@ -134,7 +152,7 @@ static func validation_errors(event_ids: Dictionary = {}) -> Array:
 		seen_chains[chain_id] = true
 		if prefix.is_empty():
 			errors.append("character chain %s is missing flag_prefix." % chain_id)
-		for beat in _dictionary_array(chain.get("beats", [])):
+		for beat in JsonCoerceScript._dictionary_array(chain.get("beats", [])):
 			var beat_id := str(beat.get("id", "")).strip_edges()
 			var event_id := str(beat.get("event_id", "")).strip_edges()
 			var compound := "%s:%s" % [chain_id, beat_id]
@@ -145,7 +163,7 @@ static func validation_errors(event_ids: Dictionary = {}) -> Array:
 				errors.append("character chain %s beat %s references unknown event: %s" % [chain_id, beat_id, event_id])
 			if _dictionary(beat.get("placement", {})).is_empty():
 				errors.append("character chain %s beat %s needs explicit placement." % [chain_id, beat_id])
-		for ending_flag in _string_array(chain.get("ending_flags", [])):
+		for ending_flag in JsonCoerceScript._string_array(chain.get("ending_flags", [])):
 			if not ending_flag.begins_with(prefix):
 				errors.append("character chain %s ending flag escapes prefix: %s" % [chain_id, ending_flag])
 	return errors
@@ -165,7 +183,7 @@ static func _ensure_run_anchors(run_state: RunState) -> void:
 			var archetype_id := str(node.get("archetype_id", node_id)).strip_edges()
 			if node_id.is_empty() or ["pawn_shop", "grand_casino", "apartment", "house", "motel_room"].has(archetype_id):
 				continue
-			candidates.append({"id": node_id, "score": _stable_hash("%s:sal:%s" % [run_state.seed_text, node_id])})
+			candidates.append({"id": node_id, "score": JsonCoerceScript._utf8_stable_hash("%s:sal:%s" % [run_state.seed_text, node_id])})
 	candidates.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
 		var a_score := int(a.get("score", 0))
 		var b_score := int(b.get("score", 0))
@@ -222,7 +240,7 @@ static func _apply_rourke_staff_register(run_state: RunState, environment: Dicti
 		or bool(run_state.story_flags.get("chain06_rourke_expected", false))
 	if prior_line.is_empty() and not has_register:
 		return
-	var ambient := _string_array(environment.get("layer_ambient_lines", []))
+	var ambient := JsonCoerceScript._string_array(environment.get("layer_ambient_lines", []))
 	if not prior_line.is_empty():
 		ambient.erase(prior_line)
 	var line := ""
@@ -314,18 +332,11 @@ static func _has_overdue_lender_debt(run_state: RunState, lender_id: String) -> 
 
 
 static func _placement_matches(placement: Dictionary, environment: Dictionary) -> bool:
-	var archetype_ids := _string_array(placement.get("archetype_ids", []))
+	var archetype_ids := JsonCoerceScript._string_array(placement.get("archetype_ids", []))
 	if not archetype_ids.is_empty() and not archetype_ids.has(str(environment.get("archetype_id", ""))):
 		return false
-	var layer_ids := _string_array(placement.get("layer_ids", []))
+	var layer_ids := JsonCoerceScript._string_array(placement.get("layer_ids", []))
 	return layer_ids.is_empty() or layer_ids.has(str(environment.get("current_layer_id", "")))
-
-
-static func _stable_hash(text: String) -> int:
-	var value := 2166136261
-	for byte in text.to_utf8_buffer():
-		value = int((value ^ int(byte)) * 16777619) & 0x7fffffff
-	return value
 
 
 static func _load_dictionary(path: String) -> Dictionary:
@@ -337,24 +348,3 @@ static func _load_dictionary(path: String) -> Dictionary:
 
 static func _dictionary(value: Variant) -> Dictionary:
 	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
-
-
-static func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value as Array:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append(entry)
-	return result
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value as Array:
-		var text := str(entry).strip_edges()
-		if not text.is_empty() and not result.has(text):
-			result.append(text)
-	return result

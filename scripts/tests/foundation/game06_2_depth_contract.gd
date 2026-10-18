@@ -73,6 +73,7 @@ func _run() -> void:
 	game.setup(definition, library)
 	_check_generic_null_authority_provider()
 	_check_contract(game)
+	_check_action_stutter_routing(game)
 	_check_declared_projection_ids(game)
 	_check_phase_projection(game)
 	_check_itemized_accounting(game)
@@ -87,7 +88,7 @@ func _run() -> void:
 	_check_legacy_replay_window_convergence(game)
 	_check_hostile_delivery_and_restore(game)
 	_check_failure_atomic_rng_retry(game)
-	_check_failed_turn_retry(game)
+	_check_failed_turn_automatic_recovery(game)
 	_check_mixed_rate_funding_rejection(game)
 	_cleanup_authority_hosts()
 	if failures.is_empty():
@@ -220,6 +221,46 @@ func _check_contract(game: GameModule) -> void:
 			_check(str(equivalent.get("target_selection", "")) in ["focus", "cycle", "direct"], "Gesture %s %s equivalent has no canonical target selection." % [str(gesture.get("id", "unknown")), input_kind])
 	var persistence: Dictionary = contract.get("ritual_persistence", {}) if typeof(contract.get("ritual_persistence", {})) == TYPE_DICTIONARY else {}
 	_check(persistence.get("save_boundaries", []) == ["wagering", "initial_deal", "player_turn", "dealer_procedure", "settlement"], "Not every Blackjack action phase is a declared save boundary.")
+	var authority_contract: Dictionary = game.sealed_action_authority_contract()
+	_check(int(authority_contract.get("active_replay_limit", 0)) == 2, "Blackjack did not retain its bounded two-response replay window.")
+	_check(bool(authority_contract.get("in_place_nonrejecting_commit", false)), "Ordinary Blackjack actions lost their no-scenario in-place commit optimization.")
+	_check(str(authority_contract.get("in_place_nonrejecting_commit_predicate_method", "")) == "_blackjack_in_place_commit_allowed", "Blackjack in-place commits are no longer action allowlisted.")
+
+
+func _check_action_stutter_routing(game: GameModule) -> void:
+	var fixture := _fixture(game, "GAME06-2-ACTION-STUTTER", 62)
+	var run: RunState = fixture.get("run")
+	var environment: Dictionary = fixture.get("environment", {})
+	var table: Dictionary = game.call("_table_state_preview", run, environment)
+	var active_hand := {
+		"cards": [{"rank": 10, "suit": 0, "deck": 0}, {"rank": 8, "suit": 1, "deck": 0}],
+		"wager_multiplier": 1,
+		"stood": false,
+		"doubled": false,
+		"split": false,
+	}
+	var single_hand := {
+		"selected_stake": 5,
+		"locked_stake": 5,
+		"player_hands": [active_hand.duplicate(true)],
+		"active_hand_index": 0,
+		"dealer_cards": [{"rank": 9, "suit": 2, "deck": 0}, {"rank": 7, "suit": 3, "deck": 0}],
+		"moves_made": false,
+		"split_count": 0,
+	}
+	_check(bool(game.call("_blackjack_decision_will_settle", "blackjack_stand", single_hand, table, run)), "A final-hand Stand still takes the duplicate session preflight path.")
+	_check(bool(game.call("_blackjack_decision_will_settle", "blackjack_double", single_hand, table, run)), "A final-hand Double still takes the duplicate session preflight path.")
+	_check(bool(game.call("_blackjack_decision_will_settle", "blackjack_surrender", single_hand, table, run)), "A valid Surrender still takes the duplicate session preflight path.")
+	var split_hands := single_hand.duplicate(true)
+	(split_hands.get("player_hands", []) as Array).append(active_hand.duplicate(true))
+	_check(not bool(game.call("_blackjack_decision_will_settle", "blackjack_stand", split_hands, table, run)), "A nonterminal split-hand Stand bypassed the lightweight session path.")
+	_check(not bool(game.call("_blackjack_in_place_commit_allowed", "play_basic", run, environment)), "Blackjack first-entry normalization incorrectly entered the in-place commit path.")
+	_seed_authority_session(game, run, environment, single_hand)
+	_check(bool(game.call("_blackjack_in_place_commit_allowed", "play_basic", run, environment)), "Ordinary Blackjack settlement lost its in-place allowlist entry.")
+	_check(not bool(game.call("_blackjack_in_place_commit_allowed", "peek_hole_card", run, environment)), "Blackjack Peek incorrectly entered the ordinary in-place commit path.")
+	var host := _authority_host(game, run, 5)
+	_check(not bool(host.call("_sealed_action_host_in_place_session_intent_allowed", "blackjack_stand")), "A final-hand Stand was still executed through the duplicate session preflight.")
+	_check(host.call("_sealed_action_host_transaction_candidate", "blackjack_stand") == run, "A synchronous ordinary Stand still cloned the accumulated run before settlement.")
 
 
 func _check_declared_projection_ids(game: GameModule) -> void:
@@ -469,7 +510,7 @@ func _check_read_only_compatibility_equivalence(game: GameModule, run: RunState,
 	var table_source := source.substr(table_start, table_end - table_start) if table_start >= 0 and table_end > table_start else ""
 	_check(
 		core_source.contains("read_only_run_state and (not _blackjack_compatibility_read_only_core_allowed")
-			and core_source.contains("_table_state(run_state, environment, read_only_run_state)")
+			and core_source.contains("_table_state(run_state, environment, read_only_run_state, owns_table_state)")
 			and table_source.contains("_apply_grand_casino_dealer_assignment(table, run_state, environment, observational)"),
 		"Read-only compatibility core no longer proves its closed classifier and observational table projection."
 	)
@@ -680,7 +721,8 @@ func _check_legacy_replay_window_convergence(game: GameModule) -> void:
 	var converged: Dictionary = converged_table.get(BlackjackActionAuthorityScript.LEDGER_KEY, {})
 	var converged_order: Array = converged.get("request_order", [])
 	_check(not BlackjackActionAuthorityScript.validate_persisted_ledger(converged, binding, restored.blackjack_authority_checkpoint_fingerprint()).is_empty(), "Historical Blackjack replay window did not converge to a valid bounded ledger.")
-	_check(converged_order.size() == BlackjackActionAuthorityScript.ACTIVE_REPLAY_LIMIT and (converged.get("journal", []) as Array).size() == BlackjackActionAuthorityScript.ACTIVE_REPLAY_LIMIT, "First post-load commit did not converge replay cache and journal to the active bound.")
+	var active_replay_limit := int(game.sealed_action_authority_contract().get("active_replay_limit", BlackjackActionAuthorityScript.ACTIVE_REPLAY_LIMIT))
+	_check(converged_order.size() == active_replay_limit and (converged.get("journal", []) as Array).size() == active_replay_limit, "First post-load commit did not converge replay cache and journal to the provider's active bound.")
 	var legacy_cache: Dictionary = legacy.get("request_cache", {})
 	var oldest_delivery: Dictionary = ((legacy_cache.get(oldest_key, {}) as Dictionary).get("response", {}) as Dictionary).get(BlackjackActionAuthorityScript.HOST_DELIVERY_KEY, {})
 	var newest_delivery: Dictionary = ((legacy_cache.get(newest_key, {}) as Dictionary).get("response", {}) as Dictionary).get(BlackjackActionAuthorityScript.HOST_DELIVERY_KEY, {})
@@ -750,16 +792,17 @@ func _legacy_replay_ledger(binding: String, checkpoint: String, session: Diction
 	return rolling
 
 
-func _check_failed_turn_retry(game: GameModule) -> void:
-	var retry_fixture := _prepared_authority_fixture(game, "GAME06-2-TURN-ROLLBACK", 36, 5)
-	var control_fixture := _clone_prepared_authority_fixture(game, retry_fixture)
-	var retry_run: RunState = retry_fixture.run
+func _check_failed_turn_automatic_recovery(game: GameModule) -> void:
+	var recovery_fixture := _prepared_authority_fixture(game, "GAME06-2-TURN-ROLLBACK", 36, 5)
+	var control_fixture := _clone_prepared_authority_fixture(game, recovery_fixture)
+	var retry_run: RunState = recovery_fixture.run
 	var control_run: RunState = control_fixture.run
 	var before_bankroll := retry_run.bankroll
 	var before_chips := retry_run.grand_casino_chips
 	var before_rng := retry_run.rng_state
 	var before_town_action := int(retry_run.town_state.action_index)
 	var before_environment_turns := int(retry_run.current_environment.get("turns", 0))
+	var before_story := RitualRuntimeScript.canonical_json(retry_run.story_log)
 	var before_table: Dictionary = game.call("_table_state_preview", retry_run, retry_run.current_environment)
 	before_table.erase("_blackjack_action_authority")
 	var retry_host := _failing_authority_host(game, retry_run, 5)
@@ -773,20 +816,36 @@ func _check_failed_turn_retry(game: GameModule) -> void:
 	_check(not pending.is_empty() and str(pending.get("request_key", "")) == str(rejected.get("blackjack_host_request_key", "")), "Failed environment turn did not retain the exact retryable pending delivery key.")
 	_check(retry_run.bankroll == before_bankroll and retry_run.grand_casino_chips == before_chips and retry_run.rng_state == before_rng, "Failed environment turn funded, applied, or advanced RNG on the live run.")
 	_check(int(retry_run.town_state.action_index) == before_town_action and int(retry_run.current_environment.get("turns", 0)) == before_environment_turns, "Failed environment turn advanced a live action boundary.")
+	_check(RitualRuntimeScript.canonical_json(retry_run.story_log) == before_story, "Rejected Blackjack delivery leaked completed history before publication.")
 	_check(RitualRuntimeScript.canonical_json(rejected_table_without_authority) == RitualRuntimeScript.canonical_json(before_table), "Failed environment turn published detached Blackjack table/result mutations.")
 	var pending_surface: Dictionary = game.surface_state(retry_run, retry_run.current_environment, {})
 	var pending_bindings: Dictionary = pending_surface.get("surface_action_bindings", {})
-	_check(bool(pending_surface.get("blackjack_host_retry_available", false)) and str((pending_bindings.get("legal", {}) as Dictionary).get("action", "")) == "blackjack_retry_pending", "Failed action did not project a native retry control and legal binding.")
-	_check(bool(pending_surface.get("blackjack_host_cancel_available", false)) and str((pending_bindings.get("cheat", {}) as Dictionary).get("action", "")) == "blackjack_cancel_pending", "Failed action did not project a native cancel control and alternate binding.")
-	var surface_handled: bool = retry_host.call("_handle_module_surface_action", "blackjack_retry_pending", 0, true, true)
-	var retried: Dictionary = retry_host.call("_sealed_action_host_replay_request", pending)
+	_check(not pending_surface.has("blackjack_host_pending_delivery") and not pending_surface.has("blackjack_host_retry_available") and not pending_surface.has("blackjack_host_cancel_available"), "Blackjack exposed its internal pending-delivery recovery state on the player surface.")
+	var projected_actions := RitualRuntimeScript.canonical_json(pending_bindings)
+	_check(projected_actions.find("blackjack_retry_pending") < 0 and projected_actions.find("blackjack_cancel_pending") < 0, "Blackjack projected manual recovery actions after a failed delivery.")
+	_check(str(pending_surface.get("table_notice", "")).findn("sealed action") < 0, "Blackjack exposed sealed-action terminology in its table notice.")
+	var recovered: Dictionary = retry_host.call("_sealed_action_host_rollback_pending_delivery")
+	var recovered_table: Dictionary = game.call("_table_state_preview", retry_run, retry_run.current_environment)
+	var recovered_ledger: Dictionary = recovered_table.get("_blackjack_action_authority", {})
+	var recovered_table_without_authority := recovered_table.duplicate(true)
+	recovered_table_without_authority.erase("_blackjack_action_authority")
+	_check(bool(recovered.get("ok", false)) and bool(recovered.get("handled", false)), "Failed Blackjack delivery was not rolled back automatically by the host recovery path.")
+	_check((recovered_ledger.get("pending_delivery", {}) as Dictionary).is_empty(), "Automatic Blackjack recovery left a pending delivery behind.")
+	_check(str(recovered.get("message", "")).is_empty(), "Automatic Blackjack recovery exposed an internal recovery message to the player.")
+	_check(RitualRuntimeScript.canonical_json(recovered_table_without_authority) == RitualRuntimeScript.canonical_json(before_table), "Automatic Blackjack recovery did not restore the exact pre-delivery table.")
+	var retried: Dictionary = retry_host.call("_sealed_action_host_resolve_intent", "play_basic", 5)
 	var control_host := _authority_host(game, control_run, 5)
 	var control: Dictionary = control_host.call("_sealed_action_host_resolve_intent", "play_basic", 5)
-	_check(surface_handled, "Native pending-action retry did not travel through the canvas-facing host command path.")
-	_check(bool(retried.get("ok", false)) and bool(retried.get("blackjack_host_committed", false)), "Exact-key retry after an environment-turn rejection did not commit.")
-	_check(str(retried.get("blackjack_host_request_key", "")) == str(pending.get("request_key", "")), "Environment-turn retry replaced its durable delivery key.")
-	_check(RitualRuntimeScript.canonical_json(retried) == RitualRuntimeScript.canonical_json(control), "Environment-turn retry response diverged from a clean single delivery.")
-	_check(RitualRuntimeScript.canonical_json(retry_run.to_save_snapshot()) == RitualRuntimeScript.canonical_json(control_run.to_save_snapshot()), "Environment-turn retry double-funded, double-applied, burned RNG, or crossed two boundaries.")
+	var retry_committed_table: Dictionary = game.call("_table_state_preview", retry_run, retry_run.current_environment)
+	var control_committed_table: Dictionary = game.call("_table_state_preview", control_run, control_run.current_environment)
+	retry_committed_table.erase("_blackjack_action_authority")
+	control_committed_table.erase("_blackjack_action_authority")
+	_check(bool(retried.get("ok", false)) and bool(retried.get("blackjack_host_committed", false)), "A fresh Blackjack action did not commit after automatic recovery.")
+	_check(bool(control.get("ok", false)), "Clean control Blackjack delivery did not commit for automatic-recovery comparison.")
+	_check(retry_run.bankroll == control_run.bankroll and retry_run.grand_casino_chips == control_run.grand_casino_chips and retry_run.rng_state == control_run.rng_state, "Automatic recovery double-funded, double-applied, or burned gameplay RNG before the next action.")
+	_check(int(retry_run.town_state.action_index) == int(control_run.town_state.action_index) and int(retry_run.current_environment.get("turns", 0)) == int(control_run.current_environment.get("turns", 0)), "Automatic recovery crossed an extra gameplay boundary before the next action.")
+	_check(RitualRuntimeScript.canonical_json(retry_committed_table) == RitualRuntimeScript.canonical_json(control_committed_table), "The first action after automatic recovery diverged from a clean Blackjack delivery.")
+	_check(retry_run.story_log.size() == control_run.story_log.size() and retry_run.story_log.size() == 1, "The first action after automatic recovery did not publish exactly one completed story record.")
 
 	var cancel_fixture := _prepared_authority_fixture(game, "GAME06-2-CANCEL-ROLLBACK", 37, 5)
 	var cancel_run: RunState = cancel_fixture.run
@@ -794,12 +853,12 @@ func _check_failed_turn_retry(game: GameModule) -> void:
 	var before_cancel_table: Dictionary = game.call("_table_state_preview", cancel_run, cancel_run.current_environment)
 	var before_cancel_session: Dictionary = (before_cancel_table.get("_blackjack_action_authority", {}) as Dictionary).get("session", {})
 	var cancel_prepared: Dictionary = cancel_host.call("_sealed_action_host_prepare_delivery", "play_basic", 5)
-	_check(bool(cancel_prepared.get("ok", false)), "Host could not stage a pending action for native cancellation coverage.")
-	var cancel_handled: bool = cancel_host.call("_handle_module_surface_action", "blackjack_cancel_pending", 0, true, true)
+	_check(bool(cancel_prepared.get("ok", false)), "Host could not stage a pending action for automatic rollback coverage.")
+	var cancel_recovery: Dictionary = cancel_host.call("_sealed_action_host_rollback_pending_delivery")
 	var after_cancel_table: Dictionary = game.call("_table_state_preview", cancel_run, cancel_run.current_environment)
 	var after_cancel_ledger: Dictionary = after_cancel_table.get("_blackjack_action_authority", {})
-	_check(cancel_handled and (after_cancel_ledger.get("pending_delivery", {}) as Dictionary).is_empty(), "Native cancel control did not clear the exact pending delivery through the canvas-facing path.")
-	_check(RitualRuntimeScript.canonical_json(after_cancel_ledger.get("session", {})) == RitualRuntimeScript.canonical_json(before_cancel_session), "Native cancel did not restore the exact pre-delivery Blackjack session.")
+	_check(bool(cancel_recovery.get("handled", false)) and (after_cancel_ledger.get("pending_delivery", {}) as Dictionary).is_empty(), "Automatic rollback did not clear the exact pending Blackjack delivery.")
+	_check(RitualRuntimeScript.canonical_json(after_cancel_ledger.get("session", {})) == RitualRuntimeScript.canonical_json(before_cancel_session), "Automatic rollback did not restore the exact pre-delivery Blackjack session.")
 
 
 func _check_hostile_delivery_and_restore(game: GameModule) -> void:
@@ -905,9 +964,9 @@ func _prepared_authority_fixture(game: GameModule, seed_text: String, seed_index
 
 func _clone_prepared_authority_fixture(game: GameModule, source: Dictionary) -> Dictionary:
 	# The Crew privacy contract intentionally gives independent runs distinct
-	# authenticated ciphertext. Retry controls need an exact pre-divergence clone
-	# so their byte comparisons continue to cover every Blackjack fingerprint,
-	# receipt and state field without normalizing away that private authority.
+	# authenticated ciphertext. Recovery comparisons need an exact pre-divergence
+	# clone so they continue to cover the same gameplay state without normalizing
+	# away that private authority.
 	var source_run: RunState = source.run
 	var run: RunState = RunStateScript.new()
 	run.from_dict(source_run.to_save_snapshot())

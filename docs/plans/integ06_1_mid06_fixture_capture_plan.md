@@ -43,13 +43,13 @@ boundaries. They are not described as owner builds.
 ## Capture command
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/integ06_1_generate_mid06_fixtures.ps1 `
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/archive/integ06_1/integ06_1_generate_mid06_fixtures.ps1 `
   -OutputDirectory scripts/tests/fixtures/integ06_1/mid_0_6 `
   -CaptureTimeoutSeconds 180 `
   -KeepHistoricalArchive
 ```
 
-`tools/integ06_1_generate_mid06_fixtures.ps1` rejects every commit outside the
+`tools/archive/integ06_1/integ06_1_generate_mid06_fixtures.ps1` rejects every commit outside the
 three reviewed boundaries. Its shared generator archives the historical runtime
 closure, imports it into a clean data root, injects the hash-recorded driver,
 runs each case independently, and copies only the historical SaveService output

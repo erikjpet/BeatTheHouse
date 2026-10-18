@@ -8,8 +8,36 @@ const Schema := preload("res://scripts/core/scenario_sequence_schema.gd")
 
 # Refreshed after the accepted integrated environment/scenario passes expanded
 # the exact signatures and removed all previously recorded similarity warnings.
-const PRODUCTION_AUTHORITY_SHA256 := "72da67b4adb39cc4f19f09f891e306bc90c5c15e8c94b87037197805dcbe4698"
-const PRODUCTION_AUTHORITY_BYTES := 1765130
+# JSON.stringify formats floats through the C runtime's snprintf, so its bytes
+# differ between Windows and Linux. The baseline hashes a canonical form with
+# every float fixed at 1e-12 resolution, which is identical on all platforms.
+# Two independent full audits reproduced this refreshed authority after the
+# reviewed slot/counter target inventory changes, with the same 1,485 clean
+# pairs and no warnings or failures.
+const PRODUCTION_AUTHORITY_SHA256 := "45446147aef3f81132a059791c5d61104c553221f397fa4c14ca00a3aff389d4"
+const PRODUCTION_AUTHORITY_BYTES := 1784388
+const CANONICAL_FLOAT_SCALE := 1000000000000.0
+
+
+static func canonical_authority_text(value: Variant) -> String:
+	return JSON.stringify(_canonical_authority_value(value))
+
+
+static func _canonical_authority_value(value: Variant) -> Variant:
+	match typeof(value):
+		TYPE_FLOAT:
+			return int(roundf(float(value) * CANONICAL_FLOAT_SCALE))
+		TYPE_ARRAY:
+			var items: Array = []
+			for item in value as Array:
+				items.append(_canonical_authority_value(item))
+			return items
+		TYPE_DICTIONARY:
+			var fields: Dictionary = {}
+			for key in (value as Dictionary).keys():
+				fields[key] = _canonical_authority_value((value as Dictionary).get(key))
+			return fields
+	return value
 
 
 func _init() -> void:
@@ -20,8 +48,9 @@ func _init() -> void:
 	var elapsed_ms := float(Time.get_ticks_usec() - started_usec) / 1000.0
 	var authority: Dictionary = library.scenario_sequence_catalog.get("uniqueness_audit", {})
 	var authority_json := JSON.stringify(authority)
-	if authority_json.sha256_text() != PRODUCTION_AUTHORITY_SHA256 or authority_json.to_utf8_buffer().size() != PRODUCTION_AUTHORITY_BYTES:
-		failures.append("Optimized production authority JSON differs from the exact accepted ENV-06.7 baseline: sha256=%s bytes=%d expected_sha256=%s expected_bytes=%d." % [authority_json.sha256_text(), authority_json.to_utf8_buffer().size(), PRODUCTION_AUTHORITY_SHA256, PRODUCTION_AUTHORITY_BYTES])
+	var canonical_json := canonical_authority_text(authority)
+	if canonical_json.sha256_text() != PRODUCTION_AUTHORITY_SHA256 or canonical_json.to_utf8_buffer().size() != PRODUCTION_AUTHORITY_BYTES:
+		failures.append("Optimized production authority JSON differs from the exact accepted ENV-06.7 baseline: sha256=%s bytes=%d expected_sha256=%s expected_bytes=%d." % [canonical_json.sha256_text(), canonical_json.to_utf8_buffer().size(), PRODUCTION_AUTHORITY_SHA256, PRODUCTION_AUTHORITY_BYTES])
 	if (authority.get("pairs", []) as Array).size() != 1485 or not (authority.get("failures", []) as Array).is_empty() or not (authority.get("warnings", []) as Array).is_empty():
 		failures.append("Optimized production authority shape/findings differ from the exact accepted ENV-06.7 baseline.")
 	var audit_inputs := _production_audit_inputs(library)

@@ -16,7 +16,7 @@ roguelike (Web/itch.io + Windows, 1280×720). Data-driven content in
 `data/*.json`; run logic in `scripts/core/run_state.gd`; UI via extracted
 controllers + pure view models (foundation_main gains wiring only). This
 file is self-contained; the binding design contract is
-`docs/plans/0.5_grand_casino_rework_plan.md` section 2 — read it first.
+`docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` section 2 — read it first.
 Requires slice 1 (three casino rooms) already landed; re-verify its actual
 code, code reality wins.
 

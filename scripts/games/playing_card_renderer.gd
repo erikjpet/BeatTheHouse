@@ -1,6 +1,9 @@
 class_name PlayingCardRenderer
 extends RefCounted
 
+# Stateless shared painter for playing-card faces, backs, ranks, suits, and
+# compact card codes; it owns presentation only, never deck or hand state.
+
 const CardShoeScript := preload("res://scripts/core/card_shoe.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const C_DARK := VisualStyleScript.DARK

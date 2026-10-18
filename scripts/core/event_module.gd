@@ -1,7 +1,10 @@
 class_name EventModule
 extends RefCounted
 
-# Data-backed event contract for conditional run consequences.
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
+# Data-backed event contract for trigger checks, player choices, conversations,
+# consequences, follow-ups, character chains, and shared ActionResult deltas.
 
 const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
 const CharacterChainModelScript := preload("res://scripts/core/character_chain_model.gd")
@@ -9,6 +12,18 @@ const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
 
 var definition: Dictionary = {}
 var content_library: ContentLibrary = null
+
+
+# One shared classification keeps person events on the TalkDock path. A speaker
+# explicitly marked as a non-room actor is not enough on its own; authored talk
+# presentation still counts (for example a phone contact).
+static func is_person_conversation_definition(event_definition: Dictionary) -> bool:
+	if str(event_definition.get("presentation", "")).strip_edges() == "talk":
+		return true
+	if str(event_definition.get("visual_type", "")).strip_edges() == "character":
+		return true
+	var speaker: Dictionary = event_definition.get("speaker", {}) if typeof(event_definition.get("speaker", {})) == TYPE_DICTIONARY else {}
+	return not speaker.is_empty() and bool(speaker.get("environment_actor", true))
 
 
 # Stores the event definition used by this module.
@@ -39,7 +54,7 @@ func get_interaction_mode() -> String:
 
 # Returns available event choices.
 func choices(run_state: RunState = null, environment: Dictionary = {}) -> Array:
-	var payload := _copy_dict(definition.get("payload", {}))
+	var payload := JsonCoerceScript._copy_dict(definition.get("payload", {}))
 	if get_id() == "crew_planning_table":
 		return run_state.crew_heist_table_choices() if run_state != null else []
 	if get_id() == "heist_live_table":
@@ -75,22 +90,128 @@ func choices(run_state: RunState = null, environment: Dictionary = {}) -> Array:
 	if str(payload.get("kind", "")) == "grand_casino_high_roller_cashout":
 		return _grand_casino_high_roller_choices(payload, run_state, environment)
 	var result: Array = []
-	for choice_value in _copy_array(payload.get("choices", [])):
+	for choice_value in JsonCoerceScript._copy_array(payload.get("choices", [])):
 		if typeof(choice_value) != TYPE_DICTIONARY:
 			continue
 		var choice_data: Dictionary = (choice_value as Dictionary).duplicate(true)
 		if _choice_conditions_allow(choice_data, run_state, environment):
-			choice_data = _rumor_delivery_choice(choice_data, run_state, environment)
-			choice_data = _traveler_context_choice(choice_data, run_state)
-			choice_data = _reputation_context_choice(choice_data, environment)
-			choice_data = CharacterChainModelScript.contextualize_choice(get_id(), choice_data, run_state)
-			choice_data = _lender_terms_choice(choice_data, run_state)
-			result.append(choice_data)
+			result.append(_contextualized_choice(choice_data, run_state, environment))
 	return result
 
 
+# Returns player-facing choices, retaining explicitly displayable unmet
+# conditions as disabled responses. Authority still resolves through choices(),
+# so a stale or forged enabled flag can never bypass the condition check.
+func choice_views(run_state: RunState = null, environment: Dictionary = {}) -> Array:
+	var payload := JsonCoerceScript._copy_dict(definition.get("payload", {}))
+	# Dynamic choice providers already return their complete player-facing view.
+	# None currently author displayable unmet conditions.
+	if get_id() in ["crew_planning_table", "heist_live_table"] \
+			or str(payload.get("kind", "")) in [
+				"crew_rook_signpost", "crew_rook_leads", "crew_contact",
+				"crew_job_board", "crew_practice_rig", "crew_stake_horse_loss",
+				"crew_collection_press", "crew_rook_ride", "crew_mags_bench",
+				"grand_casino_showdown", "grand_casino_high_roller_cashout",
+			]:
+		var dynamic_views: Array = []
+		for choice_value in choices(run_state, environment):
+			if typeof(choice_value) != TYPE_DICTIONARY:
+				continue
+			var choice_data := (choice_value as Dictionary).duplicate(true)
+			choice_data["enabled"] = true
+			choice_data["disabled_reason"] = ""
+			dynamic_views.append(choice_data)
+		return dynamic_views
+	var result: Array = []
+	for choice_value in JsonCoerceScript._copy_array(payload.get("choices", [])):
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice_data := (choice_value as Dictionary).duplicate(true)
+		var enabled := _choice_conditions_allow(choice_data, run_state, environment)
+		var choice_conditions := JsonCoerceScript._copy_dict(choice_data.get("conditions", {}))
+		# Ordinary unmet choice conditions remain hidden, preserving existing story
+		# secrecy. Active-count hand-offs are deliberately visible so Cass can tell
+		# the player what is missing without resolving the encounter. Do not expose
+		# the choice when any other authored condition is unmet.
+		if not enabled:
+			if not bool(choice_conditions.get("requires_active_count", false)):
+				continue
+			var other_conditions := choice_conditions.duplicate(true)
+			other_conditions.erase("requires_active_count")
+			if not _conditions_allow(run_state, environment, {"choice_conditions": true, "conditions_override": other_conditions}):
+				continue
+		choice_data = _contextualized_choice(choice_data, run_state, environment)
+		choice_data["enabled"] = enabled
+		choice_data["disabled_reason"] = "" if enabled else _choice_disabled_reason(choice_conditions, run_state)
+		result.append(choice_data)
+	return result
+
+
+func conversation_summary(run_state: RunState = null, environment: Dictionary = {}, projected_choices: Array = []) -> String:
+	var payload := JsonCoerceScript._copy_dict(definition.get("payload", {}))
+	var views := projected_choices if not projected_choices.is_empty() else choice_views(run_state, environment)
+	var summary := str(payload.get("summary", "")).strip_edges()
+	if summary.is_empty():
+		summary = str(definition.get("start_summary", "")).strip_edges()
+	var any_enabled := false
+	var live_scene_summary := ""
+	var consequence_summary := ""
+	for choice_value in views:
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice_data := choice_value as Dictionary
+		any_enabled = any_enabled or bool(choice_data.get("enabled", true))
+		var choice_summary := str(choice_data.get("scene_summary", "")).strip_edges()
+		if live_scene_summary.is_empty() and not choice_summary.is_empty():
+			live_scene_summary = choice_summary
+		if consequence_summary.is_empty():
+			consequence_summary = str(choice_data.get("presentation_consequence_summary", choice_data.get("consequence_summary", ""))).strip_edges()
+	if not live_scene_summary.is_empty():
+		summary = live_scene_summary
+	elif summary.is_empty() and not consequence_summary.is_empty():
+		summary = consequence_summary
+	var active_count_missing_line := str(payload.get("active_count_missing_line", "")).strip_edges()
+	if not any_enabled and not active_count_missing_line.is_empty():
+		summary = active_count_missing_line
+	var rumor_importance_line := str(payload.get("rumor_importance_line", "")).strip_edges()
+	var event_conditions := JsonCoerceScript._copy_dict(definition.get("conditions", {}))
+	if bool(event_conditions.get("requires_available_rumor", false)) and not rumor_importance_line.is_empty() and not summary.contains(rumor_importance_line):
+		summary = "%s\n%s" % [summary, rumor_importance_line] if not summary.is_empty() else rumor_importance_line
+	return _short_conversation_summary(summary)
+
+
+func _short_conversation_summary(value: String) -> String:
+	var lines: Array = []
+	for line_value in value.split("\n", false):
+		var line := str(line_value).strip_edges()
+		if line.is_empty():
+			continue
+		lines.append(line)
+		if lines.size() == 3:
+			break
+	return "\n".join(lines)
+
+
+func _contextualized_choice(choice_data: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	var resolved := _rumor_delivery_choice(choice_data, run_state, environment)
+	resolved = _traveler_context_choice(resolved, run_state)
+	resolved = _reputation_context_choice(resolved, environment)
+	resolved = CharacterChainModelScript.contextualize_choice(get_id(), resolved, run_state)
+	return _lender_terms_choice(resolved, run_state)
+
+
+func _choice_disabled_reason(conditions: Dictionary, run_state: RunState) -> String:
+	if bool(conditions.get("requires_active_count", false)):
+		if run_state == null:
+			return "Come back when you're actually counting."
+		var count_reason := str(run_state.active_player_count_status().get("reason", "")).strip_edges()
+		if not count_reason.is_empty():
+			return count_reason
+	return "That response is not available right now."
+
+
 func _lender_terms_choice(choice_data: Dictionary, run_state: RunState) -> Dictionary:
-	var consequences := _copy_dict(choice_data.get("consequences", {}))
+	var consequences := JsonCoerceScript._copy_dict(choice_data.get("consequences", {}))
 	var lender_id := str(consequences.get("lender_hook", "")).strip_edges()
 	if lender_id.is_empty() or run_state == null or content_library == null:
 		return choice_data
@@ -104,7 +225,7 @@ func _lender_terms_choice(choice_data: Dictionary, run_state: RunState) -> Dicti
 	var authored_text := str(resolved.get("text", "")).strip_edges()
 	resolved["text"] = "%s %s" % [authored_text, terms_summary] if not authored_text.is_empty() else terms_summary
 	resolved["consequence_summary"] = terms_summary
-	resolved["loan_terms"] = _copy_dict(option.get("loan_terms", {}))
+	resolved["loan_terms"] = JsonCoerceScript._copy_dict(option.get("loan_terms", {}))
 	resolved["requires_confirm"] = true
 	return resolved
 
@@ -123,12 +244,12 @@ func _mags_bench_choices(payload: Dictionary, run_state: RunState, environment: 
 	if not bool(status.get("available", false)):
 		return [{"id": "leave", "label": "Cases closed", "text": str(status.get("message", "Mags keeps the cases shut.")), "consequences": {}}]
 	var result: Array = []
-	for entry_value in _copy_array(payload.get("catalog", [])):
+	for entry_value in JsonCoerceScript._copy_array(payload.get("catalog", [])):
 		if typeof(entry_value) != TYPE_DICTIONARY:
 			continue
 		var entry: Dictionary = entry_value
 		var output_item := str(entry.get("output_item", "")).strip_edges()
-		var required_items := _string_array(entry.get("requires_items", []))
+		var required_items := JsonCoerceScript._raw_string_array(entry.get("requires_items", []))
 		var cash_cost := maxi(0, int(entry.get("cash_cost", 0)))
 		var minimum_rank := str(entry.get("min_member_rank", "associate")).strip_edges()
 		var conditions := {
@@ -179,7 +300,29 @@ func can_trigger(run_state: RunState, environment: Dictionary, context: Dictiona
 
 
 # Applies simple event consequences to the run.
-func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "") -> Dictionary:
+func resolve(
+	run_state: RunState,
+	environment: Dictionary,
+	choice_id: String = "",
+	external_rollback_owner: bool = false,
+	profile_stages: bool = false
+) -> Dictionary:
+	var profile_started_usec := Time.get_ticks_usec() if profile_stages else 0
+	# Loaded saves and sealed game transactions can leave renderer-owned scenario
+	# proof pending its trusted rebuild while the durable causal state remains
+	# valid. An event choice immediately following a game must repair that
+	# non-causal seal before its environment-turn preflight, just as other shared
+	# player-action boundaries do. Never attempt to authorize the event when the
+	# exact current room cannot be finalized.
+	if run_state != null and run_state.scenario_sequence_present() and not run_state._scenario_semantic_ready():
+		var finalized := run_state.scenario_finalize_installed_environment(
+			content_library,
+			JsonCoerceScript._copy_dict(run_state.current_environment.get("scenario_layout_context", {}))
+		)
+		if not bool(finalized.get("ok", false)):
+			var finalization_errors := JsonCoerceScript._copy_array(finalized.get("errors", []))
+			var finalization_message := str(finalization_errors[0]) if not finalization_errors.is_empty() else "Dynamic room sequence semantic records could not be finalized."
+			return _empty_result(choice_id, environment, finalization_message)
 	# Resolution is an authority boundary, not merely a UI convenience. A stale
 	# module reference or copied pre-resolution environment must not replay an
 	# event. Triggered/talk events are authorized by the host queue; ordinary
@@ -190,7 +333,7 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 		host_authorized = run_state.triggered_event_pending(get_id()) if get_interaction_mode() == "triggered" else can_trigger(run_state, run_state.current_environment)
 	if not host_authorized:
 		return _empty_result(choice_id, environment, "Event is no longer available.")
-	var payload := _copy_dict(definition.get("payload", {}))
+	var payload := JsonCoerceScript._copy_dict(definition.get("payload", {}))
 	if str(payload.get("kind", "")) == "grand_casino_showdown":
 		return _resolve_grand_casino_showdown(run_state, environment, payload, choice_id)
 	if str(payload.get("kind", "")) == "grand_casino_high_roller_cashout":
@@ -267,7 +410,7 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 		var delivery_rollback_room_states := run_state.grand_casino_room_states.duplicate(true)
 		var delivery_result := run_state.resolve_crew_favor_delivery_job(choice_key, {
 			"success": consequences,
-			"failure": _copy_dict(selected_choice.get("streets_failure", {})),
+			"failure": JsonCoerceScript._copy_dict(selected_choice.get("streets_failure", {})),
 		})
 		var sequence_schedule := {"ok": true, "inactive": true}
 		if bool(delivery_result.get("ok", false)):
@@ -280,18 +423,18 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 				result["ok"] = false
 				result["delivery_started"] = false
 				result["world_sequence_scheduled"] = false
-				result["errors"] = _copy_array(sequence_schedule.get("errors", []))
+				result["errors"] = JsonCoerceScript._copy_array(sequence_schedule.get("errors", []))
 				result["message"] = str((result["errors"] as Array)[0]) if not (result["errors"] as Array).is_empty() else "The Crew route could not be staged safely."
 				return result
 		var start_message := str(delivery_result.get("message", "The route is marked. Keep your head down."))
-		var start_deltas := _copy_dict(result.get("deltas", {}))
+		var start_deltas := JsonCoerceScript._copy_dict(result.get("deltas", {}))
 		start_deltas["bankroll_delta"] = 0
 		start_deltas["suspicion_delta"] = 0
 		start_deltas["flags_set"] = {}
 		start_deltas["messages"] = [start_message]
-		var start_story := _copy_array(start_deltas.get("story_log", []))
+		var start_story := JsonCoerceScript._copy_array(start_deltas.get("story_log", []))
 		if not start_story.is_empty() and typeof(start_story[0]) == TYPE_DICTIONARY:
-			var entry := _copy_dict(start_story[0])
+			var entry := JsonCoerceScript._copy_dict(start_story[0])
 			entry["bankroll_delta"] = 0
 			entry["suspicion_delta"] = 0
 			start_story[0] = entry
@@ -307,7 +450,14 @@ func resolve(run_state: RunState, environment: Dictionary, choice_id: String = "
 		result["world_sequence_owner_token"] = str(sequence_schedule.get("owner_token", ""))
 		apply_event_result(run_state, result)
 		return result
-	apply_event_result(run_state, result)
+	var apply_started_usec := Time.get_ticks_usec() if profile_stages else 0
+	apply_event_result(run_state, result, external_rollback_owner, profile_stages)
+	if profile_stages:
+		var timing: Dictionary = result.get("debug_event_resolve_usec", {}) if typeof(result.get("debug_event_resolve_usec", {})) == TYPE_DICTIONARY else {}
+		timing["resolve_before_apply"] = apply_started_usec - profile_started_usec
+		timing["apply_total"] = Time.get_ticks_usec() - apply_started_usec
+		timing["total"] = Time.get_ticks_usec() - profile_started_usec
+		result["debug_event_resolve_usec"] = timing
 	if get_id() == "crew_favor_delivery":
 		run_state.resolve_crew_favor_delivery_job(choice_key, {"success": consequences})
 	return result
@@ -320,9 +470,9 @@ func _schedule_choice_world_sequence(run_state: RunState, selected_choice: Dicti
 	var package_id := str(selected_choice.get("world_sequence_package_id", "")).strip_edges()
 	if package_id.is_empty():
 		return {"ok": true, "inactive": true}
-	var snapshot := _copy_dict(owner_start_result.get("snapshot", {}))
-	var targets := _copy_array(snapshot.get("targets", []))
-	var target := _copy_dict(targets[0]) if not targets.is_empty() else {}
+	var snapshot := JsonCoerceScript._copy_dict(owner_start_result.get("snapshot", {}))
+	var targets := JsonCoerceScript._copy_array(snapshot.get("targets", []))
+	var target := JsonCoerceScript._copy_dict(targets[0]) if not targets.is_empty() else {}
 	var node_id := str(target.get("node_id", "")).strip_edges()
 	var public_instance_token := str(snapshot.get("job_id", "")).strip_edges()
 	if public_instance_token.is_empty():
@@ -337,15 +487,25 @@ func _schedule_choice_world_sequence(run_state: RunState, selected_choice: Dicti
 
 
 # Applies a shared event result and records event-specific outcomes.
-func apply_event_result(run_state: RunState, result: Dictionary) -> void:
+func apply_event_result(run_state: RunState, result: Dictionary, external_rollback_owner: bool = false, profile_stages: bool = false) -> void:
 	if run_state == null or not bool(result.get("ok", false)):
 		return
-	var rollback_run := run_state.to_dict()
-	var rollback_environment := run_state.current_environment.duplicate(true)
-	var rollback_world_map := run_state.world_map.duplicate(true)
-	var rollback_room_states := run_state.grand_casino_room_states.duplicate(true)
+	var profile_started_usec := Time.get_ticks_usec() if profile_stages else 0
+	var profile_stage_started_usec := profile_started_usec
+	var profile_timing: Dictionary = {}
+	# Foundation already owns a complete lifecycle rollback for player-facing
+	# event resolution. Reusing it avoids serializing a mature run and cloning all
+	# stored world-map rooms again before a simple response can begin. Direct
+	# model callers retain this module-owned rollback by leaving the flag false.
+	var rollback_run := run_state.to_dict() if not external_rollback_owner else {}
+	var rollback_environment := run_state.current_environment.duplicate(true) if not external_rollback_owner else {}
+	var rollback_world_map := run_state.world_map.duplicate(true) if not external_rollback_owner else {}
+	var rollback_room_states := run_state.grand_casino_room_states.duplicate(true) if not external_rollback_owner else {}
+	if profile_stages:
+		profile_timing["rollback"] = Time.get_ticks_usec() - profile_stage_started_usec
+		profile_stage_started_usec = Time.get_ticks_usec()
 	var deltas: Dictionary = result.get("deltas", {})
-	var debt_settlement := _copy_dict(deltas.get("discounted_debt_settlement", {}))
+	var debt_settlement := JsonCoerceScript._copy_dict(deltas.get("discounted_debt_settlement", {}))
 	if not debt_settlement.is_empty():
 		var settlement_result := run_state.apply_discounted_debt_settlement(debt_settlement)
 		if not bool(settlement_result.get("ok", false)):
@@ -362,7 +522,10 @@ func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 		var service_result: Dictionary = {}
 		match str(pre_hook.get("type", "")):
 			"hear_rumor":
-				run_state.hear_rumor(str(pre_hook.get("rumor_id", "")))
+				run_state.hear_rumor(
+					str(pre_hook.get("rumor_id", "")),
+					bool(pre_hook.get("retain_environment_rumor", false))
+				)
 			"crew_switch_reveal":
 				service_result = run_state.crew_switch_reveal_node(str(pre_hook.get("node_id", "")))
 			"crew_knuckles_stash":
@@ -395,18 +558,35 @@ func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 			if str(pre_hook.get("type", "")) == "crew_heist":
 				for public_key in ["cost", "forced", "run_ended"]:
 					if service_result.has(public_key): result[public_key] = service_result.get(public_key)
-	var advance_result := run_state.advance_environment_turns(1)
+	var advance_result := run_state.advance_environment_turns_with_external_rollback(1) \
+		if external_rollback_owner else run_state.advance_environment_turns(1)
+	if profile_stages:
+		profile_timing["pre_hooks"] = profile_stage_started_usec - profile_started_usec - int(profile_timing.get("rollback", 0))
+		profile_timing["advance_turn"] = Time.get_ticks_usec() - profile_stage_started_usec
+		profile_stage_started_usec = Time.get_ticks_usec()
 	if not bool(advance_result.get("ok", false)):
-		run_state.from_dict(rollback_run)
-		run_state.current_environment = rollback_environment
-		run_state.world_map = rollback_world_map
-		run_state.grand_casino_room_states = rollback_room_states
+		if not external_rollback_owner:
+			run_state.from_dict(rollback_run)
+			run_state.current_environment = rollback_environment
+			run_state.world_map = rollback_world_map
+			run_state.grand_casino_room_states = rollback_room_states
 		var advance_errors: Array = advance_result.get("errors", []) if typeof(advance_result.get("errors", [])) == TYPE_ARRAY else []
 		result["ok"] = false
 		result["message"] = str(advance_errors[0]) if not advance_errors.is_empty() else "The event boundary could not advance safely."
 		result["errors"] = advance_errors.duplicate(true)
 		return
+	# The River Queen normally keeps the player aboard for its authored action
+	# window. Accepting the Grand invitation is a concrete departure handoff:
+	# the host's launch is waiting at the dock. Release only that venue-authored
+	# lock; a police-sweep lock remains authoritative and must still be served.
+	if get_id() == "grand_casino_invite" and str(result.get("choice_id", "")) == "accept_invite" \
+			and str(run_state.current_environment.get("archetype_id", "")) == "delta_queen" \
+			and str(run_state.current_environment.get("travel_lock_source", "")) != "police_sweep":
+		run_state.current_environment["travel_lock_remaining"] = 0
 	GameModule.apply_result(run_state, result)
+	if profile_stages:
+		profile_timing["apply_shared_result"] = Time.get_ticks_usec() - profile_stage_started_usec
+		profile_stage_started_usec = Time.get_ticks_usec()
 	# Recruitment aftermath is committed from this exact resolved event result,
 	# before resolve_event removes the live placement. The host derives member,
 	# path and outcome; consequence payloads never write Crew state directly.
@@ -415,10 +595,12 @@ func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 	for hook in deltas.get("event_hooks", []):
 		if typeof(hook) != TYPE_DICTIONARY:
 			continue
-		var hook_data := _copy_dict(hook)
+		var hook_data := JsonCoerceScript._copy_dict(hook)
 		match str(hook_data.get("type", "")):
 			"resolve_event":
-				run_state.resolve_event(str(hook_data.get("event_id", "")))
+				var membership_result := run_state.resolve_event(str(hook_data.get("event_id", "")), profile_stages)
+				if profile_stages and not membership_result.is_empty():
+					result["debug_event_membership_usec"] = JsonCoerceScript._copy_dict(membership_result.get("debug_membership_usec", {}))
 			"trigger_event":
 				_apply_trigger_event_hook(run_state, result, hook_data)
 			"hear_rumor":
@@ -435,12 +617,22 @@ func apply_event_result(run_state: RunState, result: Dictionary) -> void:
 				)
 			"crew_switch_reveal", "crew_lucky_collection", "crew_knuckles_stash", "crew_knuckles_retrieve", "crew_job_accept", "crew_practice_rig", "crew_stake_loss_choice", "crew_collection_choice", "crew_rook_ride", "crew_heist":
 				pass
-	CharacterChainModelScript.apply_to_environment(run_state, run_state.current_environment)
+	if profile_stages:
+		profile_timing["event_hooks"] = Time.get_ticks_usec() - profile_stage_started_usec
+		profile_stage_started_usec = Time.get_ticks_usec()
+	CharacterChainModelScript.apply_to_environment(run_state, run_state.current_environment, content_library)
+	if profile_stages:
+		profile_timing["character_chain"] = Time.get_ticks_usec() - profile_stage_started_usec
+		profile_stage_started_usec = Time.get_ticks_usec()
 	run_state.scenario_publish_event_result(result)
 	# The event action already advanced the authoritative world boundary above.
 	# Consume its correlated scenario fact on that same boundary so an accepted
 	# choice cannot leave sequence aftermath pending until another player action.
 	run_state.scenario_flush_facts()
+	if profile_stages:
+		profile_timing["scenario_publish"] = Time.get_ticks_usec() - profile_stage_started_usec
+		profile_timing["apply_measured_total"] = Time.get_ticks_usec() - profile_started_usec
+		result["debug_event_resolve_usec"] = profile_timing
 
 
 # Returns a no-op event result for invalid choices.
@@ -473,26 +665,26 @@ func _consequence_deltas(consequences: Dictionary, story_entry: Dictionary, mess
 	deltas["alcoholic_delta"] = int(consequences.get("alcoholic_delta", 0))
 	deltas["baseline_luck_delta"] = int(consequences.get("baseline_luck_delta", 0))
 	if consequences.has("debt"):
-		deltas["debt_changes"] = [_copy_dict(consequences.get("debt", {}))]
+		deltas["debt_changes"] = [JsonCoerceScript._copy_dict(consequences.get("debt", {}))]
 	else:
-		deltas["debt_changes"] = _copy_array(consequences.get("debt_changes", []))
-	deltas["inventory_add"] = _copy_array(consequences.get("inventory_add", []))
-	deltas["inventory_remove"] = _copy_array(consequences.get("inventory_remove", []))
+		deltas["debt_changes"] = JsonCoerceScript._copy_array(consequences.get("debt_changes", []))
+	deltas["inventory_add"] = JsonCoerceScript._copy_array(consequences.get("inventory_add", []))
+	deltas["inventory_remove"] = JsonCoerceScript._copy_array(consequences.get("inventory_remove", []))
 	var pending_bag_value: Variant = consequences.get("pending_bags", consequences.get("pending_bag", []))
 	if typeof(pending_bag_value) == TYPE_DICTIONARY:
 		deltas["pending_bags"] = [pending_bag_value]
 	else:
-		deltas["pending_bags"] = _copy_array(pending_bag_value)
-	deltas["flags_set"] = _copy_dict(consequences.get("flags", consequences.get("flags_set", {})))
-	var story_flags := _copy_dict(consequences.get("story_flags_set", {}))
+		deltas["pending_bags"] = JsonCoerceScript._copy_array(pending_bag_value)
+	deltas["flags_set"] = JsonCoerceScript._copy_dict(consequences.get("flags", consequences.get("flags_set", {})))
+	var story_flags := JsonCoerceScript._copy_dict(consequences.get("story_flags_set", {}))
 	var single_story_flag := str(consequences.get("set_story_flag", "")).strip_edges()
 	if not single_story_flag.is_empty():
 		story_flags[single_story_flag] = true
 	for story_flag_id in _single_or_array_strings(consequences.get("set_story_flags", [])):
 		story_flags[str(story_flag_id)] = true
 	deltas["story_flags_set"] = story_flags
-	deltas["environment_layer_discovery"] = _copy_dict(consequences.get("environment_layer_discovery", {}))
-	var travel_hooks := _copy_array(consequences.get("travel_hooks_add", []))
+	deltas["environment_layer_discovery"] = JsonCoerceScript._copy_dict(consequences.get("environment_layer_discovery", {}))
+	var travel_hooks := JsonCoerceScript._copy_array(consequences.get("travel_hooks_add", []))
 	for route_id in _single_or_array_strings(consequences.get("unlock_travel_route", consequences.get("unlock_travel_routes", []))):
 		var route_target := _destination_archetype_for_route(str(route_id))
 		if route_target.is_empty():
@@ -500,34 +692,34 @@ func _consequence_deltas(consequences: Dictionary, story_entry: Dictionary, mess
 		if not travel_hooks.has(route_target):
 			travel_hooks.append(route_target)
 	deltas["travel_hooks_add"] = travel_hooks
-	var travel_changes := _copy_dict(consequences.get("travel_changes", {}))
+	var travel_changes := JsonCoerceScript._copy_dict(consequences.get("travel_changes", {}))
 	if consequences.has("set_next_archetypes"):
-		travel_changes["set_next_archetypes"] = _copy_array(consequences.get("set_next_archetypes", []))
+		travel_changes["set_next_archetypes"] = JsonCoerceScript._copy_array(consequences.get("set_next_archetypes", []))
 	if consequences.has("add_next_archetypes"):
-		travel_changes["add_next_archetypes"] = _copy_array(consequences.get("add_next_archetypes", []))
+		travel_changes["add_next_archetypes"] = JsonCoerceScript._copy_array(consequences.get("add_next_archetypes", []))
 	deltas["travel_changes"] = travel_changes
 	var story_entries := [story_entry]
-	story_entries.append_array(_copy_array(consequences.get("story_log", [])))
+	story_entries.append_array(JsonCoerceScript._copy_array(consequences.get("story_log", [])))
 	deltas["story_log"] = story_entries
-	var messages := _copy_array(consequences.get("messages", []))
+	var messages := JsonCoerceScript._copy_array(consequences.get("messages", []))
 	if not message.is_empty():
 		messages.push_front(message)
 	deltas["messages"] = messages
-	deltas["event_hooks"] = _copy_array(consequences.get("event_hooks", []))
+	deltas["event_hooks"] = JsonCoerceScript._copy_array(consequences.get("event_hooks", []))
 	var recruit_member_id := str(consequences.get("crew_recruit_member", "")).strip_edges()
 	if not recruit_member_id.is_empty():
 		deltas["event_hooks"].append({"type": "crew_recruit", "member_id": recruit_member_id})
 	var meet_member_id := str(consequences.get("crew_meet_member", "")).strip_edges()
 	if not meet_member_id.is_empty():
 		deltas["event_hooks"].append({"type": "crew_meet", "member_id": meet_member_id})
-	deltas["demo_finale"] = _copy_dict(consequences.get("demo_finale", {}))
-	deltas["discounted_debt_settlement"] = _copy_dict(consequences.get("discounted_debt_settlement", {}))
+	deltas["demo_finale"] = JsonCoerceScript._copy_dict(consequences.get("demo_finale", {}))
+	deltas["discounted_debt_settlement"] = JsonCoerceScript._copy_dict(consequences.get("discounted_debt_settlement", {}))
 	if bool(consequences.get("resolve_event", false)):
 		deltas["event_hooks"].append({
 			"type": "resolve_event",
 			"event_id": get_id(),
 		})
-	var trigger_event := _copy_dict(consequences.get("trigger_event", {}))
+	var trigger_event := JsonCoerceScript._copy_dict(consequences.get("trigger_event", {}))
 	if not trigger_event.is_empty():
 		trigger_event["type"] = "trigger_event"
 		trigger_event["source_event_id"] = get_id()
@@ -537,13 +729,17 @@ func _consequence_deltas(consequences: Dictionary, story_entry: Dictionary, mess
 		if not target_event.is_empty():
 			var target_defaults := {
 				"presentation": str(target_event.get("presentation", "modal")),
-				"speaker": _copy_dict(target_event.get("speaker", {})),
+				"speaker": JsonCoerceScript._copy_dict(target_event.get("speaker", {})),
 			}
-			trigger_event["entry_overrides"] = _merge_triggered_entry_overrides(target_defaults, _copy_dict(trigger_event.get("entry_overrides", {})))
+			trigger_event["entry_overrides"] = _merge_triggered_entry_overrides(target_defaults, JsonCoerceScript._copy_dict(trigger_event.get("entry_overrides", {})))
 		deltas["event_hooks"].append(trigger_event)
 	var hear_rumor_id := str(consequences.get("hear_rumor_id", "")).strip_edges()
 	if not hear_rumor_id.is_empty():
-		deltas["event_hooks"].append({"type": "hear_rumor", "rumor_id": hear_rumor_id})
+		deltas["event_hooks"].append({
+			"type": "hear_rumor",
+			"rumor_id": hear_rumor_id,
+			"retain_environment_rumor": bool(definition.get("retain_rumor_after_delivery", false)),
+		})
 	return deltas
 
 
@@ -566,23 +762,23 @@ func _resolved_lender_hook_consequences(run_state: RunState, consequences: Dicti
 	var lender_result := resolver.hook_result("lender", lender_id)
 	if lender_result.is_empty() or not bool(lender_result.get("ok", false)):
 		return consequences
-	var lender_deltas := _copy_dict(lender_result.get("deltas", {}))
+	var lender_deltas := JsonCoerceScript._copy_dict(lender_result.get("deltas", {}))
 	var resolved := consequences.duplicate(true)
 	for key in ["bankroll_delta", "suspicion_delta", "alcohol_intake", "drunk_delta", "pending_drunk_absorption_delta", "drunk_distortion_suppression_turns", "heat_cooldown_actions", "heat_cooldown_per_action", "alcoholic_delta", "baseline_luck_delta"]:
 		resolved[key] = int(resolved.get(key, 0)) + int(lender_deltas.get(key, 0))
-	var debt_changes := _copy_array(resolved.get("debt_changes", []))
-	debt_changes.append_array(_copy_array(lender_deltas.get("debt_changes", [])))
+	var debt_changes := JsonCoerceScript._copy_array(resolved.get("debt_changes", []))
+	debt_changes.append_array(JsonCoerceScript._copy_array(lender_deltas.get("debt_changes", [])))
 	resolved["debt_changes"] = debt_changes
-	var flags := _copy_dict(resolved.get("flags_set", resolved.get("flags", {})))
-	var lender_flags := _copy_dict(lender_deltas.get("flags_set", {}))
+	var flags := JsonCoerceScript._copy_dict(resolved.get("flags_set", resolved.get("flags", {})))
+	var lender_flags := JsonCoerceScript._copy_dict(lender_deltas.get("flags_set", {}))
 	for flag_key in lender_flags.keys():
 		flags[str(flag_key)] = lender_flags[flag_key]
 	resolved["flags_set"] = flags
-	var story_log := _copy_array(resolved.get("story_log", []))
-	story_log.append_array(_copy_array(lender_deltas.get("story_log", [])))
+	var story_log := JsonCoerceScript._copy_array(resolved.get("story_log", []))
+	story_log.append_array(JsonCoerceScript._copy_array(lender_deltas.get("story_log", [])))
 	resolved["story_log"] = story_log
-	var messages := _copy_array(resolved.get("messages", []))
-	messages.append_array(_copy_array(lender_deltas.get("messages", [])))
+	var messages := JsonCoerceScript._copy_array(resolved.get("messages", []))
+	messages.append_array(JsonCoerceScript._copy_array(lender_deltas.get("messages", [])))
 	resolved["messages"] = messages
 	return resolved
 
@@ -606,10 +802,10 @@ func _apply_trigger_event_hook(run_state: RunState, source_result: Dictionary, h
 	var roll := rng.randi_range(0, 9999)
 	run_state.save_rng(rng)
 	var success := roll < threshold
-	_apply_trigger_hook_flags(run_state, _copy_dict(hook_data.get("success_flags" if success else "failure_flags", {})))
-	_apply_trigger_hook_story(run_state, _copy_array(hook_data.get("success_story_log" if success else "failure_story_log", [])))
+	_apply_trigger_hook_flags(run_state, JsonCoerceScript._copy_dict(hook_data.get("success_flags" if success else "failure_flags", {})))
+	_apply_trigger_hook_story(run_state, JsonCoerceScript._copy_array(hook_data.get("success_story_log" if success else "failure_story_log", [])))
 	if success:
-		var context := _copy_dict(hook_data.get("context", {}))
+		var context := JsonCoerceScript._copy_dict(hook_data.get("context", {}))
 		context["trigger"] = "chain"
 		context["type"] = "chain"
 		context["source_event_id"] = str(hook_data.get("source_event_id", source_result.get("event_id", "")))
@@ -643,11 +839,11 @@ func _triggered_event_entry_overrides(target_id: String, run_state: RunState, ho
 	if not target_event.is_empty():
 		defaults = {
 			"presentation": str(target_event.get("presentation", "modal")),
-			"speaker": _copy_dict(target_event.get("speaker", {})),
-			"timing": _triggered_event_timing(_copy_dict(target_event.get("payload", {}))),
+			"speaker": JsonCoerceScript._copy_dict(target_event.get("speaker", {})),
+			"timing": _triggered_event_timing(JsonCoerceScript._copy_dict(target_event.get("payload", {}))),
 		}
-	var overrides := _merge_triggered_entry_overrides(defaults, _copy_dict(hook_data.get("entry_overrides", {})))
-	var speaker := _copy_dict(overrides.get("speaker", {}))
+	var overrides := _merge_triggered_entry_overrides(defaults, JsonCoerceScript._copy_dict(hook_data.get("entry_overrides", {})))
+	var speaker := JsonCoerceScript._copy_dict(overrides.get("speaker", {}))
 	if not speaker.is_empty():
 		speaker = CharacterRosterScript.resolve_speaker(speaker, content_library, run_state, target_id, str(speaker.get("voice_line_key", "")))
 		overrides["speaker"] = speaker
@@ -659,7 +855,7 @@ static func _merge_triggered_entry_overrides(defaults: Dictionary, authored: Dic
 	for key_value in authored.keys():
 		var key := str(key_value)
 		if key == "speaker" and typeof(authored.get(key, {})) == TYPE_DICTIONARY:
-			var speaker := _copy_dict(merged.get("speaker", {}))
+			var speaker := JsonCoerceScript._copy_dict(merged.get("speaker", {}))
 			for speaker_key in (authored.get(key, {}) as Dictionary).keys():
 				speaker[str(speaker_key)] = (authored.get(key, {}) as Dictionary)[speaker_key]
 			merged["speaker"] = speaker
@@ -669,7 +865,7 @@ static func _merge_triggered_entry_overrides(defaults: Dictionary, authored: Dic
 
 
 static func _triggered_event_timing(payload: Dictionary) -> Dictionary:
-	var timing := _copy_dict(payload.get("timing", {}))
+	var timing := JsonCoerceScript._copy_dict(payload.get("timing", {}))
 	var duration_actions := maxi(0, int(timing.get("duration_actions", 0)))
 	var timeout_choice_id := str(timing.get("timeout_choice_id", "")).strip_edges()
 	var expires := bool(timing.get("expires", false)) and duration_actions > 0 and not timeout_choice_id.is_empty()
@@ -721,7 +917,7 @@ func _trigger_allows(environment: Dictionary, context: Dictionary = {}) -> bool:
 		"table_approach":
 			if str(context.get("trigger", context.get("type", ""))) != "table_approach":
 				return false
-			var games := _string_array(trigger.get("games", []))
+			var games := JsonCoerceScript._raw_string_array(trigger.get("games", []))
 			var game_id := str(context.get("game_id", "")).strip_edges()
 			if not games.is_empty() and not games.has(game_id):
 				return false
@@ -782,7 +978,9 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 		return false
 	if conditions.has("max_luck") and run_state.effective_luck() > int(conditions.get("max_luck", 0)):
 		return false
-	var economy_states := _string_array(conditions.get("economy_states", []))
+	if bool(conditions.get("requires_active_count", false)) and not bool(run_state.active_player_count_status().get("active", false)):
+		return false
+	var economy_states := JsonCoerceScript._raw_string_array(conditions.get("economy_states", []))
 	if not economy_states.is_empty() and not economy_states.has(run_state.economy()):
 		return false
 	var requires_flags := _readonly_dict(conditions.get("requires_flags", {}))
@@ -790,26 +988,26 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 		if run_state.narrative_flags.get(str(key), null) != requires_flags[key]:
 			return false
 	var completed_tutorial_lessons := _readonly_dict(run_state.narrative_flags.get("tutorial_lessons_completed", {}))
-	for lesson_id in _string_array(conditions.get("requires_tutorial_lessons", [])):
+	for lesson_id in JsonCoerceScript._raw_string_array(conditions.get("requires_tutorial_lessons", [])):
 		if not bool(completed_tutorial_lessons.get(lesson_id, false)):
 			return false
 	var requires_story_flags := _readonly_dict(conditions.get("requires_story_flags", {}))
 	for key in requires_story_flags.keys():
 		if _story_flag_value(run_state, str(key)) != requires_story_flags[key]:
 			return false
-	for flag_id in _string_array(conditions.get("blocked_by_flags", [])):
+	for flag_id in JsonCoerceScript._raw_string_array(conditions.get("blocked_by_flags", [])):
 		if bool(run_state.narrative_flags.get(flag_id, false)):
 			return false
-	for flag_id in _string_array(conditions.get("missing_flags", [])):
+	for flag_id in JsonCoerceScript._raw_string_array(conditions.get("missing_flags", [])):
 		if bool(run_state.narrative_flags.get(flag_id, false)):
 			return false
-	for flag_id in _string_array(conditions.get("blocked_by_story_flags", [])):
+	for flag_id in JsonCoerceScript._raw_string_array(conditions.get("blocked_by_story_flags", [])):
 		if _story_flag_is_true(run_state, flag_id):
 			return false
-	for flag_id in _string_array(conditions.get("missing_story_flags", [])):
+	for flag_id in JsonCoerceScript._raw_string_array(conditions.get("missing_story_flags", [])):
 		if _story_flag_is_true(run_state, flag_id):
 			return false
-	var requires_any_flags := _string_array(conditions.get("requires_any_flags", []))
+	var requires_any_flags := JsonCoerceScript._raw_string_array(conditions.get("requires_any_flags", []))
 	if not requires_any_flags.is_empty():
 		var found_any_flag := false
 		for flag_id in requires_any_flags:
@@ -818,29 +1016,29 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 				break
 		if not found_any_flag:
 			return false
-	for item_id in _string_array(conditions.get("requires_items", [])):
+	for item_id in JsonCoerceScript._raw_string_array(conditions.get("requires_items", [])):
 		if not run_state.inventory.has(item_id):
 			return false
-	for item_id in _string_array(conditions.get("blocked_by_items", [])):
+	for item_id in JsonCoerceScript._raw_string_array(conditions.get("blocked_by_items", [])):
 		if run_state.inventory.has(item_id):
 			return false
 	if conditions.has("min_bankroll") and run_state.bankroll < int(conditions.get("min_bankroll", 0)):
 		return false
-	var archetype_ids := _string_array(conditions.get("archetype_ids", []))
+	var archetype_ids := JsonCoerceScript._raw_string_array(conditions.get("archetype_ids", []))
 	if not archetype_ids.is_empty() and not archetype_ids.has(str(environment.get("archetype_id", ""))):
 		return false
-	for archetype_id in _string_array(conditions.get("blocked_archetype_ids", [])):
+	for archetype_id in JsonCoerceScript._raw_string_array(conditions.get("blocked_archetype_ids", [])):
 		if str(environment.get("archetype_id", "")) == archetype_id:
 			return false
-	var scenario_ids := _string_array(conditions.get("scenario_ids", []))
+	var scenario_ids := JsonCoerceScript._raw_string_array(conditions.get("scenario_ids", []))
 	var environment_scenario_id := str(environment.get("scenario_id", _readonly_dict(environment.get("scenario_state", {})).get("id", "")))
 	if not scenario_ids.is_empty() and not scenario_ids.has(environment_scenario_id):
 		return false
 	var environment_node_id := str(environment.get("world_node_id", environment.get("archetype_id", ""))).strip_edges()
-	for flag_id in _string_array(conditions.get("story_flag_matches_node", [])):
+	for flag_id in JsonCoerceScript._raw_string_array(conditions.get("story_flag_matches_node", [])):
 		if str(_story_flag_value(run_state, flag_id)).strip_edges() != environment_node_id:
 			return false
-	for character_id in _string_array(conditions.get("requires_traveler_here", [])):
+	for character_id in JsonCoerceScript._raw_string_array(conditions.get("requires_traveler_here", [])):
 		if run_state.traveler_node(character_id) != environment_node_id:
 			return false
 	var pressure_band := _readonly_dict(conditions.get("pressure_band", {}))
@@ -851,13 +1049,13 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 			return false
 	if bool(conditions.get("requires_available_rumor", false)) and _next_environment_rumor(environment).is_empty():
 		return false
-	for rumor_id in _string_array(conditions.get("requires_rumor_fact_ids", [])):
+	for rumor_id in JsonCoerceScript._raw_string_array(conditions.get("requires_rumor_fact_ids", [])):
 		if run_state.rumor_fact(rumor_id).is_empty():
 			return false
-	var layer_ids := _string_array(conditions.get("layer_ids", []))
+	var layer_ids := JsonCoerceScript._raw_string_array(conditions.get("layer_ids", []))
 	if not layer_ids.is_empty() and not layer_ids.has(str(environment.get("current_layer_id", ""))):
 		return false
-	for layer_id in _string_array(conditions.get("blocked_layer_ids", [])):
+	for layer_id in JsonCoerceScript._raw_string_array(conditions.get("blocked_layer_ids", [])):
 		if str(environment.get("current_layer_id", "")) == layer_id:
 			return false
 	var minimum_crew_rank := str(conditions.get("min_crew_rank", "")).strip_edges()
@@ -879,9 +1077,9 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 		var ranks := CrewStateModel.RANK_IDS
 		if not CrewStateModel.MEMBER_IDS.has(member_id) or not ranks.has(minimum) or ranks.find(run_state.crew_rank(member_id)) < ranks.find(minimum):
 			return false
-	var requires_games := _string_array(conditions.get("requires_games", []))
+	var requires_games := JsonCoerceScript._raw_string_array(conditions.get("requires_games", []))
 	if not requires_games.is_empty():
-		var environment_games := _string_array(environment.get("game_ids", []))
+		var environment_games := JsonCoerceScript._raw_string_array(environment.get("game_ids", []))
 		for game_id in requires_games:
 			if not environment_games.has(game_id):
 				return false
@@ -895,10 +1093,10 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 			return false
 	if conditions.has("requires_overdue_debt") and bool(conditions.get("requires_overdue_debt", false)) != _has_debt_with_status(run_state, ["overdue", "favor_due"]):
 		return false
-	var lender_ids := _string_array(conditions.get("requires_lender_debt", []))
+	var lender_ids := JsonCoerceScript._raw_string_array(conditions.get("requires_lender_debt", []))
 	if not lender_ids.is_empty() and not _has_lender_debt(run_state, lender_ids):
 		return false
-	var travel_ids := _string_array(conditions.get("requires_travel_targets", []))
+	var travel_ids := JsonCoerceScript._raw_string_array(conditions.get("requires_travel_targets", []))
 	if not travel_ids.is_empty():
 		var available_travel := _event_travel_targets(run_state, environment)
 		for travel_id in travel_ids:
@@ -912,9 +1110,9 @@ func _conditions_allow(run_state: RunState, environment: Dictionary, context: Di
 
 
 func _rumor_delivery_choice(choice_data: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
-	var conditions := _copy_dict(definition.get("conditions", {}))
+	var conditions := JsonCoerceScript._copy_dict(definition.get("conditions", {}))
 	var required := bool(conditions.get("requires_available_rumor", false))
-	var speaker := _copy_dict(definition.get("speaker", {}))
+	var speaker := JsonCoerceScript._copy_dict(definition.get("speaker", {}))
 	var dave_delivery := str(speaker.get("character_id", "")) == "dave_bus_regular"
 	if not required and not bool(definition.get("rumor_delivery", false)) and not dave_delivery:
 		return choice_data
@@ -928,14 +1126,14 @@ func _rumor_delivery_choice(choice_data: Dictionary, run_state: RunState, enviro
 	else:
 		resolved["text"] = "%s %s" % [str(resolved.get("text", "")).strip_edges(), str(rumor.get("line", "")).strip_edges()]
 		resolved["text"] = str(resolved.get("text", "")).strip_edges()
-	var consequences := _copy_dict(resolved.get("consequences", {}))
+	var consequences := JsonCoerceScript._copy_dict(resolved.get("consequences", {}))
 	consequences["hear_rumor_id"] = str(rumor.get("id", rumor.get("fact_id", "")))
 	resolved["consequences"] = consequences
 	return resolved
 
 
 func _traveler_context_choice(choice_data: Dictionary, run_state: RunState) -> Dictionary:
-	var speaker := _copy_dict(definition.get("speaker", {}))
+	var speaker := JsonCoerceScript._copy_dict(definition.get("speaker", {}))
 	var character_id := str(speaker.get("character_id", "")).strip_edges()
 	if run_state == null or character_id != "dave_bus_regular" or run_state.town_state == null:
 		return choice_data
@@ -943,7 +1141,7 @@ func _traveler_context_choice(choice_data: Dictionary, run_state: RunState) -> D
 	if context_line.contains("{") or context_line.contains(" ."):
 		context_line = ""
 	if context_line.is_empty():
-		context_line = str(_copy_dict(definition.get("payload", {})).get("summary", "")).strip_edges()
+		context_line = str(JsonCoerceScript._copy_dict(definition.get("payload", {})).get("summary", "")).strip_edges()
 	if context_line.is_empty():
 		return choice_data
 	var resolved := choice_data.duplicate(true)
@@ -955,7 +1153,7 @@ func _traveler_context_choice(choice_data: Dictionary, run_state: RunState) -> D
 func _reputation_context_choice(choice_data: Dictionary, environment: Dictionary) -> Dictionary:
 	if str(definition.get("id", "")) != "town_reputation_reaction":
 		return choice_data
-	var reputation := _copy_dict(environment.get("town_reputation", {}))
+	var reputation := JsonCoerceScript._copy_dict(environment.get("town_reputation", {}))
 	var staff_line := str(reputation.get("staff_line", "")).strip_edges()
 	if staff_line.is_empty():
 		return choice_data
@@ -966,7 +1164,7 @@ func _reputation_context_choice(choice_data: Dictionary, environment: Dictionary
 
 
 func _next_environment_rumor(environment: Dictionary) -> Dictionary:
-	for rumor_value in _copy_array(environment.get("town_rumors", [])):
+	for rumor_value in JsonCoerceScript._copy_array(environment.get("town_rumors", [])):
 		if typeof(rumor_value) == TYPE_DICTIONARY:
 			return (rumor_value as Dictionary).duplicate(true)
 	return {}
@@ -1005,7 +1203,7 @@ func _event_travel_targets(run_state: RunState, environment: Dictionary) -> Arra
 		environment.get("travel_hooks", []),
 		run_state.unlocked_travel,
 	]:
-		for target_id in _string_array(source):
+		for target_id in JsonCoerceScript._raw_string_array(source):
 			if not result.has(target_id):
 				result.append(target_id)
 	return result
@@ -1032,7 +1230,7 @@ func _has_debt_with_status(run_state: RunState, statuses: Array) -> bool:
 
 
 func _choice_conditions_allow(choice_data: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
-	var choice_conditions := _copy_dict(choice_data.get("conditions", {}))
+	var choice_conditions := JsonCoerceScript._copy_dict(choice_data.get("conditions", {}))
 	if choice_conditions.is_empty():
 		return true
 	return _conditions_allow(run_state, environment, {"choice_conditions": true, "conditions_override": choice_conditions})
@@ -1041,16 +1239,16 @@ func _choice_conditions_allow(choice_data: Dictionary, run_state: RunState, envi
 # Returns consequences from a selected choice or legacy top-level event data.
 func _consequences(selected_choice: Dictionary) -> Dictionary:
 	if not selected_choice.is_empty():
-		return _copy_dict(selected_choice.get("consequences", {}))
-	return _copy_dict(definition.get("consequences", {}))
+		return JsonCoerceScript._copy_dict(selected_choice.get("consequences", {}))
+	return JsonCoerceScript._copy_dict(definition.get("consequences", {}))
 
 
 func _resolved_checked_consequences(run_state: RunState, environment: Dictionary, selected_choice: Dictionary, consequences: Dictionary) -> Dictionary:
-	var check := _copy_dict(consequences.get("check", {}))
+	var check := JsonCoerceScript._copy_dict(consequences.get("check", {}))
 	if check.is_empty() or run_state == null:
 		return consequences
 	var chance := clampi(int(check.get("chance_percent", 50)), 0, 100)
-	var item_bonus := _copy_dict(check.get("item_success_bonus", {}))
+	var item_bonus := JsonCoerceScript._copy_dict(check.get("item_success_bonus", {}))
 	for item_id_value in item_bonus.keys():
 		if run_state.inventory.has(str(item_id_value)):
 			chance += int(item_bonus[item_id_value])
@@ -1061,10 +1259,10 @@ func _resolved_checked_consequences(run_state: RunState, environment: Dictionary
 	var outcome_key := "success_consequences" if roll <= chance else "failure_consequences"
 	var resolved := consequences.duplicate(true)
 	resolved.erase("check")
-	var outcome := _copy_dict(check.get(outcome_key, {}))
+	var outcome := JsonCoerceScript._copy_dict(check.get(outcome_key, {}))
 	for key in outcome.keys():
 		resolved[key] = outcome[key]
-	var story := _copy_array(resolved.get("story_log", []))
+	var story := JsonCoerceScript._copy_array(resolved.get("story_log", []))
 	story.append({
 		"type": "event_check",
 		"event_id": get_id(),
@@ -1082,12 +1280,12 @@ func _resolved_checked_consequences(run_state: RunState, environment: Dictionary
 func _message(selected_choice: Dictionary) -> String:
 	if not selected_choice.is_empty():
 		return str(selected_choice.get("text", selected_choice.get("label", get_display_name())))
-	var payload := _copy_dict(definition.get("payload", {}))
+	var payload := JsonCoerceScript._copy_dict(definition.get("payload", {}))
 	return str(definition.get("text", payload.get("summary", "")))
 
 
 func _grand_casino_showdown_choices(payload: Dictionary, run_state: RunState, environment: Dictionary) -> Array:
-	var all_choices := _copy_array(payload.get("choices", []))
+	var all_choices := JsonCoerceScript._copy_array(payload.get("choices", []))
 	if run_state == null:
 		return all_choices
 	var active := bool(run_state.narrative_flags.get("grand_casino_showdown_active", false))
@@ -1102,13 +1300,13 @@ func _grand_casino_showdown_choices(payload: Dictionary, run_state: RunState, en
 		RunState.GRAND_CASINO_SHOWDOWN_STEP_WALK:
 			return _grand_casino_showdown_walk_choices(payload, run_state)
 		RunState.GRAND_CASINO_SHOWDOWN_STEP_PAT_DOWN:
-			var pat_down_config := _copy_dict(payload.get("pat_down", {}))
-			var continue_choice := _copy_dict(pat_down_config.get("continue_choice", {}))
+			var pat_down_config := JsonCoerceScript._copy_dict(payload.get("pat_down", {}))
+			var continue_choice := JsonCoerceScript._copy_dict(pat_down_config.get("continue_choice", {}))
 			if continue_choice.is_empty():
 				return []
-			var pat_down := _copy_dict(run_state.narrative_flags.get("grand_casino_showdown_pat_down", {}))
+			var pat_down := JsonCoerceScript._copy_dict(run_state.narrative_flags.get("grand_casino_showdown_pat_down", {}))
 			var tier := str(pat_down.get("tier", "clean"))
-			var tier_message := str(_copy_dict(pat_down_config.get("tier_messages", {})).get(tier, "Rourke's search ends."))
+			var tier_message := str(JsonCoerceScript._copy_dict(pat_down_config.get("tier_messages", {})).get(tier, "Rourke's search ends."))
 			continue_choice["scene_summary"] = "Pat-down: %s. %s" % [tier.capitalize(), tier_message]
 			continue_choice["presentation_consequence_summary"] = str(continue_choice.get("consequence_summary", ""))
 			return [continue_choice]
@@ -1160,11 +1358,11 @@ func _resolve_grand_casino_showdown(run_state: RunState, environment: Dictionary
 	})
 	result["event_id"] = get_id()
 	result["choice_id"] = choice_key
-	result["showdown"] = _copy_dict(outcome.get("status", run_state.grand_casino_showdown_status(config)))
-	result["showdown_check"] = _copy_dict(outcome.get("check", {}))
-	result["grand_casino_duel_terms"] = _copy_dict(run_state.narrative_flags.get("grand_casino_duel_terms", {}))
+	result["showdown"] = JsonCoerceScript._copy_dict(outcome.get("status", run_state.grand_casino_showdown_status(config)))
+	result["showdown_check"] = JsonCoerceScript._copy_dict(outcome.get("check", {}))
+	result["grand_casino_duel_terms"] = JsonCoerceScript._copy_dict(run_state.narrative_flags.get("grand_casino_duel_terms", {}))
 	result["duel_ready"] = bool(outcome.get("duel_ready", false))
-	result["grand_casino_duel"] = _copy_dict(outcome.get("duel", {}))
+	result["grand_casino_duel"] = JsonCoerceScript._copy_dict(outcome.get("duel", {}))
 	if outcome.has("success"):
 		result["success"] = bool(outcome.get("success", false))
 	if run_state.is_terminal():
@@ -1173,9 +1371,9 @@ func _resolve_grand_casino_showdown(run_state: RunState, environment: Dictionary
 
 
 func _grand_casino_showdown_config(payload: Dictionary) -> Dictionary:
-	var config := _copy_dict(payload.get("showdown_tuning", {}))
+	var config := JsonCoerceScript._copy_dict(payload.get("showdown_tuning", {}))
 	for key in ["walk", "pat_down", "interrogation", "duel_terms"]:
-		config[key] = _copy_dict(payload.get(key, {}))
+		config[key] = JsonCoerceScript._copy_dict(payload.get(key, {}))
 	config["success_message"] = str(payload.get("success_message", ""))
 	config["failure_message"] = str(payload.get("failure_message", ""))
 	return config
@@ -1193,13 +1391,13 @@ func _grand_casino_showdown_presented_choices(choices: Array) -> Array:
 
 
 func _grand_casino_showdown_walk_choices(payload: Dictionary, run_state: RunState) -> Array:
-	var walk_config := _copy_dict(payload.get("walk", {}))
+	var walk_config := JsonCoerceScript._copy_dict(payload.get("walk", {}))
 	var status := run_state.grand_casino_showdown_walk_status()
 	if bool(status.get("ditch_used", false)):
 		return []
-	var inventory_items := _copy_array(status.get("inventory", []))
+	var inventory_items := JsonCoerceScript._copy_array(status.get("inventory", []))
 	var result: Array = []
-	for option_value in _copy_array(walk_config.get("choices", [])):
+	for option_value in JsonCoerceScript._copy_array(walk_config.get("choices", [])):
 		if typeof(option_value) != TYPE_DICTIONARY:
 			continue
 		var option: Dictionary = option_value
@@ -1240,7 +1438,7 @@ func _grand_casino_showdown_item_label(item_id: String) -> String:
 
 
 func _grand_casino_interrogation_scene_summary(status: Dictionary) -> String:
-	var stakes := _copy_dict(status.get("stakes", {}))
+	var stakes := JsonCoerceScript._copy_dict(status.get("stakes", {}))
 	return "Beat %d/%d. Rourke: %s Stakes: heat %s; proof %s; clean %s; items %s; drink/debt %s; history %s." % [
 		int(status.get("beat_number", 0)),
 		int(status.get("beat_count", 0)),
@@ -1259,7 +1457,7 @@ func _signed_value(value: int) -> String:
 
 
 func _grand_casino_high_roller_choices(payload: Dictionary, run_state: RunState, _environment: Dictionary) -> Array:
-	var all_choices := _copy_array(payload.get("choices", []))
+	var all_choices := JsonCoerceScript._copy_array(payload.get("choices", []))
 	if run_state == null:
 		return all_choices
 	if not bool(run_state.narrative_flags.get("high_roller_cashout_pending", false)):
@@ -1303,29 +1501,14 @@ func _resolve_grand_casino_high_roller_cashout(run_state: RunState, environment:
 	})
 	result["event_id"] = get_id()
 	result["choice_id"] = choice_key
-	result["high_roller_cashout"] = _copy_dict(outcome.get("status", {}))
+	result["high_roller_cashout"] = JsonCoerceScript._copy_dict(outcome.get("status", {}))
 	if run_state.is_terminal():
 		result["state"] = GameModule.RESULT_ENDED
 	return result
 
 
 # Safely duplicates array content.
-static func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
 # Normalizes a variant array into string ids.
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	for entry in _readonly_array(value):
-		var id := str(entry)
-		if not id.is_empty():
-			result.append(id)
-	return result
-
-
 static func _readonly_array(value: Variant) -> Array:
 	return value if typeof(value) == TYPE_ARRAY else []
 
@@ -1336,13 +1519,9 @@ static func _readonly_dict(value: Variant) -> Dictionary:
 
 static func _single_or_array_strings(value: Variant) -> Array:
 	if typeof(value) == TYPE_ARRAY:
-		return _string_array(value)
+		return JsonCoerceScript._raw_string_array(value)
 	var text := str(value).strip_edges()
 	return [] if text.is_empty() else [text]
 
 
 # Safely duplicates dictionary content.
-static func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)

@@ -41,7 +41,7 @@
     `E364B27C765D8B82B6C525A1CDF248D013BDE69BD1643D104E48883256816F71`.
   - `builds/itch/BeatTheHouse-windows.zip`: 43,657,926 bytes, SHA256
     `2D40849FF927EB47772A889D8F5735D7CAABE3D24030493A480C4729B90EA363`.
-- Documentation updated: `docs/plans/0.4_release_checklist.md` package rows
+- Documentation updated: `docs/archive/0.4/plans/0.4_release_checklist.md` package rows
   were refreshed and a Playtest Fix Addendum was appended.
 - Queue update: this prompt was removed and
   `v04_publish_and_tag_prompt.md` was unblocked for owner-launch only.
@@ -58,7 +58,7 @@ You are working in `D:\Projects\Beat-The-House` (Godot 4.6 GDScript casino
 roguelike — see CLAUDE.md). The owner's playtest produced CRITICAL fixes
 (idle-animation liveness, meta home lag/phantom-items/top-bar) that
 post-date the packaged 0.4.0 builds, so `builds/itch/*.zip` and the hashes
-in `docs/plans/0.4_release_checklist.md` no longer describe the release
+in `docs/archive/0.4/plans/0.4_release_checklist.md` no longer describe the release
 tree. This task re-verifies and re-packages so the publish audit passes
 against the FIXED tree.
 
@@ -84,7 +84,7 @@ against the FIXED tree.
    - `tools\web_perf_smoke.ps1`
 2. Re-export both packages via `tools\export_itch.ps1 -Target web` and
    `-Target windows`; record sizes and SHA256 hashes.
-3. Update `docs/plans/0.4_release_checklist.md`: replace the package
+3. Update `docs/archive/0.4/plans/0.4_release_checklist.md`: replace the package
    artifact rows with the new sizes/hashes and append a "Playtest Fix
    Addendum" section listing the fix commits, the gates rerun with
    results, and the re-export evidence. Do not rewrite prior sections.

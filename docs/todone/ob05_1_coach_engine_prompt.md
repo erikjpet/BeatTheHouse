@@ -17,7 +17,7 @@ rendering; UI via extracted components + pure view models
 (foundation_main gains wiring only); content data-driven from
 `data/*.json`; profile persistence is schema-versioned with atomic
 writes. This file is self-contained; the binding design contract is
-`docs/plans/0.5_onboarding_tutorial_plan.md` Part 1 — read it first.
+`docs/archive/0.5/plans/0.5_onboarding_tutorial_plan.md` Part 1 — read it first.
 No dependency on the Grand Casino rework; but if it has landed, its
 surfaces (chips, card tiers) are valid tip subjects.
 

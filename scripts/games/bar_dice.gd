@@ -11,7 +11,6 @@ const ActionAuthorityScript := preload("res://scripts/core/blackjack_action_auth
 const RitualProjectionScript := preload("res://scripts/core/bar_dice_ritual_projection.gd")
 
 const C_DARK := VisualStyleScript.DARK
-const C_DARK_2 := VisualStyleScript.DARK_2
 const C_PINK := VisualStyleScript.PINK
 const C_PINK_2 := VisualStyleScript.PINK_2
 const C_CYAN := VisualStyleScript.CYAN
@@ -51,33 +50,47 @@ const PALMED_SWAP_ACTION_ID := "palmed_swap"
 const CONSOLE_Y := 344.0
 const CONSOLE_SELECT_BUTTON_WIDTHS := [108.0, 108.0, 100.0, 100.0]
 const CONSOLE_ROLL_BUTTON_WIDTHS := [108.0, 124.0, 116.0]
-const RULES_PANEL_RECT := Rect2(556, 218, 300, 58)
-const PAYTABLE_PANEL_RECT := Rect2(556, 282, 190, 50)
-const ROUND_TIMER_RECT := Rect2(752, 282, 116, 50)
+const RULES_PANEL_RECT := Rect2(560, 198, 312, 82)
+const PAYTABLE_PANEL_RECT := Rect2(560, 286, 198, 50)
+const ROUND_TIMER_RECT := Rect2(764, 286, 108, 50)
 const BAR_DICE_GUIDANCE_RECT := Rect2(452, CONSOLE_Y + 61, 432, 20)
-const RULES_PANEL_LINE_LIMIT := 47
+const RULES_PANEL_LINE_LIMIT := 30
 const BAR_DICE_RITUAL_PHASES := ["agree_wager", "cover", "shake", "throw", "reveal", "call", "settle"]
 const BAR_DICE_PROPOSAL_REQUIRES_APPLY_KEY := "bar_dice_proposal_requires_apply"
 const BAR_DICE_SURFACE_INTENT_KEY := "bar_dice_surface_intent"
 const BAR_DICE_SURFACE_INTENT_INDEX_KEY := "bar_dice_surface_intent_index"
 
-const PLAYER_DICE_ORIGIN := Vector2(262, 214)
+const PLAYER_DICE_ORIGIN := Vector2(268, 246)
 const DIE_SIZE := Vector2(38, 38)
 const DIE_SPACING := 46.0
-const OPPONENT_DIE_SIZE := Vector2(22, 22)
-const OPPONENT_DIE_SPACING := 29.0
-const MAX_VISIBLE_OPPONENT_ROWS := 3
+const OPPONENT_DIE_SIZE := Vector2(16, 16)
+const OPPONENT_DIE_SPACING := 21.0
+const MAX_VISIBLE_OPPONENT_ROWS := 4
 const OPPONENT_DICE_ORIGINS := [
-	Vector2(76, 150),
-	Vector2(76, 188),
-	Vector2(76, 226),
+	Vector2(68, 210),
+	Vector2(68, 243),
+	Vector2(68, 276),
+	Vector2(68, 309),
 ]
+const OPPONENT_PANEL_OFFSET := Vector2(-8, -12)
+const OPPONENT_PANEL_SIZE := Vector2(184, 32)
+const PLAYER_CONTENT_RECT := Rect2(260, 234, 286, 104)
+const OPPONENT_CONTENT_RECT := Rect2(60, 198, 184, 131)
+const CONSOLE_CONTENT_RECT := Rect2(0, CONSOLE_Y, 900, 86)
 const BAR_PATRON_POSITIONS := [
-	Vector2(94, 84),
-	Vector2(236, 70),
-	Vector2(660, 70),
-	Vector2(808, 84),
+	Vector2(94, 104),
+	Vector2(236, 104),
+	Vector2(660, 104),
+	Vector2(808, 104),
 ]
+const BAR_DICE_DEALER_STATUS_LAYOUT := {
+	"station": Rect2(344, 84, 212, 108),
+	"character_foot": Vector2(450, 174),
+	"character_scale": 0.92,
+	"attention_meter": Rect2(352, 200, 92, 7),
+	"danger_meter": Rect2(456, 200, 92, 7),
+	"status_panel": Rect2(352, 216, 196, 16),
+}
 const DICE_GOAL_LABELS := ["SHIP 6", "CAPTAIN 5", "CREW 4", "CARGO"]
 
 const RULESET_LABEL := {
@@ -119,13 +132,6 @@ const EDGE_PAYOUT_PERCENT := {
 	"standard": 66,
 	"sharp": 70,
 }
-const CATEGORY_RANK := {
-	"not_qualified": 0,
-	"ship_only": 10,
-	"ship_captain": 20,
-	"ship_captain_crew": 50,
-	"perfect_cargo": 70,
-}
 const CATEGORY_LABEL := {
 	"not_qualified": "No Ship",
 	"ship_only": "Ship Only",
@@ -134,7 +140,6 @@ const CATEGORY_LABEL := {
 	"perfect_cargo": "Midnight Cargo",
 }
 const DIE_WORD := {1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six"}
-const DIE_WORD_PLURAL := {1: "Ones", 2: "Twos", 3: "Threes", 4: "Fours", 5: "Fives", 6: "Sixes"}
 const MEMORABLE_REGULAR := {
 	"id": "knucklebones_nell",
 	"name": "Knucklebones Nell",
@@ -175,6 +180,26 @@ func sealed_action_authority_contract() -> Dictionary:
 	return {
 		"resolve_proposal_method": &"_bar_dice_resolve_proposal",
 		"wager_cost_proposal_method": &"_bar_dice_wager_cost_proposal",
+		# Foundation already owns an isolated transaction candidate. Resolve and
+		# replay against that candidate directly so late-run history is neither
+		# serialized nor fingerprinted as part of every dice settlement.
+		"trusted_candidate_resolve_method": &"_bar_dice_resolve_candidate",
+		"trusted_candidate_wager_method": &"_bar_dice_wager_cost_candidate",
+		"trusted_candidate_first_proposal_owns_transaction": true,
+		"compact_authority_evidence_method": &"_bar_dice_authority_evidence",
+		"trusted_candidate_structural_replay_match": true,
+		"lightweight_resolution_candidate": true,
+		# The replay candidate is fully detached before the accepted proposal runs.
+		# Its first execution can therefore fork only the table shell: any nested
+		# writes remain inside the already-private transaction candidate, while the
+		# independently deep replay still proves the complete result.
+		"trusted_candidate_shallow_machine_detach": true,
+		# With no authored scenario or injected rollback fixture, the host's turn
+		# boundary cannot reject. Publish the replay-validated table directly instead
+		# of cloning and reconciling the complete run around every throw.
+		"in_place_nonrejecting_commit": true,
+		# Synchronous retry needs only the current response and its predecessor.
+		"active_replay_limit": 2,
 		"host_auto_tick_method": &"",
 		"surface_intent_key": BAR_DICE_SURFACE_INTENT_KEY,
 		"surface_intent_index_key": BAR_DICE_SURFACE_INTENT_INDEX_KEY,
@@ -267,6 +292,19 @@ func _bar_dice_wager_cost_proposal(action_id: String, stake: int, run_snapshot: 
 	}
 
 
+func _bar_dice_wager_cost_candidate(action_id: String, stake: int, candidate: RunState, ui_state: Dictionary = {}) -> int:
+	if candidate == null:
+		return 0
+	if action_id == "press":
+		var press_table := _dice_state_preview(candidate, candidate.current_environment)
+		var offer := _copy_dict(_copy_dict(press_table.get("last_result", {})).get("press_offer", {}))
+		return mini(maxi(1, int(offer.get("risk", stake))), maxi(0, candidate.wager_balance_for_game(get_id(), candidate.current_environment))) if bool(offer.get("available", false)) else 0
+	if action_id in ["roll", "loaded_toss", "palmed_swap"]:
+		var table := _dice_state_preview(candidate, candidate.current_environment)
+		return _sealed_bar_dice_stake(stake, table, ui_state, candidate, candidate.current_environment)
+	return 0
+
+
 func wager_activity_incomplete(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> bool:
 	var state := _dice_state_preview(run_state, environment)
 	return bool(_normalized_ui_state(run_state, environment, ui_state, state).get("rolled", false))
@@ -276,6 +314,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var state := _dice_state_preview(run_state, environment)
 	var ui := _normalized_ui_state(run_state, environment, ui_state, state)
 	var last_result := _copy_dict(state.get("last_result", {}))
+	var wager_currency := GameModule.presentation_currency_for_game(run_state, get_id(), environment)
+	var settlement: Dictionary = last_result.get("settlement", {}) if typeof(last_result.get("settlement", {})) == TYPE_DICTIONARY else {}
+	var result_currency := str(settlement.get("currency", wager_currency))
+	var result_currency_delta := int(settlement.get("delta", last_result.get("bankroll_delta", 0)))
+	var result_settlement_text := PlayerTextScript.format_settlement_delta(result_currency, result_currency_delta)
 	var rolled := bool(ui.get("rolled", false))
 	var showing_result := not rolled and not last_result.is_empty()
 	var phase := "select" if rolled else ("settled" if showing_result else "bet")
@@ -325,14 +368,14 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var animated_dice_indices := _index_array(tumble.get("indices", []))
 	if rolled and not str(tumble.get("id", "")).is_empty() and animated_dice_indices.is_empty():
 		animated_dice_indices = _all_die_indices()
-	var tumble_active := not str(tumble.get("id", "")).is_empty()
+	var tumble_active := _tumble_is_active(tumble, ui)
 	var surface_motion_active := tumble_active or controlled_roll_meter_active or palmed_swap_meter_active
 	var pit_boss := run_state.pit_boss_watch_status(environment) if run_state != null else {}
 	var press_offer := _copy_dict(last_result.get("press_offer", {}))
 	var press_available := phase == "settled" and bool(press_offer.get("available", false))
 	var controlled_roll_item_modifiers := skill_item_modifier_badges(run_state, CONTROLLED_ROLL_ITEM_EFFECT_KEYS)
-	var explainer := _bar_dice_explainer(phase, player_score, last_result, active_stake, working_pot, rake, participants, round_timer)
-	var turn_guide := _bar_dice_turn_guide(phase, player_score, reroll, suggested, remaining_shakes, active_stake, working_pot, round_timer, last_result)
+	var explainer := _bar_dice_explainer(phase, player_score, last_result, active_stake, working_pot, rake, participants, round_timer, wager_currency)
+	var turn_guide := _bar_dice_turn_guide(phase, player_score, reroll, suggested, remaining_shakes, active_stake, working_pot, round_timer, last_result, wager_currency)
 	var rules_lines := _bar_dice_rules_panel_lines(phase, turn_guide, explainer)
 	var action_buttons := _bar_dice_action_buttons(
 		phase,
@@ -345,7 +388,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		loaded_armed,
 		controlled_roll,
 		palm_armed,
-		palmed_swap
+		palmed_swap,
+		wager_currency
 	)
 	var ritual_phase := str(ui.get("bar_dice_ritual_phase", "agree_wager"))
 	action_buttons = _bar_dice_ritual_action_buttons(ritual_phase, action_buttons)
@@ -366,6 +410,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 
 	return GameModule.surface_spec({
 		"surface_renderer": "dice_table",
+		"surface_renderer_opaque": true,
 		"surface_life": "bar_dice_table",
 		"surface_cast": "dealer_table",
 		"surface_controls_native": true,
@@ -385,6 +430,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_animates_idle": true,
 		"surface_realtime_state_refresh": surface_motion_active,
 		"phase": phase,
+		"wager_currency": wager_currency,
 		"bar_dice_ritual_phase": ritual_phase,
 		"bar_dice_ritual_projection": ritual_projection,
 		"ritual_actors": [ritual_projection.get("opponent_actor", {}), ritual_projection.get("onlookers_actor", {})],
@@ -409,8 +455,10 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"dealer_profile": _copy_dict(state.get("dealer_profile", {})),
 		"dealer_attention_pressure": 8 if phase == "select" else 4,
 		"patrons": patrons,
+		"patron_overlay_mode": "compact",
 		"rail_bettors": patrons,
 		"patron_wager_action": "bar_dice_rail_bet",
+		"rail_wager_controls_visible": ritual_phase in ["agree_wager", "settle"],
 		"snitch_pressure": _patron_snitch_pressure(patrons),
 		"suspicion_level": run_state.suspicion_level() if run_state != null else 0,
 		"stake_ladder": _int_array(state.get("stake_ladder", [])),
@@ -477,6 +525,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"info_text": str(explainer.get("summary", "")),
 		"result_message": str(last_result.get("summary", "")) if showing_result else "",
 		"result_bankroll_delta": int(last_result.get("bankroll_delta", 0)) if showing_result else 0,
+		"result_settlement_text": result_settlement_text if showing_result else "",
 		"result_suspicion_delta": int(last_result.get("suspicion_delta", 0)) if showing_result else 0,
 		"press_available": press_available,
 		"press_risk": int(press_offer.get("risk", 0)) if press_available else 0,
@@ -528,7 +577,7 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 	_draw_bar_room(surface, surface_state)
 	_draw_bar_top(surface, surface_state)
 	TableVisualsScript.draw_table_patrons(surface, surface_state, BAR_PATRON_POSITIONS)
-	TableVisualsScript.draw_dealer_station(surface, surface_state, "calls cargo")
+	TableVisualsScript.draw_dealer_station(surface, surface_state, "calls cargo", BAR_DICE_DEALER_STATUS_LAYOUT)
 	_draw_dice_rows(surface, surface_state)
 	_draw_explainer(surface, surface_state)
 	_draw_paytable(surface, surface_state)
@@ -783,6 +832,71 @@ func _bar_dice_resolve_proposal(action_id: String, stake: int, run_snapshot: Dic
 	}
 	proposal["output_fingerprint"] = RuntimeScript.canonical_fingerprint(proposal)
 	return proposal
+
+
+func _bar_dice_resolve_candidate(action_id: String, stake: int, candidate: RunState, proposal_rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	if candidate == null or proposal_rng == null:
+		return _empty_result(action_id, stake, {}, "Bar Dice resolution requires an isolated run and RNG candidate.")
+	var resolution_ui_state := ui_state.duplicate(true)
+	if not resolution_ui_state.has("surface_time_msec"):
+		resolution_ui_state["surface_time_msec"] = GameModule.deterministic_time_msec(candidate, {})
+	return _resolve_bar_dice_proposal_core(
+		action_id,
+		stake,
+		candidate,
+		candidate.current_environment,
+		proposal_rng,
+		resolution_ui_state
+	)
+
+
+func _bar_dice_authority_evidence(candidate: RunState, action_id: String, stake: int, ui_state: Dictionary = {}) -> Dictionary:
+	if candidate == null:
+		return {}
+	var environment := candidate.current_environment
+	var table := _table_state_preview(candidate, environment).duplicate(false)
+	# The host authenticates replay history and pending apply state separately.
+	# Excluding those growing receipt collections keeps this evidence constant-cost.
+	table.erase(ActionAuthorityScript.LEDGER_KEY)
+	table.erase(ActionAuthorityScript.PENDING_APPLY_RECEIPT_KEY)
+	var environment_evidence := environment.duplicate(false)
+	environment_evidence.erase("environment_runtime_revision")
+	# Only Bar Dice's table can affect its result. Other games and retained run
+	# histories remain outside this exact deterministic authority projection.
+	environment_evidence["game_states"] = {get_id(): table}
+	return {
+		"version": 1,
+		"game_id": get_id(),
+		"action_id": action_id,
+		"stake": maxi(0, stake),
+		"account_checkpoint": candidate.action_authority_checkpoint_fingerprint(),
+		"bankroll": candidate.bankroll,
+		"grand_casino_chips": candidate.grand_casino_chips,
+		"rng_seed": candidate.rng_seed,
+		"rng_state": candidate.rng_state,
+		"simulation_msec": candidate.simulation_msec,
+		"game_clock_minutes": candidate.game_clock_minutes,
+		"seed_text": candidate.seed_text,
+		"seed_value": candidate.seed_value,
+		"run_status": candidate.run_status,
+		"economic_state": candidate.economic_state,
+		"challenge_config": candidate.challenge_config,
+		"inventory": candidate.inventory,
+		"active_item_id": candidate.active_item_id,
+		"suspicion": candidate.suspicion,
+		"baseline_luck": candidate.baseline_luck,
+		"drunk_level": candidate.drunk_level,
+		"alcoholic_level": candidate.alcoholic_level,
+		"narrative_flags": candidate.narrative_flags,
+		"crew_play_state": candidate.crew_play_state,
+		"grand_casino_staffing": candidate.grand_casino_staffing,
+		"rourke_current_room": candidate.rourke_current_room,
+		"rourke_current_spot": candidate.rourke_current_spot,
+		"rourke_facing": candidate.rourke_facing,
+		"rourke_off_floor_actions": candidate.rourke_off_floor_actions,
+		"environment": environment_evidence,
+		"ui_state": ui_state,
+	}
 
 
 func _resolve_bar_dice_proposal_core(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
@@ -1403,7 +1517,19 @@ func _dice_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 func _dice_state_preview(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var stored: Variant = game_states.get(get_id(), {})
-	var state: Dictionary = (stored as Dictionary).duplicate(true) if typeof(stored) == TYPE_DICTIONARY and not (stored as Dictionary).is_empty() else _fallback_state(run_state, environment)
+	var has_stored_state := typeof(stored) == TYPE_DICTIONARY and not (stored as Dictionary).is_empty()
+	# Current tables are immutable to preview callers. Detach only their outer
+	# shell because the assignment refresh below replaces top-level values and
+	# never edits retained patrons/results in place. Older schemas still take the
+	# conservative deep path before normalization.
+	var stored_state := stored as Dictionary if has_stored_state else {}
+	var state: Dictionary
+	if not has_stored_state:
+		state = _fallback_state(run_state, environment)
+	elif _state_is_current(stored_state):
+		state = stored_state.duplicate(false)
+	else:
+		state = stored_state.duplicate(true)
 	_apply_grand_casino_bartender_assignment(state, run_state, environment, true)
 	return state if _state_is_current(state) else _normalize_state(state)
 
@@ -1443,12 +1569,6 @@ func _apply_grand_casino_bartender_assignment(state: Dictionary, run_state: RunS
 	state["dealer_name"] = dealer_name
 	state["dealer_profile"] = profile
 	state["staff_assignment_id"] = assignment_id
-
-
-func _fallback_state(run_state: RunState, environment: Dictionary) -> Dictionary:
-	var rng := RngStream.new()
-	rng.configure(_stable_hash("%s:%s:%s" % [get_id(), str(run_state.seed_text if run_state != null else "fallback"), str(environment.get("id", ""))]))
-	return generate_environment_state(run_state, environment, rng)
 
 
 func _normalize_state(state: Dictionary) -> Dictionary:
@@ -1633,10 +1753,10 @@ func _start_controlled_roll(ui_state: Dictionary, run_state: RunState, state: Di
 		JSON.stringify(dice),
 		int(ui_state.get("shake_number", 1)),
 	]
-	var started := now_msec - int(_stable_hash(seed) % period)
+	var started := now_msec - int(JsonCoerceScript._stable_hash(seed) % period)
 	var watch_info := _patron_watch_info(state)
 	return {
-		"challenge_id": "bar_control_%d" % _stable_hash(seed),
+		"challenge_id": "bar_control_%d" % JsonCoerceScript._stable_hash(seed),
 		"desired_face": desired_face,
 		"desired_die_index": desired_index,
 		"dice_before": dice.duplicate(),
@@ -1777,12 +1897,12 @@ func _start_palmed_swap_challenge(ui_state: Dictionary, run_state: RunState, sta
 		JSON.stringify(dice),
 		int(ui_state.get("shake_number", 1)),
 	]
-	var started := now_msec - int(_stable_hash(seed) % period)
+	var started := now_msec - int(JsonCoerceScript._stable_hash(seed) % period)
 	var target_index := clampi(int(target.get("index", 0)), 0, DICE_COUNT - 1)
 	var target_phase := int(round((float(target_index) + 0.5) * float(period) / float(DICE_COUNT)))
 	var watch_info := _patron_watch_info(state)
 	return {
-		"challenge_id": "bar_palm_%d" % _stable_hash(seed),
+		"challenge_id": "bar_palm_%d" % JsonCoerceScript._stable_hash(seed),
 		"dice_before": dice.duplicate(),
 		"target_die_index": target_index,
 		"target_face": clampi(int(target.get("face", dice[target_index])), 1, DIE_FACES),
@@ -1999,7 +2119,7 @@ func _normalize_dealer_profile(value: Variant, state: Dictionary) -> Dictionary:
 	var dealer := _copy_dict(value)
 	if dealer.is_empty():
 		var rng := RngStream.new()
-		rng.configure(_stable_hash("%s:dealer" % str(state.get("table_key", "bar"))))
+		rng.configure(JsonCoerceScript._stable_hash("%s:dealer" % str(state.get("table_key", "bar"))))
 		dealer = _generate_dealer_profile(rng, str(state.get("dealer_name", "Bartender")), str(state.get("edge_tier", "standard")))
 	dealer["name"] = str(dealer.get("name", state.get("dealer_name", "Bartender")))
 	dealer["role"] = str(dealer.get("role", "bar_dice_caller"))
@@ -2066,7 +2186,7 @@ func _normalize_patrons(value: Variant) -> Array:
 	var patrons := _dictionary_array(value)
 	if patrons.is_empty():
 		var rng := RngStream.new()
-		rng.configure(_stable_hash("bar_dice:patrons:fallback"))
+		rng.configure(JsonCoerceScript._stable_hash("bar_dice:patrons:fallback"))
 		return _generate_patrons(rng, 2)
 	for i in range(patrons.size()):
 		var patron: Dictionary = patrons[i]
@@ -2303,7 +2423,7 @@ func _deterministic_die(run_state: RunState, state: Dictionary, shake_number: in
 	var rng_state := int(run_state.rng_state) if run_state != null else 0
 	var table_key := str(state.get("table_key", "table"))
 	var rounds := int(state.get("rounds_played", 0))
-	var hashed := _stable_hash("%s:%s:%s:%d:%d:%d:%d" % [get_id(), table_key, seed_text, rng_state, rounds, shake_number, index])
+	var hashed := JsonCoerceScript._stable_hash("%s:%s:%s:%d:%d:%d:%d" % [get_id(), table_key, seed_text, rng_state, rounds, shake_number, index])
 	return 1 + int(hashed % DIE_FACES)
 
 
@@ -2377,7 +2497,7 @@ func _apply_controlled_roll(dice_value: Variant, controlled_roll: Dictionary) ->
 		return dice
 	if grade == "partial":
 		var hash_text := "%s:%s:%s" % [str(controlled_roll.get("challenge_id", "")), JSON.stringify(dice), str(desired_face)]
-		if int(_stable_hash(hash_text) % 100) >= 70:
+		if int(JsonCoerceScript._stable_hash(hash_text) % 100) >= 70:
 			return dice
 	dice[desired_index] = desired_face
 	return dice
@@ -2509,7 +2629,7 @@ func _hand_blurb(score: Dictionary) -> String:
 			return "No Ship"
 
 
-func _bar_dice_explainer(phase: String, player_score: Dictionary, last_result: Dictionary, active_stake: int, pot: int, rake: int, participants: int, round_timer: Dictionary) -> Dictionary:
+func _bar_dice_explainer(phase: String, player_score: Dictionary, last_result: Dictionary, active_stake: int, pot: int, rake: int, participants: int, round_timer: Dictionary, wager_currency: String = "cash") -> Dictionary:
 	if phase == "settled" and not last_result.is_empty():
 		return {
 			"title": _result_title(str(last_result.get("outcome", ""))),
@@ -2531,7 +2651,7 @@ func _bar_dice_explainer(phase: String, player_score: Dictionary, last_result: D
 	var seconds := int(round_timer.get("remaining_seconds", 0))
 	return {
 		"title": "SHIP, CAPTAIN, CREW",
-		"summary": "$%d ante builds a $%d pot with %d seats." % [active_stake, pot, participants],
+		"summary": "%s ante builds a %s pot with %d seats." % [PlayerTextScript.format_currency_amount(wager_currency, active_stake), PlayerTextScript.format_currency_amount(wager_currency, pot), participants],
 		"rule": "High cargo wins after 6-5-4. Tied cargo carries the pot.",
 		"pot": pot,
 		"rake": rake,
@@ -2540,7 +2660,7 @@ func _bar_dice_explainer(phase: String, player_score: Dictionary, last_result: D
 	}
 
 
-func _bar_dice_turn_guide(phase: String, player_score: Dictionary, reroll: Array, suggested: Array, remaining_shakes: int, active_stake: int, pot: int, round_timer: Dictionary, last_result: Dictionary) -> Dictionary:
+func _bar_dice_turn_guide(phase: String, player_score: Dictionary, reroll: Array, suggested: Array, remaining_shakes: int, active_stake: int, pot: int, round_timer: Dictionary, last_result: Dictionary, wager_currency: String = "cash") -> Dictionary:
 	var guide := {
 		"title": "How to play",
 		"goal": "Make 6, then 5, then 4. When all three lock, the last two dice are cargo.",
@@ -2580,7 +2700,7 @@ func _bar_dice_turn_guide(phase: String, player_score: Dictionary, reroll: Array
 	var seconds := int(round_timer.get("remaining_seconds", 0))
 	guide["title"] = "Before the roll"
 	guide["next_step"] = "Choose an ante, then ROLL to play the hand step by step."
-	guide["selection"] = "$%d ante feeds a $%d table pot." % [active_stake, pot]
+	guide["selection"] = "%s ante feeds a %s table pot." % [PlayerTextScript.format_currency_amount(wager_currency, active_stake), PlayerTextScript.format_currency_amount(wager_currency, pot)]
 	guide["shake_hint"] = "AUTO-PLAY HAND skips choices; ROLL CUP lets you choose every reroll."
 	guide["result_hint"] = "Next automatic shake in %ds if you sit at the table." % seconds if seconds > 0 else "The table is waiting for your ante."
 	return guide
@@ -2589,20 +2709,20 @@ func _bar_dice_turn_guide(phase: String, player_score: Dictionary, reroll: Array
 func _bar_dice_rules_panel_lines(phase: String, guide: Dictionary, explainer: Dictionary) -> Array:
 	var lines: Array = []
 	if phase == "select":
-		lines.append("Goal: make 6 Ship, 5 Captain, 4 Crew.")
-		lines.append("Then cargo dice decide the pot.")
-		lines.append("Pink rerolls; teal locks; plain stays.")
-		lines.append("SHAKE marked dice only; SETTLE compares.")
+		lines.append("6 Ship · 5 Captain · 4 Crew")
+		lines.append("Last two dice score cargo.")
+		lines.append("Pink rerolls · teal locks.")
+		lines.append("SHAKE picks · SETTLE scores.")
 	elif phase == "settled":
-		lines.append("6-5-4 locks first; last two dice are cargo.")
-		lines.append("High cargo wins; tied cargo carries the pot.")
-		lines.append(str(guide.get("selection", explainer.get("summary", ""))))
-		lines.append("Roll again or press a clean win.")
+		lines.append("6-5-4 locks before cargo.")
+		lines.append("High cargo wins; ties carry.")
+		lines.append(str(guide.get("selection", explainer.get("summary", ""))).left(RULES_PANEL_LINE_LIMIT))
+		lines.append("Roll again or press a win.")
 	else:
-		lines.append("Goal: make 6 Ship, 5 Captain, 4 Crew.")
-		lines.append("High cargo wins after all three lock.")
-		lines.append("Pick ante, then ROLL CUP for choices.")
-		lines.append("AUTO-PLAY skips choices; ties carry the pot.")
+		lines.append("6 Ship · 5 Captain · 4 Crew")
+		lines.append("High cargo wins after 6-5-4.")
+		lines.append("Pick ante, then ROLL CUP.")
+		lines.append("AUTO-PLAY skips choices.")
 	return _compact_text_lines(lines, RULES_PANEL_LINE_LIMIT)
 
 
@@ -2615,15 +2735,15 @@ func _bar_dice_legend() -> Array:
 	]
 
 
-func _bar_dice_action_buttons(phase: String, remaining_shakes: int, reroll: Array, suggested: Array, can_shake: bool, press_available: bool, press_risk: int, loaded_armed: bool = false, controlled_roll: Dictionary = {}, palm_armed: bool = false, palmed_swap: Dictionary = {}) -> Array:
+func _bar_dice_action_buttons(phase: String, remaining_shakes: int, reroll: Array, suggested: Array, can_shake: bool, press_available: bool, press_risk: int, loaded_armed: bool = false, controlled_roll: Dictionary = {}, palm_armed: bool = false, palmed_swap: Dictionary = {}, wager_currency: String = "cash") -> Array:
 	var buttons: Array = []
 	if phase == "select":
 		var suggested_count := suggested.size()
-		var shake_label := "SHAKE PINK DICE" if not reroll.is_empty() else "SHAKE AMBER DICE"
-		var shake_detail := "Reroll selected only" if not reroll.is_empty() else "Reroll suggestions"
-		var shake_button_detail := "%s; %d left" % [shake_detail, remaining_shakes]
+		var shake_label := "SHAKE DICE"
+		var shake_detail := "Reroll picks" if not reroll.is_empty() else "Reroll hints"
+		var shake_button_detail := "%s · %d left" % [shake_detail, remaining_shakes]
 		if reroll.is_empty():
-			shake_button_detail = "Reroll %d suggested; %d left" % [suggested_count, remaining_shakes]
+			shake_button_detail = "Reroll %d · %d left" % [suggested_count, remaining_shakes]
 		buttons.append({
 			"action": "bar_dice_shake",
 			"index": 0,
@@ -2635,13 +2755,13 @@ func _bar_dice_action_buttons(phase: String, remaining_shakes: int, reroll: Arra
 		buttons.append({
 			"action": "bar_dice_resolve",
 			"index": 0,
-			"label": "SETTLE CURRENT",
-			"detail": "Compare shown dice",
+			"label": "SETTLE",
+			"detail": "Compare dice",
 			"accent": "yellow",
 			"enabled": true,
 		})
 		var load_action := "bar_dice_release" if loaded_armed else "bar_dice_load"
-		var load_label := "RELEASE THROW" if loaded_armed else "CHEAT LOAD DIE"
+		var load_label := "RELEASE" if loaded_armed else "LOAD DIE"
 		var load_detail := "Hit %s band" % _word_single(int(controlled_roll.get("desired_face", 6))) if loaded_armed else "Time controlled roll"
 		var grade := str(controlled_roll.get("skill_grade", ""))
 		if loaded_armed and not grade.is_empty():
@@ -2658,8 +2778,8 @@ func _bar_dice_action_buttons(phase: String, remaining_shakes: int, reroll: Arra
 		buttons.append({
 			"action": "bar_dice_palm",
 			"index": 0,
-			"label": "SWAP NOW" if palm_armed else "CHEAT PALM SWAP",
-			"detail": "Lock the weak die" if palm_armed else "Time one hidden swap",
+			"label": "SWAP NOW" if palm_armed else "PALM SWAP",
+			"detail": "Lock weak die" if palm_armed else "Time weak die",
 			"accent": "orange",
 			"enabled": true,
 			"selected": palm_armed and str(palmed_swap.get("skill_grade", "")).is_empty(),
@@ -2686,7 +2806,7 @@ func _bar_dice_action_buttons(phase: String, remaining_shakes: int, reroll: Arra
 			"action": "bar_dice_press",
 			"index": 0,
 			"label": "PRESS LAST WIN",
-			"detail": "Risk $%d" % press_risk,
+			"detail": "Risk %s" % PlayerTextScript.format_currency_amount(wager_currency, press_risk),
 			"accent": "amber",
 			"enabled": true,
 		})
@@ -2696,13 +2816,13 @@ func _bar_dice_action_buttons(phase: String, remaining_shakes: int, reroll: Arra
 func _bar_dice_ritual_action_buttons(ritual_phase: String, ordinary_buttons: Array) -> Array:
 	match ritual_phase:
 		"cover":
-			return [{"action":"bar_dice_ack_cover","index":0,"label":"TAKE THE COVER","detail":"Cash stays on the bar","accent":"amber","enabled":true}]
+			return [{"action":"bar_dice_ack_cover","index":0,"label":"TAKE COVER","detail":"Cash on bar","accent":"amber","enabled":true}]
 		"throw":
-			return [{"action":"bar_dice_throw","index":0,"label":"SLAM THE CUP","detail":"Commit this shown hand","accent":"pink","enabled":true}]
+			return [{"action":"bar_dice_throw","index":0,"label":"SLAM CUP","detail":"Commit hand","accent":"pink","enabled":true}]
 		"reveal":
-			return [{"action":"bar_dice_reveal","index":0,"label":"LIFT THE CUP","detail":"No dice reroll here","accent":"teal","enabled":true}]
+			return [{"action":"bar_dice_reveal","index":0,"label":"LIFT CUP","detail":"Reveal dice","accent":"teal","enabled":true}]
 		"call":
-			return [{"action":"bar_dice_ack_call","index":0,"label":"CALL IT","detail":"Settle the exact covered wager","accent":"yellow","enabled":true}]
+			return [{"action":"bar_dice_ack_call","index":0,"label":"CALL IT","detail":"Settle wager","accent":"yellow","enabled":true}]
 	return ordinary_buttons
 
 
@@ -2838,7 +2958,7 @@ func _opponent_preview_dice(state: Dictionary, patron_index: int) -> Array:
 	var table_key := str(state.get("table_key", "bar"))
 	var rounds := int(state.get("rounds_played", 0))
 	for die_index in range(DICE_COUNT):
-		var hashed := _stable_hash("%s:preview:%d:%d:%d" % [table_key, rounds, patron_index, die_index])
+		var hashed := JsonCoerceScript._stable_hash("%s:preview:%d:%d:%d" % [table_key, rounds, patron_index, die_index])
 		dice.append(1 + int(hashed % DIE_FACES))
 	return dice
 
@@ -2995,6 +3115,16 @@ func _active_tumble(ui_state: Dictionary, last_result: Dictionary, rolled: bool)
 	return {"id": "", "started": 0, "indices": []}
 
 
+func _tumble_is_active(tumble: Dictionary, ui_state: Dictionary) -> bool:
+	if str(tumble.get("id", "")).is_empty() or bool(ui_state.get("reduce_motion", false)):
+		return false
+	var started_msec := int(tumble.get("started", 0))
+	if started_msec <= 0:
+		return false
+	var elapsed_msec := maxi(0, _surface_time_msec(ui_state) - started_msec)
+	return elapsed_msec < TUMBLE_DURATION_MSEC
+
+
 func _set_tumble(ui_state: Dictionary, prefix: String, indices: Array = []) -> void:
 	var now := _surface_time_msec(ui_state)
 	ui_state["tumble_id"] = "%s_%d" % [prefix, now]
@@ -3002,11 +3132,15 @@ func _set_tumble(ui_state: Dictionary, prefix: String, indices: Array = []) -> v
 	ui_state["tumble_indices"] = _index_array(indices)
 
 
+func _bar_dice_surface_amount(state: Dictionary, amount: int) -> String:
+	return PlayerTextScript.format_currency_amount(str(state.get("wager_currency", "cash")), amount, true)
+
+
 func _draw_bar_room(surface, state: Dictionary) -> void:
 	TableVisualsScript.draw_room(surface, state, "BAR DICE", "%s / %s" % [str(state.get("bar_name", "bar top")), str(state.get("edge_label", "Bar Rake"))])
 	var ritual_phase := str(state.get("bar_dice_ritual_phase", "agree_wager")).replace("_", " ").to_upper()
-	surface.surface_label("%s  ·  OPP $%d" % [ritual_phase, int(state.get("opponent_available_cash", 0))], Vector2(520, 34), 10, C_SOFT)
-	surface.surface_label("COVER $%d  ·  AT RISK $%d  ·  RETURNED $%d" % [int(state.get("covered_total", 0)), int(state.get("at_risk_total", 0)), int(state.get("returned_stake", 0))], Vector2(520, 52), 9, C_AMBER)
+	surface.surface_label(("%s  ·  OPP %s" % [ritual_phase, _bar_dice_surface_amount(state, int(state.get("opponent_available_cash", 0)))]).left(29), Vector2(344, 38), 8, C_SOFT)
+	surface.surface_label(("COV %s  ·  RISK %s  ·  RET %s" % [_bar_dice_surface_amount(state, int(state.get("covered_total", 0))), _bar_dice_surface_amount(state, int(state.get("at_risk_total", 0))), _bar_dice_surface_amount(state, int(state.get("returned_stake", 0)))]).left(34), Vector2(344, 56), 7, C_AMBER)
 
 
 func _draw_bar_top(surface, _state: Dictionary) -> void:
@@ -3028,20 +3162,27 @@ func _draw_dice_rows(surface, state: Dictionary) -> void:
 	var suggested := _draw_array_view(state.get("suggested_reroll", []))
 	var scoring := _draw_array_view(state.get("scoring_indices", []))
 	var animated := _draw_array_view(state.get("animated_dice_indices", []))
-	var guide := _draw_dict_view(state.get("bar_dice_turn_guide", {}))
 	_draw_opponent_dice_rows(surface, state)
-	surface.surface_label("YOUR CUP", Vector2(262, 204), 12, C_TEAL)
-	if phase == "select":
-		surface.surface_label(str(guide.get("selection", "Pink rerolls; plain dice stay.")).left(64), Vector2(262, 194), 8, C_SOFT)
-	_draw_dice_row(surface, player, PLAYER_DICE_ORIGIN, reroll, suggested, scoring, false, DIE_SIZE, DIE_SPACING, animated, phase == "select", false)
+	surface.surface_label("YOUR CUP", Vector2(268, 238), 10, C_TEAL)
+	_draw_dice_row(FunctionOptions.DiceRowOptions.from({
+		"surface": surface, "values": player, "start": PLAYER_DICE_ORIGIN, "reroll": reroll,
+		"suggested": suggested, "scoring": scoring, "hidden": false, "die_size": DIE_SIZE,
+		"die_spacing": DIE_SPACING, "rolling_indices": animated,
+		"show_keep_labels": phase == "select", "compact": false,
+	}))
 	if phase == "select":
 		_add_dice_row_hits(surface, player, PLAYER_DICE_ORIGIN, "bar_dice_select", DIE_SIZE, DIE_SPACING)
-		_draw_dice_goal_strip(surface, state, Vector2(262, 266))
-	_draw_legend_row(surface, state, Vector2(262, 306))
+	var cheat_meter_visible := bool(state.get("loaded_armed", false)) or bool(state.get("palm_armed", false))
+	if phase == "select" and not cheat_meter_visible:
+		var remaining := int(state.get("remaining_shakes", 0))
+		var score_summary := "%s  ·  %d shake%s left" % [str(state.get("player_blurb", "Cup open")), remaining, "" if remaining == 1 else "s"]
+		surface.surface_label(score_summary.left(39), Vector2(268, 302), 7, C_SOFT)
+		_draw_dice_goal_strip(surface, state, Vector2(268, 312))
 	if bool(state.get("loaded_armed", false)):
-		_draw_controlled_roll_meter(surface, state, Vector2(262, 282))
+		_draw_controlled_roll_meter(surface, state, Vector2(268, 302))
 	if bool(state.get("palm_armed", false)):
-		_draw_palmed_swap_meter(surface, state, Vector2(262, 282))
+		_draw_palmed_swap_meter(surface, state, Vector2(268, 302))
+	_draw_legend_row(surface, state, Vector2(268, 338 if phase == "select" else 326))
 
 
 func _draw_controlled_roll_meter(surface, state: Dictionary, pos: Vector2) -> void:
@@ -3095,22 +3236,53 @@ func _draw_opponent_dice_rows(surface, state: Dictionary) -> void:
 	var rows := _draw_array_view(state.get("opponent_rows", []))
 	if rows.is_empty():
 		return
-	surface.surface_label("RAIL CUPS", Vector2(76, 134), 9, C_PINK_2)
+	var wager_controls_visible := bool(state.get("rail_wager_controls_visible", false))
+	var wager_action := str(state.get("patron_wager_action", ""))
 	for i in range(mini(rows.size(), MAX_VISIBLE_OPPONENT_ROWS)):
 		var row: Dictionary = rows[i]
 		var origin: Vector2 = OPPONENT_DICE_ORIGINS[i]
 		var accent := C_YELLOW if bool(row.get("winning", false)) else C_PINK_2
-		var panel := Rect2(origin + Vector2(-8, -16), Vector2(204, 34))
+		var panel := Rect2(origin + OPPONENT_PANEL_OFFSET, OPPONENT_PANEL_SIZE)
 		surface.draw_rect(panel, Color("#130c18"))
 		surface.draw_rect(panel, Color(accent.r, accent.g, accent.b, 0.18), false, 1)
-		surface.surface_label(str(row.get("name", "Rail")).to_upper().left(10), origin + Vector2(0, -5), 7, accent)
-		surface.surface_label(str(row.get("blurb", "Cup ready")).left(18), origin + Vector2(88, -5), 7, C_SOFT)
-		if not str(row.get("banter", "")).is_empty():
-			surface.surface_label(str(row.get("banter", "")).left(28), origin + Vector2(0, 34), 6, C_AMBER)
-		_draw_dice_row(surface, _draw_array_view(row.get("dice", [])), origin + Vector2(0, 7), [], [], _draw_array_view(row.get("scoring_indices", [])), false, OPPONENT_DIE_SIZE, OPPONENT_DIE_SPACING, [], false, true)
+		surface.surface_label(str(row.get("name", "Rail")).to_upper().left(10), origin + Vector2(0, -4), 6, accent)
+		var detail := str(row.get("banter", "")).strip_edges()
+		if detail.is_empty():
+			detail = str(row.get("blurb", "Cup ready"))
+		if not wager_controls_visible:
+			surface.surface_label(detail.left(13), origin + Vector2(78, -4), 6, C_AMBER)
+		_draw_dice_row(FunctionOptions.DiceRowOptions.from({
+			"surface": surface, "values": _draw_array_view(row.get("dice", [])), "start": origin + Vector2(0, 3),
+			"reroll": [], "suggested": [], "scoring": _draw_array_view(row.get("scoring_indices", [])),
+			"hidden": false, "die_size": OPPONENT_DIE_SIZE, "die_spacing": OPPONENT_DIE_SPACING,
+			"rolling_indices": [], "show_keep_labels": false, "compact": true,
+		}))
+		if wager_controls_visible and not wager_action.is_empty():
+			var patron_index := int(row.get("turn_order", i))
+			_draw_rail_choice(surface, Rect2(origin + Vector2(108, 3), Vector2(30, 16)), "WITH", wager_action, patron_index, C_TEAL)
+			_draw_rail_choice(surface, Rect2(origin + Vector2(142, 3), Vector2(30, 16)), "FADE", wager_action, patron_index + 100, C_PINK)
 
 
-func _draw_dice_row(surface, values: Array, start: Vector2, reroll: Array, suggested: Array, scoring: Array, hidden: bool, die_size: Vector2, die_spacing: float, rolling_indices: Array, show_keep_labels: bool, compact: bool) -> void:
+func _draw_rail_choice(surface, rect: Rect2, label: String, action: String, index: int, accent: Color) -> void:
+	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.18))
+	surface.draw_rect(rect, accent, false, 1)
+	surface.surface_label_centered(label, rect.grow(-1), 6, accent)
+	surface.surface_add_exact_hit(rect, action, index)
+
+
+func _draw_dice_row(options: FunctionOptions.DiceRowOptions) -> void:
+	var surface = options.values.get("surface")
+	var values: Array = options.values.get("values", [])
+	var start: Vector2 = options.values.get("start", Vector2.ZERO)
+	var reroll: Array = options.values.get("reroll", [])
+	var suggested: Array = options.values.get("suggested", [])
+	var scoring: Array = options.values.get("scoring", [])
+	var hidden := bool(options.values.get("hidden", false))
+	var die_size: Vector2 = options.values.get("die_size", Vector2.ZERO)
+	var die_spacing := float(options.values.get("die_spacing", 0.0))
+	var rolling_indices: Array = options.values.get("rolling_indices", [])
+	var show_keep_labels := bool(options.values.get("show_keep_labels", false))
+	var compact := bool(options.values.get("compact", false))
 	var tumble_active := bool(surface.surface_animation_active(TUMBLE_CHANNEL))
 	var tumble_progress := float(surface.surface_animation_progress(TUMBLE_CHANNEL))
 	var flicker := float(surface.surface_flicker())
@@ -3171,7 +3343,7 @@ func _draw_die(surface, rect: Rect2, value: int, marked: bool, suggested: bool, 
 	elif show_keep_label:
 		status = "KEEP"
 		status_color = C_SOFT
-	if not status.is_empty():
+	if not status.is_empty() and not compact:
 		surface.surface_label_centered(status, Rect2(rect.position + Vector2(-2, rect.size.y + 2), Vector2(rect.size.x + 4, 10)), 6 if compact else 7, status_color)
 
 
@@ -3245,14 +3417,16 @@ func _draw_explainer(surface, state: Dictionary) -> void:
 	_draw_neon_panel(surface, rect, C_AMBER, 0.14)
 	var title := str(guide.get("title", explainer.get("title", "How to play"))).to_upper()
 	surface.surface_label(title.left(22), rect.position + Vector2(10, 13), 9, C_YELLOW)
-	surface.surface_label("POT $%d" % int(explainer.get("pot", 0)), rect.position + Vector2(232, 13), 8, C_TEAL)
-	surface.surface_label("RAKE $%d" % int(explainer.get("rake", 0)), rect.position + Vector2(232, 25), 8, C_PINK_2)
 	var lines := _panel_string_lines(state.get("bar_dice_rules_lines", []))
-	var y := rect.position.y + 27.0
+	var y := rect.position.y + 29.0
 	for i in range(mini(lines.size(), 4)):
 		var color := C_SOFT if i == 0 else C_WHITE if i == 1 else C_AMBER if i == 2 else C_TEAL
-		surface.surface_label(str(lines[i]), Vector2(rect.position.x + 10.0, y + float(i) * 9.0), 6, color)
-	surface.surface_label("CARGO %d" % int(explainer.get("cargo", 0)), rect.position + Vector2(232, 40), 8, C_YELLOW)
+		surface.surface_label(str(lines[i]).left(RULES_PANEL_LINE_LIMIT), Vector2(rect.position.x + 10.0, y + float(i) * 12.0), 6, color)
+	var metric_x := rect.end.x - 88.0
+	surface.draw_line(Vector2(metric_x - 8.0, rect.position.y + 20.0), Vector2(metric_x - 8.0, rect.end.y - 8.0), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.18), 1)
+	surface.surface_label(("POT %s" % _bar_dice_surface_amount(state, int(explainer.get("pot", 0)))).left(13), Vector2(metric_x, rect.position.y + 29.0), 7, C_TEAL)
+	surface.surface_label(("RAKE %s" % _bar_dice_surface_amount(state, int(explainer.get("rake", 0)))).left(13), Vector2(metric_x, rect.position.y + 47.0), 7, C_PINK_2)
+	surface.surface_label(("CARGO %d" % int(explainer.get("cargo", 0))).left(13), Vector2(metric_x, rect.position.y + 65.0), 7, C_YELLOW)
 
 
 func _draw_paytable(surface, state: Dictionary) -> void:
@@ -3264,7 +3438,7 @@ func _draw_paytable(surface, state: Dictionary) -> void:
 		var row: Dictionary = rows[i]
 		var y := rect.position.y + 26 + i * 9
 		surface.surface_label(str(row.get("label", "")).left(18), Vector2(rect.position.x + 10, y), 6, C_SOFT)
-		var payout_text := "$%d" % int(row.get("payout", 0)) if int(row.get("payout", 0)) > 0 else "NO PAY"
+		var payout_text := _bar_dice_surface_amount(state, int(row.get("payout", 0))) if int(row.get("payout", 0)) > 0 else "NO PAY"
 		surface.surface_label(payout_text, Vector2(rect.position.x + 138, y), 6, C_YELLOW)
 
 
@@ -3281,7 +3455,7 @@ func _draw_legend_row(surface, state: Dictionary, pos: Vector2) -> void:
 
 
 func _draw_round_timer(surface, state: Dictionary) -> void:
-	TableVisualsScript.draw_round_timer_panel(surface, state.get("table_round_timer", {}), ROUND_TIMER_RECT, C_TEAL)
+	TableVisualsScript.draw_round_timer_panel(surface, state.get("table_round_timer", {}), ROUND_TIMER_RECT, C_TEAL, "ROUND")
 
 
 func _draw_console(surface, state: Dictionary) -> void:
@@ -3291,9 +3465,9 @@ func _draw_console(surface, state: Dictionary) -> void:
 	surface.draw_rect(panel, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.18), false, 1)
 	var guide := _draw_dict_view(state.get("bar_dice_turn_guide", {}))
 	_draw_chip_ladder(surface, state, phase)
-	surface.surface_label("ANTE $%d" % int(state.get("active_stake", 0)), Vector2(330, CONSOLE_Y + 24), 12, C_YELLOW)
-	surface.surface_label("POT $%d" % int(state.get("pot_meter", 0)), Vector2(330, CONSOLE_Y + 44), 12, C_TEAL)
-	surface.surface_label("CARRY $%d" % int(state.get("carryover_pot", 0)), Vector2(330, CONSOLE_Y + 64), 11, C_SOFT)
+	surface.surface_label("ANTE %s" % _bar_dice_surface_amount(state, int(state.get("active_stake", 0))), Vector2(330, CONSOLE_Y + 24), 12, C_YELLOW)
+	surface.surface_label("POT %s" % _bar_dice_surface_amount(state, int(state.get("pot_meter", 0))), Vector2(330, CONSOLE_Y + 44), 12, C_TEAL)
+	surface.surface_label("CARRY %s" % _bar_dice_surface_amount(state, int(state.get("carryover_pot", 0))), Vector2(330, CONSOLE_Y + 64), 11, C_SOFT)
 	var buttons := _draw_array_view(state.get("bar_dice_action_buttons", []))
 	var widths := CONSOLE_SELECT_BUTTON_WIDTHS if phase == "select" else CONSOLE_ROLL_BUTTON_WIDTHS
 	var x := 428.0
@@ -3317,10 +3491,30 @@ func _draw_console(surface, state: Dictionary) -> void:
 		var delta := int(state.get("result_bankroll_delta", 0))
 		var heat := int(state.get("result_suspicion_delta", 0))
 		var color := C_TEAL if delta > 0 else C_YELLOW if delta == 0 else C_ORANGE
-		surface.surface_label_centered("Bankroll %+d  Heat %+d" % [delta, heat], BAR_DICE_GUIDANCE_RECT, 11, color)
+		var settlement_text := str(state.get("result_settlement_text", PlayerTextScript.format_settlement_delta(str(state.get("wager_currency", "cash")), delta)))
+		surface.surface_label_centered("%s  Heat %+d" % [settlement_text, heat], BAR_DICE_GUIDANCE_RECT, 11, color)
 	else:
-		var prompt := str(guide.get("shake_hint", "Roll, mark dice, shake, then settle."))
-		surface.surface_label_centered(prompt, BAR_DICE_GUIDANCE_RECT, 9, C_SOFT)
+		var prompt := _bar_dice_console_prompt(state, phase, guide)
+		surface.surface_label_centered(prompt, BAR_DICE_GUIDANCE_RECT, 8, C_SOFT)
+
+
+func _bar_dice_console_prompt(state: Dictionary, phase: String, _guide: Dictionary) -> String:
+	match str(state.get("bar_dice_ritual_phase", "agree_wager")):
+		"cover":
+			return "Opponent covers. Confirm to take the cup."
+		"throw":
+			return "Throw the cup when ready."
+		"reveal":
+			return "Lift the cup to reveal both hands."
+		"call":
+			return "Call the result and settle the pot."
+	if bool(state.get("loaded_armed", false)):
+		return "Release inside the target band."
+	if bool(state.get("palm_armed", false)):
+		return "Stop the palm track on the weak die."
+	if phase == "select":
+		return "Mark dice, SHAKE chosen dice, or SETTLE this cup."
+	return "Choose an ante. ROLL CUP plays step by step."
 
 
 func _draw_chip_ladder(surface, state: Dictionary, phase: String) -> void:
@@ -3331,7 +3525,7 @@ func _draw_chip_ladder(surface, state: Dictionary, phase: String) -> void:
 		var fill := C_YELLOW if i == selected else Color("#271735")
 		surface.draw_rect(rect, fill)
 		surface.draw_rect(rect, C_SOFT, false, 2)
-		surface.surface_label_centered("$%d" % int(ladder[i]), rect, 12, C_DARK if i == selected else C_SOFT)
+		surface.surface_label_centered(_bar_dice_surface_amount(state, int(ladder[i])), rect, 12, C_DARK if i == selected else C_SOFT)
 		if phase != "select":
 			surface.surface_add_hit(rect, "bar_dice_stake", i)
 
@@ -3342,10 +3536,10 @@ func _draw_table_button(surface, rect: Rect2, label: String, action: String, ind
 	surface.draw_rect(rect, C_WHITE if selected else accent, false, 2 if selected else 1)
 	var text_color := accent if enabled else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.45)
 	if detail.is_empty():
-		surface.surface_label_centered(label.left(18), rect.grow(-4), 9, text_color)
+		surface.surface_label_centered(label.left(18), rect.grow(-4), 8 if label.length() <= 12 else 7, text_color)
 	else:
-		surface.surface_label_centered(label.left(18), Rect2(rect.position + Vector2(4, 8), Vector2(rect.size.x - 8.0, 13)), 8, text_color)
-		surface.surface_label_centered(detail.left(22), Rect2(rect.position + Vector2(4, 25), Vector2(rect.size.x - 8.0, 11)), 7, text_color)
+		surface.surface_label_centered(label.left(18), Rect2(rect.position + Vector2(4, 8), Vector2(rect.size.x - 8.0, 13)), 8 if label.length() <= 12 else 7, text_color)
+		surface.surface_label_centered(detail.left(20), Rect2(rect.position + Vector2(4, 25), Vector2(rect.size.x - 8.0, 11)), 6, text_color)
 	if enabled:
 		surface.surface_add_exact_hit(rect, action, index)
 
@@ -3375,13 +3569,30 @@ func _draw_neon_panel(surface, rect: Rect2, accent: Color, alpha: float = 0.16) 
 
 
 func _bar_dice_layout_snapshot() -> Dictionary:
+	var text_panel_rects := _bar_dice_text_panel_regions()
+	var opponent_panel_rects := _bar_dice_opponent_panel_rects()
+	var dealer_station_rects := _bar_dice_dealer_station_rects()
+	var content_zone_rects := [
+		_rect_payload(OPPONENT_CONTENT_RECT, "rail_cups"),
+		_rect_payload(PLAYER_CONTENT_RECT, "player_cup"),
+		_rect_payload(CONSOLE_CONTENT_RECT, "console"),
+	]
+	for panel_value in text_panel_rects:
+		if str((panel_value as Dictionary).get("id", "")) != "console_guidance":
+			content_zone_rects.append(panel_value)
+	content_zone_rects.append_array(dealer_station_rects)
+	content_zone_rects.append_array(_bar_dice_patron_safe_rects())
 	return {
 		"rules_panel": _rect_payload(RULES_PANEL_RECT),
 		"paytable_panel": _rect_payload(PAYTABLE_PANEL_RECT),
 		"round_timer": _rect_payload(ROUND_TIMER_RECT),
 		"guidance_rect": BAR_DICE_GUIDANCE_RECT,
-		"text_panel_rects": _bar_dice_text_panel_regions(),
+		"text_panel_rects": text_panel_rects,
+		"opponent_panel_rects": opponent_panel_rects,
+		"dealer_station_rects": dealer_station_rects,
+		"patron_exclusion_rects": text_panel_rects + opponent_panel_rects + dealer_station_rects,
 		"patron_safe_rects": _bar_dice_patron_safe_rects(),
+		"content_zone_rects": content_zone_rects,
 	}
 
 
@@ -3394,11 +3605,27 @@ func _bar_dice_text_panel_regions() -> Array:
 	]
 
 
+func _bar_dice_opponent_panel_rects() -> Array:
+	var rects: Array = []
+	for i in range(MAX_VISIBLE_OPPONENT_ROWS):
+		rects.append(_rect_payload(Rect2(OPPONENT_DICE_ORIGINS[i] + OPPONENT_PANEL_OFFSET, OPPONENT_PANEL_SIZE), "rail_cup_%d" % i))
+	return rects
+
+
+func _bar_dice_dealer_station_rects() -> Array:
+	var ids := ["dealer_station", "dealer_attention", "dealer_danger", "dealer_status"]
+	var rects: Array = []
+	var occupied_rects: Array = TableVisualsScript.dealer_station_occupied_rects(BAR_DICE_DEALER_STATUS_LAYOUT)
+	for i in range(occupied_rects.size()):
+		rects.append(_rect_payload(occupied_rects[i], ids[i] if i < ids.size() else "dealer_%d" % i))
+	return rects
+
+
 func _bar_dice_patron_safe_rects() -> Array:
 	var rects: Array = []
 	for i in range(mini(BAR_PATRON_POSITIONS.size(), 4)):
 		var pos: Vector2 = BAR_PATRON_POSITIONS[i]
-		rects.append(_rect_payload(Rect2(pos + Vector2(-50, -54), Vector2(142, 158)), "patron_%d" % i))
+		rects.append(_rect_payload(Rect2(pos + Vector2(-50, -22), Vector2(142, 116)), "patron_%d" % i))
 	return rects
 
 
@@ -3453,21 +3680,6 @@ func _panel_string_lines(value: Variant) -> Array:
 	return result
 
 
-func _empty_result(action_id: String, stake: int, environment: Dictionary, text: String) -> Dictionary:
-	return GameModule.build_action_result({
-		"ok": false,
-		"type": "game_action",
-		"source_id": get_id(),
-		"game_id": get_id(),
-		"action_id": action_id,
-		"action_kind": "unknown",
-		"stake": stake,
-		"won": false,
-		"environment_id": environment.get("id", ""),
-		"message": text,
-	})
-
-
 func _action_def(action_id: String) -> Dictionary:
 	for action_value in definition.get("legal_actions", []):
 		if typeof(action_value) == TYPE_DICTIONARY and str((action_value as Dictionary).get("id", "")) == action_id:
@@ -3476,12 +3688,6 @@ func _action_def(action_id: String) -> Dictionary:
 		if typeof(action_value) == TYPE_DICTIONARY and str((action_value as Dictionary).get("id", "")) == action_id:
 			return (action_value as Dictionary).duplicate(true)
 	return {}
-
-
-func _item_effect_total(key: String, run_state: RunState) -> int:
-	if run_state == null:
-		return 0
-	return run_state.item_effect_total(key, get_family()) if run_state.has_method("item_effect_total") else 0
 
 
 func _patron_snitch_pressure(patrons: Array) -> int:
@@ -3528,15 +3734,6 @@ func _int_dice(value: Variant) -> Array:
 	return result
 
 
-func _int_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		result.append(int(entry))
-	return result
-
-
 func _index_array(value: Variant) -> Array:
 	var result: Array = []
 	if typeof(value) != TYPE_ARRAY:
@@ -3565,27 +3762,6 @@ func _index_array_raw(value: Variant) -> Array:
 	return result
 
 
-func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		var text := str(entry).strip_edges()
-		if not text.is_empty():
-			result.append(text)
-	return result
-
-
-func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append((entry as Dictionary).duplicate(true))
-	return result
-
-
 # Surface-state collections are immutable for a draw. Renderer-only views avoid
 # rebuilding normalized dice and control data on every animation frame.
 static func _draw_dict_view(value: Variant) -> Dictionary:
@@ -3598,11 +3774,3 @@ static func _draw_array_view(value: Variant) -> Array:
 
 func _color_name(name: String) -> Dictionary:
 	return {"name": name}
-
-
-func _stable_hash(text: String) -> int:
-	var hash_value := 2166136261
-	for i in range(text.length()):
-		hash_value = int(hash_value ^ text.unicode_at(i))
-		hash_value = int((hash_value * 16777619) & 0x7fffffff)
-	return maxi(hash_value, 1)

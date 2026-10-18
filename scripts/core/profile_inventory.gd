@@ -1,15 +1,25 @@
 class_name ProfileInventory
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Profile-level inventory lives outside RunState and survives between runs.
 
 const INVENTORY_PATH := "user://profile_inventory.json"
 const INVENTORY_PATH_ENV := "BTH_PROFILE_INVENTORY_PATH"
 const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd")
+const DurableStoreScript := preload("res://scripts/core/durable_store.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const SCHEMA_VERSION := 5
 const RUN_HISTORY_LIMIT := 20
 const RELEASE_REPORTING_KEY := "release_0_6"
+const PROFILE_STORAGE_KEYS := [
+	"schema_version", "act", "items", "challenge_completions",
+	"completed_challenge_flags", "run_history", "daily_runs",
+	"lifetime_stats", "act_seam", "scratch_ticket_types_discovered",
+	"scratch_ticket_collection_acknowledged", "tips_seen",
+	"tutorial_completed",
+]
 const CREW_STANDING_IDS := ["stranger", "marker", "associate", "made", "inner_circle"]
 const REFERENCE_CHIP_ID := "profile_poker_chip"
 const ACTIVE_SCRATCH_TICKET_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "crossword_corner", "bonus_bingo", "high_roller_holdem", "golden_vault"]
@@ -35,6 +45,7 @@ var loaded_from_disk := false
 var loaded_schema_version := 0
 var tutorial_field_present := false
 var _unknown_fields: Dictionary = {}
+var last_load_outcome: Dictionary = {"ok": false, "outcome": DurableStoreScript.OUTCOME_NONE}
 
 
 func load() -> void:
@@ -43,35 +54,24 @@ func load() -> void:
 	tutorial_field_present = false
 	from_dict({})
 	var path := store_path()
-	if not FileAccess.file_exists(path):
+	last_load_outcome = DurableStoreScript.read_json(path, Callable(self, "_profile_payload_valid"))
+	if not bool(last_load_outcome.get("ok", false)):
 		return
-	var text := FileAccess.get_file_as_string(path)
-	var json := JSON.new()
-	if json.parse(text) != OK:
-		return
-	var parsed: Variant = json.data
-	if typeof(parsed) == TYPE_DICTIONARY:
-		from_dict(parsed)
-		loaded_from_disk = true
+	from_dict(last_load_outcome.get("data", {}))
+	loaded_from_disk = true
 
 
 func save() -> Error:
-	var path := store_path()
-	var absolute_path := ProjectSettings.globalize_path(path)
-	var directory_error := DirAccess.make_dir_recursive_absolute(absolute_path.get_base_dir())
-	if directory_error != OK:
-		return directory_error
-	var temp_path := "%s.tmp" % absolute_path
-	var file := FileAccess.open(temp_path, FileAccess.WRITE)
-	if file == null:
-		return FileAccess.get_open_error()
-	file.store_string(JSON.stringify(to_dict(), "\t"))
-	file.close()
-	if FileAccess.file_exists(absolute_path):
-		var remove_error := DirAccess.remove_absolute(absolute_path)
-		if remove_error != OK:
-			return remove_error
-	return DirAccess.rename_absolute(temp_path, absolute_path)
+	var result := DurableStoreScript.write_json(store_path(), to_dict(), Callable(self, "_profile_payload_valid"))
+	return int(result.get("error", FAILED))
+
+
+func last_load_result() -> Dictionary:
+	return last_load_outcome.duplicate(true)
+
+
+func _profile_payload_valid(data: Dictionary) -> bool:
+	return not data.is_empty() and int(data.get("schema_version", 0)) >= 0
 
 
 func to_dict() -> Dictionary:
@@ -96,9 +96,10 @@ func to_dict() -> Dictionary:
 func from_dict(data: Dictionary) -> void:
 	loaded_schema_version = int(data.get("schema_version", 0))
 	tutorial_field_present = data.has("tutorial_completed")
-	_unknown_fields = data.duplicate(true)
-	for key in ["schema_version", "act", "items", "challenge_completions", "completed_challenge_flags", "run_history", "daily_runs", "lifetime_stats", "act_seam", "scratch_ticket_types_discovered", "scratch_ticket_collection_acknowledged", "tips_seen", "tutorial_completed"]:
-		_unknown_fields.erase(key)
+	# Copy only genuinely unknown forward-compatible fields. The old path first
+	# deep-copied the complete profile—including every retained run—and then erased
+	# all known fields, so startup paid for history once here and again below.
+	_unknown_fields = _copy_unknown_fields(data, PROFILE_STORAGE_KEYS)
 	items = []
 	challenge_completions = _normalize_challenge_completions(data.get("challenge_completions", data.get("completed_challenge_flags", {})))
 	run_history = _normalize_run_history(data.get("run_history", []))
@@ -202,10 +203,6 @@ func discover_scratch_ticket_type(type_id: String) -> bool:
 	return true
 
 
-func has_discovered_scratch_ticket_type(type_id: String) -> bool:
-	return scratch_ticket_types_discovered.has(type_id.strip_edges())
-
-
 func scratch_ticket_discovery_count() -> int:
 	return scratch_ticket_types_discovered.size()
 
@@ -240,7 +237,7 @@ func completed_challenge_rows() -> Array:
 	flags.sort()
 	for flag_value in flags:
 		var flag := str(flag_value)
-		var entry := _copy_dict(challenge_completions.get(flag, {}))
+		var entry := JsonCoerceScript._copy_dict(challenge_completions.get(flag, {}))
 		if not bool(entry.get("completed", false)):
 			continue
 		rows.append({
@@ -253,15 +250,29 @@ func completed_challenge_rows() -> Array:
 
 
 func record_run_result(snapshot: Dictionary) -> Dictionary:
-	var entry := _normalize_run_history_entry(snapshot)
+	# Reporting detail is consumed once into lifetime aggregates. Retaining that
+	# same nested Crew/world ledger in every recent-run row made profile load/save
+	# scale with redundant historical payload that no screen reads.
+	var entry := _normalize_run_history_entry(snapshot, true)
 	if entry.is_empty():
 		return {"ok": false, "message": "Run result snapshot was not terminal."}
-	run_history.push_front(entry)
+	var summary := _run_history_summary(entry)
+	run_history.push_front(summary)
 	while run_history.size() > RUN_HISTORY_LIMIT:
 		run_history.pop_back()
 	_record_lifetime_stats(entry)
-	_record_daily_result(entry)
-	return {"ok": true, "entry": entry.duplicate(true)}
+	_record_daily_result(summary)
+	return {"ok": true, "entry": summary.duplicate(true)}
+
+
+func recent_run_history(limit: int = 8) -> Array:
+	var result: Array = []
+	var count := mini(run_history.size(), maxi(0, limit))
+	for index in range(count):
+		var value: Variant = run_history[index]
+		if typeof(value) == TYPE_DICTIONARY:
+			result.append((value as Dictionary).duplicate(true))
+	return result
 
 
 func record_act_seam(payload: Dictionary) -> Dictionary:
@@ -289,7 +300,7 @@ func _record_lifetime_stats(entry: Dictionary) -> void:
 	stats["total_runs"] = maxi(0, int(stats.get("total_runs", 0))) + 1
 	var outcome := str(entry.get("outcome", ""))
 	if outcome == "victory":
-		var victories := _copy_dict(stats.get("victories_per_route", {}))
+		var victories := JsonCoerceScript._copy_dict(stats.get("victories_per_route", {}))
 		var route := str(entry.get("route", "victory"))
 		victories[route] = maxi(0, int(victories.get(route, 0))) + 1
 		stats["victories_per_route"] = victories
@@ -297,19 +308,19 @@ func _record_lifetime_stats(entry: Dictionary) -> void:
 	stats["biggest_single_win"] = maxi(biggest, maxi(0, int(entry.get("biggest_single_win", 0))))
 	stats["total_bankroll_won"] = maxi(0, int(stats.get("total_bankroll_won", 0))) + maxi(0, int(entry.get("bankroll_won", 0)))
 	stats["total_bankroll_lost"] = maxi(0, int(stats.get("total_bankroll_lost", 0))) + maxi(0, int(entry.get("bankroll_lost", 0)))
-	var tallies := _copy_dict(stats.get("games_played", {}))
-	for game_id_value in _copy_dict(entry.get("games_played", {})).keys():
+	var tallies := JsonCoerceScript._copy_dict(stats.get("games_played", {}))
+	for game_id_value in JsonCoerceScript._copy_dict(entry.get("games_played", {})).keys():
 		var game_id := str(game_id_value).strip_edges()
 		if game_id.is_empty():
 			continue
-		tallies[game_id] = maxi(0, int(tallies.get(game_id, 0))) + maxi(0, int(_copy_dict(entry.get("games_played", {})).get(game_id_value, 0)))
+		tallies[game_id] = maxi(0, int(tallies.get(game_id, 0))) + maxi(0, int(JsonCoerceScript._copy_dict(entry.get("games_played", {})).get(game_id_value, 0)))
 	stats["games_played"] = tallies
 	var release := _normalize_release_lifetime_stats(stats.get(RELEASE_REPORTING_KEY, {}))
-	var run_release := _copy_dict(entry.get(RELEASE_REPORTING_KEY, {}))
-	var crew := _copy_dict(run_release.get("crew", {}))
-	var world := _copy_dict(run_release.get("world", {}))
-	var numbers := _copy_dict(run_release.get("numbers", {}))
-	var deliveries := _copy_dict(run_release.get("deliveries", {}))
+	var run_release := JsonCoerceScript._copy_dict(entry.get(RELEASE_REPORTING_KEY, {}))
+	var crew := JsonCoerceScript._copy_dict(run_release.get("crew", {}))
+	var world := JsonCoerceScript._copy_dict(run_release.get("world", {}))
+	var numbers := JsonCoerceScript._copy_dict(run_release.get("numbers", {}))
+	var deliveries := JsonCoerceScript._copy_dict(run_release.get("deliveries", {}))
 	release["crew_path_runs"] = int(release.get("crew_path_runs", 0)) + (1 if bool(crew.get("path_walked", false)) else 0)
 	release["highest_crew_standing"] = _higher_crew_standing(str(release.get("highest_crew_standing", "stranger")), str(crew.get("standing", "stranger")))
 	var run_members := _normalize_reporting_rows(crew.get("members_met", []))
@@ -332,8 +343,8 @@ func _record_lifetime_stats(entry: Dictionary) -> void:
 		and not str(crew.get("turn_resolution", "")).strip_edges().is_empty()
 	release["crew_turn_resolutions"] = int(release.get("crew_turn_resolutions", 0)) + (1 if approved_turn_resolution else 0)
 	release["nights_survived"] = int(release.get("nights_survived", 0)) + maxi(0, int(world.get("nights_survived", 0)))
-	release["scenarios_experienced"] = int(release.get("scenarios_experienced", 0)) + _copy_array(world.get("scenarios", [])).size()
-	release["notable_aftermath_outcomes"] = int(release.get("notable_aftermath_outcomes", 0)) + _copy_array(world.get("notable_outcomes", [])).size()
+	release["scenarios_experienced"] = int(release.get("scenarios_experienced", 0)) + JsonCoerceScript._copy_array(world.get("scenarios", [])).size()
+	release["notable_aftermath_outcomes"] = int(release.get("notable_aftermath_outcomes", 0)) + JsonCoerceScript._copy_array(world.get("notable_outcomes", [])).size()
 	release["sweeps_encountered"] = int(release.get("sweeps_encountered", 0)) + maxi(0, int(world.get("sweeps_encountered", 0)))
 	release["rumors_proved_true"] = int(release.get("rumors_proved_true", 0)) + maxi(0, int(world.get("rumors_proved_true", 0)))
 	release["numbers_slips_placed"] = int(release.get("numbers_slips_placed", 0)) + maxi(0, int(numbers.get("slips_placed", 0)))
@@ -366,7 +377,7 @@ func _record_daily_result(entry: Dictionary) -> void:
 	state["best_streak"] = maxi(maxi(0, int(state.get("best_streak", 0))), current_streak)
 	state["last_completed_date"] = completion_date
 	state["last_daily_id"] = str(entry.get("daily_id", ""))
-	var best_result := _copy_dict(state.get("best_result", {}))
+	var best_result := JsonCoerceScript._copy_dict(state.get("best_result", {}))
 	if best_result.is_empty() or _daily_entry_score(entry) > _daily_entry_score(best_result):
 		state["best_result"] = entry.duplicate(true)
 	daily_runs = state
@@ -412,7 +423,7 @@ func _normalize_run_history(value: Variant) -> Array:
 	return result
 
 
-func _normalize_run_history_entry(value: Dictionary) -> Dictionary:
+func _normalize_run_history_entry(value: Dictionary, include_reporting: bool = false) -> Dictionary:
 	var outcome := str(value.get("outcome", "")).strip_edges()
 	if outcome.is_empty():
 		var status := str(value.get("run_status", "")).strip_edges()
@@ -428,8 +439,7 @@ func _normalize_run_history_entry(value: Dictionary) -> Dictionary:
 	var completed_date := str(value.get("completed_date", "")).strip_edges()
 	if completed_date.is_empty():
 		completed_date = _today_date_string()
-	var result := value.duplicate(true)
-	result.merge({
+	var result := {
 		"seed": str(value.get("seed", value.get("seed_text", ""))).strip_edges(),
 		"route": route,
 		"outcome": outcome,
@@ -448,25 +458,33 @@ func _normalize_run_history_entry(value: Dictionary) -> Dictionary:
 		"bankroll_lost": maxi(0, int(value.get("bankroll_lost", maxi(0, -int(value.get("bankroll_delta", 0)))))),
 		"biggest_single_win": maxi(0, int(value.get("biggest_single_win", 0))),
 		"games_played": _normalize_int_dictionary(value.get("games_played", {})),
-	}, true)
-	if value.has(RELEASE_REPORTING_KEY):
+	}
+	if include_reporting and value.has(RELEASE_REPORTING_KEY):
 		result[RELEASE_REPORTING_KEY] = _normalize_release_run_stats(value.get(RELEASE_REPORTING_KEY, {}))
 	return result
 
 
+func _run_history_summary(entry: Dictionary) -> Dictionary:
+	# Re-normalizing the already canonical scalar row is cheap and guarantees the
+	# retained history never inherits reporting-only or caller-owned containers.
+	return _normalize_run_history_entry(entry, false)
+
+
 func _normalize_daily_runs(value: Variant) -> Dictionary:
-	var source := _copy_dict(value)
+	var source := JsonCoerceScript._copy_dict(value)
+	var best_result_value: Variant = source.get("best_result", {})
+	var best_result := _normalize_run_history_entry(best_result_value as Dictionary) if typeof(best_result_value) == TYPE_DICTIONARY else {}
 	return {
 		"current_streak": maxi(0, int(source.get("current_streak", 0))),
 		"best_streak": maxi(0, int(source.get("best_streak", 0))),
 		"last_completed_date": str(source.get("last_completed_date", "")).strip_edges(),
 		"last_daily_id": str(source.get("last_daily_id", "")).strip_edges(),
-		"best_result": _copy_dict(source.get("best_result", {})),
+		"best_result": best_result,
 	}
 
 
 func _normalize_lifetime_stats(value: Variant) -> Dictionary:
-	var source := _copy_dict(value)
+	var source := JsonCoerceScript._copy_dict(value)
 	var result := source.duplicate(true)
 	_normalize_whole_number_values(result)
 	result.merge({
@@ -485,9 +503,9 @@ func _normalize_lifetime_stats(value: Variant) -> Dictionary:
 
 
 static func _normalize_release_run_stats(value: Variant) -> Dictionary:
-	var source := _copy_dict(value)
+	var source := JsonCoerceScript._copy_dict(value)
 	var result := source.duplicate(true)
-	var crew := _copy_dict(source.get("crew", {}))
+	var crew := JsonCoerceScript._copy_dict(source.get("crew", {}))
 	var normalized_crew := crew.duplicate(true)
 	normalized_crew.merge({
 		"path_walked": bool(crew.get("path_walked", false)),
@@ -501,7 +519,7 @@ static func _normalize_release_run_stats(value: Variant) -> Dictionary:
 		normalized_crew.erase("turn_resolution")
 	else:
 		normalized_crew["turn_resolution"] = turn_resolution
-	var world := _copy_dict(source.get("world", {}))
+	var world := JsonCoerceScript._copy_dict(source.get("world", {}))
 	var normalized_world := world.duplicate(true)
 	normalized_world.merge({
 		"nights_survived": maxi(0, int(world.get("nights_survived", 0))),
@@ -510,14 +528,14 @@ static func _normalize_release_run_stats(value: Variant) -> Dictionary:
 		"sweeps_encountered": maxi(0, int(world.get("sweeps_encountered", 0))),
 		"rumors_proved_true": maxi(0, int(world.get("rumors_proved_true", 0))),
 	}, true)
-	var numbers := _copy_dict(source.get("numbers", {}))
+	var numbers := JsonCoerceScript._copy_dict(source.get("numbers", {}))
 	var normalized_numbers := numbers.duplicate(true)
 	normalized_numbers.merge({
 		"slips_placed": maxi(0, int(numbers.get("slips_placed", 0))),
 		"hits": maxi(0, int(numbers.get("hits", 0))),
 		"rig_route_used": bool(numbers.get("rig_route_used", false)),
 	}, true)
-	var deliveries := _copy_dict(source.get("deliveries", {}))
+	var deliveries := JsonCoerceScript._copy_dict(source.get("deliveries", {}))
 	var normalized_deliveries := deliveries.duplicate(true)
 	normalized_deliveries.merge({
 		"runs_completed": maxi(0, int(deliveries.get("runs_completed", 0))),
@@ -531,7 +549,7 @@ static func _normalize_release_run_stats(value: Variant) -> Dictionary:
 
 
 static func _normalize_release_lifetime_stats(value: Variant) -> Dictionary:
-	var source := _copy_dict(value)
+	var source := JsonCoerceScript._copy_dict(value)
 	var result := source.duplicate(true)
 	_normalize_whole_number_values(result)
 	result["highest_crew_standing"] = _normalize_crew_standing(str(source.get("highest_crew_standing", "stranger")))
@@ -668,8 +686,8 @@ static func _normalize_act_seam(value: Variant) -> Dictionary:
 		"victory_route": route,
 		"demo_victory_route": str(source.get("demo_victory_route", "")).strip_edges(),
 		"final_bankroll_band": str(source.get("final_bankroll_band", "walking_money")).strip_edges(),
-		"story_flags": _copy_dict(source.get("story_flags", {})),
-		"route_payload": _copy_dict(source.get("route_payload", {})),
+		"story_flags": JsonCoerceScript._copy_dict(source.get("story_flags", {})),
+		"route_payload": JsonCoerceScript._copy_dict(source.get("route_payload", {})),
 	}
 
 
@@ -716,13 +734,12 @@ static func _is_leap_year(year: int) -> bool:
 	return year % 400 == 0 or (year % 4 == 0 and year % 100 != 0)
 
 
-static func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
-
-
-static func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
+static func _copy_unknown_fields(source: Dictionary, known_keys: Array) -> Dictionary:
+	var result: Dictionary = {}
+	for key_value in source.keys():
+		var key := str(key_value)
+		if known_keys.has(key):
+			continue
+		var value: Variant = source.get(key_value)
+		result[key_value] = value.duplicate(true) if typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY] else value
+	return result

@@ -1,6 +1,8 @@
 class_name ScenarioOperationRegistry
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Small allowlisted semantic operations. Definitions never name callables or
 # node/resource paths; each operation has a fixed data contract here.
 
@@ -15,6 +17,12 @@ const OWNER_PRIORITY := {
 	"scenario": 60,
 	"sweep": 70,
 }
+const AUTHORED_SCENE_SLOT_FAMILIES := ["event", "scenario"]
+const AUTHORED_SCENE_PLACEMENT_CLASSES := [
+	"standing_person", "behind_counter_person", "seated_person", "group",
+	"floor_fixture", "ground_marker", "surface_item", "shop_item", "wall_mounted",
+	"hanging", "doorway",
+]
 const SCENE_OPS := ["spawn", "remove", "move", "replace", "reveal", "hide", "enable", "disable", "set_state", "set_appearance"]
 const INTERACTION_OPS := ["add", "remove", "replace", "gate", "retarget", "augment"]
 const ACTOR_OPS := ["spawn", "despawn", "set_position", "set_route", "set_pose", "set_behavior"]
@@ -283,9 +291,9 @@ static func apply_operations(state_value: Dictionary, family: String, operations
 	# Sealed host targets are live even before a scenario materializes its overlay.
 	# Per-operation declared-target checks below still gate mutation, while create
 	# operations continue to reject every identity already present in inventory.
-	for target_value in _string_array(_dict(original.get("target_inventory", {})).get(collection_key, [])):
+	for target_value in JsonCoerceScript._unique_string_array(_dict(original.get("target_inventory", {})).get(collection_key, [])):
 		known_targets[str(target_value)] = true
-	var existing_receipts := _string_array(original.get("operation_receipts", []))
+	var existing_receipts := JsonCoerceScript._unique_string_array(original.get("operation_receipts", []))
 	for index in range(operations.size()):
 		if typeof(operations[index]) != TYPE_DICTIONARY:
 			errors.append("%s[%d] is not a dictionary." % [family, index])
@@ -339,7 +347,7 @@ static func apply_operations(state_value: Dictionary, family: String, operations
 		var receipt_id := str(item.get("receipt_id", ""))
 		if existing_receipts.has(receipt_id):
 			continue
-		var receipts := _string_array(state.get("operation_receipts", []))
+		var receipts := JsonCoerceScript._unique_string_array(state.get("operation_receipts", []))
 		receipts.append(receipt_id)
 		state["operation_receipts"] = receipts
 		fingerprints[receipt_id] = str(item.get("fingerprint", ""))
@@ -402,7 +410,7 @@ static func resolve_interactions(base_records: Array, overlay_records: Array) ->
 		if tainted.has(source_key) or not records.has(source_key) or str(overlay.get("mode", "add")) == "add":
 			continue
 		var target_key := identity(str(overlay.get("target_owner_namespace", "")), str(overlay.get("target_stable_object_id", "")))
-		var claims := _string_array(target_claims.get(target_key, []))
+		var claims := JsonCoerceScript._unique_string_array(target_claims.get(target_key, []))
 		claims.append(source_key)
 		target_claims[target_key] = claims
 	for overlay_value in ordered_overlays:
@@ -416,7 +424,7 @@ static func resolve_interactions(base_records: Array, overlay_records: Array) ->
 		if mode == "add":
 			continue
 		var target_key := identity(str(overlay.get("target_owner_namespace", "")), str(overlay.get("target_stable_object_id", "")))
-		var competing_claims := _string_array(target_claims.get(target_key, []))
+		var competing_claims := JsonCoerceScript._unique_string_array(target_claims.get(target_key, []))
 		if competing_claims.size() > 1 and source_key != str(competing_claims[0]):
 			var winner_source := str(competing_claims[0])
 			errors.append("interaction target claim loser %s cannot override %s; canonical winner is %s." % [source_key, target_key, winner_source])
@@ -609,6 +617,11 @@ static func _apply_operation(state: Dictionary, family: String, operation: Dicti
 			"move", "set_position":
 				current["anchor_id"] = str(operation.get("anchor_id", current.get("anchor_id", "")))
 				current["zone_id"] = str(operation.get("zone_id", current.get("zone_id", "")))
+				if family == "actor_ops" and op_id == "set_position":
+					# Placement authority is authored once and must remain stable across
+					# nodes, transitions, saves, and seeds.  The structural receipt hashes
+					# the runtime boundary and is therefore unsuitable as a layout key.
+					current["authored_position_route_id"] = str(operation.get("receipt_id", ""))
 			"reveal": current["visible"] = true
 			"hide": current["visible"] = false
 			"enable": current["enabled"] = true
@@ -657,13 +670,13 @@ static func _validate_operation_target(state: Dictionary, family: String, operat
 					errors.append("%s %s references undeclared or unavailable %s %s." % [family, op_id, spatial_kind, spatial_id])
 	if family == "actor_ops" and op_id == "set_route":
 		var route_id := str(operation.get("route_id", ""))
-		var route_authorized := not parse_owned_identity(route_id).is_empty() and _string_array(_dict(state.get("declared_targets", {})).get("routes", [])).has(route_id) and _inventory_has(state, "routes", route_id)
+		var route_authorized := not parse_owned_identity(route_id).is_empty() and JsonCoerceScript._unique_string_array(_dict(state.get("declared_targets", {})).get("routes", [])).has(route_id) and _inventory_has(state, "routes", route_id)
 		if not route_authorized:
 			errors.append("actor set_route requires an exact owned route identity, got %s." % route_id)
 	var create_operation := family == "scene_ops" and op_id == "spawn" or family == "interaction_ops" and op_id == "add" or family == "actor_ops" and op_id == "spawn" or family in ["service_ops", "game_ops"] and op_id == "add"
 	if create_operation:
 		var create_owner := str(operation.get("owner_namespace", ""))
-		var authorized_create_owners := _string_array(state.get("creation_owner_namespaces", ["scenario"]))
+		var authorized_create_owners := JsonCoerceScript._unique_string_array(state.get("creation_owner_namespaces", ["scenario"]))
 		if not authorized_create_owners.has(create_owner):
 			errors.append("%s %s requires exact mounted sequence ownership." % [family, op_id])
 		elif collection.has(key) or _inventory_has(state, collection_key, key):
@@ -700,7 +713,7 @@ static func _normalize_semantic_state(value: Dictionary) -> Dictionary:
 	return {
 		"base_interactions": _array(value.get("base_interactions", [])),
 		"event_choices": _dict(value.get("event_choices", {})),
-		"creation_owner_namespaces": _string_array(value.get("creation_owner_namespaces", ["scenario"])),
+		"creation_owner_namespaces": JsonCoerceScript._unique_string_array(value.get("creation_owner_namespaces", ["scenario"])),
 		"inventory_schema_version": maxi(0, int(value.get("inventory_schema_version", 0))),
 		"inventory_digest": str(value.get("inventory_digest", "")),
 		"scene_objects": _dict(value.get("scene_objects", {})),
@@ -710,7 +723,7 @@ static func _normalize_semantic_state(value: Dictionary) -> Dictionary:
 		"games": _dict(value.get("games", {})),
 		"routes": _dict(value.get("routes", {})),
 		"transition_queue": _array(value.get("transition_queue", [])),
-		"operation_receipts": _string_array(value.get("operation_receipts", [])),
+		"operation_receipts": JsonCoerceScript._unique_string_array(value.get("operation_receipts", [])),
 		"operation_receipt_records": _array(value.get("operation_receipt_records", [])),
 		"operation_fingerprints": _normalized_operation_fingerprints(value.get("operation_fingerprints", {}), value.get("operation_receipts", [])),
 		"tombstones": _dict(value.get("tombstones", {})),
@@ -776,7 +789,7 @@ static func _public_collection_with_tombstones(resolved: Dictionary, collection_
 		# Scenario-created identities have no immutable base presentation to
 		# suppress. Their removal is represented by absence; only declared,
 		# inventory-backed producer identities need a closed public tombstone.
-		if parsed.is_empty() or _string_array(resolved.get("creation_owner_namespaces", ["scenario"])).has(str(parsed.get("owner_namespace", ""))) or not _target_authorized(resolved, collection_key, identity_key):
+		if parsed.is_empty() or JsonCoerceScript._unique_string_array(resolved.get("creation_owner_namespaces", ["scenario"])).has(str(parsed.get("owner_namespace", ""))) or not _target_authorized(resolved, collection_key, identity_key):
 			continue
 		result[identity_key] = {
 			"owner_namespace": str(parsed.get("owner_namespace", "")),
@@ -810,41 +823,33 @@ static func _normalize_declared_targets(value: Variant) -> Dictionary:
 	var result: Dictionary = {}
 	var source := _dict(value)
 	for collection_key in ["scene_objects", "interactions", "actors", "services", "games", "routes", "anchors", "zones"]:
-		result[collection_key] = _string_array(source.get(collection_key, []))
+		result[collection_key] = JsonCoerceScript._unique_string_array(source.get(collection_key, []))
 	return result
 
 
 static func _normalized_operation_fingerprints(value: Variant, receipts_value: Variant) -> Dictionary:
 	var result: Dictionary = {}
 	var source := _dict(value)
-	for receipt_value in _string_array(receipts_value):
+	for receipt_value in JsonCoerceScript._unique_string_array(receipts_value):
 		var receipt_id := str(receipt_value)
 		var fingerprint := str(source.get(receipt_id, ""))
-		if _valid_sha256(fingerprint): result[receipt_id] = fingerprint
+		if JsonCoerceScript._valid_sha256(fingerprint): result[receipt_id] = fingerprint
 	return result
-
-
-static func _valid_sha256(value: String) -> bool:
-	if value.length() != 64 or value != value.to_lower(): return false
-	for index in range(value.length()):
-		var code := value.unicode_at(index)
-		if not (code >= 48 and code <= 57) and not (code >= 97 and code <= 102): return false
-	return true
 
 
 static func _target_declared(state: Dictionary, collection_key: String, target_key: String) -> bool:
 	var declared := _dict(state.get("declared_targets", {}))
 	var inventory := _dict(state.get("target_inventory", {}))
 	var tombstones := _dict(_dict(state.get("tombstones", {})).get(collection_key, {}))
-	return not tombstones.has(target_key) and _string_array(declared.get(collection_key, [])).has(target_key) and _string_array(inventory.get(collection_key, [])).has(target_key)
+	return not tombstones.has(target_key) and JsonCoerceScript._unique_string_array(declared.get(collection_key, [])).has(target_key) and JsonCoerceScript._unique_string_array(inventory.get(collection_key, [])).has(target_key)
 
 
 static func _inventory_has(state: Dictionary, collection_key: String, target_key: String) -> bool:
-	return _string_array(_dict(state.get("target_inventory", {})).get(collection_key, [])).has(target_key)
+	return JsonCoerceScript._unique_string_array(_dict(state.get("target_inventory", {})).get(collection_key, [])).has(target_key)
 
 
 static func _target_authorized(state: Dictionary, collection_key: String, target_key: String) -> bool:
-	return _string_array(_dict(state.get("declared_targets", {})).get(collection_key, [])).has(target_key) and _inventory_has(state, collection_key, target_key)
+	return JsonCoerceScript._unique_string_array(_dict(state.get("declared_targets", {})).get(collection_key, [])).has(target_key) and _inventory_has(state, collection_key, target_key)
 
 
 static func _collection_key(family: String) -> String:
@@ -856,13 +861,17 @@ static func _collection_key(family: String) -> String:
 
 
 static func _validate_scene_payload(payload: Dictionary, errors: Array) -> void:
-	_append_unknown_keys("scene object payload", payload, ["label", "role", "icon_key", "anchor_id", "zone_id", "bounds", "visible", "enabled", "state", "appearance", "description", "description_variants"], errors)
+	_append_unknown_keys("scene object payload", payload, ["label", "role", "icon_key", "anchor_id", "zone_id", "bounds", "visible", "enabled", "state", "appearance", "description", "description_variants", "slot_family", "placement_class"], errors)
 	if str(payload.get("label", "")).strip_edges().is_empty() or str(payload.get("role", "")).strip_edges().is_empty():
 		errors.append("scene object requires label and semantic role.")
 	if str(payload.get("anchor_id", "")).strip_edges().is_empty() and str(payload.get("zone_id", "")).strip_edges().is_empty():
 		errors.append("scene object requires bounded anchor_id or zone_id.")
 	if payload.has("icon_key") and str(payload.get("icon_key", "")).strip_edges().is_empty():
 		errors.append("scene object icon_key cannot be blank when authored.")
+	if payload.has("slot_family") and str(payload.get("slot_family", "")).strip_edges() not in AUTHORED_SCENE_SLOT_FAMILIES:
+		errors.append("scene object slot_family must be event or scenario when authored.")
+	if payload.has("placement_class") and str(payload.get("placement_class", "")).strip_edges() not in AUTHORED_SCENE_PLACEMENT_CLASSES:
+		errors.append("scene object placement_class is not supported when authored.")
 	var bounds := _dict(payload.get("bounds", {}))
 	_append_unknown_keys("scene object bounds", bounds, ["w", "h"], errors)
 	if bounds.is_empty() or not _finite_number(bounds.get("w")) or not _finite_number(bounds.get("h")) or float(bounds.get("w", 0.0)) <= 0.0 or float(bounds.get("h", 0.0)) <= 0.0:
@@ -871,7 +880,15 @@ static func _validate_scene_payload(payload: Dictionary, errors: Array) -> void:
 
 
 static func _validate_interaction_payload(payload: Dictionary, errors: Array) -> void:
-	_append_unknown_keys("interaction payload", payload, ["owner_namespace", "stable_object_id", "presentation_object_id", "source_kind", "source_field", "source_record_id", "label", "state_label", "prompt", "enabled", "disabled_reason", "available_actions", "input_actions", "non_color_state", "focus_order", "hit_bounds", "normalized_hit_rect", "min_target_size", "safe_exit", "alternate_exit", "mode", "target_owner_namespace", "target_stable_object_id", "source_id", "operation_receipt_key", "operation_boundary_id", "operation_fingerprint"], errors)
+	_append_unknown_keys("interaction payload", payload, ["owner_namespace", "stable_object_id", "presentation_object_id", "source_kind", "source_field", "source_record_id", "label", "state_label", "prompt", "enabled", "disabled_reason", "available_actions", "input_actions", "non_color_state", "focus_order", "hit_bounds", "normalized_hit_rect", "min_target_size", "safe_exit", "alternate_exit", "presentation_mode", "mode", "target_owner_namespace", "target_stable_object_id", "source_id", "operation_receipt_key", "operation_boundary_id", "operation_fingerprint"], errors)
+	if payload.has("presentation_mode"):
+		var presentation_mode := str(payload.get("presentation_mode", ""))
+		# The optional durable extension marks only the non-default, geometry-free
+		# action-list presentation. Room presentation remains field absence.
+		if presentation_mode != "overflow":
+			errors.append("interaction presentation_mode may only declare overflow.")
+		elif payload.has("normalized_hit_rect"):
+			errors.append("overflow interaction presentation must be geometry-free.")
 	for provenance_key in ["source_kind", "source_field", "source_record_id"]:
 		if payload.has(provenance_key) and str(payload.get(provenance_key, "")).strip_edges().is_empty():
 			errors.append("interaction producer provenance %s cannot be blank." % provenance_key)
@@ -1375,15 +1392,6 @@ static func _validate_bounded_variant(label: String, value: Variant, depth: int,
 
 static func _length_prefixed(value: String) -> String:
 	return "%d:%s" % [value.length(), value]
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY: return result
-	for item_value in value as Array:
-		var item := str(item_value).strip_edges()
-		if not item.is_empty() and not result.has(item): result.append(item)
-	return result
 
 
 static func _array(value: Variant) -> Array:

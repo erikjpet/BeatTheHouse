@@ -84,10 +84,12 @@ func _run() -> void:
 		return
 	app.call("_sync_coach_environment_anchor_geometry")
 	coach = coach_overlay.call("current_snapshot")
+	var selected_info: Dictionary = environment_canvas.call("current_view_snapshot").get("selected_info", {})
 	var coffee_action_rect: Rect2 = environment_canvas.call("global_rect_for_selected_object_action", "item:instant_coffee")
 	var coffee_anchor_rect := _rect(coach.get("anchor_rect", {}))
 	talk_rect = _rect((app.call("current_talk_dock_snapshot") as Dictionary).get("occupied_rect", {}))
-	if not coffee_action_rect.has_area() \
+	if not bool(selected_info.get("visible", false)) \
+			or not coffee_action_rect.has_area() \
 			or coffee_anchor_rect.position.distance_to(coffee_action_rect.position) > 0.75 \
 			or coffee_anchor_rect.size.distance_to(coffee_action_rect.size) > 0.75 \
 			or talk_rect.intersects(coffee_action_rect):

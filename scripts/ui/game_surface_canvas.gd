@@ -1,13 +1,19 @@
 class_name GameSurfaceCanvas
 extends Control
 
-# Hosts the active gambling surface. Game-specific drawing lives in the active
-# GameModule; this canvas only owns scaling, hit regions, overlays, and input.
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
+# Hosts the active gambling surface. Game-specific drawing/state lives in the
+# active GameModule; this canvas owns scaling, hit regions, pointer capture,
+# autonomous animation channels, retained layers, shared overlays, and audio/UI
+# signal delivery. Redraw scheduling never depends on pointer movement.
 
 signal surface_action(action: String, index: int, confirm_requested: bool)
 signal surface_action_blocked(action: String, reason: String)
 signal surface_pointer_action(action: String, index: int, phase: String, board_position: Vector2)
 signal surface_music_cue(cue_id: String, context: Dictionary)
+signal audio_status_changed(message: String)
+signal view_geometry_changed
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
@@ -20,18 +26,12 @@ const C_DARK_2 := VisualStyleScript.DARK_2
 const C_PANEL := VisualStyleScript.DARK_3
 const C_PINK := VisualStyleScript.PINK
 const C_PINK_2 := VisualStyleScript.PINK_2
-const C_HOT := VisualStyleScript.HOT
 const C_CYAN := VisualStyleScript.CYAN
 const C_TEAL := VisualStyleScript.TEAL
 const C_YELLOW := VisualStyleScript.YELLOW
-const C_AMBER := VisualStyleScript.AMBER
-const C_PURPLE := VisualStyleScript.PURPLE
-const C_PURPLE_2 := VisualStyleScript.PURPLE_2
 const C_ORANGE := VisualStyleScript.ORANGE
 const C_WHITE := VisualStyleScript.WHITE
 const C_SOFT := VisualStyleScript.SOFT
-const C_SHADOW := VisualStyleScript.SHADOW
-const C_BLUE := VisualStyleScript.BLUE
 const BOARD_SIZE := VisualStyleScript.GAME_BOARD_SIZE
 const SLOT_BOARD_SIZE := Vector2(960, 540)
 const MIN_SURFACE_TOUCH_HIT_SIZE := Vector2(44.0, 44.0)
@@ -43,6 +43,7 @@ const EMULATED_TOUCH_SUPPRESS_DISTANCE := 18.0
 const SURFACE_ANIMATION_FPS := 60.0
 const SURFACE_ANIMATION_INTERVAL_SEC := 1.0 / SURFACE_ANIMATION_FPS
 const DEFAULT_WEB_IDLE_ANIMATION_FPS := 1.0
+const DEFAULT_NATIVE_IDLE_ANIMATION_FPS := 15.0
 const TRANSIENT_SURFACE_LOOP_HOLD_MSEC := 95
 
 var game_id: String = ""
@@ -54,6 +55,8 @@ var background_texture: Texture2D
 var use_external_background := false
 var flicker: float = 0.0
 var hit_regions: Array = []
+var surface_state_revision := 0
+var hit_region_state_revision := -1
 var hovered_surface_action: String = ""
 var hovered_surface_index: int = -1
 var captured_surface_action: String = ""
@@ -87,6 +90,8 @@ var small_screen_mode := false
 var drunk_time_scale := 1.0
 var last_mouse_press_msec: int = -100000
 var last_mouse_press_position := Vector2(-100000.0, -100000.0)
+var last_hit_region_geometry_signature := -1
+var hit_region_geometry_signal_scheduled := false
 var last_touch_press_msec: int = -100000
 var last_touch_press_position := Vector2(-100000.0, -100000.0)
 var surface_animation_redraw_accumulator := 0.0
@@ -96,9 +101,12 @@ var surface_animation_handoff_until_msec := 0
 var surface_render_elapsed_sec := 0.0
 var surface_simulation_clock_msec := 0.0
 var surface_presentation_clock_msec := 0.0
+var surface_clock_reset_pending := false
 var transient_surface_loop_deadline_msec := 0
 var transient_surface_loop_id := ""
 var environment_activity_paused := false
+var timed_feedback_paused := false
+var reject_orphan_surface_events := false
 var surface_render_state_dirty := false
 var _surface_audio_authority := RefCounted.new()
 var _surface_audio_authority_bound := false
@@ -116,24 +124,43 @@ func bind_surface_audio_authority(authority: RefCounted) -> void:
 func set_game_module(game_module: GameModule) -> void:
 	if surface_game_module == game_module:
 		return
+	if surface_game_module != null and surface_game_module.has_method("release_surface_host"):
+		surface_game_module.call("release_surface_host", self)
 	surface_game_module = game_module
 	surface_render_state_dirty = true
 	queue_redraw()
 
 
-func set_environment_activity_paused(paused: bool) -> void:
-	if environment_activity_paused == paused:
-		return
+func set_environment_activity_paused(paused: bool, pause_timed_feedback: bool = false) -> void:
+	var changed := environment_activity_paused != paused or timed_feedback_paused != pause_timed_feedback
 	environment_activity_paused = paused
+	timed_feedback_paused = pause_timed_feedback
 	if paused:
 		_cancel_captured_surface_pointer()
-	queue_redraw()
+	_ensure_surface_sfx_player()
+	if surface_sfx_player.has_method("set_surface_activity_paused"):
+		surface_sfx_player.call("set_surface_activity_paused", timed_feedback_paused, _surface_audio_authority)
+	if changed:
+		queue_redraw()
+
+
+func set_modal_activity_paused(paused: bool) -> void:
+	set_environment_activity_paused(paused, paused)
+
+
+func handle_application_lifecycle(active: bool) -> void:
+	if active:
+		return
+	reject_orphan_surface_events = true
+	captured_pointer_move_pending = false
+	captured_pointer_move_position = Vector2.ZERO
+	_cancel_captured_surface_pointer()
 
 
 func clear_runtime_state() -> void:
 	_cancel_captured_surface_pointer()
 	stop_surface_audio()
-	surface_game_module = null
+	set_game_module(null)
 	game_id = ""
 	state = {}
 	view_data = {}
@@ -142,6 +169,8 @@ func clear_runtime_state() -> void:
 	background_texture = null
 	use_external_background = false
 	hit_regions = []
+	surface_state_revision += 1
+	hit_region_state_revision = -1
 	hovered_surface_action = ""
 	hovered_surface_index = -1
 	captured_surface_action = ""
@@ -162,8 +191,10 @@ func clear_runtime_state() -> void:
 	perf_surface_animation_scheduler_elapsed_sec = 0.0
 	surface_animation_handoff_until_msec = 0
 	surface_render_elapsed_sec = 0.0
-	surface_simulation_clock_msec = 0.0
-	surface_presentation_clock_msec = 0.0
+	# Teardown can run while FoundationMain still owns an application/modal pause.
+	# Preserve the frozen clock values until that owner releases them; the next
+	# surface snapshot starts from authored time (or zero when it has no clock).
+	surface_clock_reset_pending = true
 	transient_surface_loop_deadline_msec = 0
 	transient_surface_loop_id = ""
 	surface_render_state_dirty = false
@@ -172,17 +203,24 @@ func clear_runtime_state() -> void:
 
 
 func render_game_snapshot(snapshot: Dictionary) -> void:
+	# A newly rendered live surface must recover autonomous processing even if a
+	# prior lifecycle or harness owner disabled this canvas.
+	_arm_animation_heartbeat()
 	uses_foundation_snapshot = true
 	surface_render_elapsed_sec = 0.0
 	view_data = snapshot.duplicate(false)
+	surface_state_revision += 1
 	# Patch-routing metadata is never renderer state. Entry assembly can merge a
 	# module patch before this boundary, so consume it defensively here as well as
 	# in apply_surface_state_patch().
 	view_data.erase("surface_defer_patch_redraw")
 	game_id = str(view_data.get("game_id", game_id))
 	state = view_data
-	surface_simulation_clock_msec = float(state.get("surface_time_msec", surface_simulation_clock_msec))
-	surface_presentation_clock_msec = float(state.get("surface_presentation_time_msec", state.get("surface_time_msec", surface_presentation_clock_msec)))
+	var simulation_clock_default := 0.0 if surface_clock_reset_pending else surface_simulation_clock_msec
+	var presentation_clock_default := 0.0 if surface_clock_reset_pending else surface_presentation_clock_msec
+	surface_simulation_clock_msec = float(state.get("surface_time_msec", simulation_clock_default))
+	surface_presentation_clock_msec = float(state.get("surface_presentation_time_msec", state.get("surface_time_msec", presentation_clock_default)))
+	surface_clock_reset_pending = false
 	reduce_motion = bool(state.get("reduce_motion", false))
 	drunk_time_scale = clampf(float(state.get("drunk_time_scale", 1.0)), DRUNK_TIME_SCALE_MIN, 1.0)
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(state.get("drunk_effect_mode", drunk_effect_mode)))
@@ -196,11 +234,15 @@ func render_game_snapshot(snapshot: Dictionary) -> void:
 func apply_surface_state_patch(patch: Dictionary) -> void:
 	if patch.is_empty():
 		return
+	# Realtime/action patches are live presentation boundaries. Keep their finite
+	# and idle animation clocks independent of subsequent pointer input.
+	_arm_animation_heartbeat()
 	var defer_redraw := bool(patch.get("surface_defer_patch_redraw", false))
 	for key in patch.keys():
 		if str(key) == "surface_defer_patch_redraw":
 			continue
 		view_data[key] = patch[key]
+	surface_state_revision += 1
 	state = view_data
 	if patch.has("surface_time_msec"):
 		surface_simulation_clock_msec = float(state.get("surface_time_msec", surface_simulation_clock_msec))
@@ -266,6 +308,7 @@ func current_view_snapshot() -> Dictionary:
 		"small_screen_mode": small_screen_mode,
 		"minimum_touch_hit_size": SmallScreenPolicyScript.surface_hit_size(small_screen_mode, MIN_SURFACE_TOUCH_HIT_SIZE),
 		"surface_hit_actions": _hit_region_snapshots(),
+		"surface_hit_regions_current": hit_region_state_revision == surface_state_revision,
 		"outcome_message": str(state.get("outcome_message", state.get("result_message", ""))),
 		"outcome_bankroll_delta": int(state.get("outcome_bankroll_delta", state.get("bankroll_delta", 0))),
 		"outcome_suspicion_delta": int(state.get("outcome_suspicion_delta", state.get("suspicion_delta", 0))),
@@ -346,14 +389,15 @@ func surface_animation_liveness_active() -> bool:
 	return _surface_animation_liveness_active()
 
 
-# This is the production idle cadence, not a test floor. Web intentionally
-# renders low-detail idle motion less often; native keeps the full cadence.
+# This is the production idle cadence, not a test floor. Surfaces may opt into
+# their deliberately stepped low-detail idle cast on native as well as Web;
+# finite deal/payout channels still leave low-detail mode and run at 60 FPS.
 func surface_idle_animation_fps() -> float:
 	if reduce_motion or not bool(state.get("surface_animates_idle", false)):
 		return 0.0
-	if not OS.has_feature("web"):
+	if not surface_low_detail_idle():
 		return SURFACE_ANIMATION_FPS
-	return _requested_web_idle_animation_fps()
+	return _requested_web_idle_animation_fps() if OS.has_feature("web") else _requested_native_idle_animation_fps()
 
 
 # A lightweight boundary query for UI owners that must wait until a finite
@@ -685,10 +729,14 @@ func surface_presentation_time_msec() -> int:
 
 func surface_elapsed(channel_id: String) -> float:
 	var channel := _surface_animation_channel(channel_id)
+	return _surface_elapsed_for_channel(channel)
+
+
+func _surface_elapsed_for_channel(channel: Dictionary) -> float:
 	if channel.is_empty() or not bool(channel.get("active", false)):
 		return 999.0
 	if reduce_motion:
-		return surface_animation_duration(channel_id)
+		return _surface_animation_duration_for_channel(channel)
 	var started_msec := int(channel.get("started_msec", 0))
 	if started_msec <= 0:
 		return 999.0
@@ -711,6 +759,10 @@ func surface_elapsed(channel_id: String) -> float:
 
 func surface_animation_duration(channel_id: String) -> float:
 	var channel := _surface_animation_channel(channel_id)
+	return _surface_animation_duration_for_channel(channel)
+
+
+func _surface_animation_duration_for_channel(channel: Dictionary) -> float:
 	return float(maxi(0, int(channel.get("duration_msec", 0)))) / 1000.0
 
 
@@ -722,14 +774,14 @@ func surface_animation_active(channel_id: String) -> bool:
 		return false
 	if str(channel.get("active_id", "")).is_empty():
 		return false
-	var duration := surface_animation_duration(channel_id)
+	var duration := _surface_animation_duration_for_channel(channel)
 	if duration <= 0.0:
 		return true
-	return surface_elapsed(channel_id) < duration
+	return _surface_elapsed_for_channel(channel) < duration
 
 
 func surface_low_detail_idle() -> bool:
-	if not OS.has_feature("web"):
+	if not OS.has_feature("web") and not bool(state.get("surface_native_low_detail_idle", false)):
 		return false
 	if reduce_motion or not bool(state.get("surface_animates_idle", false)):
 		return false
@@ -755,7 +807,7 @@ func surface_animation_active_id(channel_id: String) -> String:
 
 
 func surface_animation_metadata(channel_id: String) -> Dictionary:
-	return _copy_dict(_surface_animation_channel(channel_id).get("metadata", {}))
+	return JsonCoerceScript._copy_dict(_surface_animation_channel(channel_id).get("metadata", {}))
 
 
 func surface_play_audio_cue(cue_id: String, context: Dictionary = {}, authority: Variant = null) -> void:
@@ -800,7 +852,7 @@ func surface_add_hit(rect: Rect2, action: String, index: int = -1, expand_touch_
 
 
 func surface_add_invisible_hit(rect: Rect2, action: String, index: int = -1, expand_touch_hit: bool = true) -> void:
-	hit_regions.append({"rect": _touch_hit_rect(rect, expand_touch_hit), "action": action, "index": index})
+	hit_regions.append({"rect": _touch_hit_rect(rect, expand_touch_hit), "action": action, "index": index, "invisible": true})
 
 
 func surface_add_exact_hit(rect: Rect2, action: String, index: int = -1) -> void:
@@ -892,8 +944,12 @@ func surface_native_action_selected(action: String) -> bool:
 
 func surface_label(text: String, pos: Vector2, font_size: int, color: Color) -> void:
 	_register_surface_text_rect(text, pos, font_size)
-	draw_string(get_theme_default_font(), pos + Vector2(1, 1), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color(0.0, 0.0, 0.0, 0.62))
-	draw_string(get_theme_default_font(), pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
+	# Animated tables redraw dozens of labels at production cadence. Resolve the
+	# themed font once per label instead of repeating the theme lookup for its
+	# shadow and foreground command.
+	var font := get_theme_default_font()
+	draw_string(font, pos + Vector2(1, 1), text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, Color(0.0, 0.0, 0.0, 0.62))
+	draw_string(font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, font_size, color)
 
 
 func surface_label_plain(text: String, pos: Vector2, font_size: int, color: Color) -> void:
@@ -952,6 +1008,10 @@ func _centered_label_fit_size(font: Font, text: String, rect: Rect2, font_size: 
 
 
 func _register_surface_text_rect(text: String, pos: Vector2, font_size: int) -> void:
+	if drunk_distortion_overlay == null or not drunk_distortion_overlay.visible:
+		return
+	if surface_text_protected_rects.size() >= DrunkDistortionOverlay.MAX_UI_PROTECTED_RECTS:
+		return
 	var clean := text.strip_edges()
 	if clean.is_empty():
 		return
@@ -960,6 +1020,11 @@ func _register_surface_text_rect(text: String, pos: Vector2, font_size: int) -> 
 
 
 func _register_surface_text_panel_rect(rect: Rect2) -> void:
+	# Readability masks are consumed only by the visible distortion overlay.
+	# Ordinary play previously allocated and measured up to sixteen label rects
+	# per draw, then discarded them without a consumer.
+	if drunk_distortion_overlay == null or not drunk_distortion_overlay.visible:
+		return
 	if rect.size.x <= 0.0 or rect.size.y <= 0.0:
 		return
 	if surface_text_protected_rects.size() >= DrunkDistortionOverlay.MAX_UI_PROTECTED_RECTS:
@@ -1024,34 +1089,10 @@ func surface_draw_action_button(rect: Rect2, label: String, action: String, inde
 	surface_add_hit(rect, action, index)
 
 
-func surface_draw_guidance_border(rect: Rect2, label: String = "", active: bool = true) -> void:
-	var color := C_YELLOW if active else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.42)
-	var hovered := active and _hit_region_hovered_rect(rect)
-	var border_width := 4 if hovered and not reduce_motion else 3
-	var glow_alpha := 0.20 if reduce_motion else (0.30 + 0.12 * sin(float(Time.get_ticks_msec()) / 90.0))
-	if active:
-		draw_rect(rect.grow(8.0), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, glow_alpha), false, 3)
-	draw_rect(rect.grow(3.0), C_WHITE if hovered else color, false, border_width)
-	draw_rect(rect.grow(-2.0), color, false, 1)
-	if not label.strip_edges().is_empty():
-		var badge_width := clampf(float(label.length()) * 7.0 + 18.0, 52.0, rect.size.x + 18.0)
-		var badge := Rect2(rect.position + Vector2((rect.size.x - badge_width) * 0.5, -24.0), Vector2(badge_width, 20.0))
-		draw_rect(badge, Color(0.0, 0.0, 0.0, 0.82))
-		draw_rect(badge, color, false, 1)
-		surface_label_centered(label.to_upper(), badge.grow(-2.0), 10, color)
-
-
-func _hit_region_hovered_rect(rect: Rect2) -> bool:
-	for region_value in hit_regions:
-		var region: Dictionary = region_value if typeof(region_value) == TYPE_DICTIONARY else {}
-		var hit_rect: Rect2 = region.get("rect", Rect2())
-		if hit_rect.intersects(rect):
-			if surface_region_hovered(str(region.get("action", "")), int(region.get("index", -1))):
-				return true
-	return false
-
-
 func _ready() -> void:
+	# Active surfaces own their animation heartbeat. Hover and selection redraws
+	# are supplemental and must never be required for visible game motion.
+	_arm_animation_heartbeat()
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	focus_mode = Control.FOCUS_ALL
 	clip_contents = true
@@ -1063,14 +1104,18 @@ func _gui_input(event: InputEvent) -> void:
 	if event is InputEventKey or event is InputEventJoypadButton:
 		if event is InputEventKey and (event as InputEventKey).echo:
 			return
-		var joy_confirm := event is InputEventJoypadButton and (event as InputEventJoypadButton).button_index == JOY_BUTTON_A
-		if event.is_action_pressed("ui_accept") or (joy_confirm and (event as InputEventJoypadButton).pressed):
+		if event.is_action_pressed("ui_accept"):
+			reject_orphan_surface_events = false
 			_activate_keyboard_hold()
-		elif event.is_action_released("ui_accept") or (joy_confirm and not (event as InputEventJoypadButton).pressed):
+		elif event.is_action_released("ui_accept"):
+			if reject_orphan_surface_events:
+				return
 			_release_keyboard_hold()
 		return
 	var motion_event := event as InputEventMouseMotion
 	if motion_event != null:
+		if reject_orphan_surface_events:
+			return
 		_set_hovered_surface_region(motion_event.position)
 		if not captured_surface_action.is_empty() and (motion_event.button_mask & MOUSE_BUTTON_MASK_LEFT) != 0:
 			_queue_or_emit_captured_pointer_move(motion_event.position)
@@ -1078,11 +1123,14 @@ func _gui_input(event: InputEvent) -> void:
 	var mouse_event := event as InputEventMouseButton
 	if mouse_event != null:
 		if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
+			reject_orphan_surface_events = false
 			if _mouse_duplicates_recent_touch_press(mouse_event.position):
 				accept_event()
 				return
 			_remember_mouse_press(mouse_event.position)
 			_activate_surface_at_position(mouse_event.position, mouse_event.double_click)
+		elif reject_orphan_surface_events:
+			return
 		elif not mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT and not captured_surface_action.is_empty():
 			_flush_captured_pointer_move()
 			_emit_captured_surface_pointer("end", mouse_event.position)
@@ -1090,16 +1138,21 @@ func _gui_input(event: InputEvent) -> void:
 	var touch_event := event as InputEventScreenTouch
 	if touch_event != null:
 		if touch_event.pressed:
+			reject_orphan_surface_events = false
 			if _touch_duplicates_recent_mouse_press(touch_event.position):
 				accept_event()
 				return
 			_remember_touch_press(touch_event.position)
 			_activate_surface_at_position(touch_event.position, touch_event.double_tap)
+		elif reject_orphan_surface_events:
+			return
 		elif not touch_event.pressed and not captured_surface_action.is_empty():
 			_flush_captured_pointer_move()
 			_emit_captured_surface_pointer("end", touch_event.position)
 		return
 	var drag_event := event as InputEventScreenDrag
+	if drag_event != null and reject_orphan_surface_events:
+		return
 	if drag_event != null and not captured_surface_action.is_empty():
 		_queue_or_emit_captured_pointer_move(drag_event.position)
 		return
@@ -1236,13 +1289,17 @@ func _clear_captured_surface_pointer_state() -> void:
 	captured_surface_board_position = Vector2.ZERO
 	captured_surface_keyboard = false
 	captured_pointer_move_pending = false
+	captured_pointer_move_position = Vector2.ZERO
 
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_FOCUS_EXIT:
 		_cancel_captured_surface_pointer()
-	elif what == NOTIFICATION_VISIBILITY_CHANGED and is_node_ready() and not is_visible_in_tree():
-		_cancel_captured_surface_pointer()
+	elif what == NOTIFICATION_VISIBILITY_CHANGED and is_node_ready():
+		if is_visible_in_tree():
+			_arm_animation_heartbeat()
+		else:
+			_cancel_captured_surface_pointer()
 
 
 func _queue_or_emit_captured_pointer_move(screen_position: Vector2) -> void:
@@ -1263,6 +1320,8 @@ func _flush_captured_pointer_move() -> void:
 
 func _process(delta: float) -> void:
 	if not is_visible_in_tree():
+		return
+	if timed_feedback_paused:
 		return
 	_flush_captured_pointer_move()
 	if transient_surface_loop_deadline_msec > 0 and Time.get_ticks_msec() >= transient_surface_loop_deadline_msec:
@@ -1289,9 +1348,24 @@ func _process(delta: float) -> void:
 	_schedule_surface_animation_redraws(clamped_delta)
 
 
+func debug_pause_contract_snapshot() -> Dictionary:
+	return {
+		"environment_activity_paused": environment_activity_paused,
+		"timed_feedback_paused": timed_feedback_paused,
+		"reject_orphan_surface_events": reject_orphan_surface_events,
+		"captured_surface_action": captured_surface_action,
+		"captured_pointer_move_pending": captured_pointer_move_pending,
+		"surface_simulation_time_msec": surface_simulation_time_msec(),
+		"surface_presentation_time_msec": surface_presentation_time_msec(),
+		"surface_clock_reset_pending": surface_clock_reset_pending,
+		"surface_sfx": surface_sfx_player.call("debug_soak_snapshot") if surface_sfx_player != null and surface_sfx_player.has_method("debug_soak_snapshot") else {},
+	}
+
+
 func _schedule_surface_animation_redraws(delta: float) -> void:
-	var redraw_demand := _surface_animation_redraw_demand()
-	var main_redraw := bool(redraw_demand.get("main", false))
+	# The scheduler needs only the main boolean. Building a two-field diagnostic
+	# dictionary here allocated once per visible frame on every animated surface.
+	var main_redraw := _surface_main_animation_redraw_active()
 	if main_redraw:
 		perf_surface_animation_scheduler_elapsed_sec += maxf(0.0, delta)
 		if _surface_animation_redraw_due(delta):
@@ -1348,7 +1422,29 @@ func _draw() -> void:
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	_update_drunk_distortion_protected_rects()
 	_ensure_snapshot_proxy_hit_regions()
+	hit_region_state_revision = surface_state_revision
+	_notify_hit_region_geometry_changed()
 	_record_draw_performance(draw_started_usec)
+
+
+func _notify_hit_region_geometry_changed() -> void:
+	# Hit regions are rebuilt by draw code after the host's synchronous coach
+	# refresh. Notify only when their shape actually changes so guided highlights
+	# can follow controls such as Pull Tab's Peel -> File ticket transition without
+	# adding work to animated idle frames.
+	var signature := hash(hit_regions) ^ hash(size) ^ hash(get_global_transform())
+	if signature == last_hit_region_geometry_signature:
+		return
+	last_hit_region_geometry_signature = signature
+	if hit_region_geometry_signal_scheduled:
+		return
+	hit_region_geometry_signal_scheduled = true
+	call_deferred("_emit_view_geometry_changed")
+
+
+func _emit_view_geometry_changed() -> void:
+	hit_region_geometry_signal_scheduled = false
+	view_geometry_changed.emit()
 
 
 func _ensure_surface_sfx_player() -> void:
@@ -1359,6 +1455,8 @@ func _ensure_surface_sfx_player() -> void:
 		surface_sfx_player.call("bind_surface_audio_authority", _surface_audio_authority)
 	if surface_sfx_player.has_signal("music_cue_requested"):
 		surface_sfx_player.music_cue_requested.connect(_on_surface_sfx_music_cue)
+	if surface_sfx_player.has_signal("audio_status_changed"):
+		surface_sfx_player.audio_status_changed.connect(_on_surface_audio_status_changed)
 	add_child(surface_sfx_player)
 
 
@@ -1388,6 +1486,10 @@ func _on_surface_sfx_music_cue(cue_id: String, context: Dictionary) -> void:
 	surface_music_cue.emit(cue_id, context)
 
 
+func _on_surface_audio_status_changed(message: String) -> void:
+	audio_status_changed.emit(message)
+
+
 func _ensure_drunk_distortion_overlay() -> void:
 	if drunk_distortion_overlay != null:
 		return
@@ -1413,7 +1515,7 @@ func _normalized_drunk_effect_mode(value: String) -> String:
 func _update_surface_animation_channels() -> void:
 	var next_ids := {}
 	var now_msec := Time.get_ticks_msec()
-	for channel_value in _dictionary_array(state.get("surface_animation_channels", [])):
+	for channel_value in JsonCoerceScript._dictionary_array(state.get("surface_animation_channels", [])):
 		var channel: Dictionary = channel_value
 		var channel_id := str(channel.get("id", ""))
 		if channel_id.is_empty():
@@ -1423,7 +1525,7 @@ func _update_surface_animation_channels() -> void:
 		var incoming_active := bool(channel.get("active", not incoming_active_id.is_empty()))
 		var incoming_started := int(channel.get("started_msec", 0))
 		var restart_on_id_change := bool(channel.get("restart_on_active_id_change", true))
-		var current := _copy_dict(surface_animation_channels.get(channel_id, {}))
+		var current := JsonCoerceScript._copy_dict(surface_animation_channels.get(channel_id, {}))
 		var was_active := _surface_channel_record_active(current)
 		var current_active_id := str(current.get("active_id", ""))
 		if current.is_empty() or (restart_on_id_change and current_active_id != incoming_active_id):
@@ -1438,7 +1540,7 @@ func _update_surface_animation_channels() -> void:
 			var current_offset := maxi(0, int(current.get("elapsed_offset_msec", 0)))
 			var incoming_offset := maxi(0, int(channel.get("elapsed_offset_msec", 0)))
 			current["elapsed_offset_msec"] = incoming_offset
-			current["metadata"] = _copy_dict(channel.get("metadata", current.get("metadata", {})))
+			current["metadata"] = JsonCoerceScript._copy_dict(channel.get("metadata", current.get("metadata", {})))
 			current["clock_source"] = str(channel.get("clock_source", current.get("clock_source", "realtime")))
 			if incoming_started > 0:
 				current["started_msec"] = incoming_started
@@ -1455,7 +1557,7 @@ func _update_surface_animation_channels() -> void:
 			_mark_surface_animation_handoff(now_msec)
 	for existing_id in surface_animation_channels.keys():
 		if not next_ids.has(str(existing_id)):
-			if _surface_channel_record_active(_copy_dict(surface_animation_channels.get(existing_id, {}))):
+			if _surface_channel_record_active(JsonCoerceScript._copy_dict(surface_animation_channels.get(existing_id, {}))):
 				_mark_surface_animation_handoff(now_msec)
 			surface_animation_channels.erase(existing_id)
 
@@ -1469,7 +1571,8 @@ func _sync_surface_audio() -> void:
 		last_audio_profile_id = profile_id
 	if profile_id.is_empty():
 		return
-	var sync_spec := _copy_dict(audio.get("state_sync", {}))
+	var sync_value: Variant = audio.get("state_sync", {})
+	var sync_spec: Dictionary = sync_value as Dictionary if typeof(sync_value) == TYPE_DICTIONARY else {}
 	if sync_spec.is_empty():
 		return
 	_ensure_surface_sfx_player()
@@ -1480,37 +1583,34 @@ func _sync_surface_audio() -> void:
 
 func _surface_audio_timing(sync_spec: Dictionary) -> Dictionary:
 	var timing: Dictionary = {}
-	for raw_key in sync_spec.keys():
+	for raw_key in sync_spec:
 		var key := str(raw_key)
 		if key != "animation_channel" and not key.ends_with("_channel"):
 			continue
 		var channel_id := str(sync_spec.get(key, ""))
+		var channel := _surface_animation_channel(channel_id)
+		var duration := _surface_animation_duration_for_channel(channel)
+		var elapsed := _surface_elapsed_for_channel(channel)
+		var active := false
+		if not reduce_motion and not channel.is_empty() \
+				and bool(channel.get("active", false)) \
+				and not str(channel.get("active_id", "")).is_empty():
+			active = duration <= 0.0 or elapsed < duration
 		timing[key] = {
 			"channel_id": channel_id,
-			"elapsed": surface_elapsed(channel_id),
-			"active": surface_animation_active(channel_id),
-			"active_id": surface_animation_active_id(channel_id),
+			"elapsed": elapsed,
+			"active": active,
+			"active_id": str(channel.get("active_id", "")),
 		}
 	return timing
 
 
 func _needs_continuous_redraw() -> bool:
-	return bool(_surface_animation_redraw_demand().get("main", false))
+	return _surface_main_animation_redraw_active()
 
 
 func _surface_animation_liveness_active() -> bool:
-	var demand := _surface_animation_redraw_demand()
-	return bool(demand.get("main", false))
-
-
-func _surface_animation_redraw_demand() -> Dictionary:
-	var main := _surface_main_animation_redraw_active()
-	return {
-		"main": main,
-		"handoff": _surface_animation_handoff_active(),
-	}
-
-
+	return _surface_main_animation_redraw_active()
 func _surface_main_animation_redraw_active() -> bool:
 	if reduce_motion:
 		return false
@@ -1529,6 +1629,13 @@ func _surface_main_animation_redraw_active() -> bool:
 	return bool(state.get("surface_animates_idle", false))
 
 
+func _arm_animation_heartbeat() -> void:
+	# PROCESS_MODE_PAUSABLE opts out of an accidentally disabled inherited mode
+	# while still respecting an intentional SceneTree pause.
+	process_mode = Node.PROCESS_MODE_PAUSABLE
+	set_process(true)
+
+
 func _surface_channel_record_active(channel: Dictionary) -> bool:
 	return bool(channel.get("active", false)) and not str(channel.get("active_id", "")).is_empty()
 
@@ -1543,7 +1650,7 @@ func _surface_animation_handoff_active() -> bool:
 
 func _surface_animation_redraw_due(delta: float) -> bool:
 	surface_animation_redraw_accumulator += maxf(0.0, delta)
-	var target_interval := _web_idle_animation_interval() if surface_low_detail_idle() else SURFACE_ANIMATION_INTERVAL_SEC
+	var target_interval := _low_detail_idle_animation_interval() if surface_low_detail_idle() else SURFACE_ANIMATION_INTERVAL_SEC
 	if surface_animation_redraw_accumulator < target_interval:
 		return false
 	surface_animation_redraw_accumulator = minf(
@@ -1554,12 +1661,16 @@ func _surface_animation_redraw_due(delta: float) -> bool:
 	return true
 
 
-func _web_idle_animation_interval() -> float:
-	return 1.0 / _requested_web_idle_animation_fps()
+func _low_detail_idle_animation_interval() -> float:
+	return 1.0 / (_requested_web_idle_animation_fps() if OS.has_feature("web") else _requested_native_idle_animation_fps())
 
 
 func _requested_web_idle_animation_fps() -> float:
 	return clampf(float(state.get("surface_web_idle_animation_fps", DEFAULT_WEB_IDLE_ANIMATION_FPS)), DEFAULT_WEB_IDLE_ANIMATION_FPS, SURFACE_ANIMATION_FPS)
+
+
+func _requested_native_idle_animation_fps() -> float:
+	return clampf(float(state.get("surface_native_idle_animation_fps", DEFAULT_NATIVE_IDLE_ANIMATION_FPS)), 1.0, SURFACE_ANIMATION_FPS)
 
 
 func _scale_canvas() -> void:
@@ -1690,7 +1801,7 @@ func _surface_ui_protected_board_rects() -> Array:
 
 func _surface_state_rects(key: String, hover_filtered: bool = false) -> Array:
 	var rects: Array = []
-	for region in _dictionary_array(state.get(key, [])):
+	for region in JsonCoerceScript._dictionary_array(state.get(key, [])):
 		if hover_filtered and not _surface_hover_region_matches(region):
 			continue
 		var rect := _surface_state_rect(region)
@@ -1781,6 +1892,7 @@ func _hit_region_snapshots() -> Array:
 			"action": str(region.get("action", "")),
 			"index": int(region.get("index", -1)),
 			"rect": rect,
+			"invisible": bool(region.get("invisible", false)),
 		})
 	return snapshots
 
@@ -1794,9 +1906,9 @@ func _ensure_snapshot_proxy_hit_regions() -> void:
 		_add_proxy_hit_region(Rect2(98, 258, 26, 42), "surface_stake_down", -1)
 		_add_proxy_hit_region(Rect2(128, 258, 26, 42), "surface_stake_up", -1)
 		_add_proxy_hit_region(Rect2(158, 258, 44, 42), "surface_stake_max", -1)
-	if not _dictionary_array(state.get("legal_actions", [])).is_empty():
+	if not JsonCoerceScript._dictionary_array(state.get("legal_actions", [])).is_empty():
 		_add_proxy_hit_region(Rect2(212, 258, 150, 42), "surface_legal", 0)
-	if not _dictionary_array(state.get("cheat_actions", [])).is_empty():
+	if not JsonCoerceScript._dictionary_array(state.get("cheat_actions", [])).is_empty():
 		_add_proxy_hit_region(Rect2(372, 258, 174, 42), "surface_cheat", 0)
 
 
@@ -1871,7 +1983,7 @@ func _surface_animation_status_snapshot() -> Dictionary:
 			"duration_msec": int(channel.get("duration_msec", 0)),
 			"started_msec": int(channel.get("started_msec", 0)),
 			"elapsed_offset_msec": int(channel.get("elapsed_offset_msec", 0)),
-			"metadata": _copy_dict(channel.get("metadata", {})),
+			"metadata": JsonCoerceScript._copy_dict(channel.get("metadata", {})),
 		}
 	return snapshot
 
@@ -1881,11 +1993,11 @@ func _surface_action_blocked(action: String) -> bool:
 
 
 func _surface_action_block_reason(action: String) -> String:
-	for block_value in _dictionary_array(state.get("surface_action_blocks", [])):
+	for block_value in JsonCoerceScript._dictionary_array(state.get("surface_action_blocks", [])):
 		var block: Dictionary = block_value
 		var blocked_action := str(block.get("action", ""))
 		if blocked_action != action:
-			var blocked_actions := _string_array(block.get("actions", []))
+			var blocked_actions := JsonCoerceScript._raw_string_array(block.get("actions", []))
 			if not blocked_actions.has(action):
 				continue
 		var channel_id := str(block.get("while_animation", ""))
@@ -1900,19 +2012,17 @@ func _surface_action_block_reason(action: String) -> String:
 
 
 func _surface_audio_spec() -> Dictionary:
-	var audio := _copy_dict(state.get("surface_audio", {}))
-	if not audio.has("profile_id"):
-		audio["profile_id"] = ""
-	if not audio.has("action_cues"):
-		audio["action_cues"] = {}
-	if not audio.has("state_sync"):
-		audio["state_sync"] = {}
-	return audio
+	# Surface snapshots remain immutable between host patches. Callers only read
+	# this contract and already supply defaults, so a deep copy on every process
+	# frame did not protect an ownership boundary.
+	var audio_value: Variant = state.get("surface_audio", {})
+	return audio_value as Dictionary if typeof(audio_value) == TYPE_DICTIONARY else {}
 
 
 func _surface_action_audio_cue(action: String) -> String:
 	var audio := _surface_audio_spec()
-	var action_cues := _copy_dict(audio.get("action_cues", {}))
+	var action_cues_value: Variant = audio.get("action_cues", {})
+	var action_cues: Dictionary = action_cues_value as Dictionary if typeof(action_cues_value) == TYPE_DICTIONARY else {}
 	if not action_cues.has(action):
 		return ""
 	var cue_value: Variant = action_cues.get(action, "")
@@ -1989,8 +2099,8 @@ func _draw_foundation_control_strip(panel: Rect2, include_back: bool) -> void:
 	surface_draw_stake_control(Rect2(98, 258, 26, 42), "-", bool(state.get("has_valid_stake", false)), "surface_stake_down")
 	surface_draw_stake_control(Rect2(128, 258, 26, 42), "+", bool(state.get("has_valid_stake", false)), "surface_stake_up")
 	surface_draw_stake_control(Rect2(158, 258, 44, 42), "MAX", bool(state.get("has_valid_stake", false)), "surface_stake_max")
-	var legal_actions := _dictionary_array(state.get("legal_actions", []))
-	var cheat_actions := _dictionary_array(state.get("cheat_actions", []))
+	var legal_actions := JsonCoerceScript._dictionary_array(state.get("legal_actions", []))
+	var cheat_actions := JsonCoerceScript._dictionary_array(state.get("cheat_actions", []))
 	var legal_action := _first_dictionary(legal_actions)
 	var cheat_action := _first_dictionary(cheat_actions)
 	_draw_surface_action_tile(Rect2(212, 258, 150, 42), "Safe: %s" % _surface_action_label(legal_action, "Safe action"), _surface_action_summary(legal_action, "legal"), "legal", not legal_action.is_empty(), _surface_action_selected("legal", legal_action), "surface_legal", 0)
@@ -2145,40 +2255,6 @@ func _surface_action_summary(action: Dictionary, kind: String) -> String:
 	elif kind == "cheat":
 		parts.append("heat risk")
 	return " / ".join(parts)
-
-
-func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append(entry)
-	return result
-
-
-func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		var text := str(entry)
-		if not text.is_empty():
-			result.append(text)
-	return result
-
-
-func _vector_from_dict(value: Variant, fallback: Vector2 = Vector2.ZERO) -> Vector2:
-	if typeof(value) != TYPE_DICTIONARY:
-		return fallback
-	var data: Dictionary = value as Dictionary
-	return Vector2(float(data.get("x", fallback.x)), float(data.get("y", fallback.y)))
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
 
 
 func _first_dictionary(value: Array) -> Dictionary:

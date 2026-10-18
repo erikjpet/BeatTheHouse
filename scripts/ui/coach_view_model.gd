@@ -1,6 +1,11 @@
 class_name CoachViewModel
 extends RefCounted
 
+# Pure tutorial/coach projection logic for trigger matching, live anchors,
+# bubble placement, allowed input, and completion recognition.
+
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const ANCHOR_KINDS := ["interactable_object", "hud_element", "surface_action", "none"]
 const COMPLETION_TYPES := ["anchored_action", "one_of_actions", "any_action", "explicit_ok", "state_predicate"]
 const VIEWPORT_MARGIN := 12.0
@@ -21,7 +26,7 @@ static func trigger_matches(lesson: Dictionary, context: Dictionary, seen: Dicti
 	var trigger := _dict(lesson.get("trigger", {}))
 	if trigger.is_empty():
 		return false
-	for dependency_id in _string_array(trigger.get("depends_on", [])):
+	for dependency_id in JsonCoerceScript._string_array(trigger.get("depends_on", [])):
 		if not bool(seen.get(dependency_id, false)):
 			return false
 	for field in ["screen", "environment_kind", "environment_archetype", "game_id"]:
@@ -83,7 +88,7 @@ static func build(lesson: Dictionary, context: Dictionary) -> Dictionary:
 	if anchor_rect.has_area():
 		anchor_rect = anchor_rect.intersection(viewport_rect)
 	var additional_anchor_rects: Array = []
-	for additional_id in _string_array(lesson.get("additional_anchor_ids", [])):
+	for additional_id in JsonCoerceScript._string_array(lesson.get("additional_anchor_ids", [])):
 		var additional_rect := _anchor_rect(anchor_kind, additional_id, context)
 		if additional_rect.has_area():
 			additional_anchor_rects.append(_rect_dict(additional_rect.intersection(viewport_rect)))
@@ -95,7 +100,10 @@ static func build(lesson: Dictionary, context: Dictionary) -> Dictionary:
 	var available_width := maxf(1.0, viewport_rect.size.x - VIEWPORT_MARGIN * 2.0)
 	var preferred_width := 420.0 if small_screen else 384.0
 	var bubble_width := minf(available_width, preferred_width)
-	var bubble_height := 172.0 if completion_type == "explicit_ok" else 144.0
+	# Four rendered copy lines, container spacing, and the dismiss control need
+	# the same safe height for ambient advice as for explicit acknowledgements.
+	# The former 144 px ambient bubble clipped long normal-run Skip tip controls.
+	var bubble_height := 172.0
 	if small_screen:
 		bubble_height += 14.0
 	var bubble_size := Vector2(
@@ -106,7 +114,25 @@ static func build(lesson: Dictionary, context: Dictionary) -> Dictionary:
 	if not tutorial_lesson:
 		bubble_rect = _bubble_rect_avoiding_context(viewport_rect, bubble_rect, bubble_size, context)
 	var guidance := _dict(lesson.get("gating", {}))
-	var suggested_action_ids := _string_array(guidance.get("allowed_action_ids", []))
+	var suggested_action_ids := JsonCoerceScript._string_array(guidance.get("allowed_action_ids", []))
+	# A lesson that explicitly offers several controls must expose all of their
+	# live hit regions through the tutorial shield. Authored additional anchors
+	# remain useful for non-action emphasis, while allowed actions automatically
+	# become equivalent clickable focus targets when they share the anchor kind.
+	for suggested_action_id in suggested_action_ids:
+		if suggested_action_id == anchor_id:
+			continue
+		var suggested_rect := _anchor_rect(anchor_kind, suggested_action_id, context)
+		if not suggested_rect.has_area():
+			continue
+		suggested_rect = suggested_rect.intersection(viewport_rect)
+		var already_included := false
+		for existing_rect_value in additional_anchor_rects:
+			if _rect(existing_rect_value).is_equal_approx(suggested_rect):
+				already_included = true
+				break
+		if not already_included:
+			additional_anchor_rects.append(_rect_dict(suggested_rect))
 	var delivery := str(lesson.get("delivery", "coach")).strip_edges().to_lower()
 	if not ["coach", "dialogue"].has(delivery):
 		delivery = "coach"
@@ -182,7 +208,7 @@ static func completion_matches(lesson: Dictionary, action_id: String) -> bool:
 		"any_action":
 			return not action_id.strip_edges().is_empty()
 		"one_of_actions":
-			return _string_array(completion.get("action_ids", [])).has(action_id.strip_edges())
+			return JsonCoerceScript._string_array(completion.get("action_ids", [])).has(action_id.strip_edges())
 		"anchored_action":
 			var expected := str(completion.get("action_id", "")).strip_edges()
 			if expected.is_empty():
@@ -269,6 +295,13 @@ static func _bubble_rect(viewport_rect: Rect2, anchor_rect: Rect2, bubble_size: 
 	return Rect2(position, bubble_size)
 
 
+# Live room selection can replace an object's broad hit area with its inline
+# action button after the lesson has already rendered. Keep the bubble tied to
+# that current target so the guidance never covers the control it names.
+static func bubble_rect_for_live_anchor(viewport_rect: Rect2, anchor_rect: Rect2, bubble_size: Vector2) -> Rect2:
+	return _bubble_rect(viewport_rect, anchor_rect, bubble_size)
+
+
 # Ambient advice keeps its one intentional pointer receiver (Skip tip) while
 # choosing the least-contended standard placement from public UI geometry. The
 # choice is pure and deterministic; guided tutorial placement remains authored.
@@ -334,17 +367,6 @@ static func _rect_dict(rect: Rect2) -> Dictionary:
 
 static func _dict(value: Variant) -> Dictionary:
 	return (value as Dictionary) if typeof(value) == TYPE_DICTIONARY else {}
-
-
-static func _string_array(value: Variant) -> Array[String]:
-	var result: Array[String] = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry_value in value:
-		var entry := str(entry_value).strip_edges()
-		if not entry.is_empty() and not result.has(entry):
-			result.append(entry)
-	return result
 
 
 static func _number(value: Variant) -> float:

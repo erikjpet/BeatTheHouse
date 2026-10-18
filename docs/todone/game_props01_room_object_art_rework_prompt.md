@@ -93,9 +93,9 @@ All room game objects are drawn in `scripts/ui/pixel_scene_canvas.gd`:
     `tools/scratch_ticket_redesign_capture.gd`,
     `tools/craps_table_visual_capture.ps1`,
     `tools/street_craps_visual_capture.ps1`,
-    `tools/game06_6_bar_dice_web_capture.mjs`;
+    `tools/archive/game06_6/game06_6_bar_dice_web_capture.mjs`;
   - real rooms: `tools/environment_layout_screenshots.gd` (run windowed);
-  - production room receipts: `tools/env06_8_unlabeled_contact_sheet_probe.gd`
+  - production room receipts: `tools/archive/env06_8/env06_8_unlabeled_contact_sheet_probe.gd`
     (it already renders rooms with text removed — a useful model for the "no
     label" check).
 

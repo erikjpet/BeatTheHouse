@@ -23,7 +23,7 @@ The repository still identifies itself as 0.4.0 everywhere:
 
 There is a `v0.4.0` git tag, but 0.4.0 was NEVER published - an earlier
 candidate was tagged, playtest defects were found, and development continued.
-`docs/plans/0.4_release_checklist.md` records this status. 0.5.0 is therefore
+`docs/archive/0.4/plans/0.4_release_checklist.md` records this status. 0.5.0 is therefore
 the first cut that will actually ship since 0.3.3.
 
 Every prior release has a checklist doc (`0.2`, `0.3`, `0.3.1`, `0.3.2`,
@@ -41,9 +41,9 @@ in favor of a single source of truth if that is clean to do; otherwise update
 both occurrences. Add or extend a test that asserts the rendered in-game
 version matches `ProjectSettings` so this cannot drift again.
 
-### 2. `docs/plans/0.5_release_checklist.md`
+### 2. `docs/archive/0.5/plans/0.5_release_checklist.md`
 
-Model it on `docs/plans/0.4_release_checklist.md` (same section shape:
+Model it on `docs/archive/0.4/plans/0.4_release_checklist.md` (same section shape:
 Release Identity table, Included Scope, gate evidence, known limitations,
 publish steps). It must state honestly what is verified and what is pending.
 Scope it from what actually landed in 0.5 - read the git log and the 0.5
@@ -70,7 +70,7 @@ the release tag are release-owner actions that remain pending.
 
 ### 3. Publish copy
 
-Write `docs/plans/0.5_publish_copy.md` and `docs/plans/0.5_devlog_post.md`
+Write `docs/archive/0.5/plans/0.5_publish_copy.md` and `docs/plans/0.5_devlog_post.md`
 following the tone and structure of the 0.4/0.3.3 equivalents. Lead with what
 a player will actually notice: the endgame, the new game, and the fact that
 the whole interface was rebuilt. Do not invent features - verify each claim

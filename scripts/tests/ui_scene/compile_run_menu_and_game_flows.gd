@@ -490,16 +490,27 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 			var second_patch: Dictionary = game.surface_realtime_state_patch(run_state, run_state.current_environment, {"surface_time_msec": 1100}, first_patch)
 			var motor_continued := int(second_patch.get("coin_pusher_ticks_advanced", 0)) > 0 \
 					and int((live_machine.get("simulation", {}) as Dictionary).get("tick", -2)) > tick_before_save
+			# Non-game detail panels hide this canvas while preserving the active game
+			# session. They must release renderer-owned viewport caches, then rebind and
+			# rebuild the exact surface when GAME becomes visible again.
+			probe.call("_set_current_screen", "ITEMS")
+			probe.call("_render_foundation_snapshots")
+			var hidden_surface_host_released: bool = canvas.get("surface_game_module") == null
+			probe.call("_set_current_screen", "GAME")
+			probe.call("_render_foundation_snapshots")
+			var visible_surface_host_rebound: bool = canvas.get("surface_game_module") == game \
+					and str((canvas.call("realtime_surface_state") as Dictionary).get("game_id", "")) == "coin_pusher"
 			var transient_clean := not serialized_before.contains("\"simulation\"") \
 					and not serialized_before.contains("live_session") \
 					and not serialized_after.contains("\"simulation\"") \
 					and not serialized_after.contains("live_session") \
 					and not serialized_after.contains("accumulator_units") \
 					and not serialized_after.contains("input_trace")
-			var live_loop_passed := pricing_passed and opening_snapshot_exact and still_live_after_save and motor_continued and transient_clean \
+			var live_loop_passed := pricing_passed and opening_snapshot_exact and still_live_after_save and motor_continued \
+					and hidden_surface_host_released and visible_surface_host_rebound and transient_clean \
 					and not game.foundation_save_ready(run_state, run_state.current_environment)
 			if not live_loop_passed:
-				push_error("Coin Pusher live DROP was frozen by autosave or leaked transient solver state: still_live=%s motor=%s clean=%s ready=%s durable=%s." % [still_live_after_save, motor_continued, transient_clean, game.foundation_save_ready(run_state, run_state.current_environment), serialized_after])
+				push_error("Coin Pusher live DROP was frozen by autosave, retained its hidden render host, or leaked transient solver state: still_live=%s motor=%s hidden_release=%s rebound=%s clean=%s ready=%s durable=%s." % [still_live_after_save, motor_continued, hidden_surface_host_released, visible_surface_host_rebound, transient_clean, game.foundation_save_ready(run_state, run_state.current_environment), serialized_after])
 			if bool(live_simulation.get("skill_stop_engaged", false)):
 				canvas.emit_signal("surface_action", "coin_pusher_skill_stop", 0, false)
 			canvas.emit_signal("surface_action", "coin_pusher_skill_stop", 0, false)
@@ -534,6 +545,7 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 				# must be able to cancel safely.
 				probe.set("current_game", game)
 				probe.set("game_exit_settle_active", true)
+				game.set("_exit_settle_active", true)
 				probe.call_deferred("_finish_chunked_game_exit")
 				await process_frame
 				var lifecycle_exit_started := bool(probe.get("game_exit_settle_active"))
@@ -542,6 +554,7 @@ func _check_coin_pusher_owned_canvas_render_frame(_app: Control) -> bool:
 					await process_frame
 				lifecycle_abort_passed = lifecycle_exit_started \
 						and not bool(probe.get("game_exit_settle_active")) \
+						and not bool(game.get("_exit_settle_active")) \
 						and probe.get("current_game") == null \
 						and probe.get("run_state") == null \
 						and str(probe.get("current_screen")) == "START"
@@ -994,7 +1007,8 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 		return false
 	var talk_snapshot: Dictionary = app.call("current_talk_dock_snapshot")
 	if not bool(talk_snapshot.get("visible", false)) or str(talk_snapshot.get("speaker", "")) != "Pal":
-		push_error("Tutorial first beat did not speak through the real Pal TalkDock conversation.")
+		var tutorial_layout := JsonCoerceScript._copy_dict(run_state.current_environment.get("layout", {}))
+		push_error("Tutorial first beat did not speak through the real Pal TalkDock conversation: talk=%s coach=%s xray=%s manifest=%s bindings=%s placement_errors=%s" % [JSON.stringify(talk_snapshot), JSON.stringify(coach_snapshot), JSON.stringify(app.call("_interactable_object", "item:xray_glasses")), JSON.stringify(run_state.current_environment.get("object_manifest", {})), JSON.stringify(tutorial_layout.get("slot_bindings", {})), JSON.stringify(tutorial_layout.get("placement_errors", []))])
 		return false
 	var tutorial_environment_canvas: Control = app.get("environment_canvas")
 	var tutorial_game_canvas: Control = app.get("game_surface_canvas")
@@ -1398,12 +1412,12 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	var underground_choice: Dictionary = app.call("_travel_choice", "small_underground_casino")
 	var apartment_choice: Dictionary = app.call("_travel_choice", "apartment")
 	var corner_store_choice: Dictionary = app.call("_travel_choice", "corner_store")
-	if gas_departure_targets.size() != 3 \
-			or not gas_departure_targets.has("small_underground_casino") or not gas_departure_targets.has("apartment") or not gas_departure_targets.has("corner_store") \
+	if gas_departure_targets.size() != 2 \
+			or not gas_departure_targets.has("small_underground_casino") or not gas_departure_targets.has("corner_store") \
+			or not apartment_choice.is_empty() \
 			or underground_choice.is_empty() or not bool(underground_choice.get("enabled", false)) \
-			or apartment_choice.is_empty() or not bool(apartment_choice.get("enabled", false)) \
 			or corner_store_choice.is_empty() or not bool(corner_store_choice.get("enabled", false)):
-		push_error("The Path A departure map did not expose Underground plus both visited return routes: targets=%s underground=%s apartment=%s corner=%s." % [str(gas_departure_targets), str(underground_choice), str(apartment_choice), str(corner_store_choice)])
+		push_error("The Path A departure map did not expose Underground plus its reachable visited Corner Store return inside the capped route list: targets=%s underground=%s apartment=%s corner=%s." % [str(gas_departure_targets), str(underground_choice), str(apartment_choice), str(corner_store_choice)])
 		return false
 	app.call("open_world_map")
 	for _frame in range(24):
@@ -1435,7 +1449,7 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	var redeem_context: Dictionary = app.call("_coach_context_snapshot")
 	var redeem_lesson: Dictionary = app.get("library").tutorial_lesson("tutorial_gas_redeem")
 	if str((redeem_context.get("action", {}) as Dictionary).get("last_action_id", "")) != "redeem_pull_tab_winners" or not CoachViewModelScript.state_completion_matches(redeem_lesson, redeem_context):
-		push_error("The real pull-tab clerk result could not satisfy Pal's redemption lesson: context=%s lesson=%s." % [str(redeem_context.get("action", {})), str(redeem_lesson.get("completion", {}))])
+		push_error("The real Pull Tabs counter result could not satisfy Pal's redemption lesson: context=%s lesson=%s." % [str(redeem_context.get("action", {})), str(redeem_lesson.get("completion", {}))])
 		return false
 	app.set("last_hook_result", {})
 	app.call("back_to_environment")
@@ -1556,14 +1570,18 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	coach_snapshot = app.get("coach_overlay").call("current_snapshot")
 	var starter_card_in_run_inventory := false
 	if run_state != null:
-		for item_value in _copy_array(run_state.inventory):
-			var item := _copy_dict(item_value)
-			var meta := _copy_dict(item.get("meta_collection", {}))
+		for item_value in JsonCoerceScript._copy_array(run_state.inventory):
+			var item := JsonCoerceScript._copy_dict(item_value)
+			var meta := JsonCoerceScript._copy_dict(item.get("meta_collection", {}))
 			if int(meta.get("instance_id", 0)) == starter_id and str(meta.get("item_class", "")) == "players_card":
 				starter_card_in_run_inventory = true
 				break
 	if run_state == null or run_state.is_tutorial_run() or not bool(run_state.challenge_modifiers().get("grand_casino_prestige", false)) or not starter_card_in_run_inventory or str(coach_snapshot.get("lesson_id", "")).begins_with("tip_first_"):
 		push_error("First normal run after the tutorial did not carry the Players Card/prestige state or repeated an ambient tip: tutorial=%s prestige=%s card=%s coach=%s modifiers=%s inventory=%s." % [str(run_state.is_tutorial_run() if run_state != null else null), str(run_state.challenge_modifiers().get("grand_casino_prestige", false) if run_state != null else null), str(starter_card_in_run_inventory), str(coach_snapshot.get("lesson_id", "")), str(run_state.challenge_modifiers() if run_state != null else {}), str(run_state.inventory if run_state != null else [])])
+		return false
+	var projected_inventory: Array = app.call("_inventory_view_list")
+	if projected_inventory.size() != 1 or str(projected_inventory[0]) != "Grand Casino Players Card" or JSON.stringify(projected_inventory).length() > 80:
+		push_error("Structured meta items leaked raw dictionaries into player-facing inventory text: %s." % JSON.stringify(projected_inventory))
 		return false
 	run_state.current_environment = {"id": "normal_grand_host_ui", "archetype_id": RunState.GRAND_CASINO_ARCHETYPE_ID}
 	app.call("_queue_normal_grand_host_greeting", {"id": "normal_previous_room", "archetype_id": "bar"})
@@ -1590,14 +1608,14 @@ func _check_onboarding_tutorial_ui_flow(app: Control) -> bool:
 	app.call("_refresh")
 	await process_frame
 	var report_screen: RunReportScreen = app.get("run_report_screen")
-	if profile.tutorial_completed or report_screen == null or report_screen.new_run_button.text != "Restart Tutorial" or report_screen.home_button.text != "Start Normal Run" or not str(report_screen.outcome_how.text).contains("Restart the tutorial"):
-		push_error("Tutorial failure did not preserve incomplete state and offer an explicit tutorial restart or normal-start choice.")
+	if not profile.tutorial_completed or report_screen == null or report_screen.new_run_button.text != "Restart Tutorial" or report_screen.home_button.text != "Start Normal Run" or not str(report_screen.outcome_how.text).contains("Restart the tutorial"):
+		push_error("Tutorial failure did not preserve the one-time offer state and expose an explicit tutorial restart or normal-start choice.")
 		return false
 	app.call("_on_run_report_new_run_requested")
 	await process_frame
 	run_state = app.get("run_state")
-	if run_state == null or not run_state.is_tutorial_run() or profile.tutorial_completed:
-		push_error("Tutorial failure replay did not restart First Night without completing onboarding.")
+	if run_state == null or not run_state.is_tutorial_run() or not profile.tutorial_completed:
+		push_error("Tutorial failure replay did not restart First Night while retaining the one-time offer state.")
 		return false
 	run_state.fail_run(RunState.FAILURE_BANKROLL_ZERO, "The tutorial bankroll ran out again.")
 	app.call("_route_failed_run_if_needed")
@@ -1802,7 +1820,7 @@ func _check_showdown_phase_ui(app: Control) -> bool:
 	environment["event_ids"] = [RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID]
 	var run_state := _grand_casino_fixture_run("UI-HOUSE-CALLS-PHASES", environment)
 	run_state.current_environment["turns"] = 0
-	var objective := _copy_dict(run_state.current_environment.get("demo_objective", {}))
+	var objective := JsonCoerceScript._copy_dict(run_state.current_environment.get("demo_objective", {}))
 	run_state.add_suspicion("ui_showdown_phase", int(objective.get("showdown_heat_threshold", 70)), "behavior")
 	run_state.evaluate_environment_objective_state()
 	_set_ui_fixture_run(app, run_state)
@@ -1865,7 +1883,7 @@ func _check_showdown_phase_ui(app: Control) -> bool:
 
 
 func _popup_has_choice(snapshot: Dictionary, choice_id: String) -> bool:
-	for choice_value in _copy_array(snapshot.get("choices", [])):
+	for choice_value in JsonCoerceScript._copy_array(snapshot.get("choices", [])):
 		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == choice_id:
 			return true
 	return false
@@ -2006,8 +2024,11 @@ func _travel_to_target_and_check_games(app: Control, target_id: String) -> bool:
 
 
 func _check_web_travel_cannot_strand_transition(app: Control) -> bool:
-	app.call("start_foundation_run", "UI-WEB-TRAVEL-CONTINUATION")
+	app.call("start_foundation_run", "UI-WEB-TRAVEL-CONTINUATION", {}, false)
 	await process_frame
+	if app.get("run_state") == null:
+		push_error("Web travel regression fixture could not start its standard run.")
+		return false
 	app.set("travel_transition_force_web_runtime_for_test", true)
 	for travel_index in range(2):
 		var run_state: RunState = app.get("run_state")
@@ -2216,9 +2237,10 @@ func _check_scratch_ticket_selected_slot_purchase(app: Control) -> bool:
 	canvas.call("_gui_input", mouse_event)
 	await process_frame
 	var purchased_machine: Dictionary = game.call("_ensure_machine_state", run_state, run_state.current_environment, false)
-	var active_ticket: Dictionary = purchased_machine.get("active_ticket", {}) if typeof(purchased_machine.get("active_ticket", {})) == TYPE_DICTIONARY else {}
-	if active_ticket.is_empty() or str(active_ticket.get("type_id", "")) != selected_type_id:
-		push_error("Clicking scratch vending row 2 resolved against stale row 1 state: expected=%s actual=%s." % [selected_type_id, str(active_ticket.get("type_id", ""))])
+	var tray_stack: Array = purchased_machine.get("tray_stack", []) if typeof(purchased_machine.get("tray_stack", [])) == TYPE_ARRAY else []
+	var tray_ticket: Dictionary = tray_stack[0] if not tray_stack.is_empty() and typeof(tray_stack[0]) == TYPE_DICTIONARY else {}
+	if tray_ticket.is_empty() or str(tray_ticket.get("type_id", "")) != selected_type_id:
+		push_error("Clicking scratch vending row 2 dispensed the stale row 1 ticket: expected=%s actual=%s." % [selected_type_id, str(tray_ticket.get("type_id", ""))])
 		return false
 	if run_state.bankroll != bankroll_before - selected_price:
 		push_error("Scratch vending row 2 charged $%d instead of $%d." % [bankroll_before - run_state.bankroll, selected_price])
@@ -2243,6 +2265,21 @@ func _check_slot_autoplay_button_one_click(app: Control) -> bool:
 	var canvas: Control = app.get("game_surface_canvas")
 	if run_state == null or app.get("current_game") == null or canvas == null:
 		push_error("Slot autoplay one-click fixture could not start the slot surface.")
+		return false
+	var expected_slot_identities := [
+		"pinball:classic_3_reel", "buffalo:line_5x3", "pinball:video_feature",
+		"buffalo:classic_3_reel", "pinball:line_5x3", "buffalo:video_feature",
+	]
+	var actual_slot_identities: Array = []
+	for fixture_index in range(6):
+		var state_key := "slot" if fixture_index == 0 else "slot:%d" % (fixture_index + 1)
+		var fixture_machine := SlotMachineStateScript.peek_machine(run_state.current_environment, state_key)
+		if fixture_machine.is_empty():
+			push_error("Slot practice room did not expose all six machine fixtures; missing %s." % state_key)
+			return false
+		actual_slot_identities.append("%s:%s" % [str(fixture_machine.get("type_id", "")), str(fixture_machine.get("format_id", ""))])
+	if actual_slot_identities != expected_slot_identities:
+		push_error("Slot practice room did not expose the six authored family/format types: %s." % JSON.stringify(actual_slot_identities))
 		return false
 	run_state.bankroll = 100000
 	app.call("_refresh")
@@ -2490,7 +2527,7 @@ func _check_confirmed_all_in_wager_result_then_failure(app: Control) -> bool:
 	return true
 
 
-func _check_presented_bankroll_waits_for_result_reveal(app: Control) -> bool:
+func _check_settled_bankroll_visible_during_result_reveal(app: Control) -> bool:
 	var original_run_state: Variant = app.get("run_state")
 	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))
 	app.call("start_foundation_run", "UI-BANKROLL-PRESENTATION", {}, false)
@@ -2535,7 +2572,7 @@ func _check_presented_bankroll_waits_for_result_reveal(app: Control) -> bool:
 	app.call("_resolve_game_action", "bankroll_fixture_win", false, false, false)
 	await process_frame
 	var settled_bankroll := int((app.call("serialized_run_state") as Dictionary).get("bankroll", -1))
-	var expected_presented := 90
+	var expected_presented := 140
 	if settled_bankroll != 140:
 		var debug_game_value: Variant = app.get("current_game")
 		var debug_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
@@ -2556,7 +2593,7 @@ func _check_presented_bankroll_waits_for_result_reveal(app: Control) -> bool:
 	if int(mid_hud.get("bankroll", -1)) != expected_presented:
 		var debug_canvas := app.get("game_surface_canvas") as Control
 		var debug_surface: Dictionary = debug_canvas.call("surface_runtime_status") if debug_canvas != null else {}
-		push_error("Top HUD spoiled the settled bankroll during result animation: hud=%d hold=%s presented=%d surface=%s." % [
+		push_error("Top HUD lagged behind the settled bankroll during result animation: hud=%d hold=%s presented=%d surface=%s." % [
 			int(mid_hud.get("bankroll", -1)),
 			str(app.get("presented_bankroll_hold_active")),
 			int(app.get("presented_bankroll_value")),
@@ -2564,16 +2601,16 @@ func _check_presented_bankroll_waits_for_result_reveal(app: Control) -> bool:
 		])
 		return false
 	if int(mid_game.get("bankroll", -1)) != expected_presented:
-		push_error("Game snapshot spoiled the settled bankroll during result animation.")
+		push_error("Game snapshot lagged behind the settled bankroll during result animation.")
 		return false
 	if int(mid_save.get("visible_bankroll", -1)) != expected_presented:
-		push_error("Save/status side channel spoiled the settled bankroll during result animation.")
+		push_error("Save/status side channel lagged behind the settled bankroll during result animation.")
 		return false
-	if int(mid_consequence.get("bankroll", -1)) != expected_presented or int(mid_consequence.get("recent_bankroll_delta", 999)) != 0:
-		push_error("Consequence side channel exposed result money before the reveal boundary.")
+	if int(mid_consequence.get("bankroll", -1)) != expected_presented or int(mid_consequence.get("recent_bankroll_delta", 999)) != 40:
+		push_error("Consequence side channel did not expose settled result money during the reveal animation.")
 		return false
 	if int(mid_game.get("stake_max", 999)) > expected_presented:
-		push_error("Stake availability used settled bankroll while result presentation was still active.")
+		push_error("Stake availability exceeded the settled bankroll while result presentation was active.")
 		return false
 	var game_surface_canvas := app.get("game_surface_canvas") as Control
 	if game_surface_canvas == null:
@@ -2745,7 +2782,7 @@ func _check_background_slot_all_in_confirmation(app: Control) -> bool:
 func _check_multi_slot_reentry_uses_selected_fixture(app: Control) -> bool:
 	var original_run_state: Variant = app.get("run_state")
 	var original_dev_game_test_mode := bool(app.get("dev_game_test_mode"))
-	app.call("start_foundation_run", "UI-MULTI-SLOT-REENTRY")
+	app.call("start_foundation_run", "UI-MULTI-SLOT-REENTRY", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	if run_state == null:
@@ -2812,7 +2849,7 @@ func _check_multi_slot_background_autoplay_budget(app: Control) -> bool:
 	if save_service == null or _remove_save_slot(save_service, checkpoint_slot) != OK:
 		push_error("Multi-slot autoplay fixture could not prepare its isolated checkpoint save.")
 		return false
-	app.call("start_foundation_run", "UI-MULTI-SLOT-AUTOPLAY")
+	app.call("start_foundation_run", "UI-MULTI-SLOT-AUTOPLAY", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	if run_state == null:
@@ -2845,15 +2882,22 @@ func _check_multi_slot_background_autoplay_budget(app: Control) -> bool:
 	var after_first_slot_1 := int(SlotMachineStateScript.read_machine(run_state.current_environment, "slot").get("spin_count", 0))
 	var after_first_slot_2 := int(SlotMachineStateScript.read_machine(run_state.current_environment, "slot:2").get("spin_count", 0))
 	var after_first_slot_3 := int(SlotMachineStateScript.read_machine(run_state.current_environment, "slot:3").get("spin_count", 0))
-	if after_first_slot_1 != 11 or after_first_slot_2 != 20 or after_first_slot_3 != 30:
-		push_error("First multi-slot runtime tick should advance only background slot 1; got %d/%d/%d." % [after_first_slot_1, after_first_slot_2, after_first_slot_3])
+	if after_first_slot_1 != 10 or after_first_slot_2 != 20 or after_first_slot_3 != 30:
+		push_error("Background slots advanced during the foreground reel animation; got %d/%d/%d." % [after_first_slot_1, after_first_slot_2, after_first_slot_3])
 		return false
+	var surface_canvas: Control = app.get("game_surface_canvas") as Control
+	surface_canvas.set("surface_animation_channels", {})
+	surface_canvas.set("surface_animation_handoff_until_msec", 0)
+	app.call("_advance_environment_game_runtime")
+	# The scheduler deliberately leaves one quiet process pass between expensive
+	# offscreen settlements so two cabinets cannot create adjacent frame spikes.
+	app.call("_advance_environment_game_runtime")
 	app.call("_advance_environment_game_runtime")
 	var after_second_slot_1 := int(SlotMachineStateScript.read_machine(run_state.current_environment, "slot").get("spin_count", 0))
 	var after_second_slot_2 := int(SlotMachineStateScript.read_machine(run_state.current_environment, "slot:2").get("spin_count", 0))
 	var after_second_slot_3 := int(SlotMachineStateScript.read_machine(run_state.current_environment, "slot:3").get("spin_count", 0))
 	if after_second_slot_1 != 11 or after_second_slot_2 != 20 or after_second_slot_3 != 31:
-		push_error("Second multi-slot runtime tick should advance only background slot 3; got %d/%d/%d." % [after_second_slot_1, after_second_slot_2, after_second_slot_3])
+		push_error("Deferred multi-slot runtime did not drain both background cabinets after the foreground animation; got %d/%d/%d." % [after_second_slot_1, after_second_slot_2, after_second_slot_3])
 		return false
 	var active_keys_after_runtime := JSON.stringify(run_state.current_environment.get("active_game_state_keys", {}))
 	if active_keys_after_runtime != active_keys_before_open:
@@ -2862,6 +2906,9 @@ func _check_multi_slot_background_autoplay_budget(app: Control) -> bool:
 	if str(app.get("current_game_state_key")) != "slot:2":
 		push_error("Background multi-slot runtime did not restore the transient foreground slot fixture.")
 		return false
+	if not _arm_foreground_slot_checkpoint_collision(app, run_state, "slot:2", "slot", "post-deferred-runtime-animation"):
+		return false
+	app.call("_prepare_foundation_run_save")
 	if not _saved_foreground_slot_checkpoint_isolated(save_service, checkpoint_slot, run_state, "slot:2", ["slot", "slot:3"], "background autoplay tick"):
 		return false
 
@@ -2889,13 +2936,22 @@ func _check_multi_slot_background_autoplay_budget(app: Control) -> bool:
 		return false
 	app.call("_invalidate_environment_runtime_schedule", run_state.current_environment)
 	app.call("_advance_environment_game_runtime")
+	if not str(app.get("pending_wager_confirm_source_game_state_key")).is_empty():
+		push_error("Background all-in confirmation interrupted an active foreground Slot animation.")
+		return false
+	surface_canvas.set("surface_animation_channels", {})
+	surface_canvas.set("surface_animation_handoff_until_msec", 0)
+	app.call("_advance_environment_game_runtime")
 	if str(app.get("pending_wager_confirm_source_game_state_key")) != "slot:3":
-		push_error("Background slot 3 did not open its final-bankroll confirmation.")
+		push_error("Background slot 3 did not open its final-bankroll confirmation after the foreground animation.")
 		return false
 	app.call("confirm_pending_wager_action")
 	if str(app.get("current_game_state_key")) != "slot:2" or slot_game.transient_state_key_context() != "slot:2":
 		push_error("Confirmed background slot wager did not restore foreground slot 2 before save preparation.")
 		return false
+	if not _arm_foreground_slot_checkpoint_collision(app, run_state, "slot:2", "slot:3", "post-confirmation-animation"):
+		return false
+	app.call("_prepare_foundation_run_save")
 	if not _saved_foreground_slot_checkpoint_isolated(save_service, checkpoint_slot, run_state, "slot:2", ["slot", "slot:3"], "confirmed background wager"):
 		return false
 	app.call("return_to_main_menu")
@@ -3590,6 +3646,12 @@ func _check_final_demo_objective_hud_matrix(app: Control) -> bool:
 	if str(ready_card.get("tier", "")) != "Silver" or str(ready_card.get("progress", "")).find("Gold") == -1 or (ready_cage_model.get("comp_actions", []) as Array).size() != 2:
 		push_error("Ready Cage counter did not expose exact Gold progress, benefits, and comp controls.")
 		return false
+	var ready_linda_entry: Dictionary = high_roller_run.pending_talk_event("dialogue:linda_cage_services")
+	app.call("_resolve_dialogue_choice", ready_linda_entry, "open_card")
+	var ready_card_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	if not str(ready_card_talk.get("summary", "")).begins_with("Silver. Gold:"):
+		push_error("Linda's rendered Players Card page replaced its live Silver-to-Gold ledger with a generic voice line.")
+		return false
 	while not high_roller_run.next_pending_talk_event().is_empty():
 		high_roller_run.complete_talk_event_resolution(str(high_roller_run.next_pending_talk_event().get("event_id", "")))
 	app.call("_refresh_talk_dock")
@@ -3984,10 +4046,14 @@ func _check_lender_acceptance_does_not_open_motel_popup(app: Control) -> bool:
 	var run_state: RunState = app.get("run_state")
 	run_state.bankroll = 1
 	run_state.economic_state = "volatile"
+	# Keep the unrelated motel event injected so this remains a popup-isolation
+	# regression, but host The Crew in a room with their current authenticated
+	# three-person slot. The strict placement contract no longer permits a test to
+	# synthesize a canvas actor in Motel, where no Crew slot is authored.
 	var environment := {
 		"id": "ui_crew_lender_interrupt_fixture",
-		"archetype_id": "motel",
-		"display_name": "Motel Lender Fixture",
+		"archetype_id": "corner_store",
+		"display_name": "Corner Store Lender Fixture",
 		"kind": "shop",
 		"tier": 1,
 		"turns": 1,
@@ -4184,10 +4250,17 @@ func _check_game_surface_touch_hit_policy() -> bool:
 	root.add_child(touch_canvas)
 	touch_canvas.call("surface_add_hit", Rect2(12, 12, 12, 16), "surface_stake_up")
 	touch_canvas.call("surface_add_exact_hit", Rect2(40, 40, 12, 16), "dense_board_probe")
+	touch_canvas.call("surface_add_invisible_hit", Rect2(64, 40, 12, 16), "invisible_focus_probe")
 	var snapshot: Dictionary = touch_canvas.call("current_view_snapshot")
 	var regions: Array = snapshot.get("surface_hit_actions", [])
 	var control_rect := _surface_hit_rect(regions, "surface_stake_up")
 	var dense_rect := _surface_hit_rect(regions, "dense_board_probe")
+	var invisible_focus_tagged := false
+	for region_value in regions:
+		if typeof(region_value) == TYPE_DICTIONARY \
+				and str((region_value as Dictionary).get("action", "")) == "invisible_focus_probe":
+			invisible_focus_tagged = bool((region_value as Dictionary).get("invisible", false))
+			break
 	var touch_activation := {"count": 0, "action": "", "confirm_requested": false}
 	touch_canvas.connect("surface_action", func(action: String, _index: int, confirm_requested: bool) -> void:
 		touch_activation["count"] = int(touch_activation.get("count", 0)) + 1
@@ -4215,6 +4288,9 @@ func _check_game_surface_touch_hit_policy() -> bool:
 		return false
 	if absf(dense_rect.size.x - 12.0) > 0.001 or absf(dense_rect.size.y - 16.0) > 0.001:
 		push_error("Dense game-board hit regions should keep exact geometry to avoid overlapping betting grids.")
+		return false
+	if not invisible_focus_tagged:
+		push_error("Invisible compatibility hit regions must remain distinguishable from drawn player controls in public snapshots.")
 		return false
 	if int(touch_activation.get("count", 0)) != 1 or str(touch_activation.get("action", "")) != "surface_stake_up" or not bool(touch_activation.get("confirm_requested", false)):
 		push_error("Game surface touch input did not activate the expected hit region exactly once.")
@@ -4343,13 +4419,6 @@ func _object_by_id(objects: Array, object_id: String) -> Dictionary:
 	return {}
 
 
-func _interactable_object_id_with_prefix(objects: Array, prefix: String) -> bool:
-	for object_data in objects:
-		if typeof(object_data) == TYPE_DICTIONARY and str((object_data as Dictionary).get("object_id", "")).begins_with(prefix):
-			return true
-	return false
-
-
 func _canvas_object_by_id(objects: Array, object_id: String) -> Dictionary:
 	for object_data in objects:
 		if typeof(object_data) == TYPE_DICTIONARY and str((object_data as Dictionary).get("id", "")) == object_id:
@@ -4373,7 +4442,7 @@ func _canvas_object_id_with_prefix(objects: Array, prefix: String) -> bool:
 
 func _hidden_world_map_ids(map_data: Dictionary) -> Array:
 	var hidden_ids: Array = []
-	for node_value in _copy_array(map_data.get("nodes", [])):
+	for node_value in JsonCoerceScript._copy_array(map_data.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
 		var node: Dictionary = node_value
@@ -4387,7 +4456,7 @@ func _hidden_world_map_ids(map_data: Dictionary) -> Array:
 
 
 func _world_map_node_by_id(map_data: Dictionary, node_id: String) -> Dictionary:
-	for node_value in _copy_array(map_data.get("nodes", [])):
+	for node_value in JsonCoerceScript._copy_array(map_data.get("nodes", [])):
 		if typeof(node_value) == TYPE_DICTIONARY and str((node_value as Dictionary).get("id", "")) == node_id:
 			return (node_value as Dictionary).duplicate(true)
 	return {}
@@ -4422,37 +4491,6 @@ func _map_canvas_size_equal(a: Dictionary, b: Dictionary) -> bool:
 	return true
 
 
-func _map_marker_centers_equal(a: Dictionary, b: Dictionary) -> bool:
-	var a_centers := _map_marker_centers(a)
-	var b_centers := _map_marker_centers(b)
-	if a_centers.keys().size() != b_centers.keys().size():
-		return false
-	for marker_id_value in a_centers.keys():
-		var marker_id := str(marker_id_value)
-		if not b_centers.has(marker_id):
-			return false
-		var a_position: Vector2 = a_centers.get(marker_id, Vector2.ZERO)
-		var b_position: Vector2 = b_centers.get(marker_id, Vector2.INF)
-		if a_position.distance_to(b_position) > 0.25:
-			return false
-	return true
-
-
-func _map_marker_centers(view: Dictionary) -> Dictionary:
-	var result: Dictionary = {}
-	for marker_value in _copy_array(view.get("icon_markers", [])):
-		if typeof(marker_value) != TYPE_DICTIONARY:
-			continue
-		var marker: Dictionary = marker_value
-		var marker_id := str(marker.get("id", "")).strip_edges()
-		var center_value: Variant = marker.get("screen_center", {})
-		if marker_id.is_empty() or typeof(center_value) != TYPE_DICTIONARY:
-			continue
-		var center: Dictionary = center_value
-		result[marker_id] = Vector2(float(center.get("x", 0.0)), float(center.get("y", 0.0)))
-	return result
-
-
 func _map_icon_marker(markers: Array, node_id: String) -> Dictionary:
 	for marker_value in markers:
 		if typeof(marker_value) != TYPE_DICTIONARY:
@@ -4473,16 +4511,6 @@ func _event_choice_has_trigger_event(event_definition: Dictionary, choice_id: St
 			continue
 		var consequences: Dictionary = choice_data.get("consequences", {}) if typeof(choice_data.get("consequences", {})) == TYPE_DICTIONARY else {}
 		return consequences.has("trigger_event")
-	return false
-
-
-func _category_has_fragment(categories: Array, fragment: String) -> bool:
-	for category in categories:
-		if typeof(category) != TYPE_DICTIONARY:
-			continue
-		var category_data: Dictionary = category
-		if str(category_data.get("id", "")).findn(fragment) != -1 or str(category_data.get("title", "")).findn(fragment) != -1:
-			return true
 	return false
 
 

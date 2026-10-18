@@ -1,5 +1,7 @@
 extends "res://scripts/tests/foundation/check_core_content.gd"
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const SlotsBlackjackAuthorityDriver := preload("res://scripts/tests/foundation/blackjack_authority_test_driver.gd")
 const BarDiceFoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 
@@ -55,6 +57,11 @@ func _check_slot_one_click_spin(definition: Dictionary, failures: Array) -> void
 		failures.append("Slot Spin button still required a second click before resolving.")
 	if JSON.stringify(run_state.to_dict()) != before:
 		failures.append("Slot Spin command mutated RunState before the host resolved the one-click action.")
+	var presentation = SlotPresentationScript.new()
+	var idle_surface: Dictionary = presentation.surface_state(machine, run_state, definition, {"surface_time_msec": 1000})
+	var idle_patch: Dictionary = presentation.realtime_state_patch(machine, run_state, {"surface_time_msec": 1016}, idle_surface)
+	if not bool(idle_patch.get("surface_defer_patch_redraw", false)):
+		failures.append("Slot idle realtime patch bypassed the canvas animation scheduler with a redundant redraw.")
 
 
 func _check_slot_runtime_storage_contract(definition: Dictionary, failures: Array) -> void:
@@ -908,6 +915,8 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 		failures.append("Slot pinball realtime reveal did not activate the takeover.")
 	if not takeover_patch.has("surface_animation_channels") or not takeover_patch.has("slot_skin") or not takeover_patch.has("surface_audio") or not _slot_array(takeover_patch.get("slot_grid", ["stale"])).is_empty():
 		failures.append("Slot pinball realtime reveal returned a partial patch, leaving stale cabinet layout or controls on screen.")
+	if bool(takeover_patch.get("surface_defer_patch_redraw", false)):
+		failures.append("Slot pinball structural takeover deferred its required first redraw.")
 	var takeover_manifest: Dictionary = renderer.render_signature(takeover_patch, definition, 1000, "feature")
 	if not bool(takeover_manifest.get("pinball_takeover_active", false)) or not bool(takeover_manifest.get("pinball_launch_control_visible", false)):
 		failures.append("Slot pinball realtime reveal did not produce an interactive launch takeover.")
@@ -919,6 +928,15 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 	}, takeover_patch)
 	if not bool(latched_patch.get("slot_active_bonus_active", false)) or bool(latched_patch.get("slot_bonus_trigger_reveal_pending", true)):
 		failures.append("Slot pinball reveal handoff regressed to reels after its spin timing channel was removed.")
+	if latched_patch.has("slot_skin") or latched_patch.has("surface_animation_channels") or latched_patch.has("slot_grid"):
+		failures.append("Slot pinball steady-state refresh rebuilt static takeover fields instead of returning a compact live patch.")
+	if not bool(latched_patch.get("surface_defer_patch_redraw", false)):
+		failures.append("Slot pinball steady-state refresh bypassed its active animation scheduler with a duplicate redraw.")
+	var latched_surface := takeover_patch.duplicate(true)
+	latched_surface.merge(latched_patch, true)
+	var latched_manifest: Dictionary = renderer.render_signature(latched_surface, definition, 1100, "feature")
+	if not bool(latched_manifest.get("pinball_takeover_active", false)) or not bool(latched_manifest.get("pinball_launch_control_visible", false)):
+		failures.append("Slot pinball compact live patch did not preserve the installed takeover surface.")
 	var angled_machine: Dictionary = _slot_machine(definition, prelaunch_run, "pinball", "video_feature", "standard", "plain")
 	angled_machine["active_bonus"] = pinball.open_feature(angled_machine, 10, prelaunch_run.create_rng("slot_pin_angle_open"), definition)
 	var angle_step: Dictionary = pinball.step_bonus(angled_machine, "slot_bonus_left", prelaunch_run.create_rng("slot_pin_angle_left"), definition)
@@ -1177,6 +1195,57 @@ func _check_slot_pinball_feature_visual_manifest(definition: Dictionary, failure
 			positions_a,
 			positions_b,
 		])
+	_check_slot_pinball_durable_liveness(definition, failures)
+
+
+func _check_slot_pinball_durable_liveness(definition: Dictionary, failures: Array) -> void:
+	var pinball = SlotFamilyPinballScript.new()
+	var run_state: RunState = _slot_run_state("SLOT-PINBALL-DURABLE-LIVENESS", 100000)
+	var environment: Dictionary = _slot_environment()
+	var machine: Dictionary = _slot_machine(definition, run_state, "pinball", "classic_3_reel", "standard", "plain")
+	var active: Dictionary = pinball.open_feature(machine, 10, run_state.create_rng("slot_pin_durable_open"), definition)
+	machine["active_bonus"] = active
+	var launch: Dictionary = pinball.step_bonus(machine, "slot_bonus_launch", run_state.create_rng("slot_pin_durable_launch"), definition, {"surface_time_msec": 1000})
+	active = _slot_dict(launch.get("active_bonus", {}))
+	machine["active_bonus"] = active
+	if int(active.get("active_ball_count", 0)) <= 0:
+		failures.append("Slot pinball durable liveness fixture failed to launch a live ball.")
+		return
+	_slot_store_machine(run_state, environment, machine)
+	var game = SlotGameScript.new()
+	game.setup(definition)
+	game.checkpoint_surface_ui_state_for_save({}, run_state, environment)
+	var save_service = SaveServiceScript.new()
+	var save_slot := "foundation_pinball_durable_liveness"
+	if save_service.save_run(run_state, save_slot) != OK:
+		failures.append("Slot pinball durable liveness fixture failed to write its JSON save.")
+		return
+	var loaded_value: Variant = save_service.load_run(save_slot)
+	save_service.clear_run(save_slot)
+	if not (loaded_value is RunState):
+		failures.append("Slot pinball durable liveness fixture failed to reload its JSON save.")
+		return
+	var loaded_run := loaded_value as RunState
+	var saved_machine: Dictionary = SlotMachineStateScript.peek_machine(loaded_run.current_environment, "slot")
+	var saved_active: Dictionary = _slot_dict(saved_machine.get("active_bonus", {}))
+	var durable: Dictionary = _slot_dict(saved_active.get(PinballFeatureScript.DURABLE_RUNTIME_KEY, {}))
+	if str(durable.get("schema", "")) != PinballFeatureScript.DURABLE_RUNTIME_SCHEMA:
+		failures.append("Slot pinball save checkpoint omitted its exact in-flight solver state.")
+		return
+	PinballFeatureScript.clear_runtime_session_cache()
+	var cold_first: Dictionary = PinballFeatureScript.surface_refresh(saved_active, 10)
+	var cold_first_status: Dictionary = PinballFeatureScript.live_status(cold_first)
+	var cold_second: Dictionary = PinballFeatureScript.surface_refresh(cold_first, 42)
+	var cold_second_status: Dictionary = PinballFeatureScript.live_status(cold_second)
+	var durable_tick_delta := int(cold_second_status.get("tick", 0)) - int(cold_first_status.get("tick", 0))
+	if int(cold_first_status.get("active_ball_count", 0)) <= 0 or durable_tick_delta <= 0:
+		failures.append("Slot pinball cold restore retained the bonus but froze its in-flight ball: first=%s second=%s." % [JSON.stringify(cold_first_status), JSON.stringify(cold_second_status)])
+	if cold_first.has(PinballFeatureScript.DURABLE_RUNTIME_KEY) or cold_second.has(PinballFeatureScript.DURABLE_RUNTIME_KEY):
+		failures.append("Slot pinball copied its durable solver payload into realtime presentation patches.")
+	print("SLOT_PINBALL_DURABLE_LIVENESS restored_tick_delta=%d active_balls=%d" % [
+		durable_tick_delta,
+		int(cold_second_status.get("active_ball_count", 0)),
+	])
 
 
 func _slot_pinball_visual_sample(definition: Dictionary, format_id: String, inputs: Array, seed: String) -> Dictionary:
@@ -1794,9 +1863,9 @@ func _check_skill_cheat_item_content_reachability(library: ContentLibrary, failu
 		if group_def.is_empty():
 			failures.append("Skill-cheat item support group is missing: %s." % group_id)
 			continue
-		var group_items := _string_array(group_def.get("item_ids", []))
+		var group_items := JsonCoerceScript._string_array(group_def.get("item_ids", []))
 		var shop_pool := library.shop_item_pool_for_challenge([], {"modifiers": {"content_groups": [group_id]}})
-		for item_id_value in _string_array(expectation.get("items", [])):
+		for item_id_value in JsonCoerceScript._string_array(expectation.get("items", [])):
 			var item_id := str(item_id_value)
 			var item_def := library.item(item_id)
 			if item_def.is_empty():
@@ -1804,7 +1873,7 @@ func _check_skill_cheat_item_content_reachability(library: ContentLibrary, failu
 				continue
 			if not group_items.has(item_id):
 				failures.append("Skill-cheat support item %s is not listed in content group %s." % [item_id, group_id])
-			if not _string_array(item_def.get("content_groups", [])).has(group_id):
+			if not JsonCoerceScript._string_array(item_def.get("content_groups", [])).has(group_id):
 				failures.append("Skill-cheat support item %s does not declare content group %s." % [item_id, group_id])
 			if not shop_pool.has(item_id):
 				failures.append("Skill-cheat support item %s is not reachable from shop pools for %s." % [item_id, group_id])
@@ -1959,7 +2028,7 @@ func _check_roulette_spin_lands_on_result(game: GameModule, result_surface: Dict
 	if last_result.is_empty() or trajectory.is_empty():
 		failures.append("Roulette landing fixture missing result or trajectory.")
 		return
-	var sequence := _string_array(result_surface.get("wheel_sequence", []))
+	var sequence := JsonCoerceScript._string_array(result_surface.get("wheel_sequence", []))
 	var count := maxi(1, sequence.size())
 	var winning_index := int(last_result.get("winning_index", -1))
 	if winning_index < 0 or winning_index >= count:
@@ -2321,10 +2390,6 @@ func _grand_casino_game_fixture_run(library: ContentLibrary, boss_archetype: Dic
 	return run_state
 
 
-func _grand_casino_game_cheat_result(game_id: String, game: GameModule, run_state: RunState) -> Dictionary:
-	return _grand_casino_game_cheat_result_for_action(game_id, "", game, run_state)
-
-
 func _grand_casino_game_cheat_result_for_action(game_id: String, action_id: String, game: GameModule, run_state: RunState) -> Dictionary:
 	var environment: Dictionary = run_state.current_environment
 	var rng := run_state.create_rng("c1_%s_heat_result" % game_id)
@@ -2439,23 +2504,12 @@ func _resolve_table_game_surface_contract(game: GameModule, action_id: String, s
 	return result
 
 
-func _skill_contract_bar_dice_palm_ui(game: GameModule, run_state: RunState, environment: Dictionary, base_ui: Dictionary) -> Dictionary:
-	var ui: Dictionary = base_ui.duplicate(true)
-	ui["surface_time_msec"] = int(ui.get("surface_time_msec", 18000))
-	var start_command: Dictionary = game.surface_action_command("bar_dice_palm", 0, false, ui, run_state, environment)
-	var palm_ui: Dictionary = start_command.get("ui_state", ui)
-	var challenge: Dictionary = palm_ui.get("palmed_swap_challenge", {}) if typeof(palm_ui.get("palmed_swap_challenge", {})) == TYPE_DICTIONARY else {}
-	palm_ui["surface_time_msec"] = int(challenge.get("target_msec", int(palm_ui.get("surface_time_msec", 18000))))
-	var lock_command: Dictionary = game.surface_action_command("bar_dice_palm", 0, false, palm_ui, run_state, environment)
-	return lock_command.get("ui_state", palm_ui)
-
-
 func _check_premium_grand_casino_table_contract(library: ContentLibrary, game_id: String, game: GameModule, failures: Array) -> void:
 	var boss_archetype := _archetype_by_id(library, "grand_casino_high_limit")
 	if boss_archetype.is_empty():
 		failures.append("Grand Casino premium %s audit requires the grand_casino_high_limit archetype." % game_id)
 		return
-	if not _string_array(boss_archetype.get("game_pool", [])).has(game_id):
+	if not JsonCoerceScript._string_array(boss_archetype.get("game_pool", [])).has(game_id):
 		failures.append("Grand Casino premium audit expected %s in the High Limit game pool." % game_id)
 		return
 
@@ -2952,27 +3006,44 @@ func _check_surface_bindings_non_mutating(game: GameModule, surface: Dictionary,
 func _check_run_action_service_boundary(library: ContentLibrary, failures: Array) -> void:
 	var item_definition := _first_definition(library.items)
 	var service_definition := _first_definition(library.services)
-	var lender_definition := _first_definition(library.lenders)
+	var lender_definition := library.lender("the_crew")
 	if item_definition.is_empty() or service_definition.is_empty() or lender_definition.is_empty():
-		failures.append("RunActionService boundary check needs item, service, and lender definitions.")
+		failures.append("RunActionService boundary check needs item, service, and the Corner Store's Crew lender definition.")
+		return
+	var fixture_archetype := _archetype_by_id(library, "corner_store")
+	if fixture_archetype.is_empty():
+		failures.append("RunActionService boundary check needs the Corner Store production archetype.")
 		return
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("RUN-ACTION-SERVICE")
 	run_state.bankroll = 200
-	run_state.current_environment = {
-		"id": "run_action_service_room",
-		"display_name": "Run Action Service Room",
-		"kind": "shop",
-		"archetype_id": "run_action_service_fixture",
-		"item_offers": [{
-			"id": str(item_definition.get("id", "")),
-			"display_name": str(item_definition.get("display_name", "")),
-			"price": 1,
-		}],
-		"service_ids": [str(service_definition.get("id", ""))],
-		"lender_hooks": [str(lender_definition.get("id", ""))],
-		"layout": {},
+	var item_id := str(item_definition.get("id", ""))
+	var service_id := str(service_definition.get("id", ""))
+	var lender_id := str(lender_definition.get("id", ""))
+	var fixture_offer := {
+		"id": item_id,
+		"display_name": str(item_definition.get("display_name", "")),
+		"price": 1,
 	}
+	var fixture_environment := EnvironmentInstance.from_archetype(
+		fixture_archetype,
+		1,
+		run_state.create_rng("run_action_service_room"),
+		library
+	).to_dict()
+	fixture_environment["id"] = "run_action_service_room"
+	fixture_environment["display_name"] = "Run Action Service Room"
+	fixture_environment["item_offers"] = [fixture_offer.duplicate(true)]
+	fixture_environment["service_ids"] = [service_id]
+	fixture_environment["lender_hooks"] = [lender_id]
+	fixture_environment["event_ids"] = []
+	# Test-specific membership changes cross the same manifest/layout seam used
+	# by production mutations before the room is installed.
+	fixture_environment["layout"] = EnvironmentInstance.ensure_generated_layout(fixture_environment, library)
+	var installation := run_state.set_environment(fixture_environment)
+	if not bool(installation.get("ok", false)):
+		failures.append("RunActionService boundary fixture could not install its generated room: %s" % JSON.stringify(installation.get("errors", [])))
+		return
 	run_state.environment_history = [{
 		"id": "run_action_service_previous_room",
 		"display_name": "Previous Room",
@@ -2983,26 +3054,24 @@ func _check_run_action_service_boundary(library: ContentLibrary, failures: Array
 	var resolver: RunActionService = RunActionServiceScript.new()
 	resolver.setup(library, run_state)
 
-	var item_id := str(item_definition.get("id", ""))
 	var purchase := resolver.buy_item_offer(item_id)
 	if not bool(purchase.get("ok", false)):
 		failures.append("RunActionService did not buy an item offer: %s" % str(purchase.get("message", "")))
 	elif not run_state.inventory.has(item_id) or not (run_state.current_environment.get("item_offers", []) as Array).is_empty():
 		failures.append("RunActionService item purchase did not add inventory and remove the offer.")
 
-	run_state.current_environment["item_offers"] = [{"id": item_id, "price": 1}]
+	run_state.current_environment["item_offers"] = [fixture_offer.duplicate(true)]
+	run_state.reconcile_current_environment_object_manifest(true)
 	var sale := resolver.sell_inventory_item(item_id)
 	if not bool(sale.get("ok", false)):
 		failures.append("RunActionService did not sell a sellable inventory item: %s" % str(sale.get("message", "")))
 	elif run_state.inventory.has(item_id):
 		failures.append("RunActionService item sale did not remove the sold item from inventory.")
 
-	var service_id := str(service_definition.get("id", ""))
 	var service_result := resolver.use_hook("service", service_id)
 	if bool(resolver.hook_option("service", service_id).get("mutation_supported", false)) and not bool(service_result.get("ok", false)):
 		failures.append("RunActionService did not resolve a supported service hook: %s" % str(service_result.get("message", "")))
 
-	var lender_id := str(lender_definition.get("id", ""))
 	var lender_result := resolver.use_hook("lender", lender_id)
 	if bool(resolver.hook_option("lender", lender_id).get("mutation_supported", false)) and not bool(lender_result.get("ok", false)):
 		failures.append("RunActionService did not resolve a supported lender hook: %s" % str(lender_result.get("message", "")))
@@ -3053,41 +3122,138 @@ func _sb4_dispose_app(app: Control) -> void:
 	app.free()
 
 
-func _sb4_check_blackjack_stale_stake_all_in(library: ContentLibrary, app: Control, failures: Array) -> void:
-	var blackjack: GameModule = _load_surface_contract_game(library, "blackjack", failures)
-	if blackjack == null:
+func _sb4_check_blackjack_stale_stake_all_in(_library: ContentLibrary, app: Control, failures: Array) -> void:
+	var run_state := _sb4_start_blackjack_authority_fixture(app, 20, failures, "cancel")
+	if run_state == null:
 		return
-	var run_state: RunState = RunStateScript.new()
-	run_state.start_new("SB4-BLACKJACK-STALE-STAKE-ALL-IN")
+	if not _sb4_open_blackjack_stale_all_in(app, run_state, 20, "cancel", failures):
+		return
+	app.call("cancel_pending_wager_confirmation")
+	if not _sb4_blackjack_pending_delivery(app, run_state).is_empty():
+		failures.append("Canceling the Blackjack all-in modal left a sealed pending delivery that blocks the next table action.")
+	if bool((app.call("current_event_choice_popup_snapshot") as Dictionary).get("visible", false)):
+		failures.append("Canceling the Blackjack all-in modal left the blocking popup visible.")
+	app.set("selected_stake", 10)
+	app.call("_on_game_surface_action", "blackjack_deal", 0, false)
+	if not _sb4_blackjack_pending_delivery(app, run_state).is_empty():
+		failures.append("A new Blackjack deal after all-in cancellation remained blocked by the canceled sealed delivery.")
+	if run_state.bankroll != 10:
+		failures.append("A clean $10 Blackjack deal after all-in cancellation did not charge exactly once; bankroll=%d." % run_state.bankroll)
+
+	run_state = _sb4_start_blackjack_authority_fixture(app, 20, failures, "confirm")
+	if run_state == null or not _sb4_open_blackjack_stale_all_in(app, run_state, 20, "confirm", failures):
+		return
+	app.call("confirm_pending_wager_action")
+	var confirmed_ledger := _sb4_blackjack_authority_ledger(app, run_state)
+	if not JsonCoerceScript._copy_dict(confirmed_ledger.get("pending_delivery", {})).is_empty():
+		failures.append("Confirming the clamped Blackjack all-in left its sealed delivery pending.")
+	var confirmed_session := JsonCoerceScript._copy_dict(confirmed_ledger.get("session", {}))
+	if int(confirmed_session.get("locked_stake", 0)) != 20 or run_state.bankroll != 0:
+		failures.append("Confirmed Blackjack all-in did not lock and charge the exact displayed $20 stake (locked=%d bankroll=%d)." % [int(confirmed_session.get("locked_stake", 0)), run_state.bankroll])
+	var confirmed_snapshot := JSON.stringify(run_state.to_dict())
+	app.call("confirm_pending_wager_action")
+	if JSON.stringify(run_state.to_dict()) != confirmed_snapshot:
+		failures.append("Repeated Blackjack all-in confirmation mutated the committed hand a second time.")
+
+	run_state = _sb4_start_blackjack_authority_fixture(app, 100, failures, "side-bet")
+	if run_state == null:
+		return
+	var blackjack: GameModule = app.get("current_game")
+	var initial_ledger := _sb4_blackjack_authority_ledger(app, run_state)
+	var initial_surface := blackjack.surface_state(run_state, run_state.current_environment, JsonCoerceScript._copy_dict(initial_ledger.get("session", {})))
+	var side_bet_index := -1
+	var available_side_bets := JsonCoerceScript._copy_array(initial_surface.get("side_bets_available", []))
+	for index in range(available_side_bets.size()):
+		var side_bet := JsonCoerceScript._copy_dict(available_side_bets[index])
+		if bool(side_bet.get("surface_enabled", false)):
+			side_bet_index = index
+			break
+	if side_bet_index < 0:
+		failures.append("Blackjack side-bet stale-stake fixture found no enabled authored side bet.")
+		return
+	app.call("_on_game_surface_action", "blackjack_side_bet", side_bet_index, false)
+	var side_bet_ledger := _sb4_blackjack_authority_ledger(app, run_state)
+	var side_bet_session := JsonCoerceScript._copy_dict(side_bet_ledger.get("session", {}))
+	if JsonCoerceScript._copy_array(side_bet_session.get("blackjack_side_bets", [])).is_empty():
+		failures.append("Blackjack side-bet stale-stake fixture did not stage its side bet through the sealed host.")
+		return
 	run_state.bankroll = 20
-	var environment := _surface_contract_environment()
-	environment["game_ids"] = ["blackjack"]
-	environment["economic_profile"] = {"stake_floor": 1, "stake_ceiling": 100}
-	var table: Dictionary = blackjack.generate_environment_state(run_state, environment, run_state.create_rng("sb4_blackjack_stale_stake_table"))
-	table["patrons"] = []
-	table["side_bets"] = []
-	environment["game_states"] = {"blackjack": table}
-	run_state.set_environment(environment)
-	app.set("library", library)
-	app.set("run_state", run_state)
-	app.set("current_game", blackjack)
-	var game_cache: Dictionary = app.get("game_module_cache")
-	game_cache["blackjack"] = blackjack
-	app.set("game_module_cache", game_cache)
-	app.set("game_surface_ui_state", {})
-	# Reproduce a previous $60 selection after the bankroll has fallen to $20.
+	var side_environment := run_state.current_environment.duplicate(true)
+	side_environment["economic_profile"] = {"stake_floor": 1, "stake_ceiling": 100}
+	run_state.current_environment = side_environment
+	var side_surface := blackjack.surface_state(run_state, run_state.current_environment, side_bet_session)
+	var side_aware_stake := int(side_surface.get("stake_ceiling", 0))
+	if side_aware_stake <= 0 or side_aware_stake >= 20:
+		failures.append("Blackjack side-bet fixture did not establish a reduced affordable main stake; ceiling=%d." % side_aware_stake)
+		return
+	if not _sb4_open_blackjack_stale_all_in(app, run_state, side_aware_stake, "side-bet", failures):
+		return
+	app.call("cancel_pending_wager_confirmation")
+	if not _sb4_blackjack_pending_delivery(app, run_state).is_empty():
+		failures.append("Canceling the side-bet-aware Blackjack all-in left a sealed pending delivery.")
+
+	run_state = _sb4_start_blackjack_authority_fixture(app, 0, failures, "zero-capacity")
+	if run_state == null:
+		return
 	app.set("selected_stake", 60)
-	app.call("_set_current_screen", "GAME")
+	app.call("_on_game_surface_action", "blackjack_deal", 0, false)
+	var zero_popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	if bool(zero_popup.get("visible", false)) or not _sb4_blackjack_pending_delivery(app, run_state).is_empty() or run_state.bankroll != 0:
+		failures.append("Zero-capacity Blackjack input opened or sealed an unaffordable wager (popup=%s pending=%s bankroll=%d)." % [JSON.stringify(zero_popup), JSON.stringify(_sb4_blackjack_pending_delivery(app, run_state)), run_state.bankroll])
+
+
+func _sb4_start_blackjack_authority_fixture(app: Control, bankroll: int, failures: Array, label: String) -> RunState:
+	if not bool(app.call("start_foundation_run", "UI-ALL-IN-RESULT", {}, false)):
+		failures.append("Blackjack %s fixture could not reset the FoundationMain run lifecycle." % label)
+		return null
+	var session: Dictionary = app.call("start_game_test_session", "blackjack")
+	if not bool(session.get("ok", false)):
+		failures.append("Blackjack %s fixture could not enter the canonical game-test session: %s" % [label, JSON.stringify(session.get("errors", []))])
+		return null
+	var run_state: RunState = app.get("run_state")
+	if run_state == null:
+		failures.append("Blackjack %s fixture entered without an active RunState." % label)
+		return null
+	run_state.bankroll = bankroll
+	var environment := run_state.current_environment.duplicate(true)
+	environment["economic_profile"] = {"stake_floor": 1, "stake_ceiling": 100}
+	run_state.current_environment = environment
 	app.call("_hide_event_choice_popup")
+	return run_state
+
+
+func _sb4_open_blackjack_stale_all_in(app: Control, run_state: RunState, expected_stake: int, label: String, failures: Array) -> bool:
+	var bankroll_before := run_state.bankroll
+	app.set("selected_stake", 60)
+	var expected_generic_clamp := int(app.call("_current_selected_stake"))
+	var pre_action_blocked := bool(app.call("_deferred_embedded_refresh_blocks_current_surface_input"))
+	var pre_action_modal := str(app.call("_blocking_modal_message"))
 	app.call("_on_game_surface_action", "blackjack_deal", 0, false)
 	var popup: Dictionary = app.call("current_event_choice_popup_snapshot")
+	var pending := _sb4_blackjack_pending_delivery(app, run_state)
 	if not bool(popup.get("visible", false)) or str(popup.get("popup_type", "")) != "wager_confirmation":
-		failures.append("Blackjack rejected the affordable $20 clamped all-in instead of opening confirmation for a stale $60 selection.")
-	elif int(app.get("pending_wager_confirm_stake")) != 20 or int(app.get("selected_stake")) != 20:
-		failures.append("Blackjack all-in confirmation retained the stale $60 stake instead of the displayed affordable $20 stake.")
-	if run_state.bankroll != 20:
-		failures.append("Blackjack stale-stake all-in changed bankroll before player confirmation.")
-	app.call("cancel_pending_wager_confirmation")
+		var message_label: Label = app.get("message_label") as Label
+		var message_text := message_label.text if message_label != null else ""
+		failures.append("Blackjack %s rejected the affordable clamped all-in (selected=%d generic_clamp=%d expected=%d pending=%s pre_action_blocked=%s pre_action_modal=%s message=%s popup=%s)." % [label, int(app.get("selected_stake")), expected_generic_clamp, expected_stake, JSON.stringify(pending), str(pre_action_blocked), pre_action_modal, message_text, JSON.stringify(popup)])
+		return false
+	if int(app.get("pending_wager_confirm_stake")) != expected_stake or int(app.get("selected_stake")) != expected_stake or int(pending.get("stake", -1)) != expected_stake:
+		var diagnostic_ledger := _sb4_blackjack_authority_ledger(app, run_state)
+		var diagnostic_session := JsonCoerceScript._copy_dict(diagnostic_ledger.get("session", {}))
+		failures.append("Blackjack %s all-in did not seal the exact displayed affordable stake (selected=%d modal=%d delivery=%d expected=%d bankroll=%d locked=%s dealt=%s side_bets=%s session_stake=%s)." % [label, int(app.get("selected_stake")), int(app.get("pending_wager_confirm_stake")), int(pending.get("stake", -1)), expected_stake, run_state.bankroll, str(diagnostic_session.get("locked_stake", null)), str(not JsonCoerceScript._copy_array(diagnostic_session.get("dealer_cards", [])).is_empty()), JSON.stringify(diagnostic_session.get("blackjack_side_bets", [])), str(diagnostic_session.get("selected_stake", null))])
+		return false
+	if run_state.bankroll != bankroll_before:
+		failures.append("Blackjack %s all-in changed bankroll before confirmation." % label)
+		return false
+	return true
+
+
+func _sb4_blackjack_authority_ledger(app: Control, run_state: RunState) -> Dictionary:
+	var value: Variant = app.call("_sealed_action_host_ledger", run_state, false, false)
+	return JsonCoerceScript._copy_dict(value)
+
+
+func _sb4_blackjack_pending_delivery(app: Control, run_state: RunState) -> Dictionary:
+	return JsonCoerceScript._copy_dict(_sb4_blackjack_authority_ledger(app, run_state).get("pending_delivery", {}))
 
 
 func _sb4_check_background_runtime_does_not_block_active_game(library: ContentLibrary, app: Control, failures: Array) -> void:
@@ -3362,7 +3528,9 @@ func _sb4_first_triggerable_event_id(library: ContentLibrary, run_state: RunStat
 
 
 func _sb4_check_wager_modal_routes(library: ContentLibrary, app: Control, failures: Array) -> void:
-	app.call("start_foundation_run", "SB4-WAGER-MODAL")
+	if not bool(app.call("start_foundation_run", "UI-ALL-IN-RESULT", {}, false)):
+		failures.append("SB.4 all-in wager modal coverage could not start its known-viable foundation run.")
+		return
 	var run_state: RunState = app.get("run_state")
 	if run_state == null:
 		failures.append("SB.4 all-in wager modal coverage could not start a run.")
@@ -3599,7 +3767,7 @@ func _mutation_firewall_game_run_state(library: ContentLibrary, game: GameModule
 		"stake_floor": 1,
 		"stake_ceiling": 200,
 	}
-	var game_states := _copy_dict(environment.get("game_states", {}))
+	var game_states := JsonCoerceScript._copy_dict(environment.get("game_states", {}))
 	var generated_state := game.generate_environment_state(run_state, environment, run_state.create_rng("mutation_firewall_state_%s" % game_id))
 	if not generated_state.is_empty():
 		game_states[game_id] = generated_state.duplicate(true)
@@ -3890,7 +4058,7 @@ func _check_one_machine_challenge(library: ContentLibrary, failures: Array) -> v
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("ONE-MACHINE-GEN", config)
 	var environment := EnvironmentInstance.from_archetype(slot_archetype, 1, run_state.create_rng("one_machine"), library, run_state.challenge_config)
-	for game_id in _string_array(environment.game_ids):
+	for game_id in JsonCoerceScript._string_array(environment.game_ids):
 		if game_id != "slot":
 			failures.append("One Machine generated non-slot game %s." % game_id)
 
@@ -3925,7 +4093,7 @@ func _first_definition(values: Array) -> Dictionary:
 
 func _count_string_occurrences(values: Variant, target: String) -> int:
 	var count := 0
-	for id in _string_array(values):
+	for id in JsonCoerceScript._string_array(values):
 		if str(id) == target:
 			count += 1
 	return count
@@ -3943,13 +4111,6 @@ func _foundation_string_occurrence_count(text: String, needle: String) -> int:
 		count += 1
 		offset = found + needle.length()
 	return count
-
-
-func _dictionary_has_key_prefix(values: Dictionary, prefix: String) -> bool:
-	for key in values.keys():
-		if str(key).begins_with(prefix):
-			return true
-	return false
 
 
 func _surface_harness_has_action(harness, action_id: String) -> bool:
@@ -4168,7 +4329,8 @@ func _bar_dice_play_round(game: GameModule, run_state: RunState, _rng: RngStream
 	command = host.call("_sealed_action_host_surface_intent", "bar_dice_reveal", 0, false)
 	command = host.call("_sealed_action_host_surface_intent", "bar_dice_ack_call", 0, false)
 	var delivery: Dictionary = command.get("_sealed_action_host_delivery", {})
-	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", action_id, stake, delivery)
+	var prepared: Dictionary = command.get("_sealed_action_host_prepared", {}) if typeof(command.get("_sealed_action_host_prepared", {})) == TYPE_DICTIONARY else {}
+	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", action_id, stake, delivery, prepared)
 	host.free()
 	return result
 

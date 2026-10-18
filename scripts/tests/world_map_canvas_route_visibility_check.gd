@@ -21,6 +21,7 @@ func _init() -> void:
 
 func _run() -> void:
 	_check_run_map_location_visibility_contract()
+	_check_destination_nameplates_fit_text()
 	await _check_zoomed_route_geometry_survives()
 	await _check_scroll_zoom_and_drag_pan()
 	await _check_overlay_routes_navigation_events()
@@ -41,6 +42,16 @@ func _check_run_map_location_visibility_contract() -> void:
 	_check(not FoundationTravelViewModelScript.world_map_node_should_render(host, revealed_seen, false, false), "Seen but unvisited locations should stay hidden when they are not currently travelable.")
 	_check(FoundationTravelViewModelScript.world_map_node_should_render(host, revealed_seen, false, true), "An unvisited location should appear while it is a currently travelable destination.")
 	_check(FoundationTravelViewModelScript.world_map_node_should_render(host, visited, false, false), "A visited location should remain visible when it is no longer reachable from the current stop.")
+
+
+func _check_destination_nameplates_fit_text() -> void:
+	var canvas: WorldMapCanvas = WorldMapCanvasScript.new()
+	canvas.size = Vector2(540.0, 390.0)
+	var short_rect: Rect2 = canvas.call("_destination_node_label_rect", Vector2(270.0, 180.0), {"id": "bar", "label": "Bar"})
+	var long_rect: Rect2 = canvas.call("_destination_node_label_rect", Vector2(270.0, 180.0), {"id": "underground", "label": "Small Underground Casino"})
+	_check(short_rect.has_area() and long_rect.has_area(), "Destination nameplates must produce visible bordered bounds.")
+	_check(long_rect.size.x > short_rect.size.x, "Destination nameplate borders must measure their location text instead of using one fixed width.")
+	canvas.free()
 
 
 func _check_zoomed_route_geometry_survives() -> void:
@@ -72,6 +83,9 @@ func _check_zoomed_route_geometry_survives() -> void:
 	await process_frame
 	var initial_view := canvas.current_view_snapshot()
 	_check(_array(initial_view.get("visible_route_segments", [])).size() >= 2, "Initial map did not expose travel route segments.")
+	for marker_value in _array(initial_view.get("icon_markers", [])):
+		var marker: Dictionary = marker_value
+		_check(not str(marker.get("label", "")).strip_edges().is_empty(), "Visible travel-map marker did not expose its readable destination label.")
 	var selected_snapshot := initial_view.duplicate(true)
 	selected_snapshot["selected_node_id"] = "north"
 	selected_snapshot["map_focus_node_ids"] = ["north"]
@@ -136,6 +150,8 @@ func _check_overlay_routes_navigation_events() -> void:
 			break
 	_check(test_button != null, "Travel-map overlay did not create a clickable location target.")
 	if test_button != null:
+		_check(test_button.text.is_empty(), "The invisible map hit target rendered duplicate location text over its icon.")
+		_check(not test_button.accessibility_name.strip_edges().is_empty() and not test_button.tooltip_text.strip_edges().is_empty(), "The text-free map hit target lost its accessible location identity.")
 		_check(test_button.get_signal_connection_list("mouse_entered").is_empty(), "Map location target still has a hover-selection callback.")
 		test_button.mouse_entered.emit()
 		await process_frame
@@ -163,6 +179,21 @@ func _check_overlay_routes_navigation_events() -> void:
 		test_button.pressed.emit()
 		await process_frame
 		_check(click_events.size() == 1, "Travel-map button-up recovery duplicated a normally completed node click.")
+		# A camera/layout frame can hide a moving pooled button before BaseButton
+		# emits button_up. The stationary holder's release must still complete the
+		# captured location click instead of leaving travel selection inert.
+		controller.sync_node_buttons(map_snapshot)
+		click_events.clear()
+		test_button.button_down.emit()
+		test_button.visible = false
+		var canceled_release := InputEventMouseButton.new()
+		canceled_release.button_index = MOUSE_BUTTON_LEFT
+		canceled_release.pressed = false
+		canceled_release.position = Vector2(400.0, 215.0)
+		_check(controller.handle_holder_gui_input(canceled_release), "Travel-map holder did not recover a moving node whose release signal was canceled.")
+		await process_frame
+		_check(click_events.size() == 1, "Travel-map holder release recovery did not complete the canceled moving-node click exactly once.")
+		controller.sync_node_buttons(map_snapshot)
 	var before: Dictionary = canvas.current_view_snapshot().get("map_bounds", {})
 	var wheel := InputEventMouseButton.new()
 	wheel.button_index = MOUSE_BUTTON_WHEEL_UP

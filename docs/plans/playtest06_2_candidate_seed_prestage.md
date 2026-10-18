@@ -27,7 +27,7 @@ single-process catalog-discovery helper.
 | `PLAYTEST-CATALOG-01` | Historical diagnostic candidate: 13 generated archetypes, eight game ids, Vault Drop, and twelve scenario assignments were reported at `9b52c27a`, but the local output was not retained. | Natural travel or completion of any game, machine goal, scenario branch, or major route. |
 
 The structured form is
-`tools/playtest06_2_candidate_seeds.json`. Every row is deliberately
+`tools/archive/playtest06_2/playtest06_2_candidate_seeds.json`. Every row is deliberately
 `CANDIDATE`, even where an earlier branch recorded a pass, because the owner
 must play one later frozen tree.
 
@@ -44,7 +44,7 @@ unfinished release-gate lane or is diagnostic-only.
 Run:
 
 ```powershell
-powershell -NoProfile -File tools/playtest06_2_seed_manifest_contract.ps1
+powershell -NoProfile -File tools/archive/playtest06_2/playtest06_2_seed_manifest_contract.ps1
 ```
 
 In `PRESTAGE` this checks schema, Git provenance, unique seed identity, catalog
@@ -55,13 +55,13 @@ it proves structure, not reachability.
 The negative/positive promotion fixtures are executable with:
 
 ```powershell
-powershell -NoProfile -File tools/playtest06_2_seed_manifest_contract_test.ps1
+powershell -NoProfile -File tools/archive/playtest06_2/playtest06_2_seed_manifest_contract_test.ps1
 ```
 
 Finalization must change the manifest to `FINAL` and run:
 
 ```powershell
-powershell -NoProfile -File tools/playtest06_2_seed_manifest_contract.ps1 `
+powershell -NoProfile -File tools/archive/playtest06_2/playtest06_2_seed_manifest_contract.ps1 `
   -RequireFinal -ExpectedTestedCommit <frozen-owner-build-commit>
 ```
 
@@ -107,7 +107,7 @@ in the file for provenance, but it cannot satisfy a final slot.
 Create the local, non-release owner build only with:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/playtest06_owner_build.ps1 `
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/archive/playtest06/playtest06_owner_build.ps1 `
   -CandidateCommit <frozen-owner-build-commit> -RequireGodot
 ```
 
@@ -126,7 +126,7 @@ committed owner-build-manifest SHA-256.
 
 ## Catalog-discovery helper
 
-`tools/playtest06_2_seed_catalog_probe.gd` extends the already-landed
+`tools/archive/playtest06_2/playtest06_2_seed_catalog_probe.gd` extends the already-landed
 `scenario_seed_audit.gd` pattern rather than replacing it. It loads content
 once, generates a map for each seed, records first-visit archetype/game/scenario
 assignments and pusher variations, and selects a greedy subset that maximizes
@@ -140,7 +140,7 @@ $sourceCommit = (git rev-parse HEAD).Trim()
 $sourceTree = (git rev-parse "$sourceCommit`^{tree}").Trim()
 $godotHash = (Get-FileHash -LiteralPath $godot -Algorithm SHA256).Hash.ToLowerInvariant()
 & $godot --headless --path . `
-  --script res://tools/playtest06_2_seed_catalog_probe.gd -- `
+  --script res://tools/archive/playtest06_2/playtest06_2_seed_catalog_probe.gd -- `
   --seeds=PLAYTEST-CATALOG-01,PLAYTEST-CATALOG-02,SCENARIO-AUDIT `
   --out=res://.tmp/playtest06_2/catalog_probe.json `
   "--source-commit=$sourceCommit" "--source-tree=$sourceTree" `

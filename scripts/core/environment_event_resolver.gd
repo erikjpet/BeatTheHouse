@@ -1,6 +1,8 @@
 class_name EnvironmentEventResolver
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Single authority for environment event candidate filtering and selection.
 # Catalog analysis and EnvironmentInstance generation both consume this code so
 # interaction modes, scopes, required ids, count ranges, and unique-class
@@ -8,12 +10,12 @@ extends RefCounted
 
 
 static func candidate_ids(archetype: Dictionary, event_definitions: Array) -> Array:
-	var pool := _string_array(archetype.get("event_pool", []))
+	var pool := JsonCoerceScript._string_array(archetype.get("event_pool", []))
 	if event_definitions.is_empty():
 		# A raw pool is not event authority. Callers without validated definitions
 		# fail closed through the same resolver path as an empty ContentLibrary.
 		return []
-	var scopes := _string_array(archetype.get("event_scopes", []))
+	var scopes := JsonCoerceScript._string_array(archetype.get("event_scopes", []))
 	var result: Array = []
 	for definition_value in event_definitions:
 		if typeof(definition_value) != TYPE_DICTIONARY:
@@ -37,7 +39,7 @@ static func select_ids(archetype: Dictionary, event_definitions: Array, rng: Var
 	var count := _count(archetype.get("event_count", 1), rng)
 	var picked := _pick_ids_with_required(candidates, count, required, rng)
 	var resolved := _filter_unique_event_ids(picked, event_definitions)
-	return rng.pick_many(resolved, resolved.size())
+	return rng.shuffled(resolved)
 
 
 # Exact membership envelope over every selection permitted by the authored
@@ -103,7 +105,7 @@ static func selection_contract(archetype: Dictionary, event_definitions: Array) 
 
 static func _required_ids(archetype: Dictionary, candidates: Array) -> Array:
 	var result: Array = []
-	for required_id in _string_array(archetype.get("required_event_ids", [])):
+	for required_id in JsonCoerceScript._string_array(archetype.get("required_event_ids", [])):
 		if candidates.has(required_id) and not result.has(required_id):
 			result.append(required_id)
 	return result
@@ -175,7 +177,7 @@ static func _unique_class_blockers(event_id: String, candidates: Array, definiti
 
 
 static func _event_fits(definition: Dictionary, scopes: Array) -> bool:
-	var event_scopes := _string_array(definition.get("scopes", []))
+	var event_scopes := JsonCoerceScript._string_array(definition.get("scopes", []))
 	if event_scopes.has("any"):
 		return true
 	for scope in scopes:
@@ -208,17 +210,6 @@ static func _definitions_by_id(event_definitions: Array) -> Dictionary:
 		var event_id := str(definition.get("id", "")).strip_edges()
 		if not event_id.is_empty() and not result.has(event_id):
 			result[event_id] = definition
-	return result
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for item in value as Array:
-		var text := str(item).strip_edges()
-		if not text.is_empty() and not result.has(text):
-			result.append(text)
 	return result
 
 

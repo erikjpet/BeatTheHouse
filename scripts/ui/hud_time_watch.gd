@@ -1,6 +1,9 @@
 class_name HudTimeWatch
 extends Control
 
+# Compact animated HUD clock that formats the run minute, honors reduced motion,
+# and exposes a stable snapshot for UI checks.
+
 var _minute_of_day := 0
 
 

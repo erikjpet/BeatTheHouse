@@ -1,0 +1,18 @@
+# Beat the House GDScript lint policy (Godot 4.6 / gdtoolkit 4.x).
+# Indentation is tabs. Class member sections use one separating blank line and
+# top-level functions use two; gdformat owns blank-line layout while gdlint
+# enforces parsing, naming, trailing whitespace, and mixed indentation.
+disable:
+- class-definitions-order
+- function-arguments-number
+- max-file-lines
+- max-line-length
+- max-public-methods
+- no-elif-return
+- no-else-return
+- private-method-call
+function-arguments-number: 1000
+max-file-lines: 50000
+max-line-length: 1000
+max-public-methods: 5000
+load-constant-name: ([A-Z][a-z0-9]*)+(Script|Scene)

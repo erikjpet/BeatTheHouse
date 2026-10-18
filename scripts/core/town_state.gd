@@ -1,6 +1,11 @@
 class_name TownState
 extends RefCounted
 
+# Persistent deterministic town simulation for conditions, schedules,
+# progressive meters, generation overrides, and action-time advancement.
+
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const CONDITIONS_PATH := "res://data/town/conditions.json"
 const TownNetworkScript := preload("res://scripts/core/town_network.gd")
 const PoliceSweepModelScript := preload("res://scripts/core/police_sweep_model.gd")
@@ -42,6 +47,7 @@ var _scenario_weight_by_id: Dictionary = {}
 var _travel_profile: Dictionary = {}
 var _music_modifier_profile: Dictionary = {}
 var _economic_modifier_profile: Dictionary = {}
+var _condition_rumor_signature: Array = []
 
 
 static func conditions() -> Dictionary:
@@ -69,12 +75,65 @@ func generate(p_seed_value: int, source_conditions: Dictionary = {}) -> void:
 	_generate_calendar(root_rng.fork("town_calendar"))
 	_generate_happenings(root_rng.fork("town_happenings"))
 	progressive_meters = {}
+	_condition_rumor_signature = []
 	living_world = TownNetworkScript.new()
 	living_world.generate(seed_value)
 	police_sweep = PoliceSweepModelScript.new()
 	police_sweep.reset(seed_value, _police_sweep_config())
 	if _host_capability != null: police_sweep.bind_host_capability(_host_capability)
 	_refresh_current_profiles()
+
+
+# Replaces only the requested generation-time town conditions. Environment
+# practice uses this after the ordinary seeded schedule has been generated, so
+# "default" remains byte-for-byte normal generation while exact selections use
+# the same authored condition definitions and modifier pipeline.
+func apply_generation_overrides(overrides: Dictionary) -> Dictionary:
+	var errors: Array = []
+	var weather_id := str(overrides.get("weather", "")).strip_edges()
+	if not weather_id.is_empty():
+		if not WEATHER_IDS.has(weather_id) or not _weather_definition_by_id.has(weather_id):
+			errors.append("Unknown weather condition: %s" % weather_id)
+		else:
+			var weather_definition := _dictionary(_weather_definition_by_id.get(weather_id, {}))
+			weather_schedule = [{
+				"id": weather_id,
+				"start_action": 0,
+				"end_action": turn_horizon,
+				"modifiers": _dictionary(weather_definition.get("modifiers", {})).duplicate(true),
+			}]
+			_rebuild_weather_index()
+	var day_type_id := str(overrides.get("day_type", "")).strip_edges()
+	if not day_type_id.is_empty():
+		var selected_day: Dictionary = {}
+		for definition in JsonCoerceScript._dictionary_array(_dictionary(_conditions.get("calendar", {})).get("cycle", [])):
+			if str(definition.get("id", "")) == day_type_id:
+				selected_day = definition.duplicate(true)
+				break
+		if selected_day.is_empty() or not DAY_TYPE_IDS.has(day_type_id):
+			errors.append("Unknown calendar condition: %s" % day_type_id)
+		else:
+			selected_day["duration_actions"] = turn_horizon
+			calendar_cycle = [selected_day]
+			calendar_offset_actions = 0
+	if overrides.has("happenings"):
+		var requested := JsonCoerceScript._raw_string_array(overrides.get("happenings", []))
+		var exact_happenings: Array = []
+		for happening_id in requested:
+			if not HAPPENING_IDS.has(happening_id) or not _happening_definition_by_id.has(happening_id):
+				errors.append("Unknown town happening: %s" % happening_id)
+				continue
+			var happening_definition := _dictionary(_happening_definition_by_id.get(happening_id, {}))
+			exact_happenings.append({
+				"id": happening_id,
+				"display_name": str(happening_definition.get("display_name", _display_name(happening_id))),
+				"start_action": 0,
+				"end_action": turn_horizon,
+				"modifiers": _dictionary(happening_definition.get("modifiers", {})).duplicate(true),
+			})
+		happenings = exact_happenings
+	_refresh_current_profiles()
+	return {"ok": errors.is_empty(), "errors": errors}
 
 
 func restore(source: Dictionary, p_seed_value: int, source_conditions: Dictionary = {}) -> bool:
@@ -86,11 +145,12 @@ func restore(source: Dictionary, p_seed_value: int, source_conditions: Dictionar
 	action_index = maxi(0, int(source.get("action_index", 0)))
 	turn_horizon = maxi(1, int(source.get("turn_horizon", DEFAULT_TURN_HORIZON)))
 	_conditions = source_conditions if not source_conditions.is_empty() else conditions()
-	weather_schedule = _dictionary_array(source.get("weather_schedule", []))
-	calendar_cycle = _dictionary_array(source.get("calendar_cycle", []))
+	weather_schedule = JsonCoerceScript._dictionary_array(source.get("weather_schedule", []))
+	calendar_cycle = JsonCoerceScript._dictionary_array(source.get("calendar_cycle", []))
 	calendar_offset_actions = maxi(0, int(source.get("calendar_offset_actions", 0)))
-	happenings = _dictionary_array(source.get("happenings", []))
+	happenings = JsonCoerceScript._dictionary_array(source.get("happenings", []))
 	progressive_meters = _dictionary(source.get("progressive_meters", {})).duplicate(true) if source_schema >= 3 else {}
+	_condition_rumor_signature = []
 	living_world = TownNetworkScript.new()
 	var living_world_value: Variant = source.get("living_world", {})
 	if typeof(living_world_value) == TYPE_DICTIONARY and not (living_world_value as Dictionary).is_empty():
@@ -179,6 +239,7 @@ func configure_world(map_data: Dictionary, synchronize_rumor_facts: bool = true)
 		living_world = TownNetworkScript.new()
 		living_world.generate(seed_value)
 	living_world.configure_world(map_data)
+	_condition_rumor_signature = []
 	if police_sweep == null:
 		police_sweep = PoliceSweepModelScript.new()
 		police_sweep.reset(seed_value, _police_sweep_config())
@@ -291,8 +352,8 @@ func rumor_facts(fact_class: String = "") -> Array:
 	return living_world.rumor_facts(fact_class) if living_world != null else []
 
 
-func rumors_for_venue(node_id: String, speaker_side: String, count: int = 1, rng: RngStream = null) -> Array:
-	return living_world.rumors_for_venue(node_id, speaker_side, count, rng) if living_world != null else []
+func rumors_for_venue(node_id: String, speaker_side: String, count: int = 1, rng: RngStream = null, fact_class: String = "") -> Array:
+	return living_world.rumors_for_venue(node_id, speaker_side, count, rng, fact_class) if living_world != null else []
 
 
 func hear_rumor(rumor_id: String) -> Dictionary:
@@ -415,6 +476,41 @@ func snapshot(deep_copy_seeded_definitions: bool = true) -> Dictionary:
 	}
 
 
+# Destination previews read the current town profiles and may seed one scenario
+# or character-chain rumor. Retain immutable schedules/profile indexes and fork
+# only the living-world tables that those operations can change.
+func detached_travel_preview_candidate() -> TownState:
+	var candidate := get_script().new() as TownState
+	candidate.seed_value = seed_value
+	candidate.action_index = action_index
+	candidate.turn_horizon = turn_horizon
+	candidate.weather_schedule = weather_schedule
+	candidate.calendar_cycle = calendar_cycle
+	candidate.calendar_offset_actions = calendar_offset_actions
+	candidate.happenings = happenings
+	candidate.living_world = living_world.detached_travel_preview_candidate() if living_world != null else null
+	candidate.police_sweep = police_sweep
+	candidate.progressive_meters = progressive_meters
+	candidate._conditions = _conditions
+	candidate._weather_by_action = _weather_by_action
+	candidate._weather_segment_by_action = _weather_segment_by_action
+	candidate._weather_definition_by_id = _weather_definition_by_id
+	candidate._happening_definition_by_id = _happening_definition_by_id
+	candidate._weather_id = _weather_id
+	candidate._day_type_id = _day_type_id
+	candidate._active_happening_ids = _active_happening_ids
+	candidate._active_happening_lookup = _active_happening_lookup
+	candidate._active_town_flags = _active_town_flags
+	candidate._scenario_weight_by_tag = _scenario_weight_by_tag
+	candidate._scenario_weight_by_archetype = _scenario_weight_by_archetype
+	candidate._scenario_weight_by_id = _scenario_weight_by_id
+	candidate._travel_profile = _travel_profile
+	candidate._music_modifier_profile = _music_modifier_profile
+	candidate._economic_modifier_profile = _economic_modifier_profile
+	candidate._condition_rumor_signature = _condition_rumor_signature
+	return candidate
+
+
 func public_snapshot() -> Dictionary:
 	var visible_happenings := active_happenings()
 	var visible_flags: Array = _active_town_flags.keys()
@@ -431,17 +527,17 @@ func public_snapshot() -> Dictionary:
 
 func _index_definitions() -> void:
 	_weather_definition_by_id = {}
-	for definition in _dictionary_array(_conditions.get("weather_states", [])):
+	for definition in JsonCoerceScript._dictionary_array(_conditions.get("weather_states", [])):
 		_weather_definition_by_id[str(definition.get("id", ""))] = definition
 	_happening_definition_by_id = {}
 	var happening_config := _dictionary(_conditions.get("happenings", {}))
-	for definition in _dictionary_array(happening_config.get("definitions", [])):
+	for definition in JsonCoerceScript._dictionary_array(happening_config.get("definitions", [])):
 		_happening_definition_by_id[str(definition.get("id", ""))] = definition
 
 
 func _generate_weather_schedule(rng: RngStream) -> void:
 	weather_schedule = []
-	var definitions := _dictionary_array(_conditions.get("weather_states", []))
+	var definitions := JsonCoerceScript._dictionary_array(_conditions.get("weather_states", []))
 	if definitions.is_empty():
 		definitions = [{"id": "clear", "dwell_actions": [turn_horizon, turn_horizon], "modifiers": {}}]
 	var definition_index := rng.randi_range(0, definitions.size() - 1)
@@ -481,7 +577,7 @@ func _rebuild_weather_index() -> void:
 
 func _generate_calendar(rng: RngStream) -> void:
 	var calendar := _dictionary(_conditions.get("calendar", {}))
-	calendar_cycle = _dictionary_array(calendar.get("cycle", []))
+	calendar_cycle = JsonCoerceScript._dictionary_array(calendar.get("cycle", []))
 	if calendar_cycle.is_empty():
 		calendar_cycle = [{"id": "midweek", "duration_actions": turn_horizon, "modifiers": {}}]
 	var period := _calendar_period()
@@ -492,7 +588,7 @@ func _generate_happenings(rng: RngStream) -> void:
 	happenings = []
 	var happening_config := _dictionary(_conditions.get("happenings", {}))
 	var definitions: Array = []
-	for definition in _dictionary_array(happening_config.get("definitions", [])):
+	for definition in JsonCoerceScript._dictionary_array(happening_config.get("definitions", [])):
 		var spawn_chance := clampi(int(definition.get("spawn_chance_percent", 100)), 0, 100)
 		if spawn_chance <= 0 or (spawn_chance < 100 and rng.randi_range(1, 100) > spawn_chance):
 			continue
@@ -545,8 +641,8 @@ func _refresh_current_profiles() -> void:
 func _sync_condition_rumor_facts() -> void:
 	if living_world == null or living_world.node_metadata.is_empty():
 		return
-	living_world.remove_rumor_facts(TownNetworkScript.RUMOR_CLASS_CONDITION)
 	var sources: Array = []
+	var source_signature: Array = []
 	for happening in happenings:
 		var start_action := maxi(0, int(happening.get("start_action", 0)))
 		var end_action := maxi(start_action + 1, int(happening.get("end_action", start_action + 1)))
@@ -555,14 +651,17 @@ func _sync_condition_rumor_facts() -> void:
 		var happening_id := str(happening.get("id", "")).strip_edges()
 		if happening_id.is_empty():
 			continue
+		var display_name := str(happening.get("display_name", happening_id.replace("_", " ").capitalize()))
+		var condition_line := "%s is moving through town." % display_name
 		sources.append({
 			"source_id": happening_id,
-			"display_name": str(happening.get("display_name", happening_id.replace("_", " ").capitalize())),
-			"condition_line": "%s is moving through town." % str(happening.get("display_name", happening_id.replace("_", " ").capitalize())),
+			"display_name": display_name,
+			"condition_line": condition_line,
 			"start_action": start_action,
 			"end_action": end_action,
 			"incoming_window_actions": 12,
 		})
+		source_signature.append([happening_id, display_name, condition_line, start_action, end_action])
 	for segment in weather_schedule:
 		var start_action := maxi(0, int(segment.get("start_action", 0)))
 		var end_action := maxi(start_action + 1, int(segment.get("end_action", start_action + 1)))
@@ -571,33 +670,53 @@ func _sync_condition_rumor_facts() -> void:
 		var weather_id := str(segment.get("id", "clear")).strip_edges()
 		if weather_id == "clear":
 			continue
+		var source_id := "weather:%s:%d" % [weather_id, start_action]
+		var display_name := _display_name(weather_id)
+		var condition_line := "%s is moving in." % display_name
 		sources.append({
-			"source_id": "weather:%s:%d" % [weather_id, start_action],
-			"display_name": _display_name(weather_id),
-			"condition_line": "%s is moving in." % _display_name(weather_id),
+			"source_id": source_id,
+			"display_name": display_name,
+			"condition_line": condition_line,
 			"start_action": start_action,
 			"end_action": end_action,
 			"incoming_window_actions": 12,
 		})
+		source_signature.append([source_id, display_name, condition_line, start_action, end_action])
 	var node_ids: Array = living_world.node_metadata.keys()
 	node_ids.sort()
+	var cass_modifiers: Dictionary = {}
+	var traveler_signature: Array = []
+	for node_id_value in node_ids:
+		var node_id := str(node_id_value)
+		var cass_modifier := living_world.departed_traveler_modifier(node_id, "cass_rival_counter")
+		if cass_modifier.is_empty():
+			continue
+		cass_modifiers[node_id] = cass_modifier
+		traveler_signature.append([node_id, int(cass_modifier.get("departed_action", action_index)), action_index + maxi(1, int(cass_modifier.get("remaining_actions", 1)))])
+	var silas_state := living_world.traveler_state("silas_snitch")
+	var silas_node := str(silas_state.get("node_id", ""))
+	traveler_signature.append([silas_node, int(silas_state.get("arrived_action", action_index)), int(silas_state.get("depart_action", action_index + 1))])
+	var next_signature := [node_ids, source_signature, traveler_signature]
+	if next_signature == _condition_rumor_signature:
+		living_world.touch_rumor_facts(TownNetworkScript.RUMOR_CLASS_CONDITION)
+		return
+	_condition_rumor_signature = next_signature
+	living_world.remove_rumor_facts(TownNetworkScript.RUMOR_CLASS_CONDITION)
 	for source in sources:
 		for node_id_value in node_ids:
 			var node_id := str(node_id_value)
 			var source_id := str(source.get("source_id", ""))
 			var payload: Dictionary = (source as Dictionary).duplicate(true)
 			payload["target_node_id"] = node_id
-			living_world.register_rumor_fact(
+			living_world.register_owned_rumor_fact(
 				TownNetworkScript.RUMOR_CLASS_CONDITION,
 				"condition:%s:%s" % [source_id.replace(":", "_"), node_id],
 				payload
 			)
-	for node_id_value in node_ids:
+	for node_id_value in cass_modifiers.keys():
 		var node_id := str(node_id_value)
-		var cass_modifier := living_world.departed_traveler_modifier(node_id, "cass_rival_counter")
-		if cass_modifier.is_empty():
-			continue
-		living_world.register_rumor_fact(TownNetworkScript.RUMOR_CLASS_CONDITION, "condition:cass_left:%s" % node_id, {
+		var cass_modifier: Dictionary = cass_modifiers[node_id]
+		living_world.register_owned_rumor_fact(TownNetworkScript.RUMOR_CLASS_CONDITION, "condition:cass_left:%s" % node_id, {
 			"target_node_id": node_id,
 			"source_id": "cass_rival_counter",
 			"display_name": "Cass Venn",
@@ -606,10 +725,8 @@ func _sync_condition_rumor_facts() -> void:
 			"end_action": action_index + maxi(1, int(cass_modifier.get("remaining_actions", 1))),
 			"incoming_window_actions": 0,
 		})
-	var silas_state := living_world.traveler_state("silas_snitch")
-	var silas_node := str(silas_state.get("node_id", ""))
 	if not silas_node.is_empty():
-		living_world.register_rumor_fact(TownNetworkScript.RUMOR_CLASS_CONDITION, "condition:silas_drinks:%s" % silas_node, {
+		living_world.register_owned_rumor_fact(TownNetworkScript.RUMOR_CLASS_CONDITION, "condition:silas_drinks:%s" % silas_node, {
 			"target_node_id": silas_node,
 			"source_id": "silas_snitch",
 			"display_name": "Silas Crow",
@@ -633,7 +750,7 @@ func _sync_sweep_rumor_facts() -> void:
 	var recent_node := previous_node if not previous_node.is_empty() else current_node
 	var age := maxi(0, action_index - int(sweep.get("arrived_action", action_index)))
 	var heading_name := _living_world_node_label(heading_node) if not heading_node.is_empty() else "out of town"
-	living_world.register_rumor_fact(TownNetworkScript.RUMOR_CLASS_SWEEP, "sweep:recent", {
+	living_world.register_owned_rumor_fact(TownNetworkScript.RUMOR_CLASS_SWEEP, "sweep:recent", {
 		"target_node_id": recent_node,
 		"source_id": "police_sweep",
 		"fact_detail": "there %d turns ago, headed toward %s" % [age, heading_name],
@@ -641,7 +758,7 @@ func _sync_sweep_rumor_facts() -> void:
 		"truth_node_id": current_node,
 	})
 	if not heading_node.is_empty():
-		living_world.register_rumor_fact(TownNetworkScript.RUMOR_CLASS_SWEEP, "sweep:heading", {
+		living_world.register_owned_rumor_fact(TownNetworkScript.RUMOR_CLASS_SWEEP, "sweep:heading", {
 			"target_node_id": heading_node,
 			"source_id": "police_sweep",
 			"fact_detail": "headed this way from %s" % _living_world_node_label(current_node),
@@ -665,7 +782,7 @@ func _sync_progressive_rumor_fact(meter_id: String) -> void:
 		return
 	var value := maxi(0, int(meter.get("value", 0)))
 	var detail := "fat at $%d" % value if value >= 240 else "building at $%d" % value if value >= 170 else "thin at $%d" % value
-	living_world.register_rumor_fact(VAULT_PROGRESSIVE_RUMOR_CLASS, "vault:%s" % str(meter.get("target_node_id", meter_id)), {
+	living_world.register_owned_rumor_fact(VAULT_PROGRESSIVE_RUMOR_CLASS, "vault:%s" % str(meter.get("target_node_id", meter_id)), {
 		"target_node_id": str(meter.get("target_node_id", "")),
 		"target_name": str(meter.get("target_name", meter.get("target_node_id", ""))),
 		"source_id": meter_id,
@@ -791,16 +908,6 @@ func _display_name(id: String) -> String:
 
 static func _dictionary(value: Variant) -> Dictionary:
 	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
-
-
-static func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry_value in value as Array:
-		if typeof(entry_value) == TYPE_DICTIONARY:
-			result.append((entry_value as Dictionary).duplicate(true))
-	return result
 
 
 static func _int_range(value: Variant, fallback_min: int, fallback_max: int) -> Array:

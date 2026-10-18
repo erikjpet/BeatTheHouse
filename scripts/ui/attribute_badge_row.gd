@@ -145,12 +145,6 @@ static func warm_all_glyphs(glyph_size: int = DEFAULT_GLYPH_SIZE) -> void:
 		var glyph_id := str(glyph_id_value)
 		for polarity in ["class", "neutral", "good", "bad"]:
 			texture_for_badge({"glyph_id": glyph_id, "polarity": polarity}, glyph_size, false)
-
-
-static func texture_cache_size() -> int:
-	return _texture_cache.size()
-
-
 static func texture_for_badge(badge: Dictionary, glyph_size: int = DEFAULT_GLYPH_SIZE, include_frame: bool = false) -> Texture2D:
 	var glyph_id := str(badge.get("glyph_id", "")).strip_edges()
 	if glyph_id.is_empty():

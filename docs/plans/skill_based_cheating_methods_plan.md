@@ -1,38 +1,41 @@
 # Skill-Based Cheating Methods Plan
 
-Status: **IMPLEMENTED DESIGN LOCK** for the unreleased 0.4.0 candidate.
+Status: **IMPLEMENTED DESIGN LOCK active in the current 0.6 source.**
 Symbol names and shared result contracts remain authoritative; numeric line
 references in the source-check section are historical and should not be used
 for navigation after later architecture work.
 Date: 2026-07-01
+Current-source review: 2026-10-08
 
-This document defines the shared skill-cheat contract for Act 1. It is a
-design-only plan: no gameplay code changes are implied here. T2.2-T2.5 implement
-the four Phase 1 cheats against this contract, and T2.6 audits every existing
-cheat/advantage action for the same reporting shape.
+This document defines the implemented shared skill-cheat contract for Act 1.
+T2.2-T2.5 originally implemented the four Phase 1 cheats against this contract,
+and T2.6 audited every existing cheat/advantage action for the same reporting
+shape. Later 0.6 game-depth work extends the game-specific surfaces while
+retaining these authority and result fields.
 
 ## Source Check
 
-The plan was cross-checked against these current implementation points:
+The plan was cross-checked against these current implementation points. Stable
+symbols are named instead of line numbers so routine source movement does not
+make this reference stale:
 
-- `scripts/games/blackjack.gd:4188` starts the count challenge, `:4406` syncs
-  icons, and `:4489` finalizes the challenge.
-- `scripts/games/blackjack.gd:745` finalizes an unanswered count before
-  settlement; `:772` selects `legal`, `risky`, or `cheat`; `:803` records the
-  pit-boss fields.
-- `scripts/core/game_module.gd:68` builds cheat action rows with
-  security/pit-boss pressure; `:311` defines the current skill action kinds;
-  `:386` normalizes skill-cheat result fields; `:471` applies result deltas and
-  calls Grand Casino result recording.
-- `scripts/core/run_state.gd:409` applies alcohol heat scaling; `:473` exposes
-  `security_risk_bonus`; `:492` exposes `security_action_pressure`; `:733`
-  records Grand Casino game evidence; `:1462` exposes `pit_boss_watch_status`.
-- `docs/plans/grand_casino_endgame_design.md:155` defines cheat evidence, and
-  `:173` defines staff attention sources.
-- Current non-blackjack cheats are immediate or ad hoc: video poker
-  `mark_holds`, bar dice `loaded_toss`/`palmed_swap`, roulette
-  `read_wheel_bias`/`roulette_nudge`, baccarat `read_baccarat_shoe`, pull-tab
-  detector/tarot/x-ray paths, and slot `nudge`.
+- `scripts/games/blackjack.gd` owns `_start_count_challenge()`,
+  `_sync_count_challenge_icons()`, `_finalize_count_challenge()`, settlement
+  preview/finalization, and `_persist_counter_surveillance()`.
+- `scripts/core/game_module.gd` exposes `cheat_actions()`, recognizes the
+  `cheat`/`risky`/`advantage` action kinds, normalizes them through
+  `normalize_skill_cheat_contract()`, and applies authoritative results through
+  `apply_result()`.
+- `scripts/core/run_state.gd` owns `alcohol_adjusted_suspicion_delta()`,
+  `security_risk_bonus()`, `security_action_pressure()`,
+  `record_grand_casino_game_result()`, and `pit_boss_watch_status()`.
+- `docs/plans/grand_casino_endgame_design.md` defines cheat evidence under
+  **Living Rourke and Rival Cheaters** and staff attention in the same contract.
+- Current non-blackjack paths include graded video-poker holdout and Bar Dice
+  controlled-roll challenges, Roulette past posting and wheel reading,
+  Baccarat shoe reading and edge-sort memory, Pull Tab detector/tarot paths,
+  and the slot nudge. All use the shared normalized result/security contract;
+  game-specific fields remain supplemental diagnostics.
 
 ## 1. Shared Skill-Cheat Contract
 
@@ -159,11 +162,11 @@ of run/table/challenge ids. Never call `randomize()`, `randf()`, or `randi()`.
 
 ### T2.2 Video Poker: Holdout Timing Window
 
-Current state: `mark_holds` immediately arms an ideal-card holdout and resolves
-on draw. It reports `skill_outcome = "holdout_card"` and shared heat fields, but
-there is no timing skill check.
+0.6 implementation: `mark_holds` arms a visible palm timing challenge during
+the draw. The graded result controls whether the seeded holdout card lands and
+reports the shared skill, story, Heat, and watched-state fields.
 
-Target: turn `mark_holds` into a visible palm timing challenge during the draw.
+Implemented design: `mark_holds` becomes a visible palm timing challenge during the draw.
 The player still chooses/marks holds, then must click or press during a palm
 window as the draw animation opens the replacement-card gap.
 
@@ -199,14 +202,14 @@ Items and alcohol:
 
 ### T2.3 Bar Dice: Controlled-Roll Timing Meter
 
-Current state: `loaded_toss` and `palmed_swap` directly alter dice before
-settlement, then report heat and skill outcome. They do not ask the player to
-perform a controlled throw.
+0.6 implementation: `loaded_toss` opens the controlled-roll timing meter and
+grades the throw before settlement. `palmed_swap` remains a direct table cheat
+but reports through the same normalized result and security fields.
 
-Target: make `loaded_toss` the controlled-roll skill cheat. The player arms the
+Implemented design: `loaded_toss` is the controlled-roll skill cheat. The player arms the
 loaded toss, sees a throw meter sweep across desired die faces, and releases in
-the target band. `palmed_swap` remains a cheat action but T2.6 must make its
-reporting match the shared contract if T2.3 does not upgrade it.
+the target band. `palmed_swap` remains a direct cheat action and its reporting
+matches the shared contract.
 
 Challenge state:
 
@@ -239,10 +242,11 @@ Items and alcohol:
 
 ### T2.4 Roulette: Past-Post Reaction Window
 
-Current state: roulette supports reading wheel bias and nudging the wheel before
-the ball drops. It does not model a past-post move after "no more bets."
+0.6 implementation: Roulette supports legal wheel-bias reading and a separate
+past-post reaction challenge after "no more bets" and before payout. Already
+paid results cannot be changed.
 
-Target: add a past-post cheat that opens only after no-more-bets and before
+Implemented design: the past-post cheat opens only after no-more-bets and before
 payout. The player reacts to the visible final rotor/ball result and tries to
 place or move one chip in a short post-result window. This is a reaction check,
 not a pre-spin nudge.
@@ -276,10 +280,11 @@ Items and alcohol:
 
 ### T2.5 Baccarat: Edge-Sort Observation Memory
 
-Current state: `read_baccarat_shoe` immediately reads shoe tempo for heat. It
-does not ask the player to observe and remember edge cues across hands.
+0.6 implementation: `read_baccarat_shoe` provides the immediate advantage read,
+while `edge_sort` observes and remembers deterministic edge cues across hands
+and resets with the shoe.
 
-Target: add an edge-sort observation/memory cheat across shoe hands. The surface
+Implemented design: edge sorting is an observation/memory cheat across shoe hands. The surface
 shows subtle card-back orientation or shoe-cut cues when cards leave the shoe.
 The player must remember cue sequences and use them before a later bet.
 
@@ -433,21 +438,20 @@ Per-task focus:
 
 ## 6. T2.6 Enforcement Notes
 
-T2.6 should audit these current gaps after T2.2-T2.5 land:
+T2.6 closed the following original gaps after T2.2-T2.5 landed:
 
-- Video poker and bar dice already set some shared skill fields, but must gain
-  actual graded checks and complete `skill_story_context`.
-- Roulette and baccarat currently report heat/watch data for immediate read
-  cheats; they need explicit `skill_outcome`, `skill_grade`, and contract tests.
+- Video Poker and Bar Dice gained actual graded checks and complete
+  `skill_story_context`.
+- Roulette and Baccarat now report explicit `skill_outcome`, `skill_grade`,
+  Heat/watch data, and contract evidence for their read and active cheat paths.
 - Pull tabs have several cheat-like paths (`tab_detector_scan`, detector-aided
-  buys, suspicious redemption) and should report the shared fields whenever the
+  buys, suspicious redemption) and report the shared fields whenever the
   action kind is `cheat`.
-- Slot nudge already has a coin-chain timing grade; T2.6 should map
+- Slot nudge keeps its coin-chain timing grade and maps
   `slot_nudge_skill_outcome` into `skill_outcome`/`skill_grade` at the shared
   contract layer while preserving slot-specific diagnostics.
-- Blackjack count challenge remains the reference implementation, but it should
-  also be audited for the same `skill_grade`/`skill_story_context` expectations
-  so the contract is truly cross-game.
+- Blackjack's count challenge remains the reference implementation and uses the
+  same `skill_grade`/`skill_story_context` expectations.
 
 T2.6 implementation note:
 

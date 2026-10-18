@@ -8,7 +8,6 @@ const RITUAL_ID := "grand_casino.showdown_duel"
 const STATE_VERSION := 1
 const PHASES := ["approach", "seating", "response", "commitment", "reveal", "phase_break", "crowd_change", "outcome_staging", "exit"]
 const DUEL_OUTCOMES := ["walk_out_clean", "shown_the_door", "taken_out_back"]
-const ROUTES := ["high_roller_cashout", "pit_boss_showdown", "crew_heist"]
 const PUBLIC_CREW_FIELDS := ["member_id", "presentation_id", "pose", "public_state"]
 const PUBLIC_CREW_STATES := ["present", "supporting", "departing"]
 const PRODUCT_PROJECTION_CONTRACT := "showdown_duel_public_surface/1"

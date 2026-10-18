@@ -210,7 +210,7 @@ func _command(state: Dictionary, definition: Dictionary, command_id: String, rec
 		for action_value in _array(interaction.get("available_actions", [])):
 			if str(_dict(action_value).get("id", "")) == command_id: object_id = str(interaction.get("stable_object_id", ""))
 	var descriptor := Runtime._command_descriptor(state, definition, "scenario", object_id, command_id)
-	return Runtime.command(command_id,"package_c_runtime_node",str(state.get("phase_id","")),receipt_id,{},"scenario",object_id,str(descriptor.get("action_origin_owner_namespace","scenario")),str(descriptor.get("action_origin_stable_object_id",object_id)),str(descriptor.get("action_origin_receipt_key","")),str(descriptor.get("action_origin_boundary_id","")),str(descriptor.get("action_origin_fingerprint","")))
+	return Runtime.command(FunctionOptions.scenario_sequence_command(command_id, "package_c_runtime_node", str(state.get("phase_id", "")), receipt_id, {"payload": {}, "owner_namespace": "scenario", "stable_object_id": object_id, "action_origin_owner_namespace": str(descriptor.get("action_origin_owner_namespace", "scenario")), "action_origin_stable_object_id": str(descriptor.get("action_origin_stable_object_id", object_id)), "action_origin_receipt_key": str(descriptor.get("action_origin_receipt_key", "")), "action_origin_boundary_id": str(descriptor.get("action_origin_boundary_id", "")), "action_origin_fingerprint": str(descriptor.get("action_origin_fingerprint", ""))}))
 
 func _fact_route(state: Dictionary, definition: Dictionary, fact_type: String, payload: Dictionary, fact_id: String) -> Dictionary:
 	var fact := Runtime.fact(fact_type,_producer(fact_type),"package_c_runtime_node",fact_id,1,1,payload)

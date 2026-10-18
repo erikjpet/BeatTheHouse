@@ -1,12 +1,16 @@
 class_name FoundationHudBar
 extends PanelContainer
 
+# Main run HUD for money, bankroll, time, Heat, debt, and status feedback,
+# including compact layout and reduced-motion behavior.
+
 signal time_requested
 
 const SegmentedMeterScript := preload("res://scripts/ui/segmented_meter.gd")
 const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const HudTimeWatchScript := preload("res://scripts/ui/hud_time_watch.gd")
 const HeatFeedbackVisualsScript := preload("res://scripts/ui/heat_feedback_visuals.gd")
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 
 var wallet_value: Label
 var wallet_delta: Label
@@ -104,14 +108,7 @@ func render(model: Dictionary) -> void:
 	var bankroll_delta := int(model.get("bankroll_delta", observed_delta))
 	if bankroll_delta == 0:
 		bankroll_delta = observed_delta
-	render_bankroll(bankroll, bankroll_delta)
-
-	var show_chips := bool(model.get("show_chips", false))
-	if chips_chip.visible != show_chips:
-		chips_chip.visible = show_chips
-	var chips_text := "%d" % int(model.get("chips", 0))
-	if chips_value.text != chips_text:
-		chips_value.text = chips_text
+	render_money(bankroll, int(model.get("chips", 0)), bool(model.get("show_chips", false)), bankroll_delta)
 
 	var heat := float(model.get("heat_level", 0.0))
 	heat_meter.configure("heat", heat)
@@ -127,6 +124,20 @@ func render(model: Dictionary) -> void:
 
 	render_clock(model)
 	_render_status_icons(model.get("status_icons", []))
+
+
+func render_money(bankroll: int, chips: int, show_chips: bool, bankroll_delta: int = 0) -> void:
+	if wallet_value == null:
+		return
+	var observed_delta := bankroll - _last_bankroll if _has_rendered else 0
+	if bankroll_delta == 0:
+		bankroll_delta = observed_delta
+	render_bankroll(bankroll, bankroll_delta)
+	if chips_chip.visible != show_chips:
+		chips_chip.visible = show_chips
+	var chips_text := "%d" % chips
+	if chips_value.text != chips_text:
+		chips_value.text = chips_text
 
 
 func render_bankroll(bankroll: int, bankroll_delta: int = 0) -> void:
@@ -194,8 +205,6 @@ func current_snapshot() -> Dictionary:
 		snapshot["mode"] = mode
 		snapshot["meta_fields"] = _meta_field_snapshot()
 	return snapshot
-
-
 # Returns the rectangle of the control the player actually sees. Tutorial
 # focus must never target the hidden legacy status label that predates this HUD.
 func global_rect_for_element(element_id: String) -> Rect2:
@@ -484,6 +493,7 @@ func _render_status_icons(statuses_value: Variant) -> void:
 			continue
 		var status: Dictionary = status_value
 		var icon_rect := TextureRect.new()
+		icon_rect.set_meta("status_id", str(status.get("id", "")))
 		icon_rect.texture = UIArtScript.icon(str(status.get("icon", "alert")))
 		icon_rect.custom_minimum_size = VisualStyle.ICON_SMALL
 		icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -535,9 +545,4 @@ func _clock_parts(model: Dictionary) -> Dictionary:
 
 
 func _exact_time_label(minute_of_day: int) -> String:
-	var normalized := posmod(minute_of_day, 1440)
-	var hour_24 := int(floor(float(normalized) / 60.0))
-	var hour_12 := hour_24 % 12
-	if hour_12 == 0:
-		hour_12 = 12
-	return "%d:%02d %s" % [hour_12, normalized % 60, "AM" if hour_24 < 12 else "PM"]
+	return PlayerTextScript.format_time_of_day(minute_of_day)

@@ -18,7 +18,7 @@ state machine lives in `scripts/core/run_state.gd` under the canonical
 contract in `docs/plans/grand_casino_endgame_design.md` (ids
 `the_house_calls`, `casino_taken_out_back`, and the flag families are
 BINDING). This file is self-contained; the design contract is
-`docs/plans/0.5_grand_casino_rework_plan.md` section 7 (phases 1-3) —
+`docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` section 7 (phases 1-3) —
 read both first. Requires slices 1-3 and 5 landed; re-verify actual code.
 
 ## Task

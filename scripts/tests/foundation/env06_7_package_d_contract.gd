@@ -260,7 +260,7 @@ func _check_package_presentation_contract(definition: Dictionary, entry: Diction
 
 func _runtime_command(state: Dictionary, definition: Dictionary, command_id: String, node_id: String, receipt_id: String, stable_object_id: String) -> Dictionary:
 	var descriptor := Runtime._command_descriptor(state, definition, "scenario", stable_object_id, command_id)
-	return Runtime.command(command_id, node_id, str(state.get("phase_id", "")), receipt_id, {}, "scenario", stable_object_id, str(descriptor.get("action_origin_owner_namespace", "scenario")), str(descriptor.get("action_origin_stable_object_id", stable_object_id)), str(descriptor.get("action_origin_receipt_key", "")), str(descriptor.get("action_origin_boundary_id", "")), str(descriptor.get("action_origin_fingerprint", "")))
+	return Runtime.command(FunctionOptions.scenario_sequence_command(command_id, node_id, str(state.get("phase_id", "")), receipt_id, {"payload": {}, "owner_namespace": "scenario", "stable_object_id": stable_object_id, "action_origin_owner_namespace": str(descriptor.get("action_origin_owner_namespace", "scenario")), "action_origin_stable_object_id": str(descriptor.get("action_origin_stable_object_id", stable_object_id)), "action_origin_receipt_key": str(descriptor.get("action_origin_receipt_key", "")), "action_origin_boundary_id": str(descriptor.get("action_origin_boundary_id", "")), "action_origin_fingerprint": str(descriptor.get("action_origin_fingerprint", ""))}))
 
 
 func _success_verbs(definition: Dictionary) -> Array:

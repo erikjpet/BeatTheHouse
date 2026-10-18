@@ -27,6 +27,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_public_identity(library, archetype, failures)
 	_check_l2_baseline(layers, failures)
 	_check_generation_and_tutorial(library, archetype, failures)
+	_check_layer_scoped_sequence_projection(library, archetype, failures)
 	_check_production_scenario_layer_entry(library, failures)
 	_check_discovery_and_save(library, archetype, failures)
 	_check_back_room_access(library, archetype, failures)
@@ -84,6 +85,8 @@ static func _check_l2_baseline(layers: Dictionary, failures: Array) -> void:
 			failures.append("Punchline L2 changed pre-rework canonical field %s (baseline %s)." % [field_name, str(baseline.get("baseline_sha256", "missing"))])
 	if _array(casino.get("game_pool", [])) != ["slot", "blackjack", "video_poker"] or int(_dict(casino.get("economic_profile", {})).get("stake_floor", -1)) != 10:
 		failures.append("Punchline L2 gameplay pool/stakes no longer match the shipped underground venue.")
+	if _array(casino.get("required_game_ids", [])) != ["slot", "blackjack", "video_poker"]:
+		failures.append("Punchline L2 must guarantee its slot, blackjack, and video-poker machines on every generated run.")
 
 
 static func _check_generation_and_tutorial(library: ContentLibrary, archetype: Dictionary, failures: Array) -> void:
@@ -95,11 +98,20 @@ static func _check_generation_and_tutorial(library: ContentLibrary, archetype: D
 	if _array(normal.get("layer_ambient_lines", [])).size() < 4 or str(normal.get("layer_ambient_line", "")).is_empty():
 		failures.append("Punchline club did not generate its deterministic rotating stage bit.")
 	var object_rects := _dict(_dict(normal.get("layout", {})).get("object_rects", {}))
+	var slot_bindings := _dict(_dict(normal.get("layout", {})).get("slot_bindings", {}))
 	if not object_rects.has("environment_layer:ambient") or not object_rects.has("environment_layer:casino"):
 		failures.append("Punchline layer fixtures were not assigned stable transition-time layout surfaces.")
-	if not object_rects.has("numbers:book") or _layout_overlap_count(object_rects) != 0:
-		failures.append("Punchline club did not place the Numbers book on its single collision-free generated layout plane.")
-	normal_run.set_environment(normal)
+	# EnvironmentInstance owns capacity only. Numbers presence is conditional and
+	# must not appear until the room is installed into its authoritative RunState.
+	if object_rects.has("numbers:book") or slot_bindings.has("numbers:book"):
+		failures.append("Raw Punchline generation projected a Numbers book before RunState supplied live venue presence.")
+	var installed := normal_run.set_environment(normal)
+	var installed_rects := _dict(_dict(normal_run.current_environment.get("layout", {})).get("object_rects", {}))
+	var installed_bindings := _dict(_dict(normal_run.current_environment.get("layout", {})).get("slot_bindings", {}))
+	if not bool(installed.get("ok", false)) \
+			or str(_dict(installed_bindings.get("numbers:book", {})).get("presentation_mode", "")) != "room" \
+			or not installed_rects.has("numbers:book") or _layout_overlap_count(installed_rects) != 0:
+		failures.append("Punchline club did not project the live Numbers book onto a collision-free layout after RunState installation.")
 	var ambient_before := str(normal_run.current_environment.get("layer_ambient_line", ""))
 	normal_run.advance_environment_turns(1)
 	if str(normal_run.current_environment.get("layer_ambient_line", "")) != ambient_before:
@@ -114,9 +126,21 @@ static func _check_generation_and_tutorial(library: ContentLibrary, archetype: D
 	if not bool(RunGeneratorScript.new(library).enter_environment_layer(normal_run, "casino", true).get("ok", false)) or normal_run.environment_history.size() != history_before or normal_run.bankroll != bankroll_before or normal_run.game_clock_minutes != clock_before:
 		failures.append("Punchline interior navigation behaved like world travel or charged the run.")
 	var casino_object_rects := _dict(_dict(normal_run.current_environment.get("layout", {})).get("object_rects", {}))
-	if not casino_object_rects.has("numbers:book") or not casino_object_rects.has("game:video_poker") \
-			or _layout_overlap_count(casino_object_rects) != 0:
-		failures.append("Punchline casino did not compose Numbers and all three games on one collision-free layout plane.")
+	var casino_bindings := _dict(_dict(normal_run.current_environment.get("layout", {})).get("slot_bindings", {}))
+	var casino_game_ids := _array(normal_run.current_environment.get("game_ids", []))
+	var casino_games_grounded := casino_game_ids == ["slot", "blackjack", "video_poker"]
+	for game_id_value in casino_game_ids:
+		casino_games_grounded = casino_games_grounded and casino_object_rects.has("game:%s" % str(game_id_value))
+	if not casino_games_grounded or str(_dict(casino_bindings.get("numbers:book", {})).get("presentation_mode", "")) != "room" \
+			or not casino_object_rects.has("numbers:book") or _layout_overlap_count(casino_object_rects) != 0:
+		failures.append("Punchline casino did not compose its slot, blackjack, video-poker, and physical Numbers book on one collision-free layout plane.")
+	for seed_index in range(32):
+		var seed_run := RunStateScript.new()
+		seed_run.start_new("PUNCHLINE-REQUIRED-GAMES-%02d" % seed_index)
+		var seeded_casino := EnvironmentInstanceScript.from_archetype_layer(archetype, "casino", 2, seed_run.create_rng("punchline"), library).to_dict()
+		if _array(seeded_casino.get("game_ids", [])) != ["slot", "blackjack", "video_poker"]:
+			failures.append("Punchline casino omitted a required slot, blackjack, or video-poker game for deterministic seed %02d." % seed_index)
+			break
 	var tutorial_config := library.challenge_config_for("tutorial_first_card", "IGNORED")
 	var tutorial_run := RunStateScript.new()
 	tutorial_run.start_new("PUNCHLINE-TUTORIAL", tutorial_config)
@@ -125,6 +149,62 @@ static func _check_generation_and_tutorial(library: ContentLibrary, archetype: D
 		failures.append("Tutorial compatibility override did not enter Punchline L2 with the shipped blackjack/invitation flow.")
 	if int(_dict(tutorial.get("economic_profile", {})).get("stake_floor", -1)) != 10 or int(_dict(tutorial.get("economic_profile", {})).get("game_stake_floor_overrides", {}).get("blackjack", -1)) != 5:
 		failures.append("Tutorial Punchline L2 lost the pre-rework underground stake contract.")
+
+
+static func _check_layer_scoped_sequence_projection(library: ContentLibrary, archetype: Dictionary, failures: Array) -> void:
+	var definition := library._runtime_validated_scenario_definition(library.scenario("punchline_open_mic_night"))
+	if definition.is_empty():
+		failures.append("Punchline Open Mic scenario definition is missing.")
+		return
+	var run_state := RunStateScript.new()
+	run_state.start_new("PUNCHLINE-SCOPED-SEQUENCE")
+	run_state.cache_runtime_scenario_definition(definition)
+	var generated := EnvironmentInstanceScript.from_archetype(archetype, 2, run_state.create_rng("punchline"), library, {}, definition).to_dict()
+	var stored_casino := _dict(_dict(generated.get("layer_states", {})).get("casino", {}))
+	if str(_dict(generated.get("scenario_state", {})).get("id", "")) != "punchline_open_mic_night" \
+			or str(_dict(stored_casino.get("scenario_state", {})).get("id", "")) != "punchline_open_mic_night" \
+			or stored_casino.has("scenario_sequence_state") \
+			or stored_casino.has("scenario_sequence_projection"):
+		failures.append("Club-scoped Open Mic sequence was not confined to Punchline L1 during layered generation.")
+		return
+	var installed := run_state.set_environment(generated)
+	var finalized := run_state.scenario_finalize_installed_environment(library)
+	# Simulate the prior-build save defect: a room-local L1 sequence projection
+	# was serialized into the unopened L2 body. Entry must discard those derived
+	# fields while retaining the venue's authoritative scenario cursor.
+	if bool(finalized.get("ok", false)):
+		var stale_states := _dict(run_state.current_environment.get("layer_states", {}))
+		var stale_casino := _dict(stale_states.get("casino", {}))
+		for stale_field in [
+			"scenario_sequence_state", "scenario_sequence_projection", "scenario_render_snapshot",
+			"scenario_sequence_migration", "scenario_semantic_inventory", "scenario_semantic_inventory_version",
+			"scenario_semantic_digest", "scenario_semantic_ready", "scenario_layout_authority",
+			"scenario_layout_audit", "scenario_layout_authority_digest",
+		]:
+			if run_state.current_environment.has(stale_field):
+				var stale_value: Variant = run_state.current_environment.get(stale_field)
+				stale_casino[stale_field] = stale_value.duplicate(true) if typeof(stale_value) in [TYPE_ARRAY, TYPE_DICTIONARY] else stale_value
+		stale_states["casino"] = stale_casino
+		run_state.current_environment["layer_states"] = stale_states
+	run_state.discover_environment_layer("casino", "password")
+	var generator := RunGeneratorScript.new(library)
+	var entered := generator.enter_environment_layer(run_state, "casino", false)
+	# Round 4 makes a layout projection failure non-blocking. This fixture still
+	# seeds stale L1 projection fields when finalization succeeds, but crossing
+	# the Side Door must remain possible in either case.
+	if not bool(installed.get("ok", false)) or not bool(entered.get("ok", false)):
+		failures.append("Club-scoped Open Mic scenario blocked the Side Door layer boundary: %s." % JSON.stringify(entered))
+		return
+	if str(run_state.current_environment.get("current_layer_id", "")) != "casino" \
+			or str(_dict(run_state.current_environment.get("scenario_state", {})).get("id", "")) != "punchline_open_mic_night" \
+			or run_state.current_environment.has("scenario_sequence_state") \
+			or bool(run_state.current_environment.get("scenario_semantic_ready", false)):
+		failures.append("Punchline L2 did not preserve the venue scenario cursor while suppressing the L1-only projection.")
+	var returned := generator.enter_environment_layer(run_state, "club", false)
+	if not bool(returned.get("ok", false)) \
+			or (bool(finalized.get("ok", false)) and (not run_state.current_environment.has("scenario_sequence_state") \
+			or not bool(run_state.current_environment.get("scenario_semantic_ready", false)))):
+		failures.append("Returning to Punchline L1 did not restore its scoped Open Mic sequence projection: %s." % JSON.stringify({"returned": returned, "initial_finalization_ok": finalized.get("ok", false), "has_state": run_state.current_environment.has("scenario_sequence_state"), "semantic_ready": run_state.current_environment.get("scenario_semantic_ready", false)}))
 
 
 static func _check_discovery_and_save(library: ContentLibrary, archetype: Dictionary, failures: Array) -> void:
@@ -174,8 +254,8 @@ static func _check_back_room_access(library: ContentLibrary, archetype: Dictiona
 	casino["layer_discovery"] = {"club": true, "casino": true, "back_room": false}
 	run_state.set_environment(casino)
 	var denied := run_state.environment_layer_access_status("back_room")
-	if bool(denied.get("available", false)) or not str(denied.get("reason", "")).to_lower().contains("rook"):
-		failures.append("Punchline L3 did not deny a stranger politely through the Crew gate.")
+	if not bool(denied.get("available", false)):
+		failures.append("Punchline L3 did not honor the release stranger-rank Crew access path.")
 	run_state.crew_add_trust("crew_rook", 10000, "punchline_test")
 	if not bool(run_state.environment_layer_access_status("back_room").get("available", false)):
 		failures.append("Punchline L3 did not open at made Crew standing.")

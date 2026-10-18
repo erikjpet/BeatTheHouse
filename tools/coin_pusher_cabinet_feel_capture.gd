@@ -372,20 +372,6 @@ func _apply_body_views(bodies: Array, liveness_tick: int, solver_state: Dictiona
 	})
 
 
-func _sample_design_pixel(design_point: Vector2, debug_file: String = "") -> Color:
-	canvas.queue_redraw()
-	await process_frame
-	await process_frame
-	var transform_values: Dictionary = canvas.call("debug_design_space_transform", Vector2(900, 430))
-	var viewport_point: Vector2 = canvas.global_position + transform_values.get("position", Vector2.ZERO) + design_point * (transform_values.get("scale", Vector2.ONE) as Vector2)
-	var image := root.get_viewport().get_texture().get_image()
-	if image == null:
-		return Color.BLACK
-	if not debug_file.is_empty():
-		image.save_png("%s/%s" % [out_dir, debug_file])
-	return image.get_pixelv(Vector2i(roundi(viewport_point.x), roundi(viewport_point.y)))
-
-
 func _feature_color_evidence(kind: String, debug_file: String) -> Dictionary:
 	canvas.queue_redraw()
 	await process_frame
@@ -413,14 +399,6 @@ func _feature_color_evidence(kind: String, debug_file: String) -> Dictionary:
 	return {"kind": kind, "saved": saved, "teal_pixel_count": teal_pixel_count, "purple_pixel_count": purple_pixel_count, "teal_sample_rgb": [teal_sample.r, teal_sample.g, teal_sample.b], "purple_sample_rgb": [purple_sample.r, purple_sample.g, purple_sample.b]}
 
 
-func _project_for_capture(x: int, y: int, z: int) -> Vector2:
-	var projection_state := {
-		"coin_pusher_geometry": machine_definition.get("geometry", {}),
-		"coin_pusher_coin_height": int((machine_definition.get("coins", {}) as Dictionary).get("height", 1700)),
-	}
-	return Renderer.new().debug_project_for_test(projection_state, float(x), float(y), float(z))
-
-
 func _state(seed: String, opening_count: int) -> Dictionary:
 	return Solver.create_machine(_rng(seed), machine_definition, opening_count)
 
@@ -443,14 +421,6 @@ func _configure_body(body: Dictionary, x: int, y: int, z: int, support: String, 
 	body["sleeping"] = rest == "resting"
 	body["sleep_ticks"] = 8 if rest == "resting" else 0
 	body["carried_sleep"] = support == "platform"
-
-
-func _front_y(state: Dictionary) -> int:
-	var front := 1000000
-	for body_value in state.get("bodies", []):
-		if typeof(body_value) == TYPE_DICTIONARY:
-			front = mini(front, int((body_value as Dictionary).get("y", front)))
-	return front
 
 
 func _body_y_by_id(state: Dictionary) -> Dictionary:

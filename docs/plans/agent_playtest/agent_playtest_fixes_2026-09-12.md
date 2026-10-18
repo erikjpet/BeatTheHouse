@@ -6,6 +6,11 @@ Fix worktree: `D:\Projects\Beat-The-House-worktrees\playtest-fixes` (physical pa
 Branch: `codex/agent-playtest-fixes`  
 State: all fixes are uncommitted; nothing was pushed, merged, stashed, reset, or staged.
 
+Historical disposition: the recorded work was later accepted and integrated
+into `main`. Absolute worktree and `.tmp` evidence links below preserve their
+original locations; the temporary trees were deliberately removed after
+integration and are not portable repository links.
+
 The sweep harness was copied into the fix worktree as untracked validation tooling: `tools/agent_playtest_session.gd` and `tools/agent_playtest_session.ps1`.
 
 ## Header and evidence index
@@ -244,7 +249,7 @@ All ten original command streams were replayed on the fixed build, totaling 916 
 - BUG-10: no files.
 - BUG-11: `scripts/games/video_poker.gd`; combined/table-game tests.
 - BUG-14: `scripts/core/event_module.gd`; combined production-seam regression.
-- BUG-15: `data/audio/surface_sfx_manifest.json`; `tools/audio06_1_surface_sfx_audit.gd`.
+- BUG-15: `data/audio/surface_sfx_manifest.json`; `tools/archive/audio06_1/audio06_1_surface_sfx_audit.gd`.
 - BUG-17: `scripts/ui/environment_interaction_controller.gd`; `scripts/ui/environment_interaction_view_model.gd`.
 - BUG-20: `scripts/games/roulette.gd`; `scripts/tests/foundation/check_table_games.gd`.
 - BUG-21: `scripts/games/crew_draw_poker.gd`; combined/Crew Poker tests.

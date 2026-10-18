@@ -1,6 +1,9 @@
 class_name RunReportTimelineCanvas
 extends Control
 
+# Draws and replays the run-report travel/action timeline from prepared entries,
+# with presentation-only progress control.
+
 signal seek_requested(progress: float)
 
 const BAND_COLORS := [

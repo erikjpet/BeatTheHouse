@@ -28,7 +28,7 @@ engine + dialogue/talk system, do not invent a parallel one.
   but the player can always progress, and the optional detour (Path A) is
   genuinely skippable.
 
-## New characters (define both; add to `docs/plans/0.5_voice_bible.md`)
+## New characters (define both; add to `docs/archive/0.5/plans/0.5_voice_bible.md`)
 
 - **Pal — the early-run guide (apartment → underground casino).** A NEW
   character: warm, friendly, encouraging, streetwise; on your side. Speaks in

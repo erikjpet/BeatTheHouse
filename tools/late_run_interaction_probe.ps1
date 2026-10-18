@@ -33,5 +33,12 @@ if (-not $godot.EndsWith("_console.exe")) {
     if (Test-Path -LiteralPath $consoleCandidate) { $godot = $consoleCandidate }
 }
 
+# Godot writes warnings to stderr even when the probe succeeds. PowerShell 7
+# must therefore defer to the process exit code instead of promoting diagnostic
+# output to a terminating NativeCommandError.
+$previousErrorActionPreference = $ErrorActionPreference
+$ErrorActionPreference = "Continue"
 & $godot --headless --path $root --script "res://tools/late_run_interaction_probe.gd"
-exit $LASTEXITCODE
+$godotExitCode = $LASTEXITCODE
+$ErrorActionPreference = $previousErrorActionPreference
+exit $godotExitCode

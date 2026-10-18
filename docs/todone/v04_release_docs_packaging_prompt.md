@@ -40,9 +40,9 @@ Changes completed:
 - Updated `README.md` as the 0.4 top-level spec with current scope, generated
   content counts, validation commands, active docs, export status, and the
   explicit boss-fight/final-scene cut.
-- Added `docs/plans/0.4_release_checklist.md` with final gate evidence,
+- Added `docs/archive/0.4/plans/0.4_release_checklist.md` with final gate evidence,
   package hashes, export readiness, accepted limitations, and release decision.
-- Added `docs/plans/0.4_publish_copy.md` with itch.io, GitHub release, and
+- Added `docs/archive/0.4/plans/0.4_publish_copy.md` with itch.io, GitHub release, and
   devlog copy.
 - Updated `CHANGELOG.md` with concise 0.4.0 notes.
 - Updated `docs/todo/QUEUE.md`; publish/tag and post-release verification
@@ -68,9 +68,9 @@ documents, packages, and prepares the Act 1 completion release.
 
 ## Read first
 
-- `docs/plans/0.4_act1_completion_plan.md`
-- `docs/plans/0.3.2_release_checklist.md`
-- `docs/plans/0.3.3_publish_copy.md`
+- `docs/archive/0.4/plans/0.4_act1_completion_plan.md`
+- `docs/archive/0.3/plans/0.3.2_release_checklist.md`
+- `docs/archive/0.3/plans/0.3.3_publish_copy.md`
 - `README.md`
 - `CHANGELOG.md`
 - `project.godot`
@@ -90,11 +90,11 @@ documents, packages, and prepares the Act 1 completion release.
    - explicit boss fight/final scene cut,
    - validation commands,
    - active docs index.
-3. Create `docs/plans/0.4_release_checklist.md`, mirroring the 0.3.2 format:
+3. Create `docs/archive/0.4/plans/0.4_release_checklist.md`, mirroring the 0.3.2 format:
    release identity, scope, final gate matrix, package artifacts, checksums,
    export readiness, accepted limitations, release decision.
 4. Update `CHANGELOG.md` with concise 0.4.0 release notes.
-5. Create `docs/plans/0.4_publish_copy.md` with itch/GitHub/devlog copy.
+5. Create `docs/archive/0.4/plans/0.4_publish_copy.md` with itch/GitHub/devlog copy.
 6. Produce fresh Web and Windows itch packages through `tools/export_itch.ps1`.
 7. Verify Web boot in the local server smoke path and Windows exe launch.
 8. Run butler dry-run only. Publishing remains a user action.
@@ -115,7 +115,7 @@ documents, packages, and prepares the Act 1 completion release.
 - Web local smoke passes.
 - Windows launch smoke passes.
 - Butler dry-run output recorded.
-- `docs/plans/0.4_release_checklist.md` has fresh evidence for every gate it
+- `docs/archive/0.4/plans/0.4_release_checklist.md` has fresh evidence for every gate it
   lists.
 - Prompt archived to `docs/todone/` with execution record and committed
   locally.

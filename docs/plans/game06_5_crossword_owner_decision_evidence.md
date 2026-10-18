@@ -69,7 +69,7 @@ Current Crossword definition:
 | award ladder | 3 words `$15`; 4 `$30`; 5 `$75`; 6 `$250`; 7 `$1,500` |
 | prize weights | `5500, 1450, 1250, 950, 650, 200` per 10,000 |
 | configured RTP band | `[3.75, 4.20]` |
-| recorded seeded measurement | `3.89031` in `docs/plans/0.5_performance_audit.md` |
+| recorded seeded measurement | `3.89031` in `docs/archive/0.5/plans/0.5_performance_audit.md` |
 | current focused measurement | 100,000 samples per type in `_check_scratch_rtp()` |
 
 The nominal prize-table weighted return is `3.953333...` times price; the

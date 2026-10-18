@@ -1,5 +1,7 @@
 extends "res://scripts/tests/foundation/check_slots_surfaces.gd"
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const CrapsRulesScript := preload("res://scripts/games/craps/craps_rules.gd")
 const GameRitualRuntimeContractScript := preload("res://scripts/tests/foundation/game_ritual_runtime_contract.gd")
 const BlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
@@ -155,6 +157,8 @@ func _check_craps_street_variant(game: GameModule, library: ContentLibrary, fail
 	var street_room_visual: Dictionary = street_room_state.get("visual_state", {}) if typeof(street_room_state.get("visual_state", {})) == TYPE_DICTIONARY else {}
 	if str(street_room_visual.get("variant", "")) != "street_craps" or not street_room_visual.has("dispersed"):
 		failures.append("Street Craps room prop did not publish the chalk-circle variant and dispersed state.")
+	if str(street_room_state.get("environment_prop", "")) != "street_craps_circle" or str(street_room_state.get("display_name", "")) != "Street Craps":
+		failures.append("Street Craps did not select its dedicated alley-floor object identity.")
 	var street_harness := SurfaceHarness.new()
 	street_harness.setup(surface)
 	game.draw_surface(street_harness, surface, {"contract_harness": true})
@@ -998,13 +1002,13 @@ func _check_crew_poker_contract(library: ContentLibrary, failures: Array) -> voi
 		stable_position = position.size() == 2 and int(position[0]) == 450 and int(position[1]) == 218
 	var game_count: Array = back_room.get("game_count", []) if typeof(back_room.get("game_count", [])) == TYPE_ARRAY else []
 	var exact_count := game_count.size() == 2 and int(game_count[0]) == 1 and int(game_count[1]) == 1
-	var back_pool := _string_array(back_room.get("game_pool", []))
-	var back_required := _string_array(back_room.get("required_game_ids", []))
+	var back_pool := JsonCoerceScript._string_array(back_room.get("game_pool", []))
+	var back_required := JsonCoerceScript._string_array(back_room.get("required_game_ids", []))
 	var exact_pool := back_pool.size() == 1 and str(back_pool[0]) == "crew_draw_poker"
 	var exact_required := back_required.size() == 1 and str(back_required[0]) == "crew_draw_poker"
 	if not stable_position or not exact_pool or not exact_required or not exact_count:
 		failures.append("Crew poker must furnish exactly one stable table in the L3 back room.")
-	if _string_array(poker_archetype.get("game_pool", [])).has("crew_draw_poker") or _string_array(club.get("game_pool", [])).has("crew_draw_poker"):
+	if JsonCoerceScript._string_array(poker_archetype.get("game_pool", [])).has("crew_draw_poker") or JsonCoerceScript._string_array(club.get("game_pool", [])).has("crew_draw_poker"):
 		failures.append("Crew poker leaked out of the nested L3 game pool into the public Punchline layer.")
 	var game: GameModule = CrewDrawPokerGameScript.new()
 	game.setup(definition, library)
@@ -1577,7 +1581,7 @@ func _check_crew_poker_dealer_and_animation_contract(game: GameModule, failures:
 	var environment := {"id": "crew_poker_dealer_animation", "archetype_id": "small_underground_casino", "kind": "crew", "layer_id": "back_room", "resident_member_ids": ["crew_mags", "crew_rook"], "game_ids": ["crew_draw_poker"], "game_states": {}}
 	var first := game.generate_environment_state(run_state, environment, seed_a)
 	var second := game.generate_environment_state(run_state, environment, seed_b)
-	var members := _string_array(first.get("members", []))
+	var members := JsonCoerceScript._string_array(first.get("members", []))
 	var dealer_id := str(first.get("dealer_member_id", ""))
 	if dealer_id.is_empty() or members.has(dealer_id) or dealer_id != str(second.get("dealer_member_id", "")) or JSON.stringify(members) != JSON.stringify(second.get("members", [])):
 		failures.append("Crew poker house-dealer selection was not deterministic and disjoint from the five playing seats.")
@@ -1705,6 +1709,21 @@ func _check_crew_poker_dealer_and_animation_contract(game: GameModule, failures:
 			fold_count += 1
 	if fold_count != 2:
 		failures.append("Crew poker fold animation did not send both hidden cards to the muck.")
+	if not fold_seats.is_empty():
+		var folded_actor := str((fold_seats[0] as Dictionary).get("member_id", ""))
+		if bool(game.call("_resting_hole_cards_visible", fold_after, folded_actor)):
+			failures.append("Crew poker redrew a folded opponent's hidden cards after the dealer collected them.")
+	var player_fold_after := fold_before.duplicate(true)
+	player_fold_after["player_active"] = false
+	if bool(game.call("_resting_hole_cards_visible", player_fold_after, "player")):
+		failures.append("Crew poker redrew the player's hidden cards after folding them to the dealer.")
+	var player_fold_environment := run_state.current_environment.duplicate(true)
+	var player_fold_states: Dictionary = player_fold_environment.get("game_states", {}).duplicate(true)
+	player_fold_states["crew_draw_poker"] = player_fold_after
+	player_fold_environment["game_states"] = player_fold_states
+	var player_fold_surface := game.surface_state(run_state, player_fold_environment, {})
+	if bool(game.call("_resting_hole_cards_visible", player_fold_surface, "player")):
+		failures.append("Crew poker surface projection lost the player's folded state and redrew returned cards.")
 	var showdown_before := street_after.duplicate(true)
 	showdown_before["phase"] = "river"
 	showdown_before["community_cards"] = [{"rank": 3, "suit": 0, "deck": 0}, {"rank": 7, "suit": 1, "deck": 0}, {"rank": 11, "suit": 2, "deck": 0}, {"rank": 12, "suit": 3, "deck": 0}, {"rank": 14, "suit": 0, "deck": 0}]
@@ -2122,7 +2141,7 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 		return
 	if str(table.get("schema", "")) != "roulette_table_state":
 		failures.append("Roulette generated table state did not expose the roulette schema.")
-	var wheel_sequence := _string_array(table.get("wheel_sequence", []))
+	var wheel_sequence := JsonCoerceScript._string_array(table.get("wheel_sequence", []))
 	if wheel_sequence.size() != 38 or not wheel_sequence.has("0") or not wheel_sequence.has("00"):
 		failures.append("Roulette generated American table did not expose a 38-pocket wheel sequence.")
 	var rules: Dictionary = table.get("rules", {}) if typeof(table.get("rules", {})) == TYPE_DICTIONARY else {}
@@ -2342,7 +2361,7 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 	armed_spin_ui["selected_action_id"] = "spin_roulette"
 	armed_spin_ui["selected_action_kind"] = "legal"
 	var armed_surface := game.surface_state(run_state, environment, armed_spin_ui)
-	if not _string_array(armed_surface.get("native_selected_surface_actions", [])).has("roulette_spin"):
+	if not JsonCoerceScript._string_array(armed_surface.get("native_selected_surface_actions", [])).has("roulette_spin"):
 		failures.append("Roulette armed spin was not reflected in native selected surface actions.")
 	var confirm_spin := _check_surface_command_non_mutating(game, "roulette_spin", 0, false, armed_spin_ui, run_state, environment, "roulette confirm spin command", failures)
 	if str(confirm_spin.get("action_id", "")) != "spin_roulette" or not bool(confirm_spin.get("resolve", false)):
@@ -2365,6 +2384,18 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 	var persisted_last_result: Dictionary = persisted_table.get("last_result", {}) if typeof(persisted_table.get("last_result", {})) == TYPE_DICTIONARY else {}
 	var resolved_at_msec := int(persisted_last_result.get("resolved_at_msec", 0))
 	var early_result_surface := game.surface_state(run_state, environment, {"surface_time_msec": resolved_at_msec + 100})
+	if not game.surface_realtime_patch_preserves_host_state() or not game.surface_realtime_uses_lightweight_ui_state():
+		failures.append("Roulette realtime animation did not preserve the compact host-state contract.")
+	if game.surface_realtime_ui_state_keys().has("selected_stake"):
+		failures.append("Roulette realtime animation requested the expensive generic stake projection.")
+	var early_realtime_patch: Dictionary = game.surface_realtime_state_patch(run_state, environment, {"surface_time_msec": resolved_at_msec + 200}, early_result_surface)
+	if early_realtime_patch.has("spin_trajectory"):
+		failures.append("Roulette realtime patch recopied the immutable spin trajectory.")
+	var merged_realtime_surface := early_result_surface.duplicate(false)
+	for patch_key in early_realtime_patch.keys():
+		merged_realtime_surface[patch_key] = early_realtime_patch[patch_key]
+	if JSON.stringify(merged_realtime_surface.get("spin_trajectory", [])) != JSON.stringify(early_result_surface.get("spin_trajectory", [])):
+		failures.append("Roulette compact realtime patch did not retain the exact initial spin trajectory.")
 	var early_channels: Array = early_result_surface.get("surface_animation_channels", []) if typeof(early_result_surface.get("surface_animation_channels", [])) == TYPE_ARRAY else []
 	var early_spin_channel: Dictionary = {}
 	for channel_value in early_channels:
@@ -2856,7 +2887,7 @@ func _roulette_target_index(targets: Array, target_type: String, number: String)
 		var target: Dictionary = targets[i]
 		if str(target.get("type", "")) != target_type:
 			continue
-		if _string_array(target.get("numbers", [])).has(number):
+		if JsonCoerceScript._string_array(target.get("numbers", [])).has(number):
 			return i
 	return -1
 
@@ -3100,14 +3131,23 @@ func _check_baccarat_surface_contract(game: GameModule, failures: Array, library
 	var persisted_table: Dictionary = ((environment.get("game_states", {}) as Dictionary).get("baccarat", {}) as Dictionary)
 	if int(persisted_table.get("hands_played", 0)) <= 0 or (persisted_table.get("last_result", {}) as Dictionary).is_empty():
 		failures.append("Baccarat did not persist the resolved table hand state.")
+	var persisted_result_before := JSON.stringify(persisted_table.get("last_result", {}))
+	game.surface_realtime_state_patch(run_state, environment, {"surface_time_msec": int((persisted_table.get("last_result", {}) as Dictionary).get("resolved_at_msec", 0)) + 200}, ready_surface)
+	if JSON.stringify(persisted_table.get("last_result", {})) != persisted_result_before:
+		failures.append("Baccarat read-only realtime projection mutated the authoritative settled hand by alias.")
 	var settled_surface := game.surface_state(run_state, environment, {"surface_time_msec": Time.get_ticks_msec() + 7000})
 	var settled_explainer: Dictionary = settled_surface.get("baccarat_explainer", {}) if typeof(settled_surface.get("baccarat_explainer", {})) == TYPE_DICTIONARY else {}
 	if str(settled_explainer.get("winner", "")) != str(result.get("baccarat_winner", "")):
 		failures.append("Baccarat hand explainer winner did not match the resolved hand.")
 	if int(settled_explainer.get("player_total", -1)) < 0 or int(settled_explainer.get("banker_total", -1)) < 0:
 		failures.append("Baccarat hand explainer did not expose Player and Banker totals.")
-	if str(settled_explainer.get("primary", "")).find("Player") < 0 or str(settled_explainer.get("primary", "")).find("Banker") < 0 or str(settled_explainer.get("bet_summary", "")).find("Net") < 0:
+	var settled_bet_summary := str(settled_explainer.get("bet_summary", ""))
+	var settled_wager_currency := str(settled_surface.get("wager_currency", "cash")).strip_edges().to_lower()
+	var expected_settlement_prefix := "Chip change:" if settled_wager_currency == "chips" else "Cash change:"
+	if str(settled_explainer.get("primary", "")).find("Player") < 0 or str(settled_explainer.get("primary", "")).find("Banker") < 0 or settled_bet_summary.find(expected_settlement_prefix) < 0:
 		failures.append("Baccarat hand explainer did not summarize totals and player bet outcome.")
+	if settled_wager_currency == "chips" and (settled_bet_summary.find("$") >= 0 or settled_bet_summary.findn("cash") >= 0):
+		failures.append("Baccarat hand explainer used cash wording for a chip settlement.")
 	var settled_road: Dictionary = settled_surface.get("baccarat_road", {}) if typeof(settled_surface.get("baccarat_road", {})) == TYPE_DICTIONARY else {}
 	if int(settled_road.get("visible_count", 0)) < 1 or (_baccarat_dictionary_array(settled_road.get("beads", []))).is_empty():
 		failures.append("Baccarat bead-plate road did not record the resolved hand.")
@@ -4292,7 +4332,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		var miss_tick := _blackjack_authority_auto_command(game, 1, run_state, environment, miss_state, test_now)
 		var tick_state: Dictionary = miss_tick.get("ui_state", {})
 		var tick_challenge: Dictionary = tick_state.get("count_challenge", {})
-		if (_string_array(tick_challenge.get("missed_icons", []))).is_empty():
+		if (JsonCoerceScript._string_array(tick_challenge.get("missed_icons", []))).is_empty():
 			failures.append("Blackjack live count auto tick did not persist missed count symbols.")
 	var watched_peek_run_state: RunState = RunStateScript.new()
 	watched_peek_run_state.start_new("BLACKJACK-WATCHED-PEEK-CONTRACT")
@@ -4961,6 +5001,49 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 	var multi_after_first: Dictionary = (multi_count_environment.get("game_states", {}) as Dictionary).get("blackjack", {})
 	if int(multi_after_first.get("recorded_running_count", 999)) != multi_first_expected_count:
 		failures.append("Blackjack recorded count did not persist after the first counted hand.")
+	var multi_between_surface := game.surface_state(multi_count_run_state, multi_count_environment, {})
+	if not bool(multi_between_surface.get("between_hands", false)) \
+			or not bool(multi_between_surface.get("between_hands_count_visible", false)) \
+			or int(multi_between_surface.get("between_hands_recorded_running_count", 999)) != multi_first_expected_count:
+		failures.append("Blackjack did not expose the player's recorded count in the counted between-hands state.")
+	var count_label := str(game.call("_blackjack_shoe_status_text", {
+		"shoe_remaining": 31,
+		"between_hands_count_visible": true,
+		"between_hands_recorded_running_count": -3,
+		"running_count": 11,
+	}))
+	var hidden_count_label := str(game.call("_blackjack_shoe_status_text", {
+		"shoe_remaining": 31,
+		"between_hands_count_visible": false,
+		"counting_enabled": false,
+		"between_hands_recorded_running_count": -3,
+		"recorded_running_count": -3,
+		"running_count": 11,
+	}))
+	var live_count_label := str(game.call("_blackjack_shoe_status_text", {
+		"shoe_remaining": 31,
+		"between_hands_count_visible": false,
+		"counting_enabled": true,
+		"between_hands_recorded_running_count": 99,
+		"recorded_running_count": -4,
+		"running_count": 11,
+	}))
+	if not count_label.contains("YOUR COUNT -3") or count_label.contains("+11") \
+			or hidden_count_label.contains("YOUR COUNT") or hidden_count_label.contains("-3") \
+			or not live_count_label.contains("YOUR COUNT -4") or live_count_label.contains("+11") or live_count_label.contains("+99"):
+		failures.append("Blackjack between-hands count label leaked the true count or ignored the counting visibility flag.")
+	var count_label_protected := false
+	for region_value in multi_between_surface.get("surface_ui_protected_regions", []):
+		if typeof(region_value) != TYPE_DICTIONARY:
+			continue
+		var region: Dictionary = region_value
+		if float(region.get("x", 9999.0)) <= 344.0 and float(region.get("y", 9999.0)) <= 48.0 \
+				and float(region.get("x", 0.0)) + float(region.get("w", 0.0)) >= 568.0 \
+				and float(region.get("y", 0.0)) + float(region.get("h", 0.0)) >= 66.0:
+			count_label_protected = true
+			break
+	if not count_label_protected:
+		failures.append("Blackjack between-hands count label is outside the protected HUD regions.")
 	var multi_second_deal := _blackjack_authority_surface(game, "blackjack_deal", 5, multi_count_run_state, multi_count_environment)
 	var multi_second_surface := game.surface_state(multi_count_run_state, multi_count_environment, multi_second_deal.get("ui_state", {}))
 	if int(multi_second_surface.get("persisted_recorded_running_count", 999)) != multi_first_expected_count or int(multi_second_surface.get("recorded_running_count", 999)) != multi_first_expected_count:
@@ -5065,6 +5148,7 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		{"rank": 10, "suit": 2}, {"rank": 5, "suit": 1}, {"rank": 4, "suit": 0}, {"rank": 3, "suit": 2}
 	]
 	shuffle_environment["game_states"] = {"blackjack": shuffle_table}
+	var shuffle_generation_before := int(shuffle_table.get("shoe_generation", 1))
 	var shuffle_deal := game.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, shuffle_run_state, shuffle_environment)
 	var shuffle_stand := game.surface_action_command("blackjack_stand", 0, true, shuffle_deal.get("ui_state", {}), shuffle_run_state, shuffle_environment)
 	var _shuffle_result := _blackjack_authority_resolve(game, "play_basic", 5, shuffle_run_state, shuffle_environment, shuffle_run_state.create_rng("blackjack_forced_shuffle_resolve"), shuffle_stand.get("ui_state", {}))
@@ -5075,6 +5159,9 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Blackjack cut-card shuffle did not rebuild a full shoe from the declared deck count.")
 	if int(shuffle_updated.get("running_count", 99)) != 0 or int(shuffle_updated.get("recorded_running_count", 99)) != 0:
 		failures.append("Blackjack cut-card shuffle did not reset true and recorded counts.")
+	if int(shuffle_updated.get("recorded_count_shoe_generation", -1)) != 0 \
+			or int(shuffle_updated.get("shoe_generation", 1)) <= shuffle_generation_before:
+		failures.append("Blackjack cut-card shuffle did not invalidate the player's recorded-count shoe provenance.")
 	if int(shuffle_updated.get("last_shuffle_hand", 0)) <= 0:
 		failures.append("Blackjack cut-card shuffle did not record the shuffle hand.")
 
@@ -5674,7 +5761,7 @@ func _check_video_poker_freds_hat(game: GameModule, library: ContentLibrary, fai
 	if int(effect.get("video_poker_strategy_hint", 0)) != 1 or int(effect.get("video_poker_win_heat", 0)) != 1:
 		failures.append("Fred's Poker Hat does not expose its strategy hint and +1 win Heat effects.")
 	var group := library.content_group("video_poker_pack")
-	if not _string_array(group.get("item_ids", [])).has("freds_poker_hat"):
+	if not JsonCoerceScript._string_array(group.get("item_ids", [])).has("freds_poker_hat"):
 		failures.append("Fred's Poker Hat is not reachable through the video-poker content pack.")
 
 	var run_state: RunState = _vp_fresh(game, "jacks_or_better", "FREDS-HAT-SURFACE", 100000, "full_pay", 1, 1)
@@ -6325,16 +6412,6 @@ func _check_video_poker_rtp_bands(game: GameModule, failures: Array) -> void:
 			failures.append("Video poker active cabinet %s/%s/%d-hand RTP %.4f fell outside the sampled sane band." % [variant_id, tier_id, hand_count, rtp])
 
 
-func _video_poker_tier_row_mult(game: GameModule, variant_id: String, tier_id: String, row_key: String) -> int:
-	var variant: Dictionary = game.call("_variant", {"variant_id": variant_id, "paytable_tier_id": tier_id})
-	var rows: Array = variant.get("rows", [])
-	for row_value in rows:
-		var row: Dictionary = row_value if typeof(row_value) == TYPE_DICTIONARY else {}
-		if str(row.get("key", "")) == row_key:
-			return int(row.get("mult", 0))
-	return 0
-
-
 func _video_poker_rtp(game: GameModule, variant_id: String, tier_id: String, action_id: String, seed_text: String, rounds: int, hand_count: int = 1) -> float:
 	var run_state: RunState = _vp_fresh(game, variant_id, seed_text, 100000000, tier_id, hand_count, 1)
 	var environment: Dictionary = run_state.current_environment
@@ -6355,6 +6432,15 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("PULL-TABS-SURFACE-CONTRACT")
 	var environment := _surface_contract_environment()
+	environment["archetype_id"] = "gas_station_casino"
+	environment["local_narrative_flags"] = {
+		"lottery_counter": {
+			"host_object_id": "character:nell",
+			"staff_label": "Nell",
+			"sale_game_ids": ["pull_tabs"],
+			"service_game_ids": ["pull_tabs", "scratch_tickets"],
+		},
+	}
 	var generated_state := game.generate_environment_state(run_state, environment, run_state.create_rng("pull_tab_contract_machine"))
 	if generated_state.is_empty():
 		failures.append("Pull Tabs did not generate finite deal state for an environment.")
@@ -6410,10 +6496,10 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Pull Tabs surface did not route to the pull-tab machine renderer.")
 	var counter_ritual: Dictionary = surface.get("counter_ritual", {}) if typeof(surface.get("counter_ritual", {})) == TYPE_DICTIONARY else {}
 	var counter_attention: Dictionary = counter_ritual.get("attention", {}) if typeof(counter_ritual.get("attention", {})) == TYPE_DICTIONARY else {}
-	if str(surface.get("surface_cast", "")) != "clerk_and_machine" or (counter_ritual.get("actors", []) as Array).is_empty() or (counter_ritual.get("objects", []) as Array).size() < 3:
-		failures.append("Pull Tabs did not project the clerk, deal rack, counter, and losing-ticket pile as material ritual state.")
+	if str(surface.get("surface_cast", "")) != "counter_staff_and_stock" or (counter_ritual.get("actors", []) as Array).is_empty() or (counter_ritual.get("objects", []) as Array).size() < 3:
+		failures.append("Pull Tabs did not project counter staff, merchandise rack, counter, and losing-ticket pile as material ritual state.")
 	if bool(counter_attention.get("reveals_hidden_outcomes", true)) or int(counter_attention.get("suspicion", -1)) != run_state.suspicion_level():
-		failures.append("Pull Tabs clerk attention leaked ticket contents or diverged from existing suspicion authority.")
+		failures.append("Pull Tabs counter-staff attention leaked ticket contents or diverged from existing suspicion authority.")
 	_check_idle_animation_liveness_contract(surface, "Pull Tabs cabinet surface", failures)
 	if not bool(surface.get("surface_controls_native", false)):
 		failures.append("Pull Tabs surface did not expose native surface controls.")
@@ -6579,14 +6665,43 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	var auto_due_msec := int(auto_state.get("pull_tab_auto_open_next_msec", 0))
 	if not bool(auto_state.get("pull_tab_auto_open_active", false)) or auto_due_msec <= auto_start_msec:
 		failures.append("Pull Tabs Auto Open did not activate and schedule its first simulated click.")
-	if game.surface_auto_tick_may_be_active({}) or not game.surface_auto_tick_may_be_active(auto_state):
-		failures.append("Pull Tabs automation fast gate did not distinguish dormant and active retained state.")
-	if game.surface_needs_auto_tick(auto_state, run_state, environment):
-		failures.append("Pull Tabs Auto Open requested work before its first scheduled click.")
+	if not game.surface_auto_tick_may_be_active({}) or not game.surface_auto_tick_may_be_active(auto_state):
+		failures.append("Pull Tabs automation fast gate did not keep the glimmer scheduler available while Auto Open was dormant or active.")
+	if not game.surface_needs_auto_tick(auto_state, run_state, environment):
+		failures.append("Pull Tabs glimmer scheduler did not request its missing initialization patch.")
+	var glimmer_init := game.surface_auto_action_command(auto_state, run_state, environment, {})
+	var initialized_auto_state: Dictionary = glimmer_init.get("ui_state", {}) if typeof(glimmer_init.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	var glimmer_due_msec := int(initialized_auto_state.get("pull_tab_glimmer_next_due_msec", 0))
+	if (
+		not bool(glimmer_init.get("handled", false))
+		or not bool(glimmer_init.get("surface_transient", false))
+		or not bool(initialized_auto_state.get("pull_tab_glimmer_initialized", false))
+		or glimmer_due_msec < auto_start_msec + 25000
+		or glimmer_due_msec > auto_start_msec + 35000
+		or int(initialized_auto_state.get("pull_tab_auto_open_next_msec", -1)) != auto_due_msec
+		or not bool(initialized_auto_state.get("pull_tab_auto_open_active", false))
+	):
+		failures.append("Pull Tabs glimmer initialization did not schedule 25-35 seconds ahead while preserving Auto Open.")
+	if game.surface_needs_auto_tick(initialized_auto_state, run_state, environment):
+		failures.append("Pull Tabs automation requested work before either initialized schedule was due.")
 	var auto_tick_keys := game.surface_auto_tick_state_keys()
-	if not auto_tick_keys.has("pull_tab_auto_open_active") or not auto_tick_keys.has("pull_tab_auto_open_next_msec") or auto_tick_keys.has("pull_tab_reveals"):
-		failures.append("Pull Tabs Auto Open per-frame gate did not keep its state-key view minimal.")
-	var auto_due_state := auto_state.duplicate(true)
+	var expected_auto_tick_keys := [
+		"pull_tab_auto_open_active",
+		"pull_tab_auto_open_next_msec",
+		"pull_tab_glimmer_initialized",
+		"pull_tab_glimmer_enabled",
+		"pull_tab_glimmer_session_ordinal",
+		"pull_tab_glimmer_event_ordinal",
+		"pull_tab_glimmer_next_due_msec",
+		"pull_tab_glimmer_hide_due_msec",
+	]
+	if auto_tick_keys != expected_auto_tick_keys or auto_tick_keys.has("pull_tab_reveals"):
+		failures.append("Pull Tabs auto-tick state keys did not match the minimal Auto Open plus glimmer schedule scalars.")
+	for forbidden_fragment in ["target", "fingerprint", "prize", "payout", "tier", "rank", "symbol", "contents"]:
+		if forbidden_fragment in JSON.stringify(auto_tick_keys).to_lower():
+			failures.append("Pull Tabs auto-tick state keys exposed forbidden private glimmer data: %s." % forbidden_fragment)
+			break
+	var auto_due_state := initialized_auto_state.duplicate(true)
 	auto_due_state["surface_time_msec"] = auto_due_msec
 	auto_due_state["drunk_scaled_surface_time_msec"] = auto_due_msec
 	if not game.surface_needs_auto_tick(auto_due_state, run_state, environment):
@@ -6608,12 +6723,32 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Pull Tabs Auto Open did not route its next tick through the normal ticket filing path.")
 	if str(auto_file.get("surface_audio_cue", "")) != "ticket_navigation" or str(auto_file.get("surface_audio_action", "")) != "pull_tab_file_ticket":
 		failures.append("Pull Tabs Auto Open file tick did not request the normal filing/navigation SFX cue.")
-	var auto_off := game.surface_action_command("pull_tab_auto_open", 0, false, auto_file.get("ui_state", {}), run_state, environment)
+	var both_due_msec := maxi(glimmer_due_msec, int((auto_file.get("ui_state", {}) as Dictionary).get("pull_tab_auto_open_next_msec", 0)))
+	var both_due_state: Dictionary = (auto_file.get("ui_state", {}) as Dictionary).duplicate(true)
+	both_due_state["surface_time_msec"] = both_due_msec
+	both_due_state["drunk_scaled_surface_time_msec"] = both_due_msec
+	both_due_state["pull_tab_auto_open_active"] = true
+	both_due_state["pull_tab_auto_open_next_msec"] = both_due_msec
+	both_due_state["pull_tab_glimmer_next_due_msec"] = both_due_msec
+	both_due_state["pull_tab_glimmer_hide_due_msec"] = 0
+	var both_due_glimmer := game.surface_auto_action_command(both_due_state, run_state, environment, {})
+	var both_due_glimmer_state: Dictionary = both_due_glimmer.get("ui_state", {}) if typeof(both_due_glimmer.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	if (
+		not bool(both_due_glimmer.get("handled", false))
+		or int(both_due_glimmer_state.get("pull_tab_glimmer_event_ordinal", 0)) <= int(both_due_state.get("pull_tab_glimmer_event_ordinal", 0))
+		or int(both_due_glimmer_state.get("pull_tab_auto_open_next_msec", -1)) != both_due_msec
+	):
+		failures.append("Pull Tabs simultaneous due frame did not process the glimmer while leaving Auto Open due.")
+	var both_due_auto := game.surface_auto_action_command(both_due_glimmer_state, run_state, environment, {})
+	var both_due_auto_state: Dictionary = both_due_auto.get("ui_state", {}) if typeof(both_due_auto.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	if not bool(both_due_auto.get("handled", false)) or int(both_due_auto_state.get("pull_tab_auto_open_next_msec", 0)) <= both_due_msec:
+		failures.append("Pull Tabs simultaneous due frame did not process the still-due Auto Open action on the next frame.")
+	var auto_off := game.surface_action_command("pull_tab_auto_open", 0, false, both_due_auto_state, run_state, environment)
 	var auto_off_state: Dictionary = auto_off.get("ui_state", {}) if typeof(auto_off.get("ui_state", {})) == TYPE_DICTIONARY else {}
 	if bool(auto_off_state.get("pull_tab_auto_open_active", true)) or int(auto_off_state.get("pull_tab_auto_open_next_msec", -1)) != 0:
 		failures.append("Pull Tabs Stop Auto did not cancel the repeating click schedule.")
-	if game.surface_auto_tick_may_be_active(auto_off_state):
-		failures.append("Pull Tabs automation fast gate stayed active after Stop Auto.")
+	if not game.surface_auto_tick_may_be_active(auto_off_state):
+		failures.append("Pull Tabs automation fast gate stopped the glimmer scheduler after Stop Auto.")
 	var next_ticket_click := _check_surface_command_non_mutating(game, "pull_tab_next", 0, false, {}, run_state, environment, "pull-tab next ticket", failures)
 	var next_ticket_state: Dictionary = next_ticket_click.get("ui_state", {})
 	if int(next_ticket_state.get("pull_tab_stack_cursor", 0)) != mini(1, int(game.surface_state(run_state, environment, {}).get("pull_tab_stack_count", 1)) - 1):
@@ -6678,17 +6813,25 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Pull Tabs did not move a fully opened ticket into a winner or loser pile.")
 	var hooks := game.environment_interactable_objects(run_state, environment)
 	if hooks.is_empty():
-		failures.append("Pull Tabs did not expose a room-side redemption clerk.")
+		failures.append("Pull Tabs did not expose counter help and redemption actions.")
 	else:
 		var cash_in_found := false
+		var help_found := false
 		for hook_value in hooks:
 			if typeof(hook_value) != TYPE_DICTIONARY:
 				continue
+			if str((hook_value as Dictionary).get("slot_binding_source_id", "")) != "character:nell" \
+					or not str((hook_value as Dictionary).get("unique_object_class", "")).is_empty():
+				failures.append("Pull Tabs counter action was not bound exclusively to Nell's existing counter host.")
 			for action_value in (hook_value as Dictionary).get("available_actions", []):
-				if typeof(action_value) == TYPE_DICTIONARY and str((action_value as Dictionary).get("id", "")) == "redeem_pull_tab_winners" and str((action_value as Dictionary).get("label", "")) == "Cash In":
+				if typeof(action_value) == TYPE_DICTIONARY and str((action_value as Dictionary).get("id", "")) == "redeem_pull_tab_winners" and str((action_value as Dictionary).get("label", "")) == "Cash In Pull Tabs":
 					cash_in_found = true
+				if typeof(action_value) == TYPE_DICTIONARY and str((action_value as Dictionary).get("id", "")) == "start_dialogue" and str((action_value as Dictionary).get("label", "")) == "Ask About Pull Tabs":
+					help_found = true
 		if not cash_in_found:
-			failures.append("Pull Tabs redemption control did not use the Cash In label.")
+			failures.append("Pull Tabs redemption control did not use the explicit Cash In Pull Tabs label.")
+		if not help_found:
+			failures.append("Pull Tabs counter help did not use the explicit Ask About Pull Tabs label.")
 	var winner_count_harness := SurfaceHarness.new()
 	winner_count_harness.setup(sorted_surface)
 	game.call("_draw_pull_tab_ordered_winner_pile", winner_count_harness, Rect2(0, 0, 150, 100), [_pull_tab_test_ticket_result("one", 5), _pull_tab_test_ticket_result("two", 5)])
@@ -6701,7 +6844,7 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	var redeem_before := _run_state_result_snapshot(run_state)
 	var redeem_command := game.environment_action_command("ticket_redeemer", "redeem_pull_tab_winners", run_state, environment, run_state.create_rng("pull_tab_redeem"))
 	if not bool(redeem_command.get("handled", false)):
-		failures.append("Pull Tabs redemption clerk did not handle winner redemption.")
+		failures.append("Pull Tabs counter staff did not handle winner redemption.")
 	var redeem_result: Dictionary = redeem_command.get("result", {})
 	if str(redeem_result.get("type", "")) != "game_hook" or int(redeem_result.get("bankroll_delta", 0)) <= 0:
 		failures.append("Pull Tabs redemption did not return a cashout game_hook result.")
@@ -6721,7 +6864,7 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	var pattern_redeem_command := game.environment_action_command("ticket_redeemer", "redeem_pull_tab_winners", run_state, environment, run_state.create_rng("pull_tab_pattern_redeem"))
 	var pattern_redeem_result: Dictionary = pattern_redeem_command.get("result", {})
 	if not bool(pattern_redeem_command.get("handled", false)):
-		failures.append("Pull Tabs suspicious cashout pattern was not handled by the redemption clerk.")
+		failures.append("Pull Tabs suspicious cashout pattern was not handled by the counter staff.")
 	elif int(pattern_redeem_result.get("suspicion_delta", 0)) <= 0:
 		failures.append("Pull Tabs repeated high-value winners with no loser trail did not add cashier heat.")
 	elif int(pattern_redeem_result.get("pull_tab_cashout_pattern_heat", 0)) <= 0:
@@ -6729,6 +6872,12 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	elif int(pattern_redeem_result.get("pull_tab_loser_trail_count", -1)) != 0:
 		failures.append("Pull Tabs suspicious cashout did not report the visible loser trail count.")
 	else:
+		var followup: Dictionary = pattern_redeem_result.get("followup_dialogue", {}) if typeof(pattern_redeem_result.get("followup_dialogue", {})) == TYPE_DICTIONARY else {}
+		if str(followup.get("dialogue_id", "")) != "pull_tab_clerk" \
+				or str(followup.get("start_node", "")) not in ["suspicious_bulk", "suspicious_repeat"] \
+				or str(followup.get("source_object_id", "")) != "character:nell" \
+				or str((followup.get("speaker", {}) as Dictionary).get("name", "")) != "Nell":
+			failures.append("Pull Tabs suspicious cashout did not request the counter-staff follow-up conversation.")
 		GameModule.apply_result(run_state, pattern_redeem_result, run_state.create_rng("pull_tab_pattern_redeem_apply"))
 		call("_check_action_result_applied", pattern_redeem_before, run_state, pattern_redeem_result, "pull-tab suspicious redemption result", failures)
 	_check_pull_tab_tarot_reading_surface(game, failures)
@@ -7429,28 +7578,56 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 			break
 	var bar_layout: Dictionary = surface.get("bar_dice_layout", {}) if typeof(surface.get("bar_dice_layout", {})) == TYPE_DICTIONARY else {}
 	var text_panel_rects: Array = bar_layout.get("text_panel_rects", []) if typeof(bar_layout.get("text_panel_rects", [])) == TYPE_ARRAY else []
+	var opponent_panel_rects: Array = bar_layout.get("opponent_panel_rects", []) if typeof(bar_layout.get("opponent_panel_rects", [])) == TYPE_ARRAY else []
+	var dealer_station_rects: Array = bar_layout.get("dealer_station_rects", []) if typeof(bar_layout.get("dealer_station_rects", [])) == TYPE_ARRAY else []
+	var patron_exclusion_rects: Array = bar_layout.get("patron_exclusion_rects", []) if typeof(bar_layout.get("patron_exclusion_rects", [])) == TYPE_ARRAY else []
 	var patron_safe_rects: Array = bar_layout.get("patron_safe_rects", []) if typeof(bar_layout.get("patron_safe_rects", [])) == TYPE_ARRAY else []
+	var content_zone_rects: Array = bar_layout.get("content_zone_rects", []) if typeof(bar_layout.get("content_zone_rects", [])) == TYPE_ARRAY else []
 	if text_panel_rects.size() < 2 or patron_safe_rects.size() < 2:
 		failures.append("Bar Dice surface did not expose text-panel and player-safe layout metadata.")
+	if opponent_panel_rects.size() != 4:
+		failures.append("Bar Dice surface did not expose all four compact Rail Cups panel rectangles.")
+	if dealer_station_rects.size() < 4:
+		failures.append("Bar Dice surface did not expose the dealer station and all status-widget rectangles.")
+	if patron_exclusion_rects.size() != text_panel_rects.size() + opponent_panel_rects.size() + dealer_station_rects.size():
+		failures.append("Bar Dice patron-exclusion metadata did not include every text, Rail Cups, and dealer-station rectangle.")
 	var game_board := Rect2(Vector2.ZERO, Vector2(ArtContractsScript.GAME_BOARD_SIZE))
 	for panel_value in text_panel_rects:
 		var panel_rect := _layout_rect_from_dict(panel_value)
 		if panel_rect.size.x <= 0.0 or panel_rect.size.y <= 0.0 or panel_rect.position.x < 0.0 or panel_rect.position.y < 0.0 or panel_rect.end.x > game_board.end.x or panel_rect.end.y > game_board.end.y:
 			failures.append("Bar Dice text panel is outside the game board: %s." % str(panel_rect))
 		var panel_id := str((panel_value as Dictionary).get("id", "")) if typeof(panel_value) == TYPE_DICTIONARY else ""
-		if panel_id == "rules" and panel_rect.size.y >= 64.0:
-			failures.append("Bar Dice rules panel stayed too large after the compact layout pass.")
+		if panel_id == "rules" and (panel_rect.size.y > 86.0 or panel_rect.size.x < 300.0):
+			failures.append("Bar Dice rules panel does not preserve its readable, bounded two-column layout.")
+	for occupied_value in patron_exclusion_rects:
+		var occupied_rect := _layout_rect_from_dict(occupied_value)
+		if occupied_rect.size.x <= 0.0 or occupied_rect.size.y <= 0.0 or occupied_rect.position.x < 0.0 or occupied_rect.position.y < 0.0 or occupied_rect.end.x > game_board.end.x or occupied_rect.end.y > game_board.end.y:
+			failures.append("Bar Dice patron-exclusion rectangle is outside the game board: %s." % str(occupied_rect))
+			continue
+		var occupied_id := str((occupied_value as Dictionary).get("id", "unnamed")) if typeof(occupied_value) == TYPE_DICTIONARY else "unnamed"
 		for patron_value in patron_safe_rects:
 			var patron_rect := _layout_rect_from_dict(patron_value)
-			if panel_rect.intersects(patron_rect):
-				failures.append("Bar Dice text panel overlaps a table player: %s intersects %s." % [str(panel_rect), str(patron_rect)])
-				break
+			if occupied_rect.intersects(patron_rect):
+				var patron_id := str((patron_value as Dictionary).get("id", "unnamed")) if typeof(patron_value) == TYPE_DICTIONARY else "unnamed"
+				failures.append("Bar Dice occupied region %s overlaps table player %s: %s intersects %s." % [occupied_id, patron_id, str(occupied_rect), str(patron_rect)])
 	for i in range(patron_safe_rects.size()):
 		var patron_a := _layout_rect_from_dict(patron_safe_rects[i])
 		for j in range(i + 1, patron_safe_rects.size()):
 			var patron_b := _layout_rect_from_dict(patron_safe_rects[j])
 			if patron_a.intersects(patron_b):
 				failures.append("Bar Dice table player regions overlap: %s intersects %s." % [str(patron_a), str(patron_b)])
+	if content_zone_rects.size() < 10:
+		failures.append("Bar Dice surface did not expose all major non-overlapping UI zones.")
+	for i in range(content_zone_rects.size()):
+		var zone_a := _layout_rect_from_dict(content_zone_rects[i])
+		if not game_board.encloses(zone_a):
+			failures.append("Bar Dice UI zone is outside the game board: %s." % str(zone_a))
+		for j in range(i + 1, content_zone_rects.size()):
+			var zone_b := _layout_rect_from_dict(content_zone_rects[j])
+			if zone_a.intersects(zone_b):
+				var zone_a_id := str((content_zone_rects[i] as Dictionary).get("id", "zone_%d" % i))
+				var zone_b_id := str((content_zone_rects[j] as Dictionary).get("id", "zone_%d" % j))
+				failures.append("Bar Dice UI zones overlap: %s intersects %s." % [zone_a_id, zone_b_id])
 	if (surface.get("dice_legend", []) as Array).size() < 3:
 		failures.append("Bar Dice surface did not expose locked/suggested/selected dice legend data.")
 	if not _surface_blocks_action_while(surface, "bar_dice_select", "bar_dice_tumble") or not _surface_blocks_action_while(surface, "bar_dice_shake", "bar_dice_tumble"):
@@ -7464,6 +7641,7 @@ func _check_bar_dice_surface_contract(game: GameModule, failures: Array) -> void
 	var bar_dice_harness := SurfaceHarness.new()
 	bar_dice_harness.setup(surface)
 	game.draw_surface(bar_dice_harness, surface, {"contract_harness": true})
+	_check_surface_hit_layout(bar_dice_harness, "Bar Dice idle surface", failures)
 	var bar_dice_roll_hit := _surface_harness_first_hit(bar_dice_harness, "bar_dice_roll", 0)
 	_check_canvas_hit_dispatch(surface, bar_dice_roll_hit.get("rect", Rect2()), "bar_dice_roll", 0, "Bar Dice roll canvas dispatch", failures)
 	var highest_stake_index := (surface.get("stake_ladder", []) as Array).size() - 1
@@ -7634,7 +7812,8 @@ func _bar_dice_resolve_with_reroll(game: GameModule, seed_text: String, reroll: 
 	host.call("_sealed_action_host_surface_intent", "bar_dice_throw", 0, false)
 	host.call("_sealed_action_host_surface_intent", "bar_dice_reveal", 0, false)
 	var call_command: Dictionary = host.call("_sealed_action_host_surface_intent", "bar_dice_ack_call", 0, false)
-	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", "roll", 10, call_command.get("_sealed_action_host_delivery", {}))
+	var prepared: Dictionary = call_command.get("_sealed_action_host_prepared", {}) if typeof(call_command.get("_sealed_action_host_prepared", {})) == TYPE_DICTIONARY else {}
+	var result: Dictionary = host.call("_sealed_action_host_resolve_intent", "roll", 10, call_command.get("_sealed_action_host_delivery", {}), prepared)
 	host.free()
 	return result
 
@@ -8176,7 +8355,8 @@ func _check_bar_dice_save_load_mid_round(game: GameModule, failures: Array) -> v
 	restored_host.call("_sealed_action_host_surface_intent", "bar_dice_throw", 0, false)
 	restored_host.call("_sealed_action_host_surface_intent", "bar_dice_reveal", 0, false)
 	var call_command: Dictionary = restored_host.call("_sealed_action_host_surface_intent", "bar_dice_ack_call", 0, false)
-	var result: Dictionary = restored_host.call("_sealed_action_host_resolve_intent", "roll", 10, call_command.get("_sealed_action_host_delivery", {}))
+	var prepared: Dictionary = call_command.get("_sealed_action_host_prepared", {}) if typeof(call_command.get("_sealed_action_host_prepared", {})) == TYPE_DICTIONARY else {}
+	var result: Dictionary = restored_host.call("_sealed_action_host_resolve_intent", "roll", 10, call_command.get("_sealed_action_host_delivery", {}), prepared)
 	restored_host.free()
 	if not bool(result.get("ok", false)) or (result.get("bar_dice_player_dice", []) as Array).size() != 5:
 		failures.append("Bar Dice restored mid-round state could not resolve a valid table round.")

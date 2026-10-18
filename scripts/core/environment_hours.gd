@@ -1,6 +1,8 @@
 class_name EnvironmentHours
 extends RefCounted
 
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
+
 # Pure venue-hours helpers. All callers pass deterministic clock minutes.
 
 const MINUTES_PER_DAY := 1440
@@ -50,13 +52,13 @@ static func status_at(archetype: Dictionary, minute_of_day: int) -> Dictionary:
 			"closing_soon": soon,
 			"label": "Closing soon" if soon else "Open",
 			"disabled_reason": "",
-			"opens_at": _clock_label(open_minute),
-			"closes_at": _clock_label(close_minute),
+			"opens_at": PlayerTextScript.format_time_of_day(open_minute),
+			"closes_at": PlayerTextScript.format_time_of_day(close_minute),
 			"minutes_until_open": 0,
 			"minutes_until_close": until_close,
 		}
 	var until_open := _minutes_forward(minute, open_minute)
-	var opens_at := _clock_label(open_minute)
+	var opens_at := PlayerTextScript.format_time_of_day(open_minute)
 	return {
 		"open": false,
 		"always_open": false,
@@ -64,7 +66,7 @@ static func status_at(archetype: Dictionary, minute_of_day: int) -> Dictionary:
 		"label": "Closed",
 		"disabled_reason": "Closed. Opens at %s." % opens_at,
 		"opens_at": opens_at,
-		"closes_at": _clock_label(close_minute),
+		"closes_at": PlayerTextScript.format_time_of_day(close_minute),
 		"minutes_until_open": until_open,
 		"minutes_until_close": 0,
 	}
@@ -79,6 +81,26 @@ static func travel_status_text(archetype: Dictionary, minute_of_day: int) -> Str
 			return "Closing soon: %s" % str(status.get("closes_at", ""))
 		return "Open until %s" % str(status.get("closes_at", ""))
 	return str(status.get("disabled_reason", "Closed."))
+
+
+# Identifies the venue opening whose active session contains this absolute game
+# minute. Same-session revisits share an id; crossing a real close/reopen boundary
+# changes it. Always-open environments rotate with the game day.
+static func operating_cycle_id(archetype: Dictionary, absolute_minutes: int) -> String:
+	var safe_minutes := maxi(0, absolute_minutes)
+	var day_index := int(floor(float(safe_minutes) / float(MINUTES_PER_DAY)))
+	var minute := _normalize_minute(safe_minutes)
+	var hours := _hours_dict(archetype.get("open_hours", null))
+	if hours.is_empty():
+		return "day:%d" % day_index
+	var open_minute := _normalize_minute(int(hours.get("open_minute", 0)))
+	var close_minute := _normalize_minute(int(hours.get("close_minute", open_minute)))
+	if open_minute == close_minute:
+		return "day:%d" % day_index
+	# An after-midnight portion of an overnight schedule belongs to the opening
+	# that began on the previous day.
+	var opening_day := day_index - 1 if close_minute < open_minute and minute < close_minute else day_index
+	return "open:%d:%d" % [opening_day, open_minute]
 
 
 static func _hours_dict(value: Variant) -> Dictionary:
@@ -103,13 +125,3 @@ static func _minutes_forward(from_minute: int, to_minute: int) -> int:
 	if to_value >= from_value:
 		return to_value - from_value
 	return MINUTES_PER_DAY - from_value + to_value
-
-
-static func _clock_label(minute_of_day: int) -> String:
-	var minute := _normalize_minute(minute_of_day)
-	var hour_24 := int(floor(float(minute) / 60.0)) % 24
-	var hour_12 := hour_24 % 12
-	if hour_12 == 0:
-		hour_12 = 12
-	var suffix := "AM" if hour_24 < 12 else "PM"
-	return "%d %s" % [hour_12, suffix]

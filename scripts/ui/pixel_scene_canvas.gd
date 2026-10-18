@@ -1,7 +1,11 @@
 class_name PixelSceneCanvas
 extends Control
 
-# Draws first-person venue scenes as hard-edged pixel art directly on Godot's canvas.
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
+# Draws and interacts with first-person venue scenes as hard-edged pixel art.
+# It owns camera/focus animation, object hit regions, selection feedback, and the
+# developer placement overlay, but consumes sealed room geometry from core.
 
 signal object_hovered(object_id: String)
 signal object_focused(object_id: String)
@@ -10,6 +14,13 @@ signal view_geometry_changed
 signal developer_placement_lock_requested(request: Dictionary)
 signal developer_placement_reset_requested(request: Dictionary)
 signal developer_placement_promote_requested
+signal developer_placement_refresh_requested
+signal developer_placement_export_requested(request: Dictionary)
+signal developer_layout_save_requested(request: Dictionary)
+signal developer_slot_layer_requested(request: Dictionary)
+signal developer_slot_scale_requested(request: Dictionary)
+signal developer_placement_undo_requested(request: Dictionary)
+signal developer_slot_placement_shortcut_toggled(enabled: bool)
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
@@ -19,11 +30,47 @@ const DrunkDistortionOverlayScript := preload("res://scripts/ui/drunk_distortion
 const HeatFeedbackVisualsScript := preload("res://scripts/ui/heat_feedback_visuals.gd")
 const TableGameVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
+const EnvironmentObjectManifestScript := preload("res://scripts/core/environment_object_manifest.gd")
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
+const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd")
 const CoinPusherRoomPropScript := preload("res://scripts/ui/game_props/coin_pusher_room_prop.gd")
 const ScratchTicketRoomPropScript := preload("res://scripts/ui/game_props/scratch_ticket_room_prop.gd")
 const CrapsRoomPropScript := preload("res://scripts/ui/game_props/craps_room_prop.gd")
+const StreetCrapsCirclePropScript := preload("res://scripts/ui/game_props/street_craps_circle_prop.gd")
 const BarDiceRoomPropScript := preload("res://scripts/ui/game_props/bar_dice_room_prop.gd")
-const CATEGORY_AUTHORED_TYPES := ["event", "item"]
+const SLOT_COLLECTION_FIELDS := ["fixed_slots", "event_slots", "scenario_slots", "exit_slots"]
+const SLOT_FAMILIES := ["fixed", "event", "scenario", "exit"]
+const SLOT_FILTER_OPTIONS := ["fixed", "event", "scenario", "exit", "all"]
+const SLOT_DRAW_LAYERS := {"behind": -1, "standard": 0, "front": 1}
+const SLOT_OBJECT_SCALE_MIN := 0.5
+const SLOT_OBJECT_SCALE_MAX := 2.0
+const SLOT_OBJECT_SCALE_STEP := 0.1
+const GRAND_CASINO_FIXED_GAME_VISUAL_SIZES := {
+	"fixed.game_machine_1": Vector2(110.0, 72.0),
+	"fixed.game_machine_2": Vector2(110.0, 72.0),
+	"fixed.game_machine_3": Vector2(110.0, 72.0),
+	"fixed.game_machine_4": Vector2(110.0, 72.0),
+	"fixed.game_machine_5": Vector2(110.0, 72.0),
+	"fixed.game_table_left": Vector2(72.0, 48.0),
+	"fixed.game_table_right": Vector2(72.0, 48.0),
+}
+const SLOT_MACHINE_WORLD_VISUAL_SIZES := {
+	"classic_3_reel": Vector2(116.0, 88.0),
+	"line_5x3": Vector2(142.0, 112.0),
+	"video_feature": Vector2(148.0, 120.0),
+}
+const SLOT_MACHINE_COMPACT_SCALE_FLOOR := 0.82
+const DEVELOPER_PANEL_MARGIN := 8.0
+const DEVELOPER_PANEL_MIN_WIDTH := 320.0
+const DEVELOPER_PANEL_PREFERRED_WIDTH := 552.0
+const DEVELOPER_PANEL_FIXED_HEIGHT := 404.0
+const DEVELOPER_PANEL_RESTORE_MIN_WIDTH := 156.0
+const DEVELOPER_PANEL_FONT_SIZE := 11
+const DEVELOPER_PANEL_CONTROL_HEIGHT := 30.0
+const DEVELOPER_PANEL_FILTER_MIN_WIDTH := 96.0
+const DEVELOPER_PANEL_INFO_HEIGHT := 58.0
+const DEVELOPER_ROUTE_COLLISION_EDGE_TOLERANCE := 1.01
+const DEVELOPER_PLACEMENT_UNDO_LIMIT := 64
 
 const C_DARK := VisualStyleScript.DARK
 const C_DARK_2 := VisualStyleScript.DARK_2
@@ -43,7 +90,6 @@ const C_WHITE := VisualStyleScript.WHITE
 const C_SOFT := VisualStyleScript.SOFT
 const C_SHADOW := VisualStyleScript.SHADOW
 const C_BLUE := VisualStyleScript.BLUE
-const C_POLICE_RED := Color("#ff173d")
 const C_POLICE_BLUE := Color("#1f64ff")
 const BOARD_SIZE := VisualStyleScript.ENVIRONMENT_BOARD_SIZE
 const FOCUS_ZOOM := 1.38
@@ -75,6 +121,8 @@ const OBJECT_INFO_TYPE_GAP := 8.0
 const OBJECT_INFO_HEADER_Y := 13.0
 const OBJECT_INFO_HEADER_RULE_Y := 18.0
 const OBJECT_INFO_BODY_Y := 31.0
+const OBJECT_INFO_STATUS_ICON_SIZE := 12.0
+const OBJECT_INFO_STATUS_ICON_GAP := 5.0
 const OBJECT_INFO_BADGE_RAISE := 5.0
 const OBJECT_INFO_ACTION_HEIGHT := 16.0
 const OBJECT_INFO_ACTION_GAP := 5.0
@@ -89,16 +137,28 @@ const OBJECT_INFO_ANIMATION_SPEED := 14.0
 const OBJECT_INFO_RECT_SNAP_EPSILON := 0.25
 const OBJECT_LABEL_MAX_WIDTH := 126.0
 const OBJECT_LABEL_HEIGHT := 15.0
-const OBJECT_LABEL_GAP := 4.0
+const OBJECT_LABEL_TWO_LINE_HEIGHT := 26.0
+const OBJECT_LABEL_GAP := 2.0
+const OBJECT_LABEL_MAX_OFFSET_STEPS := 2
+const OBJECT_LABEL_FONT_SIZE := 10
+const OBJECT_LABEL_TEXT_PADDING_X := 3.0
+const OBJECT_LABEL_BASELINE_Y := 11.0
+const OBJECT_LABEL_LINE_HEIGHT := 11.0
+const OBJECT_LABEL_MAX_TETHER_GAP := OBJECT_LABEL_GAP + float(OBJECT_LABEL_MAX_OFFSET_STEPS) * (OBJECT_LABEL_LINE_HEIGHT + 2.0)
 # Godot can deliver touch plus emulated mouse after a stalled frame.
 const EMULATED_TOUCH_SUPPRESS_MS := 750
 const EMULATED_TOUCH_SUPPRESS_DISTANCE := 18.0
 const DRUNK_TIME_SCALE_MIN := 0.33
 const SCENE_IDLE_ANIMATION_FPS := 60.0
-const SCENE_IDLE_ANIMATION_INTERVAL_SEC := 1.0 / SCENE_IDLE_ANIMATION_FPS
 const WEB_SCENE_IDLE_ANIMATION_FPS := 30.0
 const WEB_GRAND_CASINO_IDLE_ANIMATION_FPS := 15.0
+const DEVELOPER_DRAG_REDRAW_INTERVAL_MSEC := 33
 const ITEM_ICON_TEXTURE_CACHE_LIMIT := 32
+const SLOT_PROP_STATIC_LAYER_CACHE_LIMIT := 64
+const SLOT_PROP_PREVIEW_LAYER_CACHE_LIMIT := 64
+const CHARACTER_IDLE_PROFILE_CACHE_LIMIT := 768
+const CHARACTER_IDLE_GESTURE_SEGMENT_COUNT := 12
+const CHARACTER_IDLE_BLINK_SEGMENT_COUNT := 10
 const MAX_CONCURRENT_PERSON_TRANSITS := 8
 const PERSON_TRANSIT_SPEED_PIXELS_PER_SEC := 82.0
 const PERSON_TRANSIT_MIN_DURATION_SEC := 0.75
@@ -114,9 +174,6 @@ const SCENE_SPARKLES_DELTA_QUEEN := [Vector2(128, 96), Vector2(448, 96), Vector2
 const SCENE_SPARKLES_UNDERGROUND := [Vector2(154, 134), Vector2(505, 136), Vector2(772, 142)]
 const SCENE_SPARKLES_GRAND_CASINO := [Vector2(132, 118), Vector2(728, 118), Vector2(444, 154)]
 const SCENE_SPARKLES_PAWN_SHOP := [Vector2(150, 84), Vector2(414, 118), Vector2(690, 154)]
-const LINDA_CAGE_FEET := [Vector2(330, 260), Vector2(420, 260), Vector2(512, 260), Vector2(590, 260)]
-const SCENARIO_CROWD_POINTS := [Vector2(82, 254), Vector2(219, 271), Vector2(356, 288), Vector2(493, 271), Vector2(630, 254), Vector2(767, 271), Vector2(164, 288), Vector2(301, 254), Vector2(438, 288), Vector2(575, 271)]
-const SCENARIO_CROWD_COLOR := Color(0.02, 0.025, 0.05, 0.56)
 
 var environment_id: String = "corner_store"
 var environment_name: String = "Corner Store"
@@ -144,10 +201,25 @@ var item_icon_texture_cache: Dictionary = {}
 var item_icon_texture_cache_scope_key: String = ""
 var icon_sprite_texture_cache: Dictionary = {}
 var scene_objects_by_id_cache: Dictionary = {}
+var active_scene_objects_cache: Array = []
+var behind_counter_scene_objects_cache: Array = []
+var room_front_scene_objects_cache: Array = []
+var room_top_scene_objects_cache: Array = []
+var scene_object_cache_valid := false
+var scene_has_live_actor_routes := false
+var object_label_rect_cache: Dictionary = {}
+var object_label_layout_stats: Dictionary = {}
+var object_labels_and_borders_enabled := true
 var draw_text_width_cache: Dictionary = {}
 var fit_draw_text_cache: Dictionary = {}
 var object_animation_phase_cache: Dictionary = {}
+var character_idle_profile_cache: Dictionary = {}
+var slot_prop_static_layer_cache: Dictionary = {}
+var slot_prop_preview_layer_cache: Dictionary = {}
+var slot_prop_preview_layer_rebuild_count := 0
 var actor_route_started_at_cache: Dictionary = {}
+var actor_position_receipt_cache: Dictionary = {}
+var actor_position_route_room_key := ""
 var actor_route_time := 0.0
 var person_transits: Dictionary = {}
 var person_transit_ids: Array[String] = []
@@ -185,19 +257,107 @@ var _scenario_hazard_fill_points := PackedVector2Array([Vector2.ZERO, Vector2.ZE
 var _scenario_hazard_outline_points := PackedVector2Array([Vector2.ZERO, Vector2.ZERO, Vector2.ZERO, Vector2.ZERO])
 var developer_placement_mode := false
 var developer_placement_dragging := false
+var developer_drag_redraw_pending := false
+var developer_drag_last_redraw_msec := -100000
 var developer_placement_drag_offset := Vector2.ZERO
 var developer_placement_original_rect := Rect2()
 var developer_placement_pending_rect := Rect2()
 var developer_placement_valid := false
 var developer_placement_surface_id := ""
 var developer_placement_overlap_ids: Array[String] = []
+var developer_placement_surface_map_cache: Dictionary = {}
+var developer_placement_surface_map_cache_valid := false
+var room_surface_slots_by_id_cache: Dictionary = {}
+var room_surface_counters_by_id_cache: Dictionary = {}
+var room_foreground_counters_cache: Array = []
+var room_surface_draw_cache_valid := false
 var developer_placement_panel: PanelContainer
+var developer_placement_panel_shell: VBoxContainer
+var developer_placement_panel_header: HBoxContainer
+var developer_placement_content: MarginContainer
+var developer_placement_stack: VBoxContainer
+var developer_placement_minimize_button: Button
+var developer_placement_restore_button: Button
+var developer_placement_panel_minimized := false
 var developer_placement_label: Label
 var developer_placement_lock_button: Button
 var developer_placement_reset_button: Button
+var developer_placement_export_button: Button
+var developer_placement_promote_button: Button
+var developer_layout_save_button: Button
+var developer_layout_save_next_button: Button
+var developer_slot_placement_mode := false
+var developer_slot_placement_shortcut_enabled := false
+var developer_slot_selected_id := ""
+var developer_slot_dragging := false
+var developer_slot_drag_offset := Vector2.ZERO
+var developer_slot_original_rect := Rect2()
+var developer_slot_pending_rect := Rect2()
+var developer_slot_pending_position := Vector2.ZERO
+var developer_slot_valid := false
+var developer_slot_overlap_ids: Array[String] = []
+var developer_slots_cache: Array = []
+var developer_available_slots_cache: Array = []
+var developer_visible_slots_cache: Array = []
+var developer_slots_by_id_cache: Dictionary = {}
+var developer_slot_rects_by_id_cache: Dictionary = {}
+var developer_slot_positions_by_id_cache: Dictionary = {}
+var developer_slots_cache_valid := false
+var developer_available_slots_cache_valid := false
+var developer_visible_slots_cache_valid := false
+var developer_slot_occupants_by_id_cache: Dictionary = {}
+var developer_required_slot_ids_cache: Dictionary = {}
+var developer_slot_overlay_rows_cache: Array = []
+var developer_slot_overlay_cache_valid := false
+var developer_slot_overlap_summary_cache: Dictionary = {}
+var developer_slot_overlap_summary_cache_valid := false
+var developer_slot_scene_object_baseline: Array = []
+var developer_slot_scene_object_baseline_valid := false
+var developer_slot_filter_row: HBoxContainer
+var developer_slot_filter_buttons: Dictionary = {}
+var developer_slot_family_button_group: ButtonGroup
+var developer_slot_visibility_row: HBoxContainer
+var developer_slot_show_empty_button: CheckBox
+var developer_slot_show_reserves_button: CheckBox
+var developer_slot_edit_shared_button: CheckBox
+var developer_slot_context_label: Label
+var developer_slot_layer_row: HBoxContainer
+var developer_slot_layer_buttons: Dictionary = {}
+var developer_slot_layer_button_group: ButtonGroup
+var developer_slot_scale_decrease_button: Button
+var developer_slot_scale_reset_button: Button
+var developer_slot_scale_increase_button: Button
+var developer_slot_show_empty_capacity := true
+var developer_slot_show_runtime_reserves := true
+var developer_slot_edit_shared_in_scenario := false
+var developer_slot_hovered_id := ""
+var developer_slot_context_change_locking := false
+var developer_placement_panel_layout_queued := false
+var developer_slot_review_context_key := ""
+var developer_slot_reviewed_families: Dictionary = {}
+var developer_placement_undo_context_key := ""
+var developer_placement_undo_stack: Array[Dictionary] = []
+var scene_object_cache_rebuild_count := 0
+var developer_slot_cache_rebuild_count := 0
+var developer_placement_panel_update_count := 0
+var developer_slot_overlay_cache_rebuild_count := 0
+var developer_slot_overlap_audit_count := 0
+var object_label_layout_rebuild_count := 0
+var environment_snapshot_render_generation := 0
+var developer_placement_authority_dirty := false
+var developer_slot_family_filters := {
+	"fixed": true,
+	"event": false,
+	"scenario": false,
+	"exit": false,
+	"all": false,
+}
 
 
 func _ready() -> void:
+	# Animation liveness is owned by this canvas. Pointer input may request extra
+	# redraws for hover state, but must never be the heartbeat for room motion.
+	_arm_animation_heartbeat()
 	mouse_filter = Control.MOUSE_FILTER_STOP
 	focus_mode = Control.FOCUS_ALL
 	clip_contents = true
@@ -208,18 +368,82 @@ func _ready() -> void:
 func set_developer_placement_mode(enabled: bool) -> void:
 	if developer_placement_mode == enabled:
 		return
+	if enabled and developer_slot_placement_mode:
+		_finish_developer_slot_placement_edit()
+		developer_slot_placement_mode = false
+		developer_slot_selected_id = ""
+		_restore_developer_slot_scene_objects()
 	if not enabled:
 		_finish_developer_placement_edit()
 	developer_placement_mode = enabled
+	_clear_developer_placement_undo_history(
+		_developer_slot_snapshot_context_key(foundation_snapshot) if enabled else ""
+	)
 	_ensure_developer_placement_panel()
-	developer_placement_panel.visible = enabled
+	_sync_developer_placement_panel_visibility()
 	_update_developer_placement_panel()
+	_invalidate_camera_target()
+	_update_camera_target_if_needed()
 	queue_redraw()
+	if not enabled:
+		_flush_deferred_developer_placement_authority()
+
+
+func set_developer_slot_placement_mode(enabled: bool) -> void:
+	if developer_slot_placement_mode == enabled:
+		return
+	if enabled and developer_placement_mode:
+		clear_developer_placement_preview()
+		developer_placement_mode = false
+	if not enabled:
+		_finish_developer_slot_placement_edit()
+		developer_slot_selected_id = ""
+	developer_slot_placement_mode = enabled
+	_clear_developer_placement_undo_history(
+		_developer_slot_snapshot_context_key(foundation_snapshot) if enabled else ""
+	)
+	_invalidate_developer_placement_geometry_caches()
+	if developer_slot_filter_row != null:
+		developer_slot_filter_row.visible = enabled
+	if developer_slot_visibility_row != null:
+		developer_slot_visibility_row.visible = enabled
+	if developer_slot_context_label != null:
+		developer_slot_context_label.visible = enabled
+	if developer_slot_layer_row != null:
+		developer_slot_layer_row.visible = enabled
+	if enabled:
+		# A placement pass must expose every authored coordinate by default. The
+		# owner can still hide capacity temporarily, but a newly opened context
+		# never looks complete while silently concealing positions.
+		developer_slot_show_empty_capacity = true
+		developer_slot_show_runtime_reserves = true
+		developer_slot_edit_shared_in_scenario = false
+		_capture_developer_slot_scene_object_baseline()
+	else:
+		developer_slot_hovered_id = ""
+		_restore_developer_slot_scene_objects()
+	_ensure_developer_placement_panel()
+	_configure_developer_slot_context(enabled)
+	_sync_developer_placement_panel_visibility()
+	_apply_authoring_slot_positions_to_scene_objects()
+	_update_developer_placement_panel()
+	_invalidate_camera_target()
+	_update_camera_target_if_needed()
+	queue_redraw()
+	if not enabled:
+		_flush_deferred_developer_placement_authority()
+
+
+# Enables the F1 shortcut only on the live authoring canvas. Decorative room
+# canvases intentionally leave this disabled so they cannot open placement UI.
+func set_developer_slot_placement_shortcut_enabled(enabled: bool) -> void:
+	developer_slot_placement_shortcut_enabled = enabled
 
 
 func developer_placement_snapshot() -> Dictionary:
 	return {
 		"enabled": developer_placement_mode,
+		"panel_minimized": developer_placement_panel_minimized,
 		"selected_object_id": selected_object_id,
 		"dragging": developer_placement_dragging,
 		"pending": developer_placement_pending_rect.has_area(),
@@ -227,18 +451,324 @@ func developer_placement_snapshot() -> Dictionary:
 		"surface_id": developer_placement_surface_id,
 		"overlap_ids": developer_placement_overlap_ids.duplicate(),
 		"request": _developer_placement_request(),
+		"undo_count": _developer_placement_undo_count(),
 	}
 
 
-func clear_developer_placement_preview() -> void:
+func developer_slot_placement_snapshot() -> Dictionary:
+	var review_status := _developer_slot_review_status()
+	var selected_slot := _developer_slot(developer_slot_selected_id)
+	return {
+		"enabled": developer_slot_placement_mode,
+		"panel_minimized": developer_placement_panel_minimized,
+		"selected_slot_id": developer_slot_selected_id,
+		"selected_object_scale": _developer_slot_object_scale(selected_slot) if not selected_slot.is_empty() else 1.0,
+		"dragging": developer_slot_dragging,
+		"pending": developer_slot_pending_rect.has_area(),
+		"valid": developer_slot_valid,
+		"overlap_ids": developer_slot_overlap_ids.duplicate(),
+		"visible_slot_count": _developer_slots().size(),
+		"total_slot_count": _developer_slots(true).size(),
+		"family_filters": developer_slot_family_filters.duplicate(true),
+		"active_family": _developer_slot_active_family(),
+		"show_empty_capacity": developer_slot_show_empty_capacity,
+		"show_runtime_reserves": developer_slot_show_runtime_reserves,
+		"edit_shared_in_scenario": developer_slot_edit_shared_in_scenario,
+		"hovered_slot_id": developer_slot_hovered_id,
+		"preview_context": _developer_slot_preview_context(),
+		"placement_progress": _copy_dictionary(foundation_snapshot.get("developer_placement_progress", {})),
+		"required_review_families": review_status.get("required", []).duplicate(),
+		"reviewed_families": review_status.get("reviewed", []).duplicate(),
+		"missing_review_families": review_status.get("missing", []).duplicate(),
+		"review_ready": bool(review_status.get("ready", false)),
+		"marker_label_ids": _developer_slot_label_ids(),
+		"overlap_summary": _developer_slot_overlap_summary(),
+		"request": _developer_slot_placement_request(),
+		"undo_count": _developer_placement_undo_count(),
+	}
+
+
+func set_developer_slot_family_visible(family: String, visible: bool) -> void:
+	var normalized_family := family.strip_edges().to_lower()
+	if normalized_family not in SLOT_FILTER_OPTIONS:
+		return
+	# Scenario slots are meaningful only while an exact scenario owns the current
+	# room/layer. Shared runtime reserves remain in the placement map for delivery
+	# and chain binding, but they are not base-room authoring choices.
+	if visible and normalized_family != "all" and not _developer_slot_family_available(normalized_family):
+		return
+	# Families are tabs, not accumulating checkboxes. Only one lifecycle family
+	# is presented at a time so a room never opens as a wall of every possible
+	# slot. The active tab cannot be unpressed without selecting another one.
+	if not visible and bool(developer_slot_family_filters.get(normalized_family, false)):
+		return
+	if visible:
+		_ensure_developer_slot_review_context()
+		if normalized_family == "all":
+			for family_value in SLOT_FAMILIES:
+				var reviewed_family := str(family_value)
+				if _developer_slot_family_available(reviewed_family):
+					developer_slot_reviewed_families[reviewed_family] = true
+		else:
+			developer_slot_reviewed_families[normalized_family] = true
+		for family_value in SLOT_FAMILIES:
+			var candidate_family := str(family_value)
+			developer_slot_family_filters[candidate_family] = normalized_family == "all" \
+				and _developer_slot_family_available(candidate_family) \
+				or candidate_family == normalized_family
+		developer_slot_family_filters["all"] = normalized_family == "all"
+		# Choosing a shared family is an explicit request to edit the shared room,
+		# even while a scenario is previewed. Keep the warning toggle synchronized
+		# instead of leaving the selected markers visible but immovable.
+		if _developer_slot_has_active_scenario():
+			set_developer_slot_edit_shared_in_scenario(normalized_family != "scenario")
+	for family_value in SLOT_FILTER_OPTIONS:
+		var candidate_family := str(family_value)
+		var button_value: Variant = developer_slot_filter_buttons.get(candidate_family)
+		if button_value is BaseButton:
+			(button_value as BaseButton).set_pressed_no_signal(bool(developer_slot_family_filters.get(candidate_family, false)))
+	_invalidate_developer_slot_derived_caches()
+	var selected := _developer_slot(developer_slot_selected_id)
+	if not selected.is_empty() and not _developer_slot_visible_in_preview(selected):
+		_finish_developer_slot_placement_edit()
+		developer_slot_selected_id = ""
+	developer_slot_hovered_id = ""
+	_update_developer_placement_panel()
+	queue_redraw()
+
+
+func set_developer_slot_show_empty_capacity(visible: bool) -> void:
+	developer_slot_show_empty_capacity = visible
+	_invalidate_developer_slot_derived_caches()
+	if developer_slot_show_empty_button != null:
+		developer_slot_show_empty_button.set_pressed_no_signal(visible)
+	_prune_hidden_developer_slot_selection()
+	_update_developer_placement_panel()
+	queue_redraw()
+
+
+func set_developer_slot_show_runtime_reserves(visible: bool) -> void:
+	developer_slot_show_runtime_reserves = visible
+	_invalidate_developer_slot_derived_caches()
+	if developer_slot_show_reserves_button != null:
+		developer_slot_show_reserves_button.set_pressed_no_signal(visible)
+	_prune_hidden_developer_slot_selection()
+	_update_developer_placement_panel()
+	queue_redraw()
+
+
+func set_developer_slot_edit_shared_in_scenario(enabled: bool) -> void:
+	if not _developer_slot_has_active_scenario():
+		enabled = false
+	if developer_slot_edit_shared_in_scenario == enabled:
+		return
+	var selected := _developer_slot(developer_slot_selected_id)
+	if not selected.is_empty() and _developer_slot_scope(selected) == "room_shared":
+		_finish_developer_slot_placement_edit()
+	developer_slot_edit_shared_in_scenario = enabled
+	_invalidate_developer_slot_derived_caches()
+	if developer_slot_edit_shared_button != null:
+		developer_slot_edit_shared_button.set_pressed_no_signal(enabled)
+	_update_developer_placement_panel()
+	queue_redraw()
+
+
+func _configure_developer_slot_context(reset_family: bool) -> void:
+	var exact_scenario := _developer_slot_has_active_scenario()
+	if not exact_scenario and bool(developer_slot_family_filters.get("scenario", false)):
+		# A same-canvas transition from a scenario layout to its base room must not
+		# leave the now-unavailable Scenario tab selected.
+		reset_family = true
+	if reset_family:
+		# Every newly opened layout starts as a complete review surface. Filters
+		# are a temporary convenience inside one context and must not silently
+		# carry hidden authored positions into Load Next Missing.
+		developer_slot_show_empty_capacity = true
+		developer_slot_show_runtime_reserves = true
+		developer_slot_edit_shared_in_scenario = false
+	elif not exact_scenario:
+		developer_slot_edit_shared_in_scenario = false
+	if developer_slot_show_empty_button != null:
+		developer_slot_show_empty_button.set_pressed_no_signal(developer_slot_show_empty_capacity)
+	if developer_slot_show_reserves_button != null:
+		developer_slot_show_reserves_button.set_pressed_no_signal(developer_slot_show_runtime_reserves)
+	if developer_slot_edit_shared_button != null:
+		developer_slot_edit_shared_button.visible = developer_slot_placement_mode and exact_scenario
+		developer_slot_edit_shared_button.set_pressed_no_signal(developer_slot_edit_shared_in_scenario)
+	for family_value in SLOT_FILTER_OPTIONS:
+		var family := str(family_value)
+		var button_value: Variant = developer_slot_filter_buttons.get(family)
+		if button_value is BaseButton:
+			var available := family == "all" or _developer_slot_family_available(family)
+			(button_value as BaseButton).visible = available
+			(button_value as BaseButton).disabled = not available
+	if not reset_family:
+		return
+	var preferred_family := "scenario" if exact_scenario else "fixed"
+	for family_value in SLOT_FAMILIES:
+		var family := str(family_value)
+		developer_slot_family_filters[family] = family == preferred_family
+		var button_value: Variant = developer_slot_filter_buttons.get(family)
+		if button_value is BaseButton:
+			(button_value as BaseButton).set_pressed_no_signal(family == preferred_family)
+	developer_slot_family_filters["all"] = false
+	var all_button_value: Variant = developer_slot_filter_buttons.get("all")
+	if all_button_value is BaseButton:
+		(all_button_value as BaseButton).set_pressed_no_signal(false)
+	developer_slot_selected_id = ""
+	developer_slot_hovered_id = ""
+	developer_slot_review_context_key = _developer_slot_snapshot_context_key(foundation_snapshot)
+	developer_slot_reviewed_families.clear()
+	developer_slot_reviewed_families[preferred_family] = true
+	_invalidate_developer_slot_derived_caches()
+
+
+func _ensure_developer_slot_review_context() -> void:
+	var context_key := _developer_slot_snapshot_context_key(foundation_snapshot)
+	if context_key == developer_slot_review_context_key:
+		return
+	developer_slot_review_context_key = context_key
+	developer_slot_reviewed_families.clear()
+
+
+func _developer_slot_required_review_families() -> Array[String]:
+	var required: Array[String] = []
+	if _developer_slot_has_active_scenario():
+		required.append("scenario")
+		return required
+	for family_value in SLOT_FAMILIES:
+		var family := str(family_value)
+		if int(_developer_slot_family_counts(family).get("total", 0)) > 0:
+			required.append(family)
+	return required
+
+
+func _developer_slot_review_status() -> Dictionary:
+	_ensure_developer_slot_review_context()
+	var required := _developer_slot_required_review_families()
+	var reviewed: Array[String] = []
+	var missing: Array[String] = []
+	for family in required:
+		if bool(developer_slot_reviewed_families.get(family, false)):
+			reviewed.append(family)
+		else:
+			missing.append(family)
+	return {
+		"required": required,
+		"reviewed": reviewed,
+		"missing": missing,
+		"ready": missing.is_empty(),
+	}
+
+
+func _developer_slot_has_active_scenario() -> bool:
+	return not EnvironmentPlacementScript.active_scenario_id(foundation_snapshot).is_empty()
+
+
+func _developer_slot_family_available(family: String) -> bool:
+	var normalized_family := family.strip_edges().to_lower()
+	return normalized_family in SLOT_FAMILIES \
+		and (normalized_family != "scenario" or _developer_slot_has_active_scenario())
+
+
+func _developer_slot_scope(slot: Dictionary) -> String:
+	return "scenario_local" if bool(slot.get("scenario_instance", false)) else "room_shared"
+
+
+func _developer_slot_is_editable(slot: Dictionary) -> bool:
+	if slot.is_empty() or not _developer_slot_family_available(_developer_slot_family(slot)):
+		return false
+	if _developer_slot_scope(slot) == "scenario_local":
+		return not slot.is_empty()
+	return not _developer_slot_has_active_scenario() or developer_slot_edit_shared_in_scenario
+
+
+func _developer_slot_hidden_detail_count() -> int:
+	var result := 0
+	for slot_value in _developer_slots(true):
+		if not _developer_slot_visible_by_detail(slot_value as Dictionary):
+			result += 1
+	return result
+
+
+func _prune_hidden_developer_slot_selection() -> void:
+	var selected := _developer_slot(developer_slot_selected_id)
+	if not selected.is_empty() and not _developer_slot_visible_in_preview(selected):
+		_finish_developer_slot_placement_edit()
+		developer_slot_selected_id = ""
+	var hovered := _developer_slot(developer_slot_hovered_id)
+	if not hovered.is_empty() and not _developer_slot_visible_in_preview(hovered):
+		developer_slot_hovered_id = ""
+
+
+func clear_developer_placement_preview(refresh_panel: bool = true, redraw: bool = true) -> void:
 	developer_placement_dragging = false
+	developer_drag_redraw_pending = false
 	developer_placement_original_rect = Rect2()
 	developer_placement_pending_rect = Rect2()
 	developer_placement_valid = false
 	developer_placement_surface_id = ""
 	developer_placement_overlap_ids.clear()
-	_update_developer_placement_panel()
-	queue_redraw()
+	if refresh_panel:
+		_update_developer_placement_panel()
+	if redraw:
+		queue_redraw()
+
+
+func clear_developer_slot_placement_preview(refresh_panel: bool = true, redraw: bool = true) -> void:
+	developer_slot_dragging = false
+	developer_drag_redraw_pending = false
+	developer_slot_drag_offset = Vector2.ZERO
+	developer_slot_original_rect = Rect2()
+	developer_slot_pending_rect = Rect2()
+	developer_slot_pending_position = Vector2.ZERO
+	developer_slot_valid = false
+	developer_slot_overlap_ids.clear()
+	if refresh_panel:
+		_update_developer_placement_panel()
+	if redraw:
+		queue_redraw()
+
+
+func _flush_deferred_developer_placement_authority() -> void:
+	if not developer_placement_authority_dirty:
+		return
+	developer_placement_refresh_requested.emit()
+
+
+func acknowledge_developer_placement_authority_refresh() -> void:
+	developer_placement_authority_dirty = false
+
+
+func _invalidate_developer_placement_geometry_caches() -> void:
+	# Effective surface maps are shared immutable cache values. Drop this canvas's
+	# reference instead of clearing the dictionary owned by EnvironmentPlacement.
+	developer_placement_surface_map_cache = {}
+	developer_placement_surface_map_cache_valid = false
+	room_surface_slots_by_id_cache.clear()
+	room_surface_counters_by_id_cache.clear()
+	room_foreground_counters_cache = []
+	room_surface_draw_cache_valid = false
+	developer_slots_cache = []
+	developer_available_slots_cache = []
+	developer_visible_slots_cache = []
+	developer_slots_by_id_cache.clear()
+	developer_slot_rects_by_id_cache.clear()
+	developer_slot_positions_by_id_cache.clear()
+	developer_slots_cache_valid = false
+	developer_available_slots_cache_valid = false
+	_invalidate_developer_slot_derived_caches()
+
+
+func _invalidate_developer_slot_derived_caches() -> void:
+	developer_available_slots_cache = []
+	developer_available_slots_cache_valid = false
+	developer_visible_slots_cache = []
+	developer_visible_slots_cache_valid = false
+	developer_slot_overlay_rows_cache = []
+	developer_slot_overlay_cache_valid = false
+	developer_slot_overlap_summary_cache.clear()
+	developer_slot_overlap_summary_cache_valid = false
 
 
 func _ensure_developer_placement_panel() -> void:
@@ -246,54 +776,426 @@ func _ensure_developer_placement_panel() -> void:
 		return
 	developer_placement_panel = PanelContainer.new()
 	developer_placement_panel.name = "DeveloperPlacementPanel"
-	developer_placement_panel.position = Vector2(8.0, 8.0)
-	developer_placement_panel.custom_minimum_size = Vector2(320.0, 0.0)
+	developer_placement_panel.position = Vector2.ONE * DEVELOPER_PANEL_MARGIN
+	developer_placement_panel.custom_minimum_size = Vector2.ZERO
 	developer_placement_panel.mouse_filter = Control.MOUSE_FILTER_PASS
-	developer_placement_panel.visible = developer_placement_mode
+	developer_placement_panel.clip_contents = true
+	developer_placement_panel.visible = false
+	var panel_style := StyleBoxFlat.new()
+	panel_style.bg_color = Color("#090b18f2")
+	panel_style.border_color = Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.82)
+	panel_style.set_border_width_all(2)
+	panel_style.set_corner_radius_all(4)
+	for side in [SIDE_LEFT, SIDE_TOP, SIDE_RIGHT, SIDE_BOTTOM]:
+		panel_style.set_content_margin(side, 8.0)
+	developer_placement_panel.add_theme_stylebox_override("panel", panel_style)
 	add_child(developer_placement_panel)
 
-	var stack := VBoxContainer.new()
-	stack.mouse_filter = Control.MOUSE_FILTER_PASS
-	stack.add_theme_constant_override("separation", 5)
-	developer_placement_panel.add_child(stack)
+	developer_placement_restore_button = Button.new()
+	developer_placement_restore_button.name = "RestoreDeveloperPlacementPanel"
+	developer_placement_restore_button.text = "Placement Menu"
+	developer_placement_restore_button.custom_minimum_size = Vector2(DEVELOPER_PANEL_RESTORE_MIN_WIDTH, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_placement_restore_button.tooltip_text = "Restore the placement menu. (F2)"
+	developer_placement_restore_button.visible = false
+	developer_placement_restore_button.pressed.connect(_restore_developer_placement_panel)
+	add_child(developer_placement_restore_button)
+
+	developer_placement_panel_shell = VBoxContainer.new()
+	developer_placement_panel_shell.name = "DeveloperPlacementPanelShell"
+	developer_placement_panel_shell.mouse_filter = Control.MOUSE_FILTER_PASS
+	developer_placement_panel_shell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_placement_panel_shell.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	developer_placement_panel_shell.add_theme_constant_override("separation", 4)
+	developer_placement_panel.add_child(developer_placement_panel_shell)
+
+	developer_placement_panel_header = HBoxContainer.new()
+	developer_placement_panel_header.name = "DeveloperPlacementPanelHeader"
+	developer_placement_panel_header.mouse_filter = Control.MOUSE_FILTER_PASS
+	developer_placement_panel_header.custom_minimum_size.y = DEVELOPER_PANEL_CONTROL_HEIGHT
+	developer_placement_panel_header.add_theme_constant_override("separation", 6)
+	developer_placement_panel_shell.add_child(developer_placement_panel_header)
+	var panel_title := Label.new()
+	panel_title.name = "DeveloperPlacementPanelTitle"
+	panel_title.text = "SLOT PLACEMENT (F1)"
+	panel_title.tooltip_text = "Ctrl+Z undoes the latest placement change in this layout."
+	panel_title.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	panel_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel_title.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel_title.add_theme_color_override("font_color", C_CYAN)
+	developer_placement_panel_header.add_child(panel_title)
+	developer_placement_minimize_button = Button.new()
+	developer_placement_minimize_button.name = "MinimizeDeveloperPlacementPanel"
+	developer_placement_minimize_button.text = "Hide (F2)"
+	developer_placement_minimize_button.custom_minimum_size = Vector2(112.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_placement_minimize_button.tooltip_text = "Hide this menu so objects underneath it can be selected. (F2 restores it.)"
+	developer_placement_minimize_button.pressed.connect(_minimize_developer_placement_panel)
+	developer_placement_panel_header.add_child(developer_placement_minimize_button)
+
+	developer_placement_content = MarginContainer.new()
+	developer_placement_content.name = "DeveloperPlacementContent"
+	developer_placement_content.mouse_filter = Control.MOUSE_FILTER_PASS
+	developer_placement_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_placement_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	developer_placement_panel_shell.add_child(developer_placement_content)
+
+	developer_placement_stack = VBoxContainer.new()
+	developer_placement_stack.name = "DeveloperPlacementStack"
+	developer_placement_stack.mouse_filter = Control.MOUSE_FILTER_PASS
+	developer_placement_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_placement_stack.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	developer_placement_stack.add_theme_constant_override("separation", 4)
+	developer_placement_content.add_child(developer_placement_stack)
+	var stack := developer_placement_stack
+
+	developer_slot_filter_row = HBoxContainer.new()
+	developer_slot_filter_row.name = "SlotFamilyFilters"
+	developer_slot_filter_row.custom_minimum_size.y = DEVELOPER_PANEL_CONTROL_HEIGHT
+	developer_slot_filter_row.add_theme_constant_override("separation", 4)
+	developer_slot_filter_row.visible = developer_slot_placement_mode
+	stack.add_child(developer_slot_filter_row)
+	developer_slot_family_button_group = ButtonGroup.new()
+	developer_slot_family_button_group.allow_unpress = false
+	for family_value in SLOT_FILTER_OPTIONS:
+		var family := str(family_value)
+		var button := Button.new()
+		button.name = "%sSlots" % family.capitalize()
+		button.text = "All" if family == "all" else family.capitalize()
+		button.toggle_mode = true
+		button.button_group = developer_slot_family_button_group
+		button.button_pressed = bool(developer_slot_family_filters.get(family, true))
+		button.custom_minimum_size = Vector2(DEVELOPER_PANEL_FILTER_MIN_WIDTH, DEVELOPER_PANEL_CONTROL_HEIGHT)
+		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		button.size_flags_stretch_ratio = 1.0
+		button.tooltip_text = "Show every available slot family together." if family == "all" else "Show only %s.* authoring slots." % family
+		button.add_theme_color_override("font_color", _developer_slot_family_color(family))
+		button.toggled.connect(_on_developer_slot_family_filter_toggled.bind(family))
+		developer_slot_filter_buttons[family] = button
+		developer_slot_filter_row.add_child(button)
+
+	developer_slot_visibility_row = HBoxContainer.new()
+	developer_slot_visibility_row.name = "SlotVisibilityFilters"
+	developer_slot_visibility_row.custom_minimum_size.y = DEVELOPER_PANEL_CONTROL_HEIGHT
+	developer_slot_visibility_row.add_theme_constant_override("separation", 4)
+	developer_slot_visibility_row.visible = developer_slot_placement_mode
+	stack.add_child(developer_slot_visibility_row)
+	developer_slot_show_empty_button = CheckBox.new()
+	developer_slot_show_empty_button.name = "ShowEmptyCapacity"
+	developer_slot_show_empty_button.text = "Empty slots"
+	developer_slot_show_empty_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_slot_show_empty_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_slot_show_empty_button.size_flags_stretch_ratio = 1.0
+	developer_slot_show_empty_button.button_pressed = developer_slot_show_empty_capacity
+	developer_slot_show_empty_button.tooltip_text = "Show unused capacity in the active family. Required missing positions stay visible."
+	developer_slot_show_empty_button.toggled.connect(set_developer_slot_show_empty_capacity)
+	developer_slot_visibility_row.add_child(developer_slot_show_empty_button)
+	developer_slot_show_reserves_button = CheckBox.new()
+	developer_slot_show_reserves_button.name = "ShowRuntimeReserves"
+	developer_slot_show_reserves_button.text = "Reserves"
+	developer_slot_show_reserves_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_slot_show_reserves_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_slot_show_reserves_button.size_flags_stretch_ratio = 1.0
+	developer_slot_show_reserves_button.button_pressed = developer_slot_show_runtime_reserves
+	developer_slot_show_reserves_button.tooltip_text = "Show positions reserved for delivery and other runtime-injected content."
+	developer_slot_show_reserves_button.toggled.connect(set_developer_slot_show_runtime_reserves)
+	developer_slot_visibility_row.add_child(developer_slot_show_reserves_button)
+	developer_slot_edit_shared_button = CheckBox.new()
+	developer_slot_edit_shared_button.name = "EditSharedRoomSlots"
+	developer_slot_edit_shared_button.text = "Shared room"
+	developer_slot_edit_shared_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_slot_edit_shared_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_slot_edit_shared_button.size_flags_stretch_ratio = 1.0
+	developer_slot_edit_shared_button.button_pressed = developer_slot_edit_shared_in_scenario
+	developer_slot_edit_shared_button.tooltip_text = "Exact scenarios normally lock room-shared fixed, event, reserve, and exit positions. Enable only to deliberately change the base room; doing so resets completion for that room and all of its scenarios."
+	developer_slot_edit_shared_button.toggled.connect(set_developer_slot_edit_shared_in_scenario)
+	developer_slot_edit_shared_button.visible = developer_slot_placement_mode and _developer_slot_has_active_scenario()
+	developer_slot_visibility_row.add_child(developer_slot_edit_shared_button)
+
+	developer_slot_context_label = Label.new()
+	developer_slot_context_label.name = "SlotPreviewContext"
+	developer_slot_context_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	developer_slot_context_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	developer_slot_context_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	developer_slot_context_label.custom_minimum_size.y = DEVELOPER_PANEL_INFO_HEIGHT
+	developer_slot_context_label.max_lines_visible = 4
+	developer_slot_context_label.visible = developer_slot_placement_mode
+	stack.add_child(developer_slot_context_label)
+
 	developer_placement_label = Label.new()
+	developer_placement_label.name = "PlacementSelectionSummary"
 	developer_placement_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	developer_placement_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	developer_placement_label.text = "Placement mode: drag an object; release to keep its room position."
+	developer_placement_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	developer_placement_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	developer_placement_label.custom_minimum_size.y = DEVELOPER_PANEL_INFO_HEIGHT
+	developer_placement_label.max_lines_visible = 4
+	developer_placement_label.text = "PLACEMENT\nNo marker selected\nDrag a marker to reposition it.\nLock saves the pending position."
 	stack.add_child(developer_placement_label)
 
+	developer_slot_layer_row = HBoxContainer.new()
+	developer_slot_layer_row.name = "SlotDrawLayers"
+	developer_slot_layer_row.custom_minimum_size.y = DEVELOPER_PANEL_CONTROL_HEIGHT
+	developer_slot_layer_row.add_theme_constant_override("separation", 4)
+	developer_slot_layer_row.tooltip_text = "Choose whether occupants of this slot draw behind, within, or in front of normal room objects."
+	developer_slot_layer_row.visible = developer_slot_placement_mode
+	stack.add_child(developer_slot_layer_row)
+	developer_slot_layer_button_group = ButtonGroup.new()
+	developer_slot_layer_button_group.allow_unpress = false
+	for layer_name_value in ["behind", "standard", "front"]:
+		var layer_name := str(layer_name_value)
+		var layer_button := Button.new()
+		layer_button.name = "%sDrawLayer" % layer_name.capitalize()
+		layer_button.text = layer_name.capitalize()
+		layer_button.toggle_mode = true
+		layer_button.button_group = developer_slot_layer_button_group
+		layer_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+		layer_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		layer_button.size_flags_stretch_ratio = 1.0
+		layer_button.disabled = true
+		layer_button.tooltip_text = "%s draw layer (%d). Higher layers appear above lower layers." % [layer_name.capitalize(), int(SLOT_DRAW_LAYERS.get(layer_name, 0))]
+		layer_button.toggled.connect(_on_developer_slot_layer_toggled.bind(layer_name))
+		developer_slot_layer_buttons[layer_name] = layer_button
+		developer_slot_layer_row.add_child(layer_button)
+	var size_label := Label.new()
+	size_label.name = "SlotObjectSizeLabel"
+	size_label.text = "Size"
+	size_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	size_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	size_label.custom_minimum_size = Vector2(34.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	size_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	developer_slot_layer_row.add_child(size_label)
+	developer_slot_scale_decrease_button = Button.new()
+	developer_slot_scale_decrease_button.name = "DecreaseSlotObjectSize"
+	developer_slot_scale_decrease_button.text = "-"
+	developer_slot_scale_decrease_button.custom_minimum_size = Vector2(38.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_slot_scale_decrease_button.tooltip_text = "Make the selected slot's object 10% smaller."
+	developer_slot_scale_decrease_button.disabled = true
+	developer_slot_scale_decrease_button.pressed.connect(_adjust_developer_slot_scale.bind(-SLOT_OBJECT_SCALE_STEP))
+	developer_slot_layer_row.add_child(developer_slot_scale_decrease_button)
+	developer_slot_scale_reset_button = Button.new()
+	developer_slot_scale_reset_button.name = "ResetSlotObjectSize"
+	developer_slot_scale_reset_button.text = "100%"
+	developer_slot_scale_reset_button.custom_minimum_size = Vector2(58.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_slot_scale_reset_button.tooltip_text = "Current object size. Press to restore 100%."
+	developer_slot_scale_reset_button.disabled = true
+	developer_slot_scale_reset_button.pressed.connect(_set_developer_slot_scale.bind(1.0))
+	developer_slot_layer_row.add_child(developer_slot_scale_reset_button)
+	developer_slot_scale_increase_button = Button.new()
+	developer_slot_scale_increase_button.name = "IncreaseSlotObjectSize"
+	developer_slot_scale_increase_button.text = "+"
+	developer_slot_scale_increase_button.custom_minimum_size = Vector2(38.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_slot_scale_increase_button.tooltip_text = "Make the selected slot's object 10% larger."
+	developer_slot_scale_increase_button.disabled = true
+	developer_slot_scale_increase_button.pressed.connect(_adjust_developer_slot_scale.bind(SLOT_OBJECT_SCALE_STEP))
+	developer_slot_layer_row.add_child(developer_slot_scale_increase_button)
+
+	var layout_actions := HBoxContainer.new()
+	layout_actions.name = "LayoutActions"
+	layout_actions.custom_minimum_size.y = DEVELOPER_PANEL_CONTROL_HEIGHT
+	layout_actions.add_theme_constant_override("separation", 4)
+	stack.add_child(layout_actions)
+	developer_layout_save_next_button = Button.new()
+	developer_layout_save_next_button.name = "SaveAndLoadNextLayout"
+	developer_layout_save_next_button.text = "Save & Load Next Missing"
+	developer_layout_save_next_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_layout_save_next_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_layout_save_next_button.size_flags_stretch_ratio = 1.0
+	developer_layout_save_next_button.tooltip_text = "Save this reviewed layout, then immediately generate the next missing environment/scenario layout."
+	developer_layout_save_next_button.visible = developer_slot_placement_mode
+	developer_layout_save_next_button.pressed.connect(_save_and_load_next_developer_slot_layout)
+	layout_actions.add_child(developer_layout_save_next_button)
+	developer_layout_save_button = Button.new()
+	developer_layout_save_button.name = "SaveCurrentLayout"
+	developer_layout_save_button.text = "Save Current Layout"
+	developer_layout_save_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_layout_save_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_layout_save_button.size_flags_stretch_ratio = 1.0
+	developer_layout_save_button.tooltip_text = "Save every active slot position for this exact environment and scenario layout, then update completion coverage."
+	developer_layout_save_button.visible = developer_slot_placement_mode
+	developer_layout_save_button.pressed.connect(_save_current_developer_slot_layout)
+	layout_actions.add_child(developer_layout_save_button)
+
 	var actions := HBoxContainer.new()
-	actions.add_theme_constant_override("separation", 5)
+	actions.name = "PlacementActions"
+	actions.custom_minimum_size.y = DEVELOPER_PANEL_CONTROL_HEIGHT
+	actions.add_theme_constant_override("separation", 4)
 	stack.add_child(actions)
 	developer_placement_lock_button = Button.new()
 	developer_placement_lock_button.text = "Lock"
-	developer_placement_lock_button.tooltip_text = "Save this room position. Items and events author reusable category slots."
-	developer_placement_lock_button.pressed.connect(_lock_developer_placement)
+	developer_placement_lock_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_placement_lock_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_placement_lock_button.size_flags_stretch_ratio = 1.0
+	developer_placement_lock_button.tooltip_text = "Save the current object or four-family slot position."
+	developer_placement_lock_button.pressed.connect(_lock_active_developer_placement)
 	actions.add_child(developer_placement_lock_button)
 	var cancel_button := Button.new()
+	cancel_button.name = "CancelPlacement"
 	cancel_button.text = "Cancel"
-	cancel_button.pressed.connect(_cancel_developer_placement_preview)
+	cancel_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	cancel_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cancel_button.size_flags_stretch_ratio = 1.0
+	cancel_button.pressed.connect(_cancel_active_developer_placement_preview)
 	actions.add_child(cancel_button)
 	developer_placement_reset_button = Button.new()
 	developer_placement_reset_button.text = "Reset"
+	developer_placement_reset_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_placement_reset_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_placement_reset_button.size_flags_stretch_ratio = 1.0
 	developer_placement_reset_button.tooltip_text = "Remove the local override for this room/object pair."
-	developer_placement_reset_button.pressed.connect(_reset_developer_placement)
+	developer_placement_reset_button.pressed.connect(_reset_active_developer_placement)
 	actions.add_child(developer_placement_reset_button)
 	var project_actions := HBoxContainer.new()
+	project_actions.name = "ProjectActions"
 	project_actions.mouse_filter = Control.MOUSE_FILTER_PASS
+	project_actions.custom_minimum_size.y = DEVELOPER_PANEL_CONTROL_HEIGHT
+	project_actions.add_theme_constant_override("separation", 4)
 	stack.add_child(project_actions)
-	var promote_button := Button.new()
-	promote_button.text = "Save to Project"
-	promote_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	promote_button.tooltip_text = "Lock the pending position and promote all locked positions into future builds."
-	promote_button.pressed.connect(_save_developer_placement_to_project)
-	project_actions.add_child(promote_button)
+	developer_placement_promote_button = Button.new()
+	developer_placement_promote_button.name = "SavePlacementToProject"
+	developer_placement_promote_button.text = "Save to Project"
+	developer_placement_promote_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_placement_promote_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_placement_promote_button.size_flags_stretch_ratio = 1.0
+	developer_placement_promote_button.tooltip_text = "Lock the pending position and promote all locked positions into a writable source checkout."
+	developer_placement_promote_button.pressed.connect(_save_active_developer_placement_to_project)
+	developer_placement_promote_button.visible = not PersistencePathsScript.distribution_build()
+	project_actions.add_child(developer_placement_promote_button)
+	developer_placement_export_button = Button.new()
+	developer_placement_export_button.name = "ExportPlacementReport"
+	developer_placement_export_button.text = "Export Report"
+	developer_placement_export_button.custom_minimum_size = Vector2(0.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
+	developer_placement_export_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	developer_placement_export_button.size_flags_stretch_ratio = 1.0
+	developer_placement_export_button.tooltip_text = "Lock the pending position and export the complete effective placement authority to a shareable JSON report. Works from an EXE build."
+	developer_placement_export_button.pressed.connect(_export_active_developer_placement_report)
+	project_actions.add_child(developer_placement_export_button)
+	_apply_developer_panel_fixed_metrics(developer_placement_panel)
+	_apply_developer_panel_fixed_metrics(developer_placement_restore_button)
+	_sync_developer_placement_panel_visibility()
 	_update_developer_placement_panel()
+	_queue_developer_placement_panel_layout()
+
+
+func _apply_developer_panel_fixed_metrics(node: Node) -> void:
+	var control := node as Control
+	if control != null and (control is Label or control is BaseButton):
+		control.add_theme_font_size_override("font_size", DEVELOPER_PANEL_FONT_SIZE)
+	if control is BaseButton:
+		control.custom_minimum_size.y = DEVELOPER_PANEL_CONTROL_HEIGHT
+	for child in node.get_children():
+		_apply_developer_panel_fixed_metrics(child)
+
+
+func _developer_placement_mode_active() -> bool:
+	return developer_placement_mode or developer_slot_placement_mode
+
+
+func _sync_developer_placement_panel_visibility() -> void:
+	var active := _developer_placement_mode_active()
+	if not active:
+		developer_placement_panel_minimized = false
+	if developer_placement_panel != null:
+		developer_placement_panel.visible = active and not developer_placement_panel_minimized
+	if developer_placement_restore_button != null:
+		developer_placement_restore_button.visible = active and developer_placement_panel_minimized
+	_queue_developer_placement_panel_layout()
+
+
+func _set_developer_placement_panel_minimized(minimized: bool) -> void:
+	developer_placement_panel_minimized = minimized and _developer_placement_mode_active()
+	_sync_developer_placement_panel_visibility()
+
+
+func _minimize_developer_placement_panel() -> void:
+	_set_developer_placement_panel_minimized(true)
+	if developer_placement_restore_button != null:
+		developer_placement_restore_button.grab_focus()
+
+
+func _restore_developer_placement_panel() -> void:
+	_set_developer_placement_panel_minimized(false)
+	if developer_placement_minimize_button != null:
+		developer_placement_minimize_button.grab_focus()
+
+
+func _toggle_developer_placement_panel_minimized() -> void:
+	if developer_placement_panel_minimized:
+		_restore_developer_placement_panel()
+	else:
+		_minimize_developer_placement_panel()
+
+
+func _queue_developer_placement_panel_layout() -> void:
+	if developer_placement_panel_layout_queued or not is_inside_tree():
+		return
+	developer_placement_panel_layout_queued = true
+	call_deferred("_layout_developer_placement_panel")
+
+
+func _layout_developer_placement_panel() -> void:
+	developer_placement_panel_layout_queued = false
+	if developer_placement_panel == null or developer_placement_content == null or developer_placement_stack == null:
+		return
+	_apply_developer_panel_fixed_metrics(developer_placement_panel)
+	_apply_developer_panel_fixed_metrics(developer_placement_restore_button)
+	var available_size := Vector2(
+		maxf(0.0, size.x - DEVELOPER_PANEL_MARGIN * 2.0),
+		maxf(0.0, size.y - DEVELOPER_PANEL_MARGIN * 2.0)
+	)
+	if available_size.x <= 0.0 or available_size.y <= 0.0:
+		return
+	if developer_placement_restore_button != null:
+		var restore_size := Vector2(
+			minf(DEVELOPER_PANEL_RESTORE_MIN_WIDTH, available_size.x),
+			minf(DEVELOPER_PANEL_CONTROL_HEIGHT, available_size.y)
+		)
+		developer_placement_restore_button.size = restore_size
+		developer_placement_restore_button.position = Vector2(
+			maxf(DEVELOPER_PANEL_MARGIN, size.x - DEVELOPER_PANEL_MARGIN - restore_size.x),
+			DEVELOPER_PANEL_MARGIN
+		)
+	var panel_width := minf(maxf(DEVELOPER_PANEL_MIN_WIDTH, DEVELOPER_PANEL_PREFERRED_WIDTH), available_size.x)
+	var panel_height := minf(DEVELOPER_PANEL_FIXED_HEIGHT, available_size.y)
+	developer_placement_panel.position = Vector2.ONE * DEVELOPER_PANEL_MARGIN
+	developer_placement_panel.custom_minimum_size = Vector2.ZERO
+	developer_placement_panel.size = Vector2(maxf(1.0, panel_width), maxf(1.0, panel_height))
+
+
+func _on_developer_slot_family_filter_toggled(pressed: bool, family: String) -> void:
+	if pressed:
+		set_developer_slot_family_visible(family, true)
 
 
 func _update_developer_placement_panel() -> void:
 	if developer_placement_panel == null or developer_placement_label == null:
 		return
+	developer_placement_panel_update_count += 1
+	_sync_developer_placement_panel_visibility()
+	_queue_developer_placement_panel_layout()
+	if developer_layout_save_button != null:
+		developer_layout_save_button.visible = developer_slot_placement_mode
+	if developer_layout_save_next_button != null:
+		var progress := _copy_dictionary(foundation_snapshot.get("developer_placement_progress", {}))
+		developer_layout_save_next_button.visible = developer_slot_placement_mode and bool(progress.get("practice_session", false))
+	if developer_placement_promote_button != null:
+		developer_placement_promote_button.visible = not PersistencePathsScript.distribution_build()
+	if developer_slot_placement_mode:
+		if developer_slot_filter_row != null:
+			developer_slot_filter_row.visible = true
+		if developer_slot_visibility_row != null:
+			developer_slot_visibility_row.visible = true
+		if developer_slot_context_label != null:
+			developer_slot_context_label.visible = true
+		if developer_slot_layer_row != null:
+			developer_slot_layer_row.visible = true
+		_update_developer_slot_placement_panel()
+		return
+	if developer_slot_filter_row != null:
+		developer_slot_filter_row.visible = false
+	if developer_slot_visibility_row != null:
+		developer_slot_visibility_row.visible = false
+	if developer_slot_context_label != null:
+		developer_slot_context_label.visible = false
+	if developer_slot_layer_row != null:
+		developer_slot_layer_row.visible = false
 	var object_data := _scene_object(selected_object_id)
 	if object_data.is_empty():
 		developer_placement_label.text = "Placement mode: drag an object; release to keep it. Right-click or Escape cancels. F2 hides this panel."
@@ -322,32 +1224,389 @@ func _update_developer_placement_panel() -> void:
 	developer_placement_reset_button.disabled = false
 
 
-func _developer_placement_identity(object_data: Dictionary) -> Dictionary:
-	var object_id := str(object_data.get("id", "")).strip_edges()
-	var interaction_type := str(object_data.get("interaction_type", object_data.get("type", ""))).strip_edges()
-	var category_spot_field := str(object_data.get("layout_spot_field", "")).strip_edges()
-	if interaction_type in CATEGORY_AUTHORED_TYPES and not category_spot_field.is_empty():
-		var category_index := maxi(0, int(object_data.get("layout_index", 0)))
-		return {
-			"field": "category_slot_positions",
-			"slot_id": "%s:%d" % [category_spot_field, category_index],
-			"owner_namespace": "category",
-			"stable_object_id": interaction_type,
-			"category": interaction_type,
-			"category_index": category_index,
-		}
-	var owner_namespace := str(object_data.get("owner_namespace", "")).strip_edges()
-	var stable_object_id := str(object_data.get("stable_object_id", "")).strip_edges()
-	var dynamic_object := object_id.contains("::")
-	var slot_id := object_id
-	if dynamic_object:
-		slot_id = stable_object_id if owner_namespace == "scenario" and not stable_object_id.is_empty() else object_id
-	return {
-		"field": "scenario_object_slot_positions" if dynamic_object else "object_slot_positions",
-		"slot_id": slot_id,
-		"owner_namespace": owner_namespace,
-		"stable_object_id": stable_object_id,
+func _update_developer_slot_placement_panel() -> void:
+	var review_status := _developer_slot_review_status()
+	var progress := _copy_dictionary(foundation_snapshot.get("developer_placement_progress", {}))
+	_update_developer_slot_filter_labels()
+	var review_ready := bool(review_status.get("ready", false))
+	if developer_layout_save_button != null:
+		developer_layout_save_button.disabled = not review_ready
+	if developer_layout_save_next_button != null:
+		developer_layout_save_next_button.disabled = not review_ready
+	var preview_context := _developer_slot_preview_context()
+	if developer_slot_context_label != null:
+		var context_name := str(preview_context.get("label", "No active scenario")).trim_prefix("Active preview: ")
+		var layout_id := str(progress.get("layout_id", "")).strip_edges()
+		if not layout_id.is_empty():
+			context_name = layout_id
+		var context_lines: Array[String] = ["CONTEXT | %s" % context_name]
+		if _developer_slot_has_active_scenario():
+			if developer_slot_edit_shared_in_scenario:
+				context_lines.append("SCOPE | Scenario + shared room (room progress resets)")
+			else:
+				context_lines.append("SCOPE | Scenario slots; shared room is locked")
+		else:
+			context_lines.append("SCOPE | Shared room; applies to every scenario")
+		var reviewed_families: Array = review_status.get("reviewed", [])
+		var missing_review_families: Array = review_status.get("missing", [])
+		var review_line := "REVIEW | READY | %s" % ", ".join(reviewed_families)
+		if not missing_review_families.is_empty():
+			review_line = "REVIEW | TODO | %s" % ", ".join(missing_review_families)
+		var overlap_summary := _developer_slot_overlap_summary()
+		var issue_parts: Array[String] = []
+		var active_overlap_count := int(overlap_summary.get("active_count", 0))
+		if active_overlap_count > 0:
+			issue_parts.append("%d active overlap(s)" % active_overlap_count)
+		var alternative_overlap_count := int(overlap_summary.get("alternative_count", 0))
+		if alternative_overlap_count > 0:
+			issue_parts.append("%d allowed alternative(s)" % alternative_overlap_count)
+		var hidden_detail_count := _developer_slot_hidden_detail_count()
+		if hidden_detail_count > 0:
+			issue_parts.append("%d hidden marker(s)" % hidden_detail_count)
+		if not issue_parts.is_empty():
+			review_line += " | %s" % ", ".join(issue_parts)
+		context_lines.append(review_line)
+		var progress_line := "PROGRESS | Local draft"
+		if not progress.is_empty():
+			var saved_label := "SAVED" if bool(progress.get("saved", false)) else "NOT SAVED"
+			progress_line = "PROGRESS | %s | %d/%d saved | %d left" % [
+				saved_label,
+				int(progress.get("saved_layout_count", 0)),
+				int(progress.get("expected_layout_count", 0)),
+				int(progress.get("missing_layout_count", 0)),
+			]
+			var next_missing := str(progress.get("next_missing_layout_id", "")).strip_edges()
+			if not next_missing.is_empty() and not bool(progress.get("complete", false)):
+				progress_line += " | Next: %s" % next_missing
+		context_lines.append(progress_line)
+		developer_slot_context_label.text = "\n".join(context_lines)
+		developer_slot_context_label.tooltip_text = "\n".join(context_lines)
+	var family := _developer_slot_active_family()
+	var family_counts := _developer_slot_family_counts(family)
+	var count_summary := "%s %d/%d shown" % [
+		family.capitalize(),
+		int(family_counts.get("visible", 0)),
+		int(family_counts.get("total", 0)),
+	]
+	var slot := _developer_slot(developer_slot_selected_id)
+	var showing_hover := false
+	if slot.is_empty():
+		slot = _developer_slot(developer_slot_hovered_id)
+		showing_hover = not slot.is_empty()
+	if slot.is_empty():
+		_sync_developer_slot_layer_buttons({}, false)
+		_sync_developer_slot_scale_buttons({}, false)
+		var visibility_summary := "Occupied slots"
+		if developer_slot_show_empty_capacity:
+			visibility_summary = "Empty slots shown"
+		if developer_slot_show_runtime_reserves:
+			visibility_summary += " | Reserves shown"
+		developer_placement_label.text = "SELECTION | %s\nNo slot selected\n%s\nHover or drag a marker to inspect it." % [count_summary, visibility_summary]
+		developer_placement_label.tooltip_text = "Select or drag a visible slot marker to inspect and reposition it."
+		developer_placement_lock_button.disabled = true
+		developer_placement_reset_button.disabled = true
+		return
+	var slot_id := str(slot.get("id", developer_slot_selected_id))
+	family = _developer_slot_family(slot)
+	var scope_label := "SCENARIO-LOCAL" if _developer_slot_scope(slot) == "scenario_local" else "ROOM-SHARED"
+	var editable := _developer_slot_is_editable(slot)
+	_sync_developer_slot_layer_buttons(slot, not showing_hover and editable)
+	_sync_developer_slot_scale_buttons(slot, not showing_hover and editable)
+	var kind := str(slot.get("kind", family))
+	var placement_class := str(slot.get("footprint_class", "unknown"))
+	var support := str(slot.get("support_id", "free"))
+	var occupants := _developer_slot_occupants(slot_id)
+	var primary_label := _developer_slot_primary_label(slot)
+	var occupancy := "Empty capacity" if occupants.is_empty() else "Occupant: %s" % ", ".join(occupants)
+	var known_claimants := _developer_slot_claimant_labels(slot)
+	var slot_state := _developer_slot_state(slot)
+	var requirement := "required" if bool(slot_state.get("required", false)) else "optional capacity"
+	if _developer_slot_is_runtime_reserve(slot):
+		var reserve_reason := _developer_slot_reserve_reason(slot)
+		requirement = "runtime reserve" if reserve_reason.is_empty() else "runtime reserve: %s" % reserve_reason
+	var warnings: Array = slot_state.get("warnings", [])
+	var status_text := "hover preview" if showing_hover else "unchanged"
+	var draw_layer_label := _developer_slot_draw_layer_label(_developer_slot_draw_layer(slot))
+	var object_scale_percent := int(round(_developer_slot_object_scale(slot) * 100.0))
+	if developer_slot_pending_rect.has_area():
+		status_text = "position %.0f, %.0f" % [developer_slot_pending_position.x, developer_slot_pending_position.y]
+		if not developer_slot_overlap_ids.is_empty():
+			status_text += "; %s overlap: %s" % [
+				"blocked route" if not developer_slot_valid else "advisory",
+				", ".join(developer_slot_overlap_ids.slice(0, mini(3, developer_slot_overlap_ids.size()))),
+			]
+	if not warnings.is_empty():
+		status_text += "; WARNING: %s" % "; ".join(warnings)
+	if _developer_slot_contains_object(slot_id, "travel:leave"):
+		status_text += "; drag to move / double-click or Enter to use"
+	developer_placement_label.text = "%s | %s | %s\n%s\n%s | %s | %s\n%s | %s | Size: %d%% | %s | %s" % [
+		str(foundation_snapshot.get("archetype_id", environment_id)),
+		str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", "main"))),
+		count_summary,
+		primary_label,
+		slot_id,
+		"%s%s" % [scope_label, " / LOCKED" if not editable else ""],
+		"%s / %s" % [family if kind == family else "%s:%s" % [family, kind], placement_class],
+		occupancy,
+		"Layer: %s" % draw_layer_label,
+		object_scale_percent,
+		requirement,
+		status_text,
+	]
+	var tooltip_lines: Array[String] = [
+		primary_label,
+		"Slot: %s" % slot_id,
+		"Scope: %s" % scope_label,
+		"Class: %s | Support: %s" % [placement_class, support],
+		"Draw layer: %s" % draw_layer_label,
+		"Object size: %d%%" % object_scale_percent,
+		occupancy,
+		"Status: %s" % status_text,
+	]
+	if not known_claimants.is_empty():
+		tooltip_lines.append("Known roles: %s" % ", ".join(known_claimants))
+	developer_placement_label.tooltip_text = "\n".join(tooltip_lines)
+	developer_placement_lock_button.disabled = showing_hover or not editable or not developer_slot_pending_rect.has_area() or not developer_slot_valid
+	developer_placement_reset_button.disabled = showing_hover or not editable
+
+
+func _developer_slot_draw_layer(slot: Dictionary) -> int:
+	if slot.has("draw_layer"):
+		return clampi(int(slot.get("draw_layer", 0)), -1, 1)
+	return -1 if str(slot.get("footprint_class", "")) == "behind_counter_person" else 0
+
+
+func _developer_slot_draw_layer_label(layer: int) -> String:
+	match clampi(layer, -1, 1):
+		-1: return "Behind"
+		1: return "Front"
+		_: return "Standard"
+
+
+func _sync_developer_slot_layer_buttons(slot: Dictionary, editable: bool) -> void:
+	var active_layer := _developer_slot_draw_layer(slot) if not slot.is_empty() else 99
+	for layer_name_value in SLOT_DRAW_LAYERS.keys():
+		var layer_name := str(layer_name_value)
+		var button_value: Variant = developer_slot_layer_buttons.get(layer_name)
+		if not (button_value is BaseButton):
+			continue
+		var button := button_value as BaseButton
+		button.disabled = slot.is_empty() or not editable
+		button.set_pressed_no_signal(active_layer == int(SLOT_DRAW_LAYERS.get(layer_name, 0)))
+
+
+func _developer_slot_object_scale(slot: Dictionary) -> float:
+	return clampf(float(slot.get("object_scale", 1.0)), SLOT_OBJECT_SCALE_MIN, SLOT_OBJECT_SCALE_MAX)
+
+
+func _sync_developer_slot_scale_buttons(slot: Dictionary, editable: bool) -> void:
+	var has_slot := not slot.is_empty()
+	var scale := _developer_slot_object_scale(slot) if has_slot else 1.0
+	if developer_slot_scale_decrease_button != null:
+		developer_slot_scale_decrease_button.disabled = not has_slot or not editable or scale <= SLOT_OBJECT_SCALE_MIN + 0.001
+	if developer_slot_scale_increase_button != null:
+		developer_slot_scale_increase_button.disabled = not has_slot or not editable or scale >= SLOT_OBJECT_SCALE_MAX - 0.001
+	if developer_slot_scale_reset_button != null:
+		developer_slot_scale_reset_button.text = "%d%%" % int(round(scale * 100.0))
+		developer_slot_scale_reset_button.disabled = not has_slot or not editable or is_equal_approx(scale, 1.0)
+
+
+func _adjust_developer_slot_scale(delta: float) -> void:
+	var slot := _developer_slot(developer_slot_selected_id)
+	if slot.is_empty():
+		return
+	_set_developer_slot_scale(_developer_slot_object_scale(slot) + delta)
+
+
+func _set_developer_slot_scale(scale: float) -> void:
+	var slot := _developer_slot(developer_slot_selected_id)
+	if slot.is_empty() or not _developer_slot_is_editable(slot):
+		_sync_developer_slot_scale_buttons(slot, false)
+		return
+	var normalized_scale := snappedf(clampf(scale, SLOT_OBJECT_SCALE_MIN, SLOT_OBJECT_SCALE_MAX), SLOT_OBJECT_SCALE_STEP)
+	if is_equal_approx(normalized_scale, _developer_slot_object_scale(slot)):
+		_sync_developer_slot_scale_buttons(slot, true)
+		return
+	var request := {
+		"environment": _developer_slot_environment(),
+		"slot_id": developer_slot_selected_id,
+		"scale": normalized_scale,
+		"_undo_context_key": _developer_slot_snapshot_context_key(foundation_snapshot),
+		"_slot_scale_handled": false,
+		"_slot_scale_persisted": false,
 	}
+	developer_slot_scale_requested.emit(request)
+	if bool(request.get("_slot_scale_handled", false)) and not bool(request.get("_slot_scale_persisted", false)):
+		_sync_developer_slot_scale_buttons(slot, true)
+		return
+	_record_developer_placement_undo(request)
+	_invalidate_developer_placement_geometry_caches()
+	_update_developer_placement_panel()
+	queue_redraw()
+
+
+func _on_developer_slot_layer_toggled(pressed: bool, layer_name: String) -> void:
+	if not pressed or not SLOT_DRAW_LAYERS.has(layer_name):
+		return
+	var slot := _developer_slot(developer_slot_selected_id)
+	if slot.is_empty() or not _developer_slot_is_editable(slot):
+		_sync_developer_slot_layer_buttons(slot, false)
+		return
+	var request := {
+		"environment": _developer_slot_environment(),
+		"slot_id": developer_slot_selected_id,
+		"layer": int(SLOT_DRAW_LAYERS.get(layer_name, 0)),
+		"_undo_context_key": _developer_slot_snapshot_context_key(foundation_snapshot),
+		"_slot_layer_handled": false,
+		"_slot_layer_persisted": false,
+	}
+	developer_slot_layer_requested.emit(request)
+	if bool(request.get("_slot_layer_handled", false)) and not bool(request.get("_slot_layer_persisted", false)):
+		_sync_developer_slot_layer_buttons(slot, true)
+		return
+	_record_developer_placement_undo(request)
+	_invalidate_developer_placement_geometry_caches()
+	_update_developer_placement_panel()
+	queue_redraw()
+
+
+func _lock_active_developer_placement() -> void:
+	if developer_slot_placement_mode:
+		_lock_developer_slot_placement()
+	else:
+		_lock_developer_placement()
+
+
+func _cancel_active_developer_placement_preview() -> void:
+	if developer_slot_placement_mode:
+		_cancel_developer_slot_placement_preview()
+	else:
+		_cancel_developer_placement_preview()
+
+
+func _reset_active_developer_placement() -> void:
+	if developer_slot_placement_mode:
+		_reset_developer_slot_placement()
+	else:
+		_reset_developer_placement()
+
+
+func _save_active_developer_placement_to_project() -> void:
+	if developer_slot_placement_mode:
+		_save_developer_slot_placement_to_project()
+	else:
+		_save_developer_placement_to_project()
+
+
+func _export_active_developer_placement_report() -> void:
+	var request: Dictionary = {}
+	if developer_slot_placement_mode:
+		if developer_slot_pending_rect.has_area():
+			if not developer_slot_valid:
+				return
+			request = _developer_slot_placement_request()
+			request["_undo_context_key"] = _developer_slot_snapshot_context_key(foundation_snapshot)
+			clear_developer_slot_placement_preview()
+	else:
+		if developer_placement_pending_rect.has_area():
+			if not developer_placement_valid:
+				return
+			request = _developer_placement_request()
+			request["_undo_context_key"] = _developer_slot_snapshot_context_key(foundation_snapshot)
+			clear_developer_placement_preview()
+	developer_placement_export_requested.emit(request)
+	if not request.is_empty():
+		_record_developer_placement_undo(request)
+
+
+func _save_and_load_next_developer_slot_layout() -> void:
+	_save_current_developer_slot_layout(true)
+
+
+func _save_current_developer_slot_layout(load_next_missing: bool = false) -> void:
+	if not developer_slot_placement_mode:
+		return
+	var review_status := _developer_slot_review_status()
+	if not bool(review_status.get("ready", false)):
+		_update_developer_placement_panel()
+		return
+	var pending_request: Dictionary = {}
+	if developer_slot_pending_rect.has_area():
+		if not developer_slot_valid:
+			return
+		pending_request = _developer_slot_placement_request()
+	var request := _developer_full_slot_layout_request()
+	# The complete layout transaction owns the pending coordinate too. Avoid a
+	# separate durable single-slot write and full room refresh immediately before
+	# this full-layout save.
+	if not pending_request.is_empty():
+		var full_positions: Dictionary = request.get("full_positions", {})
+		full_positions[str(pending_request.get("slot_id", ""))] = pending_request.get("position", Vector2.ZERO)
+		request["full_positions"] = full_positions
+		request["slot_count"] = full_positions.size()
+	request["load_next_missing"] = load_next_missing
+	request["_undo_context_key"] = _developer_slot_snapshot_context_key(foundation_snapshot)
+	request["reviewed_families"] = (review_status.get("reviewed", []) as Array).duplicate()
+	var render_generation := environment_snapshot_render_generation
+	developer_slot_dragging = false
+	developer_layout_save_requested.emit(request)
+	if _developer_layout_save_failed(request):
+		_update_developer_placement_panel()
+		queue_redraw()
+		return
+	if not load_next_missing:
+		_record_developer_placement_undo(request)
+	if environment_snapshot_render_generation == render_generation:
+		clear_developer_slot_placement_preview(false, false)
+		developer_placement_authority_dirty = true
+		_invalidate_developer_placement_geometry_caches()
+		if _apply_authoring_slot_positions_to_scene_objects():
+			_capture_developer_slot_scene_object_baseline()
+		_update_developer_placement_panel()
+		queue_redraw()
+
+
+func _developer_layout_save_failed(request: Dictionary) -> bool:
+	return bool(request.get("_developer_layout_save_handled", false)) \
+		and not bool(request.get("_developer_layout_save_persisted", false))
+
+
+func _developer_full_slot_layout_request() -> Dictionary:
+	var environment := _developer_slot_environment()
+	var full_positions: Dictionary = {}
+	# Full saves preserve hidden shared runtime-reserve geometry even though the
+	# base-room placement list no longer offers those scenario-family markers.
+	for slot_value in _developer_authored_slots():
+		var slot := slot_value as Dictionary
+		var slot_id := str(slot.get("id", "")).strip_edges()
+		if slot_id.is_empty():
+			continue
+		full_positions[slot_id] = _developer_slot_position(slot)
+	return {
+		"environment": environment,
+		"field": "slot_positions",
+		"full_positions": full_positions,
+		"slot_count": full_positions.size(),
+		"preview_context": _developer_slot_preview_context(),
+	}
+
+
+func _developer_placement_identity(object_data: Dictionary) -> Dictionary:
+	# Schema-v2 object placement is a convenience view over the reusable slot
+	# authority. Moving an occupied object therefore moves its authored slot; it
+	# must never recreate the retired per-object/category coordinate overlays.
+	var occupied_slot_id := str(object_data.get("slot_id", "")).strip_edges()
+	var occupied_slot_family := str(object_data.get("slot_family", object_data.get("family", ""))).strip_edges()
+	if occupied_slot_family.is_empty() and occupied_slot_id.contains("."):
+		occupied_slot_family = occupied_slot_id.get_slice(".", 0)
+	if occupied_slot_family in SLOT_FAMILIES and occupied_slot_id.begins_with("%s." % occupied_slot_family):
+		return {
+			"field": "slot_positions",
+			"slot_id": occupied_slot_id,
+			"owner_namespace": str(object_data.get("owner_namespace", "")).strip_edges(),
+			"stable_object_id": str(object_data.get("stable_object_id", "")).strip_edges(),
+		}
+	return {}
 
 
 func _developer_placement_request() -> Dictionary:
@@ -355,9 +1614,17 @@ func _developer_placement_request() -> Dictionary:
 	if object_data.is_empty():
 		return {}
 	var identity := _developer_placement_identity(object_data)
+	if identity.is_empty():
+		return {}
 	var placement_class := str(object_data.get("placement_class", "")).strip_edges()
 	if placement_class.is_empty():
 		placement_class = EnvironmentPlacementScript.classify(object_data, str(object_data.get("interaction_type", object_data.get("type", ""))), selected_object_id, str(object_data.get("prop", object_data.get("icon_key", ""))))
+	var object_rect := developer_placement_pending_rect if developer_placement_pending_rect.has_area() else _developer_edit_rect_for_object(object_data)
+	var slot_position := object_rect.position
+	var slot := _developer_slot(str(identity.get("slot_id", "")))
+	if not slot.is_empty():
+		var source_rect := developer_placement_original_rect if developer_placement_original_rect.has_area() else _developer_slot_rect(slot)
+		slot_position += _developer_slot_position(slot) - source_rect.position
 	return {
 		"environment": {
 			"archetype_id": str(foundation_snapshot.get("archetype_id", foundation_snapshot.get("id", environment_id))),
@@ -367,10 +1634,14 @@ func _developer_placement_request() -> Dictionary:
 		"object_id": selected_object_id,
 		"owner_namespace": str(identity.get("owner_namespace", "")),
 		"stable_object_id": str(identity.get("stable_object_id", "")),
-		"field": str(identity.get("field", "object_slot_positions")),
+		"field": str(identity.get("field", "slot_positions")),
 		"slot_id": str(identity.get("slot_id", selected_object_id)),
-		"position": developer_placement_pending_rect.position if developer_placement_pending_rect.has_area() else _developer_edit_rect_for_object(object_data).position,
-		"size": _developer_edit_rect_for_object(object_data).size,
+		# Slot overrides store the authored contact/anchor, not the visual hit
+		# rectangle's top-left. Keep both so persistence and immediate preview use
+		# the coordinate appropriate to each representation.
+		"position": slot_position,
+		"preview_top_left": object_rect.position,
+		"size": object_rect.size,
 		"placement_class": placement_class,
 		"surface_id": developer_placement_surface_id,
 		"category": str(identity.get("category", "")),
@@ -388,16 +1659,47 @@ func set_environment_activity_paused(paused: bool) -> void:
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_RESIZED:
+		_queue_developer_placement_panel_layout()
 		_invalidate_camera_target()
 		_update_camera_target_if_needed()
 		queue_redraw()
 		view_geometry_changed.emit()
+	elif what == NOTIFICATION_VISIBILITY_CHANGED and is_node_ready() and is_visible_in_tree():
+		_arm_animation_heartbeat()
 
 
 # Copies a foundation EnvironmentInstance view snapshot into canvas-local state.
 func render_environment_snapshot(snapshot: Dictionary) -> void:
+	_render_owned_environment_snapshot(snapshot.duplicate(true))
+
+
+# Internal ownership-transfer path for a freshly assembled presentation value.
+# The canvas treats foundation_snapshot as immutable; callers that retain or may
+# mutate their dictionary must continue using render_environment_snapshot().
+func render_owned_environment_snapshot(snapshot: Dictionary) -> void:
+	_render_owned_environment_snapshot(snapshot)
+
+
+func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
+	# Re-arm presentation processing at every live-content boundary. This repairs
+	# a canvas disabled by a prior lifecycle/test owner without waiting for input.
+	_arm_animation_heartbeat()
+	environment_snapshot_render_generation += 1
+	# Ambient clock ticks can rebuild the room snapshot while the selected
+	# object's complete presentation record remains identical. Retain that old
+	# record by reference so the camera target is only refreshed when an input to
+	# its composition actually changed; the rebuilt scene array does not mutate
+	# the outgoing dictionary.
+	var previous_camera_focus_source := _camera_focus_source()
+	var previous_slot_context := _developer_slot_snapshot_context_key(foundation_snapshot)
+	var next_slot_context := _developer_slot_snapshot_context_key(snapshot)
+	_preserve_developer_slot_edit_before_context_change(snapshot)
 	uses_foundation_snapshot = true
-	foundation_snapshot = snapshot.duplicate(true)
+	foundation_snapshot = snapshot
+	if previous_slot_context != next_slot_context:
+		developer_placement_authority_dirty = false
+		_clear_developer_placement_undo_history(next_slot_context)
+	_invalidate_developer_placement_geometry_caches()
 	var archetype_id := str(foundation_snapshot.get("archetype_id", foundation_snapshot.get("id", environment_id)))
 	var visual_context: Dictionary = foundation_snapshot.get("visual_context", {}) if typeof(foundation_snapshot.get("visual_context", {})) == TYPE_DICTIONARY else {}
 	var art_key := str(visual_context.get("art_key", archetype_id)).strip_edges()
@@ -410,7 +1712,7 @@ func render_environment_snapshot(snapshot: Dictionary) -> void:
 		item_icon_texture_cache_scope_key = texture_scope_key
 	environment_name = str(foundation_snapshot.get("display_name", foundation_snapshot.get("name", environment_name)))
 	var presentation_value: Variant = foundation_snapshot.get("scenario_presentation", {})
-	scenario_presentation = (presentation_value as Dictionary).duplicate(true) if typeof(presentation_value) == TYPE_DICTIONARY else {}
+	scenario_presentation = presentation_value as Dictionary if typeof(presentation_value) == TYPE_DICTIONARY else {}
 	_cache_scenario_presentation()
 	suspicion_level = int(foundation_snapshot.get("suspicion_level", suspicion_level))
 	drunk_level = int(foundation_snapshot.get("drunk_level", drunk_level))
@@ -419,25 +1721,141 @@ func render_environment_snapshot(snapshot: Dictionary) -> void:
 	drunk_effect_mode = _normalized_drunk_effect_mode(str(foundation_snapshot.get("drunk_effect_mode", drunk_effect_mode)))
 	_update_drunk_distortion_overlay()
 	foundation_scene_objects = _objects_from_foundation_snapshot(foundation_snapshot)
+	if developer_slot_placement_mode:
+		_capture_developer_slot_scene_object_baseline()
+		if previous_slot_context != next_slot_context:
+			developer_slot_edit_shared_in_scenario = false
+			_configure_developer_slot_context(true)
+	# The incoming snapshot replaces either preview, so clear their presentation
+	# state before deriving labels and scene caches from authoritative geometry.
+	clear_developer_placement_preview(false, false)
+	clear_developer_slot_placement_preview(false, false)
+	_apply_authoring_slot_positions_to_scene_objects(false)
 	_sync_person_transits()
 	_sync_actor_route_starts()
 	overlay_repositioned_object_ids.clear()
-	_clear_draw_text_caches()
 	_rebuild_scene_object_cache()
 	_prune_object_animation_phase_cache()
-	icon_sprite_texture_cache = {}
 	if not selected_object_id.is_empty() and _scene_object(selected_object_id).is_empty():
 		selected_object_id = ""
 	if not hovered_object_id.is_empty() and _scene_object(hovered_object_id).is_empty():
 		hovered_object_id = ""
-	# A normal view refresh must not commit or reinterpret an in-progress authoring
-	# gesture. The last locked data will already be present in this fresh snapshot.
-	clear_developer_placement_preview()
+	if not developer_slot_selected_id.is_empty() and _developer_slot(developer_slot_selected_id).is_empty():
+		developer_slot_selected_id = ""
+	# Same-context refreshes remain non-committing. Exact context transitions have
+	# already retained a valid changed nudge above, against the outgoing layout.
 	_update_developer_placement_panel()
-	_invalidate_camera_target()
-	_update_camera_target_if_needed()
+	if camera_target_dirty or previous_camera_focus_source != _camera_focus_source():
+		_invalidate_camera_target()
+		_update_camera_target_if_needed()
 	queue_redraw()
 	view_geometry_changed.emit()
+
+
+func _preserve_developer_slot_edit_before_context_change(next_snapshot: Dictionary) -> void:
+	if not developer_slot_placement_mode or not developer_slot_pending_rect.has_area() \
+			or developer_slot_context_change_locking:
+		return
+	var current_context := _developer_slot_snapshot_context_key(foundation_snapshot)
+	var next_context := _developer_slot_snapshot_context_key(next_snapshot)
+	if current_context.is_empty() or current_context == next_context:
+		return
+	developer_slot_context_change_locking = true
+	_finish_developer_slot_placement_edit()
+	developer_slot_context_change_locking = false
+
+
+func _developer_slot_snapshot_context_key(snapshot: Dictionary) -> String:
+	if snapshot.is_empty():
+		return ""
+	var archetype_id := str(snapshot.get("archetype_id", snapshot.get("id", ""))).strip_edges()
+	var layer_id := str(snapshot.get("current_layer_id", snapshot.get("layer_id", ""))).strip_edges()
+	var map_id := "%s:%s" % [archetype_id, layer_id] if not layer_id.is_empty() else archetype_id
+	var scenario_id := EnvironmentPlacementScript.active_scenario_id(snapshot)
+	return "%s::%s" % [map_id, scenario_id if not scenario_id.is_empty() else "base"]
+
+
+func _clear_developer_placement_undo_history(context_key: String = "") -> void:
+	developer_placement_undo_stack.clear()
+	developer_placement_undo_context_key = context_key
+
+
+func _developer_placement_undo_count() -> int:
+	var context_key := _developer_slot_snapshot_context_key(foundation_snapshot)
+	return developer_placement_undo_stack.size() \
+		if context_key == developer_placement_undo_context_key else 0
+
+
+func _record_developer_placement_undo(request: Dictionary) -> void:
+	var record_value: Variant = request.get("_placement_undo_record", {})
+	if typeof(record_value) != TYPE_DICTIONARY or (record_value as Dictionary).is_empty():
+		return
+	var context_key := str(request.get(
+		"_undo_context_key",
+		_developer_slot_snapshot_context_key(foundation_snapshot)
+	)).strip_edges()
+	if context_key.is_empty() \
+			or context_key != _developer_slot_snapshot_context_key(foundation_snapshot):
+		return
+	if developer_placement_undo_context_key != context_key:
+		_clear_developer_placement_undo_history(context_key)
+	var record := (record_value as Dictionary).duplicate(true)
+	record["context_key"] = context_key
+	while developer_placement_undo_stack.size() >= DEVELOPER_PLACEMENT_UNDO_LIMIT:
+		developer_placement_undo_stack.pop_front()
+	developer_placement_undo_stack.append(record)
+
+
+func _developer_placement_undo_shortcut_pressed(event: InputEvent) -> bool:
+	if not (event is InputEventKey):
+		return false
+	var key_event := event as InputEventKey
+	return key_event.pressed \
+		and not key_event.echo \
+		and key_event.ctrl_pressed \
+		and (key_event.keycode == KEY_Z or key_event.physical_keycode == KEY_Z)
+
+
+func _undo_developer_placement_change() -> void:
+	# A keyboard nudge is not durable until it is locked. Undoing it should simply
+	# discard that preview rather than consume an earlier saved edit.
+	if developer_slot_placement_mode and developer_slot_pending_rect.has_area():
+		var slot_preview_changed := not developer_slot_original_rect.has_area() \
+				or not developer_slot_pending_rect.position.is_equal_approx(developer_slot_original_rect.position)
+		clear_developer_slot_placement_preview()
+		if slot_preview_changed:
+			return
+	if developer_placement_mode and developer_placement_pending_rect.has_area():
+		var object_preview_changed := not developer_placement_original_rect.has_area() \
+				or not developer_placement_pending_rect.position.is_equal_approx(developer_placement_original_rect.position) \
+				or not developer_placement_pending_rect.size.is_equal_approx(developer_placement_original_rect.size)
+		clear_developer_placement_preview()
+		if object_preview_changed:
+			return
+	var context_key := _developer_slot_snapshot_context_key(foundation_snapshot)
+	if developer_placement_undo_context_key != context_key:
+		_clear_developer_placement_undo_history(context_key)
+	if developer_placement_undo_stack.is_empty():
+		_update_developer_placement_panel()
+		return
+	var record: Dictionary = developer_placement_undo_stack.back().duplicate(true)
+	var request := {
+		"undo_record": record,
+		"_placement_undo_handled": false,
+		"_placement_undo_persisted": false,
+	}
+	var render_generation := environment_snapshot_render_generation
+	developer_placement_undo_requested.emit(request)
+	if not bool(request.get("_placement_undo_handled", false)) \
+			or not bool(request.get("_placement_undo_persisted", false)):
+		return
+	developer_placement_undo_stack.pop_back()
+	if environment_snapshot_render_generation == render_generation:
+		developer_placement_authority_dirty = true
+		_invalidate_developer_placement_geometry_caches()
+		_apply_authoring_slot_positions_to_scene_objects()
+		_update_developer_placement_panel()
+		queue_redraw()
 
 
 func settle_person_transits() -> void:
@@ -472,9 +1890,18 @@ func set_small_screen_mode(enabled: bool) -> void:
 	small_screen_mode = enabled
 	info_card_visual_rect = Rect2()
 	info_card_visual_object_id = ""
+	_rebuild_scene_object_cache()
 	_invalidate_camera_target()
 	queue_redraw()
 	view_geometry_changed.emit()
+
+
+func set_object_labels_and_borders_enabled(enabled: bool) -> void:
+	if object_labels_and_borders_enabled == enabled:
+		return
+	object_labels_and_borders_enabled = enabled
+	_rebuild_object_label_rect_cache(_active_scene_objects())
+	queue_redraw()
 
 
 # Keeps camera focus clear of a live conversation without changing stable room
@@ -513,16 +1940,32 @@ func debug_soak_snapshot() -> Dictionary:
 		"environment_id": environment_id,
 		"item_icon_texture_cache_scope_key": item_icon_texture_cache_scope_key,
 		"foundation_object_count": foundation_scene_objects.size(),
+		"active_scene_object_cache_size": active_scene_objects_cache.size(),
 		"scene_object_index_count": scene_objects_by_id_cache.size(),
+		"object_label_rect_cache_size": object_label_rect_cache.size(),
+		"object_label_layout": object_label_layout_stats.duplicate(true),
+		"object_labels_and_borders_enabled": object_labels_and_borders_enabled,
 		"item_icon_texture_cache_size": item_icon_texture_cache.size(),
 		"icon_sprite_texture_cache_size": icon_sprite_texture_cache.size(),
 		"draw_text_width_cache_size": draw_text_width_cache.size(),
 		"fit_draw_text_cache_size": fit_draw_text_cache.size(),
 		"object_animation_phase_cache_size": object_animation_phase_cache.size(),
+		"character_idle_profile_cache_size": character_idle_profile_cache.size(),
+		"slot_prop_static_layer_cache_size": slot_prop_static_layer_cache.size(),
+		"slot_prop_preview_layer_cache_size": slot_prop_preview_layer_cache.size(),
+		"slot_prop_preview_layer_rebuild_count": slot_prop_preview_layer_rebuild_count,
 		"actor_route_started_at_cache_size": actor_route_started_at_cache.size(),
 		"actor_route_time": actor_route_time,
 		"background_texture_loaded": background_texture != null,
 		"scene_idle_animation_redraw_count": scene_idle_animation_redraw_count,
+		"scene_object_cache_rebuild_count": scene_object_cache_rebuild_count,
+		"developer_slot_cache_rebuild_count": developer_slot_cache_rebuild_count,
+		"developer_placement_panel_update_count": developer_placement_panel_update_count,
+		"developer_slot_overlay_cache_rebuild_count": developer_slot_overlay_cache_rebuild_count,
+		"developer_slot_overlap_audit_count": developer_slot_overlap_audit_count,
+		"object_label_layout_rebuild_count": object_label_layout_rebuild_count,
+		"environment_snapshot_render_generation": environment_snapshot_render_generation,
+		"developer_placement_authority_dirty": developer_placement_authority_dirty,
 		"person_transit_count": person_transit_ids.size(),
 		"person_transit_cap": MAX_CONCURRENT_PERSON_TRANSITS,
 		"person_transit_ids": person_transit_ids.duplicate(),
@@ -533,6 +1976,13 @@ func debug_soak_snapshot() -> Dictionary:
 
 func reset_performance_counters() -> void:
 	scene_idle_animation_redraw_count = 0
+	scene_object_cache_rebuild_count = 0
+	developer_slot_cache_rebuild_count = 0
+	developer_placement_panel_update_count = 0
+	developer_slot_overlay_cache_rebuild_count = 0
+	developer_slot_overlap_audit_count = 0
+	object_label_layout_rebuild_count = 0
+	slot_prop_preview_layer_rebuild_count = 0
 
 
 func performance_live_status() -> Dictionary:
@@ -577,6 +2027,7 @@ func set_selected_object(object_id: String, snap_to_target: bool = true) -> void
 		selected_object_id = object_id
 		selected_info_action_index = 0
 		_invalidate_camera_target()
+	_update_object_label_accessibility()
 	_update_camera_target_if_needed()
 	# Reduced-motion and explicit room resets snap. A tutorial conversation only
 	# freezes autonomous room activity; player-driven focus presentation remains
@@ -605,26 +2056,88 @@ func select_object_at(index: int) -> void:
 
 # Returns the rendered object id under a local canvas coordinate.
 func object_id_at_local_position(local_position: Vector2) -> String:
-	var object_ids := _object_ids_at_local_position(local_position)
+	var object_ids := _object_ids_at_local_position(local_position, false)
 	return object_ids[0] if not object_ids.is_empty() else ""
 
 
-# Returns every interactive object under a point from front to back. Developer
-# placement intentionally permits overlap, so play input needs a way to reach
-# objects below the topmost rendered object.
-func _object_ids_at_local_position(local_position: Vector2) -> Array[String]:
+# Returns the already-rendered interaction record for an input callback. The
+# host treats this as read-only and avoids rebuilding or deep-copying the room
+# catalog for an object the canvas has just proven is current.
+func interactable_object_view(object_id: String) -> Dictionary:
+	for object_value in _array_view(foundation_snapshot.get("interactable_objects", [])):
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data := object_value as Dictionary
+		if str(object_data.get("object_id", "")) == object_id:
+			return object_data
+	return {}
+
+
+# Applies a simulation-owned state change to one already-rendered room object.
+# Background fixtures use this path so an AUTO spin can become visible without
+# rebuilding the complete room catalog, layout, text caches, and actor routes.
+func apply_interactable_object_state_patch(object_id: String, object_state: Dictionary) -> bool:
+	if not uses_foundation_snapshot or object_id.is_empty() or object_state.is_empty():
+		return false
+	var runtime_state := _copy_dictionary(object_state.get("runtime_state", {}))
+	var visual_state := _copy_dictionary(object_state.get("visual_state", {}))
+	var patched := false
+	for object_value in foundation_scene_objects:
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data := object_value as Dictionary
+		if str(object_data.get("id", "")) != object_id:
+			continue
+		object_data["status_summary"] = str(object_state.get("status_summary", ""))
+		object_data["state_badge"] = str(object_state.get("state_badge", ""))
+		object_data["runtime_state"] = runtime_state
+		object_data["visual_state"] = visual_state
+		patched = true
+		break
+	for object_value in _array_view(foundation_snapshot.get("interactable_objects", [])):
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var interaction_record := object_value as Dictionary
+		if str(interaction_record.get("object_id", "")) != object_id:
+			continue
+		interaction_record["status_summary"] = str(object_state.get("status_summary", ""))
+		interaction_record["state_badge"] = str(object_state.get("state_badge", ""))
+		# Both canvas projections treat these dictionaries as immutable. Reuse the
+		# one detached copy so an autoplay result does not recursively copy the reel,
+		# win-cell, bonus, and timeline payload a second time on the presentation
+		# frame.
+		interaction_record["runtime_state"] = runtime_state
+		interaction_record["visual_state"] = visual_state
+		patched = true
+		break
+	if patched:
+		queue_redraw()
+	return patched
+
+
+# Returns rendered objects under a point from front to back. Actionable objects
+# remain ahead of view-only scenery when their hit regions overlap so a passive
+# prop cannot conceal a usable interaction. Hover/focus may include passive
+# objects; activation and keyboard traversal retain the interactive-only path.
+func _object_ids_at_local_position(local_position: Vector2, interactive_only: bool = true) -> Array[String]:
 	var board_position := _local_to_board_position(local_position)
 	var objects := _active_scene_objects()
-	var object_ids: Array[String] = []
+	var interactive_ids: Array[String] = []
+	var passive_ids: Array[String] = []
 	for index in range(objects.size() - 1, -1, -1):
 		var object_data: Dictionary = objects[index]
-		if not bool(object_data.get("interactive", true)):
-			continue
 		if _interaction_rect_for_object(object_data).has_point(board_position):
 			var object_id := str(object_data.get("id", ""))
-			if not object_id.is_empty() and not object_ids.has(object_id):
-				object_ids.append(object_id)
-	return object_ids
+			if object_id.is_empty():
+				continue
+			if bool(object_data.get("interactive", true)):
+				if not interactive_ids.has(object_id):
+					interactive_ids.append(object_id)
+			elif not interactive_only and not passive_ids.has(object_id):
+				passive_ids.append(object_id)
+	if not interactive_only:
+		interactive_ids.append_array(passive_ids)
+	return interactive_ids
 
 
 # Returns canvas-owned view data only; this is not a simulation source.
@@ -646,6 +2159,7 @@ func current_view_snapshot() -> Dictionary:
 		"drunk_time_scale_percent": int(round(drunk_time_scale * 100.0)),
 		"hovered_object_id": hovered_object_id,
 		"selected_object_id": selected_object_id,
+		"object_labels_and_borders_enabled": object_labels_and_borders_enabled,
 		"scene_animation_time": flicker,
 		"scene_idle_animation_active": _scene_idle_animation_active(),
 		"scene_idle_animation_fps": SCENE_IDLE_ANIMATION_FPS,
@@ -669,7 +2183,7 @@ func current_view_snapshot() -> Dictionary:
 		"minimum_environment_hit_size": SmallScreenPolicyScript.environment_hit_size(small_screen_mode),
 		"reserved_overlay_global_rect": reserved_overlay_global_rect,
 		"overlay_repositioned_object_ids": overlay_repositioned_object_ids.duplicate(),
-		"objects": _copy_array(_active_scene_objects()),
+		"objects": JsonCoerceScript._copy_array(_active_scene_objects()),
 		"object_layout": _scene_object_layout_snapshot(_active_scene_objects()),
 		"scenario_layout_audit": _copy_dictionary(foundation_snapshot.get("scenario_layout_audit", {})) if uses_foundation_snapshot else {},
 		"scenario_layout_authority_digest": str(foundation_snapshot.get("scenario_layout_authority_digest", "")) if uses_foundation_snapshot else "",
@@ -692,6 +2206,7 @@ func current_view_snapshot() -> Dictionary:
 		"grand_casino_entry_cue": foundation_snapshot.get("grand_casino_entry_cue", {}) if uses_foundation_snapshot else {},
 		"reduce_motion": reduce_motion,
 		"developer_placement": developer_placement_snapshot(),
+		"developer_slot_placement": developer_slot_placement_snapshot(),
 	}
 
 
@@ -722,6 +2237,14 @@ func local_position_for_selected_info_action_button(action_index: int = 0) -> Ve
 
 
 func _gui_input(event: InputEvent) -> void:
+	# Placement owns ordinary room input, but its safe exit must remain usable so
+	# an author can leave the current room without first disabling the tool.
+	if _developer_placement_mode_active() and _handle_developer_placement_safe_exit_input(event):
+		accept_event()
+		return
+	if developer_slot_placement_mode and _handle_developer_slot_placement_input(event):
+		accept_event()
+		return
 	if developer_placement_mode and _handle_developer_placement_input(event):
 		accept_event()
 		return
@@ -809,9 +2332,88 @@ func _gui_input(event: InputEvent) -> void:
 		_set_hovered_object(object_id_at_local_position((event as InputEventScreenDrag).position))
 
 
+# The placement overlay keeps ordinary click/drag ownership of Leave so its
+# exit slot remains selectable and movable. A deliberate double-click (or Enter
+# after selecting its slot/object) uses the exit without disabling placement.
+func _handle_developer_placement_safe_exit_input(event: InputEvent) -> bool:
+	const SAFE_EXIT_OBJECT_ID := "travel:leave"
+	var active_drag := developer_slot_dragging or developer_placement_dragging
+	var pending_edit := developer_slot_pending_rect.has_area() or developer_placement_pending_rect.has_area()
+	if event.is_action_pressed("ui_accept") \
+			and _developer_safe_exit_is_selected() \
+			and not active_drag \
+			and not pending_edit:
+		object_focused.emit(SAFE_EXIT_OBJECT_ID)
+		object_activated.emit(SAFE_EXIT_OBJECT_ID)
+		return true
+	if active_drag:
+		return false
+	var local_position := Vector2.ZERO
+	if event is InputEventMouseButton:
+		var mouse := event as InputEventMouseButton
+		if mouse.button_index != MOUSE_BUTTON_LEFT or not mouse.pressed or not mouse.double_click:
+			return false
+		local_position = mouse.position
+	elif event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if not touch.pressed or not touch.double_tap:
+			return false
+		local_position = touch.position
+	else:
+		return false
+	if not _developer_safe_exit_has_local_point(local_position):
+		return false
+	object_focused.emit(SAFE_EXIT_OBJECT_ID)
+	object_activated.emit(SAFE_EXIT_OBJECT_ID)
+	return true
+
+
+func _developer_safe_exit_has_local_point(local_position: Vector2) -> bool:
+	var safe_exit := _scene_object("travel:leave")
+	return not safe_exit.is_empty() \
+		and bool(safe_exit.get("interactive", true)) \
+		and bool(safe_exit.get("visible", true)) \
+		and _interaction_rect_for_object(safe_exit).has_point(_local_to_board_position(local_position))
+
+
+func _developer_safe_exit_is_selected() -> bool:
+	if developer_slot_placement_mode:
+		return _developer_slot_contains_object(developer_slot_selected_id, "travel:leave")
+	return developer_placement_mode and selected_object_id == "travel:leave"
+
+
+# Buttons inside the placement menu own keyboard focus while they are used.
+# F1 must still toggle slot mode, and F2 must still reach the menu toggle when
+# focus has moved to the sibling Restore button after minimizing.
+func _unhandled_key_input(event: InputEvent) -> void:
+	if not (event is InputEventKey):
+		return
+	var key_event := event as InputEventKey
+	if not key_event.pressed or key_event.echo:
+		return
+	if key_event.keycode == KEY_F1 and developer_slot_placement_shortcut_enabled and is_visible_in_tree():
+		var enabled := not developer_slot_placement_mode
+		set_developer_slot_placement_mode(enabled)
+		developer_slot_placement_shortcut_toggled.emit(enabled)
+		get_viewport().set_input_as_handled()
+		return
+	if not _developer_placement_mode_active():
+		return
+	if _developer_placement_undo_shortcut_pressed(key_event):
+		_undo_developer_placement_change()
+		get_viewport().set_input_as_handled()
+		return
+	if key_event.keycode == KEY_F2:
+		_toggle_developer_placement_panel_minimized()
+		get_viewport().set_input_as_handled()
+
+
 func _handle_developer_placement_input(event: InputEvent) -> bool:
+	if _developer_placement_undo_shortcut_pressed(event):
+		_undo_developer_placement_change()
+		return true
 	if event is InputEventKey and (event as InputEventKey).pressed and not (event as InputEventKey).echo and (event as InputEventKey).keycode == KEY_F2:
-		developer_placement_panel.visible = not developer_placement_panel.visible
+		_toggle_developer_placement_panel_minimized()
 		return true
 	if event is InputEventMouseMotion:
 		var motion := event as InputEventMouseMotion
@@ -875,7 +2477,9 @@ func _developer_object_id_at_local_position(local_position: Vector2) -> String:
 	var board_position := _local_to_board_position(local_position)
 	var objects := _active_scene_objects()
 	for index in range(objects.size() - 1, -1, -1):
-		var object_data := _copy_dictionary(objects[index])
+		if typeof(objects[index]) != TYPE_DICTIONARY:
+			continue
+		var object_data := objects[index] as Dictionary
 		if _developer_edit_rect_for_object(object_data).has_point(board_position):
 			return str(object_data.get("id", ""))
 	return ""
@@ -912,18 +2516,31 @@ func _update_developer_placement_preview(top_left: Vector2) -> void:
 		clampf(top_left.x, 0.0, maxf(0.0, BOARD_SIZE.x - size_value.x)),
 		clampf(top_left.y, 0.0, maxf(0.0, BOARD_SIZE.y - size_value.y))
 	)
-	developer_placement_pending_rect = Rect2(bounded.round(), size_value)
-	_set_developer_preview_object_rect(developer_placement_pending_rect)
-	_validate_developer_placement_preview()
-	queue_redraw()
+	var next_rect := Rect2(bounded.round(), size_value)
+	if developer_placement_pending_rect.has_area() and developer_placement_pending_rect.is_equal_approx(next_rect):
+		return
+	developer_placement_pending_rect = next_rect
+	_validate_developer_placement_preview(not developer_placement_dragging)
+	_queue_developer_drag_redraw()
 
 
 func _set_developer_preview_object_rect(rect: Rect2) -> void:
 	for index in range(foundation_scene_objects.size()):
-		var object_data := _copy_dictionary(foundation_scene_objects[index])
-		if str(object_data.get("id", "")) != selected_object_id:
+		if typeof(foundation_scene_objects[index]) != TYPE_DICTIONARY:
 			continue
-		object_data["position"] = rect.get_center() / Vector2(BOARD_SIZE)
+		var current := foundation_scene_objects[index] as Dictionary
+		if str(current.get("id", "")) != selected_object_id:
+			continue
+		var current_position_value: Variant = current.get("position", Vector2.ZERO)
+		var current_position: Vector2 = current_position_value if typeof(current_position_value) == TYPE_VECTOR2 else Vector2.ZERO
+		var current_size_value: Variant = current.get("size", Vector2.ZERO)
+		var current_size: Vector2 = current_size_value if typeof(current_size_value) == TYPE_VECTOR2 else Vector2.ZERO
+		var target_position := rect.get_center() / Vector2(BOARD_SIZE)
+		if current_position.is_equal_approx(target_position) and current_size.is_equal_approx(rect.size):
+			return
+		var object_data := current.duplicate(false)
+		object_data["position"] = target_position
+		object_data["size"] = rect.size
 		foundation_scene_objects[index] = object_data
 		break
 	_rebuild_scene_object_cache()
@@ -931,37 +2548,71 @@ func _set_developer_preview_object_rect(rect: Rect2) -> void:
 	_update_camera_target_if_needed()
 
 
-func _validate_developer_placement_preview() -> void:
+func _developer_placement_surface_map() -> Dictionary:
+	if not developer_placement_surface_map_cache_valid:
+		developer_placement_surface_map_cache = EnvironmentPlacementScript.surface_map(_developer_slot_environment())
+		developer_placement_surface_map_cache_valid = true
+	return developer_placement_surface_map_cache
+
+
+func _ensure_room_surface_draw_cache() -> void:
+	if room_surface_draw_cache_valid:
+		return
+	room_surface_slots_by_id_cache = {}
+	room_surface_counters_by_id_cache = {}
+	room_foreground_counters_cache = []
+	var surface_map := _developer_placement_surface_map()
+	for field in SLOT_COLLECTION_FIELDS:
+		for slot_value in _array_view(surface_map.get(field, [])):
+			if typeof(slot_value) != TYPE_DICTIONARY:
+				continue
+			var slot := slot_value as Dictionary
+			room_surface_slots_by_id_cache[str(slot.get("id", ""))] = slot
+	for counter_value in _array_view(surface_map.get("counters", [])):
+		if typeof(counter_value) != TYPE_DICTIONARY:
+			continue
+		var counter := counter_value as Dictionary
+		room_surface_counters_by_id_cache[str(counter.get("id", ""))] = counter
+		if not str(counter.get("foreground_art_id", "")).is_empty():
+			room_foreground_counters_cache.append(counter)
+	room_foreground_counters_cache.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		return str((left_value as Dictionary).get("id", "")) < str((right_value as Dictionary).get("id", ""))
+	)
+	room_surface_draw_cache_valid = true
+
+
+func _validate_developer_placement_preview(refresh_panel: bool = true) -> void:
 	developer_placement_valid = false
 	developer_placement_surface_id = ""
 	developer_placement_overlap_ids.clear()
 	var object_data := _scene_object(selected_object_id)
 	if object_data.is_empty() or not developer_placement_pending_rect.has_area():
-		_update_developer_placement_panel()
+		if refresh_panel:
+			_update_developer_placement_panel()
 		return
 	var placement_class := str(object_data.get("placement_class", "")).strip_edges()
 	if placement_class.is_empty():
 		placement_class = EnvironmentPlacementScript.classify(object_data, str(object_data.get("interaction_type", object_data.get("type", ""))), selected_object_id, str(object_data.get("prop", object_data.get("icon_key", ""))))
-	var environment := _copy_dictionary(foundation_snapshot)
-	var support := EnvironmentPlacementScript.support_for_rect(environment, placement_class, developer_placement_pending_rect)
+	var support := EnvironmentPlacementScript.support_for_rect_on_surfaces(_developer_placement_surface_map(), placement_class, developer_placement_pending_rect)
 	# Developer placement is direct composition authoring. Physical surfaces and
 	# overlaps remain useful diagnostics, but they never veto an intentional
 	# in-bounds coordinate selected by the owner.
 	developer_placement_valid = Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)).encloses(developer_placement_pending_rect)
 	developer_placement_surface_id = str(support.get("surface_id", ""))
 	for other_value in _active_scene_objects():
-		var other := _copy_dictionary(other_value)
+		if typeof(other_value) != TYPE_DICTIONARY:
+			continue
+		var other := other_value as Dictionary
 		var other_id := str(other.get("id", ""))
 		if other_id.is_empty() or other_id == selected_object_id:
 			continue
 		if developer_placement_pending_rect.intersects(_developer_edit_rect_for_object(other)):
 			developer_placement_overlap_ids.append(other_id)
-	_update_developer_placement_panel()
+	if refresh_panel:
+		_update_developer_placement_panel()
 
 
 func _cancel_developer_placement_preview() -> void:
-	if developer_placement_original_rect.has_area() and not selected_object_id.is_empty():
-		_set_developer_preview_object_rect(developer_placement_original_rect)
 	clear_developer_placement_preview()
 
 
@@ -982,6 +2633,9 @@ func _finish_developer_placement_edit() -> void:
 func _developer_edit_rect_for_object(object_data: Dictionary) -> Rect2:
 	# Small-screen expansion and actor-route animation are presentation
 	# derivatives. Author only the canonical 900x430 placement rectangle.
+	if developer_placement_mode and developer_placement_pending_rect.has_area() \
+			and str(object_data.get("id", "")) == selected_object_id:
+		return developer_placement_pending_rect
 	return _board_rect_for_object_at_position(object_data, object_data.get("position", Vector2(0.5, 0.5)))
 
 
@@ -989,11 +2643,21 @@ func _lock_developer_placement() -> void:
 	if not developer_placement_valid or not developer_placement_pending_rect.has_area():
 		return
 	var request := _developer_placement_request()
-	clear_developer_placement_preview()
+	request["defer_refresh"] = true
+	request["_undo_context_key"] = _developer_slot_snapshot_context_key(foundation_snapshot)
+	var render_generation := environment_snapshot_render_generation
+	clear_developer_placement_preview(false, false)
 	developer_placement_lock_requested.emit(request)
-	# Lock handlers rebuild the authoritative room synchronously. Keep the exact
-	# position the owner just accepted visible even if that rebuild had a stale
-	# interaction projection cached before the placement was written.
+	if _developer_placement_lock_failed(request):
+		return
+	_record_developer_placement_undo(request)
+	if environment_snapshot_render_generation == render_generation:
+		developer_placement_authority_dirty = true
+		_invalidate_developer_placement_geometry_caches()
+		_update_developer_placement_panel()
+	# Normal locks update locally and defer the authoritative room rebuild. Keep
+	# the exact accepted position visible; this also protects against a custom
+	# synchronous host returning a stale interaction projection.
 	_apply_saved_developer_placement(request)
 
 
@@ -1002,14 +2666,33 @@ func _save_developer_placement_to_project() -> void:
 	# older locked value, so a newly dragged preview disappeared on the next room
 	# refresh even though the player had just asked to save it to the project.
 	var saved_request: Dictionary = {}
+	var render_generation := environment_snapshot_render_generation
 	if developer_placement_pending_rect.has_area():
 		if not developer_placement_valid:
 			return
 		saved_request = _developer_placement_request()
-		clear_developer_placement_preview()
+		saved_request["defer_refresh"] = true
+		clear_developer_placement_preview(false, false)
 		developer_placement_lock_requested.emit(saved_request)
-		_apply_saved_developer_placement(saved_request)
+		if _developer_placement_lock_failed(saved_request):
+			return
 	developer_placement_promote_requested.emit()
+	if environment_snapshot_render_generation == render_generation:
+		developer_placement_authority_dirty = true
+		_invalidate_developer_placement_geometry_caches()
+		_update_developer_placement_panel()
+	if not saved_request.is_empty():
+		_apply_saved_developer_placement(saved_request)
+
+
+func _developer_placement_lock_failed(request: Dictionary) -> bool:
+	return bool(request.get("_placement_lock_handled", false)) \
+		and not bool(request.get("_placement_lock_persisted", false))
+
+
+func _developer_placement_reset_failed(request: Dictionary) -> bool:
+	return bool(request.get("_placement_reset_handled", false)) \
+		and not bool(request.get("_placement_reset_persisted", false))
 
 
 func _apply_saved_developer_placement(request: Dictionary) -> void:
@@ -1019,7 +2702,7 @@ func _apply_saved_developer_placement(request: Dictionary) -> void:
 	var object_data := _scene_object(object_id)
 	if object_data.is_empty():
 		return
-	var position_value: Variant = request.get("position", Vector2.ZERO)
+	var position_value: Variant = request.get("preview_top_left", request.get("position", Vector2.ZERO))
 	if typeof(position_value) != TYPE_VECTOR2:
 		return
 	var size_value: Variant = request.get("size", Vector2.ZERO)
@@ -1034,8 +2717,1059 @@ func _reset_developer_placement() -> void:
 	var request := _developer_placement_request()
 	if request.is_empty():
 		return
-	clear_developer_placement_preview()
+	var render_generation := environment_snapshot_render_generation
+	request["_undo_context_key"] = _developer_slot_snapshot_context_key(foundation_snapshot)
+	clear_developer_placement_preview(false, false)
 	developer_placement_reset_requested.emit(request)
+	if _developer_placement_reset_failed(request):
+		return
+	_record_developer_placement_undo(request)
+	if environment_snapshot_render_generation == render_generation:
+		_invalidate_developer_placement_geometry_caches()
+		_update_developer_placement_panel()
+		queue_redraw()
+
+
+func _developer_slot_environment() -> Dictionary:
+	return {
+		"archetype_id": str(foundation_snapshot.get("archetype_id", foundation_snapshot.get("id", environment_id))),
+		"current_layer_id": str(foundation_snapshot.get("current_layer_id", foundation_snapshot.get("layer_id", ""))),
+		"scenario_id": str(foundation_snapshot.get("scenario_id", "")),
+		"scenario_state": _copy_dictionary(foundation_snapshot.get("scenario_state", {})),
+		"scenario_sequence_state": _copy_dictionary(foundation_snapshot.get("scenario_sequence_state", {})),
+	}
+
+
+func _developer_slots(include_hidden: bool = false) -> Array:
+	if foundation_snapshot.is_empty() and environment_id.is_empty():
+		return []
+	var available_slots := _developer_available_slots()
+	if include_hidden:
+		return available_slots
+	if developer_visible_slots_cache_valid:
+		return developer_visible_slots_cache
+	var slots: Array = []
+	for slot_value in available_slots:
+		var slot := slot_value as Dictionary
+		if _developer_slot_visible_in_preview(slot):
+			slots.append(slot)
+	developer_visible_slots_cache = slots
+	developer_visible_slots_cache_valid = true
+	return developer_visible_slots_cache
+
+
+func _developer_available_slots() -> Array:
+	_ensure_developer_slot_cache()
+	if developer_available_slots_cache_valid:
+		return developer_available_slots_cache
+	var slots: Array = []
+	for slot_value in developer_slots_cache:
+		var slot := slot_value as Dictionary
+		if _developer_slot_family_available(_developer_slot_family(slot)):
+			slots.append(slot)
+	developer_available_slots_cache = slots
+	developer_available_slots_cache_valid = true
+	return developer_available_slots_cache
+
+
+func _developer_authored_slots() -> Array:
+	_ensure_developer_slot_cache()
+	return developer_slots_cache
+
+
+func _ensure_developer_slot_cache() -> void:
+	if developer_slots_cache_valid:
+		return
+	developer_slot_cache_rebuild_count += 1
+	var surface_map := _developer_placement_surface_map()
+	var slots: Array = []
+	var slots_by_id: Dictionary = {}
+	var slot_rects_by_id: Dictionary = {}
+	var slot_positions_by_id: Dictionary = {}
+	for field in SLOT_COLLECTION_FIELDS:
+		for slot_value in _array_view(surface_map.get(field, [])):
+			if typeof(slot_value) != TYPE_DICTIONARY:
+				continue
+			var slot := slot_value as Dictionary
+			var slot_id := str(slot.get("id", "")).strip_edges()
+			if slot_id.is_empty():
+				continue
+			slots.append(slot)
+			slots_by_id[slot_id] = slot
+			var position := _developer_slot_position(slot)
+			var rect_values := _array_view(slot.get("hit_rect", []))
+			var rect := Rect2(position - Vector2(22.0, 22.0), Vector2(44.0, 44.0))
+			if rect_values.size() >= 4:
+				rect = Rect2(float(rect_values[0]), float(rect_values[1]), float(rect_values[2]), float(rect_values[3]))
+			slot_positions_by_id[slot_id] = position
+			slot_rects_by_id[slot_id] = rect
+	slots.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		var left := left_value as Dictionary
+		var right := right_value as Dictionary
+		var left_kind := str(left.get("kind", ""))
+		var right_kind := str(right.get("kind", ""))
+		return str(left.get("id", "")) < str(right.get("id", "")) if left_kind == right_kind else left_kind < right_kind
+	)
+	developer_slots_cache = slots
+	developer_slots_by_id_cache = slots_by_id
+	developer_slot_rects_by_id_cache = slot_rects_by_id
+	developer_slot_positions_by_id_cache = slot_positions_by_id
+	developer_slots_cache_valid = true
+
+
+func _developer_slot_active_family() -> String:
+	if bool(developer_slot_family_filters.get("all", false)):
+		return "all"
+	for family_value in SLOT_FAMILIES:
+		var family := str(family_value)
+		if bool(developer_slot_family_filters.get(family, false)):
+			return family
+	return "fixed"
+
+
+func _developer_slot_visible_in_preview(slot: Dictionary) -> bool:
+	if not _developer_slot_family_visible(_developer_slot_family(slot)):
+		return false
+	return _developer_slot_visible_by_detail(slot)
+
+
+func _developer_slot_visible_by_detail(slot: Dictionary) -> bool:
+	if not _developer_slot_occupant_records(str(slot.get("id", ""))).is_empty():
+		return true
+	if _developer_slot_is_required(slot):
+		return true
+	if _developer_slot_is_runtime_reserve(slot):
+		return developer_slot_show_runtime_reserves
+	return developer_slot_show_empty_capacity
+
+
+func _developer_slot_is_runtime_reserve(slot: Dictionary) -> bool:
+	if bool(slot.get("runtime_reserve", false)):
+		return true
+	var capacity_role := str(slot.get("capacity_role", "")).strip_edges().to_lower()
+	if capacity_role == "runtime_reserve":
+		return true
+	var metadata := _copy_dictionary(slot.get("metadata", {}))
+	return bool(metadata.get("runtime_reserve", false)) \
+			or str(metadata.get("capacity_role", "")).strip_edges().to_lower() == "runtime_reserve"
+
+
+func _developer_slot_reserve_reason(slot: Dictionary) -> String:
+	var reason := str(slot.get("reserve_reason", "")).strip_edges()
+	if reason.is_empty():
+		reason = str(_copy_dictionary(slot.get("metadata", {})).get("reserve_reason", "")).strip_edges()
+	return reason.replace("_", " ").capitalize()
+
+
+func _developer_slot_is_required(slot: Dictionary) -> bool:
+	if bool(slot.get("occupancy_required", false)):
+		return true
+	var slot_id := str(slot.get("id", "")).strip_edges()
+	if scene_object_cache_valid:
+		return developer_required_slot_ids_cache.has(slot_id)
+	for row_value in _developer_manifest_rows():
+		if typeof(row_value) != TYPE_DICTIONARY:
+			continue
+		var row := row_value as Dictionary
+		if bool(row.get("active", true)) and bool(row.get("physical", true)) \
+				and bool(row.get("required", false)) \
+				and str(row.get("exact_slot_id", "")).strip_edges() == slot_id:
+			return true
+	for occupant_value in _developer_slot_occupant_records(slot_id):
+		if typeof(occupant_value) == TYPE_DICTIONARY \
+				and bool((occupant_value as Dictionary).get("manifest_required", false)):
+			return true
+	return false
+
+
+func _developer_slot_family_counts(family: String) -> Dictionary:
+	var total := 0
+	var visible := 0
+	for slot_value in _developer_slots(true):
+		var slot := slot_value as Dictionary
+		if family != "all" and _developer_slot_family(slot) != family:
+			continue
+		total += 1
+		if _developer_slot_visible_by_detail(slot):
+			visible += 1
+	return {"visible": visible, "total": total}
+
+
+func _update_developer_slot_filter_labels() -> void:
+	var required_review_families := _developer_slot_required_review_families()
+	var family_labels := {
+		"fixed": "Fixed",
+		"event": "Events",
+		"scenario": "Scenario",
+		"exit": "Exits",
+		"all": "All",
+	}
+	for family_value in SLOT_FILTER_OPTIONS:
+		var family := str(family_value)
+		var button_value: Variant = developer_slot_filter_buttons.get(family)
+		if not (button_value is BaseButton):
+			continue
+		var available := family == "all" or _developer_slot_family_available(family)
+		(button_value as BaseButton).visible = available
+		(button_value as BaseButton).disabled = not available
+		var counts := _developer_slot_family_counts(family)
+		var review_status := "All available families" if family == "all" else "Optional"
+		if family != "all" and required_review_families.has(family):
+			review_status = "Reviewed" if bool(developer_slot_reviewed_families.get(family, false)) else "TODO"
+		(button_value as BaseButton).text = str(family_labels.get(family, family.capitalize()))
+		(button_value as BaseButton).tooltip_text = "%s slots: %d/%d shown. Review: %s." % [
+			family.capitalize(),
+			int(counts.get("visible", 0)),
+			int(counts.get("total", 0)),
+			review_status,
+		]
+
+
+func _developer_slot_preview_context() -> Dictionary:
+	var sequence_state := _copy_dictionary(foundation_snapshot.get("scenario_sequence_state", {}))
+	var scenario_state := _copy_dictionary(foundation_snapshot.get("scenario_state", {}))
+	var projection := _copy_dictionary(foundation_snapshot.get("scenario_sequence_projection", {}))
+	# Use the same layer-aware scenario identity as placement composition and
+	# persistence. A club scenario cursor can remain in run state while the
+	# player views the casino floor, but it is not the active placement context.
+	var scenario_id := EnvironmentPlacementScript.active_scenario_id(foundation_snapshot)
+	var scenario_name := str(foundation_snapshot.get("scenario_display_name", scenario_state.get("display_name", ""))).strip_edges()
+	if scenario_name.is_empty():
+		scenario_name = _developer_friendly_identifier(scenario_id)
+	var phase_id := str(projection.get("phase_id", sequence_state.get("phase_id", ""))).strip_edges()
+	var status := str(projection.get("status", sequence_state.get("status", ""))).strip_edges()
+	var resolved_outcomes := _array_view(projection.get("resolved_outcomes", sequence_state.get("resolved_outcomes", [])))
+	var outcome_id := str(resolved_outcomes.back()).strip_edges() if not resolved_outcomes.is_empty() else ""
+	var label := "Active preview: no scenario"
+	if not scenario_id.is_empty():
+		label = "Active preview: %s" % scenario_name
+		if not phase_id.is_empty():
+			label += " · %s" % _developer_friendly_identifier(phase_id)
+		elif not outcome_id.is_empty():
+			label += " · Aftermath: %s" % _developer_friendly_identifier(outcome_id)
+		elif not status.is_empty() and status.to_lower() != "active":
+			label += " · %s" % _developer_friendly_identifier(status)
+	return {
+		"scenario_id": scenario_id,
+		"scenario_name": scenario_name,
+		"phase_id": phase_id,
+		"status": status,
+		"outcome_id": outcome_id,
+		"label": label,
+	}
+
+
+func _developer_friendly_identifier(value: String) -> String:
+	var friendly := value.strip_edges().replace("_", " ").replace("-", " ")
+	return friendly.capitalize() if not friendly.is_empty() else ""
+
+
+func _developer_slot(slot_id: String) -> Dictionary:
+	var clean_id := slot_id.strip_edges()
+	if clean_id.is_empty() or (foundation_snapshot.is_empty() and environment_id.is_empty()):
+		return {}
+	_ensure_developer_slot_cache()
+	var slot_value: Variant = developer_slots_by_id_cache.get(clean_id, {})
+	return slot_value as Dictionary if typeof(slot_value) == TYPE_DICTIONARY else {}
+
+
+func _developer_slot_rect(slot: Dictionary) -> Rect2:
+	var slot_id := str(slot.get("id", "")).strip_edges()
+	var cached_value: Variant = developer_slot_rects_by_id_cache.get(slot_id)
+	if typeof(cached_value) == TYPE_RECT2:
+		return cached_value
+	var values := _array_view(slot.get("hit_rect", []))
+	if values.size() >= 4:
+		return Rect2(float(values[0]), float(values[1]), float(values[2]), float(values[3]))
+	var position := _developer_slot_position(slot)
+	return Rect2(position - Vector2(22.0, 22.0), Vector2(44.0, 44.0))
+
+
+func _developer_slot_visual_rect(slot: Dictionary, base_rect: Rect2 = Rect2()) -> Rect2:
+	var authored_rect := _developer_slot_rect(slot)
+	var rect := base_rect if base_rect.has_area() else authored_rect
+	var scale := _developer_slot_object_scale(slot)
+	if not rect.has_area() or is_equal_approx(scale, 1.0):
+		return rect
+	var anchor := _developer_slot_position(slot) + rect.position - authored_rect.position
+	return Rect2(anchor + (rect.position - anchor) * scale, rect.size * scale)
+
+
+func _developer_slot_position(slot: Dictionary) -> Vector2:
+	var slot_id := str(slot.get("id", "")).strip_edges()
+	var cached_value: Variant = developer_slot_positions_by_id_cache.get(slot_id)
+	if typeof(cached_value) == TYPE_VECTOR2:
+		return cached_value
+	var values := _array_view(slot.get("pos", []))
+	if values.size() < 2:
+		return Vector2.ZERO
+	return Vector2(float(values[0]), float(values[1]))
+
+
+func _developer_slot_occupants(slot_id: String) -> Array[String]:
+	var occupants: Array[String] = []
+	for object_data in _developer_slot_occupant_records(slot_id):
+		var label := str(object_data.get("label", "")).strip_edges()
+		if label.is_empty():
+			label = _developer_friendly_identifier(str(object_data.get("id", "object")).get_slice(":", 1))
+		if label.is_empty():
+			label = "Object"
+		if not occupants.has(label):
+			occupants.append(label)
+	occupants.sort()
+	return occupants
+
+
+func _developer_slot_occupant_records(slot_id: String) -> Array:
+	if scene_object_cache_valid:
+		var cached_value: Variant = developer_slot_occupants_by_id_cache.get(slot_id, [])
+		return cached_value as Array if typeof(cached_value) == TYPE_ARRAY else []
+	var occupants: Array = []
+	for object_value in foundation_scene_objects:
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data := object_value as Dictionary
+		if str(object_data.get("slot_id", "")) == slot_id:
+			occupants.append(object_data)
+	return occupants
+
+
+func _developer_slot_contains_object(slot_id: String, object_id: String) -> bool:
+	if slot_id.is_empty() or object_id.is_empty():
+		return false
+	for object_value in _developer_slot_occupant_records(slot_id):
+		if typeof(object_value) == TYPE_DICTIONARY \
+				and str((object_value as Dictionary).get("id", "")) == object_id:
+			return true
+	return false
+
+
+func _developer_slot_primary_label(slot: Dictionary) -> String:
+	var label := _developer_slot_unqualified_label(slot)
+	if not bool(slot.get("scenario_instance", false)) or not _developer_slot_label_repeats(label, slot):
+		return label
+	var qualifier := _developer_slot_zone_label(slot)
+	if qualifier.is_empty():
+		qualifier = "Position %d" % int(slot.get("scenario_ordinal", 0))
+	elif _developer_slot_label_and_zone_repeat(label, qualifier, slot):
+		qualifier += " %d" % int(slot.get("scenario_ordinal", 0))
+	return "%s - %s" % [label, qualifier]
+
+
+func _developer_slot_unqualified_label(slot: Dictionary) -> String:
+	var occupants := _developer_slot_occupants(str(slot.get("id", "")))
+	if occupants.size() == 1:
+		return occupants[0]
+	if occupants.size() > 1:
+		return "%s +%d" % [occupants[0], occupants.size() - 1]
+	if bool(slot.get("scenario_instance", false)):
+		var claimant_labels := _developer_slot_claimant_labels(slot)
+		if claimant_labels.size() == 1:
+			return claimant_labels[0]
+		if claimant_labels.size() > 1:
+			var alternate_count := claimant_labels.size() - 1
+			return "%s (+%d alternate%s)" % [
+				claimant_labels[0],
+				alternate_count,
+				"" if alternate_count == 1 else "s",
+			]
+	return _developer_slot_capacity_label(slot)
+
+
+func _developer_slot_label_repeats(label: String, slot: Dictionary) -> bool:
+	var normalized := label.strip_edges().to_lower()
+	if normalized.is_empty():
+		return false
+	for candidate_value in _developer_slots(true):
+		var candidate := candidate_value as Dictionary
+		if str(candidate.get("id", "")) == str(slot.get("id", "")) \
+				or not bool(candidate.get("scenario_instance", false)):
+			continue
+		if _developer_slot_unqualified_label(candidate).strip_edges().to_lower() == normalized:
+			return true
+	return false
+
+
+func _developer_slot_label_and_zone_repeat(label: String, qualifier: String, slot: Dictionary) -> bool:
+	var normalized_label := label.strip_edges().to_lower()
+	var normalized_zone := qualifier.strip_edges().to_lower()
+	for candidate_value in _developer_slots(true):
+		var candidate := candidate_value as Dictionary
+		if str(candidate.get("id", "")) == str(slot.get("id", "")) \
+				or not bool(candidate.get("scenario_instance", false)):
+			continue
+		if _developer_slot_unqualified_label(candidate).strip_edges().to_lower() == normalized_label \
+				and _developer_slot_zone_label(candidate).strip_edges().to_lower() == normalized_zone:
+			return true
+	return false
+
+
+func _developer_slot_zone_label(slot: Dictionary) -> String:
+	var zone_ids := _array_view(slot.get("scenario_zone_ids", []))
+	var zone_id := str(zone_ids[0]).strip_edges() if not zone_ids.is_empty() else ""
+	if zone_id.is_empty():
+		zone_id = str(slot.get("zone_id", "")).strip_edges()
+	return _developer_friendly_identifier(zone_id)
+
+
+func _developer_slot_capacity_label(slot: Dictionary) -> String:
+	var physical_role := str(slot.get("physical_role", "")).strip_edges()
+	var slot_id := str(slot.get("id", "")).strip_edges()
+	var family := _developer_slot_family(slot)
+	var identity := slot_id.get_slice(".", 1) if slot_id.contains(".") else slot_id
+	var suffix := identity.get_slice("_", identity.get_slice_count("_") - 1)
+	if not physical_role.is_empty():
+		if suffix.is_valid_int() and not physical_role.ends_with(" %s" % suffix):
+			return "%s %s" % [physical_role, suffix]
+		return physical_role
+	if family in ["fixed", "exit"]:
+		return _developer_friendly_identifier(identity)
+	var placement_class := str(slot.get("footprint_class", "capacity")).strip_edges()
+	var label := _developer_friendly_identifier(placement_class)
+	if suffix.is_valid_int():
+		label += " %s" % suffix
+	return label
+
+
+func _developer_slot_known_claimants(slot: Dictionary) -> Array[String]:
+	var claimants: Array[String] = []
+	for claimant_value in _array_view(slot.get("occupant_ids", [])):
+		var claimant := str(claimant_value).strip_edges()
+		if not claimant.is_empty() and not claimants.has(claimant):
+			claimants.append(claimant)
+	claimants.sort()
+	return claimants
+
+
+func _developer_slot_claimant_labels(slot: Dictionary) -> Array[String]:
+	# Room-shared slots already lead with the live occupant when one exists and
+	# otherwise use their authored capacity role. Their raw occupant_ids are
+	# stable migration/runtime aliases, not owner-facing names. Exact scenario
+	# slots carry explicit scenario_occupant_labels and retain this detail.
+	if not bool(slot.get("scenario_instance", false)):
+		return []
+	var candidates: Array[Dictionary] = []
+	var authored_labels := _array_view(slot.get("scenario_occupant_labels", []))
+	for label_value in authored_labels:
+		var authored_label := str(label_value).strip_edges()
+		if authored_label.is_empty():
+			continue
+		candidates.append({
+			"label": authored_label,
+			"priority": 10 if authored_label.to_lower().begins_with("aftermath:") else 0,
+		})
+	var scenario_id := str(slot.get("scenario_id", "")).strip_edges()
+	if candidates.is_empty():
+		for claimant in _developer_slot_known_claimants(slot):
+			var label := _developer_slot_claimant_label(claimant, scenario_id)
+			if label.is_empty():
+				continue
+			candidates.append({
+				"label": label,
+				"priority": 10 if claimant.to_lower().contains("aftermath_") else 0,
+			})
+	candidates.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		var left := left_value as Dictionary
+		var right := right_value as Dictionary
+		var left_priority := int(left.get("priority", 0))
+		var right_priority := int(right.get("priority", 0))
+		return str(left.get("label", "")) < str(right.get("label", "")) if left_priority == right_priority else left_priority < right_priority
+	)
+	var labels: Array[String] = []
+	var normalized_labels: Dictionary = {}
+	for candidate in candidates:
+		var label := str(candidate.get("label", ""))
+		var normalized := label.strip_edges().to_lower()
+		if normalized.is_empty() or normalized_labels.has(normalized):
+			continue
+		normalized_labels[normalized] = true
+		labels.append(label)
+	return labels
+
+
+func _developer_slot_claimant_label(claimant_id: String, scenario_id: String) -> String:
+	var identity := claimant_id.strip_edges()
+	if identity.begins_with("meta_sal_shelf:"):
+		var shelf_index := identity.get_slice(":", 1)
+		if shelf_index.is_valid_int():
+			return "Sal's Shelf Slot %d" % (int(shelf_index) + 1)
+	if _developer_slot_claimant_is_action_only(identity):
+		return ""
+	var double_separator := identity.find("::")
+	if double_separator >= 0:
+		identity = identity.substr(double_separator + 2)
+	else:
+		var separator := identity.find(":")
+		if separator >= 0:
+			identity = identity.substr(separator + 1)
+	var scenario_prefix := "%s_" % scenario_id
+	if not scenario_id.is_empty() and identity.begins_with(scenario_prefix):
+		identity = identity.trim_prefix(scenario_prefix)
+	if identity.begins_with("scenario_"):
+		identity = identity.trim_prefix("scenario_")
+	var aftermath := identity.begins_with("aftermath_")
+	if aftermath:
+		identity = identity.trim_prefix("aftermath_")
+	for suffix in ["_actor", "_prop"]:
+		if identity.ends_with(suffix):
+			identity = identity.left(identity.length() - suffix.length())
+	var label := _developer_friendly_identifier(identity)
+	return "Aftermath: %s" % label if aftermath and not label.is_empty() else label
+
+
+func _developer_slot_claimant_is_action_only(identity: String) -> bool:
+	var tokens := identity.to_lower().split("_", false)
+	var count := tokens.size()
+	if count >= 2 and tokens[count - 2] == "task" and tokens[count - 1].is_valid_int():
+		return true
+	return count >= 4 \
+		and tokens[count - 4] == "work" \
+		and tokens[count - 3].is_valid_int() \
+		and tokens[count - 2] == "choice" \
+		and tokens[count - 1].is_valid_int()
+
+
+func _developer_slot_family(slot: Dictionary) -> String:
+	var family := str(slot.get("kind", "")).strip_edges().to_lower()
+	if family in SLOT_FAMILIES:
+		return family
+	var slot_id := str(slot.get("id", "")).strip_edges().to_lower()
+	var separator := slot_id.find(".")
+	if separator > 0:
+		family = slot_id.left(separator)
+	return family if family in SLOT_FAMILIES else "unknown"
+
+
+func _developer_slot_family_visible(family: String) -> bool:
+	return bool(developer_slot_family_filters.get(family, false))
+
+
+func _developer_slot_family_color(family: String) -> Color:
+	match family:
+		"fixed": return C_CYAN
+		"event": return C_AMBER
+		"scenario": return C_PURPLE_2
+		"exit": return C_PINK
+	return C_SOFT
+
+
+func _developer_manifest_rows() -> Array:
+	var manifest_value: Variant = foundation_snapshot.get("object_manifest", {})
+	if typeof(manifest_value) != TYPE_DICTIONARY:
+		return []
+	return _array_view((manifest_value as Dictionary).get("rows", []))
+
+
+func _developer_slot_state(slot: Dictionary, comparison_slots: Array = []) -> Dictionary:
+	var slot_id := str(slot.get("id", "")).strip_edges()
+	var family := _developer_slot_family(slot)
+	var placement_class := str(slot.get("footprint_class", "")).strip_edges()
+	var support_id := str(slot.get("support_id", "")).strip_edges()
+	var required := _developer_slot_is_required(slot)
+	var occupants := _developer_slot_occupant_records(slot_id)
+	var warnings: Array[String] = []
+	if str(slot.get("kind", family)).strip_edges().to_lower() != family:
+		warnings.append("kind/prefix mismatch")
+	if required and occupants.is_empty():
+		warnings.append("required occupant missing")
+	if occupants.size() > 1:
+		warnings.append("multiple occupants")
+	var slot_rect := _developer_slot_visual_rect(slot)
+	var diagnose_overlap := slot_id == developer_slot_selected_id or _developer_slot_is_context_active(slot)
+	if diagnose_overlap:
+		var slots_to_compare := comparison_slots if not comparison_slots.is_empty() else _developer_slot_overlap_candidates(slot_id)
+		for other_value in slots_to_compare:
+			var other := other_value as Dictionary
+			var other_id := str(other.get("id", ""))
+			if other_id != slot_id \
+					and _developer_slot_is_context_active(slot) \
+					and _developer_slot_is_context_active(other) \
+					and slot_rect.intersects(_developer_slot_visual_rect(other)):
+				warnings.append("overlaps %s" % other_id)
+				break
+	for occupant_value in occupants:
+		var occupant := occupant_value as Dictionary
+		var occupant_family := str(occupant.get("manifest_family", occupant.get("slot_family", ""))).strip_edges().to_lower()
+		if occupant_family.is_empty():
+			var occupant_slot := str(occupant.get("slot_id", ""))
+			var separator := occupant_slot.find(".")
+			if separator > 0:
+				occupant_family = occupant_slot.left(separator)
+		if not occupant_family.is_empty() and occupant_family != family:
+			warnings.append("family crossover: %s" % occupant_family)
+		var occupant_class := str(occupant.get("placement_class", "")).strip_edges()
+		if not placement_class.is_empty() and not occupant_class.is_empty() and occupant_class != placement_class:
+			warnings.append("class mismatch: %s" % occupant_class)
+		var metadata := _copy_dictionary(occupant.get("manifest_metadata", {}))
+		var occupant_support := str(occupant.get("support_id", metadata.get("support_id", ""))).strip_edges()
+		if not support_id.is_empty() and not occupant_support.is_empty() and occupant_support != support_id:
+			warnings.append("support mismatch: %s" % occupant_support)
+	return {
+		"family": family,
+		"required": required,
+		"occupants": occupants,
+		"warnings": warnings,
+	}
+
+
+func _developer_slot_is_context_active(slot: Dictionary) -> bool:
+	var slot_id := str(slot.get("id", "")).strip_edges()
+	return _developer_slot_is_required(slot) or not _developer_slot_occupant_records(slot_id).is_empty()
+
+
+func _developer_slot_overlap_candidates(selected_slot_id: String = "") -> Array:
+	var candidates: Array = []
+	for slot_value in _developer_slots(true):
+		var slot := slot_value as Dictionary
+		var slot_id := str(slot.get("id", ""))
+		if slot_id != selected_slot_id:
+			candidates.append(slot)
+	return candidates
+
+
+func _developer_slot_overlap_summary() -> Dictionary:
+	if developer_slot_overlap_summary_cache_valid:
+		return developer_slot_overlap_summary_cache
+	developer_slot_overlap_audit_count += 1
+	var slots := _developer_slots(true)
+	var active_pairs: Array[String] = []
+	var alternative_pairs: Array[String] = []
+	for left_index in range(slots.size()):
+		var left := slots[left_index] as Dictionary
+		var left_id := str(left.get("id", ""))
+		var left_rect := _developer_slot_visual_rect(left)
+		for right_index in range(left_index + 1, slots.size()):
+			var right := slots[right_index] as Dictionary
+			if not left_rect.intersects(_developer_slot_visual_rect(right)):
+				continue
+			var right_id := str(right.get("id", ""))
+			var pair_label := "%s / %s" % [left_id, right_id]
+			if _developer_slot_is_context_active(left) and _developer_slot_is_context_active(right):
+				active_pairs.append(pair_label)
+			else:
+				alternative_pairs.append(pair_label)
+	developer_slot_overlap_summary_cache = {
+		"active_count": active_pairs.size(),
+		"active_pairs": active_pairs,
+		"alternative_count": alternative_pairs.size(),
+		"alternative_pairs": alternative_pairs,
+	}
+	developer_slot_overlap_summary_cache_valid = true
+	return developer_slot_overlap_summary_cache
+
+
+func _developer_slot_label_ids() -> Array[String]:
+	var result: Array[String] = []
+	for slot_id in [developer_slot_selected_id, developer_slot_hovered_id]:
+		var clean_id := str(slot_id).strip_edges()
+		if clean_id.is_empty() or result.has(clean_id):
+			continue
+		var slot := _developer_slot(clean_id)
+		if not slot.is_empty() and _developer_slot_visible_in_preview(slot):
+			result.append(clean_id)
+	return result
+
+
+func _developer_slot_id_at_local_position(local_position: Vector2) -> String:
+	var board_position := _local_to_board_position(local_position)
+	var selected := _developer_slot(developer_slot_selected_id)
+	if not selected.is_empty():
+		var selected_base_rect := developer_slot_pending_rect if developer_slot_pending_rect.has_area() else _developer_slot_rect(selected)
+		var selected_rect := _developer_slot_visual_rect(selected, selected_base_rect)
+		if selected_rect.has_point(board_position):
+			return developer_slot_selected_id
+	var slots := _developer_slots()
+	for index in range(slots.size() - 1, -1, -1):
+		var slot := slots[index] as Dictionary
+		if _developer_slot_visual_rect(slot).has_point(board_position):
+			return str(slot.get("id", ""))
+	return ""
+
+
+func _handle_developer_slot_placement_input(event: InputEvent) -> bool:
+	if _developer_placement_undo_shortcut_pressed(event):
+		_undo_developer_placement_change()
+		return true
+	if event is InputEventKey and (event as InputEventKey).pressed and not (event as InputEventKey).echo and (event as InputEventKey).keycode == KEY_F2:
+		_toggle_developer_placement_panel_minimized()
+		return true
+	if event is InputEventMouseMotion:
+		var motion := event as InputEventMouseMotion
+		if developer_slot_dragging:
+			_update_developer_slot_placement_preview(_local_to_board_position(motion.position) - developer_slot_drag_offset)
+		else:
+			var hovered_slot_id := _developer_slot_id_at_local_position(motion.position)
+			if hovered_slot_id != developer_slot_hovered_id:
+				developer_slot_hovered_id = hovered_slot_id
+				var hovered_slot := _developer_slot(hovered_slot_id)
+				if hovered_slot.is_empty():
+					tooltip_text = ""
+				else:
+					var hover_scope := "SCENARIO-LOCAL" if _developer_slot_scope(hovered_slot) == "scenario_local" else "ROOM-SHARED"
+					if not _developer_slot_is_editable(hovered_slot):
+						hover_scope += " / LOCKED"
+					tooltip_text = "%s\n%s\n%s" % [_developer_slot_primary_label(hovered_slot), hovered_slot_id, hover_scope]
+					var known_claimants := _developer_slot_claimant_labels(hovered_slot)
+					if not known_claimants.is_empty():
+						var shown_claimants := known_claimants.slice(0, mini(5, known_claimants.size()))
+						tooltip_text += "\nKnown roles: %s" % ", ".join(shown_claimants)
+						if known_claimants.size() > shown_claimants.size():
+							tooltip_text += " +%d" % (known_claimants.size() - shown_claimants.size())
+				_update_developer_placement_panel()
+				queue_redraw()
+		return true
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT:
+			if mouse_event.pressed:
+				_begin_developer_slot_placement_drag(mouse_event.position)
+			else:
+				_finish_developer_slot_placement_edit()
+			return true
+		if mouse_event.button_index == MOUSE_BUTTON_RIGHT and mouse_event.pressed:
+			_cancel_developer_slot_placement_preview()
+			return true
+	if event is InputEventScreenTouch:
+		var touch := event as InputEventScreenTouch
+		if touch.pressed:
+			_begin_developer_slot_placement_drag(touch.position)
+		else:
+			_finish_developer_slot_placement_edit()
+		return true
+	if event is InputEventScreenDrag:
+		if developer_slot_dragging:
+			var drag := event as InputEventScreenDrag
+			_update_developer_slot_placement_preview(_local_to_board_position(drag.position) - developer_slot_drag_offset)
+		return true
+	if event.is_action_pressed("ui_cancel"):
+		_cancel_developer_slot_placement_preview()
+		return true
+	if event.is_action_pressed("ui_accept") and developer_slot_pending_rect.has_area():
+		_lock_developer_slot_placement()
+		return true
+	var nudge := Vector2.ZERO
+	if event.is_action_pressed("ui_left"):
+		nudge.x = -1.0
+	elif event.is_action_pressed("ui_right"):
+		nudge.x = 1.0
+	elif event.is_action_pressed("ui_up"):
+		nudge.y = -1.0
+	elif event.is_action_pressed("ui_down"):
+		nudge.y = 1.0
+	if not nudge.is_zero_approx() and not developer_slot_selected_id.is_empty():
+		if event is InputEventKey and (event as InputEventKey).shift_pressed:
+			nudge *= 10.0
+		var slot := _developer_slot(developer_slot_selected_id)
+		if not slot.is_empty() and _developer_slot_is_editable(slot):
+			if not developer_slot_original_rect.has_area():
+				developer_slot_original_rect = _developer_slot_rect(slot)
+			var current_rect := developer_slot_pending_rect if developer_slot_pending_rect.has_area() else developer_slot_original_rect
+			_update_developer_slot_placement_preview(current_rect.position + nudge)
+		return true
+	return false
+
+
+func _begin_developer_slot_placement_drag(local_position: Vector2) -> void:
+	var slot_id := _developer_slot_id_at_local_position(local_position)
+	if slot_id.is_empty():
+		_finish_developer_slot_placement_edit()
+		developer_slot_selected_id = ""
+		developer_slot_hovered_id = ""
+		_update_developer_placement_panel()
+		queue_redraw()
+		return
+	if slot_id != developer_slot_selected_id:
+		_finish_developer_slot_placement_edit()
+		developer_slot_selected_id = slot_id
+	developer_slot_hovered_id = slot_id
+	var slot := _developer_slot(slot_id)
+	if slot.is_empty():
+		return
+	if not _developer_slot_is_editable(slot):
+		clear_developer_slot_placement_preview()
+		developer_slot_selected_id = slot_id
+		developer_slot_hovered_id = slot_id
+		_update_developer_placement_panel()
+		queue_redraw()
+		return
+	developer_slot_original_rect = _developer_slot_rect(slot)
+	developer_slot_pending_rect = developer_slot_original_rect
+	developer_slot_pending_position = _developer_slot_position(slot)
+	developer_slot_drag_offset = _local_to_board_position(local_position) - developer_slot_original_rect.position
+	developer_slot_dragging = true
+	_validate_developer_slot_placement_preview()
+	queue_redraw()
+
+
+func _update_developer_slot_placement_preview(top_left: Vector2) -> void:
+	var slot := _developer_slot(developer_slot_selected_id)
+	if slot.is_empty() or not _developer_slot_is_editable(slot):
+		return
+	if not developer_slot_original_rect.has_area():
+		developer_slot_original_rect = _developer_slot_rect(slot)
+	var size_value := developer_slot_original_rect.size
+	var bounded := Vector2(
+		clampf(top_left.x, 0.0, maxf(0.0, BOARD_SIZE.x - size_value.x)),
+		clampf(top_left.y, 0.0, maxf(0.0, BOARD_SIZE.y - size_value.y))
+	).round()
+	var next_rect := Rect2(bounded, size_value)
+	if developer_slot_pending_rect.has_area() and developer_slot_pending_rect.is_equal_approx(next_rect):
+		return
+	developer_slot_pending_rect = next_rect
+	developer_slot_pending_position = _developer_slot_position(slot) + bounded - developer_slot_original_rect.position
+	_validate_developer_slot_placement_preview(not developer_slot_dragging)
+	_queue_developer_drag_redraw()
+
+
+func _queue_developer_drag_redraw() -> void:
+	developer_drag_redraw_pending = true
+	_flush_developer_drag_redraw()
+
+
+func _flush_developer_drag_redraw() -> void:
+	if not developer_drag_redraw_pending:
+		return
+	var now_msec := Time.get_ticks_msec()
+	if now_msec - developer_drag_last_redraw_msec < DEVELOPER_DRAG_REDRAW_INTERVAL_MSEC:
+		return
+	developer_drag_redraw_pending = false
+	developer_drag_last_redraw_msec = now_msec
+	queue_redraw()
+
+
+func _validate_developer_slot_placement_preview(refresh_panel: bool = true) -> void:
+	var selected_slot := _developer_slot(developer_slot_selected_id)
+	var selected_visual_rect := _developer_slot_visual_rect(selected_slot, developer_slot_pending_rect) if not selected_slot.is_empty() else Rect2()
+	developer_slot_valid = selected_visual_rect.has_area() and Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)).encloses(selected_visual_rect)
+	developer_slot_overlap_ids.clear()
+	if not developer_slot_valid:
+		if refresh_panel:
+			_update_developer_placement_panel()
+		return
+	# Manual placement is the one opportunity to inspect future capacity. Warn
+	# against every authored marker in this exact context, including currently
+	# empty and injected-content reserves. Scenario-local overlap is always
+	# advisory: deterministic draw order and overlap cycling keep those objects
+	# usable. Shared route endpoints retain the stricter obstruction check.
+	for slot_value in _developer_slots(true):
+		var slot := slot_value as Dictionary
+		var slot_id := str(slot.get("id", ""))
+		if slot_id == developer_slot_selected_id:
+			continue
+		var other_rect := _developer_slot_visual_rect(slot)
+		if selected_visual_rect.intersects(other_rect):
+			developer_slot_overlap_ids.append(slot_id)
+		var route_sensitive := _developer_slot_is_route_endpoint(developer_slot_selected_id) \
+				or _developer_slot_is_route_endpoint(slot_id)
+		if not _developer_slot_overlap_is_allowed(selected_slot, slot) \
+				and route_sensitive \
+				and (_developer_slot_is_context_active(slot) or _developer_slot_is_route_endpoint(slot_id)) \
+				and _developer_slot_rects_meaningfully_intersect(
+					_developer_slot_expanded_rect(selected_visual_rect),
+					_developer_slot_expanded_rect(other_rect)
+				):
+			if not developer_slot_overlap_ids.has(slot_id):
+				developer_slot_overlap_ids.append(slot_id)
+			developer_slot_valid = false
+	if refresh_panel:
+		_update_developer_placement_panel()
+
+
+func _developer_slot_overlap_is_allowed(selected_slot: Dictionary, other_slot: Dictionary) -> bool:
+	return _developer_slot_scope(selected_slot) == "scenario_local" \
+		or _developer_slot_scope(other_slot) == "scenario_local"
+
+
+func _developer_slot_is_route_endpoint(slot_id: String) -> bool:
+	if slot_id.is_empty():
+		return false
+	for route_value in _array_view(_developer_placement_surface_map().get("actor_routes", [])):
+		if typeof(route_value) != TYPE_DICTIONARY:
+			continue
+		var route := route_value as Dictionary
+		if slot_id in [
+			str(route.get("start_slot_id", "")),
+			str(route.get("end_slot_id", "")),
+			str(route.get("reduced_motion_slot_id", "")),
+		]:
+			return true
+	return false
+
+
+func _developer_slot_expanded_rect(rect: Rect2) -> Rect2:
+	if not rect.has_area():
+		return Rect2()
+	var minimum := Vector2(SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE)
+	var expanded_size := Vector2(maxf(rect.size.x, minimum.x), maxf(rect.size.y, minimum.y))
+	var expanded := Rect2(rect.get_center() - expanded_size * 0.5, expanded_size)
+	expanded.position = Vector2(
+		clampf(expanded.position.x, 0.0, float(BOARD_SIZE.x) - expanded.size.x),
+		clampf(expanded.position.y, 0.0, float(BOARD_SIZE.y) - expanded.size.y)
+	)
+	return expanded
+
+
+func _developer_slot_rects_meaningfully_intersect(left: Rect2, right: Rect2) -> bool:
+	if not left.has_area() or not right.has_area() or not left.intersects(right):
+		return false
+	var overlap := left.intersection(right)
+	return overlap.size.x > DEVELOPER_ROUTE_COLLISION_EDGE_TOLERANCE \
+		and overlap.size.y > DEVELOPER_ROUTE_COLLISION_EDGE_TOLERANCE
+
+
+func _developer_slot_placement_request() -> Dictionary:
+	var slot := _developer_slot(developer_slot_selected_id)
+	if slot.is_empty() or not _developer_slot_is_editable(slot):
+		return {}
+	return {
+		"environment": _developer_slot_environment(),
+		"field": "slot_positions",
+		"slot_id": developer_slot_selected_id,
+		"position": developer_slot_pending_position if developer_slot_pending_rect.has_area() else _developer_slot_position(slot),
+		"size": _developer_slot_rect(slot).size,
+		"slot_kind": str(slot.get("kind", "")),
+		"placement_class": str(slot.get("footprint_class", "")),
+		"support_id": str(slot.get("support_id", "")),
+	}
+
+
+func _cancel_developer_slot_placement_preview() -> void:
+	clear_developer_slot_placement_preview()
+
+
+func _finish_developer_slot_placement_edit() -> void:
+	developer_slot_dragging = false
+	if not developer_slot_pending_rect.has_area():
+		_update_developer_placement_panel()
+		return
+	var changed := not developer_slot_pending_rect.position.is_equal_approx(developer_slot_original_rect.position)
+	if changed and developer_slot_valid:
+		_lock_developer_slot_placement()
+		return
+	clear_developer_slot_placement_preview()
+
+
+func _lock_developer_slot_placement() -> void:
+	if not developer_slot_valid or not developer_slot_pending_rect.has_area():
+		return
+	var request := _developer_slot_placement_request()
+	request["defer_refresh"] = true
+	request["_undo_context_key"] = _developer_slot_snapshot_context_key(foundation_snapshot)
+	var render_generation := environment_snapshot_render_generation
+	clear_developer_slot_placement_preview(false, false)
+	developer_placement_lock_requested.emit(request)
+	if _developer_placement_lock_failed(request):
+		return
+	_record_developer_placement_undo(request)
+	# Normal locks deliberately defer the authoritative room rebuild. Apply the
+	# saved surface map locally, while still avoiding duplicate work if a custom
+	# host rendered a fresh snapshot synchronously.
+	if environment_snapshot_render_generation == render_generation:
+		developer_placement_authority_dirty = true
+		_invalidate_developer_placement_geometry_caches()
+		if _apply_authoring_slot_positions_to_scene_objects():
+			_capture_developer_slot_scene_object_baseline()
+		_update_developer_placement_panel()
+		queue_redraw()
+
+
+func _save_developer_slot_placement_to_project() -> void:
+	var render_generation := environment_snapshot_render_generation
+	if developer_slot_pending_rect.has_area():
+		if not developer_slot_valid:
+			return
+		var request := _developer_slot_placement_request()
+		request["defer_refresh"] = true
+		clear_developer_slot_placement_preview(false, false)
+		developer_placement_lock_requested.emit(request)
+		if _developer_placement_lock_failed(request):
+			return
+	developer_placement_promote_requested.emit()
+	if environment_snapshot_render_generation == render_generation:
+		developer_placement_authority_dirty = true
+		_invalidate_developer_placement_geometry_caches()
+		if _apply_authoring_slot_positions_to_scene_objects():
+			_capture_developer_slot_scene_object_baseline()
+		_update_developer_placement_panel()
+		queue_redraw()
+
+
+func _reset_developer_slot_placement() -> void:
+	var request := _developer_slot_placement_request()
+	if request.is_empty():
+		return
+	var render_generation := environment_snapshot_render_generation
+	request["_undo_context_key"] = _developer_slot_snapshot_context_key(foundation_snapshot)
+	clear_developer_slot_placement_preview(false, false)
+	developer_placement_reset_requested.emit(request)
+	if _developer_placement_reset_failed(request):
+		return
+	_record_developer_placement_undo(request)
+	if environment_snapshot_render_generation == render_generation:
+		developer_placement_authority_dirty = true
+		_invalidate_developer_placement_geometry_caches()
+		if _apply_authoring_slot_positions_to_scene_objects():
+			_capture_developer_slot_scene_object_baseline()
+		_update_developer_placement_panel()
+		queue_redraw()
+
+
+func _capture_developer_slot_scene_object_baseline() -> void:
+	developer_slot_scene_object_baseline = []
+	for object_value in foundation_scene_objects:
+		developer_slot_scene_object_baseline.append(
+			(object_value as Dictionary).duplicate(false) if typeof(object_value) == TYPE_DICTIONARY else object_value
+		)
+	developer_slot_scene_object_baseline_valid = true
+
+
+func _restore_developer_slot_scene_objects() -> void:
+	if not developer_slot_scene_object_baseline_valid:
+		return
+	foundation_scene_objects = []
+	for object_value in developer_slot_scene_object_baseline:
+		foundation_scene_objects.append(
+			(object_value as Dictionary).duplicate(false) if typeof(object_value) == TYPE_DICTIONARY else object_value
+		)
+	developer_slot_scene_object_baseline.clear()
+	developer_slot_scene_object_baseline_valid = false
+	_rebuild_scene_object_cache()
+	_invalidate_camera_target()
+	_update_camera_target_if_needed()
+
+
+func _apply_authoring_slot_positions_to_scene_objects(refresh_caches: bool = true) -> bool:
+	if not developer_slot_placement_mode or foundation_scene_objects.is_empty():
+		return false
+	_ensure_developer_slot_cache()
+	var changed := false
+	for index in range(foundation_scene_objects.size()):
+		if typeof(foundation_scene_objects[index]) != TYPE_DICTIONARY:
+			continue
+		var current := foundation_scene_objects[index] as Dictionary
+		var slot_id := str(current.get("slot_id", ""))
+		if not developer_slots_by_id_cache.has(slot_id):
+			continue
+		var rect := _developer_slot_rect(developer_slots_by_id_cache.get(slot_id, {}) as Dictionary)
+		var target_position := rect.get_center() / Vector2(BOARD_SIZE)
+		var current_position_value: Variant = current.get("position", Vector2.ZERO)
+		var current_position: Vector2 = current_position_value if typeof(current_position_value) == TYPE_VECTOR2 else Vector2.ZERO
+		var current_size_value: Variant = current.get("size", Vector2.ZERO)
+		var current_size: Vector2 = current_size_value if typeof(current_size_value) == TYPE_VECTOR2 else Vector2.ZERO
+		if current_position.is_equal_approx(target_position) and current_size.is_equal_approx(rect.size) \
+				and not current.has("actor_route_stage"):
+			continue
+		var object_data := current.duplicate(false)
+		object_data["position"] = target_position
+		object_data["size"] = rect.size
+		object_data.erase("actor_route_stage")
+		foundation_scene_objects[index] = object_data
+		changed = true
+	if changed and refresh_caches:
+		_rebuild_scene_object_cache()
+		_invalidate_camera_target()
+		_update_camera_target_if_needed()
+	return changed
 
 
 func _remember_mouse_press(position: Vector2) -> void:
@@ -1066,6 +3800,7 @@ func _mouse_duplicates_recent_touch_press(position: Vector2) -> bool:
 func _process(delta: float) -> void:
 	if not is_visible_in_tree():
 		return
+	_flush_developer_drag_redraw()
 	var previous_zoom := camera_zoom
 	var previous_offset := camera_offset
 	var was_info_animating := info_card_animating
@@ -1079,7 +3814,7 @@ func _process(delta: float) -> void:
 		var snapped_camera_changed := absf(previous_zoom - camera_zoom) > CAMERA_ZOOM_SNAP_EPSILON or previous_offset.distance_squared_to(camera_offset) > CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON
 		if snapped_camera_changed or was_info_animating or person_transit_changed:
 			queue_redraw()
-		if snapped_camera_changed:
+		if snapped_camera_changed or person_transit_changed:
 			view_geometry_changed.emit()
 		return
 	var scaled_delta := maxf(0.0, delta) * drunk_time_scale
@@ -1100,12 +3835,24 @@ func _process(delta: float) -> void:
 	var camera_changed := absf(previous_zoom - camera_zoom) > CAMERA_ZOOM_SNAP_EPSILON or previous_offset.distance_squared_to(camera_offset) > CAMERA_OFFSET_SNAP_EPSILON * CAMERA_OFFSET_SNAP_EPSILON
 	if camera_changed or info_card_animating or was_info_animating or person_transit_changed or _scene_idle_animation_redraw_due(scaled_delta):
 		queue_redraw()
-	if camera_changed:
+	# Arrival/departure completion changes both the visible object rectangle and
+	# whether it can receive input. Guided interactions cache those live hit
+	# regions, so settling a person must publish geometry just like a camera move.
+	if camera_changed or person_transit_changed:
 		view_geometry_changed.emit()
 
 
 func _scene_idle_animation_active() -> bool:
+	# Release-gated invariant: authoring overlays may optimize their own geometry,
+	# but they cannot make room animation depend on hover/drag pointer redraws.
 	return not reduce_motion
+
+
+func _arm_animation_heartbeat() -> void:
+	# PROCESS_MODE_PAUSABLE opts out of an accidentally disabled inherited mode
+	# while still respecting an intentional SceneTree pause.
+	process_mode = Node.PROCESS_MODE_PAUSABLE
+	set_process(true)
 
 
 func _scene_idle_animation_redraw_due(delta: float) -> bool:
@@ -1183,22 +3930,28 @@ func _draw() -> void:
 				_draw_punchline_club()
 			"punchline_back_room":
 				_draw_punchline_back_room()
-			"grand_casino", "grand_casino_high_limit", "grand_casino_back_room":
+			"grand_casino":
 				_draw_grand_casino()
+			"grand_casino_high_limit":
+				_draw_grand_casino_private_room("HIGH LIMIT", "PRIVATE TABLES", C_CYAN)
+			"grand_casino_back_room":
+				_draw_grand_casino_private_room("BACK ROOM", "ROURKE'S TABLES", C_PINK)
 			"grand_casino_cage":
 				_draw_grand_casino_cage()
 			_:
 				_draw_corner_store()
+	# These closed, authored fixture faces are part of the room art. The exact
+	# same routine is replayed after live behind-counter bodies, so occlusion
+	# cannot recolor or approximate the original counter.
+	_draw_authored_counter_foregrounds()
 	_draw_scenario_palette()
-	_draw_scenario_crowd()
 	_draw_scene_life()
-	_draw_familiar_characters()
-	_draw_scenario_signage()
 	_draw_focus_dim_overlay()
 	_draw_scene_objects()
 	_draw_scene_outcome_highlight()
 	_draw_pressure_overlay()
 	_draw_drunk_overlay()
+	_draw_developer_slot_overlay()
 	_draw_developer_placement_outline()
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	_update_drunk_distortion_protected_rects()
@@ -1218,30 +3971,126 @@ func _draw_developer_placement_outline() -> void:
 	draw_circle(rect.position, 4.0, color)
 
 
+func _draw_developer_slot_overlay() -> void:
+	if not developer_slot_placement_mode:
+		return
+	var font := ThemeDB.fallback_font
+	for row_value in _developer_slot_overlay_rows():
+		var row := row_value as Dictionary
+		var slot := row.get("slot", {}) as Dictionary
+		var slot_id := str(slot.get("id", ""))
+		var base_rect := _developer_slot_rect(slot)
+		if slot_id == developer_slot_selected_id and developer_slot_pending_rect.has_area():
+			base_rect = developer_slot_pending_rect
+		var rect := _developer_slot_visual_rect(slot, base_rect)
+		var family := _developer_slot_family(slot)
+		var color := _developer_slot_family_color(family)
+		var selected := slot_id == developer_slot_selected_id
+		var hovered := slot_id == developer_slot_hovered_id
+		var editable := bool(row.get("editable", false))
+		if not editable:
+			color = C_SOFT
+		elif selected:
+			color = C_TEAL if developer_slot_valid or not developer_slot_pending_rect.has_area() else C_HOT
+		var occupied := bool(row.get("occupied", false))
+		var has_warnings := bool(row.get("has_warnings", false))
+		if has_warnings and not selected:
+			color = C_HOT
+		var fill_alpha := 0.08 if not editable else (0.19 if occupied else 0.10)
+		if selected:
+			fill_alpha = 0.30
+		draw_rect(rect, Color(color.r, color.g, color.b, fill_alpha), true)
+		draw_rect(rect, Color(color.r, color.g, color.b, 0.96), false, 3.0 if selected else 1.5)
+		var center := rect.get_center()
+		draw_line(center - Vector2(5.0, 0.0), center + Vector2(5.0, 0.0), color, 1.0)
+		draw_line(center - Vector2(0.0, 5.0), center + Vector2(0.0, 5.0), color, 1.0)
+		if occupied:
+			draw_circle(center, 3.0, color)
+		# Keep the full room readable: every slot retains its compact marker, while
+		# only the hovered/selected slot expands into a text label and stable ID.
+		if not selected and not hovered:
+			continue
+		var label_width := maxf(112.0, minf(200.0, maxf(rect.size.x, 160.0)))
+		var primary_lines := _wrap_developer_slot_label(str(row.get("primary_label", "")), font, 8, label_width - 6.0)
+		var label_lines: Array[String] = []
+		label_lines.append_array(primary_lines)
+		label_lines.append_array(_wrap_developer_slot_label(slot_id, font, 7, label_width - 6.0))
+		var label_line_height := 9.0
+		var label_height := maxf(11.0, float(label_lines.size()) * label_line_height + 3.0)
+		var label_y := rect.position.y - label_height
+		if label_y < 1.0:
+			label_y = minf(BOARD_SIZE.y - label_height - 1.0, rect.end.y + 1.0)
+		var label_rect := Rect2(
+			Vector2(clampf(rect.position.x, 0.0, BOARD_SIZE.x - label_width), label_y),
+			Vector2(label_width, label_height)
+		)
+		draw_rect(label_rect, Color(C_DARK.r, C_DARK.g, C_DARK.b, 0.88), true)
+		for line_index in range(label_lines.size()):
+			var line_color := color if line_index < primary_lines.size() else C_SOFT
+			var line_font_size := 8 if line_index < primary_lines.size() else 7
+			draw_string(
+				font,
+				label_rect.position + Vector2(3.0, 9.0 + float(line_index) * label_line_height),
+				label_lines[line_index],
+				HORIZONTAL_ALIGNMENT_LEFT,
+				label_rect.size.x - 6.0,
+				line_font_size,
+				line_color
+			)
+
+
+func _developer_slot_overlay_rows() -> Array:
+	if developer_slot_overlay_cache_valid:
+		return developer_slot_overlay_rows_cache
+	developer_slot_overlay_cache_rebuild_count += 1
+	var comparison_slots := _developer_slots(true)
+	var rows: Array = []
+	for slot_value in _developer_slots():
+		var slot := slot_value as Dictionary
+		var slot_id := str(slot.get("id", ""))
+		var slot_state := _developer_slot_state(slot, comparison_slots)
+		rows.append({
+			"slot": slot,
+			"editable": _developer_slot_is_editable(slot),
+			"occupied": not _developer_slot_occupant_records(slot_id).is_empty(),
+			"has_warnings": not (slot_state.get("warnings", []) as Array).is_empty(),
+			"primary_label": _developer_slot_primary_label(slot),
+		})
+	developer_slot_overlay_rows_cache = rows
+	developer_slot_overlay_cache_valid = true
+	return developer_slot_overlay_rows_cache
+
+
+# Wraps stable slot IDs without deleting or replacing any character. Semantic
+# separators are preferred as line endings so IDs remain easy to scan.
+func _wrap_developer_slot_label(text: String, font: Font, font_size: int, max_width: float) -> Array[String]:
+	var lines: Array[String] = []
+	var remaining := text
+	var safe_width := maxf(8.0, max_width)
+	while not remaining.is_empty():
+		if font == null or _draw_text_width(remaining, font, font_size) <= safe_width:
+			lines.append(remaining)
+			break
+		var fit_chars := 0
+		for length in range(1, remaining.length() + 1):
+			if _draw_text_width(remaining.left(length), font, font_size) > safe_width:
+				break
+			fit_chars = length
+		fit_chars = maxi(1, fit_chars)
+		var break_chars := fit_chars
+		for index in range(fit_chars - 1, 0, -1):
+			if "._:-/".contains(remaining.substr(index, 1)):
+				break_chars = index + 1
+				break
+		lines.append(remaining.left(break_chars))
+		remaining = remaining.substr(break_chars)
+	return lines
+
+
 func _draw_scenario_palette() -> void:
 	if scenario_palette_overlay.a <= 0.0:
 		return
 	draw_rect(Rect2(Vector2.ZERO, Vector2(BOARD_SIZE)), scenario_palette_overlay)
-
-
-func _draw_scenario_crowd() -> void:
-	for index in range(scenario_crowd_count):
-		var point: Vector2 = SCENARIO_CROWD_POINTS[index]
-		if environment_id == "delta_queen":
-			point.y = 246.0
-		var scale := 0.72 + float(index % 3) * 0.08
-		draw_circle(Vector2(point.x, point.y - 12.0 * scale), 6.0 * scale, SCENARIO_CROWD_COLOR)
-		draw_rect(Rect2(point.x - 7.0 * scale, point.y - 6.0 * scale, 14.0 * scale, 24.0 * scale), SCENARIO_CROWD_COLOR)
-
-
-func _draw_scenario_signage() -> void:
-	if scenario_signage.is_empty():
-		return
-	var font := ThemeDB.fallback_font
-	var rect := Rect2(190, 12, 520, 24)
-	draw_rect(rect, Color(0.02, 0.02, 0.05, 0.84))
-	draw_rect(rect, Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.72), false, 2.0)
-	draw_string(font, rect.position + Vector2(8, 16), _fit_draw_text(scenario_signage, font, 11, rect.size.x - 16.0), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 16.0, 11, C_WHITE)
 
 
 func _cache_scenario_presentation() -> void:
@@ -1302,7 +4151,7 @@ func _bg() -> void:
 
 
 func _draw_corner_store() -> void:
-	# Narrow store aisle, glass counter, bored clerk, scratchers, beer neon, and boxes.
+	# Narrow store aisle, glass counter, scratchers, beer neon, and boxes.
 	draw_rect(Rect2(0, 0, 900, 245), Color("#10101d"))
 	for x in [78, 212, 620, 758]:
 		draw_rect(Rect2(x, 0, 18, 238), Color("#16162a"))
@@ -1319,7 +4168,6 @@ func _draw_corner_store() -> void:
 	draw_rect(Rect2(338, 92, 246, 114), Color("#070712"))
 	draw_rect(Rect2(352, 106, 218, 88), Color("#181834"))
 	draw_rect(Rect2(430, 116, 60, 72), Color("#111120"))
-	_silhouette(Vector2(460, 158), 1.0, C_SHADOW)
 	draw_rect(Rect2(352, 142, 218, 7), C_CYAN)
 	draw_rect(Rect2(338, 206, 246, 48), Color("#20203c"))
 	for x in range(360, 552, 38):
@@ -1335,6 +4183,14 @@ func _draw_corner_store() -> void:
 	for i in range(4):
 		draw_rect(Rect2(642 + i * 48, 220 - i * 9, 42, 32), Color("#513315"))
 		draw_rect(Rect2(648 + i * 48, 228 - i * 9, 16, 4), C_AMBER)
+	# A dedicated service ledge keeps the payphone physically supported instead
+	# of floating over the aisle floor.
+	draw_rect(Rect2(170, 270, 100, 16), Color("#2b2036"))
+	draw_line(Vector2(174, 270), Vector2(266, 270), C_CYAN_2.darkened(0.20), 3)
+	draw_rect(Rect2(180, 286, 10, 58), Color("#151522"))
+	draw_rect(Rect2(250, 286, 10, 58), Color("#151522"))
+	draw_rect(Rect2(194, 292, 52, 24), Color("#11111d"))
+	draw_line(Vector2(202, 304), Vector2(238, 304), C_AMBER.darkened(0.35), 2)
 	_floor_reflections()
 
 
@@ -1395,6 +4251,12 @@ func _draw_motel() -> void:
 	draw_rect(Rect2(742, 58, 54, 146), Color("#13283a"))
 	for y in range(78, 172, 22):
 		draw_rect(Rect2(752, y, 34, 12), _cycle_color(y))
+	# The low phone desk is an authored interaction support on the room floor.
+	# Keep its top/front aligned with placement_surfaces.json (286 / 324).
+	draw_rect(Rect2(450, 286, 224, 38), Color("#241a2d"))
+	draw_line(Vector2(454, 286), Vector2(670, 286), C_CYAN_2.darkened(0.28), 3)
+	draw_rect(Rect2(466, 324, 12, 48), Color("#11111d"))
+	draw_rect(Rect2(646, 324, 12, 48), Color("#11111d"))
 	_floor_reflections()
 
 
@@ -1547,7 +4409,7 @@ func _draw_pawn_shop() -> void:
 
 
 func _draw_bar() -> void:
-	# Dive bar with bottle mirror, stools, pool table, video poker, neon signs, and patrons.
+	# Dive bar with bottle mirror, stools, pool table, neon signs, and patrons.
 	draw_rect(Rect2(0, 0, 900, 244), Color("#0f1320"))
 	draw_rect(Rect2(54, 52, 498, 130), Color("#151c2d"))
 	draw_rect(Rect2(72, 70, 462, 84), Color("#202842"))
@@ -1556,6 +4418,11 @@ func _draw_bar() -> void:
 		draw_rect(Rect2(x + 3, 74, 8, 10), C_AMBER)
 	_neon_text("DIVE", Vector2(620, 58), 28, C_PINK)
 	_neon_text("COLD BEER", Vector2(604, 104), 22, C_CYAN)
+	# The dartboard gives league-night display props a real wall fixture.
+	draw_circle(Vector2(824, 92), 24, Color("#1a1422"))
+	draw_circle(Vector2(824, 92), 19, C_AMBER.darkened(0.25))
+	draw_circle(Vector2(824, 92), 13, Color("#4b1730"))
+	draw_circle(Vector2(824, 92), 5, C_CYAN_2)
 	draw_rect(Rect2(38, 178, 548, 56), Color("#3a1c16"))
 	for x in [106, 186, 266, 346, 426, 506]:
 		draw_rect(Rect2(x, 230, 42, 12), C_SHADOW)
@@ -1566,14 +4433,17 @@ func _draw_bar() -> void:
 	draw_rect(Rect2(612, 200, 196, 48), Color("#176b4d"))
 	draw_rect(Rect2(654, 124, 112, 14), C_AMBER)
 	draw_line(Vector2(710, 80), Vector2(710, 124), C_SOFT, 2)
-	draw_rect(Rect2(768, 144, 86, 112), Color("#111120"))
-	draw_rect(Rect2(782, 158, 58, 48), C_PURPLE)
-	draw_rect(Rect2(792, 170, 38, 18), C_CYAN)
+	# A low wall booth supports the one seated aftermath patron.
+	draw_rect(Rect2(654, 302, 142, 42), Color("#23172b"))
+	draw_rect(Rect2(662, 310, 126, 22), Color("#42213a"))
+	draw_rect(Rect2(670, 332, 110, 14), C_PINK_2.darkened(0.38))
+	draw_rect(Rect2(672, 346, 10, 38), Color("#16101c"))
+	draw_rect(Rect2(768, 346, 10, 38), Color("#16101c"))
 	_floor_reflections()
 
 
 func _draw_jazz_club() -> void:
-	# Late-1960s jazz room: low amber stage, smoky tables, trio players, bar, and pull-tabs.
+	# Late-1960s jazz room architecture: low amber stage, smoky tables, and bar.
 	draw_rect(Rect2(0, 0, 900, 246), Color("#120d17"))
 	for x in range(0, 900, 72):
 		var panel_color := Color("#1a111c") if int(x / 72) % 2 == 0 else Color("#211420")
@@ -1595,9 +4465,6 @@ func _draw_jazz_club() -> void:
 	_draw_light_cone(Vector2(470, 34), Vector2(54, 194), C_AMBER, 0.12)
 	_neon_text("AFTER HOURS", Vector2(126, 62), 18, C_CYAN)
 	_neon_text("JAZZ", Vector2(374, 62), 24, C_YELLOW)
-	_draw_jazz_player(Vector2(178, 208), 0.72, "sax")
-	_draw_jazz_player(Vector2(322, 208), 0.76, "cello")
-	_draw_jazz_player(Vector2(466, 208), 0.70, "drums")
 	draw_rect(Rect2(600, 72, 254, 122), Color("#17101a"))
 	draw_rect(Rect2(618, 88, 218, 62), Color("#241622"))
 	for x in range(630, 826, 28):
@@ -1605,11 +4472,6 @@ func _draw_jazz_club() -> void:
 		draw_rect(Rect2(x + 2, 96, 6, 8), C_AMBER)
 	draw_rect(Rect2(590, 188, 284, 48), Color("#3b1f15"))
 	draw_line(Vector2(602, 197), Vector2(862, 197), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.48), 3)
-	_neon_text("PULL TABS", Vector2(704, 162), 14, C_PINK)
-	draw_rect(Rect2(704, 176, 76, 64), Color("#090912"))
-	draw_rect(Rect2(714, 184, 56, 20), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.24))
-	for i in range(4):
-		draw_rect(Rect2(716, 210 + i * 6, 52, 3), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.52))
 	for table_x in [112, 244, 612]:
 		var table_y := 304 + int(sin(float(table_x)) * 5.0)
 		draw_rect(Rect2(table_x - 38, table_y, 76, 14), Color("#241315"))
@@ -1652,7 +4514,7 @@ func _draw_jazz_player(foot: Vector2, scale_value: float, instrument: String) ->
 
 
 func _draw_kitty_cat_lounge() -> void:
-	# Velvet lounge with a stage, champagne bar, house wheel, and forgiving staff.
+	# Velvet lounge architecture with a stage, champagne bar, tables, and low lighting.
 	draw_rect(Rect2(0, 0, 900, 246), Color("#130918"))
 	for x in range(0, 900, 60):
 		var panel := Color("#241022") if int(x / 60) % 2 == 0 else Color("#1a0d1d")
@@ -1682,12 +4544,6 @@ func _draw_kitty_cat_lounge() -> void:
 		draw_rect(Rect2(x + 2, 94, 6, 8), C_AMBER)
 	draw_rect(Rect2(584, 190, 268, 48), Color("#3d1b14"))
 	draw_line(Vector2(596, 199), Vector2(840, 199), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.46), 3)
-	draw_circle(Vector2(704, 274), 48, Color("#2a1220"))
-	draw_circle(Vector2(704, 274), 38, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.26))
-	for i in range(8):
-		var angle := float(i) * TAU / 8.0 + flicker * 0.08
-		draw_line(Vector2(704, 274), Vector2(704, 274) + Vector2(cos(angle), sin(angle)) * 42.0, _cycle_color(i * 19), 2)
-	draw_circle(Vector2(704, 274), 9, C_YELLOW)
 	for table_x in [130, 300, 472]:
 		draw_rect(Rect2(table_x - 42, 308, 84, 14), Color("#251015"))
 		draw_rect(Rect2(table_x - 20, 298, 12, 20), C_AMBER)
@@ -1716,8 +4572,6 @@ func _draw_delta_queen() -> void:
 	draw_rect(Rect2(378, 188, 176, 48), Color("#1b7555"))
 	for x in [122, 172, 222, 410, 460, 510]:
 		_card_back(Rect2(x, 154 + (x % 3) * 4, 26, 36))
-	_slot_machine(Rect2(626, 132, 76, 124), C_CYAN)
-	_slot_machine(Rect2(724, 132, 76, 124), C_PINK)
 	draw_rect(Rect2(0, 292, 900, 16), Color("#493116"))
 	for x in range(0, 900, 60):
 		draw_line(Vector2(x, 278), Vector2(x + 28, 328), C_AMBER, 3)
@@ -1761,17 +4615,6 @@ func _draw_beach() -> void:
 	draw_line(Vector2(270, 238), Vector2(330, 238), C_CYAN, 4)
 	draw_rect(Rect2(616, 192, 130, 42), Color("#080d16"))
 	_neon_text("BEACH", Vector2(634, 220), 21, C_YELLOW)
-	# A patched-in boardwalk arcade kiosk keeps the lone machine above the tide.
-	draw_rect(Rect2(676, 96, 128, 142), Color("#10131d"))
-	draw_rect(Rect2(668, 92, 144, 10), Color("#493116"))
-	draw_line(Vector2(676, 96), Vector2(676, 238), C_AMBER.darkened(0.28), 4)
-	draw_line(Vector2(804, 96), Vector2(804, 238), C_AMBER.darkened(0.28), 4)
-	draw_rect(Rect2(650, 66, 132, 44), Color("#101a25"))
-	draw_rect(Rect2(662, 76, 108, 16), C_AMBER.darkened(0.10))
-	_neon_text("TIDE SLOT", Vector2(668, 92), 12, C_CYAN)
-	_slot_machine(Rect2(704, 112, 72, 118), C_CYAN)
-	draw_line(Vector2(776, 218), Vector2(824, 232), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.45), 2)
-	draw_rect(Rect2(690, 230, 100, 8), Color("#6b4624"))
 	_floor_reflections()
 
 
@@ -1792,8 +4635,6 @@ func _draw_gas_station() -> void:
 	draw_line(Vector2(64, 154), Vector2(294, 132), C_PINK, 2)
 	draw_line(Vector2(64, 170), Vector2(294, 160), C_PURPLE_2, 2)
 	_neon_text("HIGHWAY", Vector2(82, 116), 18, C_CYAN)
-	for x in [348, 444, 540]:
-		_slot_machine(Rect2(x, 122, 74, 120), _cycle_color(x))
 	# Authored counter contacts for the drink, ticket, and staff stations.
 	for shelf in [Rect2(320, 76, 104, 8), Rect2(532, 76, 104, 8), Rect2(660, 76, 104, 8), Rect2(788, 76, 96, 8)]:
 		draw_rect(shelf, Color("#493116"))
@@ -1818,7 +4659,7 @@ func _draw_gas_station() -> void:
 
 
 func _draw_underground() -> void:
-	# Basement casino with low ceiling, felt tables, guard, string lights, smoke, and bar cart.
+	# Basement casino with low ceiling, felt tables, string lights, smoke, and bar cart.
 	draw_rect(Rect2(0, 0, 900, 245), Color("#0d0a18"))
 	for y in [34, 68, 102]:
 		draw_rect(Rect2(0, y, 900, 8), Color("#1d1730"))
@@ -1832,7 +4673,6 @@ func _draw_underground() -> void:
 	draw_rect(Rect2(456, 158, 222, 62), Color("#187452"))
 	for x in [150, 196, 242, 504, 550, 596]:
 		_card_back(Rect2(x, 134 + (x % 2) * 8, 28, 38))
-	_silhouette(Vector2(790, 190), 1.35, C_SHADOW)
 	draw_rect(Rect2(744, 88, 108, 178), Color("#08080f"))
 	draw_rect(Rect2(40, 188, 70, 82), Color("#352214"))
 	draw_rect(Rect2(48, 168, 54, 20), C_AMBER)
@@ -1913,66 +4753,104 @@ func _draw_punchline_back_room() -> void:
 	draw_circle(Vector2(760, 177), 12, C_YELLOW.darkened(0.2))
 	draw_circle(Vector2(760, 177), 4, C_SHADOW)
 	_neon_text("RIG", Vector2(742, 132), 12, C_YELLOW)
-	# Rook's guarded exit remains the normal travel seam.
-	_silhouette(Vector2(626, 188), 1.05, C_SHADOW)
+	# The exit remains the normal travel seam; Rook is rendered by the manifest.
 	draw_rect(Rect2(790, 70, 80, 174), Color("#12151b"))
 	draw_circle(Vector2(808, 158), 3, C_AMBER)
 	_floor_reflections()
 
 
 func _draw_grand_casino() -> void:
-	# Boss-floor casino: broad pit, velvet ropes, watched tables, slot wall, cameras, and pit boss.
-	draw_rect(Rect2(0, 0, 900, 246), Color("#090914"))
+	# Boss-floor casino arranged as a legible working room: one machine bank,
+	# two staffed felt tables, and a central host station. The room art supplies
+	# physical supports; live game objects and people occupy the authored slots.
+	draw_rect(Rect2(0, 0, 900, 430), Color("#090914"))
 	for x in range(0, 900, 90):
 		draw_rect(Rect2(x, 0, 48, 246), Color("#11112a"))
 		draw_rect(Rect2(x + 48, 0, 42, 246), Color("#0d0d1a"))
-	draw_rect(Rect2(0, 0, 900, 34), Color("#1b1034"))
-	draw_rect(Rect2(0, 34, 900, 6), C_PINK)
-	_neon_text("GRAND", Vector2(340, 62), 42, C_YELLOW)
-	_neon_text("NO CUTE MOVES", Vector2(300, 104), 20, C_CYAN)
-	draw_rect(Rect2(170, 88, 560, 8), Color("#34234b"))
-	draw_line(Vector2(180, 96), Vector2(720, 96), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.24), 2)
-	draw_rect(Rect2(740, 96, 120, 8), Color("#34234b"))
-	draw_line(Vector2(748, 104), Vector2(852, 104), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.22), 2)
-	draw_rect(Rect2(170, 160, 560, 8), Color("#291b35"))
-	draw_line(Vector2(180, 168), Vector2(720, 168), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.18), 2)
-	for x in [96, 208, 692, 804]:
-		draw_rect(Rect2(x, 46, 64, 118), Color("#120b24"))
-		draw_rect(Rect2(x + 8, 56, 48, 74), Color("#251044"))
-		draw_rect(Rect2(x + 18, 132, 28, 10), C_AMBER)
-	var slot_positions := [40, 190, 340] if environment_id == "grand_casino" else [238, 348, 552, 662]
-	for x in slot_positions:
-		_slot_machine(Rect2(x, 124, 70, 116), _cycle_color(x))
-	draw_rect(Rect2(82, 184, 258, 82), Color("#123f30"))
-	draw_rect(Rect2(104, 198, 214, 46), Color("#1a7755"))
-	draw_rect(Rect2(562, 184, 258, 82), Color("#123f30"))
-	draw_rect(Rect2(584, 198, 214, 46), Color("#1a7755"))
-	for x in [146, 196, 246, 626, 676, 726]:
-		_card_back(Rect2(x, 166 + (x % 3) * 5, 26, 36))
-	for x in [82, 340, 560, 820]:
-		draw_line(Vector2(x, 246), Vector2(x, 294), C_AMBER, 4)
-	for x in [82, 340, 560]:
-		draw_line(Vector2(x, 254), Vector2(x + 220, 254), C_PINK_2, 3)
-	draw_rect(Rect2(392, 132, 116, 152), Color("#090914"))
-	draw_rect(Rect2(410, 154, 80, 8), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.25))
-	draw_rect(Rect2(420, 170, 60, 6), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.20))
-	for x in [252, 450, 648]:
-		draw_line(Vector2(x, 40), Vector2(x, 74), C_SOFT.darkened(0.2), 2)
-		draw_rect(Rect2(x - 16, 74, 32, 18), C_SHADOW)
-		draw_line(Vector2(x, 92), Vector2(x + 56, 132), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.28), 3)
-	for x in range(36, 864, 72):
-		draw_rect(Rect2(x, 286 + int(sin(flicker * 2.2 + x) * 3.0), 42, 4), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.32))
-		draw_rect(Rect2(x + 10, 302, 76, 2), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.22))
-	if environment_id == "grand_casino":
-		draw_rect(Rect2(344, 300, 212, 10), C_AMBER.darkened(0.25))
-		draw_rect(Rect2(356, 310, 188, 34), Color("#171225"))
-		draw_line(Vector2(370, 344), Vector2(364, 356), C_SOFT.darkened(0.45), 3)
-		draw_line(Vector2(530, 344), Vector2(536, 356), C_SOFT.darkened(0.45), 3)
-		draw_rect(Rect2(452, 340, 96, 8), C_AMBER.darkened(0.32))
-		draw_rect(Rect2(40, 326, 820, 8), Color("#2d2037"))
-		draw_line(Vector2(50, 334), Vector2(850, 334), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.18), 2)
-		draw_rect(Rect2(100, 346, 700, 8), C_AMBER.darkened(0.35))
-		draw_line(Vector2(110, 354), Vector2(790, 354), Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.32), 2)
+	draw_rect(Rect2(0, 0, 900, 32), Color("#1b1034"))
+	draw_rect(Rect2(0, 32, 900, 5), C_PINK)
+	_neon_text("GRAND CASINO", Vector2(330, 48), 24, C_YELLOW)
+	draw_line(Vector2(282, 72), Vector2(618, 72), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.32), 2)
+
+	# Five equal machine bays form a single uninterrupted row.
+	for machine_x in [90, 246, 402, 558, 714]:
+		draw_rect(Rect2(machine_x - 6, 78, 108, 120), Color("#160f27"))
+		draw_rect(Rect2(machine_x, 84, 96, 108), Color("#21113a"), false, 2)
+		draw_rect(Rect2(machine_x + 10, 94, 76, 48), Color("#080914"))
+		draw_rect(Rect2(machine_x + 14, 150, 68, 28), Color("#100d1c"))
+		draw_line(Vector2(machine_x + 12, 186), Vector2(machine_x + 84, 186), C_AMBER.darkened(0.20), 4)
+
+	# A distinct ticket kiosk and cocktail shelf bookend the machine bank.
+	draw_rect(Rect2(8, 84, 72, 112), Color("#161226"))
+	draw_rect(Rect2(14, 96, 60, 52), Color("#080914"))
+	_neon_text("CAGE", Vector2(16, 88), 10, C_CYAN)
+	draw_rect(Rect2(16, 156, 56, 30), Color("#21182b"))
+	draw_rect(Rect2(816, 112, 76, 72), Color("#151326"))
+	_neon_text("BAR", Vector2(830, 122), 12, C_PINK)
+	draw_rect(Rect2(816, 170, 76, 14), C_AMBER.darkened(0.24))
+
+	# Tabletop art extends above the authored contact edge at y=258; the darker
+	# apron below it is replayed after any behind-table staff are drawn.
+	for table_x in [82, 546]:
+		draw_rect(Rect2(table_x, 206, 272, 88), Color("#0c2e25"))
+		draw_rect(Rect2(table_x + 12, 214, 248, 44), Color("#1a7755"))
+		draw_rect(Rect2(table_x + 22, 222, 228, 28), Color("#145b43"), false, 2)
+		draw_rect(Rect2(table_x, 258, 272, 36), Color("#123f30"))
+		draw_line(Vector2(table_x, 258), Vector2(table_x + 272, 258), C_AMBER.darkened(0.10), 4)
+		draw_line(Vector2(table_x + 20, 286), Vector2(table_x + 252, 286), Color("#08231c"), 3)
+
+	# The central host desk has a clear work position and a solid foreground.
+	draw_rect(Rect2(344, 318, 212, 48), Color("#171225"))
+	draw_line(Vector2(344, 318), Vector2(556, 318), C_AMBER, 4)
+	draw_rect(Rect2(364, 330, 172, 20), Color("#0e0b18"))
+	_neon_text("HOST", Vector2(418, 334), 14, C_CYAN)
+	draw_line(Vector2(370, 366), Vector2(364, 394), C_SOFT.darkened(0.45), 4)
+	draw_line(Vector2(530, 366), Vector2(536, 394), C_SOFT.darkened(0.45), 4)
+
+	# Low floor bands define the public circulation area without implying routes.
+	draw_rect(Rect2(72, 302, 756, 6), Color("#2d2037"))
+	draw_rect(Rect2(96, 398, 708, 6), C_AMBER.darkened(0.35))
+	_floor_reflections()
+
+
+func _draw_grand_casino_private_room(title: String, subtitle: String, accent: Color) -> void:
+	# High Limit and the Back Room share the main floor's exact felt geometry so
+	# their fixed game slots remain truthful, but they do not inherit the public
+	# machine bank, cocktail shelf, or host signage.
+	draw_rect(Rect2(0, 0, 900, 430), Color("#080812"))
+	for x in range(0, 900, 112):
+		draw_rect(Rect2(x, 0, 56, 246), Color("#111126"))
+		draw_rect(Rect2(x + 56, 0, 56, 246), Color("#0c0c18"))
+	draw_rect(Rect2(0, 0, 900, 32), Color("#1b1034"))
+	draw_rect(Rect2(0, 32, 900, 5), accent)
+	_neon_text(title, Vector2(450.0 - float(title.length()) * 8.0, 48), 24, C_YELLOW)
+	_neon_text(subtitle, Vector2(450.0 - float(subtitle.length()) * 5.0, 78), 12, accent)
+	# Two quiet felt pits replace the public machine row. Their apron edges match
+	# the authored counter contacts used by both private-room maps.
+	for table_x in [82, 546]:
+		draw_rect(Rect2(table_x, 206, 272, 88), Color("#0c2e25"))
+		draw_rect(Rect2(table_x + 12, 214, 248, 44), Color("#1a7755"))
+		draw_rect(Rect2(table_x + 22, 222, 228, 28), Color("#145b43"), false, 2)
+		draw_rect(Rect2(table_x, 258, 272, 36), Color("#123f30"))
+		draw_line(Vector2(table_x, 258), Vector2(table_x + 272, 258), C_AMBER.darkened(0.10), 4)
+		draw_line(Vector2(table_x + 20, 286), Vector2(table_x + 252, 286), Color("#08231c"), 3)
+	# A private central desk supports the room's stationary contact without
+	# presenting the public-floor HOST identity.
+	draw_rect(Rect2(344, 318, 212, 48), Color("#171225"))
+	draw_line(Vector2(344, 318), Vector2(556, 318), accent, 4)
+	draw_rect(Rect2(364, 330, 172, 20), Color("#0e0b18"))
+	_neon_text("VIP" if environment_id == "grand_casino_high_limit" else "OFFICE", Vector2(420, 334), 14, accent)
+	draw_line(Vector2(370, 366), Vector2(364, 394), C_SOFT.darkened(0.45), 4)
+	draw_line(Vector2(530, 366), Vector2(536, 394), C_SOFT.darkened(0.45), 4)
+	# Real framed notices occupy the wall areas; no route or status graphics are
+	# painted into the player view.
+	draw_rect(Rect2(8, 36, 72, 48), Color("#171326"))
+	draw_rect(Rect2(16, 44, 56, 32), Color(accent.r, accent.g, accent.b, 0.16), false, 2)
+	draw_rect(Rect2(820, 36, 72, 48), Color("#171326"))
+	draw_rect(Rect2(828, 44, 56, 32), Color(accent.r, accent.g, accent.b, 0.16), false, 2)
+	draw_rect(Rect2(72, 302, 756, 6), Color("#2d2037"))
+	draw_rect(Rect2(96, 398, 708, 6), C_AMBER.darkened(0.35))
+	_floor_reflections()
 
 
 func _draw_grand_casino_cage() -> void:
@@ -1988,7 +4866,7 @@ func _draw_grand_casino_cage() -> void:
 	# Gift case at left.
 	draw_rect(Rect2(54, 124, 190, 150), Color("#090b16"))
 	draw_rect(Rect2(62, 132, 174, 112), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.13))
-	for shelf_y in [170, 214]:
+	for shelf_y in [178, 238]:
 		draw_line(Vector2(66, shelf_y), Vector2(232, shelf_y), C_SOFT.darkened(0.35), 3)
 	var shop_state: Dictionary = foundation_snapshot.get("cage_gift_shop_state", {}) if typeof(foundation_snapshot.get("cage_gift_shop_state", {})) == TYPE_DICTIONARY else {}
 	var available_stock: Array = []
@@ -2051,7 +4929,6 @@ func _draw_scene_life() -> void:
 			_draw_scan_bands(36, 820, 20, 72, C_SOFT, 0.10, 1.9)
 			var scan_x := 372 + int(abs(sin(flicker * 3.0)) * 164.0)
 			draw_rect(Rect2(scan_x, 206, 22, 5), Color(C_TEAL.r, C_TEAL.g, C_TEAL.b, 0.72))
-			draw_rect(Rect2(452, 114 + int(sin(flicker * 2.0) * 2.0), 16, 4), C_SOFT)
 			_draw_sparkles(SCENE_SPARKLES_CORNER_STORE, C_TEAL, 0.18)
 		"back_alley":
 			var bulb_alpha: float = 0.18 + absf(sin(flicker * 4.0)) * 0.18
@@ -2094,7 +4971,6 @@ func _draw_scene_life() -> void:
 			_draw_sign_pulse(Rect2(596, 102, 172, 34), C_CYAN, 0.17, 5.4)
 			draw_circle(Vector2(642 + sin(flicker * 1.5) * 7.0, 222), 5, C_WHITE)
 			draw_circle(Vector2(756 + cos(flicker * 1.7) * 5.0, 232), 4, C_WHITE)
-			draw_rect(Rect2(780, 158, 58, 48), Color(C_PURPLE.r, C_PURPLE.g, C_PURPLE.b, 0.20 + abs(sin(flicker * 6.0)) * 0.18))
 			_draw_smoke_bands(96, 520, 72, C_CYAN, 0.035)
 			_draw_sparkles(SCENE_SPARKLES_BAR, C_YELLOW, 0.20)
 		"jazz_club":
@@ -2102,15 +4978,11 @@ func _draw_scene_life() -> void:
 			_draw_sign_pulse(Rect2(696, 146, 124, 34), C_PINK, 0.20, 4.8)
 			_draw_smoke_bands(58, 826, 76, C_AMBER, 0.045)
 			_draw_smoke_bands(140, 760, 132, C_CYAN, 0.026)
-			var cymbal_alpha := 0.22 + absf(sin(flicker * 8.0)) * 0.24
-			draw_circle(Vector2(466, 168), 15, Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, cymbal_alpha))
-			draw_rect(Rect2(718, 184, 48, 18), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.18 + absf(sin(flicker * 5.2)) * 0.16))
 			_draw_sparkles(SCENE_SPARKLES_JAZZ_CLUB, C_YELLOW, 0.18)
 		"kitty_cat_lounge":
 			_draw_sign_pulse(Rect2(116, 46, 404, 48), C_PINK, 0.18, 3.8)
 			_draw_smoke_bands(70, 820, 92, C_PINK, 0.044)
 			_draw_smoke_bands(120, 760, 138, C_CYAN, 0.026)
-			draw_circle(Vector2(704, 274), 40, Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.10 + absf(sin(flicker * 3.0)) * 0.14))
 			for x in [122, 292, 464, 622, 762]:
 				draw_rect(Rect2(x, 302 + int(sin(flicker * 2.0 + x) * 2.0), 16, 4), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.30))
 			_draw_sparkles(SCENE_SPARKLES_KITTY_CAT, C_YELLOW, 0.20)
@@ -2138,15 +5010,12 @@ func _draw_scene_life() -> void:
 			var laser_color := C_PINK if hot else C_CYAN
 			_draw_camera_sweep(Vector2(739, 94), Vector2(sweep, 190), laser_color, 0.42)
 			draw_rect(Rect2(sweep - 10, 190, 20, 5), Color(laser_color.r, laser_color.g, laser_color.b, 0.36))
-			for x in [348, 444, 540]:
-				draw_rect(Rect2(x + 12, 132, 50, 8), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.18 + abs(sin(flicker * 5.0 + x)) * 0.22))
 			_draw_headlights()
 			_draw_scan_bands(0, 900, 42, 76, C_SOFT, 0.08, 2.4)
 		"small_underground_casino":
 			for i in range(6):
 				var x := int(fmod(flicker * 16.0 + float(i * 160), 1040.0)) - 120
 				draw_rect(Rect2(x, 116 + i * 18, 260, 16), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.045))
-			draw_rect(Rect2(770, 140, 38, 5), Color(C_PINK.r, C_PINK.g, C_PINK.b, 0.28 + abs(sin(flicker * 3.0)) * 0.18))
 			_draw_smoke_bands(24, 840, 92, C_PINK, 0.05)
 			_draw_string_lights()
 			_draw_sparkles(SCENE_SPARKLES_UNDERGROUND, C_TEAL, 0.16)
@@ -2156,20 +5025,6 @@ func _draw_scene_life() -> void:
 			for i in range(light_count):
 				var x := 300 + i * 150 if low_detail else 250 + i * 100
 				draw_rect(Rect2(x, 124, 52, 8), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.12 + abs(sin(flicker * 3.2 + i)) * (0.12 if low_detail else 0.20)))
-			var watch_status := _pit_boss_watch_snapshot()
-			var sweep := 250 + int(abs(sin(flicker * 1.35)) * 400.0)
-			var watched := bool(watch_status.get("watched", false))
-			var beam := C_PINK if watched else C_CYAN
-			var primary_alpha := 0.42 if watched else 0.20
-			_draw_camera_sweep(Vector2(450, 92), Vector2(sweep, 226), beam, primary_alpha)
-			if not low_detail:
-				_draw_camera_sweep(Vector2(252, 92), Vector2(170 + int(abs(sin(flicker * 1.0)) * 210.0), 220), C_CYAN, 0.18)
-				_draw_camera_sweep(Vector2(648, 92), Vector2(520 + int(abs(cos(flicker * 1.1)) * 210.0), 220), C_CYAN, 0.18)
-			var badge_color := C_POLICE_RED if watched else C_CYAN
-			draw_rect(Rect2(386, 150, 128, 18), Color(0.0, 0.0, 0.0, 0.50))
-			draw_rect(Rect2(392, 154, 116, 5), Color(badge_color.r, badge_color.g, badge_color.b, 0.34 + abs(sin(flicker * 2.4)) * 0.28))
-			var watch_active := bool(watch_status.get("active", false))
-			_neon_text("WATCHED" if watched else "ROURKE HERE" if watch_active else "ROURKE AWAY", Vector2(398 if watch_active else 396, 164), 10, badge_color)
 			_draw_sign_pulse(Rect2(336, 58, 226, 54), C_YELLOW, 0.14, 3.8)
 			if not low_detail:
 				_draw_sparkles(SCENE_SPARKLES_GRAND_CASINO, C_YELLOW, 0.18)
@@ -2181,66 +5036,11 @@ func _draw_scene_life() -> void:
 				draw_rect(Rect2(bar_x, 124, 3, 112), Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.12 + abs(sin(flicker * 1.8 + bar_x)) * 0.08))
 
 
-func _draw_familiar_characters() -> void:
-	# Recurring venue characters provide social pressure and make rooms readable.
-	match environment_id:
-		"corner_store":
-			_draw_named_character("mara", Vector2(465, 206), 0.78, "clerk")
-		"back_alley":
-			_draw_named_character("vince", Vector2(110, 254), 0.88, "watcher")
-			_draw_named_character("lena", Vector2(780, 254), 0.82, "dealer")
-		"motel":
-			_draw_named_character("june", Vector2(610, 176), 0.82, "dealer")
-			_draw_named_character("marco", Vector2(748, 270), 0.72, "fixer")
-		"bar":
-			_draw_named_character("rafi", Vector2(188, 178), 0.76, "bartender")
-			_draw_named_character("dot", Vector2(500, 178), 0.70, "regular")
-		"jazz_club":
-			_draw_named_character("rafi", Vector2(824, 188), 0.66, "bartender")
-			_draw_named_character("dot", Vector2(614, 270), 0.52, "regular")
-		"kitty_cat_lounge":
-			_draw_named_character("iris", Vector2(618, 190), 0.70, "host")
-			_draw_named_character("dot", Vector2(304, 234), 0.58, "regular")
-		"delta_queen":
-			_draw_named_character("sable", Vector2(436, 170), 0.70, "dealer")
-			_draw_named_character("ox", Vector2(790, 268), 0.86, "deck_boss")
-		"gas_station_casino":
-			_draw_named_character("nell", Vector2(746, 104), 0.76, "attendant")
-			_draw_watch_camera(Vector2(744, 72), C_PINK)
-		"small_underground_casino":
-			_draw_named_character("sable", Vector2(505, 155), 0.72, "dealer")
-			_draw_named_character("ox", Vector2(794, 266), 1.02, "bouncer")
-		"pawn_shop":
-			_draw_named_character("sal", Vector2(450, 224), 0.74, "clerk")
-		"grand_casino":
-			_draw_named_character("iris", Vector2(632, 180), 0.76, "host")
-			var bartender := _grand_casino_staff_member("bartender")
-			if not bartender.is_empty():
-				_draw_named_character(str(bartender.get("style_id", "rafi")), Vector2(188, 184), 0.72, "bartender")
-			_draw_grand_casino_living_characters()
-		"grand_casino_high_limit":
-			var dealer_spots := {
-				"blackjack": Vector2(246, 188),
-				"baccarat": Vector2(450, 170),
-				"roulette": Vector2(654, 188),
-			}
-			for role_value in ["blackjack", "baccarat", "roulette"]:
-				var role_id := str(role_value)
-				var dealer := _grand_casino_staff_member(role_id)
-				if not dealer.is_empty():
-					_draw_named_character(str(dealer.get("style_id", "mara")), dealer_spots[role_id], 0.70, "dealer")
-			_draw_grand_casino_living_characters()
-		"grand_casino_back_room":
-			_draw_grand_casino_living_characters()
-		"grand_casino_cage":
-			_draw_linda_cage_silhouette()
-
-
-func _draw_linda_cage_silhouette() -> void:
+func _draw_linda_cage_silhouette(authored_feet: Vector2) -> void:
 	var cage_state: Dictionary = foundation_snapshot.get("linda_cage", {}) if typeof(foundation_snapshot.get("linda_cage", {})) == TYPE_DICTIONARY else {}
 	var pose_index := clampi(int(cage_state.get("pose_index", 1)), 0, 3)
 	var facing := str(cage_state.get("facing", "left"))
-	var feet: Vector2 = LINDA_CAGE_FEET[pose_index]
+	var feet := authored_feet
 	var idle_y: float = 0.0 if reduce_motion else sin(flicker * 1.7 + float(pose_index)) * 1.5
 	var pos: Vector2 = feet + Vector2(0, idle_y)
 	# Featureless by contract: opaque head/body only, with no skin, eye, nose,
@@ -2259,57 +5059,88 @@ func _draw_named_character(id: String, foot: Vector2, scale_value: float, role: 
 	var hair: Color = style["hair"]
 	var jacket: Color = style["jacket"]
 	var accent: Color = style["accent"]
-	var sway := sin(flicker * float(style["tempo"]) + float(style["phase"])) * 2.0
-	var pos := foot + Vector2(sway, 0)
+	var idle_profile := _character_idle_profile("named:%s" % id, role, style)
+	var idle_state := _character_idle_state(idle_profile, flicker)
+	var pose := str(idle_state.get("pose", "idle"))
+	var pos := foot + Vector2(float(idle_state.get("sway", 0.0)), float(idle_state.get("bob", 0.0)))
+	var head_shift := Vector2(float(idle_state.get("head_x", 0.0)), float(idle_state.get("head_y", 0.0))) * scale_value
 	var head := Rect2(pos + Vector2(-10, -66) * scale_value, Vector2(20, 20) * scale_value)
+	head.position += head_shift
 	var body := Rect2(pos + Vector2(-17, -46) * scale_value, Vector2(34, 44) * scale_value)
 	var shoulder_y := pos.y - 38 * scale_value
 	draw_rect(Rect2(pos.x - 18 * scale_value, pos.y - 6 * scale_value, 36 * scale_value, 4 * scale_value), Color(0.0, 0.0, 0.0, 0.36))
 	draw_rect(body, Color("#06070c"))
 	draw_rect(Rect2(body.position + Vector2(3, 4) * scale_value, body.size - Vector2(6, 7) * scale_value), jacket)
-	draw_rect(Rect2(pos + Vector2(-23, -36) * scale_value, Vector2(8, 35) * scale_value), Color("#05060a"))
-	draw_rect(Rect2(pos + Vector2(15, -36) * scale_value, Vector2(8, 35) * scale_value), Color("#05060a"))
+	var gesture_amount := float(idle_state.get("gesture_amount", 0.0))
+	var gesture_side := int(idle_state.get("gesture_side", 1))
+	_draw_named_character_arm(pos, scale_value, accent, skin, pose, true, gesture_amount, gesture_side)
+	_draw_named_character_arm(pos, scale_value, accent, skin, pose, false, gesture_amount, gesture_side)
 	draw_rect(head, skin)
 	draw_rect(Rect2(head.position + Vector2(0, 0), Vector2(head.size.x, 7 * scale_value)), hair)
-	draw_rect(Rect2(head.position + Vector2(4, 9) * scale_value, Vector2(4, 3) * scale_value), Color("#05060a"))
-	draw_rect(Rect2(head.position + Vector2(13, 9) * scale_value, Vector2(4, 3) * scale_value), Color("#05060a"))
-	var nose_x := head.position.x - 2.0 * scale_value if facing == "left" else head.end.x
+	var eye_offset := float(idle_state.get("eye_offset", 0.0)) * scale_value
+	var left_eye := head.position + Vector2(4, 9) * scale_value + Vector2(eye_offset, 0.0)
+	var right_eye := head.position + Vector2(13, 9) * scale_value + Vector2(eye_offset, 0.0)
+	var eye_height := 1.0 if bool(idle_state.get("blink", false)) else 3.0
+	draw_rect(Rect2(left_eye, Vector2(4, eye_height) * scale_value), Color("#05060a"))
+	draw_rect(Rect2(right_eye, Vector2(4, eye_height) * scale_value), Color("#05060a"))
+	var effective_facing := facing
+	if pose == "lookaround":
+		effective_facing = "left" if float(idle_state.get("eye_offset", 0.0)) < 0.0 else "right"
+	var nose_x := head.position.x - 2.0 * scale_value if effective_facing == "left" else head.end.x
 	draw_rect(Rect2(nose_x, head.position.y + 12.0 * scale_value, 3.0 * scale_value, 3.0 * scale_value), skin)
 	draw_rect(Rect2(pos + Vector2(-15, -48) * scale_value, Vector2(30, 5) * scale_value), accent)
 	draw_line(Vector2(pos.x - 24 * scale_value, shoulder_y), Vector2(pos.x + 24 * scale_value, shoulder_y), Color(accent.r, accent.g, accent.b, 0.45), maxf(1.0, 3.0 * scale_value))
+	var prop_lift := -2.0 * float(idle_state.get("gesture_amount", 0.0)) * scale_value
 	match role:
 		"watcher", "bouncer", "pit_boss":
-			draw_rect(Rect2(pos + Vector2(14, -55) * scale_value, Vector2(10, 4) * scale_value), C_PINK)
+			draw_rect(Rect2(pos + Vector2(14, -55) * scale_value + Vector2(0.0, prop_lift), Vector2(10, 4) * scale_value), C_PINK)
 		"dealer":
-			_card_back(Rect2(pos + Vector2(-25, -26) * scale_value, Vector2(16, 22) * scale_value))
+			_card_back(Rect2(pos + Vector2(-25, -26) * scale_value + Vector2(0.0, prop_lift), Vector2(16, 22) * scale_value))
 		"bartender", "attendant", "clerk":
-			draw_rect(Rect2(pos + Vector2(16, -24) * scale_value, Vector2(7, 16) * scale_value), C_AMBER)
+			draw_rect(Rect2(pos + Vector2(16, -24) * scale_value + Vector2(0.0, prop_lift), Vector2(7, 16) * scale_value), C_AMBER)
 		"regular", "fixer":
-			draw_rect(Rect2(pos + Vector2(-25, -20) * scale_value, Vector2(16, 5) * scale_value), C_CYAN)
+			draw_rect(Rect2(pos + Vector2(-25, -20) * scale_value + Vector2(0.0, prop_lift), Vector2(16, 5) * scale_value), C_CYAN)
 
 
-func _draw_grand_casino_living_characters() -> void:
-	var living_floor := _grand_casino_living_floor_snapshot()
-	if living_floor.is_empty():
-		return
-	var escort: Dictionary = living_floor.get("escort", {}) if typeof(living_floor.get("escort", {})) == TYPE_DICTIONARY else {}
-	if not escort.is_empty():
-		var progress := clampf(float(escort.get("progress", 0.0)), 0.0, 1.0)
-		var escort_x := lerpf(170.0, 760.0, progress)
-		_draw_named_character("rourke", Vector2(escort_x, 274), 1.04, "pit_boss", "right")
-		_draw_rival_cheater_tell(str(escort.get("tell", "heel_tap")), 0, Vector2(escort_x - 54.0, 274))
-		_neon_text("TO THE BACK ROOM", Vector2(330, 326), 14, C_PINK)
-		return
-	var rourke: Dictionary = living_floor.get("rourke", {}) if typeof(living_floor.get("rourke", {})) == TYPE_DICTIONARY else {}
-	if bool(rourke.get("present", false)):
-		_draw_named_character("rourke", _rourke_scene_foot(str(rourke.get("spot", ""))), 1.04, "pit_boss", str(rourke.get("facing", "right")))
-	var rivals: Array = living_floor.get("rivals", []) if typeof(living_floor.get("rivals", [])) == TYPE_ARRAY else []
-	for index in range(rivals.size()):
-		if typeof(rivals[index]) != TYPE_DICTIONARY:
-			continue
-		var rival := rivals[index] as Dictionary
-		var spot_index := clampi(int(rival.get("spot", index)), 0, 2)
-		_draw_rival_cheater(rival, _rival_scene_foot(spot_index))
+func _draw_named_character_arm(pos: Vector2, scale_value: float, accent: Color, skin: Color, pose: String, left: bool, gesture_amount: float, gesture_side: int) -> void:
+	var side := -1.0 if left else 1.0
+	var active_side := (left and gesture_side < 0) or (not left and gesture_side >= 0)
+	var shoulder := pos + Vector2(side * 18.0, -37.0) * scale_value
+	var resting_hand := pos + Vector2(side * 22.0, -8.0) * scale_value
+	var hand := resting_hand
+	match pose:
+		"arms_folded":
+			hand = pos + Vector2(-side * 9.0, -27.0) * scale_value
+		"chin_touch":
+			if active_side:
+				hand = pos + Vector2(side * 8.0, -52.0) * scale_value
+		"pocket_check":
+			if active_side:
+				hand = pos + Vector2(side * 9.0, -16.0) * scale_value
+		"adjust_cuff":
+			hand = pos + Vector2(-side * 5.0, -21.0 if left else -25.0) * scale_value
+		"counter_tap", "card_check":
+			hand = pos + Vector2(side * 14.0, -19.0 if left else -16.0) * scale_value
+		"shoulder_roll":
+			hand = pos + Vector2(side * (28.0 if left else 18.0), -19.0 if left else -11.0) * scale_value
+		"lookaround":
+			hand = pos + Vector2(side * 24.0, -13.0) * scale_value
+		"head_scratch":
+			if active_side:
+				hand = pos + Vector2(side * 9.0, -58.0) * scale_value
+		"stretch":
+			hand = pos + Vector2(side * 31.0, -49.0) * scale_value
+		"hand_on_hip":
+			if active_side:
+				hand = pos + Vector2(side * 13.0, -20.0) * scale_value
+		"wrist_check":
+			hand = pos + Vector2(-side * (2.0 if active_side else 8.0), -27.0 if active_side else -24.0) * scale_value
+		"rub_hands":
+			hand = pos + Vector2(side * 4.0, -23.0) * scale_value
+	hand = resting_hand.lerp(hand, clampf(gesture_amount, 0.0, 1.0))
+	draw_line(shoulder, hand, Color("#05060a"), maxf(2.0, 7.0 * scale_value))
+	draw_line(shoulder, hand, Color(accent.r, accent.g, accent.b, 0.30), maxf(1.0, 2.0 * scale_value))
+	draw_rect(Rect2(hand - Vector2(2.5, 2.0) * scale_value, Vector2(5.0, 5.0) * scale_value), skin)
 
 
 func _draw_rival_cheater(rival: Dictionary, foot: Vector2) -> void:
@@ -2350,59 +5181,26 @@ func _draw_rival_cheater_tell(tell: String, idle_phase: int, foot: Vector2) -> v
 			draw_rect(Rect2(animated_foot + Vector2(-6, -42), Vector2(12 + tell_motion * 3.0, 3)), C_PINK)
 
 
-func _rourke_scene_foot(spot: String) -> Vector2:
-	match spot:
-		"main_left":
-			return Vector2(210, 274)
-		"main_cage":
-			return Vector2(700, 274)
-		"high_rail":
-			return Vector2(220, 274)
-		"high_door":
-			return Vector2(730, 274)
-		"back_table":
-			return Vector2(390, 274)
-		"back_door":
-			return Vector2(700, 274)
-		_:
-			return Vector2(450, 274)
-
-
-func _rival_scene_foot(spot_index: int) -> Vector2:
-	match spot_index:
-		0:
-			return Vector2(250, 274)
-		1:
-			return Vector2(510, 274)
-		_:
-			return Vector2(752, 274)
-
-
 func _character_style(id: String) -> Dictionary:
 	var styles := {
-		"mara": {"skin": Color("#d9a36a"), "hair": Color("#271018"), "jacket": Color("#24404a"), "accent": C_CYAN, "tempo": 1.0, "phase": 0.2},
-		"vince": {"skin": Color("#a66a50"), "hair": Color("#06070c"), "jacket": Color("#34102b"), "accent": C_PINK, "tempo": 1.6, "phase": 2.1},
-		"lena": {"skin": Color("#c98665"), "hair": Color("#161025"), "jacket": Color("#273344"), "accent": C_AMBER, "tempo": 1.3, "phase": 0.7},
-		"june": {"skin": Color("#d0a07c"), "hair": Color("#332010"), "jacket": Color("#21363a"), "accent": C_TEAL, "tempo": 0.9, "phase": 1.8},
-		"marco": {"skin": Color("#bd7b5d"), "hair": Color("#0f0b0a"), "jacket": Color("#3d2142"), "accent": C_ORANGE, "tempo": 1.1, "phase": 2.5},
-		"rafi": {"skin": Color("#b7755c"), "hair": Color("#08090e"), "jacket": Color("#2f1a18"), "accent": C_YELLOW, "tempo": 1.4, "phase": 0.4},
-		"dot": {"skin": Color("#dfb28d"), "hair": Color("#551b42"), "jacket": Color("#26315a"), "accent": C_PINK_2, "tempo": 1.8, "phase": 1.0},
-		"nell": {"skin": Color("#c48968"), "hair": Color("#513315"), "jacket": Color("#27384f"), "accent": C_YELLOW, "tempo": 0.8, "phase": 1.4},
-		"sable": {"skin": Color("#b87a63"), "hair": Color("#05060a"), "jacket": Color("#1b2f2a"), "accent": C_TEAL, "tempo": 0.7, "phase": 2.0},
-		"ox": {"skin": Color("#8f5a48"), "hair": Color("#05060a"), "jacket": Color("#11131f"), "accent": C_ORANGE, "tempo": 0.55, "phase": 0.0},
-		"rourke": {"skin": Color("#d1a072"), "hair": Color("#ede0b5"), "jacket": Color("#161017"), "accent": C_PINK, "tempo": 0.65, "phase": 1.2},
-		"iris": {"skin": Color("#cca17e"), "hair": Color("#2b1630"), "jacket": Color("#20203c"), "accent": C_CYAN, "tempo": 0.85, "phase": 2.6},
-		"sal": {"skin": Color("#bf8366"), "hair": Color("#1b1210"), "jacket": Color("#24212a"), "accent": C_YELLOW, "tempo": 0.60, "phase": 1.7},
+		"mara": {"skin": Color("#d9a36a"), "hair": Color("#271018"), "jacket": Color("#24404a"), "accent": C_CYAN, "tempo": 1.0, "phase": 0.2, "idle_primary": "counter_tap", "idle_secondary": "lookaround"},
+		"alley_merchant": {"skin": Color("#9c684f"), "hair": Color("#241910"), "jacket": Color("#28301f"), "accent": C_AMBER, "tempo": 0.75, "phase": 1.5, "idle_primary": "pocket_check", "idle_secondary": "chin_touch"},
+		"motel_clerk": {"skin": Color("#c99572"), "hair": Color("#1c2630"), "jacket": Color("#30404a"), "accent": C_TEAL, "tempo": 0.8, "phase": 2.8, "idle_primary": "adjust_cuff", "idle_secondary": "lookaround"},
+		"silas": {"skin": Color("#b77a62"), "hair": Color("#19151f"), "jacket": Color("#1d2535"), "accent": C_PURPLE_2, "tempo": 1.15, "phase": 0.9, "idle_primary": "chin_touch", "idle_secondary": "card_check"},
+		"vince": {"skin": Color("#a66a50"), "hair": Color("#06070c"), "jacket": Color("#34102b"), "accent": C_PINK, "tempo": 1.6, "phase": 2.1, "idle_primary": "shoulder_roll", "idle_secondary": "lookaround"},
+		"lena": {"skin": Color("#c98665"), "hair": Color("#161025"), "jacket": Color("#273344"), "accent": C_AMBER, "tempo": 1.3, "phase": 0.7, "idle_primary": "lookaround", "idle_secondary": "adjust_cuff"},
+		"june": {"skin": Color("#d0a07c"), "hair": Color("#332010"), "jacket": Color("#21363a"), "accent": C_TEAL, "tempo": 0.9, "phase": 1.8, "idle_primary": "card_check", "idle_secondary": "arms_folded"},
+		"marco": {"skin": Color("#bd7b5d"), "hair": Color("#0f0b0a"), "jacket": Color("#3d2142"), "accent": C_ORANGE, "tempo": 1.1, "phase": 2.5, "idle_primary": "pocket_check", "idle_secondary": "shoulder_roll"},
+		"rafi": {"skin": Color("#b7755c"), "hair": Color("#08090e"), "jacket": Color("#2f1a18"), "accent": C_YELLOW, "tempo": 1.4, "phase": 0.4, "idle_primary": "counter_tap", "idle_secondary": "arms_folded"},
+		"dot": {"skin": Color("#dfb28d"), "hair": Color("#551b42"), "jacket": Color("#26315a"), "accent": C_PINK_2, "tempo": 1.8, "phase": 1.0, "idle_primary": "adjust_cuff", "idle_secondary": "shoulder_roll"},
+		"nell": {"skin": Color("#c48968"), "hair": Color("#513315"), "jacket": Color("#27384f"), "accent": C_YELLOW, "tempo": 0.8, "phase": 1.4, "idle_primary": "chin_touch", "idle_secondary": "lookaround"},
+		"sable": {"skin": Color("#b87a63"), "hair": Color("#05060a"), "jacket": Color("#1b2f2a"), "accent": C_TEAL, "tempo": 0.7, "phase": 2.0, "idle_primary": "arms_folded", "idle_secondary": "pocket_check"},
+		"ox": {"skin": Color("#8f5a48"), "hair": Color("#05060a"), "jacket": Color("#11131f"), "accent": C_ORANGE, "tempo": 0.55, "phase": 0.0, "idle_primary": "arms_folded", "idle_secondary": "shoulder_roll"},
+		"rourke": {"skin": Color("#d1a072"), "hair": Color("#ede0b5"), "jacket": Color("#161017"), "accent": C_PINK, "tempo": 0.65, "phase": 1.2, "idle_primary": "chin_touch", "idle_secondary": "adjust_cuff"},
+		"iris": {"skin": Color("#cca17e"), "hair": Color("#2b1630"), "jacket": Color("#20203c"), "accent": C_CYAN, "tempo": 0.85, "phase": 2.6, "idle_primary": "card_check", "idle_secondary": "lookaround"},
+		"sal": {"skin": Color("#bf8366"), "hair": Color("#1b1210"), "jacket": Color("#24212a"), "accent": C_YELLOW, "tempo": 0.60, "phase": 1.7, "idle_primary": "counter_tap", "idle_secondary": "pocket_check"},
 	}
 	return styles.get(id, styles["mara"])
-
-
-func _draw_watch_camera(pos: Vector2, accent: Color) -> void:
-	draw_rect(Rect2(pos + Vector2(-20, -10), Vector2(40, 20)), Color("#05060a"))
-	draw_rect(Rect2(pos + Vector2(-8, -5), Vector2(16, 10)), C_SHADOW)
-	draw_rect(Rect2(pos + Vector2(-3, -3), Vector2(6, 6)), accent)
-
-
 func _draw_interactable_light(rect: Rect2, accent: Color, selected: bool) -> void:
 	var alpha := 0.14 + absf(sin(flicker * 2.4 + rect.position.x * 0.02)) * 0.08
 	if selected:
@@ -2496,48 +5294,191 @@ func _draw_string_lights() -> void:
 func _draw_scene_objects() -> void:
 	# Interactable props are rendered here; transparent buttons only provide hit testing.
 	var low_detail := _grand_casino_web_low_detail()
-	for object_data in _active_scene_objects():
-		var rect := _board_rect_for_object(object_data)
-		var object_id := str(object_data.get("id", ""))
-		var object_type := str(object_data.get("type", "item"))
-		var selected := object_id == selected_object_id
-		var hovered := object_id == hovered_object_id
-		var disabled := bool(object_data.get("disabled", false))
-		_draw_object_shadow(rect, selected or hovered, str(object_data.get("shadow_kind", "base")))
-		match object_type:
-			"game":
-				_draw_game_prop(rect, object_data, selected or hovered)
-			"travel":
-				_draw_travel_prop(rect, object_data, selected or hovered)
-			"event":
-				_draw_event_prop(rect, object_data, selected or hovered)
-			"character":
-				_draw_character_actor(rect, object_data)
-			"scenario_actor":
-				_draw_scenario_actor(rect, object_data, selected or hovered)
-			"scenario_object":
-				_draw_scenario_prop(rect, object_data, selected or hovered)
-			"drink":
-				_draw_drink_prop(rect, selected or hovered)
-			_:
-				_draw_item_prop(rect, object_data, selected or hovered, str(object_data.get("surface", "counter")))
-		if str(object_data.get("placement_class", "")) == "behind_counter_person":
-			_draw_counter_person_occlusion(rect, selected or hovered)
-		if disabled:
-			_draw_disabled_scene_mark(rect)
-		if disabled and (selected or hovered):
-			_draw_disabled_focus_mark(rect, selected)
-		elif selected:
-			_draw_selected_scene_mark(rect)
-			if object_type in ["item", "drink"]:
-				_draw_selected_item_frame(rect, object_type)
-		elif hovered:
-			_draw_hover_scene_mark(rect)
-		elif should_draw_hotspot_hint(object_data, low_detail):
-			_draw_hotspot_hint(rect, object_type)
-		_draw_object_label(rect, str(object_data.get("label", "")), object_type, disabled, selected or hovered)
-	if not developer_placement_mode:
+	var objects := _active_scene_objects()
+	# Static rooms retain the layout built with their scene cache. Only authored
+	# live routes need a global relayout each frame; placement previews resolve the
+	# moving owner's label directly without the all-pairs label pass.
+	if scene_has_live_actor_routes:
+		_rebuild_object_label_rect_cache(objects)
+	var behind_counter := behind_counter_scene_objects_cache
+	var room_standard := room_front_scene_objects_cache
+	var room_front := room_top_scene_objects_cache
+	if not scene_object_cache_valid:
+		behind_counter = []
+		room_standard = []
+		room_front = []
+		for object_value in objects:
+			var object_data := object_value as Dictionary
+			match _scene_object_draw_layer(object_data):
+				-1: behind_counter.append(object_data)
+				1: room_front.append(object_data)
+				_: room_standard.append(object_data)
+	# The three authored layers are strict: counter fronts separate Behind from
+	# Standard, and Front is painted last above every lower object layer.
+	for object_value in behind_counter:
+		_draw_scene_object_body(object_value as Dictionary)
+	_draw_room_foreground_occluders(behind_counter)
+	for object_value in room_standard:
+		_draw_scene_object_body(object_value as Dictionary)
+	for object_value in room_front:
+		_draw_scene_object_body(object_value as Dictionary)
+	# Labels and focus affordances stay above fixtures and remain fully usable.
+	for object_value in objects:
+		_draw_scene_object_adornments(object_value as Dictionary, low_detail)
+	if not developer_placement_mode and not developer_slot_placement_mode:
 		_draw_selected_object_info()
+
+
+func _draw_scene_object_body(object_data: Dictionary) -> void:
+	var rect := _natural_model_rect_for_object(object_data)
+	var object_id := str(object_data.get("id", ""))
+	var object_type := str(object_data.get("type", "item"))
+	var active := object_labels_and_borders_enabled and (object_id == selected_object_id or object_id == hovered_object_id)
+	_draw_object_shadow(rect, active, str(object_data.get("shadow_kind", "base")))
+	if _draw_manifest_specific_object(rect, object_data, active):
+		return
+	match object_type:
+		"game":
+			_draw_game_prop(rect, object_data, active)
+		"travel":
+			_draw_travel_prop(rect, object_data, active)
+		"event":
+			_draw_event_prop(rect, object_data, active)
+		"character":
+			_draw_character_actor(rect, object_data)
+		"scenario_actor":
+			_draw_scenario_actor(rect, object_data, active)
+		"scenario_object":
+			_draw_scenario_prop(rect, object_data, active)
+		"drink":
+			_draw_drink_prop(rect, active)
+		_:
+			_draw_item_prop(rect, object_data, active, str(object_data.get("surface", "counter")))
+
+
+func _draw_manifest_specific_object(rect: Rect2, object_data: Dictionary, active: bool) -> bool:
+	if not bool(object_data.get("manifest_physical", false)):
+		return false
+	var render_key := str(object_data.get("manifest_render_key", object_data.get("visual_key", ""))).strip_edges().to_lower()
+	var metadata := _copy_dictionary(object_data.get("manifest_metadata", {}))
+	var feet := Vector2(rect.get_center().x, rect.end.y - 2.0)
+	if render_key == "fixed_host_linda":
+		_draw_linda_cage_silhouette(feet)
+		if active:
+			draw_rect(rect.grow(2.0), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.34), false, 2.0)
+		return true
+	if render_key == "grand_rourke":
+		_draw_named_character("rourke", feet, clampf(rect.size.y / 80.0, 0.58, 1.15), "pit_boss", str(metadata.get("facing", "right")))
+		if active:
+			draw_rect(rect.grow(2.0), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.34), false, 2.0)
+		return true
+	if render_key == "grand_rival":
+		_draw_rival_cheater(metadata, feet)
+		if active:
+			draw_rect(rect.grow(2.0), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.34), false, 2.0)
+		return true
+
+	var character_id := ""
+	var character_role := "regular"
+	match render_key:
+		"fixed_host_mara":
+			character_id = "mara"
+			character_role = "clerk"
+		"fixed_host_back_alley_merchant":
+			character_id = "alley_merchant"
+			character_role = "fixer"
+		"fixed_host_motel_clerk":
+			character_id = "motel_clerk"
+			character_role = "clerk"
+		"fixed_host_rafi", "jazz_bartender":
+			character_id = "rafi"
+			character_role = "bartender"
+		"fixed_host_iris":
+			character_id = "iris"
+			character_role = "host"
+		"fixed_host_sable":
+			character_id = "sable"
+			character_role = "dealer"
+		"fixed_host_ox":
+			character_id = "ox"
+			character_role = "bouncer"
+		"fixed_host_sal":
+			character_id = "sal"
+			character_role = "clerk"
+		"fixed_host_june":
+			character_id = "june"
+			character_role = "dealer"
+		"fixed_host_marco":
+			character_id = "marco"
+			character_role = "fixer"
+		"fixed_host_vince":
+			character_id = "vince"
+			character_role = "watcher"
+		"fixed_host_lena":
+			character_id = "lena"
+			character_role = "dealer"
+		"fixed_host_dot":
+			character_id = "dot"
+			character_role = "regular"
+		"fixed_host_nell":
+			character_id = "nell"
+			character_role = "attendant"
+		"numbers_silas":
+			character_id = "silas"
+			character_role = "watcher"
+	if not character_id.is_empty():
+		_draw_named_character(character_id, feet, clampf(rect.size.y / 80.0, 0.48, 1.15), character_role, str(metadata.get("facing", "right")))
+		if active:
+			draw_rect(rect.grow(2.0), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.34), false, 2.0)
+		return true
+	match render_key:
+		"jazz_musician_sax", "jazz_musician_cello", "jazz_musician_drummer":
+			var instrument := "sax" if render_key.ends_with("_sax") else "cello" if render_key.ends_with("_cello") else "drums"
+			var scale_value := clampf(rect.size.y / 88.0, 0.48, 1.15)
+			_draw_jazz_player(Vector2(rect.get_center().x, rect.end.y - 2.0), scale_value, instrument)
+			if active:
+				draw_rect(rect.grow(2.0), Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.34), false, 2.0)
+			return true
+		"jazz_tip_jar":
+			var jar := Rect2(
+				rect.position + Vector2(rect.size.x * 0.30, rect.size.y * 0.22),
+				Vector2(rect.size.x * 0.40, rect.size.y * 0.58)
+			)
+			draw_rect(jar, Color("#21131a"))
+			draw_rect(jar, C_AMBER if active else C_CYAN, false, 2.0)
+			draw_rect(Rect2(jar.position + Vector2(jar.size.x * 0.12, -3.0), Vector2(jar.size.x * 0.76, 4.0)), C_SOFT)
+			_neon_text("TIP", jar.position + Vector2(2.0, jar.size.y * 0.62), 8, C_YELLOW)
+			return true
+		"jazz_band_stage":
+			var mark := Rect2(rect.position + Vector2(rect.size.x * 0.08, rect.size.y * 0.58), Vector2(rect.size.x * 0.84, maxf(5.0, rect.size.y * 0.18)))
+			draw_rect(mark, Color(C_AMBER.r, C_AMBER.g, C_AMBER.b, 0.20 if not active else 0.38))
+			draw_line(mark.position, Vector2(mark.end.x, mark.position.y), C_AMBER, 2.0)
+			return true
+	return false
+
+
+func _draw_scene_object_adornments(object_data: Dictionary, low_detail: bool) -> void:
+	var rect := _natural_model_rect_for_object(object_data)
+	var object_id := str(object_data.get("id", ""))
+	var object_type := str(object_data.get("type", "item"))
+	var selected := object_id == selected_object_id
+	var hovered := object_id == hovered_object_id
+	var disabled := bool(object_data.get("disabled", false))
+	if disabled:
+		_draw_disabled_scene_mark(rect)
+	if not object_labels_and_borders_enabled:
+		return
+	if disabled and (selected or hovered):
+		_draw_disabled_focus_mark(rect, selected)
+	elif selected:
+		_draw_selected_scene_mark(rect)
+		if object_type in ["item", "drink"]:
+			_draw_selected_item_frame(rect, object_type)
+	elif hovered:
+		_draw_hover_scene_mark(rect)
+	elif should_draw_hotspot_hint(object_data, low_detail):
+		_draw_hotspot_hint(rect, object_type)
+	_draw_object_label(rect, str(object_data.get("label", "")), object_type, disabled, selected or hovered, object_data)
 
 
 func _draw_scenario_prop(rect: Rect2, object_data: Dictionary, active: bool) -> void:
@@ -2545,37 +5486,72 @@ func _draw_scenario_prop(rect: Rect2, object_data: Dictionary, active: bool) -> 
 	var accent := C_ORANGE if role == "obstacle" else C_PURPLE_2 if role == "exit" else C_CYAN_2
 	# Scenario props use the same concrete icon vocabulary as ordinary event
 	# props. The semantic icon key chooses paper, furniture, barriers, lights,
-	# refreshments, machinery, doors, or a neutral fixture silhouette.
+	# refreshments, machinery, or doors. Room placement never authorizes the
+	# generic room-fixture fallback.
 	_draw_event_prop(rect, object_data, active)
-	draw_rect(rect, accent.lightened(0.16) if active else accent, false, 2.0)
 	if role in ["obstacle", "exit"]:
 		var mark := "!" if role == "obstacle" else ">"
 		_neon_text(mark, rect.position + Vector2(5.0, 14.0), 12, C_WHITE)
 	if not str(object_data.get("state", "")).is_empty():
 		draw_line(rect.position + Vector2(8.0, rect.size.y - 9.0), rect.end - Vector2(8.0, 9.0), accent, 3.0)
-		_draw_public_prop_state_marker(rect, object_data, accent)
+		_draw_public_prop_state_marker(rect, object_data)
 
 
 func _draw_scenario_actor(rect: Rect2, object_data: Dictionary, active: bool) -> void:
 	var behavior := str(object_data.get("behavior", "idle"))
 	var pose := str(object_data.get("pose", "idle"))
 	var accent := C_ORANGE if behavior in ["guard", "fight", "flee"] else C_TEAL
-	var center := rect.get_center()
-	var route_points := _copy_array(object_data.get("route_points", []))
-	if route_points.size() >= 2:
-		var start := _vector2_from_dict(route_points[0], Vector2.ZERO) * Vector2(BOARD_SIZE)
-		var finish := _vector2_from_dict(route_points[1], Vector2.ZERO) * Vector2(BOARD_SIZE)
-		draw_dashed_line(start, finish, accent, 2.0, 7.0, true)
-		draw_circle(finish, 4.0, accent)
+	var object_id := str(object_data.get("id", object_data.get("source_id", "scenario_actor")))
+	var idle_profile := _character_idle_profile("object:%s/scenario" % object_id, behavior)
+	var idle_state := _character_idle_state(idle_profile, flicker)
+	var idle_pose := str(idle_state.get("pose", "idle")) if pose in ["", "idle", "watch", "watching"] else pose
+	var center := rect.get_center() + Vector2(float(idle_state.get("sway", 0.0)), float(idle_state.get("bob", 0.0)))
 	var head_radius := clampf(rect.size.x * 0.15, 6.0, 12.0)
-	draw_circle(Vector2(center.x, rect.position.y + head_radius + 4.0), head_radius, C_SOFT.darkened(0.15))
+	var head_center := Vector2(center.x, rect.position.y + head_radius + 4.0 + float(idle_state.get("bob", 0.0))) + Vector2(float(idle_state.get("head_x", 0.0)), float(idle_state.get("head_y", 0.0)))
+	draw_circle(head_center, head_radius, C_SOFT.darkened(0.15))
 	var body_top := rect.position.y + head_radius * 2.0 + 6.0
 	var body := Rect2(Vector2(center.x - rect.size.x * 0.20, body_top), Vector2(rect.size.x * 0.40, maxf(16.0, rect.end.y - body_top - 8.0)))
 	draw_rect(body, accent.darkened(0.42))
 	draw_rect(body, accent.lightened(0.15) if active else accent, false, 2.0)
 	var arm_y := body.position.y + body.size.y * 0.38
 	var arm_spread := rect.size.x * (0.38 if pose in ["fight", "warning"] else 0.28)
-	draw_line(Vector2(center.x - arm_spread, arm_y), Vector2(center.x + arm_spread, arm_y), accent, 3.0)
+	var gesture_amount := float(idle_state.get("gesture_amount", 0.0))
+	var gesture_side := int(idle_state.get("gesture_side", 1))
+	var left_hand_y := arm_y
+	var right_hand_y := arm_y
+	match idle_pose:
+		"arms_folded", "card_check", "adjust_cuff":
+			arm_spread = lerpf(arm_spread, rect.size.x * 0.12, gesture_amount)
+			left_hand_y += 5.0 * gesture_amount
+			right_hand_y -= 2.0 * gesture_amount
+		"chin_touch":
+			right_hand_y -= head_radius * 2.2 * gesture_amount
+		"pocket_check", "counter_tap":
+			left_hand_y += 8.0 * gesture_amount
+		"shoulder_roll":
+			left_hand_y -= 6.0 * gesture_amount
+			right_hand_y += 5.0 * gesture_amount
+		"head_scratch":
+			if gesture_side < 0:
+				left_hand_y -= head_radius * 2.4 * gesture_amount
+			else:
+				right_hand_y -= head_radius * 2.4 * gesture_amount
+		"stretch":
+			arm_spread = lerpf(arm_spread, rect.size.x * 0.46, gesture_amount)
+			left_hand_y -= head_radius * 1.35 * gesture_amount
+			right_hand_y -= head_radius * 1.35 * gesture_amount
+		"hand_on_hip":
+			arm_spread = lerpf(arm_spread, rect.size.x * 0.16, gesture_amount)
+			if gesture_side < 0:
+				left_hand_y += 7.0 * gesture_amount
+			else:
+				right_hand_y += 7.0 * gesture_amount
+		"wrist_check", "rub_hands":
+			arm_spread = lerpf(arm_spread, rect.size.x * 0.08, gesture_amount)
+			left_hand_y += 2.0 * gesture_amount
+			right_hand_y -= 1.0 * gesture_amount
+	draw_line(Vector2(center.x, arm_y), Vector2(center.x - arm_spread, left_hand_y), accent, 3.0)
+	draw_line(Vector2(center.x, arm_y), Vector2(center.x + arm_spread, right_hand_y), accent, 3.0)
 	if behavior in ["guard", "watch", "patrol"]:
 		_neon_text("EYE", Vector2(center.x - 10.0, rect.end.y - 4.0), 8, C_WHITE)
 
@@ -2585,6 +5561,7 @@ func _draw_selected_object_info() -> void:
 	if info.is_empty():
 		return
 	var object_data: Dictionary = info.get("object", {})
+	var expanded := bool(info.get("expanded", false))
 	var object_type := str(object_data.get("type", "item"))
 	var interaction_type := str(object_data.get("interaction_type", object_type))
 	var card := _animated_info_card_rect(info)
@@ -2600,19 +5577,24 @@ func _draw_selected_object_info() -> void:
 	var type_text := _player_facing_object_type(interaction_type)
 	var title_text := title if not title.is_empty() else type_text
 	var type_width := _object_info_type_width(type_text, font)
-	var title_width := maxf(20.0, card.size.x - type_width - OBJECT_INFO_PADDING_X * 2.0 - OBJECT_INFO_TYPE_GAP)
+	var status_icon_rect := Rect2(
+		Vector2(card.end.x - OBJECT_INFO_PADDING_X - type_width - OBJECT_INFO_TYPE_GAP - OBJECT_INFO_STATUS_ICON_SIZE, card.position.y + 3.0),
+		Vector2(OBJECT_INFO_STATUS_ICON_SIZE, OBJECT_INFO_STATUS_ICON_SIZE)
+	)
+	var title_width := maxf(20.0, status_icon_rect.position.x - card.position.x - OBJECT_INFO_PADDING_X - OBJECT_INFO_STATUS_ICON_GAP)
 	draw_string(font, card.position + Vector2(OBJECT_INFO_PADDING_X, OBJECT_INFO_HEADER_Y), _fit_draw_text(title_text, font, 11, title_width), HORIZONTAL_ALIGNMENT_LEFT, title_width, 11, header_color)
+	_draw_object_interaction_status_icon(status_icon_rect, _object_info_is_actionable(object_data))
 	draw_string(font, card.position + Vector2(card.size.x - OBJECT_INFO_PADDING_X - type_width, OBJECT_INFO_HEADER_Y), _fit_draw_text(type_text, font, 8, type_width), HORIZONTAL_ALIGNMENT_RIGHT, type_width, 8, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.82))
 	var y := card.position.y + OBJECT_INFO_BODY_Y
 	if lines.is_empty():
 		lines = [_fallback_object_description(object_data)]
 	var badges := _array_view(object_data.get("attribute_badges", []))
-	if not badges.is_empty():
+	if expanded and not badges.is_empty():
 		var badge_entries := _selected_info_badge_entries_for_rect(object_data, card, y)
 		var row_rect := AttributeBadgeRowScript.draw_canvas(self, badges, Vector2(card.position.x + OBJECT_INFO_PADDING_X, y - OBJECT_INFO_BADGE_RAISE), card.size.x - OBJECT_INFO_PADDING_X * 2.0, 16)
 		selected_info_badge_hit_entries = badge_entries
 		y += row_rect.size.y + 4.0
-	var action_area_height := _selected_info_action_area_height(object_data, card.size.x - OBJECT_INFO_PADDING_X * 2.0)
+	var action_area_height := _selected_info_action_area_height(object_data, card.size.x - OBJECT_INFO_PADDING_X * 2.0) if expanded else 0.0
 	var body_bottom := card.end.y - OBJECT_INFO_BOTTOM_PADDING
 	if action_area_height > 0.0:
 		body_bottom -= OBJECT_INFO_ACTION_GAP + action_area_height
@@ -2644,6 +5626,22 @@ func _draw_selected_object_info() -> void:
 			if not detail.is_empty() and detail_rect.size.x > 0.0 and detail_rect.size.y > 0.0:
 				draw_multiline_string(font, detail_rect.position + Vector2(0.0, 9.0), detail, HORIZONTAL_ALIGNMENT_CENTER, detail_rect.size.x, 8, OBJECT_INFO_INLINE_ACTION_DETAIL_MAX_LINES, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.86), TextServer.BREAK_MANDATORY | TextServer.BREAK_WORD_BOUND)
 	_draw_selected_info_badge_hover_text(font)
+
+
+func _draw_object_interaction_status_icon(rect: Rect2, actionable: bool) -> void:
+	var color := C_TEAL if actionable else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.66)
+	draw_rect(rect, Color(0.0, 0.0, 0.0, 0.52))
+	draw_rect(rect, color, false, 1.0)
+	if actionable:
+		var center := rect.get_center()
+		var left := Vector2(rect.position.x + 3.0, center.y)
+		var right := Vector2(rect.end.x - 3.0, center.y)
+		draw_line(left, right, color, 2.0)
+		draw_line(right, right + Vector2(-3.0, -3.0), color, 2.0)
+		draw_line(right, right + Vector2(-3.0, 3.0), color, 2.0)
+	else:
+		draw_line(rect.position + Vector2(3.0, 3.0), rect.end - Vector2(3.0, 3.0), color, 2.0)
+		draw_line(Vector2(rect.end.x - 3.0, rect.position.y + 3.0), Vector2(rect.position.x + 3.0, rect.end.y - 3.0), color, 2.0)
 
 
 func _draw_selected_info_badge_hover_text(font: Font) -> void:
@@ -2730,7 +5728,7 @@ func _draw_focus_dim_overlay() -> void:
 	var selected_object := _scene_object(selected_object_id)
 	if selected_object.is_empty():
 		return
-	var rect := _board_rect_for_object(selected_object)
+	var rect := _natural_model_rect_for_object(selected_object)
 	var glow_alpha := 0.18 + absf(sin(flicker * 4.2)) * 0.10
 	var glow_color := _color_for_object_type(str(selected_object.get("type", "item")))
 	_draw_prop_underlight(rect, glow_color, glow_alpha * 1.6)
@@ -2745,7 +5743,7 @@ func _draw_scene_outcome_highlight() -> void:
 	var object_data := _scene_object(outcome_object_id)
 	if object_data.is_empty():
 		return
-	var object_rect := _board_rect_for_object(object_data)
+	var object_rect := _natural_model_rect_for_object(object_data)
 	var accent := _color_for_object_type(str(object_data.get("type", "item")))
 	var pulse := 0.34 + absf(sin(flicker * 5.6)) * 0.22
 	_draw_prop_underlight(object_rect, accent, pulse)
@@ -2781,6 +5779,12 @@ func _has_scene_outcome_feedback() -> bool:
 
 
 func _active_scene_objects() -> Array:
+	if scene_object_cache_valid:
+		return active_scene_objects_cache
+	return _ordered_scene_objects()
+
+
+func _ordered_scene_objects() -> Array:
 	var active := foundation_scene_objects if uses_foundation_snapshot else scene_objects
 	var has_layout_authority := false
 	for value in active:
@@ -2801,16 +5805,52 @@ func _active_scene_objects() -> Array:
 
 
 func _rebuild_scene_object_cache() -> void:
+	scene_object_cache_rebuild_count += 1
+	active_scene_objects_cache = _ordered_scene_objects()
+	behind_counter_scene_objects_cache = []
+	room_front_scene_objects_cache = []
+	room_top_scene_objects_cache = []
+	scene_object_cache_valid = true
+	_rebuild_object_label_rect_cache(active_scene_objects_cache)
 	scene_objects_by_id_cache = {}
-	for object_value in _active_scene_objects():
+	scene_has_live_actor_routes = false
+	developer_slot_occupants_by_id_cache = {}
+	developer_required_slot_ids_cache = {}
+	for row_value in _developer_manifest_rows():
+		if typeof(row_value) != TYPE_DICTIONARY:
+			continue
+		var row := row_value as Dictionary
+		var required_slot_id := str(row.get("exact_slot_id", "")).strip_edges()
+		if not required_slot_id.is_empty() and bool(row.get("active", true)) \
+				and bool(row.get("physical", true)) and bool(row.get("required", false)):
+			developer_required_slot_ids_cache[required_slot_id] = true
+	for object_value in active_scene_objects_cache:
 		if typeof(object_value) != TYPE_DICTIONARY:
 			continue
 		var object_data: Dictionary = object_value
+		match _scene_object_draw_layer(object_data):
+			-1: behind_counter_scene_objects_cache.append(object_data)
+			1: room_top_scene_objects_cache.append(object_data)
+			_: room_front_scene_objects_cache.append(object_data)
 		var object_id := str(object_data.get("id", ""))
 		if not object_id.is_empty():
 			scene_objects_by_id_cache[object_id] = object_data
-		AttributeBadgeRowScript.warm_cache(_copy_array(object_data.get("attribute_badges", [])), 14)
+		var slot_id := str(object_data.get("slot_id", "")).strip_edges()
+		if not slot_id.is_empty():
+			var occupants_value: Variant = developer_slot_occupants_by_id_cache.get(slot_id, [])
+			var occupants: Array = occupants_value as Array if typeof(occupants_value) == TYPE_ARRAY else []
+			occupants.append(object_data)
+			developer_slot_occupants_by_id_cache[slot_id] = occupants
+			if bool(object_data.get("manifest_required", false)):
+				developer_required_slot_ids_cache[slot_id] = true
+		var route_stage_value: Variant = object_data.get("actor_route_stage", {})
+		var route_points_value: Variant = object_data.get("actor_route_points", [])
+		if typeof(route_stage_value) == TYPE_DICTIONARY and not (route_stage_value as Dictionary).is_empty() \
+				and typeof(route_points_value) == TYPE_ARRAY and (route_points_value as Array).size() >= 2:
+			scene_has_live_actor_routes = true
+		AttributeBadgeRowScript.warm_cache(_array_view(object_data.get("attribute_badges", [])), 14)
 		_warm_object_info_layout_cache(object_data)
+	_invalidate_developer_slot_derived_caches()
 
 
 func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
@@ -2824,7 +5864,7 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 		objects.sort_custom(Callable(PixelSceneCanvas, "_sort_composed_scene_objects"))
 		return objects
 	else:
-		var games := _string_array(snapshot.get("game_ids", []))
+		var games := JsonCoerceScript._raw_string_array(snapshot.get("game_ids", []))
 		for index in range(games.size()):
 			objects.append({
 			"id": "game:%s" % games[index],
@@ -2832,7 +5872,7 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 			"position": Vector2(0.28 + float(index % 3) * 0.18, 0.56 + float(index / 3) * 0.13),
 			"size": Vector2(118, 72),
 			})
-		var events := _string_array(snapshot.get("event_ids", []))
+		var events := JsonCoerceScript._raw_string_array(snapshot.get("event_ids", []))
 		for index in range(events.size()):
 			objects.append({
 			"id": "event:%s" % events[index],
@@ -2856,9 +5896,9 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 			"position": Vector2(0.30 + float(index % 4) * 0.12, 0.76),
 			"size": Vector2(90, 54),
 			})
-		var travel_targets := _string_array(snapshot.get("next_archetypes", []))
+		var travel_targets := JsonCoerceScript._raw_string_array(snapshot.get("next_archetypes", []))
 		if travel_targets.is_empty():
-			travel_targets = _string_array(snapshot.get("travel_hooks", []))
+			travel_targets = JsonCoerceScript._raw_string_array(snapshot.get("travel_hooks", []))
 		if not travel_targets.is_empty():
 			objects.append({
 			"id": "travel:leave",
@@ -2870,27 +5910,20 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 			})
 	var ids: Dictionary = {}
 	for object_value in objects:
-		ids[str(_copy_dictionary(object_value).get("id", ""))] = true
-	var render_snapshot := _copy_dictionary(snapshot.get("scenario_render_snapshot", {}))
-	if not bool(render_snapshot.get("ok", false)):
+		if typeof(object_value) == TYPE_DICTIONARY:
+			ids[str((object_value as Dictionary).get("id", ""))] = true
+	var render_snapshot_value: Variant = snapshot.get("scenario_render_snapshot", {})
+	var render_snapshot: Dictionary = render_snapshot_value as Dictionary if typeof(render_snapshot_value) == TYPE_DICTIONARY else {}
+	if not EnvironmentObjectManifestScript.has_causal_scenario_renderer_snapshot(snapshot):
 		objects.sort_custom(Callable(PixelSceneCanvas, "_sort_composed_scene_objects"))
 		return objects
-	for stage_index in range(_copy_array(render_snapshot.get("active_stages", [])).size()):
-		var stage := _copy_dictionary(_copy_array(render_snapshot.get("active_stages", []))[stage_index])
-		var stage_id := str(stage.get("stage_id", "stage_%d" % stage_index))
-		var stage_object_id := "scenario:stage:%s" % stage_id
-		if ids.has(stage_object_id): continue
-		objects.append_array(_objects_from_interactable_records([{
-			"object_id": stage_object_id, "object_type": "scenario", "visual_type": "scenario_object",
-			"source_id": stage_id, "label": str(stage.get("message", "Room state")),
-			"short_description": str(stage.get("message", "")), "presence": "scenario_stage",
-			"interactive": false, "decorative": true, "enabled": true,
-			"normalized_rect": {"x": 0.34, "y": 0.06 + float(stage_index) * 0.09, "w": 0.32, "h": 0.08},
-			"non_color_state": "stage", "z_order": 10000 + stage_index,
-		}]))
-		ids[stage_object_id] = true
-	for visual_value in _copy_array(render_snapshot.get("visual_objects", [])):
-		var visual := _copy_dictionary(visual_value)
+	# Active-stage text is public room status, not a physical prop. Its actions
+	# remain available in the room action list; the canvas only renders authored
+	# physical visual_objects, so no generic status boxes float along the wall.
+	for visual_value in _array_view(render_snapshot.get("visual_objects", [])):
+		if typeof(visual_value) != TYPE_DICTIONARY:
+			continue
+		var visual := visual_value as Dictionary
 		var object_id := str(visual.get("object_id", ""))
 		if object_id.is_empty() or ids.has(object_id) or not bool(visual.get("visible", true)):
 			continue
@@ -2900,20 +5933,34 @@ func _objects_from_foundation_snapshot(snapshot: Dictionary) -> Array:
 	return objects
 func _objects_from_interactable_records(records: Array) -> Array:
 	var objects: Array = []
+	var rendered_slot_holders: Dictionary = {}
+	var rendered_object_ids: Dictionary = {}
 	for index in range(records.size()):
 		if typeof(records[index]) != TYPE_DICTIONARY:
 			continue
 		var record: Dictionary = records[index]
-		if not bool(record.get("visible", true)):
+		if not bool(record.get("visible", true)) or str(record.get("presentation_mode", "room")) == "overflow":
 			continue
 		var object_id := str(record.get("object_id", ""))
 		if object_id.is_empty():
 			continue
+		if rendered_object_ids.has(object_id):
+			# Binding and placement audits retain the duplicate identities. The
+			# renderer only needs a deterministic last-line defense, and may be
+			# exercised repeatedly by diagnostic fixtures without flooding stderr.
+			continue
+		var slot_id := str(record.get("slot_id", "")).strip_edges()
+		var slot_holder := str(rendered_slot_holders.get(slot_id, "")) if not slot_id.is_empty() else ""
+		if not slot_holder.is_empty():
+			continue
+		rendered_object_ids[object_id] = true
+		if not slot_id.is_empty():
+			rendered_slot_holders[slot_id] = object_id
 		var interaction_type := str(record.get("object_type", "info"))
 		var object_type := str(record.get("visual_type", interaction_type))
 		var normalized_rect := _normalized_rect_from_record(record)
 		var focus_point := normalized_rect.position + normalized_rect.size * 0.5
-		var layout_resolved := bool(record.get("scenario_layout_resolved", false))
+		var layout_resolved := bool(record.get("scenario_layout_resolved", false)) or bool(record.get("fixed_slot_geometry", false))
 		var minimum_visual_size := Vector2.ZERO if layout_resolved else _minimum_object_visual_size(object_type)
 		var scene_object := {
 			"id": object_id,
@@ -2942,10 +5989,10 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"classification_summary": str(record.get("classification_summary", "")),
 			"addition_count": maxi(0, int(record.get("addition_count", 0))),
 			"cost_summary": str(record.get("cost_summary", "")),
-			"attribute_badges": _copy_array(record.get("attribute_badges", [])),
-			"runtime_state": (record.get("runtime_state", {}) as Dictionary).duplicate(true) if typeof(record.get("runtime_state", {})) == TYPE_DICTIONARY else {},
-			"visual_state": (record.get("visual_state", {}) as Dictionary).duplicate(true) if typeof(record.get("visual_state", {})) == TYPE_DICTIONARY else {},
-			"character_actor": (record.get("character_actor", {}) as Dictionary).duplicate(true) if typeof(record.get("character_actor", {})) == TYPE_DICTIONARY else {},
+			"attribute_badges": _array_view(record.get("attribute_badges", [])),
+			"runtime_state": record.get("runtime_state", {}) as Dictionary if typeof(record.get("runtime_state", {})) == TYPE_DICTIONARY else {},
+			"visual_state": record.get("visual_state", {}) as Dictionary if typeof(record.get("visual_state", {})) == TYPE_DICTIONARY else {},
+			"character_actor": record.get("character_actor", {}) as Dictionary if typeof(record.get("character_actor", {})) == TYPE_DICTIONARY else {},
 			"owner_namespace": str(record.get("owner_namespace", "")),
 			"stable_object_id": str(record.get("stable_object_id", "")),
 			"semantic_role": str(record.get("semantic_role", "")),
@@ -2957,22 +6004,26 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"actor_pose": str(record.get("actor_pose", "")),
 			"actor_behavior": str(record.get("actor_behavior", "")),
 			"actor_route_id": str(record.get("actor_route_id", "")),
-			"actor_route_points": _copy_array(record.get("actor_route_points", [])),
-			"actor_route_stage": _copy_dictionary(record.get("actor_route_stage", {})),
-			"small_screen_rect": _copy_dictionary(record.get("small_screen_rect", {})),
+			"actor_route_points": _array_view(record.get("actor_route_points", [])),
+			"actor_route_stage": record.get("actor_route_stage", {}) as Dictionary if typeof(record.get("actor_route_stage", {})) == TYPE_DICTIONARY else {},
+			"small_screen_rect": record.get("small_screen_rect", {}) as Dictionary if typeof(record.get("small_screen_rect", {})) == TYPE_DICTIONARY else {},
+			"label_rect": record.get("label_rect", {}) as Dictionary if typeof(record.get("label_rect", {})) == TYPE_DICTIONARY else {},
+			"small_screen_label_rect": record.get("small_screen_label_rect", {}) as Dictionary if typeof(record.get("small_screen_label_rect", {})) == TYPE_DICTIONARY else {},
+			"fixed_slot_geometry": bool(record.get("fixed_slot_geometry", false)),
 			"scenario_z_order": int(record.get("scenario_z_order", index)),
 			"scenario_layout_resolved": bool(record.get("scenario_layout_resolved", false)),
 			"scenario_layout_authority_identity": str(record.get("scenario_layout_authority_identity", "")),
 			"scenario_layout_authority_digest": str(record.get("scenario_layout_authority_digest", "")),
 			"source_order": index,
 			"state_badge": str(record.get("state_badge", "")),
-			"visual_key": str(record.get("visual_key", "")),
+			"visual_key": str(record.get("visual_key", record.get("manifest_render_key", ""))),
 			"prop": str(record.get("prop", "")),
 			"surface": str(record.get("surface", "")),
 			"icon_key": str(record.get("icon_key", "")),
 			"asset_path": str(record.get("asset_path", "")),
-			"available_actions": _copy_array(record.get("available_actions", [])),
-			"inline_actions": _copy_array(record.get("inline_actions", [])),
+			"available_actions": _array_view(record.get("available_actions", [])),
+			"inline_actions": _array_view(record.get("inline_actions", [])),
+			"attached_room_actions": _array_view(record.get("attached_room_actions", [])),
 			"confirm_action_id": str(record.get("confirm_action_id", "")),
 			"scenario_owner_namespace": str(record.get("scenario_owner_namespace", "")),
 			"scenario_stable_object_id": str(record.get("scenario_stable_object_id", "")),
@@ -2983,7 +6034,8 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"pose": str(record.get("pose", "")),
 			"behavior": str(record.get("behavior", "")),
 			"route_id": str(record.get("route_id", "")),
-			"route_points": _copy_array(record.get("route_points", [])),
+			"authored_position_route_id": str(record.get("authored_position_route_id", "")),
+			"route_points": _array_view(record.get("route_points", [])),
 			"non_color_state": str(record.get("non_color_state", "")),
 			"z_order": int(record.get("z_order", 0)),
 			"z_order_explicit": bool(record.get("z_order_explicit", record.has("z_order"))),
@@ -2991,6 +6043,20 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"layout_index": maxi(0, int(record.get("layout_index", 0))),
 			"layout_spot_field": str(record.get("layout_spot_field", "")),
 			"placement_class": str(record.get("placement_class", "")),
+			"slot_id": slot_id,
+			"slot_family": str(record.get("slot_family", record.get("manifest_family", ""))),
+			"manifest_object_id": str(record.get("manifest_object_id", "")),
+			"manifest_presentation_id": str(record.get("manifest_presentation_id", "")),
+			"manifest_family": str(record.get("manifest_family", record.get("slot_family", ""))),
+			"manifest_source_kind": str(record.get("manifest_source_kind", "")),
+			"manifest_source_id": str(record.get("manifest_source_id", "")),
+			"manifest_exact_slot_id": str(record.get("manifest_exact_slot_id", "")),
+			"manifest_required": bool(record.get("manifest_required", false)),
+			"manifest_physical": bool(record.get("manifest_physical", false)),
+			"manifest_render_key": str(record.get("manifest_render_key", "")),
+			"manifest_action_ids": _array_view(record.get("manifest_action_ids", [])),
+			"manifest_metadata": record.get("manifest_metadata", {}) as Dictionary if typeof(record.get("manifest_metadata", {})) == TYPE_DICTIONARY else {},
+			"presentation_mode": str(record.get("presentation_mode", "room")),
 			"contact": str(record.get("contact", "")),
 		}
 		objects.append(_apply_draw_hints(scene_object, object_type, index))
@@ -3058,7 +6124,7 @@ func _settled_person_objects(objects: Array) -> Dictionary:
 			continue
 		var object_data := value as Dictionary
 		var object_id := str(object_data.get("id", "")).strip_edges()
-		if object_id.is_empty() or not EnvironmentPlacementScript.is_person_class(str(object_data.get("placement_class", ""))):
+		if object_id.is_empty() or not _scene_object_represents_person(object_data):
 			continue
 		var settled := object_data.duplicate(true)
 		settled.erase("person_transit_active")
@@ -3066,6 +6132,18 @@ func _settled_person_objects(objects: Array) -> Dictionary:
 		settled.erase("person_transit_settled_position")
 		result[object_id] = settled
 	return result
+
+
+static func _scene_object_represents_person(object_data: Dictionary) -> bool:
+	if not EnvironmentPlacementScript.is_person_class(str(object_data.get("placement_class", ""))):
+		return false
+	var visual_type := str(object_data.get("type", "")).strip_edges().to_lower()
+	if visual_type in ["actor", "character", "npc", "scenario_actor"]:
+		return true
+	if not str(object_data.get("actor_id", "")).strip_edges().is_empty():
+		return true
+	var actor_value: Variant = object_data.get("character_actor", {})
+	return typeof(actor_value) == TYPE_DICTIONARY and not (actor_value as Dictionary).is_empty()
 
 
 func _start_person_transit(object_id: String, settled_value: Variant, kind: String) -> void:
@@ -3090,53 +6168,35 @@ func _start_person_transit(object_id: String, settled_value: Variant, kind: Stri
 
 
 func _person_transit_route(settled: Dictionary, kind: String) -> Dictionary:
-	var surfaces := EnvironmentPlacementScript.surface_map(foundation_snapshot)
-	var doorway_values: Variant = surfaces.get("doorways", [])
-	var floor_data: Dictionary = surfaces.get("floor", {}) if typeof(surfaces.get("floor", {})) == TYPE_DICTIONARY else {}
-	var band_values: Variant = floor_data.get("bands", [])
-	if typeof(doorway_values) != TYPE_ARRAY or (doorway_values as Array).is_empty() or typeof(band_values) != TYPE_ARRAY or (band_values as Array).is_empty():
+	var surfaces := _developer_placement_surface_map()
+	var settled_slot_id := str(settled.get("slot_id", "")).strip_edges()
+	if settled_slot_id.is_empty():
 		return {}
-	var settled_position: Vector2 = settled.get("position", Vector2(0.5, 0.5))
-	var settled_center := settled_position * Vector2(BOARD_SIZE)
-	var object_size: Vector2 = settled.get("size", Vector2(64.0, 96.0))
-	var settled_contact := Vector2(settled_center.x, settled_center.y + object_size.y * 0.5)
-	var doorway_center := Vector2(-1.0, -1.0)
-	var doorway_distance := INF
-	for doorway_value in doorway_values as Array:
-		if typeof(doorway_value) != TYPE_DICTIONARY:
-			continue
-		var doorway_rect := _pixel_bounds_rect((doorway_value as Dictionary).get("bounds", []))
-		if not doorway_rect.has_area():
-			continue
-		var candidate := doorway_rect.get_center()
-		var distance := candidate.distance_squared_to(settled_contact)
-		if distance < doorway_distance:
-			doorway_distance = distance
-			doorway_center = candidate
-	if doorway_center.x < 0.0:
+	var exit_slots := JsonCoerceScript._copy_array(surfaces.get("exit_slots", []))
+	exit_slots.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		var left := _copy_dictionary(left_value)
+		var right := _copy_dictionary(right_value)
+		var left_priority := int(left.get("priority", 0))
+		var right_priority := int(right.get("priority", 0))
+		return str(left.get("id", "")) < str(right.get("id", "")) if left_priority == right_priority else left_priority < right_priority
+	)
+	if exit_slots.is_empty():
 		return {}
-	var floor_band := Rect2()
-	var band_distance := INF
-	for band_value in band_values as Array:
-		var candidate_band := _pixel_bounds_rect(band_value)
-		if not candidate_band.has_area():
-			continue
-		var candidate_contact := Vector2(
-			clampf(settled_contact.x, candidate_band.position.x, candidate_band.end.x),
-			clampf(settled_contact.y, candidate_band.position.y, candidate_band.end.y)
-		)
-		var distance := candidate_contact.distance_squared_to(settled_contact)
-		if distance < band_distance:
-			band_distance = distance
-			floor_band = candidate_band
-	if not floor_band.has_area():
+	var exit_slot := _copy_dictionary(exit_slots[0])
+	var exit_rect := _pixel_bounds_rect(exit_slot.get("hit_rect", []))
+	if not exit_rect.has_area():
 		return {}
-	var lane_contact_y := clampf(settled_contact.y, floor_band.position.y + 2.0, floor_band.end.y - 2.0)
-	var doorway_x := clampf(doorway_center.x, floor_band.position.x + 2.0, floor_band.end.x - 2.0)
-	var lane_y := lane_contact_y - object_size.y * 0.5
-	var doorway_position := Vector2(doorway_x, lane_y)
-	var lane_position := Vector2(clampf(settled_center.x, floor_band.position.x + 2.0, floor_band.end.x - 2.0), lane_y)
-	var pixel_points := [doorway_position, lane_position, settled_center]
+	var settled_slot := _surface_slot_by_id(surfaces, settled_slot_id)
+	if settled_slot.is_empty():
+		return {}
+	var settled_lane_ids := JsonCoerceScript._copy_array(settled_slot.get("walk_lane_ids", []))
+	var lane_ids: Array = []
+	for lane_id_value in JsonCoerceScript._copy_array(exit_slot.get("walk_lane_ids", [])):
+		if settled_lane_ids.has(lane_id_value):
+			lane_ids.append(lane_id_value)
+	var pixel_points := EnvironmentSlotBinderScript.authored_route_points(surfaces, exit_slot, settled_slot, lane_ids)
+	if pixel_points.size() < 2:
+		return {}
 	if kind == "departure":
 		pixel_points.reverse()
 	var points: Array = []
@@ -3149,7 +6209,7 @@ func _person_transit_route(settled: Dictionary, kind: String) -> Dictionary:
 	var small_rect := _rect_from_dict(settled.get("small_screen_rect", {}))
 	var small_endpoint := small_rect.get_center() if small_rect.has_area() else endpoint / Vector2(BOARD_SIZE)
 	if kind == "departure":
-		small_endpoint = doorway_position / Vector2(BOARD_SIZE)
+		small_endpoint = exit_rect.get_center() / Vector2(BOARD_SIZE)
 	var stage := {
 		"mode": "to_endpoint",
 		"duration_sec": clampf(distance / PERSON_TRANSIT_SPEED_PIXELS_PER_SEC, PERSON_TRANSIT_MIN_DURATION_SEC, PERSON_TRANSIT_MAX_DURATION_SEC),
@@ -3160,6 +6220,15 @@ func _person_transit_route(settled: Dictionary, kind: String) -> Dictionary:
 		"small_screen_endpoint": {"x": small_endpoint.x, "y": small_endpoint.y},
 	}
 	return {"points": points, "stage": stage}
+
+
+func _surface_slot_by_id(surfaces: Dictionary, slot_id: String) -> Dictionary:
+	for field in SLOT_COLLECTION_FIELDS:
+		for slot_value in JsonCoerceScript._copy_array(surfaces.get(field, [])):
+			var slot := _copy_dictionary(slot_value)
+			if str(slot.get("id", "")) == slot_id:
+				return slot
+	return {}
 
 
 func _apply_person_transit_to_scene_object(object_id: String, transit: Dictionary) -> void:
@@ -3175,7 +6244,7 @@ func _apply_person_transit_fields(object_data: Dictionary, transit: Dictionary) 
 	object_data["person_transit_settled_position"] = object_data.get("position", Vector2(0.5, 0.5))
 	object_data["interactive"] = false
 	object_data["disabled"] = false
-	object_data["actor_route_points"] = _copy_array(transit.get("route_points", []))
+	object_data["actor_route_points"] = JsonCoerceScript._copy_array(transit.get("route_points", []))
 	object_data["actor_route_stage"] = _copy_dictionary(transit.get("route_stage", {}))
 
 
@@ -3277,14 +6346,25 @@ func _object_layout_footprint(object_data: Dictionary, position: Vector2) -> Rec
 	return _clamp_board_rect(footprint)
 
 
+func _scene_object_is_scenario_owned(object_data: Dictionary) -> bool:
+	var object_id := str(object_data.get("id", ""))
+	var object_type := str(object_data.get("type", "")).to_lower()
+	return str(object_data.get("owner_namespace", "")).to_lower() == "scenario" \
+		or object_id.begins_with("scenario::") \
+		or str(object_data.get("slot_family", "")).to_lower() == "scenario" \
+		or object_type == "scenario" \
+		or object_type.begins_with("scenario_")
+
+
 func _scene_object_layout_snapshot(objects: Array) -> Dictionary:
 	var entries: Array = []
 	var overlaps: Array = []
+	var allowed_overlaps: Array = []
 	for index in range(objects.size()):
 		if typeof(objects[index]) != TYPE_DICTIONARY:
 			continue
 		var object_data: Dictionary = objects[index]
-		var object_rect := _board_rect_for_object(object_data)
+		var object_rect := _natural_model_rect_for_object(object_data)
 		var footprint := _object_layout_footprint(object_data, object_data.get("position", Vector2(0.5, 0.5)))
 		var entry := {
 			"id": str(object_data.get("id", "")),
@@ -3292,9 +6372,10 @@ func _scene_object_layout_snapshot(objects: Array) -> Dictionary:
 			"rect": _rect_to_snapshot(object_rect),
 			"footprint": _rect_to_snapshot(footprint),
 			"interaction_rect": _rect_to_snapshot(_interaction_rect_for_object(object_data)),
-			"label_rect": _rect_to_snapshot(_label_rect_for_object(object_rect, str(object_data.get("label", "")))),
+			"label_rect": _rect_to_snapshot(_resolved_label_rect_for_object(object_data, object_rect)),
 			"z_order": int(object_data.get("scenario_z_order", object_data.get("source_order", index))),
 			"layout_authority_identity": str(object_data.get("scenario_layout_authority_identity", "")),
+			"scenario_owned": _scene_object_is_scenario_owned(object_data),
 			"actor_route_stage": _copy_dictionary(object_data.get("actor_route_stage", {})),
 			"actor_route_position": _actor_route_position(object_data),
 		}
@@ -3307,19 +6388,58 @@ func _scene_object_layout_snapshot(objects: Array) -> Dictionary:
 				var intersection := a_rect.intersection(b_rect)
 				var area := maxf(0.0, intersection.size.x) * maxf(0.0, intersection.size.y)
 				if area > OBJECT_LAYOUT_MAX_OVERLAP_AREA:
-					overlaps.append({
+					var overlap := {
 						"a": str((entries[a] as Dictionary).get("id", "")),
 						"b": str((entries[b] as Dictionary).get("id", "")),
 						"area": area,
-					})
+					}
+					if bool((entries[a] as Dictionary).get("scenario_owned", false)) \
+							or bool((entries[b] as Dictionary).get("scenario_owned", false)):
+						allowed_overlaps.append(overlap)
+					else:
+						overlaps.append(overlap)
 	return {
 		"objects": entries,
 		"overlap_count": overlaps.size(),
 		"overlaps": overlaps,
+		"allowed_overlap_count": allowed_overlaps.size(),
+		"allowed_overlaps": allowed_overlaps,
 		"gap": OBJECT_LAYOUT_GAP,
 		"margin": OBJECT_LAYOUT_MARGIN,
 		"small_screen_mode": small_screen_mode,
 		"deterministic_z_order": true,
+		"label_layout": object_label_layout_stats.duplicate(true),
+	}
+
+
+func accessibility_clickable_rect_audit() -> Dictionary:
+	var entries: Array = []
+	var violations: Array = []
+	for object_data in _active_scene_objects():
+		if typeof(object_data) != TYPE_DICTIONARY or not bool((object_data as Dictionary).get("interactive", true)):
+			continue
+		var object_rect := _interaction_rect_for_object(object_data as Dictionary)
+		entries.append({"id": str((object_data as Dictionary).get("id", "")), "kind": "object", "rect": _rect_to_snapshot(object_rect)})
+		if small_screen_mode and (object_rect.size.x < SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE.x or object_rect.size.y < SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE.y):
+			violations.append("object:%s" % str((object_data as Dictionary).get("id", "")))
+	var info := _selected_object_info()
+	if not info.is_empty():
+		for entry_value in _selected_info_action_entries_from_info(info):
+			if typeof(entry_value) != TYPE_DICTIONARY:
+				continue
+			var entry := entry_value as Dictionary
+			if not bool(entry.get("enabled", true)):
+				continue
+			var action_rect: Rect2 = entry.get("button_rect", Rect2())
+			entries.append({"id": str(entry.get("emit_object_id", entry.get("label", ""))), "kind": "action", "rect": _rect_to_snapshot(action_rect)})
+			if small_screen_mode and action_rect.size.y < SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT:
+				violations.append("action:%s" % str(entry.get("emit_object_id", entry.get("label", ""))))
+	return {
+		"small_screen_mode": small_screen_mode,
+		"minimum_action_height": SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT if small_screen_mode else 0.0,
+		"entries": entries,
+		"violations": violations,
+		"valid": violations.is_empty(),
 	}
 
 
@@ -3405,6 +6525,9 @@ func _production_game_prop(object_data: Dictionary) -> String:
 	if source_id == "scratch_tickets":
 		return "scratch_ticket_room"
 	if source_id == "craps":
+		var visual: Dictionary = object_data.get("visual_state", {}) if typeof(object_data.get("visual_state", {})) == TYPE_DICTIONARY else {}
+		if authored == "street_craps_circle" or str(visual.get("variant", "")) == "street_craps":
+			return "street_craps_circle"
 		return "craps_room"
 	if source_id == "bar_dice":
 		return "bar_dice_room"
@@ -3422,7 +6545,7 @@ func _production_game_prop(object_data: Dictionary) -> String:
 
 
 func _normalized_rect_from_record(record: Dictionary) -> Rect2:
-	var layout_resolved := bool(record.get("scenario_layout_resolved", false))
+	var layout_resolved := bool(record.get("scenario_layout_resolved", false)) or bool(record.get("fixed_slot_geometry", false))
 	var rect := _rect_from_dict(record.get("normalized_rect", record.get("focus_rect", {})))
 	if layout_resolved:
 		# Finalized scenario records are already board-bounded and digested by the
@@ -3453,23 +6576,6 @@ func _minimum_object_visual_size(object_type: String) -> Vector2:
 	return DEFAULT_OBJECT_VISUAL_MIN_SIZE
 
 
-func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		var id := str(entry)
-		if not id.is_empty():
-			result.append(id)
-	return result
-
-
-func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
 func _array_view(value: Variant) -> Array:
 	if typeof(value) != TYPE_ARRAY:
 		return []
@@ -3498,7 +6604,7 @@ func _warm_object_info_layout_cache(object_data: Dictionary) -> void:
 	var lines := _object_info_lines(object_data)
 	if title.is_empty() and lines.is_empty():
 		return
-	var object_rect := _board_rect_for_object(object_data)
+	var object_rect := _natural_model_rect_for_object(object_data)
 	if object_rect.size.x <= 0.0 or object_rect.size.y <= 0.0:
 		return
 	_object_info_rect(object_rect, title, lines, str(object_data.get("type", "item")), object_data)
@@ -3525,20 +6631,12 @@ func _grand_casino_staffing_snapshot() -> Dictionary:
 		return {}
 	var value: Variant = foundation_snapshot.get("grand_casino_staffing", {})
 	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
-
-
-func _grand_casino_staff_member(role_id: String) -> Dictionary:
-	var staffing := _grand_casino_staffing_snapshot()
-	var assignments: Dictionary = staffing.get("assignments", {}) if typeof(staffing.get("assignments", {})) == TYPE_DICTIONARY else {}
-	var value: Variant = assignments.get(role_id, {})
-	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
-
-
 func _selected_object_info_snapshot() -> Dictionary:
 	var info := _selected_object_info()
 	if info.is_empty():
 		return {"visible": false}
 	var object_data: Dictionary = info.get("object", {})
+	var expanded := bool(info.get("expanded", false))
 	var action_entries := _selected_info_action_entries_from_info(info)
 	var action_button_rect := _selected_info_action_button_rect_from_entries(action_entries)
 	var visual_rect := _animated_info_card_rect(info)
@@ -3546,7 +6644,11 @@ func _selected_object_info_snapshot() -> Dictionary:
 		"visible": true,
 		"object_id": str(info.get("object_id", "")),
 		"title": str(info.get("title", "")),
-		"lines": _copy_array(info.get("lines", [])),
+		"lines": JsonCoerceScript._copy_array(info.get("lines", [])),
+		"expanded": expanded,
+		"interaction_available": _object_info_is_actionable(object_data),
+		"interaction_status": _object_info_interaction_status(object_data),
+		"interaction_icon": "action" if _object_info_is_actionable(object_data) else "view_only",
 		"rect": _rect_to_snapshot(info.get("rect", Rect2())),
 		"visual_rect": _rect_to_snapshot(visual_rect),
 		"animating": info_card_animating,
@@ -3557,9 +6659,9 @@ func _selected_object_info_snapshot() -> Dictionary:
 		"action_label": _selected_info_action_label(object_data),
 		"action_button_rect": _rect_to_snapshot(action_button_rect),
 		"actions": _selected_info_action_snapshot_list(action_entries),
-		"attribute_badges": _copy_array(object_data.get("attribute_badges", [])),
-		"badge_hit_entries": _selected_info_badge_snapshot_list(_selected_info_badge_entries_for_rect(object_data, visual_rect, visual_rect.position.y + OBJECT_INFO_BODY_Y)),
-		"body_text_start_y": _selected_info_body_text_start_y(object_data, visual_rect),
+		"attribute_badges": JsonCoerceScript._copy_array(object_data.get("attribute_badges", [])) if expanded else [],
+		"badge_hit_entries": _selected_info_badge_snapshot_list(_selected_info_badge_entries_for_rect(object_data, visual_rect, visual_rect.position.y + OBJECT_INFO_BODY_Y)) if expanded else [],
+		"body_text_start_y": _selected_info_body_text_start_y(object_data, visual_rect, expanded),
 	}
 
 
@@ -3573,18 +6675,43 @@ func _selected_object_info() -> Dictionary:
 	if object_data.is_empty():
 		return {}
 	var title := str(object_data.get("label", "")).strip_edges()
-	var lines := _object_info_lines(object_data)
+	var expanded := not selected_object_id.is_empty() and object_id == selected_object_id
+	var lines := _object_info_lines(object_data) if expanded else _hover_object_info_lines(object_data)
 	if title.is_empty() and lines.is_empty():
 		return {}
-	var object_rect := _board_rect_for_object(object_data)
+	var object_rect := _natural_model_rect_for_object(object_data)
 	return {
 		"object": object_data,
 		"object_id": object_id,
 		"title": title,
 		"lines": lines,
-		"rect": _object_info_rect(object_rect, title, lines, str(object_data.get("type", "item")), object_data),
+		"expanded": expanded,
+		"rect": _object_info_rect(object_rect, title, lines, str(object_data.get("type", "item")), object_data, expanded),
 		"object_rect": object_rect,
 	}
+
+
+func _hover_object_info_lines(object_data: Dictionary) -> Array:
+	var full_lines := _object_info_lines(object_data)
+	var lines: Array = []
+	if not full_lines.is_empty():
+		lines.append(full_lines[0])
+	else:
+		var fallback := _fallback_object_description(object_data).strip_edges()
+		if not fallback.is_empty():
+			lines.append(fallback)
+	lines.append("Interactive — click for details." if _object_info_is_actionable(object_data) else "View only — click for details.")
+	return lines
+
+
+func _object_info_is_actionable(object_data: Dictionary) -> bool:
+	return not object_data.is_empty() \
+		and bool(object_data.get("interactive", true)) \
+		and not bool(object_data.get("disabled", false))
+
+
+func _object_info_interaction_status(object_data: Dictionary) -> String:
+	return "Interactive" if _object_info_is_actionable(object_data) else "View only"
 
 
 func _object_info_lines(object_data: Dictionary) -> Array:
@@ -3740,13 +6867,17 @@ func _fit_draw_text(text: String, font: Font, font_size: int, max_width: float) 
 	var fitted := compact
 	if font != null and not compact.is_empty() and _draw_text_width(compact, font, font_size) > max_width:
 		fitted = ""
+		var ellipsis := "…"
+		var ellipsis_width := _draw_text_width(ellipsis, font, font_size)
 		var available := compact.length()
 		while available > 0:
-			var candidate := compact.left(available).strip_edges()
-			if _draw_text_width(candidate, font, font_size) <= max_width:
-				fitted = candidate
+			var candidate := compact.left(available).strip_edges().trim_suffix(".")
+			if _draw_text_width(candidate, font, font_size) + ellipsis_width <= max_width:
+				fitted = candidate + ellipsis
 				break
 			available -= 1
+		if fitted.is_empty() and ellipsis_width <= max_width:
+			fitted = ellipsis
 	_store_fit_draw_text(cache_key, fitted)
 	return fitted
 
@@ -3775,11 +6906,33 @@ func _selected_info_has_single_action_button(object_data: Dictionary) -> bool:
 		return false
 	if str(object_data.get("id", "")) != selected_object_id:
 		return false
-	if bool(object_data.get("disabled", false)):
+	var authored_actions := _array_view(object_data.get("available_actions", []))
+	var visible_actions := _selected_info_available_actions(object_data)
+	# If action records exist, their presentation visibility is authoritative.
+	# An object-level confirm id must not resurrect an explicitly hidden action.
+	if not authored_actions.is_empty() and visible_actions.is_empty():
 		return false
 	if not str(object_data.get("confirm_action_id", "")).strip_edges().is_empty():
 		return true
-	return not _array_view(object_data.get("available_actions", [])).is_empty()
+	return not visible_actions.is_empty()
+
+
+func _selected_info_action_is_visible(action_data: Dictionary) -> bool:
+	return bool(action_data.get("visible", true)) \
+		and bool(action_data.get("presentation_visible", true)) \
+		and not bool(action_data.get("hidden", false)) \
+		and not bool(action_data.get("hidden_only", false))
+
+
+func _selected_info_available_actions(object_data: Dictionary) -> Array:
+	var result: Array = []
+	for action_value in _array_view(object_data.get("available_actions", [])):
+		if typeof(action_value) != TYPE_DICTIONARY:
+			continue
+		var action_data: Dictionary = action_value
+		if _selected_info_action_is_visible(action_data):
+			result.append(action_data)
+	return result
 
 
 func _selected_info_inline_actions(object_data: Dictionary) -> Array:
@@ -3787,14 +6940,14 @@ func _selected_info_inline_actions(object_data: Dictionary) -> Array:
 		return []
 	if str(object_data.get("id", "")) != selected_object_id:
 		return []
-	if bool(object_data.get("disabled", false)):
-		return []
 	var actions := _array_view(object_data.get("inline_actions", []))
 	var result: Array = []
 	for action in actions:
 		if typeof(action) != TYPE_DICTIONARY:
 			continue
 		var action_data: Dictionary = action
+		if not _selected_info_action_is_visible(action_data):
+			continue
 		var label := str(action_data.get("label", "")).strip_edges()
 		var emit_object_id := str(action_data.get("emit_object_id", action_data.get("id", ""))).strip_edges()
 		if label.is_empty() or emit_object_id.is_empty():
@@ -3849,7 +7002,7 @@ func _selected_info_action_label(object_data: Dictionary) -> String:
 	if not inline_actions.is_empty() and typeof(inline_actions[0]) == TYPE_DICTIONARY:
 		return str((inline_actions[0] as Dictionary).get("label", "")).strip_edges().capitalize()
 	var action_id := str(object_data.get("confirm_action_id", "")).strip_edges()
-	var actions := _array_view(object_data.get("available_actions", []))
+	var actions := _selected_info_available_actions(object_data)
 	var label := ""
 	if not actions.is_empty() and typeof(actions[0]) == TYPE_DICTIONARY:
 		label = str((actions[0] as Dictionary).get("label", "")).strip_edges()
@@ -3888,15 +7041,21 @@ func _selected_info_action_label(object_data: Dictionary) -> String:
 	return label.capitalize()
 
 
+func _selected_info_single_action_enabled(object_data: Dictionary) -> bool:
+	if object_data.is_empty() or bool(object_data.get("disabled", false)) or not bool(object_data.get("enabled", true)):
+		return false
+	var actions := _array_view(object_data.get("available_actions", []))
+	if not actions.is_empty() and typeof(actions[0]) == TYPE_DICTIONARY:
+		var action := actions[0] as Dictionary
+		return bool(action.get("enabled", true)) and not bool(action.get("disabled", false))
+	return not str(object_data.get("confirm_action_id", "")).strip_edges().is_empty()
+
+
 func _selected_info_action_button_rect() -> Rect2:
 	var info := _selected_object_info()
 	if info.is_empty():
 		return Rect2()
 	return _selected_info_action_button_rect_from_entries(_selected_info_action_entries_for_rect(info, _animated_info_card_rect(info)))
-
-
-func _selected_info_action_button_rect_from_info(info: Dictionary) -> Rect2:
-	return _selected_info_action_button_rect_from_entries(_selected_info_action_entries_from_info(info))
 
 
 func _selected_info_action_button_rect_from_entries(entries: Array) -> Rect2:
@@ -3949,12 +7108,25 @@ func _selected_info_action_entries_for_rect(info: Dictionary, card: Rect2) -> Ar
 				"detail_rect": detail_rect,
 				"selected": entries.size() == selected_info_action_index,
 				"input_action": str(action_data.get("input_action", "")),
-				"enabled": bool(action_data.get("enabled", true)),
+				"enabled": not bool(object_data.get("disabled", false))
+					and bool(object_data.get("enabled", true))
+					and not bool(action_data.get("disabled", false))
+					and bool(action_data.get("enabled", true)),
 			})
 			y += button_height + detail_height + OBJECT_INFO_INLINE_ACTION_GAP
 		return entries
 	if _selected_info_has_single_action_button(object_data):
 		var action_height := _selected_info_action_height()
+		var available_actions := _selected_info_available_actions(object_data)
+		var first_action: Dictionary = {}
+		if not available_actions.is_empty() and typeof(available_actions[0]) == TYPE_DICTIONARY:
+			first_action = available_actions[0]
+		var single_enabled := _selected_info_single_action_enabled(object_data) \
+			and not bool(object_data.get("disabled", false)) \
+			and bool(object_data.get("enabled", true)) \
+			and not bool(first_action.get("disabled", false)) \
+			and bool(first_action.get("enabled", true)) \
+			and not str(object_data.get("confirm_action_id", "")).strip_edges().is_empty()
 		entries.append({
 			"inline": false,
 			"label": _selected_info_action_label(object_data),
@@ -3966,6 +7138,7 @@ func _selected_info_action_entries_for_rect(info: Dictionary, card: Rect2) -> Ar
 			),
 			"detail_rect": Rect2(),
 			"selected": false,
+			"enabled": single_enabled,
 		})
 	return entries
 
@@ -3988,6 +7161,7 @@ func _selected_info_action_snapshot_list(entries: Array) -> Array:
 			"detail_rect": _rect_to_snapshot(action_entry.get("detail_rect", Rect2())),
 			"inline": bool(action_entry.get("inline", false)),
 			"selected": bool(action_entry.get("selected", false)),
+			"enabled": bool(action_entry.get("enabled", false)),
 		})
 	return snapshots
 
@@ -4017,9 +7191,9 @@ func _selected_info_badge_snapshot_list(entries: Array) -> Array:
 	return snapshots
 
 
-func _selected_info_body_text_start_y(object_data: Dictionary, card: Rect2) -> float:
+func _selected_info_body_text_start_y(object_data: Dictionary, card: Rect2, include_badges: bool = true) -> float:
 	var y := card.position.y + OBJECT_INFO_BODY_Y
-	if not _array_view(object_data.get("attribute_badges", [])).is_empty():
+	if include_badges and not _array_view(object_data.get("attribute_badges", [])).is_empty():
 		var entries := _selected_info_badge_entries_for_rect(object_data, card, y)
 		if not entries.is_empty() and typeof(entries[0]) == TYPE_DICTIONARY:
 			var first_entry: Dictionary = entries[0]
@@ -4065,7 +7239,7 @@ func _selected_info_badge_tooltip_at_local_position(local_position: Vector2) -> 
 
 func _activate_selected_info_action_at_local_position(local_position: Vector2) -> bool:
 	var action_entry := _selected_info_action_entry_at_local_position(local_position)
-	if action_entry.is_empty():
+	if action_entry.is_empty() or not bool(action_entry.get("enabled", false)):
 		return false
 	var info := _selected_object_info()
 	var object_id := str(info.get("object_id", selected_object_id))
@@ -4100,7 +7274,7 @@ func _activate_selected_info_action_for_authored_input(event: InputEvent) -> boo
 
 
 func _activate_selected_info_action_entry(action_entry: Dictionary) -> bool:
-	if action_entry.is_empty() or not bool(action_entry.get("enabled", true)):
+	if action_entry.is_empty() or not bool(action_entry.get("enabled", false)):
 		return false
 	var info := _selected_object_info()
 	var object_id := str(info.get("object_id", selected_object_id))
@@ -4189,11 +7363,11 @@ func _compact_info_text(text: String) -> String:
 	return compact
 
 
-func _object_info_rect(object_rect: Rect2, title: String, lines: Array, object_type: String, object_data: Dictionary = {}) -> Rect2:
+func _object_info_rect(object_rect: Rect2, title: String, lines: Array, object_type: String, object_data: Dictionary = {}, include_details: bool = true) -> Rect2:
 	var visible_rect := _visible_board_rect().grow(-OBJECT_LAYOUT_MARGIN)
 	if visible_rect.size.x <= 0.0 or visible_rect.size.y <= 0.0:
 		visible_rect = Rect2(Vector2(OBJECT_LAYOUT_MARGIN, OBJECT_LAYOUT_MARGIN), Vector2(BOARD_SIZE) - Vector2(OBJECT_LAYOUT_MARGIN * 2.0, OBJECT_LAYOUT_MARGIN * 2.0))
-	var card_size := _object_info_size(title, lines, object_type, visible_rect, object_data)
+	var card_size := _object_info_size(title, lines, object_type, visible_rect, object_data, include_details)
 	return _object_info_rect_for_visible(object_rect, card_size, visible_rect)
 
 
@@ -4251,7 +7425,7 @@ func _append_unique_info_rect(candidates: Array, rect: Rect2) -> void:
 	candidates.append(rect)
 
 
-func _object_info_size(title: String, lines: Array, object_type: String, visible_rect: Rect2, object_data: Dictionary = {}) -> Vector2:
+func _object_info_size(title: String, lines: Array, object_type: String, visible_rect: Rect2, object_data: Dictionary = {}, include_details: bool = true) -> Vector2:
 	var max_width := minf(_object_info_width(object_type), visible_rect.size.x)
 	var min_width := minf(OBJECT_INFO_MIN_WIDTH, max_width)
 	var font := get_theme_default_font()
@@ -4262,16 +7436,17 @@ func _object_info_size(title: String, lines: Array, object_type: String, visible
 	var content_width := _object_info_header_width(title_text, type_text, font)
 	for line in lines:
 		content_width = maxf(content_width, _draw_text_width(str(line), font, 9) + OBJECT_INFO_PADDING_X * 2.0)
-	content_width = maxf(content_width, _object_info_action_content_width(object_data, font))
+	if include_details:
+		content_width = maxf(content_width, _object_info_action_content_width(object_data, font))
 	if lines.is_empty():
 		content_width = maxf(content_width, min_width)
-	var badge_height := _object_info_badge_height(object_data)
+	var badge_height := _object_info_badge_height(object_data) if include_details else 0.0
 	if badge_height > 0.0:
 		content_width = maxf(content_width, _object_info_badge_width(object_data))
 	var width := clampf(ceilf(content_width), min_width, max_width)
 	var line_count := maxi(1, lines.size())
 	var height := maxf(OBJECT_INFO_MIN_HEIGHT, OBJECT_INFO_BODY_Y + badge_height + float(line_count) * OBJECT_INFO_LINE_HEIGHT + OBJECT_INFO_BOTTOM_PADDING)
-	var action_area_height := _selected_info_action_area_height(object_data, width - OBJECT_INFO_PADDING_X * 2.0)
+	var action_area_height := _selected_info_action_area_height(object_data, width - OBJECT_INFO_PADDING_X * 2.0) if include_details else 0.0
 	if action_area_height > 0.0:
 		height += OBJECT_INFO_ACTION_GAP + action_area_height
 	height = minf(ceilf(height), visible_rect.size.y)
@@ -4307,7 +7482,12 @@ func _object_info_action_content_width(object_data: Dictionary, font: Font) -> f
 
 
 func _object_info_header_width(title: String, type_text: String, font: Font) -> float:
-	return _draw_text_width(title, font, 11) + _object_info_type_width(type_text, font) + OBJECT_INFO_PADDING_X * 2.0 + OBJECT_INFO_TYPE_GAP
+	return _draw_text_width(title, font, 11) \
+		+ _object_info_type_width(type_text, font) \
+		+ OBJECT_INFO_PADDING_X * 2.0 \
+		+ OBJECT_INFO_TYPE_GAP \
+		+ OBJECT_INFO_STATUS_ICON_SIZE \
+		+ OBJECT_INFO_STATUS_ICON_GAP
 
 
 func _object_info_type_width(type_text: String, font: Font) -> float:
@@ -4325,13 +7505,6 @@ func _draw_text_width(text: String, font: Font, font_size: int) -> float:
 		draw_text_width_cache.clear()
 	draw_text_width_cache[cache_key] = width
 	return width
-
-
-func _clear_draw_text_caches() -> void:
-	draw_text_width_cache = {}
-	fit_draw_text_cache = {}
-
-
 func _clamp_rect_to_visible(rect: Rect2, visible_rect: Rect2) -> Rect2:
 	var x := clampf(rect.position.x, visible_rect.position.x, visible_rect.end.x - rect.size.x)
 	var y := clampf(rect.position.y, visible_rect.position.y, visible_rect.end.y - rect.size.y)
@@ -4366,6 +7539,23 @@ func _invalidate_camera_target() -> void:
 	camera_target_dirty = true
 
 
+func _camera_focus_source() -> Dictionary:
+	if selected_object_id.is_empty():
+		return {"selected_object_id": ""}
+	var object_data := _scene_object(selected_object_id)
+	var slot_data := {}
+	if not object_data.is_empty():
+		var slot_id := str(object_data.get("slot_id", "")).strip_edges()
+		if not slot_id.is_empty():
+			slot_data = _developer_slot(slot_id)
+	return {
+		"selected_object_id": selected_object_id,
+		"environment_id": environment_id,
+		"object": object_data,
+		"slot": slot_data,
+	}
+
+
 func _update_camera_target_if_needed() -> void:
 	if not camera_target_dirty:
 		return
@@ -4380,7 +7570,7 @@ func _camera_lerp_weight(delta: float, speed: float) -> float:
 func _update_camera_target() -> void:
 	camera_target_dirty = false
 	camera_target_refresh_count += 1
-	if developer_placement_mode:
+	if developer_placement_mode or developer_slot_placement_mode:
 		camera_focus_active = false
 		camera_focus_point = Vector2(0.5, 0.5)
 		target_camera_zoom = 1.0
@@ -4393,7 +7583,7 @@ func _update_camera_target() -> void:
 		target_camera_zoom = 1.0
 		target_camera_offset = Vector2.ZERO
 		return
-	var object_rect := _board_rect_for_object(object_data)
+	var object_rect := _natural_model_rect_for_object(object_data)
 	var board_size := Vector2(BOARD_SIZE)
 	camera_focus_point = Vector2(
 		clampf((object_rect.position.x + object_rect.size.x * 0.5) / board_size.x, 0.0, 1.0),
@@ -4608,14 +7798,15 @@ func _set_hovered_object(object_id: String) -> void:
 		return
 	hovered_object_id = object_id
 	var hovered_object := _scene_object(object_id)
-	var enabled_hover := not hovered_object.is_empty() and not bool(hovered_object.get("disabled", false))
+	var enabled_hover := _object_info_is_actionable(hovered_object)
 	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if enabled_hover else Control.CURSOR_ARROW
+	_update_object_label_accessibility()
 	object_hovered.emit(object_id)
 	queue_redraw()
 
 
 func _focus_object_at_local_position(local_position: Vector2) -> void:
-	var object_ids := _object_ids_at_local_position(local_position)
+	var object_ids := _object_ids_at_local_position(local_position, false)
 	var object_id := ""
 	if not object_ids.is_empty():
 		object_id = object_ids[0]
@@ -4704,7 +7895,7 @@ func global_rect_for_selected_composition() -> Rect2:
 	var object_data := _scene_object(selected_object_id)
 	if object_data.is_empty():
 		return Rect2()
-	var composition := _board_rect_to_local_rect(_board_rect_for_object(object_data))
+	var composition := _board_rect_to_local_rect(_natural_model_rect_for_object(object_data))
 	var info := _selected_object_info()
 	if not info.is_empty():
 		var info_rect: Variant = info.get("rect", Rect2())
@@ -4742,19 +7933,224 @@ func _update_drunk_distortion_protected_rects() -> void:
 	for object_data in _active_scene_objects():
 		if typeof(object_data) != TYPE_DICTIONARY:
 			continue
-		var object_rect := _board_rect_for_object(object_data)
-		var label_rect := _label_rect_for_object(object_rect, str((object_data as Dictionary).get("label", "")))
+		var object_rect := _natural_model_rect_for_object(object_data)
+		var label_rect := _resolved_label_rect_for_object(object_data, object_rect)
 		if label_rect.size.x > 0.0 and label_rect.size.y > 0.0:
 			protected_rects.append(_board_rect_to_local_rect(label_rect.grow(3.0)))
 	drunk_distortion_overlay.set_ui_protected_rects(protected_rects)
 
 
+# Sealed fixed/scenario rectangles are normally exact draw, interaction, and
+# label authority. Grand Casino's compact game anchors deliberately keep their
+# collision/layout footprint separate from their larger cabinet/table artwork;
+# enlarging the authority rectangles makes the shared room resolver relocate
+# otherwise valid placements. Legacy and otherwise unslotted room models retain
+# their natural dimensions and are anchored to the slot's physical contact.
+func _natural_model_rect_for_object(object_data: Dictionary) -> Rect2:
+	var slot_rect := _board_rect_for_object(object_data)
+	var object_scale := _scene_object_slot_scale(object_data)
+	var slot_machine_visual_rect := _slot_machine_world_visual_rect(object_data, slot_rect, object_scale)
+	if slot_machine_visual_rect.has_area():
+		return slot_machine_visual_rect
+	if bool(object_data.get("fixed_slot_geometry", false)):
+		var fixed_visual_rect := _grand_casino_fixed_game_visual_rect(object_data, slot_rect)
+		if fixed_visual_rect.has_area():
+			return _scaled_slotted_object_rect(fixed_visual_rect, object_data, object_scale)
+		return _scaled_slotted_object_rect(slot_rect, object_data, object_scale)
+	if bool(object_data.get("scenario_layout_resolved", false)):
+		return _scaled_slotted_object_rect(slot_rect, object_data, object_scale)
+	var model_size := _natural_model_size_for_object(object_data) * object_scale
+	if small_screen_mode and bool(object_data.get("interactive", true)):
+		model_size.x = maxf(model_size.x, SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE.x)
+		model_size.y = maxf(model_size.y, SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE.y)
+	var placement_class := str(object_data.get("placement_class", "")).strip_edges()
+	if placement_class.is_empty():
+		placement_class = EnvironmentPlacementScript.classify(
+			object_data,
+			str(object_data.get("interaction_type", object_data.get("type", ""))),
+			str(object_data.get("id", "")),
+			str(object_data.get("prop", object_data.get("icon_key", "")))
+		)
+	var center := slot_rect.get_center()
+	if placement_class not in ["wall_mounted", "hanging", "doorway"]:
+		center.y = slot_rect.end.y - model_size.y * 0.5
+	return Rect2(center - model_size * 0.5, model_size)
+
+
+# Slot anchors remain compact layout authority, but the displayed cabinet needs
+# enough room for its actual reel format. A 5x3 or feature cabinet cannot be
+# squeezed into the classic 3-reel silhouette without erasing the live result it
+# is meant to showcase. Developer scales below 1.0 stay useful but ease toward a
+# legibility floor instead of collapsing the reel cells to a few pixels.
+func _slot_machine_world_visual_rect(object_data: Dictionary, slot_rect: Rect2, object_scale: float) -> Rect2:
+	var visual := _slot_prop_visual_state(object_data)
+	var format_id := str(visual.get("machine_format", "")).strip_edges().to_lower()
+	if format_id.is_empty():
+		return Rect2()
+	var visual_size_value: Variant = SLOT_MACHINE_WORLD_VISUAL_SIZES.get(format_id, Vector2.ZERO)
+	var visual_size: Vector2 = visual_size_value if typeof(visual_size_value) == TYPE_VECTOR2 else Vector2.ZERO
+	if visual_size.x <= 0.0 or visual_size.y <= 0.0:
+		var reel_count := maxi(3, int(visual.get("reel_count", 3)))
+		var row_count := maxi(1, int(visual.get("row_count", 1)))
+		visual_size = Vector2(116.0 + float(maxi(0, reel_count - 3)) * 13.0, 88.0 + float(maxi(0, row_count - 1)) * 12.0)
+	var reel_overflow := maxi(0, int(visual.get("reel_count", 3)) - (3 if format_id == "classic_3_reel" else 5))
+	var row_overflow := maxi(0, int(visual.get("row_count", 1)) - (1 if format_id == "classic_3_reel" else 3))
+	visual_size += Vector2(float(reel_overflow) * 10.0, float(row_overflow) * 10.0)
+	var effective_scale := object_scale
+	if object_scale < 1.0:
+		effective_scale = lerpf(SLOT_MACHINE_COMPACT_SCALE_FLOOR, 1.0, clampf((object_scale - SLOT_OBJECT_SCALE_MIN) / (1.0 - SLOT_OBJECT_SCALE_MIN), 0.0, 1.0))
+	visual_size *= effective_scale
+	var placement_class := str(object_data.get("placement_class", "")).strip_edges()
+	if placement_class.is_empty():
+		placement_class = EnvironmentPlacementScript.classify(
+			object_data,
+			str(object_data.get("interaction_type", object_data.get("type", ""))),
+			str(object_data.get("id", "")),
+			str(object_data.get("prop", object_data.get("icon_key", "")))
+		)
+	var center := slot_rect.get_center()
+	if placement_class not in ["wall_mounted", "hanging", "doorway"]:
+		center.y = slot_rect.end.y - visual_size.y * 0.5
+	return Rect2(center - visual_size * 0.5, visual_size)
+
+
+func _scene_object_slot_scale(object_data: Dictionary) -> float:
+	var slot_id := str(object_data.get("slot_id", "")).strip_edges()
+	if slot_id.is_empty():
+		return 1.0
+	var slot := _developer_slot(slot_id)
+	return _developer_slot_object_scale(slot) if not slot.is_empty() else 1.0
+
+
+func _scaled_slotted_object_rect(rect: Rect2, object_data: Dictionary, scale: float) -> Rect2:
+	if not rect.has_area() or is_equal_approx(scale, 1.0):
+		return rect
+	var slot_id := str(object_data.get("slot_id", "")).strip_edges()
+	var slot := _developer_slot(slot_id)
+	var anchor := rect.get_center()
+	if not slot.is_empty():
+		anchor = _developer_slot_position(slot)
+		if developer_slot_placement_mode and slot_id == developer_slot_selected_id and developer_slot_pending_rect.has_area():
+			anchor = developer_slot_pending_position
+	return Rect2(anchor + (rect.position - anchor) * scale, rect.size * scale)
+
+
+func _grand_casino_fixed_game_visual_rect(object_data: Dictionary, slot_rect: Rect2) -> Rect2:
+	if environment_id != "grand_casino" or str(object_data.get("type", "")) != "game":
+		return Rect2()
+	var slot_id := str(object_data.get("slot_id", ""))
+	var visual_size_value: Variant = GRAND_CASINO_FIXED_GAME_VISUAL_SIZES.get(slot_id, Vector2.ZERO)
+	if typeof(visual_size_value) != TYPE_VECTOR2:
+		return Rect2()
+	var visual_size := visual_size_value as Vector2
+	if visual_size.x <= 0.0 or visual_size.y <= 0.0:
+		return Rect2()
+	return Rect2(slot_rect.get_center() - visual_size * 0.5, visual_size)
+
+
+func _natural_model_size_for_object(object_data: Dictionary) -> Vector2:
+	var interaction_type := str(object_data.get("interaction_type", "")).strip_edges().to_lower()
+	var size := _natural_model_size_for_type(interaction_type)
+	if size.x > 0.0 and size.y > 0.0:
+		return size
+	var visual_type := str(object_data.get("type", "")).strip_edges().to_lower()
+	size = _natural_model_size_for_type(visual_type)
+	if size.x > 0.0 and size.y > 0.0:
+		return size
+	var prop := str(object_data.get("prop", object_data.get("icon_key", ""))).strip_edges().to_lower()
+	match prop:
+		"bed":
+			return Vector2(150.0, 74.0)
+		"door", "motel_door", "side_door":
+			return Vector2(104.0, 64.0)
+		"machine", "slot_machine", "video_poker_machine", "coin_pusher_room":
+			return Vector2(110.0, 72.0)
+	var placement_class := str(object_data.get("placement_class", "")).strip_edges()
+	if placement_class.is_empty():
+		placement_class = EnvironmentPlacementScript.classify(
+			object_data,
+			visual_type,
+			str(object_data.get("id", "")),
+			prop
+		)
+	match placement_class:
+		"standing_person":
+			return Vector2(102.0, 64.0)
+		"behind_counter_person":
+			return Vector2(108.0, 70.0)
+		"seated_person":
+			return Vector2(100.0, 64.0)
+		"group":
+			return Vector2(118.0, 72.0)
+		"floor_fixture":
+			return Vector2(110.0, 72.0)
+		"ground_marker":
+			return Vector2(104.0, 58.0)
+		"surface_item", "shop_item":
+			return Vector2(90.0, 54.0)
+		"wall_mounted":
+			return Vector2(96.0, 54.0)
+		"hanging":
+			return Vector2(104.0, 58.0)
+		"doorway":
+			return Vector2(104.0, 64.0)
+	return DEFAULT_OBJECT_VISUAL_MIN_SIZE
+
+
+# Canonical pre-slot canvas footprints. These are model dimensions, not source
+# texture dimensions and not lower bounds to be reconciled with a slot.
+func _natural_model_size_for_type(object_type: String) -> Vector2:
+	match object_type:
+		"game":
+			return Vector2(110.0, 72.0)
+		"event":
+			return Vector2(100.0, 64.0)
+		"item":
+			return Vector2(90.0, 54.0)
+		"shopkeeper":
+			return Vector2(108.0, 70.0)
+		"game_hook":
+			return Vector2(104.0, 58.0)
+		"travel":
+			return Vector2(104.0, 64.0)
+		"service":
+			return Vector2(96.0, 54.0)
+		"lender":
+			return Vector2(102.0, 58.0)
+		"numbers", "numbers_silas":
+			return Vector2(106.0, 62.0)
+		"environment_layer":
+			return Vector2(118.0, 72.0)
+		"home_tenure":
+			return Vector2(116.0, 58.0)
+		"home_sleep":
+			return Vector2(150.0, 74.0)
+		"home_storage":
+			return Vector2(108.0, 58.0)
+		"home_container":
+			return Vector2(104.0, 58.0)
+		"drink":
+			return Vector2(90.0, 54.0)
+		"meta_sal_shelf":
+			return SAL_SHELF_VISUAL_MIN_SIZE
+	return Vector2.ZERO
+
+
 func _board_rect_for_object(object_data: Dictionary) -> Rect2:
+	# Placement previews are presentation-only until the owner locks the edit.
+	# Keeping authored objects immutable here avoids rebuilding every scene,
+	# label, badge, and camera cache for each mouse-motion event.
+	if developer_placement_mode and developer_placement_pending_rect.has_area() \
+			and str(object_data.get("id", "")) == selected_object_id:
+		return developer_placement_pending_rect
+	if developer_slot_placement_mode and developer_slot_pending_rect.has_area() \
+			and str(object_data.get("slot_id", "")) == developer_slot_selected_id:
+		return developer_slot_pending_rect
 	var route_position := _actor_route_position(object_data)
 	if route_position.x >= 0.0 and route_position.y >= 0.0:
 		var route_rect := _board_rect_for_object_at_position(object_data, route_position)
 		if small_screen_mode:
-			if bool(object_data.get("scenario_layout_resolved", false)):
+			if bool(object_data.get("scenario_layout_resolved", false)) or bool(object_data.get("fixed_slot_geometry", false)):
 				var sealed_small := _rect_from_dict(object_data.get("small_screen_rect", {}))
 				var sealed_size := sealed_small.size * Vector2(BOARD_SIZE)
 				return Rect2(route_rect.get_center() - sealed_size * 0.5, sealed_size)
@@ -4772,18 +8168,13 @@ func _board_rect_for_object(object_data: Dictionary) -> Rect2:
 func _interaction_rect_for_object(object_data: Dictionary) -> Rect2:
 	if bool(object_data.get("person_transit_active", false)):
 		return Rect2()
-	var rect := _board_rect_for_object(object_data)
-	if not small_screen_mode or bool(object_data.get("scenario_layout_resolved", false)):
+	var rect := _natural_model_rect_for_object(object_data)
+	if not bool(object_data.get("interactive", true)) or not rect.has_area() \
+			or is_equal_approx(_scene_object_slot_scale(object_data), 1.0):
 		return rect
-	var minimum_size := SmallScreenPolicyScript.ENVIRONMENT_OBJECT_HIT_SIZE
-	var next_size := Vector2(maxf(rect.size.x, minimum_size.x), maxf(rect.size.y, minimum_size.y))
-	var board_size := Vector2(BOARD_SIZE)
-	next_size.x = minf(next_size.x, board_size.x)
-	next_size.y = minf(next_size.y, board_size.y)
-	var next_position := rect.get_center() - next_size * 0.5
-	next_position.x = clampf(next_position.x, 0.0, maxf(0.0, board_size.x - next_size.x))
-	next_position.y = clampf(next_position.y, 0.0, maxf(0.0, board_size.y - next_size.y))
-	return Rect2(next_position, next_size)
+	var minimum := EnvironmentSlotBinderScript.MIN_INTERACTIVE_TARGET
+	var hit_size := Vector2(maxf(rect.size.x, minimum.x), maxf(rect.size.y, minimum.y))
+	return Rect2(rect.get_center() - hit_size * 0.5, hit_size)
 
 
 func _actor_route_position(object_data: Dictionary) -> Vector2:
@@ -4849,26 +8240,64 @@ func _actor_route_cache_key(object_data: Dictionary) -> String:
 
 
 func _sync_actor_route_starts() -> void:
+	var room_key := _person_transit_snapshot_key(foundation_snapshot)
+	var fresh_room_snapshot := room_key != actor_position_route_room_key
+	if fresh_room_snapshot:
+		actor_position_route_room_key = room_key
+		actor_position_receipt_cache.clear()
+		actor_route_started_at_cache.clear()
 	var active: Dictionary = {}
+	var active_receipts: Dictionary = {}
 	for value in foundation_scene_objects:
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var object_data := value as Dictionary
+		var object_id := str(object_data.get("id", "")).strip_edges()
+		var receipt_id := str(object_data.get("authored_position_route_id", "")).strip_edges()
+		if not object_id.is_empty():
+			active_receipts[object_id] = true
 		if _copy_dictionary(object_data.get("actor_route_stage", {})).is_empty():
+			if not object_id.is_empty():
+				actor_position_receipt_cache[object_id] = receipt_id
 			continue
 		var key := _actor_route_cache_key(object_data)
 		active[key] = true
-		if not actor_route_started_at_cache.has(key):
-			actor_route_started_at_cache[key] = actor_route_time
+		if receipt_id.is_empty():
+			# Authored patrol/ambient routes retain their normal live animation.
+			if not actor_route_started_at_cache.has(key):
+				actor_route_started_at_cache[key] = actor_route_time
+		else:
+			var had_actor := actor_position_receipt_cache.has(object_id)
+			var previous_receipt := str(actor_position_receipt_cache.get(object_id, ""))
+			var duration := maxf(0.001, float(_copy_dictionary(object_data.get("actor_route_stage", {})).get("duration_sec", 1.0)))
+			if not fresh_room_snapshot and had_actor and previous_receipt != receipt_id:
+				# Only an already-rendered actor receiving a new persisted movement
+				# receipt animates. Reconstruction and revisit seal directly at endpoint.
+				actor_route_started_at_cache[key] = actor_route_time
+			elif not actor_route_started_at_cache.has(key):
+				actor_route_started_at_cache[key] = actor_route_time - duration
+			actor_position_receipt_cache[object_id] = receipt_id
 	for key_value in actor_route_started_at_cache.keys():
 		if not active.has(str(key_value)):
 			actor_route_started_at_cache.erase(key_value)
+	for object_id_value in actor_position_receipt_cache.keys():
+		if not active_receipts.has(str(object_id_value)):
+			actor_position_receipt_cache.erase(object_id_value)
 
 
 func _scene_object_z_key(object_data: Dictionary) -> int:
 	if bool(object_data.get("scenario_layout_resolved", false)):
 		return 10000 + int(object_data.get("scenario_z_order", 0))
 	return int(object_data.get("source_order", 0))
+
+
+func _scene_object_draw_layer(object_data: Dictionary) -> int:
+	var slot_id := str(object_data.get("slot_id", "")).strip_edges()
+	if not slot_id.is_empty():
+		var slot := _developer_slot(slot_id)
+		if not slot.is_empty():
+			return _developer_slot_draw_layer(slot)
+	return -1 if str(object_data.get("placement_class", "")) == "behind_counter_person" else 0
 
 
 func _scenario_layout_evidence(objects: Array) -> Dictionary:
@@ -4886,7 +8315,7 @@ func _scenario_layout_evidence(objects: Array) -> Dictionary:
 			digests[digest] = true
 		entries.append({
 			"identity": identity,
-			"draw_rect": _rect_to_snapshot(_board_rect_for_object(object_data)),
+			"draw_rect": _rect_to_snapshot(_natural_model_rect_for_object(object_data)),
 			"hit_rect": _rect_to_snapshot(_interaction_rect_for_object(object_data)),
 			"z_order": int(object_data.get("scenario_z_order", 0)),
 			"route_stage": _copy_dictionary(object_data.get("actor_route_stage", {})),
@@ -4914,11 +8343,210 @@ func _label_rect_for_object(rect: Rect2, label: String) -> Rect2:
 	if text.is_empty():
 		return Rect2()
 	var width := minf(maxf(48.0, float(text.length()) * 5.8 + 12.0), OBJECT_LABEL_MAX_WIDTH)
+	var height := OBJECT_LABEL_TWO_LINE_HEIGHT if float(text.length()) * 5.8 + 12.0 > OBJECT_LABEL_MAX_WIDTH else OBJECT_LABEL_HEIGHT
 	var x := rect.position.x + rect.size.x * 0.5 - width * 0.5
-	var y := rect.position.y - OBJECT_LABEL_HEIGHT - OBJECT_LABEL_GAP
+	var y := rect.position.y - height - OBJECT_LABEL_GAP
 	if y < OBJECT_LAYOUT_MARGIN:
 		y = rect.end.y + OBJECT_LABEL_GAP
-	return _clamp_board_rect(Rect2(Vector2(x, y), Vector2(width, OBJECT_LABEL_HEIGHT)))
+	return _clamp_board_rect(Rect2(Vector2(x, y), Vector2(width, height)))
+
+
+func _object_label_lines(text: String, font: Font, font_size: int, max_width: float) -> Array[String]:
+	var compact := text.replace("\n", " ").replace("\t", " ").strip_edges()
+	while compact.find("  ") != -1:
+		compact = compact.replace("  ", " ")
+	if compact.is_empty():
+		return []
+	if font == null or _draw_text_width(compact, font, font_size) <= max_width:
+		return [compact]
+	var words := compact.split(" ", false)
+	var first := ""
+	var split_index := 0
+	for index in range(words.size()):
+		var candidate := str(words[index]) if first.is_empty() else "%s %s" % [first, str(words[index])]
+		if not first.is_empty() and _draw_text_width(candidate, font, font_size) > max_width:
+			split_index = index
+			break
+		first = candidate
+		split_index = index + 1
+	if first.is_empty():
+		return [_fit_draw_text(compact, font, font_size, max_width)]
+	var remainder := " ".join(words.slice(split_index))
+	if remainder.is_empty():
+		return [_fit_draw_text(first, font, font_size, max_width)]
+	return [_fit_draw_text(first, font, font_size, max_width), _fit_draw_text(remainder, font, font_size, max_width)]
+
+
+func object_label_accessibility_snapshot(full_label: String) -> Dictionary:
+	var full := full_label.strip_edges()
+	var lines := _object_label_lines(full, ThemeDB.fallback_font, OBJECT_LABEL_FONT_SIZE, OBJECT_LABEL_MAX_WIDTH - OBJECT_LABEL_TEXT_PADDING_X * 2.0)
+	return {
+		"tooltip": full,
+		"accessibility_name": full,
+		"line_count": lines.size(),
+		"rendered_lines": lines,
+	}
+
+
+func _update_object_label_accessibility() -> void:
+	var focus_id := hovered_object_id if not hovered_object_id.is_empty() else selected_object_id
+	var object_data := _scene_object(focus_id)
+	var full_label := str(object_data.get("label", "")).strip_edges()
+	tooltip_text = full_label
+	accessibility_name = full_label if not full_label.is_empty() else "Environment scene"
+
+
+func _resolved_label_rect_for_object(object_data: Dictionary, object_rect: Rect2) -> Rect2:
+	if not object_labels_and_borders_enabled:
+		return Rect2()
+	if _object_has_live_placement_preview(object_data):
+		return _label_rect_for_object(object_rect, str(object_data.get("label", "")))
+	var object_id := str(object_data.get("id", ""))
+	if object_label_rect_cache.has(object_id):
+		return object_label_rect_cache[object_id] as Rect2
+	return _label_rect_for_object(object_rect, str(object_data.get("label", "")))
+
+
+func _object_has_live_placement_preview(object_data: Dictionary) -> bool:
+	if developer_placement_mode and developer_placement_pending_rect.has_area() \
+			and str(object_data.get("id", "")) == selected_object_id:
+		return true
+	return developer_slot_placement_mode and developer_slot_pending_rect.has_area() \
+			and str(object_data.get("slot_id", "")) == developer_slot_selected_id
+
+
+func _rebuild_object_label_rect_cache(objects: Array) -> void:
+	object_label_layout_rebuild_count += 1
+	object_label_rect_cache = {}
+	if not object_labels_and_borders_enabled:
+		object_label_layout_stats = {
+			"enabled": false,
+			"label_count": 0,
+			"moved_count": 0,
+			"default_label_overlap_count": 0,
+			"resolved_label_overlap_count": 0,
+			"default_object_overlap_count": 0,
+			"resolved_object_overlap_count": 0,
+			"detached_label_count": 0,
+			"max_owner_gap": 0.0,
+			"owner_tether_limit": OBJECT_LABEL_MAX_TETHER_GAP,
+			"overlap_policy": "bounded_tether",
+		}
+		return
+	var live_objects: Array[Dictionary] = []
+	var object_rects: Array[Rect2] = []
+	var default_label_rects: Array[Rect2] = []
+	var resolved_label_rects: Array[Rect2] = []
+	var moved_count := 0
+	var detached_label_count := 0
+	var max_owner_gap := 0.0
+	for value in objects:
+		var object_data: Dictionary = value if typeof(value) == TYPE_DICTIONARY else {}
+		live_objects.append(object_data)
+		object_rects.append(_natural_model_rect_for_object(object_data))
+	for index in range(live_objects.size()):
+		var object_data := live_objects[index]
+		var object_rect := object_rects[index]
+		var default_rect := _label_rect_for_object(object_rect, str(object_data.get("label", "")))
+		default_label_rects.append(default_rect)
+		var occupied := resolved_label_rects.duplicate()
+		for other_index in range(object_rects.size()):
+			if other_index != index:
+				occupied.append(object_rects[other_index])
+		var resolved := _resolve_object_label_overlap(default_rect, object_rect, occupied)
+		var object_id := str(object_data.get("id", ""))
+		if not object_id.is_empty() and resolved.has_area():
+			object_label_rect_cache[object_id] = resolved
+		if resolved.position != default_rect.position:
+			moved_count += 1
+		var owner_gap := _rect_edge_gap(object_rect, resolved)
+		max_owner_gap = maxf(max_owner_gap, owner_gap)
+		if owner_gap > OBJECT_LABEL_MAX_TETHER_GAP + 0.01:
+			detached_label_count += 1
+		resolved_label_rects.append(resolved)
+	object_label_layout_stats = {
+		"enabled": true,
+		"label_count": object_label_rect_cache.size(),
+		"moved_count": moved_count,
+		"default_label_overlap_count": _rect_pair_overlap_count(default_label_rects),
+		"resolved_label_overlap_count": _rect_pair_overlap_count(resolved_label_rects),
+		"default_object_overlap_count": _label_object_overlap_count(default_label_rects, object_rects),
+		"resolved_object_overlap_count": _label_object_overlap_count(resolved_label_rects, object_rects),
+		"detached_label_count": detached_label_count,
+		"max_owner_gap": max_owner_gap,
+		"owner_tether_limit": OBJECT_LABEL_MAX_TETHER_GAP,
+		"overlap_policy": "bounded_tether",
+	}
+
+
+func _resolve_object_label_overlap(label_rect: Rect2, object_rect: Rect2, occupied: Array[Rect2]) -> Rect2:
+	if not label_rect.has_area() or not _rect_overlaps_any(label_rect, occupied):
+		return label_rect
+	var board_height := float(BOARD_SIZE.y)
+	var step := OBJECT_LABEL_LINE_HEIGHT + 2.0
+	var above := label_rect.get_center().y < object_rect.get_center().y
+	var directions := [-1.0, 1.0] if above else [1.0, -1.0]
+	var best := label_rect
+	var best_overlap := _label_overlap_area(label_rect, occupied)
+	# Labels are identifiers, not free-floating annotations. Search only a small
+	# tether around the owning object; in a very crowded room, a little overlap
+	# is preferable to a perfectly clear label that appears to name something else.
+	for offset_index in range(OBJECT_LABEL_MAX_OFFSET_STEPS + 1):
+		for direction_value in directions:
+			var direction := float(direction_value)
+			var side_start_y := object_rect.position.y - label_rect.size.y - OBJECT_LABEL_GAP if direction < 0.0 else object_rect.end.y + OBJECT_LABEL_GAP
+			var y := side_start_y + direction * step * float(offset_index)
+			if y < OBJECT_LAYOUT_MARGIN or y + label_rect.size.y > board_height - OBJECT_LAYOUT_MARGIN:
+				continue
+			var candidate := Rect2(Vector2(label_rect.position.x, y), label_rect.size)
+			var overlap := _label_overlap_area(candidate, occupied)
+			if overlap <= 0.01:
+				return candidate
+			if overlap + 0.01 < best_overlap:
+				best = candidate
+				best_overlap = overlap
+	return best
+
+
+func _rect_overlaps_any(rect: Rect2, others: Array[Rect2]) -> bool:
+	return _label_overlap_area(rect, others) > 0.01
+
+
+func _rect_edge_gap(a: Rect2, b: Rect2) -> float:
+	if not a.has_area() or not b.has_area():
+		return 0.0
+	var horizontal_gap := maxf(0.0, maxf(a.position.x - b.end.x, b.position.x - a.end.x))
+	var vertical_gap := maxf(0.0, maxf(a.position.y - b.end.y, b.position.y - a.end.y))
+	return Vector2(horizontal_gap, vertical_gap).length()
+
+
+func _label_overlap_area(rect: Rect2, others: Array[Rect2]) -> float:
+	var total := 0.0
+	for other in others:
+		total += _rect_overlap_area(rect, other)
+	return total
+
+
+func _rect_pair_overlap_count(rects: Array[Rect2]) -> int:
+	var count := 0
+	for first_index in range(rects.size()):
+		if not rects[first_index].has_area():
+			continue
+		for second_index in range(first_index + 1, rects.size()):
+			if _rect_overlap_area(rects[first_index], rects[second_index]) > 0.01:
+				count += 1
+	return count
+
+
+func _label_object_overlap_count(labels: Array[Rect2], object_rects: Array[Rect2]) -> int:
+	var count := 0
+	for label_index in range(labels.size()):
+		if not labels[label_index].has_area():
+			continue
+		for object_index in range(object_rects.size()):
+			if label_index != object_index and _rect_overlap_area(labels[label_index], object_rects[object_index]) > 0.01:
+				count += 1
+	return count
 
 
 func _clamp_board_rect(rect: Rect2) -> Rect2:
@@ -4989,11 +8617,109 @@ func _draw_object_shadow(rect: Rect2, selected: bool, shadow_kind: String) -> vo
 		draw_rect(Rect2(Vector2(rect.position.x + rect.size.x * 0.08, shadow_y - 4.0), Vector2(rect.size.x * 0.84, 4)), Color(glow.r, glow.g, glow.b, 0.32))
 
 
-func _draw_counter_person_occlusion(rect: Rect2, selected: bool) -> void:
-	var front := Color(C_DARK_2.r, C_DARK_2.g, C_DARK_2.b, 0.94)
-	draw_rect(Rect2(Vector2(rect.position.x - 3.0, rect.end.y - 4.0), Vector2(rect.size.x + 6.0, 8.0)), front)
-	if selected:
-		draw_line(Vector2(rect.position.x - 3.0, rect.end.y - 4.0), Vector2(rect.end.x + 3.0, rect.end.y - 4.0), C_YELLOW, 2.0)
+func _draw_room_foreground_occluders(behind_counter_objects: Array) -> void:
+	if behind_counter_objects.is_empty():
+		return
+	_ensure_room_surface_draw_cache()
+	if room_surface_slots_by_id_cache.is_empty() and room_surface_counters_by_id_cache.is_empty():
+		return
+	var support_ids: Dictionary = {}
+	for object_value in behind_counter_objects:
+		var object_data := object_value as Dictionary
+		var slot := room_surface_slots_by_id_cache.get(str(object_data.get("slot_id", "")), {}) as Dictionary
+		var support_id := str(slot.get("support_id", ""))
+		if room_surface_counters_by_id_cache.has(support_id):
+			support_ids[support_id] = true
+	var ordered_supports := support_ids.keys()
+	ordered_supports.sort()
+	for support_id_value in ordered_supports:
+		var support_id := str(support_id_value)
+		var counter := room_surface_counters_by_id_cache.get(support_id, {}) as Dictionary
+		_draw_counter_foreground_art(counter)
+
+
+func _draw_authored_counter_foregrounds() -> void:
+	_ensure_room_surface_draw_cache()
+	for counter_value in room_foreground_counters_cache:
+		_draw_counter_foreground_art(counter_value as Dictionary)
+
+
+func _draw_counter_foreground_art(counter: Dictionary) -> bool:
+	var art_id := str(counter.get("foreground_art_id", ""))
+	var x0 := float(counter.get("x0", 0.0))
+	var x1 := float(counter.get("x1", 0.0))
+	var top_y := float(counter.get("top_y", 0.0))
+	var front_y := float(counter.get("front_y", top_y))
+	var front := Rect2(Vector2(x0, top_y), Vector2(x1 - x0, front_y - top_y))
+	if not front.has_area():
+		return false
+	match art_id:
+		"corner_store_register":
+			draw_rect(front, Color("#20203c"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_CYAN, 3.0)
+			for x in range(int(front.position.x) + 20, int(front.end.x) - 12, 38):
+				draw_rect(Rect2(x, front.position.y + 10, 28, maxf(4.0, front.size.y - 20.0)), C_AMBER.darkened(0.18))
+		"back_alley_crate_display":
+			draw_rect(front, Color("#4a2d1f"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER.darkened(0.18), 3.0)
+			for x in range(int(front.position.x) + 8, int(front.end.x), 42):
+				draw_line(Vector2(x, front.position.y + 5), Vector2(x + 24, front.end.y - 5), Color("#2a1812"), 3.0)
+		"motel_merchandise_counter", "motel_lobby_table":
+			draw_rect(front, Color("#18161f"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_PINK.darkened(0.30), 3.0)
+			draw_line(front.position + Vector2(8, front.size.y - 7), front.end - Vector2(8, 7), Color("#0e0c14"), 3.0)
+		"bar_main_counter":
+			draw_rect(front, Color("#3a1c16"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER.darkened(0.12), 4.0)
+			for x in range(int(front.position.x) + 24, int(front.end.x), 80):
+				draw_line(Vector2(x, front.position.y + 8), Vector2(x + 18, front.end.y - 8), Color("#24100d"), 3.0)
+		"gas_station_staff_window":
+			draw_rect(front, Color("#493116"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER.darkened(0.22), 2.0)
+		"punchline_right_table":
+			draw_rect(front, Color("#123c30"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), Color("#187452"), 4.0)
+			draw_line(front.position + Vector2(12, front.size.y - 8), front.end - Vector2(12, 8), Color("#0b2b22"), 3.0)
+		"jazz_bar":
+			draw_rect(front, Color("#3b1f15"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER, 3.0)
+			for x in range(int(front.position.x) + 16, int(front.end.x), 44):
+				draw_rect(Rect2(x, front.position.y + 10, 26, maxf(3.0, front.size.y - 18.0)), Color("#21100d"))
+		"kitty_champagne_bar":
+			draw_rect(front, Color("#3a1932"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_PINK, 3.0)
+			for x in range(int(front.position.x) + 18, int(front.end.x), 48):
+				draw_circle(Vector2(x, front.position.y + front.size.y * 0.56), 4.0, C_YELLOW.darkened(0.10))
+		"delta_right_table":
+			draw_rect(front, Color("#362319"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER, 4.0)
+			draw_line(front.position + Vector2(10, front.size.y - 9), front.end - Vector2(10, 9), Color("#21150f"), 3.0)
+		"beach_towel_stall":
+			draw_rect(front, Color("#6b4327"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_YELLOW.darkened(0.16), 3.0)
+			for x in range(int(front.position.x) + 12, int(front.end.x), 34):
+				draw_rect(Rect2(x, front.position.y + 8, 20, maxf(4.0, front.size.y - 16.0)), _cycle_color(x).darkened(0.25))
+		"pawn_counter", "pawn_estate_shelf":
+			draw_rect(front, Color("#4a2d1f"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER.darkened(0.20), 3.0)
+			draw_line(front.position + Vector2(8, front.size.y - 6), front.end - Vector2(8, 6), Color("#241717"), 2.0)
+		"grand_host_station":
+			draw_rect(front, Color("#171225"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER.darkened(0.18), 3.0)
+			draw_line(front.position + Vector2(8, front.size.y - 5), front.end - Vector2(8, 5), Color("#090914"), 2.0)
+		"grand_table_left", "grand_table_right":
+			draw_rect(front, Color("#123f30"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_AMBER.darkened(0.10), 4.0)
+			draw_line(front.position + Vector2(20, front.size.y - 8), front.end - Vector2(20, 8), Color("#08231c"), 3.0)
+		"grand_cage_teller_counter":
+			draw_rect(front, Color("#2b1a25"))
+			draw_line(front.position, Vector2(front.end.x, front.position.y), C_CYAN.darkened(0.24), 4.0)
+			for tray_x in range(int(front.position.x) + 44, int(front.end.x) - 72, 112):
+				draw_rect(Rect2(tray_x, front.position.y + 20, 72, 15), Color("#11131d"))
+				draw_rect(Rect2(tray_x + 8, front.position.y + 23, 56, 5), C_AMBER.darkened(0.30))
+		_:
+			return false
+	return true
 
 
 func _draw_hotspot_hint(rect: Rect2, object_type: String) -> void:
@@ -5064,27 +8790,30 @@ func _draw_disabled_focus_mark(rect: Rect2, selected: bool) -> void:
 	_draw_prop_glints(rect, color, pulse * 0.55)
 
 
-func _draw_object_label(rect: Rect2, label: String, object_type: String, disabled: bool, active: bool) -> void:
+func _draw_object_label(rect: Rect2, label: String, object_type: String, disabled: bool, active: bool, object_data: Dictionary = {}) -> void:
 	var text := label.strip_edges()
 	if text.is_empty():
 		return
-	var label_rect := _label_rect_for_object(rect, text)
+	var label_rect := _resolved_label_rect_for_object(object_data, rect)
 	if label_rect.size.x <= 0.0 or label_rect.size.y <= 0.0:
 		return
 	var color := _color_for_object_type(object_type)
-	var alpha := 1.0 if active else 0.86
+	var alpha := 0.94 if active else 0.72
 	if disabled:
 		color = C_SOFT
-		alpha = 0.68
+		alpha = 0.56
 	var font := get_theme_default_font()
-	var fitted := _fit_draw_text(text, font, 8, label_rect.size.x - 6.0)
-	var text_pos := label_rect.position + Vector2(3.0, 10.0)
-	draw_string(font, text_pos + Vector2(1.0, 1.0), fitted, HORIZONTAL_ALIGNMENT_CENTER, label_rect.size.x - 6.0, 8, Color(0.0, 0.0, 0.0, 0.78))
-	draw_string(font, text_pos, fitted, HORIZONTAL_ALIGNMENT_CENTER, label_rect.size.x - 6.0, 8, Color(color.r, color.g, color.b, alpha))
+	var text_width := label_rect.size.x - OBJECT_LABEL_TEXT_PADDING_X * 2.0
+	var lines := _object_label_lines(text, font, OBJECT_LABEL_FONT_SIZE, text_width)
+	for index in range(mini(2, lines.size())):
+		var text_pos := label_rect.position + Vector2(OBJECT_LABEL_TEXT_PADDING_X, OBJECT_LABEL_BASELINE_Y + float(index) * OBJECT_LABEL_LINE_HEIGHT)
+		draw_string(font, text_pos + Vector2(1.0, 1.0), lines[index], HORIZONTAL_ALIGNMENT_CENTER, text_width, OBJECT_LABEL_FONT_SIZE, Color(0.0, 0.0, 0.0, 0.80 if active else 0.58))
+		draw_string(font, text_pos, lines[index], HORIZONTAL_ALIGNMENT_CENTER, text_width, OBJECT_LABEL_FONT_SIZE, Color(color.r, color.g, color.b, alpha))
+	var rule_y := label_rect.end.y - 1.0 if label_rect.get_center().y < rect.get_center().y else label_rect.position.y + 1.0
 	draw_line(
-		Vector2(label_rect.position.x + 8.0, label_rect.end.y - 1.0),
-		Vector2(label_rect.end.x - 8.0, label_rect.end.y - 1.0),
-		Color(color.r, color.g, color.b, alpha * 0.32),
+		Vector2(label_rect.position.x + 8.0, rule_y),
+		Vector2(label_rect.end.x - 8.0, rule_y),
+		Color(color.r, color.g, color.b, alpha * (0.28 if active else 0.10)),
 		1
 	)
 
@@ -5152,7 +8881,13 @@ func _texture_for_icon_sprite(icon_sprite: Dictionary, object_data: Dictionary, 
 	var object_id := str(object_data.get("id", object_data.get("source_id", object_data.get("icon_key", "")))).strip_edges()
 	if object_id.is_empty():
 		object_id = "sprite"
-	var cache_key := "%s|%s|%d" % [object_id, accent.to_html(true), texture_size]
+	var cache_key := "%s|%d|%s|%d|%s" % [
+		object_id,
+		hash(icon_sprite),
+		accent.to_html(true),
+		texture_size,
+		"high_contrast" if VisualStyleScript.high_contrast_enabled else "standard",
+	]
 	if icon_sprite_texture_cache.has(cache_key):
 		return icon_sprite_texture_cache[cache_key] as Texture2D
 	var texture := IconSpriteRendererScript.texture(icon_sprite, texture_size, accent, false)
@@ -5225,6 +8960,307 @@ func _prune_object_animation_phase_cache() -> void:
 		var key := str(key_value)
 		if not bool(active_keys.get(key, false)):
 			object_animation_phase_cache.erase(key)
+	for profile_key_value in character_idle_profile_cache.keys():
+		var profile_key := str(profile_key_value)
+		if not profile_key.begins_with("object:"):
+			continue
+		var object_key := profile_key.trim_prefix("object:").get_slice("/", 0)
+		if not bool(active_keys.get(object_key, false)):
+			character_idle_profile_cache.erase(profile_key_value)
+
+
+func _stable_character_animation_hash(value: String, salt: int = 0) -> int:
+	var hash_value := 97 + salt * 131
+	for index in range(value.length()):
+		hash_value = int(fposmod(float(hash_value * 37 + value.unicode_at(index) + salt), 1000003.0))
+	return hash_value
+
+
+func _character_idle_gestures_for_role(role: String) -> Array:
+	match role.to_lower():
+		"watcher", "bouncer", "pit_boss", "guard", "security":
+			return ["arms_folded", "lookaround", "shoulder_roll", "chin_touch", "hand_on_hip", "neck_stretch", "wrist_check", "weight_shift"]
+		"dealer", "card_dealer", "croupier":
+			return ["card_check", "adjust_cuff", "lookaround", "counter_tap", "wrist_check", "rub_hands", "neck_stretch", "weight_shift"]
+		"bartender", "attendant", "clerk", "cashier", "vendor":
+			return ["counter_tap", "adjust_cuff", "lookaround", "chin_touch", "wrist_check", "rub_hands", "stretch", "weight_shift"]
+		"regular", "fixer", "patron", "customer", "guest":
+			return ["pocket_check", "chin_touch", "lookaround", "arms_folded", "shoulder_roll", "head_scratch", "stretch", "hand_on_hip", "weight_shift"]
+		"runner", "messenger", "lookout":
+			return ["lookaround", "pocket_check", "shoulder_roll", "counter_tap", "wrist_check", "neck_stretch", "weight_shift", "stretch"]
+		_:
+			return ["lookaround", "adjust_cuff", "chin_touch", "pocket_check", "arms_folded", "counter_tap", "shoulder_roll", "head_scratch", "stretch", "hand_on_hip", "wrist_check", "rub_hands", "neck_stretch", "weight_shift"]
+
+
+func _append_unique_character_idle_pose(poses: Array, pose: String) -> void:
+	var normalized_pose := pose.strip_edges()
+	if not normalized_pose.is_empty() and not poses.has(normalized_pose):
+		poses.append(normalized_pose)
+
+
+func _character_idle_pose_choices(role: String, authored: Dictionary, hash_a: int, hash_b: int, hash_c: int) -> Array:
+	var role_gestures: Array = _character_idle_gestures_for_role(role)
+	var poses: Array = []
+	var primary := str(authored.get("idle_primary", role_gestures[hash_a % role_gestures.size()]))
+	var secondary := str(authored.get("idle_secondary", role_gestures[hash_b % role_gestures.size()]))
+	_append_unique_character_idle_pose(poses, primary)
+	_append_unique_character_idle_pose(poses, secondary)
+	_append_unique_character_idle_pose(poses, str(authored.get("idle_tertiary", "")))
+	var role_offset := hash_c % role_gestures.size()
+	for index in range(role_gestures.size()):
+		_append_unique_character_idle_pose(poses, str(role_gestures[(role_offset + index) % role_gestures.size()]))
+	return poses
+
+
+func _build_character_idle_gesture_events(cache_key: String, poses: Array, segment_duration: float) -> Array:
+	var events: Array = []
+	var previous_pose := ""
+	for index in range(CHARACTER_IDLE_GESTURE_SEGMENT_COUNT):
+		var pose_hash := _stable_character_animation_hash(cache_key, 83 + index * 37)
+		var timing_hash := _stable_character_animation_hash(cache_key, 149 + index * 53)
+		var pose_index := index if index < poses.size() else pose_hash % poses.size()
+		var pose := str(poses[pose_index])
+		# Occasional empty segments create natural long pauses without requiring
+		# mutable RNG or making the result depend on draw order.
+		if index >= poses.size() and pose_hash % 6 == 0:
+			pose = ""
+		elif pose == previous_pose and poses.size() > 1:
+			pose = str(poses[(pose_index + 1 + pose_hash % (poses.size() - 1)) % poses.size()])
+		if not pose.is_empty():
+			previous_pose = pose
+		var duration_fraction := float(timing_hash % 1000) / 999.0
+		var start_fraction := float(_stable_character_animation_hash(cache_key, 211 + index * 71) % 1000) / 999.0
+		var duration := 0.68 + duration_fraction * 0.92
+		var start_span := maxf(0.0, segment_duration - duration - 0.80)
+		var start := 0.35 + start_fraction * start_span
+		events.append({
+			"pose": pose,
+			"start": start,
+			"duration": duration,
+			"side": -1 if pose_hash % 2 == 0 else 1,
+		})
+	return events
+
+
+func _build_character_idle_blink_events(cache_key: String, segment_duration: float) -> Array:
+	var events: Array = []
+	for index in range(CHARACTER_IDLE_BLINK_SEGMENT_COUNT):
+		var blink_hash := _stable_character_animation_hash(cache_key, 307 + index * 43)
+		var start_fraction := float(_stable_character_animation_hash(cache_key, 401 + index * 61) % 1000) / 999.0
+		var duration := 0.075 + float(blink_hash % 45) / 1000.0
+		var start_span := maxf(0.0, segment_duration - duration - 0.72)
+		events.append({
+			"start": 0.18 + start_fraction * start_span,
+			"duration": duration,
+			"double": blink_hash % 6 == 0,
+		})
+	return events
+
+
+func _character_idle_profile(identity: String, role: String, authored: Dictionary = {}) -> Dictionary:
+	var normalized_identity := identity.strip_edges()
+	if normalized_identity.is_empty():
+		normalized_identity = "anonymous"
+	var cache_key := "%s|%s" % [normalized_identity, role.to_lower()]
+	if character_idle_profile_cache.has(cache_key):
+		return character_idle_profile_cache.get(cache_key, {})
+	var hash_a := _stable_character_animation_hash(cache_key, 11)
+	var hash_b := _stable_character_animation_hash(cache_key, 29)
+	var hash_c := _stable_character_animation_hash(cache_key, 47)
+	var hash_d := _stable_character_animation_hash(cache_key, 67)
+	var gesture_poses := _character_idle_pose_choices(role, authored, hash_a, hash_b, hash_c)
+	var gesture_segment_duration := 4.15 + float(hash_d % 245) / 100.0
+	var gesture_events := _build_character_idle_gesture_events(cache_key, gesture_poses, gesture_segment_duration)
+	var blink_segment_duration := 3.15 + float(hash_c % 245) / 100.0
+	var blink_events := _build_character_idle_blink_events(cache_key, blink_segment_duration)
+	var primary_event: Dictionary = gesture_events[0]
+	var secondary_event: Dictionary = gesture_events[1]
+	var gesture_cycle_duration := gesture_segment_duration * float(gesture_events.size())
+	var authored_tempo := float(authored.get("tempo", 0.0))
+	var authored_phase := float(authored.get("phase", -1.0))
+	var profile := {
+		"identity": normalized_identity,
+		"signature": "%s:%d:%d:%d:%d" % [normalized_identity, hash_a, hash_b, hash_c, hash_d],
+		"primary_pose": str(gesture_poses[0]),
+		"secondary_pose": str(gesture_poses[1]),
+		"gesture_poses": gesture_poses,
+		"gesture_events": gesture_events,
+		"gesture_segment_duration": gesture_segment_duration,
+		"tempo": authored_tempo if authored_tempo > 0.0 else 0.72 + float(hash_a % 47) / 100.0,
+		"phase": authored_phase if authored_phase >= 0.0 else float(hash_b % 628) / 100.0,
+		"cycle_duration": gesture_cycle_duration,
+		# Preserve the old profile fields for debug consumers while the live
+		# sampler uses the richer per-segment routine above.
+		"primary_start": float(primary_event.get("start", 0.0)) / gesture_cycle_duration,
+		"primary_duration": float(primary_event.get("duration", 0.0)) / gesture_cycle_duration,
+		"secondary_start": (gesture_segment_duration + float(secondary_event.get("start", 0.0))) / gesture_cycle_duration,
+		"secondary_duration": float(secondary_event.get("duration", 0.0)) / gesture_cycle_duration,
+		"sway_amount": 0.35 + float(hash_b % 130) / 100.0,
+		"sway_tempo": 0.38 + float(hash_c % 42) / 100.0,
+		"sway_secondary_amount": 0.08 + float(hash_d % 34) / 100.0,
+		"sway_secondary_tempo": 0.14 + float(hash_a % 23) / 100.0,
+		"bob_amount": 0.22 + float(hash_a % 85) / 100.0,
+		"breath_tempo": 0.72 + float(hash_b % 55) / 100.0,
+		"bob_secondary_amount": 0.04 + float(hash_c % 18) / 100.0,
+		"bob_secondary_tempo": 0.18 + float(hash_d % 29) / 100.0,
+		"eye_range": 0.18 + float(hash_c % 68) / 100.0,
+		"eye_tempo": 0.22 + float(hash_a % 49) / 100.0,
+		"blink_events": blink_events,
+		"blink_segment_duration": blink_segment_duration,
+		"blink_period": blink_segment_duration,
+		"blink_offset": float(hash_c % 300) / 100.0,
+		"double_blink": hash_a % 6 == 0,
+	}
+	if character_idle_profile_cache.size() >= CHARACTER_IDLE_PROFILE_CACHE_LIMIT:
+		character_idle_profile_cache.clear()
+	character_idle_profile_cache[cache_key] = profile
+	return profile
+
+
+func _character_idle_state(profile: Dictionary, clock: float) -> Dictionary:
+	if reduce_motion:
+		return {"pose": "idle", "gesture_amount": 0.0, "gesture_side": 1, "sway": 0.0, "bob": 0.0, "head_x": 0.0, "head_y": 0.0, "eye_offset": 0.0, "blink": false}
+	var tempo := float(profile.get("tempo", 1.0))
+	var phase := float(profile.get("phase", 0.0))
+	var animation_clock := clock * tempo + phase
+	var pose := "idle"
+	var gesture_amount := 0.0
+	var gesture_side := 1
+	var gesture_events_value: Variant = profile.get("gesture_events", [])
+	if typeof(gesture_events_value) == TYPE_ARRAY and not (gesture_events_value as Array).is_empty():
+		var gesture_events: Array = gesture_events_value
+		var gesture_segment_duration := maxf(2.0, float(profile.get("gesture_segment_duration", 5.0)))
+		var gesture_schedule_position := fposmod(animation_clock, gesture_segment_duration * float(gesture_events.size()))
+		var gesture_event_index := clampi(int(floor(gesture_schedule_position / gesture_segment_duration)), 0, gesture_events.size() - 1)
+		var gesture_segment_position := fposmod(gesture_schedule_position, gesture_segment_duration)
+		var gesture_event: Dictionary = gesture_events[gesture_event_index] if typeof(gesture_events[gesture_event_index]) == TYPE_DICTIONARY else {}
+		var gesture_start := float(gesture_event.get("start", 0.0))
+		var gesture_duration := maxf(0.01, float(gesture_event.get("duration", 1.0)))
+		var event_pose := str(gesture_event.get("pose", "")).strip_edges()
+		if not event_pose.is_empty() and gesture_segment_position >= gesture_start and gesture_segment_position < gesture_start + gesture_duration:
+			pose = event_pose
+			gesture_side = int(gesture_event.get("side", 1))
+			gesture_amount = sin(((gesture_segment_position - gesture_start) / gesture_duration) * PI)
+	else:
+		var cycle_duration := maxf(4.0, float(profile.get("cycle_duration", 8.0)))
+		var cycle_position := fposmod(animation_clock, cycle_duration) / cycle_duration
+		var primary_start := float(profile.get("primary_start", 0.38))
+		var primary_duration := float(profile.get("primary_duration", 0.16))
+		var secondary_start := float(profile.get("secondary_start", 0.72))
+		var secondary_duration := float(profile.get("secondary_duration", 0.14))
+		if cycle_position >= primary_start and cycle_position < primary_start + primary_duration:
+			pose = str(profile.get("primary_pose", "lookaround"))
+			gesture_amount = sin(((cycle_position - primary_start) / primary_duration) * PI)
+		elif cycle_position >= secondary_start and cycle_position < secondary_start + secondary_duration:
+			pose = str(profile.get("secondary_pose", "adjust_cuff"))
+			gesture_amount = sin(((cycle_position - secondary_start) / secondary_duration) * PI)
+	var eye_offset := sin(clock * float(profile.get("eye_tempo", 0.5)) + phase * 0.7) * float(profile.get("eye_range", 0.5))
+	if pose == "lookaround":
+		eye_offset += float(gesture_side) * gesture_amount * 0.9
+	var blinking := false
+	var blink_events_value: Variant = profile.get("blink_events", [])
+	if typeof(blink_events_value) == TYPE_ARRAY and not (blink_events_value as Array).is_empty():
+		var blink_events: Array = blink_events_value
+		var blink_segment_duration := maxf(1.0, float(profile.get("blink_segment_duration", 4.5)))
+		var blink_schedule_position := fposmod(clock + float(profile.get("blink_offset", 0.0)), blink_segment_duration * float(blink_events.size()))
+		var blink_event_index := clampi(int(floor(blink_schedule_position / blink_segment_duration)), 0, blink_events.size() - 1)
+		var blink_segment_position := fposmod(blink_schedule_position, blink_segment_duration)
+		var blink_event: Dictionary = blink_events[blink_event_index] if typeof(blink_events[blink_event_index]) == TYPE_DICTIONARY else {}
+		var blink_start := float(blink_event.get("start", 0.0))
+		var blink_duration := maxf(0.04, float(blink_event.get("duration", 0.10)))
+		blinking = blink_segment_position >= blink_start and blink_segment_position < blink_start + blink_duration
+		if bool(blink_event.get("double", false)):
+			var double_start := blink_start + blink_duration + 0.13
+			blinking = blinking or (blink_segment_position >= double_start and blink_segment_position < double_start + blink_duration * 0.92)
+	else:
+		var blink_position := fposmod(clock + float(profile.get("blink_offset", 0.0)), float(profile.get("blink_period", 4.5)))
+		blinking = blink_position < 0.11
+		if bool(profile.get("double_blink", false)):
+			blinking = blinking or (blink_position > 0.22 and blink_position < 0.31)
+	var head_x := 0.0
+	var head_y := sin(clock * float(profile.get("breath_tempo", 1.0)) * 0.53 + phase) * 0.24
+	match pose:
+		"chin_touch":
+			head_x = float(gesture_side) * gesture_amount * 0.8
+			head_y += gesture_amount * 0.7
+		"shoulder_roll":
+			head_x = -float(gesture_side) * gesture_amount * 0.7
+		"counter_tap", "card_check":
+			head_y += gesture_amount * 0.8
+		"lookaround":
+			head_x = float(gesture_side) * gesture_amount * 0.8
+		"head_scratch":
+			head_x = float(gesture_side) * gesture_amount * 0.65
+			head_y += gesture_amount * 0.45
+		"stretch":
+			head_y -= gesture_amount * 0.9
+		"hand_on_hip", "weight_shift":
+			head_x = float(gesture_side) * gesture_amount * 0.55
+		"wrist_check", "rub_hands":
+			head_y += gesture_amount * 0.45
+		"neck_stretch":
+			head_x = float(gesture_side) * gesture_amount * 1.0
+			head_y += gesture_amount * 0.30
+	var sway := sin(clock * float(profile.get("sway_tempo", 0.55)) + phase) * float(profile.get("sway_amount", 1.0))
+	sway += sin(clock * float(profile.get("sway_secondary_tempo", 0.24)) + phase * 1.73) * float(profile.get("sway_secondary_amount", 0.2))
+	var bob := sin(clock * float(profile.get("breath_tempo", 1.0)) + phase) * float(profile.get("bob_amount", 0.6))
+	bob += sin(clock * float(profile.get("bob_secondary_tempo", 0.32)) + phase * 1.31) * float(profile.get("bob_secondary_amount", 0.1))
+	if pose == "weight_shift":
+		sway += float(gesture_side) * gesture_amount * 1.25
+		bob += gesture_amount * 0.25
+	return {
+		"pose": pose,
+		"gesture_amount": gesture_amount,
+		"gesture_side": gesture_side,
+		"sway": sway,
+		"bob": bob,
+		"head_x": head_x,
+		"head_y": head_y,
+		"eye_offset": eye_offset,
+		"blink": blinking,
+	}
+
+
+func _character_actor_identity(object_data: Dictionary, actor: Dictionary, member: Dictionary, member_index: int) -> String:
+	var object_id := str(object_data.get("id", object_data.get("source_id", object_data.get("icon_key", "character")))).strip_edges()
+	var model: Dictionary = member.get("model", {}) if typeof(member.get("model", {})) == TYPE_DICTIONARY else {}
+	var member_id := ""
+	for candidate in [member.get("character_id", ""), member.get("id", ""), member.get("name", ""), model.get("id", ""), model.get("name", "")]:
+		member_id = str(candidate).strip_edges()
+		if not member_id.is_empty():
+			break
+	if member_id.is_empty():
+		member_id = str(actor.get("character_id", actor.get("id", "member_%d" % member_index))).strip_edges()
+	return "object:%s/member:%d:%s" % [object_id, member_index, member_id]
+
+
+func debug_character_idle_profile(object_data: Dictionary, member_index: int = 0) -> Dictionary:
+	var actor: Dictionary = object_data.get("character_actor", {}) if typeof(object_data.get("character_actor", {})) == TYPE_DICTIONARY else {}
+	var members: Array = actor.get("members", []) if typeof(actor.get("members", [])) == TYPE_ARRAY else []
+	var member: Dictionary = members[member_index] if member_index >= 0 and member_index < members.size() and typeof(members[member_index]) == TYPE_DICTIONARY else {}
+	var identity := _character_actor_identity(object_data, actor, member, member_index)
+	var role := str(member.get("role", actor.get("role", "staff")))
+	return _character_idle_profile(identity, role).duplicate(true)
+
+
+func debug_named_character_idle_profile(character_id: String, role: String) -> Dictionary:
+	return _character_idle_profile("named:%s" % character_id, role, _character_style(character_id)).duplicate(true)
+
+
+func debug_character_idle_state(profile: Dictionary, clock: float) -> Dictionary:
+	return _character_idle_state(profile, clock).duplicate(true)
+
+
+func debug_character_actor_idle_state(object_data: Dictionary, member_index: int, clock: float) -> Dictionary:
+	var actor: Dictionary = object_data.get("character_actor", {}) if typeof(object_data.get("character_actor", {})) == TYPE_DICTIONARY else {}
+	var members: Array = actor.get("members", []) if typeof(actor.get("members", [])) == TYPE_ARRAY else []
+	var member: Dictionary = members[member_index] if member_index >= 0 and member_index < members.size() and typeof(members[member_index]) == TYPE_DICTIONARY else {}
+	return _character_actor_member_idle_state(object_data, actor, member, member_index, clock).duplicate(true)
+
+
+func debug_character_actor_scales(object_data: Dictionary, rect: Rect2 = Rect2(0.0, 0.0, 104.0, 78.0)) -> Array:
+	var actor: Dictionary = object_data.get("character_actor", {}) if typeof(object_data.get("character_actor", {})) == TYPE_DICTIONARY else {}
+	return _character_actor_member_scales(rect, object_data, actor).duplicate()
 
 
 func _draw_character_actor(rect: Rect2, object_data: Dictionary) -> void:
@@ -5234,49 +9270,87 @@ func _draw_character_actor(rect: Rect2, object_data: Dictionary) -> void:
 	var members: Array = actor.get("members", []) if typeof(actor.get("members", [])) == TYPE_ARRAY else []
 	var portrait_count := clampi(int(actor.get("portrait_count", maxi(1, members.size()))), 1, 3)
 	var faceless := str(actor.get("presentation", "")) == "faceless_silhouette"
-	var phase := _object_animation_phase(object_data)
-	var animation_clock := phase if reduce_motion else flicker + phase
-	var width_requirement := 54.0 + float(portrait_count - 1) * 38.0
-	var base_scale := clampf(minf(rect.size.y / 86.0, rect.size.x / width_requirement), 0.42, 0.74)
+	var member_scales := _character_actor_member_scales(rect, object_data, actor)
 	var foot_y := rect.end.y - 2.0
 	if portrait_count >= 2:
 		var left_member: Dictionary = members[1] if members.size() > 1 and typeof(members[1]) == TYPE_DICTIONARY else {}
-		TableGameVisualsScript._draw_table_character(
-			self,
-			_character_actor_style(left_member, actor, faceless, animation_clock + 0.7),
-			Vector2(rect.position.x + rect.size.x * 0.30, foot_y - 1.0),
-			base_scale * 0.82 * _character_actor_scale(left_member),
-			animation_clock + 0.7
-		)
+		_draw_character_actor_member(object_data, actor, left_member, 1, faceless, Vector2(rect.position.x + rect.size.x * 0.30, foot_y - 1.0), float(member_scales[1]))
 	if portrait_count >= 3:
 		var right_member: Dictionary = members[2] if members.size() > 2 and typeof(members[2]) == TYPE_DICTIONARY else {}
-		TableGameVisualsScript._draw_table_character(
-			self,
-			_character_actor_style(right_member, actor, faceless, animation_clock + 1.4),
-			Vector2(rect.position.x + rect.size.x * 0.70, foot_y - 1.0),
-			base_scale * 0.82 * _character_actor_scale(right_member),
-			animation_clock + 1.4
-		)
+		_draw_character_actor_member(object_data, actor, right_member, 2, faceless, Vector2(rect.position.x + rect.size.x * 0.70, foot_y - 1.0), float(member_scales[2]))
 	var lead_member: Dictionary = members[0] if not members.is_empty() and typeof(members[0]) == TYPE_DICTIONARY else {}
-	TableGameVisualsScript._draw_table_character(
-		self,
-		_character_actor_style(lead_member, actor, faceless, animation_clock),
-		Vector2(rect.position.x + rect.size.x * 0.50, foot_y),
-		base_scale * _character_actor_scale(lead_member),
-		animation_clock
-	)
+	_draw_character_actor_member(object_data, actor, lead_member, 0, faceless, Vector2(rect.position.x + rect.size.x * 0.50, foot_y), float(member_scales[0]))
 	# Talk events keep their person in the room while the authored event badge
 	# identifies why that person is selectable (rumor, offer, warning, and so on).
 	var event_icon := _texture_for_asset_path(str(object_data.get("asset_path", "")))
 	if event_icon != null:
 		var icon_size := clampf(minf(rect.size.x, rect.size.y) * 0.30, 22.0, 32.0)
 		var icon_rect := Rect2(rect.end - Vector2(icon_size + 3.0, icon_size + 3.0), Vector2(icon_size, icon_size))
-		_draw_live_texture_icon(event_icon, icon_rect, object_data, C_CYAN_2, str(object_data.get("id", "")) == selected_object_id, bool(object_data.get("disabled", false)))
+		_draw_live_texture_icon(event_icon, icon_rect, object_data, C_CYAN_2, object_labels_and_borders_enabled and str(object_data.get("id", "")) == selected_object_id, bool(object_data.get("disabled", false)))
 
 
-func _character_actor_style(member: Dictionary, actor: Dictionary, faceless: bool, clock: float) -> Dictionary:
+func _character_actor_member_scales(rect: Rect2, object_data: Dictionary, actor: Dictionary) -> Array:
+	var members: Array = actor.get("members", []) if typeof(actor.get("members", [])) == TYPE_ARRAY else []
+	var portrait_count := clampi(int(actor.get("portrait_count", maxi(1, members.size()))), 1, 3)
+	var width_requirement := 54.0 + float(portrait_count - 1) * 38.0
+	var base_scale := clampf(minf(rect.size.y / 86.0, rect.size.x / width_requirement), 0.42, 0.74)
+	var full_size_group := portrait_count >= 3 and _character_actor_is_crew_group(object_data, actor)
+	var scales: Array = []
+	for member_index in range(portrait_count):
+		var member: Dictionary = members[member_index] if member_index < members.size() and typeof(members[member_index]) == TYPE_DICTIONARY else {}
+		var depth_scale := 1.0 if member_index == 0 or full_size_group else 0.82
+		scales.append(base_scale * depth_scale * _character_actor_scale(member))
+	return scales
+
+
+func _character_actor_is_crew_group(object_data: Dictionary, actor: Dictionary) -> bool:
+	return str(actor.get("character_pool_id", "")).strip_edges() == "crew_regulars" \
+		or str(actor.get("character_identity_key", "")).strip_edges() == "the_crew" \
+		or str(object_data.get("source_id", "")).strip_edges() == "the_crew" \
+		or str(object_data.get("id", "")).strip_edges() == "lender:the_crew"
+
+
+func _scenario_actor_pose_allows_idle_routine(object_data: Dictionary, role: String, semantic_pose: String) -> bool:
+	var interaction_type := str(object_data.get("interaction_type", object_data.get("type", ""))).strip_edges()
+	if interaction_type != "scenario_actor":
+		return semantic_pose in ["", "idle", "watch", "watching"]
+	# Scenario phases commonly keep people in passive semantic states for several
+	# minutes. Those labels must not freeze the character's generated idle routine.
+	# Explicit action poses remain authoritative while the action is being shown.
+	if role.to_lower() not in ["idle", "watch", "guard", "work"]:
+		return false
+	if semantic_pose.begins_with("aftermath_"):
+		return true
+	return semantic_pose in [
+		"", "idle", "watch", "watching", "waiting", "working", "observing",
+		"arrival", "awaiting_choice", "waiting_on_choice", "watching_return", "finished", "relieved",
+	]
+
+
+func _character_actor_member_idle_state(object_data: Dictionary, actor: Dictionary, member: Dictionary, member_index: int, clock: float) -> Dictionary:
+	var role := str(member.get("role", actor.get("role", "staff")))
+	var identity := _character_actor_identity(object_data, actor, member, member_index)
+	var idle_profile := _character_idle_profile(identity, role)
+	var idle_state := _character_idle_state(idle_profile, clock)
+	var semantic_pose := str(member.get("pose", actor.get("pose", object_data.get("pose", "idle")))).strip_edges()
+	if semantic_pose.is_empty():
+		semantic_pose = "idle"
+	if not _scenario_actor_pose_allows_idle_routine(object_data, role, semantic_pose):
+		# Authored work/fight/movement poses communicate scenario state and must
+		# not be replaced by a decorative scratch, stretch, or pocket check.
+		idle_state["pose"] = semantic_pose
+		idle_state["gesture_amount"] = 1.0
+	return idle_state
+
+
+func _draw_character_actor_member(object_data: Dictionary, actor: Dictionary, member: Dictionary, member_index: int, faceless: bool, foot: Vector2, scale_value: float) -> void:
+	var idle_state := _character_actor_member_idle_state(object_data, actor, member, member_index, flicker)
+	var animated_foot := foot + Vector2(float(idle_state.get("sway", 0.0)), float(idle_state.get("bob", 0.0)))
+	TableGameVisualsScript._draw_table_character(self, _character_actor_style(member, actor, faceless, idle_state), animated_foot, scale_value, flicker)
+
+
+func _character_actor_style(member: Dictionary, actor: Dictionary, faceless: bool, idle_state: Dictionary) -> Dictionary:
 	var model: Dictionary = member.get("model", {}) if typeof(member.get("model", {})) == TYPE_DICTIONARY else {}
-	var cycle := fposmod(clock, 4.2) / 4.2
 	return {
 		"name": "",
 		"skin": C_DARK_3 if faceless else _character_actor_color(model, "skin_color", Color("#c49371")),
@@ -5284,9 +9358,14 @@ func _character_actor_style(member: Dictionary, actor: Dictionary, faceless: boo
 		"jacket": C_SHADOW if faceless else _character_actor_color(model, "jacket_color", _character_actor_color(actor, "jacket_color", C_BLUE)),
 		"accent": C_SOFT if faceless else _character_actor_color(model, "accent_color", C_CYAN_2),
 		"role": str(member.get("role", actor.get("role", "staff"))),
-		"pose": "watching" if fposmod(clock, 2.8) > 1.9 else "idle",
-		"eye_offset": 0.0 if reduce_motion else sin(clock * 0.72) * 0.55,
-		"blink": false if reduce_motion else cycle > 0.92 and cycle < 0.975,
+		"pose": str(idle_state.get("pose", "idle")),
+		"gesture_amount": float(idle_state.get("gesture_amount", 0.0)),
+		"gesture_side": int(idle_state.get("gesture_side", 1)),
+		"eye_offset": float(idle_state.get("eye_offset", 0.0)),
+		"blink": bool(idle_state.get("blink", false)),
+		"head_x": float(idle_state.get("head_x", 0.0)),
+		"head_y": float(idle_state.get("head_y", 0.0)),
+		"sway_amount": 0.0,
 		"holding_card": false,
 		"silhouette": str(model.get("silhouette", actor.get("silhouette", "coat"))),
 		"faceless": faceless,
@@ -5368,7 +9447,7 @@ func _texture_for_asset_path(asset_path: String) -> Texture2D:
 		return item_icon_texture_cache[path] as Texture2D
 	if not ResourceLoader.exists(path):
 		return _load_uncached_image_texture(path)
-	var resource := ResourceLoader.load(path, "Texture2D", ResourceLoader.CACHE_MODE_IGNORE)
+	var resource := ResourceLoader.load(path, "Texture2D", ResourceLoader.CACHE_MODE_REUSE)
 	var texture := resource as Texture2D
 	_remember_item_icon_texture(path, texture)
 	return texture
@@ -5443,22 +9522,33 @@ func _draw_game_prop(rect: Rect2, object_data: Dictionary, selected: bool) -> vo
 	var accent := C_PINK if selected else C_CYAN
 	if disabled:
 		accent = C_SOFT
-	if _grand_casino_web_low_detail() and not selected:
-		_draw_low_detail_game_prop(rect, object_data, accent, disabled)
-		_draw_game_runtime_badge(rect, object_data, accent)
-		return
-	_draw_interactable_light(rect, accent, selected)
 	var prop := str(object_data.get("prop", "card_table"))
+	var game_key := str(object_data.get("source_id", object_data.get("icon_key", "")))
+	# Generated machines keep their own cabinet identity on every platform. The
+	# Grand Casino's Web simplification remains available to other game props,
+	# but may never replace a live machine with placeholder art.
 	if prop == "machine":
-		var game_key := str(object_data.get("source_id", object_data.get("icon_key", "")))
+		_draw_interactable_light(rect, accent, selected)
 		if game_key == "pull_tabs":
 			_draw_pull_tab_machine_prop(rect, object_data, accent, selected, disabled)
 		else:
 			_draw_slot_cabinet_prop(rect, object_data, accent, selected, disabled)
-	elif prop == "coin_pusher_room":
+		_draw_game_runtime_badge(rect, object_data, accent)
+		return
+	if _grand_casino_web_low_detail() and not selected:
+		_draw_low_detail_game_prop(rect, object_data, accent, disabled)
+		_draw_game_runtime_badge(rect, object_data, accent)
+		return
+	# The street circle is painted directly on the alley floor. The generic
+	# fixture spotlight/base would make its chalk ring read as another table.
+	if prop != "street_craps_circle":
+		_draw_interactable_light(rect, accent, selected)
+	if prop == "coin_pusher_room":
 		CoinPusherRoomPropScript.draw(self, rect, object_data, accent, selected, disabled, flicker)
 	elif prop == "scratch_ticket_room":
 		ScratchTicketRoomPropScript.draw(self, rect, object_data, accent, selected, disabled, flicker)
+	elif prop == "street_craps_circle":
+		StreetCrapsCirclePropScript.draw(self, rect, object_data, accent, selected, disabled, flicker)
 	elif prop == "craps_room":
 		CrapsRoomPropScript.draw(self, rect, object_data, accent, selected, disabled, flicker)
 	elif prop == "bar_dice_room":
@@ -5483,7 +9573,9 @@ func _draw_game_prop(rect: Rect2, object_data: Dictionary, selected: bool) -> vo
 
 func _draw_low_detail_game_prop(rect: Rect2, object_data: Dictionary, accent: Color, disabled: bool = false) -> void:
 	var prop := str(object_data.get("prop", "card_table"))
-	var source_id := str(object_data.get("source_id", object_data.get("icon_key", "")))
+	if prop == "street_craps_circle":
+		StreetCrapsCirclePropScript.draw_low_detail(self, rect, object_data, accent, disabled, flicker)
+		return
 	var base_alpha := 0.18 if disabled else 0.30
 	draw_rect(Rect2(rect.position + Vector2(rect.size.x * 0.12, rect.size.y * 0.82), Vector2(rect.size.x * 0.76, 4)), Color(accent.r, accent.g, accent.b, base_alpha))
 	if prop == "coin_pusher_room":
@@ -5498,20 +9590,18 @@ func _draw_low_detail_game_prop(rect: Rect2, object_data: Dictionary, accent: Co
 	if prop == "bar_dice_room":
 		BarDiceRoomPropScript.draw_low_detail(self, rect, object_data, accent, disabled, flicker)
 		return
-	if prop in ["machine", "video_poker_machine"]:
+	if prop == "video_poker_machine":
 		var cabinet := Rect2(rect.position + Vector2(rect.size.x * 0.24, rect.size.y * 0.18), Vector2(rect.size.x * 0.52, rect.size.y * 0.58))
 		draw_rect(cabinet, Color("#090a14"))
 		draw_rect(cabinet, Color(accent.r, accent.g, accent.b, 0.18), false, 1)
 		var screen := Rect2(cabinet.position + Vector2(cabinet.size.x * 0.18, cabinet.size.y * 0.26), Vector2(cabinet.size.x * 0.64, cabinet.size.y * 0.26))
-		var screen_color := Color("#f0ead7") if prop == "machine" else Color("#07131b")
-		draw_rect(screen, screen_color)
+		draw_rect(screen, Color("#07131b"))
 		draw_rect(screen, Color(accent.r, accent.g, accent.b, 0.28), false, 1)
 		for i in range(3):
 			var reel := Rect2(screen.position + Vector2(3.0 + float(i) * screen.size.x * 0.30, 3.0), Vector2(screen.size.x * 0.18, maxf(5.0, screen.size.y - 6.0)))
 			draw_rect(reel, _cycle_color(i * 23 + int(rect.position.x)).darkened(0.10))
-		var label := "SLOT" if source_id == "slot" else "TIX" if source_id == "pull_tabs" else "POKER"
 		var font := get_theme_default_font()
-		draw_string(font, cabinet.position + Vector2(2.0, cabinet.size.y * 0.82), _fit_draw_text(label, font, 7, cabinet.size.x - 4.0), HORIZONTAL_ALIGNMENT_CENTER, cabinet.size.x - 4.0, 7, C_YELLOW)
+		draw_string(font, cabinet.position + Vector2(2.0, cabinet.size.y * 0.82), _fit_draw_text("POKER", font, 7, cabinet.size.x - 4.0), HORIZONTAL_ALIGNMENT_CENTER, cabinet.size.x - 4.0, 7, C_YELLOW)
 	else:
 		var table := Rect2(rect.position + Vector2(rect.size.x * 0.08, rect.size.y * 0.44), Vector2(rect.size.x * 0.84, rect.size.y * 0.30))
 		draw_rect(table, Color("#123f30"))
@@ -5717,7 +9807,7 @@ func _public_prop_state_label(public_state: String) -> String:
 	return "CHANGED"
 
 
-func _draw_public_prop_state_marker(rect: Rect2, object_data: Dictionary, accent: Color) -> void:
+func _draw_public_prop_state_marker(rect: Rect2, object_data: Dictionary) -> void:
 	var variant := str(object_data.get("prop_state_variant", ""))
 	if variant.is_empty():
 		return
@@ -5727,8 +9817,8 @@ func _draw_public_prop_state_marker(rect: Rect2, object_data: Dictionary, accent
 		1: marker_color = C_YELLOW
 		2: marker_color = C_PINK
 		3: marker_color = C_TEAL
-	# Keep the state cue inside the object's lower edge. The previous boxed badge
-	# covered nearby machines and read like a second generic icon in dense rooms.
+	# Keep the state cue inside the object's lower edge. A perimeter around the
+	# complete model reads like a leftover placeholder in dense floor layouts.
 	var rail := Rect2(rect.position + Vector2(5.0, rect.size.y - 7.0), Vector2(maxf(1.0, rect.size.x - 10.0), 3.0))
 	draw_rect(rail, Color(0.02, 0.02, 0.05, 0.72))
 	# Ten hexadecimal cells expose forty deterministic non-color bits. Actual
@@ -5744,7 +9834,6 @@ func _draw_public_prop_state_marker(rect: Rect2, object_data: Dictionary, accent
 				draw_rect(bit_rect, Color(marker_color.r, marker_color.g, marker_color.b, 0.18), false, 1.0)
 	draw_line(rect.position + Vector2(3.0, rect.size.y - 10.0), rect.position + Vector2(3.0, rect.size.y - 2.0), marker_color, 2.0)
 	draw_line(rect.end - Vector2(3.0, 10.0), rect.end - Vector2(3.0, 2.0), marker_color, 2.0)
-	draw_rect(rect.grow(1.0), Color(accent.r, accent.g, accent.b, 0.58), false, 1.0)
 
 
 func _fallback_scenario_semantic_prop(value: String) -> String:
@@ -6033,7 +10122,14 @@ func _draw_event_door_prop(rect: Rect2, accent: Color, motel: bool) -> void:
 
 func _draw_event_machine_prop(rect: Rect2, accent: Color) -> void:
 	var machine := Rect2(rect.position + Vector2(rect.size.x * 0.26, 6), Vector2(rect.size.x * 0.48, rect.size.y * 0.74))
-	_slot_machine(machine, accent)
+	# This is damaged event equipment, not a playable generated slot cabinet.
+	# Keep it visibly inert instead of borrowing any slot-machine renderer.
+	draw_rect(machine, Color("#0b0c13"))
+	draw_rect(machine, Color(accent.r, accent.g, accent.b, 0.24), false, 2)
+	var service_panel := Rect2(machine.position + Vector2(machine.size.x * 0.16, machine.size.y * 0.18), Vector2(machine.size.x * 0.68, machine.size.y * 0.42))
+	draw_rect(service_panel, Color("#171421"))
+	draw_line(service_panel.position + Vector2(2, service_panel.size.y * 0.72), service_panel.end - Vector2(2, service_panel.size.y * 0.72), accent.darkened(0.18), 2)
+	draw_line(service_panel.position + Vector2(service_panel.size.x * 0.30, 3), service_panel.position + Vector2(service_panel.size.x * 0.54, service_panel.size.y - 3), C_PINK, 2)
 	draw_line(machine.position + Vector2(machine.size.x * 0.18, machine.size.y * 0.24), machine.position + Vector2(machine.size.x * 0.82, machine.size.y * 0.45), C_PINK, 3)
 	var badge := Rect2(rect.position + Vector2(rect.size.x * 0.66, rect.size.y * 0.18), Vector2(rect.size.x * 0.18, rect.size.y * 0.22))
 	draw_rect(badge, Color(0.05, 0.04, 0.08, 0.86))
@@ -6148,10 +10244,6 @@ func _silhouette(pos: Vector2, scale_value: float, color: Color) -> void:
 	draw_rect(Rect2(pos.x + 18 * scale_value, pos.y - 14 * scale_value, 12 * scale_value, 48 * scale_value), color)
 
 
-func _slot_machine(rect: Rect2, accent: Color) -> void:
-	_draw_slot_cabinet_prop(rect, {"label": "SLOT", "source_id": "ambient_slot"}, accent, false, false)
-
-
 func _draw_roulette_room_prop(rect: Rect2, object_data: Dictionary, accent: Color, selected: bool, disabled: bool = false) -> void:
 	var table := Rect2(rect.position + Vector2(rect.size.x * 0.06, rect.size.y * 0.48), Vector2(rect.size.x * 0.88, rect.size.y * 0.30))
 	draw_rect(table, Color("#14503c"))
@@ -6227,40 +10319,33 @@ func _draw_pull_tab_machine_prop(rect: Rect2, object_data: Dictionary, accent: C
 
 
 func _draw_slot_cabinet_prop(rect: Rect2, object_data: Dictionary, accent: Color, selected: bool, disabled: bool = false) -> void:
-	var phase := float(abs(hash(str(object_data.get("id", object_data.get("label", "slot"))))) % 1000) / 1000.0
-	var profile := _slot_prop_profile(object_data, accent)
+	var static_layer := _slot_prop_static_layer(rect, object_data, accent)
+	var preview_layer := _slot_prop_preview_layer(object_data)
+	var phase := float(static_layer.get("phase", 0.0))
+	var profile: Dictionary = static_layer.get("profile", {})
 	var runtime := _slot_prop_runtime_state(object_data)
-	var preview := _slot_prop_preview_state(object_data)
-	var preview_phase := str(preview.get("phase", "idle"))
-	var live_preview := bool(preview.get("active", false)) or ["spinning", "win", "near_miss", "bonus", "nudge_chain"].has(preview_phase)
+	var preview: Dictionary = preview_layer.get("preview", {})
+	var preview_phase := str(preview_layer.get("phase", "idle"))
+	var live_preview := bool(preview_layer.get("active", false)) or ["spinning", "win", "near_miss", "bonus", "nudge_chain"].has(preview_phase)
 	var pulse_speed := 4.8 if preview_phase == "spinning" else 4.1 if live_preview else 3.5 if selected else 2.1
 	var pulse := 0.38 + absf(sin(flicker * pulse_speed + phase * TAU)) * (0.34 if live_preview else 0.30 if selected else 0.14)
-	var safe := Rect2(
-		rect.position + Vector2(rect.size.x * 0.14, rect.size.y * 0.03),
-		Vector2(rect.size.x * 0.72, rect.size.y * 0.92)
-	)
-	if safe.size.x < 28.0 or safe.size.y < 42.0:
-		draw_rect(rect.grow(-2.0), Color("#111120"))
-		return
-	var format_id := str(profile.get("format_id", "classic_3_reel"))
-	var reel_count := maxi(3, int(profile.get("reel_count", 3)))
-	var row_count := maxi(1, int(profile.get("row_count", 1)))
-	var video_feature := format_id == "video_feature"
-	var classic := format_id == "classic_3_reel" or row_count <= 1
+	var safe: Rect2 = static_layer.get("safe", rect)
+	var reel_count := int(static_layer.get("reel_count", 3))
+	var row_count := int(static_layer.get("row_count", 1))
+	var video_feature := bool(static_layer.get("video_feature", false))
+	var classic := bool(static_layer.get("classic", true))
 	var slot_accent: Color = profile.get("accent", accent)
 	var slot_light: Color = profile.get("light", C_CYAN)
 	var slot_trim: Color = profile.get("trim", C_YELLOW)
 	var primary: Color = profile.get("primary", Color("#0b0d18"))
 	var secondary: Color = profile.get("secondary", Color("#07070c"))
 	var glass: Color = profile.get("glass", Color("#f2efe2"))
-	var base := Rect2(safe.position + Vector2(safe.size.x * (0.10 if classic else 0.08), safe.size.y * 0.86), Vector2(safe.size.x * (0.80 if classic else 0.84), safe.size.y * 0.10))
-	var body := Rect2(safe.position + Vector2(safe.size.x * (0.15 if classic else 0.08), safe.size.y * (0.20 if classic else 0.15)), Vector2(safe.size.x * (0.70 if classic else 0.84), safe.size.y * (0.68 if classic else 0.73)))
-	var topper := Rect2(safe.position + Vector2(safe.size.x * (0.10 if classic else 0.04), safe.size.y * 0.04), Vector2(safe.size.x * (0.80 if classic else 0.92), safe.size.y * (0.17 if classic else 0.15)))
-	var screen := Rect2(body.position + Vector2(body.size.x * (0.18 if classic else 0.10), body.size.y * (0.30 if classic else 0.22)), Vector2(body.size.x * (0.64 if classic else 0.80), body.size.y * (0.26 if classic else 0.42)))
-	if video_feature:
-		screen = Rect2(body.position + Vector2(body.size.x * 0.09, body.size.y * 0.20), Vector2(body.size.x * 0.58, body.size.y * 0.48))
-	var feature_panel := Rect2(body.position + Vector2(body.size.x * 0.72, body.size.y * 0.19), Vector2(body.size.x * 0.18, body.size.y * 0.48))
-	var deck := Rect2(body.position + Vector2(body.size.x * 0.10, body.size.y * (0.70 if classic else 0.72)), Vector2(body.size.x * 0.80, body.size.y * (0.13 if classic else 0.12)))
+	var base: Rect2 = static_layer.get("base", Rect2())
+	var body: Rect2 = static_layer.get("body", Rect2())
+	var topper: Rect2 = static_layer.get("topper", Rect2())
+	var screen: Rect2 = static_layer.get("screen", Rect2())
+	var feature_panel: Rect2 = static_layer.get("feature_panel", Rect2())
+	var deck: Rect2 = static_layer.get("deck", Rect2())
 	var rail_alpha := 0.34 + pulse * 0.24
 	draw_rect(Rect2(safe.position + Vector2(safe.size.x * 0.16, safe.size.y * 0.94), Vector2(safe.size.x * 0.68, safe.size.y * 0.035)), Color(slot_accent.r, slot_accent.g, slot_accent.b, 0.22))
 	draw_rect(base, Color("#06060b"))
@@ -6276,12 +10361,12 @@ func _draw_slot_cabinet_prop(rect: Rect2, object_data: Dictionary, accent: Color
 	draw_rect(screen, Color("#03040a"))
 	draw_rect(Rect2(screen.position + Vector2(2, 2), screen.size - Vector2(4, 4)), Color("#06080f"))
 	draw_rect(screen, Color(slot_light.r, slot_light.g, slot_light.b, 0.16 + pulse * 0.08), false, 1)
-	_draw_slot_prop_reels(screen, reel_count, row_count, profile, glass, phase, preview)
+	_draw_slot_prop_reels(screen, reel_count, row_count, profile, glass, phase, preview_layer)
 	_draw_slot_prop_nudge_chain_overlay(screen, preview, profile, phase, pulse)
 	if video_feature:
 		_draw_slot_prop_feature_panel(feature_panel, profile, pulse, phase, preview)
 	else:
-		var feature_strip := Rect2(body.position + Vector2(body.size.x * 0.18, body.size.y * (0.60 if classic else 0.66)), Vector2(body.size.x * 0.64, body.size.y * (0.08 if classic else 0.05)))
+		var feature_strip: Rect2 = static_layer.get("feature_strip", Rect2())
 		_draw_slot_prop_feature_strip(feature_strip, profile, pulse, phase, preview)
 	draw_rect(deck, Color("#12080f"))
 	draw_rect(deck, Color(slot_trim.r, slot_trim.g, slot_trim.b, 0.18 + pulse * 0.08), false, 1)
@@ -6298,7 +10383,7 @@ func _draw_slot_cabinet_prop(rect: Rect2, object_data: Dictionary, accent: Color
 		var lever_x := body.position.x + body.size.x * 0.93
 		draw_line(Vector2(lever_x, body.position.y + body.size.y * 0.28), Vector2(lever_x, body.position.y + body.size.y * 0.55), slot_trim, 2)
 		draw_circle(Vector2(lever_x, body.position.y + body.size.y * 0.25), maxf(2.0, safe.size.x * 0.035), C_YELLOW)
-	var light_count := maxi(3, int(safe.size.x / 16.0))
+	var light_count := int(static_layer.get("light_count", 3))
 	for i in range(light_count):
 		var t := 0.0 if light_count <= 1 else float(i) / float(light_count - 1)
 		var pos := topper.position + Vector2(topper.size.x * t, -1.0)
@@ -6309,6 +10394,124 @@ func _draw_slot_cabinet_prop(rect: Rect2, object_data: Dictionary, accent: Color
 	if disabled:
 		draw_rect(safe, Color(0.0, 0.0, 0.0, 0.48))
 		draw_line(safe.position + Vector2(safe.size.x * 0.12, safe.size.y * 0.20), safe.position + Vector2(safe.size.x * 0.88, safe.size.y * 0.78), C_SOFT, 3)
+
+
+func _slot_prop_static_layer(rect: Rect2, object_data: Dictionary, fallback_accent: Color) -> Dictionary:
+	var object_id := str(object_data.get("id", object_data.get("label", "generated_machine")))
+	# Spin previews are animated independently and can be large. Key this static
+	# cabinet geometry only by the profile fields it actually consumes.
+	var visual := _slot_prop_visual_state(object_data)
+	var cached_value: Variant = slot_prop_static_layer_cache.get(object_id, {})
+	if typeof(cached_value) == TYPE_DICTIONARY:
+		var retained := cached_value as Dictionary
+		if is_same(retained.get("visual_ref", {}), visual) \
+				and retained.get("rect", Rect2()) == rect \
+				and retained.get("fallback_accent", Color.TRANSPARENT) == fallback_accent:
+			return retained
+	var signature := hash([
+		rect,
+		fallback_accent,
+		visual.get("machine_family", ""),
+		visual.get("machine_format", ""),
+		visual.get("cabinet_identity", ""),
+		visual.get("cabinet_title", ""),
+		visual.get("reel_count", null),
+		visual.get("row_count", null),
+		visual.get("cabinet_palette", {}),
+	])
+	if typeof(cached_value) == TYPE_DICTIONARY:
+		var cached := cached_value as Dictionary
+		if int(cached.get("signature", -1)) == signature:
+			cached["visual_ref"] = visual
+			return cached
+	var profile := _slot_prop_profile(object_data, fallback_accent)
+	var phase := float(abs(hash(object_id)) % 1000) / 1000.0
+	var safe := Rect2(
+		rect.position + Vector2(rect.size.x * 0.14, rect.size.y * 0.03),
+		Vector2(rect.size.x * 0.72, rect.size.y * 0.92)
+	)
+	var format_id := str(profile.get("format_id", "classic_3_reel"))
+	var reel_count := maxi(3, int(profile.get("reel_count", 3)))
+	var row_count := maxi(1, int(profile.get("row_count", 1)))
+	var video_feature := format_id == "video_feature"
+	var classic := format_id == "classic_3_reel" or row_count <= 1
+	var base := Rect2(safe.position + Vector2(safe.size.x * (0.10 if classic else 0.08), safe.size.y * 0.86), Vector2(safe.size.x * (0.80 if classic else 0.84), safe.size.y * 0.10))
+	var body := Rect2(safe.position + Vector2(safe.size.x * (0.15 if classic else 0.08), safe.size.y * (0.20 if classic else 0.15)), Vector2(safe.size.x * (0.70 if classic else 0.84), safe.size.y * (0.68 if classic else 0.73)))
+	var topper := Rect2(safe.position + Vector2(safe.size.x * (0.10 if classic else 0.04), safe.size.y * 0.04), Vector2(safe.size.x * (0.80 if classic else 0.92), safe.size.y * (0.17 if classic else 0.15)))
+	var screen := Rect2(body.position + Vector2(body.size.x * (0.18 if classic else 0.10), body.size.y * (0.30 if classic else 0.22)), Vector2(body.size.x * (0.64 if classic else 0.80), body.size.y * (0.26 if classic else 0.42)))
+	if video_feature:
+		screen = Rect2(body.position + Vector2(body.size.x * 0.09, body.size.y * 0.20), Vector2(body.size.x * 0.58, body.size.y * 0.48))
+	var feature_panel := Rect2(body.position + Vector2(body.size.x * 0.72, body.size.y * 0.19), Vector2(body.size.x * 0.18, body.size.y * 0.48))
+	var deck := Rect2(body.position + Vector2(body.size.x * 0.10, body.size.y * (0.70 if classic else 0.72)), Vector2(body.size.x * 0.80, body.size.y * (0.13 if classic else 0.12)))
+	var feature_strip := Rect2(body.position + Vector2(body.size.x * 0.18, body.size.y * (0.60 if classic else 0.66)), Vector2(body.size.x * 0.64, body.size.y * (0.08 if classic else 0.05)))
+	var layer := {
+		"signature": signature,
+		"visual_ref": visual,
+		"rect": rect,
+		"fallback_accent": fallback_accent,
+		"phase": phase,
+		"profile": profile,
+		"safe": safe,
+		"reel_count": reel_count,
+		"row_count": row_count,
+		"video_feature": video_feature,
+		"classic": classic,
+		"base": base,
+		"body": body,
+		"topper": topper,
+		"screen": screen,
+		"feature_panel": feature_panel,
+		"deck": deck,
+		"feature_strip": feature_strip,
+		"light_count": maxi(3, int(safe.size.x / 16.0)),
+	}
+	if slot_prop_static_layer_cache.size() >= SLOT_PROP_STATIC_LAYER_CACHE_LIMIT and not slot_prop_static_layer_cache.has(object_id):
+		slot_prop_static_layer_cache.erase(slot_prop_static_layer_cache.keys()[0])
+	slot_prop_static_layer_cache[object_id] = layer
+	return layer
+
+
+# Decodes a newly published slot preview once. The environment canvas continues
+# redrawing autonomously for neon, reels, and cabinet motion, but steady frames
+# reuse the grid reference and a compact per-reel win mask instead of copying and
+# rescanning the preview payload for every visible cell.
+func _slot_prop_preview_layer(object_data: Dictionary) -> Dictionary:
+	var object_id := str(object_data.get("id", object_data.get("label", "generated_machine")))
+	var preview := _slot_prop_preview_state(object_data)
+	var cached_value: Variant = slot_prop_preview_layer_cache.get(object_id, {})
+	if typeof(cached_value) == TYPE_DICTIONARY:
+		var cached := cached_value as Dictionary
+		if is_same(cached.get("preview_ref", {}), preview):
+			return cached
+	var grid_value: Variant = preview.get("grid", [])
+	var grid: Array = grid_value as Array if typeof(grid_value) == TYPE_ARRAY else []
+	var reel_count := maxi(grid.size(), maxi(0, int(preview.get("reel_count", 0))))
+	var win_row_masks := PackedInt32Array()
+	win_row_masks.resize(reel_count)
+	var win_cells_value: Variant = preview.get("win_cells", [])
+	if typeof(win_cells_value) == TYPE_ARRAY:
+		for cell_value in win_cells_value as Array:
+			if typeof(cell_value) != TYPE_DICTIONARY:
+				continue
+			var cell := cell_value as Dictionary
+			var reel_index := int(cell.get("reel", -1))
+			var row_index := int(cell.get("row", -1))
+			if reel_index < 0 or reel_index >= win_row_masks.size() or row_index < 0 or row_index >= 31:
+				continue
+			win_row_masks[reel_index] = win_row_masks[reel_index] | (1 << row_index)
+	var layer := {
+		"preview_ref": preview,
+		"preview": preview,
+		"grid": grid,
+		"win_row_masks": win_row_masks,
+		"phase": str(preview.get("phase", "idle")),
+		"active": bool(preview.get("active", false)),
+	}
+	if slot_prop_preview_layer_cache.size() >= SLOT_PROP_PREVIEW_LAYER_CACHE_LIMIT and not slot_prop_preview_layer_cache.has(object_id):
+		slot_prop_preview_layer_cache.erase(slot_prop_preview_layer_cache.keys()[0])
+	slot_prop_preview_layer_cache[object_id] = layer
+	slot_prop_preview_layer_rebuild_count += 1
+	return layer
 
 
 func _slot_prop_visual_state(object_data: Dictionary) -> Dictionary:
@@ -6340,9 +10543,7 @@ func _slot_prop_profile(object_data: Dictionary, fallback_accent: Color) -> Dict
 	var identity := str(visual.get("cabinet_identity", "")).to_lower()
 	if format_id.is_empty():
 		format_id = "classic_3_reel"
-	var title := str(visual.get("cabinet_title", object_data.get("label", "SLOT"))).strip_edges().to_upper()
-	if title.is_empty():
-		title = "SLOT"
+	var title := str(visual.get("cabinet_title", "")).strip_edges().to_upper()
 	var reel_count := int(visual.get("reel_count", 5 if format_id != "classic_3_reel" else 3))
 	var row_count := int(visual.get("row_count", 3 if format_id != "classic_3_reel" else 1))
 	var profile := {
@@ -6448,6 +10649,11 @@ func _slot_prop_profile(object_data: Dictionary, fallback_accent: Color) -> Dict
 					"glass": Color("#dffbff"),
 					"marker": "table",
 				}, true)
+	var palette := _copy_dictionary(visual.get("cabinet_palette", {}))
+	for key in ["primary", "secondary", "accent", "light", "trim", "glass"]:
+		var color_text := str(palette.get(key, "")).strip_edges()
+		if not color_text.is_empty():
+			profile[key] = Color(color_text)
 	return profile
 
 
@@ -6489,18 +10695,19 @@ func _draw_slot_prop_topper(topper: Rect2, profile: Dictionary, pulse: float, ph
 				draw_rect(score, Color(trim_color.r, trim_color.g, trim_color.b, 0.22 + pulse * 0.10), false, 1)
 	var font := get_theme_default_font()
 	var title_size := clampi(int(topper.size.y * 0.34), 7, 13)
-	var title := str(profile.get("title", "SLOT")).left(10)
+	var title := str(profile.get("title", "")).left(10)
 	var status := str(preview.get("status_label", "")).strip_edges()
 	if not status.is_empty() and preview_phase != "idle":
 		title = status.left(10)
-	draw_string(font, topper.position + Vector2(4.0, topper.size.y * 0.66), _fit_draw_text(title, font, title_size, topper.size.x - 8.0), HORIZONTAL_ALIGNMENT_CENTER, topper.size.x - 8.0, title_size, C_YELLOW)
+	if not title.is_empty():
+		draw_string(font, topper.position + Vector2(4.0, topper.size.y * 0.66), _fit_draw_text(title, font, title_size, topper.size.x - 8.0), HORIZONTAL_ALIGNMENT_CENTER, topper.size.x - 8.0, title_size, C_YELLOW)
 
 
-func _draw_slot_prop_reels(screen: Rect2, reel_count: int, row_count: int, profile: Dictionary, glass: Color, phase: float, preview: Dictionary = {}) -> void:
+func _draw_slot_prop_reels(screen: Rect2, reel_count: int, row_count: int, profile: Dictionary, glass: Color, phase: float, preview_layer: Dictionary = {}) -> void:
 	var family := str(profile.get("family", ""))
 	var accent_color: Color = profile.get("accent", C_PINK)
 	var light_color: Color = profile.get("light", C_CYAN)
-	var preview_phase := str(preview.get("phase", "idle"))
+	var preview_phase := str(preview_layer.get("phase", "idle"))
 	var spin_active := preview_phase == "spinning"
 	var reel_gap := maxf(1.0, screen.size.x * 0.020)
 	var reel_w := (screen.size.x - reel_gap * float(reel_count + 1)) / float(reel_count)
@@ -6515,20 +10722,20 @@ func _draw_slot_prop_reels(screen: Rect2, reel_count: int, row_count: int, profi
 				var scroll := fposmod(flicker * (42.0 + float(i) * 5.0), cell_h)
 				for band in range(3):
 					var symbol_rect := Rect2(reel.position + Vector2(reel.size.x * 0.18, reel.size.y * 0.06 + float(band) * cell_h - scroll), Vector2(reel.size.x * 0.64, cell_h * 0.70))
-					_draw_slot_prop_symbol(symbol_rect, _slot_prop_preview_symbol(preview, i, band), family, i + band, phase, false)
+					_draw_slot_prop_symbol(symbol_rect, _slot_prop_preview_symbol(preview_layer, i, band), family, i + band, phase, false)
 			else:
 				var symbol := Rect2(reel.position + reel.size * 0.22, reel.size * 0.56)
-				_draw_slot_prop_symbol(symbol, _slot_prop_preview_symbol(preview, i, 0), family, i, phase, _slot_prop_preview_cell_highlight(preview, i, 0))
+				_draw_slot_prop_symbol(symbol, _slot_prop_preview_symbol(preview_layer, i, 0), family, i, phase, _slot_prop_preview_cell_highlight(preview_layer, i, 0))
 		else:
 			var cell_gap := maxf(1.0, reel.size.y * 0.035)
 			var cell_h := (reel.size.y - cell_gap * float(row_count + 1)) / float(row_count)
 			var scroll := fposmod(flicker * (38.0 + float(i) * 4.0), cell_h + cell_gap) if spin_active else 0.0
 			for row in range(row_count):
 				var cell := Rect2(reel.position + Vector2(reel.size.x * 0.18, cell_gap + float(row) * (cell_h + cell_gap) - scroll), Vector2(reel.size.x * 0.64, cell_h))
-				var symbol_id := _slot_prop_preview_symbol(preview, i, row + (1 if spin_active else 0))
+				var symbol_id := _slot_prop_preview_symbol(preview_layer, i, row + (1 if spin_active else 0))
 				if symbol_id == "BLANK" and row == 1:
 					symbol_id = "BUFFALO" if family == "buffalo" and i % 2 == 0 else "BALL"
-				var highlight := _slot_prop_preview_cell_highlight(preview, i, row)
+				var highlight := _slot_prop_preview_cell_highlight(preview_layer, i, row)
 				_draw_slot_prop_symbol(cell, symbol_id, family, i + row * 7, phase, highlight)
 			if spin_active:
 				draw_rect(reel, Color(light_color.r, light_color.g, light_color.b, 0.10 + absf(sin(flicker * 10.0 + float(i))) * 0.12))
@@ -6621,11 +10828,9 @@ func _draw_slot_prop_symbol(rect: Rect2, symbol: String, family: String, index: 
 		draw_string(font, rect.position + Vector2(1.0, rect.size.y * 0.68), _fit_draw_text(label, font, label_size, rect.size.x - 2.0), HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - 2.0, label_size, Color("#070812"))
 
 
-func _slot_prop_preview_symbol(preview: Dictionary, reel_index: int, row_index: int) -> String:
-	var grid_value: Variant = preview.get("grid", [])
-	if typeof(grid_value) != TYPE_ARRAY:
-		return "BLANK"
-	var grid: Array = grid_value as Array
+func _slot_prop_preview_symbol(preview_layer: Dictionary, reel_index: int, row_index: int) -> String:
+	var grid_value: Variant = preview_layer.get("grid", [])
+	var grid: Array = grid_value as Array if typeof(grid_value) == TYPE_ARRAY else []
 	if grid.is_empty():
 		return "BLANK"
 	var safe_reel := posmod(reel_index, grid.size())
@@ -6637,14 +10842,13 @@ func _slot_prop_preview_symbol(preview: Dictionary, reel_index: int, row_index: 
 	return str(column[posmod(row_index, column.size())])
 
 
-func _slot_prop_preview_cell_highlight(preview: Dictionary, reel_index: int, row_index: int) -> bool:
-	for cell_value in _copy_array(preview.get("win_cells", [])):
-		if typeof(cell_value) != TYPE_DICTIONARY:
-			continue
-		var cell: Dictionary = cell_value
-		if int(cell.get("reel", -1)) == reel_index and int(cell.get("row", -1)) == row_index:
-			return true
-	return false
+func _slot_prop_preview_cell_highlight(preview_layer: Dictionary, reel_index: int, row_index: int) -> bool:
+	var masks_value: Variant = preview_layer.get("win_row_masks", PackedInt32Array())
+	if typeof(masks_value) != TYPE_PACKED_INT32_ARRAY:
+		return false
+	var masks := masks_value as PackedInt32Array
+	return reel_index >= 0 and reel_index < masks.size() and row_index >= 0 and row_index < 31 \
+		and (masks[reel_index] & (1 << row_index)) != 0
 
 
 func _draw_slot_prop_feature_strip(strip: Rect2, profile: Dictionary, pulse: float, phase: float, preview: Dictionary = {}) -> void:
@@ -6714,7 +10918,7 @@ func _draw_slot_prop_nudge_chain_overlay(screen: Rect2, preview: Dictionary, pro
 	var chain: Dictionary = _copy_dictionary(preview.get("nudge_chain", {}))
 	if not bool(chain.get("active", false)):
 		return
-	var coins: Array = _copy_array(chain.get("coins", []))
+	var coins: Array = JsonCoerceScript._copy_array(chain.get("coins", []))
 	var row_count := maxi(1, int(preview.get("row_count", 1)))
 	var active_index := clampi(int(chain.get("active_index", 0)), 0, maxi(0, coins.size() - 1))
 	var active_coin: Dictionary = _copy_dictionary(coins[active_index]) if active_index < coins.size() else {}

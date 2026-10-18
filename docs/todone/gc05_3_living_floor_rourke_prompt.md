@@ -16,7 +16,7 @@ roguelike (Web/itch.io + Windows, 1280×720). Immediate-mode canvas
 rendering (`scripts/ui/pixel_scene_canvas.gd` draws rooms and ambient
 characters); run logic in `scripts/core/run_state.gd`; seeded RNG via
 `RngStream` forks only. This file is self-contained; the binding design
-contract is `docs/plans/0.5_grand_casino_rework_plan.md` section 3 — read
+contract is `docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` section 3 — read
 it first. Requires slices 1-2 landed; re-verify their actual code.
 
 ## Task

@@ -1,6 +1,8 @@
 class_name CrewStateModel
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Data and normalization contract for within-run Crew trust, jobs, and The Turn ledger.
 
 const CREW_CONFIG_PATH := "res://data/crew/crew.json"
@@ -315,7 +317,7 @@ static func job_proposal_verbs(kind: String) -> Array:
 		if str(definition.get("kind", "")) != kind:
 			continue
 		var semantics: Dictionary = definition.get("semantics", {}) if typeof(definition.get("semantics", {})) == TYPE_DICTIONARY else {}
-		return _string_array(semantics.get("public_verbs", []))
+		return JsonCoerceScript._string_array(semantics.get("public_verbs", []))
 	return []
 
 
@@ -344,7 +346,7 @@ static func validate_content() -> Array:
 	var source: Dictionary = config_rows[0]
 	if int(source.get("schema_version", 0)) != STATE_SCHEMA_VERSION:
 		failures.append("crew.json schema_version must match CrewStateModel.")
-	if _string_array(source.get("member_ids", [])) != MEMBER_IDS:
+	if JsonCoerceScript._string_array(source.get("member_ids", [])) != MEMBER_IDS:
 		failures.append("crew.json member_ids must contain the seven authored crew ids in contract order.")
 	var thresholds: Array = source.get("rank_thresholds", []) if typeof(source.get("rank_thresholds", [])) == TYPE_ARRAY else []
 	var previous := -1
@@ -360,16 +362,16 @@ static func validate_content() -> Array:
 		previous = amount
 	if rank_ids != RANK_IDS:
 		failures.append("crew.json rank ladder does not match the binding five ranks.")
-	if _string_array(source.get("grievance_kinds", [])) != GRIEVANCE_KINDS:
+	if JsonCoerceScript._string_array(source.get("grievance_kinds", [])) != GRIEVANCE_KINDS:
 		failures.append("crew.json grievance taxonomy does not match the binding ledger kinds.")
 	var member_rank_perks: Dictionary = source.get("member_rank_perks", {}) if typeof(source.get("member_rank_perks", {})) == TYPE_DICTIONARY else {}
 	for member_id in MEMBER_IDS:
 		var gates: Dictionary = member_rank_perks.get(member_id, {}) if typeof(member_rank_perks.get(member_id, {})) == TYPE_DICTIONARY else {}
-		if not _string_array(gates.get("associate", [])).has("member_jobs"):
+		if not JsonCoerceScript._string_array(gates.get("associate", [])).has("member_jobs"):
 			failures.append("crew.json %s must open member jobs at Associate." % member_id)
 		for rank_id_value in gates.keys():
 			var rank_id := str(rank_id_value)
-			if not RANK_IDS.has(rank_id) or _string_array(gates.get(rank_id_value, [])).is_empty():
+			if not RANK_IDS.has(rank_id) or JsonCoerceScript._string_array(gates.get(rank_id_value, [])).is_empty():
 				failures.append("crew.json %s has an invalid or empty %s perk gate." % [member_id, rank_id])
 	var member_services: Dictionary = source.get("member_services", {}) if typeof(source.get("member_services", {})) == TYPE_DICTIONARY else {}
 	if int(member_services.get("switch_intel_uses_per_visit", 0)) <= 0 or int(member_services.get("knuckles_stash_cap", 0)) <= 0:
@@ -383,7 +385,7 @@ static func validate_content() -> Array:
 		failures.append("crew.json Practice Rig threshold must be positive.")
 	var heist_requirements: Dictionary = source.get("heist_requirements", {}) if typeof(source.get("heist_requirements", {})) == TYPE_DICTIONARY else {}
 	for plan_id in heist_requirements.keys():
-		for member_id in _string_array(heist_requirements.get(plan_id, [])):
+		for member_id in JsonCoerceScript._string_array(heist_requirements.get(plan_id, [])):
 			if not MEMBER_IDS.has(member_id):
 				failures.append("crew.json heist requirement %s references unknown member %s." % [plan_id, member_id])
 	var job_ids := {}
@@ -464,14 +466,3 @@ static func _load_array(path: String) -> Array:
 		return []
 	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
 	return (parsed as Array).duplicate(true) if typeof(parsed) == TYPE_ARRAY else []
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry_value in value:
-		var entry := str(entry_value).strip_edges()
-		if not entry.is_empty():
-			result.append(entry)
-	return result

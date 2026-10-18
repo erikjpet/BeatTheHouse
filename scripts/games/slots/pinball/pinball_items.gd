@@ -1,6 +1,9 @@
 class_name PinballItems
 extends RefCounted
 
+# Compiles item effects into pinball modifiers and applies verified hooks at
+# launch, collision, award, and drain boundaries.
+
 const EXISTING_ITEMS := [
 	"slot_pinball_drain_cleaner_uses",
 	"slot_pinball_jackpot_magnet_uses",

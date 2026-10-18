@@ -1,6 +1,9 @@
 class_name PerformanceLivenessGuard
 extends RefCounted
 
+# Evaluates frame/performance signals without changing scheduling; its result
+# may recommend cheaper work but never permits disabling autonomous animation.
+
 
 static func evaluate(surface: String, counter: String, floor: int, measured: int) -> Dictionary:
 	var minimum := maxi(0, floor)

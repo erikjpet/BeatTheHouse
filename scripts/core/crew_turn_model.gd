@@ -1,6 +1,8 @@
 class_name CrewTurnModel
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Hidden, deterministic heist-fracture rules. Persisted state uses neutral keys
 # because raw saves are a player-visible surface.
 
@@ -55,18 +57,22 @@ static func restore_state(value: Variant, member_ids: Array) -> Dictionary:
 
 
 static func can_restore_state(value: Variant, member_ids: Array) -> bool:
-	if typeof(value) != TYPE_DICTIONARY or (value as Dictionary).is_empty(): return false
+	if typeof(value) != TYPE_DICTIONARY or (value as Dictionary).is_empty():
+		return false
 	var source: Dictionary = value
 	var version := int(source.get("v", 0))
 	var legacy_keys := ["c", "e", "f", "h", "m", "v", "w"]
-	var current_keys := legacy_keys.duplicate(); current_keys.append("t")
+	var current_keys := legacy_keys.duplicate()
+	current_keys.append("t")
 	if version not in [LEGACY_STATE_VERSION, STATE_VERSION] or not _exact_keys(source, legacy_keys if version == LEGACY_STATE_VERSION else current_keys) \
 			or typeof(source.get("w")) != TYPE_ARRAY or typeof(source.get("e")) != TYPE_ARRAY \
 			or (version == STATE_VERSION and (typeof(source.get("t")) != TYPE_ARRAY or (source.get("t") as Array).size() > TOMBSTONE_LIMIT)):
 		return false
-	if not str(source.get("m", "")).is_empty() and not member_ids.has(str(source.get("m", ""))): return false
+	if not str(source.get("m", "")).is_empty() and not member_ids.has(str(source.get("m", ""))):
+		return false
 	if _signal_array(source.get("w", [])).size() != (source.get("w") as Array).size() \
-			or _signal_array(source.get("e", [])).size() != (source.get("e") as Array).size(): return false
+			or _signal_array(source.get("e", [])).size() != (source.get("e") as Array).size():
+		return false
 	return version != STATE_VERSION or _tombstone_array(source.get("t", [])).size() == (source.get("t") as Array).size()
 
 
@@ -74,9 +80,11 @@ static func record_tombstone(state_value: Variant, boundary: int, code: int, mem
 	var state := normalize_state(state_value, member_ids)
 	var row := {"b": maxi(0, boundary), "q": clampi(code, 1, 99)}
 	var rows := _tombstone_array(state.get("t", []))
-	if rows.has(row): return state
+	if rows.has(row):
+		return state
 	rows.append(row)
-	while rows.size() > TOMBSTONE_LIMIT: rows.pop_front()
+	while rows.size() > TOMBSTONE_LIMIT:
+		rows.pop_front()
 	state["t"] = rows
 	return state
 
@@ -92,30 +100,37 @@ static func private_save_fingerprint(payload_value: Variant, member_ids: Array, 
 # as a clean/turned classifier.
 static func pack_private_save(payload_value: Variant, member_ids: Array, grievance_kinds: Array, binding: String) -> String:
 	var payload := normalize_private_payload(payload_value, member_ids, grievance_kinds)
-	if payload.is_empty(): return ""
+	if payload.is_empty():
+		return ""
 	var master_key := _private_install_key()
-	if master_key.size() != 32: return ""
+	if master_key.size() != 32:
+		return ""
 	var encryption_key := _private_subkey(master_key, "aes-cbc")
 	var authentication_key := _private_subkey(master_key, "hmac-sha256")
 	var body := canonical_json(payload).to_utf8_buffer()
-	if body.size() + 4 > PRIVATE_SAVE_PLAIN_BYTES: return ""
+	if body.size() + 4 > PRIVATE_SAVE_PLAIN_BYTES:
+		return ""
 	var plain := Crypto.new().generate_random_bytes(PRIVATE_SAVE_PLAIN_BYTES)
 	plain[0] = (body.size() >> 24) & 0xff
 	plain[1] = (body.size() >> 16) & 0xff
 	plain[2] = (body.size() >> 8) & 0xff
 	plain[3] = body.size() & 0xff
-	for index in range(body.size()): plain[index + 4] = body[index]
+	for index in range(body.size()):
+		plain[index + 4] = body[index]
 	var iv := Crypto.new().generate_random_bytes(16)
 	var aes := AESContext.new()
-	if aes.start(AESContext.MODE_CBC_ENCRYPT, encryption_key, iv) != OK: return ""
+	if aes.start(AESContext.MODE_CBC_ENCRYPT, encryption_key, iv) != OK:
+		return ""
 	var encrypted := aes.update(plain)
 	aes.finish()
-	if encrypted.size() != PRIVATE_SAVE_PLAIN_BYTES: return ""
+	if encrypted.size() != PRIVATE_SAVE_PLAIN_BYTES:
+		return ""
 	var authenticated := PackedByteArray()
 	authenticated.append_array(iv)
 	authenticated.append_array(encrypted)
 	var mac := _private_save_mac(authentication_key, binding, authenticated)
-	if mac.size() != 32: return ""
+	if mac.size() != 32:
+		return ""
 	authenticated.append_array(mac)
 	return Marshalls.raw_to_base64(authenticated) if authenticated.size() == PRIVATE_SAVE_BYTES else ""
 
@@ -123,20 +138,25 @@ static func pack_private_save(payload_value: Variant, member_ids: Array, grievan
 static func unpack_private_save(encoded: String, member_ids: Array, grievance_kinds: Array, binding: String) -> Dictionary:
 	var master_key := _private_install_key()
 	var capsule := Marshalls.base64_to_raw(encoded)
-	if master_key.size() != 32 or capsule.size() != PRIVATE_SAVE_BYTES: return {}
+	if master_key.size() != 32 or capsule.size() != PRIVATE_SAVE_BYTES:
+		return {}
 	var encryption_key := _private_subkey(master_key, "aes-cbc")
 	var authentication_key := _private_subkey(master_key, "hmac-sha256")
 	var authenticated := capsule.slice(0, 16 + PRIVATE_SAVE_PLAIN_BYTES)
 	var supplied_mac := capsule.slice(16 + PRIVATE_SAVE_PLAIN_BYTES)
 	var expected_mac := _private_save_mac(authentication_key, binding, authenticated)
-	if supplied_mac.size() != expected_mac.size() or not _constant_time_equal(supplied_mac, expected_mac): return {}
+	if supplied_mac.size() != expected_mac.size() or not _constant_time_equal(supplied_mac, expected_mac):
+		return {}
 	var aes := AESContext.new()
-	if aes.start(AESContext.MODE_CBC_DECRYPT, encryption_key, authenticated.slice(0, 16)) != OK: return {}
+	if aes.start(AESContext.MODE_CBC_DECRYPT, encryption_key, authenticated.slice(0, 16)) != OK:
+		return {}
 	var plain := aes.update(authenticated.slice(16))
 	aes.finish()
-	if plain.size() != PRIVATE_SAVE_PLAIN_BYTES: return {}
+	if plain.size() != PRIVATE_SAVE_PLAIN_BYTES:
+		return {}
 	var body_size := (int(plain[0]) << 24) | (int(plain[1]) << 16) | (int(plain[2]) << 8) | int(plain[3])
-	if body_size <= 0 or body_size + 4 > PRIVATE_SAVE_PLAIN_BYTES: return {}
+	if body_size <= 0 or body_size + 4 > PRIVATE_SAVE_PLAIN_BYTES:
+		return {}
 	var parsed: Variant = JSON.parse_string(plain.slice(4, body_size + 4).get_string_from_utf8())
 	return normalize_private_payload(parsed, member_ids, grievance_kinds)
 
@@ -144,26 +164,32 @@ static func unpack_private_save(encoded: String, member_ids: Array, grievance_ki
 static func unpack_legacy_private_save(encoded: String, member_ids: Array, binding: String) -> Dictionary:
 	var master_key := _private_install_key()
 	var capsule := Marshalls.base64_to_raw(encoded)
-	if master_key.size() != 32 or capsule.size() != LEGACY_PRIVATE_SAVE_BYTES: return {}
+	if master_key.size() != 32 or capsule.size() != LEGACY_PRIVATE_SAVE_BYTES:
+		return {}
 	var encryption_key := _private_subkey(master_key, "aes-cbc")
 	var authentication_key := _private_subkey(master_key, "hmac-sha256")
 	var authenticated := capsule.slice(0, 16 + LEGACY_PRIVATE_SAVE_PLAIN_BYTES)
 	var supplied_mac := capsule.slice(16 + LEGACY_PRIVATE_SAVE_PLAIN_BYTES)
 	var expected_mac := _private_save_mac(authentication_key, binding, authenticated)
-	if supplied_mac.size() != expected_mac.size() or not _constant_time_equal(supplied_mac, expected_mac): return {}
+	if supplied_mac.size() != expected_mac.size() or not _constant_time_equal(supplied_mac, expected_mac):
+		return {}
 	var aes := AESContext.new()
-	if aes.start(AESContext.MODE_CBC_DECRYPT, encryption_key, authenticated.slice(0, 16)) != OK: return {}
+	if aes.start(AESContext.MODE_CBC_DECRYPT, encryption_key, authenticated.slice(0, 16)) != OK:
+		return {}
 	var plain := aes.update(authenticated.slice(16))
 	aes.finish()
-	if plain.size() != LEGACY_PRIVATE_SAVE_PLAIN_BYTES: return {}
+	if plain.size() != LEGACY_PRIVATE_SAVE_PLAIN_BYTES:
+		return {}
 	var body_size := (int(plain[0]) << 24) | (int(plain[1]) << 16) | (int(plain[2]) << 8) | int(plain[3])
-	if body_size <= 0 or body_size + 4 > LEGACY_PRIVATE_SAVE_PLAIN_BYTES: return {}
+	if body_size <= 0 or body_size + 4 > LEGACY_PRIVATE_SAVE_PLAIN_BYTES:
+		return {}
 	var parsed: Variant = JSON.parse_string(plain.slice(4, body_size + 4).get_string_from_utf8())
 	return restore_state(parsed, member_ids) if can_restore_state(parsed, member_ids) else {}
 
 
 static func private_save_binding(authority_id: String, seed_text: String, public_context: Dictionary) -> String:
-	if not valid_authority_id(authority_id): return ""
+	if not valid_authority_id(authority_id):
+		return ""
 	return "%d\n%s\n%s\n%s" % [PRIVATE_SAVE_FORMAT, authority_id, seed_text, canonical_json(public_context).sha256_text()]
 
 
@@ -175,28 +201,35 @@ static func legacy_private_save_binding(seed_text: String, plan_id: String, lock
 # heist-local capsule. New saves must use pack_private_save().
 static func pack_legacy_private_save(state_value: Variant, member_ids: Array, binding: String) -> String:
 	var state := normalize_state(state_value, member_ids)
-	if not can_restore_state(state, member_ids): return ""
+	if not can_restore_state(state, member_ids):
+		return ""
 	var master_key := _private_install_key()
-	if master_key.size() != 32: return ""
+	if master_key.size() != 32:
+		return ""
 	var body := canonical_json(state).to_utf8_buffer()
-	if body.size() + 4 > LEGACY_PRIVATE_SAVE_PLAIN_BYTES: return ""
+	if body.size() + 4 > LEGACY_PRIVATE_SAVE_PLAIN_BYTES:
+		return ""
 	var plain := Crypto.new().generate_random_bytes(LEGACY_PRIVATE_SAVE_PLAIN_BYTES)
 	plain[0] = (body.size() >> 24) & 0xff
 	plain[1] = (body.size() >> 16) & 0xff
 	plain[2] = (body.size() >> 8) & 0xff
 	plain[3] = body.size() & 0xff
-	for index in range(body.size()): plain[index + 4] = body[index]
+	for index in range(body.size()):
+		plain[index + 4] = body[index]
 	var iv := Crypto.new().generate_random_bytes(16)
 	var aes := AESContext.new()
-	if aes.start(AESContext.MODE_CBC_ENCRYPT, _private_subkey(master_key, "aes-cbc"), iv) != OK: return ""
+	if aes.start(AESContext.MODE_CBC_ENCRYPT, _private_subkey(master_key, "aes-cbc"), iv) != OK:
+		return ""
 	var encrypted := aes.update(plain)
 	aes.finish()
-	if encrypted.size() != LEGACY_PRIVATE_SAVE_PLAIN_BYTES: return ""
+	if encrypted.size() != LEGACY_PRIVATE_SAVE_PLAIN_BYTES:
+		return ""
 	var authenticated := PackedByteArray()
 	authenticated.append_array(iv)
 	authenticated.append_array(encrypted)
 	var mac := _private_save_mac(_private_subkey(master_key, "hmac-sha256"), binding, authenticated)
-	if mac.size() != 32: return ""
+	if mac.size() != 32:
+		return ""
 	authenticated.append_array(mac)
 	return Marshalls.raw_to_base64(authenticated) if authenticated.size() == LEGACY_PRIVATE_SAVE_BYTES else ""
 
@@ -208,9 +241,11 @@ static func new_authority_id() -> String:
 
 static func valid_authority_id(value: String) -> bool:
 	var clean := value.strip_edges().to_lower()
-	if clean.length() != 64: return false
+	if clean.length() != 64:
+		return false
 	for code in clean.to_ascii_buffer():
-		if not (code >= 48 and code <= 57) and not (code >= 97 and code <= 102): return false
+		if not (code >= 48 and code <= 57) and not (code >= 97 and code <= 102):
+			return false
 	return true
 
 
@@ -219,26 +254,35 @@ static func valid_authority_id(value: String) -> bool:
 # host diagnostics; the identifying suffix cannot be recomputed from a run save.
 static func private_reference(label: String, context: String) -> String:
 	var master_key := _private_install_key()
-	if master_key.size() != 32 or label.strip_edges().is_empty(): return ""
+	if master_key.size() != 32 or label.strip_edges().is_empty():
+		return ""
 	var hmac := HMACContext.new()
-	if hmac.start(HashingContext.HASH_SHA256, master_key) != OK: return ""
-	if hmac.update(("bth06:private-reference:" + label + ":" + context).to_utf8_buffer()) != OK: return ""
+	if hmac.start(HashingContext.HASH_SHA256, master_key) != OK:
+		return ""
+	if hmac.update(("bth06:private-reference:" + label + ":" + context).to_utf8_buffer()) != OK:
+		return ""
 	return "%s:%s" % [label, hmac.finish().hex_encode()]
 
 
 static func normalize_private_payload(value: Variant, member_ids: Array, grievance_kinds: Array) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY: return {}
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
 	var source: Dictionary = value
-	if not _exact_keys(source, ["g", "q", "x"]): return {}
+	if not _exact_keys(source, ["g", "q", "x"]):
+		return {}
 	var private_state := restore_state(source.get("x", {}), member_ids)
-	if not can_restore_state(source.get("x", {}), member_ids): return {}
+	if not can_restore_state(source.get("x", {}), member_ids):
+		return {}
 	var ledger_value: Variant = source.get("g", [])
-	if typeof(ledger_value) != TYPE_ARRAY or (ledger_value as Array).size() > PRIVATE_GRIEVANCE_LIMIT: return {}
+	if typeof(ledger_value) != TYPE_ARRAY or (ledger_value as Array).size() > PRIVATE_GRIEVANCE_LIMIT:
+		return {}
 	var ledger: Array = []
 	for row_value in ledger_value as Array:
-		if typeof(row_value) != TYPE_ARRAY: return {}
+		if typeof(row_value) != TYPE_ARRAY:
+			return {}
 		var row: Array = row_value
-		if row.size() != 6: return {}
+		if row.size() != 6:
+			return {}
 		var member_index := int(row[0])
 		var kind_index := int(row[1])
 		var weight := int(row[2])
@@ -251,7 +295,8 @@ static func normalize_private_payload(value: Variant, member_ids: Array, grievan
 			return {}
 		ledger.append([member_index, kind_index, weight, turn_recorded, id_hex, source_hex])
 	var sequence := int(source.get("q", -1))
-	if sequence < ledger.size() or sequence > PRIVATE_SEQUENCE_LIMIT: return {}
+	if sequence < ledger.size() or sequence > PRIVATE_SEQUENCE_LIMIT:
+		return {}
 	return {"x": private_state, "g": ledger, "q": sequence}
 
 
@@ -262,13 +307,16 @@ static func canonical_json(value: Variant) -> String:
 static func _canonical(value: Variant) -> Variant:
 	if typeof(value) == TYPE_DICTIONARY:
 		var source: Dictionary = value
-		var keys := source.keys(); keys.sort()
+		var keys := source.keys()
+		keys.sort()
 		var result: Dictionary = {}
-		for key in keys: result[str(key)] = _canonical(source.get(key))
+		for key in keys:
+			result[str(key)] = _canonical(source.get(key))
 		return result
 	if typeof(value) == TYPE_ARRAY:
 		var result: Array = []
-		for entry in value as Array: result.append(_canonical(entry))
+		for entry in value as Array:
+			result.append(_canonical(entry))
 		return result
 	if typeof(value) == TYPE_FLOAT:
 		# Godot's JSON parser represents every JSON number as a float. Treat exact
@@ -281,37 +329,47 @@ static func _canonical(value: Variant) -> Variant:
 
 
 static func _bounded_hex_text(value: String) -> bool:
-	if value.length() % 2 != 0 or value.length() > PRIVATE_TEXT_BYTE_LIMIT * 2: return false
+	if value.length() % 2 != 0 or value.length() > PRIVATE_TEXT_BYTE_LIMIT * 2:
+		return false
 	for code in value.to_ascii_buffer():
-		if not (code >= 48 and code <= 57) and not (code >= 97 and code <= 102): return false
+		if not (code >= 48 and code <= 57) and not (code >= 97 and code <= 102):
+			return false
 	var decoded := value.hex_decode()
 	return decoded.size() <= PRIVATE_TEXT_BYTE_LIMIT and decoded.get_string_from_utf8().to_utf8_buffer() == decoded
 
 
 static func _private_subkey(master_key: PackedByteArray, label: String) -> PackedByteArray:
 	var context := HMACContext.new()
-	if context.start(HashingContext.HASH_SHA256, master_key) != OK: return PackedByteArray()
-	if context.update(("bth06:crew-turn:kdf:" + label).to_utf8_buffer()) != OK: return PackedByteArray()
+	if context.start(HashingContext.HASH_SHA256, master_key) != OK:
+		return PackedByteArray()
+	if context.update(("bth06:crew-turn:kdf:" + label).to_utf8_buffer()) != OK:
+		return PackedByteArray()
 	return context.finish()
 
 
 static func _private_save_mac(authentication_key: PackedByteArray, binding: String, authenticated: PackedByteArray) -> PackedByteArray:
 	var context := HMACContext.new()
-	if context.start(HashingContext.HASH_SHA256, authentication_key) != OK: return PackedByteArray()
-	if context.update((binding + "\n").to_utf8_buffer()) != OK: return PackedByteArray()
-	if context.update(authenticated) != OK: return PackedByteArray()
+	if context.start(HashingContext.HASH_SHA256, authentication_key) != OK:
+		return PackedByteArray()
+	if context.update((binding + "\n").to_utf8_buffer()) != OK:
+		return PackedByteArray()
+	if context.update(authenticated) != OK:
+		return PackedByteArray()
 	return context.finish()
 
 
 static func _constant_time_equal(first: PackedByteArray, second: PackedByteArray) -> bool:
-	if first.size() != second.size(): return false
+	if first.size() != second.size():
+		return false
 	var difference := 0
-	for index in range(first.size()): difference |= int(first[index]) ^ int(second[index])
+	for index in range(first.size()):
+		difference |= int(first[index]) ^ int(second[index])
 	return difference == 0
 
 
 static func _private_install_key() -> PackedByteArray:
-	if _private_key_cache.size() == 32: return _private_key_cache
+	if _private_key_cache.size() == 32:
+		return _private_key_cache
 	var absolute_path := ProjectSettings.globalize_path(PRIVATE_KEY_PATH)
 	if FileAccess.file_exists(PRIVATE_KEY_PATH):
 		var existing := FileAccess.get_file_as_bytes(PRIVATE_KEY_PATH)
@@ -319,10 +377,12 @@ static func _private_install_key() -> PackedByteArray:
 			_private_key_cache = existing
 			return _private_key_cache
 	var generated := Crypto.new().generate_random_bytes(32)
-	if generated.size() != 32: return PackedByteArray()
+	if generated.size() != 32:
+		return PackedByteArray()
 	var temporary_path := "%s.%d.%d.tmp" % [absolute_path, OS.get_process_id(), Time.get_ticks_usec()]
 	var temporary := FileAccess.open(temporary_path, FileAccess.WRITE)
-	if temporary == null: return PackedByteArray()
+	if temporary == null:
+		return PackedByteArray()
 	temporary.store_buffer(generated)
 	temporary.flush()
 	temporary = null
@@ -330,7 +390,8 @@ static func _private_install_key() -> PackedByteArray:
 	if FileAccess.file_exists(PRIVATE_KEY_PATH):
 		DirAccess.remove_absolute(temporary_path)
 		var raced := FileAccess.get_file_as_bytes(PRIVATE_KEY_PATH)
-		if raced.size() != 32: return PackedByteArray()
+		if raced.size() != 32:
+			return PackedByteArray()
 		_private_key_cache = raced
 		return _private_key_cache
 	if DirAccess.rename_absolute(temporary_path, absolute_path) != OK:
@@ -343,7 +404,7 @@ static func _private_install_key() -> PackedByteArray:
 
 
 static func eligible_members(plan_definition: Dictionary, met_members: Array, member_ids: Array) -> Array:
-	var architects := _string_array(plan_definition.get("architects", []))
+	var architects := JsonCoerceScript._string_array(plan_definition.get("architects", []))
 	var result: Array = []
 	for member_value in met_members:
 		var member_id := str(member_value)
@@ -418,7 +479,7 @@ static func validate_tuning(tuning: Dictionary) -> Array:
 	for key in ["chance_percent_per_weight", "chance_percent_cap", "wrong_choice_chance_percent", "crew_trust_cost", "hedge_trust_cost", "payment_shortfall_percent"]:
 		if int(tuning.get(key, 0)) <= 0:
 			failures.append("Hidden heist tuning %s must be positive." % key)
-	var partial := _int_array(tuning.get("partial_haul_percent_band", []))
+	var partial := JsonCoerceScript._int_array(tuning.get("partial_haul_percent_band", []))
 	if partial.size() != 2 or partial[0] <= 0 or partial[1] < partial[0] or partial[1] >= 100:
 		failures.append("Hidden heist partial-haul band must contain two ascending percentages below 100.")
 	return failures
@@ -435,39 +496,27 @@ static func _signal_array(value: Variant) -> Array:
 	return result
 
 
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) == TYPE_ARRAY:
-		for entry_value in value:
-			var text := str(entry_value).strip_edges()
-			if not text.is_empty():
-				result.append(text)
-	return result
-
-
-static func _int_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) == TYPE_ARRAY:
-		for entry_value in value:
-			result.append(int(entry_value))
-	return result
-
-
 static func _tombstone_array(value: Variant) -> Array:
 	var result: Array = []
-	if typeof(value) != TYPE_ARRAY: return result
+	if typeof(value) != TYPE_ARRAY:
+		return result
 	for row_value in value:
-		if typeof(row_value) != TYPE_DICTIONARY: continue
+		if typeof(row_value) != TYPE_DICTIONARY:
+			continue
 		var row: Dictionary = row_value
-		if not _exact_keys(row, ["b", "q"]) or int(row.get("b", -1)) < 0 or int(row.get("q", 0)) < 1 or int(row.get("q", 0)) > 99: continue
+		if not _exact_keys(row, ["b", "q"]) or int(row.get("b", -1)) < 0 or int(row.get("q", 0)) < 1 or int(row.get("q", 0)) > 99:
+			continue
 		result.append({"b": int(row.get("b", 0)), "q": int(row.get("q", 0))})
-	while result.size() > TOMBSTONE_LIMIT: result.pop_front()
+	while result.size() > TOMBSTONE_LIMIT:
+		result.pop_front()
 	return result
 
 
 static func _exact_keys(value: Dictionary, expected: Array) -> bool:
-	var keys := value.keys(); keys.sort()
-	var exact := expected.duplicate(); exact.sort()
+	var keys := value.keys()
+	keys.sort()
+	var exact := expected.duplicate()
+	exact.sort()
 	return keys == exact
 
 

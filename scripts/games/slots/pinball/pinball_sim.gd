@@ -1,6 +1,9 @@
 class_name PinballSim
 extends RefCounted
 
+# Deterministic fixed-step pinball feature simulation. It owns balls, collisions,
+# controls, scoring events, and rollback snapshots, but no RunState economy.
+
 const FIXED_DT := 1.0 / 120.0
 const RNG_MODULUS := 2147483647
 const RNG_MULTIPLIER := 48271
@@ -27,7 +30,6 @@ const EVENT_SPAWNER := 18
 
 const SENSOR_SKILL := 1
 const SENSOR_SLINGSHOT := 2
-const SENSOR_LAUNCHER := 3
 const SENSOR_MULTIPLIER := 4
 const SENSOR_TARGET := 5
 const SENSOR_GATE := 6

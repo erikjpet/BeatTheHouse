@@ -1,5 +1,7 @@
 extends Node
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Supported entry point: coin_pusher_export_parity_runner.tscn. A Node script
 # launched directly with --script never enters the tree and cannot run _ready().
 
@@ -145,15 +147,8 @@ func _canonical_json(value: Variant) -> String:
 
 func _rng(seed: String) -> RngStream:
 	var rng := RngStream.new()
-	rng.configure(_stable_hash(seed))
+	rng.configure(JsonCoerceScript._utf8_stable_hash(seed))
 	return rng
-
-
-func _stable_hash(value: String) -> int:
-	var hash_value := 2166136261
-	for byte in value.to_utf8_buffer():
-		hash_value = int((hash_value ^ int(byte)) * 16777619) & 0x7fffffff
-	return hash_value
 
 
 func _publish(report: Dictionary) -> void:

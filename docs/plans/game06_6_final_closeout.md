@@ -13,7 +13,7 @@ Foundation host, preserves the existing Ship/Captain/Crew rules and economy,
 and supplies deterministic opponent, onlooker, tell, energy, accessibility,
 save/revisit, and presentation state.
 
-Closeout added only `tools/game06_6_bar_dice_web_capture.mjs` so the existing
+Closeout added only `tools/archive/game06_6/game06_6_bar_dice_web_capture.mjs` so the existing
 platform probe could be executed in a fresh Web release export. No game rule,
 payout, probability, budget, product data, or runtime authority changed.
 

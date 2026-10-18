@@ -60,6 +60,7 @@ function Get-SplitTestRunnerLines {
     $lines = New-Object System.Collections.Generic.List[string]
     $sourceIndex = 0
     $omitMarkedBlocks = $SourceRelativePaths.Count -gt 1
+    $seenJsonCoercePreload = $false
     foreach ($relativePath in $SourceRelativePaths) {
         $source = Join-Path $ProjectRoot $relativePath
         if (-not (Test-Path -LiteralPath $source)) {
@@ -76,6 +77,13 @@ function Get-SplitTestRunnerLines {
             if ($sourceIndex -gt 0 -and $lineIndex -eq 0 -and ($line -match '^extends\s+' -or $line -match '^class_name\s+')) {
                 $lineIndex += 1
                 continue
+            }
+            if ($line -match '^const JsonCoerceScript := preload\("res://scripts/core/json_coerce\.gd"\)') {
+                if ($seenJsonCoercePreload) {
+                    $lineIndex += 1
+                    continue
+                }
+                $seenJsonCoercePreload = $true
             }
             $lines.Add($line)
             $lineIndex += 1

@@ -1,6 +1,8 @@
 class_name SfxPlayer
 extends Node
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const SurfaceSfxManifestScript := preload("res://scripts/core/surface_sfx_manifest.gd")
 
@@ -12,9 +14,9 @@ const SurfaceSfxManifestScript := preload("res://scripts/core/surface_sfx_manife
 # procedural samples in one place.
 
 signal music_cue_requested(cue_id: String, context: Dictionary)
+signal audio_status_changed(message: String)
 
 const SFX_BUS := "SFX"
-const SURFACE_SFX_MANIFEST_PATH := "res://data/audio/surface_sfx_manifest.json"
 const SAMPLE_RATE := 22050
 const TELEPHONE_SAMPLE_RATE := 4000
 const WEB_DELIVERY_ROOT := "res://assets/audio/sfx_web"
@@ -25,6 +27,8 @@ const SLOT_POST_REEL_BONUS_DELAY := 0.40
 const SLOT_BONUS_STEP_TIME := 0.72
 const ONE_SHOT_PLAYER_COUNT := 10
 const WEB_SURFACE_LOOP_ID := "sfx:surface_loop"
+const WEB_LOOP_RETRY_LIMIT := 2
+const WEB_FAILURE_WARNING_THRESHOLD := 3
 const BLACKJACK_PREWARM_EVENTS := [
 	"blackjack_card",
 	"blackjack_chip",
@@ -206,8 +210,19 @@ var _debug_coin_pusher_motor_pitch := 0.0
 var _debug_coin_pusher_motor_volume_db := 0.0
 var _debug_coin_pusher_motor_running := false
 var _web_surface_loop_active := false
+var _pending_web_loop_retry: Dictionary = {}
+var _web_loop_retry_count := 0
+var _web_delivery_attempts := 0
+var _web_delivery_failure_count := 0
+var _web_fallback_count := 0
+var _web_dropped_cue_count := 0
+var _audio_status_message := ""
+var _debug_web_delivery_results: Array = []
+var _debug_web_delivery_active := false
 var _surface_loop_event_id := ""
 var _surface_loop_fade_tween: Tween
+var _surface_activity_paused := false
+var _surface_pause_transition_serial := 0
 var _played_markers: Dictionary = {}
 var _normalized_event_cache: Dictionary = {}
 var _prewarm_queue: Array[String] = []
@@ -225,6 +240,8 @@ var _surface_cue_occurrences: Dictionary = {}
 var _surface_last_variation_step: Dictionary = {}
 var _surface_selection_trace: Array = []
 var _surface_voice_serial := 0
+var _slot_audio_profile_cache_key := ""
+var _slot_audio_profile_cache: Dictionary = {}
 var _surface_audio_authority: RefCounted
 var _surface_audio_authority_bound := false
 var _rejected_surface_authority_calls := 0
@@ -273,6 +290,8 @@ func _process(_delta: float) -> void:
 
 func play_surface_cue(cue_id: String, context: Dictionary = {}, surface_state: Dictionary = {}, authority: Variant = null) -> void:
 	if not _has_surface_audio_authority(authority):
+		return
+	if _surface_activity_paused:
 		return
 	if not audio_enabled or _running_headless():
 		return
@@ -344,6 +363,8 @@ func prewarm_surface_profile(profile_id: String, authority: Variant = null) -> v
 func start_surface_loop(cue_id: String, volume_db: float = -10.0, pitch: float = 1.0, authority: Variant = null) -> void:
 	if not _has_surface_audio_authority(authority):
 		return
+	if _surface_activity_paused:
+		return
 	if not audio_enabled or _running_headless():
 		return
 	var clean_cue := cue_id.strip_edges()
@@ -381,6 +402,8 @@ func stop_surface_loop(cue_id: String = "", authority: Variant = null) -> void:
 func sync_surface_state(surface_state: Dictionary, sync_spec: Dictionary, timing: Dictionary, authority: Variant = null) -> void:
 	if not _has_surface_audio_authority(authority):
 		return
+	if _surface_activity_paused:
+		return
 	if not audio_enabled or _running_headless():
 		return
 	var method := str(sync_spec.get("method", ""))
@@ -389,8 +412,7 @@ func sync_surface_state(surface_state: Dictionary, sync_spec: Dictionary, timing
 			var channel_id := str(sync_spec.get("animation_channel", ""))
 			var feature_channel_id := str(sync_spec.get("feature_animation_channel", "slot_feature"))
 			var nudge_chain_channel_id := str(sync_spec.get("nudge_chain_channel", "slot_nudge_chain"))
-			var slot_state := surface_state.duplicate(false)
-			slot_state["_surface_audio_timing"] = {
+			var slot_timing := {
 				"spin_elapsed": _timing_elapsed(timing, "animation_channel"),
 				"spin_active": _timing_active(timing, "animation_channel"),
 				"spin_active_id": _timing_active_id(timing, "animation_channel"),
@@ -409,9 +431,19 @@ func sync_surface_state(surface_state: Dictionary, sync_spec: Dictionary, timing
 			if bool(surface_state.get("slot_nudge_chain_active", false)):
 				slot_elapsed = _timing_elapsed(timing, "nudge_chain_channel")
 				slot_active = _timing_active(timing, "nudge_chain_channel")
-			sync_slot_state(slot_state, slot_elapsed, slot_active)
+			# Pass timing beside the immutable surface snapshot. The previous shallow
+			# duplicate copied the entire Slot surface solely to attach this transient
+			# dictionary on every active audio frame.
+			sync_slot_state(surface_state, slot_elapsed, slot_active, slot_timing)
 		"pull_tab_dispense_state":
 			sync_pull_tab_dispense(
+				surface_state,
+				_timing_elapsed(timing, "animation_channel"),
+				_timing_active(timing, "animation_channel"),
+				_timing_active_id(timing, "animation_channel")
+			)
+		"scratch_dispense_state":
+			sync_scratch_dispense(
 				surface_state,
 				_timing_elapsed(timing, "animation_channel"),
 				_timing_active(timing, "animation_channel"),
@@ -516,7 +548,7 @@ func sync_coin_pusher_state(surface_state: Dictionary, elapsed: float, animation
 	# Incremental Coin Pusher action views retain the canvas-owned dense body
 	# arrays while publishing the authoritative post-action count separately.
 	# Full/legacy snapshots continue to derive the same value from `bodies`.
-	var body_count := int(snapshot.get("body_count", _dictionary_array(snapshot.get("bodies", [])).size()))
+	var body_count := int(snapshot.get("body_count", JsonCoerceScript._dictionary_array(snapshot.get("bodies", [])).size()))
 	var loaded := body_count >= 80
 	var phase_milli := int(snapshot.get("lower_phase_milli", 0))
 	var phase_domain_milli := maxi(1, int(snapshot.get("phase_domain_milli", 8000)))
@@ -558,7 +590,7 @@ func sync_coin_pusher_state(surface_state: Dictionary, elapsed: float, animation
 	if not animation_active and not _coin_pusher_action_observed_active:
 		return
 	var event_classes: Dictionary = _dict(profile.get("event_classes", {}))
-	var events := _dictionary_array(snapshot.get("events", []))
+	var events := JsonCoerceScript._dictionary_array(snapshot.get("events", []))
 	for index in range(events.size()):
 		var event: Dictionary = events[index]
 		if not _coin_pusher_event_is_audio_primary(event):
@@ -611,7 +643,7 @@ func _sync_live_coin_pusher_state(surface_state: Dictionary, profile: Dictionary
 		return
 	_coin_pusher_live_event_serial = serial
 	var event_classes: Dictionary = _dict(profile.get("event_classes", {}))
-	var events := _dictionary_array(surface_state.get("coin_pusher_audio_events", []))
+	var events := JsonCoerceScript._dictionary_array(surface_state.get("coin_pusher_audio_events", []))
 	for index in range(events.size()):
 		var event: Dictionary = events[index]
 		if not _coin_pusher_event_is_audio_primary(event):
@@ -735,10 +767,10 @@ func _emit_music_director_cue(cue_id: String, context: Dictionary = {}) -> bool:
 	return true
 
 
-func sync_slot_state(slot_state: Dictionary, elapsed: float, animation_active: bool) -> void:
+func sync_slot_state(slot_state: Dictionary, elapsed: float, animation_active: bool, audio_timing: Dictionary = {}) -> void:
 	if not audio_enabled or _running_headless():
 		return
-	var timing := _dict(slot_state.get("_surface_audio_timing", {}))
+	var timing := audio_timing if not audio_timing.is_empty() else _dict(slot_state.get("_surface_audio_timing", {}))
 	var feature_scene := _dict(slot_state.get("slot_feature_scene", {}))
 	var feature_active := bool(feature_scene.get("active", false))
 	var incoming_id := _active_slot_audio_id(slot_state, feature_scene, timing)
@@ -795,12 +827,12 @@ func sync_slot_state(slot_state: Dictionary, elapsed: float, animation_active: b
 
 	if feature_active:
 		_sync_feature_music(feature_scene, profile)
-		_sync_feature_scene_cues(slot_state, profile, elapsed)
+		_sync_feature_scene_cues(slot_state, profile, elapsed, timing)
 		return
 	if not _feature_music_id.is_empty():
 		_feature_music_id = ""
 
-	var bonus_steps := _dictionary_array(slot_state.get("slot_bonus_steps", []))
+	var bonus_steps := JsonCoerceScript._dictionary_array(slot_state.get("slot_bonus_steps", []))
 	if cue_stream.is_empty() and not bonus_steps.is_empty():
 		_trigger("bonus_start", elapsed >= bonus_start_time, str(profile.get("bonus_start_event", "bonus_start")), -1.0, float(profile.get("bonus_pitch", 1.0)))
 		for i in range(bonus_steps.size()):
@@ -972,12 +1004,42 @@ func sync_pull_tab_dispense(surface_state: Dictionary, elapsed: float, animation
 		_played_markers.clear()
 	if not animation_active:
 		return
-	var events := _dictionary_array(surface_state.get("pull_tab_dispense_events", []))
+	var events := JsonCoerceScript._dictionary_array(surface_state.get("pull_tab_dispense_events", []))
 	for event_value in events:
 		var event: Dictionary = event_value
 		var marker := "pull_tab_thud_%s" % str(event.get("ticket_id", event.get("sequence_index", events.find(event_value))))
 		var thud_time := float(maxi(0, int(event.get("start_msec", 0)) + int(event.get("drop_start_msec", 240)))) / 1000.0
 		_trigger(marker, elapsed >= thud_time, "pull_tab_thump", -3.5, 0.96 + float(int(event.get("deal_index", 0))) * 0.035)
+
+
+func sync_scratch_dispense(surface_state: Dictionary, elapsed: float, animation_active: bool, active_id: String) -> void:
+	if not audio_enabled or _running_headless():
+		return
+	if active_id.is_empty():
+		_animation_id = ""
+		_played_markers.clear()
+		return
+	_ensure_players()
+	if active_id != _animation_id:
+		_animation_id = active_id
+		_played_markers.clear()
+	if not animation_active:
+		return
+	var events := JsonCoerceScript._dictionary_array(surface_state.get("scratch_dispense_events", []))
+	for index in range(events.size()):
+		var event: Dictionary = events[index]
+		var key := str(event.get("ticket_id", index))
+		var start := float(maxi(0, int(event.get("start_msec", index * 1500)))) / 1000.0
+		var lift_arrive := float(maxi(0, int(event.get("lift_arrive_msec", 470)))) / 1000.0
+		var pickup := float(maxi(0, int(event.get("pickup_msec", 650)))) / 1000.0
+		var lower_start := float(maxi(0, int(event.get("lower_start_msec", 720)))) / 1000.0
+		var tray_land := float(maxi(0, int(event.get("tray_land_msec", 1360)))) / 1000.0
+		var pitch_step := float(int(event.get("slot", 0)) % 4) * 0.018
+		_trigger("scratch_lift_%s" % key, elapsed >= start, "lever", -6.0, 0.82 + pitch_step)
+		_trigger("scratch_lift_stop_%s" % key, elapsed >= start + lift_arrive, "button", -8.0, 0.88)
+		_trigger("scratch_pick_%s" % key, elapsed >= start + pickup, "paper_peek", -4.8, 0.92 + pitch_step)
+		_trigger("scratch_lower_%s" % key, elapsed >= start + lower_start, "nudge", -6.5, 0.78 + pitch_step)
+		_trigger("scratch_tray_%s" % key, elapsed >= start + tray_land, "pull_tab_thump", -3.2, 0.94 + pitch_step)
 
 
 func sync_blackjack_state(surface_state: Dictionary, deal_elapsed: float, deal_animation_active: bool, deal_active_id: String, payout_elapsed: float, payout_animation_active: bool, payout_active_id: String) -> void:
@@ -990,7 +1052,7 @@ func sync_blackjack_state(surface_state: Dictionary, deal_elapsed: float, deal_a
 		if deal_active_id != _blackjack_deal_id:
 			_blackjack_deal_id = deal_active_id
 			_clear_markers_with_prefix("blackjack_deal_")
-		var events := _dictionary_array(surface_state.get("deal_animation_events", []))
+		var events := JsonCoerceScript._dictionary_array(surface_state.get("deal_animation_events", []))
 		for i in range(events.size()):
 			var event: Dictionary = events[i]
 			var delay := float(maxi(0, int(event.get("delay_msec", 0)))) / 1000.0
@@ -1080,7 +1142,7 @@ func sync_baccarat_state(surface_state: Dictionary, deal_elapsed: float, deal_an
 		if deal_active_id != _baccarat_deal_id:
 			_baccarat_deal_id = deal_active_id
 			_clear_markers_with_prefix("baccarat_deal_")
-		var events := _dictionary_array(surface_state.get("deal_animation_events", []))
+		var events := JsonCoerceScript._dictionary_array(surface_state.get("deal_animation_events", []))
 		for i in range(events.size()):
 			var event: Dictionary = events[i]
 			if str(event.get("type", "card")) != "card":
@@ -1127,63 +1189,19 @@ func stop_all() -> void:
 	_played_markers.clear()
 	for player in _players:
 		if player is AudioStreamPlayer:
-			(player as AudioStreamPlayer).stop()
+			var audio_player := player as AudioStreamPlayer
+			audio_player.stop()
+			audio_player.stream = null
 
 
 func preview_event_stream(event_id: String) -> AudioStreamWAV:
 	return _event_stream(event_id)
-
-
-func debug_event_delivery_has_signal(event_id: String) -> bool:
-	var normalized := _normalized_event_id(event_id)
-	if normalized.is_empty():
-		return false
-	# Exercise the exact delivery path and inspect the complete waveform. Sparse
-	# diegetic impulses must not be mistaken for missing assets by subsampling.
-	return _pcm_stream_has_signal(_event_stream(normalized))
-
-
-func _pcm_stream_has_signal(stream: AudioStreamWAV) -> bool:
-	if stream == null or stream.data.is_empty():
-		return false
-	if stream.format != AudioStreamWAV.FORMAT_16_BITS:
-		return true
-	for offset in range(0, stream.data.size() - 1, 2):
-		if stream.data.decode_s16(offset) != 0:
-			return true
-	return false
-
-
 func render_event_master_stream(event_id: String) -> AudioStreamWAV:
 	return _synthesized_event_stream(_normalized_event_id(event_id))
 
 
-func debug_slot_cue_markers(slot_state: Dictionary) -> Array:
-	var timing := _dict(slot_state.get("_surface_audio_timing", {}))
-	var scene := _dict(slot_state.get("slot_feature_scene", {}))
-	var active_id := _active_slot_audio_id(slot_state, scene, timing)
-	var result: Array = []
-	for cue in _slot_audio_cues(slot_state):
-		result.append(_cue_marker(active_id, cue))
-	for cue in _dictionary_array(scene.get("audio_cues", [])):
-		result.append(_cue_marker(active_id, cue))
-	return result
-
-
 func debug_normalized_event_id(event_id: String) -> String:
 	return _normalized_event_id(event_id)
-
-
-func debug_surface_sfx_profile(profile_id: String) -> Dictionary:
-	return _surface_sfx_profile(profile_id).duplicate(true)
-
-
-func debug_surface_selection_trace() -> Array:
-	return _surface_selection_trace.duplicate(true)
-
-
-func debug_select_surface_event(profile_id: String, event_class: String, selection_seed: int, occurrence: int, last_step: int = -1) -> Dictionary:
-	return SurfaceSfxManifestScript.select_event(profile_id, event_class, selection_seed, occurrence, last_step)
 
 
 func debug_coin_pusher_event_schedule(surface_state: Dictionary) -> Array:
@@ -1191,9 +1209,9 @@ func debug_coin_pusher_event_schedule(surface_state: Dictionary) -> Array:
 	var event_classes: Dictionary = _dict(profile.get("event_classes", {}))
 	var result: Array = []
 	var snapshot := _dict(surface_state.get("coin_pusher_snapshot", {}))
-	var events := _dictionary_array(surface_state.get("coin_pusher_audio_events", []))
+	var events := JsonCoerceScript._dictionary_array(surface_state.get("coin_pusher_audio_events", []))
 	if events.is_empty():
-		events = _dictionary_array(snapshot.get("events", []))
+		events = JsonCoerceScript._dictionary_array(snapshot.get("events", []))
 	for event_value in events:
 		var event: Dictionary = event_value
 		if not _coin_pusher_event_is_audio_primary(event):
@@ -1207,23 +1225,6 @@ func debug_coin_pusher_event_schedule(surface_state: Dictionary) -> Array:
 			"volume_db": float(mix.get("volume_db", -5.0)),
 			"pitch": float(mix.get("pitch", 1.0)),
 		})
-	return result
-
-
-func debug_coin_pusher_runtime_event_markers(surface_state: Dictionary, elapsed: float, animation_active: bool, active_id: String, reset_state: bool = true) -> Array:
-	if reset_state:
-		_coin_pusher_action_id = ""
-		_coin_pusher_action_observed_active = false
-		_coin_pusher_audio_baseline_initialized = false
-		_coin_pusher_silent_baseline_action_id = ""
-		_clear_markers_with_prefix("coin_pusher_event_")
-	sync_coin_pusher_state(surface_state, elapsed, animation_active, active_id, true)
-	var result: Array = []
-	for marker_value in _played_markers.keys():
-		var marker := str(marker_value)
-		if marker.begins_with("coin_pusher_event_"):
-			result.append(marker)
-	result.sort()
 	return result
 
 
@@ -1248,7 +1249,7 @@ func debug_slot_final_cue_armed(slot_state: Dictionary, elapsed: float, animatio
 	var reel_stop_times := _slot_reel_stop_times(slot_state)
 	var last_stop_time := float(reel_stop_times[reel_stop_times.size() - 1]) if not reel_stop_times.is_empty() else 0.0
 	var final_time := last_stop_time + 0.35
-	var bonus_steps := _dictionary_array(slot_state.get("slot_bonus_steps", []))
+	var bonus_steps := JsonCoerceScript._dictionary_array(slot_state.get("slot_bonus_steps", []))
 	if not bonus_steps.is_empty():
 		var bonus_start_time := float(slot_state.get("slot_bonus_start_time", last_stop_time + SLOT_POST_REEL_BONUS_DELAY))
 		final_time = bonus_start_time + float(bonus_steps.size()) * SLOT_BONUS_STEP_TIME + 0.22
@@ -1269,8 +1270,31 @@ func debug_soak_snapshot() -> Dictionary:
 		"surface_selection_trace_size": _surface_selection_trace.size(),
 		"surface_profile_count": _surface_sfx_manifest.size(),
 		"surface_loop_event_id": _surface_loop_event_id,
+		"surface_activity_paused": _surface_activity_paused,
+		"surface_pause_transition_serial": _surface_pause_transition_serial,
+		"surface_loop_phase": _loop_player.get_playback_position() if _loop_player != null and _loop_player.playing else 0.0,
 		"rejected_surface_authority_calls": _rejected_surface_authority_calls,
+		"web_delivery_attempts": _web_delivery_attempts,
+		"web_delivery_failure_count": _web_delivery_failure_count,
+		"web_loop_retry_count": _web_loop_retry_count,
+		"web_fallback_count": _web_fallback_count,
+		"web_dropped_cue_count": _web_dropped_cue_count,
+		"audio_status": _audio_status_message,
 	}
+
+
+func set_surface_activity_paused(paused: bool, authority: Variant = null) -> void:
+	if not _has_surface_audio_authority(authority) or _surface_activity_paused == paused:
+		return
+	_surface_activity_paused = paused
+	_surface_pause_transition_serial += 1
+	if _surface_loop_fade_tween != null and _surface_loop_fade_tween.is_valid():
+		_surface_loop_fade_tween.kill()
+		_surface_loop_fade_tween = null
+	if WebAudioBridgeScript.available() and _web_surface_loop_active:
+		WebAudioBridgeScript.set_loop_paused(WEB_SURFACE_LOOP_ID, paused)
+	if _loop_player != null and _loop_player.playing:
+		_loop_player.stream_paused = paused
 
 
 func audio_fidelity_contract_snapshot() -> Dictionary:
@@ -1282,6 +1306,7 @@ func audio_fidelity_contract_snapshot() -> Dictionary:
 		"web_delivery_event_count": WEB_DELIVERY_EVENT_IDS.size(),
 		"web_delivery_uses_preencoded_pcm": true,
 		"web_incremental_prewarm": true,
+		"web_native_audio_fallback": false,
 		"native_slot_delivery_event_count": NATIVE_SLOT_DELIVERY_EVENTS.size(),
 		"native_slot_events_avoid_runtime_synthesis": true,
 	}
@@ -1323,11 +1348,19 @@ func _trigger_cue(active_id: String, cue: Dictionary, condition: bool, _profile:
 
 
 func _slot_audio_cues(slot_state: Dictionary) -> Array:
-	var result: Array = []
 	var raw: Variant = slot_state.get("slot_audio_cues", [])
 	if typeof(raw) != TYPE_ARRAY:
-		return result
-	for entry in raw:
+		return []
+	var source: Array = raw as Array
+	var normalization_required := false
+	for entry in source:
+		if typeof(entry) != TYPE_DICTIONARY:
+			normalization_required = true
+			break
+	if not normalization_required:
+		return source
+	var result: Array = []
+	for entry in source:
 		if typeof(entry) == TYPE_DICTIONARY:
 			result.append(entry)
 		elif typeof(entry) == TYPE_STRING:
@@ -1369,11 +1402,21 @@ func _cue_marker(active_id: String, cue: Dictionary) -> String:
 
 func _slot_reel_stop_times(slot_state: Dictionary) -> Array:
 	var raw: Variant = slot_state.get("slot_reel_stop_times", [])
+	var reel_count := maxi(1, int(slot_state.get("slot_reel_count", 3)))
+	if typeof(raw) == TYPE_ARRAY:
+		var source: Array = raw as Array
+		if source.size() == reel_count:
+			var normalized := true
+			for value in source:
+				if typeof(value) != TYPE_FLOAT and typeof(value) != TYPE_INT:
+					normalized = false
+					break
+			if normalized:
+				return source
 	var result: Array = []
 	if typeof(raw) == TYPE_ARRAY:
-		for value in raw:
+		for value in raw as Array:
 			result.append(float(value))
-	var reel_count := maxi(1, int(slot_state.get("slot_reel_count", 3)))
 	while result.size() < reel_count:
 		if result.is_empty():
 			result.append(float(SLOT_CLASSIC_REEL_STOP_TIMES[0]))
@@ -1390,6 +1433,9 @@ func _slot_audio_profile(slot_state: Dictionary) -> Dictionary:
 	var math_id := str(slot_state.get("slot_math_variant_id", "standard"))
 	var bonus_id := str(slot_state.get("slot_bonus_variant_id", "plain"))
 	var cabinet_id := str(slot_state.get("slot_cabinet_variant_id", ""))
+	var cache_key := "\u001f".join([format_id, type_id, math_id, bonus_id, cabinet_id])
+	if cache_key == _slot_audio_profile_cache_key and not _slot_audio_profile_cache.is_empty():
+		return _slot_audio_profile_cache
 	var pitch_bias := 0.0
 	match math_id:
 		"steady":
@@ -1489,7 +1535,9 @@ func _slot_audio_profile(slot_state: Dictionary) -> Dictionary:
 		profile["loop_pitch"] = float(profile.get("loop_pitch", 1.0)) * 0.97
 		profile["stop_pitch_step"] = float(profile.get("stop_pitch_step", -0.04)) - 0.010
 		profile["bonus_pitch"] = float(profile.get("bonus_pitch", 1.0)) + 0.03
-	return profile
+	_slot_audio_profile_cache_key = cache_key
+	_slot_audio_profile_cache = profile
+	return _slot_audio_profile_cache
 
 
 func _trigger(marker: String, condition: bool, event_id: String, volume_db: float = 0.0, pitch: float = 1.0, suppress_physical_playback: bool = false) -> void:
@@ -1540,7 +1588,7 @@ func _sync_feature_music(feature_scene: Dictionary, profile: Dictionary) -> void
 	})
 
 
-func _sync_feature_scene_cues(slot_state: Dictionary, profile: Dictionary, fallback_elapsed: float) -> void:
+func _sync_feature_scene_cues(slot_state: Dictionary, profile: Dictionary, fallback_elapsed: float, audio_timing: Dictionary = {}) -> void:
 	var scene := _dict(slot_state.get("slot_feature_scene", {}))
 	var scene_id := str(scene.get("scene_id", scene.get("mode", "")))
 	if scene_id.is_empty():
@@ -1548,7 +1596,7 @@ func _sync_feature_scene_cues(slot_state: Dictionary, profile: Dictionary, fallb
 	if scene_id != _feature_scene_audio_id:
 		_feature_scene_audio_id = scene_id
 		_clear_markers_with_prefix("feature_scene_")
-	var timing := _dict(slot_state.get("_surface_audio_timing", {}))
+	var timing := audio_timing if not audio_timing.is_empty() else _dict(slot_state.get("_surface_audio_timing", {}))
 	var elapsed := float(timing.get("feature_elapsed", fallback_elapsed))
 	var stages: Array = scene.get("stages", []) if typeof(scene.get("stages", [])) == TYPE_ARRAY else []
 	var start_times: Array = []
@@ -1557,7 +1605,7 @@ func _sync_feature_scene_cues(slot_state: Dictionary, profile: Dictionary, fallb
 		start_times.append(cursor)
 		if typeof(stage_value) == TYPE_DICTIONARY:
 			cursor += float(maxi(1, int((stage_value as Dictionary).get("duration_msec", 1)))) / 1000.0
-	var cues := _dictionary_array(scene.get("audio_cues", []))
+	var cues := JsonCoerceScript._dictionary_array(scene.get("audio_cues", []))
 	for cue in cues:
 		var stage_index := int(cue.get("stage_index", 0))
 		var cue_time := 0.0
@@ -1577,16 +1625,34 @@ func _start_reel_loop(event_id: String = "reel_loop", volume_db: float = -13.0, 
 	if suppress_physical_playback:
 		return
 	var stream := _event_stream(event_id)
-	if WebAudioBridgeScript.available():
-		WebAudioBridgeScript.play_stream(stream, "sfx:%s" % _normalized_event_id(event_id), volume_db, pitch, WEB_SURFACE_LOOP_ID, true)
-		_web_surface_loop_active = true
+	if _web_audio_delivery_available():
+		_web_delivery_attempts += 1
+		if _deliver_web_stream(stream, "sfx:%s" % _normalized_event_id(event_id), volume_db, pitch, WEB_SURFACE_LOOP_ID, true):
+			_web_surface_loop_active = true
+			_pending_web_loop_retry = {}
+			_web_loop_retry_count = 0
+			return
+		_record_web_delivery_failure()
+		_pending_web_loop_retry = {"stream": stream, "stream_id": "sfx:%s" % _normalized_event_id(event_id), "volume_db": volume_db, "pitch": pitch}
+		_web_loop_retry_count = 0
+		if is_inside_tree() and not _debug_web_delivery_active:
+			call_deferred("_retry_pending_web_surface_loop")
+		# Godot 4.6's no-threads Web audio worklet can retain streamed native
+		# playback until its MessagePort exhausts memory. The bridge is the sole
+		# Web transport; a miss is retried and then reported, never handed to a
+		# second native AudioStreamPlayer transport.
 		return
 	if _loop_player == null:
+		if not _pending_web_loop_retry.is_empty():
+			_web_dropped_cue_count += 1
 		return
+	if not _pending_web_loop_retry.is_empty():
+		_web_fallback_count += 1
 	_loop_player.stream = stream
 	_loop_player.volume_db = volume_db
 	_loop_player.pitch_scale = pitch
-	_loop_player.play()
+	if _loop_player.is_inside_tree():
+		_loop_player.play()
 
 
 func _stop_reel_loop() -> void:
@@ -1595,10 +1661,14 @@ func _stop_reel_loop() -> void:
 	_surface_loop_fade_tween = null
 	if WebAudioBridgeScript.available() and _web_surface_loop_active:
 		WebAudioBridgeScript.stop_loop(WEB_SURFACE_LOOP_ID)
-		_web_surface_loop_active = false
-	if _loop_player != null and _loop_player.playing:
-		_loop_player.stop()
+	_web_surface_loop_active = false
+	if _loop_player != null:
+		if _loop_player.playing:
+			_loop_player.stop()
+		_loop_player.stream = null
 	_surface_loop_event_id = ""
+	_pending_web_loop_retry = {}
+	_web_loop_retry_count = 0
 
 
 func _stop_one_shot_loops() -> void:
@@ -1616,12 +1686,19 @@ func _stop_one_shot_loops() -> void:
 func _play(event_id: String, volume_db: float = 0.0, pitch: float = 1.0, profile_id: String = "", max_voices: int = ONE_SHOT_PLAYER_COUNT) -> void:
 	_remove_from_prewarm_queue(_normalized_event_id(event_id))
 	var stream := _event_stream(event_id)
-	if WebAudioBridgeScript.available():
-		WebAudioBridgeScript.play_stream(stream, "sfx:%s" % _normalized_event_id(event_id), volume_db, pitch, "", false, profile_id, max_voices)
+	if _web_audio_delivery_available():
+		_web_delivery_attempts += 1
+		if _deliver_web_stream(stream, "sfx:%s" % _normalized_event_id(event_id), volume_db, pitch, "", false, profile_id, max_voices):
+			return
+		_record_web_delivery_failure()
+		_web_dropped_cue_count += 1
 		return
 	var player := _next_player(profile_id, max_voices)
 	if player == null:
+		_web_dropped_cue_count += 1
 		return
+	if _web_audio_delivery_available():
+		_web_fallback_count += 1
 	player.stop()
 	player.stream = stream
 	player.volume_db = volume_db
@@ -1630,6 +1707,81 @@ func _play(event_id: String, volume_db: float = 0.0, pitch: float = 1.0, profile
 	player.set_meta("surface_profile_id", profile_id)
 	player.set_meta("surface_voice_serial", _surface_voice_serial)
 	player.play()
+
+
+func _web_audio_delivery_available() -> bool:
+	return _debug_web_delivery_active or WebAudioBridgeScript.available()
+
+
+func _deliver_web_stream(stream: AudioStream, stream_id: String, volume_db: float, pitch: float, loop_id: String, force_loop: bool, profile_id: String = "", max_voices: int = ONE_SHOT_PLAYER_COUNT) -> bool:
+	if _debug_web_delivery_active:
+		if _debug_web_delivery_results.is_empty():
+			return false
+		return bool(_debug_web_delivery_results.pop_front())
+	return WebAudioBridgeScript.play_stream(stream, stream_id, volume_db, pitch, loop_id, force_loop, profile_id, max_voices)
+
+
+func _retry_pending_web_surface_loop() -> void:
+	if _pending_web_loop_retry.is_empty() or _web_surface_loop_active:
+		return
+	_web_loop_retry_count += 1
+	_web_delivery_attempts += 1
+	var request := _pending_web_loop_retry
+	if _deliver_web_stream(request.get("stream") as AudioStream, str(request.get("stream_id", "")), float(request.get("volume_db", -13.0)), float(request.get("pitch", 1.0)), WEB_SURFACE_LOOP_ID, true):
+		_web_surface_loop_active = true
+		_pending_web_loop_retry = {}
+		if _loop_player != null and _loop_player.playing:
+			_loop_player.stop()
+		if _loop_player != null:
+			_loop_player.stream = null
+		return
+	_record_web_delivery_failure()
+	if _web_loop_retry_count < WEB_LOOP_RETRY_LIMIT:
+		if is_inside_tree() and not _debug_web_delivery_active:
+			call_deferred("_retry_pending_web_surface_loop")
+		return
+	_pending_web_loop_retry = {}
+	_web_dropped_cue_count += 1
+	_publish_audio_unavailable_status()
+
+
+func _record_web_delivery_failure() -> void:
+	_web_delivery_failure_count += 1
+	if _web_delivery_failure_count >= WEB_FAILURE_WARNING_THRESHOLD:
+		_publish_audio_unavailable_status()
+
+
+func _publish_audio_unavailable_status() -> void:
+	var message := "Audio unavailable. Gameplay will continue; check browser audio permissions or reload."
+	if _audio_status_message == message:
+		return
+	_audio_status_message = message
+	audio_status_changed.emit(message)
+
+
+func debug_web_delivery_contract(results: Array) -> Dictionary:
+	_stop_reel_loop()
+	_web_delivery_attempts = 0
+	_web_delivery_failure_count = 0
+	_web_fallback_count = 0
+	_web_dropped_cue_count = 0
+	_audio_status_message = ""
+	_debug_web_delivery_results = results.duplicate()
+	_debug_web_delivery_active = true
+	_ensure_players()
+	_start_reel_loop("reel_loop", -13.0, 1.0)
+	while not _pending_web_loop_retry.is_empty() and _web_loop_retry_count < WEB_LOOP_RETRY_LIMIT:
+		_retry_pending_web_surface_loop()
+	_debug_web_delivery_active = false
+	return {
+		"loop_active": _web_surface_loop_active,
+		"attempts": _web_delivery_attempts,
+		"retry_count": _web_loop_retry_count,
+		"failure_count": _web_delivery_failure_count,
+		"fallback_count": _web_fallback_count,
+		"dropped_cue_count": _web_dropped_cue_count,
+		"status": _audio_status_message,
+	}
 
 
 func _next_player(profile_id: String = "", max_voices: int = ONE_SHOT_PLAYER_COUNT) -> AudioStreamPlayer:
@@ -3216,16 +3368,6 @@ func _soft_limit(value: float) -> float:
 	if amount <= 0.72:
 		return value
 	return value / (1.0 + (amount - 0.72) * 0.80)
-
-
-func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append(entry)
-	return result
 
 
 func _dict(value: Variant) -> Dictionary:

@@ -1,6 +1,9 @@
 class_name ScenarioSemanticViewModel
 extends RefCounted
 
+# Converts sealed scenario semantic records into player-safe actors, objects,
+# actions, and failure projections for room presentation.
+
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
 const BOARD_SIZE := Vector2(900.0, 430.0)

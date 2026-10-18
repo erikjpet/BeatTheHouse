@@ -1,6 +1,9 @@
 class_name CoinPusherGame
 extends GameModule
 
+# Production host for Quarter Falls, Jackpot Ridge, and The Vault Drop. It owns
+# durable cabinet state, live-session scheduling, actions, settlement, and UI.
+
 var _generation_timing_enabled := false
 var _last_generation_timing_usec: Dictionary = {}
 
@@ -34,8 +37,12 @@ const VaultDropScript := preload("res://scripts/games/coin_pusher/vault_drop.gd"
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const CoinPusherLiveSessionScript := preload("res://scripts/games/coin_pusher/coin_pusher_live_session.gd")
 const V3_HEADLESS_MESSAGE := "Aim for bonus-token cups, use the stop to build pressure, and push the machine's heavy feature pieces into the win tray."
+const WEB_SURFACE_ANIMATION_FPS := 30.0
 
 var _live_machines: Dictionary = {}
+var _live_machine_generations: Dictionary = {}
+var _next_live_machine_generation := 1
+var _last_host_rollback_failure: Dictionary = {}
 var _exit_settle_active := false
 var _renderer = null
 var _machine_definition_cache: Dictionary = {}
@@ -60,7 +67,15 @@ func defers_embedded_action_presentation_refresh(run_state: RunState, _environme
 func host_action_rollback_snapshot(action_id: String, run_state: RunState, environment: Dictionary) -> Dictionary:
 	if action_id != DROP_ACTION or run_state == null or run_state.grand_casino_game_uses_chips(get_id(), environment):
 		return {}
-	var machine := _ensure_live_machine(run_state, environment)
+	var cache_key := _live_key(run_state, environment)
+	var identity_generation := int(_live_machine_generations.get(cache_key, 0))
+	# A compact token is valid only for an already-live, generation-bound cabinet.
+	# In particular, never advertise compact recovery during the exit handoff,
+	# where _ensure_live_machine() intentionally projects durable state without
+	# installing a live cache entry. The host will retain its complete fallback.
+	if not _live_machines.has(cache_key) or identity_generation <= 0:
+		return {}
+	var machine: Dictionary = _live_machines[cache_key]
 	if str(machine.get("variation_id", "quarter_falls")) != "quarter_falls":
 		return {}
 	var shell: Dictionary = {}
@@ -74,7 +89,10 @@ func host_action_rollback_snapshot(action_id: String, run_state: RunState, envir
 	var durable_value: Variant = durable_states.get(get_id(), null)
 	return {
 		"supported": true,
-		"machine": machine,
+		"game_id": get_id(),
+		"action_id": action_id,
+		"cache_key": cache_key,
+		"identity_generation": identity_generation,
 		"shell": shell,
 		"motor_target_rate_present": simulation.has("motor_target_rate_fp"),
 		"motor_target_rate_fp": int(simulation.get("motor_target_rate_fp", 0)),
@@ -94,14 +112,19 @@ func host_action_rollback_snapshot(action_id: String, run_state: RunState, envir
 
 
 func restore_host_action_rollback(snapshot: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
-	var machine_value: Variant = snapshot.get("machine", null)
 	var shell_value: Variant = snapshot.get("shell", null)
-	if typeof(machine_value) != TYPE_DICTIONARY or typeof(shell_value) != TYPE_DICTIONARY:
+	var cache_key := str(snapshot.get("cache_key", ""))
+	var expected_key := _live_key(run_state, environment)
+	var expected_generation := int(snapshot.get("identity_generation", 0))
+	if cache_key.is_empty() or cache_key != expected_key or expected_generation <= 0 or typeof(shell_value) != TYPE_DICTIONARY:
+		_record_host_rollback_failure(snapshot, expected_key, "invalid compact rollback identity")
 		return false
-	var machine := machine_value as Dictionary
+	var machine := _ensure_live_machine(run_state, environment)
+	var current_generation := int(_live_machine_generations.get(cache_key, 0))
+	if current_generation != expected_generation:
+		_record_host_rollback_failure(snapshot, expected_key, "live machine generation changed")
+		return false
 	var shell := shell_value as Dictionary
-	if not is_same(machine, _ensure_live_machine(run_state, environment)):
-		return false
 	for key in machine.keys():
 		if str(key) not in ["simulation", "live_session", "settled_state"] and not shell.has(key):
 			machine.erase(key)
@@ -127,10 +150,32 @@ func restore_host_action_rollback(snapshot: Dictionary, run_state: RunState, env
 		durable_states[get_id()] = durable_machine_value
 	else:
 		durable_states.erase(get_id())
+	_last_host_rollback_failure = {}
 	return true
 
 
+func host_action_rollback_failure_payload() -> Dictionary:
+	return _last_host_rollback_failure.duplicate(true)
+
+
+func _record_host_rollback_failure(snapshot: Dictionary, current_key: String, reason: String) -> void:
+	_last_host_rollback_failure = {
+		"game_id": get_id(),
+		"action_id": str(snapshot.get("action_id", "")),
+		"cache_key": str(snapshot.get("cache_key", "")),
+		"current_cache_key": current_key,
+		"identity_generation": int(snapshot.get("identity_generation", 0)),
+		"current_identity_generation": int(_live_machine_generations.get(current_key, 0)),
+		"reason": reason,
+	}
+
+
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
+	# A lifecycle reset can abandon the final rendered exit handoff after its live
+	# cabinet has already been removed. A new authoritative entry owns a fresh
+	# session and must never inherit that stale exit-only latch.
+	if _exit_settle_active:
+		cancel_chunked_exit_settle()
 	# Surface entry is presentation-only. Machine normalization, rumor updates,
 	# and staff-watch consequences belong to generation/action boundaries.
 	var busy := _machine_busy(environment)
@@ -612,6 +657,11 @@ func draw_surface(surface, state: Dictionary, _render_context: Dictionary = {}) 
 	return _coin_pusher_renderer().draw(surface, state)
 
 
+func release_surface_host(surface) -> void:
+	if _renderer != null:
+		_renderer.release_surface_host(surface)
+
+
 func renderer_signature(state: Dictionary) -> Dictionary:
 	return _coin_pusher_renderer().render_signature(state)
 
@@ -760,8 +810,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	var advanced := CoinPusherLiveSessionScript.advance(machine, now_msec, publish_presentation)
 	var advanced_events: Variant = advanced.get("events")
 	var physics_events: Array = advanced_events if typeof(advanced_events) == TYPE_ARRAY else []
-	if not physics_events.is_empty():
-		_consume_live_physics_events(run_state, machine, physics_events)
+	_consume_live_physics_events(run_state, environment, machine, physics_events)
 	var terminal_event_seen := false
 	for event_value in physics_events:
 		if typeof(event_value) == TYPE_DICTIONARY and str((event_value as Dictionary).get("kind", "")) in ["tray", "gutter"]:
@@ -891,6 +940,12 @@ func checkpoint_surface_ui_state_for_save(_ui_state: Dictionary, _run_state: Run
 	pass
 
 
+func checkpoint_surface_ui_state_for_save_requires_ui_state() -> bool:
+	# Live simulation state is owned by the machine cache/durable snapshot; this
+	# save hook never consumes the retained renderer projection.
+	return false
+
+
 func foundation_save_ready(run_state: RunState, environment: Dictionary) -> bool:
 	var key := _live_key(run_state, environment)
 	if not _live_machines.has(key):
@@ -911,7 +966,7 @@ func begin_chunked_exit_settle(run_state: RunState, environment: Dictionary) -> 
 	_exit_settle_active = true
 	var machine: Dictionary = _live_machines[key]
 	var result := CoinPusherLiveSessionScript.begin_chunked_settle(machine)
-	_consume_live_physics_events(run_state, machine, result.get("events", []))
+	_consume_live_physics_events(run_state, environment, machine, result.get("events", []))
 	_register_pile_rumor(run_state, environment, machine)
 	return result
 
@@ -922,7 +977,7 @@ func advance_chunked_exit_settle(run_state: RunState, environment: Dictionary, t
 		return {"done": true, "ticks": 0}
 	var machine: Dictionary = _live_machines[key]
 	var result := CoinPusherLiveSessionScript.advance_chunked_settle(machine, tick_budget)
-	var consumed := _consume_live_physics_events(run_state, machine, result.get("events", []))
+	var consumed := _consume_live_physics_events(run_state, environment, machine, result.get("events", []))
 	if int(result.get("ticks", 0)) > 0:
 		_register_pile_rumor(run_state, environment, machine)
 	_advance_tell_decay(machine, int(result.get("ticks", 0)))
@@ -937,11 +992,22 @@ func advance_chunked_exit_settle(run_state: RunState, environment: Dictionary, t
 	if bool(result.get("done", false)):
 		_write_live_durable(run_state, environment, machine, false)
 		_live_machines.erase(key)
+		_live_machine_generations.erase(key)
 	return result
 
 
 func finalize_chunked_exit_settle(run_state: RunState, environment: Dictionary) -> void:
-	_live_machines.erase(_live_key(run_state, environment))
+	var key := _live_key(run_state, environment)
+	_live_machines.erase(key)
+	_live_machine_generations.erase(key)
+	_exit_settle_active = false
+
+
+func cancel_chunked_exit_settle() -> void:
+	# Cancellation crosses a run/session authority boundary, so no transient
+	# cabinet from the abandoned session may survive into the replacement run.
+	_live_machines.clear()
+	_live_machine_generations.clear()
 	_exit_settle_active = false
 
 
@@ -952,9 +1018,9 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 	var local_rng := rng
 	if local_rng == null:
 		local_rng = RngStream.new()
-		local_rng.configure(_stable_hash("%s:%s:%s" % [get_id(), str(run_state.seed_text if run_state != null else "fallback"), str(environment.get("id", "node"))]))
+		local_rng.configure(JsonCoerceScript._overflow_stable_hash("%s:%s:%s" % [get_id(), str(run_state.seed_text if run_state != null else "fallback"), str(environment.get("id", "node"))]))
 	var variation_rng := RngStream.new()
-	variation_rng.configure(_stable_hash("coin_pusher_variation:%s:%s" % [str(run_state.seed_text if run_state != null else "fallback"), _environment_node_id(run_state, environment)]))
+	variation_rng.configure(JsonCoerceScript._overflow_stable_hash("coin_pusher_variation:%s:%s" % [str(run_state.seed_text if run_state != null else "fallback"), _environment_node_id(run_state, environment)]))
 	var variation_id := _seeded_variation_id(environment, variation_rng)
 	var variation_config := _variation_config(variation_id)
 	if _generation_timing_enabled:
@@ -1192,7 +1258,7 @@ func _normalize_machine_state(source: Dictionary, run_state: RunState = null, en
 	var migrated_v2 := not has_live and not has_settled
 	var legacy_tray_value := maxi(0, int(machine.get("tray_value", 0)))
 	var migration_rng := RngStream.new()
-	migration_rng.configure(_stable_hash("coin_pusher_physical_migration:%s:%s" % [_environment_node_id(run_state, environment), str(run_state.seed_text if run_state != null else "fallback")]))
+	migration_rng.configure(JsonCoerceScript._overflow_stable_hash("coin_pusher_physical_migration:%s:%s" % [_environment_node_id(run_state, environment), str(run_state.seed_text if run_state != null else "fallback")]))
 	if migrated_v2:
 		var migrated_variation_id := str(machine.get("variation_id", _variation_id()))
 		machine["simulation"] = CoinPusherSolverScript.create_machine(migration_rng, _machine_definition(migrated_variation_id), mini(_opening_coin_count(migrated_variation_id), 250))
@@ -1213,7 +1279,7 @@ func _normalize_machine_state(source: Dictionary, run_state: RunState = null, en
 		machine["variation_state"] = {}
 	if (machine.get("variation_state", {}) as Dictionary).is_empty() and variation_id != "quarter_falls":
 		var rng := RngStream.new()
-		rng.configure(_stable_hash("migrate:%s:%s" % [variation_id, _environment_node_id(run_state, environment)]))
+		rng.configure(JsonCoerceScript._overflow_stable_hash("migrate:%s:%s" % [variation_id, _environment_node_id(run_state, environment)]))
 		machine["variation_state"] = JackpotRidgeScript.initial_state(_variation_config(variation_id), rng, _lane_count(), _cell_count()) if variation_id == "jackpot_ridge" else VaultDropScript.initial_state(_variation_config(variation_id), rng, _lane_count(), _cell_count(), _environment_node_id(run_state, environment))
 	for key in ["tray_value", "total_cost", "total_payout", "action_count", "tell_rung", "suspicion_floor"]:
 		machine[key] = maxi(0, int(machine.get(key, 0)))
@@ -1350,6 +1416,12 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"surface_fixed_price_actions": true,
 		"surface_stake_controls_required": false,
 		"surface_animates_idle": true,
+		"surface_web_idle_animation_fps": WEB_SURFACE_ANIMATION_FPS,
+		# The renderer's retained layers are pixel-equivalent to the immediate
+		# painter and leave the moving platform/body batch live. Native builds
+		# use them too so an idle cabinet does not redraw its unchanged shell,
+		# backglass, playfield dressing, and controls every animation tick.
+		"coin_pusher_native_retained_layers": true,
 		"surface_realtime_state_refresh": true,
 		"surface_pointer_coalesce_moves": true,
 		"surface_embeds_outcomes": true,
@@ -1725,12 +1797,14 @@ func _ensure_live_machine(run_state: RunState, environment: Dictionary) -> Dicti
 	var settled: Dictionary = machine.get("settled_state", {}) if typeof(machine.get("settled_state", {})) == TYPE_DICTIONARY else {}
 	if _has_v3_simulation(machine) and str(settled.get("schema", "")) != CoinPusherLiveSessionScript.SNAPSHOT_SCHEMA:
 		machine["settled_state"] = CoinPusherLiveSessionScript.make_snapshot(_simulation(machine), machine)
-	var seed := _stable_hash("pusher_live:%s:%s" % [str(run_state.seed_text if run_state != null else "fallback"), _environment_node_id(run_state, environment)])
-	CoinPusherLiveSessionScript.begin(machine, _machine_definition(str(machine.get("variation_id", _variation_id()))), seed)
+	var seed := JsonCoerceScript._overflow_stable_hash("pusher_live:%s:%s" % [str(run_state.seed_text if run_state != null else "fallback"), _environment_node_id(run_state, environment)])
+	CoinPusherLiveSessionScript.begin(machine, _machine_definition(str(machine.get("variation_id", _variation_id()))), seed, true)
 	_assign_feature_items(machine, run_state, environment)
 	_sync_physical_features(machine)
 	_sync_variation_motor(machine)
 	_live_machines[key] = machine
+	_live_machine_generations[key] = _next_live_machine_generation
+	_next_live_machine_generation += 1
 	return machine
 
 
@@ -1855,6 +1929,43 @@ func _ledger_value(ledger: Array) -> int:
 	return total
 
 
+func _settle_tray_coins(run_state: RunState, environment: Dictionary, machine: Dictionary) -> Dictionary:
+	var simulation := _simulation(machine)
+	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
+	if tray.is_empty():
+		return {"cash": 0, "count": 0}
+	var remaining: Array = []
+	var settled_count := 0
+	var settled_raw_value := 0
+	var settled_cash := 0
+	for entry_value in tray:
+		if typeof(entry_value) != TYPE_DICTIONARY:
+			remaining.append(entry_value)
+			continue
+		var entry: Dictionary = entry_value
+		if str(entry.get("kind", "")) != "coin" or not str(entry.get("item_id", "")).is_empty():
+			remaining.append(entry)
+			continue
+		var raw_value := maxi(0, int(entry.get("value", 0)))
+		var provenance: Dictionary = entry.get("provenance", {}) if typeof(entry.get("provenance", {})) == TYPE_DICTIONARY else {}
+		settled_count += 1
+		settled_raw_value += raw_value
+		settled_cash += raw_value * maxi(1, int(provenance.get("ridge_multiplier", 1)))
+	if settled_count <= 0:
+		return {"cash": 0, "count": 0}
+	simulation["tray_ledger"] = remaining
+	simulation["collected_count"] = int(simulation.get("collected_count", 0)) + settled_count
+	simulation["collected_value"] = int(simulation.get("collected_value", 0)) + settled_raw_value
+	if settled_cash > 0 and run_state != null:
+		run_state.change_bankroll(settled_cash)
+		run_state.log_story(_story_entry("coin_pusher_tray_payout", "free", environment, settled_cash, 0, {
+			"tray_count": settled_count,
+			"automatic": true,
+		}))
+		machine["last_message"] = "$%d lands in the tray and credits immediately." % settled_cash
+	return {"cash": settled_cash, "count": settled_count}
+
+
 func _collect_surface_command(run_state: RunState, environment: Dictionary, machine: Dictionary, debug_action_timing: bool = false, debug_action_started_usec: int = 0) -> Dictionary:
 	var debug_stage_started_usec := Time.get_ticks_usec() if debug_action_timing else 0
 	var simulation := _simulation(machine)
@@ -1938,7 +2049,9 @@ func _resolve_live_nudge(run_state: RunState, environment: Dictionary, machine: 
 	deltas["messages"] = [message]
 	var result := GameModule.build_owned_action_result({"source_id": get_id(), "game_id": get_id(), "action_id": NUDGE_ACTION, "action_kind": "cheat", "environment_id": str(environment.get("id", "")), "deltas": deltas, "message": message})
 	result["host_apply_result"] = true
-	result["surface_audio_cue"] = "coin_pusher_alarm" if alarmed else "coin_pusher_chirp"
+	# Surface cues name semantic classes from the profile manifest; the manifest
+	# resolves those classes to the concrete coin-pusher samples.
+	result["surface_audio_cue"] = "alarm" if alarmed else "tell_chirp"
 	result["surface_audio_context"] = {"tell_rung": int(machine.get("tell_rung", 0)), "alarmed": alarmed}
 	return result
 
@@ -2081,17 +2194,20 @@ func _enqueue_feature_bonus(machine: Dictionary, count: int, origin: String) -> 
 	}, count)
 
 
-func _consume_live_physics_events(run_state: RunState, machine: Dictionary, events_value: Variant) -> Dictionary:
+func _consume_live_physics_events(run_state: RunState, environment: Dictionary, machine: Dictionary, events_value: Variant) -> Dictionary:
+	var result := {"payout": 0, "prizes": [], "gutter_count": 0, "shim_recovered": false}
 	if typeof(events_value) != TYPE_ARRAY or (events_value as Array).is_empty():
-		return {"payout": 0, "prizes": [], "gutter_count": 0, "shim_recovered": false}
+		result.merge(_settle_tray_coins(run_state, environment, machine), true)
+		return result
 	var session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
 	var rng := RngStream.new()
 	if typeof(session.get("rng", {})) == TYPE_DICTIONARY:
 		rng.restore(session.get("rng", {}))
 	else:
 		rng.configure(1)
-	var result := _consume_physics_events(run_state, machine, events_value as Array, rng)
+	result = _consume_physics_events(run_state, machine, events_value as Array, rng)
 	session["rng"] = rng.snapshot()
+	result.merge(_settle_tray_coins(run_state, environment, machine), true)
 	return result
 
 
@@ -2293,11 +2409,13 @@ func _safe_pusher_item_pool(run_state: RunState) -> Array:
 func _assign_feature_items(machine: Dictionary, run_state: RunState, environment: Dictionary) -> void:
 	var seed := int(machine.get("feature_item_seed", 0))
 	if seed == 0:
-		seed = _stable_hash("pusher_items:%s:%s:%s" % [
+		# The seed is saved, and JSON numbers are doubles: keep it within 53 bits so
+		# a loaded machine assigns the same feature items.
+		seed = maxi(1, JsonCoerceScript._overflow_stable_hash("pusher_items:%s:%s:%s" % [
 			str(run_state.seed_text if run_state != null else "fallback"),
 			_environment_node_id(run_state, environment),
 			str(machine.get("variation_id", "quarter_falls")),
-		])
+		]) & 0x1FFFFFFFFFFFFF)
 		machine["feature_item_seed"] = seed
 	_assign_feature_items_from_pool(machine, _safe_pusher_item_pool(run_state), seed)
 
@@ -2315,7 +2433,7 @@ func _assign_feature_items_from_pool(machine: Dictionary, item_pool: Array, seed
 		var item_id := str(feature.get("item_id", ""))
 		if not bool(feature.get("pusher_item_assigned", false)) or not bool(allowed.get(item_id, false)):
 			var feature_id := str(feature.get("id", "feature"))
-			item_id = str(item_pool[posmod(_stable_hash("%d:%s" % [seed, feature_id]), item_pool.size())])
+			item_id = str(item_pool[posmod(JsonCoerceScript._overflow_stable_hash("%d:%s" % [seed, feature_id]), item_pool.size())])
 		var item_definition := library.item(item_id)
 		feature["item_id"] = item_id
 		feature["item_label"] = str(item_definition.get("display_name", item_id.capitalize()))
@@ -2765,12 +2883,6 @@ func _register_pile_rumor(run_state: RunState, environment: Dictionary, machine:
 	})
 
 
-func _staff_watch_suspicion_delta(run_state: RunState, machine: Dictionary) -> int:
-	if run_state == null or not bool(machine.get("staff_watch_memory", false)):
-		return 0
-	return maxi(0, int(machine.get("suspicion_floor", 0)) - run_state.suspicion_level())
-
-
 func _seed_prize_riders(environment: Dictionary, rng: RngStream) -> Array:
 	var tuning := _tuning()
 	var definitions: Array = tuning.get("prize_riders", []) if typeof(tuning.get("prize_riders", [])) == TYPE_ARRAY else []
@@ -2843,32 +2955,6 @@ func _weighted_prize(definitions: Array, rng: RngStream) -> Dictionary:
 		if roll <= 0:
 			return (value as Dictionary).duplicate(true)
 	return {}
-
-
-func _inventory_prizes(prizes: Array) -> Array:
-	var result: Array = []
-	for value in prizes:
-		if typeof(value) == TYPE_DICTIONARY:
-			var item_id := str((value as Dictionary).get("item_id", ""))
-			if not item_id.is_empty() and not result.has(item_id):
-				result.append(item_id)
-	return result
-
-
-func _prize_cash(prizes: Array) -> int:
-	var result := 0
-	for value in prizes:
-		if typeof(value) == TYPE_DICTIONARY:
-			result += maxi(0, int((value as Dictionary).get("cash_value", 0)))
-	return result
-
-
-func _prize_labels(prizes: Array) -> String:
-	var labels: Array = []
-	for value in prizes:
-		if typeof(value) == TYPE_DICTIONARY:
-			labels.append(str((value as Dictionary).get("label", (value as Dictionary).get("item_id", "prize"))))
-	return ", ".join(labels)
 
 
 func _story_entry(action_id: String, kind: String, environment: Dictionary, bankroll_delta: int, heat: int, context: Dictionary) -> Dictionary:
@@ -3074,10 +3160,3 @@ func _prize_count_min() -> int:
 
 func _prize_count_max() -> int:
 	return maxi(_prize_count_min(), _int_tuning("prize_count_max", 3))
-
-
-func _stable_hash(text: String) -> int:
-	var value := 2166136261
-	for index in range(text.length()):
-		value = int((value ^ text.unicode_at(index)) * 16777619)
-	return abs(value) if value != 0 else 1

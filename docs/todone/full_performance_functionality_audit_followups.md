@@ -21,10 +21,10 @@ The current source is broadly functional under the foundation suites: validation
 | `tools/foundation_visual_qa.ps1` | PASS WITH WARNINGS | Visual QA exited green, but Godot emitted recurring RID/ObjectDB leak warnings. |
 | `tools/web_perf_smoke.ps1 -Plan l02` | FAIL | Web ready wall time `21168ms` exceeded `20000ms`; scenario frame budgets passed. |
 | `tools/web_perf_smoke.ps1 -Plan grand_casino -SkipExport` | FAIL | Web ready wall time `22286ms` exceeded `20000ms`; Grand Casino scenario frame p95 budgets passed. |
-| `tools/ui05_surface_coverage_check.ps1` | PASS | 57 `scripts/ui` files accounted. |
-| `tools/ui05_token_adoption_check.ps1` | PASS | 38 UI files covered, 19 deliberate exemptions. |
-| `tools/ui05_popup_fit_check.ps1` | PASS | 3 representative viewport/content pairs. |
-| `tools/ui05_asset_pipeline_check.ps1` | PASS | 50 PNGs cross-checked. |
+| `tools/archive/ui05/ui05_surface_coverage_check.ps1` | PASS | 57 `scripts/ui` files accounted. |
+| `tools/archive/ui05/ui05_token_adoption_check.ps1` | PASS | 38 UI files covered, 19 deliberate exemptions. |
+| `tools/archive/ui05/ui05_popup_fit_check.ps1` | PASS | 3 representative viewport/content pairs. |
+| `tools/archive/ui05/ui05_asset_pipeline_check.ps1` | PASS | 50 PNGs cross-checked. |
 | `tools/collection_meta_check.ps1` | PASS | Collection/meta validation passed. |
 
 ## Todo list
@@ -101,7 +101,7 @@ The art manifest also has a `pull_tabs` game entry but no equivalent `scratch_ti
 
 - Scratch Tickets game card and scene preview no longer reuse Pull Tabs art.
 - Pull Tabs still uses its own existing art.
-- `tools/ui05_asset_pipeline_check.ps1`, `tools/validate_project.ps1`, and `FoundationSuite scratch_tickets` pass.
+- `tools/archive/ui05/ui05_asset_pipeline_check.ps1`, `tools/validate_project.ps1`, and `FoundationSuite scratch_tickets` pass.
 
 ### P1 — Update README to the actual 0.5 implementation
 
@@ -109,7 +109,7 @@ The art manifest also has a `pull_tabs` game entry but no equivalent `scratch_ti
 
 - Opening game list omits Scratch Tickets.
 - Content counts are stale: current data counts are 18 environments, 8 games, 67 items, 10 content groups, 49 events, 12 travel route templates, 8 challenges, 20 dialogues, 3 music tracks, and 40 tutorial lessons.
-- Validation section points to `docs/plans/0.4_release_checklist.md` and 0.4 supplemental probes instead of the 0.5 release/checklist state.
+- Validation section points to `docs/archive/0.4/plans/0.4_release_checklist.md` and 0.4 supplemental probes instead of the 0.5 release/checklist state.
 - Export section says versions are stamped `0.4.0`, while `project.godot` and export presets are `0.5.0`.
 - Documentation list emphasizes 0.4 release docs and does not clearly promote the current 0.5 release checklist/publish/devlog docs.
 
@@ -124,7 +124,7 @@ The art manifest also has a `pull_tabs` game entry but no equivalent `scratch_ti
 
 ### P1 — Retire or archive stale queue/planning documents that still claim open resolved work
 
-**Finding:** `docs/todo/README_0_5_release_queue.md` is still present under `docs/todo` and describes a queue with `p0_0`, `p0_2`, `p1_2`, `p1_1`, `p2_3`, `p2_1`, and `p2_2` as pending, even though those prompts have been archived and later audit work verified the queue. `docs/plans/0.5_ui_overhaul_brief.md` still says `Status: PLANNED, runs LAST in 0.5`, while the release checklist claims the full UI redesign is included.
+**Finding:** `docs/todo/README_0_5_release_queue.md` is still present under `docs/todo` and describes a queue with `p0_0`, `p0_2`, `p1_2`, `p1_1`, `p2_3`, `p2_1`, and `p2_2` as pending, even though those prompts have been archived and later audit work verified the queue. `docs/archive/0.5/plans/0.5_ui_overhaul_brief.md` still says `Status: PLANNED, runs LAST in 0.5`, while the release checklist claims the full UI redesign is included.
 
 **Needed change:** Convert stale planning docs into historical records or update their status headers so they cannot be mistaken for active work. For the queue README, move it to `docs/todone/` or rewrite it as a completed queue index with archived prompt links and final commits. For the UI brief, add a completion/superseded status pointing to the implemented report and release checklist.
 
@@ -136,7 +136,7 @@ The art manifest also has a `pull_tabs` game entry but no equivalent `scratch_ti
 
 ### P1 — Bring 0.5 release paperwork up to current audit reality
 
-**Finding:** `docs/plans/0.5_release_checklist.md` is useful but stale in important places:
+**Finding:** `docs/archive/0.5/plans/0.5_release_checklist.md` is useful but stale in important places:
 
 - It records source-prep gates from 2026-07-26, not this audit's current gate outcomes.
 - It still says scratch scarcity is pending confirmation before `p2_3`, but `p2_3_scratch_collection_payoff_prompt.md` is already archived.
@@ -251,10 +251,10 @@ Gate results:
 | `tools/foundation_performance_probe.ps1 -RequireGodot` | PASS; no RID/ObjectDB leak warnings. Existing non-blocking warnings remain for natural perf seed coverage, slot preview room kind, and native slot autoplay waiver covered by web smoke. |
 | `tools/foundation_visual_qa.ps1` | PASS; no RID/ObjectDB leak warnings |
 | `tools/foundation_determinism_probe.ps1 -RequireGodot -SeedCount 10 -SeedPrefix AUDIT-DETERMINISM` | PASS; hash `2869710968` |
-| `tools/ui05_surface_coverage_check.ps1` | PASS |
-| `tools/ui05_token_adoption_check.ps1` | PASS |
-| `tools/ui05_popup_fit_check.ps1` | PASS |
-| `tools/ui05_asset_pipeline_check.ps1` | PASS |
+| `tools/archive/ui05/ui05_surface_coverage_check.ps1` | PASS |
+| `tools/archive/ui05/ui05_token_adoption_check.ps1` | PASS |
+| `tools/archive/ui05/ui05_popup_fit_check.ps1` | PASS |
+| `tools/archive/ui05/ui05_asset_pipeline_check.ps1` | PASS |
 | `tools/collection_meta_check.ps1` | PASS |
 
 Accepted/deferred items:

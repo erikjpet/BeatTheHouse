@@ -1,0 +1,108 @@
+{
+  "release_tag": "v0.6.0",
+  "source_commit": "a095414b20cdb3570e06b367c621be43e0256109",
+  "assessed_checkout": "395990c68ebc6428bf8e1fbe49890ee4299b3252",
+  "runtime_unchanged_by_readme_commit": true,
+  "web_archive_sha256": "ba3dc809efdfcd80575550a0357247518ee01ccc5a0eb56a098f0c952dfc0f19",
+  "served_files_identical_to_archive": true,
+  "new_normal_web_seeds": [
+    "BTH061-STABILITY-A",
+    "BTH061-STABILITY-B",
+    "BTH061-STABILITY-D"
+  ],
+  "cases": [
+    {
+      "id": "BTH061-001",
+      "seed": "BTH061-STABILITY-B",
+      "location": "Bar",
+      "cabinet": "Quarter Falls",
+      "input": "ordinary mouse inputs, no edited state or saves",
+      "observed_cash_before_drop": 97,
+      "observed_cash_after_drop": 96,
+      "observed_cash_after_continue": 97,
+      "persisted_before_drop": {
+        "seed": "BTH061-STABILITY-B",
+        "cash": 97,
+        "clock_minutes": 770,
+        "rng_state": 1989494952,
+        "packed_state_sha256": "fa3cc56f7450bc83c48aa666e2a713b97fe635fef43fa884cace7f4433561c65",
+        "save_file_sha256": "57641587ae91dd64e24ab0c4e1bf79f465520d3b4f877eb8d0b4a0a7388d5db9"
+      },
+      "persisted_after_main_menu": {
+        "seed": "BTH061-STABILITY-B",
+        "cash": 97,
+        "clock_minutes": 770,
+        "rng_state": 1989494952,
+        "packed_state_sha256": "fa3cc56f7450bc83c48aa666e2a713b97fe635fef43fa884cace7f4433561c65",
+        "save_file_sha256": "57641587ae91dd64e24ab0c4e1bf79f465520d3b4f877eb8d0b4a0a7388d5db9"
+      },
+      "identical_durable_save": true,
+      "paid-menu_screenshot": "b-paid-menu.png",
+      "after-continue_screenshot": "b-after-continue.png"
+    },
+    {
+      "id": "BTH061-001",
+      "seed": "BTH061-STABILITY-D",
+      "location": "Corner Store",
+      "cabinet": "Quarter Falls",
+      "input": "ordinary mouse inputs, no edited state or saves",
+      "observed_cash_before_drop": 97,
+      "observed_cash_after_drop": 96,
+      "observed_cash_after_continue": 97,
+      "persisted_before_drop": {
+        "seed": "BTH061-STABILITY-D",
+        "cash": 97,
+        "clock_minutes": 755,
+        "rng_state": 253256873,
+        "packed_state_sha256": "02f96b61f0f215e1e1482d3851a72666f40d71c73949c84543e225b439c8d1a0",
+        "save_file_sha256": "f810c9f3ee16d318d914a6c8dd23e92994e8cafcc5c71286928831478f6494b9"
+      },
+      "persisted_after_main_menu": {
+        "seed": "BTH061-STABILITY-D",
+        "cash": 97,
+        "clock_minutes": 755,
+        "rng_state": 253256873,
+        "packed_state_sha256": "02f96b61f0f215e1e1482d3851a72666f40d71c73949c84543e225b439c8d1a0",
+        "save_file_sha256": "f810c9f3ee16d318d914a6c8dd23e92994e8cafcc5c71286928831478f6494b9"
+      },
+      "identical_durable_save": true,
+      "paid-menu_screenshot": "d-paid-menu.png",
+      "after-continue_screenshot": "d-after-continue.png"
+    }
+  ],
+  "storage_fault_probe": {
+    "active_cash_before_menu": 97,
+    "baseline_saved": true,
+    "kind": "production_lifecycle_with_isolated_storage_fault",
+    "loaded_original_save": true,
+    "original_cash": 100,
+    "reloaded_cash": 100,
+    "reproduced": true,
+    "run_discarded_after_failed_save": true,
+    "save_directory_displaced": 0,
+    "save_directory_restored": 0,
+    "save_outcome": {
+      "data": {},
+      "error": 12,
+      "error_code": "temporary_open_failed",
+      "message": "Temporary Open Failed",
+      "ok": false,
+      "outcome": "nothing-loadable",
+      "slot_id": "foundation_ui_autosave"
+    },
+    "seed": "BTH061-SAVE-FAILURE",
+    "selected": true,
+    "source_commit": "a095414b20cdb3570e06b367c621be43e0256109",
+    "started": true,
+    "status_message": "Autosave failed. Retry from Run Menu or after another action.",
+    "traveled": true
+  },
+  "limitations": [
+    "Initial assessment, not completion of the full release coverage list.",
+    "Coin Pusher loss reproduced on shipped Web; native close and Windows parity remain pending.",
+    "Storage failure was injected in an isolated production-source probe, not found on healthy Web storage.",
+    "Paused replay pointer actions were not accepted as physics or wager evidence.",
+    "C/D/E catalog discovery used prevalidated travel and is not normal-play coverage.",
+    "No new performance qualification or optimization is claimed."
+  ]
+}

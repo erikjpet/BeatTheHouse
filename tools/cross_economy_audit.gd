@@ -1142,15 +1142,6 @@ func _crew_job_boundary(run_state: RunState, run: Dictionary, member_id: String,
 	return "crew_job_accept"
 
 
-func _mark_conditioning(run: Dictionary, note: String) -> void:
-	run["conditioned_probe"] = true
-	var existing := str(run.get("conditioning", "none"))
-	if existing == "none" or existing.is_empty():
-		run["conditioning"] = note
-	elif not existing.contains(note):
-		run["conditioning"] = "%s %s" % [existing, note]
-
-
 func _best_public_job_for_member(run_state: RunState, member_id: String) -> Dictionary:
 	var best := {}
 	var best_cash := -1

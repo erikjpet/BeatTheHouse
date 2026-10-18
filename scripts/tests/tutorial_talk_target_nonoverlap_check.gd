@@ -65,7 +65,7 @@ func _run_nonoverlap_check() -> void:
 	_stage_blackjack_raised_bet_surface()
 	_stage_guide_lesson("tutorial_blackjack_raise")
 	await _settle(8)
-	if str(app.get("coach_overlay").call("active_anchor_id")) != "surface_stake_up":
+	if str(app.get("coach_overlay").call("active_anchor_id")) != "blackjack_wager_place_gesture":
 		_fail("Blackjack raise lesson did not highlight the chip control.")
 		return
 	if not _active_target_is_clear("blackjack chip control"):

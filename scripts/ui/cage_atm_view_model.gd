@@ -1,6 +1,9 @@
 class_name CageAtmViewModel
 extends RefCounted
 
+# Projects Cage ATM balances and inline chip/cash actions without applying the
+# underlying Grand Casino transaction.
+
 const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.gd")
 
 
@@ -33,7 +36,6 @@ static func build(run_state: RunState) -> Dictionary:
 		"available_credit": int(status.get("available_credit", 0)),
 		"loan_increment": CageEconomyModelScript.LOAN_INCREMENT,
 		"loan_cap": CageEconomyModelScript.LOAN_CAP,
-		"origination_fee": CageEconomyModelScript.ORIGINATION_FEE,
 		"borrow_options": borrow_options,
 		"repay_options": repay_options,
 		"payoff_amount": payoff,

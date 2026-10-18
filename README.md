@@ -8,41 +8,59 @@ Bar Dice, Craps, Blackjack, Baccarat, Roulette, Video Poker, and the Crew's
 back-room Hold'em game. Every win, cheat, drink, loan, and bad exit pushes the
 run state forward.
 
-Versions 0.2.0 through 0.3.3 are historical source releases; 0.4.0 was an Act 1
-candidate tag that was not published before development continued. Version
-0.5.1 is the latest published release line. Current `main` is the active 0.6
-integration line: it keeps the Act 1 foundation, adds the Living Town and Crew
-systems, and reworks the Grand Casino into a three-room endgame with a living
-Rourke, a chips-and-Cage economy, Linda's Bronze/Silver/Gold Players Card
-ladder, a four-phase back-room showdown, a playable heads-up blackjack duel,
-and persistent card/chip meta rewards. Narration/audio, inventory cards,
-meaningful destination tradeoffs, automated tutorial coverage, and broad
-strict-input and deterministic regression coverage. The 0.6 source is playable,
-but room construction/finalization must be redesigned before release: the
-current full contract suite exposes placement, route, and layout-snapshot debt.
-The owner approved the tested baseline for public release on 2026-08-12. The
-`v0.5.1` tag and GitHub Release identify the final corrected 0.5 playtest baseline;
-`v0.5.0` remains the immutable original release boundary.
+**0.6 is the current release.** It includes the Act 1 foundation, the Living Town,
+55 persistent room scenarios, the Crew campaign, eleven depth-complete game
+modules, expanded tutorial and audio coverage, and a reworked four-room Grand
+Casino endgame with a living Rourke, chips and Cage economy, Linda's
+Bronze/Silver/Gold Players Card ladder, four-phase showdown, heads-up Blackjack
+duel, and persistent card/chip meta rewards.
+
+The current room placements are accepted as the 0.6 release baseline. Windows,
+Web, and source packages are available from the
+[official 0.6 release](https://github.com/erikjpet/BeatTheHouse/releases/tag/v0.6.0).
+
 Beat the House is not a real-money gambling product. It has no real-money
 wagering, cash prizes, gambling monetization, or store credentials checked into
 the repository.
+
+## Download 0.6
+
+| Download | Contents |
+| --- | --- |
+| [Windows](https://github.com/erikjpet/BeatTheHouse/releases/download/v0.6.0/BeatTheHouse-0.6.0-windows-x64.zip) | Runnable 64-bit EXE and its required native DLL |
+| [Web](https://github.com/erikjpet/BeatTheHouse/releases/download/v0.6.0/BeatTheHouse-0.6.0-web.zip) | Browser build with `index.html` at the ZIP root |
+| [Source](https://github.com/erikjpet/BeatTheHouse/releases/download/v0.6.0/BeatTheHouse-0.6.0-source.zip) | Source, runtime assets, native code, build tools, tests, and documentation |
+| [Checksums](https://github.com/erikjpet/BeatTheHouse/releases/download/v0.6.0/SHA256SUMS.txt) | SHA-256 hashes for the release files |
+
+Extract the entire Windows ZIP and run `BeatTheHouse.exe`; keep the native DLL
+beside it. Serve the Web build over HTTP or upload its ZIP to a browser-game
+host. For local Web play, run `python -m http.server 8000` in the extracted Web
+folder and open `http://localhost:8000`.
+
+Release packages contain no player saves, inventory, collection progress,
+settings, or authority keys. Fresh profiles start with no saved run to Continue.
+Existing local and browser saves remain in their separate user storage.
+Intentional regression-save fixtures are source-only and excluded from game
+packages. Build provenance, test results, and qualification limits accompany the
+[release downloads](https://github.com/erikjpet/BeatTheHouse/releases/tag/v0.6.0).
 
 ## Current Implementation
 
 | Area | Current state |
 | --- | --- |
-| Engine | Godot 4.x project with Godot 4.6 project feature metadata |
+| Engine | Godot project; use the pinned engine installed by `tools/install_godot.ps1` |
 | Main scene | `res://scenes/main.tscn` |
 | Main UI shell | `res://scripts/ui/foundation_main.gd` |
-| Prior release line | 0.3.3 public source release; 0.4.0 unpublished Act 1 candidate |
-| Active planning target | Redesign room construction/placement, then resume the parked 0.6 qualification sequence |
-| Current release readiness | Accepted work is integrated on `main` and playable; not release-ready until placement is redesigned and the deferred performance, playtest, polish, and release gates are rerun |
+| Published release | [0.6](https://github.com/erikjpet/BeatTheHouse/releases/tag/v0.6.0), with Windows, Web, and source downloads |
+| Source line | 0.6, stamped consistently in project and export metadata |
+| Placement baseline | Current room and scenario placements accepted for 0.6 |
+| Release verification | Normal ending routes, save/relaunch, migration, determinism, soak, package audits, and native Windows performance Smoke completed; details accompany the downloads |
 | Viewport | 1280x720, non-resizable, canvas stretch with kept aspect |
 | Renderer | Godot mobile renderer by default; Windows uses Godot compatibility/OpenGL to avoid the native Vulkan/OBS crash path seen in local WER reports |
 | Input model | Single pointer interaction with mouse/touch parity |
 | Target exports | Web/itch.io and Windows desktop; Android/iOS presets remain credential-blocked |
 | Run model | Seeded deterministic run state with forked RNG streams |
-| Current win target | Reach the Grand Casino, then earn Gold clean (five settled games, net +$30, heat at most 30) or survive Pit Boss Rourke's four-phase back-room showdown |
+| Current win target | Reach the Grand Casino, then earn Gold through Linda, survive Rourke's back-room showdown, or finish the Crew's Grand Casino heist |
 | Prestige content | A clean Gold win mints a fragile Players Card; carrying it grants recognition, tightens the clean heat ceiling, improves collection drops, and risks permanent loss on failure |
 
 The player starts in a generated low-stakes environment, buys or uses items,
@@ -73,7 +91,7 @@ Production content is JSON under `data/`.
 | --- | ---: | --- | --- |
 | Environments | 18 | `data/environments/archetypes.json` | Shops, homes, tier-1 casinos, tier-2 venues, jazz club, beach, pawn shop, and the Grand Casino's connected rooms plus Cage |
 | Games | 11 | `data/games/games.json` | Full-simulation games, including Coin Pusher, Craps, and Crew Hold'em |
-| Items | 88 | `data/items/items.json` | Permanent, temporary, consumable, contraband, active, game, security, travel, slot, pinball, container, time, and build-synergy effects |
+| Items | 89 | `data/items/items.json` | Permanent, temporary, consumable, contraband, active, game, security, travel, slot, pinball, container, time, and build-synergy effects |
 | Content groups | 16 | `data/content_groups/groups.json` | Modular run packs that enable/disable games and their related item pools |
 | Events | 159 | `data/events/events.json` | Scoped room and scenario events with choices, follow-ups, character chains, Crew/world sequences, and boss-floor consequences |
 | Services | 18 | `data/services/services.json` | Shop, drink, information, music, security, and venue-specific services |
@@ -81,7 +99,8 @@ Production content is JSON under `data/`.
 | Travel route templates | 12 | `data/travel/routes.json` | Destination templates for shops, casinos, tier-2 venues, the jazz club, beach, the underground casino, and the Grand Casino; `WorldMap` turns them into seeded graph paths with costs, unlocks, scouting previews, travel locks, and route-risk events |
 | Challenges | 8 | `data/challenges/challenges.json` | Act 1 authored challenge runs with profile completion flags |
 | Dialogues | 32 | `data/dialogue/dialogues.json` | TalkDock dialogue content for Act 1, the guided first night, Living Town, and Crew routes |
-| Collection schemas | 1 collection | `data/collections/collections.json` | Local meta collection bags/items, housing data, and pawn-shop sale values |
+| Characters | 45 identities / 3 pools | `data/characters/characters.json`, `data/characters/pools.json` | Seven Crew regulars, the Blue Note trio, shop staff, casino staff, patrons, and recurring world characters |
+| Collections | 2 collections / 28 entries in 1 versioned definition pack | `data/collections/collections.json` | Local meta collection bags/items, housing data, and pawn-shop sale values |
 | Music tracks | 3 | `data/audio/music_manifest.json` | Authored music manifest used by the procedural music player |
 | Tutorial lessons | 66 | `data/tutorial/lessons.json` | Dialogue-guided and contextual tutorial definitions, highlights, pacing, and gating contracts |
 
@@ -112,7 +131,7 @@ The current environment pack contains:
 | `bar` | casino | 1 | Low-stakes gambling room |
 | `gas_station_casino` | casino | 1 | Low-stakes gambling room |
 | `jazz_club` | shop | 1 | Rare late-1960s music room with trio services, pull tabs, and rare musician rewards |
-| `small_underground_casino` | casino | 1 | Larger room with Grand Casino route access |
+| `small_underground_casino` | club | 1 | Layered comedy-club, hidden-casino, and Crew-room venue with Grand Casino route access |
 | `kitty_cat_lounge` | casino | 2 | Velvet-rope lounge with a house wheel, champagne pressure, and paid heat management |
 | `delta_queen` | casino | 2 | Riverboat mid-stakes rung with scheduled boarding and temporary travel lock |
 | `beach` | recovery | 2 | Low Tide Beach route environment and recovery stop |
@@ -150,6 +169,77 @@ the player temporarily in venues such as `delta_queen`. The Grand Casino route
 requires the `grand_casino_invite` story flag and costs `$70` before any graph
 path modifiers.
 
+## Living Town, Scenarios, And The Crew
+
+The 0.6 world layer is built from 55 deterministic scenario sequences across
+five authored packages under `data/environments/scenario_sequences/`. A room's
+Tonight scenario can change its visible actors, props, objectives, available
+actions, routes, aftermath, and revisit state. Scenario consequences are
+designed to apply exactly once across travel, save/load, expiry, interruption,
+and return visits, while unrevealed outcomes remain outside public projections.
+
+The Crew route is a connected campaign rather than a single lender interaction.
+It includes persistent trust and relationship state, physical deliveries,
+Numbers play, recruitable specialists, five coordinated table plays, Police
+Sweep responses, two heist plans, and the Turn confrontation. The back-room
+Hold'em table supports five production nights and seven persistent opponents;
+Crew decisions and grievances carry through later jobs and endings. Ignoring
+the Crew remains a supported no-op route.
+
+Room construction uses four explicit families: permanent `fixed`, optional
+ambient `event`, scenario-owned `scenario`, and real-travel `exit` positions.
+Fixed/event/exit geometry is shared by every version of a room. Each of the 55
+catalog scenarios overlays its own compact scenario-specific local bank, so the
+same role can be positioned differently in different scenarios without exposing
+every phase and outcome as another room-wide marker. A local position is reused
+when its claimant stays in one place; objects that coexist or deliberately move
+between phases retain separate positions within that scenario. Games,
+items, people, and illustrated props occupy art-aligned places, while abstract
+actions attach to tangible hosts instead of adding room markers. Pull Tabs are
+played from a physical machine in the Bar, Gas Station Casino, Jazz Club, and
+Grand Casino; help and redemption remain attached to each venue's existing
+bartender, clerk, or host desk instead of creating duplicate staff objects.
+
+The owner placement workflow lives under **Settings > Environment Library**.
+It exposes four equal-size single-family tabs plus an **All** view, defaults
+empty capacity and runtime reserves visible for the exhaustive pass, and
+provides toggles to hide either when temporary visual clutter is unhelpful.
+The selected slot can be assigned to the **Behind**, **Standard**, or **Front**
+draw layer; higher layers appear above lower ones. Occupied markers identify the
+object they contain when selected or hovered so the room remains readable, and
+layered scenarios stay locked to their authored room. The audited runtime
+maximum is 16 occupied objects in one layout, below the guarded limit of 20.
+Each nonempty family must be deliberately reviewed before a base layout can be
+saved. **Save & Load Next Missing** records the current coordinates and advances
+to the next unfinished context, while progress shows the saved and missing
+counts until all 75 contexts are complete. The placement panel has a visible
+minimize control; minimizing removes the entire large panel from hit testing so
+room objects and slots underneath it can be selected. A small restore button
+brings back every panel control, and F2 provides the same panel toggle as a
+keyboard shortcut. F1 toggles slot placement mode itself on or off and keeps
+the saved Settings preference synchronized. The minimized state survives
+context advances but resets when placement mode is exited. Packaged builds hide the
+project-writing control and export the schema-3 report as
+`BeatTheHouse_environment_slot_placement_changes.json`. A report verification
+and import workflow checks source provenance, complete layout coverage, and
+placement-authority hashes before coordinates are promoted into committed
+data. While working inside an Environment Library placement room, F9 loads a
+different random environment with one of its compatible authored scenarios and
+a fresh practice seed; it has no effect outside slot placement mode or in a
+normal run. The generated per-environment checklist is
+`docs/plans/environment_scenario_layout_breakdown.md`.
+
+Environment Library sessions are deliberately repair-safe. Practice rooms do
+not end because the venue closes or an ordinary run-terminal condition fires,
+and placement/access validation reports a warning without refusing to open the
+room. This keeps a broken scenario or obstructed access lane loadable so its
+objects can be repositioned and saved.
+
+The ordinary Settings menu also provides **Object labels and borders**. It is
+enabled by default and keeps selected/hovered descriptions subtle and close to
+their object outline. Turning it off hides those labels and borders without
+disabling object selection, details, or interaction.
+
 ## Games
 
 Game definitions live in `data/games/games.json`. Each game module extends the
@@ -158,19 +248,21 @@ rendering details.
 
 | Game | Family | Module | Cheat actions | Current behavior |
 | --- | --- | --- | --- | --- |
-| Scratch Tickets | lottery | `scripts/games/scratch_tickets.gd` | none | Seven generated-art ticket faces with separate background/icon/foil renderers, high-resolution interpolated scratching, intentional drag-to-bin discard, visible win/dud piles, fixed-at-purchase outcomes, compact settled receipts, and collection-print payoff |
-| Pull Tabs | novelty | `scripts/games/pull_tabs.gd` | `tab_detector_scan` | Finite pull-tab deals, ticket windows, row/deal state, detector and tarot item interactions |
+| Scratch Tickets | novelty | `scripts/games/scratch_tickets.gd` | none | Seven generated-art ticket faces, fixed-at-purchase outcomes, interpolated scratching, discard and win/dud filing, collection payoff, plus a detailed vending cabinet whose lift shelf dispenses each ticket into a clickable tray in about 1.5 seconds |
+| Pull Tabs | novelty | `scripts/games/pull_tabs.gd` | `tab_detector_scan` | Counter-sold finite deals, ticket windows, row/deal state, detector and tarot interactions, counter redemption, and voiced suspicious-cashout follow-up |
 | Slot | slots | `scripts/games/slot.gd` | `nudge` | Generated Pinball/Buffalo machines, fixed bet ladder, reel-shift nudge, autoplay, feature bonuses, and bonus-stuck watchdog coverage |
-| Bar Dice | dice | `scripts/games/bar_dice.gd` | `loaded_toss`, `palmed_swap` | Ship, Captain, Crew as a bar-top table game with patrons, cargo scoring, carryover pots, and skill-timed dice cheats |
+| Bar Dice | dice | `scripts/games/bar_dice.gd` | `loaded_toss`, `palmed_swap` | Ship, Captain, Crew as a fixed-layout bar-top table with patrons, cargo scoring, carryover pots, readable rules/paytable/timer panels, and skill-timed dice cheats |
 | Blackjack | cards | `scripts/games/blackjack.gd` | `peek_hole_card`, `count_cards` | Shoe blackjack with hit/stand/split/double, side bets, count challenge, and hole-card peek heat |
 | Baccarat | cards | `scripts/games/baccarat.gd` | `read_baccarat_shoe`, `edge_sort` | Mini-baccarat with Player/Banker/Tie/pair bets, commission, shoe state, read-shoe, and edge-sort play |
 | Roulette | wheel | `scripts/games/roulette.gd` | `read_wheel_bias`, `past_post` | Full roulette layout with inside/outside bets, chip placement, wheel spin, payout animation, wheel-read, and past-post timing |
-| Video Poker | cards | `scripts/games/video_poker.gd` | `mark_holds` | Multi-game video poker with bet, hold, draw, double-up, and mark-hold cheat action |
-| Coin Pusher | novelty | `scripts/games/coin_pusher.gd` | machine-specific advantage actions | Three deterministic physics-backed cabinets with live trays, cabinet goals, persistence, and native/Web parity coverage |
-| Craps | dice | `scripts/games/craps.gd` | table-specific advantage actions | Full-table and street variants with 40 reachable wager types, derived house edges, and million-roll verification |
-| Crew Hold'em | cards | `scripts/games/crew_draw_poker.gd` | read/bluff actions | Six-handed no-limit Hold'em with a Crew dealer, animated dealing/chips, distinct persistent opponent personalities, and hidden-card authority |
+| Video Poker | cards | `scripts/games/video_poker.gd` | `mark_holds` | Three cabinets—9/6 Jacks or Better, Double Deuces, and Triple Double Bonus—with 1-5 coin betting, one to three hands, hold/draw, double-up, recommendations, and mark-hold play |
+| Coin Pusher | coin_pusher | `scripts/games/coin_pusher.gd` | `nudge_machine` | Three deterministic physics-backed cabinets with live trays, cabinet goals, persistence, and native/Web parity coverage |
+| Craps | dice | `scripts/games/craps.gd` | `dice_setting`, `dice_switching` | Full-table and street variants with 40 reachable wager types, derived house edges, million-roll verification, and a dedicated pavement-circle room object for Street Craps |
+| Crew Hold'em | cards | `scripts/games/crew_draw_poker.gd` | none; tells are surface play | Six-handed no-limit Hold'em with automatic paced opponent turns, five personality-shaped tell emotions, player-projected tells, dealer/muck fold cleanup, animated cards/chips, persistent opponents, and hidden-card authority |
 
-Shared table-game visuals live in `scripts/games/table_game_visuals.gd`.
+Shared table-game visuals live in `scripts/games/table_game_visuals.gd`. The
+maintained source-backed roster, actions, mechanics, and complete inventory of
+all 47 game scripts are in `docs/game_reference.md`.
 
 ## Slot System
 
@@ -208,6 +300,9 @@ Buffalo supports free games, Hold and Spin, wheel/monster feature paths, Gold
 Buffalo collection/conversion, must-hit meter data, and jackpot tiers.
 
 ## Runtime Architecture
+
+The maintained ownership, mutation, scheduling, and source-navigation guide is
+`docs/code_reference.md`. The table below lists the primary entry points.
 
 | Path | Responsibility |
 | --- | --- |
@@ -266,9 +361,10 @@ have agent-driven real-pointer evidence in
 `docs/plans/tutorial_completion_report.md`; the five-person cold-player gate
 TUT-N17 remains explicitly human-only.
 
-Native and Web audio now share the 22.05 kHz SFX synthesis contract. The Web
-export ships 80 pre-encoded SFX cues and authored music derivatives, decodes
-them off the main thread, preserves the stem mix, and follows the native
+Native and Web audio share the 22.05 kHz SFX synthesis contract. Thirteen
+surface profiles route bounded, manifest-declared game and scenario cues. The
+Web export uses pre-encoded SFX and authored music derivatives, decodes them off
+the main thread, preserves the stem mix, and follows the native
 Master/Music/SFX bus gains. The native authored masters remain unchanged.
 
 ## Save, Failure, And Victory
@@ -280,9 +376,10 @@ Master/Music/SFX bus gains. The native authored masters remain unchanged.
 - Terminal failure reasons are defined in `RunState`: `bankroll_zero`,
   `stranded`, `police_capture`, `casino_taken_out_back` (losing the Grand Casino
   back-room showdown), and `abandoned` (the player walks away).
-- Demo victory is driven by environment `demo_objective` data and has two Grand
-  Casino routes: the clean `high_roller_cashout` Players Card route and the
-  `pit_boss_showdown` (`the_house_calls`) back-room route. The duel records
+- Demo victory is driven by environment and Crew objective data and has three
+  Grand Casino routes: the clean `high_roller_cashout` Players Card route, the
+  `pit_boss_showdown` (`the_house_calls`) back-room route, and `crew_heist`.
+  The duel records
   `walk_out_clean`, `shown_the_door`, or `taken_out_back`; the middle outcome
   is a successful exit that converts the uncashed rack into a Sal-pawnable
   meta item. See
@@ -297,7 +394,7 @@ Master/Music/SFX bus gains. The native authored masters remain unchanged.
 ```text
 assets/                  PNG art used by environment, event, item, game, and UI presentation
 data/                    JSON content packs, reusable character identities/pools, and art manifest
-docs/plans/              Active Act 1 board, release ledgers, design locks, and historical plans
+docs/plans/              Maintained design references, generated guides, dated evidence, and historical plans
 scenes/main.tscn          Active Godot scene wired to FoundationMain
 scripts/core/             Runtime state, content loading, generation, result application, save/load
 scripts/games/            Full-simulation game modules
@@ -345,11 +442,10 @@ The wrappers resolve Godot in this order:
 
 ## Validation
 
-The canonical 0.6 execution state is
-`docs/todo/README_0_6_board.md`; the exact current integration verdict is
-`docs/plans/main_integration_audit_2026-09-14.md`. Release ledgers through 0.5.1 are historical
-evidence for published source boundaries; they are not evidence that current
-0.6 `main` is ready to ship. The primary headless commands are:
+The current product summary is `docs/current_game_state.md`; the canonical game
+roster and source inventory are in `docs/game_reference.md`. The 0.6 release
+includes its build provenance, verification report, and evidence archive with
+the downloads. The primary headless commands are:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools\validate_project.ps1
@@ -372,24 +468,29 @@ powershell -ExecutionPolicy Bypass -File tools\ui05_surface_coverage_check.ps1
 powershell -ExecutionPolicy Bypass -File tools\ui05_token_adoption_check.ps1
 powershell -ExecutionPolicy Bypass -File tools\ui05_popup_fit_check.ps1
 powershell -ExecutionPolicy Bypass -File tools\ui05_asset_pipeline_check.ps1
+powershell -ExecutionPolicy Bypass -File tools\code_documentation_check.ps1
+powershell -ExecutionPolicy Bypass -File tools\game_documentation_check.ps1
 ```
 
-Current integration evidence and remaining work:
+Current placement authority and carried-forward integration evidence (static
+authority refreshed 2026-10-08):
 
-- Current `main` includes the latest game-prop art,
-  back-room poker tweaks, the complete `fix06_32` game-verification stack, and
-  playtest repairs BUG-01 through BUG-36 except the placement-owned findings
-  deliberately held for the room-construction redesign.
-- Static architecture validation, the dedicated playtest-fix regression groups,
-  game contracts, the game-rework gate wiring contract, and a visible-input
-  start → inventory → travel → merchant → lender → second venue → game path pass.
-  The reusable player-session harness is `tools/agent_playtest_session.ps1`.
-- The broad Contract suite is intentionally still red at the room-generation
-  boundary: generated overlaps, route/finalization rejection, Grand Casino slot
-  placement, and stale placement-dependent golden snapshots remain open. Those
-  failures are not waived and block release readiness.
-- Performance, platform, packaging, versioning, tagging, and publication must be
-  rerun only after the placement redesign is accepted and merged.
+- All 21 source maps and 55 exact scenario layouts pass the migration, ledger,
+  schema, naming, family, and generated-guide checks. The reachable authoring
+  set is exactly 20 base rooms plus 55 scenarios.
+- The current engine-free static audit validates 4,627 active physical bindings
+  plus 825 attached/nonphysical bindings across 767 reachable snapshots, with
+  zero missing authority, overflow, duplicate occupancy, or fixed/scenario
+  conflicts. The prerelease runtime audit separately covered all 75 contexts
+  across six seeds and observed a maximum of 16 occupied room objects against
+  the guarded limit of 20.
+- Placement persistence, complete-layout coverage, report export, scenario
+  isolation, Environment Library launch, and both placement editors pass their
+  focused engine checks. Shared edits correctly invalidate every affected
+  completion marker until the room is saved or reset.
+- The owner accepted the current placements for 0.6. The checklist, in-game
+  saved/missing counter, and schema-3 report remain available for future
+  playtest-driven adjustments.
 
 Other targeted wrappers live in `tools/`: slot cabinet visual QA, environment
 generation audit, performance probe, mouse playtests, and game seed audits.
@@ -407,76 +508,24 @@ while the full suite reserves up to 1800 seconds. Killing the parent PowerShell
 early can leave Godot children writing `user://` logs, which has reproduced
 Windows native access-violation dialogs on later runs.
 
-For shipped 0.2.0 release evidence, use the tracked checklist at
-`docs/plans/0.2_release_checklist.md`. For shipped 0.3.0 evidence, use
-`docs/plans/0.3_release_checklist.md`. For shipped 0.3.1 evidence, use
-`docs/plans/0.3.1_release_checklist.md`. For the completed 0.3.2 internal
-readiness ledger, use `docs/plans/0.3.2_release_checklist.md`. For the
-unpublished 0.4 candidate, use `docs/plans/0.4_release_checklist.md` as
-historical context only. For Act 1 historical work, use
-`docs/plans/act_one_feature_complete_task_board.md`.
-
 ## Documentation
 
-The README is the current top-level implementation spec. The `docs/plans/`
-folder holds active planning documents, shipped-release ledgers, and historical
-context:
-
-- `CHANGELOG.md` - public release changelog for shipped releases and candidate
-  notes.
-- `docs/plans/0.5_release_checklist.md` - current 0.5 source-prep and release
-  readiness ledger.
-- `docs/plans/0.5_source_completion_record.md` - owner source-completion
-  decision, final playtest scope, current validation, and publication boundary.
-- `docs/plans/0.5_publish_copy.md` - paste-ready itch.io and GitHub release
-  copy for 0.5.0 after owner approval.
-- `docs/plans/0.5.0_devlog_post.md` - ready-to-post 0.5.0 devlog and social carousel plan.
-- `docs/plans/0.5_prerelease_playtest_report.md` - 0.5 prerelease playtest
-  findings and closure evidence.
-- `docs/plans/tutorial_completion_report.md` - current pre-human tutorial
-  requirement table, real-interface route matrix, and explicit TUT-N17 handoff.
-- `docs/plans/0.5_performance_audit.md` - current native/Web performance,
-  liveness, memory-soak, Scratch Ticket compaction, and Web audio evidence.
-- `docs/plans/act_one_feature_complete_task_board.md` - the historical Act 1
-  implementation board, retained for decisions and landing evidence.
-- `docs/plans/pinball_feature_rework_plan.md`,
-  `docs/plans/pinball_feel_reference.md` - the shipped pinball feature
-  contract and feel targets. Use these with the live slot stack when touching
-  pinball or shared slot release work.
-- `docs/plans/grand_casino_endgame_design.md` - the authoritative Grand Casino
-  endgame design lock (three rooms, chips/Cage, Linda's card ladder, living
-  Rourke, four-phase showdown, duel outcome ladder, meta rewards, and canonical
-  ids).
-- `docs/plans/content_style_guide.md` - the active release voice and
-  player-facing copy rules for Act 1 content.
-- `docs/plans/dead_code_audit_report.md` - the release cleanup audit and
-  protect list for code and tooling that looks dead but is live.
-- `docs/plans/skill_based_cheating_methods_plan.md` - the shared
-  skill-cheat design contract and cross-game method matrix.
-- `docs/plans/world_map_design.md` - the world-map route/progression design
-  lock.
-- `docs/plans/music_system_rework_plan.md` and
-  `docs/plans/music_listening_pass.md` - parked post-0.3 music planning and
-  listening-check context.
-- `docs/plans/0.2_release_checklist.md` - the shipped 0.2.0 release readiness
-  checklist, including validation evidence and known blockers.
-- `docs/plans/0.3_release_checklist.md` - the shipped 0.3.0 readiness ledger.
-- `docs/plans/0.3.1_release_checklist.md` - the shipped 0.3.1 hardening
-  release ledger, including performance/stability evidence and package hashes.
-- `docs/plans/0.3.2_release_checklist.md` - the completed 0.3.2 low-end/web
-  cleanup release ledger, including gate evidence and package hashes.
-- `docs/plans/0.3.3_publish_copy.md` - paste-ready itch.io, GitHub release,
-  and devlog copy for the 0.3.3 public patch.
-- `docs/plans/0.4_act1_completion_plan.md` - the implemented 0.4 scope and
-  historical candidate evidence.
-- `docs/plans/0.4_release_checklist.md` - the 0.4 package/readiness ledger,
-  retained as historical context.
-- `docs/plans/0.4_publish_copy.md` - historical paste-ready itch.io, GitHub,
-  and devlog copy prepared for the unpublished 0.4.0 candidate.
-
-For current slot implementation work, use the slot stack listed in this README
-and the pinball docs above rather than older file names referenced inside
-historical release evidence.
+- [Current game state](docs/current_game_state.md) — maintained product summary.
+- [Game reference](docs/game_reference.md) — source-backed roster, actions, and mechanics.
+- [Code reference](docs/code_reference.md) — runtime ownership and production code guide.
+- [Documentation index](docs/README.md) — document organization and authority.
+- [Changelog](CHANGELOG.md) — detailed changes.
+- [Release review](docs/releases/0.6.0_candidate_review.md) — accepted placements,
+  save restoration repair, snapshot review, and fresh-release data audit.
+- [Grand Casino design](docs/plans/grand_casino_endgame_design.md) — rooms,
+  chips/Cage, Linda's card ladder, Rourke, showdown, and rewards.
+- [World map design](docs/plans/world_map_design.md) — travel and progression.
+- [Content style guide](docs/plans/content_style_guide.md) — player-facing copy.
+- [Pinball implementation](docs/plans/pinball_feature_rework_plan.md) and
+  [feel targets](docs/plans/pinball_feel_reference.md) — slot feature contracts.
+- [Cheating methods](docs/plans/skill_based_cheating_methods_plan.md) — shared
+  skill-cheat design and cross-game methods.
+- [Music architecture](docs/plans/music_system_rework_plan.md) — adaptive audio.
 
 ## Export Targets
 
@@ -487,37 +536,28 @@ historical release evidence.
 | Android | Android | `builds/android/BeatTheHouse.aab` |
 | iOS | iOS | `builds/ios/BeatTheHouse.zip` |
 
-`tools/export_itch.ps1` packages the Web and Windows presets for itch.io upload
-after Godot export templates are installed. Project and export preset versions
-are currently stamped `0.5.1`. The tool supports `-Push -DryRun` for butler
-command verification and non-dry-run publishing after the user has installed
-butler and run `butler login` once. Fresh final 0.5 Web/Windows package hashes
-do not exist until the owner runs the final export packaging. Android
-signing and iOS team/signature values still require real project credentials
-before store submission.
+`tools/export_itch.ps1` packages the Web and Windows presets into upload-ready
+ZIPs after the matching Godot export templates and native libraries are
+installed. The official 0.6 tag identifies the verified game source; its
+packages and build identities are attached to the GitHub release. README and
+other documentation updates on `main` can follow that immutable source tag.
+Android signing and iOS team/signature values require project credentials
+before store submission. itch.io publication is separate from GitHub Releases.
 
 ## Known Release Limitations
 
-- Current 0.6 `main` is not release-ready. Room construction does not reliably
-  accommodate the expanded object inventory. The rejected reusable-slot
-  placement experiment was assessed and deleted during the two-branch custody
-  cleanup; it was never merged into `main`.
 - Tutorial pointer overlays can partially cover the center of the action they
   describe. The merged player path remains operable through the exposed part of
-  the target, but the composition should be corrected during the room/UI
-  placement redesign.
+  the target; further composition adjustments can follow playtesting.
 - The Web export is intentionally single-threaded. Procedural music is generated
   deterministically at build time into compact Web beds, so browser startup and
   playback no longer depend on PThreads or main-thread synthesis. Cross-origin
   isolation headers remain supported but are not required by the shipped build.
-- The historical TUT-N17 plan requested five cold players, including two
-  without Blackjack knowledge. Any remaining sample gap must be recorded as an
-  accepted limitation or completed before the public package release.
-- The collection schema ships with `draft: true` as an accepted 0.5 limitation.
-- itch.io publishing remains a user action: install/login with butler and push
-  the Web and Windows packages from `tools/export_itch.ps1`, or upload through
-  the itch.io dashboard.
-- itch.io package publishing remains separate from the GitHub source release.
+- The local collection schema still carries `draft: true`. Its browser groups
+  entries and exposes tier/float detail, but dedicated sort/filter controls,
+  Steam Inventory, and community-market integration remain deferred.
+- itch.io publishing remains an owner-only action using the upload-ready Web
+  and Windows zips produced locally by `tools/export_itch.ps1`.
 - Android and iOS store submission require real signing/team credentials.
 
 ## Design Rules
@@ -536,10 +576,11 @@ before store submission.
 
 ## Cleanup Policy
 
-The repository has exactly two durable branches: `main` for accepted work and
-`codex/wip-0.6-consolidated` for explicitly deferred work. Do not leave a task
-on its own durable branch; land it on `main`, consolidate it into the WIP
-branch, or delete it after review.
+The durable-branch policy reserves `main` for accepted work and
+`codex/wip-0.6-consolidated` for explicitly deferred work. Topic branches are
+temporary: land them on `main`, consolidate them into the WIP branch, or delete
+them after review. Final release cleanup must not leave an abandoned topic
+branch presented as maintained product state.
 
 Keep the repository focused on runnable source, current specs, source assets, and
 intentional documentation. Do not commit generated Godot caches, import products,

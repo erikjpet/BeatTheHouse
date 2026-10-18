@@ -1,6 +1,7 @@
 $ErrorActionPreference = "Stop"
-$root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
-. (Join-Path $PSScriptRoot "perf06_phase_qualification_contract.ps1")
+. (Join-Path $PSScriptRoot "repository_root.ps1")
+$root = Resolve-BthRepositoryRoot -StartPath $PSScriptRoot
+. (Join-Path $root "tools/archive/perf06/perf06_phase_qualification_contract.ps1")
 $budget = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_budget_table.json") -Raw | ConvertFrom-Json
 
 function New-Scenario {
@@ -89,13 +90,13 @@ foreach ($token in @("Get-Perf06PhaseBudgetEvaluation", "Get-Perf06PhaseLiveness
 }
 if ($nativeLauncher.Contains('passed = $true')) { throw "Native launcher still hard-codes a passing result." }
 
-$builder = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_build_surface_report.ps1") -Raw
+$builder = Get-Content -LiteralPath (Join-Path $root "tools/archive/perf06/perf06_build_surface_report.ps1") -Raw
 if ($builder.Contains('floor=if ($measured -gt 0) { 1 } else { 0 }')) { throw "Surface builder still replaces published liveness floors with one tick." }
 foreach ($token in @("budget_evaluation =", "progress_evaluation =", "liveness = `$livenessEvaluation", "idle_timing_liveness_assertion = `$idleTimingLivenessAssertion", "Get-Perf06PhaseBudgetEvaluation", "Get-Perf06PhaseProgressEvaluation", "Get-Perf06IdleTimingLivenessAssertion")) {
     if (-not $builder.Contains($token)) { throw "Surface builder lost qualification evidence '$token'." }
 }
 
-$consumer = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_matrix_contract.ps1") -Raw
+$consumer = Get-Content -LiteralPath (Join-Path $root "tools/archive/perf06/perf06_matrix_contract.ps1") -Raw
 foreach ($token in @('liveness.measured -lt [int]$Row.liveness.floor', 'observed -gt [double]$check.maximum', 'budget_evaluation', 'progress_evaluation', 'active phase has no passing retained progress evidence', 'Get-Perf06IdleTimingLivenessAssertion', 'idle timing and liveness did not pass their inseparable assertion')) {
     if (-not $consumer.Contains($token)) { throw "Final consumer lost fail-closed check '$token'." }
 }

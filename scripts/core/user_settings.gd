@@ -6,6 +6,10 @@ extends RefCounted
 const SETTINGS_PATH := "user://settings.json"
 const SETTINGS_PATH_ENV := "BTH_USER_SETTINGS_PATH"
 const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd")
+const DurableStoreScript := preload("res://scripts/core/durable_store.gd")
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const IoResultScript := preload("res://scripts/core/io_result.gd")
+const KeysScript := preload("res://scripts/core/keys.gd")
 const MUSIC_BUS := "Music"
 const SFX_BUS := "SFX"
 const RESOLUTIONS := [
@@ -18,6 +22,16 @@ const WINDOW_MODES := ["windowed", "fullscreen", "borderless"]
 const TEXT_SIZES := ["small", "normal", "large"]
 const DRUNK_EFFECT_MODES := ["distortion", "classic"]
 const HAPTICS_CUT_REASON := "Haptics are not used by the current demo input stack."
+const SETTINGS_SCHEMA_VERSION := 1
+const SETTINGS_SCHEMA_KEY := "settings_schema_version"
+const STORAGE_KEYS := [
+	SETTINGS_SCHEMA_KEY,
+	"resolution", "window_mode", "vsync_enabled", "master_volume",
+	"music_volume", "sfx_volume", "audio_calm", "ui_scale", "text_size",
+	"reduce_motion", "drunk_effect_mode", "high_contrast",
+	"play_on_small_screen", "coach_tips_enabled", "object_labels_and_borders_enabled", "selected_home_type_id",
+	"developer_placement_mode", "developer_slot_placement_mode",
+]
 
 var resolution: Vector2i = Vector2i(1280, 720)
 var window_mode: String = "windowed"
@@ -33,8 +47,11 @@ var drunk_effect_mode: String = "distortion"
 var high_contrast: bool = false
 var play_on_small_screen: bool = false
 var coach_tips_enabled: bool = true
+var object_labels_and_borders_enabled: bool = true
 var selected_home_type_id: String = "random"
 var developer_placement_mode: bool = false
+var developer_slot_placement_mode: bool = false
+var last_load_outcome: Dictionary = {"ok": false, "outcome": DurableStoreScript.OUTCOME_NONE}
 
 
 # Restores default preference values.
@@ -53,29 +70,70 @@ func reset() -> void:
 	high_contrast = false
 	play_on_small_screen = false
 	coach_tips_enabled = true
+	object_labels_and_borders_enabled = true
 	selected_home_type_id = "random"
 	developer_placement_mode = false
+	developer_slot_placement_mode = false
 
 
-# Loads preferences from disk or defaults.
-func load() -> void:
+# Loads preferences from disk or defaults and reports recoverable failures.
+func load() -> Dictionary:
 	reset()
 	var path := settings_path()
-	if not FileAccess.file_exists(path):
-		return
-	var text := FileAccess.get_file_as_string(path)
-	var parsed: Variant = JSON.parse_string(text)
-	if typeof(parsed) == TYPE_DICTIONARY:
-		from_dict(parsed)
+	last_load_outcome = DurableStoreScript.read_json(path, Callable(self, "_settings_payload_valid"))
+	if IoResultScript.is_ok(last_load_outcome):
+		from_dict(last_load_outcome.get("data", {}))
+		var code := "loaded_backup" if str(last_load_outcome.get("outcome", "")) == DurableStoreScript.OUTCOME_BACKUP else "loaded"
+		var loaded_result := last_load_outcome.duplicate(true)
+		loaded_result["code"] = code
+		loaded_result["path"] = path
+		return loaded_result
+	if not bool(last_load_outcome.get("primary_exists", false)) and not bool(last_load_outcome.get("backup_exists", false)):
+		return IoResultScript.failed(ERR_FILE_NOT_FOUND, "missing", "Settings file is missing.", {"code": "missing", "path": path, KeysScript.OUTCOME: DurableStoreScript.OUTCOME_NONE})
+	if bool(last_load_outcome.get("primary_exists", false)):
+		var detail_result := _invalid_settings_detail(path)
+		return _recover_invalid_settings_file(path, str(detail_result.get("detail", "invalid_schema")), str(detail_result.get("message", "Settings could not be loaded.")))
+	return IoResultScript.failed(
+		int(last_load_outcome.get(IoResultScript.KEY_ERROR, ERR_FILE_CORRUPT)),
+		"backup_read_failed",
+		"Settings backup could not be read.",
+		{"code": "io_error", "detail": "backup_read_failed", "path": path}
+	)
+
+
+func _invalid_settings_detail(path: String) -> Dictionary:
+	var file := FileAccess.open(path, FileAccess.READ)
+	if file == null:
+		return {"detail": "read_failed", "message": "Settings could not be read."}
+	var text := file.get_as_text()
+	var read_error := file.get_error()
+	file.close()
+	if read_error != OK:
+		return {"detail": "read_failed", "message": "Settings could not be read."}
+	var parser := JSON.new()
+	if parser.parse(text) != OK:
+		return {"detail": "malformed_json", "message": parser.get_error_message()}
+	return {"detail": "invalid_schema", "message": "Settings do not contain a recognized settings schema."}
+
+
+func _recover_invalid_settings_file(path: String, detail: String, message: String) -> Dictionary:
+	var preserved_path := "%s.invalid.%d.%d" % [path, int(Time.get_unix_time_from_system()), Time.get_ticks_usec()]
+	var rename_error := DirAccess.rename_absolute(ProjectSettings.globalize_path(path), ProjectSettings.globalize_path(preserved_path))
+	if rename_error != OK:
+		return IoResultScript.failed(rename_error, "preserve_failed", message, {
+			"code": "io_error", "detail": "preserve_failed",
+			"source_detail": detail, "path": path,
+		})
+	return IoResultScript.ok({
+		"code": "recovered_defaults", "detail": detail, "path": path,
+		"preserved_path": preserved_path, KeysScript.MESSAGE: message,
+	})
 
 
 # Saves preferences to disk.
 func save() -> Error:
-	var file := FileAccess.open(settings_path(), FileAccess.WRITE)
-	if file == null:
-		return FileAccess.get_open_error()
-	file.store_string(JSON.stringify(to_dict(), "\t"))
-	return OK
+	var result := DurableStoreScript.write_json(settings_path(), to_dict(), Callable(self, "_settings_payload_valid"))
+	return int(result.get("error", FAILED))
 
 
 # Returns the live settings path, with test harnesses allowed to opt into isolation.
@@ -89,6 +147,7 @@ static func settings_path() -> String:
 # Converts preferences to saveable data.
 func to_dict() -> Dictionary:
 	return {
+		SETTINGS_SCHEMA_KEY: SETTINGS_SCHEMA_VERSION,
 		"resolution": {
 			"width": resolution.x,
 			"height": resolution.y,
@@ -106,9 +165,60 @@ func to_dict() -> Dictionary:
 		"high_contrast": high_contrast,
 		"play_on_small_screen": play_on_small_screen,
 		"coach_tips_enabled": coach_tips_enabled,
+		"object_labels_and_borders_enabled": object_labels_and_borders_enabled,
 		"selected_home_type_id": selected_home_type_id,
 		"developer_placement_mode": developer_placement_mode,
+		"developer_slot_placement_mode": developer_slot_placement_mode,
 	}
+
+
+# Accept current versioned payloads and migrate schema-less preferences from
+# earlier releases when at least one genuine settings key is present. A random
+# JSON object is not a settings generation merely because it parses.
+func _settings_payload_valid(data: Dictionary) -> bool:
+	if data.has(SETTINGS_SCHEMA_KEY):
+		var version_value: Variant = data.get(SETTINGS_SCHEMA_KEY)
+		if typeof(version_value) != TYPE_INT and typeof(version_value) != TYPE_FLOAT:
+			return false
+		var version_number := float(version_value)
+		if version_number != floor(version_number):
+			return false
+		var version := int(version_number)
+		if version < 1 or version > SETTINGS_SCHEMA_VERSION:
+			return false
+	return _recognized_settings_values_valid(data)
+
+
+func _recognized_settings_values_valid(data: Dictionary) -> bool:
+	var recognized := false
+	for key_value in STORAGE_KEYS:
+		var key := str(key_value)
+		if key == SETTINGS_SCHEMA_KEY or not data.has(key):
+			continue
+		recognized = true
+		if not _settings_value_shape_valid(key, data.get(key)):
+			return false
+	return recognized
+
+
+func _settings_value_shape_valid(key: String, value: Variant) -> bool:
+	match key:
+		"resolution":
+			if typeof(value) != TYPE_DICTIONARY:
+				return false
+			var size := value as Dictionary
+			return _settings_number(size.get("width", null)) and _settings_number(size.get("height", null))
+		"master_volume", "music_volume", "sfx_volume", "ui_scale":
+			return _settings_number(value)
+		"vsync_enabled", "audio_calm", "reduce_motion", "high_contrast", "play_on_small_screen", "coach_tips_enabled", "object_labels_and_borders_enabled", "developer_placement_mode", "developer_slot_placement_mode":
+			return typeof(value) == TYPE_BOOL
+		"window_mode", "text_size", "drunk_effect_mode", "selected_home_type_id":
+			return typeof(value) == TYPE_STRING
+	return false
+
+
+func _settings_number(value: Variant) -> bool:
+	return typeof(value) == TYPE_INT or typeof(value) == TYPE_FLOAT
 
 
 # Restores and clamps preference data.
@@ -118,9 +228,7 @@ func from_dict(data: Dictionary) -> void:
 	if not RESOLUTIONS.has(resolution):
 		resolution = Vector2i(1280, 720)
 
-	window_mode = data.get("window_mode", window_mode)
-	if not WINDOW_MODES.has(window_mode):
-		window_mode = "windowed"
+	window_mode = JsonCoerceScript.coerce_enum(data.get("window_mode"), WINDOW_MODES, "windowed")
 
 	vsync_enabled = bool(data.get("vsync_enabled", vsync_enabled))
 	master_volume = _volume(data.get("master_volume", master_volume))
@@ -128,9 +236,7 @@ func from_dict(data: Dictionary) -> void:
 	sfx_volume = _volume(data.get("sfx_volume", sfx_volume))
 	audio_calm = bool(data.get("audio_calm", audio_calm))
 	ui_scale = clampf(float(data.get("ui_scale", ui_scale)), 0.85, 1.3)
-	text_size = data.get("text_size", text_size)
-	if not TEXT_SIZES.has(text_size):
-		text_size = "normal"
+	text_size = JsonCoerceScript.coerce_enum(data.get("text_size"), TEXT_SIZES, "normal")
 	reduce_motion = bool(data.get("reduce_motion", reduce_motion))
 	drunk_effect_mode = str(data.get("drunk_effect_mode", drunk_effect_mode))
 	if not DRUNK_EFFECT_MODES.has(drunk_effect_mode):
@@ -138,10 +244,20 @@ func from_dict(data: Dictionary) -> void:
 	high_contrast = bool(data.get("high_contrast", high_contrast))
 	play_on_small_screen = bool(data.get("play_on_small_screen", play_on_small_screen))
 	coach_tips_enabled = bool(data.get("coach_tips_enabled", coach_tips_enabled))
+	object_labels_and_borders_enabled = bool(data.get("object_labels_and_borders_enabled", object_labels_and_borders_enabled))
 	selected_home_type_id = str(data.get("selected_home_type_id", selected_home_type_id)).strip_edges()
 	developer_placement_mode = bool(data.get("developer_placement_mode", developer_placement_mode))
+	developer_slot_placement_mode = bool(data.get("developer_slot_placement_mode", developer_slot_placement_mode))
+	if developer_slot_placement_mode:
+		developer_placement_mode = false
 	if selected_home_type_id.is_empty():
 		selected_home_type_id = "random"
+
+
+static func storage_keys() -> Array:
+	var result: Array = STORAGE_KEYS.duplicate()
+	result.sort()
+	return result
 
 
 # Applies preferences to Godot services.
@@ -205,6 +321,7 @@ func accessibility_snapshot() -> Dictionary:
 		"high_contrast": high_contrast,
 		"play_on_small_screen": play_on_small_screen,
 		"coach_tips_enabled": coach_tips_enabled,
+		"object_labels_and_borders_enabled": object_labels_and_borders_enabled,
 		"haptics_supported": false,
 		"haptics_cut_reason": HAPTICS_CUT_REASON,
 	}
@@ -301,8 +418,12 @@ func _set_volume(bus_name: String, value: float) -> void:
 	if bus_index < 0:
 		return
 	var clamped := _volume(value)
-	var volume_db := -80.0 if clamped <= 0.0 else linear_to_db(clamped)
-	AudioServer.set_bus_volume_db(bus_index, volume_db)
+	if clamped <= 0.0:
+		# Preserve the last non-zero dB value while guaranteeing digital silence.
+		AudioServer.set_bus_mute(bus_index, true)
+		return
+	AudioServer.set_bus_volume_db(bus_index, linear_to_db(clamped))
+	AudioServer.set_bus_mute(bus_index, false)
 
 
 # Clamps a value to the allowed volume range.

@@ -506,9 +506,20 @@ function New-SelfTestZipArchive {
 
 function Invoke-NativeCommand {
     param([scriptblock]$Command, [string]$Failure)
-    $output = & $Command
-    if ($LASTEXITCODE -ne 0) {
-        throw "$Failure (exit $LASTEXITCODE)."
+    # Windows PowerShell wraps a native process' stderr as non-terminating error
+    # records. With the bootstrap's Stop policy, informational compiler/SDK
+    # diagnostics can abort this helper before its authoritative exit-code check.
+    $previousErrorActionPreference = $ErrorActionPreference
+    try {
+        $ErrorActionPreference = "Continue"
+        $output = & $Command 2>$null
+        $nativeExitCode = $LASTEXITCODE
+    }
+    finally {
+        $ErrorActionPreference = $previousErrorActionPreference
+    }
+    if ($nativeExitCode -ne 0) {
+        throw "$Failure (exit $nativeExitCode)."
     }
     return @($output)
 }

@@ -30,6 +30,28 @@ const SLOT_RITUAL_CONTRACT := "game_ritual/1"
 const SLOT_RITUAL_ID := "slot.machine_session"
 const SLOT_HANDLE_PULL_GESTURE := "slot_handle_pull_gesture"
 const SLOT_HANDLE_MIN_PULL := 36.0
+const SLOT_CONTEXTUAL_ITEM_EFFECT_KEYS := [
+	"win_bonus", "payout_delta", "loss_reduction",
+	"slot_nudge_perfect_msec_bonus", "slot_nudge_close_msec_bonus",
+	"slot_cold_quarter_heat_reduction", "slot_split_reel_note_perfect_msec_bonus",
+	"slot_split_reel_note_close_msec_bonus",
+]
+const SLOT_LEGAL_ITEM_EFFECT_KEYS := [
+	"slot_three_reel_loss_refund_percent", "slot_gold_tooth_coin_upgrade_chance",
+	"slot_gold_tooth_coin_multiplier", "slot_first_bonus_bonus_percent",
+	"slot_first_bonus_bonus_cap", "slot_feature_weight_bonus_percent",
+	"slot_reel_win_weight_percent", "slot_pinball_drain_cleaner_uses",
+	"slot_pinball_drain_cleaner_floor_percent", "slot_pinball_drain_cleaner_award_percent",
+	"slot_pinball_jackpot_magnet_uses", "slot_pinball_jackpot_magnet_award_percent",
+	"slot_pinball_jackpot_magnet_progress_bonus", "slot_pinball_splitter_token_uses",
+	"slot_pinball_splitter_token_extra_balls", "slot_pinball_return_spring_uses",
+	"slot_pinball_return_spring_impulse", "slot_pinball_tilt_dampener_percent",
+	"slot_pinball_bumper_battery_hits", "slot_pinball_bumper_battery_award_percent",
+	"slot_pinball_bumper_battery_kick_percent", "slot_pinball_bumper_battery_up_impulse",
+	"slot_pinball_rubber_pegs", "slot_pinball_magnet_cup_radius_percent",
+	"slot_pinball_extra_ball_token", "slot_pinball_plunger_tuner_width_percent",
+	"slot_pinball_lock_jammer_uses",
+]
 
 var generator
 var resolver
@@ -54,7 +76,16 @@ func sealed_action_authority_contract() -> Dictionary:
 		# against a narrow detached candidate and fingerprint the exact Slot inputs
 		# instead of serializing unrelated late-run story/world history six times.
 		"compact_authority_evidence_method": &"_machine_game_authority_evidence",
+		# Both isolated executions already compare their complete result, RNG, and
+		# compact authority graphs. The replay does not need to serialize that same
+		# large Slot/pinball payload into a second output digest.
+		"trusted_candidate_structural_replay_match": true,
 		"lightweight_resolution_candidate": true,
+		# Slot resolution replaces machine fields and takes an owned copy before
+		# changing any nested runtime model. The two replay candidates therefore
+		# need independent top-level tables, not recursive copies of retained
+		# animation/feature history that neither execution mutates in place.
+		"trusted_candidate_shallow_machine_detach": true,
 		"in_place_nonrejecting_commit": true,
 		# One current response plus its immediate predecessor covers synchronous
 		# retry/save recovery. Larger Blackjack hand history only made each later
@@ -222,6 +253,22 @@ func checkpoint_surface_ui_state(ui_state: Dictionary, _run_state: RunState, env
 	_write_machine(environment, machine, false)
 
 
+func checkpoint_surface_ui_state_for_save(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> void:
+	checkpoint_surface_ui_state(ui_state, run_state, environment)
+	var machine: Dictionary = _read_machine(environment)
+	var active: Dictionary = machine.get("active_bonus", {}) if typeof(machine.get("active_bonus", {})) == TYPE_DICTIONARY else {}
+	if str(active.get("family", "")) != "pinball" or not bool(active.get("active", false)) or bool(active.get("complete", false)):
+		return
+	var durable := PinballFeatureScript.durable_runtime_checkpoint(active)
+	if durable.is_empty():
+		return
+	active = active.duplicate(false)
+	active[PinballFeatureScript.DURABLE_RUNTIME_KEY] = durable
+	machine = machine.duplicate(false)
+	machine["active_bonus"] = active
+	_write_machine(environment, machine, false)
+
+
 func _settle_completed_presentation(machine: Dictionary) -> void:
 	# Feature state, replay data, final grid, classification, and offers remain
 	# durable. Only the finite ordinary-spin timeline has reached end-of-life.
@@ -278,7 +325,10 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 
 
 func generate_environment_fixture_states(_run_state: RunState, environment: Dictionary, rng: RngStream, fixture_count: int) -> Dictionary:
-	if str(environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID or fixture_count <= 0:
+	var local_flags: Dictionary = environment.get("local_narrative_flags", {}) if typeof(environment.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
+	var supported_room := str(environment.get("archetype_id", "")) == RunState.GRAND_CASINO_ARCHETYPE_ID \
+			or bool(local_flags.get("practice_session", false))
+	if not supported_room or fixture_count <= 0:
 		return {}
 	var fixture_specs := [
 		{"format_id": "classic_3_reel", "type_id": "pinball", "math_variant_id": "steady", "cabinet_variant_id": "neon_magenta", "bonus_variant_id": "plain"},
@@ -293,6 +343,8 @@ func generate_environment_fixture_states(_run_state: RunState, environment: Dict
 		var key := get_id() if fixture_index == 0 else "%s:%d" % [get_id(), fixture_index + 1]
 		var spec: Dictionary = fixture_specs[fixture_index % fixture_specs.size()]
 		var machine: Dictionary = generator.build_machine_from_ids(definition, spec, rng.fork("grand_casino_slot_fixture:%d" % fixture_index))
+		var skin: Dictionary = catalog.skin_for_machine(machine, definition)
+		machine["environment_display_name"] = str(skin.get("cabinet_title", "Slot"))
 		# Build the immutable family/format view during room generation, outside
 		# active play, so the first autoplay spin for a newly unique cabinet cannot
 		# pay a one-time strip/cache construction cost.
@@ -347,6 +399,27 @@ func active_item_command(item_id: String, run_state: RunState, environment: Dict
 		CUMQUAT_SANDWICH_ITEM_ID:
 			return _arm_cumquat_sandwich(machine, environment)
 	return {"handled": false}
+
+
+func surface_realtime_patch_preserves_host_state() -> bool:
+	# Realtime presentation may commit the one-time reels-to-pinball reveal, but
+	# it cannot change Foundation bankroll, pressure, intoxication, or selection.
+	return true
+
+
+func foreground_blocks_environment_runtime_during_surface_presentation() -> bool:
+	return true
+
+
+func surface_realtime_uses_lightweight_ui_state() -> bool:
+	return true
+
+
+func surface_realtime_ui_state_keys() -> Array:
+	# Slot timing reads the canvas channel status plus optional player timing
+	# inputs. Dense retained reels, history, and bonus data come from the owned
+	# machine, not from the host UI dictionary.
+	return ["surface_runtime_status", "slot_tease_input_msec", "slot_nudge_chain_input_msec"]
 
 
 func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
@@ -737,7 +810,9 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	var machine: Dictionary = _ensure_machine_state(run_state, environment, rng)
 	var normalized_action := _normalize_action(action_id)
 	if normalized_action.begins_with("slot_bonus_"):
-		var bonus_resolved: Dictionary = resolver.resolve_bonus_action(machine, normalized_action, rng, definition, environment, run_state, _slot_cross_game_item_effects(run_state, machine, false), _ui_state)
+		# _ensure_machine_state returns a private, current-schema candidate. Preserve
+		# that ownership through bonus resolution just as the spin path below does.
+		var bonus_resolved: Dictionary = resolver.resolve_bonus_action_owned(machine, normalized_action, rng, definition, environment, run_state, _slot_cross_game_item_effects(run_state, machine, false), _ui_state)
 		var bonus_machine_value: Variant = bonus_resolved.get("machine", machine)
 		var bonus_machine: Dictionary = bonus_machine_value as Dictionary if typeof(bonus_machine_value) == TYPE_DICTIONARY else machine
 		if not StateScript.active_bonus_incomplete(bonus_machine):
@@ -757,7 +832,19 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 	# _ensure_machine_state returns an owned, current-schema machine and the
 	# final write normalizes once. Normalizing at both resolver entry and exit
 	# duplicated the entire reel/bonus state twice per spin.
-	var resolved: Dictionary = resolver.resolve_spin(machine, normalized_action, selected_bet, rng, definition, environment, false, false, run_state, _slot_cross_game_item_effects(run_state, machine, normalized_action == "nudge"), _ui_state)
+	var resolved: Dictionary = resolver.resolve_spin(FunctionOptions.SlotResolveOptions.from({
+		"machine": machine,
+		"action_id": normalized_action,
+		"selected_bet": selected_bet,
+		"rng": rng,
+		"definition": definition,
+		"environment": environment,
+		"normalize_machine": false,
+		"audit_metrics_mode": false,
+		"run_state": run_state,
+		"item_effects": _slot_cross_game_item_effects(run_state, machine, normalized_action == "nudge"),
+		"ui_state": _ui_state,
+	}))
 	var resolved_machine_value: Variant = resolved.get("machine", machine)
 	var resolved_machine: Dictionary = resolved_machine_value as Dictionary if typeof(resolved_machine_value) == TYPE_DICTIONARY else machine
 	resolved = _apply_tutorial_first_night_match(resolved, resolved_machine, normalized_action, run_state)
@@ -1162,7 +1249,20 @@ func environment_runtime_tick(run_state: RunState, environment: Dictionary, rng:
 	machine["slot_autoplay_next_msec"] = now_msec + _slot_autoplay_delay_msec(machine)
 	_write_machine(environment, machine)
 	var selected_bet: Dictionary = StateScript.selected_bet(machine)
-	var resolved: Dictionary = resolver.resolve_spin(machine, "spin", selected_bet, rng, definition, environment, false, false, run_state, _slot_cross_game_item_effects(run_state, machine, false), {}, false)
+	var resolved: Dictionary = resolver.resolve_spin(FunctionOptions.SlotResolveOptions.from({
+		"machine": machine,
+		"action_id": "spin",
+		"selected_bet": selected_bet,
+		"rng": rng,
+		"definition": definition,
+		"environment": environment,
+		"normalize_machine": false,
+		"audit_metrics_mode": false,
+		"run_state": run_state,
+		"item_effects": _slot_cross_game_item_effects(run_state, machine, false),
+		"ui_state": {},
+		"include_presentation_payload": false,
+	}))
 	var resolved_machine_value: Variant = resolved.get("machine", machine)
 	var resolved_machine: Dictionary = resolved_machine_value as Dictionary if typeof(resolved_machine_value) == TYPE_DICTIONARY else machine
 	var feature_pending := _slot_feature_pending(resolved_machine)
@@ -1193,13 +1293,6 @@ func environment_runtime_state(_run_state: RunState, environment: Dictionary) ->
 	return _slot_environment_runtime_state_for_machine(machine)
 
 
-func environment_runtime_state_for_state_key(_run_state: RunState, environment: Dictionary, state_key: String) -> Dictionary:
-	var machine: Dictionary = StateScript.read_machine(environment, _normalized_fixture_state_key(state_key))
-	if machine.is_empty():
-		return {}
-	return _slot_environment_runtime_state_for_machine(machine)
-
-
 func environment_object_state(_run_state: RunState, environment: Dictionary) -> Dictionary:
 	var machine: Dictionary = _read_machine(environment)
 	if machine.is_empty():
@@ -1218,6 +1311,7 @@ func _slot_environment_object_state_for_machine(machine: Dictionary) -> Dictiona
 	var preview := _slot_environment_preview(machine)
 	var runtime := _slot_environment_runtime_state_for_machine(machine, preview)
 	return {
+		"display_name": str(machine.get("environment_display_name", "Slot")),
 		"status_summary": str(runtime.get("status_summary", "")),
 		"state_badge": str(runtime.get("status_label", "")),
 		"runtime_state": runtime,
@@ -1289,6 +1383,7 @@ func _slot_environment_visual_state(machine: Dictionary, preview: Dictionary = {
 		"cabinet_topper_style": str(skin.get("topper_style", "")),
 		"cabinet_motion_style": str(skin.get("motion_style", "")),
 		"cabinet_background_path": str(skin.get("background_path", "")),
+		"cabinet_palette": _slot_copy_dict(skin.get("palette", {})),
 		"feature_name": str(skin.get("feature_name", "")),
 		"pay_model": str(skin.get("pay_model", "")),
 		"reel_count": int(skin.get("reel_count", machine.get("reel_count", 3))),
@@ -1937,44 +2032,20 @@ func _slot_cross_game_item_effects(run_state: RunState, machine: Dictionary, is_
 	if run_state == null:
 		return {}
 	var item_state: Dictionary = _slot_copy_dict(machine.get("slot_item_state", {}))
-	return {
-		"win_bonus": _item_bonus("win_bonus", run_state, is_cheat),
-		"payout_delta": _item_bonus("payout_delta", run_state, is_cheat),
-		"loss_reduction": _item_bonus("loss_reduction", run_state, is_cheat),
-		"cheat_suspicion_delta": _item_bonus("cheat_suspicion_delta", run_state, true),
-		"slot_three_reel_loss_refund_percent": _item_bonus("slot_three_reel_loss_refund_percent", run_state, false),
-		"slot_nudge_perfect_msec_bonus": _item_bonus("slot_nudge_perfect_msec_bonus", run_state, is_cheat),
-		"slot_nudge_close_msec_bonus": _item_bonus("slot_nudge_close_msec_bonus", run_state, is_cheat),
-		"slot_gold_tooth_coin_upgrade_chance": _item_bonus("slot_gold_tooth_coin_upgrade_chance", run_state, false),
-		"slot_gold_tooth_coin_multiplier": _item_bonus("slot_gold_tooth_coin_multiplier", run_state, false),
-		"slot_first_bonus_bonus_percent": _item_bonus("slot_first_bonus_bonus_percent", run_state, false),
-		"slot_first_bonus_bonus_cap": _item_bonus("slot_first_bonus_bonus_cap", run_state, false),
-		"slot_feature_weight_bonus_percent": _item_bonus("slot_feature_weight_bonus_percent", run_state, false),
-		"slot_reel_win_weight_percent": _item_bonus("slot_reel_win_weight_percent", run_state, false),
-		"slot_pinball_drain_cleaner_uses": _item_bonus("slot_pinball_drain_cleaner_uses", run_state, false),
-		"slot_pinball_drain_cleaner_floor_percent": _item_bonus("slot_pinball_drain_cleaner_floor_percent", run_state, false),
-		"slot_pinball_drain_cleaner_award_percent": _item_bonus("slot_pinball_drain_cleaner_award_percent", run_state, false),
-		"slot_pinball_jackpot_magnet_uses": _item_bonus("slot_pinball_jackpot_magnet_uses", run_state, false),
-		"slot_pinball_jackpot_magnet_award_percent": _item_bonus("slot_pinball_jackpot_magnet_award_percent", run_state, false),
-		"slot_pinball_jackpot_magnet_progress_bonus": _item_bonus("slot_pinball_jackpot_magnet_progress_bonus", run_state, false),
-		"slot_pinball_splitter_token_uses": _item_bonus("slot_pinball_splitter_token_uses", run_state, false),
-		"slot_pinball_splitter_token_extra_balls": _item_bonus("slot_pinball_splitter_token_extra_balls", run_state, false),
-		"slot_pinball_return_spring_uses": _item_bonus("slot_pinball_return_spring_uses", run_state, false),
-		"slot_pinball_return_spring_impulse": _item_bonus("slot_pinball_return_spring_impulse", run_state, false),
-		"slot_pinball_tilt_dampener_percent": _item_bonus("slot_pinball_tilt_dampener_percent", run_state, false),
-		"slot_pinball_bumper_battery_hits": _item_bonus("slot_pinball_bumper_battery_hits", run_state, false),
-		"slot_pinball_bumper_battery_award_percent": _item_bonus("slot_pinball_bumper_battery_award_percent", run_state, false),
-		"slot_pinball_bumper_battery_kick_percent": _item_bonus("slot_pinball_bumper_battery_kick_percent", run_state, false),
-		"slot_pinball_bumper_battery_up_impulse": _item_bonus("slot_pinball_bumper_battery_up_impulse", run_state, false),
-		"slot_pinball_rubber_pegs": _item_bonus("slot_pinball_rubber_pegs", run_state, false),
-		"slot_pinball_magnet_cup_radius_percent": _item_bonus("slot_pinball_magnet_cup_radius_percent", run_state, false),
-		"slot_pinball_extra_ball_token": _item_bonus("slot_pinball_extra_ball_token", run_state, false),
-		"slot_pinball_plunger_tuner_width_percent": _item_bonus("slot_pinball_plunger_tuner_width_percent", run_state, false),
-		"slot_pinball_lock_jammer_uses": _item_bonus("slot_pinball_lock_jammer_uses", run_state, false),
-		"slot_cold_quarter_heat_reduction": int(item_state.get("cold_quarter_heat_reduction", _item_bonus("slot_cold_quarter_heat_reduction", run_state, is_cheat))),
-		"slot_split_reel_note_perfect_msec_bonus": int(item_state.get("split_reel_note_perfect_msec_bonus", _item_bonus("slot_split_reel_note_perfect_msec_bonus", run_state, is_cheat))),
-		"slot_split_reel_note_close_msec_bonus": int(item_state.get("split_reel_note_close_msec_bonus", _item_bonus("slot_split_reel_note_close_msec_bonus", run_state, is_cheat))),
-	}
+	var effects := run_state.item_effect_totals(SLOT_LEGAL_ITEM_EFFECT_KEYS, get_family(), "legal")
+	var contextual := run_state.item_effect_totals(SLOT_CONTEXTUAL_ITEM_EFFECT_KEYS, get_family(), "cheat" if is_cheat else "legal")
+	for key_value in contextual.keys():
+		effects[key_value] = contextual[key_value]
+	effects["cheat_suspicion_delta"] = run_state.item_effect_total("cheat_suspicion_delta", get_family(), "cheat")
+	for override_key in [
+		"slot_cold_quarter_heat_reduction",
+		"slot_split_reel_note_perfect_msec_bonus",
+		"slot_split_reel_note_close_msec_bonus",
+	]:
+		var state_key: String = override_key.trim_prefix("slot_")
+		if item_state.has(state_key):
+			effects[override_key] = int(item_state.get(state_key, 0))
+	return effects
 
 
 func _slot_copy_array(value: Variant) -> Array:

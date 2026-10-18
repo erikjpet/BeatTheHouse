@@ -1,6 +1,11 @@
 class_name ScenarioSequenceRuntime
 extends RefCounted
 
+# Authoritative data-driven scenario state machine: normalization, command
+# preparation/application, fact queues, phase transitions, and terminal cleanup.
+
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const SequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 
@@ -39,21 +44,6 @@ const FACT_REQUIRED_FIELDS := {
 	"world_boundary": ["amount", "action_index"],
 	"scenario_command": ["command_id", "receipt_id"],
 }
-const FACT_FIELD_TYPES := {
-	"game_result": {"game_id": TYPE_STRING, "action_id": TYPE_STRING, "won": TYPE_BOOL, "ended": TYPE_BOOL, "bankroll_delta": TYPE_INT, "chips_delta": TYPE_INT, "applied_heat_delta": TYPE_INT},
-	"event_result": {"event_id": TYPE_STRING, "choice_id": TYPE_STRING, "resolution_id": TYPE_STRING, "resolved": TYPE_BOOL, "ok": TYPE_BOOL},
-	"service_result": {"kind": TYPE_STRING, "service_id": TYPE_STRING, "ok": TYPE_BOOL, "action_id": TYPE_STRING},
-	"travel_departed": {"source_id": TYPE_STRING, "target_id": TYPE_STRING, "travel_kind": TYPE_STRING},
-	"travel_arrived": {"source_id": TYPE_STRING, "target_id": TYPE_STRING, "travel_kind": TYPE_STRING},
-	"crew_changed": {"member_id": TYPE_STRING, "change": TYPE_STRING, "value": -1},
-	"crew_job_changed": {"job_id": TYPE_STRING, "definition_id": TYPE_STRING, "member_id": TYPE_STRING, "status": TYPE_STRING, "outcome": TYPE_STRING},
-	"heat_changed": {"previous": TYPE_INT, "current": TYPE_INT, "applied_delta": TYPE_INT, "source": TYPE_STRING},
-	"heat_band_changed": {"previous_band": TYPE_STRING, "current_band": TYPE_STRING, "current": TYPE_INT, "source": TYPE_STRING},
-	"town_transition": {"action_index": TYPE_INT, "weather": TYPE_STRING, "day_type": TYPE_STRING, "happening_ids": TYPE_ARRAY},
-	"sweep_changed": {"action_index": TYPE_INT, "node_id": TYPE_STRING, "segment_index": TYPE_INT, "active": TYPE_BOOL},
-	"world_boundary": {"amount": TYPE_INT, "action_index": TYPE_INT},
-	"scenario_command": {"command_id": TYPE_STRING, "receipt_id": TYPE_STRING},
-}
 const FACT_PAYLOAD_TYPES := {
 	"game_result": {"game_id": "string", "action_id": "string", "won": "bool", "ended": "bool", "bankroll_delta": "int", "chips_delta": "int", "applied_heat_delta": "int"},
 	"event_result": {"event_id": "string", "choice_id": "string", "resolution_id": "string", "resolved": "bool", "ok": "bool"},
@@ -81,12 +71,14 @@ const MAX_RECEIPTS := 256
 const COMMAND_RESULT_KEYS := ["ok", "replayed", "receipt_id", "command_id", "phase_id", "status", "boundary_serial", "outcomes", "changed", "cost", "state"]
 
 
-static func initial_state(definition: Dictionary, node_id: String, seed_token: String = "", host_semantics: Dictionary = {}) -> Dictionary:
+static func initial_state(definition: Dictionary, node_id: String, seed_token: String = "", host_semantics: Dictionary = {}, definition_prevalidated: bool = false) -> Dictionary:
 	if not SequenceSchemaScript.is_sequence(definition):
 		return {}
 	var target_inventory := _dict(host_semantics.get("target_inventory", {}))
 	target_inventory["event_choices"] = _dict(host_semantics.get("event_choices", target_inventory.get("event_choices", {})))
-	var validation := SequenceSchemaScript.validate_definition(definition, OperationRegistryScript, target_inventory)
+	# Production finalization has already validated the exact definition against
+	# this sealed inventory. All default/public callers retain the full validation.
+	var validation: Array = [] if definition_prevalidated else SequenceSchemaScript.validate_definition(definition, OperationRegistryScript, target_inventory)
 	validation.append_array(_array(host_semantics.get("inventory_errors", [])))
 	if not validation.is_empty():
 		return {"schema_version": STATE_SCHEMA_VERSION, "status": STATUS_CLEANED, "errors": validation}
@@ -112,7 +104,7 @@ static func initial_state(definition: Dictionary, node_id: String, seed_token: S
 		"resolved_branches": [],
 		"resolved_outcomes": [],
 		"semantic_state": {
-			"creation_owner_namespaces": _string_array(host_semantics.get("creation_owner_namespaces", ["scenario"])),
+			"creation_owner_namespaces": JsonCoerceScript._unique_string_array(host_semantics.get("creation_owner_namespaces", ["scenario"])),
 			"declared_targets": SequenceSchemaScript.verified_declared_targets(definition, target_inventory),
 			"target_inventory": target_inventory.duplicate(true),
 			"base_interactions": _array(host_semantics.get("base_interactions", [])),
@@ -181,7 +173,7 @@ static func normalize_state(value: Variant, definition: Dictionary = {}, trusted
 	var semantic_source := _dict(source.get("semantic_state", {})).duplicate(true)
 	if not trusted_host_semantics.is_empty():
 		semantic_source["event_choices"] = _dict(trusted_host_semantics.get("event_choices", {}))
-		semantic_source["creation_owner_namespaces"] = _string_array(trusted_host_semantics.get("creation_owner_namespaces", ["scenario"]))
+		semantic_source["creation_owner_namespaces"] = JsonCoerceScript._unique_string_array(trusted_host_semantics.get("creation_owner_namespaces", ["scenario"]))
 	var state := {
 		"schema_version": STATE_SCHEMA_VERSION,
 		"scenario_id": str(source.get("scenario_id", "")).strip_edges(),
@@ -240,7 +232,7 @@ static func normalize_state(value: Variant, definition: Dictionary = {}, trusted
 		state["command_receipt_records"] = _migrate_command_receipt_records(state, definition)
 	if not [STATUS_ACTIVE, STATUS_AFTERMATH, STATUS_CLEANED].has(str(state.get("status", ""))):
 		state["status"] = STATUS_CLEANED
-	if not str(state.get("cleanup_content_fingerprint", "")).is_empty() and not _valid_sha256(str(state.get("cleanup_content_fingerprint", ""))):
+	if not str(state.get("cleanup_content_fingerprint", "")).is_empty() and not JsonCoerceScript._valid_sha256(str(state.get("cleanup_content_fingerprint", ""))):
 		return {}
 	if not definition.is_empty():
 		var expected_scenario_id := str(definition.get("id", ""))
@@ -255,7 +247,7 @@ static func normalize_state(value: Variant, definition: Dictionary = {}, trusted
 	var semantic := _dict(state.get("semantic_state", {}))
 	semantic["operation_receipt_records"] = _normalized_integer_record_fields(semantic.get("operation_receipt_records", []), ["boundary_ordinal", "operation_index"])
 	state["semantic_state"] = semantic
-	if _array(semantic.get("transition_queue", [])).size() > OperationRegistryScript.MAX_TRANSITION_QUEUE or _string_array(semantic.get("operation_receipts", [])).size() > OperationRegistryScript.MAX_OPERATION_RECEIPTS:
+	if _array(semantic.get("transition_queue", [])).size() > OperationRegistryScript.MAX_TRANSITION_QUEUE or JsonCoerceScript._unique_string_array(semantic.get("operation_receipts", [])).size() > OperationRegistryScript.MAX_OPERATION_RECEIPTS:
 		state["status"] = STATUS_CLEANED
 	if not definition.is_empty() and not SequenceSchemaScript.phase_ids(definition).has(str(state.get("phase_id", ""))) and str(state.get("status", "")) == STATUS_ACTIVE:
 		state["status"] = STATUS_CLEANED
@@ -301,7 +293,19 @@ static func _persisted_collections_within_limits(source: Dictionary) -> bool:
 	return true
 
 
-static func command(command_id: String, node_id: String, phase_id: String, idempotency_key: String, payload: Dictionary = {}, owner_namespace: String = "scenario", stable_object_id: String = "sequence", action_origin_owner_namespace: String = "", action_origin_stable_object_id: String = "", action_origin_receipt_key: String = "", action_origin_boundary_id: String = "", action_origin_fingerprint: String = "") -> Dictionary:
+static func command(options: FunctionOptions.ScenarioSequenceCommandOptions) -> Dictionary:
+	var command_id := str(options.values.get("command_id", ""))
+	var node_id := str(options.values.get("node_id", ""))
+	var phase_id := str(options.values.get("phase_id", ""))
+	var idempotency_key := str(options.values.get("idempotency_key", ""))
+	var payload: Dictionary = options.values.get("payload", {})
+	var owner_namespace := str(options.values.get("owner_namespace", "scenario"))
+	var stable_object_id := str(options.values.get("stable_object_id", "sequence"))
+	var action_origin_owner_namespace := str(options.values.get("action_origin_owner_namespace", ""))
+	var action_origin_stable_object_id := str(options.values.get("action_origin_stable_object_id", ""))
+	var action_origin_receipt_key := str(options.values.get("action_origin_receipt_key", ""))
+	var action_origin_boundary_id := str(options.values.get("action_origin_boundary_id", ""))
+	var action_origin_fingerprint := str(options.values.get("action_origin_fingerprint", ""))
 	return {
 		"schema_version": COMMAND_SCHEMA_VERSION,
 		"command_id": command_id.strip_edges(),
@@ -327,7 +331,7 @@ static func apply_command(state_value: Dictionary, definition: Dictionary, comma
 		return {"ok": false, "errors": bounded_errors, "state": original, "replayed": false}
 	var receipt_id := str(command_value.get("idempotency_key", "")).strip_edges()
 	var command_fingerprint := _fingerprint(command_value)
-	if not receipt_id.is_empty() and _string_array(state.get("command_receipts", [])).has(receipt_id):
+	if not receipt_id.is_empty() and JsonCoerceScript._unique_string_array(state.get("command_receipts", [])).has(receipt_id):
 		if str(_dict(state.get("command_fingerprints", {})).get(receipt_id, "")) != command_fingerprint:
 			return {"ok": false, "errors": ["scenario command idempotency_key was reused for a different command"], "state": state, "replayed": false}
 		var cached := _dict(_dict(state.get("command_results", {})).get(receipt_id, {}))
@@ -343,7 +347,7 @@ static func apply_command(state_value: Dictionary, definition: Dictionary, comma
 		if not causal_descriptor.is_empty():
 			effective_context["causal_action_descriptor"] = causal_descriptor
 	var validation := _validate_command(state, definition, command_value, effective_context)
-	if _string_array(state.get("command_receipts", [])).size() >= MAX_RECEIPTS:
+	if JsonCoerceScript._unique_string_array(state.get("command_receipts", [])).size() >= MAX_RECEIPTS:
 		validation.append("scenario command lifetime receipt limit reached")
 	if _next_cause_ordinal(state) + _fact_array(state.get("fact_queue", [])).size() >= MAX_RECEIPTS:
 		validation.append("scenario causal journal lifetime limit reached")
@@ -360,7 +364,7 @@ static func apply_command(state_value: Dictionary, definition: Dictionary, comma
 	if not bool(handler_result.get("ok", false)):
 		return {"ok": false, "errors": _array(handler_result.get("errors", [])), "state": original, "replayed": false}
 	state = _complete_command_objective_steps(state, definition, command_id)
-	var receipts := _string_array(state.get("command_receipts", []))
+	var receipts := JsonCoerceScript._unique_string_array(state.get("command_receipts", []))
 	receipts.append(receipt_id)
 	state["command_receipts"] = receipts
 	var fingerprints := _dict(state.get("command_fingerprints", {}))
@@ -387,7 +391,7 @@ static func apply_command(state_value: Dictionary, definition: Dictionary, comma
 		"status": str(state.get("status", "")),
 		"boundary_serial": int(state.get("boundary_serial", 0)),
 		"cost": cost,
-		"outcomes": _string_array(state.get("resolved_outcomes", [])),
+		"outcomes": JsonCoerceScript._unique_string_array(state.get("resolved_outcomes", [])),
 		"changed": true if prevalidated_state else state_before != JSON.stringify(_canonical_variant(state)),
 		"state": {},
 	}
@@ -419,7 +423,7 @@ static func enqueue_fact(state_value: Dictionary, definition: Dictionary, fact_v
 		return {"ok": false, "duplicate": false, "state": state, "errors": bounded_errors}
 	var fact_id := str(fact_value.get("fact_id", "")) if typeof(fact_value.get("fact_id")) == TYPE_STRING else ""
 	var fact_fingerprint := _fingerprint(fact_value)
-	if _string_array(state.get("fact_receipts", [])).has(fact_id):
+	if JsonCoerceScript._unique_string_array(state.get("fact_receipts", [])).has(fact_id):
 		if str(_dict(state.get("fact_fingerprints", {})).get(fact_id, "")) != fact_fingerprint:
 			return {"ok": false, "duplicate": false, "state": state, "errors": ["scenario fact_id was reused for a different fact"]}
 		return {"ok": true, "duplicate": true, "state": state, "errors": []}
@@ -487,7 +491,7 @@ static func validate_fact(state: Dictionary, fact_value: Dictionary) -> Array:
 				continue
 			if not _fact_payload_value_matches(payload.get(field_value), str(payload_types.get(field, ""))):
 				errors.append("scenario %s fact payload.%s has the wrong exact type" % [fact_type, field])
-		if fact_type == "town_transition" and _string_array(payload.get("happening_ids", [])).size() != _array(payload.get("happening_ids", [])).size():
+		if fact_type == "town_transition" and JsonCoerceScript._unique_string_array(payload.get("happening_ids", [])).size() != _array(payload.get("happening_ids", [])).size():
 			errors.append("scenario town_transition fact payload.happening_ids must contain unique stable strings")
 		if fact_type == "heat_band_changed" and (str(payload.get("previous_band", "")) not in ["quiet", "caution", "hot", "critical"] or str(payload.get("current_band", "")) not in ["quiet", "caution", "hot", "critical"]): errors.append("scenario heat_band_changed fact requires registered heat bands")
 		# Event-result authority is definition- and delivery-bound in
@@ -536,11 +540,11 @@ static func flush_facts(state_value: Dictionary, definition: Dictionary, boundar
 	for fact_value in ready:
 		var typed_fact := fact_value as Dictionary
 		var fact_id := str(typed_fact.get("fact_id", ""))
-		if _string_array(state.get("fact_receipts", [])).has(fact_id):
+		if JsonCoerceScript._unique_string_array(state.get("fact_receipts", [])).has(fact_id):
 			continue
 		var envelope := _without_ingress(typed_fact)
 		var fingerprint := _fingerprint(envelope)
-		var receipts := _string_array(state.get("fact_receipts", []))
+		var receipts := JsonCoerceScript._unique_string_array(state.get("fact_receipts", []))
 		receipts.append(fact_id)
 		state["fact_receipts"] = receipts
 		var fingerprints := _dict(state.get("fact_fingerprints", {}))
@@ -592,7 +596,7 @@ static func record_visit(state_value: Dictionary, definition: Dictionary, visit_
 	if not _valid_id(clean_visit_id) or not _valid_persisted_text(clean_visit_id):
 		return {"ok": false, "state": state, "errors": ["scenario visit requires a stable visit_id"]}
 	var receipt_key := "visit:%s" % clean_visit_id
-	var receipts := _string_array(state.get("visit_receipts", []))
+	var receipts := JsonCoerceScript._unique_string_array(state.get("visit_receipts", []))
 	if receipts.has(receipt_key):
 		return {"ok": true, "state": state, "errors": [], "replayed": true}
 	if receipts.size() >= MAX_RECEIPTS or _next_cause_ordinal(state) + _fact_array(state.get("fact_queue", [])).size() >= MAX_RECEIPTS:
@@ -678,7 +682,7 @@ static func apply_expiry(state_value: Dictionary, definition: Dictionary, bounda
 	if str(expiry.get("boundary", "none")) == "none" or str(expiry.get("boundary", "none")) != clean_boundary:
 		return {"ok": true, "state": state, "applied": false, "expired": false, "errors": []}
 	var receipt_id := "expiry:%s:%d" % [clean_boundary, maxi(0, boundary_serial)]
-	var receipts := _string_array(state.get("expiry_receipts", []))
+	var receipts := JsonCoerceScript._unique_string_array(state.get("expiry_receipts", []))
 	if receipts.has(receipt_id):
 		return {"ok": true, "state": state, "applied": false, "expired": str(state.get("status", "")) != STATUS_ACTIVE, "replayed": true, "errors": []}
 	var next := state.duplicate(false)
@@ -695,7 +699,7 @@ static func apply_expiry(state_value: Dictionary, definition: Dictionary, bounda
 		return {"ok": true, "state": next, "applied": true, "expired": false, "policy": policy, "errors": []}
 	if policy in ["fail", "ignore", "cancel"]:
 		var objective_outcome := "failure" if policy == "fail" else policy
-		for objective_id_value in _string_array(SequenceSchemaScript.phase(definition, str(next.get("phase_id", ""))).get("objective_ids", [])):
+		for objective_id_value in JsonCoerceScript._unique_string_array(SequenceSchemaScript.phase(definition, str(next.get("phase_id", ""))).get("objective_ids", [])):
 			next = _resolve_objective(next, definition, str(objective_id_value), objective_outcome)
 		var outcome := _lifecycle_outcome(definition, policy)
 		if not outcome.is_empty():
@@ -725,7 +729,7 @@ static func drain_transitions(state_value: Dictionary, definition: Dictionary, r
 	if state.is_empty():
 		return {"ok": false, "state": state, "transitions": [], "errors": ["scenario transition drain requires state"]}
 	var semantic := OperationRegistryScript.normalize_semantic_state(_dict(state.get("semantic_state", {})))
-	var delivered := _string_array(state.get("transition_delivery_receipts", []))
+	var delivered := JsonCoerceScript._unique_string_array(state.get("transition_delivery_receipts", []))
 	var emitted: Array = []
 	var remaining: Array = []
 	var active_stages := _bounded_records(state.get("active_stages", []), MAX_RECEIPTS)
@@ -782,7 +786,7 @@ static func drain_event_requests(state_value: Dictionary, definition: Dictionary
 	var state := state_value.duplicate(true) if prevalidated_state else normalize_state(state_value, definition)
 	if state.is_empty():
 		return {"ok": false, "state": state, "requests": [], "errors": ["scenario event-request drain requires state"]}
-	var delivered := _string_array(state.get("event_request_delivery_receipts", []))
+	var delivered := JsonCoerceScript._unique_string_array(state.get("event_request_delivery_receipts", []))
 	var history := _bounded_records(state.get("event_request_history", []), MAX_RECEIPTS)
 	var emitted: Array = []
 	for request_value in _bounded_records(state.get("event_request_queue", []), MAX_RECEIPTS):
@@ -898,7 +902,7 @@ static func public_projection(state_value: Dictionary, definition: Dictionary = 
 		"boundary_serial": maxi(0, int(state.get("boundary_serial", 0))),
 		"objectives": _public_objectives(state, definition),
 		"local_state": SequenceSchemaScript.public_local_state(definition, state.get("local_state", {})),
-		"resolved_outcomes": _string_array(state.get("resolved_outcomes", [])),
+		"resolved_outcomes": JsonCoerceScript._unique_string_array(state.get("resolved_outcomes", [])),
 		"last_feedback": str(state.get("last_feedback", "")),
 		"semantic_state": public_semantics,
 		"pending_transition_count": _array(_dict(state.get("semantic_state", {})).get("transition_queue", [])).size(),
@@ -1136,7 +1140,7 @@ static func _run_handler(state: Dictionary, definition: Dictionary, handler_id: 
 		"resolve_objective":
 			next = _resolve_objective(next, definition, str(inputs.get("objective_id", "")), str(inputs.get("outcome", "")))
 		"record_outcome":
-			var outcomes := _string_array(next.get("resolved_outcomes", []))
+			var outcomes := JsonCoerceScript._unique_string_array(next.get("resolved_outcomes", []))
 			var outcome := str(inputs.get("outcome", "")).strip_edges()
 			if not outcome.is_empty() and not outcomes.has(outcome): outcomes.append(outcome)
 			next["resolved_outcomes"] = outcomes
@@ -1260,7 +1264,7 @@ static func _apply_fact(state: Dictionary, definition: Dictionary, fact_value: D
 		if not bool(handler_result.get("ok", false)):
 			return handler_result
 		next = _dict(handler_result.get("state", next))
-	var active_objective_ids := _string_array(SequenceSchemaScript.phase(definition, str(next.get("phase_id", ""))).get("objective_ids", []))
+	var active_objective_ids := JsonCoerceScript._unique_string_array(SequenceSchemaScript.phase(definition, str(next.get("phase_id", ""))).get("objective_ids", []))
 	for objective_value in _array(SequenceSchemaScript.sequence(definition).get("objectives", [])):
 		var objective := _dict(objective_value)
 		if not active_objective_ids.has(str(objective.get("id", ""))):
@@ -1277,7 +1281,7 @@ static func _apply_fact(state: Dictionary, definition: Dictionary, fact_value: D
 			return {"ok": false, "state": original, "errors": ["scenario event_result does not match a delivered event request"]}
 		if bool(payload.get("resolved", false)):
 			var event_receipt := "%s:%s" % [resolution_id if not resolution_id.is_empty() else str(payload.get("event_id", "")), str(payload.get("choice_id", ""))]
-			var event_receipts := _string_array(next.get("event_choice_receipts", []))
+			var event_receipts := JsonCoerceScript._unique_string_array(next.get("event_choice_receipts", []))
 			_append_unique(event_receipts, event_receipt)
 			next["event_choice_receipts"] = event_receipts
 	if fact_type == "world_boundary":
@@ -1309,7 +1313,7 @@ static func _evaluate_branches(state: Dictionary, definition: Dictionary, trigge
 				return {"ok": false, "state": state, "errors": ["scenario resolved branch identity exceeds the persisted text boundary"]}
 			var records := _array(next.get("branch_resolution_records", []))
 			var resolved := _resolved_branch_ids(records)
-			for legacy_id in _string_array(next.get("resolved_branches", [])): _append_unique(resolved, str(legacy_id))
+			for legacy_id in JsonCoerceScript._unique_string_array(next.get("resolved_branches", [])): _append_unique(resolved, str(legacy_id))
 			if resolved.has(branch_id): continue
 			var target := str(branch.get("next_phase", "")).strip_edges()
 			if not target.is_empty() and not _entry_conditions_match(SequenceSchemaScript.phase(definition, target), next, trigger): continue
@@ -1370,7 +1374,7 @@ static func _condition_matches(condition: Dictionary, state: Dictionary, trigger
 			var local_value: Variant = _dict(state.get("local_state", {})).get(str(condition.get("key", "")))
 			return typeof(local_value) == TYPE_INT and typeof(condition.get("value")) == TYPE_INT and int(local_value) >= int(condition.get("value"))
 		"objective": return _objective_step_complete(state, str(condition.get("objective_id", "")), str(condition.get("step_id", "")))
-		"outcome": return _string_array(state.get("resolved_outcomes", [])).has(str(condition.get("outcome", "")))
+		"outcome": return JsonCoerceScript._unique_string_array(state.get("resolved_outcomes", [])).has(str(condition.get("outcome", "")))
 		"receipt": return _receipt_condition_matches(condition, state)
 	return false
 
@@ -1393,7 +1397,7 @@ static func _enter_phase(state: Dictionary, definition: Dictionary, phase_id: St
 			return {"ok": false, "state": state, "errors": ["scenario phase %s entry conditions are not satisfied" % phase_id]}
 	var next := state.duplicate(false)
 	var semantic := _dict(next.get("semantic_state", {}))
-	var transition_receipts := _string_array(next.get("transition_receipts", []))
+	var transition_receipts := JsonCoerceScript._unique_string_array(next.get("transition_receipts", []))
 	var boundary_id := "%s:%s:phase:%s:%s" % [str(next.get("scenario_id", "")), str(next.get("node_id", "")), phase_id, source_receipt]
 	if not _valid_persisted_text(boundary_id) or not _valid_persisted_text(source_receipt):
 		return {"ok": false, "state": state, "errors": ["scenario transition boundary exceeds the persisted text boundary"]}
@@ -1445,7 +1449,7 @@ static func _resolve_outcome(state: Dictionary, definition: Dictionary, outcome:
 		if not bool(applied.get("ok", false)):
 			return {"ok": false, "state": state, "errors": _array(applied.get("errors", []))}
 		semantic = _dict(applied.get("state", semantic))
-	var outcomes := _string_array(next.get("resolved_outcomes", []))
+	var outcomes := JsonCoerceScript._unique_string_array(next.get("resolved_outcomes", []))
 	if not outcomes.has(outcome): outcomes.append(outcome)
 	next["resolved_outcomes"] = outcomes
 	next = _set_objective_outcomes(next, definition, "")
@@ -1468,7 +1472,7 @@ static func _apply_cleanup(state: Dictionary, definition: Dictionary, reason: St
 	var stored_content_fingerprint := str(next.get("cleanup_content_fingerprint", ""))
 	if not stored_content_fingerprint.is_empty() and stored_content_fingerprint != content_fingerprint:
 		return {"ok": false, "state": state, "errors": ["scenario cleanup content changed after cleanup was finalized"], "replayed": false}
-	var receipts := _string_array(next.get("cleanup_receipts", []))
+	var receipts := JsonCoerceScript._unique_string_array(next.get("cleanup_receipts", []))
 	if receipts.has(receipt_id):
 		if str(_dict(next.get("cleanup_fingerprints", {})).get(receipt_id, "")) != cleanup_fingerprint:
 			return {"ok": false, "state": state, "errors": ["scenario cleanup receipt conflicts with current cleanup content"], "replayed": false}
@@ -1549,7 +1553,7 @@ static func _cleanup_target_absence_is_receipted(semantic: Dictionary, state: Di
 
 static func _complete_command_objective_steps(state: Dictionary, definition: Dictionary, command_id: String) -> Dictionary:
 	var next := state
-	var active_objective_ids := _string_array(SequenceSchemaScript.phase(definition, str(state.get("phase_id", ""))).get("objective_ids", []))
+	var active_objective_ids := JsonCoerceScript._unique_string_array(SequenceSchemaScript.phase(definition, str(state.get("phase_id", ""))).get("objective_ids", []))
 	for objective_value in _array(SequenceSchemaScript.sequence(definition).get("objectives", [])):
 		var objective := _dict(objective_value)
 		if not active_objective_ids.has(str(objective.get("id", ""))):
@@ -1563,7 +1567,7 @@ static func _complete_command_objective_steps(state: Dictionary, definition: Dic
 
 static func _complete_objective_step(state: Dictionary, definition: Dictionary, objective_id: String, step_id: String) -> Dictionary:
 	var next := state.duplicate(false)
-	var active_ids := _string_array(SequenceSchemaScript.phase(definition, str(state.get("phase_id", ""))).get("objective_ids", []))
+	var active_ids := JsonCoerceScript._unique_string_array(SequenceSchemaScript.phase(definition, str(state.get("phase_id", ""))).get("objective_ids", []))
 	if not active_ids.has(objective_id):
 		return next
 	var objective_definition := _objective_definition(definition, objective_id)
@@ -1577,7 +1581,7 @@ static func _complete_objective_step(state: Dictionary, definition: Dictionary, 
 		return next
 	var progress := _normalize_objective_progress(next.get("objective_progress", {}))
 	var objective := _dict(progress.get(objective_id, {}))
-	var completed := _string_array(objective.get("completed_steps", []))
+	var completed := JsonCoerceScript._unique_string_array(objective.get("completed_steps", []))
 	for index in range(wanted_index):
 		if not completed.has(str(_dict(ordered_steps[index]).get("id", ""))):
 			return next
@@ -1591,7 +1595,7 @@ static func _complete_objective_step(state: Dictionary, definition: Dictionary, 
 static func _resolve_objective(state: Dictionary, definition: Dictionary, objective_id: String, outcome: String) -> Dictionary:
 	var next := state.duplicate(false)
 	var objective_definition := _objective_definition(definition, objective_id)
-	if objective_definition.is_empty() or not _string_array(objective_definition.get("outcomes", [])).has(outcome):
+	if objective_definition.is_empty() or not JsonCoerceScript._unique_string_array(objective_definition.get("outcomes", [])).has(outcome):
 		return next
 	var progress := _normalize_objective_progress(next.get("objective_progress", {}))
 	var objective := _dict(progress.get(objective_id, {}))
@@ -1610,7 +1614,7 @@ static func _objective_definition(definition: Dictionary, objective_id: String) 
 
 
 static func _objective_step_complete(state: Dictionary, objective_id: String, step_id: String) -> bool:
-	return _string_array(_dict(_dict(state.get("objective_progress", {})).get(objective_id, {})).get("completed_steps", [])).has(step_id)
+	return JsonCoerceScript._unique_string_array(_dict(_dict(state.get("objective_progress", {})).get(objective_id, {})).get("completed_steps", [])).has(step_id)
 
 
 static func _set_objective_outcomes(state: Dictionary, definition: Dictionary, forced_outcome: String) -> Dictionary:
@@ -1619,9 +1623,9 @@ static func _set_objective_outcomes(state: Dictionary, definition: Dictionary, f
 	for objective_value in _array(SequenceSchemaScript.sequence(definition).get("objectives", [])):
 		var objective := _dict(objective_value)
 		var objective_id := str(objective.get("id", ""))
-		var allowed := _string_array(objective.get("outcomes", []))
+		var allowed := JsonCoerceScript._unique_string_array(objective.get("outcomes", []))
 		var objective_state := _dict(progress.get(objective_id, {}))
-		var completed := _string_array(objective_state.get("completed_steps", []))
+		var completed := JsonCoerceScript._unique_string_array(objective_state.get("completed_steps", []))
 		var desired := forced_outcome
 		if desired.is_empty():
 			# A terminal branch or lifecycle policy may already have resolved this
@@ -1653,7 +1657,7 @@ static func _normalize_objective_progress(value: Variant) -> Dictionary:
 	keys.sort()
 	for key_value in keys:
 		var objective := _dict((value as Dictionary).get(key_value, {}))
-		result[str(key_value)] = {"completed_steps": _string_array(objective.get("completed_steps", [])), "outcome": str(objective.get("outcome", ""))}
+		result[str(key_value)] = {"completed_steps": JsonCoerceScript._unique_string_array(objective.get("completed_steps", [])), "outcome": str(objective.get("outcome", ""))}
 	return result
 
 
@@ -1666,7 +1670,7 @@ static func _phase_command_ids(state: Dictionary, definition: Dictionary, phase_
 			_append_unique(result, str(condition.get("command_id", "")))
 	for objective_value in _array(SequenceSchemaScript.sequence(definition).get("objectives", [])):
 		var objective := _dict(objective_value)
-		if not _string_array(phase_data.get("objective_ids", [])).has(str(objective.get("id", ""))): continue
+		if not JsonCoerceScript._unique_string_array(phase_data.get("objective_ids", [])).has(str(objective.get("id", ""))): continue
 		for step_value in _array(objective.get("steps", [])):
 			var step := _dict(step_value)
 			if str(step.get("kind", "")) == "command": _append_unique(result, str(step.get("command_id", "")))
@@ -1712,7 +1716,7 @@ static func _public_objectives(state: Dictionary, definition: Dictionary) -> Arr
 	for objective_value in _array(SequenceSchemaScript.sequence(definition).get("objectives", [])):
 		var objective := _dict(objective_value)
 		var objective_id := str(objective.get("id", ""))
-		var completed := _string_array(_dict(progress.get(objective_id, {})).get("completed_steps", []))
+		var completed := JsonCoerceScript._unique_string_array(_dict(progress.get(objective_id, {})).get("completed_steps", []))
 		result.append({"id": objective_id, "label": str(objective.get("label", "")), "progress_label": str(objective.get("progress_label", "")), "completed": completed.size(), "total": _array(objective.get("steps", [])).size(), "outcome": str(_dict(progress.get(objective_id, {})).get("outcome", ""))})
 	return result
 
@@ -1756,7 +1760,7 @@ static func _normalized_command_results(value: Variant, receipts_value: Variant,
 		var receipt_id := str(record.get("receipt_key", ""))
 		var envelope := _dict(record.get("envelope", {}))
 		var fingerprint := str(record.get("fingerprint", ""))
-		if receipt_id.is_empty() or record_index.has(receipt_id) or not _valid_sha256(fingerprint) or fingerprint != _fingerprint(envelope):
+		if receipt_id.is_empty() or record_index.has(receipt_id) or not JsonCoerceScript._valid_sha256(fingerprint) or fingerprint != _fingerprint(envelope):
 			continue
 		record_index[receipt_id] = record
 	var fingerprints := _dict(fingerprints_value)
@@ -1808,7 +1812,7 @@ static func _normalized_receipt_fingerprints(value: Variant, receipts_value: Var
 	for receipt_value in _bounded_strings(receipts_value, MAX_RECEIPTS):
 		var receipt_id := str(receipt_value)
 		var fingerprint := str(source.get(receipt_id, ""))
-		if _valid_sha256(fingerprint): result[receipt_id] = fingerprint
+		if JsonCoerceScript._valid_sha256(fingerprint): result[receipt_id] = fingerprint
 	return result
 
 
@@ -1827,14 +1831,6 @@ static func _reordinal_visit_records(value: Variant) -> Array:
 		record["cause_ordinal"] = result.size()
 		result.append(record)
 	return result
-
-
-static func _valid_sha256(value: String) -> bool:
-	if value.length() != 64 or value != value.to_lower(): return false
-	for index in range(value.length()):
-		var code := value.unicode_at(index)
-		if not (code >= 48 and code <= 57) and not (code >= 97 and code <= 102): return false
-	return true
 
 
 static func _valid_persisted_text(value: String) -> bool:
@@ -2003,7 +1999,7 @@ static func _event_request_was_delivered(state: Dictionary, event_id: String) ->
 
 static func _event_resolution_was_consumed(state: Dictionary, resolution_id: String) -> bool:
 	var prefix := "%s:" % resolution_id
-	for receipt_value in _string_array(state.get("event_choice_receipts", [])):
+	for receipt_value in JsonCoerceScript._unique_string_array(state.get("event_choice_receipts", [])):
 		if str(receipt_value).begins_with(prefix):
 			return true
 	return false
@@ -2028,7 +2024,7 @@ static func _authored_action_origin_matches(state: Dictionary, definition: Dicti
 	var receipt_key := str(action.get("action_origin_receipt_key", ""))
 	var boundary_id := str(action.get("action_origin_boundary_id", ""))
 	var fingerprint := str(action.get("action_origin_fingerprint", ""))
-	if receipt_key.is_empty() or boundary_id.is_empty() or not _valid_sha256(fingerprint): return false
+	if receipt_key.is_empty() or boundary_id.is_empty() or not JsonCoerceScript._valid_sha256(fingerprint): return false
 	var receipt_record: Dictionary = {}
 	for record_value in _array(_dict(state.get("semantic_state", {})).get("operation_receipt_records", [])):
 		var record := _dict(record_value)
@@ -2063,7 +2059,7 @@ static func _authored_interaction_operation_for_receipt(definition: Dictionary, 
 	var fingerprint := str(receipt_record.get("fingerprint", ""))
 	var boundary_id := str(receipt_record.get("boundary_id", ""))
 	var source_ref := str(receipt_record.get("source_ref", ""))
-	if operation_index < 0 or authored_receipt_id.is_empty() or not _valid_sha256(fingerprint):
+	if operation_index < 0 or authored_receipt_id.is_empty() or not JsonCoerceScript._valid_sha256(fingerprint):
 		return {}
 	var matched: Dictionary = {}
 	for phase_value in _array(_dict(SequenceSchemaScript.sequence(definition).get("phase_graph", {})).get("phases", [])):
@@ -2097,7 +2093,7 @@ static func _command_precondition_errors(state: Dictionary, action: Dictionary) 
 
 
 static func _aftermath_feedback(state: Dictionary, definition: Dictionary) -> String:
-	var outcomes := _string_array(state.get("resolved_outcomes", []))
+	var outcomes := JsonCoerceScript._unique_string_array(state.get("resolved_outcomes", []))
 	if outcomes.is_empty():
 		return str(state.get("last_feedback", ""))
 	var aftermath := _dict(_dict(SequenceSchemaScript.sequence(definition).get("aftermath", {})).get(outcomes[outcomes.size() - 1], {}))
@@ -2115,15 +2111,6 @@ static func _lifecycle_outcome(definition: Dictionary, policy: String) -> String
 		if aftermath.has(str(candidate_value)):
 			return str(candidate_value)
 	return ""
-
-
-static func _append_runtime_error(state: Dictionary, message: String) -> void:
-	var errors := _bounded_strings(state.get("runtime_errors", []), 32)
-	if not message.strip_edges().is_empty() and not errors.has(message):
-		errors.append(message)
-	state["runtime_errors"] = _bounded_strings(errors, 32)
-
-
 static func _normalize_expiry_counts(value: Variant) -> Dictionary:
 	var source := _dict(value)
 	var result: Dictionary = {}
@@ -2138,8 +2125,8 @@ static func _receipt_condition_matches(condition: Dictionary, state: Dictionary)
 	var receipt_kind := str(condition.get("receipt_kind", ""))
 	var receipt_id := str(condition.get("receipt_id", ""))
 	match receipt_kind:
-		"command": return _string_array(state.get("command_receipts", [])).has(receipt_id)
-		"fact": return _string_array(state.get("fact_receipts", [])).has(receipt_id)
+		"command": return JsonCoerceScript._unique_string_array(state.get("command_receipts", [])).has(receipt_id)
+		"fact": return JsonCoerceScript._unique_string_array(state.get("fact_receipts", [])).has(receipt_id)
 		"operation":
 			var records := _array(_dict(state.get("semantic_state", {})).get("operation_receipt_records", []))
 			for record_value in records:
@@ -2331,21 +2318,29 @@ static func _normalized_fact_receipt_records(value: Variant) -> Array:
 	var result := _normalized_integer_record_fields(value, ["cause_ordinal", "flush_batch_ordinal", "flush_boundary_serial"])
 	for record_value in result:
 		var record := record_value as Dictionary
-		var envelope := _dict(record.get("envelope", {})).duplicate(true)
-		for integer_field in ["schema_version", "producer_serial", "boundary_serial"]:
-			var raw: Variant = envelope.get(integer_field)
-			if typeof(raw) == TYPE_FLOAT and is_finite(float(raw)) and is_equal_approx(float(raw), floor(float(raw))):
-				envelope[integer_field] = int(raw)
-		var payload := _dict(envelope.get("payload", {})).duplicate(true)
-		var payload_types := _dict(FACT_PAYLOAD_TYPES.get(str(envelope.get("fact_type", "")), {}))
-		for field_value in payload_types.keys():
-			var field := str(field_value)
-			var raw: Variant = payload.get(field)
-			if str(payload_types.get(field, "")) == "int" and typeof(raw) == TYPE_FLOAT and is_finite(float(raw)) and is_equal_approx(float(raw), floor(float(raw))):
-				payload[field] = int(raw)
-		envelope["payload"] = payload
-		record["envelope"] = envelope
+		record["envelope"] = _integral_fact_fields(_dict(record.get("envelope", {})))
 	return result
+
+
+# Persisted facts round-trip through JSON, which turns every int into a float.
+# Restore the integer envelope and payload fields before exact-type validation.
+static func _integral_fact_fields(source: Dictionary) -> Dictionary:
+	var envelope := source.duplicate(true)
+	for integer_field in ["schema_version", "producer_serial", "boundary_serial", "ingress_serial"]:
+		var raw: Variant = envelope.get(integer_field)
+		if typeof(raw) == TYPE_FLOAT and is_finite(float(raw)) and is_equal_approx(float(raw), floor(float(raw))):
+			envelope[integer_field] = int(raw)
+	if envelope.has("payload") and typeof(envelope.get("payload")) != TYPE_DICTIONARY:
+		return envelope
+	var payload := _dict(envelope.get("payload", {})).duplicate(true)
+	var payload_types := _dict(FACT_PAYLOAD_TYPES.get(str(envelope.get("fact_type", "")), {}))
+	for field_value in payload_types.keys():
+		var field := str(field_value)
+		var raw: Variant = payload.get(field)
+		if str(payload_types.get(field, "")) == "int" and typeof(raw) == TYPE_FLOAT and is_finite(float(raw)) and is_equal_approx(float(raw), floor(float(raw))):
+			payload[field] = int(raw)
+	envelope["payload"] = payload
+	return envelope
 
 
 static func _resolved_branch_ids(records: Array) -> Array:
@@ -2357,15 +2352,6 @@ static func _resolved_branch_ids(records: Array) -> Array:
 		if not phase_id.is_empty() and not branch_id.is_empty():
 			_append_unique(result, "%s:%s" % [phase_id, branch_id])
 	return result
-
-
-static func _resolved_branch_outcomes(records: Array) -> Array:
-	var result: Array = []
-	for record_value in records:
-		_append_unique(result, str(_dict(record_value).get("terminal_outcome", "")))
-	return result
-
-
 static func _normalized_event_correlations(value: Variant, event_choices: Dictionary = {}) -> Array:
 	var result: Array = []
 	var seen: Dictionary = {}
@@ -2403,19 +2389,19 @@ static func _normalized_fact_queue(value: Variant, state: Dictionary) -> Array:
 	var seen: Dictionary = {}
 	for fact_value in _array(value):
 		if typeof(fact_value) != TYPE_DICTIONARY: continue
-		var queued := (fact_value as Dictionary).duplicate(true)
+		var queued := _integral_fact_fields(fact_value as Dictionary)
 		if typeof(queued.get("ingress_serial")) != TYPE_INT or int(queued.get("ingress_serial", 0)) < 1: continue
 		var envelope := _without_ingress(queued)
 		if not OperationRegistryScript.validate_bounded_variant("persisted scenario fact", envelope).is_empty() or not validate_fact(state, envelope).is_empty(): continue
 		var fact_id := str(envelope.get("fact_id", ""))
-		if seen.has(fact_id) or _string_array(state.get("fact_receipts", [])).has(fact_id): continue
+		if seen.has(fact_id) or JsonCoerceScript._unique_string_array(state.get("fact_receipts", [])).has(fact_id): continue
 		seen[fact_id] = true
 		result.append(queued)
 	return result
 
 
 static func _bounded_strings(value: Variant, _limit: int) -> Array:
-	return _string_array(value)
+	return JsonCoerceScript._unique_string_array(value)
 
 
 static func _append_unique(values: Array, value: String) -> void:
@@ -2479,15 +2465,6 @@ static func _canonical_variant_inner(value: Variant, depth: int, ancestors: Arra
 		for item in value as Array: result.append(_canonical_variant_inner(item, depth + 1, ancestors))
 		return result
 	return value
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY: return result
-	for item_value in value as Array:
-		var item := str(item_value).strip_edges()
-		if not item.is_empty() and not result.has(item): result.append(item)
-	return result
 
 
 static func _array(value: Variant) -> Array:

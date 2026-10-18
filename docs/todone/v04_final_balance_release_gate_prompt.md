@@ -10,7 +10,7 @@
   - `263913a Stabilize world map badge pooling for soak`
   - `b3806b3 Stabilize mouse QA multi-game coverage`
   - `9a975f9 Stabilize mouse QA lender fixture routing`
-- Evidence document: `docs/plans/0.4_act1_completion_plan.md`, section
+- Evidence document: `docs/archive/0.4/plans/0.4_act1_completion_plan.md`, section
   "Final Balance And Release Gate Evidence".
 - Balance metrics:
   - `tools/endgame_metrics_probe.gd -- --seed-prefix=V04-FINAL --seeds-per-scenario=2 --output=res://.tmp/endgame_metrics_probe/v04_final.json --report=res://.tmp/endgame_metrics_probe/v04_final.md` - PASS; deterministic, 10 runs, victory rate 0.70, median 23.53 minutes, clean victory 0.6667, cheat victory 0.75, tier-2 0.70, lender 0.50, challenge 0.40, collection engagement 0.60, showdown 3/3.
@@ -41,9 +41,9 @@ of known release-gate failures.
 
 ## Read first
 
-- `docs/plans/0.4_act1_completion_plan.md`
+- `docs/archive/0.4/plans/0.4_act1_completion_plan.md`
 - `README.md`
-- `docs/plans/0.3.2_release_checklist.md`
+- `docs/archive/0.3/plans/0.3.2_release_checklist.md`
 - `tools/endgame_metrics_probe.gd`
 - `tools/foundation_mouse_batch_playtest.ps1`
 - `tools/foundation_performance_probe.ps1`
@@ -67,7 +67,7 @@ of known release-gate failures.
    rather than weakening checks.
 4. Run the strict 60-run mouse batch. 0.4 is an Act 1 completion cut, so do
    not substitute the old 3-run 0.3 fast smoke for final release evidence.
-5. Record a concise before/after table in `docs/plans/0.4_act1_completion_plan.md`.
+5. Record a concise before/after table in `docs/archive/0.4/plans/0.4_act1_completion_plan.md`.
 
 ## Gate matrix
 

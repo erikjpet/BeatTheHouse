@@ -38,7 +38,7 @@ release-path copy before 0.4.
 ## Read first
 
 - `README.md`
-- `docs/plans/0.4_act1_completion_plan.md`
+- `docs/archive/0.4/plans/0.4_act1_completion_plan.md`
 - `docs/plans/act_one_feature_complete_task_board.md` section 13, especially
   the historical D6 failure.
 - `docs/plans/grand_casino_endgame_design.md`

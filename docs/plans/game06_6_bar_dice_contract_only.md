@@ -102,7 +102,7 @@ heads without importing rejected runtime commits.
 - Executable invariant proof:
   `scripts/tests/foundation/game06_6_bar_dice_contract.gd`.
 - Bounded platform/evidence probe:
-  `tools/game06_6_bar_dice_platform_probe.gd` and its scene.
+  `tools/archive/game06_6/game06_6_bar_dice_platform_probe.gd` and its scene.
 - Fifteen inspected native captures, contact sheet, hashes and report:
   `docs/plans/evidence/game06_6_bar_dice/`.
 

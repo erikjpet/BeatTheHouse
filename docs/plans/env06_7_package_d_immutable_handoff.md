@@ -20,7 +20,7 @@ does not record a verdict.
 3. `docs/plans/env06_7_package_d_remediation_proof.md`
 4. `docs/plans/env06_7_package_d_sequence_dossiers.json`
 5. `scripts/tests/foundation/env06_7_package_d_contract.gd`
-6. `tools/env06_7_package_d_author.gd`
+6. `tools/archive/env06_7/env06_7_package_d_author.gd`
 
 No crew/world model, poker game/data/model, shared scenario catalog/index,
 scenario runtime/schema/renderer, shared pixel canvas, board, main, `.tmp/`,

@@ -36,6 +36,7 @@ func _run() -> void:
 	var seed_count := maxi(1, int(OS.get_environment("BTH_DETERMINISM_SEED_COUNT")))
 	if seed_count <= 1 and OS.get_environment("BTH_DETERMINISM_SEED_COUNT").strip_edges().is_empty():
 		seed_count = DEFAULT_SEED_COUNT
+	var seed_start := maxi(1, int(OS.get_environment("BTH_DETERMINISM_SEED_START")))
 	var seed_prefix := OS.get_environment("BTH_DETERMINISM_SEED_PREFIX").strip_edges()
 	if seed_prefix.is_empty():
 		seed_prefix = DEFAULT_SEED_PREFIX
@@ -53,7 +54,7 @@ func _run() -> void:
 	_build_game_modules()
 
 	var runs: Array = []
-	for seed_index in range(seed_count):
+	for seed_index in range(seed_start - 1, seed_start - 1 + seed_count):
 		var seed := "%s-%03d" % [seed_prefix, seed_index + 1]
 		runs.append(_simulate_seed(seed, seed_index))
 
@@ -67,6 +68,7 @@ func _run() -> void:
 		"tool": "foundation_determinism_probe",
 		"deterministic": true,
 		"seed_prefix": seed_prefix,
+		"seed_start": seed_start,
 		"seed_count": seed_count,
 		"checkpoint_count": checkpoint_rows.size(),
 		"combined_hash": combined_hash,
@@ -135,8 +137,21 @@ func _simulate_seed(seed: String, seed_index: int) -> Dictionary:
 	_apply_triggered_event_chain(run_state, checkpoints, seed)
 	_apply_dialogue_sequence(run_state, checkpoints, seed)
 	_apply_talk_content_sequence(run_state, checkpoints, seed)
+	var terminal_stage := "talk_content" if run_state.is_terminal() else ""
 	_apply_numbers_sequence(run_state, checkpoints, seed)
+	if terminal_stage.is_empty() and run_state.is_terminal():
+		terminal_stage = "numbers"
 	_apply_delivery_sequence(run_state, checkpoints, seed)
+	if terminal_stage.is_empty() and run_state.is_terminal():
+		terminal_stage = "delivery"
+	if not terminal_stage.is_empty():
+		failures.append("%s became terminal during %s before the all-games fixture: %s" % [seed, terminal_stage, JSON.stringify({
+			"run_status": run_state.run_status,
+			"failure_reason": run_state.run_failure_reason,
+			"failure_message": run_state.run_failure_message,
+			"bankroll": run_state.bankroll,
+			"suspicion": run_state.suspicion_level(),
+		})])
 	_install_all_game_environment(run_state, seed_index)
 	_checkpoint(run_state, checkpoints, seed, "all_games_fixture")
 	_apply_all_game_resolves(run_state, checkpoints, seed)
@@ -199,12 +214,16 @@ func _apply_numbers_sequence(run_state: RunState, checkpoints: Array, seed: Stri
 		return
 	var required_total := maxi(0, int(allocation_quote.get("total", 0)))
 	var bankroll_before_fixture := run_state.bankroll
-	var fixture_funding := maxi(0, required_total - bankroll_before_fixture)
+	# The camouflage allocation spends its quoted total immediately. Keep one
+	# dollar outside the fixture so exercising the successful allocation cannot
+	# also conclude the shared determinism run before delivery and game coverage.
+	var minimum_fixture_bankroll := required_total + 1
+	var fixture_funding := maxi(0, minimum_fixture_bankroll - bankroll_before_fixture)
 	if fixture_funding > 0:
 		run_state.change_bankroll(fixture_funding)
 	_checkpoint(run_state, checkpoints, seed, "numbers_fix_fixture_funding")
 	var expected_bankroll := bankroll_before_fixture + fixture_funding
-	if required_total <= 0 or fixture_funding != maxi(0, required_total - bankroll_before_fixture) or run_state.bankroll != expected_bankroll or run_state.bankroll < required_total:
+	if required_total <= 0 or fixture_funding != maxi(0, minimum_fixture_bankroll - bankroll_before_fixture) or run_state.bankroll != expected_bankroll or run_state.bankroll < minimum_fixture_bankroll:
 		failures.append("%s deterministic Numbers fixture did not fund the quoted total: %s" % [seed, JSON.stringify({
 			"bankroll_after": run_state.bankroll,
 			"bankroll_before": bankroll_before_fixture,
@@ -396,6 +415,15 @@ func _dialogue_event(event_id: String, choice_id: String, effects: Dictionary) -
 
 
 func _apply_talk_content_sequence(run_state: RunState, checkpoints: Array, seed: String) -> void:
+	# This section exercises every heat-gated talk choice before later sections
+	# exercise the complete game library. Seeded travel can leave a small amount
+	# of local heat behind, so normalize through the public state transition before
+	# establishing the fixture's reviewed 90-heat boundary. Adding 90 on top of
+	# travel heat can legitimately end the run and make all later game coverage a
+	# terminal-state no-op.
+	var existing_heat := run_state.suspicion_level()
+	if existing_heat > 0:
+		run_state.add_suspicion("talk_content_fixture_reset", -existing_heat, "behavior")
 	run_state.add_suspicion("talk_content_probe", 90, "behavior")
 	for spec_value in [
 		{"event_id": "blackjack_counter_probe", "choice_id": "play_dumb", "trigger": "table_approach", "game_id": "blackjack"},
@@ -477,7 +505,16 @@ func _apply_all_game_resolves(run_state: RunState, checkpoints: Array, seed: Str
 	_resolve_game(run_state, checkpoints, seed, "video_poker", "draw", 0, _timed_ui(run_state, "video_poker_draw", {"bet_level": 1, "denomination_index": 0}))
 	var bar_dice_result := _resolve_bar_dice_host_round(run_state, "roll", 20)
 	if not bool(bar_dice_result.get("ok", false)):
-		failures.append("%s bar_dice/roll failed: %s" % [seed, str(bar_dice_result.get("message", "no message"))])
+		failures.append("%s bar_dice/roll failed: %s" % [seed, JSON.stringify({
+			"result": bar_dice_result,
+			"run_status": run_state.run_status,
+			"terminal": run_state.is_terminal(),
+			"bankroll": run_state.bankroll,
+			"grand_casino_chips": run_state.grand_casino_chips,
+			"suspicion": run_state.suspicion_level(),
+			"failure_reason": run_state.run_failure_reason,
+			"failure_message": run_state.run_failure_message,
+		})])
 	else:
 		run_state.advance_environment_turns(1)
 		_checkpoint(run_state, checkpoints, seed, "game_bar_dice_roll")
@@ -882,6 +919,11 @@ func _checkpoint(run_state: RunState, checkpoints: Array, seed: String, label: S
 		"label": label,
 		"hash": _stable_hash_text(canonical),
 		"bytes": canonical.length(),
+		"run_status": run_state.run_status,
+		"failure_reason": run_state.run_failure_reason,
+		"bankroll": run_state.bankroll,
+		"grand_casino_chips": run_state.grand_casino_chips,
+		"suspicion": run_state.suspicion_level(),
 	})
 
 
@@ -894,6 +936,11 @@ func _checkpoint_with_evidence(run_state: RunState, checkpoints: Array, seed: St
 		"hash": _stable_hash_text(canonical),
 		"bytes": canonical.length(),
 		"evidence_hash": _stable_hash_text(_canonical_text(evidence)),
+		"run_status": run_state.run_status,
+		"failure_reason": run_state.run_failure_reason,
+		"bankroll": run_state.bankroll,
+		"grand_casino_chips": run_state.grand_casino_chips,
+		"suspicion": run_state.suspicion_level(),
 	})
 
 

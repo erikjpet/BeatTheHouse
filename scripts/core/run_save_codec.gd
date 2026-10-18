@@ -21,6 +21,9 @@ const STORAGE_HASH_KEY := "sha256"
 const STORAGE_SIZE_KEY := "uncompressed_bytes"
 const STORAGE_FORMAT := "json-zstd-z85-v1"
 const MAX_STORAGE_BYTES := 32 * 1024 * 1024
+const PACK_ERROR_EMPTY := "empty_input"
+const PACK_ERROR_TOO_LARGE := "storage_limit_exceeded"
+const PACK_ERROR_COMPRESSION := "compression_failed"
 const STORAGE_COMPRESSED_SIZE_KEY := "compressed_bytes"
 const Z85_ALPHABET := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-:+=^!/*?&<>()[]{}@%$#"
 const SEEDED_SCENARIO_DEFINITIONS_KEY := "seeded_scenario_definitions_by_node"
@@ -32,6 +35,8 @@ const PATCH_ERASE_KEY := "e"
 const ENVIRONMENT_BASE_REF_KEY := "__bth_environment_base_ref"
 
 static var _scenario_definition_cache: Dictionary = {}
+static var debug_storage_byte_limit_override: int = 0
+static var debug_force_compression_failure: bool = false
 
 
 static func encode(runtime_state: Dictionary) -> Dictionary:
@@ -103,18 +108,23 @@ static func _expand_environment_registry_deltas(source: Dictionary) -> Dictionar
 # is transparently accepted alongside every previously shipped unpacked save.
 static func pack_for_storage(encoded_state: Dictionary) -> Dictionary:
 	var source := JSON.stringify(encoded_state).to_utf8_buffer()
-	if source.is_empty() or source.size() > MAX_STORAGE_BYTES:
-		return {}
+	var storage_limit := debug_storage_byte_limit_override if debug_storage_byte_limit_override > 0 else MAX_STORAGE_BYTES
+	if source.is_empty():
+		return {"ok": false, "error": ERR_INVALID_DATA, "error_code": PACK_ERROR_EMPTY, "packed": {}}
+	if source.size() > storage_limit:
+		return {"ok": false, "error": ERR_OUT_OF_MEMORY, "error_code": PACK_ERROR_TOO_LARGE, "packed": {}, "uncompressed_bytes": source.size(), "storage_limit_bytes": storage_limit}
+	if debug_force_compression_failure:
+		return {"ok": false, "error": ERR_CANT_CREATE, "error_code": PACK_ERROR_COMPRESSION, "packed": {}}
 	var compressed := source.compress(FileAccess.COMPRESSION_ZSTD)
 	if compressed.is_empty():
-		return {}
-	return {
+		return {"ok": false, "error": ERR_CANT_CREATE, "error_code": PACK_ERROR_COMPRESSION, "packed": {}}
+	return {"ok": true, "error": OK, "error_code": "", "packed": {
 		STORAGE_MARKER_KEY: STORAGE_FORMAT,
 		STORAGE_DATA_KEY: _z85_encode(compressed),
 		STORAGE_HASH_KEY: _sha256(source),
 		STORAGE_SIZE_KEY: source.size(),
 		STORAGE_COMPRESSED_SIZE_KEY: compressed.size(),
-	}
+	}}
 
 
 static func storage_envelope_valid(value: Dictionary) -> bool:

@@ -1,5 +1,7 @@
 $ErrorActionPreference = "Stop"
-$launcher = Get-Content -LiteralPath (Join-Path $PSScriptRoot "integ06_1_terminal_soak.ps1") -Raw
+. (Join-Path $PSScriptRoot "repository_root.ps1")
+$root = Resolve-BthRepositoryRoot -StartPath $PSScriptRoot
+$launcher = Get-Content -LiteralPath (Join-Path $root "tools/archive/integ06_1/integ06_1_terminal_soak.ps1") -Raw
 
 function Assert-Contains([string]$Needle, [string]$Message) {
     if (-not $launcher.Contains($Needle)) { throw $Message }

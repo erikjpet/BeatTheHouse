@@ -1,7 +1,7 @@
 # Pinball Feel Reference - Ballionaire
 
-Status: **ACTIVE IMPLEMENTED FEEL REFERENCE** for the unreleased 0.4.0
-pinball feature. External storefront counts below are historical research
+Status: **ACTIVE IMPLEMENTED FEEL REFERENCE** for the current 0.6 pinball
+feature. External storefront counts below are historical research
 snapshots from 2026-07-01, not current claims about another product.
 
 Date: 2026-07-01

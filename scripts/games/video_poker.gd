@@ -311,10 +311,29 @@ func sealed_action_authority_script() -> Script:
 	return ActionAuthorityScript
 
 
+func defers_embedded_action_presentation_refresh(run_state: RunState, _environment: Dictionary) -> bool:
+	# Resolution, bankroll, Heat, and replay publication remain synchronous. On a
+	# normal run, hand the complete machine/HUD projection to the guarded next
+	# frame so a Draw click does not also consume the visual rebuild in one pulse.
+	# Tutorial coach boundaries retain their synchronous presentation contract.
+	return run_state != null and not run_state.is_tutorial_run()
+
+
 func sealed_action_authority_contract() -> Dictionary:
 	return {
 		"resolve_proposal_method": &"_machine_game_resolve_proposal",
 		"wager_cost_proposal_method": &"_machine_game_wager_cost_proposal",
+		# Video Poker resolution changes only its bound cabinet before the host
+		# applies the accepted bankroll/Heat result. Replay it against narrow trusted
+		# candidates instead of serializing the accumulated run twice per DRAW.
+		"trusted_candidate_resolve_method": &"_machine_game_resolve_candidate",
+		"trusted_candidate_wager_method": &"_machine_game_wager_cost_candidate",
+		"compact_authority_evidence_method": &"_machine_game_authority_evidence",
+		"trusted_candidate_structural_replay_match": true,
+		"lightweight_resolution_candidate": true,
+		"trusted_candidate_shallow_machine_detach": true,
+		"in_place_nonrejecting_commit": true,
+		"active_replay_limit": 2,
 		"host_auto_tick_method": &"_machine_game_host_needs_auto_tick",
 		"surface_intent_key": "",
 		"surface_intent_index_key": "",
@@ -494,6 +513,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var coin_value := _coin_value(state, denomination_index)
 	var hand_count := _hand_count(state)
 	var total_bet := _wager_for(state, ui)
+	var wager_currency := GameModule.presentation_currency_for_game(run_state, get_id(), environment)
+	var wager_capacity := maxi(0, run_state.wager_capacity_for_game(get_id(), environment))
 
 	var hand: Array = []
 	var final_hands: Array = []
@@ -555,7 +576,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var outcome_headline := ""
 	if phase == "settled":
 		if win_credits > 0:
-			outcome_headline = "WIN: %s • PAID $%d" % [pay_label.to_upper(), win_credits]
+			outcome_headline = "WIN: %s • PAID %s" % [pay_label.to_upper(), PlayerTextScript.format_currency_amount(wager_currency, win_credits, true)]
 		else:
 			outcome_headline = "NO PAY • SET YOUR BET AND PRESS DEAL"
 	elif phase == "double_result":
@@ -581,6 +602,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 
 	var spec: Dictionary = GameModule.surface_spec({
 		"surface_renderer": "card_machine",
+		"surface_renderer_opaque": true,
 		"surface_life": "screen",
 		"surface_cast": "machine",
 		"surface_controls_native": true,
@@ -619,7 +641,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"multi_hand_mode": "%d Play" % hand_count,
 		"bet_credits": total_bet,
 		"win_credits": win_credits,
-		"bankroll": maxi(0, run_state.wager_capacity_for_game(get_id(), environment)),
+		"bankroll": wager_capacity,
+		"wager_currency": wager_currency,
+		"account_balance_text": PlayerTextScript.format_currency_account_balance(wager_currency, wager_capacity),
+		"win_amount_text": PlayerTextScript.format_currency_amount(wager_currency, win_credits, true),
+		"bet_amount_text": PlayerTextScript.format_currency_amount(wager_currency, total_bet, true),
 		"progressive_meter": int(state.get("progressive_meter", PROGRESSIVE_BASE)),
 		"holdout_tell": str(state.get("holdout_tell", "")),
 		"hand": hand,
@@ -700,6 +726,18 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	spec["ritual_id"] = VIDEO_POKER_RITUAL_ID
 	spec["ritual_projection"] = _video_poker_live_ritual_projection(phase, spec, flip, pit_boss, hand_active, last_result)
 	return spec
+
+
+func embedded_action_view_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	# Video Poker's surface state is already the complete post-action machine
+	# projection. Refresh only that embedded surface after Deal/Draw/Double instead
+	# of rebuilding the surrounding room, navigation, and HUD snapshots.
+	var patch := surface_state(run_state, environment, ui_state)
+	# The projection above already includes the new flip/draw animation channels
+	# and their authored timestamps. A second realtime projection at this same
+	# boundary duplicates the complete card/paytable build without advancing time.
+	patch["surface_action_realtime_refresh_required"] = false
+	return patch
 
 
 func _video_poker_live_ritual_projection(phase: String, spec: Dictionary, flip: Dictionary, pit_boss: Dictionary, hand_active: bool, last_result: Dictionary) -> Dictionary:
@@ -971,6 +1009,17 @@ func _machine_game_resolve_proposal(action_id: String, stake: int, run_snapshot:
 	return proposal
 
 
+func _machine_game_resolve_candidate(action_id: String, stake: int, candidate: RunState, proposal_rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:
+	if candidate == null or proposal_rng == null:
+		return _empty_result(action_id, stake, {}, "Video Poker resolution requires an isolated run and RNG candidate.")
+	var proposal_ui := ui_state.duplicate(true)
+	proposal_ui["_sealed_action_defer_apply"] = true
+	var result := resolve_with_context(action_id, stake, candidate, candidate.current_environment, proposal_rng, proposal_ui)
+	if bool(result.get("ok", false)):
+		result["machine_game_proposal_requires_apply"] = true
+	return result
+
+
 func _machine_game_wager_cost_proposal(action_id: String, stake: int, run_snapshot: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	var candidate := RunState.new()
 	candidate.from_dict(run_snapshot.duplicate(true))
@@ -978,6 +1027,59 @@ func _machine_game_wager_cost_proposal(action_id: String, stake: int, run_snapsh
 	return {
 		"cost": maxi(0, cost),
 		"input_fingerprint": RuntimeScript.canonical_fingerprint({"action_id": action_id, "stake": stake, "run_snapshot": run_snapshot, "ui_state": ui_state}),
+	}
+
+
+func _machine_game_wager_cost_candidate(action_id: String, stake: int, candidate: RunState, ui_state: Dictionary = {}) -> int:
+	if candidate == null:
+		return 0
+	return maxi(0, wager_cost_for_context(action_id, stake, candidate, candidate.current_environment, ui_state))
+
+
+func _machine_game_authority_evidence(candidate: RunState, action_id: String, stake: int, ui_state: Dictionary = {}) -> Dictionary:
+	if candidate == null:
+		return {}
+	var environment := candidate.current_environment
+	var machine := _table_state_preview(candidate, environment).duplicate(false)
+	# Receipts authenticate the transaction envelope independently. Keeping replay
+	# history inside the game evidence made every later hand hash all earlier hands.
+	machine.erase(ActionAuthorityScript.LEDGER_KEY)
+	machine.erase(ActionAuthorityScript.PENDING_APPLY_RECEIPT_KEY)
+	var environment_evidence := environment.duplicate(false)
+	environment_evidence.erase("environment_runtime_revision")
+	environment_evidence["game_states"] = {get_id(): machine}
+	return {
+		"version": 1,
+		"game_id": get_id(),
+		"action_id": action_id,
+		"stake": maxi(0, stake),
+		"account_checkpoint": candidate.action_authority_checkpoint_fingerprint(),
+		"bankroll": candidate.bankroll,
+		"grand_casino_chips": candidate.grand_casino_chips,
+		"rng_seed": candidate.rng_seed,
+		"rng_state": candidate.rng_state,
+		"simulation_msec": candidate.simulation_msec,
+		"game_clock_minutes": candidate.game_clock_minutes,
+		"seed_text": candidate.seed_text,
+		"seed_value": candidate.seed_value,
+		"run_status": candidate.run_status,
+		"economic_state": candidate.economic_state,
+		"challenge_config": candidate.challenge_config,
+		"inventory": candidate.inventory,
+		"active_item_id": candidate.active_item_id,
+		"suspicion": candidate.suspicion,
+		"baseline_luck": candidate.baseline_luck,
+		"drunk_level": candidate.drunk_level,
+		"alcoholic_level": candidate.alcoholic_level,
+		"narrative_flags": candidate.narrative_flags,
+		"crew_play_state": candidate.crew_play_state,
+		"grand_casino_staffing": candidate.grand_casino_staffing,
+		"rourke_current_room": candidate.rourke_current_room,
+		"rourke_current_spot": candidate.rourke_current_spot,
+		"rourke_facing": candidate.rourke_facing,
+		"rourke_off_floor_actions": candidate.rourke_off_floor_actions,
+		"environment": environment_evidence,
+		"ui_state": ui_state,
 	}
 
 
@@ -1159,7 +1261,13 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 	var blurb := _hand_blurb(primary_descriptor, pay_row, variant)
 	if hand_count > 1:
 		blurb = "%s x%d hands" % [blurb, hand_count]
-	var message := _outcome_message(blurb, pay_row, gross_payout, bankroll_delta, suspicion_delta, is_cheat, pit_boss_summary, security_message, holdout_grade, holdout_applied, holdout_challenge, state)
+	var message := _outcome_message(FunctionOptions.VideoPokerOutcomeOptions.from({
+		"blurb": blurb, "pay_row": pay_row, "coin_pay": gross_payout,
+		"bankroll_delta": bankroll_delta, "suspicion_delta": suspicion_delta, "is_cheat": is_cheat,
+		"pit_boss_summary": pit_boss_summary, "security_message": security_message,
+		"holdout_grade": holdout_grade, "holdout_applied": holdout_applied,
+		"holdout_challenge": holdout_challenge, "state": state,
+	}))
 	# A real machine's WIN meter and gamble stake show the gross paid credits,
 	# even when one winning multi-hand row returns less than the total wager.
 	var win_credits := maxi(0, gross_payout)
@@ -1463,12 +1571,6 @@ func _cabinet_id_for_state(state: Dictionary) -> String:
 			return "jacks_or_better"
 
 
-func _fallback_state(run_state: RunState, environment: Dictionary) -> Dictionary:
-	var rng := RngStream.new()
-	rng.configure(_stable_hash("%s:%s:%s" % [get_id(), str(run_state.seed_text if run_state != null else "fallback"), str(environment.get("id", ""))]))
-	return generate_environment_state(run_state, environment, rng)
-
-
 func _normalize_state(state: Dictionary) -> Dictionary:
 	var normalized: Dictionary = state.duplicate(true)
 	normalized["schema"] = STATE_SCHEMA
@@ -1683,11 +1785,11 @@ func _start_holdout_challenge(ui_state: Dictionary, run_state: RunState, state: 
 		JSON.stringify(holds),
 		int(ui_state.get("bet_level", MAX_BET_LEVEL)),
 	]
-	var prompt_offset := HOLDOUT_PROMPT_BASE_MSEC + (_stable_hash(seed) % 141) - 70
+	var prompt_offset := HOLDOUT_PROMPT_BASE_MSEC + (JsonCoerceScript._stable_hash(seed) % 141) - 70
 	var windows: Dictionary = _holdout_windows(run_state)
 	var pit_boss: Dictionary = run_state.pit_boss_watch_status(environment) if run_state != null else {}
 	return {
-		"challenge_id": "vp_holdout_%d" % _stable_hash(seed),
+		"challenge_id": "vp_holdout_%d" % JsonCoerceScript._stable_hash(seed),
 		"opening_hand": opening.duplicate(true),
 		"holds": holds,
 		"target_card": _copy_dict(target.get("card", {})),
@@ -2056,21 +2158,6 @@ func _paytable_tier(state: Dictionary) -> Dictionary:
 	return tier
 
 
-func _pick_paytable_tier(rng: RngStream) -> String:
-	var total_weight := 0
-	for tier_id in PAYTABLE_TIERS.keys():
-		var tier: Dictionary = PAYTABLE_TIERS[tier_id]
-		total_weight += maxi(1, int(tier.get("weight", 1)))
-	var roll := rng.randi_range(1, maxi(1, total_weight))
-	var cursor := 0
-	for tier_id in PAYTABLE_TIERS.keys():
-		var tier: Dictionary = PAYTABLE_TIERS[tier_id]
-		cursor += maxi(1, int(tier.get("weight", 1)))
-		if roll <= cursor:
-			return str(tier_id)
-	return "standard"
-
-
 func _normalize_denominations(value: Variant) -> Array:
 	var result: Array = []
 	if typeof(value) == TYPE_ARRAY:
@@ -2128,25 +2215,6 @@ func _hand_count(state: Dictionary) -> int:
 	return _normalize_hand_count(int(state.get("multi_hand_count", 1)))
 
 
-func _next_lower_hand_count(count: int) -> int:
-	var lowered := 1
-	for option in MULTI_HAND_OPTIONS:
-		var option_count := int(option)
-		if option_count < count:
-			lowered = option_count
-	return lowered
-
-
-func _minimum_denomination_credits(denominations: Array) -> int:
-	var lowest := 999999
-	for entry_value in denominations:
-		if typeof(entry_value) != TYPE_DICTIONARY:
-			continue
-		var entry: Dictionary = entry_value
-		lowest = mini(lowest, maxi(1, int(entry.get("credits", 1))))
-	return 1 if lowest == 999999 else lowest
-
-
 func _playable_denomination_indices(denominations: Array, hand_count: int, wager_ceiling: int) -> Array:
 	var result: Array = []
 	for i in range(denominations.size()):
@@ -2157,16 +2225,6 @@ func _playable_denomination_indices(denominations: Array, hand_count: int, wager
 		# independently limits how many coins are affordable at the selected value.
 		var minimum_wager := maxi(1, int(entry.get("credits", 1))) * maxi(1, hand_count)
 		if minimum_wager <= wager_ceiling:
-			result.append(i)
-	return result
-
-
-func _full_ladder_denomination_indices(denominations: Array, hand_count: int, wager_ceiling: int) -> Array:
-	var result: Array = []
-	for i in range(denominations.size()):
-		var entry: Dictionary = denominations[i] if typeof(denominations[i]) == TYPE_DICTIONARY else {}
-		var max_wager := maxi(1, int(entry.get("credits", 1))) * maxi(1, hand_count) * _coin_count_for_level(MAX_BET_LEVEL)
-		if max_wager <= wager_ceiling:
 			result.append(i)
 	return result
 
@@ -2226,7 +2284,7 @@ func _deal_deck(run_state: RunState, state: Dictionary) -> Array:
 	var rng_state := int(run_state.rng_state) if run_state != null else 0
 	var seed_text := str(run_state.seed_text) if run_state != null else "video_poker"
 	var local_rng := RngStream.new()
-	local_rng.configure(_stable_hash("%s:%s:%s:%d:%d:deal" % [get_id(), str(state.get("cabinet_key", "")), seed_text, rng_state, hands]))
+	local_rng.configure(JsonCoerceScript._stable_hash("%s:%s:%s:%d:%d:deal" % [get_id(), str(state.get("cabinet_key", "")), seed_text, rng_state, hands]))
 	return CardShoeScript.shuffle_cards(_base_deck(_variant(state)), local_rng)
 
 
@@ -2725,7 +2783,7 @@ func _best_odds_holds(hand: Array, variant: Dictionary, state: Dictionary, coin_
 		coin_count,
 		coin_value,
 		int(state.get("progressive_meter", PROGRESSIVE_BASE)),
-		_stable_hash(_hand_signature(hand)),
+		JsonCoerceScript._stable_hash(_hand_signature(hand)),
 	]
 	if _strategy_hold_cache.has(cache_key):
 		return _index_array(_strategy_hold_cache.get(cache_key, []))
@@ -2769,7 +2827,7 @@ func _hold_expected_pay(hand: Array, deck: Array, holds: Array, variant: Diction
 				samples += 1
 	else:
 		var sample_rng := RngStream.new()
-		sample_rng.configure(_stable_hash("%s|%s" % [seed_key, JSON.stringify(holds)]))
+		sample_rng.configure(JsonCoerceScript._stable_hash("%s|%s" % [seed_key, JSON.stringify(holds)]))
 		for _sample in range(STRATEGY_SAMPLE_CAP):
 			var pool := deck.duplicate(false)
 			var cards: Array = []
@@ -2971,7 +3029,7 @@ func _double_up_view(run_state: RunState, state: Dictionary, ui: Dictionary, las
 	var rng_state := int(run_state.rng_state) if run_state != null else 0
 	var seed_text := str(run_state.seed_text) if run_state != null else "video_poker"
 	var local_rng := RngStream.new()
-	local_rng.configure(_stable_hash("%s:%s:%d:%d:double" % [get_id(), seed_text, rng_state, hands + chain]))
+	local_rng.configure(JsonCoerceScript._stable_hash("%s:%s:%d:%d:double" % [get_id(), seed_text, rng_state, hands + chain]))
 	var deck: Array = CardShoeScript.shuffle_cards(CardShoeScript.build_deck(), local_rng)
 	var dealer: Dictionary = deck[0]
 	var picks: Array = []
@@ -3078,7 +3136,19 @@ func _high_two_pair(rank_counts: Dictionary, high: bool) -> int:
 	return int(pairs[pairs.size() - 1]) if high else int(pairs[0])
 
 
-func _outcome_message(blurb: String, pay_row: Dictionary, coin_pay: int, bankroll_delta: int, suspicion_delta: int, is_cheat: bool, pit_boss_summary: String, security_message: String, holdout_grade: String = "", holdout_applied: bool = false, holdout_challenge: Dictionary = {}, state: Dictionary = {}) -> String:
+func _outcome_message(options: FunctionOptions.VideoPokerOutcomeOptions) -> String:
+	var blurb := str(options.values.get("blurb", ""))
+	var pay_row: Dictionary = options.values.get("pay_row", {})
+	var coin_pay := int(options.values.get("coin_pay", 0))
+	var bankroll_delta := int(options.values.get("bankroll_delta", 0))
+	var suspicion_delta := int(options.values.get("suspicion_delta", 0))
+	var is_cheat := bool(options.values.get("is_cheat", false))
+	var pit_boss_summary := str(options.values.get("pit_boss_summary", ""))
+	var security_message := str(options.values.get("security_message", ""))
+	var holdout_grade := str(options.values.get("holdout_grade", ""))
+	var holdout_applied := bool(options.values.get("holdout_applied", false))
+	var holdout_challenge: Dictionary = options.values.get("holdout_challenge", {})
+	var state: Dictionary = options.values.get("state", {})
 	var lead := "You draw %s." % blurb
 	if is_cheat:
 		var grade_text := holdout_grade.replace("_", " ").capitalize()
@@ -3240,6 +3310,10 @@ func _immediate_action_command(action_id: String, action_kind: String, ui_state:
 		"action_id": action_id,
 		"action_kind": action_kind,
 		"direct_resolve": true,
+		# DOUBLE UP risks the already-awarded win and deliberately carries a zero
+		# new wager. It must not be rejected by the ordinary positive table-stake
+		# range before its sealed zero-cost action reaches the cabinet.
+		"skip_stake_validation": action_id == "double_up",
 		"preserve_surface_ui_state": false,
 		"set_stake": set_stake,
 		"selected_index": index,
@@ -3303,21 +3377,6 @@ func _build_result(action_id: String, action_kind: String, stake: int, bankroll_
 
 # --- Drawing -----------------------------------------------------------------
 
-func _empty_result(action_id: String, stake: int, environment: Dictionary, text: String) -> Dictionary:
-	return GameModule.build_action_result({
-		"ok": false,
-		"type": "game_action",
-		"source_id": get_id(),
-		"game_id": get_id(),
-		"action_id": action_id,
-		"action_kind": "unknown",
-		"stake": stake,
-		"won": false,
-		"environment_id": environment.get("id", ""),
-		"message": text,
-	})
-
-
 # --- Value helpers -----------------------------------------------------------
 
 func _index_array(value: Variant) -> Array:
@@ -3371,11 +3430,3 @@ func _presentation_cards(count: int) -> Array:
 	for i in range(count):
 		cards.append({"hidden": true})
 	return cards
-
-
-func _stable_hash(text: String) -> int:
-	var hash_value := 2166136261
-	for i in range(text.length()):
-		hash_value = int(hash_value ^ text.unicode_at(i))
-		hash_value = int((hash_value * 16777619) & 0x7fffffff)
-	return maxi(hash_value, 1)

@@ -1,5 +1,7 @@
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Permanent crew06_5 acceptance contract: all seven primary/fallback paths,
 # optionality, rank perks, save migration, and hidden deterministic presence.
 
@@ -13,7 +15,7 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const IGNORED_BASELINE_PATH := "res://scripts/tests/fixtures/crew06_5_ignored_run_baseline.json"
-const IGNORED_BASELINE_CHANGE_COMMIT := "f41d6db846097d9e26fe02005affc81007b42c5c"
+const IGNORED_BASELINE_CHANGE_COMMIT := "release-0.6-transient-runtime-geometry-normalization-v1"
 const JSON_EXACT_INTEGER_LIMIT := 9007199254740991.0
 
 
@@ -113,9 +115,9 @@ static func _check_event_presentation_contract(library: ContentLibrary, failures
 	var knuckles_speaker := _dict(knuckles.get("speaker", {}))
 	if str(knuckles.get("asset_path", "")) != "res://assets/art/events/rowdy_regular.png" \
 		or str(knuckles.get("icon_key", "")) != "rowdy_regular" \
-		or str(knuckles.get("environment_prop", "")) != "rowdy_patron" \
+		or str(knuckles.get("environment_prop", "")) != "character_actor" \
 		or not bool(knuckles_speaker.get("environment_actor", false)):
-		failures.append("Knuckles recruitment must remain an actor-present rowdy encounter, not a door prop.")
+		failures.append("Knuckles recruitment must remain a named standing actor with rowdy encounter art, not a door prop.")
 
 
 static func _check_placement_matrix(library: ContentLibrary, failures: Array) -> void:
@@ -130,7 +132,7 @@ static func _check_placement_matrix(library: ContentLibrary, failures: Array) ->
 				continue
 			var definition := CrewRecruitmentModelScript.member_definition(member_id)
 			var event_id := str(definition.get("event_id", ""))
-			if not _string_array(run_state.current_environment.get("event_ids", [])).has(event_id):
+			if not JsonCoerceScript._string_array(run_state.current_environment.get("event_ids", [])).has(event_id):
 				failures.append("Crew recruitment %s did not place its %s encounter." % [member_id, path_kind])
 				continue
 			var module := EventModuleScript.new()
@@ -170,7 +172,7 @@ static func _check_placement_matrix(library: ContentLibrary, failures: Array) ->
 		"resolved_event_ids": [],
 	}
 	CrewRecruitmentModelScript.apply_to_environment(velvet_negative, non_slow_environment)
-	if _string_array(non_slow_environment.get("event_ids", [])).has("recruitment_velvet"):
+	if JsonCoerceScript._string_array(non_slow_environment.get("event_ids", [])).has("recruitment_velvet"):
 		failures.append("Velvet fallback leaked outside the authored Slow Night beat.")
 
 
@@ -183,7 +185,7 @@ static func _check_production_reachability(library: ContentLibrary, failures: Ar
 			var run_state: RunState = generated.get("run_state") as RunState
 			var event_id := str(CrewRecruitmentModelScript.member_definition(member_id).get("event_id", ""))
 			if run_state == null or not bool(generated.get("entered", false)) \
-				or not _string_array(run_state.current_environment.get("event_ids", [])).has(event_id):
+				or not JsonCoerceScript._string_array(run_state.current_environment.get("event_ids", [])).has(event_id):
 				failures.append("Production generation did not expose %s's %s recruitment path." % [member_id, path_kind])
 				continue
 			var module := EventModuleScript.new()
@@ -234,63 +236,34 @@ static func _check_rook_paths(library: ContentLibrary, failures: Array) -> void:
 
 
 static func _check_bishop_grand_casino_presence(library: ContentLibrary, failures: Array) -> void:
-	var selected_seed := ""
-	for seed_index in range(128):
-		var candidate := _marked_run("CREW-BISHOP-CAGE-PRESENCE-%03d" % seed_index)
-		_recruit_for_fixture(candidate, "crew_bishop")
-		_set_fixture_world(candidate, [RunState.GRAND_CASINO_ARCHETYPE_ID])
-		var cage_probe := {
-			"id": "bishop_cage_seed_probe",
-			"archetype_id": RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID,
-			"world_node_id": RunState.GRAND_CASINO_ARCHETYPE_ID,
-			"kind": "casino",
-			"event_ids": [],
-			"resolved_event_ids": [],
-			"scenario_patron_ids": [],
-		}
-		CrewRecruitmentModelScript.apply_to_environment(candidate, cage_probe)
-		if _presence_has_member(cage_probe, "crew_bishop"):
-			selected_seed = candidate.seed_text
-			break
-	if selected_seed.is_empty():
-		failures.append("No deterministic Bishop itinerary seed selected the Grand Casino cage window.")
-		return
-	var run_state := _marked_run(selected_seed)
+	var run_state := _marked_run("CREW-BISHOP-GRAND-PRESENCE")
 	_recruit_for_fixture(run_state, "crew_bishop")
 	_set_fixture_world(run_state, [RunState.GRAND_CASINO_ARCHETYPE_ID])
 	run_state.narrative_flags["grand_casino_high_limit_access"] = true
 	var generator := RunGeneratorScript.new(library)
 	generator.next_environment(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID, true)
-	var selected_rooms: Array = []
-	if _presence_has_member(run_state.current_environment, "crew_bishop"):
-		selected_rooms.append(RunState.GRAND_CASINO_ARCHETYPE_ID)
+	if not _presence_has_member(run_state.current_environment, "crew_bishop") or not _presence_has_contact(run_state.current_environment, "crew_bishop"):
+		failures.append("Bishop's authored Grand Main presence did not retain its contextual contact seam.")
 	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
 		failures.append("Bishop cage presence fixture could not enter the production cage room.")
 		return
-	if _presence_has_member(run_state.current_environment, "crew_bishop"):
-		selected_rooms.append(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID)
-	if not _presence_has_contact(run_state.current_environment, "crew_bishop"):
-		failures.append("Bishop's selected cage presence did not retain its contextual contact seam.")
+	if _presence_has_member(run_state.current_environment, "crew_bishop") or _presence_has_contact(run_state.current_environment, "crew_bishop"):
+		failures.append("Bishop's Grand Main presence leaked into the Cage room.")
 	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID):
 		failures.append("Bishop cage presence fixture could not enter the production high-limit room.")
 		return
-	if _presence_has_member(run_state.current_environment, "crew_bishop"):
-		selected_rooms.append(RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID)
-	if selected_rooms != [RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID]:
-		failures.append("Bishop itinerary must select exactly one physical Grand Casino room; got %s." % JSON.stringify(selected_rooms))
+	if _presence_has_member(run_state.current_environment, "crew_bishop") or _presence_has_contact(run_state.current_environment, "crew_bishop"):
+		failures.append("Bishop's Grand Main presence leaked into High-Limit.")
 	# Re-entry must recompute from canonical world-node identity rather than
 	# trusting a stale serialized room actor snapshot.
-	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID):
-		failures.append("Bishop cage presence fixture could not return to the main floor.")
-		return
-	var stored_cage := run_state.peek_grand_casino_room_environment(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID)
-	stored_cage["crew_presence"] = [{"member_id": "crew_rook", "rank": "marker", "line": "stale"}]
-	stored_cage["scenario_patron_ids"] = ["crew_rook"]
-	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID) \
+	var stored_main := run_state.peek_grand_casino_room_environment(RunState.GRAND_CASINO_ARCHETYPE_ID)
+	stored_main["crew_presence"] = [{"member_id": "crew_rook", "rank": "marker", "line": "stale"}]
+	stored_main["scenario_patron_ids"] = ["crew_rook"]
+	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID) \
 		or not _presence_has_member(run_state.current_environment, "crew_bishop") \
 		or not _presence_has_contact(run_state.current_environment, "crew_bishop") \
 		or _presence_has_member(run_state.current_environment, "crew_rook"):
-		failures.append("Restored Grand Casino cage did not refresh Bishop's seeded presence on revisit.")
+		failures.append("Restored Grand Main did not refresh Bishop's authored presence on revisit.")
 
 
 static func _check_rook_signposts(library: ContentLibrary, failures: Array) -> void:
@@ -316,7 +289,7 @@ static func _check_rook_signposts(library: ContentLibrary, failures: Array) -> v
 			"scenario_patron_ids": [],
 		}
 		CrewRecruitmentModelScript.apply_to_environment(run_state, environment)
-		if _string_array(environment.get("event_ids", [])).has("recruitment_rook_leads"):
+		if JsonCoerceScript._string_array(environment.get("event_ids", [])).has("recruitment_rook_leads"):
 			leads_placed = true
 			break
 	if not leads_placed:
@@ -328,17 +301,17 @@ static func _check_rook_signposts(library: ContentLibrary, failures: Array) -> v
 	_set_fixture_world(presence_run, ["back_alley"])
 	var environment := {"id": "rook_leads_fixture", "archetype_id": "back_alley", "world_node_id": "back_alley", "kind": "casino", "event_ids": [], "resolved_event_ids": []}
 	CrewRecruitmentModelScript.apply_to_environment(presence_run, environment)
-	if not _string_array(environment.get("event_ids", [])).has("recruitment_rook_leads"):
+	if not JsonCoerceScript._string_array(environment.get("event_ids", [])).has("recruitment_rook_leads"):
 		failures.append("Rook's seeded presence did not expose his reusable leads encounter.")
 	else:
 		presence_run.set_environment(environment)
 		var module := EventModuleScript.new()
 		module.setup(library.event("recruitment_rook_leads"), library)
 		var first := module.resolve(presence_run, presence_run.current_environment, "ask_switch")
-		if not bool(first.get("ok", false)) or _string_array(presence_run.current_environment.get("resolved_event_ids", [])).has("recruitment_rook_leads") \
+		if not bool(first.get("ok", false)) or JsonCoerceScript._string_array(presence_run.current_environment.get("resolved_event_ids", [])).has("recruitment_rook_leads") \
 			or not bool(presence_run.narrative_flags.get("crew_rook_lead_heard:crew_switch", false)) \
 			or not module.choice("ask_switch", presence_run, presence_run.current_environment).is_empty() \
-			or _string_array(presence_run.current_environment.get("event_ids", [])).has("recruitment_rook_leads") \
+			or JsonCoerceScript._string_array(presence_run.current_environment.get("event_ids", [])).has("recruitment_rook_leads") \
 			or module.can_trigger(presence_run, presence_run.current_environment):
 			failures.append("Rook's presence-bound lead did not retire after its one authored hearing.")
 		var heard_round_trip := RunStateScript.new()
@@ -398,13 +371,13 @@ static func _check_perks_and_save(failures: Array) -> void:
 	loaded.from_dict(saved)
 	if loaded.crew_rank("crew_switch") != "associate" or loaded.crew_rank("crew_knuckles") != "associate" or not loaded.crew_rook_escort_available():
 		failures.append("Crew met/rank/perk state did not survive save/load.")
-	if not _string_array(loaded.crew_knuckles_stash_status().get("item_ids", [])).has("marked_cards") or loaded._carried_contraband_ids().has("marked_cards"):
+	if not JsonCoerceScript._string_array(loaded.crew_knuckles_stash_status().get("item_ids", [])).has("marked_cards") or loaded._carried_contraband_ids().has("marked_cards"):
 		failures.append("Knuckles' capped stash did not survive a sweep-safe save round trip.")
 	var legacy := RunStateScript.new()
 	var legacy_data := RunStateScript.new().to_dict()
 	legacy_data["crew_state"] = _dict(legacy_data.get("crew_state", {}))
 	legacy.from_dict(legacy_data)
-	if not _string_array(legacy.crew_knuckles_stash_status().get("item_ids", [])).is_empty():
+	if not JsonCoerceScript._string_array(legacy.crew_knuckles_stash_status().get("item_ids", [])).is_empty():
 		failures.append("Pre-recruitment crew saves did not migrate to an empty stash.")
 
 
@@ -606,12 +579,12 @@ static func _check_presence_determinism(failures: Array) -> void:
 		"crew_presence": [{"member_id": "crew_rook", "rank": "marker", "line": "stale"}],
 	}
 	CrewRecruitmentModelScript.apply_to_environment(first, stale_environment)
-	var stale_patrons := _string_array(stale_environment.get("scenario_patron_ids", []))
+	var stale_patrons := JsonCoerceScript._string_array(stale_environment.get("scenario_patron_ids", []))
 	var leaked_member := false
 	for member_id in CrewRecruitmentModelScript.MEMBER_IDS:
 		if stale_patrons.has(member_id):
 			leaked_member = true
-	if stale_environment.has("crew_presence") or leaked_member or _string_array(stale_environment.get("event_ids", [])).has("recruitment_rook_leads"):
+	if stale_environment.has("crew_presence") or leaked_member or JsonCoerceScript._string_array(stale_environment.get("event_ids", [])).has("recruitment_rook_leads"):
 		failures.append("Crew presence rotation left stale patrons or Rook leads in an empty room.")
 	var recovery_run := _marked_run("CREW-PRESENCE-RECOVERY")
 	var recovery_environment := {
@@ -625,9 +598,9 @@ static func _check_presence_determinism(failures: Array) -> void:
 	}
 	CrewRecruitmentModelScript.apply_to_environment(recovery_run, recovery_environment)
 	if recovery_environment.has("crew_presence") \
-		or _string_array(recovery_environment.get("event_ids", [])).has("recruitment_rook_leads") \
-		or _string_array(recovery_environment.get("scenario_patron_ids", [])).has("crew_rook") \
-		or not _string_array(recovery_environment.get("scenario_patron_ids", [])).has("bonfire_crowd"):
+		or JsonCoerceScript._string_array(recovery_environment.get("event_ids", [])).has("recruitment_rook_leads") \
+		or JsonCoerceScript._string_array(recovery_environment.get("scenario_patron_ids", [])).has("crew_rook") \
+		or not JsonCoerceScript._string_array(recovery_environment.get("scenario_patron_ids", [])).has("bonfire_crowd"):
 		failures.append("Crew presence weakened the actor-free recovery-venue contract.")
 
 
@@ -653,12 +626,12 @@ static func _set_fixture_world(run_state: RunState, node_ids: Array) -> void:
 static func _generated_path(library: ContentLibrary, member_id: String, path_kind: String) -> Dictionary:
 	var definition := CrewRecruitmentModelScript.member_definition(member_id)
 	var location := _dict(definition.get(path_kind, {}))
-	var archetypes := _string_array(location.get("archetype_ids", []))
+	var archetypes := JsonCoerceScript._string_array(location.get("archetype_ids", []))
 	if archetypes.is_empty():
 		return {"run_state": null, "entered": false}
-	var scenarios := _string_array(location.get("scenario_ids", []))
+	var scenarios := JsonCoerceScript._string_array(location.get("scenario_ids", []))
 	if scenarios.is_empty():
-		scenarios = _string_array(location.get("preferred_scenario_ids", []))
+		scenarios = JsonCoerceScript._string_array(location.get("preferred_scenario_ids", []))
 	var scenario_id := str(scenarios[0]) if not scenarios.is_empty() else ""
 	var run_state := _marked_run(_production_path_seed(member_id, path_kind, scenario_id))
 	var world_map := WorldMapScript.new(library).build(run_state, run_state.create_rng("map"))
@@ -689,8 +662,9 @@ static func _generated_path(library: ContentLibrary, member_id: String, path_kin
 		if not scenario.is_empty():
 			run_state.seed_scenario_for_node(archetype_id, scenario)
 	generator.next_environment(run_state, archetype_id, true)
-	var entered := str(run_state.current_environment.get("archetype_id", "")) == archetype_id and generator._last_environment_install_errors.is_empty()
-	var layers := _string_array(location.get("layer_ids", []))
+	var generation_errors := generator._last_environment_install_errors.duplicate(true)
+	var entered := str(run_state.current_environment.get("archetype_id", "")) == archetype_id and generation_errors.is_empty()
+	var layers := JsonCoerceScript._string_array(location.get("layer_ids", []))
 	var layer_result: Dictionary = {}
 	var base_arrival_failures: Array = []
 	if entered and not layers.is_empty():
@@ -699,14 +673,19 @@ static func _generated_path(library: ContentLibrary, member_id: String, path_kin
 	if entered and not layers.is_empty() and str(run_state.current_environment.get("current_layer_id", "")) != str(layers[0]):
 		layer_result = generator.enter_environment_layer(run_state, str(layers[0]), false)
 		entered = bool(layer_result.get("ok", false))
+	var world_finalization_errors: Array = []
 	if entered:
 		var world_finalized := run_state.world_sequence_finalize_base_semantics([], library, {"viewport_size": {"x": 1280, "y": 720}})
 		entered = bool(world_finalized.get("ok", false)) or bool(world_finalized.get("inactive", false))
+		if not entered:
+			world_finalization_errors = _array(world_finalized.get("errors", [])).duplicate(true)
 	var path_errors: Array = []
+	path_errors.append_array(generation_errors)
 	if not base_arrival_failures.is_empty():
 		path_errors.append_array(base_arrival_failures)
 	if not layer_result.is_empty() and not bool(layer_result.get("ok", false)):
 		path_errors.append(str(layer_result.get("message", layer_result.get("errors", []))))
+	path_errors.append_array(world_finalization_errors)
 	return {"run_state": run_state, "entered": entered, "errors": path_errors}
 
 
@@ -730,7 +709,7 @@ static func _production_path_seed(member_id: String, path_kind: String, scenario
 
 static func _presence_environment(run_state: RunState, member_id: String, configure_world: bool = true) -> Dictionary:
 	var definition := CrewRecruitmentModelScript.member_definition(member_id)
-	var locations := _string_array(definition.get("presence", []))
+	var locations := JsonCoerceScript._string_array(definition.get("presence", []))
 	if configure_world:
 		_set_fixture_world(run_state, locations)
 	var world_ids: Array = []
@@ -760,7 +739,7 @@ static func _contact_is_embedded(environment: Dictionary, member_id: String) -> 
 	if environment.is_empty():
 		return false
 	var contact_event_id := str(CrewRecruitmentModelScript.member_definition(member_id).get("contact_event_id", ""))
-	if not _string_array(environment.get("event_ids", [])).has(contact_event_id):
+	if not JsonCoerceScript._string_array(environment.get("event_ids", [])).has(contact_event_id):
 		return false
 	for presence_value in _array(environment.get("crew_presence", [])):
 		if typeof(presence_value) == TYPE_DICTIONARY and str((presence_value as Dictionary).get("member_id", "")) == member_id \
@@ -913,12 +892,3 @@ static func _dict(value: Variant) -> Dictionary:
 
 static func _array(value: Variant) -> Array:
 	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	for value_entry in _array(value):
-		var entry := str(value_entry).strip_edges()
-		if not entry.is_empty():
-			result.append(entry)
-	return result

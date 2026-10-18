@@ -89,7 +89,7 @@ func _scenario_metrics(definition: Dictionary, generator, resolver, scenario: Di
 	for spin_index in range(spins):
 		if StateScript.active_bonus_incomplete(machine):
 			machine["active_bonus"] = {"active": false, "complete": true}
-		var resolved: Dictionary = resolver.resolve_spin(machine, "spin", bet, rng, definition, {}, false, true)
+		var resolved: Dictionary = resolver.resolve_spin(FunctionOptions.slot_resolve(machine, "spin", bet, {"rng": rng, "definition": definition, "environment": {}, "normalize_machine": false, "audit_metrics_mode": true}))
 		machine = _dict(resolved.get("machine", machine))
 		var result: Dictionary = _dict(resolved.get("result", {}))
 		var stake_cost := maxi(0, int(result.get("slot_stake_cost", 10)))
@@ -101,7 +101,7 @@ func _scenario_metrics(definition: Dictionary, generator, resolver, scenario: Di
 			var window: Dictionary = _dict(offer.get("skill_window_msec", {}))
 			if not window.is_empty():
 				var input_msec := _scripted_nudge_input_msec(offer, nudge_count + 1)
-				var nudge_resolved: Dictionary = resolver.resolve_spin(machine, "nudge", bet, rng, definition, {}, false, false, run_state, {}, {"slot_nudge_chain_input_msec": input_msec})
+				var nudge_resolved: Dictionary = resolver.resolve_spin(FunctionOptions.slot_resolve(machine, "nudge", bet, {"rng": rng, "definition": definition, "environment": {}, "normalize_machine": false, "audit_metrics_mode": false, "run_state": run_state, "item_effects": {}, "ui_state": {"slot_nudge_chain_input_msec": input_msec}}))
 				machine = _dict(nudge_resolved.get("machine", machine))
 				var nudge_result: Dictionary = _dict(nudge_resolved.get("result", {}))
 				total_delta += int(nudge_result.get("bankroll_delta", 0))

@@ -13,8 +13,8 @@ shared indexes. Its unique implementation paths are:
 - `scripts/ui/scenario_renderers/roadside_shelter.gd`
 - `scripts/tests/foundation/env06_7_package_b_contract.gd`
 - `docs/plans/env06_7_package_b_sequence_dossiers.json`
-- `tools/env06_7_package_b_generate.mjs`
-- `tools/env06_7_package_b_sign.gd`
+- `tools/archive/env06_7/env06_7_package_b_generate.mjs`
+- `tools/archive/env06_7/env06_7_package_b_sign.gd`
 
 ## Required production authority
 

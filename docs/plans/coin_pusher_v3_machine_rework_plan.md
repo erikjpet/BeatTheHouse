@@ -1,6 +1,11 @@
 # Coin Pusher V3 — The Real Machine (binding design contract)
 
-Status: **OWNER-APPROVED design, execution pending** (2026-08-17).
+Status: **OWNER-APPROVED, IMPLEMENTED BINDING DESIGN** (approved 2026-08-17).
+All three production cabinets, persistence, deterministic native/Web paths,
+goals, collection, conservation, and focused gates are present in current 0.6
+source. Final implementation acceptance is recorded in
+`docs/plans/coin_pusher_v3_program_closure_audit.md`; the design rulings below
+remain authoritative.
 **Amendment 6.2 (2026-08-18): rear-fed visible drop-board ruling.** The
 owner rejected the retraction-apex shortcut that allowed a newly inserted coin
 to land directly on the lower fixed deck. Every inserted coin now travels down
@@ -558,10 +563,10 @@ tray_value and sub-game state, and log the migration once.
 
 | Stage | Prompt | Scope |
 | --- | --- | --- |
-| 1 | `pusherv3_1_physics_machine_prompt.md` | Section 4 solver rebuild + section 3 machine mechanics, headless; behavior contracts green |
-| 2 | `pusherv3_2_live_loop_prompt.md` | 3.5-3.7 + 5: continuous loop, apparatus framework, skill stop, tray/collect, exit-settle + section 8 persistence, delete the trace subsystem |
-| 3 | `pusherv3_3_cabinet_prompt.md` | Section 6 full cabinet renderer + audio + projection |
-| 4 | `pusherv3_4_variations_integration_prompt.md` | Ridge plinko + pucks and Vault fragments on the new machine, 5.3-5.5 integration re-wiring, EV harness, migration, feel captures, board closure |
+| 1 | `docs/todone/pusherv3_1_physics_machine_prompt.md` | Section 4 solver rebuild + section 3 machine mechanics, headless; behavior contracts green |
+| 2 | `docs/todone/pusherv3_2_live_loop_prompt.md` | 3.5-3.7 + 5: continuous loop, apparatus framework, skill stop, tray/collect, exit-settle + section 8 persistence, delete the trace subsystem |
+| 3 | `docs/todone/pusherv3_3_cabinet_prompt.md` | Section 6 full cabinet renderer + audio + projection |
+| 4 | `docs/todone/pusherv3_4_variations_integration_prompt.md` | Ridge plinko + pucks and Vault fragments on the new machine, 5.3-5.5 integration re-wiring, EV harness, migration, feel captures, board closure |
 
 Supersessions recorded on the board: `pusher06_0/1/2/3/4` are closed
 as superseded by this contract.

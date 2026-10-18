@@ -1,6 +1,9 @@
 class_name ScratchTicketIconRenderer
 extends RefCounted
 
+# Stateless renderer for mechanic-specific Scratch Ticket symbols, numbers,
+# card marks, and prize icons within authored ticket regions.
+
 const RegionModelScript := preload("res://scripts/games/scratch_ticket_region_model.gd")
 const PlayingCardRendererScript := preload("res://scripts/games/playing_card_renderer.gd")
 const SYMBOLS := {

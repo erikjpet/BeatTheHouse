@@ -1,6 +1,9 @@
 class_name CoinPusherSolver
 extends RefCounted
 
+# Deterministic fixed-point body solver for Coin Pusher platforms, contacts,
+# support transfer, sleeping, terminal tray/gutter events, and compact snapshots.
+
 const SCHEMA := "coin_pusher_machine_v3"
 const VERSION := 3
 const FIXED_HZ := 60
@@ -61,6 +64,7 @@ const OPENING_TEMPLATE_CACHE_CAPACITY := 16
 static var _native_backend: Object = null
 static var _native_backend_checked := false
 static var _last_step_backend := "gdscript_v3"
+static var _native_required_error_reported := false
 static var _opening_template_cache: Dictionary = {}
 static var _opening_template_cache_order: Array = []
 
@@ -466,8 +470,27 @@ static func step_ticks(state: Dictionary, config: Dictionary, tick_count: int) -
 			var native_result := result_value as Dictionary
 			_debug_assert_invariants(native_result)
 			return native_result
+	if native == null and _native_extension_required():
+		_last_step_backend = "native_extension_required"
+		var message := "Distribution build is missing the required Coin Pusher native extension; simulation was stopped instead of using the development fallback."
+		if not _native_required_error_reported:
+			_native_required_error_reported = true
+			push_error(message)
+		return {
+			"ok": false,
+			"error_code": "native_extension_required",
+			"message": message,
+			"events": [],
+			"metrics": {"fixed_ticks": 0, "body_count": (state.get("bodies", []) as Array).size()},
+			"invariants": {"ok": false, "native_extension_required": true},
+		}
 	_last_step_backend = "gdscript_v3"
 	return _step_ticks_gdscript(state, config, tick_count)
+
+
+static func _native_extension_required() -> bool:
+	var override := OS.get_environment("BTH_FORCE_DISTRIBUTION_NATIVE_REQUIRED").strip_edges().to_lower()
+	return OS.has_feature("distribution_build") or ["1", "true", "yes", "on"].has(override)
 
 
 static func step_ticks_reference_for_test(state: Dictionary, config: Dictionary, tick_count: int) -> Dictionary:
@@ -553,6 +576,15 @@ static func last_step_backend_for_test() -> String:
 static func reset_native_backend_for_test() -> void:
 	_native_backend = null
 	_native_backend_checked = false
+	_native_required_error_reported = false
+
+
+static func force_native_backend_missing_for_test() -> void:
+	_native_backend = null
+	_native_backend_checked = true
+	# The returned fail-closed payload remains testable without deliberately
+	# polluting a passing regression's stderr with the production one-shot error.
+	_native_required_error_reported = true
 
 
 static func _native_solver_backend() -> Object:
@@ -2154,17 +2186,6 @@ static func _integrate_axis(body: Dictionary, position_key: String, velocity_key
 	var whole := _divi(total, FIXED_HZ)
 	body[position_key] = int(body.get(position_key, 0)) + whole
 	body[remainder_key] = total - whole * FIXED_HZ
-
-
-static func _total_mass(bodies: Array) -> int:
-	var total := 0
-	for body_value in bodies:
-		var body: Dictionary = body_value
-		if not bool(body.get("sleeping", false)):
-			total += maxi(1, int(body.get("mass", FP)))
-	return total
-
-
 static func _apply_surface_friction(body: Dictionary, coefficient: int) -> void:
 	var keep := clampi(FP - _divi(coefficient, 8), 0, FP)
 	body["vx"] = _divi(int(body.get("vx", 0)) * keep, FP)
@@ -2231,21 +2252,6 @@ static func _wake_nearby(bodies: Array, x: int, y: int, radius: int, excluded_id
 		var dy := int(body.get("y", 0)) - y
 		if dx * dx + dy * dy <= radius_sq:
 			_wake(body)
-
-
-static func _position_clear(bodies: Array, x: int, y: int, minimum: int) -> bool:
-	var minimum_sq := minimum * minimum
-	for body_value in bodies:
-		var body: Dictionary = body_value
-		if int(body.get("z", 0)) > DECK_Z + SUPPORT_VERTICAL_TOLERANCE:
-			continue
-		var dx := int(body.get("x", 0)) - x
-		var dy := int(body.get("y", 0)) - y
-		if dx * dx + dy * dy < minimum_sq:
-			return false
-	return true
-
-
 static func _z_bands_overlap(left: Dictionary, right: Dictionary) -> bool:
 	var left_base := int(left.get("z", 0))
 	var right_base := int(right.get("z", 0))

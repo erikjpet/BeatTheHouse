@@ -1,31 +1,43 @@
 # 0.6 Active Task Board — The Living Town & The Crew
 
+> **Historical board:** This legacy board and its later
+> [`README_0_6_release_week.md`](README_0_6_release_week.md) override are both
+> closed as active coordination sources. Preserve their row history, but do not
+> claim work from either file. Use `../current_game_state.md` for current state
+> and `environment_scenario_slot_instance_rework.md` for the remaining owner
+> placement handoff.
+
 Created: 2026-08-13 · Binding design contract:
 `docs/plans/0.6_living_world_roadmap.md` (v4, owner-approved).
-This board is the **single source of truth for 0.6 execution state**.
+This board is retained as the historical source of pre-release-week execution state.
 The roadmap is the single source of truth for **design intent**. When
 code reality disagrees with either, code reality wins — record the
 disagreement in the linked Discovery & Decision Log companion.
 
-## Current-state audit — 2026-09-14
+## Current-state audit — 2026-09-15
 
 Current synchronized `main` contains the completed playtest-repair series, its
 reusable visible-input session harness, the completed eight-commit `fix06_32`
 verification stack, the newer back-room poker personalities and
-dealer/animation work, and the game-prop/Silas rework. Static validation, all
-three playtest-fix regression groups, game contracts, the game-rework gate
-wiring contract, and a merged player path pass.
+dealer/animation work, the game-prop/Silas rework, the accepted performance
+machinery, the September 15 smoke stabilization, and the dead/redundant-code
+cleanup and shared-runtime consolidation passes. The current product summary is
+`../current_game_state.md`.
 
-The build is playable but not release-ready. The full Contract suite still
-fails at the room-construction/finalization boundary: generated overlap and
-route rejection, Grand Casino slot-bank placement, and placement-dependent
-golden drift remain open. The attempted reusable spawn-slot placement approach
+The build is playable but not release-ready. On current source, static
+validation and exhaustive script loading pass; all nine Smoke stages, focused
+game/audio checks, performance smoke, and native Coin Pusher identity/parity
+pass. A fresh Contract run still fails at room/scenario composition: label and
+hit-authority overlap in normal or expanded small-screen layouts, colliding
+route endpoints, omitted generated inventory, and placement-dependent fixture
+expectations remain open. The attempted reusable spawn-slot placement approach
 was explicitly rejected, excluded from `main`, and deleted during the
-two-branch custody cleanup. Performance/platform and release work stays parked
-until an accepted placement redesign lands. Deferred code may exist only on
-`codex/wip-0.6-consolidated`.
-The exact integration inventory, verification matrix, playtest path, and failure
-census are recorded in `../plans/main_integration_audit_2026-09-14.md`.
+two-branch custody cleanup. Binding performance/platform and release work stays
+parked until an accepted placement redesign lands. Deferred code may exist only
+on `codex/wip-0.6-consolidated`.
+
+The September 14 integration inventory remains the custody snapshot that led to
+this state; it is no longer the latest verification verdict.
 
 Use these distinctions when choosing work:
 
@@ -40,13 +52,16 @@ Use these distinctions when choosing work:
 - `PARKED` remains intentionally unavailable until its named owner/playtest
   dependency opens it.
 
-The complete file-by-file reconciliation and recommended execution order are
-in `docs/plans/0.6_todo_state_audit_2026-08-31.md`.
+The dated file-by-file reconciliation is preserved at
+`docs/plans/0.6_todo_state_audit_2026-08-31.md`; its September 3 addenda are
+historical inputs, not the current execution order. Any owner-directed sequence
+later in this board is likewise historical; current state is maintained in
+`../current_game_state.md`.
 
 ## Playtest findings intake
 
-The owner build and known limitations are recorded in
-`docs/plans/0.6_playtest_handoff.md`. Owner notes become scoped `fix06_*` rows
+The historical September 10 owner build and its then-known limitations are
+recorded in `docs/plans/0.6_playtest_handoff.md`. Owner notes become scoped `fix06_*` rows
 through the playtest intake process. Cosmetic, pacing and balance notes remain
 findings until the owner prioritizes them; direction changes are owner decisions
 recorded in the roadmap and are never guessed by an agent.
@@ -392,16 +407,11 @@ below remain independently actionable.
 
 ### Current owner-directed sequence
 
-The first owner playtest has already produced the `playtest_fixes01…03` repair
-series. The current order is now binding:
-
-1. Maintain the two-branch custody state. The rejected placement experiment is
-   deleted, and all other assessed completed work is integrated on `main`.
-2. Rethink room construction for the expanded object inventory and land an
-   accepted placement update.
-3. Rerun the performance/platform and full playtest gates on that accepted
-   placement tree, then follow owner direction for balance, polish, and release.
-   Do not begin release activity before placement is complete.
+The binding release sequence, live scoreboard, owner checkpoints, and scope
+boundary are maintained in
+[`README_0_6_release_week.md`](README_0_6_release_week.md). Do not claim work
+from this board's historical sequence unless the release-week plan explicitly
+moves it into the active 0.6.0 path.
 
 ## Owner Questions (current verdicts; do not guess)
 

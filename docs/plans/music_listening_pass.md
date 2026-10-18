@@ -1,7 +1,8 @@
 # Music Listening Pass
 
-Status: **COMPLETE for the unreleased 0.4.0 candidate.** This remains the
-listening reference for the live procedural/authored stem system.
+Status: **COMPLETE HISTORICAL LISTENING PASS / ACTIVE REFERENCE.** This 2026-07-02
+pass remains a reference for the current procedural/authored stem system; later
+0.6 phrase, tempo, outcome, and Web-delivery work extends it.
 
 Build checked: Act 1 T6.6 music director pass, 2026-07-02.
 

@@ -31,6 +31,7 @@ func _init() -> void:
 	_check_side_pot(game, failures)
 	_check_no_limit_raise_rules(game, failures)
 	_check_table_talk(game, library, failures)
+	_check_automatic_turns_and_tells(game, failures)
 	_check_six_hand_rotation_and_shoe(game, failures)
 	_check_raise_round_closure(game, failures)
 	_check_multiway_split(failures)
@@ -219,6 +220,110 @@ func _check_performance(game: GameModule, failures: Array[String]) -> Dictionary
 	if elapsed_usec > 2000000:
 		failures.append("One thousand deterministic Hold'em evaluations exceeded the two-second audit budget.")
 	return {"sessions": 1000, "elapsed_usec": elapsed_usec, "budget_usec": 2000000}
+
+
+func _check_automatic_turns_and_tells(game: GameModule, failures: Array[String]) -> void:
+	var run_state := RunStateScript.new()
+	run_state.start_new("CREW-HOLDEM-AUTOMATIC-TURNS")
+	run_state.bankroll = 500
+	for member_id in CrewStateModelScript.MEMBER_IDS:
+		run_state.crew_add_trust(str(member_id), CrewStateModelScript.rank_threshold("made"), "automatic_turn_audit")
+	var environment := {
+		"id": "crew_holdem_automatic_turns",
+		"archetype_id": "small_underground_casino",
+		"kind": "crew",
+		"layer_id": "back_room",
+		"crew_poker_turn_engine": "ordered_v1",
+		"resident_member_ids": CrewStateModelScript.MEMBER_IDS.slice(0, CrewPokerGameScript.MAX_OPPONENT_SEATS),
+		"game_ids": ["crew_draw_poker"],
+		"game_states": {},
+	}
+	var setup_rng := RngStreamScript.new()
+	setup_rng.configure(48821)
+	var generated := game.generate_environment_state(run_state, environment, setup_rng)
+	environment["game_states"] = {"crew_draw_poker": generated}
+	run_state.current_environment = environment
+	var deal := _apply(game, run_state, "deal", {"surface_time_msec": 1000, "surface_presentation_time_msec": 1000}, 48822)
+	if not bool(deal.get("ok", false)):
+		failures.append("Automatic-turn audit could not deal its Hold'em fixture.")
+		return
+	var table: Dictionary = run_state.current_environment.get("game_states", {}).get("crew_draw_poker", {})
+	var owner := str(table.get("turn_owner", ""))
+	var due_msec := int(table.get("npc_turn_due_msec", 0))
+	var started_msec := int(table.get("npc_turn_started_msec", 0))
+	if owner.is_empty() or owner == "player" or str(table.get("npc_turn_actor", "")) != owner or due_msec <= started_msec:
+		failures.append("Hold'em did not schedule the first opponent decision after the deal.")
+		return
+	var surface := game.surface_state(run_state, run_state.current_environment, deal.get("ui_state", {}))
+	var active_tell: Dictionary = surface.get("active_tell", {}) if typeof(surface.get("active_tell", {})) == TYPE_DICTIONARY else {}
+	var emotion := str(active_tell.get("emotion", ""))
+	if not CrewPokerGameScript.TELL_EMOTIONS.has(emotion) or str(active_tell.get("cue", "")).is_empty():
+		failures.append("The waiting opponent did not publish a readable emotional tell and physical cue.")
+	if not (surface.get("legal_actions", []) as Array).is_empty():
+		failures.append("The live Hold'em surface still exposed a manual Watch action during an opponent turn.")
+	for private_key in ["strength", "pressure", "equity", "intent"]:
+		if active_tell.has(private_key):
+			failures.append("The public emotional tell leaked private decision field %s." % private_key)
+	var early_ui: Dictionary = (deal.get("ui_state", {}) as Dictionary).duplicate(true)
+	early_ui["surface_time_msec"] = started_msec + 1
+	early_ui["surface_presentation_time_msec"] = started_msec + 1
+	if game.surface_needs_auto_tick(early_ui, run_state, run_state.current_environment):
+		failures.append("Hold'em advanced an opponent before the visible thinking/animation window elapsed.")
+	var due_ui := {"surface_time_msec": due_msec + 1, "surface_presentation_time_msec": due_msec + 1, "reduce_motion": false}
+	if not game.surface_needs_auto_tick(due_ui, run_state, run_state.current_environment):
+		failures.append("Hold'em did not request an automatic action when the opponent timer became due.")
+	var command := game.surface_auto_action_command(due_ui, run_state, run_state.current_environment)
+	if not bool(command.get("handled", false)) or not bool(command.get("direct_resolve", false)) or str(command.get("action_id", "")) != "observe":
+		failures.append("The due opponent turn did not produce one direct automatic decision command.")
+	var before_ordinal := int(table.get("action_ordinal", 0))
+	var automatic_result := _apply(game, run_state, "observe", due_ui, 48823)
+	var after_table: Dictionary = run_state.current_environment.get("game_states", {}).get("crew_draw_poker", {})
+	if not bool(automatic_result.get("ok", false)) or int(after_table.get("action_ordinal", 0)) != before_ordinal + 1:
+		failures.append("The automatic opponent command did not resolve exactly one visible decision.")
+
+	var emotion_samples := {}
+	var same_hand_samples := {}
+	var tell_state := {
+		"phase": "flop",
+		"pot": 18,
+		"current_bet": 6,
+		"community_cards": [_card(14, 2), _card(9, 1), _card(4, 3)],
+	}
+	var tell_seat := {"member_id": "crew_lucky", "cards": [_card(7, 0), _card(3, 1)], "round_contribution": 0}
+	for sample in range(240):
+		var tell_rng := RngStreamScript.new()
+		tell_rng.configure(51000 + sample)
+		var tell: Dictionary = game.call("_npc_tell_for_turn", tell_state, tell_seat, tell_rng)
+		var sampled_emotion := str(tell.get("emotion", ""))
+		emotion_samples[sampled_emotion] = true
+		same_hand_samples[sampled_emotion] = true
+	if same_hand_samples.size() < 2:
+		failures.append("A fixed hidden hand always emitted the same tell instead of retaining ambiguity.")
+	# Strong/weak fixtures across the full personality cast must be capable of
+	# presenting every authored emotional family, including misleading projections.
+	for member_id in CrewStateModelScript.MEMBER_IDS:
+		for cards in [[_card(14, 0), _card(14, 1)], [_card(8, 0), _card(3, 1)]]:
+			var sample_seat := {"member_id": str(member_id), "cards": cards, "round_contribution": 0}
+			for sample in range(40):
+				var cast_rng := RngStreamScript.new()
+				cast_rng.configure(62000 + CrewStateModelScript.MEMBER_IDS.find(member_id) * 1000 + sample + (0 if int((cards[0] as Dictionary).get("rank", 0)) == 14 else 400))
+				var cast_tell: Dictionary = game.call("_npc_tell_for_turn", tell_state, sample_seat, cast_rng)
+				emotion_samples[str(cast_tell.get("emotion", ""))] = true
+	for expected_emotion in CrewPokerGameScript.TELL_EMOTIONS:
+		if not emotion_samples.has(str(expected_emotion)):
+			failures.append("The emotional tell system never showcased %s in its deterministic cast sample." % str(expected_emotion))
+	var timing: Dictionary = CrewPokerModelScript.config().get("opponent_turn_timing", {})
+	var normal_max := int(timing.get("maximum_msec", 2400))
+	var delays := {}
+	var saw_long_think := false
+	for sample in range(160):
+		var delay_rng := RngStreamScript.new()
+		delay_rng.configure(73000 + sample)
+		var delay := int(game.call("_npc_think_delay_msec", tell_state, tell_seat, {"strength": 49, "pressure": 42}, delay_rng, false))
+		delays[delay] = true
+		saw_long_think = saw_long_think or delay > normal_max
+	if delays.size() < 8 or not saw_long_think:
+		failures.append("Opponent decision timing did not vary or produce occasional longer deliberation.")
 
 
 func _check_side_pot(game: GameModule, failures: Array[String]) -> void:

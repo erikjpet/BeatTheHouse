@@ -17,6 +17,24 @@ Assert-True $gamesPlan.valid ("Production games shard plan is invalid: " + (@($g
 $contractsPlan = Test-FoundationSystemsShardPlan -ExpectedIds (Get-FoundationContractsCheckIds) -Shards (Get-FoundationContractsShardPlan)
 Assert-True $contractsPlan.valid ("Production contracts shard plan is invalid: " + (@($contractsPlan.errors) -join " | "))
 
+$preferredContractOrder = @(
+    "contracts_content_scenarios",
+    "contracts_games",
+    "contracts_coin_pusher",
+    "contracts_crew"
+)
+$selectedContractPlan = [ordered]@{ contracts_content_core = @("content_contracts") }
+$selectedContractOrder = @(Get-FoundationShardLaunchOrder -Plan $selectedContractPlan -PreferredOrder $preferredContractOrder)
+Assert-True ($selectedContractOrder.Count -eq 1) "A selected Contract shard launch order added unselected preferred shards."
+Assert-True ($selectedContractOrder[0] -eq "contracts_content_core") "A selected Contract shard lost its canonical launch identity."
+$orderedContractPlan = [ordered]@{
+    contracts_content_core = @("content_contracts")
+    contracts_games = @("game_contracts")
+    contracts_content_scenarios = @("scenario_contracts")
+}
+$orderedContractOrder = @(Get-FoundationShardLaunchOrder -Plan $orderedContractPlan -PreferredOrder $preferredContractOrder)
+Assert-True (($orderedContractOrder -join "|") -eq "contracts_content_scenarios|contracts_games|contracts_content_core") "Contract launch ordering did not intersect preferences with the selected plan."
+
 $runnerSource = Get-Content -LiteralPath (Join-Path (Split-Path -Parent $PSScriptRoot) "scripts/tests/foundation/check_core_content.gd") -Raw
 $systemsMatch = [regex]::Match($runnerSource, '(?s)func _foundation_run_system_suite\(.*?(?=\nfunc _foundation_run_all_suite\()')
 Assert-True $systemsMatch.Success "Could not locate the systems registration in the foundation runner source."
@@ -73,7 +91,7 @@ $passedReport = [pscustomobject]@{
     passed = $true
     failure_count = 0
     failures = @()
-    checks = @([pscustomobject]@{ id = "beta"; duration_msec = 1; failure_count = 0; failures = @() })
+    checks = @([pscustomobject]@{ id = "beta"; duration_msec = 1; failure_count = 0; failures = @(); passed = $true })
     last_started_check = "beta"
     registered_check_ids = @("alpha", "beta")
     requested_check_ids = @("beta")
@@ -87,6 +105,13 @@ Assert-True (-not $aggregate.passed) "Aggregate accepted a failing shard report.
 Assert-True ($aggregate.exit_code -ne 0) "Aggregate failure did not propagate a nonzero exit code."
 Assert-True ((@($aggregate.report.failures) -join " | ").Contains("hostile shard assertion")) "Aggregate dropped the shard assertion failure."
 Assert-True ($aggregate.report.checks.Count -eq 2) "Aggregate dropped executed check evidence while propagating failure."
+
+$selectedAggregate = Merge-FoundationSystemsShardReports -ExpectedIds @("beta") -RegisteredIds @("alpha", "beta") -ShardResults @(
+    [pscustomobject]@{ shard_id = "selected"; expected_check_ids = @("beta"); exit_code = 0; raw_exit_code = 0; timed_out = $false; duration_msec = 2; report = $passedReport; report_path = "selected.json"; stdout_path = "selected.out"; stderr_path = "selected.err"; stderr_issues = @(); last_started_check = "beta" }
+)
+Assert-True $selectedAggregate.passed "Selected-shard aggregate rejected the runner's full canonical registration."
+Assert-True (($selectedAggregate.report.registered_check_ids -join "|") -eq "alpha|beta") "Selected-shard aggregate dropped the full canonical registration evidence."
+Assert-True (($selectedAggregate.report.requested_check_ids -join "|") -eq "beta") "Selected-shard aggregate widened its requested coverage."
 
 $unknownPlan = [ordered]@{ first = @("alpha", "intruder"); second = @("beta") }
 $unknownResult = Test-FoundationSystemsShardPlan -ExpectedIds @("alpha", "beta") -Shards $unknownPlan
@@ -156,7 +181,8 @@ foreach ($slotId in @("foundation_save_round_trip", "foundation_save_atomic_reco
     Assert-True $foundationSourceText.Contains(('var slot_id := "' + $slotId + '"')) "Systems source no longer exposes save slot '$slotId' for ownership validation."
     Assert-True $pathOwners.Contains("user://saves/$slotId.json") "Derived SaveService user path for '$slotId' has no shard owner."
 }
-Assert-True ($saveServiceSource.Contains('const SAVE_DIR := "user://saves"') -and $saveServiceSource.Contains('"%s.tmp"') -and $saveServiceSource.Contains('"%s.bak"')) "SaveService derived .tmp/.bak persistence targets are no longer covered by the owned save slots."
+$durableStoreSource = Get-Content -Raw -LiteralPath (Join-Path $projectRoot "scripts/core/durable_store.gd")
+Assert-True ($saveServiceSource.Contains('const SAVE_DIR := "user://saves"') -and $saveServiceSource.Contains('DurableStoreScript.write_json') -and $durableStoreSource.Contains('"%s.tmp"') -and $durableStoreSource.Contains('"%s.bak"')) "SaveService derived .tmp/.bak persistence targets are no longer covered by the owned save slots through DurableStore."
 
 $tempCache = Join-Path ([System.IO.Path]::GetTempPath()) ("bth_shard_cache_" + [Guid]::NewGuid().ToString("N"))
 try {

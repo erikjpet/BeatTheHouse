@@ -1,5 +1,7 @@
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Opening a game is navigation. Every production activation presentation must
 # be observational; persistent changes belong to a resolved player action.
 
@@ -167,7 +169,7 @@ static func _check_generated_environment_sweep(library: ContentLibrary, covered_
 
 
 static func _enter_and_check_remaining_layers(library: ContentLibrary, generator: RunGenerator, run_state: RunState, scenario_id: String, covered_game_ids: Dictionary, checked_contexts: Dictionary, failures: Array) -> void:
-	var remaining := _string_array(run_state.current_environment.get("layer_ids", []))
+	var remaining := JsonCoerceScript._string_array(run_state.current_environment.get("layer_ids", []))
 	remaining.erase(str(run_state.current_environment.get("current_layer_id", "")))
 	while not remaining.is_empty():
 		var entered := false
@@ -206,7 +208,7 @@ static func _check_environment(library: ContentLibrary, source_run: RunState, sc
 	# every one of seven cold clones made this guard scale quadratically as new
 	# surfaces were added, without strengthening the mutation assertion.
 	var complete_snapshot: Dictionary = {}
-	for game_id_value in _string_array(environment.get("game_ids", [])):
+	for game_id_value in JsonCoerceScript._string_array(environment.get("game_ids", [])):
 		var game_id := str(game_id_value)
 		covered_game_ids[game_id] = true
 		var state_keys := _generated_state_keys(environment, game_id)
@@ -276,14 +278,14 @@ static func _filter_environment_game_states(environment: Dictionary, game_id: St
 
 
 static func _record_environment_catalog_coverage(environment: Dictionary, covered_game_ids: Dictionary) -> void:
-	for game_id_value in _string_array(environment.get("game_ids", [])):
+	for game_id_value in JsonCoerceScript._string_array(environment.get("game_ids", [])):
 		covered_game_ids[str(game_id_value)] = true
 
 
 static func _environment_has_unchecked_context(environment: Dictionary, scenario_id: String, checked_contexts: Dictionary) -> bool:
 	var archetype_id := str(environment.get("archetype_id", ""))
 	var layer_id := str(environment.get("current_layer_id", "base"))
-	for game_id_value in _string_array(environment.get("game_ids", [])):
+	for game_id_value in JsonCoerceScript._string_array(environment.get("game_ids", [])):
 		var game_id := str(game_id_value)
 		for state_key_value in _generated_state_keys(environment, game_id):
 			var context_key := "%s|%s|%s|%s|%s" % [game_id, str(state_key_value), archetype_id, layer_id, scenario_id]
@@ -837,12 +839,3 @@ static func _dict(value: Variant) -> Dictionary:
 
 static func _array(value: Variant) -> Array:
 	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	for entry_value in _array(value):
-		var entry := str(entry_value).strip_edges()
-		if not entry.is_empty():
-			result.append(entry)
-	return result

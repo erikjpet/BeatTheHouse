@@ -75,15 +75,15 @@ sources.
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File tools\validate_project.ps1
 
-& $godot --headless --path . --script res://tools/env06_7_package_a_generate.gd
-& $godot --headless --path . --script res://tools/env06_7_package_a_check.gd
-& $godot --headless --path . --script res://tools/env06_7_package_b_sign.gd
+& $godot --headless --path . --script res://tools/archive/env06_7/env06_7_package_a_generate.gd
+& $godot --headless --path . --script res://tools/archive/env06_7/env06_7_package_a_check.gd
+& $godot --headless --path . --script res://tools/archive/env06_7/env06_7_package_b_sign.gd
 & $godot --headless --path . --script res://scripts/tests/foundation/env06_7_package_b_contract.gd
-& $godot --headless --path . --script res://tools/env06_7_package_c_author.gd
+& $godot --headless --path . --script res://tools/archive/env06_7/env06_7_package_c_author.gd
 & $godot --headless --path . --script res://scripts/tests/foundation/env06_7_package_c_contract.gd
-& $godot --headless --path . --script res://tools/env06_7_package_d_author.gd
+& $godot --headless --path . --script res://tools/archive/env06_7/env06_7_package_d_author.gd
 & $godot --headless --path . --script res://scripts/tests/foundation/env06_7_package_d_contract.gd
-& $godot --headless --path . --script res://tools/env06_7_package_e_author.gd
+& $godot --headless --path . --script res://tools/archive/env06_7/env06_7_package_e_author.gd
 & $godot --headless --path . --script res://scripts/tests/foundation/env06_7_package_e_contract.gd
 
 git diff --exit-code -- data/environments/scenario_sequences docs/plans/env06_7_package_*_sequence_dossiers.json
@@ -132,7 +132,7 @@ binding evidence.
 
 ```powershell
 & $godot --headless --path . --script `
-  res://tools/integ06_1_crew_play_entry_repro.gd
+  res://tools/archive/integ06_1/integ06_1_crew_play_entry_repro.gd
 ```
 
 ## 3. Save migration matrices
@@ -155,7 +155,7 @@ their provenance sidecars, and portable custody manifests are now checked in.
 Regenerate them only when auditing custody itself:
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File tools\integ06_1_generate_mid06_fixtures.ps1 `
+powershell -NoProfile -ExecutionPolicy Bypass -File tools\archive\integ06_1\integ06_1_generate_mid06_fixtures.ps1 `
   -OutputDirectory scripts\tests\fixtures\integ06_1\mid_0_6 `
   -CaptureTimeoutSeconds 180 `
   -KeepHistoricalArchive
@@ -198,7 +198,7 @@ satisfy the provenance check:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  tools\integ06_1_composition_matrix.ps1 `
+  tools\archive\integ06_1\integ06_1_composition_matrix.ps1 `
   -CandidateCommit $head `
   -ProfilePath $profilePath `
   -EvidenceProfile $evidenceProfile `
@@ -269,10 +269,10 @@ victory routes, at least two failure routes, and a Crew-ignoring control:
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  tools\integ06_1_terminal_soak_contract_test.ps1
+  tools\archive\integ06_1\integ06_1_terminal_soak_contract_test.ps1
 
 powershell -NoProfile -ExecutionPolicy Bypass -File `
-  tools\integ06_1_terminal_soak.ps1 `
+  tools\archive\integ06_1\integ06_1_terminal_soak.ps1 `
   -CandidateCommit $head `
   -ProfilePath $profilePath `
   -EvidenceProfile $evidenceProfile `

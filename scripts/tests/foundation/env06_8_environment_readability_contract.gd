@@ -194,7 +194,7 @@ static func _check_partial_scenario_save_restore(library: Variant, definitions: 
 	var travel := generator.travel_environment_result(run_state, target_node, true)
 	if not bool(travel.get("ok", false)) or str(run_state.current_environment.get("scenario_id", "")) != str(definition.get("id", "")):
 		library.environment_scenarios[archetype_id] = original_pool
-		failures.append("env06_8 partial-scenario restore fixture could not enter its production room.")
+		failures.append("env06_8 partial-scenario restore fixture could not enter its production room: %s" % JSON.stringify(travel))
 		return
 	var initial_finalization := run_state.scenario_finalize_installed_environment(library, _dict(run_state.current_environment.get("scenario_layout_context", {})))
 	if not bool(initial_finalization.get("ok", false)) or bool(initial_finalization.get("inactive", false)):
@@ -355,11 +355,14 @@ static func _check_layout_validation_scope(failures: Array) -> void:
 	var interactions := {"base::one": base_interaction.duplicate(true), "base::two": base_interaction.duplicate(true)}
 	var authority := {"base::one": authority_record.duplicate(true), "base::two": authority_record.duplicate(true)}
 	var base_only_errors: Array = []
-	ScenarioLayoutResolverScript._validate_interactions(interactions, authority, [], [], {}, base_only_errors)
+	var base_only_warnings: Array = []
+	ScenarioLayoutResolverScript._validate_interactions(interactions, authority, [], [], {}, base_only_errors, base_only_warnings)
 	for error_value in base_only_errors:
 		if str(error_value).contains("ambiguous") or str(error_value).contains("overlap"):
 			failures.append("env06_8 scenario layout validator still attributes a base-only collision to the active scenario.")
 			break
+	if not base_only_warnings.is_empty():
+		failures.append("env06_8 scenario layout validator warns about base-only collisions outside its scope.")
 	var scenario_interaction := base_interaction.duplicate(true)
 	scenario_interaction["owner_namespace"] = "scenario"
 	scenario_interaction["label"] = "Scenario control"
@@ -367,13 +370,23 @@ static func _check_layout_validation_scope(failures: Array) -> void:
 	interactions["scenario::three"] = scenario_interaction
 	authority["scenario::three"] = authority_record.duplicate(true)
 	var composed_errors: Array = []
-	ScenarioLayoutResolverScript._validate_interactions(interactions, authority, [], [], {}, composed_errors)
+	var composed_warnings: Array = []
+	ScenarioLayoutResolverScript._validate_interactions(interactions, authority, [], [], {}, composed_errors, composed_warnings)
 	var caught_scenario_collision := false
-	for error_value in composed_errors:
-		if str(error_value).contains("scenario::three") and (str(error_value).contains("ambiguous") or str(error_value).contains("overlap")):
+	for warning_value in composed_warnings:
+		if str(warning_value).contains("scenario::three") and str(warning_value).contains("overlap"):
 			caught_scenario_collision = true
 	if not caught_scenario_collision:
-		failures.append("env06_8 scenario layout validator no longer catches scenario-to-base collisions.")
+		failures.append("env06_8 scenario layout validator no longer reports scenario-to-base overlap warnings.")
+	for error_value in composed_errors:
+		if str(error_value).contains("scenario::three") and (str(error_value).contains("ambiguous") or str(error_value).contains("overlap")):
+			failures.append("env06_8 provisional slot overlap still prevents scenario composition.")
+			break
+	var missing_errors: Array = []
+	var missing_warnings: Array = []
+	ScenarioLayoutResolverScript._validate_interactions({"scenario::missing": scenario_interaction}, {}, [], [], {}, missing_errors, missing_warnings)
+	if missing_errors.is_empty() or not missing_warnings.is_empty():
+		failures.append("env06_8 missing exact layout authority no longer fails closed as an error.")
 
 
 static func _check_icon_vocabulary(failures: Array) -> void:
@@ -497,11 +510,18 @@ static func _check_read_only_visual_composition(failures: Array) -> void:
 		"present": true, "visible": true, "enabled": true, "label": "Readable fixture", "role": "evidence",
 		"state": "present", "description": "Scuffs on the fixture show where the room changed.", "description_variants": {},
 	}
-	var authority_record := ScenarioLayoutResolverScript._authority_record(
-		"scenario::readable_fixture", "scenario::readable_fixture",
-		{"x": 0.2, "y": 0.2, "w": 0.1, "h": 0.1}, {"x": 0.2, "y": 0.2, "w": 0.1, "h": 0.1},
-		1, "scene_object", "semantic_visual", [], {}, true, true, false
-	)
+	var authority_record := ScenarioLayoutResolverScript._authority_record(FunctionOptions.ScenarioAuthorityRecordOptions.from({
+		"identity": "scenario::readable_fixture",
+		"presentation_object_id": "scenario::readable_fixture",
+		"normal": {"x": 0.2, "y": 0.2, "w": 0.1, "h": 0.1},
+		"small": {"x": 0.2, "y": 0.2, "w": 0.1, "h": 0.1},
+		"z_order": 1,
+		"visual_kind": "scene_object",
+		"source": "semantic_visual",
+		"presentation_required": true,
+		"presentation_visible": true,
+		"presentation_interactive": false,
+	}))
 	var authority := {"scenario::readable_fixture": authority_record}
 	var seal_errors: Array = []
 	ScenarioLayoutResolverScript._seal_projection_coverage(authority, {"scene_objects": {"scenario::readable_fixture": semantic}, "actors": {}, "interactions": {}}, seal_errors)
@@ -680,7 +700,12 @@ static func _check_presentation_records(records: Array, failures: Array) -> void
 
 static func _seeded_description_observer(library: Variant, archetype_id: String, scenario_id: String, hidden_profile: String, failures: Array) -> Dictionary:
 	var run_state := RunStateScript.new()
-	run_state.start_new("ENV06_8-HIDDEN-%s" % scenario_id)
+	var observer_seed := "ENV06_8-HIDDEN-%s" % scenario_id
+	var observer_config := RunStateScript.custom_challenge("env06_8_hidden_observer", observer_seed, {
+		"scenario_pins": {archetype_id: scenario_id},
+		"scenario_pins_apply_mutations": true,
+	})
+	run_state.start_new(observer_seed, observer_config)
 	if hidden_profile == "turn_and_grievance":
 		var turn := CrewTurnModelScript.empty_state()
 		turn["m"] = str(CrewStateModelScript.MEMBER_IDS[1])
@@ -705,17 +730,30 @@ static func _seeded_description_observer(library: Variant, archetype_id: String,
 			break
 	if target_node.is_empty(): target_node = archetype_id
 	var travel := generator.travel_environment_result(run_state, target_node, true)
-	if not bool(travel.get("ok", false)) or str(run_state.current_environment.get("scenario_id", "")) != scenario_id:
+	if not bool(travel.get("ok", false)):
 		failures.append("env06_8 paired observer could not enter %s: %s" % [scenario_id, JSON.stringify(travel.get("errors", []))])
 		return {}
-	# Travel alone leaves the room semantically unfinalized. The production host
-	# runs the same finalization immediately after arrival, and the sequence
-	# runtime installs no state until it does, so an observer that skips it reads
-	# an empty state and cannot exercise reentry at all.
-	var finalization := run_state.scenario_finalize_installed_environment(library, _dict(run_state.current_environment.get("scenario_layout_context", {})))
-	if not bool(finalization.get("ok", false)) or bool(finalization.get("inactive", false)):
-		failures.append("env06_8 paired observer could not finalize %s: %s" % [scenario_id, JSON.stringify(finalization)])
+	var pinned_definitions := _array(library.environment_scenarios.get(archetype_id, []))
+	var pinned_definition := _dict(pinned_definitions[0]) if not pinned_definitions.is_empty() else {}
+	var target_layer_id := str(pinned_definition.get("layer_id", "")).strip_edges()
+	if not target_layer_id.is_empty() and str(run_state.current_environment.get("current_layer_id", "")) != target_layer_id:
+		run_state.discover_environment_layer(target_layer_id, "env06_8_hidden_observer")
+		var layer_entry := generator.enter_environment_layer(run_state, target_layer_id, false)
+		if not bool(layer_entry.get("ok", false)):
+			failures.append("env06_8 paired observer could not enter %s layer %s: %s" % [scenario_id, target_layer_id, str(layer_entry.get("message", "unknown layer error"))])
+			return {}
+	if str(run_state.current_environment.get("scenario_id", "")) != scenario_id:
+		failures.append("env06_8 paired observer entered the wrong scenario for %s." % scenario_id)
 		return {}
+	# Production generation now finalizes the arrived room before publishing it.
+	# Keep this observer compatible with an explicitly unfinalized fixture, but do
+	# not invoke the scenario boundary twice: terminal-on-arrival scenarios can be
+	# correctly inactive after their first committed finalization.
+	if not bool(run_state.current_environment.get("scenario_semantic_ready", false)):
+		var finalization := run_state.scenario_finalize_installed_environment(library, _dict(run_state.current_environment.get("scenario_layout_context", {})))
+		if not bool(finalization.get("ok", false)) or bool(finalization.get("inactive", false)):
+			failures.append("env06_8 paired observer could not finalize %s: %s" % [scenario_id, JSON.stringify(finalization)])
+			return {}
 	var projection := run_state.world_sequence_composed_projection()
 	var semantic := _dict(projection.get("semantic_state", {}))
 	var arrival: Array = []
@@ -807,12 +845,14 @@ static func _runtime_description_trace(definition: Dictionary, initial_state: Di
 				var command_id := str(condition.get("command_id", ""))
 				var origin := _find_action_origin(state, command_id)
 				var descriptor := ScenarioSequenceRuntimeScript._command_descriptor(state, definition, str(origin.get("owner_namespace", "")), str(origin.get("stable_object_id", "")), command_id, {})
-				var command := ScenarioSequenceRuntimeScript.command(
-					command_id, str(state.get("node_id", "")), str(state.get("phase_id", "")), "env06_8:%s:%d:%d" % [scenario_id, serial, branch_index], {},
-					str(origin.get("owner_namespace", "")), str(origin.get("stable_object_id", "")),
-					str(descriptor.get("action_origin_owner_namespace", "")), str(descriptor.get("action_origin_stable_object_id", "")),
-					str(descriptor.get("action_origin_receipt_key", "")), str(descriptor.get("action_origin_boundary_id", "")), str(descriptor.get("action_origin_fingerprint", ""))
-				)
+				var command := ScenarioSequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command(command_id, str(state.get("node_id", "")), str(state.get("phase_id", "")), "env06_8:%s:%d:%d" % [scenario_id, serial, branch_index], {
+					"payload": {}, "owner_namespace": str(origin.get("owner_namespace", "")), "stable_object_id": str(origin.get("stable_object_id", "")),
+					"action_origin_owner_namespace": str(descriptor.get("action_origin_owner_namespace", "")),
+					"action_origin_stable_object_id": str(descriptor.get("action_origin_stable_object_id", "")),
+					"action_origin_receipt_key": str(descriptor.get("action_origin_receipt_key", "")),
+					"action_origin_boundary_id": str(descriptor.get("action_origin_boundary_id", "")),
+					"action_origin_fingerprint": str(descriptor.get("action_origin_fingerprint", "")),
+				}))
 				applied = ScenarioSequenceRuntimeScript.apply_command(state, definition, command, {"available_funds": 100000})
 			else:
 				applied = _apply_trace_fact(state, definition, condition, scenario_id, serial, branch_index)
@@ -853,7 +893,7 @@ static func reachable_public_states(definition: Dictionary, initial_state: Dicti
 			if reentry_key != state_key:
 				states.append({"state": reentry_state, "path": "%s|reentry" % path})
 		else:
-			errors.append("%s/%s reentry failed: %s" % [scenario_id, path, JSON.stringify(reentry.get("errors", []))])
+			errors.append("%s/%s reentry failed: %s capacity=%s" % [scenario_id, path, JSON.stringify(reentry.get("errors", [])), JSON.stringify(_scenario_capacity_counts(state))])
 		if str(state.get("status", "")) != ScenarioSequenceRuntimeScript.STATUS_ACTIVE:
 			var expiry := _dict(_dict(definition.get("sequence", {})).get("expiry", {}))
 			var boundary := str(expiry.get("boundary", "night_end"))
@@ -873,12 +913,14 @@ static func reachable_public_states(definition: Dictionary, initial_state: Dicti
 				var command_id := str(condition.get("command_id", ""))
 				var origin := _find_action_origin(state, command_id)
 				var descriptor := ScenarioSequenceRuntimeScript._command_descriptor(state, definition, str(origin.get("owner_namespace", "")), str(origin.get("stable_object_id", "")), command_id, {})
-				var command := ScenarioSequenceRuntimeScript.command(
-					command_id, str(state.get("node_id", "")), str(state.get("phase_id", "")), "grounding:%s:%d:%d" % [scenario_id, serial, branch_index], {},
-					str(origin.get("owner_namespace", "")), str(origin.get("stable_object_id", "")),
-					str(descriptor.get("action_origin_owner_namespace", "")), str(descriptor.get("action_origin_stable_object_id", "")),
-					str(descriptor.get("action_origin_receipt_key", "")), str(descriptor.get("action_origin_boundary_id", "")), str(descriptor.get("action_origin_fingerprint", ""))
-				)
+				var command := ScenarioSequenceRuntimeScript.command(FunctionOptions.scenario_sequence_command(command_id, str(state.get("node_id", "")), str(state.get("phase_id", "")), "grounding:%s:%d:%d" % [scenario_id, serial, branch_index], {
+					"payload": {}, "owner_namespace": str(origin.get("owner_namespace", "")), "stable_object_id": str(origin.get("stable_object_id", "")),
+					"action_origin_owner_namespace": str(descriptor.get("action_origin_owner_namespace", "")),
+					"action_origin_stable_object_id": str(descriptor.get("action_origin_stable_object_id", "")),
+					"action_origin_receipt_key": str(descriptor.get("action_origin_receipt_key", "")),
+					"action_origin_boundary_id": str(descriptor.get("action_origin_boundary_id", "")),
+					"action_origin_fingerprint": str(descriptor.get("action_origin_fingerprint", "")),
+				}))
 				applied = ScenarioSequenceRuntimeScript.apply_command(state, definition, command, {"available_funds": 100000})
 			else:
 				applied = _apply_trace_fact(state, definition, condition, scenario_id, serial, branch_index)
@@ -891,6 +933,28 @@ static func reachable_public_states(definition: Dictionary, initial_state: Dicti
 	if serial >= MAX_PUBLIC_TRACE_STATES:
 		errors.append("%s exceeded the bounded reachable-state trace." % scenario_id)
 	return {"states": states, "errors": errors}
+
+
+static func _scenario_capacity_counts(state: Dictionary) -> Dictionary:
+	var result: Dictionary = {}
+	result["bounded_errors"] = ScenarioOperationRegistryScript.validate_bounded_variant("scenario runtime state", state)
+	result["schema_version"] = state.get("schema_version")
+	result["scenario_id"] = state.get("scenario_id")
+	result["definition_version"] = state.get("definition_version")
+	result["phase_id"] = state.get("phase_id")
+	result["cleanup_content_fingerprint"] = state.get("cleanup_content_fingerprint")
+	for key in [
+		"command_receipts", "command_receipt_records", "fact_receipts", "fact_receipt_records",
+		"fact_queue", "visit_receipts", "visit_receipt_records", "expiry_boundary_records",
+		"transition_receipts", "transition_receipt_records", "cleanup_receipts", "cleanup_receipt_records",
+	]:
+		result[key] = _array(state.get(key, [])).size()
+	var semantic := _dict(state.get("semantic_state", {}))
+	result["semantic_keys"] = semantic.keys()
+	result["transition_queue"] = _array(semantic.get("transition_queue", [])).size()
+	result["operation_receipts"] = _array(semantic.get("operation_receipts", [])).size()
+	result["operation_receipt_records"] = _array(semantic.get("operation_receipt_records", [])).size()
+	return result
 
 
 static func _check_runtime_icon_resolution(state: Dictionary, scenario_id: String, path: String, canvas: Variant, icon_by_identity: Dictionary, failures: Array) -> void:

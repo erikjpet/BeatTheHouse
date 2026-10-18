@@ -2,8 +2,10 @@
 
 The game treats the music as a live band made from synchronized recordings.
 It chooses parts, changes intensity, adds fills, and applies effects while the
-player is gambling. Steam and mobile use the full native Godot mix. The web
-version remains a reduced fallback and does not limit the master recordings.
+player is gambling. Native builds use the full Godot stem mix. Web builds use
+deterministic pre-encoded derivatives that preserve the authored arrangement,
+stem balance, phrase changes, and bus gains without synthesizing masters on the
+browser main thread. The Web delivery path does not limit the master recordings.
 
 ## Jazz Club filename and master checklist
 

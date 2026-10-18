@@ -1,7 +1,13 @@
 class_name GameModule
 extends RefCounted
 
+const IoResultScript := preload("res://scripts/core/io_result.gd")
+const KeysScript := preload("res://scripts/core/keys.gd")
+
 # Base contract for foundation gambling modules.
+
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 
 const RESULT_CONTINUE := "continue"
 const RESULT_ENDED := "ended"
@@ -43,6 +49,7 @@ func set_transient_state_key_context(state_key: String) -> void:
 	_transient_state_key_context = state_key.strip_edges()
 
 
+# Returns the host-selected fixture key used for the current read/action only.
 func transient_state_key_context() -> String:
 	return _transient_state_key_context
 
@@ -56,6 +63,8 @@ func gameplay_model() -> String:
 	return GAMEPLAY_MODEL_FULL_SIMULATION if model == GAMEPLAY_MODEL_FULL_SIMULATION else GAMEPLAY_MODEL_GENERIC_ODDS
 
 
+# Convenience predicate for hosts choosing between generic odds and a complete
+# module-owned surface/state lifecycle.
 func is_full_simulation() -> bool:
 	return gameplay_model() == GAMEPLAY_MODEL_FULL_SIMULATION
 
@@ -192,6 +201,8 @@ func host_action_rollback_snapshot(_action_id: String, _run_state: RunState, _en
 	return {}
 
 
+# Restores a module-provided rollback capsule after the host rejects publication.
+# Returning false asks the host to use its conservative whole-run fallback.
 func restore_host_action_rollback(_snapshot: Dictionary, _run_state: RunState, _environment: Dictionary) -> bool:
 	return false
 
@@ -243,6 +254,7 @@ func surface_action_uses_lightweight_ui_state(_surface_action: String) -> bool:
 	return false
 
 
+# Declares the retained UI keys required by lightweight surface action commands.
 func surface_action_ui_state_keys() -> Array:
 	return []
 
@@ -261,23 +273,45 @@ func checkpoint_surface_ui_state_for_save(ui_state: Dictionary, run_state: RunSt
 	checkpoint_surface_ui_state(ui_state, run_state, environment)
 
 
+# Modules whose save checkpoint is entirely backed by durable/runtime state can
+# skip construction of the retained surface UI snapshot. That snapshot may hold
+# a complete card shoe, roulette undo history, or dense physical-machine view.
+func checkpoint_surface_ui_state_for_save_requires_ui_state() -> bool:
+	return true
+
+
+# Reports whether the module has reached a durable state safe for Foundation's
+# normal save path; continuous simulations can hold this false while settling.
 func foundation_save_ready(_run_state: RunState, _environment: Dictionary) -> bool:
 	return true
 
 
+# Selects the bounded multi-frame exit-settlement protocol instead of immediate
+# checkpointing for a dense continuous simulation.
 func requires_chunked_exit_settle(_run_state: RunState, _environment: Dictionary) -> bool:
 	return false
 
 
+# Starts module-owned chunked settlement and returns progress metadata for the
+# host. The default is already complete.
 func begin_chunked_exit_settle(_run_state: RunState, _environment: Dictionary) -> Dictionary:
 	return {"started": false, "done": true}
 
 
+# Advances at most tick_budget settlement steps and reports completion/progress.
 func advance_chunked_exit_settle(_run_state: RunState, _environment: Dictionary, _tick_budget: int = 8) -> Dictionary:
 	return {"done": true, "ticks": 0}
 
 
+# Publishes the final durable checkpoint after chunked settlement completes.
 func finalize_chunked_exit_settle(_run_state: RunState, _environment: Dictionary) -> void:
+	pass
+
+
+# Cancels transient work when the host abandons a chunked exit during a broader
+# lifecycle reset (load, main menu, test-room replacement, or scene teardown).
+# Modules must not publish additional durable state from this callback.
+func cancel_chunked_exit_settle() -> void:
 	pass
 
 
@@ -308,10 +342,14 @@ func surface_auto_tick_may_be_active(_retained_ui_state: Dictionary) -> bool:
 	return true
 
 
+# Exact due predicate for automatic surface commands. It is evaluated without
+# making animation liveness depend on pointer input.
 func surface_needs_auto_tick(_ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> bool:
 	return false
 
 
+# Declares the retained UI keys required by the automatic surface due predicate
+# and command when lightweight state is enabled.
 func surface_auto_tick_state_keys() -> Array:
 	return []
 
@@ -329,6 +367,7 @@ func surface_realtime_uses_lightweight_ui_state() -> bool:
 	return false
 
 
+# Declares the retained UI keys required to build a lightweight realtime patch.
 func surface_realtime_ui_state_keys() -> Array:
 	return []
 
@@ -348,6 +387,14 @@ func foreground_blocks_environment_runtime(_run_state: RunState, _environment: D
 	return false
 
 
+# Indicates whether a still-playing foreground presentation also suspends that
+# fixture's background runtime to prevent double advancement.
+func foreground_blocks_environment_runtime_during_surface_presentation() -> bool:
+	return false
+
+
+# Returns one host-normalized automatic command when due; it does not apply the
+# result itself.
 func surface_auto_action_command(_ui_state: Dictionary, _run_state: RunState, _environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:
 	return {"handled": false}
 
@@ -365,10 +412,12 @@ func environment_runtime_enabled() -> bool:
 	return false
 
 
+# Returns the player-safe current background-runtime projection for this fixture.
 func environment_runtime_state(_run_state: RunState, _environment: Dictionary) -> Dictionary:
 	return {}
 
 
+# Cheap exact predicate used by the scheduler at or after the declared due time.
 func environment_runtime_needs_tick(_run_state: RunState, _environment: Dictionary, _now_msec: int) -> bool:
 	return false
 
@@ -380,6 +429,8 @@ func environment_runtime_next_due_msec(run_state: RunState, environment: Diction
 	return now_msec if environment_runtime_needs_tick(run_state, environment, now_msec) else -1
 
 
+# Advances one background-runtime boundary and returns a host-normalized patch or
+# action request; modules must not perform unrelated RunState work here.
 func environment_runtime_tick(_run_state: RunState, _environment: Dictionary, _rng: RngStream, _now_msec: int) -> Dictionary:
 	return {"handled": false}
 
@@ -476,14 +527,16 @@ static func surface_spec(payload: Dictionary = {}) -> Dictionary:
 	spec["surface_realtime_state_refresh"] = bool(spec.get("surface_realtime_state_refresh", false))
 	spec["surface_embeds_outcomes"] = bool(spec.get("surface_embeds_outcomes", false))
 	spec["surface_suppresses_game_result_burst"] = bool(spec.get("surface_suppresses_game_result_burst", false))
-	spec["surface_action_bindings"] = _copy_dict(spec.get("surface_action_bindings", {}))
-	spec["native_selected_surface_actions"] = _copy_array(spec.get("native_selected_surface_actions", []))
-	spec["surface_animation_channels"] = _normalize_surface_animation_channels(spec.get("surface_animation_channels", []))
-	spec["surface_audio"] = _copy_dict(spec.get("surface_audio", {}))
-	spec["surface_action_blocks"] = _copy_array(spec.get("surface_action_blocks", []))
-	spec["surface_state_labels"] = _copy_array(spec.get("surface_state_labels", []))
-	spec["surface_result_display"] = _copy_dict(spec.get("surface_result_display", {}))
-	spec["surface_ui_preference_keys"] = _copy_array(spec.get("surface_ui_preference_keys", []))
+	# The full payload copy above already owns every nested container. Reusing
+	# those owned values avoids copying the largest renderer fields a second time.
+	spec["surface_action_bindings"] = _owned_dict(spec.get("surface_action_bindings", {}))
+	spec["native_selected_surface_actions"] = _owned_array(spec.get("native_selected_surface_actions", []))
+	spec["surface_animation_channels"] = _normalize_surface_animation_channels(spec.get("surface_animation_channels", []), true)
+	spec["surface_audio"] = _owned_dict(spec.get("surface_audio", {}))
+	spec["surface_action_blocks"] = _owned_array(spec.get("surface_action_blocks", []))
+	spec["surface_state_labels"] = _owned_array(spec.get("surface_state_labels", []))
+	spec["surface_result_display"] = _owned_dict(spec.get("surface_result_display", {}))
+	spec["surface_ui_preference_keys"] = _owned_array(spec.get("surface_ui_preference_keys", []))
 	return spec
 
 
@@ -504,19 +557,25 @@ static func surface_animation_channel(channel_id: String, active_id: String = ""
 	return channel
 
 
+# Normalizes the semantic audio profile, deterministic selection seed, action
+# cues, and state-sync values consumed by SfxPlayer.
 static func surface_audio_spec(payload: Dictionary = {}) -> Dictionary:
 	var spec := payload.duplicate(true)
 	spec["profile_id"] = str(spec.get("profile_id", "default"))
 	spec["selection_seed"] = maxi(1, int(spec.get("selection_seed", 1)))
-	spec["action_cues"] = _copy_dict(spec.get("action_cues", {}))
-	spec["state_sync"] = _copy_dict(spec.get("state_sync", {}))
+	spec["action_cues"] = _owned_dict(spec.get("action_cues", {}))
+	spec["state_sync"] = _owned_dict(spec.get("state_sync", {}))
 	return spec
 
 
+# Returns and, when requested, starts the shared between-round timer stored in
+# the mutable table dictionary.
 static func table_round_timer_status(table: Dictionary, now_msec: int, label: String = "Next round", duration_msec: int = TABLE_ROUND_START_DELAY_MSEC, auto_start: bool = true) -> Dictionary:
 	return _table_round_timer_status_impl(table, now_msec, label, duration_msec, auto_start, true)
 
 
+# Read-only timer projection; unlike table_round_timer_status, it never writes a
+# missing start timestamp into the table.
 static func table_round_timer_status_peek(table: Dictionary, now_msec: int, label: String = "Next round", duration_msec: int = TABLE_ROUND_START_DELAY_MSEC, auto_start: bool = true) -> Dictionary:
 	return _table_round_timer_status_impl(table, now_msec, label, duration_msec, auto_start, false)
 
@@ -543,6 +602,7 @@ static func _table_round_timer_status_impl(table: Dictionary, now_msec: int, lab
 	}
 
 
+# Clears the shared timer or restarts it from an explicit monotonic timestamp.
 static func reset_table_round_timer(table: Dictionary, now_msec: int = 0) -> void:
 	if now_msec > 0:
 		table["table_round_timer_started_msec"] = now_msec
@@ -550,6 +610,8 @@ static func reset_table_round_timer(table: Dictionary, now_msec: int = 0) -> voi
 		table["table_round_timer_started_msec"] = 0
 
 
+# Selects the host-provided presentation clock when available, otherwise the
+# deterministic RunState simulation clock; it never returns zero.
 static func deterministic_time_msec(run_state: RunState, ui_state: Dictionary = {}) -> int:
 	if ui_state.has("surface_time_msec"):
 		return maxi(1, int(ui_state.get("surface_time_msec", 0)))
@@ -582,22 +644,8 @@ static func surface_command(payload: Dictionary = {}, zero_copy_transient: bool 
 		command["stake_multiplier"] = int(command.get("stake_multiplier", 1))
 	command["message"] = str(command.get("message", ""))
 	return command
-
-
-static func surface_animation_status(surface_status: Dictionary, channel_id: String) -> Dictionary:
-	var animations := _copy_dict(surface_status.get("surface_animations", surface_status.get("surface_animation_status", {})))
-	var status := _copy_dict(animations.get(channel_id, {}))
-	if status.is_empty():
-		var channels := _copy_array(surface_status.get("surface_animation_channels", []))
-		for channel_value in channels:
-			if typeof(channel_value) != TYPE_DICTIONARY:
-				continue
-			var channel: Dictionary = channel_value
-			if str(channel.get("id", "")) == channel_id:
-				return channel.duplicate(true)
-	return status
-
-
+# Orders and clamps timing windows so perfect is contained by good, which is
+# contained by close.
 static func normalize_skill_timing_windows(perfect_msec: int, good_msec: int, close_msec: int, min_perfect_msec: int = 1) -> Dictionary:
 	var perfect := maxi(maxi(1, min_perfect_msec), perfect_msec)
 	var good := maxi(perfect, good_msec)
@@ -609,6 +657,8 @@ static func normalize_skill_timing_windows(perfect_msec: int, good_msec: int, cl
 	}
 
 
+# Grades an absolute timing distance against normalized windows and returns the
+# shared grade, accuracy, distance, and effective windows.
 static func skill_timing_grade_from_distance(distance_msec: int, perfect_msec: int, good_msec: int, close_msec: int, min_perfect_msec: int = 1) -> Dictionary:
 	var windows := normalize_skill_timing_windows(perfect_msec, good_msec, close_msec, min_perfect_msec)
 	var distance := maxi(0, distance_msec)
@@ -633,10 +683,12 @@ static func skill_timing_grade_from_distance(distance_msec: int, perfect_msec: i
 	}
 
 
+# True for grades that apply the attempted advantage rather than a complete miss.
 static func skill_grade_applies(grade: String) -> bool:
 	return grade == "perfect" or grade == "good" or grade == "partial"
 
 
+# Builds the stable shared outcome key for a game-specific skill prefix/grade.
 static func skill_outcome_for_grade(prefix: String, grade: String, fallback_grade: String = "miss") -> String:
 	var resolved_grade := grade if not grade.is_empty() else fallback_grade
 	return "%s_%s" % [prefix, resolved_grade]
@@ -660,6 +712,8 @@ static func build_owned_action_result(payload: Dictionary = {}) -> Dictionary:
 	return _build_action_result(payload, true)
 
 
+# Fast path for trusted action-local payloads already known to contain only the
+# canonical result-delta vocabulary.
 static func build_canonical_owned_action_result(payload: Dictionary = {}) -> Dictionary:
 	# Hot paths that construct only canonical delta keys can transfer ownership
 	# directly. The normal public builder remains fail-safe for untrusted shapes.
@@ -805,19 +859,8 @@ static func normalize_skill_cheat_contract(result: Dictionary, payload: Dictiona
 	deltas["story_log"] = normalized_story
 	result["deltas"] = deltas
 	return result
-
-
-# Keeps top-level and delta messages synchronized when a module decorates output.
-static func set_result_message(result: Dictionary, message: String) -> Dictionary:
-	var updated := result.duplicate(true)
-	var deltas := _normalize_result_deltas(updated.get("deltas", {}))
-	updated["message"] = message
-	deltas["messages"] = [] if message.is_empty() else [message]
-	updated["deltas"] = deltas
-	updated["messages"] = _copy_array(deltas["messages"])
-	return updated
-
-
+# Copies patrons and marks the TalkDock-focused patron as visibly speaking and
+# watching without mutating the module's stored patron array.
 static func patrons_with_talk_focus(patrons: Array, focused_speaker_value: Variant) -> Array:
 	var focused_speaker := _copy_dict(focused_speaker_value)
 	if focused_speaker.is_empty() or str(focused_speaker.get("role", "")) != "patron":
@@ -842,34 +885,270 @@ static func patrons_with_talk_focus(patrons: Array, focused_speaker_value: Varia
 	return result
 
 
-# Applies structured module changes through RunState.
-static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream = null) -> void:
+# Returns the player-facing wager currency for this game/context; Grand Casino
+# chip games use chips and all other contexts use cash.
+static func presentation_currency_for_game(run_state: RunState, game_id: String, environment: Dictionary = {}) -> String:
+	if run_state != null and run_state.grand_casino_game_uses_chips(game_id, environment):
+		return "chips"
+	return "cash"
+
+
+# Compatibility entry point for callers that only own a transient result. New
+# action settlement uses finalize_routed_settlement() so the durable embedded
+# surface receives the same structured currency record.
+static func finalize_routed_player_message(result: Dictionary, deltas: Dictionary) -> void:
+	finalize_routed_settlement(null, result, deltas)
+
+
+# Establishes one post-routing settlement authority for transient and persisted
+# presentation. Zero-net results are intentional records too: a push still has
+# a routed account and must not fall back to pre-routing Bankroll/CASH copy.
+static func finalize_routed_settlement(run_state: RunState, result: Dictionary, deltas: Dictionary, sync_persisted: bool = true) -> void:
+	var cash_delta := int(deltas.get("bankroll_delta", 0))
+	var chips_delta := int(deltas.get("chips_delta", 0))
+	if cash_delta == 0 and chips_delta == 0 and not _zero_routed_settlement_is_authoritative(run_state, result):
+		return
+	var currency := _routed_settlement_currency(result, cash_delta, chips_delta)
+	var delta := chips_delta if currency == "chips" else cash_delta
+	var settlement_message := PlayerTextScript.format_settlement_delta(currency, delta)
+	var settlement := {
+		"currency": currency,
+		"delta": delta,
+		"message": settlement_message,
+	}
+	var authored_message := str(result.get("message", ""))
+	var player_message := _routed_settlement_message(authored_message, currency, delta, settlement_message)
+	var player_messages := _merge_routed_settlement_messages(result, deltas, authored_message, player_message, settlement_message)
+	var message_key := "game.result.currency_settlement"
+	var message_params := {
+		"currency": currency,
+		"delta": delta,
+		"cash_delta": cash_delta,
+		"chips_delta": chips_delta,
+	}
+	if not authored_message.is_empty() and authored_message != player_message:
+		result["diagnostic_message"] = authored_message
+	result["currency"] = currency
+	result["currency_delta"] = delta
+	result["settlement"] = settlement.duplicate(true)
+	result["message_key"] = message_key
+	result["message_params"] = message_params.duplicate(true)
+	result["message"] = player_message
+	result["messages"] = player_messages.duplicate()
+	deltas["settlement"] = settlement.duplicate(true)
+	deltas["message_key"] = message_key
+	deltas["message_params"] = message_params.duplicate(true)
+	deltas["message"] = player_message
+	deltas["messages"] = player_messages.duplicate()
+	result["deltas"] = deltas
+	if sync_persisted:
+		_sync_persisted_routed_settlement(run_state, result, settlement, message_key, message_params)
+
+
+static func _zero_routed_settlement_is_authoritative(run_state: RunState, result: Dictionary) -> bool:
+	if typeof(result.get("settlement", null)) == TYPE_DICTIONARY and not (result.get("settlement", {}) as Dictionary).is_empty():
+		return true
 	if run_state == null:
+		return false
+	var environment := run_state.current_environment
+	var states_value: Variant = environment.get("game_states", {})
+	if typeof(states_value) != TYPE_DICTIONARY:
+		return false
+	var states := states_value as Dictionary
+	var game_id := str(result.get("game_id", result.get("source_id", ""))).strip_edges()
+	var state_key := _routed_settlement_state_key(environment, states, game_id, result)
+	if state_key.is_empty() or typeof(states.get(state_key, null)) != TYPE_DICTIONARY:
+		return false
+	var state := states.get(state_key, {}) as Dictionary
+	var last_value: Variant = state.get("last_result", {})
+	if typeof(last_value) != TYPE_DICTIONARY or (last_value as Dictionary).is_empty():
+		return false
+	var last_result := last_value as Dictionary
+	if not last_result.has("bankroll_delta") or int(last_result.get("bankroll_delta", 1)) != 0:
+		return false
+	var result_action := str(result.get("action_id", "")).strip_edges()
+	var stored_action := str(last_result.get("action_id", "")).strip_edges()
+	if not result_action.is_empty() and stored_action == result_action:
+		return true
+	var authored_message := str(result.get("message", "")).strip_edges().to_lower()
+	var stored_message := str(last_result.get("message", last_result.get("summary", ""))).strip_edges().to_lower()
+	return not authored_message.is_empty() \
+		and not stored_message.is_empty() \
+		and (authored_message.find(stored_message) >= 0 or stored_message.find(authored_message) >= 0)
+
+
+static func _routed_settlement_currency(result: Dictionary, cash_delta: int, chips_delta: int) -> String:
+	var authored_currency := str(result.get("currency", "")).strip_edges().to_lower()
+	if authored_currency == "chips" or (chips_delta != 0 and cash_delta == 0):
+		return "chips"
+	return "cash"
+
+
+static func _routed_settlement_message(authored_message: String, currency: String, delta: int, settlement_message: String) -> String:
+	var routed_authored := authored_message.strip_edges()
+	if currency == "chips":
+		routed_authored = _replace_cash_amounts_with_chips(routed_authored)
+		routed_authored = routed_authored.replace("Bankroll", "Chip balance").replace("bankroll", "chip balance")
+		routed_authored = routed_authored.replace("Cash", "Chips").replace("cash", "chips")
+	if routed_authored.to_lower().find(settlement_message.to_lower()) >= 0:
+		return routed_authored
+	return PlayerTextScript.join_sentences([routed_authored, settlement_message]) if not routed_authored.is_empty() else settlement_message
+
+
+static func _merge_routed_settlement_messages(result: Dictionary, deltas: Dictionary, authored_message: String, player_message: String, settlement_message: String) -> Array:
+	var source_messages := _copy_array(deltas.get("messages", []))
+	for value in _copy_array(result.get("messages", [])):
+		if not source_messages.has(value):
+			source_messages.append(value)
+	var merged: Array = []
+	if not player_message.is_empty():
+		merged.append(player_message)
+	for value in source_messages:
+		var message := str(value).strip_edges()
+		if message.is_empty() \
+				or message == authored_message.strip_edges() \
+				or message == settlement_message.strip_edges() \
+				or merged.has(message):
+			continue
+		merged.append(message)
+	return merged
+
+
+static func _replace_cash_amounts_with_chips(message: String) -> String:
+	# Hand-rolled scan for "$[+-]digits[,digits]": the Web release template is built without the RegEx module.
+	var result := ""
+	var index := 0
+	while index < message.length():
+		var start := index + 1
+		if message[index] == "$" and start < message.length() and "+-".contains(message[start]):
+			start += 1
+		var end := start
+		if message[index] == "$" and end < message.length() and message[end].is_valid_int():
+			while end < message.length() and (message[end].is_valid_int() or message[end] == ","):
+				end += 1
+			var amount_text := message.substr(index + 1, end - index - 1)
+			var amount := int(amount_text.replace(",", ""))
+			var noun := "chip" if absi(amount) == 1 else "chips"
+			result += "%s %s" % [amount_text, noun]
+			index = end
+			continue
+		result += message[index]
+		index += 1
+	return result
+
+
+static func _sync_persisted_routed_settlement(run_state: RunState, result: Dictionary, settlement: Dictionary, message_key: String, message_params: Dictionary) -> void:
+	if run_state == null or settlement.is_empty():
 		return
-	if not bool(result.get("ok", false)):
+	var environment := run_state.current_environment
+	var states_value: Variant = environment.get("game_states", {})
+	if typeof(states_value) != TYPE_DICTIONARY:
+		return
+	var states := states_value as Dictionary
+	var game_id := str(result.get("game_id", result.get("source_id", ""))).strip_edges()
+	var state_key := _routed_settlement_state_key(environment, states, game_id, result)
+	if state_key.is_empty() or typeof(states.get(state_key, null)) != TYPE_DICTIONARY:
+		return
+	var state := (states.get(state_key, {}) as Dictionary).duplicate(false)
+	var last_value: Variant = state.get("last_result", {})
+	if typeof(last_value) != TYPE_DICTIONARY or (last_value as Dictionary).is_empty():
+		return
+	var last_result := (last_value as Dictionary).duplicate(true)
+	var authored_message := str(last_result.get("message", last_result.get("summary", "")))
+	var persisted_message := _routed_settlement_message(
+		authored_message,
+		str(settlement.get("currency", "cash")),
+		int(settlement.get("delta", 0)),
+		str(settlement.get("message", ""))
+	)
+	if not authored_message.is_empty() and authored_message != persisted_message:
+		last_result["diagnostic_message"] = authored_message
+	last_result["currency"] = str(settlement.get("currency", "cash"))
+	last_result["currency_delta"] = int(settlement.get("delta", 0))
+	last_result["settlement"] = settlement.duplicate(true)
+	last_result["message_key"] = message_key
+	last_result["message_params"] = message_params.duplicate(true)
+	last_result["message"] = persisted_message
+	last_result["summary"] = persisted_message
+	state["last_result"] = last_result
+	states[state_key] = state
+	environment["game_states"] = states
+	run_state.current_environment = environment
+
+
+static func _routed_settlement_state_key(environment: Dictionary, states: Dictionary, game_id: String, result: Dictionary) -> String:
+	for explicit_value in [result.get("game_state_key", ""), result.get("state_key", "")]:
+		var explicit_key := str(explicit_value).strip_edges()
+		if not explicit_key.is_empty() and states.has(explicit_key):
+			return explicit_key
+	var active_keys: Dictionary = environment.get("active_game_state_keys", {}) if typeof(environment.get("active_game_state_keys", {})) == TYPE_DICTIONARY else {}
+	var active_key := str(active_keys.get(game_id, "")).strip_edges()
+	if not active_key.is_empty() and states.has(active_key):
+		return active_key
+	if not game_id.is_empty() and states.has(game_id):
+		return game_id
+	var candidates: Array[String] = []
+	for key_value in states.keys():
+		var candidate := str(key_value)
+		var candidate_state_value: Variant = states.get(key_value, {})
+		if candidate.begins_with("%s:" % game_id) \
+				and typeof(candidate_state_value) == TYPE_DICTIONARY \
+				and typeof((candidate_state_value as Dictionary).get("last_result", null)) == TYPE_DICTIONARY:
+			candidates.append(candidate)
+	return candidates[0] if candidates.size() == 1 else ""
+
+
+# Applies structured module changes through RunState.
+static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream = null, trusted_result_fingerprint: String = "") -> Dictionary:
+	if run_state == null:
+		return IoResultScript.failed(ERR_INVALID_PARAMETER, "missing_run_state", "Run state is required to apply a game result.")
+	# Reject before receipt consumption, currency routing, or any other mutation.
+	# Explicit terminal settlements are the only results allowed to finalize an
+	# already-ended run.
+	if bool(result.get(KeysScript.OK, false)) and run_state.is_terminal() and not bool(result.get("terminal_settlement", false)):
+		return IoResultScript.failed(FAILED, "terminal_state_rejected", "A non-terminal result cannot be applied after the run has ended.")
+	if not bool(result.get(KeysScript.OK, false)):
 		run_state.clear_deferred_bankroll_zero_resolution()
-		return
-	if (str(result.get("game_id", result.get("source_id", ""))) == "blackjack" \
+		return IoResultScript.failed(
+			int(result.get(IoResultScript.KEY_ERROR, FAILED)),
+			str(result.get(IoResultScript.KEY_ERROR_CODE, "result_rejected")),
+			str(result.get(KeysScript.MESSAGE, "Game result was rejected.")),
+			{"result": result.duplicate(true)}
+		)
+	var result_game_id := str(result.get("game_id", result.get("source_id", "")))
+	if (result_game_id == "blackjack" \
 			or bool(result.get("table_game_authoritative", false)) \
 			or bool(result.get("sealed_action_authoritative", false))) \
-			and not run_state.consume_blackjack_authority_result_receipt(result):
-		return
+			and not run_state.consume_blackjack_authority_result_receipt(result, trusted_result_fingerprint):
+		return IoResultScript.failed(ERR_INVALID_DATA, "authority_receipt_rejected", "The authoritative game receipt was rejected.")
 	normalize_skill_cheat_contract(result)
 	var deltas := _normalize_result_deltas(result.get("deltas", {}))
 	run_state.record_score_spending_from_result(result, deltas)
 	deltas = run_state.route_grand_casino_game_currency(result, deltas)
+	finalize_routed_settlement(run_state, result, deltas, false)
 	var defer_bankroll_zero := bool(result.get("defer_bankroll_zero_failure", false)) or run_state.defer_next_bankroll_zero_failure
 	if defer_bankroll_zero:
 		result["defer_bankroll_zero_failure"] = true
-	var bankroll_delta := int(deltas.get("bankroll_delta", 0))
+	var bankroll_delta := int(deltas.get(KeysScript.BANKROLL_DELTA, 0))
+	var failed_before_money := run_state.run_status == RunState.RUN_STATUS_FAILED
 	if bankroll_delta != 0:
 		run_state.change_bankroll(bankroll_delta, defer_bankroll_zero)
 	var chips_delta := int(deltas.get("chips_delta", 0))
 	if chips_delta != 0:
 		run_state.change_grand_casino_chips(chips_delta, defer_bankroll_zero)
+	if not failed_before_money and run_state.run_status == RunState.RUN_STATUS_FAILED and not bool(result.get("terminal_settlement", false)):
+		run_state.clear_deferred_bankroll_zero_resolution()
+		return IoResultScript.failed(FAILED, "terminal_settlement_rejected", "The game settlement ended the run before it could be published.")
+	_sync_persisted_routed_settlement(
+		run_state,
+		result,
+		result.get("settlement", {}) if typeof(result.get("settlement", {})) == TYPE_DICTIONARY else {},
+		str(result.get("message_key", "")),
+		result.get("message_params", {}) if typeof(result.get("message_params", {})) == TYPE_DICTIONARY else {}
+	)
 	var suspicion_delta := int(deltas.get("suspicion_delta", 0))
-	var blackjack_heat_attempt := suspicion_delta > 0 and str(result.get("game_id", result.get("source_id", ""))) == "blackjack"
-	if suspicion_delta > 0 and str(result.get("game_id", result.get("source_id", ""))) == "blackjack":
+	var blackjack_heat_attempt := suspicion_delta > 0 and result_game_id == "blackjack"
+	if blackjack_heat_attempt:
 		var capped_blackjack_delta := run_state.blackjack_suspicion_delta_before_backoff(suspicion_delta)
 		if capped_blackjack_delta != suspicion_delta:
 			deltas["base_suspicion_delta"] = suspicion_delta
@@ -1013,6 +1292,7 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 	if rng != null:
 		run_state.save_rng(rng)
 	run_state.clear_deferred_bankroll_zero_resolution()
+	return IoResultScript.ok({"result": result})
 
 
 # Resolves one action with data-driven odds and item modifiers.
@@ -1256,18 +1536,57 @@ func _inventory_item_id(entry: Variant) -> String:
 	return str(entry)
 
 
+func _item_effect_total(key: String, run_state: RunState) -> int:
+	if run_state == null:
+		return 0
+	return run_state.item_effect_total(key, get_family()) if run_state.has_method("item_effect_total") else 0
+
+
+func _stable_hash(text: String) -> int:
+	var value := 216613626
+	for index in range(text.length()):
+		value = value ^ text.unicode_at(index)
+		value = int((value * 16777619) & 0x7fffffff)
+	return maxi(1, value)
+
+
+func _fallback_state(run_state: RunState, environment: Dictionary) -> Dictionary:
+	var rng := RngStream.new()
+	rng.configure(_stable_hash("%s:%s:%s" % [get_id(), str(run_state.seed_text if run_state != null else "fallback"), str(environment.get("id", ""))]))
+	return generate_environment_state(run_state, environment, rng)
+
+
+# Returns the stored game state for read-only, per-frame checks.
+func _peek_table_state(environment: Dictionary) -> Dictionary:
+	var states: Variant = environment.get("game_states", {})
+	if typeof(states) != TYPE_DICTIONARY:
+		return {}
+	var table: Variant = (states as Dictionary).get(get_id(), {})
+	if typeof(table) != TYPE_DICTIONARY or (table as Dictionary).is_empty():
+		return {}
+	return table as Dictionary
+
+
 # Safely duplicates array content.
 static func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
+	return JsonCoerceScript._copy_array(value)
 
 
 # Safely duplicates dictionary content.
 static func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
+	return JsonCoerceScript._copy_dict(value)
+
+
+static func _dictionary_array(value: Variant) -> Array:
+	return JsonCoerceScript._dictionary_array(value)
+
+
+static func _string_array(value: Variant) -> Array:
+	return JsonCoerceScript._string_array(value)
+
+
+static func _int_array(value: Variant) -> Array:
+	return JsonCoerceScript._int_array(value)
 
 
 static func _owned_array(value: Variant) -> Array:
@@ -1278,12 +1597,12 @@ static func _owned_dict(value: Variant) -> Dictionary:
 	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
 
 
-static func _normalize_surface_animation_channels(value: Variant) -> Array:
+static func _normalize_surface_animation_channels(value: Variant, take_ownership: bool = false) -> Array:
 	var entries: Array = []
 	if typeof(value) == TYPE_DICTIONARY:
 		var channels: Dictionary = value
 		for key in channels.keys():
-			var channel := _copy_dict(channels.get(key, {}))
+			var channel := _owned_dict(channels.get(key, {})) if take_ownership else _copy_dict(channels.get(key, {}))
 			if channel.is_empty():
 				continue
 			if not channel.has("id"):
@@ -1292,7 +1611,7 @@ static func _normalize_surface_animation_channels(value: Variant) -> Array:
 	elif typeof(value) == TYPE_ARRAY:
 		for entry in value:
 			if typeof(entry) == TYPE_DICTIONARY:
-				entries.append((entry as Dictionary).duplicate(true))
+				entries.append(entry if take_ownership else (entry as Dictionary).duplicate(true))
 
 	var result: Array = []
 	for entry in entries:
@@ -1301,14 +1620,14 @@ static func _normalize_surface_animation_channels(value: Variant) -> Array:
 		if channel_id.is_empty():
 			continue
 		var active_id := str(channel.get("active_id", ""))
-		var normalized := channel.duplicate(true)
+		var normalized := channel
 		normalized["id"] = channel_id
 		normalized["active_id"] = active_id
 		normalized["started_msec"] = maxi(0, int(channel.get("started_msec", 0)))
 		normalized["duration_msec"] = maxi(0, int(channel.get("duration_msec", 0)))
 		normalized["active"] = bool(channel.get("active", not active_id.is_empty()))
 		normalized["restart_on_active_id_change"] = bool(channel.get("restart_on_active_id_change", true))
-		normalized["metadata"] = _copy_dict(channel.get("metadata", {}))
+		normalized["metadata"] = _owned_dict(channel.get("metadata", {}))
 		result.append(normalized)
 	return result
 

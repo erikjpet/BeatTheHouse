@@ -3,6 +3,8 @@ extends RefCounted
 
 const OperationRegistryScript := preload("res://scripts/core/scenario_operation_registry.gd")
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
+const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const DYNAMIC_SOURCE_FIELDS := ["active_delivery_run.handoff_pending_node_id", "numbers_state.venue_status", "numbers_state.silas_presence", "crew_presence", "game_ids.environment_interactable_objects", "game_ids.environment_interactable_objects.dialogue_id"]
 
 
@@ -13,13 +15,39 @@ const DYNAMIC_SOURCE_FIELDS := ["active_delivery_run.handoff_pending_node_id", "
 static func authoritative_interactable_records(environment: Dictionary, library: Variant) -> Dictionary:
 	if library == null:
 		return {"ok": false, "records": [], "errors": ["authoritative base semantic production requires ContentLibrary."]}
-	var object_rects := _dict(_dict(environment.get("layout", {})).get("object_rects", {}))
+	var layout := _dict(environment.get("layout", {}))
+	var object_rects := _dict(layout.get("object_rects", {}))
+	var slot_bindings := _dict(layout.get("slot_bindings", {}))
+	var manifest_rows: Dictionary = {}
+	for row_value in _array(_dict(environment.get("object_manifest", {})).get("rows", [])):
+		var manifest_row := _dict(row_value)
+		if not bool(manifest_row.get("active", false)) or not bool(manifest_row.get("physical", false)):
+			continue
+		var presentation_id := str(manifest_row.get("presentation_object_id", manifest_row.get("object_id", ""))).strip_edges()
+		if not presentation_id.is_empty():
+			manifest_rows[presentation_id] = manifest_row
 	var records: Array = []
 	var errors: Array = []
-	for object_id_value in object_rects.keys():
+	var slot_authority: Dictionary = {}
+	if _layout_has_slot_authority(layout):
+		slot_authority = EnvironmentSlotBinderScript.validate_base_layout_authority(environment)
+		if not bool(slot_authority.get("ok", false)):
+			return {"ok": false, "records": [], "errors": _array(slot_authority.get("errors", []))}
+	# Fixed-slot overflow is intentional presentation authority, not absence from
+	# the room. Generated layouts keep those identities in slot_bindings while
+	# object_rects contains only room-bound objects. Never resurrect a room binding
+	# whose rendered rectangle is absent; add only authenticated overflow ids.
+	var object_ids: Array = object_rects.keys()
+	for object_id_value in _array(slot_authority.get("overflow_ids", [])):
+		if _base_identity_is_live(environment, str(object_id_value)) and not object_ids.has(object_id_value):
+			object_ids.append(object_id_value)
+	object_ids.sort_custom(func(left: Variant, right: Variant) -> bool: return str(left) < str(right))
+	for object_id_value in object_ids:
 		var object_id := str(object_id_value).strip_edges()
 		var parts := object_id.split(":", false)
-		if parts.size() != 2:
+		# Repeated fixtures retain one catalog source id and a unique presentation
+		# suffix (for example game:slot:2). The full object_id remains identity.
+		if parts.size() < 2:
 			continue
 		var domain := str(parts[0])
 		var source_id := str(parts[1])
@@ -35,6 +63,8 @@ static func authoritative_interactable_records(environment: Dictionary, library:
 			"travel":
 				if source_id == "leave":
 					definition = {"display_name": "Leave"}
+				elif _parent_home_door_authorized(environment, library, source_id, object_id):
+					definition = _dict(library.call("environment_archetype", source_id))
 				elif _casino_room_target_authorized(environment, library, source_id, object_id):
 					definition = _dict(library.call("environment_archetype", source_id))
 				else:
@@ -42,13 +72,26 @@ static func authoritative_interactable_records(environment: Dictionary, library:
 		if definition.is_empty():
 			errors.append("authoritative base semantic source %s is not catalog-backed." % object_id)
 			continue
-		var rect := _dict(object_rects.get(object_id, {}))
-		for rect_key in ["x", "y", "w", "h"]:
-			if not _finite_number(rect.get(rect_key)):
-				errors.append("authoritative base semantic source %s has malformed layout geometry." % object_id)
-				break
-		if not errors.is_empty() and str(errors[-1]).contains(object_id):
+		var binding := _dict(slot_bindings.get(object_id, {}))
+		var manifest_row := _dict(manifest_rows.get(object_id, {}))
+		if not manifest_rows.is_empty() and manifest_row.is_empty():
+			errors.append("authoritative base semantic source %s is absent from the environment object manifest." % object_id)
 			continue
+		if not manifest_row.is_empty() and str(manifest_row.get("family", "")) != str(binding.get("slot_family", binding.get("kind", ""))):
+			errors.append("authoritative base semantic source %s crosses manifest and slot families." % object_id)
+			continue
+		var presentation_mode := str(binding.get("presentation_mode", "room" if object_rects.has(object_id) else ""))
+		if presentation_mode not in ["room", "overflow"]:
+			errors.append("authoritative base semantic source %s has no closed room/overflow presentation authority." % object_id)
+			continue
+		var rect := _dict(object_rects.get(object_id, {}))
+		if presentation_mode == "room":
+			for rect_key in ["x", "y", "w", "h"]:
+				if not _finite_number(rect.get(rect_key)):
+					errors.append("authoritative base semantic source %s has malformed layout geometry." % object_id)
+					break
+			if not errors.is_empty() and str(errors[-1]).contains(object_id):
+				continue
 		var action_id := str({
 			"game": "enter_game",
 			"event": "inspect_event_choices",
@@ -71,30 +114,76 @@ static func authoritative_interactable_records(environment: Dictionary, library:
 			"travel": "Open map." if source_id == "leave" else "Double-click to travel.",
 		}.get(domain, "Choose an action."))
 		var available_actions := [{"id": action_id, "label": action_label, "input_action": "confirm", "non_color_state": "available"}]
+		var label := str(definition.get("display_name", definition.get("label", source_id.replace("_", " ").capitalize())))
 		var record := {
 			"object_id": object_id,
 			"object_type": object_type,
 			"source_id": source_id,
-			"label": str(definition.get("display_name", definition.get("label", source_id.replace("_", " ").capitalize()))),
+			"label": label,
 			"action_summary": action_summary,
 			"enabled": true,
 			"disabled_reason": "",
 			"available_actions": available_actions,
 			"confirm_action_id": str(available_actions[0].get("id", "")),
-			"normalized_rect": rect.duplicate(true),
-			"focus_rect": rect,
-			"focus_point": {
+			"presentation_mode": presentation_mode,
+		}
+		if not binding.is_empty():
+			record["placement_class"] = str(binding.get("placement_class", ""))
+			record["slot_family"] = str(binding.get("slot_family", binding.get("kind", "")))
+		if not manifest_row.is_empty():
+			record["manifest_object_id"] = str(manifest_row.get("instance_object_id", ""))
+			record["manifest_family"] = str(manifest_row.get("family", ""))
+			record["manifest_action_ids"] = _array(manifest_row.get("action_ids", []))
+		if presentation_mode == "room":
+			record["normalized_rect"] = rect.duplicate(true)
+			record["focus_rect"] = rect.duplicate(true)
+			record["focus_point"] = {
 				"x": float(rect.get("x", 0.0)) + float(rect.get("w", 0.0)) * 0.5,
 				"y": float(rect.get("y", 0.0)) + float(rect.get("h", 0.0)) * 0.5,
-			},
-		}
+			}
 		records.append(record)
-	return {"ok": errors.is_empty(), "records": records if errors.is_empty() else [], "errors": errors}
+	# Exact scenario layouts may attach a catalog action to a tangible scenario
+	# object instead of giving that action a second physical marker. Preserve the
+	# catalog-owned interaction identity as geometry-free action-list authority;
+	# the live composer attaches it to the exact host before presentation.
+	var surface_map := EnvironmentPlacementScript.surface_map(environment)
+	var hosted_action_ids := _dict(surface_map.get("scenario_instance_action_host_ids", {}))
+	var ordered_hosted_ids := hosted_action_ids.keys()
+	ordered_hosted_ids.sort_custom(func(left: Variant, right: Variant) -> bool: return str(left) < str(right))
+	for action_id_value in ordered_hosted_ids:
+		var action_id := str(action_id_value).strip_edges()
+		var host_id := str(hosted_action_ids.get(action_id_value, "")).strip_edges()
+		if action_id.is_empty() or host_id.is_empty() or not _catalog_identity_is_live(environment, action_id):
+			continue
+		if object_rects.has(action_id) or slot_bindings.has(action_id):
+			errors.append("exact hosted action %s still owns physical base layout authority." % action_id)
+			continue
+		var hosted_record := _hosted_catalog_action_record(environment, library, action_id, host_id)
+		if hosted_record.is_empty():
+			errors.append("exact hosted action %s is not backed by its active catalog source." % action_id)
+			continue
+		records.append(hosted_record)
+	if not errors.is_empty():
+		return {"ok": false, "records": [], "errors": errors}
+	# Use the same immutable slot projection as the production interaction UI.
+	# This derives exact room/label rectangles and deliberately clears all room
+	# geometry for overflow records while preserving their actions and identity.
+	var room_slot_occupancy: Dictionary = {}
+	var bound := EnvironmentSlotBinderScript.bind_base_records(environment, records, slot_bindings, room_slot_occupancy)
+	if not bool(bound.get("ok", false)):
+		return {"ok": false, "records": [], "errors": _array(bound.get("errors", []))}
+	return {"ok": true, "records": _array(bound.get("records", [])), "errors": []}
 
 
 static func stamp_interactable_records(records_value: Array, environment: Dictionary, library: Variant, producer_context: Dictionary = {}) -> Dictionary:
 	var records: Array = []
 	var errors: Array = []
+	var layout := _dict(environment.get("layout", {}))
+	var slot_authority: Dictionary = {}
+	if _layout_has_slot_authority(layout):
+		slot_authority = EnvironmentSlotBinderScript.validate_base_layout_authority(environment, records_value)
+		if not bool(slot_authority.get("ok", false)):
+			return {"ok": false, "records": records_value.duplicate(true), "errors": _array(slot_authority.get("errors", []))}
 	for index in range(records_value.size()):
 		if typeof(records_value[index]) != TYPE_DICTIONARY:
 			errors.append("base presentation record %d must be a dictionary." % index)
@@ -103,11 +192,27 @@ static func stamp_interactable_records(records_value: Array, environment: Dictio
 		if not bool(record.get("interactive", true)):
 			records.append(record)
 			continue
-		var geometry := _producer_geometry(record)
-		if geometry.is_empty():
-			errors.append("base presentation record %d has no valid normalized environment-board geometry." % index)
+		var presentation_mode := str(record.get("presentation_mode", "room"))
+		if presentation_mode not in ["room", "overflow"]:
+			errors.append("base presentation record %d has invalid presentation mode." % index)
 			continue
-		for geometry_key in geometry.keys(): record[geometry_key] = geometry.get(geometry_key)
+		if presentation_mode == "room":
+			var geometry := _producer_geometry(record)
+			if geometry.is_empty():
+				errors.append("base presentation record %d has no valid normalized environment-board geometry." % index)
+				continue
+			for geometry_key in geometry.keys(): record[geometry_key] = geometry.get(geometry_key)
+		else:
+			# Legacy geometry-free records are accepted only while old saves are
+			# migrated; the live composer attaches their actions to room objects.
+			# Keep their semantic identity/action authority without inventing a room
+			# hit rectangle that could bypass slot capacity or overlap validation.
+			if not _authorized_overflow_binding(record, slot_authority) \
+					and not _authorized_hosted_action_binding(record, environment, slot_authority):
+				errors.append("base presentation record %d has no exact generated overflow or action-host authority." % index)
+				continue
+			for geometry_key in ["normalized_rect", "focus_rect", "focus_point", "normalized_hit_rect", "coordinate_space", "coordinate_board_size", "pixel_hit_bounds", "small_screen_rect", "label_rect", "small_screen_label_rect"]:
+				record.erase(geometry_key)
 		var identity := _identity_for_record(record, environment, library, producer_context)
 		if identity.is_empty():
 			errors.append("base presentation record %d is not backed by an exact environment source (%s/%s/%s)." % [index, str(record.get("object_id", "")), str(record.get("object_type", "")), str(record.get("source_id", ""))])
@@ -204,12 +309,16 @@ static func from_interactable_records(records_value: Array) -> Dictionary:
 			"non_color_state": non_color_state,
 			"focus_order": index,
 			"hit_bounds": bounds,
-			"normalized_hit_rect": _dict(geometry.get("normalized_hit_rect", {})),
 			"min_target_size": OperationRegistryScript.MIN_TARGET_SIZE,
 			"safe_exit": presentation_id == "travel:leave" or presentation_id.begins_with("environment_layer:") or presentation_id.begins_with("travel:"),
 			"alternate_exit": false,
 			"source_id": str(source.get("source_id", "")),
 		}
+		if str(source.get("presentation_mode", "room")) == "overflow":
+			interaction["presentation_mode"] = "overflow"
+		var normalized_hit_rect := _dict(geometry.get("normalized_hit_rect", {}))
+		if not normalized_hit_rect.is_empty():
+			interaction["normalized_hit_rect"] = normalized_hit_rect
 		interactions.append(interaction)
 		if source.has("semantic_actor") or source.has("semantic_actor_id") or source.has("semantic_actor_owner_namespace") or source.has("semantic_actor_provenance"):
 			errors.append("base interactable %s cannot promote presentation metadata into a semantic actor." % presentation_id)
@@ -229,7 +338,7 @@ static func is_dynamic_interaction_record(record: Dictionary) -> bool:
 
 # Producer-only records have no final layout entry to independently prove them,
 # so exact inventory admission replays their closed producer authority here.
-static func validate_dynamic_interaction_record(record: Dictionary, environment: Dictionary, library: Variant) -> Array:
+static func validate_dynamic_interaction_record(record: Dictionary, environment: Dictionary, library: Variant, authenticated_overflow: bool = false) -> Array:
 	var errors: Array = []
 	var source_field := str(record.get("source_field", ""))
 	var source_record_id := str(record.get("source_record_id", ""))
@@ -243,7 +352,7 @@ static func validate_dynamic_interaction_record(record: Dictionary, environment:
 	var expected_owner := str({"game_ids.environment_interactable_objects": "game", "game_ids.environment_interactable_objects.dialogue_id": "game", "crew_presence": "crew", "active_delivery_run.handoff_pending_node_id": "traveler"}.get(source_field, "base"))
 	if str(record.get("owner_namespace", "")) != expected_owner or str(record.get("stable_object_id", "")) != presentation_id:
 		errors.append("dynamic interaction identity does not match its producer-owned presentation object.")
-	if not _interaction_geometry_valid(record):
+	if not _interaction_geometry_valid(record, authenticated_overflow):
 		errors.append("dynamic interaction lacks valid normalized and pixel hit bounds.")
 	match source_field:
 		"game_ids.environment_interactable_objects", "game_ids.environment_interactable_objects.dialogue_id":
@@ -336,6 +445,13 @@ static func _identity_for_record(source: Dictionary, environment: Dictionary, li
 	var domain := str(parts[0]) if not parts.is_empty() else ""
 	var source_id := str(source.get("source_id", "")).strip_edges()
 	if source_id.is_empty() and parts.size() > 1: source_id = str(parts[1])
+	# Named guaranteed hosts/fixtures may exist only as exact fixed declarations,
+	# rather than as a catalog game/event/service. Authenticate their synthesized
+	# presentation against the room's sealed manifest row before normal domains are
+	# considered. Catalog-backed rows use their catalog source id, so they continue
+	# through the stricter domain-specific branches below.
+	var fixed_declaration_identity := _fixed_declaration_identity(source, environment, presentation_id, source_id)
+	if not fixed_declaration_identity.is_empty(): return fixed_declaration_identity
 	var owner := str({"game": "game", "game_hook": "game", "dialogue": "game", "service": "service", "lender": "service", "event": "event", "crew_presence": "crew", "delivery": "traveler"}.get(domain, "base"))
 	var source_field := ""
 	var source_record_id := source_id
@@ -357,12 +473,28 @@ static func _identity_for_record(source: Dictionary, environment: Dictionary, li
 		"item":
 			source_field = "item_offers"
 			if str(source.get("object_type", "")) != "item" or not _offer_present(environment.get(source_field, []), source_id, presentation_id) or not _library_has(library, "item", source_id): return {}
+		"cage_gift_item":
+			source_field = "cage_gift_shop_state.stock"
+			if str(environment.get("archetype_id", "")) != "grand_casino_cage" \
+					or str(source.get("object_type", "")) != "item" \
+					or parts.size() != 2 or not str(parts[1]).is_valid_int(): return {}
+			var stock_index := int(parts[1])
+			if str(stock_index) != str(parts[1]): return {}
+			var stock_rows := _array(_dict(environment.get("cage_gift_shop_state", {})).get("stock", []))
+			if stock_index < 0 or stock_index >= stock_rows.size() or typeof(stock_rows[stock_index]) != TYPE_DICTIONARY: return {}
+			var stock := _dict(stock_rows[stock_index])
+			var stock_item_id := str(stock.get("item_id", stock.get("id", ""))).strip_edges()
+			if source_id != stock_item_id or not _library_has(library, "item", stock_item_id): return {}
+			source_record_id = "%d:%s" % [stock_index, stock_item_id]
 		"crew_presence":
 			source_field = "crew_presence"
 			if str(source.get("object_type", "")) != "dialogue" or not _record_present(environment.get(source_field, []), "member_id", source_id): return {}
 		"travel":
 			var room_target := _exact_id(_dict(environment.get("local_narrative_flags", {})).get("casino_room_targets", []), source_id)
-			if room_target:
+			if _parent_home_door_authorized(environment, library, source_id, presentation_id):
+				source_field = "runtime_object_manifest_entries"
+				if str(source.get("object_type", "")) != "travel": return {}
+			elif room_target:
 				source_field = "local_narrative_flags.casino_room_targets"
 				if str(source.get("object_type", "")) != "travel" or presentation_id != "travel:%s" % source_id or not _casino_room_target_authorized(environment, library, source_id, presentation_id): return {}
 			else:
@@ -431,7 +563,48 @@ static func _identity_for_record(source: Dictionary, environment: Dictionary, li
 	}
 
 
+static func _fixed_declaration_identity(source: Dictionary, environment: Dictionary, presentation_id: String, source_id: String) -> Dictionary:
+	if presentation_id.is_empty() or source_id.is_empty(): return {}
+	var matched_row: Dictionary = {}
+	for row_value in _array(_dict(environment.get("object_manifest", {})).get("rows", [])):
+		var row := _dict(row_value)
+		if str(row.get("presentation_object_id", "")) != presentation_id: continue
+		if str(row.get("family", "")) != "fixed" \
+				or str(row.get("source_kind", "")) != "environment_declaration" \
+				or str(row.get("source_field", "")) != "fixed_objects" \
+				or str(row.get("source_collection", "")) != "fixed_objects": return {}
+		if not bool(row.get("active", false)) or not bool(row.get("physical", false)): return {}
+		var row_source_id := str(row.get("source_id", "")).strip_edges()
+		var instance_id := str(row.get("instance_object_id", "")).strip_edges()
+		if row_source_id.is_empty() or instance_id.is_empty() or source_id != row_source_id: return {}
+		if str(source.get("object_type", "")).strip_edges() != str(row.get("object_type", "")).strip_edges(): return {}
+		if source.has("manifest_object_id") and str(source.get("manifest_object_id", "")) != instance_id: return {}
+		if source.has("manifest_presentation_id") and str(source.get("manifest_presentation_id", "")) != presentation_id: return {}
+		if source.has("manifest_family") and str(source.get("manifest_family", "")) != "fixed": return {}
+		if source.has("manifest_source_kind") and str(source.get("manifest_source_kind", "")) != "environment_declaration": return {}
+		if source.has("manifest_source_id") and str(source.get("manifest_source_id", "")) != row_source_id: return {}
+		if source.has("slot_family") and str(source.get("slot_family", "")) != "fixed": return {}
+		if source.has("exact_slot_id") and str(source.get("exact_slot_id", "")) != str(row.get("exact_slot_id", "")): return {}
+		matched_row = row
+		break
+	if matched_row.is_empty(): return {}
+	var parsed := OperationRegistryScript.parse_owned_identity(OperationRegistryScript.identity("base", presentation_id))
+	if parsed.is_empty(): return {}
+	return {
+		"owner_namespace": str(parsed.get("owner_namespace", "")),
+		"stable_object_id": str(parsed.get("stable_object_id", "")),
+		"source_kind": "environment_declaration",
+		"source_field": "fixed_objects",
+		"source_record_id": str(matched_row.get("instance_object_id", "")),
+	}
+
+
 static func _bounds(record: Dictionary) -> Dictionary:
+	if str(record.get("presentation_mode", "room")) == "overflow":
+		# OperationRegistry models the actionable list control's accessible extent,
+		# not a room-space rectangle. The live composer attaches the action to a
+		# visible room object before it reaches the player.
+		return {"pixel_hit_bounds": {"w": OperationRegistryScript.MIN_TARGET_SIZE, "h": OperationRegistryScript.MIN_TARGET_SIZE}}
 	if str(record.get("coordinate_space", "")) != "normalized_environment_board": return {}
 	var board := _dict(record.get("coordinate_board_size", {}))
 	var expected := Vector2(ArtContractsScript.ENVIRONMENT_BOARD_SIZE)
@@ -451,6 +624,100 @@ static func _bounds(record: Dictionary) -> Dictionary:
 	if not is_equal_approx(pixel_width, width * expected.x) or not is_equal_approx(pixel_height, height * expected.y): return {}
 	if pixel_width < OperationRegistryScript.MIN_TARGET_SIZE or pixel_height < OperationRegistryScript.MIN_TARGET_SIZE: return {}
 	return {"pixel_hit_bounds": {"w": pixel_width, "h": pixel_height}, "normalized_hit_rect": {"x": x, "y": y, "w": width, "h": height}}
+
+
+static func _authorized_overflow_binding(record: Dictionary, slot_authority: Dictionary) -> bool:
+	var object_id := str(record.get("object_id", "")).strip_edges()
+	return not object_id.is_empty() and bool(slot_authority.get("ok", false)) \
+		and _exact_id(slot_authority.get("overflow_ids", []), object_id)
+
+
+static func _authorized_hosted_action_binding(record: Dictionary, environment: Dictionary, slot_authority: Dictionary) -> bool:
+	if not bool(slot_authority.get("ok", false)):
+		return false
+	var object_id := str(record.get("object_id", "")).strip_edges()
+	var binding_source_id := str(record.get("slot_binding_source_id", "")).strip_edges()
+	if object_id.is_empty() or binding_source_id.is_empty() or object_id == binding_source_id:
+		return false
+	var surface_map := EnvironmentPlacementScript.surface_map(environment)
+	var exact_host_id := str(_dict(surface_map.get("scenario_instance_action_host_ids", {})).get(object_id, "")).strip_edges()
+	return exact_host_id == binding_source_id \
+		and not _dict(slot_authority.get("slot_bindings", {})).has(object_id) \
+		and not _dict(slot_authority.get("object_rects", {})).has(object_id)
+
+
+static func _hosted_catalog_action_record(environment: Dictionary, library: Variant, object_id: String, host_id: String) -> Dictionary:
+	var parts := object_id.split(":", false)
+	if parts.size() != 2:
+		return {}
+	var domain := str(parts[0])
+	var source_id := str(parts[1])
+	var definition: Dictionary = {}
+	match domain:
+		"game": definition = _dict(library.call("game", source_id)) if library.has_method("game") else {}
+		"event": definition = _dict(library.call("event", source_id)) if library.has_method("event") else {}
+		"service": definition = _dict(library.call("service", source_id)) if library.has_method("service") else {}
+		"lender": definition = _dict(library.call("lender", source_id)) if library.has_method("lender") else {}
+		"travel":
+			if source_id == "leave":
+				definition = {"display_name": "Leave"}
+			else:
+				definition = _dict(library.call("route", source_id)) if library.has_method("route") else {}
+		_:
+			return {}
+	if definition.is_empty():
+		return {}
+	var action_id := str({
+		"game": "enter_game",
+		"event": "inspect_event_choices",
+		"service": "use_service_hook",
+		"lender": "use_lender_hook",
+		"travel": "open_map" if source_id == "leave" else "travel",
+	}.get(domain, "interact"))
+	var action_label := str({
+		"game": "Double-click to enter",
+		"event": "Review responses",
+		"service": "Use",
+		"lender": "Use",
+		"travel": "Open Map" if source_id == "leave" else "Travel",
+	}.get(domain, "Interact"))
+	var action_summary := str({
+		"game": "Double-click this machine to enter.",
+		"event": "Choose a response.",
+		"service": "Double-click to use.",
+		"lender": "Double-click to use.",
+		"travel": "Open map." if source_id == "leave" else "Double-click to travel.",
+	}.get(domain, "Choose an action."))
+	var available_actions := [{"id": action_id, "label": action_label, "input_action": "confirm", "non_color_state": "available"}]
+	return {
+		"object_id": object_id,
+		"object_type": domain,
+		"source_id": source_id,
+		"label": str(definition.get("display_name", definition.get("label", source_id.replace("_", " ").capitalize()))),
+		"action_summary": action_summary,
+		"enabled": true,
+		"disabled_reason": "",
+		"available_actions": available_actions,
+		"confirm_action_id": action_id,
+		"presentation_mode": "overflow",
+		"slot_binding_source_id": host_id,
+	}
+
+
+static func _catalog_identity_is_live(environment: Dictionary, presentation_id: String) -> bool:
+	var parts := presentation_id.split(":", false)
+	if parts.size() != 2:
+		return false
+	var source_id := str(parts[1])
+	match str(parts[0]):
+		"game": return _exact_id(environment.get("game_ids", []), source_id)
+		"event": return _exact_id(environment.get("event_ids", []), source_id)
+		"service": return _exact_id(environment.get("service_ids", []), source_id)
+		"lender": return _exact_id(environment.get("lender_hooks", []), source_id)
+		"travel":
+			return source_id == "leave" and not _ids(_array(environment.get("travel_hooks", [])) + _array(environment.get("next_archetypes", []))).is_empty() \
+				or _ordinary_route_present(environment, source_id)
+	return false
 
 
 static func _producer_geometry(record: Dictionary) -> Dictionary:
@@ -474,9 +741,14 @@ static func _producer_geometry(record: Dictionary) -> Dictionary:
 	}
 
 
-static func _interaction_geometry_valid(record: Dictionary) -> bool:
+static func _interaction_geometry_valid(record: Dictionary, authenticated_overflow: bool = false) -> bool:
 	var rect := _dict(record.get("normalized_hit_rect", {}))
 	var pixels := _dict(record.get("hit_bounds", record.get("pixel_hit_bounds", {})))
+	if authenticated_overflow:
+		return rect.is_empty() and str(record.get("presentation_mode", "")) == "overflow" \
+			and _finite_number(pixels.get("w")) and _finite_number(pixels.get("h")) \
+			and float(pixels.get("w")) >= OperationRegistryScript.MIN_TARGET_SIZE \
+			and float(pixels.get("h")) >= OperationRegistryScript.MIN_TARGET_SIZE
 	for key in ["x", "y", "w", "h"]:
 		if not _finite_number(rect.get(key)): return false
 	for key in ["w", "h"]:
@@ -573,15 +845,30 @@ static func _offer(value: Variant, source_id: String, presentation_id: String) -
 
 static func _transition_present(value: Variant, source_id: String) -> bool:
 	return _record_present(value, "target_layer_id", source_id)
-
-
-static func _route_present(environment: Dictionary, source_id: String) -> bool:
-	if _exact_id(environment.get("travel_hooks", []), source_id) or _exact_id(environment.get("next_archetypes", []), source_id): return true
-	return _exact_id(_dict(environment.get("local_narrative_flags", {})).get("casino_room_targets", []), source_id)
-
-
 static func _ordinary_route_present(environment: Dictionary, source_id: String) -> bool:
 	return _exact_id(environment.get("travel_hooks", []), source_id) or _exact_id(environment.get("next_archetypes", []), source_id)
+
+
+static func _parent_home_door_authorized(environment: Dictionary, library: Variant, source_id: String, presentation_id: String) -> bool:
+	if source_id.is_empty() or presentation_id != "travel:%s" % source_id \
+			or not _library_has(library, "environment_archetype", source_id):
+		return false
+	var home_target := _dict(library.call("environment_archetype", source_id))
+	if str(home_target.get("kind", "")) != "home":
+		return false
+	for entry_value in _array(environment.get("runtime_object_manifest_entries", [])):
+		var entry := _dict(entry_value)
+		if str(entry.get("runtime_owner", "")) == "home_return_exit" \
+				and str(entry.get("object_id", entry.get("presentation_object_id", ""))) == presentation_id \
+				and str(entry.get("presentation_object_id", entry.get("object_id", ""))) == presentation_id \
+				and str(entry.get("object_type", "")) == "travel" \
+				and str(entry.get("source_id", "")) == source_id \
+				and str(entry.get("slot_family", "")) == "exit" \
+				and str(entry.get("spot_field", "")) == "runtime_object_manifest_entries" \
+				and bool(entry.get("active", false)) and bool(entry.get("physical", false)) \
+				and _ids(entry.get("action_ids", [])) == ["enter_room"]:
+			return true
+	return false
 
 
 static func _casino_room_target_authorized(environment: Dictionary, library: Variant, source_id: String, presentation_id: String) -> bool:
@@ -616,7 +903,48 @@ static func _deep_merge(base: Dictionary, overlay: Dictionary) -> Dictionary:
 
 
 static func _layout_present(environment: Dictionary, presentation_id: String) -> bool:
-	return _dict(_dict(environment.get("layout", {})).get("object_rects", {})).has(presentation_id)
+	var layout := _dict(environment.get("layout", {}))
+	if _dict(layout.get("object_rects", {})).has(presentation_id):
+		return true
+	if not _layout_has_slot_authority(layout):
+		return false
+	var authority := EnvironmentSlotBinderScript.validate_base_layout_authority(environment)
+	return bool(authority.get("ok", false)) and _exact_id(authority.get("overflow_ids", []), presentation_id)
+
+
+static func _base_identity_is_live(environment: Dictionary, presentation_id: String) -> bool:
+	var manifest_rows := _array(_dict(environment.get("object_manifest", {})).get("rows", []))
+	if not manifest_rows.is_empty():
+		for row_value in manifest_rows:
+			var row := _dict(row_value)
+			if not bool(row.get("active", false)) or not bool(row.get("physical", false)):
+				continue
+			if str(row.get("presentation_object_id", row.get("object_id", ""))) == presentation_id \
+					or _array(row.get("action_ids", [])).has(presentation_id):
+				return true
+		return false
+	var parts := presentation_id.split(":", false)
+	if parts.size() < 2: return false
+	var domain := str(parts[0])
+	var source_id := str(parts[1])
+	match domain:
+		"game": return _exact_id(environment.get("game_ids", []), source_id)
+		"event": return _exact_id(environment.get("event_ids", []), source_id)
+		"service": return _exact_id(environment.get("service_ids", []), source_id)
+		"lender": return _exact_id(environment.get("lender_hooks", []), source_id)
+		"travel":
+			if source_id == "leave":
+				return not _ids(_array(environment.get("travel_hooks", [])) + _array(environment.get("next_archetypes", []))).is_empty()
+			return _exact_id(environment.get("travel_hooks", []), source_id) \
+				or _exact_id(environment.get("next_archetypes", []), source_id) \
+				or _exact_id(_dict(environment.get("local_narrative_flags", {})).get("casino_room_targets", []), source_id)
+	return false
+
+
+static func _layout_has_slot_authority(layout: Dictionary) -> bool:
+	for key in ["slot_schema_version", "slot_map_digest", "slot_binding_digest", "slot_bindings", "slot_overflow_ids"]:
+		if layout.has(key): return true
+	return false
 
 
 static func _dict(value: Variant) -> Dictionary:
@@ -628,13 +956,6 @@ static func _action_inputs(actions: Array) -> Array:
 	for action_value in actions:
 		var input_action := str((action_value as Dictionary).get("input_action", "confirm"))
 		if not result.has(input_action): result.append(input_action)
-	return result
-
-
-static func _action_ids(actions: Array) -> Array:
-	var result: Array = []
-	for action_value in actions: result.append(str((action_value as Dictionary).get("id", "")))
-	result.sort()
 	return result
 
 

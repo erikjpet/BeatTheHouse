@@ -774,11 +774,6 @@ func _capture_rapid_drop_pile(variation_id: String, definition: Dictionary) -> D
 	return {"id": "rapid_drop_pile", "passed": passed, "files": [file, reduced_file], "body_ids": ids, "distinct_landing_cells": landed_positions.size(), "scatter_direction_count": scatter_directions.size(), "platform_rooted_body_support_count": carried_stack_count, "initial_tick": int(initial.get("tick", -1)), "final_tick": int(final_record.get("tick", -1))}
 
 
-func _save_pair(variation_id: String, scene_id: String, definition: Dictionary, first: Dictionary, second: Dictionary, reduced: bool) -> Dictionary:
-	var file := "%s_%s.png" % [variation_id, scene_id]
-	return {"files": [file], "saved": await _save_record_strip(file, variation_id, definition, [first, second], reduced)}
-
-
 func _save_record_strip(file_name: String, variation_id: String, definition: Dictionary, records: Array, reduced_motion: bool) -> bool:
 	if records.is_empty():
 		return false
@@ -826,10 +821,6 @@ func _record(state: Dictionary, previous_views: Array = [], events: Array = []) 
 	(active_machine.get("live_session", {}) as Dictionary)["presentation_previous_bodies"] = saved_previous
 	(active_machine.get("live_session", {}) as Dictionary)["presentation_current_bodies"] = saved_current
 	return {"tick": int(state.get("tick", 0)), "state": state.duplicate(true), "previous_views": previous, "current_views": current, "events": events.duplicate(true), "production_surface_state": production_surface}
-
-
-func _record_from_views(state: Dictionary, views: Array) -> Dictionary:
-	return _record(state, views, [])
 
 
 func _enter_production_variation(variation_id: String) -> bool:
@@ -1081,14 +1072,6 @@ func _body_from_views(views: Array, body_id: String) -> Dictionary:
 		if typeof(body_value) == TYPE_DICTIONARY and str((body_value as Dictionary).get("id", "")) == body_id:
 			return (body_value as Dictionary).duplicate(true)
 	return {}
-
-
-func _body_y_map(views: Array) -> Dictionary:
-	var result := {}
-	for body_value in views:
-		if typeof(body_value) == TYPE_DICTIONARY:
-			result[str((body_value as Dictionary).get("id", ""))] = int((body_value as Dictionary).get("y", 0))
-	return result
 
 
 func _body_y_for_ids(views: Array, ids: Array) -> Dictionary:

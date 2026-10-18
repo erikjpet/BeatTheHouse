@@ -1,12 +1,21 @@
 class_name FoundationMain
 extends Control
 
-const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
-# Thin UI shell for the README foundation runtime.
+const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
+const BuildIdentityScript := preload("res://scripts/core/build_identity.gd")
+
+# Top-level application orchestrator. It owns screen/modal lifecycle, run and
+# profile session wiring, action routing, game/environment entry, save/recovery,
+# travel, tutorials, terminal presentation, and stable test snapshots. Domain
+# rules remain in core models/services and concrete GameModules.
 
 const DEFAULT_SEED := "FOUNDATION-UI-SEED"
+const GENERATED_RUN_START_ATTEMPTS := 8
 const AUTOSAVE_SLOT := "foundation_ui_autosave"
+const TERMINAL_RESUME_CHECKPOINT_FLAG := "terminal_resume_checkpoint_saved"
 const RELEASE_MENU_FRAMING := "Fictional casino roguelike. Simulated gambling only; no real-money wagering or cash prizes."
 const ACTION_CATEGORY_GAMES := "games"
 const ACTION_CATEGORY_EVENTS := "events"
@@ -59,6 +68,11 @@ const GAME_SURFACE_REALTIME_REFRESH_INTERVAL_MSEC := 16
 const AUTOSAVE_INTERACTION_DEBOUNCE_MSEC := 250
 const AUTOSAVE_GAME_INTERACTION_DEBOUNCE_MSEC := 400
 const AUTOSAVE_MAX_DEFER_MSEC := 1500
+const ENVIRONMENT_RUNTIME_AUTOSAVE_DEBOUNCE_MSEC := 4000
+const ENVIRONMENT_RUNTIME_AUTOSAVE_MAX_DEFER_MSEC := 6000
+const AUTOSAVE_RETRY_BASE_MSEC := 1000
+const AUTOSAVE_RETRY_MAX_MSEC := 30000
+const AUTOSAVE_TRANSIENT_RETRY_LIMIT := 5
 # Environment time is continuous: one in-game hour passes every 40 real
 # seconds while the player is on an active, unpaused run surface.
 const GAME_CLOCK_REAL_SECONDS_PER_GAME_HOUR := 40.0
@@ -93,7 +107,6 @@ const ENVIRONMENT_RUNTIME_STATE_KEY_CACHE_LIMIT := 64
 const RUN_ITEM_ICON_TEXTURE_CACHE_LIMIT := 64
 const RESULT_FEEDBACK_WIDTH := 340.0
 const RESULT_FEEDBACK_HEIGHT := 72.0
-const RESULT_FEEDBACK_MAX_CHARS := 64
 const MAIN_MENU_COLLAPSED_SIZE := Vector2(1200, 680)
 const MAIN_MENU_EXPANDED_SIZE := Vector2(1100, 620)
 const MAIN_MENU_VIEWPORT_MARGIN := Vector2(32, 24)
@@ -106,10 +119,8 @@ const MIN_NATIVE_TOUCH_TARGET_HEIGHT := 40.0
 const EVENT_CHOICE_POPUP_BASE_SIZE := Vector2(460, 320)
 const EVENT_CHOICE_TEXT_MAX_LINES := 2
 const EVENT_CHOICE_SUMMARY_MAX_LINES := 3
-const RUN_INVENTORY_POPUP_SIZE := Vector2(1120, 620)
-const RUN_INVENTORY_POPUP_MARGIN := 12.0
-const WORLD_MAP_NODE_BUTTON_POOL_SIZE := 12
-const WORLD_MAP_DETAIL_BADGE_CELL_POOL_SIZE := 10
+const EVENT_CHOICE_TEXT_MIN_HEIGHT := 34.0
+const EVENT_CHOICE_SUMMARY_MIN_HEIGHT := 48.0
 const GAME_SURFACE_UI_PREFERENCE_KEYS := [
 	"selected_chip",
 	"selected_stake",
@@ -128,20 +139,21 @@ const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection
 const CollectionDropServiceScript := preload("res://scripts/core/collection_drop_service.gd")
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
 const SettingsMenuScript := preload("res://scripts/ui/settings_menu.gd")
+const ModalFocusScopeScript := preload("res://scripts/ui/modal_focus_scope.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const FoundationWidgetsScript := preload("res://scripts/ui/foundation_widgets.gd")
 const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
-const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
 const CareerStatsScreenScript := preload("res://scripts/ui/career_stats_screen.gd")
 const FoundationScreenBuilderScript := preload("res://scripts/ui/foundation_screen_builder.gd")
 const MetaSessionControllerScript := preload("res://scripts/ui/meta_session_controller.gd")
 const ProceduralMusicPlayerScript := preload("res://scripts/ui/procedural_music_player.gd")
-const PerfTelemetryOverlayScript := preload("res://scripts/ui/perf_telemetry_overlay.gd")
+const PERF_TELEMETRY_OVERLAY_PATH := "res://scripts/ui/perf_telemetry_overlay.gd"
+const NullPerfSinkScript := preload("res://scripts/ui/null_perf_sink.gd")
+const SealedActionHostScript := preload("res://scripts/ui/sealed_action_host.gd")
 const RunTerminalEvaluatorScript := preload("res://scripts/core/run_terminal_evaluator.gd")
 const RunActionServiceScript := preload("res://scripts/core/run_action_service.gd")
-const GameRitualRuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const ItemEffectScript := preload("res://scripts/core/item_effect.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
@@ -243,6 +255,7 @@ var action_authority_contract: Dictionary:
 		return current_game.sealed_action_authority_contract()
 
 var user_settings: UserSettings
+var user_settings_load_outcome: Dictionary = {}
 var profile_inventory: ProfileInventory
 var meta_collection_service: MetaCollectionService
 var meta_session_controller: MetaSessionController
@@ -294,6 +307,17 @@ var camera_focus_point: Vector2 = Vector2(0.5, 0.5)
 var current_context_mode: String = CONTEXT_MODE_ROOM
 var game_surface_ui_state: Dictionary = {}
 var game_module_cache: Dictionary = {}
+var game_module_script_cache: Dictionary = {}
+var game_module_script_prewarm_requests: Dictionary = {}
+var run_ui_script_prewarm_results: Dictionary = {}
+# Bounded by the finite run-UI/game catalogs. A Script lets an owner discovered
+# after light-menu boot reuse the exact successful load; a null value makes a
+# failed path terminal for this host instead of requeueing it before gameplay.
+var script_prewarm_terminal_results: Dictionary = {}
+var script_prewarm_thread: Thread
+var script_prewarm_active_path := ""
+var script_prewarm_stopping := false
+var script_prewarm_force_start_error_for_test := false
 var triggered_event_module_cache: Dictionary = {}
 var triggered_event_module_cache_library: ContentLibrary = null
 var triggered_event_module_cache_generation := -1
@@ -350,6 +374,19 @@ var presented_bankroll_game_id := ""
 var presented_bankroll_action_id := ""
 var presented_bankroll_release_screen := ""
 var presented_bankroll_started_msec := 0
+var financial_hud_dirty := false
+var financial_hud_refresh_callable: Callable
+# Per-frame work is routed through _timed(); binding each step once keeps the
+# idle frame free of Callable allocations when telemetry is disabled.
+var _process_frame_delta := 0.0
+var _apply_run_screen_layout_callable: Callable
+var _advance_run_game_clock_callable: Callable
+var _advance_game_surface_frame_callable: Callable
+var _advance_game_surface_automation_callable: Callable
+var _advance_game_surface_realtime_callable: Callable
+var _advance_presented_bankroll_callable: Callable
+var _advance_environment_game_runtime_callable: Callable
+var _flush_pending_autosave_callable: Callable
 var pending_active_item_id: String = ""
 var run_inventory_popup_mode: String = ""
 var run_inventory_context_container_id: String = ""
@@ -358,9 +395,12 @@ var selected_run_inventory_item_source: String = ""
 var travel_transition_active := false
 var travel_transition_target_id: String = ""
 var travel_transition_target_label: String = ""
+var prepared_travel_lifecycle_rollback: Dictionary = {}
 var travel_transition_force_web_runtime_for_test := false
 var game_surface_auto_resolving := false
 var environment_game_runtime_scan_count := 0
+var foreground_game_action_runtime_quiet_pending := false
+var environment_runtime_quiet_frames := 0
 var environment_runtime_state_key_cache: Dictionary = {}
 var environment_runtime_active_keys_scratch: Dictionary = {}
 var environment_runtime_scheduler = EnvironmentRuntimeSchedulerScript.new()
@@ -376,14 +416,15 @@ var drunk_time_last_scale := 1.0
 var continuous_environment_clock_enabled := true
 var environment_pause_started_msec := 0
 var environment_paused_total_msec := 0
+var application_pause_owners: Dictionary = {}
 var environment_clock_fractional_minutes := 0.0
 var stored_grand_casino_runtime_last_msec := -100000
 var dev_game_test_mode := false
+var dev_environment_test_mode := false
+var environment_test_refresh_counter := 0
 var meta_session_active := false
 var meta_session_location_id: String = ""
 var meta_last_panel_message: String = ""
-var meta_interactable_object_view_cache: Array = []
-var meta_interactable_object_view_cache_key := ""
 var show_game_library_launcher := true
 var autosave_slot_id := AUTOSAVE_SLOT
 var pending_autosave := false
@@ -395,6 +436,11 @@ var autosave_dirty_generation := 0
 var autosave_inflight_generation := 0
 var autosave_completed_generation := 0
 var autosave_loadable_available := false
+var autosave_failure_generation := 0
+var autosave_failure_count := 0
+var autosave_last_error: Error = OK
+var autosave_last_error_code := ""
+var autosave_retry_blocked := false
 var tutorial_meta_home_handoff_scheduled := false
 
 var start_screen: Control
@@ -434,6 +480,22 @@ var game_test_stake_floor_input: SpinBox
 var game_test_stake_ceiling_input: SpinBox
 var game_test_security_option: OptionButton
 var game_test_generation_overrides_text: TextEdit
+var environment_test_menu: VBoxContainer
+var environment_library_button: Button
+var environment_test_status_label: Label
+var environment_test_seed_input: LineEdit
+var environment_test_archetype_option: OptionButton
+var environment_test_scenario_option: OptionButton
+var environment_test_layer_option: OptionButton
+var environment_test_weather_option: OptionButton
+var environment_test_day_option: OptionButton
+var environment_test_happening_mode_option: OptionButton
+var environment_test_happening_checks: Dictionary = {}
+var environment_test_back_button: Button
+var environment_test_next_missing_button: Button
+var environment_test_overlay: Control
+var environment_test_overlay_panel: PanelContainer
+var environment_test_overlay_content: VBoxContainer
 var acquire_chip_button: Button
 var career_button: Button
 var inventory_button: Button
@@ -442,6 +504,7 @@ var profile_chip_texture: Texture2D
 var run_item_icon_texture_cache: Dictionary = {}
 var seed_input: LineEdit
 var main_menu_seed_counter: int = 0
+var generated_menu_seed_text := ""
 var content_group_config_button: Button
 var content_group_panel: PanelContainer
 var content_group_status_label: Label
@@ -471,8 +534,13 @@ var top_menu_button: Button
 var top_settings_button: Button
 var top_inventory_button: Button
 var active_item_button: Button
+var delivery_action_strip: HFlowContainer
+var delivery_action_buttons: Dictionary = {}
 var run_menu_overlay: Control
 var run_menu_panel: PanelContainer
+var run_menu_header: Control
+var run_menu_scroll: ScrollContainer
+var run_menu_action_controls: Array[Control] = []
 var run_menu_status_label: Label
 var run_menu_resume_button: Button
 var run_menu_save_button: Button
@@ -485,12 +553,15 @@ var run_menu_skip_tutorial_button: Button
 var tutorial_skip_dialog: ConfirmationDialog
 var settings_overlay: Control
 var settings_margin: MarginContainer
+var settings_panel: PanelContainer
 var settings_menu: SettingsMenu
 var procedural_music_player: ProceduralMusicPlayer
 var environment_sfx_player: Node
 var _game_surface_audio_authority := RefCounted.new()
 var _environment_audio_authority := RefCounted.new()
-var perf_telemetry_overlay: PerfTelemetryOverlay
+var perf_telemetry_overlay: Variant = null
+var _foundation_perf_sink: Variant = NullPerfSinkScript.new()
+var _sealed_action_host: RefCounted
 var boot_telemetry_events: Array = []
 var boot_start_msec := 0
 var event_choice_popup_overlay: Control
@@ -501,6 +572,12 @@ var event_choice_popup_summary_label: Label
 var event_choice_popup_scroll: ScrollContainer
 var event_choice_popup_content_stack: VBoxContainer
 var event_choice_popup_choices_list: VBoxContainer
+var event_choice_popup_pressed_button: Button
+var event_choice_popup_pressed_callback := Callable()
+var event_choice_popup_press_position := Vector2.ZERO
+var event_choice_popup_press_activation_serial := 0
+var event_choice_popup_activation_serial := 0
+var event_choice_popup_previous_focus_owner: Control
 var numbers_surface_source_id: String = ""
 var numbers_digit_options: Array = []
 var numbers_stake_input: SpinBox
@@ -525,15 +602,11 @@ var bag_open_reel
 var meta_item_interaction_mode := ""
 var selected_meta_item_key := ""
 var meta_trade_selected_instance_ids: Array = []
-var run_inventory_panel: PanelContainer
-var run_inventory_items_scroll: ScrollContainer
-var run_inventory_detail_panel: PanelContainer
-var run_inventory_title_label: Label
-var run_inventory_summary_label: Label
-var run_inventory_list: GridContainer
-var run_inventory_detail_box: VBoxContainer
 var run_journal_overlay: Control
 var run_journal_panel: PanelContainer
+var run_journal_header: Control
+var run_journal_scroll: ScrollContainer
+var run_journal_close_button: Button
 var run_journal_summary_label: Label
 var run_journal_list: VBoxContainer
 var travel_transition_overlay: Control
@@ -548,14 +621,14 @@ var world_map_title_label: Label
 var world_map_detail_popup: PanelContainer
 var world_map_detail_label: Label
 var world_map_badge_slot: VBoxContainer
-var world_map_badge_row: HFlowContainer
-var world_map_badge_cells: Array = []
 var world_map_confirm_button: Button
+var world_map_close_button: Button
 var world_map_overlay_controller
+var world_map_previous_focus_owner: Control
+var modal_focus_scope: RefCounted = ModalFocusScopeScript.new()
 var wager_confirmation_controller
 var selected_world_map_node_id: String = ""
 var world_map_button_ids: Array = []
-var world_map_button_layout_size := Vector2(-1.0, -1.0)
 var world_map_button_relayout_deferred := false
 var travel_target_ids_cache_key: String = ""
 var travel_target_ids_cache: Array = []
@@ -572,8 +645,14 @@ var action_panel_refresh_scheduled := false
 var action_panel_refresh_generation_counter := 0
 var action_panel_refresh_active_generation := 0
 var game_coach_refresh_scheduled := false
+var game_coach_refresh_delay_frames := 0
+var game_coach_transition_wait_frames := 0
+var game_coach_refresh_phase := 0
 var tutorial_guardrail_dialogue_reconcile_active := false
 var pending_action_panel_object: Dictionary = {}
+var interactable_object_catalog_cache: Array = []
+var interactable_object_catalog_cache_valid := false
+var interactable_object_catalog_cache_key := ""
 var interactable_object_view_cache: Array = []
 var interactable_object_view_cache_valid := false
 var interactable_object_view_cache_key := ""
@@ -611,6 +690,7 @@ var environment_canvas: PixelSceneCanvas
 var game_surface_canvas
 var run_layout_dirty := true
 var run_layout_last_screen_size := Vector2(-1.0, -1.0)
+var delivery_action_layout_refresh_deferred := false
 var accessibility_tree_transform_active := false
 var web_audio_unlock_refresh_scheduled := false
 var web_audio_unlock_refresh_count := 0
@@ -638,7 +718,21 @@ const WEB_AUDIO_UNLOCK_REFRESH_DELAY_SECONDS := 0.20
 # - settings_overlay may stack over the run menu only; it must not stack over
 #   travel, world map, inventory, journal, or decision popups.
 
+func _init() -> void:
+	_sealed_action_host = SealedActionHostScript.new(self)
+	financial_hud_refresh_callable = Callable(self, "_refresh_financial_hud_if_dirty")
+	_apply_run_screen_layout_callable = Callable(self, "_apply_run_screen_layout")
+	_advance_run_game_clock_callable = Callable(self, "_advance_run_game_clock_for_frame")
+	_advance_game_surface_frame_callable = Callable(self, "_advance_game_surface_frame")
+	_advance_game_surface_automation_callable = Callable(self, "_advance_game_surface_automation")
+	_advance_game_surface_realtime_callable = Callable(self, "_advance_game_surface_realtime_state")
+	_advance_presented_bankroll_callable = Callable(self, "_advance_presented_bankroll")
+	_advance_environment_game_runtime_callable = Callable(self, "_advance_environment_game_runtime")
+	_flush_pending_autosave_callable = Callable(self, "_flush_pending_autosave_if_ready")
+
+
 func _ready() -> void:
+	get_tree().auto_accept_quit = false
 	boot_start_msec = Time.get_ticks_msec()
 	boot_telemetry_events = []
 	_mark_boot_event("engine_ready_start", {"autoload_count": _project_autoload_count()})
@@ -657,6 +751,8 @@ func _ready() -> void:
 	_mark_boot_event("foundation_ready")
 	_build_ui()
 	_mark_boot_event("ui_built")
+	_surface_user_settings_load_outcome()
+	_surface_durable_load_outcome("Profile progress", profile_inventory.last_load_result())
 	_refresh()
 	_mark_boot_event("main_menu_interactive", {
 		"screen": current_screen,
@@ -667,49 +763,42 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if perf_telemetry_overlay == null:
-		if run_layout_dirty:
-			_apply_run_screen_layout()
-		_advance_run_game_clock(delta)
-		if current_screen == SCREEN_GAME:
-			_advance_game_surface_automation()
-			_advance_game_surface_realtime_state()
-		if presented_bankroll_hold_active:
-			_advance_presented_bankroll()
-		if (current_screen == SCREEN_ENVIRONMENT or current_screen == SCREEN_GAME) and not meta_session_active:
-			_advance_environment_game_runtime()
-		if pending_autosave or (save_service != null and save_service.async_save_in_flight()):
-			_flush_pending_autosave_if_ready()
-		return
-	perf_telemetry_overlay.begin_foundation_frame()
+	_poll_script_prewarm_worker()
+	_advance_game_coach_refresh_after_draw()
+	_sync_simulation_pause_owners()
+	_foundation_perf_sink.call("begin_foundation_frame")
 	if run_layout_dirty:
-		var layout_started_usec := Time.get_ticks_usec()
-		_apply_run_screen_layout()
-		perf_telemetry_overlay.record_foundation_subsystem_usec("layout", Time.get_ticks_usec() - layout_started_usec)
-	var clock_started_usec := Time.get_ticks_usec()
-	_advance_run_game_clock(delta)
-	perf_telemetry_overlay.record_foundation_subsystem_usec("environment_runtime", Time.get_ticks_usec() - clock_started_usec)
+		_timed("layout", _apply_run_screen_layout_callable)
+	_process_frame_delta = delta
+	_timed("environment_runtime", _advance_run_game_clock_callable)
 	if current_screen == SCREEN_GAME:
-		var snapshot_started_usec := Time.get_ticks_usec()
-		var automation_started_usec := snapshot_started_usec
-		_advance_game_surface_automation()
-		perf_telemetry_overlay.record_foundation_subsystem_usec("surface_automation", Time.get_ticks_usec() - automation_started_usec)
-		var realtime_started_usec := Time.get_ticks_usec()
-		_advance_game_surface_realtime_state()
-		perf_telemetry_overlay.record_foundation_subsystem_usec("surface_realtime", Time.get_ticks_usec() - realtime_started_usec)
-		perf_telemetry_overlay.record_foundation_subsystem_usec("snapshot_builds", Time.get_ticks_usec() - snapshot_started_usec)
+		_timed("snapshot_builds", _advance_game_surface_frame_callable)
+	if financial_hud_dirty:
+		_timed("snapshot_builds", financial_hud_refresh_callable)
 	if presented_bankroll_hold_active:
-		var presented_started_usec := Time.get_ticks_usec()
-		_advance_presented_bankroll()
-		perf_telemetry_overlay.record_foundation_subsystem_usec("snapshot_builds", Time.get_ticks_usec() - presented_started_usec)
+		_timed("snapshot_builds", _advance_presented_bankroll_callable)
 	if (current_screen == SCREEN_ENVIRONMENT or current_screen == SCREEN_GAME) and not meta_session_active:
-		var environment_started_usec := Time.get_ticks_usec()
-		_advance_environment_game_runtime()
-		perf_telemetry_overlay.record_foundation_subsystem_usec("environment_runtime", Time.get_ticks_usec() - environment_started_usec)
+		_timed("environment_runtime", _advance_environment_game_runtime_callable)
 	if pending_autosave or (save_service != null and save_service.async_save_in_flight()):
-		var autosave_started_usec := Time.get_ticks_usec()
-		_flush_pending_autosave_if_ready()
-		perf_telemetry_overlay.record_foundation_subsystem_usec("autosave_flush", Time.get_ticks_usec() - autosave_started_usec)
+		_timed("autosave_flush", _flush_pending_autosave_callable)
+
+
+func _advance_game_surface_frame() -> void:
+	_timed("surface_automation", _advance_game_surface_automation_callable)
+	_timed("surface_realtime", _advance_game_surface_realtime_callable)
+
+
+func _timed(name: String, operation: Callable) -> void:
+	if not bool(_foundation_perf_sink.call("is_live")):
+		operation.call()
+		return
+	var started_usec := Time.get_ticks_usec()
+	operation.call()
+	_foundation_perf_sink.call("record_foundation_subsystem_usec", name, Time.get_ticks_usec() - started_usec)
+
+
+func _advance_run_game_clock_for_frame() -> void:
+	_advance_run_game_clock(_process_frame_delta)
 
 
 func _advance_run_game_clock(delta: float) -> void:
@@ -730,6 +819,11 @@ func _advance_run_game_clock(delta: float) -> void:
 	if not bool(clock_result.get("ok", false)):
 		return
 	environment_clock_fractional_minutes -= float(elapsed_minutes)
+	if bool(clock_result.get("delivery_resolved", false)):
+		_show_message("The delivery window closed before the handoff.")
+		_autosave_foundation_run("Delivery deadline saved.")
+		_refresh()
+		return
 	var boundary_changed := _apply_closing_time_clock_boundary()
 	if structured_hud != null:
 		structured_hud.render_clock(FoundationHudViewModelScript.clock_model(run_state))
@@ -743,7 +837,7 @@ func _advance_environment_turns_checked(amount: int = 1, debug_timing: Dictionar
 		debug_timing["host_turn_transaction_usec"] = (result.get("debug_turn_transaction_usec", {}) as Dictionary).duplicate(true)
 	if bool(result.get("ok", false)):
 		return true
-	_show_message(str(_copy_array(result.get("errors", []))[0]) if not _copy_array(result.get("errors", [])).is_empty() else "The world boundary could not advance safely.")
+	_show_message(str(JsonCoerceScript._copy_array(result.get("errors", []))[0]) if not JsonCoerceScript._copy_array(result.get("errors", [])).is_empty() else "The world boundary could not advance safely.")
 	_refresh_runtime_environment_views()
 	return false
 
@@ -753,29 +847,272 @@ func _input(event: InputEvent) -> void:
 		if procedural_music_player != null and procedural_music_player.has_method("web_audio_user_gesture"):
 			procedural_music_player.web_audio_user_gesture()
 		_schedule_web_audio_unlock_refresh()
+	if _handle_environment_test_random_scenario_hotkey(event):
+		get_viewport().set_input_as_handled()
+		return
+	if _handle_environment_test_refresh_hotkey(event):
+		get_viewport().set_input_as_handled()
+		return
+	if modal_focus_scope != null and bool(modal_focus_scope.call("handle_input", event)):
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_action_pressed("ui_cancel") and _route_topmost_modal_cancel():
+		get_viewport().set_input_as_handled()
+		return
+	if _event_choice_popup_is_visible() and _trap_event_choice_popup_focus(event):
+		get_viewport().set_input_as_handled()
+		return
 	if talk_dock != null and not _talk_dock_input_is_blocked() and talk_dock.handle_hotkey(event):
 		get_viewport().set_input_as_handled()
 
 
 func _notification(what: int) -> void:
-	if what == NOTIFICATION_RESIZED:
+	if what == NOTIFICATION_PREDELETE:
+		_drain_script_prewarm_requests_for_shutdown()
+	elif what == NOTIFICATION_APPLICATION_FOCUS_OUT or what == NOTIFICATION_WM_WINDOW_FOCUS_OUT:
+		set_application_pause_owner("focus_out", true)
+	elif what == NOTIFICATION_APPLICATION_FOCUS_IN or what == NOTIFICATION_WM_WINDOW_FOCUS_IN:
+		set_application_pause_owner("focus_out", false)
+	elif what == NOTIFICATION_APPLICATION_PAUSED:
+		set_application_pause_owner("application_paused", true)
+	elif what == NOTIFICATION_APPLICATION_RESUMED:
+		set_application_pause_owner("application_paused", false)
+	elif what == NOTIFICATION_RESIZED:
+		if DisplayServer.get_name() != "headless":
+			set_application_pause_owner("window_minimized", DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_MINIMIZED)
 		_invalidate_run_screen_layout()
 		_apply_run_screen_layout()
+		_layout_world_map_panel()
+		_layout_run_menu_panel()
+		_layout_run_journal_panel()
+		_layout_settings_overlay()
 		if _event_choice_popup_is_visible():
 			call_deferred("_position_event_choice_popup")
-	elif what == NOTIFICATION_WM_CLOSE_REQUEST and run_state != null and not _is_meta_session():
-		# Window-manager exits are durability boundaries just like the in-game
-		# Exit action. A worker generation is joined and the newest state is
-		# written atomically before Godot accepts the close request.
-		_autosave_foundation_run("Saved before exit.", true)
+	elif what == NOTIFICATION_WM_CLOSE_REQUEST:
+		exit_game()
+
+
+func _exit_tree() -> void:
+	if modal_focus_scope != null and modal_focus_scope.has_method("clear"):
+		modal_focus_scope.call("clear")
+	_drain_script_prewarm_requests_for_shutdown()
+
+
+func _drain_script_prewarm_requests_for_shutdown() -> void:
+	# Godot requires every started Thread to be joined before its last reference
+	# is released. Discard work that has not started, then join the one immutable
+	# path already owned by the worker without publishing into a tearing-down UI.
+	script_prewarm_stopping = true
+	if script_prewarm_thread != null:
+		if script_prewarm_thread.is_started():
+			script_prewarm_thread.wait_to_finish()
+		script_prewarm_thread = null
+	script_prewarm_active_path = ""
+	run_ui_script_prewarm_requests.clear()
+	game_module_script_prewarm_requests.clear()
+	run_ui_script_prewarm_results.clear()
+	script_prewarm_terminal_results.clear()
+
+
+func _queue_script_prewarm_request(requests: Dictionary, script_path: String) -> void:
+	if script_prewarm_stopping or script_path.is_empty() or script_prewarm_terminal_results.has(script_path):
+		return
+	requests[script_path] = true
+
+
+func _next_script_prewarm_path() -> String:
+	# Dictionary insertion order preserves the canonical UI order requested by
+	# _request_run_ui_script_prewarm(). UI always wins over game-only work, with
+	# Coin Pusher deliberately last among the run-interface scripts.
+	if not run_ui_script_prewarm_requests.is_empty():
+		return str(run_ui_script_prewarm_requests.keys()[0])
+	if not game_module_script_prewarm_requests.is_empty():
+		return str(game_module_script_prewarm_requests.keys()[0])
+	return ""
+
+
+func _start_next_script_prewarm_worker() -> void:
+	if script_prewarm_stopping or script_prewarm_thread != null:
+		return
+	var script_path := _next_script_prewarm_path()
+	if script_path.is_empty():
+		return
+	script_prewarm_active_path = script_path
+	script_prewarm_thread = Thread.new()
+	var start_error: Error = ERR_CANT_CREATE
+	if not script_prewarm_force_start_error_for_test:
+		start_error = script_prewarm_thread.start(
+			Callable(self, "_load_script_prewarm_path_on_worker").bind(script_path),
+			Thread.PRIORITY_LOW
+		)
+	if start_error == OK:
+		return
+	script_prewarm_thread = null
+	script_prewarm_active_path = ""
+	_load_and_publish_script_prewarm_path(script_path)
+
+
+func _load_script_prewarm_path_on_worker(script_path: String) -> Variant:
+	# The worker receives one immutable value, touches no SceneTree or shared
+	# container, and returns its strong resource reference to the main thread.
+	return ResourceLoader.load(script_path)
+
+
+func _poll_script_prewarm_worker() -> void:
+	if script_prewarm_stopping:
+		return
+	if script_prewarm_thread == null:
+		_start_next_script_prewarm_worker()
+		return
+	if script_prewarm_thread.is_alive():
+		return
+	_join_active_script_prewarm_worker()
+	_start_next_script_prewarm_worker()
+
+
+func _join_active_script_prewarm_worker() -> void:
+	if script_prewarm_thread == null:
+		return
+	var script_path := script_prewarm_active_path
+	var loaded_resource: Variant = null
+	if script_prewarm_thread.is_started():
+		loaded_resource = script_prewarm_thread.wait_to_finish()
+	script_prewarm_thread = null
+	script_prewarm_active_path = ""
+	_publish_script_prewarm_result(script_path, loaded_resource)
+
+
+func _publish_script_prewarm_result(script_path: String, loaded_resource: Variant) -> void:
+	var publish_run_ui := run_ui_script_prewarm_requests.has(script_path)
+	var publish_game_module := game_module_script_prewarm_requests.has(script_path)
+	var loaded_script := loaded_resource as Script
+	script_prewarm_terminal_results[script_path] = loaded_script
+	# One completed load satisfies every owner of a shared path before either
+	# request record is erased.
+	run_ui_script_prewarm_requests.erase(script_path)
+	game_module_script_prewarm_requests.erase(script_path)
+	if publish_run_ui:
+		run_ui_script_prewarm_results[script_path] = loaded_script
+	if publish_game_module and loaded_script != null:
+		_cache_game_module_script(script_path, loaded_script)
+
+
+func _load_and_publish_script_prewarm_path(
+	script_path: String,
+	require_run_ui_result: bool = false,
+	require_game_module_result: bool = false
+) -> Script:
+	var publish_run_ui := require_run_ui_result or run_ui_script_prewarm_requests.has(script_path)
+	var publish_game_module := require_game_module_result or game_module_script_prewarm_requests.has(script_path)
+	# Join the one active load before any main-thread fallback. This guarantees
+	# the exact path is never duplicated and also avoids dependency overlap when
+	# the active worker owns a different script from the same resource graph.
+	if script_prewarm_thread != null:
+		_join_active_script_prewarm_worker()
+	var loaded_script: Script = run_ui_script_prewarm_results.get(script_path) as Script
+	if loaded_script == null:
+		loaded_script = game_module_script_cache.get(script_path) as Script
+	if loaded_script == null:
+		loaded_script = script_prewarm_terminal_results.get(script_path) as Script
+	if loaded_script == null:
+		loaded_script = _installed_run_ui_script_for_path(script_path)
+	if loaded_script == null and script_prewarm_terminal_results.has(script_path):
+		run_ui_script_prewarm_requests.erase(script_path)
+		game_module_script_prewarm_requests.erase(script_path)
+		return null
+	if loaded_script == null:
+		loaded_script = ResourceLoader.load(script_path) as Script
+	script_prewarm_terminal_results[script_path] = loaded_script
+	# One load satisfies every owner of a shared path. Erase both pending entries
+	# atomically so an immediate UI or runtime-game path cannot load it again.
+	run_ui_script_prewarm_requests.erase(script_path)
+	game_module_script_prewarm_requests.erase(script_path)
+	if publish_run_ui:
+		run_ui_script_prewarm_results[script_path] = loaded_script
+	if publish_game_module and loaded_script != null:
+		_cache_game_module_script(script_path, loaded_script)
+	return loaded_script
+
+
+func _installed_run_ui_script_for_path(script_path: String) -> Script:
+	for field_name_value in RUN_UI_SCRIPT_PATHS.keys():
+		var field_name := str(field_name_value)
+		if str(RUN_UI_SCRIPT_PATHS.get(field_name, "")) != script_path:
+			continue
+		var installed_script := get(field_name) as Script
+		if installed_script != null:
+			return installed_script
+	return null
+
+
+func _finish_all_script_prewarm_work() -> void:
+	# Generation and save reconstruction can ask GameModuleRegistry for any
+	# authored module. Finish the finite menu queue before those broad consumers
+	# run so no gameplay-time lookup can race the worker's exact path.
+	while script_prewarm_thread != null \
+			or not run_ui_script_prewarm_requests.is_empty() \
+			or not game_module_script_prewarm_requests.is_empty():
+		if script_prewarm_thread == null:
+			var pending_before := run_ui_script_prewarm_requests.size() + game_module_script_prewarm_requests.size()
+			_start_next_script_prewarm_worker()
+			if script_prewarm_thread == null:
+				var pending_after := run_ui_script_prewarm_requests.size() + game_module_script_prewarm_requests.size()
+				if pending_after >= pending_before:
+					break
+				continue
+		_join_active_script_prewarm_worker()
+
+
+func _settle_script_prewarm_before_runtime() -> void:
+	# UI construction is complete before every runtime entry. Join the one game
+	# script that may already be compiling, then discard unstarted speculative
+	# work. Runtime module creation stays synchronous and centralized, so no
+	# generator/travel lookup can overlap a menu-owned loader Thread.
+	if script_prewarm_thread != null:
+		_join_active_script_prewarm_worker()
+	game_module_script_prewarm_requests.clear()
+
+
+func _publish_cached_game_module_scripts_to_generator() -> void:
+	# A fresh generator must inherit only work this host has already completed.
+	# This cache-only handoff deliberately cannot queue or load a resource.
+	if generator == null:
+		return
+	for module_path_value in game_module_script_cache.keys():
+		var module_path := str(module_path_value)
+		var module_script := game_module_script_cache.get(module_path) as Script
+		if not module_path.is_empty() and module_script != null:
+			generator.cache_game_module_script(module_path, module_script)
+
+
+func _consume_run_ui_script_prewarm_result(script_path: String) -> Variant:
+	if not run_ui_script_prewarm_results.has(script_path):
+		_load_and_publish_script_prewarm_path(script_path, true)
+	var loaded_resource: Variant = run_ui_script_prewarm_results.get(script_path)
+	run_ui_script_prewarm_results.erase(script_path)
+	return loaded_resource
 
 
 func _initialize_perf_telemetry() -> void:
-	if perf_telemetry_overlay != null or not PerfTelemetryOverlayScript.runtime_enabled():
+	if perf_telemetry_overlay != null or not _perf_telemetry_requested():
 		return
-	perf_telemetry_overlay = PerfTelemetryOverlayScript.new()
+	var overlay_script: Script = load(PERF_TELEMETRY_OVERLAY_PATH)
+	if overlay_script == null or not bool(overlay_script.call("runtime_enabled")):
+		return
+	perf_telemetry_overlay = overlay_script.new()
 	add_child(perf_telemetry_overlay)
 	perf_telemetry_overlay.configure(self)
+	_foundation_perf_sink = perf_telemetry_overlay
+
+
+# Every telemetry switch is a bth_perf* command-line token or web query key.
+# Normal boots skip compiling the diagnostics overlay; the overlay's own
+# runtime_enabled() still makes the exact decision once it is requested.
+func _perf_telemetry_requested() -> bool:
+	for arg_value in OS.get_cmdline_user_args():
+		if str(arg_value).find("bth_perf") != -1:
+			return true
+	return OS.has_feature("web") and str(JavaScriptBridge.eval("window.location.search", true)).find("bth_perf") != -1
 
 
 # Compile checks use this to verify the active scene is on the foundation path.
@@ -787,9 +1124,11 @@ func uses_foundation_runtime() -> bool:
 func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Dictionary = {}, include_meta_home_modifiers: bool = true) -> bool:
 	if not _ensure_run_ui_built():
 		return false
+	_clear_run_audio_caches()
 	if library == null:
 		_initialize_foundation()
 	_ensure_full_content_library_loaded()
+	_settle_script_prewarm_before_runtime()
 	_finish_conclusion_animation()
 	if structured_hud != null:
 		structured_hud.reset_wallet_delta()
@@ -803,6 +1142,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	pending_autosave_after_frame = -1
 	pending_autosave_not_before_msec = 0
 	pending_autosave_first_queued_msec = 0
+	_clear_autosave_failure_state()
 	environment_clock_fractional_minutes = 0.0
 	stored_grand_casino_runtime_last_msec = -100000
 	environment_runtime_state_key_cache.clear()
@@ -811,14 +1151,12 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	last_environment_runtime_result = {}
 	run_report_model = {}
 	run_report_model_key = ""
+	if run_report_screen != null:
+		run_report_screen.clear_report()
 	run_item_icon_texture_cache.clear()
 	close_content_group_config()
 	close_challenge_selection()
-	_hide_run_menu()
-	_hide_world_map_overlay()
-	close_meta_item_interaction()
-	_hide_run_journal_popup()
-	_hide_travel_transition()
+	_clear_input_guard_modal_state()
 	_reset_game_surface_runtime_state()
 	var resolved_seed := seed_text.strip_edges()
 	if resolved_seed.is_empty():
@@ -829,6 +1167,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	# A generator may retain failed-install diagnostics from a previous run. New
 	# run generation owns a fresh generator just as it owns a fresh RunState.
 	generator = RunGenerator.new(library)
+	_publish_cached_game_module_scripts_to_generator()
 	_bind_run_state_presentation_signals()
 	_configure_coach_for_run()
 	_sync_scratch_ticket_discovery_to_run()
@@ -836,8 +1175,9 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	_apply_meta_collection_loadout_to_run()
 	run_state.begin_act(1)
 	dev_game_test_mode = false
+	dev_environment_test_mode = false
 	generator.next_environment(run_state)
-	if not _environment_is_playable(run_state):
+	if not _environment_is_playable(run_state) and not _recover_unplayable_environment():
 		var failed_seed := resolved_seed
 		run_state = null
 		_set_current_screen(SCREEN_START)
@@ -853,11 +1193,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	save_status_message = "Run not saved yet."
 	selected_action_category = ACTION_CATEGORY_GAMES
 	_set_current_screen(SCREEN_ENVIRONMENT)
-	_hide_event_choice_popup()
-	_hide_run_inventory_popup()
-	_hide_run_journal_popup()
-	_hide_world_map_overlay()
-	_hide_travel_transition()
+	_clear_input_guard_modal_state()
 	if talk_dock != null:
 		talk_dock.clear_entry()
 	if item_found_popup != null:
@@ -924,7 +1260,7 @@ func select_action_category(category_id: String) -> bool:
 func enter_first_available_game() -> void:
 	if run_state == null:
 		return
-	var game_ids := _string_array(run_state.current_environment.get("game_ids", []))
+	var game_ids := JsonCoerceScript._raw_string_array(run_state.current_environment.get("game_ids", []))
 	if game_ids.is_empty():
 		_show_message("No game is available in this environment.")
 		return
@@ -966,6 +1302,10 @@ func _enter_game_after_input_guard(clean_game_id: String, clean_state_key: Strin
 	current_game = game_module
 	current_game_state_key = clean_state_key
 	current_game.set_transient_state_key_context(clean_state_key)
+	if _current_game_uses_action_authority() and bool(action_authority_contract.get("automatic_pending_recovery", false)):
+		var entry_recovery := _sealed_action_host_rollback_pending_delivery()
+		if not bool(entry_recovery.get("ok", false)):
+			push_error("Blackjack could not restore its prior table state on entry: %s" % str(entry_recovery.get("diagnostic_detail", entry_recovery.get("error_code", "unknown"))))
 	_invalidate_environment_runtime_schedule(run_state.current_environment)
 	_sync_presented_bankroll_to_actual()
 	selected_action_category = ACTION_CATEGORY_GAMES
@@ -1000,13 +1340,13 @@ func _enter_grand_casino_duel_surface() -> bool:
 		var room_result := generator.enter_grand_casino_room_result(run_state, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID)
 		if not bool(room_result.get("ok", false)):
 			_restore_foundation_lifecycle_snapshot(rollback)
-			var room_errors := _copy_array(room_result.get("errors", []))
+			var room_errors := JsonCoerceScript._copy_array(room_result.get("errors", []))
 			_show_message(str(room_errors[0]) if not room_errors.is_empty() else "The back room could not be entered safely.")
 			_refresh()
 			return false
 	_reset_game_surface_runtime_state()
-	var duel_game_ids := _string_array(run_state.current_environment.get("game_ids", []))
-	var local_flags := _copy_dict(run_state.current_environment.get("local_narrative_flags", {}))
+	var duel_game_ids := JsonCoerceScript._raw_string_array(run_state.current_environment.get("game_ids", []))
+	var local_flags := JsonCoerceScript._copy_dict(run_state.current_environment.get("local_narrative_flags", {}))
 	var duel_game_id := str(local_flags.get("showdown_game_id", "")).strip_edges()
 	if duel_game_id.is_empty() or not duel_game_ids.has(duel_game_id):
 		return false
@@ -1100,11 +1440,7 @@ func _complete_back_to_environment() -> void:
 	_invalidate_environment_runtime_schedule(run_state.current_environment if run_state != null else {})
 	_clear_recent_result_feedback()
 	_set_current_screen(SCREEN_ENVIRONMENT)
-	_hide_event_choice_popup()
-	_hide_run_inventory_popup()
-	_hide_run_journal_popup()
-	_hide_world_map_overlay()
-	_hide_travel_transition()
+	_clear_input_guard_modal_state()
 	_clear_selected_game_action()
 	_clear_selected_stake()
 	clear_interaction_focus()
@@ -1130,12 +1466,48 @@ func _environment_is_playable(candidate: RunState) -> bool:
 func _recover_unplayable_environment() -> bool:
 	if _environment_is_playable(run_state):
 		return true
-	if run_state == null or not run_state.has_world_map():
+	if run_state == null:
+		return false
+	# A normal run can legitimately use Back Alley as its starter housing. Some
+	# scenario overlays have stricter route geometry than that generated room.
+	# Keep the seed, map, base room, and all simulation state deterministic while
+	# suppressing only the overlay that the installer already proved invalid.
+	var failure: Dictionary = generator.environment_install_failure_snapshot() if generator != null and generator.has_method("environment_install_failure_snapshot") else {}
+	var failed_scenario_id := str(failure.get("scenario_id", "")).strip_edges()
+	var failed_target_id := str(failure.get("target_id", "")).strip_edges()
+	if run_state.current_environment.is_empty() and not failed_scenario_id.is_empty() and not failed_target_id.is_empty() and _suppress_failed_standard_scenario(failure):
+		generator = RunGenerator.new(library)
+		_publish_cached_game_module_scripts_to_generator()
+		generator.next_environment(run_state)
+		if _environment_is_playable(run_state):
+			return true
+	if not run_state.has_world_map():
 		return false
 	generator = RunGenerator.new(library)
+	_publish_cached_game_module_scripts_to_generator()
 	var target_node_id := run_state.current_world_node_id()
 	generator.next_environment(run_state, target_node_id, true)
 	return _environment_is_playable(run_state)
+
+
+func _suppress_failed_standard_scenario(failure: Dictionary, expected_target_id: String = "") -> bool:
+	if run_state == null or run_state.is_tutorial_run() or str(run_state.challenge_config.get("mode", "standard")).strip_edges().to_lower() != "standard":
+		return false
+	var failed_scenario_id := str(failure.get("scenario_id", "")).strip_edges()
+	var failed_target_id := str(failure.get("target_id", "")).strip_edges()
+	if failed_scenario_id.is_empty() or failed_target_id.is_empty() or (not expected_target_id.is_empty() and failed_target_id != expected_target_id):
+		return false
+	var challenge := run_state.challenge_config.duplicate(true)
+	var modifiers: Dictionary = challenge.get("modifiers", {}) if typeof(challenge.get("modifiers", {})) == TYPE_DICTIONARY else {}
+	var pins: Dictionary = modifiers.get("scenario_pins", {}) if typeof(modifiers.get("scenario_pins", {})) == TYPE_DICTIONARY else {}
+	if not bool(modifiers.get("scenario_pins_apply_mutations", true)) and str(pins.get(failed_target_id, "")) == failed_scenario_id:
+		return false
+	pins[failed_target_id] = failed_scenario_id
+	modifiers["scenario_pins"] = pins
+	modifiers["scenario_pins_apply_mutations"] = false
+	challenge["modifiers"] = modifiers
+	run_state.challenge_config = challenge
+	return true
 
 
 func _clear_recent_result_feedback() -> void:
@@ -1224,7 +1596,16 @@ func _surface_action_uses_game_binding(action: String) -> bool:
 func _current_game_bound_surface_action(action: String, index: int) -> Dictionary:
 	if current_game == null or run_state == null:
 		return {"action": action, "index": index}
-	var surface_state := current_game.surface_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
+	# The canvas already resolved this binding for ordinary pointer input. Reuse
+	# its current presentation state for keyboard/direct callers too; rebuilding a
+	# whole table just to read one binding delays the real action work.
+	var surface_state: Dictionary = {}
+	if game_surface_canvas != null:
+		var rendered_state: Dictionary = game_surface_canvas.realtime_surface_state()
+		if str(rendered_state.get("game_id", "")) == current_game.get_id():
+			surface_state = rendered_state
+	if surface_state.is_empty():
+		surface_state = current_game.surface_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
 	var bindings: Dictionary = surface_state.get("surface_action_bindings", {}) if typeof(surface_state.get("surface_action_bindings", {})) == TYPE_DICTIONARY else {}
 	var binding_value: Variant = bindings.get(action, {})
 	if typeof(binding_value) != TYPE_DICTIONARY or (binding_value as Dictionary).is_empty():
@@ -1350,1140 +1731,228 @@ func _current_game_surface_input_time_msec() -> int:
 
 
 func _sealed_action_host_table_binding(environment: Dictionary = {}) -> String:
-	var source := environment if not environment.is_empty() else (run_state.current_environment if run_state != null else {})
-	# A venue can contain several independently generated cabinets for one game.
-	# Their sealed receipts must not share an identity: otherwise cabinet 2 can
-	# collide with cabinet 1's already-consumed request key and fail as stale.
-	var state_key := _sealed_action_host_state_key()
-	return RunState.action_authority_table_binding(state_key, source)
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_table_binding(environment)
 
 
 func _sealed_action_host_state_key() -> String:
-	if current_game == null:
-		return ""
-	var game_id := current_game.get_id()
-	var state_key := current_game_state_key.strip_edges()
-	if state_key.is_empty():
-		state_key = current_game.transient_state_key_context().strip_edges()
-	if state_key == game_id or state_key.begins_with("%s:" % game_id):
-		return state_key
-	return game_id
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_state_key()
 
 
 func _sealed_action_host_ledger(candidate: RunState, create: bool = true, reconcile_checkpoint: bool = true) -> Dictionary:
-	if candidate == null or not _current_game_uses_action_authority():
-		return {}
-	var environment := candidate.current_environment
-	var table: Dictionary = current_game.call("_table_state", candidate, environment) if create else current_game.call("_table_state_preview", candidate, environment)
-	var binding := _sealed_action_host_table_binding(environment)
-	var expected_checkpoint := candidate.action_authority_checkpoint_fingerprint() if reconcile_checkpoint else ""
-	var validated: Dictionary = ActionAuthorityScript.validate_persisted_ledger_cow(table.get(ActionAuthorityScript.LEDGER_KEY, {}), binding, expected_checkpoint)
-	if not validated.is_empty() or not create:
-		return validated
-	return ActionAuthorityScript.default_ledger(binding, candidate.action_authority_checkpoint_fingerprint())
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_ledger(candidate, create, reconcile_checkpoint)
 
 
 func _sealed_action_host_store_ledger(candidate: RunState, ledger: Dictionary) -> void:
-	var environment := candidate.current_environment
-	var table: Dictionary = current_game.call("_table_state", candidate, environment)
-	# Authority helpers are copy-on-write and cached response/journal values are
-	# immutable. Isolate the top-level ledger binding without recursively cloning
-	# the full replay window on every internal host stage.
-	table[ActionAuthorityScript.LEDGER_KEY] = ledger.duplicate(false)
-	table.erase(ActionAuthorityScript.PENDING_APPLY_RECEIPT_KEY)
-	current_game.call("_update_environment_table", environment, table)
+	_sealed_action_host.bind(self)
+	_sealed_action_host._sealed_action_host_store_ledger(candidate, ledger)
 
 
 func _sealed_action_host_compact_evidence_method() -> StringName:
-	var method := StringName(action_authority_contract.get("compact_authority_evidence_method", &""))
-	if current_game == null or method.is_empty() or not current_game.has_method(method):
-		return &""
-	return method
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_compact_evidence_method()
+
+
+func _sealed_action_host_compact_evidence_allowed(candidate: RunState, action_id: String, stake: int, session: Dictionary) -> bool:
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_compact_evidence_allowed(candidate, action_id, stake, session)
 
 
 func _sealed_action_host_compact_evidence(candidate: RunState, action_id: String, stake: int, session: Dictionary) -> Dictionary:
-	var method := _sealed_action_host_compact_evidence_method()
-	if candidate == null or method.is_empty():
-		return {}
-	var value: Variant = current_game.call(method, candidate, action_id, stake, session)
-	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_compact_evidence(candidate, action_id, stake, session)
 
 
 func _sealed_action_host_trusted_context(candidate: RunState, stake: int, action_id: String = "") -> Dictionary:
-	var environment := candidate.current_environment
-	var canonical_run_fingerprint := ""
-	var compact_evidence := _sealed_action_host_compact_evidence(candidate, action_id, stake, {})
-	if not compact_evidence.is_empty():
-		canonical_run_fingerprint = GameRitualRuntimeScript.canonical_fingerprint(compact_evidence)
-	else:
-		var snapshot := candidate.to_save_snapshot()
-		# These are host presentation caches, not simulation authority. The UI can
-		# materialize their defaults between a sealed surface intent and synchronous
-		# settlement, and authority-ledger writes intentionally bump the room render
-		# revision. Binding either to a wager receipt makes a valid click fail closed
-		# even though game state, funds, and RNG are unchanged.
-		snapshot.erase("music_tempo_state")
-		snapshot.erase("music_choreography_state")
-		# Crew's per-run save authority is intentionally random and private. It is not
-		# Blackjack action authority, so exclude only that opaque id/capsule from the
-		# trusted-context fingerprint while retaining every public Crew state field.
-		var crew_state: Dictionary = (snapshot.get("crew_state", {}) as Dictionary).duplicate(false) if typeof(snapshot.get("crew_state", {})) == TYPE_DICTIONARY else {}
-		crew_state.erase("a")
-		crew_state.erase("z")
-		snapshot["crew_state"] = crew_state
-		# Remove only host presentation/replay metadata from the canonical table.
-		var snapshot_environment: Dictionary = (snapshot.get("current_environment", {}) as Dictionary).duplicate(false)
-		snapshot_environment.erase("environment_runtime_revision")
-		var game_states: Dictionary = (snapshot_environment.get("game_states", {}) as Dictionary).duplicate(false)
-		var state_key := _sealed_action_host_state_key()
-		if typeof(game_states.get(state_key, null)) == TYPE_DICTIONARY:
-			var table: Dictionary = (game_states.get(state_key, {}) as Dictionary).duplicate(false)
-			table.erase(ActionAuthorityScript.LEDGER_KEY)
-			table.erase(ActionAuthorityScript.PENDING_APPLY_RECEIPT_KEY)
-			game_states[state_key] = table
-			snapshot_environment["game_states"] = game_states
-			snapshot["current_environment"] = snapshot_environment
-		canonical_run_fingerprint = GameRitualRuntimeScript.canonical_fingerprint(snapshot)
-	return {
-		"table_binding": _sealed_action_host_table_binding(environment),
-		"environment_id": str(environment.get("id", "")),
-		"environment_archetype_id": str(environment.get("archetype_id", "")),
-		"stake": maxi(0, stake),
-		"canonical_run_fingerprint": canonical_run_fingerprint,
-		"account_rng_checkpoint_fingerprint": candidate.action_authority_checkpoint_fingerprint(),
-	}
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_trusted_context(candidate, stake, action_id)
 
 
 func _sealed_action_host_transient_run_snapshot(candidate: RunState) -> Dictionary:
-	var snapshot := candidate.to_save_snapshot()
-	if current_game == null:
-		return snapshot
-	var environment: Dictionary = (snapshot.get("current_environment", {}) as Dictionary).duplicate(false) if typeof(snapshot.get("current_environment", {})) == TYPE_DICTIONARY else {}
-	environment["active_game_id"] = current_game.get_id()
-	snapshot["current_environment"] = environment
-	return snapshot
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_transient_run_snapshot(candidate)
 
 
 func _sealed_action_host_detached() -> RunState:
-	if run_state == null:
-		return null
-	return run_state.detached_host_action_candidate(_sealed_action_host_state_key())
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_detached()
 
 
-func _sealed_action_host_can_commit_in_place() -> bool:
-	return run_state != null \
-		and bool(action_authority_contract.get("in_place_nonrejecting_commit", false)) \
-		and run_state.host_action_in_place_commit_safe()
+func _sealed_action_host_can_commit_in_place(action_id: String = "") -> bool:
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_can_commit_in_place(action_id)
 
 
-func _sealed_action_host_transaction_candidate() -> RunState:
-	return run_state if _sealed_action_host_can_commit_in_place() else _sealed_action_host_detached()
+func _sealed_action_host_transaction_candidate(action_id: String = "") -> RunState:
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_transaction_candidate(action_id)
+
+
+func _sealed_action_host_delivery_stake(command: Dictionary, session: Dictionary) -> int:
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_delivery_stake(command, session)
 
 
 func _sealed_action_host_in_place_session_intent_allowed(surface_action: String) -> bool:
-	if run_state == null or run_state.is_terminal() or surface_action.is_empty():
-		return false
-	var intents_value: Variant = action_authority_contract.get("in_place_session_intents", [])
-	return typeof(intents_value) == TYPE_ARRAY and (intents_value as Array).has(surface_action)
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_in_place_session_intent_allowed(surface_action)
 
 
 func _sealed_action_host_in_place_ledger() -> Dictionary:
-	if run_state == null or current_game == null:
-		return {}
-	var states_value: Variant = run_state.current_environment.get("game_states", {})
-	if typeof(states_value) != TYPE_DICTIONARY:
-		return {}
-	var table_value: Variant = (states_value as Dictionary).get(_sealed_action_host_state_key(), {})
-	if typeof(table_value) != TYPE_DICTIONARY:
-		return {}
-	return ActionAuthorityScript.validate_persisted_ledger_cow(
-		(table_value as Dictionary).get(ActionAuthorityScript.LEDGER_KEY, {}),
-		_sealed_action_host_table_binding(run_state.current_environment),
-		run_state.action_authority_checkpoint_fingerprint()
-	)
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_in_place_ledger()
 
 
 func _sealed_action_host_store_in_place_ledger(ledger: Dictionary) -> bool:
-	if run_state == null or current_game == null or ledger.is_empty():
-		return false
-	var states_value: Variant = run_state.current_environment.get("game_states", {})
-	if typeof(states_value) != TYPE_DICTIONARY:
-		return false
-	var states := states_value as Dictionary
-	var state_key := _sealed_action_host_state_key()
-	var table_value: Variant = states.get(state_key, {})
-	if typeof(table_value) != TYPE_DICTIONARY:
-		return false
-	var table := table_value as Dictionary
-	table[ActionAuthorityScript.LEDGER_KEY] = ledger.duplicate(false)
-	table.erase(ActionAuthorityScript.PENDING_APPLY_RECEIPT_KEY)
-	return true
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_store_in_place_ledger(ledger)
 
 
 func _sealed_action_host_in_place_session_intent(surface_action: String, index: int, confirm_requested: bool, surface_time_msec: int) -> Dictionary:
-	var method := StringName(action_authority_contract.get("in_place_session_intent_method", &""))
-	if method.is_empty() or current_game == null or not current_game.has_method(method):
-		return _sealed_action_host_rejection("invalid_intent", "Session-only Blackjack input has no sealed handler.")
-	var ledger := _sealed_action_host_in_place_ledger()
-	if ledger.is_empty():
-		return _sealed_action_host_rejection("internal_fail_closed", "The live Blackjack session could not be validated.")
-	if not (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
-		return _sealed_action_host_rejection("pending_delivery", "Retry or cancel the pending Blackjack action before changing the table.")
-	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
-	if surface_time_msec >= 0:
-		session = _apply_game_surface_time_fields(session, surface_time_msec)
-	var command_value: Variant = current_game.call(method, surface_action, index, confirm_requested, session, run_state, run_state.current_environment)
-	if typeof(command_value) != TYPE_DICTIONARY:
-		return _sealed_action_host_rejection("invalid_intent", "Session-only Blackjack input returned an invalid command.")
-	var command := command_value as Dictionary
-	if bool(command.get("direct_resolve", false)) or bool(command.get("resolve", false)) or not str(command.get("action_id", "")).is_empty():
-		return _sealed_action_host_rejection("invalid_intent", "A session-only Blackjack input attempted to cross an economic boundary.")
-	if bool(command.get("handled", false)):
-		var next_session: Dictionary = command.get("ui_state", session) if typeof(command.get("ui_state", session)) == TYPE_DICTIONARY else session
-		ledger = ActionAuthorityScript.stage_session_cow(ledger, next_session)
-		if not _sealed_action_host_store_in_place_ledger(ledger):
-			return _sealed_action_host_rejection("internal_fail_closed", "The live Blackjack session could not be staged.")
-	return command
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_in_place_session_intent(surface_action, index, confirm_requested, surface_time_msec)
 
 
 func _sealed_action_host_restored_candidate(snapshot: Dictionary, layout_context: Dictionary = {}, trusted_environment: Dictionary = {}) -> RunState:
-	var candidate := RunState.new()
-	candidate.from_dict(snapshot)
-	if candidate.restore_trusted_scenario_semantics(trusted_environment):
-		if current_game != null:
-			candidate.current_environment["active_game_id"] = current_game.get_id()
-		return candidate
-	# Save snapshots deliberately omit renderer-derived scenario semantics and
-	# mark dynamic rooms for a trusted rebuild. Sealed game transactions operate
-	# on detached save snapshots, so rebuild that non-causal authority before an
-	# environment-turn boundary is allowed to run on the candidate.
-	var finalized := candidate.scenario_finalize_installed_environment(library, layout_context)
-	if not bool(finalized.get("ok", false)):
-		return null
-	if current_game != null:
-		candidate.current_environment["active_game_id"] = current_game.get_id()
-	return candidate
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_restored_candidate(snapshot, layout_context, trusted_environment)
 
 
-func _sealed_action_host_normalized_candidate(candidate: RunState) -> RunState:
-	if candidate == null:
-		return null
-	return _sealed_action_host_restored_candidate(
-		candidate.to_save_snapshot(),
-		_copy_dict(candidate.current_environment.get("scenario_layout_context", {})),
-		candidate.current_environment
-	)
+func _sealed_action_host_publish(candidate: RunState, action_id: String = "") -> bool:
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_publish(candidate, action_id)
 
 
-func _sealed_action_host_publish(candidate: RunState) -> bool:
-	if candidate == null or run_state == null:
-		return false
-	if candidate == run_state:
-		return _sealed_action_host_can_commit_in_place()
-	if not run_state.publish_host_action_candidate(candidate):
-		return false
-	_set_active_game_binding(current_game.get_id() if current_game != null else "")
-	return true
+func _sealed_action_host_rollback_pending_delivery() -> Dictionary:
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_rollback_pending_delivery()
 
 
 func _sealed_action_host_rejection(error_code: String, message: String, request_key: String = "") -> Dictionary:
-	var rejection := {
-		"ok": false,
-		"error_code": error_code,
-		"message": message,
-		"request_key": request_key,
-	}
-	rejection[ActionAuthorityScript.HOST_REQUEST_KEY] = request_key
-	rejection[ActionAuthorityScript.HOST_COMMITTED_KEY] = false
-	return rejection
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_rejection(error_code, message, request_key)
 
 
 func _sealed_action_host_surface_intent(surface_action: String, index: int, confirm_requested: bool = false, surface_time_msec: int = -1) -> Dictionary:
-	if not _current_game_uses_action_authority() or run_state == null or surface_action.is_empty():
-		return _sealed_action_host_rejection("invalid_intent", "Blackjack action intent is unavailable.")
-	# A count-pulse mouse-over only stages the already sealed table session. It has
-	# no wager, RNG, environment-turn, or result authority, so cloning a late run's
-	# world/scenario graph here is both unnecessary and visibly expensive.
-	if _sealed_action_host_in_place_session_intent_allowed(surface_action):
-		return _sealed_action_host_in_place_session_intent(surface_action, index, confirm_requested, surface_time_msec)
-	var candidate := _sealed_action_host_transaction_candidate()
-	if candidate == null:
-		return _sealed_action_host_rejection("internal_fail_closed", "Sealed table semantics could not be rebuilt.")
-	var ledger := _sealed_action_host_ledger(candidate, true)
-	# First entry can materialize and normalize the Blackjack table while the
-	# authority ledger is being created. Persist that deterministic, non-economic
-	# table shape on the detached candidate before sealing a delivery so the
-	# trusted run context is identical when the delivery is consumed.
-	_sealed_action_host_store_ledger(candidate, ledger)
-	ledger = _sealed_action_host_ledger(candidate, true)
-	var pending: Dictionary = ledger.get("pending_delivery", {})
-	if not pending.is_empty():
-		var retry_surface_actions: Array = action_authority_contract.get("retry_surface_actions", [])
-		var cancel_surface_actions: Array = action_authority_contract.get("cancel_surface_actions", [])
-		if surface_action in retry_surface_actions:
-			return GameModule.surface_command({
-				"handled": true,
-				"action_id": str(pending.get("action_id", "")),
-				"action_kind": "legal",
-				"direct_resolve": true,
-				"skip_stake_validation": true,
-				"set_stake": int(pending.get("stake", 0)),
-				"ui_state": (ledger.get("session", {}) as Dictionary).duplicate(true),
-				"_sealed_action_host_delivery": pending.duplicate(true),
-				"message": "Retrying the sealed Blackjack action.",
-			})
-		if surface_action in cancel_surface_actions:
-			var cancelled: Dictionary = ActionAuthorityScript.cancel_delivery_cow(ledger, pending)
-			if not bool(cancelled.get("ok", false)):
-				return _sealed_action_host_rejection(str(cancelled.get("error_code", "receipt_content_conflict")), "Blackjack cancellation did not match the pending action.", str(pending.get("request_key", "")))
-			var cancelled_ledger: Dictionary = cancelled.get("ledger", ledger)
-			_sealed_action_host_store_ledger(candidate, cancelled_ledger)
-			if not _sealed_action_host_publish(candidate):
-				return _sealed_action_host_rejection("internal_fail_closed", "Blackjack cancellation could not restore the pre-delivery session.", str(pending.get("request_key", "")))
-			return GameModule.surface_command({
-				"handled": true,
-				"ui_state": (cancelled_ledger.get("session", {}) as Dictionary).duplicate(true),
-				"message": "Pending Blackjack action cancelled; the pre-delivery table state is restored.",
-			})
-		return _sealed_action_host_rejection("pending_delivery", "Retry or cancel the pending Blackjack action before changing the table.", str(pending.get("request_key", "")))
-	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
-	var recovery_session := session.duplicate(true)
-	if surface_time_msec >= 0:
-		# Sealed sessions retain UI state between actions. Refresh the complete
-		# surface clock tuple together so games cannot observe a new raw timestamp
-		# alongside an older slowed/presentation timestamp.
-		session = _apply_game_surface_time_fields(session, surface_time_msec)
-	if current_game.has_method("_has_dealt_hand") and not current_game.call("_has_dealt_hand", session) and _current_selected_stake() > 0:
-		session["selected_stake"] = _current_selected_stake()
-	var command: Dictionary = current_game.surface_action_command(surface_action, index, confirm_requested, session, candidate, candidate.current_environment)
-	command.erase("_sealed_action_host_prepared")
-	if bool(command.get("handled", false)):
-		var next_session: Dictionary = command.get("ui_state", session) if typeof(command.get("ui_state", session)) == TYPE_DICTIONARY else session
-		ledger = ActionAuthorityScript.stage_session_cow(ledger, next_session)
-		if bool(command.get("direct_resolve", false)) or bool(command.get("resolve", false)):
-			# Persist and reload the detached staged session before sealing. On a
-			# table's first action, storing the session may materialize canonical
-			# non-ledger defaults. The delivery must fingerprint that exact stable
-			# candidate, which is the one published below.
-			_sealed_action_host_store_ledger(candidate, ledger)
-			ledger = _sealed_action_host_ledger(candidate, true)
-			var action_id := str(command.get("action_id", ""))
-			var delivery_stake := int(command.get("set_stake", _current_selected_stake()))
-			var issued: Dictionary = ActionAuthorityScript.issue_delivery_cow(ledger, action_id, _sealed_action_host_trusted_context(candidate, delivery_stake, action_id), delivery_stake, recovery_session)
-			if not bool(issued.get("ok", false)):
-				return _sealed_action_host_rejection(str(issued.get("error_code", "receipt_content_conflict")), "Blackjack delivery conflicts with the pending action.")
-			ledger = issued.get("ledger", ledger)
-			var delivery: Dictionary = issued.get("delivery", {})
-			command[ActionAuthorityScript.HOST_REQUEST_KEY] = str(delivery.get("request_key", ""))
-			command[ActionAuthorityScript.HOST_BOUNDARY_ORDINAL_KEY] = int(delivery.get("boundary_ordinal", 0))
-			command["_sealed_action_host_delivery"] = delivery.duplicate(true)
-	_sealed_action_host_store_ledger(candidate, ledger)
-	if not _sealed_action_host_publish(candidate):
-		return _sealed_action_host_rejection("internal_fail_closed", "Blackjack host could not publish the staged action.")
-	if command.has("_sealed_action_host_delivery"):
-		command["_sealed_action_host_prepared"] = {
-			"candidate": candidate,
-			"ledger": ledger,
-			"delivery": command.get("_sealed_action_host_delivery", {}),
-		}
-	return command
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_surface_intent(surface_action, index, confirm_requested, surface_time_msec)
+
+
+func _sealed_action_host_surface_intent_impl(surface_action: String, index: int, confirm_requested: bool = false, surface_time_msec: int = -1) -> Dictionary:
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_surface_intent_impl(surface_action, index, confirm_requested, surface_time_msec)
 
 
 func _sealed_action_host_pointer_intent(surface_action: String, index: int, phase: String, board_position: Vector2, ui_state: Dictionary) -> Dictionary:
-	var candidate := _sealed_action_host_transaction_candidate()
-	if candidate == null:
-		return _sealed_action_host_rejection("invalid_intent", "Table pointer intent is unavailable.")
-	var ledger := _sealed_action_host_ledger(candidate, true)
-	if not (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
-		return _sealed_action_host_rejection("pending_delivery", "Retry or cancel the pending table action before changing the ceremony.")
-	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
-	for transient_key in ["surface_time_msec", "drunk_scaled_surface_time_msec", "reduce_motion"]:
-		if ui_state.has(transient_key):
-			session[transient_key] = ui_state[transient_key]
-	var command: Dictionary = current_game.surface_pointer_command(surface_action, index, phase, board_position, session, candidate, candidate.current_environment)
-	if bool(command.get("handled", false)):
-		var next_session: Dictionary = command.get("ui_state", session) if typeof(command.get("ui_state", session)) == TYPE_DICTIONARY else session
-		ledger = ActionAuthorityScript.stage_session_cow(ledger, next_session)
-	_sealed_action_host_store_ledger(candidate, ledger)
-	if not _sealed_action_host_publish(candidate):
-		return _sealed_action_host_rejection("internal_fail_closed", "Table pointer intent could not be persisted.")
-	return command
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_pointer_intent(surface_action, index, phase, board_position, ui_state)
 
 
 func _sealed_action_host_needs_auto_tick(surface_time_msec: int) -> bool:
-	var predicate_method := StringName(action_authority_contract.get("host_auto_tick_method", &""))
-	if run_state == null or current_game == null or predicate_method.is_empty() or not current_game.has_method(predicate_method):
-		return false
-	var predicate_time_msec := surface_time_msec
-	if bool(action_authority_contract.get("host_auto_tick_uses_drunk_scaled_time", false)):
-		predicate_time_msec = _drunk_scaled_surface_time_msec(surface_time_msec, _current_drunk_time_scale())
-	return bool(current_game.call(predicate_method, predicate_time_msec, run_state, run_state.current_environment))
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_needs_auto_tick(surface_time_msec)
 
 
 func _sealed_action_host_auto_intent(surface_time_msec: int) -> Dictionary:
-	var candidate := _sealed_action_host_transaction_candidate()
-	if candidate == null:
-		return _sealed_action_host_rejection("invalid_intent", "Blackjack auto action intent is unavailable.")
-	var ledger := _sealed_action_host_ledger(candidate, true)
-	if not (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
-		return {}
-	var session: Dictionary = (ledger.get("session", {}) as Dictionary).duplicate(true)
-	var recovery_session := session.duplicate(true)
-	# Automatic actions are a new presentation boundary, not a continuation of
-	# the retained session's prior frame. Rebase raw and slowed clocks atomically;
-	# Slot uses the latter to schedule both base and Buffalo feature reels.
-	session = _apply_game_surface_time_fields(session, surface_time_msec)
-	var command := current_game.surface_auto_action_command(session, candidate, candidate.current_environment, {})
-	if bool(command.get("handled", false)):
-		var next_session: Dictionary = command.get("ui_state", session) if typeof(command.get("ui_state", session)) == TYPE_DICTIONARY else session
-		ledger = ActionAuthorityScript.stage_session_cow(ledger, next_session)
-		if bool(command.get("direct_resolve", false)) or bool(command.get("resolve", false)):
-			_sealed_action_host_store_ledger(candidate, ledger)
-			ledger = _sealed_action_host_ledger(candidate, true)
-			var delivery_stake := int(command.get("set_stake", _current_selected_stake()))
-			var auto_action_id := str(command.get("action_id", ""))
-			var issued: Dictionary = ActionAuthorityScript.issue_delivery_cow(ledger, auto_action_id, _sealed_action_host_trusted_context(candidate, delivery_stake, auto_action_id), delivery_stake, recovery_session)
-			if not bool(issued.get("ok", false)):
-				return _sealed_action_host_rejection(str(issued.get("error_code", "receipt_content_conflict")), "Blackjack auto delivery conflicts with the pending action.")
-			ledger = issued.get("ledger", ledger)
-			var delivery: Dictionary = issued.get("delivery", {})
-			command["_sealed_action_host_delivery"] = delivery.duplicate(true)
-			command[ActionAuthorityScript.HOST_REQUEST_KEY] = str(delivery.get("request_key", ""))
-	_sealed_action_host_store_ledger(candidate, ledger)
-	if not _sealed_action_host_publish(candidate):
-		return _sealed_action_host_rejection("internal_fail_closed", "Blackjack host could not publish the auto action.")
-	if command.has("_sealed_action_host_delivery"):
-		# The automatic action is resolved synchronously by
-		# _apply_game_surface_automation_command. Carry the exact candidate that
-		# crossed the publish boundary just as the manual surface path does; cloning
-		# the whole run again adds no authority or isolation.
-		command["_sealed_action_host_prepared"] = {
-			"candidate": candidate,
-			"ledger": ledger,
-			"delivery": command.get("_sealed_action_host_delivery", {}),
-		}
-	return command
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_auto_intent(surface_time_msec)
 
 
 func _sealed_action_host_preview_wager_cost(action_id: String, stake: int) -> int:
-	if not _current_game_uses_action_authority() or run_state == null or action_id.is_empty():
-		return 0
-	var candidate := _sealed_action_host_transaction_candidate()
-	if candidate == null:
-		return 0
-	var ledger := _sealed_action_host_ledger(candidate, true)
-	_sealed_action_host_store_ledger(candidate, ledger)
-	var trusted_wager_method := StringName(action_authority_contract.get("trusted_candidate_wager_method", &""))
-	if not trusted_wager_method.is_empty() and current_game.has_method(trusted_wager_method):
-		var trusted_session: Dictionary = ledger.get("session", {}) if typeof(ledger.get("session", {})) == TYPE_DICTIONARY else {}
-		return maxi(0, int(current_game.call(trusted_wager_method, action_id, stake, candidate, trusted_session)))
-	var snapshot := _sealed_action_host_transient_run_snapshot(candidate)
-	# The wager proposal is read-only and the canonical module binds this exact
-	# session into its input fingerprint; no mutable staging happens on this path.
-	var session: Dictionary = ledger.get("session", {}) if typeof(ledger.get("session", {})) == TYPE_DICTIONARY else {}
-	var wager_method := StringName(action_authority_contract.get("wager_cost_proposal_method", &""))
-	if wager_method.is_empty() or not current_game.has_method(wager_method):
-		return 0
-	var proposal: Dictionary = current_game.call(wager_method, action_id, stake, snapshot, session)
-	var expected_input := GameRitualRuntimeScript.canonical_fingerprint({
-		"action_id": action_id,
-		"stake": stake,
-		"run_snapshot": snapshot,
-		"ui_state": session,
-	})
-	if str(proposal.get("input_fingerprint", "")) != expected_input:
-		return 0
-	return maxi(0, int(proposal.get("cost", 0)))
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_preview_wager_cost(action_id, stake)
 
 
 func _sealed_action_host_replay_request(delivery_claim: Dictionary) -> Dictionary:
-	var request_key := str(delivery_claim.get("request_key", ""))
-	if request_key.is_empty() or not _current_game_uses_action_authority() or run_state == null:
-		return _sealed_action_host_rejection("unknown_receipt", "Blackjack request receipt is unavailable.", request_key)
-	var candidate := _sealed_action_host_detached()
-	if candidate == null:
-		return _sealed_action_host_rejection("internal_fail_closed", "Sealed table semantics could not be rebuilt.", request_key)
-	# _sealed_action_host_detached restored through RunState.from_dict, whose
-	# save boundary already fully validated and isolated this ledger. Carry that
-	# exact local value through this synchronous transaction instead of re-reading
-	# and revalidating the growing history at every internal stage.
-	var candidate_states: Dictionary = candidate.current_environment.get("game_states", {}) if typeof(candidate.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	var state_key := _sealed_action_host_state_key()
-	var candidate_table: Dictionary = candidate_states.get(state_key, {}) if typeof(candidate_states.get(state_key, {})) == TYPE_DICTIONARY else {}
-	var ledger: Dictionary = (candidate_table.get(ActionAuthorityScript.LEDGER_KEY, {}) as Dictionary).duplicate(false) if typeof(candidate_table.get(ActionAuthorityScript.LEDGER_KEY, {})) == TYPE_DICTIONARY else {}
-	var replay: Dictionary = ActionAuthorityScript.cached_response(ledger, request_key, delivery_claim)
-	if replay.is_empty():
-		return _sealed_action_host_rejection("unknown_receipt", "Blackjack request receipt is unavailable.", request_key)
-	if not bool(replay.get("ok", false)) and replay.has("error_code"):
-		return _sealed_action_host_rejection(str(replay.get("error_code", "receipt_content_conflict")), "Blackjack replay envelope did not match its committed boundary.", request_key)
-	return replay
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_replay_request(delivery_claim)
 
 
 func _sealed_action_host_prepare_delivery(action_id: String, stake: int, delivery_claim: Dictionary = {}) -> Dictionary:
-	var requested_key := str(delivery_claim.get("request_key", ""))
-	var candidate := _sealed_action_host_transaction_candidate()
-	if candidate == null:
-		return _sealed_action_host_rejection("internal_fail_closed", "Blackjack host could not create a detached delivery.", requested_key)
-	var ledger := _sealed_action_host_ledger(candidate, true)
-	var cache: Dictionary = ledger.get("request_cache", {}) if typeof(ledger.get("request_cache", {})) == TYPE_DICTIONARY else {}
-	if not requested_key.is_empty() and cache.has(requested_key):
-		if str(delivery_claim.get("action_id", "")) != action_id or int(delivery_claim.get("stake", -1)) != stake:
-			return _sealed_action_host_rejection("receipt_content_conflict", "Blackjack request receipt is bound to a different action or stake.", requested_key)
-		var cached_response: Dictionary = ActionAuthorityScript.cached_replay_response(ledger, requested_key, delivery_claim)
-		if cached_response.is_empty() or (not bool(cached_response.get("ok", false)) and cached_response.has("error_code")):
-			return _sealed_action_host_rejection("receipt_content_conflict", "Blackjack request receipt is bound to different content.", requested_key)
-		return {"ok": true, "cached_response": cached_response}
-	var context := _sealed_action_host_trusted_context(candidate, stake, action_id)
-	var pending: Dictionary = ledger.get("pending_delivery", {}) if typeof(ledger.get("pending_delivery", {})) == TYPE_DICTIONARY else {}
-	if not pending.is_empty():
-		if not delivery_claim.is_empty() and GameRitualRuntimeScript.canonical_json(delivery_claim) != GameRitualRuntimeScript.canonical_json(pending):
-			return _sealed_action_host_rejection("stale_boundary", "Blackjack delivery belongs to a different action boundary.", requested_key)
-		var matched: Dictionary = ActionAuthorityScript.delivery_matches(ledger, str(pending.get("request_key", "")), action_id, context, stake)
-		if not bool(matched.get("ok", false)):
-			return _sealed_action_host_rejection(str(matched.get("error_code", "receipt_content_conflict")), "Blackjack delivery content changed before settlement.", str(pending.get("request_key", "")))
-		return {
-			"ok": true,
-			"delivery": pending.duplicate(true),
-			"_sealed_candidate": candidate,
-			"_sealed_ledger": ledger,
-		}
-	if not requested_key.is_empty():
-		return _sealed_action_host_rejection("stale_boundary", "Blackjack delivery is no longer pending.", requested_key)
-	var issued: Dictionary = ActionAuthorityScript.issue_delivery_cow(ledger, action_id, context, stake, ledger.get("session", {}))
-	if not bool(issued.get("ok", false)):
-		return _sealed_action_host_rejection(str(issued.get("error_code", "receipt_content_conflict")), "Blackjack delivery could not be issued.")
-	ledger = issued.get("ledger", ledger)
-	_sealed_action_host_store_ledger(candidate, ledger)
-	# Delivery identity is durable before any RNG, funding, or game proposal work.
-	if not _sealed_action_host_publish(candidate):
-		return _sealed_action_host_rejection("internal_fail_closed", "Blackjack delivery could not be persisted.")
-	# The detached candidate and validated ledger are still the exact state that
-	# successfully crossed the publish boundary. Hand them only to the synchronous
-	# resolver so it need not serialize and restore the just-published run again.
-	return {
-		"ok": true,
-		"delivery": (issued.get("delivery", {}) as Dictionary).duplicate(true),
-		"_sealed_candidate": candidate,
-		"_sealed_ledger": ledger,
-	}
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_prepare_delivery(action_id, stake, delivery_claim)
 
 
 func _sealed_action_host_is_canonical_replay(result: Dictionary) -> bool:
-	if run_state == null or not _current_game_uses_action_authority():
-		return false
-	var ledger := _sealed_action_host_ledger(run_state, false)
-	return not ledger.is_empty() and ActionAuthorityScript.valid_cached_replay(ledger, result)
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_is_canonical_replay(result)
 
 
 func _sealed_action_host_cached_replay(delivery_claim: Dictionary) -> Dictionary:
-	var request_key := str(delivery_claim.get("request_key", ""))
-	if request_key.is_empty() or run_state == null or not _current_game_uses_action_authority():
-		return {}
-	var ledger := _sealed_action_host_ledger(run_state, false)
-	var cache: Dictionary = ledger.get("request_cache", {}) if typeof(ledger.get("request_cache", {})) == TYPE_DICTIONARY else {}
-	if ledger.is_empty() or not cache.has(request_key):
-		return {}
-	var replay: Dictionary = ActionAuthorityScript.cached_replay_response(ledger, request_key, delivery_claim)
-	if replay.is_empty() or (not bool(replay.get("ok", false)) and replay.has("error_code")):
-		return _sealed_action_host_rejection("receipt_content_conflict", "Blackjack request receipt is bound to different content.", request_key)
-	return replay
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_cached_replay(delivery_claim)
 
 
 func _sealed_action_host_present_cached_replay(result: Dictionary) -> bool:
-	if not _sealed_action_host_is_canonical_replay(result):
-		return false
-	if FoundationActionViewModelScript == null:
-		FoundationActionViewModelScript = load(str(RUN_UI_SCRIPT_PATHS.get("FoundationActionViewModelScript", ""))) as Script
-	if FoundationActionViewModelScript == null:
-		return false
-	# Cache hits may refresh presentation, but they are not a second action
-	# boundary and must never repeat tutorials, audio, absorption, autosave,
-	# interrupts, outcome scheduling, or any other one-shot consumer.
-	last_game_result = FoundationActionViewModelScript.stored_game_result_snapshot(result)
-	if game_surface_canvas != null and current_screen == SCREEN_GAME:
-		game_surface_canvas.render_game_snapshot(_game_view_snapshot(true))
-	else:
-		_refresh()
-	return true
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_present_cached_replay(result)
 
 
 func _sealed_action_host_proposal_valid(proposal: Dictionary, proposal_input: Dictionary) -> bool:
-	if not _current_game_uses_action_authority():
-		return false
-	var keys := proposal.keys()
-	keys.sort()
-	var expected_keys := ["input_fingerprint", "ok", "output_fingerprint", "result", "rng_snapshot", "run_snapshot"]
-	expected_keys.sort()
-	if keys != expected_keys \
-			or typeof(proposal.get("result", null)) != TYPE_DICTIONARY \
-			or typeof(proposal.get("run_snapshot", null)) != TYPE_DICTIONARY \
-			or typeof(proposal.get("rng_snapshot", null)) != TYPE_DICTIONARY:
-		return false
-	if str(proposal.get("input_fingerprint", "")) != GameRitualRuntimeScript.canonical_fingerprint(proposal_input):
-		return false
-	# Validation erases only one top-level field. The proposal's nested result and
-	# snapshots remain immutable here, so cloning the entire saved run would add
-	# a second full-state allocation to every accepted action.
-	var output := proposal.duplicate(false)
-	var provided_output_fingerprint := str(output.get("output_fingerprint", ""))
-	output.erase("output_fingerprint")
-	if provided_output_fingerprint != GameRitualRuntimeScript.canonical_fingerprint(output):
-		return false
-	# The host replays the canonical module from the sealed serialized input. Both
-	# outputs are independently bound to their complete canonical content by the
-	# same SHA-256 contract, so comparing those verified bindings is equivalent to
-	# serializing both full proposals a second time and comparing the strings.
-	# This keeps the hostile-input boundary fail-closed while avoiding one large,
-	# short-lived allocation on every accepted action.
-	var resolve_method := StringName(action_authority_contract.get("resolve_proposal_method", &""))
-	if resolve_method.is_empty() or not current_game.has_method(resolve_method):
-		return false
-	var canonical: Dictionary = current_game.call(
-		resolve_method,
-		str(proposal_input.get("action_id", "")),
-		int(proposal_input.get("stake", 0)),
-		proposal_input.get("run_snapshot", {}),
-		proposal_input.get("rng_snapshot", {}),
-		proposal_input.get("ui_state", {})
-	)
-	var canonical_output := canonical.duplicate(false)
-	var canonical_output_fingerprint := str(canonical_output.get("output_fingerprint", ""))
-	canonical_output.erase("output_fingerprint")
-	if canonical_output_fingerprint.is_empty() \
-			or canonical_output_fingerprint != GameRitualRuntimeScript.canonical_fingerprint(canonical_output):
-		return false
-	return canonical_output_fingerprint == provided_output_fingerprint
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_proposal_valid(proposal, proposal_input)
 
 
-func _sealed_action_host_candidate_proposal(resolve_method: StringName, action_id: String, stake: int, base_candidate: RunState, input_ledger: Dictionary, proposal_input: Dictionary, proposal_input_fingerprint: String, session: Dictionary, use_base_candidate: bool = false, compact_evidence: bool = false) -> Dictionary:
-	if base_candidate == null or resolve_method.is_empty() or not current_game.has_method(resolve_method):
-		return {}
-	var proposal_candidate := base_candidate
-	if not use_base_candidate:
-		if bool(action_authority_contract.get("lightweight_resolution_candidate", false)):
-			proposal_candidate = base_candidate.detached_host_resolution_candidate(_sealed_action_host_state_key())
-		else:
-			proposal_candidate = base_candidate.detached_host_action_candidate(_sealed_action_host_state_key())
-	_sealed_action_host_store_ledger(proposal_candidate, input_ledger)
-	var proposal_rng := RngStream.new()
-	proposal_rng.restore(proposal_input.get("rng_snapshot", {}))
-	var result: Dictionary = current_game.call(resolve_method, action_id, stake, proposal_candidate, proposal_rng, session)
-	var authority_evidence := _sealed_action_host_compact_evidence(proposal_candidate, action_id, stake, session) if compact_evidence else {}
-	if compact_evidence and authority_evidence.is_empty():
-		return {}
-	var proposal := {
-		"ok": bool(result.get("ok", false)),
-		"input_fingerprint": proposal_input_fingerprint,
-		"result": result.duplicate(true),
-		# Compact providers retain the actual detached candidate in this private
-		# bundle. A serialized whole-run snapshot adds no validation after the host
-		# has independently replayed and matched exact evidence.
-		"run_snapshot": {} if compact_evidence else proposal_candidate.to_save_snapshot(),
-		"rng_snapshot": proposal_rng.snapshot(),
-	}
-	if compact_evidence:
-		proposal["output_fingerprint"] = GameRitualRuntimeScript.canonical_fingerprint({
-			"input_fingerprint": proposal_input_fingerprint,
-			"ok": bool(proposal.get("ok", false)),
-			"result": proposal.get("result", {}),
-			"rng_snapshot": proposal.get("rng_snapshot", {}),
-			"authority_evidence": authority_evidence,
-		})
-	else:
-		proposal["output_fingerprint"] = GameRitualRuntimeScript.canonical_fingerprint(proposal)
-	return {"proposal": proposal, "candidate": proposal_candidate, "authority_evidence": authority_evidence}
+func _sealed_action_host_candidate_proposal(resolve_method: StringName, action_id: String, stake: int, base_candidate: RunState, input_ledger: Dictionary, proposal_input: Dictionary, proposal_input_fingerprint: String, session: Dictionary, use_base_candidate: bool = false, compact_evidence: bool = false, fingerprint_output: bool = true) -> Dictionary:
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_candidate_proposal(resolve_method, action_id, stake, base_candidate, input_ledger, proposal_input, proposal_input_fingerprint, session, use_base_candidate, compact_evidence, fingerprint_output)
 
 
-func _sealed_action_host_candidate_proposals_match(first: Dictionary, replay: Dictionary, proposal_input: Dictionary) -> bool:
-	var expected_input_fingerprint := str(first.get("input_fingerprint", ""))
-	if expected_input_fingerprint.is_empty() or expected_input_fingerprint != str(replay.get("input_fingerprint", "")):
-		return false
-	var expected_keys := ["input_fingerprint", "ok", "output_fingerprint", "result", "rng_snapshot", "run_snapshot"]
-	expected_keys.sort()
-	for proposal in [first, replay]:
-		if typeof(proposal) != TYPE_DICTIONARY:
-			return false
-		var keys := (proposal as Dictionary).keys()
-		keys.sort()
-		if keys != expected_keys \
-				or str((proposal as Dictionary).get("input_fingerprint", "")) != expected_input_fingerprint \
-				or typeof((proposal as Dictionary).get("result", null)) != TYPE_DICTIONARY \
-				or typeof((proposal as Dictionary).get("run_snapshot", null)) != TYPE_DICTIONARY \
-				or typeof((proposal as Dictionary).get("rng_snapshot", null)) != TYPE_DICTIONARY:
-			return false
-		if str((proposal as Dictionary).get("output_fingerprint", "")).is_empty():
-			return false
-	return str(first.get("output_fingerprint", "")) == str(replay.get("output_fingerprint", ""))
+func _sealed_action_host_candidate_proposals_match(first: Dictionary, replay: Dictionary, proposal_input: Dictionary, first_authority_evidence: Dictionary = {}, replay_authority_evidence: Dictionary = {}) -> bool:
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_candidate_proposals_match(first, replay, proposal_input, first_authority_evidence, replay_authority_evidence)
 
 
 func _sealed_action_host_snapshot_ledger(snapshot: Dictionary) -> Dictionary:
-	var environment: Dictionary = snapshot.get("current_environment", {}) if typeof(snapshot.get("current_environment", {})) == TYPE_DICTIONARY else {}
-	var game_states: Dictionary = environment.get("game_states", {}) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	var state_key := _sealed_action_host_state_key()
-	var table: Dictionary = game_states.get(state_key, {}) if typeof(game_states.get(state_key, {})) == TYPE_DICTIONARY else {}
-	return (table.get(ActionAuthorityScript.LEDGER_KEY, {}) as Dictionary).duplicate(false) if typeof(table.get(ActionAuthorityScript.LEDGER_KEY, {})) == TYPE_DICTIONARY else {}
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_snapshot_ledger(snapshot)
 
 
 func _sealed_action_host_snapshot_with_ledger(snapshot: Dictionary, ledger: Dictionary) -> Dictionary:
-	# Copy only the four containers on the authority path. All other snapshot
-	# values remain immutable during proposal hashing/restoration.
-	var result := snapshot.duplicate(false)
-	var environment: Dictionary = (result.get("current_environment", {}) as Dictionary).duplicate(false) if typeof(result.get("current_environment", {})) == TYPE_DICTIONARY else {}
-	var game_states: Dictionary = (environment.get("game_states", {}) as Dictionary).duplicate(false) if typeof(environment.get("game_states", {})) == TYPE_DICTIONARY else {}
-	var state_key := _sealed_action_host_state_key()
-	var table: Dictionary = (game_states.get(state_key, {}) as Dictionary).duplicate(false) if typeof(game_states.get(state_key, {})) == TYPE_DICTIONARY else {}
-	table[ActionAuthorityScript.LEDGER_KEY] = ledger.duplicate(false)
-	game_states[state_key] = table
-	environment["game_states"] = game_states
-	result["current_environment"] = environment
-	return result
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_snapshot_with_ledger(snapshot, ledger)
 
 
 func _sealed_action_host_compact_proposal_ledger(ledger: Dictionary) -> Dictionary:
-	var compact := ledger.duplicate(false)
-	compact["request_cache"] = {}
-	compact["request_order"] = []
-	compact["journal"] = []
-	compact["journal_head"] = ""
-	return compact
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_compact_proposal_ledger(ledger)
 
 
 func _sealed_action_host_expand_proposal_ledger(full_input: Dictionary, compact_input: Dictionary, compact_output: Dictionary) -> Dictionary:
-	# The module may rebind only the account/RNG checkpoint (Crew plays do this
-	# after their visible fee). It cannot change delivery/session identity or
-	# smuggle history through the compact proposal channel.
-	if compact_output.is_empty() \
-			or not (compact_output.get("request_cache", {}) as Dictionary).is_empty() \
-			or not (compact_output.get("request_order", []) as Array).is_empty() \
-			or not (compact_output.get("journal", []) as Array).is_empty() \
-			or not str(compact_output.get("journal_head", "")).is_empty():
-		return {}
-	for key in ActionAuthorityScript.LEDGER_KEYS:
-		if key in ["checkpoint_fingerprint", "request_cache", "request_order", "journal", "journal_head"]:
-			continue
-		var output_value: Variant = compact_output.get(key)
-		var input_value: Variant = compact_input.get(key)
-		if typeof(output_value) != typeof(input_value):
-			return {}
-		if typeof(output_value) in [TYPE_DICTIONARY, TYPE_ARRAY]:
-			if GameRitualRuntimeScript.canonical_fingerprint(output_value) != GameRitualRuntimeScript.canonical_fingerprint(input_value):
-				return {}
-		elif output_value != input_value:
-			return {}
-	var expanded := full_input.duplicate(false)
-	expanded["checkpoint_fingerprint"] = compact_output.get("checkpoint_fingerprint")
-	return expanded
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_expand_proposal_ledger(full_input, compact_input, compact_output)
 
 
 func _sealed_action_host_public_run_snapshot(value: Variant) -> Dictionary:
-	var snapshot: Dictionary = (value as Dictionary).duplicate(false) if typeof(value) == TYPE_DICTIONARY else {}
-	# This projection erases top-level private authority only; nested public Crew
-	# state is immutable and can be shared by the temporary fingerprint view.
-	var crew_state: Dictionary = (snapshot.get("crew_state", {}) as Dictionary).duplicate(false) if typeof(snapshot.get("crew_state", {})) == TYPE_DICTIONARY else {}
-	crew_state.erase("a")
-	crew_state.erase("z")
-	snapshot["crew_state"] = crew_state
-	return snapshot
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_public_run_snapshot(value)
 
 
-func _sealed_action_host_proposal_fingerprints(proposal: Dictionary, proposal_input: Dictionary, compact_authority_evidence: Dictionary = {}) -> Dictionary:
-	if not compact_authority_evidence.is_empty():
-		return {
-			"proposal_fingerprint": str(proposal.get("output_fingerprint", "")),
-			"run_fingerprint": GameRitualRuntimeScript.canonical_fingerprint(compact_authority_evidence),
-			"rng_fingerprint": GameRitualRuntimeScript.canonical_fingerprint(proposal.get("rng_snapshot", {})),
-		}
-	var content := proposal.duplicate(false)
-	content.erase("output_fingerprint")
-	# The full opaque proposal was already replayed and validated above. Receipts
-	# persist a public gameplay identity, so Crew's random private save authority
-	# must not make otherwise identical Blackjack transactions hash differently.
-	var public_input := proposal_input.duplicate(false)
-	public_input["run_snapshot"] = _sealed_action_host_public_run_snapshot(public_input.get("run_snapshot", {}))
-	content["input_fingerprint"] = GameRitualRuntimeScript.canonical_fingerprint(public_input)
-	content["run_snapshot"] = _sealed_action_host_public_run_snapshot(content.get("run_snapshot", {}))
-	return {
-		"proposal_fingerprint": GameRitualRuntimeScript.canonical_fingerprint(content),
-		"run_fingerprint": GameRitualRuntimeScript.canonical_fingerprint(content.get("run_snapshot", {})),
-		"rng_fingerprint": GameRitualRuntimeScript.canonical_fingerprint(proposal.get("rng_snapshot", {})),
-	}
+func _sealed_action_host_proposal_fingerprints(proposal: Dictionary, proposal_input: Dictionary, compact_authority_evidence: Dictionary = {}, compact_component_fingerprints: Dictionary = {}) -> Dictionary:
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_proposal_fingerprints(proposal, proposal_input, compact_authority_evidence, compact_component_fingerprints)
 
 
 func _sealed_action_host_advance_environment_turn(candidate: RunState) -> Dictionary:
-	return candidate.advance_environment_turns(1)
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_advance_environment_turn(candidate)
 
 
 func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_claim: Dictionary = {}, prepared_claim: Dictionary = {}) -> Dictionary:
-	var delivery_key := str(delivery_claim.get("request_key", ""))
-	if not _current_game_uses_action_authority() or run_state == null or action_id.is_empty():
-		return _sealed_action_host_rejection("invalid_intent", "Blackjack action intent is unavailable.", delivery_key)
-	var prepared: Dictionary = prepared_claim
-	if not prepared.is_empty():
-		var prepared_candidate: RunState = prepared.get("candidate", null) as RunState
-		var prepared_ledger: Dictionary = prepared.get("ledger", {}) if typeof(prepared.get("ledger", {})) == TYPE_DICTIONARY else {}
-		var prepared_delivery: Dictionary = prepared.get("delivery", {}) if typeof(prepared.get("delivery", {})) == TYPE_DICTIONARY else {}
-		if prepared_candidate == null \
-				or str(prepared_delivery.get("action_id", "")) != action_id \
-				or int(prepared_delivery.get("stake", -1)) != stake \
-				or GameRitualRuntimeScript.canonical_json(prepared_delivery) != GameRitualRuntimeScript.canonical_json(delivery_claim) \
-				or GameRitualRuntimeScript.canonical_json(prepared_ledger.get("pending_delivery", {})) != GameRitualRuntimeScript.canonical_json(prepared_delivery):
-			return _sealed_action_host_rejection("stale_boundary", "Blackjack prepared delivery no longer matched its synchronous action boundary.", delivery_key)
-		prepared = {
-			"ok": true,
-			"delivery": prepared_delivery,
-			"_sealed_candidate": prepared_candidate,
-			"_sealed_ledger": prepared_ledger,
-		}
-	else:
-		prepared = _sealed_action_host_prepare_delivery(action_id, stake, delivery_claim)
-	if not bool(prepared.get("ok", false)):
-		return prepared
-	if typeof(prepared.get("cached_response", null)) == TYPE_DICTIONARY:
-		return (prepared.get("cached_response", {}) as Dictionary).duplicate(true)
-	var delivery: Dictionary = prepared.get("delivery", {})
-	var request_key := str(delivery.get("request_key", ""))
-	var candidate_value: Variant = prepared.get("_sealed_candidate", null)
-	var candidate: RunState = candidate_value as RunState
-	if candidate == null:
-		candidate = _sealed_action_host_detached()
-	if candidate == null:
-		return _sealed_action_host_rejection("internal_fail_closed", "Sealed table semantics could not be rebuilt.", request_key)
-	var commits_in_place := candidate == run_state and _sealed_action_host_can_commit_in_place()
-	# prepare_delivery validated this ledger and either observed an already durable
-	# pending delivery or published the newly issued one. Keep a top-level local
-	# copy for the remaining copy-on-write stages.
-	var prepared_ledger_value: Variant = prepared.get("_sealed_ledger", {})
-	var ledger: Dictionary = (prepared_ledger_value as Dictionary).duplicate(false) if typeof(prepared_ledger_value) == TYPE_DICTIONARY else {}
-	if ledger.is_empty() or GameRitualRuntimeScript.canonical_json(ledger.get("pending_delivery", {})) != GameRitualRuntimeScript.canonical_json(delivery):
-		return _sealed_action_host_rejection("stale_boundary", "Blackjack delivery was not present on the canonical candidate.", request_key)
-	# Resolution proposals copy the session at their own mutation boundary. Keep
-	# the validated ledger value read-only here instead of cloning it once in the
-	# host and a second time in the provider.
-	var session: Dictionary = ledger.get("session", {}) if typeof(ledger.get("session", {})) == TYPE_DICTIONARY else {}
-	var provider_contract: Dictionary = action_authority_contract
-	var wager_method := StringName(provider_contract.get("wager_cost_proposal_method", &""))
-	var resolve_method := StringName(provider_contract.get("resolve_proposal_method", &""))
-	var candidate_wager_method := StringName(provider_contract.get("trusted_candidate_wager_method", &""))
-	var candidate_resolve_method := StringName(provider_contract.get("trusted_candidate_resolve_method", &""))
-	var uses_trusted_candidate_provider := not candidate_wager_method.is_empty() \
-			and not candidate_resolve_method.is_empty() \
-			and current_game.has_method(candidate_wager_method) \
-			and current_game.has_method(candidate_resolve_method)
-	var uses_compact_authority_evidence := uses_trusted_candidate_provider \
-			and not _sealed_action_host_compact_evidence_method().is_empty()
-	if wager_method.is_empty() or resolve_method.is_empty() \
-			or not current_game.has_method(wager_method) or not current_game.has_method(resolve_method):
-		return _sealed_action_host_rejection("invalid_intent", "Sealed action proposal methods are unavailable.", request_key)
-	var wager_proposal: Dictionary
-	if uses_trusted_candidate_provider:
-		wager_proposal = {
-			"cost": maxi(0, int(current_game.call(candidate_wager_method, action_id, stake, candidate, session))),
-		}
-	else:
-		# Trusted candidate providers above read the already isolated RunState and
-		# never consume a serialized wager input. Materialize this snapshot only for
-		# legacy proposal providers that actually bind it into their fingerprint.
-		var wager_snapshot := _sealed_action_host_transient_run_snapshot(candidate)
-		var wager_input_fingerprint := GameRitualRuntimeScript.canonical_fingerprint({
-			"action_id": action_id,
-			"stake": stake,
-			"run_snapshot": wager_snapshot,
-			"ui_state": session,
-		})
-		wager_proposal = current_game.call(wager_method, action_id, stake, wager_snapshot, session)
-		if str(wager_proposal.get("input_fingerprint", "")) != wager_input_fingerprint:
-			return _sealed_action_host_rejection("invalid_proposal", "Blackjack wager proposal did not match its canonical input.", request_key)
-	var wager_cost := maxi(0, int(wager_proposal.get("cost", 0)))
-	var funding_preview := candidate.preview_grand_casino_wager_funding(current_game.get_id(), wager_cost, candidate.current_environment)
-	if not bool(funding_preview.get("ok", false)):
-		return _sealed_action_host_rejection("insufficient_funds", str(funding_preview.get("message", "You do not have enough cash or chips for that wager.")), request_key)
-	var funding_depletes_liquid_balance := candidate.bankroll - int(funding_preview.get("cash_used", 0)) <= 0 \
-		and candidate.grand_casino_chips - int(funding_preview.get("existing_chips_used", 0)) <= 0
-	var place_bet_action := str(provider_contract.get("place_bet_action", ""))
-	if not place_bet_action.is_empty() and action_id == place_bet_action and funding_depletes_liquid_balance:
-		candidate.begin_deferred_bankroll_zero_resolution()
-	var funding := candidate.fund_grand_casino_wager(current_game.get_id(), wager_cost, candidate.current_environment)
-	if not bool(funding.get("ok", false)):
-		return _sealed_action_host_rejection("insufficient_funds", str(funding.get("message", "You do not have enough cash or chips for that wager.")), request_key)
-	# Detached proposal restores still reconcile their serialized account/RNG.
-	# Refresh only the detached checkpoint after funding; the live pending
-	# delivery remains bound to its original canonical context until commit.
-	var funded_ledger := ledger.duplicate(false)
-	if funded_ledger.is_empty():
-		return _sealed_action_host_rejection("invalid_proposal", "Blackjack authority disappeared during wager funding.", request_key)
-	funded_ledger["checkpoint_fingerprint"] = candidate.action_authority_checkpoint_fingerprint()
-	_sealed_action_host_store_ledger(candidate, funded_ledger)
-	var rng := candidate.create_rng()
-	var proposal_input := {
-		"action_id": action_id,
-		"stake": stake,
-		"run_snapshot": {} if uses_compact_authority_evidence else _sealed_action_host_transient_run_snapshot(candidate),
-		"rng_snapshot": rng.snapshot(),
-		"ui_state": session,
-	}
-	# Historical responses are irrelevant to deterministic game resolution. Send
-	# the canonical module an internally consistent empty-history ledger, replay
-	# and validate that compact proposal in full, then restore the exact
-	# host-validated history before receipt hashing, apply, and publication.
-	var compact_input_ledger := _sealed_action_host_compact_proposal_ledger(funded_ledger)
-	var compact_proposal_input := proposal_input.duplicate(false)
-	if uses_compact_authority_evidence:
-		# The detached candidate remains the source of truth; compact evidence below
-		# binds its exact Slot/account inputs without embedding unrelated run history.
-		# An in-place transaction keeps the durable live retry history intact while
-		# both narrow proposal candidates receive their own compact ledger below.
-		if not commits_in_place:
-			_sealed_action_host_store_ledger(candidate, compact_input_ledger)
-	else:
-		compact_proposal_input["run_snapshot"] = _sealed_action_host_snapshot_with_ledger(
-			proposal_input.get("run_snapshot", {}),
-			compact_input_ledger
-		)
-	var compact_proposal: Dictionary
-	var trusted_proposed_candidate: RunState
-	var compact_authority_evidence: Dictionary = {}
-	var runtime_restore_method: StringName = &""
-	var runtime_checkpoint: Dictionary = {}
-	var accepted_runtime_checkpoint: Dictionary = {}
-	var has_runtime_checkpoint := false
-	if uses_trusted_candidate_provider:
-		var compact_input_fingerprint := ""
-		if uses_compact_authority_evidence:
-			var input_evidence := _sealed_action_host_compact_evidence(candidate, action_id, stake, session)
-			if input_evidence.is_empty():
-				return _sealed_action_host_rejection("invalid_proposal", "Game authority evidence was unavailable.", request_key)
-			compact_input_fingerprint = GameRitualRuntimeScript.canonical_fingerprint({
-				"action_id": action_id,
-				"stake": stake,
-				"authority_evidence": input_evidence,
-				"rng_snapshot": proposal_input.get("rng_snapshot", {}),
-				"ui_state": session,
-			})
-		else:
-			compact_input_fingerprint = GameRitualRuntimeScript.canonical_fingerprint(compact_proposal_input)
-		var runtime_checkpoint_method := StringName(provider_contract.get("proposal_runtime_checkpoint_method", &""))
-		runtime_restore_method = StringName(provider_contract.get("proposal_runtime_restore_method", &""))
-		has_runtime_checkpoint = not runtime_checkpoint_method.is_empty() \
-				and not runtime_restore_method.is_empty() \
-				and current_game.has_method(runtime_checkpoint_method) \
-				and current_game.has_method(runtime_restore_method)
-		runtime_checkpoint = current_game.call(runtime_checkpoint_method, candidate) if has_runtime_checkpoint else {}
-		# Compact providers execute the accepted proposal directly on the already
-		# isolated full candidate. Build the cheap replay candidate before that first
-		# mutation so both executions begin at the exact same machine boundary.
-		var first_source: RunState = candidate.detached_host_resolution_candidate(_sealed_action_host_state_key()) if commits_in_place else candidate
-		var replay_source: RunState = candidate.detached_host_resolution_candidate(_sealed_action_host_state_key()) if uses_compact_authority_evidence else candidate
-		var first_bundle := _sealed_action_host_candidate_proposal(candidate_resolve_method, action_id, stake, first_source, compact_input_ledger, compact_proposal_input, compact_input_fingerprint, session, uses_compact_authority_evidence, uses_compact_authority_evidence)
-		if has_runtime_checkpoint and not bool(current_game.call(runtime_restore_method, runtime_checkpoint)):
-			return _sealed_action_host_rejection("invalid_proposal", "Game runtime could not be restored for sealed replay.", request_key)
-		var replay_bundle := _sealed_action_host_candidate_proposal(candidate_resolve_method, action_id, stake, replay_source, compact_input_ledger, compact_proposal_input, compact_input_fingerprint, session, uses_compact_authority_evidence, uses_compact_authority_evidence)
-		compact_proposal = first_bundle.get("proposal", {})
-		var replay_proposal: Dictionary = replay_bundle.get("proposal", {})
-		if not _sealed_action_host_candidate_proposals_match(compact_proposal, replay_proposal, compact_proposal_input):
-			if has_runtime_checkpoint:
-				current_game.call(runtime_restore_method, runtime_checkpoint)
-			return _sealed_action_host_rejection("invalid_proposal", "Blackjack game proposal failed closed validation.", request_key)
-		trusted_proposed_candidate = first_bundle.get("candidate", null) as RunState
-		compact_authority_evidence = first_bundle.get("authority_evidence", {}) if typeof(first_bundle.get("authority_evidence", {})) == TYPE_DICTIONARY else {}
-		if has_runtime_checkpoint:
-			var replay_candidate: RunState = replay_bundle.get("candidate", null) as RunState
-			accepted_runtime_checkpoint = current_game.call(runtime_checkpoint_method, replay_candidate if replay_candidate != null else candidate)
-			if not bool(current_game.call(runtime_restore_method, runtime_checkpoint)):
-				return _sealed_action_host_rejection("invalid_proposal", "Game runtime could not be restored after sealed replay.", request_key)
-	else:
-		compact_proposal = current_game.call(
-			resolve_method,
-			action_id,
-			stake,
-			compact_proposal_input.get("run_snapshot", {}),
-			compact_proposal_input.get("rng_snapshot", {}),
-			session
-		)
-		if not _sealed_action_host_proposal_valid(compact_proposal, compact_proposal_input):
-			return _sealed_action_host_rejection("invalid_proposal", "Blackjack game proposal failed closed validation.", request_key)
-	var compact_output_ledger: Dictionary
-	if uses_compact_authority_evidence and trusted_proposed_candidate != null:
-		var compact_output_table: Dictionary = current_game.call("_table_state_preview", trusted_proposed_candidate, trusted_proposed_candidate.current_environment)
-		compact_output_ledger = (compact_output_table.get(ActionAuthorityScript.LEDGER_KEY, {}) as Dictionary).duplicate(false) if typeof(compact_output_table.get(ActionAuthorityScript.LEDGER_KEY, {})) == TYPE_DICTIONARY else {}
-	else:
-		compact_output_ledger = _sealed_action_host_snapshot_ledger(compact_proposal.get("run_snapshot", {}))
-	var expanded_ledger := _sealed_action_host_expand_proposal_ledger(funded_ledger, compact_input_ledger, compact_output_ledger)
-	if expanded_ledger.is_empty():
-		return _sealed_action_host_rejection("invalid_proposal", "Blackjack proposal changed sealed authority history or delivery state.", request_key)
-	# Both replacements below are top-level. The compact proposal has already
-	# passed exact replay validation, and its nested values remain read-only.
-	var proposal := compact_proposal.duplicate(false)
-	if not uses_compact_authority_evidence:
-		proposal["run_snapshot"] = _sealed_action_host_snapshot_with_ledger(
-			compact_proposal.get("run_snapshot", {}),
-			expanded_ledger
-		)
-	var proposal_fingerprints := _sealed_action_host_proposal_fingerprints(proposal, proposal_input, compact_authority_evidence)
-	# Proposal fingerprints are sealed above and the local proposal is never read
-	# again. Isolate the result's top-level host metadata without cloning nested
-	# game presentation/delta payloads that apply_result already owns defensively.
-	var result: Dictionary = (proposal.get("result", {}) as Dictionary).duplicate(false)
-	if not bool(proposal.get("ok", false)) or not bool(result.get("ok", false)):
-		result["ok"] = false
-		result[ActionAuthorityScript.HOST_REQUEST_KEY] = request_key
-		result[ActionAuthorityScript.HOST_COMMITTED_KEY] = false
-		return result
-	if str(result.get("game_id", result.get("source_id", ""))) != current_game.get_id() \
-			or str(result.get("action_id", "")) != action_id \
-			or str(result.get("environment_id", "")) != str(candidate.current_environment.get("id", "")):
-		return _sealed_action_host_rejection("invalid_proposal", "Blackjack result identity did not match the sealed delivery.", request_key)
-	var proposed_candidate := trusted_proposed_candidate
-	if commits_in_place and trusted_proposed_candidate != null:
-		# Both detached executions matched before this first live gameplay mutation.
-		# Transfer the accepted machine as one owned value; the pending delivery was
-		# already durable and all account/result consequences remain host-owned below.
-		var accepted_table: Dictionary = current_game.call("_table_state_preview", trusted_proposed_candidate, trusted_proposed_candidate.current_environment)
-		accepted_table = accepted_table.duplicate(true)
-		accepted_table[ActionAuthorityScript.LEDGER_KEY] = expanded_ledger.duplicate(false)
-		current_game.call("_update_environment_table", run_state.current_environment, accepted_table)
-		proposed_candidate = run_state
-	if proposed_candidate == null:
-		proposed_candidate = _sealed_action_host_restored_candidate(
-			compact_proposal.get("run_snapshot", {}),
-			_copy_dict(candidate.current_environment.get("scenario_layout_context", {})),
-			candidate.current_environment
-		)
-	if proposed_candidate == null:
-		return _sealed_action_host_rejection("invalid_proposal", "Blackjack proposal scenario semantics could not be rebuilt.", request_key)
-	if str(expanded_ledger.get("checkpoint_fingerprint", "")) != proposed_candidate.action_authority_checkpoint_fingerprint():
-		return _sealed_action_host_rejection("invalid_proposal", "Blackjack proposal checkpoint did not match its canonical account and RNG state.", request_key)
-	var proposed_table: Dictionary = current_game.call("_table_state", proposed_candidate, proposed_candidate.current_environment)
-	proposed_table[ActionAuthorityScript.LEDGER_KEY] = expanded_ledger.duplicate(false)
-	current_game.call("_update_environment_table", proposed_candidate.current_environment, proposed_table)
-	var proposed_ledger := expanded_ledger.duplicate(false)
-	if proposed_ledger.is_empty() or GameRitualRuntimeScript.canonical_json(proposed_ledger.get("pending_delivery", {})) != GameRitualRuntimeScript.canonical_json(delivery):
-		return _sealed_action_host_rejection("invalid_proposal", "Blackjack proposal changed its delivery authority.", request_key)
-	var proposed_rng := RngStream.new()
-	proposed_rng.restore(proposal.get("rng_snapshot", {}))
-	var skip_environment_turn := _sealed_action_host_normalize_environment_turn(result, action_id)
-	var requires_apply := _sealed_action_host_normalize_result_authority(result, provider_contract)
-	result[ActionAuthorityScript.HOST_COMMITTED_KEY] = true
-	result[ActionAuthorityScript.HOST_REQUEST_KEY] = request_key
-	result[ActionAuthorityScript.HOST_DELIVERY_KEY] = delivery.duplicate(true)
-	result[ActionAuthorityScript.HOST_BOUNDARY_ORDINAL_KEY] = int(delivery.get("boundary_ordinal", 0))
-	result[ActionAuthorityScript.HOST_WAGER_COST_KEY] = wager_cost
-	result[ActionAuthorityScript.HOST_FUNDING_LEASE_KEY] = funding_preview.duplicate(true)
-	result[ActionAuthorityScript.HOST_INTENT_FINGERPRINT_KEY] = str(delivery.get("intent_fingerprint", ""))
-	result[ActionAuthorityScript.HOST_CONTEXT_FINGERPRINT_KEY] = str(delivery.get("trusted_context_fingerprint", ""))
-	var binding := _sealed_action_host_table_binding(proposed_candidate.current_environment)
-	var receipt: Dictionary = ActionAuthorityScript.receipt_for(
-		delivery,
-		binding,
-		result,
-		str(proposal_fingerprints.get("proposal_fingerprint", "")),
-		str(proposal_fingerprints.get("run_fingerprint", "")),
-		str(proposal_fingerprints.get("rng_fingerprint", ""))
-	)
-	# receipt_for has just fingerprinted the same result content and excludes both
-	# host receipt fields by contract. Reuse that verified binding instead of
-	# serializing the result a second time before apply.
-	result[ActionAuthorityScript.HOST_CONTENT_FINGERPRINT_KEY] = str(receipt.get("result_fingerprint", ""))
-	result[ActionAuthorityScript.HOST_APPLY_RECEIPT_KEY] = receipt.duplicate(true)
-	var environment_id := str(proposed_candidate.current_environment.get("id", ""))
-	var suspicion_before := proposed_candidate.suspicion_level_for_environment_id(environment_id)
-	var should_apply := requires_apply or bool(result.get("host_apply_result", false))
-	if should_apply:
-		var table: Dictionary = current_game.call("_table_state", proposed_candidate, proposed_candidate.current_environment)
-		table[ActionAuthorityScript.PENDING_APPLY_RECEIPT_KEY] = receipt.duplicate(true)
-		current_game.call("_update_environment_table", proposed_candidate.current_environment, table)
-		GameModule.apply_result(proposed_candidate, result, proposed_rng)
-		var applied_table: Dictionary = current_game.call("_table_state_preview", proposed_candidate, proposed_candidate.current_environment)
-		if applied_table.has(ActionAuthorityScript.PENDING_APPLY_RECEIPT_KEY):
-			return _sealed_action_host_rejection("apply_receipt_rejected", "Blackjack result apply did not consume its exact pending receipt.", request_key)
-	# Main's environment turn is itself a snapshot transaction. Reconcile the
-	# detached ledger to the post-apply account/RNG before entering that boundary.
-	if proposed_ledger.is_empty():
-		return _sealed_action_host_rejection("invalid_proposal", "Blackjack authority disappeared after result apply.", request_key)
-	proposed_ledger["checkpoint_fingerprint"] = proposed_candidate.action_authority_checkpoint_fingerprint()
-	_sealed_action_host_store_ledger(proposed_candidate, proposed_ledger)
-	if not bool(result.get("defer_bankroll_zero_failure", false)) and not skip_environment_turn:
-		var turn_result := _sealed_action_host_advance_environment_turn(proposed_candidate)
-		if not bool(turn_result.get("ok", false)):
-			return _sealed_action_host_rejection(str(turn_result.get("error_code", "environment_turn_failed")), "Blackjack transaction could not cross the environment boundary.", request_key)
-	var suspicion_after := proposed_candidate.suspicion_level_for_environment_id(environment_id)
-	var transaction_suspicion_delta := suspicion_after - suspicion_before
-	var action_suspicion_delta := int((result.get("deltas", {}) as Dictionary).get("suspicion_delta", result.get("suspicion_delta", 0))) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else int(result.get("suspicion_delta", 0))
-	if transaction_suspicion_delta != action_suspicion_delta:
-		result[ActionAuthorityScript.HOST_ACTION_SUSPICION_DELTA_KEY] = action_suspicion_delta
-		result[ActionAuthorityScript.HOST_ENVIRONMENT_TURN_SUSPICION_DELTA_KEY] = transaction_suspicion_delta - action_suspicion_delta
-		result["suspicion_delta"] = transaction_suspicion_delta
-		var transaction_deltas: Dictionary = result.get("deltas", {}).duplicate(true) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else GameModule.empty_result_deltas()
-		transaction_deltas["suspicion_delta"] = transaction_suspicion_delta
-		result["deltas"] = transaction_deltas
-		GameModule.normalize_skill_cheat_contract(result)
-	var committed_session: Dictionary = {}
-	if typeof(result.get("ui_state", null)) == TYPE_DICTIONARY:
-		committed_session = result.get("ui_state", {})
-	elif typeof(result.get(ActionAuthorityScript.SURFACE_UI_STATE_KEY, null)) == TYPE_DICTIONARY:
-		committed_session = result.get(ActionAuthorityScript.SURFACE_UI_STATE_KEY, {})
-	elif action_id != "play_basic":
-		committed_session = session
-	if proposed_ledger.is_empty():
-		return _sealed_action_host_rejection("invalid_proposal", "Blackjack ledger disappeared before commit.", request_key)
-	proposed_ledger = ActionAuthorityScript.stage_session_cow(proposed_ledger, committed_session)
-	var committed_receipt: Dictionary = ActionAuthorityScript.receipt_for(
-		delivery,
-		binding,
-		result,
-		str(proposal_fingerprints.get("proposal_fingerprint", "")),
-		str(proposal_fingerprints.get("run_fingerprint", "")),
-		str(proposal_fingerprints.get("rng_fingerprint", ""))
-	)
-	result[ActionAuthorityScript.HOST_APPLY_RECEIPT_KEY] = committed_receipt
-	result[ActionAuthorityScript.HOST_CONTENT_FINGERPRINT_KEY] = str(committed_receipt.get("result_fingerprint", ""))
-	proposed_ledger = ActionAuthorityScript.commit_response_cow(
-		proposed_ledger,
-		delivery,
-		result,
-		str(proposal_fingerprints.get("proposal_fingerprint", "")),
-		str(proposal_fingerprints.get("run_fingerprint", "")),
-		str(proposal_fingerprints.get("rng_fingerprint", "")),
-		proposed_candidate.action_authority_checkpoint_fingerprint(),
-		int(provider_contract.get("active_replay_limit", ActionAuthorityScript.ACTIVE_REPLAY_LIMIT))
-	)
-	_sealed_action_host_store_ledger(proposed_candidate, proposed_ledger)
-	if has_runtime_checkpoint and not bool(current_game.call(runtime_restore_method, accepted_runtime_checkpoint)):
-		return _sealed_action_host_rejection("internal_fail_closed", "Game runtime could not publish the accepted transaction.", request_key)
-	if not _sealed_action_host_publish(proposed_candidate):
-		if has_runtime_checkpoint:
-			current_game.call(runtime_restore_method, runtime_checkpoint)
-		return _sealed_action_host_rejection("internal_fail_closed", "Blackjack host could not publish the accepted transaction.", request_key)
-	return result
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_resolve_intent(action_id, stake, delivery_claim, prepared_claim)
 
 
 func _sealed_action_host_normalize_result_authority(result: Dictionary, provider_contract: Dictionary) -> bool:
-	var proposal_requires_apply_key := str(provider_contract.get("proposal_requires_apply_key", ""))
-	var requires_apply := not proposal_requires_apply_key.is_empty() and bool(result.get(proposal_requires_apply_key, false))
-	if not proposal_requires_apply_key.is_empty():
-		result.erase(proposal_requires_apply_key)
-	var authoritative_result_marker := str(provider_contract.get("authoritative_result_marker", ""))
-	if not authoritative_result_marker.is_empty():
-		# The host owns capability minting even when a canonical provider authored
-		# the proposal. Strip every inbound claim before observing host policy.
-		result.erase(authoritative_result_marker)
-		if requires_apply:
-			result[authoritative_result_marker] = true
-	return requires_apply
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_normalize_result_authority(result, provider_contract)
 
 
 func _sealed_action_host_normalize_environment_turn(result: Dictionary, action_id: String) -> bool:
-	# A proposal may describe an internal preference, but it cannot grant itself
-	# authority over the host's environment clock. Erase the inbound marker and
-	# derive the exception only from this host-owned, exact game/action allowlist.
-	result.erase(ActionAuthorityScript.SKIP_ENVIRONMENT_TURN_KEY)
-	if current_game == null:
-		return false
-	var game_id := current_game.get_id()
-	var allowed_value: Variant = SEALED_ACTION_HOST_SKIP_ENVIRONMENT_TURN_ALLOWLIST.get(game_id, [])
-	var provider_allowed_value: Variant = action_authority_contract.get("skip_environment_turn_actions", [])
-	var legacy_allowed := typeof(allowed_value) == TYPE_ARRAY and (allowed_value as Array).has(action_id)
-	var provider_allowed := typeof(provider_allowed_value) == TYPE_ARRAY and (provider_allowed_value as Array).has(action_id)
-	return legacy_allowed or provider_allowed
+	_sealed_action_host.bind(self)
+	return _sealed_action_host._sealed_action_host_normalize_environment_turn(result, action_id)
 
 
 # `input_route_guarded` is trusted call-stack context only. It is never read
@@ -2522,7 +1991,7 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 		var multiplied_stake := _current_selected_stake() * int(command.get("stake_multiplier", 1))
 		set_selected_stake(multiplied_stake, true)
 	if command.has("set_stake") and not direct_resolve:
-		set_selected_stake(int(command.get("set_stake", _current_selected_stake())), true)
+		set_selected_stake(int(command.get("set_stake", 0)), true)
 	_play_surface_command_audio(command, index)
 	var environment_changed := bool(command.get("environment_changed", false))
 	var action_id := str(command.get("action_id", ""))
@@ -2545,6 +2014,14 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 	var surface_patch_value: Variant = command.get("surface_state_patch", {})
 	if typeof(surface_patch_value) == TYPE_DICTIONARY and not (surface_patch_value as Dictionary).is_empty() and game_surface_canvas != null:
 		game_surface_canvas.apply_surface_state_patch(surface_patch_value as Dictionary)
+		# Lightweight table interactions (count markers, peek controls, scratch
+		# cells, and similar gestures) update the live surface without taking the
+		# full game-resolution path. Tutorial lessons may complete from that local
+		# state, so give them the same post-action boundary check instead of leaving
+		# the player trapped behind a guide that still expects an already-finished
+		# gesture.
+		if run_state != null and run_state.is_tutorial_run():
+			_defer_coach_boundary_refresh()
 		return true
 	if environment_changed:
 		_autosave_foundation_run("Autosaved.")
@@ -2734,45 +2211,17 @@ func _advance_presented_bankroll() -> void:
 func _presented_bankroll() -> int:
 	if run_state == null:
 		return 0
-	if presented_bankroll_hold_active:
-		return presented_bankroll_value
 	return run_state.bankroll
 
 
 func _visible_recent_bankroll_delta(bankroll_delta: int) -> int:
-	return 0 if presented_bankroll_hold_active else bankroll_delta
+	return bankroll_delta
 
 
-func _begin_presented_bankroll_hold(result: Dictionary, before_bankroll: int, wager_cost: int) -> void:
+func _begin_presented_bankroll_hold(_result: Dictionary, _before_bankroll: int, _wager_cost: int) -> void:
+	# Money is authoritative as soon as the deterministic action settles. Result
+	# animations may continue, but they must never hold the visible wallet back.
 	_clear_presented_bankroll_hold()
-	if run_state == null or current_game == null:
-		return
-	if not bool(result.get("ok", false)):
-		return
-	var deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
-	var bankroll_delta := int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
-	if bankroll_delta == 0:
-		return
-	if not _result_uses_game_bankroll_presentation(result):
-		return
-	var stake_cost := maxi(wager_cost, int(result.get("stake", 0)))
-	presented_bankroll_hold_active = true
-	presented_bankroll_value = maxi(0, before_bankroll - maxi(0, stake_cost))
-	presented_bankroll_game_id = current_game.get_id()
-	presented_bankroll_action_id = str(result.get("action_id", ""))
-	presented_bankroll_release_screen = SCREEN_GAME
-	presented_bankroll_started_msec = Time.get_ticks_msec()
-
-
-func _result_uses_game_bankroll_presentation(result: Dictionary) -> bool:
-	if current_game == null:
-		return false
-	var result_game_id := str(result.get("game_id", result.get("source_id", "")))
-	if not result_game_id.is_empty() and result_game_id != current_game.get_id():
-		return false
-	return bool(result.get("surface_embeds_outcomes", false)) or _current_game_embeds_result_feedback()
-
-
 func _sync_presented_bankroll_to_actual() -> void:
 	if run_state != null:
 		presented_bankroll_value = run_state.bankroll
@@ -2794,6 +2243,16 @@ func _game_surface_presentation_active() -> bool:
 
 
 func _advance_environment_game_runtime() -> void:
+	# Never stack an offscreen cabinet settlement onto a frame that has just
+	# resolved a watched action. Input callbacks can run immediately before this
+	# process pass, while foreground autoplay resolves inside it, so consume the
+	# marker here rather than resetting it at frame start.
+	if foreground_game_action_runtime_quiet_pending:
+		foreground_game_action_runtime_quiet_pending = false
+		return
+	if environment_runtime_quiet_frames > 0:
+		environment_runtime_quiet_frames -= 1
+		return
 	if game_surface_auto_resolving or run_state == null or library == null or run_state.is_terminal():
 		return
 	if (current_screen != SCREEN_ENVIRONMENT and current_screen != SCREEN_GAME) or meta_session_active:
@@ -2806,9 +2265,13 @@ func _advance_environment_game_runtime() -> void:
 	var scanned := _advance_environment_game_runtime_for_environment(run_state.current_environment, now_msec)
 	if run_state.is_terminal() or _simulation_progression_paused():
 		return
-	scanned = _advance_grand_casino_stored_main_floor_slot_runtime(now_msec) or scanned
+	# At most one due fixture resolves per process pass. A stored main-floor
+	# cabinet can wait one frame when the active room already performed work.
+	if not scanned:
+		scanned = _advance_grand_casino_stored_main_floor_slot_runtime(now_msec)
 	if scanned:
 		environment_game_runtime_scan_count += 1
+		environment_runtime_quiet_frames = 1
 
 
 func _advance_environment_game_runtime_for_environment(environment_data: Dictionary, now_msec: int, game_ids_override: Array = []) -> bool:
@@ -2922,6 +2385,7 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 			_show_message(str(result.get("message", "")))
 		elif bool(command.get("attention", false)) or bool(result.get("slot_pending_feature", false)):
 			_show_message(str(result.get("message", command.get("message", ""))))
+		_patch_environment_game_runtime_presentation(game, state_key)
 		# The background fixture is no longer the active presentation context once
 		# its result has been consumed. Restore the foreground selection before
 		# save preparation checkpoints the visible surface animation.
@@ -2929,7 +2393,16 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 		game.set_transient_state_key_context(previous_state_key_context)
 		_advance_alcohol_absorption()
 		var autosave_started_usec := Time.get_ticks_usec()
-		_autosave_foundation_run("Autosaved.")
+		if current_game == null:
+			# A running world cabinet can settle several spins while the player is
+			# watching the room. Coalesce those generations into one detached save
+			# snapshot; capturing the entire late-run graph after every reel result
+			# caused the visible cadence hitch even though file I/O was asynchronous.
+			_queue_environment_runtime_autosave()
+		else:
+			# An open game may own surface checkpoint state, so retain the ordinary
+			# immediate preparation boundary for the foreground presentation.
+			_autosave_foundation_run("Autosaved.")
 		environment_runtime_last_timing_usec = {
 			"schedule": schedule_finished_usec - frame_started_usec,
 			"resolve": resolve_finished_usec - resolve_started_usec,
@@ -2943,6 +2416,43 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 	_restore_environment_runtime_active_key(environment_data, active_keys, game_id, had_active_key, previous_active_key, using_scratch_active_keys)
 	game.set_transient_state_key_context(previous_state_key_context)
 	return true
+
+
+func _patch_environment_game_runtime_presentation(game: GameModule, state_key: String) -> void:
+	if game == null or run_state == null or environment_canvas == null:
+		return
+	var state_value: Variant
+	if game.has_method("environment_object_state_for_state_key"):
+		state_value = game.call("environment_object_state_for_state_key", run_state, run_state.current_environment, state_key)
+	else:
+		state_value = game.environment_object_state(run_state, run_state.current_environment)
+	if typeof(state_value) != TYPE_DICTIONARY:
+		return
+	var object_state := state_value as Dictionary
+	if object_state.is_empty():
+		return
+	var object_id := "game:%s" % state_key
+	if interactable_object_catalog_cache_valid:
+		for object_value in interactable_object_catalog_cache:
+			if typeof(object_value) != TYPE_DICTIONARY:
+				continue
+			var object_record := object_value as Dictionary
+			if str(object_record.get("object_id", "")) != object_id:
+				continue
+			object_record["status_summary"] = str(object_state.get("status_summary", ""))
+			object_record["state_badge"] = str(object_state.get("state_badge", ""))
+			object_record["runtime_state"] = JsonCoerceScript._copy_dict(object_state.get("runtime_state", {}))
+			object_record["visual_state"] = JsonCoerceScript._copy_dict(object_state.get("visual_state", {}))
+			interactable_object_view_cache_valid = false
+			break
+	environment_canvas.apply_interactable_object_state_patch(object_id, object_state)
+	# Background play changes the wallet and clock, but neither requires rebuilding
+	# the room or the rest of the HUD projection.
+	if structured_hud != null:
+		var deltas: Dictionary = last_environment_runtime_result.get("deltas", {}) if typeof(last_environment_runtime_result.get("deltas", {})) == TYPE_DICTIONARY else {}
+		var bankroll_delta := int(last_environment_runtime_result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
+		structured_hud.render_bankroll(_presented_bankroll(), bankroll_delta)
+		structured_hud.render_clock(FoundationHudViewModelScript.clock_model(run_state))
 
 
 func _rebuild_environment_runtime_schedule(environment_data: Dictionary, game_ids: Array, now_msec: int, same_environment: bool) -> void:
@@ -3039,7 +2549,7 @@ func _advance_grand_casino_stored_main_floor_slot_runtime(now_msec: int) -> bool
 		return false
 	var main_floor := run_state.peek_grand_casino_room_environment(RunState.GRAND_CASINO_ARCHETYPE_ID)
 	var main_floor_slot_id := _main_floor_slot_game_id()
-	if main_floor_slot_id.is_empty() or main_floor.is_empty() or not _string_array(main_floor.get("game_ids", [])).has(main_floor_slot_id):
+	if main_floor_slot_id.is_empty() or main_floor.is_empty() or not JsonCoerceScript._raw_string_array(main_floor.get("game_ids", [])).has(main_floor_slot_id):
 		return false
 	stored_grand_casino_runtime_last_msec = now_msec
 	var scanned := _advance_environment_game_runtime_for_environment(main_floor, now_msec, [main_floor_slot_id])
@@ -3063,7 +2573,7 @@ func _commit_offscreen_environment_runtime_command(_environment_data: Dictionary
 		last_environment_runtime_result = _environment_runtime_result_receipt(result)
 	# Offscreen spins have no surface state to checkpoint. Queueing directly
 	# coalesces all three cabinets into one async save without touching the frame.
-	_queue_pending_autosave("Autosaved.", 1)
+	_queue_environment_runtime_autosave()
 	environment_runtime_last_timing_usec = {
 		"schedule": schedule_finished_usec - frame_started_usec,
 		"resolve": resolve_finished_usec - resolve_started_usec,
@@ -3098,7 +2608,7 @@ func _main_floor_slot_game_id() -> String:
 	if library == null:
 		return ""
 	for game_value in library.games:
-		var game_def := _copy_dict(game_value)
+		var game_def := JsonCoerceScript._copy_dict(game_value)
 		if str(game_def.get("module_path", "")).ends_with("scripts/games/slot.gd"):
 			return str(game_def.get("id", "")).strip_edges()
 	return ""
@@ -3145,14 +2655,14 @@ func _restore_environment_runtime_active_key(environment_data: Dictionary, activ
 
 
 func _set_environment_active_game_state_key(environment_data: Dictionary, game_id: String, state_key: String) -> void:
-	var active_keys := _copy_dict(environment_data.get("active_game_state_keys", {}))
+	var active_keys := JsonCoerceScript._copy_dict(environment_data.get("active_game_state_keys", {}))
 	active_keys[game_id] = state_key
 	environment_data["active_game_state_keys"] = active_keys
 
 
 func _environment_active_game_state_key(environment_data: Dictionary, game_id: String) -> String:
 	var clean_game_id := game_id.strip_edges()
-	var active_keys := _copy_dict(environment_data.get("active_game_state_keys", {}))
+	var active_keys := JsonCoerceScript._copy_dict(environment_data.get("active_game_state_keys", {}))
 	var state_key := str(active_keys.get(clean_game_id, clean_game_id)).strip_edges()
 	return state_key if not state_key.is_empty() else clean_game_id
 
@@ -3178,6 +2688,12 @@ func _restore_environment_active_game_state_keys(environment_data: Dictionary, a
 func _foreground_game_blocks_environment_runtime() -> bool:
 	if current_game == null:
 		return false
+	# A watched Slot spin is the most draw-heavy finite presentation in the room.
+	# Offscreen cabinets remain due in the scheduler, so holding them until the
+	# visible reels finish changes neither their order nor their RNG outcomes; it
+	# only prevents two extra settlement/turn spikes from landing inside one spin.
+	if current_game.foreground_blocks_environment_runtime_during_surface_presentation() and _game_surface_presentation_active():
+		return true
 	# The old generic cards gate built a full render/session snapshot every frame
 	# merely to inspect Blackjack's hand-complete bit. Let each module read its
 	# authoritative retained state; all games default to an allocation-free false.
@@ -3220,11 +2736,17 @@ func _current_game_surface_auto_tick_state() -> Dictionary:
 	var ui_state: Dictionary = {
 		"selected_action_id": selected_action_id,
 		"selected_action_kind": selected_action_kind,
-		"selected_stake": _current_selected_stake(),
 	}
 	# Read-only live references avoid the per-frame deep copy; action paths still
 	# rebuild the canonical ui_state before mutating or resolving anything.
 	var auto_tick_keys: Array = current_game.surface_auto_tick_state_keys() if current_game != null else []
+	# Resolving the generic stake range rebuilds action availability. Automatic
+	# predicates should pay that cost only when a module declares that its compact
+	# tick state consumes the selected stake. Due action boundaries still rebuild
+	# the complete canonical UI state for modules that did not opt into lightweight
+	# command handling.
+	if auto_tick_keys.has("selected_stake"):
+		ui_state["selected_stake"] = _current_selected_stake()
 	for key_value in auto_tick_keys:
 		var key := str(key_value)
 		if not key.is_empty() and game_surface_ui_state.has(key):
@@ -3247,7 +2769,12 @@ func _current_game_surface_realtime_ui_state(now_msec: int) -> Dictionary:
 		# so can visually pin a realtime table animation to one frame.
 		ui_state["selected_action_id"] = selected_action_id
 		ui_state["selected_action_kind"] = selected_action_kind
-		ui_state["selected_stake"] = _current_selected_stake()
+		# Resolving the generic stake range can rebuild action availability and is
+		# one of the most expensive host projections. Lightweight modules explicitly
+		# request it when their realtime patch consumes it; the current modules keep
+		# stake in their sealed session and do not need that work on every tick.
+		if requested_keys.has("selected_stake"):
+			ui_state["selected_stake"] = _current_selected_stake()
 		if requested_keys.has("surface_runtime_status"):
 			ui_state["surface_runtime_status"] = game_surface_canvas.surface_realtime_ui_status() if game_surface_canvas != null else {}
 		if requested_keys.has("focused_talk_speaker"):
@@ -3355,6 +2882,13 @@ func _reset_game_surface_runtime_state(checkpoint_source: bool = true) -> void:
 	_invalidate_deferred_embedded_action_refresh()
 	if checkpoint_source:
 		_checkpoint_current_game_surface_ui_state()
+	# A broader lifecycle transition owns this reset. Cancel a partially rendered
+	# chunked exit synchronously, before current_game/run_state can be replaced and
+	# before another session can enter the cached module on the same frame.
+	if game_exit_settle_active:
+		if current_game != null:
+			current_game.cancel_chunked_exit_settle()
+		game_exit_settle_active = false
 	if current_game != null:
 		current_game.set_transient_state_key_context("")
 	if game_surface_canvas != null:
@@ -3469,8 +3003,8 @@ func select_travel_option(target_id: String) -> bool:
 
 
 # Confirms the selected travel destination through RunGenerator.
-func confirm_selected_travel(require_immediate_result: bool = false) -> bool:
-	var caller_rollback := _foundation_lifecycle_snapshot()
+func confirm_selected_travel(require_immediate_result: bool = false, prepared_lifecycle_rollback: Dictionary = {}) -> bool:
+	var caller_rollback := prepared_lifecycle_rollback if not prepared_lifecycle_rollback.is_empty() else _foundation_lifecycle_snapshot()
 	_protect_foundation_coach_attention(caller_rollback)
 	var travel_ok := _confirm_selected_travel_with_lifecycle_snapshot(require_immediate_result, caller_rollback)
 	_commit_foundation_coach_attention(caller_rollback)
@@ -3498,10 +3032,8 @@ func _confirm_selected_travel_with_lifecycle_snapshot(require_immediate_result: 
 		_show_message(str(choice.get("disabled_reason", "Route closed. Check hours or pick another stop.")))
 		_refresh()
 		return false
-	var travel_result: Variant = _travel_to(str(choice.get("id", "")), str(choice.get("label", choice.get("id", ""))), choice, require_immediate_result)
+	var travel_result: Variant = _travel_to_with_lifecycle_snapshot(str(choice.get("id", "")), str(choice.get("label", choice.get("id", ""))), choice, require_immediate_result, caller_rollback)
 	var travel_ok := bool((travel_result as Dictionary).get("ok", false)) if typeof(travel_result) == TYPE_DICTIONARY else true
-	if not travel_ok:
-		_restore_foundation_lifecycle_snapshot(caller_rollback)
 	return travel_ok
 
 
@@ -3524,17 +3056,33 @@ func wait_out_police_sweep() -> bool:
 func open_world_map(force_closing_allowed: bool = false) -> bool:
 	if run_state == null:
 		return false
+	if _is_environment_test_session():
+		open_environment_test_menu()
+		return true
 	if _guard_player_input_route(force_closing_allowed, "map"):
 		return false
+	world_map_previous_focus_owner = get_viewport().gui_get_focus_owner() if modal_focus_scope == null else null
+	# The map becomes the sole interaction surface. Leaving the room selection
+	# alive kept its info/action card visible beneath the modal map and made the
+	# travel screen look like two competing layers.
+	clear_interaction_focus(false, false)
+	if environment_canvas != null:
+		environment_canvas.set_selected_object("")
 	selected_action_category = ACTION_CATEGORY_TRAVEL
 	_set_current_screen(SCREEN_TRAVEL)
 	_clear_world_map_selection(false)
 	if world_map_overlay != null:
 		world_map_overlay.visible = true
 		world_map_overlay.move_to_front()
+	_layout_world_map_panel()
 	_sync_coach_focus_visibility()
 	_request_world_map_button_relayout()
 	_refresh()
+	if modal_focus_scope != null and world_map_overlay != null:
+		var map_controls := _world_map_focus_controls()
+		var initial_focus: Control = map_controls[0] if not map_controls.is_empty() else world_map_close_button
+		modal_focus_scope.call("push_scope", world_map_overlay, initial_focus, null, map_controls)
+	call_deferred("_focus_world_map_entry")
 	return true
 
 
@@ -3555,17 +3103,61 @@ func _prewarm_world_map_overlay_for_run() -> void:
 func close_world_map() -> void:
 	_clear_world_map_selection(false)
 	if world_map_overlay != null:
+		if modal_focus_scope != null:
+			modal_focus_scope.call("pop_scope", world_map_overlay)
 		world_map_overlay.visible = false
 	_sync_coach_focus_visibility()
 	if current_screen == SCREEN_TRAVEL:
 		_set_current_screen(SCREEN_ENVIRONMENT)
 		_refresh()
+	if modal_focus_scope == null:
+		call_deferred("_restore_world_map_focus")
+	else:
+		world_map_previous_focus_owner = null
+
+
+func _focus_world_map_entry() -> void:
+	if not _world_map_overlay_is_visible():
+		return
+	_ensure_world_map_overlay_controller()
+	world_map_overlay_controller.focus_first_available(world_map_close_button)
+	_refresh_world_map_focus_scope()
+
+
+func _world_map_focus_controls() -> Array[Control]:
+	var controls: Array[Control] = []
+	if world_map_overlay_controller == null or not world_map_overlay_controller.has_method("focus_controls"):
+		return controls
+	for value in world_map_overlay_controller.call("focus_controls"):
+		var control := value as Control
+		if control != null:
+			controls.append(control)
+	return controls
+
+
+func _refresh_world_map_focus_scope() -> void:
+	if modal_focus_scope == null or world_map_overlay == null or not world_map_overlay.visible:
+		return
+	if modal_focus_scope.call("active_root") != world_map_overlay:
+		return
+	var controls := _world_map_focus_controls()
+	var preferred: Control = controls[0] if not controls.is_empty() else world_map_close_button
+	modal_focus_scope.call("refresh_scope", world_map_overlay, preferred, controls)
+
+
+func _restore_world_map_focus() -> void:
+	if is_instance_valid(world_map_previous_focus_owner) and world_map_previous_focus_owner.is_visible_in_tree():
+		world_map_previous_focus_owner.grab_focus()
+	world_map_previous_focus_owner = null
 
 
 func _hide_world_map_overlay() -> void:
 	_clear_world_map_selection(false)
 	if world_map_overlay != null:
+		if modal_focus_scope != null:
+			modal_focus_scope.call("pop_scope", world_map_overlay)
 		world_map_overlay.visible = false
+	world_map_previous_focus_owner = null
 
 
 func _clear_world_map_selection(refresh_overlay: bool = true) -> void:
@@ -3634,6 +3226,8 @@ func confirm_world_map_travel() -> Dictionary:
 		_restore_foundation_lifecycle_snapshot(caller_rollback)
 		return {"ok": false, "errors": [message if not message.is_empty() else "Map travel is not available."]}
 	if world_map_overlay != null:
+		if modal_focus_scope != null:
+			modal_focus_scope.call("pop_scope", world_map_overlay)
 		world_map_overlay.visible = false
 	_sync_coach_focus_visibility()
 	_protect_foundation_coach_attention(caller_rollback)
@@ -3644,10 +3238,8 @@ func confirm_world_map_travel() -> Dictionary:
 			# one-button acknowledgement first so the shared TalkDock queue cannot
 			# misclassify the requested action as abandoning Pal and add Heat.
 			_advance_completed_tutorial_action_dialogue(completed_lesson_id)
-	var travel_result := _travel_to(str(result.get("target_id", "")), str(result.get("label", result.get("target_id", ""))), result.get("choice", {}) as Dictionary, true)
-	if not bool(travel_result.get("ok", false)):
-		_restore_foundation_lifecycle_snapshot(caller_rollback)
-	else:
+	var travel_result := _travel_to_with_lifecycle_snapshot(str(result.get("target_id", "")), str(result.get("label", result.get("target_id", ""))), result.get("choice", {}) as Dictionary, true, caller_rollback)
+	if bool(travel_result.get("ok", false)):
 		_commit_foundation_coach_attention(caller_rollback)
 	return travel_result
 
@@ -3678,6 +3270,8 @@ func _confirm_meta_world_map_travel() -> Dictionary:
 		_restore_foundation_lifecycle_snapshot(caller_rollback)
 		return {"ok": false, "errors": [message if not message.is_empty() else "Meta travel is not available."]}
 	if world_map_overlay != null:
+		if modal_focus_scope != null:
+			modal_focus_scope.call("pop_scope", world_map_overlay)
 		world_map_overlay.visible = false
 	var target_id := str(result.get("target_id", META_LOCATION_HOME))
 	if target_id == META_LOCATION_START_RUN:
@@ -3690,7 +3284,7 @@ func _confirm_meta_world_map_travel() -> Dictionary:
 
 
 # Selects an event choice without mutating simulation state.
-func select_event_choice(event_id: String, choice_id: String) -> bool:
+func select_event_choice(event_id: String, choice_id: String, refresh_presentation: bool = true) -> bool:
 	var visible_popup_choice := _event_choice_popup_is_visible() and _event_choice_popup_allows_event_resolution(event_id)
 	if not visible_popup_choice and _guard_player_input_route():
 		return false
@@ -3710,16 +3304,17 @@ func select_event_choice(event_id: String, choice_id: String) -> bool:
 	_set_current_screen(SCREEN_EVENT)
 	focus_interactable_object("event:%s" % selected_event_id)
 	_show_message("Selected event choice: %s." % selected_event_choice_label)
-	_refresh_after_environment_selection()
+	if refresh_presentation:
+		_refresh_after_environment_selection()
 	return true
 
 
 # Resolves the selected event choice through EventModule.
-func confirm_selected_event_choice() -> Dictionary:
+func confirm_selected_event_choice(lifecycle_rollback: Dictionary = {}) -> Dictionary:
 	if selected_event_id.is_empty() or selected_event_choice_id.is_empty():
 		_show_message("Select an event choice first.")
 		return {"ok": false, "errors": ["Select an event choice first."]}
-	return resolve_event_choice(selected_event_id, selected_event_choice_id)
+	return resolve_event_choice(selected_event_id, selected_event_choice_id, lifecycle_rollback)
 
 
 # Owns the full public event-card interaction, including the selection UI and
@@ -3735,10 +3330,16 @@ func activate_event_choice_action(event_id: String, choice_id: String) -> bool:
 			# Event cards resolve directly. Complete the parent-event tutorial
 			# acknowledgement before selecting and confirming the response.
 			_advance_completed_tutorial_action_dialogue(completed_lesson_id)
-	if not select_event_choice(event_id, choice_id):
+	# This path selects and resolves as one transaction. Publishing the temporary
+	# selection before resolution only redraws presentation that the result redraws
+	# again a few lines later, which was especially visible on room event objects.
+	if not select_event_choice(event_id, choice_id, false):
 		_restore_foundation_lifecycle_snapshot(caller_rollback)
 		return false
-	var event_result := confirm_selected_event_choice()
+	# Reuse the transaction's rollback image. resolve_event_choice() used to clone
+	# the complete RunState a second time here, including every generated room and
+	# live game buffer, before a Counter Phone response could begin.
+	var event_result := confirm_selected_event_choice(caller_rollback)
 	if not bool(event_result.get("ok", false)):
 		_restore_foundation_lifecycle_snapshot(caller_rollback)
 		return false
@@ -3747,7 +3348,7 @@ func activate_event_choice_action(event_id: String, choice_id: String) -> bool:
 
 
 # Resolves one selected event choice through EventModule.
-func resolve_event_choice(event_id: String, choice_id: String) -> Dictionary:
+func resolve_event_choice(event_id: String, choice_id: String, lifecycle_rollback: Dictionary = {}) -> Dictionary:
 	if travel_transition_active:
 		_show_message("Travel is already in progress.")
 		_refresh_modal_contract_owner()
@@ -3775,11 +3376,14 @@ func resolve_event_choice(event_id: String, choice_id: String) -> Dictionary:
 	event_module.setup(event_definition, library)
 	var event_context := _pending_event_trigger_context(event_id)
 	if resolving_talk:
-		event_context = _copy_dict(talk_entry.get("context", {}))
+		event_context = JsonCoerceScript._copy_dict(talk_entry.get("context", {}))
 	var event_environment := _event_environment_for_context(event_context)
 	if not event_module.can_trigger(run_state, event_environment, event_context):
 		_show_message("Event cannot trigger right now.")
-		if resolving_talk and run_state != null:
+		# Person conversations stay present until a choice actually resolves. This
+		# also protects a restored TalkDock entry from being retired by a transient
+		# eligibility change before the player can respond.
+		if resolving_talk and run_state != null and not _event_is_person_conversation(event_id):
 			run_state.complete_talk_event_resolution(event_id)
 			_refresh_talk_dock()
 		return {"ok": false, "errors": ["Event cannot trigger right now."]}
@@ -3789,8 +3393,18 @@ func resolve_event_choice(event_id: String, choice_id: String) -> Dictionary:
 	var was_triggered_popup := popup_type == "triggered_event"
 	var return_to_game_after_event := _event_resolution_returns_to_active_game(popup_type, event_context)
 	var inventory_before := _run_inventory_id_set()
-	var event_rollback := _foundation_lifecycle_snapshot()
-	var result := event_module.resolve(run_state, event_environment, choice_id)
+	var caller_owns_event_rollback := not lifecycle_rollback.is_empty()
+	var event_rollback := lifecycle_rollback if caller_owns_event_rollback else _foundation_lifecycle_snapshot()
+	# This method always owns a complete lifecycle rollback, either supplied by
+	# the deferred room response or captured above. Let EventModule reuse that
+	# owner instead of cloning the entire run and every stored map room again.
+	var result := event_module.resolve(run_state, event_environment, choice_id, true)
+	if not bool(result.get("ok", false)):
+		if not caller_owns_event_rollback:
+			_restore_foundation_lifecycle_snapshot(event_rollback)
+			_show_message(str(result.get("message", "The event could not be resolved safely.")))
+			_refresh_after_foundation_lifecycle_rollback(event_rollback)
+		return result
 	var result_deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
 	var layer_discovery: Dictionary = result_deltas.get("environment_layer_discovery", {}) if typeof(result_deltas.get("environment_layer_discovery", {})) == TYPE_DICTIONARY else {}
 	var discovered_layer_id := str(layer_discovery.get("layer_id", "")).strip_edges()
@@ -3805,7 +3419,7 @@ func resolve_event_choice(event_id: String, choice_id: String) -> Dictionary:
 		var room_result := generator.enter_grand_casino_room_result(run_state, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID)
 		if not bool(room_result.get("ok", false)):
 			_restore_foundation_lifecycle_snapshot(event_rollback)
-			var room_errors := _copy_array(room_result.get("errors", []))
+			var room_errors := JsonCoerceScript._copy_array(room_result.get("errors", []))
 			var room_error := str(room_errors[0]) if not room_errors.is_empty() else "The back room could not be entered safely."
 			_show_message(room_error)
 			_refresh()
@@ -3826,7 +3440,7 @@ func resolve_event_choice(event_id: String, choice_id: String) -> Dictionary:
 	_play_result_drink_audio_cue(result)
 	if was_triggered_popup and run_state != null:
 		run_state.complete_triggered_event_resolution(event_id)
-	if resolving_talk and run_state != null:
+	if resolving_talk and run_state != null and bool(result.get("ok", false)):
 		run_state.complete_talk_event_resolution(event_id)
 	# Pal may explain debt only after the player has seen and resolved the actual
 	# family offer. Debt itself is applied slightly earlier inside EventModule,
@@ -4094,8 +3708,17 @@ func _acknowledge_closing_time_talk(choice_id: String) -> void:
 func _advance_talk_event_action_boundary(_source: String) -> bool:
 	if run_state == null:
 		return false
+	# Most queued conversations do not expire. Their dock projection is unchanged
+	# by a game action, so rebuilding dialogue eligibility, character presentation,
+	# and controls after every autoplay spin only creates an input hitch. Keep the
+	# action-boundary visit itself synchronous; expiring conversations retain the
+	# exact decrement, redraw, and timeout behavior.
+	var focused_entry := run_state.next_pending_talk_event()
+	var focused_timing: Dictionary = focused_entry.get("timing", {}) if typeof(focused_entry.get("timing", {})) == TYPE_DICTIONARY else {}
 	var expired := run_state.advance_focused_talk_event_actions(1)
 	if expired.is_empty():
+		if focused_entry.is_empty() or not bool(focused_timing.get("expires", false)):
+			return false
 		_refresh_talk_dock()
 		return false
 	var timing: Dictionary = expired.get("timing", {}) if typeof(expired.get("timing", {})) == TYPE_DICTIONARY else {}
@@ -4146,10 +3769,9 @@ func _apply_forced_environment_travel(_source: String) -> Dictionary:
 		if bool(choice.get("enabled", false)):
 			run_state.narrative_flags["health_inspector_forced_travel"] = true
 			_show_message("The Health Inspector shuts the room down. You have to move.")
-			var travel_result := _travel_to(str(choice.get("id", "")), str(choice.get("label", choice.get("id", ""))), choice, true)
+			var travel_result := _travel_to_with_lifecycle_snapshot(str(choice.get("id", "")), str(choice.get("label", choice.get("id", ""))), choice, true, rollback)
 			if not bool(travel_result.get("ok", false)):
-				_restore_foundation_lifecycle_snapshot(rollback)
-				var travel_errors := _copy_array(travel_result.get("errors", []))
+				var travel_errors := JsonCoerceScript._copy_array(travel_result.get("errors", []))
 				var travel_error := str(travel_errors[0]) if not travel_errors.is_empty() else "Forced travel could not be completed safely."
 				_show_message(travel_error)
 				return {"ok": false, "applied": false, "errors": [travel_error]}
@@ -4377,11 +3999,15 @@ func _enqueue_table_approach_talk_events(source: String) -> bool:
 	# before asking a dense game surface (notably Coin Pusher) to rebuild itself.
 	if not library.has_table_approach_talk_event_for_game(game_id):
 		return false
-	var surface_state := current_game.surface_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
+	var surface_state: Variant
+	if current_game.has_method("table_approach_talk_snapshot"):
+		surface_state = current_game.call("table_approach_talk_snapshot", run_state, run_state.current_environment, _current_game_surface_ui_state())
+	else:
+		surface_state = current_game.surface_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
 	if typeof(surface_state) != TYPE_DICTIONARY:
 		return false
 	var state: Dictionary = surface_state
-	var patrons := _copy_array(state.get("patrons", []))
+	var patrons := JsonCoerceScript._copy_array(state.get("patrons", []))
 	if patrons.is_empty():
 		return false
 	var hands_played := int(state.get("hands_played", state.get("rounds_played", 0)))
@@ -4425,7 +4051,7 @@ func _enqueue_table_approach_talk_events(source: String) -> bool:
 
 func _triggered_entry_overrides(event_definition: Dictionary, speaker_override: Dictionary = {}) -> Dictionary:
 	var payload: Dictionary = event_definition.get("payload", {}) if typeof(event_definition.get("payload", {})) == TYPE_DICTIONARY else {}
-	var speaker := speaker_override.duplicate(true) if not speaker_override.is_empty() else _copy_dict(event_definition.get("speaker", {}))
+	var speaker := speaker_override.duplicate(true) if not speaker_override.is_empty() else JsonCoerceScript._copy_dict(event_definition.get("speaker", {}))
 	speaker = _resolve_character_speaker(
 		_normalized_talk_speaker(speaker),
 		str(event_definition.get("id", "")),
@@ -4501,7 +4127,7 @@ func _normalized_talk_speaker(speaker: Dictionary) -> Dictionary:
 		"tell": str(speaker.get("tell", "")).strip_edges(),
 		"presentation": presentation,
 		"environment_actor": bool(speaker.get("environment_actor", true)),
-		"face_layers": _copy_array(speaker.get("face_layers", [])),
+		"face_layers": JsonCoerceScript._copy_array(speaker.get("face_layers", [])),
 		"portrait_count": clampi(int(speaker.get("portrait_count", 1)), 1, 3),
 		"character_id": str(speaker.get("character_id", "")).strip_edges(),
 		"character_pool_id": str(speaker.get("character_pool_id", "")).strip_edges(),
@@ -4511,9 +4137,9 @@ func _normalized_talk_speaker(speaker: Dictionary) -> Dictionary:
 		"speaking_character_id": str(speaker.get("speaking_character_id", "")).strip_edges(),
 		"speaking_character_name": str(speaker.get("speaking_character_name", "")).strip_edges(),
 		"speaking_character_title": str(speaker.get("speaking_character_title", "")).strip_edges(),
-		"members": _copy_array(speaker.get("members", [])),
-		"encounter": _copy_dict(speaker.get("encounter", {})),
-		"lender_terms": _copy_dict(speaker.get("lender_terms", {})),
+		"members": JsonCoerceScript._copy_array(speaker.get("members", [])),
+		"encounter": JsonCoerceScript._copy_dict(speaker.get("encounter", {})),
+		"lender_terms": JsonCoerceScript._copy_dict(speaker.get("lender_terms", {})),
 	}
 
 
@@ -4601,14 +4227,14 @@ func _show_triggered_event_popup(entry: Dictionary) -> bool:
 		"event_id": event_id,
 		"trigger_context": context,
 		"summary": str(event_option.get("summary", "")),
-		"choices": _copy_array(event_option.get("choices", [])),
+		"choices": JsonCoerceScript._copy_array(event_option.get("choices", [])),
 	}
 	if event_choice_popup_title_label != null:
 		event_choice_popup_title_label.text = str(event_option.get("display_name", event_id))
 	if event_choice_popup_summary_label != null:
 		event_choice_popup_summary_label.text = str(event_option.get("summary", "Something interrupts the room."))
 	_clear_event_choice_popup_choices()
-	for choice_value in _copy_array(event_option.get("choices", [])):
+	for choice_value in JsonCoerceScript._copy_array(event_option.get("choices", [])):
 		if typeof(choice_value) != TYPE_DICTIONARY:
 			continue
 		var choice: Dictionary = choice_value
@@ -4618,13 +4244,11 @@ func _show_triggered_event_popup(entry: Dictionary) -> bool:
 			str(choice.get("consequence_summary", "")),
 			Callable(self, "resolve_event_choice").bind(event_id, str(choice.get("id", ""))),
 			false,
-			choice.get("attribute_badges", [])
+			choice.get("attribute_badges", []),
+			event_id,
+			str(choice.get("id", ""))
 		)
-	event_choice_popup_overlay.visible = true
-	event_choice_popup_overlay.move_to_front()
-	_sync_coach_focus_visibility()
-	_position_event_choice_popup()
-	call_deferred("_position_event_choice_popup")
+	_present_event_choice_popup()
 	return true
 
 
@@ -4671,8 +4295,20 @@ func _refresh_talk_dock() -> void:
 	var entry_speaker: Dictionary = entry.get("speaker", {}) if typeof(entry.get("speaker", {})) == TYPE_DICTIONARY else {}
 	var entry_context: Dictionary = entry.get("context", {}) if typeof(entry.get("context", {})) == TYPE_DICTIONARY else {}
 	var summary_override := str(entry_context.get("summary_override", "")).strip_edges()
+	var summary_tracks_live_conditions := bool(entry_context.get("summary_tracks_live_conditions", false)) \
+		or _event_summary_tracks_live_conditions(event_id)
+	# Snapshot summaries preserve live rumor wording across save/reload. A
+	# condition-dependent line (Cass's missing-count response) must instead
+	# follow the current choice state while the same conversation stays queued.
+	# Inferring from content keeps pre-fix queued saves compatible.
+	if not summary_override.is_empty() and not summary_tracks_live_conditions:
+		option = option.duplicate(true)
+		option["summary"] = summary_override
 	var voice_line := str(entry_speaker.get("voice_line", "")).strip_edges()
-	var authored_guide_dialogue := bool(option.get("authored_guide_dialogue", false)) or (dialogue_id == "linda_cage_services" and run_state.is_tutorial_run())
+	# Linda's service pages are live account ledgers: their summaries expose the
+	# current cash, chips, card progress, and comps. A randomized greeting must
+	# never replace those exact values, including after save/continue.
+	var authored_guide_dialogue := bool(option.get("authored_guide_dialogue", false)) or dialogue_id == "linda_cage_services"
 	# Dynamic dialogue summaries can contain exact run-state information such as
 	# Vince's next scratch-machine restock. Never replace that information with
 	# a generic randomized character bark.
@@ -4691,6 +4327,7 @@ func _refresh_talk_dock() -> void:
 	talk_dock_avoid_sync_active = true
 	talk_dock.set_entry(entry, option, run_state.pending_talk_event_count())
 	talk_dock_avoid_sync_active = false
+	_sync_coach_panel_for_talk_dock()
 	_sync_talk_dock_coach_avoid_rect()
 	if item_found_popup != null and item_found_popup.is_open():
 		item_found_talk_dock_suspended = true
@@ -4703,7 +4340,7 @@ func _refresh_talk_dock() -> void:
 
 
 func _talk_option_obligation_summary(option: Dictionary) -> String:
-	for choice_value in _copy_array(option.get("choices", [])):
+	for choice_value in JsonCoerceScript._copy_array(option.get("choices", [])):
 		if typeof(choice_value) != TYPE_DICTIONARY:
 			continue
 		var choice: Dictionary = choice_value
@@ -4793,7 +4430,10 @@ func start_dialogue(dialogue_id: String, source_data: Dictionary = {}) -> bool:
 	var summary_override := str(source_data.get("dialogue_summary", "")).strip_edges()
 	if not summary_override.is_empty():
 		context["summary_override"] = summary_override
-	var speaker: Dictionary = dialogue.get("speaker", {}) if typeof(dialogue.get("speaker", {})) == TYPE_DICTIONARY else {}
+	var speaker := JsonCoerceScript._copy_dict(dialogue.get("speaker", {}))
+	var speaker_override := JsonCoerceScript._copy_dict(source_data.get("dialogue_speaker_override", {}))
+	for override_key in speaker_override.keys():
+		speaker[override_key] = speaker_override[override_key]
 	speaker = _resolve_character_speaker(_normalized_talk_speaker(speaker), clean_id, str(speaker.get("voice_line_key", "")))
 	var start_node := str(source_data.get("start_node", dialogue.get("start", ""))).strip_edges()
 	if not run_state.enqueue_dialogue(clean_id, event_id, speaker, start_node, "dialogue", context):
@@ -4948,6 +4588,84 @@ func _start_event_dialogue(event_id: String) -> bool:
 	})
 
 
+func _event_is_person_conversation(event_id: String, inspect_live_object: bool = false) -> bool:
+	if library == null:
+		return false
+	var event_definition := library.event(event_id)
+	if event_definition.is_empty():
+		return false
+	if EventModule.is_person_conversation_definition(event_definition):
+		return true
+	if inspect_live_object:
+		var object_data := _interactable_object("event:%s" % event_id)
+		return str(object_data.get("visual_type", "")) == "character"
+	return false
+
+
+func _event_summary_tracks_live_conditions(event_id: String) -> bool:
+	if library == null:
+		return false
+	var event_payload := JsonCoerceScript._copy_dict(library.event(event_id).get("payload", {}))
+	return not str(event_payload.get("active_count_missing_line", "")).strip_edges().is_empty()
+
+
+func _start_person_event_conversation(event_id: String) -> bool:
+	if run_state == null or library == null:
+		return false
+	var event_definition := library.event(event_id)
+	if event_definition.is_empty():
+		return false
+	var dialogue_id := str(event_definition.get("dialogue_id", "")).strip_edges()
+	if not dialogue_id.is_empty():
+		return _start_event_dialogue(event_id)
+	var event_option := _eligible_event_option(event_id)
+	if event_option.is_empty():
+		_show_message("Nothing is happening here right now.")
+		_refresh()
+		return false
+	if not run_state.pending_talk_event(event_id).is_empty():
+		_refresh_talk_dock()
+		_show_message("Conversation is already open.")
+		_refresh()
+		return true
+	_clear_recent_result_feedback()
+	var speaker: Dictionary = event_option.get("speaker", {}) if typeof(event_option.get("speaker", {})) == TYPE_DICTIONARY else {}
+	if speaker.is_empty() and typeof(event_definition.get("speaker", {})) == TYPE_DICTIONARY:
+		speaker = (event_definition.get("speaker", {}) as Dictionary).duplicate(true)
+	if speaker.is_empty():
+		speaker = {
+			"role": "stranger",
+			"name": str(event_option.get("display_name", event_id)),
+			"bind": "none",
+		}
+	speaker = _resolve_character_speaker(
+		_normalized_talk_speaker(speaker),
+		event_id,
+		str(speaker.get("voice_line_key", ""))
+	)
+	var context := {
+		"trigger": "event_object",
+		"type": "event_conversation",
+		"source": "event_object",
+		"source_object_id": "event:%s" % event_id,
+		"environment_snapshot": RunState.environment_context_snapshot(run_state.current_environment),
+		"summary_override": str(event_option.get("summary", "")).strip_edges(),
+		"summary_tracks_live_conditions": _event_summary_tracks_live_conditions(event_id),
+	}
+	if not run_state.enqueue_triggered_event(event_id, "event_object", context, {
+		"presentation": "talk",
+		"speaker": speaker,
+	}):
+		_show_message("Conversation is already queued.")
+		_refresh()
+		return false
+	_refresh_talk_dock()
+	_show_message("Talking to %s." % str(speaker.get("name", event_option.get("display_name", "the room"))))
+	_autosave_foundation_run("Autosaved.")
+	_refresh()
+	return true
+
+
 func _dialogue_option_for_entry(entry: Dictionary) -> Dictionary:
 	if library == null:
 		return {}
@@ -4987,10 +4705,10 @@ func _dialogue_option_for_entry(entry: Dictionary) -> Dictionary:
 		summary = _sal_starter_offer_summary()
 	elif dialogue_id == "sal_starter_mocking_relist" and meta_collection_service != null:
 		for row_value in meta_collection_service.sal_shelf_rows():
-			var row := _copy_dict(row_value)
+			var row := JsonCoerceScript._copy_dict(row_value)
 			if str(row.get("listing_mode", "")) != MetaCollectionServiceScript.LISTING_MODE_MOCKING_RELIST:
 				continue
-			var relist_quote := _copy_dict(row.get("quote_basis", {}))
+			var relist_quote := JsonCoerceScript._copy_dict(row.get("quote_basis", {}))
 			summary = "Same exact item. Pawn quote %d gold; asking price ceil(%d × 10) = %d gold." % [int(relist_quote.get("pawn_quote", 0)), int(relist_quote.get("pawn_quote", 0)), int(row.get("asking_price", 0))]
 			break
 	return {
@@ -5059,7 +4777,7 @@ func _dialogue_choice_views(dialogue_id: String, node: Dictionary) -> Array:
 			"event_type": "social",
 			"dialogue_id": dialogue_id,
 			"consequences": effects,
-			"check": _copy_dict(effects.get("check", {})),
+			"check": JsonCoerceScript._copy_dict(effects.get("check", {})),
 			"consequence_summary": "Hidden" if bool(choice.get("effects_hidden", false)) else _event_choice_consequence_summary({"consequences": effects}),
 			"requires_confirm": _event_choice_requires_confirmation({"consequences": effects}),
 			"enabled": bool(requirement.get("enabled", true)),
@@ -5358,10 +5076,10 @@ func _start_sal_routine_dialogue(kind: String) -> bool:
 		return false
 	var snapshot := meta_collection_service.snapshot()
 	var pool: Array[String] = ["sal_purchase_1", "sal_purchase_2"]
-	var count := _copy_array(_copy_dict(snapshot.get("sal_resale", {})).get("purchase_history", [])).size()
+	var count := JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(snapshot.get("sal_resale", {})).get("purchase_history", [])).size()
 	if kind == "sale":
 		pool = ["sal_sale_1", "sal_sale_2"]
-		count = _copy_array(snapshot.get("sale_history", [])).size()
+		count = JsonCoerceScript._copy_array(snapshot.get("sale_history", [])).size()
 	var index := posmod(maxi(0, count - 1), pool.size())
 	return start_dialogue(pool[index], {
 		"source": "sal_%s" % kind,
@@ -5591,7 +5309,7 @@ func _pending_event_trigger_context(event_id: String) -> Dictionary:
 		return context.duplicate(true)
 	var talk_entry := _pending_talk_event_entry(event_id)
 	if not talk_entry.is_empty():
-		return _copy_dict(talk_entry.get("context", {}))
+		return JsonCoerceScript._copy_dict(talk_entry.get("context", {}))
 	return {}
 
 
@@ -5800,12 +5518,6 @@ func _transfer_home_container_item_from_popup(from_container_id: String, to_cont
 	_refresh()
 
 
-func _close_home_storage_popup() -> void:
-	_hide_event_choice_popup()
-	_hide_run_inventory_popup()
-	_refresh()
-
-
 func open_run_inventory() -> void:
 	if run_state == null:
 		_show_message("No active run to inspect.")
@@ -5965,7 +5677,7 @@ func _use_global_active_item(item_id: String, detail: Dictionary) -> bool:
 	var display_name := str(detail.get("display_name", item_id))
 	var message := str(result.get("message", ""))
 	if message.is_empty():
-		var messages := _copy_array(result.get("messages", result.get("deltas", {}).get("messages", [])))
+		var messages := JsonCoerceScript._copy_array(result.get("messages", result.get("deltas", {}).get("messages", [])))
 		message = str(messages[0]) if not messages.is_empty() else "%s used." % display_name
 	_show_message(message)
 	_set_current_screen(SCREEN_RESULT)
@@ -5981,7 +5693,7 @@ func _select_first_active_item_from_result(result: Dictionary) -> void:
 	if run_state == null or run_action_service == null:
 		return
 	var deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
-	for item_id in _string_array(deltas.get("inventory_add", [])):
+	for item_id in JsonCoerceScript._raw_string_array(deltas.get("inventory_add", [])):
 		var detail := run_action_service.inventory_item_detail(item_id)
 		if not detail.is_empty() and bool(detail.get("active_item", false)):
 			run_state.set_active_item(item_id)
@@ -6022,11 +5734,7 @@ func _show_active_item_confirmation_popup(item: Dictionary) -> void:
 	var impact := "Toggles this item." if mode == "toggle" else "Consumes this item." if mode == "consumable" else "Uses this item."
 	_add_wager_confirmation_card("Use Item", "Activate %s now." % display_name, impact, Callable(self, "confirm_pending_active_item_use"), true)
 	_add_wager_confirmation_card("Cancel", "Keep the item ready.", "No change.", Callable(self, "cancel_pending_active_item_use"), false)
-	event_choice_popup_overlay.visible = true
-	event_choice_popup_overlay.move_to_front()
-	_sync_coach_focus_visibility()
-	_position_event_choice_popup()
-	call_deferred("_position_event_choice_popup")
+	_present_event_choice_popup()
 
 
 func talk_to_shopkeeper() -> bool:
@@ -6232,10 +5940,10 @@ func _use_lender_hook_after_input_guard(lender_id: String, completed_talk_event_
 	if run_state.scenario_sequence_present():
 		var finalized := run_state.scenario_finalize_installed_environment(
 			library,
-			_copy_dict(run_state.current_environment.get("scenario_layout_context", {}))
+			JsonCoerceScript._copy_dict(run_state.current_environment.get("scenario_layout_context", {}))
 		)
 		if not bool(finalized.get("ok", false)):
-			var finalization_errors := _copy_array(finalized.get("errors", []))
+			var finalization_errors := JsonCoerceScript._copy_array(finalized.get("errors", []))
 			_show_message(str(finalization_errors[0]) if not finalization_errors.is_empty() else "The room changed before the deal could close. Try again.")
 			_refresh()
 			return false
@@ -6308,6 +6016,10 @@ func open_pawn_counter(lender_id: String = "") -> bool:
 		return false
 	if _guard_player_input_route(false, "lender:%s" % lender_id):
 		return false
+	return _open_pawn_counter_after_input_guard(lender_id)
+
+
+func _open_pawn_counter_after_input_guard(lender_id: String = "") -> bool:
 	_refresh_run_action_service()
 	if lender_id.strip_edges().is_empty():
 		lender_id = _first_current_pawn_lender_id()
@@ -6316,6 +6028,8 @@ func open_pawn_counter(lender_id: String = "") -> bool:
 		_show_message("Pawn counter is not available.")
 		_refresh()
 		return false
+	selected_lender_hook_id = lender_id
+	selected_lender_hook_label = str(option.get("display_name", lender_id))
 	_open_run_inventory_popup("pawn_counter", lender_id)
 	_refresh()
 	return true
@@ -6326,7 +6040,7 @@ func _pawn_counter_pawn_item(lender_id: String, item_id: String) -> void:
 	var resolved := run_action_service.pawn_inventory_item(item_id, lender_id)
 	if not bool(resolved.get("ok", false)):
 		_show_message(str(resolved.get("message", "Could not pawn that item.")))
-		open_pawn_counter(lender_id)
+		_open_pawn_counter_after_input_guard(lender_id)
 		return
 	var result: Dictionary = resolved.get("result", {}) if typeof(resolved.get("result", {})) == TYPE_DICTIONARY else {}
 	# Pawn transactions happen outside a game result surface. Clear any stale
@@ -6341,29 +6055,27 @@ func _pawn_counter_pawn_item(lender_id: String, item_id: String) -> void:
 	if _apply_post_action_environment_interrupt("lender"):
 		_refresh()
 		return
-	open_pawn_counter(lender_id)
+	_open_pawn_counter_after_input_guard(lender_id)
 
 
 func _pawn_counter_redeem_ticket(lender_id: String, debt_id: String) -> void:
 	if run_state == null:
 		return
-	if _guard_player_input_route():
-		return
 	var result := run_state.repay_debt(debt_id)
 	if not bool(result.get("ok", false)):
 		_show_message(str(result.get("message", "Could not redeem that ticket.")))
-		open_pawn_counter(lender_id)
+		_open_pawn_counter_after_input_guard(lender_id)
 		return
 	_sync_presented_bankroll_to_actual()
 	_show_message(str(result.get("message", "Ticket redeemed.")))
 	_autosave_foundation_run("Autosaved.")
-	open_pawn_counter(lender_id)
+	_open_pawn_counter_after_input_guard(lender_id)
 
 
 func use_game_environment_hook(game_id: String, hook_id: String, action_id: String = "") -> bool:
 	if run_state == null or library == null:
 		return false
-	if _guard_player_input_route():
+	if _guard_player_input_route(false, "game_hook:%s:%s" % [game_id, hook_id]):
 		return false
 	var game := _game_module_for_id(game_id)
 	if game == null:
@@ -6397,6 +6109,7 @@ func use_game_environment_hook(game_id: String, hook_id: String, action_id: Stri
 			_refresh_runtime_environment_views()
 			return false
 		GameModule.apply_result(run_state, result, rng)
+		_enqueue_game_hook_followup_dialogue(result, game_id, hook_id)
 		_play_result_drink_audio_cue(result)
 		_advance_alcohol_absorption()
 	last_hook_result = result.duplicate(true)
@@ -6410,6 +6123,35 @@ func use_game_environment_hook(game_id: String, hook_id: String, action_id: Stri
 		return true
 	_refresh()
 	return true
+
+
+func _enqueue_game_hook_followup_dialogue(result: Dictionary, game_id: String, hook_id: String) -> bool:
+	if run_state == null or library == null or not bool(result.get("ok", false)):
+		return false
+	var request := JsonCoerceScript._copy_dict(result.get("followup_dialogue", {}))
+	var dialogue_id := str(request.get("dialogue_id", "")).strip_edges()
+	var event_id := str(request.get("event_id", "")).strip_edges()
+	if dialogue_id.is_empty() or event_id.is_empty() or not run_state.pending_talk_event(event_id).is_empty():
+		return false
+	var dialogue := library.dialogue(dialogue_id)
+	if dialogue.is_empty():
+		return false
+	var speaker := JsonCoerceScript._copy_dict(dialogue.get("speaker", {}))
+	var speaker_override := JsonCoerceScript._copy_dict(request.get("speaker", {}))
+	for override_key in speaker_override.keys():
+		speaker[override_key] = speaker_override[override_key]
+	speaker = _resolve_character_speaker(_normalized_talk_speaker(speaker), event_id, str(speaker.get("voice_line_key", "")))
+	var source_object_id := str(request.get("source_object_id", "")).strip_edges()
+	var context := {
+		"trigger": "game_hook_followup",
+		"type": "dialogue",
+		"dialogue_id": dialogue_id,
+		"source": "game_hook:%s:%s" % [game_id, hook_id],
+		"source_object_id": source_object_id,
+		"environment_snapshot": RunState.environment_context_snapshot(run_state.current_environment),
+	}
+	var start_node := str(request.get("start_node", dialogue.get("start", ""))).strip_edges()
+	return run_state.enqueue_dialogue(dialogue_id, event_id, speaker, start_node, "game_hook_followup", context)
 
 
 # Saves the current foundation run.
@@ -6429,9 +6171,9 @@ func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = 
 		save_status_message = "Practice sessions are not autosaved."
 		return false
 	if current_game != null and not current_game.foundation_save_ready(run_state, run_state.current_environment):
-		autosave_dirty_generation += 1
+		_mark_autosave_dirty()
 		save_status_message = "Save waits for the live machine to settle." if force else status_text
-		return true
+		return not force
 	# Capture the completed action while it is still the active context. This is
 	# deliberately separate from JSON serialization/disk I/O: a later deferred
 	# flush must not mutate RunState during an unrelated hover/focus frame.
@@ -6443,13 +6185,16 @@ func _autosave_foundation_run(status_text: String = "Autosaved.", force: bool = 
 	if not force:
 		_queue_pending_autosave(status_text, 1)
 		return true
-	autosave_dirty_generation += 1
+	_mark_autosave_dirty()
 	return _write_foundation_run_save(status_text, true)
 
 
 func _prepare_foundation_run_save() -> void:
 	if current_game != null and run_state != null and not run_state.current_environment.is_empty():
-		current_game.checkpoint_surface_ui_state_for_save(_current_game_surface_ui_state(), run_state, run_state.current_environment)
+		var checkpoint_ui_state: Dictionary = {}
+		if current_game.checkpoint_surface_ui_state_for_save_requires_ui_state():
+			checkpoint_ui_state = _current_game_surface_ui_state()
+		current_game.checkpoint_surface_ui_state_for_save(checkpoint_ui_state, run_state, run_state.current_environment)
 	_evaluate_run_terminal_state()
 	if procedural_music_player != null:
 		run_state.remember_music_tempo_state(procedural_music_player.adaptive_tempo_save_state())
@@ -6465,7 +6210,8 @@ func _write_foundation_run_save(status_text: String = "Autosaved.", synchronous:
 	if synchronous and save_service.async_save_in_flight():
 		var pending_error := save_service.wait_for_async_save()
 		if pending_error != OK:
-			save_status_message = "Autosave failed."
+			_record_autosave_failure(pending_error, "async_wait_failed", autosave_inflight_generation)
+			autosave_inflight_generation = 0
 			return false
 	var requested_generation := autosave_dirty_generation
 	var error := save_service.save_run(run_state, autosave_slot_id) if synchronous else save_service.begin_save_run(run_state, autosave_slot_id)
@@ -6474,6 +6220,7 @@ func _write_foundation_run_save(status_text: String = "Autosaved.", synchronous:
 			autosave_completed_generation = maxi(autosave_completed_generation, requested_generation)
 			autosave_inflight_generation = 0
 			autosave_loadable_available = true
+			_clear_autosave_failure_state()
 		else:
 			autosave_inflight_generation = requested_generation
 		pending_autosave = autosave_dirty_generation > requested_generation
@@ -6493,16 +6240,17 @@ func _write_foundation_run_save(status_text: String = "Autosaved.", synchronous:
 			_refresh_start_screen()
 		return true
 	if error == ERR_BUSY:
-		pending_autosave = true
-		pending_autosave_after_frame = Engine.get_process_frames() + 1
-		return true
-	save_status_message = "Autosave failed."
+		_record_autosave_failure(error, "save_service_busy", requested_generation)
+		return not synchronous
+	_record_autosave_failure(error, "save_start_failed", requested_generation)
 	return false
 
 
 func _flush_pending_autosave_if_ready() -> void:
 	_poll_async_foundation_save()
 	if not pending_autosave:
+		return
+	if autosave_retry_blocked:
 		return
 	if pending_autosave_after_frame >= 0 and Engine.get_process_frames() < pending_autosave_after_frame:
 		return
@@ -6523,6 +6271,7 @@ func _poll_async_foundation_save() -> void:
 		autosave_completed_generation = maxi(autosave_completed_generation, autosave_inflight_generation)
 		autosave_inflight_generation = 0
 		autosave_loadable_available = true
+		_clear_autosave_failure_state()
 		pending_autosave = autosave_dirty_generation > autosave_completed_generation
 		if pending_autosave:
 			pending_autosave_after_frame = Engine.get_process_frames() + 1
@@ -6531,19 +6280,32 @@ func _poll_async_foundation_save() -> void:
 			pending_autosave_not_before_msec = 0
 			pending_autosave_first_queued_msec = 0
 	else:
+		var failed_generation := autosave_inflight_generation
+		var result_error: Error = int(result.get("error", FAILED))
 		autosave_inflight_generation = 0
-		save_status_message = "Autosave failed."
-		pending_autosave = true
-		pending_autosave_after_frame = Engine.get_process_frames() + 1
+		_record_autosave_failure(
+			result_error,
+			str(result.get("error_code", "async_save_failed")),
+			failed_generation
+		)
 	if save_status_label != null:
 		save_status_label.text = _save_status_text()
 
 
-func _queue_pending_autosave(status_text: String, defer_frames: int) -> void:
+func _queue_environment_runtime_autosave() -> void:
+	_queue_pending_autosave(
+		"Autosaved.",
+		1,
+		ENVIRONMENT_RUNTIME_AUTOSAVE_DEBOUNCE_MSEC,
+		ENVIRONMENT_RUNTIME_AUTOSAVE_MAX_DEFER_MSEC
+	)
+
+
+func _queue_pending_autosave(status_text: String, defer_frames: int, debounce_override_msec: int = -1, max_defer_override_msec: int = -1) -> void:
 	var now_msec := Time.get_ticks_msec()
 	if not pending_autosave or pending_autosave_first_queued_msec <= 0:
 		pending_autosave_first_queued_msec = now_msec
-	autosave_dirty_generation += 1
+	_mark_autosave_dirty()
 	pending_autosave = true
 	pending_autosave_status_text = status_text
 	pending_autosave_after_frame = maxi(pending_autosave_after_frame, Engine.get_process_frames() + maxi(0, defer_frames))
@@ -6551,8 +6313,9 @@ func _queue_pending_autosave(status_text: String, defer_frames: int) -> void:
 	# though capture itself is asynchronous. Giving rapid table actions a short
 	# quiet window coalesces them instead of making serialization contend with
 	# input, animation, and audio after every click.
-	var debounce_msec := AUTOSAVE_GAME_INTERACTION_DEBOUNCE_MSEC if current_screen == SCREEN_GAME else AUTOSAVE_INTERACTION_DEBOUNCE_MSEC
-	var max_deadline_msec := pending_autosave_first_queued_msec + AUTOSAVE_MAX_DEFER_MSEC
+	var debounce_msec := debounce_override_msec if debounce_override_msec >= 0 else AUTOSAVE_GAME_INTERACTION_DEBOUNCE_MSEC if current_screen == SCREEN_GAME else AUTOSAVE_INTERACTION_DEBOUNCE_MSEC
+	var max_defer_msec := max_defer_override_msec if max_defer_override_msec >= 0 else AUTOSAVE_MAX_DEFER_MSEC
+	var max_deadline_msec := pending_autosave_first_queued_msec + max_defer_msec
 	pending_autosave_not_before_msec = mini(now_msec + debounce_msec, max_deadline_msec)
 	save_status_message = "Autosave pending."
 	# Async generation state is player-visible HUD state. Keep the rendered label
@@ -6560,6 +6323,90 @@ func _queue_pending_autosave(status_text: String, defer_frames: int) -> void:
 	# never disagree during the deferred capture window.
 	if save_status_label != null:
 		save_status_label.text = _save_status_text()
+
+
+func retry_failed_autosave() -> bool:
+	if not pending_autosave or run_state == null:
+		return false
+	_clear_autosave_failure_state()
+	pending_autosave_after_frame = Engine.get_process_frames() + 1
+	pending_autosave_not_before_msec = 0
+	save_status_message = "Autosave retry requested."
+	return true
+
+
+func autosave_recovery_snapshot() -> Dictionary:
+	return {
+		"dirty_generation": autosave_dirty_generation,
+		"completed_generation": autosave_completed_generation,
+		"failure_generation": autosave_failure_generation,
+		"failure_count": autosave_failure_count,
+		"last_error": autosave_last_error,
+		"last_error_code": autosave_last_error_code,
+		"retry_blocked": autosave_retry_blocked,
+		"retry_not_before_msec": pending_autosave_not_before_msec,
+		"pending": pending_autosave,
+		"status": save_status_message,
+	}
+
+
+func _mark_autosave_dirty() -> void:
+	autosave_dirty_generation += 1
+	if autosave_dirty_generation > autosave_failure_generation:
+		_clear_autosave_failure_state()
+
+
+func _record_autosave_failure(error: Error, error_code: String, failed_generation: int) -> void:
+	# Attribute the error to the generation that was actually written. A newer
+	# action may become dirty while that request is in flight; assigning the old
+	# I/O failure to the newest generation would latch it without one attempt.
+	var generation := maxi(0, failed_generation)
+	if generation <= 0:
+		generation = autosave_dirty_generation
+	if generation != autosave_failure_generation:
+		autosave_failure_count = 0
+	autosave_failure_generation = generation
+	autosave_failure_count += 1
+	autosave_last_error = error
+	autosave_last_error_code = error_code
+	pending_autosave = true
+	var transient := _autosave_error_is_transient(error)
+	var newer_dirty_generation := autosave_dirty_generation > generation
+	if transient and autosave_failure_count <= AUTOSAVE_TRANSIENT_RETRY_LIMIT:
+		var delay_msec := _autosave_retry_delay_msec(autosave_failure_count)
+		autosave_retry_blocked = false
+		pending_autosave_after_frame = Engine.get_process_frames() + 1
+		pending_autosave_not_before_msec = Time.get_ticks_msec() + delay_msec
+		save_status_message = "Autosave retry scheduled in %.1f seconds." % (float(delay_msec) / 1000.0)
+	elif newer_dirty_generation:
+		# Permanent failure still latches the generation that failed, but a newer
+		# already-dirty snapshot receives its own single attempt. Preserve any
+		# debounce deadline established when that generation was queued.
+		autosave_retry_blocked = false
+		pending_autosave_after_frame = Engine.get_process_frames() + 1
+		save_status_message = "Earlier autosave failed. Newer changes remain queued."
+	else:
+		autosave_retry_blocked = true
+		pending_autosave_after_frame = -1
+		pending_autosave_not_before_msec = 0
+		save_status_message = "Autosave failed. Retry from Run Menu or after another action."
+
+
+func _autosave_error_is_transient(error: Error) -> bool:
+	return error == ERR_BUSY or error == ERR_TIMEOUT
+
+
+func _autosave_retry_delay_msec(failure_count: int) -> int:
+	var exponent := mini(maxi(0, failure_count - 1), 20)
+	return mini(AUTOSAVE_RETRY_BASE_MSEC * (1 << exponent), AUTOSAVE_RETRY_MAX_MSEC)
+
+
+func _clear_autosave_failure_state() -> void:
+	autosave_failure_generation = 0
+	autosave_failure_count = 0
+	autosave_last_error = OK
+	autosave_last_error_code = ""
+	autosave_retry_blocked = false
 
 
 func _should_defer_autosave_for_game_surface() -> bool:
@@ -6571,15 +6418,11 @@ func _game_surface_autosave_blocked() -> bool:
 		return false
 	if game_surface_canvas == null:
 		return false
-	var runtime_status: Dictionary = game_surface_canvas.surface_runtime_status()
-	var animations: Dictionary = runtime_status.get("surface_animations", {}) if typeof(runtime_status.get("surface_animations", {})) == TYPE_DICTIONARY else {}
-	for channel_value in animations.values():
-		if typeof(channel_value) != TYPE_DICTIONARY:
-			continue
-		var channel: Dictionary = channel_value
-		if bool(channel.get("active", false)):
-			return true
-	return false
+	# Autosave needs only the finite transition bit. Building the diagnostic
+	# runtime-status projection here copied geometry, effect state, every channel,
+	# and the drunk-overlay snapshot on every animated frame while a save was
+	# pending—the exact sustained Slot-autoplay path where it hurts most.
+	return game_surface_canvas.surface_transition_animation_active()
 
 
 # Loads the current foundation run.
@@ -6596,6 +6439,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 		_refresh_run_menu()
 		return false
 	_ensure_full_content_library_loaded()
+	_settle_script_prewarm_before_runtime()
 	var loaded: Variant = save_service.load_run(autosave_slot_id)
 	var load_result := save_service.last_load_result()
 	if loaded == null:
@@ -6624,9 +6468,13 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	environment_runtime_active_keys_scratch.clear()
 	environment_runtime_scheduler.clear()
 	run_state = loaded
-	var recovered_broken_environment := not _environment_is_playable(run_state)
-	var broken_environment_requires_map := recovered_broken_environment and not _recover_unplayable_environment()
-	if broken_environment_requires_map:
+	var loaded_terminal := run_state.is_terminal()
+	var recovered_broken_environment := false
+	var broken_environment_requires_map := false
+	if not loaded_terminal:
+		recovered_broken_environment = not _environment_is_playable(run_state)
+		broken_environment_requires_map = recovered_broken_environment and not _recover_unplayable_environment()
+	if loaded_terminal or broken_environment_requires_map:
 		current_game = null
 	else:
 		_set_active_game_binding()
@@ -6634,6 +6482,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	_configure_coach_for_run()
 	_sync_presented_bankroll_to_actual()
 	dev_game_test_mode = false
+	dev_environment_test_mode = false
 	_refresh_run_action_service()
 	current_game = null
 	last_game_result = _game_result_from_story_log(run_state.story_log)
@@ -6642,11 +6491,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	pending_post_purchase_affinity_result = {}
 	if item_found_popup != null:
 		item_found_popup.clear_all()
-	_hide_event_choice_popup()
-	_hide_run_inventory_popup()
-	_hide_run_journal_popup()
-	_hide_world_map_overlay()
-	_hide_travel_transition()
+	_clear_input_guard_modal_state()
 	_clear_selected_game_action()
 	_clear_selected_stake()
 	_clear_selected_travel()
@@ -6657,19 +6502,29 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	clear_interaction_focus()
 	var loaded_from_backup := str(load_result.get("outcome", "")) == SaveService.LOAD_OUTCOME_BACKUP
 	autosave_loadable_available = true
-	save_status_message = "Loaded backup save." if loaded_from_backup else "Loaded run."
-	_set_current_screen(SCREEN_TRAVEL if broken_environment_requires_map else SCREEN_ENVIRONMENT)
+	if loaded_terminal:
+		save_status_message = "Loaded completed backup." if loaded_from_backup else "Loaded completed run."
+	else:
+		save_status_message = "Loaded backup save." if loaded_from_backup else "Loaded run."
 	if procedural_music_player != null:
 		procedural_music_player.sync_authored_arrangement_state(run_state.music_arrangement_state)
 		procedural_music_player.sync_adaptive_tempo_state(run_state.music_tempo_state)
 		procedural_music_player.sync_music_choreography_state(run_state.music_choreography_state)
+	if loaded_terminal:
+		run_report_model = {}
+		run_report_model_key = ""
+		if run_state.run_status == RunState.RUN_STATUS_ENDED:
+			_route_ended_run_if_needed()
+		else:
+			_route_failed_run_if_needed()
+		return true
+	_set_current_screen(SCREEN_TRAVEL if broken_environment_requires_map else SCREEN_ENVIRONMENT)
 	if broken_environment_requires_map:
 		_show_message("That saved room was incomplete. Choose a safe destination on the map.")
 	else:
 		_show_message("Recovered an incomplete saved room: %s." % str(run_state.current_environment.get("display_name", "Environment")) if recovered_broken_environment else "%s: %s." % ["Recovered run from backup" if loaded_from_backup else "Run loaded", str(run_state.current_environment.get("display_name", "Environment"))])
 	if recovered_broken_environment and not broken_environment_requires_map:
 		_autosave_foundation_run("Recovered room autosaved.")
-	_hide_run_menu()
 	if broken_environment_requires_map:
 		open_world_map(true)
 		return true
@@ -6700,6 +6555,13 @@ func open_run_menu() -> void:
 	_refresh_run_menu()
 	run_menu_overlay.visible = true
 	run_menu_overlay.move_to_front()
+	_layout_run_menu_panel()
+	# ScrollContainer minimums settle after the first visible layout pass. Reapply
+	# the authoritative viewport clamp so a first-ever open cannot retain the
+	# unbounded content minimum for one or more frames.
+	call_deferred("_settle_run_menu_panel_layout")
+	if modal_focus_scope != null:
+		modal_focus_scope.call("push_scope", run_menu_overlay, run_menu_resume_button)
 	_sync_coach_focus_visibility()
 	_refresh_talk_dock()
 
@@ -6716,8 +6578,11 @@ func save_run_from_menu() -> void:
 		_show_message("No active run to save.")
 		_refresh_run_menu()
 		return
-	_autosave_foundation_run("Saved to Resume Slot.", true)
-	_refresh_run_menu()
+	if not _autosave_foundation_run("Saved to Resume Slot.", true):
+		_show_message(save_status_message)
+		_refresh()
+		return
+	_clear_input_guard_modal_state()
 	_refresh()
 
 
@@ -6750,17 +6615,12 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 	var snapshot := {
 		"run_state_ref": run_state,
 		"run_state_storage": _run_state_lifecycle_storage_snapshot(),
-		"run": run_state.to_dict() if run_state != null else {},
-		"environment": run_state.current_environment.duplicate(true) if run_state != null else {},
-		"world_map": run_state.world_map.duplicate(true) if run_state != null else {},
-		"room_states": run_state.grand_casino_room_states.duplicate(true) if run_state != null else {},
-		"home_state": run_state.home_state.duplicate(true) if run_state != null else {},
 		"fields": {},
 		"visibility": {},
 	}
 	var fields: Dictionary = snapshot["fields"]
 	for field_name in [
-		"meta_session_active", "meta_session_location_id", "meta_last_panel_message", "dev_game_test_mode",
+		"meta_session_active", "meta_session_location_id", "meta_last_panel_message", "dev_game_test_mode", "dev_environment_test_mode",
 		"environment_pause_started_msec", "environment_paused_total_msec", "talk_dock_avoid_sync_active", "item_found_talk_dock_suspended",
 		"current_game", "current_game_state_key", "game_exit_settle_active", "last_game_exit_final_projection_rendered",
 		"last_game_result", "last_environment_runtime_result", "last_item_result", "last_hook_result", "game_surface_ui_state",
@@ -6778,12 +6638,13 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 		"game_surface_auto_resolving", "last_game_surface_realtime_refresh_msec", "surface_feature_music_active", "surface_feature_music_ducking", "drunk_time_anchor_real_msec", "drunk_time_anchor_scaled_msec", "drunk_time_last_scale",
 		"pending_autosave", "pending_autosave_status_text", "pending_autosave_after_frame", "pending_autosave_not_before_msec", "pending_autosave_first_queued_msec",
 		"autosave_dirty_generation", "autosave_inflight_generation", "autosave_completed_generation", "save_status_message",
+		"autosave_failure_generation", "autosave_failure_count", "autosave_last_error", "autosave_last_error_code", "autosave_retry_blocked",
 	]:
 		var value: Variant = get(field_name)
 		fields[field_name] = value.duplicate(true) if typeof(value) == TYPE_DICTIONARY or typeof(value) == TYPE_ARRAY else value
 	var visibility: Dictionary = snapshot["visibility"]
 	for control_name in [
-		"run_screen", "start_screen", "start_menu_controls", "start_menu_intro", "inventory_page", "game_test_menu",
+		"run_screen", "start_screen", "start_menu_controls", "start_menu_intro", "inventory_page", "game_test_menu", "environment_test_menu", "environment_test_overlay",
 		"event_choice_popup_overlay", "run_inventory_overlay", "run_journal_overlay", "run_menu_overlay", "world_map_overlay", "travel_transition_overlay",
 	]:
 		var control: Variant = get(control_name)
@@ -6801,7 +6662,7 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 		} if run_state != null and run_state.numbers_state != null else {},
 		"town": {
 			"state": run_state.town_state.snapshot(),
-			"conditions": _copy_dict(run_state.town_state.get("_conditions")),
+			"conditions": JsonCoerceScript._copy_dict(run_state.town_state.get("_conditions")),
 		} if run_state != null and run_state.town_state != null else {},
 	}
 	snapshot["event_popup_presentation"] = {
@@ -6853,28 +6714,28 @@ func _restore_foundation_lifecycle_snapshot(snapshot: Dictionary) -> void:
 	var restored_run: Variant = snapshot.get("run_state_ref", null)
 	run_state = restored_run as RunState if restored_run is RunState else null
 	if run_state != null:
-		var storage_snapshot := _copy_dict(snapshot.get("run_state_storage", {}))
+		var storage_snapshot := JsonCoerceScript._copy_dict(snapshot.get("run_state_storage", {}))
 		if storage_snapshot.is_empty():
-			run_state.from_dict(_copy_dict(snapshot.get("run", {})))
-			run_state.current_environment = _copy_dict(snapshot.get("environment", {}))
-			run_state.world_map = _copy_dict(snapshot.get("world_map", {}))
-			run_state.grand_casino_room_states = _copy_dict(snapshot.get("room_states", {}))
-			run_state.home_state = _copy_dict(snapshot.get("home_state", {}))
+			run_state.from_dict(JsonCoerceScript._copy_dict(snapshot.get("run", {})))
+			run_state.current_environment = JsonCoerceScript._copy_dict(snapshot.get("environment", {}))
+			run_state.world_map = JsonCoerceScript._copy_dict(snapshot.get("world_map", {}))
+			run_state.grand_casino_room_states = JsonCoerceScript._copy_dict(snapshot.get("room_states", {}))
+			run_state.home_state = JsonCoerceScript._copy_dict(snapshot.get("home_state", {}))
 		else:
 			_restore_run_state_lifecycle_storage(storage_snapshot)
-		var mutable_models := _copy_dict(snapshot.get("run_state_mutable_models", {}))
-		var numbers_model := _copy_dict(mutable_models.get("numbers", {}))
+		var mutable_models := JsonCoerceScript._copy_dict(snapshot.get("run_state_mutable_models", {}))
+		var numbers_model := JsonCoerceScript._copy_dict(mutable_models.get("numbers", {}))
 		if run_state.numbers_state != null and not numbers_model.is_empty():
-			run_state.numbers_state.restore(_copy_dict(numbers_model.get("state", {})), run_state.seed_value, _copy_dict(numbers_model.get("config", {})))
-		var town_model := _copy_dict(mutable_models.get("town", {}))
+			run_state.numbers_state.restore(JsonCoerceScript._copy_dict(numbers_model.get("state", {})), run_state.seed_value, JsonCoerceScript._copy_dict(numbers_model.get("config", {})))
+		var town_model := JsonCoerceScript._copy_dict(mutable_models.get("town", {}))
 		if run_state.town_state != null and not town_model.is_empty():
-			run_state.town_state.restore(_copy_dict(town_model.get("state", {})), run_state.seed_value, _copy_dict(town_model.get("conditions", {})))
-	var fields := _copy_dict(snapshot.get("fields", {}))
+			run_state.town_state.restore(JsonCoerceScript._copy_dict(town_model.get("state", {})), run_state.seed_value, JsonCoerceScript._copy_dict(town_model.get("conditions", {})))
+	var fields := JsonCoerceScript._copy_dict(snapshot.get("fields", {}))
 	for field_name_value in fields.keys():
 		var field_name := str(field_name_value)
 		var value: Variant = fields.get(field_name)
 		set(field_name, value.duplicate(true) if typeof(value) == TYPE_DICTIONARY or typeof(value) == TYPE_ARRAY else value)
-	var visibility := _copy_dict(snapshot.get("visibility", {}))
+	var visibility := JsonCoerceScript._copy_dict(snapshot.get("visibility", {}))
 	for control_name_value in visibility.keys():
 		var control_name := str(control_name_value)
 		var control: Variant = get(control_name)
@@ -6883,7 +6744,7 @@ func _restore_foundation_lifecycle_snapshot(snapshot: Dictionary) -> void:
 	var restored_world_map_controller: Variant = snapshot.get("world_map_controller_ref", null)
 	world_map_overlay_controller = restored_world_map_controller if restored_world_map_controller is RefCounted and restored_world_map_controller.has_method("sync_from_host") else null
 	if world_map_overlay_controller != null:
-		var controller_state := _copy_dict(snapshot.get("world_map_controller", {}))
+		var controller_state := JsonCoerceScript._copy_dict(snapshot.get("world_map_controller", {}))
 		world_map_overlay_controller.set_small_screen_mode(bool(controller_state.get("small_screen_mode", false)))
 		world_map_overlay_controller.sync_from_host(
 			str(controller_state.get("selected_node_id", "")),
@@ -6892,13 +6753,13 @@ func _restore_foundation_lifecycle_snapshot(snapshot: Dictionary) -> void:
 			str(controller_state.get("snapshot_cache_key", "")),
 			str(controller_state.get("canvas_snapshot_key", ""))
 		)
-	_restore_coach_lifecycle_snapshot(_copy_dict(snapshot.get("coach", {})))
-	var event_popup_presentation := _copy_dict(snapshot.get("event_popup_presentation", {}))
+	_restore_coach_lifecycle_snapshot(JsonCoerceScript._copy_dict(snapshot.get("coach", {})))
+	var event_popup_presentation := JsonCoerceScript._copy_dict(snapshot.get("event_popup_presentation", {}))
 	if event_choice_popup_title_label != null:
 		event_choice_popup_title_label.text = str(event_popup_presentation.get("title", ""))
 	if event_choice_popup_summary_label != null:
 		event_choice_popup_summary_label.text = str(event_popup_presentation.get("summary", ""))
-	var world_map_popup_presentation := _copy_dict(snapshot.get("world_map_popup_presentation", {}))
+	var world_map_popup_presentation := JsonCoerceScript._copy_dict(snapshot.get("world_map_popup_presentation", {}))
 	if world_map_title_label != null:
 		world_map_title_label.text = str(world_map_popup_presentation.get("title", ""))
 	if world_map_detail_label != null:
@@ -6908,11 +6769,11 @@ func _restore_foundation_lifecycle_snapshot(snapshot: Dictionary) -> void:
 	if world_map_confirm_button != null:
 		world_map_confirm_button.text = str(world_map_popup_presentation.get("confirm_text", ""))
 		world_map_confirm_button.disabled = bool(world_map_popup_presentation.get("confirm_disabled", true))
-	var talk_dock_canvas_snapshot := _copy_dict(snapshot.get("talk_dock_canvases", {}))
+	var talk_dock_canvas_snapshot := JsonCoerceScript._copy_dict(snapshot.get("talk_dock_canvases", {}))
 	if environment_header != null:
 		var restored_focus_object := _interactable_object(selected_object_id) if not selected_object_id.is_empty() else {}
 		_refresh_world_header(restored_focus_object)
-	var talk_dock_snapshot := _copy_dict(snapshot.get("talk_dock", {}))
+	var talk_dock_snapshot := JsonCoerceScript._copy_dict(snapshot.get("talk_dock", {}))
 	if talk_dock_snapshot.is_empty():
 		_sync_talk_dock_coach_avoid_rect()
 	else:
@@ -6978,13 +6839,13 @@ func _restore_coach_lifecycle_snapshot(snapshot: Dictionary) -> void:
 	if restored_parent is Node and coach_overlay.get_parent() == restored_parent:
 		var restored_index := clampi(int(snapshot.get("parent_index", coach_overlay.get_index())), 0, maxi(0, (restored_parent as Node).get_child_count() - 1))
 		(restored_parent as Node).move_child(coach_overlay, restored_index)
-	coach_overlay.seen = _copy_dict(snapshot.get("seen", {}))
-	coach_overlay.queued_lessons = _copy_array(snapshot.get("queued_lessons", []))
-	coach_overlay.queued_ids = _copy_dict(snapshot.get("queued_ids", {}))
-	coach_overlay.active_lesson = _copy_dict(snapshot.get("active_lesson", {}))
-	coach_overlay.active_context = _copy_dict(snapshot.get("active_context", {}))
-	coach_overlay.latest_context = _copy_dict(snapshot.get("latest_context", {}))
-	coach_overlay.prepared_snapshot = _copy_dict(snapshot.get("prepared_snapshot", {}))
+	coach_overlay.seen = JsonCoerceScript._copy_dict(snapshot.get("seen", {}))
+	coach_overlay.queued_lessons = JsonCoerceScript._copy_array(snapshot.get("queued_lessons", []))
+	coach_overlay.queued_ids = JsonCoerceScript._copy_dict(snapshot.get("queued_ids", {}))
+	coach_overlay.active_lesson = JsonCoerceScript._copy_dict(snapshot.get("active_lesson", {}))
+	coach_overlay.active_context = JsonCoerceScript._copy_dict(snapshot.get("active_context", {}))
+	coach_overlay.latest_context = JsonCoerceScript._copy_dict(snapshot.get("latest_context", {}))
+	coach_overlay.prepared_snapshot = JsonCoerceScript._copy_dict(snapshot.get("prepared_snapshot", {}))
 	coach_overlay.active_layout_key = int(snapshot.get("active_layout_key", 0))
 	coach_overlay.live_anchor_rect = snapshot.get("live_anchor_rect", Rect2()) as Rect2
 	coach_overlay.live_anchor_rect_valid = bool(snapshot.get("live_anchor_rect_valid", false))
@@ -7000,7 +6861,7 @@ func _restore_coach_lifecycle_snapshot(snapshot: Dictionary) -> void:
 		coach_overlay.panel.visible = bool(snapshot.get("panel_visible", false))
 		coach_overlay.panel.modulate = snapshot.get("panel_modulate", Color.WHITE) as Color
 	if coach_overlay.focus_layer != null:
-		coach_overlay.focus_layer.snapshot = _copy_dict(snapshot.get("focus_snapshot", {}))
+		coach_overlay.focus_layer.snapshot = JsonCoerceScript._copy_dict(snapshot.get("focus_snapshot", {}))
 		coach_overlay.focus_layer.live_anchor_rect = snapshot.get("focus_live_anchor_rect", Rect2()) as Rect2
 		coach_overlay.focus_layer.live_anchor_rect_valid = bool(snapshot.get("focus_live_anchor_rect_valid", false))
 		coach_overlay.focus_layer.visible = bool(snapshot.get("focus_visible", false))
@@ -7013,36 +6874,57 @@ func _restore_coach_lifecycle_snapshot(snapshot: Dictionary) -> void:
 		coach_overlay.ok_button.text = str(snapshot.get("ok_text", ""))
 		coach_overlay.ok_button.disabled = bool(snapshot.get("ok_disabled", false))
 	var container_layout_restorations: Array = []
-	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay, _copy_dict(snapshot.get("root_control", {})), container_layout_restorations)
-	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.panel, _copy_dict(snapshot.get("panel_control", {})), container_layout_restorations)
-	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.eyebrow_label, _copy_dict(snapshot.get("eyebrow_control", {})), container_layout_restorations)
-	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.copy_label, _copy_dict(snapshot.get("copy_control", {})), container_layout_restorations)
-	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.ok_button, _copy_dict(snapshot.get("ok_control", {})), container_layout_restorations)
-	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.focus_layer, _copy_dict(snapshot.get("focus_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay, JsonCoerceScript._copy_dict(snapshot.get("root_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.panel, JsonCoerceScript._copy_dict(snapshot.get("panel_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.eyebrow_label, JsonCoerceScript._copy_dict(snapshot.get("eyebrow_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.copy_label, JsonCoerceScript._copy_dict(snapshot.get("copy_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.ok_button, JsonCoerceScript._copy_dict(snapshot.get("ok_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(coach_overlay.focus_layer, JsonCoerceScript._copy_dict(snapshot.get("focus_control", {})), container_layout_restorations)
 	var restored_focus: Variant = snapshot.get("focus_ref", null)
 	if restored_focus is Control and is_instance_valid(restored_focus) and (restored_focus as Control).is_inside_tree() and not (restored_focus as Control).is_queued_for_deletion():
 		(restored_focus as Control).grab_focus()
 	elif bool(snapshot.get("focus_was_ok", false)) and coach_overlay.ok_button != null:
 		coach_overlay.ok_button.grab_focus()
-	coach_overlay.restore_attention_tween_lifecycle_snapshot(_copy_dict(snapshot.get("attention", {})))
+	coach_overlay.restore_attention_tween_lifecycle_snapshot(JsonCoerceScript._copy_dict(snapshot.get("attention", {})))
 
 
 func _protect_foundation_coach_attention(snapshot: Dictionary) -> void:
-	var coach_snapshot := _copy_dict(snapshot.get("coach", {}))
+	var coach_snapshot := JsonCoerceScript._copy_dict(snapshot.get("coach", {}))
 	var restored_coach: Variant = coach_snapshot.get("ref", null)
 	if restored_coach is Control and coach_overlay == restored_coach:
-		coach_snapshot["attention"] = coach_overlay.protect_attention_tween_lifecycle_snapshot(_copy_dict(coach_snapshot.get("attention", {})))
+		var attention_snapshot := JsonCoerceScript._copy_dict(coach_snapshot.get("attention", {}))
+		# A caller-owned lifecycle boundary can pass the same snapshot through
+		# several nested helpers. One checkpoint protects it for the full boundary;
+		# replacing its token would strand the earlier checkpoint and retain a tween.
+		if int(attention_snapshot.get("checkpoint_token", 0)) <= 0:
+			attention_snapshot = coach_overlay.protect_attention_tween_lifecycle_snapshot(attention_snapshot)
+		coach_snapshot["attention"] = attention_snapshot
 		snapshot["coach"] = coach_snapshot
 		snapshot["_coach_attention_rolled_back"] = false
+
+
+func _foundation_coach_attention_boundary_snapshot() -> Dictionary:
+	if coach_overlay == null:
+		return {}
+	# Opening an event card does not mutate simulation state, but it still crosses
+	# the same input boundary as other room actions and must preserve the current
+	# Coach attention tween. Capture only that ownership token instead of cloning
+	# the complete RunState and every presentation model.
+	return {
+		"coach": {
+			"ref": coach_overlay,
+			"attention": coach_overlay.attention_tween_lifecycle_snapshot(),
+		},
+	}
 
 
 func _commit_foundation_coach_attention(snapshot: Dictionary) -> void:
 	if bool(snapshot.get("_coach_attention_rolled_back", false)):
 		return
-	var coach_snapshot := _copy_dict(snapshot.get("coach", {}))
+	var coach_snapshot := JsonCoerceScript._copy_dict(snapshot.get("coach", {}))
 	var restored_coach: Variant = coach_snapshot.get("ref", null)
 	if restored_coach is Control and coach_overlay == restored_coach:
-		coach_overlay.commit_attention_tween_lifecycle_snapshot(_copy_dict(coach_snapshot.get("attention", {})))
+		coach_overlay.commit_attention_tween_lifecycle_snapshot(JsonCoerceScript._copy_dict(coach_snapshot.get("attention", {})))
 
 
 func _refresh_after_foundation_lifecycle_rollback(snapshot: Dictionary) -> void:
@@ -7051,7 +6933,7 @@ func _refresh_after_foundation_lifecycle_rollback(snapshot: Dictionary) -> void:
 	# the exact Coach model and controls one final time without rerender side effects.
 	_protect_foundation_coach_attention(snapshot)
 	_refresh()
-	_restore_coach_lifecycle_snapshot(_copy_dict(snapshot.get("coach", {})))
+	_restore_coach_lifecycle_snapshot(JsonCoerceScript._copy_dict(snapshot.get("coach", {})))
 	snapshot["_coach_attention_rolled_back"] = true
 
 
@@ -7147,9 +7029,9 @@ func _restore_talk_dock_lifecycle_snapshot(snapshot: Dictionary) -> void:
 	if restored_parent is Node and talk_dock.get_parent() == restored_parent:
 		var restored_index := clampi(int(snapshot.get("parent_index", talk_dock.get_index())), 0, maxi(0, (restored_parent as Node).get_child_count() - 1))
 		(restored_parent as Node).move_child(talk_dock, restored_index)
-	talk_dock.restore_attention_tween_lifecycle_snapshot(_copy_array(snapshot.get("attention_tweens", [])))
-	talk_dock.entry = _copy_dict(snapshot.get("entry", {}))
-	talk_dock.option = _copy_dict(snapshot.get("option", {}))
+	talk_dock.restore_attention_tween_lifecycle_snapshot(JsonCoerceScript._copy_array(snapshot.get("attention_tweens", [])))
+	talk_dock.entry = JsonCoerceScript._copy_dict(snapshot.get("entry", {}))
+	talk_dock.option = JsonCoerceScript._copy_dict(snapshot.get("option", {}))
 	talk_dock.queue_count = int(snapshot.get("queue_count", 0))
 	talk_dock.expanded = bool(snapshot.get("expanded", false))
 	talk_dock.armed_choice_id = str(snapshot.get("armed_choice_id", ""))
@@ -7178,20 +7060,20 @@ func _restore_talk_dock_lifecycle_snapshot(snapshot: Dictionary) -> void:
 			child.queue_free()
 		talk_dock._render_choices()
 	var container_layout_restorations: Array = []
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock, _copy_dict(snapshot.get("dock_control", {})), container_layout_restorations)
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.panel, _copy_dict(snapshot.get("panel_control", {})), container_layout_restorations)
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.portrait_panel, _copy_dict(snapshot.get("portrait_panel_control", {})), container_layout_restorations)
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.portrait_model, _copy_dict(snapshot.get("portrait_model_control", {})), container_layout_restorations)
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.collapsed_button, _copy_dict(snapshot.get("collapsed_button_control", {})), container_layout_restorations)
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.collapse_button, _copy_dict(snapshot.get("collapse_button_control", {})), container_layout_restorations)
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.header_row, _copy_dict(snapshot.get("header_control", {})), container_layout_restorations)
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.speaker_label, _copy_dict(snapshot.get("speaker_control", {})), container_layout_restorations)
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.summary_label, _copy_dict(snapshot.get("summary_control", {})), container_layout_restorations)
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.body_label, _copy_dict(snapshot.get("body_control", {})), container_layout_restorations)
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.choice_list, _copy_dict(snapshot.get("choice_list_control", {})), container_layout_restorations)
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.urgency_bar, _copy_dict(snapshot.get("urgency_bar_control", {})), container_layout_restorations)
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.badge_label, _copy_dict(snapshot.get("badge_control", {})), container_layout_restorations)
-	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.urgency_label, _copy_dict(snapshot.get("urgency_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock, JsonCoerceScript._copy_dict(snapshot.get("dock_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.panel, JsonCoerceScript._copy_dict(snapshot.get("panel_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.portrait_panel, JsonCoerceScript._copy_dict(snapshot.get("portrait_panel_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.portrait_model, JsonCoerceScript._copy_dict(snapshot.get("portrait_model_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.collapsed_button, JsonCoerceScript._copy_dict(snapshot.get("collapsed_button_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.collapse_button, JsonCoerceScript._copy_dict(snapshot.get("collapse_button_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.header_row, JsonCoerceScript._copy_dict(snapshot.get("header_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.speaker_label, JsonCoerceScript._copy_dict(snapshot.get("speaker_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.summary_label, JsonCoerceScript._copy_dict(snapshot.get("summary_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.body_label, JsonCoerceScript._copy_dict(snapshot.get("body_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.choice_list, JsonCoerceScript._copy_dict(snapshot.get("choice_list_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.urgency_bar, JsonCoerceScript._copy_dict(snapshot.get("urgency_bar_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.badge_label, JsonCoerceScript._copy_dict(snapshot.get("badge_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.urgency_label, JsonCoerceScript._copy_dict(snapshot.get("urgency_control", {})), container_layout_restorations)
 	if talk_dock.collapsed_button != null:
 		talk_dock.collapsed_button.text = str(snapshot.get("collapsed_text", ""))
 	if talk_dock.collapse_button != null:
@@ -7207,16 +7089,16 @@ func _restore_talk_dock_lifecycle_snapshot(snapshot: Dictionary) -> void:
 		talk_dock.body_label.max_lines_visible = int(snapshot.get("body_max_lines", 0))
 	if talk_dock.choice_list != null:
 		talk_dock.choice_list.columns = int(snapshot.get("choice_columns", 1))
-		_restore_talk_dock_choice_lifecycle_snapshot(_copy_array(snapshot.get("choice_controls", [])), container_layout_restorations)
+		_restore_talk_dock_choice_lifecycle_snapshot(JsonCoerceScript._copy_array(snapshot.get("choice_controls", [])), container_layout_restorations)
 	if talk_dock.urgency_bar != null:
 		talk_dock.urgency_bar.value = float(snapshot.get("urgency_value", 0.0))
 	if talk_dock.badge_label != null:
 		talk_dock.badge_label.text = str(snapshot.get("badge_text", ""))
 	if talk_dock.urgency_label != null:
 		talk_dock.urgency_label.text = str(snapshot.get("urgency_text", ""))
-	talk_dock.rendered_response_icon_kinds.assign(_copy_array(snapshot.get("rendered_response_icon_kinds", [])))
+	talk_dock.rendered_response_icon_kinds.assign(JsonCoerceScript._copy_array(snapshot.get("rendered_response_icon_kinds", [])))
 	if talk_dock.portrait_model != null:
-		talk_dock.portrait_model.speaker = _copy_dict(snapshot.get("portrait_speaker", {}))
+		talk_dock.portrait_model.speaker = JsonCoerceScript._copy_dict(snapshot.get("portrait_speaker", {}))
 		talk_dock.portrait_model.speaker_key = str(snapshot.get("portrait_speaker_key", ""))
 		talk_dock.portrait_model.animation_clock = float(snapshot.get("portrait_animation_clock", 0.0))
 		talk_dock.portrait_model.animation_redraw_elapsed = float(snapshot.get("portrait_animation_redraw_elapsed", 0.0))
@@ -7230,7 +7112,7 @@ func _restore_talk_dock_lifecycle_snapshot(snapshot: Dictionary) -> void:
 	if restored_focus is Control and is_instance_valid(restored_focus) and (restored_focus as Control).is_inside_tree() and not (restored_focus as Control).is_queued_for_deletion():
 		(restored_focus as Control).grab_focus()
 	else:
-		var choice_focus_path := _copy_array(snapshot.get("choice_focus_path", []))
+		var choice_focus_path := JsonCoerceScript._copy_array(snapshot.get("choice_focus_path", []))
 		if choice_focus_path.size() == 2 and talk_dock.choice_list != null:
 			var response_index := int(choice_focus_path[0])
 			var child_index := int(choice_focus_path[1])
@@ -7418,18 +7300,18 @@ func _restore_talk_dock_choice_lifecycle_snapshot(snapshot: Array, container_lay
 	if talk_dock == null or talk_dock.choice_list == null:
 		return
 	for response_index in range(mini(snapshot.size(), talk_dock.choice_list.get_child_count())):
-		var response_state := _copy_dict(snapshot[response_index])
+		var response_state := JsonCoerceScript._copy_dict(snapshot[response_index])
 		var response_value: Node = talk_dock.choice_list.get_child(response_index)
 		if not response_value is Control:
 			continue
-		_restore_talk_dock_control_lifecycle_snapshot(response_value as Control, _copy_dict(response_state.get("control", {})), container_layout_restorations)
-		var child_states := _copy_array(response_state.get("children", []))
+		_restore_talk_dock_control_lifecycle_snapshot(response_value as Control, JsonCoerceScript._copy_dict(response_state.get("control", {})), container_layout_restorations)
+		var child_states := JsonCoerceScript._copy_array(response_state.get("children", []))
 		for child_index in range(mini(child_states.size(), response_value.get_child_count())):
-			var child_state := _copy_dict(child_states[child_index])
+			var child_state := JsonCoerceScript._copy_dict(child_states[child_index])
 			var child_value: Node = response_value.get_child(child_index)
 			if not child_value is Control:
 				continue
-			_restore_talk_dock_control_lifecycle_snapshot(child_value as Control, _copy_dict(child_state.get("control", {})), container_layout_restorations)
+			_restore_talk_dock_control_lifecycle_snapshot(child_value as Control, JsonCoerceScript._copy_dict(child_state.get("control", {})), container_layout_restorations)
 			if child_value is Button:
 				(child_value as Button).text = str(child_state.get("button_text", ""))
 				(child_value as Button).disabled = bool(child_state.get("button_disabled", false))
@@ -7454,6 +7336,7 @@ func _talk_dock_canvas_lifecycle_snapshot() -> Dictionary:
 		"environment_drunk_effect_mode": environment_canvas.drunk_effect_mode if environment_canvas != null else "distortion",
 		"environment_reduce_motion": environment_canvas.reduce_motion if environment_canvas != null else false,
 		"environment_small_screen_mode": environment_canvas.small_screen_mode if environment_canvas != null else false,
+		"environment_object_labels_and_borders_enabled": environment_canvas.object_labels_and_borders_enabled if environment_canvas != null else true,
 		"environment_overlay_repositioned_object_ids": environment_canvas.overlay_repositioned_object_ids.duplicate() if environment_canvas != null else [],
 		"environment_selected_object_id": environment_canvas.selected_object_id if environment_canvas != null else "",
 		"environment_hovered_object_id": environment_canvas.hovered_object_id if environment_canvas != null else "",
@@ -7495,12 +7378,12 @@ func _restore_talk_dock_canvas_lifecycle_snapshot(snapshot: Dictionary) -> void:
 		# not only its selection/camera scalars, so the rejected transition cannot
 		# expose a newly derived room layout or interaction set.
 		environment_canvas.uses_foundation_snapshot = bool(snapshot.get("environment_uses_foundation_snapshot", false))
-		environment_canvas.foundation_snapshot = _copy_dict(snapshot.get("environment_foundation_snapshot", {}))
-		environment_canvas.foundation_scene_objects = _copy_array(snapshot.get("environment_foundation_scene_objects", []))
-		environment_canvas.scene_objects = _copy_array(snapshot.get("environment_scene_objects", []))
+		environment_canvas.foundation_snapshot = JsonCoerceScript._copy_dict(snapshot.get("environment_foundation_snapshot", {}))
+		environment_canvas.foundation_scene_objects = JsonCoerceScript._copy_array(snapshot.get("environment_foundation_scene_objects", []))
+		environment_canvas.scene_objects = JsonCoerceScript._copy_array(snapshot.get("environment_scene_objects", []))
 		environment_canvas.environment_id = str(snapshot.get("environment_id", environment_canvas.environment_id))
 		environment_canvas.environment_name = str(snapshot.get("environment_name", environment_canvas.environment_name))
-		environment_canvas.scenario_presentation = _copy_dict(snapshot.get("environment_scenario_presentation", {}))
+		environment_canvas.scenario_presentation = JsonCoerceScript._copy_dict(snapshot.get("environment_scenario_presentation", {}))
 		environment_canvas.scenario_palette_overlay = snapshot.get("environment_scenario_palette_overlay", Color.TRANSPARENT) as Color
 		environment_canvas.scenario_crowd_count = int(snapshot.get("environment_scenario_crowd_count", 0))
 		environment_canvas.scenario_signage = str(snapshot.get("environment_scenario_signage", ""))
@@ -7510,7 +7393,8 @@ func _restore_talk_dock_canvas_lifecycle_snapshot(snapshot: Dictionary) -> void:
 		environment_canvas.drunk_effect_mode = str(snapshot.get("environment_drunk_effect_mode", "distortion"))
 		environment_canvas.reduce_motion = bool(snapshot.get("environment_reduce_motion", false))
 		environment_canvas.small_screen_mode = bool(snapshot.get("environment_small_screen_mode", false))
-		environment_canvas.overlay_repositioned_object_ids.assign(_copy_array(snapshot.get("environment_overlay_repositioned_object_ids", [])))
+		environment_canvas.object_labels_and_borders_enabled = bool(snapshot.get("environment_object_labels_and_borders_enabled", true))
+		environment_canvas.overlay_repositioned_object_ids.assign(JsonCoerceScript._copy_array(snapshot.get("environment_overlay_repositioned_object_ids", [])))
 		environment_canvas.call("_cache_scenario_presentation")
 		environment_canvas.call("_rebuild_scene_object_cache")
 		# Every selection, hover, camera target, and redraw authority is captured.
@@ -7553,19 +7437,32 @@ func _install_lifecycle_environment(environment: Dictionary) -> Dictionary:
 	return run_state.set_environment(environment) if run_state != null else {"ok": false, "errors": ["Environment installation requires an active run."]}
 
 
+func _travel_to_with_lifecycle_snapshot(target_id: String, target_label: String, choice_data: Dictionary, require_immediate_result: bool, lifecycle_rollback: Dictionary) -> Dictionary:
+	var previous_rollback := prepared_travel_lifecycle_rollback
+	prepared_travel_lifecycle_rollback = lifecycle_rollback
+	var result := _travel_to(target_id, target_label, choice_data, require_immediate_result)
+	prepared_travel_lifecycle_rollback = previous_rollback
+	if not bool(result.get("ok", false)):
+		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+	return result
+
+
 func _travel_to(target_id: String, target_label: String, choice_data: Dictionary = {}, require_immediate_result: bool = false) -> Dictionary:
 	if run_state == null:
 		return {"ok": false, "errors": ["Travel requires an active run."]}
 	if travel_transition_active:
+		_show_message("Travel is already in progress.")
+		_refresh_modal_contract_owner()
 		return {"ok": false, "errors": ["Travel is already in progress."]}
 	# This stage clock exists only for an explicitly enabled performance probe.
 	# Normal travel skips timestamp reads and publishes no diagnostics.
-	var perf_corner_store_timing := perf_telemetry_overlay != null \
+	var perf_corner_store_timing: bool = perf_telemetry_overlay != null \
 		and perf_telemetry_overlay.travel_stage_timing_enabled(target_id)
 	var perf_corner_store_total_started_usec := Time.get_ticks_usec() if perf_corner_store_timing else 0
 	var perf_corner_store_stage_started_usec := perf_corner_store_total_started_usec
 	var perf_corner_store_stages := {}
-	var lifecycle_rollback := _foundation_lifecycle_snapshot()
+	var caller_owns_lifecycle_rollback := not prepared_travel_lifecycle_rollback.is_empty()
+	var lifecycle_rollback := prepared_travel_lifecycle_rollback if caller_owns_lifecycle_rollback else _foundation_lifecycle_snapshot()
 	_protect_foundation_coach_attention(lifecycle_rollback)
 	_clear_recent_result_feedback()
 	if perf_corner_store_timing:
@@ -7574,14 +7471,15 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	var ignored_talk_entries: Array = []
 	if choice_data.is_empty():
 		choice_data = _travel_choice(target_id)
-	var route := _copy_dict(choice_data.get("route", {}))
+	var route := JsonCoerceScript._copy_dict(choice_data.get("route", {}))
 	if route.is_empty():
 		route = _world_route_for_target(target_id)
 	if route.is_empty():
 		route = library.route(target_id) if library != null else {}
 	if not bool(choice_data.get("enabled", true)):
 		var disabled_reason := str(choice_data.get("disabled_reason", "Route closed. Check hours or pick another stop."))
-		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		if not caller_owns_lifecycle_rollback:
+			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 		_show_message(disabled_reason)
 		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 		return {"ok": false, "errors": [disabled_reason]}
@@ -7593,13 +7491,15 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			return {"ok": true, "errors": []}
 		var meta_result := _enter_meta_location(meta_target_id)
 		if not bool(meta_result.get("ok", false)):
-			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+			if not caller_owns_lifecycle_rollback:
+				_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 			return meta_result
 		_commit_foundation_coach_attention(lifecycle_rollback)
 		return meta_result
 	var local_casino_room_move := bool(choice_data.get("local_casino_room", false))
 	if local_casino_room_move and (not run_state.is_grand_casino_environment() or _environment_archetype(target_id).is_empty()):
-		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		if not caller_owns_lifecycle_rollback:
+			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 		_show_message("That interior casino door is not available.")
 		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 		return {"ok": false, "errors": ["That interior casino door is not available."]}
@@ -7607,12 +7507,14 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	var departure_kind := "grand_room" if local_casino_room_move else "world"
 	var departure_preflight := run_state.scenario_preflight_environment_change(departure_source_id, target_id, departure_kind)
 	if not bool(departure_preflight.get("ok", false)):
-		var departure_errors := _copy_array(departure_preflight.get("errors", []))
+		var departure_errors := JsonCoerceScript._copy_array(departure_preflight.get("errors", []))
 		var departure_error := str(departure_errors[0]) if not departure_errors.is_empty() else "Travel could not begin safely."
-		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		if not caller_owns_lifecycle_rollback:
+			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 		_show_message(departure_error)
 		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 		return {"ok": false, "errors": [departure_error]}
+	_clear_input_guard_modal_state()
 	# Preserve the source surface before generation/storage without clearing the
 	# live UI until every authoritative travel mutation has committed.
 	_checkpoint_current_game_surface_ui_state()
@@ -7647,6 +7549,11 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	route["travel_method"] = WorldMapScript.travel_method_label(travel_method_kind)
 	if str(route.get("method", "")).strip_edges().is_empty() or force_walk:
 		route["method"] = str(route.get("travel_method", ""))
+	# Contextual fares belong to the departure boundary. In particular,
+	# free_from_archetypes must be resolved before destination installation
+	# replaces current_environment, or a route shown as comped can be charged at
+	# its authored fare after arrival.
+	var departure_route_status := run_state.travel_route_status(route)
 	var travel_minutes := maxi(1, int(choice_data.get("travel_minutes", _travel_clock_minutes_for_route(route, force_walk))))
 	var departed_game_clock_minutes := maxi(0, run_state.game_clock_minutes)
 	route["travel_minutes"] = travel_minutes
@@ -7656,8 +7563,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	run_state.current_environment["departed_game_clock_minutes"] = departed_game_clock_minutes
 	var clock_result := run_state.advance_game_clock_minutes(travel_minutes)
 	if not bool(clock_result.get("ok", false)):
-		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
-		var clock_errors := _copy_array(clock_result.get("errors", []))
+		if not caller_owns_lifecycle_rollback:
+			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		var clock_errors := JsonCoerceScript._copy_array(clock_result.get("errors", []))
 		var clock_error := str(clock_errors[0]) if not clock_errors.is_empty() else "Travel time could not advance safely."
 		_show_message(clock_error)
 		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
@@ -7668,10 +7576,11 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		perf_corner_store_stage_started_usec = Time.get_ticks_usec()
 	var install_result: Dictionary
 	if local_casino_room_move:
-		install_result = generator.enter_grand_casino_room_result(run_state, target_id)
+		install_result = generator.enter_grand_casino_room_result_with_caller_rollback(run_state, target_id)
 		if not bool(install_result.get("ok", false)):
-			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
-			var room_errors := _copy_array(install_result.get("errors", []))
+			if not caller_owns_lifecycle_rollback:
+				_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+			var room_errors := JsonCoerceScript._copy_array(install_result.get("errors", []))
 			var room_error := str(room_errors[0]) if not room_errors.is_empty() else "The interior casino room could not be prepared."
 			_show_message(room_error)
 			_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
@@ -7680,10 +7589,14 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 			run_state.narrative_flags["grand_casino_high_limit_access"] = true
 			run_state.narrative_flags["grand_casino_high_limit_access_method"] = "cash_buy_in"
 	else:
-		install_result = generator.travel_environment_result(run_state, target_id, true)
+		install_result = generator.travel_environment_result_with_caller_rollback(run_state, target_id, true)
 		if not bool(install_result.get("ok", false)):
-			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
-			var install_errors := _copy_array(install_result.get("errors", []))
+			var retry_result := _retry_travel_without_invalid_scenario(target_id, target_label, choice_data, require_immediate_result, lifecycle_rollback)
+			if not retry_result.is_empty():
+				return retry_result
+			if not caller_owns_lifecycle_rollback:
+				_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+			var install_errors := JsonCoerceScript._copy_array(install_result.get("errors", []))
 			var install_error := str(install_errors[0]) if not install_errors.is_empty() else "Travel destination could not be installed."
 			_show_message(install_error)
 			_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
@@ -7695,11 +7608,12 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	if not bool(install_result.get("scenario_finalized", false)):
 		destination_finalization = run_state.scenario_finalize_installed_environment(
 			library,
-			_copy_dict(run_state.current_environment.get("scenario_layout_context", {}))
+			JsonCoerceScript._copy_dict(run_state.current_environment.get("scenario_layout_context", {}))
 		)
 	if not bool(destination_finalization.get("ok", false)):
-		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
-		var finalization_errors := _copy_array(destination_finalization.get("errors", []))
+		if not caller_owns_lifecycle_rollback:
+			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		var finalization_errors := JsonCoerceScript._copy_array(destination_finalization.get("errors", []))
 		var finalization_error := str(finalization_errors[0]) if not finalization_errors.is_empty() else "The arrived room could not be finalized safely."
 		_show_message(finalization_error)
 		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
@@ -7709,8 +7623,9 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		perf_corner_store_stage_started_usec = Time.get_ticks_usec()
 	var delivery_arrival := run_state.delivery_resolve_travel_arrival(route, route_risk) if run_state.delivery_has_active_run() else {}
 	if not delivery_arrival.is_empty() and not bool(delivery_arrival.get("ok", false)):
-		_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
-		var delivery_errors := _copy_array(delivery_arrival.get("errors", []))
+		if not caller_owns_lifecycle_rollback:
+			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		var delivery_errors := JsonCoerceScript._copy_array(delivery_arrival.get("errors", []))
 		var delivery_error := str(delivery_errors[0]) if not delivery_errors.is_empty() else str(delivery_arrival.get("message", "Delivery arrival could not be resolved safely."))
 		_show_message(delivery_error)
 		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
@@ -7763,7 +7678,13 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	if environment_canvas != null:
 		environment_canvas.set_selected_object("", true)
 	var destination_name := str(run_state.current_environment.get("display_name", target_label))
-	var travel_result := _travel_result(target_id, destination_name, route, previous_environment, run_state.current_environment, travel_decay, route_risk)
+	var travel_result := _travel_result(target_id, destination_name, route, previous_environment, run_state.current_environment, travel_decay, route_risk, departure_route_status)
+	var delivery_resolution_message := str(delivery_arrival.get("message", "")).strip_edges()
+	if bool(delivery_arrival.get("resolved", false)) and not delivery_resolution_message.is_empty():
+		travel_result["message"] = "%s %s" % [str(travel_result.get("message", "")), delivery_resolution_message]
+		var delivery_resolution_deltas: Dictionary = travel_result.get("deltas", {}) if typeof(travel_result.get("deltas", {})) == TYPE_DICTIONARY else {}
+		delivery_resolution_deltas["messages"] = [str(travel_result.get("message", ""))]
+		travel_result["deltas"] = delivery_resolution_deltas
 	if not local_casino_room_move:
 		# Rook's service discounts exactly one successful ordinary route. Interior
 		# room doors do not consume the promised ride.
@@ -7846,6 +7767,23 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	return {"ok": true, "errors": [], "travel_result": travel_result.duplicate(true)}
 
 
+func _retry_travel_without_invalid_scenario(target_id: String, target_label: String, choice_data: Dictionary, require_immediate_result: bool, lifecycle_rollback: Dictionary) -> Dictionary:
+	if generator == null or not generator.has_method("environment_install_failure_snapshot"):
+		return {}
+	var failure: Dictionary = generator.environment_install_failure_snapshot()
+	if str(failure.get("target_id", "")).strip_edges() != target_id or str(failure.get("scenario_id", "")).strip_edges().is_empty():
+		return {}
+	# The failed caller-owned install can have advanced route/scenario state. Put
+	# the complete run and presentation back at the departure boundary, then run
+	# the ordinary transaction once more with only the rejected overlay muted.
+	_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+	if not _suppress_failed_standard_scenario(failure, target_id):
+		return {}
+	generator = RunGenerator.new(library)
+	_publish_cached_game_module_scripts_to_generator()
+	return _travel_to(target_id, target_label, choice_data, require_immediate_result)
+
+
 func _queue_normal_grand_host_greeting(previous_environment: Dictionary) -> void:
 	if run_state == null or run_state.is_tutorial_run():
 		return
@@ -7855,11 +7793,13 @@ func _queue_normal_grand_host_greeting(previous_environment: Dictionary) -> void
 		return
 	if bool(run_state.narrative_flags.get("grand_host_greeting_seen", false)):
 		return
-	if _enqueue_normal_grand_host_greeting_without_refresh():
+	# Travel has already committed its public Result receipt. Opening the one-time
+	# welcome must not erase that receipt before observers can read the fare.
+	if _enqueue_normal_grand_host_greeting_without_refresh(true):
 		run_state.narrative_flags["grand_host_greeting_seen"] = true
 
 
-func _enqueue_normal_grand_host_greeting_without_refresh() -> bool:
+func _enqueue_normal_grand_host_greeting_without_refresh(preserve_recent_result_feedback: bool = false) -> bool:
 	if run_state == null or library == null or run_state.is_terminal():
 		return false
 	var dialogue := library.dialogue(NORMAL_GRAND_HOST_DIALOGUE_ID)
@@ -7878,7 +7818,8 @@ func _enqueue_normal_grand_host_greeting_without_refresh() -> bool:
 		_refresh_talk_dock()
 		_show_message("Conversation is already open.")
 		return true
-	_clear_recent_result_feedback()
+	if not preserve_recent_result_feedback:
+		_clear_recent_result_feedback()
 	var speaker: Dictionary = dialogue.get("speaker", {}) if typeof(dialogue.get("speaker", {})) == TYPE_DICTIONARY else {}
 	speaker = _resolve_character_speaker(_normalized_talk_speaker(speaker), NORMAL_GRAND_HOST_DIALOGUE_ID, str(speaker.get("voice_line_key", "")))
 	var start_node := str(dialogue.get("start", "")).strip_edges()
@@ -8017,8 +7958,8 @@ func _tutorial_linda_exit_guardrail_node() -> String:
 	return ""
 
 
-func _travel_result(target_id: String, destination_name: String, route: Dictionary, previous_environment: Dictionary, destination_environment: Dictionary, travel_decay: Dictionary = {}, route_risk: Dictionary = {}) -> Dictionary:
-	var route_status := run_state.travel_route_status(route)
+func _travel_result(target_id: String, destination_name: String, route: Dictionary, previous_environment: Dictionary, destination_environment: Dictionary, travel_decay: Dictionary = {}, route_risk: Dictionary = {}, departure_route_status: Dictionary = {}) -> Dictionary:
+	var route_status := departure_route_status.duplicate(true) if not departure_route_status.is_empty() else run_state.travel_route_status(route)
 	var travel_method_kind := WorldMapScript.travel_method_kind(route, str(route_status.get("distance", route.get("distance", ""))))
 	var travel_method := WorldMapScript.travel_method_label(travel_method_kind)
 	var cost := int(route_status.get("cost", 0))
@@ -8120,6 +8061,10 @@ func _travel_result(target_id: String, destination_name: String, route: Dictiona
 		"deltas": deltas,
 		"message": message,
 	})
+	# The shared builder intentionally normalizes to the canonical action-result
+	# keys. Restore the travel receipt's exact departure price so public observers
+	# can distinguish a real comp from a paid route without parsing display copy.
+	built["route_cost"] = cost
 	return built
 
 
@@ -8152,16 +8097,6 @@ func _should_use_atomic_web_travel_transition() -> bool:
 	return travel_transition_force_web_runtime_for_test or OS.has_feature("web") or OS.get_name() == "Web"
 
 
-func _should_yield_for_travel_transition() -> bool:
-	# Browser tabs can suspend requestAnimationFrame while hidden or throttled.
-	# Holding the exclusive travel lock across a frame await can therefore strand
-	# the run even though destination generation already remains synchronous and
-	# bounded. Web travel stays atomic; desktop keeps the presentation frames.
-	if _should_use_atomic_web_travel_transition():
-		return false
-	return DisplayServer.get_name().to_lower() != "headless" and is_inside_tree()
-
-
 func _initialize_foundation() -> void:
 	_mark_boot_event("foundation_init_start")
 	library = ContentLibrary.new()
@@ -8185,6 +8120,8 @@ func _initialize_foundation() -> void:
 	_mark_boot_event("content_library_load_complete", library.load_timing_snapshot())
 	game_module_cache = {}
 	generator = RunGenerator.new(library)
+	_publish_cached_game_module_scripts_to_generator()
+	_request_game_module_script_prewarm()
 	save_service = SaveService.new()
 	autosave_loadable_available = save_service.has_run(autosave_slot_id)
 	platform_services = PlatformServices.new()
@@ -8205,6 +8142,8 @@ func _ensure_full_content_library_loaded() -> void:
 	_surface_content_validation_errors(library, true)
 	game_module_cache = {}
 	generator = RunGenerator.new(library)
+	_publish_cached_game_module_scripts_to_generator()
+	_request_game_module_script_prewarm()
 	_refresh_run_action_service()
 
 
@@ -8285,7 +8224,7 @@ func _select_main_menu_background_environment() -> Dictionary:
 			continue
 		var data: Dictionary = archetype
 		var archetype_id := str(data.get("id", "")).strip_edges()
-		var asset_path := str(_copy_dict(data.get("visual_context", {})).get("asset_path", "")).strip_edges()
+		var asset_path := str(JsonCoerceScript._copy_dict(data.get("visual_context", {})).get("asset_path", "")).strip_edges()
 		if archetype_id.is_empty() or asset_path.is_empty():
 			continue
 		# Several room variants deliberately share one fallback image. Only include
@@ -8316,7 +8255,7 @@ func _reroll_main_menu_background() -> void:
 	background_snapshot["archetype_id"] = str(background_snapshot.get("id", ""))
 	background_snapshot["display_name"] = str(background_snapshot.get("display_name", background_snapshot.get("name", background_snapshot.get("id", ""))))
 	background_snapshot["reduce_motion"] = _reduce_motion_enabled()
-	var asset_path := str(_copy_dict(background_snapshot.get("visual_context", {})).get("asset_path", "")).strip_edges()
+	var asset_path := str(JsonCoerceScript._copy_dict(background_snapshot.get("visual_context", {})).get("asset_path", "")).strip_edges()
 	var background_asset := load(asset_path) as Texture2D if not asset_path.is_empty() else null
 	main_menu_background.set("background_texture", background_asset)
 	main_menu_background.set("use_external_background", background_asset != null)
@@ -8339,10 +8278,27 @@ func _fit_main_menu_background_to_viewport() -> void:
 
 func _initialize_user_settings() -> void:
 	user_settings = UserSettingsScript.new()
-	user_settings.load()
+	user_settings_load_outcome = user_settings.load()
 	selected_home_type_id = user_settings.selected_home_type_id
 	VisualStyle.set_high_contrast_enabled(user_settings.high_contrast)
 	user_settings.apply()
+
+
+func _surface_user_settings_load_outcome() -> void:
+	if settings_menu != null and settings_menu.has_method("set_recovery_banner"):
+		settings_menu.call("set_recovery_banner", user_settings_load_outcome)
+	var code := str(user_settings_load_outcome.get("code", ""))
+	if code == "recovered_defaults":
+		_show_message("Settings could not be read. Safe defaults were restored and the original file was preserved.")
+	elif code == "io_error":
+		_show_message("Settings could not be read. Safe defaults are active; check file access before saving.")
+	elif code == "loaded_backup":
+		_show_message("Settings were recovered from the last good backup.")
+
+
+func _surface_durable_load_outcome(store_label: String, outcome: Dictionary) -> void:
+	if str(outcome.get("outcome", "")) == "loaded-backup":
+		_show_message("%s was recovered from the last good backup." % store_label)
 
 
 func _initialize_profile_inventory() -> void:
@@ -8389,6 +8345,7 @@ func _record_scratch_ticket_discovery(type_id: String) -> Dictionary:
 func _initialize_meta_collection() -> void:
 	meta_collection_service = MetaCollectionServiceScript.new()
 	meta_collection_service.load()
+	_surface_durable_load_outcome("Collection progress", meta_collection_service.last_load_result())
 	meta_session_controller = MetaSessionControllerScript.new()
 	meta_session_controller.configure(library, meta_collection_service)
 	collection_drop_service = CollectionDropServiceScript.new()
@@ -8445,10 +8402,9 @@ func _build_ui() -> void:
 	# the menu. An immediate New Run still completes any remaining stages
 	# synchronously, so staging cannot expose a partially usable game screen.
 	if OS.has_feature("web") or _defer_start_menu_secondary_panels():
-		# The production Web export is intentionally single-threaded. Godot's
-		# threaded ResourceLoader has no worker there and makes its compilation
-		# backlog part of first paint, so Web retains the bounded stage-per-frame
-		# loader. Native builds can compile the same scripts off the menu thread.
+		# Web retains its bounded stage-per-frame loader. Native builds additionally
+		# compile one queued script at a time on one owned background Thread before
+		# each bounded node stage, keeping first paint independent from the run shell.
 		if not OS.has_feature("web"):
 			_request_run_ui_script_prewarm()
 		call_deferred("_prewarm_run_ui_after_web_start")
@@ -8478,9 +8434,9 @@ func _prewarm_run_ui_after_web_start() -> void:
 	run_ui_build_in_progress = true
 	await get_tree().process_frame
 	while not run_ui_built:
-		# Script compilation is the expensive part of the run shell. Let the
-		# ResourceLoader worker finish it without freezing the already-interactive
-		# menu, then keep the existing bounded node-build stages on the main thread.
+		# Script compilation is the expensive part of the run shell. The native
+		# serial worker resolves one queued script at a time; this coroutine adds a
+		# bounded node-build stage only after that stage's results are ready.
 		if not _run_ui_stage_scripts_ready(run_ui_build_stage):
 			await get_tree().process_frame
 			continue
@@ -8497,16 +8453,67 @@ func _prewarm_run_ui_after_web_start() -> void:
 func _request_run_ui_script_prewarm() -> void:
 	if OS.has_feature("web"):
 		return
-	for script_path_value in RUN_UI_SCRIPT_PATHS.values():
-		var script_path := str(script_path_value)
-		if script_path.is_empty() or run_ui_script_prewarm_requests.has(script_path) or ResourceLoader.has_cached(script_path):
+	# Dictionary insertion order is the queue order. Prioritize scripts needed by
+	# the first playable room; optional overlays and game modules may continue
+	# warming after an immediate Play click instead of blocking it.
+	var ordered_fields: Array = []
+	for stage_index in range(15):
+		for field_name_value in RUN_UI_STAGE_SCRIPT_FIELDS.get(stage_index, []):
+			if not ordered_fields.has(field_name_value):
+				ordered_fields.append(field_name_value)
+	for field_name_value in RUN_UI_SCRIPT_PATHS.keys():
+		if str(field_name_value) == "CoinPusherGameScript":
 			continue
-		var request_error := ResourceLoader.load_threaded_request(script_path)
-		if request_error == OK:
-			run_ui_script_prewarm_requests[script_path] = true
+		if not ordered_fields.has(field_name_value):
+			ordered_fields.append(field_name_value)
+	# The large optional game is still warmed while the menu is idle, but only
+	# after every first-room and overlay script has entered the queue.
+	ordered_fields.append("CoinPusherGameScript")
+	for field_name_value in ordered_fields:
+		var field_name := str(field_name_value)
+		var script_path := str(RUN_UI_SCRIPT_PATHS.get(field_name, ""))
+		if script_path.is_empty() \
+				or get(field_name) is Script \
+				or run_ui_script_prewarm_results.has(script_path) \
+				or script_prewarm_terminal_results.has(script_path) \
+				or run_ui_script_prewarm_requests.has(script_path):
+			continue
+		_queue_script_prewarm_request(run_ui_script_prewarm_requests, script_path)
 
+
+func _request_game_module_script_prewarm() -> void:
+	if OS.has_feature("web") or library == null:
+		return
+	for definition_value in library.games:
+		if typeof(definition_value) != TYPE_DICTIONARY:
+			continue
+		var module_path := str((definition_value as Dictionary).get("module_path", "")).strip_edges()
+		if module_path.is_empty() or module_path.ends_with("_ui.gd") or module_path.begins_with("res://data/runtime/"):
+			continue
+		if game_module_script_cache.has(module_path):
+			if generator != null:
+				generator.cache_game_module_script(module_path, game_module_script_cache.get(module_path) as Script)
+			continue
+		var resolved_ui_script := script_prewarm_terminal_results.get(module_path) as Script
+		if resolved_ui_script == null:
+			resolved_ui_script = run_ui_script_prewarm_results.get(module_path) as Script
+		if resolved_ui_script == null:
+			resolved_ui_script = _installed_run_ui_script_for_path(module_path)
+		if resolved_ui_script != null:
+			_cache_game_module_script(module_path, resolved_ui_script)
+			continue
+		if script_prewarm_terminal_results.has(module_path):
+			continue
+		if game_module_script_prewarm_requests.has(module_path):
+			continue
+		_queue_script_prewarm_request(game_module_script_prewarm_requests, module_path)
+func _cache_game_module_script(module_path: String, module_script: Script) -> void:
+	game_module_script_cache[module_path] = module_script
+	if generator != null:
+		generator.cache_game_module_script(module_path, module_script)
 
 func _run_ui_stage_scripts_ready(stage_index: int) -> bool:
+	_poll_script_prewarm_worker()
 	var stage_fields: Array = RUN_UI_STAGE_SCRIPT_FIELDS.get(stage_index, [])
 	for field_name_value in stage_fields:
 		var field_name := str(field_name_value)
@@ -8515,7 +8522,7 @@ func _run_ui_stage_scripts_ready(stage_index: int) -> bool:
 		var script_path := str(RUN_UI_SCRIPT_PATHS.get(field_name, ""))
 		if not run_ui_script_prewarm_requests.has(script_path):
 			continue
-		if ResourceLoader.load_threaded_get_status(script_path) == ResourceLoader.THREAD_LOAD_IN_PROGRESS:
+		if not run_ui_script_prewarm_results.has(script_path):
 			return false
 	return true
 
@@ -8533,16 +8540,9 @@ func _ensure_run_ui_stage_scripts(stage_index: int) -> bool:
 		if script_path.is_empty():
 			_fail_run_ui_build(field_name, "an unregistered script path")
 			return false
-		var loaded_script: Variant
-		if run_ui_script_prewarm_requests.has(script_path):
-			var threaded_status := ResourceLoader.load_threaded_get_status(script_path)
-			if threaded_status in [ResourceLoader.THREAD_LOAD_IN_PROGRESS, ResourceLoader.THREAD_LOAD_LOADED]:
-				# This only blocks the explicit immediate-Play path. The menu prewarmer
-				# calls this function after its nonblocking status check succeeds.
-				loaded_script = ResourceLoader.load_threaded_get(script_path)
-			run_ui_script_prewarm_requests.erase(script_path)
-		if not (loaded_script is Script):
-			loaded_script = ResourceLoader.load(script_path)
+		# This is a cheap result lookup after idle-menu prewarm, or the one
+		# centralized synchronous load/cancel path after an immediate Play click.
+		var loaded_script: Variant = _consume_run_ui_script_prewarm_result(script_path)
 		if not (loaded_script is Script):
 			_fail_run_ui_build(field_name, script_path)
 			return false
@@ -8612,12 +8612,12 @@ func _build_next_run_ui_stage() -> bool:
 		12:
 			_build_coach_overlay()
 		13:
-			# The Web prewarmer advances two light stages per frame. This spacer
-			# keeps the following large resource graph off the coach-build frame.
+			# Keep the optional Coin Pusher dependency behind its own post-shell
+			# stage so every ordinary run-screen dependency can settle first.
 			pass
 		14:
-			# Loading happens in _ensure_run_ui_stage_scripts(). Holding the Script
-			# makes RunGenerator's ordinary load(module_path) a resource-cache hit.
+			# Loading is performed atomically by _ensure_run_ui_stage_scripts().
+			# This stage intentionally has no node construction of its own.
 			pass
 		_:
 			run_ui_built = true
@@ -8636,6 +8636,7 @@ func _ensure_main_menu_background_built() -> void:
 	if main_menu_background != null or start_screen == null:
 		return
 	main_menu_background = PixelSceneCanvasScript.new()
+	main_menu_background.call("set_object_labels_and_borders_enabled", bool(user_settings.object_labels_and_borders_enabled) if user_settings != null else true)
 	main_menu_background.set_anchors_preset(Control.PRESET_FULL_RECT)
 	# _reroll_main_menu_background() both selects and publishes the environment.
 	# Avoid the former select-then-discard pass that cloned every candidate twice.
@@ -9064,7 +9065,7 @@ func _home_type_label(archetype: Dictionary) -> String:
 	var display_name := str(archetype.get("display_name", "")).strip_edges()
 	if not display_name.is_empty():
 		return display_name
-	var nouns := _string_array(archetype.get("name_nouns", []))
+	var nouns := JsonCoerceScript._raw_string_array(archetype.get("name_nouns", []))
 	if not nouns.is_empty():
 		return str(nouns[0])
 	return str(archetype.get("id", "Home")).replace("_", " ").capitalize()
@@ -9245,7 +9246,7 @@ func _new_run_challenge_for_seed(seed_text: String) -> Dictionary:
 
 func _challenge_with_home_selection(seed_text: String, config: Dictionary) -> Dictionary:
 	var normalized := RunState.normalize_challenge(seed_text, config)
-	var modifiers := _copy_dict(normalized.get("modifiers", {}))
+	var modifiers := JsonCoerceScript._copy_dict(normalized.get("modifiers", {}))
 	var home_id := _normalize_home_type_id(selected_home_type_id)
 	if home_id == RunState.HOME_SELECTION_RANDOM:
 		modifiers.erase("home_archetype_id")
@@ -9271,21 +9272,23 @@ func _build_settings_overlay() -> void:
 	settings_margin.add_theme_constant_override("margin_bottom", 48)
 	settings_overlay.add_child(settings_margin)
 
-	var panel := _panel_container(Color("#080817", 0.98), VisualStyle.PINK)
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	settings_margin.add_child(panel)
+	settings_panel = _panel_container(Color("#080817", 0.98), VisualStyle.PINK)
+	settings_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	settings_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	settings_margin.add_child(settings_panel)
 
 	settings_menu = SettingsMenuScript.new()
 	settings_menu.visible = false
 	settings_menu.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	settings_menu.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	settings_menu.setup(user_settings)
-	settings_menu.back_requested.connect(close_settings_menu)
+	settings_menu.cancel_requested.connect(close_settings_menu)
 	settings_menu.settings_applied.connect(_on_settings_applied)
 	settings_menu.reset_tips_requested.connect(_on_reset_coach_tips_requested)
 	settings_menu.game_library_requested.connect(_on_settings_game_library_requested)
-	panel.add_child(settings_menu)
+	settings_menu.environment_library_requested.connect(_on_settings_environment_library_requested)
+	settings_panel.add_child(settings_menu)
+	_layout_settings_overlay()
 
 
 func _build_event_choice_popup_overlay() -> void:
@@ -9293,6 +9296,7 @@ func _build_event_choice_popup_overlay() -> void:
 	event_choice_popup_overlay.visible = false
 	event_choice_popup_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
 	event_choice_popup_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	event_choice_popup_overlay.gui_input.connect(Callable(self, "_on_event_choice_popup_overlay_gui_input"))
 	add_child(event_choice_popup_overlay)
 
 	event_choice_popup_panel = _panel_container(Color("#080817", 0.98), VisualStyle.AMBER)
@@ -9338,6 +9342,10 @@ func _build_event_choice_popup_overlay() -> void:
 	event_choice_popup_summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	event_choice_popup_summary_label.max_lines_visible = EVENT_CHOICE_SUMMARY_MAX_LINES
 	event_choice_popup_summary_label.clip_text = true
+	# Wrapped Labels report no useful vertical minimum before their width settles.
+	# Reserve their authored line budget so the adaptive popup measures visible
+	# copy instead of collapsing it out of the card.
+	event_choice_popup_summary_label.custom_minimum_size.y = EVENT_CHOICE_SUMMARY_MIN_HEIGHT
 	event_choice_popup_content_stack.add_child(event_choice_popup_summary_label)
 
 	var separator := HSeparator.new()
@@ -9360,21 +9368,17 @@ func _build_talk_dock() -> void:
 
 
 func _on_talk_dock_conversation_active_changed(active: bool) -> void:
-	var now_msec := Time.get_ticks_msec()
-	var should_pause := active \
-		and run_state != null \
-		and run_state.is_tutorial_run() \
-		and talk_dock != null \
-		and _talk_entry_is_pal_tutorial_dialogue(talk_dock.entry)
-	if should_pause and environment_pause_started_msec <= 0:
-		environment_pause_started_msec = now_msec
-	elif not should_pause and environment_pause_started_msec > 0:
-		environment_paused_total_msec += maxi(0, now_msec - environment_pause_started_msec)
-		environment_pause_started_msec = 0
-	if environment_canvas != null:
-		environment_canvas.set_environment_activity_paused(should_pause)
-	if game_surface_canvas != null:
-		game_surface_canvas.set_environment_activity_paused(should_pause)
+	_sync_simulation_pause_owners()
+	_sync_coach_panel_for_talk_dock()
+
+
+func _sync_coach_panel_for_talk_dock() -> void:
+	if coach_overlay == null:
+		return
+	var natural_conversation_active: bool = talk_dock != null \
+		and talk_dock.conversation_active \
+		and not _talk_entry_is_pal_tutorial_dialogue(talk_dock.entry)
+	coach_overlay.set_panel_suppressed(natural_conversation_active)
 
 
 func _talk_entry_is_pal_tutorial_dialogue(entry: Dictionary) -> bool:
@@ -9400,6 +9404,7 @@ func _apply_talk_dock_environment_reserve() -> void:
 	var reserved_rect := _current_talk_dock_environment_reserved_rect()
 	if environment_canvas != null:
 		if environment_canvas.set_reserved_overlay_rect(reserved_rect):
+			interactable_object_catalog_cache_valid = false
 			interactable_object_view_cache_valid = false
 	if world_map_overlay_controller != null:
 		if _world_map_overlay_is_visible():
@@ -9459,7 +9464,7 @@ func _build_conclusion_animation_overlay() -> void:
 
 func _build_run_inventory_overlay() -> void:
 	run_inventory_screen = RunInventoryScreenScript.new()
-	run_inventory_screen.configure(Callable(self, "_run_item_texture_for_asset_path"))
+	run_inventory_screen.configure(Callable(self, "_run_item_texture_for_asset_path"), modal_focus_scope)
 	run_inventory_screen.close_requested.connect(Callable(self, "close_run_inventory"))
 	run_inventory_screen.item_selected.connect(Callable(self, "_on_run_inventory_screen_item_selected"))
 	run_inventory_screen.set_active_requested.connect(Callable(self, "select_active_inventory_item"))
@@ -9477,7 +9482,7 @@ func _build_run_inventory_overlay() -> void:
 
 func _build_meta_item_interaction_overlay() -> void:
 	meta_item_interaction_screen = MetaItemInteractionScreenScript.new()
-	meta_item_interaction_screen.configure(Callable(self, "_run_item_texture_for_asset_path"))
+	meta_item_interaction_screen.configure(Callable(self, "_run_item_texture_for_asset_path"), modal_focus_scope)
 	meta_item_interaction_screen.close_requested.connect(Callable(self, "close_meta_item_interaction"))
 	meta_item_interaction_screen.selection_changed.connect(Callable(self, "_on_meta_item_selection_changed"))
 	meta_item_interaction_screen.action_requested.connect(Callable(self, "_on_meta_item_action_requested"))
@@ -9502,7 +9507,8 @@ func _build_run_journal_overlay() -> void:
 	run_journal_overlay.add_child(shade)
 
 	run_journal_panel = _panel_container(Color("#080817", 0.98), VisualStyle.TEAL)
-	run_journal_panel.custom_minimum_size = Vector2(600, 440)
+	run_journal_panel.custom_minimum_size = Vector2.ZERO
+	run_journal_panel.clip_contents = true
 	run_journal_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	run_journal_overlay.add_child(run_journal_panel)
 
@@ -9512,33 +9518,39 @@ func _build_run_journal_overlay() -> void:
 	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	run_journal_panel.add_child(stack)
 
-	var header := HBoxContainer.new()
-	header.add_theme_constant_override("separation", 8)
-	stack.add_child(header)
+	run_journal_header = HBoxContainer.new()
+	run_journal_header.add_theme_constant_override("separation", 8)
+	stack.add_child(run_journal_header)
 	var title := _label("Run Journal", 20)
 	_set_control_font_color(title, VisualStyle.YELLOW)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	header.add_child(title)
-	var close_button := _button("Close", Callable(self, "close_run_journal"))
-	close_button.custom_minimum_size = Vector2(96, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
-	header.add_child(close_button)
+	run_journal_header.add_child(title)
+	run_journal_close_button = _button("Close", Callable(self, "close_run_journal"))
+	run_journal_close_button.custom_minimum_size = Vector2(96, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
+	run_journal_header.add_child(run_journal_close_button)
+
+	run_journal_scroll = ScrollContainer.new()
+	run_journal_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	run_journal_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	run_journal_scroll.follow_focus = true
+	run_journal_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	run_journal_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.add_child(run_journal_scroll)
+
+	var scroll_stack := VBoxContainer.new()
+	scroll_stack.add_theme_constant_override("separation", 8)
+	scroll_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	run_journal_scroll.add_child(scroll_stack)
 
 	run_journal_summary_label = _label("", 12)
 	_set_control_font_color(run_journal_summary_label, VisualStyle.CYAN)
 	run_journal_summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	stack.add_child(run_journal_summary_label)
-
-	var scroll := ScrollContainer.new()
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
-	scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	stack.add_child(scroll)
+	scroll_stack.add_child(run_journal_summary_label)
 
 	run_journal_list = VBoxContainer.new()
 	run_journal_list.add_theme_constant_override("separation", 8)
 	run_journal_list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(run_journal_list)
+	scroll_stack.add_child(run_journal_list)
 
 
 func _build_travel_transition_overlay() -> void:
@@ -9603,7 +9615,7 @@ func _build_world_map_overlay() -> void:
 	world_map_overlay.add_child(dim)
 
 	world_map_panel = _panel_container(Color("#050611", 0.98), VisualStyle.PURPLE_2)
-	world_map_panel.custom_minimum_size = Vector2(860, 540)
+	world_map_panel.custom_minimum_size = Vector2.ZERO
 	world_map_panel.anchor_left = 0.5
 	world_map_panel.anchor_top = 0.5
 	world_map_panel.anchor_right = 0.5
@@ -9632,9 +9644,9 @@ func _build_world_map_overlay() -> void:
 	_set_control_font_color(world_map_title_label, VisualStyle.YELLOW)
 	header.add_child(world_map_title_label)
 
-	var close_button := _button("Close", Callable(self, "close_world_map"))
-	close_button.custom_minimum_size = Vector2(96, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
-	header.add_child(close_button)
+	world_map_close_button = _button("Close", Callable(self, "close_world_map"))
+	world_map_close_button.custom_minimum_size = Vector2(96, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	header.add_child(world_map_close_button)
 
 	var body := VBoxContainer.new()
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -9643,7 +9655,7 @@ func _build_world_map_overlay() -> void:
 
 	world_map_holder = Control.new()
 	world_map_holder.name = "WorldMapHolder"
-	world_map_holder.custom_minimum_size = Vector2(800, 430)
+	world_map_holder.custom_minimum_size = Vector2.ZERO
 	world_map_holder.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	world_map_holder.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	world_map_holder.clip_contents = true
@@ -9652,7 +9664,7 @@ func _build_world_map_overlay() -> void:
 	body.add_child(world_map_holder)
 
 	world_map_nodes_layer = WorldMapCanvasScript.new()
-	world_map_nodes_layer.custom_minimum_size = Vector2(800, 430)
+	world_map_nodes_layer.custom_minimum_size = Vector2.ZERO
 	world_map_nodes_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
 	world_map_nodes_layer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	if world_map_nodes_layer.has_signal("layout_changed"):
@@ -9688,7 +9700,8 @@ func _build_world_map_overlay() -> void:
 	world_map_confirm_button = _button("Travel", Callable(self, "confirm_world_map_travel"))
 	world_map_confirm_button.custom_minimum_size = Vector2(132, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	popup_stack.add_child(world_map_confirm_button)
-	world_map_overlay_controller.configure_nodes(world_map_overlay, world_map_holder, world_map_nodes_layer, world_map_title_label, world_map_detail_popup, world_map_detail_label, world_map_badge_slot, world_map_confirm_button)
+	world_map_overlay_controller.configure_nodes(world_map_overlay, world_map_holder, world_map_nodes_layer, world_map_title_label, world_map_detail_popup, world_map_detail_label, world_map_badge_slot, world_map_confirm_button, world_map_close_button)
+	_layout_world_map_panel()
 
 
 func _ensure_world_map_overlay_controller() -> void:
@@ -9696,6 +9709,126 @@ func _ensure_world_map_overlay_controller() -> void:
 		world_map_overlay_controller = WorldMapOverlayControllerScript.new()
 		world_map_overlay_controller.node_pressed.connect(Callable(self, "select_world_map_node"))
 	world_map_overlay_controller.set_small_screen_mode(_small_screen_enabled())
+
+
+func _modal_viewport_size(override_size: Vector2 = Vector2.ZERO) -> Vector2:
+	if override_size.x > 0.0 and override_size.y > 0.0:
+		return override_size
+	if world_map_overlay != null and world_map_overlay.size.x > 0.0 and world_map_overlay.size.y > 0.0:
+		return world_map_overlay.size
+	return get_viewport_rect().size
+
+
+func _bounded_centered_modal_rect(viewport_size: Vector2, maximum_size: Vector2, margin: Vector2) -> Rect2:
+	var available := Vector2(maxf(1.0, viewport_size.x - margin.x * 2.0), maxf(1.0, viewport_size.y - margin.y * 2.0))
+	var modal_size := Vector2(minf(maximum_size.x, available.x), minf(maximum_size.y, available.y))
+	return Rect2((viewport_size - modal_size) * 0.5, modal_size)
+
+
+func _world_map_panel_rect_for_viewport(viewport_size: Vector2) -> Rect2:
+	var compact := _small_screen_enabled() or viewport_size.x < 960.0 or viewport_size.y < 540.0
+	var margin := Vector2(12.0, 12.0) if compact else Vector2(24.0, 24.0)
+	return _bounded_centered_modal_rect(viewport_size, Vector2(860.0, 540.0), margin)
+
+
+func _run_menu_panel_rect_for_viewport(viewport_size: Vector2) -> Rect2:
+	return _bounded_centered_modal_rect(viewport_size, Vector2(540.0, 430.0), Vector2(12.0, 12.0))
+
+
+func _run_journal_panel_rect_for_viewport(viewport_size: Vector2) -> Rect2:
+	return _bounded_centered_modal_rect(viewport_size, Vector2(720.0, 560.0), Vector2(12.0, 12.0))
+
+
+func _layout_run_menu_panel() -> void:
+	if run_menu_panel == null:
+		return
+	var viewport_size := run_menu_overlay.size if run_menu_overlay != null and run_menu_overlay.size.x > 0.0 and run_menu_overlay.size.y > 0.0 else _modal_viewport_size()
+	var rect := _run_menu_panel_rect_for_viewport(viewport_size)
+	run_menu_panel.position = rect.position
+	run_menu_panel.size = rect.size
+
+
+func _settle_run_menu_panel_layout() -> void:
+	await get_tree().process_frame
+	if run_menu_overlay != null and run_menu_overlay.visible:
+		_layout_run_menu_panel()
+
+
+func _on_run_menu_action_focus_entered(action: Control) -> void:
+	if run_menu_scroll == null or action == null or not run_menu_scroll.is_ancestor_of(action):
+		return
+	run_menu_scroll.ensure_control_visible(action)
+	call_deferred("_settle_run_menu_action_visibility", action)
+
+
+func _settle_run_menu_action_visibility(action: Control) -> void:
+	await get_tree().process_frame
+	_clamp_run_menu_action_visibility(action)
+	await get_tree().process_frame
+	_clamp_run_menu_action_visibility(action)
+
+
+func _clamp_run_menu_action_visibility(action: Control) -> void:
+	if run_menu_scroll == null or action == null or not is_instance_valid(action) or not run_menu_scroll.is_ancestor_of(action):
+		return
+	var viewport_rect := run_menu_scroll.get_global_rect()
+	var action_rect := action.get_global_rect()
+	var correction := 0.0
+	if action_rect.position.y < viewport_rect.position.y:
+		correction = action_rect.position.y - viewport_rect.position.y
+	elif action_rect.end.y > viewport_rect.end.y:
+		correction = action_rect.end.y - viewport_rect.end.y
+	if not is_zero_approx(correction):
+		run_menu_scroll.scroll_vertical += int(round(correction))
+
+
+func _layout_run_journal_panel() -> void:
+	if run_journal_panel == null:
+		return
+	var viewport_size := run_journal_overlay.size if run_journal_overlay != null and run_journal_overlay.size.x > 0.0 and run_journal_overlay.size.y > 0.0 else _modal_viewport_size()
+	var rect := _run_journal_panel_rect_for_viewport(viewport_size)
+	run_journal_panel.position = rect.position
+	run_journal_panel.size = rect.size
+
+
+func _settings_panel_rect_for_viewport(viewport_size: Vector2) -> Rect2:
+	var compact := _small_screen_enabled() or viewport_size.x < 960.0 or viewport_size.y < 540.0
+	var horizontal_margin := 72.0 if compact else minf(220.0, maxf(24.0, (viewport_size.x - 480.0) * 0.5))
+	var vertical_margin := 12.0 if compact else 48.0
+	return Rect2(Vector2(horizontal_margin, vertical_margin), Vector2(maxf(1.0, viewport_size.x - horizontal_margin * 2.0), maxf(1.0, viewport_size.y - vertical_margin * 2.0)))
+
+
+func _layout_world_map_panel() -> void:
+	if world_map_panel == null:
+		return
+	var viewport_size := _modal_viewport_size()
+	var rect := _world_map_panel_rect_for_viewport(viewport_size)
+	world_map_panel.custom_minimum_size = Vector2.ZERO
+	world_map_panel.anchor_left = 0.5
+	world_map_panel.anchor_top = 0.5
+	world_map_panel.anchor_right = 0.5
+	world_map_panel.anchor_bottom = 0.5
+	world_map_panel.offset_left = -rect.size.x * 0.5
+	world_map_panel.offset_top = -rect.size.y * 0.5
+	world_map_panel.offset_right = rect.size.x * 0.5
+	world_map_panel.offset_bottom = rect.size.y * 0.5
+	if world_map_holder != null:
+		world_map_holder.custom_minimum_size = Vector2.ZERO
+	if world_map_nodes_layer != null:
+		world_map_nodes_layer.custom_minimum_size = Vector2.ZERO
+	if world_map_overlay_controller != null:
+		world_map_overlay_controller.reset_button_layout()
+
+
+func _layout_settings_overlay() -> void:
+	if settings_margin == null:
+		return
+	var viewport_size := _modal_viewport_size()
+	var rect := _settings_panel_rect_for_viewport(viewport_size)
+	settings_margin.add_theme_constant_override("margin_left", int(round(rect.position.x)))
+	settings_margin.add_theme_constant_override("margin_right", int(round(viewport_size.x - rect.end.x)))
+	settings_margin.add_theme_constant_override("margin_top", int(round(rect.position.y)))
+	settings_margin.add_theme_constant_override("margin_bottom", int(round(viewport_size.y - rect.end.y)))
 
 
 func _sync_world_map_overlay_controller_from_host() -> void:
@@ -9901,6 +10034,467 @@ func _build_game_test_menu(parent: Node) -> void:
 		list.add_child(button)
 
 
+func _build_environment_test_menu(parent: Node) -> void:
+	environment_test_menu = VBoxContainer.new()
+	environment_test_menu.visible = false
+	environment_test_menu.add_theme_constant_override("separation", 7)
+	environment_test_menu.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	environment_test_menu.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	parent.add_child(environment_test_menu)
+
+	var header := HBoxContainer.new()
+	header.add_theme_constant_override("separation", 8)
+	environment_test_menu.add_child(header)
+	var heading := _label("Environment Library", 20)
+	_set_control_font_color(heading, VisualStyle.YELLOW)
+	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	header.add_child(heading)
+	environment_test_back_button = _button("Back", Callable(self, "close_environment_test_menu"))
+	environment_test_back_button.custom_minimum_size = Vector2(96, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	header.add_child(environment_test_back_button)
+
+	var description := _label("Spawn a real generated room without starting a run. Player state carries between practice rooms.", 12)
+	_set_control_font_color(description, VisualStyle.CYAN)
+	description.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	environment_test_menu.add_child(description)
+
+	var panel := _panel_container(Color("#050611", 0.82), VisualStyle.CYAN_2)
+	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	environment_test_menu.add_child(panel)
+	var controls := VBoxContainer.new()
+	controls.add_theme_constant_override("separation", 7)
+	controls.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	panel.add_child(controls)
+
+	var seed_row := HBoxContainer.new()
+	seed_row.add_theme_constant_override("separation", 8)
+	controls.add_child(seed_row)
+	seed_row.add_child(_label("Seed", 12))
+	environment_test_seed_input = LineEdit.new()
+	environment_test_seed_input.text = "ENVIRONMENT-TEST"
+	environment_test_seed_input.placeholder_text = "Repeatable practice seed"
+	environment_test_seed_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	environment_test_seed_input.custom_minimum_size = Vector2(0, 34)
+	seed_row.add_child(environment_test_seed_input)
+
+	var identity_row := HBoxContainer.new()
+	identity_row.add_theme_constant_override("separation", 8)
+	controls.add_child(identity_row)
+	environment_test_archetype_option = _environment_test_option_group(identity_row, "Environment")
+	environment_test_scenario_option = _environment_test_option_group(identity_row, "Scenario")
+	environment_test_layer_option = _environment_test_option_group(identity_row, "Starting Area")
+	environment_test_archetype_option.item_selected.connect(_on_environment_test_archetype_selected)
+	environment_test_scenario_option.item_selected.connect(_on_environment_test_scenario_selected)
+	environment_test_layer_option.item_selected.connect(_on_environment_test_layer_selected)
+
+	var condition_row := HBoxContainer.new()
+	condition_row.add_theme_constant_override("separation", 8)
+	controls.add_child(condition_row)
+	environment_test_weather_option = _environment_test_option_group(condition_row, "Weather")
+	_environment_test_add_option(environment_test_weather_option, "Default", "default")
+	_environment_test_add_option(environment_test_weather_option, "Random", "random")
+	for weather_id in TownState.WEATHER_IDS:
+		_environment_test_add_option(environment_test_weather_option, str(weather_id).replace("_", " ").capitalize(), str(weather_id))
+	environment_test_day_option = _environment_test_option_group(condition_row, "Calendar")
+	_environment_test_add_option(environment_test_day_option, "Default", "default")
+	_environment_test_add_option(environment_test_day_option, "Random", "random")
+	for day_id in TownState.DAY_TYPE_IDS:
+		_environment_test_add_option(environment_test_day_option, str(day_id).replace("_", " ").capitalize(), str(day_id))
+	environment_test_happening_mode_option = _environment_test_option_group(condition_row, "Town Events")
+	_environment_test_add_option(environment_test_happening_mode_option, "Default", "default")
+	_environment_test_add_option(environment_test_happening_mode_option, "Random", "random")
+	_environment_test_add_option(environment_test_happening_mode_option, "None", "none")
+	_environment_test_add_option(environment_test_happening_mode_option, "Choose", "custom")
+	environment_test_happening_mode_option.item_selected.connect(_on_environment_test_happening_mode_selected)
+
+	var happening_row := HFlowContainer.new()
+	happening_row.add_theme_constant_override("h_separation", 12)
+	happening_row.add_theme_constant_override("v_separation", 4)
+	controls.add_child(happening_row)
+	for happening_id in TownState.HAPPENING_IDS:
+		var check := CheckBox.new()
+		check.text = str(happening_id).replace("_", " ").capitalize()
+		check.disabled = true
+		check.set_meta("environment_test_happening_id", happening_id)
+		happening_row.add_child(check)
+		environment_test_happening_checks[happening_id] = check
+
+	var placement_action_row := HBoxContainer.new()
+	placement_action_row.add_theme_constant_override("separation", 8)
+	controls.add_child(placement_action_row)
+	environment_test_next_missing_button = _button(
+		"Load Next Missing",
+		Callable(self, "_load_next_missing_environment_layout")
+	)
+	environment_test_next_missing_button.name = "LoadNextMissingLayout"
+	environment_test_next_missing_button.custom_minimum_size = Vector2(0, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	environment_test_next_missing_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	environment_test_next_missing_button.tooltip_text = "Select and spawn the next unsaved base or exact scenario layout in the 75-layout placement pass."
+	placement_action_row.add_child(environment_test_next_missing_button)
+
+	var action_row := HBoxContainer.new()
+	action_row.add_theme_constant_override("separation", 8)
+	controls.add_child(action_row)
+	environment_test_status_label = _label("Choose a room and scenario.", 12)
+	_set_control_font_color(environment_test_status_label, VisualStyle.CYAN_2)
+	environment_test_status_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	environment_test_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	action_row.add_child(environment_test_status_label)
+	var spawn_button := _button("Spawn Environment", Callable(self, "start_environment_test_session"))
+	spawn_button.custom_minimum_size = Vector2(190, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+	action_row.add_child(spawn_button)
+
+	_populate_environment_test_archetypes()
+
+
+func _environment_test_option_group(parent: Node, label_text: String) -> OptionButton:
+	var group := VBoxContainer.new()
+	group.add_theme_constant_override("separation", 3)
+	group.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	parent.add_child(group)
+	var label := _label(label_text, 11)
+	_set_control_font_color(label, VisualStyle.CYAN_2)
+	group.add_child(label)
+	var option := OptionButton.new()
+	option.custom_minimum_size = Vector2(0, 34)
+	option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	group.add_child(option)
+	return option
+
+
+func _environment_test_add_option(option: OptionButton, label_text: String, id: String) -> void:
+	var index := option.item_count
+	option.add_item(label_text)
+	option.set_item_metadata(index, id)
+
+
+func _environment_test_selected_id(option: OptionButton, fallback: String = "") -> String:
+	if option == null or option.item_count <= 0 or option.selected < 0:
+		return fallback
+	return str(option.get_item_metadata(option.selected)).strip_edges()
+
+
+func _environment_test_select_id(option: OptionButton, wanted_id: String) -> bool:
+	if option == null:
+		return false
+	var clean_id := wanted_id.strip_edges()
+	for index in range(option.item_count):
+		if str(option.get_item_metadata(index)).strip_edges() == clean_id:
+			option.select(index)
+			return true
+	return false
+
+
+func _environment_test_placement_pass_active() -> bool:
+	return user_settings != null and bool(user_settings.developer_slot_placement_mode)
+
+
+func _populate_environment_test_archetypes() -> void:
+	if environment_test_archetype_option == null or library == null:
+		return
+	environment_test_archetype_option.clear()
+	for definition_value in library.environment_archetypes:
+		if typeof(definition_value) != TYPE_DICTIONARY:
+			continue
+		var definition: Dictionary = definition_value
+		var archetype_id := str(definition.get("id", "")).strip_edges()
+		if archetype_id.is_empty():
+			continue
+		var display_name := str(definition.get("display_name", "")).strip_edges()
+		if display_name.is_empty():
+			display_name = archetype_id.replace("_", " ").capitalize()
+		_environment_test_add_option(environment_test_archetype_option, display_name, archetype_id)
+	if environment_test_archetype_option.item_count > 0:
+		environment_test_archetype_option.select(0)
+		_refresh_environment_test_identity_options()
+
+
+func _on_environment_test_archetype_selected(_index: int) -> void:
+	_refresh_environment_test_identity_options()
+
+
+func _on_environment_test_scenario_selected(_index: int) -> void:
+	_sync_environment_test_layer_to_scenario()
+
+
+func _on_environment_test_layer_selected(_index: int) -> void:
+	_refresh_environment_test_completion_presentation()
+
+
+func _refresh_environment_test_identity_options() -> void:
+	if library == null or environment_test_scenario_option == null or environment_test_layer_option == null:
+		return
+	var previous_scenario_id := _environment_test_selected_id(environment_test_scenario_option)
+	var previous_layer_id := _environment_test_selected_id(environment_test_layer_option)
+	var archetype_id := _environment_test_selected_id(environment_test_archetype_option)
+	var placement_pass := _environment_test_placement_pass_active()
+	environment_test_scenario_option.clear()
+	if not placement_pass:
+		_environment_test_add_option(environment_test_scenario_option, "Normal Run Selection", "__default")
+	_environment_test_add_option(environment_test_scenario_option, "Base / No Scenario", "__none")
+	for scenario_value in library.scenarios_for_archetype(archetype_id):
+		if typeof(scenario_value) != TYPE_DICTIONARY:
+			continue
+		var scenario: Dictionary = scenario_value
+		var scenario_id := str(scenario.get("id", "")).strip_edges()
+		if scenario_id.is_empty():
+			continue
+		var scenario_name := str(scenario.get("display_name", scenario.get("name", ""))).strip_edges()
+		if scenario_name.is_empty():
+			scenario_name = scenario_id.replace("_", " ").capitalize()
+		_environment_test_add_option(environment_test_scenario_option, scenario_name, scenario_id)
+	environment_test_layer_option.clear()
+	var archetype := library.environment_archetype(archetype_id)
+	var layers := JsonCoerceScript._copy_dict(archetype.get("layers", {}))
+	if layers.is_empty() or not placement_pass:
+		var entrance_label := "Main room" if placement_pass else "Scenario / Normal Entrance"
+		_environment_test_add_option(environment_test_layer_option, entrance_label, "")
+	var ordered_layer_ids: Array = []
+	ordered_layer_ids.assign(layers.keys())
+	for layer_id_value in ordered_layer_ids:
+		var layer_id := str(layer_id_value)
+		var layer := JsonCoerceScript._copy_dict(layers.get(layer_id_value, {}))
+		var layer_name := str(layer.get("layer_display_name", layer_id.replace("_", " ").capitalize()))
+		_environment_test_add_option(environment_test_layer_option, layer_name, layer_id)
+	var fallback_scenario_id := "__none" if placement_pass else "__default"
+	if not _environment_test_select_id(environment_test_scenario_option, previous_scenario_id):
+		_environment_test_select_id(environment_test_scenario_option, fallback_scenario_id)
+	if not _environment_test_select_id(environment_test_layer_option, previous_layer_id):
+		var default_layer_id := str(archetype.get("default_layer_id", "")).strip_edges()
+		if default_layer_id.is_empty() or not _environment_test_select_id(environment_test_layer_option, default_layer_id):
+			environment_test_layer_option.select(0)
+	_sync_environment_test_layer_to_scenario()
+
+
+func _sync_environment_test_layer_to_scenario() -> void:
+	if library == null or environment_test_scenario_option == null or environment_test_layer_option == null:
+		return
+	var scenario_id := _environment_test_selected_id(
+		environment_test_scenario_option,
+		"__none" if _environment_test_placement_pass_active() else "__default"
+	)
+	var exact_scenario := scenario_id not in ["__default", "__none"]
+	var authored_layer_id := ""
+	if exact_scenario:
+		authored_layer_id = str(library.scenario(scenario_id).get("layer_id", "")).strip_edges()
+	for index in range(environment_test_layer_option.item_count):
+		if str(environment_test_layer_option.get_item_metadata(index)).strip_edges() == authored_layer_id:
+			environment_test_layer_option.select(index)
+			break
+	var archetype_id := _environment_test_selected_id(environment_test_archetype_option)
+	var layers := JsonCoerceScript._copy_dict(library.environment_archetype(archetype_id).get("layers", {}))
+	environment_test_layer_option.disabled = layers.is_empty() or exact_scenario
+	environment_test_layer_option.tooltip_text = "Exact scenarios always open in their authored area." if exact_scenario else "Choose the starting area for this base room."
+	_refresh_environment_test_completion_presentation()
+
+
+func _environment_test_layout_environment(
+	archetype_id: String,
+	layer_id: String,
+	scenario_id: String
+) -> Dictionary:
+	var environment: Dictionary = {"archetype_id": archetype_id.strip_edges()}
+	var clean_layer_id := layer_id.strip_edges()
+	if not clean_layer_id.is_empty():
+		environment["current_layer_id"] = clean_layer_id
+	var clean_scenario_id := scenario_id.strip_edges()
+	if clean_scenario_id not in ["", "__default", "__none", DeveloperPlacementStoreScript.BASE_LAYOUT_ID]:
+		environment["scenario_id"] = clean_scenario_id
+		environment["scenario_state"] = {
+			"id": clean_scenario_id,
+			"layer_id": clean_layer_id,
+		}
+	return environment
+
+
+func _environment_test_current_layout_environment() -> Dictionary:
+	var archetype_id := _environment_test_selected_id(environment_test_archetype_option)
+	var scenario_id := _environment_test_selected_id(
+		environment_test_scenario_option,
+		"__none" if _environment_test_placement_pass_active() else "__default"
+	)
+	var layer_id := _environment_test_selected_id(environment_test_layer_option)
+	if scenario_id not in ["__default", "__none"]:
+		layer_id = str(library.scenario(scenario_id).get("layer_id", layer_id)).strip_edges()
+	return _environment_test_layout_environment(archetype_id, layer_id, scenario_id)
+
+
+func _environment_test_status_prefix(saved: bool) -> String:
+	return "SAVED · " if saved else "TODO · "
+
+
+func _environment_test_scenario_name(scenario_id: String) -> String:
+	var scenario := library.scenario(scenario_id)
+	var scenario_name := str(scenario.get("display_name", scenario.get("name", ""))).strip_edges()
+	return scenario_name if not scenario_name.is_empty() else scenario_id.replace("_", " ").capitalize()
+
+
+func _environment_test_layer_name(archetype_id: String, layer_id: String) -> String:
+	if layer_id.strip_edges().is_empty():
+		return "Main room"
+	var layers := JsonCoerceScript._copy_dict(library.environment_archetype(archetype_id).get("layers", {}))
+	var layer := JsonCoerceScript._copy_dict(layers.get(layer_id, {}))
+	return str(layer.get("layer_display_name", layer_id.replace("_", " ").capitalize()))
+
+
+func _environment_test_friendly_layout_name(layout_id: String) -> String:
+	var separator := layout_id.find("::")
+	if separator < 0:
+		return layout_id
+	var map_id := layout_id.left(separator)
+	var scenario_id := layout_id.substr(separator + 2)
+	var archetype_id := map_id
+	var layer_id := ""
+	var layer_separator := map_id.find(":")
+	if layer_separator >= 0:
+		archetype_id = map_id.left(layer_separator)
+		layer_id = map_id.substr(layer_separator + 1)
+	var archetype := library.environment_archetype(archetype_id)
+	var environment_name := str(archetype.get("display_name", "")).strip_edges()
+	if environment_name.is_empty():
+		environment_name = archetype_id.replace("_", " ").capitalize()
+	if not layer_id.is_empty():
+		environment_name += " — %s" % _environment_test_layer_name(archetype_id, layer_id)
+	var context_name := "Base / No Scenario" if scenario_id == DeveloperPlacementStoreScript.BASE_LAYOUT_ID else _environment_test_scenario_name(scenario_id)
+	return "%s / %s" % [environment_name, context_name]
+
+
+func _environment_test_next_missing_layout_id(coverage: Dictionary = {}) -> String:
+	var snapshot := coverage if not coverage.is_empty() else DeveloperPlacementStoreScript.coverage_snapshot()
+	var next_missing := str(snapshot.get("next_missing_layout_id", "")).strip_edges()
+	if not next_missing.is_empty():
+		return next_missing
+	var missing := JsonCoerceScript._copy_array(snapshot.get("missing_layout_ids", []))
+	return str(missing[0]).strip_edges() if not missing.is_empty() else ""
+
+
+func _refresh_environment_test_completion_presentation() -> void:
+	if library == null or environment_test_scenario_option == null or environment_test_layer_option == null:
+		return
+	var placement_pass := _environment_test_placement_pass_active()
+	if environment_test_next_missing_button != null:
+		environment_test_next_missing_button.visible = placement_pass
+	if not placement_pass:
+		if environment_test_status_label != null:
+			var selected_scenario_id := _environment_test_selected_id(environment_test_scenario_option, "__default")
+			if selected_scenario_id not in ["__default", "__none"]:
+				var authored_layer_id := str(library.scenario(selected_scenario_id).get("layer_id", "")).strip_edges()
+				var area_label := "main room" if authored_layer_id.is_empty() else _environment_test_layer_name(
+					_environment_test_selected_id(environment_test_archetype_option), authored_layer_id
+				)
+				environment_test_status_label.text = "Exact scenario area locked: %s." % area_label
+			elif not JsonCoerceScript._copy_dict(library.environment_archetype(
+				_environment_test_selected_id(environment_test_archetype_option)
+			).get("layers", {})).is_empty():
+				environment_test_status_label.text = "Base / normal selection: choose any starting area."
+			else:
+				environment_test_status_label.text = "%d scenario choice(s) available." % environment_test_scenario_option.item_count
+		return
+
+	var archetype_id := _environment_test_selected_id(environment_test_archetype_option)
+	var selected_layer_id := _environment_test_selected_id(environment_test_layer_option)
+	for index in range(environment_test_scenario_option.item_count):
+		var scenario_id := str(environment_test_scenario_option.get_item_metadata(index)).strip_edges()
+		if scenario_id == "__none":
+			var base_environment := _environment_test_layout_environment(archetype_id, selected_layer_id, scenario_id)
+			environment_test_scenario_option.set_item_text(
+				index,
+				"%sBase / No Scenario" % _environment_test_status_prefix(
+					DeveloperPlacementStoreScript.layout_saved(base_environment)
+				)
+			)
+		elif scenario_id != "__default":
+			var scenario_layer_id := str(library.scenario(scenario_id).get("layer_id", "")).strip_edges()
+			var scenario_environment := _environment_test_layout_environment(
+				archetype_id, scenario_layer_id, scenario_id
+			)
+			environment_test_scenario_option.set_item_text(
+				index,
+				"%s%s" % [
+					_environment_test_status_prefix(DeveloperPlacementStoreScript.layout_saved(scenario_environment)),
+					_environment_test_scenario_name(scenario_id),
+				]
+			)
+	for index in range(environment_test_layer_option.item_count):
+		var layer_id := str(environment_test_layer_option.get_item_metadata(index)).strip_edges()
+		var layer_environment := _environment_test_layout_environment(archetype_id, layer_id, "__none")
+		environment_test_layer_option.set_item_text(
+			index,
+			"%s%s" % [
+				_environment_test_status_prefix(DeveloperPlacementStoreScript.layout_saved(layer_environment)),
+				_environment_test_layer_name(archetype_id, layer_id),
+			]
+		)
+
+	var coverage := DeveloperPlacementStoreScript.coverage_snapshot()
+	var next_missing := _environment_test_next_missing_layout_id(coverage)
+	if environment_test_next_missing_button != null:
+		environment_test_next_missing_button.disabled = next_missing.is_empty()
+		environment_test_next_missing_button.text = "All Layouts Saved" if next_missing.is_empty() else "Load Next Missing"
+		environment_test_next_missing_button.tooltip_text = (
+			"Every authored placement layout is saved."
+			if next_missing.is_empty()
+			else "Select and spawn %s." % _environment_test_friendly_layout_name(next_missing)
+		)
+	if environment_test_status_label != null:
+		var current_environment := _environment_test_current_layout_environment()
+		var current_layout_id := DeveloperPlacementStoreScript.layout_id(current_environment)
+		var current_state := "SAVED" if DeveloperPlacementStoreScript.layout_saved(current_environment) else "TODO"
+		var next_label := "complete" if next_missing.is_empty() else _environment_test_friendly_layout_name(next_missing)
+		environment_test_status_label.text = "Placement pass: %d/%d saved. Current: %s · %s. Next: %s." % [
+			int(coverage.get("saved_layout_count", 0)),
+			int(coverage.get("expected_layout_count", 0)),
+			current_state,
+			_environment_test_friendly_layout_name(current_layout_id),
+			next_label,
+		]
+
+
+func _select_environment_test_layout(layout_id: String) -> bool:
+	var separator := layout_id.find("::")
+	if separator < 0:
+		return false
+	var map_id := layout_id.left(separator)
+	var scenario_id := layout_id.substr(separator + 2)
+	var archetype_id := map_id
+	var layer_id := ""
+	var layer_separator := map_id.find(":")
+	if layer_separator >= 0:
+		archetype_id = map_id.left(layer_separator)
+		layer_id = map_id.substr(layer_separator + 1)
+	if not _environment_test_select_id(environment_test_archetype_option, archetype_id):
+		return false
+	_refresh_environment_test_identity_options()
+	var selector_scenario_id := "__none" if scenario_id == DeveloperPlacementStoreScript.BASE_LAYOUT_ID else scenario_id
+	if not _environment_test_select_id(environment_test_scenario_option, selector_scenario_id):
+		return false
+	if selector_scenario_id == "__none" and not _environment_test_select_id(environment_test_layer_option, layer_id):
+		return false
+	_sync_environment_test_layer_to_scenario()
+	return DeveloperPlacementStoreScript.layout_id(_environment_test_current_layout_environment()) == layout_id
+
+
+func _load_next_missing_environment_layout() -> Dictionary:
+	var coverage := DeveloperPlacementStoreScript.coverage_snapshot()
+	var next_missing := _environment_test_next_missing_layout_id(coverage)
+	if next_missing.is_empty():
+		_refresh_environment_test_completion_presentation()
+		return {"ok": false, "errors": ["Every environment layout is already saved."]}
+	if not _select_environment_test_layout(next_missing):
+		var error := "The next missing placement layout could not be selected: %s." % next_missing
+		if environment_test_status_label != null:
+			environment_test_status_label.text = error
+		return {"ok": false, "errors": [error]}
+	return start_environment_test_session()
+
+
+func _on_environment_test_happening_mode_selected(_index: int) -> void:
+	var custom := _environment_test_selected_id(environment_test_happening_mode_option) == "custom"
+	for check_value in environment_test_happening_checks.values():
+		if check_value is CheckBox:
+			(check_value as CheckBox).disabled = not custom
+
+
 func _ensure_inventory_page_built() -> void:
 	if inventory_page != null:
 		return
@@ -9932,6 +10526,358 @@ func _ensure_game_test_menu_built() -> void:
 	_ensure_full_content_library_loaded()
 	_build_game_test_menu(start_menu_stack)
 	_apply_accessibility_settings()
+
+
+func _ensure_environment_test_menu_built() -> void:
+	if environment_test_menu != null or not show_game_library_launcher:
+		return
+	if start_menu_stack == null:
+		return
+	_ensure_full_content_library_loaded()
+	_build_environment_test_menu(start_menu_stack)
+	_apply_accessibility_settings()
+
+
+func _ensure_environment_test_overlay_built() -> void:
+	if environment_test_overlay != null:
+		return
+	environment_test_overlay = PanelContainer.new()
+	environment_test_overlay.visible = false
+	environment_test_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
+	environment_test_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
+	environment_test_overlay.add_theme_stylebox_override("panel", VisualStyle.pixel_box(Color("#03030a", 0.94), VisualStyle.CYAN, 1))
+	add_child(environment_test_overlay)
+	var margin := MarginContainer.new()
+	margin.set_anchors_preset(Control.PRESET_FULL_RECT)
+	margin.add_theme_constant_override("margin_left", 72)
+	margin.add_theme_constant_override("margin_right", 72)
+	margin.add_theme_constant_override("margin_top", 42)
+	margin.add_theme_constant_override("margin_bottom", 42)
+	environment_test_overlay.add_child(margin)
+	environment_test_overlay_panel = _panel_container(Color("#080817", 0.99), VisualStyle.PINK)
+	environment_test_overlay_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	environment_test_overlay_panel.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	margin.add_child(environment_test_overlay_panel)
+	environment_test_overlay_content = VBoxContainer.new()
+	environment_test_overlay_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	environment_test_overlay_content.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	environment_test_overlay_panel.add_child(environment_test_overlay_content)
+
+
+func open_environment_test_menu() -> void:
+	if not show_game_library_launcher:
+		return
+	_ensure_environment_test_menu_built()
+	if environment_test_menu == null:
+		return
+	close_content_group_config()
+	close_challenge_selection()
+	var in_run := current_screen != SCREEN_START and run_state != null
+	if in_run:
+		_ensure_environment_test_overlay_built()
+		if environment_test_menu.get_parent() != environment_test_overlay_content:
+			environment_test_menu.reparent(environment_test_overlay_content)
+		environment_test_overlay.visible = true
+		environment_test_overlay.move_to_front()
+		environment_test_back_button.text = "Resume"
+	else:
+		if environment_test_menu.get_parent() != start_menu_stack:
+			environment_test_menu.reparent(start_menu_stack)
+		if settings_menu != null:
+			settings_menu.visible = false
+		if inventory_page != null:
+			inventory_page.visible = false
+		if career_stats_screen != null:
+			career_stats_screen.visible = false
+		if game_test_menu != null:
+			game_test_menu.visible = false
+		if start_menu_controls != null:
+			start_menu_controls.visible = false
+		if start_menu_intro != null:
+			start_menu_intro.visible = false
+		environment_test_back_button.text = "Back"
+	environment_test_menu.visible = true
+	_refresh_environment_test_identity_options()
+
+
+func close_environment_test_menu() -> void:
+	if environment_test_menu != null:
+		environment_test_menu.visible = false
+	if environment_test_overlay != null and environment_test_overlay.visible:
+		environment_test_overlay.visible = false
+		_refresh()
+		return
+	if start_menu_intro != null:
+		start_menu_intro.visible = true
+	if start_menu_controls != null:
+		start_menu_controls.visible = true
+	_refresh_start_screen()
+
+
+func _environment_test_condition_overrides(candidate: RunState, generation_key: String) -> Dictionary:
+	var result: Dictionary = {}
+	var rng := candidate.create_rng("environment_practice_conditions:%s" % generation_key)
+	var weather_mode := _environment_test_selected_id(environment_test_weather_option, "default")
+	if weather_mode == "random":
+		result["weather"] = str(rng.pick(TownState.WEATHER_IDS, "clear"))
+	elif weather_mode != "default":
+		result["weather"] = weather_mode
+	var day_mode := _environment_test_selected_id(environment_test_day_option, "default")
+	if day_mode == "random":
+		result["day_type"] = str(rng.pick(TownState.DAY_TYPE_IDS, "midweek"))
+	elif day_mode != "default":
+		result["day_type"] = day_mode
+	var happening_mode := _environment_test_selected_id(environment_test_happening_mode_option, "default")
+	if happening_mode == "random":
+		result["happenings"] = rng.pick_many(TownState.HAPPENING_IDS, rng.randi_range(0, mini(2, TownState.HAPPENING_IDS.size())))
+	elif happening_mode == "none":
+		result["happenings"] = []
+	elif happening_mode == "custom":
+		var selected_happenings: Array = []
+		for happening_id in TownState.HAPPENING_IDS:
+			var check: CheckBox = environment_test_happening_checks.get(happening_id, null)
+			if check != null and check.button_pressed:
+				selected_happenings.append(happening_id)
+		result["happenings"] = selected_happenings
+	return result
+
+
+# F5 is a practice-room authoring convenience, never a run command. Reusing the
+# retained Environment Library selectors preserves the chosen scenario, layer,
+# weather, calendar, and town-event modes while a new seed rebuilds the room.
+func _handle_environment_test_refresh_hotkey(event: InputEvent) -> bool:
+	if not _environment_test_hotkey_pressed(event, KEY_F5):
+		return false
+	if not _can_refresh_environment_test_session():
+		return false
+	var result := _refresh_environment_test_session_with_random_seed()
+	if not bool(result.get("ok", false)):
+		var errors := JsonCoerceScript._copy_array(result.get("errors", []))
+		_show_message(str(errors[0]) if not errors.is_empty() else "The environment could not be refreshed.")
+	# Consume an eligible F5 even when generation reports an error. Allowing the
+	# same key event to continue made a failed refresh look like no input at all.
+	return true
+
+
+# F9 advances Environment Library users to a different environment and one of
+# that environment's exact scenarios. It remains unavailable in normal runs,
+# but it must not depend on the canvas' transient placement toggle: authors may
+# temporarily use F1 while reviewing a room and still expect F9 to reroll it.
+func _handle_environment_test_random_scenario_hotkey(event: InputEvent) -> bool:
+	if not _environment_test_hotkey_pressed(event, KEY_F9):
+		return false
+	if not _can_load_random_environment_test_scenario():
+		return false
+	var result := _load_random_environment_test_scenario()
+	if not bool(result.get("ok", false)):
+		var errors := JsonCoerceScript._copy_array(result.get("errors", []))
+		_show_message(str(errors[0]) if not errors.is_empty() else "A random placement room could not be loaded.")
+	return true
+
+
+# Function keys may arrive as a logical keycode or only as a physical keycode,
+# depending on the keyboard layout and Windows input path.
+func _environment_test_hotkey_pressed(event: InputEvent, expected_keycode: Key) -> bool:
+	var key_event := event as InputEventKey
+	return key_event != null \
+		and key_event.pressed \
+		and not key_event.echo \
+		and (key_event.keycode == expected_keycode or key_event.physical_keycode == expected_keycode)
+
+
+func _can_refresh_environment_test_session() -> bool:
+	return _is_environment_test_session() \
+		and current_screen != SCREEN_START \
+		and run_state != null \
+		and not run_state.current_environment.is_empty() \
+		and (environment_test_overlay == null or not environment_test_overlay.visible)
+
+
+func _can_load_random_environment_test_scenario() -> bool:
+	return _can_refresh_environment_test_session()
+
+
+# Chooses environments uniformly, then chooses one compatible exact scenario
+# within the selected environment. Environments without authored scenarios are
+# omitted because F9 promises both a random environment and a random scenario.
+func _load_random_environment_test_scenario() -> Dictionary:
+	if not _can_load_random_environment_test_scenario():
+		return {"ok": false, "errors": ["F9 random loading is available only inside an Environment Library room."]}
+	_ensure_full_content_library_loaded()
+	var current_archetype_id := str(run_state.current_environment.get("archetype_id", "")).strip_edges()
+	var candidates: Array[Dictionary] = []
+	for definition_value in library.environment_archetypes:
+		if typeof(definition_value) != TYPE_DICTIONARY:
+			continue
+		var archetype_id := str((definition_value as Dictionary).get("id", "")).strip_edges()
+		if archetype_id.is_empty():
+			continue
+		var scenario_ids: Array[String] = []
+		for scenario_value in library.scenarios_for_archetype(archetype_id):
+			if typeof(scenario_value) != TYPE_DICTIONARY:
+				continue
+			var scenario_id := str((scenario_value as Dictionary).get("id", "")).strip_edges()
+			if not scenario_id.is_empty():
+				scenario_ids.append(scenario_id)
+		if not scenario_ids.is_empty():
+			candidates.append({"archetype_id": archetype_id, "scenario_ids": scenario_ids})
+	if candidates.is_empty():
+		return {"ok": false, "errors": ["No environment has an authored scenario available."]}
+	var different_environment_candidates: Array[Dictionary] = []
+	for candidate in candidates:
+		if str(candidate.get("archetype_id", "")) != current_archetype_id:
+			different_environment_candidates.append(candidate)
+	if not different_environment_candidates.is_empty():
+		candidates = different_environment_candidates
+	environment_test_refresh_counter += 1
+	var random_stamp := "%d-%d-%d" % [
+		int(Time.get_unix_time_from_system() * 1000.0),
+		Time.get_ticks_usec(),
+		environment_test_refresh_counter,
+	]
+	var rng := RandomNumberGenerator.new()
+	rng.seed = random_stamp.hash()
+	var selection := candidates[rng.randi_range(0, candidates.size() - 1)]
+	var selected_archetype_id := str(selection.get("archetype_id", ""))
+	var compatible_scenario_ids := JsonCoerceScript._copy_array(selection.get("scenario_ids", []))
+	var selected_scenario_id := str(compatible_scenario_ids[rng.randi_range(0, compatible_scenario_ids.size() - 1)])
+	if not _environment_test_select_id(environment_test_archetype_option, selected_archetype_id):
+		return {"ok": false, "errors": ["The random environment could not be selected."]}
+	_refresh_environment_test_identity_options()
+	if not _environment_test_select_id(environment_test_scenario_option, selected_scenario_id):
+		return {"ok": false, "errors": ["The random scenario could not be selected for its environment."]}
+	_sync_environment_test_layer_to_scenario()
+	if environment_test_seed_input != null:
+		environment_test_seed_input.text = "ENVIRONMENT-F9-%s" % random_stamp
+	var result := start_environment_test_session()
+	if bool(result.get("ok", false)):
+		_show_message("Random placement room: %s / %s. Press F9 for another." % [
+			str(run_state.current_environment.get("display_name", selected_archetype_id.replace("_", " ").capitalize())),
+			_environment_test_scenario_name(selected_scenario_id),
+		])
+	return result
+
+
+func _refresh_environment_test_session_with_random_seed() -> Dictionary:
+	if not _can_refresh_environment_test_session():
+		return {"ok": false, "errors": ["F5 refresh is available only inside an Environment Library room."]}
+	environment_test_refresh_counter += 1
+	var refresh_seed := "ENVIRONMENT-F5-%d-%d-%d" % [
+		int(Time.get_unix_time_from_system() * 1000.0),
+		Time.get_ticks_usec(),
+		environment_test_refresh_counter,
+	]
+	var previous_seed := environment_test_seed_input.text if environment_test_seed_input != null else ""
+	if environment_test_seed_input != null:
+		environment_test_seed_input.text = refresh_seed
+	var result := start_environment_test_session()
+	if bool(result.get("ok", false)):
+		_show_message("Environment refreshed with a new random seed. Press F5 to reroll again.")
+	elif environment_test_seed_input != null:
+		environment_test_seed_input.text = previous_seed
+	return result
+
+
+func start_environment_test_session() -> Dictionary:
+	if not show_game_library_launcher:
+		return {"ok": false, "errors": ["The environment test launcher is disabled."]}
+	if not _ensure_run_ui_built():
+		return {"ok": false, "errors": [RUN_UI_UNAVAILABLE_MESSAGE]}
+	_ensure_full_content_library_loaded()
+	_settle_script_prewarm_before_runtime()
+	var archetype_id := _environment_test_selected_id(environment_test_archetype_option)
+	if archetype_id.is_empty():
+		return {"ok": false, "errors": ["Choose an environment first."]}
+	var visible_seed := environment_test_seed_input.text.strip_edges() if environment_test_seed_input != null else ""
+	if visible_seed.is_empty():
+		visible_seed = "ENVIRONMENT-TEST"
+	var scenario_id := _environment_test_selected_id(
+		environment_test_scenario_option,
+		"__none" if _environment_test_placement_pass_active() else "__default"
+	)
+	var layer_id := _environment_test_selected_id(environment_test_layer_option)
+	var generation_key := "%s|%s|%s|%s|%s|%s" % [
+		visible_seed, archetype_id, scenario_id, layer_id,
+		_environment_test_selected_id(environment_test_weather_option, "default"),
+		"%s:%s" % [_environment_test_selected_id(environment_test_day_option, "default"), _environment_test_selected_id(environment_test_happening_mode_option, "default")],
+	]
+	var carried_player_state := run_state.environment_test_player_state() if _is_environment_test_session() and run_state != null else {}
+	var candidate := RunState.new()
+	var domain_seed := "ENVIRONMENT-PRACTICE-v1:%s" % visible_seed
+	var modifiers := {"environment_practice": true}
+	if scenario_id not in ["__default", "__none"]:
+		modifiers["scenario_pins"] = {archetype_id: scenario_id}
+	candidate.start_new(domain_seed, RunState.custom_challenge("environment_practice", domain_seed, modifiers))
+	candidate.bankroll = 100000
+	if not carried_player_state.is_empty():
+		candidate.restore_environment_test_player_state(carried_player_state)
+	var condition_overrides := _environment_test_condition_overrides(candidate, generation_key)
+	var request := {
+		"archetype_id": archetype_id,
+		"scenario_id": scenario_id,
+		"layer_id": layer_id,
+		"condition_overrides": condition_overrides,
+		"generation_key": generation_key,
+		"depth": 0,
+	}
+	var rollback := _foundation_lifecycle_snapshot()
+	_protect_foundation_coach_attention(rollback)
+	var candidate_generator := RunGenerator.new(library)
+	for module_path_value in game_module_script_cache.keys():
+		var module_script: Variant = game_module_script_cache.get(module_path_value)
+		if module_script is Script:
+			candidate_generator.cache_game_module_script(str(module_path_value), module_script as Script)
+	var result := candidate_generator.environment_test_result(candidate, request)
+	if not bool(result.get("ok", false)):
+		_restore_foundation_lifecycle_snapshot(rollback)
+		var errors := JsonCoerceScript._copy_array(result.get("errors", []))
+		var message := str(errors[0]) if not errors.is_empty() else "The environment could not be generated."
+		if environment_test_status_label != null:
+			environment_test_status_label.text = message
+		return {"ok": false, "errors": [message]}
+	run_state = candidate
+	generator = candidate_generator
+	dev_game_test_mode = true
+	dev_environment_test_mode = true
+	_bind_run_state_presentation_signals()
+	_reset_game_surface_runtime_state()
+	_set_active_game_binding()
+	current_game = null
+	last_game_result = {}
+	last_environment_runtime_result = {}
+	last_item_result = {}
+	last_hook_result = {}
+	selected_action_category = ACTION_CATEGORY_GAMES
+	_hide_event_choice_popup()
+	_hide_run_inventory_popup()
+	_hide_run_journal_popup()
+	_hide_run_menu()
+	_hide_travel_transition()
+	_clear_selected_game_action()
+	_clear_selected_stake()
+	_clear_selected_travel()
+	_clear_selected_event_choice()
+	_clear_selected_item_offer()
+	_clear_selected_service_hook()
+	_clear_selected_lender_hook()
+	clear_interaction_focus()
+	if environment_test_menu != null:
+		environment_test_menu.visible = false
+	if environment_test_overlay != null:
+		environment_test_overlay.visible = false
+	_set_current_screen(SCREEN_ENVIRONMENT)
+	if start_screen != null:
+		start_screen.visible = false
+	if run_screen != null:
+		run_screen.visible = true
+	_commit_foundation_coach_attention(rollback)
+	_refresh()
+	var warnings := JsonCoerceScript._copy_array(result.get("warnings", []))
+	var practice_message := "Environment practice: %s" % str(run_state.current_environment.get("display_name", archetype_id.replace("_", " ").capitalize()))
+	if not warnings.is_empty():
+		practice_message += " — loaded for repair with placement warning: %s" % str(warnings[0])
+	_show_message(practice_message)
+	return {"ok": true, "errors": [], "warnings": warnings, "environment": run_state.current_environment.duplicate(true)}
 
 
 func _game_test_spin_group(label_text: String, target_id: String) -> VBoxContainer:
@@ -9983,6 +10929,10 @@ func _bind_run_state_presentation_signals() -> void:
 	var heat_callback := Callable(self, "_on_run_state_heat_changed")
 	if not run_state.heat_changed.is_connected(heat_callback):
 		run_state.heat_changed.connect(heat_callback)
+	var money_callback := Callable(self, "_on_run_state_money_changed")
+	if not run_state.money_changed.is_connected(money_callback):
+		run_state.money_changed.connect(money_callback)
+	financial_hud_dirty = true
 	if heat_gain_feedback_overlay != null:
 		heat_gain_feedback_overlay.cancel()
 	if structured_hud != null:
@@ -9990,6 +10940,7 @@ func _bind_run_state_presentation_signals() -> void:
 
 
 func _on_run_state_heat_changed(applied_amount: int, _level: int, _cue_id: String, _context: Dictionary) -> void:
+	financial_hud_dirty = true
 	if applied_amount <= 0 or current_screen == SCREEN_START or meta_session_active:
 		return
 	if heat_gain_feedback_overlay != null:
@@ -9999,6 +10950,28 @@ func _on_run_state_heat_changed(applied_amount: int, _level: int, _cue_id: Strin
 	_ensure_environment_sfx_player()
 	if environment_sfx_player != null and environment_sfx_player.has_method("play_heat_gain"):
 		environment_sfx_player.call("play_heat_gain", applied_amount)
+
+
+func _on_run_state_money_changed(_revision: int) -> void:
+	financial_hud_dirty = true
+
+
+func _refresh_financial_hud_if_dirty() -> void:
+	financial_hud_dirty = false
+	if run_state == null or current_screen == SCREEN_START or meta_session_active:
+		return
+	var hud_model := _run_status_hud_model()
+	if status_label != null:
+		var next_status_text := str(hud_model.get("status_text", ""))
+		if status_label.text != next_status_text:
+			status_label.text = next_status_text
+	if structured_hud != null:
+		structured_hud.render(hud_model)
+	if current_screen == SCREEN_GAME and game_surface_canvas != null and current_game != null:
+		game_surface_canvas.apply_surface_state_patch({
+			"bankroll": run_state.wager_capacity_for_game(current_game.get_id(), run_state.current_environment),
+			"money_revision": run_state.money_revision(),
+		})
 
 
 func _build_run_menu_overlay() -> void:
@@ -10014,15 +10987,11 @@ func _build_run_menu_overlay() -> void:
 	shade.add_theme_stylebox_override("panel", VisualStyle.pixel_box(Color("#03030a", 0.84), VisualStyle.CYAN_2, 1))
 	run_menu_overlay.add_child(shade)
 
-	var center := CenterContainer.new()
-	center.set_anchors_preset(Control.PRESET_FULL_RECT)
-	center.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	run_menu_overlay.add_child(center)
-
 	run_menu_panel = _panel_container(Color("#080817", 0.98), VisualStyle.CYAN)
-	run_menu_panel.custom_minimum_size = Vector2(540, 430)
+	run_menu_panel.custom_minimum_size = Vector2.ZERO
+	run_menu_panel.clip_contents = true
 	run_menu_panel.mouse_filter = Control.MOUSE_FILTER_STOP
-	center.add_child(run_menu_panel)
+	run_menu_overlay.add_child(run_menu_panel)
 
 	var margin := MarginContainer.new()
 	margin.add_theme_constant_override("margin_left", 18)
@@ -10037,62 +11006,94 @@ func _build_run_menu_overlay() -> void:
 	stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	margin.add_child(stack)
 
+	run_menu_header = VBoxContainer.new()
+	run_menu_header.add_theme_constant_override("separation", 6)
+	run_menu_header.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	stack.add_child(run_menu_header)
+
 	var title := _label("Run Menu", 24)
 	_set_control_font_color(title, VisualStyle.YELLOW)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	stack.add_child(title)
+	run_menu_header.add_child(title)
 
 	run_menu_status_label = _label("", 13)
 	_set_control_font_color(run_menu_status_label, VisualStyle.CYAN_2)
 	run_menu_status_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	run_menu_status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	run_menu_status_label.custom_minimum_size = Vector2(0, 50)
-	stack.add_child(run_menu_status_label)
+	run_menu_header.add_child(run_menu_status_label)
+
+	run_menu_scroll = ScrollContainer.new()
+	run_menu_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	run_menu_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	run_menu_scroll.follow_focus = true
+	run_menu_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	run_menu_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	stack.add_child(run_menu_scroll)
+
+	var scroll_stack := VBoxContainer.new()
+	scroll_stack.add_theme_constant_override("separation", 10)
+	scroll_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	run_menu_scroll.add_child(scroll_stack)
 
 	var slot_note := _label("Resume Slot: one local save. Save overwrites it; Load replaces this run from it.", 12)
 	_set_control_font_color(slot_note, VisualStyle.SOFT)
 	slot_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	slot_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	stack.add_child(slot_note)
-	stack.add_child(_attribute_glyph_legend_panel())
+	scroll_stack.add_child(slot_note)
+	scroll_stack.add_child(_attribute_glyph_legend_panel())
 
 	var button_grid := GridContainer.new()
 	button_grid.columns = 2
 	button_grid.add_theme_constant_override("h_separation", 10)
 	button_grid.add_theme_constant_override("v_separation", 10)
 	button_grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stack.add_child(button_grid)
+	scroll_stack.add_child(button_grid)
 
 	run_menu_resume_button = _button("Resume", Callable(self, "close_run_menu"))
-	run_menu_resume_button.custom_minimum_size = Vector2(0, 42)
+	run_menu_resume_button.custom_minimum_size = Vector2(0, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
 	button_grid.add_child(run_menu_resume_button)
 	run_menu_save_button = _button("Save", Callable(self, "save_run_from_menu"))
-	run_menu_save_button.custom_minimum_size = Vector2(0, 42)
+	run_menu_save_button.custom_minimum_size = Vector2(0, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
 	button_grid.add_child(run_menu_save_button)
 	run_menu_load_button = _button("Load", Callable(self, "load_run_from_menu"))
-	run_menu_load_button.custom_minimum_size = Vector2(0, 42)
+	run_menu_load_button.custom_minimum_size = Vector2(0, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
 	button_grid.add_child(run_menu_load_button)
 	run_menu_journal_button = _button("Journal", Callable(self, "open_run_journal"))
-	run_menu_journal_button.custom_minimum_size = Vector2(0, 42)
+	run_menu_journal_button.custom_minimum_size = Vector2(0, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
 	button_grid.add_child(run_menu_journal_button)
 	run_menu_settings_button = _button("Settings", Callable(self, "open_settings_menu"))
-	run_menu_settings_button.custom_minimum_size = Vector2(0, 42)
+	run_menu_settings_button.custom_minimum_size = Vector2(0, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
 	button_grid.add_child(run_menu_settings_button)
 	run_menu_abandon_button = _button("Abandon Run", Callable(self, "abandon_run_from_menu"))
-	run_menu_abandon_button.custom_minimum_size = Vector2(0, 42)
+	run_menu_abandon_button.custom_minimum_size = Vector2(0, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
 	button_grid.add_child(run_menu_abandon_button)
 	run_menu_main_menu_button = _button("Main Menu", Callable(self, "return_to_main_menu"))
-	run_menu_main_menu_button.custom_minimum_size = Vector2(0, 42)
+	run_menu_main_menu_button.custom_minimum_size = Vector2(0, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
 	button_grid.add_child(run_menu_main_menu_button)
 	run_menu_skip_tutorial_button = _button("Skip Lessons", Callable(self, "request_skip_tutorial"))
-	run_menu_skip_tutorial_button.custom_minimum_size = Vector2(0, 42)
+	run_menu_skip_tutorial_button.custom_minimum_size = Vector2(0, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
 	button_grid.add_child(run_menu_skip_tutorial_button)
+	run_menu_action_controls = [
+		run_menu_resume_button,
+		run_menu_save_button,
+		run_menu_load_button,
+		run_menu_journal_button,
+		run_menu_settings_button,
+		run_menu_abandon_button,
+		run_menu_main_menu_button,
+		run_menu_skip_tutorial_button,
+	]
+	for action_control in run_menu_action_controls:
+		if action_control != null:
+			action_control.focus_entered.connect(Callable(self, "_on_run_menu_action_focus_entered").bind(action_control))
 
 	tutorial_skip_dialog = ConfirmationDialog.new()
 	tutorial_skip_dialog.title = "Skip the lessons?"
 	tutorial_skip_dialog.dialog_text = "End this guided run? You can replay Lessons from the main menu."
 	tutorial_skip_dialog.confirmed.connect(_confirm_skip_tutorial)
 	add_child(tutorial_skip_dialog)
+	_layout_run_menu_panel()
 
 
 func _attribute_glyph_legend_panel() -> Control:
@@ -10142,6 +11143,7 @@ func _build_run_report_screen(parent: BoxContainer) -> void:
 	run_report_screen.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	run_report_screen.new_run_requested.connect(_on_run_report_new_run_requested)
 	run_report_screen.home_requested.connect(_on_run_report_home_requested)
+	run_report_screen.main_menu_requested.connect(_on_run_report_main_menu_requested)
 	run_report_screen.copy_seed_requested.connect(_on_run_report_copy_seed_requested)
 	run_report_screen.bag_claim_requested.connect(claim_victory_collection_bag)
 	run_report_screen.take_home_item_claim_requested.connect(claim_victory_container_item)
@@ -10165,7 +11167,7 @@ func _refresh() -> void:
 		return
 	var resumed_world_outcomes := _resume_pending_world_sequence_outcomes()
 	if not bool(resumed_world_outcomes.get("ok", false)):
-		var resume_errors := _copy_array(resumed_world_outcomes.get("errors", []))
+		var resume_errors := JsonCoerceScript._copy_array(resumed_world_outcomes.get("errors", []))
 		_show_message(str(resume_errors[0]) if not resume_errors.is_empty() else "A pending Crew outcome is waiting to retry.")
 	elif not bool(resumed_world_outcomes.get("inactive", false)):
 		_autosave_foundation_run("Crew outcome resumed.")
@@ -10457,41 +11459,45 @@ func _schedule_game_coach_refresh_after_draw() -> void:
 	if game_coach_refresh_scheduled:
 		return
 	game_coach_refresh_scheduled = true
-	call_deferred("_refresh_game_coach_after_draw")
+	game_coach_refresh_delay_frames = 2
+	game_coach_transition_wait_frames = 0
+	game_coach_refresh_phase = 0
 
 
-func _refresh_game_coach_after_draw() -> void:
-	var tree := get_tree()
-	if tree != null:
-		# A deferred callback that awaits one process_frame resumes before that
-		# frame's draw pass. Wait through the following frame as well so dynamic
-		# surface actions (for example Peel -> File) have rebuilt their exact hit
-		# regions before the coach reads them.
-		await tree.process_frame
-		await tree.process_frame
-	if current_screen != SCREEN_GAME or current_game == null:
-		game_coach_refresh_scheduled = false
+func _advance_game_coach_refresh_after_draw() -> void:
+	if not game_coach_refresh_scheduled:
 		return
-	var transition_active: bool = tree != null and game_surface_canvas != null and game_surface_canvas.surface_transition_animation_active()
-	# A settled surface can present its next instruction immediately (entering a
-	# game and Buy are common examples). After a finite table animation, wait for
-	# the visible result to finish before Pal starts the next voiced beat.
-	if not transition_active:
-		_refresh_coach_at_boundary()
-		_refresh_talk_dock()
-	if transition_active:
-		# Some actions expose their next exact hit target only after a finite
-		# presentation completes. Wait for that transition, not for idle renderer
-		# liveness, and cap the wait so a malformed channel cannot strand coach
-		# evaluation. This loop performs no snapshot or collection copies.
-		var transition_wait_frames := 0
-		while game_surface_canvas != null \
+	# Count process frames instead of keeping an async member coroutine alive.
+	# The latter could resume after the host was freed during a scene/test exit.
+	if game_coach_refresh_delay_frames > 0:
+		game_coach_refresh_delay_frames -= 1
+		return
+	if current_screen != SCREEN_GAME or current_game == null:
+		_reset_game_coach_refresh_after_draw()
+		return
+	if game_coach_refresh_phase == 0:
+		var transition_active: bool = game_surface_canvas != null and game_surface_canvas.surface_transition_animation_active()
+		# A settled surface can present its next instruction immediately (entering a
+		# game and Buy are common examples). After a finite table animation, wait for
+		# the visible result to finish before Pal starts the next voiced beat.
+		if not transition_active:
+			_refresh_coach_at_boundary()
+			_refresh_talk_dock()
+		else:
+			game_coach_refresh_phase = 1
+			return
+	elif game_coach_refresh_phase == 1:
+		# Wait for a finite presentation, not for idle renderer liveness, with the
+		# same hard bound as the former coroutine.
+		if game_surface_canvas != null \
 				and game_surface_canvas.surface_transition_animation_active() \
-				and transition_wait_frames < 180:
-			transition_wait_frames += 1
-			await tree.process_frame
-		await tree.process_frame
-	game_coach_refresh_scheduled = false
+				and game_coach_transition_wait_frames < 180:
+			game_coach_transition_wait_frames += 1
+			return
+		game_coach_refresh_phase = 2
+		game_coach_refresh_delay_frames = 1
+		return
+	_reset_game_coach_refresh_after_draw()
 	if current_screen != SCREEN_GAME or current_game == null:
 		return
 	# GameSurfaceCanvas builds its exact pointer hit regions during drawing. The
@@ -10504,6 +11510,13 @@ func _refresh_game_coach_after_draw() -> void:
 	# completed Deal lesson's outline stranded over an in-hand control layout.
 	_refresh_coach_at_boundary(true)
 	_refresh_talk_dock()
+
+
+func _reset_game_coach_refresh_after_draw() -> void:
+	game_coach_refresh_scheduled = false
+	game_coach_refresh_delay_frames = 0
+	game_coach_transition_wait_frames = 0
+	game_coach_refresh_phase = 0
 
 
 func _render_start_screen() -> void:
@@ -10539,7 +11552,12 @@ func _render_environment_screen() -> void:
 		structured_hud.set_compact_mode(_compact_run_hud_enabled())
 		structured_hud.render(hud_model)
 	if environment_header != null:
-		environment_header.render(run_state.current_environment, str(hud_model.get("goal_text", "")))
+		var scenario_presentation := JsonCoerceScript._copy_dict(run_state.current_environment.get("scenario_presentation", {}))
+		environment_header.render(
+			run_state.current_environment,
+			str(hud_model.get("goal_text", "")),
+			str(scenario_presentation.get("signage_line", ""))
+		)
 	_style_hud_for_recent_consequence()
 	if save_status_label != null:
 		save_status_label.text = str(hud_model.get("save_text", ""))
@@ -10638,6 +11656,8 @@ func _world_object_summary_text(object_data: Dictionary) -> String:
 func _set_current_screen(screen_id: String) -> void:
 	var previous_screen := current_screen
 	current_screen = screen_id
+	if previous_screen != screen_id:
+		_invalidate_run_screen_layout()
 	if screen_id == SCREEN_START and previous_screen != SCREEN_START:
 		_refresh_menu_seed_text()
 		_reroll_main_menu_background()
@@ -10710,7 +11730,7 @@ func music_fx_state_snapshot() -> Dictionary:
 	if run_state == null:
 		return {}
 	var environment := run_state.current_environment
-	var visual_context: Dictionary = _copy_dict(environment.get("visual_context", {}))
+	var visual_context: Dictionary = JsonCoerceScript._copy_dict(environment.get("visual_context", {}))
 	var watch_status: Dictionary = run_state.pit_boss_watch_status(environment)
 	var objective_status: Dictionary = run_state.demo_objective_status(environment)
 	var forced_threshold := clampi(int(objective_status.get("forced_showdown_heat_threshold", 95)), 0, 100)
@@ -10758,7 +11778,7 @@ func music_fx_state_snapshot() -> Dictionary:
 func _ensure_run_music_arrangement_state() -> void:
 	if run_state == null or library == null:
 		return
-	var profile := _copy_dict(run_state.current_environment.get("music_profile", {}))
+	var profile := JsonCoerceScript._copy_dict(run_state.current_environment.get("music_profile", {}))
 	var track_id := str(profile.get("authored_track_id", "")).strip_edges()
 	if track_id.is_empty():
 		return
@@ -10767,7 +11787,7 @@ func _ensure_run_music_arrangement_state() -> void:
 	if typeof(recipes_value) != TYPE_ARRAY or (recipes_value as Array).is_empty() or typeof((recipes_value as Array)[0]) != TYPE_DICTIONARY:
 		return
 	var recipe: Dictionary = (recipes_value as Array)[0]
-	var sections := _string_array(recipe.get("sections", []))
+	var sections := JsonCoerceScript._raw_string_array(recipe.get("sections", []))
 	if sections.is_empty():
 		return
 	run_state.ensure_music_arrangement_state(track_id, str(recipe.get("id", "")), str(sections[0]))
@@ -10790,7 +11810,7 @@ func _on_authored_music_phrase_event(event: Dictionary) -> void:
 			continue
 		var phrase_event := event.duplicate(true)
 		phrase_event["event_token"] = "%s:%s" % [str(run_state.music_arrangement_state.get("visit_id", "")), str(event.get("event_token", ""))]
-		var state := run_state.advance_music_arrangement_phrase(track_id, recipe_id, _copy_array(recipe.get("sections", [])), phrase_event, _copy_dict(recipe.get("role_policies", {})))
+		var state := run_state.advance_music_arrangement_phrase(track_id, recipe_id, JsonCoerceScript._copy_array(recipe.get("sections", [])), phrase_event, JsonCoerceScript._copy_dict(recipe.get("role_policies", {})))
 		if bool(state.get("event_accepted", false)):
 			_update_procedural_music()
 		return
@@ -10799,7 +11819,7 @@ func _on_authored_music_phrase_event(event: Dictionary) -> void:
 func _on_authored_music_arrangement_selected(selection: Dictionary) -> void:
 	if run_state == null:
 		return
-	run_state.remember_music_arrangement_selection(str(selection.get("track_id", "")), _copy_dict(selection.get("selected_variant_ids", {})), _copy_dict(selection.get("selected_role_epochs", {})))
+	run_state.remember_music_arrangement_selection(str(selection.get("track_id", "")), JsonCoerceScript._copy_dict(selection.get("selected_variant_ids", {})), JsonCoerceScript._copy_dict(selection.get("selected_role_epochs", {})))
 
 
 func _music_environment_payload(environment: Dictionary) -> Dictionary:
@@ -10811,9 +11831,9 @@ func _music_environment_payload(environment: Dictionary) -> Dictionary:
 		"kind": str(environment.get("kind", "")),
 		"tier": str(environment.get("tier", "")),
 		"mood": str(environment.get("mood", "")),
-		"visual_context": _copy_dict(environment.get("visual_context", {})),
-		"music_profile": _copy_dict(environment.get("music_profile", {})),
-		"security_profile": _copy_dict(environment.get("security_profile", {})),
+		"visual_context": JsonCoerceScript._copy_dict(environment.get("visual_context", {})),
+		"music_profile": JsonCoerceScript._copy_dict(environment.get("music_profile", {})),
+		"security_profile": JsonCoerceScript._copy_dict(environment.get("security_profile", {})),
 	}
 
 
@@ -10867,7 +11887,7 @@ func _music_debt_pressure_snapshot() -> Dictionary:
 	var debt_entries: Array = []
 	if run_state == null:
 		return {"debt": debt_entries, "debt_count": active_count, "overdue_debt_count": overdue_count, "overdue_debt": false}
-	for debt_value in _copy_array(run_state.debt):
+	for debt_value in JsonCoerceScript._copy_array(run_state.debt):
 		if typeof(debt_value) != TYPE_DICTIONARY:
 			continue
 		var debt_data: Dictionary = debt_value
@@ -10979,7 +11999,7 @@ func _schedule_surface_music_event(outcome_class: String, cue_id: String, contex
 	if procedural_music_player == null:
 		return {}
 	var action_index := int(run_state.event_cadence.get("action_index", 0)) if run_state != null else 0
-	var scene: Dictionary = _copy_dict(context.get("feature_scene", {}))
+	var scene: Dictionary = JsonCoerceScript._copy_dict(context.get("feature_scene", {}))
 	var marker := str(context.get("marker", context.get("normalized_event_id", cue_id))).strip_edges()
 	var scene_id := str(scene.get("scene_id", scene.get("mode", "feature"))).strip_edges()
 	var token := "%d:%s:%s:%s" % [action_index, scene_id, cue_id, marker]
@@ -11001,8 +12021,8 @@ func _stop_procedural_music() -> void:
 
 
 func _sync_surface_feature_music_state(surface_state: Dictionary) -> void:
-	var feature_scene: Dictionary = _copy_dict(surface_state.get("slot_feature_scene", {}))
-	var music: Dictionary = _copy_dict(feature_scene.get("feature_music", {}))
+	var feature_scene: Dictionary = JsonCoerceScript._copy_dict(surface_state.get("slot_feature_scene", {}))
+	var music: Dictionary = JsonCoerceScript._copy_dict(feature_scene.get("feature_music", {}))
 	var feature_music_active := bool(feature_scene.get("active", false)) and not music.is_empty() and bool(music.get("loop", false))
 	var should_duck := feature_music_active and bool(music.get("duck_background_music", false))
 	if procedural_music_player != null:
@@ -11059,17 +12079,25 @@ func _apply_focus_layout() -> void:
 	var game_mode := _is_game_focus_mode()
 	var failure_mode := _is_failure_screen()
 	var victory_mode := _is_victory_screen()
+	var terminal_report := failure_mode or victory_mode
+	# The report is a terminal screen, not another panel in the room/game stack.
+	# Hide every piece of live play so death discovered by a background runtime or
+	# save checkpoint cannot split the viewport with the previously active surface.
+	if environment_header != null:
+		environment_header.visible = not terminal_report
 	if environment_canvas != null:
-		environment_canvas.visible = not game_mode and not failure_mode and not victory_mode
+		environment_canvas.visible = not game_mode and not terminal_report
 		environment_canvas.custom_minimum_size = ENVIRONMENT_CANVAS_MIN_SIZE
 		environment_canvas.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	if game_surface_canvas != null:
-		game_surface_canvas.visible = game_mode and not failure_mode and not victory_mode
+		game_surface_canvas.visible = game_mode and not terminal_report
 		game_surface_canvas.custom_minimum_size = GAME_SURFACE_FOCUSED_MIN_SIZE if game_mode else GAME_SURFACE_PREVIEW_MIN_SIZE
 		game_surface_canvas.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	if run_report_screen != null:
-		run_report_screen.visible = failure_mode or victory_mode
+		run_report_screen.visible = terminal_report
 		run_report_screen.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	if terminal_report and environment_result_panel != null:
+		environment_result_panel.visible = false
 
 
 func _apply_run_screen_layout() -> void:
@@ -11114,6 +12142,22 @@ func _apply_run_screen_layout() -> void:
 
 func _invalidate_run_screen_layout() -> void:
 	run_layout_dirty = true
+
+
+func _schedule_delivery_action_layout_refresh() -> void:
+	_invalidate_run_screen_layout()
+	if delivery_action_layout_refresh_deferred:
+		return
+	delivery_action_layout_refresh_deferred = true
+	call_deferred("_settle_delivery_action_layout")
+
+
+func _settle_delivery_action_layout() -> void:
+	delivery_action_layout_refresh_deferred = false
+	# Container minimum-size propagation is deferred too. Re-arm and apply the
+	# layout after the strip's children have received their real dimensions.
+	_invalidate_run_screen_layout()
+	_apply_run_screen_layout()
 
 
 func _render_run_report() -> void:
@@ -11233,11 +12277,11 @@ func _render_selected_object_context(object_data: Dictionary) -> void:
 	if not risk.is_empty() and object_type != CONTEXT_MODE_TRAVEL:
 		_add_detail_row(card, "Risk", risk)
 	if object_type == CONTEXT_MODE_TRAVEL:
-		for preview_line in _copy_array(object_data.get("preview_lines", [])).slice(0, 4):
+		for preview_line in JsonCoerceScript._copy_array(object_data.get("preview_lines", [])).slice(0, 4):
 			var preview_text := str(preview_line).strip_edges()
 			if not preview_text.is_empty():
 				_add_detail_row(card, "Route", preview_text, true)
-		var unlock_lines := _copy_array(object_data.get("unlock_conditions", []))
+		var unlock_lines := JsonCoerceScript._copy_array(object_data.get("unlock_conditions", []))
 		if not unlock_lines.is_empty():
 			_add_detail_row(card, "Unlock", "; ".join(unlock_lines.slice(0, 2)), true)
 	var status := str(object_data.get("status_summary", ""))
@@ -11260,7 +12304,7 @@ func _render_selected_object_context(object_data: Dictionary) -> void:
 
 
 func _add_attribute_badge_row(parent: BoxContainer, badges_value: Variant, glyph_size: int = 16) -> void:
-	var badges := _copy_array(badges_value)
+	var badges := JsonCoerceScript._copy_array(badges_value)
 	if badges.is_empty():
 		return
 	var safe_glyph_size := clampi(glyph_size, 12, 18)
@@ -11271,6 +12315,7 @@ func _add_attribute_badge_row(parent: BoxContainer, badges_value: Variant, glyph
 
 
 func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -> void:
+	_add_context_attached_room_actions(card, object_data)
 	if not bool(object_data.get("enabled", true)):
 		return
 	var object_type := str(object_data.get("object_type", "info"))
@@ -11293,6 +12338,17 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 			_add_card_button(card, "Inspect", Callable(self, "_inspect_casino_fixture").bind(object_data), false, true)
 		CONTEXT_MODE_NUMBERS:
 			_add_card_button(card, "Talk Business" if source_id == "silas" else "Work the Desk" if source_id == "desk" else "Open Book", Callable(self, "_open_numbers_surface").bind(source_id), false, true)
+		CONTEXT_MODE_DELIVERY:
+			var delivery_actions := JsonCoerceScript._copy_array(object_data.get("delivery_actions", []))
+			if delivery_actions.is_empty():
+				_add_card_button(card, "Retrieve The Package" if source_id == "retrieve" else "Take The Package", Callable(self, "_activate_delivery_physical_action").bind(source_id), false, true)
+			else:
+				for delivery_action_value in delivery_actions:
+					var delivery_action := JsonCoerceScript._copy_dict(delivery_action_value)
+					var delivery_verb := str(delivery_action.get("verb", "")).strip_edges()
+					if delivery_verb.is_empty():
+						continue
+					_add_card_button(card, str(delivery_action.get("label", delivery_verb.replace("_", " ").capitalize())), Callable(self, "_activate_delivery_physical_action").bind(delivery_verb), false, true)
 		CONTEXT_MODE_HOME_TENURE:
 			_add_card_button(card, str(object_data.get("label", "Pay")), Callable(self, "confirm_home_tenure_action"), false, true)
 		CONTEXT_MODE_HOME_SLEEP:
@@ -11318,6 +12374,7 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 			_add_card_button(card, "Inspect", Callable(self, "open_meta_sal_shelf").bind(int(source_id)), false, true)
 		CONTEXT_MODE_META_SAL_TALK:
 			_add_card_button(card, "Talk", Callable(self, "_talk_to_sal"), false, true)
+			_add_card_button(card, "Sell", Callable(self, "open_meta_sell_counter"), false, true)
 		CONTEXT_MODE_TRAVEL:
 			_add_context_travel_actions(card, source_id)
 		CONTEXT_MODE_SERVICE:
@@ -11329,17 +12386,39 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 		CONTEXT_MODE_SCENARIO_SEQUENCE:
 			_add_context_scenario_sequence_actions(card, object_data)
 		"scenario_scene_object", "scenario_actor", "character":
-			if _copy_array(object_data.get("scenario_sequence_actions", [])).is_empty():
+			if JsonCoerceScript._copy_array(object_data.get("scenario_sequence_actions", [])).is_empty():
 				card.add_child(_muted_label("Read-only room detail", 13))
 			else:
 				_add_context_scenario_sequence_actions(card, object_data)
-	if not _copy_array(object_data.get("scenario_augmented_inline_actions", [])).is_empty():
+	if object_type not in [CONTEXT_MODE_SCENARIO_SEQUENCE, "scenario_scene_object", "scenario_actor", "character"] \
+			and not JsonCoerceScript._copy_array(object_data.get("scenario_sequence_actions", [])).is_empty():
+		_add_context_scenario_sequence_actions(card, object_data)
+	if bool(object_data.get("delivery_handoff_direct", false)):
+		_add_card_button(card, "Hand Over The Package", Callable(self, "_complete_delivery_handoff").bind(str(object_data.get("delivery_handoff_node_id", ""))), false, true)
+	if not JsonCoerceScript._copy_array(object_data.get("scenario_augmented_inline_actions", [])).is_empty():
 		_add_context_scenario_actions(card, {"inline_actions": object_data.get("scenario_augmented_inline_actions", [])})
 
 
+func _add_context_attached_room_actions(card: VBoxContainer, object_data: Dictionary) -> void:
+	var object_id := str(object_data.get("object_id", ""))
+	for value in JsonCoerceScript._copy_array(object_data.get("attached_room_actions", [])):
+		var descriptor := JsonCoerceScript._copy_dict(value)
+		var key := str(descriptor.get("key", "")).strip_edges()
+		if key.is_empty():
+			continue
+		var label := str(descriptor.get("label", "Room action")).strip_edges()
+		var disabled := not bool(descriptor.get("enabled", false))
+		if disabled:
+			var reason := str(descriptor.get("disabled_reason", "Unavailable.")).strip_edges()
+			if not reason.is_empty():
+				label = "%s - %s" % [label, reason]
+		var button := _add_card_button(card, label, Callable(self, "_activate_attached_room_action").bind(object_id, key), disabled, false)
+		button.custom_minimum_size = Vector2(0, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
+
+
 func _add_context_scenario_actions(card: VBoxContainer, object_data: Dictionary) -> void:
-	for action_value in _copy_array(object_data.get("inline_actions", [])):
-		var action := _copy_dict(action_value)
+	for action_value in JsonCoerceScript._copy_array(object_data.get("inline_actions", [])):
+		var action := JsonCoerceScript._copy_dict(action_value)
 		if action.is_empty():
 			continue
 		var command_id := str(action.get("scenario_command_id", action.get("id", ""))).strip_edges()
@@ -11364,7 +12443,7 @@ func _add_context_scenario_actions(card: VBoxContainer, object_data: Dictionary)
 
 
 func _add_context_scenario_sequence_actions(card: VBoxContainer, object_data: Dictionary) -> void:
-	for action_value in _copy_array(object_data.get("scenario_sequence_actions", [])):
+	for action_value in JsonCoerceScript._copy_array(object_data.get("scenario_sequence_actions", [])):
 		if typeof(action_value) != TYPE_DICTIONARY: continue
 		var action := action_value as Dictionary
 		var action_id := str(action.get("id", ""))
@@ -11394,6 +12473,9 @@ func _add_context_event_actions(card: VBoxContainer, event_id: String) -> void:
 		card.add_child(_muted_label("Nothing is happening here right now.", 13))
 		return
 	var event_definition := library.event(event_id) if library != null else {}
+	if _event_is_person_conversation(event_id):
+		_add_card_button(card, "Talk", Callable(self, "_start_person_event_conversation").bind(event_id), false, true)
+		return
 	if not str(event_definition.get("dialogue_id", "")).strip_edges().is_empty():
 		_add_card_button(card, "Talk", Callable(self, "_start_event_dialogue").bind(event_id), false, true)
 		return
@@ -11426,7 +12508,10 @@ func _add_context_event_inline_actions(card: VBoxContainer, event_id: String, in
 			continue
 		var label := str(action_data.get("label", choice_id))
 		var selected := bool(action_data.get("selected", false))
-		var button := _add_card_button(card, label, Callable(self, "activate_event_choice_action").bind(event_id, choice_id), false, selected)
+		# Inline event rows share the sealed response token used by the room canvas.
+		# Dispatch through that handler so dismissal rows close the event surface
+		# instead of entering EventModule as a consequence-bearing choice.
+		var button := _add_card_button(card, label, Callable(self, "_activate_event_response_action").bind(emit_id), false, selected)
 		button.custom_minimum_size = Vector2(0, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 		_set_control_font_size(button, 16)
 		var detail := str(action_data.get("text", "")).strip_edges()
@@ -11470,6 +12555,8 @@ func _event_choice_action_detail(choice_data: Dictionary) -> String:
 
 
 func _event_inline_response_actions(event_id: String, choices: Array) -> Array:
+	if _event_is_person_conversation(event_id):
+		return []
 	if _event_uses_canonical_popup_choice_surface(event_id) and not _event_allows_canvas_inline_response(event_id, choices):
 		return []
 	var actions: Array = []
@@ -11491,7 +12578,7 @@ func _event_inline_response_actions(event_id: String, choices: Array) -> Array:
 			"label": label,
 			"text": _event_choice_action_detail(choice_data),
 			"impact_summary": impact,
-			"attribute_badges": _copy_array(choice_data.get("attribute_badges", [])),
+			"attribute_badges": JsonCoerceScript._copy_array(choice_data.get("attribute_badges", [])),
 			"selected": event_id == selected_event_id and choice_id == selected_event_choice_id,
 		})
 	return actions
@@ -11519,7 +12606,7 @@ func _add_context_game_hook_actions(card: VBoxContainer, object_data: Dictionary
 	var hook_id := str(object_data.get("source_id", ""))
 	var action_id := str(object_data.get("confirm_action_id", ""))
 	var label := "Use"
-	var actions := _copy_array(object_data.get("available_actions", []))
+	var actions := JsonCoerceScript._copy_array(object_data.get("available_actions", []))
 	var rendered := false
 	for action_value in actions:
 		if typeof(action_value) != TYPE_DICTIONARY:
@@ -11565,7 +12652,7 @@ func _add_context_travel_actions(card: VBoxContainer, target_id: String) -> void
 			return
 		var direct_room_exit := _local_parent_home_door_travel_choice(_parent_home_parent_target_id())
 		if not direct_room_exit.is_empty():
-			for preview_line in _copy_array(direct_room_exit.get("preview_lines", [])):
+			for preview_line in JsonCoerceScript._copy_array(direct_room_exit.get("preview_lines", [])):
 				var preview_text := str(preview_line).strip_edges()
 				if not preview_text.is_empty():
 					card.add_child(_muted_label(preview_text, 12))
@@ -11579,7 +12666,7 @@ func _add_context_travel_actions(card: VBoxContainer, target_id: String) -> void
 		return
 	var local_door_choice := _local_parent_home_door_travel_choice(target_id)
 	if not local_door_choice.is_empty():
-		for preview_line in _copy_array(local_door_choice.get("preview_lines", [])):
+		for preview_line in JsonCoerceScript._copy_array(local_door_choice.get("preview_lines", [])):
 			var preview_text := str(preview_line).strip_edges()
 			if not preview_text.is_empty():
 				card.add_child(_muted_label(preview_text, 12))
@@ -11593,12 +12680,12 @@ func _add_context_travel_actions(card: VBoxContainer, target_id: String) -> void
 	if choice.is_empty():
 		card.add_child(_muted_label("That route is no longer available.", 13))
 		return
-	for preview_line in _copy_array(choice.get("preview_lines", [])).slice(0, 4):
+	for preview_line in JsonCoerceScript._copy_array(choice.get("preview_lines", [])).slice(0, 4):
 		var preview_text := str(preview_line).strip_edges()
 		if not preview_text.is_empty():
 			card.add_child(_muted_label(preview_text, 12))
 	_add_attribute_badge_row(card, choice.get("attribute_badges", []), 16)
-	var unlock_lines := _copy_array(choice.get("unlock_conditions", []))
+	var unlock_lines := JsonCoerceScript._copy_array(choice.get("unlock_conditions", []))
 	if not unlock_lines.is_empty():
 		card.add_child(_muted_label("Unlock: %s" % "; ".join(unlock_lines.slice(0, 2)), 12))
 	if not bool(choice.get("enabled", true)):
@@ -11667,7 +12754,7 @@ func _context_type_label(object_type: String) -> String:
 
 func _action_category_view_list() -> Array:
 	var environment := run_state.current_environment
-	var game_count := _string_array(environment.get("game_ids", [])).size()
+	var game_count := JsonCoerceScript._raw_string_array(environment.get("game_ids", [])).size()
 	var event_count := _eligible_event_option_view_list().size()
 	var item_count := _item_offer_view_list().size()
 	var inventory_count := _inventory_item_view_list().size()
@@ -11812,16 +12899,25 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		return
 	if current_action_uses_authority and not authority_delivery.is_empty():
 		if str(authority_delivery.get("action_id", "")) != action_id:
-			_show_message("Blackjack replay failed closed because its action did not match the sealed delivery.")
+			_sealed_action_host_rollback_pending_delivery()
+			var mismatch_message := PlayerTextScript.resolve("sealed_action.stale") if bool(action_authority_contract.get("automatic_pending_recovery", false)) else PlayerTextScript.resolve("sealed_action.mismatch", {
+				"provider_label": current_game.get_display_name(),
+			})
+			_show_message(mismatch_message)
 			_refresh()
 			return
-		var early_replay := _sealed_action_host_cached_replay(authority_delivery)
-		if not early_replay.is_empty():
-			if early_replay.has(resolved_action_authority_script.HOST_REPLAY_KEY) and _sealed_action_host_present_cached_replay(early_replay):
+		# A synchronous prepared handoff already owns the fully validated candidate,
+		# ledger, and delivery. The resolver verifies that exact trio before mutation,
+		# so walking the live ledger here is only needed for standalone replay claims.
+		if authority_prepared.is_empty():
+			var early_replay := _sealed_action_host_cached_replay(authority_delivery)
+			if not early_replay.is_empty():
+				if early_replay.has(resolved_action_authority_script.HOST_REPLAY_KEY) and _sealed_action_host_present_cached_replay(early_replay):
+					return
+				_sealed_action_host_rollback_pending_delivery()
+				_show_message(str(early_replay.get("message", PlayerTextScript.resolve("sealed_action.failed_closed"))))
+				_refresh()
 				return
-			_show_message(str(early_replay.get("message", "Blackjack replay failed closed.")))
-			_refresh()
-			return
 	var debug_coin_pusher_host := bool(resolved_surface_ui_state.get("coin_pusher_debug_profile_stages", false))
 	var debug_host_started_usec := Time.get_ticks_usec() if debug_coin_pusher_host else 0
 	var debug_host_stage_started_usec := debug_host_started_usec
@@ -11841,8 +12937,15 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 				and typeof(rendered_stake_value) == TYPE_DICTIONARY:
 			rendered_stake_view = rendered_stake_value
 	var current_stake_range := _stake_range(rendered_stake_view)
-	var stake := stake_override if stake_override > 0 else (_selected_stake_for_range(current_stake_range) if bool(current_stake_range.get("has_valid", false)) else selected_stake)
-	if stake <= 0:
+	var has_sealed_delivery_stake := current_action_uses_authority \
+			and not authority_delivery.is_empty() \
+			and authority_delivery.has("stake")
+	# Once the intent host has issued a delivery, its stake is part of the sealed
+	# action identity. Re-reading the mutable UI selection here can substitute a
+	# different value (for example Baccarat's locked table wager) and reject an
+	# otherwise valid synchronous click at the settlement boundary.
+	var stake := maxi(0, int(authority_delivery.get("stake", 0))) if has_sealed_delivery_stake else (stake_override if stake_override > 0 else (_selected_stake_for_range(current_stake_range) if bool(current_stake_range.get("has_valid", false)) else selected_stake))
+	if stake <= 0 and not has_sealed_delivery_stake:
 		stake = _default_stake()
 	var stake_is_valid := bool(current_stake_range.get("has_valid", false)) \
 			and stake >= int(current_stake_range.get("min", 1)) \
@@ -11860,7 +12963,12 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	if not rendered_action_state.is_empty() and rendered_action_state.has("surface_action_bindings"):
 		action_surface_ui_state = action_surface_ui_state.duplicate(false)
 		action_surface_ui_state["surface_action_bindings"] = rendered_action_state.get("surface_action_bindings", {})
-	var wager_cost := _wager_cost_for_action(action_id, stake, action_surface_ui_state)
+	# A sealed delivery with skip_stake_validation is already entering the
+	# authoritative resolver, which recomputes and enforces its exact wager cost.
+	# Previewing it here would build and validate a second detached Blackjack
+	# candidate solely for an all-in dialog that retries/settlement must not show.
+	var sealed_skip_preview := current_action_uses_authority and skip_stake_validation and not authority_delivery.is_empty()
+	var wager_cost := 0 if sealed_skip_preview else _wager_cost_for_action(action_id, stake, action_surface_ui_state)
 	if not wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, action_surface_ui_state):
 		_pause_repeating_surface_action_for_wager_confirmation()
 		_show_wager_confirmation_popup(action_id, stake, wager_cost, skip_stake_validation, preserve_surface_ui_state)
@@ -11872,10 +12980,14 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	# rejection cannot touch live state, so taking a second whole-run rollback here
 	# only blocks the input thread on accumulated saves.
 	var authority_owns_action_rollback := current_action_uses_authority
-	var boundary_rollback_run := {} if uses_compact_action_rollback or authority_owns_action_rollback else run_state.to_dict()
+	# Compact rollback is the fast path, but it must never be the only recovery
+	# path. Keep a complete pre-resolution fallback for the exceptional cache
+	# generation/token failure so an accepted module action cannot leak through a
+	# rejected environment-turn boundary.
+	var boundary_rollback_run := {} if authority_owns_action_rollback else run_state.to_dict()
 	if debug_coin_pusher_host:
 		debug_host_timing["host_rollback_snapshot"] = Time.get_ticks_usec() - debug_rollback_started_usec
-	var boundary_rollback_environment := {} if uses_compact_action_rollback or authority_owns_action_rollback else run_state.current_environment.duplicate(true)
+	var boundary_rollback_environment := {} if authority_owns_action_rollback else run_state.current_environment.duplicate(true)
 	var boundary_rollback_deferred_failure := run_state.defer_next_bankroll_zero_failure
 	var confirmed_all_in_wager := wager_confirmed and _wager_needs_final_bankroll_confirmation(current_game, action_id, stake, wager_cost, action_surface_ui_state)
 	if confirmed_all_in_wager:
@@ -11904,11 +13016,20 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	if debug_coin_pusher_host:
 		debug_host_timing["host_module_resolve"] = Time.get_ticks_usec() - debug_host_stage_started_usec
 		debug_host_stage_started_usec = Time.get_ticks_usec()
+	if current_action_uses_authority and not bool(result.get("ok", false)):
+		var automatic_recovery := _sealed_action_host_rollback_pending_delivery()
+		if not bool(automatic_recovery.get("ok", false)):
+			push_error("Blackjack could not restore its prior table state after a rejected action: %s" % str(automatic_recovery.get("diagnostic_detail", automatic_recovery.get("error_code", "unknown"))))
+		elif bool(automatic_recovery.get("handled", false)):
+			result["ui_state"] = automatic_recovery.get("ui_state", {})
+			result["preserve_surface_ui_state"] = true
 	if resolved_action_authority_script != null and result.has(resolved_action_authority_script.HOST_REPLAY_KEY):
 		if not _sealed_action_host_present_cached_replay(result):
-			result = _sealed_action_host_rejection("invalid_cache", "Blackjack replay did not match the canonical committed response.", str(result.get(resolved_action_authority_script.HOST_REQUEST_KEY, "")))
+			result = _sealed_action_host_rejection("invalid_cache", "Sealed action replay did not match the canonical committed response.", str(result.get(resolved_action_authority_script.HOST_REQUEST_KEY, "")))
 		else:
 			return
+	if bool(result.get("ok", false)):
+		foreground_game_action_runtime_quiet_pending = true
 	if bool(result.get("ok", false)):
 		var scratch_completion: Dictionary = _record_scratch_ticket_discovery(str(result.get("scratch_discovered_type_id", "")))
 		if not scratch_completion.is_empty():
@@ -11918,7 +13039,7 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 				result["message"] = completion_message if original_message.is_empty() else "%s %s" % [original_message, completion_message]
 				var deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
 				deltas = deltas.duplicate(true)
-				var messages := _copy_array(deltas.get("messages", []))
+				var messages := JsonCoerceScript._copy_array(deltas.get("messages", []))
 				messages.append(completion_message)
 				deltas["messages"] = messages
 				result["deltas"] = deltas
@@ -11939,7 +13060,10 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 			if not _advance_environment_turns_checked(1, debug_host_timing if debug_coin_pusher_host else {}):
 				if uses_compact_action_rollback:
 					if not current_game.restore_host_action_rollback(compact_action_rollback, run_state, run_state.current_environment):
-						push_error("Game module failed to restore its declared compact host-action rollback token.")
+						run_state.from_dict(boundary_rollback_run)
+						run_state.current_environment = boundary_rollback_environment
+						var rollback_failure: Dictionary = current_game.call("host_action_rollback_failure_payload") as Dictionary if current_game.has_method("host_action_rollback_failure_payload") else {}
+						push_error("Game module failed to restore its declared compact host-action rollback token; full fallback applied: %s" % JSON.stringify(rollback_failure))
 				elif not authority_owns_action_rollback:
 					run_state.from_dict(boundary_rollback_run)
 					run_state.current_environment = boundary_rollback_environment
@@ -11962,13 +13086,7 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		debug_host_stage_started_usec = Time.get_ticks_usec()
 	if confirmed_all_in_wager and run_state.defer_next_bankroll_zero_failure:
 		run_state.clear_deferred_bankroll_zero_resolution()
-	var tutorial_caught_transition := TutorialFlowScript.apply_caught_transition(run_state, result)
-	if not tutorial_caught_transition.is_empty():
-		result["tutorial_caught_transition"] = tutorial_caught_transition.duplicate(true)
-		result["message"] = str(tutorial_caught_transition.get("message", result.get("message", "")))
-		if coach_overlay != null:
-			coach_overlay.begin_tutorial_run(tutorial_caught_transition.get("completed_lessons", {}))
-	var tutorial_dialogue_request := _copy_dict(result.get("tutorial_dialogue_request", {}))
+	var tutorial_dialogue_request := JsonCoerceScript._copy_dict(result.get("tutorial_dialogue_request", {}))
 	if not tutorial_dialogue_request.is_empty():
 		var tutorial_dialogue_queue_key := str(tutorial_dialogue_request.get("queue_key", ""))
 		if bool(tutorial_dialogue_request.get("clear_existing", false)):
@@ -11982,10 +13100,10 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 				str(tutorial_dialogue_request.get("speaker", "Dealer")),
 				bool(tutorial_dialogue_request.get("advance_existing", false))
 			)
-	var poker_table_talk_request := _copy_dict(result.get("crew_poker_table_talk_request", {}))
+	var poker_table_talk_request := JsonCoerceScript._copy_dict(result.get("crew_poker_table_talk_request", {}))
 	if bool(result.get("ok", false)) and not poker_table_talk_request.is_empty():
 		_enqueue_crew_poker_table_talk(poker_table_talk_request)
-	var craps_table_talk_request := _copy_dict(result.get("craps_table_talk_request", {}))
+	var craps_table_talk_request := JsonCoerceScript._copy_dict(result.get("craps_table_talk_request", {}))
 	if bool(result.get("ok", false)) and not craps_table_talk_request.is_empty():
 		_enqueue_craps_table_talk(craps_table_talk_request)
 	var embeds_result_feedback := _current_game_embeds_result_feedback()
@@ -12209,10 +13327,37 @@ func confirm_pending_wager_action() -> void:
 
 
 func cancel_pending_wager_confirmation() -> void:
-	_clear_pending_wager_confirmation()
+	var sealed_cancel_command := _pending_wager_sealed_cancel_command()
+	if not sealed_cancel_command.is_empty() and not bool(sealed_cancel_command.get("handled", false)):
+		_show_message(str(sealed_cancel_command.get("message", "The pending wager could not be canceled safely.")))
+		return
 	_hide_event_choice_popup()
-	_show_message("All-in wager canceled. Choose a smaller stake or another action.")
-	_refresh()
+	if bool(sealed_cancel_command.get("handled", false)):
+		# The sealed host has already restored and published the recovery candidate.
+		# Apply its presentation command only after the modal releases input ownership.
+		_apply_game_surface_command(sealed_cancel_command, -1, false, false, true)
+	else:
+		_show_message("All-in wager canceled. Choose a smaller stake or another action.")
+		_refresh()
+
+
+func _pending_wager_sealed_cancel_command() -> Dictionary:
+	if pending_wager_confirm_action_id.is_empty() or run_state == null or not pending_wager_confirm_source_game_id.is_empty() \
+			or not _current_game_uses_action_authority():
+		return {}
+	var ledger := _sealed_action_host_ledger(run_state, false, false)
+	var pending: Dictionary = ledger.get("pending_delivery", {}) if typeof(ledger.get("pending_delivery", {})) == TYPE_DICTIONARY else {}
+	if pending.is_empty():
+		return {}
+	if bool(action_authority_contract.get("automatic_pending_recovery", false)):
+		var automatic_recovery := _sealed_action_host_rollback_pending_delivery()
+		if bool(automatic_recovery.get("handled", false)):
+			automatic_recovery["message"] = "All-in wager canceled. Choose a smaller stake or another action."
+		return automatic_recovery
+	var cancel_actions: Array = action_authority_contract.get("cancel_surface_actions", []) if typeof(action_authority_contract.get("cancel_surface_actions", [])) == TYPE_ARRAY else []
+	if cancel_actions.is_empty() or str(cancel_actions[0]).is_empty():
+		return _sealed_action_host_rejection("invalid_intent", "The sealed provider has no cancellation action.", str(pending.get("request_key", "")))
+	return _sealed_action_host_surface_intent(str(cancel_actions[0]), 0, false, _current_game_surface_input_time_msec())
 
 
 func _wager_cost_for_action(action_id: String, stake: int, surface_ui_state: Dictionary = {}) -> int:
@@ -12260,7 +13405,7 @@ func _resolve_environment_runtime_wager_action(game_id: String, action_id: Strin
 	var boundary_rollback_run := run_state.to_dict()
 	var boundary_rollback_environment := run_state.current_environment.duplicate(true)
 	var boundary_rollback_deferred_failure := run_state.defer_next_bankroll_zero_failure
-	var original_active_game_state_keys := _copy_dict(run_state.current_environment.get("active_game_state_keys", {}))
+	var original_active_game_state_keys := JsonCoerceScript._copy_dict(run_state.current_environment.get("active_game_state_keys", {}))
 	var previous_state_key_context := game.transient_state_key_context()
 	if not state_key.strip_edges().is_empty():
 		game.set_transient_state_key_context(state_key)
@@ -12322,7 +13467,8 @@ func _simulation_progression_paused() -> bool:
 	# Conversations remain modal to player input, but only Pal owns the tutorial
 	# time-freeze contract. Natural dealer, patron, and event conversations keep
 	# normal-run clocks and autonomous systems moving behind the dialogue.
-	return travel_transition_active \
+	return not application_pause_owners.is_empty() \
+		or travel_transition_active \
 		or _pal_tutorial_time_freeze_active() \
 		or _event_choice_popup_is_visible() \
 		or _meta_item_interaction_is_visible() \
@@ -12330,6 +13476,47 @@ func _simulation_progression_paused() -> bool:
 		or _run_journal_popup_is_visible() \
 		or _world_map_overlay_is_visible() \
 		or _run_menu_is_visible()
+
+
+func set_application_pause_owner(owner: String, paused: bool) -> void:
+	var clean_owner := owner.strip_edges()
+	if clean_owner.is_empty():
+		return
+	var was_paused := not application_pause_owners.is_empty()
+	if paused:
+		application_pause_owners[clean_owner] = true
+	else:
+		application_pause_owners.erase(clean_owner)
+	var is_paused := not application_pause_owners.is_empty()
+	if game_surface_canvas != null and game_surface_canvas.has_method("handle_application_lifecycle") and was_paused != is_paused:
+		game_surface_canvas.call("handle_application_lifecycle", not is_paused)
+	_sync_simulation_pause_owners()
+
+
+func _sync_simulation_pause_owners() -> void:
+	var should_pause := _simulation_progression_paused()
+	var pause_timed_feedback := should_pause and not (_pal_tutorial_time_freeze_active() and application_pause_owners.is_empty())
+	var now_msec := Time.get_ticks_msec()
+	if should_pause and environment_pause_started_msec <= 0:
+		environment_pause_started_msec = now_msec
+	elif not should_pause and environment_pause_started_msec > 0:
+		environment_paused_total_msec += maxi(0, now_msec - environment_pause_started_msec)
+		environment_pause_started_msec = 0
+	if environment_canvas != null:
+		environment_canvas.set_environment_activity_paused(should_pause)
+	if game_surface_canvas != null:
+		game_surface_canvas.set_environment_activity_paused(should_pause, pause_timed_feedback)
+
+
+func application_lifecycle_snapshot() -> Dictionary:
+	return {
+		"pause_owners": application_pause_owners.keys(),
+		"application_paused": not application_pause_owners.is_empty(),
+		"simulation_paused": _simulation_progression_paused(),
+		"environment_canvas_paused": bool(environment_canvas.get("environment_activity_paused")) if environment_canvas != null else true,
+		"game_canvas_paused": bool(game_surface_canvas.get("environment_activity_paused")) if game_surface_canvas != null else true,
+		"game_timed_feedback_paused": bool(game_surface_canvas.get("timed_feedback_paused")) if game_surface_canvas != null else true,
+	}
 
 
 func _pal_tutorial_time_freeze_active() -> bool:
@@ -12342,6 +13529,18 @@ func _talk_dock_input_is_blocked() -> bool:
 	# A map can intentionally host a tutorial conversation. It remains modal to
 	# the room behind it, but must not make its own TalkDock unresponsive.
 	return travel_transition_active or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _run_menu_is_visible()
+
+
+func _clear_input_guard_modal_state() -> void:
+	# Each close helper is idempotent, so this also repairs a partially torn-down
+	# modal stack at lifecycle boundaries.
+	_hide_event_choice_popup()
+	_hide_run_menu()
+	_hide_world_map_overlay()
+	close_meta_item_interaction()
+	_hide_run_inventory_popup()
+	_hide_run_journal_popup()
+	_hide_travel_transition()
 
 
 func _blocking_modal_message() -> String:
@@ -12571,6 +13770,8 @@ func _ensure_environment_sfx_player() -> void:
 		environment_sfx_player.call("bind_surface_audio_authority", _environment_audio_authority)
 	if environment_sfx_player.has_method("set_prewarm_events"):
 		environment_sfx_player.call("set_prewarm_events", ["phone_call", "phone_out_of_service", "heat_gain"])
+	if environment_sfx_player.has_signal("audio_status_changed"):
+		environment_sfx_player.audio_status_changed.connect(_on_surface_audio_status_changed)
 	add_child(environment_sfx_player)
 
 
@@ -12586,8 +13787,8 @@ func _on_game_surface_music_cue(cue_id: String, context: Dictionary) -> void:
 	if normalized_cue.is_empty():
 		return
 	if normalized_cue.begins_with("bonus_music"):
-		var feature_scene: Dictionary = _copy_dict(context.get("feature_scene", {}))
-		var feature_music: Dictionary = _copy_dict(context.get("feature_music", feature_scene.get("feature_music", {})))
+		var feature_scene: Dictionary = JsonCoerceScript._copy_dict(context.get("feature_scene", {}))
+		var feature_music: Dictionary = JsonCoerceScript._copy_dict(context.get("feature_music", feature_scene.get("feature_music", {})))
 		var should_duck := bool(feature_music.get("duck_background_music", false))
 		_schedule_surface_music_event("feature_start", normalized_cue, context)
 		procedural_music_player.update_feature_music_state({
@@ -12641,24 +13842,23 @@ func _show_wager_confirmation_popup(action_id: String, stake: int, wager_cost: i
 	if event_choice_popup_summary_label != null:
 		event_choice_popup_summary_label.text = str(view.get("summary", ""))
 	_clear_event_choice_popup_choices()
-	for card_value in _copy_array(view.get("cards", [])):
+	for card_value in JsonCoerceScript._copy_array(view.get("cards", [])):
 		if typeof(card_value) != TYPE_DICTIONARY:
 			continue
 		var card: Dictionary = card_value
 		var callback := Callable(self, "confirm_pending_wager_action") if str(card.get("action", "")) == "confirm" else Callable(self, "cancel_pending_wager_confirmation")
 		_add_wager_confirmation_card(str(card.get("label", "")), str(card.get("text", "")), str(card.get("impact", "")), callback, bool(card.get("primary", false)))
-	event_choice_popup_overlay.visible = true
-	event_choice_popup_overlay.move_to_front()
-	_sync_coach_focus_visibility()
-	_position_event_choice_popup()
-	call_deferred("_position_event_choice_popup")
+	_present_event_choice_popup()
 
 
-func _add_wager_confirmation_card(label: String, text: String, _impact: String, callback: Callable, primary: bool, badges_value: Variant = []) -> void:
+func _add_wager_confirmation_card(label: String, text: String, _impact: String, callback: Callable, primary: bool, badges_value: Variant = [], rendered_event_id: String = "", rendered_choice_id: String = "") -> void:
 	if event_choice_popup_choices_list == null:
 		return
 	var border := VisualStyle.YELLOW if primary else VisualStyle.CYAN_2
 	var card := _panel_container(VisualStyle.DARK_2, border)
+	if not rendered_event_id.is_empty() and not rendered_choice_id.is_empty():
+		card.set_meta("event_id", rendered_event_id)
+		card.set_meta("choice_id", rendered_choice_id)
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	event_choice_popup_choices_list.add_child(card)
 	var stack := VBoxContainer.new()
@@ -12678,17 +13878,173 @@ func _add_wager_confirmation_card(label: String, text: String, _impact: String, 
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.max_lines_visible = EVENT_CHOICE_TEXT_MAX_LINES
 	body.clip_text = true
+	body.custom_minimum_size.y = EVENT_CHOICE_TEXT_MIN_HEIGHT
 	stack.add_child(body)
 	_add_attribute_badge_row(stack, badges_value, 16)
-	var button := _button(label, callback)
+	var button := _button(label, Callable(self, "_activate_event_choice_popup_callback").bind(callback))
+	if not rendered_event_id.is_empty() and not rendered_choice_id.is_empty():
+		button.set_meta("event_id", rendered_event_id)
+		button.set_meta("choice_id", rendered_choice_id)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	button.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	button.clip_text = true
+	button.button_down.connect(Callable(self, "_capture_event_choice_popup_button_press").bind(button, callback))
+	button.button_up.connect(Callable(self, "_defer_event_choice_popup_button_press_recovery"))
 	if primary:
 		_style_selected_button(button)
 	stack.add_child(button)
+	_apply_accessibility_to_node(card, _accessibility_font_scale(), _accessibility_control_scale())
 	if _event_choice_popup_is_visible():
 		call_deferred("_position_event_choice_popup")
+		call_deferred("_focus_first_event_choice")
+
+
+func _activate_event_choice_popup_callback(callback: Callable) -> void:
+	# The ordinary Button path won the press. Advance the serial before invoking
+	# the callback because it may synchronously hide and rebuild this popup.
+	event_choice_popup_activation_serial += 1
+	_clear_event_choice_popup_button_press()
+	if callback.is_valid():
+		callback.call()
+
+
+func _capture_event_choice_popup_button_press(button: Button, callback: Callable) -> void:
+	if button == null or button.disabled or not callback.is_valid():
+		return
+	event_choice_popup_pressed_button = button
+	event_choice_popup_pressed_callback = callback
+	event_choice_popup_press_position = get_viewport().get_mouse_position() if get_viewport() != null else Vector2.ZERO
+	event_choice_popup_press_activation_serial = event_choice_popup_activation_serial
+
+
+func _defer_event_choice_popup_button_press_recovery() -> void:
+	call_deferred("_finish_event_choice_popup_button_press")
+
+
+func _present_event_choice_popup() -> void:
+	if event_choice_popup_overlay == null:
+		return
+	if not event_choice_popup_overlay.visible:
+		var popup_viewport := get_viewport()
+		event_choice_popup_previous_focus_owner = popup_viewport.gui_get_focus_owner() if popup_viewport != null else null
+	event_choice_popup_overlay.visible = true
+	event_choice_popup_overlay.move_to_front()
+	_sync_coach_focus_visibility()
+	_position_event_choice_popup()
+	call_deferred("_position_event_choice_popup")
+	call_deferred("_focus_first_event_choice")
+
+
+func _event_choice_focus_controls() -> Array[Control]:
+	var controls: Array[Control] = []
+	if event_choice_popup_choices_list == null:
+		return controls
+	for node in event_choice_popup_choices_list.find_children("*", "Control", true, false):
+		var control := node as Control
+		if control == null or not control.is_visible_in_tree() or control.focus_mode == Control.FOCUS_NONE:
+			continue
+		if control is BaseButton and (control as BaseButton).disabled:
+			continue
+		controls.append(control)
+	return controls
+
+
+func _focus_first_event_choice() -> void:
+	if not _event_choice_popup_is_visible():
+		return
+	var controls := _event_choice_focus_controls()
+	if controls.is_empty():
+		return
+	var preferred: Control = null
+	for control in controls:
+		if str(control.get_meta("choice_id", "")) == pending_event_choice_popup_focus_choice_id:
+			preferred = control
+			break
+	(preferred if preferred != null else controls[0]).grab_focus()
+
+
+func _trap_event_choice_popup_focus(event: InputEvent) -> bool:
+	var forward := event.is_action_pressed("ui_focus_next")
+	var backward := event.is_action_pressed("ui_focus_prev")
+	if not forward and not backward:
+		return false
+	var controls := _event_choice_focus_controls()
+	if controls.is_empty():
+		return true
+	var current := get_viewport().gui_get_focus_owner()
+	var index := controls.find(current)
+	var direction := -1 if backward else 1
+	controls[posmod(index + direction, controls.size())].grab_focus()
+	return true
+
+
+func _route_topmost_modal_cancel() -> bool:
+	if _event_choice_popup_is_visible():
+		if bool(pending_event_choice_popup_snapshot.get("dismissible", false)):
+			if str(pending_event_choice_popup_snapshot.get("popup_type", "")) == "interactable_event":
+				_dismiss_interactable_event_popup()
+			else:
+				_hide_event_choice_popup()
+		return true
+	if settings_overlay != null and settings_overlay.visible:
+		close_settings_menu()
+		return true
+	if _meta_item_interaction_is_visible():
+		close_meta_item_interaction()
+		return true
+	if _run_inventory_popup_is_visible():
+		close_run_inventory()
+		return true
+	if _run_journal_popup_is_visible():
+		close_run_journal()
+		return true
+	if _world_map_overlay_is_visible():
+		close_world_map()
+		return true
+	if _run_menu_is_visible():
+		close_run_menu()
+		return true
+	return false
+
+
+func _on_event_choice_popup_overlay_gui_input(event: InputEvent) -> void:
+	# A settling popup can move the pressed Button before release. The stationary
+	# overlay still receives that release, just as the world-map holder does.
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT and not mouse_event.pressed:
+			_defer_event_choice_popup_button_press_recovery()
+	elif event is InputEventScreenTouch and not (event as InputEventScreenTouch).pressed:
+		_defer_event_choice_popup_button_press_recovery()
+
+
+func _finish_event_choice_popup_button_press() -> bool:
+	if event_choice_popup_pressed_button == null or not event_choice_popup_pressed_callback.is_valid():
+		return false
+	var button := event_choice_popup_pressed_button
+	var callback := event_choice_popup_pressed_callback
+	var press_position := event_choice_popup_press_position
+	var activation_serial := event_choice_popup_press_activation_serial
+	_clear_event_choice_popup_button_press()
+	if event_choice_popup_activation_serial != activation_serial:
+		return false
+	if not _event_choice_popup_is_visible() or not is_instance_valid(button) or button.disabled or not button.is_visible_in_tree():
+		return false
+	var release_position := get_viewport().get_mouse_position() if get_viewport() != null else press_position
+	# Preserve ScrollContainer gestures. Only recover a click whose pointer stayed
+	# within ordinary click jitter while layout moved underneath it.
+	if press_position.distance_to(release_position) > 10.0:
+		return false
+	event_choice_popup_activation_serial += 1
+	callback.call()
+	return true
+
+
+func _clear_event_choice_popup_button_press() -> void:
+	event_choice_popup_pressed_button = null
+	event_choice_popup_pressed_callback = Callable()
+	event_choice_popup_press_position = Vector2.ZERO
+	event_choice_popup_press_activation_serial = event_choice_popup_activation_serial
 
 
 func _clear_pending_wager_confirmation() -> void:
@@ -12834,7 +14190,7 @@ func current_screen_snapshot() -> Dictionary:
 		"world_map": _world_map_snapshot() if run_state != null else {},
 		"conclusion_animation": current_conclusion_animation_snapshot(),
 		"accessibility": current_accessibility_snapshot(),
-		"scenario_layout_audit": _copy_dict(environment.get("scenario_layout_audit", {})),
+		"scenario_layout_audit": JsonCoerceScript._copy_dict(environment.get("scenario_layout_audit", {})),
 		"scenario_layout_authority_digest": str(environment.get("scenario_layout_authority_digest", "")),
 	}
 
@@ -12904,7 +14260,7 @@ func current_event_choice_popup_snapshot() -> Dictionary:
 	var snapshot := pending_event_choice_popup_snapshot.duplicate(true)
 	snapshot["visible"] = _event_choice_popup_is_visible()
 	var choice_ids: Array = []
-	for choice_value in _copy_array(snapshot.get("choices", [])):
+	for choice_value in JsonCoerceScript._copy_array(snapshot.get("choices", [])):
 		if typeof(choice_value) != TYPE_DICTIONARY:
 			continue
 		var choice_id := str((choice_value as Dictionary).get("id", "")).strip_edges()
@@ -13014,7 +14370,7 @@ func current_run_inventory_snapshot() -> Dictionary:
 		"selected_item_source": selected_run_inventory_item_source,
 		"selected_item": selected_item,
 		"container_id": run_inventory_context_container_id,
-		"containers": _copy_array(popup_model.get("containers", [])),
+		"containers": JsonCoerceScript._copy_array(popup_model.get("containers", [])),
 		"selected_key": str(popup_model.get("selected_key", "")),
 		"active_container_key": str(popup_model.get("active_container_key", "")),
 		"merchant_available": _shopkeeper_available() if run_state != null else false,
@@ -13026,7 +14382,7 @@ func current_run_inventory_snapshot() -> Dictionary:
 		snapshot["interaction_kind"] = _run_inventory_interaction_kind(run_inventory_popup_mode)
 		if run_inventory_screen != null:
 			var layout_rects: Dictionary = run_inventory_screen.layout_rects()
-			snapshot["spatial"] = _copy_dict(layout_rects.get("spatial", {}))
+			snapshot["spatial"] = JsonCoerceScript._copy_dict(layout_rects.get("spatial", {}))
 			snapshot["popup_rect"] = _rect_to_dict(_rect_from_dict(layout_rects.get("popup_rect", Rect2())))
 			snapshot["grid_rect"] = _rect_to_dict(_rect_from_dict(layout_rects.get("grid_rect", Rect2())))
 			snapshot["detail_rect"] = _rect_to_dict(_rect_from_dict(layout_rects.get("detail_rect", Rect2())))
@@ -13094,7 +14450,7 @@ func current_objective_hud_snapshot() -> Dictionary:
 			"text": str(meta_hud.get("objective_text", "")),
 			"status_text": str(meta_hud.get("status_text", "")),
 			"save_text": "",
-			"fields": _copy_array(meta_hud.get("fields", [])),
+			"fields": JsonCoerceScript._copy_array(meta_hud.get("fields", [])),
 			"location_text": str(meta_hud.get("location_text", "")),
 			"gold": int(meta_hud.get("gold", 0)),
 			"gold_text": str(meta_hud.get("gold_text", "")),
@@ -13191,9 +14547,13 @@ func focus_interactable_object(object_id: String) -> bool:
 		clear_interaction_focus(true)
 		return true
 	var object_data := _interactable_object(object_id)
+	var focus_object_id := object_id
+	if object_data.is_empty():
+		object_data = EnvironmentInteractionControllerScript.interactable_object_hosting_action(self, object_id)
+		focus_object_id = str(object_data.get("object_id", ""))
 	if object_data.is_empty():
 		return false
-	return _focus_interactable_object_with_data(object_id, object_data)
+	return _focus_interactable_object_with_data(focus_object_id, object_data)
 
 
 func focus_interactable_object_from_view(object_data: Dictionary) -> bool:
@@ -13242,11 +14602,111 @@ func activate_interactable_object(object_id: String) -> bool:
 	# snapshot, so cloning the entire Foundation lifecycle here is redundant.
 	if object_id.begins_with("event_response:"):
 		return _activate_event_response_action(object_id)
+	# Inspecting a room event only focuses it and opens its response card. The
+	# response resolver below owns the actual transactional rollback boundary.
+	# Avoid copying a mature run just to display the card.
+	if object_id.begins_with("event:"):
+		var event_attention_boundary := _foundation_coach_attention_boundary_snapshot()
+		_protect_foundation_coach_attention(event_attention_boundary)
+		var event_action_ok := _activate_interactable_object_with_lifecycle_snapshot(object_id, event_attention_boundary)
+		_commit_foundation_coach_attention(event_attention_boundary)
+		return event_action_ok
 	var caller_rollback := _foundation_lifecycle_snapshot()
 	_protect_foundation_coach_attention(caller_rollback)
 	var action_ok := _activate_interactable_object_with_lifecycle_snapshot(object_id, caller_rollback)
 	_commit_foundation_coach_attention(caller_rollback)
 	return action_ok
+
+
+func _activate_attached_room_action(target_object_id: String, action_key: String) -> bool:
+	var target := _interactable_object(target_object_id)
+	if target.is_empty() or action_key.is_empty():
+		return false
+	var descriptor: Dictionary = {}
+	for value in JsonCoerceScript._copy_array(target.get("attached_room_actions", [])):
+		var candidate := JsonCoerceScript._copy_dict(value)
+		if str(candidate.get("key", "")) == action_key:
+			descriptor = candidate
+			break
+	if descriptor.is_empty() or not bool(descriptor.get("enabled", false)):
+		return false
+	var record := JsonCoerceScript._copy_dict(descriptor.get("record", {}))
+	var action := JsonCoerceScript._copy_dict(descriptor.get("action", {}))
+	var object_type := str(record.get("object_type", CONTEXT_MODE_ROOM)).strip_edges()
+	var source_id := str(action.get("source_id", action.get("hook_id", record.get("source_id", "")))).strip_edges()
+	var source := str(action.get("_attached_source", ""))
+	if source == "scenario_sequence_actions" \
+			or object_type in [CONTEXT_MODE_SCENARIO_SEQUENCE, "scenario_scene_object", "scenario_actor", "character"]:
+		return _activate_scenario_sequence_action(record, action)
+	var scenario_command_id := str(action.get("scenario_command_id", record.get("scenario_command_id", ""))).strip_edges()
+	if object_type == CONTEXT_MODE_SCENARIO or not scenario_command_id.is_empty():
+		if scenario_command_id.is_empty():
+			scenario_command_id = str(action.get("id", ""))
+		return _activate_scenario_action(
+			str(action.get("scenario_owner_namespace", record.get("scenario_owner_namespace", record.get("owner_namespace", "scenario")))),
+			str(action.get("scenario_stable_object_id", record.get("scenario_stable_object_id", record.get("stable_object_id", "")))),
+			scenario_command_id,
+			str(action.get("scenario_idempotency_key", "")),
+			str(action.get("action_origin_owner_namespace", record.get("scenario_owner_namespace", ""))),
+			str(action.get("action_origin_stable_object_id", record.get("scenario_stable_object_id", ""))),
+			str(action.get("action_origin_receipt_key", "")),
+			str(action.get("action_origin_boundary_id", "")),
+			str(action.get("action_origin_fingerprint", ""))
+		)
+	match object_type:
+		CONTEXT_MODE_DIALOGUE:
+			var dialogue_action_id := str(record.get("object_id", "dialogue:%s" % source_id)).strip_edges()
+			if _guard_player_input_route(false, dialogue_action_id):
+				return false
+			return start_dialogue(source_id, record)
+		CONTEXT_MODE_GAME:
+			return enter_game(source_id)
+		CONTEXT_MODE_GAME_HOOK:
+			return use_game_environment_hook(str(action.get("parent_id", record.get("parent_id", ""))), source_id, str(action.get("id", record.get("confirm_action_id", ""))))
+		CONTEXT_MODE_EVENT:
+			return _activate_event_object(source_id)
+		CONTEXT_MODE_ITEM:
+			return _select_item_offer_after_input_guard(source_id) and _apply_item_offer_after_input_guard(source_id)
+		CONTEXT_MODE_SHOPKEEPER:
+			return open_shopkeeper_sale_page()
+		CONTEXT_MODE_SERVICE:
+			return select_service_hook(source_id) and confirm_selected_service_hook()
+		CONTEXT_MODE_LENDER:
+			if _lender_is_pawn_counter(source_id):
+				return open_pawn_counter(source_id)
+			return select_lender_hook(source_id) and confirm_selected_lender_hook()
+		CONTEXT_MODE_TRAVEL:
+			return select_travel_option(source_id) and confirm_selected_travel()
+	var emit_object_id := str(action.get("emit_object_id", "")).strip_edges()
+	return activate_interactable_object(emit_object_id) if not emit_object_id.is_empty() else false
+
+
+func _attached_pawn_lender_id(object_data: Dictionary) -> String:
+	# The authored pawn-shop layout intentionally folds the merchant and lender
+	# aliases into one physical Sal character. Treat that host as the pawn counter
+	# on primary activation while retaining both explicit attached actions.
+	if str(object_data.get("object_id", "")).strip_edges() != "staff:pawn_counter_sal":
+		return ""
+	for descriptor_value in JsonCoerceScript._copy_array(object_data.get("attached_room_actions", [])):
+		var descriptor := JsonCoerceScript._copy_dict(descriptor_value)
+		var record := JsonCoerceScript._copy_dict(descriptor.get("record", {}))
+		if str(record.get("object_type", "")).strip_edges() != CONTEXT_MODE_LENDER:
+			continue
+		var action := JsonCoerceScript._copy_dict(descriptor.get("action", {}))
+		var lender_id := str(action.get("source_id", action.get("hook_id", record.get("source_id", "")))).strip_edges()
+		if not lender_id.is_empty() and _lender_is_pawn_counter(lender_id):
+			return lender_id
+	# Manifest identities are the durable contract for a consolidated fixed host.
+	# Keep primary activation working even if a transient live action projection
+	# is being rebuilt while the player's inventory changes.
+	for action_id_value in JsonCoerceScript._copy_array(object_data.get("action_ids", object_data.get("manifest_action_ids", []))):
+		var action_id := str(action_id_value).strip_edges()
+		if not action_id.begins_with("lender:"):
+			continue
+		var lender_id := action_id.trim_prefix("lender:")
+		if _lender_is_pawn_counter(lender_id):
+			return lender_id
+	return ""
 
 
 func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, caller_rollback: Dictionary) -> bool:
@@ -13256,6 +14716,10 @@ func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, ca
 	var visible_event_response := object_id.begins_with("event_response:") and _event_choice_popup_is_visible()
 	if not visible_event_response and _guard_player_input_route(false, object_id):
 		return false
+	if object_id == "travel:leave" and _is_environment_test_session():
+		focus_interactable_object(object_id)
+		open_environment_test_menu()
+		return true
 	if _is_meta_session():
 		var meta_action_ok := _activate_meta_interactable_object(object_id)
 		if not meta_action_ok and object_id == "travel:leave":
@@ -13272,9 +14736,7 @@ func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, ca
 				_restore_foundation_lifecycle_snapshot(caller_rollback)
 				return false
 			focus_interactable_object(object_id)
-			var direct_exit_result := _travel_to(str(direct_room_exit.get("id", "")), str(direct_room_exit.get("label", "Lobby")), direct_room_exit, true)
-			if not bool(direct_exit_result.get("ok", false)):
-				_restore_foundation_lifecycle_snapshot(caller_rollback)
+			var direct_exit_result := _travel_to_with_lifecycle_snapshot(str(direct_room_exit.get("id", "")), str(direct_room_exit.get("label", "Lobby")), direct_room_exit, true, caller_rollback)
 			return bool(direct_exit_result.get("ok", false))
 		var leave_object := _interactable_object(object_id)
 		if leave_object.is_empty():
@@ -13327,6 +14789,14 @@ func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, ca
 		_show_message(disabled_reason)
 		_refresh()
 		return false
+	var attached_pawn_lender_id := _attached_pawn_lender_id(object_data)
+	if not attached_pawn_lender_id.is_empty():
+		return _open_pawn_counter_after_input_guard(attached_pawn_lender_id)
+	if bool(object_data.get("delivery_handoff_direct", false)):
+		var handoff_node_id := str(object_data.get("delivery_handoff_node_id", "")).strip_edges()
+		if handoff_node_id.is_empty():
+			return false
+		return _complete_delivery_handoff(handoff_node_id)
 	var object_type := str(object_data.get("object_type", CONTEXT_MODE_ROOM))
 	var source_id := str(object_data.get("source_id", ""))
 	match object_type:
@@ -13378,18 +14848,14 @@ func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, ca
 						_refresh()
 						_restore_foundation_lifecycle_snapshot(caller_rollback)
 						return false
-					var direct_exit_result := _travel_to(str(direct_room_exit.get("id", "")), str(direct_room_exit.get("label", "Lobby")), direct_room_exit, true)
-					if not bool(direct_exit_result.get("ok", false)):
-						_restore_foundation_lifecycle_snapshot(caller_rollback)
+					var direct_exit_result := _travel_to_with_lifecycle_snapshot(str(direct_room_exit.get("id", "")), str(direct_room_exit.get("label", "Lobby")), direct_room_exit, true, caller_rollback)
 					return bool(direct_exit_result.get("ok", false))
 				var map_opened := open_world_map()
 				if not map_opened:
 					_restore_foundation_lifecycle_snapshot(caller_rollback)
 				return map_opened
 			if select_travel_option(source_id):
-				var travel_ok := confirm_selected_travel(true)
-				if not travel_ok:
-					_restore_foundation_lifecycle_snapshot(caller_rollback)
+				var travel_ok := confirm_selected_travel(true, caller_rollback)
 				return travel_ok
 			_restore_foundation_lifecycle_snapshot(caller_rollback)
 			return false
@@ -13399,8 +14865,7 @@ func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, ca
 			return false
 		CONTEXT_MODE_LENDER:
 			if _lender_is_pawn_counter(source_id):
-				select_lender_hook(source_id)
-				return open_pawn_counter(source_id)
+				return _open_pawn_counter_after_input_guard(source_id)
 			if select_lender_hook(source_id):
 				return confirm_selected_lender_hook()
 			return false
@@ -13417,11 +14882,11 @@ func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, ca
 				str(object_data.get("action_origin_fingerprint", ""))
 			)
 		CONTEXT_MODE_SCENARIO_SEQUENCE:
-			var actions := _copy_array(object_data.get("scenario_sequence_actions", []))
+			var actions := JsonCoerceScript._copy_array(object_data.get("scenario_sequence_actions", []))
 			if actions.is_empty() or typeof(actions[0]) != TYPE_DICTIONARY: return false
 			return _activate_scenario_sequence_action(object_data, actions[0] as Dictionary)
 		"scenario_scene_object", "scenario_actor", "character":
-			var actions := _copy_array(object_data.get("scenario_sequence_actions", []))
+			var actions := JsonCoerceScript._copy_array(object_data.get("scenario_sequence_actions", []))
 			if not actions.is_empty() and typeof(actions[0]) == TYPE_DICTIONARY:
 				return _activate_scenario_sequence_action(object_data, actions[0] as Dictionary)
 			_show_message(str(object_data.get("short_description", "This room detail is here to be read.")))
@@ -13460,7 +14925,7 @@ func _activate_scenario_action(owner_namespace: String, stable_object_id: String
 		idempotency_key = "ui:%d:%s:%s:%s" % [maxi(0, int(projection.get("boundary_serial", 0))), owner_namespace, stable_object_id, command_id]
 	var result := run_state.scenario_sequence_command(command_id, idempotency_key, {}, owner_namespace, stable_object_id, _scenario_host_interaction_availability(), action_origin_owner_namespace, action_origin_stable_object_id, action_origin_receipt_key, action_origin_boundary_id, action_origin_fingerprint)
 	if not bool(result.get("ok", false)):
-		var errors := _copy_array(result.get("errors", []))
+		var errors := JsonCoerceScript._copy_array(result.get("errors", []))
 		_show_message(str(errors[0]) if not errors.is_empty() else "That room action could not be completed.")
 		_refresh()
 		return false
@@ -13515,8 +14980,8 @@ func _execute_scenario_sequence_action(object_data: Dictionary, action: Dictiona
 	var action_id := str(action.get("id", ""))
 	if action_id.is_empty():
 		return false
-	var sequence_state := _copy_dict(run_state.current_environment.get("scenario_sequence_state", {}))
-	var receipt_ordinal := _copy_array(sequence_state.get("command_receipts", [])).size()
+	var sequence_state := JsonCoerceScript._copy_dict(run_state.current_environment.get("scenario_sequence_state", {}))
+	var receipt_ordinal := JsonCoerceScript._copy_array(sequence_state.get("command_receipts", [])).size()
 	var visit_id := str(run_state.current_environment.get("environment_visit_id", "visit"))
 	var receipt_id := "scenario:%s:%s:%s:%d" % [visit_id, str(object_data.get("object_id", "interaction")), action_id, receipt_ordinal]
 	var host_availability := _scenario_host_interaction_availability()
@@ -13524,8 +14989,8 @@ func _execute_scenario_sequence_action(object_data: Dictionary, action: Dictiona
 		action_id,
 		receipt_id,
 		{},
-		str(object_data.get("owner_namespace", "")),
-		str(object_data.get("stable_object_id", "")),
+		str(action.get("attached_owner_namespace", object_data.get("owner_namespace", ""))),
+		str(action.get("attached_stable_object_id", object_data.get("stable_object_id", ""))),
 		host_availability,
 		str(action.get("action_origin_owner_namespace", object_data.get("owner_namespace", ""))),
 		str(action.get("action_origin_stable_object_id", object_data.get("stable_object_id", ""))),
@@ -13534,7 +14999,7 @@ func _execute_scenario_sequence_action(object_data: Dictionary, action: Dictiona
 		str(action.get("action_origin_fingerprint", ""))
 	)
 	if not bool(result.get("ok", false)):
-		var errors := _copy_array(result.get("errors", []))
+		var errors := JsonCoerceScript._copy_array(result.get("errors", []))
 		_show_message(str(errors[0]) if not errors.is_empty() else "That room action is no longer available.")
 		_refresh()
 		return false
@@ -13572,40 +15037,38 @@ func _activate_world_sequence_action(owner_token: String, object_data: Dictionar
 	var action_id := str(action.get("id", "")).strip_edges()
 	var projection := run_state.world_sequence_projection(owner_token)
 	if action_id.is_empty() or projection.is_empty(): return false
-	var idempotency_key := "ui:%d:%s:%s:%s" % [maxi(0, int(projection.get("boundary_serial", 0))), owner_token, str(object_data.get("stable_object_id", "")), action_id]
-	var result := run_state.world_sequence_command(
-		owner_token,
-		action_id,
-		idempotency_key,
-		{},
-		str(object_data.get("owner_namespace", "")),
-		str(object_data.get("stable_object_id", "")),
-		_scenario_host_interaction_availability(),
-		str(action.get("action_origin_owner_namespace", object_data.get("owner_namespace", ""))),
-		str(action.get("action_origin_stable_object_id", object_data.get("stable_object_id", ""))),
-		str(action.get("action_origin_receipt_key", "")),
-		str(action.get("action_origin_boundary_id", "")),
-		str(action.get("action_origin_fingerprint", ""))
-	)
+	var command_stable_id := str(action.get("attached_stable_object_id", object_data.get("stable_object_id", "")))
+	var idempotency_key := "ui:%d:%s:%s:%s" % [maxi(0, int(projection.get("boundary_serial", 0))), owner_token, command_stable_id, action_id]
+	var result := run_state.world_sequence_command(FunctionOptions.world_sequence_command(owner_token, action_id, idempotency_key, {
+		"payload": {},
+		"owner_namespace": str(action.get("attached_owner_namespace", object_data.get("owner_namespace", ""))),
+		"stable_object_id": command_stable_id,
+		"host_interaction_availability": _scenario_host_interaction_availability(),
+		"action_origin_owner_namespace": str(action.get("action_origin_owner_namespace", object_data.get("owner_namespace", ""))),
+		"action_origin_stable_object_id": str(action.get("action_origin_stable_object_id", object_data.get("stable_object_id", ""))),
+		"action_origin_receipt_key": str(action.get("action_origin_receipt_key", "")),
+		"action_origin_boundary_id": str(action.get("action_origin_boundary_id", "")),
+		"action_origin_fingerprint": str(action.get("action_origin_fingerprint", "")),
+	}))
 	if not bool(result.get("ok", false)):
-		var errors := _copy_array(result.get("errors", []))
+		var errors := JsonCoerceScript._copy_array(result.get("errors", []))
 		_show_message(str(errors[0]) if not errors.is_empty() else "That Crew action is no longer available.")
 		_refresh()
 		return false
-	if _copy_array(result.get("outcomes", [])).has("delivered"):
+	if JsonCoerceScript._copy_array(result.get("outcomes", [])).has("delivered"):
 		var committed := run_state.world_sequence_commit_delivery_outcome(owner_token, run_state.current_world_node_id())
 		if not bool(committed.get("ok", false)):
-			var commit_errors := _copy_array(committed.get("errors", []))
+			var commit_errors := JsonCoerceScript._copy_array(committed.get("errors", []))
 			_show_message(str(commit_errors[0]) if not commit_errors.is_empty() else "That delivery outcome could not be committed safely.")
 			_refresh()
 			return false
 	var outcome_result := _consume_world_sequence_outcomes(owner_token)
 	if not bool(outcome_result.get("ok", false)):
-		var outcome_errors := _copy_array(outcome_result.get("errors", []))
+		var outcome_errors := JsonCoerceScript._copy_array(outcome_result.get("errors", []))
 		_show_message(str(outcome_errors[0]) if not outcome_errors.is_empty() else "That outcome could not be applied safely.")
 		_refresh()
 		return false
-	var message := str(outcome_result.get("message", _copy_dict(result.get("state", {})).get("last_feedback", "Room state updated.")))
+	var message := str(outcome_result.get("message", JsonCoerceScript._copy_dict(result.get("state", {})).get("last_feedback", "Room state updated.")))
 	clear_interaction_focus()
 	_clear_recent_result_feedback()
 	_show_environment_action_acknowledgement(message)
@@ -13616,7 +15079,7 @@ func _activate_world_sequence_action(owner_token: String, object_data: Dictionar
 
 func _consume_world_sequence_outcomes(owner_token: String) -> Dictionary:
 	for outcome_value in run_state.world_sequence_pending_outcomes(owner_token):
-		var outcome := _copy_dict(outcome_value)
+		var outcome := JsonCoerceScript._copy_dict(outcome_value)
 		var channel_id := str(outcome.get("channel_id", ""))
 		var receipt_id := str(outcome.get("receipt_id", ""))
 		match channel_id:
@@ -13647,12 +15110,18 @@ func _scenario_host_interaction_availability() -> Dictionary:
 	# before a command that cannot have changed any of them yet.
 	var records := interactable_object_view_cache if interactable_object_view_cache_valid else _interactable_object_view_list()
 	for record_value in records:
-		var record := _copy_dict(record_value)
+		var record := JsonCoerceScript._copy_dict(record_value)
 		var owner := str(record.get("owner_namespace", "")).strip_edges()
 		var stable_id := str(record.get("stable_object_id", "")).strip_edges()
 		if owner.is_empty() or stable_id.is_empty():
 			continue
 		availability["%s::%s" % [owner, stable_id]] = bool(record.get("enabled", true)) and bool(record.get("interactive", true))
+		for action_value in JsonCoerceScript._copy_array(record.get("scenario_sequence_actions", [])):
+			var action := JsonCoerceScript._copy_dict(action_value)
+			var attached_owner := str(action.get("attached_owner_namespace", "")).strip_edges()
+			var attached_stable_id := str(action.get("attached_stable_object_id", "")).strip_edges()
+			if not attached_owner.is_empty() and not attached_stable_id.is_empty():
+				availability["%s::%s" % [attached_owner, attached_stable_id]] = bool(action.get("enabled", true))
 	return availability
 
 
@@ -13666,8 +15135,8 @@ func _consume_scenario_transitions() -> String:
 	if not bool(drained.get("ok", false)):
 		return ""
 	var messages: Array[String] = []
-	for transition_value in _copy_array(drained.get("transitions", [])):
-		var transition := _copy_dict(transition_value)
+	for transition_value in JsonCoerceScript._copy_array(drained.get("transitions", [])):
+		var transition := JsonCoerceScript._copy_dict(transition_value)
 		var cue_id := str(transition.get("cue_id", "")).strip_edges()
 		if not cue_id.is_empty():
 			if str(transition.get("op", "")) == "music":
@@ -13690,8 +15159,8 @@ func _consume_scenario_event_requests() -> String:
 	if not bool(drained.get("ok", false)):
 		return ""
 	var messages: Array[String] = []
-	for request_value in _copy_array(drained.get("requests", [])):
-		var request := _copy_dict(request_value)
+	for request_value in JsonCoerceScript._copy_array(drained.get("requests", [])):
+		var request := JsonCoerceScript._copy_dict(request_value)
 		var kind := str(request.get("kind", "event"))
 		var message := str(request.get("message", "")).strip_edges()
 		if kind == "item":
@@ -13716,9 +15185,9 @@ func _complete_delivery_handoff(node_id: String) -> bool:
 	var owner_token := run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", node_id)
 	if not owner_token.is_empty():
 		for object_value in _interactable_object_view_list():
-			var object_data := _copy_dict(object_value)
+			var object_data := JsonCoerceScript._copy_dict(object_value)
 			if str(object_data.get("world_sequence_owner_token", "")) != owner_token: continue
-			var actions := _copy_array(object_data.get("scenario_sequence_actions", []))
+			var actions := JsonCoerceScript._copy_array(object_data.get("scenario_sequence_actions", []))
 			if actions.is_empty() or typeof(actions[0]) != TYPE_DICTIONARY: continue
 			return _activate_world_sequence_action(owner_token, object_data, actions[0] as Dictionary)
 		# A cleaned sequence leaves an audited owner tombstone. If no live owned
@@ -13739,7 +15208,7 @@ func _activate_delivery_physical_action(verb: String) -> bool:
 	if run_state == null:
 		return false
 	var delivery := run_state.delivery_snapshot()
-	var physical := _copy_dict(delivery.get("physical", {}))
+	var physical := JsonCoerceScript._copy_dict(delivery.get("physical", {}))
 	var receipt_key := "ui:%s:%s:%d" % [str(delivery.get("run_id", "delivery")), verb, int(physical.get("command_sequence", 0)) + 1]
 	var result := run_state.delivery_apply_physical_action(verb, receipt_key)
 	if not bool(result.get("ok", false)):
@@ -13781,15 +15250,14 @@ func _inspect_casino_fixture(object_data: Dictionary) -> bool:
 				# Preserve the exact sealed choice selected on the main floor. The
 				# selection refresh may rebuild the generic travel view, but this local
 				# door must not re-query a different screen-scoped route contract.
-				var cage_travel := _travel_to(
+				var cage_travel := _travel_to_with_lifecycle_snapshot(
 					str(cage_choice.get("id", RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID)),
 					str(cage_choice.get("label", RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID)),
 					cage_choice,
-					true
+					true,
+					caller_rollback
 				)
 				var travel_ok := bool(cage_travel.get("ok", false))
-				if not travel_ok:
-					_restore_foundation_lifecycle_snapshot(caller_rollback)
 				return travel_ok
 			_restore_foundation_lifecycle_snapshot(caller_rollback)
 		return _start_linda_cage_services(object_data)
@@ -13910,7 +15378,7 @@ func _lender_conversation_option(entry: Dictionary) -> Dictionary:
 		if lender_option.is_empty():
 			return {}
 		var terms_summary := str(lender_option.get("terms_summary", "")).strip_edges()
-		loan_terms = _copy_dict(lender_option.get("loan_terms", {}))
+		loan_terms = JsonCoerceScript._copy_dict(lender_option.get("loan_terms", {}))
 		summary = str(lender_option.get("summary", definition.get("description", "They make a loan offer."))).strip_edges()
 		consequence_summary = terms_summary if not terms_summary.is_empty() else "Accepting creates an active obligation."
 		enabled = bool(lender_option.get("enabled", true))
@@ -14131,7 +15599,7 @@ func _use_cage_players_card_comp(comp_id: String) -> void:
 			if not bool(clock_result.get("ok", false)):
 				run_state.from_dict(rollback_run)
 				run_state.current_environment = rollback_environment
-				_show_message(str(_copy_array(clock_result.get("errors", []))[0]) if not _copy_array(clock_result.get("errors", [])).is_empty() else "Time could not advance safely.")
+				_show_message(str(JsonCoerceScript._copy_array(clock_result.get("errors", []))[0]) if not JsonCoerceScript._copy_array(clock_result.get("errors", [])).is_empty() else "Time could not advance safely.")
 				_refresh_runtime_environment_views()
 				return
 		else:
@@ -14178,6 +15646,21 @@ func _activate_event_response_action(action_object_id: String) -> bool:
 		return false
 	var event_id := payload.substr(0, separator)
 	var choice_id := payload.substr(separator + 1)
+	var event_option := _eligible_event_option(event_id)
+	var live_choice := _event_choice(event_option, choice_id)
+	if bool(live_choice.get("dismissal", false)):
+		if _event_choice_popup_is_visible():
+			if not _event_choice_popup_allows_event_resolution(event_id) \
+					or str(pending_event_choice_popup_snapshot.get("popup_type", "")) != "interactable_event":
+				return false
+			_dismiss_interactable_event_popup()
+			return true
+		if selected_object_id != "event:%s" % event_id:
+			return false
+		_dismiss_interactable_event_selection()
+		return true
+	if _event_is_person_conversation(event_id, true):
+		return _start_person_event_conversation(event_id)
 	event_choice_resolution_pending = true
 	call_deferred("_finish_deferred_event_response_action", event_id, choice_id)
 	return true
@@ -14244,6 +15727,8 @@ func _activate_event_object(event_id: String) -> bool:
 		_show_message("Nothing is happening here right now.")
 		_refresh()
 		return false
+	if _event_is_person_conversation(event_id, true):
+		return _start_person_event_conversation(event_id)
 	var choices: Array = event_option.get("choices", [])
 	if choices.is_empty():
 		_show_message("Choose a response.")
@@ -14277,7 +15762,7 @@ func _show_interactable_event_popup(event_id: String) -> bool:
 		"event_id": event_id,
 		"trigger_context": {},
 		"summary": str(event_option.get("summary", "")),
-		"choices": _copy_array(event_option.get("choices", [])),
+		"choices": JsonCoerceScript._copy_array(event_option.get("choices", [])),
 	}
 	if event_choice_popup_title_label != null:
 		event_choice_popup_title_label.text = str(event_option.get("display_name", event_id))
@@ -14285,17 +15770,24 @@ func _show_interactable_event_popup(event_id: String) -> bool:
 		event_choice_popup_summary_label.text = str(event_option.get("summary", "Something is available here."))
 	_clear_event_choice_popup_choices()
 	var has_explicit_dismissal := false
-	for choice_value in _copy_array(event_option.get("choices", [])):
+	for choice_value in JsonCoerceScript._copy_array(event_option.get("choices", [])):
 		if typeof(choice_value) != TYPE_DICTIONARY:
 			continue
 		var choice: Dictionary = choice_value
 		has_explicit_dismissal = has_explicit_dismissal or bool(choice.get("dismissal", false))
+		# Route popup buttons through the same deferred transaction as inline room
+		# responses. This acknowledges the click before the event boundary, shares
+		# one rollback owner, and keeps tutorial action completion consistent.
+		var choice_callback := Callable(self, "_dismiss_interactable_event_popup") if bool(choice.get("dismissal", false)) else Callable(self, "_activate_event_response_action").bind("event_response:%s:%s" % [event_id, str(choice.get("id", ""))])
 		_add_wager_confirmation_card(
 			str(choice.get("label", choice.get("id", ""))),
 			str(choice.get("text", "")),
 			str(choice.get("consequence_summary", "")),
-			Callable(self, "resolve_event_choice").bind(event_id, str(choice.get("id", ""))),
-			false
+			choice_callback,
+			false,
+			[],
+			event_id,
+			str(choice.get("id", ""))
 		)
 	if not has_explicit_dismissal and not showdown_sequence:
 		_add_wager_confirmation_card(
@@ -14303,13 +15795,12 @@ func _show_interactable_event_popup(event_id: String) -> bool:
 			"Walk away without changing the run.",
 			"No consequence.",
 			Callable(self, "_dismiss_interactable_event_popup"),
-			false
+			false,
+			[],
+			event_id,
+			"dismiss"
 		)
-	event_choice_popup_overlay.visible = true
-	event_choice_popup_overlay.move_to_front()
-	_sync_coach_focus_visibility()
-	_position_event_choice_popup()
-	call_deferred("_position_event_choice_popup")
+	_present_event_choice_popup()
 	return true
 
 
@@ -14317,7 +15808,13 @@ func _dismiss_interactable_event_popup() -> void:
 	if str(pending_event_choice_popup_snapshot.get("popup_type", "")) != "interactable_event":
 		return
 	_hide_event_choice_popup()
+	_dismiss_interactable_event_selection()
+
+
+func _dismiss_interactable_event_selection() -> void:
 	_clear_selected_event_choice()
+	_set_current_screen(SCREEN_GAME if current_game != null else SCREEN_ENVIRONMENT)
+	clear_interaction_focus(false, false)
 	_show_message("You leave it alone.")
 	_refresh()
 
@@ -14437,7 +15934,9 @@ func _on_environment_object_focused(object_id: String) -> void:
 		pending_post_purchase_affinity_result = {}
 		if current_screen == SCREEN_RESULT:
 			_set_current_screen(SCREEN_ENVIRONMENT)
-	if not focus_interactable_object(object_id):
+	var rendered_object := environment_canvas.interactable_object_view(object_id) if environment_canvas != null else {}
+	var focused := focus_interactable_object_from_view(rendered_object) if not rendered_object.is_empty() else focus_interactable_object(object_id)
+	if not focused:
 		return
 	_sync_coach_environment_anchor_geometry()
 	if object_id == "travel:leave" and coach_overlay != null and coach_overlay.active_anchor_kind() == "interactable_object" and coach_overlay.active_anchor_id() == object_id:
@@ -14458,6 +15957,50 @@ func _on_environment_object_activated(object_id: String) -> void:
 
 func _on_environment_view_geometry_changed() -> void:
 	_sync_coach_environment_anchor_geometry()
+
+
+func _on_game_surface_view_geometry_changed() -> void:
+	_sync_coach_game_surface_anchor_geometry()
+
+
+func _sync_coach_game_surface_anchor_geometry() -> void:
+	if coach_overlay == null or game_surface_canvas == null or current_screen != SCREEN_GAME:
+		return
+	var anchor_kind: String = coach_overlay.active_anchor_kind()
+	if anchor_kind != "surface_action":
+		return
+	var anchor_id: String = coach_overlay.active_anchor_id()
+	if anchor_id.is_empty():
+		return
+	var game_coach_state: Dictionary = current_game.coach_state(run_state, run_state.current_environment, _current_game_surface_ui_state()) if current_game != null and run_state != null else {}
+	coach_overlay.update_active_anchor_context(_coach_anchor_rects(game_coach_state), game_coach_state)
+	var rendered_rect := _coach_live_game_surface_anchor_rect(anchor_id)
+	if not rendered_rect.has_area():
+		return
+	coach_overlay.update_active_anchor_rect(anchor_kind, anchor_id, rendered_rect)
+	_sync_coach_focus_visibility()
+	_sync_talk_dock_coach_avoid_rect()
+
+
+func _coach_live_game_surface_anchor_rect(anchor_id: String) -> Rect2:
+	var rendered_rect: Rect2 = game_surface_canvas.global_rect_for_surface_action(anchor_id)
+	if rendered_rect.has_area() or current_game == null or run_state == null:
+		return rendered_rect
+	# Some lessons name a semantic target (for example DRINK PASS) that is
+	# rendered by an indexed physical control. Resolve the same public aliases as
+	# the boundary model before moving the live highlight after a redraw.
+	var game_coach_state: Dictionary = current_game.coach_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
+	for alias_value in game_coach_state.get("surface_action_anchors", []):
+		if typeof(alias_value) != TYPE_DICTIONARY:
+			continue
+		var alias: Dictionary = alias_value
+		if str(alias.get("id", "")).strip_edges() != anchor_id:
+			continue
+		return game_surface_canvas.global_rect_for_surface_action(
+			str(alias.get("action", "")).strip_edges(),
+			int(alias.get("index", -1))
+		)
+	return Rect2()
 
 
 func _sync_coach_environment_anchor_geometry() -> void:
@@ -14488,13 +16031,18 @@ func select_environment_view_object(index: int = 0) -> void:
 
 
 func _render_foundation_snapshots() -> void:
-	var environment_visible := current_screen != SCREEN_GAME or current_game == null
+	var terminal_report := _is_failure_screen() or _is_victory_screen()
+	var environment_visible := not terminal_report and (current_screen != SCREEN_GAME or current_game == null)
 	var game_visible := current_screen == SCREEN_GAME and current_game != null
 	var game_snapshot: Dictionary = _game_view_snapshot(true) if game_visible else {}
 	if environment_canvas != null and environment_visible:
 		_render_environment_canvas_snapshot()
 	if game_surface_canvas != null:
-		game_surface_canvas.set_game_module(current_game)
+		# Item/service/lender detail panels can remain inside an active game session,
+		# but the game canvas is hidden there. Release renderer-owned viewport caches
+		# until the player returns to GAME; the module simulation remains live and the
+		# normal game snapshot rebuilds the identical presentation on re-entry.
+		game_surface_canvas.set_game_module(current_game if game_visible else null)
 		if game_visible:
 			# A realtime module's first boundary is an entry anchor, not a gameplay
 			# tick. Apply it before the initial render so the module clock, host
@@ -14585,7 +16133,10 @@ func _render_environment_canvas_snapshot() -> void:
 	if environment_canvas == null:
 		return
 	environment_canvas.set_reserved_overlay_rect(_current_talk_dock_environment_reserved_rect())
-	environment_canvas.render_environment_snapshot(_environment_view_snapshot())
+	# _environment_view_snapshot() returns a new presentation root which no host
+	# code retains or mutates. Transfer it directly; the public canvas entry point
+	# keeps its defensive deep copy for shared/external dictionaries.
+	environment_canvas.render_owned_environment_snapshot(_environment_view_snapshot())
 	rendered_environment_snapshot_signature = _environment_snapshot_signature()
 
 
@@ -14643,38 +16194,80 @@ func _environment_view_snapshot() -> Dictionary:
 	})
 	# Interaction projection runs while the snapshot is assembled, so attach the
 	# resulting audit after that atomic projection has completed.
-	snapshot["scenario_layout_audit"] = _copy_dict(run_state.current_environment.get("scenario_layout_audit", {}))
+	snapshot["scenario_layout_audit"] = JsonCoerceScript._copy_dict(run_state.current_environment.get("scenario_layout_audit", {}))
 	snapshot["scenario_layout_authority_digest"] = str(run_state.current_environment.get("scenario_layout_authority_digest", ""))
+	if user_settings != null and bool(user_settings.developer_slot_placement_mode):
+		snapshot["developer_placement_progress"] = _developer_placement_progress_snapshot(
+			run_state.current_environment
+		)
 	return snapshot
 
 
+func _developer_placement_progress_snapshot(environment: Dictionary) -> Dictionary:
+	var coverage := DeveloperPlacementStoreScript.coverage_snapshot()
+	var missing := JsonCoerceScript._copy_array(coverage.get("missing_layout_ids", []))
+	return {
+		"layout_id": DeveloperPlacementStoreScript.layout_id(environment),
+		"saved": DeveloperPlacementStoreScript.layout_saved(environment),
+		"saved_layout_count": int(coverage.get("saved_layout_count", 0)),
+		"expected_layout_count": int(coverage.get("expected_layout_count", 0)),
+		"missing_layout_count": missing.size(),
+		"next_missing_layout_id": str(
+			coverage.get("next_missing_layout_id", missing[0] if not missing.is_empty() else "")
+		),
+		"complete": bool(coverage.get("complete", false)),
+		"practice_session": _is_environment_test_session(),
+	}
+
+
 func _interactable_object_view_list() -> Array:
-	var cache_key := _interactable_object_cache_key()
-	if interactable_object_view_cache_valid and interactable_object_view_cache_key == cache_key:
+	var catalog_key := _interactable_object_cache_key()
+	if not interactable_object_catalog_cache_valid or interactable_object_catalog_cache_key != catalog_key:
+		interactable_object_catalog_cache = EnvironmentInteractionViewModelScript.deduplicated_scenario_instruction_records(
+			EnvironmentInteractionControllerScript.interactable_object_view_list(self)
+		)
+		interactable_object_catalog_cache_valid = true
+		# Scenario projection seals its layout authority while building the catalog.
+		# Capture the post-projection token; retaining the pre-projection token made
+		# the immediately following header/canvas request rebuild the same expensive
+		# catalog, and delivery-arrival contacts amplified that into a multi-second
+		# travel hitch.
+		catalog_key = _interactable_object_cache_key()
+		interactable_object_catalog_cache_key = catalog_key
+		interactable_object_view_cache_valid = false
+	var view_key := "%s|%s|%s|%s" % [catalog_key, hover_target_id, focus_target_id, selected_object_id]
+	if interactable_object_view_cache_valid and interactable_object_view_cache_key == view_key:
 		return interactable_object_view_cache
-	interactable_object_view_cache = EnvironmentInteractionViewModelScript.deduplicated_scenario_instruction_records(
-		EnvironmentInteractionControllerScript.interactable_object_view_list(self)
-	)
+	interactable_object_view_cache = []
+	for object_value in interactable_object_catalog_cache:
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data := (object_value as Dictionary).duplicate(false)
+		var object_id := str(object_data.get("object_id", ""))
+		object_data["hovered"] = object_id == hover_target_id
+		object_data["focused"] = object_id == focus_target_id
+		object_data["selected"] = object_id == selected_object_id
+		interactable_object_view_cache.append(object_data)
 	interactable_object_view_cache_valid = true
-	interactable_object_view_cache_key = cache_key
+	interactable_object_view_cache_key = view_key
 	return interactable_object_view_cache
 
 
 func _interactable_object_cache_key() -> String:
 	if run_state == null:
 		return "no-run"
-	return "%d|%s|%s|%s|%s|%s|%s|%s|%s|%s|%s" % [
+	# Screen routing is presentation state. None of the catalog projection paths
+	# consume current_screen, and including it here made an ordinary category
+	# click rebuild and recommit sealed room-layout authority. Event/item selection
+	# still invalidates inline catalog presentation; the selected travel target is
+	# consumed only by the travel/map view and must not rebuild room authority.
+	return "%d|%s|%s|%s|%s|%s" % [
 		run_state.get_instance_id(),
 		_interactable_environment_cache_token(run_state.current_environment),
 		JSON.stringify([run_state.delivery_physical_interactions(), run_state.delivery_arrival_interaction()]),
-		current_screen,
-		hover_target_id,
-		focus_target_id,
-		selected_object_id,
 		selected_event_id,
 		selected_event_choice_id,
 		selected_item_offer_id,
-		selected_travel_target_id,
 	]
 
 
@@ -14685,6 +16278,10 @@ func _interactable_environment_cache_token(environment: Dictionary) -> String:
 	# the room object catalog and made late-run lender selection take hundreds of
 	# milliseconds. Include the small authored interaction collections explicitly
 	# so in-place host/test updates cannot reuse a stale catalog.
+	var layout_value: Variant = environment.get("layout", {})
+	var layout: Dictionary = layout_value as Dictionary if typeof(layout_value) == TYPE_DICTIONARY else {}
+	var manifest_value: Variant = environment.get("object_manifest", {})
+	var manifest: Dictionary = manifest_value as Dictionary if typeof(manifest_value) == TYPE_DICTIONARY else {}
 	return JSON.stringify([
 		str(environment.get("id", "")),
 		str(environment.get("world_node_id", "")),
@@ -14693,6 +16290,9 @@ func _interactable_environment_cache_token(environment: Dictionary) -> String:
 		int(environment.get("environment_runtime_revision", 0)),
 		str(environment.get("scenario_semantic_digest", "")),
 		str(environment.get("scenario_layout_authority_digest", "")),
+		int(environment.get("object_manifest_revision", manifest.get("revision", 0))),
+		str(environment.get("object_manifest_digest", manifest.get("digest", ""))),
+		environment.get("runtime_object_manifest_entries", []),
 		bool(environment.get("scenario_semantic_ready", false)),
 		bool(environment.get("scenario_restore_pending_trusted_rebuild", false)),
 		str(environment.get("scenario_sequence_pending_visit_id", "")),
@@ -14702,7 +16302,11 @@ func _interactable_environment_cache_token(environment: Dictionary) -> String:
 		environment.has("scenario_sequence_projection"),
 		str(environment.get("current_layer_id", "")),
 		str(environment.get("kind", "")),
-		_copy_dict(environment.get("layout", {})).get("object_rects", {}),
+		int(layout.get("slot_schema_version", 0)),
+		str(layout.get("slot_map_digest", "")),
+		str(layout.get("slot_binding_digest", "")),
+		layout.get("slot_overflow_ids", []),
+		layout.get("object_rects", {}),
 		environment.get("game_ids", []),
 		environment.get("event_ids", []),
 		environment.get("resolved_event_ids", []),
@@ -14713,14 +16317,6 @@ func _interactable_environment_cache_token(environment: Dictionary) -> String:
 		environment.get("next_archetypes", []),
 		environment.get("object_fixtures", []),
 	])
-
-
-func _filter_unique_interactable_objects(objects: Array) -> Array:
-	return EnvironmentInteractionViewModelScript.filter_unique_objects(objects)
-
-
-func _objects_with_closing_time_lock(objects: Array) -> Array:
-	return EnvironmentInteractionViewModelScript.objects_with_closing_time_lock(objects, _closing_time_disabled_reason())
 
 
 func _game_hook_interactable_objects(apply_failure_lock: bool = true) -> Array:
@@ -14795,7 +16391,7 @@ func _environment_game_fixture_object_states(game_id: String) -> Dictionary:
 	if not game.has_method("environment_object_state_for_state_key"):
 		return result
 	var layout := _current_environment_layout()
-	var fixture_counts := _copy_dict(layout.get("game_fixture_counts", {}))
+	var fixture_counts := JsonCoerceScript._copy_dict(layout.get("game_fixture_counts", {}))
 	var fixture_count := maxi(1, int(fixture_counts.get(game_id, 1)))
 	for fixture_index in range(fixture_count):
 		var state_key := game_id if fixture_index == 0 else "%s:%d" % [game_id, fixture_index + 1]
@@ -14804,20 +16400,6 @@ func _environment_game_fixture_object_states(game_id: String) -> Dictionary:
 		if typeof(state_value) == TYPE_DICTIONARY:
 			result[object_id] = (state_value as Dictionary).duplicate(true)
 	return result
-
-
-func _set_active_game_state_key(game_id: String, state_key: String) -> void:
-	if run_state == null:
-		return
-	var clean_game_id := game_id.strip_edges()
-	if clean_game_id.is_empty():
-		return
-	var clean_state_key := state_key.strip_edges()
-	if clean_state_key.is_empty():
-		clean_state_key = clean_game_id
-	var active_keys := _copy_dict(run_state.current_environment.get("active_game_state_keys", {}))
-	active_keys[clean_game_id] = clean_state_key
-	run_state.current_environment["active_game_state_keys"] = active_keys
 
 
 func _game_state_key_from_object_id(object_id: String, game_id: String) -> String:
@@ -14846,28 +16428,6 @@ func _generated_object_interaction_rect(object_id: String) -> Rect2:
 	return EnvironmentInteractionViewModelScript.rect_from_dict((object_rects as Dictionary).get(object_id, {})) if typeof(object_rects) == TYPE_DICTIONARY and (object_rects as Dictionary).has(object_id) else Rect2()
 
 
-func _interaction_rect(object_type: String, index: int) -> Rect2:
-	return EnvironmentInteractionViewModelScript.interaction_rect_for_object("", object_type, index, _current_environment_layout())
-
-
-func _authored_interaction_rect(object_type: String, index: int) -> Rect2:
-	return EnvironmentInteractionViewModelScript.authored_interaction_rect(object_type, index, _current_environment_layout())
-
-
-func _layout_spot_for_object_type(object_type: String, index: int) -> Vector2:
-	var field_name: String = EnvironmentInteractionViewModelScript.layout_spot_field_name(object_type)
-	var spots: Variant = _current_environment_layout().get(field_name, [])
-	return EnvironmentInteractionViewModelScript.layout_spot_to_board_position((spots as Array)[index]) if not field_name.is_empty() and typeof(spots) == TYPE_ARRAY and index >= 0 and index < (spots as Array).size() else Vector2(-1.0, -1.0)
-
-
-func _layout_spot_field_name(object_type: String) -> String:
-	return EnvironmentInteractionViewModelScript.layout_spot_field_name(object_type)
-
-
-func _layout_spot_to_board_position(value: Variant) -> Vector2:
-	return EnvironmentInteractionViewModelScript.layout_spot_to_board_position(value)
-
-
 func _current_environment_layout() -> Dictionary:
 	if run_state == null:
 		return {}
@@ -14883,15 +16443,11 @@ func _current_environment_layout() -> Dictionary:
 		if archetype_id == RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID and typeof(archetype_layout) == TYPE_DICTIONARY:
 			var saved_item_spots: Variant = resolved_layout.get("item_spots", [])
 			if typeof(saved_item_spots) != TYPE_ARRAY or (saved_item_spots as Array).is_empty():
-				resolved_layout["item_spots"] = _copy_array((archetype_layout as Dictionary).get("item_spots", []))
+				resolved_layout["item_spots"] = JsonCoerceScript._copy_array((archetype_layout as Dictionary).get("item_spots", []))
 		return resolved_layout
 	if typeof(archetype_layout) != TYPE_DICTIONARY:
 		return {}
 	return archetype_layout as Dictionary
-
-
-func _normalized_interaction_rect(object_type: String, index: int) -> Rect2:
-	return EnvironmentInteractionViewModelScript.normalized_interaction_rect(object_type, index)
 
 
 func _rect_to_dict(rect: Rect2) -> Dictionary:
@@ -14932,7 +16488,9 @@ func _game_view_snapshot(read_only_render_result: bool = false) -> Dictionary:
 
 func _current_game_surface_ui_state() -> Dictionary:
 	if FoundationActionViewModelScript == null:
-		FoundationActionViewModelScript = load(str(RUN_UI_SCRIPT_PATHS.get("FoundationActionViewModelScript", ""))) as Script
+		FoundationActionViewModelScript = _consume_run_ui_script_prewarm_result(
+			str(RUN_UI_SCRIPT_PATHS.get("FoundationActionViewModelScript", ""))
+		) as Script
 	if FoundationActionViewModelScript == null:
 		return {}
 	return FoundationActionViewModelScript.current_game_surface_ui_state(self)
@@ -14991,62 +16549,11 @@ func _refresh_consequence_labels() -> void:
 		_clear(consequence_cards_list)
 
 
-func _refresh_consequence_cards(snapshot: Dictionary) -> void:
-	if consequence_cards_list == null:
-		return
-	_clear(consequence_cards_list)
-	var shown := 0
-	for card in snapshot.get("cards", []):
-		if typeof(card) == TYPE_DICTIONARY:
-			_add_consequence_card(card as Dictionary)
-			shown += 1
-		if shown >= 3:
-			break
-
-
-func _add_consequence_card(card: Dictionary) -> void:
-	var tone := str(card.get("tone", "neutral"))
-	var border := VisualStyle.CYAN_2
-	match tone:
-		"positive":
-			border = VisualStyle.TEAL
-		"risk":
-			border = VisualStyle.PINK
-		"cost":
-			border = VisualStyle.ORANGE
-		"story":
-			border = VisualStyle.AMBER
-		"next":
-			border = VisualStyle.PURPLE_2
-	var panel := _panel_container(VisualStyle.DARK_3, border)
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.custom_minimum_size = Vector2(0, 54)
-	consequence_cards_list.add_child(panel)
-	var stack := VBoxContainer.new()
-	stack.add_theme_constant_override("separation", 2)
-	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_child(stack)
-	var title := _label(str(card.get("title", "Outcome")), 12)
-	_set_control_font_color(title, border)
-	stack.add_child(title)
-	var line_count := 0
-	for line in card.get("lines", []):
-		var text := str(line)
-		if not text.strip_edges().is_empty():
-			var line_label := _label(text, 10)
-			line_label.max_lines_visible = 1
-			line_label.clip_text = true
-			stack.add_child(line_label)
-			line_count += 1
-		if line_count >= 2:
-			break
-
-
 func _run_report_outcome_snapshot() -> Dictionary:
 	if run_state == null:
 		return {}
 	_render_run_report()
-	return _copy_dict(run_report_model.get("outcome", {}))
+	return JsonCoerceScript._copy_dict(run_report_model.get("outcome", {}))
 func _victory_container_item_choices() -> Array:
 	var result: Array = []
 	if run_state == null or library == null:
@@ -15060,7 +16567,7 @@ func _victory_container_item_choices() -> Array:
 		var definition := library.item(item_id)
 		if definition.is_empty():
 			continue
-		var effect := _copy_dict(definition.get("effect", {}))
+		var effect := JsonCoerceScript._copy_dict(definition.get("effect", {}))
 		var capacity := maxi(0, int(definition.get("container_capacity", 0)))
 		capacity = maxi(capacity, int(effect.get("container_capacity", 0)))
 		if str(definition.get("class", "")) != "container" and capacity <= 0:
@@ -15105,34 +16612,6 @@ func _consequence_view_snapshot() -> Dictionary:
 		"item_labeler": Callable(self, "_item_id_list_label"),
 		"travel_labeler": Callable(self, "_travel_id_list_label"),
 	})
-func _result_is_visible_consequence(result: Dictionary, recent_message: String = "") -> bool:
-	if result.is_empty():
-		return false
-	var result_type := str(result.get("type", ""))
-	if ["game_enter", "game_actions"].has(result_type):
-		return false
-	var deltas: Dictionary = result.get("deltas", {})
-	if int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0))) != 0:
-		return true
-	if int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0))) != 0:
-		return true
-	for key in ["alcohol_intake", "drunk_delta", "alcoholic_delta", "baseline_luck_delta"]:
-		if int(deltas.get(key, 0)) != 0:
-			return true
-	if bool(result.get("ended", deltas.get("ended", false))):
-		return true
-	for key in ["debt_changes", "inventory_add", "inventory_remove", "travel_hooks_add", "story_log", "messages", "item_hooks", "event_hooks"]:
-		if not _copy_array(deltas.get(key, [])).is_empty():
-			return true
-	for key in ["flags_set", "travel_changes"]:
-		var value: Variant = deltas.get(key, {})
-		if typeof(value) == TYPE_DICTIONARY and not (value as Dictionary).is_empty():
-			return true
-	if not recent_message.strip_edges().is_empty():
-		return true
-	return ["game_action", "game_action_summary", "item_effect", "item_sale", "event", "travel", "service_hook", "lender_hook", "game_hook", "story_summary"].has(result_type)
-
-
 func _refresh_environment_result_feedback() -> void:
 	if environment_result_panel == null:
 		return
@@ -15183,7 +16662,7 @@ func _environment_result_feedback_view() -> Dictionary:
 		"bankroll_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
 		"object_id": _outcome_object_id(result),
-		"music_outcome_schedule": _copy_dict(result.get("music_outcome_schedule", last_music_outcome_schedule)),
+		"music_outcome_schedule": JsonCoerceScript._copy_dict(result.get("music_outcome_schedule", last_music_outcome_schedule)),
 		"result": result.duplicate(true),
 	}
 
@@ -15216,32 +16695,6 @@ func _environment_result_feedback_accent(result: Dictionary, bankroll_delta: int
 			return VisualStyle.CYAN_2
 
 
-func _outcome_card_title(result: Dictionary) -> String:
-	if result.is_empty():
-		return "Ready"
-	var type := str(result.get("type", ""))
-	var action_kind := str(result.get("action_kind", ""))
-	match type:
-		"game_action", "game_action_summary":
-			return "Risky play resolved" if action_kind == "cheat" else "Play resolved"
-		"item_effect":
-			return "Item gained"
-		"item_sale":
-			return "Item sold"
-		"event":
-			return "Event resolved"
-		"travel":
-			return "Travel complete"
-		"service_hook":
-			return "Service resolved"
-		"lender_hook":
-			return "Debt changed"
-		"game_hook":
-			return "Cashout resolved"
-		_:
-			return "Outcome"
-
-
 func _outcome_card_tone(_result: Dictionary, bankroll_delta: int, suspicion_delta: int) -> String:
 	if suspicion_delta > 0:
 		return "risk"
@@ -15250,46 +16703,6 @@ func _outcome_card_tone(_result: Dictionary, bankroll_delta: int, suspicion_delt
 	if bankroll_delta > 0:
 		return "positive"
 	return "neutral"
-
-
-func _should_show_pressure_card(pressure: Dictionary) -> bool:
-	return TerminalConsequenceViewModelScript.should_show_pressure_card(pressure)
-
-
-func _pressure_card_tone(pressure: Dictionary) -> String:
-	return TerminalConsequenceViewModelScript.pressure_card_tone(pressure)
-
-
-func _pressure_card_lines(pressure: Dictionary) -> Array:
-	return TerminalConsequenceViewModelScript.pressure_card_lines(pressure)
-
-
-func _risk_card_lines(suspicion_delta: int, suspicion_cues: Variant, security_cues: Variant) -> Array:
-	return TerminalConsequenceViewModelScript.risk_card_lines(run_state, suspicion_delta, _copy_array(suspicion_cues), _copy_array(security_cues))
-
-
-func _alcohol_card_lines(alcohol_intake: int, drunk_delta: int, alcoholic_delta: int, baseline_luck_delta: int) -> Array:
-	return TerminalConsequenceViewModelScript.alcohol_card_lines(run_state, alcohol_intake, drunk_delta, alcoholic_delta, baseline_luck_delta)
-
-
-func _debt_card_lines(debt_changes: Array, debt_items: Variant) -> Array:
-	return TerminalConsequenceViewModelScript.debt_card_lines(debt_changes, _copy_array(debt_items))
-
-
-func _inventory_card_lines(inventory_add: Array, inventory_remove: Array, inventory_items: Variant) -> Array:
-	return TerminalConsequenceViewModelScript.inventory_card_lines(inventory_add, inventory_remove, _copy_array(inventory_items), Callable(self, "_item_id_list_label"))
-
-
-func _travel_card_lines(travel_hooks: Array, travel_changes: Dictionary, travel_choices: Variant) -> Array:
-	return TerminalConsequenceViewModelScript.travel_card_lines(travel_hooks, travel_changes, _copy_array(travel_choices), Callable(self, "_travel_id_list_label"))
-
-
-func _story_card_lines(recent_message: String, story_messages: Array) -> Array:
-	return TerminalConsequenceViewModelScript.story_card_lines(recent_message, story_messages)
-
-
-func _next_action_lines(travel_choices: Variant) -> Array:
-	return TerminalConsequenceViewModelScript.next_action_lines(current_game != null, _copy_array(travel_choices))
 
 
 func _item_id_list_label(items: Array) -> String:
@@ -15395,7 +16808,7 @@ func _suspicion_cue_view_list() -> Array:
 
 func _security_cue_view_list() -> Array:
 	var result: Array = []
-	for cue in _copy_array(run_state.current_environment.get("suspicion_cues", [])):
+	for cue in JsonCoerceScript._copy_array(run_state.current_environment.get("suspicion_cues", [])):
 		var label := str(cue)
 		if not label.is_empty():
 			result.append(label)
@@ -15404,10 +16817,19 @@ func _security_cue_view_list() -> Array:
 
 func _inventory_view_list() -> Array:
 	var result: Array = []
-	for item_id in _string_array(run_state.inventory):
+	if run_state == null:
+		return result
+	for item_value in run_state.inventory:
+		var item_id := _inventory_value_id(item_value)
+		if item_id.is_empty():
+			continue
+		if typeof(item_value) == TYPE_DICTIONARY:
+			var runtime_label := str((item_value as Dictionary).get("display_name", "")).strip_edges()
+			result.append(runtime_label if not runtime_label.is_empty() else _inventory_item_label(item_id))
+			continue
 		var item_definition := library.item(item_id) if library != null else {}
 		if item_definition.is_empty():
-			result.append(_label_from_id(item_id))
+			result.append(_inventory_item_label(item_id))
 			continue
 		var label := str(item_definition.get("display_name", _label_from_id(item_id)))
 		result.append(label)
@@ -15416,7 +16838,7 @@ func _inventory_view_list() -> Array:
 
 func _debt_view_list() -> Array:
 	var result: Array = []
-	for debt_entry in _copy_array(run_state.debt):
+	for debt_entry in JsonCoerceScript._copy_array(run_state.debt):
 		if typeof(debt_entry) != TYPE_DICTIONARY:
 			continue
 		var debt_data := debt_entry as Dictionary
@@ -15511,44 +16933,6 @@ func _story_entry_label(entry: Dictionary) -> String:
 			return _label_from_id(type)
 
 
-func _debt_summary(items: Array) -> String:
-	if items.is_empty():
-		return "none"
-	if items.size() == 1:
-		return str(items[0])
-	return "%d active debts" % items.size()
-
-
-func _inventory_summary(items: Array) -> String:
-	if items.is_empty():
-		return "empty"
-	if items.size() <= 3:
-		return ", ".join(items)
-	return "%s +%d" % [", ".join(items.slice(0, 3)), items.size() - 3]
-
-
-func _flag_summary(labels: Array) -> String:
-	if labels.is_empty():
-		return "none"
-	if labels.size() <= 3:
-		return ", ".join(labels)
-	return "%s +%d" % [", ".join(labels.slice(0, 3)), labels.size() - 3]
-
-
-func _travel_summary(choices: Array) -> String:
-	if choices.is_empty():
-		return "none"
-	var labels: Array = []
-	for choice in choices:
-		if typeof(choice) == TYPE_DICTIONARY:
-			labels.append(str((choice as Dictionary).get("label", (choice as Dictionary).get("id", ""))))
-	if labels.is_empty():
-		return "%d available" % choices.size()
-	if labels.size() <= 2:
-		return ", ".join(labels)
-	return "%s +%d" % [", ".join(labels.slice(0, 2)), labels.size() - 2]
-
-
 func _default_stake() -> int:
 	var range := _stake_range()
 	return int(range.get("default", 1))
@@ -15570,6 +16954,10 @@ func _show_message(text: String) -> void:
 		message_label.text = display_text
 	if start_status_label != null and run_state == null:
 		start_status_label.text = display_text
+
+
+func _on_surface_audio_status_changed(message: String) -> void:
+	_show_message(message)
 
 
 func _show_environment_action_acknowledgement(text: String) -> void:
@@ -15615,11 +17003,10 @@ func _on_start_pressed() -> bool:
 	if not _ensure_run_ui_built():
 		return false
 	var seed_text := seed_input.text.strip_edges()
-	if seed_text.is_empty():
-		seed_text = _generate_menu_seed_text()
-		seed_input.text = seed_text
 	if selected_challenge_id.is_empty() and _fresh_profile_needs_tutorial():
 		return start_tutorial_run()
+	if seed_text.is_empty() or seed_text == generated_menu_seed_text:
+		return start_generated_foundation_run()
 	return start_foundation_run(seed_text, _new_run_challenge_for_seed(seed_text))
 
 
@@ -15663,7 +17050,13 @@ func start_tutorial_run() -> bool:
 		_show_message("The First Night lesson is unavailable.")
 		return false
 	selected_challenge_id = ""
-	return start_foundation_run(str(config.get("seed_text", "FIRST-NIGHT-ACE-17")), config, false)
+	if not start_foundation_run(str(config.get("seed_text", "FIRST-NIGHT-ACE-17")), config, false):
+		return false
+	# Beginning the automatic lesson is the one-time profile boundary. Replay
+	# Lessons calls this same entry point, but remains available regardless of the
+	# persisted flag because only automatic selection consults should_auto_start().
+	_complete_tutorial_profile()
+	return true
 
 
 func _fresh_profile_needs_tutorial() -> bool:
@@ -15683,20 +17076,10 @@ func request_skip_tutorial() -> void:
 func _confirm_skip_tutorial() -> void:
 	if run_state == null or not run_state.is_tutorial_run():
 		return
-	if profile_inventory == null:
-		_initialize_profile_inventory()
-	profile_inventory.tutorial_completed = true
-	var profile_save_error := profile_inventory.save()
-	if profile_save_error != OK:
-		profile_inventory.tutorial_completed = false
-		_show_message("Could not save lesson completion.")
+	if not _complete_tutorial_profile():
 		return
-	if save_service != null:
-		var clear_error := save_service.clear_run(autosave_slot_id)
-		if clear_error != OK:
-			_show_message("Could not clear the tutorial Resume Slot.")
-			return
-		autosave_loadable_available = false
+	if not _clear_tutorial_resume_slot():
+		return
 	if coach_overlay != null:
 		coach_overlay.suspend()
 	run_state = null
@@ -15706,24 +17089,34 @@ func _confirm_skip_tutorial() -> void:
 func start_generated_foundation_run() -> bool:
 	if not _ensure_run_ui_built():
 		return false
-	var seed_text := _generate_menu_seed_text()
-	if seed_input != null:
-		seed_input.text = seed_text
-	return start_foundation_run(seed_text, _new_run_challenge_for_seed(seed_text))
+	for _attempt in range(GENERATED_RUN_START_ATTEMPTS):
+		var seed_text := _generate_menu_seed_text()
+		generated_menu_seed_text = seed_text
+		if seed_input != null:
+			seed_input.text = seed_text
+		if start_foundation_run(seed_text, _new_run_challenge_for_seed(seed_text)):
+			return true
+	return false
 
 
 func start_meta_quick_run() -> bool:
 	if not _ensure_run_ui_built():
 		return false
-	var seed_text := _generate_menu_seed_text()
-	if seed_input != null:
-		seed_input.text = seed_text
-	return start_foundation_run(seed_text, {}, false)
+	for _attempt in range(GENERATED_RUN_START_ATTEMPTS):
+		var seed_text := _generate_menu_seed_text()
+		generated_menu_seed_text = seed_text
+		if seed_input != null:
+			seed_input.text = seed_text
+		if start_foundation_run(seed_text, {}, false):
+			return true
+	return false
 
 
 func _on_run_report_new_run_requested() -> void:
 	if _terminal_reward_selection_pending():
 		_show_message("Choose and store each earned reward before leaving the run report.")
+		return
+	if not _save_foundation_run_before_leaving("Completed run saved."):
 		return
 	if run_state != null and run_state.is_tutorial_run() and run_state.run_status == RunState.RUN_STATUS_FAILED:
 		start_tutorial_run()
@@ -15736,12 +17129,19 @@ func _on_run_report_home_requested() -> void:
 		_show_message("Choose and store each earned reward before leaving the run report.")
 		return
 	if run_state != null and run_state.is_tutorial_run() and run_state.run_status == RunState.RUN_STATUS_FAILED:
-		if not _complete_tutorial_profile():
+		if not _save_foundation_run_before_leaving("Lesson completion saved."):
 			return
 		start_generated_foundation_run()
 		return
+	if return_to_main_menu():
+		open_collection_browser()
+
+
+func _on_run_report_main_menu_requested() -> void:
+	if _terminal_reward_selection_pending():
+		_show_message("Choose and store each earned reward before leaving the run report.")
+		return
 	return_to_main_menu()
-	open_collection_browser()
 
 
 func _complete_tutorial_profile() -> bool:
@@ -15756,6 +17156,18 @@ func _complete_tutorial_profile() -> bool:
 	profile_inventory.tutorial_completed = false
 	_show_message("Could not save lesson completion.")
 	return false
+
+
+func _clear_tutorial_resume_slot() -> bool:
+	if save_service == null:
+		return true
+	var clear_error := save_service.clear_run(autosave_slot_id)
+	if clear_error != OK:
+		_show_message("Could not clear the tutorial Resume Slot.")
+		return false
+	autosave_loadable_available = false
+	pending_autosave = false
+	return true
 
 
 func _on_run_report_copy_seed_requested(seed: String) -> void:
@@ -15773,7 +17185,7 @@ func _challenge_with_meta_home_for_run(seed_text: String, config: Dictionary) ->
 		return normalized
 	if meta_collection_service == null:
 		_initialize_meta_collection()
-	var modifiers := _copy_dict(normalized.get("modifiers", {}))
+	var modifiers := JsonCoerceScript._copy_dict(normalized.get("modifiers", {}))
 	var meta_modifiers: Dictionary = meta_collection_service.normal_run_start_modifiers()
 	for key in meta_modifiers.keys():
 		if str(key) == "home_archetype_id" and not str(modifiers.get("home_archetype_id", "")).strip_edges().is_empty():
@@ -15787,7 +17199,7 @@ func _apply_meta_collection_loadout_to_run() -> void:
 	if run_state == null or not run_state.meta_collection_enabled_for_run():
 		return
 	var modifiers := run_state.challenge_modifiers()
-	for item_value in _copy_array(modifiers.get("meta_collection_loadout", [])):
+	for item_value in JsonCoerceScript._copy_array(modifiers.get("meta_collection_loadout", [])):
 		if typeof(item_value) != TYPE_DICTIONARY:
 			continue
 		var item: Dictionary = item_value
@@ -15799,14 +17211,39 @@ func _apply_meta_collection_loadout_to_run() -> void:
 	run_state.invalidate_inventory_effect_cache()
 
 
-func return_to_main_menu() -> void:
+func _save_foundation_run_before_leaving(status_text: String) -> bool:
+	if run_state == null or _is_meta_session() or dev_game_test_mode:
+		return true
+	if run_state.is_tutorial_run():
+		return _complete_tutorial_profile() and _clear_tutorial_resume_slot()
+	# Keep the active state key until the machine has published its settled
+	# authority. A failed write must leave that state available for retry.
+	_invalidate_deferred_embedded_action_refresh()
+	var settling_game := current_game
+	var was_settling := game_exit_settle_active
+	game_exit_settle_active = false
+	_checkpoint_current_game_surface_ui_state()
+	if current_game != null and not current_game.foundation_save_ready(run_state, run_state.current_environment):
+		# A live machine may exist before a retained UI projection is installed.
+		current_game.checkpoint_surface_ui_state({}, run_state, run_state.current_environment)
+	if was_settling and settling_game != null:
+		settling_game.cancel_chunked_exit_settle()
+	if _autosave_foundation_run(status_text, true):
+		return true
+	_show_message("Could not save the run. Your run is still open; choose Save to retry.")
+	_refresh()
+	return false
+
+
+func return_to_main_menu() -> bool:
 	if _is_meta_session():
 		_exit_meta_session()
-		return
+		return true
 	if _all_in_result_terminal_check_is_pending():
 		_evaluate_run_terminal_state(true)
-	if run_state != null and not dev_game_test_mode:
-		_autosave_foundation_run("Autosaved before main menu.", true)
+	if not _save_foundation_run_before_leaving("Autosaved before main menu."):
+		return false
+	_clear_run_audio_caches()
 	pending_all_in_result_terminal_check = false
 	_finish_conclusion_animation()
 	_reset_game_surface_runtime_state()
@@ -15821,14 +17258,10 @@ func return_to_main_menu() -> void:
 	meta_session_location_id = ""
 	meta_last_panel_message = ""
 	dev_game_test_mode = false
+	dev_environment_test_mode = false
 	_refresh_run_action_service()
 	close_run_configuration()
-	_hide_run_menu()
-	_hide_event_choice_popup()
-	_hide_run_inventory_popup()
-	_hide_run_journal_popup()
-	_hide_world_map_overlay()
-	_hide_travel_transition()
+	_clear_input_guard_modal_state()
 	if item_found_popup != null:
 		item_found_popup.clear_all()
 	_clear_selected_game_action()
@@ -15852,6 +17285,12 @@ func return_to_main_menu() -> void:
 	close_settings_menu()
 	_restore_main_menu_surface_visibility()
 	_refresh_start_screen()
+	return true
+
+
+func _clear_run_audio_caches() -> void:
+	if procedural_music_player != null and procedural_music_player.has_method("clear_run_scoped_caches"):
+		procedural_music_player.call("clear_run_scoped_caches")
 
 
 func _restore_main_menu_surface_visibility() -> void:
@@ -15869,18 +17308,35 @@ func _restore_main_menu_surface_visibility() -> void:
 	if start_menu_controls != null:
 		start_menu_controls.visible = true
 	_set_start_menu_action_controls_visible(true)
+	# The redesigned menu keeps its persistent utility actions in the top bar,
+	# outside start_menu_action_controls. Treat the return-to-menu transition as
+	# the normalization boundary for those controls too; otherwise an interrupted
+	# or deferred surface transition can strand an individually hidden/disabled
+	# button even though the containing main-menu tree has been restored.
+	for utility_button in [game_library_button, inventory_button, career_button, settings_button, exit_game_button]:
+		if utility_button is Button and is_instance_valid(utility_button):
+			utility_button.visible = true
+			utility_button.disabled = false
 
 
 func exit_game() -> void:
+	if not _save_foundation_run_before_leaving("Autosaved before exit."):
+		return
 	_reset_game_surface_runtime_state()
 	_set_active_game_binding()
-	if run_state != null:
-		_autosave_foundation_run("Autosaved before exit.", true)
 	get_tree().quit()
 
 
 func open_settings_menu() -> void:
 	if settings_menu == null or settings_overlay == null:
+		# Native and web startup intentionally defer the run shell. Settings owns
+		# Environment Library placement controls, so a cold-start click must cross
+		# that deferred boundary instead of being silently ignored.
+		if not _ensure_run_ui_built():
+			return
+	if settings_menu == null or settings_overlay == null:
+		return
+	if _event_choice_popup_is_visible():
 		return
 	close_run_configuration()
 	if start_menu_controls != null:
@@ -15895,12 +17351,21 @@ func open_settings_menu() -> void:
 		start_menu_intro.visible = true
 	settings_overlay.visible = true
 	settings_overlay.move_to_front()
+	_layout_settings_overlay()
 	_sync_coach_focus_visibility()
+	if modal_focus_scope != null:
+		modal_focus_scope.call("push_scope", settings_overlay)
 	settings_menu.open()
+	if modal_focus_scope != null:
+		modal_focus_scope.call("refresh_scope", settings_overlay, get_viewport().gui_get_focus_owner())
 	_refresh_talk_dock()
 
 
 func close_settings_menu() -> void:
+	if settings_overlay != null and settings_overlay.visible and modal_focus_scope != null:
+		modal_focus_scope.call("pop_scope", settings_overlay)
+	if settings_menu != null:
+		settings_menu.discard_draft()
 	if settings_menu != null:
 		settings_menu.visible = false
 	if settings_overlay != null:
@@ -15929,22 +17394,62 @@ func _on_settings_applied() -> void:
 		_refresh_world_header()
 
 
+# Persists the F1 slot-mode toggle and mirrors it into Settings while the
+# canvas has already applied the visual/editor state for immediate feedback.
+func _on_developer_slot_placement_shortcut_toggled(enabled: bool) -> void:
+	if user_settings == null:
+		return
+	user_settings.developer_slot_placement_mode = enabled
+	if enabled:
+		user_settings.developer_placement_mode = false
+	if settings_menu != null:
+		settings_menu.sync_developer_slot_placement_mode(enabled)
+	if user_settings.save() != OK:
+		_show_message("Slot placement mode changed, but Settings could not be saved.")
+
+
 func _on_settings_game_library_requested() -> void:
+	if settings_menu != null:
+		settings_menu.apply_draft("Settings saved; opening Game Library.")
 	close_settings_menu()
 	open_game_test_menu()
 
 
+func _on_settings_environment_library_requested() -> void:
+	if settings_menu != null:
+		settings_menu.apply_draft("Settings saved; opening Environment Library.")
+	close_settings_menu()
+	open_environment_test_menu()
+
+
+func _is_environment_test_session() -> bool:
+	return dev_environment_test_mode and run_state != null
+
+
 func _on_developer_placement_lock_requested(request: Dictionary) -> void:
-	var environment := _copy_dict(request.get("environment", {}))
+	# Signals are synchronous. Report persistence back through the request so the
+	# canvas does not paint or promote a coordinate after a failed durable write.
+	request["_placement_lock_handled"] = true
+	request["_placement_lock_persisted"] = false
+	var environment := JsonCoerceScript._copy_dict(request.get("environment", {}))
+	var undo_record := _developer_placement_undo_record(
+		environment,
+		"Move %s" % str(request.get("slot_id", "placement"))
+	)
 	var result := DeveloperPlacementStoreScript.save_position(
 		environment,
-		str(request.get("field", "object_slot_positions")),
+		str(request.get("field", "slot_positions")),
 		str(request.get("slot_id", "")),
 		request.get("position", Vector2.ZERO)
 	)
 	if not bool(result.get("ok", false)):
 		_show_message(str(result.get("error", "Could not lock that placement.")))
 		_render_foundation_snapshots()
+		return
+	request["_placement_lock_persisted"] = true
+	if not undo_record.is_empty():
+		request["_placement_undo_record"] = undo_record
+	if bool(request.get("defer_refresh", false)):
 		return
 	var refresh_result := _refresh_developer_authored_environment()
 	if not bool(refresh_result.get("ok", false)):
@@ -15954,15 +17459,24 @@ func _on_developer_placement_lock_requested(request: Dictionary) -> void:
 
 
 func _on_developer_placement_reset_requested(request: Dictionary) -> void:
-	var environment := _copy_dict(request.get("environment", {}))
+	request["_placement_reset_handled"] = true
+	request["_placement_reset_persisted"] = false
+	var environment := JsonCoerceScript._copy_dict(request.get("environment", {}))
+	var undo_record := _developer_placement_undo_record(
+		environment,
+		"Reset %s" % str(request.get("slot_id", "placement"))
+	)
 	var result := DeveloperPlacementStoreScript.clear_position(
 		environment,
-		str(request.get("field", "object_slot_positions")),
+		str(request.get("field", "slot_positions")),
 		str(request.get("slot_id", ""))
 	)
 	if not bool(result.get("ok", false)):
 		_show_message(str(result.get("error", "Could not reset that placement.")))
 		return
+	request["_placement_reset_persisted"] = true
+	if not undo_record.is_empty():
+		request["_placement_undo_record"] = undo_record
 	var refresh_result := _refresh_developer_authored_environment()
 	if not bool(refresh_result.get("ok", false)):
 		_show_message(str(refresh_result.get("error", "The placement reset was saved, but this room could not refresh it yet.")))
@@ -15970,21 +17484,247 @@ func _on_developer_placement_reset_requested(request: Dictionary) -> void:
 	_show_message("Placement reset to authored data.")
 
 
+func _on_developer_slot_layer_requested(request: Dictionary) -> void:
+	request["_slot_layer_handled"] = true
+	request["_slot_layer_persisted"] = false
+	var environment := JsonCoerceScript._copy_dict(request.get("environment", {}))
+	var undo_record := _developer_placement_undo_record(
+		environment,
+		"Change %s layer" % str(request.get("slot_id", "placement"))
+	)
+	var result := DeveloperPlacementStoreScript.save_slot_layer(
+		environment,
+		str(request.get("slot_id", "")),
+		int(request.get("layer", 0))
+	)
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("error", "Could not save that slot layer.")))
+		return
+	request["_slot_layer_persisted"] = true
+	if not undo_record.is_empty():
+		request["_placement_undo_record"] = undo_record
+	var refresh_result := _refresh_developer_authored_environment()
+	if not bool(refresh_result.get("ok", false)):
+		_show_message(str(refresh_result.get("error", "The slot layer was saved, but this room could not refresh it yet.")))
+		return
+	var layer_name := "Behind" if int(request.get("layer", 0)) < 0 else "Front" if int(request.get("layer", 0)) > 0 else "Standard"
+	_show_message("%s now uses the %s draw layer." % [str(request.get("slot_id", "Slot")), layer_name])
+
+
+func _on_developer_slot_scale_requested(request: Dictionary) -> void:
+	request["_slot_scale_handled"] = true
+	request["_slot_scale_persisted"] = false
+	var environment := JsonCoerceScript._copy_dict(request.get("environment", {}))
+	var undo_record := _developer_placement_undo_record(
+		environment,
+		"Resize %s" % str(request.get("slot_id", "placement"))
+	)
+	var result := DeveloperPlacementStoreScript.save_slot_scale(
+		environment,
+		str(request.get("slot_id", "")),
+		float(request.get("scale", 1.0))
+	)
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("error", "Could not save that object size.")))
+		return
+	request["_slot_scale_persisted"] = true
+	if not undo_record.is_empty():
+		request["_placement_undo_record"] = undo_record
+	var refresh_result := _refresh_developer_authored_environment()
+	if not bool(refresh_result.get("ok", false)):
+		_show_message(str(refresh_result.get("error", "The object size was saved, but this room could not refresh it yet.")))
+		return
+	_show_message("%s object size is now %d%%." % [str(request.get("slot_id", "Slot")), int(round(float(request.get("scale", 1.0)) * 100.0))])
+
+
+func _developer_placement_undo_record(environment: Dictionary, label: String) -> Dictionary:
+	var state := DeveloperPlacementStoreScript.capture_user_room_state(environment)
+	if state.is_empty():
+		return {}
+	return {
+		"label": label,
+		"state": state,
+	}
+
+
+func _on_developer_placement_undo_requested(request: Dictionary) -> void:
+	request["_placement_undo_handled"] = true
+	request["_placement_undo_persisted"] = false
+	var record := JsonCoerceScript._copy_dict(request.get("undo_record", {}))
+	var state := JsonCoerceScript._copy_dict(record.get("state", {}))
+	var result := DeveloperPlacementStoreScript.restore_user_room_state(state)
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("error", "Could not undo that placement change.")))
+		return
+	request["_placement_undo_persisted"] = true
+	var refresh_result := _refresh_developer_authored_environment()
+	if not bool(refresh_result.get("ok", false)):
+		_show_message(str(refresh_result.get("error", "The change was undone, but this room could not refresh it yet.")))
+		return
+	_show_message("Undid: %s." % str(record.get("label", "placement change")))
+
+
 func _on_developer_placement_promote_requested() -> void:
 	var result := DeveloperPlacementStoreScript.promote_user_overrides()
-	_show_message("Locked placements saved to %s." % str(result.get("path", "project data")) if bool(result.get("ok", false)) else str(result.get("error", "Could not save placements to the project.")))
+	if not bool(result.get("ok", false)):
+		var promote_error := str(result.get("error", "Could not save placements to the project."))
+		# A pending coordinate was already saved to the writable override store.
+		# Refresh that authoritative state even when copying it into the project
+		# fails, so the run catalog and placement canvas cannot diverge.
+		var recovery_refresh := _refresh_developer_authored_environment()
+		if not bool(recovery_refresh.get("ok", false)):
+			promote_error = "%s %s" % [promote_error, str(recovery_refresh.get("error", "The room could not refresh the retained placement."))]
+		_show_message(promote_error)
+		return
+	var refresh_result := _refresh_developer_authored_environment()
+	if not bool(refresh_result.get("ok", false)):
+		_show_message(str(refresh_result.get("error", "The placements were saved, but this room could not refresh them yet.")))
+		return
+	var message := "Locked placements saved to %s." % str(result.get("path", "project data"))
+	var warning := str(result.get("warning", "")).strip_edges()
+	if not warning.is_empty():
+		message += " %s" % warning
+	_show_message(message)
+
+
+func _on_developer_placement_refresh_requested() -> void:
+	var refresh_result := _refresh_developer_authored_environment()
+	if not bool(refresh_result.get("ok", false)):
+		_show_message(str(refresh_result.get("error", "Saved placements could not refresh in this room yet.")))
+
+
+func _on_developer_layout_save_requested(request: Dictionary) -> void:
+	request["_developer_layout_save_handled"] = true
+	request["_developer_layout_save_persisted"] = false
+	var environment := JsonCoerceScript._copy_dict(request.get("environment", {}))
+	var undo_record := _developer_placement_undo_record(
+		environment,
+		"Save %s" % DeveloperPlacementStoreScript.layout_id(environment)
+	)
+	var positions := JsonCoerceScript._copy_dict(request.get("full_positions", {}))
+	var result := DeveloperPlacementStoreScript.save_layout(
+		environment,
+		positions,
+		str(request.get("field", "slot_positions"))
+	)
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("error", "Could not save the current environment layout.")))
+		return
+	request["_developer_layout_save_persisted"] = true
+	if not undo_record.is_empty():
+		request["_placement_undo_record"] = undo_record
+	var coverage := DeveloperPlacementStoreScript.coverage_snapshot()
+	var missing_value: Variant = coverage.get("missing_layout_ids", [])
+	var missing_count := (missing_value as Array).size() if typeof(missing_value) == TYPE_ARRAY else 0
+	var message := "Saved %s (%d slots). Coverage: %d/%d layouts saved; %d missing." % [
+		str(result.get("layout_id", "current layout")),
+		int(result.get("slot_count", positions.size())),
+		int(coverage.get("saved_layout_count", 0)),
+		int(coverage.get("expected_layout_count", 0)),
+		missing_count,
+	]
+	if bool(coverage.get("complete", false)):
+		message += " All environment layouts are complete; export the placement report when ready."
+	var ignored_value: Variant = result.get("ignored_slot_ids", [])
+	if typeof(ignored_value) == TYPE_ARRAY and not (ignored_value as Array).is_empty():
+		message += " %d unsupported slot IDs were ignored." % (ignored_value as Array).size()
+	var refresh_result := {"ok": true}
+	var load_next_missing := bool(request.get("load_next_missing", false))
+	if load_next_missing and not bool(coverage.get("complete", false)):
+		if not _is_environment_test_session():
+			refresh_result = _refresh_developer_authored_environment()
+			message += " Save & Load Next is only available in an Environment Library practice session."
+		else:
+			var next_layout_id := str(coverage.get("next_missing_layout_id", "")).strip_edges()
+			var next_result := _load_next_missing_environment_layout()
+			if bool(next_result.get("ok", false)):
+				message += " Loaded next missing layout: %s." % next_layout_id
+			else:
+				refresh_result = _refresh_developer_authored_environment()
+				var next_errors := JsonCoerceScript._copy_array(next_result.get("errors", []))
+				message += " Warning: %s" % (str(next_errors[0]) if not next_errors.is_empty() else "The next missing layout could not be loaded.")
+	else:
+		refresh_result = _refresh_developer_authored_environment()
+	if not bool(refresh_result.get("ok", false)):
+		message += " Warning: %s" % str(refresh_result.get("error", "The layout was saved, but this room could not refresh it yet."))
+	_show_message(message)
+
+
+func _on_developer_placement_export_requested(pending_request: Dictionary) -> void:
+	var refresh_warning := ""
+	if not pending_request.is_empty():
+		var environment := JsonCoerceScript._copy_dict(pending_request.get("environment", {}))
+		var undo_record := _developer_placement_undo_record(
+			environment,
+			"Move %s" % str(pending_request.get("slot_id", "placement"))
+		)
+		var save_result := DeveloperPlacementStoreScript.save_position(
+			environment,
+			str(pending_request.get("field", "slot_positions")),
+			str(pending_request.get("slot_id", "")),
+			pending_request.get("position", Vector2.ZERO)
+		)
+		if not bool(save_result.get("ok", false)):
+			_show_message(str(save_result.get("error", "Could not lock the pending placement, so no report was exported.")))
+			_render_foundation_snapshots()
+			return
+		if not undo_record.is_empty():
+			pending_request["_placement_undo_record"] = undo_record
+		var refresh_result := _refresh_developer_authored_environment()
+		if not bool(refresh_result.get("ok", false)):
+			refresh_warning = str(refresh_result.get("error", "The placement was saved, but this room could not refresh it yet."))
+		elif environment_canvas != null:
+			if str(pending_request.get("object_id", "")).strip_edges().is_empty():
+				environment_canvas.call("_apply_authoring_slot_positions_to_scene_objects")
+			else:
+				environment_canvas.call("_apply_saved_developer_placement", pending_request)
+	var result := DeveloperPlacementStoreScript.export_user_overrides()
+	if not bool(result.get("ok", false)):
+		_show_message(str(result.get("error", "Could not export the placement report.")))
+		return
+	var absolute_path := str(result.get("absolute_path", result.get("path", ""))).strip_edges()
+	if not absolute_path.is_empty():
+		DisplayServer.clipboard_set(absolute_path)
+		OS.shell_show_in_file_manager(absolute_path, true)
+	var coverage_value: Variant = result.get("coverage", {})
+	var coverage: Dictionary = coverage_value if typeof(coverage_value) == TYPE_DICTIONARY else {}
+	var missing_value: Variant = coverage.get("missing_layout_ids", [])
+	var missing_count := (missing_value as Array).size() if typeof(missing_value) == TYPE_ARRAY else int(result.get("missing_layout_count", 0))
+	var message := "Exported %d slot positions across %d rooms. Coverage: %d/%d layouts saved; %d missing. The report path is copied: %s" % [
+		int(result.get("slot_count", 0)),
+		int(result.get("room_count", 0)),
+		int(coverage.get("saved_layout_count", result.get("saved_layout_count", 0))),
+		int(coverage.get("expected_layout_count", result.get("expected_layout_count", 0))),
+		missing_count,
+		absolute_path,
+	]
+	if bool(coverage.get("complete", result.get("complete", false))):
+		message += " All environment layouts are complete."
+	var warnings: Array[String] = []
+	if not refresh_warning.is_empty():
+		warnings.append(refresh_warning)
+	var export_warning := str(result.get("warning", "")).strip_edges()
+	if not export_warning.is_empty():
+		warnings.append(export_warning)
+	if not warnings.is_empty():
+		message += " Warning: %s" % " ".join(warnings)
+	_show_message(message)
 
 
 func _refresh_developer_authored_environment() -> Dictionary:
 	# Placement is interaction geometry. Discard the projection cached for the
 	# pre-save layout before rebuilding or the canvas receives its old rect until
 	# an unrelated run-state change invalidates the cache.
+	interactable_object_catalog_cache_valid = false
+	interactable_object_catalog_cache_key = ""
 	interactable_object_view_cache_valid = false
 	interactable_object_view_cache_key = ""
 	if run_state == null or run_state.current_environment.is_empty():
 		_render_foundation_snapshots()
+		if environment_canvas != null:
+			environment_canvas.acknowledge_developer_placement_authority_refresh()
 		return {"ok": true}
-	var layout := _copy_dict(run_state.current_environment.get("layout", {}))
+	var layout := JsonCoerceScript._copy_dict(run_state.current_environment.get("layout", {}))
 	layout.erase("generated_object_rect_version")
 	layout.erase("grounding_signature")
 	run_state.current_environment["layout"] = layout
@@ -15992,13 +17732,15 @@ func _refresh_developer_authored_environment() -> Dictionary:
 	if run_state.scenario_sequence_present():
 		var finalized := run_state.scenario_finalize_installed_environment(
 			library,
-			_copy_dict(run_state.current_environment.get("scenario_layout_context", {}))
+			JsonCoerceScript._copy_dict(run_state.current_environment.get("scenario_layout_context", {}))
 		)
 		if not bool(finalized.get("ok", false)):
-			var errors := _copy_array(finalized.get("errors", []))
+			var errors := JsonCoerceScript._copy_array(finalized.get("errors", []))
 			_render_foundation_snapshots()
 			return {"ok": false, "error": str(errors[0]) if not errors.is_empty() else "The room placement could not be finalized."}
 	_render_foundation_snapshots()
+	if environment_canvas != null:
+		environment_canvas.acknowledge_developer_placement_authority_refresh()
 	return {"ok": true}
 
 
@@ -16040,8 +17782,8 @@ func _on_coach_lesson_completed(lesson_id: String) -> void:
 func _resume_after_completed_tutorial_action(lesson_id: String, expected_generation: int) -> void:
 	if expected_generation != tutorial_action_resume_active_generation:
 		return
+	var selected_before_boundary := selected_object_id
 	_advance_completed_tutorial_action_dialogue(lesson_id)
-	_clear_stale_focus_before_dependent_tutorial_target(lesson_id)
 	if lesson_id == TUTORIAL_META_HOME_CARD_LESSON_ID and _is_meta_session():
 		run_state.narrative_flags["tutorial_meta_home_handoff_completed"] = true
 		run_state.challenge_config["tutorial"] = false
@@ -16049,25 +17791,38 @@ func _resume_after_completed_tutorial_action(lesson_id: String, expected_generat
 	# unwinding the prior lesson. Evaluate once more at the settled boundary so
 	# consecutive focus/action lessons never leave a blank guidance gap.
 	_refresh_coach_at_boundary()
-
-
-func _clear_stale_focus_before_dependent_tutorial_target(completed_lesson_id: String) -> void:
-	if library == null or selected_object_id.is_empty():
+	if expected_generation != tutorial_action_resume_active_generation:
 		return
-	for lesson_value in library.tutorial_lessons:
-		if typeof(lesson_value) != TYPE_DICTIONARY:
-			continue
-		var lesson: Dictionary = lesson_value
-		var trigger: Dictionary = lesson.get("trigger", {}) if typeof(lesson.get("trigger", {})) == TYPE_DICTIONARY else {}
-		if not _string_array(trigger.get("depends_on", [])).has(completed_lesson_id):
-			continue
-		var anchor: Dictionary = CoachViewModelScript.resolved_anchor(lesson, _coach_context_snapshot())
-		if str(anchor.get("kind", "")) != "interactable_object":
-			continue
-		var next_object_id := str(anchor.get("id", "")).strip_edges()
-		if not next_object_id.is_empty() and next_object_id != selected_object_id:
+	_reconcile_focus_after_dependent_tutorial_target(selected_before_boundary)
+	_sync_coach_environment_anchor_geometry()
+
+
+func _reconcile_focus_after_dependent_tutorial_target(selected_before_boundary: String) -> void:
+	if library == null or coach_overlay == null:
+		return
+	var active_lesson_id: String = coach_overlay.active_lesson_id()
+	if active_lesson_id.is_empty():
+		return
+	var lesson := library.tutorial_lesson(active_lesson_id)
+	var anchor: Dictionary = CoachViewModelScript.resolved_anchor(lesson, _coach_context_snapshot())
+	if str(anchor.get("kind", "")) != "interactable_object":
+		return
+	var target_object_id := str(anchor.get("id", "")).strip_edges()
+	if target_object_id.is_empty():
+		return
+	if target_object_id != selected_before_boundary:
+		if not selected_before_boundary.is_empty() and selected_object_id == selected_before_boundary:
 			clear_interaction_focus(false)
 		return
+	# The dependency walker may complete several lessons that were satisfied out
+	# of order. If the final active lesson still asks for an action on the object
+	# the player selected, keep the action card and coach geometry on that object.
+	var gating: Dictionary = lesson.get("gating", {}) if typeof(lesson.get("gating", {})) == TYPE_DICTIONARY else {}
+	var allowed_actions := JsonCoerceScript._raw_string_array(gating.get("allowed_action_ids", []))
+	if selected_object_id != target_object_id \
+			and allowed_actions.has(target_object_id) \
+			and not _interactable_object(target_object_id).is_empty():
+		focus_interactable_object(target_object_id)
 
 
 func _advance_completed_tutorial_action_dialogue(lesson_id: String) -> void:
@@ -16272,6 +18027,7 @@ func _enter_meta_location(location_id: String, tutorial_handoff: bool = false) -
 func _exit_meta_session() -> void:
 	_hide_run_menu()
 	_hide_event_choice_popup()
+	close_run_configuration()
 	close_meta_item_interaction()
 	_hide_run_inventory_popup()
 	_hide_run_journal_popup()
@@ -16299,6 +18055,7 @@ func _exit_meta_session() -> void:
 		inventory_page.visible = false
 	if game_test_menu != null:
 		game_test_menu.visible = false
+	_restore_main_menu_surface_visibility()
 	_stop_procedural_music()
 	_refresh_start_screen()
 
@@ -16326,7 +18083,7 @@ func _apply_meta_environment(location_id: String) -> Dictionary:
 	var installed := _install_lifecycle_environment(environment)
 	if not bool(installed.get("ok", false)):
 		_restore_foundation_lifecycle_snapshot(rollback)
-		var install_errors := _copy_array(installed.get("errors", []))
+		var install_errors := JsonCoerceScript._copy_array(installed.get("errors", []))
 		var install_error := str(install_errors[0]) if not install_errors.is_empty() else "That location could not be entered safely."
 		_show_message(install_error)
 		return {"ok": false, "errors": [install_error]}
@@ -16348,98 +18105,14 @@ func _meta_environment_result(location_id: String) -> Dictionary:
 	return meta_session_controller.build_environment_result(location_id, run_state)
 
 
-func _build_meta_environment(location_id: String) -> Dictionary:
-	var result := _meta_environment_result(location_id)
-	if result.is_empty():
-		return {}
-	return (result.get("environment", {}) as Dictionary).duplicate(true) if typeof(result.get("environment", {})) == TYPE_DICTIONARY else {}
-
-
-func _build_meta_home_environment() -> Dictionary:
-	return _build_meta_environment(META_LOCATION_HOME)
-
-
-func _build_meta_pawn_environment() -> Dictionary:
-	return _build_meta_environment(_meta_pawn_location_id())
-
-
-func _meta_container_rows() -> Array:
-	_ensure_meta_session_controller()
-	var result := meta_session_controller.build_environment_result(META_LOCATION_HOME, run_state)
-	var environment: Dictionary = result.get("environment", {}) if typeof(result.get("environment", {})) == TYPE_DICTIONARY else {}
-	return _copy_array(environment.get("home_containers", []))
-
-
-func _meta_container_item_ids_for_index(container_index: int) -> Array:
-	_ensure_meta_session_controller()
-	var rows := _meta_container_rows()
-	if container_index < 0 or container_index >= rows.size() or typeof(rows[container_index]) != TYPE_DICTIONARY:
-		return []
-	return _copy_array((rows[container_index] as Dictionary).get("items", []))
-
-
-func _meta_container_label(item_id: String) -> String:
-	_ensure_meta_session_controller()
-	var rows := _meta_container_rows()
-	for row_value in rows:
-		if typeof(row_value) == TYPE_DICTIONARY and str((row_value as Dictionary).get("item_id", "")) == item_id:
-			return str((row_value as Dictionary).get("display_name", item_id.replace("_", " ").capitalize()))
-	return item_id.strip_edges().replace("_", " ").capitalize()
-
-
 func _meta_interactable_object_view_list() -> Array:
 	_ensure_meta_session_controller()
 	return meta_session_controller.interactable_object_view_list(meta_session_location_id, run_state, hover_target_id, focus_target_id, selected_object_id)
 
 
-func _meta_interactable_object_view_cache_key() -> String:
-	_ensure_meta_session_controller()
-	return meta_session_controller.interactable_object_view_cache_key
-
-
-func _meta_home_interactable_objects() -> Array:
-	_ensure_meta_session_controller()
-	return meta_session_controller.interactable_object_view_list(META_LOCATION_HOME, run_state, hover_target_id, focus_target_id, selected_object_id)
-
-
 func _meta_home_summary_view() -> Dictionary:
 	_ensure_meta_session_controller()
 	return meta_session_controller.home_summary_view()
-
-
-func _meta_snapshot_carried_instance_ids(owned_instances: Array, loadout: Array, housing_tier: String) -> Array:
-	var owned_ids: Array = []
-	for instance_value in owned_instances:
-		var instance := _copy_dict(instance_value)
-		var instance_id := int(instance.get("instance_id", 0))
-		if instance_id > 0 and not owned_ids.has(instance_id):
-			owned_ids.append(instance_id)
-	if housing_tier == MetaCollectionServiceScript.HOUSING_BACK_ALLEY:
-		return owned_ids
-	var carried: Array = []
-	for id_value in loadout:
-		var instance_id := int(id_value)
-		if instance_id > 0 and owned_ids.has(instance_id) and not carried.has(instance_id):
-			carried.append(instance_id)
-	return carried
-
-
-func _meta_snapshot_container_capacity(containers: Array) -> int:
-	var total := 0
-	for container_value in containers:
-		var container := _copy_dict(container_value)
-		total += maxi(0, int(container.get("capacity", 0)))
-	return total
-
-
-func _meta_unopened_bag_rows() -> Array:
-	_ensure_meta_session_controller()
-	return meta_session_controller.unopened_bag_rows()
-
-
-func _meta_pawn_interactable_objects() -> Array:
-	_ensure_meta_session_controller()
-	return meta_session_controller.interactable_object_view_list(_meta_pawn_location_id(), run_state, hover_target_id, focus_target_id, selected_object_id)
 
 
 func open_meta_container(container_id: String = "") -> void:
@@ -16482,15 +18155,15 @@ func open_meta_sal_shelf(slot_index: int) -> void:
 		_show_meta_popup("Sal's Shelf", "That shelf spot does not exist.", "meta_sal_shelf")
 		_add_meta_close_card()
 		return
-	var row := _copy_dict(rows[slot_index])
+	var row := JsonCoerceScript._copy_dict(rows[slot_index])
 	if not bool(row.get("occupied", false)):
 		_show_meta_popup("Empty Shelf", "This locked shelf spot is empty. A later victory may restock it.", "meta_sal_shelf")
 		_add_meta_close_card()
 		return
-	var item := _copy_dict(row.get("item", {}))
-	var quote := _copy_dict(row.get("quote_basis", {}))
-	var floats := _copy_dict(quote.get("clamped_floats", {}))
-	var contributions := _copy_dict(quote.get("rarity_contributions", {}))
+	var item := JsonCoerceScript._copy_dict(row.get("item", {}))
+	var quote := JsonCoerceScript._copy_dict(row.get("quote_basis", {}))
+	var floats := JsonCoerceScript._copy_dict(quote.get("clamped_floats", {}))
+	var contributions := JsonCoerceScript._copy_dict(quote.get("rarity_contributions", {}))
 	var mode := str(row.get("listing_mode", "normal"))
 	var policy := "Normal shelf: ceil(max(quote + 1, quote × 1.5))."
 	if mode == MetaCollectionServiceScript.LISTING_MODE_STARTER_DISCOUNT:
@@ -16561,10 +18234,10 @@ func _confirm_meta_sal_purchase(token: String) -> void:
 		return
 	meta_last_panel_message = str(result.get("message", "Purchase complete."))
 	_hide_event_choice_popup()
-	var purchased_item := _copy_dict(result.get("item", {}))
+	var purchased_item := JsonCoerceScript._copy_dict(result.get("item", {}))
 	selected_meta_item_key = "meta:item:%d" % int(purchased_item.get("instance_id", 0))
 	_open_meta_item_interaction(MetaItemInteractionViewModelScript.MODE_CONTAINER, selected_meta_item_key)
-	if not _copy_dict(result.get("starter_offer", {})).is_empty():
+	if not JsonCoerceScript._copy_dict(result.get("starter_offer", {})).is_empty():
 		_resume_sal_starter_offer()
 	else:
 		_start_sal_routine_dialogue("purchase")
@@ -16611,7 +18284,7 @@ func _open_meta_item_interaction(mode: String, focus_key: String = "", container
 			model = MetaItemInteractionViewModelScript.build(meta_collection_service, mode, selected_meta_item_key, meta_trade_selected_instance_ids)
 			model["focus_explicit"] = true
 	selected_meta_item_key = str(model.get("selected_key", ""))
-	meta_trade_selected_instance_ids = _copy_array(model.get("trade_selected_ids", []))
+	meta_trade_selected_instance_ids = JsonCoerceScript._copy_array(model.get("trade_selected_ids", []))
 	meta_item_interaction_screen.open(model)
 
 
@@ -16620,7 +18293,7 @@ func _refresh_meta_item_interaction() -> void:
 		return
 	var model: Dictionary = MetaItemInteractionViewModelScript.build(meta_collection_service, meta_item_interaction_mode, selected_meta_item_key, meta_trade_selected_instance_ids)
 	selected_meta_item_key = str(model.get("selected_key", ""))
-	meta_trade_selected_instance_ids = _copy_array(model.get("trade_selected_ids", []))
+	meta_trade_selected_instance_ids = JsonCoerceScript._copy_array(model.get("trade_selected_ids", []))
 	meta_item_interaction_screen.update_model(model)
 
 
@@ -16654,7 +18327,7 @@ func _on_meta_item_action_requested(action_id: String, payload: Dictionary) -> v
 		"toggle_trade":
 			_toggle_meta_trade_selection(int(payload.get("instance_id", 0)))
 		"arm_trade":
-			_arm_meta_trade_up(_copy_array(payload.get("instance_ids", [])))
+			_arm_meta_trade_up(JsonCoerceScript._copy_array(payload.get("instance_ids", [])))
 
 
 func _toggle_meta_trade_selection(instance_id: int) -> void:
@@ -16686,7 +18359,7 @@ func _open_selected_meta_bag(instance_id: int) -> void:
 		_show_message(meta_last_panel_message)
 		_refresh_meta_item_interaction()
 		return
-	var revealed_item := _copy_dict(result.get("item", {}))
+	var revealed_item := JsonCoerceScript._copy_dict(result.get("item", {}))
 	if not bool(_apply_meta_environment(meta_session_location_id).get("ok", false)):
 		_refresh()
 		return
@@ -16703,7 +18376,7 @@ func _open_bag_reel(open_result: Dictionary) -> void:
 	if bag_open_reel == null:
 		return
 	var resolver: Variant = CollectionItemResolverScript.new()
-	var bag := _copy_dict(open_result.get(BagOpenReelViewModelScript.RESULT_BAG_KEY, {}))
+	var bag := JsonCoerceScript._copy_dict(open_result.get(BagOpenReelViewModelScript.RESULT_BAG_KEY, {}))
 	var possible_contents: Array = resolver.bag_item_options_for_bag(int(bag.get("bagdef_id", -1)))
 	var model: Dictionary = BagOpenReelViewModelScript.build(open_result, possible_contents, _reduce_motion_enabled())
 	bag_open_reel.open(model)
@@ -16716,12 +18389,12 @@ func _close_bag_open_reel() -> void:
 
 func _first_meta_selection_in_container(model: Dictionary, container_id: String) -> String:
 	var clean_id := container_id.strip_edges()
-	for container_value in _copy_array(model.get("containers", [])):
-		var container := _copy_dict(container_value)
+	for container_value in JsonCoerceScript._copy_array(model.get("containers", [])):
+		var container := JsonCoerceScript._copy_dict(container_value)
 		if str(container.get("container_type", "")) != clean_id and str(container.get("key", "")) != clean_id:
 			continue
-		for slot_value in _copy_array(container.get("slots", [])):
-			var key := str(_copy_dict(slot_value).get("selection_key", ""))
+		for slot_value in JsonCoerceScript._copy_array(container.get("slots", [])):
+			var key := str(JsonCoerceScript._copy_dict(slot_value).get("selection_key", ""))
 			if not key.is_empty():
 				return key
 	return ""
@@ -16752,7 +18425,7 @@ func _confirm_meta_trade_up(token: String) -> void:
 		_add_meta_close_card()
 		_refresh()
 		return
-	var granted := _copy_dict(result.get("item", {}))
+	var granted := JsonCoerceScript._copy_dict(result.get("item", {}))
 	if not bool(_apply_meta_environment(meta_session_location_id).get("ok", false)):
 		_refresh()
 		return
@@ -16820,11 +18493,7 @@ func _show_meta_popup(title: String, summary: String, popup_type: String) -> voi
 	if event_choice_popup_summary_label != null:
 		event_choice_popup_summary_label.text = summary
 	_clear_event_choice_popup_choices()
-	event_choice_popup_overlay.visible = true
-	event_choice_popup_overlay.move_to_front()
-	_sync_coach_focus_visibility()
-	_position_event_choice_popup()
-	call_deferred("_position_event_choice_popup")
+	_present_event_choice_popup()
 
 
 func _add_meta_action_card(title: String, text: String, impact: String, callback: Callable, button_text: String, primary: bool) -> void:
@@ -16840,39 +18509,13 @@ func _add_meta_action_card(title: String, text: String, impact: String, callback
 		button.text = button_text
 
 
-func _add_meta_popup_line(text: String) -> void:
-	if event_choice_popup_choices_list == null:
-		return
-	var label := _label(text, 13)
-	label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_set_control_font_color(label, VisualStyle.SOFT)
-	event_choice_popup_choices_list.add_child(label)
-	if _event_choice_popup_is_visible():
-		call_deferred("_position_event_choice_popup")
-
-
 func _add_meta_close_card() -> void:
 	_add_meta_action_card("Back", "Return to the room.", "No change.", Callable(self, "_hide_event_choice_popup"), "Back", false)
-
-
-func _meta_owned_item_rows() -> Array:
-	_ensure_meta_session_controller()
-	return meta_session_controller.owned_item_rows()
 
 
 func _meta_sale_rows() -> Array:
 	_ensure_meta_session_controller()
 	return meta_session_controller.sale_rows()
-
-
-func _meta_trade_up_candidates() -> Array:
-	_ensure_meta_session_controller()
-	return meta_session_controller.trade_up_candidates()
-
-
-func _meta_next_tier(tier: String) -> String:
-	_ensure_meta_session_controller()
-	return meta_session_controller.next_tier(tier)
 
 
 func close_inventory_page() -> void:
@@ -16970,6 +18613,7 @@ func start_game_test_session(game_id: String) -> Dictionary:
 	if library == null:
 		_initialize_foundation()
 	_ensure_full_content_library_loaded()
+	_settle_script_prewarm_before_runtime()
 	var game := _game_module_for_id(game_id)
 	if game == null:
 		if game_test_status_label != null:
@@ -16994,7 +18638,7 @@ func _start_game_test_session_with_lifecycle_snapshot(game_id: String, game: Gam
 	var installed := _install_lifecycle_environment(environment)
 	if not bool(installed.get("ok", false)):
 		_restore_foundation_lifecycle_snapshot(rollback)
-		var install_errors := _copy_array(installed.get("errors", []))
+		var install_errors := JsonCoerceScript._copy_array(installed.get("errors", []))
 		var install_error := str(install_errors[0]) if not install_errors.is_empty() else "Could not enter the test room."
 		if game_test_status_label != null: game_test_status_label.text = install_error
 		return {"ok": false, "errors": [install_error]}
@@ -17036,11 +18680,11 @@ func _start_game_test_session_with_lifecycle_snapshot(game_id: String, game: Gam
 func _prepare_game_test_prerequisites(game_id: String, environment: Dictionary) -> void:
 	if run_state == null:
 		return
-	var states := _copy_dict(environment.get("game_states", {}))
-	var table := _copy_dict(states.get(game_id, {}))
+	var states := JsonCoerceScript._copy_dict(environment.get("game_states", {}))
+	var table := JsonCoerceScript._copy_dict(states.get(game_id, {}))
 	if str(table.get("schema", "")) != "crew_draw_table":
 		return
-	var members := _string_array(table.get("members", []))
+	var members := JsonCoerceScript._raw_string_array(table.get("members", []))
 	if members.is_empty():
 		return
 	# The launcher is a playable practice room, not a progression preview. Give
@@ -17108,10 +18752,10 @@ func _refresh_start_screen() -> void:
 	var has_save := _has_foundation_save()
 	var save_slot_status := save_service.slot_status(autosave_slot_id) if save_service != null else {}
 	if start_status_label != null:
-		if not run_ui_build_failure_reason.is_empty():
-			start_status_label.text = RUN_UI_UNAVAILABLE_MESSAGE
-		elif not content_validation_status_message.is_empty():
+		if not content_validation_status_message.is_empty():
 			start_status_label.text = content_validation_status_message
+		elif not run_ui_build_failure_reason.is_empty():
+			start_status_label.text = RUN_UI_UNAVAILABLE_MESSAGE
 		elif has_save:
 			if bool(save_slot_status.get("primary_corrupt", false)) and bool(save_slot_status.get("backup_loadable", false)):
 				start_status_label.text = "Backup save available. Continue will recover the last good run."
@@ -17137,7 +18781,8 @@ func _refresh_start_screen() -> void:
 	if seed_status_label != null:
 		seed_status_label.visible = tutorial_seed_locked
 		seed_status_label.text = "First Night uses a fixed lesson seed; later runs use your seed." if tutorial_seed_locked else ""
-	if tutorial_seed_locked and start_status_label != null and not has_save:
+	if tutorial_seed_locked and start_status_label != null and not has_save \
+			and content_validation_status_message.is_empty() and run_ui_build_failure_reason.is_empty():
 		start_status_label.text = "Your first run is the First Night lesson, so its teaching seed is fixed."
 	_refresh_content_group_controls()
 	_refresh_challenge_controls()
@@ -17150,11 +18795,7 @@ func _mandatory_tutorial_seed_locked() -> bool:
 
 
 func _release_version_text() -> String:
-	const FALLBACK_RELEASE_VERSION := "0.5.0"
-	var release_version := str(ProjectSettings.get_setting("application/config/version", FALLBACK_RELEASE_VERSION)).strip_edges()
-	if release_version.is_empty():
-		release_version = FALLBACK_RELEASE_VERSION
-	return "Version %s" % release_version
+	return "Version %s" % BuildIdentityScript.display_version()
 
 
 func _generate_menu_seed_text() -> String:
@@ -17169,7 +18810,8 @@ func _generate_menu_seed_text() -> String:
 
 func _refresh_menu_seed_text() -> void:
 	if seed_input != null:
-		seed_input.text = _generate_menu_seed_text()
+		generated_menu_seed_text = _generate_menu_seed_text()
+		seed_input.text = generated_menu_seed_text
 
 
 func save_status_snapshot() -> Dictionary:
@@ -17185,6 +18827,11 @@ func save_status_snapshot() -> Dictionary:
 		"save_path": save_service.run_save_path(autosave_slot_id) if save_service != null else "",
 		"status_text": _save_status_text(),
 		"pending_autosave": pending_autosave,
+		"autosave_failure_count": autosave_failure_count,
+		"autosave_last_error": autosave_last_error,
+		"autosave_last_error_code": autosave_last_error_code,
+		"autosave_retry_blocked": autosave_retry_blocked,
+		"autosave_retry_not_before_msec": pending_autosave_not_before_msec,
 		"active_summary": _run_summary_text(run_state) if run_state != null else "",
 		"visible_objective": _objective_hud_text() if run_state != null else "",
 		"visible_bankroll": _presented_bankroll() if run_state != null else 0,
@@ -17213,6 +18860,8 @@ func _run_menu_is_visible() -> bool:
 
 func _hide_run_menu() -> void:
 	if run_menu_overlay != null:
+		if run_menu_overlay.visible and modal_focus_scope != null:
+			modal_focus_scope.call("pop_scope", run_menu_overlay)
 		run_menu_overlay.visible = false
 	_sync_coach_focus_visibility()
 
@@ -17257,6 +18906,8 @@ func _refresh_run_menu() -> void:
 	if run_menu_skip_tutorial_button != null:
 		run_menu_skip_tutorial_button.visible = run_state != null and run_state.is_tutorial_run()
 		run_menu_skip_tutorial_button.disabled = not run_menu_skip_tutorial_button.visible
+	if modal_focus_scope != null and run_menu_overlay != null and run_menu_overlay.visible:
+		modal_focus_scope.call("refresh_scope", run_menu_overlay, run_menu_resume_button)
 
 
 func _configure_coach_for_run() -> void:
@@ -17328,7 +18979,9 @@ func _run_status_hud_model() -> Dictionary:
 	if run_state == null:
 		return {}
 	if FoundationHudViewModelScript == null:
-		FoundationHudViewModelScript = load(str(RUN_UI_SCRIPT_PATHS.get("FoundationHudViewModelScript", ""))) as Script
+		FoundationHudViewModelScript = _consume_run_ui_script_prewarm_result(
+			str(RUN_UI_SCRIPT_PATHS.get("FoundationHudViewModelScript", ""))
+		) as Script
 	if FoundationHudViewModelScript == null:
 		return {}
 	var pressure := _run_pressure_view()
@@ -17376,83 +19029,62 @@ func _apply_hud_mode_visibility() -> void:
 		top_inventory_button.visible = not meta_mode
 	if active_item_button != null:
 		active_item_button.visible = not meta_mode
+	_refresh_delivery_action_strip()
 
 
-func _hud_goal_text(pressure: Dictionary, demo_objective: Dictionary = {}) -> String:
-	return FoundationHudViewModelScript.hud_goal_text(run_state, pressure, demo_objective, Callable(self, "_player_facing_text"))
-
-
-func _hud_debt_text(debt_items: Array) -> String:
-	return FoundationHudViewModelScript.hud_debt_text(debt_items, Callable(self, "_player_facing_text"))
-
-
-func _hud_inventory_text(inventory_items: Array) -> String:
-	return FoundationHudViewModelScript.hud_inventory_text(inventory_items, Callable(self, "_player_facing_text"))
-
-
-func _hud_home_text() -> String:
-	return FoundationHudViewModelScript.hud_home_text(run_state, Callable(self, "_player_facing_text"))
-
-
-func _hud_run_status_text(pressure: Dictionary) -> String:
-	return FoundationHudViewModelScript.hud_run_status_text(run_state, pressure)
-
-
-func _hud_save_text() -> String:
-	return FoundationHudViewModelScript.hud_save_text(_has_foundation_save(), save_status_message, Callable(self, "_player_facing_text"))
-
-
-func _hud_meter(value: int, maximum: int, width: int) -> String:
-	return FoundationHudViewModelScript.hud_meter(value, maximum, width)
-
-
-func _repeat_char(character: String, count: int) -> String:
-	return character.repeat(maxi(0, count))
-
-
-func _hud_short(text: String, max_length: int) -> String:
-	return FoundationHudViewModelScript.hud_short(text, max_length, Callable(self, "_player_facing_text"))
+func _refresh_delivery_action_strip() -> void:
+	if delivery_action_strip == null:
+		return
+	var actions: Array = []
+	if run_state != null and not _is_meta_session() and current_screen in [SCREEN_ENVIRONMENT, SCREEN_RESULT] and current_game == null \
+			and run_state.has_method("delivery_top_actions"):
+		actions = JsonCoerceScript._copy_array(run_state.delivery_top_actions())
+	var signature := JSON.stringify(actions)
+	if str(delivery_action_strip.get_meta("action_signature", "")) == signature:
+		var next_visible := not actions.is_empty()
+		if delivery_action_strip.visible != next_visible:
+			delivery_action_strip.visible = next_visible
+			_schedule_delivery_action_layout_refresh()
+		return
+	delivery_action_strip.set_meta("action_signature", signature)
+	for child in delivery_action_strip.get_children():
+		delivery_action_strip.remove_child(child)
+		child.queue_free()
+	delivery_action_buttons.clear()
+	if actions.is_empty():
+		delivery_action_strip.visible = false
+		# This strip is a second row inside the clipped HUD. Recompute the info
+		# band whenever its contents disappear so the room canvas can reclaim the
+		# released height instead of retaining the previous delivery footprint.
+		_schedule_delivery_action_layout_refresh()
+		return
+	var heading := _muted_label("PACKAGE", 12)
+	heading.tooltip_text = "Actions for the delivery currently in your possession."
+	delivery_action_strip.add_child(heading)
+	for action_value in actions:
+		var action := JsonCoerceScript._copy_dict(action_value)
+		var verb := str(action.get("id", ""))
+		if verb.is_empty():
+			continue
+		var button := _hud_nav_button(str(action.get("label", verb.replace("_", " ").capitalize())), Callable(self, "_activate_delivery_physical_action").bind(verb))
+		button.tooltip_text = str(action.get("message", "Act on the current delivery."))
+		button.custom_minimum_size.y = MIN_NATIVE_TOUCH_TARGET_HEIGHT
+		delivery_action_strip.add_child(button)
+		delivery_action_buttons[verb] = button
+	delivery_action_strip.visible = delivery_action_strip.get_child_count() > 1
+	# The HUD height is cached by viewport size, but delivery actions can appear
+	# without a resize (for example, after entering the Count's Cage room). Mark
+	# the layout dirty after rebuilding this second row so clip_contents cannot
+	# leave an authenticated action rendered below the old one-row HUD boundary.
+	_schedule_delivery_action_layout_refresh()
 
 
 func _objective_goal_text(pressure: Dictionary, demo_objective: Dictionary = {}) -> String:
 	return FoundationHudViewModelScript.objective_goal_text(run_state, pressure, demo_objective)
 
 
-func _boss_floor_objective_goal_text(demo_objective: Dictionary) -> String:
-	return FoundationHudViewModelScript.boss_floor_objective_goal_text(demo_objective)
-
-
 func _objective_presentation_state(pressure: Dictionary, demo_objective: Dictionary) -> String:
 	return FoundationHudViewModelScript.objective_presentation_state(pressure, demo_objective)
-
-
-func _objective_guidance_view(pressure: Dictionary, demo_objective: Dictionary) -> Dictionary:
-	var state: String = FoundationHudViewModelScript.objective_presentation_state(pressure, demo_objective)
-	return FoundationHudViewModelScript.objective_guidance_view(pressure, demo_objective, _next_objective_option_for_state(state, demo_objective))
-
-
-func _boss_floor_incomplete_guidance(demo_objective: Dictionary) -> String:
-	return FoundationHudViewModelScript.boss_floor_incomplete_guidance(demo_objective)
-
-
-func _boss_floor_high_roller_progress_close(demo_objective: Dictionary) -> bool:
-	return FoundationHudViewModelScript.boss_floor_progress_close(demo_objective)
-
-
-func _boss_floor_heat_pressure_close(demo_objective: Dictionary) -> bool:
-	return FoundationHudViewModelScript.boss_floor_heat_pressure_close(demo_objective)
-
-
-func _is_boss_floor_demo_objective(demo_objective: Dictionary) -> bool:
-	return FoundationHudViewModelScript.is_boss_floor_objective(demo_objective)
-
-
-func _boss_floor_status_key(suffix: String) -> String:
-	return FoundationHudViewModelScript.boss_floor_status_key(suffix)
-
-
-func _objective_pressure_text(pressure: Dictionary) -> String:
-	return FoundationHudViewModelScript.objective_pressure_text(pressure)
 
 
 func _demo_objective_status() -> Dictionary:
@@ -17465,10 +19097,6 @@ func _pit_boss_watch_status() -> Dictionary:
 	if run_state == null:
 		return {}
 	return run_state.pit_boss_watch_status(run_state.current_environment)
-
-
-func _pit_boss_hud_text(status: Dictionary) -> String:
-	return FoundationHudViewModelScript.pit_boss_hud_text(status)
 
 
 func _active_demo_objective_needs_play(objective: Dictionary = {}) -> bool:
@@ -17592,7 +19220,7 @@ func _first_enabled_hook_option(options: Array) -> Dictionary:
 
 
 func _has_enabled_game_object() -> bool:
-	for game_id in _string_array(run_state.current_environment.get("game_ids", [])):
+	for game_id in JsonCoerceScript._raw_string_array(run_state.current_environment.get("game_ids", [])):
 		if not library.game(game_id).is_empty():
 			return true
 	return false
@@ -17625,7 +19253,7 @@ func _has_deferred_bankroll_zero_failure() -> bool:
 		return true
 	if run_state == null or library == null or run_state.has_liquid_run_funds() or run_state.current_environment.is_empty():
 		return false
-	for game_id in _string_array(run_state.current_environment.get("game_ids", [])):
+	for game_id in JsonCoerceScript._raw_string_array(run_state.current_environment.get("game_ids", [])):
 		var game := current_game if current_game != null and current_game.get_id() == game_id else _game_module_for_id(game_id)
 		if game == null:
 			continue
@@ -17753,11 +19381,7 @@ func _clear_terminal_interaction_state() -> void:
 	_set_active_game_binding()
 	current_game = null
 	game_surface_ui_state = {}
-	_hide_run_menu()
-	_hide_event_choice_popup()
-	_hide_run_inventory_popup()
-	_hide_run_journal_popup()
-	_hide_travel_transition()
+	_clear_input_guard_modal_state()
 	_clear_selected_game_action()
 	_clear_selected_stake()
 	_clear_selected_travel()
@@ -17779,14 +19403,24 @@ func _clear_terminal_interaction_state() -> void:
 func _route_ended_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 	if run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
 		return false
+	var tutorial_exit := run_state.is_tutorial_run()
+	var tutorial_exit_saved := not tutorial_exit or _complete_tutorial_profile()
 	_process_terminal_meta_bag_drops()
 	_record_profile_run_result_once(terminal_result)
+	if tutorial_exit and tutorial_exit_saved:
+		tutorial_exit_saved = _clear_tutorial_resume_slot()
 	_clear_terminal_interaction_state()
 	_set_current_screen(SCREEN_VICTORY)
 	_record_challenge_completion_if_needed()
+	var terminal_checkpoint_saved := _save_terminal_resume_checkpoint()
+	_present_terminal_run_screen()
 	var message := str(terminal_result.get("message", "")).strip_edges()
 	if message.is_empty():
 		message = str(_run_report_outcome_snapshot().get("how", "The run is complete."))
+	if not tutorial_exit_saved:
+		message = "The lesson ended, but its profile completion could not be saved."
+	elif not terminal_checkpoint_saved:
+		message = "%s The completed run could not be saved to the Resume Slot." % message
 	_show_message(message)
 	if _tutorial_bronze_home_handoff_ready() and not tutorial_meta_home_handoff_scheduled:
 		tutorial_meta_home_handoff_scheduled = true
@@ -17823,15 +19457,58 @@ func _enter_tutorial_meta_home_handoff() -> void:
 func _route_failed_run_if_needed(terminal_result: Dictionary = {}) -> bool:
 	if run_state == null or run_state.run_status != RunState.RUN_STATUS_FAILED:
 		return false
+	var tutorial_exit := run_state.is_tutorial_run()
+	var tutorial_exit_saved := not tutorial_exit or _complete_tutorial_profile()
 	_process_terminal_meta_bag_drops()
 	_record_profile_run_result_once(terminal_result)
+	if tutorial_exit and tutorial_exit_saved:
+		tutorial_exit_saved = _clear_tutorial_resume_slot()
 	_clear_terminal_interaction_state()
 	_set_current_screen(SCREEN_FAILURE)
+	var terminal_checkpoint_saved := _save_terminal_resume_checkpoint()
+	_present_terminal_run_screen()
 	var message := run_state.run_failure_message
 	if message.strip_edges().is_empty():
 		message = str(terminal_result.get("message", "The run is over."))
+	if not tutorial_exit_saved:
+		message = "The lesson ended, but its profile completion could not be saved."
+	elif not terminal_checkpoint_saved:
+		message = "%s The completed run could not be saved to the Resume Slot." % message
 	_show_message(message)
 	return true
+
+
+func _save_terminal_resume_checkpoint() -> bool:
+	if run_state == null or not run_state.is_terminal():
+		return false
+	# Tutorials intentionally clear their Resume Slot after awarding the starter
+	# profile state. Practice and meta sessions follow their existing no-save rule.
+	if run_state.is_tutorial_run() or dev_game_test_mode or _is_meta_session():
+		return true
+	if bool(run_state.narrative_flags.get(TERMINAL_RESUME_CHECKPOINT_FLAG, false)):
+		return true
+	run_state.narrative_flags[TERMINAL_RESUME_CHECKPOINT_FLAG] = true
+	_mark_autosave_dirty()
+	if _write_foundation_run_save("Completed run saved.", true):
+		return true
+	# Leave a failed checkpoint eligible for retry if another terminal refresh or
+	# the main-menu transition gets a later chance to write it.
+	run_state.narrative_flags.erase(TERMINAL_RESUME_CHECKPOINT_FLAG)
+	return false
+
+
+func _present_terminal_run_screen() -> void:
+	# Terminal state can be discovered outside the broad refresh path (for
+	# example by an offscreen cabinet tick or autosave preparation). Apply the
+	# exclusive report immediately instead of depending on the caller to refresh.
+	if run_state == null or not run_state.is_terminal():
+		return
+	start_screen.visible = false
+	run_screen.visible = true
+	_invalidate_run_screen_layout()
+	_apply_focus_layout()
+	_refresh_environment_result_feedback()
+	_render_run_report()
 
 
 func _process_terminal_meta_bag_drops() -> void:
@@ -17857,7 +19534,7 @@ func _process_terminal_meta_bag_drops() -> void:
 		var special_save_error := meta_collection_service.save()
 		if special_save_error == OK:
 			save_status_message = "Meta collection updated."
-			if tutorial_card_victory and not _copy_dict(special_outcome.get("card_reward", {})).is_empty():
+			if tutorial_card_victory and not JsonCoerceScript._copy_dict(special_outcome.get("card_reward", {})).is_empty():
 				_complete_tutorial_profile()
 	if not run_state.meta_collection_enabled_for_run():
 		return
@@ -17875,7 +19552,7 @@ func claim_victory_collection_bag(marker_id: String) -> void:
 	var result: Dictionary = collection_drop_service.flush_selected_pending_bag(run_state, meta_collection_service, marker_id)
 	if bool(result.get("ok", false)):
 		var save_error := meta_collection_service.save()
-		if save_error == OK and not _copy_array(result.get("summary_lines", [])).is_empty():
+		if save_error == OK and not JsonCoerceScript._copy_array(result.get("summary_lines", [])).is_empty():
 			save_status_message = "Collection bag stored."
 	_show_message(str(result.get("message", "Collection choice updated.")))
 	run_report_model_key = ""
@@ -17895,7 +19572,7 @@ func claim_victory_container_item(item_id: String) -> void:
 	var choices := _victory_container_item_choices()
 	var selected := {}
 	for choice_value in choices:
-		var choice := _copy_dict(choice_value)
+		var choice := JsonCoerceScript._copy_dict(choice_value)
 		if str(choice.get("id", "")) == clean_id:
 			selected = choice
 			break
@@ -17971,7 +19648,7 @@ func _profile_run_result_snapshot(terminal_result: Dictionary = {}) -> Dictionar
 		"failure_reason": failure_reason,
 		"final_bankroll": run_state.bankroll,
 		"day_count": run_state.game_day(),
-		"duration_actions": maxi(0, int(_copy_dict(run_state.event_cadence).get("action_index", 0))),
+		"duration_actions": maxi(0, int(JsonCoerceScript._copy_dict(run_state.event_cadence).get("action_index", 0))),
 		"completed_date": completion_date,
 		"completed_unix": int(Time.get_unix_time_from_system()),
 		"challenge_mode": str(challenge_config.get("mode", "")),
@@ -17982,7 +19659,7 @@ func _profile_run_result_snapshot(terminal_result: Dictionary = {}) -> Dictionar
 		"bankroll_won": maxi(0, int(run_state.narrative_flags.get("profile_bankroll_won", maxi(0, run_state.bankroll - RunState.DEFAULT_BANKROLL)))),
 		"bankroll_lost": maxi(0, int(run_state.narrative_flags.get("profile_bankroll_lost", maxi(0, RunState.DEFAULT_BANKROLL - run_state.bankroll)))),
 		"biggest_single_win": maxi(0, int(run_state.narrative_flags.get("profile_biggest_single_win", 0))),
-		"games_played": _copy_dict(run_state.narrative_flags.get("profile_games_played", {})),
+		"games_played": JsonCoerceScript._copy_dict(run_state.narrative_flags.get("profile_games_played", {})),
 		"release_0_6": RunReportViewModelScript.release_profile_snapshot(run_state.to_dict()),
 		"terminal_message": str(terminal_result.get("message", "")),
 	}
@@ -18020,21 +19697,6 @@ func _record_challenge_completion_if_needed() -> void:
 
 func _pressure_status_text(pressure: Dictionary) -> String:
 	return TerminalConsequenceViewModelScript.pressure_status_text(pressure)
-
-
-func _supported_recovery_available() -> bool:
-	if run_state == null or library == null:
-		return false
-	for option in _lender_hook_view_list():
-		if typeof(option) != TYPE_DICTIONARY:
-			continue
-		var lender_option := option as Dictionary
-		if bool(lender_option.get("mutation_supported", false)) and bool(lender_option.get("enabled", false)):
-			return true
-	for object_data in _game_hook_interactable_objects(false):
-		if typeof(object_data) == TYPE_DICTIONARY and bool((object_data as Dictionary).get("enabled", false)):
-			return true
-	return false
 
 
 func _run_failed_without_recovery() -> bool:
@@ -18077,10 +19739,6 @@ func _run_summary_text(state: RunState) -> String:
 	return TerminalConsequenceViewModelScript.run_summary_text(state, pressure)
 
 
-func _run_travel_target_count(state: RunState) -> int:
-	return TerminalConsequenceViewModelScript.run_travel_target_count(state)
-
-
 func _game_result_from_story_log(entries: Array) -> Dictionary:
 	return TerminalConsequenceViewModelScript.game_result_from_story_log(entries, Callable(self, "_game_display_name"), Callable(self, "_label_from_id"))
 
@@ -18096,7 +19754,9 @@ func _create_game_module(definition: Dictionary) -> GameModule:
 	var module_path := str(definition.get("module_path", ""))
 	if module_path.is_empty() or module_path.ends_with("_ui.gd") or module_path.begins_with("res://data/runtime/"):
 		return null
-	var module_script: Script = load(module_path)
+	# Runtime-first creation uses the same atomic load/cancel path as idle-menu
+	# prewarming, so a pending shared owner cannot load this script again later.
+	var module_script := _load_and_publish_script_prewarm_path(module_path, false, true)
 	if module_script == null:
 		return null
 	var module_instance: Variant = module_script.new()
@@ -18213,9 +19873,9 @@ func _game_test_archetype() -> Dictionary:
 		if typeof(archetype_value) != TYPE_DICTIONARY:
 			continue
 		var archetype: Dictionary = archetype_value
-		var pool_size := _string_array(archetype.get("game_pool", [])).size()
+		var pool_size := JsonCoerceScript._raw_string_array(archetype.get("game_pool", [])).size()
 		var tier := int(archetype.get("tier", 0))
-		var strictness_score := 1 if not _copy_dict(archetype.get("security_profile", {})).is_empty() else 0
+		var strictness_score := 1 if not JsonCoerceScript._copy_dict(archetype.get("security_profile", {})).is_empty() else 0
 		var score := pool_size * 100 + tier * 10 + strictness_score
 		if score > best_score:
 			best_score = score
@@ -18235,7 +19895,7 @@ func _game_environment_hook_action_id(game: GameModule, hook_id: String) -> Stri
 		var confirm_action_id := str(hook_data.get("confirm_action_id", ""))
 		if not confirm_action_id.is_empty():
 			return confirm_action_id
-		var actions := _copy_array(hook_data.get("available_actions", []))
+		var actions := JsonCoerceScript._copy_array(hook_data.get("available_actions", []))
 		if not actions.is_empty() and typeof(actions[0]) == TYPE_DICTIONARY:
 			return str((actions[0] as Dictionary).get("id", ""))
 	return ""
@@ -18337,11 +19997,6 @@ func _selected_stake_for_range(range: Dictionary) -> int:
 	if selected_stake <= 0:
 		return int(range.get("default", 1))
 	return clampi(selected_stake, int(range.get("min", 1)), int(range.get("max", 1)))
-
-
-func _is_valid_stake(stake: int) -> bool:
-	var range := _stake_range()
-	return bool(range.get("has_valid", false)) and stake >= int(range.get("min", 1)) and stake <= int(range.get("max", 1))
 
 
 func _stake_range(action_view: Dictionary = {}) -> Dictionary:
@@ -18526,7 +20181,7 @@ func _render_numbers_surface(result_message: String = "") -> void:
 	var silas := run_state.numbers_silas_status() if source_id == "silas" else {}
 	var venue: Dictionary = {}
 	var venue_id := str(run_state.current_environment.get("archetype_id", run_state.current_world_node_id()))
-	for venue_value in _copy_array(status.get("venue_status", [])):
+	for venue_value in JsonCoerceScript._copy_array(status.get("venue_status", [])):
 		if typeof(venue_value) == TYPE_DICTIONARY and str((venue_value as Dictionary).get("id", "")) == venue_id:
 			venue = (venue_value as Dictionary).duplicate(true)
 			break
@@ -18536,6 +20191,7 @@ func _render_numbers_surface(result_message: String = "") -> void:
 		"visible": true,
 		"popup_type": "numbers_surface",
 		"blocking": true,
+		"dismissible": true,
 		"source_id": source_id,
 		"venue_id": venue_id,
 		"book_open": bool(venue.get("open", false)),
@@ -18574,11 +20230,7 @@ func _render_numbers_surface(result_message: String = "") -> void:
 		if source_id == "desk":
 			_build_numbers_desk_controls(desk)
 	_add_card_button(event_choice_popup_choices_list, "Back", Callable(self, "_hide_event_choice_popup"))
-	event_choice_popup_overlay.visible = true
-	event_choice_popup_overlay.move_to_front()
-	_sync_coach_focus_visibility()
-	_position_event_choice_popup()
-	call_deferred("_position_event_choice_popup")
+	_present_event_choice_popup()
 
 
 func _build_numbers_slip_controls(venue: Dictionary) -> void:
@@ -18648,7 +20300,7 @@ func _build_numbers_desk_controls(desk: Dictionary) -> void:
 		if not bool(desk.get("fix_available", false)):
 			event_choice_popup_choices_list.add_child(_muted_label("Finish the active streets work before moving the fix package.", 12))
 	elif fix_stage == "camouflage":
-		_build_numbers_allocation_controls(_copy_array(desk.get("venues", [])))
+		_build_numbers_allocation_controls(JsonCoerceScript._copy_array(desk.get("venues", [])))
 	elif fix_stage == "bribe_running":
 		event_choice_popup_choices_list.add_child(_muted_label("The fix package is moving through the streets.", 12))
 	elif fix_stage == "payday":
@@ -18803,9 +20455,17 @@ func _hide_event_choice_popup(clear_snapshot: bool = true) -> void:
 	if clear_snapshot:
 		pending_event_choice_popup_snapshot = {}
 	_clear_pending_wager_confirmation()
+	call_deferred("_restore_event_choice_popup_focus")
+
+
+func _restore_event_choice_popup_focus() -> void:
+	if is_instance_valid(event_choice_popup_previous_focus_owner) and event_choice_popup_previous_focus_owner.is_visible_in_tree():
+		event_choice_popup_previous_focus_owner.grab_focus()
+	event_choice_popup_previous_focus_owner = null
 
 
 func _clear_event_choice_popup_choices() -> void:
+	_clear_event_choice_popup_button_press()
 	if event_choice_popup_choices_list != null:
 		# Detach immediately so a newly-built offer is never measured together
 		# with cards that are merely queued for deletion from the previous one.
@@ -18923,11 +20583,16 @@ func _open_run_journal_popup() -> void:
 	if run_journal_overlay == null or run_journal_list == null:
 		return
 	_render_run_journal_contents()
+	if run_journal_scroll != null:
+		run_journal_scroll.scroll_vertical = 0
 	run_journal_overlay.visible = true
 	run_journal_overlay.move_to_front()
 	_sync_coach_focus_visibility()
 	_position_run_journal_popup()
+	if modal_focus_scope != null:
+		modal_focus_scope.call("push_scope", run_journal_overlay, run_journal_close_button)
 	call_deferred("_position_run_journal_popup")
+	call_deferred("_reset_run_journal_scroll_position")
 
 
 func _render_run_journal_contents() -> void:
@@ -18950,27 +20615,44 @@ func _add_run_journal_card(entry: Dictionary) -> void:
 		return
 	var category := str(entry.get("category", "story"))
 	var border := _run_journal_category_color(category)
+	var entry_index := int(entry.get("index", 0))
+	var entry_title := str(entry.get("title", "Story"))
+	var entry_body := str(entry.get("body", ""))
+	var detail_lines := JsonCoerceScript._copy_array(entry.get("detail_lines", []))
 	var card := _panel_container(VisualStyle.DARK_2, border)
+	card.name = "RunJournalEntry%d" % entry_index
 	card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	card.focus_mode = Control.FOCUS_ALL
+	card.mouse_filter = Control.MOUSE_FILTER_STOP
+	card.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	var accessible_parts := ["Journal entry %d: %s" % [entry_index, entry_title]]
+	if not entry_body.strip_edges().is_empty():
+		accessible_parts.append(entry_body.strip_edges())
+	if not detail_lines.is_empty():
+		accessible_parts.append("; ".join(detail_lines))
+	card.accessibility_name = ". ".join(accessible_parts)
+	card.tooltip_text = card.accessibility_name
+	card.focus_entered.connect(Callable(self, "_on_run_journal_card_focus_changed").bind(card, border, true))
+	card.focus_exited.connect(Callable(self, "_on_run_journal_card_focus_changed").bind(card, border, false))
+	card.gui_input.connect(Callable(self, "_on_run_journal_card_gui_input").bind(card))
 	run_journal_list.add_child(card)
 	var stack := VBoxContainer.new()
 	stack.add_theme_constant_override("separation", 4)
 	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card.add_child(stack)
 
-	var heading := _label("#%d %s" % [int(entry.get("index", 0)), str(entry.get("title", "Story"))], 14)
+	var heading := _label("#%d %s" % [entry_index, entry_title], 14)
 	_set_control_font_color(heading, border)
 	heading.clip_text = true
 	heading.max_lines_visible = 1
 	stack.add_child(heading)
 
-	var body := _label(str(entry.get("body", "")), 12)
+	var body := _label(entry_body, 12)
 	_set_control_font_color(body, VisualStyle.SOFT)
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.max_lines_visible = 3
 	stack.add_child(body)
 
-	var detail_lines := _copy_array(entry.get("detail_lines", []))
 	if detail_lines.is_empty():
 		return
 	var details := _label(" | ".join(detail_lines), 10)
@@ -18980,39 +20662,49 @@ func _add_run_journal_card(entry: Dictionary) -> void:
 	stack.add_child(details)
 
 
+func _on_run_journal_card_focus_changed(card: PanelContainer, border: Color, focused: bool) -> void:
+	if not is_instance_valid(card):
+		return
+	card.add_theme_stylebox_override("panel", VisualStyle.pixel_box(
+		VisualStyle.DARK_2,
+		VisualStyle.YELLOW if focused else border,
+		3 if focused else VisualStyle.UI_BORDER_WIDTH
+	))
+	if focused and run_journal_scroll != null:
+		run_journal_scroll.ensure_control_visible(card)
+
+
+func _on_run_journal_card_gui_input(event: InputEvent, card: PanelContainer) -> void:
+	if not is_instance_valid(card):
+		return
+	if (event is InputEventMouseButton and (event as InputEventMouseButton).pressed) \
+			or (event is InputEventScreenTouch and (event as InputEventScreenTouch).pressed):
+		card.grab_focus()
+
+
+func _reset_run_journal_scroll_position() -> void:
+	if run_journal_scroll != null and run_journal_overlay != null and run_journal_overlay.visible:
+		run_journal_scroll.scroll_vertical = 0
+
+
 func _position_run_journal_popup() -> void:
 	if run_journal_overlay == null or run_journal_panel == null:
 		return
-	var overlay_rect := run_journal_overlay.get_global_rect()
-	if overlay_rect.size.x <= 0.0 or overlay_rect.size.y <= 0.0:
-		return
-	var margin := 12.0
-	var width := clampf(overlay_rect.size.x * 0.62, 520.0, 720.0)
-	var height := clampf(overlay_rect.size.y * 0.68, 360.0, 560.0)
-	if overlay_rect.size.x < 620.0:
-		width = clampf(overlay_rect.size.x - margin * 2.0, 300.0, 540.0)
-	if overlay_rect.size.y < 480.0:
-		height = clampf(overlay_rect.size.y - margin * 2.0, 300.0, 420.0)
-	var popup_size := Vector2(width, height)
-	var global_position := Vector2(
-		overlay_rect.position.x + (overlay_rect.size.x - popup_size.x) * 0.5,
-		overlay_rect.position.y + (overlay_rect.size.y - popup_size.y) * 0.5
-	)
-	global_position.x = clampf(global_position.x, overlay_rect.position.x + margin, overlay_rect.position.x + overlay_rect.size.x - popup_size.x - margin)
-	global_position.y = clampf(global_position.y, overlay_rect.position.y + margin, overlay_rect.position.y + overlay_rect.size.y - popup_size.y - margin)
-	run_journal_panel.position = global_position - overlay_rect.position
-	run_journal_panel.size = popup_size
+	_layout_run_journal_panel()
 
 
 func _hide_run_journal_popup() -> void:
 	if run_journal_overlay != null:
+		if run_journal_overlay.visible and modal_focus_scope != null:
+			modal_focus_scope.call("pop_scope", run_journal_overlay)
 		run_journal_overlay.visible = false
 	_sync_coach_focus_visibility()
 	if run_journal_list != null:
 		_clear(run_journal_list)
+	if run_journal_scroll != null:
+		run_journal_scroll.scroll_vertical = 0
 	if run_journal_panel != null:
-		run_journal_panel.position = Vector2.ZERO
-		run_journal_panel.size = run_journal_panel.custom_minimum_size
+		_layout_run_journal_panel()
 
 
 func _run_journal_popup_is_visible() -> bool:
@@ -19091,7 +20783,8 @@ func _held_container_item_options() -> Array:
 	var result: Array = []
 	if run_state == null or library == null:
 		return result
-	for item_id in _string_array(run_state.inventory):
+	for item_value in run_state.inventory:
+		var item_id := _inventory_value_id(item_value)
 		var option := _container_item_option(item_id)
 		if not option.is_empty():
 			result.append(option)
@@ -19119,16 +20812,6 @@ func _container_item_option(item_id: String) -> Dictionary:
 	}
 
 
-func _storable_inventory_item_ids() -> Array:
-	var result: Array = []
-	if run_state == null:
-		return result
-	for item_id in _string_array(run_state.inventory):
-		if _container_item_option(item_id).is_empty():
-			result.append(item_id)
-	return result
-
-
 func _home_container_by_id(container_id: String) -> Dictionary:
 	if run_state == null:
 		return {}
@@ -19142,7 +20825,7 @@ func _home_container_by_id(container_id: String) -> Dictionary:
 
 
 func _home_container_contents_summary(container: Dictionary) -> String:
-	var items := _string_array(container.get("items", []))
+	var items := JsonCoerceScript._raw_string_array(container.get("items", []))
 	if items.is_empty():
 		return "Empty."
 	var labels: Array = []
@@ -19189,11 +20872,6 @@ func _refresh_active_item_slot() -> void:
 	active_item_button.icon = _run_item_texture_for_asset_path(str(item.get("asset_path", "")))
 
 
-func _item_sale_price(item_definition: Dictionary) -> int:
-	_refresh_run_action_service()
-	return run_action_service.item_sale_price(item_definition)
-
-
 func _shopkeeper_available() -> bool:
 	_refresh_run_action_service()
 	return run_action_service.shopkeeper_available()
@@ -19212,7 +20890,7 @@ func _shopkeeper_should_draw() -> bool:
 func _object_fixture_declared(object_id: String) -> bool:
 	if run_state == null or object_id.is_empty():
 		return false
-	for fixture_id in _string_array(run_state.current_environment.get("object_fixtures", [])):
+	for fixture_id in JsonCoerceScript._raw_string_array(run_state.current_environment.get("object_fixtures", [])):
 		if fixture_id == object_id:
 			return true
 	return false
@@ -19259,11 +20937,6 @@ func _item_offer(item_id: String) -> Dictionary:
 	return run_action_service.item_offer(item_id, selected_item_offer_id)
 
 
-func _effect_summary(effect: Dictionary) -> String:
-	_refresh_run_action_service()
-	return run_action_service.effect_summary(effect)
-
-
 func _label_from_id(id: String) -> String:
 	_refresh_run_action_service()
 	if run_action_service != null:
@@ -19308,7 +20981,7 @@ func _first_current_pawn_lender_id() -> String:
 		return selected_lender_hook_id
 	var lender_values: Array = []
 	if run_state != null:
-		lender_values = _copy_array(run_state.current_environment.get("lender_hooks", []))
+		lender_values = JsonCoerceScript._copy_array(run_state.current_environment.get("lender_hooks", []))
 	for lender_value in lender_values:
 		var lender_id := str(lender_value)
 		if _lender_is_pawn_counter(lender_id):
@@ -19344,6 +21017,7 @@ func _refresh_world_map_overlay() -> void:
 	world_map_overlay_controller.apply_title(_world_map_title_text(current_label))
 	_refresh_world_map_detail()
 	_position_world_map_detail_popup(snapshot)
+	_refresh_world_map_focus_scope()
 
 
 func _on_world_map_canvas_layout_changed() -> void:
@@ -19368,6 +21042,7 @@ func _refresh_world_map_overlay_after_layout() -> void:
 	var snapshot := _world_map_snapshot()
 	world_map_overlay_controller.sync_node_buttons(snapshot)
 	_position_world_map_detail_popup(snapshot)
+	_refresh_world_map_focus_scope()
 	_sync_coach_world_map_anchor_geometry()
 
 
@@ -19410,7 +21085,10 @@ func _world_map_title_text(current_label: String) -> String:
 		current_label,
 	]
 	if run_state.delivery_has_active_run():
-		title += " | Courier: %d actions" % int(run_state.delivery_snapshot().get("deadline_remaining", 0))
+		title += " | Courier: %s" % PlayerTextScript.count_text(
+			"action",
+			int(run_state.delivery_snapshot().get("deadline_remaining", 0))
+		)
 	return title
 
 
@@ -19421,6 +21099,11 @@ func _position_world_map_detail_popup(snapshot: Dictionary) -> void:
 		reserved_rect = talk_dock.environment_reserved_global_rect()
 	world_map_overlay_controller.set_reserved_overlay_global_rect(reserved_rect)
 	world_map_overlay_controller.position_detail_popup(snapshot)
+	# Detail visibility changes whether Travel belongs to the focus ring. Rebuild
+	# both directions only after the popup has taken its final visible state.
+	if world_map_overlay_controller.has_method("refresh_focus_neighbors"):
+		world_map_overlay_controller.call("refresh_focus_neighbors")
+	_refresh_world_map_focus_scope()
 
 
 func _refresh_world_map_detail() -> void:
@@ -19474,10 +21157,10 @@ func _refresh_world_map_detail() -> void:
 	]
 	var delivery_layer := run_state.delivery_map_layer()
 	if not delivery_layer.is_empty():
-		for target_value in _copy_array(delivery_layer.get("targets", [])):
+		for target_value in JsonCoerceScript._copy_array(delivery_layer.get("targets", [])):
 			if typeof(target_value) == TYPE_DICTIONARY and str((target_value as Dictionary).get("node_id", "")) == selected_world_map_node_id:
-				detail_lines.append("Courier target · %d actions · %s" % [
-					int(delivery_layer.get("deadline_remaining", 0)),
+				detail_lines.append("Courier target · %s · %s" % [
+					PlayerTextScript.count_text("action", int(delivery_layer.get("deadline_remaining", 0))),
 					str((target_value as Dictionary).get("status", "pending")),
 				])
 				break
@@ -19490,15 +21173,6 @@ func _refresh_world_map_detail() -> void:
 func _set_world_map_detail_badges(badges_value: Variant) -> void:
 	_ensure_world_map_overlay_controller()
 	world_map_overlay_controller.set_detail_badges(badges_value)
-
-
-func _ensure_world_map_detail_badge_pool() -> void:
-	_ensure_world_map_overlay_controller()
-	world_map_overlay_controller.set_detail_badges([])
-
-
-func _update_world_map_detail_badge_cells(badges: Array) -> void:
-	_set_world_map_detail_badges(badges)
 
 
 func _world_map_detail_badge_prewarm_sample() -> Array:
@@ -19545,10 +21219,6 @@ func _world_map_travel_method_kind(choice: Dictionary) -> String:
 	return WorldMapScript.travel_method_kind(choice, str(choice.get("distance", "near")))
 
 
-func _world_map_travel_cost_line(choice: Dictionary) -> String:
-	return _world_map_travel_summary_line(choice)
-
-
 func _world_map_travel_summary_line(choice: Dictionary) -> String:
 	var method := _world_map_travel_method(choice)
 	var cost := 0 if _world_map_travel_method_kind(choice) == WorldMapScript.TRAVEL_METHOD_WALK else maxi(0, int(choice.get("cost", 0)))
@@ -19589,30 +21259,16 @@ func _meta_world_map_snapshot() -> Dictionary:
 	return meta_session_controller.world_map_snapshot(meta_session_location_id, selected_world_map_node_id)
 
 
-func _meta_world_map_node(node_id: String, position: Vector2, selected_id: String) -> Dictionary:
-	_ensure_meta_session_controller()
-	var snapshot := meta_session_controller.world_map_snapshot(meta_session_location_id, selected_id)
-	for node_value in _copy_array(snapshot.get("nodes", [])):
-		if typeof(node_value) == TYPE_DICTIONARY and str((node_value as Dictionary).get("id", "")) == node_id:
-			return (node_value as Dictionary).duplicate(true)
-	return {}
-
-
 func _meta_archetype_id_for_location(node_id: String) -> String:
 	_ensure_meta_session_controller()
 	return meta_session_controller.archetype_id_for_location(node_id)
-
-
-func _meta_map_icon_archetype_id(node_id: String) -> String:
-	_ensure_meta_session_controller()
-	return meta_session_controller.map_icon_archetype_id(node_id)
 
 
 func _refresh_meta_world_map_detail() -> void:
 	_ensure_meta_session_controller()
 	var detail := meta_session_controller.world_map_detail_view(meta_session_location_id, selected_world_map_node_id)
 	_set_world_map_confirm_enabled(bool(detail.get("confirm_enabled", false)))
-	_set_world_map_detail_badges(_copy_array(detail.get("badges", [])))
+	_set_world_map_detail_badges(JsonCoerceScript._copy_array(detail.get("badges", [])))
 	world_map_detail_label.text = str(detail.get("text", ""))
 
 
@@ -19620,6 +21276,9 @@ func _set_world_map_confirm_enabled(enabled: bool) -> void:
 	if world_map_confirm_button == null:
 		return
 	world_map_confirm_button.disabled = not enabled
+	if world_map_overlay_controller != null and world_map_overlay_controller.has_method("refresh_focus_neighbors"):
+		world_map_overlay_controller.call("refresh_focus_neighbors")
+	_refresh_world_map_focus_scope()
 
 
 func _world_map_snapshot() -> Dictionary:
@@ -19634,8 +21293,8 @@ func _world_map_node_should_render(node: Dictionary, is_current: bool, is_availa
 	return FoundationTravelViewModelScript.world_map_node_should_render(self, node, is_current, is_available_target)
 
 
-func _world_route_for_target(target_id: String) -> Dictionary:
-	return FoundationTravelViewModelScript.world_route_for_target(self, target_id)
+func _world_route_for_target(target_id: String, path_query: Dictionary = {}) -> Dictionary:
+	return FoundationTravelViewModelScript.world_route_for_target(self, target_id, path_query)
 
 
 func _travel_choice_view_list() -> Array:
@@ -19767,7 +21426,9 @@ func _add_detail_row(stack: VBoxContainer, label_text: String, value_text: Strin
 
 
 func _add_card_button(stack: VBoxContainer, text: String, callback: Callable, disabled: bool = false, primary: bool = false) -> Button:
-	return FoundationWidgetsScript.add_card_button(stack, text, callback, disabled, primary)
+	var button := FoundationWidgetsScript.add_card_button(stack, text, callback, disabled, primary)
+	_apply_accessibility_to_node(button, _accessibility_font_scale(), _accessibility_control_scale())
+	return button
 
 
 func _accessible_font_size(base_size: int) -> int:
@@ -19829,7 +21490,7 @@ func _refresh_coach_at_boundary_if_current(expected_generation: int) -> void:
 func _refresh_coach_at_boundary(surface_transition_wait_satisfied: bool = false) -> void:
 	if coach_overlay == null or run_state == null or current_screen == SCREEN_START:
 		return
-	if TutorialFlowScript.repair_legacy_frontier(run_state):
+	if TutorialFlowScript.repair_legacy_tutorial_save(run_state):
 		var repaired_completed: Dictionary = run_state.narrative_flags.get("tutorial_lessons_completed", {}) if typeof(run_state.narrative_flags.get("tutorial_lessons_completed", {})) == TYPE_DICTIONARY else {}
 		coach_overlay.begin_tutorial_run(repaired_completed)
 	# Opening Inventory can satisfy a tutorial action. Do not evaluate the next
@@ -19855,6 +21516,13 @@ func _refresh_coach_at_boundary(surface_transition_wait_satisfied: bool = false)
 	_focus_tutorial_meta_home_card_lesson()
 	_complete_preperformed_tutorial_actions()
 	_focus_tutorial_corner_store_purchase_lesson()
+	# A newly activated room lesson can share the exact same rendered snapshot as
+	# the lesson before it. In that case the canvas has no geometry-change signal
+	# to emit, while an older host projection may not yet contain the new target.
+	# Reconcile against the live room after every tutorial boundary so the input
+	# shield never turns a visible, highlighted object into an unclickable prop.
+	_sync_coach_environment_anchor_geometry()
+	_sync_coach_game_surface_anchor_geometry()
 	_sync_coach_focus_visibility()
 	_sync_talk_dock_coach_avoid_rect()
 
@@ -19953,7 +21621,7 @@ func _record_tutorial_action_if_authored(action_id: String) -> void:
 					expected = str(anchor.get("id", "")).strip_edges()
 				authored = expected == clean_action_id
 			"one_of_actions":
-				authored = _string_array(completion.get("action_ids", [])).has(clean_action_id)
+				authored = JsonCoerceScript._raw_string_array(completion.get("action_ids", [])).has(clean_action_id)
 		if authored:
 			break
 	if not authored:
@@ -19961,6 +21629,13 @@ func _record_tutorial_action_if_authored(action_id: String) -> void:
 	var performed: Dictionary = run_state.narrative_flags.get("tutorial_actions_performed", {}) if typeof(run_state.narrative_flags.get("tutorial_actions_performed", {})) == TYPE_DICTIONARY else {}
 	performed[clean_action_id] = true
 	run_state.narrative_flags["tutorial_actions_performed"] = performed
+	var contexts: Dictionary = run_state.narrative_flags.get("tutorial_action_contexts", {}) if typeof(run_state.narrative_flags.get("tutorial_action_contexts", {})) == TYPE_DICTIONARY else {}
+	contexts[clean_action_id] = {
+		"environment_archetype": str(run_state.current_environment.get("archetype_id", "")),
+		"screen": current_screen,
+		"game_id": current_game.get_id() if current_game != null else "",
+	}
+	run_state.narrative_flags["tutorial_action_contexts"] = contexts
 
 
 func _consume_recorded_tutorial_action(action_id: String) -> void:
@@ -19972,6 +21647,9 @@ func _consume_recorded_tutorial_action(action_id: String) -> void:
 		return
 	performed.erase(clean_action_id)
 	run_state.narrative_flags["tutorial_actions_performed"] = performed
+	var contexts: Dictionary = run_state.narrative_flags.get("tutorial_action_contexts", {}) if typeof(run_state.narrative_flags.get("tutorial_action_contexts", {})) == TYPE_DICTIONARY else {}
+	contexts.erase(clean_action_id)
+	run_state.narrative_flags["tutorial_action_contexts"] = contexts
 
 
 func _complete_preperformed_tutorial_actions() -> void:
@@ -19980,6 +21658,7 @@ func _complete_preperformed_tutorial_actions() -> void:
 	var performed: Dictionary = run_state.narrative_flags.get("tutorial_actions_performed", {}) if typeof(run_state.narrative_flags.get("tutorial_actions_performed", {})) == TYPE_DICTIONARY else {}
 	if performed.is_empty():
 		return
+	var performed_contexts: Dictionary = run_state.narrative_flags.get("tutorial_action_contexts", {}) if typeof(run_state.narrative_flags.get("tutorial_action_contexts", {})) == TYPE_DICTIONARY else {}
 	for _index in range(16):
 		var lesson_id: String = coach_overlay.active_lesson_id()
 		if lesson_id.is_empty():
@@ -20003,19 +21682,36 @@ func _complete_preperformed_tutorial_actions() -> void:
 				if not action_id.is_empty():
 					action_ids.append(action_id)
 			"one_of_actions":
-				action_ids = _string_array(completion.get("action_ids", []))
+				action_ids = JsonCoerceScript._raw_string_array(completion.get("action_ids", []))
 			_:
 				return
 		var matched_action := ""
 		for action_id_value in action_ids:
 			var candidate := str(action_id_value)
-			if bool(performed.get(candidate, false)):
+			if bool(performed.get(candidate, false)) and _recorded_tutorial_action_matches_lesson(candidate, lesson, performed_contexts):
 				matched_action = candidate
 				break
 		if matched_action.is_empty() or not coach_overlay.notify_action(matched_action):
 			return
 		_consume_recorded_tutorial_action(matched_action)
 		coach_overlay.evaluate_at_boundary(_coach_context_snapshot())
+
+
+func _recorded_tutorial_action_matches_lesson(action_id: String, lesson: Dictionary, contexts: Dictionary) -> bool:
+	# Machine/table ids are intentionally reused across venues. A Blackjack entry
+	# in the underground casino must not silently complete the later instruction
+	# to enter Blackjack on the Grand Casino floor. Other authored ids remain
+	# globally unique and retain the legacy pre-performance behavior.
+	if not action_id.begins_with("game:"):
+		return true
+	var trigger: Dictionary = lesson.get("trigger", {}) if typeof(lesson.get("trigger", {})) == TYPE_DICTIONARY else {}
+	var expected_environment := str(trigger.get("environment_archetype", "")).strip_edges()
+	if expected_environment.is_empty():
+		return true
+	var context_value: Variant = contexts.get(action_id, {})
+	if typeof(context_value) != TYPE_DICTIONARY:
+		return false
+	return str((context_value as Dictionary).get("environment_archetype", "")).strip_edges() == expected_environment
 
 
 func _sync_coach_focus_visibility() -> void:
@@ -20042,6 +21738,12 @@ func _clear_run_guidance_for_start_screen() -> void:
 
 func _sync_talk_dock_coach_avoid_rect() -> void:
 	if talk_dock == null or talk_dock_avoid_sync_active:
+		return
+	# Ordinary room focus has no dialogue footprint to place. Keep the reserve
+	# cleared, but do not rebuild every scenario clearance rectangle until the
+	# dock is actually visible.
+	if not talk_dock.visible:
+		_apply_talk_dock_environment_reserve()
 		return
 	var anchor_rect := Rect2()
 	var focus_x_hint := -1.0
@@ -20144,10 +21846,10 @@ func _scenario_talk_dock_protected_rects() -> Array:
 	if environment_canvas == null or not environment_canvas.has_method("current_view_snapshot"):
 		return protected
 	if run_state != null and environment_canvas.has_method("global_rect_for_normalized_board_rect"):
-		var authority := _copy_dict(run_state.current_environment.get("scenario_layout_authority", {}))
+		var authority := JsonCoerceScript._copy_dict(run_state.current_environment.get("scenario_layout_authority", {}))
 		for identity_value in authority.keys():
 			var identity := str(identity_value)
-			var record := _copy_dict(authority.get(identity_value, {}))
+			var record := JsonCoerceScript._copy_dict(authority.get(identity_value, {}))
 			var scenario_owned := identity.begins_with("scenario::") \
 				or bool(record.get("semantic_actor_member", false)) \
 				or bool(record.get("semantic_interaction_member", false))
@@ -20159,7 +21861,7 @@ func _scenario_talk_dock_protected_rects() -> Array:
 			if sealed_rect.has_area():
 				protected.append(sealed_rect)
 	var snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
-	for object_value in _copy_array(snapshot.get("objects", [])):
+	for object_value in JsonCoerceScript._copy_array(snapshot.get("objects", [])):
 		if typeof(object_value) != TYPE_DICTIONARY:
 			continue
 		var object_data: Dictionary = object_value
@@ -20285,9 +21987,9 @@ func _starter_card_count() -> int:
 	if meta_collection_service == null:
 		return 0
 	var count := 0
-	for instance_value in _copy_array(meta_collection_service.snapshot().get("owned_instances", [])):
-		var instance := _copy_dict(instance_value)
-		var stamp := _copy_dict(instance.get("instance_data", {}))
+	for instance_value in JsonCoerceScript._copy_array(meta_collection_service.snapshot().get("owned_instances", [])):
+		var instance := JsonCoerceScript._copy_dict(instance_value)
+		var stamp := JsonCoerceScript._copy_dict(instance.get("instance_data", {}))
 		if bool(stamp.get("starter_card", false)):
 			count += 1
 	return count
@@ -20319,6 +22021,27 @@ func _coach_anchor_rects(game_coach_state: Dictionary = {}) -> Dictionary:
 			var rendered_rect := environment_canvas.global_rect_for_selected_object_action(object_id)
 			if not rendered_rect.has_area():
 				rendered_rect = environment_canvas.global_rect_for_object(object_id)
+			if not rendered_rect.has_area():
+				# Meta Home can schedule its first coach frame in the same refresh
+				# that installs the custom object catalog. The sealed focus rect is
+				# already the final click geometry, so it is a safe anchor while the
+				# canvas object cache catches up.
+				rendered_rect = environment_canvas.global_rect_for_normalized_board_rect(
+					object_data.get("focus_rect", object_data.get("normalized_rect", {}))
+				)
+			if not rendered_rect.has_area():
+				var normalized_rect := _rect_from_dict(object_data.get("focus_rect", object_data.get("normalized_rect", {})))
+				var anchor_surface := environment_canvas.get_global_rect()
+				if not anchor_surface.has_area():
+					anchor_surface = get_viewport().get_visible_rect()
+				if normalized_rect.has_area() and anchor_surface.has_area():
+					rendered_rect = Rect2(
+						anchor_surface.position + normalized_rect.position * anchor_surface.size,
+						normalized_rect.size * anchor_surface.size
+					)
+				elif normalized_rect.has_area():
+					var logical_size := Vector2(VisualStyle.ENVIRONMENT_BOARD_SIZE)
+					rendered_rect = Rect2(normalized_rect.position * logical_size, normalized_rect.size * logical_size)
 			if not rendered_rect.has_area():
 				continue
 			objects[object_id] = rendered_rect
@@ -20409,7 +22132,11 @@ func _apply_accessibility_settings() -> void:
 		heat_gain_feedback_overlay.set_reduce_motion(bool(user_settings.reduce_motion) if user_settings != null else false)
 	if environment_canvas != null:
 		environment_canvas.set_small_screen_mode(small_screen_enabled)
+		environment_canvas.set_object_labels_and_borders_enabled(bool(user_settings.object_labels_and_borders_enabled) if user_settings != null else true)
 		environment_canvas.set_developer_placement_mode(bool(user_settings.developer_placement_mode) if user_settings != null else false)
+		environment_canvas.set_developer_slot_placement_mode(bool(user_settings.developer_slot_placement_mode) if user_settings != null else false)
+	if main_menu_background != null:
+		main_menu_background.call("set_object_labels_and_borders_enabled", bool(user_settings.object_labels_and_borders_enabled) if user_settings != null else true)
 	if game_surface_canvas != null:
 		game_surface_canvas.set_small_screen_mode(small_screen_enabled)
 	if run_inventory_screen != null:
@@ -20443,6 +22170,10 @@ func _apply_accessibility_settings() -> void:
 	if transform_active or accessibility_tree_transform_active:
 		_apply_accessibility_to_node(self, font_scale, control_scale)
 	accessibility_tree_transform_active = transform_active
+	_layout_settings_overlay()
+	_layout_world_map_panel()
+	_layout_run_menu_panel()
+	_layout_run_journal_panel()
 	_invalidate_run_screen_layout()
 
 
@@ -20660,7 +22391,7 @@ func _texture_for_image_asset_path(asset_path: String) -> Texture2D:
 		return run_item_icon_texture_cache[path] as Texture2D
 	if not ResourceLoader.exists(path):
 		return _load_uncached_run_item_texture(path)
-	var texture := ResourceLoader.load(path, "Texture2D", ResourceLoader.CACHE_MODE_IGNORE) as Texture2D
+	var texture := ResourceLoader.load(path, "Texture2D", ResourceLoader.CACHE_MODE_REUSE) as Texture2D
 	_remember_run_item_texture(path, texture)
 	return texture
 
@@ -20687,29 +22418,6 @@ func _style_selected_button(button: Button) -> void:
 
 func _clear(container: Node) -> void:
 	FoundationWidgetsScript.clear(container)
-
-
-func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		var id := str(entry)
-		if not id.is_empty():
-			result.append(id)
-	return result
-
-
-func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
 
 
 func _snapshot_copy_value(value: Variant) -> Variant:

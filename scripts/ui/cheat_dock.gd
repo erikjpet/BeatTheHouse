@@ -48,9 +48,5 @@ func current_snapshot() -> Dictionary:
 	}
 
 
-func _select(action_id: String) -> void:
-	action_selected.emit(action_id, "cheat")
-
-
 static func _array(value: Variant) -> Array:
 	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []

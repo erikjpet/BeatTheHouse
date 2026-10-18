@@ -68,7 +68,7 @@ fallback slots resolved only for collision, not for composition. That is why
 rooms read as arbitrary rather than staged.
 
 **3. Consequence gap (content).** The `env06_7` conversion was produced by a
-generator (`tools/env06_7_package_a_generate.gd`). It satisfies the structural
+generator (`tools/archive/env06_7/env06_7_package_a_generate.gd`). It satisfies the structural
 contract while producing almost no observable consequence. `depth06_1` passed it
 because that gate measured structural uniqueness — mechanic signatures, phase and
 branch counts — and never whether an action produces something a player can see.

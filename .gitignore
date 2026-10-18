@@ -6,6 +6,7 @@ docs/plans/0.3.2_function_census.md
 .godot/
 *.translation
 *.uid
+!tools/archive/**/*.gd.uid
 *.import
 !assets/audio/music/**/*.wav.import
 .tmp/
@@ -23,6 +24,12 @@ builds/
 /native/coin_pusher/**/*.o
 user/
 user://
+# Generated player/test profiles are never release source. Intentional save
+# regression fixtures live under scripts/tests/fixtures instead.
+user_data/
+app_userdata/
+saves/
+.crew_host_authority_v1
 
 # OS/editor noise
 .DS_Store

@@ -74,7 +74,7 @@ fab0ee82 Surface shops and Jazz Club earlier
 - Working tree contains other people's uncommitted work
   (`scripts/games/scratch_tickets.gd`,
   `scripts/tests/foundation/check_scratch_tickets.gd`,
-  `docs/plans/0.5_ui_overhaul_brief.md`, and an untracked `docs/todo/`).
+  `docs/archive/0.5/plans/0.5_ui_overhaul_brief.md`, and an untracked `docs/todo/`).
   Treat all of it as user-owned: never revert, reformat, or stage it. Stage
   explicitly, file by file.
 - Style: tabs, typed GDScript, sparse comments.

@@ -1,11 +1,23 @@
 class_name EnvironmentPlacement
 extends RefCounted
 
+# Resolves authored fixed, event, scenario, and exit slot geometry, including
+# developer overrides and exact scenario-local placement authority.
+
 const SURFACE_MAP_PATH := "res://data/environments/placement_surfaces.json"
+const SCENARIO_LAYOUT_PATH := "res://data/environments/scenario_slot_layouts.json"
 const DeveloperPlacementStoreScript := preload("res://scripts/core/developer_placement_store.gd")
+const SLOT_SCHEMA_VERSION := 2
+const SLOT_FAMILIES := ["fixed", "event", "scenario", "exit"]
+const SLOT_COLLECTIONS := {
+	"fixed": "fixed_slots",
+	"event": "event_slots",
+	"scenario": "scenario_slots",
+	"exit": "exit_slots",
+}
 const CLASSES := [
 	"standing_person", "behind_counter_person", "seated_person", "group",
-	"floor_fixture", "ground_marker", "surface_item", "wall_mounted",
+	"floor_fixture", "ground_marker", "surface_item", "shop_item", "wall_mounted",
 	"hanging", "doorway",
 ]
 const PERSON_CLASSES := ["standing_person", "behind_counter_person", "seated_person", "group"]
@@ -19,7 +31,7 @@ const HANGING_TOKENS := ["banner", "hanging", "speaker rig", "string light"]
 const DOOR_TOKENS := ["door", "exit", "gangway", "leave"]
 const GROUND_TOKENS := ["chalk", "lane", "mark", "spill", "tape"]
 const SURFACE_TOKENS := ["basket", "card", "case", "desk", "drink", "glass", "item", "ledger", "manifest", "note", "provenance", "table", "ticket", "tray", "watch"]
-const PERSON_EVENT_PROPS := ["bar_patron", "casino_host", "clerk_counter", "clerk_talk", "host_station", "patron", "pit_boss", "rowdy_patron", "staff"]
+const PERSON_EVENT_PROPS := ["bar_patron", "casino_host", "clerk_counter", "clerk_talk", "host_station", "patron", "patron_talk", "pit_boss", "rowdy_patron", "staff"]
 const WALL_EVENT_PROPS := ["security_camera"]
 const DOOR_EVENT_PROPS := ["motel_door", "side_door"]
 const SURFACE_EVENT_PROPS := ["card_table", "paper_note", "room_refreshment", "table"]
@@ -31,32 +43,36 @@ const SCENARIO_RESERVATION_FIELDS := [
 	"scenario_reserved_wall_rects", "scenario_reserved_clear_rects",
 	"scenario_reserved_clear_rects_by_class",
 ]
-const LOCAL_SNAP_OFFSETS := [
-	Vector2.ZERO,
-	Vector2(56.0, 0.0), Vector2(-56.0, 0.0),
-	Vector2(0.0, 52.0), Vector2(0.0, -52.0),
-	Vector2(112.0, 0.0), Vector2(-112.0, 0.0),
-	Vector2(0.0, 104.0), Vector2(0.0, -104.0),
-	Vector2(112.0, 52.0), Vector2(-112.0, 52.0),
-	Vector2(112.0, -52.0), Vector2(-112.0, -52.0),
-	Vector2(168.0, 0.0), Vector2(-168.0, 0.0),
-	Vector2(168.0, 104.0), Vector2(-168.0, 104.0),
-]
-const LOCAL_SNAP_RADIUS := 198.0
 
 static var _surface_maps: Dictionary = {}
 static var _effective_surface_maps: Dictionary = {}
+static var _runtime_surface_maps: Dictionary = {}
+static var _runtime_surface_revision := -1
+static var _scenario_layouts: Dictionary = {}
+static var _maps_with_catalog_scenarios: Dictionary = {}
 static var _surface_maps_loaded := false
 
 
 static func classify(object_data: Dictionary, object_type: String = "", object_id: String = "", visual_prop: String = "") -> String:
+	var clean_type := object_type.strip_edges().to_lower()
+	# Merchandise owns a closed placement class so props and scenario visuals can
+	# never consume its authored shelf row. Cage stock uses the same base item
+	# record contract under a stable, index-addressed presentation identity.
+	if clean_type == "item" or object_id.begins_with("cage_gift_item:"):
+		return "shop_item"
 	var explicit := str(object_data.get("placement_class", "")).strip_edges()
 	if explicit in CLASSES:
 		return explicit
-	var clean_type := object_type.strip_edges().to_lower()
 	var clean_prop := visual_prop.strip_edges().to_lower()
 	if clean_prop.is_empty():
 		clean_prop = str(object_data.get("visual_prop", object_data.get("environment_prop", ""))).strip_edges().to_lower()
+	# Event speakers describe who narrates or owns an interaction, not always the
+	# physical object that receives it.  Concrete table props remain furniture
+	# even when a staff/crew speaker supplies the dialogue (The Live Table is the
+	# canonical case); otherwise the speaker role incorrectly wins below and
+	# consumes behind-counter person capacity.
+	if clean_type == "event" and clean_prop in ["card_table", "table"]:
+		return "floor_fixture"
 	var person_semantics := "%s %s %s %s %s %s" % [
 		object_id, clean_type, clean_prop, str(object_data.get("role", "")),
 		str(object_data.get("pose", "")), str(object_data.get("appearance", "")),
@@ -166,29 +182,44 @@ static func classify(object_data: Dictionary, object_type: String = "", object_i
 
 
 static func surface_map(environment: Dictionary) -> Dictionary:
+	var authority_revision := DeveloperPlacementStoreScript.authority_revision()
+	if authority_revision != _runtime_surface_revision:
+		_runtime_surface_maps.clear()
+		_runtime_surface_revision = authority_revision
+	var cache_key := DeveloperPlacementStoreScript.layout_id(environment)
+	if _runtime_surface_maps.has(cache_key):
+		return _dict(_runtime_surface_maps.get(cache_key, {}))
+	var result := _with_runtime_slot_geometry(environment, _shipping_surface_map(environment))
+	_runtime_surface_maps[cache_key] = result
+	return result
+
+
+static func _shipping_surface_map(environment: Dictionary) -> Dictionary:
 	_ensure_surface_maps()
 	var archetype_id := str(environment.get("archetype_id", environment.get("id", ""))).strip_edges()
 	var layer_id := str(environment.get("current_layer_id", environment.get("layer_id", ""))).strip_edges()
 	var layered_key := "%s:%s" % [archetype_id, layer_id]
 	var map_key := layered_key if not layer_id.is_empty() and _surface_maps.has(layered_key) else archetype_id
 	var base_map := _dict(_surface_maps.get(map_key, {}))
-	var scenario_state := _dict(environment.get("scenario_state", {}))
-	var scenario_id := str(scenario_state.get("id", environment.get("scenario_id", ""))).strip_edges()
+	var scenario_id := active_scenario_id(environment)
 	var scenario_overrides := _dict(base_map.get("scenario_overrides", {}))
+	var has_instance_layout := _scenario_layouts.has("%s::%s" % [map_key, scenario_id])
 	if scenario_id.is_empty():
 		var base_key := "%s::base" % map_key
 		if _effective_surface_maps.has(base_key):
-			return _with_developer_slots(environment, _dict(_effective_surface_maps.get(base_key, {})))
+			return _dict(_effective_surface_maps.get(base_key, {}))
 		var unreserved_map := base_map.duplicate(false)
 		for field_value in SCENARIO_RESERVATION_FIELDS:
 			unreserved_map.erase(str(field_value))
-		_effective_surface_maps[base_key] = unreserved_map
-		return _with_developer_slots(environment, unreserved_map)
-	if not scenario_overrides.has(scenario_id):
-		return _with_developer_slots(environment, base_map)
+		var base_result := _with_scenario_instance_layout(map_key, scenario_id, unreserved_map)
+		_effective_surface_maps[base_key] = base_result
+		return base_result
 	var effective_key := "%s::%s" % [map_key, scenario_id]
 	if _effective_surface_maps.has(effective_key):
-		return _with_developer_slots(environment, _dict(_effective_surface_maps.get(effective_key, {})))
+		return _dict(_effective_surface_maps.get(effective_key, {}))
+	if not scenario_overrides.has(scenario_id) and not has_instance_layout:
+		_effective_surface_maps[effective_key] = base_map
+		return base_map
 	var result := base_map.duplicate(false)
 	var scenario_override := _dict(scenario_overrides.get(scenario_id, {}))
 	var base_class_overrides := _dict(base_map.get("class_overrides", {})).duplicate(true)
@@ -196,62 +227,274 @@ static func surface_map(environment: Dictionary) -> Dictionary:
 	if scenario_override.has("class_overrides"):
 		base_class_overrides.merge(_dict(scenario_override.get("class_overrides", {})), true)
 		result["class_overrides"] = base_class_overrides
+	result = _with_scenario_instance_layout(map_key, scenario_id, result)
 	_effective_surface_maps[effective_key] = result
-	return _with_developer_slots(environment, result)
+	return result
+
+
+static func active_scenario_id(environment: Dictionary) -> String:
+	# Placement composition and persistence must agree on both layer targeting and
+	# selector sentinels. In particular, Environment Library's ``__none`` choice is
+	# a request for the shared base room, not a scenario identity that can expose
+	# generic scenario capacity.
+	return DeveloperPlacementStoreScript.active_scenario_id(environment)
+
+
+# Catalog scenario objects own exact, scenario-scoped slot instances. Shared
+# runtime reserves remain available for injected delivery/chain records, while
+# ordinary map-wide generic scenario pools are retired from catalog and clean
+# no-scenario layouts.
+static func _with_scenario_instance_layout(map_key: String, scenario_id: String, surface_data: Dictionary) -> Dictionary:
+	var layout_key := "%s::%s" % [map_key, scenario_id]
+	var layout := _dict(_scenario_layouts.get(layout_key, {}))
+	var has_catalog_layouts := bool(_maps_with_catalog_scenarios.get(map_key, false))
+	if layout.is_empty() and (not scenario_id.is_empty() or not has_catalog_layouts):
+		return surface_data
+	var result := surface_data.duplicate(true)
+	var runtime_slots: Array = []
+	for slot_value in _array(result.get("scenario_slots", [])):
+		var slot := _dict(slot_value)
+		if bool(slot.get("runtime_reserve", false)):
+			runtime_slots.append(slot.duplicate(true))
+	if layout.is_empty():
+		result["scenario_slots"] = runtime_slots
+		result["scenario_slot_ids"] = {}
+		result["scenario_object_slot_ids"] = _filtered_slot_mapping(
+			_dict(result.get("scenario_object_slot_ids", {})), runtime_slots
+		)
+		result["scenario_category_slot_ids"] = _filtered_slot_mapping(
+			_dict(result.get("scenario_category_slot_ids", {})), runtime_slots
+		)
+		result["actor_routes"] = _filtered_actor_routes(_array(result.get("actor_routes", [])), runtime_slots)
+		result["scenario_position_route_ids"] = _filtered_route_mapping(
+			_dict(result.get("scenario_position_route_ids", {})), _array(result.get("actor_routes", []))
+		)
+		result["scenario_layout_id"] = "%s::base" % map_key
+		result["scenario_layout_scoped"] = true
+		return result
+	var authored_slots := _array(layout.get("scenario_slots", [])).duplicate(true)
+	authored_slots.append_array(runtime_slots)
+	result["scenario_slots"] = authored_slots
+	result["scenario_instance_slot_ids"] = _dict(layout.get("scenario_instance_slot_ids", {})).duplicate(true)
+	result["scenario_instance_object_slot_ids"] = _dict(layout.get("scenario_instance_object_slot_ids", {})).duplicate(true)
+	var scenario_object_class_ids := _dict(layout.get("scenario_instance_object_class_ids", {})).duplicate(true)
+	result["scenario_instance_object_class_ids"] = scenario_object_class_ids
+	# Exact scenario objects seal their footprint as well as their slot. This
+	# supersedes legacy map/scenario heuristics (for example, a saved party table
+	# that used to be classified as a wall marker) without weakening validation
+	# for any object that is not part of the exact layout.
+	var class_overrides := _dict(result.get("class_overrides", {})).duplicate(true)
+	class_overrides.merge(scenario_object_class_ids, true)
+	result["class_overrides"] = class_overrides
+	var scenario_instance_art_keys := _dict(layout.get("scenario_instance_art_keys", {})).duplicate(true)
+	# Exact layouts seal both geometry and the concrete renderer for every
+	# scenario-owned prop. Position keys remain separate because one stable object
+	# can present different tangible states in different phases.
+	result["scenario_instance_art_keys"] = scenario_instance_art_keys
+	result["scenario_instance_action_host_ids"] = _dict(layout.get("scenario_instance_action_host_ids", {})).duplicate(true)
+	var scenario_family_ids := _dict(layout.get("scenario_instance_object_family_ids", {}))
+	var object_family_ids := _dict(result.get("object_family_ids", {})).duplicate(true)
+	object_family_ids.merge(scenario_family_ids, true)
+	result["object_family_ids"] = object_family_ids
+	for family in ["fixed", "event", "exit"]:
+		var field := "%s_object_slot_ids" % family
+		result[field] = _without_mapping_keys(_dict(result.get(field, {})), scenario_family_ids)
+	result["fixed_objects"] = _without_fixed_declarations(
+		_array(result.get("fixed_objects", [])), scenario_family_ids
+	)
+	# The older preference fields remain complete views for diagnostics and
+	# callers that do not yet distinguish exact scenario instances.
+	result["scenario_slot_ids"] = _dict(layout.get("scenario_instance_slot_ids", {})).duplicate(true)
+	result["scenario_object_slot_ids"] = _dict(layout.get("scenario_instance_object_slot_ids", {})).duplicate(true)
+	result["scenario_category_slot_ids"] = {}
+	result["actor_routes"] = _array(layout.get("actor_routes", [])).duplicate(true)
+	result["scenario_position_route_ids"] = _filtered_route_mapping(
+		_dict(result.get("scenario_position_route_ids", {})), _array(result.get("actor_routes", []))
+	)
+	result["scenario_layout_id"] = str(layout.get("layout_id", layout_key))
+	result["scenario_layout_scenario_id"] = scenario_id
+	result["scenario_layout_display_name"] = str(layout.get("display_name", scenario_id))
+	result["scenario_layout_scoped"] = true
+	result["scenario_layout_audit"] = _dict(layout.get("audit", {})).duplicate(true)
+	return result
+
+
+static func _filtered_slot_mapping(source: Dictionary, slots: Array) -> Dictionary:
+	var valid: Dictionary = {}
+	for slot_value in slots:
+		var slot_id := str(_dict(slot_value).get("id", "")).strip_edges()
+		if not slot_id.is_empty():
+			valid[slot_id] = true
+	var result: Dictionary = {}
+	for key_value in source.keys():
+		var slot_id := str(source.get(key_value, "")).strip_edges()
+		if valid.has(slot_id):
+			result[str(key_value)] = slot_id
+	return result
+
+
+static func _without_mapping_keys(source: Dictionary, removed: Dictionary) -> Dictionary:
+	var result := source.duplicate(true)
+	for key_value in removed.keys():
+		result.erase(str(key_value))
+	return result
+
+
+static func _without_fixed_declarations(source: Array, removed: Dictionary) -> Array:
+	var result: Array = []
+	for declaration_value in source:
+		var declaration := _dict(declaration_value)
+		if removed.has(str(declaration.get("object_id", ""))):
+			continue
+		result.append(declaration.duplicate(true))
+	return result
+
+
+static func _filtered_actor_routes(routes: Array, slots: Array) -> Array:
+	var valid: Dictionary = {}
+	for slot_value in slots:
+		valid[str(_dict(slot_value).get("id", ""))] = true
+	var result: Array = []
+	for route_value in routes:
+		var route := _dict(route_value)
+		if valid.has(str(route.get("start_slot_id", ""))) and valid.has(str(route.get("end_slot_id", ""))):
+			result.append(route.duplicate(true))
+	return result
+
+
+static func _filtered_route_mapping(source: Dictionary, routes: Array) -> Dictionary:
+	var valid: Dictionary = {}
+	for route_value in routes:
+		var route_id := str(_dict(route_value).get("id", "")).strip_edges()
+		if not route_id.is_empty():
+			valid[route_id] = true
+	var result: Dictionary = {}
+	for key_value in source.keys():
+		var route_id := str(source.get(key_value, "")).strip_edges()
+		if valid.has(route_id):
+			result[str(key_value)] = route_id
+	return result
 
 
 static func surface_map_by_id(archetype_id: String, layer_id: String = "") -> Dictionary:
 	return surface_map({"archetype_id": archetype_id, "current_layer_id": layer_id})
 
 
-# Applies developer-authored positions as the final authored slot layer. This
-# changes placement inputs only; it never touches run state, visibility, or RNG.
-static func _with_developer_slots(environment: Dictionary, surface_data: Dictionary) -> Dictionary:
-	var base_overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "object_slot_positions")
-	var scenario_overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "scenario_object_slot_positions")
-	var category_overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "category_slot_positions")
-	if base_overrides.is_empty() and scenario_overrides.is_empty() and category_overrides.is_empty():
-		return surface_data
-	var result := surface_data.duplicate(true)
-	for field in ["object_slot_positions", "scenario_object_slot_positions"]:
-		var overrides := base_overrides if field == "object_slot_positions" else scenario_overrides
-		if overrides.is_empty():
-			continue
-		var slots := _dict(result.get(field, {})).duplicate(true)
-		slots.merge(overrides, true)
-		result[field] = slots
-	# These parallel maps retain provenance. The generated-layout pass uses them
-	# to distinguish deliberate free placement from legacy authored coordinates
-	# that still need physical-surface recovery.
-	result["developer_object_slot_positions"] = base_overrides.duplicate(true)
-	result["developer_scenario_object_slot_positions"] = scenario_overrides.duplicate(true)
-	result["developer_category_slot_positions"] = category_overrides.duplicate(true)
+static func slots_for_family(surface_data: Dictionary, family: String) -> Array:
+	var collection := str(SLOT_COLLECTIONS.get(family, ""))
+	return _array(surface_data.get(collection, [])).duplicate(true) if not collection.is_empty() else []
+
+
+static func all_slots(surface_data: Dictionary) -> Array:
+	var result: Array = []
+	for family in SLOT_FAMILIES:
+		result.append_array(slots_for_family(surface_data, str(family)))
 	return result
+
+
+static func slot_family(slot: Dictionary) -> String:
+	var family := str(slot.get("kind", "")).strip_edges()
+	var slot_id := str(slot.get("id", "")).strip_edges()
+	return family if family in SLOT_FAMILIES and slot_id.begins_with("%s." % family) else ""
+
+
+# Reusable slot geometry is already live through surface_map(), so locked slot
+# moves persist when the overlay is disabled and in newly generated rooms.
+static func authoring_surface_map(environment: Dictionary) -> Dictionary:
+	return surface_map(environment)
+
+
+# A locked reusable-slot edit is runtime authority on this machine immediately.
+# Save to Project controls whether that same authority ships in future builds;
+# it is not an activation step for the local authoring session.
+static func _with_runtime_slot_geometry(environment: Dictionary, surface_data: Dictionary) -> Dictionary:
+	var overrides := DeveloperPlacementStoreScript.slot_overrides(environment, "slot_positions")
+	var layer_overrides := DeveloperPlacementStoreScript.slot_layer_overrides(environment)
+	var scale_overrides := DeveloperPlacementStoreScript.slot_scale_overrides(environment)
+	if overrides.is_empty() and layer_overrides.is_empty() and scale_overrides.is_empty():
+		return surface_data
+	var result := _with_slot_overrides(surface_data, overrides, layer_overrides, scale_overrides)
+	if not overrides.is_empty():
+		result["developer_slot_positions"] = overrides.duplicate(true)
+	if not layer_overrides.is_empty():
+		result["developer_slot_layers"] = layer_overrides.duplicate(true)
+	if not scale_overrides.is_empty():
+		result["developer_slot_scales"] = scale_overrides.duplicate(true)
+	return result
+
+
+# Applies position, draw-layer and visual-scale overrides in one pass over the
+# slot collections. A slot move is a rigid translation: its stable id, class,
+# size, support and priority remain authored authority while its contact
+# point, hit rectangle and label anchor move together. Visual scale is
+# independent of interaction and support geometry; the renderer applies it
+# around the stable contact point while binding and accessibility keep the
+# reviewed hit rectangle.
+static func _with_slot_overrides(surface_data: Dictionary, positions: Dictionary, layers: Dictionary, scales: Dictionary) -> Dictionary:
+	# Surface maps are immutable runtime authority. Keep their large shared maps,
+	# routes, and unmodified slot records by reference; a local override only
+	# needs copy-on-write ownership of the collection and slot it changes.
+	var result := surface_data.duplicate(false)
+	for field in SLOT_COLLECTIONS.values():
+		var source_slots := _array(surface_data.get(field, []))
+		var updated: Array = []
+		var collection_changed := false
+		for slot_value in source_slots:
+			if typeof(slot_value) != TYPE_DICTIONARY:
+				updated.append(slot_value)
+				continue
+			var source_slot := slot_value as Dictionary
+			var slot_id := str(source_slot.get("id", "")).strip_edges()
+			if slot_id.is_empty() or not (positions.has(slot_id) or layers.has(slot_id) or scales.has(slot_id)):
+				updated.append(source_slot)
+				continue
+			var slot := source_slot.duplicate(false)
+			var slot_changed := positions.has(slot_id) and _translate_slot(slot, _vector(positions.get(slot_id, [])))
+			if layers.has(slot_id):
+				slot["draw_layer"] = clampi(int(layers.get(slot_id, 0)), -1, 1)
+				slot_changed = true
+			if scales.has(slot_id):
+				slot["object_scale"] = clampf(float(scales.get(slot_id, 1.0)), DeveloperPlacementStoreScript.SLOT_SCALE_MIN, DeveloperPlacementStoreScript.SLOT_SCALE_MAX)
+				slot_changed = true
+			updated.append(slot if slot_changed else source_slot)
+			collection_changed = collection_changed or slot_changed
+		if collection_changed:
+			result[field] = updated
+	return result
+
+
+static func _translate_slot(slot: Dictionary, target: Vector2) -> bool:
+	if not is_finite(target.x) or not is_finite(target.y):
+		return false
+	var delta := target - _number_pair(slot.get("pos", []))
+	slot["pos"] = [target.x, target.y]
+	var hit_values := _array(slot.get("hit_rect", [])).duplicate()
+	if hit_values.size() >= 4:
+		hit_values[0] = float(hit_values[0]) + delta.x
+		hit_values[1] = float(hit_values[1]) + delta.y
+		slot["hit_rect"] = hit_values
+	var label_values := _array(slot.get("label_anchor", [])).duplicate()
+	if label_values.size() >= 2:
+		label_values[0] = float(label_values[0]) + delta.x
+		label_values[1] = float(label_values[1]) + delta.y
+		slot["label_anchor"] = label_values
+	return true
 
 
 # Preserves authored geometry whenever its class contact already rests on a
 # physical room support. Recovery is deliberately local and bounded; the
 # content pass owns composition, while this is only a malformed-slot safety net.
-static func authored_or_local_rect(environment: Dictionary, placement_class: String, authored: Rect2) -> Dictionary:
-	var authored_support := support_for_rect(environment, placement_class, authored)
-	if not authored_support.is_empty():
-		return {"ok": true, "rect": authored, "surface_id": str(authored_support.get("surface_id", "")), "adjusted": false, "defaulted": false}
-	var local_candidates := _local_support_candidates(environment, placement_class, authored)
-	for candidate_value in local_candidates:
-		var candidate := _dict(candidate_value)
-		var rect: Rect2 = candidate.get("rect", Rect2())
-		if rect.position.distance_to(authored.position) <= LOCAL_SNAP_RADIUS:
-			return {"ok": true, "rect": rect, "surface_id": str(candidate.get("surface_id", "")), "adjusted": true, "defaulted": false}
-	var fallback := class_default_rect(environment, placement_class, authored.size)
-	return {"ok": true, "rect": fallback.get("rect", authored), "surface_id": str(fallback.get("surface_id", "class_default")), "adjusted": true, "defaulted": true}
-
-
-# Returns the physical support occupied by rect, or an empty dictionary.
 static func support_for_rect(environment: Dictionary, placement_class: String, rect: Rect2) -> Dictionary:
+	return support_for_rect_on_surfaces(surface_map(environment), placement_class, rect)
+
+
+# Static slot validation already holds the immutable effective surface map.
+# Reusing it avoids re-merging developer/project placement layers for each
+# authored slot while checking its physical support.
+static func support_for_rect_on_surfaces(surfaces: Dictionary, placement_class: String, rect: Rect2) -> Dictionary:
 	var board := Rect2(0.0, 0.0, 900.0, 430.0)
 	if rect.size.x <= 0.0 or rect.size.y <= 0.0 or not board.encloses(rect):
 		return {}
-	var surfaces := surface_map(environment)
 	var contact := _contact_point(rect, placement_class)
 	if placement_class in GROUNDED_CLASSES:
 		var floor_data := _dict(surfaces.get("floor", {}))
@@ -259,15 +502,28 @@ static func support_for_rect(environment: Dictionary, placement_class: String, r
 		for band_key in ["bands", "stage_bands"]:
 			for band_value in _array(floor_data.get(str(band_key), [])):
 				var band := _rect_array(band_value)
-				if band.has_point(contact) and contact.y >= contact_range.x - 0.5 and contact.y <= contact_range.y + 0.5:
-					return {"surface_id": "stage" if str(band_key) == "stage_bands" else "floor"}
-	elif placement_class in ["behind_counter_person", "surface_item"]:
+				if not _rect_has_point_inclusive(band, contact):
+					continue
+				# Raised and recessed stage bands are explicit grounded supports and
+				# intentionally sit outside the main floor's contact range. The range
+				# only constrains the broad floor bands. Accept authored feet on a
+				# band's lower edge as well; Rect2.has_point excludes that edge.
+				if str(band_key) == "stage_bands":
+					return {"surface_id": "stage"}
+				if contact.y >= contact_range.x - 0.5 and contact.y <= contact_range.y + 0.5:
+					return {"surface_id": "floor"}
+	elif placement_class in ["behind_counter_person", "surface_item", "shop_item"]:
 		for counter_value in _array(surfaces.get("counters", [])):
 			var counter := _dict(counter_value)
 			var allowed_classes := _array(counter.get("classes", []))
-			if not allowed_classes.is_empty() and placement_class not in allowed_classes:
+			var support_class := "surface_item" if placement_class == "shop_item" else placement_class
+			if not allowed_classes.is_empty() and support_class not in allowed_classes:
 				continue
-			if absf(contact.y - float(counter.get("top_y", -1000.0))) <= 0.5 \
+			var top_y := float(counter.get("top_y", -1000.0))
+			var front_y := float(counter.get("front_y", top_y))
+			var vertical_contact := contact.y > top_y + 0.5 and contact.y <= front_y + 0.5 \
+					if placement_class == "behind_counter_person" else absf(contact.y - top_y) <= 0.5
+			if vertical_contact \
 					and rect.position.x >= float(counter.get("x0", 0.0)) - 0.5 \
 					and rect.end.x <= float(counter.get("x1", 0.0)) + 0.5:
 				return {"surface_id": str(counter.get("id", "counter"))}
@@ -295,220 +551,6 @@ static func support_for_rect(environment: Dictionary, placement_class: String, r
 	return {}
 
 
-static func class_default_rect(environment: Dictionary, placement_class: String, size: Vector2) -> Dictionary:
-	var surfaces := surface_map(environment)
-	var authored_defaults := _dict(surfaces.get("class_default_contacts", {}))
-	var default_values := _array(authored_defaults.get(placement_class, []))
-	var contact := _vector(default_values)
-	var surface_id := "class_default"
-	if default_values.size() < 2:
-		var centered := Rect2(Vector2(450.0, 215.0) - size * 0.5, size)
-		var candidates := _local_support_candidates(environment, placement_class, centered)
-		if not candidates.is_empty():
-			var selected := _dict(candidates[0])
-			return {"rect": selected.get("rect", centered), "surface_id": str(selected.get("surface_id", surface_id))}
-		contact = Vector2(450.0, 414.0)
-	var rect := _rect_at_contact(contact, size, placement_class)
-	var support := support_for_rect(environment, placement_class, rect)
-	if not support.is_empty():
-		surface_id = str(support.get("surface_id", surface_id))
-	return {"rect": rect, "surface_id": surface_id}
-
-
-static func _local_support_candidates(environment: Dictionary, placement_class: String, authored: Rect2) -> Array:
-	var result: Array = []
-	var seen: Dictionary = {}
-	for offset_value in LOCAL_SNAP_OFFSETS:
-		var offset: Vector2 = offset_value
-		_append_supported_candidate(result, seen, environment, placement_class, Rect2(authored.position + offset, authored.size))
-	var surfaces := surface_map(environment)
-	if placement_class in GROUNDED_CLASSES:
-		var floor_data := _dict(surfaces.get("floor", {}))
-		var contact_range := _number_pair(floor_data.get("contact_y", []))
-		for band_key in ["bands", "stage_bands"]:
-			for band_value in _array(floor_data.get(str(band_key), [])):
-				var band := _rect_array(band_value)
-				var min_x := band.position.x + authored.size.x * 0.5
-				var max_x := band.end.x - authored.size.x * 0.5
-				var min_y := maxf(band.position.y, contact_range.x)
-				var max_y := minf(band.end.y, contact_range.y)
-				if max_x >= min_x and max_y >= min_y:
-					var contact := Vector2(clampf(authored.get_center().x, min_x, max_x), clampf(authored.end.y, min_y, max_y))
-					_append_supported_candidate(result, seen, environment, placement_class, _rect_at_contact(contact, authored.size, placement_class))
-	elif placement_class in ["behind_counter_person", "surface_item"]:
-		for counter_value in _array(surfaces.get("counters", [])):
-			var counter := _dict(counter_value)
-			var allowed_classes := _array(counter.get("classes", []))
-			if not allowed_classes.is_empty() and placement_class not in allowed_classes:
-				continue
-			var min_x := float(counter.get("x0", 0.0)) + authored.size.x * 0.5
-			var max_x := float(counter.get("x1", 0.0)) - authored.size.x * 0.5
-			if max_x >= min_x:
-				var contact := Vector2(clampf(authored.get_center().x, min_x, max_x), float(counter.get("top_y", 0.0)))
-				_append_supported_candidate(result, seen, environment, placement_class, _rect_at_contact(contact, authored.size, placement_class))
-	elif placement_class == "seated_person":
-		for seat_value in _array(surfaces.get("seats", [])):
-			var seat := _dict(seat_value)
-			_append_supported_candidate(result, seen, environment, placement_class, _rect_at_contact(_vector(seat.get("point", [])), authored.size, placement_class))
-	elif placement_class == "wall_mounted":
-		var wall_data := _dict(surfaces.get("wall", {}))
-		var wall_regions: Array = _array(wall_data.get("mounts", [])).duplicate(true)
-		wall_regions.append({"id": "wall", "bounds": wall_data.get("bounds", [])})
-		for region_value in wall_regions:
-			var region := _dict(region_value)
-			var bounds := _rect_array(region.get("bounds", []))
-			var center := Vector2(
-				clampf(authored.get_center().x, bounds.position.x + authored.size.x * 0.5, bounds.end.x - authored.size.x * 0.5),
-				clampf(authored.get_center().y, bounds.position.y + authored.size.y * 0.5, bounds.end.y - authored.size.y * 0.5)
-			)
-			_append_supported_candidate(result, seen, environment, placement_class, _rect_at_contact(center, authored.size, placement_class))
-	elif placement_class == "hanging":
-		var bounds := _rect_array(_dict(surfaces.get("ceiling", {})).get("bounds", []))
-		var center := Vector2(
-			clampf(authored.get_center().x, bounds.position.x + authored.size.x * 0.5, bounds.end.x - authored.size.x * 0.5),
-			clampf(authored.get_center().y, bounds.position.y + authored.size.y * 0.5, bounds.end.y - authored.size.y * 0.5)
-		)
-		_append_supported_candidate(result, seen, environment, placement_class, _rect_at_contact(center, authored.size, placement_class))
-	elif placement_class == "doorway":
-		for doorway_value in _array(surfaces.get("doorways", [])):
-			var doorway := _dict(doorway_value)
-			var bounds := _rect_array(doorway.get("bounds", []))
-			var center := Vector2(
-				clampf(authored.get_center().x, maxf(bounds.position.x, authored.size.x * 0.5), minf(bounds.end.x, 900.0 - authored.size.x * 0.5)),
-				clampf(authored.get_center().y, maxf(bounds.position.y, authored.size.y * 0.5), minf(bounds.end.y, 430.0 - authored.size.y * 0.5))
-			)
-			_append_supported_candidate(result, seen, environment, placement_class, _rect_at_contact(center, authored.size, placement_class))
-	result.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
-		var left: Rect2 = _dict(left_value).get("rect", Rect2())
-		var right: Rect2 = _dict(right_value).get("rect", Rect2())
-		return left.position.distance_squared_to(authored.position) < right.position.distance_squared_to(authored.position)
-	)
-	return result
-
-
-static func _append_supported_candidate(result: Array, seen: Dictionary, environment: Dictionary, placement_class: String, rect: Rect2) -> void:
-	var support := support_for_rect(environment, placement_class, rect)
-	if support.is_empty():
-		return
-	var key := "%.2f:%.2f:%.2f:%.2f" % [rect.position.x, rect.position.y, rect.size.x, rect.size.y]
-	if seen.has(key):
-		return
-	seen[key] = true
-	result.append({"rect": rect, "surface_id": str(support.get("surface_id", ""))})
-
-
-static func _rect_at_contact(contact: Vector2, size: Vector2, placement_class: String) -> Rect2:
-	if placement_class in ["wall_mounted", "hanging", "doorway"]:
-		return Rect2(contact - size * 0.5, size)
-	return Rect2(Vector2(contact.x - size.x * 0.5, contact.y - size.y), size)
-
-
-static func grounded_rect(environment: Dictionary, placement_class: String, authored: Rect2, constraint: Rect2 = Rect2()) -> Dictionary:
-	var surfaces := surface_map(environment)
-	if surfaces.is_empty() or placement_class not in CLASSES:
-		return {"ok": false, "rect": authored, "surface_id": "", "error": "missing placement surface map or class"}
-	var candidates := candidate_rects(environment, placement_class, authored, constraint)
-	if candidates.is_empty():
-		return {"ok": false, "rect": authored, "surface_id": "", "error": "no valid surface candidate"}
-	var selected := _dict(candidates[0])
-	return {"ok": true, "rect": selected.get("rect", authored), "surface_id": str(selected.get("surface_id", "")), "error": ""}
-
-
-static func candidate_rects(environment: Dictionary, placement_class: String, authored: Rect2, constraint: Rect2 = Rect2(), fine_search: bool = false) -> Array:
-	var surfaces := surface_map(environment)
-	var result: Array = []
-	var depth_step := 8.0 if fine_search else 26.0
-	var horizontal_step := 8.0 if fine_search else maxf(24.0, authored.size.x + 8.0)
-	var surface_step := 8.0 if fine_search else maxf(20.0, authored.size.x + 6.0)
-	var vertical_step := 8.0 if fine_search else maxf(20.0, authored.size.y + 6.0)
-	if placement_class in GROUNDED_CLASSES:
-		var floor_data := _dict(surfaces.get("floor", {}))
-		var contact_range := _number_pair(floor_data.get("contact_y", []))
-		var grounded_bands: Array = []
-		for band_value in _array(floor_data.get("bands", [])):
-			grounded_bands.append({"bounds": band_value, "surface_id": "floor"})
-		for band_value in _array(floor_data.get("stage_bands", [])):
-			grounded_bands.append({"bounds": band_value, "surface_id": "stage"})
-		for band_entry_value in grounded_bands:
-			var band_entry := _dict(band_entry_value)
-			var band_value: Variant = band_entry.get("bounds", [])
-			var band := _rect_array(band_value)
-			if band.size.x <= 0.0 or band.size.y <= 0.0:
-				continue
-			var stage_band := str(band_entry.get("surface_id", "floor")) == "stage"
-			var min_contact := band.position.y if stage_band else maxf(band.position.y, contact_range.x)
-			var max_contact := band.end.y if stage_band else minf(band.end.y, contact_range.y)
-			for contact_y in _ordered_values(clampf(authored.end.y, min_contact, max_contact), min_contact, max_contact, depth_step):
-				for center_x in _ordered_values(clampf(authored.get_center().x, band.position.x + authored.size.x * 0.5, band.end.x - authored.size.x * 0.5), band.position.x + authored.size.x * 0.5, band.end.x - authored.size.x * 0.5, horizontal_step):
-					_append_candidate(result, Rect2(Vector2(center_x - authored.size.x * 0.5, contact_y - authored.size.y), authored.size), str(band_entry.get("surface_id", "floor")), placement_class, constraint)
-	elif placement_class in ["behind_counter_person", "surface_item"]:
-		for counter_value in _array(surfaces.get("counters", [])):
-			var counter := _dict(counter_value)
-			var allowed_classes := _array(counter.get("classes", []))
-			if not allowed_classes.is_empty() and placement_class not in allowed_classes:
-				continue
-			var x0 := float(counter.get("x0", 0.0))
-			var x1 := float(counter.get("x1", 0.0))
-			var contact_y := float(counter.get("top_y", 0.0))
-			var min_x := x0 + authored.size.x * 0.5
-			var max_x := x1 - authored.size.x * 0.5
-			if max_x < min_x:
-				continue
-			for center_x in _ordered_values(clampf(authored.get_center().x, min_x, max_x), min_x, max_x, surface_step):
-				_append_candidate(result, Rect2(Vector2(center_x - authored.size.x * 0.5, contact_y - authored.size.y), authored.size), str(counter.get("id", "counter")), placement_class, constraint)
-	elif placement_class == "seated_person":
-		for seat_value in _array(surfaces.get("seats", [])):
-			var seat := _dict(seat_value)
-			var point := _vector(seat.get("point", []))
-			_append_candidate(result, Rect2(Vector2(point.x - authored.size.x * 0.5, point.y - authored.size.y), authored.size), str(seat.get("id", "seat")), placement_class, constraint)
-	elif placement_class == "wall_mounted":
-		var wall := _rect_array(_dict(surfaces.get("wall", {})).get("bounds", []))
-		var min_x := wall.position.x + authored.size.x * 0.5
-		var max_x := wall.end.x - authored.size.x * 0.5
-		var min_y := wall.position.y + authored.size.y * 0.5
-		var max_y := wall.end.y - authored.size.y * 0.5
-		for center_y in _ordered_values(clampf(authored.get_center().y, min_y, max_y), min_y, max_y, vertical_step):
-			for center_x in _ordered_values(clampf(authored.get_center().x, min_x, max_x), min_x, max_x, horizontal_step):
-				var candidate := Rect2(Vector2(center_x, center_y) - authored.size * 0.5, authored.size)
-				if not _intersects_named_rects(candidate, _array(_dict(surfaces.get("wall", {})).get("exclusions", []))):
-					_append_candidate(result, candidate, "wall", placement_class, constraint)
-		for mount_value in _array(_dict(surfaces.get("wall", {})).get("mounts", [])):
-			var mount := _dict(mount_value)
-			var mount_bounds := _rect_array(mount.get("bounds", []))
-			var mount_min_x := mount_bounds.position.x + authored.size.x * 0.5
-			var mount_max_x := mount_bounds.end.x - authored.size.x * 0.5
-			var mount_min_y := mount_bounds.position.y + authored.size.y * 0.5
-			var mount_max_y := mount_bounds.end.y - authored.size.y * 0.5
-			if mount_max_x < mount_min_x or mount_max_y < mount_min_y:
-				continue
-			for center_y in _ordered_values(clampf(authored.get_center().y, mount_min_y, mount_max_y), mount_min_y, mount_max_y, vertical_step):
-				for center_x in _ordered_values(clampf(authored.get_center().x, mount_min_x, mount_max_x), mount_min_x, mount_max_x, horizontal_step):
-					_append_candidate(result, Rect2(Vector2(center_x, center_y) - authored.size * 0.5, authored.size), str(mount.get("id", "wall_mount")), placement_class, constraint)
-	elif placement_class == "hanging":
-		var ceiling := _rect_array(_dict(surfaces.get("ceiling", {})).get("bounds", []))
-		var min_x := ceiling.position.x + authored.size.x * 0.5
-		var max_x := ceiling.end.x - authored.size.x * 0.5
-		var min_y := ceiling.position.y + authored.size.y * 0.5
-		var max_y := ceiling.end.y - authored.size.y * 0.5
-		if max_x >= min_x and max_y >= min_y:
-			for center_y in _ordered_values(clampf(authored.get_center().y, min_y, max_y), min_y, max_y, vertical_step):
-				for center_x in _ordered_values(clampf(authored.get_center().x, min_x, max_x), min_x, max_x, horizontal_step):
-					_append_candidate(result, Rect2(Vector2(center_x, center_y) - authored.size * 0.5, authored.size), "ceiling", placement_class, constraint)
-	elif placement_class == "doorway":
-		for doorway_value in _array(surfaces.get("doorways", [])):
-			var doorway := _dict(doorway_value)
-			var doorway_rect := _rect_array(doorway.get("bounds", []))
-			var min_x := maxf(doorway_rect.position.x, authored.size.x * 0.5)
-			var max_x := minf(doorway_rect.end.x, 900.0 - authored.size.x * 0.5)
-			var min_y := maxf(doorway_rect.position.y, authored.size.y * 0.5)
-			var max_y := minf(doorway_rect.end.y, 430.0 - authored.size.y * 0.5)
-			for center_y in _ordered_values(clampf(authored.get_center().y, min_y, max_y), min_y, max_y, vertical_step):
-				for center_x in _ordered_values(clampf(authored.get_center().x, min_x, max_x), min_x, max_x, horizontal_step):
-					_append_candidate(result, Rect2(Vector2(center_x, center_y) - authored.size * 0.5, authored.size), str(doorway.get("id", "doorway")), placement_class, constraint)
-	result.sort_custom(func(a: Variant, b: Variant) -> bool: return _dict(a).get("rect", authored).get_center().distance_squared_to(authored.get_center()) < _dict(b).get("rect", authored).get_center().distance_squared_to(authored.get_center()))
-	return result
-
-
 static func valid_rect(environment: Dictionary, placement_class: String, rect: Rect2, constraint: Rect2 = Rect2()) -> bool:
 	if not constraint.is_equal_approx(Rect2()) and not constraint.encloses(rect):
 		return false
@@ -522,7 +564,7 @@ static func is_person_class(placement_class: String) -> bool:
 static func shadow_kind(placement_class: String) -> String:
 	if placement_class in ["wall_mounted", "hanging", "doorway"]:
 		return "none"
-	if placement_class == "surface_item":
+	if placement_class in ["surface_item", "shop_item"]:
 		return "contact"
 	return "feet" if placement_class in PERSON_CLASSES else "base"
 
@@ -532,6 +574,8 @@ static func _ensure_surface_maps() -> void:
 		return
 	_surface_maps_loaded = true
 	_effective_surface_maps.clear()
+	_scenario_layouts.clear()
+	_maps_with_catalog_scenarios.clear()
 	var file := FileAccess.open(SURFACE_MAP_PATH, FileAccess.READ)
 	if file == null:
 		return
@@ -539,20 +583,77 @@ static func _ensure_surface_maps() -> void:
 	file.close()
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return
-	for map_value in _array(_dict(parsed).get("maps", [])):
+	var root := _dict(parsed)
+	if int(root.get("schema_version", 0)) != 3 or int(root.get("slot_schema_version", 0)) != SLOT_SCHEMA_VERSION:
+		return
+	for map_value in _array(root.get("maps", [])):
 		var map_data := _dict(map_value)
 		var map_id := str(map_data.get("id", ""))
-		if not map_id.is_empty():
+		if not map_id.is_empty() and _surface_map_v2_valid(map_data):
 			_surface_maps[map_id] = map_data
+	var layout_file := FileAccess.open(SCENARIO_LAYOUT_PATH, FileAccess.READ)
+	if layout_file == null:
+		return
+	var layout_parsed: Variant = JSON.parse_string(layout_file.get_as_text())
+	layout_file.close()
+	if typeof(layout_parsed) != TYPE_DICTIONARY:
+		return
+	var layout_root := _dict(layout_parsed)
+	if int(layout_root.get("schema_version", 0)) != 1 \
+			or int(layout_root.get("slot_schema_version", 0)) != SLOT_SCHEMA_VERSION:
+		return
+	for map_id_value in _array(layout_root.get("maps_with_catalog_scenarios", [])):
+		_maps_with_catalog_scenarios[str(map_id_value)] = true
+	for layout_value in _array(layout_root.get("layouts", [])):
+		var layout := _dict(layout_value)
+		var map_id := str(layout.get("map_id", "")).strip_edges()
+		var scenario_id := str(layout.get("scenario_id", "")).strip_edges()
+		if map_id.is_empty() or scenario_id.is_empty():
+			continue
+		_scenario_layouts["%s::%s" % [map_id, scenario_id]] = layout
 
 
-static func _append_candidate(output: Array, rect: Rect2, surface_id: String, placement_class: String, constraint: Rect2) -> void:
-	var board := Rect2(0.0, 0.0, 900.0, 430.0)
-	if rect.size.x <= 0.0 or rect.size.y <= 0.0 or not board.encloses(rect):
-		return
-	if constraint.has_area() and not constraint.has_point(_contact_point(rect, placement_class)):
-		return
-	output.append({"rect": rect, "surface_id": surface_id})
+static func _surface_map_v2_valid(map_data: Dictionary) -> bool:
+	if int(map_data.get("slot_schema_version", 0)) != SLOT_SCHEMA_VERSION:
+		return false
+	var seen: Dictionary = {}
+	var fixed_slot_ids: Dictionary = {}
+	for family in SLOT_FAMILIES:
+		var collection := str(SLOT_COLLECTIONS.get(family, ""))
+		if typeof(map_data.get(collection)) != TYPE_ARRAY:
+			return false
+		for slot_value in _array(map_data.get(collection, [])):
+			var slot := _dict(slot_value)
+			var slot_id := str(slot.get("id", "")).strip_edges()
+			if slot_id.is_empty() or seen.has(slot_id) or not slot_id.begins_with("%s." % family) \
+					or str(slot.get("kind", "")) != family or str(slot.get("footprint_class", "")) not in CLASSES:
+				return false
+			seen[slot_id] = family
+			if family == "fixed":
+				fixed_slot_ids[slot_id] = true
+	for family in SLOT_FAMILIES:
+		for suffix in ["object_slot_ids", "category_slot_ids"]:
+			var field := "%s_%s" % [family, suffix]
+			if typeof(map_data.get(field)) != TYPE_DICTIONARY:
+				return false
+			for slot_id_value in _dict(map_data.get(field, {})).values():
+				if str(seen.get(str(slot_id_value), "")) != family:
+					return false
+	if typeof(map_data.get("object_family_ids")) != TYPE_DICTIONARY or typeof(map_data.get("fixed_objects")) != TYPE_ARRAY:
+		return false
+	for family_value in _dict(map_data.get("object_family_ids", {})).values():
+		if str(family_value) not in SLOT_FAMILIES:
+			return false
+	var fixed_object_ids: Dictionary = {}
+	for declaration_value in _array(map_data.get("fixed_objects", [])):
+		var declaration := _dict(declaration_value)
+		var object_id := str(declaration.get("object_id", declaration.get("instance_object_id", ""))).strip_edges()
+		var exact_slot_id := str(declaration.get("exact_slot_id", "")).strip_edges()
+		if object_id.is_empty() or fixed_object_ids.has(object_id) or not fixed_slot_ids.has(exact_slot_id) \
+				or typeof(declaration.get("required")) != TYPE_BOOL or typeof(declaration.get("action_ids")) != TYPE_ARRAY:
+			return false
+		fixed_object_ids[object_id] = true
+	return true
 
 
 static func _contact_point(rect: Rect2, placement_class: String) -> Vector2:
@@ -561,23 +662,9 @@ static func _contact_point(rect: Rect2, placement_class: String) -> Vector2:
 	return Vector2(rect.get_center().x, rect.end.y)
 
 
-static func _ordered_values(preferred: float, minimum: float, maximum: float, step: float) -> Array:
-	var values: Array = []
-	if maximum < minimum:
-		return values
-	values.append(clampf(preferred, minimum, maximum))
-	var distance := step
-	while preferred - distance >= minimum or preferred + distance <= maximum:
-		if preferred - distance >= minimum:
-			values.append(preferred - distance)
-		if preferred + distance <= maximum:
-			values.append(preferred + distance)
-		distance += step
-	if not values.has(minimum):
-		values.append(minimum)
-	if not values.has(maximum):
-		values.append(maximum)
-	return values
+static func _rect_has_point_inclusive(rect: Rect2, point: Vector2) -> bool:
+	return point.x >= rect.position.x - 0.5 and point.x <= rect.end.x + 0.5 \
+		and point.y >= rect.position.y - 0.5 and point.y <= rect.end.y + 0.5
 
 
 static func _intersects_named_rects(rect: Rect2, entries: Array) -> bool:

@@ -1,5 +1,9 @@
 extends "res://scripts/tests/foundation/check_items_events_world.gd"
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
+
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
 const RunReportTimelineCanvasScript := preload("res://scripts/ui/run_report_timeline_canvas.gd")
 const CageCounterViewModelScript := preload("res://scripts/ui/cage_counter_view_model.gd")
@@ -10,6 +14,7 @@ const StaffBlackjackGameScript := preload("res://scripts/games/blackjack.gd")
 const StaffBaccaratGameScript := preload("res://scripts/games/baccarat.gd")
 const StaffRouletteGameScript := preload("res://scripts/games/roulette.gd")
 const StaffBarDiceGameScript := preload("res://scripts/games/bar_dice.gd")
+const SaveFuzzTableGameAuthorityDriverScript := preload("res://scripts/tests/foundation/table_game_authority_test_driver.gd")
 const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
 const MusicDeliveryIndexScript := preload("res://scripts/core/music_delivery_index.gd")
 const MusicLayerChoreographyScript := preload("res://scripts/ui/music_layer_choreography.gd")
@@ -203,13 +208,13 @@ func _check_run_report_foundation(failures: Array) -> void:
 	var failed_ledger_text := JSON.stringify(failed_ledger).to_lower()
 	if failed_ledger_text.contains("the turn") or failed_ledger_text.contains("traitor") or failed_ledger_text.contains("grievance") or failed_ledger_text.contains("pattern") or failed_ledger_text.contains("\"w\":9"):
 		failures.append("Unresolved/failed run ledger leaked Turn or hidden heist state: %s." % JSON.stringify(failed_ledger))
-	var failed_world := _copy_dict(failed_ledger.get("world", {}))
-	var failed_numbers := _copy_dict(failed_ledger.get("numbers", {}))
-	if _copy_array(failed_world.get("scenarios", [])).size() != 2 or _copy_array(failed_world.get("notable_outcomes", [])).size() != 1 or int(failed_world.get("sweeps_encountered", 0)) != 1 or int(failed_world.get("rumors_proved_true", 0)) != 1 \
-		or int(failed_numbers.get("slips_placed", 0)) != 3 or int(failed_numbers.get("hits", 0)) != 1 or not bool(failed_numbers.get("rig_route_used", false)) or _copy_array(failed_ledger.get("games", [])).size() != 3:
+	var failed_world := JsonCoerceScript._copy_dict(failed_ledger.get("world", {}))
+	var failed_numbers := JsonCoerceScript._copy_dict(failed_ledger.get("numbers", {}))
+	if JsonCoerceScript._copy_array(failed_world.get("scenarios", [])).size() != 2 or JsonCoerceScript._copy_array(failed_world.get("notable_outcomes", [])).size() != 1 or int(failed_world.get("sweeps_encountered", 0)) != 1 or int(failed_world.get("rumors_proved_true", 0)) != 1 \
+		or int(failed_numbers.get("slips_placed", 0)) != 3 or int(failed_numbers.get("hits", 0)) != 1 or not bool(failed_numbers.get("rig_route_used", false)) or JsonCoerceScript._copy_array(failed_ledger.get("games", [])).size() != 3:
 		failures.append("Run report did not aggregate the complete visible 0.6 ledger at terminal boundary: %s." % JSON.stringify(failed_ledger))
 	var midnight_ledger := RunReportViewModelScript.build_release_ledger({"game_clock_minutes": 1440})
-	if int(_copy_dict(midnight_ledger.get("world", {})).get("nights_survived", 0)) != 1:
+	if int(JsonCoerceScript._copy_dict(midnight_ledger.get("world", {})).get("nights_survived", 0)) != 1:
 		failures.append("Run report did not record the first survived night at the existing calendar-day boundary.")
 	var meeting_run: RunState = RunStateScript.new()
 	meeting_run.start_new("META06-MEETING-BOUNDARY")
@@ -217,10 +222,10 @@ func _check_run_report_foundation(failures: Array) -> void:
 	meeting_run.crew_trust_by_member["crew_lucky"] = CrewStateModelScript.rank_threshold("associate")
 	meeting_run.crew_trust_by_member["crew_bishop"] = CrewStateModelScript.rank_threshold("marker") - 1
 	var production_met: Array = meeting_run.call("_crew_heist_met_members")
-	var reported_members := _copy_array(_copy_dict(RunReportViewModelScript.build_release_ledger(meeting_run.to_dict()).get("crew", {})).get("members_met", []))
+	var reported_members := JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(RunReportViewModelScript.build_release_ledger(meeting_run.to_dict()).get("crew", {})).get("members_met", []))
 	var reported_member_ids: Array = []
 	for member in reported_members:
-		reported_member_ids.append(str(_copy_dict(member).get("id", "")))
+		reported_member_ids.append(str(JsonCoerceScript._copy_dict(member).get("id", "")))
 	if reported_member_ids != production_met or reported_member_ids != ["crew_rook", "crew_lucky"]:
 		failures.append("Run report member detection diverged from the production rank!=stranger meeting boundary: production=%s report=%s." % [JSON.stringify(production_met), JSON.stringify(reported_member_ids)])
 	var completed_ledger_fixture := ledger_fixture.duplicate(true)
@@ -230,7 +235,7 @@ func _check_run_report_foundation(failures: Array) -> void:
 	completed_ledger_fixture["narrative_flags"]["demo_victory_message"] = "The Turn broke the score. The crew left before the room could count twice."
 	completed_ledger_fixture["crew_state"]["crew_heist"]["status"] = "completed"
 	var completed_ledger := RunReportViewModelScript.build_release_ledger(completed_ledger_fixture)
-	if not str(_copy_dict(completed_ledger.get("crew", {})).get("turn_resolution", "")).contains("The Turn"):
+	if not str(JsonCoerceScript._copy_dict(completed_ledger.get("crew", {})).get("turn_resolution", "")).contains("The Turn"):
 		failures.append("A completed heist did not surface its contract-approved ending-only Turn resolution.")
 
 	var delivery_reporting_run: RunState = RunStateScript.new()
@@ -383,8 +388,8 @@ func _check_run_report_foundation(failures: Array) -> void:
 	]
 	route_run_data["game_clock_minutes"] = report_start_clock + 28
 	var route_report := RunReportViewModelScript.build(route_run_data)
-	var route_timeline := _copy_dict(route_report.get("timeline", {}))
-	var route_path := _copy_array(route_timeline.get("visited_node_ids", []))
+	var route_timeline := JsonCoerceScript._copy_dict(route_report.get("timeline", {}))
+	var route_path := JsonCoerceScript._copy_array(route_timeline.get("visited_node_ids", []))
 	if JSON.stringify(route_path) != JSON.stringify(["home", "bar", "grand_casino", "bar"]):
 		failures.append("Run report route reconstruction did not preserve authoritative visits/revisit order: %s." % JSON.stringify(route_path))
 	var route_segments: Array = route_timeline.get("replay_segments", []) if typeof(route_timeline.get("replay_segments", [])) == TYPE_ARRAY else []
@@ -397,9 +402,9 @@ func _check_run_report_foundation(failures: Array) -> void:
 				int((segment_value as Dictionary).get("start_game_clock_minutes", -1)),
 				int((segment_value as Dictionary).get("end_game_clock_minutes", -1)),
 			])
-	var route_map := _copy_dict(route_report.get("map_snapshot", {}))
-	if travel_segment_count != 3 or _copy_array(route_map.get("route_path_geometry", [])).size() != 3 or _copy_array(route_map.get("nodes", [])).size() != 3:
-		failures.append("Run report map did not render the full movement path with unique nodes and all travel legs: segments=%d geometry=%d nodes=%d." % [travel_segment_count, _copy_array(route_map.get("route_path_geometry", [])).size(), _copy_array(route_map.get("nodes", [])).size()])
+	var route_map := JsonCoerceScript._copy_dict(route_report.get("map_snapshot", {}))
+	if travel_segment_count != 3 or JsonCoerceScript._copy_array(route_map.get("route_path_geometry", [])).size() != 3 or JsonCoerceScript._copy_array(route_map.get("nodes", [])).size() != 3:
+		failures.append("Run report map did not render the full movement path with unique nodes and all travel legs: segments=%d geometry=%d nodes=%d." % [travel_segment_count, JsonCoerceScript._copy_array(route_map.get("route_path_geometry", [])).size(), JsonCoerceScript._copy_array(route_map.get("nodes", [])).size()])
 	if JSON.stringify(route_travel_clocks) != JSON.stringify([
 		[report_start_clock + 4, report_start_clock + 8],
 		[report_start_clock + 12, report_start_clock + 16],
@@ -437,8 +442,8 @@ func _check_run_report_foundation(failures: Array) -> void:
 	multi_day_data["event_cadence"] = {"action_index": 100}
 	multi_day_data["suspicion"] = {"level": 42}
 	multi_day_data["game_clock_minutes"] = multi_day_end
-	var multi_day_timeline := _copy_dict(RunReportViewModelScript.build(multi_day_data).get("timeline", {}))
-	var multi_day_segments := _copy_array(multi_day_timeline.get("replay_segments", []))
+	var multi_day_timeline := JsonCoerceScript._copy_dict(RunReportViewModelScript.build(multi_day_data).get("timeline", {}))
+	var multi_day_segments := JsonCoerceScript._copy_array(multi_day_timeline.get("replay_segments", []))
 	var expected_segment_clocks := [
 		["dwell", "apartment", report_start_clock, report_start_clock + 180],
 		["travel", "", report_start_clock + 180, report_start_clock + 240],
@@ -460,7 +465,7 @@ func _check_run_report_foundation(failures: Array) -> void:
 				or int(actual.get("end_game_clock_minutes", -1)) != int(expected[3]):
 				failures.append("Multi-day run report distorted segment %d: expected=%s actual=%s." % [index, JSON.stringify(expected), JSON.stringify(actual)])
 				break
-	var multi_day_heat := _copy_array(multi_day_timeline.get("heat_samples", []))
+	var multi_day_heat := JsonCoerceScript._copy_array(multi_day_timeline.get("heat_samples", []))
 	if multi_day_heat.is_empty() or int((multi_day_heat[-1] as Dictionary).get("game_clock_minutes", -1)) != multi_day_end or not is_equal_approx(float((multi_day_heat[-1] as Dictionary).get("progress", -1.0)), 1.0):
 		failures.append("Multi-day run report did not extend the final heat state through the exact run end time.")
 	var step_canvas: RunReportTimelineCanvas = RunReportTimelineCanvasScript.new()
@@ -1200,7 +1205,7 @@ func _check_music_stem_director_foundation(library: ContentLibrary, failures: Ar
 	var big_envelope: Dictionary = outcome_player.get("_music_event_envelope")
 	if not bool(scheduled_big.get("accepted", false)) or float(big_envelope.get("end_beat", 0.0)) - float(big_envelope.get("start_beat", 0.0)) != 16.0:
 		failures.append("Explicit big-win outcome did not preserve the true four-musical-bar envelope.")
-	if _copy_array(jazz_recipe.get("sections", [])) != ["A", "A", "B", "A", "A", "A", "C", "A"]:
+	if JsonCoerceScript._copy_array(jazz_recipe.get("sections", [])) != ["A", "A", "B", "A", "A", "A", "C", "A"]:
 		failures.append("Jazz harmony recipe did not encode AABA followed by AACA.")
 	var jazz_state := MusicArrangementSelectorScript.initial_recipe_state(jazz_8_track, 17, "fixture_visit")
 	var jazz_sections: Array = [str(jazz_state.get("harmonic_section", "A"))]
@@ -1706,11 +1711,11 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 	elif int(route.get("requires_travel_count_min", 0)) < 1 or not bool(route.get("hide_until_travel_count_met", false)):
 		failures.append("Grand Casino route should stay hidden until at least one travel has occurred.")
 	var underground := _archetype_by_id(library, "small_underground_casino")
-	if underground.is_empty() or not _string_array(underground.get("next_archetypes", [])).has("grand_casino"):
+	if underground.is_empty() or not JsonCoerceScript._string_array(underground.get("next_archetypes", [])).has("grand_casino"):
 		failures.append("Underground casino must route to the Grand Casino boss floor.")
 	for boss_event_id in ["pit_boss_sweep", "comped_suite_offer", "eye_in_the_sky", "high_roller_cashout", "the_house_calls"]:
 		var event := library.event(boss_event_id)
-		if event.is_empty() or not _string_array(event.get("scopes", [])).has("boss"):
+		if event.is_empty() or not JsonCoerceScript._string_array(event.get("scopes", [])).has("boss"):
 			failures.append("Boss-only event is missing or not scoped to boss: %s." % boss_event_id)
 	var finale_event := library.event(finale_event_id)
 	if finale_event.is_empty() or str(finale_event.get("type", "")) != "landmark":
@@ -1794,7 +1799,7 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 	if bool(non_boss_status.get("active", false)):
 		failures.append("Grand Casino boss objective should not appear outside the boss floor.")
 	non_boss_run.evaluate_environment_objective_state()
-	if bool(non_boss_run.narrative_flags.get("demo_finale_pending", false)) or _string_array(non_boss_run.current_environment.get("event_ids", [])).has(finale_event_id):
+	if bool(non_boss_run.narrative_flags.get("demo_finale_pending", false)) or JsonCoerceScript._string_array(non_boss_run.current_environment.get("event_ids", [])).has(finale_event_id):
 		failures.append("The House Calls triggered outside the boss floor.")
 	if non_boss_run.run_status != RunState.RUN_STATUS_ACTIVE:
 		failures.append("Non-boss objective fixture should not end or fail the run.")
@@ -1811,9 +1816,9 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		failures.append("Grand Casino clean lane should not set victory during A1 state reporting.")
 	var ready_cage := CageCounterViewModelScript.build(clean_run)
 	var ready_card: Dictionary = ready_cage.get("card", {}) if typeof(ready_cage.get("card", {})) == TYPE_DICTIONARY else {}
-	if str(_copy_dict(ready_cage.get("host", {})).get("name", "")) != "Linda" or not bool(ready_card.get("can_review", false)) or str(ready_card.get("review_state", "")) != "ready":
+	if str(JsonCoerceScript._copy_dict(ready_cage.get("host", {})).get("name", "")) != "Linda" or not bool(ready_card.get("can_review", false)) or str(ready_card.get("review_state", "")) != "ready":
 		failures.append("Cage view model did not expose Linda and the ready Players Card review.")
-	if _copy_array(ready_cage.get("promotions", [])).is_empty():
+	if JsonCoerceScript._copy_array(ready_cage.get("promotions", [])).is_empty():
 		failures.append("Cage view model did not populate Players Card tier benefits and comps.")
 
 	var save_service: SaveService = SaveServiceScript.new()
@@ -1829,7 +1834,7 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 	var loaded_clean_status: Dictionary = loaded_clean.demo_objective_status()
 	if not bool(loaded_clean_status.get("high_roller_ready", false)) or str(loaded_clean_status.get("players_card_next_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_GOLD:
 		failures.append("Grand Casino clean objective metadata did not survive SaveService load.")
-	if _string_array(loaded_clean.current_environment.get("event_ids", [])).has("high_roller_cashout"):
+	if JsonCoerceScript._string_array(loaded_clean.current_environment.get("event_ids", [])).has("high_roller_cashout"):
 		failures.append("Players Card review should remain at the Cage instead of the Grand Casino event surface.")
 	var high_roller_module := EventModule.new()
 	high_roller_module.setup(high_roller_event)
@@ -1962,7 +1967,7 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		failures.append("Grand Casino heat lane did not mark The House Calls as pending.")
 	if not bool(showdown_status.get("staff_attention_active", false)):
 		failures.append("Grand Casino heat lane did not expose staff attention while pending.")
-	if not _string_array(run_state.current_environment.get("event_ids", [])).has(finale_event_id):
+	if not JsonCoerceScript._string_array(run_state.current_environment.get("event_ids", [])).has(finale_event_id):
 		failures.append("Boss objective did not inject The House Calls into the active event list.")
 	var finale_module := EventModule.new()
 	finale_module.setup(finale_event)
@@ -2077,19 +2082,19 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 	if typeof(showdown_tuning_value) == TYPE_DICTIONARY:
 		showdown_config = (showdown_tuning_value as Dictionary).duplicate(true)
 	for showdown_key in ["walk", "pat_down", "interrogation", "duel_terms"]:
-		showdown_config[showdown_key] = _copy_dict(finale_payload.get(showdown_key, {}))
+		showdown_config[showdown_key] = JsonCoerceScript._copy_dict(finale_payload.get(showdown_key, {}))
 	showdown_config["success_message"] = str(finale_payload.get("success_message", ""))
 	showdown_config["failure_message"] = str(finale_payload.get("failure_message", ""))
 
-	var pat_down_config := _copy_dict(showdown_config.get("pat_down", {}))
-	var classifications := _copy_array(pat_down_config.get("classifications", []))
+	var pat_down_config := JsonCoerceScript._copy_dict(showdown_config.get("pat_down", {}))
+	var classifications := JsonCoerceScript._copy_array(pat_down_config.get("classifications", []))
 	if classifications.size() != 2 or int(pat_down_config.get("blatant_min_items", 0)) != 3:
 		failures.append("Showdown contraband tiers were not data-authored with the locked blatant threshold.")
 	var classification_items := {}
 	for classification_value in classifications:
 		if typeof(classification_value) == TYPE_DICTIONARY:
 			var classification: Dictionary = classification_value
-			classification_items[str(classification.get("id", ""))] = _string_array(classification.get("item_ids", []))
+			classification_items[str(classification.get("id", ""))] = JsonCoerceScript._string_array(classification.get("item_ids", []))
 	if JSON.stringify(classification_items.get("contraband", [])) != JSON.stringify(["marked_cards", "foil_sleeve", "weighted_keyring"]) or JSON.stringify(classification_items.get("surveillance", [])) != JSON.stringify(["xray_glasses", "tab_detector", "tarot_card"]):
 		failures.append("Showdown pat-down data drifted from the canonical item-modifier classification sets.")
 
@@ -2119,8 +2124,8 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 	var walk_result := finale_module.resolve(active_run, active_run.current_environment, "keep_everything")
 	if not bool(walk_result.get("ok", false)) or str(active_run.narrative_flags.get("grand_casino_showdown_step", "")) != RunState.GRAND_CASINO_SHOWDOWN_STEP_PAT_DOWN:
 		failures.append("Keeping every item did not advance to the pat-down boundary.")
-	var clean_pat_down := _copy_dict(active_run.narrative_flags.get("grand_casino_showdown_pat_down", {}))
-	if str(clean_pat_down.get("tier", "")) != "clean" or not _copy_array(clean_pat_down.get("confiscated_items", [])).is_empty():
+	var clean_pat_down := JsonCoerceScript._copy_dict(active_run.narrative_flags.get("grand_casino_showdown_pat_down", {}))
+	if str(clean_pat_down.get("tier", "")) != "clean" or not JsonCoerceScript._copy_array(clean_pat_down.get("confiscated_items", [])).is_empty():
 		failures.append("A clean inventory did not produce the clean pat-down tier.")
 	var pat_down_slot_id := "foundation_check_house_calls_pat_down"
 	save_error = save_service.save_run(active_run, pat_down_slot_id)
@@ -2137,7 +2142,7 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 	finale_module.resolve(loaded_pat_down, loaded_pat_down.current_environment, "face_rourke")
 	if str(loaded_pat_down.narrative_flags.get("grand_casino_showdown_step", "")) != RunState.GRAND_CASINO_SHOWDOWN_STEP_INTERROGATION:
 		failures.append("The pat-down did not advance to interrogation.")
-	var clean_evidence := _string_array(loaded_pat_down.narrative_flags.get("grand_casino_showdown_interrogation_evidence", []))
+	var clean_evidence := JsonCoerceScript._string_array(loaded_pat_down.narrative_flags.get("grand_casino_showdown_interrogation_evidence", []))
 	if clean_evidence.size() != 3 or clean_evidence.has("watched_cheat") or clean_evidence.has("cheat_evidence") or clean_evidence.has("open_debt") or clean_evidence.has("drunk"):
 		failures.append("Clean interrogation selected evidence that was not present in the scripted run.")
 	var evidence_twin := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-ACTIVE", environment.to_dict(), finale_module)
@@ -2189,9 +2194,9 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		var deterministic_ui := {"surface_time_msec": 5000, "drunk_scaled_surface_time_msec": 5000}
 		var deal_command := game.surface_action_command("blackjack_deal", 0, false, deterministic_ui, win_run, win_run.current_environment)
 		var replay_deal := game.surface_action_command("blackjack_deal", 0, false, deterministic_ui, replay_run, replay_run.current_environment)
-		var dealt_ui := _copy_dict(deal_command.get("ui_state", {}))
-		var replay_ui := _copy_dict(replay_deal.get("ui_state", {}))
-		if not bool(deal_command.get("handled", false)) or _copy_array(dealt_ui.get("player_hands", [])).is_empty() or _copy_array(dealt_ui.get("dealer_cards", [])).size() != 2:
+		var dealt_ui := JsonCoerceScript._copy_dict(deal_command.get("ui_state", {}))
+		var replay_ui := JsonCoerceScript._copy_dict(replay_deal.get("ui_state", {}))
+		if not bool(deal_command.get("handled", false)) or JsonCoerceScript._copy_array(dealt_ui.get("player_hands", [])).is_empty() or JsonCoerceScript._copy_array(dealt_ui.get("dealer_cards", [])).size() != 2:
 			failures.append("Rourke boss surface did not deal a playable deterministic blackjack hand.")
 		if JSON.stringify(_save_load_canonical_value([dealt_ui.get("player_hands", []), dealt_ui.get("dealer_cards", []), win_run.grand_casino_duel_status().get("edge_schedule", [])])) != JSON.stringify(_save_load_canonical_value([replay_ui.get("player_hands", []), replay_ui.get("dealer_cards", []), replay_run.grand_casino_duel_status().get("edge_schedule", [])])):
 			failures.append("Identical Rourke duel seeds/actions did not reproduce hands and edge schedule.")
@@ -2199,7 +2204,7 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		hit_run.from_dict(win_run.to_dict())
 		hit_run.bankroll = 0
 		hit_run.grand_casino_chips = 0
-		var hit_ui := _copy_dict(dealt_ui)
+		var hit_ui := JsonCoerceScript._copy_dict(dealt_ui)
 		hit_ui["boss_duel_session"] = true
 		hit_ui["selected_stake"] = int(duel_state.get("ante", 20))
 		hit_ui["locked_stake"] = int(duel_state.get("ante", 20))
@@ -2223,14 +2228,14 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		hit_ui["shoe"] = [{"rank": 6, "suit": 0, "deck": 0}, {"rank": 2, "suit": 1, "deck": 0}]
 		hit_ui["shoe_refilled_during_hand"] = true
 		hit_run.persist_grand_casino_duel_session(hit_ui)
-		var hit_hands_before := _copy_array(hit_run.grand_casino_duel_status().get("hands", [])).size()
+		var hit_hands_before := JsonCoerceScript._copy_array(hit_run.grand_casino_duel_status().get("hands", [])).size()
 		var hit_command := game.surface_action_command("blackjack_hit", 0, false, hit_ui, hit_run, hit_run.current_environment)
-		var hit_command_ui := _copy_dict(hit_command.get("ui_state", {}))
+		var hit_command_ui := JsonCoerceScript._copy_dict(hit_command.get("ui_state", {}))
 		if not bool(hit_command.get("handled", false)) or bool(hit_command.get("resolve", false)) or not bool(hit_command_ui.get("settlement_pending", false)):
 			failures.append("Rourke hit-to-21 did not stage settlement behind its card animation: %s." % JSON.stringify(hit_command))
 		hit_command_ui["surface_presentation_time_msec"] = int(hit_command_ui.get("deal_started_msec", 0)) + 5000
 		var hit_settle_command := game.surface_auto_action_command(hit_command_ui, hit_run, hit_run.current_environment)
-		hit_command_ui = _copy_dict(hit_settle_command.get("ui_state", hit_command_ui))
+		hit_command_ui = JsonCoerceScript._copy_dict(hit_settle_command.get("ui_state", hit_command_ui))
 		if str(hit_settle_command.get("action_id", "")) != "play_basic" or not bool(hit_settle_command.get("resolve", hit_settle_command.get("direct_resolve", false))):
 			failures.append("Rourke hit-to-21 did not become settleable after its card animation: %s." % JSON.stringify(hit_settle_command))
 		elif game.wager_cost_for_context("play_basic", int(duel_state.get("ante", 20)), hit_run, hit_run.current_environment, hit_command_ui) != 0:
@@ -2241,12 +2246,12 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 			if not bool(hit_compat.get("blackjack_compatibility_simulation", false)) or JSON.stringify(_save_load_canonical_run_snapshot(hit_run.to_dict())) != hit_before_compat:
 				failures.append("Detached Rourke hit compatibility resolve mutated live RunState.")
 			var hit_result := _blackjack_authority_resolve_for_test(game, "play_basic", int(duel_state.get("ante", 20)), hit_run, hit_command_ui)
-			var hit_hands_after := _copy_array(hit_run.grand_casino_duel_status().get("hands", [])).size()
+			var hit_hands_after := JsonCoerceScript._copy_array(hit_run.grand_casino_duel_status().get("hands", [])).size()
 			if not bool(hit_result.get("ok", false)) or hit_hands_after != hit_hands_before + 1:
 				failures.append("Rourke hit-to-21 SETTLE path did not advance exactly one duel hand: result=%s state=%s." % [JSON.stringify(hit_result), JSON.stringify(hit_run.grand_casino_duel_status())])
 		var double_run: RunState = RunStateScript.new()
 		double_run.from_dict(win_run.to_dict())
-		var double_ui := _copy_dict(dealt_ui)
+		var double_ui := JsonCoerceScript._copy_dict(dealt_ui)
 		double_ui["boss_duel_session"] = true
 		double_ui["selected_stake"] = int(duel_state.get("ante", 20))
 		double_ui["locked_stake"] = int(duel_state.get("ante", 20))
@@ -2266,14 +2271,14 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		}]
 		double_ui["shoe"] = [{"rank": 10, "suit": 0, "deck": 0}, {"rank": 2, "suit": 1, "deck": 0}, {"rank": 10, "suit": 2, "deck": 0}]
 		double_ui["shoe_refilled_during_hand"] = true
-		var double_hands_before := _copy_array(double_run.grand_casino_duel_status().get("hands", [])).size()
+		var double_hands_before := JsonCoerceScript._copy_array(double_run.grand_casino_duel_status().get("hands", [])).size()
 		var double_command := game.surface_action_command("blackjack_double", 0, false, double_ui, double_run, double_run.current_environment)
-		var double_command_ui := _copy_dict(double_command.get("ui_state", {}))
+		var double_command_ui := JsonCoerceScript._copy_dict(double_command.get("ui_state", {}))
 		if not bool(double_command.get("handled", false)) or bool(double_command.get("resolve", double_command.get("direct_resolve", false))) or not bool(double_command_ui.get("settlement_pending", false)):
 			failures.append("Rourke duel double did not stage settlement behind its card animation: %s." % JSON.stringify(double_command))
 		double_command_ui["surface_presentation_time_msec"] = int(double_command_ui.get("deal_started_msec", 0)) + 5000
 		var double_settle_command := game.surface_auto_action_command(double_command_ui, double_run, double_run.current_environment)
-		double_command_ui = _copy_dict(double_settle_command.get("ui_state", double_command_ui))
+		double_command_ui = JsonCoerceScript._copy_dict(double_settle_command.get("ui_state", double_command_ui))
 		if str(double_settle_command.get("action_id", "")) != "play_basic" or not bool(double_settle_command.get("resolve", double_settle_command.get("direct_resolve", false))):
 			failures.append("Rourke duel double did not become settleable after its card animation: %s." % JSON.stringify(double_settle_command))
 		else:
@@ -2283,8 +2288,8 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 				failures.append("Detached Rourke double compatibility resolve mutated live RunState.")
 			var doubled_result := _blackjack_authority_resolve_for_test(game, "play_basic", int(duel_state.get("ante", 20)), double_run, double_command_ui)
 			var doubled_status := double_run.grand_casino_duel_status()
-			var doubled_hands := _copy_array(doubled_status.get("hands", []))
-			var result_hands := _copy_array(doubled_result.get("blackjack_hand_results", []))
+			var doubled_hands := JsonCoerceScript._copy_array(doubled_status.get("hands", []))
+			var result_hands := JsonCoerceScript._copy_array(doubled_result.get("blackjack_hand_results", []))
 			var result_hand: Dictionary = result_hands[0] if not result_hands.is_empty() and typeof(result_hands[0]) == TYPE_DICTIONARY else {}
 			if not bool(doubled_result.get("ok", false)) or not bool(doubled_result.get("blackjack_boss_duel", false)):
 				failures.append("Rourke duel double did not settle through the boss duel result path: %s." % JSON.stringify(doubled_result))
@@ -2298,7 +2303,7 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		if save_error != OK or loaded_mid_duel == null or JSON.stringify(_save_load_canonical_value(loaded_mid_duel.narrative_flags.get("grand_casino_duel_state", {}))) != JSON.stringify(_save_load_canonical_value(win_run.narrative_flags.get("grand_casino_duel_state", {}))):
 			failures.append("Rourke's exact dealt hand/session did not survive SaveService load.")
 		var loaded_surface := game.surface_state(loaded_mid_duel, loaded_mid_duel.current_environment, {}) if loaded_mid_duel != null else {}
-		if loaded_mid_duel != null and _copy_array(loaded_surface.get("player_hands", [])).is_empty():
+		if loaded_mid_duel != null and JsonCoerceScript._copy_array(loaded_surface.get("player_hands", [])).is_empty():
 			failures.append("Rourke's saved mid-hand cards did not reopen on the boss surface.")
 		var replay_before_compat := JSON.stringify(_save_load_canonical_run_snapshot(replay_run.to_dict()))
 		var original_before_compat := JSON.stringify(_save_load_canonical_run_snapshot(win_run.to_dict()))
@@ -2347,28 +2352,28 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 
 	var minor_run := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-MINOR", environment.to_dict(), finale_module, ["marked_cards"])
 	finale_module.resolve(minor_run, minor_run.current_environment, "keep_everything")
-	if str(_copy_dict(minor_run.narrative_flags.get("grand_casino_showdown_pat_down", {})).get("tier", "")) != "minor" or minor_run.inventory.has("marked_cards"):
+	if str(JsonCoerceScript._copy_dict(minor_run.narrative_flags.get("grand_casino_showdown_pat_down", {})).get("tier", "")) != "minor" or minor_run.inventory.has("marked_cards"):
 		failures.append("One contraband item did not produce confiscating minor pat-down.")
 	var serious_run := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-SERIOUS", environment.to_dict(), finale_module, ["marked_cards", "foil_sleeve"])
 	finale_module.resolve(serious_run, serious_run.current_environment, "keep_everything")
-	var serious_pat_down := _copy_dict(serious_run.narrative_flags.get("grand_casino_showdown_pat_down", {}))
+	var serious_pat_down := JsonCoerceScript._copy_dict(serious_run.narrative_flags.get("grand_casino_showdown_pat_down", {}))
 	if str(serious_pat_down.get("tier", "")) != "serious" or int(serious_pat_down.get("handicap", 0)) <= 0 or serious_run.inventory.has("marked_cards") or serious_run.inventory.has("foil_sleeve"):
 		failures.append("Multiple contraband did not produce confiscation plus a serious handicap.")
 	var surveillance_run := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-SURVEILLANCE", environment.to_dict(), finale_module, ["xray_glasses"])
 	finale_module.resolve(surveillance_run, surveillance_run.current_environment, "keep_everything")
-	if str(_copy_dict(surveillance_run.narrative_flags.get("grand_casino_showdown_pat_down", {})).get("tier", "")) != "serious":
+	if str(JsonCoerceScript._copy_dict(surveillance_run.narrative_flags.get("grand_casino_showdown_pat_down", {})).get("tier", "")) != "serious":
 		failures.append("Carried surveillance gear did not produce the serious pat-down tier.")
 	var watched_surveillance_run := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-WATCHED-SURVEILLANCE", environment.to_dict(), finale_module, ["xray_glasses"], {"grand_casino_watched_cheat_evidence": true})
 	finale_module.resolve(watched_surveillance_run, watched_surveillance_run.current_environment, "keep_everything")
-	if watched_surveillance_run.is_terminal() or str(_copy_dict(watched_surveillance_run.narrative_flags.get("grand_casino_showdown_pat_down", {})).get("tier", "")) != "serious":
+	if watched_surveillance_run.is_terminal() or str(JsonCoerceScript._copy_dict(watched_surveillance_run.narrative_flags.get("grand_casino_showdown_pat_down", {})).get("tier", "")) != "serious":
 		failures.append("Watched evidence incorrectly promoted surveillance-only gear above the serious tier.")
 	var blatant_run := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-BLATANT", environment.to_dict(), finale_module, ["marked_cards", "foil_sleeve", "weighted_keyring"])
 	var blatant_result := finale_module.resolve(blatant_run, blatant_run.current_environment, "keep_everything")
-	if blatant_run.run_status != RunState.RUN_STATUS_FAILED or blatant_run.run_failure_reason != RunState.FAILURE_CASINO_TAKEN_OUT_BACK or str(blatant_result.get("message", "")).find("before the game") == -1 or not _copy_dict(blatant_run.narrative_flags.get("grand_casino_duel_terms", {})).is_empty():
+	if blatant_run.run_status != RunState.RUN_STATUS_FAILED or blatant_run.run_failure_reason != RunState.FAILURE_CASINO_TAKEN_OUT_BACK or str(blatant_result.get("message", "")).find("before the game") == -1 or not JsonCoerceScript._copy_dict(blatant_run.narrative_flags.get("grand_casino_duel_terms", {})).is_empty():
 		failures.append("Blatant contraband did not fail immediately with its distinct pre-duel message.")
 	var watched_blatant_run := _new_showdown_phase_run("M2-FUN-HOUSE-CALLS-WATCHED-BLATANT", environment.to_dict(), finale_module, ["marked_cards"], {"grand_casino_watched_cheat_evidence": true, "grand_casino_cheat_evidence": true})
 	finale_module.resolve(watched_blatant_run, watched_blatant_run.current_environment, "keep_everything")
-	if watched_blatant_run.run_status != RunState.RUN_STATUS_FAILED or str(_copy_dict(watched_blatant_run.narrative_flags.get("grand_casino_showdown_pat_down", {})).get("tier", "")) != "blatant":
+	if watched_blatant_run.run_status != RunState.RUN_STATUS_FAILED or str(JsonCoerceScript._copy_dict(watched_blatant_run.narrative_flags.get("grand_casino_showdown_pat_down", {})).get("tier", "")) != "blatant":
 		failures.append("Watched evidence plus carried contraband did not trigger blatant failure.")
 
 	serious_run.drunk_level = 75
@@ -2376,19 +2381,19 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 	serious_run.add_debt({"id": "showdown_debt_one", "lender_id": "street_lender", "balance": 40, "status": "active"})
 	serious_run.narrative_flags["grand_casino_cheat_evidence"] = true
 	finale_module.resolve(serious_run, serious_run.current_environment, "face_rourke")
-	var dirty_evidence := _string_array(serious_run.narrative_flags.get("grand_casino_showdown_interrogation_evidence", []))
+	var dirty_evidence := JsonCoerceScript._string_array(serious_run.narrative_flags.get("grand_casino_showdown_interrogation_evidence", []))
 	if dirty_evidence.size() != 3 or dirty_evidence.has("clean_record"):
 		failures.append("Dirty interrogation selected evidence inconsistent with the scripted run.")
 	var failure_result := _finish_showdown_interrogation(finale_module, serious_run, "take_the_edge")
 	var failure_run: RunState = serious_run
-	var clean_terms := _copy_dict(win_run.narrative_flags.get("grand_casino_duel_terms", {}))
-	var dirty_terms := _copy_dict(failure_run.narrative_flags.get("grand_casino_duel_terms", {}))
+	var clean_terms := JsonCoerceScript._copy_dict(win_run.narrative_flags.get("grand_casino_duel_terms", {}))
+	var dirty_terms := JsonCoerceScript._copy_dict(failure_run.narrative_flags.get("grand_casino_duel_terms", {}))
 	if clean_terms.is_empty() or dirty_terms.is_empty() or not clean_terms.has("starting_stacks") or not dirty_terms.has("handicaps") or not dirty_terms.has("margin_thresholds"):
 		failures.append("Interrogation did not serialize the complete duel_terms schema.")
-	elif int(_copy_dict(dirty_terms.get("handicaps", {})).get("player", 0)) <= 0 or int(dirty_terms.get("rourke_aggression", 0)) < int(clean_terms.get("rourke_aggression", 0)):
+	elif int(JsonCoerceScript._copy_dict(dirty_terms.get("handicaps", {})).get("player", 0)) <= 0 or int(dirty_terms.get("rourke_aggression", 0)) < int(clean_terms.get("rourke_aggression", 0)):
 		failures.append("Dirty/serious facts did not harden the serialized duel terms.")
-	var clean_interrogation_terms := _copy_dict(clean_terms.get("interrogation", {}))
-	var clean_answers := _copy_array(clean_interrogation_terms.get("answers", []))
+	var clean_interrogation_terms := JsonCoerceScript._copy_dict(clean_terms.get("interrogation", {}))
+	var clean_answers := JsonCoerceScript._copy_array(clean_interrogation_terms.get("answers", []))
 	var clean_strength_total := 0
 	for answer_value in clean_answers:
 		if typeof(answer_value) == TYPE_DICTIONARY:
@@ -2398,11 +2403,11 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 		failures.append("Serialized duel terms did not consume the three recorded fact-derived response strengths.")
 	if not bool(failure_result.get("ok", false)) or not bool(failure_result.get("duel_ready", false)) or failure_run.run_status != RunState.RUN_STATUS_ACTIVE:
 		failures.append("Dirty interrogation did not enter the playable duel boundary.")
-	var clean_rules := _copy_dict(clean_terms.get("rules", {}))
-	var dirty_rules := _copy_dict(dirty_terms.get("rules", {}))
+	var clean_rules := JsonCoerceScript._copy_dict(clean_terms.get("rules", {}))
+	var dirty_rules := JsonCoerceScript._copy_dict(dirty_terms.get("rules", {}))
 	var clean_detection := int(clean_rules.get("player_cheat_detection_base", 0)) + int(clean_terms.get("rourke_aggression", 0)) * int(clean_rules.get("player_cheat_detection_per_aggression", 0)) + int(clean_terms.get("rourke_cheat_level", 0)) * int(clean_rules.get("player_cheat_detection_per_cheat_level", 0))
 	var dirty_detection := int(dirty_rules.get("player_cheat_detection_base", 0)) + int(dirty_terms.get("rourke_aggression", 0)) * int(dirty_rules.get("player_cheat_detection_per_aggression", 0)) + int(dirty_terms.get("rourke_cheat_level", 0)) * int(dirty_rules.get("player_cheat_detection_per_cheat_level", 0))
-	if int(_copy_dict(dirty_terms.get("starting_stacks", {})).get("player", 0)) >= int(_copy_dict(clean_terms.get("starting_stacks", {})).get("player", 0)) or dirty_detection < clean_detection:
+	if int(JsonCoerceScript._copy_dict(dirty_terms.get("starting_stacks", {})).get("player", 0)) >= int(JsonCoerceScript._copy_dict(clean_terms.get("starting_stacks", {})).get("player", 0)) or dirty_detection < clean_detection:
 		failures.append("Pat-down/interrogation terms did not visibly worsen the player's stack and Rourke detection sensitivity.")
 
 	var edge_rng_a := RngStream.new()
@@ -2413,15 +2418,15 @@ func _check_demo_boss_objective_foundation(library: ContentLibrary, failures: Ar
 	var replay_b := GrandCasinoDuelModelScript.initialize(dirty_terms, edge_rng_b)
 	if JSON.stringify(replay_a.get("edge_schedule", [])) != JSON.stringify(replay_b.get("edge_schedule", [])):
 		failures.append("Rourke's named seeded edge schedule drifted across identical replays.")
-	var schedule := _copy_array(replay_a.get("edge_schedule", []))
+	var schedule := JsonCoerceScript._copy_array(replay_a.get("edge_schedule", []))
 	if not schedule.is_empty():
-		var authored_edge := _copy_dict(schedule[0])
+		var authored_edge := JsonCoerceScript._copy_dict(schedule[0])
 		authored_edge.merge({"id": "deck_stack", "active": true, "called": false, "stripped": false}, true)
 		schedule[0] = authored_edge
 		replay_a["edge_schedule"] = schedule
 		var correct_call := GrandCasinoDuelModelScript.call_out(replay_a, "deck_stack", dirty_terms)
 		var false_call := GrandCasinoDuelModelScript.call_out(replay_a, "hole_swap", dirty_terms)
-		if not bool(correct_call.get("correct", false)) or not bool(_copy_dict(correct_call.get("edge", {})).get("stripped", false)) or int(correct_call.get("swing", 0)) <= 0:
+		if not bool(correct_call.get("correct", false)) or not bool(JsonCoerceScript._copy_dict(correct_call.get("edge", {})).get("stripped", false)) or int(correct_call.get("swing", 0)) <= 0:
 			failures.append("A correct Rourke call-out did not strip the authored edge and swing momentum.")
 		if bool(false_call.get("correct", true)) or int(false_call.get("swing", 0)) >= 0:
 			failures.append("A false Rourke accusation did not cost the authored duel chips.")
@@ -2498,7 +2503,7 @@ func _new_showdown_phase_run(seed: String, environment: Dictionary, finale_modul
 		run_state.add_item(str(item_value))
 	for flag_id in flags.keys():
 		run_state.narrative_flags[str(flag_id)] = flags[flag_id]
-	var objective := _copy_dict(run_state.current_environment.get("demo_objective", {}))
+	var objective := JsonCoerceScript._copy_dict(run_state.current_environment.get("demo_objective", {}))
 	run_state.add_suspicion("boss_heat_fixture", int(objective.get("showdown_heat_threshold", 70)), "behavior")
 	run_state.evaluate_environment_objective_state()
 	var arrival := finale_module.resolve(run_state, run_state.current_environment, "enter_back_room")
@@ -2671,7 +2676,7 @@ func _check_grand_casino_players_card_tiers(library: ContentLibrary, main_archet
 			if str(story_entry.get("message", "")) != RunState.GRAND_CASINO_ACT_TWO_SEAM_MESSAGE or str(story_entry.get("tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_GOLD:
 				failures.append("Gold victory logged an incorrect Act 2 seam story marker.")
 	var seam_report := RunReportViewModelScript.build(run_state.to_dict(), {"outcomes": RunReportViewModelScript.load_outcome_registry()})
-	var seam_outcome := _copy_dict(seam_report.get("outcome", {}))
+	var seam_outcome := JsonCoerceScript._copy_dict(seam_report.get("outcome", {}))
 	if seam_story_count != 1 or str(seam_outcome.get("seam_line", "")) != RunState.GRAND_CASINO_ACT_TWO_SEAM_MESSAGE or str(seam_outcome.get("how", "")).count(RunState.GRAND_CASINO_ACT_TWO_SEAM_MESSAGE) != 1:
 		failures.append("Gold victory did not log and present exactly one truthful Act 2 seam line.")
 	var evidence_run: RunState = RunStateScript.new()
@@ -3064,7 +3069,7 @@ func _check_grand_casino_living_floor(library: ContentLibrary, main_archetype: D
 	var cameo := library.event("rourke_scouting_cameo")
 	var kitty := _archetype_by_id(library, "kitty_cat_lounge")
 	var delta := _archetype_by_id(library, "delta_queen")
-	if cameo.is_empty() or str(cameo.get("presentation", "")) != "talk" or not _string_array(kitty.get("event_pool", [])).has("rourke_scouting_cameo") or not _string_array(delta.get("event_pool", [])).has("rourke_scouting_cameo"):
+	if cameo.is_empty() or str(cameo.get("presentation", "")) != "talk" or not JsonCoerceScript._string_array(kitty.get("event_pool", [])).has("rourke_scouting_cameo") or not JsonCoerceScript._string_array(delta.get("event_pool", [])).has("rourke_scouting_cameo"):
 		failures.append("Rare Rourke scouting talk was not authored into both tier-2 casino pools.")
 	else:
 		var cameo_run: RunState = RunStateScript.new()
@@ -3097,7 +3102,7 @@ func _check_grand_casino_staff_rotation(library: ContentLibrary, main_archetype:
 	var constants: Dictionary = first_staffing.get("constants", {}) if typeof(first_staffing.get("constants", {})) == TYPE_DICTIONARY else {}
 	if first_assignments.size() != 4:
 		failures.append("Grand Casino day-one staffing did not assign all three dealers and the bartender.")
-	if str(_copy_dict(constants.get("rourke", {})).get("id", "")) != "rourke" or str(_copy_dict(constants.get("linda", {})).get("id", "")) != "linda":
+	if str(JsonCoerceScript._copy_dict(constants.get("rourke", {})).get("id", "")) != "rourke" or str(JsonCoerceScript._copy_dict(constants.get("linda", {})).get("id", "")) != "linda":
 		failures.append("Grand Casino staffing treated Rourke or Linda as a rotating role.")
 	for assignment_value in first_assignments.values():
 		if typeof(assignment_value) == TYPE_DICTIONARY and ["rourke", "linda"].has(str((assignment_value as Dictionary).get("id", ""))):
@@ -3320,10 +3325,10 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 		return
 	if not bool(high_limit.get("map_hidden", false)) or not bool(back_room.get("map_hidden", false)) or not bool(cage.get("map_hidden", false)):
 		failures.append("Grand Casino subrooms must be hidden from world-map node generation.")
-	if not _string_array(cage.get("game_pool", [])).is_empty() or RunState.ROURKE_ROOM_PATH.has(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID) or RunState.RIVAL_CHEATER_ROOMS.has(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
+	if not JsonCoerceScript._string_array(cage.get("game_pool", [])).is_empty() or RunState.ROURKE_ROOM_PATH.has(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID) or RunState.RIVAL_CHEATER_ROOMS.has(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
 		failures.append("Grand Casino Cage leaked into a game, Rourke patrol, or rival-cheater room set.")
-	var main_games := _string_array(main_archetype.get("game_pool", []))
-	var high_games := _string_array(high_limit.get("game_pool", []))
+	var main_games := JsonCoerceScript._string_array(main_archetype.get("game_pool", []))
+	var high_games := JsonCoerceScript._string_array(high_limit.get("game_pool", []))
 	for machine_id in ["slot", "video_poker", "pull_tabs", "blackjack"]:
 		if not main_games.has(machine_id):
 			failures.append("Grand Casino Main Floor is missing required low-limit game: %s." % machine_id)
@@ -3336,8 +3341,8 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 		failures.append("Grand Casino High-Limit Room lost its blackjack table while adding the Main Floor low-limit table.")
 	if high_games.has("video_poker"):
 		failures.append("Grand Casino High-Limit Room incorrectly includes video poker.")
-	var main_economic := _copy_dict(main_archetype.get("economic_profile", {}))
-	var high_economic := _copy_dict(high_limit.get("economic_profile", {}))
+	var main_economic := JsonCoerceScript._copy_dict(main_archetype.get("economic_profile", {}))
+	var high_economic := JsonCoerceScript._copy_dict(high_limit.get("economic_profile", {}))
 	if int(high_economic.get("stake_floor", 0)) <= int(main_economic.get("stake_floor", 0)):
 		failures.append("Grand Casino High-Limit Room stake floor is not higher than the Main Floor.")
 	var main_blackjack_ceiling := GameModule.stake_ceiling_for_game({"economic_profile": main_economic}, "blackjack", 0)
@@ -3369,34 +3374,39 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 	})
 	if int(chip_stake_range.get("max", 0)) != 100:
 		failures.append("Grand Casino blackjack stake range ignored chips; $30 cash plus 70 chips should allow a $100 stake, got $%d." % int(chip_stake_range.get("max", 0)))
-	var main_layout := _copy_dict(main_archetype.get("layout", {}))
-	var fixture_counts := _copy_dict(main_layout.get("game_fixture_counts", {}))
-	if int(fixture_counts.get("slot", 0)) != 3 or _copy_array(main_layout.get("game_spots", [])).size() < 6:
+	var main_layout := JsonCoerceScript._copy_dict(main_archetype.get("layout", {}))
+	var fixture_counts := JsonCoerceScript._copy_dict(main_layout.get("game_fixture_counts", {}))
+	if int(fixture_counts.get("slot", 0)) != 3 or JsonCoerceScript._copy_array(main_layout.get("game_spots", [])).size() < 6:
 		failures.append("Grand Casino Main Floor does not author three slot fixtures plus its other three games.")
 	var fixture_run: RunState = RunStateScript.new()
 	fixture_run.start_new("GC-MAIN-LOW-LIMIT-FIXTURES")
 	var fixture_environment := EnvironmentInstance.from_archetype(main_archetype, 3, fixture_run.create_rng("gc_main_low_limit_fixtures"), library).to_dict()
-	var fixture_rects := _copy_dict(_copy_dict(fixture_environment.get("layout", {})).get("object_rects", {}))
+	var fixture_rects := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(fixture_environment.get("layout", {})).get("object_rects", {}))
 	for fixture_id in ["game:slot", "game:slot:2", "game:slot:3"]:
 		if not fixture_rects.has(fixture_id):
 			failures.append("Grand Casino Main Floor generated layout is missing slot fixture %s." % fixture_id)
-	var slot_centers: Array = []
-	for fixture_id in ["game:slot", "game:slot:2", "game:slot:3"]:
-		var rect := _copy_dict(fixture_rects.get(fixture_id, {}))
+	var slot_centers: Dictionary = {}
+	for fixture_id in ["game:slot", "game:slot:2", "game:slot:3", "game:video_poker"]:
+		var rect := JsonCoerceScript._copy_dict(fixture_rects.get(fixture_id, {}))
 		if rect.is_empty():
 			continue
-		slot_centers.append(Vector2(float(rect.get("x", 0.0)) + float(rect.get("w", 0.0)) * 0.5, float(rect.get("y", 0.0)) + float(rect.get("h", 0.0)) * 0.5))
-	if slot_centers.size() == 3:
-		var first_gap := absf((slot_centers[1] as Vector2).x - (slot_centers[0] as Vector2).x)
-		var second_gap := absf((slot_centers[2] as Vector2).x - (slot_centers[1] as Vector2).x)
-		if absf((slot_centers[0] as Vector2).y - (slot_centers[1] as Vector2).y) > 0.01 or absf((slot_centers[1] as Vector2).y - (slot_centers[2] as Vector2).y) > 0.01 or first_gap > 0.16 or second_gap > 0.16 or absf(first_gap - second_gap) > 0.02:
-			failures.append("Grand Casino Main Floor slot fixtures are not placed as a tight three-across bank.")
+		slot_centers[fixture_id] = Vector2(float(rect.get("x", 0.0)) + float(rect.get("w", 0.0)) * 0.5, float(rect.get("y", 0.0)) + float(rect.get("h", 0.0)) * 0.5)
+	if slot_centers.size() == 4:
+		var first_gap := absf((slot_centers["game:slot:2"] as Vector2).x - (slot_centers["game:slot"] as Vector2).x)
+		var second_gap := absf((slot_centers["game:slot:3"] as Vector2).x - (slot_centers["game:slot:2"] as Vector2).x)
+		var third_gap := absf((slot_centers["game:video_poker"] as Vector2).x - (slot_centers["game:slot:3"] as Vector2).x)
+		var row_y := (slot_centers["game:slot"] as Vector2).y
+		if first_gap <= 0.0 or absf(first_gap - second_gap) > 0.02 or absf(second_gap - third_gap) > 0.02 \
+				or absf(row_y - (slot_centers["game:slot:2"] as Vector2).y) > 0.01 \
+				or absf(row_y - (slot_centers["game:slot:3"] as Vector2).y) > 0.01 \
+				or absf(row_y - (slot_centers["game:video_poker"] as Vector2).y) > 0.01:
+			failures.append("Grand Casino Main Floor wall machines are not placed as one evenly aligned row (centers=%s gaps=%.3f/%.3f/%.3f)." % [str(slot_centers), first_gap, second_gap, third_gap])
 	var slot_variant_run := _grand_casino_spatial_fixture_run(library, "GC-MAIN-SLOT-VARIANTS", failures)
-	var slot_game_states := _copy_dict(slot_variant_run.current_environment.get("game_states", {})) if slot_variant_run != null else {}
+	var slot_game_states := JsonCoerceScript._copy_dict(slot_variant_run.current_environment.get("game_states", {})) if slot_variant_run != null else {}
 	var slot_machine_keys: Dictionary = {}
 	var slot_cabinet_variants: Dictionary = {}
 	for state_key in ["slot", "slot:2", "slot:3"]:
-		var machine := _copy_dict(slot_game_states.get(state_key, {}))
+		var machine := JsonCoerceScript._copy_dict(slot_game_states.get(state_key, {}))
 		if machine.is_empty():
 			failures.append("Grand Casino Main Floor did not generate machine state for %s." % state_key)
 			continue
@@ -3406,7 +3416,7 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 		failures.append("Grand Casino Main Floor slot fixtures did not generate three distinct slot machine variants.")
 	var fixture_slot_object_states: Dictionary = {}
 	for state_key in ["slot", "slot:2", "slot:3"]:
-		var machine := _copy_dict(slot_game_states.get(state_key, {}))
+		var machine := JsonCoerceScript._copy_dict(slot_game_states.get(state_key, {}))
 		if machine.is_empty():
 			continue
 		fixture_slot_object_states["game:%s" % state_key] = {
@@ -3418,8 +3428,8 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 			},
 		}
 	var game_sources: Array = []
-	for game_index in range(_string_array(fixture_environment.get("game_ids", [])).size()):
-		var fixture_game_id := str(_string_array(fixture_environment.get("game_ids", []))[game_index])
+	for game_index in range(JsonCoerceScript._string_array(fixture_environment.get("game_ids", [])).size()):
+		var fixture_game_id := str(JsonCoerceScript._string_array(fixture_environment.get("game_ids", []))[game_index])
 		game_sources.append({"id": fixture_game_id, "index": game_index, "definition": library.game(fixture_game_id), "runtime_state": {}, "object_state": {}, "fixture_object_states": fixture_slot_object_states if fixture_game_id == "slot" else {}})
 	var fixture_objects := EnvironmentInteractionViewModelScript.interactable_object_view_list(fixture_run, library, {
 		"selection": {},
@@ -3442,7 +3452,7 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 		var fixture_object: Dictionary = fixture_object_value
 		if str(fixture_object.get("object_type", "")) != "game" or str(fixture_object.get("source_id", "")) != "slot":
 			continue
-		slot_fixture_visual_keys[str(_copy_dict(fixture_object.get("visual_state", {})).get("machine_key", ""))] = true
+		slot_fixture_visual_keys[str(JsonCoerceScript._copy_dict(fixture_object.get("visual_state", {})).get("machine_key", ""))] = true
 	if slot_fixture_visual_keys.size() != 3:
 		failures.append("Grand Casino Main Floor interaction view did not preserve distinct slot fixture visual states.")
 
@@ -3451,7 +3461,7 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 		map_run.start_new("GC-SPATIAL-MAP-%02d" % seed_index)
 		var map_data := WorldMapScript.new(library).build(map_run, map_run.create_rng("gc_spatial_map"))
 		var grand_node_count := 0
-		for node_value in _copy_array(map_data.get("nodes", [])):
+		for node_value in JsonCoerceScript._copy_array(map_data.get("nodes", [])):
 			if typeof(node_value) != TYPE_DICTIONARY:
 				continue
 			var node_id := str((node_value as Dictionary).get("id", ""))
@@ -3465,12 +3475,15 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 	if run_state == null:
 		return
 	var generator: RunGenerator = RunGeneratorScript.new(library)
-	var layout := _copy_dict(run_state.current_environment.get("layout", {}))
-	var object_rects := _copy_dict(layout.get("object_rects", {}))
+	var layout := JsonCoerceScript._copy_dict(run_state.current_environment.get("layout", {}))
+	var object_rects := JsonCoerceScript._copy_dict(layout.get("object_rects", {}))
+	var slot_bindings := JsonCoerceScript._copy_dict(layout.get("slot_bindings", {}))
 	for object_id in ["casino_fixture:host_desk", "travel:grand_casino_high_limit", "travel:grand_casino_back_room", "travel:grand_casino_cage"]:
-		if not object_rects.has(object_id):
-			failures.append("Grand Casino Main Floor layout is missing authored object placement: %s." % object_id)
-	var buy_in := int(_copy_dict(run_state.current_environment.get("local_narrative_flags", {})).get("casino_high_limit_buy_in", 60))
+		var binding := JsonCoerceScript._copy_dict(slot_bindings.get(object_id, {}))
+		var mode := str(binding.get("presentation_mode", ""))
+		if mode not in ["room", "overflow"] or (mode == "room" and not object_rects.has(object_id)):
+			failures.append("Grand Casino Main Floor layout is missing authored object placement authority: %s." % object_id)
+	var buy_in := int(JsonCoerceScript._copy_dict(run_state.current_environment.get("local_narrative_flags", {})).get("casino_high_limit_buy_in", 60))
 	run_state.bankroll = maxi(0, buy_in - 1)
 	if bool(run_state.grand_casino_room_access_status(RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID, buy_in).get("available", true)):
 		failures.append("Grand Casino High-Limit door admitted a player without card access or enough cash.")
@@ -3485,11 +3498,11 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID):
 		failures.append("Grand Casino room seam could not enter the freely accessible Cage.")
 		return
-	var cage_rects := _copy_dict(_copy_dict(run_state.current_environment.get("layout", {})).get("object_rects", {}))
+	var cage_rects := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(run_state.current_environment.get("layout", {})).get("object_rects", {}))
 	for object_id in ["casino_fixture:cage_counter", "casino_fixture:cage_atm", "travel:grand_casino"]:
 		if not cage_rects.has(object_id):
 			failures.append("Grand Casino Cage layout is missing authored object placement: %s." % object_id)
-	var cage_item_spots := _copy_array(_copy_dict(run_state.current_environment.get("layout", {})).get("item_spots", []))
+	var cage_item_spots := JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(run_state.current_environment.get("layout", {})).get("item_spots", []))
 	if cage_item_spots.size() != 4 or cage_rects.has("casino_fixture:cage_gift_shop"):
 		failures.append("Grand Casino Cage layout did not replace the gift popup fixture with four stable shelf-item spots.")
 	if not generator.enter_grand_casino_room(run_state, RunState.GRAND_CASINO_ARCHETYPE_ID):
@@ -3513,7 +3526,7 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 	if int(run_state.narrative_flags.get("grand_casino_games_played", 0)) != 1 or int(run_state.narrative_flags.get("grand_casino_entry_bankroll", -2)) != entry_bankroll:
 		failures.append("Grand Casino room move reset shared objective counters or entry bankroll.")
 	run_state.store_current_world_node_environment()
-	var stored_main := _copy_dict(WorldMapScript.node_by_id(run_state.world_map, RunState.GRAND_CASINO_ARCHETYPE_ID).get("environment", {}))
+	var stored_main := JsonCoerceScript._copy_dict(WorldMapScript.node_by_id(run_state.world_map, RunState.GRAND_CASINO_ARCHETYPE_ID).get("environment", {}))
 	if str(stored_main.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID:
 		failures.append("Grand Casino world node stored a subroom instead of the Main Floor snapshot.")
 	var restored: RunState = RunStateScript.new()
@@ -3805,6 +3818,17 @@ func _check_terminal_evaluator_behavior_matrix(library: ContentLibrary, failures
 	_assert_public_terminal_result(event_run, library, _terminal_expected({
 		"event_recovery_available": true, "recovery_available": true,
 	}), RunState.RUN_STATUS_ACTIVE, RunState.FAILURE_NONE, "event recovery", failures)
+
+	var zero_invite_run := _terminal_recovery_run("TERMINAL-PUBLIC-ZERO-INVITE", {
+		"kind": "casino", "event_ids": ["grand_casino_invite"],
+	})
+	zero_invite_run.change_bankroll(-zero_invite_run.bankroll, true)
+	_assert_public_terminal_result(zero_invite_run, library, _terminal_expected({
+		"failed": true,
+		"terminal": true,
+		"reason": RunState.FAILURE_BANKROLL_ZERO,
+		"message": RunState.BANKROLL_ZERO_FAILURE_MESSAGE,
+	}), RunState.RUN_STATUS_FAILED, RunState.FAILURE_BANKROLL_ZERO, "zero-bankroll invitation cannot rescue bankruptcy", failures)
 
 	var merchant_run := _terminal_recovery_run("TERMINAL-PUBLIC-MERCHANT", {
 		"kind": "shop", "item_offers": [{"id": "fixture_offer"}],
@@ -4378,16 +4402,77 @@ func _check_environment_instance_shape(environment: EnvironmentInstance, require
 		failures.append("EnvironmentInstance layout should serialize generated object placement data.")
 	else:
 		var object_rects: Variant = (layout as Dictionary).get("object_rects", {})
-		if typeof(object_rects) != TYPE_DICTIONARY:
-			failures.append("EnvironmentInstance layout should include stable object_rects.")
+		var slot_bindings: Variant = (layout as Dictionary).get("slot_bindings", {})
+		var slot_overflow_ids: Variant = (layout as Dictionary).get("slot_overflow_ids", [])
+		var slot_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(data)
+		if not bool(slot_authority.get("ok", false)):
+			failures.append("EnvironmentInstance layout failed sealed base-slot validation: %s." % JSON.stringify(slot_authority.get("errors", [])))
+		elif typeof(object_rects) != TYPE_DICTIONARY or typeof(slot_bindings) != TYPE_DICTIONARY or typeof(slot_overflow_ids) != TYPE_ARRAY:
+			failures.append("EnvironmentInstance layout should include stable slot authority and object_rects.")
 		else:
+			var manifest_families := {}
+			var manifest_action_owners := {}
+			var object_manifest := JsonCoerceScript._copy_dict(data.get("object_manifest", {}))
+			for row_value in JsonCoerceScript._copy_array(object_manifest.get("rows", [])):
+				var row := JsonCoerceScript._copy_dict(row_value)
+				var presentation_object_id := str(row.get("presentation_object_id", row.get("object_id", "")))
+				if not presentation_object_id.is_empty():
+					manifest_families[presentation_object_id] = str(row.get("family", ""))
+					for action_id_value in JsonCoerceScript._copy_array(row.get("action_ids", [])):
+						var action_id := str(action_id_value).strip_edges()
+						if action_id.is_empty():
+							continue
+						if manifest_action_owners.has(action_id) and str(manifest_action_owners.get(action_id, "")) != presentation_object_id:
+							failures.append("EnvironmentInstance manifest assigns one event action to multiple presentation hosts.")
+						manifest_action_owners[action_id] = presentation_object_id
 			for event_id in environment.event_ids:
-				if not (object_rects as Dictionary).has("event:%s" % str(event_id)):
-					failures.append("EnvironmentInstance layout is missing event object placement.")
+				var object_id := "event:%s" % str(event_id)
+				# An event may either own a presentation row or be an action exposed by
+				# another sealed host. Exact scenario-layout authority is the source of
+				# truth for the latter; the physical manifest intentionally omits the
+				# action-only row so it cannot become a duplicate placement marker.
+				# In every case the tangible host must retain complete slot authority.
+				var presentation_object_id := object_id
+				if not (slot_bindings as Dictionary).has(presentation_object_id):
+					var exact_action_hosts := JsonCoerceScript._copy_dict(
+						(layout as Dictionary).get("scenario_instance_action_host_ids", {})
+					)
+					presentation_object_id = str(exact_action_hosts.get(
+						object_id,
+						manifest_action_owners.get(object_id, "")
+					))
+				var binding := JsonCoerceScript._copy_dict((slot_bindings as Dictionary).get(presentation_object_id, {}))
+				var expected_family := str(manifest_families.get(presentation_object_id, ""))
+				var mode := str(binding.get("presentation_mode", ""))
+				var slot := JsonCoerceScript._copy_dict(binding.get("slot", {}))
+				var slot_id := str(binding.get("slot_id", ""))
+				var placement_class := str(binding.get("placement_class", ""))
+				if binding.is_empty() \
+						or presentation_object_id.is_empty() \
+						or str(binding.get("identity", "")) != presentation_object_id \
+						or expected_family not in ["fixed", "event", "scenario"] \
+						or str(binding.get("kind", "")) != expected_family \
+						or str(binding.get("slot_family", "")) != expected_family \
+						or placement_class not in EnvironmentPlacementScript.CLASSES \
+						or mode not in ["room", "overflow"]:
+					failures.append("EnvironmentInstance layout is missing sealed event presentation authority.")
+					break
+				if mode == "room" and (slot_id.is_empty() or slot.is_empty() or not (object_rects as Dictionary).has(presentation_object_id) or (slot_overflow_ids as Array).has(presentation_object_id)):
+					failures.append("EnvironmentInstance room event binding is missing authored geometry.")
+					break
+				if mode == "overflow" and (not slot_id.is_empty() or not slot.is_empty() or (object_rects as Dictionary).has(presentation_object_id) or not (slot_overflow_ids as Array).has(presentation_object_id)):
+					failures.append("EnvironmentInstance overflow event binding retained room geometry.")
 					break
 			for offer in environment.item_offers:
-				if typeof(offer) == TYPE_DICTIONARY and not (object_rects as Dictionary).has("item:%s" % str((offer as Dictionary).get("id", ""))):
-					failures.append("EnvironmentInstance layout is missing item offer placement.")
+				if typeof(offer) != TYPE_DICTIONARY:
+					continue
+				var item_object_id := "item:%s" % str((offer as Dictionary).get("id", ""))
+				var item_binding := JsonCoerceScript._copy_dict((slot_bindings as Dictionary).get(item_object_id, {}))
+				var item_mode := str(item_binding.get("presentation_mode", ""))
+				if item_mode not in ["room", "overflow"] \
+						or (item_mode == "room" and not (object_rects as Dictionary).has(item_object_id)) \
+						or (item_mode == "overflow" and not (slot_overflow_ids as Array).has(item_object_id)):
+					failures.append("EnvironmentInstance layout is missing sealed item offer placement authority.")
 					break
 			if not _unique_strings(environment.next_archetypes, environment.travel_hooks).is_empty() and not (object_rects as Dictionary).has("travel:leave"):
 				failures.append("EnvironmentInstance layout is missing the world-map Leave travel object placement.")
@@ -4466,12 +4551,12 @@ func _check_tier_two_venue_progression(library: ContentLibrary, failures: Array)
 		failures.append("Kitty Cat Lounge must be a tier-2 casino archetype.")
 	if int(delta.get("tier", 0)) != 2 or str(delta.get("kind", "")) != "casino":
 		failures.append("Delta Queen must be a tier-2 casino archetype.")
-	if not _string_array(kitty.get("service_pool", [])).has("kitty_burlesque_show"):
+	if not JsonCoerceScript._string_array(kitty.get("service_pool", [])).has("kitty_burlesque_show"):
 		failures.append("Kitty Cat Lounge is missing its heat-management show service.")
-	if not _string_array(kitty.get("game_pool", [])).has("roulette"):
+	if not JsonCoerceScript._string_array(kitty.get("game_pool", [])).has("roulette"):
 		failures.append("Kitty Cat Lounge should reuse roulette as its house wheel.")
 	for required_game in ["blackjack", "roulette", "video_poker"]:
-		if not _string_array(delta.get("game_pool", [])).has(required_game):
+		if not JsonCoerceScript._string_array(delta.get("game_pool", [])).has(required_game):
 			failures.append("Delta Queen is missing mid-stakes game %s." % required_game)
 	if int(delta.get("travel_locked_actions", 0)) < 2:
 		failures.append("Delta Queen must declare a travel_locked_actions ride duration.")
@@ -4487,17 +4572,17 @@ func _check_tier_two_venue_progression(library: ContentLibrary, failures: Array)
 	var tier_one_to_tier_two := false
 	for source_id in tier_one_sources:
 		var source := _archetype_by_id(library, source_id)
-		var targets := _unique_strings(_string_array(source.get("next_archetypes", [])), _string_array(source.get("travel_hooks", [])))
+		var targets := _unique_strings(JsonCoerceScript._string_array(source.get("next_archetypes", [])), JsonCoerceScript._string_array(source.get("travel_hooks", [])))
 		if targets.has("kitty_cat_lounge") or targets.has("delta_queen"):
 			tier_one_to_tier_two = true
 	if not tier_one_to_tier_two:
 		failures.append("No tier-1 casino routes into the tier-2 venues.")
-	var kitty_targets := _unique_strings(_string_array(kitty.get("next_archetypes", [])), _string_array(kitty.get("travel_hooks", [])))
-	var delta_targets := _unique_strings(_string_array(delta.get("next_archetypes", [])), _string_array(delta.get("travel_hooks", [])))
+	var kitty_targets := _unique_strings(JsonCoerceScript._string_array(kitty.get("next_archetypes", [])), JsonCoerceScript._string_array(kitty.get("travel_hooks", [])))
+	var delta_targets := _unique_strings(JsonCoerceScript._string_array(delta.get("next_archetypes", [])), JsonCoerceScript._string_array(delta.get("travel_hooks", [])))
 	if not kitty_targets.has("grand_casino") or not delta_targets.has("grand_casino"):
 		failures.append("Tier-2 venues must route onward to the Grand Casino.")
 	var underground := _archetype_by_id(library, "small_underground_casino")
-	var underground_targets := _unique_strings(_string_array(underground.get("next_archetypes", [])), _string_array(underground.get("travel_hooks", [])))
+	var underground_targets := _unique_strings(JsonCoerceScript._string_array(underground.get("next_archetypes", [])), JsonCoerceScript._string_array(underground.get("travel_hooks", [])))
 	if not underground_targets.has("grand_casino"):
 		failures.append("Small Underground Casino lost its direct Grand Casino shortcut.")
 	_check_tier_two_world_spawn_thresholds(library, failures)
@@ -4625,7 +4710,7 @@ func _check_tier_two_route_gates(library: ContentLibrary, delta: Dictionary, del
 		failures.append("Delta Queen did not expose Grand Casino as a visible locked route before the invitation was earned.")
 	loaded.narrative_flags["grand_casino_invite"] = true
 	var invite_status := loaded.travel_route_status(grand_route)
-	if not bool(invite_status.get("available", false)) or bool(invite_status.get("hidden", true)) or bool(invite_status.get("locked", true)):
+	if not bool(invite_status.get("available", false)) or bool(invite_status.get("hidden", true)) or bool(invite_status.get("locked", true)) or int(invite_status.get("cost", -1)) != 0:
 		failures.append("Delta Queen did not allow onward travel after ride lock and invitation: %s." % str(invite_status.get("disabled_reason", "")))
 
 
@@ -4636,9 +4721,9 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 		return
 	for archetype in [kitty, delta]:
 		var archetype_id := str((archetype as Dictionary).get("id", ""))
-		if not _string_array((archetype as Dictionary).get("event_pool", [])).has("grand_casino_invite"):
+		if not JsonCoerceScript._string_array((archetype as Dictionary).get("event_pool", [])).has("grand_casino_invite"):
 			failures.append("%s event pool does not include the Grand Casino invite." % archetype_id)
-		if not _string_array((archetype as Dictionary).get("required_event_ids", [])).has("grand_casino_invite"):
+		if not JsonCoerceScript._string_array((archetype as Dictionary).get("required_event_ids", [])).has("grand_casino_invite"):
 			failures.append("%s does not require the Grand Casino invite event." % archetype_id)
 	for seed_index in range(8):
 		var seed_text := "GRAND-INVITE-SPAWN-%d" % seed_index
@@ -4647,7 +4732,7 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 		for archetype in [kitty, delta]:
 			var archetype_data := archetype as Dictionary
 			var environment := EnvironmentInstance.from_archetype(archetype_data, 2, run_state.create_rng("%s:%s" % [seed_text, str(archetype_data.get("id", ""))]), library).to_dict()
-			if not _string_array(environment.get("event_ids", [])).has("grand_casino_invite"):
+			if not JsonCoerceScript._string_array(environment.get("event_ids", [])).has("grand_casino_invite"):
 				failures.append("%s did not guarantee Grand Casino invite for seed %s." % [str(archetype_data.get("id", "")), seed_text])
 	var decline_run: RunState = RunStateScript.new()
 	decline_run.start_new("GRAND-INVITE-DECLINE")
@@ -4658,10 +4743,14 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 	_check_grand_casino_invite_table_win_spawn(library, invite_module, kitty, delta, failures)
 	if not invite_module.can_trigger(decline_run, decline_env):
 		failures.append("Grand Casino invite did not trigger at a tier-2 casino before acceptance.")
+	var decline_bankroll_before := decline_run.bankroll
 	var decline_result := invite_module.resolve(decline_run, decline_env, "not_yet")
 	if not bool(decline_result.get("ok", false)):
 		failures.append("Grand Casino invite decline choice did not resolve.")
-	if bool(decline_run.narrative_flags.get("grand_casino_invite", false)) or _string_array(decline_run.current_environment.get("resolved_event_ids", [])).has("grand_casino_invite"):
+	var decline_deltas := JsonCoerceScript._copy_dict(decline_result.get("deltas", {}))
+	if decline_run.bankroll != decline_bankroll_before or int(decline_result.get("bankroll_delta", 0)) != 0 or int(decline_deltas.get("bankroll_delta", 0)) != 0:
+		failures.append("Declining Grand Casino invite granted bankroll.")
+	if bool(decline_run.narrative_flags.get("grand_casino_invite", false)) or JsonCoerceScript._string_array(decline_run.current_environment.get("resolved_event_ids", [])).has("grand_casino_invite"):
 		failures.append("Declining Grand Casino invite set the flag or resolved the event.")
 	if not invite_module.can_trigger(decline_run, decline_run.current_environment):
 		failures.append("Declining Grand Casino invite did not leave the event re-openable.")
@@ -4674,7 +4763,14 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 	var accept_env := EnvironmentInstance.from_archetype(delta, 2, accept_run.create_rng("accept_delta"), library).to_dict()
 	accept_run.set_environment(accept_env)
 	accept_run.current_environment["travel_lock_remaining"] = 0
+	accept_run.enter_world_node("delta_queen", accept_run.current_environment)
 	var locked_route := library.route("grand_casino")
+	var expected_free_origins := ["beach", "delta_queen", "kitty_cat_lounge"]
+	var authored_free_origins := JsonCoerceScript._string_array(JsonCoerceScript._copy_array(locked_route.get("free_from_archetypes", [])))
+	expected_free_origins.sort()
+	authored_free_origins.sort()
+	if authored_free_origins != expected_free_origins:
+		failures.append("Grand Casino route free origins must be exactly Kitty Cat Lounge, Delta Queen, and Beach: %s." % JSON.stringify(authored_free_origins))
 	var locked_status := accept_run.travel_route_status(locked_route)
 	if bool(locked_status.get("available", true)) or bool(locked_status.get("hidden", true)) or not bool(locked_status.get("locked", false)):
 		failures.append("Grand Casino route was not exposed as a locked route before accepting the invite.")
@@ -4682,17 +4778,149 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 	if bool(underground_locked_status.get("available", true)) or not bool(underground_locked_status.get("hidden", false)) or bool(underground_locked_status.get("locked", false)):
 		failures.append("Underground route without locked_hint should remain fully hidden before its tip.")
 	_check_grand_casino_locked_route_ui(library, delta, locked_route, failures)
+	var accept_bankroll_before := accept_run.bankroll
 	var accept_result := invite_module.resolve(accept_run, accept_run.current_environment, "accept_invite")
 	if not bool(accept_result.get("ok", false)) or not bool(accept_run.narrative_flags.get("grand_casino_invite", false)):
 		failures.append("Accepting Grand Casino invite did not set the unlock flag.")
-	if not _string_array(accept_run.current_environment.get("resolved_event_ids", [])).has("grand_casino_invite"):
+	var accept_deltas := JsonCoerceScript._copy_dict(accept_result.get("deltas", {}))
+	if int(accept_result.get("bankroll_delta", 0)) != 50 or int(accept_deltas.get("bankroll_delta", 0)) != 50 or accept_run.bankroll != accept_bankroll_before + 50:
+		failures.append("Accepting Grand Casino invite did not grant exactly +50 bankroll once.")
+	if not JsonCoerceScript._string_array(accept_run.current_environment.get("resolved_event_ids", [])).has("grand_casino_invite"):
 		failures.append("Accepting Grand Casino invite did not resolve the event instance.")
 	var grand_node := WorldMapScript.node_by_id(accept_run.world_map, "grand_casino")
 	if not bool(grand_node.get("unlocked", false)) or str(grand_node.get("discovery_source", "")) != WorldMapScript.DISCOVERY_SOURCE_EVENT:
 		failures.append("Accepting Grand Casino invite did not unlock the Grand Casino map node as an event discovery.")
 	var unlocked_status := accept_run.travel_route_status(locked_route)
-	if not bool(unlocked_status.get("available", false)) or bool(unlocked_status.get("hidden", true)) or bool(unlocked_status.get("locked", true)):
+	if not bool(unlocked_status.get("available", false)) or bool(unlocked_status.get("hidden", true)) or bool(unlocked_status.get("locked", true)) or int(unlocked_status.get("cost", -1)) != 0:
 		failures.append("Grand Casino route did not become available after accepting the invite.")
+	var accepted_bankroll := accept_run.bankroll
+	var retry_result := invite_module.resolve(accept_run, accept_run.current_environment, "accept_invite")
+	var retry_deltas := JsonCoerceScript._copy_dict(retry_result.get("deltas", {}))
+	if bool(retry_result.get("ok", false)) or accept_run.bankroll != accepted_bankroll \
+			or int(retry_result.get("bankroll_delta", 0)) != 0 or int(retry_deltas.get("bankroll_delta", 0)) != 0:
+		failures.append("Resolved Grand Casino invite granted bankroll again on retry.")
+
+	var floor_run: RunState = RunStateScript.new()
+	floor_run.start_new("GRAND-INVITE-ONE-DOLLAR")
+	floor_run.change_bankroll(-(floor_run.bankroll - 1))
+	floor_run.environment_history.append({"id": "visited_once", "archetype_id": "corner_store"})
+	floor_run.set_world_map(WorldMapScript.new(library).build(floor_run, floor_run.create_rng("grand_invite_floor_map")))
+	var floor_env := EnvironmentInstance.from_archetype(delta, 2, floor_run.create_rng("grand_invite_floor_delta"), library).to_dict()
+	floor_env["travel_lock_remaining"] = 0
+	floor_run.set_environment(floor_env)
+	floor_run.enter_world_node("delta_queen", floor_run.current_environment)
+	var floor_result := invite_module.resolve(floor_run, floor_run.current_environment, "accept_invite")
+	var floor_status := floor_run.travel_route_status(locked_route)
+	if not bool(floor_result.get("ok", false)) or floor_run.bankroll != 51 or floor_run.run_status != RunState.RUN_STATUS_ACTIVE or floor_run.is_terminal() \
+			or int(floor_status.get("cost", -1)) != 0 or not bool(floor_status.get("available", false)):
+		failures.append("A live $1 Delta Queen run did not become an active $51 run with free invited Grand travel.")
+
+	var low_bankroll_run: RunState = RunStateScript.new()
+	low_bankroll_run.from_dict(accept_run.to_dict())
+	var bar_archetype := _archetype_by_id(library, "bar")
+	var low_bankroll_env := EnvironmentInstance.from_archetype(bar_archetype, 1, low_bankroll_run.create_rng("grand_invite_low_bar"), library).to_dict()
+	low_bankroll_env["travel_lock_remaining"] = 0
+	low_bankroll_run.world_map = WorldMapScript.unlock_nodes(low_bankroll_run.world_map, ["bar"], WorldMapScript.DISCOVERY_SOURCE_TRAVEL)
+	low_bankroll_run.set_environment(low_bankroll_env)
+	low_bankroll_run.enter_world_node("bar", low_bankroll_run.current_environment)
+	low_bankroll_run.bankroll = 500
+	var low_bankroll_map := WorldMapScript.new(library)
+	var low_bankroll_route := low_bankroll_map.route_for_target(low_bankroll_run.world_map, "bar", "grand_casino")
+	var priced_low_bankroll_status := low_bankroll_run.travel_route_status(low_bankroll_route)
+	var priced_low_bankroll_cost := int(priced_low_bankroll_status.get("cost", 0))
+	low_bankroll_run.bankroll = maxi(0, priced_low_bankroll_cost - 1)
+	var low_bankroll_status := low_bankroll_run.travel_route_status(low_bankroll_route)
+	if low_bankroll_route.is_empty() or priced_low_bankroll_cost <= 0 or bool(low_bankroll_status.get("available", true)) or str(low_bankroll_status.get("disabled_reason", "")) != "Not enough bankroll for this route.":
+		failures.append("Low-bankroll invited Grand route did not retain its exact affordability blocker.")
+	var low_bankroll_targets := RunGeneratorScript.new(library)._world_travel_target_ids(low_bankroll_run, low_bankroll_run.world_map, "bar")
+	if not low_bankroll_targets.has("grand_casino"):
+		failures.append("The event-unlocked Grand Casino disappeared from the capped production map while its fare was unaffordable: %s." % JSON.stringify(low_bankroll_targets))
+	if low_bankroll_targets.size() > WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT + low_bankroll_run.travel_option_bonus():
+		failures.append("Preserving the unaffordable event-unlocked Grand Casino exceeded the production travel-card cap.")
+	# A real late-route map can have one enabled event-unlocked Tier-2 casino plus
+	# more additive revisits than the three-card surface can render. The promised
+	# Grand card must replace the lower-priority new destination, while the
+	# deterministic revisit subset fills only the remaining capped slots.
+	var crowded_revisit_ids := ["back_alley", "bar", "gas_station_casino", "motel"]
+	var crowded_nodes: Array = [{
+		"id": "kitty_cat_lounge", "kind": "casino", "tier": 2,
+		"state": WorldMapScript.STATE_VISITED, "seen": true,
+		"position": {"x": 0.5, "y": 0.5},
+	}]
+	for revisit_index in range(crowded_revisit_ids.size()):
+		crowded_nodes.append({
+			"id": str(crowded_revisit_ids[revisit_index]), "kind": "casino", "tier": 1,
+			"state": WorldMapScript.STATE_VISITED, "seen": true,
+			"position": {"x": 0.1 + float(revisit_index) * 0.15, "y": 0.2},
+		})
+	crowded_nodes.append({
+		"id": "delta_queen", "kind": "casino", "tier": 2,
+		"state": WorldMapScript.STATE_REVEALED, "seen": true, "unlocked": true,
+		"discovery_source": WorldMapScript.DISCOVERY_SOURCE_EVENT,
+		"position": {"x": 0.7, "y": 0.7},
+	})
+	crowded_nodes.append({
+		"id": "grand_casino", "kind": "boss", "tier": 3,
+		"state": WorldMapScript.STATE_REVEALED, "seen": true, "unlocked": true,
+		"discovery_source": WorldMapScript.DISCOVERY_SOURCE_EVENT,
+		"position": {"x": 0.9, "y": 0.5},
+	})
+	var crowded_edges: Array = []
+	for crowded_target_id in crowded_revisit_ids + ["delta_queen", "grand_casino"]:
+		crowded_edges.append({
+			"a": "kitty_cat_lounge", "b": str(crowded_target_id),
+			"distance_blocks": 2, "base_cost": 8, "cost": 8,
+		})
+	var crowded_map := {
+		"seed_text": "GRAND-INVITE-CROWDED",
+		"start_node_id": "back_alley",
+		"current_node_id": "kitty_cat_lounge",
+		"nodes": crowded_nodes,
+		"edges": crowded_edges,
+		"visited_path": crowded_revisit_ids + ["kitty_cat_lounge"],
+	}
+	var crowded_enabled_ids := crowded_revisit_ids + ["delta_queen"]
+	var crowded_targets := WorldMapScript.travel_target_ids(
+		crowded_map,
+		"kitty_cat_lounge",
+		WorldMapScript.TRAVEL_NEW_TARGET_LIMIT,
+		WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT,
+		crowded_enabled_ids
+	)
+	if not crowded_targets.has("grand_casino") or crowded_targets.has("delta_queen"):
+		failures.append("The promised Grand Casino did not replace the lower-priority new Tier-2 card on a revisit-crowded map: %s." % JSON.stringify(crowded_targets))
+	if crowded_targets.size() != WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT:
+		failures.append("The promised Grand Casino and crowded revisits did not obey the production travel-card cap: %s." % JSON.stringify(crowded_targets))
+	var selected_crowded_revisits := 0
+	for crowded_target_id_value in crowded_targets:
+		var crowded_target_id := str(crowded_target_id_value)
+		if crowded_target_id == "grand_casino":
+			continue
+		if not crowded_revisit_ids.has(crowded_target_id):
+			failures.append("The crowded travel-card subset admitted an unexpected target %s: %s." % [crowded_target_id, JSON.stringify(crowded_targets)])
+		else:
+			selected_crowded_revisits += 1
+	if selected_crowded_revisits != WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT - 1:
+		failures.append("The promised Grand Casino did not preserve exactly two deterministic revisit cards under the cap: %s." % JSON.stringify(crowded_targets))
+	# A temporarily unaffordable event promise cannot rely on a lower-priority new
+	# card being available to displace. It must remain visible, with its blocker,
+	# even when every competing capped card is an enabled revisit.
+	var revisit_only_targets := WorldMapScript.travel_target_ids(
+		crowded_map,
+		"kitty_cat_lounge",
+		WorldMapScript.TRAVEL_NEW_TARGET_LIMIT,
+		WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT,
+		crowded_revisit_ids
+	)
+	var revisit_only_selected_count := 0
+	for revisit_only_target_value in revisit_only_targets:
+		if crowded_revisit_ids.has(str(revisit_only_target_value)):
+			revisit_only_selected_count += 1
+	if revisit_only_targets.size() != WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT \
+			or not revisit_only_targets.has("grand_casino") \
+			or revisit_only_targets.has("delta_queen") \
+			or revisit_only_selected_count != WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT - 1:
+		failures.append("The disabled promised Grand Casino disappeared behind an all-revisit travel-card cap: %s." % JSON.stringify(revisit_only_targets))
 	var suppressed_env := EnvironmentInstance.from_archetype(kitty, 2, accept_run.create_rng("suppressed_kitty"), library).to_dict()
 	if invite_module.can_trigger(accept_run, suppressed_env):
 		failures.append("Grand Casino invite copy at the other tier-2 venue was not suppressed after acceptance.")
@@ -4707,8 +4935,18 @@ func _check_grand_casino_invite_gate(library: ContentLibrary, kitty: Dictionary,
 			failures.append("Save service could not reload Grand Casino invite progress.")
 		else:
 			var loaded_status: Dictionary = loaded_accept.travel_route_status(locked_route)
-			if not bool(loaded_status.get("available", false)):
+			if loaded_accept.bankroll != accepted_bankroll \
+					or not bool(loaded_accept.narrative_flags.get("grand_casino_invite", false)) \
+					or not JsonCoerceScript._string_array(loaded_accept.current_environment.get("resolved_event_ids", [])).has("grand_casino_invite") \
+					or int(loaded_status.get("cost", -1)) != 0 \
+					or not bool(loaded_status.get("available", false)):
 				failures.append("Grand Casino invite route availability did not survive save/load.")
+			var loaded_bankroll_before_retry: int = loaded_accept.bankroll
+			var loaded_retry: Dictionary = invite_module.resolve(loaded_accept, loaded_accept.current_environment, "accept_invite")
+			var loaded_retry_deltas := JsonCoerceScript._copy_dict(loaded_retry.get("deltas", {}))
+			if bool(loaded_retry.get("ok", false)) or loaded_accept.bankroll != loaded_bankroll_before_retry \
+					or int(loaded_retry.get("bankroll_delta", 0)) != 0 or int(loaded_retry_deltas.get("bankroll_delta", 0)) != 0:
+				failures.append("Save/load rearmed the resolved Grand Casino invite or granted its bankroll twice.")
 	var gated_run: RunState = RunStateScript.new()
 	gated_run.start_new("GRAND-INVITE-GATED-LOAD")
 	gated_run.bankroll = 500
@@ -4734,7 +4972,7 @@ func _check_grand_casino_invite_table_win_spawn(library: ContentLibrary, invite_
 	var source_environment := EnvironmentInstance.from_archetype(source_archetype, 1, run_state.create_rng("table_win_source"), library).to_dict()
 	source_environment["id"] = "table_win_source_room"
 	source_environment["world_node_id"] = source_node_id
-	var source_event_ids := _string_array(source_environment.get("event_ids", []))
+	var source_event_ids := JsonCoerceScript._string_array(source_environment.get("event_ids", []))
 	source_event_ids.erase(RunState.GRAND_CASINO_INVITATION_EVENT_ID)
 	source_environment["event_ids"] = source_event_ids
 	run_state.set_environment(source_environment)
@@ -4758,22 +4996,22 @@ func _check_grand_casino_invite_table_win_spawn(library: ContentLibrary, invite_
 	GameModule.apply_result(run_state, qualifying_result)
 	if not bool(run_state.narrative_flags.get(RunState.GRAND_CASINO_INVITATION_TABLE_WIN_FLAG, false)):
 		failures.append("A net blackjack win over $300 did not trigger the Grand Casino invitation.")
-	if not _string_array(run_state.current_environment.get("event_ids", [])).has(RunState.GRAND_CASINO_INVITATION_EVENT_ID):
+	if not JsonCoerceScript._string_array(run_state.current_environment.get("event_ids", [])).has(RunState.GRAND_CASINO_INVITATION_EVENT_ID):
 		failures.append("The table-win invitation did not spawn in the player's current environment.")
-	if not bool(qualifying_result.get("grand_casino_invitation_spawned", false)) or _string_array(qualifying_result.get("messages", [])).is_empty():
+	if not bool(qualifying_result.get("grand_casino_invitation_spawned", false)) or JsonCoerceScript._string_array(qualifying_result.get("messages", [])).is_empty():
 		failures.append("The qualifying table result did not tell the player that the invitation spawned.")
 	if not invite_module.can_trigger(run_state, run_state.current_environment):
 		failures.append("The table-win invitation spawned but was not interactable in its earned environment.")
 	var default_node := WorldMapScript.node_by_id(run_state.world_map, "delta_queen")
 	var stored_default: Dictionary = default_node.get("environment", {}) if typeof(default_node.get("environment", {})) == TYPE_DICTIONARY else {}
-	if _string_array(stored_default.get("event_ids", [])).has(RunState.GRAND_CASINO_INVITATION_EVENT_ID):
+	if JsonCoerceScript._string_array(stored_default.get("event_ids", [])).has(RunState.GRAND_CASINO_INVITATION_EVENT_ID):
 		failures.append("The table-win trigger left a second invitation at the default Tier-2 spawn.")
 
 	run_state.store_current_world_node_environment()
 	var other_environment := EnvironmentInstance.from_archetype(kitty, 2, run_state.create_rng("table_win_other"), library).to_dict()
 	other_environment["world_node_id"] = "kitty_cat_lounge"
 	run_state.set_environment(other_environment)
-	if _string_array(run_state.current_environment.get("event_ids", [])).has(RunState.GRAND_CASINO_INVITATION_EVENT_ID):
+	if JsonCoerceScript._string_array(run_state.current_environment.get("event_ids", [])).has(RunState.GRAND_CASINO_INVITATION_EVENT_ID):
 		failures.append("Entering another default Tier-2 venue regenerated a second table-win invitation.")
 	GameModule.apply_result(run_state, {"ok": true, "game_id": "roulette", "source_id": "roulette", "action_id": "spin_roulette", "deltas": {"bankroll_delta": 900}})
 	if str(run_state.narrative_flags.get("grand_casino_invite_table_win_environment_id", "")) != "table_win_source_room":
@@ -4783,16 +5021,20 @@ func _check_grand_casino_invite_table_win_spawn(library: ContentLibrary, invite_
 	loaded.from_dict(run_state.to_dict())
 	var loaded_source_node := WorldMapScript.node_by_id(loaded.world_map, source_node_id)
 	var loaded_source: Dictionary = loaded_source_node.get("environment", {}) if typeof(loaded_source_node.get("environment", {})) == TYPE_DICTIONARY else {}
-	if not _string_array(loaded_source.get("event_ids", [])).has(RunState.GRAND_CASINO_INVITATION_EVENT_ID):
+	if not JsonCoerceScript._string_array(loaded_source.get("event_ids", [])).has(RunState.GRAND_CASINO_INVITATION_EVENT_ID):
 		failures.append("The earned invitation location did not survive save/load.")
 	loaded.set_environment(loaded_source)
 	if not invite_module.can_trigger(loaded, loaded.current_environment):
 		failures.append("The earned invitation was not interactable after returning to its saved location.")
 	else:
+		var table_win_accept_bankroll_before := loaded.bankroll
 		var accept_result := invite_module.resolve(loaded, loaded.current_environment, "accept_invite")
 		if not bool(accept_result.get("ok", false)) or not bool(loaded.narrative_flags.get("grand_casino_invite", false)):
 			failures.append("The earned table-win invitation could not be accepted normally.")
-		if _string_array(loaded.current_environment.get("event_ids", [])).has(RunState.GRAND_CASINO_INVITATION_EVENT_ID) or _world_map_stored_event_count(loaded.world_map, RunState.GRAND_CASINO_INVITATION_EVENT_ID) != 0:
+		var table_win_accept_deltas := JsonCoerceScript._copy_dict(accept_result.get("deltas", {}))
+		if int(accept_result.get("bankroll_delta", 0)) != 50 or int(table_win_accept_deltas.get("bankroll_delta", 0)) != 50 or loaded.bankroll != table_win_accept_bankroll_before + 50:
+			failures.append("The saved table-win invitation did not grant exactly +50 bankroll once.")
+		if JsonCoerceScript._string_array(loaded.current_environment.get("event_ids", [])).has(RunState.GRAND_CASINO_INVITATION_EVENT_ID) or _world_map_stored_event_count(loaded.world_map, RunState.GRAND_CASINO_INVITATION_EVENT_ID) != 0:
 			failures.append("Accepting the table-win invitation left another spawned copy in the run.")
 
 
@@ -4802,7 +5044,7 @@ func _world_map_stored_event_count(map_data: Dictionary, event_id: String) -> in
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
 		var environment_value: Variant = (node_value as Dictionary).get("environment", {})
-		if typeof(environment_value) == TYPE_DICTIONARY and _string_array((environment_value as Dictionary).get("event_ids", [])).has(event_id):
+		if typeof(environment_value) == TYPE_DICTIONARY and JsonCoerceScript._string_array((environment_value as Dictionary).get("event_ids", [])).has(event_id):
 			count += 1
 	return count
 
@@ -4870,7 +5112,7 @@ func _check_grand_casino_locked_route_ui(library: ContentLibrary, delta: Diction
 		failures.append("Grand Casino locked route armed selected_travel_target_id.")
 	var map_snapshot: Dictionary = app.call("_world_map_snapshot")
 	var grand_node: Dictionary = {}
-	for node_value in _copy_array(map_snapshot.get("nodes", [])):
+	for node_value in JsonCoerceScript._copy_array(map_snapshot.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
 		var node: Dictionary = node_value
@@ -4887,8 +5129,124 @@ func _check_grand_casino_locked_route_ui(library: ContentLibrary, delta: Diction
 	unlocked_run.from_dict(ui_run.to_dict())
 	unlocked_run.narrative_flags["grand_casino_invite"] = true
 	var unlocked_status := unlocked_run.travel_route_status(locked_route)
-	if not bool(unlocked_status.get("available", false)) or bool(unlocked_status.get("hidden", true)) or bool(unlocked_status.get("locked", true)):
+	if not bool(unlocked_status.get("available", false)) or bool(unlocked_status.get("hidden", true)) or bool(unlocked_status.get("locked", true)) or int(unlocked_status.get("cost", -1)) != 0:
 		failures.append("Grand Casino locked_hint route did not return normal status after the invite flag.")
+	var unaffordable_run: RunState = RunStateScript.new()
+	unaffordable_run.from_dict(unlocked_run.to_dict())
+	var bar_archetype := _archetype_by_id(library, "bar")
+	if bar_archetype.is_empty():
+		failures.append("Grand Casino unaffordable-map fixture requires the Bar archetype.")
+		_sb4_dispose_app(app)
+		return
+	var bar_env := EnvironmentInstance.from_archetype(bar_archetype, 1, unaffordable_run.create_rng("grand_locked_ui_bar"), library).to_dict()
+	bar_env["travel_lock_remaining"] = 0
+	unaffordable_run.world_map = WorldMapScript.unlock_nodes(unaffordable_run.world_map, ["bar"], WorldMapScript.DISCOVERY_SOURCE_TRAVEL)
+	unaffordable_run.set_environment(bar_env)
+	unaffordable_run.enter_world_node("bar", unaffordable_run.current_environment)
+	unaffordable_run.bankroll = 500
+	var unaffordable_route := RunGeneratorScript.new(library).world_route_for_target(unaffordable_run, "grand_casino")
+	var priced_unaffordable_status := unaffordable_run.travel_route_status(unaffordable_route)
+	var priced_unaffordable_cost := int(priced_unaffordable_status.get("cost", 0))
+	unaffordable_run.bankroll = maxi(0, priced_unaffordable_cost - 1)
+	var unaffordable_status := unaffordable_run.travel_route_status(unaffordable_route)
+	if unaffordable_route.is_empty() or priced_unaffordable_cost <= 0 or bool(unaffordable_status.get("available", true)) or str(unaffordable_status.get("disabled_reason", "")) != "Not enough bankroll for this route.":
+		failures.append("Non-comp Grand Casino UI fixture did not retain its positive unaffordable fare.")
+	app.set("run_state", unaffordable_run)
+	app.call("_invalidate_travel_view_cache")
+	app.call("_refresh")
+	var unaffordable_target_ids: Array = app.call("_travel_target_ids")
+	if not unaffordable_target_ids.has("grand_casino"):
+		failures.append("Invited Grand Casino was not selected as a public map target while its fare was unaffordable: %s." % JSON.stringify(unaffordable_target_ids))
+	var hidden_node_id := ""
+	for hidden_candidate_value in JsonCoerceScript._copy_array(unaffordable_run.world_map.get("nodes", [])):
+		if typeof(hidden_candidate_value) != TYPE_DICTIONARY:
+			continue
+		var hidden_candidate_id := str((hidden_candidate_value as Dictionary).get("id", "")).strip_edges()
+		if not hidden_candidate_id.is_empty() and not WorldMapScript.is_node_visible(unaffordable_run.world_map, hidden_candidate_id):
+			hidden_node_id = hidden_candidate_id
+			break
+	if hidden_node_id.is_empty():
+		failures.append("Grand Casino unaffordable-map fixture did not retain an unrevealed node for privacy coverage.")
+	elif unaffordable_target_ids.has(hidden_node_id):
+		failures.append("Public travel targets retained hidden node %s even though no travel choice could be rendered for it." % hidden_node_id)
+	var unaffordable_map_snapshot: Dictionary = app.call("_world_map_snapshot")
+	var unaffordable_grand_node: Dictionary = {}
+	var hidden_node_rendered := false
+	for node_value in JsonCoerceScript._copy_array(unaffordable_map_snapshot.get("nodes", [])):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = node_value
+		var node_id := str(node.get("id", ""))
+		if node_id == "grand_casino":
+			unaffordable_grand_node = node
+		if not hidden_node_id.is_empty() and node_id == hidden_node_id:
+			hidden_node_rendered = true
+	if unaffordable_grand_node.is_empty():
+		failures.append("Selected, invited Grand Casino disappeared from the public map while its fare was unaffordable.")
+	else:
+		if not bool(unaffordable_grand_node.get("travel_target", false)) or bool(unaffordable_grand_node.get("travel_enabled", true)):
+			failures.append("Unaffordable Grand Casino public map node was not a disabled travel target.")
+		if str(unaffordable_grand_node.get("travel_disabled_reason", "")) != "Not enough bankroll for this route.":
+			failures.append("Unaffordable Grand Casino public map node did not retain the exact fare blocker.")
+	if hidden_node_rendered:
+		failures.append("Rendering an unaffordable selected destination leaked unrevealed map node %s." % hidden_node_id)
+
+	# Confirm through FoundationMain rather than stopping at route-status preview:
+	# destination installation replaces current_environment before the travel
+	# result is built, so this catches any late recomputation of a departure comp.
+	var comp_run: RunState = RunStateScript.new()
+	comp_run.from_dict(unlocked_run.to_dict())
+	comp_run.bankroll = 51
+	var comp_generator: RunGenerator = RunGeneratorScript.new(library)
+	var comp_route := comp_generator.world_route_for_target(comp_run, "grand_casino")
+	var comp_status := comp_run.travel_route_status(comp_route)
+	if comp_route.is_empty() or int(comp_status.get("cost", -1)) != 0 or not bool(comp_status.get("available", false)):
+		failures.append("Grand Casino production comp-travel fixture was not enabled at zero fare before confirmation.")
+	else:
+		app.set("run_state", comp_run)
+		app.set("generator", comp_generator)
+		app.set("current_game", null)
+		app.call("_clear_selected_travel")
+		app.call("_invalidate_travel_view_cache")
+		app.call("_set_current_screen", "ENVIRONMENT")
+		app.call("_refresh")
+		var comp_selected := bool(app.call("select_travel_option", "grand_casino"))
+		var comp_confirmed := bool(app.call("confirm_selected_travel", true)) if comp_selected else false
+		var comp_result: Dictionary = app.get("last_hook_result") if typeof(app.get("last_hook_result")) == TYPE_DICTIONARY else {}
+		if not comp_selected or not comp_confirmed \
+				or str(comp_run.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID \
+				or comp_run.bankroll != 51 or comp_run.run_status != RunState.RUN_STATUS_ACTIVE or comp_run.is_terminal() \
+				or int(comp_result.get("route_cost", -1)) != 0 or int(comp_result.get("bankroll_delta", -1)) != 0 \
+				or int(comp_run.narrative_flags.get("grand_casino_entry_bankroll", -1)) != 51 \
+				or int(comp_run.narrative_flags.get("grand_casino_net_winnings", -1)) != 0:
+			failures.append("Real Delta Queen-to-Grand confirmation did not preserve the $51 comp stake as the active zero-net entry baseline: selected=%s confirmed=%s bankroll=%d status=%s result=%s." % [comp_selected, comp_confirmed, comp_run.bankroll, comp_run.run_status, JSON.stringify(comp_result)])
+
+	var paid_run: RunState = RunStateScript.new()
+	paid_run.from_dict(unaffordable_run.to_dict())
+	paid_run.bankroll = 500
+	var paid_generator: RunGenerator = RunGeneratorScript.new(library)
+	var paid_route := paid_generator.world_route_for_target(paid_run, "grand_casino")
+	var paid_status := paid_run.travel_route_status(paid_route)
+	var paid_cost := int(paid_status.get("cost", 0))
+	if paid_route.is_empty() or paid_cost <= 0 or not bool(paid_status.get("available", false)):
+		failures.append("Grand Casino production paid-travel fixture did not retain an available positive Bar fare.")
+	else:
+		var paid_bankroll_before := paid_run.bankroll
+		app.set("run_state", paid_run)
+		app.set("generator", paid_generator)
+		app.set("current_game", null)
+		app.call("_clear_selected_travel")
+		app.call("_invalidate_travel_view_cache")
+		app.call("_set_current_screen", "ENVIRONMENT")
+		app.call("_refresh")
+		var paid_selected := bool(app.call("select_travel_option", "grand_casino"))
+		var paid_confirmed := bool(app.call("confirm_selected_travel", true)) if paid_selected else false
+		var paid_result: Dictionary = app.get("last_hook_result") if typeof(app.get("last_hook_result")) == TYPE_DICTIONARY else {}
+		if not paid_selected or not paid_confirmed \
+				or str(paid_run.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID \
+				or paid_run.bankroll != paid_bankroll_before - paid_cost or paid_run.run_status != RunState.RUN_STATUS_ACTIVE \
+				or int(paid_result.get("route_cost", -1)) != paid_cost or int(paid_result.get("bankroll_delta", 0)) != -paid_cost:
+			failures.append("Real Bar-to-Grand confirmation did not charge its positive departure fare exactly once: selected=%s confirmed=%s expected=%d bankroll=%d result=%s." % [paid_selected, paid_confirmed, paid_cost, paid_run.bankroll, JSON.stringify(paid_result)])
 	_sb4_dispose_app(app)
 
 
@@ -4917,7 +5275,7 @@ func _check_baccarat_grand_casino_only(library: ContentLibrary, failures: Array)
 			continue
 		var archetype: Dictionary = archetype_value
 		var archetype_id := str(archetype.get("id", ""))
-		var pool := _string_array(archetype.get("game_pool", []))
+		var pool := JsonCoerceScript._string_array(archetype.get("game_pool", []))
 		if pool.has("baccarat"):
 			if archetype_id != RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID:
 				failures.append("Baccarat must only appear in the Grand Casino High-Limit Room, but %s includes it." % archetype_id)
@@ -5404,7 +5762,7 @@ func _save_load_fuzz_drive_action(library: ContentLibrary, generator: RunGenerat
 
 
 func _save_load_fuzz_resolve_triggered_event(library: ContentLibrary, run_state: RunState, label: String, failures: Array) -> bool:
-	var entry := _copy_dict(run_state.active_triggered_event)
+	var entry := JsonCoerceScript._copy_dict(run_state.active_triggered_event)
 	if entry.is_empty():
 		entry = run_state.next_pending_triggered_event()
 		if entry.is_empty():
@@ -5476,6 +5834,9 @@ func _save_load_fuzz_travel(generator: RunGenerator, run_state: RunState, failur
 		var status := run_state.travel_route_status(route)
 		if not bool(status.get("available", false)):
 			continue
+		# Production travel only offers destinations that are open on arrival.
+		if not generator._world_target_is_available(run_state, run_state.world_map, current_node_id, target_id):
+			continue
 		var cost := maxi(0, int(status.get("cost", route.get("cost", 0))))
 		var travel_heat := run_state.begin_travel_suspicion_decay(route, target_id)
 		var arrived := HarnessProductionFidelityScript.travel_and_finalize(generator, run_state, target_id, false, generator.library, failures, "save/load fuzz arrival %s" % target_id)
@@ -5489,7 +5850,7 @@ func _save_load_fuzz_travel(generator: RunGenerator, run_state: RunState, failur
 
 
 func _save_load_fuzz_play_game(library: ContentLibrary, run_state: RunState, action_index: int, _label: String, failures: Array) -> bool:
-	var game_ids := _string_array(run_state.current_environment.get("game_ids", []))
+	var game_ids := JsonCoerceScript._string_array(run_state.current_environment.get("game_ids", []))
 	if game_ids.is_empty():
 		return false
 	var start_index := posmod(action_index, game_ids.size())
@@ -5522,6 +5883,11 @@ func _save_load_fuzz_play_game(library: ContentLibrary, run_state: RunState, act
 			var result: Dictionary = game.resolve_with_context(action_id, stake, run_state, run_state.current_environment, rng, {})
 			if bool(result.get("ok", false)):
 				GameModule.apply_result(run_state, result, rng)
+				return true
+			# Sealed games such as Bar Dice reject the legacy observer path and
+			# settle only through the production Foundation host.
+			if bool(result.get("sealed_action_authoritative", false)) \
+					and bool(SaveFuzzTableGameAuthorityDriverScript.resolve(game, action_id, stake, run_state, run_state.current_environment).get("ok", false)):
 				return true
 	return false
 
@@ -5574,8 +5940,11 @@ func _save_load_checkpoint(library: ContentLibrary, run_state: RunState, label: 
 	var after_json := JSON.stringify(after_snapshot)
 	if after_json != before_json:
 		failures.append("SB.3 %s RunState to_dict -> from_dict -> to_dict was not byte-identical at %s." % [label, _save_load_first_mismatch(before_snapshot, after_snapshot)])
+	# Load the second clone from persisted JSON text exactly like the first and
+	# like a real save. The canonical snapshot dictionary stores integral floats
+	# as ints, which no save file can contain.
 	var second: RunState = RunStateScript.new()
-	second.from_dict(after_snapshot)
+	second.from_dict(JSON.parse_string(after_json) as Dictionary)
 	if JSON.stringify(_save_load_canonical_run_snapshot(second.to_dict())) != after_json:
 		failures.append("SB.3 %s RunState normalization was not idempotent on the second load." % label)
 	var after_signature := _save_load_action_signature(library, restored, failures)
@@ -5718,9 +6087,9 @@ func _save_load_action_signature(library: ContentLibrary, run_state: RunState, f
 	signature["pending_triggered_count"] = run_state.pending_triggered_events.size()
 	signature["active_triggered_event"] = str(run_state.active_triggered_event.get("event_id", ""))
 	if run_state.has_world_map():
-		signature["travel_targets"] = _string_array(WorldMapScript.travel_target_ids(run_state.world_map, run_state.current_world_node_id()))
+		signature["travel_targets"] = JsonCoerceScript._string_array(WorldMapScript.travel_target_ids(run_state.world_map, run_state.current_world_node_id()))
 	var game_signatures: Array = []
-	for game_id_value in _string_array(run_state.current_environment.get("game_ids", [])):
+	for game_id_value in JsonCoerceScript._string_array(run_state.current_environment.get("game_ids", [])):
 		var game_id := str(game_id_value)
 		var game: GameModule = _load_surface_contract_game(library, game_id, failures)
 		if game == null:
@@ -5838,7 +6207,7 @@ func _check_save_load_skill_challenge_midstates(library: ContentLibrary, failure
 		var deal_command: Dictionary = blackjack.surface_action_command("blackjack_deal", 0, false, {"selected_stake": 5}, blackjack_run, blackjack_run.current_environment)
 		var count_command: Dictionary = blackjack.surface_action_command("blackjack_count_toggle", 0, false, deal_command.get("ui_state", {}), blackjack_run, blackjack_run.current_environment)
 		var count_ui: Dictionary = count_command.get("ui_state", {}) if typeof(count_command.get("ui_state", {})) == TYPE_DICTIONARY else {}
-		if _copy_dict(count_ui.get("count_challenge", {})).is_empty():
+		if JsonCoerceScript._copy_dict(count_ui.get("count_challenge", {})).is_empty():
 			failures.append("SB.3 blackjack count mid-state fixture did not start count_challenge.")
 		_save_load_checkpoint(library, _save_load_canonical_run(blackjack_run), "target/blackjack_count_midstep", true, failures)
 
@@ -5846,7 +6215,7 @@ func _check_save_load_skill_challenge_midstates(library: ContentLibrary, failure
 	if video_poker != null:
 		var poker_fixture := _video_poker_holdout_item_fixture(video_poker, "")
 		var poker_run := poker_fixture.get("run_state", null) as RunState
-		if poker_run == null or _copy_dict(poker_fixture.get("challenge", {})).is_empty():
+		if poker_run == null or JsonCoerceScript._copy_dict(poker_fixture.get("challenge", {})).is_empty():
 			failures.append("SB.3 video poker holdout mid-state fixture did not start holdout_challenge.")
 		else:
 			poker_run.current_environment["game_ids"] = ["video_poker"]
@@ -5856,7 +6225,7 @@ func _check_save_load_skill_challenge_midstates(library: ContentLibrary, failure
 	if bar_dice != null:
 		var dice_fixture := _bar_dice_controlled_roll_item_fixture(bar_dice, "")
 		var dice_run := dice_fixture.get("run_state", null) as RunState
-		if dice_run == null or _copy_dict(dice_fixture.get("challenge", {})).is_empty():
+		if dice_run == null or JsonCoerceScript._copy_dict(dice_fixture.get("challenge", {})).is_empty():
 			failures.append("SB.3 bar dice controlled-roll mid-state fixture did not start controlled_roll.")
 		else:
 			_save_load_checkpoint(library, _save_load_canonical_run(dice_run), "target/bar_dice_controlled_roll_midstep", true, failures)
@@ -5865,7 +6234,7 @@ func _check_save_load_skill_challenge_midstates(library: ContentLibrary, failure
 	if roulette != null:
 		var roulette_fixture := _roulette_past_post_item_fixture(roulette, library, "")
 		var roulette_run := roulette_fixture.get("run_state", null) as RunState
-		if roulette_run == null or _copy_dict(roulette_fixture.get("challenge", {})).is_empty():
+		if roulette_run == null or JsonCoerceScript._copy_dict(roulette_fixture.get("challenge", {})).is_empty():
 			failures.append("SB.3 roulette past-post mid-state fixture did not start past_post_challenge.")
 		else:
 			_save_load_checkpoint(library, _save_load_canonical_run(roulette_run), "target/roulette_past_post_midstep", true, failures)
@@ -5874,7 +6243,7 @@ func _check_save_load_skill_challenge_midstates(library: ContentLibrary, failure
 	if baccarat != null:
 		var baccarat_fixture := _baccarat_edge_sort_item_fixture(baccarat, "")
 		var baccarat_run := baccarat_fixture.get("run_state", null) as RunState
-		if baccarat_run == null or _copy_dict(baccarat_fixture.get("challenge", {})).is_empty():
+		if baccarat_run == null or JsonCoerceScript._copy_dict(baccarat_fixture.get("challenge", {})).is_empty():
 			failures.append("SB.3 baccarat edge-sort mid-state fixture did not start edge_sort_challenge.")
 		else:
 			_save_load_checkpoint(library, _save_load_canonical_run(baccarat_run), "target/baccarat_edge_sort_midstep", true, failures)
@@ -5911,28 +6280,13 @@ func _check_save_load_world_event_lender_midstates(library: ContentLibrary, fail
 	if lender_definition.is_empty():
 		failures.append("SB.3 lender mid-schedule fixture could not find lender content.")
 	else:
-		var lender_run: RunState = RunStateScript.new()
-		lender_run.start_new("SB3-LENDER-MID", RunState.custom_challenge("sb3_lender", "SB3-LENDER-MID", {"starting_bankroll": 500}))
-		lender_run.set_environment({
-			"id": "sb3_lender_room",
-			"display_name": "SB3 Lender Room",
-			"kind": "casino",
-			"archetype_id": "sb3_lender_fixture",
-			"game_ids": ["video_poker"],
-			"game_states": {},
-			"economic_profile": {"stake_floor": 1, "stake_ceiling": 20},
-			"security_profile": {},
-			"lender_hooks": [str(lender_definition.get("id", ""))],
-			"layout": {},
-		})
-		var video_poker_game: GameModule = _load_surface_contract_game(library, "video_poker", failures)
-		if video_poker_game != null:
-			var game_states := _copy_dict(lender_run.current_environment.get("game_states", {}))
-			game_states["video_poker"] = video_poker_game.generate_environment_state(lender_run, lender_run.current_environment, lender_run.create_rng("sb3_lender_video_poker_state"))
-			lender_run.current_environment["game_states"] = game_states
-		var resolver: RunActionService = RunActionServiceScript.new()
-		resolver.setup(library, lender_run)
-		var lender_result := resolver.use_hook("lender", str(lender_definition.get("id", "")))
+		# Synthetic empty layouts are no longer legal environment state; open the
+		# debt in the shared real slot-schema-v2 lender room.
+		var lender_id := str(lender_definition.get("id", ""))
+		var lender_fixture := _lender_fixture(library, "SB3-LENDER-MID", [lender_id], [], [])
+		var lender_run: RunState = lender_fixture.get("run_state", null)
+		var resolver: RunActionService = lender_fixture.get("resolver", null)
+		var lender_result := resolver.use_hook("lender", lender_id)
 		if not bool(lender_result.get("ok", false)) or lender_run.debt.is_empty():
 			failures.append("SB.3 lender mid-schedule fixture could not open debt.")
 		else:

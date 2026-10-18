@@ -1,8 +1,8 @@
 class_name PlatformServices
 extends RefCounted
 
-# Local no-op adapter for future platform integrations.
-# Core gameplay should depend on returned payloads, not platform SDK branches.
+# Supported local adapter at the platform-service boundary. External SDKs are
+# deferred; core gameplay depends on returned payloads rather than SDK branches.
 
 var service_name: String = "local"
 
@@ -52,27 +52,6 @@ func submit_daily_score(daily_id: String, score: int, challenge_config: Dictiona
 		"challenge_id": challenge_config.get("id", "daily"),
 		"challenge_config": challenge_config.duplicate(true),
 		"submitted": false,
-	})
-
-
-# Pretends to save cloud run data for future adapter parity.
-func save_cloud_run(slot_id: String, run_data: Dictionary) -> Dictionary:
-	return _local_payload({
-		"ok": true,
-		"slot_id": slot_id,
-		"bytes": JSON.stringify(run_data).length(),
-		"run_data": run_data.duplicate(true),
-		"saved": false,
-	})
-
-
-# Reports that no local cloud save exists.
-func load_cloud_run(slot_id: String) -> Dictionary:
-	return _local_payload({
-		"ok": false,
-		"slot_id": slot_id,
-		"run_data": {},
-		"loaded": false,
 	})
 
 

@@ -1,6 +1,9 @@
 class_name ScratchTicketFoilRenderer
 extends RefCounted
 
+# Paints deterministic latex/foil textures for active Scratch Tickets; exposed
+# style identities describe appearance only and never influence outcomes.
+
 static func draw(surface, ticket: Dictionary, art_frame: Rect2, state: Dictionary = {}) -> void:
 	if ticket.is_empty():
 		return

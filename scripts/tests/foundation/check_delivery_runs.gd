@@ -3,7 +3,9 @@ extends "res://scripts/tests/foundation/check_items_events_world.gd"
 const DeliveryRunModelTestScript := preload("res://scripts/core/delivery_run_model.gd")
 const DeliveryWorldMapTestScript := preload("res://scripts/core/world_map.gd")
 # SHA-256 of canonical [target_id, path] arrays captured from the public
-# WorldMap.path_between implementation at integration baseline 6523054b.
+# WorldMap.path_between implementation. Round 3 refreshes only the four seeds
+# whose all-node routes changed with the fixed room-slot release merge; their
+# live delivery targets remain visible, enabled, and handoff-reachable.
 # Entry order: all, visible, hidden-source all, hidden-source visible.
 const DELIVERY_PATH_COMPAT_SHA256 := {
 	"DELIVERY-PROPERTY-00": ["8dd3f440291825d7fdeb5dafbd9dabbbd812f5f2cc18449c75512bfc7b2f36b3", "bbaac96850c406c7d2f1a72b2b82a8158a7fb4442048f9abebd09775117ee082", "d438edd91519497fe320c5a1da17f12ebb6915af9472d1837144b4ac05da25ce", "8cd7847d0aaaa81432ddb44d88496eb40b66a5a40f09c38f2d51626dbf19f5de"],
@@ -11,12 +13,12 @@ const DELIVERY_PATH_COMPAT_SHA256 := {
 	"DELIVERY-PROPERTY-02": ["702aa2a62d5ba00d42bb63bd6843f89e953e9559efdbfc51902faffef9ad6b5e", "e3f3f3eea4b2a12c4ea7602140c7dc4d798ee803631d2c1131be8a372c9e005d", "7cfd3f882dffb1787c13fc3e8a1c64dc36d654011d7a5e7111cc767b079deabe", "e59809e480c9a123899786d48ce71cdaf1657dab328ea96f21912fed238ede2d"],
 	"DELIVERY-PROPERTY-03": ["702aa2a62d5ba00d42bb63bd6843f89e953e9559efdbfc51902faffef9ad6b5e", "e3f3f3eea4b2a12c4ea7602140c7dc4d798ee803631d2c1131be8a372c9e005d", "7cfd3f882dffb1787c13fc3e8a1c64dc36d654011d7a5e7111cc767b079deabe", "e59809e480c9a123899786d48ce71cdaf1657dab328ea96f21912fed238ede2d"],
 	"DELIVERY-PROPERTY-04": ["047c51f66440cc9ac35a5994bf6bb60a73336af842d7f0080832476c6cb5c2a1", "0ec74c2514acf700c0413424188a65cc4be446f9d204fe5318fb33cc47943fb8", "a456f590c93b64ab4aefc9c226b4792241154b18bf51e7d39a613d84e5ada9ff", "c50d4e44675a199ed20522ae7186e05b1f95cb42443320578e57bcb69399d192"],
-	"DELIVERY-PROPERTY-05": ["702aa2a62d5ba00d42bb63bd6843f89e953e9559efdbfc51902faffef9ad6b5e", "e3f3f3eea4b2a12c4ea7602140c7dc4d798ee803631d2c1131be8a372c9e005d", "7cfd3f882dffb1787c13fc3e8a1c64dc36d654011d7a5e7111cc767b079deabe", "e59809e480c9a123899786d48ce71cdaf1657dab328ea96f21912fed238ede2d"],
-	"DELIVERY-PROPERTY-06": ["702aa2a62d5ba00d42bb63bd6843f89e953e9559efdbfc51902faffef9ad6b5e", "e3f3f3eea4b2a12c4ea7602140c7dc4d798ee803631d2c1131be8a372c9e005d", "7cfd3f882dffb1787c13fc3e8a1c64dc36d654011d7a5e7111cc767b079deabe", "e59809e480c9a123899786d48ce71cdaf1657dab328ea96f21912fed238ede2d"],
+	"DELIVERY-PROPERTY-05": ["7400b76329bbb70191811ec2f7c179ae10e9ed913133ee5a672fcf58ad811f00", "3e277ec77bfcad85f70ba2a95a0ecab778946b311ed70654b0c1e30768c8ace0", "7cfd3f882dffb1787c13fc3e8a1c64dc36d654011d7a5e7111cc767b079deabe", "e59809e480c9a123899786d48ce71cdaf1657dab328ea96f21912fed238ede2d"],
+	"DELIVERY-PROPERTY-06": ["ea0e8b53568961f3ed19407b520db44cb9293ee0ee9c45d0a8a55017ef7f5c93", "3e277ec77bfcad85f70ba2a95a0ecab778946b311ed70654b0c1e30768c8ace0", "7cfd3f882dffb1787c13fc3e8a1c64dc36d654011d7a5e7111cc767b079deabe", "e59809e480c9a123899786d48ce71cdaf1657dab328ea96f21912fed238ede2d"],
 	"DELIVERY-PROPERTY-07": ["8dd3f440291825d7fdeb5dafbd9dabbbd812f5f2cc18449c75512bfc7b2f36b3", "bbaac96850c406c7d2f1a72b2b82a8158a7fb4442048f9abebd09775117ee082", "d438edd91519497fe320c5a1da17f12ebb6915af9472d1837144b4ac05da25ce", "8cd7847d0aaaa81432ddb44d88496eb40b66a5a40f09c38f2d51626dbf19f5de"],
 	"DELIVERY-PROPERTY-08": ["8dd3f440291825d7fdeb5dafbd9dabbbd812f5f2cc18449c75512bfc7b2f36b3", "bbaac96850c406c7d2f1a72b2b82a8158a7fb4442048f9abebd09775117ee082", "d438edd91519497fe320c5a1da17f12ebb6915af9472d1837144b4ac05da25ce", "8cd7847d0aaaa81432ddb44d88496eb40b66a5a40f09c38f2d51626dbf19f5de"],
 	"DELIVERY-PROPERTY-09": ["8dd3f440291825d7fdeb5dafbd9dabbbd812f5f2cc18449c75512bfc7b2f36b3", "bbaac96850c406c7d2f1a72b2b82a8158a7fb4442048f9abebd09775117ee082", "d438edd91519497fe320c5a1da17f12ebb6915af9472d1837144b4ac05da25ce", "8cd7847d0aaaa81432ddb44d88496eb40b66a5a40f09c38f2d51626dbf19f5de"],
-	"DELIVERY-PROPERTY-10": ["047c51f66440cc9ac35a5994bf6bb60a73336af842d7f0080832476c6cb5c2a1", "0ec74c2514acf700c0413424188a65cc4be446f9d204fe5318fb33cc47943fb8", "8dd63a0d61962fad6397407d9fe07aa4208fc6f33dbf04172d6349309412ff10", "af65cee6fe1ae77a42a4da7dd4226ac6ff4bcc0758622633eba70db137b8acba"],
+	"DELIVERY-PROPERTY-10": ["a425a1fb7b6ea6e74b693606d32b6a53bfa9986183d7e77668f123c81a1f645b", "1654e10fa9580c34d91a30f0d89dee897b101f1fed8cdf3e54e7152c3cfc394a", "8dd63a0d61962fad6397407d9fe07aa4208fc6f33dbf04172d6349309412ff10", "af65cee6fe1ae77a42a4da7dd4226ac6ff4bcc0758622633eba70db137b8acba"],
 	"DELIVERY-PROPERTY-11": ["8dd3f440291825d7fdeb5dafbd9dabbbd812f5f2cc18449c75512bfc7b2f36b3", "bbaac96850c406c7d2f1a72b2b82a8158a7fb4442048f9abebd09775117ee082", "d438edd91519497fe320c5a1da17f12ebb6915af9472d1837144b4ac05da25ce", "8cd7847d0aaaa81432ddb44d88496eb40b66a5a40f09c38f2d51626dbf19f5de"],
 	"DELIVERY-PROPERTY-12": ["047c51f66440cc9ac35a5994bf6bb60a73336af842d7f0080832476c6cb5c2a1", "0ec74c2514acf700c0413424188a65cc4be446f9d204fe5318fb33cc47943fb8", "8dd63a0d61962fad6397407d9fe07aa4208fc6f33dbf04172d6349309412ff10", "af65cee6fe1ae77a42a4da7dd4226ac6ff4bcc0758622633eba70db137b8acba"],
 	"DELIVERY-PROPERTY-13": ["8dd3f440291825d7fdeb5dafbd9dabbbd812f5f2cc18449c75512bfc7b2f36b3", "bbaac96850c406c7d2f1a72b2b82a8158a7fb4442048f9abebd09775117ee082", "d438edd91519497fe320c5a1da17f12ebb6915af9472d1837144b4ac05da25ce", "8cd7847d0aaaa81432ddb44d88496eb40b66a5a40f09c38f2d51626dbf19f5de"],
@@ -24,7 +26,7 @@ const DELIVERY_PATH_COMPAT_SHA256 := {
 	"DELIVERY-PROPERTY-15": ["047c51f66440cc9ac35a5994bf6bb60a73336af842d7f0080832476c6cb5c2a1", "0ec74c2514acf700c0413424188a65cc4be446f9d204fe5318fb33cc47943fb8", "8dd63a0d61962fad6397407d9fe07aa4208fc6f33dbf04172d6349309412ff10", "af65cee6fe1ae77a42a4da7dd4226ac6ff4bcc0758622633eba70db137b8acba"],
 	"DELIVERY-PROPERTY-16": ["702aa2a62d5ba00d42bb63bd6843f89e953e9559efdbfc51902faffef9ad6b5e", "e3f3f3eea4b2a12c4ea7602140c7dc4d798ee803631d2c1131be8a372c9e005d", "7cfd3f882dffb1787c13fc3e8a1c64dc36d654011d7a5e7111cc767b079deabe", "e59809e480c9a123899786d48ce71cdaf1657dab328ea96f21912fed238ede2d"],
 	"DELIVERY-PROPERTY-17": ["702aa2a62d5ba00d42bb63bd6843f89e953e9559efdbfc51902faffef9ad6b5e", "e3f3f3eea4b2a12c4ea7602140c7dc4d798ee803631d2c1131be8a372c9e005d", "7cfd3f882dffb1787c13fc3e8a1c64dc36d654011d7a5e7111cc767b079deabe", "e59809e480c9a123899786d48ce71cdaf1657dab328ea96f21912fed238ede2d"],
-	"DELIVERY-PROPERTY-18": ["702aa2a62d5ba00d42bb63bd6843f89e953e9559efdbfc51902faffef9ad6b5e", "e3f3f3eea4b2a12c4ea7602140c7dc4d798ee803631d2c1131be8a372c9e005d", "7cfd3f882dffb1787c13fc3e8a1c64dc36d654011d7a5e7111cc767b079deabe", "e59809e480c9a123899786d48ce71cdaf1657dab328ea96f21912fed238ede2d"],
+	"DELIVERY-PROPERTY-18": ["ea0e8b53568961f3ed19407b520db44cb9293ee0ee9c45d0a8a55017ef7f5c93", "3e277ec77bfcad85f70ba2a95a0ecab778946b311ed70654b0c1e30768c8ace0", "7cfd3f882dffb1787c13fc3e8a1c64dc36d654011d7a5e7111cc767b079deabe", "e59809e480c9a123899786d48ce71cdaf1657dab328ea96f21912fed238ede2d"],
 	"DELIVERY-PROPERTY-19": ["9e3cb7201b39af731c589534be55edbe768f6024cc564f8aaebf337871041670", "e3f3f3eea4b2a12c4ea7602140c7dc4d798ee803631d2c1131be8a372c9e005d", "7cfd3f882dffb1787c13fc3e8a1c64dc36d654011d7a5e7111cc767b079deabe", "e59809e480c9a123899786d48ce71cdaf1657dab328ea96f21912fed238ede2d"],
 }
 const DELIVERY_PATH_PUBLIC_SPOT_SEEDS := [
@@ -46,6 +48,7 @@ func _check_delivery_framework(library: ContentLibrary, failures: Array) -> void
 	_check_delivery_sweep_and_map_intel(failures)
 	_check_delivery_save_and_migration(failures)
 	_check_delivery_ordinary_travel_identity(failures)
+	_check_crew_package_player_flow(failures)
 
 
 func _check_delivery_target_properties(library: ContentLibrary, failures: Array) -> void:
@@ -395,6 +398,65 @@ func _check_delivery_ordinary_travel_identity(failures: Array) -> void:
 	if not ordinary.active_delivery_run.is_empty() or ordinary.delivery_has_active_run() or not ordinary.delivery_map_layer().is_empty() \
 		or not ordinary.delivery_arrival_interaction().is_empty() or JSON.stringify(ordinary.to_dict()) != before:
 		failures.append("Inactive delivery reads mutated or leaked into the ordinary core run.")
+
+
+func _check_crew_package_player_flow(failures: Array) -> void:
+	var run_state := _delivery_test_run("DELIVERY-CREW-PACKAGE-UX", failures)
+	run_state.narrative_flags["crew_favor_pending"] = true
+	var started := run_state.resolve_crew_favor_delivery_job("run_package", {
+		"success": {"bankroll_delta": 22, "suspicion_delta": 4, "flags": {"crew_favor_completed": true}},
+		"failure": {"suspicion_delta": 9, "flags": {"crew_favor_failed": true}},
+	})
+	var snapshot := run_state.delivery_snapshot()
+	var targets := snapshot.get("targets", []) as Array
+	var target := targets[0] as Dictionary if not targets.is_empty() else {}
+	var target_node := DeliveryWorldMapTestScript.node_metadata_by_id(run_state.world_map, str(target.get("node_id", "")))
+	var top_ids: Array = []
+	for action_value in run_state.delivery_top_actions():
+		top_ids.append(str((action_value as Dictionary).get("id", "")))
+	if not bool(started.get("ok", false)) or bool(run_state.narrative_flags.get("crew_favor_pending", true)) \
+			or not run_state.inventory.has("crew_package") or str((snapshot.get("physical", {}) as Dictionary).get("cargo_state", "")) != DeliveryRunModelTestScript.CARGO_CARRIED \
+			or str(snapshot.get("deadline_kind", "")) != DeliveryRunModelTestScript.DEADLINE_CLOCK or int(snapshot.get("deadline_remaining", 0)) != 180 \
+			or str(target.get("contact_label", "")).is_empty() or str(started.get("message", "")).find(str(target.get("contact_label", ""))) < 0 \
+			or str(target_node.get("kind", "")) == "home" or not run_state.delivery_physical_interactions().is_empty() \
+			or not top_ids.has("wait") or not top_ids.has("duck") or not top_ids.has("stash") or not top_ids.has("ditch"):
+		failures.append("Accepted Crew package did not become one carried contraband item with a named, timed, non-home route and top-screen actions: %s" % JSON.stringify(started))
+		return
+	var stale_popup_save := run_state.to_dict()
+	(stale_popup_save.get("narrative_flags", {}) as Dictionary)["crew_favor_pending"] = true
+	var restored: RunState = RunStateScript.new()
+	restored.from_dict(stale_popup_save)
+	if not restored.delivery_has_active_run() or bool(restored.narrative_flags.get("crew_favor_pending", false)):
+		failures.append("Restoring a live Crew package route did not suppress a stale accepted-offer popup flag.")
+	var deadline_before := int(snapshot.get("deadline_remaining", 0))
+	run_state.debt.append({
+		"id": "crew_favor_popup_regression",
+		"lender_id": "the_crew",
+		"debt_kind": "favor",
+		"status": "favor_due",
+		"default_consequence": "crew_favor_due",
+		"next_pressure_turns": 1,
+		"nag_interval_turns": 1,
+	})
+	run_state.advance_environment_turns(3)
+	if int(run_state.delivery_snapshot().get("deadline_remaining", 0)) != deadline_before \
+			or bool(run_state.narrative_flags.get("crew_favor_pending", false)):
+		failures.append("Clock-timed Crew package consumed turn deadlines or recurring debt pressure reopened its accepted offer.")
+	var stashed := run_state.delivery_apply_physical_action("stash", "test:crew-package:stash")
+	var stash_objects := run_state.delivery_physical_interactions()
+	if not bool(stashed.get("ok", false)) or run_state.inventory.has("crew_package") or stash_objects.size() != 1 \
+			or str((stash_objects[0] as Dictionary).get("verb", "")) != "retrieve":
+		failures.append("Stashing The Package did not move it from inventory into one retrievable room object.")
+		return
+	var retrieved := run_state.delivery_apply_physical_action("retrieve", "test:crew-package:retrieve")
+	if not bool(retrieved.get("ok", false)) or not run_state.inventory.has("crew_package") or not run_state.delivery_physical_interactions().is_empty():
+		failures.append("Retrieving The Package did not return it to inventory and clear the room object.")
+		return
+	var almost_expired := run_state.advance_game_clock_minutes(179)
+	var expired := run_state.advance_game_clock_minutes(1)
+	if not bool(almost_expired.get("ok", false)) or not bool(expired.get("delivery_resolved", false)) or run_state.delivery_has_active_run() \
+			or run_state.inventory.has("crew_package") or str((run_state.delivery_snapshot().get("resolution", {}) as Dictionary).get("reason", "")) != "deadline":
+		failures.append("Crew package did not expire exactly on its game-clock deadline and leave inventory clean.")
 
 
 func _delivery_test_run(seed: String, failures: Array) -> RunState:

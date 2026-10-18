@@ -1,5 +1,7 @@
 extends "res://scripts/tests/foundation/check_table_games.gd"
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const RunSaveCodecScript := preload("res://scripts/core/run_save_codec.gd")
@@ -102,7 +104,7 @@ func _first_reachable_target_path_with_game(library: ContentLibrary, target_ids:
 		var archetype := _archetype_by_id(library, target_id)
 		if archetype.is_empty():
 			continue
-		var nested := _first_target_with_game(library, _string_array(archetype.get("next_archetypes", [])), game_id)
+		var nested := _first_target_with_game(library, JsonCoerceScript._string_array(archetype.get("next_archetypes", [])), game_id)
 		if not nested.is_empty():
 			return [target_id, nested]
 	return []
@@ -301,6 +303,7 @@ func _check_item_build_interaction_foundation(library: ContentLibrary, failures:
 		failures.append("Item purchase did not apply item cost through result-delta bankroll.")
 	if JSON.parse_string(JSON.stringify(purchase_result)) == null:
 		failures.append("Item purchase result was not serializable.")
+	_check_inventory_view_cache_invalidation(library, failures)
 	_check_item_affinity_purchase_nudge(library, failures)
 
 	var baseline_game := GameModule.new()
@@ -347,6 +350,42 @@ func _check_item_build_interaction_foundation(library: ContentLibrary, failures:
 			failures.append("Item build story state did not survive SaveService load.")
 
 
+func _check_inventory_view_cache_invalidation(library: ContentLibrary, failures: Array) -> void:
+	var run_state := RunStateScript.new()
+	run_state.start_new("INVENTORY-VIEW-CACHE")
+	var resolver := RunActionServiceScript.new()
+	resolver.setup(library, run_state)
+	resolver.inventory_item_view_list()
+	run_state.add_item("thermos_black_coffee")
+	var added_view := resolver.inventory_item_view_list()
+	if _item_offer_by_id(added_view, "thermos_black_coffee").is_empty():
+		failures.append("Inventory view cache did not invalidate after adding an item.")
+	var selection := resolver.set_active_item("thermos_black_coffee")
+	var selected_detail := _item_offer_by_id(resolver.inventory_item_view_list(), "thermos_black_coffee")
+	if not bool(selection.get("ok", false)) or not bool(selected_detail.get("active_selected", false)):
+		failures.append("Inventory view cache did not invalidate after active-item selection.")
+	var ticket_environment := {
+		"id": "inventory_cache_ticket_room",
+		"world_node_id": "inventory_cache_ticket_room",
+		"archetype_id": "gas_station_casino",
+		"display_name": "Ticket Room",
+	}
+	run_state.remember_portable_ticket_state("scratch_tickets", ticket_environment, {
+		"pending_queue": [{"id": "cache_ticket_1"}],
+		"winner_pile": [],
+	})
+	var one_ticket := _item_offer_by_id(resolver.inventory_item_view_list(), "pile_of_scratch_tickets")
+	if int(one_ticket.get("ticket_count", 0)) != 1:
+		failures.append("Inventory view cache did not publish the first portable ticket state.")
+	run_state.remember_portable_ticket_state("scratch_tickets", ticket_environment, {
+		"pending_queue": [{"id": "cache_ticket_1"}, {"id": "cache_ticket_2"}],
+		"winner_pile": [],
+	})
+	var two_tickets := _item_offer_by_id(resolver.inventory_item_view_list(), "pile_of_scratch_tickets")
+	if int(two_tickets.get("ticket_count", 0)) != 2:
+		failures.append("Inventory view cache reused a stale portable-ticket count.")
+
+
 func _seed_for_first_roll_between(min_roll: int, max_roll: int) -> String:
 	for index in range(1, 5000):
 		var seed := "ITEM-BUILD-%d" % index
@@ -366,29 +405,37 @@ func _check_item_affinity_purchase_nudge(library: ContentLibrary, failures: Arra
 		return
 	if AttributeBadgesScript.item_game_affinity_id(item_def) != "blackjack":
 		failures.append("Marked Cards should infer blackjack game affinity from data-authored effect keys.")
+	var fixture_archetype := _archetype_by_id(library, "delta_queen")
+	if fixture_archetype.is_empty():
+		failures.append("Marked Cards affinity check needs the Delta Queen production archetype.")
+		return
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("ITEM-AFFINITY-PURCHASE")
 	run_state.bankroll = 1000
-	run_state.set_environment({
-		"id": "item_affinity_shop",
-		"archetype_id": "item_affinity_shop",
-		"kind": "shop",
-		"tier": 1,
-		"game_ids": ["blackjack"],
-		"item_offers": [{"id": "marked_cards", "price": 12}],
-		"service_ids": [],
-		"event_ids": [],
-		"lender_hooks": [],
-		"next_archetypes": [],
-		"travel_hooks": [],
-	})
+	# Delta Queen is a production v2 room with both blackjack and merchandise
+	# capacity, so the affinity assertion and committed purchase share the same
+	# physical membership contract as normal gameplay.
+	var fixture_environment := EnvironmentInstance.from_archetype(
+		fixture_archetype,
+		2,
+		run_state.create_rng("item_affinity_shop"),
+		library
+	).to_dict()
+	fixture_environment["id"] = "item_affinity_shop"
+	fixture_environment["item_offers"] = [{"id": "marked_cards", "price": 12}]
+	fixture_environment["event_ids"] = []
+	fixture_environment["layout"] = EnvironmentInstance.ensure_generated_layout(fixture_environment, library)
+	var installation := run_state.set_environment(fixture_environment)
+	if not bool(installation.get("ok", false)):
+		failures.append("Marked Cards affinity fixture could not install its generated room: %s" % JSON.stringify(installation.get("errors", [])))
+		return
 	var resolver: RunActionService = RunActionServiceScript.new()
 	resolver.setup(library, run_state)
 	var offer := resolver.item_offer("marked_cards")
 	if str(offer.get("game_affinity", "")) != "blackjack":
 		failures.append("Marked Cards item offer did not expose blackjack game affinity.")
 	var saw_blackjack_badge := false
-	for badge_value in _copy_array(offer.get("attribute_badges", [])):
+	for badge_value in JsonCoerceScript._copy_array(offer.get("attribute_badges", [])):
 		if typeof(badge_value) == TYPE_DICTIONARY and str((badge_value as Dictionary).get("glyph_id", "")) == "game_blackjack":
 			saw_blackjack_badge = true
 			break
@@ -403,7 +450,7 @@ func _check_item_affinity_purchase_nudge(library: ContentLibrary, failures: Arra
 		failures.append("Marked Cards purchase did not request a blackjack object highlight.")
 	if str(result.get("item_affinity_nudge", "")).find("blackjack") == -1:
 		failures.append("Marked Cards purchase did not nudge the player toward blackjack.")
-	if not _string_array(result.get("messages", [])).has(str(result.get("item_affinity_nudge", ""))):
+	if not JsonCoerceScript._string_array(result.get("messages", [])).has(str(result.get("item_affinity_nudge", ""))):
 		failures.append("Marked Cards purchase nudge was not included in player-facing messages.")
 
 
@@ -489,24 +536,6 @@ func _check_item_result_delta_shape(result: Dictionary, failures: Array) -> void
 
 
 # Checks direct item deltas are applied through RunState domains.
-func _check_item_result_applied(before: Dictionary, run_state: RunState, result: Dictionary, label: String, failures: Array) -> void:
-	if not bool(result.get("ok", false)):
-		return
-	var deltas: Dictionary = result.get("deltas", {})
-	var expected_bankroll := int(before.get("bankroll", 0)) + int(deltas.get("bankroll_delta", 0))
-	if run_state.bankroll != expected_bankroll:
-		failures.append("RunState bankroll did not match %s." % label)
-	var expected_suspicion := clampi(int(before.get("suspicion", 0)) + int(deltas.get("suspicion_delta", 0)), 0, 100)
-	if int(run_state.suspicion.get("level", 0)) != expected_suspicion:
-		failures.append("RunState suspicion did not match %s." % label)
-	var story_delta: Array = deltas.get("story_log", [])
-	if run_state.story_log.size() != int(before.get("story_count", 0)) + story_delta.size():
-		failures.append("RunState story log did not match %s." % label)
-	var debt_delta: Array = deltas.get("debt_changes", [])
-	if run_state.debt.size() != int(before.get("debt_count", 0)) + debt_delta.size():
-		failures.append("RunState debt did not match %s." % label)
-
-
 # Checks production event triggering and resolution through EventModule.
 func _check_event_module_foundation(library: ContentLibrary, failures: Array) -> void:
 	var run_a: RunState = RunStateScript.new()
@@ -630,7 +659,7 @@ func _check_event_system_state_foundation(library: ContentLibrary, failures: Arr
 		route_refresh_run.world_map = WorldMapScript.store_environment(route_refresh_run.world_map, "motel", stale_motel_environment)
 		var stale_corner_node := WorldMapScript.node_by_id(route_refresh_run.world_map, "corner_store")
 		var stale_motel_node := WorldMapScript.node_by_id(route_refresh_run.world_map, "motel")
-		if _copy_dict(stale_corner_node.get("environment", {})).is_empty() or _copy_dict(stale_motel_node.get("environment", {})).is_empty():
+		if JsonCoerceScript._copy_dict(stale_corner_node.get("environment", {})).is_empty() or JsonCoerceScript._copy_dict(stale_motel_node.get("environment", {})).is_empty():
 			failures.append("Side Door route-refresh fixture could not seed stale shop environments.")
 		var side_door_event := EventModule.new()
 		side_door_event.setup(side_door_def)
@@ -643,7 +672,7 @@ func _check_event_system_state_foundation(library: ContentLibrary, failures: Arr
 			_check_event_result_applied(cheap_route_before, route_refresh_run, cheap_route_result, "side-door cheap-route result", failures)
 			var corner_after := WorldMapScript.node_by_id(route_refresh_run.world_map, "corner_store")
 			var motel_after := WorldMapScript.node_by_id(route_refresh_run.world_map, "motel")
-			if not _copy_dict(corner_after.get("environment", {})).is_empty() or not _copy_dict(motel_after.get("environment", {})).is_empty():
+			if not JsonCoerceScript._copy_dict(corner_after.get("environment", {})).is_empty() or not JsonCoerceScript._copy_dict(motel_after.get("environment", {})).is_empty():
 				failures.append("Side Door cheap-route choice did not clear stored shop nodes for fresh offers.")
 
 	var debt_event_def := library.event("motel_knock")
@@ -747,7 +776,7 @@ func _check_t4_7_environment_generation(library: ContentLibrary, failures: Array
 			var environment := EnvironmentInstance.from_archetype(archetype, sample_index, run_state.create_rng("t47_generation"), library)
 			var layout: Dictionary = environment.layout
 			var object_rects: Dictionary = layout.get("object_rects", {}) if typeof(layout.get("object_rects", {})) == TYPE_DICTIONARY else {}
-			for event_id in _string_array(environment.event_ids):
+			for event_id in JsonCoerceScript._string_array(environment.event_ids):
 				var event_def := library.event(event_id)
 				if str(event_def.get("interaction_mode", "")) != "interactable":
 					failures.append("T4.7 generated triggered event as room object: %s in %s." % [event_id, archetype_id])
@@ -888,6 +917,10 @@ func _check_talk_decision_system_foundation(library: ContentLibrary, failures: A
 		failures.append("Talk ignore fixture requires FoundationMain runtime nodes.")
 		_sb4_dispose_app(app)
 		return
+	if not bool(app.call("start_foundation_run", "TALK-IGNORE-PENALTY", {}, false)):
+		failures.append("Talk ignore fixture could not build and start the staged FoundationMain run UI.")
+		_sb4_dispose_app(app)
+		return
 	var ignore_run: RunState = RunStateScript.new()
 	ignore_run.start_new("TALK-IGNORE-PENALTY")
 	ignore_run.set_environment(_t4_3_fixture_environment("bar", "bar", 1, ["blackjack"], [], ["motel"]))
@@ -906,7 +939,7 @@ func _check_talk_decision_system_foundation(library: ContentLibrary, failures: A
 		failures.append("Talk explicit ignore did not clear the pending entry.")
 	if ignore_run.suspicion_level() < before_ignore_heat + 5:
 		failures.append("Talk explicit ignore did not add heat.")
-	if _copy_array(ignore_run.current_environment.get("resolved_event_ids", [])).has(event_id):
+	if JsonCoerceScript._copy_array(ignore_run.current_environment.get("resolved_event_ids", [])).has(event_id):
 		failures.append("Talk explicit ignore resolved the event benefit path instead of only applying the penalty.")
 	if not _story_log_has_type(ignore_run.story_log, "talk_ignored"):
 		failures.append("Talk explicit ignore did not record a story entry.")
@@ -943,6 +976,10 @@ func _check_dialogue_system_foundation(library: ContentLibrary, failures: Array)
 	var pending := run_state.next_pending_talk_event()
 	if str(pending.get("dialogue_id", "")) != "pull_tab_clerk" or str(pending.get("current_node", "")) != "greeting":
 		failures.append("Dialogue queue entry did not expose dialogue_id/current_node.")
+	var pending_event_id := str(pending.get("event_id", ""))
+	if pending_event_id.is_empty():
+		failures.append("Dialogue queue entry did not expose its triggered-event authority id.")
+		return
 	var restored: RunState = RunStateScript.new()
 	restored.from_dict(run_state.to_dict())
 	var restored_pending := restored.next_pending_talk_event()
@@ -955,8 +992,10 @@ func _check_dialogue_system_foundation(library: ContentLibrary, failures: Array)
 	else:
 		var route_effects: Dictionary = ask_routes.get("effects", {}) if typeof(ask_routes.get("effects", {})) == TYPE_DICTIONARY else {}
 		var route_event := EventModule.new()
-		route_event.setup(_dialogue_test_event_definition("dialogue_route_fixture", "ask_routes", route_effects), library)
-		route_event.resolve(run_state, run_state.current_environment, "ask_routes")
+		route_event.setup(_dialogue_test_event_definition(pending_event_id, "ask_routes", route_effects), library)
+		var route_result := route_event.resolve(run_state, run_state.current_environment, "ask_routes")
+		if not bool(route_result.get("ok", false)):
+			failures.append("Dialogue ask_routes choice could not resolve through its queued triggered-event authority.")
 		if not bool(run_state.story_flags.get("pull_tab_clerk_route_tip", false)) or not bool(run_state.narrative_flags.get("pull_tab_clerk_route_tip", false)):
 			failures.append("Dialogue set_story_flag did not sync story_flags and narrative_flags.")
 		if not run_state.unlocked_travel.has("gas_station_casino"):
@@ -980,8 +1019,10 @@ func _check_dialogue_system_foundation(library: ContentLibrary, failures: Array)
 		var loose_effects: Dictionary = ask_loose.get("effects", {}) if typeof(ask_loose.get("effects", {})) == TYPE_DICTIONARY else {}
 		var heat_before := run_state.suspicion_level()
 		var loose_event := EventModule.new()
-		loose_event.setup(_dialogue_test_event_definition("dialogue_loose_fixture", "ask_loose", loose_effects), library)
-		loose_event.resolve(run_state, run_state.current_environment, "ask_loose")
+		loose_event.setup(_dialogue_test_event_definition(pending_event_id, "ask_loose", loose_effects), library)
+		var loose_result := loose_event.resolve(run_state, run_state.current_environment, "ask_loose")
+		if not bool(loose_result.get("ok", false)):
+			failures.append("Dialogue ask_loose choice could not resolve through its queued triggered-event authority.")
 		if run_state.suspicion_level() < heat_before + 2:
 			failures.append("Dialogue risky branch did not apply its heat cost.")
 
@@ -1133,6 +1174,9 @@ func _check_t4_7_family_loan_contract(library: ContentLibrary, failures: Array) 
 	event_run.start_new("T47-FAMILY-ACCEPT")
 	event_run.set_environment(_t4_3_fixture_environment("motel", "shop", 1, [], [], ["bar"]))
 	event_run.narrative_flags["brother_in_law_phone_ready"] = true
+	# Triggered events resolve only while the host queue holds them; the phone
+	# chain is what normally queues the call.
+	event_run.enqueue_triggered_event("family_loan", "fixture", {"trigger": "chain"}, {"presentation": "talk"})
 	var event_module := EventModule.new()
 	event_module.setup(library.event("family_loan"), library)
 	var event_result := event_module.resolve(event_run, event_run.current_environment, "accept")
@@ -1165,6 +1209,7 @@ func _check_t4_7_family_loan_contract(library: ContentLibrary, failures: Array) 
 	deny_run.start_new("T47-FAMILY-DENY")
 	deny_run.set_environment(_t4_3_fixture_environment("motel", "shop", 1, [], [], ["bar"]))
 	deny_run.narrative_flags["brother_in_law_phone_ready"] = true
+	deny_run.enqueue_triggered_event("family_loan", "fixture", {"trigger": "chain"}, {"presentation": "talk"})
 	var deny_module := EventModule.new()
 	deny_module.setup(library.event("family_loan"), library)
 	deny_module.resolve(deny_run, deny_run.current_environment, "deny")
@@ -1256,7 +1301,7 @@ func _check_t4_7_crew_conversation_contract(library: ContentLibrary, failures: A
 			or str((direct_members[0] as Dictionary).get("character_id", "")) != "crew_rook" \
 			or str(direct_speaker.get("voice_line", "")).is_empty() \
 			or str((direct_speaker.get("lender_terms", {}) as Dictionary).get("lender_id", "")) != "the_crew" \
-			or int((direct_speaker.get("lender_terms", {}) as Dictionary).get("loan_amount", 0)) != 45:
+			or int((direct_speaker.get("lender_terms", {}) as Dictionary).get("loan_amount", 0)) != 70:
 			failures.append("T4.7 Direct character_id speakers do not resolve a reusable model and voice.")
 		var loan_members: Array = loan_speaker.get("members", []) if typeof(loan_speaker.get("members", [])) == TYPE_ARRAY else []
 		var favor_members: Array = favor_speaker.get("members", []) if typeof(favor_speaker.get("members", [])) == TYPE_ARRAY else []
@@ -1290,10 +1335,13 @@ func _check_t6_7_visibility_event_cadence(library: ContentLibrary, failures: Arr
 
 
 func _check_t6_7_visibility_classes(library: ContentLibrary, failures: Array) -> void:
-	var shop_environment := _t4_3_fixture_environment("fixture_shop", "shop", 1, [], [], ["bar"])
-	shop_environment["object_fixtures"] = ["shopkeeper:merchant"]
+	# Synthetic rooms have no slot-schema-v2 placement map and can no longer bind
+	# objects. Corner Store is a real shop that declares the shopkeeper fixture.
+	var shop_run: RunState = RunStateScript.new()
+	shop_run.start_new("T67-SHOPKEEPER")
+	var shop_environment := EnvironmentInstance.from_archetype(_archetype_by_id(library, "corner_store"), 1, shop_run.create_rng("t67_shopkeeper_room"), library).to_dict()
 	shop_environment["item_offers"] = []
-	shop_environment["layout"] = EnvironmentInstance.ensure_generated_layout(shop_environment)
+	shop_environment["layout"] = EnvironmentInstance.ensure_generated_layout(shop_environment, library)
 	var object_rects: Dictionary = (shop_environment.get("layout", {}) as Dictionary).get("object_rects", {}) if typeof(shop_environment.get("layout", {})) == TYPE_DICTIONARY else {}
 	if not object_rects.has("shopkeeper:merchant"):
 		failures.append("T6.7 shopkeeper fixture did not keep a stable layout rect when no offers were present.")
@@ -1876,6 +1924,12 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 	if boss_route.is_empty():
 		failures.append("Travel route fixture is missing: grand_casino.")
 	else:
+		var expected_free_origins := ["beach", "delta_queen", "kitty_cat_lounge"]
+		var authored_free_origins := JsonCoerceScript._string_array(JsonCoerceScript._copy_array(boss_route.get("free_from_archetypes", [])))
+		expected_free_origins.sort()
+		authored_free_origins.sort()
+		if authored_free_origins != expected_free_origins:
+			failures.append("Grand Casino route free origins must be exactly Kitty Cat Lounge, Delta Queen, and Beach: %s." % JSON.stringify(authored_free_origins))
 		var boss_run: RunState = RunStateScript.new()
 		boss_run.start_new("TRAVEL-GRAND-GATE")
 		boss_run.bankroll = 200
@@ -1894,6 +1948,51 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 		var boss_unlocked_status := boss_run.travel_route_status(boss_route)
 		if bool(boss_unlocked_status.get("hidden", true)) or not bool(boss_unlocked_status.get("available", false)):
 			failures.append("Grand Casino route should be available after travel count, bankroll, and invitation.")
+
+		# The invitation comp is origin-specific and must win before weather pricing,
+		# while the invitation and global travel gates remain authoritative.
+		var comp_run: RunState = RunStateScript.new()
+		comp_run.start_new("TOWN-HOOKS")
+		comp_run.bankroll = 1
+		comp_run.environment_history.append({"id": "visited_once", "archetype_id": "corner_store"})
+		comp_run.set_environment({"id": "grand_comp_locked", "archetype_id": "delta_queen", "travel_lock_remaining": 0})
+		var initial_town := comp_run.town_snapshot()
+		var found_storm := false
+		for action_index in range(maxi(1, int(initial_town.get("turn_horizon", 240)))):
+			var storm_town := initial_town.duplicate(true)
+			storm_town["action_index"] = action_index
+			comp_run.town_state.restore(storm_town, comp_run.seed_value)
+			if comp_run.weather_now() == "storm":
+				found_storm = true
+				break
+		if not found_storm:
+			failures.append("Grand Casino comp regression could not reach its storm-weather fixture.")
+		var comp_preinvite_status := comp_run.travel_route_status(boss_route)
+		if bool(comp_preinvite_status.get("available", true)) or bool(comp_preinvite_status.get("hidden", true)) or not bool(comp_preinvite_status.get("locked", false)):
+			failures.append("A comp origin bypassed the Grand Casino invitation gate.")
+		comp_run.narrative_flags["grand_casino_invite"] = true
+		for comp_origin in ["kitty_cat_lounge", "delta_queen", "beach"]:
+			comp_run.set_environment({"id": "grand_comp_%s" % comp_origin, "archetype_id": comp_origin, "travel_lock_remaining": 0})
+			var comp_status := comp_run.travel_route_status(boss_route)
+			if int(comp_status.get("cost", -1)) != 0 or not bool(comp_status.get("available", false)):
+				failures.append("Invited Grand Casino travel from %s was not free and available under storm weather: %s." % [comp_origin, JSON.stringify(comp_status)])
+		comp_run.set_environment({"id": "grand_comp_beach_locked", "archetype_id": "beach", "travel_lock_remaining": 2})
+		var comp_travel_locked_status := comp_run.travel_route_status(boss_route)
+		if int(comp_travel_locked_status.get("cost", -1)) != 0 or bool(comp_travel_locked_status.get("available", true)) \
+				or bool(comp_travel_locked_status.get("hidden", true)) or str(comp_travel_locked_status.get("disabled_reason", "")).strip_edges().is_empty():
+			failures.append("Free Beach-to-Grand travel bypassed the ordinary global travel lock.")
+		comp_run.current_environment["travel_lock_remaining"] = 0
+		comp_run.bankroll = 500
+		comp_run.set_environment({"id": "grand_paid_bar", "archetype_id": "bar", "travel_lock_remaining": 0})
+		var paid_grand_status := comp_run.travel_route_status(boss_route)
+		var paid_grand_cost := int(paid_grand_status.get("cost", 0))
+		if paid_grand_cost <= 0 or not bool(paid_grand_status.get("available", false)):
+			failures.append("A non-comp Bar origin did not retain a positive Grand Casino fare under storm weather: %s." % JSON.stringify(paid_grand_status))
+		else:
+			comp_run.bankroll = paid_grand_cost - 1
+			var unaffordable_paid_status := comp_run.travel_route_status(boss_route)
+			if bool(unaffordable_paid_status.get("available", true)) or str(unaffordable_paid_status.get("disabled_reason", "")) != "Not enough bankroll for this route.":
+				failures.append("A non-comp Grand Casino fare did not retain its exact affordability blocker.")
 
 	var back_alley_route := library.route("back_alley")
 	if back_alley_route.is_empty():
@@ -1938,7 +2037,7 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 		var partial_preview := run_state.travel_route_preview(delta_route, delta_archetype)
 		if str(partial_preview.get("level", "")) != "partial":
 			failures.append("Default route preview should be partial.")
-		if not _string_array(partial_preview.get("game_ids", [])).is_empty():
+		if not JsonCoerceScript._string_array(partial_preview.get("game_ids", [])).is_empty():
 			failures.append("Partial route preview should not reveal exact generated games.")
 		var preview_run: RunState = RunStateScript.new()
 		preview_run.start_new("TRAVEL-PREVIEW")
@@ -1957,12 +2056,36 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 		var travel_heat := preview_run.begin_travel_suspicion_decay(delta_route, "delta_queen")
 		var actual_environment := _harness_arrive(preview_generator, preview_run, failures, "scouted-preview Delta Queen arrival", "delta_queen").to_dict()
 		preview_run.finish_travel_suspicion_decay(travel_heat)
-		if _string_array(full_preview.get("game_ids", [])) != _string_array(actual_environment.get("game_ids", [])):
+		if JsonCoerceScript._string_array(full_preview.get("game_ids", [])) != JsonCoerceScript._string_array(actual_environment.get("game_ids", [])):
 			failures.append("Scouted route preview games did not match the generated destination.")
-		if _string_array(full_preview.get("service_ids", [])) != _string_array(actual_environment.get("service_ids", [])):
+		if JsonCoerceScript._string_array(full_preview.get("service_ids", [])) != JsonCoerceScript._string_array(actual_environment.get("service_ids", [])):
 			failures.append("Scouted route preview services did not match the generated destination.")
 		if int(full_preview.get("travel_locked_actions", 0)) != int(actual_environment.get("travel_locked_actions", 0)):
-			failures.append("Scouted route preview did not expose the generated travel lock.")
+			failures.append("Scouted route preview did not expose the generated travel lock (preview=%d actual=%d)." % [int(full_preview.get("travel_locked_actions", 0)), int(actual_environment.get("travel_locked_actions", 0))])
+		var actual_layout := JsonCoerceScript._copy_dict(actual_environment.get("layout", {}))
+		for object_id_value in JsonCoerceScript._copy_dict(actual_layout.get("object_rects", {})).keys():
+			var object_id := str(object_id_value)
+			if object_id.begins_with("travel:") and object_id != "travel:leave":
+				failures.append("Riverboat room layout retained the non-rendered destination hotspot %s." % object_id)
+
+		# Reproduce a late-run world-map arrival after accumulated travel history.
+		# Destination count may grow, but the room owns one map-exit hotspot and must
+		# still install atomically when its scenario presentation is sealed.
+		var late_run: RunState = RunStateScript.new()
+		late_run.start_new("TRAVEL-LATE-RIVERBOAT")
+		late_run.bankroll = 1000
+		late_run.add_item("roadside_map")
+		var late_generator: RunGenerator = RunGeneratorScript.new(library)
+		_harness_arrive(late_generator, late_run, failures, "late-run travel initial arrival")
+		for history_index in range(12):
+			late_run.environment_history.append({"id": "late_history_%02d" % history_index, "archetype_id": "bar" if history_index % 2 == 0 else "motel"})
+		var late_delta := _harness_arrive(late_generator, late_run, failures, "late-run Riverboat arrival", "delta_queen", true).to_dict()
+		if late_run.current_world_node_id() != "delta_queen":
+			failures.append("Late-run world-map travel did not install the Riverboat destination.")
+		for object_id_value in JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(late_delta.get("layout", {})).get("object_rects", {})).keys():
+			var object_id := str(object_id_value)
+			if object_id.begins_with("travel:") and object_id != "travel:leave":
+				failures.append("Late-run Riverboat arrival retained the non-rendered destination hotspot %s." % object_id)
 	var beach_route := library.route("beach")
 	var beach_archetype := _archetype_by_id(library, "beach")
 	if beach_route.is_empty() or beach_archetype.is_empty():
@@ -1972,32 +2095,43 @@ func _check_travel_route_foundation(library: ContentLibrary, failures: Array) ->
 			failures.append("Beach route does not point to the beach archetype.")
 		if int(beach_route.get("cost", -1)) != 0 or str(beach_route.get("distance", "")) != "near" or str(beach_route.get("risk", "")) != "low":
 			failures.append("Beach route should be a free, near, low-risk walk.")
-		if not _string_array(delta_archetype.get("travel_hooks", [])).has("beach"):
+		if not JsonCoerceScript._string_array(delta_archetype.get("travel_hooks", [])).has("beach"):
 			failures.append("Delta Queen should expose the nearby beach travel hook.")
-		if not _string_array(beach_archetype.get("travel_hooks", [])).has("delta_queen"):
+		if not JsonCoerceScript._string_array(beach_archetype.get("travel_hooks", [])).has("delta_queen"):
 			failures.append("Beach should route back to the Delta Queen.")
-		if not _string_array(beach_archetype.get("service_pool", [])).has("beach_relax") or not _string_array(beach_archetype.get("service_pool", [])).has("beach_sand_pile"):
+		if not JsonCoerceScript._string_array(beach_archetype.get("service_pool", [])).has("beach_relax") or not JsonCoerceScript._string_array(beach_archetype.get("service_pool", [])).has("beach_sand_pile"):
 			failures.append("Beach should expose relax and sand-pile service hooks.")
-		if _string_array(beach_archetype.get("game_pool", [])) != ["slot"] or _string_array(beach_archetype.get("required_game_ids", [])) != ["slot"]:
+		if JsonCoerceScript._string_array(beach_archetype.get("game_pool", [])) != ["slot"] or JsonCoerceScript._string_array(beach_archetype.get("required_game_ids", [])) != ["slot"]:
 			failures.append("Beach should always expose its lone boardwalk slot for the Cumquat Sandwich.")
-		var beach_layout := _copy_dict(beach_archetype.get("layout", {}))
-		var beach_game_spots := _copy_array(beach_layout.get("game_spots", []))
-		var beach_slot_spot := _copy_array(beach_game_spots[0]) if beach_game_spots.size() == 1 else []
+		var beach_layout := JsonCoerceScript._copy_dict(beach_archetype.get("layout", {}))
+		var beach_game_spots := JsonCoerceScript._copy_array(beach_layout.get("game_spots", []))
+		var beach_slot_spot := JsonCoerceScript._copy_array(beach_game_spots[0]) if beach_game_spots.size() == 1 else []
 		if beach_slot_spot.size() < 2 or int(beach_slot_spot[0]) != 740 or int(beach_slot_spot[1]) != 171:
 			failures.append("Beach boardwalk slot hotspot is not aligned with the authored kiosk.")
 		var beach_generation_run: RunState = RunStateScript.new()
 		beach_generation_run.start_new("BEACH-SLOT-GENERATION")
 		var generated_beach := EnvironmentInstance.from_archetype(beach_archetype, 2, beach_generation_run.create_rng("beach_slot_generation"), library).to_dict()
-		if _string_array(generated_beach.get("game_ids", [])) != ["slot"] or not _copy_dict(_copy_dict(generated_beach.get("layout", {})).get("object_rects", {})).has("game:slot"):
+		if JsonCoerceScript._string_array(generated_beach.get("game_ids", [])) != ["slot"] or not JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(generated_beach.get("layout", {})).get("object_rects", {})).has("game:slot"):
 			failures.append("Generated Beach did not create the playable slot fixture and stable hotspot.")
 
 	var scout_run: RunState = RunStateScript.new()
 	scout_run.start_new("TRAVEL-SCOUTING")
 	if scout_run.travel_scouting_level() != 0:
 		failures.append("Fresh run should not start with route scouting.")
+	if scout_run.travel_option_bonus() != 0:
+		failures.append("Fresh run should not start with extra travel options.")
 	scout_run.add_item("roadside_map")
 	if scout_run.travel_scouting_level() <= 0:
 		failures.append("Roadside Map did not enable full route scouting previews.")
+	if scout_run.travel_option_bonus() != 1:
+		failures.append("Roadside Map did not add exactly one travel option.")
+	var restored_scout_run: RunState = RunStateScript.new()
+	restored_scout_run.from_dict(scout_run.to_dict())
+	if restored_scout_run.travel_option_bonus() != 1:
+		failures.append("Roadside Map travel-option bonus did not survive save/load restore.")
+	restored_scout_run.remove_item("roadside_map")
+	if restored_scout_run.travel_option_bonus() != 0:
+		failures.append("Selling or removing Roadside Map did not remove its travel-option bonus.")
 	var service_scout_run: RunState = RunStateScript.new()
 	service_scout_run.start_new("TRAVEL-SERVICE-SCOUT")
 	var scout_service := library.service("cashier_tip")
@@ -2103,7 +2237,7 @@ func _check_world_map_payload_independent_read_paths(library: ContentLibrary, fa
 	run_state.world_map = map_data
 	run_state.current_environment = heavy_environment.duplicate(true)
 	var preview := RunGeneratorScript.new(library).preview_environment(run_state, "bar")
-	if _string_array(preview.get("game_ids", [])) != ["slot", "pull_tabs"]:
+	if JsonCoerceScript._string_array(preview.get("game_ids", [])) != ["slot", "pull_tabs"]:
 		failures.append("Stored world-room scouting preview did not preserve public game ids.")
 	if preview.has("game_states"):
 		failures.append("Stored world-room scouting preview leaked accumulated machine payloads.")
@@ -2122,7 +2256,7 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	if start_node_id.is_empty() or start_node_id != str(run_a.current_environment.get("world_node_id", "")) or str(start_environment.archetype_id) != start_node_id:
 		failures.append("Generated start environment did not sync to the current world map node.")
 	var snapshot := WorldMapScript.snapshot(run_a.world_map)
-	var visible_ids := _string_array(snapshot.get("visible_node_ids", []))
+	var visible_ids := JsonCoerceScript._string_array(snapshot.get("visible_node_ids", []))
 	if visible_ids.size() < 2:
 		failures.append("World map should spawn-discover at least one travelable stop from the start node.")
 	if _world_map_hidden_count(run_a.world_map) <= 0:
@@ -2134,15 +2268,33 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 		failures.append("World map snapshot leaked hidden node data at start: %s." % ", ".join(initial_leaks))
 	if not _world_map_snapshot_icons_match_positions(run_a.world_map, snapshot):
 		failures.append("World map snapshot icons did not preserve generated node positions.")
-	var travel_targets := WorldMapScript.travel_target_ids(run_a.world_map, start_node_id)
+	# Room travel hooks use production's capped list, which omits venues closed on arrival.
+	var travel_targets: Array = generator.call("_world_travel_target_ids", run_a, run_a.world_map, start_node_id)
 	if travel_targets.is_empty():
 		failures.append("World map should expose at least one capped travel target from the start node.")
 	if travel_targets.size() > WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT:
 		failures.append("World map exposed too many start travel targets: %d." % travel_targets.size())
 	if _world_map_target_new_count(run_a.world_map, travel_targets) > WorldMapScript.TRAVEL_NEW_TARGET_LIMIT:
 		failures.append("World map exposed more than two new travel targets from the start node.")
-	if _string_array(run_a.current_environment.get("travel_hooks", [])) != travel_targets or _string_array(run_a.current_environment.get("next_archetypes", [])) != travel_targets:
+	if JsonCoerceScript._string_array(run_a.current_environment.get("travel_hooks", [])) != travel_targets or JsonCoerceScript._string_array(run_a.current_environment.get("next_archetypes", [])) != travel_targets:
 		failures.append("Current environment travel hooks should mirror capped world-map travel targets.")
+	var map_item_run: RunState = RunStateScript.new()
+	map_item_run.from_dict(run_a.to_dict())
+	var map_item_source_id := map_item_run.current_world_node_id()
+	var map_item_neighbors := WorldMapScript.neighbor_ids(map_item_run.world_map, map_item_source_id)
+	map_item_run.world_map = WorldMapScript.unlock_nodes(map_item_run.world_map, map_item_neighbors, WorldMapScript.DISCOVERY_SOURCE_EVENT)
+	var ordinary_map_targets: Array = generator.call("_world_travel_target_ids", map_item_run, map_item_run.world_map, map_item_source_id)
+	map_item_run.add_item("roadside_map")
+	var mapped_travel_targets: Array = generator.call("_world_travel_target_ids", map_item_run, map_item_run.world_map, map_item_source_id)
+	if mapped_travel_targets.size() != ordinary_map_targets.size() + 1:
+		failures.append("Roadside Map did not add one destination to the generated travel list: ordinary=%s mapped=%s." % [str(ordinary_map_targets), str(mapped_travel_targets)])
+	elif mapped_travel_targets.slice(0, ordinary_map_targets.size()) != ordinary_map_targets:
+		failures.append("Roadside Map changed the deterministic ordering of existing travel choices: ordinary=%s mapped=%s." % [str(ordinary_map_targets), str(mapped_travel_targets)])
+	var restored_map_item_run: RunState = RunStateScript.new()
+	restored_map_item_run.from_dict(map_item_run.to_dict())
+	var restored_mapped_targets: Array = generator.call("_world_travel_target_ids", restored_map_item_run, restored_map_item_run.world_map, map_item_source_id)
+	if restored_mapped_targets != mapped_travel_targets:
+		failures.append("Roadside Map travel choices changed across save/load: before=%s after=%s." % [str(mapped_travel_targets), str(restored_mapped_targets)])
 	_check_world_map_current_marker(snapshot, start_node_id, failures)
 	_check_world_map_payload_independent_read_paths(library, failures)
 	_check_closing_soon_world_travel(library, failures)
@@ -2212,11 +2364,11 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 		failures.append("World map event-unlock fixture could not find a hidden node.")
 	else:
 		var before_unlock_snapshot := WorldMapScript.snapshot(run_a.world_map)
-		if _string_array(before_unlock_snapshot.get("visible_node_ids", [])).has(hidden_unlock_id):
+		if JsonCoerceScript._string_array(before_unlock_snapshot.get("visible_node_ids", [])).has(hidden_unlock_id):
 			failures.append("World map event-unlock fixture started with the hidden target visible.")
 		run_a.add_next_archetypes([hidden_unlock_id])
 		var after_unlock_snapshot := WorldMapScript.snapshot(run_a.world_map)
-		if not _string_array(after_unlock_snapshot.get("visible_node_ids", [])).has(hidden_unlock_id):
+		if not JsonCoerceScript._string_array(after_unlock_snapshot.get("visible_node_ids", [])).has(hidden_unlock_id):
 			failures.append("World map event grant did not reveal %s without re-entering the map." % hidden_unlock_id)
 		var unlocked_node := WorldMapScript.node_by_id(run_a.world_map, hidden_unlock_id)
 		if not bool(unlocked_node.get("unlocked", false)) or str(unlocked_node.get("discovery_source", "")) != WorldMapScript.DISCOVERY_SOURCE_EVENT:
@@ -2251,7 +2403,7 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 		if noon_targets.size() != WorldMapScript.TRAVEL_NEW_TARGET_LIMIT:
 			failures.append("World map should offer exactly two initial destinations for seed %03d; offered %s." % [early_shop_seed_index, str(noon_targets)])
 			break
-		var sorted_noon_targets := _string_array(noon_targets)
+		var sorted_noon_targets := JsonCoerceScript._string_array(noon_targets)
 		sorted_noon_targets.sort()
 		initial_pair_keys["|".join(sorted_noon_targets)] = true
 		if sorted_noon_targets.has("bar"):
@@ -2268,7 +2420,7 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 			early_shop_run.world_map,
 			early_shop_run.current_world_node_id()
 		)
-		if _string_array(evening_targets).has(WorldMapScript.JAZZ_CLUB_ID):
+		if JsonCoerceScript._string_array(evening_targets).has(WorldMapScript.JAZZ_CLUB_ID):
 			jazz_offer_count += 1
 	if early_shop_offer_count < 95:
 		failures.append("World map should offer an open shop early in at least 95%% of seeded runs; offered %d/100." % early_shop_offer_count)
@@ -2317,7 +2469,7 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 	_harness_arrive(generator, run_a, failures, "world-map first destination arrival", first_target)
 	run_a.finish_travel_suspicion_decay(travel_heat)
 	var visited_node_id := run_a.current_world_node_id()
-	run_a.current_environment["game_states"] = _copy_dict(run_a.current_environment.get("game_states", {}))
+	run_a.current_environment["game_states"] = JsonCoerceScript._copy_dict(run_a.current_environment.get("game_states", {}))
 	run_a.current_environment["game_states"]["world_map_fixture"] = {"remaining": 1, "top_prize_claimed": false}
 	var return_targets := WorldMapScript.travel_target_ids(run_a.world_map, visited_node_id)
 	if not return_targets.has(start_node_id):
@@ -2328,7 +2480,7 @@ func _check_world_map_foundation(library: ContentLibrary, failures: Array) -> vo
 			failures.append("World map did not expose visited node %s as a revisit target from %s." % [visited_id, visited_node_id])
 			break
 	var return_route := generator.world_route_for_target(run_a, start_node_id)
-	if _string_array(return_route.get("world_path", [])).size() < 2:
+	if JsonCoerceScript._string_array(return_route.get("world_path", [])).size() < 2:
 		failures.append("Return world-map route did not include a visible path.")
 	var return_cost := int(run_a.travel_route_status(return_route).get("cost", 0))
 	var return_method := WorldMapScript.travel_method_kind(return_route, str(return_route.get("distance", "")))
@@ -2449,18 +2601,18 @@ func _check_meta_home_run_boundary(library: ContentLibrary, failures: Array) -> 
 	var linked_service: Variant = MetaCollectionServiceScript.new()
 	linked_service.load()
 	var linked_modifiers: Dictionary = linked_service.normal_run_start_modifiers()
-	var meta_containers := _copy_array(linked_modifiers.get("meta_collection_containers", []))
+	var meta_containers := JsonCoerceScript._copy_array(linked_modifiers.get("meta_collection_containers", []))
 	if meta_containers.size() != 1:
 		failures.append("Meta-home two-item bag did not produce exactly one run container manifest.")
 	else:
-		var meta_container := _copy_dict(meta_containers[0])
-		if str(meta_container.get("item_id", "")) != "bag" or int(meta_container.get("capacity", 0)) != 3 or _copy_array(meta_container.get("items", [])).size() != 2:
+		var meta_container := JsonCoerceScript._copy_dict(meta_containers[0])
+		if str(meta_container.get("item_id", "")) != "bag" or int(meta_container.get("capacity", 0)) != 3 or JsonCoerceScript._copy_array(meta_container.get("items", [])).size() != 2:
 			failures.append("Meta-home two-item bag manifest did not preserve its bag identity, capacity, and packed count.")
 	var linked_config: Dictionary = RunStateScript.standard_challenge("META-HOME-LINKED-BAG")
 	linked_config["modifiers"] = linked_modifiers
 	var linked_run: RunState = RunStateScript.new()
 	linked_run.start_new("META-HOME-LINKED-BAG", linked_config)
-	for item_value in _copy_array(linked_modifiers.get("meta_collection_loadout", [])):
+	for item_value in JsonCoerceScript._copy_array(linked_modifiers.get("meta_collection_loadout", [])):
 		if typeof(item_value) == TYPE_DICTIONARY:
 			linked_run.inventory.append((item_value as Dictionary).duplicate(true))
 	var linked_generator: RunGenerator = RunGeneratorScript.new(library)
@@ -2469,23 +2621,23 @@ func _check_meta_home_run_boundary(library: ContentLibrary, failures: Array) -> 
 	if str(linked_run.current_environment.get("archetype_id", "")) != MetaCollectionServiceScript.HOUSING_MOTEL_ROOM or spawned_containers.size() != 1:
 		failures.append("Motel run did not spawn the meta-home bag as its only linked container.")
 	else:
-		var spawned_container := _copy_dict(spawned_containers[0])
-		if str(spawned_container.get("id", "")) != str(_copy_dict(meta_containers[0]).get("id", "")) or str(spawned_container.get("item_id", "")) != "bag" or int(spawned_container.get("capacity", 0)) != 3 or _copy_array(spawned_container.get("items", [])).size() != 2 or not bool(spawned_container.get("meta_loadout", false)):
+		var spawned_container := JsonCoerceScript._copy_dict(spawned_containers[0])
+		if str(spawned_container.get("id", "")) != str(JsonCoerceScript._copy_dict(meta_containers[0]).get("id", "")) or str(spawned_container.get("item_id", "")) != "bag" or int(spawned_container.get("capacity", 0)) != 3 or JsonCoerceScript._copy_array(spawned_container.get("items", [])).size() != 2 or not bool(spawned_container.get("meta_loadout", false)):
 			failures.append("Spawned motel bag was not identical to the two-item meta-home bag.")
 		var linked_resolver: RunActionService = RunActionServiceScript.new()
 		linked_resolver.setup(library, linked_run)
 		var linked_model: Dictionary = RunInventoryViewModelScript.build(linked_run, linked_resolver, "home_container", str(spawned_container.get("id", "")), {})
-		var linked_items := _copy_array(linked_model.get("items", []))
+		var linked_items := JsonCoerceScript._copy_array(linked_model.get("items", []))
 		if linked_items.size() != 2 or not str(linked_model.get("summary", "")).begins_with("2/3 packed from the meta-home"):
 			failures.append("Spawned motel bag popup did not expose the two packed meta-home items and 2/3 capacity.")
 		for linked_item_value in linked_items:
-			if str(_copy_dict(linked_item_value).get("storage_source", "")) != "loadout":
+			if str(JsonCoerceScript._copy_dict(linked_item_value).get("storage_source", "")) != "loadout":
 				failures.append("Spawned motel bag treated a linked meta-home item as unrelated room storage.")
 				break
 	var linked_loaded: RunState = RunStateScript.new()
 	linked_loaded.from_dict(linked_run.to_dict())
 	var loaded_containers := linked_loaded.current_home_containers()
-	if loaded_containers.size() != 1 or _copy_array(_copy_dict(loaded_containers[0]).get("items", [])).size() != 2 or not bool(_copy_dict(loaded_containers[0]).get("meta_loadout", false)):
+	if loaded_containers.size() != 1 or JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(loaded_containers[0]).get("items", [])).size() != 2 or not bool(JsonCoerceScript._copy_dict(loaded_containers[0]).get("meta_loadout", false)):
 		failures.append("Linked meta-home bag identity and contents did not survive run save/load.")
 	_remove_user_store_file(linked_path)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, previous_path)
@@ -2495,7 +2647,7 @@ func _check_meta_home_run_boundary(library: ContentLibrary, failures: Array) -> 
 	var drop_service: Variant = CollectionDropServiceScript.new()
 	if not drop_service.ensure_run_end_pending_bags(daily, null).is_empty():
 		failures.append("Daily run created meta collection pending bags.")
-	if not _copy_array(drop_service.flush_pending_bags(daily, service).get("granted", [])).is_empty():
+	if not JsonCoerceScript._copy_array(drop_service.flush_pending_bags(daily, service).get("granted", [])).is_empty():
 		failures.append("Daily run flushed meta collection bags.")
 
 
@@ -2506,28 +2658,28 @@ func _check_meta_home_fresh_store_defaults(failures: Array) -> void:
 	_remove_user_store_file(test_path)
 	var service: Variant = MetaCollectionServiceScript.new()
 	var fresh: Dictionary = service.load()
-	if not _copy_array(fresh.get("owned_instances", [])).is_empty():
+	if not JsonCoerceScript._copy_array(fresh.get("owned_instances", [])).is_empty():
 		failures.append("Fresh meta store must start with zero owned item instances.")
-	if not _copy_array(fresh.get("unopened_bags", [])).is_empty():
+	if not JsonCoerceScript._copy_array(fresh.get("unopened_bags", [])).is_empty():
 		failures.append("Fresh meta store must start with zero unopened bags.")
 	if int(fresh.get("gold_balance", -1)) != 0:
 		failures.append("Fresh meta store must start with zero gold.")
 	if str(fresh.get("housing_tier", "")) != MetaCollectionServiceScript.HOUSING_BACK_ALLEY:
 		failures.append("Fresh meta store must start at back alley housing.")
-	var containers := _copy_array(fresh.get("owned_containers", []))
+	var containers := JsonCoerceScript._copy_array(fresh.get("owned_containers", []))
 	if containers.size() != 1:
 		failures.append("Fresh meta store must contain exactly one starter container.")
 	else:
-		var container := _copy_dict(containers[0])
+		var container := JsonCoerceScript._copy_dict(containers[0])
 		if str(container.get("item_id", "")) != "bag" or int(container.get("capacity", 0)) != 3:
 			failures.append("Fresh meta store starter container should be the empty spawn bag.")
-	var sal_resale := _copy_dict(fresh.get("sal_resale", {}))
-	var sal_slots := _copy_array(sal_resale.get("slots", []))
-	var starter_instances: Array = sal_slots.filter(func(slot_value: Dictionary) -> bool: return bool(slot_value.get("protected", false)) and not _copy_dict(slot_value.get("item", {})).is_empty())
+	var sal_resale := JsonCoerceScript._copy_dict(fresh.get("sal_resale", {}))
+	var sal_slots := JsonCoerceScript._copy_array(sal_resale.get("slots", []))
+	var starter_instances: Array = sal_slots.filter(func(slot_value: Dictionary) -> bool: return bool(slot_value.get("protected", false)) and not JsonCoerceScript._copy_dict(slot_value.get("item", {})).is_empty())
 	if starter_instances.size() != 1:
 		failures.append("Fresh meta store must reserve exactly one protected Sal starter instance.")
 	else:
-		var starter_id := int(_copy_dict(_copy_dict(starter_instances[0]).get("item", {})).get("instance_id", 0))
+		var starter_id := int(JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(starter_instances[0]).get("item", {})).get("instance_id", 0))
 		if starter_id < MetaCollectionServiceScript.FIRST_INSTANCE_ID or int(fresh.get("next_instance_id", 0)) != starter_id + 1:
 			failures.append("Fresh meta store next_instance_id did not advance past the protected Sal starter.")
 	var save_error: Error = service.save()
@@ -2535,7 +2687,7 @@ func _check_meta_home_fresh_store_defaults(failures: Array) -> void:
 		failures.append("Fresh meta store save failed with error %d." % int(save_error))
 	var reloaded_service: Variant = MetaCollectionServiceScript.new()
 	var reloaded: Dictionary = reloaded_service.load()
-	if not _copy_array(reloaded.get("owned_instances", [])).is_empty() or not _copy_array(reloaded.get("unopened_bags", [])).is_empty():
+	if not JsonCoerceScript._copy_array(reloaded.get("owned_instances", [])).is_empty() or not JsonCoerceScript._copy_array(reloaded.get("unopened_bags", [])).is_empty():
 		failures.append("Fresh meta store persisted phantom owned items or bags.")
 	_remove_user_store_file(test_path)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, previous_path)
@@ -2571,22 +2723,22 @@ func _check_meta_home_fixture_pollution_migration(failures: Array) -> void:
 	})
 	var polluted_service: Variant = MetaCollectionServiceScript.new()
 	var migrated: Dictionary = polluted_service.load()
-	if not _copy_array(migrated.get("owned_instances", [])).is_empty():
+	if not JsonCoerceScript._copy_array(migrated.get("owned_instances", [])).is_empty():
 		failures.append("Fixture-polluted meta store should quarantine legacy owned item instances.")
-	if not _copy_array(migrated.get("unopened_bags", [])).is_empty():
+	if not JsonCoerceScript._copy_array(migrated.get("unopened_bags", [])).is_empty():
 		failures.append("Fixture-polluted meta store should quarantine UI/test unopened bags.")
 	if int(migrated.get("gold_balance", -1)) != 0:
 		failures.append("Fixture-only meta store should reset gold to zero after quarantine.")
 	if not bool(migrated.get(MetaCollectionServiceScript.FIXTURE_POLLUTION_MIGRATION_FLAG, false)):
 		failures.append("Fixture-polluted meta store did not persist the quarantine migration flag.")
-	var quarantine := _copy_dict(migrated.get("quarantined_records", {}))
-	if _copy_array(quarantine.get("fixture_bags", [])).is_empty():
+	var quarantine := JsonCoerceScript._copy_dict(migrated.get("quarantined_records", {}))
+	if JsonCoerceScript._copy_array(quarantine.get("fixture_bags", [])).is_empty():
 		failures.append("Fixture-polluted meta store did not preserve quarantined bag evidence.")
-	if _copy_array(quarantine.get("fixture_instances", [])).is_empty():
+	if JsonCoerceScript._copy_array(quarantine.get("fixture_instances", [])).is_empty():
 		failures.append("Fixture-polluted meta store did not preserve quarantined instance evidence.")
 	var persisted_service: Variant = MetaCollectionServiceScript.new()
 	var persisted: Dictionary = persisted_service.load()
-	if not _copy_array(persisted.get("owned_instances", [])).is_empty() or not _copy_array(persisted.get("unopened_bags", [])).is_empty():
+	if not JsonCoerceScript._copy_array(persisted.get("owned_instances", [])).is_empty() or not JsonCoerceScript._copy_array(persisted.get("unopened_bags", [])).is_empty():
 		failures.append("Fixture-polluted meta store quarantine did not survive reload.")
 	_remove_user_store_file(polluted_path)
 
@@ -2620,9 +2772,9 @@ func _check_meta_home_fixture_pollution_migration(failures: Array) -> void:
 	})
 	var earned_service: Variant = MetaCollectionServiceScript.new()
 	var earned: Dictionary = earned_service.load()
-	if _copy_array(earned.get("owned_instances", [])).size() != 1:
+	if JsonCoerceScript._copy_array(earned.get("owned_instances", [])).size() != 1:
 		failures.append("Earned meta item with real provenance was incorrectly quarantined.")
-	if _copy_array(earned.get("unopened_bags", [])).size() != 1:
+	if JsonCoerceScript._copy_array(earned.get("unopened_bags", [])).size() != 1:
 		failures.append("Earned meta bag with real provenance was incorrectly quarantined.")
 	if int(earned.get("gold_balance", -1)) != 12:
 		failures.append("Earned meta store gold changed during fixture quarantine check.")
@@ -2639,16 +2791,23 @@ func _check_time_open_hours_foundation(library: ContentLibrary, failures: Array)
 		return
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("TIME-OPEN-HOURS")
+	var overnight_cycle := EnvironmentHoursScript.operating_cycle_id(bar_archetype, 23 * 60)
+	if overnight_cycle != EnvironmentHoursScript.operating_cycle_id(bar_archetype, EnvironmentHoursScript.MINUTES_PER_DAY + 2 * 60):
+		failures.append("An overnight venue changed operating cycles at midnight before it closed.")
+	if overnight_cycle == EnvironmentHoursScript.operating_cycle_id(bar_archetype, EnvironmentHoursScript.MINUTES_PER_DAY + 12 * 60):
+		failures.append("A venue close/reopen boundary did not advance its operating cycle.")
+	if EnvironmentHoursScript.operating_cycle_id({}, 60) == EnvironmentHoursScript.operating_cycle_id({}, EnvironmentHoursScript.MINUTES_PER_DAY + 60):
+		failures.append("An always-open environment did not refresh its situation on the next game day.")
 	var environment := EnvironmentInstance.from_archetype(bar_archetype, 1, run_state.create_rng("time_open_hours"), library)
 	run_state.set_environment(environment.to_dict())
 	run_state.game_clock_minutes = 0
-	if run_state.clock_display_text(true) != "Day 1 12 AM":
-		failures.append("Clock display should render midnight as Day 1 12 AM.")
+	if run_state.clock_display_text(true) != "Day 1 12:00 AM":
+		failures.append("Clock display should render midnight as Day 1 12:00 AM.")
 	run_state.game_clock_minutes = 12 * 60
-	if run_state.clock_display_text(true) != "Day 1 12 PM":
-		failures.append("Clock display should render noon as Day 1 12 PM.")
+	if run_state.clock_display_text(true) != "Day 1 12:00 PM":
+		failures.append("Clock display should render noon as Day 1 12:00 PM.")
 	run_state.game_clock_minutes = 24 * 60
-	if run_state.clock_display_text(true) != "Day 2 12 AM":
+	if run_state.clock_display_text(true) != "Day 2 12:00 AM":
 		failures.append("Clock display should roll over to Day 2 at midnight.")
 	var action_clock_before := run_state.game_clock_minutes
 	run_state.advance_environment_turns(2)
@@ -2687,6 +2846,10 @@ func _check_time_open_hours_foundation(library: ContentLibrary, failures: Array)
 		failures.append("Closing-time travel fixture requires FoundationMain runtime nodes.")
 		_sb4_dispose_app(app)
 		return
+	# Headless startup loads only the main-menu catalog. A real run expands it
+	# before room entry; this fixture injects a RunState directly, so it must cross
+	# that same content boundary before the closing dialogue can resolve.
+	app.call("_ensure_full_content_library_loaded")
 	var ui_run: RunState = RunStateScript.new()
 	ui_run.start_new("TIME-OPEN-HOURS-UI")
 	ui_run.bankroll = 100
@@ -2776,7 +2939,7 @@ func _check_time_open_hours_foundation(library: ContentLibrary, failures: Array)
 
 func _world_map_hidden_count(map_data: Dictionary) -> int:
 	var count := 0
-	for node_value in _copy_array(map_data.get("nodes", [])):
+	for node_value in JsonCoerceScript._copy_array(map_data.get("nodes", [])):
 		if typeof(node_value) == TYPE_DICTIONARY and str((node_value as Dictionary).get("state", "")) == WorldMapScript.STATE_HIDDEN:
 			count += 1
 	return count
@@ -2784,7 +2947,7 @@ func _world_map_hidden_count(map_data: Dictionary) -> int:
 
 func _world_map_visited_ids(map_data: Dictionary) -> Array:
 	var ids: Array = []
-	for node_value in _copy_array(map_data.get("nodes", [])):
+	for node_value in JsonCoerceScript._copy_array(map_data.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
 		var node: Dictionary = node_value
@@ -2809,7 +2972,7 @@ func _world_map_visible_ids_have_sources(map_data: Dictionary) -> bool:
 func _world_map_snapshot_hidden_leaks(map_data: Dictionary, snapshot: Dictionary) -> Array:
 	var hidden_ids := _world_map_hidden_ids(map_data)
 	var leaks: Array = []
-	for node_value in _copy_array(snapshot.get("nodes", [])):
+	for node_value in JsonCoerceScript._copy_array(snapshot.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
 		var node: Dictionary = node_value
@@ -2818,7 +2981,7 @@ func _world_map_snapshot_hidden_leaks(map_data: Dictionary, snapshot: Dictionary
 			leaks.append(node_id)
 		if node.has("environment") and not leaks.has("%s:environment" % node_id):
 			leaks.append("%s:environment" % node_id)
-	for edge_value in _copy_array(snapshot.get("edges", [])):
+	for edge_value in JsonCoerceScript._copy_array(snapshot.get("edges", [])):
 		if typeof(edge_value) != TYPE_DICTIONARY:
 			continue
 		var edge: Dictionary = edge_value
@@ -2836,7 +2999,7 @@ func _world_map_snapshot_hidden_leaks(map_data: Dictionary, snapshot: Dictionary
 
 func _world_map_hidden_ids(map_data: Dictionary) -> Array:
 	var hidden_ids: Array = []
-	for node_value in _copy_array(map_data.get("nodes", [])):
+	for node_value in JsonCoerceScript._copy_array(map_data.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
 		var node: Dictionary = node_value
@@ -2854,7 +3017,7 @@ func _first_hidden_world_node_id(map_data: Dictionary) -> String:
 
 
 func _world_map_snapshot_icons_match_positions(map_data: Dictionary, snapshot: Dictionary) -> bool:
-	for node_value in _copy_array(snapshot.get("nodes", [])):
+	for node_value in JsonCoerceScript._copy_array(snapshot.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			return false
 		var snapshot_node: Dictionary = node_value
@@ -2936,11 +3099,11 @@ func _write_user_store_text(path: String, text: String) -> void:
 
 func _world_map_positions(map_data: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
-	for node_value in _copy_array(map_data.get("nodes", [])):
+	for node_value in JsonCoerceScript._copy_array(map_data.get("nodes", [])):
 		if typeof(node_value) != TYPE_DICTIONARY:
 			continue
 		var node: Dictionary = node_value
-		result[str(node.get("id", ""))] = _copy_dict(node.get("position", {}))
+		result[str(node.get("id", ""))] = JsonCoerceScript._copy_dict(node.get("position", {}))
 	return result
 
 
@@ -2958,7 +3121,7 @@ func _world_map_beach_delta_adjacency_ok(map_data: Dictionary, label: String, fa
 		failures.append("World map beach edge must price as 1 block for %s, got %d." % [label, int(edge.get("distance_blocks", 0))])
 		return false
 	var beach_edge_count := 0
-	for edge_value in _copy_array(map_data.get("edges", [])):
+	for edge_value in JsonCoerceScript._copy_array(map_data.get("edges", [])):
 		if typeof(edge_value) != TYPE_DICTIONARY:
 			continue
 		var candidate: Dictionary = edge_value
@@ -2971,12 +3134,71 @@ func _world_map_beach_delta_adjacency_ok(map_data: Dictionary, label: String, fa
 
 
 func _world_map_beach_route_gate_ok(map_data: Dictionary, label: String, library: ContentLibrary, failures: Array) -> bool:
-	var gated_map := WorldMapScript.unlock_nodes(map_data, ["beach"], WorldMapScript.DISCOVERY_SOURCE_EVENT)
-	gated_map = WorldMapScript.enter_node(gated_map, "delta_queen", {})
+	var gated_map := WorldMapScript.enter_node(map_data, "delta_queen", {})
+	# Recreate the shipped failure after arrival: an old save can keep Beach
+	# hidden and spawn-locked while several other visible routes compete for the
+	# three-card cap. The production selector must repair this without a test-only
+	# unlock or a caller-injected target id.
+	var nodes: Array = JsonCoerceScript._copy_array(gated_map.get("nodes", []))
+	var ordinary_yield_id := str(gated_map.get("start_node_id", ""))
+	if ordinary_yield_id in ["", "beach", "delta_queen"]:
+		for candidate_value in nodes:
+			if typeof(candidate_value) != TYPE_DICTIONARY:
+				continue
+			var candidate_id := str((candidate_value as Dictionary).get("id", ""))
+			if not candidate_id in ["", "beach", "delta_queen"]:
+				ordinary_yield_id = candidate_id
+				break
+	for node_index in range(nodes.size()):
+		if typeof(nodes[node_index]) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = nodes[node_index]
+		var node_id := str(node.get("id", ""))
+		if node_id == "beach":
+			node["state"] = WorldMapScript.STATE_HIDDEN
+			node["seen"] = false
+			node["unlocked"] = false
+			node["route_spawn_open"] = false
+			node["discovery_source"] = WorldMapScript.DISCOVERY_SOURCE_NONE
+			# Keep the mandatory connector below the ordinary candidate cut so this
+			# fixture proves post-priority replacement rather than lucky early rank.
+			node["tier"] = 99
+		else:
+			node["state"] = WorldMapScript.STATE_VISITED if node_id in ["delta_queen", ordinary_yield_id] else WorldMapScript.STATE_REVEALED
+			node["seen"] = true
+			node["unlocked"] = true
+			node["route_spawn_open"] = true
+			node["home_lost"] = false
+			node["discovery_source"] = WorldMapScript.DISCOVERY_SOURCE_SPAWN
+		nodes[node_index] = node
+	gated_map["nodes"] = nodes
+	gated_map["visited_path"] = [ordinary_yield_id, "delta_queen"]
 	var map_service: Variant = WorldMapScript.new(library)
+	var no_beach_control := gated_map.duplicate(true)
+	var control_nodes: Array = JsonCoerceScript._copy_array(no_beach_control.get("nodes", []))
+	for node_index in range(control_nodes.size()):
+		if typeof(control_nodes[node_index]) != TYPE_DICTIONARY:
+			continue
+		var control_node: Dictionary = control_nodes[node_index]
+		if str(control_node.get("id", "")) == "beach":
+			control_node["home_lost"] = true
+			control_nodes[node_index] = control_node
+			break
+	no_beach_control["nodes"] = control_nodes
+	var expanded_competitors := WorldMapScript.travel_target_ids(no_beach_control, "delta_queen", 32, 32)
+	if expanded_competitors.has("beach") or expanded_competitors.size() <= WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT:
+		failures.append("World map Beach cap fixture did not create more than three eligible ordinary competitors for %s: %s." % [label, str(expanded_competitors)])
+		return false
+	var capped_control := WorldMapScript.travel_target_ids(no_beach_control, "delta_queen")
+	if capped_control.size() != WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT or str(capped_control[-1]) != ordinary_yield_id:
+		failures.append("World map Beach cap control did not end with the intended lowest-ranked ordinary card for %s: yield=%s targets=%s." % [label, ordinary_yield_id, str(capped_control)])
+		return false
 	var delta_targets := WorldMapScript.travel_target_ids(gated_map, "delta_queen")
-	if not delta_targets.has("beach"):
-		failures.append("World map beach should be travelable from delta_queen for %s." % label)
+	if delta_targets.count("beach") != 1:
+		failures.append("World map beach should survive hidden/locked state and capped route competition exactly once from delta_queen for %s: %s." % [label, str(delta_targets)])
+		return false
+	if delta_targets.size() != WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT or delta_targets.has(ordinary_yield_id):
+		failures.append("Beach connector did not replace the lowest-ranked ordinary card inside the configured cap for %s: yield=%s targets=%s." % [label, ordinary_yield_id, str(delta_targets)])
 		return false
 	var access_route: Dictionary = map_service.route_for_target(gated_map, "delta_queen", "beach")
 	if access_route.is_empty():
@@ -2992,6 +3214,12 @@ func _world_map_beach_route_gate_ok(map_data: Dictionary, label: String, library
 	var broke_access_run: RunState = RunStateScript.new()
 	broke_access_run.start_new("BEACH-ACCESS-FREE")
 	broke_access_run.bankroll = 0
+	broke_access_run.set_environment({"id": "beach_access_lock", "archetype_id": "delta_queen", "travel_lock_remaining": 2})
+	var globally_locked_status := broke_access_run.travel_route_status(access_route)
+	if bool(globally_locked_status.get("available", true)) or str(globally_locked_status.get("disabled_reason", "")).strip_edges().is_empty():
+		failures.append("Required Beach access bypassed the ordinary global travel lock for %s." % label)
+		return false
+	broke_access_run.current_environment["travel_lock_remaining"] = 0
 	var access_status := broke_access_run.travel_route_status(access_route)
 	if not bool(access_status.get("available", false)) or int(access_status.get("cost", -1)) != 0:
 		failures.append("A broke player could not take the free Delta Queen to Beach walk for %s." % label)
@@ -3000,6 +3228,35 @@ func _world_map_beach_route_gate_ok(map_data: Dictionary, label: String, library
 	var beach_targets := WorldMapScript.travel_target_ids(gated_map, "beach")
 	if not beach_targets.has("delta_queen"):
 		failures.append("World map beach should still allow return travel to delta_queen for %s." % label)
+		return false
+	# An accepted invitation can detour through the mandatory Beach connector and
+	# still take the real, capped production route to Grand without losing its comp.
+	var invited_beach_run: RunState = RunStateScript.new()
+	invited_beach_run.start_new("BEACH-GRAND-DETOUR-%s" % label)
+	invited_beach_run.bankroll = 1
+	invited_beach_run.environment_history.append({"id": "visited_once", "archetype_id": "corner_store"})
+	invited_beach_run.narrative_flags["grand_casino_invite"] = true
+	invited_beach_run.set_world_map(gated_map)
+	invited_beach_run.set_environment({"id": "beach_grand_detour", "archetype_id": "beach", "travel_lock_remaining": 2})
+	var beach_grand_generator: RunGenerator = RunGeneratorScript.new(library)
+	var beach_grand_route := beach_grand_generator.world_route_for_target(invited_beach_run, "grand_casino")
+	if beach_grand_route.is_empty():
+		failures.append("Invited Beach detour could not resolve a real generated Grand Casino route for %s." % label)
+		return false
+	var beach_grand_locked_status := invited_beach_run.travel_route_status(beach_grand_route)
+	if int(beach_grand_locked_status.get("cost", -1)) != 0 or bool(beach_grand_locked_status.get("available", true)) \
+			or bool(beach_grand_locked_status.get("hidden", true)) or str(beach_grand_locked_status.get("disabled_reason", "")).strip_edges().is_empty():
+		failures.append("Invited Beach detour bypassed the global travel lock or lost its zero fare for %s: %s." % [label, JSON.stringify(beach_grand_locked_status)])
+		return false
+	invited_beach_run.current_environment["travel_lock_remaining"] = 0
+	var invited_beach_targets := beach_grand_generator._world_travel_target_ids(
+		invited_beach_run,
+		invited_beach_run.world_map,
+		invited_beach_run.current_world_node_id()
+	)
+	var beach_grand_status := invited_beach_run.travel_route_status(beach_grand_route)
+	if not invited_beach_targets.has("grand_casino") or int(beach_grand_status.get("cost", -1)) != 0 or not bool(beach_grand_status.get("available", false)):
+		failures.append("Invited Beach detour did not expose an enabled zero-cost Grand Casino production target for %s: targets=%s status=%s." % [label, JSON.stringify(invited_beach_targets), JSON.stringify(beach_grand_status)])
 		return false
 	var return_route: Dictionary = map_service.route_for_target(gated_map, "beach", "delta_queen")
 	if int(return_route.get("cost", -1)) != 0 \
@@ -3019,6 +3276,11 @@ func _world_map_beach_route_gate_ok(map_data: Dictionary, label: String, library
 	var return_status := broke_return_run.travel_route_status(return_route)
 	if not bool(return_status.get("available", false)) or int(return_status.get("cost", -1)) != 0:
 		failures.append("A broke player could not take the free Beach return walk for %s." % label)
+		return false
+	var revisit_map := WorldMapScript.enter_node(gated_map, "delta_queen", {})
+	var revisit_targets := WorldMapScript.travel_target_ids(revisit_map, "delta_queen")
+	if revisit_targets.count("beach") != 1:
+		failures.append("Revisiting the Delta Queen did not preserve exactly one Beach destination for %s: %s." % [label, str(revisit_targets)])
 		return false
 	var delta_archetype := _archetype_by_id(library, "delta_queen")
 	if delta_archetype.is_empty() \
@@ -3040,7 +3302,7 @@ func _world_map_beach_route_gate_ok(map_data: Dictionary, label: String, library
 
 
 func _world_map_edge_between(map_data: Dictionary, a: String, b: String) -> Dictionary:
-	for edge_value in _copy_array(map_data.get("edges", [])):
+	for edge_value in JsonCoerceScript._copy_array(map_data.get("edges", [])):
 		if typeof(edge_value) != TYPE_DICTIONARY:
 			continue
 		var edge: Dictionary = edge_value
@@ -3055,6 +3317,11 @@ func _check_unique_object_layout_classes(library: ContentLibrary, failures: Arra
 	var pull_tabs_game: GameModule = _load_surface_contract_game(library, "pull_tabs", failures)
 	if pull_tabs_game == null:
 		return
+	var counter_hosts := {
+		"bar": "staff:bar_bartender",
+		"gas_station_casino": "character:nell",
+		"jazz_club": "shopkeeper:merchant",
+	}
 	for archetype_id in ["bar", "gas_station_casino", "jazz_club"]:
 		var archetype := _archetype_by_id(library, str(archetype_id))
 		if archetype.is_empty():
@@ -3064,18 +3331,31 @@ func _check_unique_object_layout_classes(library: ContentLibrary, failures: Arra
 		run_state.start_new("UNIQUE-OBJECT-%s" % str(archetype_id))
 		var environment := EnvironmentInstance.from_archetype(archetype, 1, run_state.create_rng("unique_object_environment"), library)
 		var environment_data := environment.to_dict()
-		var game_states := _copy_dict(environment_data.get("game_states", {}))
+		var game_states := JsonCoerceScript._copy_dict(environment_data.get("game_states", {}))
 		game_states["pull_tabs"] = pull_tabs_game.generate_environment_state(run_state, environment_data, run_state.create_rng("unique_object_pull_tabs"))
 		environment_data["game_states"] = game_states
 		environment_data["layout"] = EnvironmentInstance.ensure_generated_layout(environment_data)
 		var conflicts := _unique_object_layout_conflicts(environment_data, library)
 		if not conflicts.is_empty():
 			failures.append("Unique object layout guard found duplicate identity classes in %s: %s." % [str(archetype_id), ", ".join(conflicts)])
-		var object_rects: Dictionary = _copy_dict(_copy_dict(environment_data.get("layout", {})).get("object_rects", {}))
-		if object_rects.has("dialogue:pull_tab_clerk"):
-			failures.append("Pull Tabs duplicate dialogue clerk still reserved a room object in %s." % str(archetype_id))
-		if not object_rects.has("game_hook:pull_tabs:ticket_redeemer"):
-			failures.append("Pull Tabs unique clerk guard dropped the redeem counter in %s." % str(archetype_id))
+		var object_rects: Dictionary = JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(environment_data.get("layout", {})).get("object_rects", {}))
+		var counter_host_id := str(counter_hosts.get(archetype_id, ""))
+		if not object_rects.has(counter_host_id):
+			failures.append("Pull Tabs sales counter host %s lost its room object in %s." % [counter_host_id, str(archetype_id)])
+		for forbidden_id in ["game:pull_tabs", "dialogue:pull_tab_clerk", "game_hook:pull_tabs:ticket_redeemer"]:
+			if object_rects.has(forbidden_id):
+				failures.append("Pull Tabs counter action %s still reserved a separate room object in %s." % [forbidden_id, str(archetype_id)])
+		var counter_host_row: Dictionary = {}
+		for row_value in JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(environment_data.get("object_manifest", {})).get("rows", [])):
+			if typeof(row_value) != TYPE_DICTIONARY:
+				continue
+			var row: Dictionary = row_value
+			if bool(row.get("active", true)) and str(row.get("presentation_object_id", row.get("presentation_id", ""))) == counter_host_id:
+				counter_host_row = row
+				break
+		for action_id in ["game:pull_tabs", "dialogue:pull_tab_clerk", "game_hook:pull_tabs:ticket_redeemer"]:
+			if not JsonCoerceScript._copy_array(counter_host_row.get("action_ids", [])).has(action_id):
+				failures.append("Pull Tabs counter host %s does not own action %s in %s." % [counter_host_id, action_id, str(archetype_id)])
 
 
 func _check_generated_object_layout_stability(library: ContentLibrary, failures: Array) -> void:
@@ -3090,7 +3370,7 @@ func _check_generated_object_layout_stability(library: ContentLibrary, failures:
 		var environment := EnvironmentInstance.from_archetype(archetype, 1, first_run.create_rng("stable_room_layout"), library).to_dict()
 		var layout := EnvironmentInstance.ensure_generated_layout(environment)
 		environment["layout"] = layout
-		var object_rects := _copy_dict(layout.get("object_rects", {}))
+		var object_rects := JsonCoerceScript._copy_dict(layout.get("object_rects", {}))
 		if archetype_id == "bar" and not object_rects.has("service:house_drink"):
 			failures.append("Stable object layout guard did not classify the bar drink through service_spots.")
 			continue
@@ -3105,21 +3385,21 @@ func _check_generated_object_layout_stability(library: ContentLibrary, failures:
 		repeated_run.start_new(seed_text)
 		var repeated_environment := EnvironmentInstance.from_archetype(archetype, 1, repeated_run.create_rng("stable_room_layout"), library).to_dict()
 		var repeated_layout := EnvironmentInstance.ensure_generated_layout(repeated_environment)
-		if JSON.stringify(_copy_dict(repeated_layout.get("object_rects", {}))) != JSON.stringify(object_rects):
+		if JSON.stringify(JsonCoerceScript._copy_dict(repeated_layout.get("object_rects", {}))) != JSON.stringify(object_rects):
 			failures.append("The same seed did not reproduce the same fixed %s object positions." % archetype_id)
 
 
 func _unique_object_layout_conflicts(environment_data: Dictionary, library: ContentLibrary) -> Array:
 	var class_by_object_id: Dictionary = {}
-	for event_id in _string_array(environment_data.get("event_ids", [])):
+	for event_id in JsonCoerceScript._string_array(environment_data.get("event_ids", [])):
 		var event_definition := library.event(event_id)
 		var unique_class := str(event_definition.get("unique_object_class", "")).strip_edges()
 		if not unique_class.is_empty() and not bool(event_definition.get("allow_duplicate_unique_class", false)):
 			class_by_object_id["event:%s" % event_id] = unique_class
-	var game_states := _copy_dict(environment_data.get("game_states", {}))
-	for game_id in _string_array(environment_data.get("game_ids", [])):
-		var machine := _copy_dict(game_states.get(game_id, {}))
-		for hook_value in _copy_array(machine.get("environment_hooks", [])):
+	var game_states := JsonCoerceScript._copy_dict(environment_data.get("game_states", {}))
+	for game_id in JsonCoerceScript._string_array(environment_data.get("game_ids", [])):
+		var machine := JsonCoerceScript._copy_dict(game_states.get(game_id, {}))
+		for hook_value in JsonCoerceScript._copy_array(machine.get("environment_hooks", [])):
 			if typeof(hook_value) != TYPE_DICTIONARY:
 				continue
 			var hook: Dictionary = hook_value
@@ -3131,7 +3411,7 @@ func _unique_object_layout_conflicts(environment_data: Dictionary, library: Cont
 				var dialogue_id := str(hook.get("dialogue_id", "")).strip_edges()
 				object_id = "dialogue:%s" % dialogue_id if not dialogue_id.is_empty() else "game_hook:%s:%s" % [game_id, str(hook.get("id", ""))]
 			class_by_object_id[object_id] = unique_class
-	var object_rects: Dictionary = _copy_dict(_copy_dict(environment_data.get("layout", {})).get("object_rects", {}))
+	var object_rects: Dictionary = JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(environment_data.get("layout", {})).get("object_rects", {}))
 	var seen_classes: Dictionary = {}
 	var conflicts: Array = []
 	for object_id_value in object_rects.keys():
@@ -3375,19 +3655,19 @@ func _check_service_hook_foundation(library: ContentLibrary, failures: Array) ->
 			failures.append("Beach sand pile inventory/flag state did not survive RunState round-trip.")
 		if beach_slot_game != null:
 			var cumquat_command := beach_slot_game.active_item_command("cumquat_sandwich", beach_run, beach_run.current_environment, beach_run.create_rng("beach_cumquat_arm"))
-			var cumquat_result := _copy_dict(cumquat_command.get("result", {}))
+			var cumquat_result := JsonCoerceScript._copy_dict(cumquat_command.get("result", {}))
 			if not bool(cumquat_command.get("handled", false)) or not bool(cumquat_result.get("ok", false)):
 				failures.append("Cumquat Sandwich found on the Beach could not be used on its boardwalk slot.")
 			else:
 				GameModule.apply_result(beach_run, cumquat_result, beach_run.create_rng("beach_cumquat_apply"))
 				var armed_machine := SlotMachineStateScript.read_machine(beach_run.current_environment, "slot")
-				var armed_item_state := _copy_dict(armed_machine.get("slot_item_state", {}))
+				var armed_item_state := JsonCoerceScript._copy_dict(armed_machine.get("slot_item_state", {}))
 				if beach_run.inventory.has("cumquat_sandwich") or not bool(armed_item_state.get("cumquat_force_bonus_pending", false)):
 					failures.append("Beach slot did not consume the Cumquat Sandwich and arm its forced bonus.")
 				var armed_loaded: RunState = RunStateScript.new()
 				armed_loaded.from_dict(beach_run.to_dict())
 				var loaded_machine := SlotMachineStateScript.read_machine(armed_loaded.current_environment, "slot")
-				if not bool(_copy_dict(loaded_machine.get("slot_item_state", {})).get("cumquat_force_bonus_pending", false)):
+				if not bool(JsonCoerceScript._copy_dict(loaded_machine.get("slot_item_state", {})).get("cumquat_force_bonus_pending", false)):
 					failures.append("Beach slot Cumquat Sandwich state did not survive save/load.")
 
 	var unsupported_run: RunState = RunStateScript.new()
@@ -3448,6 +3728,8 @@ func _fixture_service_result(run_state: RunState, service: Dictionary, service_i
 			"type": "service_hook",
 			"source_id": service_id,
 			"action_id": "use_service_hook",
+			"error_code": "unsupported_service",
+			"message": "This service has no supported effect.",
 		})
 	var message := str(service.get("message", "Used %s." % str(service.get("display_name", service_id))))
 	deltas["story_log"] = [{
@@ -3495,14 +3777,14 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 		if source_archetype.is_empty():
 			failures.append("Jazz Club route source is missing: %s." % source_id)
 			continue
-		if not _string_array(source_archetype.get("rare_next_archetypes", [])).has("jazz_club"):
+		if not JsonCoerceScript._string_array(source_archetype.get("rare_next_archetypes", [])).has("jazz_club"):
 			failures.append("Jazz Club route source %s no longer exposes the music room." % source_id)
 		if int(source_archetype.get("rare_next_chance_percent", 0)) < 40:
 			failures.append("Jazz Club route source %s should expose the music room at least 40%% of the time." % source_id)
-	var jazz_game_pool := _string_array(jazz_archetype.get("game_pool", []))
+	var jazz_game_pool := JsonCoerceScript._string_array(jazz_archetype.get("game_pool", []))
 	if jazz_game_pool != ["pull_tabs"]:
 		failures.append("Jazz Club should always expose exactly the pull-tabs machine.")
-	if _string_array(jazz_archetype.get("required_game_ids", [])) != ["pull_tabs"]:
+	if JsonCoerceScript._string_array(jazz_archetype.get("required_game_ids", [])) != ["pull_tabs"]:
 		failures.append("Jazz Club should require the pull-tabs machine in every generated instance.")
 	var jazz_visual_context: Dictionary = jazz_archetype.get("visual_context", {}) if typeof(jazz_archetype.get("visual_context", {})) == TYPE_DICTIONARY else {}
 	if str(jazz_visual_context.get("scene_type", "")) != "jazz_club":
@@ -3512,7 +3794,7 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 	if str(jazz_visual_context.get("description", "")).strip_edges().is_empty():
 		failures.append("Jazz Club visual description should be present.")
 	for service_id in ["house_drink", "jazz_sax_round", "jazz_cello_round", "jazz_drummer_round", "jazz_band_tip_jar", "listen_to_jazz"]:
-		if not _string_array(jazz_archetype.get("service_pool", [])).has(service_id):
+		if not JsonCoerceScript._string_array(jazz_archetype.get("service_pool", [])).has(service_id):
 			failures.append("Jazz Club service pool is missing %s." % service_id)
 	var jazz_service_expectations := {
 		"jazz_sax_round": "baseline_luck_delta",
@@ -3532,7 +3814,7 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 		if library.item(item_id).is_empty():
 			failures.append("Jazz reward item is missing: %s." % item_id)
 	var jazz_event_ids := ["jazz_trio_set_break", "jazz_connected_regular", "jazz_after_hours_invitation"]
-	var jazz_event_pool := _string_array(jazz_archetype.get("event_pool", []))
+	var jazz_event_pool := JsonCoerceScript._string_array(jazz_archetype.get("event_pool", []))
 	for event_id_value in jazz_event_ids:
 		var event_id := str(event_id_value)
 		if not jazz_event_pool.has(event_id):
@@ -3544,7 +3826,7 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 		if str(event_definition.get("interaction_mode", "")) != "triggered" or str(event_definition.get("presentation", "")) != "talk":
 			failures.append("Jazz Club event %s should be a triggered talk event." % event_id)
 		var event_conditions: Dictionary = event_definition.get("conditions", {}) if typeof(event_definition.get("conditions", {})) == TYPE_DICTIONARY else {}
-		if not _string_array(event_conditions.get("archetype_ids", [])).has("jazz_club"):
+		if not JsonCoerceScript._string_array(event_conditions.get("archetype_ids", [])).has("jazz_club"):
 			failures.append("Jazz Club event %s should be scoped to the jazz_club archetype." % event_id)
 	var jazz_route := library.route("jazz_club")
 	if jazz_route.is_empty() or str(jazz_route.get("destination_archetype", "")) != "jazz_club":
@@ -3555,7 +3837,7 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 	var environment_a := EnvironmentInstance.from_archetype(jazz_archetype, 2, run_state.create_rng("jazz_a"), library)
 	var environment_b := EnvironmentInstance.from_archetype(jazz_archetype, 3, run_state.create_rng("jazz_b"), library)
 	if environment_a.game_ids != ["pull_tabs"]:
-		failures.append("Generated Jazz Club did not place the guaranteed pull-tab machine.")
+		failures.append("Generated Jazz Club did not stock its guaranteed Pull Tabs counter merchandise.")
 	var jazz_environment_data := environment_a.to_dict()
 	var pull_tabs_game: GameModule = _load_surface_contract_game(library, "pull_tabs", failures)
 	if pull_tabs_game != null:
@@ -3606,6 +3888,8 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 			failures.append("Jazz Club event %s triggered outside the jazz club archetype." % event_id)
 	var after_hours_event := EventModule.new()
 	after_hours_event.setup(library.event("jazz_after_hours_invitation"), library)
+	# Triggered talk events resolve only from the host queue, as production enqueues them.
+	jazz_event_run.enqueue_triggered_event("jazz_after_hours_invitation", "jazz_club_foundation", event_context, {"presentation": "talk"})
 	var shades_result := after_hours_event.resolve(jazz_event_run, jazz_event_run.current_environment, "take_the_shades")
 	if not bool(shades_result.get("ok", false)):
 		failures.append("Jazz after-hours invitation cover-item choice did not resolve.")
@@ -3822,7 +4106,11 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 		failures.append("Drummer holder did not award the legend glasses after two listened sets.")
 
 	run_state.add_suspicion("jazz_heat_fixture", 25, "behavior", false, {"environment_id": str(run_state.current_environment.get("id", ""))})
-	var heat_before_glasses := run_state.suspicion_level()
+	# Service hooks resolve after their action boundary, which may apply ordinary
+	# turn heat decay first; the glasses clear all heat left at that point.
+	var glasses_boundary_oracle := run_state.detached_host_action_candidate()
+	glasses_boundary_oracle.advance_environment_turns(1)
+	var heat_before_glasses := glasses_boundary_oracle.suspicion_level()
 	var glasses_option := resolver.hook_option("service", "show_drummer_glasses")
 	if not bool(glasses_option.get("enabled", false)):
 		failures.append("Legend glasses service did not appear when heat was present.")
@@ -3862,9 +4150,10 @@ func _check_jazz_club_foundation(library: ContentLibrary, failures: Array) -> vo
 func _check_jazz_club_layout(environment_data: Dictionary, failures: Array) -> void:
 	var layout: Dictionary = environment_data.get("layout", {}) if typeof(environment_data.get("layout", {})) == TYPE_DICTIONARY else {}
 	var object_rects: Dictionary = layout.get("object_rects", {}) if typeof(layout.get("object_rects", {})) == TYPE_DICTIONARY else {}
+	for forbidden_id in ["game:pull_tabs", "dialogue:pull_tab_clerk", "game_hook:pull_tabs:ticket_redeemer"]:
+		if object_rects.has(forbidden_id):
+			failures.append("Jazz Club Pull Tabs counter action %s still has a separate room placement." % forbidden_id)
 	for object_id in [
-		"game:pull_tabs",
-		"game_hook:pull_tabs:ticket_redeemer",
 		"shopkeeper:merchant",
 		"service:house_drink",
 		"service:jazz_sax_round",
@@ -3875,9 +4164,18 @@ func _check_jazz_club_layout(environment_data: Dictionary, failures: Array) -> v
 	]:
 		if not object_rects.has(object_id):
 			failures.append("Jazz Club layout is missing object placement for %s." % object_id)
+	var counter_host_row: Dictionary = {}
+	for row_value in JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(environment_data.get("object_manifest", {})).get("rows", [])):
+		if typeof(row_value) != TYPE_DICTIONARY:
+			continue
+		var row: Dictionary = row_value
+		if bool(row.get("active", true)) and str(row.get("presentation_object_id", row.get("presentation_id", ""))) == "shopkeeper:merchant":
+			counter_host_row = row
+			break
+	for action_id in ["game:pull_tabs", "dialogue:pull_tab_clerk", "game_hook:pull_tabs:ticket_redeemer"]:
+		if not JsonCoerceScript._copy_array(counter_host_row.get("action_ids", [])).has(action_id):
+			failures.append("Jazz Club bartender does not own Pull Tabs counter action %s." % action_id)
 	var expected_zones := {
-		"game:pull_tabs": Rect2(680, 175, 150, 105),
-		"game_hook:pull_tabs:ticket_redeemer": Rect2(550, 210, 130, 85),
 		"shopkeeper:merchant": Rect2(580, 80, 150, 105),
 		"service:house_drink": Rect2(760, 85, 140, 90),
 		"service:jazz_sax_round": Rect2(110, 220, 130, 90),
@@ -4016,7 +4314,7 @@ func _check_cash_lender_lifecycle(library: ContentLibrary, lender_id: String, de
 		failures.append("Cash lender %s repayment did not cool heat." % lender_id)
 	if bool(repay_resolver.hook_option("lender", lender_id).get("enabled", true)):
 		failures.append("Cash lender %s offered a larger loan in the same room after repayment." % lender_id)
-	repay_state.current_environment["id"] = "lender_cash_return_%s" % lender_id
+	_reidentify_lender_fixture_room(repay_state, "lender_cash_return_%s" % lender_id)
 	var next_option := repay_resolver.hook_option("lender", lender_id)
 	if not bool(next_option.get("enabled", false)):
 		failures.append("Cash lender %s did not return after leaving the room: %s" % [lender_id, str(next_option.get("disabled_reason", ""))])
@@ -4058,11 +4356,11 @@ func _check_crew_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 		failures.append("The Crew lender did not request the bankroll transfer animation.")
 	if bool(multi_resolver.hook_option("lender", "the_crew").get("enabled", true)):
 		failures.append("The Crew allowed a second marker from the same location.")
-	multi_state.current_environment["id"] = "lender_crew_second_room"
+	_reidentify_lender_fixture_room(multi_state, "lender_crew_second_room")
 	var second_marker := multi_resolver.use_hook("lender", "the_crew")
 	if not bool(second_marker.get("ok", false)):
 		failures.append("The Crew second location loan did not resolve.")
-	multi_state.current_environment["id"] = "lender_crew_third_room"
+	_reidentify_lender_fixture_room(multi_state, "lender_crew_third_room")
 	var third_marker := multi_resolver.use_hook("lender", "the_crew")
 	if not bool(third_marker.get("ok", false)):
 		failures.append("The Crew third location loan did not resolve.")
@@ -4070,11 +4368,11 @@ func _check_crew_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 		failures.append("The Crew did not stack location markers into one debt entry.")
 	else:
 		var multi_debt: Dictionary = multi_state.debt[0] as Dictionary
-		if int(multi_debt.get("balance", 0)) != 6:
-			failures.append("The Crew stacked marker balance was not six favors after three locations.")
-		if _copy_array(multi_debt.get("source_location_ids", [])).size() != 3:
+		if int(multi_debt.get("balance", 0)) != 3:
+			failures.append("The Crew stacked marker balance was not three favors after three locations.")
+		if JsonCoerceScript._copy_array(multi_debt.get("source_location_ids", [])).size() != 3:
 			failures.append("The Crew did not preserve all three source locations.")
-	multi_state.current_environment["id"] = "lender_crew_fourth_room"
+	_reidentify_lender_fixture_room(multi_state, "lender_crew_fourth_room")
 	if bool(multi_resolver.hook_option("lender", "the_crew").get("enabled", true)):
 		failures.append("The Crew allowed more than three active loan locations.")
 
@@ -4089,11 +4387,11 @@ func _check_crew_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 	var borrow_result: Dictionary = borrow.get("result", {}) if typeof(borrow.get("result", {})) == TYPE_DICTIONARY else {}
 	if str(borrow_result.get("conclusion_animation", "")) != "bankroll_transfer":
 		failures.append("The Crew direct lender did not request the bankroll transfer animation.")
-	if run_state.bankroll != before_bankroll + 45:
+	if run_state.bankroll != before_bankroll + 70:
 		failures.append("The Crew did not lend its configured cash amount.")
 	var debt_data: Dictionary = run_state.debt[0] as Dictionary
-	if str(debt_data.get("debt_kind", "")) != "favor" or int(debt_data.get("balance", 0)) != 2:
-		failures.append("The Crew debt was not denominated as two favors.")
+	if str(debt_data.get("debt_kind", "")) != "favor" or int(debt_data.get("balance", 0)) != 1:
+		failures.append("The Crew debt was not denominated as one favor.")
 	var marked_members := 0
 	for member_id in CrewStateModelScript.MEMBER_IDS:
 		if run_state.crew_rank(str(member_id)) == "marker":
@@ -4113,22 +4411,26 @@ func _check_crew_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 	var favor := run_state.complete_debt_favor("the_crew_marker")
 	if not bool(favor.get("ok", false)):
 		failures.append("The Crew favor completion did not resolve.")
-	elif str(favor.get("message", "")) != "You do the Crew's favor and knock one marker off the slate.":
+	elif str(favor.get("message", "")) != "You finish the Crew's last favor and clear the marker.":
 		failures.append("The Crew favor completion changed its shipped message.")
-	debt_data = run_state.debt[0] as Dictionary
-	if int(debt_data.get("balance", 0)) != 1 or str(debt_data.get("status", "")) != "active":
-		failures.append("The Crew favor completion did not reduce and reset the marker.")
-	var refusal := run_state.refuse_debt_favor("the_crew_marker")
+	if not run_state.debt.is_empty() or not bool(run_state.narrative_flags.get("crew_marker_clear", false)):
+		failures.append("The Crew's sole favor did not clear the marker.")
+	var refusal_fixture := _lender_fixture(library, "LENDER-CREW-REFUSAL", ["the_crew"], [], [])
+	var refusal_state: RunState = refusal_fixture.get("run_state", null)
+	var refusal_resolver: RunActionService = refusal_fixture.get("resolver", null)
+	refusal_resolver.use_hook("lender", "the_crew")
+	refusal_state.advance_environment_turns(2)
+	var refusal := refusal_state.refuse_debt_favor("the_crew_marker")
 	if not bool(refusal.get("ok", false)):
 		failures.append("The Crew favor refusal did not resolve.")
 	elif str(refusal.get("message", "")) != "You refuse the Crew's favor; the marker becomes cash at brutal rates.":
 		failures.append("The Crew favor refusal changed its shipped message.")
-	debt_data = run_state.debt[0] as Dictionary
-	if str(debt_data.get("debt_kind", "")) != "cash" or int(debt_data.get("balance", 0)) != 45:
+	debt_data = refusal_state.debt[0] as Dictionary
+	if str(debt_data.get("debt_kind", "")) != "cash" or int(debt_data.get("balance", 0)) != 70:
 		failures.append("The Crew refusal did not convert the remaining favor to cash at the configured rate.")
-	if bool(run_state.narrative_flags.get("crew_favor_pending", true)) or not bool(run_state.narrative_flags.get("crew_marker_converted_to_cash", false)):
+	if bool(refusal_state.narrative_flags.get("crew_favor_pending", true)) or not bool(refusal_state.narrative_flags.get("crew_marker_converted_to_cash", false)):
 		failures.append("The Crew conversion changed its shipped pending/conversion flags.")
-	var conversion_grievances := run_state.crew_grievances()
+	var conversion_grievances := refusal_state.crew_grievances()
 	if conversion_grievances.size() != 1 or str((conversion_grievances[0] as Dictionary).get("kind", "")) != "favor_converted_unpaid":
 		failures.append("The Crew cash conversion did not write exactly one hidden favor_converted_unpaid grievance.")
 
@@ -4139,6 +4441,26 @@ func _crew_favor_event_fixture(library: ContentLibrary, seed: String, rook_trust
 	RunGeneratorScript.new(library).next_environment(run_state)
 	if run_state.current_environment.is_empty() or not run_state.has_world_map():
 		failures.append("Crew favor fixture did not generate a production room and world map for %s." % seed)
+	# The shipped $70 marker is a one-favor debt. A delivery offer without that
+	# debt is no longer a legal production state because success clears it
+	# atomically with the cash, Heat, and trust rewards.
+	run_state.add_debt({
+		"id": "the_crew_marker",
+		"lender_id": RunState.CREW_LENDER_ID,
+		"lender_name": "The Crew",
+		"balance": 1,
+		"principal": 70,
+		"debt_kind": "favor",
+		"status": "favor_due",
+		"deadline_turns": 2,
+		"turns_remaining": 0,
+		"interest_rate": 0.0,
+		"loan_count": 1,
+		"default_consequence": "crew_favor_due",
+		"refuse_consequence": "crew_convert_to_cash",
+		"cash_conversion_balance_per_favor": 70,
+		"cash_conversion_interest_rate": 0.35,
+	})
 	run_state.narrative_flags["crew_favor_pending"] = true
 	if rook_trust != 0:
 		run_state.crew_add_trust("crew_rook", rook_trust, "fixture")
@@ -4176,8 +4498,8 @@ func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Crew standing did not derive plan-specific Inner Circle eligibility.")
 	ladder.crew_trust_by_member["crew_velvet"] = CrewStateModelScript.rank_threshold("inner_circle")
 	heist_eligibility = ladder.crew_standing().get("heist_eligibility", {})
-	if not bool(heist_eligibility.get("the_whale_game", false)) or ladder.crew_rank("crew_mags") != "stranger":
-		failures.append("The Whale Game did not gate on Velvet alone as required by the roadmap.")
+	if heist_eligibility.has("the_whale_game") or not bool(heist_eligibility.get("the_count", false)) or ladder.crew_rank("crew_mags") != "stranger":
+		failures.append("Crew standing exposed the deferred Whale Game outside the Count-only release scope.")
 
 	var fulfilled_fixture := _lender_fixture(library, "CREW-FAVOR-FULFILLED", ["the_crew"], [], [])
 	var fulfilled_state: RunState = fulfilled_fixture.get("run_state", null)
@@ -4224,21 +4546,21 @@ func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
 	var favor_heat_before_handoff := event_run.suspicion_level()
 	var favor_completed_before_handoff := bool(event_run.narrative_flags.get("crew_favor_completed", false))
 	var favor_owner_token := str(event_result.get("world_sequence_owner_token", ""))
-	var favor_projection := _copy_dict(event_run.world_sequence_projection(favor_owner_token))
-	var favor_semantic := _copy_dict(favor_projection.get("semantic_state", {}))
-	var favor_interactions := _copy_dict(favor_semantic.get("interactions", {}))
-	var favor_interaction := _copy_dict(favor_interactions.get("crew::package_handoff", {}))
-	var favor_actions := _copy_array(favor_interaction.get("available_actions", []))
-	var favor_action := _copy_dict(favor_actions[0]) if not favor_actions.is_empty() else {}
-	var favor_command := event_run.world_sequence_command(
-		favor_owner_token, "make_handoff", "foundation:crew_favor:handoff", {}, "crew", "package_handoff",
-		{"crew::package_handoff": true},
-		str(favor_action.get("action_origin_owner_namespace", "")),
-		str(favor_action.get("action_origin_stable_object_id", "")),
-		str(favor_action.get("action_origin_receipt_key", "")),
-		str(favor_action.get("action_origin_boundary_id", "")),
-		str(favor_action.get("action_origin_fingerprint", ""))
-	)
+	var favor_projection := JsonCoerceScript._copy_dict(event_run.world_sequence_projection(favor_owner_token))
+	var favor_semantic := JsonCoerceScript._copy_dict(favor_projection.get("semantic_state", {}))
+	var favor_interactions := JsonCoerceScript._copy_dict(favor_semantic.get("interactions", {}))
+	var favor_interaction := JsonCoerceScript._copy_dict(favor_interactions.get("crew::package_handoff", {}))
+	var favor_actions := JsonCoerceScript._copy_array(favor_interaction.get("available_actions", []))
+	var favor_action := JsonCoerceScript._copy_dict(favor_actions[0]) if not favor_actions.is_empty() else {}
+	var favor_command := event_run.world_sequence_command(FunctionOptions.world_sequence_command(favor_owner_token, "make_handoff", "foundation:crew_favor:handoff", {
+		"payload": {}, "owner_namespace": "crew", "stable_object_id": "package_handoff",
+		"host_interaction_availability": {"crew::package_handoff": true},
+		"action_origin_owner_namespace": str(favor_action.get("action_origin_owner_namespace", "")),
+		"action_origin_stable_object_id": str(favor_action.get("action_origin_stable_object_id", "")),
+		"action_origin_receipt_key": str(favor_action.get("action_origin_receipt_key", "")),
+		"action_origin_boundary_id": str(favor_action.get("action_origin_boundary_id", "")),
+		"action_origin_fingerprint": str(favor_action.get("action_origin_fingerprint", "")),
+	}))
 	var favor_handoff := event_run.delivery_complete_handoff(favor_target)
 	if favor_target.is_empty() or not bool(favor_arrival.get("handoff_ready", false)) or not bool(favor_command.get("ok", false)) or not bool(favor_handoff.get("ok", false)) \
 		or favor_bankroll_before_handoff != favor_bankroll_before or favor_completed_before_handoff \
@@ -4252,9 +4574,7 @@ func _check_crew_trust_core(library: ContentLibrary, failures: Array) -> void:
 	var failed_heat_before := failed_run.suspicion_level()
 	var failed_start := event_module.resolve(failed_run, failed_run.current_environment, "run_package")
 	failed_run.complete_talk_event_resolution("crew_favor_delivery")
-	if failed_run.delivery_has_active_run():
-		failed_run.active_delivery_run["deadline_remaining"] = 1
-	var failed_boundary := failed_run.advance_environment_turns(1)
+	var failed_boundary := failed_run.advance_game_clock_minutes(180)
 	var failed_resolution: Dictionary = failed_run.delivery_snapshot().get("resolution", {}) if typeof(failed_run.delivery_snapshot().get("resolution", {})) == TYPE_DICTIONARY else {}
 	var failed_heat_cue: Dictionary = {}
 	for cue_value in failed_run.suspicion.get("cues", []):
@@ -4341,7 +4661,7 @@ func _check_family_lender_lifecycle(library: ContentLibrary, failures: Array) ->
 		failures.append("Brother-in-law early repayment did not record goodwill.")
 	if bool(resolver.hook_option("lender", "brother_in_law").get("enabled", true)):
 		failures.append("Brother-in-law offered a same-room repeat loan after repayment.")
-	run_state.current_environment["id"] = "lender_family_return_room"
+	_reidentify_lender_fixture_room(run_state, "lender_family_return_room")
 	run_state.narrative_flags["brother_in_law_phone_ready"] = true
 	var repeat_option := resolver.hook_option("lender", "brother_in_law")
 	if not bool(repeat_option.get("enabled", false)):
@@ -4366,11 +4686,11 @@ func _check_family_lender_lifecycle(library: ContentLibrary, failures: Array) ->
 
 
 func _check_pawn_lender_lifecycle(library: ContentLibrary, failures: Array) -> void:
-	var empty_fixture := _lender_fixture(library, "LENDER-PAWN-EMPTY", ["sals_pawn_counter"], [], [])
+	var empty_fixture := _pawn_lender_fixture(library, "LENDER-PAWN-EMPTY", [])
 	var empty_resolver: RunActionService = empty_fixture.get("resolver", null)
 	if bool(empty_resolver.hook_option("lender", "sals_pawn_counter").get("enabled", true)):
 		failures.append("Sal's Pawn Counter was enabled without collateral.")
-	var fixture := _lender_fixture(library, "LENDER-PAWN", ["sals_pawn_counter"], [], ["creased_luck_card", "cheap_sunglasses", "scratch_pad", "payment_calendar", "pawn_receipt_sleeve"])
+	var fixture := _pawn_lender_fixture(library, "LENDER-PAWN", ["creased_luck_card", "cheap_sunglasses", "scratch_pad", "payment_calendar", "pawn_receipt_sleeve"])
 	var run_state: RunState = fixture.get("run_state", null)
 	var resolver: RunActionService = fixture.get("resolver", null)
 	var quotes := resolver.pawn_quote_options("sals_pawn_counter")
@@ -4440,7 +4760,7 @@ func _check_pawn_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 	if run_state.bankroll != 500 - middle_payoff:
 		failures.append("Pawn selective repayment did not charge exactly the ticket buy-back amount.")
 
-	var default_fixture := _lender_fixture(library, "LENDER-PAWN-DEFAULT", ["sals_pawn_counter"], [], ["creased_luck_card"])
+	var default_fixture := _pawn_lender_fixture(library, "LENDER-PAWN-DEFAULT", ["creased_luck_card"])
 	var default_state: RunState = default_fixture.get("run_state", null)
 	var default_resolver: RunActionService = default_fixture.get("resolver", null)
 	default_resolver.use_hook("lender", "sals_pawn_counter")
@@ -4449,7 +4769,7 @@ func _check_pawn_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 		failures.append("Pawn default did not forfeit collateral, clear the loan, and record Sal's shelf.")
 	var pawn_archetype := _archetype_by_id(library, "pawn_shop")
 	var generated_pawn_shop := EnvironmentInstance.from_archetype(pawn_archetype, 2, default_state.create_rng("pawn_forfeit_real_shop"), library).to_dict()
-	var base_offer_count := _copy_array(generated_pawn_shop.get("item_offers", [])).size()
+	var base_offer_count := JsonCoerceScript._copy_array(generated_pawn_shop.get("item_offers", [])).size()
 	var base_had_forfeited_item := not _item_offer_by_id(generated_pawn_shop.get("item_offers", []), "creased_luck_card").is_empty()
 	default_state.set_environment(generated_pawn_shop)
 	var shelf_offer := _item_offer_by_id(default_state.current_environment.get("item_offers", []), "creased_luck_card")
@@ -4460,7 +4780,7 @@ func _check_pawn_lender_lifecycle(library: ContentLibrary, failures: Array) -> v
 		if not bool(shelf_offer.get("forfeited_pawn_shelf", false)) or int(shelf_offer.get("price", 0)) != int(item_definition.get("price_max", 0)):
 			failures.append("Forfeited pawn shelf item was not priced at retail price_max.")
 	var expected_offer_count := base_offer_count if base_had_forfeited_item else base_offer_count + 1
-	if _copy_array(default_state.current_environment.get("item_offers", [])).size() != expected_offer_count:
+	if JsonCoerceScript._copy_array(default_state.current_environment.get("item_offers", [])).size() != expected_offer_count:
 		failures.append("Forfeited pawn shelf injection hid or discarded a real generated Sal offer.")
 	default_state.bankroll = 500
 	var buy_back := default_resolver.buy_item_offer("creased_luck_card")
@@ -4484,13 +4804,13 @@ func _check_pawn_shop_run_environment(library: ContentLibrary, failures: Array) 
 		return
 	if int(pawn_archetype.get("tier", 0)) != 2 or str(pawn_archetype.get("kind", "")) != "shop":
 		failures.append("Pawn shop run archetype must be a tier 2 shop.")
-	if not _string_array(pawn_archetype.get("lender_hooks", [])).has("sals_pawn_counter"):
+	if not JsonCoerceScript._string_array(pawn_archetype.get("lender_hooks", [])).has("sals_pawn_counter"):
 		failures.append("Pawn shop run archetype does not expose Sal's pawn counter.")
 	for archetype_value in library.environment_archetypes:
 		if typeof(archetype_value) != TYPE_DICTIONARY:
 			continue
 		var archetype := archetype_value as Dictionary
-		if str(archetype.get("id", "")) != "pawn_shop" and _string_array(archetype.get("lender_hooks", [])).has("sals_pawn_counter"):
+		if str(archetype.get("id", "")) != "pawn_shop" and JsonCoerceScript._string_array(archetype.get("lender_hooks", [])).has("sals_pawn_counter"):
 			failures.append("Sal's pawn counter was authored outside the pawn shop in %s." % str(archetype.get("id", "unknown")))
 	var legacy_environment := {
 		"id": "legacy_corner_store",
@@ -4501,14 +4821,14 @@ func _check_pawn_shop_run_environment(library: ContentLibrary, failures: Array) 
 	var migration_state := RunStateScript.new()
 	migration_state.start_new("PAWN-SHOP-LOCATION-MIGRATION")
 	migration_state.set_environment(legacy_environment)
-	if _string_array(migration_state.current_environment.get("lender_hooks", [])).has("sals_pawn_counter"):
+	if JsonCoerceScript._string_array(migration_state.current_environment.get("lender_hooks", [])).has("sals_pawn_counter"):
 		failures.append("Legacy non-pawn-shop environment state retained Sal's pawn counter after normalization.")
-	if _string_array(pawn_archetype.get("event_scopes", [])).find("shop") < 0:
+	if JsonCoerceScript._string_array(pawn_archetype.get("event_scopes", [])).find("shop") < 0:
 		failures.append("Pawn shop run archetype does not use shop event scope.")
-	if _string_array(pawn_archetype.get("required_game_ids", [])) != ["slot"]:
+	if JsonCoerceScript._string_array(pawn_archetype.get("required_game_ids", [])) != ["slot"]:
 		failures.append("Pawn shop run archetype does not require its slot machine.")
 	var pawn_layout: Dictionary = pawn_archetype.get("layout", {}) if typeof(pawn_archetype.get("layout", {})) == TYPE_DICTIONARY else {}
-	if _copy_array(pawn_layout.get("item_spots", [])).size() < 6 or _copy_array(pawn_layout.get("game_spots", [])).is_empty():
+	if JsonCoerceScript._copy_array(pawn_layout.get("item_spots", [])).size() < 6 or JsonCoerceScript._copy_array(pawn_layout.get("game_spots", [])).is_empty():
 		failures.append("Pawn shop layout does not provide six item spots and a slot-machine spot.")
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("PAWN-SHOP-DISCOUNT")
@@ -4516,7 +4836,7 @@ func _check_pawn_shop_run_environment(library: ContentLibrary, failures: Array) 
 	var pawn_offers: Array = pawn_environment.get("item_offers", [])
 	if pawn_offers.size() != 6:
 		failures.append("Pawn shop must roll exactly six discounted item offers, got %d." % pawn_offers.size())
-	if _string_array(pawn_environment.get("game_ids", [])) != ["slot"]:
+	if JsonCoerceScript._string_array(pawn_environment.get("game_ids", [])) != ["slot"]:
 		failures.append("Pawn shop generated without its playable slot-machine game.")
 	for offer_value in pawn_offers:
 		if typeof(offer_value) != TYPE_DICTIONARY:
@@ -4535,7 +4855,7 @@ func _check_pawn_shop_run_environment(library: ContentLibrary, failures: Array) 
 	var normal_archetype := _archetype_by_id(library, "corner_store")
 	if not normal_archetype.is_empty():
 		var normal_environment := EnvironmentInstance.from_archetype(normal_archetype, 1, run_state.create_rng("normal_shop_price"), library).to_dict()
-		for offer_value in _copy_array(normal_environment.get("item_offers", [])):
+		for offer_value in JsonCoerceScript._copy_array(normal_environment.get("item_offers", [])):
 			if typeof(offer_value) != TYPE_DICTIONARY:
 				continue
 			var offer := offer_value as Dictionary
@@ -4570,21 +4890,19 @@ func _item_offer_by_id(offers: Variant, item_id: String) -> Dictionary:
 	return {}
 
 
-func _lender_fixture(library: ContentLibrary, seed: String, lender_ids: Array, service_ids: Array, inventory_ids: Array) -> Dictionary:
+func _pawn_lender_fixture(library: ContentLibrary, seed: String, inventory_ids: Array) -> Dictionary:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new(seed)
 	run_state.bankroll = 100
-	run_state.current_environment = {
-		"id": "%s_room" % seed.to_lower(),
-		"display_name": "Lender Fixture Room",
-		"kind": "shop",
-		"tier": 1,
-		"archetype_id": "lender_fixture",
-		"service_ids": service_ids.duplicate(true),
-		"lender_hooks": lender_ids.duplicate(true),
-		"layout": {},
-	}
-	for item_id in _string_array(inventory_ids):
+	var pawn_archetype := _archetype_by_id(library, "pawn_shop")
+	var pawn_environment := EnvironmentInstance.from_archetype(
+		pawn_archetype,
+		2,
+		run_state.create_rng("%s_pawn_shop" % seed.to_lower()),
+		library
+	).to_dict()
+	run_state.set_environment(pawn_environment)
+	for item_id in JsonCoerceScript._string_array(inventory_ids):
 		run_state.add_item(item_id)
 	var resolver: RunActionService = RunActionServiceScript.new()
 	resolver.setup(library, run_state)
@@ -4592,6 +4910,46 @@ func _lender_fixture(library: ContentLibrary, seed: String, lender_ids: Array, s
 		"run_state": run_state,
 		"resolver": resolver,
 	}
+
+
+func _lender_fixture(library: ContentLibrary, seed: String, lender_ids: Array, service_ids: Array, inventory_ids: Array) -> Dictionary:
+	var run_state: RunState = RunStateScript.new()
+	run_state.start_new(seed)
+	run_state.bankroll = 100
+	# Exercise lender behavior in a real slot-schema-v2 room. Synthetic empty
+	# layouts are no longer legal environment state and hid placement failures.
+	var motel_lender := lender_ids.has("motel_friend") or lender_ids.has("brother_in_law") \
+			or service_ids.has("call_brother_in_law")
+	var archetype_id := "motel" if motel_lender else "back_alley"
+	var fixture_archetype := _archetype_by_id(library, archetype_id).duplicate(true)
+	fixture_archetype["lender_hooks"] = lender_ids.duplicate(true)
+	fixture_archetype["required_lender_hooks"] = lender_ids.duplicate(true)
+	fixture_archetype["lender_count"] = [lender_ids.size(), lender_ids.size()]
+	fixture_archetype["service_pool"] = service_ids.duplicate(true)
+	fixture_archetype["event_pool"] = []
+	fixture_archetype["event_count"] = [0, 0]
+	var fixture_environment := EnvironmentInstance.from_archetype(
+		fixture_archetype,
+		1,
+		run_state.create_rng("%s_lender_room" % seed.to_lower()),
+		library
+	).to_dict()
+	run_state.set_environment(fixture_environment)
+	for item_id in JsonCoerceScript._string_array(inventory_ids):
+		run_state.add_item(item_id)
+	var resolver: RunActionService = RunActionServiceScript.new()
+	resolver.setup(library, run_state)
+	return {
+		"run_state": run_state,
+		"resolver": resolver,
+	}
+
+
+func _reidentify_lender_fixture_room(run_state: RunState, room_id: String) -> void:
+	# Repeat-loan behavior keys on the generated room instance id. Keep the
+	# durable manifest/layout seal synchronized when a fixture simulates travel.
+	run_state.current_environment["id"] = room_id
+	run_state.reconcile_current_environment_object_manifest(true)
 
 
 func _fixture_lender_result(run_state: RunState, lender: Dictionary, lender_id: String) -> Dictionary:

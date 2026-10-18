@@ -1,6 +1,11 @@
 class_name SlotFamilyBuffalo
 extends RefCounted
 
+# Buffalo-family ways math and bonus lifecycle, including free games, Hold and
+# Spin, wheel/monster paths, Gold Buffalo conversion, meters, and jackpots.
+
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const MathScript := preload("res://scripts/games/slots/slot_rng_math.gd")
 
 const FAMILY_ID := "buffalo"
@@ -58,13 +63,13 @@ const FILL_REEL_SYMBOLS := [
 
 func outcome_table(machine: Dictionary, definition: Dictionary, _free_spin: bool) -> Array:
 	var config: Dictionary = _buffalo_config(definition)
-	var tables: Dictionary = _copy_dict(config.get("outcome_tables", {}))
+	var tables: Dictionary = JsonCoerceScript._copy_dict(config.get("outcome_tables", {}))
 	var format_id := str(machine.get("format_id", "classic_3_reel"))
 	var table_id := "video_feature" if format_id == "video_feature" else "base"
-	var table: Array = _dictionary_array(tables.get(table_id, []))
+	var table: Array = JsonCoerceScript._dictionary_array(tables.get(table_id, []))
 	if format_id == "classic_3_reel":
 		table = _heritage_table(table)
-	return _adjusted_table(table, str(machine.get("math_variant_id", "standard")), table_id)
+	return _adjusted_table(table, str(machine.get("math_variant_id", "standard")))
 
 
 func force_outcome_symbols(machine: Dictionary, grid: Array, entry: Dictionary, rng: RngStream, definition: Dictionary) -> Array:
@@ -86,7 +91,7 @@ func force_outcome_symbols(machine: Dictionary, grid: Array, entry: Dictionary, 
 			placement = {"kind": "tease", "symbol": "GOLD_TOKEN", "cells": cells_near.slice(0, tease_coin_count), "skill_line_cells": cells_near, "side_effect_gold_token_count": mini(2, cells_near.size()), "line_index": int((cells_near[0] as Dictionary).get("row", center_row)) if not cells_near.is_empty() else center_row}
 		"ldw":
 			var ldw_plan: Dictionary = _full_payline_plan(reel_count, row_count, rng)
-			var cells_ldw: Array = _copy_array(ldw_plan.get("cells", []))
+			var cells_ldw: Array = JsonCoerceScript._copy_array(ldw_plan.get("cells", []))
 			for cell in cells_ldw:
 				MathScript.set_cell(result, int((cell as Dictionary).get("reel", 0)), int((cell as Dictionary).get("row", 0)), "10")
 			_trim_forced_reel_matches(result, cells_ldw, "10")
@@ -98,7 +103,7 @@ func force_outcome_symbols(machine: Dictionary, grid: Array, entry: Dictionary, 
 			var wild_reel := int(win_plan.get("wild_reel", -1))
 			var wild_cell_index := int(win_plan.get("wild_cell_index", -1))
 			var wild_symbol := str(win_plan.get("wild_symbol", "SUNSET_2X"))
-			var cells_win: Array = _copy_array(line_plan.get("cells", []))
+			var cells_win: Array = JsonCoerceScript._copy_array(line_plan.get("cells", []))
 			for index in range(cells_win.size()):
 				var cell: Dictionary = cells_win[index]
 				var reel := int(cell.get("reel", index))
@@ -108,11 +113,11 @@ func force_outcome_symbols(machine: Dictionary, grid: Array, entry: Dictionary, 
 				MathScript.set_cell(result, reel, int(cell.get("row", center_row)), placed_symbol)
 			if int(win_plan.get("extra_reel", -1)) >= 0 and row_count > 1 and not cells_win.is_empty():
 				var extra_index := clampi(int(win_plan.get("extra_reel", 1)), 0, cells_win.size() - 1)
-				var extra_anchor: Dictionary = _copy_dict(cells_win[extra_index])
+				var extra_anchor: Dictionary = JsonCoerceScript._copy_dict(cells_win[extra_index])
 				var extra_reel := clampi(int(extra_anchor.get("reel", extra_index)), 0, reel_count - 1)
 				var occupied_rows := {}
 				for cell_value in cells_win:
-					var cell: Dictionary = _copy_dict(cell_value)
+					var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 					if int(cell.get("reel", -1)) == extra_reel:
 						occupied_rows[int(cell.get("row", -1))] = true
 				var extra_target := mini(maxi(1, int(win_plan.get("extra_count", 1))), maxi(1, row_count - occupied_rows.size()))
@@ -136,11 +141,11 @@ func force_outcome_symbols(machine: Dictionary, grid: Array, entry: Dictionary, 
 			placement = {"kind": "feature", "symbol": "GOLD_TOKEN", "cells": cells_free, "line_index": -1}
 		"hold_and_spin":
 			var config: Dictionary = _buffalo_config(definition)
-			var hold_config: Dictionary = _copy_dict(config.get("hold_and_spin", {}))
+			var hold_config: Dictionary = JsonCoerceScript._copy_dict(config.get("hold_and_spin", {}))
 			var trigger_count := clampi(int(hold_config.get("lock_trigger_count", 8)), 3, reel_count * row_count)
 			var locks: Array = MathScript.random_cells(reel_count, row_count, trigger_count, rng)
 			for cell_value in locks:
-				var cell: Dictionary = _copy_dict(cell_value)
+				var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 				MathScript.set_cell(result, int(cell.get("reel", 0)), int(cell.get("row", 0)), "GOLD_TOKEN")
 			placement = {"kind": "feature", "symbol": "GOLD_TOKEN", "cells": locks, "line_index": -1}
 		"monster_feature":
@@ -153,19 +158,8 @@ func force_outcome_symbols(machine: Dictionary, grid: Array, entry: Dictionary, 
 	if not placement.is_empty():
 		entry["forced_placement"] = placement
 	if not FEATURE_CLASSES.has(classification):
-		_sanitize_buffalo_grid(result, definition, _protected_cell_lookup(_copy_array(placement.get("cells", []))))
+		_sanitize_buffalo_grid(result, definition, MathScript.protected_cell_lookup(JsonCoerceScript._copy_array(placement.get("cells", []))))
 	return result
-
-
-func _ways_cells(reel_count: int, row_count: int, count: int, rng: RngStream) -> Array:
-	var cells: Array = []
-	var safe_reels := maxi(1, reel_count)
-	var target_count := mini(maxi(1, count), safe_reels)
-	var start_reel := rng.randi_range(0, maxi(0, safe_reels - target_count))
-	for offset in range(target_count):
-		var reel_index := start_reel + offset
-		cells.append({"reel": reel_index, "row": rng.randi_range(0, maxi(1, row_count) - 1)})
-	return cells
 
 
 func _full_payline_plan(reel_count: int, row_count: int, rng: RngStream) -> Dictionary:
@@ -210,10 +204,10 @@ func open_feature(machine: Dictionary, entry: Dictionary, stake: int, rng: RngSt
 	if classification == "monster_feature":
 		return _wheel_feature(machine, stake, feature_scale, rng)
 	if classification == "hold_and_spin":
-		var hold_placement: Dictionary = _copy_dict(entry.get("forced_placement", {}))
-		return _hold_feature(machine, stake, feature_scale, maxi(0, int(bonus_variant.get("bonus_step_bonus", 0))), _copy_array(hold_placement.get("cells", [])))
-	var free_placement: Dictionary = _copy_dict(entry.get("forced_placement", {}))
-	var forced_scatter_count := _copy_array(free_placement.get("cells", [])).size()
+		var hold_placement: Dictionary = JsonCoerceScript._copy_dict(entry.get("forced_placement", {}))
+		return _hold_feature(machine, stake, feature_scale, maxi(0, int(bonus_variant.get("bonus_step_bonus", 0))), JsonCoerceScript._copy_array(hold_placement.get("cells", [])))
+	var free_placement: Dictionary = JsonCoerceScript._copy_dict(entry.get("forced_placement", {}))
+	var forced_scatter_count := JsonCoerceScript._copy_array(free_placement.get("cells", [])).size()
 	var scatter_count := maxi(3, forced_scatter_count if forced_scatter_count > 0 else MathScript.count_symbol(machine.get("last_grid", []), "GOLD_TOKEN"))
 	return _free_games_feature(machine, stake, feature_scale, scatter_count, maxi(0, int(bonus_variant.get("bonus_step_bonus", 0))))
 
@@ -249,10 +243,10 @@ func apply_nudge_to_grid(machine: Dictionary, grid: Array) -> Dictionary:
 
 
 func step_bonus(machine: Dictionary, action_id: String, rng: RngStream, _definition: Dictionary, _ui_state: Dictionary = {}) -> Dictionary:
-	var active: Dictionary = _copy_dict(machine.get("active_bonus", {}))
+	var active: Dictionary = JsonCoerceScript._copy_dict(machine.get("active_bonus", {}))
 	if active.is_empty() or not bool(active.get("active", false)):
 		return _bonus_step_result(false, 0, "No buffalo feature is active.", active)
-	active["slot_item_effects"] = _copy_dict(_ui_state.get("slot_item_effects", {}))
+	active["slot_item_effects"] = JsonCoerceScript._copy_dict(_ui_state.get("slot_item_effects", {}))
 	var mode := str(active.get("mode", ""))
 	if mode == "wheel":
 		return _step_wheel(machine, active, action_id, rng)
@@ -266,14 +260,14 @@ func step_bonus(machine: Dictionary, action_id: String, rng: RngStream, _definit
 
 
 func apply_grid_side_effects(machine: Dictionary, grid: Array, stake: int, entry: Dictionary = {}, definition: Dictionary = {}) -> Dictionary:
-	var bet_id := str(_copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2"))
-	var bonus_state: Dictionary = _copy_dict(machine.get("bonus_state", {}))
-	var buckets: Dictionary = _copy_dict(bonus_state.get("per_bet", {}))
-	var bucket: Dictionary = _copy_dict(buckets.get(bet_id, {}))
+	var bet_id := str(JsonCoerceScript._copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2"))
+	var bonus_state: Dictionary = JsonCoerceScript._copy_dict(machine.get("bonus_state", {}))
+	var buckets: Dictionary = JsonCoerceScript._copy_dict(bonus_state.get("per_bet", {}))
+	var bucket: Dictionary = JsonCoerceScript._copy_dict(buckets.get(bet_id, {}))
 	if bucket.is_empty():
 		bucket = {"gold_buffalo_heads": 0, "gold_buffalo_max_seen": 0, "must_hit_meter": 100, "must_hit_ready": false, "feature_completion_count": 0}
-	var placement: Dictionary = _copy_dict(entry.get("forced_placement", {}))
-	var placement_cells: Array = _copy_array(placement.get("cells", []))
+	var placement: Dictionary = JsonCoerceScript._copy_dict(entry.get("forced_placement", {}))
+	var placement_cells: Array = JsonCoerceScript._copy_array(placement.get("cells", []))
 	var placement_lookup: Dictionary = _cell_lookup(placement_cells)
 	var side_counts: Dictionary = _grid_side_effect_counts(grid, entry)
 	var animal_count := int(side_counts.get("animal_count", 0))
@@ -293,7 +287,7 @@ func apply_grid_side_effects(machine: Dictionary, grid: Array, stake: int, entry
 				if ANIMAL_SYMBOLS.has(str(column[row_index])) and bool(placement_lookup.get(_coin_cell_key(reel_index, row_index), false)):
 					column[row_index] = "BUFFALO"
 			converted[reel_index] = column
-		_sanitize_buffalo_grid(converted, definition, _protected_cell_lookup(placement_cells))
+		_sanitize_buffalo_grid(converted, definition, MathScript.protected_cell_lookup(placement_cells))
 		var post_payout := grid_payout(converted, stake)
 		conversion_award = maxi(0, mini(stake * 4, post_payout - pre_payout))
 		bucket["gold_buffalo_heads"] = 0
@@ -319,8 +313,8 @@ func apply_grid_side_effects(machine: Dictionary, grid: Array, stake: int, entry
 
 
 func _grid_side_effect_counts(grid: Array, entry: Dictionary) -> Dictionary:
-	var placement: Dictionary = _copy_dict(entry.get("forced_placement", {}))
-	var cells: Array = _copy_array(placement.get("cells", []))
+	var placement: Dictionary = JsonCoerceScript._copy_dict(entry.get("forced_placement", {}))
+	var cells: Array = JsonCoerceScript._copy_array(placement.get("cells", []))
 	if cells.is_empty():
 		return {
 			"animal_count": 0,
@@ -333,7 +327,7 @@ func _grid_side_effect_counts(grid: Array, entry: Dictionary) -> Dictionary:
 	var gold_token_count := 0
 	var lock_count := 0
 	for cell_value in cells:
-		var cell: Dictionary = _copy_dict(cell_value)
+		var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 		var symbol := _grid_symbol(grid, int(cell.get("reel", -1)), int(cell.get("row", -1)))
 		if ANIMAL_SYMBOLS.has(symbol):
 			animal_count += 1
@@ -355,14 +349,14 @@ func _grid_side_effect_counts(grid: Array, entry: Dictionary) -> Dictionary:
 func _cell_lookup(cells: Array) -> Dictionary:
 	var lookup := {}
 	for cell_value in cells:
-		var cell: Dictionary = _copy_dict(cell_value)
+		var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 		lookup[_coin_cell_key(int(cell.get("reel", -1)), int(cell.get("row", -1)))] = true
 	return lookup
 
 
 func grid_payout_for_entry(grid: Array, stake: int, stake_cost: int = -1, machine: Dictionary = {}, definition: Dictionary = {}, entry: Dictionary = {}) -> int:
 	var classification := str(entry.get("classification", ""))
-	var forced_placement: Dictionary = _copy_dict(entry.get("forced_placement", {}))
+	var forced_placement: Dictionary = JsonCoerceScript._copy_dict(entry.get("forced_placement", {}))
 	var payout := -1
 	if (classification == "true_win" or classification == "ldw") and str(forced_placement.get("kind", "")) == "line":
 		payout = _forced_line_payout(grid, stake, stake_cost, definition, forced_placement)
@@ -373,7 +367,7 @@ func grid_payout_for_entry(grid: Array, stake: int, stake_cost: int = -1, machin
 	if classification != "true_win":
 		return payout
 	var config := _buffalo_config(definition)
-	var format_scales: Dictionary = _copy_dict(config.get("true_win_payout_percent_by_format", {}))
+	var format_scales: Dictionary = JsonCoerceScript._copy_dict(config.get("true_win_payout_percent_by_format", {}))
 	var format_percent := maxi(1, int(format_scales.get(str(machine.get("format_id", "classic_3_reel")), 100)))
 	var math_variant: Dictionary = _variant_by_id(definition.get("slot_math_variants", []), str(machine.get("math_variant_id", "standard")))
 	var normal_pay_scale := maxf(0.0, float(math_variant.get("normal_pay_scale", 1.0)))
@@ -381,7 +375,7 @@ func grid_payout_for_entry(grid: Array, stake: int, stake_cost: int = -1, machin
 
 
 func _forced_line_payout(grid: Array, stake: int, stake_cost: int, definition: Dictionary, forced_placement: Dictionary) -> int:
-	var cells: Array = _copy_array(forced_placement.get("cells", []))
+	var cells: Array = JsonCoerceScript._copy_array(forced_placement.get("cells", []))
 	var symbol_id := str(forced_placement.get("symbol", ""))
 	if cells.is_empty() or symbol_id.is_empty():
 		return -1
@@ -395,7 +389,7 @@ func _forced_line_payout(grid: Array, stake: int, stake_cost: int, definition: D
 
 
 func _forced_ways_payout(grid: Array, stake: int, stake_cost: int, definition: Dictionary, forced_placement: Dictionary) -> int:
-	var cells: Array = _copy_array(forced_placement.get("cells", []))
+	var cells: Array = JsonCoerceScript._copy_array(forced_placement.get("cells", []))
 	var symbol_id := str(forced_placement.get("symbol", ""))
 	if cells.is_empty() or symbol_id.is_empty():
 		return -1
@@ -407,7 +401,7 @@ func _forced_ways_payout(grid: Array, stake: int, stake_cost: int, definition: D
 		return -1
 	var reel_lookup := {}
 	for cell_value in cells:
-		var cell: Dictionary = _copy_dict(cell_value)
+		var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 		var reel_index := int(cell.get("reel", -1))
 		if reel_index >= 0 and reel_index < grid.size():
 			reel_lookup[reel_index] = true
@@ -432,7 +426,7 @@ func _forced_ways_payout(grid: Array, stake: int, stake_cost: int, definition: D
 	var consecutive := reel_lookup.size()
 	if symbol_id == "10" and consecutive == 3 and safe_stake_cost > 1:
 		return maxi(1, safe_stake_cost - 1)
-	var symbol_def: Dictionary = _copy_dict(symbols.get(symbol_id, {}))
+	var symbol_def: Dictionary = JsonCoerceScript._copy_dict(symbols.get(symbol_id, {}))
 	var pay_key := "pay%d" % mini(consecutive, 6)
 	var pay := int(symbol_def.get(pay_key, 0))
 	return safe_stake * pay * ways
@@ -455,7 +449,7 @@ func grid_payout(grid: Array, stake: int, stake_cost: int = -1, _machine: Dictio
 		if candidate == "10" and safe_stake_cost > 1:
 			best = maxi(best, maxi(1, safe_stake_cost - 1))
 			continue
-		var symbol_def: Dictionary = _copy_dict(symbols.get(candidate, {}))
+		var symbol_def: Dictionary = JsonCoerceScript._copy_dict(symbols.get(candidate, {}))
 		var pay_key := "pay%d" % mini(cells.size(), 6)
 		var pay := int(symbol_def.get(pay_key, 0))
 		best = maxi(best, safe_stake * pay * maxi(1, int(match.get("multiplier", 1))))
@@ -468,7 +462,7 @@ func _line_match_for_cells(grid: Array, cells: Array) -> Dictionary:
 	var symbol := ""
 	var multiplier := 1
 	for cell_value in cells:
-		var cell: Dictionary = _copy_dict(cell_value)
+		var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 		var current := _grid_symbol(grid, int(cell.get("reel", -1)), int(cell.get("row", -1)))
 		if current.is_empty() or current == "BLANK":
 			return {}
@@ -490,7 +484,7 @@ func _line_payout_for_cells(grid: Array, cells: Array, candidate: String, stake:
 		return 0
 	var multiplier := 1
 	for cell_value in cells:
-		var cell: Dictionary = _copy_dict(cell_value)
+		var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 		var symbol := _grid_symbol(grid, int(cell.get("reel", -1)), int(cell.get("row", -1)))
 		if symbol == candidate:
 			continue
@@ -500,7 +494,7 @@ func _line_payout_for_cells(grid: Array, cells: Array, candidate: String, stake:
 		return 0
 	if candidate == "10" and stake_cost > 1:
 		return maxi(1, stake_cost - 1)
-	var symbol_def: Dictionary = _copy_dict(symbols.get(candidate, {}))
+	var symbol_def: Dictionary = JsonCoerceScript._copy_dict(symbols.get(candidate, {}))
 	var pay_key := "pay%d" % mini(cells.size(), 6)
 	var pay := int(symbol_def.get(pay_key, 0))
 	return maxi(0, stake) * pay * multiplier
@@ -509,7 +503,7 @@ func _line_payout_for_cells(grid: Array, cells: Array, candidate: String, stake:
 func _actual_forced_ways_symbol(grid: Array, cells: Array, original_symbol: String, symbols: Dictionary) -> String:
 	var fallback_symbol := ""
 	for cell_value in cells:
-		var cell: Dictionary = _copy_dict(cell_value)
+		var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 		var reel_index := int(cell.get("reel", -1))
 		var row_index := int(cell.get("row", -1))
 		if reel_index < 0 or reel_index >= grid.size() or typeof(grid[reel_index]) != TYPE_ARRAY:
@@ -563,9 +557,9 @@ func current_grand_prize(machine: Dictionary, stake: int, bet_id: String = "bet_
 
 
 func advance_grand_prize(machine: Dictionary, stake_cost: int, stake: int, bet_id: String = "bet_10") -> int:
-	var bonus_state: Dictionary = _copy_dict(machine.get("bonus_state", {}))
-	var buckets: Dictionary = _copy_dict(bonus_state.get("per_bet", {}))
-	var bucket: Dictionary = _copy_dict(buckets.get(bet_id, {}))
+	var bonus_state: Dictionary = JsonCoerceScript._copy_dict(machine.get("bonus_state", {}))
+	var buckets: Dictionary = JsonCoerceScript._copy_dict(bonus_state.get("per_bet", {}))
+	var bucket: Dictionary = JsonCoerceScript._copy_dict(buckets.get(bet_id, {}))
 	var current := maxi(0, int(bucket.get(GRAND_PRIZE_STATE_KEY, 0)))
 	if current <= 0:
 		current = base_grand_prize(stake, bet_id)
@@ -583,9 +577,9 @@ func advance_grand_prize(machine: Dictionary, stake_cost: int, stake: int, bet_i
 
 
 func reset_grand_prize(machine: Dictionary, stake: int, bet_id: String = "bet_10") -> void:
-	var bonus_state: Dictionary = _copy_dict(machine.get("bonus_state", {}))
-	var buckets: Dictionary = _copy_dict(bonus_state.get("per_bet", {}))
-	var bucket: Dictionary = _copy_dict(buckets.get(bet_id, {}))
+	var bonus_state: Dictionary = JsonCoerceScript._copy_dict(machine.get("bonus_state", {}))
+	var buckets: Dictionary = JsonCoerceScript._copy_dict(bonus_state.get("per_bet", {}))
+	var bucket: Dictionary = JsonCoerceScript._copy_dict(buckets.get(bet_id, {}))
 	bucket[GRAND_PRIZE_STATE_KEY] = base_grand_prize(stake, bet_id)
 	bucket[GRAND_PRIZE_INITIAL_MULTIPLIER_KEY] = GRAND_PRIZE_BASE_MULTIPLIER
 	bucket[GRAND_PRIZE_SPINS_KEY] = 0
@@ -596,9 +590,9 @@ func reset_grand_prize(machine: Dictionary, stake: int, bet_id: String = "bet_10
 
 
 func _grand_prize_bucket(machine: Dictionary, bet_id: String) -> Dictionary:
-	var bonus_state: Dictionary = _copy_dict(machine.get("bonus_state", {}))
-	var buckets: Dictionary = _copy_dict(bonus_state.get("per_bet", {}))
-	return _copy_dict(buckets.get(bet_id, {}))
+	var bonus_state: Dictionary = JsonCoerceScript._copy_dict(machine.get("bonus_state", {}))
+	var buckets: Dictionary = JsonCoerceScript._copy_dict(bonus_state.get("per_bet", {}))
+	return JsonCoerceScript._copy_dict(buckets.get(bet_id, {}))
 
 
 func hold_award_for_lock_count(stake: int, lock_count: int, max_cells: int, bet_id: String = "bet_10", grand_prize: int = -1) -> int:
@@ -613,7 +607,7 @@ func hold_award_for_lock_count(stake: int, lock_count: int, max_cells: int, bet_
 
 
 func _free_games_feature(machine: Dictionary, stake: int, feature_scale: float, scatter_count: int, step_bonus: int) -> Dictionary:
-	var bet_id := str(_copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2"))
+	var bet_id := str(JsonCoerceScript._copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2"))
 	var grand_prize := current_grand_prize(machine, stake, bet_id)
 	var format_id := str(machine.get("format_id", ""))
 	var profile := _free_games_profile(format_id)
@@ -672,7 +666,7 @@ func _hold_feature(machine: Dictionary, stake: int, feature_scale: float, step_b
 	var reel_count := maxi(1, int(machine.get("reel_count", 5)))
 	var row_count := maxi(1, int(machine.get("row_count", 3)))
 	var max_cells := maxi(1, reel_count * row_count)
-	var bet_id := str(_copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2"))
+	var bet_id := str(JsonCoerceScript._copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2"))
 	var grand_prize := current_grand_prize(machine, stake, bet_id)
 	var session_cap := maxi(1, stake * 55)
 	var current_total := _hold_lock_total(locks, stake, max_cells, bet_id, grand_prize)
@@ -711,7 +705,7 @@ func _hold_feature(machine: Dictionary, stake: int, feature_scale: float, step_b
 
 
 func _wheel_feature(machine: Dictionary, stake: int, feature_scale: float, rng: RngStream) -> Dictionary:
-	var bet_id := str(_copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2"))
+	var bet_id := str(JsonCoerceScript._copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2"))
 	var choices: Array = [
 		{"id": "free_games", "label": "Free Games", "route": "free_games"},
 		{"id": "hold_and_spin", "label": "Coin Link", "route": "hold_and_spin"},
@@ -749,7 +743,7 @@ func _wheel_feature(machine: Dictionary, stake: int, feature_scale: float, rng: 
 
 
 func _step_wheel(machine: Dictionary, active: Dictionary, action_id: String, rng: RngStream) -> Dictionary:
-	var choices: Array = _dictionary_array(active.get("choices", []))
+	var choices: Array = JsonCoerceScript._dictionary_array(active.get("choices", []))
 	var choice_index := 1
 	if action_id == "slot_bonus_left":
 		choice_index = 0
@@ -757,8 +751,8 @@ func _step_wheel(machine: Dictionary, active: Dictionary, action_id: String, rng
 		choice_index = 2
 	choice_index = clampi(choice_index, 0, maxi(0, choices.size() - 1))
 	var choice: Dictionary = choices[choice_index] if not choices.is_empty() else {"id": "free_games", "route": "free_games"}
-	var history: Array = _dictionary_array(active.get("history", []))
-	var trophy_choices: Array = _dictionary_array(active.get("trophy_choices", []))
+	var history: Array = JsonCoerceScript._dictionary_array(active.get("history", []))
+	var trophy_choices: Array = JsonCoerceScript._dictionary_array(active.get("trophy_choices", []))
 	var reveal: Dictionary = _trophy_reveal_for_choice(choice, choice_index, trophy_choices, active, rng)
 	var wheel_stop := int(active.get("wheel_angle", 0)) + rng.randi_range(80, 220)
 	history.append({"id": "trophy_pick_reveal", "choice_id": str(choice.get("id", "free_games")), "route": str(choice.get("route", "free_games")), "choice_index": choice_index, "wheel_stop": wheel_stop, "reveal": reveal})
@@ -808,8 +802,8 @@ func _complete_stalled_feature(machine: Dictionary, active: Dictionary, message_
 	var completed: Dictionary = active.duplicate(true)
 	var mode := str(completed.get("mode", ""))
 	var stake := maxi(1, int(completed.get("stake", 1)))
-	var bet_id := str(completed.get("bet_id", _copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2")))
-	var locks: Array = _dictionary_array(completed.get("locks", []))
+	var bet_id := str(completed.get("bet_id", JsonCoerceScript._copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2")))
+	var locks: Array = JsonCoerceScript._dictionary_array(completed.get("locks", []))
 	var max_cells := maxi(1, int(completed.get("max_cells", maxi(1, locks.size()))))
 	var grand_prize := maxi(current_grand_prize(machine, stake, bet_id), int(completed.get("grand_prize", 0)))
 	var final_total := maxi(maxi(maxi(0, int(completed.get("feature_total", 0))), int(completed.get("pending_award", 0))), int(completed.get("awarded", 0)))
@@ -835,7 +829,7 @@ func _complete_stalled_feature(machine: Dictionary, active: Dictionary, message_
 	completed["remaining_steps"] = 0
 	completed["respins_remaining"] = 0
 	completed["grand_prize"] = grand_prize
-	completed["collection_meter"] = _coin_collection_meter(completed) if mode == "free_games" else _copy_dict(completed.get("collection_meter", {}))
+	completed["collection_meter"] = _coin_collection_meter(completed) if mode == "free_games" else JsonCoerceScript._copy_dict(completed.get("collection_meter", {}))
 	machine["last_bonus_replay"] = completed.duplicate(true)
 	machine["active_bonus"] = {"active": false, "complete": true}
 	var step := _bonus_step_result(true, final_total, message_template % final_total, completed)
@@ -845,8 +839,8 @@ func _complete_stalled_feature(machine: Dictionary, active: Dictionary, message_
 
 
 func _step_hold(machine: Dictionary, active: Dictionary, rng: RngStream) -> Dictionary:
-	var history: Array = _dictionary_array(active.get("history", []))
-	var locks: Array = _dictionary_array(active.get("locks", []))
+	var history: Array = JsonCoerceScript._dictionary_array(active.get("history", []))
+	var locks: Array = JsonCoerceScript._dictionary_array(active.get("locks", []))
 	var max_cells := maxi(1, int(active.get("max_cells", 15)))
 	var row_count := maxi(1, int(active.get("row_count", machine.get("row_count", 3))))
 	var stake := maxi(1, int(active.get("stake", 1)))
@@ -866,7 +860,7 @@ func _step_hold(machine: Dictionary, active: Dictionary, rng: RngStream) -> Dict
 			if open_cells <= 0:
 				break
 			if rng.randi_range(1, 100) <= chance:
-				var lock: Dictionary = _new_lock(locks, max_cells, stake, row_count, rng, _copy_dict(active.get("slot_item_effects", {})))
+				var lock: Dictionary = _new_lock(locks, max_cells, stake, row_count, rng, JsonCoerceScript._copy_dict(active.get("slot_item_effects", {})))
 				lock["source"] = "respin"
 				lock["reveal_start_msec"] = 1700 + added_count * 180
 				lock["reveal_duration_msec"] = 360
@@ -924,9 +918,9 @@ func _step_hold(machine: Dictionary, active: Dictionary, rng: RngStream) -> Dict
 
 
 func _step_free_games(machine: Dictionary, active: Dictionary, rng: RngStream) -> Dictionary:
-	var history: Array = _dictionary_array(active.get("history", []))
+	var history: Array = JsonCoerceScript._dictionary_array(active.get("history", []))
 	var stake := maxi(1, int(active.get("stake", 1)))
-	var bet_id := str(active.get("bet_id", _copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2")))
+	var bet_id := str(active.get("bet_id", JsonCoerceScript._copy_dict(machine.get("bet_ladder", {})).get("selected_id", "bet_2")))
 	var reel_count := maxi(1, int(machine.get("reel_count", 5)))
 	var row_count := maxi(1, int(machine.get("row_count", 4)))
 	var reel_strips_value: Variant = machine.get("bonus_reel_strips", machine.get("reel_strips", []))
@@ -940,8 +934,8 @@ func _step_free_games(machine: Dictionary, active: Dictionary, rng: RngStream) -
 	var payout_percent := maxi(1, int(active.get("payout_percent", 100)))
 	var payout_scale := float(payout_percent) / 100.0
 	var coin_result: Dictionary = _collect_free_game_coins(active, grid, stake, float(active.get("feature_scale", 1.0)) * payout_scale, rng)
-	var collected_coins: Array = _dictionary_array(coin_result.get("collected_coins", []))
-	var new_coins: Array = _dictionary_array(coin_result.get("new_coins", []))
+	var collected_coins: Array = JsonCoerceScript._dictionary_array(coin_result.get("collected_coins", []))
+	var new_coins: Array = JsonCoerceScript._dictionary_array(coin_result.get("new_coins", []))
 	var coin_total := maxi(0, int(coin_result.get("coin_total", 0)))
 	var coins_collected := maxi(0, int(coin_result.get("coins_collected", 0)))
 	var coins_since_retrigger := maxi(0, int(coin_result.get("coins_since_retrigger", 0)))
@@ -1065,7 +1059,7 @@ func _balance_large_free_game_gold(machine: Dictionary, active: Dictionary, grid
 		return {"candidates": candidates.size(), "kept": candidates.size(), "suppressed": 0, "full_screen": true}
 	if format_id == "video_feature":
 		var occupied_cells: Dictionary = {}
-		for coin_value in _dictionary_array(active.get("collected_coins", [])):
+		for coin_value in JsonCoerceScript._dictionary_array(active.get("collected_coins", [])):
 			var coin: Dictionary = coin_value
 			occupied_cells[_coin_cell_key(int(coin.get("reel", -1)), int(coin.get("row", -1)))] = true
 		for cell in candidates:
@@ -1092,10 +1086,10 @@ func _balance_large_free_game_gold(machine: Dictionary, active: Dictionary, grid
 
 
 func _collect_free_game_coins(active: Dictionary, grid: Array, stake: int, feature_scale: float, rng: RngStream) -> Dictionary:
-	var collected: Array = _dictionary_array(active.get("collected_coins", []))
+	var collected: Array = JsonCoerceScript._dictionary_array(active.get("collected_coins", []))
 	var by_cell: Dictionary = {}
 	for index in range(collected.size()):
-		var coin: Dictionary = _copy_dict(collected[index])
+		var coin: Dictionary = JsonCoerceScript._copy_dict(collected[index])
 		by_cell[_coin_cell_key(int(coin.get("reel", 0)), int(coin.get("row", 0)))] = index
 	var new_coins: Array = []
 	var added_value := 0
@@ -1107,7 +1101,7 @@ func _collect_free_game_coins(active: Dictionary, grid: Array, stake: int, featu
 		for row_index in range(column.size()):
 			if str(column[row_index]) != "GOLD_TOKEN":
 				continue
-			var value_info: Dictionary = _free_game_coin_value(stake, feature_scale, rng, _copy_dict(active.get("slot_item_effects", {})))
+			var value_info: Dictionary = _free_game_coin_value(stake, feature_scale, rng, JsonCoerceScript._copy_dict(active.get("slot_item_effects", {})))
 			var value := maxi(1, int(value_info.get("value", stake)))
 			var key := _coin_cell_key(reel_index, row_index)
 			var coin: Dictionary = {
@@ -1122,7 +1116,7 @@ func _collect_free_game_coins(active: Dictionary, grid: Array, stake: int, featu
 			}
 			if by_cell.has(key):
 				var existing_index := int(by_cell.get(key, 0))
-				var existing: Dictionary = _copy_dict(collected[existing_index])
+				var existing: Dictionary = JsonCoerceScript._copy_dict(collected[existing_index])
 				existing["value"] = maxi(0, int(existing.get("value", 0))) + value
 				existing["added_value"] = value
 				existing["tier"] = str(value_info.get("tier", existing.get("tier", "")))
@@ -1149,7 +1143,7 @@ func _collect_free_game_coins(active: Dictionary, grid: Array, stake: int, featu
 
 
 func _coin_reveal_sequence(collected_coins: Array, target_total: int) -> Array:
-	var coins: Array = _dictionary_array(collected_coins)
+	var coins: Array = JsonCoerceScript._dictionary_array(collected_coins)
 	var reveal_count := coins.size()
 	var safe_total := maxi(0, target_total)
 	var result: Array = []
@@ -1157,11 +1151,11 @@ func _coin_reveal_sequence(collected_coins: Array, target_total: int) -> Array:
 		return result
 	var original_total := 0
 	for coin_value in coins:
-		var coin: Dictionary = _copy_dict(coin_value)
+		var coin: Dictionary = JsonCoerceScript._copy_dict(coin_value)
 		original_total += maxi(0, int(coin.get("value", 0)))
 	var remaining := safe_total
 	for index in range(reveal_count):
-		var coin: Dictionary = _copy_dict(coins[index])
+		var coin: Dictionary = JsonCoerceScript._copy_dict(coins[index])
 		var remaining_cells := reveal_count - index
 		var value := 0
 		if remaining > 0:
@@ -1188,7 +1182,7 @@ func _coin_reveal_sequence(collected_coins: Array, target_total: int) -> Array:
 		result.append(coin)
 	if remaining > 0 and not result.is_empty():
 		var last_index := result.size() - 1
-		var last: Dictionary = _copy_dict(result[last_index])
+		var last: Dictionary = JsonCoerceScript._copy_dict(result[last_index])
 		last["value"] = maxi(0, int(last.get("value", 0))) + remaining
 		result[last_index] = last
 	return result
@@ -1197,7 +1191,7 @@ func _coin_reveal_sequence(collected_coins: Array, target_total: int) -> Array:
 func _coin_reveal_total(reveals: Array) -> int:
 	var total := 0
 	for reveal_value in reveals:
-		var reveal: Dictionary = _copy_dict(reveal_value)
+		var reveal: Dictionary = JsonCoerceScript._copy_dict(reveal_value)
 		total += maxi(0, int(reveal.get("value", 0)))
 	return total
 
@@ -1256,7 +1250,7 @@ func _free_games_profile(format_id: String) -> Dictionary:
 		"session_cap_multiplier": 74,
 	}
 	if FREE_GAMES_FORMAT_PROFILES.has(format_id):
-		defaults.merge(_copy_dict(FREE_GAMES_FORMAT_PROFILES.get(format_id, {})), true)
+		defaults.merge(JsonCoerceScript._copy_dict(FREE_GAMES_FORMAT_PROFILES.get(format_id, {})), true)
 	return defaults
 
 
@@ -1267,7 +1261,7 @@ func _coin_cell_key(reel_index: int, row_index: int) -> String:
 func _trophy_choices_from_choices(choices: Array, bet_id: String, stake: int) -> Array:
 	var trophies: Array = []
 	for index in range(choices.size()):
-		var choice: Dictionary = _copy_dict(choices[index])
+		var choice: Dictionary = JsonCoerceScript._copy_dict(choices[index])
 		var route := str(choice.get("route", choice.get("id", "")))
 		var tier := ""
 		var award_hint := 0
@@ -1290,7 +1284,7 @@ func _trophy_choices_from_choices(choices: Array, bet_id: String, stake: int) ->
 func _trophy_reveal_for_choice(choice: Dictionary, choice_index: int, trophy_choices: Array, active: Dictionary, rng: RngStream) -> Dictionary:
 	var reveal: Dictionary = {}
 	if choice_index >= 0 and choice_index < trophy_choices.size():
-		reveal = _copy_dict(trophy_choices[choice_index])
+		reveal = JsonCoerceScript._copy_dict(trophy_choices[choice_index])
 	else:
 		reveal = {"index": choice_index, "id": str(choice.get("id", "")), "label": str(choice.get("label", "")), "route": str(choice.get("route", ""))}
 	reveal["revealed"] = true
@@ -1327,7 +1321,7 @@ func _jackpot_ladder_state(bet_id: String, stake: int, lit_tier: String, machine
 func _new_lock(existing_locks: Array, max_cells: int, stake: int, row_count: int, rng: RngStream, item_effects: Dictionary = {}) -> Dictionary:
 	var occupied: Dictionary = {}
 	for lock_value in existing_locks:
-		var lock: Dictionary = _copy_dict(lock_value)
+		var lock: Dictionary = JsonCoerceScript._copy_dict(lock_value)
 		occupied[int(lock.get("cell", 0))] = true
 	var cell := rng.randi_range(0, maxi(0, max_cells - 1))
 	var guard := 0
@@ -1382,7 +1376,7 @@ func _hold_respin_display(machine: Dictionary, active: Dictionary, locks: Array,
 	var grid: Array = MathScript.project_grid(reel_strips, stops, reel_count, row_count)
 	var lock_lookup: Dictionary = {}
 	for lock_value in locks:
-		var lock: Dictionary = _copy_dict(lock_value)
+		var lock: Dictionary = JsonCoerceScript._copy_dict(lock_value)
 		var cell: Dictionary = _hold_lock_cell(lock, row_count)
 		var reel := int(cell.get("reel", -1))
 		var row := int(cell.get("row", -1))
@@ -1414,7 +1408,7 @@ func _hold_lock_total(locks: Array, stake: int, max_cells: int, bet_id: String, 
 	var sum := 0
 	var multiplier_bonus := 0
 	for lock_value in locks:
-		var lock: Dictionary = _copy_dict(lock_value)
+		var lock: Dictionary = JsonCoerceScript._copy_dict(lock_value)
 		sum += maxi(0, int(lock.get("value", stake)))
 		multiplier_bonus += maxi(0, int(lock.get("multiplier", 1)) - 1)
 	var total := int(round(float(sum) * (1.0 + minf(1.5, float(multiplier_bonus) * 0.18))))
@@ -1436,7 +1430,7 @@ func _grand_prize_eligible(bet_id: String) -> bool:
 func _initial_locks(machine: Dictionary) -> Array:
 	var locks: Array = []
 	var grid: Array = machine.get("last_grid", [])
-	var stake := int(_copy_dict(machine.get("bet_ladder", {})).get("selected_total", 10))
+	var stake := int(JsonCoerceScript._copy_dict(machine.get("bet_ladder", {})).get("selected_total", 10))
 	var cell_index := 0
 	for reel_index in range(grid.size()):
 		var column: Array = grid[reel_index] as Array
@@ -1453,7 +1447,7 @@ func _initial_locks_from_cells(machine: Dictionary, cells: Array, stake: int) ->
 	var grid: Array = machine.get("last_grid", [])
 	var row_count := maxi(1, int(machine.get("row_count", 1)))
 	for cell_value in cells:
-		var cell: Dictionary = _copy_dict(cell_value)
+		var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 		var reel_index := int(cell.get("reel", -1))
 		var row_index := int(cell.get("row", -1))
 		if reel_index < 0 or row_index < 0:
@@ -1488,7 +1482,7 @@ func _hold_lock_cell(lock: Dictionary, row_count: int) -> Dictionary:
 func _hold_lock_cells(locks: Array) -> Array:
 	var result: Array = []
 	for lock_value in locks:
-		var lock: Dictionary = _copy_dict(lock_value)
+		var lock: Dictionary = JsonCoerceScript._copy_dict(lock_value)
 		if lock.has("reel") and lock.has("row"):
 			result.append({"reel": int(lock.get("reel", -1)), "row": int(lock.get("row", -1))})
 	return result
@@ -1513,7 +1507,7 @@ func _heritage_table(table: Array) -> Array:
 	return result
 
 
-func _adjusted_table(table: Array, math_id: String, table_id: String) -> Array:
+func _adjusted_table(table: Array, math_id: String) -> Array:
 	var result: Array = []
 	for entry_value in table:
 		var entry: Dictionary = (entry_value as Dictionary).duplicate(true)
@@ -1535,21 +1529,7 @@ func _adjusted_table(table: Array, math_id: String, table_id: String) -> Array:
 				weight = int(round(float(weight) * 1.25))
 		entry["weight"] = maxi(0, weight)
 		result.append(entry)
-	return _normalize_table_total(result, 10000, table_id)
-
-
-func _normalize_table_total(table: Array, target_total: int, _table_id: String) -> Array:
-	var total := 0
-	for entry_value in table:
-		total += maxi(0, int((entry_value as Dictionary).get("weight", 0)))
-	var delta := target_total - total
-	for i in range(table.size()):
-		var entry: Dictionary = table[i]
-		if str(entry.get("id", "")) == "zero_loss":
-			entry["weight"] = maxi(0, int(entry.get("weight", 0)) + delta)
-			table[i] = entry
-			break
-	return table
+	return MathScript.normalize_weight_table(result, 10000)
 
 
 func _bonus_step_result(complete: bool, award: int, message: String, active: Dictionary) -> Dictionary:
@@ -1576,13 +1556,13 @@ func _fill_nonpaying_grid(grid: Array, rng: RngStream = null) -> void:
 
 
 func _sanitize_buffalo_grid(grid: Array, definition: Dictionary, protected_cells: Dictionary) -> void:
-	_limit_symbol_count(grid, "GOLD_TOKEN", 0, protected_cells)
+	MathScript.limit_symbol_count(grid, "GOLD_TOKEN", 0, protected_cells)
 	var guard := 0
 	while guard < 128:
 		var violation: Dictionary = _first_buffalo_ways_violation(grid, definition, protected_cells)
 		if violation.is_empty():
 			return
-		var break_cell: Dictionary = _first_unprotected_cell(_copy_array(violation.get("cells", [])), protected_cells)
+		var break_cell: Dictionary = MathScript.first_unprotected_cell(JsonCoerceScript._copy_array(violation.get("cells", [])), protected_cells)
 		if break_cell.is_empty():
 			return
 		MathScript.set_cell(grid, int(break_cell.get("reel", 0)), int(break_cell.get("row", 0)), "BLANK")
@@ -1598,52 +1578,9 @@ func _first_buffalo_ways_violation(grid: Array, definition: Dictionary, protecte
 		var cells: Array = MathScript.payline_cells(reel_count, row_count, line_index)
 		var match: Dictionary = _line_match_for_cells(grid, cells)
 		var candidate := str(match.get("symbol", ""))
-		if not candidate.is_empty() and symbols.has(candidate) and not _all_cells_protected(cells, protected_cells):
+		if not candidate.is_empty() and symbols.has(candidate) and not MathScript.all_cells_protected(cells, protected_cells):
 			return {"cells": cells, "symbol": candidate, "start_reel": 0, "line_index": line_index}
 	return {}
-
-
-func _limit_symbol_count(grid: Array, symbol_id: String, max_count: int, protected_cells: Dictionary) -> void:
-	var seen := 0
-	for reel_index in range(grid.size()):
-		if typeof(grid[reel_index]) != TYPE_ARRAY:
-			continue
-		var column: Array = grid[reel_index] as Array
-		for row_index in range(column.size()):
-			if str(column[row_index]) != symbol_id:
-				continue
-			seen += 1
-			if seen > max_count and not bool(protected_cells.get("%d:%d" % [reel_index, row_index], false)):
-				column[row_index] = "BLANK"
-		grid[reel_index] = column
-
-
-func _protected_cell_lookup(cells: Array) -> Dictionary:
-	var lookup := {}
-	for cell_value in cells:
-		var cell: Dictionary = _copy_dict(cell_value)
-		lookup["%d:%d" % [int(cell.get("reel", -1)), int(cell.get("row", -1))]] = true
-	return lookup
-
-
-func _first_unprotected_cell(cells: Array, protected_cells: Dictionary) -> Dictionary:
-	var index := cells.size() - 1
-	while index >= 0:
-		var cell: Dictionary = _copy_dict(cells[index])
-		if not bool(protected_cells.get("%d:%d" % [int(cell.get("reel", -1)), int(cell.get("row", -1))], false)):
-			return cell
-		index -= 1
-	return {}
-
-
-func _all_cells_protected(cells: Array, protected_cells: Dictionary) -> bool:
-	if cells.is_empty():
-		return false
-	for cell_value in cells:
-		var cell: Dictionary = _copy_dict(cell_value)
-		if not bool(protected_cells.get("%d:%d" % [int(cell.get("reel", -1)), int(cell.get("row", -1))], false)):
-			return false
-	return true
 
 
 func _grid_row_count(grid: Array) -> int:
@@ -1687,12 +1624,12 @@ func _buffalo_true_win_plan(reel_count: int, format_id: String, rng: RngStream, 
 func _buffalo_true_win_profile_plan(reel_count: int, format_id: String, rng: RngStream, definition: Dictionary) -> Dictionary:
 	var config: Dictionary = _buffalo_config(definition)
 	var symbols: Dictionary = _buffalo_symbol_lookup(config)
-	var profiles_by_format: Dictionary = _copy_dict(config.get("true_win_profiles", {}))
-	var raw_profiles: Array = _dictionary_array(profiles_by_format.get(format_id, []))
+	var profiles_by_format: Dictionary = JsonCoerceScript._copy_dict(config.get("true_win_profiles", {}))
+	var raw_profiles: Array = JsonCoerceScript._dictionary_array(profiles_by_format.get(format_id, []))
 	if raw_profiles.is_empty() and reel_count <= 3:
-		raw_profiles = _dictionary_array(profiles_by_format.get("classic_3_reel", []))
+		raw_profiles = JsonCoerceScript._dictionary_array(profiles_by_format.get("classic_3_reel", []))
 	elif raw_profiles.is_empty():
-		raw_profiles = _dictionary_array(profiles_by_format.get("line_5x3", []))
+		raw_profiles = JsonCoerceScript._dictionary_array(profiles_by_format.get("line_5x3", []))
 	var candidates: Array = []
 	for profile_value in raw_profiles:
 		var profile: Dictionary = profile_value
@@ -1744,7 +1681,7 @@ func _buffalo_true_win_profile_plan(reel_count: int, format_id: String, rng: Rng
 
 
 func _buffalo_profile_wild_symbol(profile: Dictionary, rng: RngStream) -> String:
-	var wild_symbols: Array = _string_array(profile.get("wild_symbols", []))
+	var wild_symbols: Array = JsonCoerceScript._literal_string_array(profile.get("wild_symbols", []))
 	if wild_symbols.is_empty():
 		wild_symbols = ["SUNSET_2X", "SUNSET_2X", "SUNSET_3X"]
 	var wild_symbol := str(wild_symbols[rng.randi_range(0, wild_symbols.size() - 1)])
@@ -1753,33 +1690,13 @@ func _buffalo_profile_wild_symbol(profile: Dictionary, rng: RngStream) -> String
 	return wild_symbol
 
 
-func _stop_ways_extension(grid: Array, cells: Array, symbol: String) -> void:
-	if cells.is_empty() or grid.is_empty():
-		return
-	var min_reel := grid.size()
-	var max_reel := -1
-	for cell_value in cells:
-		var cell: Dictionary = _copy_dict(cell_value)
-		var reel_index := int(cell.get("reel", -1))
-		min_reel = mini(min_reel, reel_index)
-		max_reel = maxi(max_reel, reel_index)
-	for stop_reel in [min_reel - 1, max_reel + 1]:
-		if stop_reel < 0 or stop_reel >= grid.size():
-			continue
-		var column: Array = grid[stop_reel] if typeof(grid[stop_reel]) == TYPE_ARRAY else []
-		for row_index in range(column.size()):
-			if str(column[row_index]) == symbol or WILD_SYMBOLS.has(str(column[row_index])):
-				column[row_index] = _safe_buffalo_fill_symbol(stop_reel, row_index, symbol)
-		grid[stop_reel] = column
-
-
 func _trim_forced_reel_matches(grid: Array, cells: Array, symbol: String) -> void:
 	if cells.is_empty() or symbol.is_empty():
 		return
 	var keep := {}
 	var reel_lookup := {}
 	for cell_value in cells:
-		var cell: Dictionary = _copy_dict(cell_value)
+		var cell: Dictionary = JsonCoerceScript._copy_dict(cell_value)
 		var reel_index := int(cell.get("reel", -1))
 		var row_index := int(cell.get("row", -1))
 		if reel_index < 0 or row_index < 0:
@@ -1845,10 +1762,18 @@ func _wild_multiplier(symbol: String) -> int:
 
 func _buffalo_symbol_lookup(config: Dictionary) -> Dictionary:
 	var result: Dictionary = {}
-	for symbol_value in _dictionary_array(config.get("symbols", [])):
-		var symbol: Dictionary = symbol_value
+	var symbols_value: Variant = config.get("symbols", [])
+	if typeof(symbols_value) != TYPE_ARRAY:
+		return result
+	# Definitions are immutable for the lifetime of a SlotGame. Reusing their
+	# read-only dictionaries avoids rebuilding the whole symbol table for every
+	# accidental-win check and payline evaluation.
+	for symbol_value in symbols_value as Array:
+		if typeof(symbol_value) != TYPE_DICTIONARY:
+			continue
+		var symbol: Dictionary = symbol_value as Dictionary
 		if int(symbol.get("pay3", 0)) > 0:
-			result[str(symbol.get("id", ""))] = symbol.duplicate(true)
+			result[str(symbol.get("id", ""))] = symbol
 	if result.is_empty():
 		result = {
 			"BUFFALO": {"id": "BUFFALO", "pay3": 1, "pay4": 3, "pay5": 8},
@@ -1866,45 +1791,13 @@ func _buffalo_symbol_lookup(config: Dictionary) -> Dictionary:
 
 
 func _buffalo_config(definition: Dictionary) -> Dictionary:
-	return _copy_dict(definition.get("slot_buffalo_config", {}))
+	var config_value: Variant = definition.get("slot_buffalo_config", {})
+	return config_value as Dictionary if typeof(config_value) == TYPE_DICTIONARY else {}
 
 
 func _variant_by_id(entries_value: Variant, variant_id: String) -> Dictionary:
-	for entry_value in _dictionary_array(entries_value):
+	for entry_value in JsonCoerceScript._dictionary_array(entries_value):
 		var entry: Dictionary = entry_value
 		if str(entry.get("id", "")) == variant_id:
 			return entry.duplicate(true)
 	return {}
-
-
-func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	var source: Array = value as Array
-	for entry in source:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append((entry as Dictionary).duplicate(true))
-	return result
-
-
-func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	var source: Array = value as Array
-	for entry in source:
-		result.append(str(entry))
-	return result
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
-
-
-func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)

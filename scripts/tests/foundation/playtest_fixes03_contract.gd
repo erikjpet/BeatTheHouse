@@ -106,8 +106,8 @@ static func _check_bug07_tutorial_dialogue_input_ownership(failures: Array) -> v
 		room_press.button_index = MOUSE_BUTTON_LEFT
 		room_press.pressed = true
 		room_press.position = Vector2(700.0, 400.0)
-		if not bool(coach.call("_consume_blocked_pointer_input", room_press)):
-			failures.append("BUG-07 regression: registering TalkDock disables the tutorial shield over unrelated room controls.")
+		if bool(coach.call("_consume_blocked_pointer_input", room_press)):
+			failures.append("BUG-07 regression: advisory tutorial guidance swallowed an unrelated room control.")
 	# Skipping the phone pointer may mark that guidance seen, but it must not make
 	# the dependent debt lesson real before the authored debt/result predicates.
 	coach.set("lessons", [{
@@ -298,7 +298,7 @@ static func _check_bug31_lucky_terms_survive_render(library, failures: Array) ->
 	var conversation: Dictionary = host.call("_lender_conversation_option", run_state.pending_talk_event(event_id))
 	var choices: Array = conversation.get("choices", [])
 	var accept: Dictionary = choices[0] if not choices.is_empty() and typeof(choices[0]) == TYPE_DICTIONARY else {}
-	for token in ["$45", "2 favors", "0%", "2 turns"]:
+	for token in ["$70", "1 favor", "0%", "2 turns"]:
 		if not rendered_body.contains(token):
 			failures.append("BUG-31 regression: Lucky's rendered offer/confirmation body omits %s (%s)." % [token, rendered_body])
 		if not str(accept.get("consequence_summary", "")).contains(token):
@@ -308,7 +308,7 @@ static func _check_bug31_lucky_terms_survive_render(library, failures: Array) ->
 	var service := RunActionServiceScript.new()
 	service.setup(library, run_state)
 	var result: Dictionary = service.use_hook("lender", "the_crew")
-	for token in ["$45", "2 favors", "0%", "2 turns"]:
+	for token in ["$70", "1 favor", "0%", "2 turns"]:
 		if not str(result.get("message", "")).contains(token):
 			failures.append("BUG-31 regression: Lucky's accepted-loan result omits %s (%s)." % [token, result.get("message", "")])
 	var continued_run = RunStateScript.new()
@@ -318,7 +318,7 @@ static func _check_bug31_lucky_terms_survive_render(library, failures: Array) ->
 		if typeof(debt_value) == TYPE_DICTIONARY and str((debt_value as Dictionary).get("lender_id", "")) == "the_crew":
 			crew_debt = debt_value
 			break
-	if int(crew_debt.get("principal", 0)) != 45 or int(crew_debt.get("balance", 0)) != 2 or str(crew_debt.get("debt_kind", "")) != "favor" or int(crew_debt.get("deadline_turns", 0)) != 2:
+	if int(crew_debt.get("principal", 0)) != 70 or int(crew_debt.get("balance", 0)) != 1 or str(crew_debt.get("debt_kind", "")) != "favor" or int(crew_debt.get("deadline_turns", 0)) != 2:
 		failures.append("BUG-31 regression: disclosed Lucky terms do not match the favor obligation restored by Continue (%s)." % crew_debt)
 	host.free()
 	dock.free()

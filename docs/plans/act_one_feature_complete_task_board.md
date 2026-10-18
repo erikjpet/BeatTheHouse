@@ -2,7 +2,7 @@
 
 > **HISTORICAL — superseded, kept for reference.** Its implementation backlog
 > is complete or superseded; current 0.4 readiness lives in
-> `docs/plans/0.4_release_checklist.md`.
+> `docs/archive/0.4/plans/0.4_release_checklist.md`.
 
 Created: 2026-07-01
 Owner: project management
@@ -172,7 +172,7 @@ TASK T0.1 - Verify actual completion status of prior-board work and this
 board's gap table.
 
 Read docs/plans/demo_release_task_board.md (historical) and
-docs/plans/0.2_release_checklist.md. For each demo-board task A0-F6, run its
+docs/archive/0.2/plans/0.2_release_checklist.md. For each demo-board task A0-F6, run its
 stated DONE gate (or the closest current equivalent) and record PASS/FAIL
 with one line of evidence. Do the same for each row of the gap table in
 act_one_feature_complete_task_board.md section 1.
@@ -1647,7 +1647,7 @@ avg/p95/max 13.567/19.274/22.658 ms; pull_tabs resolve avg/p95/max
 TASK T7.6 - Fix the table-game resolve-path performance regression.
 
 MEASURED EVIDENCE (2026-07-02): baccarat max hand resolve was 9.693 ms at
-the 0.2 gate (docs/plans/0.2_release_checklist.md) and now measures
+the 0.2 gate (docs/archive/0.2/plans/0.2_release_checklist.md) and now measures
 18.366 ms (tools/run_baccarat_seed_audit.ps1) — ~2x. The regression window
 contains the skill-cheat work (T2.2-T2.5): baccarat edge-sort added ~32
 dictionary-copy calls; roulette/video poker/bar dice received the same
@@ -1967,7 +1967,7 @@ This is a planning/documentation task; no gameplay code.
    - IN (ship blockers): all Epic 9 passes, T7.3 balance gauntlet (its deps
      are all DONE — schedule it immediately), T7.2 visual QA warnings,
      T6.3 layout/touch pass, T7.4 itch pipeline, F-style release checklist
-     update (mirror docs/plans/0.2_release_checklist.md as
+     update (mirror docs/archive/0.2/plans/0.2_release_checklist.md as
      0.3_release_checklist.md with fresh evidence).
    - OUT (parked until 0.3 ships): T6.4-T6.6 music rework, T5.3 profile
      completion, T8.1 seam, T4.2 jazz club, T6.1/T6.2, T7.5.
@@ -2008,7 +2008,7 @@ their status is PARKED(0.3) so they are not picked up by accident.
 | T7.2 Visual QA Optional-Route Warnings Elimination | Required release polish; drive known optional-route warnings to zero or document a non-red exclusion. |
 | T6.3 Full Text/Layout/Touch Collision Pass | Required final layout/touch sweep across Act 1 screens. |
 | T7.4 Itch Publish Pipeline | Required final packaging/publish dry-run after balance, cleanup, and docs truth pass. |
-| 0.3 release checklist update | R10 creates `docs/plans/0.3_release_checklist.md` by mirroring `docs/plans/0.2_release_checklist.md` format with fresh 0.3 gate evidence. |
+| 0.3 release checklist update | R10 creates `docs/archive/0.3/plans/0.3_release_checklist.md` by mirroring `docs/archive/0.2/plans/0.2_release_checklist.md` format with fresh 0.3 gate evidence. |
 
 **OUT - parked until after 0.3 ships:**
 
@@ -2363,7 +2363,7 @@ Docs classification:
 | File | R9 class | Action |
 | --- | --- | --- |
 | `docs/plans/act_one_feature_complete_task_board.md` | ACTIVE | Keep as active board and R9 ledger. |
-| `docs/plans/0.3_release_checklist.md` | ACTIVE | Keep as current 0.3 readiness ledger created by R10. |
+| `docs/archive/0.3/plans/0.3_release_checklist.md` | ACTIVE | Keep as current 0.3 readiness ledger created by R10. |
 | `docs/plans/dead_code_audit_report.md` | ACTIVE | Keep as cleanup/protect-list source. |
 | `docs/plans/grand_casino_endgame_design.md` | ACTIVE | Keep as shipped endgame contract. |
 | `docs/plans/music_listening_pass.md` | ACTIVE | Keep as parked music-context source. |
@@ -2372,7 +2372,7 @@ Docs classification:
 | `docs/plans/pinball_feel_reference.md` | ACTIVE | Keep as active pinball feel reference. |
 | `docs/plans/skill_based_cheating_methods_plan.md` | ACTIVE | Keep as active cheat contract. |
 | `docs/plans/world_map_design.md` | ACTIVE | Keep as active world-map contract. |
-| `docs/plans/0.2_release_checklist.md` | HISTORICAL-KEEP | Keep as 0.2 release evidence. |
+| `docs/archive/0.2/plans/0.2_release_checklist.md` | HISTORICAL-KEEP | Keep as 0.2 release evidence. |
 | `docs/plans/demo_release_task_board.md` | DELETE | Deleted; surviving status truth lives in this board's section 13 ledger. |
 | `docs/plans/pinball_rework_agent_prompts.md` | DELETE | Deleted; T1.1/T1.2/T1.3 evidence copied into this board. |
 | `docs/plans/pinball_rework_progress.md` | DELETE | Deleted; final acceptance copied into T1.1 evidence. |
@@ -2409,7 +2409,7 @@ event cadence/interaction changes, and the performance fixes.
    module layout), runtime architecture table (world_map.gd, new helpers),
    travel/map description, validation command list, Documentation index
    (active docs only per R9's classification).
-2. Create docs/plans/0.3_release_checklist.md mirroring the 0.2 format:
+2. Create docs/archive/0.3/plans/0.3_release_checklist.md mirroring the 0.2 format:
    release identity, included scope (everything landed since 0.2.0),
    validation evidence table (fresh gate runs with real output), export
    readiness, known blockers.
@@ -2429,7 +2429,7 @@ data/; 0.3 checklist has fresh evidence for every gate it lists.
 Evidence 2026-07-03: README truth pass updated implementation status, scripted
 content counts, game cheat-action table, current slot/world-map/runtime
 architecture, validation commands, active docs index, export readiness, and
-known 0.3 blockers. Added `docs/plans/0.3_release_checklist.md` with fresh
+known 0.3 blockers. Added `docs/archive/0.3/plans/0.3_release_checklist.md` with fresh
 0.3 evidence and a not-release-ready decision. Scripted content counts from
 `data/`: environments 10, games 7, items 59, content groups 9, events 33,
 services 12, lenders 5, travel route templates 10, prestige cut,

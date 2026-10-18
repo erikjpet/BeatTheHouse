@@ -1,6 +1,11 @@
 class_name SlotRenderer
 extends RefCounted
 
+# Procedural renderer for slot cabinets, reels, feature boards, meters, controls,
+# and celebrations, with content-keyed caches that do not own gameplay state.
+
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const CatalogScript := preload("res://scripts/games/slots/slot_catalog.gd")
 const DESIGN_SIZE := Vector2(960, 540)
 const PINBALL_AIM_MIN_DEGREES := -60
@@ -189,7 +194,11 @@ func draw(surface, surface_state: Dictionary, definition: Dictionary) -> bool:
 	var nudge_chain_elapsed_msec := int(round(surface.surface_elapsed("slot_nudge_chain") * 1000.0))
 	if nudge_chain_elapsed_msec <= 0 or nudge_chain_elapsed_msec > 900000:
 		nudge_chain_elapsed_msec = int(surface_state.get("slot_nudge_chain_elapsed_msec", 0))
-	var signature: Dictionary = render_signature(surface_state, definition, elapsed_msec, "", false)
+	# The public signature includes the complete visual-audit manifest. Drawing
+	# needs only the fields below; rebuilding pinball geometry, Buffalo audit
+	# counters, nudge diagnostics, and unused reel arrays every frame was pure
+	# allocation on the live renderer path.
+	var signature: Dictionary = _draw_signature(surface_state, elapsed_msec)
 	var pinball_takeover := _pinball_takeover_active(surface_state)
 	var background_texture := _slot_background_texture(skin)
 	var has_background_art := background_texture != null
@@ -215,6 +224,37 @@ func draw(surface, surface_state: Dictionary, definition: Dictionary) -> bool:
 	_draw_controls(surface, surface_state, skin, accent, light, trim)
 	_draw_back_control(surface, accent, light)
 	return true
+
+
+func _draw_signature(surface_state: Dictionary, time_msec: int) -> Dictionary:
+	var active_bonus: Dictionary = _read_dict(surface_state.get("slot_active_bonus", {}))
+	var plan: Dictionary = _read_dict(surface_state.get("slot_animation_plan", {}))
+	var reel_motion: Array = []
+	for entry_value in _read_array(surface_state.get("slot_reel_timeline", [])):
+		reel_motion.append(_reel_motion(_read_dict(entry_value), time_msec))
+	var tier := str(surface_state.get("slot_celebration_tier", plan.get("celebration_tier", "none")))
+	var reveal_ready := _result_reveal_ready(surface_state, time_msec)
+	var win_cells: Array = _read_array(surface_state.get("slot_win_cells", []))
+	var buffalo_board_payload: Dictionary = {}
+	if str(active_bonus.get("family", surface_state.get("slot_type_id", ""))) == "buffalo" \
+			and not active_bonus.is_empty() \
+			and bool(surface_state.get("slot_active_bonus_active", false)):
+		buffalo_board_payload = _buffalo_main_board_payload(surface_state, time_msec)
+	return {
+		"time_bucket": posmod(time_msec / 180, 20),
+		"reel_motion": reel_motion,
+		"result_reveal_ready": reveal_ready,
+		"gold_tease_active": int(plan.get("tease_coin_count", 0)) > 0,
+		"win_line_drawn": win_cells.size() >= 2 and str(surface_state.get("slot_win_kind", "none")) == "line",
+		"buffalo_main_board_payload": buffalo_board_payload,
+		"tease_overlay_visible": reveal_ready and (bool(plan.get("tease_active", false)) or str(surface_state.get("slot_classification", "")) == "near_miss"),
+		"result_strip_payload": _result_strip_payload(surface_state, time_msec),
+		"celebration_tier": tier,
+		"celebration_overlay_visible": reveal_ready and tier != "none" and tier != "tease",
+		"particle_count": _particle_count_for_tier(tier, time_msec, plan),
+		"color_cycle_active": _color_cycle_active(tier, time_msec, plan),
+		"color_cycle_hue": _color_cycle_hue(tier, time_msec, plan),
+	}
 
 
 func _slot_background_texture(skin: Dictionary) -> Texture2D:
@@ -557,7 +597,12 @@ func _draw_reels(surface, state: Dictionary, definition: Dictionary, skin: Dicti
 		for point_index in range(maxi(0, points.size() - 1)):
 			surface.draw_line(points[point_index], points[point_index + 1], Color(light.r, light.g, light.b, 0.92), 4)
 			surface.draw_line(points[point_index], points[point_index + 1], Color(accent.r, accent.g, accent.b, 0.48), 8)
-	_draw_buffalo_main_board_overlay(surface, state, definition, rect, reel_count, row_count, gap, cell_w, cell_h, time_msec, accent, light, glass, _read_dict(signature.get("buffalo_main_board_payload", {})))
+	_draw_buffalo_main_board_overlay(FunctionOptions.BuffaloBoardOverlayOptions.from({
+		"surface": surface, "state": state, "definition": definition, "reel_rect": rect,
+		"reel_count": reel_count, "row_count": row_count, "gap": gap, "cell_w": cell_w,
+		"cell_h": cell_h, "time_msec": time_msec, "accent": accent, "light": light,
+		"glass": glass, "payload": _read_dict(signature.get("buffalo_main_board_payload", {})),
+	}))
 	if bool(signature.get("tease_overlay_visible", false)):
 		surface.draw_rect(rect.grow(15), Color(accent.r, accent.g, accent.b, 0.44), false, 4)
 
@@ -698,7 +743,21 @@ func _buffalo_main_board_manifest(surface_state: Dictionary, payload: Dictionary
 	}
 
 
-func _draw_buffalo_main_board_overlay(surface, state: Dictionary, definition: Dictionary, reel_rect: Rect2, reel_count: int, row_count: int, gap: float, cell_w: float, cell_h: float, time_msec: int, accent: Color, light: Color, glass: Color, payload: Dictionary = {}) -> void:
+func _draw_buffalo_main_board_overlay(options: FunctionOptions.BuffaloBoardOverlayOptions) -> void:
+	var surface = options.values.get("surface")
+	var state: Dictionary = options.values.get("state", {})
+	var definition: Dictionary = options.values.get("definition", {})
+	var reel_rect: Rect2 = options.values.get("reel_rect", Rect2())
+	var reel_count := int(options.values.get("reel_count", 0))
+	var row_count := int(options.values.get("row_count", 0))
+	var gap := float(options.values.get("gap", 0.0))
+	var cell_w := float(options.values.get("cell_w", 0.0))
+	var cell_h := float(options.values.get("cell_h", 0.0))
+	var time_msec := int(options.values.get("time_msec", 0))
+	var accent: Color = options.values.get("accent", Color.WHITE)
+	var light: Color = options.values.get("light", Color.WHITE)
+	var glass: Color = options.values.get("glass", Color.WHITE)
+	var payload: Dictionary = options.values.get("payload", {})
 	var active: Dictionary = _read_dict(state.get("slot_active_bonus", {}))
 	if str(active.get("family", state.get("slot_type_id", ""))) != "buffalo":
 		return
@@ -1190,7 +1249,7 @@ func _draw_pinball_playfield(surface, rect: Rect2, state: Dictionary, active: Di
 		positions = _pinball_multiball_fallback_positions(feature_msec)
 	var lit_state: Dictionary = _pinball_lit_state(active)
 	if live_feature_active and int(active.get("active_ball_count", 0)) > 0 and positions.is_empty():
-		var physics: Dictionary = _copy_dict(active.get("physics", {}))
+		var physics: Dictionary = JsonCoerceScript._copy_dict(active.get("physics", {}))
 		positions.append({"ball_index": 0, "position": Vector2(clampf(float(physics.get("ball_x", 0.5)), 0.0, 1.0), clampf(float(physics.get("ball_y", 0.5)), 0.0, 1.0))})
 	surface.draw_rect(play_rect, Color("#08101a"))
 	surface.draw_rect(play_rect, Color(light.r, light.g, light.b, 0.18), false, 2)
@@ -2568,7 +2627,7 @@ func _draw_celebration_overlay(surface, state: Dictionary, skin: Dictionary, sig
 	var particle_count := maxi(0, int(signature.get("particle_count", 0)))
 	var rect := _rect_from_dict(skin.get("reel_window", {})).grow(18)
 	var center := rect.position + rect.size * 0.5
-	var plan: Dictionary = _copy_dict(state.get("slot_animation_plan", {}))
+	var plan: Dictionary = JsonCoerceScript._copy_dict(state.get("slot_animation_plan", {}))
 	var visual_time := int(state.get("slot_visual_time_msec", 0))
 	var shake := _shake_offset(tier, visual_time, plan)
 	var tier_color := trim if tier == "jackpot" else light if tier == "mega" else accent
@@ -2756,18 +2815,6 @@ func _rect_intersection(a: Rect2, b: Rect2) -> Rect2:
 	if right <= left or bottom <= top:
 		return Rect2(Vector2(left, top), Vector2.ZERO)
 	return Rect2(Vector2(left, top), Vector2(right - left, bottom - top))
-
-
-func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
 
 
 func _read_array(value: Variant) -> Array:

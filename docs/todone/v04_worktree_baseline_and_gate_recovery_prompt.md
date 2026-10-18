@@ -13,7 +13,7 @@
   - `powershell -ExecutionPolicy Bypass -File tools\check_godot.ps1 -RequireGodot -TimeoutSec 600` -> PASS, report `D:\Projects\Beat-The-House\.tmp\test_reports\20260707_200018_smoke\summary.json`.
   - Supplemental direct probe: `powershell -ExecutionPolicy Bypass -File tools\foundation_performance_probe.ps1 -RequireGodot` -> initial FAIL on the stale table idle/synthetic contract, then PASS after the runtime/probe fix.
 - Dirty-tree inventory and decisions:
-  - Docs/queue cluster: `docs/plans/0.4_act1_completion_plan.md`, deleted `v04_meta_collection_loadout_prompt.md`, deleted `v04_meta_collection_economy_polish_prompt.md`, and new `v04_meta_home_environment_prompt.md` were committed as intentional queue maintenance in `f968a03`; the new prompt supersedes both deleted prompts.
+  - Docs/queue cluster: `docs/archive/0.4/plans/0.4_act1_completion_plan.md`, deleted `v04_meta_collection_loadout_prompt.md`, deleted `v04_meta_collection_economy_polish_prompt.md`, and new `v04_meta_home_environment_prompt.md` were committed as intentional queue maintenance in `f968a03`; the new prompt supersedes both deleted prompts.
   - Archive-format cluster: `docs/todone/environment_semantic_layout_prompt.md` already had an execution record but used `# Execution Record`; normalized to `## Execution Record` in `f968a03`.
   - Runtime/performance cluster: table games were still requesting continuous full-surface idle redraws; committed the root-cause recovery in `066e479`.
   - No generated cruft, unowned WIP, or completed prompt files remained under `docs/todo/` after this closeout.
@@ -36,7 +36,7 @@ work continues.
 ## Read first
 
 - `README.md`
-- `docs/plans/0.4_act1_completion_plan.md`
+- `docs/archive/0.4/plans/0.4_act1_completion_plan.md`
 - `docs/todo/RULES.md`
 - `docs/todo/QUEUE.md`
 - `docs/todone/RULES.md`

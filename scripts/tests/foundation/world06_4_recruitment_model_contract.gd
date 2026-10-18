@@ -162,10 +162,6 @@ func _environment(node_id: String, scenario_id: String = "") -> Dictionary:
 	return {"id": node_id, "archetype_id": node_id, "world_node_id": node_id, "kind": "casino", "scenario_id": scenario_id, "event_ids": [], "scenario_patron_ids": []}
 
 
-func _job_definition(member_id: String) -> Dictionary:
-	return {"id": "fixture_job", "label": "Fixture", "member_id": member_id, "kind": "package_run", "min_rank": "associate", "payload": {"target_count": 1, "cargo_id": "fixture", "cargo_label": "fixture", "cargo_heat_per_travel": 0}, "expiry_in_actions": 10, "rewards": {"cash": 0, "trust": 1}, "failure": {"trust": -1, "grievance_kind": "job_abandoned", "grievance_weight": 1}}
-
-
 func _recruit_for_fixture(run_state: Variant, member_id: String) -> void:
 	var target := 30
 	run_state.crew_add_trust(member_id, maxi(0, target - run_state.crew_trust(member_id)), "fixture")

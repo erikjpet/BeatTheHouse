@@ -5,14 +5,14 @@ const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
 
 # Central sizing contract for the optional phone/tablet interaction mode.
 # Keep gameplay and desktop presentation independent from these values so the
-# larger-target mode can evolve with the wider 0.5 UI rework.
+# larger-target mode can evolve without changing rules or authored geometry.
 
 const CONTROL_TOUCH_TARGET_HEIGHT := 52.0
 const MAP_NODE_TOUCH_TARGET_SIZE := 60.0
 const SURFACE_TOUCH_HIT_SIZE := Vector2(56.0, 56.0)
 const ENVIRONMENT_OBJECT_HIT_SIZE := Vector2(ArtContractsScript.ENVIRONMENT_OBJECT_HIT_SIZE)
-const ENVIRONMENT_ACTION_HEIGHT := 34.0
-const ENVIRONMENT_INLINE_ACTION_HEIGHT := 34.0
+const ENVIRONMENT_ACTION_HEIGHT := CONTROL_TOUCH_TARGET_HEIGHT
+const ENVIRONMENT_INLINE_ACTION_HEIGHT := CONTROL_TOUCH_TARGET_HEIGHT
 const FONT_SCALE := 1.08
 const CONTROL_SCALE := 1.30
 const SETTINGS_SIDE_MARGIN := 72

@@ -1,13 +1,14 @@
 $ErrorActionPreference = "Stop"
-$root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+. (Join-Path $PSScriptRoot "repository_root.ps1")
+$root = Resolve-BthRepositoryRoot -StartPath $PSScriptRoot
 $tablePath = Join-Path $PSScriptRoot "perf06_budget_table.json"
 $table = Get-Content -LiteralPath $tablePath -Raw | ConvertFrom-Json
 $webText = Get-Content -LiteralPath (Join-Path $PSScriptRoot "web_perf_smoke.ps1") -Raw
 $nativeText = Get-Content -LiteralPath (Join-Path $PSScriptRoot "foundation_performance_probe.gd") -Raw
-$lowEndText = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_low_end_matrix.ps1") -Raw
+$lowEndText = Get-Content -LiteralPath (Join-Path $root "tools/archive/perf06/perf06_low_end_matrix.ps1") -Raw
 $nativeRuntimeText = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_native_runtime_matrix.ps1") -Raw
-$phaseContractText = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_phase_qualification_contract.ps1") -Raw
-$matrixConsumerText = Get-Content -LiteralPath (Join-Path $PSScriptRoot "perf06_matrix_contract.ps1") -Raw
+$phaseContractText = Get-Content -LiteralPath (Join-Path $root "tools/archive/perf06/perf06_phase_qualification_contract.ps1") -Raw
+$matrixConsumerText = Get-Content -LiteralPath (Join-Path $root "tools/archive/perf06/perf06_matrix_contract.ps1") -Raw
 
 if ([string]$table.schema -cne "beat_the_house.perf06_budget_table/v1" -or [int]$table.version -ne 1) {
     throw "Published performance budget table schema/version changed without a contract update."

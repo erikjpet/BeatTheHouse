@@ -1,14 +1,21 @@
 class_name EnvironmentHeader
 extends PanelContainer
 
+# Renders the room title, scenario/weather/time context, and responsive header
+# state from an immutable environment snapshot.
+
 const CONFIG_PATH := "res://data/ui/environment_ui.json"
 const UIArtScript := preload("res://scripts/ui/ui_art.gd")
+const MIN_TEXT_TITLE_SIZE := 14
+const SITUATION_LINE_HEIGHT := VisualStyle.TYPE_CAPTION + VisualStyle.SPACE_2
 
 static var _config_cache: Dictionary = {}
 
 var title_art: TextureRect
 var accessible_title: Label
 var blurb_label: Label
+var situation_slot: Control
+var situation_label: Label
 var goal_label: Label
 var options_row: HBoxContainer
 var current_archetype_id := ""
@@ -20,7 +27,7 @@ func _ready() -> void:
 	_build()
 
 
-func render(environment: Dictionary, goal_text: String) -> void:
+func render(environment: Dictionary, goal_text: String, situation_text: String = "") -> void:
 	if title_art == null:
 		return
 	var archetype_id := str(environment.get("archetype_id", environment.get("kind", ""))).strip_edges()
@@ -36,7 +43,11 @@ func render(environment: Dictionary, goal_text: String) -> void:
 	accessible_title.text = display_name
 	accessible_title.visible = text_title
 	accessible_title.tooltip_text = "%s title plate" % display_name
+	_fit_text_title(display_name)
 	blurb_label.text = str(layer_blurbs.get(layer_id, config.get("blurb", display_name)))
+	var rendered_situation := situation_text.strip_edges()
+	situation_label.text = rendered_situation
+	situation_label.visible = not rendered_situation.is_empty()
 	var rendered_goal := goal_text.strip_edges()
 	if rendered_goal.is_empty():
 		rendered_goal = "Inspect the room and choose an available action."
@@ -54,12 +65,24 @@ func render(environment: Dictionary, goal_text: String) -> void:
 	options_row.add_child(interaction_hint)
 
 
+func _fit_text_title(display_name: String) -> void:
+	var font_size := VisualStyle.TYPE_TITLE
+	var maximum_width := VisualStyle.ENVIRONMENT_TITLE_COMPACT_SIZE.x - float(VisualStyle.SPACE_2 * 2)
+	var font := accessible_title.get_theme_font("font")
+	while font_size > MIN_TEXT_TITLE_SIZE \
+			and font.get_string_size(display_name, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size).x > maximum_width:
+		font_size -= 1
+	FoundationWidgets.set_control_font_size(accessible_title, font_size)
+
+
 func current_snapshot() -> Dictionary:
 	return {
 		"archetype_id": current_archetype_id,
 		"title_texture": title_art.texture.resource_path if title_art != null and title_art.texture != null else "",
 		"accessible_title": accessible_title.text if accessible_title != null else "",
 		"blurb": blurb_label.text if blurb_label != null else "",
+		"situation": situation_label.text if situation_label != null else "",
+		"situation_visible": situation_label != null and situation_label.visible,
 		"goal": "",
 		"option_count": 0,
 		"configured_option_count": options_row.get_child_count() - 1 if options_row != null else 0,
@@ -104,6 +127,20 @@ func _build() -> void:
 	blurb_label.max_lines_visible = 1
 	blurb_label.clip_text = true
 	copy_stack.add_child(blurb_label)
+	# Reserve the scenario subline even when it is empty. Showing scenario text
+	# must not change this header's minimum height or move the room canvas.
+	situation_slot = Control.new()
+	situation_slot.custom_minimum_size = Vector2(VisualStyle.FLEXIBLE_SIZE, SITUATION_LINE_HEIGHT)
+	situation_slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	situation_slot.clip_contents = true
+	copy_stack.add_child(situation_slot)
+	situation_label = FoundationWidgets.muted_label("", VisualStyle.TYPE_CAPTION)
+	situation_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	situation_label.max_lines_visible = 1
+	situation_label.clip_text = true
+	situation_label.visible = false
+	situation_slot.add_child(situation_label)
+	situation_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	goal_label = FoundationWidgets.label("", VisualStyle.TYPE_SMALL)
 	goal_label.autowrap_mode = TextServer.AUTOWRAP_OFF
 	goal_label.clip_text = true

@@ -1,6 +1,8 @@
 class_name WorldMap
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Persistent deterministic travel graph for Act 1 runs.
 
 const VERSION := 3
@@ -115,7 +117,15 @@ func route_for_target(map_data: Dictionary, current_id: String, target_id: Strin
 	# node. A late run can retain several large machine states there, so deep
 	# copying the complete map for every candidate made a refresh scale with all
 	# previously visited rooms. Normalize topology only on this read path.
-	var normalized := normalize_topology(map_data)
+	return route_for_target_prepared(map_data, current_id, target_id, prepare_path_query(map_data, current_id, true))
+
+
+# Builds one route from a shared source-path query. The travel list asks about
+# every visible destination at once; reusing this query avoids normalizing the
+# same map and walking the same graph once per card.
+func route_for_target_prepared(map_data: Dictionary, current_id: String, target_id: String, path_query: Dictionary) -> Dictionary:
+	var normalized_value: Variant = path_query.get("normalized", {})
+	var normalized: Dictionary = normalized_value if typeof(normalized_value) == TYPE_DICTIONARY and not (normalized_value as Dictionary).is_empty() else normalize_topology(map_data)
 	var source_id := current_id.strip_edges()
 	var destination_id := target_id.strip_edges()
 	if source_id.is_empty() or destination_id.is_empty() or source_id == destination_id:
@@ -125,7 +135,7 @@ func route_for_target(map_data: Dictionary, current_id: String, target_id: Strin
 	var source_node := node_by_id(normalized, source_id)
 	var destination_node := node_by_id(normalized, destination_id)
 	var direct_revisit_path := false
-	var path := _path_between_normalized(normalized, source_id, destination_id, true)
+	var path := prepared_path(path_query, destination_id)
 	if path.size() < 2:
 		if source_node.is_empty() or destination_node.is_empty():
 			return {}
@@ -136,7 +146,8 @@ func route_for_target(map_data: Dictionary, current_id: String, target_id: Strin
 		path = [source_id, destination_id]
 		direct_revisit_path = true
 	var route := library.route(destination_id).duplicate(true) if library != null else {}
-	var edge_lookup := _edge_lookup(normalized)
+	var edge_lookup_value: Variant = path_query.get("edges_by_id", {})
+	var edge_lookup: Dictionary = edge_lookup_value if typeof(edge_lookup_value) == TYPE_DICTIONARY else _edge_lookup(normalized)
 	var distance_blocks := _path_distance_blocks_prepared(edge_lookup, path)
 	if direct_revisit_path:
 		var source_position: Dictionary = source_node.get("position", {"x": 0.5, "y": 0.5}) if typeof(source_node.get("position", {})) == TYPE_DICTIONARY else {"x": 0.5, "y": 0.5}
@@ -232,10 +243,10 @@ static func normalize(map_data: Dictionary) -> Dictionary:
 	normalized["start_node_id"] = str(normalized.get("start_node_id", ""))
 	normalized["current_node_id"] = str(normalized.get("current_node_id", normalized.get("start_node_id", "")))
 	normalized["revision"] = maxi(0, int(normalized.get("revision", 0)))
-	normalized["nodes"] = _normalize_nodes(_copy_array(normalized.get("nodes", [])))
-	normalized["edges"] = _normalize_edges(_copy_array(normalized.get("edges", [])))
-	normalized["visited_path"] = _string_array(normalized.get("visited_path", []))
-	return normalized
+	normalized["nodes"] = _normalize_nodes(JsonCoerceScript._copy_array(normalized.get("nodes", [])))
+	normalized["edges"] = _normalize_edges(JsonCoerceScript._copy_array(normalized.get("edges", [])))
+	normalized["visited_path"] = JsonCoerceScript._string_array(normalized.get("visited_path", []))
+	return _enforce_beach_gateway_access(normalized)
 
 
 # Read-only path/map presentation needs node identity and topology, not the
@@ -247,7 +258,7 @@ static func normalize_topology(map_data: Dictionary) -> Dictionary:
 	var edges_value: Variant = map_data.get("edges", [])
 	var nodes: Array = nodes_value as Array if typeof(nodes_value) == TYPE_ARRAY else []
 	var edges: Array = edges_value as Array if typeof(edges_value) == TYPE_ARRAY else []
-	return {
+	var normalized := {
 		"version": maxi(1, int(map_data.get("version", VERSION))),
 		"seed_text": str(map_data.get("seed_text", "")),
 		"start_node_id": str(map_data.get("start_node_id", "")),
@@ -258,8 +269,9 @@ static func normalize_topology(map_data: Dictionary) -> Dictionary:
 		# the topology-only projection has a chance to omit it.
 		"nodes": _normalize_nodes(nodes, false),
 		"edges": _normalize_edges(edges),
-		"visited_path": _string_array(map_data.get("visited_path", [])),
+		"visited_path": JsonCoerceScript._string_array(map_data.get("visited_path", [])),
 	}
+	return _enforce_beach_gateway_access(normalized)
 
 
 static func current_node_id(map_data: Dictionary) -> String:
@@ -324,6 +336,10 @@ static func visible_node_ids(map_data: Dictionary) -> Array:
 		var node_id := str(node.get("id", ""))
 		if not node_id.is_empty() and _node_is_visible(node):
 			result.append(node_id)
+	if current_node_id(map_data) == BEACH_GATEWAY_ID and not result.has(BEACH_ID):
+		var beach_node := node_metadata_by_id(map_data, BEACH_ID)
+		if not beach_node.is_empty() and not bool(beach_node.get("home_lost", false)):
+			result.append(BEACH_ID)
 	return result
 
 
@@ -331,6 +347,8 @@ static func is_node_visible(map_data: Dictionary, node_id: String) -> bool:
 	var node := node_metadata_by_id(map_data, node_id)
 	if node.is_empty():
 		return false
+	if current_node_id(map_data) == BEACH_GATEWAY_ID and node_id.strip_edges() == BEACH_ID:
+		return not bool(node.get("home_lost", false))
 	return _node_is_visible(node)
 
 
@@ -443,11 +461,12 @@ static func path_between(map_data: Dictionary, a: String, b: String, visible_onl
 # The query owns topology-only dictionaries and never retains environment
 # payloads from the source map.
 static func prepare_path_query(map_data: Dictionary, source_node_id: String, visible_only: bool = true) -> Dictionary:
-	var normalized := normalize_topology(map_data)
 	var source_id := source_node_id.strip_edges()
+	var normalized := _enforce_beach_gateway_access(normalize_topology(map_data), source_id)
 	var visible_lookup := _visible_node_lookup(normalized)
 	var previous_by_node_id: Dictionary = {}
 	var query := {
+		"normalized": normalized,
 		"source_node_id": source_id,
 		"visible_only": visible_only,
 		"previous_by_node_id": previous_by_node_id,
@@ -595,6 +614,10 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 	var source_id := node_id.strip_edges()
 	if source_id.is_empty():
 		source_id = current_node_id(normalized)
+	# Callers may project choices for an explicit source before moving the map
+	# cursor there. Apply the same physical dock invariant to that source rather
+	# than relying only on the persisted current_node_id migration.
+	normalized = _enforce_beach_gateway_access(normalized, source_id)
 	var result: Array = []
 	var visible_data := _visible_ids_and_lookup(normalized)
 	var visible_ids: Array = visible_data.get("ids", [])
@@ -606,7 +629,7 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 	var enabled_lookup := _enabled_target_lookup(enabled_target_ids)
 	var node_lookup := _node_lookup(normalized)
 	var edge_lookup := _edge_lookup(normalized)
-	var visited_path := _string_array(normalized.get("visited_path", []))
+	var visited_path := JsonCoerceScript._string_array(normalized.get("visited_path", []))
 	var new_candidates := _travel_candidate_entries_prepared(normalized, source_id, false, enabled_lookup, visible_ids, visible_lookup, node_lookup, edge_lookup, visited_path)
 	var old_candidates := _travel_candidate_entries_prepared(normalized, source_id, true, enabled_lookup, visible_ids, visible_lookup, node_lookup, edge_lookup, visited_path)
 	var enabled_new_candidates := _filter_candidates_by_enabled(new_candidates, true)
@@ -624,6 +647,8 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 		if not target_id.is_empty() and not result.has(target_id):
 			result.append(target_id)
 	for candidate_value in enabled_old_candidates:
+		if result.size() >= total_limit:
+			break
 		var candidate: Dictionary = candidate_value
 		var target_id := str(candidate.get("id", ""))
 		if target_id.is_empty() or result.has(target_id):
@@ -643,25 +668,40 @@ static func travel_target_ids(map_data: Dictionary, node_id: String = "", max_ne
 		var target_id := str(candidate.get("id", ""))
 		if not target_id.is_empty() and not result.has(target_id):
 			result.append(target_id)
-	var priority_candidates := enabled_new_candidates + enabled_old_candidates
-	if source_id == BEACH_GATEWAY_ID:
-		result = _ensure_visible_neighbor_target(result, source_id, BEACH_ID, total_limit, visible_lookup, edge_lookup, node_lookup)
-	elif source_id == BEACH_ID:
+	var enabled_priority_candidates := enabled_new_candidates + enabled_old_candidates
+	var all_priority_candidates := enabled_priority_candidates + fallback_new_candidates + fallback_old_candidates
+	if source_id == BEACH_ID:
 		result = _ensure_visible_neighbor_target(result, source_id, BEACH_GATEWAY_ID, total_limit, visible_lookup, edge_lookup, node_lookup)
 	# Once a Tier-2 casino has been revealed and passes its route gates, it must
 	# survive the small travel-card cap. Otherwise cheaper familiar stops can
 	# crowd the newly earned progression route out of the actual player UI.
-	var tier_two_priority_id := _first_priority_node_id(priority_candidates, node_lookup, TIER_TWO_CASINO_IDS)
+	var tier_two_priority_id := _first_priority_node_id(enabled_priority_candidates, node_lookup, TIER_TWO_CASINO_IDS)
 	# An explicit event lead is an equally strong player promise. In particular,
 	# Parking Lot Tip unlocks The Punchline from across town; if ordinary nearby
 	# stops and a newly revealed Tier-2 casino consume all three cards, the player
 	# is forced through hours of incidental travel and can reach the venue only
 	# after it closes. Keep one event-unlocked destination on the visible list.
-	var event_priority_id := _first_event_unlocked_priority_node_id(priority_candidates, node_lookup)
+	# An event promise remains useful when the route is temporarily disabled. In
+	# particular, accepting the Grand invitation below its fare must show the
+	# Grand card and its affordability reason instead of silently evicting it.
+	var event_priority_id := _first_event_unlocked_priority_node_id(all_priority_candidates, node_lookup)
+	var promised_disabled_priority_ids: Array = [event_priority_id]
+	var grand_priority_node: Dictionary = node_lookup.get(GRAND_CASINO_ID, {})
+	if bool(grand_priority_node.get("unlocked", false)) \
+			and str(grand_priority_node.get("discovery_source", "")) == DISCOVERY_SOURCE_EVENT \
+			and not promised_disabled_priority_ids.has(GRAND_CASINO_ID):
+		promised_disabled_priority_ids.append(GRAND_CASINO_ID)
 	# Preserve the invited Grand Casino at the same time when both progression
-	# targets are live; independently replacing the last card makes priority
-	# destinations evict one another under the three-card cap.
-	result = _ensure_priority_targets(result, priority_candidates, [GRAND_CASINO_ID, event_priority_id, tier_two_priority_id], total_limit)
+	# targets are live. Grand remains an explicit highest-priority promise even
+	# when another event-unlocked route scores first; only actually event-unlocked
+	# nodes may bypass a temporary route blocker such as insufficient fare.
+	result = _ensure_priority_targets(result, all_priority_candidates, [GRAND_CASINO_ID, event_priority_id, tier_two_priority_id], total_limit, promised_disabled_priority_ids)
+	# The physical dock-to-Beach exit is mandatory, but remains inside the normal
+	# travel-card cap. Apply it after generic priority promotion so a later
+	# replacement cannot evict it; when full, the last (lowest-ranked) ordinary
+	# card yields to the local connector.
+	if source_id == BEACH_GATEWAY_ID and total_limit > 0:
+		result = _ensure_visible_neighbor_target(result, source_id, BEACH_ID, total_limit, visible_lookup, edge_lookup, node_lookup)
 	return result
 
 
@@ -682,6 +722,35 @@ static func store_environment(map_data: Dictionary, node_id: String, environment
 		break
 	normalized["nodes"] = nodes
 	return _bump_revision(normalized)
+
+
+# RunState owns an already-normalized map and passes a detached persistence
+# snapshot here. Copy only the containers that change instead of normalizing and
+# deep-copying every other generated room in the map on each local interaction.
+static func store_runtime_environment(map_data: Dictionary, node_id: String, environment_data: Dictionary) -> Dictionary:
+	var target_id := node_id.strip_edges()
+	if map_data.is_empty() or target_id.is_empty() or environment_data.is_empty():
+		return map_data
+	var nodes_value: Variant = map_data.get("nodes", [])
+	if typeof(nodes_value) != TYPE_ARRAY:
+		return map_data
+	var nodes: Array = (nodes_value as Array).duplicate(false)
+	var target_index := -1
+	for index in range(nodes.size()):
+		if typeof(nodes[index]) == TYPE_DICTIONARY and str((nodes[index] as Dictionary).get("id", "")) == target_id:
+			target_index = index
+			break
+	if target_index < 0:
+		return map_data
+	var stored_map := map_data.duplicate(false)
+	var target_node := (nodes[target_index] as Dictionary).duplicate(false)
+	# The caller deliberately transfers this already-detached snapshot. Retaining
+	# it avoids a second full room clone while keeping live environment mutations
+	# isolated from the stored node.
+	target_node["environment"] = environment_data
+	nodes[target_index] = target_node
+	stored_map["nodes"] = nodes
+	return _bump_revision(stored_map)
 
 
 static func enter_node(map_data: Dictionary, node_id: String, environment_data: Dictionary = {}) -> Dictionary:
@@ -718,11 +787,11 @@ static func enter_node(map_data: Dictionary, node_id: String, environment_data: 
 		node["discovered_by_travel"] = true
 		nodes[index] = node
 	normalized["nodes"] = nodes
-	var path: Array = _string_array(normalized.get("visited_path", []))
+	var path: Array = JsonCoerceScript._string_array(normalized.get("visited_path", []))
 	if path.is_empty() or str(path[path.size() - 1]) != target_id:
 		path.append(target_id)
 	normalized["visited_path"] = path
-	return _bump_revision(normalized)
+	return _bump_revision(_enforce_beach_gateway_access(normalized, target_id))
 
 
 static func mark_scouted(map_data: Dictionary, node_id: String) -> Dictionary:
@@ -771,7 +840,7 @@ static func unlock_nodes(map_data: Dictionary, node_ids: Array, source: String =
 	if node_ids.is_empty():
 		return normalize(map_data)
 	var normalized := normalize(map_data)
-	var unlock_ids := _string_array(node_ids)
+	var unlock_ids := JsonCoerceScript._string_array(node_ids)
 	var clean_source := source.strip_edges().to_lower()
 	if clean_source.is_empty():
 		clean_source = DISCOVERY_SOURCE_EVENT
@@ -796,6 +865,70 @@ static func unlock_nodes(map_data: Dictionary, node_ids: Array, source: String =
 	return _bump_revision(normalized)
 
 
+# Runtime event rewards operate on an already-normalized authoritative map.
+# Copy only the map envelope, node array, and nodes that actually change so a
+# route reveal does not duplicate every generated environment stored at other
+# world-map nodes. Shop invalidation is folded into the same pass; the older
+# unlock_nodes() API remains the owning/normalizing boundary for external data.
+static func unlock_runtime_nodes(
+	map_data: Dictionary,
+	node_ids: Array,
+	source: String = DISCOVERY_SOURCE_EVENT,
+	refresh_shop_environments: bool = true
+) -> Dictionary:
+	if map_data.is_empty() or node_ids.is_empty():
+		return map_data
+	var unlock_ids := JsonCoerceScript._string_array(node_ids)
+	if unlock_ids.is_empty():
+		return map_data
+	var unlock_lookup: Dictionary = {}
+	for node_id_value in unlock_ids:
+		unlock_lookup[str(node_id_value)] = true
+	var nodes_value: Variant = map_data.get("nodes", [])
+	if typeof(nodes_value) != TYPE_ARRAY:
+		return map_data
+	var source_nodes := nodes_value as Array
+	var nodes := source_nodes.duplicate(false)
+	var clean_source := source.strip_edges().to_lower()
+	if clean_source.is_empty():
+		clean_source = DISCOVERY_SOURCE_EVENT
+	var changed := false
+	for index in range(source_nodes.size()):
+		if typeof(source_nodes[index]) != TYPE_DICTIONARY:
+			continue
+		var source_node := source_nodes[index] as Dictionary
+		if not unlock_lookup.has(str(source_node.get("id", ""))):
+			continue
+		var node := source_node.duplicate(false)
+		if str(node.get("state", STATE_HIDDEN)) != STATE_VISITED and str(node.get("state", STATE_HIDDEN)) != STATE_REVEALED:
+			node["state"] = STATE_REVEALED
+			changed = true
+		if not bool(node.get("seen", false)):
+			node["seen"] = true
+			changed = true
+		if clean_source == DISCOVERY_SOURCE_SPAWN:
+			if not bool(node.get("discovered_at_spawn", false)):
+				node["discovered_at_spawn"] = true
+				changed = true
+		else:
+			if not bool(node.get("unlocked", false)):
+				node["unlocked"] = true
+				changed = true
+		if str(node.get("discovery_source", "")) != clean_source:
+			node["discovery_source"] = clean_source
+			changed = true
+		if refresh_shop_environments and str(node.get("kind", "")).strip_edges().to_lower() == "shop" \
+				and typeof(node.get("environment", {})) == TYPE_DICTIONARY and not (node.get("environment", {}) as Dictionary).is_empty():
+			node["environment"] = {}
+			changed = true
+		nodes[index] = node
+	if not changed:
+		return map_data
+	var result := map_data.duplicate(false)
+	result["nodes"] = nodes
+	return _bump_revision(result)
+
+
 # Makes hidden nodes eligible for the normal neighbor-discovery pass without
 # revealing or directly unlocking them. This is distinct from event unlocks:
 # the player must still reach a connected location before the node appears.
@@ -803,7 +936,7 @@ static func enable_node_spawns(map_data: Dictionary, node_ids: Array) -> Diction
 	if node_ids.is_empty():
 		return normalize(map_data)
 	var normalized := normalize(map_data)
-	var spawn_ids := _string_array(node_ids)
+	var spawn_ids := JsonCoerceScript._string_array(node_ids)
 	var nodes: Array = normalized.get("nodes", [])
 	var changed := false
 	for index in range(nodes.size()):
@@ -826,8 +959,8 @@ static func enable_node_spawns(map_data: Dictionary, node_ids: Array) -> Diction
 # gates without changing the current node, visit path, or stored environments.
 static func discover_spawn_open_neighbors(map_data: Dictionary, source_node_ids: Array, target_node_ids: Array) -> Dictionary:
 	var normalized := normalize(map_data)
-	var source_ids := _string_array(source_node_ids)
-	var target_ids := _string_array(target_node_ids)
+	var source_ids := JsonCoerceScript._string_array(source_node_ids)
+	var target_ids := JsonCoerceScript._string_array(target_node_ids)
 	if source_ids.is_empty() or target_ids.is_empty():
 		return normalized
 	var nodes: Array = normalized.get("nodes", [])
@@ -859,29 +992,6 @@ static func discover_spawn_open_neighbors(map_data: Dictionary, source_node_ids:
 		return normalized
 	normalized["nodes"] = nodes
 	return _bump_revision(normalized)
-
-
-static func refresh_shop_node_environments(map_data: Dictionary, node_ids: Array) -> Dictionary:
-	if node_ids.is_empty():
-		return normalize(map_data)
-	var normalized := normalize(map_data)
-	var refresh_ids := _string_array(node_ids)
-	var nodes: Array = normalized.get("nodes", [])
-	for index in range(nodes.size()):
-		if typeof(nodes[index]) != TYPE_DICTIONARY:
-			continue
-		var node: Dictionary = nodes[index]
-		var node_id := str(node.get("id", ""))
-		if not refresh_ids.has(node_id):
-			continue
-		if str(node.get("kind", "")).strip_edges().to_lower() != "shop":
-			continue
-		node["environment"] = {}
-		nodes[index] = node
-	normalized["nodes"] = nodes
-	return _bump_revision(normalized)
-
-
 static func mark_home_lost(map_data: Dictionary, node_id: String) -> Dictionary:
 	var target_id := node_id.strip_edges()
 	if target_id.is_empty():
@@ -942,7 +1052,7 @@ static func snapshot(map_data: Dictionary, selected_id: String = "") -> Dictiona
 		"visible_node_ids": visible_ids,
 		"nodes": visible_nodes,
 		"edges": visible_edges,
-		"visited_path": _string_array(normalized.get("visited_path", [])),
+		"visited_path": JsonCoerceScript._string_array(normalized.get("visited_path", [])),
 		"background_path": MAP_BACKGROUND_PATH,
 	}
 
@@ -1095,7 +1205,7 @@ func _build_edges(ids: Array, archetypes_by_id: Dictionary, positions: Dictionar
 	for source_id_value in ids:
 		var source_id := str(source_id_value)
 		var source: Dictionary = archetypes_by_id.get(source_id, {})
-		var authored_targets := _ranked_target_ids(source_id, _unique_strings(_copy_array(source.get("next_archetypes", [])), _copy_array(source.get("travel_hooks", []))), archetypes_by_id, positions)
+		var authored_targets := _ranked_target_ids(source_id, _unique_strings(JsonCoerceScript._copy_array(source.get("next_archetypes", [])), JsonCoerceScript._copy_array(source.get("travel_hooks", []))), archetypes_by_id, positions)
 		for target_id_value in authored_targets:
 			var target_id := str(target_id_value)
 			if not archetypes_by_id.has(target_id):
@@ -1284,14 +1394,6 @@ func _position_distance_score(a: String, b: String, positions: Dictionary) -> fl
 	return Vector2(float(pa.get("x", 0.5)), float(pa.get("y", 0.5))).distance_to(Vector2(float(pb.get("x", 0.5)), float(pb.get("y", 0.5))))
 
 
-func _sort_ids_by_x(a: Variant, b: Variant, positions: Dictionary) -> bool:
-	var pa: Dictionary = positions.get(str(a), {"x": 0.5, "y": 0.5})
-	var pb: Dictionary = positions.get(str(b), {"x": 0.5, "y": 0.5})
-	if float(pa.get("x", 0.5)) == float(pb.get("x", 0.5)):
-		return str(a) < str(b)
-	return float(pa.get("x", 0.5)) < float(pb.get("x", 0.5))
-
-
 func _sort_score_entry(a: Variant, b: Variant) -> bool:
 	var entry_a: Dictionary = a
 	var entry_b: Dictionary = b
@@ -1380,7 +1482,7 @@ func _node_label(archetype: Dictionary) -> String:
 	var display_name := str(archetype.get("display_name", "")).strip_edges()
 	if not display_name.is_empty():
 		return display_name
-	var nouns := _string_array(archetype.get("name_nouns", []))
+	var nouns := JsonCoerceScript._string_array(archetype.get("name_nouns", []))
 	if not nouns.is_empty():
 		return str(nouns[0])
 	return str(archetype.get("id", "Unknown")).replace("_", " ").capitalize()
@@ -1474,8 +1576,8 @@ func _archetype_has_games_for_discovery(archetype: Dictionary) -> bool:
 
 
 func _archetype_game_capacity(archetype: Dictionary) -> int:
-	var game_ids := _string_array(archetype.get("game_pool", []))
-	var required_ids := _string_array(archetype.get("required_game_ids", []))
+	var game_ids := JsonCoerceScript._string_array(archetype.get("game_pool", []))
+	var required_ids := JsonCoerceScript._string_array(archetype.get("required_game_ids", []))
 	for required_id in required_ids:
 		if not game_ids.has(str(required_id)):
 			game_ids.append(str(required_id))
@@ -1516,7 +1618,7 @@ func _route_is_spawn_open(archetype_id: String) -> bool:
 	var route := library.route(archetype_id)
 	if route.is_empty():
 		return true
-	return _copy_dict(route.get("requires_flags", {})).is_empty() and maxi(0, int(route.get("requires_travel_count_min", 0))) == 0 and not bool(route.get("hide_until_travel_count_met", false)) and _copy_dict(route.get("availability_window", {})).is_empty()
+	return JsonCoerceScript._copy_dict(route.get("requires_flags", {})).is_empty() and maxi(0, int(route.get("requires_travel_count_min", 0))) == 0 and not bool(route.get("hide_until_travel_count_met", false)) and JsonCoerceScript._copy_dict(route.get("availability_window", {})).is_empty()
 
 
 func _edge_neighbor_ids(edges: Array, source_id: String) -> Array:
@@ -1554,7 +1656,7 @@ static func _normalize_nodes(nodes: Array, include_environment: bool = true) -> 
 		var id := str(source.get("id", source.get("archetype_id", ""))).strip_edges()
 		if id.is_empty():
 			continue
-		var position := _copy_dict(source.get("position", {}))
+		var position := JsonCoerceScript._copy_dict(source.get("position", {}))
 		var discovery_source := str(source.get("discovery_source", source.get("unlock_source", ""))).strip_edges().to_lower()
 		var discovered_at_spawn := bool(source.get("discovered_at_spawn", false))
 		var unlocked := bool(source.get("unlocked", false))
@@ -1584,11 +1686,11 @@ static func _normalize_nodes(nodes: Array, include_environment: bool = true) -> 
 			"icon_path": str(source.get("icon_path", _map_icon_path(id))),
 			"flavor": str(source.get("flavor", "")),
 			"scouted": bool(source.get("scouted", false)),
-			"heard": _copy_dict(source.get("heard", {})),
+			"heard": JsonCoerceScript._copy_dict(source.get("heard", {})),
 			"home_lost": bool(source.get("home_lost", false)),
 		}
 		if include_environment:
-			normalized_node["environment"] = _copy_dict(source.get("environment", {}))
+			normalized_node["environment"] = JsonCoerceScript._copy_dict(source.get("environment", {}))
 		result.append(normalized_node)
 	return result
 
@@ -1627,6 +1729,44 @@ static func _normalize_edges(edges: Array) -> Array:
 	return result
 
 
+static func _enforce_beach_gateway_access(map_data: Dictionary, source_id: String = "") -> Dictionary:
+	var nodes_value: Variant = map_data.get("nodes", [])
+	if typeof(nodes_value) != TYPE_ARRAY:
+		return map_data
+	var nodes: Array = nodes_value
+	var beach_index := -1
+	var has_gateway := false
+	for index in range(nodes.size()):
+		if typeof(nodes[index]) != TYPE_DICTIONARY:
+			continue
+		var node_id := str((nodes[index] as Dictionary).get("id", ""))
+		if node_id == BEACH_ID:
+			beach_index = index
+		elif node_id == BEACH_GATEWAY_ID:
+			has_gateway = true
+	if beach_index < 0 or not has_gateway:
+		return map_data
+	# A continued run can carry the Beach as hidden even while the player is on
+	# the boat. Repair that old discovery record at the shared normalization seam
+	# used by both save restoration and the live read-only UI projection.
+	var effective_source_id := source_id.strip_edges()
+	if effective_source_id.is_empty():
+		effective_source_id = current_node_id(map_data)
+	if effective_source_id == BEACH_GATEWAY_ID:
+		var beach_node: Dictionary = nodes[beach_index]
+		if str(beach_node.get("state", STATE_HIDDEN)) != STATE_VISITED:
+			beach_node["state"] = STATE_REVEALED
+		beach_node["seen"] = true
+		beach_node["unlocked"] = true
+		beach_node["route_spawn_open"] = true
+		beach_node["discovered_by_travel"] = true
+		if str(beach_node.get("discovery_source", "")).strip_edges().is_empty():
+			beach_node["discovery_source"] = DISCOVERY_SOURCE_TRAVEL
+		nodes[beach_index] = beach_node
+		map_data["nodes"] = nodes
+	return map_data
+
+
 static func _normalized_state(state: String) -> String:
 	var normalized := state.strip_edges().to_lower()
 	if [STATE_HIDDEN, STATE_REVEALED, STATE_VISITED].has(normalized):
@@ -1654,7 +1794,7 @@ static func _snapshot_node(node: Dictionary) -> Dictionary:
 		"kind": str(node.get("kind", "")),
 		"tier": int(node.get("tier", 1)),
 		"game_capacity": int(node.get("game_capacity", 0)),
-		"position": _copy_dict(node.get("position", {})),
+		"position": JsonCoerceScript._copy_dict(node.get("position", {})),
 		"state": str(node.get("state", STATE_HIDDEN)),
 		"seen": bool(node.get("seen", false)),
 		"discovered_at_spawn": bool(node.get("discovered_at_spawn", false)),
@@ -1662,7 +1802,7 @@ static func _snapshot_node(node: Dictionary) -> Dictionary:
 		"discovery_source": str(node.get("discovery_source", "")),
 		"route_spawn_open": bool(node.get("route_spawn_open", true)),
 		"scouted": bool(node.get("scouted", false)),
-		"heard": _copy_dict(node.get("heard", {})),
+		"heard": JsonCoerceScript._copy_dict(node.get("heard", {})),
 		"icon_path": str(node.get("icon_path", _map_icon_path(str(node.get("archetype_id", node.get("id", "")))))),
 		"flavor": str(node.get("flavor", "")),
 		"home_lost": bool(node.get("home_lost", false)),
@@ -1671,7 +1811,7 @@ static func _snapshot_node(node: Dictionary) -> Dictionary:
 
 static func _enabled_target_lookup(enabled_target_ids: Array) -> Dictionary:
 	var result: Dictionary = {}
-	for id_value in _string_array(enabled_target_ids):
+	for id_value in JsonCoerceScript._string_array(enabled_target_ids):
 		result[str(id_value)] = true
 	return result
 
@@ -1693,28 +1833,81 @@ static func _filter_candidates_by_enabled(candidates: Array, enabled: bool) -> A
 	return result
 
 
-static func _ensure_priority_targets(result: Array, candidates: Array, target_ids: Array, total_limit: int) -> Array:
+static func _ensure_priority_targets(result: Array, candidates: Array, target_ids: Array, total_limit: int, allowed_disabled_target_ids: Array = []) -> Array:
 	var normalized_result := result.duplicate(true)
 	if total_limit <= 0:
 		return normalized_result
-	var eligible_ids: Array = []
+	var eligible_candidate_ids: Array = []
+	var visited_ids: Array = []
 	for candidate_value in candidates:
 		if typeof(candidate_value) != TYPE_DICTIONARY:
 			continue
 		var candidate: Dictionary = candidate_value
 		var candidate_id := str(candidate.get("id", ""))
-		if target_ids.has(candidate_id) and not candidate_id.is_empty() and bool(candidate.get("enabled_hint", true)) and not eligible_ids.has(candidate_id):
-			eligible_ids.append(candidate_id)
-	for target_id in eligible_ids:
+		if bool(candidate.get("visited", false)) and not candidate_id.is_empty() and not visited_ids.has(candidate_id):
+			visited_ids.append(candidate_id)
+		var enabled_or_promised := bool(candidate.get("enabled_hint", true)) or allowed_disabled_target_ids.has(candidate_id)
+		if target_ids.has(candidate_id) and not candidate_id.is_empty() and enabled_or_promised and not eligible_candidate_ids.has(candidate_id):
+			eligible_candidate_ids.append(candidate_id)
+	# The caller's order is the progression contract. Candidate score order may
+	# put a lower-priority revealed casino ahead of an event-promised destination,
+	# especially when every other visible card is a protected revisit.
+	var eligible_ids: Array = []
+	for target_id_value in target_ids:
+		var target_id := str(target_id_value)
+		if eligible_candidate_ids.has(target_id) and not eligible_ids.has(target_id):
+			eligible_ids.append(target_id)
+	for priority_index in range(eligible_ids.size()):
+		var target_id := str(eligible_ids[priority_index])
 		if normalized_result.has(target_id):
 			continue
 		if normalized_result.size() < total_limit:
 			normalized_result.append(target_id)
 			continue
+		var replacement_index := -1
 		for index in range(normalized_result.size() - 1, -1, -1):
-			if not eligible_ids.has(str(normalized_result[index])):
-				normalized_result[index] = target_id
+			var existing_id := str(normalized_result[index])
+			# Revisit routes are intentionally additive to the new-destination cap.
+			# A progression priority must replace another new candidate, never erase
+			# a known way back to a previously visited stop.
+			if visited_ids.has(existing_id):
+				continue
+			if not eligible_ids.has(existing_id):
+				replacement_index = index
 				break
+		# Keep every declared priority when a non-priority card can move. Only a
+		# lower-priority new card may yield when revisits consume every other slot.
+		if replacement_index < 0:
+			for index in range(normalized_result.size() - 1, -1, -1):
+				var existing_id := str(normalized_result[index])
+				if visited_ids.has(existing_id):
+					continue
+				var existing_priority_index := eligible_ids.find(existing_id)
+				if existing_priority_index > priority_index:
+					replacement_index = index
+					break
+		# A disabled event-promised destination still needs a visible card with its
+		# blocker. If every capped slot is a revisit, one lowest-ranked ordinary
+		# revisit yields only when no stronger promise is already represented; lower
+		# promises cannot drain the familiar-route surface. Already-promoted
+		# priorities stay intact.
+		var promised_priority_visible := false
+		for promised_id_value in allowed_disabled_target_ids:
+			var promised_id := str(promised_id_value)
+			if not promised_id.is_empty() and normalized_result.has(promised_id):
+				promised_priority_visible = true
+				break
+		if replacement_index < 0 \
+				and not promised_priority_visible \
+				and allowed_disabled_target_ids.has(target_id):
+			for index in range(normalized_result.size() - 1, -1, -1):
+				var existing_id := str(normalized_result[index])
+				if not visited_ids.has(existing_id) or eligible_ids.has(existing_id):
+					continue
+				replacement_index = index
+				break
+		if replacement_index >= 0:
+			normalized_result[replacement_index] = target_id
 	return normalized_result
 
 
@@ -1739,8 +1932,6 @@ static func _first_event_unlocked_priority_node_id(candidates: Array, node_looku
 		if typeof(candidate_value) != TYPE_DICTIONARY:
 			continue
 		var candidate: Dictionary = candidate_value
-		if not bool(candidate.get("enabled_hint", true)):
-			continue
 		var candidate_id := str(candidate.get("id", ""))
 		var node: Dictionary = node_lookup.get(candidate_id, {})
 		if bool(node.get("unlocked", false)) and str(node.get("discovery_source", "")) == DISCOVERY_SOURCE_EVENT:
@@ -1764,18 +1955,6 @@ static func _ensure_visible_neighbor_target(result: Array, source_id: String, ta
 	elif not normalized_result.is_empty():
 		normalized_result[normalized_result.size() - 1] = target_id
 	return normalized_result
-
-
-static func _travel_candidate_entries(map_data: Dictionary, source_id: String, visited_only: bool, enabled_lookup: Dictionary = {}) -> Array:
-	var visible_data := _visible_ids_and_lookup(map_data)
-	var visible_ids: Array = visible_data.get("ids", [])
-	var visible_lookup: Dictionary = visible_data.get("lookup", {})
-	var node_lookup := _node_lookup(map_data)
-	var edge_lookup := _edge_lookup(map_data)
-	var visited_path := _string_array(map_data.get("visited_path", []))
-	return _travel_candidate_entries_prepared(map_data, source_id, visited_only, enabled_lookup, visible_ids, visible_lookup, node_lookup, edge_lookup, visited_path)
-
-
 static func _travel_candidate_entries_prepared(map_data: Dictionary, source_id: String, visited_only: bool, enabled_lookup: Dictionary, visible_ids: Array, visible_lookup: Dictionary, node_lookup: Dictionary, edge_lookup: Dictionary, visited_path: Array) -> Array:
 	var entries: Array = []
 	for target_id_value in visible_ids:
@@ -1837,8 +2016,10 @@ static func _travel_candidate_entries_prepared(map_data: Dictionary, source_id: 
 		var initial_variance_rank := absi(hash("%s|%s|%s" % [str(map_data.get("seed_text", "")), source_id, target_id]))
 		if target_id == JAZZ_CLUB_ID:
 			# Preserve the club's uncommon evening-start appearance while the
-			# larger daytime shop pool gains the Pawn Shop.
-			initial_variance_rank = int(float(initial_variance_rank) * 0.75)
+			# larger daytime shop pool gains the Pawn Shop. The Pawn Shop is still
+			# open at dusk, so the club needs this head start to keep its earlier
+			# rate of roughly one evening start in five.
+			initial_variance_rank = int(float(initial_variance_rank) * 0.6)
 		entries.append({
 			"id": target_id,
 			"kind": str(node.get("kind", "")).strip_edges().to_lower(),
@@ -1935,58 +2116,6 @@ static func _reconstruct_path(previous_by_id: Dictionary, source_id: String, tar
 	if path.is_empty() or str(path[0]) != source_id:
 		return []
 	return path
-
-
-static func _path_distance_blocks(map_data: Dictionary, path: Array) -> int:
-	var blocks := 0
-	for edge in _path_edges(map_data, path):
-		var edge_data: Dictionary = edge
-		blocks += maxi(1, int(edge_data.get("distance_blocks", 1)))
-	return maxi(1, blocks)
-
-
-static func _path_base_cost(map_data: Dictionary, path: Array) -> int:
-	var total := 0
-	for edge in _path_edges(map_data, path):
-		var edge_data: Dictionary = edge
-		total += maxi(0, int(edge_data.get("base_cost", edge_data.get("cost", 0))))
-	return total
-
-
-static func _path_cost(map_data: Dictionary, path: Array) -> int:
-	var total := 0
-	for edge in _path_edges(map_data, path):
-		var edge_data: Dictionary = edge
-		total += maxi(0, int(edge_data.get("cost", edge_data.get("base_cost", 0))))
-	return total
-
-
-static func _path_risk_decay(map_data: Dictionary, path: Array, band: String) -> int:
-	var risk_decay := _risk_decay_for_band(band)
-	for edge in _path_edges(map_data, path):
-		var edge_data: Dictionary = edge
-		risk_decay = maxi(risk_decay, int(edge_data.get("risk_decay", 0)))
-	return clampi(risk_decay, 0, 100)
-
-
-static func _route_edge_id(map_data: Dictionary, path: Array) -> String:
-	if path.size() == 2:
-		var direct_edge := edge_between(map_data, str(path[0]), str(path[1]))
-		if not direct_edge.is_empty():
-			return str(direct_edge.get("id", _edge_id(str(path[0]), str(path[1]))))
-	return "path:%s" % "->".join(path)
-
-
-static func _path_edges(map_data: Dictionary, path: Array) -> Array:
-	var edges: Array = []
-	for index in range(path.size() - 1):
-		var edge := edge_between(map_data, str(path[index]), str(path[index + 1]))
-		if edge.is_empty():
-			return []
-		edges.append(edge)
-	return edges
-
-
 static func _path_distance_blocks_prepared(edge_lookup: Dictionary, path: Array) -> int:
 	var blocks := 0
 	for index in range(path.size() - 1):
@@ -2183,26 +2312,3 @@ static func _unique_strings(a: Array, b: Array = []) -> Array:
 			if not text.is_empty() and not result.has(text):
 				result.append(text)
 	return result
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		var text := str(entry).strip_edges()
-		if not text.is_empty():
-			result.append(text)
-	return result
-
-
-static func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
-static func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)

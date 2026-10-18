@@ -1,6 +1,11 @@
 class_name TownNetwork
 extends RefCounted
 
+# Coordinates the generated WorldMap with town schedules and seeded scenario
+# assignment, including detached travel previews and snapshot/restore.
+
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 const RUMORS_PATH := "res://data/town/rumors.json"
 const ITINERARIES_PATH := "res://data/town/itineraries.json"
 const REPUTATION_PATH := "res://data/town/reputation.json"
@@ -9,8 +14,6 @@ const SCHEMA_VERSION := 1
 const DEFAULT_HORIZON := 240
 const RUMOR_CLASS_SCENARIO := "scenario"
 const RUMOR_CLASS_CONDITION := "town_condition"
-const RUMOR_CLASS_PUSHER := "pusher_pile"
-const RUMOR_CLASS_NUMBERS := "numbers_whisper"
 const RUMOR_CLASS_SWEEP := "sweep_sighting"
 
 static var _rumor_data_cache: Dictionary = {}
@@ -54,13 +57,13 @@ func restore(source: Dictionary, p_seed_value: int) -> bool:
 	seed_value = maxi(1, int(source.get("seed_value", p_seed_value)))
 	action_index = maxi(0, int(source.get("action_index", 0)))
 	node_metadata = _dictionary(source.get("node_metadata", {})).duplicate(true)
-	edges = _dictionary_array(source.get("edges", []))
+	edges = JsonCoerceScript._dictionary_array(source.get("edges", []))
 	itinerary_schedules = _dictionary(source.get("itinerary_schedules", {})).duplicate(true)
 	rumor_registry = _normalize_fact_registry(source.get("rumor_registry", {}))
 	heard_by_node = _dictionary(source.get("heard_by_node", {})).duplicate(true)
 	seeded_scenarios_by_node = _dictionary(source.get("seeded_scenarios_by_node", {})).duplicate(true)
 	seeded_scenario_definitions_by_node = _dictionary(source.get("seeded_scenario_definitions_by_node", {})).duplicate(true)
-	reputation_incidents = _dictionary_array(source.get("reputation_incidents", []))
+	reputation_incidents = JsonCoerceScript._dictionary_array(source.get("reputation_incidents", []))
 	reputation_type_registry = _dictionary(source.get("reputation_type_registry", reputation_type_registry)).duplicate(true)
 	reputation_sequence = maxi(0, int(source.get("reputation_sequence", reputation_incidents.size())))
 	_prune_expired_incidents()
@@ -117,6 +120,28 @@ func snapshot(deep_copy_seeded_definitions: bool = true) -> Dictionary:
 	}
 
 
+# Builds the isolated slice used by destination scouting. Preview generation
+# only adds a scenario seed (and its rumor) to this candidate; the schedules,
+# topology, reputation, and heard-rumor records are read-only. Copying just the
+# mutable indexes avoids serializing and restoring the whole living town for a
+# UI hover/click while keeping every preview mutation off the live run.
+func detached_travel_preview_candidate() -> TownNetwork:
+	var candidate := get_script().new() as TownNetwork
+	candidate.seed_value = seed_value
+	candidate.action_index = action_index
+	candidate.node_metadata = node_metadata
+	candidate.edges = edges
+	candidate.itinerary_schedules = itinerary_schedules
+	candidate.rumor_registry = rumor_registry.duplicate(false)
+	candidate.heard_by_node = heard_by_node
+	candidate.seeded_scenarios_by_node = seeded_scenarios_by_node.duplicate(false)
+	candidate.seeded_scenario_definitions_by_node = seeded_scenario_definitions_by_node.duplicate(false)
+	candidate.reputation_incidents = reputation_incidents
+	candidate.reputation_type_registry = reputation_type_registry
+	candidate.reputation_sequence = reputation_sequence
+	return candidate
+
+
 func seed_scenario_for_node(node_id: String, scenario: Dictionary) -> bool:
 	var clean_node := node_id.strip_edges()
 	var scenario_id := str(scenario.get("id", "")).strip_edges()
@@ -126,12 +151,14 @@ func seed_scenario_for_node(node_id: String, scenario: Dictionary) -> bool:
 		"id": scenario_id,
 		"archetype_id": str(scenario.get("archetype_id", clean_node)),
 		"display_name": str(scenario.get("display_name", scenario_id.replace("_", " ").capitalize())),
-		"tags": _string_array(scenario.get("tags", [])),
+		"tags": JsonCoerceScript._string_array(scenario.get("tags", [])),
 	}
 	seeded_scenarios_by_node[clean_node] = public_scenario
 	# Cache the canonical selector output, not a later content-library lookup.
 	# Challenge pins can preserve identity while intentionally suppressing the
 	# authored mutation/phase payload for controlled tutorial rooms.
+	# Runtime scenario preparation can normalize nested authored records, so each
+	# town node must own its selected definition even though the library is cached.
 	var persistent_definition := scenario.duplicate(true)
 	# Catalog-resolution receipts are process-local cache authority, not authored
 	# scenario data. Keeping them in the living-world seed needlessly grows every
@@ -160,6 +187,16 @@ func _seeded_scenario_definition_for_node_readonly(node_id: String) -> Dictionar
 
 
 func register_rumor_fact(fact_class: String, fact_id: String, payload: Dictionary) -> bool:
+	return _register_rumor_fact(fact_class, fact_id, payload.duplicate(true))
+
+
+# Internal world-model handoff for freshly constructed payloads. The caller
+# transfers ownership, avoiding a second recursive copy on every turn refresh.
+func register_owned_rumor_fact(fact_class: String, fact_id: String, payload: Dictionary) -> bool:
+	return _register_rumor_fact(fact_class, fact_id, payload)
+
+
+func _register_rumor_fact(fact_class: String, fact_id: String, payload: Dictionary) -> bool:
 	var clean_class := fact_class.strip_edges().to_lower()
 	var clean_id := fact_id.strip_edges()
 	if clean_class.is_empty() or clean_id.is_empty() or not _rumor_fact_classes().has(clean_class):
@@ -170,7 +207,7 @@ func register_rumor_fact(fact_class: String, fact_id: String, payload: Dictionar
 		"class": clean_class,
 		"target_node_id": target_node_id,
 		"source_id": str(payload.get("source_id", clean_id)).strip_edges(),
-		"payload": payload.duplicate(true),
+		"payload": payload,
 		"registered_action": action_index,
 	}
 	rumor_registry[clean_id] = fact
@@ -184,6 +221,17 @@ func remove_rumor_facts(fact_class: String) -> void:
 		var fact := _dictionary(rumor_registry.get(fact_id, {}))
 		if str(fact.get("class", "")) == clean_class:
 			rumor_registry.erase(fact_id)
+
+
+func touch_rumor_facts(fact_class: String) -> void:
+	var clean_class := fact_class.strip_edges().to_lower()
+	for fact_id_value in rumor_registry.keys():
+		var fact_id := str(fact_id_value)
+		var fact := _dictionary(rumor_registry.get(fact_id, {}))
+		if str(fact.get("class", "")) != clean_class:
+			continue
+		fact["registered_action"] = action_index
+		rumor_registry[fact_id] = fact
 
 
 func rumor_fact(fact_id: String) -> Dictionary:
@@ -203,12 +251,15 @@ func rumor_facts(fact_class: String = "") -> Array:
 	return result
 
 
-func rumors_for_venue(node_id: String, speaker_side: String, count: int = 1, rng: RngStream = null) -> Array:
+func rumors_for_venue(node_id: String, speaker_side: String, count: int = 1, rng: RngStream = null, fact_class: String = "") -> Array:
 	var clean_node := node_id.strip_edges()
+	var clean_class := fact_class.strip_edges().to_lower()
 	var candidates: Array = []
 	for fact in rumor_facts():
 		var target_node_id := str(fact.get("target_node_id", ""))
 		if target_node_id.is_empty() or target_node_id == clean_node or heard_by_node.has(target_node_id):
+			continue
+		if not clean_class.is_empty() and str(fact.get("class", "")) != clean_class:
 			continue
 		if _rumor_fact_is_true(fact):
 			candidates.append(fact)
@@ -312,11 +363,11 @@ func traveler_state(character_id: String) -> Dictionary:
 func traveler_context_line(character_id: String) -> String:
 	var definition := _itinerary_definition(character_id)
 	var line_key := str(definition.get("where_been_line_key", "")).strip_edges()
-	var lines := _character_voice_lines(character_id, line_key) if not line_key.is_empty() else _string_array(definition.get("where_been_lines", []))
+	var lines := _character_voice_lines(character_id, line_key) if not line_key.is_empty() else JsonCoerceScript._string_array(definition.get("where_been_lines", []))
 	var state := traveler_state(character_id)
 	if lines.is_empty() or state.is_empty():
 		return ""
-	var index := _stable_hash("%s:%d" % [character_id, int(state.get("segment_index", 0))]) % lines.size()
+	var index := JsonCoerceScript._stable_hash("%s:%d" % [character_id, int(state.get("segment_index", 0))]) % lines.size()
 	var line := str(lines[index])
 	line = line.replace("{current_name}", _node_label(str(state.get("node_id", ""))))
 	line = line.replace("{previous_name}", _node_label(str(state.get("previous_node_id", ""))))
@@ -422,10 +473,10 @@ func local_reputation(node_id: String) -> Dictionary:
 	elif attention <= float(thresholds.get("looser_max", -0.75)):
 		door_delta = -1
 	var staff_tone := "watchful" if attention > 0.1 else "warm" if attention < -0.1 else "neutral"
-	var staff_lines := _string_array(_dictionary(_reputation_data().get("staff_lines", {})).get(staff_tone, []))
+	var staff_lines := JsonCoerceScript._string_array(_dictionary(_reputation_data().get("staff_lines", {})).get(staff_tone, []))
 	var staff_line := ""
 	if not staff_lines.is_empty():
-		staff_line = str(staff_lines[_stable_hash("%s:%s:%d" % [clean_node, staff_tone, action_index]) % staff_lines.size()])
+		staff_line = str(staff_lines[JsonCoerceScript._stable_hash("%s:%s:%d" % [clean_node, staff_tone, action_index]) % staff_lines.size()])
 	var reaction := _rare_reaction(clean_node, attention)
 	return {
 		"node_id": clean_node,
@@ -440,7 +491,7 @@ func local_reputation(node_id: String) -> Dictionary:
 
 func _generate_itineraries() -> void:
 	itinerary_schedules = {}
-	var traveler_definitions := _dictionary_array(_itinerary_data().get("travelers", []))
+	var traveler_definitions := JsonCoerceScript._dictionary_array(_itinerary_data().get("travelers", []))
 	for definition in traveler_definitions:
 		var character_id := str(definition.get("character_id", "")).strip_edges()
 		var allowed_nodes := _eligible_itinerary_nodes(definition)
@@ -464,7 +515,7 @@ func _generate_itineraries() -> void:
 
 
 func _eligible_itinerary_nodes(definition: Dictionary) -> Array:
-	var configured := _string_array(definition.get("allowed_nodes", []))
+	var configured := JsonCoerceScript._string_array(definition.get("allowed_nodes", []))
 	var result: Array = []
 	for node_id in configured:
 		if node_metadata.has(node_id):
@@ -494,7 +545,7 @@ func _render_rumor(fact: Dictionary, speaker_side: String, rng: RngStream) -> Di
 	var side := speaker_side.strip_edges().to_lower()
 	if side.is_empty() or not templates_by_class.has(side):
 		side = "neutral"
-	var templates := _string_array(templates_by_class.get(side, templates_by_class.get("neutral", [])))
+	var templates := JsonCoerceScript._string_array(templates_by_class.get(side, templates_by_class.get("neutral", [])))
 	if templates.is_empty():
 		return {}
 	var selection_rng := rng
@@ -561,7 +612,7 @@ func _rare_reaction(node_id: String, attention: float) -> Dictionary:
 	if absf(attention) < float(config.get("minimum_attention", 0.75)):
 		return {}
 	var chance := clampi(int(config.get("chance_percent", 12)), 0, 100)
-	var roll := (_stable_hash("reputation_reaction:%s:%d" % [node_id, action_index]) % 100) + 1
+	var roll := (JsonCoerceScript._stable_hash("reputation_reaction:%s:%d" % [node_id, action_index]) % 100) + 1
 	if roll > chance:
 		return {}
 	return {
@@ -612,7 +663,7 @@ func _prune_expired_incidents() -> void:
 
 
 func _itinerary_definition(character_id: String) -> Dictionary:
-	for definition in _dictionary_array(_itinerary_data().get("travelers", [])):
+	for definition in JsonCoerceScript._dictionary_array(_itinerary_data().get("travelers", [])):
 		if str(definition.get("character_id", "")) == character_id:
 			return definition
 	return {}
@@ -623,7 +674,7 @@ func _node_label(node_id: String) -> String:
 
 
 func _rumor_fact_classes() -> Array:
-	return _string_array(_rumor_data().get("fact_classes", []))
+	return JsonCoerceScript._string_array(_rumor_data().get("fact_classes", []))
 
 
 func _normalize_fact_registry(value: Variant) -> Dictionary:
@@ -638,7 +689,7 @@ func _normalize_fact_registry(value: Variant) -> Dictionary:
 
 func _normalize_edges(value: Variant) -> Array:
 	var result: Array = []
-	for edge in _dictionary_array(value):
+	for edge in JsonCoerceScript._dictionary_array(value):
 		var a := str(edge.get("a", "")).strip_edges()
 		var b := str(edge.get("b", "")).strip_edges()
 		if a.is_empty() or b.is_empty() or not node_metadata.has(a) or not node_metadata.has(b):
@@ -675,7 +726,7 @@ static func _character_voice_lines(character_id: String, line_key: String) -> Ar
 		if str(character.get("id", "")) != character_id:
 			continue
 		var voice := _dictionary(character.get("voice", {}))
-		return _string_array(_dictionary(voice.get("lines", {})).get(line_key, []))
+		return JsonCoerceScript._string_array(_dictionary(voice.get("lines", {})).get(line_key, []))
 	return []
 
 
@@ -699,38 +750,9 @@ static func _dictionary(value: Variant) -> Dictionary:
 	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
 
 
-static func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry_value in value as Array:
-		if typeof(entry_value) == TYPE_DICTIONARY:
-			result.append((entry_value as Dictionary).duplicate(true))
-	return result
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry_value in value as Array:
-		var entry := str(entry_value).strip_edges()
-		if not entry.is_empty():
-			result.append(entry)
-	return result
-
-
 static func _int_range(value: Variant, fallback_min: int, fallback_max: int) -> Array:
 	if typeof(value) == TYPE_ARRAY and (value as Array).size() >= 2:
 		var first := int((value as Array)[0])
 		var second := int((value as Array)[1])
 		return [mini(first, second), maxi(first, second)]
 	return [mini(fallback_min, fallback_max), maxi(fallback_min, fallback_max)]
-
-
-static func _stable_hash(text: String) -> int:
-	var hash_value := 2166136261
-	for index in range(text.length()):
-		hash_value = hash_value ^ text.unicode_at(index)
-		hash_value = (hash_value * 16777619) & 0x7fffffff
-	return maxi(1, hash_value)

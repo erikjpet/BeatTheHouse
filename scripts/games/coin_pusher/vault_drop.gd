@@ -1,6 +1,9 @@
 class_name VaultDropVariation
 extends RefCounted
 
+# Cabinet-specific state and commands for The Vault Drop, including cells,
+# peeks, door awards, round flow, and physical-event reconciliation.
+
 
 static func initial_state(config: Dictionary, rng: RngStream, lane_count: int, cell_count: int, node_id: String) -> Dictionary:
 	var fragments: Array = []

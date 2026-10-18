@@ -47,6 +47,7 @@ const REQUIRED_SEQUENCE_KEYS := [
 const REQUIRED_HANDLERS := [
 	"set_local", "increment_local", "complete_objective_step", "resolve_objective",
 	"record_outcome", "publish_feedback", "request_cleanup", "event_bridge",
+	"grant_item", "grant_cash", "change_scene_object", "play_cue",
 ]
 const ALLOWED_SOURCE_DOMAINS := ["crew", "world"]
 

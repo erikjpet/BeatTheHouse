@@ -1,6 +1,9 @@
 class_name PinballBoard
 extends RefCounted
 
+# Validates and compiles authored normalized board dictionaries into the dense,
+# immutable geometry consumed by PinballSim.
+
 const SENSOR_SKILL := 1
 const SENSOR_SLINGSHOT := 2
 const SENSOR_LAUNCHER := 3

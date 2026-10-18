@@ -102,7 +102,7 @@ editing the manifest, retagging a head or reviewing a moving branch.
    - `data/games/bar_dice_game_ritual_v1.json`;
    - `scripts/core/bar_dice_ritual_projection.gd`;
    - `scripts/tests/foundation/game06_6_bar_dice_contract.gd`;
-   - `tools/game06_6_bar_dice_platform_probe.gd` and `.tscn`;
+   - `tools/archive/game06_6/game06_6_bar_dice_platform_probe.gd` and `.tscn`;
    - BAR-DICE plans and evidence.
 5. Bind the accepted `game06_1` envelope/runtime without adding a second action,
    receipt, persistence, handler or settlement path.

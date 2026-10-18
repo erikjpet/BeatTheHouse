@@ -81,7 +81,7 @@ Read first:
   button lookup helpers) and how it waits for frames.
 - `tools/environment_layout_screenshots.gd` — viewport PNG capture (must run
   windowed, not `--headless`).
-- `tools/fix06_28_punchline_player_route.gd` — a full production-player route
+- `tools/archive/fix06_28/fix06_28_punchline_player_route.gd` — a full production-player route
   (menu → run → rooms → travel → save/continue) using only visible input.
 
 Build `tools/agent_playtest_session.gd` (a `SceneTree` script) plus a

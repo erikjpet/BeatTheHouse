@@ -8,6 +8,7 @@ const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_mode
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const GameModuleScript := preload("res://scripts/core/game_module.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
+const DeliveryRunModelScript := preload("res://scripts/core/delivery_run_model.gd")
 const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 const BlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
@@ -17,19 +18,21 @@ static func check(_library: ContentLibrary, failures: Array) -> void:
 	failures.append_array(CrewHeistModelScript.validate_content())
 	if _array(CrewHeistModelScript.plan("the_count").get("architects", [])) != ["crew_bishop"] or _array(CrewHeistModelScript.plan("the_whale_game").get("architects", [])) != ["crew_velvet", "crew_mags"]:
 		failures.append("The crew06_9 seam lost its exact plan architect arrays.")
-	_check_gating(failures)
+	_check_gating(_library, failures)
 	_check_production_paths(_library, failures)
 	_check_plan_a(_library, failures)
-	_check_plan_b(_library, failures)
 	_check_abort_and_save(_library, failures)
 	_check_seam_regressions(failures)
 	_check_determinism(_library, failures)
 
 
-static func _check_gating(failures: Array) -> void:
+static func _check_gating(library: ContentLibrary, failures: Array) -> void:
 	var hidden := _run("HEIST-GATE-HIDDEN", {})
-	if bool(hidden.crew_heist_planning_status().get("visible", true)):
-		failures.append("Planning table appeared without an Inner Circle member.")
+	var hidden_status := hidden.crew_heist_planning_status()
+	var hidden_count := _dict(_rows(hidden).get("the_count", {}))
+	if not bool(hidden_status.get("visible", false)) or bool(hidden_count.get("live", true)) \
+		or not _strings(hidden_count.get("missing_stars", [])).has("No audit on the books this season."):
+		failures.append("The release planning table did not expose a truthful locked Count row before Audit knowledge.")
 	var count := _run("HEIST-GATE-COUNT", {"audit_night": true})
 	_set_inner(count, "crew_bishop")
 	var count_rows := _rows(count)
@@ -38,8 +41,8 @@ static func _check_gating(failures: Array) -> void:
 	var whale := _run("HEIST-GATE-WHALE", {"heist_plan_b_criteria": true})
 	_set_inner(whale, "crew_velvet")
 	var whale_rows := _rows(whale)
-	if not bool(_dict(whale_rows.get("the_whale_game", {})).get("live", false)) or bool(_dict(whale_rows.get("the_count", {})).get("live", false)):
-		failures.append("Plan B gating did not require a whale anchor plus Velvet alone.")
+	if whale_rows.has("the_whale_game") or bool(_dict(whale_rows.get("the_count", {})).get("live", false)):
+		failures.append("The unreleased Whale plan leaked into the public planning table.")
 	var missing := _run("HEIST-GATE-MISSING", {})
 	_set_inner(missing, "crew_bishop")
 	var missing_row := _dict(_rows(missing).get("the_count", {}))
@@ -47,8 +50,9 @@ static func _check_gating(failures: Array) -> void:
 		failures.append("Planning table did not tell the truth about the missing Audit Night star.")
 	var gala := _run("HEIST-GATE-GALA", {"gala_night": true})
 	_set_inner(gala, "crew_velvet")
-	if not bool(_dict(_rows(gala).get("the_whale_game", {})).get("live", false)):
-		failures.append("Plan B did not accept Gala Night as its alternate seeded whale anchor.")
+	if _rows(gala).has("the_whale_game"):
+		failures.append("Gala Night exposed the unreleased Whale plan on the public planning table.")
+	_check_audit_knowledge_gating(library, failures)
 	var direct := _run("HEIST-DIRECT-REJECT", {"audit_night": true})
 	_set_inner(direct, "crew_bishop")
 	var direct_before := JSON.stringify(direct.to_dict())
@@ -60,8 +64,68 @@ static func _check_gating(failures: Array) -> void:
 		failures.append("A substituted or self-asserted resolved heist hook crossed the exact Event host boundary.")
 
 
+static func _check_audit_knowledge_gating(library: ContentLibrary, failures: Array) -> void:
+	const KNOWLEDGE_FLAG := "crew_heist_count_audit_roster_read"
+	var seeded_only := _run("HEIST-AUDIT-SEEDED-ONLY", {})
+	_set_inner(seeded_only, "crew_bishop")
+	seeded_only.seed_scenario_for_node("grand_casino", library.scenario("grand_casino_audit_night"))
+	if bool(_dict(_rows(seeded_only).get("the_count", {})).get("live", false)):
+		failures.append("An unvisited seeded Audit leaked private scenario selection into The Count gate.")
+
+	var hostile := _run("HEIST-AUDIT-HOSTILE", {})
+	_set_inner(hostile, "crew_bishop")
+	hostile.narrative_flags[KNOWLEDGE_FLAG] = true
+	hostile.story_flags[KNOWLEDGE_FLAG] = "true"
+	_set_grand_situation(hostile, "grand_casino_convention_crowd", {"audit_night": "true"})
+	if bool(_dict(_rows(hostile).get("the_count", {})).get("live", false)):
+		failures.append("A non-Audit situation or malformed/forged knowledge unlocked The Count.")
+
+	var declined := _run("HEIST-AUDIT-DECLINED", {})
+	_set_inner(declined, "crew_bishop")
+	_set_grand_situation(declined, "grand_casino_audit_night", {"audit_night": true}, ["scenario_audit_roster"])
+	if not bool(_dict(_rows(declined).get("the_count", {})).get("live", false)):
+		failures.append("The currently active Audit did not make The Count live.")
+	var decline_result := _event_choice(declined, library, "scenario_audit_roster", "leave_the_count_clean")
+	if not bool(decline_result.get("ok", false)) or bool(declined.story_flags.get(KNOWLEDGE_FLAG, false)):
+		failures.append("Leaving the Audit roster either failed or incorrectly taught lasting Count knowledge.")
+	_set_grand_situation(declined, "grand_casino_convention_crowd", {})
+	if bool(_dict(_rows(declined).get("the_count", {})).get("live", false)):
+		failures.append("The Count remained live after an unobserved Audit rolled over to Convention.")
+
+	var observed := _run("HEIST-AUDIT-OBSERVED", {})
+	_set_inner(observed, "crew_bishop")
+	_set_grand_situation(observed, "grand_casino_audit_night", {"audit_night": true}, ["scenario_audit_roster"])
+	var heat_before_read := observed.suspicion_level()
+	var read_result := _event_choice(observed, library, "scenario_audit_roster", "read_the_shift")
+	if not bool(read_result.get("ok", false)) or str(read_result.get("choice_id", "")) != "read_the_shift" \
+			or observed.suspicion_level() != heat_before_read + 3 \
+			or not _array(observed.current_environment.get("resolved_event_ids", [])).has("scenario_audit_roster") \
+			or not bool(observed.story_flags.get(KNOWLEDGE_FLAG, false)) \
+			or not bool(observed.narrative_flags.get(KNOWLEDGE_FLAG, false)):
+		failures.append("Resolving the real Audit roster/read_the_shift choice did not teach the public Count fact.")
+	var heat_after_read := observed.suspicion_level()
+	if bool(_event_choice(observed, library, "scenario_audit_roster", "read_the_shift").get("ok", false)) \
+			or observed.suspicion_level() != heat_after_read:
+		failures.append("The resolved Audit roster replayed or charged its Heat twice.")
+	_set_grand_situation(observed, "grand_casino_convention_crowd", {})
+	if not bool(_dict(_rows(observed).get("the_count", {})).get("live", false)):
+		failures.append("Learned Audit knowledge did not survive a Convention rollover/revisit.")
+
+	var restored := RunStateScript.new()
+	restored.from_dict(observed.to_save_snapshot())
+	if not bool(restored.story_flags.get(KNOWLEDGE_FLAG, false)) \
+			or not bool(restored.narrative_flags.get(KNOWLEDGE_FLAG, false)) \
+			or str(restored.current_environment.get("scenario_id", "")) != "grand_casino_convention_crowd" \
+			or not bool(_dict(_rows(restored).get("the_count", {})).get("live", false)):
+		failures.append("Learned Audit knowledge did not survive Save/Continue restore.")
+
+
 static func _check_production_paths(library: ContentLibrary, failures: Array) -> void:
 	var count := _run("HEIST-PRODUCTION-COUNT", {"audit_night": true})
+	for node_value in _array(count.world_map.get("nodes", [])):
+		var node := _dict(node_value)
+		if str(node.get("archetype_id", "")) in [RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID, RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID]:
+			failures.append("The production-shaped heist fixture exposed a map-hidden Grand Casino room as a world node.")
 	_set_inner(count, "crew_bishop")
 	var planning := EventModuleScript.new()
 	planning.setup(library.event("crew_planning_table"), library)
@@ -74,62 +138,59 @@ static func _check_production_paths(library: ContentLibrary, failures: Array) ->
 	# The shared result contract also carries early legal actions.  Without a
 	# shipped blackjack settlement payload they must not count at all.
 	GameModuleScript.apply_result(count, GameModuleScript.build_action_result({"ok": true, "type": "game_action", "source_id": "blackjack", "game_id": "blackjack", "action_id": "hit", "action_kind": "legal", "stake": 12, "bankroll_delta": 0, "deltas": {"bankroll_delta": 0, "suspicion_delta": 0}, "environment_archetype_id": "grand_casino"}))
-	if int(_dict(count.crew_heist_snapshot().get("setup", {})).get("identity_sessions", 0)) != 0:
-		failures.append("An early, nonterminal blackjack action credited a furniture session.")
-	# Three settled hand results in one visit are one furniture session, not three.
-	var count_room := count.current_environment.duplicate(true)
-	count.set_environment({"id": "grand_casino", "world_node_id": "grand_casino", "archetype_id": "grand_casino", "kind": "casino", "turns": 0, "visit_id": "production_same_visit", "event_ids": [], "resolved_event_ids": []})
-	for _index in range(3):
-		_apply_authoritative_blackjack(count, library, 12)
-	count.set_environment(count_room)
-	if int(_dict(count.crew_heist_snapshot().get("setup", {})).get("identity_sessions", 0)) != 1:
-		failures.append("Repeated actions in one Grand Casino visit counted as distinct furniture sessions.")
+	var count_setup := _dict(count.crew_heist_snapshot().get("setup", {}))
+	if not bool(count_setup.get("identity", false)) or int(count_setup.get("identity_sessions", 0)) != 0:
+		failures.append("The release Count route reintroduced a separate identity-session grind.")
 	# Start through the planning event, then travel through RunGenerator and use
 	# the production in-room handoff API; no test mutates current_node_id here.
-	count.crew_heist_state["setup"] = {"identity": true, "identity_sessions": 3, "identity_session_ids": ["a", "b", "c"]}
 	if not bool(planning.resolve(count, count.current_environment, "count_schedule").get("ok", false)):
 		failures.append("Planning-table schedule action did not start the production hold.")
 	else:
+		var restored_count := RunStateScript.new()
+		restored_count.from_dict(count.to_dict())
+		count = restored_count
 		var generator := RunGeneratorScript.new(library)
-		var arrived := HarnessProductionFidelityScript.travel_and_finalize(generator, count, "grand_casino_cage", true, library, failures, "Crew heist schedule Cage arrival")
+		var schedule_targets := _array(count.delivery_snapshot().get("targets", []))
+		if schedule_targets.size() != 1 or str(_dict(schedule_targets[0]).get("node_id", "")) != RunState.GRAND_CASINO_ARCHETYPE_ID:
+			failures.append("The Count schedule did not target the canonical Grand Casino world node.")
+		var arrived := HarnessProductionFidelityScript.travel_and_finalize(generator, count, RunState.GRAND_CASINO_ARCHETYPE_ID, true, library, failures, "Crew heist schedule Grand Casino arrival")
 		if not bool(arrived.get("ok", false)):
 			return
-		count.advance_environment_turns(2)
+		var street_arrival := count.delivery_resolve_travel_arrival()
+		if not bool(street_arrival.get("ok", false)):
+			failures.append("The Count schedule did not accept its authoritative Grand Casino street arrival.")
+			return
+		count.advance_environment_turns(1)
+		if int(count.delivery_snapshot().get("hold_progress", -1)) != 0 or bool(_dict(count.crew_heist_snapshot().get("setup", {})).get("schedule", false)):
+			failures.append("The Count schedule advanced on Grand Casino Main instead of requiring the Cage.")
+		var model_before := JSON.stringify(count.active_delivery_run)
+		var missing_room_attempt := DeliveryRunModelScript.apply_host_action(
+			count.active_delivery_run,
+			"wait",
+			"heist_schedule_missing_room",
+			count._delivery_host_context(count.current_world_node_id(), "", "", "", "", "", "wait")
+		)
+		if JSON.stringify(missing_room_attempt) != model_before:
+			failures.append("The room-constrained hold model failed open when host room authority was omitted.")
+		var wrong_room_before := JSON.stringify(count.to_dict())
+		if bool(count.delivery_apply_physical_action("wait", "heist_schedule_wrong_room").get("ok", false)) or JSON.stringify(count.to_dict()) != wrong_room_before:
+			failures.append("The Count schedule accepted or mutated on a stale Main-floor hold action.")
+		if not _enter_grand_room(count, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID, library, failures, "Crew heist schedule Cage arrival"):
+			return
+		var room_before := JSON.stringify(count.to_dict())
+		var forged_room_arrival := count.delivery_resolve_travel_arrival()
+		if bool(forged_room_arrival.get("ok", false)) or JSON.stringify(count.to_dict()) != room_before:
+			failures.append("The Count Cage door accepted or mutated an empty forged arrival route.")
+			return
+		var room_arrival := count.delivery_resolve_travel_arrival(_grand_room_route(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID))
+		if not bool(room_arrival.get("ok", false)) or not bool(room_arrival.get("room_transition", false)) or JSON.stringify(count.to_dict()) != room_before:
+			failures.append("The Count Cage door was not an exact no-op for the canonical street route.")
+			return
+		if not bool(count.delivery_apply_physical_action("wait", "heist_schedule_cage_1").get("ok", false)):
+			failures.append("The Count schedule did not accept its one authored Cage hold action.")
 	if not bool(_dict(count.crew_heist_snapshot().get("setup", {})).get("schedule", false)):
-		failures.append("Ordinary generated travel did not complete the production schedule hold.")
-	var whale := _run("HEIST-PRODUCTION-WHALE", {"heist_plan_b_criteria": true})
-	_set_inner(whale, "crew_velvet")
-	whale.bankroll = 500
-	planning.resolve(whale, whale.current_environment, "lock_the_whale_game")
-	whale.set_environment({"id": "delta_queen", "world_node_id": "delta_queen", "archetype_id": "delta_queen", "kind": "casino", "turns": 0, "visit_id": "whale_visit_1", "scenario_hook_flags": {"heist_plan_b_criteria": true}, "event_ids": ["scenario_whale_aboard_vouch"], "resolved_event_ids": []})
-	var whale_event := EventModuleScript.new()
-	whale_event.setup(library.event("scenario_whale_aboard_vouch"), library)
-	whale_event.resolve(whale, whale.current_environment, "stake_his_table")
-	whale.crew_heist_table_choices()
-	var seeded_vouch_rounds := int(_dict(whale.crew_heist_snapshot().get("setup", {})).get("vouch_rounds", 0))
-	var whale_anchor_environment := whale.current_environment.duplicate(true)
-	whale.set_environment({"id": "small_underground_casino", "world_node_id": "small_underground_casino", "archetype_id": "small_underground_casino", "kind": "casino", "turns": 0, "visit_id": "unrelated_loss", "scenario_hook_flags": {}, "event_ids": [], "resolved_event_ids": []})
-	_apply_authoritative_blackjack(whale, library, 42)
-	if int(_dict(whale.crew_heist_snapshot().get("setup", {})).get("vouch_rounds", 0)) != seeded_vouch_rounds:
-		failures.append("An unrelated casino loss advanced the Whale vouch away from the authored anchor table.")
-	whale.set_environment(whale_anchor_environment)
-	for _attempt in range(12):
-		_apply_authoritative_blackjack(whale, library, 42)
-		if bool(_dict(whale.crew_heist_snapshot().get("setup", {})).get("vouch", false)): break
-	var whale_setup := _dict(whale.crew_heist_snapshot().get("setup", {}))
-	if not bool(whale.narrative_flags.get("heist_plan_b_whale_vouch", false)) or not bool(whale_setup.get("vouch", false)):
-		failures.append("The shipped whale event plus real game-result route did not complete the vouch.")
-	whale.add_item("false_bottom_cup")
-	whale.narrative_flags["craps_setting_trained"] = true
-	whale.record_score_spending(120, "fixture_production_spend")
-	whale.advance_environment_turns(1)
-	whale.current_environment["visit_id"] = "whale_visit_2"
-	whale.advance_environment_turns(1)
-	whale.crew_heist_table_choices()
-	whale_setup = _dict(whale.crew_heist_snapshot().get("setup", {}))
-	if not bool(whale_setup.get("rig", false)) or not bool(whale_setup.get("name", false)):
-		failures.append("Existing Estate Lot item, craps training, spending, and distinct visit producers did not complete Plan B setup.")
-	var public_text := JSON.stringify({"save": whale.to_dict(), "choices": whale.crew_heist_table_choices(), "story": whale.story_log}).to_lower()
+		failures.append("Canonical Grand travel plus the real Cage room did not complete the production schedule hold.")
+	var public_text := JSON.stringify({"save": count.to_dict(), "choices": count.crew_heist_table_choices(), "story": count.story_log}).to_lower()
 	for forbidden in ["traitor", "no_turn", "nobody turns", "traitor_resolution"]:
 		if public_text.find(forbidden) != -1:
 			failures.append("Hidden crew06_9 state leaked through a save, planning choice, or story log.")
@@ -143,45 +204,107 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 		return
 	if _dict(run.crew_heist_snapshot().get("r", {})) != {"v": 1, "s": "0"}:
 		failures.append("Plan lock did not write the neutral crew06_9 handoff seam.")
-	for _index in range(3):
-		_record_count_session(run, library, "count_session_%d" % _index)
 	if not bool(_event_choice(run, library, "crew_planning_table", "count_schedule").get("ok", false)):
 		failures.append("Plan A schedule did not start a real delivery hold.")
 	else:
-		_move(run, "grand_casino_cage", library, failures)
-		run.advance_environment_turns(2)
+		_move(run, RunState.GRAND_CASINO_ARCHETYPE_ID, library, failures)
+		if not bool(run.delivery_resolve_travel_arrival().get("ok", false)):
+			failures.append("Plan A schedule did not cross the real Grand Casino street route.")
+		if not _enter_grand_room(run, RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID, library, failures, "Plan A schedule Cage"):
+			return
+		run.delivery_resolve_travel_arrival(_grand_room_route(RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID))
+		run.delivery_apply_physical_action("wait", "plan_a_schedule_cage_1")
+		run.call("_crew_heist_boundary_sync")
 	if not bool(_dict(run.crew_heist_snapshot().get("setup", {})).get("schedule", false)):
-		failures.append("Plan A schedule hold did not complete at the real cage node.")
-	# The next planning action belongs to the Crew room, not the remote cage.
-	_move(run, "small_underground_casino", library, failures)
-	if not bool(_event_choice(run, library, "crew_planning_table", "count_cart").get("ok", false)):
-		failures.append("Plan A swap cart did not start a real package run.")
+		failures.append("Plan A schedule hold did not complete inside the real Cage room.")
+	# The shortened release route chains its already-carried cart directly from
+	# the authenticated Cage hold into the same-node Grand Main handoff.
+	var chained_cart := run.delivery_snapshot()
+	var chained_cart_physical := _dict(chained_cart.get("physical", {}))
+	if str(chained_cart.get("run_id", "")) != "heist:the_count:swap_cart" or str(chained_cart_physical.get("cargo_state", "")) != "carried":
+		failures.append("Plan A schedule completion did not chain its carried swap cart.")
 	else:
-		run.delivery_apply_physical_action("pickup", "crew_heist:swap_cart:pickup")
-		_move(run, "grand_casino", library, failures)
-		run.delivery_resolve_travel_arrival()
-		run.delivery_complete_handoff()
+		var cart_room_before := JSON.stringify(run.to_dict())
+		var direct_cart_attempt := DeliveryRunModelScript.complete_handoff(run.active_delivery_run, run.current_world_node_id(), RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID)
+		if JSON.stringify(direct_cart_attempt) != JSON.stringify(run.active_delivery_run) or not run.delivery_arrival_interaction().is_empty() \
+				or bool(run.delivery_complete_handoff().get("ok", false)) or JSON.stringify(run.to_dict()) != cart_room_before:
+			failures.append("Plan A swap cart could be handed off in the Cage instead of Grand Casino Main.")
+		if not _enter_grand_room(run, RunState.GRAND_CASINO_ARCHETYPE_ID, library, failures, "Plan A swap-cart Main handoff"):
+			return
+		var cart_room_arrival := run.delivery_resolve_travel_arrival(_grand_room_route(RunState.GRAND_CASINO_ARCHETYPE_ID))
+		if not bool(cart_room_arrival.get("ok", false)) or run.delivery_arrival_interaction().is_empty() or not bool(run.delivery_complete_handoff().get("ok", false)):
+			failures.append("Plan A swap cart did not expose and complete its authenticated Main-floor handoff.")
 	if not bool(_dict(run.crew_heist_snapshot().get("setup", {})).get("swap_cart", false)):
 		failures.append("Plan A swap cart did not complete through the real-map handoff.")
 	run.narrative_flags["debt_court_settlement"] = true
 	run.crew_trust_by_member["crew_knuckles"] = CrewStateModelScript.rank_threshold("associate")
-	_move(run, "small_underground_casino", library, failures)
-	if not bool(_event_choice(run, library, "crew_planning_table", "begin_play").get("ok", false)):
-		failures.append("Plan A did not enter the Play after all mandatory setup.")
+	run.call("_crew_heist_boundary_sync")
+	if str(run.crew_heist_snapshot().get("status", "")) != CrewHeistModelScript.STATUS_PLAY:
+		failures.append("Plan A did not chain into the Play after all mandatory setup.")
 		return
 	_move(run, "grand_casino", library, failures)
 	if not _array(run.current_environment.get("event_ids", [])).has("heist_live_table"):
 		failures.append("Plan A did not mount its production crew event at the designated table.")
+	var live_table_row := _manifest_row(run.current_environment, "event:heist_live_table")
+	var live_table_binding := _dict(_dict(_dict(run.current_environment.get("layout", {})).get("slot_bindings", {})).get("event:heist_live_table", {}))
+	if str(live_table_row.get("family", "")) != "scenario" \
+			or str(live_table_row.get("placement_class", "")) != "floor_fixture" \
+			or str(live_table_row.get("spot_field", "")) != "runtime_object_manifest_entries" \
+			or str(live_table_binding.get("slot_family", "")) != "scenario" \
+			or not str(live_table_binding.get("slot_id", "")).begins_with("scenario.floor_fixture_"):
+		failures.append("Plan A's production Live Table did not mount through its trusted scenario-family floor-fixture projection.")
 	var live_table := EventModuleScript.new()
 	live_table.setup(library.event("heist_live_table"), library)
-	run.advance_environment_turns(1)
+	# The release route mounts the Live Table directly on its first decision.
+	# Settled hands advance the later beats; an extra fixture turn here expires
+	# go_hold before the player can make the opening choice.
 	var mid_window := RunStateScript.new()
 	mid_window.from_dict(run.to_dict())
 	if JSON.stringify(mid_window.crew_heist_snapshot()) != JSON.stringify(run.crew_heist_snapshot()):
 		failures.append("Plan A save/load changed the live action-boundary window.")
+	var restored_live_table_row := _manifest_row(mid_window.current_environment, "event:heist_live_table")
+	var restored_live_table_binding := _dict(_dict(_dict(mid_window.current_environment.get("layout", {})).get("slot_bindings", {})).get("event:heist_live_table", {}))
+	if str(restored_live_table_row.get("family", "")) != "scenario" \
+			or str(restored_live_table_row.get("spot_field", "")) != "runtime_object_manifest_entries" \
+			or str(restored_live_table_binding.get("slot_family", "")) != "scenario":
+		failures.append("Plan A save/load did not rebuild the trusted Live Table physical projection.")
+	HarnessProductionFidelityScript.finalize_arrival(mid_window, library, failures, "Plan A restored live-table window")
+	# If a presentation refresh invalidates only the derived proof, the durable
+	# room event order must reconstruct the same immutable seal. The Grand room's
+	# authored event order is intentionally non-alphabetical, while the Crew Live
+	# Table is a post-seal runtime event that must remain outside that proof.
+	var invalidated_live_table := RunStateScript.new()
+	invalidated_live_table.from_dict(mid_window.to_dict())
+	var invalidated_expected_digest := str(invalidated_live_table.current_environment.get("scenario_semantic_digest", ""))
+	var invalidated_event_choice_order := _dict(_dict(_dict(invalidated_live_table.current_environment.get("scenario_sequence_state", {})).get("semantic_state", {})).get("event_choices", {})).keys()
+	var invalidated_routes := _array(invalidated_live_table.current_environment.get("next_archetypes", []))
+	for route_id in ["jazz_club", "small_underground_casino"]:
+		if not invalidated_routes.has(route_id):
+			invalidated_routes.append(route_id)
+	invalidated_live_table.current_environment["next_archetypes"] = invalidated_routes
+	for key in ["scenario_semantic_ready", "scenario_semantic_inventory", "scenario_base_interactions", "scenario_base_actors", "scenario_base_producer_context", "scenario_semantic_action_digest", "scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority", "scenario_layout_audit", "scenario_layout_authority_digest", "scenario_render_snapshot", "scenario_sequence_projection"]:
+		invalidated_live_table.current_environment.erase(key)
+	invalidated_live_table.current_environment["scenario_restore_pending_trusted_rebuild"] = true
+	var invalidated_rebuild := invalidated_live_table.scenario_finalize_installed_environment(library)
+	if not bool(invalidated_rebuild.get("ok", false)) \
+			or str(invalidated_live_table.current_environment.get("scenario_semantic_digest", "")) != invalidated_expected_digest \
+			or not invalidated_live_table._scenario_semantic_ready() \
+			or _dict(_dict(_dict(invalidated_live_table.current_environment.get("scenario_sequence_state", {})).get("semantic_state", {})).get("event_choices", {})).keys() != invalidated_event_choice_order:
+		failures.append("Plan A's invalidated save-shaped Live Table window could not reconstruct its original scenario seal: %s" % JSON.stringify(invalidated_rebuild.get("errors", [])))
+	# Event resolution owns the same trusted repair. A player can return from a
+	# sealed Blackjack action (or resume a save) and immediately answer Bishop;
+	# that public choice must not strand behind renderer-owned proof.
+	var pending_live_table := RunStateScript.new()
+	pending_live_table.from_dict(mid_window.to_dict())
+	if pending_live_table._scenario_semantic_ready():
+		failures.append("Plan A's save-shaped Live Table fixture did not begin with trusted scenario rebuild pending.")
+	else:
+		var pending_choice := live_table.resolve(pending_live_table, pending_live_table.current_environment, "go_hold")
+		if not bool(pending_choice.get("ok", false)) or not pending_live_table._scenario_semantic_ready():
+			failures.append("Plan A's first post-restore Live Table choice did not rebuild and retain trusted scenario semantics: %s" % str(pending_choice.get("message", "")))
 	if _choice_ids(live_table.choices(run, run.current_environment)).has("distraction_sit"):
 		failures.append("Plan A allowed its second decision before the first live-table round boundary.")
-	var expected_choices := [["go_hold", "distraction_sit"], ["distraction_sit", "exit_corridor"], ["exit_corridor", "begin_getaway"]]
+	var expected_choices := [["go_hold", "distraction_sit"], ["distraction_sit", "exit_dock"], ["exit_dock", "begin_getaway"]]
 	for round_index in range(3):
 		var before_ids := _choice_ids(live_table.choices(run, run.current_environment))
 		if not before_ids.has(str(expected_choices[round_index][0])) or before_ids.has(str(expected_choices[round_index][1])):
@@ -189,20 +312,52 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 		var decision_choice := str(expected_choices[round_index][0])
 		if not bool(live_table.resolve(run, run.current_environment, decision_choice).get("ok", false)):
 			failures.append("Plan A production crew event rejected %s." % decision_choice)
+		HarnessProductionFidelityScript.finalize_arrival(run, library, failures, "Plan A live-table beat %d" % round_index)
 		_apply_authoritative_blackjack(run, library, 12)
 	if int(_dict(run.crew_heist_snapshot().get("play", {})).get("round", 0)) != 3:
 		failures.append("Plan A real settled hands did not interleave all three crew beats.")
-	var dock := RunStateScript.new()
-	dock.from_dict(run.to_dict())
-	dock.crew_heist_state["play"]["decisions"]["exit"] = "dock"
-	if not bool(_event_choice(dock, library, "heist_live_table", "begin_getaway").get("ok", false)) or int(dock.delivery_snapshot().get("pursuit_pressure", -1)) != 4 or str(_dict(dock.crew_heist_snapshot().get("getaway", {})).get("exit", "")) != "dock":
-		failures.append("Plan A fast/loud dock route lost its historical pressure-4 contract.")
+	var corridor := RunStateScript.new()
+	corridor.from_dict(run.to_dict())
+	HarnessProductionFidelityScript.finalize_arrival(corridor, library, failures, "Plan A restored corridor route")
+	corridor.crew_heist_state["play"]["decisions"]["exit"] = "corridor"
+	var missing_delta := RunStateScript.new()
+	missing_delta.from_dict(corridor.to_dict())
+	HarnessProductionFidelityScript.finalize_arrival(missing_delta, library, failures, "Plan A missing-Delta route")
+	var missing_delta_map := missing_delta.world_map.duplicate(true)
+	var remaining_nodes: Array = []
+	for node_value in _array(missing_delta_map.get("nodes", [])):
+		if str(_dict(node_value).get("id", "")) != "delta_queen":
+			remaining_nodes.append(node_value)
+	var remaining_edges: Array = []
+	for edge_value in _array(missing_delta_map.get("edges", [])):
+		var edge := _dict(edge_value)
+		if str(edge.get("a", "")) != "delta_queen" and str(edge.get("b", "")) != "delta_queen":
+			remaining_edges.append(edge_value)
+	missing_delta_map["nodes"] = remaining_nodes
+	missing_delta_map["edges"] = remaining_edges
+	missing_delta.set_world_map(missing_delta_map)
+	var missing_delta_before := JSON.stringify(missing_delta.to_dict())
+	if bool(_event_choice(missing_delta, library, "heist_live_table", "begin_getaway").get("ok", false)) \
+			or JSON.stringify(missing_delta.to_dict()) != missing_delta_before:
+		failures.append("Plan A getaway did not fail closed and preserve state without its canonical Delta Queen endpoint.")
+	var corridor_started := _event_choice(corridor, library, "heist_live_table", "begin_getaway")
+	var corridor_targets := _array(corridor.delivery_snapshot().get("targets", []))
+	var corridor_getaway := _dict(corridor.crew_heist_snapshot().get("getaway", {}))
+	if not bool(corridor_started.get("ok", false)) or int(corridor.delivery_snapshot().get("pursuit_pressure", -1)) != 1 \
+			or str(corridor_getaway.get("exit", "")) != "corridor" or str(corridor_getaway.get("target_node_id", "")) != "delta_queen" \
+			or corridor_targets.size() != 1 or str(_dict(corridor_targets[0]).get("node_id", "")) != "delta_queen":
+		failures.append("Plan A slow/quiet corridor route did not target the canonical Delta Queen getaway with its distinct pressure-1 contract.")
+	else:
+		_move(corridor, "delta_queen", library, failures)
+		corridor.delivery_resolve_travel_arrival()
+		if corridor.run_status != RunState.RUN_STATUS_ENDED or str(corridor.crew_heist_snapshot().get("outcome", "")) != "clean_sweep":
+			failures.append("Plan A slow/quiet corridor route did not resolve through the real Delta Queen arrival to Act 1 victory.")
 	if not bool(live_table.resolve(run, run.current_environment, "begin_getaway").get("ok", false)) or str(run.delivery_snapshot().get("mode", "")) != "getaway":
 		failures.append("Plan A did not enter the real getaway mode.")
 		return
-	if int(run.delivery_snapshot().get("pursuit_pressure", -1)) != 1 or str(_dict(run.crew_heist_snapshot().get("getaway", {})).get("exit", "")) != "corridor":
-		failures.append("Plan A slow/quiet corridor route lost its distinct pressure-1 contract.")
-	_move(run, "grand_casino_cage", library, failures)
+	if int(run.delivery_snapshot().get("pursuit_pressure", -1)) != 4 or str(_dict(run.crew_heist_snapshot().get("getaway", {})).get("exit", "")) != "dock":
+		failures.append("Plan A fast/loud dock route lost its historical pressure-4 contract.")
+	_move(run, "delta_queen", library, failures)
 	run.delivery_resolve_travel_arrival()
 	if run.run_status != RunState.RUN_STATUS_ENDED or str(run.crew_heist_snapshot().get("outcome", "")) != "clean_sweep" or run.bankroll < 1000:
 		failures.append("Plan A clean route did not produce its deterministic flat payout and Act 1 victory.")
@@ -222,6 +377,7 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Plan A exit availability did not derive from the optional Debt Court guard setup.")
 	var late := RunStateScript.new()
 	late.from_dict(mid_window.to_dict())
+	HarnessProductionFidelityScript.finalize_arrival(late, library, failures, "Plan A restored late window")
 	late.advance_environment_turns(10)
 	var late_play := _dict(late.crew_heist_snapshot().get("play", {}))
 	if not bool(late_play.get("late", false)) or not bool(late_play.get("corridor_blown", false)) or int(late_play.get("score", 100)) >= 100:
@@ -234,12 +390,14 @@ static func _check_plan_a(library: ContentLibrary, failures: Array) -> void:
 		failures.append("Leaving Plan A's live session did not record its boundary-driven consequence.")
 	var blown := RunStateScript.new()
 	blown.from_dict(mid_window.to_dict())
+	HarnessProductionFidelityScript.finalize_arrival(blown, library, failures, "Plan A restored heat-spike window")
 	blown.crew_heist_state["play"]["round"] = 2
 	blown.crew_heist_state["play"]["decisions"] = {"go": "hold", "distraction": "sit", "exit": "corridor"}
 	# Authoritative game settlement is covered above; isolate the host-owned
 	# heist reducer here to prove the documented heat-spike branch.
 	blown.crew_heist_play_round({"game_id": "blackjack", "bet": 12, "heat_delta": 15}, blown.get("_crew_heist_host_capability"))
-	if not bool(_event_choice(blown, library, "heist_live_table", "begin_getaway").get("ok", false)) or str(_dict(blown.crew_heist_snapshot().get("getaway", {})).get("exit", "")) != "dock":
+	var blown_started := _event_choice(blown, library, "heist_live_table", "begin_getaway")
+	if not bool(blown_started.get("ok", false)) or str(_dict(blown.crew_heist_snapshot().get("getaway", {})).get("exit", "")) != "dock":
 		failures.append("A Plan A heat spike did not blow the corridor and force the dock.")
 	if CrewHeistModelScript.ladder(65, true) != "out_hot" or CrewHeistModelScript.ladder(90, false) != "out_hot" or CrewHeistModelScript.ladder(50, false) != "somebody_got_pinched":
 		failures.append("Plan A ladder fixtures lost their clean/hot/pinched bands.")
@@ -267,7 +425,9 @@ static func _check_plan_b(library: ContentLibrary, failures: Array) -> void:
 	if not bool(_event_choice(run, library, "crew_planning_table", "begin_play").get("ok", false)):
 		failures.append("Plan B did not seed Lucky's drunk and enter the invitational.")
 		return
-	_move(run, "grand_casino_high_limit", library, failures)
+	_move(run, RunState.GRAND_CASINO_ARCHETYPE_ID, library, failures)
+	if not _enter_grand_room(run, RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID, library, failures, "Plan B High-Limit invitational"):
+		return
 	run.current_environment["crew_presence"] = [{"member_id": "crew_velvet", "rank": "inner_circle"}]
 	run.current_environment["active_game_id"] = "craps"
 	var invitational_start := RunStateScript.new()
@@ -438,19 +598,10 @@ static func _check_abort_and_save(library: ContentLibrary, failures: Array) -> v
 	ignored.call("_crew_heist_boundary_sync")
 	if JSON.stringify(ignored.to_dict()) != ignored_before:
 		failures.append("A crew-ignoring action boundary mutated serialized run bytes through the live-table lifecycle.")
-	var identity_shortfall := _run("HEIST-IDENTITY-SHORTFALL", {"audit_night": true})
-	_set_inner(identity_shortfall, "crew_bishop")
-	_event_choice(identity_shortfall, library, "crew_planning_table", "lock_the_count")
-	identity_shortfall.crew_heist_state["setup"] = {"schedule": true, "swap_cart": true}
-	var identity_bankroll := identity_shortfall.bankroll
-	var identity_result := _event_choice(identity_shortfall, library, "crew_planning_table", "begin_play")
-	var identity_abort := _dict(identity_shortfall.crew_heist_snapshot().get("abort", {}))
-	if not bool(identity_result.get("forced", false)) or str(identity_shortfall.crew_heist_snapshot().get("status", "")) != "aborted" or str(identity_abort.get("reason", "")) != "identity_shortfall" or identity_shortfall.bankroll >= identity_bankroll or identity_shortfall.run_status != RunState.RUN_STATUS_ACTIVE:
-		failures.append("Plan A identity shortfall did not force a costed abort while preserving the active run.")
 	var ordinary_gap := _run("HEIST-ORDINARY-SETUP-GAP", {"audit_night": true})
 	_set_inner(ordinary_gap, "crew_bishop")
 	_event_choice(ordinary_gap, library, "crew_planning_table", "lock_the_count")
-	ordinary_gap.crew_heist_state["setup"] = {"identity": true, "identity_sessions": 3, "identity_session_ids": ["a", "b", "c"], "swap_cart": true}
+	ordinary_gap.crew_heist_state["setup"] = {"identity": true, "swap_cart": true}
 	var ordinary_bankroll := ordinary_gap.bankroll
 	var ordinary_result := _event_choice(ordinary_gap, library, "crew_planning_table", "begin_play")
 	if bool(ordinary_result.get("ok", false)) or str(ordinary_gap.crew_heist_snapshot().get("status", "")) != "setup" or ordinary_gap.bankroll != ordinary_bankroll:
@@ -627,19 +778,69 @@ static func _run(seed: String, hooks: Dictionary) -> RunState:
 	var nodes := [
 		{"id": "small_underground_casino", "archetype_id": "small_underground_casino", "kind": "crew", "state": "visited", "seen": true, "environment": {}},
 		{"id": "grand_casino", "archetype_id": "grand_casino", "kind": "casino", "state": "visited", "seen": true, "environment": {}},
-		{"id": "grand_casino_high_limit", "archetype_id": "grand_casino_high_limit", "kind": "casino", "state": "visited", "seen": true, "environment": {}},
-		{"id": "grand_casino_cage", "archetype_id": "grand_casino_cage", "kind": "casino", "state": "visited", "seen": true, "environment": {}},
 		{"id": "delta_queen", "archetype_id": "delta_queen", "kind": "casino", "state": "visited", "seen": true, "environment": {}},
 	]
-	var edges := [{"a": "small_underground_casino", "b": "grand_casino"}, {"a": "grand_casino", "b": "grand_casino_high_limit"}, {"a": "grand_casino", "b": "grand_casino_cage"}, {"a": "grand_casino", "b": "delta_queen"}]
+	var edges := [{"a": "small_underground_casino", "b": "grand_casino"}, {"a": "grand_casino", "b": "delta_queen"}]
 	run.set_world_map({"version": 3, "seed_text": seed, "start_node_id": "small_underground_casino", "current_node_id": "small_underground_casino", "nodes": nodes, "edges": edges, "visited_path": ["small_underground_casino"]})
 	run.set_environment({"id": "small_underground_casino", "world_node_id": "small_underground_casino", "archetype_id": "small_underground_casino", "kind": "crew", "turns": 0, "scenario_hook_flags": hooks.duplicate(true), "event_ids": ["crew_planning_table"], "resolved_event_ids": []})
 	return run
 
 
+static func _set_grand_situation(run: RunState, scenario_id: String, hooks: Dictionary, event_ids: Array = []) -> void:
+	run.set_environment({
+		"id": "grand_casino",
+		"world_node_id": "grand_casino",
+		"archetype_id": "grand_casino",
+		"kind": "boss",
+		"turns": 0,
+		"scenario_id": scenario_id,
+		"scenario_state": {
+			"schema_version": 1,
+			"id": scenario_id,
+			"archetype_id": "grand_casino",
+			"phase_index": 0,
+			"phase_action_counter": 0,
+			"mutations": {},
+			"phases": [],
+		},
+		"scenario_hook_flags": hooks.duplicate(true),
+		"event_ids": event_ids.duplicate(true),
+		"resolved_event_ids": [],
+	})
+	run.world_map["current_node_id"] = "grand_casino"
+	var visited_path := _array(run.world_map.get("visited_path", []))
+	if not visited_path.has("grand_casino"):
+		visited_path.append("grand_casino")
+	run.world_map["visited_path"] = visited_path
+	run.store_current_world_node_environment()
+
+
 static func _move(run: RunState, node_id: String, library: ContentLibrary, failures: Array) -> void:
 	var generator := RunGeneratorScript.new(library)
 	HarnessProductionFidelityScript.travel_and_finalize(generator, run, node_id, true, library, failures, "Crew heist arrival %s" % node_id)
+
+
+static func _enter_grand_room(run: RunState, archetype_id: String, library: ContentLibrary, failures: Array, context: String) -> bool:
+	if run.current_world_node_id() != RunState.GRAND_CASINO_ARCHETYPE_ID:
+		failures.append("%s requires the canonical Grand Casino world node." % context)
+		return false
+	var generator := RunGeneratorScript.new(library)
+	var result := generator.enter_grand_casino_room_result(run, archetype_id)
+	if not bool(result.get("ok", false)):
+		failures.append("%s could not enter %s: %s" % [context, archetype_id, JSON.stringify(result.get("errors", []))])
+		return false
+	if run.current_world_node_id() != RunState.GRAND_CASINO_ARCHETYPE_ID or str(run.current_environment.get("archetype_id", "")) != archetype_id:
+		failures.append("%s lost the canonical Grand world node or installed the wrong interior room." % context)
+		return false
+	return true
+
+
+static func _grand_room_route(archetype_id: String) -> Dictionary:
+	return {
+		"destination_archetype": archetype_id,
+		"target_node_id": RunState.GRAND_CASINO_ARCHETYPE_ID,
+		"local_casino_room": true,
+	}
 
 
 static func _set_inner(run: RunState, member_id: String) -> void:
@@ -659,6 +860,15 @@ static func _choice_ids(choices: Array) -> Array:
 	for value in choices:
 		result.append(str(_dict(value).get("id", "")))
 	return result
+
+
+static func _manifest_row(environment: Dictionary, object_id: String) -> Dictionary:
+	for row_value in _array(_dict(environment.get("object_manifest", {})).get("rows", [])):
+		var row := _dict(row_value)
+		if bool(row.get("active", false)) and bool(row.get("physical", false)) \
+				and str(row.get("presentation_object_id", row.get("object_id", ""))) == object_id:
+			return row
+	return {}
 
 
 static func _terminal_route(route: String) -> RunState:

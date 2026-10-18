@@ -8,13 +8,16 @@ const FIXED_HZ := 60
 const DROP_RELEASE_INTERVAL_TICKS := 20
 const MAX_CATCH_UP_TICKS := 4
 const MAX_SETTLE_TICKS := 1200
-const WEB_PRESENTATION_INTERVAL_MSEC := 1100
-const WEB_INPUT_PRESENTATION_DELAY_MSEC := 96
+# The renderer's packed native batch keeps a published frame bounded. The old
+# 1.1-second Web throttle predated that path and made the cabinet visibly update
+# at less than one frame per second even when the solver itself stayed healthy.
+const WEB_PRESENTATION_INTERVAL_MSEC := 33
+const WEB_INPUT_PRESENTATION_DELAY_MSEC := 33
 
 static var _native_cache_generation := 0
 
 
-static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int) -> Dictionary:
+static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int, start_motor_on_open: bool = false) -> Dictionary:
 	_native_cache_generation += 1
 	if typeof(machine.get("simulation", {})) != TYPE_DICTIONARY \
 			or str((machine.get("simulation", {}) as Dictionary).get("schema", "")) != CoinPusherSolverScript.SCHEMA:
@@ -48,6 +51,17 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 		simulation["cup_consumed_value"] = 0
 	if not machine.has("motor_started"):
 		machine["motor_started"] = false
+	if start_motor_on_open:
+		# The cabinet is frozen only while absent. Re-entry always resumes its
+		# continuously stroking platform unless a hard alarm locked the machine.
+		machine["motor_started"] = not bool(machine.get("locked_down", false))
+		if bool(machine.get("motor_started", false)):
+			simulation["skill_stop_engaged"] = false
+	var run_rate := int(simulation.get("motor_run_rate_fp", CoinPusherSolverScript.FP))
+	var motor_should_run := bool(machine.get("motor_started", false)) \
+			and not bool(machine.get("locked_down", false)) \
+			and not bool(simulation.get("skill_stop_engaged", false))
+	simulation["motor_target_rate_fp"] = run_rate if motor_should_run else 0
 	if typeof(machine.get("drop_queue", [])) != TYPE_ARRAY:
 		machine["drop_queue"] = []
 	if not machine.has("selected_nozzle_id") or str(machine.get("selected_nozzle_id", "")).is_empty():
@@ -716,13 +730,6 @@ static func _restore_extra(body: Dictionary, definition: Dictionary) -> Dictiona
 static func _restored_body(id: String, kind: String, x: int, y: int, z: int, meta: Dictionary, definition: Dictionary, support: String, carried: bool) -> Dictionary:
 	var coins: Dictionary = definition.get("coins", {})
 	return {"id": id, "kind": kind, "x": x, "y": y, "z": z, "vx": 0, "vy": 0, "vz": 0, "radius": int(meta.get("radius", coins.get("radius", 2350))), "height": int(meta.get("height", coins.get("height", 950))), "mass": int(meta.get("mass", coins.get("mass", 1000))), "sleeping": true, "sleep_ticks": 8, "rest_state": "resting", "support_kind": support, "carried_sleep": carried, "meta": meta.duplicate(true)}
-
-
-static func _append_u16(bytes: PackedByteArray, value: int) -> void:
-	bytes.append(value & 255)
-	bytes.append((value >> 8) & 255)
-
-
 static func _read_u16(bytes: PackedByteArray, offset: int) -> int:
 	return int(bytes[offset]) | (int(bytes[offset + 1]) << 8)
 

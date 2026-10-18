@@ -1,6 +1,9 @@
 class_name WorldMapCanvas
 extends Control
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
+
 signal layout_changed
 
 # Lightweight persistent travel-map renderer.
@@ -21,6 +24,10 @@ const CURRENT_MARKER_CORE := Color("#5df2a2")
 const CURRENT_MARKER_LABEL_BG := Color("#05060a", 0.90)
 const CURRENT_MARKER_LABEL_TEXT := Color("#ffffff")
 const CURRENT_MARKER_LABEL_FONT_SIZE := 11
+const DESTINATION_LABEL_FONT_SIZE := 9
+const DESTINATION_LABEL_PADDING := Vector2(6.0, 3.0)
+const DESTINATION_LABEL_EDGE_MARGIN := 4.0
+const TEXTURE_CACHE_MAX_ENTRIES := 128
 
 var snapshot: Dictionary = {}
 var icon_texture_cache: Dictionary = {}
@@ -147,14 +154,6 @@ func set_run_report_replay_progress(progress: float) -> void:
 	queue_redraw()
 
 
-func clear_run_report_replay() -> void:
-	replay_keyframes = []
-	replay_segments = []
-	replay_progress = 1.0
-	replay_reduce_motion = false
-	queue_redraw()
-
-
 func current_view_snapshot() -> Dictionary:
 	_ensure_layout_cache()
 	var view := snapshot.duplicate(true)
@@ -168,17 +167,18 @@ func current_view_snapshot() -> Dictionary:
 		var node_id := str(node.get("id", ""))
 		if not node_is_in_view(node_id):
 			continue
-		var center := _normalized_position(_copy_dict(node.get("position", {})))
+		var center := _normalized_position(JsonCoerceScript._copy_dict(node.get("position", {})))
 		var marker_rect := Rect2(center - ICON_SIZE * 0.5, ICON_SIZE)
 		markers.append({
 			"id": node_id,
-			"position": _copy_dict(node.get("position", {})),
+			"label": str(node.get("label", node.get("display_name", node_id.replace("_", " ").capitalize()))),
+			"position": JsonCoerceScript._copy_dict(node.get("position", {})),
 			"screen_center": {"x": center.x, "y": center.y},
 			"screen_rect": {"x": marker_rect.position.x, "y": marker_rect.position.y, "w": marker_rect.size.x, "h": marker_rect.size.y},
 			"icon_path": str(node.get("icon_path", "")),
 			"travel_target": bool(node.get("travel_target", false)),
 			"travel_enabled": bool(node.get("travel_enabled", false)),
-			"attribute_badges": _copy_array(node.get("attribute_badges", [])),
+			"attribute_badges": JsonCoerceScript._copy_array(node.get("attribute_badges", [])),
 		})
 		if node_id == current_id:
 			current_marker = {
@@ -190,7 +190,7 @@ func current_view_snapshot() -> Dictionary:
 			}
 	view["icon_markers"] = markers
 	view["current_marker"] = current_marker
-	var sweep_marker := _copy_dict(snapshot.get("sweep_marker", {}))
+	var sweep_marker := JsonCoerceScript._copy_dict(snapshot.get("sweep_marker", {}))
 	var sweep_node_id := str(sweep_marker.get("node_id", ""))
 	if not sweep_marker.is_empty() and node_screen_position_cache.has(sweep_node_id):
 		var sweep_center := node_screen_position_cache.get(sweep_node_id, Vector2.ZERO) as Vector2
@@ -260,6 +260,10 @@ func local_visual_rect_for_node(node_id: String) -> Rect2:
 	var visual_rect := Rect2(center - Vector2(radius, radius), Vector2(radius * 2.0, radius * 2.0))
 	if current:
 		visual_rect = visual_rect.merge(_current_node_label_rect(center))
+	else:
+		var node: Dictionary = nodes_by_id_cache.get(node_id, {})
+		if bool(node.get("travel_target", false)) or node_id == str(snapshot.get("selected_node_id", "")):
+			visual_rect = visual_rect.merge(_destination_node_label_rect(center, node))
 	return visual_rect
 
 
@@ -399,7 +403,7 @@ func _draw_route_path_geometry() -> void:
 
 func _draw_path() -> void:
 	var nodes := nodes_by_id_cache
-	var path := _string_array(snapshot.get("visited_path", []))
+	var path := JsonCoerceScript._string_array(snapshot.get("visited_path", []))
 	for index in range(path.size() - 1):
 		var a := _node_position(nodes, str(path[index]))
 		var b := _node_position(nodes, str(path[index + 1]))
@@ -426,7 +430,7 @@ func _draw_path() -> void:
 
 
 func _draw_sweep_marker() -> void:
-	var marker := _copy_dict(snapshot.get("sweep_marker", {}))
+	var marker := JsonCoerceScript._copy_dict(snapshot.get("sweep_marker", {}))
 	var node_id := str(marker.get("node_id", "")).strip_edges()
 	if marker.is_empty() or node_id.is_empty() or not node_screen_position_cache.has(node_id):
 		return
@@ -494,7 +498,7 @@ func _draw_replay_marker_at(marker: Vector2, label: String) -> void:
 func _replay_marker_state() -> Dictionary:
 	if replay_segments.is_empty():
 		return {"progress": replay_progress, "segment_count": 0}
-	var selected := _copy_dict(replay_segments[-1])
+	var selected := JsonCoerceScript._copy_dict(replay_segments[-1])
 	for segment_value in replay_segments:
 		if typeof(segment_value) != TYPE_DICTIONARY:
 			continue
@@ -575,6 +579,8 @@ func _draw_nodes() -> void:
 			draw_circle(pos, 7.0, color if is_current or travel_enabled else Color(color.r, color.g, color.b, alpha))
 		if is_current:
 			_draw_current_node_pin(pos, node)
+		elif travel_target or node_id == selected_id:
+			_draw_destination_node_label(pos, node, color)
 		if travel_target:
 			var status_color := Color("#5df2a2", alpha)
 			if bool(node.get("closing_soon", false)):
@@ -597,6 +603,47 @@ func _draw_current_node_ring(pos: Vector2, radius: float) -> void:
 	draw_circle(pos, radius + 9.0 + pulse * 3.0, Color(CURRENT_MARKER_RING, 0.18 + pulse * 0.12), false, 3.0)
 	draw_circle(pos, radius + 5.0, Color(CURRENT_MARKER_CORE, 0.72), false, 2.0)
 	draw_circle(pos, radius + 1.5, Color("#ffffff", 0.80), false, 1.5)
+
+
+func _draw_destination_node_label(pos: Vector2, node: Dictionary, color: Color) -> void:
+	var label := _destination_node_label(node)
+	if label.is_empty():
+		return
+	var font := ThemeDB.fallback_font
+	var rect := _destination_node_label_rect(pos, node)
+	draw_rect(rect, Color("#05060a", 0.84))
+	draw_rect(rect, Color(color.r, color.g, color.b, 0.76), false, 1.0)
+	var baseline := rect.position + Vector2(
+		DESTINATION_LABEL_PADDING.x,
+		DESTINATION_LABEL_PADDING.y + font.get_ascent(DESTINATION_LABEL_FONT_SIZE)
+	)
+	draw_string(font, baseline, label, HORIZONTAL_ALIGNMENT_CENTER, rect.size.x - DESTINATION_LABEL_PADDING.x * 2.0, DESTINATION_LABEL_FONT_SIZE, Color("#ffffff", 0.92))
+
+
+func _destination_node_label_rect(pos: Vector2, node: Dictionary) -> Rect2:
+	var label := _destination_node_label(node)
+	if label.is_empty():
+		return Rect2()
+	var font := ThemeDB.fallback_font
+	var text_size := font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1.0, DESTINATION_LABEL_FONT_SIZE)
+	var label_size := Vector2(
+		ceilf(text_size.x + DESTINATION_LABEL_PADDING.x * 2.0),
+		ceilf(maxf(text_size.y, font.get_height(DESTINATION_LABEL_FONT_SIZE)) + DESTINATION_LABEL_PADDING.y * 2.0)
+	)
+	label_size.x = minf(label_size.x, maxf(1.0, size.x - DESTINATION_LABEL_EDGE_MARGIN * 2.0))
+	var label_pos := pos + Vector2(-label_size.x * 0.5, MARKER_RADIUS + 7.0)
+	if label_pos.y + label_size.y > size.y - DESTINATION_LABEL_EDGE_MARGIN:
+		label_pos.y = pos.y - MARKER_RADIUS - label_size.y - 7.0
+	label_pos.x = clampf(
+		label_pos.x,
+		DESTINATION_LABEL_EDGE_MARGIN,
+		maxf(DESTINATION_LABEL_EDGE_MARGIN, size.x - label_size.x - DESTINATION_LABEL_EDGE_MARGIN)
+	)
+	return Rect2(Vector2(roundf(label_pos.x), roundf(label_pos.y)), label_size)
+
+
+func _destination_node_label(node: Dictionary) -> String:
+	return str(node.get("label", node.get("display_name", str(node.get("id", "")).replace("_", " ").capitalize()))).strip_edges()
 
 
 func _draw_current_node_pin(pos: Vector2, node: Dictionary) -> void:
@@ -642,14 +689,14 @@ func _current_marker_pulse_active() -> bool:
 func _rebuild_snapshot_cache() -> void:
 	nodes_by_id_cache = {}
 	courier_edge_reads_by_id = {}
-	var courier_layer := _copy_dict(snapshot.get("courier_layer", {}))
+	var courier_layer := JsonCoerceScript._copy_dict(snapshot.get("courier_layer", {}))
 	courier_active = bool(courier_layer.get("active", false))
 	courier_header_text = ""
 	if courier_active:
-		var cargo := _copy_dict(courier_layer.get("cargo", {}))
-		courier_header_text = "%s · CONTRABAND · %d ACTIONS" % [
+		var cargo := JsonCoerceScript._copy_dict(courier_layer.get("cargo", {}))
+		courier_header_text = "%s · CONTRABAND · %s" % [
 			str(cargo.get("label", "Cargo")).to_upper(),
-			int(courier_layer.get("deadline_remaining", 0)),
+			PlayerTextScript.count_text("action", int(courier_layer.get("deadline_remaining", 0))).to_upper(),
 		]
 		for read_value in _array_view(courier_layer.get("edge_reads", [])):
 			if typeof(read_value) != TYPE_DICTIONARY:
@@ -687,7 +734,7 @@ func _ensure_layout_cache() -> void:
 func _rebuild_layout_cache() -> void:
 	var next_basis_signature := _map_view_basis_signature()
 	var next_selected_node_id := str(snapshot.get("selected_node_id", "")).strip_edges()
-	var next_focus_node_ids := _string_array(snapshot.get("map_focus_node_ids", []))
+	var next_focus_node_ids := JsonCoerceScript._string_array(snapshot.get("map_focus_node_ids", []))
 	var next_layout_size := _current_or_default_layout_size()
 	var layout_size_changed := stable_layout_size.x <= 0.0 or stable_layout_size.y <= 0.0 or absf(stable_layout_size.x - next_layout_size.x) > 2.0 or absf(stable_layout_size.y - next_layout_size.y) > 2.0
 	if next_basis_signature != map_view_basis_signature or map_view_selected_node_id_cache != next_selected_node_id or map_view_focus_node_ids_cache != next_focus_node_ids or layout_size_changed:
@@ -781,14 +828,6 @@ func _compute_map_view_bounds() -> Rect2:
 	var y0 := clampf(center.y - height * 0.5, 0.0, 1.0 - height)
 	var base_bounds := Rect2(Vector2(x0, y0), Vector2(width, height))
 	return _navigation_or_authored_bounds(_selected_focus_bounds(base_bounds))
-
-
-func pan_map(direction: Vector2) -> void:
-	if direction == Vector2.ZERO:
-		return
-	_ensure_layout_cache()
-	var bounds := target_map_view_bounds_cache
-	_set_navigation_bounds(Rect2(bounds.position + direction * bounds.size * 0.18, bounds.size), false)
 
 
 func zoom_map(step: int, local_anchor: Vector2 = Vector2(-1.0, -1.0)) -> bool:
@@ -939,7 +978,7 @@ func _navigation_content_signature(map_snapshot: Dictionary) -> String:
 		])
 	parts.sort()
 	parts.append("current:%s" % str(map_snapshot.get("current_node_id", "")))
-	var enabled_ids := _string_array(map_snapshot.get("travel_enabled_node_ids", []))
+	var enabled_ids := JsonCoerceScript._string_array(map_snapshot.get("travel_enabled_node_ids", []))
 	enabled_ids.sort()
 	parts.append("enabled:%s" % ",".join(enabled_ids))
 	parts.append("fit_all:%s" % str(bool(map_snapshot.get("fit_all_nodes", false))))
@@ -1083,10 +1122,6 @@ func _point_in_view(point: Vector2, margin: float = 0.0) -> bool:
 	return point.x >= -margin and point.y >= -margin and point.x <= layout_size.x + margin and point.y <= layout_size.y + margin
 
 
-func _segment_in_view(a: Vector2, b: Vector2) -> bool:
-	return not _clipped_segment_to_view(a, b).is_empty()
-
-
 func _clipped_segment_to_view(a: Vector2, b: Vector2, margin: float = 0.0) -> Array:
 	var layout_size := _current_or_default_layout_size()
 	var min_x := -margin
@@ -1164,7 +1199,7 @@ func _travel_edge_ids(enabled_only: bool) -> Array:
 		var path_data: Dictionary = path_value
 		if enabled_only and not bool(path_data.get("enabled", false)):
 			continue
-		var path := _string_array(path_data.get("path", []))
+		var path := JsonCoerceScript._string_array(path_data.get("path", []))
 		for index in range(path.size() - 1):
 			var edge_id := _edge_id(str(path[index]), str(path[index + 1]))
 			if not edge_id.is_empty() and not result.has(edge_id):
@@ -1189,6 +1224,8 @@ func _background_texture() -> Texture2D:
 	if background_texture_cache.has(path):
 		return background_texture_cache[path] as Texture2D
 	var texture := _texture_for_path(path)
+	if background_texture_cache.size() >= TEXTURE_CACHE_MAX_ENTRIES:
+		background_texture_cache.clear()
 	background_texture_cache[path] = texture
 	return texture
 
@@ -1202,6 +1239,8 @@ func _texture_for_node(node: Dictionary) -> Texture2D:
 	if icon_texture_cache.has(path):
 		return icon_texture_cache[path] as Texture2D
 	var texture := _texture_for_path(path)
+	if icon_texture_cache.size() >= TEXTURE_CACHE_MAX_ENTRIES:
+		icon_texture_cache.clear()
 	icon_texture_cache[path] = texture
 	return texture
 
@@ -1216,6 +1255,8 @@ func _prewarm_map_icon_directory() -> void:
 		if not directory.current_is_dir() and file_name.ends_with(".png"):
 			var path := "%s/%s" % [MAP_ICON_DIR, file_name]
 			if not icon_texture_cache.has(path):
+				if icon_texture_cache.size() >= TEXTURE_CACHE_MAX_ENTRIES:
+					icon_texture_cache.clear()
 				icon_texture_cache[path] = _texture_for_path(path)
 		file_name = directory.get_next()
 	directory.list_dir_end()
@@ -1234,26 +1275,3 @@ static func _array_view(value: Variant) -> Array:
 	if typeof(value) != TYPE_ARRAY:
 		return []
 	return value as Array
-
-
-static func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
-static func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		var text := str(entry).strip_edges()
-		if not text.is_empty():
-			result.append(text)
-	return result

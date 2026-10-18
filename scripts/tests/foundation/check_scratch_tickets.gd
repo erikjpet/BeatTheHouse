@@ -45,10 +45,10 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 		failures.append("Scratch Tickets did not route to its native surface.")
 	var counter_ritual: Dictionary = surface.get("counter_ritual", {}) if typeof(surface.get("counter_ritual", {})) == TYPE_DICTIONARY else {}
 	var counter_attention: Dictionary = counter_ritual.get("attention", {}) if typeof(counter_ritual.get("attention", {})) == TYPE_DICTIONARY else {}
-	if str(surface.get("surface_cast", "")) != "clerk_and_machine" or (counter_ritual.get("actors", []) as Array).is_empty() or (counter_ritual.get("objects", []) as Array).size() < 3:
-		failures.append("Scratch Tickets did not project the clerk, rack, counter, and losing-ticket pile as material ritual state.")
+	if str(surface.get("surface_cast", "")) != "counter_staff_and_machine" or (counter_ritual.get("actors", []) as Array).is_empty() or (counter_ritual.get("objects", []) as Array).size() < 3:
+		failures.append("Scratch Tickets did not project counter staff, rack, counter, and losing-ticket pile as material ritual state.")
 	if bool(counter_attention.get("reveals_hidden_outcomes", true)) or int(counter_attention.get("suspicion", -1)) != run_state.suspicion_level():
-		failures.append("Scratch clerk attention leaked ticket contents or diverged from existing suspicion authority.")
+		failures.append("Scratch counter-staff attention leaked ticket contents or diverged from existing suspicion authority.")
 	if not bool(surface.get("surface_animates_idle", false)) or bool(surface.get("surface_realtime_state_refresh", true)):
 		failures.append("Scratch Tickets idle liveness/zero-copy flags are incorrect.")
 	var cash_hooks := game.environment_interactable_objects(run_state, environment)
@@ -57,10 +57,10 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 		if typeof(hook_value) != TYPE_DICTIONARY:
 			continue
 		for action_value in (hook_value as Dictionary).get("available_actions", []):
-			if typeof(action_value) == TYPE_DICTIONARY and str((action_value as Dictionary).get("label", "")) == "Cash In":
+			if typeof(action_value) == TYPE_DICTIONARY and str((action_value as Dictionary).get("label", "")) == "Cash In Scratchers":
 				scratch_cash_in_found = true
 	if not scratch_cash_in_found:
-		failures.append("Scratch Tickets redemption control did not use the Cash In label.")
+		failures.append("Scratch Tickets redemption control did not use the explicit Cash In Scratchers label.")
 	if not bool(surface.get("surface_pointer_coalesce_moves", false)) or not game.surface_pointer_uses_lightweight_ui_state("scratch_scrub"):
 		failures.append("Scratch Tickets did not retain coalesced lightweight pointer input.")
 	var main_source := FileAccess.get_file_as_string("res://scripts/ui/foundation_main.gd")
@@ -81,7 +81,7 @@ func _check_scratch_tickets_surface_contract(game: GameModule, failures: Array) 
 	if not _surface_harness_has_action(compact_harness, "scratch_compact_machine") or not _surface_harness_has_action(compact_harness, "scratch_compact_ticket"):
 		failures.append("Scratch Tickets small-screen mode labels compact tabs without drawing both tab controls.")
 	var art_features: Array = surface.get("scratch_machine_art_features", []) if typeof(surface.get("scratch_machine_art_features", [])) == TYPE_ARRAY else []
-	for feature in ["floor_unit", "jackpot_marquee", "glass_stock_rows", "branded_side_panel", "selection_buttons", "dispensing_tray"]:
+	for feature in ["floor_unit", "jackpot_marquee", "glass_stock_rows", "touch_selection_console", "foil_pack_display", "tap_payment_reader", "selection_buttons", "motorized_lift_rails", "moving_pickup_shelf", "dispensing_tray"]:
 		if not art_features.has(feature):
 			failures.append("Scratch vending-machine art contract is missing %s." % feature)
 	var harness := SurfaceHarness.new()
@@ -243,13 +243,32 @@ func _check_scratch_purchase_and_input(game: GameModule, run_state: RunState, en
 	var purchase_transaction: Dictionary = purchase_ritual.get("transaction", {}) if typeof(purchase_ritual.get("transaction", {})) == TYPE_DICTIONARY else {}
 	if str(purchase_transaction.get("kind", "")) != "purchase" or int(purchase_transaction.get("price", 0)) != int(purchase.get("stake", 0)):
 		failures.append("Scratch purchase did not persist its exact counter handover transaction.")
+	var purchased_machine: Dictionary = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+	var tray := _dict_array(purchased_machine.get("tray_stack", []))
+	var dispense_events := _dict_array(purchase_surface.get("scratch_dispense_events", []))
+	if tray.size() != 1 or not (purchased_machine.get("active_ticket", {}) as Dictionary).is_empty():
+		failures.append("Scratch purchase bypassed the physical output tray.")
+	if dispense_events.size() != 1 or int((dispense_events[0] as Dictionary).get("duration_msec", 0)) != 1500:
+		failures.append("Scratch dispenser did not schedule one 1.5-second lift cycle per ticket.")
+	var purchase_harness := SurfaceHarness.new()
+	purchase_harness.setup(purchase_surface)
+	game.draw_surface(purchase_harness, purchase_surface, {"contract_harness": true})
+	if not _surface_harness_has_action(purchase_harness, "scratch_collect_tray"):
+		failures.append("Scratch output tray did not expose its collect interaction after dispensing.")
 	var result_ticket: Dictionary = purchase.get("scratch_ticket", {}) if typeof(purchase.get("scratch_ticket", {})) == TYPE_DICTIONARY else {}
 	if result_ticket.has("latex_mask") or result_ticket.has("scratch_regions"):
 		failures.append("Scratch ticket purchase duplicated its live foil mask into the action result.")
-	var ticket: Dictionary = ((environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {}) as Dictionary).get("active_ticket", {})
+	var ticket: Dictionary = tray[0] if not tray.is_empty() else {}
 	var initial_mask: Array = ticket.get("latex_mask", []) if typeof(ticket.get("latex_mask", [])) == TYPE_ARRAY else []
 	if not initial_mask.is_empty() or not _dict_array(ticket.get("scratch_regions", [])).is_empty():
 		failures.append("Scratch ticket purchase eagerly allocated its high-resolution foil before presentation.")
+	var collect := game.surface_action_command("scratch_collect_tray", 0, false, buy_command.get("ui_state", {}), run_state, environment)
+	if not bool(collect.get("environment_changed", false)):
+		failures.append("Scratch tray collection did not commit the ticket to the play area.")
+	purchased_machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+	ticket = purchased_machine.get("active_ticket", {})
+	if ticket.is_empty() or not _dict_array(purchased_machine.get("tray_stack", [])).is_empty():
+		failures.append("Scratch tray collection did not move its ticket onto the scratch surface.")
 	var original_mask := (ticket.get("latex_mask", []) as Array).duplicate()
 	var begin := game.surface_pointer_command("scratch_scrub", 0, "begin", Vector2(400, 160), {}, run_state, environment)
 	game.surface_pointer_command("scratch_scrub", 0, "end", Vector2(400, 160), begin.get("ui_state", {}), run_state, environment)
@@ -712,8 +731,17 @@ func _check_scratch_result_and_queue_flow(game: GameModule, failures: Array) -> 
 	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
 	if run_state.bankroll != before - expected_price * 3:
 		failures.append("Scratch multi-buy did not charge N times the ticket price.")
-	if _dict_array(machine.get("pending_queue", [])).size() != 2 or (machine.get("active_ticket", {}) as Dictionary).is_empty():
-		failures.append("Scratch multi-buy did not leave one active ticket plus a queued stack.")
+	if _dict_array(machine.get("tray_stack", [])).size() != 3 or not (machine.get("active_ticket", {}) as Dictionary).is_empty():
+		failures.append("Scratch multi-buy did not leave all purchased tickets in the delivery tray.")
+	var dispensing_surface := game.surface_state(run_state, environment, buy.get("ui_state", {}))
+	var dispense_channels: Array = dispensing_surface.get("surface_animation_channels", [])
+	var dispense_channel: Dictionary = dispense_channels[0] if not dispense_channels.is_empty() and typeof(dispense_channels[0]) == TYPE_DICTIONARY else {}
+	if int(dispense_channel.get("duration_msec", 0)) != 4500 or _dict_array(dispensing_surface.get("scratch_dispense_events", [])).size() != 3:
+		failures.append("Scratch multi-buy did not schedule three complete 1.5-second dispense cycles.")
+	game.surface_action_command("scratch_collect_tray", 0, false, buy.get("ui_state", {}), run_state, environment)
+	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+	if _dict_array(machine.get("pending_queue", [])).size() != 2 or (machine.get("active_ticket", {}) as Dictionary).is_empty() or not _dict_array(machine.get("tray_stack", [])).is_empty():
+		failures.append("Scratch tray collection did not leave one active ticket plus a queued stack.")
 	var first_id := str((machine.get("active_ticket", {}) as Dictionary).get("id", ""))
 	var scratch_all_command := game.surface_action_command("scratch_all", 0, false, {}, run_state, environment)
 	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
@@ -849,12 +877,12 @@ func _check_scratch_save_restore(game: GameModule, failures: Array) -> void:
 	run_state.store_current_world_node_environment()
 	var save_data := run_state.to_dict()
 	var saved_machine: Dictionary = (save_data.get("current_environment", {}).get("game_states", {}) as Dictionary).get("scratch_tickets", {})
-	if saved_machine.has("active_ticket") or saved_machine.has("pending_queue"):
+	if saved_machine.has("active_ticket") or saved_machine.has("tray_stack") or saved_machine.has("pending_queue"):
 		failures.append("Scratch save duplicated player-owned tickets inside the current environment snapshot.")
 	var saved_nodes: Array = (save_data.get("world_map", {}) as Dictionary).get("nodes", [])
 	var saved_node_environment: Dictionary = (saved_nodes[0] as Dictionary).get("environment", {}) if not saved_nodes.is_empty() else {}
 	var saved_node_machine: Dictionary = (saved_node_environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
-	if saved_node_machine.has("active_ticket") or saved_node_machine.has("pending_queue"):
+	if saved_node_machine.has("active_ticket") or saved_node_machine.has("tray_stack") or saved_node_machine.has("pending_queue"):
 		failures.append("Scratch save duplicated player-owned tickets inside a stored world-map environment.")
 	# Simulate a pre-fix save: completed masks existed in the portable pile and
 	# the entire player-owned machine was duplicated in the world-map node.
@@ -891,7 +919,7 @@ func _check_scratch_save_restore(game: GameModule, failures: Array) -> void:
 	var migrated_node: Dictionary = ((restored.world_map.get("nodes", []) as Array)[0] as Dictionary)
 	var migrated_node_environment: Dictionary = migrated_node.get("environment", {})
 	var migrated_node_machine: Dictionary = (migrated_node_environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
-	if migrated_node_machine.has("active_ticket") or migrated_node_machine.has("pending_queue") or migrated_node_machine.has("loser_pile"):
+	if migrated_node_machine.has("active_ticket") or migrated_node_machine.has("tray_stack") or migrated_node_machine.has("pending_queue") or migrated_node_machine.has("loser_pile"):
 		failures.append("Scratch save migration retained duplicate player-owned state in the world-map node.")
 
 
@@ -1415,29 +1443,54 @@ func _check_scratch_scalper_restock_arrival(game: GameModule, failures: Array) -
 
 
 func _check_environment_person_transits(failures: Array) -> void:
+	var scalper_fixture := _bound_person_transit_fixture(
+		"gas_station_casino",
+		"dialogue:scratch_ticket_scalper",
+		"event"
+	)
+	var nell_fixture := _bound_person_transit_fixture(
+		"gas_station_casino",
+		"character:nell",
+		"fixed"
+	)
+	var gas_surfaces := JsonCoerceScript._copy_dict(scalper_fixture.get("surface_map", {}))
+	var priority_exit := _person_transit_priority_exit_slot(gas_surfaces)
+	if scalper_fixture.is_empty() or nell_fixture.is_empty() or priority_exit.is_empty():
+		failures.append("Person transit fixture could not resolve the gas-station person bindings and priority exit from placement authority.")
+		return
+	var settled_person := JsonCoerceScript._copy_dict(scalper_fixture.get("record", {}))
+	var settled_rect := _person_transit_slot_rect(JsonCoerceScript._copy_dict(scalper_fixture.get("slot", {})))
+	var doorway_rect := _person_transit_slot_rect(priority_exit)
+	if not settled_rect.has_area() or not doorway_rect.has_area():
+		failures.append("Person transit fixture resolved a bound person slot or priority exit without authored hit geometry.")
+		return
 	var canvas: Control = ScratchPixelSceneCanvasScript.new()
-	var settled_person := _person_transit_record("dialogue:scratch_ticket_scalper", 0.46)
-	var room := _person_transit_room("person-transit-visit", [_person_transit_record("shopkeeper:clerk", 0.30)])
+	var settled_package := _non_person_transit_record("delivery:pickup:gas_station_casino", 0.62)
+	var room := _person_transit_room("person-transit-visit", [JsonCoerceScript._copy_dict(nell_fixture.get("record", {}))])
 	canvas.call("render_environment_snapshot", room)
 	var changed_room := room.duplicate(true)
-	changed_room["interactable_objects"] = [room["interactable_objects"][0], settled_person]
+	changed_room["interactable_objects"] = [room["interactable_objects"][0], settled_person, settled_package]
 	var sealed_input := JSON.stringify(changed_room.get("interactable_objects", []))
 	canvas.call("render_environment_snapshot", changed_room)
 	if JSON.stringify(changed_room.get("interactable_objects", [])) != sealed_input:
 		failures.append("Person arrival transit mutated the settled interaction geometry source.")
 	var arrival := _canvas_object(canvas, "dialogue:scratch_ticket_scalper")
+	var package := _canvas_object(canvas, "delivery:pickup:gas_station_casino")
+	if package.is_empty() or bool(package.get("person_transit_active", false)) or (canvas.get("person_transit_ids") as Array).has("delivery:pickup:gas_station_casino"):
+		failures.append("A non-person package inherited a person arrival transit from its placement class.")
 	if not bool(arrival.get("person_transit_active", false)) or str(arrival.get("person_transit_kind", "")) != "arrival":
 		failures.append("A person added mid-visit did not begin at the authored doorway transit.")
 	elif bool(arrival.get("interactive", true)) or (canvas.call("_interaction_rect_for_object", arrival) as Rect2).has_area():
 		failures.append("An arriving person remained a moving click target.")
 	else:
 		var points: Array = arrival.get("actor_route_points", [])
-		if points.size() != 3:
+		if points.size() < 2:
 			failures.append("Person arrival did not use the bounded doorway/floor/settled route.")
 		else:
 			var doorway_point := Vector2(float((points[0] as Dictionary).get("x", -1.0)), float((points[0] as Dictionary).get("y", -1.0))) * Vector2(900, 430)
-			if doorway_point.x > 90.0:
-				failures.append("Person arrival did not choose the nearest authored gas-station doorway.")
+			var settled_point := Vector2(float((points.back() as Dictionary).get("x", -1.0)), float((points.back() as Dictionary).get("y", -1.0))) * Vector2(900, 430)
+			if not doorway_point.is_equal_approx(doorway_rect.get_center()) or not settled_point.is_equal_approx(settled_rect.get_center()):
+				failures.append("Person arrival did not follow the authored-priority exit and bound person slot.")
 	canvas.set("actor_route_time", 20.0)
 	canvas.call("_advance_person_transits")
 	var arrived := _canvas_object(canvas, "dialogue:scratch_ticket_scalper")
@@ -1445,8 +1498,19 @@ func _check_environment_person_transits(failures: Array) -> void:
 		failures.append("An arriving person did not become interactive exactly after settling.")
 	canvas.call("render_environment_snapshot", room)
 	var departure := _canvas_object(canvas, "dialogue:scratch_ticket_scalper")
+	if not _canvas_object(canvas, "delivery:pickup:gas_station_casino").is_empty():
+		failures.append("A removed non-person package walked away instead of disappearing in place.")
 	if not bool(departure.get("person_transit_active", false)) or str(departure.get("person_transit_kind", "")) != "departure" or bool(departure.get("interactive", true)):
 		failures.append("A person removed mid-visit did not walk out as a non-interactive departure.")
+	else:
+		var departure_points: Array = departure.get("actor_route_points", [])
+		if departure_points.size() < 2:
+			failures.append("Person departure did not preserve the authored bound-slot route.")
+		else:
+			var departure_start := Vector2(float((departure_points[0] as Dictionary).get("x", -1.0)), float((departure_points[0] as Dictionary).get("y", -1.0))) * Vector2(900, 430)
+			var departure_exit := Vector2(float((departure_points.back() as Dictionary).get("x", -1.0)), float((departure_points.back() as Dictionary).get("y", -1.0))) * Vector2(900, 430)
+			if not departure_start.is_equal_approx(settled_rect.get_center()) or not departure_exit.is_equal_approx(doorway_rect.get_center()):
+				failures.append("Person departure did not reverse the authored-priority bound-slot route.")
 	canvas.set("actor_route_time", 40.0)
 	canvas.call("_advance_person_transits")
 	if not _canvas_object(canvas, "dialogue:scratch_ticket_scalper").is_empty():
@@ -1463,28 +1527,53 @@ func _check_environment_person_transits(failures: Array) -> void:
 	entry_canvas.call("render_environment_snapshot", _person_transit_room("entry-after", [settled_person]))
 	if int(entry_canvas.get("person_transit_ids").size()) != 0:
 		failures.append("People already present paraded in when the player entered a room.")
+	var routed_capacity_records := _routed_person_transit_capacity_records("delta_queen", 10)
+	if routed_capacity_records.size() < 10:
+		failures.append("Person transit cap fixture could not resolve ten distinct lane-routed person slots from Delta Queen placement authority.")
+		canvas.queue_free()
+		reduced_canvas.queue_free()
+		entry_canvas.queue_free()
+		return
+	var lane_crowd: Array = routed_capacity_records.slice(0, 8)
+	lane_crowd.append(_person_transit_record("person:cap_08", "", "standing_person", Rect2(), "overflow"))
+	lane_crowd.append(_person_transit_record("person:cap_09", "", "standing_person", Rect2(), "overflow"))
+	var overflow_canvas: Control = ScratchPixelSceneCanvasScript.new()
+	overflow_canvas.call("render_environment_snapshot", _person_transit_room("overflow-visit", [], "delta_queen"))
+	overflow_canvas.call("render_environment_snapshot", _person_transit_room("overflow-visit", lane_crowd, "delta_queen"))
+	if (overflow_canvas.get("foundation_scene_objects") as Array).size() != 8:
+		failures.append("Geometry-free overflow people leaked into the fixed-slot room canvas.")
+	# Use the first ten distinct person-capable slots sharing the priority exit's
+	# authored lane. This keeps the hostile cap fixture semantic when those slots
+	# are manually repositioned in the placement tool.
+	var cap_crowd: Array = routed_capacity_records
 	var cap_canvas: Control = ScratchPixelSceneCanvasScript.new()
-	cap_canvas.call("render_environment_snapshot", _person_transit_room("cap-visit", []))
-	var crowd: Array = []
-	for index in range(10):
-		crowd.append(_person_transit_record("person:cap_%02d" % index, 0.12 + float(index) * 0.075))
-	cap_canvas.call("render_environment_snapshot", _person_transit_room("cap-visit", crowd))
-	if int(cap_canvas.get("person_transit_ids").size()) != 8 or (cap_canvas.get("foundation_scene_objects") as Array).size() != 10:
-		failures.append("Person transit cap did not animate the deterministic first eight and settle overflow immediately.")
+	cap_canvas.call("render_environment_snapshot", _person_transit_room("cap-visit", [], "delta_queen"))
+	cap_canvas.call("render_environment_snapshot", _person_transit_room("cap-visit", cap_crowd, "delta_queen"))
+	var cap_snapshot: Dictionary = cap_canvas.call("debug_soak_snapshot")
+	var expected_transit_ids := [
+		"person:cap_00", "person:cap_01", "person:cap_02", "person:cap_03",
+		"person:cap_04", "person:cap_05", "person:cap_06", "person:cap_07",
+	]
+	if int(cap_canvas.get("person_transit_ids").size()) != 8 \
+			or (cap_canvas.get("foundation_scene_objects") as Array).size() != 10 \
+			or int(cap_snapshot.get("person_transit_cap", -1)) != 8 \
+			or JsonCoerceScript._raw_string_array(cap_canvas.get("person_transit_ids")) != expected_transit_ids:
+		failures.append("Person transit cap did not animate the deterministic first eight arrivals under hostile excess input.")
 	cap_canvas.call("settle_person_transits")
 	if int(cap_canvas.get("person_transit_ids").size()) != 0:
 		failures.append("Save/reload transit settlement left presentation motion alive.")
 	canvas.queue_free()
 	reduced_canvas.queue_free()
 	entry_canvas.queue_free()
+	overflow_canvas.queue_free()
 	cap_canvas.queue_free()
 
 
-func _person_transit_room(visit_id: String, objects: Array) -> Dictionary:
+func _person_transit_room(visit_id: String, objects: Array, archetype_id: String = "gas_station_casino") -> Dictionary:
 	return {
 		"id": "scratch_person_transit_room",
-		"world_node_id": "gas_station_casino",
-		"archetype_id": "gas_station_casino",
+		"world_node_id": archetype_id,
+		"archetype_id": archetype_id,
 		"environment_visit_id": visit_id,
 		"entered_game_clock_minutes": 720,
 		"interactable_objects": objects,
@@ -1492,7 +1581,115 @@ func _person_transit_room(visit_id: String, objects: Array) -> Dictionary:
 	}
 
 
-func _person_transit_record(object_id: String, center_x: float) -> Dictionary:
+func _bound_person_transit_fixture(archetype_id: String, object_id: String, family: String) -> Dictionary:
+	var surface_map := EnvironmentPlacementScript.surface_map({
+		"id": archetype_id,
+		"world_node_id": archetype_id,
+		"archetype_id": archetype_id,
+	})
+	var binding_map := JsonCoerceScript._copy_dict(surface_map.get("%s_object_slot_ids" % family, {}))
+	var slot_id := str(binding_map.get(object_id, "")).strip_edges()
+	var slot := _person_transit_slot_by_id(surface_map, slot_id)
+	var rect := _person_transit_slot_rect(slot)
+	var placement_class := str(slot.get("footprint_class", "")).strip_edges()
+	if slot_id.is_empty() or slot.is_empty() or not rect.has_area() \
+			or str(slot.get("kind", "")) != family \
+			or not EnvironmentPlacementScript.is_person_class(placement_class):
+		return {}
+	return {
+		"surface_map": surface_map,
+		"slot": slot,
+		"record": _person_transit_record(object_id, slot_id, placement_class, rect),
+	}
+
+
+func _routed_person_transit_capacity_records(archetype_id: String, wanted_count: int) -> Array:
+	var surface_map := EnvironmentPlacementScript.surface_map({
+		"id": archetype_id,
+		"world_node_id": archetype_id,
+		"archetype_id": archetype_id,
+	})
+	var exit_slot := _person_transit_priority_exit_slot(surface_map)
+	var exit_lane_ids := JsonCoerceScript._raw_string_array(exit_slot.get("walk_lane_ids", []))
+	if exit_slot.is_empty() or exit_lane_ids.is_empty():
+		return []
+	var candidates: Array = []
+	var family_rank := {"fixed": 0, "event": 1, "scenario": 2}
+	for field in ["fixed_slots", "event_slots", "scenario_slots"]:
+		for slot_value in _dict_array(surface_map.get(field, [])):
+			var slot := slot_value as Dictionary
+			var placement_class := str(slot.get("footprint_class", "")).strip_edges()
+			if not EnvironmentPlacementScript.is_person_class(placement_class) or not _person_transit_slot_rect(slot).has_area():
+				continue
+			var shares_exit_lane := false
+			for lane_id in JsonCoerceScript._raw_string_array(slot.get("walk_lane_ids", [])):
+				if exit_lane_ids.has(lane_id):
+					shares_exit_lane = true
+					break
+			if shares_exit_lane:
+				candidates.append(slot.duplicate(true))
+	candidates.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		var left := JsonCoerceScript._copy_dict(left_value)
+		var right := JsonCoerceScript._copy_dict(right_value)
+		var left_family := int(family_rank.get(str(left.get("kind", "")), 99))
+		var right_family := int(family_rank.get(str(right.get("kind", "")), 99))
+		if left_family != right_family:
+			return left_family < right_family
+		var left_priority := int(left.get("priority", 0))
+		var right_priority := int(right.get("priority", 0))
+		return str(left.get("id", "")) < str(right.get("id", "")) if left_priority == right_priority else left_priority < right_priority
+	)
+	var records: Array = []
+	for index in range(mini(maxi(0, wanted_count), candidates.size())):
+		var slot := JsonCoerceScript._copy_dict(candidates[index])
+		records.append(_person_transit_record(
+			"person:cap_%02d" % index,
+			str(slot.get("id", "")),
+			str(slot.get("footprint_class", "")),
+			_person_transit_slot_rect(slot)
+		))
+	return records
+
+
+func _person_transit_priority_exit_slot(surface_map: Dictionary) -> Dictionary:
+	var exit_slots := _dict_array(surface_map.get("exit_slots", [])).duplicate(true)
+	exit_slots.sort_custom(func(left_value: Variant, right_value: Variant) -> bool:
+		var left := JsonCoerceScript._copy_dict(left_value)
+		var right := JsonCoerceScript._copy_dict(right_value)
+		var left_priority := int(left.get("priority", 0))
+		var right_priority := int(right.get("priority", 0))
+		return str(left.get("id", "")) < str(right.get("id", "")) if left_priority == right_priority else left_priority < right_priority
+	)
+	return JsonCoerceScript._copy_dict(exit_slots[0]).duplicate(true) if not exit_slots.is_empty() else {}
+
+
+func _person_transit_slot_by_id(surface_map: Dictionary, slot_id: String) -> Dictionary:
+	if slot_id.is_empty():
+		return {}
+	for field in ["fixed_slots", "event_slots", "scenario_slots", "exit_slots"]:
+		for slot_value in _dict_array(surface_map.get(field, [])):
+			var slot := slot_value as Dictionary
+			if str(slot.get("id", "")) == slot_id:
+				return slot.duplicate(true)
+	return {}
+
+
+func _person_transit_slot_rect(slot: Dictionary) -> Rect2:
+	var values := JsonCoerceScript._copy_array(slot.get("hit_rect", []))
+	if values.size() < 4:
+		return Rect2()
+	return Rect2(float(values[0]), float(values[1]), float(values[2]), float(values[3]))
+
+
+func _person_transit_record(object_id: String, slot_id: String, placement_class: String, rect: Rect2, presentation_mode: String = "room") -> Dictionary:
+	var normalized_rect := {}
+	if rect.has_area():
+		normalized_rect = {
+			"x": rect.position.x / 900.0,
+			"y": rect.position.y / 430.0,
+			"w": rect.size.x / 900.0,
+			"h": rect.size.y / 430.0,
+		}
 	return {
 		"object_id": object_id,
 		"object_type": "dialogue",
@@ -1502,6 +1699,27 @@ func _person_transit_record(object_id: String, center_x: float) -> Dictionary:
 		"visible": true,
 		"interactive": true,
 		"enabled": true,
+		"placement_class": placement_class,
+		"slot_id": slot_id,
+		"presentation_mode": presentation_mode,
+		"fixed_slot_geometry": presentation_mode == "room",
+		"normalized_rect": normalized_rect,
+		"small_screen_rect": normalized_rect.duplicate(true),
+	}
+
+
+func _non_person_transit_record(object_id: String, center_x: float) -> Dictionary:
+	return {
+		"object_id": object_id,
+		"object_type": "delivery",
+		"visual_type": "prop",
+		"label": "Take the package",
+		"short_description": "A package waiting for pickup.",
+		"visible": true,
+		"interactive": true,
+		"enabled": true,
+		# Deliberately hostile legacy metadata proves that placement alone cannot
+		# make a prop inherit a person's arrival/departure animation.
 		"placement_class": "standing_person",
 		"scenario_layout_resolved": true,
 		"normalized_rect": {"x": center_x - 0.04, "y": 0.55, "w": 0.08, "h": 0.20},
@@ -1625,8 +1843,8 @@ func _check_scratch_single_remaining_purchase(game: GameModule, failures: Array)
 	game.resolve_with_context("buy_scratch_ticket", int(buy.get("set_stake", 0)), run_state, environment, _scratch_rng("single-left-buy"), buy.get("ui_state", {}))
 	var updated_machine: Dictionary = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
 	var updated_stock := _dict_array(updated_machine.get("stock", []))
-	if updated_stock.is_empty() or int((updated_stock[0] as Dictionary).get("remaining", -1)) != 0 or (updated_machine.get("active_ticket", {}) as Dictionary).is_empty():
-		failures.append("Scratch one-remaining purchase did not consume the final ticket and set it active.")
+	if updated_stock.is_empty() or int((updated_stock[0] as Dictionary).get("remaining", -1)) != 0 or _dict_array(updated_machine.get("tray_stack", [])).size() != 1 or not (updated_machine.get("active_ticket", {}) as Dictionary).is_empty():
+		failures.append("Scratch one-remaining purchase did not consume the final ticket into the output tray.")
 
 
 func _check_scratch_rtp(game: GameModule, failures: Array) -> void:
@@ -1756,7 +1974,8 @@ func _check_scratch_portable_state(game: GameModule, failures: Array) -> void:
 	game.resolve_with_context("buy_scratch_ticket", int(buy.get("set_stake", 0)), run_state, environment, _scratch_rng("portable-buy"), buy.get("ui_state", {}))
 	if not run_state.inventory.has(RunState.SCRATCH_TICKET_PILE_ITEM_ID):
 		failures.append("Scratch purchase did not retain the portable ticket-pile flow.")
-	var ticket: Dictionary = run_state.portable_ticket_state("scratch_tickets", environment).get("active_ticket", {})
+	var portable_tray := _dict_array(run_state.portable_ticket_state("scratch_tickets", environment).get("tray_stack", []))
+	var ticket: Dictionary = portable_tray[0] if not portable_tray.is_empty() else {}
 	if str(ticket.get("origin_key", "")).is_empty() or not bool(ticket.get("outcome_fixed_at_purchase", false)):
 		failures.append("Portable scratch ticket lost its origin or fixed outcome.")
 
@@ -1770,7 +1989,7 @@ func _check_scratch_gas_station_generation(failures: Array) -> void:
 
 
 func _scratch_environment(environment_id: String) -> Dictionary:
-	return {"id": environment_id, "world_node_id": environment_id, "display_name": "Roadside Gas", "archetype_id": "gas_station_casino", "kind": "casino", "game_ids": ["scratch_tickets"], "game_states": {}, "economic_profile": {"stake_floor": 1, "stake_ceiling": 100}, "visual_context": {"scene_type": "gas_station_casino"}}
+	return {"id": environment_id, "world_node_id": environment_id, "display_name": "Roadside Gas", "archetype_id": "gas_station_casino", "kind": "casino", "game_ids": ["scratch_tickets"], "game_states": {}, "economic_profile": {"stake_floor": 1, "stake_ceiling": 100}, "visual_context": {"scene_type": "gas_station_casino"}, "local_narrative_flags": {"lottery_counter": {"host_object_id": "character:nell", "staff_label": "Nell", "sale_game_ids": ["pull_tabs"], "service_game_ids": ["pull_tabs", "scratch_tickets"]}}}
 
 
 func _scratch_rng(seed_text: String) -> RngStream:

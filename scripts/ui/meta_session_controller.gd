@@ -1,8 +1,8 @@
 class_name MetaSessionController
 extends RefCounted
 
-signal travel_requested(location_id: String)
-signal popup_action_requested(action_id: String, payload: Dictionary)
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 
 const CONTEXT_MODE_TRAVEL := "travel"
 const CONTEXT_MODE_HOME_CONTAINER := "home_container"
@@ -12,13 +12,16 @@ const CONTEXT_MODE_META_TRADE_UP := "meta_trade_up"
 const CONTEXT_MODE_META_PAWN_COUNTER := "meta_pawn_counter"
 const CONTEXT_MODE_META_SAL_SHELF := "meta_sal_shelf"
 const CONTEXT_MODE_META_SAL_TALK := "meta_sal_talk"
-const MAX_VISIBLE_HOME_BAG_OBJECTS := 8
+# Three authored bag positions fit every housing tier without sharing furniture.
+# Larger collections remain reachable through one Bag Shelf object in the third
+# position instead of drawing multiple bags on top of the same room surface.
+const MAX_VISIBLE_HOME_BAG_OBJECTS := 3
 const META_LOCATION_HOME := "home"
 const META_LOCATION_START_RUN := "start_run"
 
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
-const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
@@ -64,10 +67,10 @@ func home_summary_view() -> Dictionary:
 	var snapshot: Dictionary = meta_collection_service.snapshot()
 	var housing_tier := str(snapshot.get("housing_tier", MetaCollectionServiceScript.HOUSING_BACK_ALLEY))
 	var definition: Dictionary = meta_collection_service.housing_definition(housing_tier)
-	var owned_instances := _copy_array(snapshot.get("owned_instances", []))
-	var loadout := _copy_array(snapshot.get("loadout", []))
+	var owned_instances := JsonCoerceScript._copy_array(snapshot.get("owned_instances", []))
+	var loadout := JsonCoerceScript._copy_array(snapshot.get("loadout", []))
 	var carried_ids: Array = _snapshot_carried_instance_ids(owned_instances, loadout, housing_tier)
-	var carry_capacity := _snapshot_container_capacity(_copy_array(snapshot.get("owned_containers", [])))
+	var carry_capacity := _snapshot_container_capacity(JsonCoerceScript._copy_array(snapshot.get("owned_containers", [])))
 	var storage_slots := maxi(0, int(definition.get("storage_slots", 0)))
 	return {
 		"housing_tier": housing_tier,
@@ -85,10 +88,19 @@ func home_summary_view() -> Dictionary:
 func interactable_object_view_list(location_id: String, run_state: RunState, hover_target_id: String, focus_target_id: String, selected_object_id: String) -> Array:
 	var cache_key := _interactable_object_view_cache_key(location_id)
 	if cache_key == interactable_object_view_cache_key and not interactable_object_view_cache.is_empty():
-		return _copy_array(interactable_object_view_cache)
+		return JsonCoerceScript._copy_array(interactable_object_view_cache)
 	var objects := _pawn_interactable_objects(run_state, hover_target_id, focus_target_id, selected_object_id) if location_id == pawn_location_id() else _home_interactable_objects(run_state, hover_target_id, focus_target_id, selected_object_id)
+	if run_state != null:
+		var environment := JsonCoerceScript._copy_dict(run_state.current_environment)
+		var layout := _current_environment_layout(run_state)
+		environment["layout"] = layout
+		var room_slot_occupancy: Dictionary = {}
+		var binding := EnvironmentSlotBinderScript.bind_base_records(environment, objects, JsonCoerceScript._copy_dict(layout.get("slot_bindings", {})), room_slot_occupancy)
+		# A persisted fixed-slot envelope is authority here too. Never fall back to
+		# unbound source objects when its closed schema/digests fail validation.
+		objects = JsonCoerceScript._copy_array(binding.get("records", [])) if bool(binding.get("ok", false)) else []
 	interactable_object_view_cache_key = cache_key
-	interactable_object_view_cache = _copy_array(objects)
+	interactable_object_view_cache = JsonCoerceScript._copy_array(objects)
 	return objects
 
 
@@ -139,12 +151,12 @@ func owned_item_rows() -> Array:
 		var definition: Dictionary = resolver.item_definition(itemdef_id)
 		var collection: Dictionary = resolver.collection_definition(str(definition.get("collection_id", "")))
 		var run_item: Dictionary = resolver.resolve_run_item(instance)
-		var meta: Dictionary = _copy_dict(run_item.get("meta_collection", {}))
+		var meta: Dictionary = JsonCoerceScript._copy_dict(run_item.get("meta_collection", {}))
 		var item_class := str(definition.get("item_class", CollectionItemResolverScript.ITEM_CLASS_COLLECTION))
 		var collection_name := str(collection.get("display_name", "Collection"))
 		var float_summary := MetaCollectionViewModelScript._float_summary(instance)
 		if item_class == CollectionItemResolverScript.ITEM_CLASS_PLAYERS_CARD:
-			var stamp := _copy_dict(instance.get("instance_data", {}))
+			var stamp := JsonCoerceScript._copy_dict(instance.get("instance_data", {}))
 			collection_name = "Grand Casino Rewards"
 			float_summary = "Critical · Score %d · Day %d · %s" % [int(stamp.get("final_score", 0)), int(stamp.get("days_survived", 1)), str(stamp.get("seed", ""))]
 		elif item_class == CollectionItemResolverScript.ITEM_CLASS_CHIP_STACK:
@@ -170,7 +182,7 @@ func sale_rows() -> Array:
 	if meta_collection_service == null:
 		return rows
 	for item_row_value in owned_item_rows():
-		var item_row := _copy_dict(item_row_value)
+		var item_row := JsonCoerceScript._copy_dict(item_row_value)
 		var instance_id := int(item_row.get("instance_id", 0))
 		var quote: Dictionary = meta_collection_service.sale_quote(MetaCollectionServiceScript.SALE_KIND_ITEM, instance_id)
 		if not bool(quote.get("ok", false)):
@@ -212,11 +224,11 @@ func sal_shelf_rows() -> Array:
 	var store_snapshot: Dictionary = meta_collection_service.snapshot()
 	var gold_balance := int(store_snapshot.get("gold_balance", 0))
 	for slot_value in meta_collection_service.sal_shelf_rows():
-		var slot := _copy_dict(slot_value)
-		var item := _copy_dict(slot.get("item", {}))
+		var slot := JsonCoerceScript._copy_dict(slot_value)
+		var item := JsonCoerceScript._copy_dict(slot.get("item", {}))
 		var definition: Dictionary = resolver.item_definition(int(item.get("itemdef_id", -1)))
 		var collection: Dictionary = resolver.collection_definition(str(definition.get("collection_id", "")))
-		var quote := _copy_dict(slot.get("quote_basis", {}))
+		var quote := JsonCoerceScript._copy_dict(slot.get("quote_basis", {}))
 		slot["display_name"] = str(definition.get("display_name", "Empty Shelf")) if bool(slot.get("occupied", false)) else "Empty Shelf"
 		slot["collection_display_name"] = str(collection.get("display_name", "Collection"))
 		slot["tier"] = str(definition.get("tier", ""))
@@ -225,45 +237,6 @@ func sal_shelf_rows() -> Array:
 		slot["quote_basis"] = quote
 		rows.append(slot)
 	return rows
-
-
-func trade_up_candidates() -> Array:
-	var grouped: Dictionary = {}
-	if meta_collection_service == null:
-		return []
-	var resolver: Variant = _collection_resolver()
-	for instance_value in meta_collection_service.owned_instances():
-		if typeof(instance_value) != TYPE_DICTIONARY:
-			continue
-		var instance: Dictionary = instance_value
-		var definition: Dictionary = resolver.item_definition(int(instance.get("itemdef_id", -1)))
-		var collection_id := str(definition.get("collection_id", ""))
-		var tier := str(definition.get("tier", ""))
-		var next_tier := next_tier(tier)
-		if collection_id.is_empty() or tier.is_empty() or next_tier.is_empty():
-			continue
-		var key := "%s|%s" % [collection_id, tier]
-		var ids := _copy_array(grouped.get(key, []))
-		ids.append(int(instance.get("instance_id", 0)))
-		grouped[key] = ids
-	var candidates: Array = []
-	for key_value in grouped.keys():
-		var ids := _copy_array(grouped.get(key_value, []))
-		if ids.size() < 5:
-			continue
-		var key := str(key_value)
-		var parts := key.split("|", false)
-		if parts.size() < 2:
-			continue
-		var collection: Dictionary = resolver.collection_definition(str(parts[0]))
-		var tier := str(parts[1])
-		candidates.append({
-			"label": "%s %s" % [str(collection.get("display_name", "Collection")), tier.capitalize()],
-			"summary": "Creates one %s item." % next_tier(tier).capitalize(),
-			"eligible_instance_ids": ids,
-			"required_count": 5,
-		})
-	return candidates
 
 
 func next_tier(tier: String) -> String:
@@ -277,10 +250,10 @@ func next_tier(tier: String) -> String:
 func collection_reveal_text(result: Dictionary) -> String:
 	if not bool(result.get("ok", false)):
 		return str(result.get("message", "Bag could not be opened."))
-	var reveal := _copy_dict(result.get("reveal", {}))
-	var definition := _copy_dict(reveal.get("definition", {}))
-	var item := _copy_dict(reveal.get("item", {}))
-	var bag := _copy_dict(reveal.get(MetaCollectionServiceScript.REVEAL_BAG_KEY, {}))
+	var reveal := JsonCoerceScript._copy_dict(result.get("reveal", {}))
+	var definition := JsonCoerceScript._copy_dict(reveal.get("definition", {}))
+	var item := JsonCoerceScript._copy_dict(reveal.get("item", {}))
+	var bag := JsonCoerceScript._copy_dict(reveal.get(MetaCollectionServiceScript.REVEAL_BAG_KEY, {}))
 	var tier := str(definition.get("tier", "")).capitalize()
 	var condition := str(reveal.get("condition_band", "unknown")).capitalize()
 	var floats := "P %d%% / C %d%% / R %d%% / U %d%%" % [
@@ -452,9 +425,9 @@ func _build_home_environment(run_state: RunState) -> Dictionary:
 	data["object_fixtures"] = []
 	data["travel_hooks"] = [META_LOCATION_START_RUN, pawn_location_id()]
 	data["next_archetypes"] = [META_LOCATION_START_RUN, pawn_location_id()]
-	data["home_profile"] = _copy_dict(archetype.get("home_profile", {}))
+	data["home_profile"] = JsonCoerceScript._copy_dict(archetype.get("home_profile", {}))
 	data["home_containers"] = _container_rows()
-	data["home_container_index"] = _copy_array(data.get("home_containers", [])).size()
+	data["home_container_index"] = JsonCoerceScript._copy_array(data.get("home_containers", [])).size()
 	data["home_lost"] = false
 	data["meta_session"] = true
 	data["meta_location"] = META_LOCATION_HOME
@@ -514,12 +487,21 @@ func _container_rows() -> Array:
 	for container_value in meta_collection_service.carried_container_rows():
 		if typeof(container_value) != TYPE_DICTIONARY:
 			continue
-		var container: Dictionary = _copy_dict(container_value)
+		var container: Dictionary = JsonCoerceScript._copy_dict(container_value)
 		var item_id := str(container.get("item_id", "bag")).strip_edges()
 		if item_id.is_empty():
 			continue
 		container["display_name"] = _container_label(item_id)
 		rows.append(container)
+	# Home storage is a permanent walkable fixture. A fresh profile and the
+	# tutorial Players Card handoff may have no purchased container yet, but the
+	# room still needs a visible object and a stable coach anchor.
+	if rows.is_empty():
+		rows.append({
+			"id": "home_storage",
+			"item_id": "bag",
+			"display_name": "Home Storage",
+		})
 	return rows
 
 
@@ -555,6 +537,8 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 			"object_id": "meta_container:%s" % container_id,
 			"object_type": CONTEXT_MODE_HOME_CONTAINER,
 			"visual_type": CONTEXT_MODE_HOME_CONTAINER,
+			"slot_binding_source_id": "home_container:%s" % container_id,
+			"placement_class": "floor_fixture",
 			"source_id": container_id,
 			"label": str(container.get("display_name", "Container")),
 			"short_description": "Storage you own. Click to inspect packed and stored collection items.",
@@ -575,12 +559,15 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 	var direct_bag_limit := MAX_VISIBLE_HOME_BAG_OBJECTS if bag_count <= MAX_VISIBLE_HOME_BAG_OBJECTS else MAX_VISIBLE_HOME_BAG_OBJECTS - 1
 	var bags := unopened_bag_rows(direct_bag_limit)
 	for index in range(bags.size()):
-		var bag := _copy_dict(bags[index])
+		var bag := JsonCoerceScript._copy_dict(bags[index])
 		var bag_id := int(bag.get("instance_id", 0))
 		objects.append(_make_interactable_object({
 			"object_id": "meta_bag:%d" % bag_id,
 			"object_type": CONTEXT_MODE_META_BAG,
 			"visual_type": CONTEXT_MODE_META_BAG,
+			"placement_class": "surface_item",
+			"layout_spot_field": "home_bag_spots",
+			"layout_index": index,
 			"source_id": str(bag_id),
 			"label": str(bag.get("display_name", "Collection Bag")),
 			"short_description": str(bag.get("collection_display_name", "Unopened collection bag")),
@@ -589,7 +576,7 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 			"enabled": true,
 			"action_summary": "Open this bag.",
 			"status_summary": str(bag.get("tier_label", "")),
-			"attribute_badges": _copy_array(bag.get("tier_badges", [])),
+			"attribute_badges": JsonCoerceScript._copy_array(bag.get("tier_badges", [])),
 			"visual_key": "meta_bag",
 			"prop": "paper_bag",
 			"icon_key": str(bag.get("icon_key", "cashout" + "_envelope")),
@@ -603,6 +590,9 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 			"object_id": "meta_bags:all",
 			"object_type": CONTEXT_MODE_META_BAG,
 			"visual_type": CONTEXT_MODE_META_BAG,
+			"placement_class": "surface_item",
+			"layout_spot_field": "home_bag_spots",
+			"layout_index": bags.size(),
 			"source_id": "0",
 			"label": "Bag Shelf",
 			"short_description": "%d unopened bags are stored here." % bag_count,
@@ -618,12 +608,13 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 			"confirm_action_id": "open_meta_bag",
 			"focus_rect": _interaction_rect_for_object(run_state, "meta_bags:all", CONTEXT_MODE_META_BAG, bags.size()),
 		}, hover_target_id, focus_target_id, selected_object_id))
-	var upgrade := _copy_dict(home.get("upgrade", {}))
+	var upgrade := JsonCoerceScript._copy_dict(home.get("upgrade", {}))
 	var upgrade_enabled := not upgrade.is_empty() and bool(upgrade.get("affordable", false))
 	objects.append(_make_interactable_object({
 		"object_id": "meta_upgrade:home",
 		"object_type": CONTEXT_MODE_META_UPGRADE,
 		"visual_type": CONTEXT_MODE_META_UPGRADE,
+		"placement_class": "wall_mounted",
 		"source_id": "home",
 		"label": "Upgrade Sign",
 		"short_description": "Buy the next housing tier with pawn-shop gold.",
@@ -646,6 +637,7 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 			"object_id": "meta_trade_up:station",
 			"object_type": CONTEXT_MODE_META_TRADE_UP,
 			"visual_type": CONTEXT_MODE_META_TRADE_UP,
+			"placement_class": "surface_item",
 			"source_id": "station",
 			"label": "Trade-Up Station",
 			"short_description": "Trade five matching collection items for one next-tier item.",
@@ -664,6 +656,7 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 	objects.append(_make_interactable_object({
 		"object_id": "travel:leave",
 		"object_type": CONTEXT_MODE_TRAVEL,
+		"placement_class": "doorway",
 		"source_id": "leave",
 		"label": "Map Door",
 		"short_description": "Open the meta travel map.",
@@ -683,16 +676,18 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 func _pawn_interactable_objects(run_state: RunState, hover_target_id: String, focus_target_id: String, selected_object_id: String) -> Array:
 	var objects: Array = []
 	for slot_value in sal_shelf_rows():
-		var slot := _copy_dict(slot_value)
+		var slot := JsonCoerceScript._copy_dict(slot_value)
 		var index := int(slot.get("slot_index", objects.size()))
 		var occupied := bool(slot.get("occupied", false))
-		var item := _copy_dict(slot.get("item", {}))
-		var quote := _copy_dict(slot.get("quote_basis", {}))
+		var item := JsonCoerceScript._copy_dict(slot.get("item", {}))
+		var quote := JsonCoerceScript._copy_dict(slot.get("quote_basis", {}))
 		var mode := str(slot.get("listing_mode", ""))
 		objects.append(_make_interactable_object({
 			"object_id": "meta_sal_shelf:%d" % index,
 			"object_type": CONTEXT_MODE_META_SAL_SHELF,
 			"visual_type": CONTEXT_MODE_META_SAL_SHELF,
+			"slot_binding_source_id": "item:sal_shelf_%d" % index,
+			"placement_class": "shop_item",
 			"source_id": str(index),
 			"label": str(slot.get("display_name", "Empty Shelf")),
 			"short_description": "%s, %s." % [str(slot.get("collection_display_name", "Collection")), str(slot.get("tier", "")).capitalize()] if occupied else "An empty spot behind Sal's locked glass.",
@@ -717,41 +712,28 @@ func _pawn_interactable_objects(run_state: RunState, hover_target_id: String, fo
 		}, hover_target_id, focus_target_id, selected_object_id))
 	objects.append_array([
 		_make_interactable_object({
-			"object_id": "meta_pawn_counter:sell",
-			"object_type": CONTEXT_MODE_META_PAWN_COUNTER,
-			"visual_type": CONTEXT_MODE_META_PAWN_COUNTER,
-			"source_id": "sell",
-			"label": "Sell Counter",
-			"short_description": "Sal buys collection items and unopened bags for gold.",
-			"presence": "fixture",
-			"interactive": true,
-			"enabled": true,
-			"action_summary": "Choose something to sell.",
-			"effect_summary": "Pawn shop is the only gold faucet.",
-			"visual_key": "meta_pawn_counter",
-			"prop": "counter",
-			"icon_key": "pawn_receipt" + "_sleeve",
-			"available_actions": [{"id": "open_sell_counter", "label": "Sell"}],
-			"confirm_action_id": "open_sell_counter",
-			"focus_rect": _interaction_rect_for_object(run_state, "meta_pawn_counter:sell", CONTEXT_MODE_META_PAWN_COUNTER, 0),
-		}, hover_target_id, focus_target_id, selected_object_id),
-		_make_interactable_object({
 			"object_id": "meta_sal:talk",
 			"object_type": CONTEXT_MODE_META_SAL_TALK,
 			"visual_type": CONTEXT_MODE_META_SAL_TALK,
+			"slot_binding_source_id": "staff:pawn_counter_sal",
+			"placement_class": "behind_counter_person",
 			"source_id": "sal",
 			"label": "Sal",
-			"short_description": "Sal waits behind the barred counter.",
+			"short_description": "Sal waits behind the barred counter to talk, buy, and sell.",
 			"presence": "fixture",
 			"interactive": true,
 			"enabled": true,
-			"action_summary": "Talk to Sal.",
+			"action_summary": "Talk to Sal or sell an item.",
+			"effect_summary": "Sal handles the pawn shop's sales and cashouts from this counter.",
 			"visual_key": "meta_sal",
 			"prop": "pawn_broker",
 			"icon_key": "pawn_receipt_sleeve",
-			"available_actions": [{"id": "talk_sal", "label": "Talk"}],
+			"available_actions": [
+				{"id": "talk_sal", "label": "Talk"},
+				{"id": "open_sell_counter", "label": "Sell"},
+			],
 			"confirm_action_id": "talk_sal",
-			"focus_rect": _interaction_rect_for_object(run_state, "meta_sal:talk", CONTEXT_MODE_META_SAL_TALK, 0),
+			"focus_rect": _interaction_rect_for_object(run_state, "staff:pawn_counter_sal", CONTEXT_MODE_META_SAL_TALK, 0),
 		}, hover_target_id, focus_target_id, selected_object_id),
 		_make_interactable_object({
 			"object_id": "travel:leave",
@@ -776,7 +758,7 @@ func _pawn_interactable_objects(run_state: RunState, hover_target_id: String, fo
 func _sal_layout_item_offers() -> Array:
 	var offers: Array = []
 	for slot_value in sal_shelf_rows():
-		var slot := _copy_dict(slot_value)
+		var slot := JsonCoerceScript._copy_dict(slot_value)
 		var index := int(slot.get("slot_index", offers.size()))
 		offers.append({
 			"id": "sal_shelf_%d" % index,
@@ -791,8 +773,7 @@ func _sal_layout_item_offers() -> Array:
 
 
 func _sal_shelf_interaction_rect(run_state: RunState, index: int) -> Rect2:
-	var layout := _current_environment_layout(run_state)
-	var authored: Rect2 = EnvironmentInstanceScript._object_rect_from_layout(layout, "item", index, "item_spots")
+	var authored := _generated_object_interaction_rect(run_state, "item:sal_shelf_%d" % index)
 	if authored.size.x > 0.0 and authored.size.y > 0.0:
 		var center := authored.position + authored.size * 0.5
 		var board_size := Vector2(VisualStyle.ENVIRONMENT_BOARD_SIZE)
@@ -802,8 +783,7 @@ func _sal_shelf_interaction_rect(run_state: RunState, index: int) -> Rect2:
 
 
 func _pawn_exit_interaction_rect(run_state: RunState) -> Rect2:
-	var layout := _current_environment_layout(run_state)
-	var authored: Rect2 = EnvironmentInstanceScript._object_rect_from_layout(layout, "travel", 0, "travel_spots")
+	var authored := _generated_object_interaction_rect(run_state, "travel:leave")
 	if authored.size.x > 0.0 and authored.size.y > 0.0:
 		return authored
 	return _normalized_interaction_rect(CONTEXT_MODE_TRAVEL, 0)
@@ -838,7 +818,7 @@ func _snapshot_carried_instance_ids(owned_instances: Array, loadout: Array, hous
 	var owned_ids: Array = []
 	var owned_lookup := {}
 	for instance_value in owned_instances:
-		var instance := _copy_dict(instance_value)
+		var instance := JsonCoerceScript._copy_dict(instance_value)
 		var instance_id := int(instance.get("instance_id", 0))
 		if instance_id > 0 and not owned_lookup.has(instance_id):
 			owned_ids.append(instance_id)
@@ -858,7 +838,7 @@ func _snapshot_carried_instance_ids(owned_instances: Array, loadout: Array, hous
 func _snapshot_container_capacity(containers: Array) -> int:
 	var total := 0
 	for container_value in containers:
-		var container := _copy_dict(container_value)
+		var container := JsonCoerceScript._copy_dict(container_value)
 		total += maxi(0, int(container.get("capacity", 0)))
 	return total
 
@@ -878,10 +858,20 @@ func _make_interactable_object(source: Dictionary, hover_target_id: String, focu
 	var enabled := bool(source.get("enabled", true))
 	var interactive := bool(source.get("interactive", true))
 	var object_id := str(source.get("object_id", ""))
+	# Meta-room records are assembled after environment generation, before the
+	# general manifest join can annotate them. They still belong to the same
+	# four-family contract: navigation is exit; every other home/pawn fixture or
+	# inventory presentation consumes fixed capacity.
+	var object_type := str(source.get("object_type", "info"))
+	var slot_family := str(source.get("slot_family", "")).strip_edges()
+	if slot_family not in EnvironmentSlotBinderScript.SLOT_FAMILIES:
+		slot_family = "exit" if object_type == CONTEXT_MODE_TRAVEL else "fixed"
 	return {
 		"object_id": object_id,
-		"object_type": str(source.get("object_type", "info")),
-		"visual_type": str(source.get("visual_type", source.get("object_type", "info"))),
+		"object_type": object_type,
+		"visual_type": str(source.get("visual_type", object_type)),
+		"slot_family": slot_family,
+		"slot_binding_source_id": str(source.get("slot_binding_source_id", "")),
 		"presence": str(source.get("presence", "dynamic")),
 		"interactive": interactive,
 		"decorative": not interactive,
@@ -902,7 +892,7 @@ func _make_interactable_object(source: Dictionary, hover_target_id: String, focu
 		"choice_summary": str(source.get("choice_summary", "")),
 		"risk_summary": str(source.get("risk_summary", "")),
 		"cost_summary": str(source.get("cost_summary", "")),
-		"attribute_badges": _copy_array(source.get("attribute_badges", [])),
+		"attribute_badges": JsonCoerceScript._copy_array(source.get("attribute_badges", [])),
 		"runtime_state": (source.get("runtime_state", {}) as Dictionary).duplicate(true) if typeof(source.get("runtime_state", {})) == TYPE_DICTIONARY else {},
 		"visual_state": (source.get("visual_state", {}) as Dictionary).duplicate(true) if typeof(source.get("visual_state", {})) == TYPE_DICTIONARY else {},
 		"state_badge": str(source.get("state_badge", "")),
@@ -910,12 +900,15 @@ func _make_interactable_object(source: Dictionary, hover_target_id: String, focu
 		"prop": str(source.get("prop", "")),
 		"surface": str(source.get("surface", "")),
 		"icon_key": str(source.get("icon_key", "")),
+		"presentation_mode": str(source.get("presentation_mode", "room")),
+		"slot_id": str(source.get("slot_id", "")),
+		"placement_class": str(source.get("placement_class", "")),
 		"asset_path": str(source.get("asset_path", "")),
 		"unique_object_class": str(source.get("unique_object_class", "")).strip_edges(),
 		"unique_object_priority": int(source.get("unique_object_priority", 0)),
 		"allow_duplicate_unique_class": bool(source.get("allow_duplicate_unique_class", false)),
-		"available_actions": _copy_array(source.get("available_actions", [])),
-		"inline_actions": _copy_array(source.get("inline_actions", [])),
+		"available_actions": JsonCoerceScript._copy_array(source.get("available_actions", [])),
+		"inline_actions": JsonCoerceScript._copy_array(source.get("inline_actions", [])),
 		"confirm_action_id": str(source.get("confirm_action_id", "")),
 		"hovered": object_id == hover_target_id,
 		"focused": object_id == focus_target_id,
@@ -927,7 +920,7 @@ func _interaction_rect_for_object(run_state: RunState, object_id: String, object
 	var object_rect := _generated_object_interaction_rect(run_state, object_id)
 	if object_rect.size.x > 0.0 and object_rect.size.y > 0.0:
 		return object_rect
-	return _normalized_interaction_rect(object_type, index)
+	return Rect2()
 
 
 func _generated_object_interaction_rect(run_state: RunState, object_id: String) -> Rect2:
@@ -1012,19 +1005,7 @@ func _vector2_to_dict(value: Vector2) -> Dictionary:
 	}
 
 
-func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
 func _collection_resolver() -> CollectionItemResolver:
 	if _shared_collection_resolver == null:
 		_shared_collection_resolver = CollectionItemResolverScript.new()
 	return _shared_collection_resolver
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)

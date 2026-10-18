@@ -587,11 +587,15 @@ func _drive_feature(game: GameModule, run_state: RunState, environment: Dictiona
 
 func _drive_watchdog(game: GameModule, run_state: RunState, environment: Dictionary, label: String) -> Dictionary:
 	var seed_time := 5000
-	var seed_command: Dictionary = game.surface_auto_action_command({"surface_time_msec": seed_time, "drunk_scaled_surface_time_msec": seed_time}, run_state, environment, {})
-	if not bool(seed_command.get("environment_changed", false)):
-		return _fail(label, "watchdog did not arm")
-	var due_time := seed_time + WATCHDOG_GRACE_MSEC + 200
-	var command: Dictionary = game.surface_auto_action_command({"surface_time_msec": due_time, "drunk_scaled_surface_time_msec": due_time}, run_state, environment, {})
+	var command: Dictionary = game.surface_auto_action_command({"surface_time_msec": seed_time, "drunk_scaled_surface_time_msec": seed_time}, run_state, environment, {})
+	# Pinball can prove that its final ball drained from the zero-copy live status
+	# and settles on this first host tick. Other stalled bonuses still arm the
+	# generic grace timer before they are eligible for watchdog recovery.
+	if str(command.get("action_id", "")) != "slot_bonus_watchdog":
+		if not bool(command.get("environment_changed", false)):
+			return _fail(label, "watchdog did not arm")
+		var due_time := seed_time + WATCHDOG_GRACE_MSEC + 200
+		command = game.surface_auto_action_command({"surface_time_msec": due_time, "drunk_scaled_surface_time_msec": due_time}, run_state, environment, {})
 	if str(command.get("action_id", "")) != "slot_bonus_watchdog":
 		return _fail(label, "watchdog did not route through bonus action")
 	var rng: RngStream = run_state.create_rng("watchdog")
@@ -750,13 +754,27 @@ func _apply_surface_command(context: Dictionary, command: Dictionary, label: Str
 			context["selected_action_id"] = action_id
 			context["selected_action_kind"] = action_kind
 		if bool(command.get("resolve", false)) or already_selected:
-			return _resolve_context_action(context, action_id, label, bool(command.get("preserve_surface_ui_state", false)), _dict(command.get("_sealed_action_host_delivery", {})))
+			return _resolve_context_action(
+				context,
+				action_id,
+				label,
+				bool(command.get("preserve_surface_ui_state", false)),
+				_dict(command.get("_sealed_action_host_delivery", {})),
+				_dict(command.get("_sealed_action_host_prepared", {}))
+			)
 	if direct_resolve:
-		return _resolve_context_action(context, action_id, label, bool(command.get("preserve_surface_ui_state", false)), _dict(command.get("_sealed_action_host_delivery", {})))
+		return _resolve_context_action(
+			context,
+			action_id,
+			label,
+			bool(command.get("preserve_surface_ui_state", false)),
+			_dict(command.get("_sealed_action_host_delivery", {})),
+			_dict(command.get("_sealed_action_host_prepared", {}))
+		)
 	return {"ok": true}
 
 
-func _resolve_context_action(context: Dictionary, action_id: String, label: String, preserve_surface_ui_state: bool, delivery_claim: Dictionary = {}) -> Dictionary:
+func _resolve_context_action(context: Dictionary, action_id: String, label: String, preserve_surface_ui_state: bool, delivery_claim: Dictionary = {}, prepared_claim: Dictionary = {}) -> Dictionary:
 	var game: GameModule = context.get("game", null) as GameModule
 	var run_state: RunState = context.get("run_state", null) as RunState
 	if game == null or run_state == null:
@@ -769,7 +787,8 @@ func _resolve_context_action(context: Dictionary, action_id: String, label: Stri
 		host.set("game_module_cache", {game.get_id(): game})
 		host.set("run_state", run_state)
 		host.set("selected_stake", maxi(0, int(context.get("stake", 10))))
-		var authoritative_result: Dictionary = host.call("_sealed_action_host_resolve_intent", action_id, maxi(0, int(context.get("stake", 10))), delivery_claim)
+		var resolve_stake := maxi(0, int(delivery_claim.get("stake", context.get("stake", 10))))
+		var authoritative_result: Dictionary = host.call("_sealed_action_host_resolve_intent", action_id, resolve_stake, delivery_claim, prepared_claim)
 		host.free()
 		if not bool(authoritative_result.get("ok", false)):
 			return {"ok": false, "failure": "%s resolve %s failed: %s" % [label, action_id, str(authoritative_result.get("message", "no message"))]}

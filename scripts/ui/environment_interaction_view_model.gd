@@ -1,7 +1,12 @@
 class_name EnvironmentInteractionViewModel
 extends RefCounted
 
-const VisualStyle := preload("res://scripts/ui/visual_style.gd")
+# Converts sealed room/runtime records into deduplicated player-safe objects,
+# hit geometry, risk summaries, and travel copy for the environment canvas.
+
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
+const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
 
@@ -24,6 +29,8 @@ static func snapshot_signature(run_state: RunState) -> String:
 		str(environment.get("next_archetypes", [])),
 		str(environment.get("travel_hooks", [])),
 		str(environment.get("object_fixtures", [])),
+		str(environment.get("object_manifest_revision", JsonCoerceScript._copy_dict(environment.get("object_manifest", {})).get("revision", 0))),
+		str(environment.get("object_manifest_digest", JsonCoerceScript._copy_dict(environment.get("object_manifest", {})).get("digest", ""))),
 		str(environment.get("current_layer_id", "")),
 		str(environment.get("layer_discovery", {})),
 		str(environment.get("layer_ambient_line", "")),
@@ -36,6 +43,12 @@ static func snapshot_signature(run_state: RunState) -> String:
 		str(environment.get("home_containers", [])),
 		str(environment.get("cage_gift_shop_state", {})),
 		str(environment.get("layout", {})),
+		# Delivery arrival state changes the physical room catalog without changing
+		# the environment envelope. Keep the rendered canvas on the same revision as
+		# the interaction catalog so a newly active handoff cannot remain hidden
+		# behind the previous room snapshot.
+		str(run_state.delivery_physical_interactions()),
+		str(run_state.delivery_arrival_interaction()),
 		str(run_state.rourke_current_room),
 		str(run_state.rourke_current_spot),
 		str(run_state.rourke_facing),
@@ -57,6 +70,9 @@ static func environment_snapshot(run_state: RunState, data: Dictionary) -> Dicti
 	# The room canvas is a read-only presentation surface. Machine state can
 	# contain large masks/decks and is neither rendered nor mutated here.
 	var snapshot := RunState.environment_context_snapshot(run_state.current_environment)
+	snapshot["object_manifest"] = JsonCoerceScript._copy_dict(run_state.current_environment.get("object_manifest", {}))
+	snapshot["object_manifest_revision"] = int(run_state.current_environment.get("object_manifest_revision", JsonCoerceScript._copy_dict(snapshot.get("object_manifest", {})).get("revision", 0)))
+	snapshot["object_manifest_digest"] = str(run_state.current_environment.get("object_manifest_digest", JsonCoerceScript._copy_dict(snapshot.get("object_manifest", {})).get("digest", "")))
 	var recent_result: Dictionary = data.get("recent_result", {})
 	var recent_deltas: Dictionary = recent_result.get("deltas", {})
 	snapshot["suspicion_level"] = run_state.suspicion_level()
@@ -70,7 +86,7 @@ static func environment_snapshot(run_state: RunState, data: Dictionary) -> Dicti
 	snapshot["reduce_motion"] = bool(data.get("reduce_motion", false))
 	snapshot["high_contrast"] = bool(data.get("high_contrast", false))
 	snapshot["accessibility"] = data.get("accessibility", {})
-	snapshot["scenario_layout_audit"] = _copy_dict(data.get("scenario_layout_audit", {}))
+	snapshot["scenario_layout_audit"] = JsonCoerceScript._copy_dict(data.get("scenario_layout_audit", {}))
 	snapshot["scenario_layout_authority_digest"] = str(data.get("scenario_layout_authority_digest", ""))
 	snapshot["alcoholic_level"] = run_state.alcoholic_level
 	snapshot["baseline_luck"] = run_state.baseline_luck
@@ -107,14 +123,14 @@ static func environment_snapshot(run_state: RunState, data: Dictionary) -> Dicti
 	snapshot["selected_item_offer_id"] = str(data.get("selected_item_offer_id", ""))
 	snapshot["selected_item_offer_label"] = str(data.get("selected_item_offer_label", ""))
 	snapshot["selected_item_offer_price"] = int(data.get("selected_item_offer_price", 0))
-	snapshot["last_item_result"] = _copy_dict(data.get("last_item_result", {}))
+	snapshot["last_item_result"] = JsonCoerceScript._copy_dict(data.get("last_item_result", {}))
 	snapshot["service_options"] = data.get("service_options", [])
 	snapshot["lender_options"] = data.get("lender_options", [])
 	snapshot["selected_service_hook_id"] = str(data.get("selected_service_hook_id", ""))
 	snapshot["selected_service_hook_label"] = str(data.get("selected_service_hook_label", ""))
 	snapshot["selected_lender_hook_id"] = str(data.get("selected_lender_hook_id", ""))
 	snapshot["selected_lender_hook_label"] = str(data.get("selected_lender_hook_label", ""))
-	snapshot["last_hook_result"] = _copy_dict(data.get("last_hook_result", {}))
+	snapshot["last_hook_result"] = JsonCoerceScript._copy_dict(data.get("last_hook_result", {}))
 	snapshot["interactable_objects"] = data.get("interactable_objects", [])
 	snapshot["recent_result"] = recent_result
 	snapshot["outcome_object_id"] = str(data.get("outcome_object_id", ""))
@@ -146,7 +162,23 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 	var failed_reason := str(data.get("failed_reason", "Run failed."))
 	var selection: Dictionary = data.get("selection", {})
 	var layout: Dictionary = data.get("layout", {})
-	var game_fixture_counts := _copy_dict(layout.get("game_fixture_counts", {}))
+	var game_fixture_counts := JsonCoerceScript._copy_dict(layout.get("game_fixture_counts", {}))
+	var local_flags := JsonCoerceScript._copy_dict(run_state.current_environment.get("local_narrative_flags", {}))
+	var lottery_counter := JsonCoerceScript._copy_dict(local_flags.get("lottery_counter", {}))
+	var counter_host_id := str(lottery_counter.get("host_object_id", "")).strip_edges()
+	var counter_staff_label := str(lottery_counter.get("staff_label", "Counter Staff")).strip_edges()
+	var counter_sale_game_ids := JsonCoerceScript._string_array(lottery_counter.get("sale_game_ids", []))
+	var physical_manifest_ids: Dictionary = {}
+	for row_value in JsonCoerceScript._copy_array(
+		JsonCoerceScript._copy_dict(run_state.current_environment.get("object_manifest", {})).get("rows", [])
+	):
+		var row := JsonCoerceScript._copy_dict(row_value)
+		if not bool(row.get("active", false)) or not bool(row.get("physical", false)):
+			continue
+		for field in ["instance_object_id", "presentation_object_id", "object_id"]:
+			var physical_id := str(row.get(field, "")).strip_edges()
+			if not physical_id.is_empty():
+				physical_manifest_ids[physical_id] = true
 	var game_layout_index := 0
 	for source_value in data.get("game_sources", []):
 		if typeof(source_value) != TYPE_DICTIONARY:
@@ -154,18 +186,24 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 		var game_source: Dictionary = source_value
 		var game_id := str(game_source.get("id", ""))
 		var definition: Dictionary = game_source.get("definition", {})
-		var runtime_state := _copy_dict(game_source.get("runtime_state", {}))
-		var object_state := _copy_dict(game_source.get("object_state", {}))
-		var fixture_object_states := _copy_dict(game_source.get("fixture_object_states", {}))
-		for runtime_key in _copy_dict(object_state.get("runtime_state", {})).keys():
+		var runtime_state := JsonCoerceScript._copy_dict(game_source.get("runtime_state", {}))
+		var object_state := JsonCoerceScript._copy_dict(game_source.get("object_state", {}))
+		var fixture_object_states := JsonCoerceScript._copy_dict(game_source.get("fixture_object_states", {}))
+		for runtime_key in JsonCoerceScript._copy_dict(object_state.get("runtime_state", {})).keys():
 			runtime_state[runtime_key] = (object_state.get("runtime_state", {}) as Dictionary)[runtime_key]
 		var enabled := not definition.is_empty() and not failed
-		var fixture_count := maxi(1, int(game_fixture_counts.get(game_id, 1)))
+		var counter_merchandise := not counter_host_id.is_empty() and counter_sale_game_ids.has(game_id)
+		# Current authored rooms give stocked Pull Tabs a real machine/rack row. Only
+		# legacy or custom rooms that truly lack that physical manifest identity may
+		# attach the logical sale action to their existing counter host.
+		var physical_counter_merchandise := counter_merchandise and physical_manifest_ids.has("game:%s" % game_id)
+		var attached_counter_merchandise := counter_merchandise and not physical_counter_merchandise
+		var fixture_count := 1 if attached_counter_merchandise else maxi(1, int(game_fixture_counts.get(game_id, 1)))
 		for fixture_index in range(fixture_count):
 			var object_id := "game:%s" % game_id if fixture_index == 0 else "game:%s:%d" % [game_id, fixture_index + 1]
-			var fixture_object_state := _copy_dict(fixture_object_states.get(object_id, object_state))
+			var fixture_object_state := JsonCoerceScript._copy_dict(fixture_object_states.get(object_id, object_state))
 			var fixture_runtime_state := runtime_state.duplicate(true)
-			for runtime_key in _copy_dict(fixture_object_state.get("runtime_state", {})).keys():
+			for runtime_key in JsonCoerceScript._copy_dict(fixture_object_state.get("runtime_state", {})).keys():
 				fixture_runtime_state[runtime_key] = (fixture_object_state.get("runtime_state", {}) as Dictionary)[runtime_key]
 			var description := str(definition.get("description", ""))
 			if description.is_empty():
@@ -176,6 +214,12 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 			var label := str(fixture_object_state.get("display_name", definition.get("display_name", _label_from_id(game_id))))
 			if fixture_count > 1:
 				label = "%s %d" % [label, fixture_index + 1]
+			if counter_merchandise:
+				description = (
+					"Pull-tab deal rows are stocked in this rack beside %s's sales counter. Choose a row and buy from its finite supply." % counter_staff_label
+					if physical_counter_merchandise
+					else "Pull-tab deal rows are stocked as merchandise at %s's sales counter. Choose a row and buy from its finite supply." % counter_staff_label
+				)
 			objects.append(_object_with_rect({
 				"object_id": object_id,
 				"object_type": "game",
@@ -185,22 +229,24 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 				"presence": "fixture",
 				"enabled": enabled,
 				"disabled_reason": "" if enabled else failed_reason if failed else "Game definition is missing.",
-				"action_summary": "Double-click this machine to enter." if enabled else "This game is unavailable.",
+				"action_summary": "Buy Pull Tabs from this rack." if physical_counter_merchandise and enabled else "Buy Pull Tabs from the counter." if counter_merchandise and enabled else "Double-click this machine to enter." if enabled else "This game is unavailable.",
 				"status_summary": str(fixture_object_state.get("status_summary", "")),
 				"effect_summary": str(fixture_object_state.get("effect_summary", "")),
 				"impact_summary": str(fixture_object_state.get("impact_summary", "")),
 				"state_badge": str(fixture_object_state.get("state_badge", "")),
 				"risk_summary": game_risk_summary(definition),
 				"runtime_state": fixture_runtime_state,
-				"visual_state": _copy_dict(fixture_object_state.get("visual_state", {})),
+				"visual_state": JsonCoerceScript._copy_dict(fixture_object_state.get("visual_state", {})),
 				"visual_key": str(definition.get("family", definition.get("type", "game"))),
-				"prop": str(definition.get("environment_prop", definition.get("prop", "card_table"))),
+				"prop": "counter_stock" if attached_counter_merchandise else str(fixture_object_state.get("environment_prop", definition.get("environment_prop", definition.get("prop", "card_table")))),
 				"icon_key": str(definition.get("icon_key", game_id)),
 				"asset_path": str(definition.get("asset_path", "")),
-				"available_actions": [{"id": "enter_game", "label": "Double-click to enter"}] if enabled else [],
+				"slot_binding_source_id": counter_host_id if attached_counter_merchandise else "",
+				"available_actions": [{"id": "enter_game", "label": "Buy Pull Tabs" if counter_merchandise and game_id == "pull_tabs" else "Buy %s" % label if counter_merchandise else "Double-click to enter"}] if enabled else [],
 				"confirm_action_id": "enter_game" if enabled else "",
 			}, selection, layout, game_layout_index))
-			game_layout_index += 1
+			if not attached_counter_merchandise:
+				game_layout_index += 1
 	var event_index := 0
 	for event_value in data.get("event_options", []):
 		if typeof(event_value) != TYPE_DICTIONARY:
@@ -213,7 +259,8 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 		var enabled := not choices.is_empty() and not failed
 		var object_id := "event:%s" % event_id
 		var event_speaker: Dictionary = event_data.get("speaker", {}) if typeof(event_data.get("speaker", {})) == TYPE_DICTIONARY else {}
-		var character_actor := event_speaker if str(event_data.get("presentation", "")) == "talk" and bool(event_speaker.get("environment_actor", true)) and not event_speaker.is_empty() else {}
+		var character_actor := event_speaker if bool(event_speaker.get("environment_actor", true)) and not event_speaker.is_empty() else {}
+		var conversation_first := str(event_data.get("presentation", "")) == "talk" or not character_actor.is_empty()
 		objects.append(_object_with_rect({
 			"object_id": object_id,
 			"object_type": "event",
@@ -233,11 +280,13 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 			"prop": str(event_data.get("environment_prop", event_data.get("prop", ""))),
 			"icon_key": str(event_data.get("icon_key", event_id)),
 			"asset_path": str(event_data.get("asset_path", "")),
+			"slot_binding_source_id": str(event_data.get("slot_binding_source_id", "")).strip_edges(),
 			"character_actor": character_actor,
+			"presentation": str(event_data.get("presentation", "")),
 			"unique_object_class": str(event_data.get("unique_object_class", "")).strip_edges(),
 			"unique_object_priority": int(event_data.get("unique_object_priority", 0)),
 			"allow_duplicate_unique_class": bool(event_data.get("allow_duplicate_unique_class", false)),
-			"available_actions": [{"id": "inspect_event_choices", "label": "Review responses"}] if enabled else [],
+			"available_actions": [{"id": "inspect_event_choices", "label": "Talk" if conversation_first else "Review responses"}] if enabled else [],
 			"inline_actions": _call(data.get("event_inline_actions", Callable()), [event_id, choices], []) if enabled else [],
 			"confirm_action_id": "inspect_event_choices" if enabled else "",
 		}, selection, layout, event_index))
@@ -277,7 +326,7 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 			"cost_summary": cost_summary,
 			"currency": currency,
 			"price": price,
-			"attribute_badges": _copy_array(offer.get("attribute_badges", [])),
+			"attribute_badges": JsonCoerceScript._copy_array(offer.get("attribute_badges", [])),
 			"visual_key": "item",
 			"prop": str(offer.get("environment_prop", "")),
 			"surface": str(offer.get("surface", "counter")),
@@ -352,7 +401,7 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 			"risk_summary": str(_call(data.get("travel_risk_summary", Callable()), [first_choice], "")),
 			"impact_summary": str(_call(data.get("travel_preview_summary", Callable()), [first_choice], "")),
 			"cost_summary": "%d route(s)" % travel_choices.size(),
-			"attribute_badges": _copy_array(first_choice.get("attribute_badges", [])),
+			"attribute_badges": JsonCoerceScript._copy_array(first_choice.get("attribute_badges", [])),
 			"preview_lines": travel_leave_preview_lines(travel_choices, direct_room_exit),
 			"unlock_conditions": [],
 			"visual_key": "travel",
@@ -414,7 +463,7 @@ static func merge_unique_object(existing: Dictionary, incoming: Dictionary) -> D
 	var incoming_priority := int(incoming.get("unique_object_priority", 0))
 	var primary := incoming.duplicate(true) if incoming_priority > existing_priority else existing.duplicate(true)
 	var secondary := existing if incoming_priority > existing_priority else incoming
-	primary["available_actions"] = _merged_actions(_copy_array(primary.get("available_actions", [])), _copy_array(secondary.get("available_actions", [])))
+	primary["available_actions"] = _merged_actions(JsonCoerceScript._copy_array(primary.get("available_actions", [])), JsonCoerceScript._copy_array(secondary.get("available_actions", [])))
 	primary["action_summary"] = _joined_summary_lines([existing.get("action_summary", ""), incoming.get("action_summary", "")])
 	primary["effect_summary"] = _joined_summary_lines([existing.get("effect_summary", ""), incoming.get("effect_summary", "")])
 	primary["status_summary"] = _joined_summary_lines([existing.get("status_summary", ""), incoming.get("status_summary", "")])
@@ -513,10 +562,11 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 		"cost_summary": str(source.get("cost_summary", "")),
 		"currency": str(source.get("currency", "")),
 		"price": maxi(0, int(source.get("price", 0))),
-		"attribute_badges": AttributeBadgesScript.for_object_overlay(_copy_array(source.get("attribute_badges", []))),
-		"runtime_state": _copy_dict(source.get("runtime_state", {})),
-		"visual_state": _copy_dict(source.get("visual_state", {})),
-		"character_actor": _copy_dict(source.get("character_actor", {})),
+		"attribute_badges": AttributeBadgesScript.for_object_overlay(JsonCoerceScript._copy_array(source.get("attribute_badges", []))),
+		"runtime_state": JsonCoerceScript._copy_dict(source.get("runtime_state", {})),
+		"visual_state": JsonCoerceScript._copy_dict(source.get("visual_state", {})),
+		"character_actor": JsonCoerceScript._copy_dict(source.get("character_actor", {})),
+		"dialogue_speaker_override": JsonCoerceScript._copy_dict(source.get("dialogue_speaker_override", {})),
 		"state_badge": str(source.get("state_badge", "")),
 		"non_color_state": str(source.get("non_color_state", "")),
 		"safe_exit": bool(source.get("safe_exit", false)),
@@ -529,8 +579,16 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 		"pose": str(source.get("pose", "")),
 		"behavior": str(source.get("behavior", "")),
 		"route_id": str(source.get("route_id", "")),
-		"route_points": _copy_array(source.get("route_points", [])),
-		"small_screen_rect": _copy_dict(source.get("small_screen_rect", {})),
+		"authored_position_route_id": str(source.get("authored_position_route_id", "")),
+		"route_points": JsonCoerceScript._copy_array(source.get("route_points", [])),
+		"presentation_mode": str(source.get("presentation_mode", "room")),
+		"slot_id": str(source.get("slot_id", "")),
+		"slot_family": str(source.get("slot_family", source.get("manifest_family", ""))),
+		"placement_class": str(source.get("placement_class", "")),
+		"small_screen_rect": JsonCoerceScript._copy_dict(source.get("small_screen_rect", {})),
+		"label_rect": JsonCoerceScript._copy_dict(source.get("label_rect", {})),
+		"small_screen_label_rect": JsonCoerceScript._copy_dict(source.get("small_screen_label_rect", {})),
+		"fixed_slot_geometry": bool(source.get("fixed_slot_geometry", false)),
 		"z_order": int(source.get("z_order", 0)),
 		"z_order_explicit": source.has("z_order"),
 		"visible": bool(source.get("visible", true)),
@@ -539,12 +597,28 @@ static func make_interactable_object(source: Dictionary, selection: Dictionary) 
 		"surface": str(source.get("surface", "")),
 		"icon_key": str(source.get("icon_key", "")),
 		"asset_path": str(source.get("asset_path", "")),
+		"manifest_object_id": str(source.get("manifest_object_id", source.get("object_manifest_id", ""))),
+		"manifest_presentation_id": str(source.get("manifest_presentation_id", "")),
+		"manifest_family": str(source.get("manifest_family", source.get("slot_family", ""))),
+		"manifest_source_kind": str(source.get("manifest_source_kind", "")),
+		"manifest_source_id": str(source.get("manifest_source_id", "")),
+		"manifest_exact_slot_id": str(source.get("manifest_exact_slot_id", "")),
+		"manifest_required": bool(source.get("manifest_required", false)),
+		"manifest_physical": bool(source.get("manifest_physical", false)),
+		"manifest_render_key": str(source.get("manifest_render_key", "")),
+		"manifest_action_ids": JsonCoerceScript._copy_array(source.get("manifest_action_ids", [])),
+		"manifest_metadata": JsonCoerceScript._copy_dict(source.get("manifest_metadata", {})),
+		"slot_binding_source_id": str(source.get("slot_binding_source_id", "")),
 		"unique_object_class": str(source.get("unique_object_class", "")).strip_edges(),
 		"unique_object_priority": int(source.get("unique_object_priority", 0)),
 		"allow_duplicate_unique_class": bool(source.get("allow_duplicate_unique_class", false)),
-		"available_actions": _copy_array(source.get("available_actions", [])),
-		"inline_actions": _copy_array(source.get("inline_actions", [])),
+		"available_actions": JsonCoerceScript._copy_array(source.get("available_actions", [])),
+		"inline_actions": JsonCoerceScript._copy_array(source.get("inline_actions", [])),
 		"confirm_action_id": str(source.get("confirm_action_id", "")),
+		"delivery_contact": bool(source.get("delivery_contact", false)),
+		"delivery_contact_label": str(source.get("delivery_contact_label", "")),
+		"delivery_handoff_direct": bool(source.get("delivery_handoff_direct", false)),
+		"delivery_handoff_node_id": str(source.get("delivery_handoff_node_id", "")),
 		"hovered": object_id == str(selection.get("hover_target_id", "")),
 		"focused": object_id == str(selection.get("focus_target_id", "")),
 		"selected": object_id == str(selection.get("selected_object_id", "")),
@@ -613,22 +687,9 @@ static func interaction_rect_for_object(object_id: String, object_type: String, 
 		var generated := rect_from_dict((object_rects as Dictionary).get(object_id, {}))
 		if generated.size.x > 0.0 and generated.size.y > 0.0:
 			return generated
-	var authored := authored_interaction_rect(object_type, index, layout)
-	return authored if authored.size.x > 0.0 and authored.size.y > 0.0 else normalized_interaction_rect(object_type, index)
-
-
-static func authored_interaction_rect(object_type: String, index: int, layout: Dictionary) -> Rect2:
-	var field_name := layout_spot_field_name(object_type)
-	var spots: Variant = layout.get(field_name, [])
-	if field_name.is_empty() or typeof(spots) != TYPE_ARRAY or index < 0 or index >= (spots as Array).size():
-		return Rect2()
-	var spot := layout_spot_to_board_position((spots as Array)[index])
-	if spot.x < 0.0 or spot.y < 0.0:
-		return Rect2()
-	var fallback_rect := normalized_interaction_rect(object_type, index)
-	var board_size := Vector2(VisualStyle.ENVIRONMENT_BOARD_SIZE)
-	var center := Vector2(clampf(spot.x / board_size.x, 0.0, 1.0), clampf(spot.y / board_size.y, 0.0, 1.0))
-	return Rect2(center - fallback_rect.size * 0.5, fallback_rect.size)
+	# A missing fixed binding is overflow, never permission to synthesize a
+	# coordinate from a legacy category array or fallback grid.
+	return Rect2()
 
 
 static func layout_spot_field_name(object_type: String) -> String:
@@ -654,87 +715,6 @@ static func layout_spot_field_name(object_type: String) -> String:
 	return ""
 
 
-static func layout_spot_to_board_position(value: Variant) -> Vector2:
-	if typeof(value) == TYPE_VECTOR2:
-		return value as Vector2
-	if typeof(value) == TYPE_VECTOR2I:
-		var point := value as Vector2i
-		return Vector2(float(point.x), float(point.y))
-	if typeof(value) == TYPE_ARRAY and (value as Array).size() >= 2:
-		return Vector2(float((value as Array)[0]), float((value as Array)[1]))
-	if typeof(value) == TYPE_DICTIONARY:
-		return Vector2(float((value as Dictionary).get("x", -1.0)), float((value as Dictionary).get("y", -1.0)))
-	return Vector2(-1.0, -1.0)
-
-
-static func normalized_interaction_rect(object_type: String, index: int) -> Rect2:
-	var board_size := Vector2(VisualStyle.ENVIRONMENT_BOARD_SIZE)
-	var center := Vector2(0.5, 0.5)
-	var size := Vector2(0.12, 0.18)
-	match object_type:
-		"game":
-			center = Vector2(0.28 + float(index % 3) * 0.18, 0.56 + float(index / 3) * 0.13)
-			size = Vector2(118.0 / board_size.x, 72.0 / board_size.y)
-		"event":
-			center = Vector2(0.68 + float(index % 2) * 0.12, 0.42 + float(index / 2) * 0.14)
-			size = Vector2(100.0 / board_size.x, 64.0 / board_size.y)
-		"item":
-			center = Vector2(0.30 + float(index % 4) * 0.12, 0.76)
-			size = Vector2(90.0 / board_size.x, 54.0 / board_size.y)
-		"shopkeeper":
-			center = Vector2(0.80, 0.34)
-			size = Vector2(108.0 / board_size.x, 70.0 / board_size.y)
-		"game_hook", "dialogue":
-			center = Vector2(0.66 + float(index % 2) * 0.12, 0.76)
-			size = Vector2(104.0 / board_size.x, 58.0 / board_size.y)
-		"travel":
-			center = Vector2(0.78, 0.64 + float(index) * 0.12)
-			size = Vector2(118.0 / board_size.x, 64.0 / board_size.y)
-		"service":
-			center = Vector2(0.50 + float(index % 2) * 0.14, 0.76)
-			size = Vector2(96.0 / board_size.x, 54.0 / board_size.y)
-		"lender":
-			center = Vector2(0.62 + float(index % 2) * 0.12, 0.72)
-			size = Vector2(102.0 / board_size.x, 58.0 / board_size.y)
-		"numbers", "numbers_silas":
-			center = Vector2(0.42 + float(index % 2) * 0.24, 0.68)
-			size = Vector2(106.0 / board_size.x, 62.0 / board_size.y)
-		"delivery":
-			var delivery_centers := [
-				Vector2(0.72, 0.28), Vector2(0.84, 0.48),
-				Vector2(0.68, 0.66), Vector2(0.42, 0.28),
-				Vector2(0.30, 0.48), Vector2(0.46, 0.66),
-				Vector2(0.82, 0.72), Vector2(0.20, 0.28),
-			]
-			center = delivery_centers[index % delivery_centers.size()]
-			size = Vector2(100.0 / board_size.x, 70.0 / board_size.y)
-		"home_tenure":
-			center = Vector2(0.78, 0.46)
-			size = Vector2(116.0 / board_size.x, 58.0 / board_size.y)
-		"home_sleep":
-			center = Vector2(0.50, 0.42)
-			size = Vector2(150.0 / board_size.x, 74.0 / board_size.y)
-		"home_storage":
-			center = Vector2(0.20, 0.72)
-			size = Vector2(108.0 / board_size.x, 58.0 / board_size.y)
-		"home_container":
-			center = Vector2(0.22 + float(index % 4) * 0.18, 0.76 + float(index / 4) * 0.11)
-			size = Vector2(104.0 / board_size.x, 58.0 / board_size.y)
-		"meta_bag":
-			center = Vector2(0.42 + float(index % 3) * 0.12, 0.66 + float(index / 3) * 0.11)
-			size = Vector2(90.0 / board_size.x, 54.0 / board_size.y)
-		"meta_upgrade":
-			center = Vector2(0.78, 0.34)
-			size = Vector2(118.0 / board_size.x, 64.0 / board_size.y)
-		"meta_trade_up":
-			center = Vector2(0.62, 0.72)
-			size = Vector2(118.0 / board_size.x, 64.0 / board_size.y)
-		"meta_pawn_counter":
-			center = Vector2(0.50, 0.48)
-			size = Vector2(136.0 / board_size.x, 72.0 / board_size.y)
-	return Rect2(center - size * 0.5, size)
-
-
 static func travel_leave_preview_lines(travel_choices: Array, direct_room_exit: Dictionary) -> Array:
 	var result: Array = []
 	for choice_value in travel_choices.slice(0, 3):
@@ -748,7 +728,7 @@ static func travel_leave_preview_lines(travel_choices: Array, direct_room_exit: 
 			result.append("%s: %s" % [label, str(choice.get("disabled_reason", "locked"))])
 		else:
 			result.append("%s: %s, cost %d" % [label, str(choice.get("distance", "near")), int(choice.get("cost", 0))])
-	for line_value in _copy_array(direct_room_exit.get("preview_lines", [])):
+	for line_value in JsonCoerceScript._copy_array(direct_room_exit.get("preview_lines", [])):
 		var line := str(line_value).strip_edges()
 		if not line.is_empty() and not result.has(line):
 			result.append(line)
@@ -757,17 +737,17 @@ static func travel_leave_preview_lines(travel_choices: Array, direct_room_exit: 
 
 static func context_border_color(object_type: String, enabled: bool) -> Color:
 	if not enabled:
-		return VisualStyle.ORANGE
+		return VisualStyleScript.ORANGE
 	match object_type:
-		"game": return VisualStyle.CYAN
-		"event": return VisualStyle.AMBER
-		"item": return VisualStyle.TEAL
-		"shopkeeper", "game_hook", "home_tenure", "meta_bag", "meta_upgrade", "meta_trade_up", "meta_pawn_counter", "service", "lender": return VisualStyle.YELLOW
-		"dialogue": return VisualStyle.CYAN_2
-		"home_sleep": return VisualStyle.CYAN
-		"home_storage", "home_container": return VisualStyle.TEAL
-		"travel": return VisualStyle.PURPLE_2
-	return VisualStyle.CYAN_2
+		"game": return VisualStyleScript.CYAN
+		"event": return VisualStyleScript.AMBER
+		"item": return VisualStyleScript.TEAL
+		"shopkeeper", "game_hook", "home_tenure", "meta_bag", "meta_upgrade", "meta_trade_up", "meta_pawn_counter", "service", "lender": return VisualStyleScript.YELLOW
+		"dialogue": return VisualStyleScript.CYAN_2
+		"home_sleep": return VisualStyleScript.CYAN
+		"home_storage", "home_container": return VisualStyleScript.TEAL
+		"travel": return VisualStyleScript.PURPLE_2
+	return VisualStyleScript.CYAN_2
 
 
 static func context_type_label(object_type: String) -> String:
@@ -826,6 +806,15 @@ static func _object_with_rect(source: Dictionary, selection: Dictionary, layout:
 		index,
 		layout
 	)
+	var slot_bindings := JsonCoerceScript._copy_dict(layout.get("slot_bindings", {}))
+	var binding := JsonCoerceScript._copy_dict(slot_bindings.get(str(object_data.get("object_id", "")), {}))
+	if binding.is_empty():
+		binding = JsonCoerceScript._copy_dict(slot_bindings.get(str(object_data.get("manifest_object_id", "")), {}))
+	if not binding.is_empty():
+		object_data["presentation_mode"] = str(binding.get("presentation_mode", "overflow"))
+		object_data["slot_id"] = str(binding.get("slot_id", ""))
+		object_data["slot_family"] = str(binding.get("slot_family", binding.get("kind", object_data.get("slot_family", ""))))
+		object_data["placement_class"] = str(binding.get("placement_class", ""))
 	return make_interactable_object(object_data, selection)
 
 
@@ -838,11 +827,3 @@ static func _call(callback_value: Variant, args: Array, fallback: Variant) -> Va
 
 static func _label_from_id(value: String) -> String:
 	return value.replace("_", " ").capitalize()
-
-
-static func _copy_array(value: Variant) -> Array:
-	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
-
-
-static func _copy_dict(value: Variant) -> Dictionary:
-	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}

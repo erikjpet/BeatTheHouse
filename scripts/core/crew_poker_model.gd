@@ -9,6 +9,7 @@ const PATTERNS_PATH := "res://data/crew/tells.json"
 const SCHEMA_VERSION := 2
 const PROFILE_VERSION := 1
 const DECISION_RNG_DRAWS := 5
+const PATTERN_CACHE_MAX_ENTRIES := 64
 const PROFILE_ATTRIBUTES: Array[String] = [
 	"looseness", "preflop_raise", "reraise", "limp", "position_awareness",
 	"aggression", "continuation_bet", "bluff", "semi_bluff", "stickiness",
@@ -711,6 +712,8 @@ static func _ensure_patterns() -> void:
 		var row: Dictionary = value
 		var member_id := str(row.get("member_id", ""))
 		var authored: Array = row.get("patterns", []) if typeof(row.get("patterns", [])) == TYPE_ARRAY else []
+		if not _pattern_cache.has(member_id) and _pattern_cache.size() >= PATTERN_CACHE_MAX_ENTRIES:
+			break
 		_pattern_cache[member_id] = authored.duplicate(true)
 
 

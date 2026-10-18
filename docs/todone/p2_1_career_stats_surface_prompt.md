@@ -9,7 +9,7 @@ roguelike preparing 0.5. This file is self-contained.
 
 ## Why this exists
 
-`docs/plans/0.5_ui_overhaul_brief.md` scoped "the career/stats view (NEW in
+`docs/archive/0.5/plans/0.5_ui_overhaul_brief.md` scoped "the career/stats view (NEW in
 this overhaul - profile run history + lifetime stats finally get a surface)".
 It was never built as a designed surface. The UI redesign report does not
 mention career, lifetime, run history, or stats anywhere.
@@ -35,8 +35,8 @@ file list. It is the last screen that still looks like the pre-overhaul game.
 
 Build a real career/stats surface using the 0.5 design system
 (`VisualStyle` tokens + `FoundationWidgets` kit; follow
-`docs/plans/0.5_ui_redesign_report.md` for the established patterns, and
-`docs/plans/0.5_ui_art_manifest.md` for the icon pipeline if you add art).
+`docs/archive/0.5/plans/0.5_ui_redesign_report.md` for the established patterns, and
+`docs/archive/0.5/plans/0.5_ui_art_manifest.md` for the icon pipeline if you add art).
 
 Requirements:
 
@@ -69,7 +69,7 @@ Requirements:
 
 - No raw color/size literals - tokens only. Add the new files to
   `tools\ui05_token_adoption_check.ps1`'s file list.
-- Add the new files to `docs/plans/0.5_ui_redesign_report.md` with cold-look
+- Add the new files to `docs/archive/0.5/plans/0.5_ui_redesign_report.md` with cold-look
   notes and captures, so `tools\ui05_surface_coverage_check.ps1` stays green.
 - Zero gameplay-behavior change. Zero-copy per-frame; idle liveness untouched.
 - Working tree may contain other people's uncommitted work; treat it as

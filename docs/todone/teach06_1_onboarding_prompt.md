@@ -19,7 +19,7 @@ casino roguelike. The shipped tutorial/coach system lives in
 `data/tutorial/lessons.json` (56 lessons) with the coach surfaces in
 `scripts/ui/coach_overlay.gd` and `scripts/ui/coach_view_model.gd`.
 Binding design contract: `docs/plans/0.6_living_world_roadmap.md`.
-Voice: `docs/plans/0.5_voice_bible.md` +
+Voice: `docs/archive/0.5/plans/0.5_voice_bible.md` +
 `docs/plans/0.6_voice_bible_world_register.md`.
 
 ## Why this task exists

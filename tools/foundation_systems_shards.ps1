@@ -179,6 +179,8 @@ $script:FoundationContractsCheckIds = @(
     "playtest_fixes01_regressions",
     "playtest_fixes02_regressions",
     "playtest_fixes03_regressions",
+    "fixsweep06_1_wave1",
+    "fixsweep06_1_wave2",
     "coach_engine_foundation",
     "foundation_contracts",
     "bar_dice_contract",
@@ -262,7 +264,9 @@ $script:FoundationContractsShardPlan = [ordered]@{
         "content_depth_contract",
         "playtest_fixes01_regressions",
         "playtest_fixes02_regressions",
-        "playtest_fixes03_regressions"
+        "playtest_fixes03_regressions",
+        "fixsweep06_1_wave1",
+        "fixsweep06_1_wave2"
     )
     "contracts_games" = @(
         "bar_dice_contract",
@@ -358,6 +362,29 @@ function Get-FoundationContractsCheckIds {
 
 function Get-FoundationContractsShardPlan {
     return $script:FoundationContractsShardPlan
+}
+
+function Get-FoundationShardLaunchOrder {
+    param(
+        [Parameter(Mandatory = $true)]
+        [System.Collections.IDictionary]$Plan,
+        [string[]]$PreferredOrder = @()
+    )
+
+    $orderedShardIds = New-Object System.Collections.Generic.List[string]
+    foreach ($preferredShardIdValue in @($PreferredOrder)) {
+        $preferredShardId = [string]$preferredShardIdValue
+        if ($Plan.Contains($preferredShardId) -and -not $orderedShardIds.Contains($preferredShardId)) {
+            $orderedShardIds.Add($preferredShardId)
+        }
+    }
+    foreach ($shardIdValue in @($Plan.Keys)) {
+        $shardId = [string]$shardIdValue
+        if (-not $orderedShardIds.Contains($shardId)) {
+            $orderedShardIds.Add($shardId)
+        }
+    }
+    return @($orderedShardIds)
 }
 
 function Get-FoundationSystemsUserPathOwners {
@@ -729,8 +756,12 @@ function Merge-FoundationSystemsShardReports {
     param(
         [string[]]$ExpectedIds,
         [object[]]$ShardResults,
-        [string]$SuiteName = "systems"
+        [string]$SuiteName = "systems",
+        [string[]]$RegisteredIds = @()
     )
+    if ($RegisteredIds.Count -eq 0) {
+        $RegisteredIds = @($ExpectedIds)
+    }
     $harnessFailures = New-Object System.Collections.Generic.List[string]
     $checksById = @{}
     $executedByShard = [ordered]@{}
@@ -747,7 +778,7 @@ function Merge-FoundationSystemsShardReports {
                 $harnessFailures.Add("Systems shard '$shardId' produced a report with the wrong tool or suite.")
             }
             $registeredIds = @($report.registered_check_ids)
-            if (($registeredIds -join "|") -ne ($ExpectedIds -join "|")) {
+            if (($registeredIds -join "|") -ne ($RegisteredIds -join "|")) {
                 $harnessFailures.Add("Systems shard '$shardId' did not observe the canonical systems registration in its original order.")
             }
             foreach ($check in @($report.checks)) {
@@ -861,7 +892,7 @@ function Merge-FoundationSystemsShardReports {
         checks = $orderedChecks
         skipped = @()
         last_started_check = $lastStarted
-        registered_check_ids = @($ExpectedIds)
+        registered_check_ids = @($RegisteredIds)
         requested_check_ids = @($ExpectedIds)
         executed_check_ids = @($orderedChecks | ForEach-Object { [string]$_.id })
         shards = $shardSummaries

@@ -28,7 +28,7 @@ accepted as street-leaning by design.
 Prior art, both worth reading first: `docs/plans/0.6_pilot_reword_diff.md`
 (104 approved before/after lines, the calibration target) and
 `docs/plans/0.6_voice_bible_world_register.md` (the spec). Character voices
-are defined in `docs/plans/0.5_voice_bible.md` and remain binding.
+are defined in `docs/archive/0.5/plans/0.5_voice_bible.md` and remain binding.
 
 ---
 
@@ -251,7 +251,7 @@ Drawn from strings already in the data ("The ceiling loves a pattern.",
 3. **Character definitions and personalities are locked.** Owner decision.
    Do not touch `voice.style`, `display_name`, `title`, `role`, or any
    personality description in `characters.json`, and do not alter any
-   character's characterisation from `docs/plans/0.5_voice_bible.md`. You are
+   character's characterisation from `docs/archive/0.5/plans/0.5_voice_bible.md`. You are
    rewriting **what they say**, never **who they are**. A rewritten Sal line
    must still be gruff, mocking, transactional and secretly fond. A rewritten
    Vivienne line must still frame surveillance as hospitality.

@@ -173,9 +173,17 @@ func _play_hand(app: Control, exercise_save: bool, exercise_raise: bool) -> Dict
 			continue
 		if phase == "idle" and int(surface.get("hand_number", 0)) > 0:
 			break
-		var action := "poker_observe"
+		if str(surface.get("turn_owner", "")) != "player":
+			if _surface_action_index(canvas, "poker_observe") != MISSING_ACTION_INDEX:
+				failures.append("Production Hold'em exposed the removed manual Watch control.")
+				break
+			if not await _advance_automatic_opponent(app):
+				failures.append("Production host could not apply the scheduled opponent decision during %s." % phase)
+				break
+			await _settle(3)
+			continue
+		var action := "poker_call"
 		if str(surface.get("turn_owner", "")) == "player":
-			action = "poker_call"
 			if exercise_raise and phase == "river" and custom_raise_to == 0 and _surface_action_index(canvas, "poker_raise_open") != MISSING_ACTION_INDEX:
 				if await _perform_action(app, canvas, "poker_raise_open"):
 					await _settle(2)
@@ -194,9 +202,12 @@ func _play_hand(app: Control, exercise_save: bool, exercise_raise: bool) -> Dict
 		await _settle(4)
 	var final_state := _game_state(app)
 	var complete := str(final_state.get("phase", "")) == "idle" and int(final_state.get("hand_number", 0)) > 0
-	if streets != ["preflop", "flop", "turn", "river"]:
-		failures.append("Production-host Hold'em hand missed streets: %s." % JSON.stringify(streets))
 	var all_history: Array = final_state.get("action_history", []) if typeof(final_state.get("action_history", [])) == TYPE_ARRAY else []
+	var all_in_runout := complete \
+		and (final_state.get("community_cards", []) as Array).size() == 5 \
+		and all_history.any(func(row_value): return typeof(row_value) == TYPE_DICTIONARY and str((row_value as Dictionary).get("action", "")) == "all_in")
+	if streets != ["preflop", "flop", "turn", "river"] and not all_in_runout:
+		failures.append("Production-host Hold'em hand missed streets: %s." % JSON.stringify(streets))
 	var history: Array = all_history.slice(history_start)
 	var running_pot := 3
 	var action_amounts: Array = []
@@ -242,6 +253,26 @@ func _play_hand(app: Control, exercise_save: bool, exercise_raise: bool) -> Dict
 func _perform_action(app: Control, canvas: Control, action: String) -> bool:
 	var index := _surface_action_index(canvas, action)
 	return index != MISSING_ACTION_INDEX and bool(app.call("_handle_module_surface_action", action, index, true))
+
+
+func _advance_automatic_opponent(app: Control) -> bool:
+	var run_state := app.get("run_state") as RunState
+	var game := app.get("current_game") as GameModule
+	if run_state == null or game == null:
+		return false
+	var states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var table: Dictionary = states.get(GAME_ID, {}) if typeof(states.get(GAME_ID, {})) == TYPE_DICTIONARY else {}
+	var due_msec := maxi(1, int(table.get("npc_turn_due_msec", 0)))
+	var ui_state: Dictionary = (app.get("game_surface_ui_state") as Dictionary).duplicate(true)
+	ui_state.erase("poker_animation")
+	ui_state["surface_time_msec"] = due_msec + 1
+	ui_state["surface_presentation_time_msec"] = due_msec + 1
+	var command := game.surface_auto_action_command(ui_state, run_state, run_state.current_environment)
+	if not bool(command.get("handled", false)) or str(command.get("action_id", "")) != "observe":
+		return false
+	app.call("_apply_game_surface_automation_command", command, ui_state)
+	await _settle(1)
+	return true
 
 
 func _surface_action_index(canvas: Control, action: String) -> int:

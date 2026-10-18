@@ -34,7 +34,7 @@ preserved byte-for-byte by the generator.
 
 ## Executable exact-head matrix
 
-`tools/env06_7_package_a_check.gd` replaces the rejected static checker. It
+`tools/archive/env06_7/env06_7_package_a_check.gd` replaces the rejected static checker. It
 loads the production catalog and executes:
 
 - all success, failure, ignore, refuse, arrival-interruption, and

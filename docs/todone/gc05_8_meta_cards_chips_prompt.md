@@ -18,7 +18,7 @@ lives in `scripts/core/meta_collection_service.gd` +
 schema (`data/collections/collections.json`); the meta home + Sal's Pawn
 Shop sell collection items for gold; run loadouts inject meta items into
 runs. This file is self-contained; the design contract is
-`docs/plans/0.5_grand_casino_rework_plan.md` section 8 — read it first.
+`docs/archive/0.5/plans/0.5_grand_casino_rework_plan.md` section 8 — read it first.
 Requires slices 5 and 7 landed; re-verify actual code.
 
 ## Task

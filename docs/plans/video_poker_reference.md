@@ -1,6 +1,9 @@
 # Video Poker Reference: Real-Machine Spec
 
-This document is the implementation spec for the complete video-poker rebuild. It records the real casino-machine rhythm the game must prove in code, tests, captures, and manual acceptance.
+Status: **IMPLEMENTED AND ACTIVE in the current 0.6 source.** Reviewed against
+all three production cabinets on 2026-10-08.
+
+This document is the implementation spec for the complete video-poker rebuild. It records the real casino-machine rhythm the game preserves in code, tests, captures, and manual acceptance.
 
 ## Machine rhythm
 

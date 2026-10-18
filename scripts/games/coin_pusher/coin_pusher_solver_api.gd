@@ -1,6 +1,9 @@
 class_name CoinPusherSolverApi
 extends RefCounted
 
+# Stable facade over native and GDScript Coin Pusher solvers. It normalizes the
+# public contract so production, Web fallback, tests, and parity tools agree.
+
 const CoinPusherSolverScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver.gd")
 const SCHEMA := CoinPusherSolverScript.SCHEMA
 const VERSION := CoinPusherSolverScript.VERSION

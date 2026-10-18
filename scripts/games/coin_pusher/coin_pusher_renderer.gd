@@ -1,7 +1,10 @@
 class_name CoinPusherRenderer
 extends RefCounted
 
-const CoinPusherSolverAPI := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
+# Prepares and draws player-safe Coin Pusher cabinet projections, splitting
+# retained static/hardware layers from bounded live platform and body batches.
+
+const CoinPusherSolverAPIScript := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
 const DESIGN_SIZE := Vector2(900, 430)
 const CABINET_RECT := Rect2(34, 18, 832, 400)
 const MARQUEE_RECT := Rect2(170, 4, 560, 38)
@@ -76,6 +79,10 @@ var _entry_hardware_layout_carriage := -1
 var _entry_hardware_layout_cache: Dictionary = {}
 var _hardware_catalog_cache_key := ""
 var _hardware_catalog_cache: Array = []
+var _delivery_board_cache: Dictionary = {}
+var _delivery_board_cache_values := Vector4i()
+var _delivery_board_cache_x_max := 0
+var _delivery_board_cache_valid := false
 var _world_width := SCHEMA_DEFAULT_WIDTH
 var _world_back_y := SCHEMA_DEFAULT_BACK_Y
 var _coin_height := SCHEMA_DEFAULT_COIN_HEIGHT
@@ -173,7 +180,7 @@ func prepare_render_state(state: Dictionary) -> void:
 		return
 	_ensure_coin_batch()
 	var alpha := 1.0 if bool(state.get("reduce_motion", false)) else clampf(float(state.get("coin_pusher_interpolation_alpha", 1.0)), 0.0, 1.0)
-	_prepared_batch = CoinPusherSolverAPI.native_live_render_batch_packed({
+	_prepared_batch = CoinPusherSolverAPIScript.native_live_render_batch_packed({
 		"world_width": _world_width,
 		"world_back_y": _world_back_y,
 		"coin_height": _coin_height,
@@ -217,6 +224,38 @@ func _clear_prepared_batch() -> void:
 	_prepared_batch_view_serial = -1
 	_prepared_batch_alpha = -1.0
 	_prepared_batch_uploaded = false
+
+
+func release_surface_host(surface) -> void:
+	# Web caches are children of the shared game surface, while this renderer is
+	# retained by the game module. Tear them down when the host switches modules
+	# so neither the cabinet controls nor their backing viewports can leak into a
+	# room or another game.
+	if _hardware_cache_host == surface:
+		if is_instance_valid(_hardware_cache_canvas):
+			_hardware_cache_canvas.visible = false
+			_hardware_cache_canvas.queue_free()
+		_hardware_cache_canvas = null
+		_hardware_cache_host = null
+		_hardware_cache_key = ""
+		_hardware_cache_prepared_for_next_draw = false
+	if _static_cache_host == surface:
+		for viewport in _static_cache_viewports:
+			if is_instance_valid(viewport):
+				viewport.queue_free()
+		_static_cache_viewports.clear()
+		_static_cache_canvases.clear()
+		_static_cache_host = null
+		_static_cache_key = ""
+		_static_cache_state_key = ""
+		_static_cache_backglass_key = ""
+		_static_cache_pending = true
+		_static_cache_pending_layers = [true, true, true, true]
+		_static_cache_fallback_reason = "host_released"
+		if is_instance_valid(_static_cache_font) and _static_cache_font.changed.is_connected(_on_static_cache_font_changed):
+			_static_cache_font.changed.disconnect(_on_static_cache_font_changed)
+		_static_cache_font = null
+	_clear_prepared_batch()
 
 
 func _upload_prepared_batch() -> void:
@@ -667,9 +706,9 @@ func _draw_native_interpolated_bodies(surface, state: Dictionary, cabinet: Dicti
 		}
 		var current_packed: PackedInt64Array = state.get("coin_pusher_current_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_current_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array() # SA2_PER_FRAME_OK: cold fallback only when the prepared native batch is unavailable.
 		var previous_packed: PackedInt64Array = state.get("coin_pusher_previous_packed", PackedInt64Array()) if typeof(state.get("coin_pusher_previous_packed", PackedInt64Array())) == TYPE_PACKED_INT64_ARRAY else PackedInt64Array() # SA2_PER_FRAME_OK: cold fallback only when the prepared native batch is unavailable.
-		batch = CoinPusherSolverAPI.native_live_render_batch_packed(batch_config, current_packed, previous_packed, alpha) if not current_packed.is_empty() else {}
+		batch = CoinPusherSolverAPIScript.native_live_render_batch_packed(batch_config, current_packed, previous_packed, alpha) if not current_packed.is_empty() else {}
 		if batch.is_empty():
-			batch = CoinPusherSolverAPI.native_live_render_batch(batch_config, current, previous, alpha)
+			batch = CoinPusherSolverAPIScript.native_live_render_batch(batch_config, current, previous, alpha)
 	if batch.is_empty() or typeof(batch.get("buffer", null)) != TYPE_PACKED_FLOAT32_ARRAY:
 		return false
 	var count := int(batch.get("count", 0))
@@ -752,7 +791,10 @@ func draw_hardware_cache_layer(surface, state: Dictionary) -> void:
 
 
 func _prepare_hardware_cache(surface, state: Dictionary, consume_prepared: bool = true) -> bool:
-	if not OS.has_feature("web") and not bool(state.get("coin_pusher_static_cache_test", false)):
+	# Retained layers need a live Control host for child canvases and viewport
+	# textures. Protocol-only draw harnesses still exercise the same immediate
+	# production commands, but cannot own retained scene resources.
+	if not surface is Control or not _retained_layer_cache_enabled(state):
 		if is_instance_valid(_hardware_cache_canvas):
 			_hardware_cache_canvas.visible = false
 		return false
@@ -849,7 +891,10 @@ func _prepare_static_cache(surface, state: Dictionary) -> bool:
 	# The cache contains only design-space commands whose complete dependencies
 	# are listed here. Moving platform/bodies, glass, hardware, hover/hit/control
 	# state and overlays remain on the live surface every draw.
-	if not OS.has_feature("web") and not bool(state.get("coin_pusher_static_cache_test", false)):
+	if not surface is Control:
+		_static_cache_fallback_reason = "unsupported_surface_host"
+		return false
+	if not _retained_layer_cache_enabled(state):
 		_static_cache_fallback_reason = "non_web_runtime"
 		return false
 	var state_key := str(state.get("coin_pusher_static_content_key", "missing"))
@@ -946,6 +991,17 @@ func _prepare_static_cache(surface, state: Dictionary) -> bool:
 		return false
 	_static_cache_fallback_reason = ""
 	return true
+
+
+func _retained_layer_cache_enabled(state: Dictionary) -> bool:
+	if OS.has_feature("web"):
+		return true
+	# The cache contract explicitly supplies this override to compare the exact
+	# immediate and retained command streams. Keep that authority ahead of the
+	# production default so both paths remain independently provable.
+	if state.has("coin_pusher_static_cache_test"):
+		return bool(state.get("coin_pusher_static_cache_test", false))
+	return bool(state.get("coin_pusher_native_retained_layers", false))
 
 
 func _draw_static_cache_texture(surface, layer_index: int) -> void:
@@ -1752,13 +1808,25 @@ func _delivery_board(apparatus: Dictionary, geometry: Dictionary) -> Dictionary:
 	var authored: Dictionary = authored_value if typeof(authored_value) == TYPE_DICTIONARY else {}
 	var width := int(geometry.get("width", SCHEMA_DEFAULT_WIDTH))
 	var platform_top := int(geometry.get("platform_top_z", 3600))
-	return {
-		"y": int(authored.get("y", geometry.get("drop_y", SCHEMA_DEFAULT_BACK_Y))),
-		"z_top": int(authored.get("z_top", geometry.get("drop_z", 24000))),
-		"z_bottom": int(authored.get("z_bottom", platform_top)),
-		"x_min": int(authored.get("x_min", 0)),
-		"x_max": int(authored.get("x_max", width)),
+	var y := int(authored.get("y", geometry.get("drop_y", SCHEMA_DEFAULT_BACK_Y)))
+	var z_top := int(authored.get("z_top", geometry.get("drop_z", 24000)))
+	var z_bottom := int(authored.get("z_bottom", platform_top))
+	var x_min := int(authored.get("x_min", 0))
+	var x_max := int(authored.get("x_max", width))
+	var values := Vector4i(y, z_top, z_bottom, x_min)
+	if _delivery_board_cache_valid and values == _delivery_board_cache_values and x_max == _delivery_board_cache_x_max:
+		return _delivery_board_cache
+	_delivery_board_cache_values = values
+	_delivery_board_cache_x_max = x_max
+	_delivery_board_cache_valid = true
+	_delivery_board_cache = {
+		"y": y,
+		"z_top": z_top,
+		"z_bottom": z_bottom,
+		"x_min": x_min,
+		"x_max": x_max,
 	}
+	return _delivery_board_cache
 
 
 func _project_delivery_board_point(board: Dictionary, x: float, z: float) -> Vector2:

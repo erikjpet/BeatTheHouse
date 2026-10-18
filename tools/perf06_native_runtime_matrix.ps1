@@ -11,7 +11,8 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$root = [IO.Path]::GetFullPath((Split-Path -Parent $PSScriptRoot))
+. (Join-Path $PSScriptRoot "repository_root.ps1")
+$root = Resolve-BthRepositoryRoot -StartPath $PSScriptRoot
 $head = (& git -C $root rev-parse HEAD).Trim()
 if ($LASTEXITCODE -ne 0 -or -not $head) { throw "Could not resolve candidate commit." }
 if (@(& git -C $root status --short --untracked-files=no).Count -ne 0) { throw "Native runtime measurement requires a clean tracked candidate." }
@@ -91,7 +92,7 @@ $report = Get-Content -LiteralPath $rawReport -Raw | ConvertFrom-Json
 if ([string]$report.build_identity.source_commit -cne $head -or [string]$report.build_identity.export_sha256 -cne $buildHash) { throw "Native report identity does not match the exported candidate." }
 if ([string]$report.platform -cne "windows" -or [string]$report.plan -cne $Plan) { throw "Native report platform/plan identity is invalid." }
 $budgetTablePath = Join-Path $PSScriptRoot "perf06_budget_table.json"
-$phaseContractPath = Join-Path $PSScriptRoot "perf06_phase_qualification_contract.ps1"
+$phaseContractPath = Join-Path $root "tools/archive/perf06/perf06_phase_qualification_contract.ps1"
 . $phaseContractPath
 $budgetTable = Get-Content -LiteralPath $budgetTablePath -Raw | ConvertFrom-Json
 $qualificationFailures = [Collections.Generic.List[string]]::new()

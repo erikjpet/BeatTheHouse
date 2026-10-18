@@ -1,6 +1,8 @@
 class_name ScenarioHostTransaction
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Cross-consumer host boundary for table-game commands. Games author pure deltas;
 # only this host replaces table state, mutates accounts, publishes facts, or
 # advances interruption/travel requests.
@@ -22,6 +24,7 @@ const MAX_DEPTH := 10
 const MAX_VALUES := 2048
 
 
+# Builds a normalized empty transaction host state from optional persisted ledgers.
 static func initial_state(accounts: Dictionary = {}, table_states: Dictionary = {}, rng_leases: Dictionary = {}) -> Dictionary:
 	var result := normalize_state({
 		"schema_version": SCHEMA_VERSION,
@@ -49,6 +52,7 @@ static func initial_state(accounts: Dictionary = {}, table_states: Dictionary = 
 	return result
 
 
+# Normalizes untrusted persisted host state into the closed transaction schema.
 static func normalize_state(value: Variant) -> Dictionary:
 	var source := _dict(value)
 	return {
@@ -58,16 +62,16 @@ static func normalize_state(value: Variant) -> Dictionary:
 		"table_states": _dict(source.get("table_states", {})),
 		"trust": _int_dictionary(source.get("trust", {})),
 		"tells": _int_dictionary(source.get("tells", {})),
-		"fact_queue": _dictionary_array(source.get("fact_queue", [])),
-		"fact_log": _dictionary_array(source.get("fact_log", [])),
+		"fact_queue": JsonCoerceScript._dictionary_array(source.get("fact_queue", [])),
+		"fact_log": JsonCoerceScript._dictionary_array(source.get("fact_log", [])),
 		"fact_receipts": _dict(source.get("fact_receipts", {})),
 		"fact_commit_order": maxi(0, int(source.get("fact_commit_order", 0))),
 		"fact_compaction_floor": maxi(0, int(source.get("fact_compaction_floor", 0))),
 		"authoritative_receipts": _dict(source.get("authoritative_receipts", {})),
 		"receipt_results": _dict(source.get("receipt_results", {})),
 		"prepared_requests": _dict(source.get("prepared_requests", {})),
-		"acknowledgements": _dictionary_array(source.get("acknowledgements", [])),
-		"external_warnings": _string_array(source.get("external_warnings", [])),
+		"acknowledgements": JsonCoerceScript._dictionary_array(source.get("acknowledgements", [])),
+		"external_warnings": JsonCoerceScript._unique_string_array(source.get("external_warnings", [])),
 		"rng_leases": _dict(source.get("rng_leases", {})),
 		"request_delivery_serials": _int_dictionary(source.get("request_delivery_serials", {})),
 		"safe_boundary": maxi(0, int(source.get("safe_boundary", 0))),
@@ -75,6 +79,7 @@ static func normalize_state(value: Variant) -> Dictionary:
 	}
 
 
+# Projects the durable subset of a normalized transaction host state.
 static func persisted_ledger(state_value: Dictionary) -> Dictionary:
 	var state := normalize_state(state_value)
 	for key in ["accounts", "table_states", "trust", "tells", "canonical_snapshot_digest"]:
@@ -82,6 +87,7 @@ static func persisted_ledger(state_value: Dictionary) -> Dictionary:
 	return state
 
 
+# Binds a canonical snapshot and digest to a persisted transaction ledger.
 static func bind_canonical_snapshot(ledger_value: Dictionary, snapshot: Dictionary) -> Dictionary:
 	var combined := ledger_value.duplicate(true)
 	combined["accounts"] = _dict(snapshot.get("accounts", {}))
@@ -94,6 +100,7 @@ static func bind_canonical_snapshot(ledger_value: Dictionary, snapshot: Dictiona
 	return result
 
 
+# Creates the bounded public context shared by game and scenario producers.
 static func public_context(node_id: String, environment_visit_id: String, night_instance_id: String, context_instance_id: String) -> Dictionary:
 	return {
 		"node_id": node_id.strip_edges(),
@@ -103,6 +110,7 @@ static func public_context(node_id: String, environment_visit_id: String, night_
 	}
 
 
+# Returns an environment copy with its validated public context attached.
 static func inject_public_context(environment_value: Dictionary, context: Dictionary) -> Dictionary:
 	var errors := _validate_context(context)
 	if not errors.is_empty():
@@ -115,6 +123,7 @@ static func inject_public_context(environment_value: Dictionary, context: Dictio
 	return {"ok": true, "environment": environment, "errors": []}
 
 
+# Prepares the least-authority game context visible to one producer and table.
 static func prepared_game_context(state_value: Dictionary, context: Dictionary, table_id: String, producer_id: String, requested_keys: Array = []) -> Dictionary:
 	var state := normalize_state(state_value)
 	var errors := _validate_context(context)
@@ -146,6 +155,7 @@ static func prepared_game_context(state_value: Dictionary, context: Dictionary, 
 	return {"ok": true, "context": result, "errors": []}
 
 
+# Authors a bounded game fact envelope for deferred host reduction.
 static func game_fact(fact_type: String, producer_id: String, game_id: String, table_id: String, context: Dictionary, producer_receipt: String, scenario_receipt: String, target_boundary: int, payload: Dictionary) -> Dictionary:
 	return {
 		"schema_version": FACT_SCHEMA_VERSION,
@@ -162,6 +172,7 @@ static func game_fact(fact_type: String, producer_id: String, game_id: String, t
 	}
 
 
+# Authors a prepared request whose table and boundary bindings are explicit.
 static func prepared_request(request_id: String, kind: String, table_id: String, context: Dictionary, table_digest: String, target_boundary: int, delivery_serial: int, expires_at_boundary: int, payload: Dictionary) -> Dictionary:
 	return {
 		"schema_version": REQUEST_SCHEMA_VERSION,
@@ -178,6 +189,7 @@ static func prepared_request(request_id: String, kind: String, table_id: String,
 	}
 
 
+# Authors a compare-and-swap game command with its replacement table state.
 static func game_command(producer_id: String, game_id: String, table_id: String, receipt_id: String, context: Dictionary, expected_table_digest: String, replacement_table_state: Dictionary, deltas: Dictionary = {}) -> Dictionary:
 	return {
 		"schema_version": SCHEMA_VERSION,
@@ -188,17 +200,18 @@ static func game_command(producer_id: String, game_id: String, table_id: String,
 		"context": _public_context_projection(context),
 		"expected_table_digest": expected_table_digest.strip_edges(),
 		"replacement_table_state": replacement_table_state.duplicate(true),
-		"account_ops": _dictionary_array(deltas.get("account_ops", [])),
-		"trust_ops": _dictionary_array(deltas.get("trust_ops", [])),
-		"tell_ops": _dictionary_array(deltas.get("tell_ops", [])),
-		"facts": _dictionary_array(deltas.get("facts", [])),
-		"prepared_acknowledgements": _dictionary_array(deltas.get("prepared_acknowledgements", [])),
-		"external_warnings": _string_array(deltas.get("external_warnings", [])),
-		"rng_updates": _dictionary_array(deltas.get("rng_updates", [])),
+		"account_ops": JsonCoerceScript._dictionary_array(deltas.get("account_ops", [])),
+		"trust_ops": JsonCoerceScript._dictionary_array(deltas.get("trust_ops", [])),
+		"tell_ops": JsonCoerceScript._dictionary_array(deltas.get("tell_ops", [])),
+		"facts": JsonCoerceScript._dictionary_array(deltas.get("facts", [])),
+		"prepared_acknowledgements": JsonCoerceScript._dictionary_array(deltas.get("prepared_acknowledgements", [])),
+		"external_warnings": JsonCoerceScript._unique_string_array(deltas.get("external_warnings", [])),
+		"rng_updates": JsonCoerceScript._dictionary_array(deltas.get("rng_updates", [])),
 		"prepared_request": _dict(deltas.get("prepared_request", {})),
 	}
 
 
+# Adds one prepared request to a command before a travel boundary commits.
 static func pre_travel_hook(command_value: Dictionary, request: Dictionary) -> Dictionary:
 	var command := command_value.duplicate(true)
 	var errors: Array = []
@@ -212,6 +225,7 @@ static func pre_travel_hook(command_value: Dictionary, request: Dictionary) -> D
 	return {"ok": true, "command": command, "errors": []}
 
 
+# Validates and reduces a game command without mutating the caller's state.
 static func reduce_game_command(state_value: Dictionary, command_value: Dictionary) -> Dictionary:
 	var state := normalize_state(state_value)
 	var command := command_value.duplicate(true)
@@ -230,19 +244,20 @@ static func reduce_game_command(state_value: Dictionary, command_value: Dictiona
 		"table_id": str(command.get("table_id", "")),
 		"context": _dict(command.get("context", {})),
 		"replacement_table_state": _dict(command.get("replacement_table_state", {})),
-		"account_ops": _dictionary_array(command.get("account_ops", [])),
-		"trust_ops": _dictionary_array(command.get("trust_ops", [])),
-		"tell_ops": _dictionary_array(command.get("tell_ops", [])),
-		"facts": _dictionary_array(command.get("facts", [])),
-		"prepared_acknowledgements": _dictionary_array(command.get("prepared_acknowledgements", [])),
-		"external_warnings": _string_array(command.get("external_warnings", [])),
-		"rng_updates": _dictionary_array(command.get("rng_updates", [])),
+		"account_ops": JsonCoerceScript._dictionary_array(command.get("account_ops", [])),
+		"trust_ops": JsonCoerceScript._dictionary_array(command.get("trust_ops", [])),
+		"tell_ops": JsonCoerceScript._dictionary_array(command.get("tell_ops", [])),
+		"facts": JsonCoerceScript._dictionary_array(command.get("facts", [])),
+		"prepared_acknowledgements": JsonCoerceScript._dictionary_array(command.get("prepared_acknowledgements", [])),
+		"external_warnings": JsonCoerceScript._unique_string_array(command.get("external_warnings", [])),
+		"rng_updates": JsonCoerceScript._dictionary_array(command.get("rng_updates", [])),
 		"prepared_request": _dict(command.get("prepared_request", {})),
 	}
 	transaction["fingerprint"] = _transaction_fingerprint(transaction)
 	return transaction
 
 
+# Commits a previously reduced transaction when its CAS bindings still match.
 static func commit_game_command(state_value: Dictionary, transaction_value: Dictionary) -> Dictionary:
 	var state := normalize_state(state_value)
 	var transaction := transaction_value.duplicate(true)
@@ -261,33 +276,34 @@ static func commit_game_command(state_value: Dictionary, transaction_value: Dict
 	var tables := _dict(next.get("table_states", {}))
 	tables[str(transaction.get("table_id", ""))] = _dict(transaction.get("replacement_table_state", {}))
 	next["table_states"] = tables
-	_apply_account_ops(next, _dictionary_array(transaction.get("account_ops", [])))
-	_apply_named_delta_ops(next, "trust", "subject_id", _dictionary_array(transaction.get("trust_ops", [])))
-	_apply_named_delta_ops(next, "tells", "pattern_id", _dictionary_array(transaction.get("tell_ops", [])))
-	_apply_rng_updates(next, str(transaction.get("producer_id", "")), receipt_id, _dictionary_array(transaction.get("rng_updates", [])))
-	_commit_facts(next, _dictionary_array(transaction.get("facts", [])))
+	_apply_account_ops(next, JsonCoerceScript._dictionary_array(transaction.get("account_ops", [])))
+	_apply_named_delta_ops(next, "trust", "subject_id", JsonCoerceScript._dictionary_array(transaction.get("trust_ops", [])))
+	_apply_named_delta_ops(next, "tells", "pattern_id", JsonCoerceScript._dictionary_array(transaction.get("tell_ops", [])))
+	_apply_rng_updates(next, str(transaction.get("producer_id", "")), receipt_id, JsonCoerceScript._dictionary_array(transaction.get("rng_updates", [])))
+	_commit_facts(next, JsonCoerceScript._dictionary_array(transaction.get("facts", [])))
 	_commit_prepared_request(next, _dict(transaction.get("prepared_request", {})), receipt_id, str(transaction.get("producer_id", "")), str(transaction.get("game_id", "")), prepared_account_id)
-	for acknowledgement_value in _dictionary_array(transaction.get("prepared_acknowledgements", [])):
+	for acknowledgement_value in JsonCoerceScript._dictionary_array(transaction.get("prepared_acknowledgements", [])):
 		var acknowledgement: Dictionary = acknowledgement_value.duplicate(true)
 		acknowledgement["receipt_id"] = receipt_id
 		acknowledgement["phase"] = "prepared"
 		_append_acknowledgement(next, acknowledgement)
-	for warning_value in _string_array(transaction.get("external_warnings", [])):
-		var warnings := _string_array(next.get("external_warnings", []))
+	for warning_value in JsonCoerceScript._unique_string_array(transaction.get("external_warnings", [])):
+		var warnings := JsonCoerceScript._unique_string_array(next.get("external_warnings", []))
 		warnings.append(str(warning_value))
 		next["external_warnings"] = warnings
 	_record_receipt(next, receipt_id, fingerprint, {
 		"kind": "game_command", "table_id": str(transaction.get("table_id", "")),
-		"account_ops": _dictionary_array(transaction.get("account_ops", [])),
-		"trust_ops": _dictionary_array(transaction.get("trust_ops", [])),
-		"tell_ops": _dictionary_array(transaction.get("tell_ops", [])),
-		"facts": _dictionary_array(transaction.get("facts", [])),
+		"account_ops": JsonCoerceScript._dictionary_array(transaction.get("account_ops", [])),
+		"trust_ops": JsonCoerceScript._dictionary_array(transaction.get("trust_ops", [])),
+		"tell_ops": JsonCoerceScript._dictionary_array(transaction.get("tell_ops", [])),
+		"facts": JsonCoerceScript._dictionary_array(transaction.get("facts", [])),
 	})
 	next["canonical_snapshot_digest"] = _canonical_snapshot_digest(next)
 	_bump_revision(next)
 	return {"ok": true, "state": next, "replayed": false, "receipt_id": receipt_id, "errors": []}
 
 
+# Flushes queued game facts whose target boundary is now safe.
 static func flush_game_facts(state_value: Dictionary, safe_boundary: int) -> Dictionary:
 	var state := normalize_state(state_value)
 	if safe_boundary < int(state.get("safe_boundary", 0)):
@@ -296,10 +312,10 @@ static func flush_game_facts(state_value: Dictionary, safe_boundary: int) -> Dic
 	if not order_errors.is_empty():
 		return {"ok": false, "state": state, "processed": [], "errors": order_errors}
 	var next := state.duplicate(true)
-	var queue := _dictionary_array(next.get("fact_queue", []))
+	var queue := JsonCoerceScript._dictionary_array(next.get("fact_queue", []))
 	queue.sort_custom(func(a: Variant, b: Variant) -> bool: return int((a as Dictionary).get("commit_order", 0)) < int((b as Dictionary).get("commit_order", 0)))
 	var remaining: Array = []
-	var log := _dictionary_array(next.get("fact_log", []))
+	var log := JsonCoerceScript._dictionary_array(next.get("fact_log", []))
 	var processed: Array = []
 	for fact_value in queue:
 		var fact := fact_value as Dictionary
@@ -321,6 +337,7 @@ static func flush_game_facts(state_value: Dictionary, safe_boundary: int) -> Dic
 	return {"ok": true, "state": next, "processed": processed, "errors": []}
 
 
+# Records an idempotent response to a prepared request under protocol CAS.
 static func respond_to_prepared_request(state_value: Dictionary, request_id: String, response: String, receipt_id: String, expected_revision: int, expected_digest: String) -> Dictionary:
 	var state := normalize_state(state_value)
 	var fingerprint := state_digest({"kind": "request_response", "request_id": request_id, "response": response})
@@ -349,6 +366,7 @@ static func respond_to_prepared_request(state_value: Dictionary, request_id: Str
 	return {"ok": true, "state": next, "replayed": false, "errors": []}
 
 
+# Applies the bounded economy operations that complete a prepared request.
 static func complete_prepared_request_economy(state_value: Dictionary, request_id: String, account_ops: Array, receipt_id: String, expected_revision: int, expected_digest: String) -> Dictionary:
 	var state := normalize_state(state_value)
 	var fingerprint := state_digest({"kind": "economic_complete", "request_id": request_id, "account_ops": account_ops})
@@ -376,6 +394,7 @@ static func complete_prepared_request_economy(state_value: Dictionary, request_i
 	return {"ok": true, "state": next, "replayed": false, "errors": []}
 
 
+# Acknowledges a prepared request unwind and restores its replacement table.
 static func acknowledge_prepared_request_unwound(state_value: Dictionary, request_id: String, replacement_table_state: Dictionary, receipt_id: String, expected_revision: int, expected_digest: String) -> Dictionary:
 	var state := normalize_state(state_value)
 	var fingerprint := state_digest({"kind": "game_unwound", "request_id": request_id, "table": replacement_table_state})
@@ -412,6 +431,7 @@ static func acknowledge_prepared_request_unwound(state_value: Dictionary, reques
 	return {"ok": true, "state": next, "replayed": false, "errors": []}
 
 
+# Applies the runtime side of an accepted prepared request under protocol CAS.
 static func apply_prepared_request_runtime(state_value: Dictionary, request_id: String, receipt_id: String, expected_revision: int, expected_digest: String) -> Dictionary:
 	var state := normalize_state(state_value)
 	var fingerprint := state_digest({"kind": "runtime_applied", "request_id": request_id})
@@ -434,6 +454,7 @@ static func apply_prepared_request_runtime(state_value: Dictionary, request_id: 
 	return {"ok": true, "state": next, "replayed": false, "errors": []}
 
 
+# Returns the canonical digest used by host-state compare-and-swap checks.
 static func state_digest(value: Variant) -> String:
 	return JSON.stringify(_canonical_variant(value)).sha256_text()
 
@@ -682,7 +703,7 @@ static func _validate_fact_order(state: Dictionary) -> Array:
 	var floor := int(state.get("fact_compaction_floor", 0))
 	var seen: Dictionary = {}
 	var previous := floor
-	var combined := _dictionary_array(state.get("fact_log", [])) + _dictionary_array(state.get("fact_queue", []))
+	var combined := JsonCoerceScript._dictionary_array(state.get("fact_log", [])) + JsonCoerceScript._dictionary_array(state.get("fact_queue", []))
 	combined.sort_custom(func(a: Variant, b: Variant) -> bool: return int((a as Dictionary).get("commit_order", 0)) < int((b as Dictionary).get("commit_order", 0)))
 	for fact_value in combined:
 		var order := int((fact_value as Dictionary).get("commit_order", 0))
@@ -693,7 +714,7 @@ static func _validate_fact_order(state: Dictionary) -> Array:
 
 
 static func _commit_facts(state: Dictionary, facts: Array) -> void:
-	var queue := _dictionary_array(state.get("fact_queue", []))
+	var queue := JsonCoerceScript._dictionary_array(state.get("fact_queue", []))
 	var receipts := _dict(state.get("fact_receipts", {}))
 	for fact_value in facts:
 		var fact := (fact_value as Dictionary).duplicate(true)
@@ -752,7 +773,7 @@ static func _apply_rng_updates(state: Dictionary, _producer_id: String, receipt_
 		var lease_id := str(update.get("lease_id", ""))
 		var lease := _dict(leases.get(lease_id, {}))
 		lease["current_state"] = _copy_variant(update.get("after_state"))
-		var receipts := _string_array(lease.get("receipts", []))
+		var receipts := JsonCoerceScript._unique_string_array(lease.get("receipts", []))
 		if not receipts.has(receipt_id): receipts.append(receipt_id)
 		lease["receipts"] = receipts
 		leases[lease_id] = lease
@@ -839,7 +860,7 @@ static func _set_request_status(state: Dictionary, request_id: String, status: S
 
 
 static func _append_acknowledgement(state: Dictionary, acknowledgement: Dictionary) -> void:
-	var values := _dictionary_array(state.get("acknowledgements", []))
+	var values := JsonCoerceScript._dictionary_array(state.get("acknowledgements", []))
 	values.append(acknowledgement.duplicate(true))
 	state["acknowledgements"] = values
 
@@ -878,13 +899,13 @@ static func _transaction_fingerprint(transaction: Dictionary) -> String:
 		"table_id": str(transaction.get("table_id", "")),
 		"context": _dict(transaction.get("context", {})),
 		"replacement_table_state": _dict(transaction.get("replacement_table_state", {})),
-		"account_ops": _dictionary_array(transaction.get("account_ops", [])),
-		"trust_ops": _dictionary_array(transaction.get("trust_ops", [])),
-		"tell_ops": _dictionary_array(transaction.get("tell_ops", [])),
-		"facts": _dictionary_array(transaction.get("facts", [])),
-		"prepared_acknowledgements": _dictionary_array(transaction.get("prepared_acknowledgements", [])),
-		"external_warnings": _string_array(transaction.get("external_warnings", [])),
-		"rng_updates": _dictionary_array(transaction.get("rng_updates", [])),
+		"account_ops": JsonCoerceScript._dictionary_array(transaction.get("account_ops", [])),
+		"trust_ops": JsonCoerceScript._dictionary_array(transaction.get("trust_ops", [])),
+		"tell_ops": JsonCoerceScript._dictionary_array(transaction.get("tell_ops", [])),
+		"facts": JsonCoerceScript._dictionary_array(transaction.get("facts", [])),
+		"prepared_acknowledgements": JsonCoerceScript._dictionary_array(transaction.get("prepared_acknowledgements", [])),
+		"external_warnings": JsonCoerceScript._unique_string_array(transaction.get("external_warnings", [])),
+		"rng_updates": JsonCoerceScript._dictionary_array(transaction.get("rng_updates", [])),
 		"prepared_request": _dict(transaction.get("prepared_request", {})),
 	})
 
@@ -1012,20 +1033,6 @@ static func _dict(value: Variant) -> Dictionary:
 
 static func _array(value: Variant) -> Array:
 	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
-
-
-static func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	for item_value in _array(value):
-		if typeof(item_value) == TYPE_DICTIONARY: result.append((item_value as Dictionary).duplicate(true))
-	return result
-
-
-static func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	for item_value in _array(value):
-		if typeof(item_value) == TYPE_STRING and not str(item_value).strip_edges().is_empty(): result.append(str(item_value).strip_edges())
-	return result
 
 
 static func _normalize_accounts(value: Variant) -> Dictionary:

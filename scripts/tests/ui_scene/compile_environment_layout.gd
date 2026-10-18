@@ -1,5 +1,7 @@
 extends "res://scripts/tests/ui_scene/compile_components_and_main_flow.gd"
 
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
+
 func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	var collections_button := app.get("collections_button") as Button
 	if collections_button == null:
@@ -25,7 +27,7 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	if not _control_fits_viewport(canvas, viewport_rect, "meta home environment canvas"):
 		return false
 	var spatial: Dictionary = app.call("current_spatial_interaction_snapshot")
-	var objects := _copy_array(spatial.get("objects", []))
+	var objects := JsonCoerceScript._copy_array(spatial.get("objects", []))
 	var container_id := ""
 	var has_map_door := false
 	var bag_prop_count := 0
@@ -53,8 +55,8 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	if str(meta_hud.get("mode", "")) != "meta":
 		push_error("Meta home did not switch the top bar to meta mode.")
 		return false
-	var hud_fields := _copy_array(meta_hud.get("fields", []))
-	if hud_fields.size() != 3 or str(_copy_dict(hud_fields[0]).get("id", "")) != "location" or str(_copy_dict(hud_fields[1]).get("id", "")) != "gold" or str(_copy_dict(hud_fields[2]).get("id", "")) != "next_tier":
+	var hud_fields := JsonCoerceScript._copy_array(meta_hud.get("fields", []))
+	if hud_fields.size() != 3 or str(JsonCoerceScript._copy_dict(hud_fields[0]).get("id", "")) != "location" or str(JsonCoerceScript._copy_dict(hud_fields[1]).get("id", "")) != "gold" or str(JsonCoerceScript._copy_dict(hud_fields[2]).get("id", "")) != "next_tier":
 		push_error("Meta top bar should expose only location, gold, and next-tier goal, got %s." % str(hud_fields))
 		return false
 	if int(meta_hud.get("gold", -1)) != 0 or str(meta_hud.get("location_text", "")) != "Home · Back Alley" or str(meta_hud.get("next_home_label", "")) != "Motel Room" or int(meta_hud.get("next_home_price", 0)) != 60 or int(meta_hud.get("next_home_remaining_gold", -1)) != 60:
@@ -87,7 +89,7 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 		return false
 	var meta_map_view: Dictionary = meta_map_canvas.call("current_view_snapshot")
 	var meta_map_bounds: Dictionary = meta_map_view.get("map_bounds", {}) if typeof(meta_map_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
-	var meta_map_markers: Array = _copy_array(meta_map_view.get("icon_markers", []))
+	var meta_map_markers: Array = JsonCoerceScript._copy_array(meta_map_view.get("icon_markers", []))
 	var meta_map_holder_rect := _snapshot_rect(meta_map_screen.get("world_map_holder_rect", {}))
 	var meta_home_marker := _map_icon_marker(meta_map_markers, "home")
 	if meta_home_marker.is_empty():
@@ -107,7 +109,7 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 		return false
 	if not _map_markers_fit(meta_map_markers, meta_map_holder_rect, "initial meta world map"):
 		return false
-	var meta_target_ids: Array = _copy_array(_copy_dict(meta_map_screen.get("world_map", {})).get("travel_target_ids", []))
+	var meta_target_ids: Array = JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(meta_map_screen.get("world_map", {})).get("travel_target_ids", []))
 	if meta_target_ids.is_empty():
 		push_error("Meta world map did not expose a travel target.")
 		return false
@@ -130,7 +132,7 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	if not _map_canvas_size_equal(meta_map_view, selected_meta_map_view):
 		push_error("Selecting a meta world-map node changed the canvas size: before %s after %s." % [JSON.stringify(meta_map_view.get("canvas_size", {})), JSON.stringify(selected_meta_map_view.get("canvas_size", {}))])
 		return false
-	if not _map_markers_fit(_copy_array(selected_meta_map_view.get("icon_markers", [])), meta_map_holder_rect, "selected meta world map"):
+	if not _map_markers_fit(JsonCoerceScript._copy_array(selected_meta_map_view.get("icon_markers", [])), meta_map_holder_rect, "selected meta world map"):
 		return false
 	var selected_meta_screen: Dictionary = app.call("current_screen_snapshot")
 	var selected_meta_detail := str(selected_meta_screen.get("world_map_detail_text", ""))
@@ -138,7 +140,7 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	if selected_meta_lines.size() != 4 or not str(selected_meta_lines[1]).begins_with("Hours:") or str(selected_meta_lines[3]) != "0 min * 0$ * Walk":
 		push_error("Meta world-map detail did not use the compact four-field format: %s" % selected_meta_detail)
 		return false
-	var selected_meta_badges: Array = _copy_array(selected_meta_screen.get("world_map_detail_badges", []))
+	var selected_meta_badges: Array = JsonCoerceScript._copy_array(selected_meta_screen.get("world_map_detail_badges", []))
 	if not selected_meta_badges.is_empty():
 		push_error("Meta world-map detail retained badges outside the requested four fields: %s" % str(selected_meta_badges))
 		return false
@@ -178,44 +180,75 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 		push_error("Meta pawn travel did not open the custom pawn-shop room: %s." % str(pawn_environment))
 		return false
 	var pawn_spatial: Dictionary = app.call("current_spatial_interaction_snapshot")
-	var pawn_objects := _copy_array(pawn_spatial.get("objects", []))
-	if _object_by_id(pawn_objects, "meta_pawn_counter:sell").is_empty() or _object_by_id(pawn_objects, "meta_sal:talk").is_empty() or _object_by_id(pawn_objects, "travel:leave").is_empty():
-		push_error("Custom pawn-shop room did not expose separate Sal, sell-counter, and map-door interactions.")
+	var pawn_objects := JsonCoerceScript._copy_array(pawn_spatial.get("objects", []))
+	var pawn_counter_object := _object_by_id(pawn_objects, "meta_pawn_counter:sell")
+	var sal_object := _object_by_id(pawn_objects, "meta_sal:talk")
+	var pawn_door_object := _object_by_id(pawn_objects, "travel:leave")
+	if sal_object.is_empty() or pawn_door_object.is_empty() or not pawn_counter_object.is_empty():
+		var meta_controller: Variant = app.get("meta_session_controller")
+		var raw_pawn_objects: Array = meta_controller.call("_pawn_interactable_objects", run_state, "", "", "") if meta_controller != null else []
+		var pawn_layout: Dictionary = pawn_environment.get("layout", {})
+		var pawn_binding := EnvironmentSlotBinderScript.bind_base_records(pawn_environment, raw_pawn_objects, pawn_layout.get("slot_bindings", {}), {})
+		push_error("Custom pawn-shop room did not expose one Sal host with shared actions and a map-door interaction: %s." % JSON.stringify(pawn_binding.get("errors", [])))
 		return false
 	var shelf_offer_ids: Array = []
-	for offer_value in _copy_array(pawn_environment.get("item_offers", [])):
-		shelf_offer_ids.append(str(_copy_dict(offer_value).get("id", "")))
+	for offer_value in JsonCoerceScript._copy_array(pawn_environment.get("item_offers", [])):
+		shelf_offer_ids.append(str(JsonCoerceScript._copy_dict(offer_value).get("id", "")))
 	for slot_index in range(6):
 		if _object_by_id(pawn_objects, "meta_sal_shelf:%d" % slot_index).is_empty() or not shelf_offer_ids.has("sal_shelf_%d" % slot_index):
 			push_error("Custom pawn-shop room did not preserve stable shelf slot %d." % slot_index)
 			return false
-	var authored_shelf_points := [
-		Vector2(120.0 / 900.0, 164.0 / 430.0),
-		Vector2(186.0 / 900.0, 164.0 / 430.0),
-		Vector2(720.0 / 900.0, 156.0 / 430.0),
-		Vector2(786.0 / 900.0, 156.0 / 430.0),
-		Vector2(110.0 / 900.0, 238.0 / 430.0),
-		Vector2(794.0 / 900.0, 232.0 / 430.0),
-	]
-	for slot_index in range(authored_shelf_points.size()):
+	var pawn_layout_bindings := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(pawn_environment.get("layout", {})).get("slot_bindings", {}))
+	var visible_shelf_slot_ids: Dictionary = {}
+	for slot_index in range(6):
 		var shelf_object := _object_by_id(pawn_objects, "meta_sal_shelf:%d" % slot_index)
-		var focus_point := _copy_dict(shelf_object.get("focus_point", {}))
-		var actual_point := Vector2(float(focus_point.get("x", -1.0)), float(focus_point.get("y", -1.0)))
-		if actual_point.distance_to(authored_shelf_points[slot_index]) > 0.0001:
-			push_error("Sal shelf slot %d moved off its authored item spot: expected %s got %s." % [slot_index, str(authored_shelf_points[slot_index]), str(actual_point)])
+		var source_binding := JsonCoerceScript._copy_dict(pawn_layout_bindings.get("item:sal_shelf_%d" % slot_index, {}))
+		var shelf_slot_id := str(shelf_object.get("slot_id", ""))
+		var shelf_focus_rect := JsonCoerceScript._copy_dict(shelf_object.get("focus_rect", {}))
+		if str(shelf_object.get("presentation_mode", "")) != "room" \
+				or str(shelf_object.get("placement_class", "")) != "shop_item" \
+				or shelf_slot_id.is_empty() \
+				or shelf_slot_id != str(source_binding.get("slot_id", "")) \
+				or float(shelf_focus_rect.get("w", 0.0)) <= 0.0 \
+				or float(shelf_focus_rect.get("h", 0.0)) <= 0.0:
+			push_error("Sal shelf slot %d did not reuse its generated authored shop-item slot: %s / %s." % [slot_index, str(shelf_object), str(source_binding)])
 			return false
+		if visible_shelf_slot_ids.has(shelf_slot_id):
+			push_error("Sal shelf slot %d duplicated visible authored slot %s." % [slot_index, shelf_slot_id])
+			return false
+		visible_shelf_slot_ids[shelf_slot_id] = true
+	var generated_sal_binding := JsonCoerceScript._copy_dict(pawn_layout_bindings.get("staff:pawn_counter_sal", {}))
+	if str(sal_object.get("presentation_mode", "")) != "room" \
+			or str(sal_object.get("placement_class", "")) != "behind_counter_person" \
+			or str(sal_object.get("slot_id", "")) != str(generated_sal_binding.get("slot_id", "")):
+		push_error("Sal talk did not reuse the generated Sal host's fixed behind-counter slot: %s / %s." % [str(sal_object), str(generated_sal_binding)])
+		return false
+	var sal_action_ids: Array = []
+	for action_value in JsonCoerceScript._copy_array(sal_object.get("available_actions", [])):
+		sal_action_ids.append(str(JsonCoerceScript._copy_dict(action_value).get("id", "")))
+	if not sal_action_ids.has("talk_sal") or not sal_action_ids.has("open_sell_counter"):
+		push_error("The single Sal host did not expose both talk and sell actions: %s." % str(sal_object))
+		return false
+	var pawn_door_binding := JsonCoerceScript._copy_dict(pawn_layout_bindings.get("travel:leave", {}))
+	if str(pawn_door_object.get("presentation_mode", "")) != "room" \
+			or str(pawn_door_object.get("slot_family", "")) != "exit" \
+			or str(pawn_door_object.get("placement_class", "")) != str(pawn_door_binding.get("placement_class", "")) \
+			or str(pawn_door_object.get("slot_id", "")).is_empty() \
+			or str(pawn_door_object.get("slot_id", "")) != str(pawn_door_binding.get("slot_id", "")):
+		push_error("Pawn-shop Street Door did not retain its authored exit slot: %s / %s." % [str(pawn_door_object), str(pawn_door_binding)])
+		return false
 	var pawn_canvas := app.get("environment_canvas") as Control
 	var pawn_canvas_view: Dictionary = pawn_canvas.call("current_view_snapshot")
-	var pawn_layout := _copy_dict(pawn_canvas_view.get("object_layout", {}))
+	var pawn_layout := JsonCoerceScript._copy_dict(pawn_canvas_view.get("object_layout", {}))
 	if int(pawn_layout.get("overlap_count", -1)) != 0:
 		push_error("Sal shelf fixtures overlap in the authored pawn-shop layout: %s." % JSON.stringify(pawn_layout.get("overlaps", [])))
 		return false
-	if _copy_array(pawn_environment.get("item_offers", [])).size() != 6:
+	if JsonCoerceScript._copy_array(pawn_environment.get("item_offers", [])).size() != 6:
 		push_error("Custom pawn-shop room did not author exactly six physical shelf spots.")
 		return false
 	var meta_service: Variant = app.get("meta_collection_service")
-	var starter := _copy_dict(meta_service.sal_shelf_row(0))
-	var starter_item := _copy_dict(starter.get("item", {}))
+	var starter := JsonCoerceScript._copy_dict(meta_service.sal_shelf_row(0))
+	var starter_item := JsonCoerceScript._copy_dict(starter.get("item", {}))
 	var starter_price := int(starter.get("asking_price", 0))
 	meta_service.add_gold(starter_price)
 	var starter_arm: Dictionary = meta_service.arm_sal_shelf_purchase(0)
@@ -223,8 +256,8 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	await process_frame
 	run_state = app.get("run_state")
 	var starter_entry: Dictionary = run_state.pending_talk_event("dialogue:sal_starter_offer")
-	var starter_option := _copy_dict(app.call("_dialogue_option_for_entry", starter_entry))
-	var pending_offer := _copy_dict(meta_service.pending_starter_buyback())
+	var starter_option := JsonCoerceScript._copy_dict(app.call("_dialogue_option_for_entry", starter_entry))
+	var pending_offer := JsonCoerceScript._copy_dict(meta_service.pending_starter_buyback())
 	var expected_float_text := str(pending_offer.get("rare_channel", "")).replace("_", " ").capitalize()
 	if starter_entry.is_empty() or str(starter_option.get("summary", "")).find(expected_float_text) < 0 or str(starter_option.get("summary", "")).find(str(int(pending_offer.get("offer_price", 0)))) < 0:
 		push_error("Starter purchase did not open persisted Sal dialogue naming the exact rare float and offer: %s" % str(starter_option))
@@ -240,7 +273,7 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	app.call("_apply_meta_environment", app.get("meta_session_location_id"))
 	var normal := {}
 	for row_value in meta_service.sal_shelf_rows():
-		var candidate := _copy_dict(row_value)
+		var candidate := JsonCoerceScript._copy_dict(row_value)
 		if bool(candidate.get("occupied", false)) and str(candidate.get("listing_mode", "")) == "normal":
 			normal = candidate
 			break
@@ -256,7 +289,7 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 	var purchase_dialogue_id := "sal_purchase_1" if not run_state.pending_talk_event("dialogue:sal_purchase_1").is_empty() else "sal_purchase_2"
 	app.call("resolve_event_choice", "dialogue:%s" % purchase_dialogue_id, "move_on")
 	await process_frame
-	var normal_instance_id := int(_copy_dict(normal.get("item", {})).get("instance_id", 0))
+	var normal_instance_id := int(JsonCoerceScript._copy_dict(normal.get("item", {})).get("instance_id", 0))
 	var shelf_before_sale := JSON.stringify(meta_service.sal_shelf_rows())
 	var sale_arm: Dictionary = meta_service.arm_sale("item", normal_instance_id)
 	app.call("_confirm_meta_sale", str(sale_arm.get("token", "")))
@@ -335,6 +368,16 @@ func _check_run_pawn_credit_is_immediate(app: Control) -> bool:
 	if str(pawn_model.get("summary", "")).find("Cash $%d" % expected_bankroll) == -1:
 		push_error("Pawn popup did not show the immediately credited cash balance: %s." % str(pawn_model.get("summary", "")))
 		return false
+	# Returning to the main menu is an authority boundary: it must normalize the
+	# persistent top-bar controls even if a prior asynchronous surface left one
+	# hidden or disabled. The full Smoke sequence reproduced that stale state
+	# intermittently, so force it here to make the regression deterministic.
+	var exit_button := app.get("exit_game_button") as Button
+	if exit_button == null:
+		push_error("Pawn immediate-credit check could not find the main-menu Exit Game button.")
+		return false
+	exit_button.visible = false
+	exit_button.disabled = true
 	app.call("return_to_main_menu")
 	await process_frame
 	return true
@@ -519,24 +562,6 @@ func _selected_info_text_fits(canvas_value: Variant, label: String, required_fra
 	return true
 
 
-func _badge_slot_icon_only_with_tooltips(root: Control, label: String) -> bool:
-	var badge_cells := _badge_cell_controls(root)
-	if badge_cells.is_empty():
-		push_error("%s did not expose any badge cells." % label)
-		return false
-	for cell_value in badge_cells:
-		var cell := cell_value as Control
-		if cell == null or not cell.visible:
-			continue
-		if cell.tooltip_text.strip_edges().is_empty():
-			push_error("%s badge cell did not expose hover details." % label)
-			return false
-		if _visible_badge_text_label_count(cell) > 0:
-			push_error("%s badge cell still rendered text next to the icon." % label)
-			return false
-	return true
-
-
 func _world_map_detail_popup_fits(screen_snapshot: Dictionary) -> bool:
 	if not bool(screen_snapshot.get("world_map_detail_popup_visible", false)):
 		push_error("World map detail should be shown as an overlay popup.")
@@ -697,5 +722,4 @@ func _qa_action_label(action: Dictionary) -> String:
 	if action_id.is_empty():
 		return "Action"
 	return action_id.replace("_", " ").capitalize()
-
 

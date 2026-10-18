@@ -1,11 +1,12 @@
 # Item Collection Meta System — Design Plan
 
 Date: 2026-07-06 (rev 2 — owner decisions incorporated)
-Status: **PARTIALLY IMPLEMENTED for the unreleased 0.4.0 candidate.** The local
+Status: **LOCAL SYSTEM IMPLEMENTED AND ACTIVE in the current 0.6 source.** The
 collection schema, bags, storage/loadouts, meta home, housing, trade-up, run-end
-drops, and pawn selling have landed. Steam Inventory/community-market work is
-still deferred. Proposed rent/upkeep and the removed `data/prestige/purchases.json`
-path are superseded by gold-purchased housing with no rent.
+drops, pawn selling, and Gold Players Card rewards have landed. Steam
+Inventory/community-market work remains explicitly deferred. Proposed
+rent/upkeep and the removed `data/prestige/purchases.json` path are superseded
+by gold-purchased housing with no rent.
 
 Owner reference model: Counter-Strike item system (collections, rarity
 tiers, float values, trade-up contracts), adapted to the game — and designed
@@ -131,9 +132,9 @@ flavor).
 ## 6. Meta persistence (implemented; original proposal corrected)
 
 - New `scripts/core/meta_collection_service.gd` owning
-  `user://meta_collection.json`: schema-versioned, atomic write (pattern:
-  scripts/core/user_settings.gd:6,67), corruption-tolerant normalize-on-load
-  (RunState discipline).
+  `user://meta_collection.json`: schema-versioned, atomic write following the
+  `UserSettings.load()`/`save()` persistence pattern, with
+  corruption-tolerant normalize-on-load behavior (RunState discipline).
 - Holds: unopened bags, owned item instances (itemdef + instance id + four
   floats), gold balance, backpack loadout, meta-home state (housing, container
   furniture, placements), collection progress, trade-up/sale history.
@@ -192,19 +193,20 @@ run bankroll. Gold buys housing upgrades (§7) and can fund future meta sinks.
 - One inventory component, two model sources: run inventory (existing view
   model) and meta collection (new meta view model) — same grid/detail UI,
   different intents (run: use/sell/store; meta: pack/open/trade-up/pawn).
-- Sort/filter by collection, tier, float bands.
+- The current browser groups entries by collection and exposes tier and float
+  detail. Dedicated player-controlled sort/filter options remain outstanding.
 
-## 11. Phasing (each phase = one future docs/todo prompt)
+## 11. Implementation phasing and current disposition
 
-| Phase | Scope | Depends on |
+| Phase | Current disposition | Scope |
 | --- | --- | --- |
-| P0 | collections.json schema (Steam-compatible ids) + validation; MetaCollectionService versioned save; 4-float roll/decay/effect resolution with unit coverage; owner-vetted 2×14 item selection list | CRITICAL table bug fixed |
-| P1 | Bag drops (milestones + special locations) + unopened storage + single-button open pipeline with simple reveal animation + basic collection browser | P0 |
-| P2 | Backpack loadout + run-start injection + run-end usage decay | P0; run inventory extraction verified |
-| P3 | Meta-home scene (browse/open/pack in-world) + housing upgrades + pawn shop counter | P1; run-side home feature landed |
-| P4 | Trade-up station + gold economy balance + collection completion rewards | P1 |
-| P5 | Art rework integration for float-driven variation; glyph/tier badges; sort/filter; reveal polish | P2; attribute glyph system |
-| P6 (future, separate plan) | Container-transfer mechanic; Steam Inventory Service + community market integration | Owner go-ahead; P0–P5 |
+| P0 | Implemented | `collections.json` schema and validation; versioned meta save; four-float resolution; two 14-item collections |
+| P1 | Implemented | Bag drops, unopened storage, opening pipeline, reveal presentation, and collection browser |
+| P2 | Implemented | Backpack loadout, run-start injection, and run-end usage decay |
+| P3 | Implemented | Walkable meta home, housing upgrades, storage interaction, and pawn counter |
+| P4 | Implemented | Trade-up station, gold economy, and collection rewards |
+| P5 | Partially implemented local scope | Float-driven variation, tier/glyph presentation, and reveal polish are present; dedicated collection sort/filter controls are not exposed |
+| P6 | Local transfer implemented; external scope deferred | Home/container transfer is present through the unified inventory flow. Steam Inventory Service and community-market integration still require explicit owner authorization |
 
 ## Resolved owner decisions (2026-07-06)
 

@@ -1,5 +1,7 @@
 extends SceneTree
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 
 func _without_coin_pusher_game_states(value: Variant, parent_key: String = "") -> Variant:
 	if typeof(value) == TYPE_DICTIONARY:
@@ -26,6 +28,7 @@ const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 const PerformanceLivenessGuardScript := preload("res://scripts/ui/performance_liveness_guard.gd")
+const BuildIdentityScript := preload("res://scripts/core/build_identity.gd")
 const RunInventoryScreenScript := preload("res://scripts/ui/run_inventory_screen.gd")
 const BagOpenReelScript := preload("res://scripts/ui/bag_open_reel.gd")
 const BagOpenReelViewModelScript := preload("res://scripts/ui/bag_open_reel_view_model.gd")
@@ -65,18 +68,6 @@ const EXPECTED_GAME_LIBRARY_LAUNCHERS := [
 	{"id": "video_poker", "label": "Video Poker"},
 	{"id": "coin_pusher", "label": "Quarter Falls"},
 ]
-
-
-func _copy_array(value: Variant) -> Array:
-	if typeof(value) != TYPE_ARRAY:
-		return []
-	return (value as Array).duplicate(true)
-
-
-func _copy_dict(value: Variant) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY:
-		return {}
-	return (value as Dictionary).duplicate(true)
 
 
 # This file owns the executable UI gate entrypoint, while the environment and
@@ -359,8 +350,8 @@ func _check_confirmed_all_in_wager_result_then_failure(_app: Control) -> bool:
 	return false
 
 
-func _check_presented_bankroll_waits_for_result_reveal(_app: Control) -> bool:
-	_missing_descendant_fixture("_check_presented_bankroll_waits_for_result_reveal")
+func _check_settled_bankroll_visible_during_result_reveal(_app: Control) -> bool:
+	_missing_descendant_fixture("_check_settled_bankroll_visible_during_result_reveal")
 	return false
 
 
@@ -719,9 +710,9 @@ func _check_run_report_screen_component() -> bool:
 	for report_node_value in report_map.get("nodes", []):
 		if typeof(report_node_value) == TYPE_DICTIONARY:
 			var report_node: Dictionary = report_node_value
-			report_positions[str(report_node.get("id", ""))] = _copy_dict(report_node.get("position", {}))
-	if _copy_dict(report_positions.get("bar", {})) != {"x": 0.2, "y": 0.4} \
-		or _copy_dict(report_positions.get("casino", {})) != {"x": 0.8, "y": 0.5} \
+			report_positions[str(report_node.get("id", ""))] = JsonCoerceScript._copy_dict(report_node.get("position", {}))
+	if JsonCoerceScript._copy_dict(report_positions.get("bar", {})) != {"x": 0.2, "y": 0.4} \
+		or JsonCoerceScript._copy_dict(report_positions.get("casino", {})) != {"x": 0.8, "y": 0.5} \
 		or str(report_map.get("background_path", "")) != "res://assets/art/map_backgrounds/cyberpunk_city_overhead.png":
 		push_error("Run report map changed live-map coordinates or used a different geographic background: %s." % JSON.stringify(report_map))
 		return false
@@ -866,6 +857,13 @@ func _check_run_report_screen_component() -> bool:
 	if float(screen.debug_layout_snapshot().get("replay_progress", -1.0)) != 1.0:
 		push_error("Run report heat scrubber did not seek to the final action boundary.")
 		return false
+	screen.clear_report()
+	await process_frame
+	var cleared_snapshot := screen.debug_layout_snapshot()
+	for retained_count_key in ["timeline_heat_sample_count", "timeline_environment_band_count", "map_snapshot_node_count", "map_replay_keyframe_count", "map_replay_segment_count", "release_ledger_line_count", "bag_reward_choice_count", "take_home_item_reward_choice_count"]:
+		if int(cleared_snapshot.get(retained_count_key, -1)) != 0:
+			push_error("Run report retained completed-run data after clear_report: %s=%s." % [retained_count_key, str(cleared_snapshot.get(retained_count_key))])
+			return false
 	screen.queue_free()
 	await process_frame
 	return true
@@ -1020,9 +1018,9 @@ func _check_run_inventory_screen_component() -> bool:
 		return false
 	screen.update_model(_run_inventory_component_model("inspect", "", {"id": "missing", "source": "carried"}))
 	selected_key = screen.selected_item_key()
-	if str(selected_key.get("id", "")) != "odds_notebook" or str(selected_key.get("source", "")) != "carried":
+	if str(selected_key.get("id", "")) != "lucky_coin" or str(selected_key.get("source", "")) != "carried":
 		parent.queue_free()
-		push_error("Standalone run inventory did not auto-select the first item when selection was absent.")
+		push_error("Standalone run inventory did not auto-select the first visible item under the default name sort when selection was absent.")
 		return false
 	screen.set_small_screen_mode(true)
 	await process_frame
@@ -1332,6 +1330,17 @@ func _check_talk_dock_component() -> bool:
 		parent.queue_free()
 		push_error("TalkDock let unrelated room props move a selected left-side actor conversation away from bottom-right: %s." % str(protected_focus_snapshot))
 		return false
+	# A selected object near the lower center can overlap every bottom footprint.
+	# Keep the conversation on the bottom and preserve its object-driven side;
+	# vertical escape to the top makes the dock appear detached from the room.
+	dock.locked_layout_side = "left"
+	dock.set_avoid_global_rect(Rect2(400, 520, 150, 110), "fixture:lower-center-left-focus", 475.0)
+	await process_frame
+	var crowded_bottom_snapshot := dock.current_snapshot()
+	if str(crowded_bottom_snapshot.get("layout_side", "")) != "right" or str(crowded_bottom_snapshot.get("layout_vertical", "")) != "bottom" or not bool(crowded_bottom_snapshot.get("anchored_bottom", false)):
+		parent.queue_free()
+		push_error("TalkDock escaped to the top instead of staying bottom-anchored beside the selected object: %s." % str(crowded_bottom_snapshot))
+		return false
 	dock.set_avoid_global_rect(Rect2(1050, 520, 150, 110), "fixture:right-focus")
 	await process_frame
 	var right_focus_snapshot := dock.current_snapshot()
@@ -1364,7 +1373,7 @@ func _check_talk_dock_component() -> bool:
 	environment_canvas.size = parent.size
 	parent.add_child(environment_canvas)
 	environment_canvas.call("set_reserved_overlay_rect", reserved_rect)
-	environment_canvas.call("render_environment_snapshot", {
+	var environment_canvas_snapshot := {
 		"id": "talk_dock_clearance_fixture",
 		"display_name": "Talk Dock Clearance Fixture",
 		"interactable_objects": [{
@@ -1376,7 +1385,8 @@ func _check_talk_dock_component() -> bool:
 			"enabled": true,
 			"normalized_rect": {"x": 0.12, "y": 0.70, "w": 0.14, "h": 0.16},
 		}],
-	})
+	}
+	environment_canvas.call("render_environment_snapshot", environment_canvas_snapshot)
 	await process_frame
 	var clearance_snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
 	var repositioned_ids: Array = clearance_snapshot.get("overlay_repositioned_object_ids", []) if typeof(clearance_snapshot.get("overlay_repositioned_object_ids", [])) == TYPE_ARRAY else []
@@ -1460,6 +1470,16 @@ func _check_talk_dock_component() -> bool:
 		return false
 	var camera_refresh_count := int(focused_snapshot.get("camera_target_refresh_count", -1))
 	var stable_camera_offset: Vector2 = focused_snapshot.get("camera_offset", Vector2.ZERO)
+	var ambient_refresh_snapshot := environment_canvas_snapshot.duplicate(true)
+	ambient_refresh_snapshot["ambient_clock_tick"] = 1
+	environment_canvas.call("render_environment_snapshot", ambient_refresh_snapshot)
+	var ambient_focus_snapshot: Dictionary = environment_canvas.call("current_view_snapshot")
+	if int(ambient_focus_snapshot.get("camera_target_refresh_count", -2)) != camera_refresh_count \
+			or not (ambient_focus_snapshot.get("target_camera_offset", Vector2.INF) as Vector2).is_equal_approx(focused_snapshot.get("target_camera_offset", Vector2.ZERO) as Vector2):
+		environment_canvas.queue_free()
+		parent.queue_free()
+		push_error("Unrelated ambient snapshot refresh recalculated a stable focused camera target: %s." % str(ambient_focus_snapshot))
+		return false
 	for _idle_frame in range(120):
 		environment_canvas.call("set_reserved_overlay_rect", reserved_rect)
 		environment_canvas.call("_process", 1.0 / 60.0)
@@ -1552,9 +1572,11 @@ func _check_coach_overlay_component() -> bool:
 	var context := {
 		"viewport_rect": Rect2(Vector2.ZERO, parent.size),
 		"small_screen": true,
+		"screen": "ENVIRONMENT",
+		"run": {"tutorial": false},
 		"anchor_rects": {
 			"hud_elements": {"heat": Rect2(12, 12, 150, 48)},
-			"interactable_objects": {"fixture:door": Rect2(40, 220, 80, 120)},
+			"interactable_objects": {"fixture:door": Rect2(40, 220, 80, 120), "fixture:other": Rect2(240, 220, 80, 120)},
 		},
 	}
 	overlay.evaluate_at_boundary(context)
@@ -1580,13 +1602,18 @@ func _check_coach_overlay_component() -> bool:
 		push_error("Coach overlay did not advance its queue to the room-object anchor.")
 		return false
 	overlay.restore_seen({})
-	overlay.set_lessons([{"id": "coach_gate", "trigger": {"state_predicates": []}, "anchor": {"kind": "interactable_object", "id": "fixture:door"}, "copy": "Use this door.", "completion": {"type": "anchored_action"}, "gating": {"allowed_action_ids": ["fixture:door"]}}])
+	context["run"] = {"tutorial": true}
+	overlay.set_lessons([{"id": "coach_gate", "scope": "tutorial_run", "trigger": {"state_predicates": []}, "anchor": {"kind": "interactable_object", "id": "fixture:door"}, "copy": "Use either door.", "completion": {"type": "anchored_action"}, "gating": {"allowed_action_ids": ["fixture:door", "fixture:other"]}}])
 	overlay.evaluate_at_boundary(context)
 	await process_frame
 	var guidance_snapshot := overlay.current_snapshot()
 	if not overlay.input_allowed("wrong:door") or not overlay.input_allowed("fixture:door") or bool(guidance_snapshot.get("gating", true)) or not bool(guidance_snapshot.get("highlight_emphasis", false)):
 		parent.queue_free()
 		push_error("Coach overlay highlight blocked an unrelated player action.")
+		return false
+	if (guidance_snapshot.get("additional_anchor_rects", []) as Array).size() != 1:
+		parent.queue_free()
+		push_error("Coach overlay did not expose every allowed live action through its guided focus shield.")
 		return false
 	var stable_anchor := _snapshot_rect(guidance_snapshot.get("anchor_rect", {}))
 	var anchor_change_count := int(guidance_snapshot.get("live_anchor_change_count", -1))
@@ -1597,16 +1624,23 @@ func _check_coach_overlay_component() -> bool:
 		parent.queue_free()
 		push_error("Stable coach anchor refreshes changed or de-emphasized the highlight.")
 		return false
-	var shifted_anchor := Rect2(stable_anchor.position + Vector2(4.0, 3.0), stable_anchor.size)
+	var stable_bubble := _snapshot_rect(guidance_snapshot.get("bubble_rect", {}))
+	var shifted_anchor := Rect2(stable_bubble.position + Vector2(20.0, 20.0), Vector2(80.0, 40.0))
 	if not overlay.update_active_anchor_rect("interactable_object", "fixture:door", shifted_anchor):
 		parent.queue_free()
 		push_error("Coach overlay rejected one real geometry change.")
 		return false
 	for _refresh_index in range(24):
 		overlay.update_active_anchor_rect("interactable_object", "fixture:door", shifted_anchor)
-	if int(overlay.current_snapshot().get("live_anchor_change_count", -1)) != anchor_change_count + 1:
+	var shifted_guidance_snapshot := overlay.current_snapshot()
+	var shifted_bubble := _snapshot_rect(shifted_guidance_snapshot.get("bubble_rect", {}))
+	if int(shifted_guidance_snapshot.get("live_anchor_change_count", -1)) != anchor_change_count + 1:
 		parent.queue_free()
 		push_error("Coach overlay rebuilt an unchanged live anchor instead of updating once.")
+		return false
+	if shifted_bubble.intersects(shifted_anchor):
+		parent.queue_free()
+		push_error("Coach overlay left its guided bubble over a newly exposed live action: bubble=%s action=%s." % [str(shifted_bubble), str(shifted_anchor)])
 		return false
 	overlay.restore_seen({})
 	overlay.set_lessons([{
@@ -1661,6 +1695,46 @@ func _check_coach_overlay_component() -> bool:
 		parent.queue_free()
 		push_error("Coach overlay did not apply reduce-motion instantly and without attention animation.")
 		return false
+	var long_copy_parent := Control.new()
+	long_copy_parent.size = Vector2(1280, 720)
+	root.add_child(long_copy_parent)
+	var long_copy_overlay: CoachOverlay = CoachOverlayScript.new()
+	long_copy_parent.add_child(long_copy_overlay)
+	await process_frame
+	long_copy_overlay.set_lessons([{
+		"id": "coach_long_ambient_copy",
+		"scope": "normal_run",
+		"trigger": {"state_predicates": []},
+		"anchor": {"kind": "hud_element", "id": "objective"},
+		"copy": "Tonight's scenario changes this room. Read the objective: it says what can change and what ends the night.",
+		"completion": {"type": "any_action"},
+	}])
+	long_copy_overlay.evaluate_at_boundary({
+		"viewport_rect": Rect2(Vector2.ZERO, long_copy_parent.size),
+		"screen": "ENVIRONMENT",
+		"run": {"tutorial": false},
+		"anchor_rects": {"hud_elements": {}},
+	})
+	await process_frame
+	var long_copy_panel: Panel = long_copy_overlay.get("panel")
+	var long_copy_button: Button = long_copy_overlay.get("ok_button")
+	var long_copy_snapshot: Dictionary = long_copy_overlay.current_snapshot()
+	var long_copy_minimum_height := float(long_copy_snapshot.get("minimum_control_height", 0.0))
+	if not bool(long_copy_snapshot.get("visible", false)) \
+			or long_copy_panel == null \
+			or long_copy_button == null \
+			or long_copy_button.get_global_rect().size.y < long_copy_minimum_height \
+			or not long_copy_panel.get_global_rect().encloses(long_copy_button.get_global_rect()):
+		long_copy_parent.queue_free()
+		parent.queue_free()
+		push_error("Long normal-run coach copy clipped its minimum-height dismiss control: panel=%s button=%s minimum=%s." % [
+			str(long_copy_panel.get_global_rect() if long_copy_panel != null else Rect2()),
+			str(long_copy_button.get_global_rect() if long_copy_button != null else Rect2()),
+			str(long_copy_minimum_height),
+		])
+		return false
+	long_copy_parent.queue_free()
+	await process_frame
 	overlay.restore_seen({})
 	overlay.set_lessons([
 		{"id": "tips_off_normal", "trigger": {"state_predicates": []}, "anchor": {"kind": "none"}, "copy": "Normal advice.", "completion": {"type": "any_action"}},
@@ -2392,7 +2466,7 @@ func _check_family_loan_unknown_caller(app: Control) -> bool:
 func _check_crew_favor_conversation(app: Control) -> bool:
 	if not await _check_delivery_ordinary_travel_baseline(app, "before delivery lifecycle"):
 		return false
-	app.call("start_foundation_run", "UI-CREW-FAVOR-TALK")
+	app.call("start_foundation_run", "UI-CREW-FAVOR-TALK", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	var library: ContentLibrary = app.get("library")
@@ -2410,6 +2484,22 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 		return false
 	run_state.world_map = WorldMapScript.enter_node(run_state.world_map, visited_delivery_target_id)
 	run_state.world_map = WorldMapScript.enter_node(run_state.world_map, delivery_origin_id, run_state.current_environment)
+	# The shipped favor can only be offered against an active Crew marker. Keep
+	# this focused UI fixture at the due-favor seam, but retain the production
+	# debt authority that the handoff must clear atomically with its rewards.
+	run_state.add_debt({
+		"id": "the_crew_marker",
+		"lender_id": RunState.CREW_LENDER_ID,
+		"lender_name": "The Crew",
+		"balance": 1,
+		"debt_kind": "favor",
+		"status": "favor_due",
+		"deadline_turns": 2,
+		"turns_remaining": 0,
+		"default_consequence": "crew_favor_due",
+		"cash_conversion_balance_per_favor": 70,
+		"cash_conversion_interest_rate": 0.35,
+	})
 	run_state.narrative_flags["crew_favor_pending"] = true
 	var overrides: Dictionary = app.call("_triggered_entry_overrides", event_definition)
 	if not run_state.enqueue_triggered_event("crew_favor_delivery", "ui_fixture", {"trigger": "action", "type": "action", "turns": 1}, overrides):
@@ -2433,15 +2523,19 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 	if not run_state.delivery_has_active_run() or bool((app.call("current_talk_dock_snapshot") as Dictionary).get("visible", false)):
 		push_error("Crew-favor conversation did not hand off to the real-map delivery state.")
 		return false
-	var pickup_object_id := "delivery:pickup:%s" % run_state.current_world_node_id()
-	var pickup_visible := false
+	var abstract_delivery_objects: Array = []
 	for object_value in app.call("_interactable_object_view_list"):
-		if typeof(object_value) == TYPE_DICTIONARY and str((object_value as Dictionary).get("object_id", "")) == pickup_object_id:
-			pickup_visible = true
-			break
-	if not pickup_visible or not bool(app.call("activate_interactable_object", pickup_object_id)) \
-			or not bool(run_state.delivery_snapshot().get("carrying_contraband", false)):
-		push_error("Crew-favor pickup did not stage as a physical in-room interaction.")
+		if typeof(object_value) == TYPE_DICTIONARY and str((object_value as Dictionary).get("object_id", "")).begins_with("delivery:"):
+			abstract_delivery_objects.append(object_value)
+	var delivery_action_ids: Array = []
+	for action_value in run_state.delivery_top_actions():
+		delivery_action_ids.append(str((action_value as Dictionary).get("id", "")))
+	if not abstract_delivery_objects.is_empty() or not run_state.inventory.has("crew_package") \
+			or bool(run_state.narrative_flags.get("crew_favor_pending", true)) \
+			or not bool(run_state.delivery_snapshot().get("carrying_contraband", false)) \
+			or not delivery_action_ids.has("wait") or not delivery_action_ids.has("duck") \
+			or not delivery_action_ids.has("stash") or not delivery_action_ids.has("ditch"):
+		push_error("Crew-favor acceptance did not grant The Package and replace abstract room props with top-screen actions: objects=%s actions=%s inventory=%s" % [JSON.stringify(abstract_delivery_objects), JSON.stringify(delivery_action_ids), JSON.stringify(run_state.inventory)])
 		return false
 	if not bool(app.call("open_world_map")):
 		push_error("Active delivery could not open the existing world map.")
@@ -2498,24 +2592,57 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 		push_error("Crew favor did not use normal travel and RunGenerator for its marked destination: %s" % JSON.stringify(generated_environment))
 		return false
 	var mounted_handoff_owner := run_state.world_sequence_mounted_owner_for_channel("delivery_handoff", target_id)
-	var handoff_object_id := "crew::package_handoff"
-	var handoff_visible := false
+	var abstract_handoff_marker_visible := false
+	var direct_handoff_visible := false
+	var delivery_contact_count := 0
+	var delivery_contact: Dictionary = {}
+	var room_slot_counts: Dictionary = {}
 	for object_value in app.call("_interactable_object_view_list"):
-		if typeof(object_value) == TYPE_DICTIONARY \
-				and str((object_value as Dictionary).get("object_id", "")) == handoff_object_id \
-				and str((object_value as Dictionary).get("world_sequence_owner_token", "")) == mounted_handoff_owner:
-			handoff_visible = true
-			break
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data := object_value as Dictionary
+		var object_id := str(object_data.get("object_id", ""))
+		var slot_id := str(object_data.get("slot_id", "")).strip_edges()
+		if str(object_data.get("presentation_mode", "room")) == "room" and not slot_id.is_empty():
+			room_slot_counts[slot_id] = int(room_slot_counts.get(slot_id, 0)) + 1
+		if object_id == "crew::package_handoff" and not bool(object_data.get("delivery_contact", false)):
+			abstract_handoff_marker_visible = true
+		if object_id.begins_with("delivery:handoff:") or bool(object_data.get("delivery_handoff_direct", false)):
+			direct_handoff_visible = true
+		if bool(object_data.get("delivery_contact", false)):
+			delivery_contact_count += 1
+		if bool(object_data.get("delivery_contact", false)) and str(object_data.get("world_sequence_owner_token", "")) == mounted_handoff_owner:
+			delivery_contact = object_data
 	var arrival_interaction := run_state.delivery_arrival_interaction()
-	if mounted_handoff_owner.is_empty() or str(arrival_interaction.get("node_id", "")) != target_id or not handoff_visible:
-		push_error("Delivery arrival did not expose the mounted owner-scoped physical handoff in the generated room: active=%s delivery=%s owner=%s interaction=%s objects=%s" % [str(run_state.delivery_has_active_run()), JSON.stringify(run_state.delivery_snapshot()), mounted_handoff_owner, JSON.stringify(arrival_interaction), JSON.stringify(app.call("_interactable_object_view_list"))])
+	var contact_actions: Array = delivery_contact.get("scenario_sequence_actions", []) if typeof(delivery_contact.get("scenario_sequence_actions", [])) == TYPE_ARRAY else []
+	var contact_slot_id := str(delivery_contact.get("slot_id", "")).strip_edges()
+	var delivery_object_summary: Array = []
+	for object_value in app.call("_interactable_object_view_list"):
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_data := object_value as Dictionary
+		delivery_object_summary.append({
+			"object_id": str(object_data.get("object_id", "")),
+			"slot_id": str(object_data.get("slot_id", "")),
+			"slot_family": str(object_data.get("slot_family", "")),
+			"presentation_mode": str(object_data.get("presentation_mode", "")),
+			"delivery_contact": bool(object_data.get("delivery_contact", false)),
+		})
+	if mounted_handoff_owner.is_empty() or str(arrival_interaction.get("node_id", "")) != target_id or abstract_handoff_marker_visible or direct_handoff_visible \
+			or delivery_contact.is_empty() or contact_actions.is_empty() \
+			or delivery_contact_count != 1 or str(delivery_contact.get("object_id", "")) != "crew::package_handoff" \
+			or str(delivery_contact.get("slot_family", "")) != "event" or not contact_slot_id.begins_with("event.") \
+			or not bool(delivery_contact.get("scenario_layout_resolved", false)) or int(room_slot_counts.get(contact_slot_id, 0)) != 1 \
+			or str((contact_actions[0] as Dictionary).get("label", "")) != "Hand Over The Package":
+		push_error("Delivery arrival did not attach its owner-scoped handoff dialogue option to a destination person: active=%s delivery=%s owner=%s interaction=%s contact=%s registrations=%s lifecycle_errors=%s layout_audit=%s manifest_errors=%s objects=%s" % [str(run_state.delivery_has_active_run()), JSON.stringify(run_state.delivery_snapshot()), mounted_handoff_owner, JSON.stringify(arrival_interaction), JSON.stringify(delivery_contact), JSON.stringify(run_state.world_sequence_registrations), JSON.stringify(run_state.current_environment.get("scenario_sequence_lifecycle_errors", [])), JSON.stringify(run_state.current_environment.get("scenario_layout_audit", {})), JSON.stringify(run_state.current_environment.get("object_manifest_errors", [])), JSON.stringify(delivery_object_summary)])
 		return false
 	var bankroll_before_handoff := run_state.bankroll
 	var heat_before_handoff := run_state.suspicion_level()
 	if not bool(app.call("_complete_delivery_handoff", target_id)) or run_state.delivery_has_active_run() \
-		or not bool(run_state.narrative_flags.get("crew_favor_completed", false)) \
-		or run_state.bankroll != bankroll_before_handoff + 22 or run_state.suspicion_level() != heat_before_handoff + 4:
-		push_error("Physical handoff did not resolve the Crew favor with exact shipped rewards.")
+			or not bool(run_state.narrative_flags.get("crew_favor_completed", false)) \
+			or not run_state.debt.is_empty() or not bool(run_state.narrative_flags.get("crew_marker_clear", false)) \
+			or run_state.bankroll != bankroll_before_handoff + 22 or run_state.suspicion_level() != heat_before_handoff + 4:
+		push_error("Physical handoff did not atomically clear its authentic Crew marker with the exact shipped rewards: bankroll=%d/%d heat=%d/%d debt=%s flags=%s." % [run_state.bankroll, bankroll_before_handoff, run_state.suspicion_level(), heat_before_handoff, JSON.stringify(run_state.debt), JSON.stringify(run_state.narrative_flags)])
 		return false
 	var inactive_snapshot: Dictionary = app.call("_world_map_snapshot")
 	if inactive_snapshot.has("courier_layer"):
@@ -2533,7 +2660,7 @@ func _check_crew_favor_conversation(app: Control) -> bool:
 
 
 func _check_delivery_closed_next_hop_nonblocking(app: Control) -> bool:
-	app.call("start_foundation_run", "UI-CREW-FAVOR-TALK")
+	app.call("start_foundation_run", "UI-CREW-FAVOR-TALK", {}, false)
 	await process_frame
 	var run_state: RunState = app.get("run_state")
 	var target_id := "jazz_club"
@@ -2610,22 +2737,54 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 	# unified-room-plane change at db60e0b1 adds the stable Numbers fixtures to the
 	# occupied plane and reflows scenario objects around every authored object.
 	# A detached bf398237 replay and two exact-candidate replays confirmed that
-	# only the layout-derived environment/world-map records changed.
+	# only the layout-derived environment/world-map records changed. The 0.6
+	# Collision recovery searches every valid physical surface candidate and the
+	# harness isolates user placement state. health06_1 CH-14 replaces full-size
+	# pick_many removal loops with deterministic Fisher-Yates shuffles. That
+	# deliberately refreshes the three order/layout-bearing hashes below while
+	# route identity, RNG end state, story, and economy remain byte-identical.
+	# Release-week authored placement and sealed-slot repairs likewise change only
+	# the generated Bar record and the world map that embeds it. The focused T6
+	# replay retained the exact fare, clock, Heat, RNG, route choice, travel story,
+	# action index, and travel-count contract while refreshing these two hashes.
+	# Round 3 restores Leave to a dedicated authored exit in every generated room;
+	# that intentional geometry-only change refreshes the same two layout hashes.
+	# The four-family environment-slot migration seals the deterministic object
+	# manifest and gives simultaneous fixed/scenario objects distinct authored
+	# capacity.  Its provisional placement pass changes only those same generated
+	# environment and embedded world-map records. Closed semantic replay now also
+	# preserves category-authorized physical bindings against their identical
+	# prefilled occupancy claim; this refreshes the generated Bar record while all
+	# route, RNG, story, economy, clock, and world-map routing values remain
+	# unchanged. The embedded Bar record still refreshes the world-map digest.
+	# The reviewed Pull Tabs capacity and ending-route counter hosts are likewise
+	# geometry/manifest-only changes; the focused replay below retained every
+	# route, economy, clock, Heat, RNG, and story field while refreshing Bar and
+	# its embedded world-map record.
+	# Release qualification then removed transient runtime-owned geometry from
+	# immutable base inventory and normalized sealed renderer diagnostics. The
+	# exact candidate replay again changed only the generated Bar record and the
+	# world map that embeds it; every scalar, route, RNG, and story value below
+	# remained byte-identical.
+	# Independent release replays with pinned Godot 4.6 and a freshly built native
+	# solver reproduced these hashes on Linux and Windows. A full state comparison
+	# with 637a8f8 found only removal of numbers:book and numbers:silas from immutable
+	# base geometry; see docs/releases/0.6.0_candidate_review.md.
 	const EXPECTED := {
 		"bankroll_delta": -4,
 		"clock_delta": 42,
-		"current_environment_sha256": "5174d7b67fd4608517ef514d4f5e10e70f334c2af64b445b5894a1d2db5fb4ce",
+		"current_environment_sha256": "e1cc608becb41f2fb66b1c90bdc6aba220dae8a74db04dfb9013c8875399a423",
 		"current_world_node_id": "bar",
 		"heat_delta": 0,
-		"provenance_commit": "9cff9b2309d70c6c93ab34cc60cc18f79f56201b",
+		"provenance_commit": "7ddb7685efb21e45979ea10ab89e660d99c6e891",
 		"rng_state": 953559834,
-		"route_choice_sha256": "3fd96381385eb4ba8868bddac39f233b6c62d586e0cd4b249f45e050cb10657b",
+		"route_choice_sha256": "7bf98146beb16adb121391dafba6a2b316996596359dbc669f68b9af4e497559",
 		"seed": "DELIVERY-ORDINARY-BASELINE",
 		"target_id": "bar",
 		"town_action_index": 0,
 		"travel_count_delta": 1,
 		"travel_story_sha256": "0257877551b37226fd62316ee2af5e047a27387fbb87d5acfa0273d1366a0e81",
-		"world_map_sha256": "7c9bf8053b63ea69b5edebcb223b61a2b675127bf98ef259bfb328a9e9de7299",
+		"world_map_sha256": "4b0c6eead861f6365d757658eafb9b4445046f1ae9e189d52b78521c0ca00895",
 	}
 	app.call("start_foundation_run", "DELIVERY-ORDINARY-BASELINE", {}, false)
 	for _start_frame in range(3):
@@ -2666,7 +2825,7 @@ func _check_delivery_ordinary_travel_baseline(app: Control, phase: String) -> bo
 		"current_environment_sha256": JSON.stringify(run_state.current_environment).sha256_text(),
 		"current_world_node_id": run_state.current_world_node_id(),
 		"heat_delta": run_state.suspicion_level() - heat_before,
-		"provenance_commit": "9cff9b2309d70c6c93ab34cc60cc18f79f56201b",
+		"provenance_commit": "7ddb7685efb21e45979ea10ab89e660d99c6e891",
 		"rng_state": run_state.rng_state,
 		"route_choice_sha256": JSON.stringify(choice).sha256_text(),
 		"seed": "DELIVERY-ORDINARY-BASELINE",
@@ -2816,11 +2975,25 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 	environment["next_archetypes"] = ["bar"]
 	environment["scenario_id"] = str(scenario_definition.get("id", ""))
 	environment["scenario_state"] = ScenarioEngine.initial_state(scenario_definition)
+	# This fixture swaps the generated room to Pull Tabs; regenerate its sealed
+	# layout so the counter host exists before its attached dialogue opens.
+	var pull_tabs_module: GameModule = app.call("_create_game_module", library.game("pull_tabs"))
+	if pull_tabs_module == null:
+		push_error("Dialogue dock fixture could not create its Pull Tabs module.")
+		return false
+	environment["game_states"] = {
+		"pull_tabs": pull_tabs_module.generate_environment_state(
+			run_state,
+			environment,
+			run_state.create_rng("ui_dialogue_pull_tabs_machine")
+		),
+	}
+	environment["layout"] = EnvironmentInstance.ensure_generated_layout(environment, library)
 	var dialogue_environment_install := run_state.set_environment(environment)
 	if not bool(dialogue_environment_install.get("ok", false)):
 		push_error("Dialogue dock fixture could not install through the scenario host: %s." % JSON.stringify(dialogue_environment_install))
 		return false
-	var layout_before_dialogue := JSON.stringify(_copy_dict(_copy_dict(run_state.current_environment.get("layout", {})).get("object_rects", {})))
+	var layout_before_dialogue := JSON.stringify(JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(run_state.current_environment.get("layout", {})).get("object_rects", {})))
 	app.call("_refresh")
 	await process_frame
 	var rendered_positions_before_dialogue: Dictionary = {}
@@ -2829,7 +3002,19 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 	for object_value in pre_dialogue_snapshot.get("objects", []):
 		if typeof(object_value) == TYPE_DICTIONARY:
 			rendered_positions_before_dialogue[str((object_value as Dictionary).get("id", ""))] = (object_value as Dictionary).get("position", Vector2(-1.0, -1.0))
-	if not bool(app.call("start_dialogue", "pull_tab_clerk", {})):
+	var counter_dialogue_source := {
+		"dialogue_speaker_override": {
+			"role": "staff",
+			"name": "Counter Staff",
+			"character_id": "",
+			"character_pool_id": "",
+			"character_identity_key": "fixture:counter_staff",
+			"voice_line_key": "",
+			"environment_actor": false,
+			"bind": "none",
+		},
+	}
+	if not bool(app.call("start_dialogue", "pull_tab_clerk", counter_dialogue_source)):
 		push_error("Dialogue dock fixture could not start pull_tab_clerk.")
 		return false
 	await process_frame
@@ -2837,11 +3022,11 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 	if not bool(snapshot.get("visible", false)) or str(snapshot.get("event_id", "")) != "dialogue:pull_tab_clerk":
 		push_error("Dialogue dock fixture did not expose the pilot dialogue.")
 		return false
-	var speaking_character_name := str(snapshot.get("speaking_character_name", "")).strip_edges()
+	var speaker_name := str(snapshot.get("speaker", "")).strip_edges()
 	if not bool(snapshot.get("speaker_label_visible", false)) \
-		or speaking_character_name != "Rina Sol" \
-		or str(snapshot.get("speaking_character_id", "")) != "rina_pull_tab_clerk" \
-		or not str(snapshot.get("speaker_text", "")).contains(speaking_character_name):
+		or speaker_name != "Counter Staff" \
+		or not str(snapshot.get("speaking_character_id", "")).is_empty() \
+		or not str(snapshot.get("speaker_text", "")).contains(speaker_name):
 		push_error("Dialogue dock fixture did not show the active speaker inside the expanded popup: %s." % str(snapshot.get("speaker_text", "")))
 		return false
 	var panel_rect := _snapshot_rect(snapshot.get("panel_rect", Rect2()))
@@ -2869,7 +3054,7 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 		if stable_position.x < 0.0 or not rendered_position.is_equal_approx(stable_position):
 			push_error("Live dialogue relocated environment object %s instead of preserving its generated position: rendered=%s stable=%s reserve=%s." % [dialogue_object_id, str(rendered_position), str(stable_position), str(environment_reserved_rect)])
 			return false
-	if JSON.stringify(_copy_dict(_copy_dict(run_state.current_environment.get("layout", {})).get("object_rects", {}))) != layout_before_dialogue:
+	if JSON.stringify(JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(run_state.current_environment.get("layout", {})).get("object_rects", {}))) != layout_before_dialogue:
 		push_error("Opening live dialogue changed generated environment object placement.")
 		return false
 	var response_icon_kinds: Array = snapshot.get("response_icon_kinds", [])
@@ -2899,6 +3084,42 @@ func _check_dialogue_dock_main_flow(app: Control) -> bool:
 	snapshot = app.call("current_talk_dock_snapshot")
 	if bool(snapshot.get("visible", false)):
 		push_error("Dialogue dock stayed visible after the end choice.")
+		return false
+	var suspicion_before_followup := run_state.suspicion_level()
+	var followup_event_id := "pull_tab_suspicious_cashout:ui_dialogue_pull_tabs:1"
+	var followup_result := {
+		"ok": true,
+		"followup_dialogue": {
+			"dialogue_id": "pull_tab_clerk",
+			"event_id": followup_event_id,
+			"start_node": "suspicious_bulk",
+			"source_object_id": "character:nell",
+			"speaker": {
+				"role": "staff",
+				"name": "Nell",
+				"character_identity_key": "character:nell",
+				"environment_actor": false,
+			},
+		},
+	}
+	if not bool(app.call("_enqueue_game_hook_followup_dialogue", followup_result, "pull_tabs", "ticket_redeemer")):
+		push_error("Suspicious Pull Tabs cashout did not enqueue its counter-staff conversation.")
+		return false
+	app.call("_refresh")
+	await process_frame
+	var followup_entry := run_state.pending_talk_event(followup_event_id)
+	snapshot = app.call("current_talk_dock_snapshot")
+	if str(followup_entry.get("current_node", "")) != "suspicious_bulk" \
+			or str(JsonCoerceScript._copy_dict(followup_entry.get("context", {})).get("source_object_id", "")) != "character:nell" \
+			or not bool(snapshot.get("visible", false)) \
+			or str(snapshot.get("event_id", "")) != followup_event_id \
+			or str(snapshot.get("speaker", "")) != "Nell":
+		push_error("Suspicious Pull Tabs cashout conversation did not open on Nell's authored counter warning: entry=%s snapshot=%s." % [JSON.stringify(followup_entry), JSON.stringify(snapshot)])
+		return false
+	app.call("resolve_event_choice", followup_event_id, "answer_bulk")
+	await process_frame
+	if run_state.suspicion_level() != suspicion_before_followup:
+		push_error("Suspicious Pull Tabs dialogue applied heat a second time after the existing cashout heat.")
 		return false
 	return true
 
@@ -3148,49 +3369,283 @@ func _check_beach_return_travel_choice(app: Control) -> bool:
 	beach_environment["display_name"] = "The Beach"
 	beach_environment["kind"] = "recovery"
 	beach_environment["tier"] = 2
-	var map_data := WorldMapScript.unlock_nodes(
-		run_state.world_map,
-		["beach", "delta_queen"],
-		WorldMapScript.DISCOVERY_SOURCE_EVENT
-	)
 	var delta_environment := beach_environment.duplicate(true)
 	delta_environment["id"] = "ui_delta_queen_beach_access"
 	delta_environment["archetype_id"] = "delta_queen"
 	delta_environment["world_node_id"] = "delta_queen"
 	delta_environment["display_name"] = "The River Queen"
 	delta_environment["kind"] = "casino"
-	map_data = WorldMapScript.enter_node(map_data, "delta_queen", delta_environment)
+	delta_environment["travel_lock_remaining"] = 0
+	# This is the production arrival boundary. Do not pre-unlock Beach and do not
+	# pass a caller-authored target list: the shipped regression was precisely
+	# that the real selector could retain the node as hidden.
+	var map_data := WorldMapScript.enter_node(run_state.world_map, "delta_queen", delta_environment)
 	run_state.set_environment(delta_environment)
 	run_state.set_world_map(map_data)
-	run_state.bankroll = 0
+	# Keep the run above the terminal floor while proving the route's exact zero
+	# fare and the $17/$23 alternatives remain unaffordable and disabled.
+	run_state.bankroll = 10
 	run_state.game_clock_minutes = 12 * 60
 	app.call("_invalidate_travel_view_cache")
-	var access_choice: Dictionary = app.call("_travel_choice", "beach", ["beach"])
-	if not bool(access_choice.get("enabled", false)) \
-		or int(access_choice.get("cost", -1)) != 0 \
-		or str(access_choice.get("travel_method", "")) != "Walk":
-		push_error("Delta Queen did not expose the free Beach access walk: %s" % JSON.stringify(access_choice))
+	var access_targets: Array = app.call("_travel_target_ids")
+	if access_targets.count("beach") != 1:
+		push_error("Fresh Delta Queen arrival did not expose exactly one Beach through the production target selector: %s" % JSON.stringify(access_targets))
 		return false
+	var access_choice: Dictionary = {}
+	for choice_value in app.call("_travel_choice_view_list"):
+		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == "beach":
+			access_choice = (choice_value as Dictionary).duplicate(true)
+			break
+	if not bool(access_choice.get("enabled", false)) \
+			or int(access_choice.get("cost", -1)) != 0 \
+			or str(access_choice.get("travel_method", "")) != "Walk":
+		push_error("Production travel choices did not expose the fresh Delta Queen-to-Beach walk: %s" % JSON.stringify(access_choice))
+		return false
+	var access_snapshot: Dictionary = app.call("_world_map_snapshot")
+	var access_beach_node: Dictionary = {}
+	for node_value in access_snapshot.get("nodes", []):
+		if typeof(node_value) == TYPE_DICTIONARY and str((node_value as Dictionary).get("id", "")) == "beach":
+			access_beach_node = node_value
+			break
+	if access_beach_node.is_empty() or not bool(access_beach_node.get("travel_target", false)) or not bool(access_beach_node.get("travel_enabled", false)):
+		push_error("Production world-map projection did not render Beach as an enabled fresh-arrival destination: %s" % JSON.stringify(access_beach_node))
+		return false
+	var travel_leave_count := 0
+	var fake_beach_hotspot_count := 0
+	for object_value in app.call("_interactable_object_view_list"):
+		if typeof(object_value) != TYPE_DICTIONARY:
+			continue
+		var object_id := str((object_value as Dictionary).get("object_id", ""))
+		if object_id == "travel:leave":
+			travel_leave_count += 1
+		elif object_id == "travel:beach":
+			fake_beach_hotspot_count += 1
+	if travel_leave_count != 1 or fake_beach_hotspot_count != 0:
+		push_error("Delta Queen must retain one generic travel:leave control and no fake Beach hotspot: leave=%d beach=%d" % [travel_leave_count, fake_beach_hotspot_count])
+		return false
+	if not bool(app.call("open_world_map")):
+		push_error("Fresh Delta Queen could not open the production world map.")
+		return false
+	await process_frame
+	if not bool(app.call("select_world_map_node", "beach")):
+		push_error("Rendered fresh-arrival Beach destination was not selectable.")
+		return false
+	await process_frame
+	var access_confirm_button: Button = app.get("world_map_confirm_button")
+	if access_confirm_button == null or access_confirm_button.disabled:
+		push_error("Rendered fresh-arrival Beach destination did not enable its Travel confirmation.")
+		return false
+	app.call("close_world_map")
+	await process_frame
+
+	# A global scenario/environment travel lock still governs every destination.
+	# Beach remains visible during the lock and becomes enabled when normal travel
+	# resumes; the owner directive does not bypass that shared gate.
+	run_state.current_environment["travel_lock_remaining"] = 2
+	app.call("_invalidate_travel_view_cache")
+	var locked_targets: Array = app.call("_travel_target_ids")
+	var locked_choice: Dictionary = {}
+	for choice_value in app.call("_travel_choice_view_list"):
+		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == "beach":
+			locked_choice = choice_value
+			break
+	if locked_targets.count("beach") != 1 or bool(locked_choice.get("enabled", true)) or str(locked_choice.get("disabled_reason", "")).strip_edges().is_empty():
+		push_error("Beach did not remain visible-but-disabled under the ordinary global travel lock: targets=%s choice=%s" % [JSON.stringify(locked_targets), JSON.stringify(locked_choice)])
+		return false
+	run_state.current_environment["travel_lock_remaining"] = 0
+	app.call("_invalidate_travel_view_cache")
 	map_data = WorldMapScript.enter_node(map_data, "beach", beach_environment)
 	run_state.set_environment(beach_environment)
 	run_state.set_world_map(map_data)
-	run_state.bankroll = 0
+	run_state.bankroll = 10
 	run_state.game_clock_minutes = 12 * 60
 	app.call("_invalidate_travel_view_cache")
-	var open_choice: Dictionary = app.call("_travel_choice", "delta_queen", ["delta_queen"])
-	if not bool(open_choice.get("enabled", false)) \
-		or int(open_choice.get("cost", -1)) != 0 \
-		or str(open_choice.get("travel_method", "")) != "Walk":
+	var beach_targets: Array = app.call("_travel_target_ids")
+	var open_choice: Dictionary = {}
+	for choice_value in app.call("_travel_choice_view_list"):
+		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == "delta_queen":
+			open_choice = choice_value
+			break
+	if not beach_targets.has("delta_queen") or not bool(open_choice.get("enabled", false)) \
+			or int(open_choice.get("cost", -1)) != 0 \
+			or str(open_choice.get("travel_method", "")) != "Walk":
 		push_error("Open River Queen did not expose the free Beach return walk: %s" % JSON.stringify(open_choice))
 		return false
 	run_state.game_clock_minutes = 3 * 60
 	app.call("_invalidate_travel_view_cache")
-	var closed_choice: Dictionary = app.call("_travel_choice", "delta_queen", ["delta_queen"])
+	var closed_choice: Dictionary = {}
+	for choice_value in app.call("_travel_choice_view_list"):
+		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == "delta_queen":
+			closed_choice = choice_value
+			break
 	if bool(closed_choice.get("enabled", true)) \
-		or int(closed_choice.get("cost", -1)) != 0 \
-		or str(closed_choice.get("disabled_reason", "")).findn("opens at") == -1:
+			or int(closed_choice.get("cost", -1)) != 0 \
+			or str(closed_choice.get("disabled_reason", "")).findn("opens at") == -1:
 		push_error("Closed River Queen did not retain its hours gate on the free Beach return: %s" % JSON.stringify(closed_choice))
 		return false
+
+	# Revisit Delta, then recreate a pre-fix save: Beach is hidden, locked and
+	# competing with more than three visible destinations. Production selection,
+	# UI projection and Continue must all repair that state without injection.
+	run_state.game_clock_minutes = 12 * 60
+	map_data = WorldMapScript.enter_node(map_data, "delta_queen", delta_environment)
+	var hostile_nodes: Array = JsonCoerceScript._copy_array(map_data.get("nodes", []))
+	var ordinary_yield_id := str(map_data.get("start_node_id", ""))
+	if ordinary_yield_id in ["", "beach", "delta_queen"]:
+		for candidate_value in hostile_nodes:
+			if typeof(candidate_value) != TYPE_DICTIONARY:
+				continue
+			var candidate_id := str((candidate_value as Dictionary).get("id", ""))
+			if not candidate_id in ["", "beach", "delta_queen"]:
+				ordinary_yield_id = candidate_id
+				break
+	for node_index in range(hostile_nodes.size()):
+		if typeof(hostile_nodes[node_index]) != TYPE_DICTIONARY:
+			continue
+		var hostile_node: Dictionary = hostile_nodes[node_index]
+		var hostile_id := str(hostile_node.get("id", ""))
+		if hostile_id == "beach":
+			hostile_node["state"] = WorldMapScript.STATE_HIDDEN
+			hostile_node["seen"] = false
+			hostile_node["unlocked"] = false
+			hostile_node["route_spawn_open"] = false
+			hostile_node["discovery_source"] = WorldMapScript.DISCOVERY_SOURCE_NONE
+			hostile_node["tier"] = 99
+		else:
+			hostile_node["state"] = WorldMapScript.STATE_VISITED if hostile_id in ["delta_queen", ordinary_yield_id] else WorldMapScript.STATE_REVEALED
+			hostile_node["seen"] = true
+			hostile_node["unlocked"] = true
+			hostile_node["route_spawn_open"] = true
+			hostile_node["home_lost"] = false
+			hostile_node["discovery_source"] = WorldMapScript.DISCOVERY_SOURCE_SPAWN
+		hostile_nodes[node_index] = hostile_node
+	map_data["nodes"] = hostile_nodes
+	map_data["visited_path"] = [ordinary_yield_id, "delta_queen"]
+	run_state.set_environment(delta_environment)
+	var no_beach_control := map_data.duplicate(true)
+	var control_nodes: Array = JsonCoerceScript._copy_array(no_beach_control.get("nodes", []))
+	for node_index in range(control_nodes.size()):
+		if typeof(control_nodes[node_index]) != TYPE_DICTIONARY:
+			continue
+		var control_node: Dictionary = control_nodes[node_index]
+		if str(control_node.get("id", "")) == "beach":
+			control_node["home_lost"] = true
+			control_nodes[node_index] = control_node
+			break
+	no_beach_control["nodes"] = control_nodes
+	# Project the exact production UI control list without Beach. More than three
+	# routes must be genuinely enabled, and the known visited ordinary route fills
+	# the last capped card that Beach must replace.
+	# The earlier zero-bankroll assertions already prove Beach itself is free. Give
+	# this independent cap-pressure fixture enough real bankroll for every ordinary
+	# production route to participate in the selector before and after Continue.
+	var cap_competitor_bankroll := 10_000
+	run_state.bankroll = cap_competitor_bankroll
+	run_state.world_map = no_beach_control
+	app.call("_invalidate_travel_view_cache")
+	var control_enabled_targets: Array = app.call("_enabled_world_route_ids", "delta_queen")
+	var enabled_non_beach_competitors: Array = []
+	for control_target_value in control_enabled_targets:
+		var control_target_id := str(control_target_value)
+		if control_target_id != "beach" and not enabled_non_beach_competitors.has(control_target_id):
+			enabled_non_beach_competitors.append(control_target_id)
+	if enabled_non_beach_competitors.size() <= WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT:
+		push_error("Beach Continue fixture did not create more than three production-enabled non-Beach competitors: enabled=%s non_beach=%s" % [JSON.stringify(control_enabled_targets), JSON.stringify(enabled_non_beach_competitors)])
+		return false
+	var capped_control_targets: Array = app.call("_travel_target_ids")
+	if capped_control_targets.has("beach") \
+			or capped_control_targets.size() != WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT \
+			or str(capped_control_targets[-1]) != ordinary_yield_id:
+		push_error("Beach Continue control list did not end with its intended lowest-ranked ordinary card: yield=%s targets=%s" % [ordinary_yield_id, JSON.stringify(capped_control_targets)])
+		return false
+	# Deliberately bypass set_world_map normalization to model the exact legacy
+	# generation already present on disk before Continue repairs it.
+	run_state.world_map = map_data
+	run_state.bankroll = cap_competitor_bankroll
+	app.call("_invalidate_travel_view_cache")
+	var revisit_targets: Array = app.call("_travel_target_ids")
+	if revisit_targets.count("beach") != 1 \
+			or revisit_targets.size() != WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT \
+			or revisit_targets.has(ordinary_yield_id):
+		push_error("Revisited Delta Queen did not replace the lowest-ranked ordinary card with one Beach inside the cap: yield=%s targets=%s" % [ordinary_yield_id, JSON.stringify(revisit_targets)])
+		return false
+	var revisit_choice: Dictionary = {}
+	for choice_value in app.call("_travel_choice_view_list"):
+		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == "beach":
+			revisit_choice = choice_value
+			break
+	if not bool(revisit_choice.get("enabled", false)):
+		push_error("Revisited Delta Queen did not enable its hidden-save Beach choice: %s" % JSON.stringify(revisit_choice))
+		return false
+
+	var save_service: SaveService = app.get("save_service")
+	var original_slot := str(app.get("autosave_slot_id"))
+	var continue_slot := "ui_beach_access_continue"
+	if save_service == null or save_service.clear_run(continue_slot) != OK:
+		push_error("Beach Continue regression could not prepare its isolated save slot.")
+		return false
+	app.set("autosave_slot_id", continue_slot)
+	var save_error := save_service.save_run(run_state, continue_slot)
+	if save_error != OK:
+		app.set("autosave_slot_id", original_slot)
+		push_error("Beach Continue regression could not save its Delta Queen state: %s" % error_string(save_error))
+		return false
+	if not bool(app.call("load_foundation_run")):
+		save_service.clear_run(continue_slot)
+		app.set("autosave_slot_id", original_slot)
+		push_error("Beach Continue regression could not load through the production Continue path.")
+		return false
+	await process_frame
+	run_state = app.get("run_state")
+	app.call("_invalidate_travel_view_cache")
+	var continued_targets: Array = app.call("_travel_target_ids")
+	var continued_enabled_targets: Array = app.call("_enabled_world_route_ids", "delta_queen")
+	var continued_enabled_non_beach_competitors: Array = []
+	for continued_target_value in continued_enabled_targets:
+		var continued_target_id := str(continued_target_value)
+		if continued_target_id != "beach" and not continued_enabled_non_beach_competitors.has(continued_target_id):
+			continued_enabled_non_beach_competitors.append(continued_target_id)
+	var continued_choice: Dictionary = {}
+	for choice_value in app.call("_travel_choice_view_list"):
+		if typeof(choice_value) == TYPE_DICTIONARY and str((choice_value as Dictionary).get("id", "")) == "beach":
+			continued_choice = choice_value
+			break
+	var continued_snapshot: Dictionary = app.call("_world_map_snapshot")
+	var continued_beach_node: Dictionary = {}
+	for node_value in continued_snapshot.get("nodes", []):
+		if typeof(node_value) == TYPE_DICTIONARY and str((node_value as Dictionary).get("id", "")) == "beach":
+			continued_beach_node = node_value
+			break
+	if run_state == null or run_state.current_world_node_id() != "delta_queen" \
+			or run_state.bankroll != cap_competitor_bankroll \
+			or continued_enabled_non_beach_competitors.size() <= WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT \
+			or continued_targets.count("beach") != 1 \
+			or continued_targets.size() != WorldMapScript.TRAVEL_TOTAL_TARGET_LIMIT \
+			or continued_targets.has(ordinary_yield_id) \
+			or not bool(continued_choice.get("enabled", false)) \
+			or int(continued_choice.get("cost", -1)) != 0 \
+			or str(continued_choice.get("travel_method", "")) != "Walk" \
+			or not bool(continued_beach_node.get("travel_enabled", false)):
+		save_service.clear_run(continue_slot)
+		app.set("autosave_slot_id", original_slot)
+		push_error("Continue did not restore one visible, enabled Beach destination under real cap pressure: bankroll=%d enabled=%s non_beach=%s targets=%s choice=%s node=%s" % [run_state.bankroll if run_state != null else -1, JSON.stringify(continued_enabled_targets), JSON.stringify(continued_enabled_non_beach_competitors), JSON.stringify(continued_targets), JSON.stringify(continued_choice), JSON.stringify(continued_beach_node)])
+		return false
+	if not bool(app.call("open_world_map")):
+		save_service.clear_run(continue_slot)
+		app.set("autosave_slot_id", original_slot)
+		push_error("Continued Delta Queen run could not open its production world map.")
+		return false
+	await process_frame
+	var continued_selected := bool(app.call("select_world_map_node", "beach"))
+	var continued_confirm_button: Button = app.get("world_map_confirm_button")
+	if not continued_selected or continued_confirm_button == null or continued_confirm_button.disabled:
+		save_service.clear_run(continue_slot)
+		app.set("autosave_slot_id", original_slot)
+		push_error("Continued Delta Queen run did not expose an enabled rendered Beach control.")
+		return false
+	app.call("close_world_map")
+	save_service.clear_run(continue_slot)
+	app.set("autosave_slot_id", original_slot)
 	return true
 
 
@@ -3691,48 +4146,54 @@ func _init() -> void:
 
 
 func _run() -> void:
+	if not await _check_component_preflight():
+		quit(1)
+		return
+	var app := await _check_foundation_app_boot()
+	if app == null:
+		quit(1)
+		return
+	await _run_main_flow(app)
+
+
+func _check_component_preflight() -> bool:
 	_use_isolated_user_settings(TEST_SETTINGS_PATH)
 	OS.set_environment(MetaCollectionServiceScript.STORE_PATH_ENV, TEST_META_COLLECTION_PATH)
 	OS.set_environment(ProfileInventoryScript.INVENTORY_PATH_ENV, TEST_PROFILE_INVENTORY_PATH)
-	if FileAccess.file_exists(TEST_META_COLLECTION_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_META_COLLECTION_PATH))
-	if FileAccess.file_exists(TEST_PROFILE_INVENTORY_PATH):
-		DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_PROFILE_INVENTORY_PATH))
+	# Durable stores recover from their sibling backup when the primary is absent.
+	# Clear both files so a prior gate stage cannot turn this fresh-profile fixture
+	# into a completed-profile run.
+	for isolated_store_path in [TEST_META_COLLECTION_PATH, TEST_PROFILE_INVENTORY_PATH]:
+		for candidate_path in [isolated_store_path, "%s.bak" % isolated_store_path]:
+			if FileAccess.file_exists(candidate_path):
+				DirAccess.remove_absolute(ProjectSettings.globalize_path(candidate_path))
 	if VisualStyleScript.HOT != VisualStyleScript.PINK:
 		push_error("VisualStyle.HOT should alias the production hot/pink token.")
-		quit(1)
-		return
+		return false
 	if not await _check_career_stats_screen_component():
-		quit(1)
-		return
+		return false
 	if not await _check_run_report_screen_component():
-		quit(1)
-		return
+		return false
 	if not await _check_run_inventory_screen_component():
-		quit(1)
-		return
+		return false
 	if not await _check_bag_open_reel_component():
-		quit(1)
-		return
+		return false
 	if not await _check_talk_dock_component():
-		quit(1)
-		return
+		return false
 	if not await _check_coach_overlay_component():
-		quit(1)
-		return
+		return false
 	if not await _check_item_found_popup_component():
-		quit(1)
-		return
+		return false
 	if not await _check_world_map_selection_stable_component():
-		quit(1)
-		return
+		return false
 	if not await _check_performance_liveness_guard_component():
-		quit(1)
-		return
+		return false
 	if not await _check_cold_game_library_launchers():
-		quit(1)
-		return
+		return false
+	return true
 
+
+func _check_foundation_app_boot() -> Control:
 	var app: Control = MainScene.instantiate()
 	# UI interaction fixtures advance their simulation state explicitly. The
 	# continuous production clock has dedicated systems coverage.
@@ -3742,30 +4203,34 @@ func _run() -> void:
 	await process_frame
 	if app.get_script().resource_path != "res://scripts/ui/foundation_main.gd":
 		push_error("Main scene is not wired to the foundation UI shell.")
-		quit(1)
-		return
+		app.queue_free()
+		return null
 	if not app.has_method("uses_foundation_runtime") or not bool(app.call("uses_foundation_runtime")):
 		push_error("Foundation UI shell did not initialize the README runtime contracts.")
-		quit(1)
-		return
+		app.queue_free()
+		return null
 	if not await _check_embedded_refresh_deferred_coach(app):
-		quit(1)
-		return
+		app.queue_free()
+		return null
 	if not await _check_coin_pusher_owned_canvas_render_frame(app):
-		quit(1)
-		return
+		app.queue_free()
+		return null
 	if app.get("start_screen") == null:
 		push_error("Main UI did not build the start screen.")
-		quit(1)
-		return
+		app.queue_free()
+		return null
 	if app.get("run_screen") == null:
 		push_error("Main UI did not build the run screen.")
-		quit(1)
-		return
+		app.queue_free()
+		return null
 	if app.get("run_state") != null:
 		push_error("Foundation UI shell should wait for player start before creating RunState.")
-		quit(1)
-		return
+		app.queue_free()
+		return null
+	return app
+
+
+func _run_main_flow(app: Control) -> void:
 	var first_menu_snapshot: Dictionary = app.call("current_start_menu_snapshot")
 	var first_panel_size: Vector2 = first_menu_snapshot.get("menu_panel_size", Vector2.ZERO)
 	var first_menu_rect := _snapshot_rect(first_menu_snapshot.get("menu_panel_rect", {}))
@@ -3780,8 +4245,8 @@ func _run() -> void:
 		return
 	var project_version := str(ProjectSettings.get_setting("application/config/version", "")).strip_edges()
 	var rendered_version := str(first_menu_snapshot.get("release_version_text", "")).strip_edges()
-	if project_version.is_empty() or rendered_version != "Version %s" % project_version:
-		push_error("Rendered release version does not match ProjectSettings: rendered=%s project=%s." % [rendered_version, project_version])
+	if project_version != BuildIdentityScript.DEVELOPMENT_VERSION or rendered_version != "Version %s" % BuildIdentityScript.display_version():
+		push_error("Development identity boundary diverged: rendered=%s identity=%s retained_project=%s." % [rendered_version, BuildIdentityScript.display_version(), project_version])
 		quit(1)
 		return
 	app.call("open_career_stats_screen")
@@ -4023,8 +4488,25 @@ func _run() -> void:
 	if not await _check_run_pawn_credit_is_immediate(app):
 		quit(1)
 		return
+	# The pawn regression deliberately returns through a rebuilt main-menu tree.
+	# Refresh the cached control reference before asserting the normalized state.
+	exit_game_button = app.get("exit_game_button") as Button
+	if exit_game_button == null:
+		push_error("Rebuilt main menu did not expose its Exit Game button.")
+		quit(1)
+		return
 	if not exit_game_button.visible or exit_game_button.disabled:
-		push_error("Main menu Exit Game button should be visible and enabled.")
+		push_error(
+			"Main menu Exit Game button should be visible and enabled: visible=%s visible_in_tree=%s disabled=%s parent=%s parent_visible=%s current=%s."
+			% [
+				str(exit_game_button.visible),
+				str(exit_game_button.is_visible_in_tree()),
+				str(exit_game_button.disabled),
+				str(exit_game_button.get_parent()),
+				str((exit_game_button.get_parent() as CanvasItem).visible if exit_game_button.get_parent() is CanvasItem else true),
+				str(app.get("exit_game_button")),
+			]
+		)
 		quit(1)
 		return
 	game_library_button.emit_signal("pressed")
@@ -4068,7 +4550,7 @@ func _run() -> void:
 	if not await _check_confirmed_all_in_wager_result_then_failure(app):
 		quit(1)
 		return
-	if not await _check_presented_bankroll_waits_for_result_reveal(app):
+	if not await _check_settled_bankroll_visible_during_result_reveal(app):
 		quit(1)
 		return
 	if not await _check_background_slot_autoplay_isolated_from_active_game(app):
@@ -4987,7 +5469,19 @@ func _run() -> void:
 	var canvas_snapshot: Dictionary = live_environment_canvas.call("current_view_snapshot")
 	var object_layout: Dictionary = canvas_snapshot.get("object_layout", {})
 	if int(object_layout.get("overlap_count", -1)) != 0:
-		push_error("Environment object layout allowed overlapping room props: %s." % str(object_layout.get("overlaps", [])))
+		var overlap_ids: Dictionary = {}
+		for overlap_value in object_layout.get("overlaps", []):
+			var overlap: Dictionary = overlap_value if typeof(overlap_value) == TYPE_DICTIONARY else {}
+			overlap_ids[str(overlap.get("a", ""))] = true
+			overlap_ids[str(overlap.get("b", ""))] = true
+		var overlap_objects: Array = []
+		for object_value in object_layout.get("objects", []):
+			var object_data: Dictionary = object_value if typeof(object_value) == TYPE_DICTIONARY else {}
+			var object_id := str(object_data.get("id", ""))
+			if overlap_ids.has(object_id):
+				overlap_objects.append(object_data)
+		var overlap_environment: Dictionary = (app.get("run_state") as RunState).current_environment
+		push_error("Environment object layout allowed overlapping room props: archetype=%s scenario=%s overlaps=%s objects=%s." % [str(overlap_environment.get("archetype_id", "")), str(overlap_environment.get("scenario_id", "")), JSON.stringify(object_layout.get("overlaps", [])), JSON.stringify(overlap_objects)])
 		quit(1)
 		return
 	var canvas_object := _canvas_object_by_id(canvas_snapshot.get("objects", []), focus_object_id)
@@ -5308,14 +5802,16 @@ func _run() -> void:
 	app.call("clear_interaction_focus")
 	await process_frame
 	var first_seed_environment := JSON.stringify(app.call("current_environment_view_snapshot"))
-	app.call("start_foundation_run", "UI-COMPILE-SEED")
+	# Seed determinism is a run-generation contract. Keep every sample isolated
+	# from profile/loadout state written by earlier UI checks in this same process.
+	app.call("start_foundation_run", "UI-COMPILE-SEED", {}, false)
 	await process_frame
 	var same_seed_environment := JSON.stringify(app.call("current_environment_view_snapshot"))
 	if first_seed_environment != same_seed_environment:
 		push_error("Starting the same seed did not produce the same first environment.")
 		quit(1)
 		return
-	app.call("start_foundation_run", "UI-COMPILE-OTHER-SEED")
+	app.call("start_foundation_run", "UI-COMPILE-OTHER-SEED", {}, false)
 	await process_frame
 	var different_seed_environment := JSON.stringify(app.call("current_environment_view_snapshot"))
 	if same_seed_environment == different_seed_environment:
@@ -5323,10 +5819,10 @@ func _run() -> void:
 		quit(1)
 		return
 	var custom_challenge := RunStateScript.custom_challenge("ui_compile_variant", "UI-COMPILE-SEED", {"variant": "m1_01"})
-	app.call("start_foundation_run", "UI-COMPILE-SEED", custom_challenge)
+	app.call("start_foundation_run", "UI-COMPILE-SEED", custom_challenge, false)
 	await process_frame
 	var challenge_seed_value := int(app.get("run_state").seed_value)
-	app.call("start_foundation_run", "UI-COMPILE-SEED")
+	app.call("start_foundation_run", "UI-COMPILE-SEED", {}, false)
 	await process_frame
 	if challenge_seed_value == int(app.get("run_state").seed_value):
 		push_error("Custom challenge config did not alter the deterministic run seed.")
@@ -6646,14 +7142,28 @@ func _run() -> void:
 	var event_options: Array = event_snapshot.get("event_options", [])
 	if event_options.is_empty():
 		var event_fixture_run_state: RunState = app.get("run_state")
-		event_fixture_run_state.current_environment["kind"] = "shop"
-		event_fixture_run_state.current_environment["display_name"] = "Fixture Shop"
-		event_fixture_run_state.current_environment["event_ids"] = ["late_shift_discount"]
-		event_fixture_run_state.current_environment["resolved_event_ids"] = []
-		event_fixture_run_state.current_environment["item_offers"] = []
-		event_fixture_run_state.current_environment["service_ids"] = []
-		event_fixture_run_state.current_environment["lender_hooks"] = []
-		event_fixture_run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(event_fixture_run_state.current_environment)
+		var event_fixture_archetype := _archetype_by_id(app.get("library"), "corner_store")
+		# Install a clean room instead of carrying scenario/layout authority from the
+		# preceding Grand Casino practice fixture across archetypes. The strict slot
+		# contract intentionally refuses to render a Corner Store event in that map.
+		var event_fixture_environment := EnvironmentInstance.from_archetype(
+			event_fixture_archetype,
+			int(event_fixture_run_state.current_environment.get("depth", 0)),
+			event_fixture_run_state.create_rng("ui_event_slot_fixture"),
+			app.get("library")
+		).to_dict()
+		event_fixture_environment["id"] = "ui_event_slot_fixture"
+		event_fixture_environment["world_node_id"] = "corner_store"
+		event_fixture_environment["display_name"] = "Fixture Corner Store"
+		event_fixture_environment["game_ids"] = []
+		event_fixture_environment["game_states"] = {}
+		event_fixture_environment["event_ids"] = ["late_shift_discount"]
+		event_fixture_environment["resolved_event_ids"] = []
+		event_fixture_environment["item_offers"] = []
+		event_fixture_environment["service_ids"] = []
+		event_fixture_environment["lender_hooks"] = []
+		event_fixture_environment["layout"] = EnvironmentInstance.ensure_generated_layout(event_fixture_environment, app.get("library"))
+		event_fixture_run_state.current_environment = event_fixture_environment
 		app.call("clear_interaction_focus")
 		await process_frame
 		event_snapshot = app.call("current_environment_view_snapshot")
@@ -7019,19 +7529,40 @@ func _run() -> void:
 	var item_environment: Dictionary = app.call("serialized_run_state").get("current_environment", {})
 	var generated_item_layout: Dictionary = item_environment.get("layout", {})
 	var generated_object_rects: Dictionary = generated_item_layout.get("object_rects", {})
-	if not generated_object_rects.has("item:%s" % item_id):
+	var item_object_id := "item:%s" % item_id
+	if not generated_object_rects.has(item_object_id):
 		push_error("Generated environment layout did not persist item object placement by item id.")
 		quit(1)
 		return
-	var item_archetype := _archetype_by_id(app.get("library"), str(item_environment.get("archetype_id", "")))
-	var item_layout: Dictionary = item_archetype.get("layout", {})
-	var item_spots: Array = item_layout.get("item_spots", [])
-	if item_spots.is_empty():
-		push_error("Foundation item-offer map does not define item_spots for authored placement.")
-		quit(1)
-		return
-	if not _canvas_object_position_matches_board_spot(item_canvas_object, item_spots[0]):
-		push_error("Environment item holder ignored the archetype item_spots authored placement.")
+	var item_binding := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(generated_item_layout.get("slot_bindings", {})).get(item_object_id, {}))
+	var item_manifest_family := ""
+	var item_manifest := JsonCoerceScript._copy_dict(item_environment.get("object_manifest", {}))
+	for row_value in JsonCoerceScript._copy_array(item_manifest.get("rows", [])):
+		var row := JsonCoerceScript._copy_dict(row_value)
+		if str(row.get("presentation_object_id", row.get("object_id", ""))) == item_object_id:
+			item_manifest_family = str(row.get("family", ""))
+			break
+	var item_rect := _snapshot_rect(generated_object_rects.get(item_object_id, {}))
+	var item_board_size := Vector2(VisualStyleScript.ENVIRONMENT_BOARD_SIZE)
+	var expected_item_position := item_rect.get_center()
+	var expected_item_size := item_rect.size * item_board_size
+	var actual_item_position: Variant = item_canvas_object.get("position", Vector2(-1.0, -1.0))
+	var actual_item_size: Variant = item_canvas_object.get("size", Vector2(-1.0, -1.0))
+	if str(item_binding.get("identity", "")) != item_object_id \
+			or item_manifest_family not in ["fixed", "event", "scenario"] \
+			or str(item_binding.get("kind", "")) != item_manifest_family \
+			or str(item_binding.get("slot_family", "")) != item_manifest_family \
+			or str(item_binding.get("presentation_mode", "")) != "room" \
+			or str(item_binding.get("slot_id", "")).is_empty() \
+			or JsonCoerceScript._copy_dict(item_binding.get("slot", {})).is_empty() \
+			or str(item_canvas_object.get("slot_id", "")) != str(item_binding.get("slot_id", "")) \
+			or str(item_canvas_object.get("presentation_mode", "")) != "room" \
+			or not bool(item_canvas_object.get("fixed_slot_geometry", false)) \
+			or typeof(actual_item_position) != TYPE_VECTOR2 \
+			or not (actual_item_position as Vector2).is_equal_approx(expected_item_position) \
+			or typeof(actual_item_size) != TYPE_VECTOR2 \
+			or not (actual_item_size as Vector2).is_equal_approx(expected_item_size):
+		push_error("Environment item holder did not preserve its authenticated fixed-slot geometry.")
 		quit(1)
 		return
 	var serialized_before_item_category := JSON.stringify(app.call("serialized_run_state"))
@@ -7321,24 +7852,43 @@ func _run() -> void:
 	var hook_library: ContentLibrary = app.get("library")
 	var original_hook_services: Array = hook_library.services.duplicate(true)
 	var original_hook_lenders: Array = hook_library.lenders.duplicate(true)
+	# The strict four-family placement contract rejects contacts that do not have
+	# authored room authority. Move this synthetic hook fixture onto Back Alley,
+	# which owns the merchant, house-drink, and street-lender fixed slots used by
+	# the assertions below, instead of injecting them into the preceding shop.
+	var hook_fixture_archetype := _archetype_by_id(hook_library, "back_alley")
+	if hook_fixture_archetype.is_empty():
+		push_error("Hook result-delta fixture is missing the Back Alley archetype.")
+		quit(1)
+		return
+	hook_run_state.current_environment["kind"] = str(hook_fixture_archetype.get("kind", "shop"))
+	hook_run_state.current_environment["archetype_id"] = "back_alley"
+	hook_run_state.current_environment["display_name"] = "Fixture Back Alley"
+	hook_run_state.current_environment["object_fixtures"] = JsonCoerceScript._copy_array(hook_fixture_archetype.get("object_fixtures", []))
+	hook_run_state.current_environment["event_ids"] = []
+	hook_run_state.current_environment["resolved_event_ids"] = []
+	hook_run_state.current_environment["item_offers"] = []
+	hook_run_state.current_environment["layout"] = JsonCoerceScript._copy_dict(hook_fixture_archetype.get("layout", {}))
 	hook_run_state.game_clock_minutes = 20 * 60
 	hook_run_state.clear_closing_time_state()
-	hook_library.services = [{
-		"id": "fixture_ui_service",
-		"display_name": "Fixture Service",
-		"description": "A contract fixture service resolved through result deltas.",
-		"cost": 8,
-		"deltas": {
-			"bankroll_delta": 3,
-			"flags_set": {"fixture_ui_service_used": true},
-		},
-	}]
+	# Exercise result-delta behavior through a genuinely authored physical object.
+	# An invented service id has no identity-local fixed.* authority and correctly
+	# becomes an attached action under the four-family room contract.
+	var fixture_service := JsonCoerceScript._copy_dict(hook_library.service("house_drink"))
+	fixture_service["display_name"] = "Fixture Service"
+	fixture_service["description"] = "A contract fixture service resolved through result deltas."
+	fixture_service["cost"] = 8
+	fixture_service["deltas"] = {
+		"bankroll_delta": 3,
+		"flags_set": {"fixture_ui_service_used": true},
+	}
+	hook_library.services = [fixture_service]
 	hook_run_state.current_environment["kind"] = "fixture_room"
 	hook_run_state.current_environment["object_fixtures"] = ["shopkeeper:merchant"]
-	hook_run_state.current_environment["service_ids"] = ["fixture_ui_service"]
+	hook_run_state.current_environment["service_ids"] = ["house_drink"]
 	hook_run_state.current_environment["lender_hooks"] = ["fixture_missing_lender"]
 	hook_run_state.current_environment["item_offers"] = []
-	hook_run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(hook_run_state.current_environment)
+	hook_run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(hook_run_state.current_environment, hook_library)
 	var hook_spatial_snapshot: Dictionary = app.call("current_spatial_interaction_snapshot")
 	var service_interactable := _interactable_by_type(hook_spatial_snapshot.get("objects", []), "service")
 	var lender_interactable := _interactable_by_type(hook_spatial_snapshot.get("objects", []), "lender")
@@ -7431,16 +7981,16 @@ func _run() -> void:
 	hook_run_state.game_clock_minutes = 20 * 60
 	hook_run_state.clear_closing_time_state()
 
-	hook_library.lenders = [{
-		"id": "fixture_ui_lender",
-		"display_name": "Fixture Lender",
-		"description": "A contract fixture lender resolved through debt_changes.",
-		"deltas": {
-			"debt_changes": [{"id": "fixture_ui_debt", "lender_id": "fixture_ui_lender", "balance": 12, "status": "active"}],
-		},
-	}]
-	hook_run_state.current_environment["lender_hooks"] = ["fixture_ui_lender"]
-	hook_run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(hook_run_state.current_environment)
+	var fixture_lender := JsonCoerceScript._copy_dict(hook_library.lender("street_lender"))
+	fixture_lender["display_name"] = "Fixture Lender"
+	fixture_lender["description"] = "A contract fixture lender resolved through debt_changes."
+	fixture_lender.erase("debt_profile")
+	fixture_lender["deltas"] = {
+		"debt_changes": [{"id": "fixture_ui_debt", "lender_id": "street_lender", "balance": 12, "status": "active"}],
+	}
+	hook_library.lenders = [fixture_lender]
+	hook_run_state.current_environment["lender_hooks"] = ["street_lender"]
+	hook_run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(hook_run_state.current_environment, hook_library)
 	var supported_lender_snapshot: Dictionary = app.call("current_environment_view_snapshot")
 	var supported_lenders: Array = supported_lender_snapshot.get("lender_options", [])
 	if supported_lenders.is_empty() or not bool((supported_lenders[0] as Dictionary).get("mutation_supported", false)):
@@ -7468,7 +8018,7 @@ func _run() -> void:
 		return
 	await process_frame
 	var lender_talk: Dictionary = app.call("current_talk_dock_snapshot")
-	if not bool(lender_talk.get("visible", false)) or str(lender_talk.get("speaker_text", "")) != "Fixture Lender" or not bool(lender_talk.get("topic_visible", false)) or str(lender_talk.get("topic", "")) != "Loan Offer":
+	if not bool(lender_talk.get("visible", false)) or str(lender_talk.get("speaker_text", "")).find("Vic Mercer") == -1 or not bool(lender_talk.get("topic_visible", false)) or str(lender_talk.get("topic", "")) != "Loan Offer":
 		push_error("Supported lender hook did not use the standard title/topic/options conversation: %s." % JSON.stringify(lender_talk))
 		quit(1)
 		return
@@ -7568,6 +8118,12 @@ func _run() -> void:
 	var map_screen: Dictionary = app.call("current_screen_snapshot")
 	if not bool(map_screen.get("world_map_overlay_visible", false)):
 		push_error("Leave did not show the modal world map overlay.")
+		quit(1)
+		return
+	var map_spatial_snapshot: Dictionary = app.call("current_spatial_interaction_snapshot")
+	var room_canvas_at_map_open: Control = app.get("environment_canvas")
+	if not str(map_spatial_snapshot.get("selected_object_id", "")).is_empty() or (room_canvas_at_map_open != null and not str(room_canvas_at_map_open.get("selected_object_id")).is_empty()):
+		push_error("Opening the world map left the room object card selected beneath the modal travel surface.")
 		quit(1)
 		return
 	if not str(map_screen.get("selected_world_map_node_id", "")).is_empty() or bool(map_screen.get("world_map_detail_popup_visible", false)):
@@ -7839,7 +8395,7 @@ func _run() -> void:
 		push_error("World map detail popup covered the selected location icon instead of sitting beside it: popup=%s icon=%s" % [str(map_selected_popup_rect), str(selected_icon_rect)])
 		quit(1)
 		return
-	var detail_badges: Array = _copy_array(selected_map_screen.get("world_map_detail_badges", []))
+	var detail_badges: Array = JsonCoerceScript._copy_array(selected_map_screen.get("world_map_detail_badges", []))
 	if not detail_badges.is_empty():
 		push_error("World map selection popup retained information badges outside the requested four fields: %s" % str(detail_badges))
 		quit(1)
@@ -7998,7 +8554,10 @@ func _run() -> void:
 		quit(1)
 		return
 	failure_fixture_run.add_suspicion("ui_failure_screen:police", 100, "behavior", true, {"environment_id": str(failure_fixture_run.current_environment.get("id", ""))})
-	app.call("_refresh")
+	# Background games and save-boundary checks can discover terminal state
+	# without entering the broad refresh path. The terminal route itself must
+	# atomically replace the live game in that case.
+	app.call("_evaluate_run_terminal_state")
 	await process_frame
 	var failure_screen_snapshot: Dictionary = app.call("current_screen_snapshot")
 	if str(failure_screen_snapshot.get("screen", "")) != "FAILURE":
@@ -8016,6 +8575,17 @@ func _run() -> void:
 		return
 	if (app.get("game_surface_canvas") as Control).visible:
 		push_error("Game surface remained visible over the failure summary.")
+		quit(1)
+		return
+	if (app.get("environment_canvas") as Control).visible or (app.get("environment_header") as Control).visible:
+		push_error("Live room presentation remained visible beside the failure summary.")
+		quit(1)
+		return
+	var terminal_visual_panel: Control = app.get("visual_panel_container")
+	var terminal_report_rect := failure_panel.get_global_rect()
+	var terminal_visual_rect := terminal_visual_panel.get_global_rect()
+	if terminal_report_rect.size.y < terminal_visual_rect.size.y * 0.9:
+		push_error("Failure summary did not own the full terminal play area: report=%s visual=%s." % [str(terminal_report_rect), str(terminal_visual_rect)])
 		quit(1)
 		return
 	if failure_fixture_run.pending_talk_event_count() != 0 or bool((app.call("current_talk_dock_snapshot") as Dictionary).get("visible", false)):
@@ -8080,7 +8650,9 @@ func _run() -> void:
 			push_error("Run report did not distinguish failure reason %s with icon/where/how." % reason)
 			quit(1)
 			return
-	app.call("start_foundation_run", "UI-VICTORY-SEED")
+	var victory_start_config := RunStateScript.standard_challenge("UI-VICTORY-SEED")
+	victory_start_config["modifiers"] = {"home_archetype_id": "corner_store"}
+	app.call("start_foundation_run", "UI-VICTORY-SEED", victory_start_config)
 	await process_frame
 	# A scenario-exclusive game may now be valid in the seeded start room. This
 	# report fixture specifically exercises a real timed travel replay first.
@@ -8283,5 +8855,3 @@ func _run() -> void:
 	await process_frame
 	print("UI scene compile check passed.")
 	quit(0)
-
-

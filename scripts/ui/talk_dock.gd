@@ -1,6 +1,9 @@
 class_name TalkDock
 extends Control
 
+# Conversation dock for speaker portraits, queued dialogue/choices, hotkeys,
+# animation, and a stable reserved room footprint.
+
 signal choice_requested(event_id: String, choice_id: String)
 signal occupied_rect_changed(rect: Rect2)
 signal conversation_active_changed(active: bool)
@@ -247,11 +250,6 @@ class ResponseIcon:
 				return VisualStyle.YELLOW
 			_:
 				return VisualStyle.SOFT
-
-
-static func create_portrait_model() -> Control:
-	return PortraitModel.new()
-
 var entry: Dictionary = {}
 var option: Dictionary = {}
 var queue_count: int = 0
@@ -268,6 +266,7 @@ var last_occupied_rect := Rect2()
 var avoid_global_rect := Rect2()
 var protected_global_rects: Array[Rect2] = []
 var reserved_body_line_count := 1
+var reserved_choice_grid_height := 0.0
 var locked_layout_side := "left"
 var locked_layout_vertical := "bottom"
 var layout_boundary_key := ""
@@ -535,6 +534,7 @@ func set_reduce_motion(enabled: bool) -> void:
 	reduce_motion = enabled
 	if reduce_motion:
 		_complete_body_reveal()
+		_settle_attention_animation()
 	if portrait_model != null:
 		portrait_model.set_reduce_motion(enabled)
 		portrait_model.set_animation_active(visible and expanded)
@@ -558,7 +558,7 @@ func set_avoid_global_rect(next_rect: Rect2, boundary_key: String = "", focus_x_
 		layout_boundary_key = clean_boundary_key
 	var placement := _best_protected_layout(_side_for_new_boundary(next_rect, focus_x_hint))
 	var next_side := str(placement.get("side", locked_layout_side))
-	var next_vertical := str(placement.get("vertical", locked_layout_vertical))
+	var next_vertical := "bottom"
 	if next_side != locked_layout_side or next_vertical != locked_layout_vertical:
 		if next_side != locked_layout_side:
 			layout_side_change_count += 1
@@ -571,15 +571,12 @@ func _best_protected_layout(preferred_side: String) -> Dictionary:
 	var other_side := "right" if preferred_side == "left" else "left"
 	var candidates := [
 		{"side": preferred_side, "vertical": "bottom"},
-		{"side": preferred_side, "vertical": "top"},
 		{"side": other_side, "vertical": "bottom"},
-		{"side": other_side, "vertical": "top"},
 	]
 	var best: Dictionary = candidates[0]
 	var best_score := INF
 	var best_focus_overlap := INF
 	var best_side_penalty := 2
-	var best_vertical_penalty := 2
 	for candidate_value in candidates:
 		var candidate: Dictionary = candidate_value
 		var layout := _expanded_layout_rects_for(str(candidate.get("side", "left")), str(candidate.get("vertical", "bottom")), true)
@@ -591,23 +588,18 @@ func _best_protected_layout(preferred_side: String) -> Dictionary:
 		for protected_rect in protected_global_rects:
 			if footprint.intersects(protected_rect):
 				score += footprint.intersection(protected_rect).get_area()
-		# With a live selected object, conversation placement follows the player's
-		# focus first: avoid it, use the opposite horizontal side, and stay at the
-		# bottom. The environment reserve then reflows other room objects around the
-		# chosen dock. This prevents unrelated scenario props from sending a lender's
-		# conversation to the top of the screen while their actor is selected below.
+		# Conversation placement is always bottom-anchored. A live selected object
+		# still chooses the horizontal side, while the environment reserve reflows
+		# other room objects around the chosen dock.
 		var side_penalty := 0 if str(candidate.get("side", "left")) == preferred_side else 1
-		var vertical_penalty := 0 if str(candidate.get("vertical", "bottom")) == "bottom" else 1
 		var better := score < best_score
 		if avoid_global_rect.has_area():
 			better = focus_overlap < best_focus_overlap \
 				or (is_equal_approx(focus_overlap, best_focus_overlap) and side_penalty < best_side_penalty) \
-				or (is_equal_approx(focus_overlap, best_focus_overlap) and side_penalty == best_side_penalty and vertical_penalty < best_vertical_penalty) \
-				or (is_equal_approx(focus_overlap, best_focus_overlap) and side_penalty == best_side_penalty and vertical_penalty == best_vertical_penalty and score < best_score)
+				or (is_equal_approx(focus_overlap, best_focus_overlap) and side_penalty == best_side_penalty and score < best_score)
 		if better:
 			best_focus_overlap = focus_overlap
 			best_side_penalty = side_penalty
-			best_vertical_penalty = vertical_penalty
 			best_score = score
 			best = candidate
 			if not avoid_global_rect.has_area() and is_zero_approx(score):
@@ -849,6 +841,10 @@ func _render_choices() -> void:
 		if choice_id.is_empty():
 			continue
 		var label := _choice_display_label(choice_data)
+		var enabled := bool(choice_data.get("enabled", true))
+		var disabled_reason := str(choice_data.get("disabled_reason", "")).strip_edges()
+		if not enabled and not disabled_reason.is_empty():
+			label = "%s\n%s" % [label, disabled_reason]
 		if _choice_requires_confirm(choice_data) and armed_choice_id == choice_id:
 			label = "Confirm: %s" % label
 		var response := HBoxContainer.new()
@@ -862,6 +858,8 @@ func _render_choices() -> void:
 			response.add_child(response_icon)
 			rendered_response_icon_kinds.append(icon_kind)
 		var button := FoundationWidgets.button(label, Callable(self, "_on_choice_pressed").bind(choice_id))
+		button.set_meta("event_id", str(entry.get("event_id", "")).strip_edges())
+		button.set_meta("choice_id", choice_id)
 		button.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
 		button.custom_minimum_size = Vector2(
 			VisualStyle.FLEXIBLE_SIZE,
@@ -872,12 +870,16 @@ func _render_choices() -> void:
 		button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		button.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		button.clip_text = false
-		var enabled := bool(choice_data.get("enabled", true))
-		var disabled_reason := str(choice_data.get("disabled_reason", "")).strip_edges()
 		button.disabled = not enabled
 		button.tooltip_text = disabled_reason if not enabled else _response_icon_descriptions(icon_kinds)
 		response.add_child(button)
 		choice_list.add_child(response)
+	var reserve_width := SMALL_SCREEN_PANEL_WIDTH if _compact_layout_enabled() else EXPANDED_PANEL_WIDTH
+	var reserve_columns := 1 if _compact_layout_enabled() else 2
+	reserved_choice_grid_height = maxf(
+		reserved_choice_grid_height,
+		_estimated_choice_grid_height(reserve_width, reserve_columns, true)
+	)
 
 
 func _choice_column_count(choice_count: int) -> int:
@@ -943,6 +945,10 @@ func _estimated_choice_grid_height(panel_width: float, columns: int, reserve_max
 				continue
 			var choice_data: Dictionary = choice_value
 			var label := _choice_display_label(choice_data)
+			var enabled := bool(choice_data.get("enabled", true))
+			var disabled_reason := str(choice_data.get("disabled_reason", "")).strip_edges()
+			if not enabled and not disabled_reason.is_empty():
+				label = "%s\n%s" % [label, disabled_reason]
 			if _choice_requires_confirm(choice_data) and armed_choice_id == str(choice_data.get("id", "")):
 				label = "Confirm: %s" % label
 			row_height = maxf(row_height, _choice_button_minimum_height(label, _response_icon_kinds(choice_data).size(), panel_width, clean_columns))
@@ -1146,6 +1152,7 @@ func _speaker_display_name() -> String:
 func _position_panel() -> void:
 	if panel == null:
 		return
+	locked_layout_vertical = "bottom"
 	if body_label != null:
 		body_label.max_lines_visible = 10 if _compact_layout_enabled() else 4
 	var previous_panel_rect := Rect2(panel.position, panel.size)
@@ -1161,7 +1168,7 @@ func _position_panel() -> void:
 		)
 		panel.size = collapsed_size
 		var collapsed_x := VIEWPORT_MARGIN.x if locked_layout_side == "left" else maxf(VIEWPORT_MARGIN.x, size.x - collapsed_size.x - VIEWPORT_MARGIN.x)
-		var collapsed_y := VIEWPORT_MARGIN.y if locked_layout_vertical == "top" else maxf(VIEWPORT_MARGIN.y, size.y - collapsed_size.y - VIEWPORT_MARGIN.y)
+		var collapsed_y := maxf(VIEWPORT_MARGIN.y, size.y - collapsed_size.y - VIEWPORT_MARGIN.y)
 		panel.position = Vector2(collapsed_x, collapsed_y)
 		_record_layout_position_change(previous_panel_rect, previous_portrait_rect)
 		_notify_occupied_rect_changed()
@@ -1178,10 +1185,10 @@ func _position_panel() -> void:
 
 
 func _expanded_layout_rects(reserve_maximum_capacity: bool) -> Dictionary:
-	return _expanded_layout_rects_for(locked_layout_side, locked_layout_vertical, reserve_maximum_capacity)
+	return _expanded_layout_rects_for(locked_layout_side, "bottom", reserve_maximum_capacity)
 
 
-func _expanded_layout_rects_for(side: String, vertical: String, reserve_maximum_capacity: bool) -> Dictionary:
+func _expanded_layout_rects_for(side: String, _vertical: String, reserve_maximum_capacity: bool) -> Dictionary:
 	var compact_layout := _compact_layout_enabled()
 	var available_size := Vector2(
 		maxf(280.0, size.x - VIEWPORT_MARGIN.x * 2.0),
@@ -1196,7 +1203,7 @@ func _expanded_layout_rects_for(side: String, vertical: String, reserve_maximum_
 	var portrait_x := VIEWPORT_MARGIN.x + 12.0
 	if side == "right":
 		portrait_x = maxf(VIEWPORT_MARGIN.x, size.x - portrait_size.x - VIEWPORT_MARGIN.x - 12.0)
-	var portrait_y := VIEWPORT_MARGIN.y if vertical == "top" else maxf(VIEWPORT_MARGIN.y, size.y - portrait_size.y - VIEWPORT_MARGIN.y)
+	var portrait_y := maxf(VIEWPORT_MARGIN.y, size.y - portrait_size.y - VIEWPORT_MARGIN.y)
 	var portrait_rect := Rect2(
 		Vector2(portrait_x, portrait_y),
 		portrait_size
@@ -1206,7 +1213,10 @@ func _expanded_layout_rects_for(side: String, vertical: String, reserve_maximum_
 	var panel_width := minf(desired_width, panel_available_width)
 	var choice_columns := (1 if compact_layout else 2) if reserve_maximum_capacity else _choice_column_count(choice_count)
 	var desired_height := EXPANDED_PANEL_BASE_HEIGHT
-	desired_height += maxf(0.0, _estimated_choice_grid_height(panel_width, choice_columns, reserve_maximum_capacity) - VisualStyle.TALK_CHOICE_HEIGHT)
+	var choice_grid_height := _estimated_choice_grid_height(panel_width, choice_columns, reserve_maximum_capacity)
+	if reserve_maximum_capacity:
+		choice_grid_height = maxf(choice_grid_height, reserved_choice_grid_height)
+	desired_height += maxf(0.0, choice_grid_height - VisualStyle.TALK_CHOICE_HEIGHT)
 	var body_line_count := reserved_body_line_count if reserve_maximum_capacity else _estimated_body_line_count(panel_width)
 	desired_height += float(maxi(0, body_line_count - 2)) * EXPANDED_PANEL_EXTRA_BODY_LINE_HEIGHT
 	var panel_size := Vector2(panel_width, minf(desired_height, available_size.y))
@@ -1214,7 +1224,7 @@ func _expanded_layout_rects_for(side: String, vertical: String, reserve_maximum_
 	if side == "right":
 		panel_left = portrait_rect.position.x - panel_size.x + 12.0
 	panel_left = clampf(panel_left, VIEWPORT_MARGIN.x, maxf(VIEWPORT_MARGIN.x, size.x - panel_size.x - VIEWPORT_MARGIN.x))
-	var panel_y := VIEWPORT_MARGIN.y if vertical == "top" else maxf(VIEWPORT_MARGIN.y, size.y - panel_size.y - VIEWPORT_MARGIN.y)
+	var panel_y := maxf(VIEWPORT_MARGIN.y, size.y - panel_size.y - VIEWPORT_MARGIN.y)
 	var panel_rect := Rect2(Vector2(panel_left, panel_y), panel_size)
 	return {
 		"portrait_rect": portrait_rect,
@@ -1229,7 +1239,7 @@ func _reconsider_current_placement() -> void:
 	if next_side != locked_layout_side:
 		layout_side_change_count += 1
 	locked_layout_side = next_side
-	locked_layout_vertical = str(placement.get("vertical", locked_layout_vertical))
+	locked_layout_vertical = "bottom"
 
 
 func _estimated_body_line_count(panel_width: float) -> int:
@@ -1239,10 +1249,6 @@ func _estimated_body_line_count(panel_width: float) -> int:
 	var average_character_width := maxf(7.0, float(VisualStyle.TYPE_BODY_LARGE) * 0.53)
 	var characters_per_line := maxi(14, int(floor(usable_width / average_character_width)))
 	return clampi(ceili(float(full_body_text.length()) / float(characters_per_line)), 1, 10)
-
-
-func _preferred_layout_side() -> String:
-	return locked_layout_side
 
 
 func _compact_layout_enabled() -> bool:
@@ -1301,6 +1307,9 @@ func _notify_occupied_rect_changed() -> void:
 func _play_attention_animation() -> void:
 	if panel == null:
 		return
+	if reduce_motion:
+		_settle_attention_animation()
+		return
 	panel.modulate = Color(1.0, 1.0, 1.0, 0.88)
 	var tween := create_tween()
 	attention_tweens.append(tween)
@@ -1311,3 +1320,15 @@ func _play_attention_animation() -> void:
 		portrait_model.pivot_offset = portrait_model.size * 0.5
 		portrait_model.scale = Vector2(1.04, 1.04)
 		tween.parallel().tween_property(portrait_model, "scale", Vector2.ONE, 0.18)
+
+
+func _settle_attention_animation() -> void:
+	_prune_attention_tweens()
+	for tween in attention_tweens:
+		if tween != null and tween.is_valid():
+			tween.kill()
+	attention_tweens.clear()
+	if panel != null:
+		panel.modulate = Color.WHITE
+	if portrait_model != null:
+		portrait_model.scale = Vector2.ONE

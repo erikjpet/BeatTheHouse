@@ -15,7 +15,7 @@ $candidate = (git rev-parse HEAD).Trim()
 $tree = (git rev-parse "$candidate`^{tree}").Trim()
 git status --short
 
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/playtest06_owner_build.ps1 `
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/archive/playtest06/playtest06_owner_build.ps1 `
   -CandidateCommit $candidate -RequireGodot
 ```
 
@@ -64,9 +64,9 @@ and the manifest, leaving product source unchanged from `$candidate`.
 ## Final consumers
 
 ```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/playtest06_owner_build_contract_test.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/playtest06_2_seed_manifest_contract_test.ps1
-powershell -NoProfile -ExecutionPolicy Bypass -File tools/playtest06_2_seed_manifest_contract.ps1 `
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/archive/playtest06/playtest06_owner_build_contract_test.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/archive/playtest06_2/playtest06_2_seed_manifest_contract_test.ps1
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/archive/playtest06_2/playtest06_2_seed_manifest_contract.ps1 `
   -ManifestPath docs/plans/evidence/playtest06_2/final_seed_manifest.json `
   -RequireFinal -ExpectedTestedCommit $candidate
 ```

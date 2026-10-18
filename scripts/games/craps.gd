@@ -1,6 +1,9 @@
 class_name CrapsGame
 extends GameModule
 
+# Production casino/street Craps host. It owns table persistence, sealed action
+# routing, surface interaction, rituals, advantage play, and rules projection.
+
 const CrapsRulesScript := preload("res://scripts/games/craps/craps_rules.gd")
 const CrapsSurfaceViewModelScript := preload("res://scripts/games/craps/craps_surface_view_model.gd")
 const TableGameVisualsScript := preload("res://scripts/games/table_game_visuals.gd")
@@ -156,6 +159,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var working_page := clampi(int(ui_state.get("craps_working_page", 0)), 0, working_page_count - 1)
 	var spec := GameModule.surface_spec({
 		"surface_renderer": "craps",
+		"surface_renderer_opaque": true,
 		"surface_template": "shared_table_game_v1",
 		"surface_life": "street_circle" if street else "immersive_table",
 		"surface_cast": "circle_of_players" if street else "dealer_table",
@@ -966,6 +970,8 @@ func environment_object_state(run_state: RunState, environment: Dictionary) -> D
 		elif int(table.get("point", 0)) != 0:
 			status_label = "POINT %d" % int(table.get("point", 0))
 		return {
+			"display_name": "Street Craps",
+			"environment_prop": "street_craps_circle",
 			"status_label": status_label,
 			"status_detail": "Cash returned; gone for tonight" if dispersed else "$%d-$%d · Pass / Don't Pass" % [int(table.get("table_minimum", 0)), int(table.get("table_maximum", 0))],
 			"active": not dispersed,
@@ -982,6 +988,7 @@ func environment_object_state(run_state: RunState, environment: Dictionary) -> D
 			},
 		}
 	return {
+		"environment_prop": "craps_room",
 		"status_label": "POINT %d" % int(table.get("point", 0)) if int(table.get("point", 0)) != 0 else "COME-OUT",
 		"status_detail": "Table energy %d" % int(table.get("table_energy", 0)),
 		"active": true,
@@ -2369,42 +2376,9 @@ func _fallback_rng(environment: Dictionary) -> RngStream:
 	return rng
 
 
-func _stable_hash(text: String) -> int:
-	var value := 216613626
-	for index in range(text.length()):
-		value = value ^ text.unicode_at(index)
-		value = int((value * 16777619) & 0x7fffffff)
-	return maxi(1, value)
-
-
 func _dict(value: Variant) -> Dictionary:
 	return value if typeof(value) == TYPE_DICTIONARY else {}
 
 
 func _array(value: Variant) -> Array:
 	return value if typeof(value) == TYPE_ARRAY else []
-
-
-func _int_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) == TYPE_ARRAY:
-		for entry in value:
-			result.append(int(entry))
-	return result
-
-
-func _string_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) == TYPE_ARRAY:
-		for entry in value:
-			result.append(str(entry))
-	return result
-
-
-func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) == TYPE_ARRAY:
-		for entry in value:
-			if typeof(entry) == TYPE_DICTIONARY:
-				result.append((entry as Dictionary).duplicate(true))
-	return result

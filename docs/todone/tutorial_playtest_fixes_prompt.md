@@ -211,7 +211,7 @@ interaction/tooltip bugs only.)
 - Root cause, not symptom. Determinism preserved (seeded; freeze/pause at
   action boundaries, never wall-clock). Zero-copy per-frame; idle-liveness never
   gamed (F-1 especially — no accepting a 0.000 idle). Tabs, typed GDScript,
-  sparse comments. Player-facing copy follows `docs/plans/0.5_voice_bible.md`.
+  sparse comments. Player-facing copy follows `docs/archive/0.5/plans/0.5_voice_bible.md`.
   Captures under `.tmp/`. Never revert or stage unrelated user-owned work.
 - Commit in logical units per workstream with clear messages. Keep the
   stuck-state sweep and visual QA green.

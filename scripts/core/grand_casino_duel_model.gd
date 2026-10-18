@@ -1,6 +1,8 @@
 class_name GrandCasinoDuelModel
 extends RefCounted
 
+const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+
 # Pure, action-boundary state transitions for Rourke's blackjack duel.
 
 const OUTCOME_WALK_OUT_CLEAN := "walk_out_clean"
@@ -9,11 +11,11 @@ const OUTCOME_TAKEN_OUT_BACK := "taken_out_back"
 
 
 static func initialize(terms: Dictionary, rng: RngStream) -> Dictionary:
-	var rules := _copy_dict(terms.get("rules", {}))
-	var stacks := _copy_dict(terms.get("starting_stacks", {}))
+	var rules := JsonCoerceScript._copy_dict(terms.get("rules", {}))
+	var stacks := JsonCoerceScript._copy_dict(terms.get("starting_stacks", {}))
 	var hand_limit := clampi(int(rules.get("hand_limit", 5)), 1, 12)
 	var cheat_level := clampi(int(terms.get("rourke_cheat_level", 0)), 0, 3)
-	var edge_catalog := _dictionary_array(terms.get("edge_catalog", []))
+	var edge_catalog := JsonCoerceScript._dictionary_array(terms.get("edge_catalog", []))
 	var edge_schedule: Array = []
 	for hand_index in range(hand_limit):
 		var edge: Dictionary = {
@@ -31,7 +33,7 @@ static func initialize(terms: Dictionary, rng: RngStream) -> Dictionary:
 				95
 			)
 			if hand_rng.randi_range(1, 100) <= chance:
-				edge.merge(_copy_dict(hand_rng.pick(edge_catalog, edge_catalog[0])), true)
+				edge.merge(JsonCoerceScript._copy_dict(hand_rng.pick(edge_catalog, edge_catalog[0])), true)
 				edge["active"] = true
 		edge_schedule.append(edge)
 	var player_stack := maxi(1, int(stacks.get("player", 100)))
@@ -46,21 +48,21 @@ static func initialize(terms: Dictionary, rng: RngStream) -> Dictionary:
 		"rourke_stack": rourke_stack,
 		"starting_player_stack": player_stack,
 		"starting_rourke_stack": rourke_stack,
-		"ante": maxi(1, int(rules.get("base_ante", 20)) + int(_copy_dict(terms.get("handicaps", {})).get("forced_ante", 0))),
+		"ante": maxi(1, int(rules.get("base_ante", 20)) + int(JsonCoerceScript._copy_dict(terms.get("handicaps", {})).get("forced_ante", 0))),
 		"edge_schedule": edge_schedule,
 		"hands": [],
 		"blackjack_session": {},
-		"last_bark": str(_copy_dict(terms.get("barks", {})).get("intro", "Sit down. Five hands. Then the door decides.")),
+		"last_bark": str(JsonCoerceScript._copy_dict(terms.get("barks", {})).get("intro", "Sit down. Five hands. Then the door decides.")),
 		"margin": player_stack - rourke_stack,
 	}
 
 
 static func current_edge(state: Dictionary) -> Dictionary:
 	var hand_index := maxi(0, int(state.get("hand_index", 0)))
-	var schedule := _copy_array(state.get("edge_schedule", []))
+	var schedule := JsonCoerceScript._copy_array(state.get("edge_schedule", []))
 	if hand_index >= schedule.size() or typeof(schedule[hand_index]) != TYPE_DICTIONARY:
 		return {}
-	return _copy_dict(schedule[hand_index])
+	return JsonCoerceScript._copy_dict(schedule[hand_index])
 
 
 static func call_out(state: Dictionary, edge_id: String, terms: Dictionary) -> Dictionary:
@@ -68,15 +70,15 @@ static func call_out(state: Dictionary, edge_id: String, terms: Dictionary) -> D
 	if str(next_state.get("status", "")) != "active":
 		return {"ok": false, "message": "The duel is already over.", "state": next_state}
 	var hand_index := maxi(0, int(next_state.get("hand_index", 0)))
-	var schedule := _copy_array(next_state.get("edge_schedule", []))
+	var schedule := JsonCoerceScript._copy_array(next_state.get("edge_schedule", []))
 	if hand_index >= schedule.size():
 		return {"ok": false, "message": "No hand is waiting for a challenge.", "state": next_state}
-	var edge := _copy_dict(schedule[hand_index])
+	var edge := JsonCoerceScript._copy_dict(schedule[hand_index])
 	if bool(edge.get("called", false)):
 		return {"ok": false, "message": "You already made your call this hand.", "state": next_state}
 	edge["called"] = true
 	var correct := bool(edge.get("active", false)) and str(edge.get("id", "")) == edge_id
-	var rules := _copy_dict(terms.get("rules", {}))
+	var rules := JsonCoerceScript._copy_dict(terms.get("rules", {}))
 	var swing := maxi(0, int(rules.get("correct_call_swing", 8))) if correct else maxi(0, int(rules.get("false_call_cost", 6)))
 	var transfer := swing if correct else -swing
 	_apply_transfer(next_state, transfer)
@@ -85,7 +87,7 @@ static func call_out(state: Dictionary, edge_id: String, terms: Dictionary) -> D
 	edge["called_edge_id"] = edge_id
 	schedule[hand_index] = edge
 	next_state["edge_schedule"] = schedule
-	var barks := _copy_dict(terms.get("barks", {}))
+	var barks := JsonCoerceScript._copy_dict(terms.get("barks", {}))
 	next_state["last_bark"] = str(barks.get("caught_edge", "Good eye. The hand plays straight.")) if correct else str(barks.get("false_call", "Wrong tell. Pay for the noise."))
 	_evaluate_terminal(next_state, terms)
 	return {
@@ -106,7 +108,7 @@ static func apply_hand(state: Dictionary, hand_result: Dictionary, terms: Dictio
 	var caught_penalty := maxi(0, int(hand_result.get("caught_penalty", 0)))
 	transfer -= caught_penalty
 	_apply_transfer(next_state, transfer)
-	var hands := _copy_array(next_state.get("hands", []))
+	var hands := JsonCoerceScript._copy_array(next_state.get("hands", []))
 	var recorded := hand_result.duplicate(true)
 	recorded["hand_index"] = maxi(0, int(next_state.get("hand_index", 0)))
 	recorded["transfer"] = transfer
@@ -116,7 +118,7 @@ static func apply_hand(state: Dictionary, hand_result: Dictionary, terms: Dictio
 	next_state["hands"] = hands
 	next_state["hand_index"] = int(next_state.get("hand_index", 0)) + 1
 	next_state["blackjack_session"] = {}
-	var barks := _copy_dict(terms.get("barks", {}))
+	var barks := JsonCoerceScript._copy_dict(terms.get("barks", {}))
 	if transfer > 0:
 		next_state["last_bark"] = str(barks.get("player_win", "One hand. The house is still here."))
 	elif transfer < 0:
@@ -151,7 +153,7 @@ static func _evaluate_terminal(state: Dictionary, terms: Dictionary) -> void:
 	elif rourke_stack <= 0:
 		outcome = OUTCOME_WALK_OUT_CLEAN
 	elif int(state.get("hand_index", 0)) >= maxi(1, int(state.get("hand_limit", 5))):
-		outcome = outcome_for_margin(margin, _copy_dict(terms.get("margin_thresholds", {})))
+		outcome = outcome_for_margin(margin, JsonCoerceScript._copy_dict(terms.get("margin_thresholds", {})))
 	if outcome.is_empty():
 		return
 	state["status"] = "complete"
@@ -165,19 +167,3 @@ static func _apply_transfer(state: Dictionary, requested_transfer: int) -> void:
 	state["player_stack"] = player_stack + transfer
 	state["rourke_stack"] = rourke_stack - transfer
 	state["margin"] = int(state.get("player_stack", 0)) - int(state.get("rourke_stack", 0))
-
-
-static func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	for entry_value in _copy_array(value):
-		if typeof(entry_value) == TYPE_DICTIONARY:
-			result.append((entry_value as Dictionary).duplicate(true))
-	return result
-
-
-static func _copy_array(value: Variant) -> Array:
-	return (value as Array).duplicate(true) if typeof(value) == TYPE_ARRAY else []
-
-
-static func _copy_dict(value: Variant) -> Dictionary:
-	return (value as Dictionary).duplicate(true) if typeof(value) == TYPE_DICTIONARY else {}
