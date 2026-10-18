@@ -15,7 +15,7 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const HarnessProductionFidelityScript := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const IGNORED_BASELINE_PATH := "res://scripts/tests/fixtures/crew06_5_ignored_run_baseline.json"
-const IGNORED_BASELINE_CHANGE_COMMIT := "release-0.6-authored-placement-overlap-clearance-v1"
+const IGNORED_BASELINE_CHANGE_COMMIT := "release-0.6-transient-runtime-geometry-normalization-v1"
 const JSON_EXACT_INTEGER_LIMIT := 9007199254740991.0
 
 

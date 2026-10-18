@@ -2,8 +2,9 @@ extends SceneTree
 
 const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const CrewIgnoredGoldenProbeScript := preload("res://scripts/tests/foundation/crew_ignored_golden_probe.gd")
+const DeveloperPlacementStoreScript := preload("res://scripts/core/developer_placement_store.gd")
 const TARGET := "res://scripts/tests/fixtures/crew06_5_ignored_run_baseline.json"
-const BASELINE_ID := "release-0.6-authored-placement-overlap-clearance-v1"
+const BASELINE_ID := "release-0.6-transient-runtime-geometry-normalization-v1"
 const EXPECTED_SEEDS := ["CREW-IGNORED-GOLDEN-A", "CREW-IGNORED-GOLDEN-B"]
 const EXPECTED_CHECKPOINTS := [
 	"initial_bar",
@@ -36,6 +37,7 @@ func _run() -> void:
 	if not argument_failures.is_empty():
 		_fail(argument_failures)
 		return
+	_install_hermetic_placement_path()
 	var dry_run := OS.get_cmdline_user_args().has("--dry-run")
 	var library := ContentLibraryScript.new()
 	library.load()
@@ -76,8 +78,8 @@ func _run() -> void:
 	document["baseline_commit"] = BASELINE_ID
 	var provenance: Dictionary = document.get("provenance", {}) if typeof(document.get("provenance", {})) == TYPE_DICTIONARY else {}
 	provenance["change_commit"] = BASELINE_ID
-	provenance["reason"] = "The release-candidate placement review moved four authored interaction slots only far enough to clear occupied hit rectangles; the serialized room geometry changed without changing Crew state or progression."
-	provenance["proof"] = "Both fixed Crew-ignored seeds were recaptured twice through all five production checkpoints after overlap clearance; the updater requires byte-identical twin captures, inactive ambient and world-sequence no-ops, and zero Crew trust before writing."
+	provenance["reason"] = "Release qualification removed transient runtime-owned geometry from immutable base inventory and normalized non-authoritative sealed renderer diagnostics; serialized room records changed without changing Crew state or progression."
+	provenance["proof"] = "Both fixed Crew-ignored seeds were recaptured twice through all five production checkpoints after runtime-geometry normalization; the updater requires byte-identical twin captures, inactive ambient and world-sequence no-ops, and zero Crew trust before writing."
 	document["provenance"] = provenance
 	var file := FileAccess.open(TARGET, FileAccess.WRITE)
 	if file == null:
@@ -88,6 +90,28 @@ func _run() -> void:
 	file.close()
 	print("FIXSWEEP06_1_CREW_GOLDEN_UPDATED")
 	quit(0)
+
+
+func _install_hermetic_placement_path() -> void:
+	# Golden captures must describe the checked-in placement authority, never a
+	# developer's machine-local manual layout. Use a process-unique absent path
+	# before any placement store is loaded, then force the static cache to bind to
+	# that empty user layer.
+	var suffix := 0
+	var isolated_path := ""
+	while isolated_path.is_empty():
+		var candidate := "user://.fixsweep06_1_crew_golden_empty_%d_%d_%d.json" % [
+			OS.get_process_id(),
+			Time.get_ticks_usec(),
+			suffix,
+		]
+		if not FileAccess.file_exists(candidate) \
+				and not FileAccess.file_exists(candidate + ".bak") \
+				and not FileAccess.file_exists(candidate + ".tmp"):
+			isolated_path = candidate
+		suffix += 1
+	OS.set_environment(DeveloperPlacementStoreScript.USER_PATH_ENV, isolated_path)
+	DeveloperPlacementStoreScript.reload()
 
 
 static func _capture_validation_failures(value: Variant, label: String = "capture") -> Array:
