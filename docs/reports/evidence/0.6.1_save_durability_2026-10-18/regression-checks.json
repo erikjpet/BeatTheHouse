@@ -1,0 +1,68 @@
+{
+  "results": [
+    {
+      "name": "save_navigation",
+      "script": "scripts/tests/save_navigation_durability_check.gd",
+      "exit_code": 0,
+      "duration_seconds": 35.744,
+      "issues": [],
+      "passed": true,
+      "runtime_source_sha256": "2b1e263737f4a34241415481f1c5a80f629e43cd186aedf0cff382bfc1833b46"
+    },
+    {
+      "name": "autosave_recovery",
+      "script": "scripts/tests/postfix06_2_reliability_contract.gd",
+      "exit_code": 0,
+      "duration_seconds": 6.894,
+      "issues": [],
+      "passed": true,
+      "runtime_source_sha256": "2b1e263737f4a34241415481f1c5a80f629e43cd186aedf0cff382bfc1833b46"
+    },
+    {
+      "name": "terminal_resume",
+      "script": "scripts/tests/terminal_run_resume_check.gd",
+      "exit_code": 0,
+      "duration_seconds": 14.452,
+      "issues": [],
+      "passed": true,
+      "runtime_source_sha256": "2b1e263737f4a34241415481f1c5a80f629e43cd186aedf0cff382bfc1833b46"
+    },
+    {
+      "name": "lifecycle",
+      "script": "scripts/tests/fixsweep06_1_lifecycle_contract.gd",
+      "exit_code": 0,
+      "duration_seconds": 6.894,
+      "issues": [],
+      "passed": true,
+      "runtime_source_sha256": "2b1e263737f4a34241415481f1c5a80f629e43cd186aedf0cff382bfc1833b46"
+    },
+    {
+      "name": "cold_continue",
+      "script": "scripts/tests/cold_continue_room_projection_contract.gd",
+      "exit_code": 0,
+      "duration_seconds": 17.139,
+      "issues": [],
+      "passed": true,
+      "runtime_source_sha256": "2b1e263737f4a34241415481f1c5a80f629e43cd186aedf0cff382bfc1833b46"
+    },
+    {
+      "name": "ui_flows",
+      "script": "scripts/tests/ui_scene/compile_run_menu_and_game_flows.gd",
+      "exit_code": 0,
+      "duration_seconds": 116.574,
+      "issues": [],
+      "passed": true,
+      "runtime_source_sha256": "2b1e263737f4a34241415481f1c5a80f629e43cd186aedf0cff382bfc1833b46"
+    },
+    {
+      "name": "animation_liveness",
+      "script": "scripts/tests/animation_liveness_without_pointer_check.gd",
+      "exit_code": 0,
+      "duration_seconds": 5.483,
+      "issues": [],
+      "passed": true,
+      "runtime_source_sha256": "2b1e263737f4a34241415481f1c5a80f629e43cd186aedf0cff382bfc1833b46"
+    }
+  ],
+  "failures": []
+}
