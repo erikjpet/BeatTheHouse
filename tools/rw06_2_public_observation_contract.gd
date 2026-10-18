@@ -448,6 +448,20 @@ func _check_hidden_state_redaction() -> void:
 	}
 	var stable_action_transition := PublicObservation.transition_summary(transient_public_b, PublicObservation.sanitize(stable_action_changed), "look", true)
 	_check(str(stable_action_transition.get("before_fingerprint", "")) != str(stable_action_transition.get("after_fingerprint", "")), "A stable rendered game action failed to alter deterministic replay identity.")
+	var save_pending := transient_public_b.duplicate(true)
+	var save_pending_hud := _dict(save_pending.get("status_hud", {}))
+	save_pending_hud["save_text_visible"] = true
+	save_pending_hud["save_text"] = "Autosave On · Autosave pending."
+	save_pending["status_hud"] = save_pending_hud
+	var save_completed := save_pending.duplicate(true)
+	var save_completed_hud := _dict(save_completed.get("status_hud", {}))
+	save_completed_hud["save_text"] = "Autosave On · Autosaved."
+	save_completed["status_hud"] = save_completed_hud
+	_check(PublicObservation.fingerprint(save_pending) != PublicObservation.fingerprint(save_completed), "Live public observation lost the visible save acknowledgment phase.")
+	_check(str(_dict(save_pending.get("status_hud", {})).get("save_text", "")) == "Autosave On · Autosave pending.", "Live public observation removed the pending save acknowledgment.")
+	var save_ack_transition := PublicObservation.transition_summary(save_pending, save_completed, "look", true)
+	_check(str(save_ack_transition.get("before_fingerprint", "")) == str(save_ack_transition.get("after_fingerprint", "")), "Asynchronous save acknowledgment timing altered deterministic replay identity.")
+	_check(not bool(save_ack_transition.get("public_state_changed", true)), "Asynchronous save acknowledgment timing reported a seeded public-state transition.")
 
 	var revealing_talk := transient_public_b.duplicate(true)
 	revealing_talk["talk"] = {
