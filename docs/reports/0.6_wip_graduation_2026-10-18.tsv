@@ -1,0 +1,42 @@
+path	disposition	main_commit	reason
+branding/social/0.6.0_devlog_6_promotional_post.md	main	35829f05	Completed caption/alt text/source list; added retention context.
+branding/social/0.6.0_devlog_6_promotional_post.png	main	35829f05	Completed poster; original bytes preserved.
+branding/social/0.6.0_devlog_6_promotional_post.svg	main	35829f05	Editable poster; eight local image references resolve.
+data/environments/developer_placement_overrides.json	main	aeed3a1a	New House Calls lock matches existing accepted position; all old values preserved.
+data/environments/scenario_slot_layouts.json	wip		Seven Convention/Gala coordinate experiments lack direct normal-play reproduction.
+docs/plans/0.6_consolidated_branch_manifest.tsv	wip-custody		Historical branch inventory; all 359 tips retained in two-branch ancestry.
+docs/plans/0.6_consolidated_wip_handoff.md	wip-custody		Continuation and preservation instructions belong to WIP.
+docs/plans/environment_scenario_layout_breakdown.md	split	aeed3a1a	House Calls slot/count correction landed; seven experimental coordinate rows remain WIP.
+docs/todo/environment_slot_family_manifest_legacy_mapping.json	wip-retired		Historical migration/hash expectations not refreshed; no game fix.
+docs/todo/rw06_owner_questions.md	retired-history		Superseded Q-025/Q-026 removed from active WIP; original c3d73c25 retained.
+review_artifacts/promo_0_6/current_back_room_holdem.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/current_coin_pusher/01_normal_pile_rider_live_1280x720.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/current_coin_pusher/02_reduced_motion_live_1280x720.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/current_coin_pusher/manifest.json	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/current_craps_table.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/current_scenarios/beach_bonfire_night.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/current_scenarios/beach_storm_coming.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/current_scenarios/delta_queen_engine_trouble.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/current_scenarios/delta_queen_wedding_charter.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/current_scenarios/grand_casino_audit_night.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/current_scenarios/grand_casino_gala_night.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/current_scenarios/jazz_club_guest_legend.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/current_scenarios/jazz_club_recording_night.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/current_scenarios/kitty_cat_lounge_amateur_night.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/current_scenarios/kitty_cat_lounge_buyout.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/current_scenarios/pawn_shop_estate_lot_day.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/current_scenarios/pawn_shop_serial_check_day.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/current_scenarios/punchline_high_stakes_night.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/current_scenarios/punchline_open_mic_night.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/current_scenarios/report.json	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/current_scratch_ticket_play.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/neon_poster_background.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+review_artifacts/promo_0_6/scratch_ticket_machine_current.png	main	bd0bf164	Completed historical visual source; original bytes/results retained.
+scripts/core/run_state.gd	wip-diagnostic		Failure logging only; no demonstrated gameplay repair.
+scripts/core/scenario_layout_resolver.gd	wip-diagnostic		Lane logging only; no demonstrated gameplay repair.
+scripts/tests/environment_object_manifest_check.gd	wip-retired		Preserved automation investigation; no test expansion or landing.
+scripts/ui/pixel_scene_canvas.gd	wip		Slot-footprint alternative removes accepted preview sizes and legibility floor.
+tools/environment_fixed_slot_static_check.py	wip-retired		Preserved validator experiment; no production behavior change.
+tools/environment_generation_audit.gd	wip-diagnostic		Diagnostic filters and shape logging; investigation material.
+tools/migrate_environment_slots_v2.py	wip-retired		Preserved migration experiment; not needed to run current production data.
+tools/test_scenario_slot_layouts.py	wip-retired		Preserved test expectation experiment; no production behavior change.
