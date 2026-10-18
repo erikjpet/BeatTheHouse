@@ -2522,6 +2522,7 @@ if ($failures.Count -eq 0) {
     Assert-PowerShellParses $EvidenceAdmissionPath
     Assert-PowerShellParses $EvidenceAdmissionContractPath
     Assert-PowerShellParses $HeistSeedPreflightPath
+    Assert-PowerShellParses $FinalEvidencePath
     Assert-PowerShellParses $LauncherPath
 
     $runner = Get-Content -LiteralPath $RunnerPath -Raw
@@ -2529,6 +2530,7 @@ if ($failures.Count -eq 0) {
     $evidenceAdmission = Get-Content -LiteralPath $EvidenceAdmissionPath -Raw
     $evidenceAdmissionContract = Get-Content -LiteralPath $EvidenceAdmissionContractPath -Raw
     $heistSeedPreflight = Get-Content -LiteralPath $HeistSeedPreflightPath -Raw
+    $finalEvidence = Get-Content -LiteralPath $FinalEvidencePath -Raw
     $launcher = Get-Content -LiteralPath $LauncherPath -Raw
     $bridge = Get-Content -LiteralPath $BridgePath -Raw
     $sanitizer = Get-Content -LiteralPath $SanitizerPath -Raw
@@ -4875,6 +4877,8 @@ function Assert-SaveRelaunchContinue {
         'var after_fingerprint := trace_fingerprint(after_observation)',
         'static func trace_fingerprint(',
         'spatial.erase("hover_target_id")',
+        'selected_info_object_id == hovered_object_id',
+        'room_canvas["selected_info"] = {}',
         'room_canvas.erase("hovered_object_id")',
         'game.erase("peek_window_open")',
         'talk.erase("body_complete")',
@@ -4926,6 +4930,8 @@ function Assert-SaveRelaunchContinue {
         'An offscreen terminal report escaped into public observation.',
         'A non-boolean terminal render witness was coerced to visible.',
         'Private blackjack/run-state changes altered the public observation.',
+        'Live public observation removed the hover-derived info card.',
+        'A stable selected-object info change failed to alter deterministic replay identity.',
         'REPORT_PATH'
     )) {
         Assert-Contains $observationContract $required "Public observation hostile contract is missing required token: $required"
@@ -4964,6 +4970,7 @@ function Assert-SaveRelaunchContinue {
     Assert-NotMatch $runner 'heist\s*=\s*''RW06-HEIST-AUDIT-0013''' 'The rejected Convention seed must not remain the live Heist runner default.'
     Assert-Match $evidenceAdmission '(?s)fixed\s*=.*?heist\s*=\s*''RW06-HEIST-AUDIT-0002''.*?fresh_interactive\s*=.*?heist\s*=\s*''RW06-HEIST-AUDIT-0000''.*?\$EvidenceRole\s+-ceq\s+''fresh-interactive''.*?\$Ending\s+-cne\s+''heist''.*?\$Repeat\s+-ne\s+1.*?authorizedFreshSeed.*?if\s*\(\$Ending\s+-ceq\s+''heist''\s+-and\s+\$resolvedSeed\s+-cne\s+\$fixedHeistSeed\)' 'Q-013A/Q-017A admission must keep fixed Heist on exact 0002 and admit only one explicit Heist/Repeat-1 fresh seed 0000.'
     Assert-Match $runner '(?s)\$runSummary\s*=\s*\[ordered\]@\{.*?requested_evidence_role\s*=\s*\$EvidenceRole.*?replay_admission\s*=\s*\$script:ReplayAdmission.*?heist_preflight_admission\s*=\s*\$script:HeistPreflightAdmissionReceipt.*?\$finalSummary\s*=\s*\[ordered\]@\{.*?requested_evidence_role\s*=\s*\$EvidenceRole.*?replay_admission\s*=\s*\$script:ReplayAdmission.*?heist_preflight_admission\s*=\s*\$script:HeistPreflightAdmissionReceipt' 'Every direct replay report level must retain its exact evidence role, seed admission, and authenticated Heist preflight receipt.'
+    Assert-Match $finalEvidence '(?ms)^function Assert-PersistenceCoreCheckpointShape\s*\{.*?foreach \(\$name in @\(''bankroll'', ''heat'', ''boss_hand_number'', ''boss_player_stack'', ''boss_rourke_stack''\)\).*?\$chipsRendered -isnot \[bool\].*?\$chips = Get-ExactValueNoEnumerate \$Checkpoint @\(''chips''\) \$null.*?if \(\$chipsRendered\).*?\$chips -isnot \[int32\].*?elseif \(\$null -ne \$chips\).*?must be exact null while its rendered witness is false.*?(?=^function |\z)' 'Outer evidence must require an exact nonnegative Int32 for rendered chips and exact null for hidden chips, matching the public checkpoint producer.'
     Assert-Match $runner '(?s)\$invocationRoot\s*=.*?Invoke-HeistSeedPreflight.*?for \(\$iteration.*?Start-BridgeSession' 'Heist seed preflight must finish before any live replay iteration can start an engine session.'
     Assert-Match $runner '(?ms)^function Start-NormalSeededRun\s*\{.*?Click-Button\s+-Text\s+''RUN SETUP''.*?run_config_visible.*?\$Ending\s+-ceq\s+''heist''.*?Assert-HeistFreshStandardRunSetup\s+-Observation\s+\$script:LastObservation.*?set_field seed \$Seed.*?(?=^function |\z)' 'The live Heist route must authenticate exact visible fresh Standard/Random/default-content setup before typing its seed.'
     Assert-Match $replayPolicy '(?ms)^function Assert-HeistFreshStandardRunSetup.*?screen.*?START.*?run_config_visible.*?selected_challenge_id.*?selected_home_type_id.*?selected_content_groups.*?universal_passive_items.*?numbers_pack.*?challengeId\s+-isnot\s+\[string\].*?challengeId\s+-cne\s+''''.*?homeTypeId\s+-cne\s+''random''.*?contentGroups\s+-isnot\s+\[array\].*?non-default visible content group index.*?(?=^function |\z)' 'Fresh Heist launch policy must fail closed on screen, type, challenge, home, content-group membership, case, or order drift.'

@@ -1918,7 +1918,7 @@ function Assert-PersistenceCoreCheckpointShape {
             throw "$Label field '$name' is not one exact string."
         }
     }
-    foreach ($name in @('bankroll', 'chips', 'heat', 'boss_hand_number', 'boss_player_stack', 'boss_rourke_stack')) {
+    foreach ($name in @('bankroll', 'heat', 'boss_hand_number', 'boss_player_stack', 'boss_rourke_stack')) {
         $value = Get-ExactValueNoEnumerate $Checkpoint @($name) $null
         if ($value -isnot [int32] -or [int]$value -lt 0) {
             throw "$Label field '$name' is not one exact nonnegative Int32."
@@ -1927,6 +1927,15 @@ function Assert-PersistenceCoreCheckpointShape {
     $chipsRendered = Get-ExactValueNoEnumerate $Checkpoint @('chips_rendered') $null
     if ($chipsRendered -isnot [bool]) {
         throw "$Label field 'chips_rendered' is not one exact Boolean."
+    }
+    $chips = Get-ExactValueNoEnumerate $Checkpoint @('chips') $null
+    if ($chipsRendered) {
+        if ($chips -isnot [int32] -or [int]$chips -lt 0) {
+            throw "$Label field 'chips' is not one exact nonnegative Int32 while rendered."
+        }
+    }
+    elseif ($null -ne $chips) {
+        throw "$Label field 'chips' must be exact null while its rendered witness is false."
     }
 }
 
