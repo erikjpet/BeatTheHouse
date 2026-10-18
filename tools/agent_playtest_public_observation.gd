@@ -136,6 +136,17 @@ static func _trace_projection(value: Variant) -> Dictionary:
 	spatial.erase("hover_target_id")
 	result["spatial"] = spatial
 	var room_canvas := _dict(result.get("room_canvas", {}))
+	var hovered_object_id := str(room_canvas.get("hovered_object_id", ""))
+	var selected_object_id := str(room_canvas.get("selected_object_id", ""))
+	var selected_info := _dict(room_canvas.get("selected_info", {}))
+	var selected_info_object_id := str(selected_info.get("object_id", selected_info.get("id", "")))
+	# PixelSceneCanvas exposes the hovered object's info card when nothing is
+	# selected. Preserve it for live input decisions, but keep pointer resting
+	# position from becoming replay identity through this derived field.
+	if selected_object_id.is_empty() \
+			and not hovered_object_id.is_empty() \
+			and selected_info_object_id == hovered_object_id:
+		room_canvas["selected_info"] = {}
 	room_canvas.erase("hovered_object_id")
 	result["room_canvas"] = room_canvas
 	var game := _dict(result.get("game", {}))
