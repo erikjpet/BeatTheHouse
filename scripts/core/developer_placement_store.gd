@@ -683,15 +683,29 @@ static func promote_user_overrides() -> Dictionary:
 	var merged := _merged_effective_rooms()
 	var output_path := project_path()
 	var save_error := _write_payload(output_path, merged)
+	var local_clear_error := OK
 	if save_error == OK:
 		_project_rooms = merged
+		# A successful promotion makes the project copy the sole authority. Leaving
+		# the same coordinates in user:// lets that stale snapshot silently mask
+		# later project edits on the authoring machine while packaged/Web builds use
+		# the updated project file. Keep a failed promotion recoverable, but consume
+		# the local overlay after the project write has durably succeeded.
+		local_clear_error = _write_payload(user_path(), {})
+		if local_clear_error == OK:
+			_user_rooms = {}
 		_authority_revision += 1
+	var warning := ""
+	if save_error == OK and local_clear_error != OK:
+		warning = "The project placement was saved, but the machine-local shadow could not be cleared; clear it before reviewing build parity."
 	return {
 		"ok": save_error == OK,
 		"error": "" if save_error == OK else "The project placement file is not writable in this build. The local locked placement is still saved.",
+		"warning": warning,
 		"path": output_path,
 		"room_count": merged.size(),
 		"slot_count": _slot_count(merged),
+		"local_cleared": save_error == OK and local_clear_error == OK,
 	}
 
 
