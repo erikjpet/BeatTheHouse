@@ -505,6 +505,14 @@ func _check_lottery_counter_hosts(library: ContentLibrary) -> void:
 		var manifest := _dict(environment.get("object_manifest", {}))
 		var host_row := _active_manifest_row(manifest, host_id)
 		_check(not host_row.is_empty(), label, "is missing its configured physical counter host %s" % host_id)
+		_check(EnvironmentInstanceScript.ticket_redemption_manifest_errors(environment).is_empty(), label, "does not satisfy the ticket cash-out host invariant")
+		var missing_cashout := environment.duplicate(true)
+		for missing_row_value in _array(_dict(missing_cashout.get("object_manifest", {})).get("rows", [])):
+			var missing_row := missing_row_value as Dictionary
+			var remaining_actions := _array(missing_row.get("action_ids", [])).duplicate()
+			remaining_actions.erase("game_hook:pull_tabs:ticket_redeemer")
+			missing_row["action_ids"] = remaining_actions
+		_check(not EnvironmentInstanceScript.ticket_redemption_manifest_errors(missing_cashout).is_empty(), label, "accepted a ticket game after its cash-out route was removed")
 		var expected_actions := counter_service_actions.duplicate()
 		if archetype_id == "gas_station_casino":
 			expected_actions.append("game_hook:scratch_tickets:scratch_ticket_clerk")

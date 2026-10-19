@@ -765,6 +765,30 @@ static func object_manifest_errors(environment_data: Dictionary) -> Array:
 		errors.append("Environment object manifest digest mirror is stale.")
 	if int(environment_data.get("object_manifest_revision", 0)) != int(manifest.get("revision", 0)):
 		errors.append("Environment object manifest revision mirror is stale.")
+	errors.append_array(ticket_redemption_manifest_errors(environment_data))
+	return errors
+
+
+# Ticket games may never finish installation without a physical cash-out host.
+# Initial layout passes precede machine creation; enforce this once the module
+# has installed its state, including when validating a saved room on Continue.
+static func ticket_redemption_manifest_errors(environment_data: Dictionary) -> Array:
+	var errors: Array = []
+	var hooks := {"pull_tabs": "ticket_redeemer", "scratch_tickets": "scratch_ticket_clerk"}
+	var states := JsonCoerceScript._copy_dict(environment_data.get("game_states", {}))
+	var rows := active_object_manifest_rows(environment_data)
+	for game_id in JsonCoerceScript._string_array(environment_data.get("game_ids", [])):
+		if not hooks.has(game_id) or JsonCoerceScript._copy_dict(states.get(game_id, {})).is_empty():
+			continue
+		var action_id := "game_hook:%s:%s" % [game_id, hooks[game_id]]
+		var reachable := false
+		for row_value in rows:
+			var row := row_value as Dictionary
+			if JsonCoerceScript._string_array(row.get("action_ids", [])).has(action_id):
+				reachable = true
+				break
+		if not reachable:
+			errors.append("Ticket game %s has no physical cash-out host for %s." % [game_id, action_id])
 	return errors
 
 

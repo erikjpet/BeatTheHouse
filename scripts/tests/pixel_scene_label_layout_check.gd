@@ -14,6 +14,7 @@ func _init() -> void:
 
 
 func _run() -> void:
+	_check_counter_cashout_card()
 	await _check_settings_option()
 	await _check_saturated_tether_policy()
 	var canvas: PixelSceneCanvas = PixelSceneCanvasScript.new()
@@ -135,6 +136,30 @@ func _check_saturated_tether_policy() -> void:
 		_check(_horizontal_overlap(object_rect, label_rect) > 0.0 and _rect_edge_gap(object_rect, label_rect) <= 30.01, "Every saturated label must remain visibly associated with its owner.")
 	canvas.queue_free()
 	await process_frame
+
+
+func _check_counter_cashout_card() -> void:
+	var canvas: PixelSceneCanvas = PixelSceneCanvasScript.new()
+	canvas.selected_object_id = "character:nell"
+	var counter := {
+		"id": "character:nell", "enabled": false,
+		"available_actions": [{"id": "talk", "label": "Talk"}],
+		"attached_room_actions": [
+			{"key": "scratch:key", "label": "Cash In Scratchers", "enabled": true,
+				"record": {"action_summary": "Cash 1 winner for $5."}, "action": {"id": "redeem_scratch_winners"}},
+			{"key": "pull:key", "label": "Cash In Pull Tabs", "enabled": true,
+				"record": {"action_summary": "No winning tabs to redeem."}, "action": {"id": "redeem_pull_tab_winners"}},
+		],
+	}
+	var actions: Array = canvas.call("_selected_info_inline_actions", counter)
+	_check(actions.size() == 3, "The visible counter card must expose both cash-out services and retain Talk.")
+	if actions.size() >= 2:
+		_check(bool(actions[0].get("enabled", false)) and bool(actions[1].get("enabled", false)), "Cash-out must stay usable when unrelated counter dialogue is unavailable, including zero winners.")
+		var token := str(actions[0].get("emit_object_id", "")).split(":")
+		_check(token.size() == 3 and token[1].uri_decode() == "character:nell" and token[2].uri_decode() == "scratch:key", "The card must dispatch the exact current attached cash-out descriptor.")
+		var rendered: Array = canvas.call("_selected_info_action_entries_for_rect", {"object": counter}, Rect2(0, 0, 300, 240))
+		_check(rendered.size() == 3 and bool(rendered[0].get("enabled", false)) and bool(rendered[1].get("enabled", false)) and not bool(rendered[2].get("enabled", true)), "Rendered cash-out buttons must remain enabled independently of disabled Talk.")
+	canvas.free()
 
 
 func _remove_test_settings() -> void:

@@ -6947,7 +6947,32 @@ func _selected_info_inline_actions(object_data: Dictionary) -> Array:
 		return []
 	if str(object_data.get("id", "")) != selected_object_id:
 		return []
-	var actions := _array_view(object_data.get("inline_actions", []))
+	var actions := _array_view(object_data.get("inline_actions", [])).duplicate()
+	var has_attached_redemption := false
+	# Cash-out aliases share the physical counter NPC. They must also be
+	# reachable from the visible card, not only the legacy context sidebar.
+	for descriptor_value in _array_view(object_data.get("attached_room_actions", [])):
+		var descriptor := descriptor_value as Dictionary
+		var record: Dictionary = descriptor.get("record", {})
+		var action: Dictionary = descriptor.get("action", {})
+		if str(action.get("id", "")) not in ["redeem_pull_tab_winners", "redeem_scratch_winners"]:
+			continue
+		var key := str(descriptor.get("key", ""))
+		if key.is_empty():
+			continue
+		has_attached_redemption = true
+		actions.append({
+			"label": str(descriptor.get("label", "Cash In Tickets")),
+			"enabled": bool(descriptor.get("enabled", false)),
+			"disabled": not bool(descriptor.get("enabled", false)),
+			"host_independent_service": true,
+			"text": str(record.get("action_summary", "")),
+			"emit_object_id": "room_action:%s:%s" % [str(object_data.get("id", "")).uri_encode(), key.uri_encode()],
+		})
+	if has_attached_redemption:
+		var own_actions := _selected_info_available_actions(object_data)
+		if not own_actions.is_empty():
+			actions.append({"label": str((own_actions[0] as Dictionary).get("label", "Talk")), "emit_object_id": str(object_data.get("id", "")), "enabled": bool(object_data.get("enabled", true))})
 	var result: Array = []
 	for action in actions:
 		if typeof(action) != TYPE_DICTIONARY:
@@ -7115,8 +7140,8 @@ func _selected_info_action_entries_for_rect(info: Dictionary, card: Rect2) -> Ar
 				"detail_rect": detail_rect,
 				"selected": entries.size() == selected_info_action_index,
 				"input_action": str(action_data.get("input_action", "")),
-				"enabled": not bool(object_data.get("disabled", false))
-					and bool(object_data.get("enabled", true))
+				"enabled": (bool(action_data.get("host_independent_service", false))
+					or not bool(object_data.get("disabled", false)) and bool(object_data.get("enabled", true)))
 					and not bool(action_data.get("disabled", false))
 					and bool(action_data.get("enabled", true)),
 			})

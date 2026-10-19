@@ -6075,7 +6075,11 @@ func _pawn_counter_redeem_ticket(lender_id: String, debt_id: String) -> void:
 func use_game_environment_hook(game_id: String, hook_id: String, action_id: String = "") -> bool:
 	if run_state == null or library == null:
 		return false
-	if _guard_player_input_route(false, "game_hook:%s:%s" % [game_id, hook_id]):
+	# Cashing already-issued tickets is recovery, not another wager. Closing
+	# hours may stop new play but must not strand winners at their counter.
+	var ticket_redemption := (game_id == "scratch_tickets" and hook_id == "scratch_ticket_clerk" and action_id in ["", "redeem_scratch_winners"]) \
+		or (game_id == "pull_tabs" and hook_id == "ticket_redeemer" and action_id in ["", "redeem_pull_tab_winners"])
+	if _guard_player_input_route(ticket_redemption, "game_hook:%s:%s" % [game_id, hook_id]):
 		return false
 	var game := _game_module_for_id(game_id)
 	if game == null:
@@ -15952,6 +15956,11 @@ func _activate_tutorial_map_object(object_id: String, lesson_id: String) -> void
 
 
 func _on_environment_object_activated(object_id: String) -> void:
+	if object_id.begins_with("room_action:"):
+		var parts := object_id.split(":")
+		if parts.size() == 3:
+			_activate_attached_room_action(parts[1].uri_decode(), parts[2].uri_decode())
+		return
 	activate_interactable_object(object_id)
 
 
