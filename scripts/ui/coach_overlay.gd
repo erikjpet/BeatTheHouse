@@ -769,7 +769,8 @@ func update_active_anchor_rect(anchor_kind: String, anchor_id: String, next_rect
 		var viewport_rect := CoachViewModelScript._rect(prepared_snapshot.get("viewport_rect", Rect2(Vector2.ZERO, size)))
 		var previous_bubble := CoachViewModelScript._rect(prepared_snapshot.get("bubble_rect", {}))
 		if viewport_rect.has_area() and previous_bubble.has_area():
-			var bubble_rect := CoachViewModelScript.bubble_rect_for_live_anchor(viewport_rect, clipped_rect, previous_bubble.size)
+			var bubble_rect := CoachViewModelScript.bubble_rect_for_live_anchor(viewport_rect, clipped_rect,
+				previous_bubble.size, str(active_lesson.get("bubble_placement", "")))
 			prepared_snapshot["bubble_rect"] = CoachViewModelScript._rect_dict(bubble_rect)
 			panel.position = bubble_rect.position
 			panel.custom_minimum_size = bubble_rect.size

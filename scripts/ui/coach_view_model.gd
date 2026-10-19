@@ -110,7 +110,7 @@ static func build(lesson: Dictionary, context: Dictionary) -> Dictionary:
 		maxf(1.0, bubble_width),
 		minf(bubble_height, maxf(1.0, viewport_rect.size.y - VIEWPORT_MARGIN * 2.0))
 	)
-	var bubble_rect := _bubble_rect(viewport_rect, anchor_rect, bubble_size)
+	var bubble_rect := bubble_rect_for_live_anchor(viewport_rect, anchor_rect, bubble_size, str(lesson.get("bubble_placement", "")))
 	if not tutorial_lesson:
 		bubble_rect = _bubble_rect_avoiding_context(viewport_rect, bubble_rect, bubble_size, context)
 	var guidance := _dict(lesson.get("gating", {}))
@@ -298,7 +298,20 @@ static func _bubble_rect(viewport_rect: Rect2, anchor_rect: Rect2, bubble_size: 
 # Live room selection can replace an object's broad hit area with its inline
 # action button after the lesson has already rendered. Keep the bubble tied to
 # that current target so the guidance never covers the control it names.
-static func bubble_rect_for_live_anchor(viewport_rect: Rect2, anchor_rect: Rect2, bubble_size: Vector2) -> Rect2:
+static func bubble_rect_for_live_anchor(viewport_rect: Rect2, anchor_rect: Rect2, bubble_size: Vector2, placement: String = "") -> Rect2:
+	if placement == "beside_card" and anchor_rect.has_area():
+		const ANCHOR_GAP := 24.0
+		var left_x := anchor_rect.position.x - bubble_size.x - ANCHOR_GAP
+		var right_x := anchor_rect.end.x + ANCHOR_GAP
+		var left_fits := left_x >= viewport_rect.position.x + VIEWPORT_MARGIN
+		var right_fits := right_x + bubble_size.x <= viewport_rect.end.x - VIEWPORT_MARGIN
+		if left_fits or right_fits:
+			var use_left := left_fits and (not right_fits or anchor_rect.get_center().x >= viewport_rect.get_center().x)
+			var x := left_x if use_left else right_x
+			var y := clampf(anchor_rect.get_center().y - bubble_size.y * 0.5,
+				viewport_rect.position.y + VIEWPORT_MARGIN,
+				viewport_rect.end.y - bubble_size.y - VIEWPORT_MARGIN)
+			return Rect2(Vector2(x, y), bubble_size)
 	return _bubble_rect(viewport_rect, anchor_rect, bubble_size)
 
 
