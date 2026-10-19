@@ -21,6 +21,8 @@ var last_load_outcome: Dictionary = {
 	"backup_exists": false,
 	"backup_loadable": false,
 }
+# In-memory proof for a primary validated and installed by this SaveService.
+# Entries bind the exact file bytes to the absolute path, never just mtime/size.
 var trusted_primary_fingerprints: Dictionary = {}
 var async_task_id: int = -1
 var async_result_box: Dictionary = {}
@@ -33,7 +35,7 @@ var last_save_outcome: Dictionary = {"ok": true, "error": OK, "error_code": ""}
 func has_run(slot_id: String = "autosave") -> bool:
 	var clean_slot := _slot_id(slot_id)
 	io_mutex.lock()
-	var result := _primary_fingerprint_is_trusted(clean_slot, run_save_path(clean_slot))
+	var result := _primary_digest_is_trusted(clean_slot, run_save_path(clean_slot))
 	if not result:
 		result = bool(_slot_status_unlocked(clean_slot).get("has_loadable", false))
 	io_mutex.unlock()
@@ -52,14 +54,18 @@ func save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 	var clean_slot := _slot_id(slot_id)
 	var payload_result := _save_payload_result(run_state.to_save_snapshot(), clean_slot)
 	if not bool(payload_result.get("ok", false)):
+		trusted_primary_fingerprints.erase(clean_slot)
 		last_save_outcome = payload_result.duplicate(true)
 		return int(payload_result.get("error", FAILED))
 	var payload: Dictionary = payload_result.get("payload", {})
 	var path := run_save_path(clean_slot)
-	var result := DurableStoreScript.write_json(path, payload, Callable(self, "_payload_dictionary_loadable"))
+	var result := DurableStoreScript.write_json(
+		path, payload, Callable(self, "_payload_dictionary_loadable"), true,
+		_trusted_primary_digest(clean_slot, path)
+	)
 	var install_error := int(result.get("error", FAILED))
 	if bool(result.get("ok", false)):
-		_remember_primary_fingerprint(clean_slot, path)
+		_remember_primary_digest(clean_slot, path, str(result.get("validated_sha256", "")))
 		last_save_outcome = {"ok": true, "error": OK, "error_code": "", "slot_id": clean_slot}
 	else:
 		trusted_primary_fingerprints.erase(clean_slot)
@@ -84,14 +90,13 @@ func begin_save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 	var runtime_snapshot := run_state.to_save_snapshot(false)
 	var path := run_save_path(clean_slot)
 	var backup_path := backup_save_path(clean_slot)
-	# Loaded and successfully written primaries are fingerprinted. Passing that
-	# trust into the worker avoids reparsing the entire previous save merely to
-	# decide whether it is safe to rotate into the backup generation.
-	var primary_trusted := _primary_fingerprint_is_trusted(clean_slot, path)
+	# A prior installed generation can be reused only if the worker finds those
+	# exact validated bytes again. A changed or unknown primary is fully checked.
+	var primary_digest := _trusted_primary_digest(clean_slot, path)
 	async_result_box = {"error": ERR_BUSY, "slot_id": clean_slot}
 	async_slot_id = clean_slot
 	async_task_id = WorkerThreadPool.add_task(
-		Callable(self, "_async_save_worker").bind(runtime_snapshot, clean_slot, path, backup_path, primary_trusted, async_result_box),
+		Callable(self, "_async_save_worker").bind(runtime_snapshot, clean_slot, path, backup_path, primary_digest, async_result_box),
 		false,
 		"Beat the House autosave"
 	)
@@ -123,7 +128,11 @@ func _finish_async_save_result() -> Dictionary:
 		and FileAccess.file_exists(installed_path) \
 		and FileAccess.get_sha256(installed_path) == validated_digest
 	if int(result.get("error", FAILED)) == OK and (same_validated_bytes or _worker_payload_loadable(installed_path)):
-		_remember_primary_fingerprint(async_slot_id, run_save_path(async_slot_id))
+		if same_validated_bytes:
+			_remember_primary_digest(async_slot_id, run_save_path(async_slot_id), validated_digest)
+		else:
+			# An externally replaced but loadable install has no matching worker proof.
+			trusted_primary_fingerprints.erase(async_slot_id)
 		result["ok"] = true
 	else:
 		trusted_primary_fingerprints.erase(async_slot_id)
@@ -147,7 +156,7 @@ func wait_for_async_save() -> Error:
 	return int(result.get("error", FAILED))
 
 
-func _async_save_worker(runtime_snapshot: Dictionary, slot_id: String, path: String, backup_path: String, primary_trusted: bool, result_box: Dictionary) -> void:
+func _async_save_worker(runtime_snapshot: Dictionary, slot_id: String, path: String, backup_path: String, primary_digest: String, result_box: Dictionary) -> void:
 	var payload_result := _save_payload_result(runtime_snapshot, slot_id)
 	if not bool(payload_result.get("ok", false)):
 		for key in payload_result.keys():
@@ -161,12 +170,12 @@ func _async_save_worker(runtime_snapshot: Dictionary, slot_id: String, path: Str
 		"run_state": (payload_result.get("payload", {}) as Dictionary).get("run_state", {}),
 	}
 	io_mutex.lock()
-	result_box["error"] = _write_payload_atomic(payload, path, backup_path, primary_trusted, result_box)
+	result_box["error"] = _write_payload_atomic(payload, path, backup_path, primary_digest, result_box)
 	io_mutex.unlock()
 
 
-func _write_payload_atomic(payload: Dictionary, path: String, _backup_path: String, _primary_trusted: bool = false, result_box: Dictionary = {}) -> Error:
-	var result := DurableStoreScript.write_json(path, payload, Callable(self, "_payload_dictionary_loadable"), true)
+func _write_payload_atomic(payload: Dictionary, path: String, _backup_path: String, primary_digest: String = "", result_box: Dictionary = {}) -> Error:
+	var result := DurableStoreScript.write_json(path, payload, Callable(self, "_payload_dictionary_loadable"), true, primary_digest)
 	if bool(result.get("ok", false)):
 		result_box["validated_sha256"] = str(result.get("validated_sha256", ""))
 	return int(result.get("error", FAILED))
@@ -207,10 +216,13 @@ func load_run(slot_id: String = "autosave") -> Variant:
 			"exists": FileAccess.file_exists(backup_save_path(clean_slot)),
 			"loadable": false,
 		}
-		_remember_primary_fingerprint(clean_slot, run_save_path(clean_slot))
+		# Continue fully restores from disk. A later save may establish a new
+		# installed-byte proof; do not infer one from path metadata on load.
+		trusted_primary_fingerprints.erase(clean_slot)
 		last_load_outcome = _load_outcome(clean_slot, LOAD_OUTCOME_PRIMARY, primary, backup)
 		return primary.get("run_state")
 	var backup := _read_run_state_from_path(backup_save_path(clean_slot))
+	trusted_primary_fingerprints.erase(clean_slot)
 	if bool(backup.get("loadable", false)):
 		last_load_outcome = _load_outcome(clean_slot, LOAD_OUTCOME_BACKUP, primary, backup)
 		return backup.get("run_state")
@@ -256,9 +268,7 @@ func _slot_status_unlocked(clean_slot: String) -> Dictionary:
 	var backup := _slot_generation_status(backup_save_path(clean_slot))
 	var primary_loadable := bool(primary.get("loadable", false))
 	var backup_loadable := bool(backup.get("loadable", false))
-	if primary_loadable:
-		_remember_primary_fingerprint(clean_slot, run_save_path(clean_slot))
-	else:
+	if not primary_loadable:
 		trusted_primary_fingerprints.erase(clean_slot)
 	return {
 		"slot_id": clean_slot,
@@ -352,24 +362,39 @@ func _read_run_state_from_path(path: String) -> Dictionary:
 	var run_state := RunState.new()
 	run_state.from_dict(run_data)
 	return {"exists": true, "loadable": true, "run_state": run_state}
-func _primary_fingerprint_is_trusted(slot_id: String, path: String) -> bool:
-	if not trusted_primary_fingerprints.has(slot_id):
-		return false
-	return str(trusted_primary_fingerprints.get(slot_id, "")) == _file_fingerprint(path)
-
-
-func _remember_primary_fingerprint(slot_id: String, path: String) -> void:
-	var fingerprint := _file_fingerprint(path)
-	if fingerprint.is_empty():
-		trusted_primary_fingerprints.erase(slot_id)
-	else:
-		trusted_primary_fingerprints[slot_id] = fingerprint
-
-
-func _file_fingerprint(path: String) -> String:
-	if not FileAccess.file_exists(path):
+func _trusted_primary_digest(slot_id: String, path: String) -> String:
+	var entry_value: Variant = trusted_primary_fingerprints.get(slot_id, {})
+	if typeof(entry_value) != TYPE_DICTIONARY:
 		return ""
-	return "%d:%d" % [FileAccess.get_modified_time(path), FileAccess.get_size(path)]
+	var entry: Dictionary = entry_value
+	if str(entry.get("absolute_path", "")) != ProjectSettings.globalize_path(path):
+		trusted_primary_fingerprints.erase(slot_id)
+		return ""
+	var digest := str(entry.get("sha256", ""))
+	return digest if digest.length() == 64 else ""
+
+
+func _primary_digest_is_trusted(slot_id: String, path: String) -> bool:
+	var digest := _trusted_primary_digest(slot_id, path)
+	if digest.is_empty():
+		return false
+	var absolute_path := ProjectSettings.globalize_path(path)
+	var matches := FileAccess.file_exists(absolute_path) and FileAccess.get_sha256(absolute_path) == digest
+	if not matches:
+		trusted_primary_fingerprints.erase(slot_id)
+	return matches
+
+
+func _remember_primary_digest(slot_id: String, path: String, digest: String) -> void:
+	if digest.length() != 64:
+		trusted_primary_fingerprints.erase(slot_id)
+		return
+	trusted_primary_fingerprints[slot_id] = {
+		"absolute_path": ProjectSettings.globalize_path(path),
+		"sha256": digest,
+	}
+
+
 func _load_outcome(slot_id: String, outcome: String, primary: Dictionary, backup: Dictionary) -> Dictionary:
 	return {
 		"outcome": outcome,

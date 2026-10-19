@@ -23,7 +23,7 @@ const TRANSITION_INSTALL_PRIMARY := "install_primary"
 const TRANSITION_VALIDATE_PRIMARY := "validate_primary"
 
 
-static func write_json(path: String, payload: Dictionary, validator: Callable = Callable(), reuse_validated_image: bool = false) -> Dictionary:
+static func write_json(path: String, payload: Dictionary, validator: Callable = Callable(), reuse_validated_image: bool = false, validated_primary_sha256: String = "") -> Dictionary:
 	var clean_path := path.strip_edges()
 	if clean_path.is_empty():
 		return _result(false, ERR_INVALID_PARAMETER, "empty_path", OUTCOME_NONE)
@@ -52,7 +52,18 @@ static func write_json(path: String, payload: Dictionary, validator: Callable = 
 		_remove_if_exists(temp_absolute)
 		return _result(false, ERR_FILE_CORRUPT, "temporary_generation_invalid", OUTCOME_NONE)
 
-	var primary := _read_generation(clean_path, validator)
+	# A caller may supply a proof from this validator's prior successful install.
+	# Rehash the old primary itself before treating it as safe to rotate into the
+	# backup. Unknown or changed bytes still receive the full validator.
+	var same_validated_primary := reuse_validated_image and validator.is_valid() \
+		and validated_primary_sha256.length() == 64 \
+		and FileAccess.file_exists(absolute_path) \
+		and FileAccess.get_sha256(absolute_path) == validated_primary_sha256
+	var primary: Dictionary
+	if same_validated_primary:
+		primary = {"exists": true, "loadable": true, "data": {}, "error": OK}
+	else:
+		primary = _read_generation(clean_path, validator)
 	var backup_absolute := ProjectSettings.globalize_path(backup_path(clean_path))
 	var backup_rollback_absolute := "%s.rollback" % backup_absolute
 	var invalid_primary_rollback_absolute := "%s.rollback" % absolute_path
