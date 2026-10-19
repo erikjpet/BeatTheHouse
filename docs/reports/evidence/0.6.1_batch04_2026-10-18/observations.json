@@ -1,0 +1,1184 @@
+{
+  "source_commit": "78e52f8047d0cdcadea63c590b76170820afcf7b",
+  "session": "bth061-b04-20261018",
+  "method": "Selected public observations only; no saves, profiles or authority material.",
+  "records": [
+    {
+      "ordinal": 9,
+      "command": "set_field seed BTH-061-STAB-B04-001",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 0,
+        "chips": 0,
+        "heat": 0,
+        "location_archetype": "",
+        "screen": "START",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 5,
+      "canvas_object_count": 0,
+      "spatial_object_count": 0,
+      "feedback": {
+        "visible": false
+      },
+      "save_text": null,
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [],
+      "inventory_items": [],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 29,
+      "command": "click_button Travel",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 51,
+        "chips": 0,
+        "heat": 2,
+        "location_archetype": "delta_queen",
+        "screen": "RESULT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 21,
+      "canvas_object_count": 21,
+      "spatial_object_count": 21,
+      "feedback": {
+        "text": "Traveled to River Queen Riverboat Casino. Route cost 28, 54 min, risk +2. Cash change: -28.  $-28 / Heat +2",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosave pending.",
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [],
+      "inventory_items": [],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 32,
+      "command": "click_object travel:leave double",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 101,
+        "chips": 0,
+        "heat": 2,
+        "location_archetype": "delta_queen",
+        "screen": "TRAVEL",
+        "event_id": "",
+        "world_map_visible": true
+      },
+      "room_object_count": 20,
+      "canvas_object_count": 20,
+      "spatial_object_count": 20,
+      "feedback": {
+        "text": "The Grand Casino opens, with a $50 first stake on the house. Cash change: +50.  $+50",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosaved.",
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [],
+      "inventory_items": [],
+      "map_targets": [
+        {
+          "id": "beach",
+          "cost": 0,
+          "travel_enabled": true,
+          "travel_disabled_reason": "",
+          "open_status_text": "Open 24h"
+        },
+        {
+          "id": "grand_casino",
+          "cost": 0,
+          "travel_enabled": true,
+          "travel_disabled_reason": "",
+          "open_status_text": "Open 24h"
+        },
+        {
+          "id": "kitty_cat_lounge",
+          "cost": 14,
+          "travel_enabled": true,
+          "travel_disabled_reason": "",
+          "open_status_text": "Open until 5:00 AM"
+        }
+      ],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 43,
+      "command": "click_choice read_the_shift",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 101,
+        "chips": 0,
+        "heat": 11,
+        "location_archetype": "grand_casino",
+        "screen": "RESULT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 25,
+      "canvas_object_count": 25,
+      "spatial_object_count": 24,
+      "feedback": {
+        "text": "The roster exposes the Small Underground Casino route.  Heat +3",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosave pending.",
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [],
+      "inventory_items": [],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 47,
+      "command": "click_choice cage_buy_25",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 76,
+        "chips": 25,
+        "heat": 11,
+        "location_archetype": "grand_casino_cage",
+        "screen": "RESULT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 8,
+      "canvas_object_count": 8,
+      "spatial_object_count": 8,
+      "feedback": {
+        "text": "Traveled to Grand Casino Cage. 5 min.",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosave pending.",
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [
+        {
+          "id": "cage_buy_25",
+          "label": "Buy 25 Chips",
+          "enabled": true
+        },
+        {
+          "id": "cage_buy_50",
+          "label": "Buy 50 Chips",
+          "enabled": true
+        },
+        {
+          "id": "cage_cashout_all",
+          "label": "Redeem All Chips",
+          "enabled": true
+        },
+        {
+          "id": "back_main",
+          "label": "Back",
+          "enabled": true
+        }
+      ],
+      "inventory_items": [],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 51,
+      "command": "click_button Save",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 76,
+        "chips": 25,
+        "heat": 11,
+        "location_archetype": "grand_casino_cage",
+        "screen": "RESULT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 8,
+      "canvas_object_count": 8,
+      "spatial_object_count": 8,
+      "feedback": {
+        "text": "Traveled to Grand Casino Cage. 5 min.",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Saved to Resume Slot.",
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [],
+      "inventory_items": [],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 57,
+      "command": "click_button CONTINUE",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 76,
+        "chips": 25,
+        "heat": 11,
+        "location_archetype": "grand_casino_cage",
+        "screen": "ENVIRONMENT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 8,
+      "canvas_object_count": 8,
+      "spatial_object_count": 8,
+      "feedback": {
+        "text": "Traveled to Grand Casino Cage. 5 min.",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Loaded run.",
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [],
+      "inventory_items": [],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 60,
+      "command": "click_choice cage_cashout_all",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 101,
+        "chips": 0,
+        "heat": 10,
+        "location_archetype": "grand_casino_cage",
+        "screen": "ENVIRONMENT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 8,
+      "canvas_object_count": 8,
+      "spatial_object_count": 8,
+      "feedback": {
+        "text": "Linda redeems 25 chips: $0 to the marker, $25 cash, $0 marker remaining.  $+25",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosave pending.",
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [
+        {
+          "id": "cage_buy_25",
+          "label": "Buy 25 Chips",
+          "enabled": true
+        },
+        {
+          "id": "cage_buy_50",
+          "label": "Buy 50 Chips",
+          "enabled": true
+        },
+        {
+          "id": "cage_cashout_all",
+          "label": "Redeem All Chips\nNo chips to redeem.",
+          "enabled": false
+        },
+        {
+          "id": "back_main",
+          "label": "Back",
+          "enabled": true
+        }
+      ],
+      "inventory_items": [],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 64,
+      "command": "click_object travel:leave double",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 101,
+        "chips": 0,
+        "heat": 10,
+        "location_archetype": "grand_casino",
+        "screen": "TRAVEL",
+        "event_id": "",
+        "world_map_visible": true
+      },
+      "room_object_count": 24,
+      "canvas_object_count": 24,
+      "spatial_object_count": 24,
+      "feedback": {
+        "text": "Traveled to Grand Casino. 5 min.",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosaved.",
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [],
+      "inventory_items": [],
+      "map_targets": [
+        {
+          "id": "delta_queen",
+          "cost": 95,
+          "travel_enabled": true,
+          "travel_disabled_reason": "",
+          "open_status_text": "Open until 3:00 AM"
+        },
+        {
+          "id": "kitty_cat_lounge",
+          "cost": 95,
+          "travel_enabled": true,
+          "travel_disabled_reason": "",
+          "open_status_text": "Open until 5:00 AM"
+        },
+        {
+          "id": "small_underground_casino",
+          "cost": 9,
+          "travel_enabled": true,
+          "travel_disabled_reason": "",
+          "open_status_text": "Open 24h"
+        }
+      ],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 67,
+      "command": "click_object event:chain06_cass_first_contact double",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 92,
+        "chips": 0,
+        "heat": 6,
+        "location_archetype": "small_underground_casino",
+        "screen": "RESULT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 9,
+      "canvas_object_count": 9,
+      "spatial_object_count": 9,
+      "feedback": {
+        "text": "Traveled to The Punchline. Route cost 9, 42 min, distance shakes most heat, risk +3.  $-9 / Heat +3",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosave pending.",
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [
+        {
+          "id": "share_the_read",
+          "label": "Share the read\nCome back when you're actually counting.",
+          "enabled": false
+        },
+        {
+          "id": "keep_counting",
+          "label": "Keep counting\nCome back when you're actually counting.",
+          "enabled": false
+        }
+      ],
+      "inventory_items": [],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 77,
+      "command": "set_field seed BTH-061-STAB-B04-002",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 0,
+        "chips": 0,
+        "heat": 0,
+        "location_archetype": "",
+        "screen": "START",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 9,
+      "canvas_object_count": 0,
+      "spatial_object_count": 0,
+      "feedback": {
+        "visible": false
+      },
+      "save_text": null,
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [],
+      "inventory_items": [],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 93,
+      "command": "click_button Travel",
+      "accepted": false,
+      "reason": "visible enabled button not found: Travel",
+      "checkpoint": {
+        "bankroll": 56,
+        "chips": 0,
+        "heat": 2,
+        "location_archetype": "delta_queen",
+        "screen": "TRAVEL",
+        "event_id": "",
+        "world_map_visible": true
+      },
+      "room_object_count": 22,
+      "canvas_object_count": 22,
+      "spatial_object_count": 22,
+      "feedback": {
+        "text": "Traveled to River Queen Riverboat Casino. Route cost 29, 60 min, risk +2. Cash change: -29.  $-29 / Heat +2",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosaved.",
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [],
+      "inventory_items": [],
+      "map_targets": [
+        {
+          "id": "beach",
+          "cost": 0,
+          "travel_enabled": false,
+          "travel_disabled_reason": "The River Queen is out on the river for 5 more actions.",
+          "open_status_text": "Open 24h"
+        },
+        {
+          "id": "gas_station_casino",
+          "cost": 18,
+          "travel_enabled": false,
+          "travel_disabled_reason": "The River Queen is out on the river for 5 more actions.",
+          "open_status_text": "Open 24h"
+        },
+        {
+          "id": "kitty_cat_lounge",
+          "cost": 15,
+          "travel_enabled": false,
+          "travel_disabled_reason": "The River Queen is out on the river for 5 more actions.",
+          "open_status_text": "Open until 5:00 AM"
+        }
+      ],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 119,
+      "command": "click_object travel:leave double",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 93,
+        "chips": 0,
+        "heat": 0,
+        "location_archetype": "delta_queen",
+        "screen": "TRAVEL",
+        "event_id": "",
+        "world_map_visible": true
+      },
+      "room_object_count": 15,
+      "canvas_object_count": 15,
+      "spatial_object_count": 15,
+      "feedback": {
+        "text": "Play stops. Attention moves on. Cash change: -3.  $-3",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosaved.",
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [],
+      "inventory_items": [],
+      "map_targets": [
+        {
+          "id": "beach",
+          "cost": 0,
+          "travel_enabled": true,
+          "travel_disabled_reason": "",
+          "open_status_text": "Open 24h"
+        },
+        {
+          "id": "grand_casino",
+          "cost": 0,
+          "travel_enabled": true,
+          "travel_disabled_reason": "",
+          "open_status_text": "Open 24h"
+        },
+        {
+          "id": "kitty_cat_lounge",
+          "cost": 15,
+          "travel_enabled": true,
+          "travel_disabled_reason": "",
+          "open_status_text": "Open until 5:00 AM"
+        }
+      ],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 126,
+      "command": "click_object scenario::beach_bonfire_night_fire_tender double",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 93,
+        "chips": 0,
+        "heat": 0,
+        "location_archetype": "beach",
+        "screen": "RESULT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 8,
+      "canvas_object_count": 8,
+      "spatial_object_count": 6,
+      "feedback": {
+        "text": "Done at Fire tender: Communal fire.",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosave pending.",
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [],
+      "inventory_items": [],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 135,
+      "command": "click_button Inventory",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 93,
+        "chips": 0,
+        "heat": 0,
+        "location_archetype": "beach",
+        "screen": "ENVIRONMENT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 6,
+      "canvas_object_count": 6,
+      "spatial_object_count": 6,
+      "feedback": {
+        "text": "Done at Fire tender: Communal fire.",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Loaded run.",
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [],
+      "inventory_items": [
+        {
+          "id": "cumquat_sandwich",
+          "display_name": "Cumquat Sandwich",
+          "count": 1
+        }
+      ],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 140,
+      "command": "set_field seed BTH-061-STAB-B04-003",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 0,
+        "chips": 0,
+        "heat": 0,
+        "location_archetype": "",
+        "screen": "START",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 6,
+      "canvas_object_count": 0,
+      "spatial_object_count": 0,
+      "feedback": {
+        "visible": false
+      },
+      "save_text": null,
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [],
+      "inventory_items": [],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 154,
+      "command": "click_object item:ledger_pencil",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 71,
+        "chips": 0,
+        "heat": 2,
+        "location_archetype": "kitty_cat_lounge",
+        "screen": "RESULT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 20,
+      "canvas_object_count": 20,
+      "spatial_object_count": 20,
+      "feedback": {
+        "text": "Traveled to Kitty Cat Lounge. Route cost 14, 30 min, distance shakes some heat, risk +2. Cash change: -14.  $-14 / Heat +2",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosave pending.",
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [],
+      "inventory_items": [],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 155,
+      "command": "click_object item:ledger_pencil double",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 54,
+        "chips": 0,
+        "heat": 2,
+        "location_archetype": "kitty_cat_lounge",
+        "screen": "RESULT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 15,
+      "canvas_object_count": 15,
+      "spatial_object_count": 12,
+      "feedback": {
+        "text": "Bought Ledger Pencil for 17.  $-17",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosave pending.",
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [],
+      "inventory_items": [
+        {
+          "id": "ledger_pencil",
+          "display_name": "Ledger Pencil",
+          "count": 1
+        }
+      ],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 157,
+      "command": "click_choice accept_invite",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 54,
+        "chips": 0,
+        "heat": 2,
+        "location_archetype": "kitty_cat_lounge",
+        "screen": "EVENT",
+        "event_id": "grand_casino_invite",
+        "world_map_visible": false
+      },
+      "room_object_count": 15,
+      "canvas_object_count": 15,
+      "spatial_object_count": 12,
+      "feedback": {
+        "text": "Bought Ledger Pencil for 17.  $-17",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosaved.",
+      "event_popup": {
+        "choice_ids": [
+          "accept_invite",
+          "not_yet",
+          "dismiss"
+        ],
+        "choices": [
+          {
+            "enabled": true,
+            "id": "accept_invite",
+            "label": "Take the invite",
+            "text": "The Grand Casino opens, with a $50 first stake on the house."
+          },
+          {
+            "enabled": true,
+            "id": "not_yet",
+            "label": "Not yet",
+            "text": "The offer waits for you."
+          },
+          {
+            "enabled": true,
+            "id": "dismiss",
+            "label": "Leave It",
+            "text": "Walk away without changing the run."
+          }
+        ],
+        "event_id": "grand_casino_invite",
+        "render_valid": true,
+        "summary": "A host knows the road to the Grand.",
+        "title": "High Roller Invitation",
+        "visible": true
+      },
+      "talk_choices": [],
+      "inventory_items": [
+        {
+          "id": "ledger_pencil",
+          "display_name": "Ledger Pencil",
+          "count": 1
+        }
+      ],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 159,
+      "command": "click_button Take the invite",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 54,
+        "chips": 0,
+        "heat": 2,
+        "location_archetype": "kitty_cat_lounge",
+        "screen": "EVENT",
+        "event_id": "grand_casino_invite",
+        "world_map_visible": false
+      },
+      "room_object_count": 12,
+      "canvas_object_count": 12,
+      "spatial_object_count": 12,
+      "feedback": {
+        "text": "Bought Ledger Pencil for 17.  $-17",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosaved.",
+      "event_popup": {
+        "choice_ids": [
+          "accept_invite",
+          "not_yet",
+          "dismiss"
+        ],
+        "choices": [
+          {
+            "enabled": true,
+            "id": "accept_invite",
+            "label": "Take the invite",
+            "text": "The Grand Casino opens, with a $50 first stake on the house."
+          },
+          {
+            "enabled": true,
+            "id": "not_yet",
+            "label": "Not yet",
+            "text": "The offer waits for you."
+          },
+          {
+            "enabled": true,
+            "id": "dismiss",
+            "label": "Leave It",
+            "text": "Walk away without changing the run."
+          }
+        ],
+        "event_id": "grand_casino_invite",
+        "render_valid": true,
+        "summary": "A host knows the road to the Grand.",
+        "title": "High Roller Invitation",
+        "visible": true
+      },
+      "talk_choices": [],
+      "inventory_items": [
+        {
+          "id": "ledger_pencil",
+          "display_name": "Ledger Pencil",
+          "count": 1
+        }
+      ],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 162,
+      "command": "key Enter",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 54,
+        "chips": 0,
+        "heat": 2,
+        "location_archetype": "kitty_cat_lounge",
+        "screen": "EVENT",
+        "event_id": "grand_casino_invite",
+        "world_map_visible": false
+      },
+      "room_object_count": 12,
+      "canvas_object_count": 12,
+      "spatial_object_count": 12,
+      "feedback": {
+        "text": "Bought Ledger Pencil for 17.  $-17",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosaved.",
+      "event_popup": {
+        "choice_ids": [
+          "accept_invite",
+          "not_yet",
+          "dismiss"
+        ],
+        "choices": [
+          {
+            "enabled": true,
+            "id": "accept_invite",
+            "label": "Take the invite",
+            "text": "The Grand Casino opens, with a $50 first stake on the house."
+          },
+          {
+            "enabled": true,
+            "id": "not_yet",
+            "label": "Not yet",
+            "text": "The offer waits for you."
+          },
+          {
+            "enabled": true,
+            "id": "dismiss",
+            "label": "Leave It",
+            "text": "Walk away without changing the run."
+          }
+        ],
+        "event_id": "grand_casino_invite",
+        "render_valid": true,
+        "summary": "A host knows the road to the Grand.",
+        "title": "High Roller Invitation",
+        "visible": true
+      },
+      "talk_choices": [],
+      "inventory_items": [
+        {
+          "id": "ledger_pencil",
+          "display_name": "Ledger Pencil",
+          "count": 1
+        }
+      ],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 168,
+      "command": "click_choice accept_invite",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 54,
+        "chips": 0,
+        "heat": 2,
+        "location_archetype": "kitty_cat_lounge",
+        "screen": "EVENT",
+        "event_id": "grand_casino_invite",
+        "world_map_visible": false
+      },
+      "room_object_count": 12,
+      "canvas_object_count": 12,
+      "spatial_object_count": 12,
+      "feedback": {
+        "text": "Bought Ledger Pencil for 17.  $-17",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosaved.",
+      "event_popup": {
+        "choice_ids": [
+          "accept_invite",
+          "not_yet",
+          "dismiss"
+        ],
+        "choices": [
+          {
+            "enabled": true,
+            "id": "accept_invite",
+            "label": "Take the invite",
+            "text": "The Grand Casino opens, with a $50 first stake on the house."
+          },
+          {
+            "enabled": true,
+            "id": "not_yet",
+            "label": "Not yet",
+            "text": "The offer waits for you."
+          },
+          {
+            "enabled": true,
+            "id": "dismiss",
+            "label": "Leave It",
+            "text": "Walk away without changing the run."
+          }
+        ],
+        "event_id": "grand_casino_invite",
+        "render_valid": true,
+        "summary": "A host knows the road to the Grand.",
+        "title": "High Roller Invitation",
+        "visible": true
+      },
+      "talk_choices": [],
+      "inventory_items": [
+        {
+          "id": "ledger_pencil",
+          "display_name": "Ledger Pencil",
+          "count": 1
+        }
+      ],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 172,
+      "command": "click_button Save",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 54,
+        "chips": 0,
+        "heat": 2,
+        "location_archetype": "kitty_cat_lounge",
+        "screen": "ENVIRONMENT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 12,
+      "canvas_object_count": 12,
+      "spatial_object_count": 12,
+      "feedback": {
+        "text": "Bought Ledger Pencil for 17.  $-17",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Saved to Resume Slot.",
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [],
+      "inventory_items": [
+        {
+          "id": "ledger_pencil",
+          "display_name": "Ledger Pencil",
+          "count": 1
+        }
+      ],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 175,
+      "command": "click_button CONTINUE",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 54,
+        "chips": 0,
+        "heat": 2,
+        "location_archetype": "kitty_cat_lounge",
+        "screen": "ENVIRONMENT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 0,
+      "canvas_object_count": 0,
+      "spatial_object_count": 12,
+      "feedback": {
+        "text": "Bought Ledger Pencil for 17.",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Loaded run.",
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [],
+      "inventory_items": [
+        {
+          "id": "ledger_pencil",
+          "display_name": "Ledger Pencil",
+          "count": 1
+        }
+      ],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 176,
+      "command": "click_object event:grand_casino_invite double",
+      "accepted": false,
+      "reason": "agent playtest bth061-b04-20261018 command could not find exact semantic object event:grand_casino_invite; type/render-order fallback is forbidden.",
+      "checkpoint": {
+        "bankroll": 54,
+        "chips": 0,
+        "heat": 2,
+        "location_archetype": "kitty_cat_lounge",
+        "screen": "ENVIRONMENT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 0,
+      "canvas_object_count": 0,
+      "spatial_object_count": 12,
+      "feedback": {
+        "text": "Bought Ledger Pencil for 17.",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Loaded run.",
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [],
+      "inventory_items": [
+        {
+          "id": "ledger_pencil",
+          "display_name": "Ledger Pencil",
+          "count": 1
+        }
+      ],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 178,
+      "command": "wait 120",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 54,
+        "chips": 0,
+        "heat": 2,
+        "location_archetype": "kitty_cat_lounge",
+        "screen": "ENVIRONMENT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 0,
+      "canvas_object_count": 0,
+      "spatial_object_count": 12,
+      "feedback": {
+        "text": "Bought Ledger Pencil for 17.",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Loaded run.",
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [],
+      "inventory_items": [
+        {
+          "id": "ledger_pencil",
+          "display_name": "Ledger Pencil",
+          "count": 1
+        }
+      ],
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 179,
+      "command": "quit",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 54,
+        "chips": 0,
+        "heat": 2,
+        "location_archetype": "kitty_cat_lounge",
+        "screen": "ENVIRONMENT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 0,
+      "canvas_object_count": 0,
+      "spatial_object_count": 12,
+      "feedback": {
+        "text": "Bought Ledger Pencil for 17.",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Loaded run.",
+      "event_popup": {
+        "render_valid": false,
+        "visible": false
+      },
+      "talk_choices": [],
+      "inventory_items": [
+        {
+          "id": "ledger_pencil",
+          "display_name": "Ledger Pencil",
+          "count": 1
+        }
+      ],
+      "map_targets": [],
+      "log_alerts": []
+    }
+  ]
+}
