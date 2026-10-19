@@ -3428,13 +3428,21 @@ func _scenario_authoritative_environment_for_finalization(definition: Dictionary
 		var live_rects := JsonCoerceScript._copy_dict(layout.get("object_rects", {}))
 		var bindings := JsonCoerceScript._copy_dict(layout.get("slot_bindings", {}))
 		var reconciled_rects: Dictionary = {}
-		for object_id_value in baseline_rects.keys():
+		var baseline_ids := baseline_rects.keys()
+		var sealed_crew_ids := _scenario_sealed_crew_baseline_layout_ids()
+		for crew_id in sealed_crew_ids:
+			if not baseline_ids.has(crew_id): baseline_ids.append(crew_id)
+		for object_id_value in baseline_ids:
 			var object_id := str(object_id_value)
 			var binding := JsonCoerceScript._copy_dict(bindings.get(object_id, {}))
 			if str(binding.get("presentation_mode", "")) == "room" and live_rects.has(object_id):
 				reconciled_rects[object_id] = JsonCoerceScript._copy_dict(live_rects.get(object_id, {}))
 		layout["object_rects"] = reconciled_rects
 		result["layout"] = layout
+		if not sealed_crew_ids.is_empty():
+			# The semantic inventory reads this baseline hint as well as layout.
+			# Own the reconstructed proof copy; leave the saved hint untouched.
+			result["scenario_sequence_base_layout_object_rects"] = reconciled_rects.duplicate(true)
 	# Generated layouts originate in Vector2/Rect2 float32 components, while a
 	# JSON save restores scalar floats. Canonicalize through the actual persistent
 	# representation before deriving pixel hit bounds so a same-build rebuild is
@@ -3444,6 +3452,36 @@ func _scenario_authoritative_environment_for_finalization(definition: Dictionary
 	if typeof(canonical_rects_value) == TYPE_DICTIONARY:
 		canonical_layout["object_rects"] = canonical_rects_value
 		result["layout"] = canonical_layout
+	return result
+
+
+# Older Punchline baselines captured rectangle hints before deriving Crew
+# contacts, although the final immutable semantic inventory already sealed those
+# same contacts as scene objects. Recover only that known catalog-owned subset
+# from a matching persisted inventory reference. Coordinates still come from the
+# strict slot binder, and the existing final inventory digest must match exactly;
+# this does not add targets, change scenario state, or rewrite its proof.
+func _scenario_sealed_crew_baseline_layout_ids() -> Array[String]:
+	var result: Array[String] = []
+	if str(current_environment.get("archetype_id", "")) != TIER_TWO_UNDERGROUND_SOURCE_ID or str(current_environment.get("current_layer_id", "")) != "casino":
+		return result
+	var semantic := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(current_environment.get("scenario_sequence_state", {})).get("semantic_state", {}))
+	if typeof(current_environment.get("scenario_semantic_inventory_version")) != TYPE_INT or typeof(current_environment.get("scenario_semantic_digest")) != TYPE_STRING:
+		return result
+	var expected_version := int(current_environment.get("scenario_semantic_inventory_version", 0))
+	var expected_digest := str(current_environment.get("scenario_semantic_digest", ""))
+	if expected_version <= 0 or not JsonCoerceScript._valid_sha256(expected_digest) or int(semantic.get("inventory_schema_version", 0)) != expected_version or str(semantic.get("inventory_digest", "")) != expected_digest:
+		return result
+	var crew_events := CrewRecruitmentModelScript.contact_event_ids()
+	crew_events.append_array(CrewRecruitmentModelScript.recruitment_event_ids())
+	crew_events.append("recruitment_rook_leads")
+	var targets := JsonCoerceScript._copy_dict(semantic.get("target_inventory", {}))
+	for identity_value in JsonCoerceScript._copy_array(targets.get("scene_objects", [])):
+		var identity := str(identity_value)
+		if not identity.begins_with("event::event:"):
+			continue
+		var event_id := identity.trim_prefix("event::event:")
+		if crew_events.has(event_id): result.append("event:%s" % event_id)
 	return result
 
 

@@ -671,6 +671,9 @@ func recover_punchline_back_room_exit(run_state: RunState) -> Dictionary:
 		_restore_travel_snapshot(run_state, rollback)
 		return {"ok": false, "message": "The saved casino could not be restored; your run has been kept intact."}
 	CrewRecruitmentModelScript.apply_to_environment(run_state, run_state.current_environment)
+	# Restore trusted catalog contact bindings before reconstructing the immutable
+	# parent baseline; saved presentation hints may predate those contacts.
+	run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(run_state.current_environment, library)
 	var finalized := run_state.scenario_finalize_installed_environment(library)
 	run_state.reconcile_current_environment_object_manifest(true)
 	var errors := JsonCoerceScript._copy_array(finalized.get("errors", []))

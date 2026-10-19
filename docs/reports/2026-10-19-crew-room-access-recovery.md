@@ -86,3 +86,47 @@ Actual native Continue of those exact bytes renders its games, scenario objects,
 Nell and Leave with no geometry rejections and $93 preserved. The owner confirmed
 that the browser view becomes populated after its initial presentation delay.
 That case is not evidence for the Crew binding defect.
+
+
+## Strict old-baseline compatibility correction
+
+The preceding fallback limitation is resolved for the preserved affected parent.
+Its immutable sequence `semantic_state.target_inventory.scene_objects` already
+contains `event::event:crew_contact_rook`, `event::event:recruitment_mags`, and
+`event::event:recruitment_rook_leads`. Only the derived baseline rectangle hint
+omits them. The prior finalizer treated that incomplete hint as the entire
+physical membership list, conflicting with its already-sealed scene inventory.
+
+The correction reconstructs the detached proof's rectangle hint for recognized
+Crew event identities only when the Punchline casino's persisted inventory
+version/digest and sequence reference agree. Coordinates come from current slot
+bindings and trusted catalog generation. It leaves the stored baseline hint,
+semantic target inventory and reference unchanged; the existing full manifest,
+slot, semantic inventory and exact original digest validation still runs. A
+catalog-aware contact binding refresh precedes parent finalization during
+recovery. No semantic error is ignored, no new inventory target is added, and
+no scenario is restarted.
+
+Preserved fixture: `CREW-CONTINUE-REJECTED`, Rook Made at 60 trust, parent
+`punchline_high_stakes_night`. Direct parent finalization succeeds as a replay
+with original digest
+`bbe8a40c6a476a575e5e2af68d46758e100890a8dd8dad87bfb9686c1f18d300`.
+Actual JSON SaveService Continue then deliberately rejected active-room geometry
+shows the separate recovery button. Its real Foundation callback succeeds and
+returns to casino. Cash, inventory, clock and RNG remain identical; the parent
+semantic digest and full progression/receipt state (excluding derived semantic
+state) remain identical; the exact rejected Back Room payload remains retained.
+This actual callback run includes the final strict integer/string/reference-hash
+gates in production code. Evidence: local `crew-parent-supplemented.log` and
+`crew-continue-recovery-compatible.log`.
+
+The unchanged existing focused Punchline contract passes, including its existing
+missing/invalid-parent rollback checks. Automatic approval review rejected
+adding the requested new compatibility negative cases to that contract because
+of the standing hold on extending game tests/fixtures/validators/harnesses.
+Accordingly, newly proposed tampered-reference, missing-reference and removed
+sealed-contact regression cases were not added or run. Explicit human approval
+to override that hold is required for those test extensions. The strict helper
+and unchanged final digest rejection were reviewed in source; additional terminal
+state variants were not newly exercised. Existing evidence proves preservation
+of the active parent's complete progression/receipt state.
