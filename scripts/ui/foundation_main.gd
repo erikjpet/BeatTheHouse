@@ -21434,8 +21434,12 @@ func _refresh_world_map_detail() -> void:
 					str((target_value as Dictionary).get("status", "pending")),
 				])
 				break
-	world_map_detail_label.text = "\n".join(detail_lines)
 	var can_travel := selected_world_map_node_id != current_id and not choice.is_empty() and bool(choice.get("enabled", true)) and not bool(choice.get("locked", false))
+	if not can_travel and selected_world_map_node_id != current_id:
+		var disabled_reason := str(choice.get("disabled_reason", "")).strip_edges()
+		if not disabled_reason.is_empty():
+			detail_lines.append(disabled_reason)
+	world_map_detail_label.text = "\n".join(detail_lines)
 	_set_world_map_confirm_enabled(can_travel)
 	_set_world_map_detail_badges([])
 

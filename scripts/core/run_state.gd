@@ -1567,12 +1567,41 @@ func _publish_scenario_membership_candidate(candidate: Dictionary, result_value:
 			if result.has(collection_key):
 				failure[collection_key] = []
 		return failure
+	# The River Queen's Engine Trouble ride lock belongs to this authored
+	# sequence. Its normal room actions do not advance environment turns, so a
+	# successful restart must release that lock at the same verified commit.
+	if str(candidate.get("scenario_id", "")) == "delta_queen_engine_trouble":
+		_release_completed_engine_trouble_travel_lock(candidate, JsonCoerceScript._copy_dict(result.get("state", {})), _scenario_sequence_definition_readonly())
 	# Grand Casino room storage deliberately retains this Dictionary by identity.
 	# Publish the complete detached candidate without leaving that durable alias
 	# pointed at the pre-operation room.
 	current_environment.clear()
 	current_environment.merge(candidate, true)
 	return result
+
+
+func _release_completed_engine_trouble_travel_lock(environment: Dictionary, verified_state: Dictionary, definition: Dictionary) -> void:
+	# Call only after ScenarioEngine has authenticated the command or rebuilt
+	# the saved causal journal. Never infer completion from a raw save flag.
+	var authored_lock := int(JsonCoerceScript._copy_dict(definition.get("mutations", {})).get("travel_lock_actions", 0))
+	if str(environment.get("archetype_id", "")) != "delta_queen" \
+			or str(environment.get("scenario_id", "")) != "delta_queen_engine_trouble" \
+			or str(definition.get("id", "")) != "delta_queen_engine_trouble" \
+			or authored_lock <= 0 \
+			or int(environment.get("travel_locked_actions", 0)) != authored_lock \
+			or str(verified_state.get("scenario_id", "")) != "delta_queen_engine_trouble" \
+			or str(verified_state.get("node_id", "")) != str(environment.get("world_node_id", "")) \
+			or str(verified_state.get("status", "")) != ScenarioSequenceRuntimeScript.STATUS_AFTERMATH \
+			or str(verified_state.get("phase_id", "")) != "terminal_success" \
+			or not JsonCoerceScript._copy_array(verified_state.get("resolved_outcomes", [])).has("travel_resumed"):
+		return
+	if str(environment.get(ScenarioEngineScript.TRUSTED_STATE_REFERENCE_KEY, "")) != ScenarioSequenceRuntimeScript.content_fingerprint(verified_state):
+		return
+	# Police sweeps (and any later independent lock) retain their own duration.
+	if not str(environment.get("travel_lock_source", "")).is_empty():
+		return
+	if int(environment.get("travel_lock_remaining", 0)) > 0:
+		environment["travel_lock_remaining"] = 0
 
 
 # Scenario catalog events can be actions attached to a tangible scenario prop
@@ -3697,6 +3726,7 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 			current_environment[key] = refresh_candidate.get(key).duplicate(true) if typeof(refresh_candidate.get(key)) in [TYPE_DICTIONARY, TYPE_ARRAY] else refresh_candidate.get(key)
 		current_environment.erase("scenario_sequence_lifecycle_errors")
 		current_environment.erase("scenario_restore_pending_trusted_rebuild")
+		_release_completed_engine_trouble_travel_lock(current_environment, refreshed_state, definition)
 		if not definition_id.is_empty(): _scenario_sequence_definition_cache[definition_id] = definition.duplicate(true)
 		return _finalized_scenario_layout_result(true, next_digest, refreshed_state, stamped_records, refresh_layout)
 	# Build the proof and perform initialization/reentry against a detached
@@ -3753,6 +3783,7 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	current_environment.erase("scenario_sequence_pending_visit_id")
 	current_environment.erase("scenario_sequence_lifecycle_errors")
 	current_environment.erase("scenario_restore_pending_trusted_rebuild")
+	_release_completed_engine_trouble_travel_lock(current_environment, JsonCoerceScript._copy_dict(reentry.get("state", {})), definition)
 	if not definition_id.is_empty(): _scenario_sequence_definition_cache[definition_id] = definition.duplicate(true)
 	reconcile_current_environment_object_manifest(true)
 	return _finalized_scenario_layout_result(false, next_digest, JsonCoerceScript._copy_dict(reentry.get("state", {})), stamped_records, candidate_layout)
