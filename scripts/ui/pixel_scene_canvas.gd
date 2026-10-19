@@ -6749,7 +6749,7 @@ func _object_info_lines(object_data: Dictionary) -> Array:
 		_append_wrapped_info_lines(lines, "Discovery: %s" % classification.capitalize(), max_chars, 1)
 	var risk := str(object_data.get("risk_summary", "")).strip_edges()
 	if not risk.is_empty():
-		_append_wrapped_info_lines(lines, "Risk: %s" % risk if not risk.begins_with("Risk:") else risk, max_chars, 1)
+		_append_wrapped_info_lines(lines, "Risk: %s" % risk if not risk.begins_with("Risk:") else risk, max_chars, 3 if object_type == "game" else 1)
 	var action := str(object_data.get("action_summary", "")).strip_edges()
 	if bool(object_data.get("disabled", false)):
 		var reason := str(object_data.get("disabled_reason", "")).strip_edges()
