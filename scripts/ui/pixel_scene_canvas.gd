@@ -5317,6 +5317,7 @@ func _draw_scene_objects() -> void:
 	# Standard, and Front is painted last above every lower object layer.
 	for object_value in behind_counter:
 		_draw_scene_object_body(object_value as Dictionary)
+	_scale_canvas()
 	_draw_room_foreground_occluders(behind_counter)
 	for object_value in room_standard:
 		_draw_scene_object_body(object_value as Dictionary)
@@ -5325,11 +5326,16 @@ func _draw_scene_objects() -> void:
 	# Labels and focus affordances stay above fixtures and remain fully usable.
 	for object_value in objects:
 		_draw_scene_object_adornments(object_value as Dictionary, low_detail)
+	_scale_canvas()
 	if not developer_placement_mode and not developer_slot_placement_mode:
 		_draw_selected_object_info()
 
 
 func _draw_scene_object_body(object_data: Dictionary) -> void:
+	# Prop painters share this command stream. Re-establish the same board
+	# transform used by input geometry at each boundary so a painter cannot
+	# leak a local transform into the next object's body or label.
+	_scale_canvas()
 	var rect := _natural_model_rect_for_object(object_data)
 	var object_id := str(object_data.get("id", ""))
 	var object_type := str(object_data.get("type", "item"))
@@ -5458,6 +5464,7 @@ func _draw_manifest_specific_object(rect: Rect2, object_data: Dictionary, active
 
 
 func _draw_scene_object_adornments(object_data: Dictionary, low_detail: bool) -> void:
+	_scale_canvas()
 	var rect := _natural_model_rect_for_object(object_data)
 	var object_id := str(object_data.get("id", ""))
 	var object_type := str(object_data.get("type", "item"))

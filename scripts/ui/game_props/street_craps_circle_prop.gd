@@ -94,10 +94,14 @@ static func _draw_chalk_game(canvas: CanvasItem, safe: Rect2, visual: Dictionary
 		var cash_size := Vector2(maxf(8.0, safe.size.x * 0.13), maxf(4.0, safe.size.y * 0.07))
 		var cash_position := safe.position + safe.size * Vector2(cash_data.x, cash_data.y)
 		var cash := Rect2(cash_position, cash_size)
-		canvas.draw_set_transform(cash.get_center(), cash_data.z, Vector2.ONE)
-		canvas.draw_rect(Rect2(-cash.size * 0.5, cash.size), C_CASH)
-		canvas.draw_rect(Rect2(-cash.size * 0.5, cash.size), C_CASH_EDGE, false, 1.0)
-		canvas.draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
+		# Rotate vertices in board space. Changing the caller's draw transform
+		# here would also move every subsequent room prop away from its hitbox.
+		var cash_points := PackedVector2Array()
+		for corner in [Vector2(-0.5, -0.5), Vector2(0.5, -0.5), Vector2(0.5, 0.5), Vector2(-0.5, 0.5)]:
+			cash_points.append(cash.get_center() + (corner * cash.size).rotated(cash_data.z))
+		canvas.draw_colored_polygon(cash_points, C_CASH)
+		cash_points.append(cash_points[0])
+		canvas.draw_polyline(cash_points, C_CASH_EDGE, 1.0)
 
 	var point := int(visual.get("point", 0))
 	var marker_color := Color("#e8e5dc") if point == 0 else accent.lerp(Color("#f3ca52"), 0.45)
