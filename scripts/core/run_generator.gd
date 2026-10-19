@@ -1,6 +1,7 @@
 class_name RunGenerator
 extends RefCounted
 
+const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 const GameModuleRegistryScript := preload("res://scripts/core/game_module_registry.gd")
 
@@ -624,12 +625,18 @@ func enter_environment_layer(run_state: RunState, target_layer_id: String, advan
 		_restore_travel_snapshot(run_state, rollback)
 		var layer_errors := JsonCoerceScript._copy_array(layer_finalized.get("errors", []))
 		return {"ok": false, "message": str(layer_errors[0]) if not layer_errors.is_empty() else "The room semantic contract could not be finalized."}
+	# Scenario reconciliation and layer installation can replace flat event
+	# arrays. Recompute recruitment against the final layer before publication.
+	CrewRecruitmentModelScript.apply_to_environment(run_state, run_state.current_environment)
+	if target_id == "back_room":
+		# Seal final ordinary-event membership before testing this private door.
+		run_state.reconcile_current_environment_object_manifest(true)
+	var exit_errors := _crew_room_exit_errors(run_state.current_environment)
+	if not exit_errors.is_empty():
+		_restore_travel_snapshot(run_state, rollback)
+		return {"ok": false, "message": "The private room could not provide a safe exit.", "errors": exit_errors}
 	if source_layer_id != target_id:
 		run_state.scenario_publish_travel("travel_arrived", source_layer_id, target_id, "layer")
-	# Scenario reconciliation and layer installation can replace flat event
-	# arrays. Recompute recruitment/presence against the final active layer so
-	# real side-door entries and restored revisits expose the authored fallback.
-	CrewRecruitmentModelScript.apply_to_environment(run_state, run_state.current_environment)
 	if run_state.has_world_map():
 		run_state.store_current_world_node_environment()
 	return {
@@ -638,6 +645,61 @@ func enter_environment_layer(run_state: RunState, target_layer_id: String, advan
 		"access_method": str(access.get("access_method", "open")),
 		"message": str(layer_state.get("layer_entry_message", "You pass through the interior door.")),
 	}
+
+
+# A failed room projection must not trap a run. This deliberately narrow route
+# returns only from the Punchline private room to its authored public parent;
+# it never admits a player, grants credentials, charges time, or regenerates loot.
+# The prior room payload remains in layer_states for diagnosis/reentry. Destination
+# finalization and exit proof must pass before the recovery commits.
+func recover_punchline_back_room_exit(run_state: RunState) -> Dictionary:
+	if run_state == null or str(run_state.current_environment.get("archetype_id", "")) != "small_underground_casino" or str(run_state.current_environment.get("current_layer_id", "")) != "back_room":
+		return {"ok": false, "message": "This recovery door is not available here."}
+	var rollback := _travel_rollback_snapshot(run_state)
+	var source := run_state.current_environment.duplicate(true)
+	var states := JsonCoerceScript._copy_dict(source.get("layer_states", {}))
+	var target := JsonCoerceScript._copy_dict(states.get("casino", {}))
+	if target.is_empty() or str(target.get("archetype_id", "")) != "small_underground_casino" or str(target.get("current_layer_id", "")) != "casino":
+		return {"ok": false, "message": "The saved casino room is missing or invalid; your run has been kept intact."}
+	# Preserve even a rejected source envelope; no reconciliation of the broken
+	# floor is required to authorize leaving for this known, saved parent.
+	var preserved := source.duplicate(true)
+	preserved.erase("layer_states")
+	states["back_room"] = preserved
+	run_state.current_environment["layer_states"] = states
+	if not run_state.install_environment_layer_state("casino", target):
+		_restore_travel_snapshot(run_state, rollback)
+		return {"ok": false, "message": "The saved casino could not be restored; your run has been kept intact."}
+	CrewRecruitmentModelScript.apply_to_environment(run_state, run_state.current_environment)
+	var finalized := run_state.scenario_finalize_installed_environment(library)
+	run_state.reconcile_current_environment_object_manifest(true)
+	var errors := JsonCoerceScript._copy_array(finalized.get("errors", []))
+	errors.append_array(EnvironmentInstance.object_manifest_errors(run_state.current_environment))
+	var authority := EnvironmentSlotBinderScript.validate_base_layout_authority(run_state.current_environment)
+	errors.append_array(JsonCoerceScript._copy_array(authority.get("errors", [])))
+	if not bool(finalized.get("ok", false)) or not bool(authority.get("ok", false)) or not errors.is_empty():
+		_restore_travel_snapshot(run_state, rollback)
+		return {"ok": false, "message": "The saved casino could not be validated; your run has been kept intact.", "errors": errors}
+	# Installation may reconcile the previous floor; retain the exact failed
+	# payload rather than silently replacing the evidence with a regenerated room.
+	var retained_states := JsonCoerceScript._copy_dict(run_state.current_environment.get("layer_states", {}))
+	retained_states["back_room"] = preserved
+	run_state.current_environment["layer_states"] = retained_states
+	run_state.log_story({"type": "environment_layer_recovery", "source_layer_id": "back_room", "target_layer_id": "casino", "message": "The private room could not be displayed. You returned to the casino; your progress was kept."})
+	return {"ok": true, "message": "Returned to the casino. Your cash, items, and private-room state were kept."}
+
+
+func _crew_room_exit_errors(environment: Dictionary) -> Array:
+	if str(environment.get("archetype_id", "")) != "small_underground_casino" or str(environment.get("current_layer_id", "")) != "back_room":
+		return []
+	var errors := EnvironmentInstance.object_manifest_errors(environment)
+	var authority := EnvironmentSlotBinderScript.validate_base_layout_authority(environment)
+	errors.append_array(JsonCoerceScript._copy_array(authority.get("errors", [])))
+	var bindings := JsonCoerceScript._copy_dict(authority.get("slot_bindings", {}))
+	var exit_binding := JsonCoerceScript._copy_dict(bindings.get("environment_layer:casino", {}))
+	if not bool(authority.get("ok", false)) or str(exit_binding.get("presentation_mode", "")) != "room" or str(exit_binding.get("slot_family", "")) != "exit":
+		errors.append("Crew Back Room requires its authored casino exit with valid room geometry.")
+	return errors
 
 
 func _apply_cage_gift_shop_stock(run_state: RunState, environment_data: Dictionary) -> void:

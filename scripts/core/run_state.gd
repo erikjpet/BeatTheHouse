@@ -5014,7 +5014,9 @@ func environment_layer_access_status(target_layer_id: String) -> Dictionary:
 		return {"available": false, "hidden": true, "reason": "There is no door that way."}
 	var discovery := JsonCoerceScript._copy_dict(current_environment.get("layer_discovery", {}))
 	var already_discovered := bool(discovery.get(target_id, false))
-	if already_discovered or not bool(transition.get("requires_discovered", false)) and JsonCoerceScript._copy_array(transition.get("access_paths", [])).is_empty():
+	# Discovery remembers a door, not a credential. Restricted private rooms
+	# recheck their access paths at the authoritative transition boundary.
+	if already_discovered and not bool(transition.get("requires_current_access", false)) or not bool(transition.get("requires_discovered", false)) and JsonCoerceScript._copy_array(transition.get("access_paths", [])).is_empty():
 		return {"available": true, "hidden": false, "access_method": "discovered" if already_discovered else "open", "discover_on_enter": false}
 	for path_value in JsonCoerceScript._copy_array(transition.get("access_paths", [])):
 		if typeof(path_value) != TYPE_DICTIONARY:
@@ -16085,7 +16087,7 @@ static func _normalize_environment_layers(environment: Dictionary) -> void:
 		environment["layer_discovery"] = {"club": true, "casino": true, "back_room": false}
 		environment["layer_transitions"] = [
 			{"target_layer_id": "club", "label": "Comedy Club", "description": "Take the stairs back to the public room."},
-			{"target_layer_id": "back_room", "label": "Crew Back Room", "description": "A private door behind the tables.", "requires_discovered": true, "access_paths": [{"method": "crew_rank", "min_crew_rank": "associate"}, {"method": "rook_escort", "flags_any": ["rook_escort_punchline_back_room"]}], "locked_reason": "Rook keeps this door for associates."},
+			{"target_layer_id": "back_room", "label": "Crew Back Room", "description": "A private door behind the tables.", "requires_discovered": true, "access_paths": [{"method": "crew_rank", "min_crew_rank": "made"}, {"method": "rook_escort", "flags_any": ["rook_escort_punchline_back_room"]}], "requires_current_access": true, "locked_reason": "Rook keeps this door for made company or people he escorts."},
 		]
 		environment["layer_ambient_lines"] = []
 		environment["layer_ambient_label"] = ""
@@ -16105,6 +16107,7 @@ static func _normalize_environment_layers(environment: Dictionary) -> void:
 	environment["layer_ids"] = JsonCoerceScript._string_array(JsonCoerceScript._copy_array(environment.get("layer_ids", [])))
 	environment["layer_display_name"] = str(environment.get("layer_display_name", "")).strip_edges()
 	environment["layer_transitions"] = JsonCoerceScript._copy_array(environment.get("layer_transitions", []))
+	_normalize_private_layer_access(environment)
 	environment["layer_discovery"] = JsonCoerceScript._copy_dict(environment.get("layer_discovery", {}))
 	var states := JsonCoerceScript._copy_dict(environment.get("layer_states", {}))
 	for state_id_value in states.keys():
@@ -16126,6 +16129,7 @@ static func _normalize_environment_layers(environment: Dictionary) -> void:
 			if not layer_sequence_valid:
 				body.erase("scenario_sequence_state")
 				body["scenario_sequence_migration_error"] = "Persisted dynamic room sequence state is malformed, unsupported, or overbound; explicit migration is required."
+		_normalize_private_layer_access(body)
 		body["layout"] = EnvironmentInstance.ensure_generated_layout(body)
 		states[str(state_id_value)] = body
 	environment["layer_states"] = states
@@ -16135,6 +16139,23 @@ static func _normalize_environment_layers(environment: Dictionary) -> void:
 	environment["layer_ambient_rotate_actions"] = maxi(1, int(environment.get("layer_ambient_rotate_actions", 1)))
 	environment["layer_ambient_index"] = maxi(0, int(environment.get("layer_ambient_index", 0)))
 	environment["layer_ambient_line"] = str(environment.get("layer_ambient_line", "")).strip_edges()
+
+
+# Upgrade saved Punchline doors as well as newly authored doors. Existing
+# discovery and room snapshots survive; neither grants restricted-room access.
+static func _normalize_private_layer_access(environment: Dictionary) -> void:
+	if str(environment.get("archetype_id", "")) != TIER_TWO_UNDERGROUND_SOURCE_ID:
+		return
+	var transitions := JsonCoerceScript._copy_array(environment.get("layer_transitions", []))
+	for value in transitions:
+		if typeof(value) != TYPE_DICTIONARY or str(value.get("target_layer_id", "")) != "back_room":
+			continue
+		value["requires_current_access"] = true
+		value["locked_reason"] = "Rook keeps this door for made company or people he escorts."
+		var configured_rank := str(JsonCoerceScript._copy_dict(CrewStateModelScript.config().get("shared_unlocks", {})).get("layer_3_min_rank", "made"))
+		if not CrewStateModelScript.RANK_IDS.has(configured_rank): configured_rank = "made"
+		value["access_paths"] = [{"method": "crew_rank", "min_crew_rank": configured_rank}, {"method": "rook_escort", "flags_any": ["rook_escort_punchline_back_room"]}]
+	environment["layer_transitions"] = transitions
 
 
 static func _normalize_scenario_recent(value: Dictionary) -> Dictionary:

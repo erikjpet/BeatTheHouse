@@ -31,6 +31,7 @@ static func check(library: ContentLibrary, failures: Array) -> void:
 	_check_production_scenario_layer_entry(library, failures)
 	_check_discovery_and_save(library, archetype, failures)
 	_check_back_room_access(library, archetype, failures)
+	_check_private_room_recovery(library, archetype, failures)
 	_check_legacy_migration(library, archetype, failures)
 	_check_shortcut_edge(library, failures)
 	_check_scenario_layer_scope(failures)
@@ -254,25 +255,99 @@ static func _check_back_room_access(library: ContentLibrary, archetype: Dictiona
 	casino["layer_discovery"] = {"club": true, "casino": true, "back_room": false}
 	run_state.set_environment(casino)
 	var denied := run_state.environment_layer_access_status("back_room")
-	if not bool(denied.get("available", false)):
-		failures.append("Punchline L3 did not honor the release stranger-rank Crew access path.")
-	run_state.crew_add_trust("crew_rook", 10000, "punchline_test")
+	if bool(denied.get("available", false)):
+		failures.append("Punchline L3 admitted a stranger without an escort.")
+	var generator := RunGeneratorScript.new(library)
+	var denied_snapshot := run_state.to_dict()
+	if bool(generator.enter_environment_layer(run_state, "back_room", true).get("ok", false)) or not _json_equal(run_state.to_dict(), denied_snapshot):
+		failures.append("Denied Crew door changed the authoritative run or entered the private room.")
+	run_state.discover_environment_layer("back_room", "legacy")
+	if bool(run_state.environment_layer_access_status("back_room").get("available", false)):
+		failures.append("Crew room discovery bypassed current credentials.")
+	var legacy := run_state.to_dict()
+	var legacy_environment: Dictionary = legacy["current_environment"]
+	for transition in legacy_environment.get("layer_transitions", []):
+		if str(transition.get("target_layer_id", "")) == "back_room":
+			transition.erase("requires_current_access")
+			transition["access_paths"] = [{"method": "crew_rank", "min_crew_rank": "stranger"}]
+	var legacy_run := RunStateScript.new()
+	legacy_run.from_dict(legacy)
+	if bool(legacy_run.environment_layer_access_status("back_room").get("available", false)):
+		failures.append("Restored legacy Crew door retained its stranger/discovery bypass.")
+	run_state.crew_add_trust("crew_rook", 59, "punchline_test")
+	if bool(run_state.environment_layer_access_status("back_room").get("available", false)):
+		failures.append("Crew room opened below canonical Made standing.")
+	run_state.crew_add_trust("crew_rook", 1, "punchline_test")
 	if not bool(run_state.environment_layer_access_status("back_room").get("available", false)):
 		failures.append("Punchline L3 did not open at made Crew standing.")
-	var generator := RunGeneratorScript.new(library)
-	var entered_back_room := bool(generator.enter_environment_layer(run_state, "back_room", false).get("ok", false))
+	var back_room_entry := generator.enter_environment_layer(run_state, "back_room", false)
+	var entered_back_room := bool(back_room_entry.get("ok", false))
 	var back_room_games := _array(run_state.current_environment.get("game_ids", []))
 	var rook_ambient_ok := str(run_state.current_environment.get("layer_ambient_label", "")) == "Rook" \
 		and str(run_state.current_environment.get("layer_ambient_prop", "")) == "patron_talk" \
 		and str(run_state.current_environment.get("layer_ambient_line", "")).contains("Rook")
-	if not entered_back_room or not _json_equal(back_room_games, ["crew_draw_poker"]) or not rook_ambient_ok:
-		failures.append("Punchline L3 did not enter with its single Crew poker table and compatible Rook ambient shell.")
+	var manifest_rows := EnvironmentInstanceScript.active_object_manifest_rows(run_state.current_environment)
+	var has_exit := false
+	for row in manifest_rows:
+		if str(row.get("object_id", "")) == "environment_layer:casino": has_exit = true
+	if not entered_back_room or not has_exit or not _json_equal(back_room_games, ["crew_draw_poker"]) or not rook_ambient_ok:
+		failures.append("Punchline L3 did not enter with its single Crew poker table and compatible Rook ambient shell: %s." % JSON.stringify(back_room_entry))
+	var resumed := RunStateScript.new()
+	resumed.from_dict(run_state.to_dict())
+	var cash_before := resumed.bankroll
+	var inventory_before := resumed.inventory.duplicate(true)
+	if not bool(generator.enter_environment_layer(resumed, "casino", false).get("ok", false)) or resumed.bankroll != cash_before or resumed.inventory != inventory_before:
+		failures.append("Saved Crew room could not leave without changing cash/inventory.")
 	var escort_run := RunStateScript.new()
 	escort_run.start_new("PUNCHLINE-L3-ESCORT")
 	escort_run.set_environment(casino)
 	escort_run.story_flags["rook_escort_punchline_back_room"] = true
 	if not bool(escort_run.environment_layer_access_status("back_room").get("available", false)):
 		failures.append("Punchline L3 did not open from the authored Rook escort flag.")
+
+
+static func _check_private_room_recovery(library: ContentLibrary, archetype: Dictionary, failures: Array) -> void:
+	var run_state := RunStateScript.new()
+	run_state.start_new("PUNCHLINE-RECOVERY")
+	run_state.crew_add_trust("crew_rook", 10000, "recovery_test")
+	var casino := EnvironmentInstanceScript.from_archetype_layer(archetype, "casino", 2, run_state.create_rng("casino"), library).to_dict()
+	run_state.set_environment(casino)
+	var generator := RunGeneratorScript.new(library)
+	if not bool(generator.enter_environment_layer(run_state, "back_room", false).get("ok", false)):
+		failures.append("Recovery setup could not enter the Crew room.")
+		return
+	var intact := run_state.to_dict()
+	# A damaged display envelope represents the rejection class, not a claimed
+	# reproduction of the user's still-unidentified empty room.
+	run_state.current_environment["object_manifest_digest"] = "rejected-layout"
+	var preserved := run_state.current_environment.duplicate(true)
+	preserved.erase("layer_states")
+	var cash := run_state.bankroll
+	var clock := run_state.game_clock_minutes
+	var inventory := run_state.inventory.duplicate(true)
+	var rng := run_state.rng_state
+	var result := generator.recover_punchline_back_room_exit(run_state)
+	var retained := _dict(_dict(run_state.current_environment.get("layer_states", {})).get("back_room", {}))
+	if not bool(result.get("ok", false)) or str(run_state.current_environment.get("current_layer_id", "")) != "casino" or not _json_equal(retained, preserved):
+		failures.append("Rejected Crew room could not recover to its validated saved parent while retaining the exact room payload: %s." % JSON.stringify(result))
+	if run_state.bankroll != cash or run_state.inventory != inventory or run_state.game_clock_minutes != clock or run_state.rng_state != rng:
+		failures.append("Crew room recovery changed cash, inventory, clock, or RNG.")
+	if not EnvironmentInstanceScript.object_manifest_errors(run_state.current_environment).is_empty():
+		failures.append("Recovered casino has invalid object authority.")
+	run_state.from_dict(intact)
+	run_state.current_environment["layer_states"] = {}
+	var missing_parent := run_state.to_dict()
+	if bool(generator.recover_punchline_back_room_exit(run_state).get("ok", false)) or not _json_equal(run_state.to_dict(), missing_parent):
+		failures.append("Missing recovery parent did not retain the exact active run.")
+	run_state.from_dict(intact)
+	var states := _dict(run_state.current_environment.get("layer_states", {}))
+	var invalid_parent := _dict(states.get("casino", {}))
+	invalid_parent["archetype_id"] = "missing_archetype"
+	states["casino"] = invalid_parent
+	run_state.current_environment["layer_states"] = states
+	var before_rejection := run_state.to_dict()
+	if bool(generator.recover_punchline_back_room_exit(run_state).get("ok", false)) or not _json_equal(run_state.to_dict(), before_rejection):
+		failures.append("Invalid recovery parent did not roll back the exact active run.")
 
 
 static func _check_legacy_migration(library: ContentLibrary, archetype: Dictionary, failures: Array) -> void:

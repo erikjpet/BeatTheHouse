@@ -628,6 +628,7 @@ var world_map_previous_focus_owner: Control
 var modal_focus_scope: RefCounted = ModalFocusScopeScript.new()
 var wager_confirmation_controller
 var selected_world_map_node_id: String = ""
+var crew_room_recovery_button: Button
 var world_map_button_ids: Array = []
 var world_map_button_relayout_deferred := false
 var travel_target_ids_cache_key: String = ""
@@ -11181,11 +11182,55 @@ func _refresh() -> void:
 		_show_message(scenario_transition_message)
 		_autosave_foundation_run("Room presentation saved.")
 	_render_environment_screen()
+	_refresh_crew_room_recovery_control()
 	if _run_menu_is_visible():
 		_refresh_run_menu()
 	_refresh_coach_at_boundary()
 	if current_screen == SCREEN_GAME and current_game != null:
 		_schedule_game_coach_refresh_after_draw()
+
+
+# This control lives outside rejected room geometry. It appears only when the
+# identified private room loses its authored usable door, and uses a bounded,
+# destination-validated recovery instead of moving hitboxes or resetting a save.
+func _crew_room_needs_recovery(records: Array) -> bool:
+	if run_state == null or current_screen != SCREEN_ENVIRONMENT or str(run_state.current_environment.get("archetype_id", "")) != "small_underground_casino" or str(run_state.current_environment.get("current_layer_id", "")) != "back_room":
+		return false
+	for record in records:
+		if typeof(record) == TYPE_DICTIONARY and str(record.get("object_id", "")) == "environment_layer:casino" and str(record.get("presentation_mode", "room")) == "room" and bool(record.get("enabled", false)) and not bool(record.get("room_geometry_rejected", false)):
+			return false
+	return true
+
+
+func _refresh_crew_room_recovery_control() -> void:
+	var needed := false
+	if run_state != null and current_screen == SCREEN_ENVIRONMENT and str(run_state.current_environment.get("archetype_id", "")) == "small_underground_casino" and str(run_state.current_environment.get("current_layer_id", "")) == "back_room":
+		needed = _crew_room_needs_recovery(_interactable_object_view_list())
+	if not needed:
+		if is_instance_valid(crew_room_recovery_button): crew_room_recovery_button.hide()
+		return
+	if not is_instance_valid(crew_room_recovery_button):
+		crew_room_recovery_button = _button("Room unavailable - Return to casino", Callable(self, "_recover_crew_room_exit"))
+		crew_room_recovery_button.name = "CrewRoomRecovery"
+		crew_room_recovery_button.z_index = 100
+		run_screen.add_child(crew_room_recovery_button)
+		crew_room_recovery_button.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+		crew_room_recovery_button.grow_horizontal = Control.GROW_DIRECTION_BOTH
+		crew_room_recovery_button.position.y = 80
+	crew_room_recovery_button.show()
+	run_screen.move_child(crew_room_recovery_button, -1)
+
+
+func _recover_crew_room_exit() -> bool:
+	if generator == null or not _crew_room_needs_recovery(_interactable_object_view_list()) or _guard_player_input_route(true, "travel"):
+		return false
+	var result := generator.recover_punchline_back_room_exit(run_state)
+	_show_message(str(result.get("message", "The room could not be recovered; your run was kept intact.")))
+	if bool(result.get("ok", false)):
+		clear_interaction_focus()
+		_autosave_foundation_run("Returned to casino; progress kept.")
+	_refresh()
+	return bool(result.get("ok", false))
 
 
 func _refresh_after_environment_selection() -> void:
