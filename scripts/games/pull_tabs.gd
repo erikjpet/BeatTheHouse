@@ -3032,7 +3032,9 @@ func _pull_tab_presentation_time_msec(ui_state: Dictionary, run_state: RunState 
 
 func _active_dispense_events(machine: Dictionary, now_msec: int) -> Array:
 	var started_msec := int(machine.get("dispense_started_msec", 0))
-	if started_msec <= 0:
+	# A re-entered game or cold Continue may restart the presentation clock.
+	# An old visual receipt must not keep purchased tickets trapped in the tray.
+	if started_msec <= 0 or now_msec < started_msec:
 		return []
 	var elapsed_msec := maxi(0, now_msec - started_msec)
 	var result: Array = []
