@@ -5339,6 +5339,25 @@ func _pending_talk_entries() -> Array:
 	return entries
 
 
+func _talk_entries_abandoned_on_travel(entries: Array, target_id: String) -> Array:
+	if run_state == null or not run_state.is_tutorial_run() or library == null:
+		return entries
+	var abandoned: Array = []
+	for entry_value in entries:
+		if typeof(entry_value) == TYPE_DICTIONARY:
+			var entry: Dictionary = entry_value
+			var context: Dictionary = entry.get("context", {}) if typeof(entry.get("context", {})) == TYPE_DICTIONARY else {}
+			var lesson_id := str(context.get("tutorial_lesson_id", "")).strip_edges()
+			if not lesson_id.is_empty() and str(entry.get("event_id", "")) == "tutorial_guide:%s" % lesson_id:
+				var lesson := library.tutorial_lesson(lesson_id)
+				# Following the exact route the guide named is an answer, not abandonment.
+				if not lesson.is_empty() and str(lesson.get("scope", "")) == "tutorial_run" \
+						and CoachViewModelScript.completion_matches(lesson, "travel:%s" % target_id):
+					continue
+		abandoned.append(entry_value)
+	return abandoned
+
+
 func _ignore_talk_event(event_id: String, reason: String) -> bool:
 	if run_state == null:
 		return false
@@ -7701,7 +7720,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	# live UI until every authoritative travel mutation has committed.
 	_checkpoint_current_game_surface_ui_state()
 	var previous_environment := RunState.environment_context_snapshot(run_state.current_environment)
-	ignored_talk_entries = _pending_talk_entries()
+	ignored_talk_entries = _talk_entries_abandoned_on_travel(_pending_talk_entries(), target_id)
 	if world_map_overlay != null:
 		world_map_overlay.visible = false
 	# Callers that must act on the authoritative result cannot cross a presentation
