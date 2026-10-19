@@ -441,6 +441,13 @@ var autosave_failure_count := 0
 var autosave_last_error: Error = OK
 var autosave_last_error_code := ""
 var autosave_retry_blocked := false
+# A room is inspected once after its normal canvas publication, never on an
+# animation frame. Until that inspection succeeds, no deferred save may replace
+# the previously loadable generation with an unplayable projection.
+var room_publication_generation := 0
+var room_publication_checked_generation := 0
+var room_recovery_generation := 0
+var room_recovery_identity := ""
 var tutorial_meta_home_handoff_scheduled := false
 
 var start_screen: Control
@@ -629,6 +636,7 @@ var modal_focus_scope: RefCounted = ModalFocusScopeScript.new()
 var wager_confirmation_controller
 var selected_world_map_node_id: String = ""
 var crew_room_recovery_button: Button
+var room_recovery_map_button: Button
 var world_map_button_ids: Array = []
 var world_map_button_relayout_deferred := false
 var travel_target_ids_cache_key: String = ""
@@ -1193,6 +1201,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	pending_post_purchase_affinity_result = {}
 	save_status_message = "Run not saved yet."
 	selected_action_category = ACTION_CATEGORY_GAMES
+	_queue_room_publication_check()
 	_set_current_screen(SCREEN_ENVIRONMENT)
 	_clear_input_guard_modal_state()
 	if talk_dock != null:
@@ -1429,8 +1438,8 @@ func _finish_chunked_game_exit() -> void:
 		game_exit_settle_active = false
 		return
 	settling_game.finalize_chunked_exit_settle(settling_run_state, settling_run_state.current_environment)
-	_complete_back_to_environment()
 	game_exit_settle_active = false
+	_complete_back_to_environment()
 
 
 func _complete_back_to_environment() -> void:
@@ -1440,6 +1449,7 @@ func _complete_back_to_environment() -> void:
 	current_game = null
 	_invalidate_environment_runtime_schedule(run_state.current_environment if run_state != null else {})
 	_clear_recent_result_feedback()
+	_queue_room_publication_check()
 	_set_current_screen(SCREEN_ENVIRONMENT)
 	_clear_input_guard_modal_state()
 	_clear_selected_game_action()
@@ -1462,6 +1472,150 @@ func _environment_is_playable(candidate: RunState) -> bool:
 		return true
 	var current_node_id := candidate.current_world_node_id()
 	return not current_node_id.is_empty() and not WorldMapScript.neighbor_ids(candidate.world_map, current_node_id).is_empty()
+
+
+# This is armed only when a normal room is installed or restored. The ordinary
+# refresh publishes the actual canvas objects before the check runs; no frame,
+# hover, or animation callback attempts repair.
+func _queue_room_publication_check() -> void:
+	room_publication_generation += 1
+	room_recovery_generation = 0
+	room_recovery_identity = ""
+	if is_instance_valid(room_recovery_map_button):
+		room_recovery_map_button.hide()
+
+
+func _room_publication_identity() -> String:
+	if run_state == null:
+		return ""
+	var environment := run_state.current_environment
+	return "%s|%s|%s|%s" % [
+		run_state.seed_text,
+		run_state.current_world_node_id(),
+		str(environment.get("id", "")),
+		str(environment.get("current_layer_id", "")),
+	]
+
+
+func _room_recovery_active_for_current_room() -> bool:
+	return run_state != null and room_recovery_generation > 0 \
+		and room_recovery_generation == room_publication_generation \
+		and room_recovery_identity == _room_publication_identity()
+
+
+func _room_publication_save_blocked() -> bool:
+	return room_publication_generation > room_publication_checked_generation \
+		or _room_recovery_active_for_current_room()
+
+
+func _check_published_room_once() -> void:
+	if room_publication_generation <= room_publication_checked_generation:
+		return
+	if current_screen not in [SCREEN_ENVIRONMENT, SCREEN_RESULT] \
+			or current_game != null or travel_transition_active or game_exit_settle_active:
+		return
+	if run_state == null or run_state.is_terminal() or _is_meta_session() \
+			or dev_game_test_mode or dev_environment_test_mode or _is_environment_test_session() \
+			or run_state.current_environment.is_empty():
+		room_publication_checked_generation = room_publication_generation
+		return
+	var published_ids: Dictionary = {}
+	var active_count := 0
+	var scene_objects: Array = environment_canvas.foundation_scene_objects if environment_canvas != null and environment_canvas.uses_foundation_snapshot else []
+	for value in scene_objects:
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var object_data: Dictionary = value
+		if not bool(object_data.get("interactive", false)) or bool(object_data.get("decorative", false)) \
+				or bool(object_data.get("disabled", false)):
+			continue
+		var object_id := str(object_data.get("id", "")).strip_edges()
+		if object_id.is_empty():
+			continue
+		published_ids[object_id] = true
+		active_count += 1
+	var usable_exit := false
+	for value in _interactable_object_view_list():
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var record: Dictionary = value
+		var object_id := str(record.get("object_id", ""))
+		if not published_ids.has(object_id) or not bool(record.get("enabled", false)) \
+				or bool(record.get("room_geometry_rejected", false)) \
+				or str(record.get("presentation_mode", "room")) != "room":
+			continue
+		if object_id.begins_with("travel:") or object_id.begins_with("environment_layer:"):
+			usable_exit = true
+			break
+	room_publication_checked_generation = room_publication_generation
+	# An interruption may temporarily lock Leave while still presenting real
+	# actions. Only the jointly empty/no-exit state is an emergency; never change
+	# normal travel costs, lock rules, or sealed scenario authority here.
+	if active_count > 0 or usable_exit:
+		return
+	room_recovery_generation = room_publication_generation
+	room_recovery_identity = _room_publication_identity()
+	save_status_message = "Room unavailable; existing save retained."
+	call_deferred("_present_room_recovery", room_recovery_generation)
+
+
+func _room_recovery_map_has_route() -> bool:
+	if run_state == null or not run_state.has_world_map():
+		return false
+	for value in _travel_choice_view_list():
+		if typeof(value) == TYPE_DICTIONARY and bool((value as Dictionary).get("enabled", false)):
+			return true
+	return false
+
+
+func _present_room_recovery(expected_generation: int) -> void:
+	if expected_generation != room_recovery_generation or not _room_recovery_active_for_current_room():
+		return
+	if not _blocking_modal_message().is_empty():
+		return
+	if _room_recovery_map_has_route() and open_world_map(true, true):
+		_show_message("This room could not be displayed. Your saved run was kept; choose a safe destination on the map.")
+		return
+	_return_to_preserved_save_menu("This room and its routes could not be displayed. Your existing save, if any, was not replaced.")
+
+
+func _return_to_preserved_save_menu(message: String) -> void:
+	pending_autosave = false
+	pending_autosave_after_frame = -1
+	pending_autosave_not_before_msec = 0
+	pending_autosave_first_queued_msec = 0
+	_clear_input_guard_modal_state()
+	run_state = null
+	_set_current_screen(SCREEN_START)
+	_refresh()
+	_show_message(message)
+
+
+func _refresh_room_recovery_map_control() -> void:
+	var needed := _room_recovery_active_for_current_room() \
+		and current_screen in [SCREEN_ENVIRONMENT, SCREEN_RESULT] \
+		and not _world_map_overlay_is_visible()
+	if not needed:
+		if is_instance_valid(room_recovery_map_button):
+			room_recovery_map_button.hide()
+		return
+	if not is_instance_valid(room_recovery_map_button):
+		room_recovery_map_button = _button("Room unavailable - Open map", Callable(self, "_open_room_recovery_map"))
+		room_recovery_map_button.name = "RoomRecoveryMap"
+		room_recovery_map_button.z_index = 100
+		run_screen.add_child(room_recovery_map_button)
+		room_recovery_map_button.set_anchors_and_offsets_preset(Control.PRESET_CENTER_TOP)
+		room_recovery_map_button.grow_horizontal = Control.GROW_DIRECTION_BOTH
+		room_recovery_map_button.position.y = 120
+	room_recovery_map_button.show()
+	run_screen.move_child(room_recovery_map_button, -1)
+
+
+func _open_room_recovery_map() -> bool:
+	if not _room_recovery_active_for_current_room():
+		return false
+	_present_room_recovery(room_recovery_generation)
+	return _world_map_overlay_is_visible()
 
 
 func _recover_unplayable_environment() -> bool:
@@ -3056,13 +3210,19 @@ func wait_out_police_sweep() -> bool:
 	return true
 
 
-func open_world_map(force_closing_allowed: bool = false) -> bool:
+func open_world_map(force_closing_allowed: bool = false, emergency_room_recovery: bool = false) -> bool:
 	if run_state == null:
 		return false
 	if _is_environment_test_session():
 		open_environment_test_menu()
 		return true
-	if _guard_player_input_route(force_closing_allowed, "map"):
+	# This path is reached only after a failed published-room check. The ordinary
+	# input guard can itself be blocked by closing time or coach state, so do not
+	# let it prevent the sole safe exit from an unrendered room.
+	if emergency_room_recovery:
+		if not _room_recovery_active_for_current_room() or not _blocking_modal_message().is_empty():
+			return false
+	elif _guard_player_input_route(force_closing_allowed, "map"):
 		return false
 	world_map_previous_focus_owner = get_viewport().gui_get_focus_owner() if modal_focus_scope == null else null
 	# The map becomes the sole interaction surface. Leaving the room selection
@@ -3411,6 +3571,7 @@ func resolve_event_choice(event_id: String, choice_id: String, lifecycle_rollbac
 	var result_deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
 	var layer_discovery: Dictionary = result_deltas.get("environment_layer_discovery", {}) if typeof(result_deltas.get("environment_layer_discovery", {})) == TYPE_DICTIONARY else {}
 	var discovered_layer_id := str(layer_discovery.get("layer_id", "")).strip_edges()
+	var entered_layer := false
 	if bool(result.get("ok", false)) and bool(layer_discovery.get("enter", false)) and not discovered_layer_id.is_empty():
 		var layer_entry := generator.enter_environment_layer(run_state, discovered_layer_id, false)
 		if not bool(layer_entry.get("ok", false)):
@@ -3418,6 +3579,7 @@ func resolve_event_choice(event_id: String, choice_id: String, lifecycle_rollbac
 			_show_message(str(layer_entry.get("message", "The event could not enter its destination room safely.")))
 			_refresh()
 			return {"ok": false, "errors": [str(layer_entry.get("message", "The event could not enter its destination room safely."))]}
+		entered_layer = true
 	if bool(result.get("ok", false)) and bool(result.get("duel_ready", false)):
 		var room_result := generator.enter_grand_casino_room_result(run_state, RunState.GRAND_CASINO_BACK_ROOM_ARCHETYPE_ID)
 		if not bool(room_result.get("ok", false)):
@@ -3437,6 +3599,12 @@ func resolve_event_choice(event_id: String, choice_id: String, lifecycle_rollbac
 		and bool(run_state.narrative_flags.get("grand_casino_showdown_active", false))
 		and not run_state.is_terminal()
 	)
+	# The room is not published while a live game or chained showdown event owns
+	# the surface. Arm its check only when this resolution will return to a room;
+	# game exit independently arms the next visible-room publication.
+	if entered_layer and not bool(result.get("duel_ready", false)) \
+			and not showdown_continues and not return_to_game_after_event:
+		_queue_room_publication_check()
 	_show_item_found_popups(result, inventory_before)
 	_start_conclusion_animation(result, popup_rect)
 	_play_result_environment_audio_cue(result)
@@ -6214,6 +6382,10 @@ func _write_foundation_run_save(status_text: String = "Autosaved.", synchronous:
 	if save_service == null:
 		save_status_message = "Autosave unavailable."
 		return false
+	if _room_publication_save_blocked():
+		if synchronous:
+			save_status_message = "Room check pending; existing save retained."
+		return false
 	if synchronous and save_service.async_save_in_flight():
 		var pending_error := save_service.wait_for_async_save()
 		if pending_error != OK:
@@ -6256,6 +6428,8 @@ func _write_foundation_run_save(status_text: String = "Autosaved.", synchronous:
 func _flush_pending_autosave_if_ready() -> void:
 	_poll_async_foundation_save()
 	if not pending_autosave:
+		return
+	if _room_publication_save_blocked():
 		return
 	if autosave_retry_blocked:
 		return
@@ -6530,6 +6704,8 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	# the restored room, including Crew contacts added by restore.
 	run_state.reconcile_current_environment_object_manifest()
 	run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(run_state.current_environment, library)
+	if not broken_environment_requires_map:
+		_queue_room_publication_check()
 	_set_current_screen(SCREEN_TRAVEL if broken_environment_requires_map else SCREEN_ENVIRONMENT)
 	if broken_environment_requires_map:
 		_show_message("That saved room was incomplete. Choose a safe destination on the map.")
@@ -6538,8 +6714,10 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	if recovered_broken_environment and not broken_environment_requires_map:
 		_autosave_foundation_run("Recovered room autosaved.")
 	if broken_environment_requires_map:
-		open_world_map(true)
-		return true
+		if _room_recovery_map_has_route() and open_world_map(true):
+			return true
+		_return_to_preserved_save_menu("That saved room has no usable map route. Your previous save was kept unchanged.")
+		return false
 	if environment_canvas != null:
 		environment_canvas.settle_person_transits()
 	_refresh()
@@ -7728,6 +7906,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	if not ignored_talk_entries.is_empty():
 		_apply_talk_ignore_penalty(ignored_talk_entries, "travel")
 	last_hook_result = travel_result.duplicate(true)
+	_queue_room_publication_check()
 	_set_current_screen(SCREEN_RESULT)
 	_show_message(str(travel_result.get("message", "Travel complete: %s." % destination_name)))
 	_advance_alcohol_absorption()
@@ -7742,6 +7921,12 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	if not web_atomic_travel and travel_transition_active:
 		_update_travel_transition("Arrived at %s" % destination_name, "The room is ready.")
 	_hide_travel_transition()
+	if not web_atomic_travel:
+		# The normal desktop render above happened behind the travel overlay.
+		# Inspect that published canvas at the first unblocked boundary instead
+		# of waiting for an unrelated input or animation refresh.
+		_check_published_room_once()
+		_refresh_room_recovery_map_control()
 	_queue_normal_grand_host_greeting(previous_environment)
 	var travel_context := {
 		"trigger": "travel",
@@ -11189,6 +11374,8 @@ func _refresh() -> void:
 		_show_message(scenario_transition_message)
 		_autosave_foundation_run("Room presentation saved.")
 	_render_environment_screen()
+	_check_published_room_once()
+	_refresh_room_recovery_map_control()
 	_refresh_crew_room_recovery_control()
 	if _run_menu_is_visible():
 		_refresh_run_menu()
@@ -11235,6 +11422,7 @@ func _recover_crew_room_exit() -> bool:
 	_show_message(str(result.get("message", "The room could not be recovered; your run was kept intact.")))
 	if bool(result.get("ok", false)):
 		clear_interaction_focus()
+		_queue_room_publication_check()
 		_autosave_foundation_run("Returned to casino; progress kept.")
 	_refresh()
 	return bool(result.get("ok", false))
@@ -15287,6 +15475,7 @@ func _enter_environment_layer(layer_id: String) -> bool:
 		_refresh()
 		return false
 	clear_interaction_focus()
+	_queue_room_publication_check()
 	_set_current_screen(SCREEN_ENVIRONMENT)
 	_show_message(str(result.get("message", "You pass through the interior door.")))
 	_autosave_foundation_run("Autosaved.")
@@ -17274,6 +17463,11 @@ func _apply_meta_collection_loadout_to_run() -> void:
 
 func _save_foundation_run_before_leaving(status_text: String) -> bool:
 	if run_state == null or _is_meta_session() or dev_game_test_mode:
+		return true
+	if _room_recovery_active_for_current_room():
+		# Keep the last loadable generation instead of saving the rejected room.
+		pending_autosave = false
+		pending_autosave_after_frame = -1
 		return true
 	if run_state.is_tutorial_run():
 		return _complete_tutorial_profile() and _clear_tutorial_resume_slot()
