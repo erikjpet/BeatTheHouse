@@ -177,8 +177,8 @@
     "dialogue_id": "tutorial_pal_guidance",
     "dialogue_node": "gas_machine",
     "trigger": {"depends_on": ["tutorial_route_choice"], "screen": "ENVIRONMENT", "environment_archetype": "gas_station_casino", "state_predicates": []},
-    "anchor": {"kind": "interactable_object", "id": "character:nell"},
-    "copy": "Buy Pull Tabs from Nell.",
+    "anchor": {"kind": "interactable_object", "id": "game:pull_tabs"},
+    "copy": "Open the Pull Tabs machine.",
     "completion": {"type": "anchored_action", "action_id": "game:pull_tabs"},
     "gating": {"allowed_action_ids": ["game:pull_tabs"]}
   },

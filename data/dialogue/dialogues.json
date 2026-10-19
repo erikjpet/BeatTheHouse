@@ -1031,8 +1031,8 @@
         "choices": [{"id": "continue", "label": "Choose a route", "effects": {}, "end": true}]
       },
       "gas_machine": {
-        "text": "At Nell's counter, choose Buy Pull Tabs. Outcomes are fixed when each ticket is bought; peeling only reveals them. Your glasses mark a real winner in the stack.",
-        "choices": [{"id": "continue", "label": "Buy from Nell", "effects": {}, "end": true}]
+        "text": "Open the Pull Tabs machine to buy tickets. Nell cashes in filed winners later. Outcomes are fixed at purchase; peeling only reveals them. Your glasses mark a real winner in the stack.",
+        "choices": [{"id": "continue", "label": "Open Pull Tabs", "effects": {}, "end": true}]
       },
       "gas_peek": {
         "text": "Without a Tab Detector, this says PEEK. Each try has a 50% chance to highlight the nearest winner, but always adds Heat: 8%, then 9%, 10%, and 11%. Peek four times and watch the meter.",
