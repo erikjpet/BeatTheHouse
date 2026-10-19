@@ -11225,6 +11225,7 @@
       "repack_scenario_conflicts": true,
       "class_overrides": {
         "environment_layer:casino": "doorway",
+        "event:recruitment_knuckles": "standing_person",
         "event:recruitment_rook_leads": "standing_person",
         "event:town_rumor_staff": "standing_person",
         "punchline_bringer_show_task_0": "wall_mounted",
@@ -13341,6 +13342,8 @@
       },
       "object_family_ids": {
         "event:chain06_cass_first_contact": "event",
+        "event:recruitment_knuckles": "event",
+        "event:recruitment_rook_leads": "event",
         "event:scenario_headliner_cover": "scenario",
         "event:side_door": "fixed",
         "event:town_rumor_staff": "event",
@@ -13378,6 +13381,7 @@
       "class_overrides": {
         "environment_layer:back_room": "doorway",
         "environment_layer:club": "doorway",
+        "event:recruitment_mags": "standing_person",
         "event:recruitment_rook_leads": "standing_person",
         "numbers:book": "surface_item",
         "punchline_greased_week_aftermath_chain_exposed_prop": "wall_mounted",
@@ -15067,6 +15071,8 @@
       },
       "object_family_ids": {
         "event:town_rumor_staff": "event",
+        "event:recruitment_mags": "event",
+        "event:recruitment_rook_leads": "event",
         "game:slot": "fixed",
         "lender:street_lender": "fixed",
         "numbers:book": "fixed",
