@@ -3371,6 +3371,33 @@ func _scenario_authoritative_environment_for_finalization(definition: Dictionary
 					restored_event_ids.append(resolved_event_id)
 		result["event_ids"] = restored_event_ids
 		result["resolved_event_ids"] = []
+	# Buying an offer consumes live room membership, not the immutable baseline
+	# that authenticated the scenario on entry. Reconstruct only the offer
+	# identities recorded by that seal on this detached proof envelope. In
+	# particular, the last purchase must not erase the baseline merchant row.
+	# These are never published as live stock, and the rebuilt inventory must
+	# still match the original version/digest below (including exact geometry).
+	var semantic := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(current_environment.get("scenario_sequence_state", {})).get("semantic_state", {}))
+	var expected_version := int(current_environment.get("scenario_semantic_inventory_version", 0))
+	var expected_digest := str(current_environment.get("scenario_semantic_digest", ""))
+	if expected_version > 0 and not expected_digest.is_empty() \
+			and int(semantic.get("inventory_schema_version", 0)) == expected_version \
+			and str(semantic.get("inventory_digest", "")) == expected_digest:
+		var baseline_offers := JsonCoerceScript._copy_array(result.get("item_offers", []))
+		var offered_ids: Dictionary = {}
+		for offer_value in baseline_offers:
+			var offer := JsonCoerceScript._copy_dict(offer_value)
+			offered_ids[str(offer.get("object_id", "item:%s" % str(offer.get("id", ""))))] = true
+		var targets := JsonCoerceScript._copy_dict(semantic.get("target_inventory", {}))
+		for identity_value in JsonCoerceScript._copy_array(targets.get("scene_objects", [])):
+			var identity := str(identity_value)
+			if not identity.begins_with("base::item:"):
+				continue
+			var object_id := identity.trim_prefix("base::")
+			if not offered_ids.has(object_id):
+				baseline_offers.append({"id": object_id.trim_prefix("item:"), "object_id": object_id})
+				offered_ids[object_id] = true
+		result["item_offers"] = baseline_offers
 	var baseline_fields := {
 		"scenario_sequence_base_game_ids": "game_ids",
 		"scenario_sequence_base_service_ids": "service_ids",
