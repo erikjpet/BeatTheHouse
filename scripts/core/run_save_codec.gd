@@ -194,13 +194,18 @@ static func _z85_decode(encoded_text: String, expected_size: int) -> PackedByteA
 	if encoded.is_empty() or encoded.size() % 5 != 0 or expected_size <= 0:
 		return PackedByteArray()
 	var alphabet := Z85_ALPHABET.to_ascii_buffer()
+	var digit_by_byte := PackedByteArray()
+	digit_by_byte.resize(256)
+	digit_by_byte.fill(255)
+	for alphabet_index in range(alphabet.size()):
+		digit_by_byte[alphabet[alphabet_index]] = alphabet_index
 	var decoded := PackedByteArray()
 	decoded.resize((encoded.size() / 5) * 4)
 	for group in range(encoded.size() / 5):
 		var value := 0
 		for digit_index in range(5):
-			var digit := alphabet.find(encoded[group * 5 + digit_index])
-			if digit < 0:
+			var digit := int(digit_by_byte[encoded[group * 5 + digit_index]])
+			if digit == 255:
 				return PackedByteArray()
 			value = value * 85 + digit
 		for offset in range(4):
