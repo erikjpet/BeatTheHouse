@@ -5576,7 +5576,9 @@ func _draw_selected_object_info() -> void:
 	var lines: Array = info.get("lines", [])
 	var accent := _color_for_object_type(object_type)
 	var header_color := C_WHITE if title.is_empty() else accent
-	draw_rect(card, Color(0.0, 0.0, 0.0, 0.82))
+	# Room art and labels must not show through selected-object details, including
+	# shop cards brightened by a guided highlight.
+	draw_rect(card, Color(0.0, 0.0, 0.0, 1.0))
 	draw_rect(card, Color(accent.r, accent.g, accent.b, 0.30))
 	draw_rect(card, Color(accent.r, accent.g, accent.b, 0.82), false, 1)
 	draw_line(card.position + Vector2(0, OBJECT_INFO_HEADER_RULE_Y), Vector2(card.end.x, card.position.y + OBJECT_INFO_HEADER_RULE_Y), Color(accent.r, accent.g, accent.b, 0.34), 1)
