@@ -1,0 +1,705 @@
+{
+  "base_commit": "f0bdc406af525ed132c816d06aea6c9ddde6f60b",
+  "production_file": "scripts/core/run_state.gd",
+  "production_file_sha256": "ebf52dd1bb178b33db59e5019acbdbd65b1a7ad269f4f969d4749b7991b45ca6",
+  "session": "bth061-b04-20261018",
+  "method": "In-game verification through the unchanged command-file bridge; selected public observations, not automated expectations.",
+  "records": [
+    {
+      "ordinal": 182,
+      "command": "click_button CONTINUE",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 54,
+        "chips": 0,
+        "heat": 2,
+        "location_archetype": "kitty_cat_lounge",
+        "screen": "ENVIRONMENT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 18,
+      "rendered_object_ids": [
+        "staff:kitty_bar_host",
+        "character:dot",
+        "event:grand_casino_invite",
+        "event:side_door",
+        "event:town_rumor_staff",
+        "game:bar_dice",
+        "game:roulette",
+        "game:video_poker",
+        "lender:the_crew",
+        "scenario::kitty_cat_lounge_slow_night_maintenance_panel",
+        "service:house_drink",
+        "service:kitty_champagne",
+        "travel:leave",
+        "scenario::kitty_cat_lounge_slow_night_mini_stage",
+        "scenario::kitty_cat_lounge_slow_night_slow_night_host",
+        "scenario::kitty_cat_lounge_slow_night_booth_regular",
+        "scenario::kitty_cat_lounge_slow_night_closed_section_ropes",
+        "scenario::kitty_cat_lounge_slow_night_safe_exit"
+      ],
+      "inventory_items": [
+        {
+          "id": "ledger_pencil",
+          "count": 1
+        }
+      ],
+      "popup_visible": false,
+      "feedback": {
+        "text": "Bought Ledger Pencil for 17.",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Loaded run.",
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 184,
+      "command": "click_button Inventory",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 54,
+        "chips": 0,
+        "heat": 2,
+        "location_archetype": "kitty_cat_lounge",
+        "screen": "ENVIRONMENT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 18,
+      "rendered_object_ids": [
+        "staff:kitty_bar_host",
+        "character:dot",
+        "event:grand_casino_invite",
+        "event:side_door",
+        "event:town_rumor_staff",
+        "game:bar_dice",
+        "game:roulette",
+        "game:video_poker",
+        "lender:the_crew",
+        "scenario::kitty_cat_lounge_slow_night_maintenance_panel",
+        "service:house_drink",
+        "service:kitty_champagne",
+        "travel:leave",
+        "scenario::kitty_cat_lounge_slow_night_mini_stage",
+        "scenario::kitty_cat_lounge_slow_night_slow_night_host",
+        "scenario::kitty_cat_lounge_slow_night_booth_regular",
+        "scenario::kitty_cat_lounge_slow_night_closed_section_ropes",
+        "scenario::kitty_cat_lounge_slow_night_safe_exit"
+      ],
+      "inventory_items": [
+        {
+          "id": "ledger_pencil",
+          "count": 1
+        }
+      ],
+      "popup_visible": false,
+      "feedback": {
+        "text": "Bought Ledger Pencil for 17.",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Loaded run.",
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 187,
+      "command": "click_choice accept_invite",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 104,
+        "chips": 0,
+        "heat": 1,
+        "location_archetype": "kitty_cat_lounge",
+        "screen": "RESULT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 17,
+      "rendered_object_ids": [
+        "staff:kitty_bar_host",
+        "character:dot",
+        "event:side_door",
+        "event:town_rumor_staff",
+        "game:bar_dice",
+        "game:roulette",
+        "game:video_poker",
+        "service:house_drink",
+        "service:kitty_champagne",
+        "scenario::kitty_cat_lounge_slow_night_mini_stage",
+        "scenario::kitty_cat_lounge_slow_night_slow_night_host",
+        "scenario::kitty_cat_lounge_slow_night_booth_regular",
+        "scenario::kitty_cat_lounge_slow_night_closed_section_ropes"
+      ],
+      "inventory_items": [
+        {
+          "id": "ledger_pencil",
+          "count": 1
+        }
+      ],
+      "popup_visible": false,
+      "feedback": {
+        "text": "The Grand Casino opens, with a $50 first stake on the house. Cash change: +50.  $+50",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosave pending.",
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 194,
+      "command": "click_button CONTINUE",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 104,
+        "chips": 0,
+        "heat": 1,
+        "location_archetype": "kitty_cat_lounge",
+        "screen": "ENVIRONMENT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 17,
+      "rendered_object_ids": [
+        "staff:kitty_bar_host",
+        "character:dot",
+        "event:side_door",
+        "event:town_rumor_staff",
+        "game:bar_dice",
+        "game:roulette",
+        "game:video_poker",
+        "lender:the_crew",
+        "scenario::kitty_cat_lounge_slow_night_maintenance_panel",
+        "service:house_drink",
+        "service:kitty_champagne",
+        "travel:leave",
+        "scenario::kitty_cat_lounge_slow_night_mini_stage",
+        "scenario::kitty_cat_lounge_slow_night_slow_night_host",
+        "scenario::kitty_cat_lounge_slow_night_booth_regular",
+        "scenario::kitty_cat_lounge_slow_night_closed_section_ropes",
+        "scenario::kitty_cat_lounge_slow_night_safe_exit"
+      ],
+      "inventory_items": [
+        {
+          "id": "ledger_pencil",
+          "count": 1
+        }
+      ],
+      "popup_visible": false,
+      "feedback": {
+        "text": "Event: grand_casino_invite  $+50",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Loaded run.",
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 197,
+      "command": "click_button Travel",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 104,
+        "chips": 0,
+        "heat": 8,
+        "location_archetype": "grand_casino",
+        "screen": "RESULT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 23,
+      "rendered_object_ids": [
+        "casino_fixture:host_desk",
+        "staff:grand_casino_host",
+        "grand_living:rourke",
+        "event:recruitment_bishop",
+        "event:scenario_audit_roster",
+        "game:blackjack",
+        "game:craps",
+        "game:pull_tabs",
+        "game:slot",
+        "game:slot:2",
+        "game:slot:3",
+        "game:video_poker",
+        "scenario::grand_casino_convention_crowd_table_block",
+        "service:house_drink",
+        "travel:grand_casino_back_room",
+        "travel:grand_casino_cage",
+        "travel:grand_casino_high_limit",
+        "travel:leave",
+        "scenario::grand_casino_convention_crowd_machine_banks",
+        "scenario::grand_casino_convention_crowd_booking_board",
+        "scenario::grand_casino_convention_crowd_convention_coordinator",
+        "scenario::grand_casino_convention_crowd_safe_exit",
+        "scenario::grand_casino_convention_crowd_badge_delegations"
+      ],
+      "inventory_items": [
+        {
+          "id": "ledger_pencil",
+          "count": 1
+        }
+      ],
+      "popup_visible": false,
+      "feedback": {
+        "text": "Traveled to Grand Casino. 24 min, distance shakes most heat, risk +8.  Heat +8",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosave pending.",
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 204,
+      "command": "set_field seed BTH-061-STAB-B04-003",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 0,
+        "chips": 0,
+        "heat": 0,
+        "location_archetype": "",
+        "screen": "START",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 23,
+      "rendered_object_ids": [],
+      "inventory_items": [],
+      "popup_visible": false,
+      "feedback": {
+        "visible": false
+      },
+      "save_text": null,
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 218,
+      "command": "click_object item:ledger_pencil double",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 54,
+        "chips": 0,
+        "heat": 2,
+        "location_archetype": "kitty_cat_lounge",
+        "screen": "RESULT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 19,
+      "rendered_object_ids": [
+        "staff:kitty_bar_host",
+        "character:dot",
+        "event:grand_casino_invite",
+        "event:side_door",
+        "event:town_rumor_staff",
+        "game:bar_dice",
+        "game:roulette",
+        "game:video_poker",
+        "lender:the_crew",
+        "scenario::kitty_cat_lounge_slow_night_maintenance_panel",
+        "service:house_drink",
+        "service:kitty_champagne",
+        "travel:leave",
+        "scenario::kitty_cat_lounge_slow_night_mini_stage",
+        "scenario::kitty_cat_lounge_slow_night_slow_night_host",
+        "scenario::kitty_cat_lounge_slow_night_booth_regular",
+        "scenario::kitty_cat_lounge_slow_night_closed_section_ropes",
+        "scenario::kitty_cat_lounge_slow_night_safe_exit"
+      ],
+      "inventory_items": [
+        {
+          "id": "ledger_pencil",
+          "count": 1
+        }
+      ],
+      "popup_visible": false,
+      "feedback": {
+        "text": "Bought Ledger Pencil for 17.  $-17",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosave pending.",
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 220,
+      "command": "click_choice accept_invite",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 104,
+        "chips": 0,
+        "heat": 1,
+        "location_archetype": "kitty_cat_lounge",
+        "screen": "RESULT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 18,
+      "rendered_object_ids": [
+        "staff:kitty_bar_host",
+        "character:dot",
+        "event:side_door",
+        "event:town_rumor_staff",
+        "game:bar_dice",
+        "game:roulette",
+        "game:video_poker",
+        "service:house_drink",
+        "service:kitty_champagne",
+        "scenario::kitty_cat_lounge_slow_night_mini_stage",
+        "scenario::kitty_cat_lounge_slow_night_slow_night_host",
+        "scenario::kitty_cat_lounge_slow_night_booth_regular",
+        "scenario::kitty_cat_lounge_slow_night_closed_section_ropes"
+      ],
+      "inventory_items": [
+        {
+          "id": "ledger_pencil",
+          "count": 1
+        }
+      ],
+      "popup_visible": false,
+      "feedback": {
+        "text": "The Grand Casino opens, with a $50 first stake on the house. Cash change: +50.  $+50",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosave pending.",
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 226,
+      "command": "set_field seed BTH-061-STAB-B04-004",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 0,
+        "chips": 0,
+        "heat": 0,
+        "location_archetype": "",
+        "screen": "START",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 17,
+      "rendered_object_ids": [],
+      "inventory_items": [],
+      "popup_visible": false,
+      "feedback": {
+        "visible": false
+      },
+      "save_text": null,
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 241,
+      "command": "click_choice not_yet",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 60,
+        "chips": 0,
+        "heat": 2,
+        "location_archetype": "kitty_cat_lounge",
+        "screen": "RESULT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 22,
+      "rendered_object_ids": [
+        "item:creased_luck_card",
+        "shopkeeper:merchant",
+        "numbers:silas",
+        "staff:kitty_bar_host",
+        "character:dot",
+        "event:grand_casino_invite",
+        "event:rowdy_regular",
+        "event:scenario_bachelorette_storm_table",
+        "game:bar_dice",
+        "game:roulette",
+        "game:video_poker",
+        "scenario::kitty_cat_lounge_bachelorette_storm_party_leader",
+        "service:house_drink",
+        "service:kitty_champagne",
+        "scenario::kitty_cat_lounge_bachelorette_storm_safe_exit",
+        "scenario::kitty_cat_lounge_bachelorette_storm_floor_recovery_host"
+      ],
+      "inventory_items": [],
+      "popup_visible": false,
+      "feedback": {
+        "text": "The offer waits for you.",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosave pending.",
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 243,
+      "command": "click_object item:creased_luck_card double",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 44,
+        "chips": 0,
+        "heat": 1,
+        "location_archetype": "kitty_cat_lounge",
+        "screen": "RESULT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 21,
+      "rendered_object_ids": [
+        "numbers:silas",
+        "staff:kitty_bar_host",
+        "character:dot",
+        "event:grand_casino_invite",
+        "event:rowdy_regular",
+        "event:scenario_bachelorette_storm_table",
+        "event:town_rumor_staff",
+        "game:bar_dice",
+        "game:roulette",
+        "game:video_poker",
+        "scenario::kitty_cat_lounge_bachelorette_storm_party_leader",
+        "service:house_drink",
+        "service:kitty_champagne",
+        "scenario::kitty_cat_lounge_bachelorette_storm_safe_exit",
+        "scenario::kitty_cat_lounge_bachelorette_storm_floor_recovery_host",
+        "scenario::kitty_cat_lounge_bachelorette_storm_party_prop_trunk"
+      ],
+      "inventory_items": [
+        {
+          "id": "creased_luck_card",
+          "count": 1
+        }
+      ],
+      "popup_visible": false,
+      "feedback": {
+        "text": "Bought Creased Luck Card for 16.  $-16",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosave pending.",
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 248,
+      "command": "click_button CONTINUE",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 44,
+        "chips": 0,
+        "heat": 1,
+        "location_archetype": "kitty_cat_lounge",
+        "screen": "ENVIRONMENT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 20,
+      "rendered_object_ids": [
+        "event:scenario_bachelorette_storm_table",
+        "numbers:silas",
+        "staff:kitty_bar_host",
+        "character:dot",
+        "event:grand_casino_invite",
+        "event:rowdy_regular",
+        "event:town_rumor_staff",
+        "game:bar_dice",
+        "game:roulette",
+        "game:video_poker",
+        "lender:the_crew",
+        "scenario::kitty_cat_lounge_bachelorette_storm_party_leader",
+        "service:house_drink",
+        "service:kitty_champagne",
+        "travel:leave",
+        "scenario::kitty_cat_lounge_bachelorette_storm_safe_exit",
+        "scenario::kitty_cat_lounge_bachelorette_storm_floor_recovery_host",
+        "scenario::kitty_cat_lounge_bachelorette_storm_bar_route_rope",
+        "scenario::kitty_cat_lounge_bachelorette_storm_party_prop_trunk",
+        "scenario::kitty_cat_lounge_bachelorette_storm_missing_guest_marker"
+      ],
+      "inventory_items": [
+        {
+          "id": "creased_luck_card",
+          "count": 1
+        }
+      ],
+      "popup_visible": false,
+      "feedback": {
+        "text": "Bought Creased Luck Card for 16.",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Loaded run.",
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 250,
+      "command": "click_choice accept_invite",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 94,
+        "chips": 0,
+        "heat": 1,
+        "location_archetype": "kitty_cat_lounge",
+        "screen": "RESULT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 19,
+      "rendered_object_ids": [
+        "numbers:silas",
+        "staff:kitty_bar_host",
+        "character:dot",
+        "event:rowdy_regular",
+        "event:scenario_bachelorette_storm_table",
+        "event:town_rumor_staff",
+        "game:bar_dice",
+        "game:roulette",
+        "game:video_poker",
+        "scenario::kitty_cat_lounge_bachelorette_storm_party_leader",
+        "service:house_drink",
+        "service:kitty_champagne",
+        "scenario::kitty_cat_lounge_bachelorette_storm_safe_exit",
+        "scenario::kitty_cat_lounge_bachelorette_storm_floor_recovery_host",
+        "scenario::kitty_cat_lounge_bachelorette_storm_party_prop_trunk",
+        "scenario::kitty_cat_lounge_bachelorette_storm_missing_guest_marker"
+      ],
+      "inventory_items": [
+        {
+          "id": "creased_luck_card",
+          "count": 1
+        }
+      ],
+      "popup_visible": false,
+      "feedback": {
+        "text": "The Grand Casino opens, with a $50 first stake on the house. Cash change: +50.  $+50",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosave pending.",
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 253,
+      "command": "click_button Travel",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 94,
+        "chips": 0,
+        "heat": 8,
+        "location_archetype": "grand_casino",
+        "screen": "RESULT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 17,
+      "rendered_object_ids": [
+        "event:scenario_audit_roster",
+        "travel:grand_casino_cage",
+        "service:house_drink",
+        "game:pull_tabs",
+        "game:slot:2",
+        "game:slot:3",
+        "game:video_poker",
+        "game:slot",
+        "travel:grand_casino_high_limit",
+        "travel:grand_casino_back_room",
+        "game:blackjack",
+        "game:craps",
+        "casino_fixture:host_desk",
+        "event:recruitment_bishop",
+        "staff:grand_casino_host",
+        "grand_living:rourke",
+        "travel:leave"
+      ],
+      "inventory_items": [
+        {
+          "id": "creased_luck_card",
+          "count": 1
+        }
+      ],
+      "popup_visible": false,
+      "feedback": {
+        "text": "Traveled to Grand Casino. 24 min, distance shakes most heat, risk +8.  Heat +8",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Autosave pending.",
+      "map_targets": [],
+      "log_alerts": []
+    },
+    {
+      "ordinal": 257,
+      "command": "quit",
+      "accepted": true,
+      "reason": "",
+      "checkpoint": {
+        "bankroll": 94,
+        "chips": 0,
+        "heat": 8,
+        "location_archetype": "grand_casino",
+        "screen": "RESULT",
+        "event_id": "",
+        "world_map_visible": false
+      },
+      "room_object_count": 17,
+      "rendered_object_ids": [
+        "event:scenario_audit_roster",
+        "travel:grand_casino_cage",
+        "service:house_drink",
+        "game:pull_tabs",
+        "game:slot:2",
+        "game:slot:3",
+        "game:video_poker",
+        "game:slot",
+        "travel:grand_casino_high_limit",
+        "travel:grand_casino_back_room",
+        "game:blackjack",
+        "game:craps",
+        "casino_fixture:host_desk",
+        "event:recruitment_bishop",
+        "staff:grand_casino_host",
+        "grand_living:rourke",
+        "travel:leave"
+      ],
+      "inventory_items": [
+        {
+          "id": "creased_luck_card",
+          "count": 1
+        }
+      ],
+      "popup_visible": false,
+      "feedback": {
+        "text": "Traveled to Grand Casino. 24 min, distance shakes most heat, risk +8.  Heat +8",
+        "title": "Result",
+        "visible": true
+      },
+      "save_text": "Autosave On · Saved to Resume Slot.",
+      "map_targets": [],
+      "log_alerts": []
+    }
+  ]
+}
