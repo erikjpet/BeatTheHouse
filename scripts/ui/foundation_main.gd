@@ -1504,6 +1504,11 @@ func _room_recovery_active_for_current_room() -> bool:
 
 
 func _room_publication_save_blocked() -> bool:
+	# A concluded run or non-play session has no room to publish. Its terminal
+	# persistence must not wait for an environment screen that will never appear.
+	if run_state == null or run_state.is_terminal() or _is_meta_session() \
+			or dev_game_test_mode or dev_environment_test_mode or _is_environment_test_session():
+		return false
 	return room_publication_generation > room_publication_checked_generation \
 		or _room_recovery_active_for_current_room()
 
@@ -1511,15 +1516,16 @@ func _room_publication_save_blocked() -> bool:
 func _check_published_room_once() -> void:
 	if room_publication_generation <= room_publication_checked_generation:
 		return
+	if run_state == null or run_state.is_terminal() or _is_meta_session() \
+			or dev_game_test_mode or dev_environment_test_mode or _is_environment_test_session():
+		room_publication_checked_generation = room_publication_generation
+		return
 	if current_screen not in [SCREEN_ENVIRONMENT, SCREEN_RESULT] \
 			or current_game != null or travel_transition_active or game_exit_settle_active:
 		return
-	if run_state == null or run_state.is_terminal() or _is_meta_session() \
-			or dev_game_test_mode or dev_environment_test_mode or _is_environment_test_session() \
-			or run_state.current_environment.is_empty():
+	if run_state.current_environment.is_empty():
 		room_publication_checked_generation = room_publication_generation
 		return
-	var published_ids: Dictionary = {}
 	var active_count := 0
 	var scene_objects: Array = environment_canvas.foundation_scene_objects if environment_canvas != null and environment_canvas.uses_foundation_snapshot else []
 	for value in scene_objects:
@@ -1532,26 +1538,12 @@ func _check_published_room_once() -> void:
 		var object_id := str(object_data.get("id", "")).strip_edges()
 		if object_id.is_empty():
 			continue
-		published_ids[object_id] = true
 		active_count += 1
-	var usable_exit := false
-	for value in _interactable_object_view_list():
-		if typeof(value) != TYPE_DICTIONARY:
-			continue
-		var record: Dictionary = value
-		var object_id := str(record.get("object_id", ""))
-		if not published_ids.has(object_id) or not bool(record.get("enabled", false)) \
-				or bool(record.get("room_geometry_rejected", false)) \
-				or str(record.get("presentation_mode", "room")) != "room":
-			continue
-		if object_id.begins_with("travel:") or object_id.begins_with("environment_layer:"):
-			usable_exit = true
-			break
 	room_publication_checked_generation = room_publication_generation
 	# An interruption may temporarily lock Leave while still presenting real
-	# actions. Only the jointly empty/no-exit state is an emergency; never change
-	# normal travel costs, lock rules, or sealed scenario authority here.
-	if active_count > 0 or usable_exit:
+	# actions. Only a room with no enabled published interaction is an emergency;
+	# never change normal travel costs, lock rules, or sealed scenario authority.
+	if active_count > 0:
 		return
 	room_recovery_generation = room_publication_generation
 	room_recovery_identity = _room_publication_identity()
