@@ -115,7 +115,14 @@ func _finish_async_save_result() -> Dictionary:
 	var result := async_result_box.duplicate(true)
 	result["completed"] = true
 	result["in_flight"] = false
-	if int(result.get("error", FAILED)) == OK and _worker_payload_loadable(ProjectSettings.globalize_path(run_save_path(async_slot_id))):
+	var installed_path := ProjectSettings.globalize_path(run_save_path(async_slot_id))
+	var validated_digest := str(result.get("validated_sha256", ""))
+	# The worker already validated the installed generation. Reuse that proof
+	# only for the same bytes; an external change still takes the full validator.
+	var same_validated_bytes := not validated_digest.is_empty() \
+		and FileAccess.file_exists(installed_path) \
+		and FileAccess.get_sha256(installed_path) == validated_digest
+	if int(result.get("error", FAILED)) == OK and (same_validated_bytes or _worker_payload_loadable(installed_path)):
 		_remember_primary_fingerprint(async_slot_id, run_save_path(async_slot_id))
 		result["ok"] = true
 	else:
@@ -124,6 +131,7 @@ func _finish_async_save_result() -> Dictionary:
 			result["error"] = ERR_FILE_CORRUPT
 			result["error_code"] = "installed_generation_invalid"
 		result["ok"] = false
+	result.erase("validated_sha256")
 	last_save_outcome = result.duplicate(true)
 	async_task_id = -1
 	async_result_box = {}
@@ -153,12 +161,14 @@ func _async_save_worker(runtime_snapshot: Dictionary, slot_id: String, path: Str
 		"run_state": (payload_result.get("payload", {}) as Dictionary).get("run_state", {}),
 	}
 	io_mutex.lock()
-	result_box["error"] = _write_payload_atomic(payload, path, backup_path, primary_trusted)
+	result_box["error"] = _write_payload_atomic(payload, path, backup_path, primary_trusted, result_box)
 	io_mutex.unlock()
 
 
-func _write_payload_atomic(payload: Dictionary, path: String, _backup_path: String, _primary_trusted: bool = false) -> Error:
-	var result := DurableStoreScript.write_json(path, payload, Callable(self, "_payload_dictionary_loadable"))
+func _write_payload_atomic(payload: Dictionary, path: String, _backup_path: String, _primary_trusted: bool = false, result_box: Dictionary = {}) -> Error:
+	var result := DurableStoreScript.write_json(path, payload, Callable(self, "_payload_dictionary_loadable"), true)
+	if bool(result.get("ok", false)):
+		result_box["validated_sha256"] = str(result.get("validated_sha256", ""))
 	return int(result.get("error", FAILED))
 
 

@@ -23,7 +23,7 @@ const TRANSITION_INSTALL_PRIMARY := "install_primary"
 const TRANSITION_VALIDATE_PRIMARY := "validate_primary"
 
 
-static func write_json(path: String, payload: Dictionary, validator: Callable = Callable()) -> Dictionary:
+static func write_json(path: String, payload: Dictionary, validator: Callable = Callable(), reuse_validated_image: bool = false) -> Dictionary:
 	var clean_path := path.strip_edges()
 	if clean_path.is_empty():
 		return _result(false, ERR_INVALID_PARAMETER, "empty_path", OUTCOME_NONE)
@@ -47,7 +47,7 @@ static func write_json(path: String, payload: Dictionary, validator: Callable = 
 		_remove_if_exists(temp_absolute)
 		return _result(false, write_error, "temporary_write_failed", OUTCOME_NONE)
 
-	var temporary := _read_generation(temp_absolute, validator)
+	var temporary := _read_generation(temp_absolute, validator, reuse_validated_image)
 	if not bool(temporary.get("loadable", false)):
 		_remove_if_exists(temp_absolute)
 		return _result(false, ERR_FILE_CORRUPT, "temporary_generation_invalid", OUTCOME_NONE)
@@ -123,7 +123,18 @@ static func write_json(path: String, payload: Dictionary, validator: Callable = 
 			return _result(false, restore_error, "primary_restore_failed", OUTCOME_NONE)
 		return _result(false, install_error, "primary_install_failed", OUTCOME_NONE)
 
-	var installed := _read_generation(clean_path, validator)
+	# The atomic rename installs the same temporary file already parsed and
+	# validated above. Reuse that proof only when the installed bytes still have
+	# the digest of the exact text that was validated; otherwise take the normal
+	# full-validation path so an external write cannot bypass the validator.
+	var validated_digest := str(temporary.get("validated_sha256", "")) if reuse_validated_image else ""
+	var installed_digest := FileAccess.get_sha256(absolute_path) if not validated_digest.is_empty() else ""
+	var installed_reused := not installed_digest.is_empty() and installed_digest == validated_digest
+	var installed: Dictionary
+	if installed_reused:
+		installed = {"exists": true, "loadable": true, "data": temporary.get("data", {}), "error": OK, "validated_sha256": validated_digest}
+	else:
+		installed = _read_generation(clean_path, validator, reuse_validated_image)
 	if _debug_transition_fails(TRANSITION_VALIDATE_PRIMARY) or not bool(installed.get("loadable", false)):
 		var restore_error := _restore_install_generations(
 			absolute_path, backup_absolute, backup_rollback_absolute,
@@ -137,7 +148,10 @@ static func write_json(path: String, payload: Dictionary, validator: Callable = 
 	# backup. Only now may the pre-transaction backup be discarded.
 	_remove_if_exists(backup_rollback_absolute)
 	_remove_if_exists(invalid_primary_rollback_absolute)
-	return _result(true, OK, "", OUTCOME_SAVED, installed.get("data", {}))
+	var saved_result := _result(true, OK, "", OUTCOME_SAVED, installed.get("data", {}))
+	if reuse_validated_image:
+		saved_result["validated_sha256"] = str(installed.get("validated_sha256", ""))
+	return saved_result
 
 
 static func read_json(path: String, validator: Callable = Callable()) -> Dictionary:
@@ -194,7 +208,7 @@ static func set_debug_fail_transition(transition: String) -> void:
 	debug_fail_transition = transition.strip_edges()
 
 
-static func _read_generation(path: String, validator: Callable) -> Dictionary:
+static func _read_generation(path: String, validator: Callable, capture_validated_sha256: bool = false) -> Dictionary:
 	var absolute_path := ProjectSettings.globalize_path(path)
 	if not FileAccess.file_exists(absolute_path):
 		return {"exists": false, "loadable": false, "data": {}}
@@ -212,7 +226,10 @@ static func _read_generation(path: String, validator: Callable) -> Dictionary:
 	var data: Dictionary = parser.data
 	if validator.is_valid() and not bool(validator.call(data)):
 		return {"exists": true, "loadable": false, "data": data, "error": ERR_FILE_CORRUPT}
-	return {"exists": true, "loadable": true, "data": data, "error": OK}
+	var result := {"exists": true, "loadable": true, "data": data, "error": OK}
+	if capture_validated_sha256:
+		result["validated_sha256"] = text.sha256_text()
+	return result
 
 
 static func _debug_transition_fails(transition: String) -> bool:
