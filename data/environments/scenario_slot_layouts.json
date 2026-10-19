@@ -13318,7 +13318,8 @@
         "delta_queen_engine_trouble_safe_exit|delta_scenario_safe_exit|exit_lane|": "side_door"
       },
       "scenario_instance_action_host_ids": {
-        "event:scenario_engine_trouble_repairs": "scenario::delta_queen_engine_trouble_engine_mate"
+        "event:scenario_engine_trouble_repairs": "scenario::delta_queen_engine_trouble_engine_mate",
+        "scenario::delta_queen_engine_trouble_task_2": "scenario::delta_queen_engine_trouble_evacuation_benches"
       },
       "scenario_instance_object_family_ids": {},
       "actor_routes": [],

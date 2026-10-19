@@ -574,6 +574,24 @@ static func _abstract_action_target(
 	base_records: Array,
 	surface_map: Dictionary
 ) -> String:
+	var exact_hosts := _dict(surface_map.get("scenario_instance_action_host_ids", {}))
+	if identity.begins_with("scenario::") and exact_hosts.has(identity):
+		var exact_host := str(exact_hosts.get(identity, "")).strip_edges()
+		var exact_actor := actors.has(exact_host)
+		var host_semantic := _dict(actors.get(exact_host, scenes.get(exact_host, {})))
+		if not host_semantic.is_empty() \
+				and bool(host_semantic.get("present", true)) \
+				and bool(host_semantic.get("visible", true)) \
+				and bool(host_semantic.get("enabled", true)) \
+				and EnvironmentSlotBinderScript.scenario_visual_requires_room_slot(surface_map, {
+					"identity": exact_host,
+					"semantic": host_semantic,
+					"actor": exact_actor,
+					"safe_exit": false,
+				}):
+			return exact_host
+		# Exact host authority must not fall back to an unrelated room object.
+		return ""
 	var best_identity := ""
 	var best_score := -100000
 	# Intent tokens come from the owner-facing command label. Stable ids share a
