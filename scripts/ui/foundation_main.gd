@@ -2394,16 +2394,18 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 		game.set_transient_state_key_context(previous_state_key_context)
 		_advance_alcohol_absorption()
 		var autosave_started_usec := Time.get_ticks_usec()
-		if current_game == null:
-			# A running world cabinet can settle several spins while the player is
-			# watching the room. Coalesce those generations into one detached save
-			# snapshot; capturing the entire late-run graph after every reel result
-			# caused the visible cadence hitch even though file I/O was asynchronous.
-			_queue_environment_runtime_autosave()
+		# A running world cabinet can settle several spins while the player is
+		# watching this room or a different game's surface. Keep the foreground
+		# game's checkpoint current, but coalesce the expensive detached save
+		# generations in both cases.
+		if current_game != null:
+			if not current_game.foundation_save_ready(run_state, run_state.current_environment):
+				_autosave_foundation_run("Autosaved.")
+			else:
+				_prepare_foundation_run_save()
+				_queue_environment_runtime_autosave()
 		else:
-			# An open game may own surface checkpoint state, so retain the ordinary
-			# immediate preparation boundary for the foreground presentation.
-			_autosave_foundation_run("Autosaved.")
+			_queue_environment_runtime_autosave()
 		environment_runtime_last_timing_usec = {
 			"schedule": schedule_finished_usec - frame_started_usec,
 			"resolve": resolve_finished_usec - resolve_started_usec,
