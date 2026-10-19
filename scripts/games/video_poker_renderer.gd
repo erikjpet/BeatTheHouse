@@ -209,7 +209,8 @@ func _draw_marquee(surface, state: Dictionary, palette: Dictionary) -> void:
 	var denom_rect := Rect2(714, 25, 78, 32)
 	surface.draw_rect(denom_rect, Color("#02050b"))
 	surface.draw_rect(denom_rect, primary, false, 2)
-	surface.surface_label_centered(str(state.get("coin_label", "1c")).to_upper(), denom_rect.grow(-4), 15, C_WHITE)
+	surface.surface_label_centered(str(state.get("coin_label", "1c")).to_upper(), Rect2(denom_rect.position + Vector2(4, 2), Vector2(70, 14)), 11, C_WHITE)
+	surface.surface_label_centered(_coin_cost_label(state), Rect2(denom_rect.position + Vector2(4, 17), Vector2(70, 11)), 8, secondary)
 
 
 func _draw_paytable(surface, state: Dictionary, palette: Dictionary) -> void:
@@ -416,7 +417,7 @@ func _draw_controls(surface, state: Dictionary, palette: Dictionary) -> void:
 	_button(surface, Rect2(44, y, 76, 40), "BET -", "video_poker_bet_down", 0, trim, betting)
 	_button(surface, Rect2(128, y, 76, 40), "BET +", "video_poker_bet_one", 0, trim, betting)
 	_button(surface, Rect2(212, y, 92, 40), "BET MAX", "video_poker_bet_max", 0, C_YELLOW, betting)
-	_button(surface, Rect2(312, y, 78, 40), str(state.get("coin_label", "1c")).to_upper(), "video_poker_denom", 0, secondary, betting)
+	_button(surface, Rect2(312, y, 78, 40), str(state.get("coin_label", "1c")).to_upper(), "video_poker_denom", 0, secondary, betting, _coin_cost_label(state))
 	var primary_label := "DRAW" if phase == "hold" else "DEAL"
 	var primary_action := "video_poker_draw" if phase == "hold" else "video_poker_deal"
 	_button(surface, Rect2(404, y - 3, 156, 46), primary_label, primary_action, 0, primary, phase != "double_up" and not result_hold)
@@ -448,13 +449,24 @@ func _draw_controls(surface, state: Dictionary, palette: Dictionary) -> void:
 	surface.surface_label("BET %s (%d COIN/HAND)" % [bet_amount_text, coins], Vector2(meters.position.x + 8, meters.position.y + 31), 9, C_CYAN)
 
 
-func _button(surface, rect: Rect2, label: String, action: String, index: int, accent: Color, enabled: bool) -> void:
+func _coin_cost_label(state: Dictionary) -> String:
+	# Keep the cabinet's saved denomination label; disclose its actual wager unit.
+	var coin_value := maxi(1, int(state.get("coin_value", 1)))
+	return "%d CH/COIN" % coin_value if str(state.get("wager_currency", "cash")) == "chips" else "$%d/COIN" % coin_value
+
+
+func _button(surface, rect: Rect2, label: String, action: String, index: int, accent: Color, enabled: bool, sub_label: String = "") -> void:
 	var hovered := enabled and bool(surface.surface_region_hovered(action, index))
 	var fill := Color(accent.r, accent.g, accent.b, 0.30 if hovered else (0.18 if enabled else 0.05))
 	surface.draw_rect(rect, Color("#02040a"))
 	surface.draw_rect(rect.grow(-3), fill)
 	surface.draw_rect(rect, C_WHITE if hovered else (accent if enabled else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.25)), false, 2)
-	surface.surface_label_centered(label, rect.grow(-5), 12, accent if enabled else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.35))
+	var label_color := accent if enabled else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.35)
+	if sub_label.is_empty():
+		surface.surface_label_centered(label, rect.grow(-5), 12, label_color)
+	else:
+		surface.surface_label_centered(label, Rect2(rect.position + Vector2(5, 4), Vector2(rect.size.x - 10, 16)), 10, label_color)
+		surface.surface_label_centered(sub_label, Rect2(rect.position + Vector2(5, 21), Vector2(rect.size.x - 10, 13)), 8, label_color)
 	if enabled:
 		surface.surface_add_exact_hit(rect, action, index)
 
