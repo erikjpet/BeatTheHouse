@@ -45,3 +45,44 @@ recovery, valid exit does not. `git diff --check` passed.
 
 Actual deployed NEXT verification is coordinated by the integrating site owner
 and is separate from these source/headless checks.
+
+
+## Continue-path follow-up
+
+A separate clean, isolated fixture exposed a concrete empty-room class at the
+actual `load_foundation_run()` boundary: seed `CREW-CONTINUE-REJECTED`, Rook Made
+standing at exactly 60 trust, Punchline Back Room. This deliberately established
+standing fixture is not claimed to be the user's original save or entry path.
+
+The saved room's derived placement hints did not describe the Crew contact
+records now produced by the current catalog. The loaded envelope initially
+validated, but live contact records `crew_contact_rook` and
+`recruitment_rook_leads` lacked manifest family/binding annotations; the strict
+live binder rejected the entire room presentation. Refreshing the derived
+physical envelope with the trusted current ContentLibrary before publishing the
+restored screen restores those records to existing authored event-reserve slots.
+It does not change gameplay arrays, payout rates, credentials or save progression.
+
+Actual SaveService + Foundation Continue verification in isolated persistence
+roots succeeded: SCREEN_ENVIRONMENT/back_room, cash $141, valid room records and
+casino exit, recovery button hidden. Cash, inventory, game clock and RNG were
+all identical before and after Continue. Evidence remains local in
+`crew-continue-final.log` and the isolated slot under
+`state/bth-next/crew-continue-clean-data`; no personal save was used.
+
+Remaining fallback limitation: fault-injected rejected geometry after Continue
+shows the recovery control, but a saved casino parent with the
+`punchline_high_stakes_night` immutable semantic baseline can itself fail strict
+validation: that baseline's captured rectangles omit Crew contact identities now
+required by its physical manifest. Direct saved-parent validation also fails.
+The recovery action correctly rolls back and preserves the active run instead
+of bypassing semantic validation. The general callback is therefore not claimed
+as verified for that parent state. Resolving it requires a separately justified
+semantic-baseline compatibility correction; this follow-up does not alter or
+silently reseal immutable scenario authority.
+
+The integrating owner separately captured an ordinary Gas Station web save.
+Actual native Continue of those exact bytes renders its games, scenario objects,
+Nell and Leave with no geometry rejections and $93 preserved. The owner confirmed
+that the browser view becomes populated after its initial presentation delay.
+That case is not evidence for the Crew binding defect.

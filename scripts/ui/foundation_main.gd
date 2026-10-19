@@ -6523,6 +6523,11 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 		else:
 			_route_failed_run_if_needed()
 		return true
+	# Saved placement hints describe the old catalog projection. Rebuild the
+	# derived physical envelope with the trusted current catalog before publishing
+	# the restored room, including Crew contacts added by restore.
+	run_state.reconcile_current_environment_object_manifest()
+	run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(run_state.current_environment, library)
 	_set_current_screen(SCREEN_TRAVEL if broken_environment_requires_map else SCREEN_ENVIRONMENT)
 	if broken_environment_requires_map:
 		_show_message("That saved room was incomplete. Choose a safe destination on the map.")
