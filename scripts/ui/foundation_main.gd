@@ -18208,6 +18208,10 @@ func _enter_meta_location(location_id: String, tutorial_handoff: bool = false) -
 		clean_location = META_LOCATION_HOME
 	if library == null:
 		_initialize_foundation()
+	if clean_location == pawn_location:
+		# Sal's counter and pending buyback use authored dialogue, which is absent
+		# from the lightweight start-menu catalog on a cold meta-shop visit.
+		_ensure_full_content_library_loaded()
 	if meta_collection_service == null:
 		_initialize_meta_collection()
 	var rollback := _foundation_lifecycle_snapshot()
