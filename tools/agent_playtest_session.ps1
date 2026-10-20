@@ -96,22 +96,67 @@ function Set-AtomicJsonFile {
 }
 
 function Add-NewLogAlerts {
-    param([string]$ResultPath)
+    param(
+        [string]$ResultPath,
+        [string]$ResultText,
+        $ResultObject,
+        [datetime]$Deadline
+    )
+    if ((Get-Date) -ge $Deadline) { throw "Command deadline elapsed before log post-processing; raw result remains at '$ResultPath'." }
+    if ($ResultObject.PSObject.Properties['log_alerts']) {
+        throw "Result '$ResultPath' already contains log_alerts; refusing to add a duplicate field."
+    }
     $cursor = @{ stdout = 0; stderr = 0 }
     if (Test-Path -LiteralPath $LogCursorPath) {
+        if ((Get-Item -LiteralPath $LogCursorPath).Length -gt 1KB) {
+            throw "Log cursor '$LogCursorPath' exceeds the bounded post-processing size."
+        }
         $saved = Get-Content -Raw -LiteralPath $LogCursorPath -Encoding utf8 | ConvertFrom-Json
         $cursor.stdout = [int]$saved.stdout
         $cursor.stderr = [int]$saved.stderr
     }
-    $stdoutLines = if (Test-Path -LiteralPath $StdoutPath) { @(Get-Content -LiteralPath $StdoutPath -Encoding utf8) } else { @() }
-    $stderrLines = if (Test-Path -LiteralPath $StderrPath) { @(Get-Content -LiteralPath $StderrPath -Encoding utf8) } else { @() }
+    foreach ($logPath in @($StdoutPath, $StderrPath)) {
+        if ((Test-Path -LiteralPath $logPath) -and (Get-Item -LiteralPath $logPath).Length -gt 8MB) {
+            throw "Log '$logPath' exceeds the bounded post-processing size; raw result remains at '$ResultPath'."
+        }
+    }
+    [string[]]$stdoutLines = @()
+    [string[]]$stderrLines = @()
+    if (Test-Path -LiteralPath $StdoutPath) { $stdoutLines = @(Get-Content -LiteralPath $StdoutPath -Encoding utf8) }
+    if (Test-Path -LiteralPath $StderrPath) { $stderrLines = @(Get-Content -LiteralPath $StderrPath -Encoding utf8) }
     $newLines = @()
     if ($stdoutLines.Count -gt $cursor.stdout) { $newLines += $stdoutLines[$cursor.stdout..($stdoutLines.Count - 1)] }
     if ($stderrLines.Count -gt $cursor.stderr) { $newLines += $stderrLines[$cursor.stderr..($stderrLines.Count - 1)] }
     $alerts = @($newLines | Where-Object { $_ -match 'SCRIPT ERROR|(^|\s)ERROR[: ]|(^|\s)WARNING[: ]' })
-    $result = Get-Content -Raw -LiteralPath $ResultPath -Encoding utf8 | ConvertFrom-Json
-    $result | Add-Member -NotePropertyName log_alerts -NotePropertyValue $alerts -Force
-    $result | ConvertTo-Json -Depth 100 | Set-Content -LiteralPath $ResultPath -Encoding utf8
+    # Preserve the Godot result structure without a full PowerShell JSON
+    # round-trip. The old depth-100 round-trip was the unbounded post-result
+    # path shared by the abandoned helpers.
+    $last = $ResultText.Length - 1
+    while ($last -ge 0 -and [char]::IsWhiteSpace($ResultText[$last])) { $last-- }
+    if ($last -lt 0 -or $ResultText[$last] -ne '}') { throw "Result '$ResultPath' is not a complete JSON object." }
+    $alertsJson = ConvertTo-Json -InputObject ([string[]]$alerts) -Compress -Depth 2
+    $first = 0
+    while ($first -lt $last -and [char]::IsWhiteSpace($ResultText[$first])) { $first++ }
+    if ($ResultText[$first] -ne '{') { throw "Result '$ResultPath' is not a JSON object." }
+    $first++
+    while ($first -lt $last -and [char]::IsWhiteSpace($ResultText[$first])) { $first++ }
+    $hasProperties = $first -lt $last
+    $separator = if ($hasProperties) { ',' } else { '' }
+    $updatedResult = $ResultText.Insert($last, "$separator`"log_alerts`":$alertsJson")
+    $token = "$PID-$([Guid]::NewGuid().ToString('N'))"
+    $temporaryPath = "$ResultPath.$token.tmp"
+    $backupPath = "$ResultPath.$token.bak"
+    $replaced = $false
+    try {
+        if ((Get-Date) -ge $Deadline) { throw "Command deadline elapsed during log post-processing; raw result remains at '$ResultPath'." }
+        [IO.File]::WriteAllText($temporaryPath, $updatedResult, [Text.UTF8Encoding]::new($false))
+        [IO.File]::Replace($temporaryPath, $ResultPath, $backupPath)
+        $replaced = $true
+    }
+    finally {
+        Remove-Item -LiteralPath $temporaryPath -ErrorAction SilentlyContinue
+        if ($replaced) { Remove-Item -LiteralPath $backupPath -ErrorAction SilentlyContinue }
+    }
     Set-AtomicJsonFile -Path $LogCursorPath -Value @{ stdout = $stdoutLines.Count; stderr = $stderrLines.Count }
 }
 
@@ -180,6 +225,31 @@ if ($Start) {
 }
 
 if ($PSBoundParameters.ContainsKey('Command')) {
+    if ($TimeoutSeconds -lt 1 -or $TimeoutSeconds -gt 3600) {
+        throw '-TimeoutSeconds must be between 1 and 3600 for a one-shot command.'
+    }
+    # A native timer can end this one-shot helper even if a PowerShell cmdlet
+    # stops returning. The Godot result and logs remain on disk for recovery.
+    Add-Type -TypeDefinition @'
+using System;
+using System.Threading;
+public static class AgentPlaytestProcessDeadline {
+    private static Timer _timer;
+    private static int _active;
+    public static void Arm(int milliseconds) {
+        Interlocked.Exchange(ref _active, 1);
+        _timer = new Timer(_ => {
+            if (Interlocked.Exchange(ref _active, 0) == 1) Environment.Exit(124);
+        }, null, milliseconds, Timeout.Infinite);
+    }
+    public static void Disarm() {
+        Interlocked.Exchange(ref _active, 0);
+        if (_timer != null) _timer.Dispose();
+    }
+}
+'@
+    [AgentPlaytestProcessDeadline]::Arm(($TimeoutSeconds + 5) * 1000)
+    try {
     if (-not (Get-SessionProcess)) { throw "Session '$Session' is not running; start it with -Start first." }
     $numbers = @(Get-ChildItem -LiteralPath $SessionRoot -Filter '*.command.txt' -ErrorAction SilentlyContinue | ForEach-Object { [int]$_.BaseName.Split('.')[0] })
     $next = if ($numbers.Count -eq 0) { 1 } else { ($numbers | Measure-Object -Maximum).Maximum + 1 }
@@ -205,10 +275,11 @@ if ($PSBoundParameters.ContainsKey('Command')) {
     while ((Get-Date) -lt $deadline -and -not $resultReady) {
         $process = Get-SessionProcess
         if (Test-Path -LiteralPath $resultPath) {
+            if ((Get-Item -LiteralPath $resultPath).Length -gt 8MB) { throw "Result '$resultPath' exceeds the bounded JSON size limit." }
             try {
                 $resultText = Get-Content -Raw -LiteralPath $resultPath -Encoding utf8
                 if (-not [string]::IsNullOrWhiteSpace($resultText)) {
-                    $null = $resultText | ConvertFrom-Json
+                    $resultObject = $resultText | ConvertFrom-Json
                     $resultReady = $true
                     break
                 }
@@ -222,8 +293,12 @@ if ($PSBoundParameters.ContainsKey('Command')) {
         Start-Sleep -Milliseconds 100
     }
     if (-not $resultReady) { throw "Command $stem did not produce complete JSON within $TimeoutSeconds seconds." }
-    Add-NewLogAlerts -ResultPath $resultPath
+    Add-NewLogAlerts -ResultPath $resultPath -ResultText $resultText -ResultObject $resultObject -Deadline $deadline
     Get-Content -Raw -LiteralPath $resultPath -Encoding utf8
+    }
+    finally {
+        [AgentPlaytestProcessDeadline]::Disarm()
+    }
 }
 
 if (-not $Start -and -not $PSBoundParameters.ContainsKey('Command')) {
