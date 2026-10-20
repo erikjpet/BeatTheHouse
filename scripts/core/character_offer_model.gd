@@ -46,20 +46,35 @@ static func _visit_id(run_state: RunState) -> String:
 	return "%s#%d" % [str(run_state.current_environment.get("id", "")), run_state.environment_travel_count()]
 
 
+static func _host_ids(offer: Dictionary, environment: Dictionary) -> Array:
+	var value: Variant = _dict(offer.get("hosts", {})).get(str(environment.get("archetype_id", "")), "")
+	if typeof(value) == TYPE_ARRAY:
+		return value
+	return [] if str(value).is_empty() else [str(value)]
+
+
 static func _host_id(offer: Dictionary, environment: Dictionary) -> String:
-	return str(_dict(offer.get("hosts", {})).get(str(environment.get("archetype_id", "")), ""))
+	var expected := _host_ids(offer, environment)
+	for value in _dict(environment.get("object_manifest", {})).get("rows", []):
+		var row := _dict(value)
+		var id := str(row.get("instance_object_id", row.get("object_id", "")))
+		if id in expected and bool(row.get("active", true)) and bool(row.get("physical", true)):
+			return id
+	return ""
 
 
 static func _present(offer: Dictionary, environment: Dictionary) -> bool:
-	var expected := _host_id(offer, environment)
-	if expected.is_empty():
-		return false
-	for value in _dict(environment.get("object_manifest", {})).get("rows", []):
-		var row := _dict(value)
-		if str(row.get("instance_object_id", row.get("object_id", ""))) == expected \
-				and bool(row.get("active", true)) and bool(row.get("physical", true)):
-			return true
-	return false
+	return not _host_id(offer, environment).is_empty()
+
+
+static func _character_definitions() -> Dictionary:
+	var characters := {}
+	for offer in _definitions_readonly():
+		var character_id := str(offer.get("character_id", ""))
+		if not characters.has(character_id):
+			characters[character_id] = []
+		characters[character_id].append(offer)
+	return characters
 
 
 # Remember failed rolls too. Eligibility changes within a visit never reroll.
@@ -70,11 +85,17 @@ static func synchronize(run_state: RunState) -> void:
 	var previous := _dict(run_state.narrative_flags.get(STATE_KEY, {}))
 	var cycles := previous.duplicate(true)
 	var now := run_state.game_clock_minutes
-	for offer in _definitions_readonly():
-		var character_id := str(offer.get("character_id", ""))
+	var characters := _character_definitions()
+	for character_id in characters:
+		var offers: Array = characters[character_id]
+		var offer: Dictionary = offers[0]
 		var cycle := Hours.operating_cycle_id(_cycle_archetype(offer), now)
 		var state := _dict(cycles.get(character_id, {})).duplicate(true)
-		var present := _present(offer, run_state.current_environment)
+		var present := false
+		for alternative in offers:
+			if _present(alternative, run_state.current_environment):
+				present = true
+				break
 		var venue := _archetype(str(run_state.current_environment.get("archetype_id", "")))
 		var open := Hours.environment_open_at(venue, now % 1440)
 		if str(state.get("status", "")) == "available" and (
@@ -87,7 +108,7 @@ static func synchronize(run_state: RunState) -> void:
 			rng.configure(Rng.derive_seed(run_state.seed_value, run_state.seed_value, "character_offer:%s:%s" % [character_id, cycle]))
 			var roll := rng.randi_range(1, 100)
 			state = {
-				"offer_id": str(offer.get("id", "")), "cycle_id": cycle,
+				"offer_id": str(offer.get("id", "")) if offers.size() == 1 else "", "cycle_id": cycle,
 				"roll": roll, "status": "available" if roll <= int(offer.get("chance_percent", 0)) else "missed",
 				"visit_id": _visit_id(run_state),
 			}
@@ -119,27 +140,69 @@ static func snapshot_flags(flags: Dictionary) -> Dictionary:
 	return result
 
 
-static func view_for_host(run_state: RunState, library: ContentLibrary, host: Dictionary) -> Dictionary:
+static func view_for_host(run_state: RunState, library: ContentLibrary, host: Dictionary, offer_eligibility: Callable = Callable()) -> Dictionary:
+	if not _can_view(run_state, library):
+		return {}
+	synchronize(run_state)
+	_select_for_host(run_state, library, host, offer_eligibility)
 	for offer in _definitions_readonly():
-		var expected := _host_id(offer, run_state.current_environment)
-		if not expected.is_empty() and str(host.get("manifest_object_id", "")) == expected:
-			return view(run_state, library, str(offer.get("id", "")))
+		if str(host.get("manifest_object_id", "")) in _host_ids(offer, run_state.current_environment):
+			var result := view(run_state, library, str(offer.get("id", "")))
+			if not result.is_empty():
+				return result
 	return {}
 
 
+static func _can_view(run_state: RunState, library: ContentLibrary) -> bool:
+	return run_state != null and library != null and not run_state.is_terminal() and not run_state.is_tutorial_run() \
+			and not bool(run_state.current_environment.get("environment_test", false))
+
+
+# Alternatives share a roll and claim. Bind once to the first eligible content
+# entry, using priority to preserve existing services. Route offers require an
+# authoritative UI route preview before they can consume that daily decision.
+static func _select_for_host(run_state: RunState, library: ContentLibrary, host: Dictionary, offer_eligibility: Callable = Callable()) -> void:
+	var alternatives: Array = []
+	for offer in _definitions_readonly():
+		if str(host.get("manifest_object_id", "")) in _host_ids(offer, run_state.current_environment):
+			alternatives.append(offer)
+	alternatives.sort_custom(func(a: Dictionary, b: Dictionary) -> bool: return int(a.get("alternative_priority", 0)) < int(b.get("alternative_priority", 0)))
+	for offer in alternatives:
+		var character_id := str(offer.get("character_id", ""))
+		var state := _dict(_dict(run_state.narrative_flags.get(STATE_KEY, {})).get(character_id, {}))
+		if str(state.get("status", "")) != "available" or not str(state.get("offer_id", "")).is_empty():
+			continue
+		if not _eligible(run_state, offer) or not _grant_exists(library, offer):
+			continue
+		if not str(offer.get("ride_target_node_id", "")).is_empty() and not offer_eligibility.is_valid():
+			continue
+		if offer_eligibility.is_valid() and not bool(offer_eligibility.call(offer)):
+			continue
+		var cycles := _dict(run_state.narrative_flags.get(STATE_KEY, {})).duplicate(true)
+		state = state.duplicate(true)
+		state["offer_id"] = str(offer.get("id", ""))
+		cycles[character_id] = state
+		run_state.narrative_flags[STATE_KEY] = cycles
+		return
+
+
+static func _grant_exists(library: ContentLibrary, offer: Dictionary) -> bool:
+	var item_id := str(offer.get("inventory_add_item_id", ""))
+	return item_id.is_empty() or not library.item(item_id).is_empty()
+
+
 static func view(run_state: RunState, library: ContentLibrary, offer_id: String) -> Dictionary:
-	if run_state == null or library == null or run_state.is_terminal() or run_state.is_tutorial_run() \
-			or bool(run_state.current_environment.get("environment_test", false)):
+	if not _can_view(run_state, library):
 		return {}
 	synchronize(run_state)
 	for offer in _definitions_readonly():
 		if str(offer.get("id", "")) != offer_id:
 			continue
+		_select_for_host(run_state, library, {"manifest_object_id": _host_id(offer, run_state.current_environment)})
 		var state := _dict(_dict(run_state.narrative_flags.get(STATE_KEY, {})).get(str(offer.get("character_id", "")), {}))
-		if str(state.get("status", "")) != "available" or not _eligible(run_state, offer):
+		if str(state.get("status", "")) != "available" or str(state.get("offer_id", "")) != offer_id or not _eligible(run_state, offer):
 			return {}
-		var granted_item_id := str(offer.get("inventory_add_item_id", ""))
-		if not granted_item_id.is_empty() and library.item(granted_item_id).is_empty():
+		if not _grant_exists(library, offer):
 			return {}
 		var result: Dictionary = offer.duplicate(true)
 		result["token"] = {
@@ -171,6 +234,8 @@ static func _eligible(run_state: RunState, offer: Dictionary) -> bool:
 	var excluded_item_id := str(offer.get("excluded_carried_item_id", ""))
 	if not excluded_item_id.is_empty() and run_state.carries_item(excluded_item_id):
 		return false
+	if bool(offer.get("requires_no_route_scouting", false)) and run_state.travel_scouting_level() > 0:
+		return false
 	if bool(offer.get("free_home_ride", false)):
 		if not run_state.home_is_active() or str(run_state.home_state.get("home_node_id", "")).is_empty():
 			return false
@@ -182,6 +247,8 @@ static func _eligible(run_state: RunState, offer: Dictionary) -> bool:
 static func _summary(run_state: RunState, offer: Dictionary) -> String:
 	if bool(offer.get("free_home_ride", false)):
 		return "Free ride to your active home. Fare: $0. Normal route travel time applies."
+	if not str(offer.get("ride_target_node_id", "")).is_empty():
+		return "Total fare: $%d. Normal route travel time applies." % int(offer.get("cash_cost", 0))
 	var lines: Array[String] = []
 	var cost := int(offer.get("cash_cost", 0))
 	lines.append("Cost: $%d. Time: %d minutes." % [cost, int(offer.get("minutes", 0))])
@@ -196,6 +263,8 @@ static func _summary(run_state: RunState, offer: Dictionary) -> String:
 		lines.append(str(offer.get("item_summary")))
 	if not str(offer.get("item_gain_summary", "")).is_empty():
 		lines.append(str(offer.get("item_gain_summary")))
+	if not str(offer.get("effect_summary", "")).is_empty():
+		lines.append(str(offer.get("effect_summary")))
 	lines.append("Stay at %s." % str(run_state.current_environment.get("display_name", "this venue")))
 	return "\n".join(lines)
 
@@ -225,8 +294,8 @@ static func resolve(run_state: RunState, library: ContentLibrary, offer_id: Stri
 	if not accept:
 		_finish(run_state, current, "declined")
 		return {"ok": true, "type": "character_offer", "offer_id": offer_id, "minutes": 0, "message": "Offer declined.", "messages": [], "errors": []}
-	if bool(current.get("free_home_ride", false)):
-		return _error("Review the actual home route before accepting this ride.")
+	if bool(current.get("free_home_ride", false)) or not str(current.get("ride_target_node_id", "")).is_empty():
+		return _error("Review the actual route before accepting this ride.")
 	var candidate := run_state.detached_host_action_candidate()
 	if candidate == null:
 		return _error("The offer could not create a safe transaction.")
@@ -246,6 +315,8 @@ static func resolve(run_state: RunState, library: ContentLibrary, offer_id: Stri
 		if candidate.carries_item(granted_item_id):
 			return _error("That item is already carried. Review the current offer again.")
 		candidate.add_item(granted_item_id)
+	for flag in _dict(current.get("flags_set", {})):
+		candidate.narrative_flags[str(flag)] = current["flags_set"][flag]
 	candidate.recover_alcohol(int(current.get("drunk_reduction", 0)), int(current.get("pending_reduction", 0)))
 	var heat := candidate.recover_heat(int(current.get("heat_reduction", 0)), "character_offer:%s" % offer_id)
 	if not bool(heat.get("ok", false)) and not bool(heat.get("inactive", false)):

@@ -22,6 +22,7 @@
     "hosts": {"bar": "bar:bartender"},
     "chance_percent": 20,
     "cycle_archetype_id": "bar",
+    "alternative_priority": 0,
     "label": "Last of the coffee",
     "dialogue": "Last of the fresh pot. Three dollars and ten minutes. It\u2019ll clear your head a little.",
     "accept_label": "Have a coffee ($3)",
@@ -124,5 +125,41 @@
     "excluded_carried_item_id": "coolers_cufflinks",
     "item_summary": "Use exactly one available carried pair of Broken Cufflinks. Remove that pair's effect: a Blackjack peek window at 50% of normal.",
     "item_gain_summary": "Gain one Cooler's Cufflinks: absorbs the Heat from one failed Blackjack peek, then becomes Broken Cufflinks. Other caught-peek consequences still apply."
+  },
+  {
+    "id": "rafi_grand_casino_ride",
+    "character_id": "rafi",
+    "hosts": {"bar": "bar:bartender"},
+    "chance_percent": 20,
+    "cycle_archetype_id": "bar",
+    "alternative_priority": 10,
+    "label": "Heading to the Grand Casino",
+    "dialogue": "I\u2019m already heading to the Grand Casino. Want a ride? Five bucks.",
+    "accept_label": "Ride to the Grand Casino ($5)",
+    "decline_label": "No, thanks",
+    "minutes": 0,
+    "cash_cost": 5,
+    "cash_reward": 0,
+    "ride_target_node_id": "grand_casino"
+  },
+  {
+    "id": "ox_knows_the_roads",
+    "character_id": "ox",
+    "hosts": {
+      "small_underground_casino": ["punchline:club_bouncer", "punchline:casino_bouncer"],
+      "delta_queen": "delta_queen:deck_boss"
+    },
+    "chance_percent": 20,
+    "cycle_archetype_id": "small_underground_casino",
+    "label": "Knows the roads",
+    "dialogue": "You heading out? Give me fifteen minutes and I\u2019ll talk you through the routes.",
+    "accept_label": "Talk through the routes",
+    "decline_label": "Maybe later",
+    "minutes": 15,
+    "cash_cost": 0,
+    "cash_reward": 0,
+    "requires_no_route_scouting": true,
+    "flags_set": {"route_scouting_active": true},
+    "effect_summary": "Detailed travel previews for the rest of this run. No additional destinations or access."
   }
 ]

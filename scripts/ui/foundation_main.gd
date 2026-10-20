@@ -7733,6 +7733,14 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		_show_message(departure_error)
 		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 		return {"ok": false, "errors": [departure_error]}
+	var expected_offer_target_id := str(choice_data.get("expected_offer_target_node_id", "")).strip_edges()
+	var offer_route_fare := maxi(0, int(choice_data.get("offer_route_fare", 0)))
+	if not expected_offer_target_id.is_empty():
+		var offer_route_status := _character_offer_destination_route_status(run_state, route, target_id, offer_route_fare)
+		if expected_offer_target_id != target_id or not bool(offer_route_status.get("available", false)):
+			if not caller_owns_lifecycle_rollback:
+				_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+			return {"ok": false, "errors": ["The offered ride route is no longer available."]}
 	_clear_input_guard_modal_state()
 	# Preserve the source surface before generation/storage without clearing the
 	# live UI until every authoritative travel mutation has committed.
@@ -7773,6 +7781,8 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	# replaces current_environment, or a route shown as comped can be charged at
 	# its authored fare after arrival.
 	var departure_route_status := run_state.travel_route_status(route)
+	if not expected_offer_target_id.is_empty():
+		departure_route_status = _character_offer_destination_route_status(run_state, route, target_id, offer_route_fare)
 	var travel_minutes := maxi(1, int(choice_data.get("travel_minutes", _travel_clock_minutes_for_route(route, force_walk))))
 	var departed_game_clock_minutes := maxi(0, run_state.game_clock_minutes)
 	route["travel_minutes"] = travel_minutes
@@ -7794,6 +7804,15 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		if not caller_owns_lifecycle_rollback:
 			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 		return {"ok": false, "errors": ["Home access will not last through arrival."]}
+	if not expected_offer_target_id.is_empty():
+		var offer_arrival_status := _character_offer_destination_route_status(run_state, route, target_id, offer_route_fare)
+		var offer_destination_node := WorldMapScript.node_metadata_by_id(run_state.world_map, expected_offer_target_id)
+		var offer_destination := _environment_archetype(str(offer_destination_node.get("archetype_id", expected_offer_target_id)))
+		if offer_destination.is_empty() or not bool(offer_arrival_status.get("available", false)) \
+				or not TutorialFlowScript.environment_open_at(run_state, offer_destination, run_state.game_minute_of_day()):
+			if not caller_owns_lifecycle_rollback:
+				_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+			return {"ok": false, "errors": ["The offered destination will not be available on arrival."]}
 	route["arrived_game_clock_minutes"] = maxi(departed_game_clock_minutes, run_state.game_clock_minutes)
 	if perf_corner_store_timing:
 		perf_corner_store_stages["route_clock_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
@@ -7859,6 +7878,10 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		if not caller_owns_lifecycle_rollback:
 			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 		return {"ok": false, "errors": ["The active home could not be installed safely."]}
+	if not expected_offer_target_id.is_empty() and run_state.current_world_node_id() != expected_offer_target_id:
+		if not caller_owns_lifecycle_rollback:
+			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		return {"ok": false, "errors": ["The offered destination could not be installed safely."]}
 	# Modal contents are destructively rebuilt when hidden, so keep them intact
 	# until every authoritative travel boundary (including delivery arrival) commits.
 	_hide_event_choice_popup()
@@ -7941,7 +7964,12 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	if perf_corner_store_timing:
 		perf_corner_store_stages["destination_postprocess_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
 		perf_corner_store_stage_started_usec = Time.get_ticks_usec()
+	if not expected_offer_target_id.is_empty():
+		# Settle the complete quoted ride before evaluating a zero-cash ending.
+		travel_result["defer_bankroll_zero_failure"] = true
 	var applied_travel_result := GameModule.apply_result(run_state, travel_result)
+	if not expected_offer_target_id.is_empty() and bool(applied_travel_result.get("ok", false)):
+		run_state.evaluate_immediate_terminal_state(false)
 	if not ignored_talk_entries.is_empty():
 		_apply_talk_ignore_penalty(ignored_talk_entries, "travel")
 	if not expected_home_node_id.is_empty() and (not bool(applied_travel_result.get("ok", false)) \
@@ -7950,6 +7978,11 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		if not caller_owns_lifecycle_rollback:
 			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
 		return {"ok": false, "errors": ["The home arrival consequences could not settle safely."]}
+	if not expected_offer_target_id.is_empty() and (not bool(applied_travel_result.get("ok", false)) \
+			or run_state.current_world_node_id() != expected_offer_target_id):
+		if not caller_owns_lifecycle_rollback:
+			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		return {"ok": false, "errors": ["The offered arrival consequences could not settle safely."]}
 	last_hook_result = travel_result.duplicate(true)
 	_queue_room_publication_check()
 	_set_current_screen(SCREEN_RESULT)
@@ -8010,6 +8043,11 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 
 
 func _retry_travel_without_invalid_scenario(target_id: String, target_label: String, choice_data: Dictionary, require_immediate_result: bool, lifecycle_rollback: Dictionary) -> Dictionary:
+	# An offered ride owns claim and optional waiting before this travel call.
+	# Replaying only travel from its earlier rollback would lose those effects.
+	if not str(choice_data.get("expected_offer_target_node_id", "")).strip_edges().is_empty() \
+			or not str(choice_data.get("expected_active_home_node_id", "")).strip_edges().is_empty():
+		return {}
 	if generator == null or not generator.has_method("environment_install_failure_snapshot"):
 		return {}
 	var failure: Dictionary = generator.environment_install_failure_snapshot()
@@ -14927,9 +14965,82 @@ func _character_offer_comped_route(route: Dictionary) -> Dictionary:
 	return result
 
 
+func _character_offer_is_ride(offer: Dictionary) -> bool:
+	return bool(offer.get("free_home_ride", false)) or not str(offer.get("ride_target_node_id", "")).strip_edges().is_empty()
+
+
+# An offered fare replaces the ordinary fare only. Every progression, visibility
+# and lock condition is still evaluated by the canonical route status API.
+func _character_offer_destination_route_status(state: RunState, route: Dictionary, target_id: String, fare: int) -> Dictionary:
+	if state == null or route.is_empty():
+		return {"available": false}
+	var status := state.travel_route_status(_character_offer_comped_route(route))
+	status["cost"] = maxi(0, fare)
+	if state.is_terminal() or not state.has_world_map() or target_id == state.current_world_node_id() \
+			or not WorldMapScript.is_node_visible(state.world_map, target_id) \
+			or str(route.get("target_node_id", route.get("destination_archetype", ""))) != target_id \
+			or bool(status.get("hidden", false)) or bool(status.get("locked", false)) or state.bankroll < fare:
+		status["available"] = false
+	return status
+
+
+func _character_offer_destination_preview(offer: Dictionary) -> Dictionary:
+	if run_state == null or generator == null or library == null or run_state.is_terminal():
+		return {}
+	var target_id := str(offer.get("ride_target_node_id", "")).strip_edges()
+	var fare := maxi(0, int(offer.get("cash_cost", 0)))
+	var target_node := WorldMapScript.node_metadata_by_id(run_state.world_map, target_id)
+	var target_archetype := _environment_archetype(str(target_node.get("archetype_id", target_id)))
+	if target_id.is_empty() or target_node.is_empty() or target_archetype.is_empty():
+		return {}
+	var cache_key := "%s|offered_ride:%s|target:%s|fare:%d|clock:%d|flags:%d|delivery:%d|rng:%d" % [
+		_travel_base_cache_key(), str(offer.get("id", "")), target_id, fare, run_state.game_clock_minutes,
+		hash(run_state.narrative_flags), hash(run_state.active_delivery_run), run_state.rng_state,
+	]
+	if character_offer_ride_preview_cache_key == cache_key:
+		return character_offer_ride_preview_cache.duplicate(true)
+	character_offer_ride_preview_cache_key = cache_key
+	character_offer_ride_preview_cache = {}
+	var route := generator.world_route_for_target(run_state, target_id)
+	var departure_status := _character_offer_destination_route_status(run_state, route, target_id, fare)
+	if not bool(departure_status.get("available", false)):
+		return {}
+	route["cost"] = fare
+	route["base_cost"] = fare
+	var travel_minutes := _travel_clock_minutes_for_route(route)
+	var candidate := RunState.new()
+	candidate.from_dict(run_state.to_dict())
+	var clock_result := candidate.advance_game_clock_minutes(travel_minutes)
+	var arrival_status := _character_offer_destination_route_status(candidate, route, target_id, fare)
+	if not bool(clock_result.get("ok", false)) or not bool(arrival_status.get("available", false)) \
+			or not TutorialFlowScript.environment_open_at(candidate, target_archetype, candidate.game_minute_of_day()):
+		return {}
+	var target_name := str(target_node.get("label", "")).strip_edges()
+	if target_name.is_empty():
+		target_name = _travel_label_from_archetype(target_archetype, target_id)
+	var travel_details := departure_status.duplicate(true)
+	travel_details["risk_event"] = run_state.travel_route_risk_preview(route)
+	travel_details["risk_text"] = str(route.get("risk_text", ""))
+	var route_consequences := _travel_risk_summary(travel_details)
+	var summary := "Destination: %s. Total fare: $%d.\nDepart: %s. Travel: %d min.\nArrive: %s.\n%s" % [
+		target_name, fare, PlayerTextScript.format_game_clock(run_state.game_clock_minutes, true), travel_minutes,
+		PlayerTextScript.format_game_clock(candidate.game_clock_minutes, true),
+		"Travel: %s." % route_consequences if not route_consequences.is_empty() else "Normal travel consequences apply.",
+	]
+	character_offer_ride_preview_cache = {
+		"target_node_id": target_id, "target_name": target_name, "fare": fare, "route": route,
+		"wait_minutes": 0, "departure_game_clock_minutes": run_state.game_clock_minutes,
+		"travel_minutes": travel_minutes, "arrival_game_clock_minutes": candidate.game_clock_minutes,
+		"summary": summary,
+	}
+	return character_offer_ride_preview_cache.duplicate(true)
+
+
 # The eligibility projection and the confirmation surface use this same route
 # forecast. It never falls back to a generic home or advances the live clock.
 func _character_offer_route_preview(offer: Dictionary) -> Dictionary:
+	if not str(offer.get("ride_target_node_id", "")).strip_edges().is_empty():
+		return _character_offer_destination_preview(offer)
 	if run_state == null or generator == null or library == null or not bool(offer.get("free_home_ride", false)):
 		return {}
 	var home_node_id := str(run_state.home_state.get("home_node_id", "")).strip_edges()
@@ -15012,9 +15123,9 @@ func _review_character_offer(offer_id: String) -> bool:
 		_show_message("That offer is no longer available.")
 		_refresh()
 		return false
-	var route_preview := _character_offer_route_preview(offer) if bool(offer.get("free_home_ride", false)) else {}
-	if bool(offer.get("free_home_ride", false)) and route_preview.is_empty():
-		_show_message("There is no safe route to your active home for this ride.")
+	var route_preview := _character_offer_route_preview(offer) if _character_offer_is_ride(offer) else {}
+	if _character_offer_is_ride(offer) and route_preview.is_empty():
+		_show_message("There is no available route for this ride.")
 		_refresh()
 		return false
 	var summary := str(route_preview.get("summary", offer.get("summary", "")))
@@ -15056,12 +15167,12 @@ func _resolve_character_offer_response(offer_id: String, token: Dictionary, acce
 	var offer := CharacterOfferModelScript.view(run_state, library, offer_id)
 	if offer.is_empty() or JsonCoerceScript._copy_dict(offer.get("token", {})) != token:
 		return _character_offer_response_error("That offer has changed. Review the current offer before choosing.")
-	if accept and bool(offer.get("free_home_ride", false)):
+	if accept and _character_offer_is_ride(offer):
 		# Recompute at acceptance even when a prior projection has a matching key.
 		character_offer_ride_preview_cache_key = ""
 		var preview := _character_offer_route_preview(offer)
 		if preview.is_empty():
-			return _character_offer_response_error("There is no safe route to your active home for this ride.")
+			return _character_offer_response_error("There is no available route for this ride.")
 		if str(pending_event_choice_popup_snapshot.get("offer_id", "")) == offer_id:
 			var displayed_preview := JsonCoerceScript._copy_dict(pending_event_choice_popup_snapshot.get("route_preview", {}))
 			if displayed_preview != preview:
@@ -15071,23 +15182,34 @@ func _resolve_character_offer_response(offer_id: String, token: Dictionary, acce
 		if not bool(claimed.get("ok", false)):
 			return _character_offer_response_error("That offer is no longer available.")
 		var waited := run_state.advance_game_clock_minutes(int(preview.get("wait_minutes", 0)))
-		var home_node_id := str(preview.get("home_node_id", ""))
-		var route := generator.world_route_for_target(run_state, home_node_id) if bool(waited.get("ok", false)) else {}
-		route = _character_offer_comped_route(route) if not route.is_empty() else {}
-		var route_status := run_state.travel_route_status(route) if not route.is_empty() else {}
-		if not bool(waited.get("ok", false)) or run_state.is_terminal() or not _character_offer_home_matches(run_state, home_node_id) or route.is_empty() \
+		var home_ride := bool(offer.get("free_home_ride", false))
+		var destination_id := str(preview.get("home_node_id", "")) if home_ride else str(preview.get("target_node_id", ""))
+		var destination_name := str(preview.get("home_name", "Home")) if home_ride else str(preview.get("target_name", destination_id))
+		var fare := 0 if home_ride else maxi(0, int(preview.get("fare", 0)))
+		var route := generator.world_route_for_target(run_state, destination_id) if bool(waited.get("ok", false)) else {}
+		if not route.is_empty():
+			route = _character_offer_comped_route(route)
+			route["cost"] = fare
+			route["base_cost"] = fare
+		var route_status := run_state.travel_route_status(route) if home_ride and not route.is_empty() else _character_offer_destination_route_status(run_state, route, destination_id, fare)
+		if not bool(waited.get("ok", false)) or run_state.is_terminal() or route.is_empty() \
+				or (home_ride and not _character_offer_home_matches(run_state, destination_id)) \
 				or not bool(route_status.get("available", false)) or bool(route_status.get("hidden", false)) \
 				or _travel_clock_minutes_for_route(route) != int(preview.get("travel_minutes", 0)):
 			_restore_foundation_lifecycle_snapshot(rollback)
-			return _character_offer_response_error("The ride could not reach your active home safely. Nothing was spent.")
+			return _character_offer_response_error("The ride could not reach its destination safely. Nothing was spent.")
 		var choice := {
-			"id": home_node_id, "label": str(preview.get("home_name", "Home")), "route": route,
+			"id": destination_id, "label": destination_name, "route": route,
 			"enabled": true, "travel_minutes": int(preview.get("travel_minutes", 0)),
-			"expected_active_home_node_id": home_node_id,
 		}
-		var travel := _travel_to_with_lifecycle_snapshot(home_node_id, str(preview.get("home_name", "Home")), choice, true, rollback)
+		if home_ride:
+			choice["expected_active_home_node_id"] = destination_id
+		else:
+			choice["expected_offer_target_node_id"] = destination_id
+			choice["offer_route_fare"] = fare
+		var travel := _travel_to_with_lifecycle_snapshot(destination_id, destination_name, choice, true, rollback)
 		if not bool(travel.get("ok", false)):
-			return _character_offer_response_error("The ride could not reach your active home safely. Nothing was spent.")
+			return _character_offer_response_error("The ride could not reach its destination safely. Nothing was spent.")
 		return travel
 	var result := CharacterOfferModelScript.resolve(run_state, library, offer_id, token, accept)
 	_hide_event_choice_popup()

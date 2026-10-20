@@ -361,16 +361,18 @@ static func interactable_object_view_list(host: Variant) -> Array:
 # services, or change the sealed manifest action/geometry authority.
 static func _attach_character_offers(host: Variant, records: Array) -> Array:
 	CharacterOfferModelScript.synchronize(host.run_state)
+	var offer_eligibility := func(offer: Dictionary) -> bool:
+		return _character_offer_route_available(host, offer)
 	for index in range(records.size()):
 		var record := _dict(records[index])
 		if not bool(record.get("manifest_physical", false)) \
 				or not bool(record.get("visible", true)) \
 				or str(record.get("presentation_mode", "room")) != "room":
 			continue
-		var offer: Dictionary = CharacterOfferModelScript.view_for_host(host.run_state, host.library, record)
+		var offer: Dictionary = CharacterOfferModelScript.view_for_host(host.run_state, host.library, record, offer_eligibility)
 		if offer.is_empty():
 			continue
-		if bool(offer.get("free_home_ride", false)):
+		if bool(offer.get("free_home_ride", false)) or not str(offer.get("ride_target_node_id", "")).is_empty():
 			var route_preview: Dictionary = host._character_offer_route_preview(offer)
 			if route_preview.is_empty():
 				continue
@@ -406,6 +408,15 @@ static func _attach_character_offers(host: Variant, records: Array) -> Array:
 		record["decorative"] = false
 		records[index] = record
 	return records
+
+
+# Route alternatives bind a character's saved decision only after their real
+# destination is available. Other eligibility remains in the shared model.
+static func _character_offer_route_available(host: Variant, offer: Dictionary) -> bool:
+	if str(offer.get("ride_target_node_id", "")).is_empty():
+		return true
+	var preview: Dictionary = host._character_offer_route_preview(offer)
+	return not preview.is_empty()
 
 
 static func _fail_pending_restore(host: Variant, entry_environment: Dictionary, records: Array, errors: Array) -> Array:
