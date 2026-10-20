@@ -28,6 +28,7 @@ func _initialize() -> void:
 
 func _run() -> void:
 	var library: ContentLibrary = ContentLibraryScript.new()
+	library.load(false)
 	var canvas: PixelSceneCanvas = Canvas.new()
 	for definition_value in Offers.definitions():
 		var definition: Dictionary = definition_value
@@ -89,6 +90,9 @@ func _winning_run(definition: Dictionary, library: ContentLibrary) -> RunState:
 		run.drunk_level = 12
 		run.suspicion["level"] = 20
 		run.inventory = ["cheap_sunglasses"]
+		var required_item_id := str(definition.get("required_item_id", ""))
+		if not required_item_id.is_empty() and not run.inventory.has(required_item_id):
+			run.inventory.append(required_item_id)
 		run.home_state = {"active": true, "lost": false, "home_node_id": "actual_home"}
 		run.current_environment = {
 			"id": "offer_canvas:%s" % archetype_id, "archetype_id": archetype_id,

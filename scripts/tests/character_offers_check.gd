@@ -120,7 +120,8 @@ func _definition(character_id: String) -> Dictionary:
 
 
 func _check_authored_offers() -> void:
-	_expect(CharacterOfferModelScript.definitions().size() == 5, "The approved first batch contains five offer definitions.")
+	var first_batch: Array = CharacterOfferModelScript.definitions().filter(func(offer: Dictionary) -> bool: return OFFER_IDS.values().has(str(offer.get("id", ""))))
+	_expect(first_batch.size() == 5, "The approved first batch retains its five offer definitions.")
 	var expected_chances := {"iris": 25, "rafi": 20, "marco": 25, "lena": 20, "dot": 20}
 	var exact_dialogue := {
 		"iris": "I’m off at 05:00. Wait for me and I’ll drive you home. No charge.",

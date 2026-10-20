@@ -84,5 +84,45 @@
     "min_heat": 2,
     "minimum_minutes_before_close": 20,
     "heat_reduction": 8
+  },
+  {
+    "id": "june_spare_watch",
+    "character_id": "june",
+    "hosts": {"motel": "motel:june"},
+    "chance_percent": 25,
+    "cycle_archetype_id": "motel",
+    "label": "Spare Pocket Watch",
+    "dialogue": "I\u2019ve got a spare pocket watch. Five dollars and fifteen minutes, if you need one.",
+    "accept_label": "Buy Pocket Watch ($5)",
+    "decline_label": "No, thanks",
+    "minutes": 15,
+    "cash_cost": 5,
+    "cash_reward": 0,
+    "inventory_add_item_id": "pocket_watch",
+    "excluded_carried_item_id": "pocket_watch",
+    "item_gain_summary": "Gain one Pocket Watch: shows the exact minute on the HUD clock."
+  },
+  {
+    "id": "sable_cufflink_repair",
+    "character_id": "sable",
+    "hosts": {
+      "small_underground_casino": "punchline:casino_dealer",
+      "delta_queen": "delta_queen:right_table_dealer"
+    },
+    "chance_percent": 20,
+    "cycle_archetype_id": "small_underground_casino",
+    "label": "A delicate repair",
+    "dialogue": "Those cufflinks need a steady hand. Give me forty-five minutes. No charge.",
+    "accept_label": "Repair Broken Cufflinks (free)",
+    "decline_label": "Not now",
+    "minutes": 45,
+    "minimum_minutes_before_close": 45,
+    "cash_cost": 0,
+    "cash_reward": 0,
+    "required_item_id": "broken_cufflinks",
+    "inventory_add_item_id": "coolers_cufflinks",
+    "excluded_carried_item_id": "coolers_cufflinks",
+    "item_summary": "Use exactly one available carried pair of Broken Cufflinks. Remove that pair's effect: a Blackjack peek window at 50% of normal.",
+    "item_gain_summary": "Gain one Cooler's Cufflinks: absorbs the Heat from one failed Blackjack peek, then becomes Broken Cufflinks. Other caught-peek consequences still apply."
   }
 ]
