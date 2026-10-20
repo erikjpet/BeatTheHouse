@@ -101,9 +101,6 @@ func _check_fixed_ride_cache_refresh() -> void:
 		],
 		"edges": [{"a": "bar", "b": "grand_casino", "distance_blocks": 8, "base_cost": 70, "cost": 70}, {"a": "bar", "b": "apartment", "distance_blocks": 2}],
 	})
-	run.current_environment["world_map_travel"] = true
-	run.current_environment["travel_hooks"] = ["grand_casino", "apartment"]
-	run.current_environment["next_archetypes"] = ["grand_casino", "apartment"]
 	run.narrative_flags["grand_casino_invite"] = false
 	var host := OfferRefreshHost.new()
 	host.library = library
@@ -113,7 +110,9 @@ func _check_fixed_ride_cache_refresh() -> void:
 		host.set(str(field), load(str(host.RUN_UI_SCRIPT_PATHS[field])))
 	host.current_screen = host.SCREEN_ENVIRONMENT
 	host.environment_canvas = PixelCanvas.new()
-	var initial := _rafi_record(host._interactable_object_view_list())
+	var initial_records: Array = host._interactable_object_view_list()
+	var initial := _rafi_record(initial_records)
+	_expect(not initial.is_empty() and bool(initial.get("manifest_physical", false)) and str(initial.get("presentation_mode", "room")) == "room", "The production Bar fixture authenticates Rafi's physical card before cache checks; room authority errors: %s" % JSON.stringify(_room_authority_errors(initial_records)))
 	_expect(not initial.is_empty() and not initial.has("character_offer"), "Rafi's real cached card has no ride before route eligibility.")
 	_expect(str(_record(run, "rafi").get("status", "")) == "available" and str(_record(run, "rafi").get("offer_id", "")) == "", "The blocked ride retains an unbound winning daily decision.")
 	var base_catalog: Array = host.interactable_object_catalog_cache
@@ -183,6 +182,15 @@ func _service_action_ids(record: Dictionary) -> Array:
 		if not id.begins_with("character_offer:"):
 			ids.append(id)
 	return ids
+
+
+func _room_authority_errors(records: Array) -> Array:
+	var reasons: Array = []
+	for record in records:
+		var reason := str(record.get("room_geometry_rejection_reason", ""))
+		if not reason.is_empty() and not reasons.has(reason):
+			reasons.append(reason)
+	return reasons
 
 
 func _rafi_record(records: Array) -> Dictionary:
