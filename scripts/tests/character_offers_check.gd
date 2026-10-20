@@ -148,21 +148,26 @@ func _check_authored_offers() -> void:
 
 func _environment(archetype_id: String, minute: int) -> Dictionary:
 	var rows: Array = []
+	var seen := {}
 	for value in CharacterOfferModelScript.definitions():
 		var definition: Dictionary = value
-		var host_id := str((definition.get("hosts", {}) as Dictionary).get(archetype_id, ""))
-		if host_id.is_empty():
-			continue
-		rows.append({
-			"instance_object_id": host_id,
-			"presentation_object_id": host_id,
-			"object_id": host_id,
-			"family": "fixed",
-			"object_type": "character",
-			"active": true,
-			"physical": true,
-			"action_ids": [],
-		})
+		var binding: Variant = (definition.get("hosts", {}) as Dictionary).get(archetype_id, "")
+		var host_ids: Array = binding if typeof(binding) == TYPE_ARRAY else [binding]
+		for host_value in host_ids:
+			var host_id := str(host_value)
+			if host_id.is_empty() or seen.has(host_id):
+				continue
+			seen[host_id] = true
+			rows.append({
+				"instance_object_id": host_id,
+				"presentation_object_id": host_id,
+				"object_id": host_id,
+				"family": "fixed",
+				"object_type": "character",
+				"active": true,
+				"physical": true,
+				"action_ids": [],
+			})
 	return {
 		"id": "offer_fixture:%s" % archetype_id,
 		"archetype_id": archetype_id,

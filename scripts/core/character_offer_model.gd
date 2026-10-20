@@ -25,13 +25,17 @@ static func interaction_cache_stamp(run_state: RunState) -> int:
 		return 0
 	var has_host := false
 	var route_dependencies: Array = []
+	var route_targets := {}
 	for offer in _definitions_readonly():
 		if not _host_id(offer, run_state.current_environment).is_empty():
 			has_host = true
-			if bool(offer.get("free_home_ride", false)):
+			var ride_target_id := str(offer.get("ride_target_node_id", ""))
+			if not ride_target_id.is_empty():
+				route_targets[ride_target_id] = WorldMap.node_metadata_by_id(run_state.world_map, ride_target_id)
+			if bool(offer.get("free_home_ride", false)) or not ride_target_id.is_empty():
 				route_dependencies = [run_state.narrative_flags, run_state.active_delivery_run,
 					run_state.rng_state, run_state.unlocked_travel, run_state.closing_time_state,
-					int(run_state.world_map.get("revision", 0))]
+					int(run_state.world_map.get("revision", 0)), run_state.current_travel_lock_remaining(), route_targets]
 	if not has_host:
 		return 0
 	return hash([
@@ -46,21 +50,38 @@ static func interaction_cache_stamp(run_state: RunState) -> int:
 # Background cabinets patch their own objects without refreshing the room.
 # Only an offer's visible presence requires a new character-card projection;
 # ordinary time/meter movement keeps the same button and its live dispatch.
-static func visible_cache_stamp(run_state: RunState, library: ContentLibrary) -> int:
+static func visible_cache_stamp(run_state: RunState, library: ContentLibrary, offer_eligibility: Callable = Callable()) -> int:
 	if run_state == null or library == null:
 		return 0
 	var has_host := false
 	var visible: Array = []
+	var visited_hosts := {}
+	var eligibility_results := {}
+	# A newly selected alternative and its visible projection share one route
+	# check, even though binding the decision updates the saved cycle record.
+	var cached_eligibility := func(offer: Dictionary) -> bool:
+		var offer_id := str(offer.get("id", ""))
+		if not eligibility_results.has(offer_id):
+			eligibility_results[offer_id] = bool(offer_eligibility.call(offer))
+		return bool(eligibility_results[offer_id])
 	for offer in _definitions_readonly():
-		if _host_id(offer, run_state.current_environment).is_empty():
+		var host_id := _host_id(offer, run_state.current_environment)
+		if host_id.is_empty():
 			continue
 		has_host = true
-		var current := view(run_state, library, str(offer.get("id", "")))
-		if not current.is_empty():
-			visible.append(str(current.get("id", "")))
 		if bool(offer.get("free_home_ride", false)):
 			visible.append(hash([run_state.home_state, run_state.unlocked_travel,
 				int(run_state.world_map.get("revision", 0))]))
+		if visited_hosts.has(host_id):
+			continue
+		visited_hosts[host_id] = true
+		var eligibility := cached_eligibility if offer_eligibility.is_valid() else Callable()
+		var current := view_for_host(run_state, library, {"manifest_object_id": host_id}, eligibility)
+		if not current.is_empty() and not str(current.get("ride_target_node_id", "")).is_empty() \
+				and eligibility.is_valid() and not bool(eligibility.call(current)):
+			current = {}
+		if not current.is_empty():
+			visible.append(str(current.get("id", "")))
 	return hash(visible) if has_host else 0
 
 

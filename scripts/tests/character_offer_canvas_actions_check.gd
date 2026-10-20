@@ -8,6 +8,11 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 const Offers := preload("res://scripts/core/character_offer_model.gd")
 const Controller := preload("res://scripts/ui/environment_interaction_controller.gd")
 const Canvas := preload("res://scripts/ui/pixel_scene_canvas.gd")
+const OFFER_IDS := [
+	"iris_shift_ride", "rafi_last_coffee", "marco_extra_hands",
+	"lena_buying_shades", "dot_quiet_company", "june_spare_watch",
+	"sable_cufflink_repair", "ox_knows_the_roads", "rafi_grand_casino_ride",
+]
 
 class OfferHost extends RefCounted:
 	var run_state: RunState
@@ -30,8 +35,12 @@ func _run() -> void:
 	var library: ContentLibrary = ContentLibraryScript.new()
 	library.load(false)
 	var canvas: PixelSceneCanvas = Canvas.new()
+	var checked_ids: Array = []
 	for definition_value in Offers.definitions():
 		var definition: Dictionary = definition_value
+		if not str(definition.get("id", "")) in OFFER_IDS:
+			continue
+		checked_ids.append(str(definition.get("id", "")))
 		var host := OfferHost.new()
 		host.library = library
 		host.run_state = _winning_run(definition, library)
@@ -39,7 +48,7 @@ func _run() -> void:
 			continue
 		var hosts: Dictionary = definition.get("hosts", {})
 		var archetype_id := str(hosts.keys()[0])
-		var object_id := str(hosts[archetype_id])
+		var object_id := _first_host_id(hosts[archetype_id])
 		var base := _base_record(object_id)
 		var decorated: Array = Controller._attach_character_offers(host, [base.duplicate(true)])
 		_expect(decorated.size() == 1, "Offer keeps one existing physical host.")
@@ -71,6 +80,7 @@ func _run() -> void:
 		var expired_actions: Array = canvas.call("_selected_info_inline_actions", expired_objects[0])
 		_expect(_action_with_label(expired_actions, expected_label).is_empty(), "A fresh expired projection removes the offer label.")
 		_expect(not _action_with_label(expired_actions, "Existing action").is_empty(), "Expiry keeps the existing host action.")
+	_expect(checked_ids.size() == OFFER_IDS.size(), "Every approved offer has a focused canvas dispatch fixture.")
 	canvas.free()
 	for failure in failures:
 		printerr("CHARACTER OFFER CANVAS: %s" % failure)
@@ -81,13 +91,16 @@ func _run() -> void:
 func _winning_run(definition: Dictionary, library: ContentLibrary) -> RunState:
 	var hosts: Dictionary = definition.get("hosts", {})
 	var archetype_id := str(hosts.keys()[0])
-	var object_id := str(hosts[archetype_id])
+	var object_id := _first_host_id(hosts[archetype_id])
 	for index in range(128):
 		var run: RunState = RunStateScript.new()
 		run.start_new("OFFER-CANVAS-%03d" % index)
 		run.game_clock_minutes = 1380
 		run.bankroll = 100
 		run.drunk_level = 12
+		if not str(definition.get("ride_target_node_id", "")).is_empty():
+			run.drunk_level = 0
+			run.pending_drunk_absorption = []
 		run.suspicion["level"] = 20
 		run.inventory = ["cheap_sunglasses"]
 		var required_item_id := str(definition.get("required_item_id", ""))
@@ -99,10 +112,15 @@ func _winning_run(definition: Dictionary, library: ContentLibrary) -> RunState:
 			"display_name": archetype_id, "world_node_id": archetype_id,
 			"object_manifest": {"rows": [{"instance_object_id": object_id, "active": true, "physical": true}]},
 		}
-		if not Offers.view(run, library, str(definition.get("id", ""))).is_empty():
+		var offer := Offers.view_for_host(run, library, {"manifest_object_id": object_id}, func(_candidate: Dictionary) -> bool: return true)
+		if str(offer.get("id", "")) == str(definition.get("id", "")):
 			return run
 	_expect(false, "A bounded seed probe finds an eligible %s offer." % str(definition.get("id", "")))
 	return null
+
+
+func _first_host_id(binding: Variant) -> String:
+	return str(binding[0]) if typeof(binding) == TYPE_ARRAY and not binding.is_empty() else str(binding)
 
 
 func _base_record(object_id: String) -> Dictionary:

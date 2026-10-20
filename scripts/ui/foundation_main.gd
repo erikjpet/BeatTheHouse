@@ -849,8 +849,14 @@ func _advance_run_game_clock(delta: float) -> void:
 func _refresh_character_offer_visibility() -> void:
 	if environment_canvas == null or run_state == null:
 		return
-	if CharacterOfferModelScript.visible_cache_stamp(run_state, library) != rendered_character_offer_presence_stamp:
+	if _character_offer_visible_cache_stamp() != rendered_character_offer_presence_stamp:
 		_render_environment_canvas_snapshot()
+
+
+func _character_offer_visible_cache_stamp() -> int:
+	var eligibility := func(offer: Dictionary) -> bool:
+		return str(offer.get("ride_target_node_id", "")).is_empty() or not _character_offer_route_preview(offer).is_empty()
+	return CharacterOfferModelScript.visible_cache_stamp(run_state, library, eligibility)
 
 
 func _advance_environment_turns_checked(amount: int = 1, debug_timing: Dictionary = {}) -> bool:
@@ -15006,8 +15012,8 @@ func _character_offer_destination_preview(offer: Dictionary) -> Dictionary:
 	var target_archetype := _environment_archetype(str(target_node.get("archetype_id", target_id)))
 	if target_id.is_empty() or target_node.is_empty() or target_archetype.is_empty():
 		return {}
-	var cache_key := "%s|offered_ride:%s|target:%s|fare:%d|clock:%d|flags:%d|delivery:%d|rng:%d" % [
-		_travel_base_cache_key(), str(offer.get("id", "")), target_id, fare, run_state.game_clock_minutes,
+	var cache_key := "%s|offered_ride:%s|target:%s|node:%d|fare:%d|clock:%d|flags:%d|delivery:%d|rng:%d" % [
+		_travel_base_cache_key(), str(offer.get("id", "")), target_id, hash(target_node), fare, run_state.game_clock_minutes,
 		hash(run_state.narrative_flags), hash(run_state.active_delivery_run), run_state.rng_state,
 	]
 	if character_offer_ride_preview_cache_key == cache_key:
@@ -16765,7 +16771,7 @@ func _render_environment_canvas_snapshot() -> void:
 	# keeps its defensive deep copy for shared/external dictionaries.
 	environment_canvas.render_owned_environment_snapshot(_environment_view_snapshot())
 	rendered_environment_snapshot_signature = _environment_snapshot_signature()
-	rendered_character_offer_presence_stamp = CharacterOfferModelScript.visible_cache_stamp(run_state, library)
+	rendered_character_offer_presence_stamp = _character_offer_visible_cache_stamp()
 
 
 func _environment_canvas_snapshot_is_stale() -> bool:
