@@ -6,6 +6,7 @@ const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 const BuildIdentityScript := preload("res://scripts/core/build_identity.gd")
+const CharacterOfferModelScript := preload("res://scripts/core/character_offer_model.gd")
 
 # Top-level application orchestrator. It owns screen/modal lifecycle, run and
 # profile session wiring, action routing, game/environment entry, save/recovery,
@@ -326,6 +327,8 @@ var current_game_state_key: String = ""
 var pending_event_choice_popup_event_id: String = ""
 var pending_event_choice_popup_focus_choice_id: String = ""
 var pending_event_choice_popup_snapshot: Dictionary = {}
+var character_offer_ride_preview_cache_key: String = ""
+var character_offer_ride_preview_cache: Dictionary = {}
 var pending_wager_confirm_action_id: String = ""
 var pending_wager_confirm_skip_stake_validation := false
 var pending_wager_confirm_preserve_surface_ui_state := false
@@ -650,6 +653,7 @@ var world_map_snapshot_cache: Dictionary = {}
 var world_map_canvas_snapshot_key: String = ""
 var world_map_detail_badges_key: String = "__unset__"
 var rendered_environment_snapshot_signature: String = ""
+var rendered_character_offer_presence_stamp: int = 0
 var action_panel_refresh_scheduled := false
 var action_panel_refresh_generation_counter := 0
 var action_panel_refresh_active_generation := 0
@@ -838,6 +842,15 @@ func _advance_run_game_clock(delta: float) -> void:
 		structured_hud.render_clock(FoundationHudViewModelScript.clock_model(run_state))
 	if boundary_changed:
 		_refresh()
+	else:
+		_refresh_character_offer_visibility()
+
+
+func _refresh_character_offer_visibility() -> void:
+	if environment_canvas == null or run_state == null:
+		return
+	if CharacterOfferModelScript.visible_cache_stamp(run_state, library) != rendered_character_offer_presence_stamp:
+		_render_environment_canvas_snapshot()
 
 
 func _advance_environment_turns_checked(amount: int = 1, debug_timing: Dictionary = {}) -> bool:
@@ -2603,6 +2616,7 @@ func _patch_environment_game_runtime_presentation(game: GameModule, state_key: S
 		var bankroll_delta := int(last_environment_runtime_result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
 		structured_hud.render_bankroll(_presented_bankroll(), bankroll_delta)
 		structured_hud.render_clock(FoundationHudViewModelScript.clock_model(run_state))
+	_refresh_character_offer_visibility()
 
 
 func _rebuild_environment_runtime_schedule(environment_data: Dictionary, game_ids: Array, now_msec: int, same_environment: bool) -> void:
@@ -7786,6 +7800,11 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		_show_message(clock_error)
 		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 		return {"ok": false, "errors": [clock_error]}
+	var expected_home_node_id := str(choice_data.get("expected_active_home_node_id", "")).strip_edges()
+	if not expected_home_node_id.is_empty() and not _character_offer_home_matches(run_state, expected_home_node_id):
+		if not caller_owns_lifecycle_rollback:
+			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		return {"ok": false, "errors": ["Home access will not last through arrival."]}
 	route["arrived_game_clock_minutes"] = maxi(departed_game_clock_minutes, run_state.game_clock_minutes)
 	if perf_corner_store_timing:
 		perf_corner_store_stages["route_clock_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
@@ -7846,6 +7865,11 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		_show_message(delivery_error)
 		_refresh_after_foundation_lifecycle_rollback(lifecycle_rollback)
 		return {"ok": false, "errors": [delivery_error]}
+	if not expected_home_node_id.is_empty() and (not _character_offer_home_matches(run_state, expected_home_node_id) \
+			or run_state.current_world_node_id() != expected_home_node_id or not run_state.is_current_home_environment()):
+		if not caller_owns_lifecycle_rollback:
+			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		return {"ok": false, "errors": ["The active home could not be installed safely."]}
 	# Modal contents are destructively rebuilt when hidden, so keep them intact
 	# until every authoritative travel boundary (including delivery arrival) commits.
 	_hide_event_choice_popup()
@@ -7928,9 +7952,15 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	if perf_corner_store_timing:
 		perf_corner_store_stages["destination_postprocess_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
 		perf_corner_store_stage_started_usec = Time.get_ticks_usec()
-	GameModule.apply_result(run_state, travel_result)
+	var applied_travel_result := GameModule.apply_result(run_state, travel_result)
 	if not ignored_talk_entries.is_empty():
 		_apply_talk_ignore_penalty(ignored_talk_entries, "travel")
+	if not expected_home_node_id.is_empty() and (not bool(applied_travel_result.get("ok", false)) \
+			or not _character_offer_home_matches(run_state, expected_home_node_id) \
+			or run_state.current_world_node_id() != expected_home_node_id or not run_state.is_current_home_environment()):
+		if not caller_owns_lifecycle_rollback:
+			_restore_foundation_lifecycle_snapshot(lifecycle_rollback)
+		return {"ok": false, "errors": ["The home arrival consequences could not settle safely."]}
 	last_hook_result = travel_result.duplicate(true)
 	_queue_room_publication_check()
 	_set_current_screen(SCREEN_RESULT)
@@ -14121,7 +14151,7 @@ func _show_wager_confirmation_popup(action_id: String, stake: int, wager_cost: i
 	_present_event_choice_popup()
 
 
-func _add_wager_confirmation_card(label: String, text: String, _impact: String, callback: Callable, primary: bool, badges_value: Variant = [], rendered_event_id: String = "", rendered_choice_id: String = "") -> void:
+func _add_wager_confirmation_card(label: String, text: String, _impact: String, callback: Callable, primary: bool, badges_value: Variant = [], rendered_event_id: String = "", rendered_choice_id: String = "", full_text: bool = false) -> void:
 	if event_choice_popup_choices_list == null:
 		return
 	var border := VisualStyle.YELLOW if primary else VisualStyle.CYAN_2
@@ -14146,7 +14176,7 @@ func _add_wager_confirmation_card(label: String, text: String, _impact: String, 
 	var body := _label(text, 13)
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	body.max_lines_visible = EVENT_CHOICE_TEXT_MAX_LINES
+	body.max_lines_visible = -1 if full_text else EVENT_CHOICE_TEXT_MAX_LINES
 	body.clip_text = true
 	body.custom_minimum_size.y = EVENT_CHOICE_TEXT_MIN_HEIGHT
 	stack.add_child(body)
@@ -14892,6 +14922,197 @@ func activate_interactable_object(object_id: String) -> bool:
 	return action_ok
 
 
+func _character_offer_home_matches(state: RunState, home_node_id: String) -> bool:
+	if state == null or home_node_id.is_empty() or not state.home_is_active() or not state.has_world_map():
+		return false
+	if str(state.home_state.get("home_node_id", "")).strip_edges() != home_node_id:
+		return false
+	var home_node := WorldMapScript.node_metadata_by_id(state.world_map, home_node_id)
+	return not home_node.is_empty() and not bool(home_node.get("home_lost", false))
+
+
+func _character_offer_comped_route(route: Dictionary) -> Dictionary:
+	var result := route.duplicate(true)
+	result["cost"] = 0
+	result["base_cost"] = 0
+	return result
+
+
+# The eligibility projection and the confirmation surface use this same route
+# forecast. It never falls back to a generic home or advances the live clock.
+func _character_offer_route_preview(offer: Dictionary) -> Dictionary:
+	if run_state == null or generator == null or library == null or not bool(offer.get("free_home_ride", false)):
+		return {}
+	var home_node_id := str(run_state.home_state.get("home_node_id", "")).strip_edges()
+	if not _character_offer_home_matches(run_state, home_node_id) or run_state.is_terminal():
+		return {}
+	var cache_key := "%s|offer:%s|home:%d|delivery:%d|flags:%d|rng:%d" % [
+		_travel_base_cache_key(), str(offer.get("id", "")), hash(run_state.home_state),
+		hash(run_state.active_delivery_run), hash(run_state.narrative_flags), run_state.rng_state,
+	]
+	if character_offer_ride_preview_cache_key == cache_key:
+		return character_offer_ride_preview_cache.duplicate(true)
+	character_offer_ride_preview_cache_key = cache_key
+	character_offer_ride_preview_cache = {}
+	var shift_end := clampi(int(offer.get("shift_end_minute", 300)), 0, EnvironmentHours.MINUTES_PER_DAY - 1)
+	var wait_minutes := posmod(shift_end - run_state.game_minute_of_day(), EnvironmentHours.MINUTES_PER_DAY)
+	if wait_minutes <= 0:
+		return {}
+	var home_archetype_id := str(run_state.home_state.get("home_archetype_id", "")).strip_edges()
+	var home_archetype := _environment_archetype(home_archetype_id)
+	if home_archetype.is_empty() or str(home_archetype.get("kind", "")) != "home":
+		return {}
+	var route := generator.world_route_for_target(run_state, home_node_id)
+	if route.is_empty():
+		return {}
+	route = _character_offer_comped_route(route)
+	var route_status := run_state.travel_route_status(route)
+	if not bool(route_status.get("available", false)) or bool(route_status.get("hidden", false)):
+		return {}
+	# Clock advancement can resolve deliveries, charge interest and remove an
+	# expired home. A complete detached state preserves those canonical rules.
+	var candidate := RunState.new()
+	candidate.from_dict(run_state.to_dict())
+	var wait_result := candidate.advance_game_clock_minutes(wait_minutes)
+	if not bool(wait_result.get("ok", false)) or candidate.is_terminal() or not _character_offer_home_matches(candidate, home_node_id):
+		return {}
+	var departure_route := generator.world_route_for_target(candidate, home_node_id)
+	if departure_route.is_empty():
+		return {}
+	departure_route = _character_offer_comped_route(departure_route)
+	var departure_status := candidate.travel_route_status(departure_route)
+	if not bool(departure_status.get("available", false)) or bool(departure_status.get("hidden", false)):
+		return {}
+	var travel_minutes := _travel_clock_minutes_for_route(departure_route)
+	var departure_minutes := candidate.game_clock_minutes
+	var arrival_result := candidate.advance_game_clock_minutes(travel_minutes)
+	if not bool(arrival_result.get("ok", false)) or candidate.is_terminal() or not _character_offer_home_matches(candidate, home_node_id):
+		return {}
+	if not TutorialFlowScript.environment_open_at(candidate, home_archetype, candidate.game_minute_of_day()):
+		return {}
+	var arrival_status := candidate.travel_route_status(departure_route)
+	if not bool(arrival_status.get("available", false)) or bool(arrival_status.get("hidden", false)):
+		return {}
+	var home_name := str(run_state.home_state.get("display_name", "")).strip_edges()
+	if home_name.is_empty():
+		home_name = _travel_label_from_archetype(home_archetype, home_node_id)
+	var risk_preview := candidate.travel_route_risk_preview(departure_route)
+	var travel_details := departure_status.duplicate(true)
+	travel_details["risk_event"] = risk_preview
+	travel_details["risk_text"] = str(departure_route.get("risk_text", ""))
+	var route_consequences := _travel_risk_summary(travel_details)
+	var summary := "Home: %s. Fare: $0.\nWait: %d min. Depart: %s.\nTravel: %d min. Arrive: %s.\n%s" % [
+		home_name, wait_minutes, PlayerTextScript.format_game_clock(departure_minutes, true),
+		travel_minutes, PlayerTextScript.format_game_clock(candidate.game_clock_minutes, true),
+		"Travel: %s." % route_consequences if not route_consequences.is_empty() else "Normal travel consequences apply.",
+	]
+	character_offer_ride_preview_cache = {
+		"home_node_id": home_node_id, "home_name": home_name, "route": departure_route,
+		"wait_minutes": wait_minutes, "departure_game_clock_minutes": departure_minutes,
+		"travel_minutes": travel_minutes, "arrival_game_clock_minutes": candidate.game_clock_minutes,
+		"summary": summary,
+	}
+	return character_offer_ride_preview_cache.duplicate(true)
+
+
+func _review_character_offer(offer_id: String) -> bool:
+	if run_state == null or _guard_player_input_route(false, "character_offer:%s" % offer_id):
+		return false
+	var offer := CharacterOfferModelScript.view(run_state, library, offer_id)
+	if offer.is_empty():
+		_show_message("That offer is no longer available.")
+		_refresh()
+		return false
+	var route_preview := _character_offer_route_preview(offer) if bool(offer.get("free_home_ride", false)) else {}
+	if bool(offer.get("free_home_ride", false)) and route_preview.is_empty():
+		_show_message("There is no safe route to your active home for this ride.")
+		_refresh()
+		return false
+	var summary := str(route_preview.get("summary", offer.get("summary", "")))
+	var token := JsonCoerceScript._copy_dict(offer.get("token", {}))
+	pending_event_choice_popup_snapshot = {
+		"popup_type": "character_offer", "offer_id": offer_id, "token": token,
+		"blocking": true, "dismissible": false, "dialogue": str(offer.get("dialogue", "")),
+		"summary": summary, "route_preview": route_preview,
+		"choices": [{"id": "accept", "label": str(offer.get("accept_label", "Accept"))}, {"id": "decline", "label": str(offer.get("decline_label", "No, thanks"))}],
+	}
+	pending_event_choice_popup_event_id = ""
+	pending_event_choice_popup_focus_choice_id = ""
+	if event_choice_popup_title_label != null:
+		event_choice_popup_title_label.text = str(offer.get("label", "Offer"))
+	if event_choice_popup_summary_label != null:
+		event_choice_popup_summary_label.text = str(offer.get("dialogue", ""))
+	_clear_event_choice_popup_choices()
+	_add_wager_confirmation_card(str(offer.get("accept_label", "Accept")), summary, "", Callable(self, "_resolve_character_offer_response").bind(offer_id, token, true), true, [], "", "accept", true)
+	_add_wager_confirmation_card(str(offer.get("decline_label", "No, thanks")), "No cost, time, or penalty.", "", Callable(self, "_resolve_character_offer_response").bind(offer_id, token, false), false)
+	_present_event_choice_popup()
+	_autosave_foundation_run("Offer saved.")
+	return true
+
+
+func _character_offer_response_error(message: String) -> Dictionary:
+	_hide_event_choice_popup()
+	_show_message(message)
+	_refresh()
+	return {"ok": false, "errors": [message], "messages": [message]}
+
+
+func _resolve_character_offer_response(offer_id: String, token: Dictionary, accept: bool) -> Dictionary:
+	if run_state == null:
+		return _character_offer_response_error("There is no active run.")
+	if str(pending_event_choice_popup_snapshot.get("popup_type", "")) != "character_offer" \
+			or str(pending_event_choice_popup_snapshot.get("offer_id", "")) != offer_id \
+			or JsonCoerceScript._copy_dict(pending_event_choice_popup_snapshot.get("token", {})) != token:
+		return _character_offer_response_error("Review the current offer before choosing.")
+	var offer := CharacterOfferModelScript.view(run_state, library, offer_id)
+	if offer.is_empty() or JsonCoerceScript._copy_dict(offer.get("token", {})) != token:
+		return _character_offer_response_error("That offer has changed. Review the current offer before choosing.")
+	if accept and bool(offer.get("free_home_ride", false)):
+		# Recompute at acceptance even when a prior projection has a matching key.
+		character_offer_ride_preview_cache_key = ""
+		var preview := _character_offer_route_preview(offer)
+		if preview.is_empty():
+			return _character_offer_response_error("There is no safe route to your active home for this ride.")
+		if str(pending_event_choice_popup_snapshot.get("offer_id", "")) == offer_id:
+			var displayed_preview := JsonCoerceScript._copy_dict(pending_event_choice_popup_snapshot.get("route_preview", {}))
+			if displayed_preview != preview:
+				return _character_offer_response_error("The ride details have changed. Review the current offer before choosing.")
+		var rollback := _foundation_lifecycle_snapshot()
+		var claimed := CharacterOfferModelScript.claim(run_state, library, offer_id, token)
+		if not bool(claimed.get("ok", false)):
+			return _character_offer_response_error("That offer is no longer available.")
+		var waited := run_state.advance_game_clock_minutes(int(preview.get("wait_minutes", 0)))
+		var home_node_id := str(preview.get("home_node_id", ""))
+		var route := generator.world_route_for_target(run_state, home_node_id) if bool(waited.get("ok", false)) else {}
+		route = _character_offer_comped_route(route) if not route.is_empty() else {}
+		var route_status := run_state.travel_route_status(route) if not route.is_empty() else {}
+		if not bool(waited.get("ok", false)) or run_state.is_terminal() or not _character_offer_home_matches(run_state, home_node_id) or route.is_empty() \
+				or not bool(route_status.get("available", false)) or bool(route_status.get("hidden", false)) \
+				or _travel_clock_minutes_for_route(route) != int(preview.get("travel_minutes", 0)):
+			_restore_foundation_lifecycle_snapshot(rollback)
+			return _character_offer_response_error("The ride could not reach your active home safely. Nothing was spent.")
+		var choice := {
+			"id": home_node_id, "label": str(preview.get("home_name", "Home")), "route": route,
+			"enabled": true, "travel_minutes": int(preview.get("travel_minutes", 0)),
+			"expected_active_home_node_id": home_node_id,
+		}
+		var travel := _travel_to_with_lifecycle_snapshot(home_node_id, str(preview.get("home_name", "Home")), choice, true, rollback)
+		if not bool(travel.get("ok", false)):
+			return _character_offer_response_error("The ride could not reach your active home safely. Nothing was spent.")
+		return travel
+	var result := CharacterOfferModelScript.resolve(run_state, library, offer_id, token, accept)
+	_hide_event_choice_popup()
+	var messages := JsonCoerceScript._copy_array(result.get("messages", []))
+	var errors := JsonCoerceScript._copy_array(result.get("errors", []))
+	_show_message(str(result.get("message", " ".join(messages if not messages.is_empty() else errors))))
+	if bool(result.get("ok", false)):
+		last_hook_result = result.duplicate(true)
+		_apply_closing_time_clock_boundary()
+		_autosave_foundation_run("Offer saved.")
+	_refresh()
+	return result
+
+
 func _activate_attached_room_action(target_object_id: String, action_key: String) -> bool:
 	var target := _interactable_object(target_object_id)
 	if target.is_empty() or action_key.is_empty():
@@ -14928,6 +15149,8 @@ func _activate_attached_room_action(target_object_id: String, action_key: String
 			str(action.get("action_origin_fingerprint", ""))
 		)
 	match object_type:
+		"character_offer":
+			return _review_character_offer(source_id)
 		CONTEXT_MODE_DIALOGUE:
 			var dialogue_action_id := str(record.get("object_id", "dialogue:%s" % source_id)).strip_edges()
 			if _guard_player_input_route(false, dialogue_action_id):
@@ -16418,6 +16641,7 @@ func _render_environment_canvas_snapshot() -> void:
 	# keeps its defensive deep copy for shared/external dictionaries.
 	environment_canvas.render_owned_environment_snapshot(_environment_view_snapshot())
 	rendered_environment_snapshot_signature = _environment_snapshot_signature()
+	rendered_character_offer_presence_stamp = CharacterOfferModelScript.visible_cache_stamp(run_state, library)
 
 
 func _environment_canvas_snapshot_is_stale() -> bool:
@@ -16515,11 +16739,12 @@ func _interactable_object_view_list() -> Array:
 		catalog_key = _interactable_object_cache_key()
 		interactable_object_catalog_cache_key = catalog_key
 		interactable_object_view_cache_valid = false
-	var view_key := "%s|%s|%s|%s" % [catalog_key, hover_target_id, focus_target_id, selected_object_id]
+	var view_key := "%s|%s|%s|%s|%d" % [catalog_key, hover_target_id, focus_target_id, selected_object_id, CharacterOfferModelScript.interaction_cache_stamp(run_state)]
 	if interactable_object_view_cache_valid and interactable_object_view_cache_key == view_key:
 		return interactable_object_view_cache
 	interactable_object_view_cache = []
-	for object_value in interactable_object_catalog_cache:
+	var offer_records: Array = EnvironmentInteractionControllerScript._attach_character_offers(self, interactable_object_catalog_cache)
+	for object_value in offer_records:
 		if typeof(object_value) != TYPE_DICTIONARY:
 			continue
 		var object_data := (object_value as Dictionary).duplicate(false)

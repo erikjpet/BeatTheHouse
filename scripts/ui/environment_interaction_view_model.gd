@@ -9,6 +9,7 @@ const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
 const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
+const CharacterOfferModelScript := preload("res://scripts/core/character_offer_model.gd")
 
 
 static func snapshot_signature(run_state: RunState) -> String:
@@ -61,6 +62,7 @@ static func snapshot_signature(run_state: RunState) -> String:
 		str(run_state.grand_casino_staffing),
 		str(run_state.game_clock_minutes),
 		str(run_state.closing_time_status()),
+		str(CharacterOfferModelScript.interaction_cache_stamp(run_state)),
 	])
 
 
