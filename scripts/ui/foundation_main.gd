@@ -2758,7 +2758,9 @@ func _main_floor_slot_game_id() -> String:
 	if library == null:
 		return ""
 	for game_value in library.games:
-		var game_def := JsonCoerceScript._copy_dict(game_value)
+		if typeof(game_value) != TYPE_DICTIONARY:
+			continue
+		var game_def := game_value as Dictionary
 		if str(game_def.get("module_path", "")).ends_with("scripts/games/slot.gd"):
 			return str(game_def.get("id", "")).strip_edges()
 	return ""
