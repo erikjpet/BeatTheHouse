@@ -255,7 +255,7 @@
     "trigger": {"depends_on": ["tutorial_gas_peel"], "screen": "GAME", "environment_archetype": "gas_station_casino", "game_id": "pull_tabs", "state_predicates": []},
     "anchor": {"kind": "surface_action", "id": "surface_back"},
     "copy": "Leave with the winning tab filed.",
-    "completion": {"type": "anchored_action", "action_id": "surface_back"},
+    "completion": {"type": "state_predicate", "state_predicates": [{"path": "screen", "op": "equals", "value": "ENVIRONMENT"}, {"path": "environment_archetype", "op": "equals", "value": "gas_station_casino"}]},
     "gating": {"allowed_action_ids": ["surface_back"]}
   },
   {
