@@ -612,6 +612,76 @@ func coach_state(run_state: RunState, environment: Dictionary, ui_state: Diction
 	}
 
 
+# Observe durable tutorial payment without normalizing stock or materializing a
+# missing machine. Compact saves keep player piles in the per-origin record.
+func tutorial_redemption_completed(run_state: RunState, environment: Dictionary) -> bool:
+	if run_state == null or not run_state.is_tutorial_run() or environment.get("archetype_id", "") != "gas_station_casino":
+		return false
+	var states_value: Variant = environment.get("game_states")
+	if typeof(states_value) != TYPE_DICTIONARY:
+		return false
+	var machine_value: Variant = (states_value as Dictionary).get(get_id())
+	if typeof(machine_value) != TYPE_DICTIONARY:
+		return false
+	var machine: Dictionary = machine_value
+	if machine.get("schema") != "pull_tab_machine_state" or not _tutorial_redemption_integer(machine.get("version")) or machine.get("version") != 1:
+		return false
+	var item_value: Variant = machine.get("item_state")
+	if typeof(item_value) != TYPE_DICTIONARY:
+		return false
+	var targets_value: Variant = (item_value as Dictionary).get("xray_targets")
+	var redeemed_value: Variant = machine.get("redeemed_pile")
+	if typeof(targets_value) != TYPE_ARRAY or typeof(redeemed_value) != TYPE_ARRAY:
+		return false
+	var targets: Array = targets_value
+	var redeemed: Array = redeemed_value
+	if targets.is_empty() or targets.size() > XRAY_TARGET_COUNT or redeemed.is_empty() or redeemed.size() > 24:
+		return false
+	var origins_value: Variant = run_state.portable_ticket_piles.get(get_id(), {})
+	if typeof(origins_value) != TYPE_DICTIONARY:
+		return false
+	var portable_value: Variant = (origins_value as Dictionary).get(RunState.portable_ticket_origin_key(environment), {})
+	if typeof(portable_value) != TYPE_DICTIONARY:
+		return false
+	var portable: Dictionary = portable_value
+	var winners_value: Variant = portable.get("winner_pile") if not portable.is_empty() else machine.get("winner_pile")
+	if typeof(winners_value) != TYPE_ARRAY or not (winners_value as Array).is_empty():
+		return false
+	var consumed_targets := {}
+	for target_value in targets:
+		if typeof(target_value) != TYPE_DICTIONARY:
+			return false
+		var target: Dictionary = target_value
+		var deal_index: Variant = target.get("deal_index")
+		var ticket_number: Variant = target.get("ticket_number")
+		if typeof(target.get("consumed")) != TYPE_BOOL or not _tutorial_redemption_integer(deal_index) or deal_index >= PULL_TAB_MACHINE_COLUMN_COUNT or not _tutorial_redemption_integer(ticket_number) or ticket_number <= 0:
+			return false
+		if target.get("consumed") == true:
+			consumed_targets["%d:%d" % [int(deal_index), int(ticket_number)]] = true
+	if consumed_targets.is_empty():
+		return false
+	var matched := false
+	for receipt_value in redeemed:
+		if typeof(receipt_value) != TYPE_DICTIONARY:
+			return false
+		var receipt: Dictionary = receipt_value
+		var deal_index: Variant = receipt.get("deal_index")
+		var ticket_number: Variant = receipt.get("ticket_number_value", receipt.get("ticket_number"))
+		var payout: Variant = receipt.get("payout")
+		if not _tutorial_redemption_integer(deal_index) or deal_index >= PULL_TAB_MACHINE_COLUMN_COUNT or not _tutorial_redemption_integer(ticket_number) or ticket_number <= 0 or not _tutorial_redemption_integer(payout) or payout <= 0:
+			return false
+		if consumed_targets.has("%d:%d" % [int(deal_index), int(ticket_number)]):
+			matched = true
+	return matched
+
+
+func _tutorial_redemption_integer(value: Variant) -> bool:
+	if typeof(value) != TYPE_INT and typeof(value) != TYPE_FLOAT:
+		return false
+	var number := float(value)
+	return is_finite(number) and number >= 0.0 and number <= 9007199254740991.0 and number == floor(number)
+
+
 func _scripted_xray_target_ready_to_file(machine: Dictionary, ui_state: Dictionary) -> bool:
 	for ticket_value in _ticket_stack_view(machine, ui_state):
 		if typeof(ticket_value) != TYPE_DICTIONARY:

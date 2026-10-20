@@ -22208,6 +22208,13 @@ func _coach_context_snapshot() -> Dictionary:
 	var game_coach_state: Dictionary = {}
 	if current_game != null and run_state != null:
 		game_coach_state = current_game.coach_state(run_state, run_state.current_environment, _current_game_surface_ui_state())
+	elif run_state != null and run_state.is_tutorial_run() \
+			and archetype_id == "gas_station_casino" and _coach_visible_surface_screen() == SCREEN_ENVIRONMENT:
+		# Cold Continue has no transient redemption action. Read only the retained
+		# marked-winner receipt; do not enter or generate a machine to guide Pal.
+		var pull_tab_game := _game_module_for_id("pull_tabs")
+		if pull_tab_game != null:
+			game_coach_state["scripted_target_redeemed"] = bool(pull_tab_game.call("tutorial_redemption_completed", run_state, environment))
 	return {
 		"screen": _coach_visible_surface_screen(),
 		"environment_kind": str(environment.get("kind", archetype.get("kind", ""))),

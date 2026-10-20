@@ -267,7 +267,7 @@
     "trigger": {"depends_on": ["tutorial_gas_leave_machine"], "screen": "ENVIRONMENT", "environment_archetype": "gas_station_casino", "state_predicates": []},
     "anchor": {"kind": "interactable_object", "id": "character:nell"},
     "copy": "Cash the winner with Nell.",
-    "completion": {"type": "state_predicate", "state_predicates": [{"path": "action.last_action_id", "op": "equals", "value": "redeem_pull_tab_winners"}]},
+    "completion": {"type": "state_predicate", "state_predicates": [{"path": "screen", "op": "equals", "value": "ENVIRONMENT"}, {"path": "environment_archetype", "op": "equals", "value": "gas_station_casino"}, {"path": "game.scripted_target_redeemed", "op": "equals", "value": true}]},
     "gating": {"allowed_action_ids": ["game_hook:pull_tabs:ticket_redeemer", "ui:any"]}
   },
   {
