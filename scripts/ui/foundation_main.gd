@@ -3458,7 +3458,21 @@ func select_event_choice(event_id: String, choice_id: String, refresh_presentati
 	selected_event_choice_label = str(choice.get("label", choice_id))
 	selected_action_category = ACTION_CATEGORY_EVENTS
 	_set_current_screen(SCREEN_EVENT)
-	focus_interactable_object("event:%s" % selected_event_id)
+	var event_object_id := "event:%s" % selected_event_id
+	if not refresh_presentation and selected_object_id == event_object_id \
+			and focus_target_id == event_object_id and current_context_mode == CONTEXT_MODE_EVENT \
+			and run_state != null and environment_canvas != null \
+			and environment_canvas.selected_object_id == event_object_id \
+			and not str(run_state.current_environment.get("id", "")).is_empty() \
+			and str(environment_canvas.foundation_snapshot.get("id", "")) == str(run_state.current_environment.get("id", "")) \
+			and str(environment_canvas.foundation_snapshot.get("current_layer_id", "")) == str(run_state.current_environment.get("current_layer_id", "")):
+		# Immediate resolution already owns this room object's focus. Selecting a
+		# response changes the catalog key; looking up the same object here builds
+		# a transient catalog that the model commit immediately invalidates again.
+		# Retain focus acknowledgement while the committed result owns presentation.
+		_acknowledge_interactable_object_focus(event_object_id)
+	else:
+		focus_interactable_object(event_object_id)
 	_show_message("Selected event choice: %s." % selected_event_choice_label)
 	if refresh_presentation:
 		_refresh_after_environment_selection()
@@ -14839,6 +14853,11 @@ func _focus_interactable_object_with_data(object_id: String, object_data: Dictio
 			_refresh_world_header(object_data)
 	if actions_list != null:
 		_schedule_action_panel_refresh(object_data)
+	_acknowledge_interactable_object_focus(object_id)
+	return true
+
+
+func _acknowledge_interactable_object_focus(object_id: String) -> void:
 	var coach_action_id := "focus:%s" % object_id
 	_record_tutorial_action_if_authored(coach_action_id)
 	if coach_overlay != null and coach_overlay.notify_action(coach_action_id):
@@ -14849,7 +14868,6 @@ func _focus_interactable_object_with_data(object_id: String, object_data: Dictio
 	if coach_overlay != null and run_state != null and not run_state.is_tutorial_run():
 		_defer_coach_boundary_refresh()
 	_sync_talk_dock_coach_avoid_rect()
-	return true
 
 
 func activate_interactable_object(object_id: String) -> bool:
