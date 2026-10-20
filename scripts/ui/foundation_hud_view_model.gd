@@ -347,6 +347,8 @@ static func hud_run_status_text(run_state: RunState, pressure: Dictionary) -> St
 
 
 static func hud_save_text(has_save: bool, status: String, player_facing_text: Callable) -> String:
+	if has_save and status == "Autosave pending.":
+		return "Resume ready · New changes pending."
 	return "Autosave %s · %s" % [("on" if has_save else "pending").capitalize(), hud_short("current run" if status.is_empty() else status, 24, player_facing_text)]
 static func hud_short(text: String, max_length: int, player_facing_text: Callable) -> String:
 	var cleaned := _call_string(player_facing_text, text).strip_edges()
