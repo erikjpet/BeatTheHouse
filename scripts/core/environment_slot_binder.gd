@@ -597,8 +597,8 @@ static func _base_layout_policy_entry(environment: Dictionary, object_id: String
 	elif object_id == "numbers:silas":
 		object_type = "numbers_silas"
 	var entry := {"object_id": object_id, "object_type": object_type}
-	var layout := _dict(environment.get("layout", {}))
-	var hints := _dict(_dict(layout.get("object_placement_hints", {})).get(object_id, {}))
+	var layout := _dict_view(environment.get("layout", {}))
+	var hints := _dict(_dict_view(layout.get("object_placement_hints", {})).get(object_id, {}))
 	for key_value in hints.keys():
 		entry[key_value] = hints.get(key_value)
 	var source_id := object_id.trim_prefix("%s:" % str(parts[0]))
