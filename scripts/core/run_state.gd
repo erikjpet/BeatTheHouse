@@ -48,6 +48,7 @@ const DeliveryRunModelScript := preload("res://scripts/core/delivery_run_model.g
 const CrewPokerModelScript := preload("res://scripts/core/crew_poker_model.gd")
 const NumbersModelScript := preload("res://scripts/core/numbers_model.gd")
 const CharacterChainModelScript := preload("res://scripts/core/character_chain_model.gd")
+const CharacterOfferModelScript := preload("res://scripts/core/character_offer_model.gd")
 const BlackjackActionAuthorityScript := preload("res://scripts/core/blackjack_action_authority.gd")
 const GameRitualRuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 
@@ -947,6 +948,7 @@ func advance_game_clock_minutes(amount: int) -> Dictionary:
 		if not bool(membership.get("ok", false)):
 			from_dict(rollback_run)
 			return {"ok": false, "applied": false, "errors": JsonCoerceScript._copy_array(membership.get("errors", []))}
+	CharacterOfferModelScript.synchronize(self)
 	return {"ok": true, "applied": true, "delivery_resolved": delivery_resolved, "errors": []}
 
 
@@ -2367,6 +2369,7 @@ func set_environment(environment_data: Dictionary, debug_timing: Dictionary = {}
 	if perf_timing_enabled:
 		debug_timing["source_persist"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
+	CharacterOfferModelScript.expire_departure(self)
 	current_environment = _normalize_environment(environment_data)
 	_retain_world_sequences_bound_to_environment(current_environment)
 	if perf_timing_enabled:
@@ -2493,6 +2496,7 @@ func set_environment(environment_data: Dictionary, debug_timing: Dictionary = {}
 	reconcile_current_environment_object_manifest(true)
 	if perf_timing_enabled:
 		debug_timing["destination_models"] = Time.get_ticks_usec() - perf_stage_started_usec
+	CharacterOfferModelScript.synchronize(self)
 	return {"ok": true, "applied": true, "errors": []}
 
 
@@ -4982,15 +4986,18 @@ func _scenario_publish_crew_job(job: Dictionary) -> void:
 	scenario_enqueue_fact("crew_job_changed", "crew", {"job_id": str(job.get("id", "")), "definition_id": str(job.get("definition_id", "")), "member_id": str(job.get("member_id", "")), "status": str(job.get("status", "")), "outcome": str(job.get("outcome", ""))})
 
 
-func _scenario_publish_heat_change(previous_level: int, applied_delta: int, source: String) -> void:
+func _scenario_publish_heat_change(previous_level: int, applied_delta: int, source: String) -> Dictionary:
 	if applied_delta == 0:
-		return
+		return {"ok": true, "inactive": true, "errors": []}
 	var next_level := suspicion_level()
-	scenario_enqueue_fact("heat_changed", "heat", {"previous": previous_level, "current": next_level, "applied_delta": applied_delta, "source": source})
+	var changed := scenario_enqueue_fact("heat_changed", "heat", {"previous": previous_level, "current": next_level, "applied_delta": applied_delta, "source": source})
+	if not bool(changed.get("ok", false)) and not bool(changed.get("inactive", false)):
+		return changed
 	var previous_band := _scenario_heat_band(previous_level)
 	var next_band := _scenario_heat_band(next_level)
 	if previous_band != next_band:
-		scenario_enqueue_fact("heat_band_changed", "heat", {"previous_band": previous_band, "current_band": next_band, "current": next_level, "source": source})
+		return scenario_enqueue_fact("heat_band_changed", "heat", {"previous_band": previous_band, "current_band": next_band, "current": next_level, "source": source})
+	return changed
 
 
 static func _scenario_heat_band(value: int) -> String:
@@ -6213,6 +6220,25 @@ func change_pending_drunk_absorption(delta: int) -> void:
 			entry["remaining"] = remaining
 			next_queue.append(entry)
 	pending_drunk_absorption = next_queue
+
+
+# Explicit recovery can lower both meters even while more alcohol is pending.
+# Natural Drunk decay retains its separate absorption guard in change_drunk.
+func recover_alcohol(drunk_amount: int, pending_amount: int) -> void:
+	change_pending_drunk_absorption(-maxi(0, pending_amount))
+	if drunk_amount > 0:
+		_set_drunk_level(drunk_level - drunk_amount)
+
+
+# Authored recovery is an exact bounded reduction, independent of intoxication's
+# risk multiplier. Keep local Heat, timeline and scenario consequences canonical.
+func recover_heat(amount: int, source: String = "recovery") -> Dictionary:
+	var previous := suspicion_level()
+	_decrease_current_suspicion(maxi(0, amount), false)
+	var applied := suspicion_level() - previous
+	if applied != 0:
+		heat_changed.emit(applied, suspicion_level(), source, {"environment_id": str(current_environment.get("id", ""))})
+	return _scenario_publish_heat_change(previous, applied, source)
 
 
 func suppress_drunk_distortion(turns: int) -> void:
@@ -8961,6 +8987,38 @@ func remove_item(item_id: String) -> void:
 	invalidate_inventory_effect_cache()
 	if active_item_id == item_id:
 		active_item_id = ""
+
+
+# Inspect only carried inventory; home containers and collateral remain under
+# their existing owners. Instance entries can explicitly reserve or lock gear.
+func available_carried_item_index(item_id: String) -> int:
+	if item_id.is_empty():
+		return -1
+	for index in range(inventory.size()):
+		var entry: Variant = inventory[index]
+		if _inventory_item_id(entry) != item_id:
+			continue
+		if typeof(entry) == TYPE_DICTIONARY:
+			if bool(entry.get("reserved", false)) or bool(entry.get("locked", false)) \
+					or bool(entry.get("collateral", false)) or not str(entry.get("reservation_id", "")).is_empty() \
+					or not str(entry.get("reserved_for", "")).is_empty():
+				continue
+		return index
+	return -1
+
+
+func remove_available_carried_item(item_id: String) -> bool:
+	var index := available_carried_item_index(item_id)
+	if index < 0:
+		return false
+	if typeof(inventory[index]) == TYPE_STRING:
+		remove_item(item_id)
+	else:
+		inventory.remove_at(index)
+		invalidate_inventory_effect_cache()
+		if active_item_id == item_id and available_carried_item_index(item_id) < 0:
+			active_item_id = ""
+	return true
 
 
 # Sets the selected active item id. Validation belongs to the action service
@@ -14073,7 +14131,7 @@ func _decayed_suspicion_level(level: int, decay_percent: int) -> int:
 	return clampi(cooled, 0, 100)
 
 
-func _decrease_current_suspicion(amount: int) -> void:
+func _decrease_current_suspicion(amount: int, publish_facts: bool = true) -> void:
 	amount = maxi(0, amount)
 	if amount <= 0:
 		return
@@ -14083,7 +14141,8 @@ func _decrease_current_suspicion(amount: int) -> void:
 	suspicion["level"] = next_level
 	if next_level != previous_level:
 		_record_heat_history(false)
-		_scenario_publish_heat_change(previous_level, next_level - previous_level, "cooldown")
+		if publish_facts:
+			_scenario_publish_heat_change(previous_level, next_level - previous_level, "cooldown")
 	if location_id.is_empty():
 		return
 	var levels := _local_suspicion_levels()
@@ -14498,7 +14557,7 @@ func _save_snapshot(deep_copy_seeded_scenario_definitions: bool, travel_preview:
 		"environment_history": environment_history.duplicate(false),
 		"environment_history_archive_count": environment_history_archive_count,
 		"unlocked_travel": unlocked_travel.duplicate(false),
-		"narrative_flags": narrative_flags.duplicate(false),
+		"narrative_flags": CharacterOfferModelScript.snapshot_flags(narrative_flags),
 		"story_flags": story_flags.duplicate(false),
 		"story_log": [] if travel_preview else story_log.duplicate(false),
 		"story_log_archive_count": story_log_entry_count() if travel_preview else story_log_archive_count,
