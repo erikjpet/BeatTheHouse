@@ -730,6 +730,9 @@ func _build() -> void:
 	body_label = FoundationWidgets.label("", VisualStyle.TYPE_BODY_LARGE)
 	body_label.max_lines_visible = 4
 	body_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	# Shape the full line before revealing characters so wrapping cannot move
+	# live choices (including financial actions) under the player's pointer.
+	body_label.visible_characters_behavior = TextServer.VC_CHARS_AFTER_SHAPING
 	body_label.mouse_filter = Control.MOUSE_FILTER_STOP
 	body_label.gui_input.connect(Callable(self, "_on_body_gui_input"))
 	stack.add_child(body_label)
