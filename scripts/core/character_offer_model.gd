@@ -138,6 +138,9 @@ static func view(run_state: RunState, library: ContentLibrary, offer_id: String)
 		var state := _dict(_dict(run_state.narrative_flags.get(STATE_KEY, {})).get(str(offer.get("character_id", "")), {}))
 		if str(state.get("status", "")) != "available" or not _eligible(run_state, offer):
 			return {}
+		var granted_item_id := str(offer.get("inventory_add_item_id", ""))
+		if not granted_item_id.is_empty() and library.item(granted_item_id).is_empty():
+			return {}
 		var result: Dictionary = offer.duplicate(true)
 		result["token"] = {
 			"offer_id": offer_id, "cycle_id": str(state.get("cycle_id", "")),
@@ -165,6 +168,9 @@ static func _eligible(run_state: RunState, offer: Dictionary) -> bool:
 	var item_id := str(offer.get("required_item_id", ""))
 	if not item_id.is_empty() and run_state.available_carried_item_index(item_id) < 0:
 		return false
+	var excluded_item_id := str(offer.get("excluded_carried_item_id", ""))
+	if not excluded_item_id.is_empty() and run_state.carries_item(excluded_item_id):
+		return false
 	if bool(offer.get("free_home_ride", false)):
 		if not run_state.home_is_active() or str(run_state.home_state.get("home_node_id", "")).is_empty():
 			return false
@@ -188,6 +194,8 @@ static func _summary(run_state: RunState, offer: Dictionary) -> String:
 		lines.append("Reduce Heat by up to %d, to a minimum of 0." % int(offer.get("heat_reduction")))
 	if not str(offer.get("item_summary", "")).is_empty():
 		lines.append(str(offer.get("item_summary")))
+	if not str(offer.get("item_gain_summary", "")).is_empty():
+		lines.append(str(offer.get("item_gain_summary")))
 	lines.append("Stay at %s." % str(run_state.current_environment.get("display_name", "this venue")))
 	return "\n".join(lines)
 
@@ -233,6 +241,11 @@ static func resolve(run_state: RunState, library: ContentLibrary, offer_id: Stri
 	var clock := candidate.advance_game_clock_minutes(minutes)
 	if not bool(clock.get("ok", false)) or not bool(clock.get("applied", false)):
 		return _error("The offer could not advance time safely.", clock.get("errors", []))
+	var granted_item_id := str(current.get("inventory_add_item_id", ""))
+	if not granted_item_id.is_empty():
+		if candidate.carries_item(granted_item_id):
+			return _error("That item is already carried. Review the current offer again.")
+		candidate.add_item(granted_item_id)
 	candidate.recover_alcohol(int(current.get("drunk_reduction", 0)), int(current.get("pending_reduction", 0)))
 	var heat := candidate.recover_heat(int(current.get("heat_reduction", 0)), "character_offer:%s" % offer_id)
 	if not bool(heat.get("ok", false)) and not bool(heat.get("inactive", false)):
@@ -241,7 +254,7 @@ static func resolve(run_state: RunState, library: ContentLibrary, offer_id: Stri
 	if reward > 0:
 		candidate.change_bankroll(reward, true)
 	var message := "%s completed (%d minutes)." % [str(current.get("label", "Offer")), minutes]
-	candidate.log_story({"type": "character_offer", "offer_id": offer_id, "character_id": str(current.get("character_id", "")), "minutes": minutes, "cash_cost": cost, "cash_reward": reward, "message": message})
+	candidate.log_story({"type": "character_offer", "offer_id": offer_id, "character_id": str(current.get("character_id", "")), "minutes": minutes, "cash_cost": cost, "cash_reward": reward, "inventory_remove_item_id": item_id, "inventory_add_item_id": granted_item_id, "message": message})
 	var facts := candidate.scenario_flush_facts()
 	if not bool(facts.get("ok", false)) and not bool(facts.get("inactive", false)):
 		return _error("The offer's room consequences could not settle safely.", facts.get("errors", []))

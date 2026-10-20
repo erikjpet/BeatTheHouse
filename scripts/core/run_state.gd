@@ -8991,6 +8991,15 @@ func remove_item(item_id: String) -> void:
 
 # Inspect only carried inventory; home containers and collateral remain under
 # their existing owners. Instance entries can explicitly reserve or lock gear.
+func carries_item(item_id: String) -> bool:
+	if item_id.is_empty():
+		return false
+	for entry in inventory:
+		if _inventory_item_id(entry) == item_id:
+			return true
+	return false
+
+
 func available_carried_item_index(item_id: String) -> int:
 	if item_id.is_empty():
 		return -1
