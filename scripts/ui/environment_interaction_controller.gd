@@ -11,6 +11,7 @@ const EnvironmentPlacementScript := preload("res://scripts/core/environment_plac
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 const EnvironmentObjectManifestScript := preload("res://scripts/core/environment_object_manifest.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
+const CharacterOfferModelScript := preload("res://scripts/core/character_offer_model.gd")
 
 const LIVE_MEMBERSHIP_OBJECT_TYPES := ["service", "lender"]
 const LIVE_PRESENTATION_FIELDS := [
@@ -352,6 +353,60 @@ static func interactable_object_view_list(host: Variant) -> Array:
 	result = _join_object_manifest(result, host.run_state.current_environment, false, final_authority_proof)
 	result = _attach_delivery_handoff_to_contact(host, result)
 	result = _attach_action_only_records(result)
+	return result
+
+
+# Optional offers decorate an existing authenticated host after all room and
+# scenario composition. They do not add physical members, replace existing
+# services, or change the sealed manifest action/geometry authority.
+static func _attach_character_offers(host: Variant, records: Array) -> Array:
+	CharacterOfferModelScript.synchronize(host.run_state)
+	var result := records.duplicate(false)
+	for index in range(records.size()):
+		var record := _dict(records[index])
+		if not bool(record.get("manifest_physical", false)) \
+				or not bool(record.get("visible", true)) \
+				or str(record.get("presentation_mode", "room")) != "room":
+			continue
+		var offer: Dictionary = CharacterOfferModelScript.view_for_host(host.run_state, host.library, record)
+		if offer.is_empty():
+			continue
+		record = record.duplicate(false)
+		if bool(offer.get("free_home_ride", false)):
+			var route_preview: Dictionary = host._character_offer_route_preview(offer)
+			if route_preview.is_empty():
+				continue
+			offer["route_preview"] = route_preview
+			var summary := str(offer.get("summary", "")).strip_edges()
+			offer["summary"] = "%s%s%s" % [summary, "\n" if not summary.is_empty() else "", str(route_preview.get("summary", ""))]
+		var offer_id := str(offer.get("id", ""))
+		var action_key := "character_offer:%s" % offer_id
+		var attached := _array(record.get("attached_room_actions", [])).duplicate(true)
+		attached.append({
+			"id": action_key,
+			"key": action_key,
+			"label": str(offer.get("label", "Review offer")),
+			"enabled": true,
+			"disabled_reason": "",
+			"record": {"object_type": "character_offer", "source_id": offer_id, "offer": offer},
+			"action": {"id": "review", "source_id": offer_id, "enabled": true},
+		})
+		record["attached_room_actions"] = attached
+		# The canvas card consumes inline actions. Keep the attached descriptor as
+		# live dispatch authority and expose its existing URI route on that card.
+		var inline_actions := _array(record.get("inline_actions", [])).duplicate(true)
+		inline_actions.append({
+			"label": str(offer.get("label", "Review offer")),
+			"enabled": true,
+			"disabled": false,
+			"text": "",
+			"emit_object_id": "room_action:%s:%s" % [str(record.get("object_id", "")).uri_encode(), action_key.uri_encode()],
+		})
+		record["inline_actions"] = inline_actions
+		record["character_offer"] = offer
+		record["interactive"] = true
+		record["decorative"] = false
+		result[index] = record
 	return result
 
 
