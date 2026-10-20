@@ -12,6 +12,7 @@ const RunStateScript := preload("res://scripts/core/run_state.gd")
 
 const ROOT := "user://health06_1_durable_store_contract"
 const DIRECT_PATH := ROOT + "/direct.json"
+const EXACT_PATH := ROOT + "/exact_primary.json"
 const TRANSITION_PATH := ROOT + "/transition.json"
 const PROFILE_PATH := ROOT + "/profile.json"
 const META_PATH := ROOT + "/meta.json"
@@ -23,6 +24,7 @@ const RUN_SLOT := "health06_1"
 
 var failures: Array[String] = []
 var _saved_environment: Dictionary = {}
+var validation_calls := 0
 
 
 func _init() -> void:
@@ -37,6 +39,7 @@ func _run() -> void:
 	_cleanup()
 	_configure_environment()
 	_check_direct_durability()
+	_check_exact_primary_proof()
 	_check_transaction_transition_faults()
 	_check_json_coercion()
 	_check_profile_recovery()
@@ -93,6 +96,43 @@ func _check_direct_durability() -> void:
 	_expect(int((recovered.get("data", {}) as Dictionary).get("generation", 0)) == 1, "CH-01: backup recovery returned the wrong generation.")
 	var status := DurableStoreScript.status(DIRECT_PATH, Callable(self, "_valid_generation"))
 	_expect(not bool(status.get("primary_loadable", true)) and bool(status.get("backup_loadable", false)), "CH-01: durable status did not distinguish corrupt primary from valid backup.")
+
+
+func _check_exact_primary_proof() -> void:
+	var validator := Callable(self, "_count_valid_generation")
+	var first := DurableStoreScript.write_json(EXACT_PATH, {"generation": 1}, validator, true)
+	_expect(bool(first.get("ok", false)), "CH-01: exact-proof first generation failed.")
+	var first_digest := str(first.get("validated_sha256", ""))
+	validation_calls = 0
+	var second := DurableStoreScript.write_json(EXACT_PATH, {"generation": 2}, validator, true, first_digest)
+	_expect(bool(second.get("ok", false)) and validation_calls == 1, "CH-01: exact prior bytes were not reused after full validated install.")
+	var second_digest := str(second.get("validated_sha256", ""))
+	var second_bytes := FileAccess.get_file_as_bytes(EXACT_PATH)
+	var changed_valid := JSON.stringify({"generation": 7}, "\t")
+	_expect(changed_valid.to_utf8_buffer().size() == second_bytes.size(), "CH-01: valid changed-image case did not preserve primary length.")
+	_write_raw(EXACT_PATH, changed_valid)
+	validation_calls = 0
+	var third := DurableStoreScript.write_json(EXACT_PATH, {"generation": 3}, validator, true, second_digest)
+	_expect(bool(third.get("ok", false)) and validation_calls == 2, "CH-01: same-length changed valid primary bypassed full validation.")
+	var changed_valid_bytes := changed_valid.to_utf8_buffer()
+	_expect(FileAccess.get_file_as_bytes(DurableStoreScript.backup_path(EXACT_PATH)) == changed_valid_bytes, "CH-01: validated changed primary was not rotated into backup.")
+	var third_digest := str(third.get("validated_sha256", ""))
+	var third_bytes := FileAccess.get_file_as_bytes(EXACT_PATH)
+	var changed_invalid := JSON.stringify({"generation": 0}, "\t")
+	_expect(changed_invalid.to_utf8_buffer().size() == third_bytes.size(), "CH-01: invalid changed-image case did not preserve primary length.")
+	_write_raw(EXACT_PATH, changed_invalid)
+	validation_calls = 0
+	var fourth := DurableStoreScript.write_json(EXACT_PATH, {"generation": 4}, validator, true, third_digest)
+	_expect(bool(fourth.get("ok", false)) and validation_calls == 2, "CH-01: same-length invalid primary bypassed full validation.")
+	_expect(FileAccess.get_file_as_bytes(DurableStoreScript.backup_path(EXACT_PATH)) == changed_valid_bytes, "CH-01: invalid previous primary displaced the last good backup.")
+	var fourth_bytes := FileAccess.get_file_as_bytes(EXACT_PATH)
+	var backup_bytes := FileAccess.get_file_as_bytes(DurableStoreScript.backup_path(EXACT_PATH))
+	DurableStoreScript.set_debug_fail_transition(DurableStoreScript.TRANSITION_INSTALL_PRIMARY)
+	var failed := DurableStoreScript.write_json(EXACT_PATH, {"generation": 5}, validator, true, str(fourth.get("validated_sha256", "")))
+	DurableStoreScript.reset_debug_faults()
+	_expect(not bool(failed.get("ok", true)), "CH-01: exact-proof install fault reported success.")
+	_expect(FileAccess.get_file_as_bytes(EXACT_PATH) == fourth_bytes and FileAccess.get_file_as_bytes(DurableStoreScript.backup_path(EXACT_PATH)) == backup_bytes, "CH-01: exact-proof rollback changed primary or backup bytes.")
+	_expect(not FileAccess.file_exists("%s.rollback" % EXACT_PATH) and not FileAccess.file_exists("%s.bak.rollback" % EXACT_PATH), "CH-01: exact-proof rollback left transaction artifacts.")
 
 
 func _check_transaction_transition_faults() -> void:
@@ -243,6 +283,8 @@ func _check_run_save_recovery_and_trust() -> void:
 	_expect(service.save_run(run_state, RUN_SLOT) == OK, "CH-01/02: run generation two failed to save.")
 	var primary_path := service.run_save_path(RUN_SLOT)
 	_write_raw(primary_path, "{corrupt")
+	var damaged_status := service.slot_status(RUN_SLOT)
+	_expect(not bool(damaged_status.get("primary_loadable", true)) and not service.trusted_primary_fingerprints.has(RUN_SLOT), "CH-01: corrupt primary status retained an installed-byte proof.")
 	var recovery_service := SaveServiceScript.new()
 	var recovered: Variant = recovery_service.load_run(RUN_SLOT)
 	_expect(recovered != null, "CH-01: run save did not recover from backup.")
@@ -256,6 +298,8 @@ func _check_run_save_recovery_and_trust() -> void:
 	DurableStoreScript.reset_debug_faults()
 	_expect(failed_save != OK, "CH-01: induced run rename failure reported success.")
 	_expect(not service.trusted_primary_fingerprints.has(RUN_SLOT), "CH-01: failed run save retained a trusted-primary fingerprint.")
+	_expect(service.save_run(run_state, RUN_SLOT) == OK and service.trusted_primary_fingerprints.has(RUN_SLOT), "CH-01: recovery save did not re-establish installed-byte proof.")
+	_expect(service.load_run(RUN_SLOT) != null and not service.trusted_primary_fingerprints.has(RUN_SLOT), "CH-01: cold load retained a proof from the prior installed generation.")
 
 
 func _check_distribution_root_validation() -> void:
@@ -272,6 +316,11 @@ func _check_distribution_root_validation() -> void:
 
 func _valid_generation(data: Dictionary) -> bool:
 	return int(data.get("generation", 0)) > 0
+
+
+func _count_valid_generation(data: Dictionary) -> bool:
+	validation_calls += 1
+	return _valid_generation(data)
 
 
 func _capture_environment() -> void:
@@ -303,7 +352,7 @@ func _restore_environment() -> void:
 
 
 func _cleanup() -> void:
-	for path in [DIRECT_PATH, TRANSITION_PATH, PROFILE_PATH, META_PATH, SETTINGS_PATH, PLACEMENT_PATH, PROJECT_PLACEMENT_PATH]:
+	for path in [DIRECT_PATH, EXACT_PATH, TRANSITION_PATH, PROFILE_PATH, META_PATH, SETTINGS_PATH, PLACEMENT_PATH, PROJECT_PLACEMENT_PATH]:
 		_remove_generation(path)
 	_remove_generation("%s/saves/run_%s.json" % [RUN_ROOT, RUN_SLOT])
 
