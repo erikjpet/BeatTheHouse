@@ -894,7 +894,15 @@ static func _canonical(value: Variant) -> Variant:
 	if typeof(value) == TYPE_DICTIONARY:
 		var source := value as Dictionary
 		var keys := source.keys()
-		keys.sort_custom(func(left: Variant, right: Variant) -> bool: return str(left) < str(right))
+		var all_string_keys := true
+		for key_index in range(keys.size()):
+			if typeof(keys[key_index]) != TYPE_STRING:
+				all_string_keys = false
+				break
+		if all_string_keys:
+			keys.sort()
+		else:
+			keys.sort_custom(func(left: Variant, right: Variant) -> bool: return str(left) < str(right))
 		var result: Dictionary = {}
 		for key_value in keys:
 			result[str(key_value)] = _canonical(source.get(key_value))
