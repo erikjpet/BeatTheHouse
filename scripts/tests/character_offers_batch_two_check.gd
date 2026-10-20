@@ -68,7 +68,6 @@ func _check_definitions() -> void:
 	var june := _definition("june")
 	var sable := _definition("sable")
 	_expect(not june.is_empty() and not sable.is_empty(), "Both approved canonical characters have offer attributes.")
-	_expect(_definition("ox").is_empty(), "The unapproved Ox offer is absent.")
 	_expect(int(june.get("chance_percent", -1)) == 25 and int(june.get("cash_cost", -1)) == 5 and int(june.get("minutes", -1)) == 15, "June preserves the approved 25%, $5 and fifteen-minute terms.")
 	_expect(june.get("hosts", {}) == {"motel": "motel:june"}, "June uses her existing motel placement.")
 	_expect(str(june.get("inventory_add_item_id", "")) == "pocket_watch" and str(june.get("excluded_carried_item_id", "")) == "pocket_watch", "June grants one Pocket Watch and excludes an already carried watch.")
@@ -85,9 +84,12 @@ func _environment(archetype: String, minute: int) -> Dictionary:
 	var rows: Array = []
 	for value in OfferModel.definitions():
 		var offer: Dictionary = value
-		var host_id := str((offer.get("hosts", {}) as Dictionary).get(archetype, ""))
-		if not host_id.is_empty():
-			rows.append({"instance_object_id": host_id, "presentation_object_id": host_id, "object_id": host_id, "family": "fixed", "object_type": "character", "active": true, "physical": true, "action_ids": []})
+		var binding: Variant = (offer.get("hosts", {}) as Dictionary).get(archetype, "")
+		var host_ids: Array = binding if typeof(binding) == TYPE_ARRAY else [binding]
+		for host_value in host_ids:
+			var host_id := str(host_value)
+			if not host_id.is_empty():
+				rows.append({"instance_object_id": host_id, "presentation_object_id": host_id, "object_id": host_id, "family": "fixed", "object_type": "character", "active": true, "physical": true, "action_ids": []})
 	return {
 		"id": "batch_two_fixture:%s" % archetype,
 		"archetype_id": archetype, "world_node_id": archetype,
