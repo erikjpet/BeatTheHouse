@@ -13,6 +13,7 @@ const REGISTRY_KEY := "environment_registry"
 const CODEC_KEY := "run_save_codec_version"
 const EXACT_INT_KEY := "__bth_exact_int64"
 const EXACT_INTEGER_ROOT_KEYS := ["active_delivery_run", "world_sequence_registrations"]
+const BLACKJACK_LEDGER_KEY := "_blackjack_action_authority"
 const SLOT_DEFINITION_KEYS := ["reel_strips", "bonus_reel_strips"]
 const SLOT_DUPLICATE_PRESENTATION_KEYS := ["slot_reel_timeline", "slot_reel_stop_times"]
 const STORAGE_MARKER_KEY := "__bth_packed_run_state"
@@ -52,7 +53,8 @@ static func encode(runtime_state: Dictionary) -> Dictionary:
 
 static func decode(saved_state: Dictionary) -> Dictionary:
 	if int(saved_state.get(CODEC_KEY, 0)) <= 0:
-		return saved_state.duplicate(true)
+		var legacy: Variant = _restore_exact_integer_markers(saved_state)
+		return legacy as Dictionary if typeof(legacy) == TYPE_DICTIONARY else {}
 	var registry_value: Variant = saved_state.get(REGISTRY_KEY, {})
 	var registry: Dictionary = _expand_environment_registry_deltas(registry_value as Dictionary) if typeof(registry_value) == TYPE_DICTIONARY else {}
 	var root: Dictionary = saved_state.duplicate(false)
@@ -158,9 +160,110 @@ static func unpack_from_storage(stored_state: Dictionary) -> Dictionary:
 			or _sha256(source) != str(stored_state.get(STORAGE_HASH_KEY, "")):
 		return {}
 	var json := JSON.new()
-	if json.parse(source.get_string_from_utf8()) != OK or typeof(json.data) != TYPE_DICTIONARY:
+	if json.parse(preserve_blackjack_ledger_integer_tokens(source.get_string_from_utf8())) != OK or typeof(json.data) != TYPE_DICTIONARY:
 		return {}
 	return (json.data as Dictionary).duplicate(true)
+
+
+# Prior packed saves wrote the authority ledger as ordinary JSON. Godot parses
+# every JSON number as a float, invalidating the ledger's type-sensitive hashes
+# even when the saved bytes are intact. Restore only integer literals inside
+# ledger objects before the existing strict authority validation runs. Float
+# literals (including 3.0) and all non-ledger save fields stay unchanged.
+static func preserve_blackjack_ledger_integer_tokens(json_text: String) -> String:
+	var marker := '"%s"' % BLACKJACK_LEDGER_KEY
+	var ranges: Array[Dictionary] = []
+	var offset := 0
+	while offset < json_text.length():
+		var key_at := json_text.find(marker, offset)
+		if key_at < 0:
+			break
+		var value_at := key_at + marker.length()
+		while value_at < json_text.length() and json_text[value_at] in [" ", "\t", "\r", "\n"]:
+			value_at += 1
+		if value_at >= json_text.length() or json_text[value_at] != ":":
+			offset = value_at
+			continue
+		value_at += 1
+		while value_at < json_text.length() and json_text[value_at] in [" ", "\t", "\r", "\n"]:
+			value_at += 1
+		if value_at >= json_text.length() or json_text[value_at] != "{":
+			offset = value_at
+			continue
+		var end_at := _json_object_end(json_text, value_at)
+		if end_at < 0:
+			return json_text
+		ranges.append({"start": value_at, "end": end_at})
+		offset = end_at
+	for range_index in range(ranges.size() - 1, -1, -1):
+		var span: Dictionary = ranges[range_index]
+		var start_at := int(span.get("start", 0))
+		var end_at := int(span.get("end", 0))
+		json_text = json_text.substr(0, start_at) \
+			+ _json_wrap_integer_literals(json_text.substr(start_at, end_at - start_at)) \
+			+ json_text.substr(end_at)
+	return json_text
+
+
+static func _json_object_end(json_text: String, start_at: int) -> int:
+	var depth := 0
+	var inside_string := false
+	var escaped := false
+	for index in range(start_at, json_text.length()):
+		var character := json_text[index]
+		if inside_string:
+			if escaped:
+				escaped = false
+			elif character == "\\":
+				escaped = true
+			elif character == '"':
+				inside_string = false
+		elif character == '"':
+			inside_string = true
+		elif character == "{":
+			depth += 1
+		elif character == "}":
+			depth -= 1
+			if depth == 0:
+				return index + 1
+	return -1
+
+
+static func _json_wrap_integer_literals(json_text: String) -> String:
+	var pieces: Array[String] = []
+	var copy_from := 0
+	var index := 0
+	var inside_string := false
+	var escaped := false
+	while index < json_text.length():
+		var character := json_text[index]
+		if inside_string:
+			if escaped:
+				escaped = false
+			elif character == "\\":
+				escaped = true
+			elif character == '"':
+				inside_string = false
+			index += 1
+			continue
+		if character == '"':
+			inside_string = true
+			index += 1
+			continue
+		if character != "-" and not character in "0123456789":
+			index += 1
+			continue
+		var number_end := index + 1
+		while number_end < json_text.length() and json_text[number_end] in "0123456789+-.eE":
+			number_end += 1
+		var token := json_text.substr(index, number_end - index)
+		if token.is_valid_int():
+			pieces.append(json_text.substr(copy_from, index - copy_from))
+			pieces.append('{"%s":"%s"}' % [EXACT_INT_KEY, token])
+			copy_from = number_end
+		index = number_end
+	pieces.append(json_text.substr(copy_from))
+	return "".join(pieces)
 
 
 static func _sha256(bytes: PackedByteArray) -> String:
@@ -228,7 +331,7 @@ static func _encode_value(value: Variant, registry: Dictionary, fingerprints: Di
 			if key == SEEDED_SCENARIO_DEFINITIONS_KEY and typeof(child) == TYPE_DICTIONARY:
 				encoded_dict[key_value] = _encode_seeded_scenario_definitions(child as Dictionary)
 			else:
-				encoded_dict[key_value] = _encode_exact_integers(child) if key.begins_with("scenario_") or key in EXACT_INTEGER_ROOT_KEYS else _encode_value(child, registry, fingerprints, inside_environment)
+				encoded_dict[key_value] = _encode_exact_integers(child) if key.begins_with("scenario_") or key in EXACT_INTEGER_ROOT_KEYS or key == BLACKJACK_LEDGER_KEY else _encode_value(child, registry, fingerprints, inside_environment)
 		return encoded_dict
 	if typeof(value) == TYPE_ARRAY:
 		var source_array: Array = value
@@ -306,6 +409,23 @@ static func _decode_value(value: Variant, registry: Dictionary) -> Variant:
 		for entry_value in value as Array:
 			result.append(_decode_value(entry_value, registry))
 		return result
+	return value
+
+
+static func _restore_exact_integer_markers(value: Variant) -> Variant:
+	if typeof(value) == TYPE_DICTIONARY:
+		var source: Dictionary = value
+		if source.size() == 1 and typeof(source.get(EXACT_INT_KEY)) == TYPE_STRING:
+			return int(str(source.get(EXACT_INT_KEY, "0")))
+		var restored: Dictionary = {}
+		for key in source.keys():
+			restored[key] = _restore_exact_integer_markers(source.get(key))
+		return restored
+	if typeof(value) == TYPE_ARRAY:
+		var restored_array: Array = []
+		for item in value as Array:
+			restored_array.append(_restore_exact_integer_markers(item))
+		return restored_array
 	return value
 
 
@@ -405,9 +525,9 @@ static func _apply_dictionary_patch(base: Variant, patch: Variant) -> Variant:
 
 
 # JSON has one numeric type and otherwise changes every persisted integer into a
-# float. Dynamic scenario, mounted world-sequence, and delivery depth authority
-# validate exact typed envelopes, so preserve integer identity recursively for
-# those root-owned save fields.
+# float. Dynamic scenario, mounted world-sequence, delivery depth, and Blackjack
+# authority validate exact typed envelopes, so preserve integer identity for
+# those save fields.
 static func _encode_exact_integers(value: Variant) -> Variant:
 	if typeof(value) == TYPE_INT:
 		return {EXACT_INT_KEY: str(value)}

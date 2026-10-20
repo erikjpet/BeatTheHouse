@@ -280,6 +280,13 @@ func checkpoint_surface_ui_state_for_save_requires_ui_state() -> bool:
 	return true
 
 
+# A module may restore a small durable in-progress surface after Continue or
+# after leaving and re-entering its room. The default keeps existing games' UI
+# lifecycle unchanged.
+func restored_surface_ui_state(_run_state: RunState, _environment: Dictionary) -> Dictionary:
+	return {}
+
+
 # Reports whether the module has reached a durable state safe for Foundation's
 # normal save path; continuous simulations can hold this false while settling.
 func foundation_save_ready(_run_state: RunState, _environment: Dictionary) -> bool:

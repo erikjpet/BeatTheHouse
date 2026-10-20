@@ -40,6 +40,7 @@ const ActionAuthorityScript := preload("res://scripts/core/blackjack_action_auth
 const HAND_SIZE := 5
 const STATE_SCHEMA := "video_poker_machine_state"
 const STATE_VERSION := 3
+const PENDING_HAND_UI_KEY := "pending_hand_ui"
 const FLIP_CHANNEL := "video_poker_flip"
 const FLIP_DURATION_MSEC := 760
 const RANK_JACK := 11
@@ -833,6 +834,53 @@ func wager_cost_for_context(action_id: String, _stake: int, _run_state: RunState
 
 func wager_activity_incomplete(_run_state: RunState, _environment: Dictionary, ui_state: Dictionary = {}) -> bool:
 	return bool(_normalized_ui_state(ui_state).get("hand_active", false))
+
+
+func checkpoint_surface_ui_state(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> void:
+	var machine := _machine_state(run_state, environment)
+	var ui := _normalized_ui_state(ui_state)
+	if not bool(ui.get("hand_active", false)):
+		if machine.has(PENDING_HAND_UI_KEY):
+			machine.erase(PENDING_HAND_UI_KEY)
+			_update_environment_state(environment, machine)
+		return
+	# Deal does not charge or consume the draw RNG. Keep only the player's
+	# unfinished hand choices in the machine snapshot; never replay Deal on load.
+	var holds: Array = []
+	for index_value in _index_array(ui.get("holds", [])):
+		var hold_index := int(index_value)
+		if hold_index < HAND_SIZE:
+			holds.append(hold_index)
+	var pending := {
+		"hand_active": true,
+		"hands_played": int(machine.get("hands_played", 0)),
+		"holds": holds,
+		"bet_level": _bet_level(ui),
+		"denomination_index": _denomination_index(ui, machine),
+		"marked": bool(ui.get("marked", false)),
+		"deal_id": str(ui.get("deal_id", "")),
+		"deal_started_msec": int(ui.get("deal_started_msec", 0)),
+	}
+	var challenge := _normalized_holdout_challenge(ui.get("holdout_challenge", {}))
+	if not challenge.is_empty():
+		pending["holdout_challenge"] = challenge
+	machine[PENDING_HAND_UI_KEY] = pending
+	_update_environment_state(environment, machine)
+
+
+func restored_surface_ui_state(run_state: RunState, environment: Dictionary) -> Dictionary:
+	var machine := _machine_state(run_state, environment)
+	var value: Variant = machine.get(PENDING_HAND_UI_KEY, {})
+	if typeof(value) != TYPE_DICTIONARY or not bool((value as Dictionary).get("hand_active", false)) \
+			or int((value as Dictionary).get("hands_played", -1)) != int(machine.get("hands_played", 0)):
+		return {}
+	var restored := _normalized_ui_state(value as Dictionary)
+	# A cold Continue starts a new surface clock. The hand and holds are durable,
+	# but the old reveal animation timestamp is not; replaying it can leave every
+	# card face-down while the restored hand is otherwise ready to Draw.
+	restored.erase("deal_id")
+	restored.erase("deal_started_msec")
+	return restored
 
 
 # Draws the cabinet screen and registers visible/invisible hit regions.

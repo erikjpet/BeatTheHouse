@@ -1325,6 +1325,7 @@ func _enter_game_after_input_guard(clean_game_id: String, clean_state_key: Strin
 	var result := current_game.enter(run_state, run_state.current_environment)
 	last_game_result = result.duplicate(true)
 	_reset_selected_stake()
+	_store_current_game_surface_ui_state(current_game.restored_surface_ui_state(run_state, run_state.current_environment))
 	_show_message(str(result.get("message", "")))
 	_refresh()
 	_clear_selected_stake()

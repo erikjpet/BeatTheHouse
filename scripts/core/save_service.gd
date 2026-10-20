@@ -351,7 +351,7 @@ func _read_run_state_from_path(path: String) -> Dictionary:
 		return {"exists": false, "loadable": false, "run_state": null}
 	var text := FileAccess.get_file_as_string(path)
 	var json := JSON.new()
-	if json.parse(text) != OK:
+	if json.parse(RunSaveCodecScript.preserve_blackjack_ledger_integer_tokens(text)) != OK:
 		return {"exists": true, "loadable": false, "run_state": null}
 	var parsed: Variant = json.data
 	if typeof(parsed) != TYPE_DICTIONARY:
