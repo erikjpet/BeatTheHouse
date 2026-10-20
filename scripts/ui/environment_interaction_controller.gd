@@ -390,6 +390,17 @@ static func _attach_character_offers(host: Variant, records: Array) -> Array:
 			"action": {"id": "review", "source_id": offer_id, "enabled": true},
 		})
 		record["attached_room_actions"] = attached
+		# The canvas card consumes inline actions. Keep the attached descriptor as
+		# live dispatch authority and expose its existing URI route on that card.
+		var inline_actions := _array(record.get("inline_actions", [])).duplicate(true)
+		inline_actions.append({
+			"label": str(offer.get("label", "Review offer")),
+			"enabled": true,
+			"disabled": false,
+			"text": "",
+			"emit_object_id": "room_action:%s:%s" % [str(record.get("object_id", "")).uri_encode(), action_key.uri_encode()],
+		})
+		record["inline_actions"] = inline_actions
 		record["character_offer"] = offer
 		record["interactive"] = true
 		record["decorative"] = false
