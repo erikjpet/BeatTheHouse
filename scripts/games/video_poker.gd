@@ -1458,6 +1458,10 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 			"holdout_applied": holdout_applied,
 		}
 	var result := _build_result(action_id, "cheat" if is_cheat else "legal", bet_credits, bankroll_delta, suspicion_delta, ended, message, story_entry, environment)
+	# Retire the hand in the sealed session as well as the visible surface. The
+	# host otherwise retains the active Draw input after this hand has settled.
+	result["ui_state"] = {"bet_level": bet_level, "denomination_index": denomination_index}
+	result["preserve_surface_ui_state"] = false
 	result["surface_audio_cue"] = "video_poker_win" if gross_payout > 0 else ("video_poker_cheat_beat" if is_cheat else "video_poker_draw")
 	result["surface_audio_context"] = {"action": action_id, "cabinet_id": str(state.get("cabinet_id", "")), "won": gross_payout > 0}
 	result["video_poker_hand"] = final_hand
@@ -1566,6 +1570,9 @@ func _resolve_double_up(run_state: RunState, environment: Dictionary, rng: RngSt
 		"environment_id": environment.get("id", ""),
 	}
 	var result := _build_result("double_up", "legal", at_risk, bankroll_delta, 0, false, message, story_entry, environment)
+	# The resolved gamble's reveal lives in last_result, not an active pick session.
+	result["ui_state"] = {"bet_level": _bet_level(ui), "denomination_index": _denomination_index(ui, state)}
+	result["preserve_surface_ui_state"] = false
 	result["video_poker_double_outcome"] = outcome
 	result["video_poker_double_at_risk"] = at_risk
 	result["video_poker_double_next"] = next_double
