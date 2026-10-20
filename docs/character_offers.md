@@ -152,6 +152,9 @@ Run in the qualified Godot 4.6.0 environment:
 godot --headless --path . --script res://scripts/tests/character_offers_check.gd
 godot --headless --path . --script res://scripts/tests/character_offers_batch_two_check.gd
 godot --headless --path . --script res://scripts/tests/character_offers_roads_and_ride_check.gd
+godot --headless --path . --script res://scripts/tests/character_offer_canvas_actions_check.gd
+godot --headless --path . --script res://scripts/tests/character_offers_cache_check.gd
+godot --headless --path . --script res://scripts/tests/animation_liveness_without_pointer_check.gd
 ```
 
 This contract exercises deterministic saved successes/misses, eligibility,
