@@ -892,7 +892,7 @@ func restored_surface_ui_state(run_state: RunState, environment: Dictionary) -> 
 	var value: Variant = machine.get(PENDING_HAND_UI_KEY, {})
 	if typeof(value) != TYPE_DICTIONARY or not bool((value as Dictionary).get("hand_active", false)) \
 			or int((value as Dictionary).get("hands_played", -1)) != int(machine.get("hands_played", 0)):
-		return {}
+		return _restored_settled_wager_ui_state(run_state, environment, machine)
 	var restored := _normalized_ui_state(value as Dictionary)
 	# A cold Continue starts a new surface clock. The hand and holds are durable,
 	# but the old reveal animation timestamp is not; replaying it can leave every
@@ -900,6 +900,31 @@ func restored_surface_ui_state(run_state: RunState, environment: Dictionary) -> 
 	restored.erase("deal_id")
 	restored.erase("deal_started_msec")
 	return restored
+
+
+func _restored_settled_wager_ui_state(run_state: RunState, environment: Dictionary, machine: Dictionary) -> Dictionary:
+	if run_state == null:
+		return {}
+	var state_key := transient_state_key_context()
+	if state_key != get_id() and not state_key.begins_with("%s:" % get_id()):
+		state_key = get_id()
+	var binding := RunState.action_authority_table_binding(state_key, environment)
+	# Match the sealed host's delivery-free session preservation: a live balance
+	# or RNG change may require rebasing replay evidence, not resetting the saved
+	# wager. Cold restore already strips checkpoint-mismatched ledgers. Validate
+	# the complete ledger here; never promote caller UI or write authority state.
+	var ledger := ActionAuthorityScript.validate_persisted_ledger(machine.get(ActionAuthorityScript.LEDGER_KEY, {}), binding)
+	if ledger.is_empty() or not (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
+		return {}
+	var session: Dictionary = ledger.get("session", {})
+	if bool(session.get("hand_active", false)) or bool(session.get("double_active", false)):
+		return {}
+	# Only settled wager preferences belong on the new surface. The normal
+	# rendering/command paths apply the same denomination and affordability clamps.
+	return {
+		"bet_level": _bet_level(session),
+		"denomination_index": maxi(0, int(session.get("denomination_index", 0))),
+	}
 
 
 # Draws the cabinet screen and registers visible/invisible hit regions.
