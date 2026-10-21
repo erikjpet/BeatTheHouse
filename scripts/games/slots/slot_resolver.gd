@@ -221,30 +221,18 @@ func resolve_spin(options: FunctionOptions.SlotResolveOptions) -> Dictionary:
 	machine["last_tease_events"] = _tease_events(classification, nudge_applied, nudge_event)
 	machine["last_nudge_offer"] = _nudge_offer(machine, family, entry, grid, stops, classification, nudge_applied, selected_bet, definition, resolved_item_effects)
 	var animation_plan: Dictionary = {}
-	if include_presentation_payload:
-		animation_plan = _animation_plan(machine, finalized_classification, active_bonus, win_attribution)
-		if feature_triggered:
-			active_bonus["animation_duration_msec"] = int(animation_plan.get("feature_duration_msec", 0))
-			machine["active_bonus"] = active_bonus
-			machine["slot_bonus_trigger_revealed"] = false
-		machine["slot_animation_id"] = str(animation_plan.get("id", ""))
-		machine["slot_animation_duration_msec"] = int(animation_plan.get("duration_msec", 0))
-		machine["slot_animation_started_msec"] = 0
-		machine["slot_animation_plan"] = animation_plan.duplicate(true)
-		machine["slot_reel_stop_times"] = JsonCoerceScript._copy_array(animation_plan.get("reel_stop_times", []))
-		machine["slot_reel_timeline"] = JsonCoerceScript._copy_array(animation_plan.get("reel_timeline", []))
-		machine["slot_bonus_start_time"] = float(animation_plan.get("bonus_start_time", 0.0))
-	else:
-		# Offscreen autoplay has no surface to animate. Persisting or even building
-		# reel timelines here makes the player's foreground frame pay presentation
-		# work for an invisible cabinet.
-		machine.erase("slot_animation_plan")
-		machine.erase("slot_reel_stop_times")
-		machine.erase("slot_reel_timeline")
-		machine["slot_animation_id"] = ""
-		machine["slot_animation_duration_msec"] = 0
-		machine["slot_animation_started_msec"] = 0
-		machine["slot_bonus_start_time"] = 0.0
+	animation_plan = _animation_plan(machine, finalized_classification, active_bonus, win_attribution)
+	if feature_triggered:
+		active_bonus["animation_duration_msec"] = int(animation_plan.get("feature_duration_msec", 0))
+		machine["active_bonus"] = active_bonus
+		machine["slot_bonus_trigger_revealed"] = false
+	machine["slot_animation_id"] = str(animation_plan.get("id", ""))
+	machine["slot_animation_duration_msec"] = int(animation_plan.get("duration_msec", 0))
+	machine["slot_animation_started_msec"] = 0
+	machine["slot_animation_plan"] = animation_plan.duplicate(true)
+	machine["slot_reel_stop_times"] = JsonCoerceScript._copy_array(animation_plan.get("reel_stop_times", []))
+	machine["slot_reel_timeline"] = JsonCoerceScript._copy_array(animation_plan.get("reel_timeline", []))
+	machine["slot_bonus_start_time"] = float(animation_plan.get("bonus_start_time", 0.0))
 	var result: Dictionary = _spin_result(FunctionOptions.SlotSpinResultOptions.from({
 		"machine": machine,
 		"entry": entry,

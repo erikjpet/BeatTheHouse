@@ -1181,6 +1181,35 @@ is read-only in the performance investigation lane. Coverage is 233 targeted
 source/contract reviews, 1,194 static screens and 2,272 role classifications
 across 3,699 tracked paths; this remains an unfinished semantic audit.
 
+## Batch 45: remove unreachable offscreen slot branch
+
+`SlotResolver.resolve_spin` already returns the complete offscreen result when
+`include_presentation_payload` is false. Remove the later unreachable `else`
+that repeated offscreen animation-field cleanup, and dedent its live foreground
+body. Keep the earlier offscreen return and cleanup unchanged. The audit-metrics
+return, normalized/owned paths, public methods, family dispatch, animation plan,
+item effects, payout math, heat rules and RNG draws are unchanged.
+
+Native comparison with exact 158718f2 passed 192 complete spin results and
+mutated machines over all six authored cabinets, two seeds, paid/free/blocked/
+forced-feature states, both presentation flags and both audit modes. Full bytes,
+dictionary order, RNG snapshots and configuration isolation matched, including
+near misses, ordinary wins/losses, Pinball bonus and Buffalo free-game entry.
+Foreground timelines remained present and offscreen animation fields absent.
+The unchanged no-pointer animation check passed. Both 5% CPU/512MiB Jobs closed
+naturally with exit0, reader EOF, Job0 and no forced cleanup; independent
+08:57:39 UTC census confirmed both identities absent. Exact-source proof limits
+the edit to this control-flow simplification; no elapsed-time gain is claimed.
+
+Full solver and binder reviews retain native ABI/fail-closed behavior, fixed
+integer contact ordering, energy and body conservation, seeded opening-cache
+post-RNG restoration, all three layout-authority boundaries, dormant item slots,
+late aliases, route geometry and candidate commit proofs. The binder review is
+read-only during the separate physical-compilation investigation. Coverage is
+236 targeted source/contract reviews, 1,191 static screens and 2,272 role
+classifications across 3,699 tracked paths; remaining static screens still need
+semantic review.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
@@ -1299,3 +1328,13 @@ Stable remained 0.6.0; the automatic retention hook reported no error. Exact
 identity and actual closure receipts were delivered to the performance and
 fresh-player owners. This verifies deployed identity/assets and the preceding
 native checks; no visual Web gameplay or measured cleanup speedup is claimed.
+
+Batch 44 was published as `158718f28481afe3210177894aaacbba3f987d6d`, tree
+`b9fcd388acf8e5375671c6bb7c1cbd991ffde2f8`. Independent 08:54:39 UTC census
+confirmed root 16060 and all new Godot processes absent; the existing capped
+watcher/guardian remained active. Trusted HTTPS at 08:54:41 matched all 15
+archive files, NEXT redirect and WASM MIME types. Archive SHA-256:
+`e25cb7ad9f8acd669415947f1f4044624f62c83390671d1f52285241fd2b7053`.
+Stable remained 0.6.0; retention reported no error. Exact proof was delivered
+to the performance owner. The fresh-player-owner handoff returned a transport
+error, so its delivery is uncertain; no duplicate message or runtime was started.
