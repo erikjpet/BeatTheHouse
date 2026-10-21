@@ -1822,6 +1822,38 @@ static screens and 2,272 role classifications across 3,699 paths. Fourteen
 deferrals and two separate issues remain; the comprehensive audit is unfinished.
 This commit stays local while batch63 awaits the existing watcher recovery.
 
+## Batch 66: reuse the detached fact preflight envelope
+
+`ScenarioSequenceRuntime.flush_facts` recursively built the same ingress-free
+fact envelope twice during preflight. Build it once, run the unchanged read-only
+validator, then fingerprint that same detached envelope. Validation order,
+errors, closed types, canonical fingerprints, journal ordering and later atomic
+application remain unchanged. All other functions are byte-identical to
+ee894256, including bounded normalization, command replay, expiry, transitions,
+event correlation, cleanup and authority. No field, callback or receipt was
+removed; the physical/finalization and SaveService owner paths remain untouched.
+
+The exact baseline comparison passed 94 complete flushes across all 13 fact
+types, both normalized/trusted input paths, early/current/future boundaries,
+mixed producer ordering, nested dynamic payloads, cleaned/empty states and six
+malformed envelope rejections. Complete outputs, state journals, fingerprints,
+error order and input isolation matched. The 104 processed envelopes in this
+matrix each retain one preflight copy instead of two; this is a structural work
+reduction, without an elapsed-time claim. The unchanged serialized-fact-ingress
+and atomic-runtime-failure contract methods also passed, including batch rollback.
+The unchanged no-pointer liveness check passed. Both private checks exited zero
+naturally with EOF, Job0 and no forced cleanup; independent 11:36:21 UTC census
+confirmed PIDs 27968/8108 absent. No browser or user storage was used.
+
+The entire 2,475-line runtime received source review, including persisted
+collection limits, typed canonical fingerprints versus public JSON DTOs,
+causal receipts, owner boundaries and existing reentry/cleanup recovery.
+The large contract file received only the named targeted method/fixture review,
+not a claim that every one of its other checks ran or was read. Coverage is
+328 targeted reviews, 1,099 static screens and 2,272 role classifications across
+3,699 paths; 14 deferrals and two separate issues remain. Batch63 publication
+still awaits recovery of the existing stopped watcher; this batch stays local.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

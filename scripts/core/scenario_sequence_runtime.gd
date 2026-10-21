@@ -531,9 +531,9 @@ static func flush_facts(state_value: Dictionary, definition: Dictionary, boundar
 	var batch_receipt_keys: Array = []
 	var batch_fingerprints: Array = []
 	for fact_value in ready:
-		var preflight := validate_fact(original, _without_ingress(fact_value as Dictionary))
-		if not preflight.is_empty(): return {"ok": false, "state": original, "processed": [], "errors": preflight}
 		var preflight_envelope := _without_ingress(fact_value as Dictionary)
+		var preflight := validate_fact(original, preflight_envelope)
+		if not preflight.is_empty(): return {"ok": false, "state": original, "processed": [], "errors": preflight}
 		batch_receipt_keys.append(str(preflight_envelope.get("fact_id", "")))
 		batch_fingerprints.append(_fingerprint(preflight_envelope))
 	var first_cause_ordinal := _next_cause_ordinal(state)
