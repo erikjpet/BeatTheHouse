@@ -3969,3 +3969,20 @@ private Job. EOF, Job0, no forced cleanup and independent process absence are
 recorded. The resource was not instantiated: no audit, hostile-fixture suite,
 main scene, save or browser ran. No public interface or assertion was removed.
 Coverage remains 736 full reviews; this is a separate nine-line code cleanup.
+
+## Batch 149: review the authenticated turn-counter publication contract
+
+Read the complete new focused contract and the peer `16f15982` changes in
+RunState and RoomPresentationPublication. A counter-only generation requires
+exact old/new integer counters, a positive advance and equality of every other
+owned authority field, retaining the preexisting game-state exclusion. Concurrent
+changes, malformed counters and unknown future fields fall back to the full
+boundary. Fresh generations retain owned input/output/proof graphs. The host
+records trusted layout inputs only after the existing validated compilation.
+
+The contract retains complete genuine-offer state/clock/save/RNG comparison,
+subscribed-travel order, no replay and late rejection rollback. Its diagnostic
+field list excludes game states, but its separate complete-state comparison
+does not. No assertion or production byte changed; the owner's existing runtime
+evidence is reused without private fixture reads or a repeated test. Coverage is
+737 full reviews across 3,713 inventoried paths. RunState remains a partial read.
