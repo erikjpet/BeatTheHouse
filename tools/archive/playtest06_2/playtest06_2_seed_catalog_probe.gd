@@ -185,7 +185,7 @@ func _greedy_scenario_selection(reports: Array, catalog_ids: Array) -> Dictionar
 	var remaining: Dictionary = {}
 	for scenario_id in catalog_ids:
 		remaining[str(scenario_id)] = true
-	var available := reports.duplicate(true)
+	var available := reports.duplicate()
 	var selected: Array = []
 	var covered: Array = []
 	while not remaining.is_empty() and not available.is_empty():
