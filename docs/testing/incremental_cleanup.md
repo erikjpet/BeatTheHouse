@@ -4308,3 +4308,21 @@ to remove current save compatibility. The masked visual report retains its 27
 receipt-bound pair findings and original evidence limits; it is not a new
 production hit-geometry or Web pass. No data, media or historical receipt changed.
 Coverage is 782 complete file reviews.
+
+## Batch 167: stop a bounded nearby-object list at its output cap
+
+The empty context panel already publishes at most five nearby-object buttons.
+Once that count reached five, `continue` kept scanning remaining records even
+though no later button or callback could be published. Change that single word
+to `break`. The first five valid IDs, order, locked explanations, detached focus
+callback payloads and every other byte remain unchanged. No catalog, authority,
+renderer scheduling, save or public interface changes.
+
+The changed Foundation resource compiled in 9.328 seconds; the repository's
+existing no-pointer animation check passed in 6.360 seconds. Both used existing
+12% CPU / 2 GiB private Jobs, natural exit, EOF, Job0 and independent process
+absence. Retain the initial 512 MiB parser crash before any compile report and
+the single successful existing-configuration retry; its cause is unproven.
+Parallel functional sessions were identified and left untouched, and the
+required animation check waited for actual comparison-process closure. No
+latency improvement or new visual Web/gameplay pass is claimed.

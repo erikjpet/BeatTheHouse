@@ -12663,7 +12663,7 @@ func _render_empty_context_panel() -> void:
 		if object_id.is_empty():
 			continue
 		if shown >= 5:
-			continue
+			break
 		var button := _button(label, Callable(self, "focus_interactable_object_from_view").bind(data.duplicate(true)))
 		var enabled := bool(data.get("enabled", true))
 		if not enabled:
