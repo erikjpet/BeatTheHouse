@@ -361,11 +361,6 @@ static func pit_boss_hud_text(status: Dictionary) -> String:
 	return "Pit boss: watching" if bool(status.get("watched", false)) else "Pit boss: turned away"
 
 
-static func _candidate(value: Variant, object_type: String, prefix: String, hint: String) -> Dictionary:
-	if typeof(value) != TYPE_DICTIONARY or (value as Dictionary).is_empty(): return {}
-	return {"object_type": object_type, "object_id": prefix + str((value as Dictionary).get("id", "")), "hint": hint}
-
-
 static func _pressure_status_text(pressure: Dictionary) -> String:
 	var title := str(pressure.get("title", ""))
 	var summary := str(pressure.get("summary", ""))

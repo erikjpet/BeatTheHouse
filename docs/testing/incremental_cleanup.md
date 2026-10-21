@@ -569,6 +569,25 @@ configuration, popup bounds, integrated actions and animated portrait contracts;
 its assertions were not edited. Coverage now includes 126 targeted reviews.
 Publication remains paused; independent source review continues.
 
+## Batch 21: remove the unused HUD candidate adapter
+
+Remove FoundationHudViewModel's private static `_candidate` helper. The complete
+module contains only its definition. Known script/class clients use other
+public methods; the run-UI registry loads this script by identity rather than
+dispatching this helper. Tracked scene/resource signals, quoted method dispatch,
+content/editor registries, subclasses and reflection consumers were checked.
+The RefCounted helper is not an engine lifecycle hook, export or serialized
+field. Keep class name, UID, public methods and all HUD policies unchanged.
+
+The existing unmodified UI05 design-system test passed with the removal,
+covering actual widgets, ordinary/Pocket Watch clock precision, retained status
+icons, compact header configuration, popup bounds, integrated actions and
+animated/reduced-motion portraits. The documentation census passed at 214
+production modules and 11,423 functions. Its capped muted Job closed naturally
+with EOF/Job0, and independent host census confirmed absence. This is dead-code
+removal, with no runtime speed claim. Coverage remains 126 targeted reviews;
+the already-reviewed HUD module is now classified fixed. Publication is paused.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

@@ -1387,7 +1387,7 @@ docs/archive/0.6/evidence/env06_7_package_e/web_process.json	docs/archive	histor
 docs/archive/health06_1_docs_manifest.json	docs/archive	historical-evidence	role-classification	no-change	E1	6f974037cf53063335901e45fe3db37fad7457ab	353045	5180
 docs/character_authoring.md	docs/character_authoring.md	authored-document	static-screen	reviewed	D1	14d1d8a10d416e64f26836ed7c9250ca0380b3ed	5713	168
 docs/character_offers.md	docs/character_offers.md	authored-document	static-screen	reviewed	D1	3aed3f69e76fdb8d99260788f1e20519e4b6a9c1	10051	167
-docs/code_reference.md	docs/code_reference.md	authored-document	source-review	fixed	C:batch8+batch16+batch18+batch19	3613d4768403ee8c0f83d95156bbef5fc39c3a54	8605	168
+docs/code_reference.md	docs/code_reference.md	authored-document	source-review	fixed	C:batch8+batch16+batch18+batch19+batch21	3613d4768403ee8c0f83d95156bbef5fc39c3a54	8605	168
 docs/contracts/delivery_consumer_api.md	docs/contracts	authored-document	static-screen	reviewed	D1	1a5d092e1f242015fe7a37c3ef2da545d1630703	2644	34
 docs/current_game_state.md	docs/current_game_state.md	authored-document	static-screen	reviewed	D1	51322d73e4d6a3d7f5848ef19c40df79d61b696b	12936	211
 docs/game_reference.md	docs/game_reference.md	authored-document	static-screen	reviewed	D1	645fe6db1f4e970a1a8b8d3e7e12857b2a26c1a6	12025	138
@@ -3227,7 +3227,7 @@ scripts/ui/environment_interaction_controller.gd	scripts/ui	authored	static-scre
 scripts/ui/environment_interaction_view_model.gd	scripts/ui	authored	static-screen	reviewed	S1	d35c5e43b2cd05663acb8cbe0b6fe5caf1052ecb	45208	831
 scripts/ui/foundation_action_view_model.gd	scripts/ui	authored	static-screen	reviewed	S1	a16432537893c07c52748d47d6ea111c4b11f04a	47560	940
 scripts/ui/foundation_hud_bar.gd	scripts/ui	authored	static-screen	reviewed	S1	d3393f15055cc3db4b8eb43572921a277076e796	21197	548
-scripts/ui/foundation_hud_view_model.gd	scripts/ui	authored	source-review	no-change	M:batch19-full-clock-item-precision-objective-guidance-pressure-and-HUD-contracts	ee17b0d941c6ed2b6cb29bbfac94f45149a548fc	21719	377
+scripts/ui/foundation_hud_view_model.gd	scripts/ui	authored	source-review	fixed	C:batch21	ee17b0d941c6ed2b6cb29bbfac94f45149a548fc	21719	372
 scripts/ui/foundation_main.gd	scripts/ui	authored	static-screen	deferred	O1	5a7b57d90ce099ef1c2c41048bb49c6b19ca4fd4	1085346	23083
 scripts/ui/foundation_screen_builder.gd	scripts/ui	authored	static-screen	reviewed	S1	60e575e71931e2f0f152c88e83b7ba65c00900f4	31597	504
 scripts/ui/foundation_travel_view_model.gd	scripts/ui	authored	static-screen	reviewed	S1	fa46f8ac76c93a1c5d46efe7bd0a37aee193eaf5	37772	783
