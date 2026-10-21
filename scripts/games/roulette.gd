@@ -2861,7 +2861,6 @@ func _draw_roulette_wheel(surface, surface_state: Dictionary, low_detail: bool =
 	var wheel_angle := float(motion.get("wheel_angle", 0.0))
 	var winning_index := int(last_result.get("winning_index", -1))
 	var settled_spin := not spin_active and not last_result.is_empty()
-	var reveal_result := settled_spin and bool(surface_state.get("result_reveal_active", false))
 	var draw_wheel_labels := not low_detail and (spin_active or settled_spin)
 	surface.draw_circle(WHEEL_CENTER, WHEEL_RADIUS + 10, Color("#1b0d16"))
 	surface.draw_circle(WHEEL_CENTER, WHEEL_RADIUS + 4, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.28), false, 2)

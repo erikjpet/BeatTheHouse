@@ -1530,6 +1530,19 @@ deletion evidence. The comprehensive audit continues.
 Coverage is262 targeted source/contract reviews,1,165 static screens and2,272
 role classifications across3,699 paths;14 deferrals and2 separate issues remain.
 
+## Batch 56: remove a write-only Roulette drawing local
+
+`_draw_roulette_wheel` assigned `reveal_result` once and never read it. Remove
+that single local declaration. Its initializer only read a scalar Dictionary
+field and a local Boolean; it had no callback or externally visible effect.
+The identifier has one occurrence in the entire module and no read, alias,
+argument, return or exported binding. No method or interface was removed.
+Every draw call, motion calculation, animation channel and frame schedule is
+byte-identical. `roulette-unused-source-proof.json` records the exact one-line
+deletion against7ef5163e. The unchanged required no-pointer liveness check
+passed; its muted5% CPU/512MiB Job exited0 naturally, reader EOF/Job0/no forced
+cleanup, with independently confirmed process absence. No timing gain is claimed.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
