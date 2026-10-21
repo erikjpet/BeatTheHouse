@@ -175,6 +175,10 @@ now reports the actual 214 modules (89 core, 78 UI, 47 game) and 11,421 producti
 functions. Both code and game documentation checks pass; no assertion was
 changed to accommodate the census.
 
+The TSV's blob and byte columns identify the immutable input snapshot; its line
+column describes the screened text after cleanup. `-` marks non-text entries,
+avoiding trailing empty fields. No media byte count is presented as lines of code.
+
 ### Review depth and evidence key
 
 The levels distinguish what was actually done. `source-review` means targeted
