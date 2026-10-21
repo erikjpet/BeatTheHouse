@@ -1762,6 +1762,40 @@ audio runtime, RTP runs or test removal. Coverage is301 targeted reviews,1,126
 static screens and2,272 role classifications across3,699 paths;14 deferrals and2
 separate issues remain. Comprehensive semantic coverage is unfinished.
 
+## Batch 64: remove a discarded Video Poker affordability write
+
+`_affordable_bet_level` set `next["bet_level"] = 0` immediately before returning
+the scalar zero. `next` is a detached method-local UI copy; it never escapes,
+and the only consumer, `_wager_for` and its helpers, only reads scalar values.
+Remove that final discarded write. The loop, all return values, wager rules,
+copy boundary and every other function remain byte-identical. Tracked GDScript
+inheritance inspection found no authored override of this game or script path.
+No public helper, signal, dispatch name, save field or test was removed.
+
+The exact one-statement source proof is against917adf2c. The unchanged required
+no-pointer animation check passed under5% CPU/512 MiB/30s with natural exit0,
+EOF and Job0, without forced cleanup. Independent11:27:51 UTC census found its
+only recorded PID14560 absent. No gameplay timing or speedup is claimed, and no
+new test mirrors this discarded local write.
+
+Twenty-one retained test/tool files received full source reviews: visual and
+headless launcher discovery/exit contracts, terminal native-descriptor guards,
+health IO/harness/correctness/serialization assertions, scenario orchestration,
+money signals, table authority fixture routing, PCM/master generation, Godot
+installation and canonical export-tree identity with its disposable fixture.
+These are source reviews only: no captures, audio assets, installs or historical
+tests were rerun. Coverage is322 targeted reviews,1,105 static screens and2,272
+role classifications across3,699 paths. Fourteen deferrals and two separate
+issues remain; comprehensive semantic review is unfinished.
+
+Batch63 main is917adf2c, but its existing export stopped11:22:50 UTC when the
+unchanged observed CPU guard sampled15.0166% against15%. The kernel quota
+remained12%/2GiB. Independent11:27:05 census found root40164, guardian40948,
+worker43120 and all new Godot absent; Job0 and no cleanup errors were recorded.
+NEXT remains the verified38aec3ff. No duplicate build/watcher or repeated
+restart was launched. Exact batch63 deployment verification awaits recovery of
+the existing pipeline; independent source cleanup continues.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

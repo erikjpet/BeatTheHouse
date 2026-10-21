@@ -2338,7 +2338,6 @@ func _affordable_bet_level(state: Dictionary, ui: Dictionary, run_state: RunStat
 		if _wager_for(state, next) <= affordable:
 			return level
 		level -= 1
-	next["bet_level"] = 0
 	return 0
 
 
