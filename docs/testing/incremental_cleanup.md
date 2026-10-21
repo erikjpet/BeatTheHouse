@@ -616,6 +616,33 @@ audio/voice rules, async save generation/byte proofs, old-save acceptance and
 strict package/overlay validation. Coverage now records 133 targeted reviews.
 Publication/export remains paused for the parent's capacity dependency.
 
+## Batch 23: copy only the selected scenario overlay
+
+`overlay_for` copied the complete overlays dictionary, then copied its selected
+entry again. Reuse the existing read-only lookup and copy only the selected
+entry. Keep the public detached-result contract, default catalog behavior,
+whitespace lookup, malformed-input fallback and all package validation intact.
+Update the internal fast-path comment to describe its remaining ownership
+boundary accurately. No package, sequence, save-codec or content data changes.
+
+Native baseline comparison passed 217 lookups, all 55 authored overlaid
+definitions and nested mutation isolation, including malformed and typed
+synthetic catalogs. The unchanged five-night Punchline registration contract
+passed through its production game consumers. A separate comparison used the
+unchanged save codec with current versus prior catalog dependency: three
+tracked v0.5.1 saves decoded and re-encoded identically. All 55 seeded scenario
+definitions also encoded/decoded identically, including exact int64 values and
+byte-identical packed storage. No player save was read or written.
+
+Liveness and source census passed. Four capped muted Jobs drained naturally
+with EOF/Job0 and independent process absence. This removes whole-catalog copy
+work; no measured runtime gain is claimed. RunSaveCodec and the registration
+test were reviewed in full. CharacterOfferModel was also read in full and
+retained: its eligibility callbacks, separate cycle RNG, nested save snapshot,
+claim/wait/travel ownership and atomic candidate publication are outside this
+cleanup. Targeted coverage reaches 136 reviews. Publication/export stays paused
+until the retention owner confirms actual watcher activation and capacity.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

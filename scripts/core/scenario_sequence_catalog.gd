@@ -124,10 +124,7 @@ static func load_catalog(root_path: String = DEFAULT_ROOT) -> Dictionary:
 
 
 static func overlay_for(scenario_id: String, catalog: Dictionary = {}) -> Dictionary:
-	var source := _default_catalog() if catalog.is_empty() else catalog
-	if not bool(source.get("ok", false)):
-		return {}
-	return _dict(_dict(source.get("overlays", {})).get(scenario_id.strip_edges(), {}))
+	return overlay_for_readonly(scenario_id, catalog).duplicate(true)
 
 
 static func overlay_for_readonly(scenario_id: String, catalog: Dictionary = {}) -> Dictionary:
@@ -193,8 +190,8 @@ static func apply_overlay(definition: Dictionary, catalog: Dictionary = {}) -> D
 	return result
 
 
-# Internal ContentLibrary fast path. It skips overlay_for()'s deep copy of the
-# complete package catalog, but still owns the selected definition and overlay.
+# Internal ContentLibrary fast path. It borrows the selected overlay, but still
+# owns the selected definition and the overlay fields installed in that result.
 # Runtime scenario preparation can normalize nested records, so sharing those
 # records with the loaded catalog would let one preview affect later arrivals.
 static func apply_overlay_readonly(definition: Dictionary, catalog: Dictionary = {}) -> Dictionary:

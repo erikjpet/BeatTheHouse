@@ -2820,7 +2820,7 @@ scripts/core/build_identity.gd	scripts/core	authored	source-review	no-change	M:i
 scripts/core/cage_economy_model.gd	scripts/core	authored	source-review	no-change	M:payout-and-interest-preserved	ef0553fd7ec960ffa35050807354a995f5f92c09	3975	98
 scripts/core/card_shoe.gd	scripts/core	authored	source-review	no-change	M:copy-and-RNG-preserved	f30aca729257a74b78e54efefea72cc47722378c	4457	179
 scripts/core/character_chain_model.gd	scripts/core	authored	source-review	no-change	M:batch10-full-story-flag-layout-reconciliation-and-anchor-review	c1545a7ca8d43cab1a626b2a69248f4a9a7d4ce0	18246	350
-scripts/core/character_offer_model.gd	scripts/core	authored	static-screen	reviewed	S1	5a8cf683dbd224bae4bf72df70496da122a5ade8	20028	410
+scripts/core/character_offer_model.gd	scripts/core	authored	source-review	no-change	M:batch23-full-cycle-RNG-visibility-eligibility-callback-save-snapshot-and-claim-resolution-retained	5a8cf683dbd224bae4bf72df70496da122a5ade8	20028	410
 scripts/core/character_roster.gd	scripts/core	authored	source-review	no-change	M:batch10-full-seed-derived-selection-and-snapshot-boundaries	66a5ede71a9eb7864cf0dd624611729ba26efb1e	6427	148
 scripts/core/collection_drop_service.gd	scripts/core	authored	source-review	no-change	M:batch22-full-terminal-meta-flags-grants-selection-RNG-and-card-chip-rewards-retained	68fb8c47e1b96f5f44a076d08280da7c116ed16a	23175	471
 scripts/core/collection_item_resolver.gd	scripts/core	authored	source-review	no-change	M:batch18-full-definition-cache-schema-validation-instance-roll-and-effects-retained	850e558a9c11d79c5eda7cb2a11f9b9af66cecf6	27390	648
@@ -2873,7 +2873,7 @@ scripts/core/profile_inventory.gd	scripts/core	authored	source-review	fixed	C:ba
 scripts/core/rng_stream.gd	scripts/core	authored	source-review	no-change	M:rng-preserved	11f5287e01ba9f6f526a520fe259dd90c100d452	3077	106
 scripts/core/run_action_service.gd	scripts/core	authored	static-screen	reviewed	S1	99de6666cc35e802b50c4d7f4fe6b6056927ec3b	113976	2501
 scripts/core/run_generator.gd	scripts/core	authored	static-screen	reviewed	S1	b1fcf1ba90fc126ce50cd2b974ceb2ceac6297cd	101820	1778
-scripts/core/run_save_codec.gd	scripts/core	authored	static-screen	reviewed	S1	37438d8fc471d27e2805eca1740aaad5639b3e32	22994	548
+scripts/core/run_save_codec.gd	scripts/core	authored	source-review	no-change	M:batch23-full-packed-storage-exact-integer-environment-and-scenario-delta-compatibility-review	37438d8fc471d27e2805eca1740aaad5639b3e32	22994	548
 scripts/core/run_state.gd	scripts/core	authored	static-screen	deferred	O1	90ca53a137a20cb32685932a7c03e8f1d9537fac	832741	16899
 scripts/core/run_state_schema.gd	scripts/core	authored	source-review	no-change	M:batch10-full-key-vocabulary-and-legacy-restore-review	1291acf68e04917cd5818f2fb2e0fbc567f4517b	4606	121
 scripts/core/run_terminal_evaluator.gd	scripts/core	authored	static-screen	reviewed	S1	eff6ec9172396a515d84a35690163bf9f458a51e	16686	360
@@ -2889,7 +2889,7 @@ scripts/core/scenario_handlers/shops_streets.gd	scripts/core	authored	source-rev
 scripts/core/scenario_host_transaction.gd	scripts/core	authored	static-screen	reviewed	S1	3ff12479bcff991d23d1426bf016355424e5246b	67235	1062
 scripts/core/scenario_layout_resolver.gd	scripts/core	authored	static-screen	deferred	O1	111df528a783d4da0d8e14e41958a4874d636e5b	112574	2187
 scripts/core/scenario_operation_registry.gd	scripts/core	authored	static-screen	reviewed	S1	89cdc2b3bb4078242269d533f91876d1ea1db710	87344	1402
-scripts/core/scenario_sequence_catalog.gd	scripts/core	authored	source-review	no-change	M:batch22-full-lexical-package-validation-overlay-ownership-and-uniqueness-contract-review	b0d279d76085b5da0a47cf36d387a7074a4eccb3	17479	362
+scripts/core/scenario_sequence_catalog.gd	scripts/core	authored	source-review	fixed	C:batch23	b0d279d76085b5da0a47cf36d387a7074a4eccb3	17479	359
 scripts/core/scenario_sequence_rollout_manifest.gd	scripts/core	authored	source-review	no-change	M:55-sequence-census	6c0d0f26b837bf265fa8abd5abf86ac1ab4f7dd5	1936	30
 scripts/core/scenario_sequence_runtime.gd	scripts/core	authored	static-screen	reviewed	S1	f40a227ca4d531c9523d56b942757d710c8e5018	152478	2475
 scripts/core/scenario_sequence_schema.gd	scripts/core	authored	static-screen	reviewed	S1	90b5195552927860ea71aef6c80233ccf0093d2c	124497	2123
@@ -3089,7 +3089,7 @@ scripts/tests/foundation/content_depth_contract.gd	scripts/tests	authored	static
 scripts/tests/foundation/craps06_3_depth_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	4730d0c548cd6e6ec75279d79c401c7703e6b01d	10585	181
 scripts/tests/foundation/craps06_3_environment_integration_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	09a904028906a0efa70e8f625f507a083c95b7f3	9623	135
 scripts/tests/foundation/craps_full_table_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	f54ad419af781105bdd133af2a891fa2294a4e04	11733	218
-scripts/tests/foundation/crew06_10_scenario_registration_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	3595f67b8d5e97667d3c092ca2553f0f124ef1dc	1705	38
+scripts/tests/foundation/crew06_10_scenario_registration_contract.gd	scripts/tests	authored	source-review	no-change	M:batch23-full-five-Punchline-night-registration-and-production-consumer-contract	3595f67b8d5e97667d3c092ca2553f0f124ef1dc	1705	38
 scripts/tests/foundation/crew_heist_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	a4382630bcc3aacc7a3b00e53a45e0047aba2113	63014	895
 scripts/tests/foundation/crew_ignored_golden_probe.gd	scripts/tests	authored	static-screen	reviewed	S1	23691f39eb4f1af235251b2b7db23a61b15a2b55	17063	292
 scripts/tests/foundation/crew_layer3_jobs_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	06d5980cf81770fb45feba50aa316d7f85a29963	18193	313
