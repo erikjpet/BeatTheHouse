@@ -66,8 +66,11 @@ func _run() -> void:
 		await process_frame
 	if loaded:
 		state = app.get("run_state")
-		var canvas: Control = app.get("environment_canvas")
-		_check((canvas.get("foundation_scene_objects") as Array).is_empty(), "Damaged sealed geometry was published as a room.")
+		# Recovery may retain non-interactive fallback scenery. Publication and
+		# authority, rather than the count of drawable props, own this contract.
+		_check(state.room_presentation_snapshot().is_empty(), "Damaged sealed geometry was published as a room.")
+		_check(not bool(ControllerScript._object_manifest_join_proof(state.current_environment).get("ok", false)), "Damaged sealed geometry passed strict authority validation.")
+		_check(bool(app.call("_room_publication_save_blocked")), "Damaged sealed geometry did not preserve the previous save.")
 		_check(str(state.current_environment.get("scenario_layout_authority_digest", "")) == "0".repeat(64), "Reconstruction re-signed damaged geometry.")
 	await _close_app(app)
 	if failures.is_empty():
