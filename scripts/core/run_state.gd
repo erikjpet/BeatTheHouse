@@ -22,6 +22,7 @@ const DeliveryRunFacadeScript := preload("res://scripts/core/delivery_run_facade
 
 signal heat_changed(applied_amount: int, level: int, cue_id: String, context: Dictionary)
 signal money_changed(revision: int)
+signal money_delta_applied(currency: String, amount: int)
 
 const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino_showdown_model.gd")
 const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
@@ -331,8 +332,10 @@ var bankroll: int:
 	set(value):
 		if _bankroll == value:
 			return
+		var applied_delta := value - _bankroll
 		_bankroll = value
 		_mark_money_changed()
+		money_delta_applied.emit("cash", applied_delta)
 var _crew_run_facade: RefCounted = CrewRunFacadeScript.new()
 var _grand_casino_run_facade: RefCounted = GrandCasinoRunFacadeScript.new()
 var _delivery_run_facade: RefCounted = DeliveryRunFacadeScript.new()
@@ -341,8 +344,10 @@ var grand_casino_chips: int:
 	set(value):
 		if _grand_casino_run_facade.chips == value:
 			return
+		var applied_delta: int = value - _grand_casino_run_facade.chips
 		_grand_casino_run_facade.chips = value
 		_mark_money_changed()
+		money_delta_applied.emit("chips", applied_delta)
 var economic_state: String = "stable"
 var inventory: Array = []
 var portable_ticket_piles: Dictionary = {}

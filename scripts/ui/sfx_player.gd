@@ -17,6 +17,9 @@ signal music_cue_requested(cue_id: String, context: Dictionary)
 signal audio_status_changed(message: String)
 
 const SFX_BUS := "SFX"
+const MONEY_FEEDBACK_INTERVAL_MSEC := 780
+static var _last_money_feedback_msec := -1000
+static var _last_existing_money_cue_msec := -1000
 const SAMPLE_RATE := 22050
 const TELEPHONE_SAMPLE_RATE := 4000
 const WEB_DELIVERY_ROOT := "res://assets/audio/sfx_web"
@@ -871,6 +874,36 @@ func play_slot_event(event_id: String, volume_db: float = -3.0, pitch: float = 1
 	_play(event_id, volume_db, pitch)
 
 
+# Uses existing encoded/native cues and the normal SFX/Web bus gain path. One
+# shared cadence across player instances prevents rapid changes stacking cues.
+func play_money_feedback(amount: int) -> bool:
+	if amount == 0 or not audio_enabled or (_running_headless() and not _debug_web_delivery_active):
+		return false
+	for bus_name in ["Master", SFX_BUS]:
+		var bus := AudioServer.get_bus_index(bus_name)
+		if bus >= 0 and (AudioServer.is_bus_mute(bus) or AudioServer.get_bus_volume_db(bus) <= -60.0):
+			return false
+	var now := Time.get_ticks_msec()
+	if now - _last_money_feedback_msec < MONEY_FEEDBACK_INTERVAL_MSEC or now - _last_existing_money_cue_msec < MONEY_FEEDBACK_INTERVAL_MSEC:
+		return false
+	_last_money_feedback_msec = now
+	var profile := money_feedback_audio_profile(amount)
+	_ensure_players()
+	_play(str(profile.get("event_id", "")), float(profile.get("volume_db", -18.0)), float(profile.get("pitch", 1.0)), "wallet_feedback", 1)
+	return true
+
+
+func money_feedback_audio_profile(amount: int) -> Dictionary:
+	if amount == 0:
+		return {}
+	return {
+		"event_id": "payout" if amount > 0 else "coin_pusher_chirp",
+		"volume_db": -18.0 if amount > 0 else -20.0,
+		"pitch": 1.0 if amount > 0 else 0.72,
+		"max_voices": 1,
+	}
+
+
 # A restrained UI consequence cue: a soft radio chirp and muted pulse rather
 # than a siren or impact. Volume and pitch rise gently with the applied amount.
 func play_heat_gain(applied_amount: int) -> void:
@@ -1685,6 +1718,11 @@ func _stop_one_shot_loops() -> void:
 
 
 func _play(event_id: String, volume_db: float = 0.0, pitch: float = 1.0, profile_id: String = "", max_voices: int = ONE_SHOT_PLAYER_COUNT) -> void:
+	if profile_id != "wallet_feedback" and event_id in ["payout", "payout_digital", "blackjack_payout", "roulette_payout", "video_poker_win", "ticket_win", "lose"]:
+		var now := Time.get_ticks_msec()
+		if now - _last_money_feedback_msec < MONEY_FEEDBACK_INTERVAL_MSEC:
+			return # The same settlement already has its quiet wallet cue.
+		_last_existing_money_cue_msec = now
 	_remove_from_prewarm_queue(_normalized_event_id(event_id))
 	var stream := _event_stream(event_id)
 	if _web_audio_delivery_available():

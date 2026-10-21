@@ -2,6 +2,7 @@ class_name FoundationMain
 extends Control
 
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const MoneyFeedbackViewModelScript := preload("res://scripts/ui/money_feedback_view_model.gd")
 
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
@@ -271,6 +272,9 @@ var current_game: GameModule
 var game_exit_settle_active := false
 var last_game_exit_final_projection_rendered := false
 var last_game_result: Dictionary = {}
+var money_feedback_pending: Dictionary = {}
+var money_feedback_push_currency := ""
+var money_feedback_run_id := 0
 var last_music_outcome_schedule: Dictionary = {}
 var last_environment_runtime_result: Dictionary = {}
 var immediate_environment_acknowledgement := ""
@@ -796,6 +800,7 @@ func _process(delta: float) -> void:
 		_timed("environment_runtime", _advance_environment_game_runtime_callable)
 	if pending_autosave or (save_service != null and save_service.async_save_in_flight()):
 		_timed("autosave_flush", _flush_pending_autosave_callable)
+	_flush_money_feedback()
 
 
 func _advance_game_surface_frame() -> void:
@@ -1348,6 +1353,7 @@ func _enter_game_after_input_guard(clean_game_id: String, clean_state_key: Strin
 	_clear_selected_game_action()
 	var result := current_game.enter(run_state, run_state.current_environment)
 	last_game_result = result.duplicate(true)
+	_queue_settled_push_feedback(result)
 	_reset_selected_stake()
 	_store_current_game_surface_ui_state(current_game.restored_surface_ui_state(run_state, run_state.current_environment))
 	_show_message(str(result.get("message", "")))
@@ -1399,6 +1405,7 @@ func _enter_grand_casino_duel_surface() -> bool:
 	_clear_selected_game_action()
 	var result := current_game.enter(run_state, run_state.current_environment)
 	last_game_result = result.duplicate(true)
+	_queue_settled_push_feedback(result)
 	var duel := run_state.grand_casino_duel_status()
 	selected_stake = maxi(1, int(duel.get("ante", 20)))
 	_show_message(str(result.get("message", "Rourke cuts the cards.")))
@@ -2552,6 +2559,7 @@ func _advance_environment_game_runtime_for_environment(environment_data: Diction
 		last_environment_runtime_result = receipt
 		if current_game == null:
 			last_game_result = receipt.duplicate(true)
+			_queue_settled_push_feedback(receipt)
 			last_item_result = {}
 			last_hook_result = {}
 			_show_message(str(result.get("message", "")))
@@ -6889,6 +6897,7 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 	}
 	var fields: Dictionary = snapshot["fields"]
 	for field_name in [
+		"money_feedback_pending", "money_feedback_push_currency", "money_feedback_run_id",
 		"_room_catalog_publication", "interactable_object_catalog_cache", "interactable_object_catalog_cache_valid", "interactable_object_catalog_cache_key", "interactable_object_view_cache", "interactable_object_view_cache_valid", "interactable_object_view_cache_key",
 		"meta_session_active", "meta_session_location_id", "meta_last_panel_message", "dev_game_test_mode", "dev_environment_test_mode",
 		"environment_pause_started_msec", "environment_paused_total_msec", "talk_dock_avoid_sync_active", "item_found_talk_dock_suspended",
@@ -8679,6 +8688,7 @@ func _record_scratch_ticket_discovery(type_id: String) -> Dictionary:
 func _initialize_meta_collection() -> void:
 	meta_collection_service = MetaCollectionServiceScript.new()
 	meta_collection_service.load()
+	meta_collection_service.gold_delta_applied.connect(_on_meta_gold_delta_applied)
 	_surface_durable_load_outcome("Collection progress", meta_collection_service.last_load_result())
 	meta_session_controller = MetaSessionControllerScript.new()
 	meta_session_controller.configure(library, meta_collection_service)
@@ -11260,6 +11270,15 @@ func _build_run_screen() -> void:
 func _bind_run_state_presentation_signals() -> void:
 	if run_state == null:
 		return
+	if money_feedback_run_id != run_state.get_instance_id():
+		money_feedback_run_id = run_state.get_instance_id()
+		money_feedback_pending = {}
+		money_feedback_push_currency = ""
+		if structured_hud != null:
+			structured_hud.reset_wallet_delta()
+	var delta_callback := Callable(self, "_on_run_money_delta_applied").bind(money_feedback_run_id)
+	if not run_state.money_delta_applied.is_connected(delta_callback):
+		run_state.money_delta_applied.connect(delta_callback)
 	var heat_callback := Callable(self, "_on_run_state_heat_changed")
 	if not run_state.heat_changed.is_connected(heat_callback):
 		run_state.heat_changed.connect(heat_callback)
@@ -11288,6 +11307,48 @@ func _on_run_state_heat_changed(applied_amount: int, _level: int, _cue_id: Strin
 
 func _on_run_state_money_changed(_revision: int) -> void:
 	financial_hud_dirty = true
+
+
+# Mutator events are authoritative. Coalesce within the action/frame so a Cage
+# transfer or a rejected action's rollback cannot masquerade as fresh income.
+func _on_run_money_delta_applied(currency: String, amount: int, source_id: int) -> void:
+	if run_state == null or source_id != run_state.get_instance_id() or current_screen == SCREEN_START or meta_session_active:
+		return
+	MoneyFeedbackViewModelScript.add_delta(money_feedback_pending, currency, amount)
+
+
+func _on_meta_gold_delta_applied(amount: int) -> void:
+	if current_screen != SCREEN_START:
+		MoneyFeedbackViewModelScript.add_delta(money_feedback_pending, "gold", amount)
+
+
+func _queue_settled_push_feedback(result: Dictionary) -> void:
+	var currency := MoneyFeedbackViewModelScript.explicit_push_currency(result)
+	if not currency.is_empty():
+		money_feedback_push_currency = currency
+
+
+func _flush_money_feedback() -> void:
+	if money_feedback_pending.is_empty() and money_feedback_push_currency.is_empty():
+		return
+	var rate := run_state.grand_casino_chip_exchange_rate() if run_state != null else 1
+	var entries := MoneyFeedbackViewModelScript.build(money_feedback_pending, money_feedback_push_currency, rate)
+	money_feedback_pending = {}
+	money_feedback_push_currency = ""
+	if current_screen == SCREEN_START or structured_hud == null or entries.is_empty():
+		return
+	structured_hud.present_money_feedback(entries)
+	var audio_sign := 0
+	for entry_value in entries:
+		var entry: Dictionary = entry_value
+		var next_sign := signi(int(entry.get("delta", 0)))
+		if audio_sign != 0 and next_sign != 0 and next_sign != audio_sign:
+			return # Different monetary units cannot be summed to choose a sound.
+		if next_sign != 0:
+			audio_sign = next_sign
+	if audio_sign != 0:
+		_ensure_environment_sfx_player()
+		environment_sfx_player.call("play_money_feedback", audio_sign)
 
 
 func _refresh_financial_hud_if_dirty() -> void:
@@ -13534,6 +13595,7 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	if bool(result.get("ok", false)) and embeds_result_feedback and not runtime_tick_in_progress:
 		_begin_presented_bankroll_hold(result, bankroll_before_result, wager_cost)
 	last_game_result = FoundationActionViewModelScript.stored_game_result_snapshot(result)
+	_queue_settled_push_feedback(result)
 	if bool(result.get("ok", false)) and (not runtime_tick_in_progress or _music_result_bankroll_delta(result) != 0):
 		var outcome_schedule := _schedule_game_result_music_outcome(result, action_id)
 		if not outcome_schedule.is_empty():
@@ -13859,6 +13921,7 @@ func _resolve_environment_runtime_wager_action(game_id: String, action_id: Strin
 	last_environment_runtime_result = result.duplicate(true)
 	if current_game == null:
 		last_game_result = result.duplicate(true)
+		_queue_settled_push_feedback(result)
 	pending_all_in_result_terminal_check = confirmed_all_in_wager and bool(result.get("ok", false)) and run_state != null and not run_state.has_liquid_run_funds() and not bool(result.get("won", false))
 	var runtime_state := game.environment_runtime_state(run_state, run_state.current_environment)
 	if bool(runtime_state.get("slot_pending_feature", false)):

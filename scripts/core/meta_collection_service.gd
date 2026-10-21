@@ -1,6 +1,8 @@
 class_name MetaCollectionService
 extends RefCounted
 
+signal gold_delta_applied(amount: int)
+
 # Owns profile collection persistence and mutations: item instances, bags,
 # containers, housing/loadouts, trade-ups, pawn sales, and special rewards.
 
@@ -326,7 +328,7 @@ func purchase_housing_upgrade() -> Dictionary:
 	if gold < price:
 		return {"ok": false, "message": "Not enough gold for that home upgrade."}
 	var tier := str(upgrade.get("tier", ""))
-	_store["gold_balance"] = gold - price
+	_set_gold_balance(gold - price)
 	_store["housing_tier"] = tier
 	var home := JsonCoerceScript._copy_dict(_store.get("meta_home", {}))
 	home["current_location"] = "home"
@@ -804,7 +806,7 @@ func confirm_sal_shelf_purchase(token: String) -> Dictionary:
 	var slots := JsonCoerceScript._copy_array(resale.get("slots", []))
 	var listing := JsonCoerceScript._copy_dict(slots[slot_index])
 	var item := JsonCoerceScript._copy_dict(listing.get("item", {}))
-	_store["gold_balance"] = gold - price
+	_set_gold_balance(gold - price)
 	var owned := JsonCoerceScript._copy_array(_store.get("owned_instances", []))
 	owned.append(item.duplicate(true))
 	_store["owned_instances"] = owned
@@ -895,7 +897,7 @@ func resolve_starter_buyback(choice: String) -> Dictionary:
 	var loadout := _filtered_packed_ids(JsonCoerceScript._copy_array(_store.get("loadout", [])))
 	loadout.erase(instance_id)
 	_store["loadout"] = loadout
-	_store["gold_balance"] = maxi(0, int(_store.get("gold_balance", 0)) + offer_price)
+	_set_gold_balance(int(_store.get("gold_balance", 0)) + offer_price)
 	var provenance := JsonCoerceScript._copy_dict(pending.get("provenance", {}))
 	if provenance.is_empty():
 		provenance = {"source": "sal_starter_buyback", "source_id": "starter"}
@@ -996,7 +998,7 @@ func confirm_sale(token: String) -> Dictionary:
 		_store["pending_sale"] = {}
 		return {"ok": false, "message": "That item is no longer available to sell."}
 	var price := maxi(0, int(authoritative.get("price", 0)))
-	_store["gold_balance"] = maxi(0, int(_store.get("gold_balance", 0)) + price)
+	_set_gold_balance(int(_store.get("gold_balance", 0)) + price)
 	var history := JsonCoerceScript._copy_array(_store.get("sale_history", []))
 	var record := pending.duplicate(true)
 	record["gold_balance"] = int(_store.get("gold_balance", 0))
@@ -1142,8 +1144,17 @@ func remove_instance(instance_id: int) -> bool:
 
 func add_gold(amount: int) -> int:
 	_ensure_store_ready()
-	_store["gold_balance"] = maxi(0, int(_store.get("gold_balance", 0)) + amount)
+	_set_gold_balance(int(_store.get("gold_balance", 0)) + amount)
 	return int(_store.get("gold_balance", 0))
+
+
+# Emits only real profile-currency mutations; loading and normalization are
+# silent, and no presentation event becomes part of the persisted store.
+func _set_gold_balance(value: int) -> void:
+	var amount := maxi(0, value) - int(_store.get("gold_balance", 0))
+	_store["gold_balance"] = maxi(0, value)
+	if amount != 0:
+		gold_delta_applied.emit(amount)
 
 
 func snapshot() -> Dictionary:

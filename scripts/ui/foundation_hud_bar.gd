@@ -14,6 +14,9 @@ const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 
 var wallet_value: Label
 var wallet_delta: Label
+var wallet_delta_panel: PanelContainer
+var wallet_chip: HBoxContainer
+var meta_wallet_chip: HBoxContainer
 var chips_chip: HBoxContainer
 var chips_value: Label
 var heat_meter: SegmentedMeter
@@ -37,6 +40,9 @@ var compact_mode := false
 var _last_bankroll := 0
 var _last_bankroll_delta := 0
 var _wallet_delta_tone := ""
+const MONEY_FEEDBACK_DURATION_SEC := 1.6
+var _money_feedback_elapsed_sec := MONEY_FEEDBACK_DURATION_SEC
+var _money_feedback_presentations := 0
 var _has_rendered := false
 var _status_icons_key := ""
 var _heat_feedback_elapsed_sec := HeatFeedbackVisualsScript.GAIN_DURATION_SEC
@@ -65,6 +71,9 @@ func reset_wallet_delta() -> void:
 	if wallet_delta != null:
 		wallet_delta.text = ""
 		wallet_delta.modulate = Color.WHITE
+	_money_feedback_elapsed_sec = MONEY_FEEDBACK_DURATION_SEC
+	if wallet_delta_panel != null:
+		wallet_delta_panel.modulate.a = 0.0
 	cancel_heat_feedback()
 
 
@@ -104,11 +113,7 @@ func render(model: Dictionary) -> void:
 		return
 	_set_meta_mode(false)
 	var bankroll := int(model.get("bankroll", 0))
-	var observed_delta := bankroll - _last_bankroll if _has_rendered else 0
-	var bankroll_delta := int(model.get("bankroll_delta", observed_delta))
-	if bankroll_delta == 0:
-		bankroll_delta = observed_delta
-	render_money(bankroll, int(model.get("chips", 0)), bool(model.get("show_chips", false)), bankroll_delta)
+	render_money(bankroll, int(model.get("chips", 0)), bool(model.get("show_chips", false)))
 
 	var heat := float(model.get("heat_level", 0.0))
 	heat_meter.configure("heat", heat)
@@ -129,9 +134,6 @@ func render(model: Dictionary) -> void:
 func render_money(bankroll: int, chips: int, show_chips: bool, bankroll_delta: int = 0) -> void:
 	if wallet_value == null:
 		return
-	var observed_delta := bankroll - _last_bankroll if _has_rendered else 0
-	if bankroll_delta == 0:
-		bankroll_delta = observed_delta
 	render_bankroll(bankroll, bankroll_delta)
 	if chips_chip.visible != show_chips:
 		chips_chip.visible = show_chips
@@ -140,15 +142,12 @@ func render_money(bankroll: int, chips: int, show_chips: bool, bankroll_delta: i
 		chips_value.text = chips_text
 
 
-func render_bankroll(bankroll: int, bankroll_delta: int = 0) -> void:
+func render_bankroll(bankroll: int, _bankroll_delta: int = 0) -> void:
 	if wallet_value == null:
 		return
 	var wallet_text := "$%d" % bankroll
 	if wallet_value.text != wallet_text:
 		wallet_value.text = wallet_text
-	if bankroll_delta != 0:
-		_last_bankroll_delta = bankroll_delta
-	_render_delta(_last_bankroll_delta)
 	_last_bankroll = bankroll
 	_has_rendered = true
 
@@ -181,7 +180,11 @@ func current_snapshot() -> Dictionary:
 		"wallet_delta": wallet_delta.text if wallet_delta != null else "",
 		"wallet_delta_alpha": wallet_delta.modulate.a if wallet_delta != null else 0.0,
 		"wallet_delta_tone": _wallet_delta_tone,
-		"wallet_delta_static": true,
+		"wallet_delta_static": reduce_motion,
+		"wallet_delta_component": true,
+		"wallet_delta_presentations": _money_feedback_presentations,
+		"wallet_delta_active": _money_feedback_elapsed_sec < MONEY_FEEDBACK_DURATION_SEC,
+		"wallet_delta_rect": wallet_delta_panel.get_global_rect() if wallet_delta_panel != null else Rect2(),
 		"chips_visible": chips_chip != null and chips_chip.visible,
 		"chips": chips_value.text if chips_value != null else "",
 		"heat": heat_meter.current_snapshot() if heat_meter != null else {},
@@ -234,13 +237,21 @@ func _build() -> void:
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(row)
 
-	var wallet_chip := _value_chip("wallet", "Bankroll")
+	wallet_chip = _value_chip("wallet", "Bankroll")
 	wallet_value = wallet_chip.get_meta("value_label") as Label
 	row.add_child(wallet_chip)
-	wallet_delta = FoundationWidgets.label("", VisualStyle.TYPE_CAPTION)
+	wallet_delta_panel = PanelContainer.new()
+	wallet_delta_panel.name = "WalletDelta"
+	wallet_delta_panel.custom_minimum_size = Vector2(68, 36)
+	wallet_delta_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	wallet_delta_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	wallet_delta_panel.modulate.a = 0.0
+	wallet_delta = FoundationWidgets.label("", VisualStyle.TYPE_BODY_LARGE)
+	wallet_delta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	wallet_delta.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	wallet_delta.autowrap_mode = TextServer.AUTOWRAP_OFF
-	FoundationWidgets.set_control_font_color(wallet_delta, VisualStyle.role("success"))
-	wallet_chip.add_child(wallet_delta)
+	wallet_delta_panel.add_child(wallet_delta)
+	wallet_chip.add_child(wallet_delta_panel)
 
 	chips_chip = _value_chip("casino_chips", "Chips")
 	chips_value = chips_chip.get_meta("value_label") as Label
@@ -317,6 +328,7 @@ func _build() -> void:
 	meta_location_value = location_chip.get_meta("value_label") as Label
 	meta_bar.add_child(location_chip)
 	var gold_chip := _value_chip("wallet", "Gold")
+	meta_wallet_chip = gold_chip
 	meta_gold_value = gold_chip.get_meta("value_label") as Label
 	meta_bar.add_child(gold_chip)
 	var goal_chip := _value_chip("luck", "Next tier")
@@ -329,10 +341,12 @@ func _render_meta(model: Dictionary) -> void:
 	meta_location_value.text = str(model.get("location_text", "Home"))
 	meta_gold_value.text = str(model.get("gold_text", "%dg" % int(model.get("gold", 0))))
 	meta_goal_value.text = str(model.get("next_goal_text", "Top tier"))
-	reset_wallet_delta()
 
 
 func _set_meta_mode(enabled: bool) -> void:
+	var feedback_parent := meta_wallet_chip if enabled else wallet_chip
+	if wallet_delta_panel != null and feedback_parent != null and wallet_delta_panel.get_parent() != feedback_parent:
+		wallet_delta_panel.reparent(feedback_parent, false)
 	if run_bar != null and run_bar.visible == enabled:
 		run_bar.visible = not enabled
 	if meta_bar != null and meta_bar.visible != enabled:
@@ -403,14 +417,17 @@ func _meter_group(icon_id: String, title: String) -> HBoxContainer:
 
 
 func _process(delta: float) -> void:
-	if not _heat_feedback_active():
-		set_process(false)
-		return
-	_heat_feedback_elapsed_sec += maxf(0.0, delta)
-	if not _heat_feedback_active():
-		_cancel_heat_feedback()
-		return
-	_update_heat_feedback_presentation()
+	if _money_feedback_elapsed_sec < MONEY_FEEDBACK_DURATION_SEC:
+		_money_feedback_elapsed_sec += maxf(0.0, delta)
+		var remaining := MONEY_FEEDBACK_DURATION_SEC - _money_feedback_elapsed_sec
+		wallet_delta_panel.modulate.a = 1.0 if reduce_motion and remaining > 0.0 else clampf(remaining / 0.22, 0.0, 1.0)
+	if _heat_feedback_active():
+		_heat_feedback_elapsed_sec += maxf(0.0, delta)
+		if not _heat_feedback_active():
+			_cancel_heat_feedback()
+		else:
+			_update_heat_feedback_presentation()
+	set_process(_heat_feedback_active() or _money_feedback_elapsed_sec < MONEY_FEEDBACK_DURATION_SEC)
 
 
 func _update_heat_feedback_presentation() -> void:
@@ -442,7 +459,7 @@ func _cancel_heat_feedback() -> void:
 	_heat_feedback_elapsed_sec = HeatFeedbackVisualsScript.GAIN_DURATION_SEC
 	_heat_feedback_amount = 0
 	_heat_feedback_intensity = 0.0
-	set_process(false)
+	set_process(_money_feedback_elapsed_sec < MONEY_FEEDBACK_DURATION_SEC)
 	if heat_meter != null:
 		heat_meter.set_feedback_pulse(0, 0.0)
 	if heat_delta_badge != null:
@@ -451,19 +468,33 @@ func _cancel_heat_feedback() -> void:
 		heat_delta_badge.modulate = Color.WHITE
 
 
-func _render_delta(delta: int) -> void:
-	var next_text := "%+d" % delta if delta != 0 else ""
-	var next_tone := "success" if delta > 0 else "danger" if delta < 0 else ""
-	if wallet_delta.text == next_text and _wallet_delta_tone == next_tone:
+# Only applied-event delivery calls this method. Rendering balances, restoring
+# a save, and refreshing the HUD cannot manufacture or replay a money event.
+func present_money_feedback(entries: Array) -> void:
+	if entries.is_empty() or wallet_delta_panel == null:
 		return
-	wallet_delta.text = next_text
-	if delta == 0:
-		_wallet_delta_tone = ""
-		wallet_delta.modulate = Color.WHITE
-		return
-	_wallet_delta_tone = next_tone
-	FoundationWidgets.set_control_font_color(wallet_delta, VisualStyle.role(_wallet_delta_tone))
-	wallet_delta.modulate = Color(Color.WHITE, VisualStyle.HUD_LAST_DELTA_ALPHA)
+	var amounts: PackedStringArray = []
+	var tone := str((entries[0] as Dictionary).get("tone", "text_muted"))
+	for entry_value in entries:
+		var entry: Dictionary = entry_value
+		amounts.append(str(entry.get("text", "")))
+		if str(entry.get("tone", "text_muted")) != tone:
+			tone = "text_muted"
+	wallet_delta.text = "  ".join(amounts)
+	_wallet_delta_tone = tone
+	var accent := VisualStyle.role(tone)
+	var style := VisualStyle.pixel_box(VisualStyle.DARK_2, accent, 2)
+	style.content_margin_left = 8.0
+	style.content_margin_right = 8.0
+	style.content_margin_top = 5.0
+	style.content_margin_bottom = 5.0
+	wallet_delta_panel.add_theme_stylebox_override("panel", style)
+	FoundationWidgets.set_control_font_color(wallet_delta, accent)
+	wallet_delta.modulate = Color.WHITE
+	wallet_delta_panel.modulate.a = 1.0
+	_money_feedback_elapsed_sec = 0.0
+	_money_feedback_presentations += 1
+	set_process(true)
 
 
 func _render_status_icons(statuses_value: Variant) -> void:
