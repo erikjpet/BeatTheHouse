@@ -1210,6 +1210,47 @@ read-only during the separate physical-compilation investigation. Coverage is
 classifications across 3,699 tracked paths; remaining static screens still need
 semantic review.
 
+## Batch 46: reuse one detached Crew rank-perk table
+
+`CrewRunFacade.crew_rank_perks` fetches its detached member table once before
+iterating unlocked ranks. The pure provider previously rebuilt the same copied
+configuration/table for the keys and again for every eligible rank. Keep all
+public methods, rank thresholds, table order, duplicate filtering and output
+ownership. No persistent cache, trust mutation, private authority, job/heist
+transaction, payout, RNG or legacy-save behavior changes.
+
+Native baseline comparison passed 180 readouts: ten member inputs (seven
+authored plus empty/unknown/whitespace IDs), all threshold neighbors and trust
+extremes, plus ten bindings to the actual production RunState. Full ordered
+rank/perk/job-availability results and trust/configuration bytes matched. Editing
+returned arrays did not affect later outputs. Across the counted 170-readout
+matrix, the two public perk queries per row fetched the provider 544 times
+before and 340 after. This is a deterministic work count, not a timing result.
+The unchanged no-pointer animation check passed. All attempts used private
+5% CPU/512MiB Jobs and naturally closed with reader EOF and Job0; independent
+09:07 UTC census confirmed all identities absent. The first private probe had
+a missing explicit integer annotation and exited1; its evidence remains, and
+only that private fixture annotation was corrected before the passing run.
+
+Full facade review retains capability-gated recruitment/jobs/heists, public
+versus private knowledge, fixed private envelopes, old ledger/failure readers,
+planning-table Fold migration, exact-once settlement and atomic scene staging.
+Full GameSurfaceCanvas review retains autonomous redraw scheduling, pause and
+reduced-motion policy, simulation/presentation clocks, touch deduplication,
+captured-pointer ordering, audio authority and protected overlays. The parity
+runner scene and ordered native export fixture remain live contracts. Coverage
+is 240 targeted source/contract reviews, 1,187 static screens and 2,272 role
+classifications across 3,699 tracked paths; semantic coverage remains incomplete.
+
+Publication dependency: batch45 main `de037dbb` is tested and pushed, but NEXT
+still serves verified `158718f2`. The existing watcher guardian stopped its
+contained tree at 09:02:00 UTC after the unchanged 15% observer guard fired;
+the kernel 12% CPU/2GiB cap remained active, release Job0 and cleanup errors empty.
+Independent 09:03:33 UTC census found its build root, watcher, guardian and all
+new Godot processes absent. Recovery handoffs returned transport errors, so
+delivery is uncertain. No replacement watcher, export or guard change was made
+by this cleanup lane; source review and separate local batches continue.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

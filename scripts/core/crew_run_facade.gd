@@ -232,10 +232,11 @@ func crew_recruitment_public_state(member_id: String) -> Dictionary:
 func crew_rank_perks(member_id: String) -> Array:
 	var result: Array = []
 	var rank_index := CrewStateModelScript.RANK_IDS.find(crew_rank(member_id))
-	for rank_id_value in _run.CrewRecruitmentModelScript.rank_perks(member_id).keys():
+	var perks_by_rank: Dictionary = _run.CrewRecruitmentModelScript.rank_perks(member_id)
+	for rank_id_value in perks_by_rank.keys():
 		var rank_id := str(rank_id_value)
 		if CrewStateModelScript.RANK_IDS.has(rank_id) and rank_index >= CrewStateModelScript.RANK_IDS.find(rank_id):
-			for perk_value in JsonCoerceScript._copy_array(_run.CrewRecruitmentModelScript.rank_perks(member_id).get(rank_id_value, [])):
+			for perk_value in JsonCoerceScript._copy_array(perks_by_rank.get(rank_id_value, [])):
 				var perk_id := str(perk_value)
 				if not perk_id.is_empty() and not result.has(perk_id):
 					result.append(perk_id)
