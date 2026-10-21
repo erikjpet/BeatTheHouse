@@ -4342,3 +4342,9 @@ Only this changed resource compiled, passing in 7.547 seconds under the existing
 No mirrored test or broad save/game suite was added. Renderer, canvas and
 scheduling bodies are exact, so reuse batch 167's focused no-pointer check under
 the development policy. No new Web launch, gameplay or speedup is claimed.
+
+## Batch 169: review tutorial recovery and player-visible regression contracts
+
+Read both complete current files (508 and 523 lines). Tutorial coverage distinguishes a lost conversation from an acknowledged one, displaced save recovery from normal progression, and observational Blackjack projection from repair at an authorized action. The player-visible regressions cover rendered wallet/focus state, lending disclosures and persisted obligations, unique Blackjack pulse IDs across split/Continue, home selection precedence, Pinball single settlement, and Craps funding-wallet provenance.
+
+Retain the fixture copies, exact source guards, signal callbacks and required drawing-interface no-ops. They serve distinct contracts. An old tutorial comment describes passive repair, while the explicit assertions correctly require observational projection and action-boundary persistence; no behavior was inferred from that prose. No implementation change or stress run was justified, and no test or assertion was removed.
