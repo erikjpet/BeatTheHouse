@@ -106,7 +106,7 @@ static func for_route(route: Dictionary, route_risk: Dictionary = {}) -> Array:
 		_add_badge(badges, _badge("cost", str(maxi(0, int(source.get("cost", 0)))), _badge_polarity("cost", int(source.get("cost", 0))), "Route fare"))
 	var distance := str(source.get("distance", "")).strip_edges().to_lower()
 	if not distance.is_empty():
-		_add_badge(badges, _badge("distance", _distance_value_text(distance), "neutral", "Travel distance: %s" % _title_text(distance)))
+		_add_badge(badges, _badge("distance", distance, "neutral", "Travel distance: %s" % _title_text(distance)))
 	var tier := _risk_tier(risk)
 	if tier > 0:
 		_add_badge(badges, _badge("risk_tier", _pip_text(tier), _badge_polarity("risk_tier", tier), "Route risk tier"))
@@ -492,20 +492,6 @@ static func _pip_text(tier: int) -> String:
 	for _index in range(clampi(tier, 1, 3)):
 		result += "!"
 	return result
-
-
-static func _distance_value_text(distance: String) -> String:
-	match distance:
-		"near":
-			return "near"
-		"local":
-			return "local"
-		"far":
-			return "far"
-		"remote":
-			return "remote"
-		_:
-			return distance
 
 
 static func _class_value_text(kind: String, class_id: String) -> String:

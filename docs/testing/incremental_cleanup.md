@@ -57,3 +57,36 @@ regenerated, and all generator functions/content remain unchanged.
 Verification: parse both sources and compare their full AST to the baseline
 after removing only those exact import aliases; identical. This is a source
 equivalence check; it makes no image-rendering or speed claim.
+
+## Batch 3: redundant distance-label helper
+
+`AttributeBadges._distance_value_text` returned its argument for all four named
+distances and the fallback. Its only caller, `for_route`, already trims and
+lowercases the input. Pass that normalized value directly and remove the private
+identity helper. Keep every public badge API, glyph, tooltip and input policy.
+The reference audit covered scripts, tools, scenes, resources, JSON content and
+project configuration, including quoted method references; no scene, signal,
+registry, serialization or editor consumer names this helper. It is not an engine
+callback, and this module does not construct dynamic names for its helpers.
+
+Pinned Godot 4.6 native comparison against the unchanged `7680b2f0` implementation
+passed all 50 route combinations: known/custom/empty/whitespace/non-ASCII
+distance strings and five risk classes. Full badge dictionaries were equal and
+the source route remained unchanged. Both registries validated. The disposable
+probe only renamed the baseline class to load both implementations together.
+The muted, headless run took 0.453 seconds under a private 5% CPU/512 MiB Job;
+output: `CLEANUP_BADGE_EQUIVALENCE PASS cases=50`. Job accounting was zero after
+owned cleanup. No browser, listener or player save was accessed. This is native
+projection evidence, not a visual Web playtest or a latency measurement.
+
+## Release receipts
+
+`16d73614` was refused by the unchanged qualification guard; previous NEXT was
+retained. Restoration `42c0a0c1` was automatically promoted at 02:43:16 UTC.
+Unused-import commit `7680b2f0370e1b2718bfa122898122f4ebb91fbf`, tree
+`3538a2875a02120e755faa60cf6b15cc27bad552`, was promoted at 02:45:21 UTC.
+At 02:46:15 UTC trusted LAN HTTPS metadata, NEXT redirect and nine payloads
+(engine/native WASM, PCK and metadata/entry files) matched the promoted archive;
+all required WASM MIME types were `application/wasm`. Archive SHA-256:
+`0d589238c46094fc5d2ca392b458b337397fb95dc6f802ebe42bdf54cd9fa27b`.
+Stable remained `0.6.0`; audience, itch and watcher configuration were unchanged.
