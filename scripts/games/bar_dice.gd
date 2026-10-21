@@ -1303,14 +1303,7 @@ func _player_final_dice(_action_id: String, run_state: RunState, state: Dictiona
 		var dice := _int_dice(ui_state.get("dice", []))
 		if dice.size() == DICE_COUNT:
 			return dice
-	var hand := _roll_dice(rng, DICE_COUNT)
-	for _shake in range(MAX_SHAKES - 1):
-		var marks := _suggested_reroll_for_ruleset(hand, "ship_captain_crew")
-		if marks.is_empty():
-			break
-		for index_value in marks:
-			hand[int(index_value)] = rng.randi_range(1, DIE_FACES)
-	return hand
+	return _auto_play_ship_hand(rng)
 
 
 func _opponent_results(state: Dictionary, rng: RngStream) -> Array:

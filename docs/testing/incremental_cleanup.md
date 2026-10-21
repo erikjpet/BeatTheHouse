@@ -1543,6 +1543,38 @@ deletion against7ef5163e. The unchanged required no-pointer liveness check
 passed; its muted5% CPU/512MiB Job exited0 naturally, reader EOF/Job0/no forced
 cleanup, with independently confirmed process absence. No timing gain is claimed.
 
+## Batch 57: share Bar Dice's identical automatic-hand body
+
+`_player_final_dice` duplicated the exact automatic-hand body already retained
+in `_auto_play_ship_hand`. Keep the chosen five-dice branch intact and delegate
+only its fallback to that helper. All method signatures and helper bodies remain.
+The source proof compares the two prior bodies byte-for-byte; tracked content,
+scene/resource, class-name and direct-preload consumers were checked, with no
+authored inheritor/override found. The closed sealed-provider dispatch is
+unchanged. No RNG draw, reroll policy, payout or timing gain is introduced.
+
+Native comparison against exacte41f7b2d passed1,440 final hands across24 seeds,
+ten valid/malformed dice shapes, chosen/automatic paths and all three action
+IDs. It also matched144 complete generated table rounds, including both skill
+paths, every opponent, winners, rake, payout and carryover. Exact post-hand and
+post-round RNG snapshots and full input/run-save bytes matched. Required
+no-pointer animation liveness passed. Both muted private Jobs exited0 naturally,
+reader EOF/Job0/no forced cleanup; independent10:32:40 UTC census found both
+PIDs absent. `bar-autoplay-native-closure.json` retains the exact evidence.
+
+Completed the full3,776-line game read: preserve exact funded ladder-chip
+identity, sealed candidate/replay, chosen-dice ownership, lock6-5-4 policy,
+deterministic opening versus injected settlement RNG, carryover/rake/press,
+cheat timing/heat, legacy normalization, relative animation and active-content
+variant descriptors. The room prop's full/low-detail rendering was read unchanged.
+Four Roulette audit tools were also read in full and retained:157 target
+counts/hitboxes/payoffs, fourteen PCM event contracts, authenticated seed/money/
+heat/rebet journeys, timing statistics and the optional/required engine wrapper.
+Those complete tool runtimes were not repeated; no new latency or audible-QA
+claim is made. Coverage is267 targeted source/contract reviews,1,160 static
+screens and2,272 role classifications across3,699 paths.14 deferrals and2
+separate issues remain; semantic screening is not full audit completion.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
@@ -1711,3 +1743,14 @@ Independent10:17:04 census confirmed root48540/allnewGodot absent; the existing
 capped watcher and retention hook remained error-free. The actual release
 handoff returned AbsolutePathBuf from the thread transport; delivery is uncertain.
 No repeated export, browser, duplicate watcher or guard change was made.
+
+Batches55–56 promoted as`e41f7b2de3cb88b1ddd1681d9e851ac3588fb445`, tree
+`380082176890370a4791cf1c8c01a30ecf42a134`, at10:26:25 UTC. All15 archive/HTTPS
+files, dev redirect, WASM MIME, stable0.6.0 and final unchanged pointer passed
+at10:27:25. Archive SHA-256:
+`a8c76d8900646143ffa7c36090cd2543b0ac5a65d4eaf30454f2087d6cd738dc`.
+Independent10:27:28 census confirmed root48852/allnewGodot absent; existing
+capped guardian40948/watcher43120 and retention hook remained error-free.
+The actual-release thread handoff again returned AbsolutePathBuf, so delivery
+is uncertain. Exact receipts are preserved; no duplicate watcher/export or
+guard change was made.
