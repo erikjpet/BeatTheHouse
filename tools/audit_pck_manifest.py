@@ -90,18 +90,12 @@ def parse_directory(data: bytes, start: int) -> dict | None:
 
 
 def find_directory(data: bytes) -> dict:
-    positions: list[int] = []
-    cursor = 0
-    while True:
-        found = data.find(MAGIC, cursor)
-        if found < 0:
-            break
-        positions.append(found)
-        cursor = found + 1
-    for position in reversed(positions):
+    position = data.rfind(MAGIC)
+    while position >= 0:
         parsed = parse_directory(data, position)
         if parsed is not None:
             return parsed
+        position = data.rfind(MAGIC, 0, position)
     raise ValueError("no valid unencrypted Godot PCK v2/v3 directory found")
 
 
