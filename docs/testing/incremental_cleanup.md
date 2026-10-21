@@ -3542,3 +3542,18 @@ exact per-tick state/RNG/events/ledgers and dictionary/packed-render parity, plu
 a measurement showing useful benefit. No rebuild ran and no speed gain is
 claimed. All eleven first-party native files now have full source
 coverage; the kernel proposal remains deferred. Total coverage is 667 full reviews.
+
+## Batch 126: retain tutorial action, remove its unused result binding
+
+Read all 738 lines of the tutorial seed audit. Its real sealed Blackjack driver
+toggles counting, but the returned `count_toggle` local is never read. Remove
+only that binding; the exact stateful call remains in the same order. The driver
+returns a Dictionary after freeing its temporary host, so the unused result does
+not own a live host. Retained typed Dictionary reads, every assertion, RNG call,
+route, timing budget, heat rule, normal-run isolation and 100-seed sweep.
+
+The source comparison proves the one binding is the only change. A one-file
+load check passed in 7.906 seconds under the existing muted 12% CPU/2 GiB profile,
+with EOF, Job0, no errors and independent process absence. It loaded the script
+without running tutorial routes, wagers, saves or the sweep. No speed gain is
+claimed. Coverage is 668 full source reviews.
