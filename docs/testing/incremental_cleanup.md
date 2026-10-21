@@ -643,6 +643,31 @@ claim/wait/travel ownership and atomic candidate publication are outside this
 cleanup. Targeted coverage reaches 136 reviews. Publication/export stays paused
 until the retention owner confirms actual watcher activation and capacity.
 
+## Batch 24: retain one detached heist plan per projection
+
+`plan` selects an entry from an already deep-copied configuration. Return that
+owned entry directly. `begin` and `plan_surface` now retain one plan lookup per
+call, while rejecting unknown plan IDs before touching the lazy cache. Keep
+public nested ownership, normalization, phases, hidden boundaries, release plan
+selection and authored payout rules unchanged. No content or tuning changes.
+
+Native comparison passed 160 baseline cases covering invalid IDs, lazy cache
+state, known/unknown plan lookup, schema versions, restored phases, setup,
+tombstones, payouts and nested mutation isolation. The existing heist surface
+helper assertions passed unchanged in a private entrypoint, including phase,
+decision, evidence, hostile proposal, public leak and payout ladder checks.
+Liveness and source census passed. Both capped muted Jobs drained naturally
+with EOF/Job0; independent 05:12:36 UTC census confirmed both PIDs absent.
+No runtime speed gain is claimed.
+
+The full heist model, both surface/authored-semantics contracts and CrewStateModel
+were reviewed. The authored-semantics contract was read, not executed in this
+batch; its governing SHA and hidden-field checks remain unchanged. CrewStateModel
+retains proposal-only authority and private grievance boundaries. Targeted
+coverage reaches 140 reviews. The retention owner confirmed actual watcher
+activation and capacity admission at 05:08:55 UTC; publication can resume through
+the existing capped watcher.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

@@ -41,7 +41,7 @@ static func config() -> Dictionary:
 static func plan(plan_id: String) -> Dictionary:
 	for value in config().get("plans", []):
 		if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("id", "")) == plan_id:
-			return (value as Dictionary).duplicate(true)
+			return value as Dictionary
 	return {}
 
 
@@ -59,11 +59,14 @@ static func empty_state() -> Dictionary:
 
 
 static func begin(plan_id: String, action_index: int) -> Dictionary:
-	if not PLAN_IDS.has(plan_id) or plan(plan_id).is_empty():
+	if not PLAN_IDS.has(plan_id):
+		return {}
+	var definition := plan(plan_id)
+	if definition.is_empty():
 		return {}
 	var initial_setup := {}
 	if plan_id == PLAN_COUNT:
-		var identity := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(plan(plan_id).get("setup", {})).get("identity", {}))
+		var identity := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(definition.get("setup", {})).get("identity", {}))
 		initial_setup["identity"] = int(identity.get("required_sessions", 1)) <= 0
 	return normalize_state({
 		"schema_version": STATE_SCHEMA_VERSION,
@@ -191,9 +194,11 @@ static func ending_line(plan_id: String, outcome: String) -> String:
 
 
 static func plan_surface(plan_id: String) -> Dictionary:
-	if not PLAN_IDS.has(plan_id) or plan(plan_id).is_empty(): return {}
+	if not PLAN_IDS.has(plan_id): return {}
+	var definition := plan(plan_id)
+	if definition.is_empty(): return {}
 	if plan_id == PLAN_COUNT:
-		var decision_rounds := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(plan(PLAN_COUNT).get("play", {})).get("decision_rounds", {}))
+		var decision_rounds := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(definition.get("play", {})).get("decision_rounds", {}))
 		return {
 			"plan_id": PLAN_COUNT, "label": "The Count", "phases": [
 				_phase("plan", "planning_table", ["review_plan"]),
