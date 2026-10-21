@@ -3799,3 +3799,23 @@ seal, alias and malformed-shape parity. No speed gain was measured or claimed,
 and no core edit, runtime, save, fixture or export ran. Coverage is 706 full
 source reviews; nine deferred paths now have full reads and three remain at
 screening level. Deployment recovery remains a separate owner dependency.
+
+## Batch 140: retain live interaction and historical custody contracts
+
+Read the complete Guest Legend action-host and interactable-event class guards.
+Keep the real six-step UI action route, unique physical hosts, exact slot/origin
+proofs, terminal event resolution and orphan removal. The event guard's ten-seed
+base sweep and once-per-overlay sweep cover different selection rules; its
+condition-only dormancy check and deliberately broken speaker fixture must
+remain. Preserve the Beach consequences and native Coin Pusher action checks.
+No suite, gameplay flow or native process ran.
+
+Also read four complete historical wrappers/contracts: mid-development fixture
+capture, surface performance reporting, terminal-soak validation and the owner
+build. Old source commits, temporary capture plans, immutable evidence, native
+template pins, exact export identities and strict shard/witness/growth checks
+serve compatibility or provenance. Archive relocation does not justify deleting
+them or silently modernizing their launch paths. All four remain unchanged and
+were not executed. Coverage is 712 full source reviews. The newer performance
+commit is preserved; rebasing the eleven local commits left their combined
+cleanup patch byte-identical. No successful checks or exports were repeated.
