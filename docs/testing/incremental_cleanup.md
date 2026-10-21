@@ -1497,6 +1497,39 @@ Coverage is258 targeted source/contract reviews,1,169 static screens and2,272
 role classifications across3,699 paths. The remaining semantic audit and the
 explicitly deferred ownership/native/package issues remain open.
 
+## Batch 55: reuse the detached Roulette rebet layout in its full view
+
+`RouletteGame.surface_state` rebuilt the same rebet array for its output and
+enabled-state check. Build that owned projection once and reuse it in the view.
+The retained helper still prefers the last settled table layout over transient
+UI data; its empty/malformed fallback and the public output copy boundary remain.
+Every other function is unchanged, including authority replay, physics/bias RNG,
+cheat timing, payouts, heat, clocks, legacy normalization and drawing.
+
+Native comparison against exact742d216a passed504 complete generated surfaces
+for three seeds, both wheel variants, six rebet input shapes, barred/open tables
+and seven spin/payout/reveal time boundaries. Capturing delegates counted1,080
+rebet helper queries before and1,008 after; this is a deterministic work count,
+not an elapsed-time gain. Full output order and nested data matched; modifying
+returned rebet rows did not affect later outputs, inputs, full run/save or RNG.
+A separate probe loaded the retained genuine v0.5.1 Kitty Cat Roulette fixture
+and matched14 complete surfaces while preserving all decoded old-save/RNG bytes.
+Required no-pointer animation liveness passed. All three muted private Jobs
+exited0 naturally, reader EOF/Job0/no forced cleanup, and were independently
+absent at10:22:02 UTC; `roulette-rebet-native-closure.json` retains the proof.
+
+Completed the full4,701-line Roulette module read, the existing610-line shared
+depth/authority contract source, historical depth manifest and the fixture's
+provenance/current table. Preserve sealed account/table replay, retry/cancel,
+named-stack removal, pending/at-risk ownership, persistent table knowledge,
+profit-versus-return accounting, visible-outcome embargo, reduced motion and
+autonomous idle scheduling. The shared contract itself was read unchanged;
+its full Roulette/Baccarat runtime was not repeated. Remaining physical modifier
+and compatibility seams were retained; absence from one live path is not
+deletion evidence. The comprehensive audit continues.
+Coverage is262 targeted source/contract reviews,1,165 static screens and2,272
+role classifications across3,699 paths;14 deferrals and2 separate issues remain.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
@@ -1655,3 +1688,13 @@ at10:06:45. Archive SHA-256:
 Independent10:06:46 census confirmed root32928/allnewGodot absent; the existing
 capped watcher remained error-free and its retention hook completed. No browser
 journey or elapsed-time speedup is claimed by this release verification.
+
+Batches53–54 promoted as`742d216a6b87b2dcc720cdb2f5d08e411fd679c9`, tree
+`7146cd502a7f02702a5e60de9d476ec363041f45`, at10:16:18 UTC. All15 served files
+matched the archive over trusted HTTPS at10:17:03, including redirect, WASM MIME,
+stable0.6.0 and final unchanged pointer. Archive SHA-256:
+`d9489ef87114938a0d2053d1defc78f44f1d2fe2ab9a9b21bbc4488e2d89c7d1`.
+Independent10:17:04 census confirmed root48540/allnewGodot absent; the existing
+capped watcher and retention hook remained error-free. The actual release
+handoff returned AbsolutePathBuf from the thread transport; delivery is uncertain.
+No repeated export, browser, duplicate watcher or guard change was made.

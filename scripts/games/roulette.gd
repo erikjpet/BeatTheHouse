@@ -286,6 +286,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var session := _normalized_session(run_state, environment, ui_state, table)
 	var bets: Array = _bet_array(session.get("roulette_bets", []))
 	var bet_targets := _roulette_bet_targets(table)
+	var rebet_layout := _roulette_rebet_layout(session, table)
 	var selected_chip := int(session.get("selected_chip", _chip_denominations(table)[0]))
 	var chip_denoms := _chip_denominations(table)
 	var total_wager := _total_wager(bets)
@@ -412,7 +413,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"bet_targets": bet_targets,
 		"roulette_bets": bets,
 		"roulette_focused_stack_id": str(session.get("roulette_focused_stack_id", "")),
-		"roulette_rebet": _roulette_rebet_layout(session, table),
+		"roulette_rebet": rebet_layout,
 		"selected_chip": selected_chip,
 		"selected_stake": selected_chip,
 		"chip_denominations": chip_denoms,
@@ -424,7 +425,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"can_undo": not barred and not roulette_wheel_locked and not (_array(session.get("roulette_undo_stack", [])).is_empty()),
 		"can_clear": not barred and not roulette_wheel_locked and not bets.is_empty(),
 		"can_remove": not barred and not roulette_wheel_locked and not bets.is_empty(),
-		"can_rebet": not barred and not roulette_wheel_locked and not _roulette_rebet_layout(session, table).is_empty(),
+		"can_rebet": not barred and not roulette_wheel_locked and not rebet_layout.is_empty(),
 		"bankroll": visible_bankroll,
 		"last_result": last_result,
 		"last_results": visible_last_results,
