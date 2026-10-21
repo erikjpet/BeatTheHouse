@@ -10949,7 +10949,8 @@ func _draw_slot_prop_feature_panel(panel: Rect2, profile: Dictionary, pulse: flo
 		_:
 			for i in range(5):
 				var y := panel.position.y + panel.size.y * (0.14 + float(i) * 0.15)
-				draw_rect(Rect2(panel.position.x + panel.size.x * 0.20, y, panel.size.x * 0.60, maxf(2.0, panel.size.y * 0.04)), Color(_cycle_color(i * 41 + int(phase * 100.0)).r, _cycle_color(i * 41 + int(phase * 100.0)).g, _cycle_color(i * 41 + int(phase * 100.0)).b, 0.46))
+				var band_color := _cycle_color(i * 41 + int(phase * 100.0))
+				draw_rect(Rect2(panel.position.x + panel.size.x * 0.20, y, panel.size.x * 0.60, maxf(2.0, panel.size.y * 0.04)), Color(band_color.r, band_color.g, band_color.b, 0.46))
 	if bonus_active:
 		var remaining := int(bonus.get("remaining_steps", bonus.get("free_spins", 0)))
 		var font := get_theme_default_font()

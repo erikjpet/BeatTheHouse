@@ -2677,3 +2677,22 @@ Deliberate test seams, independent legacy hash oracles, complete schema checks,
 unknown-field preservation and save round trips remain intact. These tests were
 reviewed, not rerun. Publication remains behind the owners' actual finite Web
 case and brief watcher activation; local source work continues.
+
+
+## Batch 85: reuse one palette result per feature-panel bar
+
+The generic feature panel queried `_cycle_color` three times with the same
+arguments to read its red, green and blue components. Retain one local `Color`
+and read those same components. The unchanged helper only selects from six
+constant colours; it has no mutation, callback, time or RNG input. No authored
+subclass or override exists. The focused source proof retains every other byte,
+including draw arguments, alpha and scheduling. This reduces the explicit palette
+lookups from15 to5 per generic panel; no frame-time improvement is claimed.
+
+Eight more foundation tests received full source review. Their exact governing
+values, source/catalog hashes, save authority fields, named restore equivalence,
+wrong-context and caller-forgery rejections, one-time greeting order, public data
+boundaries and explicit unavailable-authority declarations remain intact. The
+cluster selector's diagnostic modes remain useful callable tools. Tests were not
+rerun. The small source-equivalence check covers this local refactor; unchanged
+animation evidence from82 is reused under the user's development policy.
