@@ -963,6 +963,37 @@ check alongside the existing route-visibility checks. No map animation behavior
 was changed here. The observation's initial process-creation transport error
 was resolved by a fresh negative process/receipt check before its one retry.
 
+## Batch 37: share deterministic Grand Casino staffing generation
+
+`GrandCasinoRunFacade._grand_casino_staffing_for_day` repeated the assignment
+generation loop already implemented by `_grand_casino_staffing_for_previous_day`.
+Delegate that loop to the existing helper with the same clamped target day,
+configuration and chance. All methods remain available. Both current-day and
+previous-day evaluations, RNG stream keys, draw order, roster fallback, rotation
+cues and detached results are retained. This removes fourteen duplicate lines;
+it makes no speed claim.
+
+The exact-source check proved the two prior loops identical modulo their day-bound
+expression, the helper unchanged, and every other production byte unchanged.
+Native comparison passed 336 complete staffing projections over four seeds, seven
+day bounds, six roster/chance configurations and two retained-state modes.
+Complete run save/RNG bytes and nested input isolation remained identical.
+The comparison and required no-pointer animation check naturally closed with
+exit0, reader EOF and Job0. Independent 07:11:56 UTC census found all recorded
+process identities absent. An initial private baseline class had an incorrect
+self return annotation; its failed log and bounded forced-cleanup receipt remain
+preserved. Correcting only that private annotation allowed the unchanged checks
+to pass; no production validation or tracked test was changed.
+
+Full source review also retained `ScenarioOperationRegistry` unchanged: closed
+handler inputs, cycle/depth/value bounds, atomic replay receipts, live target
+ownership, priority/duplicate conflict handling, public tombstones and cleanup
+authority are active contracts. Its callers include schema/runtime composition,
+environment inventories, public semantic projection and authored contract tests.
+Current baseline coverage is 214 targeted source/contract reviews, 1,205 static
+screens and 2,272 role classifications. These levels do not claim exhaustive
+semantic completion of the remaining authored files.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

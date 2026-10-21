@@ -889,21 +889,7 @@ func _grand_casino_staffing_for_day(day_index: int, config_override: Dictionary 
 	var target_day := maxi(1, day_index)
 	var config := config_override.duplicate(true) if not config_override.is_empty() else _grand_casino_staff_config()
 	var chance := clampi(int(config.get("rotation_chance_percent", _run.GRAND_CASINO_STAFF_ROTATION_CHANCE_PERCENT)), 0, 100)
-	var assignments: Dictionary = {}
-	for timeline_day in range(1, target_day + 1):
-		var day_rng = _run._create_seeded_run_rng("gc_staff_day:%d" % timeline_day)
-		var next_assignments: Dictionary = {}
-		for role_value in _run.GRAND_CASINO_STAFF_ROLE_IDS:
-			var role_id := str(role_value)
-			var roster := _grand_casino_staff_roster(config, role_id)
-			var previous: Dictionary = assignments.get(role_id, {}) if typeof(assignments.get(role_id, {})) == TYPE_DICTIONARY else {}
-			var role_rng = day_rng.fork(role_id)
-			var rotate = timeline_day == 1 or previous.is_empty() or role_rng.randi_range(1, 100) <= chance
-			var selected := _grand_casino_staff_pick(roster, previous, role_rng, rotate)
-			selected["role_id"] = role_id
-			selected["day"] = timeline_day
-			next_assignments[role_id] = selected
-		assignments = next_assignments
+	var assignments := _grand_casino_staffing_for_previous_day(target_day, config, chance)
 	var prior_assignments := _grand_casino_staff_assignments(grand_casino_staffing)
 	var rotated_roles: Array = []
 	if target_day > 1:

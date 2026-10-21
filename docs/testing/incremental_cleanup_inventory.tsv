@@ -2857,7 +2857,7 @@ scripts/core/game_ritual_runtime.gd	scripts/core	authored	source-review	no-chang
 scripts/core/game_ritual_schema.gd	scripts/core	authored	source-review	no-change	M:batch32-full-closed-shapes-vocabulary-reachability-pointer-equivalents-persistence-and-unsafe-value-review	c82d0431a989054e809fd3adab6fc9187c2dfd47	33089	609
 scripts/core/grand_casino_duel_model.gd	scripts/core	authored	source-review	fixed	C:batch11	07b82d0cd50ec7a715926c90f669d6de250761fc	7388	169
 scripts/core/grand_casino_duel_ritual_projection.gd	scripts/core	authored	source-review	no-change	M:batch25-full-receipts-closed-public-projection-fingerprint-and-ending-presentation-review	74e51d845a605a0a7f71ab050998a9521dbb9b94	20530	406
-scripts/core/grand_casino_run_facade.gd	scripts/core	authored	source-review	no-change	M:batch38-full-weak-host-facade-live-vs-preview-ownership-chip-funding-card-and-showdown-rules-deterministic-staffing-and-save-room-compaction-review	cae4aae361b776ce18635ef2f44fd75f477f7315	65800	1305
+scripts/core/grand_casino_run_facade.gd	scripts/core	authored	source-review	fixed	C:batch37	cae4aae361b776ce18635ef2f44fd75f477f7315	65800	1291
 scripts/core/grand_casino_showdown_model.gd	scripts/core	authored	source-review	fixed	C:batch11	7314fa2e61d49479c1792cfb213eebe6ae5e8ee8	9192	231
 scripts/core/io_result.gd	scripts/core	authored	source-review	no-change	M:copy-boundary	e7a777fa82f2954d2224dce9c7a185af80ea3998	1701	52
 scripts/core/item_effect.gd	scripts/core	authored	source-review	fixed	C:batch25	a4839a5187ea3df774d855c9811e96e87e817e7f	10027	249
@@ -2888,7 +2888,7 @@ scripts/core/scenario_handlers/semantic_v1.gd	scripts/core	authored	source-revie
 scripts/core/scenario_handlers/shops_streets.gd	scripts/core	authored	source-review	no-change	M:fixed-allowlisted-extension-identity	32383d8b0534a637a2bfbda7fc55cf45c90528b9	548	13
 scripts/core/scenario_host_transaction.gd	scripts/core	authored	source-review	no-change	M:batch28-full-account-table-producer-CAS-fact-order-RNG-lease-and-prepared-request-authority-review	3ff12479bcff991d23d1426bf016355424e5246b	67235	1062
 scripts/core/scenario_layout_resolver.gd	scripts/core	authored	static-screen	deferred	O1	111df528a783d4da0d8e14e41958a4874d636e5b	112574	2187
-scripts/core/scenario_operation_registry.gd	scripts/core	authored	static-screen	reviewed	S1	89cdc2b3bb4078242269d533f91876d1ea1db710	87344	1402
+scripts/core/scenario_operation_registry.gd	scripts/core	authored	source-review	no-change	M:batch37-full-closed-handler-inputs-bounded-cycle-safe-envelopes-atomic-receipt-replay-owner-priority-overlay-tombstone-and-live-target-authority-review-no-change	89cdc2b3bb4078242269d533f91876d1ea1db710	87344	1402
 scripts/core/scenario_sequence_catalog.gd	scripts/core	authored	source-review	fixed	C:batch23	b0d279d76085b5da0a47cf36d387a7074a4eccb3	17479	359
 scripts/core/scenario_sequence_rollout_manifest.gd	scripts/core	authored	source-review	no-change	M:55-sequence-census	6c0d0f26b837bf265fa8abd5abf86ac1ab4f7dd5	1936	30
 scripts/core/scenario_sequence_runtime.gd	scripts/core	authored	static-screen	reviewed	S1	f40a227ca4d531c9523d56b942757d710c8e5018	152478	2475
