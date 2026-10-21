@@ -3591,3 +3591,20 @@ assignment and overwrite. All save calls, awaits, resume keys, failure messages,
 RNG operations and assertions remain identical. No live host, save or gameplay
 audit ran and no speed gain is claimed. This resolves the specific candidate
 deferral without changing the full-review count of 673.
+
+## Batch 129: reuse fixed-object label indexes within each guide table
+
+Read the complete layout-guide generator. Each shared slot rebuilt the same
+fixed-object label indexes even though rendering never mutates the source
+surface. Build these indexes lazily once per table and pass them to the label
+helper. Keep its existing three-argument call compatible, and avoid indexing
+empty tables or tables containing only runtime reserves. Validation, geometry,
+catalog authorities, output ordering and both CLI modes remain unchanged.
+
+The complete guide generated from the checked-in authorities is byte-identical
+at 264,548 bytes, with unchanged input models. Index builds fall from 244 to 20.
+Twenty-one focused cases preserve labels, aliases, action-only exclusions,
+runtime reserves, empty capacity, invalid-coordinate errors and legacy helper
+calls. The existing non-writing `--check` passes for 75 contexts and 604 exact
+slots. No native, browser, gameplay or timing run was needed. Coverage is 674
+full source reviews; no runtime speed gain is claimed.

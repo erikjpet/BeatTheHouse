@@ -329,14 +329,15 @@ def occupant_label(identifier: str, titles: dict[str, str]) -> str:
 
 
 def shared_claimant_labels(
-    surface: dict[str, Any], slot: dict[str, Any], titles: dict[str, str]
+    surface: dict[str, Any], slot: dict[str, Any], titles: dict[str, str],
+    *, fixed_indexes: tuple[dict[str, list[str]], dict[str, str]] | None = None,
 ) -> list[str]:
     if bool(slot.get("runtime_reserve", False)):
         # A shared reserve is deliberately not tied to any one catalog object.
         # Legacy aliases may remain as migration inputs, but listing them here
         # makes action-only Task/Choice IDs look like objects to be positioned.
         return ["Variable runtime content"]
-    labels_by_slot, label_by_object = fixed_label_indexes(surface)
+    labels_by_slot, label_by_object = fixed_label_indexes(surface) if fixed_indexes is None else fixed_indexes
     slot_id = str(slot.get("id", ""))
     candidates: list[str] = list(labels_by_slot.get(slot_id, []))
     for raw_occupant in values(slot.get("occupant_ids")):
@@ -373,8 +374,11 @@ def append_shared_table(
 ) -> None:
     lines.append("| Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |")
     lines.append("| --- | --- | --- | --- | --- | --- | --- | --- |")
+    fixed_indexes = None
     for family, slot in slots:
-        labels = shared_claimant_labels(surface, slot, titles)
+        if fixed_indexes is None and not bool(slot.get("runtime_reserve", False)):
+            fixed_indexes = fixed_label_indexes(surface)
+        labels = shared_claimant_labels(surface, slot, titles, fixed_indexes=fixed_indexes)
         support = str(slot.get("support_id", "")).strip()
         lines.append(
             "| %s | %s | %s | %s | %s | %s | %s | %s |"
