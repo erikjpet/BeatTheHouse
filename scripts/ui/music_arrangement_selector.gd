@@ -47,7 +47,7 @@ static func select(entry: Dictionary, profile: Dictionary, music_state: Dictiona
 		var selected := _weighted_pick(candidates, JsonCoerceScript._stable_hash_allow_zero(seed_text))
 		if selected.is_empty():
 			continue
-		selected_stems[role] = selected.duplicate(true)
+		selected_stems[role] = selected
 		var variant_id := str(selected.get("id", "%s_%d" % [role, candidates.find(selected)])).strip_edges()
 		selected_variants[role] = {
 			"id": variant_id,
@@ -248,7 +248,7 @@ static func _select_compatibility_arrangement(entry: Dictionary, profile: Dictio
 		if selected.is_empty():
 			selected = _weighted_pick(candidates, JsonCoerceScript._stable_hash_allow_zero("%s|epoch=%d" % [role_seed, target_epoch]))
 		var selected_id := str(selected.get("id", ""))
-		selected_stems[role] = selected.duplicate(true)
+		selected_stems[role] = selected
 		selected_variants[role] = {"id": selected_id, "weight": float(selected.get("weight", 1.0)), "tags": JsonCoerceScript._string_array(selected.get("tags", [])), "harmonic_section": active_section, "intensity": float(context.get("intensity", 0.0)), "compatibility_set_id": selected_set_id}
 		selected_ids[selected_id] = true
 		selected_role_epochs[role] = target_epoch

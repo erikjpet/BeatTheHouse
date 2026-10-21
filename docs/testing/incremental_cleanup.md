@@ -783,6 +783,30 @@ the existing pre-export capacity floor. The retention owner received the exact
 floor shortfall and dependency handoff. Source review continues without exports
 or changes to resource guards.
 
+## Batch 30: retain the music selector's owned stem dictionaries
+
+Both weighted selection and retained compatibility selection already return a
+deeply detached stem dictionary. Pass that owned value into the result instead
+of immediately copying it again. Keep the picker, weighting, seed strings,
+compatibility rules, recipe progression and metadata construction unchanged.
+
+Native baseline comparison matched 2,304 complete projections across all three
+authored tracks, three synthetic/malformed configurations, six heat levels,
+four seeds and sixteen successive phrases. Input bytes stayed unchanged;
+mutating returned stems did not affect the manifest or selected-variant metadata.
+Recipe bytes matched, and the existing jazz section/contrast expectations passed
+in the focused probe. This does not claim the entire Foundation music suite ran.
+Required animation liveness and the source census passed. Both capped muted Jobs
+closed naturally with EOF/Job0 and independent process absence. No runtime speed
+measurement is claimed.
+
+Full reviews of modal focus, the music selector and scenario semantic presentation
+bring coverage to 162 targeted source/contract reviews. Modal gesture ownership,
+signal reentrancy and accessibility behavior remain intact. Scenario authority,
+action provenance and resolved overlay policy remain unchanged. Three tested
+commits are preserved locally pending existing export-capacity admission; source
+review continues.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
