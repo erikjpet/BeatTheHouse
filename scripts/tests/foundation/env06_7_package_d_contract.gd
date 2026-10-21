@@ -244,12 +244,10 @@ func _check_package_presentation_contract(definition: Dictionary, entry: Diction
 	var semantic := _dict(state.get("semantic_state", {}))
 	var interactions := _dict(semantic.get("interactions", {}))
 	if interactions.size() < 2: failures.append("%s presentation lacks task plus safe-exit targets." % scenario_id)
-	var rect_keys: Dictionary = {}
 	for interaction_value in interactions.values():
 		var interaction := _dict(interaction_value)
 		var hit := _dict(interaction.get("hit_bounds", {}))
 		if int(hit.get("w", 0)) < 44 or int(hit.get("h", 0)) < 44 or str(interaction.get("label", "")).is_empty() or str(interaction.get("prompt", "")).is_empty() or str(interaction.get("non_color_state", "")).is_empty(): failures.append("%s presentation target failed label/prompt/non-color/44px accessibility." % scenario_id)
-		rect_keys["%s:%s" % [hit.get("w", 0), hit.get("h", 0)]] = true
 	var captures := _array(_dict(entry.get("authoring", {})).get("capture_ids", []))
 	for suffix in ["arrival","partial","success","failure","refused","interrupted","reduced_motion","small_screen","hit_overlay","obstruction"]:
 		if not captures.has("%s_%s" % [scenario_id, suffix]): failures.append("%s lacks package-scoped %s evidence binding." % [scenario_id, suffix])

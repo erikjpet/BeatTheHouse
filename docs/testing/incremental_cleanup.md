@@ -4194,3 +4194,20 @@ seconds under the existing 12% CPU / 2 GiB private Job, with EOF, natural exit,
 Job0 and independent process absence. Neither contract was instantiated and no
 scenario matrix, generation, save or browser ran. No speedup is claimed.
 Coverage is 765 full file reviews.
+
+## Batch 161: remove an unread presentation-test accumulator
+
+Read all 452 lines of the Package D contract. Retain twelve scenarios, the eight
+Punchline layer bindings, scenario-specific sealed host caches, identity paths,
+four outcomes, receipt replay/conflict rejection, work-phase reentry, expiry,
+privacy and reduced-motion parity. Selected authored phase records confirm all
+twelve `work_1` references still exist; no test is removed as allegedly obsolete.
+That selected-field check does not count the data package as fully reviewed.
+
+Remove only the function-local `rect_keys` dictionary and its write. The complete
+presentation check never reads or exports it, and local variables are outside
+script-property, scene, signal, reflection and save contracts. Every actual
+44-pixel, label, prompt, non-color, capture and transition assertion remains
+byte-identical. Reuse the exact candidate's shared two-resource compile and
+independent closure from batch 160; no matrix or duplicate check ran. No speedup
+is claimed. Coverage is 766 full file reviews.
