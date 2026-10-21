@@ -4388,3 +4388,9 @@ Read the complete 548-line delivery contract, including the twenty-seed route go
 In `_delivery_pickup_if_needed`, the snapshot's physical dictionary is only inspected for `cargo_state`; the helper never modifies it or reads it after the host pickup call. Remove that one discarded deep copy while preserving the type guard, single snapshot read and exact receipt. The exact original and changed functions passed 36 controlled cases using a RunState subclass: invalid/empty/carried/pending values, four run-ID forms, exact pickup calls/keys, read counts and host side-effect parity.
 
 The focused check passed in 3.891 seconds under the private muted 12% CPU / 2 GiB Job, with natural exit, EOF/Job0 and independent absence. Recognized functional checks could coexist under the parent policy; no uncontended timing claim. No full delivery sweep, gameplay/save replay, public test addition or performance gain is claimed.
+
+## Batch 176: review historical playtest candidate and intake authority
+
+Read the four complete playtest program documents (78, 103, 221 and 229 lines). Keep their distinctions between structural pre-stage candidates, headless production-action proof and a natural owner-followable route. Their frozen-candidate custody includes separate evidence commits, typed action-indexed runtime witnesses, actual platform identities, export/tool hashes, and explicit missing or unretained evidence.
+
+The intake preserves owner wording and separates observable defects from design objections, with route/build provenance and hidden diagnostic material kept out of player-facing summaries. Dependency/status tables are dated snapshots; the gate-refresh prompt is explicitly superseded. None of these historical documents authorizes a new board claim, build, broad test replay, release, balance change or retrospective readiness claim. Leave their source and evidence unchanged.
