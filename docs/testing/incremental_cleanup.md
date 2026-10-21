@@ -198,9 +198,9 @@ exhaustiveness or a proof that no future cleanup is possible.
 
 | Disposition | Paths |
 | --- | ---: |
-| No change | 2,349 |
+| No change | 2,348 |
 | Reviewed by screening | 1,314 |
-| Fixed | 16 |
+| Fixed | 17 |
 | Deferred | 12 |
 | Unresolved baseline check issue | 0 |
 
@@ -403,6 +403,23 @@ UserSettings and the durability contract were reviewed in full. Keep recognized
 schema-less migration, invalid-file preservation, strict known-value shapes,
 accessibility/window/audio behavior and environment capture/restore unchanged.
 Publication remains paused by the parent for the shared CS2 disk reserve.
+
+## Batch 14: share the distribution path join
+
+`PersistencePaths.directory_path` repeated the exact `file_path` implementation.
+Delegate to that existing join policy, keeping both public methods and parameter
+names. Development fallback, environment override validation, distribution/Web
+epochs, root normalization and the single leading-slash trim are unchanged.
+SaveService remains the directory caller; profile, settings, meta and placement
+file callers keep their existing interfaces.
+
+Native comparison with the prior module passed 1,728 root/flag/path/name cases:
+empty/invalid/relative/user/absolute/UNC roots, slash and backslash normalization,
+distribution flag spellings, development fallbacks and unusual names. Root and
+feature decisions also matched. The pure probe performed no filesystem writes.
+The unchanged durability contract passed root rejection and actual isolated run
+save/backup/recovery paths with this implementation. No save location, migration
+or audience policy was changed. No performance gain is claimed.
 
 ## Release receipts
 

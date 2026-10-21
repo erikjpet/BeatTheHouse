@@ -2866,7 +2866,7 @@ scripts/core/keys.gd	scripts/core	authored	source-review	no-change	M:key-vocabul
 scripts/core/meta_collection_service.gd	scripts/core	authored	static-screen	reviewed	S1	c57aa6c2b836bdb8e470beab0c47951fbff3fdf0	80495	1913
 scripts/core/music_delivery_index.gd	scripts/core	authored	source-review	no-change	M:authored-filename-contract	65d3b8830254ec265d876c03f827cd3e5d8c0f9a	6742	171
 scripts/core/numbers_model.gd	scripts/core	authored	static-screen	reviewed	S1	5f14cd8d89ab750241c216d38ce9eeac5df32371	59426	1278
-scripts/core/persistence_paths.gd	scripts/core	authored	source-review	no-change	M:save-roots	991d3cc663cb778ddef83ee13772dbd005ecb3f6	2421	57
+scripts/core/persistence_paths.gd	scripts/core	authored	source-review	fixed	C:batch14	991d3cc663cb778ddef83ee13772dbd005ecb3f6	2421	57
 scripts/core/platform_services.gd	scripts/core	authored	source-review	no-change	M:adapter-contract	f59b29b434fdddab508239d371ba2ad6650af709	2049	71
 scripts/core/police_sweep_model.gd	scripts/core	authored	static-screen	reviewed	S1	a83a862a9554e11cab040dd31eb63a8bc17df46d	41119	876
 scripts/core/profile_inventory.gd	scripts/core	authored	static-screen	reviewed	S1	c2469f951e870ba0354b82131c8e559da09984e7	31270	745

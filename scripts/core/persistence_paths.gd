@@ -54,7 +54,4 @@ static func file_path(development_path: String, file_name: String) -> String:
 
 
 static func directory_path(development_path: String, directory_name: String) -> String:
-	var root := distribution_root()
-	if root.is_empty():
-		return development_path
-	return "%s/%s" % [root, directory_name.trim_prefix("/")]
+	return file_path(development_path, directory_name)
