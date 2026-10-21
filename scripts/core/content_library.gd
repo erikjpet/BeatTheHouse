@@ -1233,10 +1233,12 @@ func scenario_target_catalog_messages(scenario_id: String, target_catalog: Dicti
 	var result: Array = []
 	var structured := JsonCoerceScript._copy_array(target_catalog.get("diagnostics", []))
 	for diagnostic_value in structured:
-		var diagnostic := _as_dict(diagnostic_value)
+		var diagnostic: Dictionary = diagnostic_value if typeof(diagnostic_value) == TYPE_DICTIONARY else {}
 		result.append("environment_scenarios %s target_catalog[%s]: %s" % [scenario_id, str(diagnostic.get("code", "unknown_target")), str(diagnostic.get("message", ""))])
 	var structured_messages: Array = []
-	for diagnostic_value in structured: structured_messages.append(str(_as_dict(diagnostic_value).get("message", "")))
+	for diagnostic_value in structured:
+		var diagnostic: Dictionary = diagnostic_value if typeof(diagnostic_value) == TYPE_DICTIONARY else {}
+		structured_messages.append(str(diagnostic.get("message", "")))
 	for catalog_error_value in JsonCoerceScript._copy_array(target_catalog.get("errors", [])):
 		var catalog_error := str(catalog_error_value)
 		if not structured_messages.has(catalog_error): result.append("environment_scenarios %s target_catalog[source_invalid]: %s" % [scenario_id, catalog_error])

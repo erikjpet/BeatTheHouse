@@ -2024,7 +2024,45 @@ download, editor or game operation was performed. Coverage is374 targeted
 reviews,1,053 static screens and2,272 role classifications across3,699 paths;
 14 deferrals and two separate issues remain. The comprehensive audit continues.
 
+## Batch 73: read detached diagnostic entries without copying them again
+
+`ContentLibrary.scenario_target_catalog_messages` already deep-copies the
+structured diagnostic array before formatting it. Both formatting passes then
+deep-copied each entry again to read its fields. They now use typed, read-only
+dictionary views of that detached array; the defensive outer copy remains.
+Loop order, string conversion order, complete message formatting, error
+deduplication and empty-catalog handling are unchanged. The catalog builder,
+validation rules, authority checks and caches are untouched.
+
+Qualification compared 201 complete baseline/candidate calls, including absent
+and malformed JSON diagnostic shapes, nested dictionaries, duplicate errors and
+three scenario identifiers. Every output byte and input snapshot matched; output
+mutation remained isolated. The unchanged existing semantic-inventory diagnostic
+message check and required no-pointer animation check passed. Both muted private
+native Jobs exited naturally with EOF, Job0 and no forced cleanup. This removes
+two deep copies per diagnostic; no elapsed-time speedup is claimed.
+
+The content-library review so far covers loading, validation orchestration,
+public accessors and indexes through line1650, the formatting method and all its
+callers/helpers. This is targeted coverage, not a claim that all later validators
+have been reviewed. Eight additional authored art/report and migration-test tools
+were reviewed as recorded in the inventory. Their generators, tests, historical
+geometry comparisons and retained assets remain intact; no art generation or
+migration command was run.
+
 ## Release receipts
+
+Batches64-72 were published as nine separate commits ending at
+`ee570ffb702ba710f8333c1b47e084c1be433f7f`, tree
+`182b0f4a0a01b785c1182408a17f1ec444038ad2`. The existing watcher promoted it;
+all15 archive/HTTPS file hashes, dev redirect, WASM MIME, stable0.6.0 and final
+unchanged pointer passed at12:23:35 UTC. Archive SHA-256:
+`3ffe1b0488ad7f72fa6e45ae2d0f477b30dd4df94ee57d8eec556966e6ed9d55`.
+Independent12:23:35.691 census confirmed exportroot32228 and all new Godot absent.
+The healthy guardian42856/worker42252 remains intentionally active at the
+deployment owner's qualified10% kernel cap/2GiB; observed15% guard and retention
+were error-free. Exact peer handoffs returned AbsolutePathBuf, so delivery is
+uncertain. No duplicate watcher, manual export or guard edit was made here.
 
 Batch63 promoted as`917adf2c20e63161309be8a1c80e2d1dadd271d5`, tree
 `119d1248a762088f91868c9d54bc17e09ca22941`, at12:10:31 UTC after the deployment
