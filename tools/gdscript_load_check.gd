@@ -99,8 +99,12 @@ func _changed_files(changed_list_path: String, excludes: Array) -> Array[String]
 func _check_script(path: String) -> void:
 	checked_files.append(path)
 	var script = load(path)
-	if script == null:
+	if not script is Script:
 		failures.append("Failed to load script: %s" % path)
+	elif not script.can_instantiate() and not script.is_abstract():
+		# Godot can return a non-null GDScript resource after a compile error.
+		# Valid abstract scripts deliberately cannot be instantiated.
+		failures.append("Failed to compile script: %s" % path)
 
 
 func _excluded(path: String, excludes: Array) -> bool:

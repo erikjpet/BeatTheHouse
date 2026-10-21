@@ -138,6 +138,28 @@ The check took 0.391 seconds under a private 12% CPU/2 GiB Job, which closed
 naturally with no force, reader EOF and zero active processes. No control sizing,
 tooltip wording, selection behavior or drawing schedule changed.
 
+## Batch 7: load-check compile failures
+
+`tools/gdscript_load_check.gd` treated every non-null result of `load` as a
+success. Godot can retain a `GDScript` resource after a parser/compiler failure,
+so the old checker emitted `passed:true`, zero failures and exit 0 alongside
+real parser errors. The broad audit exposed this directly; those attempts are
+not counted as passing evidence.
+
+Require a Script resource that can instantiate, or a valid abstract script.
+`Script.can_instantiate` and `Script.is_abstract` are present in the pinned 4.6
+API. This only changes the checker: valid game code and supported abstract
+classes remain accepted, while invalid scripts are included in the failure
+array and produce exit 1.
+
+Bounded native CLI regressions used disposable roots, not committed broken
+scripts. A two-line `extends RefCounted` / `func broken(:` file produced exactly
+one checked file, one `Failed to compile script` failure, `passed:false` and
+exit 1. A separate root containing an ordinary RefCounted script plus an
+`@abstract` class produced two checked files, no failures, `passed:true` and
+exit 0. The expected parser diagnostic was retained in the negative-case
+receipt. Both private 5% CPU/512 MiB Jobs closed naturally with zero processes.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
