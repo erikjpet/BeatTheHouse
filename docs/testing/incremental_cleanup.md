@@ -2100,7 +2100,48 @@ No artwork, gallery manifest, storefront, screenshot, browser or game runtime
 was generated or changed. The UI atlas exporter and visual-capture source
 contract were also fully reviewed and retained.
 
+## Batch 76: mark telemetry system roots once
+
+`PerfTelemetryOverlay._begin_system_phase` delegates to `_begin_scenario` with
+the exact surface ID. The shared method resets the counters and marks the
+configured allocation roots; the wrapper then repeated the identical marking
+loop. The marker only assigns the same audited byte to1. Remove the wrapper's
+two-line duplicate loop while retaining every marker method, report field,
+qualification rule, budget, sample window and animation schedule.
+
+84 native comparisons cover all12 configured surfaces plus empty/unknown IDs,
+three phase modes and clean/stale counter arrays. Complete allocation snapshots,
+phase tags, required root membership, zeroed numeric counters and scenario state
+matched. The unchanged allocation contract's negative fixtures and required
+no-pointer animation check passed. Both finite muted private Jobs exited
+naturally with EOF, Job0 and no forced cleanup. No matched timing measurement
+or general allocation-reduction claim is made.
+
+The complete telemetry source and17 associated generators/probes/contracts were
+reviewed as recorded in the inventory. They were retained; only the focused
+allocation contract and native comparisons were run. In particular, no
+Monte-Carlo, opening-settle, long memory soak, private late-run fixture, screenshot
+or browser plan was launched.
+
+Separate instrumentation follow-up: the numeric allocation/copy arrays are
+declared, resized, zero-filled and read in the tracked overlay; a tracked
+scripts/tools/native reference audit found no incrementing producer. Root
+coverage alone therefore does not prove observed allocation counts. Dynamic
+external instrumentation was not certified by this source review. The existing
+schema, results and tests remain unchanged; establishing real producer accounting
+needs a separate scoped proposal, rather than changing qualification during
+cleanup.
+
 ## Release receipts
+
+Batch75 promoted as`8a38424f2ef8a37c3ad9f99cb74bc25ab8b8a149`, tree
+`dac8571a872999abd1787d4b57be4be689fc9d9e`. All15 archive/HTTPS hashes,
+redirect, WASM MIME, stable0.6.0 and final pointer passed at12:43:36 UTC.
+Archive SHA-256:
+`6945c6653f97a74d152e275e190a458b25f1bf3ebc48f0d004cdce09a58f9ad0`.
+Independent12:43:36.580 census found exportroot36932/allnewGodot absent;
+the existing10%/2GiB watcher and retention were error-free. Peer release-message
+delivery remained uncertain after AbsolutePathBuf transport errors.
 
 Batch74 promoted as`6e637fff5b1388bc0c39eb810d7429ba9e83bcca`, tree
 `69ec5048930bd3a721bcde556a3768fc5c7934a5`. All15 archive/HTTPS hashes,

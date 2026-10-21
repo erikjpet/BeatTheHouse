@@ -2748,8 +2748,6 @@ func _begin_system_phase(name: String, surface_id: String, phase_id: String, mod
 		"perf06_phase_id": phase_id,
 		"phase_evidence": {"observed": false, "pending": true},
 	})
-	for root_value in PERF06_SYSTEM_ALLOCATION_ROOTS.get(surface_id, []):
-		mark_allocation_root_audited(str(root_value))
 
 
 func _complete_system_evidence(observed: bool, evidence: Dictionary = {}) -> void:
