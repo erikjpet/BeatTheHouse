@@ -191,16 +191,16 @@ exhaustiveness or a proof that no future cleanup is possible.
 
 | Level | Paths |
 | --- | ---: |
-| Targeted source/contract review | 93 |
-| Static screening | 1,326 |
+| Targeted source/contract review | 95 |
+| Static screening | 1,324 |
 | Media/evidence/UID classification | 2,272 |
 | Total baseline paths | 3,691 |
 
 | Disposition | Paths |
 | --- | ---: |
-| No change | 2,348 |
-| Reviewed by screening | 1,314 |
-| Fixed | 17 |
+| No change | 2,349 |
+| Reviewed by screening | 1,312 |
+| Fixed | 18 |
 | Deferred | 12 |
 | Unresolved baseline check issue | 0 |
 
@@ -420,6 +420,28 @@ feature decisions also matched. The pure probe performed no filesystem writes.
 The unchanged durability contract passed root rejection and actual isolated run
 save/backup/recovery paths with this implementation. No save location, migration
 or audience policy was changed. No performance gain is claimed.
+
+## Batch 15: snapshot run-game tallies once
+
+`ProfileInventory._record_lifetime_stats` copied a run's complete game-tally
+dictionary for its keys, then copied it again for every nonempty game ID. Retain
+one detached dictionary and use it for keys and values. Keep key traversal and
+trimming, numeric coercion/clamping, cumulative counters, output ownership,
+legacy/forward-compatible fields, compact history and daily/terminal policies.
+The public record method and FoundationMain's terminal caller remain unchanged.
+
+The complete 745-line profile implementation was reviewed. Native comparison
+with its predecessor passed 800 aggregation/public-result cases across synthetic
+schema 0/1/4/5 profiles, unknown nested counters/fields, malformed/empty/mixed-key
+game maps and 32-game maps. Repeated public terminal results preserved full
+profile state, daily summaries, returned-data isolation and the 20-row history
+cap. Known counter totals were also asserted independently. No live profile was
+read or written. The required liveness gate passed; both Jobs closed naturally
+with EOF/Job0 and an independent process census confirmed closure.
+
+The existing profile-history performance probe was read and retained, including
+its bound/forward-field assertions and 0.65 ms p95 gate. It was not run for this
+aggregation-only change; no timing claim or relaxed benchmark threshold.
 
 ## Release receipts
 

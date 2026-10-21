@@ -309,11 +309,12 @@ func _record_lifetime_stats(entry: Dictionary) -> void:
 	stats["total_bankroll_won"] = maxi(0, int(stats.get("total_bankroll_won", 0))) + maxi(0, int(entry.get("bankroll_won", 0)))
 	stats["total_bankroll_lost"] = maxi(0, int(stats.get("total_bankroll_lost", 0))) + maxi(0, int(entry.get("bankroll_lost", 0)))
 	var tallies := JsonCoerceScript._copy_dict(stats.get("games_played", {}))
-	for game_id_value in JsonCoerceScript._copy_dict(entry.get("games_played", {})).keys():
+	var run_tallies := JsonCoerceScript._copy_dict(entry.get("games_played", {}))
+	for game_id_value in run_tallies.keys():
 		var game_id := str(game_id_value).strip_edges()
 		if game_id.is_empty():
 			continue
-		tallies[game_id] = maxi(0, int(tallies.get(game_id, 0))) + maxi(0, int(JsonCoerceScript._copy_dict(entry.get("games_played", {})).get(game_id_value, 0)))
+		tallies[game_id] = maxi(0, int(tallies.get(game_id, 0))) + maxi(0, int(run_tallies.get(game_id_value, 0)))
 	stats["games_played"] = tallies
 	var release := _normalize_release_lifetime_stats(stats.get(RELEASE_REPORTING_KEY, {}))
 	var run_release := JsonCoerceScript._copy_dict(entry.get(RELEASE_REPORTING_KEY, {}))

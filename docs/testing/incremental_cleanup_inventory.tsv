@@ -2869,7 +2869,7 @@ scripts/core/numbers_model.gd	scripts/core	authored	static-screen	reviewed	S1	5f
 scripts/core/persistence_paths.gd	scripts/core	authored	source-review	fixed	C:batch14	991d3cc663cb778ddef83ee13772dbd005ecb3f6	2421	57
 scripts/core/platform_services.gd	scripts/core	authored	source-review	no-change	M:adapter-contract	f59b29b434fdddab508239d371ba2ad6650af709	2049	71
 scripts/core/police_sweep_model.gd	scripts/core	authored	static-screen	reviewed	S1	a83a862a9554e11cab040dd31eb63a8bc17df46d	41119	876
-scripts/core/profile_inventory.gd	scripts/core	authored	static-screen	reviewed	S1	c2469f951e870ba0354b82131c8e559da09984e7	31270	745
+scripts/core/profile_inventory.gd	scripts/core	authored	source-review	fixed	C:batch15	c2469f951e870ba0354b82131c8e559da09984e7	31270	746
 scripts/core/rng_stream.gd	scripts/core	authored	source-review	no-change	M:rng-preserved	11f5287e01ba9f6f526a520fe259dd90c100d452	3077	106
 scripts/core/run_action_service.gd	scripts/core	authored	static-screen	reviewed	S1	99de6666cc35e802b50c4d7f4fe6b6056927ec3b	113976	2501
 scripts/core/run_generator.gd	scripts/core	authored	static-screen	reviewed	S1	b1fcf1ba90fc126ce50cd2b974ceb2ceac6297cd	101820	1778
@@ -3594,7 +3594,7 @@ tools/phone_call_audio_audit.gd	tools/phone_call_audio_audit.gd	authored	static-
 tools/pinball_sim_probe.gd	tools/pinball_sim_probe.gd	authored	static-screen	reviewed	S1	3d5d692a73e2f4446430fd7ec214691afa4459d7	6416	141
 tools/postfix06_2_feature_pcm_runtime.ps1	tools/postfix06_2_feature_pcm_runtime.ps1	authored	static-screen	reviewed	S1	017b8a652046016a84040c93dcc2bd1dbabd7b84	37442	458
 tools/postfix06_2_feature_pcm_runtime_contract_test.ps1	tools/postfix06_2_feature_pcm_runtime_contract_test.ps1	authored	static-screen	reviewed	S1	4595658e55fc12cb93507ab98a93c16c6daacc2b	28047	175
-tools/profile_history_load_performance_probe.gd	tools/profile_history_load_performance_probe.gd	authored	static-screen	reviewed	S1	39a5b630791dc61375a806d6edb1feb1468fa787	4275	102
+tools/profile_history_load_performance_probe.gd	tools/profile_history_load_performance_probe.gd	authored	source-review	no-change	M:batch15-full-bounded-history-and-forward-field-benchmark-contract-retained	39a5b630791dc61375a806d6edb1feb1468fa787	4275	102
 tools/promo_screenshots_0_4.gd	tools/promo_screenshots_0_4.gd	authored	static-screen	reviewed	S1	49310594ae3ffc3ba905a82192ceba78495b3fe6	7783	219
 tools/promo_screenshots_0_5.gd	tools/promo_screenshots_0_5.gd	authored	static-screen	reviewed	S1	1e7d80395f597b6b0b8361b78db5180b5c0c3c94	6905	199
 tools/pull_tabs_seed_audit.gd	tools/pull_tabs_seed_audit.gd	authored	static-screen	reviewed	S1	cf4bb7661b25aa785e62cd233936f8e8e4eff277	55149	990
