@@ -16,7 +16,8 @@ const BACK_ROOM_OBJECTS := ["job_board", "numbers_desk", "planning_table", "mags
 func _initialize() -> void:
 	var failures: Array = []
 	var jobs := _load_array(JOBS_PATH)
-	var recruitment := _dict(_load_array(RECRUITMENT_PATH)[0]) if not _load_array(RECRUITMENT_PATH).is_empty() else {}
+	var recruitment_rows := _load_array(RECRUITMENT_PATH)
+	var recruitment := _dict(recruitment_rows[0]) if not recruitment_rows.is_empty() else {}
 	_check_job_catalog(jobs, failures)
 	_check_recruitment_paths(recruitment, failures)
 	_check_back_room(recruitment, failures)

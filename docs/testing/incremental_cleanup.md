@@ -2819,3 +2819,32 @@ destination selection, visible global geometry at two viewport sizes, overlap
 and safe-margin checks, and cleanup. The map owner's completed before/after
 checks are reused; cleanup does not repeat them. The qualified Jazz source blob
 is unchanged after rebase.
+
+
+## Batch 91: reuse the authored recruitment test input
+
+The authored-semantics contract read, parsed and deep-copied the same recruitment
+JSON twice when nonempty. Load it once and reuse that owned array for its empty
+check and first row. There is no yield, callback or write between the original
+reads. Empty input still produces the same empty dictionary; every assertion,
+helper copy, failure message and exit rule remains unchanged. This removes one
+file read/parse/copy for the normal input, without a measured speed claim.
+
+Only that existing pure contract ran: PASS in0.203s, natural exit0/EOF/Job0 under
+the private5%/512MiB30s muted Job. PID27588 was independently absent15:12:52 UTC.
+The first closure-metadata serialization failed because of PowerShell's automatic
+`Matches` variable; the corrected fresh census is retained, with no runtime
+rerun. No broader recruitment, authority, save or gameplay suite was triggered.
+
+Seven previously screened data/registry/regression files received full source
+review, bringing the source-review count to491. Four related authority tests
+were re-read for context; their prior review evidence and coverage are retained.
+Recruitment's seven-member placement/presence rules and legacy paths remain
+authored content. The Numbers and heist contracts retain governing baselines,
+including the catalog's unreleased Whale definition. The editor's Whale safe-exit
+test and tiny prewarm fixture have explicit active consumers. Scenario uniqueness
+and validation-memo tests retain independent authority computation, hostile
+receipt/registry/target rejection and process-local receipt serialization checks.
+The Sweep regression preserves all five costed rungs, legacy restore, expiry,
+determinism and its explicit host-resolution gap. These unchanged files were
+reviewed without running them or weakening any criteria.
