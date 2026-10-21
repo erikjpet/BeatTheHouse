@@ -44,11 +44,12 @@ func _run() -> void:
 	var high_limit_active := await _run_active_rounds(RunState.GRAND_CASINO_HIGH_LIMIT_ARCHETYPE_ID, HIGH_LIMIT_ROUNDS)
 	var external_pause_after := await _assert_paused("corner_store")
 	var persistence := _persistence_report()
+	var final_counts := _spin_counts()
 
 	var expected_total := CAGE_ROUNDS + HIGH_LIMIT_ROUNDS
 	for key_value in KEYS:
 		var key := str(key_value)
-		if int(_spin_counts().get(key, -1)) != expected_total:
+		if int(final_counts.get(key, -1)) != expected_total:
 			failures.append("%s did not retain its independent %d-spin total." % [key, expected_total])
 		if bool(persistence.get("loadable", false)) and int((persistence.get("spin_counts", {}) as Dictionary).get(key, -1)) != expected_total:
 			failures.append("%s lost its spin total across save/load." % key)
@@ -66,7 +67,7 @@ func _run() -> void:
 		"back_room_pause": back_room_pause,
 		"high_limit_active": high_limit_active,
 		"external_pause_after": external_pause_after,
-		"final_spin_counts": _spin_counts(),
+		"final_spin_counts": final_counts,
 		"persistence": persistence,
 	}
 	print(JSON.stringify(report, "\t"))

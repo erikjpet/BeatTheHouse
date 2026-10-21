@@ -3395,3 +3395,21 @@ byte metrics use String length; actual Unicode/transport evidence would be
 needed before changing that validation contract. No budget or acceptance rule
 was relaxed. Unlike the screenshot manifests, these tools also print the complete
 report to stdout; no blanket report-writer rewrite was applied.
+
+
+## Batch 118: reuse the final travel-probe spin snapshot
+
+After its measured rounds and persistence check, the Grand Casino travel probe
+queried the same final spin-count snapshot once per cabinet and once for its
+report. Capture that pure snapshot once and reuse it. No callback, await or room
+mutation occurs between those old queries; the reader and production peek helper
+perform only dictionary reads. Measured runtime loops, budgets, saves, RNG and
+autoplay scheduling are unchanged.
+
+Twenty-eight focused cases ran the exact original/changed finalization blocks
+with the production pure peek helper. Complete failure order, final counts and
+inputs matched for valid, missing, wrong, string and numeric counts with loadable
+and rejected persistence. Snapshot calls changed from four to one per case
+(112 to 28 total). The 0.296-second private 5% CPU/512 MiB check exited naturally
+with EOF and Job0; its process was independently absent. No main scene, gameplay,
+timing sample or save operation ran, and no gameplay speed improvement is claimed.
