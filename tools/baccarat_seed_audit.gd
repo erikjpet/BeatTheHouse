@@ -371,7 +371,7 @@ func _audit_authoritative_host_commit(game: GameModule, seed_text: String, index
 
 func _check_hand_cards_unique(hand: Dictionary, index: int) -> void:
 	var seen := {}
-	for card in _card_array(hand.get("player_cards", [])) + _card_array(hand.get("banker_cards", [])):
+	for card in _dictionary_array(hand.get("player_cards", [])) + _dictionary_array(hand.get("banker_cards", [])):
 		var key := "%d:%d:%d" % [int(card.get("deck", -1)), int(card.get("suit", -1)), int(card.get("rank", -1))]
 		if seen.has(key):
 			failures.append("Hand %d dealt duplicate card identity %s." % [index, key])
@@ -551,16 +551,6 @@ func _print_summary() -> void:
 
 
 func _dictionary_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append((entry as Dictionary).duplicate(true))
-	return result
-
-
-func _card_array(value: Variant) -> Array:
 	var result: Array = []
 	if typeof(value) != TYPE_ARRAY:
 		return result
