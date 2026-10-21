@@ -100,6 +100,26 @@ reader EOF and no forced cleanup. No actual gameplay, RNG, cash, heat, clock,
 save, rendering schedule, or native behavior changed. The removed copy calls
 are source evidence; no player-latency improvement is claimed.
 
+## Batch 5: one game-script cache insertion path
+
+Use `GameModuleRegistry.cache_script` for successful dynamic loads as well as
+prewarmed scripts, removing the second copy of the capacity/clear/insert logic.
+The public path is still trimmed and validated; null loads are still ignored.
+Hits and replacements do not evict a full 32-entry cache, and a miss clears it
+before retaining the new script, exactly as before. Module construction and
+`setup` retain their existing type check and copy boundary.
+
+The focused native cache check passed full-cache hit/replacement/miss, invalid
+path, null script, non-game type and successful setup cases in 3.907 seconds.
+The complementary Web startup source contract passed. No cache size, eviction
+policy, public method or module definition changed. No speed claim is made.
+
+`health06_1_hot_paths_contract_test.ps1` has an independent baseline failure:
+CH-14 expects at least three `rng.shuffled` sites in `EnvironmentInstance`.
+Running the same check in the untouched `4d4eb062` main checkout reproduces the
+same failure. Leave both the assertion and the concurrently investigated
+environment implementation unchanged. This failure is not counted as a pass.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
