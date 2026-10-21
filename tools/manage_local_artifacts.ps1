@@ -326,6 +326,9 @@ function Clean-VerifiedArtifacts {
         throw "Clean refused: -Destination must identify the prior export folder."
     }
     $destinationRoot = Get-FullPath -Path $ExportDestination
+    if (Test-PathInside -Path $script:RepoRoot -Directory $destinationRoot -AllowEqual) {
+        throw "Clean refused: export destination cannot contain the repository."
+    }
     $manifestPath = Join-Path $destinationRoot $script:ManifestName
     if (-not (Test-Path -LiteralPath $manifestPath -PathType Leaf)) {
         throw "Clean refused: no prior export manifest exists at $manifestPath."

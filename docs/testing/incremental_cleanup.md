@@ -3183,3 +3183,24 @@ or storage-owner path was accessed. Its first Windows PowerShell attempt stopped
 because that child lacked Get-FileHash; it was not qualifying evidence. The same
 fixture under the installed PowerShell7.6.5 reproduced the deletion. A matching
 destination-ancestry guard is the next small independent fix.
+
+
+## Batch 107: reject a self-referential artifact cleanup destination
+
+Clean now repeats Export's existing guard that the export destination cannot
+contain the repository, including equality. Previously a root-level manifest
+could make source and exported path refer to the same file; matching hashes
+then permitted deletion of the only copy. The exact original script reproduced
+this in a tiny disposable repository. The new guard runs before manifest reading;
+all other tool bytes, ignored-path checks, toolchain protection, hashes and the
+explicit confirmation requirement remain unchanged.
+
+The focused regression uses byte-identical copies of the actual tool in four
+owned repositories. Equal and ancestor destinations reject without deleting
+source data. Legitimate sibling and nested destinations still export and clean
+successfully, preserving the verified copy; missing explicit confirmation still
+rejects. All seven synchronous PowerShell7.6.5 child invocations completed, and
+matching processes were independently absent afterward. Fixture cleanup verifies
+its exact GUID path beneath the owned temporary root before removal. No live
+artifact, private save, database, storage-owner policy, browser or game was read
+or changed. Windows PowerShell5 compatibility was not newly qualified.
