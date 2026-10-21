@@ -2696,3 +2696,23 @@ boundaries and explicit unavailable-authority declarations remain intact. The
 cluster selector's diagnostic modes remain useful callable tools. Tests were not
 rerun. The small source-equivalence check covers this local refactor; unchanged
 animation evidence from82 is reused under the user's development policy.
+
+
+## Batch 86: share the identical idle-counter field list
+
+The Web idle-liveness evaluator allocated two identical four-field name lists
+for absolute and delta counters. Pass the existing list to the same read-only
+property checker for both. Missing evidence still fails closed. Every cadence,
+elapsed-window, redraw floor, paired-draw requirement and result field remains
+unchanged. The existing focused PowerShell contract passed, including its
+1Hz/15Hz and negative evidence cases; no Godot, browser or listener launched.
+
+Thirteen launcher/contract files received full source review. Standalone Godot
+discovery and failure semantics, exact-seed audit arguments, governing thresholds,
+immutable evidence paths, archived runtime entry points, native solver binding,
+port preflight, independent matrix/budget checks and static-rule hostile fixtures
+remain intact. Repeated standalone launcher helpers are retained rather than
+introducing a new import/scope dependency during this narrow cleanup. Static text
+rules remain heuristics, not proof that every caller or counter producer exists.
+Only the changed small idle contract was executed; other reviewed tools were not
+run. Publication is queued behind the actual finite performance comparison.

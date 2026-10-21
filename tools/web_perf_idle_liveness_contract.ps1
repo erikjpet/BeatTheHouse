@@ -43,10 +43,9 @@ function Get-WebPerfIdleLivenessEvaluation {
     $after = $Scenario.liveness_counters.game_surface
     $delta = $Scenario.liveness_counter_delta.game_surface
     $counterNames = @("surface_idle_animation_fps", "surface_animation_scheduler_elapsed_msec", "surface_animation_redraw_count", "draw_sample_count")
-    $deltaNames = @("surface_idle_animation_fps", "surface_animation_scheduler_elapsed_msec", "surface_animation_redraw_count", "draw_sample_count")
     if (-not (Test-WebPerfIdlePropertiesPresent -Value $start -Names $counterNames) `
             -or -not (Test-WebPerfIdlePropertiesPresent -Value $after -Names $counterNames) `
-            -or -not (Test-WebPerfIdlePropertiesPresent -Value $delta -Names $deltaNames)) {
+            -or -not (Test-WebPerfIdlePropertiesPresent -Value $delta -Names $counterNames)) {
         return [pscustomobject]$evaluation
     }
     $evaluation.schema_present = $true
