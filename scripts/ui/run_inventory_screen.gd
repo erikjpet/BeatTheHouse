@@ -440,10 +440,10 @@ func _filtered_display_model() -> Dictionary:
 		result["items"] = filtered_items
 		return result
 	for container_value in containers:
-		var container: Dictionary = container_value.duplicate(true)
+		var container: Dictionary = container_value
 		var slots: Array = []
 		for slot_value in JsonCoerceScript._dictionary_array(container.get("slots", [])):
-			var slot: Dictionary = slot_value.duplicate(true)
+			var slot: Dictionary = slot_value
 			var item: Dictionary = slot.get("item", {}) if typeof(slot.get("item", {})) == TYPE_DICTIONARY else {}
 			if item.is_empty() or not _item_matches_browser(item):
 				continue

@@ -909,6 +909,26 @@ inventory surface's selection reconciliation, paging, retained pools, card and
 physical layouts. The inventory filtering duplicate-copy candidate is prepared
 separately and is not claimed fixed by this batch.
 
+## Batch 35: inventory filtering ownership
+
+The filter receives deeply owned container and slot records from
+`JsonCoerce._dictionary_array`, then immediately deep-copied each a second
+time. Retain the already-owned records while keeping the separate item copies
+that isolate flat rows from container items. All 480 complete model comparisons
+passed across eight filters, three sorts, four queries and five empty, loose,
+container and malformed-input shapes. Input models remained byte-identical;
+mutating nested output slots did not affect flat rows or source inputs.
+Required animation liveness passed; the two muted capped Jobs closed naturally,
+and both recorded processes were independently absent. No measured speed gain
+is claimed. Three separately tested commits remain local while the independent
+worker runs its finite functional offer/note pair against unchanged NEXT.
+
+The complete slot-presentation review brings substantive coverage to 210.
+Preserve immutable reel definitions, bounded realtime patches, exact spin/reveal
+identity, nudge timing, atomic pinball takeover, Buffalo replay and audio cues.
+The two unused local bindings identified there remain a separate cleanup
+candidate; no slot presentation code changes in this batch.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

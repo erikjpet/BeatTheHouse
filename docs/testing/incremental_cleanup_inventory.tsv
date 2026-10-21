@@ -2943,7 +2943,7 @@ scripts/games/slots/slot_family_buffalo.gd	scripts/games	authored	static-screen	
 scripts/games/slots/slot_family_pinball.gd	scripts/games	authored	source-review	no-change	M:batch32-full-reel-placement-math-weights-legacy-win-plan-payout-wilds-sanitization-and-feature-contract-review	ff7884e4e28c24e8cb4427bc50af99133830f60d	25096	595
 scripts/games/slots/slot_machine_generator.gd	scripts/games	authored	source-review	no-change	M:batch32-full-generation-stream-draw-order-configured-strip-fallback-and-normalization-review	b77fc7cdb5a51732750bdd57dba13f8599a35f18	5824	131
 scripts/games/slots/slot_machine_state.gd	scripts/games	authored	source-review	fixed	C:batch32	bae03fbe48990938fad07b5ce8c9cec11fac41f9	24449	426
-scripts/games/slots/slot_presentation.gd	scripts/games	authored	static-screen	reviewed	S1	bda1aa212f774b5ea9a513924ab0340c49230981	61455	1161
+scripts/games/slots/slot_presentation.gd	scripts/games	authored	source-review	no-change	M:batch35-full-immutable-definition-surface-patches-spin-reveal-boundary-nudge-chain-timing-pinball-takeover-buffalo-replay-and-audio-review	bda1aa212f774b5ea9a513924ab0340c49230981	61455	1161
 scripts/games/slots/slot_renderer.gd	scripts/games	authored	static-screen	reviewed	S1	0ed768a595650baf715d185e3ce009bdad3c416f	153738	2835
 scripts/games/slots/slot_resolver.gd	scripts/games	authored	static-screen	reviewed	S1	e92d046b6301a7aa500685fa50623c19fb3d3dbb	112133	2339
 scripts/games/slots/slot_rng_math.gd	scripts/games	authored	source-review	no-change	M:batch32-full-RNG-draw-order-weight-clamping-paylines-protected-cells-and-payout-table-normalization-review	bde450ef84035fa54ebab9aa2681970dce78971b	9411	265
@@ -3263,7 +3263,7 @@ scripts/ui/performance_liveness_guard.gd	scripts/ui	authored	source-review	no-ch
 scripts/ui/pixel_scene_canvas.gd	scripts/ui	authored	static-screen	reviewed	S1	b3a18e796254320e0254205a30963ae17a8f8cc0	552743	11159
 scripts/ui/player_text.gd	scripts/ui	authored	source-review	no-change	M:batch16-full-count-time-currency-and-action-message-contracts-retained	5046a035f5ef3689a83b5773a9c290e8dc7e21b2	5644	128
 scripts/ui/procedural_music_player.gd	scripts/ui	authored	static-screen	reviewed	S1	1e5e6eb5e8e192ee541d66ae1ff658b8dcf094b5	299188	6709
-scripts/ui/run_inventory_screen.gd	scripts/ui	authored	source-review	no-change	M:batch35-full-modal-focus-selection-filter-sort-owned-container-slot-models-small-screen-ticket-summary-and-action-signal-review	13a58ae771fa951d6906cd721858872b98b20772	51447	1118
+scripts/ui/run_inventory_screen.gd	scripts/ui	authored	source-review	fixed	C:batch35	13a58ae771fa951d6906cd721858872b98b20772	51447	1118
 scripts/ui/run_inventory_view_model.gd	scripts/ui	authored	source-review	no-change	M:batch31-full-storage-source-stacking-pawn-tickets-meta-loadout-read-only-and-selection-identity-review	2c694d32a0617622d432ccafa5f35ed2f9ae5209	21351	500
 scripts/ui/run_journal_view_model.gd	scripts/ui	authored	source-review	fixed	C:batch19	d1d36f410015841bce5779fb86d21b5a98be9854	9946	260
 scripts/ui/run_report_screen.gd	scripts/ui	authored	source-review	no-change	M:batch32-full-terminal-report-timeline-replay-resource-release-reward-navigation-lock-and-claim-signal-review	7582bcdf3e5f9ae9647c017183974dd0e77c52a3	32297	702
