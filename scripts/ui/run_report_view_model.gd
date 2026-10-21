@@ -1191,7 +1191,9 @@ static func _source_label(entry: Dictionary, source: Dictionary, catalogs: Dicti
 	var kind := str(source.get("kind", ""))
 	var source_id := str(source.get("id", ""))
 	if kind == "game":
-		var game := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(catalogs.get("games", {})).get(source_id, {}))
+		var games_value: Variant = catalogs.get("games", {})
+		var games: Dictionary = games_value if typeof(games_value) == TYPE_DICTIONARY else {}
+		var game := JsonCoerceScript._copy_dict(games.get(source_id, {}))
 		return str(game.get("display_name", source_id.replace("_", " ").capitalize()))
 	if kind == "travel": return "Travel"
 	if str(source.get("key", "")) == "items_bought": return "Items bought"

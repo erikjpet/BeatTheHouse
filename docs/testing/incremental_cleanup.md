@@ -861,6 +861,32 @@ static-screen and role-classification rows still do not imply full semantic
 review. Heavy checks and publication will recheck the existing process guard;
 source review continues meanwhile.
 
+## Batch 33: report game labels
+
+The terminal report looked up one game's display label by deep-copying the
+entire game catalog, then copying the selected game again. Borrow the
+type-checked catalog for that lookup and retain the selected-record copy.
+Malformed catalog fallbacks, labels, money aggregation and public interfaces
+stay identical. A capped muted comparison passed 612 source labels across six
+catalog shapes, 30 complete money-row models and six complete reports decoded
+from the authored 0.5.1/mid-0.6 saves. All inputs remained byte-identical.
+Required no-pointer animation liveness passed. Both Jobs exited naturally with
+empty process sets, EOF and independent process absence; no timing gain is
+claimed. This source-only batch leaves NEXT pinned while the independent
+performance worker prepares its finite trace.
+
+Eight further full reviews raise substantive coverage from 196 to 204. Preserve
+travel visibility, delivery next hops, opening hours, fares and the free closing
+walk; report terminal ledgers, timeline reconstruction and reward gates; closed
+environment object projections, physical identities and fixed bindings;
+Foundation action host dispatch, stake economy and owned public results;
+tutorial frontier/recovery, live anchors, dialogue and rollback lifecycles;
+Coin Pusher fixed-tick backlog, native scratch ownership, feeder input order and
+v1-v3 snapshots; world-sequence mount ownership, sealed commands, rehydration,
+tombstones and terminal receipts; and game-ritual replay, commitment conservation,
+causal receipts and rejection of raw authority. Only the report lookup changes.
+The remaining screened/classified rows still require semantic review.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
@@ -918,3 +944,16 @@ Independent 05:32:47 census confirmed the build root and new Godot processes
 absent. The existing retention hook completed with no error or reduction;
 both source attempts were protected. Exact receipts went to performance and
 retention owners. No browser/gameplay measurement is claimed by this release.
+
+Batches 28-32 were published as five separate tested commits once capacity and
+the ordinary process guard admitted publication. NEXT promoted
+`3c1eba46610956b0b93dc50b40bd19a0bb1bb4bc`, tree
+`b5602a66d8cc786e7af1360119fa865f3bcdef83`. Independent 06:15:15 UTC census
+confirmed root 32228, observed import processes 44140/43628 and all new Godot
+processes absent. Trusted HTTPS at 06:15:16 matched all 15 archive files, redirect
+and WASM MIME types; stable remained 0.6.0. Archive SHA-256:
+`0ac597f011d0b6a2e462ae14d53d6760bc13984c9cf056b40feadc156a1200d1`.
+The existing automatic retention hook completed without error. Exact identity,
+archive and actual closure receipts were handed to the performance worker for
+its separate finite trace; no visual Web gameplay or latency result is claimed
+by the cleanup worker's asset verification.
