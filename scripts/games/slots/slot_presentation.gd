@@ -252,7 +252,6 @@ func realtime_state_patch(machine: Dictionary, run_state: RunState, ui_state: Di
 	var nudge_timing := _nudge_chain_timing_state(nudge_offer, ui_state)
 	var nudge_available := not nudge_offer.is_empty() and bool(nudge_timing.get("available", false))
 	var skin: Dictionary = current_surface_state.get("slot_skin", {}) if typeof(current_surface_state.get("slot_skin", {})) == TYPE_DICTIONARY else {}
-	var feature_family := str(active_bonus.get("family", ""))
 	return {
 		"surface_realtime_state_refresh": true,
 		# The canvas scheduler already owns Slot's visible cadence: active reel and
@@ -889,7 +888,6 @@ func _feature_scene(active_bonus: Dictionary) -> Dictionary:
 
 
 func _pinball_feature_scene(active_bonus: Dictionary) -> Dictionary:
-	var mode := str(active_bonus.get("mode", "pinball"))
 	var total_steps := maxi(1, int(active_bonus.get("total_steps", active_bonus.get("remaining_steps", 1))))
 	var step_index := maxi(0, int(active_bonus.get("step_index", 0)))
 	var alert_active := _pinball_bonus_alert_active(active_bonus)

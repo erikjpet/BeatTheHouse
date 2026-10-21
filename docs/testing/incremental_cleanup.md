@@ -994,6 +994,33 @@ Current baseline coverage is 214 targeted source/contract reviews, 1,205 static
 screens and 2,272 role classifications. These levels do not claim exhaustive
 semantic completion of the remaining authored files.
 
+## Batch 38: remove two unread slot presentation locals
+
+Remove unused local `feature_family` in `realtime_state_patch` and unused local
+`mode` in `_pinball_feature_scene`. Their primitive dictionary lookups/string
+conversions produced values that neither function read. The exact-source proof
+confirms these two deletions are the entire production change. No method, field,
+resource identity, saved key, animation channel or public result is removed.
+
+The existing Godot load checker passed the single changed script with zero
+failures. It naturally closed in the muted 5%/512MiB Job with exit0, reader EOF,
+Job0 and no forced cleanup; independent process absence is recorded privately.
+No elapsed-time improvement is claimed for removing these unread bindings.
+
+The inventory now includes all 3,698 tracked paths: the 3,691 original baseline
+paths plus the two audit reports and five recovery-helper/document additions
+published by the preservation owner. Original-path blob/byte columns retain
+their input identities; added rows identify their Git blobs at `784d4df4`.
+Classification/screening of new rows does not certify a full semantic review.
+
+Further full reviews retained TalkDock input/confirmation and tween ownership,
+SealedActionHost transaction/replay authority, DeveloperPlacementStore durable
+rollback/catalog-drift recovery and PinballFeature live clocks/save rehydration.
+The unchanged EventModule has a diagnostic issue: at lines 505-565 the old
+`pre_hooks` interval is effectively zero and `advance_turn` includes pre-hooks.
+The performance owner received this finding; production timing/gameplay code is
+unchanged. The settled map-marker redraw issue remains a separate proposal.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
@@ -1075,3 +1102,15 @@ SHA-256: `c41fef5093099550be5dd762261e88486df514c0e91a14503e396aeefd9799c5`.
 The existing retention hook completed without error. Exact receipts went to
 the performance and retention owners. The untested geometry candidate was
 excluded from that push; its later proof is recorded separately above.
+
+Batches 36-37 rebased cleanly over the preservation owner's helper/document
+commits and were published separately as `ae64271f` and `784d4df4`. NEXT promoted
+`784d4df4c4dd6b37ebc97dd04af0d71959f2ecda`, tree
+`4fcbcbc055fc78e1bcb6c20a27090237bf848a39`, at 07:22:41 UTC. Independent
+07:23:42 UTC census found root 24476 and all new Godot processes absent; the two
+historical processes remained untouched. Trusted HTTPS at 07:23:43 matched all
+15 archive files, redirect and WASM MIME types. Archive SHA-256:
+`bc2163e817b6b66cbdfe586d0aad54ba5c18d90b14f8f5ba1143e15535479d4f`.
+Stable remained 0.6.0 and the existing retention hook completed without error.
+Exact receipts went to the performance and fresh-player browser owners. The
+later two-local slot cleanup was excluded from this publication.
