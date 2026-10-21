@@ -3628,3 +3628,20 @@ The binding sweep's report-open failure can still leave a successful process
 result; a focused negative-case proposal remains unqualified and unchanged.
 No game, sweep, Monte Carlo audit, media capture, export or golden refresh ran.
 Coverage is 681 full source reviews.
+
+## Batch 131: retain export custody and historical capture authorities
+
+Read the complete development exporter and seven archived author/capture or
+acceptance contracts. Retained immutable source/tree/dirty identities, required
+native outputs, locked templates, restoration in `finally`, staged audit/custody
+registration, archive-byte checks, recoverable quarantine and explicit upload
+boundaries. No exporter, watcher, limit, artifact or public destination changed.
+
+The archived Package E PowerShell launcher returns after calling its canonical
+GDScript author. Its superseded envelope below that return is historical
+provenance and remains unchanged. Similar browser adapters are independently
+preserved producers with different report contracts; they were not unified.
+Retained all false-green rejection rules, hostile fixture isolation, exact case
+and witness custody, and growth bounds. None of these tools was executed, and
+no historical instruction, browser/profile, build or upload was activated.
+Coverage is 689 full source reviews.
