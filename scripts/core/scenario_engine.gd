@@ -742,13 +742,71 @@ static func _node_binding_quarantine_result(state: Dictionary) -> Dictionary:
 
 
 static func flush_sequence_facts(environment: Dictionary, definition: Dictionary, boundary_serial: int) -> Dictionary:
+	var prepared := prepare_sequence_fact_flush(environment, definition, boundary_serial)
+	return _commit_sequence_candidate(environment, prepared["candidate"], prepared["definition"], prepared["result"])
+
+
+# One synchronous, detached preparation. The identity receipt is computed from
+# this invocation's authenticated inputs; it is never read from saved state.
+static func prepare_sequence_fact_flush(environment: Dictionary, definition: Dictionary, boundary_serial: int) -> Dictionary:
 	definition = sequence_definition_for_environment(environment, definition)
 	var candidate := environment.duplicate(false)
+	var prior_state: Variant = environment.get("scenario_sequence_state")
 	var state := ensure_sequence_state(candidate, definition)
 	if state.is_empty():
-		return {"ok": false, "errors": ["No dynamic room sequence is active."]}
+		return {"candidate": candidate, "definition": definition, "result": {"ok": false, "errors": ["No dynamic room sequence is active."]}, "unchanged_state": false}
 	var result := SequenceRuntimeScript.flush_facts(state, definition, boundary_serial, true)
-	return _commit_sequence_candidate(environment, candidate, definition, result)
+	return {"candidate": candidate, "definition": definition, "result": result,
+		"unchanged_state": bool(result.get("ok", false)) and is_same(state, prior_state) and is_same(result.get("state"), state)}
+
+
+static func unchanged_sequence_flush_result(environment: Dictionary, prepared: Dictionary) -> Dictionary:
+	if not bool(prepared.get("unchanged_state", false)):
+		return {}
+	var candidate: Dictionary = prepared["candidate"]
+	var state: Dictionary = prepared["result"]["state"]
+	var definition: Dictionary = prepared["definition"]
+	var audit := JsonCoerceScript._copy_dict(candidate.get("scenario_layout_audit", {}))
+	var renderer := JsonCoerceScript._copy_dict(candidate.get("scenario_render_snapshot", {}))
+	var digest := str(candidate.get("scenario_layout_authority_digest", ""))
+	var authority := JsonCoerceScript._copy_dict(candidate.get("scenario_layout_authority", {}))
+	if not bool(audit.get("valid", false)) \
+			or not JsonCoerceScript._valid_sha256(digest) or str(audit.get("authority_digest", "")) != digest \
+			or not bool(renderer.get("ok", false)) or str(renderer.get("layout_authority_digest", "")) != digest:
+		return {}
+	var projection := SequenceRuntimeScript.public_projection(state, definition, true)
+	if projection.is_empty() or typeof(candidate.get("scenario_layout_base_records")) != TYPE_ARRAY \
+			or typeof(candidate.get("scenario_layout_context", {})) != TYPE_DICTIONARY \
+			or str(candidate.get(TRUSTED_LAYOUT_INPUT_DIGEST_KEY, "")) != _sequence_layout_input_digest(candidate, projection):
+		return {}
+	var stored_projection := JsonCoerceScript._copy_dict(candidate.get("scenario_sequence_projection", {}))
+	if bool(audit.get("active", true)):
+		# Same authenticated input digest and the same sealed-renderer validation
+		# as _commit_reused_sequence_layout; no geometry/readiness bypass.
+		projection["semantic_state"] = JsonCoerceScript._copy_dict(stored_projection.get("semantic_state", {}))
+		var verified_renderer := ScenarioLayoutResolverScript.sealed_renderer_snapshot({"ok": true,
+			"projection": projection, "layout_authority": authority,
+			"layout_authority_digest": digest, "layout_audit": audit, "warnings": []})
+		if not bool(verified_renderer.get("ok", false)) or verified_renderer != renderer:
+			return {}
+	else:
+		if not bool(audit.get("sealed_passive", false)) or not authority.is_empty() \
+				or not bool(renderer.get("sealed_passive", false)) or str(renderer.get("presentation_mode", "")) != "passive":
+			return {}
+		var semantic := JsonCoerceScript._copy_dict(projection.get("semantic_state", {}))
+		semantic["layout_authority_digest"] = digest
+		projection["semantic_state"] = semantic
+	if projection != candidate.get("scenario_sequence_projection", {}):
+		return {}
+	# Detect materialized-catalog/baseline mutations instead of trusting the
+	# projection alone. Any normalization/replacement takes the regular commit.
+	_materialize_sequence_services_games_routes(candidate, projection)
+	if candidate != environment:
+		return {}
+	return {"ok": true, "unchanged": true, "processed": [], "errors": [],
+		"state": state.duplicate(true), "projection": projection,
+		"layout_authority": authority, "layout_authority_digest": digest,
+		"layout_audit": audit, "renderer_snapshot": renderer, "warnings": []}
 
 
 static func sequence_projection(environment: Dictionary, definition: Dictionary = {}) -> Dictionary:

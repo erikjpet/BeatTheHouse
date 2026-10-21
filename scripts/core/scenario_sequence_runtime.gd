@@ -585,6 +585,12 @@ static func flush_facts(state_value: Dictionary, definition: Dictionary, boundar
 	state["fact_queue"] = pending
 	var counters := _normalize_counters(state.get("performance_counters", {}))
 	counters["facts_flushed"] = _saturating_nonnegative_add(int(counters.get("facts_flushed", 0)), processed.size())
+	# Preserve identity only after every rejection/order/capacity check above.
+	# An empty eligible batch does not advance a boundary or journal. Normalizing
+	# a queue/counter still counts as a change and must cross the usual commit.
+	if ready.is_empty() and pending == original.get("fact_queue", []) \
+			and counters == original.get("performance_counters", {}):
+		return {"ok": true, "state": original, "processed": [], "errors": []}
 	state["performance_counters"] = counters
 	return {"ok": errors.is_empty(), "state": state, "processed": processed, "errors": errors}
 

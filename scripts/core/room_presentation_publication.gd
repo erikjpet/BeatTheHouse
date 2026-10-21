@@ -38,6 +38,15 @@ func snapshot() -> Dictionary:
 	}
 
 
+func matches_environment(environment: Dictionary) -> bool:
+	# Used only at a causal mutation boundary, never by a catalog getter. Compare
+	# against the owned publication, not a caller-provided readiness flag/digest.
+	# Opaque game buffers are excluded by the same capture policy as _init().
+	var shell := environment.duplicate(false)
+	shell.erase("game_states")
+	return shell == _environment
+
+
 static func validate(environment: Dictionary, require_renderer_proofs: bool = true) -> Dictionary:
 	return _object_manifest_join_proof(environment, require_renderer_proofs)
 

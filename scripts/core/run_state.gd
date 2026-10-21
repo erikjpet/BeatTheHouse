@@ -5191,7 +5191,18 @@ func scenario_flush_facts(boundary_serial: int = -1) -> Dictionary:
 		return {"ok": false, "processed": [], "errors": ["Dynamic room sequence semantic records are not finalized."]}
 	var target := _crew_action_index() if boundary_serial < 0 else boundary_serial
 	var candidate := current_environment.duplicate(false)
-	var result := ScenarioEngineScript.flush_sequence_facts(candidate, definition, target)
+	var prepared := ScenarioEngineScript.prepare_sequence_fact_flush(candidate, definition, target)
+	# No public cache flag authorizes this shortcut. Causal authentication and
+	# Runtime's rejection/order checks have already run. The owned publication
+	# binds the complete live room (including aliased mutations) to its accepted
+	# physical proof; Engine separately proves its sealed compilation unchanged.
+	if _room_presentation_publication != null \
+			and bool(prepared.get("unchanged_state", false)) \
+			and _room_presentation_publication.matches_environment(current_environment):
+		var unchanged := ScenarioEngineScript.unchanged_sequence_flush_result(candidate, prepared)
+		if not unchanged.is_empty():
+			return unchanged
+	var result := ScenarioEngineScript._commit_sequence_candidate(candidate, prepared["candidate"], prepared["definition"], prepared["result"])
 	return _publish_scenario_membership_candidate(candidate, result, "fact flush")
 
 
