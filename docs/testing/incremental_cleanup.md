@@ -1035,6 +1035,36 @@ normally; it did not launch a game/browser or access live private evidence.
 The helper itself remains unchanged. Coverage remains 223 targeted reviews,
 1,203 static screens and 2,272 role classifications across 3,698 paths.
 
+## Batch 40: copy only selected Numbers venue data
+
+`NumbersModel.venue_definition` now borrows the type-checked venue array during
+its read-only search and deep-copies only the selected definition. Non-arrays,
+non-dictionary entries, first duplicate selection and query trimming retain
+their previous behavior. `venue_statuses` reuses each dictionary already owned
+by `JsonCoerce._dictionary_array` before adding its three scalar display fields.
+Every returned nested record remains detached from configuration and model state.
+
+Native baseline comparison passed 126 lookups and 441 complete venue-status
+models across the five authored venues, malformed collection/entry shapes,
+duplicate IDs, whitespace queries, three days, seven action bounds and three
+strictness values. Nested output mutation left configuration and complete saved
+model bytes unchanged. The seven existing Numbers depth checks passed through
+an inherited private entrypoint, retaining every original assertion, including
+host attendance, proposal-only actions, rejected forged restoration and the
+contract's versioned legacy migration fixtures. Required no-pointer animation
+liveness passed. All three checks naturally closed with exit0, reader EOF,
+Job0 and no forced cleanup; independent 07:51:28 UTC census found every recorded
+identity absent. The exact-source proof limits production changes to these two
+read projections; no save/RNG/payout/clock/host-capability method changes.
+No elapsed-time improvement is claimed.
+
+The full read-only `ScenarioEngine` review retained legacy layer migration,
+typed causal replay/delivery receipts, inventory seals, atomic layout commits,
+drain ownership and catalog-validation receipts. Finalization paths remain with
+the performance investigation. Coverage is 224 targeted source/contract reviews,
+1,202 static screens and 2,272 role classifications across 3,698 tracked paths;
+the 12 deferrals and two separate behavior/diagnostic issues remain explicit.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

@@ -671,9 +671,15 @@ func _resolve_draw_occasion(day: int, boundary: int) -> void:
 
 
 func venue_definition(venue_id: String) -> Dictionary:
-	for venue in JsonCoerceScript._dictionary_array(config.get("venues", [])):
+	var venues_value: Variant = config.get("venues", [])
+	if typeof(venues_value) != TYPE_ARRAY:
+		return {}
+	for venue_value in venues_value as Array:
+		if typeof(venue_value) != TYPE_DICTIONARY:
+			continue
+		var venue := venue_value as Dictionary
 		if str(venue.get("id", "")) == venue_id.strip_edges():
-			return venue
+			return venue.duplicate(true)
 	return {}
 
 
@@ -682,7 +688,7 @@ func venue_statuses(day: int, at_action: int) -> Array:
 	for venue in JsonCoerceScript._dictionary_array(config.get("venues", [])):
 		var venue_id := str(venue.get("id", ""))
 		var close := close_action(venue_id, day)
-		var row: Dictionary = venue.duplicate(true)
+		var row: Dictionary = venue
 		row["close_action"] = close
 		row["open"] = at_action < close
 		row["strictness_delta"] = int(active_leak.get("strictness_delta", 0))

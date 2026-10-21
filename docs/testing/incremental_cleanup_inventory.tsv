@@ -1858,8 +1858,8 @@ docs/screenshots/scratch_ticket_three_state_review/05_bonus_bingo_three_states.p
 docs/screenshots/scratch_ticket_three_state_review/06_high_roller_holdem_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	9ae3f1c0724939aa1acaebf88e3f8524fde714f1	541341	-
 docs/screenshots/scratch_ticket_three_state_review/07_golden_vault_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	258b7cdca507173d7b8c484ed5ed19a531b994fa	474817	-
 docs/screenshots/scratch_ticket_three_state_review/all_scratch_tickets_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	506839b5f67581028469a7a9230deaf8c5a8a3fb	4560788	-
-docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	a6a09358ada798be5aceb592016ecd4d5449c825	69541	1130
-docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	80c8b8e8c57d1813aeeea44121ec24cfed96c06c	667087	-
+docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	b5cc7adb3c4386444ac58d32a464488cb5e6787a	70344	1160
+docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	fcc040e3ba6675c323119c98d0c76acc2d02cbc4	666965	-
 docs/testing/punchline_debt_court_recovery.md	docs/testing	authored-document	static-screen	reviewed	D1	ccfe341027a53866f18c201f4ef855a2420c2987	3889	64
 docs/testing/scratch_scalper_runtime_compatibility.md	docs/testing	authored-document	static-screen	reviewed	D1	15feb4c3c388e55a67a98bc58efbc003a1fc4261	3581	56
 docs/todo/README_0_6_board.md	docs/todo	authored-document	static-screen	reviewed	D1	2305cca0cdeeba83d3fa8768159758508d775c58	66017	517
@@ -2870,7 +2870,7 @@ scripts/core/json_coerce.gd	scripts/core	authored	source-review	no-change	M:comp
 scripts/core/keys.gd	scripts/core	authored	source-review	no-change	M:key-vocabulary	f9c80350e2c5d6568e24ef3a4501b3364d915f88	1323	45
 scripts/core/meta_collection_service.gd	scripts/core	authored	static-screen	reviewed	S1	c57aa6c2b836bdb8e470beab0c47951fbff3fdf0	80495	1913
 scripts/core/music_delivery_index.gd	scripts/core	authored	source-review	no-change	M:authored-filename-contract	65d3b8830254ec265d876c03f827cd3e5d8c0f9a	6742	171
-scripts/core/numbers_model.gd	scripts/core	authored	source-review	no-change	M:batch39-full-host-capability-proposal-only-path-clock-draw-settlement-pool-cap-detection-leak-fix-depth-custody-and-legacy-restore-review	5f14cd8d89ab750241c216d38ce9eeac5df32371	59426	1278
+scripts/core/numbers_model.gd	scripts/core	authored	source-review	fixed	C:batch40	5f14cd8d89ab750241c216d38ce9eeac5df32371	59426	1284
 scripts/core/persistence_paths.gd	scripts/core	authored	source-review	fixed	C:batch14	991d3cc663cb778ddef83ee13772dbd005ecb3f6	2421	57
 scripts/core/platform_services.gd	scripts/core	authored	source-review	no-change	M:adapter-contract	f59b29b434fdddab508239d371ba2ad6650af709	2049	71
 scripts/core/police_sweep_model.gd	scripts/core	authored	source-review	fixed	C:batch29	a83a862a9554e11cab040dd31eb63a8bc17df46d	41119	878
@@ -2883,7 +2883,7 @@ scripts/core/run_state.gd	scripts/core	authored	static-screen	deferred	O1	90ca53
 scripts/core/run_state_schema.gd	scripts/core	authored	source-review	no-change	M:batch10-full-key-vocabulary-and-legacy-restore-review	1291acf68e04917cd5818f2fb2e0fbc567f4517b	4606	121
 scripts/core/run_terminal_evaluator.gd	scripts/core	authored	source-review	no-change	M:batch25-full-terminal-order-practice-recovery-wager-travel-and-recent-Punchline-recovery-retained	eff6ec9172396a515d84a35690163bf9f458a51e	16686	360
 scripts/core/save_service.gd	scripts/core	authored	source-review	no-change	M:batch22-full-sync-async-save-trusted-byte-proof-recovery-slot-path-and-legacy-restore-retained	dca103924071b453f03fbf806ca28b675dfe398e	17572	428
-scripts/core/scenario_engine.gd	scripts/core	authored	static-screen	reviewed	S1	5958acf9c34c418dae0d570e7454cc24ed5f99fa	106733	1554
+scripts/core/scenario_engine.gd	scripts/core	authored	source-review	no-change	M:batch40-full-legacy-layer-migration-exact-causal-replay-typed-receipts-inventory-host-seals-atomic-layout-drains-and-public-projection-review-read-only-performance-finalization-lane-preserved	5958acf9c34c418dae0d570e7454cc24ed5f99fa	106733	1554
 scripts/core/scenario_extension_dispatch.gd	scripts/core	authored	source-review	no-change	M:batch10-full-allowlist-and-authority-boundary-review	455ae198de7bcf1c3bac07a92fa4800adc8cbd60	8017	137
 scripts/core/scenario_handlers/bars_road.gd	scripts/core	authored	source-review	no-change	M:fixed-allowlisted-extension-identity	cfb486a7c3b8451ab423b7c22e3c05836ae7d769	484	17
 scripts/core/scenario_handlers/punchline_clubs.gd	scripts/core	authored	source-review	no-change	M:fixed-allowlisted-extension-identity	ba5440cadcd54df10b84220fc7518104429c3eec	476	17
@@ -3672,7 +3672,7 @@ tools/test_environment_placement_report.py	tools/test_environment_placement_repo
 tools/test_environment_slot_consolidation.py	tools/test_environment_slot_consolidation.py	authored	static-screen	reviewed	S1	e20ee0fa6fbf2bdebb9221d347d1487aca9848a3	7896	201
 tools/test_environment_slot_migration_v2.py	tools/test_environment_slot_migration_v2.py	authored	static-screen	reviewed	S1	037fc1dcff6bee375b179cd881fa3fd722fb4fed	7768	168
 tools/test_scenario_slot_layouts.py	tools/test_scenario_slot_layouts.py	authored	static-screen	reviewed	S1	e06f64eff691d42dcb80447f06fe29e93f79656c	62340	1341
-tools/tests/restore_reconciled_copy_test.py	tools/tests	authored	source-review	fixed	C:batch39	7dd5239a9bd45d4d1014df6203a6ab505fbced33	5053	60
+tools/tests/restore_reconciled_copy_test.py	tools/tests	authored	source-review	fixed	C:batch39	061a043c63bcd44140b518645359723e1f357a8a	5048	60
 tools/trailer_capture.gd	tools/trailer_capture.gd	authored	static-screen	reviewed	S1	bd7fa3a73da45cd8f87fec26f407dc7caa60e5d5	22105	609
 tools/travel_preview_parity_probe.gd	tools/travel_preview_parity_probe.gd	authored	static-screen	reviewed	S1	3e68fc3703f0de9226e98fb8645110f0379aac59	5590	114
 tools/tutorial_failure_restart_probe.gd	tools/tutorial_failure_restart_probe.gd	authored	static-screen	reviewed	S1	9206293e92dd7b3e760b0588554885693e5bb461	2999	86
