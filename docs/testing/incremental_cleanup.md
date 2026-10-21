@@ -1251,6 +1251,35 @@ new Godot processes absent. Recovery handoffs returned transport errors, so
 delivery is uncertain. No replacement watcher, export or guard change was made
 by this cleanup lane; source review and separate local batches continue.
 
+## Batch 47: read WorldMap node state without copying its saved room
+
+`WorldMap.node_state` returns only a string. Use its existing metadata lookup
+instead of the deep-copying room lookup. Both retain identical trimmed query,
+node-array validation, first matching ID and default-state rules. The public
+room-owning `node_by_id` API and all other function bodies remain unchanged.
+The tutorial caller still checks the same visited-state value; no symbol is
+removed and no scene, dispatch or save contract changes.
+
+Native comparison against exact d1e12fd5 passed 525 state queries, including
+malformed node collections, mixed entries, duplicate IDs, whitespace, missing
+fields and non-string state values. It includes all 78 nodes from six authored
+old-save fixtures. Exact strings and complete input/save/RNG bytes matched;
+mutating a room returned by the retained owning API still leaves its source
+unchanged. Required no-pointer animation liveness passed. Both qualified checks
+used private 5% CPU/512MiB Jobs, naturally closed with exit0/reader EOF/Job0 and
+no forced cleanup; independent 09:17:07 UTC census found every recorded ID absent.
+The first sandboxed attempt completed comparisons but was rejected for a
+Windows certificate-store read error. Its receipt is retained; unchanged checks
+passed with normal certificate-store read access. No validation was relaxed.
+
+Completed the full WorldMap read: deterministic build/discovery RNG, topology
+versus owning-map contracts, ordered graph walks, travel caps, explicit Punchline
+and Grand invitations, old node/edge migrations, hours and room transfer remain
+intact. Coverage is 241 targeted source/contract reviews, 1,186 static screens
+and 2,272 role classifications across 3,699 paths. No elapsed-time improvement
+is claimed. Batch45 NEXT recovery remains pending as described above; batches
+46-47 remain separate tested local commits while source review continues.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

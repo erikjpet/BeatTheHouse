@@ -320,7 +320,7 @@ static func node_metadata_by_id(map_data: Dictionary, node_id: String) -> Dictio
 
 
 static func node_state(map_data: Dictionary, node_id: String) -> String:
-	var node := node_by_id(map_data, node_id)
+	var node := node_metadata_by_id(map_data, node_id)
 	return str(node.get("state", STATE_HIDDEN))
 
 

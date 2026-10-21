@@ -1858,8 +1858,8 @@ docs/screenshots/scratch_ticket_three_state_review/05_bonus_bingo_three_states.p
 docs/screenshots/scratch_ticket_three_state_review/06_high_roller_holdem_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	9ae3f1c0724939aa1acaebf88e3f8524fde714f1	541341	-
 docs/screenshots/scratch_ticket_three_state_review/07_golden_vault_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	258b7cdca507173d7b8c484ed5ed19a531b994fa	474817	-
 docs/screenshots/scratch_ticket_three_state_review/all_scratch_tickets_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	506839b5f67581028469a7a9230deaf8c5a8a3fb	4560788	-
-docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	3ee6eb00333b292ffc1090d341d710c904c88f89	84053	1381
-docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	37c3bdc6c6fb8112bf772354811586a89a5d8379	668603	-
+docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	e6dcd9cb381d9a680425ea40f54ce90e0c650ea8	86809	1410
+docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	2ba1c465e5416c7e92564ab0f90521934a5839dc	669043	-
 docs/testing/punchline_debt_court_recovery.md	docs/testing	authored-document	static-screen	reviewed	D1	ccfe341027a53866f18c201f4ef855a2420c2987	3889	64
 docs/testing/scratch_scalper_runtime_compatibility.md	docs/testing	authored-document	static-screen	reviewed	D1	15feb4c3c388e55a67a98bc58efbc003a1fc4261	3581	56
 docs/todo/README_0_6_board.md	docs/todo	authored-document	static-screen	reviewed	D1	2305cca0cdeeba83d3fa8768159758508d775c58	66017	517
@@ -2904,7 +2904,7 @@ scripts/core/town_network.gd	scripts/core	authored	source-review	no-change	M:bat
 scripts/core/town_state.gd	scripts/core	authored	source-review	no-change	M:batch28-full-town-clock-seeded-weather-calendar-progressive-rumor-cache-and-legacy-sweep-restore-review	334dacc3df5b1af33ebfff0fe96f6314384f2fdb	38818	918
 scripts/core/tutorial_flow.gd	scripts/core	authored	source-review	no-change	M:batch10-full-legacy-repair-tutorial-and-progress-policy-review	6950ffbed6d8f2339307ff872d6fafdb7c66f4c4	11422	259
 scripts/core/user_settings.gd	scripts/core	authored	source-review	no-change	M:batch13-full-schema-legacy-recovery-clamping-and-engine-application-review	4db9bd1fbe7192f2ed1f02eee3d771434fb789e0	16615	431
-scripts/core/world_map.gd	scripts/core	authored	static-screen	reviewed	S1	c4fe04ce82d4a7f6ab1f18efbeab0b3a834647fd	94753	2314
+scripts/core/world_map.gd	scripts/core	authored	source-review	fixed	C:batch47	c4fe04ce82d4a7f6ab1f18efbeab0b3a834647fd	94753	2314
 scripts/core/world_sequence_package_catalog.gd	scripts/core	authored	source-review	no-change	M:allowlisted-package-boundary	055bb9b752df5315f95ef5a18f2888cf3fe57fe5	4129	87
 scripts/games/baccarat.gd	scripts/games	authored	source-review	fixed	C:batch9-helper-and-callers-only	7e8187b25d908524bc55f1d688d3fd0464eead70	187936	3982
 scripts/games/bar_dice.gd	scripts/games	authored	static-screen	reviewed	S1	8c94633f82c7e3ac1f5e76e8ef3f97160e3ce1a5	173291	3776
