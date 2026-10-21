@@ -45,10 +45,8 @@ func _init() -> void:
 func _run_data_audit(effects: Dictionary, failures: Array) -> void:
 	var library: ContentLibrary = ContentLibraryScript.new()
 	library.load()
-	var checked: Array = []
 	for item_id_value in EXISTING_ITEM_IDS + NEW_ITEM_IDS:
 		var item_id := str(item_id_value)
-		checked.append(item_id)
 		var item: Dictionary = library.item(item_id)
 		if item.is_empty():
 			failures.append("missing pinball item data %s" % item_id)

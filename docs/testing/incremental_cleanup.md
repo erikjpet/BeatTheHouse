@@ -3008,3 +3008,23 @@ in0.187s under the same muted5%/512MiB limits, naturally0/EOF/Job0 with no force
 cleanup. PID43700 was independently absent16:24:18 UTC. No complete probe
 compilation, full gameplay, saved-state replay or new baseline engine fix is
 claimed, and the unchanged full performance suite was not run.
+
+
+## Batch 98: remove an unread Pinball item audit list
+
+The Pinball item data audit allocated a local `checked` array and appended each
+item ID, but never read or returned it. Those two local references are the
+complete lifetime of the untyped array; no alias, callback or return-type
+validation depends on it. Remove the declaration and append. All item lookups,
+group/asset/registry assertions, modifier and runtime-hook checks, output fields
+and exit criteria are unchanged. No timing improvement is claimed.
+
+The existing loader compiled only this changed script, with zero failures in
+4.562s. The muted5%/512MiB Job exited naturally0/EOF/Job0 without forced cleanup;
+PID48588 was independently absent16:24:18 UTC. The complete item or physics
+suite was not repeated. Six files received full source review: foreground and
+offscreen/Buffalo autoplay cadence, sustained six-cabinet autoplay performance,
+and Pinball gameplay, skill, item and physics probes. Their explicit production
+paths, controlled fixtures, launch/hit geometry, save round trips, sample counts,
+animation continuity, deterministic policies, item hooks, caps and budgets all
+remain. Historical or source-reviewed assertions are not new gameplay results.
