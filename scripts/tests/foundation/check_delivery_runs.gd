@@ -528,7 +528,7 @@ func _delivery_generate_and_arrive(run_state: RunState, node_id: String, failure
 
 func _delivery_pickup_if_needed(run_state: RunState) -> void:
 	var physical_value: Variant = run_state.delivery_snapshot().get("physical", {})
-	var physical: Dictionary = (physical_value as Dictionary).duplicate(true) if typeof(physical_value) == TYPE_DICTIONARY else {}
+	var physical: Dictionary = physical_value as Dictionary if typeof(physical_value) == TYPE_DICTIONARY else {}
 	if str(physical.get("cargo_state", "")) == "pickup_pending":
 		run_state.delivery_apply_physical_action("pickup", "foundation:pickup:%s" % str(run_state.active_delivery_run.get("run_id", "delivery")))
 

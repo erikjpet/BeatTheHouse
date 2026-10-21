@@ -4380,3 +4380,11 @@ Keep the historical manifest/log hashes, failed attempts, baseline/Slot residual
 Remove the audio audit's unread `WebAudioBridgeScript` constant. Its existing `SfxPlayerScript` dependency preloads the identical bridge and uses its methods/constants, so bridge compilation remains covered. The standalone script entry, UID, every function/assertion, hostile fixture copy, authority check, phase-completion guard, voice/mixer budget and historical evidence remain unchanged. Constant-map consumers target Foundation or the Showdown projection rather than this local audit alias.
 
 The existing one-resource compiler passed in 4.187 seconds under the private muted 12% CPU / 2 GiB Job, with natural exit, EOF/Job0 and independent process absence. No new mirrored test, full audio audit, playback, game/save flow or timing claim. There is no canvas/scheduling change to require another animation replay.
+
+## Batch 175: read delivery pickup state without a discarded nested copy
+
+Read the complete 548-line delivery contract, including the twenty-seed route goldens, prepared/public path correspondence, hidden/visited target selection, delivery-mode and sweep failure paths, save/migration boundaries, and clock-timed Crew package lifecycle. Retain every golden, criterion, generated-arrival boundary, fixture isolation copy, helper and legacy-save check.
+
+In `_delivery_pickup_if_needed`, the snapshot's physical dictionary is only inspected for `cargo_state`; the helper never modifies it or reads it after the host pickup call. Remove that one discarded deep copy while preserving the type guard, single snapshot read and exact receipt. The exact original and changed functions passed 36 controlled cases using a RunState subclass: invalid/empty/carried/pending values, four run-ID forms, exact pickup calls/keys, read counts and host side-effect parity.
+
+The focused check passed in 3.891 seconds under the private muted 12% CPU / 2 GiB Job, with natural exit, EOF/Job0 and independent absence. Recognized functional checks could coexist under the parent policy; no uncontended timing claim. No full delivery sweep, gameplay/save replay, public test addition or performance gain is claimed.
