@@ -2060,7 +2060,7 @@ func _read_machine_state(run_state: RunState, environment: Dictionary) -> Dictio
 		var game_states: Dictionary = game_states_value
 		var machine_value: Variant = game_states.get(get_id(), {})
 		if typeof(machine_value) == TYPE_DICTIONARY and not (machine_value as Dictionary).is_empty():
-			var machine := _normalize_machine_state((machine_value as Dictionary).duplicate(true))
+			var machine := _normalize_machine_state(machine_value as Dictionary)
 			_merge_portable_ticket_state_readonly(run_state, environment, machine)
 			return machine
 	var generated := _generate_machine_state(run_state, environment)

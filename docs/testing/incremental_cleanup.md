@@ -1604,6 +1604,45 @@ is269 targeted source/contract reviews,1,158 static screens and2,272 role
 classifications across3,699 paths. The14 deferrals and2 separate issues remain;
 the remaining semantic audit is unfinished.
 
+## Batch 59: retain one owning copy when reading Pull Tabs stock
+
+`_read_machine_state` deep-copied a nonempty stored machine immediately before
+`_normalize_machine_state` deep-copied it again. Pass the stored Dictionary to
+the retained normalizer, whose first operation after its empty check is the
+owning deep copy. Every subsequent write uses that copy. All other source lines,
+public methods, legacy normalization and portable-ticket merge boundaries remain.
+Tracked content, scenes/resources, class and preload consumers were reviewed;
+no authored subclass/normalizer override was found. This removes one redundant
+whole-machine copy on that path without claiming an elapsed-time improvement.
+
+Exact cc8d7739 comparison passed241 full machine reads and full surfaces across
+three seeds, five venues, six supported current/legacy/malformed shapes, portable
+inventory present/absent and missing/empty/non-Dictionary machines. The retained
+genuine v0.5.1 gas-station save was decoded and loaded for an additional comparison
+within that total. Input/save/RNG bytes matched, and changing returned sleeves,
+palettes, item state, ticket rows and forward fields left authoritative state and
+later reads unchanged. The unchanged full glimmer contract passed actual purchase,
+reveal/file, target revalidation, raw-clock, drawing, preference and save/Continue
+checks. Required unchanged no-pointer animation liveness also passed.
+
+The first private probe was rejected before execution because its preparation
+script used Windows' default cp1252 encoding. The script now writes UTF-8
+explicitly; the corrected production diff contains exactly the intended line.
+The failed receipt is retained. Successful checks exited0 naturally, reader
+EOF/Job0/no forced cleanup. Independent process closure and exact receipt names
+are recorded in `pull-read-native-closure.json` in the worker workspace. No tracked
+test, validation, guard or gameplay contract was weakened.
+
+Completed the full4,712-line Pull Tabs review and retained fixed sleeve/prize
+conservation, deterministic draw order, tutorial X-ray/redemption identity,
+portable ticket ownership, exact Peek heat, scrutiny trails, zero-bankroll rescue
+and pause-safe autonomous glimmer/dispense/reveal/file schedules. Fully reviewed
+the glimmer contract and source guard, historical provenance and990-line seed
+audit. The latter received source review only; its24-seed stress/timing audit was
+not rerun. Coverage is275 targeted source/contract reviews,1,152 static screens
+and2,272 role classifications across3,699 paths.14 deferrals and2 separate issues
+remain; comprehensive semantic coverage is unfinished.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
@@ -1794,3 +1833,13 @@ capped guardian40948/watcher43120 and retention hook remained error-free.
 The material parent checkpoint returned thread-not-found, so it was not
 delivered. Exact current receipts are preserved locally; no duplicate build,
 browser or guard change was made.
+
+Batch58 promoted as`cc8d77399954d596fca2899a6a782e38e852777e`, tree
+`614ad440a774adf04719ed9cd17e9d79b341637d`, at10:46:49 UTC. All15 archive files
+matched trusted HTTPS, dev redirect, WASM MIME, stable0.6.0 and the final pointer
+at10:47:14. Archive SHA-256:
+`ffaf03ae3b6808a74bfac27e97a4861878600da75d2561be7b4db96fb368887f`.
+Independent10:47:15 census confirmed root1616/allnewGodot absent; existing
+capped guardian40948/watcher43120 and retention hook remained error-free.
+The exact release handoff returned AbsolutePathBuf from the thread transport;
+delivery is uncertain. Receipts remain preserved; no duplicate watcher or build.

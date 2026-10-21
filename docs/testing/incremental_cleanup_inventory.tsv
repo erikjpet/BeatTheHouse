@@ -1858,8 +1858,8 @@ docs/screenshots/scratch_ticket_three_state_review/05_bonus_bingo_three_states.p
 docs/screenshots/scratch_ticket_three_state_review/06_high_roller_holdem_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	9ae3f1c0724939aa1acaebf88e3f8524fde714f1	541341	-
 docs/screenshots/scratch_ticket_three_state_review/07_golden_vault_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	258b7cdca507173d7b8c484ed5ed19a531b994fa	474817	-
 docs/screenshots/scratch_ticket_three_state_review/all_scratch_tickets_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	506839b5f67581028469a7a9230deaf8c5a8a3fb	4560788	-
-docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	116278fab38c6a58142fa93daa55d1f02fc595d7	111330	1756
-docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	918e4258da7d8a211c28a879b6f848f73cf6e18f	671808	-
+docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	c8a80b0a07341e64ddc93f1a0ad51a545d917ae1	113830	1796
+docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	1778aa906fcc462003ee28801bffd79662be611c	672191	-
 docs/testing/punchline_debt_court_recovery.md	docs/testing	authored-document	static-screen	reviewed	D1	ccfe341027a53866f18c201f4ef855a2420c2987	3889	64
 docs/testing/scratch_scalper_runtime_compatibility.md	docs/testing	authored-document	static-screen	reviewed	D1	15feb4c3c388e55a67a98bc58efbc003a1fc4261	3581	56
 docs/todo/README_0_6_board.md	docs/todo	authored-document	static-screen	reviewed	D1	2305cca0cdeeba83d3fa8768159758508d775c58	66017	517
@@ -2926,7 +2926,7 @@ scripts/games/craps/craps_rules.gd	scripts/games	authored	source-review	no-chang
 scripts/games/craps/craps_surface_view_model.gd	scripts/games	authored	source-review	no-change	M:batch32-full-public-bet-targets-working-row-identities-history-ownership-and-odds-label-review	15bd316e3cfb28e6f41f8549cfb241e685ec7d47	6235	103
 scripts/games/crew_draw_poker.gd	scripts/games	authored	source-review	fixed	C:batch54	31e058f12123f71ec0aaf7f14b2cce351d071a6d	178131	3484
 scripts/games/playing_card_renderer.gd	scripts/games	authored	source-review	no-change	M:batch9-full-card-drawing-and-code-fallback-review	f01a644c9d3478488db9ffefa369ac57e4fc994f	5010	108
-scripts/games/pull_tabs.gd	scripts/games	authored	static-screen	reviewed	S1	d999aaedae0d06bb5e4efd05db2990db1e49a7ee	219500	4712
+scripts/games/pull_tabs.gd	scripts/games	authored	source-review	fixed	C:batch59	d999aaedae0d06bb5e4efd05db2990db1e49a7ee	219500	4712
 scripts/games/roulette.gd	scripts/games	authored	source-review	fixed	C:batch55+batch56	d905e2f2a2a18ed5c10757889872402ed346fc22	230485	4701
 scripts/games/scratch_ticket_background_renderer.gd	scripts/games	authored	source-review	no-change	M:batch32-full-authored-background-map-and-measured-crossword-region-composition-review	ed6acaf10249a6a489e72cc9f958986a4f4f48c1	3025	59
 scripts/games/scratch_ticket_foil_renderer.gd	scripts/games	authored	source-review	no-change	M:batch32-full-row-anchored-foil-runs-alpha-quantization-crumbs-and-region-boundary-review	ab891c80f9502d04970a03eec4fe3297f767a04b	5633	120
@@ -3020,8 +3020,8 @@ scripts/tests/fixtures/integ06_1/v0_5_1/v051_delta_queen_video_poker_mid_game.js
 scripts/tests/fixtures/integ06_1/v0_5_1/v051_delta_queen_video_poker_mid_game.provenance.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	362b4cab05ea3b8cd7c0452422512063bd09472f	4629	74
 scripts/tests/fixtures/integ06_1/v0_5_1/v051_gas_station_mid_game.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	e2691230cd5a9a6020a4ee37adcbcec6248f0a7a	54516	1
 scripts/tests/fixtures/integ06_1/v0_5_1/v051_gas_station_mid_game.provenance.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	bc197cbfabfa499049af63c4ad76835c54e15883	2459	46
-scripts/tests/fixtures/integ06_1/v0_5_1/v051_gas_station_pull_tabs_mid_game.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	e1597e3463f8d972fda93c425ea7cf4ee7a3a258	54526	1
-scripts/tests/fixtures/integ06_1/v0_5_1/v051_gas_station_pull_tabs_mid_game.provenance.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	5904efc7e170fb252e51da7103b5d31a21c61fc9	2509	46
+scripts/tests/fixtures/integ06_1/v0_5_1/v051_gas_station_pull_tabs_mid_game.json	scripts/tests	intentional-fixture	source-review	no-change	M:batch59-authored-v051-decoded-loaded-current-machine-and-surface-baseline-comparison-input-save-RNG-and-nested-return-alias-isolation-no-fixture-change	e1597e3463f8d972fda93c425ea7cf4ee7a3a258	54526	1
+scripts/tests/fixtures/integ06_1/v0_5_1/v051_gas_station_pull_tabs_mid_game.provenance.json	scripts/tests	intentional-fixture	source-review	no-change	M:batch59-full-historical-f1ce7ec8-release-driver-capture-path-save-schema-byte-hash-and-gas-station-midgame-custody-review-retained	5904efc7e170fb252e51da7103b5d31a21c61fc9	2509	46
 scripts/tests/fixtures/integ06_1/v0_5_1/v051_gas_station_scratch_mid_game.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	7d24d379d31ba5f00efde933a7f2dd493952d71c	54524	1
 scripts/tests/fixtures/integ06_1/v0_5_1/v051_gas_station_scratch_mid_game.provenance.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	52a0b4b23b177ccf64a308f18ab965fc051ec598	2513	46
 scripts/tests/fixtures/integ06_1/v0_5_1/v051_grand_casino_baccarat_mid_game.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	04bd3cefc95fe513c69c5664e50767ed59ad4a7b	222867	1
@@ -3078,7 +3078,7 @@ scripts/tests/fixtures/punchline_l2_pre_rework_baseline.json	scripts/tests	inten
 scripts/tests/fixtures/run_state_0_3_0_save.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	99abd1b63f19aaa96ac328f7358041412e667e53	3181	133
 scripts/tests/fixtures/run_state_0_3_3_save.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	bceb89ceabab9796fe9b2238f7645dc23921b676	3437	137
 scripts/tests/fixtures/rw06_1_prewarm_drain_probe.gd	scripts/tests	intentional-fixture	static-screen	reviewed	F1	18c62e4ed3f6a04d033d5d7a2d4fd830348a95d0	61	3
-scripts/tests/fixtures/rw06_6_pull_tab_glimmer_source_guard.gd	scripts/tests	intentional-fixture	static-screen	reviewed	F1	3f61a68c750b76d0b0c429c1abe5280ff08f4eb7	4636	109
+scripts/tests/fixtures/rw06_6_pull_tab_glimmer_source_guard.gd	scripts/tests	intentional-fixture	source-review	no-change	M:batch59-full-exact-top-level-constant-signature-and-function-seam-guard-exit-status-and-file-read-infrastructure-failures-review-unchanged-source-only	3f61a68c750b76d0b0c429c1abe5280ff08f4eb7	4636	109
 scripts/tests/foundation/blackjack_authority_test_driver.gd	scripts/tests	authored	static-screen	reviewed	S1	4a5869363fef1d5cb09c6da978ef0818e987d5d6	10241	190
 scripts/tests/foundation/character_chains_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	8974ae199c9b9909eabaec41545b8bf5a151df22	29232	535
 scripts/tests/foundation/check_cage_environment_rework.gd	scripts/tests	authored	static-screen	reviewed	S1	fc4b298df57df6fb85d4bb38e0de10749546bd47	22026	308
@@ -3195,7 +3195,7 @@ scripts/tests/room_slot_occupancy_check.gd	scripts/tests	authored	static-screen	
 scripts/tests/rourke_noticed_environment_objects_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	cfa1f6b440628e40f27b646321397a78fc2292b9	3669	77
 scripts/tests/run_menu_navigation_layout_check.gd	scripts/tests	authored	source-review	no-change	M:batch43-new-upstream-file-full-four-viewport-initial-actions-focus-scroll-touch-target-help-and-slot-note-contract-review-no-repeated-native-run	cd23507e6c6c287a74ea697c2c54d96e625e4515	5319	122
 scripts/tests/run_report_main_menu_check.gd	scripts/tests	authored	static-screen	reviewed	S1	67bfdcc7629192c4a508f1c14d065b08d931ee37	1500	49
-scripts/tests/rw06_6_pull_tab_glimmer_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	f6042f24466307ed82ceede2969cf2544d620d95	44555	867
+scripts/tests/rw06_6_pull_tab_glimmer_contract.gd	scripts/tests	authored	source-review	no-change	M:batch59-full-eight-live-production-schedule-top16-cutoff-tie-draw-reduced-motion-clock-coexistence-preference-identity-revalidation-purchase-reveal-file-and-save-Continue-paths-review-unchanged-native-PASS	f6042f24466307ed82ceede2969cf2544d620d95	44555	867
 scripts/tests/save_navigation_durability_check.gd	scripts/tests	authored	static-screen	reviewed	S1	f9bb0b574bec5e80e5669fa8907f1d5e1b847b75	12846	273
 scripts/tests/scenario_slot_layout_check.gd	scripts/tests	authored	static-screen	reviewed	S1	b6dec98306713b5d137ffe97bfc5ea7dfa22155f	57954	1298
 scripts/tests/scratch_scalper_empty_spawn_check.gd	scripts/tests	authored	static-screen	reviewed	S1	29ad53ee8cbf5393d7ea7c8022be92b9138c16d0	2399	63
@@ -3603,7 +3603,7 @@ tools/postfix06_2_feature_pcm_runtime_contract_test.ps1	tools/postfix06_2_featur
 tools/profile_history_load_performance_probe.gd	tools/profile_history_load_performance_probe.gd	authored	source-review	no-change	M:batch15-full-bounded-history-and-forward-field-benchmark-contract-retained	39a5b630791dc61375a806d6edb1feb1468fa787	4275	102
 tools/promo_screenshots_0_4.gd	tools/promo_screenshots_0_4.gd	authored	static-screen	reviewed	S1	49310594ae3ffc3ba905a82192ceba78495b3fe6	7783	219
 tools/promo_screenshots_0_5.gd	tools/promo_screenshots_0_5.gd	authored	static-screen	reviewed	S1	1e7d80395f597b6b0b8361b78db5180b5c0c3c94	6905	199
-tools/pull_tabs_seed_audit.gd	tools/pull_tabs_seed_audit.gd	authored	static-screen	reviewed	S1	cf4bb7661b25aa785e62cd233936f8e8e4eff277	55149	990
+tools/pull_tabs_seed_audit.gd	tools/pull_tabs_seed_audit.gd	authored	source-review	no-change	M:batch59-full-24-seed-fixed-sleeve-prize-conservation-rapid-and-volume-purchases-active-items-peek-heat-50percent-odds-zero-bankroll-deferred-flow-full-deal-mid-save-bounded-render-timing-and-report-review-source-only-no-new-timing-claim	cf4bb7661b25aa785e62cd233936f8e8e4eff277	55149	990
 tools/render_trailer.ps1	tools/render_trailer.ps1	authored	static-screen	reviewed	S1	b964b701a8d7b940e18063dfb278a6fabf2a22bc	14225	349
 tools/repository_root.ps1	tools/repository_root.ps1	authored	source-review	no-change	M:root-resolution	e7e9f29a7de60eab4111e537d4604b4327be624a	803	22
 tools/restore_reconciled_copy.py	tools/restore_reconciled_copy.py	authored	source-review	no-change	M:batch39-full-explicit-indexed-recovery-raw-Git-byte-hash-ADS-long-path-no-overwrite-and-generated-partial-lifecycle-review-no-behavior-change	02b2213bcce7499556e913b6e530f185f1919cf6	6556	151
