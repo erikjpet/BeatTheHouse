@@ -2513,3 +2513,38 @@ Archive SHA-256:
 `2c0fe177f97d93cb529918435ac5f2367aff7b81aa677140c55a92b9c723d4d6`.
 Independent13:26:35.891 census found exportroot26668/allnewGodot absent;
 existing10%/2GiB guardian42856/watcher42252 and retention remained error-free.
+
+
+## Batch 80: reset derived placement caches once
+
+`PixelSceneCanvas._invalidate_developer_placement_geometry_caches` reset the
+available/visible arrays and available-valid flag, then immediately repeated
+those three assignments in `_invalidate_developer_slot_derived_caches`.
+Remove the first copies. The helper is unchanged and has no callbacks or yields;
+all final invalidation states, other map clears, shared surface-map reference
+drop and cache ownership remain intact. No redraw scheduling, coordinate,
+selection, authoring persistence, signal or caller changed.
+
+256 native baseline/candidate cases covered every combination of seven valid
+flags with empty/populated caches.512 complete cache and external-alias snapshots
+matched across first and repeated invalidation. The externally owned immutable
+surface map stayed intact, existing array aliases retained their contents, and
+animation counters stayed untouched. The unchanged no-pointer animation gate
+also passed. Private muted runs ended naturally with EOF/Job0. No UI-input,
+frame-rate or measured elapsed-time improvement is claimed.
+
+The canvas audit now covers its placement/filter controls, context review,
+save/undo handling, owned snapshot boundaries, room/object action input routing,
+slot-cache construction and authoring collision paths through roughly line3650.
+The rest of this11156-line file remains pending; this targeted review is not
+certification of every renderer. Physical authority/core files remain unchanged.
+The private preparer rejected a Windows default text-decoding mismatch before
+writing production; explicit UTF-8 preserved every unaffected source byte.
+
+Batch79 promoted as`8fff1f2d8ec85065b5ef6080cee4b522dfcf38fb`, tree
+`2babbbb61dbed6c25a4c63adb45ea76cffda1e20`. All15 archive/HTTPS hashes, dev
+redirect, WASM MIME, stable0.6.0 and final pointer passed13:32:20 UTC.
+Archive SHA-256:
+`251a092df389f27faf2170385b13bd6df6f8d5b7adbeb07c32a8c51b1ca84567`.
+Independent13:32:43.761 census found exportroot5704/allnewGodot absent;
+existing10%/2GiB guardian42856/watcher42252 and retention remained error-free.

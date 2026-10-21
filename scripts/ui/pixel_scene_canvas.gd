@@ -750,13 +750,10 @@ func _invalidate_developer_placement_geometry_caches() -> void:
 	room_foreground_counters_cache = []
 	room_surface_draw_cache_valid = false
 	developer_slots_cache = []
-	developer_available_slots_cache = []
-	developer_visible_slots_cache = []
 	developer_slots_by_id_cache.clear()
 	developer_slot_rects_by_id_cache.clear()
 	developer_slot_positions_by_id_cache.clear()
 	developer_slots_cache_valid = false
-	developer_available_slots_cache_valid = false
 	_invalidate_developer_slot_derived_caches()
 
 
