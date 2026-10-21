@@ -3780,3 +3780,22 @@ Coverage is 705 full source reviews; eight deferred paths now have full reviews
 and four retain screening status. The two files remain explicitly deferred for
 edits. The source-finding handoff was unconfirmed because the peer host became
 unavailable; these exact proposals remain recorded here.
+
+## Batch 139: complete the semantic-inventory authority review
+
+Read the complete 1,696-line semantic inventory. Preserve its closed schema,
+catalog guaranteed/possible distinction, exact instance identities, ordered
+diagnostics, cross-collection checks, signed source binding, finite geometry,
+fixed-host provenance and authenticated overflow rules. Optional overflow fields
+preserve legacy proof shapes. Dynamic actors, exact hosted actions and live
+runtime geometry deliberately differ from immutable sequence-base authority;
+their filters are not redundant validation. Reflective library-event discovery
+is a real caller path. No helper or ownership copy was removed.
+
+One source-only proposal remains under coordinated ownership: the base-layout
+filter repeatedly copies the complete slot-binding dictionary while examining
+each binding. A single owned map could avoid that work, subject to complete
+seal, alias and malformed-shape parity. No speed gain was measured or claimed,
+and no core edit, runtime, save, fixture or export ran. Coverage is 706 full
+source reviews; nine deferred paths now have full reads and three remain at
+screening level. Deployment recovery remains a separate owner dependency.
