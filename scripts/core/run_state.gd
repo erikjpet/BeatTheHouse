@@ -1575,9 +1575,11 @@ func _room_base_layout_without_projected_occupants() -> Dictionary:
 
 
 func validate_room_action_authority(require_renderer_proofs: bool = true) -> Dictionary:
-	# Validate the live authority, never the detached presentation. A caller
-	# retaining a public Dictionary alias cannot authorize altered geometry by
-	# displaying a previously accepted snapshot.
+	# Reuse the accepted proof only for its exact live inputs, including mutable
+	# machine hooks. Aliased changes take the original complete validation path.
+	if _room_presentation_publication != null:
+		var accepted: Dictionary = _room_presentation_publication.proof_for_live_environment(current_environment)
+		if not accepted.is_empty(): return accepted
 	return RoomPresentationPublicationScript.validate(current_environment, require_renderer_proofs)
 
 
