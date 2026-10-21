@@ -4496,3 +4496,11 @@ Read the full 620-line Baccarat seed audit. It distinguishes direct proposal-cha
 The private `_card_array` and `_dictionary_array` bodies were byte-identical. Redirect the sole card-uniqueness caller to the existing helper and remove only the duplicate body. Both helpers accept only arrays, preserve ordered dictionary entries and deep-copy each. The only code consumer is the command-line wrapper executing the SceneTree script; local dynamic dispatch calls target the game or host, not this method. No public/native/save contract changes. All remaining source is exact.
 
 The existing one-file loader passed in 6.875 seconds under the private muted 12%/2 GiB Job, with natural exit0, reader EOF, Job0 and independent PID21256 absence. The seed audit, its generator/RNG chain and 400-hand simulation were not executed. No assertions, payouts, probability bounds, test budgets or behavior were relaxed. No speed gain is claimed.
+
+## Batch 193: remove the unused Blackjack audit resolution wrapper
+
+Read all 976 lines of the Blackjack seed audit. Preserve generated rule/audio coverage, compact shoe state, real count-icon timing, the selection-only then sealed-confirmation distinction, bounded split-hand play, explicit forced rules/cheat fixtures and continuous-shoe payout drift. The drift fixture intentionally resets only prior Heat backoff because it isolates payout arithmetic; it is not proof of an uninterrupted normal Heat economy. Existing action and sample budgets stay exact.
+
+Remove only the uncalled private `_resolve_and_record` wrapper. The live resolution paths already record their own timing; the wrapper's name appeared only at its definition. This conclusion also traces the real shell-wrapper SceneTree entry, sole deferred `_run` dispatch and absence of preload, scene, registry, signal, reflection or serialized callback consumers. All remaining source, statistics, assertions, RNG calls and payout bounds are exact.
+
+The existing single-file loader passed in 6.766 seconds under the muted private 12%/2 GiB Job, natural exit0/EOF/Job0/no forced cleanup; PID32280 was independently absent. No seed audit, 1,000-hand drift simulation, private save, browser or broad suite was executed. No performance claim.

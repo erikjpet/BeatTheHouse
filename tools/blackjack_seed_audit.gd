@@ -423,16 +423,6 @@ func _record_action_command_time(start_usec: int) -> void:
 	stats["max_action_command_ms"] = maxf(float(stats.get("max_action_command_ms", 0.0)), elapsed_ms)
 
 
-func _resolve_and_record(game: GameModule, action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, ui: Dictionary) -> Dictionary:
-	var started := Time.get_ticks_usec()
-	var result: Dictionary = BlackjackAuthorityTestDriverScript.resolve(game, action_id, stake, run_state, environment, rng, ui)
-	var elapsed_ms := float(Time.get_ticks_usec() - started) / 1000.0
-	resolve_ms_samples.append(elapsed_ms)
-	stats["resolve_samples"] = resolve_ms_samples.size()
-	stats["max_resolve_ms"] = maxf(float(stats.get("max_resolve_ms", 0.0)), elapsed_ms)
-	return result
-
-
 func _audit_surface_state_timing(game: GameModule) -> void:
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("BLACKJACK-SURFACE-TIMING")
