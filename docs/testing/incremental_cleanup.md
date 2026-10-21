@@ -3339,3 +3339,26 @@ fatal-definition guard unchanged. The changed-file loader passed in 5.141 second
 with natural exit, EOF, Job0 and independent process absence. Source and loader
 evidence are recorded; no extra unit, actual failed capture or screenshot replay
 is claimed.
+
+
+## Review batch 115: coexistence, shard custody and hygiene gates
+
+Three more complete tools received source review: Wave A coexistence, the
+cross-economy shard worker and the hygiene contract. First-visit scenario choice,
+one town-action boundary, seeded schedule identity, exact Crew Marker trust,
+favor debt and full save-roundtrip comparisons remain. Its raw string-array
+policy and owned snapshots were retained. A report-write failure already enters
+the probe's existing nonzero exit path.
+
+The shard worker checks distinct source, runtime, toolchain and report identities
+before and after its workload. Those repetitions protect separate authorities
+or times; they were retained. The hygiene gate keeps the reviewed archive/UID
+companions, canonical LF hashing, exact tracked archive coverage, options and
+comment policies, and explicit destructive-retention safeguards. No archive,
+shard, full validation, engine or historical fixture was run or changed.
+
+A narrow unread-variable screen also produced three inner-class stub members
+used through dynamic host access. Those fields remain. The only actual local
+candidate is an unused shelf-arm result binding; the stateful arm call must stay
+before its snapshot and stale-token assertion. This is a candidate for a separate
+small cleanup, not permission to delete every one-occurrence name.
