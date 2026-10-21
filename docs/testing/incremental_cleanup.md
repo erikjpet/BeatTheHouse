@@ -4406,3 +4406,9 @@ This is a controlled native acceptance fixture, with injected cabinet/result sta
 Read the entire published peer `8729e4e0` diff and preserve it beneath the audit commits. A positive base publication revision alone does not establish a restored scenario catalog: a pending trusted rebuild now enters the existing boundary compiler before publication. Keep the null/meta guards and ordering. The contract adds scenario-semantic readiness alongside its existing strict authority and preserved-state assertions.
 
 Both previously qualified cleanup functions are byte-identical after rebasing. No duplicate restore fix, new gameplay change, repeated check or new owner evidence claim. The file inventory incorporates this incremental review without counting the already reviewed files again.
+
+## Batch 179: review Package A authoring and production-host checks
+
+Read every line of the Package A checker and generator, including the previously truncated ranges. The checker uses real composed production hosts, checks signatures and exact scenario coverage, exercises distinct terminal/interruption routes and preserves public-fact, privacy, target-size, reduced-motion and replay assertions. Its composition cache and detached semantic views serve different ownership boundaries.
+
+The generator normalizes JSON number types before signing, validates authoring targets, repairs the retained Delivery Day scenario and rewrites the package before a catalog reload. Its target-inventory helper is called. Retain these operations and all authored content. The unchecked file-open result before writing is recorded as an archived source concern; no failure was reproduced and no generator repair or content regeneration was added. Neither tool was run.
