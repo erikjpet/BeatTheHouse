@@ -2492,6 +2492,7 @@ func _evaluate_natural(hand: Array) -> Dictionary:
 		ranks.append(int(card.get("rank", 0)))
 		suits.append(int(card.get("suit", -1)))
 	var rank_counts: Dictionary = _rank_counts(ranks)
+	var max_count := _max_count(rank_counts)
 	var is_flush := _suits_uniform(suits)
 	var straight_high := _natural_straight_high(rank_counts)
 	var is_straight := straight_high > 0
@@ -2502,21 +2503,21 @@ func _evaluate_natural(hand: Array) -> Dictionary:
 	var pair_high := false
 	if is_straight and is_flush:
 		base = "royal_flush" if straight_high == 14 and _natural_top_keys(rank_counts) == [10, 11, 12, 13, 14] else "straight_flush"
-	elif _max_count(rank_counts) == 4:
+	elif max_count == 4:
 		base = "four_kind"
 		quad_rank = _rank_with_count(rank_counts, 4)
 		kicker = _other_rank(rank_counts, quad_rank)
-	elif _max_count(rank_counts) == 3 and _has_count(rank_counts, 2):
+	elif max_count == 3 and _has_count(rank_counts, 2):
 		base = "full_house"
 	elif is_flush:
 		base = "flush"
 	elif is_straight:
 		base = "straight"
-	elif _max_count(rank_counts) == 3:
+	elif max_count == 3:
 		base = "three_kind"
 	elif _pair_count(rank_counts) == 2:
 		base = "two_pair"
-	elif _max_count(rank_counts) == 2:
+	elif max_count == 2:
 		base = "one_pair"
 		pair_high = _high_pair_rank(rank_counts) >= RANK_JACK
 

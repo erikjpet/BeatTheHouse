@@ -1723,6 +1723,45 @@ or used to mutate retained private evidence. Coverage is281 targeted reviews,
 1,146 static screens and2,272 role classifications across3,699 paths;14 deferrals
 and2 separate issues remain. The comprehensive semantic audit continues.
 
+## Batch 63: reuse the natural Video Poker rank-frequency maximum
+
+`_evaluate_natural` scanned the same unchanged rank-count Dictionary up to four
+times for its category branches. Compute that pure maximum once and retain all
+existing conditions, category priority, rank order, descriptor fields and scoring
+indices. All other functions remain byte-identical, including wild evaluation,
+paytables, wagers, RNG, multi-hand draws, holdout, double-up, save and authority.
+
+Exact38aec3ff comparison passed4,136 complete natural descriptors:40 category/
+suit fixtures and4,096 deterministic valid sampled hands. Passive delegates
+counted17,899 maximum queries before and5,927 after, including unchanged scoring
+helper queries. Rare straight flushes now calculate one unused maximum; the
+aggregate work count is reported without an elapsed-time speedup claim. Nine
+complete detached candidate draws across all three cabinets and three hold sets
+matched full result/payout, environment, canonical input/save and RNG bytes.
+These are candidate-resolution comparisons, not a live host/browser journey.
+
+The first private fixture used separately constructed raw RunStates without
+proving their canonical input bytes equal. Descriptor and result comparisons
+passed, but its combined post-run parity assertion failed. The unchanged90s
+supervisor closed only that owned Job; its failed source/log/receipt and independent
+closure are retained. One corrected comparison used one canonical shared run,
+strictly proving it unchanged after both detached candidate resolutions, and
+passed. No tracked test or production validation was changed. Required unchanged
+no-pointer animation liveness passed. Successful Jobs exited0 naturally with
+reader EOF/Job0/no forced cleanup. Exact independent absence and all receipt
+names are retained in `video-rank-count-native-closure.json` in the worker workspace.
+
+Completed the full3,531-line Video Poker host review. Preserve deterministic
+preview versus injected draw RNG, independent multi-hand decks, legacy cabinets/
+variants, max-coin and progressive bonuses, pending-hand and sealed wager restore,
+bounded strategy caching, timing/target holdout chains and double-up accounting.
+Also fully reviewed19 small test/probe entrypoints and launchers; retain their
+compatibility aliases, delegated contracts, guards, argument/report handling and
+exit status. These19 files received source review only, with no extra exports,
+audio runtime, RTP runs or test removal. Coverage is301 targeted reviews,1,126
+static screens and2,272 role classifications across3,699 paths;14 deferrals and2
+separate issues remain. Comprehensive semantic coverage is unfinished.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
@@ -1933,3 +1972,15 @@ Independent10:58:01 census confirmed root8680/allnewGodot absent; existing
 capped guardian40948/watcher43120 and retention hook remained error-free.
 These verify exact deployed identity/assets and the preceding native checks;
 no new browser journey or elapsed-time cleanup speedup is claimed.
+
+Batches61-62 promoted as`38aec3ffd01604320d22d13e728f5eb42005663e`, tree
+`69da0928c92b1f065c4607b57ebe95234ac8e4bd`, at11:07:09 UTC. All15 archive files
+matched trusted HTTPS, dev redirect, WASM MIME, stable0.6.0 and the final pointer
+at11:08:25. Archive SHA-256:
+`2df92d4845d636a044ab083b77c0f56928fc0fff7ab02705e73c7c7176e138cf`.
+Independent11:08:26 census confirmed root41608/allnewGodot absent; existing
+capped guardian40948/watcher43120 and retention hook remained error-free.
+Parent checkpoint sends returned thread-not-found; peer handoffs returned
+AbsolutePathBuf with uncertain delivery. Tool discovery exposed no alternate
+sender, and the app's peer inventory showed malformed cloud-prefixed Windows
+working directories. Exact local progress and receipts remain preserved.
