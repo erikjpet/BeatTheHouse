@@ -3934,3 +3934,20 @@ PASS in 0.187 seconds under the existing 5% CPU/512 MiB private Job; EOF, Job0,
 no forced cleanup and independent process absence recorded. This is a focused
 ownership check, not an audit run, gameplay test or speed measurement. No scene,
 ContentLibrary, RNG, browser, save or exporter ran. Coverage is 728 full reviews.
+
+## Batch 147: review Cage compatibility and retained scenario evidence
+
+Read the complete Cage rework contract and extensive Craps playtest. Preserve
+legacy saves without retroactive ATM interest, every crossed 3 AM boundary,
+debt-first cashout, chip-only purchases, sold stock, deterministic Linda state
+and the free room exit. The Craps tool retains all wager/payout fixtures, cash
+versus chip isolation, indexed controls, roll/dialogue locks, actual hit geometry
+and its existing performance volumes and limits. No tests were removed or rerun.
+
+Also read six complete historical decisions and closeouts: the closed final
+queue and reset ledger, superseded Crossword hold, natural Punchline L3 route,
+Crew-favor cadence fix and fixed coin-pusher control trace. Dense ledger rows
+were read in full. Old open labels, branch cleanup records, broad testing plans
+and superseded product holds do not authorize new work or feature deletion.
+Prior failures and explicit deferred findings remain visible. No source,
+content, save, fixture or runtime changed. Coverage is 736 full file reviews.
