@@ -2716,3 +2716,32 @@ introducing a new import/scope dependency during this narrow cleanup. Static tex
 rules remain heuristics, not proof that every caller or counter producer exists.
 Only the changed small idle contract was executed; other reviewed tools were not
 run. Publication is queued behind the actual finite performance comparison.
+
+
+## Batch 87: read one native-wrapper snapshot for budget assertions
+
+The source-only budget contract reread the same native-wrapper file inside two
+three-token loops. Read it at the first consumer and reuse that source snapshot
+for both loops. All conditions, throw messages, protected budgets, native plugin
+binding tokens and fresh-discovery checks remain intact. The loops do not invoke
+a source writer. This removes five redundant file reads for a fixed checkout;
+no measured timing improvement is claimed. The existing focused PowerShell
+budget contract passed with version1/protected_web7. No runtime or build launched.
+
+Full source review of the four small crew catalogs covered heists,13 jobs,
+Numbers and five coordinated plays. Their production model, authored-semantic
+contract and economy-audit consumers are confirmed. No content was removed or
+retuned. The Whale definition remains behind the existing Count-only release
+plan list; its presence is not evidence of dead content. Signed book closes,
+negative honest EV, payout caps, cargo/heat/deadline rules, one-window pairing
+exception and player-funded transfer conservation remain unchanged.
+
+Batches83-86 reached exact main/NEXT
+`ec28a06b4d1ef2f20e86bbbec722e2a5c7f5ec6d`, tree
+`692a46d30d1da63242c1e326258df47f82b9825d`, promoted14:23:45 UTC. The small
+identity/entry-readiness check passed14:25:10 with nine requests/36,869 downloaded
+bytes. Served BUILD and HTML matched the archive; entry asset sizes/MIME, redirect
+and final pointer passed. Native/engine/exporter pins are identical to qualified
+4c02. No full-asset rehash or new gameplay launch was claimed. Independent14:25:10
+census found exportroot39376/all new Godot processes absent. The new automatic
+cloud handoff journal was PENDING; its assigned owner handles delivery separately.
