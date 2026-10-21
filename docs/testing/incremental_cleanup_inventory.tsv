@@ -1420,7 +1420,7 @@ docs/plans/agent_playtest/agent_playtest_postfix_06_claim_audit_2026-09-13.md	do
 docs/plans/agent_playtest/agent_playtest_report_2026-09-12.md	docs/plans	authored-document	static-screen	reviewed	D1	e383b8ae13909a671d0d6a9a249bbfb10a9aa4bc	54185	361
 docs/plans/audio06_1_surface_sfx_pass.md	docs/plans	authored-document	static-screen	reviewed	D1	d31a00fedf48ba759382ca4633a4eb249a403e2b	5006	92
 docs/plans/audio06_1_surface_sfx_prestage_matrix.md	docs/plans	authored-document	static-screen	reviewed	D1	dd0c364343d40c5e09461d856243c1f039317804	9880	73
-docs/plans/audio_engineer_delivery_contract.md	docs/plans	authored-document	static-screen	reviewed	D1	241182bb6e636f674badd52b0162d9d9b232bc5b	12909	218
+docs/plans/audio_engineer_delivery_contract.md	docs/plans	authored-document	source-review	no-change	M:batch49-full-authored-vs-fixture-master-delivery-Web-derivatives-24bit-native-float-PCM-phase-locked-tempo-phrase-fills-outcome-quantization-save-continuation-and-headphone-QA-contract-retained	241182bb6e636f674badd52b0162d9d9b232bc5b	12909	218
 docs/plans/audio_engineer_handoff.md	docs/plans	authored-document	static-screen	reviewed	D1	1de74369a1794c4eadba14d0b7db6c29382d47b5	5590	130
 docs/plans/balance06_1_cross_system_economy_audit.md	docs/plans	authored-document	static-screen	reviewed	D1	d473ee1d8404e3cd378c94fc9f8963f97d1e01dc	23375	287
 docs/plans/balance06_1_follow_on_prestage.md	docs/plans	authored-document	static-screen	reviewed	D1	52547841014950777d60bce239454f5122c7627c	10713	179
@@ -1858,8 +1858,8 @@ docs/screenshots/scratch_ticket_three_state_review/05_bonus_bingo_three_states.p
 docs/screenshots/scratch_ticket_three_state_review/06_high_roller_holdem_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	9ae3f1c0724939aa1acaebf88e3f8524fde714f1	541341	-
 docs/screenshots/scratch_ticket_three_state_review/07_golden_vault_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	258b7cdca507173d7b8c484ed5ed19a531b994fa	474817	-
 docs/screenshots/scratch_ticket_three_state_review/all_scratch_tickets_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	506839b5f67581028469a7a9230deaf8c5a8a3fb	4560788	-
-docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	c0f42e757756997e4e3d43cb21908722c492fae0	88735	1441
-docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	c8e7ce7d2ca412cd5b92bda676828fea105921b7	669047	-
+docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	e887c23f5ac30542c743d28fc6173e7e551b0555	90775	1473
+docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	cbc6d714cfce2653cbf84722e28ee4b91acf86f1	670045	-
 docs/testing/punchline_debt_court_recovery.md	docs/testing	authored-document	static-screen	reviewed	D1	ccfe341027a53866f18c201f4ef855a2420c2987	3889	64
 docs/testing/scratch_scalper_runtime_compatibility.md	docs/testing	authored-document	static-screen	reviewed	D1	15feb4c3c388e55a67a98bc58efbc003a1fc4261	3581	56
 docs/todo/README_0_6_board.md	docs/todo	authored-document	static-screen	reviewed	D1	2305cca0cdeeba83d3fa8768159758508d775c58	66017	517
@@ -2977,7 +2977,7 @@ scripts/tests/environment_slot_stacking_regression_check.gd	scripts/tests	author
 scripts/tests/environment_test_mode_check.gd	scripts/tests	authored	static-screen	reviewed	S1	d1b5212eb1a97d19227e0a781def257c9e8db6b7	12657	213
 scripts/tests/export_distribution_fresh_start_check.gd	scripts/tests	authored	static-screen	reviewed	S1	a71e0fbe4de5c48d588144b553d2b885d6bcf6ae	3903	109
 scripts/tests/fixsweep06_1_accessibility_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	246f7e35bbce05f6dc00da279e09bb855a9806fb	89111	1665
-scripts/tests/fixsweep06_1_audio_recovery_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	c100d5f28ec1f579132825a70ea7ba8b9073ea74	8470	150
+scripts/tests/fixsweep06_1_audio_recovery_contract.gd	scripts/tests	authored	source-review	no-change	M:batch49-full-composition-vs-live-mix-identity-protected-PCM-LRU-hard-mute-settings-preservation-web-registration-and-bounded-SFX-retry-tests-retained-source-review-only	c100d5f28ec1f579132825a70ea7ba8b9073ea74	8470	150
 scripts/tests/fixsweep06_1_lifecycle_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	c682186c20e7c83925c694e9163afbf13d796e87	17028	318
 scripts/tests/fixsweep06_1_packaging_runtime_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	70ec7f04fd24eb7a72568e5bc8756b803a07497a	2453	47
 scripts/tests/fixsweep06_1_player_text_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	0b6628488c2897f9d92ffb2f7f6b559e560855f6	8956	170
@@ -3285,7 +3285,7 @@ scripts/ui/scenario_semantic_view_model.gd	scripts/ui	authored	source-review	no-
 scripts/ui/sealed_action_host.gd	scripts/ui	authored	source-review	no-change	M:batch38-full-trusted-table-binding-COW-ledgers-exact-delivery-retry-compact-vs-legacy-replay-runtime-checkpoint-rollback-funding-RNG-and-host-clock-allowlist-review-no-change	0391f1922b4e7e5ee3873ed7e82b88975cb18028	94307	1435
 scripts/ui/segmented_meter.gd	scripts/ui	authored	source-review	no-change	M:batch16-full-clamping-ghost-ticks-pulse-and-dirty-redraw-retained	cdeac42fd5c9327198d81895f13127be05438b17	3523	106
 scripts/ui/settings_menu.gd	scripts/ui	authored	source-review	no-change	M:batch31-full-draft-commit-cancel-recovery-focus-trapping-signal-wiring-and-accessibility-baseline-review	829d2c1a3af8f225886fb6905e0cce0363153d7f	24757	685
-scripts/ui/sfx_player.gd	scripts/ui	authored	static-screen	reviewed	S1	d1dc8c09966316d944262ec9870ba1faa21fc678	145046	3378
+scripts/ui/sfx_player.gd	scripts/ui	authored	source-review	fixed	C:batch49	d1dc8c09966316d944262ec9870ba1faa21fc678	145046	3379
 scripts/ui/small_screen_policy.gd	scripts/ui	authored	source-review	no-change	M:touch-sizing-contract	826ade0a9450c400dc012fd2f9418b4f7499a253	1957	49
 scripts/ui/talk_dock.gd	scripts/ui	authored	source-review	fixed	C:batch41	63e0ee91566a9c6f556f35ba3928a1522c8a539d	56824	1324
 scripts/ui/terminal_consequence_view_model.gd	scripts/ui	authored	source-review	fixed	C:batch20	eedff0ddc173425261ecdf880895e6a90789eeff	20775	366

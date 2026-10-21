@@ -1311,6 +1311,38 @@ Coverage is 249 targeted source/contract reviews, 1,178 static screens and
 2,272 role classifications across 3,699 paths. Batch45 deployment recovery is
 still pending; subsequent tested cleanup commits are retained locally.
 
+## Batch 49: defer the unused Coin Pusher audio body-count fallback
+
+`SfxPlayer.sync_coin_pusher_state` passed a deep-copying body-array filter as
+the default argument to `Dictionary.get`, so that fallback ran even when the
+snapshot supplied `body_count`. Use a conditional expression to evaluate it
+only when the field is absent. Keep integer coercion of a supplied count and
+the exact dictionary-filtering fallback for older snapshots. The current live
+audio-serial path still returns before this compatibility snapshot path.
+All cue, motor, event, authority, retry, synthesis and audio-delivery bodies
+remain unchanged; this is not an action-freeze fix or a measured speedup.
+
+Muted native comparison against exact 0b29c2c9 passed 630 transitions over 63
+configurations: supplied/absent counts, both sides of the 80-body threshold,
+supported numeric/string/bool coercions, malformed or dense legacy body arrays,
+restored/new action IDs, active/terminal jumps, reduced motion and live-serial
+bypass. Complete captured motor requests, state/marker/selection snapshots and
+input bytes matched. The actual retained synchronizer runs with physical
+playback suppressed; no audible-fidelity or Web gameplay claim is made.
+Required no-pointer animation liveness passed. Both private 5% CPU/512MiB Jobs
+closed naturally with exit0/reader EOF/Job0, no forced cleanup and independent
+absence in `sfx-count-native-closure.json`.
+
+The full audio-router read retains its opaque host capability, restoration
+silence, once-only event markers, phase clocks, bounded voices/prewarming,
+exclusive Web transport, failure reporting, native PCM and procedural sample
+functions. Those synthesis helpers also serve audio tooling and are retained.
+The recovery contract and engineer handoff were fully source-reviewed; their
+broader music/cache/settings tests were not rerun for this expression change.
+Coverage is 252 targeted source/contract reviews, 1,175 static screens and
+2,272 role classifications across 3,699 paths. The semantic audit remains
+unfinished; the existing watcher recovery remains a publication dependency.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
