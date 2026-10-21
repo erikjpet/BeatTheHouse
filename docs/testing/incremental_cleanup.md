@@ -4226,3 +4226,25 @@ normal/reduced transition counts. Branch copies isolate hostile fixtures; the
 scenario-specific composition cache is not interchangeable with another layer's
 or scenario's event-choice authority. No assertion, runtime, content, historical
 save or RNG path changed, and no suite was run. Coverage is 767 full file reviews.
+
+## Batch 163: complete the Foundation host review
+
+Complete the current 23,206-line FoundationMain semantic review, including the
+family-repayment and heard-rumor changes. Keep atomic script publication, input
+and modal authority, save generations, whole versus compact rollback, clock/RNG
+ordering and old-save recovery. Ride acceptance revalidates the displayed token,
+fare, route and arrival forecast. Scenario replay avoids a second turn; command,
+delivery commit, consumption and checkpoint remain distinct boundaries.
+
+Retain fresh owned render roots, external defensive copies, cache invalidation,
+terminal reward idempotency, tutorial generation/venue context, actual coach hit
+geometry and reversible accessibility styles. The Numbers allocation controls
+now have a concrete producer and consumer here; the earlier missing-producer
+source concern is superseded without removing any assertions.
+
+Three source concerns remain proposals requiring faithful focused reproduction:
+the fallback route alias, coach-only container-layout rollback, and ignored meta
+upgrade/pack save errors. No behavior or save contract changes in this batch.
+Two tiny local cleanup leads are prepared separately; their native qualification
+is pending actual primary-checkout Godot process closure. No runtime launched.
+Coverage is 768 complete file reviews; screening and classification are separate.
