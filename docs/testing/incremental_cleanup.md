@@ -3645,3 +3645,22 @@ Retained all false-green rejection rules, hostile fixture isolation, exact case
 and witness custody, and growth bounds. None of these tools was executed, and
 no historical instruction, browser/profile, build or upload was activated.
 Coverage is 689 full source reviews.
+
+## Batch 132: reuse the source-slot index in the exact-mapping contract
+
+Read all 1,341 lines of the scenario placement tests. In the exact-mapping test,
+the source surface stays unchanged throughout a layout, yet its slot index was
+rebuilt for every scenario slot. Move that index construction outside the inner
+loop. Every test, assertion, independent replay, negative case and bound remains.
+The index stays local to its layout; production placement and save code do not
+change.
+
+Execute only the changed existing method against the checked-in 55 layouts and
+four corrupt fixtures. The valid case preserves the complete 13,447-assertion
+trace, while index builds fall from 604 to 55. Missing sources, wrong classes,
+missing exact mappings and invalid art preserve the same failures and assertion
+traces. Inputs remain unchanged and all other module ASTs match. The structured
+receipt completed before the final large console print was interrupted; that
+outer exit 1 is retained, with no failed assertion hidden or check repeated.
+No generator setup, full suite, native process, browser or export ran. No timing
+gain is claimed. Coverage is 690 full source reviews.

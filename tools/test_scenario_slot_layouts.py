@@ -597,6 +597,12 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
                     )
 
                 listed_positions: dict[str, str] = {}
+                source_slots = {
+                    str(source.get("id", "")): source
+                    for family in FAMILIES
+                    for source in values(self.maps[map_id].get(f"{family}_slots"))
+                    if isinstance(source, dict)
+                }
                 for slot_id, slot in slots.items():
                     for position_key_value in values(slot.get("scenario_position_keys")):
                         position_key = str(position_key_value).strip()
@@ -608,12 +614,6 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
                             self.assertEqual(semantic_preferences.get(position_key), slot_id)
 
                     source_id = str(slot.get("source_slot_id", ""))
-                    source_slots = {
-                        str(source.get("id", "")): source
-                        for family in FAMILIES
-                        for source in values(self.maps[map_id].get(f"{family}_slots"))
-                        if isinstance(source, dict)
-                    }
                     self.assertIn(source_id, source_slots)
                     if bool(slot.get("provisional_geometry", False)):
                         self.assertEqual(slot.get("support_id"), "manual_placement_required")
