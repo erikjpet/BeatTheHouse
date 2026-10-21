@@ -76,7 +76,7 @@ static func visible_cache_stamp(run_state: RunState, library: ContentLibrary, of
 			continue
 		visited_hosts[host_id] = true
 		var eligibility := cached_eligibility if offer_eligibility.is_valid() else Callable()
-		var current := view_for_host(run_state, library, {"manifest_object_id": host_id}, eligibility)
+		var current := prepared_view_for_host(run_state, library, {"manifest_object_id": host_id}, eligibility)
 		if not current.is_empty() and not str(current.get("ride_target_node_id", "")).is_empty() \
 				and eligibility.is_valid() and not bool(eligibility.call(current)):
 			current = {}
@@ -408,3 +408,45 @@ static func _error(message: String, errors: Array = []) -> Dictionary:
 
 static func _dict(value: Variant) -> Dictionary:
 	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
+
+
+static func prepared_view_for_host(run_state: RunState, library: ContentLibrary, host: Dictionary, offer_eligibility: Callable = Callable()) -> Dictionary:
+	if not _can_view(run_state, library):
+		return {}
+	for offer in _definitions_readonly():
+		if str(host.get("manifest_object_id", "")) in _host_ids(offer, run_state.current_environment):
+			var result := prepared_view(run_state, library, str(offer.get("id", "")))
+			if not result.is_empty():
+				return result
+	return {}
+
+
+static func prepared_view(run_state: RunState, library: ContentLibrary, offer_id: String) -> Dictionary:
+	if not _can_view(run_state, library):
+		return {}
+	for offer in _definitions_readonly():
+		if str(offer.get("id", "")) != offer_id:
+			continue
+		var state := _dict(_dict(run_state.narrative_flags.get(STATE_KEY, {})).get(str(offer.get("character_id", "")), {}))
+		if str(state.get("status", "")) != "available" or str(state.get("offer_id", "")) != offer_id or not _eligible(run_state, offer):
+			return {}
+		if not _grant_exists(library, offer):
+			return {}
+		var result: Dictionary = offer.duplicate(true)
+		result["token"] = {
+			"offer_id": offer_id, "cycle_id": str(state.get("cycle_id", "")),
+			"visit_id": _visit_id(run_state), "game_clock_minutes": run_state.game_clock_minutes,
+			"state_stamp": hash([run_state.bankroll, run_state.suspicion_level(), run_state.drunk_level,
+				run_state.pending_drunk_absorption_amount(), run_state.inventory, run_state.debt, run_state.home_state]),
+		}
+		result["summary"] = _summary(run_state, offer)
+		return result
+	return {}
+
+
+static func prepare_for_hosts(run_state: RunState, library: ContentLibrary, hosts: Array, offer_eligibility: Callable = Callable()) -> void:
+	if not _can_view(run_state, library):
+		return
+	synchronize(run_state)
+	for host in hosts:
+		_select_for_host(run_state, library, _dict(host), offer_eligibility)

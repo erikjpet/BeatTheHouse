@@ -11,6 +11,7 @@ const EnvironmentPlacementScript := preload("res://scripts/core/environment_plac
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
 const EnvironmentObjectManifestScript := preload("res://scripts/core/environment_object_manifest.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
+const RoomPresentationPublicationScript := preload("res://scripts/core/room_presentation_publication.gd")
 const CharacterOfferModelScript := preload("res://scripts/core/character_offer_model.gd")
 
 const LIVE_MEMBERSHIP_OBJECT_TYPES := ["service", "lender"]
@@ -77,16 +78,38 @@ static func _event_option_with_exact_host(option_value: Dictionary, action_hosts
 
 
 static func interactable_object_view_list(host: Variant) -> Array:
+	# The owner refresh publishes this detached catalog. Looking it up cannot
+	# synchronize runtime producers, finalize semantics or repair physical state.
+	return host.room_catalog_snapshot()
+
+
+static func prepare_room_catalog_at_boundary(host: Variant) -> Array:
 	if host.run_state == null or host.library == null:
 		return []
 	if host._is_meta_session():
 		return host._meta_interactable_object_view_list()
-	# Some normal preparation helpers populate public scenario context. If the
-	# persisted base envelope later fails authentication, restore the exact entry
-	# environment so a read-only catalog request cannot partially mutate it.
-	var entry_environment := JsonCoerceScript._copy_dict(host.run_state.current_environment)
-	var preparation: Dictionary = _dict(host.run_state.scenario_prepare_semantic_finalization())
-	var world_preparation: Dictionary = _dict(host.run_state.world_sequence_prepare_semantic_finalization())
+	var publication: Dictionary = host.run_state.room_presentation_snapshot()
+	if publication.is_empty():
+		return _fail_closed_room_records([], "Room presentation awaits its state boundary.")
+	var environment := _dict(publication.get("environment", {}))
+	var proof := _dict(publication.get("proof", {}))
+	var live := _join_object_manifest(_gather_live_records(host), environment, true, proof)
+	live = _attach_delivery_handoff_to_contact(host, live)
+	live = _attach_action_only_records(live, _dict(EnvironmentPlacementScript.surface_map(environment).get("scenario_instance_action_host_ids", {})))
+	var finalized := _dict(publication.get("finalized", {}))
+	var result := live
+	if not bool(finalized.get("inactive", true)):
+		var sealed := _array(finalized.get("records", []))
+		var projected := project_finalized_sequence_interaction_result(sealed, finalized)
+		if not bool(projected.get("ok", false)):
+			return _fail_closed_room_records(live, "Committed room projection is invalid.")
+		result = restore_live_presentation_fields(_array(projected.get("records", [])), live, _array(environment.get("resolved_event_ids", [])))
+		result = append_unsealed_live_records(result, live, sealed)
+	result = _join_object_manifest(result, environment, false, proof)
+	return _attach_action_only_records(_attach_delivery_handoff_to_contact(host, result))
+
+
+static func _gather_live_records(host: Variant) -> Array:
 	var failed = host._run_failed_without_recovery()
 	var failed_reason = host._pressure_status_text(host._run_pressure_view())
 	if failed_reason.strip_edges().is_empty():
@@ -214,6 +237,23 @@ static func interactable_object_view_list(host: Variant) -> Array:
 		"closing_time_locked": host._closing_time_blocks_environment_actions(),
 		"closing_time_reason": host._closing_time_disabled_reason(),
 	}))
+	return result
+
+
+static func compile_room_catalog_at_boundary(host: Variant) -> Array:
+	if host.run_state == null or host.library == null:
+		return []
+	if host._is_meta_session():
+		return host._meta_interactable_object_view_list()
+	# Some normal preparation helpers populate public scenario context. If the
+	# persisted base envelope later fails authentication, restore the exact entry
+	# environment so a read-only catalog request cannot partially mutate it.
+	var entry_environment := JsonCoerceScript._copy_dict(host.run_state.current_environment)
+	var preparation: Dictionary = _dict(host.run_state.scenario_prepare_semantic_finalization())
+	var world_preparation: Dictionary = _dict(host.run_state.world_sequence_prepare_semantic_finalization())
+	var result := _gather_live_records(host)
+	var layout: Dictionary = host._current_environment_layout()
+	var scenario_action_hosts := _dict(EnvironmentPlacementScript.surface_map(host.run_state.current_environment).get("scenario_instance_action_host_ids", {}))
 	# A cold save intentionally omits renderer caches. Authenticate its durable
 	# envelope for this provisional base pass. The existing production finalizers
 	# rebuild scenario/world projections below, and the complete strict proof must
@@ -360,7 +400,6 @@ static func interactable_object_view_list(host: Variant) -> Array:
 # scenario composition. They do not add physical members, replace existing
 # services, or change the sealed manifest action/geometry authority.
 static func _attach_character_offers(host: Variant, records: Array) -> Array:
-	CharacterOfferModelScript.synchronize(host.run_state)
 	var result := records.duplicate(false)
 	var offer_eligibility := func(offer: Dictionary) -> bool:
 		return _character_offer_route_available(host, offer)
@@ -370,7 +409,7 @@ static func _attach_character_offers(host: Variant, records: Array) -> Array:
 				or not bool(record.get("visible", true)) \
 				or str(record.get("presentation_mode", "room")) != "room":
 			continue
-		var offer: Dictionary = CharacterOfferModelScript.view_for_host(host.run_state, host.library, record, offer_eligibility)
+		var offer: Dictionary = CharacterOfferModelScript.prepared_view_for_host(host.run_state, host.library, record, offer_eligibility)
 		if offer.is_empty():
 			continue
 		record = record.duplicate(false)
@@ -565,94 +604,15 @@ static func _object_manifest_join_errors(environment: Dictionary) -> Array:
 
 
 static func _object_manifest_join_proof(environment: Dictionary, require_renderer_proofs: bool = true) -> Dictionary:
-	var errors: Array = []
-	var manifest := _dict(environment.get("object_manifest", {}))
-	var manifest_rows := _array(manifest.get("rows", []))
-	if manifest_rows.is_empty():
-		errors.append("Object manifest is missing.")
-	errors.append_array(EnvironmentInstanceScript.object_manifest_errors(environment))
-	var layout_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(environment)
-	if not bool(layout_authority.get("ok", false)):
-		errors.append_array(_array(layout_authority.get("errors", [])))
-		if _array(layout_authority.get("errors", [])).is_empty():
-			errors.append("Object slot authority is invalid.")
-		return {"ok": false, "layout_authority": {}, "errors": errors}
-	var base_rows: Array = []
-	var scenario_rows: Array = []
-	for row_value in manifest_rows:
-		var row := _dict(row_value)
-		if str(row.get("source_kind", "")) == "scenario_projection":
-			scenario_rows.append(row)
-		else:
-			base_rows.append(row)
-	errors.append_array(_manifest_layout_correlation_errors(
-		base_rows,
-		_dict(layout_authority.get("slot_bindings", {}))
-	))
-	if not scenario_rows.is_empty():
-		var scenario_authority_result := _validated_manifest_scenario_authority(environment, require_renderer_proofs)
-		errors.append_array(_array(scenario_authority_result.get("errors", [])))
-		if bool(scenario_authority_result.get("ok", false)):
-			errors.append_array(_manifest_layout_correlation_errors(
-				scenario_rows,
-				_dict(scenario_authority_result.get("authority", {}))
-			))
-	return {
-		"ok": errors.is_empty(),
-		"layout_authority": layout_authority if errors.is_empty() else {},
-		"errors": errors,
-	}
+	return RoomPresentationPublicationScript._object_manifest_join_proof(environment, require_renderer_proofs)
 
 
 static func _validated_manifest_scenario_authority(environment: Dictionary, require_renderer_proofs: bool = true) -> Dictionary:
-	var errors: Array = []
-	var authority := _dict(environment.get("scenario_layout_authority", {}))
-	var digest := str(environment.get("scenario_layout_authority_digest", ""))
-	var audit := _dict(environment.get("scenario_layout_audit", {}))
-	var snapshot := _dict(environment.get("scenario_render_snapshot", {}))
-	var projection_semantic := _dict(_dict(environment.get("scenario_sequence_projection", {})).get("semantic_state", {}))
-	if authority.is_empty():
-		errors.append("Scenario manifest rows have no sealed scenario layout authority.")
-	elif digest.length() != 64 or _layout_authority_digest(authority) != digest:
-		errors.append("Scenario manifest layout authority digest is invalid.")
-	if require_renderer_proofs and (not bool(audit.get("valid", false)) or str(audit.get("authority_digest", "")) != digest):
-		errors.append("Scenario manifest layout audit does not match its sealed authority.")
-	if require_renderer_proofs and (not bool(snapshot.get("ok", false)) or str(snapshot.get("layout_authority_digest", "")) != digest):
-		errors.append("Scenario manifest renderer snapshot does not match its sealed authority.")
-	if require_renderer_proofs and str(projection_semantic.get("layout_authority_digest", "")) != digest:
-		errors.append("Scenario manifest semantic projection does not match its sealed authority.")
-	return {
-		"ok": errors.is_empty(),
-		"authority": authority,
-		"errors": errors,
-	}
+	return RoomPresentationPublicationScript._validated_manifest_scenario_authority(environment, require_renderer_proofs)
 
 
 static func _manifest_layout_correlation_errors(manifest_rows: Array, bindings: Dictionary) -> Array:
-	var errors: Array = []
-	for row_value in manifest_rows:
-		var row := _dict(row_value)
-		if row.is_empty() or not bool(row.get("active", true)) or not bool(row.get("physical", true)):
-			continue
-		var instance_id := str(row.get("instance_object_id", "")).strip_edges()
-		var presentation_id := str(row.get("presentation_object_id", row.get("object_id", instance_id))).strip_edges()
-		var binding_id := presentation_id if bindings.has(presentation_id) else instance_id if bindings.has(instance_id) else ""
-		var binding := _dict(bindings.get(binding_id, {}))
-		if binding.is_empty():
-			errors.append("Manifest object %s has no authenticated slot binding." % presentation_id)
-			continue
-		var family := str(row.get("family", ""))
-		if str(binding.get("slot_family", "")) != family:
-			errors.append("Manifest object %s crosses slot families." % presentation_id)
-		# Exact exit slots describe the room-native affordance (doorway, floor mark,
-		# attendant) and may intentionally refine the generic travel-row class.
-		if family != "exit" and str(binding.get("placement_class", "")) != str(row.get("placement_class", "")):
-			errors.append("Manifest object %s changes placement class in its slot binding." % presentation_id)
-		var exact_slot_id := str(row.get("exact_slot_id", "")).strip_edges()
-		if family in ["fixed", "exit"] and not exact_slot_id.is_empty() \
-				and str(binding.get("slot_id", "")) != exact_slot_id:
-			errors.append("Manifest object %s is not bound to its exact authored slot." % presentation_id)
-	return errors
+	return RoomPresentationPublicationScript._manifest_layout_correlation_errors(manifest_rows, bindings)
 
 
 static func _manifest_layout_annotated_record(record: Dictionary, bindings: Dictionary, object_rects: Dictionary, manifest_object_id: String, presentation_id: String, family: String) -> Dictionary:
@@ -3062,3 +3022,15 @@ static func parent_home_parent_target_id(host: Variant) -> String:
 	var room_archetype = host._environment_archetype(room_node_id)
 	var parent_id := str(room_archetype.get("parent_archetype", "")).strip_edges()
 	return parent_id
+
+
+static func prepare_character_offers_at_boundary(host: Variant, records: Array = []) -> void:
+	var eligibility := func(offer: Dictionary) -> bool:
+		return _character_offer_route_available(host, offer)
+	var hosts: Array = []
+	for value in (records if not records.is_empty() else host.room_catalog_snapshot()):
+		var record := _dict(value)
+		if bool(record.get("manifest_physical", false)) and bool(record.get("visible", true)) \
+				and str(record.get("presentation_mode", "room")) == "room":
+			hosts.append(record)
+	CharacterOfferModelScript.prepare_for_hosts(host.run_state, host.library, hosts, eligibility)

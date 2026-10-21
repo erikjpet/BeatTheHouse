@@ -663,6 +663,7 @@ var game_coach_transition_wait_frames := 0
 var game_coach_refresh_phase := 0
 var tutorial_guardrail_dialogue_reconcile_active := false
 var pending_action_panel_object: Dictionary = {}
+var _room_catalog_publication: Array = []
 var interactable_object_catalog_cache: Array = []
 var interactable_object_catalog_cache_valid := false
 var interactable_object_catalog_cache_key := ""
@@ -849,6 +850,9 @@ func _advance_run_game_clock(delta: float) -> void:
 func _refresh_character_offer_visibility() -> void:
 	if environment_canvas == null or run_state == null:
 		return
+	# This is a real clock/background-state boundary. Bind the saved offer
+	# decision here; the subsequent presence and catalog reads stay read-only.
+	EnvironmentInteractionControllerScript.prepare_character_offers_at_boundary(self)
 	if _character_offer_visible_cache_stamp() != rendered_character_offer_presence_stamp:
 		_render_environment_canvas_snapshot()
 
@@ -2884,6 +2888,7 @@ func _advance_alcohol_absorption() -> void:
 
 func _refresh_runtime_environment_views() -> void:
 	_evaluate_run_terminal_state()
+	_prepare_room_presentation_at_boundary()
 	_refresh_world_header()
 	if status_label != null:
 		status_label.text = _hud_status_text()
@@ -3184,6 +3189,8 @@ func confirm_selected_travel(require_immediate_result: bool = false, prepared_li
 
 
 func _confirm_selected_travel_with_lifecycle_snapshot(require_immediate_result: bool, caller_rollback: Dictionary) -> bool:
+	if not _room_action_authority_available():
+		return false
 	if run_state == null:
 		return false
 	if _guard_player_input_route(_closing_time_blocks_environment_actions()):
@@ -5565,6 +5572,8 @@ func confirm_selected_item_offer() -> bool:
 
 # Buys one item offer and applies it through ItemEffect.
 func apply_item_offer(item_id: String) -> bool:
+	if not _room_action_authority_available():
+		return false
 	if _guard_player_input_route(false, "item:%s" % item_id):
 		return false
 	return _apply_item_offer_after_input_guard(item_id)
@@ -6049,6 +6058,8 @@ func confirm_selected_service_hook() -> bool:
 
 # Applies a supported service hook through the shared result-delta path.
 func use_service_hook(service_id: String) -> bool:
+	if not _room_action_authority_available():
+		return false
 	if _guard_player_input_route():
 		return false
 	if service_hook_resolution_locked:
@@ -6858,6 +6869,7 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 	}
 	var fields: Dictionary = snapshot["fields"]
 	for field_name in [
+		"_room_catalog_publication", "interactable_object_catalog_cache", "interactable_object_catalog_cache_valid", "interactable_object_catalog_cache_key", "interactable_object_view_cache", "interactable_object_view_cache_valid", "interactable_object_view_cache_key",
 		"meta_session_active", "meta_session_location_id", "meta_last_panel_message", "dev_game_test_mode", "dev_environment_test_mode",
 		"environment_pause_started_msec", "environment_paused_total_msec", "talk_dock_avoid_sync_active", "item_found_talk_dock_suspended",
 		"current_game", "current_game_state_key", "game_exit_settle_active", "last_game_exit_final_projection_rendered",
@@ -6946,6 +6958,9 @@ func _restore_run_state_lifecycle_storage(snapshot: Dictionary) -> void:
 		var property_name := str(property_name_value)
 		var value: Variant = snapshot.get(property_name)
 		run_state.set(property_name, value.duplicate(true) if typeof(value) == TYPE_DICTIONARY or typeof(value) == TYPE_ARRAY else value)
+	# A room assignment clears its presentation. Restore the immutable pointer
+	# after every mutable property, independent of property iteration order.
+	run_state.set("_room_presentation_publication", snapshot.get("_room_presentation_publication", null))
 
 
 func _restore_foundation_lifecycle_snapshot(snapshot: Dictionary) -> void:
@@ -11450,6 +11465,38 @@ func _build_run_report_screen(parent: BoxContainer) -> void:
 	parent.add_child(run_report_screen)
 
 
+func room_catalog_snapshot() -> Array:
+	return _room_catalog_publication.duplicate(true)
+
+
+func _room_action_authority_available() -> bool:
+	if _is_meta_session():
+		return true
+	if run_state == null:
+		return false
+	var proof := run_state.validate_room_action_authority()
+	if not bool(proof.get("ok", false)):
+		_show_message("Room object authority is invalid.")
+		return false
+	return true
+
+
+func _prepare_room_presentation_at_boundary() -> void:
+	if run_state == null or library == null or _is_meta_session():
+		return
+	if run_state.room_presentation_revision() == 0:
+		EnvironmentInteractionControllerScript.compile_room_catalog_at_boundary(self)
+		run_state.publish_room_presentation()
+	_room_catalog_publication = EnvironmentInteractionViewModelScript.deduplicated_scenario_instruction_records(
+		EnvironmentInteractionControllerScript.prepare_room_catalog_at_boundary(self)
+	).duplicate(true)
+	EnvironmentInteractionControllerScript.prepare_character_offers_at_boundary(self, _room_catalog_publication)
+	interactable_object_catalog_cache = _room_catalog_publication.duplicate(true)
+	interactable_object_catalog_cache_valid = true
+	interactable_object_catalog_cache_key = _interactable_object_cache_key()
+	interactable_object_view_cache_valid = false
+
+
 func _refresh() -> void:
 	_invalidate_run_screen_layout()
 	# Travel view caches carry a complete dependency key. Clearing them on every
@@ -11878,6 +11925,7 @@ func _render_start_screen() -> void:
 func _render_environment_screen() -> void:
 	if not _ensure_run_ui_built():
 		return
+	_prepare_room_presentation_at_boundary()
 	if current_screen == SCREEN_START:
 		_set_current_screen(SCREEN_ENVIRONMENT)
 	start_screen.visible = false
@@ -14948,6 +14996,8 @@ func _acknowledge_interactable_object_focus(object_id: String) -> void:
 
 
 func activate_interactable_object(object_id: String) -> bool:
+	if not _room_action_authority_available():
+		return false
 	# Event responses reserve their exact choice before deferring the expensive
 	# transactional world boundary. The deferred resolver owns its own rollback
 	# snapshot, so cloning the entire Foundation lifecycle here is redundant.
@@ -15245,6 +15295,8 @@ func _resolve_character_offer_response(offer_id: String, token: Dictionary, acce
 
 
 func _activate_attached_room_action(target_object_id: String, action_key: String) -> bool:
+	if not _room_action_authority_available():
+		return false
 	var target := _interactable_object(target_object_id)
 	if target.is_empty() or action_key.is_empty():
 		return false
@@ -15833,6 +15885,8 @@ func _complete_delivery_handoff(node_id: String) -> bool:
 
 
 func _activate_delivery_physical_action(verb: String) -> bool:
+	if not _room_action_authority_available():
+		return false
 	if run_state == null:
 		return false
 	var delivery := run_state.delivery_snapshot()
@@ -15910,6 +15964,8 @@ func _inspect_casino_fixture(object_data: Dictionary) -> bool:
 
 
 func _start_lender_conversation(lender_id: String, mode: String) -> bool:
+	if not _room_action_authority_available():
+		return false
 	if run_state == null or library == null:
 		return false
 	var clean_id := lender_id.strip_edges()
@@ -16086,6 +16142,8 @@ func _cage_atm_inline_actions() -> Array:
 
 
 func _activate_cage_atm_action(object_id: String) -> bool:
+	if not _room_action_authority_available():
+		return false
 	if run_state == null or str(run_state.current_environment.get("archetype_id", "")) != RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
 		return false
 	var parts := object_id.split(":")
@@ -16862,17 +16920,11 @@ func _interactable_object_view_list() -> Array:
 			EnvironmentInteractionControllerScript.interactable_object_view_list(self)
 		)
 		interactable_object_catalog_cache_valid = true
-		# Scenario projection seals its layout authority while building the catalog.
-		# Capture the post-projection token; retaining the pre-projection token made
-		# the immediately following header/canvas request rebuild the same expensive
-		# catalog, and delivery-arrival contacts amplified that into a multi-second
-		# travel hitch.
-		catalog_key = _interactable_object_cache_key()
 		interactable_object_catalog_cache_key = catalog_key
 		interactable_object_view_cache_valid = false
 	var view_key := "%s|%s|%s|%s|%d" % [catalog_key, hover_target_id, focus_target_id, selected_object_id, CharacterOfferModelScript.interaction_cache_stamp(run_state)]
 	if interactable_object_view_cache_valid and interactable_object_view_cache_key == view_key:
-		return interactable_object_view_cache
+		return interactable_object_view_cache.duplicate(true)
 	interactable_object_view_cache = []
 	var offer_records: Array = EnvironmentInteractionControllerScript._attach_character_offers(self, interactable_object_catalog_cache)
 	for object_value in offer_records:
@@ -16886,7 +16938,7 @@ func _interactable_object_view_list() -> Array:
 		interactable_object_view_cache.append(object_data)
 	interactable_object_view_cache_valid = true
 	interactable_object_view_cache_key = view_key
-	return interactable_object_view_cache
+	return interactable_object_view_cache.duplicate(true)
 
 
 func _interactable_object_cache_key() -> String:
@@ -16899,7 +16951,7 @@ func _interactable_object_cache_key() -> String:
 	# consumed only by the travel/map view and must not rebuild room authority.
 	return "%d|%s|%s|%s|%s|%s" % [
 		run_state.get_instance_id(),
-		_interactable_environment_cache_token(run_state.current_environment),
+		str(run_state.room_presentation_revision()),
 		JSON.stringify([run_state.delivery_physical_interactions(), run_state.delivery_arrival_interaction()]),
 		selected_event_id,
 		selected_event_choice_id,
@@ -17083,7 +17135,7 @@ func _current_environment_layout() -> Dictionary:
 		return resolved_layout
 	if typeof(archetype_layout) != TYPE_DICTIONARY:
 		return {}
-	return archetype_layout as Dictionary
+	return (archetype_layout as Dictionary).duplicate(true)
 
 
 func _rect_to_dict(rect: Rect2) -> Dictionary:

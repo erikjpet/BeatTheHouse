@@ -308,6 +308,10 @@ func resolve(
 	profile_stages: bool = false
 ) -> Dictionary:
 	var profile_started_usec := Time.get_ticks_usec() if profile_stages else 0
+	if run_state != null:
+		var room_authority := run_state.validate_room_action_authority(not bool(run_state.current_environment.get("scenario_restore_pending_trusted_rebuild", false)))
+		if not bool(room_authority.get("ok", false)):
+			return _empty_result(choice_id, environment, "Room object authority is invalid.")
 	# Loaded saves and sealed game transactions can leave renderer-owned scenario
 	# proof pending its trusted rebuild while the durable causal state remains
 	# valid. An event choice immediately following a game must repair that

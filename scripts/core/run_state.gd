@@ -31,6 +31,7 @@ const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_seque
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 const CrewWorldSequenceAdapterScript := preload("res://scripts/core/crew_world_sequence_adapter.gd")
 const WorldSequencePackageCatalogScript := preload("res://scripts/core/world_sequence_package_catalog.gd")
+const RoomPresentationPublicationScript := preload("res://scripts/core/room_presentation_publication.gd")
 const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const EnvironmentObjectManifestScript := preload("res://scripts/core/environment_object_manifest.gd")
@@ -352,7 +353,11 @@ var drunk_level: int = 0
 var alcoholic_level: int = 0
 var pending_drunk_absorption: Array = []
 var drunk_distortion_suppression_turns: int = 0
-var current_environment: Dictionary = {}
+var _room_presentation_publication: RefCounted = null
+var current_environment: Dictionary = {}:
+	set(value):
+		current_environment = value
+		_room_presentation_publication = null
 var world_map: Dictionary = {}
 var scenario_recent_by_archetype: Dictionary = {}
 var environment_situation_cycles_by_node: Dictionary = {}
@@ -505,6 +510,7 @@ var _scenario_sequence_definition_cache: Dictionary = {}
 var _turn_transaction_test_failure_stage: String = ""
 
 const TURN_TRANSACTION_SCALAR_FIELDS := [
+	"_room_presentation_publication",
 	"seed_text", "seed_value", "rng_seed", "rng_state", "bankroll",
 	"grand_casino_chips", "economic_state", "active_item_id", "baseline_luck",
 	"drunk_level", "alcoholic_level", "drunk_distortion_suppression_turns",
@@ -1505,6 +1511,72 @@ func _set_current_home_containers(containers: Array) -> void:
 # Single runtime seam for mutations that affect physical room membership but do
 # not otherwise rebuild layout. Selection arrays stay authoritative; the
 # manifest is a deterministic projection and consumes no RNG.
+# UI publication is deliberately not serialized. A cold restore must cross
+# its existing trusted finalization boundary before it can display a room.
+func room_presentation_revision() -> int:
+	return _room_presentation_publication.get_instance_id() if _room_presentation_publication != null else 0
+
+
+func room_presentation_snapshot() -> Dictionary:
+	return _room_presentation_publication.snapshot() if _room_presentation_publication != null else {}
+
+
+func publish_room_presentation() -> Dictionary:
+	var proof := RoomPresentationPublicationScript.validate(current_environment)
+	if not bool(proof.get("ok", false)):
+		_room_presentation_publication = null
+		return proof
+	# Scenario geometry has its own sealed authority. The old UI base binder
+	# removed these duplicate base-plane occupants while constructing a view.
+	# Perform that exact ownership cleanup here, after authenticating the incoming
+	# envelope, so persistence no longer depends on whether a view was requested.
+	var base_layout := _room_base_layout_without_projected_occupants()
+	if not base_layout.is_empty():
+		var candidate := current_environment.duplicate(false)
+		candidate["layout"] = base_layout
+		var candidate_proof := RoomPresentationPublicationScript.validate(candidate)
+		if not bool(candidate_proof.get("ok", false)):
+			_room_presentation_publication = null
+			return candidate_proof
+		current_environment["layout"] = base_layout
+		proof = candidate_proof
+	_room_presentation_publication = RoomPresentationPublicationScript.new(current_environment, proof)
+	return {"ok": true, "errors": []}
+
+
+func _room_base_layout_without_projected_occupants() -> Dictionary:
+	var bindings := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(current_environment.get("layout", {})).get("slot_bindings", {}))
+	var remove_ids: Array = []
+	for row_value in JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(current_environment.get("object_manifest", {})).get("rows", [])):
+		var row := JsonCoerceScript._copy_dict(row_value)
+		if str(row.get("source_kind", "")) != "scenario_projection":
+			continue
+		var id := str(row.get("presentation_object_id", row.get("object_id", row.get("instance_object_id", ""))))
+		if bindings.has(id):
+			remove_ids.append(id)
+	if remove_ids.is_empty():
+		return {}
+	var layout := JsonCoerceScript._copy_dict(current_environment.get("layout", {}))
+	var rects := JsonCoerceScript._copy_dict(layout.get("object_rects", {}))
+	var overflow := JsonCoerceScript._copy_array(layout.get("slot_overflow_ids", []))
+	for id in remove_ids:
+		bindings.erase(id)
+		rects.erase(id)
+		overflow.erase(id)
+	layout["slot_bindings"] = bindings
+	layout["object_rects"] = rects
+	layout["slot_overflow_ids"] = overflow
+	layout["slot_binding_digest"] = EnvironmentSlotBinderScript.binding_digest(bindings)
+	return layout
+
+
+func validate_room_action_authority(require_renderer_proofs: bool = true) -> Dictionary:
+	# Validate the live authority, never the detached presentation. A caller
+	# retaining a public Dictionary alias cannot authorize altered geometry by
+	# displaying a previously accepted snapshot.
+	return RoomPresentationPublicationScript.validate(current_environment, require_renderer_proofs)
+
+
 func reconcile_current_environment_object_manifest(refresh_layout: bool = false) -> Dictionary:
 	if not _scratch_scalper_legacy_rejection_errors(current_environment).is_empty():
 		return JsonCoerceScript._copy_dict(current_environment.get("object_manifest", {}))
@@ -1515,6 +1587,7 @@ func reconcile_current_environment_object_manifest(refresh_layout: bool = false)
 		current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
 	else:
 		EnvironmentInstance.reconcile_object_manifest(current_environment)
+	publish_room_presentation()
 	return JsonCoerceScript._copy_dict(current_environment.get("object_manifest", {}))
 
 
@@ -1536,6 +1609,9 @@ func reconcile_environment_object_membership(environment: Dictionary) -> Diction
 		var message := str(error_value).strip_edges()
 		if not message.is_empty() and not errors.has(message):
 			errors.append(message)
+	if is_same(environment, current_environment):
+		if errors.is_empty(): publish_room_presentation()
+		else: _room_presentation_publication = null
 	return {
 		"ok": errors.is_empty(),
 		"errors": errors,
@@ -1587,6 +1663,7 @@ func _publish_scenario_membership_candidate(candidate: Dictionary, result_value:
 	# pointed at the pre-operation room.
 	current_environment.clear()
 	current_environment.merge(candidate, true)
+	publish_room_presentation()
 	return result
 
 
@@ -1796,6 +1873,7 @@ func prepare_resolved_event_membership_for_publication(event_id: String, profile
 		profile_timing["defer_storage"] = Time.get_ticks_usec() - profile_stage_started_usec
 		profile_timing["total"] = Time.get_ticks_usec() - profile_started_usec
 		reconciled["debug_membership_usec"] = profile_timing
+	publish_room_presentation()
 	return reconciled
 
 
@@ -2996,6 +3074,8 @@ func world_sequence_composed_projection() -> Dictionary:
 func world_sequence_execute(token: String, command: Dictionary, public_context: Dictionary = {}) -> Dictionary:
 	var result := CrewWorldSequenceAdapterScript.execute(current_environment, token, _world_sequence_definition(token), command, public_context)
 	if bool(result.get("ok", false)): _refresh_world_sequence_registration(token)
+	if bool(result.get("ok", false)) and not bool(result.get("inactive", false)):
+		_room_presentation_publication = null
 	return result
 
 
@@ -3042,18 +3122,24 @@ func world_sequence_command(options: FunctionOptions.WorldSequenceCommandOptions
 	result["cost"] = cost
 	result["bankroll_delta"] = -cost
 	result["bankroll_after"] = bankroll
+	if bool(result.get("ok", false)) and not bool(result.get("inactive", false)):
+		_room_presentation_publication = null
 	return result
 
 
 func world_sequence_enqueue_fact(token: String, fact: Dictionary) -> Dictionary:
 	var result := CrewWorldSequenceAdapterScript.enqueue_fact(current_environment, token, _world_sequence_definition(token), fact)
 	if bool(result.get("ok", false)): _refresh_world_sequence_registration(token)
+	if bool(result.get("ok", false)) and not bool(result.get("inactive", false)):
+		_room_presentation_publication = null
 	return result
 
 
 func world_sequence_flush_facts(token: String, boundary_serial: int) -> Dictionary:
 	var result := CrewWorldSequenceAdapterScript.flush_facts(current_environment, token, _world_sequence_definition(token), boundary_serial)
 	if bool(result.get("ok", false)): _refresh_world_sequence_registration(token)
+	if bool(result.get("ok", false)) and not bool(result.get("inactive", false)):
+		_room_presentation_publication = null
 	return result
 
 
@@ -3062,6 +3148,8 @@ func world_sequence_record_visit(token: String, visit_id: String = "") -> Dictio
 	if exact_visit.is_empty(): exact_visit = str(current_environment.get("environment_visit_id", ""))
 	var result := CrewWorldSequenceAdapterScript.record_visit(current_environment, token, _world_sequence_definition(token), exact_visit)
 	if bool(result.get("ok", false)): _refresh_world_sequence_registration(token)
+	if bool(result.get("ok", false)) and not bool(result.get("inactive", false)):
+		_room_presentation_publication = null
 	return result
 
 
@@ -3070,12 +3158,16 @@ func world_sequence_apply_reentry(token: String, visit_id: String = "") -> Dicti
 	if exact_visit.is_empty(): exact_visit = str(current_environment.get("environment_visit_id", ""))
 	var result := CrewWorldSequenceAdapterScript.apply_reentry(current_environment, token, _world_sequence_definition(token), exact_visit)
 	if bool(result.get("ok", false)): _refresh_world_sequence_registration(token)
+	if bool(result.get("ok", false)) and not bool(result.get("inactive", false)):
+		_room_presentation_publication = null
 	return result
 
 
 func world_sequence_apply_expiry(token: String, boundary: String, amount: int = 1) -> Dictionary:
 	var result := CrewWorldSequenceAdapterScript.apply_expiry_boundary(current_environment, token, _world_sequence_definition(token), boundary, amount)
 	if bool(result.get("ok", false)): _refresh_world_sequence_registration(token)
+	if bool(result.get("ok", false)) and not bool(result.get("inactive", false)):
+		_room_presentation_publication = null
 	return result
 
 
@@ -3095,6 +3187,8 @@ func world_sequence_sync_owner(token: String, owner_active: bool, reason: String
 			registration["pending_outcomes"] = []
 			registration["owner_outcome_results"] = {}
 			world_sequence_registrations[token] = registration
+	if bool(result.get("ok", false)) and not bool(result.get("inactive", false)):
+		_room_presentation_publication = null
 	return result
 
 
@@ -3335,6 +3429,7 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 		layout_context["authoring_preview"] = true
 	var definition := _scenario_sequence_definition_readonly()
 	if not ScenarioSequenceSchemaScript.is_sequence(definition):
+		publish_room_presentation()
 		return {"ok": true, "inactive": true, "errors": []}
 	var authoritative_environment := _scenario_authoritative_environment_for_finalization(definition)
 	# Runtime membership (for example the Crew heist Live Table) may change after
@@ -4238,6 +4333,10 @@ func _finalized_scenario_layout_result(replayed: bool, digest: String, state: Di
 		else:
 			for key in ["projection", "layout_authority", "layout_authority_digest", "layout_audit", "renderer_snapshot", "warnings"]:
 				result[key] = composed.get(key).duplicate(true) if typeof(composed.get(key)) in [TYPE_DICTIONARY, TYPE_ARRAY] else composed.get(key)
+	if bool(result.get("ok", false)):
+		publish_room_presentation()
+	else:
+		_room_presentation_publication = null
 	return result
 
 
@@ -4723,6 +4822,9 @@ func _scenario_host_safe_id(value: String) -> String:
 
 
 func scenario_sequence_command(command_id: String, idempotency_key: String, payload: Dictionary = {}, owner_namespace: String = "scenario", stable_object_id: String = "sequence", host_interaction_availability: Dictionary = {}, action_origin_owner_namespace: String = "", action_origin_stable_object_id: String = "", action_origin_receipt_key: String = "", action_origin_boundary_id: String = "", action_origin_fingerprint: String = "") -> Dictionary:
+	var room_authority := validate_room_action_authority()
+	if not bool(room_authority.get("ok", false)):
+		return {"ok": false, "errors": JsonCoerceScript._copy_array(room_authority.get("errors", []))}
 	var definition := _scenario_sequence_definition_readonly()
 	if definition.is_empty():
 		return {"ok": false, "errors": ["No dynamic room sequence is active."]}
@@ -4874,14 +4976,20 @@ func scenario_drain_transitions(reduced_motion: bool = false) -> Dictionary:
 	var definition := _scenario_sequence_definition_readonly()
 	if definition.is_empty():
 		return {"ok": false, "inactive": true, "transitions": [], "errors": []}
-	return ScenarioEngineScript.drain_sequence_transitions(current_environment, definition, reduced_motion)
+	var result := ScenarioEngineScript.drain_sequence_transitions(current_environment, definition, reduced_motion)
+	if bool(result.get("ok", false)) and not JsonCoerceScript._copy_array(result.get("transitions", [])).is_empty():
+		publish_room_presentation()
+	return result
 
 
 func scenario_drain_event_requests() -> Dictionary:
 	var definition := _scenario_sequence_definition_readonly()
 	if definition.is_empty():
 		return {"ok": false, "inactive": true, "requests": [], "errors": []}
-	return ScenarioEngineScript.drain_sequence_event_requests(current_environment, definition)
+	var result := ScenarioEngineScript.drain_sequence_event_requests(current_environment, definition)
+	if bool(result.get("ok", false)) and not JsonCoerceScript._copy_array(result.get("requests", [])).is_empty():
+		publish_room_presentation()
+	return result
 
 
 # Migrates every persisted environment graph without changing scenario identity
@@ -13009,6 +13117,10 @@ func _apply_environment_turn_snapshot(snapshot: Dictionary, preserve_live_aliase
 			numbers_state.restore(JsonCoerceScript._copy_dict(numbers_record.get("state", {})), seed_value, JsonCoerceScript._copy_dict(numbers_record.get("config", {})))
 	else:
 		numbers_state = null
+	# Restore this immutable pointer last: installing current_environment above
+	# invalidates the previous room publication. Rejected actions keep the prior
+	# snapshot; accepted candidates transfer the already owned publication.
+	_room_presentation_publication = snapshot.get("_room_presentation_publication", null)
 
 
 static func _publish_refcounted_script_state(live_object: Object, candidate_object: Object) -> void:
@@ -14818,6 +14930,7 @@ func from_dict(data: Dictionary) -> void:
 
 
 func _run_state_schema_restore(data: Dictionary) -> void:
+	_room_presentation_publication = null
 	_scenario_sequence_definition_cache = {}
 	_world_sequence_definition_cache = {}
 	world_sequence_registrations = _normalize_world_sequence_registrations(data.get("world_sequence_registrations", {}))
