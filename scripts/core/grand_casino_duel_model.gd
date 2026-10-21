@@ -62,7 +62,7 @@ static func current_edge(state: Dictionary) -> Dictionary:
 	var schedule := JsonCoerceScript._copy_array(state.get("edge_schedule", []))
 	if hand_index >= schedule.size() or typeof(schedule[hand_index]) != TYPE_DICTIONARY:
 		return {}
-	return JsonCoerceScript._copy_dict(schedule[hand_index])
+	return schedule[hand_index] as Dictionary
 
 
 static func call_out(state: Dictionary, edge_id: String, terms: Dictionary) -> Dictionary:

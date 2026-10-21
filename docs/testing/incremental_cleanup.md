@@ -191,16 +191,16 @@ exhaustiveness or a proof that no future cleanup is possible.
 
 | Level | Paths |
 | --- | ---: |
-| Targeted source/contract review | 87 |
-| Static screening | 1,332 |
+| Targeted source/contract review | 90 |
+| Static screening | 1,329 |
 | Media/evidence/UID classification | 2,272 |
 | Total baseline paths | 3,691 |
 
 | Disposition | Paths |
 | --- | ---: |
-| No change | 2,346 |
-| Reviewed by screening | 1,320 |
-| Fixed | 12 |
+| No change | 2,347 |
+| Reviewed by screening | 1,317 |
+| Fixed | 14 |
 | Deferred | 12 |
 | Known baseline check issue | 1 |
 
@@ -331,6 +331,30 @@ receipt/account/fact matching, historical input keys, story/layout reconciliatio
 and tutorial save migration are retained. Duplicate-looking authority copies and
 legacy recovery paths are not treated as dead code. No edits to those files.
 
+## Batch 11: owned duel projections and evidence filtering
+
+`GrandCasinoDuelModel.current_edge` already owns a recursive schedule copy.
+Return its selected dictionary without copying it again. In the Showdown model,
+evaluate the read-only evidence condition before copying an accepted definition;
+rejected definitions need no recursive copy. All returned edge/evidence records
+remain independent of caller state and authored definitions. Preserve every
+condition, candidate order, RNG call, selected count and action transition.
+
+Both pure model files were reviewed in full. A native comparison with the prior
+implementations passed 1,000 cases: malformed schedules, clamped hand indices,
+nested return-value mutation, all 13 authored evidence definitions plus generic
+condition fixtures, 64 fact combinations, negative/zero/oversized selection
+counts, null RNG and two seeded RNGs. Outputs and RNG snapshots matched. Actual
+initialize/call-out/apply-hand transitions also matched through terminal states.
+The required autonomous animation check passed. Both muted capped Jobs reached
+EOF and zero active processes naturally. No measured performance result claimed.
+
+EnvironmentEventResolver was also reviewed in full, retaining its required-ID
+selection, unique-class priorities/tie order, exact selection envelope and final
+injected-RNG shuffle. It explains the CH-14 source-location mismatch: two full
+shuffle sites remain in EnvironmentInstance and the third lives in this resolver.
+No environment/resolver runtime source was changed.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
@@ -354,3 +378,13 @@ All recorded build PIDs were independently absent at 03:11:12 UTC. The Web
 performance owner received this exact receipt; its guarded trace did not run,
 so this is deployed HTTP/provenance plus native behavior evidence, not visual
 Web playtesting. Final tool/report publication is recorded in the task receipt.
+
+Card-copy and Crew-pattern commits `82ab54ea` and `81e93c04` were pushed after
+the finite performance hold released. NEXT promoted
+`81e93c0413ad8bc899215c79d0f6cacbf4ac4ef5`, tree
+`123ae4351d9b9894d2dedab1f6b58e1efcadd6e9`, at 03:49:52 UTC. Trusted LAN HTTPS
+at 03:50:42 matched all 15 archive files (including JS/worklets/icons), redirect
+and WASM MIME types. Archive SHA-256:
+`ac958f54950965092972a10117f123af80b0670ab5d6341109222286aac622ef`.
+Independent 03:50:41 census found the build root/export Godot absent. Stable
+remained 0.6.0; no browser/gameplay launch is claimed by this HTTP check.

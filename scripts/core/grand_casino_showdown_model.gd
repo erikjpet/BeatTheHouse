@@ -65,9 +65,9 @@ static func select_evidence(snapshot: Dictionary, definitions: Array, count: int
 	for definition_value in definitions:
 		if typeof(definition_value) != TYPE_DICTIONARY:
 			continue
-		var definition := (definition_value as Dictionary).duplicate(true)
+		var definition := definition_value as Dictionary
 		if _evidence_matches(str(definition.get("condition", "always")), snapshot):
-			matching.append(definition)
+			matching.append(definition.duplicate(true))
 	if rng == null:
 		return matching.slice(0, mini(matching.size(), maxi(0, count)))
 	return rng.pick_many(matching, mini(matching.size(), maxi(0, count)))
