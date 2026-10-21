@@ -95,8 +95,8 @@ static func legend_entries() -> Array:
 
 
 static func for_route(route: Dictionary, route_risk: Dictionary = {}) -> Array:
-	var source := route.duplicate(true)
-	var risk_event := route_risk.duplicate(true)
+	var source := route
+	var risk_event := route_risk
 	if risk_event.is_empty():
 		risk_event = JsonCoerceScript._copy_dict(source.get("risk_event", {}))
 	var badges: Array = []
@@ -227,7 +227,7 @@ static func item_game_affinity_label(item: Dictionary) -> String:
 
 
 static func for_event_choice(choice: Dictionary) -> Array:
-	var source := choice.duplicate(true)
+	var source := choice
 	var badges: Array = []
 	var event_type := str(source.get("event_type", source.get("type", ""))).strip_edges().to_lower()
 	if not event_type.is_empty():
@@ -246,7 +246,7 @@ static func for_event_choice(choice: Dictionary) -> Array:
 
 
 static func for_service(service: Dictionary) -> Array:
-	var source := service.duplicate(true)
+	var source := service
 	var badges: Array = []
 	var category := str(source.get("category", "")).strip_edges().to_lower()
 	badges.append(class_badge("service", category))
@@ -257,7 +257,7 @@ static func for_service(service: Dictionary) -> Array:
 
 
 static func for_lender(lender: Dictionary) -> Array:
-	var source := lender.duplicate(true)
+	var source := lender
 	var badges: Array = []
 	var lender_type := str(source.get("lender_type", source.get("category", ""))).strip_edges().to_lower()
 	badges.append(class_badge("lender", lender_type))

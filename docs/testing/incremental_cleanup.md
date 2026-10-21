@@ -79,6 +79,27 @@ output: `CLEANUP_BADGE_EQUIVALENCE PASS cases=50`. Job accounting was zero after
 owned cleanup. No browser, listener or player save was accessed. This is native
 projection evidence, not a visual Web playtest or a latency measurement.
 
+## Batch 4: read-only badge input copies
+
+`for_route`, `for_event_choice`, `for_service` and `for_lender` only read their
+input dictionaries. Stop recursively duplicating those complete inputs, plus
+the explicit route-risk dictionary, before extracting badge values. This follows
+the existing `for_item` ownership policy. Keep the defensive copies in helpers
+that append to debt/travel arrays and the newly built output dictionaries;
+caller-owned data never becomes a mutable output.
+
+Native comparison with the preceding implementation passed 325 cases covering
+all 12 authored routes, 18 services, five lenders, 277 nested event choices,
+12 empty/adversarial nested fixtures and one explicit risk override. Complete
+badge arrays matched; source dictionaries remained unchanged both after the
+call and after editing returned badges. Output:
+`CLEANUP_BADGE_COPIES PASS cases=325` (0.391 seconds, private 5% CPU/512 MiB).
+The required `animation_liveness_without_pointer_check.gd` also passed in 5.953
+seconds under a private 12% CPU/2 GiB Job. Both Jobs reached zero naturally with
+reader EOF and no forced cleanup. No actual gameplay, RNG, cash, heat, clock,
+save, rendering schedule, or native behavior changed. The removed copy calls
+are source evidence; no player-latency improvement is claimed.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
