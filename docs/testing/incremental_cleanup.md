@@ -1854,6 +1854,38 @@ not a claim that every one of its other checks ran or was read. Coverage is
 3,699 paths; 14 deferrals and two separate issues remain. Batch63 publication
 still awaits recovery of the existing stopped watcher; this batch stays local.
 
+## Batch 67: share identical scenario reentry feedback branches
+
+The `aftermath` and `resume` reentry policies had byte-identical executable
+branches. Combine their match labels over the retained body, keeping the exact
+requested policy in the result. Restart, expired-state cleanup recovery, visit
+receipts, normalization and all other functions remain byte-identical to
+dacc8de5. The source proof compares the two original bodies before combining
+them. No policy, public label or historical-save recovery was removed.
+
+Exact comparison passed 120 complete reentries across all four registered
+policies plus an invalid policy, actual active/aftermath/expired-cleaned states,
+both normalization paths and canonical/padded/invalid visit IDs. Thirty-two
+successful replays matched complete baseline outputs; input bytes were unchanged.
+The unchanged lifecycle-policy matrix also passed. An initial private probe
+overasserted that replay normalization must retain the pre-normalization byte
+shape; baseline and candidate outputs were already identical. Its source, log,
+original 90-second owned timeout/Job0 and independent three-PID closure are kept.
+One corrected probe retained exact baseline parity and input immutability and
+recorded the one baseline-normalized replay shape. No repository test or guard
+was relaxed. The corrected check exited zero naturally with EOF, Job0 and no
+forced cleanup; its independent process-absence receipt is retained. There is
+no performance or visual-playtest claim for this structural branch cleanup.
+
+Twelve further source reviews retain four verification entry scenes, outcome
+icons, character pools, CH-26 facade compatibility checks, the two audio master
+tools, the allocation contract and two historical/specification documents.
+All four scene scripts, ten icon paths and character pool member IDs resolve.
+No generators, installs, captures or allocation/RTP runs were launched. Historical
+verification claims remain historical. Coverage is 340 targeted reviews, 1,087
+static screens and 2,272 role classifications across 3,699 paths; 14 deferrals
+and two separate issues remain. Exact batch63 NEXT verification is pending.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

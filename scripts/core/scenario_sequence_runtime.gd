@@ -653,15 +653,10 @@ static func apply_reentry(state_value: Dictionary, definition: Dictionary, visit
 			next["expired"] = true
 			next["status"] = STATUS_CLEANED
 			next["last_feedback"] = "This room sequence has expired. The exit remains clear."
-		"aftermath":
+		"aftermath", "resume":
 			# Terminal aftermath is already materialized in semantic_state. Partial
 			# sequences cannot invent an outcome at reentry and therefore resume
 			# their current phase's readable arrival state.
-			if status == STATUS_AFTERMATH:
-				next["last_feedback"] = _aftermath_feedback(next, definition)
-			elif status == STATUS_ACTIVE:
-				next["last_feedback"] = str(SequenceSchemaScript.phase(definition, str(next.get("phase_id", ""))).get("arrival_feedback", next.get("last_feedback", "")))
-		"resume":
 			if status == STATUS_AFTERMATH:
 				next["last_feedback"] = _aftermath_feedback(next, definition)
 			elif status == STATUS_ACTIVE:
