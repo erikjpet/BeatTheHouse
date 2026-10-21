@@ -7343,7 +7343,7 @@ func keyboard_reachable_object_ids() -> Array:
 		if not object_id.is_empty(): candidates.append(object_data)
 	candidates.sort_custom(Callable(PixelSceneCanvas, "_sort_keyboard_objects"))
 	for candidate_value in candidates:
-		ids.append(str(_copy_dictionary(candidate_value).get("id", "")))
+		ids.append(str((candidate_value as Dictionary).get("id", "")))
 	return ids
 
 

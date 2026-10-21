@@ -2585,3 +2585,43 @@ Archive SHA-256:
 `45ff42d6a5d46d81d350548d1129bbcdfa79b70f9a004bdcb57ddd20c8468237`.
 Independent13:39:17 census found exportroot46920/allnewGodot absent;
 existing10%/2GiB guardian42856/watcher42252 and retention remained error-free.
+
+
+## Batch 82: read IDs from already detached keyboard candidates
+
+`keyboard_reachable_object_ids` makes one defensive copy of each scene record
+before filtering and sorting its local candidate list. Its final loop copied
+each detached record again solely to read `id`. Read that private dictionary
+directly. The initial ownership copy, read-only static comparator, filters,
+focus ordering, duplicate IDs and returned array remain unchanged. There is no
+signal, callback or yield between candidate creation and this projection.
+
+192 native baseline/candidate cases passed across empty/malformed scene entries,
+duplicate IDs, mixed focus order, visibility/interactivity/disabled flags and
+four foundation/cache modes. Complete ID arrays matched; inputs stayed unchanged
+and modifying one returned array did not affect the next query. The unchanged
+no-pointer animation gate passed. Both private muted runs exited naturally with
+EOF/Job0. No player input, save mutation or timing improvement is claimed.
+
+The entire large canvas source has now been read, including the remaining
+camera/board transforms, actor routes, label layout, procedural venue/prop art,
+character routines, live slot-preview cache and game cabinet painters. Lifecycle
+and draw scheduling remain intact. Three additional simple slot-painter leads
+remain separate: identical fallback branches, a repeated ternary value and an
+unused local. No bulk renderer rewrite is proposed by these leads.
+
+Correctness proposal, unchanged: `_selected_info_has_single_action_button` uses
+visible actions, while `_selected_info_single_action_enabled` first inspects the
+raw action array. A hidden/disabled first raw action could therefore suppress
+an enabled visible action with a valid confirmation ID. This is a source-risk
+observation requiring faithful player-state reproduction, not a demonstrated
+user-facing failure or authorization to loosen visibility/enable checks. Copies
+of action entries retained across external activation signals remain defensive.
+
+Batch81 promoted as`3d31ebfa48247d8155c7fd1098e7b7d6801d0cbc`, tree
+`ddd628ba277b6f65e8466edde1bba432b91c765b`. All15 archive/HTTPS hashes, dev
+redirect, WASM MIME, stable0.6.0 and final pointer passed13:45:13 UTC.
+Archive SHA-256:
+`00135efa5851fb90e665025ee047b42b2afccb9ef16e74e0e243f2c91fa66c7f`.
+Independent13:45:42 census found exportroot48636/allnewGodot absent;
+existing10%/2GiB guardian42856/watcher42252 and retention remained error-free.
