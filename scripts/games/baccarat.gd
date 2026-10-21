@@ -213,6 +213,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var session := _normalized_session(run_state, environment, ui_state, table)
 	var wager_currency := GameModule.presentation_currency_for_game(run_state, get_id(), environment)
 	var bets := _bet_dict(session.get("baccarat_bets", {}))
+	var rebet := _bet_dict(session.get("baccarat_rebet", table.get("last_bets", {})))
 	var chip_denominations := _chip_denominations(table)
 	var selected_chip := int(session.get("selected_chip", chip_denominations[0]))
 	var total_wager := _total_wager(bets)
@@ -306,7 +307,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"rules": rules,
 		"bet_targets": targets,
 		"baccarat_bets": bets,
-		"baccarat_rebet": _bet_dict(session.get("baccarat_rebet", table.get("last_bets", {}))),
+		"baccarat_rebet": rebet,
 		"selected_chip": selected_chip,
 		"selected_stake": selected_chip,
 		"chip_denominations": chip_denominations,
@@ -317,7 +318,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"can_deal": (total_wager <= 0 or min_ready) and not deal_active and not payout_active,
 		"can_clear": not bets.is_empty() and not deal_active and not payout_active,
 		"can_undo": not (_array(session.get("baccarat_undo_stack", [])).is_empty()) and not deal_active and not payout_active,
-		"can_rebet": not _bet_dict(session.get("baccarat_rebet", table.get("last_bets", {}))).is_empty() and not deal_active and not payout_active,
+		"can_rebet": not rebet.is_empty() and not deal_active and not payout_active,
 		"commission_owed": int(table.get("commission_owed", 0)),
 		"shoe_remaining": int(table.get("shoe_remaining", 0)),
 		"shoe_label": str(table.get("shoe_label", "")),

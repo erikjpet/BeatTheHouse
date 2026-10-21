@@ -1596,7 +1596,7 @@ docs/plans/game06_1_runtime_proof_manifest.md	docs/plans	authored-document	stati
 docs/plans/game06_1_table_machine_ritual_vocabulary.md	docs/plans	authored-document	static-screen	reviewed	D1	23b2bb8aa2ab3bba80069b85e31606dd3ff7b5c0	54347	901
 docs/plans/game06_2_blackjack_consumer_audit.md	docs/plans	authored-document	static-screen	reviewed	D1	8bd7a81892aa546c31d654fccc78047cde1bab54	8910	113
 docs/plans/game06_2_final_closeout.md	docs/plans	authored-document	static-screen	reviewed	D1	79b39105753c1d12ca4b6b9bfdf286d10faf0631	11563	153
-docs/plans/game06_3_baccarat_depth_manifest.md	docs/plans	authored-document	static-screen	reviewed	D1	027d0dcf5270921dc4d673760c20ffb54f71b909	1973	35
+docs/plans/game06_3_baccarat_depth_manifest.md	docs/plans	authored-document	source-review	no-change	M:batch61-full-frozen-finite-shoe-and-mandatory-rule-authority-presentation-only-pointer-keyboard-controller-squeeze-road-board-nonprediction-historical-validation-limits-review-retained	027d0dcf5270921dc4d673760c20ffb54f71b909	1973	35
 docs/plans/game06_3_handoff.md	docs/plans	authored-document	static-screen	reviewed	D1	df417256e0aaa341c8adad6b0649a4c43b64a235	6904	117
 docs/plans/game06_3_roulette_depth_manifest.md	docs/plans	authored-document	source-review	no-change	M:batch55-full-frozen-ritual-authority-phase-accounting-exact-stack-focus-and-material-energy-historical-manifest-retained	60bbfc5d3738c8d4a03715cf9f0d7cc102006920	1365	26
 docs/plans/game06_4_final_closeout.md	docs/plans	authored-document	static-screen	reviewed	D1	d586aa458a11c05a32a033b8dd6216818909f867	8315	138
@@ -1858,8 +1858,8 @@ docs/screenshots/scratch_ticket_three_state_review/05_bonus_bingo_three_states.p
 docs/screenshots/scratch_ticket_three_state_review/06_high_roller_holdem_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	9ae3f1c0724939aa1acaebf88e3f8524fde714f1	541341	-
 docs/screenshots/scratch_ticket_three_state_review/07_golden_vault_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	258b7cdca507173d7b8c484ed5ed19a531b994fa	474817	-
 docs/screenshots/scratch_ticket_three_state_review/all_scratch_tickets_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	506839b5f67581028469a7a9230deaf8c5a8a3fb	4560788	-
-docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	cce3177f90efe5840a018b94ed2422d7f7dcb33c	117116	1865
-docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	5844be302fd57e6342cfe5feb5b37266c9cc77aa	673072	-
+docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	1e9647ae033a5879345fba6c44186c0fff05a1d5	118364	1865
+docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	163f09b8b8a5ec457a7365eb260564e2e2fdd874	673080	-
 docs/testing/punchline_debt_court_recovery.md	docs/testing	authored-document	static-screen	reviewed	D1	ccfe341027a53866f18c201f4ef855a2420c2987	3889	64
 docs/testing/scratch_scalper_runtime_compatibility.md	docs/testing	authored-document	static-screen	reviewed	D1	15feb4c3c388e55a67a98bc58efbc003a1fc4261	3581	56
 docs/todo/README_0_6_board.md	docs/todo	authored-document	static-screen	reviewed	D1	2305cca0cdeeba83d3fa8768159758508d775c58	66017	517
@@ -2906,7 +2906,7 @@ scripts/core/tutorial_flow.gd	scripts/core	authored	source-review	no-change	M:ba
 scripts/core/user_settings.gd	scripts/core	authored	source-review	no-change	M:batch13-full-schema-legacy-recovery-clamping-and-engine-application-review	4db9bd1fbe7192f2ed1f02eee3d771434fb789e0	16615	431
 scripts/core/world_map.gd	scripts/core	authored	source-review	fixed	C:batch47	c4fe04ce82d4a7f6ab1f18efbeab0b3a834647fd	94753	2314
 scripts/core/world_sequence_package_catalog.gd	scripts/core	authored	source-review	no-change	M:allowlisted-package-boundary	055bb9b752df5315f95ef5a18f2888cf3fe57fe5	4129	87
-scripts/games/baccarat.gd	scripts/games	authored	source-review	fixed	C:batch9-helper-and-callers-only	7e8187b25d908524bc55f1d688d3fd0464eead70	187936	3982
+scripts/games/baccarat.gd	scripts/games	authored	source-review	fixed	C:batch9+batch61	7e8187b25d908524bc55f1d688d3fd0464eead70	187936	3983
 scripts/games/bar_dice.gd	scripts/games	authored	source-review	fixed	C:batch57+batch58	8c94633f82c7e3ac1f5e76e8ef3f97160e3ce1a5	173291	3769
 scripts/games/blackjack.gd	scripts/games	authored	source-review	fixed	C:batch9-helper-and-callers-only	5641a636c76ab9a5d06de41f3480767f7bb243c8	461229	8839
 scripts/games/coin_pusher.gd	scripts/games	authored	source-review	fixed	C:batch50	7efcedf526b46d6e60394ca16dccf48f42f3923c	183547	3160
@@ -3024,8 +3024,8 @@ scripts/tests/fixtures/integ06_1/v0_5_1/v051_gas_station_pull_tabs_mid_game.json
 scripts/tests/fixtures/integ06_1/v0_5_1/v051_gas_station_pull_tabs_mid_game.provenance.json	scripts/tests	intentional-fixture	source-review	no-change	M:batch59-full-historical-f1ce7ec8-release-driver-capture-path-save-schema-byte-hash-and-gas-station-midgame-custody-review-retained	5904efc7e170fb252e51da7103b5d31a21c61fc9	2509	46
 scripts/tests/fixtures/integ06_1/v0_5_1/v051_gas_station_scratch_mid_game.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	7d24d379d31ba5f00efde933a7f2dd493952d71c	54524	1
 scripts/tests/fixtures/integ06_1/v0_5_1/v051_gas_station_scratch_mid_game.provenance.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	52a0b4b23b177ccf64a308f18ab965fc051ec598	2513	46
-scripts/tests/fixtures/integ06_1/v0_5_1/v051_grand_casino_baccarat_mid_game.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	04bd3cefc95fe513c69c5664e50767ed59ad4a7b	222867	1
-scripts/tests/fixtures/integ06_1/v0_5_1/v051_grand_casino_baccarat_mid_game.provenance.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	1d578dca9b51d897f0398dfe0b52e6b85ee17edd	5895	89
+scripts/tests/fixtures/integ06_1/v0_5_1/v051_grand_casino_baccarat_mid_game.json	scripts/tests	intentional-fixture	source-review	no-change	M:batch61-authored-v051-decoded-loaded-Baccarat-seven-full-views-exact-output-input-save-RNG-and-rebet-output-detachment-native-proof-no-fixture-change	04bd3cefc95fe513c69c5664e50767ed59ad4a7b	222867	1
+scripts/tests/fixtures/integ06_1/v0_5_1/v051_grand_casino_baccarat_mid_game.provenance.json	scripts/tests	intentional-fixture	source-review	no-change	M:batch61-full-f1ce7ec8-historical-driver-and-grand-route-capture-account-challenge-save-schema-size-hash-and-custody-review-retained	1d578dca9b51d897f0398dfe0b52e6b85ee17edd	5895	89
 scripts/tests/fixtures/integ06_1/v0_5_1/v051_grand_casino_back_room_duel.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	1ae65962e62f039277b1c3449f89ab4cf1e68ceb	243761	1
 scripts/tests/fixtures/integ06_1/v0_5_1/v051_grand_casino_back_room_duel.provenance.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	8328a4bc7e8d7b985093748e656de8ac721610f6	13655	170
 scripts/tests/fixtures/integ06_1/v0_5_1/v051_grand_casino_cage_environment.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	06822a713fb36366edfc4b27e6f3d9860e7e4c82	196657	1

@@ -1663,6 +1663,35 @@ retained in `pull-ritual-native-closure.json` in the worker workspace.
 Coverage remains275 targeted source/contract reviews; broader semantic work
 and the recorded14 deferrals/2 issues continue.
 
+## Batch 61: reuse Baccarat's detached rebet map in its full view
+
+`surface_state` normalized the same rebet value for its public output and its
+enabled check. Build that detached map once and reuse it. The existing session
+normalizer, fallback to last settled bets, malformed-value behavior and owning
+output boundary remain. Only this full-view function changes; realtime patches,
+commands, sealed authority, shoe/RNG, settlement, commission, heat, clocks,
+squeeze gestures and animation scheduling remain byte-identical.
+
+Exact3ef0a48c comparison passed763 complete surfaces, including seven from the
+retained genuine v0.5.1 Grand Casino Baccarat save. Generated cases cover three
+seeds, two venues, six rebet shapes, UI/sealed/pending-delivery sessions and
+seven deal/ritual/payout time boundaries. All output and input/full-save/RNG bytes
+matched. Mutating the returned rebet map left inputs and later views unchanged.
+Passive delegates counted6,327 bet-map queries before and5,564 after; this is a
+work count, not elapsed-time evidence. Required unchanged no-pointer animation
+liveness passed. Both muted private Jobs exited0 naturally, reader EOF/Job0/no
+forced cleanup. `baccarat-rebet-native-closure.json` retains independent absence
+and exact runtime receipt names in the worker workspace.
+
+The prior helper-only Baccarat review is now a full3,982-line review: retain
+mandatory burn/third-card rules, net stake accounting, ceil-whole-unit commission,
+candidate versus observational simulation isolation, sealed replay/pending
+delivery, deterministic edge-sort memory/expiry, skill heat, nonpredictive road
+history and presentation-only squeeze. Historical depth manifest and old-save
+provenance were also fully reviewed and retained. Coverage is278 targeted reviews,
+1,149 static screens and2,272 role classifications across3,699 paths.14 deferrals
+and2 separate issues remain; the comprehensive semantic audit continues.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
@@ -1863,3 +1892,13 @@ Independent10:47:15 census confirmed root1616/allnewGodot absent; existing
 capped guardian40948/watcher43120 and retention hook remained error-free.
 The exact release handoff returned AbsolutePathBuf from the thread transport;
 delivery is uncertain. Receipts remain preserved; no duplicate watcher or build.
+
+Batches59-60 promoted as`3ef0a48c1254339fc0e7dff47c5c15e8817ee2be`, tree
+`9cd3d655cb08695af60a948d71e4491eea1761e8`, at10:56:59 UTC. All15 archive files
+matched trusted HTTPS, dev redirect, WASM MIME, stable0.6.0 and the final pointer
+at10:58:01. Archive SHA-256:
+`8e5d01b04b73b4d0013cdc131213fe742aa2e0ff4ea3a742b97b5016661e28ba`.
+Independent10:58:01 census confirmed root8680/allnewGodot absent; existing
+capped guardian40948/watcher43120 and retention hook remained error-free.
+These verify exact deployed identity/assets and the preceding native checks;
+no new browser journey or elapsed-time cleanup speedup is claimed.
