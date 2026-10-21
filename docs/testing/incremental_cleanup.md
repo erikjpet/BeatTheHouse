@@ -3068,3 +3068,24 @@ manifest-only child invocations started no Godot, browser, listener or image
 capture and all returned synchronously; exact wrapper commands were independently
 confirmed absent afterward. The existing full visual capture was not run. Export
 capacity remains a separate publication dependency; no guard was changed.
+
+
+## Review batch 101: parity, payout audits and historical captures
+
+Seven more files received full source review: Video Poker and Scratch RTP
+audits, Street Craps and v0.5 promotional captures, native Coin Pusher smoke and
+live-batch contracts, and the event-interaction catalog audit. The native smoke's
+Web reference-backend gate and the live-batch contract's native-Web gate serve
+different proofs; neither was removed or harmonized. Canonical state, source
+ownership, packed rendering, zero-tick durable synchronization, cache-key/reset
+isolation, physics versus insertion bookkeeping and RNG boundaries remain.
+
+The payout audits retain their declared sample policies, paytables, caps and
+bands. They were not run and are not new optimal-strategy or statistical proof.
+Historical capture fixtures and speaker-normalization comparisons intentionally
+construct controlled states; none was applied to a player save. Report-write
+failure handling and a possible queued-quit override in the Street Craps capture
+are separately recorded source risks pending a focused reproduction. An unread
+public promo preload remains without sufficient side-effect/interface evidence
+for deletion. No code, payoff, validation, native binary, capture or approved
+content changed in this review batch.
