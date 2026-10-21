@@ -3608,3 +3608,23 @@ runtime reserves, empty capacity, invalid-coordinate errors and legacy helper
 calls. The existing non-writing `--check` passes for 75 contexts and 604 exact
 slots. No native, browser, gameplay or timing run was needed. Coverage is 674
 full source reviews; no runtime speed gain is claimed.
+
+## Batch 130: drop the unused mouse-wrapper path and retain tool contracts
+
+Read the full mouse-playtest wrapper, runtime binding sweep, trailer capture,
+Craps RTP audit and Quarter Falls copy/golden probe, plus two archived owner-build
+and allocation-root contracts. Remove only the mouse wrapper's unused `$root`
+binding. Its sole caller starts a separate PowerShell process; the complete
+wrapper has no reader or variable reflection for that local. Exact source
+comparison and PowerShell 7 parsing confirm the old one reference becomes zero,
+with every option, assertion, report field and exit unchanged. The script itself
+was not executed: no actual user save or report was accessed.
+
+Retained all runtime-binding authority passes and owned phase snapshots, both
+independent Craps parity runs, minimum roll/tolerance rules, every standalone
+trailer segment, visual wait and copy/golden checkpoint. Historical contracts
+remain provenance, not current execution instructions or dead-code evidence.
+The binding sweep's report-open failure can still leave a successful process
+result; a focused negative-case proposal remains unqualified and unchanged.
+No game, sweep, Monte Carlo audit, media capture, export or golden refresh ran.
+Coverage is 681 full source reviews.

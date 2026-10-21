@@ -7,7 +7,6 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
-$root = Split-Path -Parent $PSScriptRoot
 $visualQa = Join-Path $PSScriptRoot "foundation_visual_qa.ps1"
 
 function Get-JsonProp {
