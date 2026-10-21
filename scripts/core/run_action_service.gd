@@ -1052,6 +1052,11 @@ func hook_option(kind: String, hook_id: String, selected_hook_id: String = "", r
 		summary = "%s %s" % [summary.strip_edges(), terms_summary] if not summary.strip_edges().is_empty() else terms_summary
 	var supported := not definition.is_empty() and (result_deltas_have_mutation(deltas) or (kind == "service" and _is_jazz_custom_service(hook_id)) or (kind == "lender" and _lender_has_dynamic_contract(definition)))
 	var availability_class := _hook_availability_class(kind, hook_id, definition, hook_status, supported)
+	# Borrowing can be permanently unavailable while this contact still accepts
+	# repayment. Keep the existing repayment card reachable without enabling loans.
+	if kind == "lender" and supported and availability_class == RunState.AVAILABILITY_CATEGORICAL_UNAVAILABLE \
+			and run_state != null and bool(run_state.lender_repayment_status(hook_id).get("available", false)):
+		availability_class = RunState.AVAILABILITY_TRANSIENT_BLOCKED
 	var enabled := supported and bool(hook_status.get("available", true))
 	var disabled_reason := ""
 	if not supported:
