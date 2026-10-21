@@ -3664,3 +3664,13 @@ receipt completed before the final large console print was interrupted; that
 outer exit 1 is retained, with no failed assertion hidden or check repeated.
 No generator setup, full suite, native process, browser or export ran. No timing
 gain is claimed. Coverage is 690 full source reviews.
+
+## Batch 133: remove an unused catalog-map set in the placement tests
+
+The already-reviewed dead-row test constructed `catalog_maps` without reading
+it. Remove only that pure local set construction. Python's symbol table confirms
+the old binding was assigned but unreferenced, and the complete module AST
+matches after deleting exactly that assignment. Compilation succeeds. The
+similarly named, used binding in the neighboring manual-tab test remains.
+Every test and assertion is retained; this low-impact deletion needed no suite
+rerun or native process. Coverage remains 690 full source reviews.

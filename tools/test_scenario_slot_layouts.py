@@ -279,7 +279,6 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
                 source_id = str(slot.get("source_slot_id", "")).strip()
                 if source_id:
                     source_ids_by_map[map_id].add(source_id)
-        catalog_maps = {map_id for map_id, _scenario_id in self.layouts}
         for map_id in sorted(reachable_maps):
             map_data = self.maps[map_id]
             referenced_ids = {
