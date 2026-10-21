@@ -47,6 +47,24 @@ func matches_environment(environment: Dictionary) -> bool:
 	return shell == _environment
 
 
+func advanced_turn_counter(environment: Dictionary, previous: int, next: int) -> RefCounted:
+	# Called synchronously by the host immediately after its scalar clock write.
+	# Turns is excluded from the manifest source, slot and scenario layout proof
+	# inputs. Match EVERY other field against the owned accepted publication;
+	# this cannot excuse a simultaneous mutable alias or authority change.
+	if previous < 0 or next <= previous \
+			or typeof(_environment.get("turns")) != TYPE_INT \
+			or typeof(environment.get("turns")) != TYPE_INT \
+			or _environment.get("turns") != previous or environment.get("turns") != next:
+		return null
+	var shell := environment.duplicate(false)
+	shell.erase("game_states")
+	shell["turns"] = previous
+	if shell != _environment:
+		return null
+	return get_script().new(environment, _proof)
+
+
 static func validate(environment: Dictionary, require_renderer_proofs: bool = true) -> Dictionary:
 	return _object_manifest_join_proof(environment, require_renderer_proofs)
 

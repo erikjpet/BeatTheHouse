@@ -4279,6 +4279,10 @@ func _resolve_scenario_layout_candidate(candidate: Dictionary, stamped_records: 
 	if not bool(renderer_snapshot.get("ok", false)):
 		return {"ok": false, "errors": JsonCoerceScript._copy_array(renderer_snapshot.get("errors", ["Scenario sealed renderer snapshot failed closed."])), "layout_audit": JsonCoerceScript._copy_dict(layout_result.get("layout_audit", {}))}
 	candidate["scenario_render_snapshot"] = renderer_snapshot.duplicate(true)
+	# This host boundary performed the same validated layout compilation as
+	# Engine's causal commit. Record its exact resolver inputs too; otherwise the
+	# first empty action flush discards this valid cold/restored compilation.
+	candidate[ScenarioEngineScript.TRUSTED_LAYOUT_INPUT_DIGEST_KEY] = ScenarioEngineScript._sequence_layout_input_digest(candidate, projection)
 	return layout_result
 
 
@@ -12769,6 +12773,7 @@ func _advance_environment_turns_candidate(amount: int) -> Dictionary:
 	var previous_turns := int(current_environment.get("turns", 0))
 	var next_turns := previous_turns + safe_amount
 	current_environment["turns"] = next_turns
+	_advance_published_turn_counter(previous_turns, next_turns)
 	_advance_environment_layer_ambient(next_turns)
 	if ScenarioEngineScript.advance_environment(current_environment, safe_amount):
 		current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
@@ -12843,6 +12848,14 @@ func _advance_environment_turns_candidate(amount: int) -> Dictionary:
 	if _sync_all_runtime_object_manifest_entries(current_environment):
 		reconcile_current_environment_object_manifest(true)
 	return {"ok": true, "applied": safe_amount > 0, "errors": []}
+
+
+func _advance_published_turn_counter(previous: int, next: int) -> void:
+	if _room_presentation_publication == null:
+		return
+	var advanced: RefCounted = _room_presentation_publication.advanced_turn_counter(current_environment, previous, next)
+	if advanced != null:
+		_room_presentation_publication = advanced
 
 
 func _environment_turn_test_failure(stage: String) -> Dictionary:
