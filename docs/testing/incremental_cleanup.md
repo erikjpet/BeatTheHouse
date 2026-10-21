@@ -4504,3 +4504,11 @@ Read all 976 lines of the Blackjack seed audit. Preserve generated rule/audio co
 Remove only the uncalled private `_resolve_and_record` wrapper. The live resolution paths already record their own timing; the wrapper's name appeared only at its definition. This conclusion also traces the real shell-wrapper SceneTree entry, sole deferred `_run` dispatch and absence of preload, scene, registry, signal, reflection or serialized callback consumers. All remaining source, statistics, assertions, RNG calls and payout bounds are exact.
 
 The existing single-file loader passed in 6.766 seconds under the muted private 12%/2 GiB Job, natural exit0/EOF/Job0/no forced cleanup; PID32280 was independently absent. No seed audit, 1,000-hand drift simulation, private save, browser or broad suite was executed. No performance claim.
+
+## Batch 194: review release templates and historical acceptance boundaries
+
+Read all twelve documents completely. The five release06_1 templates are deliberately parked companions of the existing release row: their placeholders represent distinct source, copy, artifact, owner-upload and public-release facts. They neither authorize posting nor add tasks, and their historical release matrix does not override the user's current focused development checks. Keep the explicit hidden-information and exact-capture boundaries.
+
+The 0.2 checklist and 0.4/0.5 drafts/reports are dated historical records. Preserve unreleased-draft warnings, configured-versus-shipped platform distinctions, retained failed/contended attempts and evidence provenance. The 0.5 sweep's stale-hit and memory-step findings are harness conclusions, not new current product or performance claims. No archive, media generator, audit command or posting action was executed.
+
+Read the Bar Dice recovery inventory's final supersession of its earlier candidate status without erasing its accepted Craps-only authority gap. Read teaching closeout and tutorial verification as exact historical requirement/evidence ledgers with normal-run isolation, production-versus-forced tutorial distinctions and the explicit unperformed human comprehension gate. Historical lesson counts are not claims about today's catalog. No document text beyond this audit record, requirement, test, version, publication scope or gameplay was changed.
