@@ -3449,3 +3449,21 @@ dry-run behavior and nonzero failure exits remain. No golden regeneration,
 baseline relaxation, gameplay or runtime check was needed for these source-only
 reviews. Coverage is now 638 full source reviews out of 3,704 inventoried paths;
 screening and asset classification are counted separately.
+
+## Batch 121: reuse capture-axis counts
+
+Read the full Quarter Falls visual-capture helper. Its private body snapshot is
+deeply detached before the viewport-save await. Reuse its distinct x/y counts
+for both validation and reporting, preserving all renderer, rider, solver-motion,
+reduced-motion and exact-manifest requirements. No production rendering or
+animation scheduling changed.
+
+Compared the exact original and changed validation/report blocks with the actual
+snapshot and counting helpers over 240 cases, including 24 valid captures,
+threshold failures, non-dictionary bodies and a live-state mutation at the save
+boundary. Complete capture records, failure messages and callback state matched;
+axis scans totaled 624 before and 480 after. The final private 5% CPU/512 MiB
+check passed in 0.297 seconds with EOF, Job0 and no engine errors. Three earlier
+private fixture failures remain recorded and are not qualification. All four
+owned process IDs were independently absent. No real capture, gameplay, timing
+sample or speedup claim is included. Full-file review count is 639.

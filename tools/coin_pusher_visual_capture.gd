@@ -152,12 +152,14 @@ func _capture_surface(file_name: String, capture_id: String, expected_reduce_mot
 	var reduced_schedule_valid := not expected_reduce_motion \
 		or (int(runtime.get("surface_animation_redraw_count", -1)) == 0 \
 		and not bool(runtime.get("surface_continuous_redraw_active", true)))
+	var distinct_x_count := _distinct_axis_count(bodies, "x")
+	var distinct_y_count := _distinct_axis_count(bodies, "y")
 	var valid := str(state.get("surface_renderer", "")) == "coin_pusher" \
 		and str(state.get("surface_life", "")) == "coin_pusher_v3_alive_cabinet" \
 		and bool(state.get("coin_pusher_alive_cabinet", false)) \
 		and bodies.size() >= 24 \
-		and _distinct_axis_count(bodies, "x") > 5 \
-		and _distinct_axis_count(bodies, "y") > 6 \
+		and distinct_x_count > 5 \
+		and distinct_y_count > 6 \
 		and (presentation.get("riders", []) as Array).size() >= 1 \
 		and bool(runtime.get("reduce_motion", false)) == expected_reduce_motion \
 		and solver_advanced \
@@ -172,8 +174,8 @@ func _capture_surface(file_name: String, capture_id: String, expected_reduce_mot
 		"state_valid": valid,
 		"surface_renderer": str(state.get("surface_renderer", "")),
 		"body_count": bodies.size(),
-		"distinct_x_count": _distinct_axis_count(bodies, "x"),
-		"distinct_y_count": _distinct_axis_count(bodies, "y"),
+		"distinct_x_count": distinct_x_count,
+		"distinct_y_count": distinct_y_count,
 		"rider_count": (presentation.get("riders", []) as Array).size(),
 		"expected_reduce_motion": expected_reduce_motion,
 		"reduce_motion": bool(runtime.get("reduce_motion", false)),
