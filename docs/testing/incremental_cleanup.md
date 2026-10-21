@@ -2878,3 +2878,22 @@ blob has explicit immutable provenance in the fully reviewed integration replay
 manifest; no simple absence-of-runtime-reader argument justifies deleting that
 custody record or changing its acceptance status. No game, save, RNG, payout,
 native contract, shipped art or approved content changed.
+
+
+## Review batch 93: authored world policy and historical entry points
+
+Six more authored data files received full source review: character chains,
+content groups, town conditions, travel routes, lenders and services. Their
+ContentLibrary/model/validator consumers remain active. Optional story flags,
+non-default gear and souvenir groups, empty game/item lists, phone-only lending,
+pawn collateral, Crew favor conversion, route gates and schedules all retain
+distinct meanings. No content, public IDs, economy, heat or clock values changed.
+
+Six archived GDScript tools were also reviewed without execution. The short
+surface-family file is an explicit compatibility entry point. Two signers are
+historical source-mutating authoring commands; no package was resigned. The
+remaining contracts preserve deferred selected-scenario validation, positive
+idle draw/liveness and bounded timing-buffer checks, plus safe staged-Web-ready
+snapshot schemas. Their historical budgets and assertions remain intact. A
+native simulated startup seam is not presented as a new Web playtest. This
+review adds coverage and justifies no further code change in these twelve files.
