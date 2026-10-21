@@ -4444,3 +4444,9 @@ Read the full Numbers contract, including public-read purity, signed book closes
 Remove only the unread local `TownStateScript` alias. The earlier `RunStateScript` preload already loads exactly the same TownState resource. The real caller uses the contract's static `run` entry; existing constant reflection targets other scripts. No scene, dispatch, serialization or exported interface depends on this alias. All other source is exact.
 
 The existing one-file loader passed in 4.094 seconds under the private muted 12%/2 GiB Job, with natural zero exit, EOF, Job0 and independent PID absence. Two prelaunch admission refusals started no process; the second arose from a UTC/local timestamp comparison and was corrected to identify only the exact concurrent functional money check. Parent-authorized functional concurrency makes no timing claim. No Numbers suite, save, fixture or broad gameplay test was run.
+
+## Batch 185: review historical integration execution and failure ledgers
+
+Read the complete capture WIP, final execution ledger and composition/migration report. Keep rejected attempts, exact historical identities, later attribution corrections and unchanged evidence hashes. In particular, missing harness arrival finalization produced cascaded room failures; an identical old failure count was not itself a waiver. The later migration-only closure is explicitly narrower than release composition, parity and terminal-soak qualification.
+
+These are dated execution and failure records. Their broad release commands do not override the user's current focused development-testing policy or create new work. No historical output, fixture, driver, golden, runtime or source was regenerated or relabeled. The documents remain unchanged.
