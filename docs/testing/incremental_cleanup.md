@@ -3853,3 +3853,27 @@ profile, directory, network or browser access. This focused check completed in
 fresh-start assertions remain unchanged. No full wrapper, performance suite,
 export, server, browser, gameplay or save operation ran. Coverage is 715 full
 file reviews. Publication remains with the deployment recovery owner.
+
+## Batch 143: complete the scenario-layout resolver review
+
+Read all 2,187 resolver lines. Preserve the compatibility preparation seam,
+authoritative resolution, passive seals, exact hosts for abstract commands,
+deterministic score ties, navigation versus safe-exit semantics, fixed room
+slots versus overflow, authored actor routes, normal/small-screen reachability,
+tombstone membership, closed authority and renderer signatures. Repair preview
+is an explicit editor context; production still rejects the same errors.
+The overlap helpers have direct regression callers and must not be deleted
+because they are absent from the main resolver path.
+
+Specific unmeasured proposal: `_assign_z_order` stores a whole scene/actor
+collection in each sort entry, then `_dict` deep-copies those entries in every
+comparison to read only `bottom` and `identity`. Sorting scalar metadata could
+avoid repeated collection copies. Preserve approximate-float ties, identity
+ordering, final mutations and ownership, and qualify complete state/seal/RNG
+parity before any owner-approved candidate or performance claim. An unused
+`base_small` local in interaction validation is also recorded, without editing
+the owned file. Both findings were handed to the performance owner.
+
+No core code, assertion, scheduling, geometry, runtime or save changed. Coverage
+is 716 full file reviews. Ten deferred paths now have complete reads; only
+RunState and FoundationMain still retain screening rather than full-file status.
