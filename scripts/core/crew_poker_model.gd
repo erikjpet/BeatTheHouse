@@ -94,7 +94,7 @@ static func patterns(member_id: String) -> Array:
 static func pattern(member_id: String, state_key: String) -> Dictionary:
 	for value in patterns(member_id):
 		if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("state_key", "")) == state_key:
-			return (value as Dictionary).duplicate(true)
+			return value as Dictionary
 	return {}
 
 
@@ -657,7 +657,7 @@ static func surface_pattern(member_id: String, cards: Array, action: String, dra
 			continue
 		var scaled_frequency := clampi(int(round(float(authored.get("frequency_percent", 0)) * (0.5 + float(clampi(tell_leak, 0, 100)) / 100.0))), 1, 100)
 		if rng.randi_range(1, 100) <= scaled_frequency:
-			return authored.duplicate(true)
+			return authored
 	return {}
 
 
