@@ -57,7 +57,8 @@ function ConvertTo-WindowsProcessArgument {
 $root = Split-Path -Parent $PSScriptRoot
 $webDir = if ([string]::IsNullOrWhiteSpace($ServeRoot)) { Join-Path $root "builds/web" } else { [System.IO.Path]::GetFullPath($ServeRoot) }
 $workspaceRoot = [System.IO.Path]::GetFullPath($root)
-if (-not $webDir.StartsWith($workspaceRoot, [System.StringComparison]::OrdinalIgnoreCase)) {
+if (-not $webDir.Equals($workspaceRoot, [System.StringComparison]::OrdinalIgnoreCase) -and
+    -not $webDir.StartsWith($workspaceRoot.TrimEnd([char[]]@('\', '/')) + [System.IO.Path]::DirectorySeparatorChar, [System.StringComparison]::OrdinalIgnoreCase)) {
     throw "Refusing to serve a directory outside the workspace: $webDir"
 }
 

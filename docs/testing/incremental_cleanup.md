@@ -2955,3 +2955,33 @@ also remains because its canonical scenario lookup may update authorization
 caches and validation errors. Audio report write-failure policy is a separate
 source risk, not an excuse to change test exit criteria. No historical signer,
 capture, full gameplay suite or old save fixture was executed or rewritten.
+
+
+## Batch 96: enforce the local Web wrapper's directory boundary
+
+The local server wrapper checked containment with a plain workspace-name prefix.
+That accepted a sibling such as `workspace-backup/web`. Require the exact
+workspace directory or a prefix ending at a directory separator. Full-path
+normalization and case-insensitive Windows comparison remain. No server launch,
+browser, headers, argument quoting, ownership, shutdown or cleanup code changed.
+This is a lexical path check; filesystem junction resolution is not claimed.
+
+The original guard's sibling acceptance was reproduced. A focused regression
+executes the actual PowerShell AST guard over17 cases: workspace and nested
+children, spaces, case, normalized paths, trailing separators, drive roots,
+prefixed siblings, parent escapes, another drive and UNC paths. All passed.
+The check starts no Python process, listener or browser and creates no path
+fixtures. The broader lifecycle test remains intact and was not rerun.
+
+Twenty-three existing files and the new path regression received full source
+review: the server wrapper and lifecycle test, native builder and historical
+performance matrix/qualification/deferral tools and registries, Slot metrics,
+shop-row placement, Heat feedback tools, a Video Poker probe, eight explicit
+archived scene entry points, the low-end profile example and the intentional
+empty-room save fixture. Historical budgets, native and animation contracts,
+negative cases, capture tools and fixtures remain unchanged. No historical
+matrix, capture, signer, server or old save was run or rewritten. A packed save's
+envelope was inspected separately; its opaque payload is not counted as a full
+semantic review. The Video Poker probe's false-start path can finish with an
+empty failure list; it is recorded as the next small test-harness candidate,
+without claiming a reproduced production gameplay failure.
