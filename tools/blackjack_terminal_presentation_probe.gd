@@ -79,7 +79,6 @@ func _run() -> void:
 
 	var challenge: Dictionary = preview_ui.get("count_challenge", {})
 	var saw_hole_card := false
-	var last_bubble_end := int(preview_ui.get("surface_time_msec", opening_msec))
 	var first_terminal_spawn := 0
 	for card_value in challenge.get("cards", []):
 		if typeof(card_value) == TYPE_DICTIONARY and str((card_value as Dictionary).get("_count_source_key", "")).begins_with("dealer:1:"):
@@ -89,7 +88,6 @@ func _run() -> void:
 			continue
 		var icon: Dictionary = icon_value
 		var spawn := int(icon.get("spawn_msec", 0))
-		last_bubble_end = maxi(last_bubble_end, spawn + int(icon.get("duration_msec", 0)))
 		var card: Dictionary = icon.get("card", {})
 		if str(card.get("_count_source_key", "")).begins_with("dealer:1:"):
 			first_terminal_spawn = spawn

@@ -2132,7 +2132,40 @@ schema, results and tests remain unchanged; establishing real producer accountin
 needs a separate scoped proposal, rather than changing qualification during
 cleanup.
 
+## Batch 77: remove a retired terminal-probe accumulator
+
+`tools/blackjack_terminal_presentation_probe.gd::_run` still initialized and
+updated `last_bubble_end`, although its terminal lifecycle now advances through
+the sealed driver and never reads that local. Remove the unused initializer and
+per-icon update only. Its three token occurrences were declaration, assignment
+and self-read; the value did not escape into a branch, argument, assertion,
+capture, return or report. The removed expressions only read concrete fixture
+timestamps and perform pure integer arithmetic.
+
+All15 assertions, fixed-shoe data, presentation times, terminal-bubble ordering
+checks, driver commands and outputs are byte-identical. The unchanged focused
+GDScript loader passed checked1/failures0. The finite muted parser Job exited
+naturally with EOF, Job0 and no forced cleanup. The full end-to-end gameplay
+probe was not rerun for this unused-local edit, and no runtime speedup is claimed.
+
+The complete environment-interaction controller source and five additional
+Blackjack/Bar Dice/Crew/inventory probes were reviewed as recorded in the
+inventory. Controller ownership copies, distinct authority checks, rollback,
+tombstones, action identity and live allowlists were retained. A fallback local
+door route may alias the content library before applying local route fields;
+this is a source-level follow-up requiring separate faithful reproduction before
+changing behavior. No controller, gameplay, save, native or content edit is part
+of this batch.
+
 ## Release receipts
+
+Batch76 promoted as`9863624c5de708517876f9107510bf30f52cd8da`, tree
+`d809e32c7b186b98ab2cb248cda495d9ce96dd8e`. All15 archive/HTTPS hashes,
+redirect, WASM MIME, stable0.6.0 and final pointer passed at12:55:30 UTC.
+Archive SHA-256:
+`1ed533daa49827b46bf5a04b83cf2e61d7bd98a3144d94fa9d6bec0685a0a7ec`.
+Independent12:55:30.684 census found exportroot18504/allnewGodot absent;
+existing guardian42856/worker42252 and retention remained error-free.
 
 Batch75 promoted as`8a38424f2ef8a37c3ad9f99cb74bc25ab8b8a149`, tree
 `dac8571a872999abd1787d4b57be4be689fc9d9e`. All15 archive/HTTPS hashes,
