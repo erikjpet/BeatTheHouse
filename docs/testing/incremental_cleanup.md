@@ -4248,3 +4248,23 @@ upgrade/pack save errors. No behavior or save contract changes in this batch.
 Two tiny local cleanup leads are prepared separately; their native qualification
 is pending actual primary-checkout Godot process closure. No runtime launched.
 Coverage is 768 complete file reviews; screening and classification are separate.
+
+## Batch 164: review scenario and hidden-state qualification contracts
+
+Read four complete files: the current scenario-backlog and hidden-information
+contracts, plus the historical phase-qualification helper and machine-games
+platform probe. Keep the exact 55/13 scenario census, exclusive layer scopes,
+production event resolver, mid-phase restore and 128-seed reach criteria. The
+old failure prose still names 20 seeds; record that diagnostic follow-up without
+changing or relaxing the sweep.
+
+The hidden-information contract retains entropy, stable private authority, seven
+real grievance producers, exact continuation, resealing, hostile transplants,
+capacity rejection and both historical save migrations. Its fixture copies
+isolate mutations. No private key, profile or save was read or created here.
+
+Retain positive idle timing/liveness and explicit allocation evidence rules,
+platform-specific budgets, sealed machine settlement, bankroll conservation and
+ordered feature/session inputs. Historical helpers remain callable records, not
+current per-commit testing policy. No suites, seed sweeps or games ran. Coverage
+is 772 complete source reviews.
