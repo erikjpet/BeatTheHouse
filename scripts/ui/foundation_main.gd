@@ -21911,6 +21911,9 @@ func _refresh_world_map_detail() -> void:
 		description,
 		travel_line,
 	]
+	var heard_rumor := _world_map_heard_rumor_line(node)
+	if not heard_rumor.is_empty():
+		detail_lines.insert(3, "Heard: %s" % heard_rumor)
 	var delivery_layer := run_state.delivery_map_layer()
 	if not delivery_layer.is_empty():
 		for target_value in JsonCoerceScript._copy_array(delivery_layer.get("targets", [])):
@@ -21947,6 +21950,14 @@ func _on_world_map_holder_gui_input(event: InputEvent) -> void:
 		_sync_world_map_overlay_controller_to_host()
 		_refresh_world_map_overlay()
 		accept_event()
+
+
+func _world_map_heard_rumor_line(node: Dictionary) -> String:
+	var heard_value: Variant = node.get("heard", {})
+	if typeof(heard_value) != TYPE_DICTIONARY:
+		return ""
+	var line_value: Variant = (heard_value as Dictionary).get("line", "")
+	return (line_value as String).strip_edges() if typeof(line_value) == TYPE_STRING else ""
 
 
 func _world_map_node_flavor(node: Dictionary) -> String:
