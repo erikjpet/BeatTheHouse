@@ -3327,3 +3327,15 @@ under the muted 5% CPU/512 MiB Job. Natural exit, EOF, Job0 and independent load
 absence were recorded. This is source/loader evidence for a small fatal-input
 guard; no full capture or real missing-definition process reproduction is claimed.
 The distinct manifest-open failure path remains a separate follow-up.
+
+
+## Batch 114: retain a review-capture manifest failure
+
+The same review producer silently skipped a null manifest output handle and
+could still report PASS. Append that error through its existing failure collector;
+its existing final branch then reports failure and quits nonzero. This separate
+two-line guard leaves valid manifest bytes, capture fixtures and the prior
+fatal-definition guard unchanged. The changed-file loader passed in 5.141 seconds,
+with natural exit, EOF, Job0 and independent process absence. Source and loader
+evidence are recorded; no extra unit, actual failed capture or screenshot replay
+is claimed.

@@ -72,6 +72,8 @@ func _run() -> void:
 	if file != null:
 		file.store_string(JSON.stringify(manifest, "\t"))
 		file.close()
+	else:
+		_fail("Could not write Craps review capture manifest.")
 	if failures.is_empty():
 		print("CRAPS_REVIEW_CAPTURE PASS files=%d dir=%s" % [saved_files.size(), ProjectSettings.globalize_path(OUTPUT_DIR)])
 		quit(0)
