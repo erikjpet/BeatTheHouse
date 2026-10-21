@@ -1813,6 +1813,16 @@ func prepare_resolved_event_membership_for_publication(event_id: String, profile
 		profile_stage_started_usec = Time.get_ticks_usec()
 
 	_sync_all_runtime_object_manifest_entries(current_environment)
+	if _room_presentation_publication != null:
+		var compiled: RefCounted = _room_presentation_publication.compile_resolved_event_membership(current_environment, clean_event_id)
+		if compiled != null and compiled.commit_compiled_event_membership(current_environment):
+			_room_presentation_publication = compiled
+			var compiled_result := {"ok": true, "errors": [], "manifest": JsonCoerceScript._copy_dict(current_environment.get("object_manifest", {})), "storage_deferred_until_departure": true}
+			if profile_stages:
+				profile_timing["owned_compilation"] = Time.get_ticks_usec() - profile_stage_started_usec
+				profile_timing["total"] = Time.get_ticks_usec() - profile_started_usec
+				compiled_result["debug_membership_usec"] = profile_timing
+			return compiled_result
 	var manifest := EnvironmentInstance.reconcile_object_manifest(current_environment)
 	if profile_stages:
 		profile_timing["manifest_reconcile"] = Time.get_ticks_usec() - profile_stage_started_usec

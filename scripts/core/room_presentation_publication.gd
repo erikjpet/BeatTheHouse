@@ -4,6 +4,8 @@ extends RefCounted
 # retains a mutable input/output alias. At action boundaries its accepted proof
 # can be reused only for exactly equal authority inputs; getters never validate.
 const EnvironmentInstanceScript := preload("res://scripts/core/environment_instance.gd")
+const EnvironmentObjectManifestScript := preload("res://scripts/core/environment_object_manifest.gd")
+const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 const MAX_AUTHORITY_GAME_INPUT_BYTES := 64 * 1024
@@ -12,6 +14,9 @@ var _environment: Dictionary
 var _proof: Dictionary
 var _authority_game_inputs: Dictionary = {}
 var _proof_reuse_safe := false
+var _surface_input_bytes := PackedByteArray()
+var _compilation_input_bytes := PackedByteArray()
+var _compilation_kind := ""
 
 
 func _init(environment: Dictionary, proof: Dictionary) -> void:
@@ -28,6 +33,10 @@ func _init(environment: Dictionary, proof: Dictionary) -> void:
 			and var_to_bytes(game_inputs).size() <= MAX_AUTHORITY_GAME_INPUT_BYTES
 	if _proof_reuse_safe:
 		_authority_game_inputs = game_inputs.duplicate(true)
+	if not environment.is_empty() and _proof_reuse_safe:
+		var surface := EnvironmentPlacementScript.surface_map(environment)
+		_proof_reuse_safe = not _has_opaque_reference(surface)
+		_surface_input_bytes = var_to_bytes(surface)
 
 
 func snapshot() -> Dictionary:
@@ -93,7 +102,171 @@ func advanced_turn_counter(environment: Dictionary, previous: int, next: int) ->
 	publication._proof = _proof
 	publication._authority_game_inputs = _authority_game_inputs
 	publication._proof_reuse_safe = _proof_reuse_safe
+	publication._surface_input_bytes = _surface_input_bytes
 	return publication
+
+
+func compile_resolved_event_membership(environment: Dictionary, event_id: String) -> RefCounted:
+	if not _proof_reuse_safe or not bool(_proof.get("ok", false)) or event_id.is_empty(): return null
+	# Construct the only supported transition from PRIVATE immutable input. No
+	# live child is recaptured, recursively rescanned or shared into the candidate.
+	var input := _environment.duplicate(false)
+	var resolved := _array(_environment.get("resolved_event_ids", [])).duplicate(true)
+	if not resolved.has(event_id): resolved.append(event_id)
+	input["resolved_event_ids"] = resolved
+	var shell := environment.duplicate(false)
+	shell.erase("game_states")
+	var expected_bytes := var_to_bytes(input)
+	if var_to_bytes(shell) != expected_bytes \
+			or var_to_bytes(_game_authority_input_view(environment)) != var_to_bytes(_authority_game_inputs): return null
+	var surface := EnvironmentPlacementScript.surface_map(environment)
+	if var_to_bytes(surface) != _surface_input_bytes: return null
+	var game_inputs := _authority_game_inputs
+	var candidate := input.duplicate(false)
+	# These are the complete game-state inputs consumed by physical compilation;
+	# opaque simulations never enter this owned geometry/semantic transaction.
+	var machines: Dictionary = {}
+	for id in game_inputs:
+		var game := _dict(game_inputs[id])
+		if bool(game.get("installed", false)):
+			machines[id] = {"environment_hooks": game.get("environment_hooks", []), "scalper_present": game.get("scalper_present", false)}
+	candidate["game_states"] = machines
+	var prior_rows := _array(_dict(input.get("object_manifest", {})).get("rows", []))
+	var prior_ids: Dictionary = {}
+	var resolved_ids: Dictionary = {}
+	for value in prior_rows:
+		var row := _dict(value)
+		if not bool(row.get("active", true)) or not bool(row.get("physical", true)): continue
+		var instance := str(row.get("instance_object_id", "")).strip_edges()
+		var presentation := str(row.get("presentation_object_id", row.get("object_id", instance))).strip_edges()
+		for id in [instance, presentation]:
+			if id.is_empty(): continue
+			prior_ids[id] = true
+			if str(row.get("family", "")) == "event" and str(row.get("source_id", "")).strip_edges() == event_id:
+				resolved_ids[id] = true
+	var entries := EnvironmentInstanceScript._physical_manifest_layout_entries(candidate, surface)
+	var canonical := EnvironmentObjectManifestScript.reconcile(candidate, entries, surface, _dict(candidate.get("object_manifest", {})))
+	candidate["object_manifest"] = canonical
+	candidate["object_manifest_digest"] = str(canonical.get("digest", ""))
+	candidate["object_manifest_revision"] = maxi(0, int(canonical.get("revision", 0)))
+	var live_ids: Dictionary = {}
+	for value in _array(canonical.get("rows", [])):
+		var row := _dict(value)
+		if not bool(row.get("active", true)) or not bool(row.get("physical", true)): continue
+		var instance := str(row.get("instance_object_id", "")).strip_edges()
+		var presentation := str(row.get("presentation_object_id", row.get("object_id", instance))).strip_edges()
+		for id in [instance, presentation]:
+			if id.is_empty(): continue
+			if not prior_ids.has(id): return null
+			live_ids[id] = true
+	var layout := _dict(candidate.get("layout", {})).duplicate(true)
+	var bindings := _dict(layout.get("slot_bindings", {})).duplicate(true)
+	var rects := _dict(layout.get("object_rects", {})).duplicate(true)
+	var overflow := JsonCoerceScript._string_array(layout.get("slot_overflow_ids", []))
+	var changed := false
+	for id in resolved_ids:
+		if live_ids.has(id): continue
+		changed = bindings.has(id) or rects.has(id) or overflow.has(id) or changed
+		bindings.erase(id)
+		rects.erase(id)
+		overflow.erase(id)
+	if changed:
+		overflow.sort()
+		layout["slot_bindings"] = bindings
+		layout["object_rects"] = rects
+		layout["slot_overflow_ids"] = overflow
+		layout["slot_binding_digest"] = EnvironmentSlotBinderScript.binding_digest(bindings)
+		layout.erase("grounding_signature")
+		candidate["layout"] = layout
+	# Releasing geometry cannot alter canonical membership inputs. Authenticate
+	# that invariant before using the locally generated canonical rows, instead
+	# of constructing the same canonical manifest again in the validator.
+	var released_surface := EnvironmentPlacementScript.surface_map(candidate)
+	var released_entries := EnvironmentInstanceScript._physical_manifest_layout_entries(candidate, released_surface)
+	if released_surface != surface or released_entries != entries: return null
+	# This canonical envelope was just built from owned input, so retain its
+	# schema/digest validation and the ticket-host boundary. Rebuilding it again
+	# to compare each freshly generated row with itself adds no authority.
+	var manifest_errors := EnvironmentObjectManifestScript.validate(canonical)
+	manifest_errors.append_array(EnvironmentInstanceScript.ticket_redemption_manifest_errors(candidate))
+	if not manifest_errors.is_empty() or _array(canonical.get("rows", [])).is_empty(): return null
+	var proof := _authenticated_event_removal_proof(input, candidate, event_id, game_inputs, _surface_input_bytes)
+	if not bool(proof.get("ok", false)): return null
+	# Match the original base-plane cleanup, including its second strong proof.
+	# Such rooms use the established path until that separate compiler owns it.
+	for value in _array(canonical.get("rows", [])):
+		var row := _dict(value)
+		if str(row.get("source_kind", "")) == "scenario_projection":
+			var id := str(row.get("presentation_object_id", row.get("object_id", row.get("instance_object_id", ""))))
+			if _dict(_dict(candidate.get("layout", {})).get("slot_bindings", {})).has(id): return null
+	candidate.erase("game_states")
+	var publication: RefCounted = get_script().new({}, {})
+	publication._environment = candidate
+	publication._proof = proof
+	publication._authority_game_inputs = game_inputs
+	publication._proof_reuse_safe = true
+	publication._compilation_input_bytes = expected_bytes
+	publication._compilation_kind = "authenticated_event_removal"
+	publication._surface_input_bytes = _surface_input_bytes
+	return publication
+
+
+func _authenticated_event_removal_proof(input: Dictionary, candidate: Dictionary, event_id: String, game_inputs: Dictionary, surface_bytes: PackedByteArray) -> Dictionary:
+	if not bool(_proof.get("ok", false)) or var_to_bytes(game_inputs) != var_to_bytes(_authority_game_inputs): return {}
+	if surface_bytes != _surface_input_bytes: return {}
+	var old_manifest := _dict(_environment.get("object_manifest", {}))
+	var new_manifest := _dict(candidate.get("object_manifest", {}))
+	var old_by_id: Dictionary = {}
+	for value in _array(old_manifest.get("rows", [])):
+		var row := _dict(value)
+		old_by_id[str(row.get("instance_object_id", ""))] = row
+	var base_rows: Array = []
+	var scenario_rows: Array = []
+	var retained_ids: Dictionary = {}
+	for value in _array(new_manifest.get("rows", [])):
+		var row := _dict(value)
+		var id := str(row.get("instance_object_id", ""))
+		if not old_by_id.has(id): return {}
+		retained_ids[id] = true
+		var old := _dict(old_by_id[id])
+		# Canonical ordering/selection metadata may change when an event leaves;
+		# each retained row must keep exactly its validated spatial identity.
+		for key in ["instance_object_id", "presentation_object_id", "object_id", "source_kind", "family", "physical", "active", "placement_class", "exact_slot_id", "required", "object_type", "spot_field"]:
+			if var_to_bytes(old.get(key)) != var_to_bytes(row.get(key)): return {}
+		if str(row.get("source_kind", "")) == "scenario_projection": scenario_rows.append(row)
+		else: base_rows.append(row)
+	for id in old_by_id:
+		var row := _dict(old_by_id[id])
+		if retained_ids.has(id) or not bool(row.get("active", true)) or not bool(row.get("physical", true)): continue
+		if str(row.get("family", "")) != "event" or str(row.get("source_id", "")).strip_edges() != event_id: return {}
+	var layout := _dict(candidate.get("layout", {}))
+	var base := _dict(_proof.get("layout_authority", {})).duplicate(false)
+	base["slot_bindings"] = _dict(layout.get("slot_bindings", {}))
+	base["object_rects"] = _dict(layout.get("object_rects", {}))
+	base["overflow_ids"] = _array(layout.get("slot_overflow_ids", []))
+	base["binding_digest"] = str(layout.get("slot_binding_digest", ""))
+	# The owned compiler only erases resolved event bindings/rectangles. Removing
+	# those occupants preserves the old slot geometry, capacities and non-overlap;
+	# correlation below still checks every retained manifest row and exact host.
+	var errors := _manifest_layout_correlation_errors(base_rows, _dict(base.get("slot_bindings", {})))
+	errors.append_array(_manifest_layout_correlation_errors(scenario_rows, _dict(candidate.get("scenario_layout_authority", {}))))
+	return {"ok":true,"layout_authority":base,"errors":[]} if errors.is_empty() else {}
+
+
+func commit_compiled_event_membership(environment: Dictionary) -> bool:
+	if _compilation_input_bytes.is_empty(): return false
+	var shell := environment.duplicate(false)
+	shell.erase("game_states")
+	if var_to_bytes(shell) != _compilation_input_bytes \
+			or var_to_bytes(_game_authority_input_view(environment)) != var_to_bytes(_authority_game_inputs) \
+			or var_to_bytes(EnvironmentPlacementScript.surface_map(environment)) != _surface_input_bytes: return false
+	for key in ["object_manifest", "object_manifest_digest", "object_manifest_revision", "layout"]:
+		var value: Variant = _environment.get(key)
+		if key == "layout" and var_to_bytes(value) == var_to_bytes(environment.get(key)): continue
+		# Live state never receives a mutable alias to a private generation.
+		environment[key] = value.duplicate(true) if typeof(value) == TYPE_DICTIONARY else value
+	_compilation_input_bytes = PackedByteArray()
+	return true
 
 
 static func _game_authority_input_view(environment: Dictionary) -> Dictionary:
