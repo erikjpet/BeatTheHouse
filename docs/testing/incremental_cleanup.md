@@ -4374,3 +4374,9 @@ The manifest test intentionally deep-copies nested hostile fixtures before mutat
 Read all four complete audio program documents (92, 73, 76 and 140 lines). Distinguish the explicitly unreviewed one-profile pre-stage proposal from the dated thirteen-profile closeout and its retained non-acceptance evidence. Their shared design requires public fact/transition authority, one-bind capabilities, deterministic selection, bounded voice stealing, mixer/mute behavior and visual/text counterparts; production music remains a separate handoff.
 
 Keep the historical manifest/log hashes, failed attempts, baseline/Slot residual attribution and phase-completion safeguard. Those records are not fresh current-build playback evidence, and the old broad test instructions do not supersede the user's focused development policy. No counts, claims, prose encoding, historical evidence, audio assets or runtime source were rewritten.
+
+## Batch 174: remove an unread audit preload alias
+
+Remove the audio audit's unread `WebAudioBridgeScript` constant. Its existing `SfxPlayerScript` dependency preloads the identical bridge and uses its methods/constants, so bridge compilation remains covered. The standalone script entry, UID, every function/assertion, hostile fixture copy, authority check, phase-completion guard, voice/mixer budget and historical evidence remain unchanged. Constant-map consumers target Foundation or the Showdown projection rather than this local audit alias.
+
+The existing one-resource compiler passed in 4.187 seconds under the private muted 12% CPU / 2 GiB Job, with natural exit, EOF/Job0 and independent process absence. No new mirrored test, full audio audit, playback, game/save flow or timing claim. There is no canvas/scheduling change to require another animation replay.

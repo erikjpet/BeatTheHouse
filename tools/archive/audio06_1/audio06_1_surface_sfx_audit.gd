@@ -2,7 +2,6 @@ extends SceneTree
 
 const ManifestScript := preload("res://scripts/core/surface_sfx_manifest.gd")
 const SfxPlayerScript := preload("res://scripts/ui/sfx_player.gd")
-const WebAudioBridgeScript := preload("res://scripts/ui/web_audio_bridge.gd")
 const GameSurfaceCanvasScript := preload("res://scripts/ui/game_surface_canvas.gd")
 
 const EXPECTED_PROFILES := [
