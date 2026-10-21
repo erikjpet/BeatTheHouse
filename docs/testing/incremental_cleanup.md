@@ -3916,3 +3916,21 @@ their reviewed diff hunks do not count as complete file coverage. The earlier
 16 cleanup commits through `b0a43358` have since promoted through the existing
 watcher, with exact identity/entry readiness and independent export closure
 recorded separately. The former allocation-recovery hold is resolved.
+
+## Batch 146: avoid copying an already-owned audit report again
+
+Read the complete scenario-sequence audit and shared probe-support tools. The
+audit assigned `_dict(value).duplicate(true)` even though its unchanged `_dict`
+helper already returns a fresh deep copy. Remove only the second consecutive
+copy. All thresholds, hostile fixtures, report fields, public helpers, validation
+and exit behavior remain unchanged. Probe support retains its exact 21-record
+trace, four distinct outcomes, sealed action origins, canonical parity rules,
+linear percentiles, separate timing budgets and capture evidence requirements.
+
+Compile the exact old/new expression with the unchanged helper and compare nine
+null, non-dictionary, empty, nested and packed-array cases. Complete outputs match;
+mutating or clearing outputs does not reach inputs, and repeated captures agree.
+PASS in 0.187 seconds under the existing 5% CPU/512 MiB private Job; EOF, Job0,
+no forced cleanup and independent process absence recorded. This is a focused
+ownership check, not an audit run, gameplay test or speed measurement. No scene,
+ContentLibrary, RNG, browser, save or exporter ran. Coverage is 728 full reviews.

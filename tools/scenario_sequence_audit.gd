@@ -55,7 +55,7 @@ func _run() -> void:
 	var catalog := ScenarioCatalogScript.load_catalog()
 	var definitions := _definitions(library, catalog)
 	var target_inventories := _target_inventories(library, definitions)
-	var authority_report := _dict(library.scenario_sequence_catalog.get("uniqueness_audit", {})).duplicate(true)
+	var authority_report := _dict(library.scenario_sequence_catalog.get("uniqueness_audit", {}))
 	var failures: Array = argument_failures.duplicate(true)
 	failures.append_array(_strings(library.validation_errors))
 	failures.append_array(_strings(catalog.get("failures", [])))
