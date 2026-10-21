@@ -85,11 +85,10 @@ func _play_seed(app: Control, seed_text: String, exercise_saves: bool, play_seco
 	var first := await _play_hand(app, exercise_saves, true)
 	var saved_mid_session := false
 	if exercise_saves and bool(first.get("complete", false)):
-		var before_session_save := _game_state(app)
 		if not _save_host_run(app):
 			failures.append("Hold'em seed %s could not write its between-hand save." % seed_text)
 		await _settle(2)
-		before_session_save = _game_state(app)
+		var before_session_save := _game_state(app)
 		if not bool(app.call("load_foundation_run")):
 			failures.append("Hold'em seed %s could not continue from a between-hand save." % seed_text)
 		elif not bool(app.call("enter_game", GAME_ID)):

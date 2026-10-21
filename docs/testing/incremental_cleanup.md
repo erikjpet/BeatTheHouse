@@ -3575,3 +3575,19 @@ matched. Fresh/forced requests fall from 16 to 14 and exactly cover final-edit
 plus music sources. PowerShell parsing passed. No Godot, FFmpeg, video render,
 install or full project gate ran; no time, disk-saving or new video-quality claim
 is included. The historical records remain unchanged. Coverage is 673 full reviews.
+
+## Batch 128: remove the discarded Hold'em table snapshot
+
+The exact candidate preserved in batch 123 now passes the one-file load check
+under the existing muted 12% CPU/2 GiB profile: 8.203 seconds, EOF, Job0, no errors
+and independent process absence. The earlier 512 MiB baseline/candidate crashes
+remain recorded; their cause is unestablished. No watcher, engine, cache, cap
+declaration or test implementation was repaired or relaxed.
+
+Remove only the pure deep snapshot that was unconditionally overwritten before
+use. Declare the surviving snapshot at its original post-save/settle read. The
+reader has no callbacks or writes; there is no use or exit between the old first
+assignment and overwrite. All save calls, awaits, resume keys, failure messages,
+RNG operations and assertions remain identical. No live host, save or gameplay
+audit ran and no speed gain is claimed. This resolves the specific candidate
+deferral without changing the full-review count of 673.
