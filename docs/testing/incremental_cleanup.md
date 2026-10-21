@@ -4288,3 +4288,23 @@ private-room recovery. Actual pre-0.6 active-room and stored-map migrations rema
 no recent recovery fix is rolled back. Copies isolate hostile fixtures and
 canonical before/after evidence. No game, generation sweep, fixture or save was
 run or rewritten. Coverage is 776 complete file reviews.
+
+## Batch 166: review authoring and evidence-custody boundaries
+
+Read the complete evidence-admission helper, Environment Library launcher check
+and four related authoring/review documents. Keep exact-case typed admission,
+present-empty versus null arrays, recursive authority rejection and independent
+frozen first-arrival RNG witnesses. The two getters intentionally differ in
+PowerShell enumeration behavior and remain separate.
+
+Keep the launcher's private settings/project/report paths, 75-context custody,
+Save & Load Next, authored layer locks, real F5/F9 input, carried player state,
+Leave dragging and distinct Sal sale/pawn actions. No launcher or replay ran.
+
+Historical consolidation and harvest records explain recoverable deletion of
+solver mechanisms, fixed-slot authority and the independent JSON authoring seam.
+Their old no-legacy-save sentence is superseded historical scope, not permission
+to remove current save compatibility. The masked visual report retains its 27
+receipt-bound pair findings and original evidence limits; it is not a new
+production hit-geometry or Web pass. No data, media or historical receipt changed.
+Coverage is 782 complete file reviews.
