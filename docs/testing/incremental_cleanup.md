@@ -525,6 +525,29 @@ as dead simply because the compact presentation hides them. Coverage is now
 120 targeted source/contract reviews. This commit remains local under the
 parent's publication/export pause.
 
+## Batch 19: inspect journal array presence without copying
+
+RunJournalViewModel recursively copied inventory/debt arrays only to ask whether
+they were empty. Use a type-checked presence helper at four such sites. Retain
+all category precedence, terminal synthesis, callback ordering and copies passed
+through label callbacks; those copies preserve an actual mutation boundary.
+
+Native comparison with the prior module passed 27,648 category cases spanning
+18 entry types, three heat deltas and eight shapes for each of three arrays,
+including packed arrays. Another 147 complete rows/public lists matched through
+active/ended/failed runs, with history unchanged. Two callback-mutation cases
+independently required both gained-item labels after the source array was
+cleared; the retained label snapshot passed. Liveness and source census passed;
+both Jobs drained naturally with EOF/Job0 and independent process absence.
+No timing result or history/save migration change is claimed.
+
+CareerStatsScreen, CoachViewModel and FoundationHudViewModel were also read in
+full. Preserve model ownership and ledger geometry, advisory input compatibility,
+anchor variants and overlap ordering, exact versus quarter-hour clock policy,
+objective/card/heat guidance and save-status presentation. Coverage reaches 124
+targeted reviews; remaining static screens still require semantic review. Local
+publication remains paused by the parent.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

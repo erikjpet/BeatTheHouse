@@ -89,15 +89,19 @@ static func _category_for_entry(entry: Dictionary) -> String:
 		return "heat"
 	if entry_type == "travel":
 		return "travel"
-	if entry_type.begins_with("item_") or not JsonCoerceScript._copy_array(entry.get("inventory_add", [])).is_empty() or not JsonCoerceScript._copy_array(entry.get("inventory_remove", [])).is_empty():
+	if entry_type.begins_with("item_") or _has_array_entries(entry.get("inventory_add", [])) or _has_array_entries(entry.get("inventory_remove", [])):
 		return "item"
-	if entry_type.find("debt") != -1 or entry_type.find("lender") != -1 or not JsonCoerceScript._copy_array(entry.get("debt_changes", [])).is_empty():
+	if entry_type.find("debt") != -1 or entry_type.find("lender") != -1 or _has_array_entries(entry.get("debt_changes", [])):
 		return "debt"
 	if entry_type == "event" or not str(entry.get("event_id", "")).is_empty():
 		return "event"
 	if entry_type == "game_action" or not str(entry.get("game_id", "")).is_empty():
 		return "game"
 	return "story"
+
+
+static func _has_array_entries(value: Variant) -> bool:
+	return typeof(value) == TYPE_ARRAY and not (value as Array).is_empty()
 
 
 static func _title_for_entry(entry: Dictionary, category: String, callbacks: Dictionary) -> String:
@@ -172,8 +176,7 @@ static func _detail_lines(entry: Dictionary, callbacks: Dictionary) -> Array:
 	var attention_sources := JsonCoerceScript._copy_array(entry.get("attention_sources", []))
 	if not attention_sources.is_empty():
 		lines.append("Attention: %s" % _label_list(attention_sources, callbacks))
-	var debt_changes := JsonCoerceScript._copy_array(entry.get("debt_changes", []))
-	if not debt_changes.is_empty():
+	if _has_array_entries(entry.get("debt_changes", [])):
 		lines.append("Debt changed")
 	var inventory_add := JsonCoerceScript._copy_array(entry.get("inventory_add", []))
 	if not inventory_add.is_empty():
