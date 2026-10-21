@@ -292,7 +292,7 @@ static func _remove_if_exists(absolute_path: String) -> Error:
 static func _result(ok: bool, error: Error, error_code: String, outcome: String, data: Dictionary = {}) -> Dictionary:
 	var extra := {
 		KeysScript.OUTCOME: outcome,
-		"data": data.duplicate(true),
+		"data": data,
 	}
 	if ok:
 		return IoResultScript.ok(extra)

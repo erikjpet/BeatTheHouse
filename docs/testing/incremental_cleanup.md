@@ -191,16 +191,16 @@ exhaustiveness or a proof that no future cleanup is possible.
 
 | Level | Paths |
 | --- | ---: |
-| Targeted source/contract review | 90 |
-| Static screening | 1,329 |
+| Targeted source/contract review | 93 |
+| Static screening | 1,326 |
 | Media/evidence/UID classification | 2,272 |
 | Total baseline paths | 3,691 |
 
 | Disposition | Paths |
 | --- | ---: |
-| No change | 2,347 |
-| Reviewed by screening | 1,317 |
-| Fixed | 15 |
+| No change | 2,349 |
+| Reviewed by screening | 1,314 |
+| Fixed | 16 |
 | Deferred | 12 |
 | Unresolved baseline check issue | 0 |
 
@@ -373,6 +373,36 @@ diagnostic. Existing shallow-RNG-copy and drawn-card-isolation violations were
 also rejected. All six negative cases failed closed, and runtime source bytes
 remained unchanged. This is source-contract diagnostic evidence, not a new
 gameplay or performance claim.
+
+## Batch 13: one durable result ownership boundary
+
+`DurableStore._result` deep-copied its payload immediately before passing it
+inside `extra` to `IoResult.ok` or `failed`; both already recursively copy the
+complete extra dictionary. Remove that first copy. Keep the IoResult ownership
+boundary, result schema, error/outcome values, validation, installed-byte proofs,
+primary/backup rotation and every rollback transition unchanged.
+
+The full DurableStore and IoResult implementations and result consumers were
+reviewed. Native comparison with the prior DurableStore passed 84 results across
+success/failure codes, all outcomes, empty/typed/nested data and three authored
+v0.5.1 save fixtures. Both success and failure retained nested payload isolation.
+A disposable probe initially needed an explicit bool annotation; its corrected
+version passed without changing runtime code or validation.
+
+The existing `health06_1_durable_store_contract.gd` passed unchanged: write/rename
+failures, all four transaction faults, byte-identical primary/backup recovery,
+same-length valid/invalid primary proof checks, synthetic profile/meta/settings
+and run-save recovery/trust, malformed-settings preservation, developer-placement
+write failure and distribution-root rejection. It ran with private APPDATA and
+test-owned paths; no player profile/save or shipped placement file was written.
+The required no-pointer animation check also passed. All Jobs drained naturally
+with EOF, no forced termination and zero processes; independent host census
+confirmed closure. No measured performance gain is claimed.
+
+UserSettings and the durability contract were reviewed in full. Keep recognized
+schema-less migration, invalid-file preservation, strict known-value shapes,
+accessibility/window/audio behavior and environment capture/restore unchanged.
+Publication remains paused by the parent for the shared CS2 disk reserve.
 
 ## Release receipts
 

@@ -2837,7 +2837,7 @@ scripts/core/crew_world_sequence_adapter.gd	scripts/core	authored	static-screen	
 scripts/core/delivery_run_facade.gd	scripts/core	authored	static-screen	reviewed	S1	4b03f3918195f51e902430d2658575be667d1b7d	39308	771
 scripts/core/delivery_run_model.gd	scripts/core	authored	static-screen	reviewed	S1	1573e985386c29b9c3de0494e74f70e1bd654c55	56321	1084
 scripts/core/developer_placement_store.gd	scripts/core	authored	static-screen	reviewed	S1	70aea6e1ba984b0f9059f08a2ed295fc68c39102	59823	1447
-scripts/core/durable_store.gd	scripts/core	authored	static-screen	reviewed	S1	62bbd9c41fcb76df940120419a74893b0027863c	14703	307
+scripts/core/durable_store.gd	scripts/core	authored	source-review	fixed	C:batch13	62bbd9c41fcb76df940120419a74893b0027863c	14703	307
 scripts/core/environment_base_semantic_records.gd	scripts/core	authored	static-screen	deferred	O1	87a04c40c9bdaa899ab35e0878b8f18431d2fd6e	58370	983
 scripts/core/environment_event_resolver.gd	scripts/core	authored	source-review	no-change	M:batch11-full-selection-envelope-unique-priority-and-RNG-delegation-review	a0a3c35846536482f0f2ee65aea2617b536c3b36	9406	217
 scripts/core/environment_hours.gd	scripts/core	authored	source-review	no-change	M:time-rules-preserved	676e9240c073111f59612823f46c7b8b441e5636	4681	127
@@ -2866,7 +2866,7 @@ scripts/core/keys.gd	scripts/core	authored	source-review	no-change	M:key-vocabul
 scripts/core/meta_collection_service.gd	scripts/core	authored	static-screen	reviewed	S1	c57aa6c2b836bdb8e470beab0c47951fbff3fdf0	80495	1913
 scripts/core/music_delivery_index.gd	scripts/core	authored	source-review	no-change	M:authored-filename-contract	65d3b8830254ec265d876c03f827cd3e5d8c0f9a	6742	171
 scripts/core/numbers_model.gd	scripts/core	authored	static-screen	reviewed	S1	5f14cd8d89ab750241c216d38ce9eeac5df32371	59426	1278
-scripts/core/persistence_paths.gd	scripts/core	authored	source-review	no-change	M:save-roots	991d3cc663cb778ddef83ee13772dbd005ecb3f6	2421	60
+scripts/core/persistence_paths.gd	scripts/core	authored	source-review	no-change	M:save-roots	991d3cc663cb778ddef83ee13772dbd005ecb3f6	2421	57
 scripts/core/platform_services.gd	scripts/core	authored	source-review	no-change	M:adapter-contract	f59b29b434fdddab508239d371ba2ad6650af709	2049	71
 scripts/core/police_sweep_model.gd	scripts/core	authored	static-screen	reviewed	S1	a83a862a9554e11cab040dd31eb63a8bc17df46d	41119	876
 scripts/core/profile_inventory.gd	scripts/core	authored	static-screen	reviewed	S1	c2469f951e870ba0354b82131c8e559da09984e7	31270	745
@@ -2898,7 +2898,7 @@ scripts/core/surface_sfx_manifest.gd	scripts/core	authored	static-screen	reviewe
 scripts/core/town_network.gd	scripts/core	authored	static-screen	reviewed	S1	f34eb8b86f20b6a8ed5892c9d25441a42f696713	30915	758
 scripts/core/town_state.gd	scripts/core	authored	static-screen	reviewed	S1	334dacc3df5b1af33ebfff0fe96f6314384f2fdb	38818	918
 scripts/core/tutorial_flow.gd	scripts/core	authored	source-review	no-change	M:batch10-full-legacy-repair-tutorial-and-progress-policy-review	6950ffbed6d8f2339307ff872d6fafdb7c66f4c4	11422	259
-scripts/core/user_settings.gd	scripts/core	authored	static-screen	reviewed	S1	4db9bd1fbe7192f2ed1f02eee3d771434fb789e0	16615	431
+scripts/core/user_settings.gd	scripts/core	authored	source-review	no-change	M:batch13-full-schema-legacy-recovery-clamping-and-engine-application-review	4db9bd1fbe7192f2ed1f02eee3d771434fb789e0	16615	431
 scripts/core/world_map.gd	scripts/core	authored	static-screen	reviewed	S1	c4fe04ce82d4a7f6ab1f18efbeab0b3a834647fd	94753	2314
 scripts/core/world_sequence_package_catalog.gd	scripts/core	authored	source-review	no-change	M:allowlisted-package-boundary	055bb9b752df5315f95ef5a18f2888cf3fe57fe5	4129	87
 scripts/games/baccarat.gd	scripts/games	authored	source-review	fixed	C:batch9-helper-and-callers-only	7e8187b25d908524bc55f1d688d3fd0464eead70	187936	3982
@@ -3162,7 +3162,7 @@ scripts/tests/gas_scratch_legacy_fixture_prepare.gd	scripts/tests	authored	stati
 scripts/tests/gas_scratch_membership_one_arrival.gd	scripts/tests	authored	static-screen	reviewed	S1	b732a602df8fbc58366ecd6c3c11667b84b39c7d	15903	315
 scripts/tests/health06_1_correctness_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	1670ba4d52a1e272b1d1bccc4554fade44e0d1b2	3859	89
 scripts/tests/health06_1_dead_code_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	52289ce4bce8154bda5ee9ebd989bab3f78928ae	3369	73
-scripts/tests/health06_1_durable_store_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	7a528d32c89e2a6870ec943dfa7d1976c28cf68b	23804	383
+scripts/tests/health06_1_durable_store_contract.gd	scripts/tests	authored	source-review	no-change	M:batch13-full-fault-matrix-private-root-and-recovery-contract-review	7a528d32c89e2a6870ec943dfa7d1976c28cf68b	23804	383
 scripts/tests/health06_1_god_object_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	6ca93ef52e6cc7a3e20e55348e2d03b1ca440fec	1706	38
 scripts/tests/health06_1_hot_paths_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	a1d1677f3eccf3f93793e991e2a11707cf5294d8	8468	167
 scripts/tests/health06_1_io_result_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	2106a2aef080ea0d75138dd202d1c4af8eea8da4	3480	58
