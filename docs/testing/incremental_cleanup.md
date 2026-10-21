@@ -1280,6 +1280,37 @@ and 2,272 role classifications across 3,699 paths. No elapsed-time improvement
 is claimed. Batch45 NEXT recovery remains pending as described above; batches
 46-47 remain separate tested local commits while source review continues.
 
+## Batch 48: share Craps roll and throw command handling
+
+The normal `craps_roll` and `craps_throw` match branches have identical bodies.
+Match both public action names in the retained branch. All preceding guards,
+including the deliberately distinct street-warning responses, stay unchanged.
+Pointer begin/move/end/cancel handling and every settlement, payout, wallet,
+RNG, heat, ritual fact, saved clock and drawing function remain byte-identical.
+No method or action name is removed. Source proof verifies the prior bodies
+match and limits the edit to one match header and five duplicate lines.
+
+Native baseline comparison passed 648 complete command payloads: casino,
+street and warning environments, two points, player/NPC shooters, three pending
+wager sets, ready/rolling/dispersed phases, talk locks and both action names
+plus unknown input. All 56 resolving and 592 nonresolving payloads, ordering,
+caller inputs, configuration and complete run/save/RNG bytes matched. The
+existing `craps06_3_depth_contract` passed unchanged, including keyboard and
+pointer boundaries and saved-roll timing. Required no-pointer animation
+liveness passed. Three private 5% CPU/512MiB Jobs naturally closed with exit0,
+reader EOF, Job0 and no forced cleanup; independent process absence is recorded
+in `craps-roll-native-closure.json`. No timing improvement is claimed.
+
+Full Craps review retains working-bet cash/chip provenance, legacy refund
+scaling, host funding receipts, interruption refunds and shared-result payload
+restoration. Four related tests, two ritual data files and the historical
+closeout were read completely. The integration, full-table and street-object
+tests were source-reviewed, not rerun; historical RTP/visual results remain
+historical. Their thresholds, authority cases and fixtures are unchanged.
+Coverage is 249 targeted source/contract reviews, 1,178 static screens and
+2,272 role classifications across 3,699 paths. Batch45 deployment recovery is
+still pending; subsequent tested cleanup commits are retained locally.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

@@ -458,15 +458,10 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 			_push_pending_history(session, pending)
 			session["craps_pending_bets"] = repeated
 			return GameModule.surface_command({"ui_state": session, "surface_audio_cue": "chip_place", "message": "The eligible wager set is staged again."})
-		"craps_roll":
+		"craps_roll", "craps_throw":
 			# The established legal action remains the keyboard/controller and
 			# reduced-motion equivalent. It resolves through the normal boundary;
 			# pointer throws use the same action id and settlement path.
-			if not _can_roll(table, pending):
-				return _message_command(session, "Back Pass or Don't Pass to shoot, or choose PASS DICE.")
-			session["craps_ritual_phase"] = "aiming_throw"
-			return _throw_resolve_command(session, pending)
-		"craps_throw":
 			if not _can_roll(table, pending):
 				return _message_command(session, "Back Pass or Don't Pass to shoot, or choose PASS DICE.")
 			session["craps_ritual_phase"] = "aiming_throw"
