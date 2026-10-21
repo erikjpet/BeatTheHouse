@@ -3484,3 +3484,20 @@ Historical listening and fixture evidence are not fresh gameplay qualification;
 archived prompts are context, not work instructions. No capture, export, updater,
 player session, audio run or unchanged suite was executed for these eight reviews.
 Coverage is 647 full reviews; the audit remains unfinished.
+
+## Batch 123: review Hold'em evidence and shard/parity runners
+
+Read both Hold'em capture/audit tools, the hostile shard-runner contracts and the
+native/Web scenario parity wrapper in full. Preserved owned visual fixtures,
+chip conservation, exact save-resume fields, deterministic replay, strict shard
+registration/error/exit rules, private cache/mutex/junction checks, all 21 trace
+states and existing timing budgets. No capture, suite, export or save test ran.
+
+The Hold'em audit creates a pure deep snapshot that is overwritten without use
+after its save/settle boundary. A scoped removal is retained privately, not
+committed: the one-file loader crashed with access violation 3221225477 before
+returning a result. The 3.625-second process exited with EOF and Job0 and was
+independently absent. Cause is unestablished; this is neither a qualified patch
+nor an attributed production defect. The original source is restored and this
+candidate is explicitly deferred. Coverage is 651 full reviews; screening and
+classification remain separate.
