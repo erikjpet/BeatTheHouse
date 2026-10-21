@@ -4055,3 +4055,19 @@ Godot's certificate-store read error. Preserve that failure; the single repeat
 used the approved process context without changing trust settings, error checks
 or limits. No test scene, gameplay, save or browser ran. No speedup is claimed.
 Coverage is 749 full file reviews across 3,714 inventoried paths.
+
+## Batch 154: review repayment visibility and immutable recovery evidence
+
+Read the complete new lender-visibility check and peer `e7da7992` diff. The
+contact remains selectable only when the existing cash-debt repayment authority
+allows it; borrowing remains disabled. The check retains active/overdue debt,
+insufficient funds, used-loan and favor exclusions plus unchanged money, debt,
+flags and RNG. Preserve the peer fix and its original focused evidence. No new
+claim of real Web repayment or repeated regression run is made here.
+
+Read four complete ritual/package/Punchline recovery records. Preserve their
+immutable heads, production authority requirements, explicit timeouts, rejected
+lineages, actual native-versus-Web scope and uninspected live-save limitation.
+Historical gate instructions and old dependency holds are not current workflow
+requirements. No source, content, fixture or runtime changed. Coverage is 754
+full file reviews; screening and classification remain separate unfinished work.
