@@ -4071,3 +4071,20 @@ lineages, actual native-versus-Web scope and uninspected live-save limitation.
 Historical gate instructions and old dependency holds are not current workflow
 requirements. No source, content, fixture or runtime changed. Coverage is 754
 full file reviews; screening and classification remain separate unfinished work.
+
+## Batch 155: review developer-placement and map input contracts
+
+Read the complete developer object-placement, full-layout save UI and map-route
+visibility checks. Preserve exact room/layer/scenario scope, local reset versus
+project promotion, slot anchors versus visual offsets, deferred refresh and
+single full-layout transactions. Hidden capacity, family review, shared-slot
+locks, distribution controls, keyboard focus and accessibility geometry remain
+explicit checks. Fixture copies and synchronous stale-refresh injections serve
+different boundaries and remain intact.
+
+The map check retains moving-button and holder-release recovery, exactly-once
+selection, held-confirm stability, zoom/pan bounds, clipped routes and recovered
+final-location coordinates. These input assertions do not establish the separate
+idle-animation finding is fixed. No test, source, settings, project placement or
+runtime changed. Coverage is 757 full reviews. Publication remains a separate
+capacity dependency; source review continues without another suite or export.
