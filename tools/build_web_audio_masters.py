@@ -101,8 +101,9 @@ def _encode_ima(samples: np.ndarray, sample_rate: int = TARGET_RATE) -> tuple[by
             offset = (frame - 1) * channels + channel
             encoded[offset // 2] |= code << (4 if offset & 1 else 0)
             decoded[frame, channel] = predictors[channel]
-    error = pcm.astype(np.float64) - decoded.astype(np.float64)
-    signal_power = float(np.mean(np.square(pcm.astype(np.float64))))
+    pcm_float = pcm.astype(np.float64)
+    error = pcm_float - decoded.astype(np.float64)
+    signal_power = float(np.mean(np.square(pcm_float)))
     noise_power = max(float(np.mean(np.square(error))), 1e-12)
     snr_db = 10.0 * float(np.log10(max(signal_power, 1e-12) / noise_power))
     return bytes(header + encoded), snr_db

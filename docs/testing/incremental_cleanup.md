@@ -1974,6 +1974,32 @@ deferrals and two separate issues. The deployment owner alone owns qualified
 CPU policy evaluation, one watcher recovery and exact917 delivery verification;
 this separate tested cleanup remains local.
 
+## Batch 71: share one read-only PCM float conversion for SNR
+
+The authoring encoder converted the same immutable PCM array to float64 once
+for reconstruction error and again for signal power. Convert once and reuse
+that method-local array in the unchanged subtraction/square/mean expressions.
+The array is neither written nor exposed. Header, nibble packing, predictor
+calls, noise floor, logarithm order and every other function remain unchanged
+against2c0a842b. This avoids one duplicate conversion without changing the codec
+or any generated asset.
+
+The same132 small input/boundary cases compare the exact new baseline: all bytes,
+float SNR, warnings, exception types/messages, predictor-helper call order and
+input arrays match. Source conversion calls fall from two to one. This is a
+structural work reduction, with no measured timing or peak-memory claim. The
+test uses existing bundled NumPy and in-memory synthetic arrays only; no Godot,
+browser, export or authored assets were accessed.
+
+Four authored data files received full semantic source review: explicit
+audit-only economy notes, Crew trust/rank/perk/service declarations, traveler
+itineraries and town reputation/door/reaction content. Their IDs, ordering,
+thresholds, time/RNG rules and narratives remain unchanged. Audit questions are
+not permission to tune balance or remove older named hooks. Coverage is368
+targeted reviews,1,059 static screens and2,272 role classifications across3,699
+paths;14 deferrals and two separate issues remain. Publication remains held for
+the deployment owner's qualified existing-watcher recovery and exact917 proof.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
