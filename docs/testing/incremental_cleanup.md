@@ -160,6 +160,109 @@ exit 1. A separate root containing an ordinary RefCounted script plus an
 exit 0. The expected parser diagnostic was retained in the negative-case
 receipt. Both private 5% CPU/512 MiB Jobs closed naturally with zero processes.
 
+The strengthened checker then passed all 214 production modules with no parser
+or compiler diagnostics. Test fragments that require the split Foundation
+runner are not certified by direct standalone loading; no fragment was deleted
+or made less strict to obtain a pass.
+
+## Batch 8: coverage inventory and current source census
+
+`incremental_cleanup_inventory.tsv` accounts for all 3,691 paths at the input
+commit, with each original Git blob and byte count. No baseline path is omitted
+or counted twice. The two new audit documents are additional reporting files,
+so the resulting repository has 3,693 tracked paths. `docs/code_reference.md`
+now reports the actual 214 modules (89 core, 78 UI, 47 game) and 11,421 production
+functions. Both code and game documentation checks pass; no assertion was
+changed to accommodate the census.
+
+### Review depth and evidence key
+
+The levels distinguish what was actually done. `source-review` means targeted
+code/contract review for that file, including changed helpers and their callers;
+it does not claim every line of a large file was manually reread. `static-screen`
+means whole-file structural/reference screening. `role-classification` means
+the asset, generated evidence or UID role was established and retained; binary
+contents were not rewritten. A `reviewed` row is not a claim of semantic
+exhaustiveness or a proof that no future cleanup is possible.
+
+| Level | Paths |
+| --- | ---: |
+| Targeted source/contract review | 75 |
+| Static screening | 1,344 |
+| Media/evidence/UID classification | 2,272 |
+| Total baseline paths | 3,691 |
+
+| Disposition | Paths |
+| --- | ---: |
+| No change | 2,337 |
+| Reviewed by screening | 1,332 |
+| Fixed | 9 |
+| Deferred | 12 |
+| Known baseline check issue | 1 |
+
+The categories are 731 other authored files, 498 authored documents, 582 media
+or metadata files, 1,658 historical evidence files, 11 first-party native files,
+97 intentional fixtures, 82 historical tool files and 32 retained UID sidecars.
+No tracked vendor tree was rewritten; installed third-party tools remain outside
+the authored cleanup scope.
+
+Evidence codes in the TSV:
+
+- `S1`: structural/symbol/reference screen. Python AST checks covered all 34
+  Python files; all 155 PowerShell and 11 JavaScript modules parsed, and all 231
+  tracked JSON files parsed. Production GDScript load coverage is 214 files.
+  Function-name occurrence and duplicate-body results are leads, not deletion
+  proof; string dispatch, registry identity, lifecycle and persistence contracts
+  must still be resolved for a candidate.
+- `D1`: document role/reference screening; keep historical plans and decisions.
+- `A1`: runtime or branding media/metadata; retain authored assets and their
+  data/manifest/resource loading contracts, including generated audio/import
+  settings. No binary rewrite or filename-only orphan deletion.
+- `E1`: retained generated/historical execution evidence, not abandoned product
+  implementation. `F1`: intentional source-only test fixture.
+- `H1`: archived tool with historical source/reproducibility meaning.
+- `U1`: retained script UID; no orphan-UID deletion based on mere age.
+- `M:*`: the named targeted source/contract review. `C:*`: fixed by the named
+  commit or batch in this report.
+- `O1`, `N1`, `P1`, `B1`: the explicit deferrals/issues below.
+
+### Explicit deferrals and retained candidates
+
+- `O1`: seven runtime/finalization files overlap the Web-freeze investigation:
+  `foundation_main`, `run_state`, `environment_instance`, `scenario_layout_resolver`,
+  `environment_object_manifest`, `environment_semantic_inventory` and
+  `environment_base_semantic_records`. Source screening is complete; edits are
+  deferred to coordinated ownership. In particular, the sole newly found
+  single-occurrence private function, `ScenarioLayoutResolver._substantially_overlaps`,
+  and its `COLLISION_RATIO` constant remain intact. Proposed next step: finish
+  dispatch/serialization/editor-reference proof with the finalization owner,
+  then remove only that island with placement/semantic compatibility checks.
+- `N1`: the four native core/header/render/step implementation files remain
+  unchanged. Registered Godot methods, array layouts, solver ordering, SIMD and
+  fixed-point semantics are native contracts. A proposed native cleanup needs
+  separate exact compiler/runtime qualification; this pass does not imply a
+  native build or measured solver improvement.
+- `P1`: the tested PCK reverse scan requires separate exporter/native-reuse
+  qualification. Its original source is restored exactly; the current pipeline
+  remains qualified. Do not relax its guard to ship this cleanup.
+- `B1`: the unchanged CH-14 shuffle-count source assertion fails on baseline as
+  recorded in batch 5. Keep the test and environment code; reconcile it with
+  the environment owner after verifying actual shuffle/RNG behavior.
+- Shared canonicalization/bounded-copy helpers in Bar Dice and Grand Casino
+  projections are deliberately retained. A shared codec proposal must prove
+  unchanged fingerprints and supported old-save behavior for both authorities.
+  Identical text alone does not establish interchangeable trust boundaries.
+- Fourteen currently single-occurrence exported `Keys` constants remain public
+  vocabulary. They are not deleted on a zero-caller search. The twelve scenario
+  handler/renderer adapters also remain: their separate paths and extension IDs
+  are validated allowlist identities, even where the forwarding bodies match.
+
+No save/migration, RNG, payout, clock/heat, content-pack, native, engine/template,
+exporter or audience input was changed. No tracked files, tests, owner caches,
+ignored evidence, browser profiles or saves were removed. No latency or memory
+benchmark result is claimed. Broader semantic review of screened-only files is
+not represented as complete by this inventory.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
@@ -171,3 +274,15 @@ At 02:46:15 UTC trusted LAN HTTPS metadata, NEXT redirect and nine payloads
 all required WASM MIME types were `application/wasm`. Archive SHA-256:
 `0d589238c46094fc5d2ca392b458b337397fb95dc6f802ebe42bdf54cd9fa27b`.
 Stable remained `0.6.0`; audience, itch and watcher configuration were unchanged.
+
+The runtime cleanup group (`2f205b9f`, `5751d748`, `e47b341b`) was pushed together
+after both the performance and storage owners released their finite holds.
+The existing watcher promoted `e47b341bc45fd599ec36fcb55e9323bd05f4e3b9`, tree
+`01fdd9de5a3ed9af9ea1e10015c4f8ba42efa649`, at 03:09:36 UTC. At 03:11:08 UTC,
+trusted LAN HTTPS identity/redirect and nine archive-matched payloads passed;
+archive SHA-256 was
+`2c67bd4388f843d220ac18a8dbc15511f17081ddc43402e6e83b6d4f1a203f9e`.
+All recorded build PIDs were independently absent at 03:11:12 UTC. The Web
+performance owner received this exact receipt; its guarded trace did not run,
+so this is deployed HTTP/provenance plus native behavior evidence, not visual
+Web playtesting. Final tool/report publication is recorded in the task receipt.

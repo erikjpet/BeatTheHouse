@@ -1,18 +1,19 @@
 # 0.6 Code Reference
 
-Updated 2026-10-08 from the feature-complete 0.6 source. This document explains
+Runtime guide written 2026-10-08 from the feature-complete 0.6 source; source
+inventory refreshed 2026-10-21. This document explains
 the runtime ownership boundaries and the comment standard used by production
 code. It is a navigation aid, not a replacement for the exact contracts in code
 and data.
 
 ## Source inventory
 
-Production GDScript under `scripts/` contains 212 modules and 11,258 functions
-after the final unused-code cleanup:
+Production GDScript under `scripts/` contains 214 modules and 11,421 functions
+after the incremental cleanup batches:
 
 | Area | Files | Responsibility |
 | --- | ---: | --- |
-| `scripts/core/` | 88 | Deterministic state, content, generation, scenarios, actions, persistence, placement, economy, Crew, and endgame rules |
+| `scripts/core/` | 89 | Deterministic state, content, generation, scenarios, actions, persistence, placement, economy, Crew, and endgame rules |
 | `scripts/ui/` | 78 | Application flow, view models, canvases, input, accessibility, dialogue/tutorial UI, audio, and presentation |
 | `scripts/games/` | 47 | Eleven playable modules plus shared renderers and game-specific simulation/support code |
 
