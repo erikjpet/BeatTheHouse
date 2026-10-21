@@ -3986,3 +3986,20 @@ field list excludes game states, but its separate complete-state comparison
 does not. No assertion or production byte changed; the owner's existing runtime
 evidence is reused without private fixture reads or a repeated test. Coverage is
 737 full reviews across 3,713 inventoried paths. RunState remains a partial read.
+
+## Batch 150: review the complete Bar/Jazz sequence contract and gate history
+
+Read the complete 11-scenario Package C contract: production-composed target
+authority, unique signatures, success/terminal/pressure/three-way choices,
+save normalization, reentry/expiry, replay/conflict rejection, rollback, privacy
+and accessible live targets. Check selected authored phase references: all 11
+still contain `work_1`, and each identity-decision phase resolves. Historical
+wording alone is insufficient to call these existing tests obsolete. Keep every
+assertion, independent fixture copy and rejection. No runtime suite was run.
+
+Read four complete package handoffs and gate/lifecycle records. Their original
+rejections, later recovery pointers, immutable evidence and acceptance limits
+remain intact. Historical release-wide test commands do not override the current
+development policy; unchanged evidence remains reusable. Source serialization
+checks are not a new Web playtest. No product, test or content changed. Coverage
+is 742 full file reviews; the broader audit remains unfinished.
