@@ -28,7 +28,7 @@ static func chains() -> Array:
 
 
 static func tuning() -> Dictionary:
-	return _dictionary(data().get("tuning", {})).duplicate(true)
+	return _dictionary(data().get("tuning", {}))
 
 
 static func apply_to_environment(

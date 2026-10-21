@@ -2897,3 +2897,30 @@ idle draw/liveness and bounded timing-buffer checks, plus safe staged-Web-ready
 snapshot schemas. Their historical budgets and assertions remain intact. A
 native simulated startup seam is not presented as a new Web playtest. This
 review adds coverage and justifies no further code change in these twelve files.
+
+
+## Batch 94: return the already-owned chain tuning
+
+`CharacterChainModel.tuning()` took a child dictionary from `data()`'s fresh
+deep copy, then deep-copied that child again. Return the already-owned child.
+The public `data()` deep copy remains unchanged, so callers still receive
+independent dictionaries. All other model code is byte-identical, including
+story/event selection, heat, clock, placement and RNG behavior. This removes a
+redundant copy; no measured latency or frame-rate gain is claimed.
+
+One focused native check compared the actual old/new model methods over ten
+empty, malformed, authored and nested/shared-container cases. Values, mutations,
+cache isolation and later-call results matched. The existing character-chain
+inventory method also passed using authored events. The private muted
+5%/512MiB30s Job exited naturally0/EOF/Job0 in4.765s with no forced cleanup;
+PID6148 was independently absent15:40:16 UTC. The earlier prelaunch deferral for
+a short Node syntax-check process remains recorded. Other character-chain
+flows, full suites and animation replays were not run for this accessor change.
+
+Eight previously screened files received full source review: the complete
+character-chain contract, offer/challenge data, late-run transaction probe,
+person departure, exact gas Scratch arrival, Scratch dispense machine and
+wrong-order tutorial shop regressions. Their budgets, negative cases, explicit
+test doubles, save checks and recent recovery assertions remain unchanged.
+Actual map and Scratch redemption/Continue observations belong to the separate
+player lane; this batch does not relabel them as newly executed cleanup tests.
