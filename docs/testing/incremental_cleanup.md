@@ -4022,3 +4022,18 @@ behavior proposal. The copy lead remains with the active RunState owner. No
 claim of a reproduced gameplay failure or measured benefit follows from source
 inspection. No core, test, save or runtime changed. Coverage is 743 full reviews;
 RunState remains deferred for coordinated edits, not for missing source review.
+
+## Batch 152: review onboarding, music and retained platform probes
+
+Read the complete onboarding contract and music harmony probe. Preserve the
+guided prefix, ten contextual encounters, trigger and queue discipline,
+nonmodal input handoff, copy ownership, musical role constraints, phrase order,
+save continuation and fixed cache bounds. A fixture's `crew_jobs` property has
+only one textual occurrence in its file but is read reflectively by CoachOverlay
+to establish a resolved-job encounter. Keep it and the associated assertions.
+
+Read the complete archived content smoke and Bar Dice/Showdown platform probes.
+Their live production calls, deterministic projections, hidden-field rejection,
+performance limits and capture manifests remain intact. Synthetic capture labels
+do not establish production hit geometry or a new gameplay pass. No source, test,
+asset or runtime changed; no broad sweep ran. Coverage is 748 full file reviews.
