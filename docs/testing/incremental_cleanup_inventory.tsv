@@ -628,7 +628,7 @@ data/games/rituals/craps06_3_environment_bindings.json	data/games	authored	sourc
 data/games/rituals/craps06_3_sequences.json	data/games	authored	source-review	no-change	M:batch48-full-five-frozen-game-ritual-profiles-phase-transitions-required-actions-facts-and-four-persistence-classes-retained	5976334cc4cbc4ebcca11713bee9b27547595eed	6573	107
 data/games/rituals/crew06_10_poker_nights.json	data/games	authored	static-screen	reviewed	S1	c194dfbb76de82887f6089617c4a85a4bee284ee	3482	62
 data/games/scratch_ticket_regions.json	data/games	authored	static-screen	reviewed	S1	f6ea13802afc2a76bd410ff8abb658f0d0320a23	59092	2844
-data/games/scratch_tickets.json	data/games	authored	static-screen	reviewed	S1	67bf8a8353b01cdf44b95f466fc5cf67c82819fa	10925	175
+data/games/scratch_tickets.json	data/games	authored	source-review	no-change	M:batch62-full-seven-families-prices-prize-weight-and-RTP-content-spots-mask-declarations-140-crossword-cycle-finite-stock-and-preserved-release-scope-review-no-data-change	67bf8a8353b01cdf44b95f466fc5cf67c82819fa	10925	175
 data/games/showdown_duel_game_ritual_v1.json	data/games	authored	static-screen	reviewed	S1	2cc158fe85dd25755bfdba374438fb6c5ac9b7f2	18863	79
 data/games/showdown_duel_ritual_v1.json	data/games	authored	static-screen	reviewed	S1	543db796eac8c83a81641e2542a82c275542c8fd	13060	103
 data/items/items.json	data/items	authored	static-screen	reviewed	S1	b6f499f94591ad654b2b22b17619e13b1328f836	59656	2009
@@ -1858,8 +1858,8 @@ docs/screenshots/scratch_ticket_three_state_review/05_bonus_bingo_three_states.p
 docs/screenshots/scratch_ticket_three_state_review/06_high_roller_holdem_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	9ae3f1c0724939aa1acaebf88e3f8524fde714f1	541341	-
 docs/screenshots/scratch_ticket_three_state_review/07_golden_vault_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	258b7cdca507173d7b8c484ed5ed19a531b994fa	474817	-
 docs/screenshots/scratch_ticket_three_state_review/all_scratch_tickets_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	506839b5f67581028469a7a9230deaf8c5a8a3fb	4560788	-
-docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	1e9647ae033a5879345fba6c44186c0fff05a1d5	118364	1865
-docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	163f09b8b8a5ec457a7365eb260564e2e2fdd874	673080	-
+docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	22a7ea721c4beecb98c8dcdb732cf4fbbe2da534	120923	1904
+docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	3f5bfe75f54b638039403a63280e5d73402e27a8	673531	-
 docs/testing/punchline_debt_court_recovery.md	docs/testing	authored-document	static-screen	reviewed	D1	ccfe341027a53866f18c201f4ef855a2420c2987	3889	64
 docs/testing/scratch_scalper_runtime_compatibility.md	docs/testing	authored-document	static-screen	reviewed	D1	15feb4c3c388e55a67a98bc58efbc003a1fc4261	3581	56
 docs/todo/README_0_6_board.md	docs/todo	authored-document	static-screen	reviewed	D1	2305cca0cdeeba83d3fa8768159758508d775c58	66017	517
@@ -2934,7 +2934,7 @@ scripts/games/scratch_ticket_icon_renderer.gd	scripts/games	authored	source-revi
 scripts/games/scratch_ticket_machine_renderer.gd	scripts/games	authored	source-review	no-change	M:batch32-full-autonomous-lift-scheduling-stock-index-purchase-targets-tray-collection-and-discard-target-review	fd0249fe3e013b04eb011ea44d1b0705ebf2e548	21495	359
 scripts/games/scratch_ticket_mask.gd	scripts/games	authored	source-review	no-change	M:batch32-full-owned-template-mask-progress-migration-continuous-brush-regions-and-settled-compaction-review	eea118ee6888287dd56559fb4e4e51fbb3375583	17318	367
 scripts/games/scratch_ticket_region_model.gd	scripts/games	authored	source-review	no-change	M:batch32-full-layout11-region-art-authority-mask-cell-inset-measured-source-and-migration-boundary-review	e0f354d8ff1e4c96027fe6a353fb543e26ce106d	4684	114
-scripts/games/scratch_tickets.gd	scripts/games	authored	static-screen	reviewed	S1	0ea7547b6894fcf29f9635dbf81152fff9038aca	155541	3151
+scripts/games/scratch_tickets.gd	scripts/games	authored	source-review	fixed	C:batch62	0ea7547b6894fcf29f9635dbf81152fff9038aca	155541	3152
 scripts/games/slot.gd	scripts/games	authored	source-review	no-change	M:batch44-full-sealed-candidate-replay-checkpoint-owned-write-seams-lifecycle-reveal-autoplay-watchdog-background-handoff-and-raw-vs-scaled-clock-contracts-retained	fa28e62ac1b18c526c639d272f6dde0fddf7d185	101674	2060
 scripts/games/slots/pinball/pinball_board.gd	scripts/games	authored	source-review	no-change	M:batch32-full-dense-packed-geometry-type-IDs-modifier-clamps-and-magnet-boundary-review	cbaec1ff96f84f21df0d7d10d5aeb6cdc7840bcc	10558	262
 scripts/games/slots/pinball/pinball_boards.gd	scripts/games	authored	source-review	no-change	M:batch32-full-three-authored-boards-geometry-sequence-identities-peg-bias-and-alias-review	d794911694110981b700ac2d6f3c50f64acf5693	12122	253
@@ -3163,7 +3163,7 @@ scripts/tests/foundation/world_sequence_delivery_proof_contract.gd	scripts/tests
 scripts/tests/game_ritual_runtime_test.gd	scripts/tests	authored	static-screen	reviewed	S1	712d55dad8374e5226b999dbf16e3e233a757ca8	352	15
 scripts/tests/gas_scratch_arrival_regression.gd	scripts/tests	authored	static-screen	reviewed	S1	dd0811b9cad8d3ccc2dcc05872bc682ee701f662	7113	122
 scripts/tests/gas_scratch_cold_regression_stage.gd	scripts/tests	authored	static-screen	reviewed	S1	6977bbefd61787ef36a5e5de89e747ef18d82bfd	22909	422
-scripts/tests/gas_scratch_legacy_fixture_prepare.gd	scripts/tests	authored	static-screen	reviewed	S1	30961ba6dbd90716563e19b766a4e990d0894b0d	8860	181
+scripts/tests/gas_scratch_legacy_fixture_prepare.gd	scripts/tests	authored	source-review	no-change	M:batch62-full-disposable-userdir-task-fixture-root-and-explicit-stage-guard-pinned-prepatch-projector-synthetic-initial-scalper-custody-and-deadline-report-review-source-only-retained-not-launched	30961ba6dbd90716563e19b766a4e990d0894b0d	8860	181
 scripts/tests/gas_scratch_membership_one_arrival.gd	scripts/tests	authored	static-screen	reviewed	S1	b732a602df8fbc58366ecd6c3c11667b84b39c7d	15903	315
 scripts/tests/health06_1_correctness_contract.gd	scripts/tests	authored	source-review	no-change	M:batch25-full-package-bounds-modifier-conflicts-clock-and-affordability-assertions-retained	1670ba4d52a1e272b1d1bccc4554fade44e0d1b2	3859	89
 scripts/tests/health06_1_dead_code_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	52289ce4bce8154bda5ee9ebd989bab3f78928ae	3369	73

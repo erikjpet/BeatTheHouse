@@ -1692,6 +1692,37 @@ provenance were also fully reviewed and retained. Coverage is278 targeted review
 1,149 static screens and2,272 role classifications across3,699 paths.14 deferrals
 and2 separate issues remain; the comprehensive semantic audit continues.
 
+## Batch 62: sum scratch-counter stock once per projection
+
+`_scratch_counter_ritual` repeated the pure stock query for staff and rack
+presentation. Reuse one local total while retaining its helper, held-type
+semantics, output copy boundary and all other functions. The recent scratch
+recovery remains intact: detached projections cannot reconcile physical room
+membership, and persisted transitions retain the identity check. Purchase,
+fixed outcomes, masks, restock/scalper RNG, gifts, ticket migration, portable
+inventory, redemption, heat and clocks remain byte-identical.
+
+Exact f81f5aca comparison passed784 complete counter projections, including24
+machines generated from all seven authored ticket families. It covers heat
+thresholds, transaction phases, winner/tray piles, active/ready tickets, null
+RunState, empty/negative stock and the existing empty-type exclusion. Output,
+input/full-save/RNG and nested return isolation matched. Passive delegates
+counted1,668 stock queries before and784 after; no elapsed-time gain is claimed.
+Required unchanged no-pointer animation liveness passed. Exact native closure
+and receipt names are retained in `scratch-ritual-native-closure.json` in the
+worker workspace. These checks do not claim a new historical-save migration
+or physical membership recovery test; those implementations are unchanged.
+
+Completed the full3,151-line scratch host review and all175 content lines.
+Retain deterministic weighted outcomes, the140-puzzle crossword cycle,
+seven-family content/paytables, deliberate drag/discard winner preservation,
+mask/reveal/file ownership, three-hour restocks, scalper gifts and zero-bankroll
+rescue. Fully reviewed the unchanged private legacy-fixture preparer: it needs
+the exact prepatch projector and disposable storage; it was not launched here
+or used to mutate retained private evidence. Coverage is281 targeted reviews,
+1,146 static screens and2,272 role classifications across3,699 paths;14 deferrals
+and2 separate issues remain. The comprehensive semantic audit continues.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

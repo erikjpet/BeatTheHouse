@@ -1176,6 +1176,7 @@ func _scratch_counter_ritual(machine: Dictionary, active_ticket: Dictionary, run
 	var losers := _dictionary_array(machine.get("loser_pile", []))
 	var suspicion := run_state.suspicion_level() if run_state != null else 0
 	var transaction := _copy_dict(machine.get("last_counter_transaction", {}))
+	var stock_total := _stock_total(machine)
 	var phase := "selection"
 	if not winners.is_empty():
 		phase = "redemption_ready"
@@ -1196,7 +1197,7 @@ func _scratch_counter_ritual(machine: Dictionary, active_ticket: Dictionary, run
 		staff_state = "paying_out"
 	elif phase in ["handover", "selection"] and not transaction.is_empty():
 		staff_state = "serving"
-	elif _stock_total(machine) <= 0:
+	elif stock_total <= 0:
 		staff_state = "bored"
 	var stock_rows := _dictionary_array(machine.get("stock", []))
 	var rack_rows: Array = []
@@ -1220,7 +1221,7 @@ func _scratch_counter_ritual(machine: Dictionary, active_ticket: Dictionary, run
 			"material_energy": "alert" if staff_state in ["watching", "suspicious", "refusing"] else "working" if staff_state in ["serving", "paying_out"] else "ambient",
 		}],
 		"objects": [
-			{"id": "ticket_rack", "state": "stocked" if _stock_total(machine) > 0 else "empty", "stock": rack_rows, "material_energy": "interactive" if _stock_total(machine) > 0 else "spent"},
+			{"id": "ticket_rack", "state": "stocked" if stock_total > 0 else "empty", "stock": rack_rows, "material_energy": "interactive" if stock_total > 0 else "spent"},
 			{"id": "counter", "state": phase, "material_energy": "active" if phase in ["handover", "redemption_ready"] else "ambient"},
 			{"id": "losing_ticket_pile", "count": losers.size() + maxi(0, int(machine.get("loser_archive_count", 0))), "visible": true, "material_energy": "spent"},
 		],
