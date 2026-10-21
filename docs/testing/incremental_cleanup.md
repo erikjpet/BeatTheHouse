@@ -3204,3 +3204,24 @@ matching processes were independently absent afterward. Fixture cleanup verifies
 its exact GUID path beneath the owned temporary root before removal. No live
 artifact, private save, database, storage-owner policy, browser or game was read
 or changed. Windows PowerShell5 compatibility was not newly qualified.
+
+
+## Review batch 108: regression ownership, rollback and navigation
+
+Six more complete files received source review: playtest fixes02, Fixsweep
+regressions and lifecycle, post-fix reliability, save navigation durability and
+room-slot occupancy. Exact semantic payouts, disclosed loan terms versus saved
+debt, speaker identity, rejected transaction rollback, primary/backup preservation,
+two-style PCM ownership, bounded autosave retries and dirty-generation attribution
+remain. No saved state, capture, engine or complete suite was run.
+
+Repeated cancellation and teardown calls deliberately test idempotency across
+mouse, touch, keyboard and controller input. Capture cleanup must preserve caller
+pause/audio ownership and reject stale releases. Settings cancellation checks
+global palette state. These repetitions remain. Slot-fixture deep copies also
+remain where record conversion or downstream binders may mutate their inputs.
+
+The navigation check's early-exit finalizer emits an error; its exit-code effect
+and runner stderr policy are a separate qualification question, not a reproduced
+gameplay failure. The historical eighteen-archetype gate and all other assertions
+were retained. This source-only batch adds no new runtime pass or speed claim.
