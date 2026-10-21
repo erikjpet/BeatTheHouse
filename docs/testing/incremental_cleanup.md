@@ -833,6 +833,34 @@ storage and pawn identities, legacy host aliases, dynamic signal wiring, and
 autonomous heat feedback. No measured speed gain is claimed. Publication remains
 subject to the existing capacity floor; independent source work continues.
 
+## Batch 32: share identical slot matrix coercion
+
+The strip and grid normalizers contain identical code after renaming local
+variables. A narrow source proof verifies that delegating `_strip_array` to
+unchanged `_grid_array` is the only state-code change. Both method identities
+remain available. Native comparison passed 24 helper values and 668 full state
+normalizations, including 20 slot machines decoded from six tracked old saves.
+Complete state bytes and nested input/output isolation matched. The state schema,
+unknown fields, bets, active bonuses, RNG and storage paths are unchanged.
+Required liveness and source census passed; capped muted Jobs closed naturally
+with independent process absence. No measured speed gain is claimed.
+
+Another 28 complete source reviews raise coverage to 196. Preserve immutable
+slot-definition views, generation/RNG draw order, bonus state and old save fields;
+pinball award caps, hook idempotency and fixed board geometry; measured scratch
+regions, continuous masks and progress migration; Coin Pusher native/fallback
+facade identities, physical conservation, progressive payouts and stroke-cycle
+anchoring; Craps odds, vig and whole-chip rounding; video-poker reveal/hit targets;
+and Blackjack's exact v3 ledger, recovery, replay and journal validation, plus
+terminal-report resource release, reward locks and action signals. The duplicate
+slot coercion is the only production change in this group; all other reviewed
+files remain unchanged. The native probe and publication had first yielded before
+launch while the user's Minecraft client was active, and resumed only after the
+ordinary process guard was clear. No user process was changed. Remaining
+static-screen and role-classification rows still do not imply full semantic
+review. Heavy checks and publication will recheck the existing process guard;
+source review continues meanwhile.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

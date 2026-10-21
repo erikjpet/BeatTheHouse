@@ -423,15 +423,4 @@ static func _grid_array(value: Variant) -> Array:
 
 
 static func _strip_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	var source: Array = value as Array
-	for strip_value in source:
-		if typeof(strip_value) == TYPE_ARRAY:
-			var strip: Array = []
-			var symbols: Array = strip_value as Array
-			for symbol in symbols:
-				strip.append(str(symbol))
-			result.append(strip)
-	return result
+	return _grid_array(value)
