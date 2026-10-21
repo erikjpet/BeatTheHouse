@@ -3877,3 +3877,23 @@ the owned file. Both findings were handed to the performance owner.
 No core code, assertion, scheduling, geometry, runtime or save changed. Coverage
 is 716 full file reviews. Ten deferred paths now have complete reads; only
 RunState and FoundationMain still retain screening rather than full-file status.
+
+## Batch 144: review tutorial records, delivery authority and current evidence
+
+Read every field in all 66 tutorial lessons and the complete Crew favor-delivery
+package. Preserve action gates, state predicates, dynamic anchors, alternate
+route recovery, normal-run coaches, meta handoff and the recent map-card fix.
+All 66 lesson IDs are unique; 54 dependencies resolve without a cycle, and all
+66 dialogue/node references resolve. This is a read-only reference check, not a
+repeated tutorial journey. The delivery package is explicitly allowlisted and
+referenced by its event and Crew/RunState paths. Preserve its three terminal
+outcomes, exactly-once handoff, normal exit, disabled aftermath and signed data.
+
+Also read five complete documents covering current Web autosave ownership,
+character-offer qualifications, historical generated-profile cleanup and the
+superseded scratch Option C handoff. Historical bases and failed-fixture records
+remain provenance. The superseded no-new-Crossword-stock direction does not
+authorize deleting the later accepted game or old issued tickets. Autosave's
+documented timing limits remain explicit; no new speed or durability claim was
+added. No content, profile, fixture, code or save changed. Coverage is 723 full
+file reviews; deployment recovery continues in its owner's lane.
