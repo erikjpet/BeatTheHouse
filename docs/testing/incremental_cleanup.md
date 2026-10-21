@@ -2439,3 +2439,42 @@ Parent checkpoint sends returned thread-not-found; peer handoffs returned
 AbsolutePathBuf with uncertain delivery. Tool discovery exposed no alternate
 sender, and the app's peer inventory showed malformed cloud-prefixed Windows
 working directories. Exact local progress and receipts remain preserved.
+
+
+## Batch 78: remove a discarded PCM-cache terminal condition
+
+`ProceduralMusicPlayer._enforce_pcm_cache_budget` published its final shared
+budget, evaluated a read-only predicate, then either returned or reached the
+same end of this void method. Remove that unobserved condition and return.
+Keep the final bridge publication at the identical boundary, including the Web
+LRU side effect. All loop conditions, victim order, active/pending/thread-key
+protection, byte accounting and eviction calls are unchanged. The predicate's
+only helpers sum the existing integer byte map; no RNG, stream, clock, playback
+or game state is touched. No symbol, interface or caller was removed.
+
+Qualification:96 baseline/candidate cases covered four budgets, four protection
+states, three insertion/replacement orders and menu-hot retention.384 complete
+policy/cache/soak/LRU snapshots matched after insertion and run-boundary clear.
+The unchanged focused `_check_cache_ownership` method also passed, retaining
+its140-byte LRU budget and active/menu-hot checks. The unchanged no-pointer
+animation check passed. Both private muted native runs exited naturally with
+EOF/Job0; independent13:20:42 UTC census confirmed both owned PIDs and all new
+Godot processes absent. The existing shared bridge publication count remains
+identical by source proof; this native check does not exercise a browser audio
+graph. No timing improvement or newly generated audio is claimed.
+
+The private preparation initially rejected exact source-pattern assertions
+before writing production source; matching the existing continuation indentation
+and blank boundary corrected the preparer. No tracked test or acceptance rule
+was changed. Music source lines1-1180 and the cache/lifetime helpers have been
+reviewed; the remainder of this large source file is still pending. Semantic
+coverage is distinguished from static screening and asset classification.
+
+Batch77 is already published as`59efdee672391d83074b734f3a04526dd80cac78`, tree
+`5fa9744556e45e77a0728b80d15a8031f67c0747`. All15 archive/HTTPS hashes, dev
+redirect, WASM MIME, stable0.6.0 and the final pointer passed13:12:37 UTC.
+Archive SHA-256:
+`212f258bcbd84f8ffe54cc60218ddfa5a7ef879171ec376319882557ae58c09c`.
+Independent13:12:37.925 census found exportroot27404/allnewGodot absent;
+existing10%/2GiB guardian42856/watcher42252 and retention remained error-free.
+No successful prior test or export was repeated for this verification.

@@ -535,12 +535,9 @@ func _enforce_pcm_cache_budget() -> void:
 		_evict_pcm_cache_key(victim)
 		_pcm_cache_eviction_count += 1
 		shared_policy = WebAudioBridgeScript.set_shared_pcm_budget(_pcm_cache_budget_bytes, _pcm_cache_total_bytes())
-	shared_policy = WebAudioBridgeScript.set_shared_pcm_budget(_pcm_cache_budget_bytes, _pcm_cache_total_bytes())
-	if _pcm_cache_total_bytes() > _pcm_cache_budget_bytes \
-			or int(shared_policy.get("combined_pcm_bytes", _pcm_cache_total_bytes())) > _pcm_cache_budget_bytes:
-		# A single active composition may exceed the budget; it remains protected
-		# until playback moves, at which point the next insertion/clear evicts it.
-		return
+	# A single active composition may exceed the budget; it remains protected
+	# until playback moves, at which point the next insertion/clear evicts it.
+	WebAudioBridgeScript.set_shared_pcm_budget(_pcm_cache_budget_bytes, _pcm_cache_total_bytes())
 
 
 func _evict_pcm_cache_key(cache_key: String) -> void:
