@@ -4150,3 +4150,26 @@ peer family-repayment diff. Save failure generations, public runtime rollback,
 queued dialogue ownership and exact existing repayment guards remain unchanged.
 This partial file is not counted as fully reviewed. Coverage is 763 full file
 reviews with six explicitly recorded issues; screening remains separate.
+
+## Batch 159: reject a missing requested cache-contract report
+
+Read the complete Coin Pusher static-cache contract. Retain production canvas
+dispatch, command order, host reentry, resize/theme/font invalidation, protected
+text rectangles, dynamic versus static keys, all 24 pixel pairs and their exact
+quantization thresholds. Copies isolate mutated fixture states and remain.
+
+The finalizer previously printed PASS and exited zero when opening the requested
+report failed. Only that boundary now appends `report_open_failed` and corrects
+the report's `passed` field before the existing sentinel and exit selection.
+Five cases execute the exact original/candidate finalizer bodies against real
+disposable file targets: omitted report, success, failed open and both outcomes
+with an earlier validation failure. They reproduce old zero versus new nonzero
+exit, preserve earlier failures, retain validation records and write identical
+successful report bytes. No post-open write or atomicity guarantee is claimed.
+
+The check passed in 0.296 seconds under the existing 5% CPU / 512 MiB private
+Job, with EOF, natural exit, Job0 and independent process absence. The first
+private wrapper failed before executing either body because its captured `quit`
+prefix used mixed indentation; retain that failure and the single corrected
+run. No renderer, native solver, game, save, browser or pixel matrix ran. No
+speedup is claimed. Coverage is 764 full file reviews.

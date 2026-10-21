@@ -459,7 +459,10 @@ func _finish() -> void:
 		return
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(report_path.get_base_dir()))
 	var file := FileAccess.open(report_path, FileAccess.WRITE)
-	if file != null:
+	if file == null:
+		failures.append("report_open_failed")
+		report["passed"] = false
+	else:
 		file.store_string(JSON.stringify(report, "\t") + "\n")
 		file.close()
 	print("COIN_PUSHER_STATIC_CACHE_CONTRACT_%s %s" % ["PASS" if failures.is_empty() else "FAIL", JSON.stringify(report)])
