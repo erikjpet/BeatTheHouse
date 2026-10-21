@@ -31,12 +31,12 @@ static func control_row(badges: Array, glyph_size: int = DEFAULT_GLYPH_SIZE) -> 
 		var glyph_id := str(badge.get("glyph_id", "")).strip_edges()
 		if glyph_id.is_empty():
 			continue
-		var tooltip := _tooltip_text(badge)
+		var tooltip := tooltip_text(badge)
 		var collapsed_width := float(safe_glyph_size) + 8.0
 		var expanded_width := collapsed_width + CONTROL_BADGE_TEXT_WIDTH
 		var row_height := float(safe_glyph_size) + 6.0
 		var cell := PanelContainer.new()
-		cell.add_theme_stylebox_override("panel", _cell_style(_badge_color(badge)))
+		cell.add_theme_stylebox_override("panel", cell_style(_badge_color(badge)))
 		cell.mouse_filter = Control.MOUSE_FILTER_STOP
 		cell.mouse_default_cursor_shape = Control.CURSOR_ARROW
 		cell.custom_minimum_size = Vector2(collapsed_width, row_height)
@@ -127,7 +127,7 @@ static func canvas_hit_entries(badges: Array, origin: Vector2, max_width: float 
 			break
 		entries.append({
 			"rect": Rect2(Vector2(x, y), Vector2(badge_width, row_height)),
-			"tooltip": _tooltip_text(badge),
+			"tooltip": tooltip_text(badge),
 		})
 		x += badge_width + 4.0
 		drawn_width += badge_width + 4.0
@@ -173,7 +173,8 @@ static func _badge_color(badge: Dictionary) -> Color:
 	return VisualStyleScript.color(token, VisualStyleScript.SOFT)
 
 
-static func _cell_style(accent: Color) -> StyleBoxFlat:
+# Creates an independent badge panel style for cards and world-map details.
+static func cell_style(accent: Color) -> StyleBoxFlat:
 	var style := StyleBoxFlat.new()
 	style.bg_color = Color(accent.r, accent.g, accent.b, 0.12)
 	style.border_color = VisualStyleScript.accessible_color(accent)
@@ -192,7 +193,8 @@ static func _cell_style(accent: Color) -> StyleBoxFlat:
 	return style
 
 
-static func _tooltip_text(badge: Dictionary) -> String:
+# Formats badge details consistently across Control and canvas consumers.
+static func tooltip_text(badge: Dictionary) -> String:
 	var tooltip := str(badge.get("tooltip", "")).strip_edges()
 	var value_text := str(badge.get("value_text", "")).strip_edges()
 	if not tooltip.is_empty() and not value_text.is_empty() and tooltip.find(value_text) < 0:

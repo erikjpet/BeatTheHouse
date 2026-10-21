@@ -120,6 +120,24 @@ Running the same check in the untouched `4d4eb062` main checkout reproduces the
 same failure. Leave both the assertion and the concurrently investigated
 environment implementation unchanged. This failure is not counted as a pass.
 
+## Batch 6: shared badge tooltip and panel style
+
+The world-map controller duplicated the badge row's tooltip fallback and panel
+style builders exactly. Expose those two existing row helpers as `tooltip_text`
+and `cell_style`, and call them from both consumers. The world-map already
+depends on `AttributeBadgeRow`; no new dependency or cyclic load is introduced.
+The removed names were private helpers with only the replaced local call sites.
+Scripts, scenes, resources, content, tests and tools contain no other references,
+including signal/Callable strings. All existing public methods remain available.
+
+Native comparison passed 107 cases covering every glyph's label/description
+fallback, explicit/overlapping/empty tooltip text, all style colors/margins/borders,
+and both contrast palettes. Each call still creates an independent mutable style.
+The baseline adapters were loaded from disposable class-renamed copies only.
+The check took 0.391 seconds under a private 12% CPU/2 GiB Job, which closed
+naturally with no force, reader EOF and zero active processes. No control sizing,
+tooltip wording, selection behavior or drawing schedule changed.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

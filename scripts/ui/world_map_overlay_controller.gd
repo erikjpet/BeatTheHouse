@@ -634,7 +634,7 @@ func _ensure_detail_badge_pool() -> void:
 		cell.mouse_filter = Control.MOUSE_FILTER_STOP
 		cell.mouse_default_cursor_shape = Control.CURSOR_ARROW
 		cell.custom_minimum_size = Vector2(24.0, 22.0)
-		cell.add_theme_stylebox_override("panel", _badge_cell_style(VisualStyleScript.CYAN_2))
+		cell.add_theme_stylebox_override("panel", AttributeBadgeRowScript.cell_style(VisualStyleScript.CYAN_2))
 		var cell_box := HBoxContainer.new()
 		cell_box.add_theme_constant_override("separation", 3)
 		cell.add_child(cell_box)
@@ -689,49 +689,15 @@ func _update_detail_badge_cells(badges: Array) -> void:
 			label.visible = false
 			continue
 		var accent := VisualStyleScript.color(AttributeBadgesScript.palette_token_for_badge(badge), VisualStyleScript.CYAN_2)
-		var detail_text := _badge_tooltip_text(badge)
+		var detail_text := AttributeBadgeRowScript.tooltip_text(badge)
 		cell.visible = true
 		cell.tooltip_text = detail_text
 		cell.custom_minimum_size = Vector2(24.0, 22.0)
-		cell.add_theme_stylebox_override("panel", _badge_cell_style(accent))
+		cell.add_theme_stylebox_override("panel", AttributeBadgeRowScript.cell_style(accent))
 		icon.texture = AttributeBadgeRowScript.texture_for_badge(badge, 16, false)
 		label.text = detail_text
 		label.visible = false
 		label.add_theme_color_override("font_color", VisualStyleScript.accessible_color(accent))
-
-
-func _badge_cell_style(accent: Color) -> StyleBoxFlat:
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color(accent.r, accent.g, accent.b, 0.12)
-	style.border_color = VisualStyleScript.accessible_color(accent)
-	style.border_width_left = 1
-	style.border_width_top = 1
-	style.border_width_right = 1
-	style.border_width_bottom = 1
-	style.corner_radius_top_left = 0
-	style.corner_radius_top_right = 0
-	style.corner_radius_bottom_left = 0
-	style.corner_radius_bottom_right = 0
-	style.content_margin_left = 3
-	style.content_margin_right = 4
-	style.content_margin_top = 2
-	style.content_margin_bottom = 2
-	return style
-
-
-func _badge_tooltip_text(badge: Dictionary) -> String:
-	var tooltip := str(badge.get("tooltip", "")).strip_edges()
-	var value_text := str(badge.get("value_text", "")).strip_edges()
-	if not tooltip.is_empty() and not value_text.is_empty() and tooltip.find(value_text) < 0:
-		return "%s: %s" % [tooltip, value_text]
-	if not tooltip.is_empty():
-		return tooltip
-	var glyph_id := str(badge.get("glyph_id", "")).strip_edges()
-	var glyph := AttributeBadgesScript.glyph_definition(glyph_id)
-	var label := str(glyph.get("label", glyph_id)).strip_edges()
-	if not value_text.is_empty():
-		return "%s: %s" % [label, value_text]
-	return str(glyph.get("description", label))
 
 
 func _hit_button(callback: Callable) -> Button:
