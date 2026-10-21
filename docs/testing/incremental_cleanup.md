@@ -165,6 +165,43 @@ or compiler diagnostics. Test fragments that require the split Foundation
 runner are not certified by direct standalone loading; no fragment was deleted
 or made less strict to obtain a pass.
 
+## Batch 9: share card-copy coercion
+
+Blackjack and Baccarat each repeated the inherited `GameModule._dictionary_array`
+implementation in `_card_array`. Delegate to that existing conversion boundary,
+retaining both method names, accepted variants, dictionary filtering and recursive
+copy isolation. CardShoe's similarly named helper deliberately borrows dictionary
+entries and is not interchangeable. No RNG draw, card order, normalization field,
+settlement, payout or save format changes.
+
+Reviewed CardShoe, PlayingCardRenderer and TableGameVisuals completely, including
+shuffle/draw ownership, malformed card-code fallback, low-detail drawing, chip
+selection and animation math. Retain those implementations. The two large game
+files received targeted card-copy and caller review (hand normalization, draw,
+settlement, discard/burn and presentation); this does not claim their thousands
+of unrelated lines have completed semantic review. Neither wrapper is removed,
+so scene, string dispatch, test and module interfaces remain available.
+
+Verification on pinned Godot 4.6:
+
+- Native comparison with the preceding game implementations: 3,312 equal results
+  across malformed/typed input, repeated cards, hand normalization and every
+  array in three authored v0.5.1 fixture saves. Nested metadata and repeated-card
+  mutation checks preserved isolation. The first sandboxed run also emitted a
+  Windows certificate-store access error; a normal-host rerun passed cleanly.
+- Existing `blackjack_win_payout_settlement_probe.gd`: PASS, including a retained
+  saved presentation timestamp, exactly-once winning payout and payout animation
+  start/end boundaries.
+- Existing Baccarat seed audit: 400 hands, 10 authoritative host commits and
+  1,000 surface-state calls, `ok: true`, zero failures, native exit 0. An initial
+  12-hand shortcut failed its unchanged statistical-rate bounds; rerun with the
+  original 400-hand sample and seed passed. Its summary lacks a literal `PASS`
+  token, so the private generic wrapper rejected that token check; independently
+  validate the tool's structured report, clean engine output and exit instead.
+- All native Jobs drained naturally with reader EOF, no forced termination and
+  zero active processes. No user save/profile was read. No performance gain or
+  visual Web playtest is claimed.
+
 ## Batch 8: coverage inventory and current source census
 
 `incremental_cleanup_inventory.tsv` accounts for all 3,691 paths at the input
@@ -191,16 +228,16 @@ exhaustiveness or a proof that no future cleanup is possible.
 
 | Level | Paths |
 | --- | ---: |
-| Targeted source/contract review | 75 |
-| Static screening | 1,344 |
+| Targeted source/contract review | 79 |
+| Static screening | 1,340 |
 | Media/evidence/UID classification | 2,272 |
 | Total baseline paths | 3,691 |
 
 | Disposition | Paths |
 | --- | ---: |
-| No change | 2,337 |
-| Reviewed by screening | 1,332 |
-| Fixed | 9 |
+| No change | 2,339 |
+| Reviewed by screening | 1,328 |
+| Fixed | 11 |
 | Deferred | 12 |
 | Known baseline check issue | 1 |
 

@@ -8819,13 +8819,7 @@ func _hand_array(value: Variant) -> Array:
 
 
 func _card_array(value: Variant) -> Array:
-	var result: Array = []
-	if typeof(value) != TYPE_ARRAY:
-		return result
-	for entry in value:
-		if typeof(entry) == TYPE_DICTIONARY:
-			result.append((entry as Dictionary).duplicate(true))
-	return result
+	return _dictionary_array(value)
 
 
 func _local_copy_dict(value: Variant) -> Dictionary:
