@@ -106,14 +106,6 @@ static func classify(object_data: Dictionary, object_type: String = "", object_i
 	# payload is reduced to a task-zone visual during composition.
 	if object_id.to_lower().ends_with("_safe_exit"):
 		return "doorway"
-	if clean_type in ["scenario_actor", "actor"]:
-		if _has_token(person_semantics, COUNTER_PERSON_TOKENS) or clean_prop in ["clerk_counter", "host_station"]:
-			return "behind_counter_person"
-		if _has_token(person_semantics, SEATED_TOKENS):
-			return "seated_person"
-		if _has_token(person_semantics, GROUP_TOKENS):
-			return "group"
-		return "standing_person"
 	if role == "exit" and _has_token(text, ["marked_lane", "clear exit", "public aisle"]):
 		return "ground_marker"
 	if role in ["exit", "doorway"]:
@@ -164,12 +156,6 @@ static func classify(object_data: Dictionary, object_type: String = "", object_i
 		if _has_token(person_semantics, GROUP_TOKENS):
 			return "group"
 		return "standing_person"
-	if clean_type in ["lender", "numbers_silas"]:
-		if object_id.to_lower().contains("pawn_counter"):
-			return "behind_counter_person"
-		return "standing_person"
-	if clean_type == "shopkeeper":
-		return "behind_counter_person"
 	if clean_type in ["game", "game_hook"]:
 		return "floor_fixture" if _has_token(text, ["coin pusher", "pull tab", "pull tabs", "scratch ticket", "scratch tickets", "slot", "video poker"]) else "surface_item"
 	if clean_type == "service" and _has_token(text, ["deck walk", "relax", "ride", "sand pile", "shuttle", "walk"]):

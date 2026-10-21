@@ -716,6 +716,24 @@ The corrected check and liveness Jobs drained naturally with EOF/Job0. No
 failed candidate was committed. One additional full contract review brings
 targeted coverage to 153. No measured performance gain is claimed.
 
+## Batch 27: remove unreachable duplicate person classification
+
+The early `person_object` condition includes actor, scenario actor, lender,
+Numbers Silas and shopkeeper types, and returns on every branch. Remove three
+later branches for those same types: they cannot execute. Preserve the earlier
+classification policy exactly, including its precedence over exit tokens. Do
+not activate the differing rules stranded in those dead branches.
+
+A source proof required exactly the 14-line deletion with every remaining byte
+of normalized source unchanged. Native comparison matched 8,624 synthetic
+contexts and 23,333 dictionaries from authored `data/` JSON files. Three existing
+semantic grounding fixture expectations also passed unchanged, and inputs were
+not mutated. No private editor/profile/save data was accessed. Liveness and
+source census passed. Capped muted Jobs closed naturally with EOF/Job0 and
+independent owned-process absence. No geometry, cache, slot support, scene,
+resource, finalization, public function or serialized field changed. Coverage
+remains 153 targeted reviews; the previously reviewed placement file is now fixed.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
