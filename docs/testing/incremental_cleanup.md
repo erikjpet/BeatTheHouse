@@ -1119,6 +1119,39 @@ classifications. The existing watcher stopped during the independent 71c3
 publication; that save-fix ancestry is preserved. This tested cleanup stays
 local pending the deployment owner's recovery, while semantic review continues.
 
+## Batch 43: copy only retained meta history
+
+`MetaCollectionService._bounded_array` now slices the retained suffix before
+deep-copying it. The preceding implementation copied every nested record and
+repeatedly removed the first array entry. The helper keeps the same newest
+records, order, negative/zero limit behavior and detached nested output. All
+callers, history limits, migration rules, quote revalidation and RNG stay intact.
+
+Native baseline comparison passed 396 folds across 11 lengths up to 4,096,
+three nested shapes and 12 limits, plus nine complete normalized stores covering
+64/256 history boundaries, unknown forward fields and unique receipt ordering.
+Input and nested output isolation and persisted RNG matched. The unchanged full
+`collection_meta_check.gd` passed all 25 existing test paths, including actual
+private save/reload, legacy fields, sales, trade-ups, Sal stock idempotency,
+starter buyback, Players Card fragility and one-time bag consumption. The
+unchanged no-pointer animation check passed. All three Jobs naturally closed
+with exit0, reader EOF, Job0 and no forced cleanup; independent 08:22 UTC census
+confirmed every recorded identity absent. The first contract launch yielded
+before creating a Job when the existing exporter was active; the later fresh
+guard admitted the check. No player data was accessed and no speed claim is made.
+
+The service and its full existing contract now have complete source reviews.
+The subsequent clean rebase also preserves the menu owner's 6bb31bb7 change
+and its new four-viewport navigation contract; that complete test source was
+reviewed without repeating its owner's completed runtime checks.
+Coin Pusher's complete renderer review retained host/font cache lifetimes,
+native and fallback batches, interpolation, ordering and hit geometry; its
+apparently leftover color helper remains live through the cabinet contract.
+Coverage is 231 targeted source/contract reviews, 1,196 static screens and 2,272
+role classifications across 3,699 tracked paths. The deployment owner restored
+the existing watcher and verified the separate 71c3 save fix at 08:20 UTC; this
+cleanup preserves it and uses that same watcher for qualified publication.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

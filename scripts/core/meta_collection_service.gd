@@ -1473,10 +1473,7 @@ func _rng_from_snapshot(snapshot_value: Dictionary) -> RngStream:
 
 
 func _bounded_array(values: Array, limit: int) -> Array:
-	var result := values.duplicate(true)
-	while result.size() > maxi(0, limit):
-		result.pop_front()
-	return result
+	return values.slice(maxi(0, values.size() - maxi(0, limit))).duplicate(true)
 
 
 func _bounded_unique_strings(values: Array, limit: int) -> Array:

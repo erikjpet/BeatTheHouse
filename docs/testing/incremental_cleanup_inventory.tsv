@@ -1858,8 +1858,8 @@ docs/screenshots/scratch_ticket_three_state_review/05_bonus_bingo_three_states.p
 docs/screenshots/scratch_ticket_three_state_review/06_high_roller_holdem_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	9ae3f1c0724939aa1acaebf88e3f8524fde714f1	541341	-
 docs/screenshots/scratch_ticket_three_state_review/07_golden_vault_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	258b7cdca507173d7b8c484ed5ed19a531b994fa	474817	-
 docs/screenshots/scratch_ticket_three_state_review/all_scratch_tickets_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	506839b5f67581028469a7a9230deaf8c5a8a3fb	4560788	-
-docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	314101f7a71e0e389d7e5792f7cb8c281a026e16	74910	1225
-docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	0079e1035c52595e346a7a378f45ce39f5cc90de	667164	-
+docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	689bc9485499a416be5c5186b1161bc78044e07a	78266	1258
+docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	b86bc2aad46e54080d4a08c7a0e6a8beccd73e27	667328	-
 docs/testing/punchline_debt_court_recovery.md	docs/testing	authored-document	static-screen	reviewed	D1	ccfe341027a53866f18c201f4ef855a2420c2987	3889	64
 docs/testing/scratch_scalper_runtime_compatibility.md	docs/testing	authored-document	static-screen	reviewed	D1	15feb4c3c388e55a67a98bc58efbc003a1fc4261	3581	56
 docs/todo/README_0_6_board.md	docs/todo	authored-document	static-screen	reviewed	D1	2305cca0cdeeba83d3fa8768159758508d775c58	66017	517
@@ -2868,7 +2868,7 @@ scripts/core/io_result.gd	scripts/core	authored	source-review	no-change	M:copy-b
 scripts/core/item_effect.gd	scripts/core	authored	source-review	fixed	C:batch25	a4839a5187ea3df774d855c9811e96e87e817e7f	10027	249
 scripts/core/json_coerce.gd	scripts/core	authored	source-review	no-change	M:compat-hashes	da57e6db2ae84165e24f6976a5a725f056527d4b	3190	111
 scripts/core/keys.gd	scripts/core	authored	source-review	no-change	M:key-vocabulary	f9c80350e2c5d6568e24ef3a4501b3364d915f88	1323	45
-scripts/core/meta_collection_service.gd	scripts/core	authored	static-screen	reviewed	S1	c57aa6c2b836bdb8e470beab0c47951fbff3fdf0	80495	1913
+scripts/core/meta_collection_service.gd	scripts/core	authored	source-review	fixed	C:batch43	c57aa6c2b836bdb8e470beab0c47951fbff3fdf0	80495	1910
 scripts/core/music_delivery_index.gd	scripts/core	authored	source-review	no-change	M:authored-filename-contract	65d3b8830254ec265d876c03f827cd3e5d8c0f9a	6742	171
 scripts/core/numbers_model.gd	scripts/core	authored	source-review	fixed	C:batch40	5f14cd8d89ab750241c216d38ce9eeac5df32371	59426	1284
 scripts/core/persistence_paths.gd	scripts/core	authored	source-review	fixed	C:batch14	991d3cc663cb778ddef83ee13772dbd005ecb3f6	2421	57
@@ -2915,7 +2915,7 @@ scripts/games/coin_pusher/coin_pusher_export_parity_runner.gd	scripts/games	auth
 scripts/games/coin_pusher/coin_pusher_export_parity_runner.tscn	scripts/games	authored	static-screen	reviewed	S1	8df819f371d754619264a89cf86583d6e81b3374	241	6
 scripts/games/coin_pusher/coin_pusher_hardware_cache_canvas.gd	scripts/games	authored	source-review	no-change	M:batch32-full-retained-hardware-cache-parent-owned-hit-registration-string-dispatch-review	82a7a363f3c92fbf70da0cdd0d9815cdd614da3d	829	23
 scripts/games/coin_pusher/coin_pusher_live_session.gd	scripts/games	authored	source-review	no-change	M:batch33-full-fixed-tick-backlog-native-scratch-ownership-input-release-boundaries-v1-v3-snapshot-and-provenance-conservation-review	5703c44147725b7b17dffc5570192f8e2ac4600d	46854	826
-scripts/games/coin_pusher/coin_pusher_renderer.gd	scripts/games	authored	static-screen	reviewed	S1	c460bc0e2269e958ad50b5f40ee0de03d057ae83	101488	1867
+scripts/games/coin_pusher/coin_pusher_renderer.gd	scripts/games	authored	source-review	no-change	M:batch43-full-retained-static-hardware-host-font-lifecycle-native-packed-and-fallback-batching-hit-geometry-interpolation-depth-order-and-live-debug-color-helper-callers-retained	c460bc0e2269e958ad50b5f40ee0de03d057ae83	101488	1867
 scripts/games/coin_pusher/coin_pusher_solver.gd	scripts/games	authored	static-screen	reviewed	S1	8567feba34c272c70594c852830c84f0d29d6eb9	108638	2328
 scripts/games/coin_pusher/coin_pusher_solver_api.gd	scripts/games	authored	source-review	no-change	M:batch32-full-native-fallback-facade-public-constant-method-and-test-contract-identities-retained	f87cb229c0901aa35ff800d533e5344f0cb5eac4	6659	162
 scripts/games/coin_pusher/coin_pusher_static_cache_canvas.gd	scripts/games	authored	source-review	no-change	M:batch32-full-retained-static-draw-protected-text-metadata-and-cache-drawn-signal-review	f0c9cb4de6fafd12d6d126bbc87103814fb71e7c	854	25
@@ -2963,7 +2963,7 @@ scripts/tests/character_offers_cache_check.gd	scripts/tests	authored	static-scre
 scripts/tests/character_offers_check.gd	scripts/tests	authored	static-screen	reviewed	S1	56b790d380a1d5e92a5af8e24a83b5f3c045f735	33001	607
 scripts/tests/character_offers_roads_and_ride_check.gd	scripts/tests	authored	static-screen	reviewed	S1	0d1460ab58d1f61aeab479bd67f4bedfb59eff81	23183	418
 scripts/tests/cold_continue_room_projection_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	07a2387a540b6d73efcdea7b5513c7f066b1c5df	4886	110
-scripts/tests/collection_meta_check.gd	scripts/tests	authored	static-screen	reviewed	S1	930ccd90b4b7f70baa36dc62bbf6cfe6e46f68af	72909	1030
+scripts/tests/collection_meta_check.gd	scripts/tests	authored	source-review	no-change	M:batch43-full-all25-existing-tests-card-fragility-Sal-idempotency-reload-legacy-fields-one-time-bag-consumption-and-meta-isolation-retained	930ccd90b4b7f70baa36dc62bbf6cfe6e46f68af	72909	1030
 scripts/tests/dave_last_stop_environment_objects_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	46bda3d2e709d9fdfd93f77786c40c0579731cca	3420	77
 scripts/tests/developer_layout_save_ui_check.gd	scripts/tests	authored	static-screen	reviewed	S1	e1e0e89a79ddce180bde21e58efcbefe3989eb79	21614	462
 scripts/tests/developer_placement_mode_check.gd	scripts/tests	authored	static-screen	reviewed	S1	d6fc81d5d23009f878eb291a71768d217c47d72c	22775	377
@@ -3193,6 +3193,7 @@ scripts/tests/punchline_legacy_pending_prepare.gd	scripts/tests	authored	static-
 scripts/tests/punchline_witness_chairs_repro.gd	scripts/tests	authored	static-screen	reviewed	S1	afd4d4b0f123d92266cbbd10013177143dd0cd39	26880	461
 scripts/tests/room_slot_occupancy_check.gd	scripts/tests	authored	static-screen	reviewed	S1	dc09346eeb04d8eb048409dc6ff1544722e78a30	12881	264
 scripts/tests/rourke_noticed_environment_objects_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	cfa1f6b440628e40f27b646321397a78fc2292b9	3669	77
+scripts/tests/run_menu_navigation_layout_check.gd	scripts/tests	authored	source-review	no-change	M:batch43-new-upstream-file-full-four-viewport-initial-actions-focus-scroll-touch-target-help-and-slot-note-contract-review-no-repeated-native-run	cd23507e6c6c287a74ea697c2c54d96e625e4515	5319	122
 scripts/tests/run_report_main_menu_check.gd	scripts/tests	authored	static-screen	reviewed	S1	67bfdcc7629192c4a508f1c14d065b08d931ee37	1500	49
 scripts/tests/rw06_6_pull_tab_glimmer_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	f6042f24466307ed82ceede2969cf2544d620d95	44555	867
 scripts/tests/save_navigation_durability_check.gd	scripts/tests	authored	static-screen	reviewed	S1	f9bb0b574bec5e80e5669fa8907f1d5e1b847b75	12846	273
@@ -3233,7 +3234,7 @@ scripts/ui/environment_interaction_view_model.gd	scripts/ui	authored	source-revi
 scripts/ui/foundation_action_view_model.gd	scripts/ui	authored	source-review	no-change	M:batch33-full-host-dispatch-public-result-ownership-stake-economy-legal-choice-and-confirmation-review	a16432537893c07c52748d47d6ea111c4b11f04a	47560	940
 scripts/ui/foundation_hud_bar.gd	scripts/ui	authored	source-review	no-change	M:batch31-full-wallet-delta-heat-pulse-autonomous-scheduling-live-clock-meta-mode-and-tutorial-target-review	d3393f15055cc3db4b8eb43572921a277076e796	21197	548
 scripts/ui/foundation_hud_view_model.gd	scripts/ui	authored	source-review	fixed	C:batch21	ee17b0d941c6ed2b6cb29bbfac94f45149a548fc	21719	372
-scripts/ui/foundation_main.gd	scripts/ui	authored	static-screen	deferred	O1	5a7b57d90ce099ef1c2c41048bb49c6b19ca4fd4	1085346	23083
+scripts/ui/foundation_main.gd	scripts/ui	authored	static-screen	deferred	O1	5a7b57d90ce099ef1c2c41048bb49c6b19ca4fd4	1085346	23084
 scripts/ui/foundation_screen_builder.gd	scripts/ui	authored	source-review	no-change	M:batch31-full-host-property-string-dispatch-signal-wiring-legacy-alias-and-lazy-panel-reference-review	60e575e71931e2f0f152c88e83b7ba65c00900f4	31597	504
 scripts/ui/foundation_travel_view_model.gd	scripts/ui	authored	source-review	no-change	M:batch33-full-cache-invalidation-visibility-delivery-next-hops-venue-hours-contextual-fares-and-closing-walk-review	fa46f8ac76c93a1c5d46efe7bd0a37aee193eaf5	37772	783
 scripts/ui/foundation_widgets.gd	scripts/ui	authored	source-review	no-change	M:batch16-full-public-widget-callback-sizing-and-accessibility-contracts-retained	9af5dfb2e61cecf7851629b25a8cec65476a424a	6994	162
