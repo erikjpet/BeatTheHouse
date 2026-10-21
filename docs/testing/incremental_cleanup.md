@@ -3755,3 +3755,28 @@ completed in 0.654 seconds; temporary occupancy concatenations fall from 2,660
 to zero across those cases. This is a work-count result, not a measured speed
 gain. No full generator, authority rewrite, runtime, save or export ran. Coverage
 is 703 full source reviews.
+
+## Batch 138: finish manifest and environment-instance semantic reads
+
+Read all 932 manifest lines and 1,657 environment-instance lines. Keep both
+files unchanged under coordinated ownership. Retained schema/identity checks,
+source and row seals, authenticated rendererless retention, runtime-projection
+exclusion, causal world owners, JSON integral boundaries, legacy layered saves,
+strict layout proofs and ticket cash-out hosts. The preview's discarded name
+and music results preserve the authoritative RNG stream and must remain. The
+empty Numbers helper deliberately delegates presence to RunState; it is not a
+new placeholder or proof that Numbers content was abandoned.
+
+Specific proposal: `_durable_layer_states` copies the complete outer layer map
+once for its keys and again for every layer. Reusing one owned outer map could
+avoid that repeated work while preserving per-layer ownership and the exact
+durable-field stripping. Benefit is unmeasured. Before editing, coordinate with
+the owner and prove complete legacy save/RNG/alias/invalid-shape parity. The
+manifest's dictionary-shaped fixed declarations also deserve a focused check:
+supplying a missing identity currently assigns into the original declaration,
+unlike the copied array-shaped path. This is a source concern, not a reproduced
+gameplay defect or an authorized behavior change. No runtime or save was opened.
+Coverage is 705 full source reviews; eight deferred paths now have full reviews
+and four retain screening status. The two files remain explicitly deferred for
+edits. The source-finding handoff was unconfirmed because the peer host became
+unavailable; these exact proposals remain recorded here.
