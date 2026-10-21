@@ -3127,3 +3127,21 @@ failed cases used two instead of four. It passed in0.203s under the muted5%/
 512MiB Job, naturally0/EOF/Job0 without forced cleanup; PID45688 was independently
 absent afterward. This is helper behavior proof, not a rerun or new qualification
 of the complete native-Web contract, renderer, save or gameplay suite.
+
+
+## Review batch 104: capture, scale and server ownership tools
+
+Eight more files received full source review: end-run social, v0.4 promo and
+v0.6 gallery captures; the extreme-state scale probe; owned Web-server lifecycle;
+and historical Bar Dice, environment-time and scenario screenshots. Their
+controlled showcase data, real production action routes, oversized/corrupt-state
+fixtures, queue/history caps, budgets, no-input frame waits, report/PNG checks
+and scenario overlap assertions remain. No capture, scale probe or browser ran.
+
+Server cleanup binds nonce, wrapper/child relationship, script, port and process
+start ticks, then revalidates identity before fallback termination. These active
+ownership checks and test seams remain. Historical loopback server lexical-root
+risk is recorded separately. Repeated gallery refresh calls also remain because
+their host methods can have side effects; repeated spelling alone is insufficient
+evidence for deletion. Capture-only clock and overlay controls were not treated
+as production animation scheduling. No content, saved state or media changed.
