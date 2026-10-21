@@ -4468,3 +4468,9 @@ The owner source receipt binds the identical tested blobs to `af91def6`: 45 targ
 Read the entire spatial inventory contract. Preserve committed selection separately from hover/focus, same-definition instance identity, two-stage confirmation, directional and small-screen paging, fallback ownership, shared card geometry, multi-container transfers, popup focus restoration and bounded control/texture reuse. Ticket piles deliberately expose origin/return guidance rather than normal item actions.
 
 The pixel, icon coverage, container-material and item-voice checks are distinct acceptance criteria, not redundant loops to delete. Keep their complete thresholds and sample budgets. The helper copies protect snapshot ownership across asynchronous UI calls. No code change, asset inspection/rewrite, test-store access, gameplay or runtime check was justified or performed.
+
+## Batch 189: review public playtest observation and replay boundaries
+
+Read the complete public observation adapter. Keep per-surface allowlists, strict rendered-state witnesses, dealer-card visibility and the distinction between live observations, compact checkpoints and trace fingerprints. The detached trace copy is subsequently edited; removing it would mutate input. Pointer resting state, asynchronous save acknowledgements, typewriter progress and transient gesture targets have explicit replay-normalization purposes.
+
+Repeated scalar and visibility filters protect different surface contracts. Do not combine them into a broad raw-state export. The inventory provider's closed-screen visibility remains a producer-trace question; this source read alone does not establish a privacy defect or authorize an API change. No observer contract, replay fingerprint, gameplay state or runtime behavior changed, and no session or private state was accessed.
