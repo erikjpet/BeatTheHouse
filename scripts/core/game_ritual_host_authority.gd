@@ -126,7 +126,6 @@ func authenticated_snapshot() -> Dictionary:
 
 
 func restore_snapshot(snapshot: Dictionary) -> Dictionary:
-	var before := _host_bytes()
 	var errors := _validate_snapshot(snapshot)
 	if not errors.is_empty():
 		return {"ok": false, "error_code": "invalid_restore", "errors": errors}
@@ -144,8 +143,6 @@ func restore_snapshot(snapshot: Dictionary) -> Dictionary:
 	_tail = (snapshot.get("tail", []) as Array).duplicate(true)
 	_authority_epoch = int(snapshot.get("authority_epoch", 0))
 	_live_requests = (snapshot.get("live_requests", {}) as Dictionary).duplicate(true)
-	if before == _host_bytes():
-		pass
 	return {"ok": true, "state": _state.duplicate(true), "projection": public_projection(), "replayed_effects": []}
 
 
@@ -292,10 +289,6 @@ func _request_epoch(request_key: String) -> int:
 
 func _host_rejection(error_code: String, request_key: String, message: String) -> Dictionary:
 	return {"ok": false, "error_code": error_code, "request_key": request_key, "message": message, "public_projection": public_projection()}
-
-
-func _host_bytes() -> String:
-	return RuntimeScript.canonical_json({"state": _state, "checkpoint": _checkpoint, "tail": _tail, "epoch": _authority_epoch, "requests": _live_requests})
 
 
 func _without_fingerprint(value: Dictionary) -> Dictionary:

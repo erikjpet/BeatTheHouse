@@ -588,6 +588,34 @@ with EOF/Job0, and independent host census confirmed absence. This is dead-code
 removal, with no runtime speed claim. Coverage remains 126 targeted reviews;
 the already-reviewed HUD module is now classified fixed. Publication is paused.
 
+## Batch 22: remove discarded ritual host serialization
+
+`restore_snapshot` serialized the entire host before validation and after a
+successful restore, compared the strings, then executed only `pass`. Remove
+that discarded work and its otherwise unused private helper. The serializer's
+canonical helper is pure. All actual snapshot shape/identity/fingerprint,
+checkpoint/tail, trusted-ledger and runtime validation remains byte-for-byte
+unchanged, as do state publication assignments and response construction.
+This removes a no-op; it does not replace or weaken an integrity check.
+
+Native baseline comparison passed 27 accepted/rejected restore cases over
+different histories, with identical responses and state. The complete existing
+ritual contract passed unchanged: malformed definitions, exactly-once/conflicting
+intents, phase/RNG authority, hostile proposals, 32-round compaction, stale intents,
+retained-tail replay, trusted-ledger refusal, resigned tampered snapshots,
+reflection and layout neutrality. A source comparison also required that only
+the discarded local/branch/helper were deleted. Liveness and source census passed.
+Both private capped Jobs drained naturally with EOF/Job0 and independent process
+absence. The initial prelaunch census preserved two October 19 playtest processes;
+the admitted run required no new native owner. No browser, export or timing claim.
+
+The full host and contract, Bar Dice ritual projection, collection-drop service,
+surface-audio manifest, SaveService and scenario catalog were reviewed. Retain
+authority and presentation separation, grant/RNG/idempotence policies, public-only
+audio/voice rules, async save generation/byte proofs, old-save acceptance and
+strict package/overlay validation. Coverage now records 133 targeted reviews.
+Publication/export remains paused for the parent's capacity dependency.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
