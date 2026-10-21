@@ -259,6 +259,32 @@ func slip_public_state(slip_id: String) -> Dictionary:
 	}
 
 
+# A read-only receipt view of the player's own recent bets. Do not return raw
+# slips: they also carry hidden detection and future/fix bookkeeping.
+func recent_slips_public() -> Array:
+	var result: Array = []
+	for index in range(slips.size() - 1, -1, -1):
+		var slip := _dictionary(slips[index])
+		if str(slip.get("id", "")).is_empty():
+			continue
+		var slip_status := str(slip.get("status", "unknown"))
+		if not ["open", "settled", "confiscated"].has(slip_status):
+			slip_status = "unknown"
+		var venue := venue_definition(str(slip.get("venue_id", "")))
+		result.append({
+			"draw": maxi(0, int(slip.get("day", 0))) + 1,
+			"venue_label": str(venue.get("label", "Local book")),
+			"digits": str(slip.get("digits", "")),
+			"stake": int(slip.get("stake", 0)),
+			"play_type": str(slip.get("play_type", "")),
+			"status": slip_status,
+			"payout": maxi(0, int(slip.get("payout", 0))) if slip_status == "settled" else 0,
+		})
+		if result.size() == 6:
+			break
+	return result
+
+
 func draw_occasion_status(day: int = -1) -> Dictionary:
 	var target_day := day_at(action_index) if day < 0 else maxi(0, day)
 	var saved := _dictionary(draw_occasions.get(str(target_day), {}))

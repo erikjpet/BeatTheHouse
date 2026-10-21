@@ -10496,6 +10496,11 @@ func numbers_status() -> Dictionary:
 	return numbers_state.status()
 
 
+# Read-only receipts for the player's own recent wagers.
+func numbers_recent_slips() -> Array:
+	return numbers_state.recent_slips_public() if numbers_state != null else []
+
+
 # Player-safe crew desk projection. Hidden solo knowledge, future handles, raw
 # leak state, and detection rolls never cross this presentation seam.
 func numbers_desk_status() -> Dictionary:

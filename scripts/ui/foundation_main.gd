@@ -20923,11 +20923,38 @@ func _render_numbers_surface(result_message: String = "") -> void:
 	if source_id == "silas":
 		_build_numbers_silas_controls(silas)
 	else:
+		_build_numbers_slip_history()
 		_build_numbers_slip_controls(venue)
 		if source_id == "desk":
 			_build_numbers_desk_controls(desk)
 	_add_card_button(event_choice_popup_choices_list, "Back", Callable(self, "_hide_event_choice_popup"))
 	_present_event_choice_popup()
+
+
+func _build_numbers_slip_history() -> void:
+	var history := run_state.numbers_recent_slips()
+	if history.is_empty():
+		return
+	var section := VBoxContainer.new()
+	section.name = "NumbersSlipHistory"
+	section.add_theme_constant_override("separation", 4)
+	event_choice_popup_choices_list.add_child(section)
+	section.add_child(_label("Recent slips (last 6)", 14))
+	for slip_value in history:
+		var slip: Dictionary = slip_value
+		var result_text := "Waiting for draw"
+		match str(slip.get("status", "")):
+			"settled":
+				result_text = "Settled: paid $%d" % int(slip.get("payout", 0))
+			"confiscated":
+				result_text = "Confiscated"
+			"unknown":
+				result_text = "Status unavailable"
+		var play_type := "Box" if str(slip.get("play_type", "")) == "box" else "Straight"
+		section.add_child(_muted_label("Draw %d - %s\n%s %s - $%d - %s" % [
+			int(slip.get("draw", 1)), str(slip.get("venue_label", "Local book")),
+			str(slip.get("digits", "")), play_type, int(slip.get("stake", 0)), result_text,
+		], 13))
 
 
 func _build_numbers_slip_controls(venue: Dictionary) -> void:
