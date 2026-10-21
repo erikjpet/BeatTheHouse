@@ -7866,7 +7866,7 @@
                     "actor_id": "gas_bus_driver",
                     "anchor_id": "package_b_gas_top_mid",
                     "behavior": "watch",
-                    "description": "The tour-bus driver watches the open door and the scattered queues, waiting for a reliable final count.",
+                    "description": "The driver watches the open bus door and queues, waiting for a final count.",
                     "description_variants": {
                       "work": "The driver checks the reconciled count against the seats visible through the open bus door."
                     },
