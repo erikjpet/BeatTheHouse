@@ -723,16 +723,25 @@ func _layout_slots() -> void:
 	_slot_rects.clear()
 	if _slot_models.is_empty():
 		return
+	var geometry_by_container: Dictionary = {}
 	for index in range(_slot_models.size()):
 		var slot: Dictionary = _slot_models[index]
 		var container_index := clampi(int(slot.get("container_index", _active_container_index)), 0, maxi(0, _containers.size() - 1))
-		var container: Dictionary = _containers[container_index] if container_index < _containers.size() else _active_container()
-		var container_type := str(container.get("container_type", "loose_carry"))
-		var full_slot_count := maxi(_normalized_slots(container).size(), int(container.get("capacity", 0)))
-		var page_reflow := _small_screen_mode and full_slot_count > SMALL_SCREEN_PAGE_SIZE
-		var normalized_rects := CatalogScript.slot_rects("small_screen_page" if page_reflow else container_type, _slot_models.size() if page_reflow else full_slot_count, _catalog)
-		var presentation := CatalogScript.presentation(container_type, _catalog)
-		var icon_scale := clampf(float(presentation.get("item_icon_scale", 0.70)), 0.25, 1.0)
+		if not geometry_by_container.has(container_index):
+			var container: Dictionary = _containers[container_index] if container_index < _containers.size() else _active_container()
+			var container_type := str(container.get("container_type", "loose_carry"))
+			var full_slot_count := maxi(_normalized_slots(container).size(), int(container.get("capacity", 0)))
+			var page_reflow := _small_screen_mode and full_slot_count > SMALL_SCREEN_PAGE_SIZE
+			var presentation := CatalogScript.presentation(container_type, _catalog)
+			geometry_by_container[container_index] = {
+				"page_reflow": page_reflow,
+				"rects": CatalogScript.slot_rects("small_screen_page" if page_reflow else container_type, _slot_models.size() if page_reflow else full_slot_count, _catalog),
+				"icon_scale": clampf(float(presentation.get("item_icon_scale", 0.70)), 0.25, 1.0),
+			}
+		var geometry: Dictionary = geometry_by_container[container_index]
+		var page_reflow := bool(geometry["page_reflow"])
+		var normalized_rects: Array = geometry["rects"]
+		var icon_scale := float(geometry["icon_scale"])
 		var art_rect := _container_art_rect(container_index)
 		var presentation_index := index if page_reflow else int(slot.get("presentation_slot_index", index))
 		if presentation_index >= normalized_rects.size() or index >= _slot_buttons.size():

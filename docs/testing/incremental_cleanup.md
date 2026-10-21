@@ -929,6 +929,40 @@ identity, nudge timing, atomic pinball takeover, Buffalo replay and audio cues.
 The two unused local bindings identified there remain a separate cleanup
 candidate; no slot presentation code changes in this batch.
 
+## Batch 36: reuse container geometry within one layout pass
+
+Physical inventory layout normalized and copied the full container slots and
+rebuilt its catalog rectangles/presentation for every visible slot. Prepare
+that geometry once per container within the same synchronous layout pass.
+The cache is local to that call; no persisted, inter-frame or authoritative
+state is added. All 60 complete public layout snapshots matched the prior
+surface across three sizes, two small-screen modes, physical/grouped cards and
+five empty, single/multiple-container and malformed-slot models. Hit rectangles,
+icons, selection, focus and paging were exact; source inputs were unchanged.
+Instrumented normalization calls in those layout passes fell from 246 to 60.
+That is a deterministic work-count reduction, not a measured timing speedup.
+Required no-pointer liveness passed; Jobs closed naturally and all three
+recorded test/observation processes were independently absent.
+
+Three further full reviews bring substantive coverage to 213. Preserve map
+camera drag/zoom, route clipping, replay, visibility and bounded texture caches;
+the Grand Casino weak-host facade, live versus preview ownership, chip funding,
+Players Card/showdown rules, seeded staffing and room save compaction; and
+Numbers host capabilities, proposal-only actions, clocks, draw/settlement pool
+caps, detection/leak/fix rules, depth custody and strict legacy restoration.
+The duplicate Casino staffing loop remains a separate prepared candidate.
+
+The map review reproduced a separate existing behavior issue: with a current
+marker eligible for motion and camera bounds already settled, `_process`
+returns before its pulse redraw branch. An unchanged-production observation
+saw zero idle draws over 15 frames; an explicit redraw produced one draw,
+confirming the observer was live. Record this as an issue, not a cleanup fix.
+Proposed follow-up: restore a bounded autonomous marker cadence after settling,
+preserve reduced-motion and map/hit geometry, and add a focused map liveness
+check alongside the existing route-visibility checks. No map animation behavior
+was changed here. The observation's initial process-creation transport error
+was resolved by a fresh negative process/receipt check before its one retry.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
@@ -999,3 +1033,14 @@ The existing automatic retention hook completed without error. Exact identity,
 archive and actual closure receipts were handed to the performance worker for
 its separate finite trace; no visual Web gameplay or latency result is claimed
 by the cleanup worker's asset verification.
+
+Batches 33-35 were pushed as three separately tested commits. NEXT promoted
+`1d8c5cf932d29b798f86957494c2e23aecd6786d`, tree
+`147338bc634af387bb984355a7bea353cfaf6298`, at 06:52:32 UTC. Independent
+06:53:20 UTC census found root 16756, observed import processes 48632/30556
+and all new Godot processes absent. Trusted HTTPS at 06:53:26 matched all 15
+archive files, redirect and WASM MIME types; stable remained 0.6.0. Archive
+SHA-256: `c41fef5093099550be5dd762261e88486df514c0e91a14503e396aeefd9799c5`.
+The existing retention hook completed without error. Exact receipts went to
+the performance and retention owners. The untested geometry candidate was
+excluded from that push; its later proof is recorded separately above.
