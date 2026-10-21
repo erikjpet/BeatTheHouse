@@ -3819,3 +3819,18 @@ them or silently modernizing their launch paths. All four remain unchanged and
 were not executed. Coverage is 712 full source reviews. The newer performance
 commit is preserved; rebasing the eleven local commits left their combined
 cleanup patch byte-identical. No successful checks or exports were repeated.
+
+## Batch 141: preserve the authenticated empty-flush fix and its evidence
+
+Read the complete new 206-line empty-flush contract and the four production
+diffs in peer commit `dfb2f8a4`. Preserve the owned publication comparison,
+separate causal/layout/renderer checks, original full-commit fallback, rejection
+order and owned results. The contract deliberately mutates aliases, checks stale
+causal data and rollback, uses the real offer and subscribed travel paths, and
+compares complete state and RNG. Its one named grounding-cache invalidation is
+explicitly checked before exact equality at the next normal layout boundary;
+it is not a general allowed-difference rule.
+
+No peer source or assertion changed and no successful check was repeated.
+Coverage is 713 full file reviews. RunState's small changed section was reviewed
+incrementally; that does not count as a full read of the remaining large file.
