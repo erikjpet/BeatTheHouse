@@ -3225,3 +3225,21 @@ The navigation check's early-exit finalizer emits an error; its exit-code effect
 and runner stderr policy are a separate qualification question, not a reproduced
 gameplay failure. The historical eighteen-archetype gate and all other assertions
 were retained. This source-only batch adds no new runtime pass or speed claim.
+
+
+## Batch 109: share function-census output construction
+
+The Check and ordinary entry paths repeated the same census construction and
+JSON/Markdown writes. Run those three identical calls once before the existing
+message/exit branch. All parser functions, seed classes, fixed-point propagation,
+ordering, schemas, output paths, Quiet behavior and other source bytes remain.
+Check still regenerates its reports; it was not turned into a weaker dry run.
+No speed improvement is claimed.
+
+Four tiny fixture runs compared every Check/Quiet combination with the original
+script. Eight PowerShell7.6.5 invocations produced byte-identical JSON and
+Markdown, identical console/error output and exit codes. Fixtures cover shipping
+and non-shipping functions, shared call reachability, unclassified functions and
+a file with no functions. The complete repository census was not run. Its
+same-file textual parser still does not resolve signals, reflection or general
+cross-file dispatch and was not used as proof that any function is dead.

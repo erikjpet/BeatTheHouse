@@ -427,19 +427,16 @@ function Write-CensusJson {
 
 # Census outputs are generated artifacts under .tmp/ and are never committed.
 # -Check regenerates them to confirm the generator still runs cleanly.
+$census = New-Census
+Write-CensusJson -Census $census -Path $OutputJson
+Write-CensusMarkdown -Census $census -Path $OutputMarkdown
 if ($Check) {
-    $census = New-Census
-    Write-CensusJson -Census $census -Path $OutputJson
-    Write-CensusMarkdown -Census $census -Path $OutputMarkdown
     if (-not $Quiet) {
         Write-Host ("Function census generation check passed: {0} functions across {1} files." -f $census.summary.functions_total, $census.summary.files_total)
     }
     exit 0
 }
 
-$census = New-Census
-Write-CensusJson -Census $census -Path $OutputJson
-Write-CensusMarkdown -Census $census -Path $OutputMarkdown
 if (-not $Quiet) {
     Write-Host ("Function census wrote {0} functions across {1} files." -f $census.summary.functions_total, $census.summary.files_total)
     Write-Host ("JSON: {0}" -f (Get-ProjectRelativePath $OutputJson))
