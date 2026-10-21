@@ -4450,3 +4450,9 @@ The existing one-file loader passed in 4.094 seconds under the private muted 12%
 Read the complete capture WIP, final execution ledger and composition/migration report. Keep rejected attempts, exact historical identities, later attribution corrections and unchanged evidence hashes. In particular, missing harness arrival finalization produced cascaded room failures; an identical old failure count was not itself a waiver. The later migration-only closure is explicitly narrower than release composition, parity and terminal-soak qualification.
 
 These are dated execution and failure records. Their broad release commands do not override the user's current focused development-testing policy or create new work. No historical output, fixture, driver, golden, runtime or source was regenerated or relabeled. The documents remain unchanged.
+
+## Batch 186: review archived capture and composition orchestration
+
+Read both complete archived PowerShell orchestrators. Keep pinned historical trees, production-derived target eligibility, separate discovery and replay stages, independent cases, environment restoration, exact coverage, custody and the distinction between unavailable counters and zero measurements. Do not execute these archive/capture/matrix commands or substitute their legacy process cleanup for the current capped owned-Job workflow.
+
+Record a specific composition-wrapper finding: after a case writes a report, row acceptance checks identity and report/row pass flags but does not also require native exit zero or reject timeout. A crash or timeout after report creation therefore needs a scoped fail-closed review before this archived producer is trusted again. No actual failure was reproduced and no validation was changed. The historical capture wrapper's PID-only recursive timeout cleanup and prefix-only source-save containment remain source leads. No content, fixture, source archive, private storage or generated evidence was touched.
