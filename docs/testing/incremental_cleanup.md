@@ -4400,3 +4400,9 @@ The intake preserves owner wording and separates observable defects from design 
 Read the complete 511-line Video Poker rebuild probe. Its three cabinet variants check independent multi-hand outcomes, normal visible mouse/touch actions, live HOLDOUT movement and machine-local timing, unfinished HOLDOUT escape/Heat, double-up target response and a Slot reference capture. Keep the timed sample boundaries, fixture copies, independent result checks and render-synchronized capture/write failures.
 
 This is a controlled native acceptance fixture, with injected cabinet/result state; it does not establish a natural player journey or Web parity. Its report-write failure enters the existing final nonzero exit, so there is no proven false-pass fix here. Repeated snapshot getters remain a source lead until their live-clock and observation behavior is established. No implementation edit, image rewrite, audio/gameplay/save access or probe run was justified.
+
+## Batch 178: preserve the cold-Continue scenario reconstruction fix
+
+Read the entire published peer `8729e4e0` diff and preserve it beneath the audit commits. A positive base publication revision alone does not establish a restored scenario catalog: a pending trusted rebuild now enters the existing boundary compiler before publication. Keep the null/meta guards and ordering. The contract adds scenario-semantic readiness alongside its existing strict authority and preserved-state assertions.
+
+Both previously qualified cleanup functions are byte-identical after rebasing. No duplicate restore fix, new gameplay change, repeated check or new owner evidence claim. The file inventory incorporates this incremental review without counting the already reviewed files again.
