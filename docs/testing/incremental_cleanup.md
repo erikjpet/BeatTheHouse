@@ -1886,6 +1886,33 @@ verification claims remain historical. Coverage is 340 targeted reviews, 1,087
 static screens and 2,272 role classifications across 3,699 paths; 14 deferrals
 and two separate issues remain. Exact batch63 NEXT verification is pending.
 
+## Batch 68: remove an unused scenario cleanup local
+
+`_apply_cleanup` initialized `original` from the existing `state` argument and
+never read or exposed that method-local binding. The initializer contains no
+call or side effect, and this scope has no dynamic local lookup or closure
+capture. Remove only that initializer; all uses of `state`, error returns,
+cleanup fingerprints, receipts and authority remain byte-identical to02065e34.
+This is a discarded reference, with no performance gain claimed. No public
+symbol, saved field, callback or test was deleted.
+
+The unchanged GDScript loader compiled the one changed runtime script with zero
+failures under5% CPU/512 MiB/30s. It exited zero naturally with EOF, Job0 and no
+forced cleanup; independent process-absence evidence is retained. The preceding
+batch's complete lifecycle/atomic evidence is kept without claiming a new
+behavior run for this one-line deletion. Coverage remains340 targeted reviews,
+1,087 static screens and2,272 role classifications across3,699 paths;14 deferrals
+and two separate issues remain. The comprehensive semantic audit is unfinished.
+
+The existing watcher received one documented recovery after fresh negative
+process/capacity checks at11:45:58 UTC. The same unchanged guardian stopped again
+at11:46:28 UTC: sampled16.1387% exceeded the observed15% guard, while the kernel
+quota remained12%/2GiB. Independent11:47:42 census found root8072, guardian18748,
+worker27820 and all new Godot absent, with Job0/no cleanup errors. No second
+recovery loop, guard change or substitute export was attempted. Main917adf2c
+still awaits exact NEXT promotion; prior verified38aec3ff is retained. Separate
+tested local commits remain preserved for normal integration after recovery.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

@@ -1455,7 +1455,6 @@ static func _resolve_outcome(state: Dictionary, definition: Dictionary, outcome:
 
 
 static func _apply_cleanup(state: Dictionary, definition: Dictionary, reason: String) -> Dictionary:
-	var original := state
 	var next := state.duplicate(false)
 	var boundary_id := "%s:%s:cleanup:%s" % [str(next.get("scenario_id", "")), str(next.get("node_id", "")), reason]
 	if not _valid_persisted_text(boundary_id) or not _valid_persisted_text(reason):
