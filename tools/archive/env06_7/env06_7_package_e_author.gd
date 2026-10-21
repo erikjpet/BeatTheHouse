@@ -392,7 +392,6 @@ func _aftermath(c:Dictionary)->Dictionary:
 		for axis in axes[index]:
 			if axis == "scene": row["scene_ops"] = [_scene_spawn(prefix,"aftermath_%s" % outcome,"%s_aftermath_%s_prop" % [prefix,outcome],"%s room marker" % outcome.replace("_"," ").capitalize(),["arrangement","debris","closed_zone","route_marker"][index],["center","right","left","exit_lane"][index],outcome,64 + index * 8,48 + index * 6)]
 			elif axis == "actor": row["actor_ops"] = [_actor_spawn(prefix,"aftermath_%s" % outcome,"%s_aftermath_%s_actor" % [prefix,outcome],"%s remaining actor" % outcome.replace("_"," ").capitalize(),"actor_%s" % outcome,["center","right","left","background"][index],["work","guard","watch","depart"][index])]
-			elif axis == "service": row["service_ops"] = [{"family":"service_ops","op":"add","receipt_id":"%s_aftermath_%s_service" % [prefix,outcome],"owner_namespace":"scenario","stable_object_id":"%s_%s_service" % [prefix,outcome],"object":{"id":"%s_%s_service" % [prefix,outcome],"label":"%s aftermath service" % outcome.replace("_"," ").capitalize(),"enabled":false,"disabled_reason":"The failed branch closes this service."}}]
 		result[outcome] = row
 	return result
 

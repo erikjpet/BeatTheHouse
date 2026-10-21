@@ -4418,3 +4418,9 @@ The generator normalizes JSON number types before signing, validates authoring t
 Read every line of the Package B–E authoring scripts. Keep their distinct configurations, identity decisions, public-fact filters, Crew Poker annotations, physical target ownership, spatial overrides, cleanup, signatures and dossier provenance. In particular, Package D's fact condition and subscription share exact payload restrictions; they are not redundant authority checks. These are historical writers of live authored JSON, not safe current migration commands. They remain unexecuted. Their unchecked file-open results are recorded as source concerns without reproducing or broadening generator repairs.
 
 Package E has one concrete cleanup candidate: its local aftermath-axis table contains only scene and actor values, leaving a copied service branch unreachable. The candidate is isolated for a separate change. The other writers' service branches remain reachable and must stay. Also read and retain the two complete empty/directory sentinels. No scenario, layout, asset, save or historical evidence bytes changed in this review.
+
+## Batch 181: remove an unreachable Package E aftermath branch
+
+Remove the copied `service` branch from Package E's aftermath builder. The local four-row axis table contains only `scene` and `actor`, is never changed or exposed, and has no asynchronous boundary. Every valid outcome therefore selected another branch already. Package C and D's reachable service builders are unchanged. All other Package E source is exact.
+
+The existing changed-file loader compiled just this author successfully in 0.578 seconds under the existing muted 12%/2 GiB Job. It exited naturally with EOF, Job0 and independent PID absence. This checks compilation without instantiating or executing the writer. No generator, gameplay, save, browser or broad suite was run; no speed gain is claimed.
