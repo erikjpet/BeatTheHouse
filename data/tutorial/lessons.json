@@ -43,6 +43,7 @@
     "dialogue_node": "map_destination",
     "trigger": {"depends_on": ["tutorial_open_map_corner"], "screen": "TRAVEL", "state_predicates": [{"path": "ui.world_map_open", "op": "equals", "value": true}]},
     "anchor": {"kind": "hud_element", "id": "travel:corner_store"},
+    "bubble_placement": "beside_card",
     "copy": "Travel to the Corner Store. It costs $0.",
     "completion": {"type": "anchored_action", "action_id": "travel:corner_store"},
     "gating": {"allowed_action_ids": ["travel:corner_store"]}
