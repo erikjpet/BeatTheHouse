@@ -228,7 +228,7 @@ Evidence codes in the TSV:
 - `U1`: retained script UID; no orphan-UID deletion based on mere age.
 - `M:*`: the named targeted source/contract review. `C:*`: fixed by the named
   commit or batch in this report.
-- `O1`, `N1`, `P1`, `B1`: the explicit deferrals/issues below.
+- `O1`, `O2`, `N1`, `P1`, `B1`: the explicit deferrals/issues below.
 
 ### Explicit deferrals and retained candidates
 
@@ -1065,6 +1065,35 @@ the performance investigation. Coverage is 224 targeted source/contract reviews,
 1,202 static screens and 2,272 role classifications across 3,698 tracked paths;
 the 12 deferrals and two separate behavior/diagnostic issues remain explicit.
 
+## Batch 41: one TalkDock reserved-rectangle calculation
+
+`TalkDock.environment_reserved_global_rect` delegates its transformed rectangle
+to the existing `_local_rect_global_aabb` helper, which already serves protected
+conversation placement. This removes the second four-corner bounding-box
+algorithm while retaining both methods, their callers and the detached-node
+guard. No layout, dialogue, focus, signal or animation policy changes.
+
+Native comparison with the unchanged c2c9 implementation passed 360 exact public
+rectangles across six viewport sizes, both sides, compact/native layouts, three
+body reservations and five parent transform combinations including rotation,
+nonuniform scale and mirroring. Hidden/visible and detached guards matched;
+complete snapshots remained unchanged by the read. The existing no-pointer
+animation check passed. Both private 5% CPU/512MiB Jobs naturally reached exit0,
+reader EOF and Job0 without forced cleanup; independent 08:07:19 UTC census
+confirmed both recorded identities absent. Exact-source proof limits the edit
+to this delegation. This is structural cleanup; no speed improvement is claimed.
+
+The full read-only RunGenerator review retained atomic installation/travel
+rollback, exact previews, persistent machines, venue-cycle migration, scenario
+selection/RNG order and the recent Punchline recovery. The full GameModule
+review retained inherited optional host interfaces, sealed result receipts,
+terminal checks, currency/heat settlement order and legacy delta coercions.
+Coverage is 226 targeted source/contract reviews, 1,200 static screens and 2,272
+role classifications across 3,698 tracked paths. Current `O2` deferrals reserve
+SaveService and its existing durability contract for the performance worker;
+their prior full reviews remain recorded. Together with the preceding `O1`,
+native and qualification deferrals, 14 paths remain explicitly deferred.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
@@ -1158,3 +1187,14 @@ historical processes remained untouched. Trusted HTTPS at 07:23:43 matched all
 Stable remained 0.6.0 and the existing retention hook completed without error.
 Exact receipts went to the performance and fresh-player browser owners. The
 later two-local slot cleanup was excluded from this publication.
+
+Batches 38-40 were published as three separate tested commits. NEXT promoted
+`c2c9e3da61224ea13e7d1c176666d0e25fab6116`, tree
+`b649786c0e88a337968a30e77c8eaef9b5548866`, at 07:54:48 UTC. Independent
+07:55:25 UTC census confirmed root 48200 and all new Godot processes absent.
+Trusted HTTPS at 07:55:28 matched all 15 archive files, redirect and WASM MIME
+types. Archive SHA-256:
+`7891e47b73a6471273dcd260f90756ed9bff4a276e69f62792bb250aab2b05b9`.
+Stable remained 0.6.0; the existing retention hook reported no error. Exact
+receipts went to the performance and fresh-player owners. Subsequent cleanup
+preserves the performance worker's separate SaveService publication.

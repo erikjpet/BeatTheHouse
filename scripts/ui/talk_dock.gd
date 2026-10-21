@@ -514,20 +514,7 @@ func environment_reserved_global_rect() -> Rect2:
 	var layout := _expanded_layout_rects(true)
 	var local_rect: Rect2 = layout.get("portrait_rect", Rect2())
 	local_rect = local_rect.merge(layout.get("panel_rect", Rect2()))
-	var canvas_transform := get_global_transform()
-	var top_left := canvas_transform * local_rect.position
-	var top_right := canvas_transform * Vector2(local_rect.end.x, local_rect.position.y)
-	var bottom_left := canvas_transform * Vector2(local_rect.position.x, local_rect.end.y)
-	var bottom_right := canvas_transform * local_rect.end
-	var minimum := Vector2(
-		minf(minf(top_left.x, top_right.x), minf(bottom_left.x, bottom_right.x)),
-		minf(minf(top_left.y, top_right.y), minf(bottom_left.y, bottom_right.y))
-	)
-	var maximum := Vector2(
-		maxf(maxf(top_left.x, top_right.x), maxf(bottom_left.x, bottom_right.x)),
-		maxf(maxf(top_left.y, top_right.y), maxf(bottom_left.y, bottom_right.y))
-	)
-	return Rect2(minimum, maximum - minimum)
+	return _local_rect_global_aabb(local_rect)
 
 
 func set_reduce_motion(enabled: bool) -> void:
