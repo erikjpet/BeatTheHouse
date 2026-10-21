@@ -1,7 +1,7 @@
 # Room catalog publication: action-freeze correction
 
-Status: private candidate. Focused native checks and no-pointer animation pass;
-Web response qualification and production publication remain blocked.
+Status: focused native ownership/parity checks, no-pointer animation and a real
+Web offer plus normal Save/Continue pass. Main/NEXT publication is pending.
 
 The regression bracket is 0.5.1 to 0.6.0. Commit
 202a25663de754f0dc8cdb9d43fe24f3396a5bd3 introduced scenario finalization during
@@ -58,8 +58,8 @@ from a catalog request after the scenario command had already committed its
 projection. The real command/fact finalizer and live action validation remain.
 Owner refresh still gathers current labels/availability and joins them to the
 committed physical proof; it does not move the entire old finalizer to another
-point on the same click. Actual savings have not yet been measured for this
-candidate.
+point on the same click. The contextual Web comparison below measures the work
+removed and the remaining action/save blocking separately.
 
 ## Focused evidence
 
@@ -83,24 +83,63 @@ The rejected validation-on-every-lookup prototype remains on
 codex/compiled-scenario-host-20261021, final record ae4400cd64c00dac022b3b86b43ce33b0b673d07.
 It is not part of this candidate.
 
-## Remaining qualification
+## Real Web qualification
 
-Use the existing private genuine-action Web recipe, finite 12% CPU/2 GiB Job,
-muted audio, private profile and exact cleanup. CPU is telemetry, not an abort
-condition. Record actual callback/frame submission and browser long tasks;
-distinguish frame submission from compositor presentation. Keep synchronous save
-capture/dispatch separate: the earlier Web sample measured about 181 ms there,
-and this change does not alter the save pipeline. Do not claim a freeze-free
-result or a Web improvement from native timings.
+The same preserved six-file pre-offer fixture, visible Take the cash selection,
+engine/native pins and action/canvas/save marks were used in both cases. Full
+hardware Chrome ran muted in a private profile under a 12% CPU / 2 GiB Job.
+CPU readings were telemetry only. These are one-pair contextual observations
+under different background load, not a statistical benchmark.
 
-The private export is concretely blocked before the engine starts. After a first
-MAX_PATH extraction failure, the shortened second run archived and extracted the
-exact f134 base plus the pinned candidate/action-mark overlay successfully. At
-17:04:54 UTC, Node returned `spawnSync ...Godot_v4.6-stable_win64_console.exe
-ENOENT` with PID 0 at import. The executable had passed its SHA256 check and
-remained present afterward. The cause of the process-creation error is not yet
-attributed. No Godot import, PCK, browser or candidate Web action resulted. The
-supervisor reported Job0/no force/errors, and an independent 17:13:01 census found
-all six recorded process IDs absent. The failed archives, overlay proof and logs
-remain retained for the working deployment route; no production push is justified
-by the native checks alone.
+| Observed phase | Control | Candidate |
+| --- | ---: | ---: |
+| Catalog compilation / publication | 241.420 ms | 20.240 ms |
+| Model / validated commit | 91.435 ms | 157.490 ms |
+| Input to callback completion | 384.225 ms | 227.000 ms |
+| Input to engine frame submission | 413.145 ms | 254.905 ms |
+| Longest browser task | 411 ms | 253 ms |
+| Save snapshot plus dispatch | 179.565 ms | 178.020 ms |
+| Input to save completion | 606.005 ms | 633.570 ms |
+
+Frame submission is not proof of compositor presentation. Actual state-boundary
+validation/publication remains visible in the model cost; the removed catalog
+work was not merely moved in full to that boundary. Synchronous save work is
+unchanged and remains a separate long task. This does not establish freeze-free
+input, faster save completion, or general improvement across every room.
+
+Both actions apply once with cash 115, heat 8 and one turn. RNG/seed, physical
+geometry, manifest and semantic/layout authority match. Each case's normal
+engine reload/Continue preserves all six saved files byte-for-byte. Across the
+two independently timed Web runs, the full canonical comparison lists four
+differences: game_clock_minutes, the latest heat-history clock, music source
+position and music transport beats. None are silently excluded.
+
+The observed input clocks are 992 and 923, respectively, and each action's heat
+record uses exactly its observed input clock. The candidate's saved clock is
+924. Foundation's unchanged frame clock accumulates 1.5 game minutes per real
+second and runs before pending autosave in _process; the candidate save capture
+starts 443.645 ms after input. A fractional minute crossing on that intervening
+frame is the source-supported explanation for the extra saved minute. The exact
+clock tick was not instrumented, so this is an inference, not direct tick proof
+or exact cross-run Web byte parity. The unchanged clock routines and the native
+fixed-input action's exact full saved bytes provide separate correctness
+evidence; this limitation remains explicit.
+
+Control host samples during observation ranged from 22.0 to 33.0%, candidate
+12.7 to 46.5%; owned Job observations were 6.3 to 8.1% of the 16-processor host,
+under the retained 12% quota. No CPU threshold aborted either completed case.
+
+The earlier MAX_PATH/Node ENOENT setup failures remain preserved. Reusing the
+installed pinned engine through the deployment helper's typed PowerShell call
+in the approved execution context recovered import/export without a download,
+toolchain rebuild or archive deletion. The audited candidate PCK is 46,744,512
+bytes, SHA256 01f74679c804b18d940b51ce29c5bb77d12213f5744ada43c5ac46bd10b8d374.
+The exact underlying OS cause of the earlier direct Node spawn failure remains
+unattributed; it no longer blocks qualification.
+
+Evidence is retained in task-2/web-regression/room-publication/real-web-comparison.json,
+the two completed room-publication Web run directories, and the warm-export
+audit/closure receipts. The candidate browser closed at 17:39:35 UTC; independent
+17:40:47 census found all 18 recorded browser/helper/supervisor IDs absent and
+port 8096 closed in both address families. Failed pre-game/point-timeout attempts
+are retained separately and contribute no action-performance claim.
