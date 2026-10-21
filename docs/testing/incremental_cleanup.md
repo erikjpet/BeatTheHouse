@@ -4430,3 +4430,9 @@ The existing changed-file loader compiled just this author successfully in 0.578
 Read the complete historical capture driver and migration diagnostic. Keep exact release/commit/tree/blob, driver, custody and save-byte identities together with ordered public-call transcripts and independent capture scenes. Canonical text hashes and raw fixture hashes deliberately have different purposes; neither is redundant. Do not modify the driver casually because retained provenance binds its bytes.
 
 The diagnostic distinguishes admitted historical state, one legacy canonicalization and subsequent current-version round trips. It also explicitly regenerates incompatible slot families from the same seed. That latter path is recovery, not proof that a historical mid-state was preserved. Record this limit without changing tests or save policy. All existing state, authority and error assertions remain. No historical tree, fixture, save, runtime or browser was opened or regenerated.
+
+## Batch 183: review fixture-custody and package remediation records
+
+Read all five fixture and package proof documents completely, including the final Package D range after a console encoding error. Preserve exact historical source/capture identities, generated-versus-owner save distinctions, explicit partial inventories and missing evidence. Their dated commands and old runtime claims do not authorize fresh infrastructure, regenerated saves or repeated broad qualification.
+
+The Package A/D/E documents explicitly limit or supersede rejected and package-local evidence. Keep those limits: synthetic target inventories, local rasters and historical native/Web samples are not current production composition, final-renderer proof or acceptance. No document, fixture, evidence image or content source was changed.
