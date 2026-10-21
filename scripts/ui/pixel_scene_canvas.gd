@@ -5179,25 +5179,39 @@ func _draw_rival_cheater_tell(tell: String, idle_phase: int, foot: Vector2) -> v
 
 
 func _character_style(id: String) -> Dictionary:
-	var styles := {
-		"mara": {"skin": Color("#d9a36a"), "hair": Color("#271018"), "jacket": Color("#24404a"), "accent": C_CYAN, "tempo": 1.0, "phase": 0.2, "idle_primary": "counter_tap", "idle_secondary": "lookaround"},
-		"alley_merchant": {"skin": Color("#9c684f"), "hair": Color("#241910"), "jacket": Color("#28301f"), "accent": C_AMBER, "tempo": 0.75, "phase": 1.5, "idle_primary": "pocket_check", "idle_secondary": "chin_touch"},
-		"motel_clerk": {"skin": Color("#c99572"), "hair": Color("#1c2630"), "jacket": Color("#30404a"), "accent": C_TEAL, "tempo": 0.8, "phase": 2.8, "idle_primary": "adjust_cuff", "idle_secondary": "lookaround"},
-		"silas": {"skin": Color("#b77a62"), "hair": Color("#19151f"), "jacket": Color("#1d2535"), "accent": C_PURPLE_2, "tempo": 1.15, "phase": 0.9, "idle_primary": "chin_touch", "idle_secondary": "card_check"},
-		"vince": {"skin": Color("#a66a50"), "hair": Color("#06070c"), "jacket": Color("#34102b"), "accent": C_PINK, "tempo": 1.6, "phase": 2.1, "idle_primary": "shoulder_roll", "idle_secondary": "lookaround"},
-		"lena": {"skin": Color("#c98665"), "hair": Color("#161025"), "jacket": Color("#273344"), "accent": C_AMBER, "tempo": 1.3, "phase": 0.7, "idle_primary": "lookaround", "idle_secondary": "adjust_cuff"},
-		"june": {"skin": Color("#d0a07c"), "hair": Color("#332010"), "jacket": Color("#21363a"), "accent": C_TEAL, "tempo": 0.9, "phase": 1.8, "idle_primary": "card_check", "idle_secondary": "arms_folded"},
-		"marco": {"skin": Color("#bd7b5d"), "hair": Color("#0f0b0a"), "jacket": Color("#3d2142"), "accent": C_ORANGE, "tempo": 1.1, "phase": 2.5, "idle_primary": "pocket_check", "idle_secondary": "shoulder_roll"},
-		"rafi": {"skin": Color("#b7755c"), "hair": Color("#08090e"), "jacket": Color("#2f1a18"), "accent": C_YELLOW, "tempo": 1.4, "phase": 0.4, "idle_primary": "counter_tap", "idle_secondary": "arms_folded"},
-		"dot": {"skin": Color("#dfb28d"), "hair": Color("#551b42"), "jacket": Color("#26315a"), "accent": C_PINK_2, "tempo": 1.8, "phase": 1.0, "idle_primary": "adjust_cuff", "idle_secondary": "shoulder_roll"},
-		"nell": {"skin": Color("#c48968"), "hair": Color("#513315"), "jacket": Color("#27384f"), "accent": C_YELLOW, "tempo": 0.8, "phase": 1.4, "idle_primary": "chin_touch", "idle_secondary": "lookaround"},
-		"sable": {"skin": Color("#b87a63"), "hair": Color("#05060a"), "jacket": Color("#1b2f2a"), "accent": C_TEAL, "tempo": 0.7, "phase": 2.0, "idle_primary": "arms_folded", "idle_secondary": "pocket_check"},
-		"ox": {"skin": Color("#8f5a48"), "hair": Color("#05060a"), "jacket": Color("#11131f"), "accent": C_ORANGE, "tempo": 0.55, "phase": 0.0, "idle_primary": "arms_folded", "idle_secondary": "shoulder_roll"},
-		"rourke": {"skin": Color("#d1a072"), "hair": Color("#ede0b5"), "jacket": Color("#161017"), "accent": C_PINK, "tempo": 0.65, "phase": 1.2, "idle_primary": "chin_touch", "idle_secondary": "adjust_cuff"},
-		"iris": {"skin": Color("#cca17e"), "hair": Color("#2b1630"), "jacket": Color("#20203c"), "accent": C_CYAN, "tempo": 0.85, "phase": 2.6, "idle_primary": "card_check", "idle_secondary": "lookaround"},
-		"sal": {"skin": Color("#bf8366"), "hair": Color("#1b1210"), "jacket": Color("#24212a"), "accent": C_YELLOW, "tempo": 0.60, "phase": 1.7, "idle_primary": "counter_tap", "idle_secondary": "pocket_check"},
-	}
-	return styles.get(id, styles["mara"])
+	match id:
+		"alley_merchant":
+			return {"skin": Color("#9c684f"), "hair": Color("#241910"), "jacket": Color("#28301f"), "accent": C_AMBER, "tempo": 0.75, "phase": 1.5, "idle_primary": "pocket_check", "idle_secondary": "chin_touch"}
+		"motel_clerk":
+			return {"skin": Color("#c99572"), "hair": Color("#1c2630"), "jacket": Color("#30404a"), "accent": C_TEAL, "tempo": 0.8, "phase": 2.8, "idle_primary": "adjust_cuff", "idle_secondary": "lookaround"}
+		"silas":
+			return {"skin": Color("#b77a62"), "hair": Color("#19151f"), "jacket": Color("#1d2535"), "accent": C_PURPLE_2, "tempo": 1.15, "phase": 0.9, "idle_primary": "chin_touch", "idle_secondary": "card_check"}
+		"vince":
+			return {"skin": Color("#a66a50"), "hair": Color("#06070c"), "jacket": Color("#34102b"), "accent": C_PINK, "tempo": 1.6, "phase": 2.1, "idle_primary": "shoulder_roll", "idle_secondary": "lookaround"}
+		"lena":
+			return {"skin": Color("#c98665"), "hair": Color("#161025"), "jacket": Color("#273344"), "accent": C_AMBER, "tempo": 1.3, "phase": 0.7, "idle_primary": "lookaround", "idle_secondary": "adjust_cuff"}
+		"june":
+			return {"skin": Color("#d0a07c"), "hair": Color("#332010"), "jacket": Color("#21363a"), "accent": C_TEAL, "tempo": 0.9, "phase": 1.8, "idle_primary": "card_check", "idle_secondary": "arms_folded"}
+		"marco":
+			return {"skin": Color("#bd7b5d"), "hair": Color("#0f0b0a"), "jacket": Color("#3d2142"), "accent": C_ORANGE, "tempo": 1.1, "phase": 2.5, "idle_primary": "pocket_check", "idle_secondary": "shoulder_roll"}
+		"rafi":
+			return {"skin": Color("#b7755c"), "hair": Color("#08090e"), "jacket": Color("#2f1a18"), "accent": C_YELLOW, "tempo": 1.4, "phase": 0.4, "idle_primary": "counter_tap", "idle_secondary": "arms_folded"}
+		"dot":
+			return {"skin": Color("#dfb28d"), "hair": Color("#551b42"), "jacket": Color("#26315a"), "accent": C_PINK_2, "tempo": 1.8, "phase": 1.0, "idle_primary": "adjust_cuff", "idle_secondary": "shoulder_roll"}
+		"nell":
+			return {"skin": Color("#c48968"), "hair": Color("#513315"), "jacket": Color("#27384f"), "accent": C_YELLOW, "tempo": 0.8, "phase": 1.4, "idle_primary": "chin_touch", "idle_secondary": "lookaround"}
+		"sable":
+			return {"skin": Color("#b87a63"), "hair": Color("#05060a"), "jacket": Color("#1b2f2a"), "accent": C_TEAL, "tempo": 0.7, "phase": 2.0, "idle_primary": "arms_folded", "idle_secondary": "pocket_check"}
+		"ox":
+			return {"skin": Color("#8f5a48"), "hair": Color("#05060a"), "jacket": Color("#11131f"), "accent": C_ORANGE, "tempo": 0.55, "phase": 0.0, "idle_primary": "arms_folded", "idle_secondary": "shoulder_roll"}
+		"rourke":
+			return {"skin": Color("#d1a072"), "hair": Color("#ede0b5"), "jacket": Color("#161017"), "accent": C_PINK, "tempo": 0.65, "phase": 1.2, "idle_primary": "chin_touch", "idle_secondary": "adjust_cuff"}
+		"iris":
+			return {"skin": Color("#cca17e"), "hair": Color("#2b1630"), "jacket": Color("#20203c"), "accent": C_CYAN, "tempo": 0.85, "phase": 2.6, "idle_primary": "card_check", "idle_secondary": "lookaround"}
+		"sal":
+			return {"skin": Color("#bf8366"), "hair": Color("#1b1210"), "jacket": Color("#24212a"), "accent": C_YELLOW, "tempo": 0.60, "phase": 1.7, "idle_primary": "counter_tap", "idle_secondary": "pocket_check"}
+		_:
+			return {"skin": Color("#d9a36a"), "hair": Color("#271018"), "jacket": Color("#24404a"), "accent": C_CYAN, "tempo": 1.0, "phase": 0.2, "idle_primary": "counter_tap", "idle_secondary": "lookaround"}
 func _draw_interactable_light(rect: Rect2, accent: Color, selected: bool) -> void:
 	var alpha := 0.14 + absf(sin(flicker * 2.4 + rect.position.x * 0.02)) * 0.08
 	if selected:

@@ -2548,3 +2548,40 @@ Archive SHA-256:
 `251a092df389f27faf2170385b13bd6df6f8d5b7adbeb07c32a8c51b1ca84567`.
 Independent13:32:43.761 census found exportroot5704/allnewGodot absent;
 existing10%/2GiB guardian42856/watcher42252 and retention remained error-free.
+
+
+## Batch 81: construct only the requested named-character style
+
+`PixelSceneCanvas._character_style` built a complete16-entry style table for each
+named-character draw or debug-profile lookup, then returned one entry. Select
+and return only the matching fresh dictionary literal. All16 original literal
+bodies retain their exact source text; unknown IDs still fall back to Mara with
+case-sensitive matching. No shared mutable style cache was introduced. Public
+shape, colours, timing/phase defaults, idle poses and both callers are unchanged.
+No signal, scene/resource reference or dynamic-dispatch symbol was removed.
+
+The baseline comparison passed152 style lookups,96 complete idle-profile queries
+and3840 sampled gesture/blink states. It also changed a returned style and
+verified the next lookup remained fresh. One private NUL-escape fixture was
+replaced by Godot's normal Unicode replacement character and produced three
+retained engine warnings; it proves fallback for that replacement string, not
+preservation of an embedded NUL. The other151 styles,92 profile queries and3680
+states do not depend on that case. Runtime exited0 with EOF/Job0. A Windows
+console-print encoding failure occurred after closure; the original full JSON
+output was retained and the unchanged runner result assertions were applied
+offline. The successful comparison was not rerun. The unchanged no-pointer
+animation gate also passed naturally. No art, saved state or audible output was
+changed, and no measured frame-time improvement is claimed.
+
+Canvas review continues through roughly line7005 plus its named idle-profile
+and state accessors around9171-9375. Geometry authority, person-transit routing,
+active render layers, autonomous scheduling and interaction visibility remain
+intact. Remaining renderer ranges are still pending.
+
+Batch80 promoted as`a5510556b1c3d80ba2c0b5c2e8d1d9f5e34177e1`, tree
+`815cac1564bcfefd30d50fc4d5befd2e04fd030b`. All15 archive/HTTPS hashes, dev
+redirect, WASM MIME, stable0.6.0 and final pointer passed13:38:53 UTC.
+Archive SHA-256:
+`45ff42d6a5d46d81d350548d1129bbcdfa79b70f9a004bdcb57ddd20c8468237`.
+Independent13:39:17 census found exportroot46920/allnewGodot absent;
+existing10%/2GiB guardian42856/watcher42252 and retention remained error-free.
