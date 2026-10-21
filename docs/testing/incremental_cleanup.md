@@ -1643,6 +1643,26 @@ not rerun. Coverage is275 targeted source/contract reviews,1,152 static screens
 and2,272 role classifications across3,699 paths.14 deferrals and2 separate issues
 remain; comprehensive semantic coverage is unfinished.
 
+## Batch 60: sum counter stock once per Pull Tabs projection
+
+`_pull_tab_counter_ritual` independently summed the same unchanged deal stock
+for staff boredom, rack state and rack material. Calculate that pure sum once
+and reuse it. Preserve the helper, all projection fields, attention thresholds,
+transaction copy boundary and every other function. This changes no stock,
+ticket, payment, heat, RNG, clock, action or scheduling contract.
+
+Exact b36f6274 comparison passed769 complete projections across heat threshold
+boundaries, four pile choices, three transaction phases, four stock shapes,
+normal/null RunState and the genuine v0.5.1 loaded machine. Complete output
+bytes matched; changing returned actor, stock and nested transaction fields
+left inputs/full save/RNG unchanged. Passive delegates counted1,739 sums before
+and769 after, with no elapsed-time claim. Required unchanged no-pointer
+animation liveness passed. Both muted private Jobs exited0 naturally, reader
+EOF/Job0/no forced cleanup. Independent closure and exact receipt names are
+retained in `pull-ritual-native-closure.json` in the worker workspace.
+Coverage remains275 targeted source/contract reviews; broader semantic work
+and the recorded14 deferrals/2 issues continue.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

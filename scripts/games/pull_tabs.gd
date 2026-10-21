@@ -3449,6 +3449,7 @@ func _pull_tab_counter_ritual(machine: Dictionary, run_state: RunState, environm
 	var tray := _array_view(machine.get("tray_stack", []))
 	var suspicion := run_state.suspicion_level() if run_state != null else 0
 	var transaction := _pt_copy_dict(machine.get("last_counter_transaction", {}))
+	var remaining_count := _pull_tab_remaining_count(machine)
 	var phase := "selection"
 	if not winners.is_empty():
 		phase = "redemption_ready"
@@ -3467,7 +3468,7 @@ func _pull_tab_counter_ritual(machine: Dictionary, run_state: RunState, environm
 		staff_state = "paying_out"
 	elif phase == "handover":
 		staff_state = "serving"
-	elif _pull_tab_remaining_count(machine) <= 0:
+	elif remaining_count <= 0:
 		staff_state = "bored"
 	var deal_rows: Array = []
 	for deal_value in _array_view(machine.get("deals", [])):
@@ -3487,7 +3488,7 @@ func _pull_tab_counter_ritual(machine: Dictionary, run_state: RunState, environm
 			"material_energy": "alert" if staff_state in ["watching", "suspicious", "refusing"] else "working" if staff_state in ["serving", "paying_out"] else "ambient",
 		}],
 		"objects": [
-			{"id": "deal_rack", "state": "stocked" if _pull_tab_remaining_count(machine) > 0 else "empty", "stock": deal_rows, "material_energy": "interactive" if _pull_tab_remaining_count(machine) > 0 else "spent"},
+			{"id": "deal_rack", "state": "stocked" if remaining_count > 0 else "empty", "stock": deal_rows, "material_energy": "interactive" if remaining_count > 0 else "spent"},
 			{"id": "counter", "state": phase, "material_energy": "active" if phase in ["handover", "redemption_ready"] else "ambient"},
 			{"id": "losing_tab_pile", "count": losers.size() + maxi(0, int(machine.get("loser_archive_count", 0))), "visible": true, "material_energy": "spent"},
 		],
