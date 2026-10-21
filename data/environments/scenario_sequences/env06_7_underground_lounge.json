@@ -9208,6 +9208,24 @@
           "travel_departed",
           {
             "fact_type": "event_result",
+            "payload_equals": {
+              "choice_id": "watch_the_next_name",
+              "event_id": "scenario_debt_court_office_hours",
+              "ok": true,
+              "resolved": true
+            }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "choice_id": "settle_the_marker",
+              "event_id": "scenario_debt_court_office_hours",
+              "ok": true,
+              "resolved": true
+            }
+          },
+          {
+            "fact_type": "event_result",
             "handler": "publish_feedback",
             "inputs": {
               "message": "The Collector's public questioning leaves the next name marked on the ledger."

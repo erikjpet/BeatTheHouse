@@ -205,8 +205,59 @@ static func _has_event_recovery(run_state: RunState, library: ContentLibrary) ->
 		event_module.setup(definition)
 		if not event_module.can_trigger(run_state, run_state.current_environment):
 			continue
+		if _has_punchline_casino_entry_recovery(run_state, library, event_module):
+			return true
 		for choice in event_module.choices():
 			if typeof(choice) == TYPE_DICTIONARY and _choice_can_recover(choice as Dictionary):
+				return true
+	return false
+
+
+static func _has_punchline_casino_entry_recovery(run_state: RunState, library: ContentLibrary, event_module: EventModule) -> bool:
+	var environment := run_state.current_environment
+	if event_module.get_id() != "side_door" or str(environment.get("archetype_id", "")) != "small_underground_casino" \
+			or str(environment.get("current_layer_id", "")) != "club" or not run_state.is_layered_environment() \
+			or not JsonCoerceScript._string_array(environment.get("layer_ids", [])).has("casino"):
+		return false
+	var archetype := library.environment_archetype("small_underground_casino")
+	var casino := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(archetype.get("layers", {})).get("casino", {}))
+	if casino.is_empty():
+		return false
+	var has_discoverable_door := false
+	for transition_value in JsonCoerceScript._copy_array(environment.get("layer_transitions", [])):
+		var transition := JsonCoerceScript._copy_dict(transition_value)
+		if str(transition.get("target_layer_id", "")) == "casino" and not bool(transition.get("requires_current_access", false)):
+			has_discoverable_door = true
+			break
+	if not has_discoverable_door:
+		return false
+	var stored_casino := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(environment.get("layer_states", {})).get("casino", {}))
+	var game_ids := JsonCoerceScript._string_array(stored_casino.get("game_ids", casino.get("required_game_ids", [])))
+	var economy := JsonCoerceScript._copy_dict(stored_casino.get("economic_profile", casino.get("economic_profile", {})))
+	var floor := maxi(1, int(economy.get("stake_floor", 1)))
+	var ceiling := maxi(0, int(economy.get("stake_ceiling", run_state.bankroll)))
+	# The club has no wagers; its conditioned Side Door choices can still lead
+	# directly to affordable tables, without counting arbitrary layer cycles.
+	for choice_value in event_module.choices(run_state, environment):
+		var choice := JsonCoerceScript._copy_dict(choice_value)
+		var consequences := JsonCoerceScript._copy_dict(choice.get("consequences", {}))
+		var deterministic := true
+		for key_value in consequences.keys():
+			if str(key_value) not in ["bankroll_delta", "environment_layer_discovery", "set_story_flag", "resolve_event"]:
+				deterministic = false
+				break
+		if not deterministic:
+			continue
+		var discovery := JsonCoerceScript._copy_dict(consequences.get("environment_layer_discovery", {}))
+		if not bool(discovery.get("enter", false)) or str(discovery.get("layer_id", "")) != "casino":
+			continue
+		var bankroll_delta := int(consequences.get("bankroll_delta", 0))
+		var remaining_cash := run_state.bankroll + bankroll_delta
+		if bankroll_delta > 0 or remaining_cash <= 0 or mini(remaining_cash, ceiling) < floor:
+			continue
+		for game_id in game_ids:
+			var game := library.game(game_id)
+			if not game.is_empty() and (not JsonCoerceScript._copy_array(game.get("legal_actions", [])).is_empty() or not JsonCoerceScript._copy_array(game.get("cheat_actions", [])).is_empty()):
 				return true
 	return false
 
