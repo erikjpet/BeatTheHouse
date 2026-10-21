@@ -4268,3 +4268,23 @@ platform-specific budgets, sealed machine settlement, bankroll conservation and
 ordered feature/session inputs. Historical helpers remain callable records, not
 current per-commit testing policy. No suites, seed sweeps or games ran. Coverage
 is 772 complete source reviews.
+
+## Batch 165: review patrol, tier-two and layered-room regressions
+
+Read the full Police Sweep, tier-two scenario, Showdown Duel and Punchline layer
+contracts. Preserve capability-only intel, stale reported markers, wake expiry,
+costed continues, replay-safe encounters, bounded player wait and foreign-lock
+ownership. Keep the exact scenario census, Jazz choreography, Engine Trouble
+countdown, Debt Court payment, one-off stock and distinct Grand Casino routes.
+
+Showdown retains explicit dependency/instance/coverage checks, nine phases,
+44-pixel targets, unchanged outcome thresholds, deterministic projections,
+receipt conflicts, privacy twins, sealed adapters and actual Blackjack restore.
+Its liveness counts and budget remain unchanged.
+
+Punchline retains the public cover and shipped L2 baseline, live Numbers layout,
+stale L1 projection repair, current Made/escort authorization and atomic damaged
+private-room recovery. Actual pre-0.6 active-room and stored-map migrations remain;
+no recent recovery fix is rolled back. Copies isolate hostile fixtures and
+canonical before/after evidence. No game, generation sweep, fixture or save was
+run or rewritten. Coverage is 776 complete file reviews.
