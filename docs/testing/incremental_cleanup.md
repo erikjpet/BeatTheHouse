@@ -1796,6 +1796,32 @@ NEXT remains the verified38aec3ff. No duplicate build/watcher or repeated
 restart was launched. Exact batch63 deployment verification awaits recovery of
 the existing pipeline; independent source cleanup continues.
 
+## Batch 65: copy only the Video Poker affordability UI shell
+
+The same affordability helper only changes its local scalar `bet_level`.
+Its unchanged wager helpers read `bet_level` and `denomination_index`, and never
+read, modify or retain nested UI payloads. Keep a detached shallow Dictionary
+shell instead of recursively duplicating unused holds, challenge and other
+payloads. All callers, normalization, output copy boundaries and every other
+function remain byte-identical to batch64. No subclass or callback was added.
+
+The exact 3e5a676f comparison passed 1,022 scalar affordability queries, 154
+complete surfaces and 616 complete bet commands across all three cabinets,
+ordinary/chip venues, eight balance shapes, out-of-range bet/denomination
+values, nested UI and null-RunState fallback. Two genuine v0.5.1 mid-game saves
+were decoded and loaded; their complete views/commands, full input/save/RNG
+bytes and nested UI remained unchanged. Their fixtures and provenance remain
+intact. This is a structural copy reduction, with no measured speedup claim.
+
+The unchanged no-pointer liveness check also passed. Both private native checks
+exited zero naturally with EOF, Job0 and no forced cleanup. Independent
+11:31:58 UTC census confirmed PIDs 31156/43276 absent. No browser, user storage,
+native implementation or pipeline was changed. The two old-save fixtures and
+their provenance add four targeted reviews: 326 source/contract reviews, 1,101
+static screens and 2,272 role classifications across 3,699 paths. Fourteen
+deferrals and two separate issues remain; the comprehensive audit is unfinished.
+This commit stays local while batch63 awaits the existing watcher recovery.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

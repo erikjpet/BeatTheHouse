@@ -2332,7 +2332,7 @@ func _affordable_bet_level(state: Dictionary, ui: Dictionary, run_state: RunStat
 	var level := _bet_level(ui)
 	var wager_capacity := run_state.wager_capacity_for_game(get_id(), environment) if run_state != null else 20
 	var affordable := maxi(0, wager_capacity)
-	var next: Dictionary = ui.duplicate(true)
+	var next: Dictionary = ui.duplicate(false)
 	while level > 0:
 		next["bet_level"] = level
 		if _wager_for(state, next) <= affordable:
