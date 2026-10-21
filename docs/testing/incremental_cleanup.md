@@ -4424,3 +4424,9 @@ Package E has one concrete cleanup candidate: its local aftermath-axis table con
 Remove the copied `service` branch from Package E's aftermath builder. The local four-row axis table contains only `scene` and `actor`, is never changed or exposed, and has no asynchronous boundary. Every valid outcome therefore selected another branch already. Package C and D's reachable service builders are unchanged. All other Package E source is exact.
 
 The existing changed-file loader compiled just this author successfully in 0.578 seconds under the existing muted 12%/2 GiB Job. It exited naturally with EOF, Job0 and independent PID absence. This checks compilation without instantiating or executing the writer. No generator, gameplay, save, browser or broad suite was run; no speed gain is claimed.
+
+## Batch 182: review historical save capture and migration authority
+
+Read the complete historical capture driver and migration diagnostic. Keep exact release/commit/tree/blob, driver, custody and save-byte identities together with ordered public-call transcripts and independent capture scenes. Canonical text hashes and raw fixture hashes deliberately have different purposes; neither is redundant. Do not modify the driver casually because retained provenance binds its bytes.
+
+The diagnostic distinguishes admitted historical state, one legacy canonicalization and subsequent current-version round trips. It also explicitly regenerates incompatible slot families from the same seed. That latter path is recovery, not proof that a historical mid-state was preserved. Record this limit without changing tests or save policy. All existing state, authority and error assertions remain. No historical tree, fixture, save, runtime or browser was opened or regenerated.
