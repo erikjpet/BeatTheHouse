@@ -2765,3 +2765,24 @@ container frames retain normalized fixed slots and intentionally empty dynamic
 slot arrays. No audio/image binary, content meaning, alias or capacity changed.
 These unchanged data files were inspected and parsed, not used to trigger more
 runtime suites. Actual player playtesting continues separately.
+
+
+## Review batch 89: capture launchers and continuation regressions
+
+Fourteen further test/launcher files received full source review. The native
+performance wrapper retains its debug-plugin hash and fresh extension discovery;
+the soak wrapper retains isolated placement authority and stderr rejection.
+Music generation retains explicit24-bit fixtures and the odd-sized RIFF chunk
+used to test padding. The harmony entry point retains two fresh-process canonical
+comparisons, while both Web captures retain owned-context cleanup and evidence
+checks. These tools remain standalone commands; their superficially repeated
+launch/discovery code has differing runtime and diagnostic contracts.
+
+The game documentation census, seven hostile game-gate fixtures, active-phase
+and startup/travel timing evidence, and serialized standalone-contract routing
+remain intact. Player regressions retain authenticated note removal, full
+inventory information/viewport checks and synchronous terminal-save Continue.
+Native stage timing is not presented as measured Web latency. No reviewed test
+was removed or rerun, and no browser, native build, fixture generation, profile
+access or listener started for this source audit. No additional code cleanup is
+justified by this group; coverage records its reviewed/no-change outcome.
