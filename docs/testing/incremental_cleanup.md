@@ -3163,3 +3163,23 @@ source risk pending a faithful focused reproduction; no broad harness repair
 or authority shortcut was introduced. Existing thresholds, fixtures and tests
 were preserved. These files were not run, and source review does not certify
 their current runtime outcomes or repeat the separate genuine-player journey.
+
+
+## Review batch 106: content, ritual and faithful-arrival contracts
+
+Five more files received full source review: content depth, machine rituals,
+production-fidelity harness, the frozen world-sequence adapter contract and
+local-artifact management. Standard event acquisition, exact crafting gates,
+no repeated souvenir farming, sealed settlement/replay, hidden-state isolation,
+real finalized arrivals, rendered hit authority, public consequences and frozen
+owner-scoped vocabulary remain. These gameplay contracts were not run.
+
+The artifact tool's default report, ignored-path scope, toolchain protection,
+copy hashes and manifest-before-delete checks remain. One concrete gap was
+reproduced separately: a manifest at the repository root made Clean compare
+the source to itself and delete the only fixture copy. The reproduction used
+an exact script copy in a tiny disposable Git repository on C; no live artifact
+or storage-owner path was accessed. Its first Windows PowerShell attempt stopped
+because that child lacked Get-FileHash; it was not qualifying evidence. The same
+fixture under the installed PowerShell7.6.5 reproduced the deletion. A matching
+destination-ancestry guard is the next small independent fix.
