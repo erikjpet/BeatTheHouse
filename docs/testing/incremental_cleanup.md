@@ -3522,3 +3522,23 @@ the same 5% CPU/512 MiB limit: access violation 3221225477 before the result,
 that the cleanup patch is not required for the crash, not its cause. The private
 candidate remains deferred; no limit, cache or engine repair was attempted.
 No Blackjack or scenario suite ran. Coverage is 663 full source reviews.
+
+## Batch 125: complete native solver source coverage
+
+Read the remaining four first-party native sources in full: the 33-line header,
+46-line bound core, 323-line render batch and 1,729-line integer step kernel.
+Confirmed both dictionary and packed render paths have live GDScript string
+dispatch and contract callers. Retained ABI 3, packed stride 9, transform stride
+12, fixed integer order, all collision/support/energy/conservation rules, RNG
+consumption, durable ledger fields, cache resets and per-call handle release.
+Public and private integer division have different overflow boundaries and were
+not merged. No native file, pin, binary, compiler or pipeline was changed.
+
+Specific deferred proposal: `refresh_platform_support_roots` constructs two local
+byte vectors on every executed tick. Kernel-owned scratch buffers reset to zero
+could reuse capacity, preserving cycle detection and body ordering. Cost and
+benefit are unmeasured. Before implementation, a separate native proposal needs
+exact per-tick state/RNG/events/ledgers and dictionary/packed-render parity, plus
+a measurement showing useful benefit. No rebuild ran and no speed gain is
+claimed. All eleven first-party native files now have full source
+coverage; the kernel proposal remains deferred. Total coverage is 667 full reviews.
