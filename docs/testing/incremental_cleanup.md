@@ -443,6 +443,29 @@ The existing profile-history performance probe was read and retained, including
 its bound/forward-field assertions and 0.65 ms p95 gate. It was not run for this
 aggregation-only change; no timing claim or relaxed benchmark threshold.
 
+## Batch 16: borrow read-only career row inputs
+
+CareerStatsViewModel copied nested dictionaries immediately before projecting
+them into fresh scalar display fields. Use a private dictionary view at those
+five read-only sites. Retain the outer daily/lifetime snapshots before profile
+callbacks, along with all labels, ordering, history limits and malformed-input
+defaults. The complete module and its profile callers were reviewed.
+
+Native comparison with the prior module passed 43 cases: null and schema
+0/1/4/5 profiles, empty/populated/malformed histories and challenges, direct row
+limits, and output mutation isolation. A profile callback that mutates lifetime
+and daily data confirmed that the retained outer snapshots preserve the prior
+display. The required liveness check and documentation/source census passed.
+Both muted capped Jobs drained naturally with EOF and zero active processes;
+independent host census found both owned processes absent. No timing claim.
+
+The report timeline, player text, widget constructors, UI art cache, segmented
+meter and heat overlay were also read in full. Their seeking/resize behavior,
+formatting, callbacks, accessibility metadata, asset fallbacks, animation and
+reduced-motion policies remain unchanged. Inventory now records 102 targeted
+source/contract reviews; the remaining static screens are not semantic signoff.
+This batch remains local while the parent's publication/export pause applies.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

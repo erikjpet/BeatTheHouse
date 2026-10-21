@@ -22,7 +22,7 @@ static func build(profile_inventory: ProfileInventory) -> Dictionary:
 	# The screen renders eight compact rows. Ask the profile for exactly that
 	# projection instead of recursively copying all retained run records first.
 	var history := profile_inventory.recent_run_history(8) if profile_inventory != null else []
-	var victories := JsonCoerceScript._copy_dict(lifetime.get("victories_per_route", {}))
+	var victories := _dict_view(lifetime.get("victories_per_route", {}))
 	var total_runs := int(lifetime.get("total_runs", 0))
 	var total_victories := 0
 	for count_value in victories.values():
@@ -94,7 +94,7 @@ static func _completed_route_count(routes: Array) -> int:
 
 
 static func _release_ledger(lifetime: Dictionary) -> Array:
-	var release := JsonCoerceScript._copy_dict(lifetime.get(ProfileInventory.RELEASE_REPORTING_KEY, {}))
+	var release := _dict_view(lifetime.get(ProfileInventory.RELEASE_REPORTING_KEY, {}))
 	return [
 		{
 			"id": "crew",
@@ -121,7 +121,7 @@ static func _release_ledger(lifetime: Dictionary) -> Array:
 				{"label": "Rig routes used", "value": str(int(release.get("numbers_rig_runs", 0)))},
 			],
 		},
-		{"id": "games", "title": "Games", "rows": _game_rows(JsonCoerceScript._copy_dict(lifetime.get("games_played", {})))},
+		{"id": "games", "title": "Games", "rows": _game_rows(_dict_view(lifetime.get("games_played", {})))},
 		{
 			"id": "deliveries",
 			"title": "Deliveries",
@@ -168,7 +168,7 @@ static func _history_rows(history: Array, limit: int = 8) -> Array:
 	var rows: Array = []
 	var count := mini(history.size(), limit)
 	for index in range(count):
-		var entry := JsonCoerceScript._copy_dict(history[index])
+		var entry := _dict_view(history[index])
 		rows.append({
 			"date": str(entry.get("completed_date", "")),
 			"outcome": _outcome_text(entry),
@@ -185,7 +185,7 @@ static func _history_rows(history: Array, limit: int = 8) -> Array:
 static func _challenge_rows(challenges: Array) -> Array:
 	var rows: Array = []
 	for challenge_value in challenges:
-		var challenge := JsonCoerceScript._copy_dict(challenge_value)
+		var challenge := _dict_view(challenge_value)
 		var title := str(challenge.get("title", challenge.get("flag", "Challenge"))).strip_edges()
 		if title.is_empty():
 			title = "Challenge"
@@ -194,6 +194,11 @@ static func _challenge_rows(challenges: Array) -> Array:
 			"id": str(challenge.get("challenge_id", challenge.get("flag", ""))),
 		})
 	return rows
+
+
+# Row projections only read their inputs and construct fresh scalar fields.
+static func _dict_view(value: Variant) -> Dictionary:
+	return value as Dictionary if typeof(value) == TYPE_DICTIONARY else {}
 
 
 static func _outcome_text(entry: Dictionary) -> String:
