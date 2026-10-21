@@ -88,7 +88,6 @@ func _check_meta_home_launcher_opens_room(app: Control) -> bool:
 		push_error("Meta world map did not expose the shared canvas.")
 		return false
 	var meta_map_view: Dictionary = meta_map_canvas.call("current_view_snapshot")
-	var meta_map_bounds: Dictionary = meta_map_view.get("map_bounds", {}) if typeof(meta_map_view.get("map_bounds", {})) == TYPE_DICTIONARY else {}
 	var meta_map_markers: Array = JsonCoerceScript._copy_array(meta_map_view.get("icon_markers", []))
 	var meta_map_holder_rect := _snapshot_rect(meta_map_screen.get("world_map_holder_rect", {}))
 	var meta_home_marker := _map_icon_marker(meta_map_markers, "home")

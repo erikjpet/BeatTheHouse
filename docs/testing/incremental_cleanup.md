@@ -4037,3 +4037,21 @@ Their live production calls, deterministic projections, hidden-field rejection,
 performance limits and capture manifests remain intact. Synthetic capture labels
 do not establish production hit geometry or a new gameplay pass. No source, test,
 asset or runtime changed; no broad sweep ran. Coverage is 748 full file reviews.
+
+## Batch 153: remove an unread UI-test map-bounds binding
+
+Read the complete environment-layout test. Remove only `meta_map_bounds`, a
+function-local binding initialized with pure dictionary reads and never consumed.
+Unlike reflective fixture properties, this local has no scene, save, signal or
+public interface. All surviving source bytes, assertions, fixture calls, snapshot
+capture and inherited runner behavior are identical. Keep the checks for map
+framing, Sal's six stock slots, immediate pawn credit, text fit, camera liveness,
+critical controls and viewport geometry.
+
+One changed-resource load passed in 9.015 seconds under the existing 12% CPU /
+2 GiB private Job; EOF, Job0, no forced cleanup and independent process absence
+are recorded. An earlier attempt compiled the resource but the runner rejected
+Godot's certificate-store read error. Preserve that failure; the single repeat
+used the approved process context without changing trust settings, error checks
+or limits. No test scene, gameplay, save or browser ran. No speedup is claimed.
+Coverage is 749 full file reviews across 3,714 inventoried paths.
