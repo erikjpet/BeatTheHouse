@@ -4126,3 +4126,27 @@ counter generations, complete offer state/clock/RNG and rollback. Its native
 diagnostic is not a new Web speed claim. No owner source, assertion or fixture
 changed, and no test was repeated. Rebase preserved the exact two qualified
 cleanup source hashes. Coverage is 759 full reviews across 3,715 paths.
+
+## Batch 158: review historical package probes and low-end routing
+
+Read all three retained Package A/B/E platform probes and the low-end matrix
+launcher. Their scenes, published runbooks and archived receipt schemas retain
+entry points; age or an unreferenced ordinary call is insufficient deletion
+evidence. Keep semantic route/zone/input uniqueness, canonical hashes, fixed
+iteration/frame budgets, contact-sheet custody and platform labels. Synthetic
+cards and literal capture flags do not prove production input or hit geometry.
+
+Record three source-only archived report-open risks: the Package A manifest,
+Package B report/manifest and Package E manifest writers dereference their file
+without checking that opening succeeded. No historical capture was rerun or
+rewritten; these concerns need a targeted failure check before any repair or
+future qualification claim. The launcher retains exact host/profile/hardware,
+power-plan and clean-source checks, output containment, native/Web producer
+routing and restoration of affinity, priority and environment settings. Its full
+matrix is not the current development check policy and was not run.
+
+FoundationMain review now continues through line 7,200, including the complete
+peer family-repayment diff. Save failure generations, public runtime rollback,
+queued dialogue ownership and exact existing repayment guards remain unchanged.
+This partial file is not counted as fully reviewed. Coverage is 763 full file
+reviews with six explicitly recorded issues; screening remains separate.
