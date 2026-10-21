@@ -3694,3 +3694,21 @@ preserves the real membership transition. All guards and assertions remain.
 These are source reviews only: no private fixture, user save, browser or engine
 was opened, and no completed recovery check was repeated. Coverage is 696 full
 source reviews.
+
+## Batch 135: retain character identities and offer transaction coverage
+
+Read the three complete character-offer contracts and every record in the
+authored character catalog. Preserve approved probabilities, exact dialogue,
+cash/time/item terms, day/venue cycles, stale-response rejection, captured-save
+ownership, reservation/collateral rules and clock/heat/delivery rollback. The
+ride contracts deliberately exercise real acceptance and travel while replacing
+presentation and disk writes; their independent failure snapshots remain.
+No test, callback override, legacy JSON convergence rule or RNG check changed.
+
+The catalog has 45 distinct IDs, 261 voice lines and 68 encounter records. All
+57 event/dialogue/lender references and every voice-line key resolve. Dynamic
+contexts and shortened offer identities are not dead-code evidence. Mo's bassist
+record contains a cellist line, and Finch's pianist record contains a drummer
+line; these are editorial choices to review separately, not permission to alter
+content semantics. All authored bytes remain unchanged. No offer or gameplay
+suite ran. Coverage is 700 full source reviews.
