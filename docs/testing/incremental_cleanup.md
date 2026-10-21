@@ -1943,6 +1943,37 @@ classifications across 3,699 paths. Fourteen deferrals and two separate issues
 remain. This separate source-only commit stays local during the deployment
 owner's CPU diagnosis; no further watcher restart or threshold change was made.
 
+## Batch 70: pack ADPCM nibbles directly into the final buffer
+
+The standalone Web audio encoder accumulated one Python list entry per encoded
+nibble, then walked that list again to pack the final bytes. Its exact output
+length and nibble offset follow from frame/channel dimensions. Preallocate the
+same final bytearray and pack each code at `(frame - 1) * channels + channel`,
+retaining predictor/index updates, header, channel order, decoded samples and
+SNR arithmetic. The function signature and every other Python AST node remain
+unchanged. All three authored call sites are retained, including SFX and
+procedural-music consumers. No runtime audio decoder or authored asset changed.
+
+132 tiny deterministic comparisons against dfc78eaa cover frame lengths
+0/1/2/3/16/65, channel counts0-4, silence/clipping/ramp/sine, five dtypes,
+noncontiguous input, nonfinite values and invalid/sample-rate boundaries.
+Complete bytes, float SNR, warnings, exception types/messages, input arrays and
+every actual predictor-helper argument/result in order match. The successful
+cases encoded3,428 nibbles: their3,428 intermediate list entries become zero.
+This is a structural allocation/pass reduction; no timing or peak-memory gain
+is claimed. Existing NumPy runs only in the small source-only fixture, with no
+Godot, browser, export or authored-asset generation.
+
+Ten full source reviews cover both audio-authoring modules and retained
+Blackjack visual, Craps hostile-RTP, Crew favor cadence, Punchline scope,
+dead-code/IoResult/facade contracts and Meta Home anchor checks. Existing tests,
+thresholds, native pins and actual save/recovery code remain unchanged; the
+other eight checks were read, not rerun. Coverage is364 targeted reviews,
+1,063 static screens and2,272 role classifications across3,699 paths, with14
+deferrals and two separate issues. The deployment owner alone owns qualified
+CPU policy evaluation, one watcher recovery and exact917 delivery verification;
+this separate tested cleanup remains local.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

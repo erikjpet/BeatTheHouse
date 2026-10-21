@@ -90,7 +90,7 @@ def _encode_ima(samples: np.ndarray, sample_rate: int = TARGET_RATE) -> tuple[by
     header.extend(struct.pack("<BBHII", 1, channels, 0, sample_rate, frames))
     for channel in range(channels):
         header.extend(struct.pack("<hB", predictors[channel], indices[channel]))
-    nibbles: list[int] = []
+    encoded = bytearray(((frames - 1) * channels + 1) // 2)
     decoded = np.empty_like(pcm)
     decoded[0] = pcm[0]
     for frame in range(1, frames):
@@ -98,11 +98,9 @@ def _encode_ima(samples: np.ndarray, sample_rate: int = TARGET_RATE) -> tuple[by
             code, predictors[channel], indices[channel] = _ima_code(
                 int(pcm[frame, channel]), predictors[channel], indices[channel]
             )
-            nibbles.append(code)
+            offset = (frame - 1) * channels + channel
+            encoded[offset // 2] |= code << (4 if offset & 1 else 0)
             decoded[frame, channel] = predictors[channel]
-    encoded = bytearray((len(nibbles) + 1) // 2)
-    for offset, code in enumerate(nibbles):
-        encoded[offset // 2] |= code << (4 if offset & 1 else 0)
     error = pcm.astype(np.float64) - decoded.astype(np.float64)
     signal_power = float(np.mean(np.square(pcm.astype(np.float64))))
     noise_power = max(float(np.mean(np.square(error))), 1e-12)
