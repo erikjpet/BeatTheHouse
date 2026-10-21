@@ -21,7 +21,7 @@ var last_load_outcome: Dictionary = {
 	"backup_exists": false,
 	"backup_loadable": false,
 }
-# In-memory proof for a primary validated and installed by this SaveService.
+# In-memory proof for exact primary bytes validated on load or install.
 # Entries bind the exact file bytes to the absolute path, never just mtime/size.
 var trusted_primary_fingerprints: Dictionary = {}
 var async_task_id: int = -1
@@ -216,9 +216,9 @@ func load_run(slot_id: String = "autosave") -> Variant:
 			"exists": FileAccess.file_exists(backup_save_path(clean_slot)),
 			"loadable": false,
 		}
-		# Continue fully restores from disk. A later save may establish a new
-		# installed-byte proof; do not infer one from path metadata on load.
-		trusted_primary_fingerprints.erase(clean_slot)
+		# Reuse only the exact bytes already checked by the normal primary load.
+		# The next save still hashes the actual file before trusting this proof.
+		_remember_primary_digest(clean_slot, run_save_path(clean_slot), str(primary.get("validated_sha256", "")))
 		last_load_outcome = _load_outcome(clean_slot, LOAD_OUTCOME_PRIMARY, primary, backup)
 		return primary.get("run_state")
 	var backup := _read_run_state_from_path(backup_save_path(clean_slot))
@@ -329,7 +329,7 @@ static func _save_payload_result(runtime_snapshot: Dictionary, slot_id: String) 
 
 
 # Accepts current envelopes and previous raw foundation RunState dictionaries.
-func _run_data_from_payload(payload: Dictionary) -> Dictionary:
+func _run_data_from_payload(payload: Dictionary, validation_proof: Dictionary = {}) -> Dictionary:
 	if payload.get("schema", "") == SAVE_SCHEMA:
 		var run_data: Variant = payload.get("run_state", {})
 		if typeof(run_data) != TYPE_DICTIONARY:
@@ -337,6 +337,9 @@ func _run_data_from_payload(payload: Dictionary) -> Dictionary:
 		var unpacked_run_data := RunSaveCodecScript.unpack_from_storage(run_data as Dictionary)
 		if unpacked_run_data.is_empty():
 			return {}
+		# These are the same pre-decode checks as _payload_dictionary_loadable.
+		# Normalized RunState defaults must never mint a durable-generation proof.
+		validation_proof["loadable"] = unpacked_run_data.has("seed_text") and unpacked_run_data.has("rng_state") and unpacked_run_data.has("current_environment")
 		var copied_run_data := RunSaveCodecScript.decode(unpacked_run_data)
 		if not copied_run_data.has("act"):
 			copied_run_data["act"] = maxi(1, int(payload.get("act", 1)))
@@ -351,17 +354,24 @@ func _read_run_state_from_path(path: String) -> Dictionary:
 		return {"exists": false, "loadable": false, "run_state": null}
 	var text := FileAccess.get_file_as_string(path)
 	var json := JSON.new()
-	if json.parse(RunSaveCodecScript.preserve_blackjack_ledger_integer_tokens(text)) != OK:
+	var load_text := RunSaveCodecScript.preserve_blackjack_ledger_integer_tokens(text)
+	if json.parse(load_text) != OK:
 		return {"exists": true, "loadable": false, "run_state": null}
 	var parsed: Variant = json.data
 	if typeof(parsed) != TYPE_DICTIONARY:
 		return {"exists": true, "loadable": false, "run_state": null}
-	var run_data := _run_data_from_payload(parsed as Dictionary)
+	var validation_proof: Dictionary = {}
+	var run_data := _run_data_from_payload(parsed as Dictionary, validation_proof)
 	if run_data.is_empty():
 		return {"exists": true, "loadable": false, "run_state": null}
 	var run_state := RunState.new()
 	run_state.from_dict(run_data)
-	return {"exists": true, "loadable": true, "run_state": run_state}
+	var result := {"exists": true, "loadable": true, "run_state": run_state}
+	# A ledger rewrite, raw/unknown envelope, failed unpack, or absent required
+	# field keeps the existing full-validation path on the following save.
+	if load_text == text and bool(validation_proof.get("loadable", false)):
+		result["validated_sha256"] = text.sha256_text()
+	return result
 func _trusted_primary_digest(slot_id: String, path: String) -> String:
 	var entry_value: Variant = trusted_primary_fingerprints.get(slot_id, {})
 	if typeof(entry_value) != TYPE_DICTIONARY:

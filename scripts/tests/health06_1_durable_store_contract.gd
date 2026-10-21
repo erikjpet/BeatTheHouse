@@ -289,6 +289,7 @@ func _check_run_save_recovery_and_trust() -> void:
 	var recovered: Variant = recovery_service.load_run(RUN_SLOT)
 	_expect(recovered != null, "CH-01: run save did not recover from backup.")
 	_expect(str(recovery_service.last_load_outcome.get("outcome", "")) == DurableStoreScript.OUTCOME_BACKUP, "CH-01: run recovery did not surface its backup outcome.")
+	_expect(not recovery_service.trusted_primary_fingerprints.has(RUN_SLOT), "CH-01: backup recovery minted a primary-byte proof.")
 	# Re-establish a valid primary, then prove a failed save invalidates its trust cache.
 	_expect(service.save_run(run_state, RUN_SLOT) == OK, "CH-01: run primary could not be re-established.")
 	_expect(service.trusted_primary_fingerprints.has(RUN_SLOT), "CH-01: successful run save did not establish a trusted fingerprint.")
@@ -299,7 +300,21 @@ func _check_run_save_recovery_and_trust() -> void:
 	_expect(failed_save != OK, "CH-01: induced run rename failure reported success.")
 	_expect(not service.trusted_primary_fingerprints.has(RUN_SLOT), "CH-01: failed run save retained a trusted-primary fingerprint.")
 	_expect(service.save_run(run_state, RUN_SLOT) == OK and service.trusted_primary_fingerprints.has(RUN_SLOT), "CH-01: recovery save did not re-establish installed-byte proof.")
-	_expect(service.load_run(RUN_SLOT) != null and not service.trusted_primary_fingerprints.has(RUN_SLOT), "CH-01: cold load retained a proof from the prior installed generation.")
+	var cold_service := SaveServiceScript.new()
+	_expect(cold_service.load_run(RUN_SLOT) != null and cold_service._primary_digest_is_trusted(RUN_SLOT, primary_path), "CH-01: fresh primary load did not capture its validated exact bytes.")
+	var primary_text := FileAccess.get_file_as_string(primary_path)
+	_write_raw(primary_path, primary_text + "\n")
+	_expect(not cold_service._primary_digest_is_trusted(RUN_SLOT, primary_path), "CH-01: an external byte change retained the loaded-primary proof.")
+	_expect(cold_service.load_run(RUN_SLOT) != null and cold_service._primary_digest_is_trusted(RUN_SLOT, primary_path), "CH-01: the changed valid primary was not revalidated on load.")
+	var raw_state := run_state.to_dict()
+	_write_raw(primary_path, JSON.stringify(raw_state))
+	_expect(cold_service.load_run(RUN_SLOT) != null and not cold_service.trusted_primary_fingerprints.has(RUN_SLOT), "CH-01: a legacy raw save minted a current-envelope proof.")
+	var proof: Dictionary = {}
+	cold_service._run_data_from_payload({"schema": SaveServiceScript.SAVE_SCHEMA, "run_state": {"bankroll": 1}}, proof)
+	_expect(not bool(proof.get("loadable", false)), "CH-01: normalized defaults minted a proof for missing required stored fields.")
+	proof.clear()
+	cold_service._run_data_from_payload({"schema": "unknown", "seed_text": "legacy", "rng_state": "0", "challenge_config": {}, "bankroll": 1, "current_environment": {}}, proof)
+	_expect(proof.is_empty(), "CH-01: an unknown envelope minted a current-envelope proof.")
 
 
 func _check_distribution_root_validation() -> void:
