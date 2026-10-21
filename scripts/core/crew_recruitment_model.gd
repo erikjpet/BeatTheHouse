@@ -24,15 +24,20 @@ static var _config_cache: Dictionary = {}
 
 
 static func config() -> Dictionary:
+	return _config_ref().duplicate(true)
+
+
+# Internal immutable configuration view; public projections retain owned copies.
+static func _config_ref() -> Dictionary:
 	if _config_cache.is_empty():
 		var rows := _load_array(CONFIG_PATH)
 		if rows.size() == 1 and typeof(rows[0]) == TYPE_DICTIONARY:
 			_config_cache = (rows[0] as Dictionary).duplicate(true)
-	return _config_cache.duplicate(true)
+	return _config_cache
 
 
 static func member_definition(member_id: String) -> Dictionary:
-	for value in _array(config().get("members", [])):
+	for value in _members_ref():
 		if typeof(value) == TYPE_DICTIONARY and str((value as Dictionary).get("member_id", "")) == member_id:
 			return (value as Dictionary).duplicate(true)
 	return {}
@@ -40,7 +45,7 @@ static func member_definition(member_id: String) -> Dictionary:
 
 static func recruitment_event_ids() -> Array:
 	var result: Array = []
-	for value in _array(config().get("members", [])):
+	for value in _members_ref():
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var event_id := str((value as Dictionary).get("event_id", "")).strip_edges()
@@ -51,13 +56,19 @@ static func recruitment_event_ids() -> Array:
 
 static func contact_event_ids() -> Array:
 	var result: Array = []
-	for value in _array(config().get("members", [])):
+	for value in _members_ref():
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var event_id := str((value as Dictionary).get("contact_event_id", "")).strip_edges()
 		if not event_id.is_empty():
 			result.append(event_id)
 	return result
+
+
+# Internal read-only member rows; callers copy selected definitions before return.
+static func _members_ref() -> Array:
+	var members: Variant = _config_ref().get("members", [])
+	return members as Array if typeof(members) == TYPE_ARRAY else []
 
 
 # Model-owned recruitment memory. Scene commands and their authentication stay

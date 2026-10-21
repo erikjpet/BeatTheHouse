@@ -692,6 +692,30 @@ rollback, Punchline recovery, exact slot geometry, rumor truth and seeded town
 behavior. Coverage reaches 152 targeted reviews; this remains an ongoing semantic
 audit. Native closure evidence is retained in the task receipt.
 
+## Batch 26: copy only selected Crew recruitment definitions
+
+Retain one internal immutable configuration/member-row view for member lookup
+and recruitment/contact event ID lists. Public `config` and selected member
+definitions still return deep copies; ID lists remain fresh ordered arrays.
+Previously each query copied the complete configuration and all member rows
+before selecting its result. Placement, eligibility, normalization, state
+mutation, seeded presence/RNG and proposal-only authority remain unchanged.
+
+Native baseline comparison passed 94 queries across authored and synthetic
+malformed/typed member collections, duplicate IDs, unknown/whitespace IDs and
+public path projections. Nested result/config mutation could not affect caches;
+event/contact ordering matched. The complete existing WORLD06_4 recruitment
+model contract passed unchanged through an inherited private entrypoint,
+covering exact seeded primary/fallback binding, hostile proposals, trusted
+contact state, persistence and hidden-field boundaries. Liveness and source
+census passed (214 modules, 11,424 functions).
+
+The first check caught a nonexistent helper in the uncommitted candidate. Only
+that verified owned process was stopped, and its failed receipt was retained.
+The corrected check and liveness Jobs drained naturally with EOF/Job0. No
+failed candidate was committed. One additional full contract review brings
+targeted coverage to 153. No measured performance gain is claimed.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

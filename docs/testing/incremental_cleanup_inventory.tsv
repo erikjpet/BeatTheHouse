@@ -1387,7 +1387,7 @@ docs/archive/0.6/evidence/env06_7_package_e/web_process.json	docs/archive	histor
 docs/archive/health06_1_docs_manifest.json	docs/archive	historical-evidence	role-classification	no-change	E1	6f974037cf53063335901e45fe3db37fad7457ab	353045	5180
 docs/character_authoring.md	docs/character_authoring.md	authored-document	static-screen	reviewed	D1	14d1d8a10d416e64f26836ed7c9250ca0380b3ed	5713	168
 docs/character_offers.md	docs/character_offers.md	authored-document	static-screen	reviewed	D1	3aed3f69e76fdb8d99260788f1e20519e4b6a9c1	10051	167
-docs/code_reference.md	docs/code_reference.md	authored-document	source-review	fixed	C:batch8+batch16+batch18+batch19+batch21+batch22	3613d4768403ee8c0f83d95156bbef5fc39c3a54	8605	168
+docs/code_reference.md	docs/code_reference.md	authored-document	source-review	fixed	C:batch8+batch16+batch18+batch19+batch21+batch22+batch26	3613d4768403ee8c0f83d95156bbef5fc39c3a54	8605	168
 docs/contracts/delivery_consumer_api.md	docs/contracts	authored-document	static-screen	reviewed	D1	1a5d092e1f242015fe7a37c3ef2da545d1630703	2644	34
 docs/current_game_state.md	docs/current_game_state.md	authored-document	static-screen	reviewed	D1	51322d73e4d6a3d7f5848ef19c40df79d61b696b	12936	211
 docs/game_reference.md	docs/game_reference.md	authored-document	static-screen	reviewed	D1	645fe6db1f4e970a1a8b8d3e7e12857b2a26c1a6	12025	138
@@ -2829,7 +2829,7 @@ scripts/core/craps06_3_environment_binding.gd	scripts/core	authored	source-revie
 scripts/core/crew_heist_model.gd	scripts/core	authored	source-review	fixed	C:batch24	1b0cecd44c1601e1137ff8e97b25be2e320de8af	23459	431
 scripts/core/crew_play_model.gd	scripts/core	authored	source-review	no-change	M:batch25-full-presence-rank-host-authorization-conservation-detection-window-and-save-contract-review	41b0c16fc1be718d73f35657d7a34f4f2bf9523a	32076	656
 scripts/core/crew_poker_model.gd	scripts/core	authored	source-review	fixed	C:batch10	9d9a0c6d29c63566941a74c1d4e98506ea85d6ff	35062	752
-scripts/core/crew_recruitment_model.gd	scripts/core	authored	source-review	no-change	M:batch25-full-seeded-placement-encounter-normalization-rank-contact-and-proposal-only-authority-review	f44cd9509afdd808f4e6c25382ed2fb0bc16d53d	32099	675
+scripts/core/crew_recruitment_model.gd	scripts/core	authored	source-review	fixed	C:batch26	f44cd9509afdd808f4e6c25382ed2fb0bc16d53d	32099	686
 scripts/core/crew_run_facade.gd	scripts/core	authored	static-screen	reviewed	S1	0f1c8d6745b62353ec742e16b374d0804963af38	140898	2465
 scripts/core/crew_state_model.gd	scripts/core	authored	source-review	no-change	M:batch24-full-trust-jobs-private-grievance-proposal-only-authority-and-validation-review	de16ff20ccc8256b09658d83008bef6223ec102c	23603	468
 scripts/core/crew_turn_model.gd	scripts/core	authored	source-review	no-change	M:batch25-full-private-save-legacy-capsule-migration-RNG-weighting-and-public-only-authority-review	d66e182932bba0118d66f6f3d76b7c357a2a0982	25067	595
@@ -3145,7 +3145,7 @@ scripts/tests/foundation/world06_3_numbers_depth_contract.gd	scripts/tests	autho
 scripts/tests/foundation/world06_4_authored_semantics_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	ab81a241c114f02a07d1c41a32dd0f971aab99db	7726	150
 scripts/tests/foundation/world06_4_hostile_authority_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	ffb550c766e51c341b192c53b1427a9db5864bdc	9349	147
 scripts/tests/foundation/world06_4_jobs_model_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	0fc22051f5971f63fbcde1c583970bc7cd47ebaa	7279	87
-scripts/tests/foundation/world06_4_recruitment_model_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	dfc0eba5f2ecb764b8dacc20605b51e702a3992d	11519	171
+scripts/tests/foundation/world06_4_recruitment_model_contract.gd	scripts/tests	authored	source-review	no-change	M:batch26-full-seeded-path-proposal-authority-trusted-contact-durable-state-and-hidden-boundary-contract	dfc0eba5f2ecb764b8dacc20605b51e702a3992d	11519	171
 scripts/tests/foundation/world06_5_plays_authored_semantics_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	28679f71986d3083fd936272bc7a74ef9f81530a	6073	118
 scripts/tests/foundation/world06_5_plays_model_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	173560189e799e7eeb5e56ae09d8d402ed54d503	12325	186
 scripts/tests/foundation/world06_5_sweep_model_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	325a86224d4d7dceab61a237e2129f6aa4422baf	16673	225
