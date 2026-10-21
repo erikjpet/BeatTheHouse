@@ -1468,6 +1468,35 @@ flight landing, reduced motion and lamp/dealer idle scheduling remain intact.
 Coverage is256 targeted source/contract reviews,1,171 static screens and2,272
 role classifications across3,699 paths; the comprehensive audit continues.
 
+## Batch 54: reuse one detached poker banter configuration
+
+`CrewDrawPokerGame._banter_for_state` fetched the same detached configuration
+twice for idle dealer banter or four times for the ordinary member fallback.
+Read it once after the empty-table return and reuse it within that query. The
+configuration provider and its owned-copy contract remain intact; no persistent
+cache is added. All other functions, public methods, RNG draws, decks, NPC
+decisions, payouts, legacy migration and turn/animation scheduling are unchanged.
+No elapsed-time gain is claimed.
+
+Native comparison against exactbe0180f4 passed1,620 complete strings across
+empty/mixed/single-member rosters, all authored dealers and unknown IDs,
+five hand indices and three phases. It also matched96 complete generated
+surface projections for four seeds, ordered/legacy engines and idle/preflop/
+river states, plus the authored v3 mid-hand fixture. Full input, configuration,
+run-save and RNG bytes stayed unchanged. Required no-pointer animation liveness
+passed. Both muted private Jobs exited0 naturally, reader EOF/Job0/no forced
+cleanup; independent10:13 UTC process absence is preserved in
+`poker-banter-native-closure.json`.
+
+Completed the full752-line CrewPokerModel review beyond the earlier targeted
+pattern helper: preserve neutral-counter packing, explicitly empty old memory,
+exactly five policy RNG draws, preflop/postflop scoring, stable odd-chip order,
+profile isolation and bounded pattern caches. Read the complete authored poker
+tuning and fourteen tell patterns and the v3 fixture; content is unchanged.
+Coverage is258 targeted source/contract reviews,1,169 static screens and2,272
+role classifications across3,699 paths. The remaining semantic audit and the
+explicitly deferred ownership/native/package issues remain open.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

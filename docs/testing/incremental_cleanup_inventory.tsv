@@ -601,7 +601,7 @@ data/crew/heist.json	data/crew	authored	static-screen	reviewed	S1	2cda7f852b6066
 data/crew/jobs.json	data/crew	authored	static-screen	reviewed	S1	d365ceb188ee0c73b07ef3e4627f395781cfedb9	8912	93
 data/crew/numbers.json	data/crew	authored	static-screen	reviewed	S1	ef50f49248881a3091e154d74f0ee08d358d87ba	8142	99
 data/crew/plays.json	data/crew	authored	static-screen	reviewed	S1	a3bbf0efe74e809556f0c6e779c9c97ebb814a70	11078	168
-data/crew/poker.json	data/crew	authored	static-screen	reviewed	S1	13da5df3351ee35af38733215188f0fe72b6574e	8011	72
+data/crew/poker.json	data/crew	authored	source-review	no-change	M:batch54-full-schema2-seven-version1-26-attribute-profiles-bounded-session-money-seeded-think-delay-and-animation-banter-content-review-retained	13da5df3351ee35af38733215188f0fe72b6574e	8011	72
 data/crew/recruitment.json	data/crew	authored	static-screen	reviewed	S1	422ee4d848277ec24dcfb76939ff55d52c8755ae	10951	133
 data/crew/tells.json	data/crew	authored	source-review	no-change	M:batch10-all-seven-members-and-fourteen-patterns	890d3b538a9b50bea3d522fb442fb795e44d298d	4150	58
 data/crew/world06_1_crew_favor_delivery_sequence.json	data/crew	authored	static-screen	reviewed	S1	d72c803533438361f94fa5a3c37a912e1e1442c4	17982	482
@@ -1858,8 +1858,8 @@ docs/screenshots/scratch_ticket_three_state_review/05_bonus_bingo_three_states.p
 docs/screenshots/scratch_ticket_three_state_review/06_high_roller_holdem_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	9ae3f1c0724939aa1acaebf88e3f8524fde714f1	541341	-
 docs/screenshots/scratch_ticket_three_state_review/07_golden_vault_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	258b7cdca507173d7b8c484ed5ed19a531b994fa	474817	-
 docs/screenshots/scratch_ticket_three_state_review/all_scratch_tickets_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	506839b5f67581028469a7a9230deaf8c5a8a3fb	4560788	-
-docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	2677d26b8aa195e732597924fa0f4c6447a19ace	100135	1585
-docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	c0133f735fb7b5b56050a9f739448ef512133712	670424	-
+docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	b6308a584d27fef69460d3c4d12e4fde4e8dde1c	102956	1628
+docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	670892155dba18975e702b346cefde6b56b459a2	670646	-
 docs/testing/punchline_debt_court_recovery.md	docs/testing	authored-document	static-screen	reviewed	D1	ccfe341027a53866f18c201f4ef855a2420c2987	3889	64
 docs/testing/scratch_scalper_runtime_compatibility.md	docs/testing	authored-document	static-screen	reviewed	D1	15feb4c3c388e55a67a98bc58efbc003a1fc4261	3581	56
 docs/todo/README_0_6_board.md	docs/todo	authored-document	static-screen	reviewed	D1	2305cca0cdeeba83d3fa8768159758508d775c58	66017	517
@@ -2924,7 +2924,7 @@ scripts/games/coin_pusher/vault_drop.gd	scripts/games	authored	source-review	no-
 scripts/games/craps.gd	scripts/games	authored	source-review	fixed	C:batch48	8b9773e008e9d5ee807b4e03dfe9db4d97a5fdd3	127264	2379
 scripts/games/craps/craps_rules.gd	scripts/games	authored	source-review	no-change	M:batch32-full-contract-wagers-traveled-Come-odds-on-comeout-vig-rounding-payout-conservation-and-RNG-review	c8e553974e43c00e4bc10f74fb10359238f14830	32235	680
 scripts/games/craps/craps_surface_view_model.gd	scripts/games	authored	source-review	no-change	M:batch32-full-public-bet-targets-working-row-identities-history-ownership-and-odds-label-review	15bd316e3cfb28e6f41f8549cfb241e685ec7d47	6235	103
-scripts/games/crew_draw_poker.gd	scripts/games	authored	source-review	no-change	M:batch53-full-injected-RNG-ordered-Holdem-vs-live-legacy-draw-migration-honest-NPC-public-reads-turn-timers-reentry-all-in-side-pots-tell-provenance-fail-closed-authority-and-idle-flight-rendering-review-no-change	31e058f12123f71ec0aaf7f14b2cce351d071a6d	178131	3483
+scripts/games/crew_draw_poker.gd	scripts/games	authored	source-review	fixed	C:batch54	31e058f12123f71ec0aaf7f14b2cce351d071a6d	178131	3484
 scripts/games/playing_card_renderer.gd	scripts/games	authored	source-review	no-change	M:batch9-full-card-drawing-and-code-fallback-review	f01a644c9d3478488db9ffefa369ac57e4fc994f	5010	108
 scripts/games/pull_tabs.gd	scripts/games	authored	static-screen	reviewed	S1	d999aaedae0d06bb5e4efd05db2990db1e49a7ee	219500	4712
 scripts/games/roulette.gd	scripts/games	authored	static-screen	reviewed	S1	d905e2f2a2a18ed5c10757889872402ed346fc22	230485	4701
@@ -2984,7 +2984,7 @@ scripts/tests/fixsweep06_1_player_text_contract.gd	scripts/tests	authored	static
 scripts/tests/fixtures/cold_continue_storm_save.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	a96be75b6296c3eb78001e1131f3b3c8402c49a8	123232	13
 scripts/tests/fixtures/cold_continue_storm_save.md	scripts/tests	authored-document	static-screen	reviewed	D1	44459195870b9168a4dfa07498d5018b01d9e111	953	16
 scripts/tests/fixtures/crew06_5_ignored_run_baseline.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	1390b61d14e99fd9158ed53773a103f1a4948ea9	7322	114
-scripts/tests/fixtures/crew_poker_v3_midhand.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	1395d47f3421042c40266d5e0930e229e5e69b0c	2634	60
+scripts/tests/fixtures/crew_poker_v3_midhand.json	scripts/tests	intentional-fixture	source-review	no-change	M:batch54-full-authored-version3-river-turn-order-four-live-actor-contributions40pot-hidden-hands-and-durable-session-fields-review-retained	1395d47f3421042c40266d5e0930e229e5e69b0c	2634	60
 scripts/tests/fixtures/game_ritual_shared_envelopes_v1.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	18aef22f602123828b1effebfd466435484e9553	6034	181
 scripts/tests/fixtures/game_ritual_vocabulary_v1.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	4268c00499067c2e8e0cf70036d46a682548beb1	14645	513
 scripts/tests/fixtures/integ06_1/mid_0_6/capture_plan.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	1283b47bdff4eedf61b5b03dfa5f994a18e1c971	4203	83

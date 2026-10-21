@@ -2892,11 +2892,12 @@ func _banter_for_state(state: Dictionary) -> String:
 		return "The bare table waits."
 	var hand_number := int(state.get("hand_number", 0))
 	var dealer_id := str(state.get("dealer_member_id", ""))
-	var dealer_lines: Dictionary = CrewPokerModelScript.config().get("dealer_banter", {}) if typeof(CrewPokerModelScript.config().get("dealer_banter", {})) == TYPE_DICTIONARY else {}
+	var tuning := CrewPokerModelScript.config()
+	var dealer_lines: Dictionary = tuning.get("dealer_banter", {}) if typeof(tuning.get("dealer_banter", {})) == TYPE_DICTIONARY else {}
 	var dealer_options: Array = dealer_lines.get(dealer_id, []) if typeof(dealer_lines.get(dealer_id, [])) == TYPE_ARRAY else []
 	if str(state.get("phase", "idle")) == "idle" and not dealer_options.is_empty():
 		return str(dealer_options[hand_number % dealer_options.size()])
-	var lines: Dictionary = CrewPokerModelScript.config().get("banter", {}) if typeof(CrewPokerModelScript.config().get("banter", {})) == TYPE_DICTIONARY else {}
+	var lines: Dictionary = tuning.get("banter", {}) if typeof(tuning.get("banter", {})) == TYPE_DICTIONARY else {}
 	var member_id := str(members[hand_number % members.size()])
 	var options: Array = lines.get(member_id, []) if typeof(lines.get(member_id, [])) == TYPE_ARRAY else []
 	return str(options[hand_number % options.size()]) if not options.is_empty() else "%s cuts the deck." % MEMBER_NAMES.get(member_id, member_id)
