@@ -1021,6 +1021,20 @@ The unchanged EventModule has a diagnostic issue: at lines 505-565 the old
 The performance owner received this finding; production timing/gameplay code is
 unchanged. The settled map-marker redraw issue remains a separate proposal.
 
+## Batch 39: remove the recovery fixture's unused import
+
+Remove only the unused `time` import from the newly published disposable
+recovery fixture. AST name-use inspection found no use or dynamic global lookup;
+the complete AST is identical after deleting that import alias. No recovery
+implementation, assertion, fixture body or refusal path changes.
+
+All eleven existing disposable fixtures passed, including raw Git bytes,
+alternate streams, long Windows paths, no-overwrite, corruption and metadata
+failure cleanup. The test used its own temporary directory and removed it
+normally; it did not launch a game/browser or access live private evidence.
+The helper itself remains unchanged. Coverage remains 223 targeted reviews,
+1,203 static screens and 2,272 role classifications across 3,698 paths.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

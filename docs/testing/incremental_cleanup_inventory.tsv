@@ -1858,8 +1858,8 @@ docs/screenshots/scratch_ticket_three_state_review/05_bonus_bingo_three_states.p
 docs/screenshots/scratch_ticket_three_state_review/06_high_roller_holdem_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	9ae3f1c0724939aa1acaebf88e3f8524fde714f1	541341	-
 docs/screenshots/scratch_ticket_three_state_review/07_golden_vault_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	258b7cdca507173d7b8c484ed5ed19a531b994fa	474817	-
 docs/screenshots/scratch_ticket_three_state_review/all_scratch_tickets_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	506839b5f67581028469a7a9230deaf8c5a8a3fb	4560788	-
-docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	b157832b07fc813dbfdd0a10b5c440e6892c7653	67045	1116
-docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	c0ed8c6036eaff136d9636f915a85b722ff10d16	664802	-
+docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	a6a09358ada798be5aceb592016ecd4d5449c825	69541	1130
+docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	80c8b8e8c57d1813aeeea44121ec24cfed96c06c	667087	-
 docs/testing/punchline_debt_court_recovery.md	docs/testing	authored-document	static-screen	reviewed	D1	ccfe341027a53866f18c201f4ef855a2420c2987	3889	64
 docs/testing/scratch_scalper_runtime_compatibility.md	docs/testing	authored-document	static-screen	reviewed	D1	15feb4c3c388e55a67a98bc58efbc003a1fc4261	3581	56
 docs/todo/README_0_6_board.md	docs/todo	authored-document	static-screen	reviewed	D1	2305cca0cdeeba83d3fa8768159758508d775c58	66017	517
@@ -3672,7 +3672,7 @@ tools/test_environment_placement_report.py	tools/test_environment_placement_repo
 tools/test_environment_slot_consolidation.py	tools/test_environment_slot_consolidation.py	authored	static-screen	reviewed	S1	e20ee0fa6fbf2bdebb9221d347d1487aca9848a3	7896	201
 tools/test_environment_slot_migration_v2.py	tools/test_environment_slot_migration_v2.py	authored	static-screen	reviewed	S1	037fc1dcff6bee375b179cd881fa3fd722fb4fed	7768	168
 tools/test_scenario_slot_layouts.py	tools/test_scenario_slot_layouts.py	authored	static-screen	reviewed	S1	e06f64eff691d42dcb80447f06fe29e93f79656c	62340	1341
-tools/tests/restore_reconciled_copy_test.py	tools/tests	authored	source-review	issue	M:batch39-full-review;unused-time-import-candidate-native-or-private-runtime-not-required;existing-disposable-fixture-check-pending	7dd5239a9bd45d4d1014df6203a6ab505fbced33	5053	60
+tools/tests/restore_reconciled_copy_test.py	tools/tests	authored	source-review	fixed	C:batch39	7dd5239a9bd45d4d1014df6203a6ab505fbced33	5053	60
 tools/trailer_capture.gd	tools/trailer_capture.gd	authored	static-screen	reviewed	S1	bd7fa3a73da45cd8f87fec26f407dc7caa60e5d5	22105	609
 tools/travel_preview_parity_probe.gd	tools/travel_preview_parity_probe.gd	authored	static-screen	reviewed	S1	3e68fc3703f0de9226e98fb8645110f0379aac59	5590	114
 tools/tutorial_failure_restart_probe.gd	tools/tutorial_failure_restart_probe.gd	authored	static-screen	reviewed	S1	9206293e92dd7b3e760b0588554885693e5bb461	2999	86

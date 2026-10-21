@@ -1,5 +1,5 @@
 """Disposable Git/private recovery fixtures; no game runtime or browser."""
-import hashlib,importlib.util,json,os,subprocess,tempfile,time
+import hashlib,importlib.util,json,os,subprocess,tempfile
 from pathlib import Path
 B=Path(__file__).resolve().parents[2];TOOL=B/'tools/restore_reconciled_copy.py'
 spec=importlib.util.spec_from_file_location('recovery_tool',TOOL);mod=importlib.util.module_from_spec(spec);spec.loader.exec_module(mod)
