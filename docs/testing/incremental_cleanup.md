@@ -668,6 +668,30 @@ coverage reaches 140 reviews. The retention owner confirmed actual watcher
 activation and capacity admission at 05:08:55 UTC; publication can resume through
 the existing capped watcher.
 
+## Batch 25: remove the repeated item-domain membership check
+
+`applies` already returns true when the supplied domain list contains the item
+domain. Its final repeated membership check can only return false. Return false
+directly, retaining global, exact-context, game and security alias precedence.
+Remove three orphan comments left by earlier helper migrations. Keep virtual
+method calls, modifier merging, input/result ownership and direct deltas intact.
+
+Native comparison passed 1,536 contexts over eight domains, malformed/typed
+domain-list shapes and three action kinds. Applicability, modifiers, complete
+results and unchanged inputs matched the prior implementation. The existing
+HEALTH06_1 correctness contract ran unchanged through the private inherited
+entrypoint and passed package bounds, modifier conflict, clock and route checks.
+Liveness and source census also passed; capped muted Jobs drained naturally.
+This removes a redundant search, without a measured performance claim.
+
+Twelve additional full source/contract reviews cover ItemEffect, Crew turn/play/
+recruitment, their relevant contracts, duel ritual projection, terminal recovery,
+delivery facade, environment placement and TownNetwork. Preserve opaque legacy
+Crew saves and RNG weighting, proposal-only methods, authorization and cargo
+rollback, Punchline recovery, exact slot geometry, rumor truth and seeded town
+behavior. Coverage reaches 152 targeted reviews; this remains an ongoing semantic
+audit. Native closure evidence is retained in the task receipt.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
@@ -701,3 +725,15 @@ and WASM MIME types. Archive SHA-256:
 `ac958f54950965092972a10117f123af80b0670ab5d6341109222286aac622ef`.
 Independent 03:50:41 census found the build root/export Godot absent. Stable
 remained 0.6.0; no browser/gameplay launch is claimed by this HTTP check.
+
+After actual retention activation and capacity admission, fourteen separately
+tested commits from `4257158e` through batch24 were pushed as a fast-forward.
+NEXT promoted `54ff1dc5a5cc7fad8dec77935b84f2c7fcb9f98f`, tree
+`6f05d5f9f0f4ca22028b2985e74da9a409c3546c`, at 05:16:03 UTC. Trusted HTTPS
+at 05:16:27 matched all 15 archive files, redirect and WASM MIME types. Archive
+SHA-256: `8890b968a437d013c28dd49b623d4d43c1329f21bd15205f5a65eb304421f7fc`.
+The build root and all new Godot processes were independently absent. Existing
+historical playtests remained untouched. The retention hook completed without
+error (zero eligible/reduced sources). Stable remained 0.6.0. This is exact
+deployed identity/assets plus the preceding native behavior checks; the
+performance owner received the identity for its separate guarded Web trace.

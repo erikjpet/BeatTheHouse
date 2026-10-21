@@ -75,7 +75,7 @@ func applies(context: Dictionary) -> bool:
 		return true
 	if domain == "security" and (context_domain == "suspicion" or domains.has("suspicion") or str(context.get("action_kind", "")) == "cheat"):
 		return true
-	return domains.has(domain)
+	return false
 
 
 # Returns modifiers that affect the supplied domain context.
@@ -247,8 +247,3 @@ static func _collect_modifier_types(source: Dictionary, prefix: String, types: D
 
 static func _modifier_type_family(value: Variant) -> String:
 	return "number" if typeof(value) in [TYPE_INT, TYPE_FLOAT] else type_string(typeof(value))
-
-
-# Safely duplicates array content.
-# Normalizes a variant array into string ids.
-# Safely duplicates dictionary content.
