@@ -3311,3 +3311,19 @@ bytes; the same four tiny cases passed in 0.281 seconds under the existing
 engine PIDs were independently absent. No screenshots, game actions or saved
 state were regenerated. The newly published room-publication source is retained
 under the performance owner's scope, adding one explicit deferred source path.
+
+
+## Batch 113: finish a capture with a missing required definition
+
+The separate Craps review screenshot producer recorded a missing production
+definition and returned from its deferred runner before either normal final
+status branch. Add one explicit nonzero quit before that return. Normal casino
+and street fixtures, all pages, roll timestamps, render synchronization, image
+writes and reporting bytes remain unchanged. The tool remains a screenshot
+producer rather than a deterministic suite gate.
+
+The existing loader checked only this changed script and passed in 5.032 seconds
+under the muted 5% CPU/512 MiB Job. Natural exit, EOF, Job0 and independent loader
+absence were recorded. This is source/loader evidence for a small fatal-input
+guard; no full capture or real missing-definition process reproduction is claimed.
+The distinct manifest-open failure path remains a separate follow-up.

@@ -22,6 +22,7 @@ func _run() -> void:
 	var definition := _craps_definition()
 	if definition.is_empty():
 		_fail("Could not load the production Craps definition.")
+		quit(1)
 		return
 	var game: GameModule = CrapsGameScript.new()
 	game.setup(definition)
