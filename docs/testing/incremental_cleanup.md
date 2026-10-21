@@ -3145,3 +3145,21 @@ risk is recorded separately. Repeated gallery refresh calls also remain because
 their host methods can have side effects; repeated spelling alone is insufficient
 evidence for deletion. Capture-only clock and overlay controls were not treated
 as production animation scheduling. No content, saved state or media changed.
+
+
+## Review batch 105: authority, labels, tutorial and launcher contracts
+
+Six more complete test files received source review: the Blackjack authority
+adapter, player-text contract, tutorial talk-target geometry, pixel-scene labels,
+Games launchers and Dave's bus encounter. These are active production seams or
+caller-facing compatibility adapters, not abandoned code. Sealed delivery and
+checkpoint checks, exact currency/clock/accessibility semantics, real pointer
+and surface actions, normal presentation liveness during simulation freeze,
+counter cash-out availability, owned settings fixtures, one-time event state
+and save round trips all remain.
+
+The authority adapter's nullable host-construction failure remains a separate
+source risk pending a faithful focused reproduction; no broad harness repair
+or authority shortcut was introduced. Existing thresholds, fixtures and tests
+were preserved. These files were not run, and source review does not certify
+their current runtime outcomes or repeat the separate genuine-player journey.
