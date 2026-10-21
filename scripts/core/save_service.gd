@@ -89,7 +89,7 @@ func begin_save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 	# Seeded scenario definitions are immutable content. The worker may share those
 	# records while encoding; recursively copying them on the input thread made an
 	# otherwise asynchronous late-run save pause every active cabinet frame.
-	var runtime_snapshot := run_state.to_save_snapshot(false)
+	var runtime_snapshot := run_state.to_save_snapshot_for_encoding()
 	var path := run_save_path(clean_slot)
 	var backup_path := backup_save_path(clean_slot)
 	# A prior installed generation can be reused only if the worker finds those

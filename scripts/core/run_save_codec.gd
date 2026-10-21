@@ -2,6 +2,7 @@ class_name RunSaveCodec
 extends RefCounted
 
 const ScenarioSequenceCatalogScript := preload("res://scripts/core/scenario_sequence_catalog.gd")
+const PersistentEnvironmentProjectionScript := preload("res://scripts/core/persistent_environment_projection.gd")
 
 # Save-only projection. Runtime dictionaries keep their full authored state;
 # persisted data deduplicates identical environments and omits slot definition
@@ -380,6 +381,8 @@ static func _z85_decode_gdscript(encoded_text: String, expected_size: int) -> Pa
 
 
 static func _encode_value(value: Variant, registry: Dictionary, fingerprints: Dictionary, inside_environment: bool) -> Variant:
+	if typeof(value) == TYPE_OBJECT and value != null and value.get_script() == PersistentEnvironmentProjectionScript:
+		return value.encode_into(registry, fingerprints)
 	if typeof(value) == TYPE_DICTIONARY:
 		var source: Dictionary = value
 		if not inside_environment and _looks_like_environment(source):

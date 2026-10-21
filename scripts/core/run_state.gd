@@ -2,6 +2,8 @@ class_name RunState
 extends RefCounted
 
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const PersistentEnvironmentProjectionScript := preload("res://scripts/core/persistent_environment_projection.gd")
+const INACTIVE_STORAGE_PROJECTION_BUDGET := 4 * 1024 * 1024
 const RunStateSchemaScript := preload("res://scripts/core/run_state_schema.gd")
 const CrewRunFacadeScript := preload("res://scripts/core/crew_run_facade.gd")
 const GrandCasinoRunFacadeScript := preload("res://scripts/core/grand_casino_run_facade.gd")
@@ -354,6 +356,8 @@ var alcoholic_level: int = 0
 var pending_drunk_absorption: Array = []
 var drunk_distortion_suppression_turns: int = 0
 var _room_presentation_publication: RefCounted = null
+var _inactive_storage_projections: Dictionary = {}
+var _inactive_storage_projection_bytes := 0
 var current_environment: Dictionary = {}:
 	set(value):
 		current_environment = value
@@ -14840,6 +14844,12 @@ func to_save_snapshot(deep_copy_seeded_scenario_definitions: bool = true) -> Dic
 	return _save_snapshot(deep_copy_seeded_scenario_definitions, false)
 
 
+# Private immutable room compilations may be carried only to RunSaveCodec,
+# never through the ordinary save-shaped dictionary/transaction APIs.
+func to_save_snapshot_for_encoding() -> Dictionary:
+	return _save_snapshot(false, false, true)
+
+
 # Produces the same logical input that RunGenerator historically obtained by
 # building a complete save snapshot and then replacing non-generation payloads.
 # Skipping those payloads at the source keeps an exact scout independent of
@@ -14848,7 +14858,7 @@ func to_travel_preview_snapshot() -> Dictionary:
 	return _save_snapshot(false, true)
 
 
-func _save_snapshot(deep_copy_seeded_scenario_definitions: bool, travel_preview: bool) -> Dictionary:
+func _save_snapshot(deep_copy_seeded_scenario_definitions: bool, travel_preview: bool, for_encoding: bool = false) -> Dictionary:
 	var preview_heat_history: Array = []
 	if travel_preview:
 		var preview_heat_sample: Dictionary = {}
@@ -14884,7 +14894,7 @@ func _save_snapshot(deep_copy_seeded_scenario_definitions: bool, travel_preview:
 		"pending_drunk_absorption": pending_drunk_absorption.duplicate(false),
 		"drunk_distortion_suppression_turns": drunk_distortion_suppression_turns,
 		"current_environment": environment_context_snapshot(current_environment) if travel_preview else _environment_for_persistent_storage(current_environment, false, true),
-		"world_map": WorldMap.normalize_topology(world_map) if travel_preview else _world_map_for_save_snapshot(world_map),
+		"world_map": WorldMap.normalize_topology(world_map) if travel_preview else _owned_world_map_for_save_snapshot(world_map, for_encoding),
 		"scenario_state_schema_version": ScenarioEngineScript.STATE_SCHEMA_VERSION,
 		"scenario_recent_by_archetype": scenario_recent_by_archetype.duplicate(false),
 		"environment_situation_cycles_by_node": environment_situation_cycles_by_node.duplicate(true),
@@ -14943,10 +14953,16 @@ func _save_snapshot(deep_copy_seeded_scenario_definitions: bool, travel_preview:
 # Restores the run from saved data.
 func from_dict(data: Dictionary) -> void:
 	RunStateSchemaScript.restore(self, data)
+	# Cold restore already owns the complete migration boundary. Compile stored
+	# rooms here once; ordinary autosaves must not regenerate their layouts on
+	# every player action. Later alias mutations invalidate by complete equality.
+	_prime_inactive_storage_projections()
 
 
 func _run_state_schema_restore(data: Dictionary) -> void:
 	_room_presentation_publication = null
+	_inactive_storage_projections = {}
+	_inactive_storage_projection_bytes = 0
 	_scenario_sequence_definition_cache = {}
 	_world_sequence_definition_cache = {}
 	world_sequence_registrations = _normalize_world_sequence_registrations(data.get("world_sequence_registrations", {}))
@@ -15563,6 +15579,68 @@ static func _world_map_for_save_snapshot(map_data: Dictionary) -> Dictionary:
 		if typeof(environment_value) == TYPE_DICTIONARY and not (environment_value as Dictionary).is_empty():
 			node["environment"] = _environment_for_persistent_storage(environment_value as Dictionary, false)
 		nodes.append(node)
+	snapshot["nodes"] = nodes
+	return snapshot
+
+
+func _inactive_storage_projection(key: String, environment: Dictionary) -> RefCounted:
+	var prior: RefCounted = _inactive_storage_projections.get(key)
+	if prior != null and prior.matches(environment):
+		return prior
+	if prior != null:
+		_inactive_storage_projection_bytes -= prior.retained_bytes
+		_inactive_storage_projections.erase(key)
+	var available := INACTIVE_STORAGE_PROJECTION_BUDGET - _inactive_storage_projection_bytes
+	if available <= 0:
+		return null
+	var projector := func(body: Dictionary) -> Dictionary:
+		return _environment_for_persistent_storage(body, false)
+	var compiled := PersistentEnvironmentProjectionScript.compile(environment, projector, available)
+	if compiled != null:
+		_inactive_storage_projections[key] = compiled
+		_inactive_storage_projection_bytes += compiled.retained_bytes
+	return compiled
+
+
+func _prime_inactive_storage_projections() -> void:
+	for node_value in world_map.get("nodes", []):
+		if typeof(node_value) != TYPE_DICTIONARY:
+			continue
+		var environment_value: Variant = node_value.get("environment", {})
+		if typeof(environment_value) == TYPE_DICTIONARY and not (environment_value as Dictionary).is_empty():
+			_inactive_storage_projection(str(node_value.get("id", "")), environment_value)
+
+
+func _owned_world_map_for_save_snapshot(map_data: Dictionary, for_encoding: bool = false) -> Dictionary:
+	if map_data.is_empty():
+		_inactive_storage_projections = {}
+		_inactive_storage_projection_bytes = 0
+		return {}
+	var snapshot := map_data.duplicate(false)
+	var nodes_value: Variant = map_data.get("nodes", [])
+	if typeof(nodes_value) != TYPE_ARRAY:
+		return snapshot
+	var nodes: Array = []
+	var present: Dictionary = {}
+	for node_value in nodes_value as Array:
+		if typeof(node_value) != TYPE_DICTIONARY:
+			nodes.append(node_value)
+			continue
+		var node := (node_value as Dictionary).duplicate(false)
+		var environment_value: Variant = node.get("environment", {})
+		if typeof(environment_value) == TYPE_DICTIONARY and not (environment_value as Dictionary).is_empty():
+			var key := str(node.get("id", ""))
+			present[key] = true
+			var compiled := _inactive_storage_projection(key, environment_value)
+			if compiled != null:
+				node["environment"] = compiled if for_encoding else compiled.snapshot()
+			else:
+				node["environment"] = _environment_for_persistent_storage(environment_value, false)
+		nodes.append(node)
+	for key in _inactive_storage_projections.keys():
+		if not present.has(key):
+			_inactive_storage_projection_bytes -= _inactive_storage_projections[key].retained_bytes
+			_inactive_storage_projections.erase(key)
 	snapshot["nodes"] = nodes
 	return snapshot
 
