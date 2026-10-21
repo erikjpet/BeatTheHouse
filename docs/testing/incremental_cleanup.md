@@ -807,6 +807,32 @@ action provenance and resolved overlay policy remain unchanged. Three tested
 commits are preserved locally pending existing export-capacity admission; source
 review continues.
 
+## Batch 31: reuse the prepared trade-selection lookup
+
+The collection-item model already builds an integer-keyed trade-position lookup
+for state markers. Reuse its membership for trade button labels, enabled state
+and disabled reasons instead of converting and scanning the same selected-ID
+array again for each item. Keep public selection normalization, ordering,
+five-item limits, trade eligibility, quotes and all service mutations unchanged.
+
+Baseline native comparison matched 240 complete public models across five modes,
+twelve selections and four selected keys, plus twelve direct helper models.
+The fixture uses 168 instances from the actual collection definitions, bags,
+special items, unknown definitions, duplicates, numeric coercions, mixed tiers,
+over-limit and invalid IDs. Action payload mutations did not affect service
+state. An initial private fixture used `null`, which both unchanged baseline and
+current integer coercion reject with runtime errors; that run was rejected by
+the runner and retained separately. Successful evidence covers supported ID
+values, not acceptance of `null`. Production validation and tracked tests were
+not changed.
+
+Required liveness and the source census passed; the capped Jobs closed naturally
+with independent process absence. Six full UI reviews raise coverage to 168.
+Retain settings draft/cancel and accessibility metadata, modal search/focus,
+storage and pawn identities, legacy host aliases, dynamic signal wiring, and
+autonomous heat feedback. No measured speed gain is claimed. Publication remains
+subject to the existing capacity floor; independent source work continues.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

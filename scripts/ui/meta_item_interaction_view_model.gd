@@ -182,13 +182,13 @@ static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: 
 		elif mode == MODE_SALE and bool(quote.get("ok", false)):
 			actions.append({"id": "arm_sale", "label": "Sell for %d gold" % int(quote.get("price", 0)), "payload": {"kind": MetaCollectionServiceScript.SALE_KIND_ITEM, "instance_id": instance_id}, "permanent": true})
 		elif mode == MODE_TRADE and trade_visible:
-			var selected_index := JsonCoerceScript._int_array(trade_selected_ids).find(instance_id)
+			var trade_selected := trade_position_by_id.has(instance_id)
 			actions.append({
 				"id": "toggle_trade",
-				"label": "Remove from Trade" if selected_index >= 0 else "Select for Trade",
+				"label": "Remove from Trade" if trade_selected else "Select for Trade",
 				"payload": {"instance_id": instance_id},
-				"enabled": selected_index >= 0 or (trade_compatible and trade_selected_ids.size() < 5),
-				"disabled_reason": trade_reason if not trade_compatible else "Five items are already selected." if trade_selected_ids.size() >= 5 and selected_index < 0 else "",
+				"enabled": trade_selected or (trade_compatible and trade_selected_ids.size() < 5),
+				"disabled_reason": trade_reason if not trade_compatible else "Five items are already selected." if trade_selected_ids.size() >= 5 and not trade_selected else "",
 			})
 		var band: Dictionary = resolver.condition_band(definition, instance)
 		# Use the cached definition already in hand; resolving a complete run-item
