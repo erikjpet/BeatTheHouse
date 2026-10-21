@@ -2985,3 +2985,26 @@ envelope was inspected separately; its opaque payload is not counted as a full
 semantic review. The Video Poker probe's false-start path can finish with an
 empty failure list; it is recorded as the next small test-harness candidate,
 without claiming a reproduced production gameplay failure.
+
+
+## Batch 97: reject a refused Video Poker probe startup
+
+The Video Poker DRAW performance probe called its finish method with an empty
+failure list when `start_foundation_run` returned false. Its existing exit
+expression could therefore report success without reaching the test. Append
+one explicit failure before that existing finish/return. All other bytes remain
+unchanged, including DRAW and double-up assertions, budgets, fixtures, timing,
+authority and cleanup. This strengthens the probe's failure handling; it does
+not establish a production Video Poker failure or a speed improvement.
+
+An initial helper tried loading the complete MainScene-preloading probe and
+the engine crashed with exit3221226356 before any branch result. That failed
+receipt remains preserved; its cause is unproven. PID48968 was independently
+absent16:20:33 UTC. The check was then narrowed once to the exact old/new
+startup guards and the unchanged quit expression, with a controlled startup
+return value. Refusal reproduced the original false pass and the candidate's
+failure; acceptance retained the original continuation behavior. This passed
+in0.187s under the same muted5%/512MiB limits, naturally0/EOF/Job0 with no forced
+cleanup. PID43700 was independently absent16:24:18 UTC. No complete probe
+compilation, full gameplay, saved-state replay or new baseline engine fix is
+claimed, and the unchanged full performance suite was not run.

@@ -24,6 +24,7 @@ func _run() -> void:
 	root.add_child(app)
 	await _settle(4)
 	if not app.call("start_foundation_run", "VIDEO-POKER-DRAW-PERF"):
+		failures.append("Could not start the Video Poker performance run.")
 		_finish({})
 		return
 	await _settle(4)
