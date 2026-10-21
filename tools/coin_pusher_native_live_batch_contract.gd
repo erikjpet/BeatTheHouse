@@ -224,8 +224,10 @@ static func _report(failures: Array[String], payload: Dictionary) -> Dictionary:
 
 
 static func _assert_equal(label: String, actual: Variant, expected: Variant, failures: Array[String]) -> void:
-	if _canonical_json(actual) != _canonical_json(expected):
-		failures.append("%s diverged: actual=%s expected=%s" % [label, _canonical_json(actual), _canonical_json(expected)])
+	var actual_json := _canonical_json(actual)
+	var expected_json := _canonical_json(expected)
+	if actual_json != expected_json:
+		failures.append("%s diverged: actual=%s expected=%s" % [label, actual_json, expected_json])
 
 
 static func _physics_events(events_value: Variant) -> Array:

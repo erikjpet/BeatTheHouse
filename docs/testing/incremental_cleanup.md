@@ -3108,3 +3108,22 @@ risk; no listener or browser was started, and no old capture was modernized.
 The live-batch assertion helper's repeated failure-only serialization is the
 next small candidate, pending an exact message/input-parity check. No native
 binary, authority gate, payout, RNG, animation schedule or test budget changed.
+
+
+## Batch 103: reuse live-batch assertion diagnostics
+
+The native live-batch contract serialized each side of a failed comparison
+twice. Keep the first canonical strings for both comparison and diagnostic.
+The canonical serializer, all twenty-nine assertion calls, native authority
+checks and every other source byte remain unchanged. Existing callers supply
+digest/RNG dictionaries, event/presentation arrays, counters and packed buffers.
+No gameplay or native implementation changed, and no timing gain is claimed.
+
+A small private check executed the exact old/new helper bodies on twenty-six
+cases, including eleven mismatches, nested data, differing dictionary insertion
+order, packed arrays, escaped text and a preexisting failure. Complete failure
+arrays and inputs remained identical. Passing cases retained two serializations;
+failed cases used two instead of four. It passed in0.203s under the muted5%/
+512MiB Job, naturally0/EOF/Job0 without forced cleanup; PID45688 was independently
+absent afterward. This is helper behavior proof, not a rerun or new qualification
+of the complete native-Web contract, renderer, save or gameplay suite.
