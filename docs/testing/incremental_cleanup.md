@@ -3501,3 +3501,24 @@ independently absent. Cause is unestablished; this is neither a qualified patch
 nor an attributed production defect. The original source is restored and this
 candidate is explicitly deferred. Coverage is 651 full reviews; screening and
 classification remain separate.
+
+## Batch 124: retain Blackjack compatibility and scenario-integration history
+
+Read all 1,059 lines of the Blackjack ritual/authority contract. Its staged
+wagers, input equivalence, read-only simulation, distinct live host identity,
+exactly-once replay, historical 128-entry ledger convergence, save restoration,
+receipt rejection, RNG/turn rollback and mixed-rate funding checks remain. No
+fixture, copy, assertion, historical save shape or test entry was removed.
+
+Read eleven A-E package ownership, ordered recovery, assembly-seam and World 3
+recovery records. These explain production geometry/catalog authentication,
+public fact boundaries and why earlier synthetic inventories were rejected.
+Retained their dated WIP/rejection/acceptance history as provenance; they are not
+new task instructions or current-build verification claims.
+
+One unchanged-source control reproduced the prior Hold'em loader crash under
+the same 5% CPU/512 MiB limit: access violation 3221225477 before the result,
+4.063 seconds, EOF/Job0/no force and independent process absence. This establishes
+that the cleanup patch is not required for the crash, not its cause. The private
+candidate remains deferred; no limit, cache or engine repair was attempted.
+No Blackjack or scenario suite ran. Coverage is 663 full source reviews.
