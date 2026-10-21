@@ -41,7 +41,6 @@ func _run_probe() -> void:
 	var player: ProceduralMusicPlayer = PlayerScript.new()
 	root.add_child(player)
 	await process_frame
-	var arrangement_recipe := SelectorScript.recipe_definition(entry_8)
 	var arrangement_state := SelectorScript.initial_recipe_state(entry_8, 17, "choreography_visit")
 	var profile := {
 		"environment_id": "jazz_choreography_probe",

@@ -2786,3 +2786,36 @@ Native stage timing is not presented as measured Web latency. No reviewed test
 was removed or rerun, and no browser, native build, fixture generation, profile
 access or listener started for this source audit. No additional code cleanup is
 justified by this group; coverage records its reviewed/no-change outcome.
+
+
+## Batch 90: remove the unused Jazz recipe copy
+
+The Jazz choreography probe assigned `recipe_definition(entry_8)` to a local
+that was never read. The static selector only reads a JSON-derived dictionary
+and copies recipe records; the next `initial_recipe_state` call performs the
+required lookup itself. Remove the unused call and local. All timeline, fill,
+tempo, save/restore, feature-resume assertions, player commands and report fields
+remain byte-identical. No public method, fixture or music behaviour changed.
+
+The existing changed-file loader passed checked1/failures0 under the private
+5%/512MiB30s Job, with natural exit0/EOF/Job0. PID27276 was independently absent
+14:54:50 UTC. An earlier admission deferred before launch for the actual short
+Continue case; its original receipt is retained. The complete audio playback
+probe and unrelated animation/gameplay suites were not repeated.
+
+Three more authority tests received full source review: exact authored job and
+recruitment semantics, forged host-authority rejection and12-stage detached-turn
+rollback with retained alias topology. Their criteria remain unchanged. A
+separate small lead is the authored-semantics test's duplicate recruitment-file
+parse; it is not part of90. A reporting lead in the Jazz probe also remains
+separate: `_finish` can print PASS after an unsuccessful report open and does not
+check the write error. Its exit-policy change needs a focused disposable I/O
+case before a separate fix;90 does not change it.
+
+The two unpublished cleanup commits were rebased onto the concurrent map fix
+`30156c3a`, preserving its lesson field and new focused regression unchanged.
+That regression also received full source review: isolated tutorial setup, real
+destination selection, visible global geometry at two viewport sizes, overlap
+and safe-margin checks, and cleanup. The map owner's completed before/after
+checks are reused; cleanup does not repeat them. The qualified Jazz source blob
+is unchanged after rebase.
