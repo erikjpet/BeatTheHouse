@@ -82,7 +82,7 @@ try {
     Write-Host "CREW_POKER_VISUAL_CAPTURE_WRAPPER_FAIL manifest unreadable: $($_.Exception.Message)"
     exit 1
 }
-if ($manifest.passed -ne $true) {
+if ($manifest.passed -isnot [bool] -or -not $manifest.passed) {
     Write-Host "CREW_POKER_VISUAL_CAPTURE_WRAPPER_FAIL manifest passed=false: $ManifestPath"
     exit 1
 }

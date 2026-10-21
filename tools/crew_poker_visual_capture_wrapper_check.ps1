@@ -155,6 +155,22 @@ if ($LASTEXITCODE -eq 0) {
     throw "Crew poker wrapper accepted passed=false."
 }
 
+foreach ($invalidManifest in @(
+    '{}',
+    '{"passed":null}',
+    '{"passed":"true"}',
+    '{"passed":"false"}',
+    '{"passed":1}',
+    '{"passed":[true]}',
+    '{"passed":{"value":true}}'
+)) {
+    Set-Content -LiteralPath $manifestPath -Encoding UTF8 -Value $invalidManifest
+    & powershell -NoProfile -ExecutionPolicy Bypass -File $wrapper -ManifestOnly -ManifestPath $manifestPath
+    if ($LASTEXITCODE -eq 0) {
+        throw "Crew poker wrapper accepted a non-boolean pass flag: $invalidManifest"
+    }
+}
+
 Set-Content -LiteralPath $manifestPath -Encoding UTF8 -Value '{"passed":true}'
 & powershell -NoProfile -ExecutionPolicy Bypass -File $wrapper -ManifestOnly -ManifestPath $manifestPath
 if ($LASTEXITCODE -ne 0) {

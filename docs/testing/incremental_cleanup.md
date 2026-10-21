@@ -3049,3 +3049,22 @@ reviewed, and the producer's boolean result expression was checked separately;
 that partial producer read is not counted as a complete source review. The
 malformed-field acceptance is the next independent cleanup candidate. Existing
 capture, RNG and missing/false/true assertions will remain intact.
+
+
+## Batch 100: require a boolean Crew capture pass flag
+
+PowerShell's coercing comparison let the Crew visual wrapper accept a string
+`"true"` or numeric1 as a passing manifest flag. Require an actual boolean true,
+matching the existing GDScript producer's boolean expression. The wrapper's
+launch, timeout, stale-image removal, ownership, manifest reading and exit code
+are otherwise byte-identical. No capture, gameplay, RNG or public content changed.
+
+The original string acceptance was reproduced with `ManifestOnly`. The existing
+focused wrapper contract then passed with seven added invalid-field fixtures:
+missing, null, string true/false, numeric, array and object values. Its original
+missing-file, boolean false and boolean true cases also passed, as did all
+unchanged process/fidelity/RNG/image-ownership source assertions. These ten
+manifest-only child invocations started no Godot, browser, listener or image
+capture and all returned synchronously; exact wrapper commands were independently
+confirmed absent afterward. The existing full visual capture was not run. Export
+capacity remains a separate publication dependency; no guard was changed.
