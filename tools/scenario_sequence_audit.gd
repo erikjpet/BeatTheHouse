@@ -146,15 +146,6 @@ static func _target_inventories(library: ContentLibrary, definitions: Array) -> 
 	return result
 
 
-static func _masked_explanations(definitions: Array) -> Dictionary:
-	var result: Dictionary = {}
-	for definition_value in definitions:
-		var authoring := _dict(_dict(definition_value).get("sequence_authoring", {}))
-		for key_value in _dict(authoring.get("masked_visual_explanations", {})).keys():
-			result[str(key_value)] = str(_dict(authoring.get("masked_visual_explanations", {})).get(key_value, ""))
-	return result
-
-
 static func _representative_definition(definitions: Array) -> Dictionary:
 	var definition := ScenarioCatalogScript.definition_for_id(definitions, HOSTILE_FIXTURE_SCENARIO_ID)
 	return definition

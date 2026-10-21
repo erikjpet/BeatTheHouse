@@ -3951,3 +3951,21 @@ were read in full. Old open labels, branch cleanup records, broad testing plans
 and superseded product holds do not authorize new work or feature deletion.
 Prior failures and explicit deferred findings remain visible. No source,
 content, save, fixture or runtime changed. Coverage is 736 full file reviews.
+
+## Batch 148: remove the audit tool's abandoned recomputation helper
+
+Remove only `_masked_explanations` from `scenario_sequence_audit.gd`. Historical
+commit `04988566` removed its sole caller when the tool switched from locally
+recomputing catalog validation to consuming ContentLibrary's validated audit.
+The complete tool has no dynamic dispatch or method enumeration for this helper;
+the launcher invokes its entrypoint, the validator checks two retained rollout
+seams, and the scenario contract's four static calls use only those seams.
+Tracked scene, resource, signal, content and save references do not register it.
+The authored explanations and their actual production validation remain intact.
+
+All surviving source bytes are identical. The existing loader compiled only the
+changed resource successfully in 4.093 seconds under the existing 12% CPU/2 GiB
+private Job. EOF, Job0, no forced cleanup and independent process absence are
+recorded. The resource was not instantiated: no audit, hostile-fixture suite,
+main scene, save or browser ran. No public interface or assertion was removed.
+Coverage remains 736 full reviews; this is a separate nine-line code cleanup.
