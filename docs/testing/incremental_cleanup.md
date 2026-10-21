@@ -3377,3 +3377,21 @@ under the private muted 5% CPU/512 MiB Job, after the performance owner reported
 its actual browser/helper closure. Natural exit, EOF, Job0 and independent loader
 absence are recorded. No profile transaction, full collection contract or new
 test mirroring this binding removal was run.
+
+
+## Review batch 117: slot travel, storage and same-run retention
+
+Three complete probes received source review. Grand Casino travel preserves
+three independent cabinets, Cage/High Limit continuation, other-location pauses
+and exact spin-count persistence. The storage probe keeps its 1/3/6/12-cabinet
+fixtures, idle/runtime/handoff budgets, full seed/RNG/economy/story/machine parity
+and canonical numeric/vector comparisons. Temporary active-key ownership copies
+and restoration stay across model calls.
+
+The same-run soak deliberately retains one active feature and a settled replay
+across travel, revisits and repeated saves, with fixed post-warm-up growth limits.
+No long soak, timing sample or saved profile was run or changed. Its nominal
+byte metrics use String length; actual Unicode/transport evidence would be
+needed before changing that validation contract. No budget or acceptance rule
+was relaxed. Unlike the screenshot manifests, these tools also print the complete
+report to stdout; no blanket report-writer rewrite was applied.
