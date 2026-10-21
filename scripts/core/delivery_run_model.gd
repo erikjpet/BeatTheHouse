@@ -330,9 +330,8 @@ static func physical_projection(state_value: Variant) -> Dictionary:
 
 
 static func cargo(state_value: Variant) -> Dictionary:
-	var state := normalize_state(state_value)
-	var physical := physical_projection(state)
-	if state.is_empty() or physical.is_empty():
+	var physical := physical_projection(state_value)
+	if physical.is_empty():
 		return {}
 	return {
 		"instance_id": str(physical.get("instance_id", "")),

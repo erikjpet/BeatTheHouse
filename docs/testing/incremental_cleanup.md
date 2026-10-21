@@ -734,6 +734,32 @@ independent owned-process absence. No geometry, cache, slot support, scene,
 resource, finalization, public function or serialized field changed. Coverage
 remains 153 targeted reviews; the previously reviewed placement file is now fixed.
 
+## Batch 28: normalize the cargo projection input once
+
+`cargo` normalized state and passed it to `physical_projection`, which normalized
+it again. Delegate the input directly to the existing public projection and use
+its empty-result rejection. Keep the normalizer, physical projection, closed
+cargo output, save migrations, command journal and all host mutation paths
+unchanged. No validation is bypassed or moved into an unchecked public API.
+
+Native baseline comparison passed 596 valid/malformed states across all four
+delivery modes, schemas 1/2/3, cargo states, terminal status and confiscation.
+It also decoded six tracked v0.5.1/mid-0.6 saves and checked their delivery
+projections (these fixtures have neutral delivery state). Synthetic legacy
+states cover active migrated cargo. Cargo bytes, normalization and input/output
+isolation matched the prior implementation. The full existing WORLD06_2 depth
+contract passed unchanged through an inherited private entrypoint, including
+ordered handoff, remote/wrong-target rejection, stash/retrieve, hold/pursuit,
+tampered receipts, terminal paths and the 64-command journal bound.
+
+Liveness and source census passed; capped muted Jobs closed naturally. Five
+additional full reviews cover DeliveryRunModel and its contract, PoliceSweepModel,
+TownState and ScenarioHostTransaction. Retain clocks, actual legacy migrations,
+private sweep intel, RNG leases, canonical/CAS validation, account conservation,
+bounded facts and host authorization. Coverage reaches 158 targeted reviews.
+No measured performance gain is claimed. Publication follows existing capacity
+admission and the coordinated runtime workflow.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
@@ -779,3 +805,15 @@ historical playtests remained untouched. The retention hook completed without
 error (zero eligible/reduced sources). Stable remained 0.6.0. This is exact
 deployed identity/assets plus the preceding native behavior checks; the
 performance owner received the identity for its separate guarded Web trace.
+
+Batches 25–27 were published as three separate commits after native closure and
+a fresh no-Web-owner check. NEXT promoted
+`4a0f0bfe16031841790346fe586c69af24ec2852`, tree
+`e80a8dcc658c0c7f726255bb85c3bc74cf8dd7a8`, at 05:32:09 UTC. All 15 served
+files matched the archive over trusted HTTPS at 05:32:49; redirect, WASM MIME
+types and stable 0.6.0 passed. Archive SHA-256:
+`974f20b68db14deb1bff63e349dd737eed4fec2d096ed2b1f3cfe45d8a57bfbe`.
+Independent 05:32:47 census confirmed the build root and new Godot processes
+absent. The existing retention hook completed with no error or reduction;
+both source attempts were protected. Exact receipts went to performance and
+retention owners. No browser/gameplay measurement is claimed by this release.
