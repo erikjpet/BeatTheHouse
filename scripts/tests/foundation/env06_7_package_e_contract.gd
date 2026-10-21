@@ -464,10 +464,6 @@ func _valid_payload(fact_type: String) -> Dictionary:
 		"world_boundary": return {"amount":1,"action_index":2}
 	return {}
 
-func _target_inventory() -> Dictionary:
-	var zones := ["base::zone:left","base::zone:right","base::zone:center","base::zone:background","base::zone:service_lane","base::zone:foreground","base::zone:exit_lane"]
-	return {"scene_objects":[],"interactions":[],"actors":[],"services":[],"games":[],"routes":[],"anchors":[],"zones":zones,"event_choices":{}}
-
 func _host_semantics() -> Dictionary:
 	return _current_host.duplicate(true)
 

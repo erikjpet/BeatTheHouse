@@ -4173,3 +4173,24 @@ private wrapper failed before executing either body because its captured `quit`
 prefix used mixed indentation; retain that failure and the single corrected
 run. No renderer, native solver, game, save, browser or pixel matrix ran. No
 speedup is claimed. Coverage is 764 full file reviews.
+
+## Batch 160: remove a superseded synthetic test inventory
+
+Read the full Package E production contract. Preserve eight frozen identities,
+exact spatial target/zone/focus/input routes, all four outcomes, lifecycle and
+pressure facts, hostile receipt rejection, hidden-state projection and wire
+canonicalization. Scenario-specific composition and the Grand Casino's distinct
+game/travel authority remain unchanged.
+
+Remove only `_target_inventory`, a four-line synthetic inventory helper. History
+at `68e569d5` shows both former callers moved to production composition and the
+sealed current host. The complete current script, standalone manifest/launcher,
+scene/resource references and reflection paths provide no remaining consumer.
+The manifest and all actual assertions remain intact; every surviving byte is
+unchanged. This is not deletion based only on a missing text match.
+
+A shared focused load of the two changed Package D/E resources passed in 4.391
+seconds under the existing 12% CPU / 2 GiB private Job, with EOF, natural exit,
+Job0 and independent process absence. Neither contract was instantiated and no
+scenario matrix, generation, save or browser ran. No speedup is claimed.
+Coverage is 765 full file reviews.
