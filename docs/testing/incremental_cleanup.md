@@ -3243,3 +3243,28 @@ and non-shipping functions, shared call reachability, unclassified functions and
 a file with no functions. The complete repository census was not run. Its
 same-file textual parser still does not resolve signals, reflection or general
 cross-file dispatch and was not used as proof that any function is dead.
+
+
+## Review batch 110: Crew compatibility and packaged-audio ownership
+
+Five complete files received source review: the Layer 3 Crew jobs contract,
+ignored-run golden probe, historical JSON-coercion rewriter, packaged feature-PCM
+runner and its source contract. The Crew checks retain their host-only entry
+boundaries, seeded board/presence behavior, delivery and collection outcomes,
+discount/travel-lock rules, training and save round trips. The ignored-run probe
+checks exact serialized bytes and recursive key sets across twenty inactive
+world-sequence seams. Its fixed-width normalization accepts only valid private
+capsule envelopes, preserving malformed-envelope visibility and the golden schema.
+
+The packaged-audio runner independently reconciles native, retained base64 and
+Web-decoded bytes against one 64 MiB ceiling. Its three boundaries, two allocator
+warm-up samples, exact contextual request identities, strict JSON Booleans,
+source/manifest/stage identities, workspace mutex, process cleanup and final
+rehashes remain. The repeated checks cover different authorities or boundaries;
+they were not collapsed. No audio, soak, browser, build or full suite was run.
+
+The coercion script is an explicit historical migration, with distinct string
+array and hash policies. It was not executed against the current source. Neither
+its textual rewrite rules nor the census are evidence that a live function can
+be removed. An apparently unused delivery-model preload in the Crew test remains
+pending dependency/loader qualification; no public constant was silently removed.
