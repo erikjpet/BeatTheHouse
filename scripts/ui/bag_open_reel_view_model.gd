@@ -69,6 +69,7 @@ static func _reel_sequence(possible_definitions: Array, winning_card: Dictionary
 	var options := JsonCoerceScript._dictionary_array(possible_definitions)
 	if options.is_empty():
 		options = [winning_card]
+	var weights := _cumulative_visual_weights(options)
 	var sequence: Array = []
 	var rng := RngStreamScript.new()
 	var seed_text := seed_key
@@ -84,7 +85,7 @@ static func _reel_sequence(possible_definitions: Array, winning_card: Dictionary
 		if index == LANDING_INDEX:
 			sequence.append(winning_card.duplicate(true))
 		else:
-			sequence.append(_item_card(_weighted_pick(options, rng), {}))
+			sequence.append(_item_card(_weighted_pick(options, rng, weights), {}))
 	var landing: Dictionary = sequence[LANDING_INDEX]
 	landing["landing"] = true
 	landing["instance_id"] = int(item.get("instance_id", 0))
@@ -92,21 +93,25 @@ static func _reel_sequence(possible_definitions: Array, winning_card: Dictionary
 	return sequence
 
 
-static func _weighted_pick(options: Array, rng: RngStream) -> Dictionary:
+static func _cumulative_visual_weights(options: Array) -> Array[int]:
+	var weights: Array[int] = []
+	var total := 0
+	for value in options:
+		var definition: Dictionary = value if typeof(value) == TYPE_DICTIONARY else {}
+		total += _tier_visual_weight(str(definition.get("tier", "")))
+		weights.append(total)
+	return weights
+
+
+static func _weighted_pick(options: Array, rng: RngStream, weights: Array[int] = []) -> Dictionary:
 	if options.is_empty():
 		return {}
-	var total := 0
-	var weights: Array = []
-	for value in options:
-		var definition := JsonCoerceScript._copy_dict(value)
-		var weight := _tier_visual_weight(str(definition.get("tier", "")))
-		weights.append(weight)
-		total += weight
+	if weights.is_empty():
+		weights = _cumulative_visual_weights(options)
+	var total := weights[weights.size() - 1]
 	var roll := rng.randi_range(1, maxi(1, total))
-	var cursor := 0
 	for index in range(options.size()):
-		cursor += int(weights[index])
-		if roll <= cursor:
+		if roll <= weights[index]:
 			return JsonCoerceScript._copy_dict(options[index])
 	return JsonCoerceScript._copy_dict(options[options.size() - 1])
 

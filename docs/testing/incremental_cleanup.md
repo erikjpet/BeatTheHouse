@@ -492,6 +492,39 @@ public methods; bypassing it requires a separate compatibility argument and is
 not slipped into this raster cleanup. Targeted coverage is now 110 files.
 Publication remains paused for the parent's shared capacity dependency.
 
+## Batch 18: prepare reel visual weights once
+
+BagOpenReelViewModel rebuilt the same tier weights, deep-copying every option,
+for each of its 46 filler selections. Build cumulative weights once per reel.
+The picker retains its two-argument entrypoint through an optional prepared
+array and still returns an isolated selected definition. Preserve option order,
+exact tier weights, seed text/hash, one RNG draw per filler, the 47-card sequence
+and committed landing at index 38. Reward creation/service source is unchanged.
+
+Native comparison with the prior model passed 8,192 weighted selections with
+identical RNG snapshots, including prepared/default calls, empty/malformed/
+shared inputs and authored bag contents. Another 108 complete models matched,
+including all ten authored bags, seed fallbacks, reduced motion and input/output
+isolation. The existing focused five-tier committed-item contract was extracted
+verbatim into a private entrypoint: consume/grant once, landing identity,
+showcase contents, reduced motion and save/reload exactly-one-instance all
+passed with private test paths. The entrypoint initially mixed indentation;
+correcting that disposable wrapper required no assertion or production change.
+
+The liveness and documentation/source census checks passed. All four owned
+processes (including the initial parse refusal) closed naturally with EOF/Job0;
+independent host census confirmed absence. No measured speed gain is claimed.
+
+The complete reel surface, CollectionItemResolver, cage counter projection,
+environment header, collection browser, distortion overlay, item popup and
+remaining two prop painters were reviewed. Their reward/instance semantics,
+definition validation/cache isolation, callback snapshots, UI signals, reduced
+motion, resize and visual-only boundaries remain intact. Hidden header options
+remain required by its configured-option snapshot test; they were not treated
+as dead simply because the compact presentation hides them. Coverage is now
+120 targeted source/contract reviews. This commit remains local under the
+parent's publication/export pause.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
