@@ -560,6 +560,7 @@ var run_menu_settings_button: Button
 var run_menu_abandon_button: Button
 var run_menu_main_menu_button: Button
 var run_menu_skip_tutorial_button: Button
+var run_menu_family_repay_button: Button
 var tutorial_skip_dialog: ConfirmationDialog
 var settings_overlay: Control
 var settings_margin: MarginContainer
@@ -6821,6 +6822,25 @@ func close_run_menu() -> void:
 	_refresh()
 
 
+func _family_loan_menu_repayment_status() -> Dictionary:
+	if run_state == null or run_state.is_terminal():
+		return {}
+	if not JsonCoerceScript._string_array(run_state.current_environment.get("lender_hooks", [])).has("brother_in_law"):
+		return {}
+	return run_state.lender_repayment_status("brother_in_law")
+
+
+func repay_family_loan_from_menu() -> void:
+	if not _run_menu_is_visible():
+		return
+	var status := _family_loan_menu_repayment_status()
+	if not bool(status.get("available", false)) or not bool(status.get("enabled", false)):
+		_refresh_run_menu()
+		return
+	close_run_menu()
+	repay_lender_debt("brother_in_law")
+
+
 func save_run_from_menu() -> void:
 	if run_state == null:
 		save_status_message = "No active run to save."
@@ -11386,6 +11406,11 @@ func _build_run_menu_overlay() -> void:
 	run_menu_skip_tutorial_button = _button("Skip Lessons", Callable(self, "request_skip_tutorial"))
 	run_menu_skip_tutorial_button.custom_minimum_size = Vector2(0, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
 	button_grid.add_child(run_menu_skip_tutorial_button)
+	# Phone lenders have no independent physical room slot. Keep their existing
+	# repayment conversation reachable without reviving a consumed call event.
+	run_menu_family_repay_button = _button("Repay Family Loan", Callable(self, "repay_family_loan_from_menu"))
+	run_menu_family_repay_button.custom_minimum_size = Vector2(0, SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT)
+	button_grid.add_child(run_menu_family_repay_button)
 	run_menu_action_controls = [
 		run_menu_resume_button,
 		run_menu_save_button,
@@ -11395,6 +11420,7 @@ func _build_run_menu_overlay() -> void:
 		run_menu_abandon_button,
 		run_menu_main_menu_button,
 		run_menu_skip_tutorial_button,
+		run_menu_family_repay_button,
 	]
 	for action_control in run_menu_action_controls:
 		if action_control != null:
@@ -19603,6 +19629,12 @@ func _refresh_run_menu() -> void:
 	if run_menu_skip_tutorial_button != null:
 		run_menu_skip_tutorial_button.visible = run_state != null and run_state.is_tutorial_run()
 		run_menu_skip_tutorial_button.disabled = not run_menu_skip_tutorial_button.visible
+	if run_menu_family_repay_button != null:
+		var repayment := _family_loan_menu_repayment_status()
+		run_menu_family_repay_button.visible = bool(repayment.get("available", false))
+		run_menu_family_repay_button.disabled = not bool(repayment.get("enabled", false))
+		run_menu_family_repay_button.text = "Repay Family Loan ($%d)" % int(repayment.get("payoff_amount", 0))
+		run_menu_family_repay_button.tooltip_text = str(repayment.get("disabled_reason", ""))
 	if modal_focus_scope != null and run_menu_overlay != null and run_menu_overlay.visible:
 		modal_focus_scope.call("refresh_scope", run_menu_overlay, run_menu_resume_button)
 
