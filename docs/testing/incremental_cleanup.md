@@ -2924,3 +2924,34 @@ wrong-order tutorial shop regressions. Their budgets, negative cases, explicit
 test doubles, save checks and recent recovery assertions remain unchanged.
 Actual map and Scratch redemption/Continue observations belong to the separate
 player lane; this batch does not relabel them as newly executed cleanup tests.
+
+
+## Batch 95: reuse final Pinball report signatures
+
+Both Pinball performance probes constructed the same final simulation signature
+three times to print three metrics. Construct it once in each probe. The query
+only reads simulation state and builds its result; no simulation tick, callback,
+RNG consumption or persistent write occurs between those reads. The signature
+and active-ball-count implementations were inspected. All simulation loops,
+seeds, timing boundaries, object-count samples, thresholds and output fields
+remain unchanged. The reuse occurs after measurement and budget checks, so it
+does not change or demonstrate the measured simulation performance.
+
+Qualification uses the existing loader for these two changed scripts only;
+the complete simulation and visual performance suites are not repeated. The
+earlier admission deferral on the performance lane's actual native process is
+retained separately from the later admitted check. Both scripts compiled with
+zero failures in5.047s under the private muted5%/512MiB Job. The worker exited
+naturally0 with EOF and Job0, without forced cleanup; exact PID30444 absence
+was then independently verified.
+
+Seventeen previously screened files received full source review, including the
+two Pinball probes, PCM/adaptive-tempo/Jazz outcome and Blackjack probes, late-run
+interaction and Bar Dice timing probes, the hot-path contract, backlog audit,
+five historical GDScript tools and two historical PowerShell capture tools.
+Command calls with apparently unused typed results remain: they have side
+effects and retain return-type validation. The repeated backlog catalog query
+also remains because its canonical scenario lookup may update authorization
+caches and validation errors. Audio report write-failure policy is a separate
+source risk, not an excuse to change test exit criteria. No historical signer,
+capture, full gameplay suite or old save fixture was executed or rewritten.

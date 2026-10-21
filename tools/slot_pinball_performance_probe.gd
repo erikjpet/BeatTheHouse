@@ -241,13 +241,14 @@ func _run_sim_tick_perf(failures: Array) -> void:
 		failures.append("sim tick avg %.3fus exceeded %.3fus" % [avg_tick, MAX_AVG_SIM_TICK_USEC])
 	if object_delta != 0:
 		failures.append("hot tick object delta expected 0, got %d" % object_delta)
+	var signature: Dictionary = sim.result_signature()
 	print("PINBALL_PERF_SIM ticks=%d avg_tick_us=%.3f sim_reported_avg_us=%.3f max_tick_us=%d object_delta=%d max_active=%d status=%s" % [
 		ticks,
 		avg_tick,
-		float(sim.result_signature().get("avg_tick_usec", 0.0)),
-		int(sim.result_signature().get("max_tick_usec", 0)),
+		float(signature.get("avg_tick_usec", 0.0)),
+		int(signature.get("max_tick_usec", 0)),
 		object_delta,
-		int(sim.result_signature().get("max_active", 0)),
+		int(signature.get("max_active", 0)),
 		"PASS" if avg_tick <= MAX_AVG_SIM_TICK_USEC and object_delta == 0 else "CHECK",
 	])
 
