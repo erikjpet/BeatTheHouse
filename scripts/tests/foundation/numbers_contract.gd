@@ -5,7 +5,6 @@ const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const NumbersModelScript := preload("res://scripts/core/numbers_model.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
-const TownStateScript := preload("res://scripts/core/town_state.gd")
 const PoliceSweepModelScript := preload("res://scripts/core/police_sweep_model.gd")
 const NumbersWorldMapScript := preload("res://scripts/core/world_map.gd")
 const NumbersContentLibraryScript := preload("res://scripts/core/content_library.gd")

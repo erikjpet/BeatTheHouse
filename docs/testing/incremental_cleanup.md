@@ -4436,3 +4436,11 @@ The diagnostic distinguishes admitted historical state, one legacy canonicalizat
 Read all five fixture and package proof documents completely, including the final Package D range after a console encoding error. Preserve exact historical source/capture identities, generated-versus-owner save distinctions, explicit partial inventories and missing evidence. Their dated commands and old runtime claims do not authorize fresh infrastructure, regenerated saves or repeated broad qualification.
 
 The Package A/D/E documents explicitly limit or supersede rejected and package-local evidence. Keep those limits: synthetic target inventories, local rasters and historical native/Web samples are not current production composition, final-renderer proof or acceptance. No document, fixture, evidence image or content source was changed.
+
+## Batch 184: remove an unread Numbers test preload
+
+Read the full Numbers contract, including public-read purity, signed book closes, the physical travel race, discovery, real funded fix slips, leakage, sampled EV, production delivery and sweep consequences, subsystem independence and exact save/restore boundaries. Keep all assertions, the 5,000-seed budget, fixture ownership and cached content library.
+
+Remove only the unread local `TownStateScript` alias. The earlier `RunStateScript` preload already loads exactly the same TownState resource. The real caller uses the contract's static `run` entry; existing constant reflection targets other scripts. No scene, dispatch, serialization or exported interface depends on this alias. All other source is exact.
+
+The existing one-file loader passed in 4.094 seconds under the private muted 12%/2 GiB Job, with natural zero exit, EOF, Job0 and independent PID absence. Two prelaunch admission refusals started no process; the second arose from a UTC/local timestamp comparison and was corrected to identify only the exact concurrent functional money check. Parent-authorized functional concurrency makes no timing claim. No Numbers suite, save, fixture or broad gameplay test was run.
