@@ -296,6 +296,11 @@ var selected_service_hook_id: String = ""
 var selected_service_hook_label: String = ""
 var service_hook_resolution_locked: bool = false
 var event_choice_resolution_pending := false
+# One accepted room response, never a queue. Presentation stays on its old
+# detached snapshot until completion; model/selection/save owners cannot interleave.
+var _event_response_transaction: Dictionary = {}
+var _event_response_dispatch_active := false
+var _event_response_generation := 0
 var scenario_sequence_action_pending := false
 var selected_lender_hook_id: String = ""
 var selected_lender_hook_label: String = ""
@@ -785,6 +790,10 @@ func _process(delta: float) -> void:
 	_poll_script_prewarm_worker()
 	_advance_game_coach_refresh_after_draw()
 	_sync_simulation_pause_owners()
+	# Canvas nodes retain their own autonomous processing/redraw. Only the host
+	# clock, HUD and persistence owners wait for this accepted transaction.
+	if not _event_response_transaction.is_empty():
+		return
 	_foundation_perf_sink.call("begin_foundation_frame")
 	if run_layout_dirty:
 		_timed("layout", _apply_run_screen_layout_callable)
@@ -881,6 +890,9 @@ func _advance_environment_turns_checked(amount: int = 1, debug_timing: Dictionar
 
 
 func _input(event: InputEvent) -> void:
+	if not _event_response_transaction.is_empty():
+		get_viewport().set_input_as_handled()
+		return
 	if _is_web_audio_unlock_gesture(event):
 		if procedural_music_player != null and procedural_music_player.has_method("web_audio_user_gesture"):
 			procedural_music_player.web_audio_user_gesture()
@@ -3528,7 +3540,18 @@ func confirm_selected_event_choice(lifecycle_rollback: Dictionary = {}) -> Dicti
 # Owns the full public event-card interaction, including the selection UI and
 # any tutorial acknowledgement that occurs before EventModule resolves.
 func activate_event_choice_action(event_id: String, choice_id: String) -> bool:
-	var caller_rollback := _foundation_lifecycle_snapshot()
+	if not _event_response_transaction.is_empty():
+		return false
+	var caller_rollback := _begin_event_choice_action(event_id, choice_id)
+	if caller_rollback.is_empty():
+		return false
+	return _finish_event_choice_action(caller_rollback, confirm_selected_event_choice(caller_rollback))
+
+
+func _begin_event_choice_action(event_id: String, choice_id: String, lifecycle_rollback: Dictionary = {}) -> Dictionary:
+	# Canvas activation already owns this complete image. Preserve that owner
+	# across the deferred response instead of cloning the whole run a second time.
+	var caller_rollback := lifecycle_rollback if not lifecycle_rollback.is_empty() and lifecycle_rollback.get("run_state_ref") == run_state else _foundation_lifecycle_snapshot()
 	_protect_foundation_coach_attention(caller_rollback)
 	_record_tutorial_action_if_authored("event:%s" % event_id)
 	if coach_overlay != null:
@@ -3543,11 +3566,14 @@ func activate_event_choice_action(event_id: String, choice_id: String) -> bool:
 	# again a few lines later, which was especially visible on room event objects.
 	if not select_event_choice(event_id, choice_id, false):
 		_restore_foundation_lifecycle_snapshot(caller_rollback)
-		return false
+		return {}
+	return caller_rollback
+
+
+func _finish_event_choice_action(caller_rollback: Dictionary, event_result: Dictionary) -> bool:
 	# Reuse the transaction's rollback image. resolve_event_choice() used to clone
 	# the complete RunState a second time here, including every generated room and
 	# live game buffer, before a Counter Phone response could begin.
-	var event_result := confirm_selected_event_choice(caller_rollback)
 	if not bool(event_result.get("ok", false)):
 		_restore_foundation_lifecycle_snapshot(caller_rollback)
 		return false
@@ -3557,29 +3583,38 @@ func activate_event_choice_action(event_id: String, choice_id: String) -> bool:
 
 # Resolves one selected event choice through EventModule.
 func resolve_event_choice(event_id: String, choice_id: String, lifecycle_rollback: Dictionary = {}) -> Dictionary:
+	if not _event_response_transaction.is_empty():
+		return {"ok": false, "errors": ["An event response is already completing."]}
+	var prepared := _prepare_event_choice_resolution(event_id, choice_id, lifecycle_rollback)
+	if prepared.has("terminal_result"):
+		return prepared["terminal_result"]
+	return _complete_event_choice_resolution(prepared, _resolve_prepared_event_choice(prepared))
+
+
+func _prepare_event_choice_resolution(event_id: String, choice_id: String, lifecycle_rollback: Dictionary) -> Dictionary:
 	if travel_transition_active:
 		_show_message("Travel is already in progress.")
 		_refresh_modal_contract_owner()
-		return {"ok": false, "errors": ["Travel is already in progress."]}
+		return {"terminal_result": {"ok": false, "errors": ["Travel is already in progress."]}}
 	if _event_choice_popup_is_visible() and not _event_choice_popup_allows_event_resolution(event_id):
 		_show_message("Finish the current prompt first.")
 		_refresh_modal_contract_owner()
-		return {"ok": false, "errors": ["Finish the current prompt first."]}
+		return {"terminal_result": {"ok": false, "errors": ["Finish the current prompt first."]}}
 	var talk_entry := _pending_talk_event_entry(event_id)
 	if not _event_choice_popup_is_visible() and not talk_entry.is_empty() and not str(talk_entry.get("dialogue_id", "")).strip_edges().is_empty():
 		_resolve_dialogue_choice(talk_entry, choice_id)
-		return {"ok": true, "delegated": true, "errors": []}
+		return {"terminal_result": {"ok": true, "delegated": true, "errors": []}}
 	var resolving_talk := not _event_choice_popup_is_visible() and not talk_entry.is_empty()
 	if not _event_choice_popup_is_visible() and not resolving_talk and _guard_player_input_route():
-		return {"ok": false, "errors": ["Player input is currently blocked."]}
+		return {"terminal_result": {"ok": false, "errors": ["Player input is currently blocked."]}}
 	var tutorial_forced_choice := _tutorial_forced_event_choice(event_id)
 	if not tutorial_forced_choice.is_empty() and tutorial_forced_choice != choice_id:
 		_show_message("Your pal points you back to the highlighted choice.")
-		return {"ok": false, "errors": ["The tutorial requires a different event choice."]}
+		return {"terminal_result": {"ok": false, "errors": ["The tutorial requires a different event choice."]}}
 	var event_definition := library.event(event_id)
 	if event_definition.is_empty():
 		_show_message("Event definition is missing.")
-		return {"ok": false, "errors": ["Event definition is missing."]}
+		return {"terminal_result": {"ok": false, "errors": ["Event definition is missing."]}}
 	var event_module := EventModule.new()
 	event_module.setup(event_definition, library)
 	var event_context := _pending_event_trigger_context(event_id)
@@ -3594,7 +3629,7 @@ func resolve_event_choice(event_id: String, choice_id: String, lifecycle_rollbac
 		if resolving_talk and run_state != null and not _event_is_person_conversation(event_id):
 			run_state.complete_talk_event_resolution(event_id)
 			_refresh_talk_dock()
-		return {"ok": false, "errors": ["Event cannot trigger right now."]}
+		return {"terminal_result": {"ok": false, "errors": ["Event cannot trigger right now."]}}
 	var popup_rect := _talk_dock_panel_rect() if resolving_talk else event_choice_popup_panel.get_global_rect() if event_choice_popup_panel != null else Rect2()
 	var had_event_popup := bool(pending_event_choice_popup_snapshot.get("visible", false))
 	var popup_type := str(pending_event_choice_popup_snapshot.get("popup_type", ""))
@@ -3606,7 +3641,32 @@ func resolve_event_choice(event_id: String, choice_id: String, lifecycle_rollbac
 	# This method always owns a complete lifecycle rollback, either supplied by
 	# the deferred room response or captured above. Let EventModule reuse that
 	# owner instead of cloning the entire run and every stored map room again.
-	var result := event_module.resolve(run_state, event_environment, choice_id, true)
+	return {
+		"event_id": event_id, "choice_id": choice_id, "module": event_module,
+		"environment": event_environment, "context": event_context,
+		"popup_rect": popup_rect, "had_event_popup": had_event_popup,
+		"was_triggered_popup": was_triggered_popup, "return_to_game": return_to_game_after_event,
+		"resolving_talk": resolving_talk, "inventory_before": inventory_before,
+		"caller_owns_rollback": caller_owns_event_rollback, "rollback": event_rollback,
+	}
+
+
+func _resolve_prepared_event_choice(prepared: Dictionary) -> Dictionary:
+	# All authoritative trigger/choice/mutation validation remains inside resolve.
+	return prepared["module"].resolve(run_state, prepared["environment"], str(prepared["choice_id"]), true)
+
+
+func _complete_event_choice_resolution(prepared: Dictionary, result: Dictionary) -> Dictionary:
+	var event_id: String = prepared["event_id"]
+	var event_context: Dictionary = prepared["context"]
+	var popup_rect: Rect2 = prepared["popup_rect"]
+	var had_event_popup: bool = prepared["had_event_popup"]
+	var was_triggered_popup: bool = prepared["was_triggered_popup"]
+	var return_to_game_after_event: bool = prepared["return_to_game"]
+	var resolving_talk: bool = prepared["resolving_talk"]
+	var inventory_before: Dictionary = prepared["inventory_before"]
+	var caller_owns_event_rollback: bool = prepared["caller_owns_rollback"]
+	var event_rollback: Dictionary = prepared["rollback"]
 	if not bool(result.get("ok", false)):
 		if not caller_owns_event_rollback:
 			_restore_foundation_lifecycle_snapshot(event_rollback)
@@ -11588,6 +11648,9 @@ func _prepare_room_presentation_at_boundary() -> void:
 
 
 func _refresh() -> void:
+	if not _event_response_transaction.is_empty() and not _event_response_dispatch_active:
+		_event_response_transaction["refresh_requested"] = true
+		return
 	_invalidate_run_screen_layout()
 	# Travel view caches carry a complete dependency key. Clearing them on every
 	# broad UI refresh forced scouted destinations to rebuild cloned RunStates,
@@ -11600,7 +11663,10 @@ func _refresh() -> void:
 		_clear_run_guidance_for_start_screen()
 		_hide_run_menu()
 		_set_current_screen(SCREEN_START)
-		_render_start_screen()
+		if not _event_response_transaction.is_empty() and int(_event_response_transaction.get("step", -1)) == 3:
+			_event_response_transaction["refresh_requested"] = true
+		else:
+			_render_start_screen()
 		return
 	var resumed_world_outcomes := _resume_pending_world_sequence_outcomes()
 	if not bool(resumed_world_outcomes.get("ok", false)):
@@ -11613,7 +11679,20 @@ func _refresh() -> void:
 	if not scenario_transition_message.is_empty():
 		_show_message(scenario_transition_message)
 		_autosave_foundation_run("Room presentation saved.")
-	_render_environment_screen()
+	if not _event_response_transaction.is_empty() and int(_event_response_transaction.get("step", -1)) == 3:
+		_event_response_transaction["refresh_requested"] = true
+		return
+	_finish_foundation_refresh()
+
+
+func _finish_foundation_refresh(room_prepared: bool = false) -> void:
+	if run_state == null or current_screen == SCREEN_START:
+		_render_start_screen()
+		return
+	if room_prepared:
+		_render_prepared_environment_screen()
+	else:
+		_render_environment_screen()
 	_check_published_room_once()
 	_refresh_room_recovery_map_control()
 	_refresh_crew_room_recovery_control()
@@ -12016,6 +12095,10 @@ func _render_environment_screen() -> void:
 	if not _ensure_run_ui_built():
 		return
 	_prepare_room_presentation_at_boundary()
+	_render_prepared_environment_screen()
+
+
+func _render_prepared_environment_screen() -> void:
 	if current_screen == SCREEN_START:
 		_set_current_screen(SCREEN_ENVIRONMENT)
 	start_screen.visible = false
@@ -13951,6 +14034,8 @@ func _modal_contract_blocks_player_input() -> bool:
 
 
 func _simulation_progression_paused() -> bool:
+	if not _event_response_transaction.is_empty():
+		return true
 	# Conversations remain modal to player input, but only Pal owns the tutorial
 	# time-freeze contract. Natural dealer, patron, and event conversations keep
 	# normal-run clocks and autonomous systems moving behind the dialogue.
@@ -14050,6 +14135,10 @@ func _blocking_modal_message() -> String:
 
 func _guard_player_input_route(force_closing_allowed: bool = false, coach_action_id: String = "ui:any", notify_coach: bool = true) -> bool:
 	input_route_guard_visit_count += 1
+	# A step is synchronous and never yields while dispatching its existing
+	# internal host calls. Between steps, every other public input stays blocked.
+	if not _event_response_transaction.is_empty() and not _event_response_dispatch_active:
+		return true
 	var message := _blocking_modal_message()
 	if message.is_empty():
 		if not force_closing_allowed and _closing_time_blocks_environment_actions():
@@ -15534,7 +15623,7 @@ func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, ca
 			_restore_foundation_lifecycle_snapshot(caller_rollback)
 		return map_opened
 	if object_id.begins_with("event_response:"):
-		var event_action_ok := _activate_event_response_action(object_id)
+		var event_action_ok := _activate_event_response_action(object_id, caller_rollback)
 		if not event_action_ok:
 			_restore_foundation_lifecycle_snapshot(caller_rollback)
 		return event_action_ok
@@ -16414,7 +16503,7 @@ func _start_linda_ambient_dialogue(object_data: Dictionary) -> bool:
 	})
 
 
-func _activate_event_response_action(action_object_id: String) -> bool:
+func _activate_event_response_action(action_object_id: String, lifecycle_rollback: Dictionary = {}) -> bool:
 	if event_choice_resolution_pending:
 		return false
 	var payload := action_object_id.trim_prefix("event_response:")
@@ -16441,13 +16530,128 @@ func _activate_event_response_action(action_object_id: String) -> bool:
 	if _event_is_person_conversation(event_id, true):
 		return _start_person_event_conversation(event_id)
 	event_choice_resolution_pending = true
-	call_deferred("_finish_deferred_event_response_action", event_id, choice_id)
+	if _can_stage_room_event_response(event_id):
+		# Acquire input/clock/save ownership when the actual input is accepted,
+		# before the deferred preparation can run on a later host iteration.
+		_event_response_generation += 1
+		_event_response_transaction = {"step": 0, "generation": _event_response_generation, "event_id": event_id, "choice_id": choice_id, "caller_rollback": lifecycle_rollback}
+		call_deferred("_advance_event_response_transaction", true, _event_response_generation)
+	else:
+		call_deferred("_finish_deferred_event_response_action", event_id, choice_id, lifecycle_rollback)
 	return true
 
 
-func _finish_deferred_event_response_action(event_id: String, choice_id: String) -> void:
+func _finish_deferred_event_response_action(event_id: String, choice_id: String, lifecycle_rollback: Dictionary = {}) -> void:
+	if _can_stage_room_event_response(event_id):
+		_event_response_generation += 1
+		_event_response_transaction = {"step": 0, "generation": _event_response_generation, "event_id": event_id, "choice_id": choice_id, "caller_rollback": lifecycle_rollback}
+		_advance_event_response_transaction()
+		return
 	activate_event_choice_action(event_id, choice_id)
 	event_choice_resolution_pending = false
+
+
+func _can_stage_room_event_response(event_id: String) -> bool:
+	# Game-owned, tutorial and dialogue responses keep their established synchronous
+	# owners. Only a focused ordinary room card or its existing popup can stage.
+	if run_state == null or run_state.is_tutorial_run() or current_game != null \
+			or (talk_dock != null and talk_dock.conversation_active):
+		return false
+	if _event_choice_popup_is_visible():
+		return current_screen in [SCREEN_ENVIRONMENT, SCREEN_EVENT, SCREEN_RESULT] \
+			and _event_choice_popup_allows_event_resolution(event_id) \
+			and str(pending_event_choice_popup_snapshot.get("popup_type", "")) == "interactable_event"
+	# Canvas cards are the ordinary room response surface too. The focused event
+	# owns this token; an unrelated/stale selection cannot acquire this boundary.
+	return current_screen in [SCREEN_ENVIRONMENT, SCREEN_RESULT] \
+		and current_context_mode == CONTEXT_MODE_EVENT \
+		and selected_object_id == "event:%s" % event_id
+
+
+func _advance_event_response_transaction(schedule_next: bool = true, expected_generation: int = -1) -> void:
+	if _event_response_transaction.is_empty():
+		return
+	if expected_generation >= 0 and expected_generation != int(_event_response_transaction.get("generation", -1)):
+		return
+	var transaction := _event_response_transaction
+	# Deferred input preparation can run before process_frame in that same
+	# iteration. A signal alone does not guarantee that the browser drew between
+	# steps. Never combine two scheduled phases in one engine frame.
+	if schedule_next and int(transaction.get("last_step_frame", -1)) == Engine.get_process_frames():
+		get_tree().process_frame.connect(Callable(self, "_advance_event_response_transaction").bind(true, int(transaction["generation"])), CONNECT_ONE_SHOT)
+		return
+	transaction["last_step_frame"] = Engine.get_process_frames()
+	_event_response_dispatch_active = true
+	match int(transaction["step"]):
+		0:
+			var rollback := _begin_event_choice_action(str(transaction["event_id"]), str(transaction["choice_id"]), transaction.get("caller_rollback", {}))
+			if rollback.is_empty():
+				_end_event_response_transaction()
+				return
+			transaction["rollback"] = rollback
+			var prepared := _prepare_event_choice_resolution(str(transaction["event_id"]), str(transaction["choice_id"]), rollback)
+			if prepared.has("terminal_result"):
+				_finish_event_choice_action(rollback, prepared["terminal_result"])
+				_end_event_response_transaction()
+				return
+			transaction["prepared"] = prepared
+			transaction["step"] = 1
+		1:
+			var prepared: Dictionary = transaction["prepared"]
+			var resolution: Dictionary = prepared["module"].begin_owned_resolution(run_state, prepared["environment"], str(prepared["choice_id"]))
+			if bool(resolution["complete"]):
+				transaction["result"] = resolution["result"]
+				transaction["step"] = 3
+			else:
+				transaction["step"] = 2
+		2:
+			transaction["result"] = transaction["prepared"]["module"].finish_owned_resolution()
+			transaction["step"] = 3
+		3:
+			var result := _complete_event_choice_resolution(transaction["prepared"], transaction["result"])
+			if not bool(result.get("ok", false)):
+				_finish_event_choice_action(transaction["rollback"], result)
+				_end_event_response_transaction()
+				# A resize/other view request queued during rejection must consume the
+				# restored generation, never the rejected partial model.
+				if bool(transaction.get("refresh_requested", false)): _finish_foundation_refresh()
+				return
+			transaction["completed_result"] = result
+			if bool(transaction.get("refresh_requested", false)) and run_state != null and current_screen != SCREEN_START:
+				_prepare_room_presentation_at_boundary()
+				transaction["room_prepared"] = true
+			transaction["step"] = 4
+		4:
+			if bool(transaction.get("refresh_requested", false)):
+				_finish_foundation_refresh(bool(transaction.get("room_prepared", false)))
+			_finish_event_choice_action(transaction["rollback"], transaction["completed_result"])
+			# Hold the host owner through this frame's actual draw. Its unrelated
+			# clock/runtime/save work resumes in the following iteration.
+			transaction["step"] = 5
+		5:
+			_end_event_response_transaction()
+			return
+	_event_response_dispatch_active = false
+	if schedule_next:
+		# Each authority/application/catalog/presentation phase gets one MainLoop
+		# iteration. This is one finite action, never a work or persistence queue.
+		get_tree().process_frame.connect(Callable(self, "_advance_event_response_transaction").bind(true, int(transaction.get("generation", -1))), CONNECT_ONE_SHOT)
+
+
+func _end_event_response_transaction() -> void:
+	_event_response_transaction = {}
+	_event_response_dispatch_active = false
+	event_choice_resolution_pending = false
+	_sync_simulation_pause_owners()
+
+
+func _drain_event_response_before_exit() -> void:
+	# A close request commits the one already-accepted action before the existing
+	# synchronous exit-save boundary. Scheduled callbacks see an empty owner later.
+	for _step in range(6):
+		if _event_response_transaction.is_empty():
+			return
+		_advance_event_response_transaction(false)
 
 
 func _activate_meta_interactable_object(object_id: String) -> bool:
@@ -18105,6 +18309,7 @@ func _restore_main_menu_surface_visibility() -> void:
 
 
 func exit_game() -> void:
+	_drain_event_response_before_exit()
 	if not _save_foundation_run_before_leaving("Autosaved before exit."):
 		return
 	_reset_game_surface_runtime_state()

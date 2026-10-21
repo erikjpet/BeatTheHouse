@@ -12,6 +12,56 @@ const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
 
 var definition: Dictionary = {}
 var content_library: ContentLibrary = null
+var _owned_resolution: Dictionary = {}
+
+
+func begin_owned_resolution(run_state: RunState, environment: Dictionary, choice_id: String) -> Dictionary:
+	if not _owned_resolution.is_empty():
+		return {"complete": true, "result": _empty_result(choice_id, environment, "An owned event response is already completing.")}
+	var owner: Dictionary = {}
+	var result := _resolve_event_choice(run_state, environment, choice_id, true, false, owner)
+	# Specialized events retain their original synchronous implementation.
+	if owner.is_empty(): return {"complete": true, "result": result}
+	_owned_resolution = owner
+	return {"complete": false}
+
+
+func finish_owned_resolution() -> Dictionary:
+	if _owned_resolution.is_empty():
+		return _empty_result("", {}, "No owned event response is pending.")
+	var owner := _owned_resolution
+	_owned_resolution = {}
+	var run_state: RunState = owner["run_state"]
+	var result: Dictionary = owner["result"]
+	# This check is once at an accepted action's new asynchronous boundary, never
+	# on view lookup. It covers the closed runtime fields and mutable submodels.
+	if _owned_application_state_bytes(run_state) != owner["state_bytes"]:
+		result["ok"] = false
+		result["errors"] = ["The run changed while its event response was completing."]
+		result["message"] = str(result["errors"][0])
+		return result
+	_finish_event_result_application(run_state, result, owner["application"])
+	if get_id() == "crew_favor_delivery":
+		run_state.resolve_crew_favor_delivery_job(str(owner["choice_key"]), {"success": owner["consequences"]})
+	return result
+
+
+func _owned_application_state_bytes(run_state: RunState) -> PackedByteArray:
+	var fields: Dictionary = {}
+	for property_value in run_state.get_property_list():
+		var property: Dictionary = property_value
+		if (int(property.get("usage", 0)) & PROPERTY_USAGE_SCRIPT_VARIABLE) == 0: continue
+		var name := str(property.get("name", ""))
+		if name.is_empty() or name == "script": continue
+		var value: Variant = run_state.get(name)
+		fields[name] = value.get_instance_id() if typeof(value) == TYPE_OBJECT and value != null else value
+	fields["owned_mutable_models"] = {
+		"numbers": {"state": run_state.numbers_state.snapshot(), "config": run_state.numbers_state.config} if run_state.numbers_state != null else {},
+		"town": {"state": run_state.town_state.snapshot(), "conditions": run_state.town_state.get("_conditions")} if run_state.town_state != null else {},
+	}
+	# The temporary view is serialized immediately; no live mutable aliases are
+	# retained by the continuation. Equality is exact and uses no readiness flag.
+	return var_to_bytes(fields)
 
 
 # One shared classification keeps person events on the TalkDock path. A speaker
@@ -307,6 +357,19 @@ func resolve(
 	external_rollback_owner: bool = false,
 	profile_stages: bool = false
 ) -> Dictionary:
+	if not _owned_resolution.is_empty():
+		return _empty_result(choice_id, environment, "An owned event response is already completing.")
+	return _resolve_event_choice(run_state, environment, choice_id, external_rollback_owner, profile_stages)
+
+
+func _resolve_event_choice(
+	run_state: RunState,
+	environment: Dictionary,
+	choice_id: String = "",
+	external_rollback_owner: bool = false,
+	profile_stages: bool = false,
+	application_owner: Variant = null
+) -> Dictionary:
 	var profile_started_usec := Time.get_ticks_usec() if profile_stages else 0
 	if run_state != null:
 		var room_authority := run_state.validate_room_action_authority(not bool(run_state.current_environment.get("scenario_restore_pending_trusted_rebuild", false)))
@@ -454,6 +517,15 @@ func resolve(
 		result["world_sequence_owner_token"] = str(sequence_schedule.get("owner_token", ""))
 		apply_event_result(run_state, result)
 		return result
+	if application_owner != null:
+		var owner: Dictionary = application_owner
+		owner["run_state"] = run_state
+		owner["result"] = result
+		owner["application"] = _begin_event_result_application(run_state, result, true, false)
+		owner["choice_key"] = choice_key
+		owner["consequences"] = consequences
+		owner["state_bytes"] = _owned_application_state_bytes(run_state)
+		return result
 	var apply_started_usec := Time.get_ticks_usec() if profile_stages else 0
 	apply_event_result(run_state, result, external_rollback_owner, profile_stages)
 	if profile_stages:
@@ -492,8 +564,13 @@ func _schedule_choice_world_sequence(run_state: RunState, selected_choice: Dicti
 
 # Applies a shared event result and records event-specific outcomes.
 func apply_event_result(run_state: RunState, result: Dictionary, external_rollback_owner: bool = false, profile_stages: bool = false) -> void:
+	var application := _begin_event_result_application(run_state, result, external_rollback_owner, profile_stages)
+	_finish_event_result_application(run_state, result, application)
+
+
+func _begin_event_result_application(run_state: RunState, result: Dictionary, external_rollback_owner: bool = false, profile_stages: bool = false) -> Dictionary:
 	if run_state == null or not bool(result.get("ok", false)):
-		return
+		return {}
 	var profile_started_usec := Time.get_ticks_usec() if profile_stages else 0
 	var profile_stage_started_usec := profile_started_usec
 	var profile_timing: Dictionary = {}
@@ -515,7 +592,7 @@ func apply_event_result(run_state: RunState, result: Dictionary, external_rollba
 		if not bool(settlement_result.get("ok", false)):
 			result["ok"] = false
 			result["message"] = str(settlement_result.get("message", "The marker settlement failed."))
-			return
+			return {}
 	# Facts and storage services take effect on the side of the boundary where
 	# the player chose them. In particular, a sweep advanced by this action must
 	# see an item after Knuckles hid it, never confiscate it first.
@@ -554,7 +631,7 @@ func apply_event_result(run_state: RunState, result: Dictionary, external_rollba
 			if not bool(service_result.get("ok", false)):
 				result["ok"] = false
 				result["message"] = "That Crew service is no longer available."
-				return
+				return {}
 			result["crew_service_result"] = service_result
 			# Heist abort/forced-abort facts are public command outcomes. Preserve
 			# them at the shared Event result boundary used by UI and automation;
@@ -578,7 +655,17 @@ func apply_event_result(run_state: RunState, result: Dictionary, external_rollba
 		result["ok"] = false
 		result["message"] = str(advance_errors[0]) if not advance_errors.is_empty() else "The event boundary could not advance safely."
 		result["errors"] = advance_errors.duplicate(true)
-		return
+		return {}
+	return {"deltas": deltas, "profile_stages": profile_stages, "profile_started_usec": profile_started_usec, "profile_stage_started_usec": profile_stage_started_usec, "profile_timing": profile_timing}
+
+
+func _finish_event_result_application(run_state: RunState, result: Dictionary, context: Dictionary) -> void:
+	if context.is_empty(): return
+	var deltas: Dictionary = context["deltas"]
+	var profile_stages: bool = context["profile_stages"]
+	var profile_started_usec: int = context["profile_started_usec"]
+	var profile_stage_started_usec: int = context["profile_stage_started_usec"]
+	var profile_timing: Dictionary = context["profile_timing"]
 	# The River Queen normally keeps the player aboard for its authored action
 	# window. Accepting the Grand invitation is a concrete departure handoff:
 	# the host's launch is waiting at the dock. Release only that venue-authored
