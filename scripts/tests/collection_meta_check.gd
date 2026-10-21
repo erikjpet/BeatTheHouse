@@ -573,7 +573,7 @@ func _test_sal_purchase_and_starter_buyback() -> void:
 	var insufficient_before := JSON.stringify(failure_service.snapshot())
 	_check(not bool(failure_service.arm_sal_shelf_purchase(0).get("ok", true)) and JSON.stringify(failure_service.snapshot()) == insufficient_before, "Insufficient-gold purchase mutated profile state.")
 	failure_service.add_gold(failure_price)
-	var stale_arm: Dictionary = failure_service.arm_sal_shelf_purchase(0)
+	failure_service.arm_sal_shelf_purchase(0)
 	var stale_before := JSON.stringify(failure_service.snapshot())
 	_check(not bool(failure_service.confirm_sal_shelf_purchase("stale-token").get("ok", true)) and JSON.stringify(failure_service.snapshot()) == stale_before, "Stale shelf token mutated profile state.")
 

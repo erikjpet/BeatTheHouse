@@ -1858,8 +1858,8 @@ docs/screenshots/scratch_ticket_three_state_review/05_bonus_bingo_three_states.p
 docs/screenshots/scratch_ticket_three_state_review/06_high_roller_holdem_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	9ae3f1c0724939aa1acaebf88e3f8524fde714f1	541341	-
 docs/screenshots/scratch_ticket_three_state_review/07_golden_vault_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	258b7cdca507173d7b8c484ed5ed19a531b994fa	474817	-
 docs/screenshots/scratch_ticket_three_state_review/all_scratch_tickets_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	506839b5f67581028469a7a9230deaf8c5a8a3fb	4560788	-
-docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	5de58b5bb849f752beebd4cd296642b7e21feba0	210671	3364
-docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	d496cfc5e8a6127f1804f95bb7c661bff127d287	744000	-
+docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	09302b7b3a8ee2793e3cd68f0648cfca5a524655	212021	3379
+docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	d680d6333ad00a2eb8d2bf0c50a3006b85263b69	744867	-
 docs/testing/punchline_debt_court_recovery.md	docs/testing	authored-document	static-screen	reviewed	D1	ccfe341027a53866f18c201f4ef855a2420c2987	3889	64
 docs/testing/scratch_scalper_runtime_compatibility.md	docs/testing	authored-document	static-screen	reviewed	D1	15feb4c3c388e55a67a98bc58efbc003a1fc4261	3581	56
 docs/todo/README_0_6_board.md	docs/todo	authored-document	static-screen	reviewed	D1	2305cca0cdeeba83d3fa8768159758508d775c58	66017	517
@@ -2965,7 +2965,7 @@ scripts/tests/character_offers_cache_check.gd	scripts/tests	authored	source-revi
 scripts/tests/character_offers_check.gd	scripts/tests	authored	static-screen	reviewed	S1	56b790d380a1d5e92a5af8e24a83b5f3c045f735	33001	607
 scripts/tests/character_offers_roads_and_ride_check.gd	scripts/tests	authored	static-screen	reviewed	S1	0d1460ab58d1f61aeab479bd67f4bedfb59eff81	23183	418
 scripts/tests/cold_continue_room_projection_contract.gd	scripts/tests	authored	source-review	no-change	M:batch83-full-captured-storm-save-real-cold-Continue-strict-manifest-join-no-RNG-money-clock-heat-drift-and-damaged-authority-no-resign-negative-control-source-review-retained-not-run-no-fixture-or-user-storage-access	07a2387a540b6d73efcdea7b5513c7f066b1c5df	4886	110
-scripts/tests/collection_meta_check.gd	scripts/tests	authored	source-review	no-change	M:batch43-full-all25-existing-tests-card-fragility-Sal-idempotency-reload-legacy-fields-one-time-bag-consumption-and-meta-isolation-retained	930ccd90b4b7f70baa36dc62bbf6cfe6e46f68af	72909	1030
+scripts/tests/collection_meta_check.gd	scripts/tests	authored	source-review	fixed	C:batch116-only-unread-stale-arm-local-binding-removed;stateful-arm-call-position-service-owned-pending-dictionary-snapshot-and-stale-token-assertion-retained;existing-one-file-loaderPASS4.781s-5percent512MiB-natural0-EOF-Job0-independent18244absence-no-profile-transaction-or-full-contract-run	930ccd90b4b7f70baa36dc62bbf6cfe6e46f68af	72909	1030
 scripts/tests/dave_last_stop_environment_objects_contract.gd	scripts/tests	authored	source-review	no-change	M:batch83-full-normal-event-choice-Last-Stop-live-town-itinerary-follow-up-layout-and-unrelated-object-retention-source-review-retained-not-run	46bda3d2e709d9fdfd93f77786c40c0579731cca	3420	77
 scripts/tests/developer_layout_save_ui_check.gd	scripts/tests	authored	static-screen	reviewed	S1	e1e0e89a79ddce180bde21e58efcbefe3989eb79	21614	462
 scripts/tests/developer_placement_mode_check.gd	scripts/tests	authored	static-screen	reviewed	S1	d6fc81d5d23009f878eb291a71768d217c47d72c	22775	377

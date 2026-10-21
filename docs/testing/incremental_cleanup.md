@@ -3362,3 +3362,18 @@ used through dynamic host access. Those fields remain. The only actual local
 candidate is an unused shelf-arm result binding; the stateful arm call must stay
 before its snapshot and stale-token assertion. This is a candidate for a separate
 small cleanup, not permission to delete every one-occurrence name.
+
+
+## Batch 116: discard an unread shelf-arm result
+
+Remove one unused local result binding in the collection contract. The stateful
+shelf-arm call still runs exactly once, in the same position before the complete
+snapshot and stale-token rejection assertion. Its pending dictionary remains
+owned by the service; no assertion, callback, storage operation or production
+interface changed. No speed improvement is claimed.
+
+The existing loader checked only this changed script and passed in 4.781 seconds
+under the private muted 5% CPU/512 MiB Job, after the performance owner reported
+its actual browser/helper closure. Natural exit, EOF, Job0 and independent loader
+absence are recorded. No profile transaction, full collection contract or new
+test mirroring this binding removal was run.
