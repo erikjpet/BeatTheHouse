@@ -4211,3 +4211,18 @@ script-property, scene, signal, reflection and save contracts. Every actual
 byte-identical. Reuse the exact candidate's shared two-resource compile and
 independent closure from batch 160; no matrix or duplicate check ran. No speedup
 is claimed. Coverage is 766 full file reviews.
+
+## Batch 162: review roadside lifecycle and observer assertions
+
+Read the complete 397-line Package B contract. Preserve the fixed twelve-scenario
+census, production-composed target binding, four physical command boundaries,
+semantic safe exit and five aftermath records. Four terminal choices and the
+interruption branch retain exact normalization, command/fact replay, conflicting
+receipt rejection and the second world boundary after intentional entry grace.
+
+Keep partial/terminal reentry, expiry and cleanup rollback, wrong-producer and
+wrong-phase injection, paired hidden-state observers, canonical JSON parity and
+normal/reduced transition counts. Branch copies isolate hostile fixtures; the
+scenario-specific composition cache is not interchangeable with another layer's
+or scenario's event-choice authority. No assertion, runtime, content, historical
+save or RNG path changed, and no suite was run. Coverage is 767 full file reviews.
