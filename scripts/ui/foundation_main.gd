@@ -11510,7 +11510,10 @@ func _room_action_authority_available() -> bool:
 func _prepare_room_presentation_at_boundary() -> void:
 	if run_state == null or library == null or _is_meta_session():
 		return
-	if run_state.room_presentation_revision() == 0:
+	# Restore can publish a valid base envelope before its non-causal scenario
+	# projection is rebuilt. That publication is not yet a reusable room catalog.
+	if run_state.room_presentation_revision() == 0 \
+			or bool(run_state.current_environment.get("scenario_restore_pending_trusted_rebuild", false)):
 		EnvironmentInteractionControllerScript.compile_room_catalog_at_boundary(self)
 		run_state.publish_room_presentation()
 	_room_catalog_publication = EnvironmentInteractionViewModelScript.deduplicated_scenario_instruction_records(

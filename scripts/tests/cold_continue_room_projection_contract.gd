@@ -45,6 +45,7 @@ func _run() -> void:
 			_check(ids.has(identity), "Cold Continue lost room object %s." % identity)
 		_check(bool(ControllerScript._object_manifest_join_proof(state.current_environment).get("ok", false)), "Rebuilt room did not pass the complete strict authority check.")
 		_check(not state.current_environment.has("scenario_restore_pending_trusted_rebuild"), "Continue left the room waiting for reconstruction.")
+		_check(state._scenario_semantic_ready(), "Continue published base geometry without rebuilding scenario action authority.")
 		_check(str(view.get("scenario_id", "")) == "gas_station_storm_shelter", "Continue changed the selected scenario.")
 		var expected := CodecScript.decode(CodecScript.unpack_from_storage(payload.run_state))
 		_check(state.bankroll == int(expected.bankroll), "Reconstruction changed cash.")
