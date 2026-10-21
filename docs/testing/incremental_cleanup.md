@@ -4110,3 +4110,19 @@ private Job, with EOF, Job0, natural exit and independent process absence. No
 room generation, gameplay, save, browser, full audit or export ran. This adds
 open-failure propagation, not a claim of atomic output writes or faster gameplay.
 Coverage is 758 full file reviews; the broader audit remains unfinished.
+
+## Batch 157: review exact live-room authority reuse
+
+Preserve peer `5f24ef8f` and read its complete production diff and focused
+122-line contract. Accepted proof reuse still requires exact owned room inputs
+plus the live game installation, hook and Scalper fields consumed by authority.
+Opaque, deep or oversized game-input graphs decline reuse; changed aliases use
+the original validator. A counter generation shares only private immutable
+children, with detached public snapshots and proofs.
+
+The contract retains strong/weak validation equality, returned-proof mutation,
+changed shell/game inputs, missing publication, ticket cashout authority,
+counter generations, complete offer state/clock/RNG and rollback. Its native
+diagnostic is not a new Web speed claim. No owner source, assertion or fixture
+changed, and no test was repeated. Rebase preserved the exact two qualified
+cleanup source hashes. Coverage is 759 full reviews across 3,715 paths.
