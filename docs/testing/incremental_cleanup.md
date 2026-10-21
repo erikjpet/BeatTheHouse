@@ -1373,6 +1373,35 @@ stopped watcher tree and all new Godot processes absent. NEXT recovery of
 tested main de037dbb is still pending; batches46-50 are separate tested local
 commits. No replacement watcher, manual export or guard change was started.
 
+## Batch 51: compute the audit signature's takeover predicate once
+
+`SlotRenderer.render_signature` queried the same pure Pinball takeover
+predicate for five adjacent manifest fields. Evaluate it once per signature
+and use that local value for all five. The predicate and public methods remain;
+the lightweight draw signature, drawing, snapshots, caches, reveal/replay
+clocks and every other function body remain unchanged. This affects audit
+manifest work, not the production lightweight drawing path. No persistent
+cache, field removal or timing gain is claimed.
+
+Native comparison against exact 9e69250a passed 264 complete signatures,
+including genuine idle/spin/forced-feature projections for all six authored
+family/format cabinets, five timeline positions, compatibility bonus shapes
+and both layout modes. Full ordered signatures and post-query projection
+bytes matched; machine and definition bytes were unchanged. Instrumented
+delegates counted 1,320 predicate calls before and 264 after. Required
+no-pointer animation liveness passed. Both private 5% CPU/512MiB Jobs closed
+naturally with exit0/reader EOF/Job0, no forced cleanup and independent process
+absence in `slot-takeover-native-closure.json`. No GPU/Web visual test or
+elapsed-time speedup is claimed by this signature comparison.
+
+Completed the full renderer read: retain audit/draw separation, clipped moving
+symbol identities, result-reveal embargo, Buffalo locks/reveal payloads,
+Pinball live/replay positions, control geometry, frame scheduling and bounded
+caches. Legacy enrichment of owned presentation projections is preserved and
+compared with baseline. Coverage is 254 targeted source/contract reviews,
+1,173 static screens and 2,272 role classifications across 3,699 paths. The
+comprehensive audit and batch45 watcher recovery remain unfinished.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

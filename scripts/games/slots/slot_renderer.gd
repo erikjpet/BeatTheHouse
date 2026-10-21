@@ -97,6 +97,7 @@ func render_signature(surface_state: Dictionary, _definition: Dictionary, time_m
 	var particle_count: int = _particle_count_for_tier(tier, time_msec, plan)
 	var strip_payload: Dictionary = _result_strip_payload(surface_state, time_msec)
 	var scan_unintentional_gold := include_layout_strings
+	var pinball_takeover := _pinball_takeover_active(surface_state)
 	var signature: Dictionary = {
 		"cabinet": str(surface_state.get("slot_cabinet_signature", skin.get("cabinet_identity", ""))),
 		"identity": str(skin.get("cabinet_identity", "")),
@@ -139,11 +140,11 @@ func render_signature(surface_state: Dictionary, _definition: Dictionary, time_m
 		"color_cycle_hue": _color_cycle_hue(tier, time_msec, plan),
 		"border_color_phase": _color_cycle_phase(tier, time_msec, plan),
 		"feature": feature_hash,
-		"pinball_takeover_active": _pinball_takeover_active(surface_state),
-		"reels_suppressed": _pinball_takeover_active(surface_state),
-		"status_panel_suppressed": _pinball_takeover_active(surface_state),
-		"result_strip_suppressed": _pinball_takeover_active(surface_state),
-		"default_controls_suppressed": _pinball_takeover_active(surface_state),
+		"pinball_takeover_active": pinball_takeover,
+		"reels_suppressed": pinball_takeover,
+		"status_panel_suppressed": pinball_takeover,
+		"result_strip_suppressed": pinball_takeover,
+		"default_controls_suppressed": pinball_takeover,
 	}
 	if not include_layout_strings:
 		signature["result_strip_payload"] = strip_payload
