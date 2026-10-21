@@ -548,6 +548,27 @@ objective/card/heat guidance and save-status presentation. Coverage reaches 124
 targeted reviews; remaining static screens still require semantic review. Local
 publication remains paused by the parent.
 
+## Batch 20: inspect consequence presence without copying
+
+The consequence visibility predicate copied each candidate delta array solely
+to test nonemptiness. Inspect its type and size instead. Preserve all early
+exclusions, scalar/ended detection, eight array keys, two dictionary keys and
+message/type fallbacks. Other card-building and callback snapshots are intact.
+
+Native comparison with the prior module passed 4,074 visibility cases and 42
+complete consequence snapshots. Inputs remained unchanged. Independent checks
+preserved empty-result suppression even with a message, game-enter suppression
+even when ended, nonempty ordinary arrays and rejection of packed arrays as
+array deltas. The required liveness gate passed. Both capped muted Jobs drained
+naturally with EOF/Job0; independent host census confirmed closure. No timing,
+save, gameplay or presentation semantics change is claimed.
+
+The complete consequence module and existing UI05 design-system test were read.
+The latter retains clock-item precision, widget cache identities, compact header
+configuration, popup bounds, integrated actions and animated portrait contracts;
+its assertions were not edited. Coverage now includes 126 targeted reviews.
+Publication remains paused; independent source review continues.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

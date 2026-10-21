@@ -3201,7 +3201,7 @@ scripts/tests/tutorial_corner_shop_order_check.gd	scripts/tests	authored	static-
 scripts/tests/tutorial_dialogue_trigger_cadence_check.gd	scripts/tests	authored	static-screen	reviewed	S1	48eb02e1bf2baf063180f6ed4b9a2977fa028a60	49395	885
 scripts/tests/tutorial_guardrail_recovery_stress_check.gd	scripts/tests	authored	static-screen	reviewed	S1	a307c8dfce09f86948f6149c7c9b93f9df2839c0	23529	508
 scripts/tests/tutorial_talk_target_nonoverlap_check.gd	scripts/tests	authored	static-screen	reviewed	S1	7ab2cdf0de7594919b0c6c9b9b2ac3eb0b3996d3	7841	175
-scripts/tests/ui05_design_system_check.gd	scripts/tests	authored	static-screen	reviewed	S1	92d5de1b0d74462f48a092d4d95f577417688dec	17239	276
+scripts/tests/ui05_design_system_check.gd	scripts/tests	authored	source-review	no-change	M:batch20-full-widget-clock-header-guidance-portrait-and-popup-contract-review	92d5de1b0d74462f48a092d4d95f577417688dec	17239	276
 scripts/tests/ui_scene/check_dave_bus_encounter.gd	scripts/tests	authored	static-screen	reviewed	S1	444c9f1f239e27d081ffc8ebeb875c45adb559d6	9228	196
 scripts/tests/ui_scene/check_environment_library_guest_legend_action_hosts.gd	scripts/tests	authored	static-screen	reviewed	S1	d020c32f633532ebe9cbf555889b9d8f5f545adb	13694	265
 scripts/tests/ui_scene/check_environment_library_launcher.gd	scripts/tests	authored	static-screen	reviewed	S1	2435940c45f1bb9afaaca9809c9866b82c42cf3f	23917	492
@@ -3282,7 +3282,7 @@ scripts/ui/settings_menu.gd	scripts/ui	authored	static-screen	reviewed	S1	829d2c
 scripts/ui/sfx_player.gd	scripts/ui	authored	static-screen	reviewed	S1	d1dc8c09966316d944262ec9870ba1faa21fc678	145046	3378
 scripts/ui/small_screen_policy.gd	scripts/ui	authored	source-review	no-change	M:touch-sizing-contract	826ade0a9450c400dc012fd2f9418b4f7499a253	1957	49
 scripts/ui/talk_dock.gd	scripts/ui	authored	static-screen	reviewed	S1	63e0ee91566a9c6f556f35ba3928a1522c8a539d	56824	1337
-scripts/ui/terminal_consequence_view_model.gd	scripts/ui	authored	static-screen	reviewed	S1	eedff0ddc173425261ecdf880895e6a90789eeff	20775	365
+scripts/ui/terminal_consequence_view_model.gd	scripts/ui	authored	source-review	fixed	C:batch20	eedff0ddc173425261ecdf880895e6a90789eeff	20775	366
 scripts/ui/ui_art.gd	scripts/ui	authored	source-review	no-change	M:batch16-full-resource-cache-fallback-and-authored-path-contracts-retained	59492c5c3e720c7fb7e8f7b30d29371900333a61	3741	133
 scripts/ui/visual_style.gd	scripts/ui	authored	source-review	no-change	M:batch17-full-palette-accessibility-roles-spacing-and-stylebox-contracts-retained	6d6b6a2a093f50a3cfaba177a64baa369e41f95c	8498	284
 scripts/ui/wager_confirmation_controller.gd	scripts/ui	authored	source-review	no-change	M:pending-wager-contract	0f3d3ec1d34cdc39647e68151f8da8eef0515bf2	2646	69
