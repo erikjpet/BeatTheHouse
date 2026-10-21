@@ -1094,6 +1094,31 @@ SaveService and its existing durability contract for the performance worker;
 their prior full reviews remain recorded. Together with the preceding `O1`,
 native and qualification deferrals, 14 paths remain explicitly deferred.
 
+## Batch 42: reuse Pinball's event-award fold
+
+The instance `_logged_award` delegates to its retained static counterpart.
+Both previously summed the same nonnegative integer award field; the instance
+version recursively copied each complete event just to read that scalar.
+The static fold, instance method, history shape and every caller remain intact.
+No RNG, physics, clocks, award caps, session caches or save checkpoint changes.
+
+Native comparison passed 48 complete history projections and direct award
+folds at event counts 0/1/6/24/192/256, including negative/fractional/string/bool
+awards, missing fields and non-dictionary entries. Inputs stayed unchanged;
+the full history dictionaries and unchanged static fold matched the baseline.
+The existing no-pointer animation check passed. Both 5% CPU/512MiB Jobs closed
+naturally with exit0, reader EOF, Job0 and no forced cleanup; independent
+08:16 UTC census confirmed both identities absent. Exact-source proof limits
+the production edit to this delegation. No elapsed-time gain is claimed.
+
+The full Buffalo family review retained forced-line versus ways authority,
+format-specific math and RNG consumption, retrigger/session bounds, persistent
+progressives, stalled-save recovery and conserved coin-reveal totals. Coverage
+is 227 targeted source/contract reviews, 1,199 static screens and 2,272 role
+classifications. The existing watcher stopped during the independent 71c3
+publication; that save-fix ancestry is preserved. This tested cleanup stays
+local pending the deployment owner's recovery, while semantic review continues.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

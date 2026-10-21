@@ -521,10 +521,7 @@ func _last_event_ball(source_events: Array) -> int:
 
 
 func _logged_award(events: Array) -> int:
-	var total := 0
-	for event_value in events:
-		total += maxi(0, int(_dict(event_value).get("award", 0)))
-	return total
+	return _logged_award_static(events)
 
 
 func _momentum_hit_count(events: Array) -> int:
