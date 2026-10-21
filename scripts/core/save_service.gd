@@ -27,6 +27,8 @@ var trusted_primary_fingerprints: Dictionary = {}
 var async_task_id: int = -1
 var async_result_box: Dictionary = {}
 var async_slot_id: String = ""
+var _web_save_job: Dictionary = {}
+var _web_save_step_frame: int = -1
 var io_mutex := Mutex.new()
 var last_save_outcome: Dictionary = {"ok": true, "error": OK, "error_code": ""}
 
@@ -47,7 +49,7 @@ func save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 	if run_state == null:
 		last_save_outcome = {"ok": false, "error": ERR_INVALID_PARAMETER, "error_code": "invalid_run_state"}
 		return ERR_INVALID_PARAMETER
-	if async_task_id >= 0:
+	if async_save_in_flight():
 		var async_error := wait_for_async_save()
 		if async_error != OK:
 			return async_error
@@ -74,14 +76,14 @@ func save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 	return install_error
 
 
-# Captures one detached RunState generation on the main thread, then performs
-# save projection, JSON encoding, validation, and atomic file rotation on a
-# worker. Only one generation writes at a time; FoundationMain coalesces newer
-# dirty generations while this job is in flight.
+# Captures one RunState generation. Threaded builds project and install on a
+# worker. No-thread Web builds own the encoded generation before yielding, then
+# pack and atomically install on separate frames. FoundationMain coalesces newer
+# dirty generations while this one bounded job is in flight.
 func begin_save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 	if run_state == null:
 		return ERR_INVALID_PARAMETER
-	if async_task_id >= 0:
+	if async_save_in_flight():
 		return ERR_BUSY
 	var clean_slot := _slot_id(slot_id)
 	# Seeded scenario definitions are immutable content. The worker may share those
@@ -93,6 +95,8 @@ func begin_save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 	# A prior installed generation can be reused only if the worker finds those
 	# exact validated bytes again. A changed or unknown primary is fully checked.
 	var primary_digest := _trusted_primary_digest(clean_slot, path)
+	if OS.has_feature("web") and OS.has_feature("nothreads"):
+		return _begin_web_save(runtime_snapshot, clean_slot, path, primary_digest)
 	async_result_box = {"error": ERR_BUSY, "slot_id": clean_slot}
 	async_slot_id = clean_slot
 	async_task_id = WorkerThreadPool.add_task(
@@ -104,10 +108,65 @@ func begin_save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 
 
 func async_save_in_flight() -> bool:
-	return async_task_id >= 0
+	return async_task_id >= 0 or not _web_save_job.is_empty()
+
+
+# No-thread Web exports run WorkerThreadPool.add_task synchronously. Capture
+# and encode before yielding: the codec owns all output containers, so later
+# frame/input mutations cannot change this generation. Keep one job, with two
+# remaining bounded phases (pack, then validated atomic install), one per frame.
+# Foundation retains its existing single coalesced newer dirty generation.
+func _begin_web_save(runtime_snapshot: Dictionary, slot_id: String, path: String, primary_digest: String) -> Error:
+	if async_save_in_flight():
+		return ERR_BUSY
+	var encoded := RunSaveCodecScript.encode(runtime_snapshot)
+	async_result_box = {"error": ERR_BUSY, "slot_id": slot_id}
+	async_slot_id = slot_id
+	_web_save_job = {
+		"phase": "pack",
+		"encoded": encoded,
+		"act": maxi(1, int(runtime_snapshot.get("act", 1))),
+		"path": path,
+		"primary_digest": primary_digest,
+	}
+	_web_save_step_frame = Engine.get_process_frames()
+	return OK
+
+
+func _advance_web_save_step() -> void:
+	var phase := str(_web_save_job.get("phase", ""))
+	if phase == "pack":
+		var packed := RunSaveCodecScript.pack_for_storage(_web_save_job.get("encoded", {}))
+		var payload_result := _payload_from_storage_pack(packed, int(_web_save_job.get("act", 1)), async_slot_id)
+		_web_save_job.erase("encoded")
+		if not bool(payload_result.get("ok", false)):
+			async_result_box = payload_result
+			_web_save_job["phase"] = "done"
+			return
+		_web_save_job["payload"] = payload_result.get("payload", {})
+		_web_save_job["phase"] = "install"
+		return
+	if phase == "install":
+		io_mutex.lock()
+		async_result_box["error"] = _write_payload_atomic(
+			_web_save_job.get("payload", {}), str(_web_save_job.get("path", "")), "",
+			str(_web_save_job.get("primary_digest", "")), async_result_box
+		)
+		io_mutex.unlock()
+		_web_save_job.erase("payload")
+		_web_save_job["phase"] = "done"
 
 
 func poll_async_save() -> Dictionary:
+	if not _web_save_job.is_empty():
+		# Multiple polls in one frame must not collapse the phases into a hitch.
+		if _web_save_step_frame == Engine.get_process_frames():
+			return {"completed": false, "in_flight": true, "slot_id": async_slot_id}
+		_web_save_step_frame = Engine.get_process_frames()
+		_advance_web_save_step()
+		if str(_web_save_job.get("phase", "")) == "done":
+			return _finish_async_save_result()
+		return {"completed": false, "in_flight": true, "slot_id": async_slot_id}
 	if async_task_id < 0:
 		return {"completed": false, "in_flight": false}
 	if not WorkerThreadPool.is_task_completed(async_task_id):
@@ -122,7 +181,7 @@ func _finish_async_save_result() -> Dictionary:
 	result["in_flight"] = false
 	var installed_path := ProjectSettings.globalize_path(run_save_path(async_slot_id))
 	var validated_digest := str(result.get("validated_sha256", ""))
-	# The worker already validated the installed generation. Reuse that proof
+	# The writer already validated the installed generation. Reuse that proof
 	# only for the same bytes; an external change still takes the full validator.
 	var same_validated_bytes := not validated_digest.is_empty() \
 		and FileAccess.file_exists(installed_path) \
@@ -143,12 +202,25 @@ func _finish_async_save_result() -> Dictionary:
 	result.erase("validated_sha256")
 	last_save_outcome = result.duplicate(true)
 	async_task_id = -1
+	_web_save_job = {}
+	_web_save_step_frame = -1
 	async_result_box = {}
 	async_slot_id = ""
 	return result
 
 
 func wait_for_async_save() -> Error:
+	if not _web_save_job.is_empty():
+		# Explicit Save/Continue/clear/navigation boundaries still drain and wait.
+		# There can only be pack and install; do not create an unbounded queue.
+		for _step in range(2):
+			if str(_web_save_job.get("phase", "")) == "done":
+				break
+			_advance_web_save_step()
+		if str(_web_save_job.get("phase", "")) != "done":
+			return ERR_BUSY
+		var web_result := _finish_async_save_result()
+		return int(web_result.get("error", FAILED))
 	if async_task_id < 0:
 		return OK
 	WorkerThreadPool.wait_for_task_completion(async_task_id)
@@ -205,7 +277,7 @@ static func _payload_dictionary_loadable(payload: Dictionary) -> bool:
 
 # Loads run state from a save slot.
 func load_run(slot_id: String = "autosave") -> Variant:
-	if async_task_id >= 0:
+	if async_save_in_flight():
 		wait_for_async_save()
 	var clean_slot := _slot_id(slot_id)
 	var primary := _read_run_state_from_path(run_save_path(clean_slot))
@@ -232,7 +304,7 @@ func load_run(slot_id: String = "autosave") -> Variant:
 
 # Removes both generations of a slot so a deliberately skipped tutorial cannot resume.
 func clear_run(slot_id: String = "autosave") -> Error:
-	if async_task_id >= 0:
+	if async_save_in_flight():
 		var async_error := wait_for_async_save()
 		if async_error != OK:
 			return async_error
@@ -312,6 +384,10 @@ func _save_payload(run_state: RunState, slot_id: String) -> Dictionary:
 
 static func _save_payload_result(runtime_snapshot: Dictionary, slot_id: String) -> Dictionary:
 	var packed_result := RunSaveCodecScript.pack_for_storage(RunSaveCodecScript.encode(runtime_snapshot))
+	return _payload_from_storage_pack(packed_result, maxi(1, int(runtime_snapshot.get("act", 1))), slot_id)
+
+
+static func _payload_from_storage_pack(packed_result: Dictionary, act: int, slot_id: String) -> Dictionary:
 	if not bool(packed_result.get("ok", false)):
 		return {
 			"ok": false,
@@ -322,7 +398,7 @@ static func _save_payload_result(runtime_snapshot: Dictionary, slot_id: String) 
 	return {"ok": true, "error": OK, "error_code": "", "slot_id": slot_id, "payload": {
 		"schema": SAVE_SCHEMA,
 		"version": SAVE_VERSION,
-		"act": maxi(1, int(runtime_snapshot.get("act", 1))),
+		"act": act,
 		"slot_id": slot_id,
 		"run_state": packed_result.get("packed", {}),
 	}}

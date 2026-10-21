@@ -27,6 +27,45 @@ const PACK_ERROR_TOO_LARGE := "storage_limit_exceeded"
 const PACK_ERROR_COMPRESSION := "compression_failed"
 const STORAGE_COMPRESSED_SIZE_KEY := "compressed_bytes"
 const Z85_ALPHABET := "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ.-:+=^!/*?&<>()[]{}@%$#"
+# The nothreads Web template executes WorkerThreadPool tasks on the calling
+# thread. Keep the exact storage format, but run its byte loops in the browser's
+# JavaScript engine instead of interpreting them once per byte in GDScript/Wasm.
+# Arguments are JSON string literals; no save text is executable source. These
+# functions are local expressions with no global state or persistence access.
+const WEB_Z85_ENCODE := """(function(base64, alphabet) {
+    const source = atob(base64), groups = Math.ceil(source.length / 4);
+    const result = new Array(groups);
+    for (let group = 0; group < groups; group++) {
+        let value = 0;
+        for (let offset = 0; offset < 4; offset++) {
+            const index = group * 4 + offset;
+            value = value * 256 + (index < source.length ? source.charCodeAt(index) : 0);
+        }
+        const digits = new Array(5);
+        for (let digit = 4; digit >= 0; digit--) {
+            digits[digit] = alphabet[value % 85];
+            value = Math.floor(value / 85);
+        }
+        result[group] = digits.join('');
+    }
+    return result.join('');
+})"""
+const WEB_Z85_DECODE := """(function(source, expectedSize, alphabet) {
+    if (!source.length || source.length % 5 || expectedSize <= 0 || expectedSize > source.length / 5 * 4) return null;
+    const digits = new Int16Array(256); digits.fill(-1);
+    for (let i = 0; i < alphabet.length; i++) digits[alphabet.charCodeAt(i)] = i;
+    const result = new Uint8Array(expectedSize);
+    for (let group = 0; group < source.length / 5; group++) {
+        let value = 0;
+        for (let digit = 0; digit < 5; digit++) {
+            const code = source.charCodeAt(group * 5 + digit);
+            if (code > 255 || digits[code] < 0) return null;
+            value = value * 85 + digits[code];
+        }
+        for (let offset = 0; offset < 4; offset++) result[group * 4 + offset] = (value >>> ((3 - offset) * 8)) & 255;
+    }
+    return result;
+})"""
 const SEEDED_SCENARIO_DEFINITIONS_KEY := "seeded_scenario_definitions_by_node"
 const SCENARIO_DEFINITION_REF_KEY := "__bth_scenario_definition_ref"
 const SCENARIO_DEFINITION_PATCH_KEY := "p"
@@ -277,6 +316,17 @@ static func _sha256(bytes: PackedByteArray) -> String:
 static func _z85_encode(source: PackedByteArray) -> String:
 	if source.is_empty():
 		return ""
+	if OS.has_feature("web") and Thread.is_main_thread():
+		var fast: Variant = JavaScriptBridge.eval(WEB_Z85_ENCODE + "(" + JSON.stringify(Marshalls.raw_to_base64(source)) + "," + JSON.stringify(Z85_ALPHABET) + ")")
+		if typeof(fast) == TYPE_STRING and (fast as String).length() == int(ceil(float(source.size()) / 4.0)) * 5:
+			return fast as String
+	# Native builds and unavailable browser bridges retain the original codec.
+	return _z85_encode_gdscript(source)
+
+
+static func _z85_encode_gdscript(source: PackedByteArray) -> String:
+	if source.is_empty():
+		return ""
 	var alphabet := Z85_ALPHABET.to_ascii_buffer()
 	var group_count := int(ceil(float(source.size()) / 4.0))
 	var encoded := PackedByteArray()
@@ -293,6 +343,16 @@ static func _z85_encode(source: PackedByteArray) -> String:
 
 
 static func _z85_decode(encoded_text: String, expected_size: int) -> PackedByteArray:
+	if OS.has_feature("web") and Thread.is_main_thread():
+		var fast: Variant = JavaScriptBridge.eval(WEB_Z85_DECODE + "(" + JSON.stringify(encoded_text) + "," + str(expected_size) + "," + JSON.stringify(Z85_ALPHABET) + ")")
+		if typeof(fast) == TYPE_PACKED_BYTE_ARRAY and (fast as PackedByteArray).size() == expected_size:
+			return fast as PackedByteArray
+	# All storage envelope, decompression and content-hash checks stay at their
+	# existing boundaries. A missing/failed bridge does not weaken validation.
+	return _z85_decode_gdscript(encoded_text, expected_size)
+
+
+static func _z85_decode_gdscript(encoded_text: String, expected_size: int) -> PackedByteArray:
 	var encoded := encoded_text.to_ascii_buffer()
 	if encoded.is_empty() or encoded.size() % 5 != 0 or expected_size <= 0:
 		return PackedByteArray()
@@ -339,6 +399,27 @@ static func _encode_value(value: Variant, registry: Dictionary, fingerprints: Di
 		for index in range(source_array.size()):
 			encoded_array.append(_encode_value(source_array[index], registry, fingerprints, inside_environment))
 		return encoded_array
+	if typeof(value) >= TYPE_PACKED_BYTE_ARRAY:
+		return value.duplicate()
+	return value
+
+
+static func _owned_encoded_leaf(value: Variant) -> Variant:
+	# Dictionary.duplicate(true) does not detach packed-array leaves. The encoded
+	# generation may outlive this frame, so own these mutable buffers as well.
+	match typeof(value):
+		TYPE_DICTIONARY:
+			var owned: Dictionary = {}
+			for key in value:
+				owned[key] = _owned_encoded_leaf(value[key])
+			return owned
+		TYPE_ARRAY:
+			var owned: Array = []
+			for entry in value:
+				owned.append(_owned_encoded_leaf(entry))
+			return owned
+		TYPE_PACKED_BYTE_ARRAY, TYPE_PACKED_INT32_ARRAY, TYPE_PACKED_INT64_ARRAY, TYPE_PACKED_FLOAT32_ARRAY, TYPE_PACKED_FLOAT64_ARRAY, TYPE_PACKED_STRING_ARRAY, TYPE_PACKED_VECTOR2_ARRAY, TYPE_PACKED_VECTOR3_ARRAY, TYPE_PACKED_COLOR_ARRAY, TYPE_PACKED_VECTOR4_ARRAY:
+			return value.duplicate()
 	return value
 
 
@@ -435,7 +516,7 @@ static func _encode_seeded_scenario_definitions(source: Dictionary) -> Dictionar
 		var node_id := str(node_id_value)
 		var definition_value: Variant = source.get(node_id_value)
 		if typeof(definition_value) != TYPE_DICTIONARY:
-			result[node_id_value] = definition_value
+			result[node_id_value] = _owned_encoded_leaf(definition_value)
 			continue
 		var definition: Dictionary = definition_value
 		var scenario_id := str(definition.get("id", "")).strip_edges()
@@ -541,6 +622,8 @@ static func _encode_exact_integers(value: Variant) -> Variant:
 		for entry_value in value as Array:
 			result.append(_encode_exact_integers(entry_value))
 		return result
+	if typeof(value) >= TYPE_PACKED_BYTE_ARRAY:
+		return value.duplicate()
 	return value
 
 
