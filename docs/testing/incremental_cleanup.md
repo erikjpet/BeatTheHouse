@@ -1402,6 +1402,38 @@ compared with baseline. Coverage is 254 targeted source/contract reviews,
 1,173 static screens and 2,272 role classifications across 3,699 paths. The
 comprehensive audit and batch45 watcher recovery remain unfinished.
 
+## Batch 52: read item-offer inputs without a deep copy
+
+`RunActionService.item_offer_view_list` only reads scalar fields from each
+environment offer before building new presentation rows. Borrow the synchronous
+Array locally instead of deep-copying the complete offer tree. Non-Array values
+still produce no ordinary offers, and non-Dictionary entries are still skipped.
+Item contexts, attribute badges, Cage shelf outputs and the owning `item_offer`
+API retain their existing detachment. Every other function is unchanged,
+including prices, challenge filters, transaction candidates, money reservation,
+revalidation and physical membership checks. No elapsed-time gain is claimed.
+
+Native comparison against exact 93c8f9d6 passed 828 complete ordered lists /5,196
+rows, all 89 authored items, seven authored environment pools, malformed input
+collections, repeated source aliases, price/pickup overrides, selection,
+challenge group choices, bankroll states and sold/unsold Cage stock. Complete
+outputs matched; source environment, challenge, inventory, catalog and RNG
+seed/state bytes stayed unchanged. Mutating returned names and nested badges
+did not change later outputs or source data. Required no-pointer animation
+liveness passed. Both private muted Jobs exited0 naturally, reader EOF/Job0,
+without forced cleanup. Independent 10:02:28 UTC census confirmed both PIDs
+absent; `offer-view-native-closure.json` retains the exact proof. No browser
+journey or new old-save migration claim is made by this view comparison.
+
+Completed the full 2,501-line service read: preserve ordinary/Cage currency
+separation, atomic candidate/revalidation boundaries, portable-ticket exactly-once
+cashout, inventory view caching, pawn collateral quotes, repeat-loan terms,
+reserved-bankroll credit, jazz reward RNG and action/clock rules. The physical
+finalizer ownership lane remains unchanged. Coverage is 255 targeted
+source/contract reviews, 1,172 static screens and 2,272 role classifications
+across 3,699 paths. Screening and classification do not complete the remaining
+semantic audit.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
@@ -1530,3 +1562,24 @@ archive files, NEXT redirect and WASM MIME types. Archive SHA-256:
 Stable remained 0.6.0; retention reported no error. Exact proof was delivered
 to the performance owner. The fresh-player-owner handoff returned a transport
 error, so its delivery is uncertain; no duplicate message or runtime was started.
+
+Batch45's first export stopped on the unchanged observed15% CPU guard and
+retained verified NEXT158718. After independent process closure, the documented
+existing launcher recovered that watcher once without changing its12%/2GiB
+Job or15% observed guard. NEXTde037dbb promoted09:51:54 UTC; all15 archive/HTTPS
+files and the final pointer matched. Archive SHA-256:
+`8e0c5b7f786d558d79ed1e96d6fc8ad20de57eeeb65946b062713558b6519741`.
+Independent09:52:53 UTC census confirmed root16096/allnewGodot absent.
+
+Batches46–51 were then pushed as six separate tested commits, preserving all
+upstream SaveService/menu fixes. NEXT promoted
+`93c8f9d64eb2b2afb84d46b73130d0bbdb6410d8`, tree
+`7367b8adf5674b04077a366c8232f1aef53e143a`, at10:00:02 UTC. All15 served files
+matched the archive over trusted HTTPS at10:00:24, with dev redirect, WASM MIME,
+stable0.6.0 and final unchanged pointer verified. Archive SHA-256:
+`16f29ca14b9797451e34058866909faf4547d0abd513f1e30b91e8e185b2783c`.
+Independent10:00:21 UTC census confirmed root42144/allnewGodot absent; existing
+capped guardian40948/watcher43120 remained intentionally active and error-free.
+Retention completed without error. Actual push and release handoffs returned
+the thread transport's AbsolutePathBuf error, so delivery is uncertain. No
+duplicate watcher, export, browser or retry loop was started.

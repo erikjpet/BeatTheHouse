@@ -67,7 +67,9 @@ func item_offer_view_list(selected_item_id: String = "") -> Array:
 	if not is_ready():
 		return []
 	var offers: Array = []
-	for offer in JsonCoerceScript._copy_array(run_state.current_environment.get("item_offers", [])):
+	var item_offers_value: Variant = run_state.current_environment.get("item_offers", [])
+	var item_offers: Array = item_offers_value if typeof(item_offers_value) == TYPE_ARRAY else []
+	for offer in item_offers:
 		if typeof(offer) != TYPE_DICTIONARY:
 			continue
 		var offer_data := offer as Dictionary
