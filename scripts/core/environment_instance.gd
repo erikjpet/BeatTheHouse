@@ -1464,11 +1464,15 @@ static func _game_hook_layout_entries(environment_data: Dictionary) -> Array:
 			if object_id.is_empty():
 				var dialogue_id := str(hook_data.get("dialogue_id", "")).strip_edges()
 				object_id = "dialogue:%s" % dialogue_id if not dialogue_id.is_empty() else "game_hook:%s:%s" % [game_id, hook_id]
+			# This machine-owned person can arrive after the immutable scenario
+			# baseline is sealed. Keep normal physical slot/manifest validation while
+			# classifying only this exact hook as a live runtime projection.
+			var runtime_scalper: bool = game_id == "scratch_tickets" and hook_id == "scratch_ticket_scalper"
 			result.append({
 				"object_id": object_id,
 				"object_type": "game_hook",
 				"index": result.size(),
-				"spot_field": "game_hook_spots",
+				"spot_field": "runtime_object_manifest_entries" if runtime_scalper else "game_hook_spots",
 				"unique_object_class": unique_object_class,
 				"unique_object_priority": 121 if hook_id == "scratch_ticket_clerk" else int(hook_data.get("unique_object_priority", 0)),
 				"allow_duplicate_unique_class": bool(hook_data.get("allow_duplicate_unique_class", false)),

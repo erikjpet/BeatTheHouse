@@ -33,6 +33,8 @@ const CrewWorldSequenceAdapterScript := preload("res://scripts/core/crew_world_s
 const WorldSequencePackageCatalogScript := preload("res://scripts/core/world_sequence_package_catalog.gd")
 const EnvironmentBaseSemanticRecordsScript := preload("res://scripts/core/environment_base_semantic_records.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
+const EnvironmentObjectManifestScript := preload("res://scripts/core/environment_object_manifest.gd")
+const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
 const ScenarioLayoutResolverScript := preload("res://scripts/core/scenario_layout_resolver.gd")
 const ArtContractsScript := preload("res://scripts/core/art_contracts.gd")
@@ -67,6 +69,7 @@ const SCENARIO_DERIVED_NONCAUSAL_ENVIRONMENT_FIELDS := [
 	"scenario_render_snapshot",
 	"scenario_live_producer_projection",
 	"scenario_restore_pending_trusted_rebuild",
+	"_scratch_scalper_legacy_rejection_errors",
 ]
 
 const DEFAULT_BANKROLL := 100
@@ -1503,6 +1506,8 @@ func _set_current_home_containers(containers: Array) -> void:
 # not otherwise rebuild layout. Selection arrays stay authoritative; the
 # manifest is a deterministic projection and consumes no RNG.
 func reconcile_current_environment_object_manifest(refresh_layout: bool = false) -> Dictionary:
+	if not _scratch_scalper_legacy_rejection_errors(current_environment).is_empty():
+		return JsonCoerceScript._copy_dict(current_environment.get("object_manifest", {}))
 	if current_environment.is_empty():
 		return {}
 	_sync_all_runtime_object_manifest_entries(current_environment)
@@ -1518,6 +1523,9 @@ func reconcile_current_environment_object_manifest(refresh_layout: bool = false)
 # published or a room snapshot is persisted; a manifest without the matching
 # slot bindings is not a complete room state.
 func reconcile_environment_object_membership(environment: Dictionary) -> Dictionary:
+	var legacy_rejection := _scratch_scalper_legacy_rejection_errors(environment)
+	if not legacy_rejection.is_empty():
+		return {"ok": false, "errors": legacy_rejection, "manifest": JsonCoerceScript._copy_dict(environment.get("object_manifest", {}))}
 	if environment.is_empty():
 		return {"ok": false, "errors": ["Environment membership reconciliation requires an environment."], "manifest": {}}
 	_sync_all_runtime_object_manifest_entries(environment)
@@ -1814,6 +1822,12 @@ func _sync_all_runtime_object_manifest_entries(environment: Dictionary) -> bool:
 			var presentation_id := str(entry.get("presentation_object_id", entry.get("object_id", ""))).strip_edges()
 			if not presentation_id.is_empty() and baseline_rects.erase(presentation_id):
 				repaired = true
+		# The scratch machine directly projects its one visit-scoped person, so
+		# it need not have a row in the separate RunState owner array. Remove the
+		# known runtime hint even after departure, when no live row remains. An
+		# older immutable seal is reconstructed separately against its exact digest.
+		if _scratch_scalper_environment(environment) and baseline_rects.erase("dialogue:scratch_ticket_scalper"):
+			repaired = true
 		if repaired:
 			environment["scenario_sequence_base_layout_object_rects"] = baseline_rects
 			changed = true
@@ -3309,6 +3323,9 @@ func world_sequence_finalize_base_semantics(interactable_records: Array, library
 
 
 func scenario_finalize_installed_environment(library: ContentLibrary, layout_context: Dictionary = {}) -> Dictionary:
+	var legacy_rejection := _scratch_scalper_legacy_rejection_errors(current_environment)
+	if not legacy_rejection.is_empty():
+		return {"ok": false, "inactive": false, "errors": legacy_rejection}
 	# Environment practice is the authoring/repair surface. UI refreshes rebuild
 	# their own layout context, so derive this permission from the installed room
 	# marker on every pass instead of relying on one generator call to carry it.
@@ -3476,6 +3493,12 @@ func _scenario_authoritative_environment_for_finalization(definition: Dictionary
 			# The semantic inventory reads this baseline hint as well as layout.
 			# Own the reconstructed proof copy; leave the saved hint untouched.
 			result["scenario_sequence_base_layout_object_rects"] = reconciled_rects.duplicate(true)
+	# A machine-owned scalper is live geometry. Reconstruct a historical seal
+	# separately below when its original digest requires that person's presence.
+	if _scratch_scalper_environment(result) and result.has("scenario_sequence_base_layout_object_rects"):
+		var scratch_baseline := JsonCoerceScript._copy_dict(result.get("scenario_sequence_base_layout_object_rects", {}))
+		scratch_baseline.erase("dialogue:scratch_ticket_scalper")
+		result["scenario_sequence_base_layout_object_rects"] = scratch_baseline
 	# Generated layouts originate in Vector2/Rect2 float32 components, while a
 	# JSON save restores scalar floats. Canonicalize through the actual persistent
 	# representation before deriving pixel hit bounds so a same-build rebuild is
@@ -3586,6 +3609,9 @@ func scenario_finalize_base_semantics(interactable_records: Array, library: Cont
 
 
 func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: ContentLibrary, layout_context: Dictionary = {}) -> Dictionary:
+	var legacy_rejection := _scratch_scalper_legacy_rejection_errors(current_environment)
+	if not legacy_rejection.is_empty():
+		return {"ok": false, "inactive": false, "errors": legacy_rejection}
 	_ensure_scenario_host_public_context()
 	var definition := _scenario_sequence_definition_readonly()
 	if not ScenarioSequenceSchemaScript.is_sequence(definition): return {"ok": true, "inactive": true, "errors": []}
@@ -3655,7 +3681,8 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	# provenance equality before doing the same.
 	var terminal_refresh := refresh_attempt and _scenario_terminal_semantic_refresh(definition)
 	var refresh_source_match := _scenario_refresh_source_matches_prior(JsonCoerceScript._copy_dict(prior_sealed.get("source_provenance", {})), JsonCoerceScript._copy_dict(sealed.get("source_provenance", {}))) if valid_prior_identity else false
-	if valid_prior_identity and (terminal_refresh or refresh_source_match):
+	var legacy_scratch_source_match := valid_prior_identity and _scenario_scratch_scalper_prior_source_matches(prior_sealed, sealed)
+	if valid_prior_identity and (terminal_refresh or refresh_source_match or legacy_scratch_source_match):
 		sealed = prior_sealed
 	var inventory_errors := EnvironmentSemanticInventoryScript.validate(sealed)
 	if not inventory_errors.is_empty(): return _scenario_semantic_finalization_failure(inventory_errors, refresh_attempt)
@@ -3793,6 +3820,191 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	return _finalized_scenario_layout_result(false, next_digest, JsonCoerceScript._copy_dict(reentry.get("state", {})), stamped_records, candidate_layout)
 
 
+# Add alongside the existing Environment*Script constants in run_state.gd.
+# const EnvironmentObjectManifestScript := preload("res://scripts/core/environment_object_manifest.gd")
+# const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
+
+static func _scratch_scalper_legacy_rejection_errors(environment: Dictionary) -> Array:
+	return JsonCoerceScript._copy_array(environment.get("_scratch_scalper_legacy_rejection_errors", []))
+
+
+static func _scratch_scalper_environment(environment: Dictionary) -> bool:
+	return str(environment.get("archetype_id", "")) == "gas_station_casino" \
+			and JsonCoerceScript._copy_array(environment.get("game_ids", [])).has("scratch_tickets")
+
+
+static func _scratch_scalper_legacy_physical_entries(environment: Dictionary, surface_map: Dictionary) -> Array:
+	var entries := EnvironmentInstance._physical_manifest_layout_entries(environment, surface_map)
+	for entry_value in entries:
+		var entry: Dictionary = entry_value
+		if str(entry.get("object_id", "")) == "dialogue:scratch_ticket_scalper" \
+				and str(entry.get("object_type", "")) == "game_hook":
+			entry["spot_field"] = "game_hook_spots"
+	return entries
+
+
+static func _scratch_scalper_retagged_manifest(environment: Dictionary, entries: Array, surface_map: Dictionary, spot_field: String) -> Dictionary:
+	var manifest := EnvironmentObjectManifestScript.normalize_persisted(environment.get("object_manifest", {}))
+	var found := false
+	var rows := JsonCoerceScript._copy_array(manifest.get("rows", []))
+	for row_value in rows:
+		var row: Dictionary = row_value
+		if str(row.get("presentation_object_id", row.get("object_id", ""))) == "dialogue:scratch_ticket_scalper":
+			if found or str(row.get("object_type", "")) != "game_hook":
+				return {}
+			row["spot_field"] = spot_field
+			found = true
+	if not found:
+		return {}
+	manifest["rows"] = rows
+	manifest["source_digest"] = EnvironmentObjectManifestScript._source_digest(environment, entries, surface_map)
+	manifest["revision"] = maxi(1, int(manifest.get("revision", 0)) + 1)
+	manifest["digest"] = EnvironmentObjectManifestScript.digest(manifest)
+	var canonical := EnvironmentObjectManifestScript.reconcile(environment, entries, surface_map, manifest)
+	# This seam can change only the one classified row and envelope hashes. All
+	# scenario rows and all other base rows must remain exact authenticated bytes.
+	if JsonCoerceScript._copy_array(canonical.get("rows", [])) != JsonCoerceScript._copy_array(manifest.get("rows", [])):
+		return {}
+	return canonical
+
+
+# Authenticate the old physical envelope before any generic layout normalizer
+# can replace it. A rejection must remain fail-closed through finalization.
+static func _migrate_legacy_scratch_scalper_manifest(environment: Dictionary) -> Dictionary:
+	if not _scratch_scalper_environment(environment):
+		return {"ok": true, "applied": false, "errors": []}
+	# Match the existing lossless JSON integer boundary without regenerating a
+	# digest, source row, slot, or rectangle before the raw proof is checked.
+	var manifest := EnvironmentObjectManifestScript.normalize_persisted(environment.get("object_manifest", {}))
+	var legacy_row_present := false
+	for row_value in JsonCoerceScript._copy_array(manifest.get("rows", [])):
+		var row := JsonCoerceScript._copy_dict(row_value)
+		if str(row.get("presentation_object_id", row.get("object_id", ""))) == "dialogue:scratch_ticket_scalper" \
+				and str(row.get("spot_field", "")) != "runtime_object_manifest_entries":
+			legacy_row_present = true
+	if not legacy_row_present:
+		return {"ok": true, "applied": false, "errors": []}
+	var surface_map := EnvironmentPlacementScript.surface_map(environment)
+	var legacy_entries := _scratch_scalper_legacy_physical_entries(environment, surface_map)
+	var errors := EnvironmentObjectManifestScript.validate_for_environment(manifest, environment, legacy_entries, surface_map)
+	if str(environment.get("object_manifest_digest", "")) != str(manifest.get("digest", "")):
+		errors.append("Legacy scratch scalper manifest digest mirror is stale.")
+	if int(environment.get("object_manifest_revision", 0)) != int(manifest.get("revision", 0)):
+		errors.append("Legacy scratch scalper manifest revision mirror is stale.")
+	var legacy_slot_environment := environment.duplicate(false)
+	legacy_slot_environment["object_manifest"] = manifest
+	var slot_proof := EnvironmentSlotBinderScript.validate_base_layout_authority(legacy_slot_environment)
+	if not bool(slot_proof.get("ok", false)):
+		errors.append_array(JsonCoerceScript._copy_array(slot_proof.get("errors", [])))
+	if not errors.is_empty():
+		return {"ok": false, "applied": false, "errors": errors}
+	var entries := EnvironmentInstance._physical_manifest_layout_entries(environment, surface_map)
+	var migrated := _scratch_scalper_retagged_manifest(environment, entries, surface_map, "runtime_object_manifest_entries")
+	if migrated.is_empty():
+		return {"ok": false, "applied": false, "errors": ["Legacy scratch scalper classification is not an exact one-row migration."]}
+	var migrated_environment := environment.duplicate(false)
+	migrated_environment["object_manifest"] = migrated
+	migrated_environment["object_manifest_digest"] = str(migrated.get("digest", ""))
+	migrated_environment["object_manifest_revision"] = int(migrated.get("revision", 0))
+	var migrated_errors := EnvironmentInstance.object_manifest_errors(migrated_environment)
+	if not migrated_errors.is_empty():
+		return {"ok": false, "applied": false, "errors": migrated_errors}
+	for field in ["object_manifest", "object_manifest_digest", "object_manifest_revision"]:
+		environment[field] = migrated_environment[field]
+	return {"ok": true, "applied": true, "errors": []}
+
+
+# Reconstruct historical immutable presence only on an owned proof envelope.
+# The sole acceptance criterion is the original complete inventory reference;
+# the live machine, payout state and causal journal are never changed here.
+func _scenario_reconstruct_legacy_scratch_scalper_inventory(semantic_environment: Dictionary, library: ContentLibrary, interactions: Array, actors: Array, expected_version: int, expected_digest: String) -> Dictionary:
+	if not _scratch_scalper_environment(semantic_environment) or expected_version <= 0 or not JsonCoerceScript._valid_sha256(expected_digest):
+		return {}
+	var legacy := semantic_environment.duplicate(true)
+	var states := JsonCoerceScript._copy_dict(legacy.get("game_states", {}))
+	var machine := JsonCoerceScript._copy_dict(states.get("scratch_tickets", {}))
+	if machine.is_empty():
+		return {}
+	machine["scalper_present"] = true
+	states["scratch_tickets"] = machine
+	legacy["game_states"] = states
+	legacy["layout"] = EnvironmentInstance.ensure_generated_layout(legacy, library)
+	if not EnvironmentInstance.object_manifest_errors(legacy).is_empty():
+		return {}
+	var slot_proof := EnvironmentSlotBinderScript.validate_base_layout_authority(legacy)
+	if not bool(slot_proof.get("ok", false)):
+		return {}
+	var layout := JsonCoerceScript._copy_dict(legacy.get("layout", {}))
+	var canonical_rects: Variant = JSON.parse_string(JSON.stringify(JsonCoerceScript._copy_dict(layout.get("object_rects", {}))))
+	if typeof(canonical_rects) == TYPE_DICTIONARY:
+		layout["object_rects"] = canonical_rects
+		legacy["layout"] = layout
+	var rects := JsonCoerceScript._copy_dict(layout.get("object_rects", {}))
+	var binding := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(layout.get("slot_bindings", {})).get("dialogue:scratch_ticket_scalper", {}))
+	if str(binding.get("presentation_mode", "")) != "room" or not rects.has("dialogue:scratch_ticket_scalper"):
+		return {}
+	var baseline := JsonCoerceScript._copy_dict(legacy.get("scenario_sequence_base_layout_object_rects", rects))
+	baseline["dialogue:scratch_ticket_scalper"] = JsonCoerceScript._copy_dict(rects.get("dialogue:scratch_ticket_scalper", {}))
+	legacy["scenario_sequence_base_layout_object_rects"] = baseline
+	var surface_map := EnvironmentPlacementScript.surface_map(legacy)
+	var entries := _scratch_scalper_legacy_physical_entries(legacy, surface_map)
+	var manifest := _scratch_scalper_retagged_manifest(legacy, entries, surface_map, "game_hook_spots")
+	if manifest.is_empty():
+		return {}
+	legacy["object_manifest"] = manifest
+	legacy["object_manifest_digest"] = str(manifest.get("digest", ""))
+	legacy["object_manifest_revision"] = int(manifest.get("revision", 0))
+	if not EnvironmentObjectManifestScript.validate_for_environment(manifest, legacy, entries, surface_map).is_empty():
+		return {}
+	var reconstructed := EnvironmentSemanticInventoryScript.for_instance(legacy, library, interactions, actors)
+	if EnvironmentSemanticInventoryScript.validate(reconstructed).is_empty() \
+			and int(reconstructed.get("schema_version", 0)) == expected_version \
+			and str(reconstructed.get("digest", "")) == expected_digest:
+		return reconstructed
+	return {}
+
+
+func _scenario_scratch_scalper_prior_source_matches(prior_inventory: Dictionary, next_inventory: Dictionary) -> bool:
+	if not _scratch_scalper_environment(current_environment) \
+			or not EnvironmentSemanticInventoryScript.validate(prior_inventory).is_empty() \
+			or not EnvironmentSemanticInventoryScript.validate(next_inventory).is_empty() \
+			or int(prior_inventory.get("schema_version", 0)) != int(current_environment.get("scenario_semantic_inventory_version", 0)) \
+			or str(prior_inventory.get("digest", "")) != str(current_environment.get("scenario_semantic_digest", "")):
+		return false
+	var prior_source := JsonCoerceScript._copy_dict(prior_inventory.get("source_provenance", {})).duplicate(true)
+	var next_source := JsonCoerceScript._copy_dict(next_inventory.get("source_provenance", {})).duplicate(true)
+	var prior_authority := JsonCoerceScript._copy_dict(prior_source.get("object_manifest_authority", {}))
+	var next_authority := JsonCoerceScript._copy_dict(next_source.get("object_manifest_authority", {}))
+	var retained_rows: Array = []
+	var removed := false
+	for row_value in JsonCoerceScript._copy_array(prior_authority.get("rows", [])):
+		var row := JsonCoerceScript._copy_dict(row_value)
+		if str(row.get("presentation_object_id", "")) == "dialogue:scratch_ticket_scalper":
+			if removed or str(row.get("source_field", "")) != "game_states.environment_hooks" \
+					or str(row.get("source_id", "")) != "scratch_ticket_scalper" \
+					or not bool(row.get("active", false)) or not bool(row.get("physical", false)):
+				return false
+			removed = true
+		else:
+			retained_rows.append(row)
+	if not removed:
+		return false
+	for row_value in JsonCoerceScript._copy_array(next_authority.get("rows", [])):
+		if str(JsonCoerceScript._copy_dict(row_value).get("presentation_object_id", "")) == "dialogue:scratch_ticket_scalper":
+			return false
+	prior_authority["rows"] = retained_rows
+	# Both containing inventories were fully validated above. Compare all closed
+	# authority fields after removing only the separately authenticated actor.
+	prior_authority.erase("digest")
+	next_authority.erase("digest")
+	prior_source["object_manifest_authority"] = prior_authority
+	next_source["object_manifest_authority"] = next_authority
+	var prior_rects := JsonCoerceScript._copy_dict(prior_source.get("layout_object_rects", {}))
+	prior_rects.erase("dialogue:scratch_ticket_scalper")
+	prior_source["layout_object_rects"] = prior_rects
+	return prior_source == next_source
+
+
 func _scenario_prior_sealed_inventory_for_current_layer(newly_sealed: Dictionary, semantic_environment: Dictionary, library: ContentLibrary, interactions: Array, actors: Array) -> Dictionary:
 	var top_level := JsonCoerceScript._copy_dict(current_environment.get("scenario_semantic_inventory", {}))
 	if not top_level.is_empty():
@@ -3807,6 +4019,9 @@ func _scenario_prior_sealed_inventory_for_current_layer(newly_sealed: Dictionary
 		return {}
 	if int(newly_sealed.get("schema_version", 0)) == expected_version and str(newly_sealed.get("digest", "")) == expected_digest:
 		return newly_sealed
+	var legacy_scratch_inventory := _scenario_reconstruct_legacy_scratch_scalper_inventory(semantic_environment, library, interactions, actors, expected_version, expected_digest)
+	if not legacy_scratch_inventory.is_empty():
+		return legacy_scratch_inventory
 	# A save-shaped restore may coincide with an authorized delivery/Numbers
 	# producer becoming visible. Rebuild the prior immutable seal by excluding
 	# only those explicitly enumerated unconsumed producers and their paired hit
@@ -4262,6 +4477,8 @@ func scenario_reject_layout_projection(errors_value: Array, layout_audit: Dictio
 
 
 func _scenario_semantic_ready() -> bool:
+	if not _scratch_scalper_legacy_rejection_errors(current_environment).is_empty():
+		return false
 	if bool(current_environment.get("scenario_restore_pending_trusted_rebuild", false)): return false
 	if str(current_environment.get("scenario_restore_contract", "")) != ENV06_6B_SEMANTIC_RESTORE_EQUIVALENCE_V1: return false
 	if not bool(current_environment.get("scenario_semantic_ready", false)): return false
@@ -16082,6 +16299,15 @@ static func _normalize_environment(data: Dictionary) -> Dictionary:
 	if data.is_empty():
 		return {}
 	var environment := data.duplicate(true)
+	# This marker is a fresh process-local rejection, never a saved authority or
+	# a policy switch. Authenticate original legacy bytes before any rebuild.
+	environment.erase("_scratch_scalper_legacy_rejection_errors")
+	var legacy_scratch_migration := _migrate_legacy_scratch_scalper_manifest(environment)
+	if not bool(legacy_scratch_migration.get("ok", false)):
+		var rejection := JsonCoerceScript._copy_array(legacy_scratch_migration.get("errors", []))
+		environment["_scratch_scalper_legacy_rejection_errors"] = rejection
+		environment["scenario_sequence_lifecycle_errors"] = rejection.duplicate(true)
+		return environment
 	if environment.has("scenario_semantic_inventory_version"):
 		var inventory_version_value: Variant = environment.get("scenario_semantic_inventory_version")
 		if typeof(inventory_version_value) == TYPE_FLOAT and is_finite(float(inventory_version_value)) and is_equal_approx(float(inventory_version_value), floor(float(inventory_version_value))):
