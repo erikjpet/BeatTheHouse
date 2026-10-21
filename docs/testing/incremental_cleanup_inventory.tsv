@@ -622,7 +622,7 @@ data/environments/scenario_sequences/env06_7_underground_lounge.json	data/enviro
 data/environments/scenario_slot_layouts.json	data/environments	authored	static-screen	reviewed	S1	c321957b67a1d12b3fcf546ea09e2d04dd647cc9	1312807	37126
 data/environments/scenarios.json	data/environments	authored	static-screen	reviewed	S1	b23ce7ddf0b8144086cc4549a0c90d5981c2108f	58719	923
 data/events/events.json	data/events	authored	static-screen	reviewed	S1	f9275650a87916db862a1fe3e4977799eb168f28	203816	4747
-data/games/bar_dice_game_ritual_v1.json	data/games	authored	static-screen	reviewed	S1	d69802c81e833987ddeed9a62c47520d58b3202a	17614	71
+data/games/bar_dice_game_ritual_v1.json	data/games	authored	source-review	no-change	M:batch58-full-frozen-seven-phase-actions-declarations-pointer-equivalence-44px-targets-scene-actors-energy-public-facts-persistence-and-handler-authority-contract-retained	d69802c81e833987ddeed9a62c47520d58b3202a	17614	71
 data/games/games.json	data/games	authored	static-screen	reviewed	S1	20d3c76ae196942415bcf4f9917198d5d54096ec	111966	4202
 data/games/rituals/craps06_3_environment_bindings.json	data/games	authored	source-review	no-change	M:batch48-full-five-profiles-exact-fund-domains-public-facts-registered-actor-route-operation-targets-and-required-inventory-retained	7b656703e6e318feb772b9ac9ede3270a5915c83	3709	61
 data/games/rituals/craps06_3_sequences.json	data/games	authored	source-review	no-change	M:batch48-full-five-frozen-game-ritual-profiles-phase-transitions-required-actions-facts-and-four-persistence-classes-retained	5976334cc4cbc4ebcca11713bee9b27547595eed	6573	107
@@ -1858,8 +1858,8 @@ docs/screenshots/scratch_ticket_three_state_review/05_bonus_bingo_three_states.p
 docs/screenshots/scratch_ticket_three_state_review/06_high_roller_holdem_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	9ae3f1c0724939aa1acaebf88e3f8524fde714f1	541341	-
 docs/screenshots/scratch_ticket_three_state_review/07_golden_vault_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	258b7cdca507173d7b8c484ed5ed19a531b994fa	474817	-
 docs/screenshots/scratch_ticket_three_state_review/all_scratch_tickets_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	506839b5f67581028469a7a9230deaf8c5a8a3fb	4560788	-
-docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	94def1fe13cd6a73f996d1c4dddbd3add1ab0d06	108515	1713
-docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	da267f1a281bf77874a53764d354a7ef6a187c7f	671210	-
+docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	116278fab38c6a58142fa93daa55d1f02fc595d7	111330	1756
+docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	918e4258da7d8a211c28a879b6f848f73cf6e18f	671808	-
 docs/testing/punchline_debt_court_recovery.md	docs/testing	authored-document	static-screen	reviewed	D1	ccfe341027a53866f18c201f4ef855a2420c2987	3889	64
 docs/testing/scratch_scalper_runtime_compatibility.md	docs/testing	authored-document	static-screen	reviewed	D1	15feb4c3c388e55a67a98bc58efbc003a1fc4261	3581	56
 docs/todo/README_0_6_board.md	docs/todo	authored-document	static-screen	reviewed	D1	2305cca0cdeeba83d3fa8768159758508d775c58	66017	517
@@ -2907,7 +2907,7 @@ scripts/core/user_settings.gd	scripts/core	authored	source-review	no-change	M:ba
 scripts/core/world_map.gd	scripts/core	authored	source-review	fixed	C:batch47	c4fe04ce82d4a7f6ab1f18efbeab0b3a834647fd	94753	2314
 scripts/core/world_sequence_package_catalog.gd	scripts/core	authored	source-review	no-change	M:allowlisted-package-boundary	055bb9b752df5315f95ef5a18f2888cf3fe57fe5	4129	87
 scripts/games/baccarat.gd	scripts/games	authored	source-review	fixed	C:batch9-helper-and-callers-only	7e8187b25d908524bc55f1d688d3fd0464eead70	187936	3982
-scripts/games/bar_dice.gd	scripts/games	authored	source-review	fixed	C:batch57	8c94633f82c7e3ac1f5e76e8ef3f97160e3ce1a5	173291	3769
+scripts/games/bar_dice.gd	scripts/games	authored	source-review	fixed	C:batch57+batch58	8c94633f82c7e3ac1f5e76e8ef3f97160e3ce1a5	173291	3769
 scripts/games/blackjack.gd	scripts/games	authored	source-review	fixed	C:batch9-helper-and-callers-only	5641a636c76ab9a5d06de41f3480767f7bb243c8	461229	8839
 scripts/games/coin_pusher.gd	scripts/games	authored	source-review	fixed	C:batch50	7efcedf526b46d6e60394ca16dccf48f42f3923c	183547	3160
 scripts/games/coin_pusher/coin_pusher_export_parity_input.json	scripts/games	authored	source-review	no-change	M:batch46-full-version3-deterministic-seed-fixed-opening-seven-ordered-trace-events-260tick-native-export-parity-fixture-retained	4f3c5870995d349def3c9646c93c0a2163aa5679	559	16
@@ -3119,7 +3119,7 @@ scripts/tests/foundation/game06_2_depth_contract.gd	scripts/tests	authored	stati
 scripts/tests/foundation/game06_2_repeated_reprieve_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	9337d2b6124a0e90d2143e2416f7ef70a4286f1a	1630	33
 scripts/tests/foundation/game06_3_depth_contract.gd	scripts/tests	authored	source-review	no-change	M:batch55-full-Roulette-Baccarat-phase-restore-neighbor-isolation-exact-stake-commission-accounting-host-marker-forgery-sealed-structural-replay-retry-cancel-and-clock-contract-source-review-only-unchanged	a808fd86a2530e334e0ed23a4b7380b10351a578	43304	610
 scripts/tests/foundation/game06_4_machine_ritual_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	67ef98abb0b72e571096a607731c58a68248aa96	27710	321
-scripts/tests/foundation/game06_6_bar_dice_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	c52cad8a16d793c5eb9a87c98951f087d4de0c1a	24851	380
+scripts/tests/foundation/game06_6_bar_dice_contract.gd	scripts/tests	authored	source-review	no-change	M:batch58-full-seven-phase-receipt-replay-conflict-partial-refused-cover-interruption-ten-seed-noninterference-host-product-funding-identity-rejection-and-unchanged1000ms-liveness-budget-source-review-only	c52cad8a16d793c5eb9a87c98951f087d4de0c1a	24851	380
 scripts/tests/foundation/game06_7_showdown_duel_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	79510cdf6173560f83bec2ca98817a4289fb9d98	29279	457
 scripts/tests/foundation/game_activation_class_guard.gd	scripts/tests	authored	static-screen	reviewed	S1	543825611d4aa00c5e5031622d332d2e90b4c36c	42446	841
 scripts/tests/foundation/game_ritual_runtime_contract.gd	scripts/tests	authored	source-review	no-change	M:batch22-full-schema-rejection-intent-hostile-proposals-compaction-restore-and-reflection-contract	125e0d20aef8b5136a20b40d3e966b944c546517	16818	227

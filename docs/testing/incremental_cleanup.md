@@ -1575,6 +1575,35 @@ claim is made. Coverage is267 targeted source/contract reviews,1,160 static
 screens and2,272 role classifications across3,699 paths.14 deferrals and2
 separate issues remain; semantic screening is not full audit completion.
 
+## Batch 58: reuse Bar Dice's per-view shake predicates
+
+`surface_state` already calculated the remaining shake count and suggested dice
+for the current selection phase. Reuse those values for `can_shake_again`.
+The two helpers only read the same unchanged inputs; their bodies and every
+other source line remain. No action, phase transition, receipt, funding check,
+reroll policy, RNG draw, payout, clock, heat or animation schedule changes.
+
+Native comparison against exact42171154 passed892 complete surfaces:864
+generated views and28 views from the retained genuine mid0.6 Bar Dice save.
+The matrix covers three seeds, both venue currencies, outcomes, dice hands,
+shake limits, rolled state, reduced motion and every old-save ritual phase.
+Full outputs, input/save bytes and RNG snapshots matched. Passive delegates
+counted1,676 predicate calls before and892 after; this is a work count, not a
+timing claim. Required unchanged no-pointer animation liveness passed. Both
+muted private Jobs exited0 naturally with reader EOF/Job0/no forced cleanup;
+independent10:42:49 UTC census confirmed both PIDs absent. Source and runtime
+proofs are retained in `bar-shake-view-source-proof.json` and
+`bar-shake-view-native-closure.json` in the worker workspace.
+
+Fully reviewed the unchanged Bar Dice ritual projection, seven-phase content
+contract and game06_6 contract. Preserve bounded replay receipts, public-field
+allowlists, partial/refused cover, interruptions, input equivalence, actual
+product funding identity and the existing1,000ms liveness budget. The broader
+contract received source review here; it was not rerun or relaxed. Coverage
+is269 targeted source/contract reviews,1,158 static screens and2,272 role
+classifications across3,699 paths. The14 deferrals and2 separate issues remain;
+the remaining semantic audit is unfinished.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
@@ -1754,3 +1783,14 @@ capped guardian40948/watcher43120 and retention hook remained error-free.
 The actual-release thread handoff again returned AbsolutePathBuf, so delivery
 is uncertain. Exact receipts are preserved; no duplicate watcher/export or
 guard change was made.
+
+Batch57 promoted as`4217115437556f2afbc068010edad31db2be1e6d`, tree
+`54bc8d95515a5efb14a62529983e314eb676b0c3`, at10:36:36 UTC. All15 archive files
+matched trusted HTTPS, dev redirect, WASM MIME, stable0.6.0 and the final pointer
+at10:41:27. Archive SHA-256:
+`5a3ad3256650ef5ddc3c08562a8dba84196e36d3eb0be9e26e60f8d9cbc2d16f`.
+Independent10:41:28 census confirmed root18084/allnewGodot absent; existing
+capped guardian40948/watcher43120 and retention hook remained error-free.
+The material parent checkpoint returned thread-not-found, so it was not
+delivered. Exact current receipts are preserved locally; no duplicate build,
+browser or guard change was made.

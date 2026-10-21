@@ -487,7 +487,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"house_scoring_indices": _index_array(opponent_score.get("scoring_indices", [])),
 		"shake_number": int(ui.get("shake_number", 0)) if phase == "select" else 0,
 		"remaining_shakes": remaining_shakes,
-		"can_shake_again": phase == "select" and _remaining_shakes(ui) > 0 and not _suggested_reroll_for_ruleset(player_dice, "ship_captain_crew").is_empty(),
+		"can_shake_again": phase == "select" and remaining_shakes > 0 and not suggested.is_empty(),
 		"loaded_armed": loaded_armed,
 		"palm_armed": palm_armed,
 		"loaded_value": loaded_value,
