@@ -21,7 +21,7 @@ import math
 import random
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Callable, Iterable
+from typing import Callable
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 

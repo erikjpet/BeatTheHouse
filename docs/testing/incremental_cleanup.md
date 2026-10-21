@@ -43,3 +43,17 @@ pipeline, native pin or watcher configuration is changed.
 
 These are tool/fixture checks, not deployed gameplay evidence. Publication and
 the broader coverage inventory are recorded as subsequent batches progress.
+
+## Batch 2: unused generator imports
+
+Remove unused `typing.Iterable` from the legacy scratch-art generator and unused
+`random` from the trailer-card generator. Python AST name-use inspection covered
+all 34 tracked Python files. Both removed bindings have no reads, string lookup,
+star-export consumer or annotation use in their modules. Neither module exports
+an import API; their commands still use the same main functions. The scratch
+generator's live seeded `random` import is retained. No output assets are
+regenerated, and all generator functions/content remain unchanged.
+
+Verification: parse both sources and compare their full AST to the baseline
+after removing only those exact import aliases; identical. This is a source
+equivalence check; it makes no image-rendering or speed claim.
