@@ -1343,6 +1343,36 @@ Coverage is 252 targeted source/contract reviews, 1,175 static screens and
 2,272 role classifications across 3,699 paths. The semantic audit remains
 unfinished; the existing watcher recovery remains a publication dependency.
 
+## Batch 50: remove Coin Pusher's private write-only feature index
+
+`_sync_physical_features` built `desired_feature_ids` alongside the retained
+`desired_features` dictionary. The former has exactly two local occurrences:
+declaration and assignment. It is never read, aliased, passed to a callback,
+exported or returned. Remove those two lines. Keep the actual feature map,
+metadata transfer, existing-body retention, support placement, item identities,
+native-cache reset and every public method and solver call unchanged. Local
+variables have no scene/resource/signal/string-dispatch registration here.
+
+Native baseline comparison passed 96 reconciliations using all three authored
+cabinet definitions and real 40-body opening states. Empty/malformed features,
+duplicate IDs, foreign existing bodies and live/closed sessions produced exact
+complete machine bytes, metadata, ordering, RNG/configuration and repeat-call
+idempotence; 48 feature bodies were actually created. No solver algorithm,
+native source/ABI, payout, RNG draw, schema or saved field was changed. Required
+no-pointer animation liveness passed. Both private 5% CPU/512MiB Jobs closed
+naturally with exit0/reader EOF/Job0 and no forced cleanup; independent
+09:38:12 UTC census confirmed both identities absent. No speedup is claimed.
+
+The complete host review retains generation-bound rollback authority, distinct
+read/live/durable snapshots, deterministic legacy tray migration, untouched
+solver cadence, chunked exit/final-frame handoff, once-only automatic payouts,
+variation-time multipliers, feature ownership and audio event publication.
+Coverage is 253 targeted source/contract reviews, 1,174 static screens and
+2,272 role classifications across 3,699 paths. The same census confirmed the
+stopped watcher tree and all new Godot processes absent. NEXT recovery of
+tested main de037dbb is still pending; batches46-50 are separate tested local
+commits. No replacement watcher, manual export or guard change was started.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

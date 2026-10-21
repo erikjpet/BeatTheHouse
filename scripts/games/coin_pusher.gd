@@ -2468,13 +2468,11 @@ func _sync_physical_features(machine: Dictionary) -> void:
 		return
 	var features := _logical_features(machine)
 	var kind := "rider" if variation_id == "quarter_falls" else "puck" if variation_id == "jackpot_ridge" else "fragment"
-	var desired_feature_ids := {}
 	var desired_features := {}
 	for value in features:
 		if typeof(value) == TYPE_DICTIONARY:
 			var desired_id := str((value as Dictionary).get("id", ""))
 			if not desired_id.is_empty():
-				desired_feature_ids[desired_id] = true
 				desired_features[desired_id] = value
 	# Bodies are authoritative physical pieces once created. Reconciliation may
 	# add a missing ledger-owned body, but it never deletes or repositions one.

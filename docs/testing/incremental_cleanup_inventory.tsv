@@ -1858,8 +1858,8 @@ docs/screenshots/scratch_ticket_three_state_review/05_bonus_bingo_three_states.p
 docs/screenshots/scratch_ticket_three_state_review/06_high_roller_holdem_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	9ae3f1c0724939aa1acaebf88e3f8524fde714f1	541341	-
 docs/screenshots/scratch_ticket_three_state_review/07_golden_vault_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	258b7cdca507173d7b8c484ed5ed19a531b994fa	474817	-
 docs/screenshots/scratch_ticket_three_state_review/all_scratch_tickets_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	506839b5f67581028469a7a9230deaf8c5a8a3fb	4560788	-
-docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	e887c23f5ac30542c743d28fc6173e7e551b0555	90775	1473
-docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	cbc6d714cfce2653cbf84722e28ee4b91acf86f1	670045	-
+docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	0382d391e54142489c533e7b47ee057a1bda1e47	92882	1503
+docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	ddfd9487f25e67b77b6660a9cf7a3a700c2a9409	670412	-
 docs/testing/punchline_debt_court_recovery.md	docs/testing	authored-document	static-screen	reviewed	D1	ccfe341027a53866f18c201f4ef855a2420c2987	3889	64
 docs/testing/scratch_scalper_runtime_compatibility.md	docs/testing	authored-document	static-screen	reviewed	D1	15feb4c3c388e55a67a98bc58efbc003a1fc4261	3581	56
 docs/todo/README_0_6_board.md	docs/todo	authored-document	static-screen	reviewed	D1	2305cca0cdeeba83d3fa8768159758508d775c58	66017	517
@@ -2909,7 +2909,7 @@ scripts/core/world_sequence_package_catalog.gd	scripts/core	authored	source-revi
 scripts/games/baccarat.gd	scripts/games	authored	source-review	fixed	C:batch9-helper-and-callers-only	7e8187b25d908524bc55f1d688d3fd0464eead70	187936	3982
 scripts/games/bar_dice.gd	scripts/games	authored	static-screen	reviewed	S1	8c94633f82c7e3ac1f5e76e8ef3f97160e3ce1a5	173291	3776
 scripts/games/blackjack.gd	scripts/games	authored	source-review	fixed	C:batch9-helper-and-callers-only	5641a636c76ab9a5d06de41f3480767f7bb243c8	461229	8839
-scripts/games/coin_pusher.gd	scripts/games	authored	static-screen	reviewed	S1	7efcedf526b46d6e60394ca16dccf48f42f3923c	183547	3162
+scripts/games/coin_pusher.gd	scripts/games	authored	source-review	fixed	C:batch50	7efcedf526b46d6e60394ca16dccf48f42f3923c	183547	3160
 scripts/games/coin_pusher/coin_pusher_export_parity_input.json	scripts/games	authored	source-review	no-change	M:batch46-full-version3-deterministic-seed-fixed-opening-seven-ordered-trace-events-260tick-native-export-parity-fixture-retained	4f3c5870995d349def3c9646c93c0a2163aa5679	559	16
 scripts/games/coin_pusher/coin_pusher_export_parity_runner.gd	scripts/games	authored	source-review	no-change	M:batch32-full-scene-entry-v3-input-fixed-tick-replay-source-isolation-and-canonical-Web-result-review	b2f06f8e5928568721fc21ad94f25be061b15093	8043	160
 scripts/games/coin_pusher/coin_pusher_export_parity_runner.tscn	scripts/games	authored	source-review	no-change	M:batch46-full-scene-resource-root-script-binding-retained-native-export-parity-entrypoint	8df819f371d754619264a89cf86583d6e81b3374	241	6
