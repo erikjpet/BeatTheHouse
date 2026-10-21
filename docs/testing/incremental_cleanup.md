@@ -4326,3 +4326,19 @@ the single successful existing-configuration retry; its cause is unproven.
 Parallel functional sessions were identified and left untouched, and the
 required animation check waited for actual comparison-process closure. No
 latency improvement or new visual Web/gameplay pass is claimed.
+
+## Batch 168: remove an unreachable save-label fallback
+
+`_save_status_text` already returns for meta sessions and every non-null run.
+Its remaining synchronous save-availability read cannot change Foundation's run
+reference or yield to an input callback. Remove the redundant null guard and
+unreachable old prefix formatting; return the same availability expression.
+That read still occurs once. Keep the function, callers, HUD delegate, formatter,
+save generations, writer and restore behavior unchanged. History confirms the
+early return predates the later HUD-fragment optimization.
+
+Only this changed resource compiled, passing in 7.547 seconds under the existing
+12% CPU / 2 GiB private Job, with natural exit, EOF, Job0 and independent absence.
+No mirrored test or broad save/game suite was added. Renderer, canvas and
+scheduling bodies are exact, so reuse batch 167's focused no-pointer check under
+the development policy. No new Web launch, gameplay or speedup is claimed.

@@ -19683,13 +19683,7 @@ func _save_status_text() -> String:
 			save_status_message,
 			Callable(self, "_player_facing_text")
 		)
-	var availability := "Saved run available" if _has_foundation_save() else "No saved run"
-	if run_state == null:
-		return availability
-	var prefix := save_status_message
-	if prefix.is_empty():
-		prefix = "Current run"
-	return "%s | %s" % [availability, prefix]
+	return "Saved run available" if _has_foundation_save() else "No saved run"
 
 
 func _hud_status_text() -> String:
