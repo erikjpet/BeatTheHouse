@@ -40,7 +40,8 @@ def main() -> int:
         encoded, snr_db = _encode_ima(np.asarray(samples), sample_rate)
         compressed = gzip.compress(encoded, compresslevel=9, mtime=0)
         destination = destination_root / f"{source.stem}.bthadpcm.gz"
-        destination.parent.mkdir(parents=True, exist_ok=True)
+        if not converted:
+            destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_bytes(compressed)
         destination.with_suffix(destination.suffix + ".import").write_text(
             '[remap]\n\nimporter="keep"\n', encoding="utf-8", newline="\n"

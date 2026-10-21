@@ -1913,6 +1913,36 @@ recovery loop, guard change or substitute export was attempted. Main917adf2c
 still awaits exact NEXT promotion; prior verified38aec3ff is retained. Separate
 tested local commits remain preserved for normal integration after recovery.
 
+## Batch 69: avoid repeated procedural-audio output-directory requests
+
+The standalone procedural-music encoder writes every result into the same
+output directory. After the first successful result, reuse that established
+directory instead of repeating `mkdir(parents=True, exist_ok=True)` for every
+file. The existing `converted` result list provides the success boundary, so no
+new state is needed. First creation remains after the same validation/encoding;
+empty inputs still create no output directory, and failed writes still raise
+before a result is appended. The complete Python AST is otherwise identical.
+
+Twelve tiny disposable fixtures use the real unchanged PCM/IMA encoder and
+deterministic gzip path: missing/empty input, one/two files, wrong channel/width/
+rate, zero frames, a valid file followed by invalid input, asset-write and
+sidecar-write failures, and existing output. Compressed bytes, import files,
+reports, partial outputs, error types/messages and input hashes match the exact
+394ed85d baseline. Two-file cases request the directory twice before and once
+after; the full fixture set counts eight versus six requests. No latency claim
+is made. Fixtures use the existing bundled Python/NumPy and small task-local WAVs;
+no installation, Godot, browser, export or authored-asset regeneration was used.
+
+Fourteen full source reviews cover the encoder and retained menu/report,
+packaging/native-identity, scoped-telemetry, export-mode, visual/seed launcher,
+feature-music and action-diagnostic tools/tests. Their existing assertions,
+compatibility switches, skips, error handling and protected native guard inputs
+remain unchanged; source review is not a claim that those other tools ran.
+Coverage is 354 targeted reviews, 1,073 static screens and 2,272 role
+classifications across 3,699 paths. Fourteen deferrals and two separate issues
+remain. This separate source-only commit stays local during the deployment
+owner's CPU diagnosis; no further watcher restart or threshold change was made.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

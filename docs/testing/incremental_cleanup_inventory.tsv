@@ -1858,8 +1858,8 @@ docs/screenshots/scratch_ticket_three_state_review/05_bonus_bingo_three_states.p
 docs/screenshots/scratch_ticket_three_state_review/06_high_roller_holdem_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	9ae3f1c0724939aa1acaebf88e3f8524fde714f1	541341	-
 docs/screenshots/scratch_ticket_three_state_review/07_golden_vault_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	258b7cdca507173d7b8c484ed5ed19a531b994fa	474817	-
 docs/screenshots/scratch_ticket_three_state_review/all_scratch_tickets_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	506839b5f67581028469a7a9230deaf8c5a8a3fb	4560788	-
-docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	4902c7e679485cf421640fb6afd6669de63951d1	134628	2137
-docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	a0309e7946f6126fc4db14eaccdd833cbf8e6e75	682701	-
+docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	5b996e4df7dcfa516407ce46712b9ccf3b0ba24c	136383	2167
+docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	814bd4e4e3dfb140ae588c21cef98c4b86500355	682709	-
 docs/testing/punchline_debt_court_recovery.md	docs/testing	authored-document	static-screen	reviewed	D1	ccfe341027a53866f18c201f4ef855a2420c2987	3889	64
 docs/testing/scratch_scalper_runtime_compatibility.md	docs/testing	authored-document	static-screen	reviewed	D1	15feb4c3c388e55a67a98bc58efbc003a1fc4261	3581	56
 docs/todo/README_0_6_board.md	docs/todo	authored-document	static-screen	reviewed	D1	2305cca0cdeeba83d3fa8768159758508d775c58	66017	517
@@ -2979,7 +2979,7 @@ scripts/tests/export_distribution_fresh_start_check.gd	scripts/tests	authored	st
 scripts/tests/fixsweep06_1_accessibility_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	246f7e35bbce05f6dc00da279e09bb855a9806fb	89111	1665
 scripts/tests/fixsweep06_1_audio_recovery_contract.gd	scripts/tests	authored	source-review	no-change	M:batch49-full-composition-vs-live-mix-identity-protected-PCM-LRU-hard-mute-settings-preservation-web-registration-and-bounded-SFX-retry-tests-retained-source-review-only	c100d5f28ec1f579132825a70ea7ba8b9073ea74	8470	150
 scripts/tests/fixsweep06_1_lifecycle_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	c682186c20e7c83925c694e9163afbf13d796e87	17028	318
-scripts/tests/fixsweep06_1_packaging_runtime_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	70ec7f04fd24eb7a72568e5bc8756b803a07497a	2453	47
+scripts/tests/fixsweep06_1_packaging_runtime_contract.gd	scripts/tests	authored	source-review	no-change	M:batch69-full-release-source-vs-manifestless-distribution-identity-and-required-native-missing-rejection-test-seams-and-environment-cache-restoration-review-retained-not-rerun	70ec7f04fd24eb7a72568e5bc8756b803a07497a	2453	47
 scripts/tests/fixsweep06_1_player_text_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	0b6628488c2897f9d92ffb2f7f6b559e560855f6	8956	170
 scripts/tests/fixtures/cold_continue_storm_save.json	scripts/tests	intentional-fixture	static-screen	reviewed	F1	a96be75b6296c3eb78001e1131f3b3c8402c49a8	123232	13
 scripts/tests/fixtures/cold_continue_storm_save.md	scripts/tests	authored-document	static-screen	reviewed	D1	44459195870b9168a4dfa07498d5018b01d9e111	953	16
@@ -3171,7 +3171,7 @@ scripts/tests/health06_1_durable_store_contract.gd	scripts/tests	authored	source
 scripts/tests/health06_1_god_object_contract.gd	scripts/tests	authored	source-review	no-change	M:batch67-full-CH26-facade-compatibility-ownership-trust-mutation-save-restore-and-sealed-host-construction-assertions-failure-aggregation-and-Control-cleanup-review-source-only-not-rerun	6ca93ef52e6cc7a3e20e55348e2d03b1ca440fec	1706	38
 scripts/tests/health06_1_hot_paths_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	a1d1677f3eccf3f93793e991e2a11707cf5294d8	8468	167
 scripts/tests/health06_1_io_result_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	2106a2aef080ea0d75138dd202d1c4af8eea8da4	3480	58
-scripts/tests/health06_1_scoped_telemetry_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	b0c9fbd8596b817b5e4653ec7042332a58911140	1576	48
+scripts/tests/health06_1_scoped_telemetry_contract.gd	scripts/tests	authored	source-review	no-change	M:batch69-full-no-op-and-recording-sink-live-timer-exactly-once-callback-and-scoped-record-contract-failure-aggregation-host-cleanup-review-source-only-performance-files-unchanged	b0c9fbd8596b817b5e4653ec7042332a58911140	1576	48
 scripts/tests/health06_1_serialization_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	f9b3b9df357110f2f0c86903e10f33d38acc060e	4512	114
 scripts/tests/health06_1_shared_primitives_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	7d6d453cfabb1a1a14b70b4bce90612eb9ca6df4	5023	90
 scripts/tests/health06_1_test_harness_contract.gd	scripts/tests	authored	source-review	no-change	M:batch63-full-unchanged-positive-negative-context-assertions-and-explicit-early-failure-exits-source-review-only-not-rerun	740f94430816a933626128590b2c9d66976fb214	812	22
@@ -3194,7 +3194,7 @@ scripts/tests/punchline_witness_chairs_repro.gd	scripts/tests	authored	static-sc
 scripts/tests/room_slot_occupancy_check.gd	scripts/tests	authored	static-screen	reviewed	S1	dc09346eeb04d8eb048409dc6ff1544722e78a30	12881	264
 scripts/tests/rourke_noticed_environment_objects_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	cfa1f6b440628e40f27b646321397a78fc2292b9	3669	77
 scripts/tests/run_menu_navigation_layout_check.gd	scripts/tests	authored	source-review	no-change	M:batch43-new-upstream-file-full-four-viewport-initial-actions-focus-scroll-touch-target-help-and-slot-note-contract-review-no-repeated-native-run	cd23507e6c6c287a74ea697c2c54d96e625e4515	5319	122
-scripts/tests/run_report_main_menu_check.gd	scripts/tests	authored	static-screen	reviewed	S1	67bfdcc7629192c4a508f1c14d065b08d931ee37	1500	49
+scripts/tests/run_report_main_menu_check.gd	scripts/tests	authored	source-review	no-change	M:batch69-full-real-report-control-explicit-main-menu-single-signal-pending-item-reward-navigation-lock-and-queued-control-cleanup-review-retained-not-rerun	67bfdcc7629192c4a508f1c14d065b08d931ee37	1500	49
 scripts/tests/rw06_6_pull_tab_glimmer_contract.gd	scripts/tests	authored	source-review	no-change	M:batch59-full-eight-live-production-schedule-top16-cutoff-tie-draw-reduced-motion-clock-coexistence-preference-identity-revalidation-purchase-reveal-file-and-save-Continue-paths-review-unchanged-native-PASS	f6042f24466307ed82ceede2969cf2544d620d95	44555	867
 scripts/tests/save_navigation_durability_check.gd	scripts/tests	authored	static-screen	reviewed	S1	f9bb0b574bec5e80e5669fa8907f1d5e1b847b75	12846	273
 scripts/tests/scenario_slot_layout_check.gd	scripts/tests	authored	static-screen	reviewed	S1	b6dec98306713b5d137ffe97bfc5ea7dfa22155f	57954	1298
@@ -3435,7 +3435,7 @@ tools/blackjack_heat_backoff_probe.gd	tools/blackjack_heat_backoff_probe.gd	auth
 tools/blackjack_interaction_runtime_probe.gd	tools/blackjack_interaction_runtime_probe.gd	authored	static-screen	reviewed	S1	40b37174d09c84db17ea3dc0f006d1c91a51b237	7751	145
 tools/blackjack_manual_count_settle_probe.gd	tools/blackjack_manual_count_settle_probe.gd	authored	static-screen	reviewed	S1	385bc8bf7955c06cfb841bbe26965952f87bca7b	5306	97
 tools/blackjack_seed_audit.gd	tools/blackjack_seed_audit.gd	authored	static-screen	reviewed	S1	f7a966b5e08cf653347804b6411fde02c2c6662b	49032	976
-tools/blackjack_seed_audit.ps1	tools/blackjack_seed_audit.ps1	authored	static-screen	reviewed	S1	3f88d4f92070a7b4084d0e5fe568d01ea2f7ccf1	1598	53
+tools/blackjack_seed_audit.ps1	tools/blackjack_seed_audit.ps1	authored	source-review	no-change	M:batch69-full-seed-count-output-forwarding-console-sibling-local-or-PATH-resolution-required-vs-optional-skip-and-process-exit-contract-review-source-only-no-audit-run	3f88d4f92070a7b4084d0e5fe568d01ea2f7ccf1	1598	53
 tools/blackjack_table_visual_capture.gd	tools/blackjack_table_visual_capture.gd	authored	static-screen	reviewed	S1	981ad21894a10834f2760d8866072b6825a5d99f	1787	54
 tools/blackjack_terminal_presentation_probe.gd	tools/blackjack_terminal_presentation_probe.gd	authored	static-screen	reviewed	S1	f1d559cba165f3d08e9deb92be144238f165a783	7474	143
 tools/blackjack_win_payout_settlement_probe.gd	tools/blackjack_win_payout_settlement_probe.gd	authored	static-screen	reviewed	S1	79a025cd48ca24997e25465b0f3f5c5d84e614a1	7406	138
@@ -3443,11 +3443,11 @@ tools/bootstrap_native_solver.ps1	tools/bootstrap_native_solver.ps1	authored	sta
 tools/build_godot_web_release_template.ps1	tools/build_godot_web_release_template.ps1	authored	static-screen	reviewed	S1	69c4dbbf1f69ac1aa696e24dafe727968f1f74a9	7681	172
 tools/build_native_slot_sfx_masters.gd	tools/build_native_slot_sfx_masters.gd	authored	source-review	no-change	M:batch67-full-authored-event-master-PCM-format-check-BTHP1-header-loop-rate-frame-count-import-sidecar-explicit-stream-file-error-paths-and-player-cleanup-review-source-only-no-assets-generated	abaff4341938319c08761d8dda84751622c48261	1596	43
 tools/build_native_solver.ps1	tools/build_native_solver.ps1	authored	static-screen	reviewed	S1	a4bc8b62100d4bdada8f1fef4e2b9e535199a55b	5060	114
-tools/build_slot_feature_music_masters.gd	tools/build_slot_feature_music_masters.gd	authored	static-screen	reviewed	S1	3f9cdb36dca98748503f19c7864b088b18a512f9	2146	50
+tools/build_slot_feature_music_masters.gd	tools/build_slot_feature_music_masters.gd	authored	source-review	no-change	M:batch69-full-two-authored-style-frame-count-role-byte-validation-loop-WAV-save-and-player-cleanup-generator-review-source-only-no-audio-generation	3f9cdb36dca98748503f19c7864b088b18a512f9	2146	50
 tools/build_slot_feature_music_masters.py	tools/build_slot_feature_music_masters.py	authored	static-screen	reviewed	S1	c02f4f73f49b52e400d42d25d4812ae22b47e519	2599	64
 tools/build_web_audio_masters.py	tools/build_web_audio_masters.py	authored	static-screen	reviewed	S1	9f062d8c38ea65c8323ffd3e8967825d25c321e2	6622	164
 tools/build_web_procedural_music_masters.gd	tools/build_web_procedural_music_masters.gd	authored	static-screen	reviewed	S1	c95b33373cba3506619ad61eb39da08cb44787eb	2741	63
-tools/build_web_procedural_music_masters.py	tools/build_web_procedural_music_masters.py	authored	static-screen	reviewed	S1	788ddf420df2255a9717f93297fb40fb551e5f35	2398	62
+tools/build_web_procedural_music_masters.py	tools/build_web_procedural_music_masters.py	authored	source-review	fixed	C:batch69	788ddf420df2255a9717f93297fb40fb551e5f35	2398	63
 tools/build_web_sfx_masters.gd	tools/build_web_sfx_masters.gd	authored	source-review	no-change	M:batch64-full-all-web-delivery-event-preview-16bit-PCM-validation-BTHS1-header-loop-rate-base64-import-sidecar-byte-count-and-preview-cleanup-review-source-only-no-assets-generated	dcd5da091028c241400c1596eca9e9825bd650ac	1471	36
 tools/capture_end_run_social.gd	tools/capture_end_run_social.gd	authored	static-screen	reviewed	S1	ac9351ed1a4c79434a42785844821b65a99f749d	7580	223
 tools/check_audio_harmony_selection.ps1	tools/check_audio_harmony_selection.ps1	authored	static-screen	reviewed	S1	9b3f3b4465d2c78e32d3c75033999ebc3f0131e7	4336	85
@@ -3512,7 +3512,7 @@ tools/export_itch_helpers.ps1	tools/export_itch_helpers.ps1	authored	static-scre
 tools/export_tree_identity.ps1	tools/export_tree_identity.ps1	authored	source-review	no-change	M:batch64-full-normalized-relative-path-and-64hex-digest-guard-ordinal-prefix-canonical-sorted-rows-directory-hash-and-SHA-finally-disposal-review-no-identity-or-pipeline-changes	de91c1644ce977ea437b3eb7a046fdcd04f3101d	2176	36
 tools/export_tree_identity_contract_test.ps1	tools/export_tree_identity_contract_test.ps1	authored	source-review	no-change	M:batch64-full-owned-two-file-GUID-fixture-directory-vs-prefixed-row-identity-lowercase-file-and-aggregate-hashes-and-resolved-root-contained-finally-cleanup-review-retained-not-rerun	f656b285d29e220b203f8dba75b8c86fa82d6453	2830	41
 tools/extreme_state_performance_probe.gd	tools/extreme_state_performance_probe.gd	authored	static-screen	reviewed	S1	fa034e661905271fa93019aa7bb086428bf70622	10806	228
-tools/extreme_state_performance_probe.ps1	tools/extreme_state_performance_probe.ps1	authored	static-screen	reviewed	S1	7a1321986388ea5febcaaf322ba7d0f555b2d242	1839	54
+tools/extreme_state_performance_probe.ps1	tools/extreme_state_performance_probe.ps1	authored	source-review	no-change	M:batch69-full-console-selection-existing-environment-save-try-finally-restoration-corpus-size-forwarding-and-exit-wrapper-review-source-only-no-heavy-run	7a1321986388ea5febcaaf322ba7d0f555b2d242	1839	54
 tools/fix06_31_contact_sheets.ps1	tools/fix06_31_contact_sheets.ps1	authored	static-screen	reviewed	S1	0811668dccfd8f302e9d1328cb7fd5080da18177	6371	144
 tools/fixsweep06_1_packaging_contract_test.ps1	tools/fixsweep06_1_packaging_contract_test.ps1	authored	source-review	no-change	M:packaging-contract	d9c5bc9d65d23186a46945396f900e8ef9e30dab	24457	309
 tools/fixsweep06_1_update_crew_golden.gd	tools/fixsweep06_1_update_crew_golden.gd	authored	static-screen	reviewed	S1	0fd007fc4477216a25a7076971f63ff7b2be0f45	9826	203
@@ -3576,8 +3576,8 @@ tools/inventory_art_screenshots.gd	tools/inventory_art_screenshots.gd	authored	s
 tools/inventory_card_screenshots.gd	tools/inventory_card_screenshots.gd	authored	static-screen	reviewed	S1	2a086efe75d253cab4eb5ee3f704248e39689e4a	4004	116
 tools/itch_screenshots_0_6.gd	tools/itch_screenshots_0_6.gd	authored	static-screen	reviewed	S1	aee4f9ad25d72f9273cb130ac3245e2f33d4b721	9642	256
 tools/late_run_interaction_probe.gd	tools/late_run_interaction_probe.gd	authored	static-screen	reviewed	S1	abd11a4bb0723204ff95b24393dbf9ec64342b56	7971	151
-tools/late_run_interaction_probe.ps1	tools/late_run_interaction_probe.ps1	authored	static-screen	reviewed	S1	602e8e9f8929d6f5a2c5c3747157e82888c1cae2	1640	44
-tools/main_menu_redesign_capture.gd	tools/main_menu_redesign_capture.gd	authored	static-screen	reviewed	S1	85271d4a46c8ffc010e5b7e21872fc0e3a5ca7c6	1350	47
+tools/late_run_interaction_probe.ps1	tools/late_run_interaction_probe.ps1	authored	source-review	no-change	M:batch69-full-explicit-local-or-PATH-engine-console-sibling-required-vs-optional-skip-temporary-stderr-policy-and-exact-native-exit-wrapper-review-source-only-no-launch	602e8e9f8929d6f5a2c5c3747157e82888c1cae2	1640	44
+tools/main_menu_redesign_capture.gd	tools/main_menu_redesign_capture.gd	authored	source-review	no-change	M:batch69-full-deferred-normal-main-run-config-start-return-viewport-settle-and-PNG-error-path-capture-sequence-review-source-only-no-visible-runtime-or-capture	85271d4a46c8ffc010e5b7e21872fc0e3a5ca7c6	1350	47
 tools/main_menu_redesign_check.gd	tools/main_menu_redesign_check.gd	authored	static-screen	reviewed	S1	ea1e0f1a5bc653be06ef79179fea515e3495ea52	5523	83
 tools/main_menu_theme_export.gd	tools/main_menu_theme_export.gd	authored	source-review	no-change	M:batch64-full-deferred-owned-preview-generation-null-empty-WAV-save-failure-cleanup-and-fixed-review-artifact-output-review-source-only-not-launched	1854e916bcc1b831107fb3a9137d8b22b76f9831	978	27
 tools/manage_local_artifacts.ps1	tools/manage_local_artifacts.ps1	authored	static-screen	reviewed	S1	19ade8ecebda1d92c1c66a7b44fbddf42a8a9838	16406	415
@@ -3588,7 +3588,7 @@ tools/perf06_allocation_contract_test.ps1	tools/perf06_allocation_contract_test.
 tools/perf06_binding_preflight_contract_test.ps1	tools/perf06_binding_preflight_contract_test.ps1	authored	static-screen	reviewed	S1	d58a124943f425f3d89dddcf49718afd165b865f	4925	89
 tools/perf06_budget_contract_test.ps1	tools/perf06_budget_contract_test.ps1	authored	static-screen	reviewed	S1	4748a18a50b5e95125477735fb41a689ee304093	5475	80
 tools/perf06_budget_table.json	tools/perf06_budget_table.json	authored	static-screen	reviewed	S1	7ea4284e800d2295d0c714ee9e682ca62a61c947	2973	96
-tools/perf06_coin_pusher_action_diagnostic_contract.ps1	tools/perf06_coin_pusher_action_diagnostic_contract.ps1	authored	static-screen	reviewed	S1	aa54360c939dc045d5fdaa9117cbd2ede44dfffd	2704	51
+tools/perf06_coin_pusher_action_diagnostic_contract.ps1	tools/perf06_coin_pusher_action_diagnostic_contract.ps1	authored	source-review	no-change	M:batch69-full-explicit-opt-in-stage-gate-readonly-snapshot-substage-retention-stale-resolve-rejection-and-refresh-reinstall-source-contract-review-retained-not-rerun-no-performance-owner-edits	aa54360c939dc045d5fdaa9117cbd2ede44dfffd	2704	51
 tools/perf06_native_runtime_matrix.ps1	tools/perf06_native_runtime_matrix.ps1	authored	static-screen	reviewed	S1	517e0ced43f7f951cbb93c62fd160bd97503e642	11257	167
 tools/perf06_phase_qualification_contract_test.ps1	tools/perf06_phase_qualification_contract_test.ps1	authored	static-screen	reviewed	S1	5c49b879325ee644c4908489f855f6832ea41744	10044	120
 tools/perf06_quiescence_contract_test.ps1	tools/perf06_quiescence_contract_test.ps1	authored	source-review	no-change	M:batch63-full-three-sample-dual-witness-before-after-custody-required-inventory-immutable-evidence-and-runbook-order-source-checks-retained-not-launched	855b63c4466d0c2d5152361ecc83fe09a0b84391	1594	20
@@ -3612,7 +3612,7 @@ tools/roulette_audio_audit.gd	tools/roulette_audio_audit.gd	authored	source-revi
 tools/roulette_rule_audit.gd	tools/roulette_rule_audit.gd	authored	source-review	no-change	M:batch57-full-157-authored-target-counts-payoff-and-hitbox-priority-zero-half-loss-and-report-contract-review-retained-source-only-no-full-rerun	53a172075709d53a3cc34e3712cd505ce5383d5e	12783	340
 tools/roulette_seed_audit.gd	tools/roulette_seed_audit.gd	authored	source-review	no-change	M:batch57-full-authenticated-host-arm-resolve-money-heat-rebet-RNG-trajectory-forced-payout-fixtures-1000-view-timing-statistics-and-report-contract-review-retained-no-new-latency-claim	a5e6f74d45a46a51aca86d8872cb3923b33fa7c6	30801	662
 tools/roulette_seed_audit.ps1	tools/roulette_seed_audit.ps1	authored	source-review	no-change	M:batch57-full-engine-selection-console-fallback-explicit-required-vs-optional-skip-arguments-and-exit-status-contract-review-retained-not-launched	f6d815f87141db69376c28cf44d5a3c500eb983b	1595	53
-tools/run_baccarat_seed_audit.ps1	tools/run_baccarat_seed_audit.ps1	authored	static-screen	reviewed	S1	dd2c3e502ebfe87aedefd8c995d362253251b6cf	1644	54
+tools/run_baccarat_seed_audit.ps1	tools/run_baccarat_seed_audit.ps1	authored	source-review	no-change	M:batch69-full-hands-seed-output-forwarding-console-sibling-local-or-PATH-resolution-required-vs-optional-skip-and-process-exit-contract-review-source-only-no-audit-run	dd2c3e502ebfe87aedefd8c995d362253251b6cf	1644	54
 tools/run_godot.ps1	tools/run_godot.ps1	authored	source-review	no-change	M:launcher	c9bd5f228ad983783baf82c74c4753fac0d78c90	930	36
 tools/run_history_transaction_performance_probe.gd	tools/run_history_transaction_performance_probe.gd	authored	static-screen	reviewed	S1	b9fedaef311d0cf2626f403bc221caea4a871c96	5094	127
 tools/runtime_binding_sweep_round4.gd	tools/runtime_binding_sweep_round4.gd	authored	static-screen	reviewed	S1	21b5f8dcc7b573ed3805f7f2859d069a7ba89ba2	22906	420
@@ -3653,7 +3653,7 @@ tools/shop_item_row_check.gd	tools/shop_item_row_check.gd	authored	static-screen
 tools/slot_autoplay_cadence_probe.gd	tools/slot_autoplay_cadence_probe.gd	authored	static-screen	reviewed	S1	54976a46e4c64439a745d5addfa9cccb31e75522	16215	345
 tools/slot_bonus_stuck_sweep.gd	tools/slot_bonus_stuck_sweep.gd	authored	static-screen	reviewed	S1	c8a7070b9bfedeabc31653444cf404cc0d940211	46756	908
 tools/slot_cabinet_visual_qa.gd	tools/slot_cabinet_visual_qa.gd	authored	static-screen	reviewed	S1	612cf0fe279918e0dd10eba5ac62b105ec364da1	40669	662
-tools/slot_cabinet_visual_qa.ps1	tools/slot_cabinet_visual_qa.ps1	authored	static-screen	reviewed	S1	d7a2ed38154093430b794cbee908db4a983b23aa	1332	47
+tools/slot_cabinet_visual_qa.ps1	tools/slot_cabinet_visual_qa.ps1	authored	source-review	no-change	M:batch69-full-console-sibling-engine-discovery-always-required-runtime-and-retained-compatibility-RequireGodot-switch-review-source-only-no-capture	d7a2ed38154093430b794cbee908db4a983b23aa	1332	47
 tools/slot_environment_entry_probe.gd	tools/slot_environment_entry_probe.gd	authored	static-screen	reviewed	S1	c4ced35f1e9e5293182ef2b406ef8fa01cd15dd9	22824	531
 tools/slot_foreground_autoplay_performance_probe.gd	tools/slot_foreground_autoplay_performance_probe.gd	authored	static-screen	reviewed	S1	83832dd656aa49d94447646d95a16d110b366cbf	18092	360
 tools/slot_machine_deep_audit.gd	tools/slot_machine_deep_audit.gd	authored	static-screen	reviewed	S1	b8e2b3cc3f14a4041f0ebdb187ff67067f16d3c9	9594	189
@@ -3680,7 +3680,7 @@ tools/tutorial_failure_restart_probe.gd	tools/tutorial_failure_restart_probe.gd	
 tools/tutorial_guided_run_capture.gd	tools/tutorial_guided_run_capture.gd	authored	static-screen	reviewed	S1	91cfc536eb9aaf8a4fb227733ab8b6816a99140d	34183	667
 tools/tutorial_seed_audit.gd	tools/tutorial_seed_audit.gd	authored	static-screen	reviewed	S1	cb91ae0c7ef06c33881a599d33ddbeaed93ceb88	55185	738
 tools/validate_project.ps1	tools/validate_project.ps1	authored	static-screen	reviewed	S1	4cdf12065606207fc2a693e2dbfaf49cd203a9f4	222021	3428
-tools/verify_native_solver_runtime.ps1	tools/verify_native_solver_runtime.ps1	authored	static-screen	reviewed	S1	fe86a0ccdee8fe1fe95765af2f9ceeb543355dc4	2198	48
+tools/verify_native_solver_runtime.ps1	tools/verify_native_solver_runtime.ps1	authored	source-review	no-change	M:batch69-full-locked-runtime-common-Git-root-selection-exact-version-and-optional-Web-template-hash-authority-boundary-review-guarded-toolchain-input-retained-no-launch-or-edit	fe86a0ccdee8fe1fe95765af2f9ceeb543355dc4	2198	48
 tools/video_poker_draw_performance_probe.gd	tools/video_poker_draw_performance_probe.gd	authored	static-screen	reviewed	S1	edd350779892510a82115199910af7594d129d68	9132	217
 tools/video_poker_rebuild_proof.gd	tools/video_poker_rebuild_proof.gd	authored	static-screen	reviewed	S1	00117af7d9c4130a53a4682bab9675d9c93a1298	21617	511
 tools/video_poker_rtp_audit.gd	tools/video_poker_rtp_audit.gd	authored	static-screen	reviewed	S1	93a7c22d2630ec76877884158e35f9341a40f868	7826	188
@@ -3690,7 +3690,7 @@ tools/wave_b_composition_probe.gd	tools/wave_b_composition_probe.gd	authored	sta
 tools/web_perf_coin_pusher_clock_contract.ps1	tools/web_perf_coin_pusher_clock_contract.ps1	authored	static-screen	reviewed	S1	a111c4feba25a8e8fab75c878d62fda1d25a842d	10429	165
 tools/web_perf_coin_pusher_clock_contract_test.ps1	tools/web_perf_coin_pusher_clock_contract_test.ps1	authored	static-screen	reviewed	S1	d457f896386c0ab9539f6e6a83d8db7394f95d22	15436	181
 tools/web_perf_export_mode.ps1	tools/web_perf_export_mode.ps1	authored	source-review	no-change	M:batch63-full-conflicting-switch-and-required-fresh-distribution-guard-structured-export-argv-no-package-option-and-nonzero-exit-propagation-review-source-only-no-export	ad07210fefc179f7118bfdc648b5109e5fd93775	749	13
-tools/web_perf_export_mode_contract_test.ps1	tools/web_perf_export_mode_contract_test.ps1	authored	static-screen	reviewed	S1	073241d1b5fb8fb61a7743f38822c8afe4b1367e	2923	49
+tools/web_perf_export_mode_contract_test.ps1	tools/web_perf_export_mode_contract_test.ps1	authored	source-review	no-change	M:batch69-full-owned-GUID-stub-only-export-argv-integration-two-hostile-mode-rejections-environment-restoration-and-resolved-contained-fixture-cleanup-review-retained-not-rerun	073241d1b5fb8fb61a7743f38822c8afe4b1367e	2923	49
 tools/web_perf_idle_liveness_contract.ps1	tools/web_perf_idle_liveness_contract.ps1	authored	static-screen	reviewed	S1	9d48d20cbde5f7361b0ea8c13dd657d2bff32a16	4074	79
 tools/web_perf_idle_liveness_contract_test.ps1	tools/web_perf_idle_liveness_contract_test.ps1	authored	static-screen	reviewed	S1	0c3e2620443e901337d2bf2f07327a4db9883d81	4941	78
 tools/web_perf_prestage_contract.ps1	tools/web_perf_prestage_contract.ps1	authored	static-screen	reviewed	S1	ca4762d67430cfb0e6bb5e01f9726e070d3a6c7c	5570	110
