@@ -3089,3 +3089,22 @@ are separately recorded source risks pending a focused reproduction. An unread
 public promo preload remains without sufficient side-effect/interface evidence
 for deletion. No code, payoff, validation, native binary, capture or approved
 content changed in this review batch.
+
+
+## Review batch 102: parity, determinism and clock evidence wrappers
+
+Eight more files received full source review: the Coin Pusher input-parity and
+Foundation determinism wrappers, Web clock evidence helpers and their focused
+contract, and four historical desktop, token-adoption and Web parity tools.
+Independent native and reference-Web backend proofs, process-repeat hashes,
+machine-field diagnostics, private placement authority, environment restoration,
+stderr rejection, required zero-valued fields, warmed draw sample/rank rules,
+no-input redraw minimums and all conservation channels remain. None was run.
+
+Historical tools retain their original protocol and explicit root/profile
+parameters. Their source review is not a current benchmark or gameplay result.
+The archived Showdown capture's lexical server-root guard is a separate source
+risk; no listener or browser was started, and no old capture was modernized.
+The live-batch assertion helper's repeated failure-only serialization is the
+next small candidate, pending an exact message/input-parity check. No native
+binary, authority gate, payout, RNG, animation schedule or test budget changed.
