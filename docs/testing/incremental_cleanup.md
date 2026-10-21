@@ -3432,3 +3432,20 @@ Seventy-two cases stopped at the center and avoid the eager 290-point array.
 No timing speedup is claimed. The private 5% CPU/512 MiB check passed in 0.297
 seconds with natural exit, EOF and Job0, and independent process absence. The
 eleven-game full pointer audit, actual input dispatch and gameplay were not rerun.
+
+## Batch 120: preserve semantic authority and golden-capture boundaries
+
+Read all 150 lines of the runtime room publication and all 983 lines of the base
+semantic-record producer. Confirmed their callers in RunState, the semantic
+inventory and negative contracts. Detached renderer snapshots do not replace live
+action authorization. Catalog, producer, slot, manifest and renderer proofs check
+different boundaries; their copies and validations remain. These two production
+files retain deferred ownership status for the performance lane. The adjacent
+RunState inspection was targeted, not a full-file review.
+
+Also read the 203-line Crew golden updater. Its argument gate, process-unique
+empty placement layer, twin captures, no-op proofs, strict key/type/order checks,
+dry-run behavior and nonzero failure exits remain. No golden regeneration,
+baseline relaxation, gameplay or runtime check was needed for these source-only
+reviews. Coverage is now 638 full source reviews out of 3,704 inventoried paths;
+screening and asset classification are counted separately.
