@@ -1544,8 +1544,7 @@ def resolve_starting_geometry(
     pass unambiguous while preserving the compact semantic slot reuse.
     """
 
-    shared = _shared_occupied_rects(surface)
-    placed: list[list[float]] = []
+    occupied = _shared_occupied_rects(surface)
 
     def in_bounds(rect: list[float]) -> bool:
         return (
@@ -1558,7 +1557,6 @@ def resolve_starting_geometry(
     def safe(slot: dict[str, Any], rect: list[float]) -> bool:
         if not in_bounds(rect):
             return False
-        occupied = shared + placed
         if any(_rect_intersects(rect, other) for other in occupied):
             return False
         if bool(slot.get("_scenario_obstruction", False)):
@@ -1631,7 +1629,7 @@ def resolve_starting_geometry(
         if bool(slot.get("provisional_geometry", False)):
             slot["zone_id"] = "provisional"
             slot["support_id"] = "manual_placement_required"
-        placed.append(candidate)
+        occupied.append(candidate)
         slot.pop("_exact_geometry_locked", None)
         slot.pop("_scenario_obstruction", None)
 

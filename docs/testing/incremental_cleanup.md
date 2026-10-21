@@ -3736,3 +3736,22 @@ check with the resolver while retaining all three shuffles and adding explicit
 site guards. The old baseline failure and successful focused reconciliation
 remain as history; neither the test nor RNG behavior was removed. These current
 deferrals are distinct from the Hold'em candidate resolved in batch 128.
+
+## Batch 137: keep one ordered occupancy list during placement search
+
+Read the full 2,090-line scenario-layout author, including explicit action hosts,
+physical marker overrides, reachable-phase coexistence, deterministic coloring
+and donor matching, exact geometry, routes and access-lane protection. In its
+placement search, `shared` and `placed` were concatenated for every candidate
+check. Use one call-local occupied list and append each accepted rectangle at
+the same boundary. Its order, ownership, collision checks, error messages and
+placement decisions remain unchanged. No authored content or geometry changed.
+
+The exact original and changed function preserve all output mutations and
+errors in 67 cases: the 55 checked-in layouts/604 slots, plus twelve focused
+collision, relocation, locked, obstruction, bounds and malformed-input fixtures.
+All other module ASTs match and input surfaces remain untouched. The check
+completed in 0.654 seconds; temporary occupancy concatenations fall from 2,660
+to zero across those cases. This is a work-count result, not a measured speed
+gain. No full generator, authority rewrite, runtime, save or export ran. Coverage
+is 703 full source reviews.
