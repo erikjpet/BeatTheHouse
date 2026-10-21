@@ -180,9 +180,7 @@ try {
 		"game_video_poker",
 		"game_pull_tabs",
 		"heat_cheat",
-		"world_map",
 		"grand_casino",
-		"cage_card",
 		"rourke_call",
 		"rourke_duel"
 	)

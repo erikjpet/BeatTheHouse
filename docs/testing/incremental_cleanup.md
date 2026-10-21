@@ -3557,3 +3557,21 @@ load check passed in 7.906 seconds under the existing muted 12% CPU/2 GiB profil
 with EOF, Job0, no errors and independent process absence. It loaded the script
 without running tutorial routes, wagers, saves or the sweep. No speed gain is
 claimed. Coverage is 668 full source reviews.
+
+## Batch 127: stop capturing two abandoned trailer holds by default
+
+Read the full trailer builder and four related production/template/history
+records. The revised production note explicitly removed static world-map and
+post-award Cage holds. Neither is consumed by the current master, vertical cut,
+page loop or music extraction, yet both remained in the default capture list.
+Remove only those two list entries. Standalone `trailer_capture.gd` support,
+every used capture, marker, edit timing, overlay, audio/encoder option, public
+switch and finished media file remain unchanged. No old footage was deleted.
+
+Six cases executed the exact original/changed capture-stage blocks with a native
+command spy: missing files, mixed cache, full cache, Force, SkipCapture and a used
+capture exiting 17. All used argument order, reuse and failure propagation
+matched. Fresh/forced requests fall from 16 to 14 and exactly cover final-edit
+plus music sources. PowerShell parsing passed. No Godot, FFmpeg, video render,
+install or full project gate ran; no time, disk-saving or new video-quality claim
+is included. The historical records remain unchanged. Coverage is 673 full reviews.
