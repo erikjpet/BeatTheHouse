@@ -3674,3 +3674,23 @@ matches after deleting exactly that assignment. Compilation succeeds. The
 similarly named, used binding in the neighboring manual-tab test remains.
 Every test and assertion is retained; this low-impact deletion needed no suite
 rerun or native process. Coverage remains 690 full source reviews.
+
+## Batch 134: preserve the recent save and room-recovery contracts
+
+Read six complete regression files covering signed roadside actor copy, storage
+byte encoding, Web save phases, one-arrival scratch membership, the prepatch
+Punchline pending-fact producer and independent cold recovery. Retained all
+strict signatures, malformed-data rejection, snapshot ownership, frame-separated
+pack/install checks, exact generation backups, fault rollback and retry rules.
+No peer fix was duplicated or changed.
+
+The Punchline producer's old source commit and three source hashes authenticate
+its synthetic prepatch state; they are intentional historical authority, not
+obsolete current-build pins. Cold legacy and resaved phases validate distinct
+raw authorities, preserve companions, settle the original fact exactly once,
+and exercise the real chairs, Side Door, another room game and normal Save.
+The scratch probe deliberately installs its stock fixture before sealing and
+preserves the real membership transition. All guards and assertions remain.
+These are source reviews only: no private fixture, user save, browser or engine
+was opened, and no completed recovery check was repeated. Coverage is 696 full
+source reviews.
