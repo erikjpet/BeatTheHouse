@@ -887,6 +887,28 @@ tombstones and terminal receipts; and game-ritual replay, commitment conservatio
 causal receipts and rejection of raw authority. Only the report lookup changes.
 The remaining screened/classified rows still require semantic review.
 
+## Batch 34: meta-home scalar summaries
+
+Two read-only snapshot reducers deep-copied each full instance/container record
+to read only its instance ID or capacity. Use type-checked dictionary views for
+these scalar reads; preserve integer coercion, positive-ID filtering,
+deduplication, order, housing rules and zero-clamped capacities. Comparison with
+the prior controller passed 216 carried-ID cases, seven capacity cases and 24
+complete public home summaries using the real in-memory collection service.
+Nested input bytes and service state stayed identical. Required liveness and
+the source census passed; both muted 5% CPU/512 MiB Jobs closed naturally and
+their recorded processes were independently absent. No speedup is claimed.
+
+Five additional complete reviews raise substantive coverage to 209. Preserve
+meta-home physical bindings, revision-cache behavior, free travel and shelf
+quotes; inventory modal focus, selection keys, filters, sorting, ticket summaries
+and action signals; the WebAudio PCM/ADPCM, active-voice LRU, explicit gesture
+unlock, mix and node-release contracts; pinball's 120 Hz collision/RNG order,
+tilt, flippers, bounded awards, event ring and transaction rollback; and the
+inventory surface's selection reconciliation, paging, retained pools, card and
+physical layouts. The inventory filtering duplicate-copy candidate is prepared
+separately and is not claimed fixed by this batch.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

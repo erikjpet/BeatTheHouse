@@ -818,7 +818,7 @@ func _snapshot_carried_instance_ids(owned_instances: Array, loadout: Array, hous
 	var owned_ids: Array = []
 	var owned_lookup := {}
 	for instance_value in owned_instances:
-		var instance := JsonCoerceScript._copy_dict(instance_value)
+		var instance: Dictionary = instance_value if typeof(instance_value) == TYPE_DICTIONARY else {}
 		var instance_id := int(instance.get("instance_id", 0))
 		if instance_id > 0 and not owned_lookup.has(instance_id):
 			owned_ids.append(instance_id)
@@ -838,7 +838,7 @@ func _snapshot_carried_instance_ids(owned_instances: Array, loadout: Array, hous
 func _snapshot_container_capacity(containers: Array) -> int:
 	var total := 0
 	for container_value in containers:
-		var container := JsonCoerceScript._copy_dict(container_value)
+		var container: Dictionary = container_value if typeof(container_value) == TYPE_DICTIONARY else {}
 		total += maxi(0, int(container.get("capacity", 0)))
 	return total
 
