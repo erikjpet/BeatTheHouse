@@ -4088,3 +4088,25 @@ final-location coordinates. These input assertions do not establish the separate
 idle-animation finding is fixed. No test, source, settings, project placement or
 runtime changed. Coverage is 757 full reviews. Publication remains a separate
 capacity dependency; source review continues without another suite or export.
+
+## Batch 156: propagate requested base-layout dump failures
+
+Read the complete multi-seed room finalization tool. Its coercion helpers borrow
+collections, so retain the explicit copies protecting scenario pools and room
+authority. Keep all 55 scenarios, seed families, reachable-state checks,
+navigation signatures, normal/small geometry, barrier census and exact-object
+rejections. The full sweep was not run.
+
+Correct one reporting boundary: `_write_base_dump` now returns whether the
+requested output opened, and `_finish` records a failure before choosing the
+exit status. Omitted output stays optional. Six cases execute the exact original
+and candidate function bodies against disposable file targets, capturing the
+chosen exit code. They reproduce old success versus new failure when opening
+the requested dump fails; successful JSON bytes, prior failures, input records
+and incomplete-run rejection remain unchanged. All other source bytes are exact.
+
+The focused probe passed in 0.296 seconds under the existing 5% CPU / 512 MiB
+private Job, with EOF, Job0, natural exit and independent process absence. No
+room generation, gameplay, save, browser, full audit or export ran. This adds
+open-failure propagation, not a claim of atomic output writes or faster gameplay.
+Coverage is 758 full file reviews; the broader audit remains unfinished.

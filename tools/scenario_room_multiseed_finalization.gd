@@ -169,7 +169,8 @@ func _run() -> void:
 
 
 func _finish(failures: Array, completed: int, scenario_count: int = EXPECTED_SCENARIOS, seed_count: int = SEED_FAMILIES.size()) -> void:
-	_write_base_dump()
+	if not _write_base_dump():
+		failures.append("Requested base-layout dump could not be opened for writing.")
 	var expected := seed_count * scenario_count
 	if failures.is_empty() and completed == expected:
 		print("SCENARIO_ROOM_MULTISEED_FINALIZATION PASS families=%d scenarios=%d finalizations=%d reachable_states=%d distinct_layouts=%d normal_and_small=validated routes=validated object_census=preserved" % [seed_count, scenario_count, completed, _reachable_state_checks, _reachable_layout_checks])
@@ -198,16 +199,17 @@ func _record_base_layout(environment: Dictionary, scenario_id: String) -> void:
 		})
 
 
-func _write_base_dump() -> void:
+func _write_base_dump() -> bool:
 	if _base_dump_path.is_empty():
-		return
+		return true
 	var absolute_path := ProjectSettings.globalize_path(_base_dump_path)
 	DirAccess.make_dir_recursive_absolute(absolute_path.get_base_dir())
 	var output := FileAccess.open(absolute_path, FileAccess.WRITE)
 	if output == null:
 		printerr("Could not write base-layout dump: %s" % absolute_path)
-		return
+		return false
 	output.store_string(JSON.stringify(_base_dump_records, "  "))
+	return true
 
 
 func _check_reachable_grounding_states(run_state: Variant, fallback_definition: Dictionary, seed_family: String, failures: Array) -> int:
