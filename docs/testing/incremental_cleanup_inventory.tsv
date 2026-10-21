@@ -2868,7 +2868,7 @@ scripts/core/music_delivery_index.gd	scripts/core	authored	source-review	no-chan
 scripts/core/numbers_model.gd	scripts/core	authored	static-screen	reviewed	S1	5f14cd8d89ab750241c216d38ce9eeac5df32371	59426	1278
 scripts/core/persistence_paths.gd	scripts/core	authored	source-review	fixed	C:batch14	991d3cc663cb778ddef83ee13772dbd005ecb3f6	2421	57
 scripts/core/platform_services.gd	scripts/core	authored	source-review	no-change	M:adapter-contract	f59b29b434fdddab508239d371ba2ad6650af709	2049	71
-scripts/core/police_sweep_model.gd	scripts/core	authored	source-review	no-change	M:batch28-full-seeded-track-host-capability-costed-proposals-legacy-restore-reroute-and-private-intel-review	a83a862a9554e11cab040dd31eb63a8bc17df46d	41119	876
+scripts/core/police_sweep_model.gd	scripts/core	authored	source-review	fixed	C:batch29	a83a862a9554e11cab040dd31eb63a8bc17df46d	41119	878
 scripts/core/profile_inventory.gd	scripts/core	authored	source-review	fixed	C:batch15	c2469f951e870ba0354b82131c8e559da09984e7	31270	746
 scripts/core/rng_stream.gd	scripts/core	authored	source-review	no-change	M:rng-preserved	11f5287e01ba9f6f526a520fe259dd90c100d452	3077	106
 scripts/core/run_action_service.gd	scripts/core	authored	static-screen	reviewed	S1	99de6666cc35e802b50c4d7f4fe6b6056927ec3b	113976	2501
@@ -3148,7 +3148,7 @@ scripts/tests/foundation/world06_4_jobs_model_contract.gd	scripts/tests	authored
 scripts/tests/foundation/world06_4_recruitment_model_contract.gd	scripts/tests	authored	source-review	no-change	M:batch26-full-seeded-path-proposal-authority-trusted-contact-durable-state-and-hidden-boundary-contract	dfc0eba5f2ecb764b8dacc20605b51e702a3992d	11519	171
 scripts/tests/foundation/world06_5_plays_authored_semantics_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	28679f71986d3083fd936272bc7a74ef9f81530a	6073	118
 scripts/tests/foundation/world06_5_plays_model_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	173560189e799e7eeb5e56ae09d8d402ed54d503	12325	186
-scripts/tests/foundation/world06_5_sweep_model_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	325a86224d4d7dceab61a237e2129f6aa4422baf	16673	225
+scripts/tests/foundation/world06_5_sweep_model_contract.gd	scripts/tests	authored	source-review	no-change	M:batch29-full-costed-rungs-proposal-only-intel-legacy-save-revisit-wake-and-ten-seed-contract	325a86224d4d7dceab61a237e2129f6aa4422baf	16673	225
 scripts/tests/foundation/world06_6_confrontation_surface_contract.gd	scripts/tests	authored	static-screen	reviewed	S1	7186845ba3fb30a4708a864ab64edc8a8e083a73	6177	115
 scripts/tests/foundation/world06_6_heist_authored_semantics_contract.gd	scripts/tests	authored	source-review	no-change	M:batch24-full-governing-hash-release-plan-and-authored-hidden-boundary-review	c69dc8aa247285d6e402cfc9220cdc4a3beb8c12	7600	137
 scripts/tests/foundation/world06_6_heist_surface_contract.gd	scripts/tests	authored	source-review	no-change	M:batch24-full-phase-decision-evidence-public-leak-and-ladder-contract-review	ba42779ac10fc0816c7e093e640bbe3d74699c2b	8750	113

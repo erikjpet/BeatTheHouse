@@ -702,8 +702,10 @@ func _shortest_path(start_node: String, target_node: String) -> Array:
 		return [start_node]
 	var queue: Array = [start_node]
 	var previous := {start_node: ""}
-	while not queue.is_empty():
-		var node_id := str(queue.pop_front())
+	var queue_index := 0
+	while queue_index < queue.size():
+		var node_id := str(queue[queue_index])
+		queue_index += 1
 		var neighbors := JsonCoerceScript._string_array(_neighbors_by_node.get(node_id, []))
 		neighbors.sort()
 		for neighbor_value in neighbors:

@@ -760,6 +760,29 @@ bounded facts and host authorization. Coverage reaches 158 targeted reviews.
 No measured performance gain is claimed. Publication follows existing capacity
 admission and the coordinated runtime workflow.
 
+## Batch 29: advance the sweep path queue with a cursor
+
+Use an index into the append-only BFS queue instead of repeatedly removing its
+front element. Visit order, sorted neighbors, first-discovered predecessors,
+reconstructed paths and every reroute decision remain the same. This changes
+only the private path helper; schedule generation, RNG, current/past segments,
+host capabilities, intel and snapshots retain their existing behavior.
+
+Native comparison covered all 64 undirected four-node graphs, including ties,
+cycles, disconnected nodes, empty and unknown endpoints: 2,304 paths matched.
+Another 768 public reroutes across three seeds matched complete results and
+snapshots, with input/result isolation. The full existing WORLD06_5 sweep model
+contract passed unchanged through an inherited private entrypoint: five costed
+rungs, forged capability rejection, private intel, legacy restore, revisit,
+wake expiry and ten-seed determinism. Liveness and source census passed, with
+natural EOF/Job0 closure and independent process absence. No runtime speed
+measurement is claimed. Coverage reaches 159 targeted reviews.
+
+The completed cargo and queue commits remain local while D free space is below
+the existing pre-export capacity floor. The retention owner received the exact
+floor shortfall and dependency handoff. Source review continues without exports
+or changes to resource guards.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
