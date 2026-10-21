@@ -3268,3 +3268,21 @@ array and hash policies. It was not executed against the current source. Neither
 its textual rewrite rules nor the census are evidence that a live function can
 be removed. An apparently unused delivery-model preload in the Crew test remains
 pending dependency/loader qualification; no public constant was silently removed.
+
+
+## Batch 111: remove an unused Crew-test dependency alias
+
+The Layer 3 job contract declared a delivery-model preload without using its
+alias. Its registered callers invoke the explicit check entry, and the tracked
+scene/resource, standalone-loader, validation and reflection consumers do not
+read that test alias. RunState already preloads the same model; the model has
+no member/static state or initialization method. Remove only this redundant
+declaration. All contract methods, assertions, fixtures and production interfaces
+remain byte-identical.
+
+The existing loader checked only the changed script and passed. Its muted,
+private process used the existing 5% CPU/512 MiB/30-second Job, exited naturally
+in 4.67 seconds with reader EOF and an empty Job, and was independently absent
+afterward. No full Crew contract, game action, animation replay, browser, export
+or user save was run. The dependency was retained through RunState, so this is
+a source cleanup with no measured speed claim.

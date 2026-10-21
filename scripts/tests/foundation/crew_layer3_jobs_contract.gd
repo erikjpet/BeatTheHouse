@@ -3,7 +3,6 @@ extends RefCounted
 
 const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment_model.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
-const DeliveryRunModelScript := preload("res://scripts/core/delivery_run_model.gd")
 const EventModuleScript := preload("res://scripts/core/event_module.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 
