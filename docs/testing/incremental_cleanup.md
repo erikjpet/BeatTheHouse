@@ -3028,3 +3028,24 @@ and Pinball gameplay, skill, item and physics probes. Their explicit production
 paths, controlled fixtures, launch/hit geometry, save round trips, sample counts,
 animation continuity, deterministic policies, item hooks, caps and budgets all
 remain. Historical or source-reviewed assertions are not new gameplay results.
+
+
+## Review batch 99: build, export and capture contracts
+
+Eight more files received full source review: the pinned Godot Web template
+builder, native live-batch wrapper, four-family exact-seed manifest, Crew visual
+wrapper and wrapper contract, export presets, scenario visual capture wrapper
+and contact-sheet producer. Thin-template cryptography modules, native ABI and
+toolchain pins, deterministic archive hashes, platform resource filters,
+explicit process cleanup, first-hand natural-tell/RNG assertions, image ownership,
+twenty-one ordered scenario captures and distinct terminal outcomes have active
+roles and remain. None of these historical build/capture commands was executed;
+no engine, export template, saved state or media was rebuilt or rewritten.
+
+One small manifest-only reproduction did run: the Crew wrapper accepted
+`{"passed":"true"}`, a string rather than the producer's JSON boolean. This
+started no Godot, server or browser. The wrapper's complete caller contract was
+reviewed, and the producer's boolean result expression was checked separately;
+that partial producer read is not counted as a complete source review. The
+malformed-field acceptance is the next independent cleanup candidate. Existing
+capture, RNG and missing/false/true assertions will remain intact.
