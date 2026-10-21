@@ -4003,3 +4003,22 @@ remain intact. Historical release-wide test commands do not override the current
 development policy; unchanged evidence remains reusable. Source serialization
 checks are not a new Web playtest. No product, test or content changed. Coverage
 is 742 full file reviews; the broader audit remains unfinished.
+
+## Batch 151: complete the RunState semantic review
+
+Complete the continuous 17,119-line review at `16f15982`, including the earlier
+peer diffs. Preserve RNG order, time and heat rules, currency-specific payouts,
+unsettled Blackjack wager protection, live ticket ownership, rollback and the
+separate causal, physical and renderer authorities. Restore still supports the
+shipped legacy Scratch/Punchline, bag, delivery and Crew capsule formats. Active
+room snapshots, inactive-room storage, observer snapshots and encoding captures
+have different ownership contracts; their copies are not interchangeable.
+
+Retain three precise leads without changing behavior: home loss disables its
+active-home predicate before room cleanup; one terminal-state copy appears
+discarded; selected talk priority can differ from insertion-order timer
+advancement. The first and third need faithful state reproductions before a
+behavior proposal. The copy lead remains with the active RunState owner. No
+claim of a reproduced gameplay failure or measured benefit follows from source
+inspection. No core, test, save or runtime changed. Coverage is 743 full reviews;
+RunState remains deferred for coordinated edits, not for missing source review.
