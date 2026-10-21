@@ -1152,6 +1152,35 @@ role classifications across 3,699 tracked paths. The deployment owner restored
 the existing watcher and verified the separate 71c3 save fix at 08:20 UTC; this
 cleanup preserves it and uses that same watcher for qualified publication.
 
+## Batch 44: strip immutable slot definition keys once
+
+`SlotMachineState.write_runtime_machine` already erases immutable definition
+keys from its owned `machine` before assigning that same dictionary to
+`normalized`. Remove the second erase loop over the same alias. The initial
+strip, schema assignment, storage compaction, Pinball view stripping, shallow
+game-state map copy and exactly one runtime-revision increment remain unchanged.
+No methods, callers, validation, payouts, RNG, clocks or save fields change.
+
+Native comparison with the exact abd3525f baseline passed 684 complete writes:
+444 synthetic schema/family/bonus/environment/key combinations and 240 writes
+using 20 machines from six authored old-save fixtures. Complete environment and
+mutated machine bytes, dictionary order, stored-machine alias identity, foreign
+fixture identity, forward fields and RNG matched. The required unchanged
+no-pointer animation check passed. Both private 5% CPU/512MiB Jobs naturally
+closed with exit0, reader EOF and Job0 without forced cleanup; independent
+08:49:18 UTC census confirmed both identities absent. No elapsed-time gain is
+claimed. The first launch was deferred before any spec/Job while the performance
+owner's finite private export was active, and ran only after its actual release.
+
+Completed full reads of `slot.gd` and `scenario_sequence_schema.gd` retain the
+owned-write interface seams, sealed replay, raw versus scaled presentation
+clocks, typed validation, per-path material cleanup, event-bridge authority and
+signature/memo contracts. Similar-looking runtime/preview and public/internal
+validation paths have distinct trust or timing requirements. The schema review
+is read-only in the performance investigation lane. Coverage is 233 targeted
+source/contract reviews, 1,194 static screens and 2,272 role classifications
+across 3,699 tracked paths; this remains an unfinished semantic audit.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
@@ -1256,3 +1285,17 @@ types. Archive SHA-256:
 Stable remained 0.6.0; the existing retention hook reported no error. Exact
 receipts went to the performance and fresh-player owners. Subsequent cleanup
 preserves the performance worker's separate SaveService publication.
+
+Batches 41-43 preserved published SaveService 71c3 and menu 6bb3, then were
+published as three separate tested commits. NEXT promoted
+`abd3525fe73c838f9d8b564cb912e38fb4b7f4d9`, tree
+`a18589249be0aa4dfb01563c477df863b2687c7d`, at 08:30:18 UTC. Independent
+08:32:47 UTC census confirmed root 35560 and all new Godot processes absent;
+the existing capped watcher/guardian remained intentionally active. Trusted
+HTTPS at 08:32:49 matched all 15 archive files, redirect and WASM MIME types.
+Archive SHA-256:
+`7bed1e9da52b2d872977467044e88b16c79a2cf3f4ea37a80dde5964dfa2647d`.
+Stable remained 0.6.0; the automatic retention hook reported no error. Exact
+identity and actual closure receipts were delivered to the performance and
+fresh-player owners. This verifies deployed identity/assets and the preceding
+native checks; no visual Web gameplay or measured cleanup speedup is claimed.

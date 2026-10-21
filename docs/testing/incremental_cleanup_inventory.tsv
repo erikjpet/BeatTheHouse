@@ -1858,8 +1858,8 @@ docs/screenshots/scratch_ticket_three_state_review/05_bonus_bingo_three_states.p
 docs/screenshots/scratch_ticket_three_state_review/06_high_roller_holdem_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	9ae3f1c0724939aa1acaebf88e3f8524fde714f1	541341	-
 docs/screenshots/scratch_ticket_three_state_review/07_golden_vault_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	258b7cdca507173d7b8c484ed5ed19a531b994fa	474817	-
 docs/screenshots/scratch_ticket_three_state_review/all_scratch_tickets_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	506839b5f67581028469a7a9230deaf8c5a8a3fb	4560788	-
-docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	689bc9485499a416be5c5186b1161bc78044e07a	78266	1258
-docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	b86bc2aad46e54080d4a08c7a0e6a8beccd73e27	667328	-
+docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	79d9de1bd39ec919d78ee220c9db3b6053f24fed	78710	1301
+docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	d06c2f0a7b519e0181060804b0bb7f952c15818d	667800	-
 docs/testing/punchline_debt_court_recovery.md	docs/testing	authored-document	static-screen	reviewed	D1	ccfe341027a53866f18c201f4ef855a2420c2987	3889	64
 docs/testing/scratch_scalper_runtime_compatibility.md	docs/testing	authored-document	static-screen	reviewed	D1	15feb4c3c388e55a67a98bc58efbc003a1fc4261	3581	56
 docs/todo/README_0_6_board.md	docs/todo	authored-document	static-screen	reviewed	D1	2305cca0cdeeba83d3fa8768159758508d775c58	66017	517
@@ -2897,7 +2897,7 @@ scripts/core/scenario_operation_registry.gd	scripts/core	authored	source-review	
 scripts/core/scenario_sequence_catalog.gd	scripts/core	authored	source-review	fixed	C:batch23	b0d279d76085b5da0a47cf36d387a7074a4eccb3	17479	359
 scripts/core/scenario_sequence_rollout_manifest.gd	scripts/core	authored	source-review	no-change	M:55-sequence-census	6c0d0f26b837bf265fa8abd5abf86ac1ab4f7dd5	1936	30
 scripts/core/scenario_sequence_runtime.gd	scripts/core	authored	static-screen	reviewed	S1	f40a227ca4d531c9523d56b942757d710c8e5018	152478	2475
-scripts/core/scenario_sequence_schema.gd	scripts/core	authored	static-screen	reviewed	S1	90b5195552927860ea71aef6c80233ccf0093d2c	124497	2123
+scripts/core/scenario_sequence_schema.gd	scripts/core	authored	source-review	no-change	M:batch44-full-bounded-typed-content-validation-target-authority-phase-reachability-termination-per-path-material-cleanup-event-bridge-proofs-canonical-signatures-and-memo-receipts-retained-read-only-performance-lane	90b5195552927860ea71aef6c80233ccf0093d2c	124497	2123
 scripts/core/static_data_cache.gd	scripts/core	authored	source-review	no-change	M:copy-and-LRU-preserved	67f2f39e91bf7dba166c208b1790db1226d62c44	1406	58
 scripts/core/surface_sfx_manifest.gd	scripts/core	authored	source-review	no-change	M:batch22-full-profile-validation-public-only-events-variation-and-voice-policy-retained	d1287b17e222da6cf8d0bc6716cf13d643842b54	11600	256
 scripts/core/town_network.gd	scripts/core	authored	source-review	no-change	M:batch25-full-detached-preview-rumor-truth-schedules-incident-decay-and-RNG-review	f34eb8b86f20b6a8ed5892c9d25441a42f696713	30915	758
@@ -2935,7 +2935,7 @@ scripts/games/scratch_ticket_machine_renderer.gd	scripts/games	authored	source-r
 scripts/games/scratch_ticket_mask.gd	scripts/games	authored	source-review	no-change	M:batch32-full-owned-template-mask-progress-migration-continuous-brush-regions-and-settled-compaction-review	eea118ee6888287dd56559fb4e4e51fbb3375583	17318	367
 scripts/games/scratch_ticket_region_model.gd	scripts/games	authored	source-review	no-change	M:batch32-full-layout11-region-art-authority-mask-cell-inset-measured-source-and-migration-boundary-review	e0f354d8ff1e4c96027fe6a353fb543e26ce106d	4684	114
 scripts/games/scratch_tickets.gd	scripts/games	authored	static-screen	reviewed	S1	0ea7547b6894fcf29f9635dbf81152fff9038aca	155541	3151
-scripts/games/slot.gd	scripts/games	authored	static-screen	reviewed	S1	fa28e62ac1b18c526c639d272f6dde0fddf7d185	101674	2060
+scripts/games/slot.gd	scripts/games	authored	source-review	no-change	M:batch44-full-sealed-candidate-replay-checkpoint-owned-write-seams-lifecycle-reveal-autoplay-watchdog-background-handoff-and-raw-vs-scaled-clock-contracts-retained	fa28e62ac1b18c526c639d272f6dde0fddf7d185	101674	2060
 scripts/games/slots/pinball/pinball_board.gd	scripts/games	authored	source-review	no-change	M:batch32-full-dense-packed-geometry-type-IDs-modifier-clamps-and-magnet-boundary-review	cbaec1ff96f84f21df0d7d10d5aeb6cdc7840bcc	10558	262
 scripts/games/slots/pinball/pinball_boards.gd	scripts/games	authored	source-review	no-change	M:batch32-full-three-authored-boards-geometry-sequence-identities-peg-bias-and-alias-review	d794911694110981b700ac2d6f3c50f64acf5693	12122	253
 scripts/games/slots/pinball/pinball_feature.gd	scripts/games	authored	source-review	fixed	C:batch42	95672477cfc0345efd4cbc7abe57addefa7920e3	58043	1324
@@ -2947,7 +2947,7 @@ scripts/games/slots/slot_definition_cache.gd	scripts/games	authored	source-revie
 scripts/games/slots/slot_family_buffalo.gd	scripts/games	authored	source-review	no-change	M:batch42-full-forced-payline-vs-ways-symbol-authority-format-profiles-RNG-consumption-retrigger-session-caps-persistent-progressives-stalled-save-recovery-and-conserved-coin-reveals-retained	5f21b409c213683163d0db803cdb785e2a76a74b	84646	1803
 scripts/games/slots/slot_family_pinball.gd	scripts/games	authored	source-review	no-change	M:batch32-full-reel-placement-math-weights-legacy-win-plan-payout-wilds-sanitization-and-feature-contract-review	ff7884e4e28c24e8cb4427bc50af99133830f60d	25096	595
 scripts/games/slots/slot_machine_generator.gd	scripts/games	authored	source-review	no-change	M:batch32-full-generation-stream-draw-order-configured-strip-fallback-and-normalization-review	b77fc7cdb5a51732750bdd57dba13f8599a35f18	5824	131
-scripts/games/slots/slot_machine_state.gd	scripts/games	authored	source-review	fixed	C:batch32	bae03fbe48990938fad07b5ce8c9cec11fac41f9	24449	426
+scripts/games/slots/slot_machine_state.gd	scripts/games	authored	source-review	fixed	C:batch32+batch44	bae03fbe48990938fad07b5ce8c9cec11fac41f9	24449	422
 scripts/games/slots/slot_presentation.gd	scripts/games	authored	source-review	fixed	C:batch38	bda1aa212f774b5ea9a513924ab0340c49230981	61455	1159
 scripts/games/slots/slot_renderer.gd	scripts/games	authored	static-screen	reviewed	S1	0ed768a595650baf715d185e3ce009bdad3c416f	153738	2835
 scripts/games/slots/slot_resolver.gd	scripts/games	authored	static-screen	reviewed	S1	e92d046b6301a7aa500685fa50623c19fb3d3dbb	112133	2339

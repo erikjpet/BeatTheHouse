@@ -73,10 +73,6 @@ static func write_runtime_machine(environment: Dictionary, game_id: String, mach
 	# the storage-only fields without a second graph traversal.
 	machine["schema_version"] = SCHEMA_VERSION
 	var normalized: Dictionary = machine
-	# Definition arrays deliberately remain absent from stored cabinet state.
-	# SlotGame reattaches shared immutable arrays for resolution/presentation.
-	for key in IMMUTABLE_DEFINITION_STATE_KEYS:
-		normalized.erase(key)
 	# The animation plan is authoritative for these values and every
 	# presentation consumer already falls back to it. Do not retain a second
 	# copy per cabinet.
