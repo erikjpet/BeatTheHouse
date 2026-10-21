@@ -11339,8 +11339,6 @@ func _build_run_menu_overlay() -> void:
 	_set_control_font_color(slot_note, VisualStyle.SOFT)
 	slot_note.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	slot_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	scroll_stack.add_child(slot_note)
-	scroll_stack.add_child(_attribute_glyph_legend_panel())
 
 	var button_grid := GridContainer.new()
 	button_grid.columns = 2
@@ -11386,6 +11384,9 @@ func _build_run_menu_overlay() -> void:
 	for action_control in run_menu_action_controls:
 		if action_control != null:
 			action_control.focus_entered.connect(Callable(self, "_on_run_menu_action_focus_entered").bind(action_control))
+	# Keep navigation visible before reference content in the bounded menu.
+	scroll_stack.add_child(slot_note)
+	scroll_stack.add_child(_attribute_glyph_legend_panel())
 
 	tutorial_skip_dialog = ConfirmationDialog.new()
 	tutorial_skip_dialog.title = "Skip the lessons?"
