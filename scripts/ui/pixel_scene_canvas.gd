@@ -10813,8 +10813,6 @@ func _slot_prop_symbol_color_for_id(symbol: String, family: String, index: int, 
 		"BLANK", "":
 			return Color("#1b1d2d")
 		_:
-			if family == "buffalo":
-				return _slot_prop_symbol_color(family, index, phase)
 			return _slot_prop_symbol_color(family, index, phase)
 
 

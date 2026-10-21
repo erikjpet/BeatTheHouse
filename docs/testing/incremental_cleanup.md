@@ -2477,8 +2477,6 @@ Archive SHA-256:
 `212f258bcbd84f8ffe54cc60218ddfa5a7ef879171ec376319882557ae58c09c`.
 Independent13:12:37.925 census found exportroot27404/allnewGodot absent;
 existing10%/2GiB guardian42856/watcher42252 and retention remained error-free.
-No successful prior test or export was repeated for this verification.
-
 
 ## Batch 79: use the detached feature profile inside its owned contract
 
@@ -2625,3 +2623,36 @@ Archive SHA-256:
 `00135efa5851fb90e665025ee047b42b2afccb9ef16e74e0e243f2c91fa66c7f`.
 Independent13:45:42 census found exportroot48636/allnewGodot absent;
 existing10%/2GiB guardian42856/watcher42252 and retention remained error-free.
+
+## Batch 83: collapse identical slot-symbol colour fallbacks
+
+`_slot_prop_symbol_color_for_id` had a buffalo-family branch and a default branch
+that returned the same helper call with identical arguments. Remove the redundant
+condition. The helper still runs exactly once, and every explicit symbol case,
+colour, argument and caller remains unchanged. No scheduling, RNG, persistence or
+content behaviour changed.
+
+The small changed-code check passed60 baseline/candidate `Color` comparisons:
+buffalo and pinball families, signed symbol indices, two phases, three fallback
+symbols and two explicit controls. Its private muted5%/512MiB run exited0 with
+EOF/Job0; PID18836 was independently absent14:03:09 UTC. The user's pre-0.6.1
+development policy applies from this boundary: run small changed-code checks,
+retain tests and reuse existing evidence for unchanged flows. Scheduling and
+animation code are byte-identical, so batch82's successful animation evidence is
+reused; no full suite or unchanged animation replay was run for83.
+
+Fourteen adjacent test files received source review without another runtime run,
+including hover affordances, idle variety, no-pointer animation, audio recovery,
+room projection, route endpoints, character actions, runtime manifests, slot
+auditing and stacking regressions. Their assertions and fixtures remain intact.
+Source review is recorded separately from test execution in the inventory.
+
+Batch82 promoted as`4c029832edef3870b6e1082652704825a0fd097b`, tree
+`76b14e18e66296d8f900dab4a37df422ccad8776`. Its existing15 archive/HTTPS checks
+passed13:52:46 UTC before the development-testing correction. Archive SHA-256:
+`68c800f73fcf62899f65d327511c70018e1bf433824d0725dc7a04b6a11ce846`.
+Independent export closure found root38956 and all new Godot processes absent;
+other owners' private browsers are recorded separately. Later small promotions
+will establish exact identity and entry readiness, reusing unchanged native and
+engine qualifications rather than repeating full release checks.
+No successful prior test or export was repeated for this verification.
