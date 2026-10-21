@@ -3834,3 +3834,22 @@ it is not a general allowed-difference rule.
 No peer source or assertion changed and no successful check was repeated.
 Coverage is 713 full file reviews. RunState's small changed section was reviewed
 incrementally; that does not count as a full read of the remaining large file.
+
+## Batch 142: route the Web smoke wrapper to its retained probe
+
+Read the complete 493-line Web smoke wrapper and its 412-line retained browser
+adapter. The wrapper still passed the removed root-level probe path to Node,
+although the archive manifest, its own missing-Node diagnostic and another live
+wrapper identify `tools/archive/l02/l02_web_perf_probe.mjs`. Correct only that
+argument. The retained adapter is still used; deleting it as abandoned code
+would break both callers. Its JavaScript and archive provenance are unchanged.
+
+Both PowerShell files parse. Three executions of the actual argument builders
+confirm the old path is absent, the corrected module exists and the other eight
+arguments remain exact, including spaced and Unicode values. The selected
+module's existing console-policy self-test exits zero before Playwright,
+profile, directory, network or browser access. This focused check completed in
+0.658 seconds. All production timing, liveness, conservation, RNG, entropy and
+fresh-start assertions remain unchanged. No full wrapper, performance suite,
+export, server, browser, gameplay or save operation ran. Coverage is 715 full
+file reviews. Publication remains with the deployment recovery owner.

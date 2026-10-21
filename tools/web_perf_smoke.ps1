@@ -114,7 +114,7 @@ try {
     }
     $coldCache = if ($CacheMode -eq "cold") { "true" } else { "false" }
     $probeArgs = @(
-        (Join-Path $PSScriptRoot "l02_web_perf_probe.mjs"),
+        (Join-Path $PSScriptRoot "archive/l02/l02_web_perf_probe.mjs"),
         "--browser=$Browser",
         "--headless=$headless",
         "--cpu=$Cpu",
