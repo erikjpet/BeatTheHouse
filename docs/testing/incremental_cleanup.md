@@ -2076,7 +2076,39 @@ before the existing uniqueness check, making that check unable to detect origina
 duplicate IDs. The existing behavior and tests remain intact; changing authored
 input acceptance needs its own explicit correctness proposal.
 
+## Batch 75: remove an overwritten image allocation
+
+`tools/generate_itch_images.py::edge_scene_layer` allocated a blank alpha image,
+then replaced it with `Image.fromarray` without ever reading the blank image.
+Only that unused allocation was removed; every other AST node is identical.
+The utility method and its interface remain available. The authored generator's
+main path does not currently call this helper, so this is cleanup of a retained
+utility, with no claim of faster storefront generation or game rendering.
+
+336 small in-memory fixtures cover four source modes, three source sizes,
+seven target sizes and four side values. Pixel bytes, encoded PNG bytes,
+warnings, exact exception types/messages and source pixels matched. The 192
+successful cases each made exactly one fewer blank-image allocation, with all
+other call order unchanged. The initial private counter assumed Pillow's
+internal allocation order and invalid-input boundary incorrectly; those two
+failed fixture versions and receipts remain preserved. The corrected check keeps
+strict output/error parity and requires an exact single-call deletion wherever
+the removed allocation was reached. No production edit was written until it
+passed. No tracked test or validation rule changed.
+
+No artwork, gallery manifest, storefront, screenshot, browser or game runtime
+was generated or changed. The UI atlas exporter and visual-capture source
+contract were also fully reviewed and retained.
+
 ## Release receipts
+
+Batch74 promoted as`6e637fff5b1388bc0c39eb810d7429ba9e83bcca`, tree
+`69ec5048930bd3a721bcde556a3768fc5c7934a5`. All15 archive/HTTPS hashes,
+redirect, WASM MIME, stable0.6.0 and final pointer passed at12:39:09 UTC.
+Archive SHA-256:
+`c7c48ab0889744fe48c251c057b28657942c4f5f3191c9843900b898729199b1`.
+Independent12:39:09.853 census found exportroot30940/allnewGodot absent;
+existing guardian42856/worker42252 and retention remained error-free.
 
 Batch73 promoted as`8f4676194990308b58ba4f5515e54816f90bf86f`, tree
 `dd35bed23f9a9a6688ff2b5afa8c88eac95a0a6c`. All15 archive/HTTPS file hashes,

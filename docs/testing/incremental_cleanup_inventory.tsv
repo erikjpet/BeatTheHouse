@@ -1858,8 +1858,8 @@ docs/screenshots/scratch_ticket_three_state_review/05_bonus_bingo_three_states.p
 docs/screenshots/scratch_ticket_three_state_review/06_high_roller_holdem_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	9ae3f1c0724939aa1acaebf88e3f8524fde714f1	541341	-
 docs/screenshots/scratch_ticket_three_state_review/07_golden_vault_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	258b7cdca507173d7b8c484ed5ed19a531b994fa	474817	-
 docs/screenshots/scratch_ticket_three_state_review/all_scratch_tickets_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	506839b5f67581028469a7a9230deaf8c5a8a3fb	4560788	-
-docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	b161e8a03d8d757d38f1724dbf82b6536422f598	147056	2335
-docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	aab6781f2a766852bcf8df2d9fb3f055f72140cc	689721	-
+docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	6b62662e7139e93eef6faeb3b82efa53bdfcac6e	149162	2367
+docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	6fe8938910e1847433cc6e5885d46341875da721	690087	-
 docs/testing/punchline_debt_court_recovery.md	docs/testing	authored-document	static-screen	reviewed	D1	ccfe341027a53866f18c201f4ef855a2420c2987	3889	64
 docs/testing/scratch_scalper_runtime_compatibility.md	docs/testing	authored-document	static-screen	reviewed	D1	15feb4c3c388e55a67a98bc58efbc003a1fc4261	3581	56
 docs/todo/README_0_6_board.md	docs/todo	authored-document	static-screen	reviewed	D1	2305cca0cdeeba83d3fa8768159758508d775c58	66017	517
@@ -3541,13 +3541,13 @@ tools/generate_devlog_social_05.py	tools/generate_devlog_social_05.py	authored	s
 tools/generate_end_run_social.py	tools/generate_end_run_social.py	authored	source-review	no-change	M:batch73-full-explicit-authored-map-and-real-viewport-input-font-layout-and-social-output-generator-review-source-only-no-raster-or-approved-copy-change	777741e0b5b5f2883bf9c5eb9907c7286360bf3b	5154	122
 tools/generate_environment_scenario_layout_breakdown.py	tools/generate_environment_scenario_layout_breakdown.py	authored	static-screen	reviewed	S1	de7fd133ab964230023c8d332333aabdc44bf367	36321	692
 tools/generate_icon_art.py	tools/generate_icon_art.py	authored	static-screen	reviewed	S1	10ffd451268ed4cbe0c8a934316b14199a34ae55	60609	1897
-tools/generate_itch_images.py	tools/generate_itch_images.py	authored	static-screen	reviewed	S1	8fae75d5c907c3598bacf99db0d7245053772068	16470	401
+tools/generate_itch_images.py	tools/generate_itch_images.py	authored	source-review	fixed	C:batch75	8fae75d5c907c3598bacf99db0d7245053772068	16470	400
 tools/generate_logo.py	tools/generate_logo.py	authored	source-review	no-change	M:batch73-full-authored-icon-mirror-composition-font-fitting-neon-alpha-vignette-logo-cover-and-banner-output-generator-review-source-only-no-art-generation	3d007e6824859cd0e166259465c52034d6eeebbf	8562	209
 tools/generate_music_delivery_fixtures.ps1	tools/generate_music_delivery_fixtures.ps1	authored	static-screen	reviewed	S1	6c48dac4665ad1ebc813a2faf4081c7bdbebd8ea	4217	90
 tools/generate_promo_log_3_3.py	tools/generate_promo_log_3_3.py	authored	source-review	no-change	M:batch73-full-icon-helper-import-explicit-feature-mapping-pixel-text-shadow-layout-and-authored-promo-output-review-source-only-no-published-copy-or-art-change	a03b8120a98c4798fae9eeda0e8240f76cb7303d	5100	134
 tools/generate_scratch_ticket_art.py	tools/generate_scratch_ticket_art.py	authored	static-screen	fixed	C:7680b2f0	86b77d141fd20deb2f675eb6fd004dd3484e0020	42136	709
 tools/generate_trailer_cards.py	tools/generate_trailer_cards.py	authored	source-review	fixed	C:7680b2f0	c07f477433758c1e8fda2a87ad6dacf6e6824c87	7431	257
-tools/generate_ui05_art.py	tools/generate_ui05_art.py	authored	static-screen	reviewed	S1	e6442859f2223d4d9e650b575fa51b2e31016d1b	6505	199
+tools/generate_ui05_art.py	tools/generate_ui05_art.py	authored	source-review	no-change	M:batch75-full-approved-atlas-background-key-grid-cell-crop-nearest-centering-font-fallback-title-motif-and-source-index-exporter-reviewed-source-only-no-runtime-asset-regeneration	e6442859f2223d4d9e650b575fa51b2e31016d1b	6505	199
 tools/grand_casino_slot_travel_probe.gd	tools/grand_casino_slot_travel_probe.gd	authored	static-screen	reviewed	S1	a09528234a2411fa7c9ef31c35261a8df7e62a72	9339	236
 tools/grand_casino_slot_travel_probe.ps1	tools/grand_casino_slot_travel_probe.ps1	authored	source-review	no-change	M:batch64-full-explicit-local-or-PATH-console-discovery-required-vs-optional-skip-headless-argv-and-exit-wrapper-retained-source-only	4f8ce87ed0a84623db6a9df311227f793313b1be	753	21
 tools/health06_1_apply_json_coerce_refactor.ps1	tools/health06_1_apply_json_coerce_refactor.ps1	authored	static-screen	reviewed	S1	20877a33e01e0cb1c4cb51509533ec9a0925cae8	8148	208
@@ -3620,7 +3620,7 @@ tools/rw06_1_apply_hand_authored_slots.py	tools/rw06_1_apply_hand_authored_slots
 tools/rw06_1_author_fixed_slots.py	tools/rw06_1_author_fixed_slots.py	authored	static-screen	reviewed	S1	0c6f01914eeadd8a522ca15808968e394bdf27c8	133808	2819
 tools/rw06_1_environment_exact_seed_contract_test.ps1	tools/rw06_1_environment_exact_seed_contract_test.ps1	authored	static-screen	reviewed	S1	de099f32bbb3d2287dbe8d4aa6e82674e8277253	550894	4210
 tools/rw06_1_visual_capture_contract_test.ps1	tools/rw06_1_visual_capture_contract_test.ps1	authored	static-screen	reviewed	S1	aaf106c1542b92cc6d6e04aebb7022f230aa5665	290130	4362
-tools/rw06_1_visual_capture_source_contract.py	tools/rw06_1_visual_capture_source_contract.py	authored	static-screen	reviewed	S1	f2ec535f561b42eb594bc1a5ebee2e8afd556d41	19887	384
+tools/rw06_1_visual_capture_source_contract.py	tools/rw06_1_visual_capture_source_contract.py	authored	source-review	no-change	M:batch75-full-engine-free-function-comment-parser-strict-native-types-report-counts-owned-manifest-cleanup-provenance-renderer-geometry-distributed-pixels-checked-writes-and-eight-hostile-source-mutations-reviewed-retained-not-rerun	f2ec535f561b42eb594bc1a5ebee2e8afd556d41	19887	384
 tools/rw06_2_ending_replay.ps1	tools/rw06_2_ending_replay.ps1	authored	static-screen	reviewed	S1	68642e46178d689cc9545d73bb0c9e61090df33e	424929	7989
 tools/rw06_2_evidence_admission.ps1	tools/rw06_2_evidence_admission.ps1	authored	static-screen	reviewed	S1	556ffa654445e058b64edd3b3e86a51d7c4739aa	25749	489
 tools/rw06_2_evidence_admission_contract.ps1	tools/rw06_2_evidence_admission_contract.ps1	authored	static-screen	reviewed	S1	3e8c9f160bc47ef06ac47d310daec754fb6a629f	92847	1514

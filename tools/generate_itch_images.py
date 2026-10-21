@@ -176,7 +176,6 @@ def edge_scene_layer(source: Image.Image, size: tuple[int, int], side: str) -> I
     width, height = size
     panel = cover(scene_only(source), size)
     panel = darken(panel, 0.30, 0.78)
-    alpha = Image.new("L", size)
     alpha_pixels = np.zeros((height, width), dtype=np.uint8)
     ramp = np.linspace(205, 0, width, dtype=np.uint8)
     if side == "right":
