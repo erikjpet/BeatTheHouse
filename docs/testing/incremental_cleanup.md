@@ -2050,7 +2050,41 @@ were reviewed as recorded in the inventory. Their generators, tests, historical
 geometry comparisons and retained assets remain intact; no art generation or
 migration command was run.
 
+## Batch 74: share one event-choice consequence validation snapshot
+
+`ContentLibrary._validate_event_definitions` previously deep-copied each choice's
+consequences for layer checks, then copied the same payload again for its other
+reference/trigger checks. The choice-local detached dictionary is now made once
+and passed to the unchanged read-only layer validator. Validation call order,
+complete error order and text, malformed-value handling and every rejection rule
+remain intact. No authored event, runtime consequence, save or physical authority
+code changed.
+
+Qualification compared the complete event validator on the 159 authored events
+and 120 malformed/duplicate-choice matrices: 121 complete validations and 457
+choices. All ordered validation errors, including a retained prior error, and
+every input snapshot matched the baseline exactly. The unchanged no-pointer
+animation check passed. Both finite muted private Jobs exited naturally with
+EOF, Job0 and no forced cleanup; independent process closure is retained locally.
+This avoids one redundant deep copy per choice; no timing speedup is claimed.
+
+The complete content-library source has now been read, including later music,
+scenario and tutorial validators and cache/error boundaries. Two historical
+devlog image generators were also reviewed and retained. A potential correctness
+follow-up is separate from cleanup: character-pool member IDs are deduplicated
+before the existing uniqueness check, making that check unable to detect original
+duplicate IDs. The existing behavior and tests remain intact; changing authored
+input acceptance needs its own explicit correctness proposal.
+
 ## Release receipts
+
+Batch73 promoted as`8f4676194990308b58ba4f5515e54816f90bf86f`, tree
+`dd35bed23f9a9a6688ff2b5afa8c88eac95a0a6c`. All15 archive/HTTPS file hashes,
+redirect, WASM MIME, stable0.6.0 and the final pointer passed at12:31:28 UTC.
+Archive SHA-256:
+`dfb702c986c90f586c72bdb0918796cd24c5d1d9494eb03a1460ab8257223c92`.
+Independent12:31:28.407 census found root39988 and all new Godot absent; the
+existing10%/2GiB watcher and retention hook remained error-free.
 
 Batches64-72 were published as nine separate commits ending at
 `ee570ffb702ba710f8333c1b47e084c1be433f7f`, tree
