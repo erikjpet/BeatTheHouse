@@ -2848,3 +2848,33 @@ receipt/registry/target rejection and process-local receipt serialization checks
 The Sweep regression preserves all five costed rungs, legacy restore, expiry,
 determinism and its explicit host-resolution gap. These unchanged files were
 reviewed without running them or weakening any criteria.
+
+
+## Batch 92: reuse scratch-preview regions
+
+The scratch-art generator built the same deterministic ticket-region list for
+its preview's symbol layer and again for foil. Build it once per ticket and use
+that read-only list in both loops. The loop bodies, geometry, order, fonts,
+compositing and output names remain unchanged. Across seven ticket shapes this
+reduces region-list construction from14 calls to7; no timing gain is claimed.
+
+A small in-memory before/after comparison used all seven authored shapes with
+synthetic RGBA backgrounds. All seven triptychs and the combined sheet matched
+both RGBA and PNG bytes exactly. It read no shipped backgrounds and wrote no
+image or asset files. The capped5%/512MiB worker exited0 with EOF after the
+comparison passed; its first post-exit Job poll remained active, so bounded
+cleanup drained it to0 and the wrapper's stricter no-cleanup assertion failed.
+That original failure is retained, not reported as a wholly successful lifecycle
+check. Independent PID22932 absence was recorded15:22:44 UTC; no rerun followed.
+
+The complete generator received source review. It retains its public drawing
+helpers, live reveal-symbol generation and deterministic foil, even though v2
+background output is historical. Eight archived PowerShell wrappers/contracts
+were reviewed and retained as historical tools, without running them or
+reactivating relocated default paths. Three authored ritual files were also
+reviewed. The two Showdown files serve different contract/projection schemas and
+remain consumed by the focused duel contract. The poker-night catalog's exact
+blob has explicit immutable provenance in the fully reviewed integration replay
+manifest; no simple absence-of-runtime-reader argument justifies deleting that
+custody record or changing its acceptance status. No game, save, RNG, payout,
+native contract, shipped art or approved content changed.

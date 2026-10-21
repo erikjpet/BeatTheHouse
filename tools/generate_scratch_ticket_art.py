@@ -657,7 +657,8 @@ def save_previews(tickets: list[TicketArt]) -> None:
         size = bg.size
         symbols = Image.new("RGBA", size, (0, 0, 0, 0))
         ds = ImageDraw.Draw(symbols, "RGBA")
-        for index, (name, region) in enumerate(ticket_regions(ticket.ticket_id)):
+        regions = ticket_regions(ticket.ticket_id)
+        for index, (name, region) in enumerate(regions):
             box = rect_abs(region, size, 2)
             if ticket.ticket_id == "crossword_corner" and name.startswith("GRID"):
                 rounded(ds, box, 2, (245, 238, 198, 255), (37, 61, 65, 255), 1)
@@ -669,7 +670,7 @@ def save_previews(tickets: list[TicketArt]) -> None:
                 center_text(ds, (box[0], box[1], box[2] - box[0], box[3] - box[1]), "SYM", 8, (34, 28, 28, 255), bold=True)
         foil = Image.new("RGBA", size, (0, 0, 0, 0))
         df = ImageDraw.Draw(foil, "RGBA")
-        for _, region in ticket_regions(ticket.ticket_id):
+        for _, region in regions:
             box = rect_abs(region, size, 0)
             rounded(df, box, 5, (176, 188, 201, 230), (255, 255, 255, 145), 1)
             for x in range(box[0] + 4, box[2], 12):
