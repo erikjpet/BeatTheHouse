@@ -103,7 +103,8 @@ func _run() -> void:
 		"reduced_motion_after": reduced_after,
 		"live_dice_start_msec": live_dice_start_msec,
 	}
-	_write_manifest()
+	if not _write_manifest():
+		return
 	print("CRAPS_TABLE_VISUAL_CAPTURE_PASS files=%d dir=%s" % [saved_files.size(), ProjectSettings.globalize_path(OUTPUT_DIR)])
 	quit(0)
 
@@ -180,7 +181,7 @@ func _capture(file_name: String) -> bool:
 	return true
 
 
-func _write_manifest() -> void:
+func _write_manifest() -> bool:
 	var manifest := {
 		"tool": "craps_table_visual_capture",
 		"passed": true,
@@ -191,9 +192,10 @@ func _write_manifest() -> void:
 	var file := FileAccess.open(MANIFEST_PATH, FileAccess.WRITE)
 	if file == null:
 		_fail("Could not write Craps visual capture manifest.")
-		return
+		return false
 	file.store_string(JSON.stringify(manifest, "\t"))
 	file.close()
+	return true
 
 
 func _fail(message: String) -> void:

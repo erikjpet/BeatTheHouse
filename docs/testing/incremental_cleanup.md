@@ -3286,3 +3286,28 @@ in 4.67 seconds with reader EOF and an empty Job, and was independently absent
 afterward. No full Crew contract, game action, animation replay, browser, export
 or user save was run. The dependency was retained through RunState, so this is
 a source cleanup with no measured speed claim.
+
+
+## Batch 112: stop a failed capture manifest before reporting success
+
+Full review of the Craps table capture found that its manifest writer could
+signal failure and return, after which the caller still printed PASS and called
+quit with zero. Return the manifest result and stop that caller path on failure.
+Capture geometry, wager fixtures, idle/reduced-motion assertions, image writes,
+manifest content and the existing error callback remain.
+
+Four focused cases used the original and changed helper bodies and caller tails,
+with real FileAccess and recorded failure/quit callbacks. A directory as the
+manifest target reproduced the original PASS and exit-call sequence `[1, 0]`;
+the changed caller stopped at `[1]`. Valid writes remained byte-identical and
+kept `[0]`. This isolates control flow; it is not a full scene/capture run or an
+independent assertion about a completed real capture's process exit.
+
+The first private oracle rejected the successful content comparison although
+the original/candidate bytes and branch observations matched. Its report and
+fixture are retained. The corrected oracle compares all expected serialized
+bytes; the same four tiny cases passed in 0.281 seconds under the existing
+5% CPU/512 MiB Job, with natural exit, EOF and no forced cleanup. Both recorded
+engine PIDs were independently absent. No screenshots, game actions or saved
+state were regenerated. The newly published room-publication source is retained
+under the performance owner's scope, adding one explicit deferred source path.
