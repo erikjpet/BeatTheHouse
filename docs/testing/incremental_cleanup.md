@@ -3897,3 +3897,22 @@ authorize deleting the later accepted game or old issued tickets. Autosave's
 documented timing limits remain explicit; no new speed or durability claim was
 added. No content, profile, fixture, code or save changed. Coverage is 723 full
 file reviews; deployment recovery continues in its owner's lane.
+
+## Batch 145: review receipt history and inactive-room projection ownership
+
+Read the complete new persistent-environment projection and its focused contract,
+plus the complete Numbers slip-history contract. Review the corresponding peer
+diffs in NumbersModel, FoundationMain, RunState, RunSaveCodec and SaveService.
+Preserve owned source/working/output graphs, packed-array ownership, opaque-value
+rejection, exact-type codec dispatch, mutation invalidation and the ordinary
+public snapshot contract. The compilation budget measures serialized payload,
+not resident memory. Receipt history exposes only the player's closed public
+fields and masks pending outcomes; displaying it does not settle or pay slips.
+
+Peer qualification is reused without replaying runtime tests or reading private
+fixtures. No production or test code changed. Coverage is 726 full file reviews
+across 3,712 inventoried paths. RunState and FoundationMain remain partial reads;
+their reviewed diff hunks do not count as complete file coverage. The earlier
+16 cleanup commits through `b0a43358` have since promoted through the existing
+watcher, with exact identity/entry readiness and independent export closure
+recorded separately. The former allocation-recovery hold is resolved.
