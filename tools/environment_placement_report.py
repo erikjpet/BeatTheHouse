@@ -147,7 +147,8 @@ def validate_report(report_path: Path, root: Path = ROOT) -> tuple[dict[str, Any
 
     shared_by_room, scenarios_by_room = expected_authority(root)
     expected_rooms = set(shared_by_room)
-    _require(set(rooms) == expected_rooms, f"room set mismatch; missing={sorted(expected_rooms-set(rooms))}, unexpected={sorted(set(rooms)-expected_rooms)}")
+    actual_rooms = set(rooms)
+    _require(actual_rooms == expected_rooms, f"room set mismatch; missing={sorted(expected_rooms-actual_rooms)}, unexpected={sorted(actual_rooms-expected_rooms)}")
     slot_count = 0
     for room_id in sorted(expected_rooms):
         room = rooms[room_id]

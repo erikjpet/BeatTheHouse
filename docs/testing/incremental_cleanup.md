@@ -2000,7 +2000,46 @@ targeted reviews,1,059 static screens and2,272 role classifications across3,699
 paths;14 deferrals and two separate issues remain. Publication remains held for
 the deployment owner's qualified existing-watcher recovery and exact917 proof.
 
+## Batch 72: reuse the placement report's immutable room-key set
+
+The offline placement-report validator constructed `set(rooms)` three times
+for one unchanged comparison/error message. Keep one method-local set and use
+it for the comparison and exact sorted missing/unexpected-room lists. Inlining
+that local restores the complete original Python AST. Schema,20/55/75 coverage,
+coordinate types, authority hashes, Git ancestry/tree/provenance and explicit
+atomic preview-write guards remain unchanged. No runtime layout or authority
+file was edited, and the validator still defaults to a dry run.
+
+Both unchanged disposable-Git unit tests passed. Ten further exact comparisons
+against1a4e72b7 cover valid full authority/summary and missing/extra/both room sets,
+wrong coordinates/coverage/hash/tree/types and unsaved base layout. Complete JSON
+output order, error types/messages and input bytes match. Room-set constructions
+fall from three to one; no latency claim is made. Only small temporary test Git
+repositories and JSON fixtures were used; no Godot, browser or export ran.
+
+Six full source reviews cover the validator/tests and retained temporary-run
+rotation, collection checker, export-template installer and stuck-state launcher.
+The retention/deletion and installation tools were read only: no cleanup,
+download, editor or game operation was performed. Coverage is374 targeted
+reviews,1,053 static screens and2,272 role classifications across3,699 paths;
+14 deferrals and two separate issues remain. The comprehensive audit continues.
+
 ## Release receipts
+
+Batch63 promoted as`917adf2c20e63161309be8a1c80e2d1dadd271d5`, tree
+`119d1248a762088f91868c9d54bc17e09ca22941`, at12:10:31 UTC after the deployment
+owner qualified and installed a stricter10% kernel quota. The15% observed guard,
+two-second sampling,2GiB and containment remain unchanged. The cleanup worker
+made no pipeline/guard edit or additional restart. That owner's12:11:33 trusted
+HTTPS/archive proof matched all15 files, redirect, WASM MIME, final pointer,
+prior38aec3ff and stable0.6.0. Archive SHA-256:
+`75cae34577f9bee0f7ce0fdaa74641a15fc4561b504acb8e4b0c58be0a07aa3b`.
+Independent12:12:21 closure confirmed all107 recorded build-only identities and
+all new Godot absent; healthy guardian42856/worker42252 remain intentionally
+active. Peak observed Job CPU was12.303912%; automatic retention completed
+without error. Exact owner receipts under `cpu-guard-diagnosis-20261021/` were
+read and incorporated without repeating the export or15-file HTTP proof.
+Original stop receipts and the measurement-formula packet remain preserved.
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
 retained. Restoration `42c0a0c1` was automatically promoted at 02:43:16 UTC.

@@ -1858,8 +1858,8 @@ docs/screenshots/scratch_ticket_three_state_review/05_bonus_bingo_three_states.p
 docs/screenshots/scratch_ticket_three_state_review/06_high_roller_holdem_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	9ae3f1c0724939aa1acaebf88e3f8524fde714f1	541341	-
 docs/screenshots/scratch_ticket_three_state_review/07_golden_vault_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	258b7cdca507173d7b8c484ed5ed19a531b994fa	474817	-
 docs/screenshots/scratch_ticket_three_state_review/all_scratch_tickets_three_states.png	docs/screenshots	historical-evidence	role-classification	no-change	E1	506839b5f67581028469a7a9230deaf8c5a8a3fb	4560788	-
-docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	4e9ac07256c2fa05401dae86a5e77e3c0a91686e	140410	2224
-docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	f90892bea95381607335849225c421b0fb9653b4	686536	-
+docs/testing/incremental_cleanup.md	docs/testing	authored-document	static-screen	reviewed	D1	143e9b8d9b813d99067f6d2cb7e983cb6e8c2a4d	142030	2263
+docs/testing/incremental_cleanup_inventory.tsv	docs/testing	authored-document	static-screen	reviewed	D1	35748f736ff06ac152f06c2a3f25a48ee10e3365	687339	-
 docs/testing/punchline_debt_court_recovery.md	docs/testing	authored-document	static-screen	reviewed	D1	ccfe341027a53866f18c201f4ef855a2420c2987	3889	64
 docs/testing/scratch_scalper_runtime_compatibility.md	docs/testing	authored-document	static-screen	reviewed	D1	15feb4c3c388e55a67a98bc58efbc003a1fc4261	3581	56
 docs/todo/README_0_6_board.md	docs/todo	authored-document	static-screen	reviewed	D1	2305cca0cdeeba83d3fa8768159758508d775c58	66017	517
@@ -3475,7 +3475,7 @@ tools/coin_pusher_pusherv3_10_opening_audit.gd	tools/coin_pusher_pusherv3_10_ope
 tools/coin_pusher_static_cache_contract.gd	tools/coin_pusher_static_cache_contract.gd	authored	static-screen	reviewed	S1	b893cf905f39b42a60288a83246a1d8edc742673	25998	466
 tools/coin_pusher_static_cache_contract.ps1	tools/coin_pusher_static_cache_contract.ps1	authored	static-screen	reviewed	S1	37689d6f646b33cd5000d0c0c36899532a232243	2919	63
 tools/coin_pusher_visual_capture.gd	tools/coin_pusher_visual_capture.gd	authored	static-screen	reviewed	S1	8e62e5b97b512300dc0908ce5e83b03f5c84b59f	11509	288
-tools/collection_meta_check.ps1	tools/collection_meta_check.ps1	authored	static-screen	reviewed	S1	fdf2a6f51fe8dc425f79323a027e5575a3284b68	1561	58
+tools/collection_meta_check.ps1	tools/collection_meta_check.ps1	authored	source-review	no-change	M:batch72-full-optional-editor-vs-headless-test-console-sibling-explicit-local-or-PATH-runtime-discovery-required-vs-optional-skip-and-exit-wrapper-review-source-only-no-editor-or-game-run	fdf2a6f51fe8dc425f79323a027e5575a3284b68	1561	58
 tools/compress_web_sfx_masters.py	tools/compress_web_sfx_masters.py	authored	source-review	no-change	M:batch67-full-explicit-root-sorted-authored-master-header-and-frame-validation-PCM-to-IMA-conversion-loop-policy-BTHA64-output-and-SNR-report-review-source-only-no-reencoding	4bf3d965509585e26c9e28de6c4501132f2ae997	1491	44
 tools/craps_extensive_playtest.gd	tools/craps_extensive_playtest.gd	authored	static-screen	reviewed	S1	d0453393d5c24f3d44cb5e8c8e2f8b82b39d7745	24636	430
 tools/craps_review_capture.gd	tools/craps_review_capture.gd	authored	static-screen	reviewed	S1	76c0b8cd094d9dc13c8f7565858bd69dae4a8829	7368	200
@@ -3505,7 +3505,7 @@ tools/environment_generation_audit.ps1	tools/environment_generation_audit.ps1	au
 tools/environment_grounding_contract.gd	tools/environment_grounding_contract.gd	authored	static-screen	reviewed	S1	e378f4450c9a9f15280b633db9207e99b6d39dd1	33780	673
 tools/environment_grounding_static_check.ps1	tools/environment_grounding_static_check.ps1	authored	source-review	no-change	M:batch63-full-explicit-or-script-relative-root-checker-existence-structured-argv-and-static-failure-propagation-review-retained-not-launched	ad60a80e855b562c04e6dd4d08266492178699e0	441	16
 tools/environment_layout_screenshots.gd	tools/environment_layout_screenshots.gd	authored	static-screen	reviewed	S1	68e504450dfc6f8d4272e06eb80022e09a770e64	201672	3966
-tools/environment_placement_report.py	tools/environment_placement_report.py	authored	static-screen	reviewed	S1	e81b823ce63aef550f5500dcbda190fe25a064b5	13261	259
+tools/environment_placement_report.py	tools/environment_placement_report.py	authored	source-review	fixed	C:batch72	e81b823ce63aef550f5500dcbda190fe25a064b5	13261	260
 tools/event_interaction_catalog_audit.gd	tools/event_interaction_catalog_audit.gd	authored	static-screen	reviewed	S1	827e793ab35b2222a4303843ac9129e8f11ce629	13934	301
 tools/export_itch.ps1	tools/export_itch.ps1	authored	static-screen	reviewed	S1	37ee86eb2367c984bfa8568718312c671d114a24	26375	457
 tools/export_itch_helpers.ps1	tools/export_itch_helpers.ps1	authored	static-screen	reviewed	S1	338efd42316385902cd21313890216609572237d	9843	249
@@ -3525,7 +3525,7 @@ tools/foundation_performance_probe.gd	tools/foundation_performance_probe.gd	auth
 tools/foundation_performance_probe.ps1	tools/foundation_performance_probe.ps1	authored	static-screen	reviewed	S1	b180a640391dc06a20a736b7e11ddbd5d5582485	5082	116
 tools/foundation_soak_probe.gd	tools/foundation_soak_probe.gd	authored	static-screen	reviewed	S1	d0a68769342a4f1cbd52eadbd9d45b5043bc9161	58034	1343
 tools/foundation_soak_probe.ps1	tools/foundation_soak_probe.ps1	authored	static-screen	reviewed	S1	28f03aa2b7005a5f2e02a176bba19a5a9151ae59	4079	115
-tools/foundation_stuck_state_sweep.ps1	tools/foundation_stuck_state_sweep.ps1	authored	static-screen	reviewed	S1	a531734a0983cdd97f1c7cc3221038c6a358f27e	1651	60
+tools/foundation_stuck_state_sweep.ps1	tools/foundation_stuck_state_sweep.ps1	authored	source-review	no-change	M:batch72-full-console-sibling-runtime-resolution-seed-count-environment-try-finally-restoration-required-vs-optional-skip-and-exit-wrapper-review-retained-source-only-no-heavy-run	a531734a0983cdd97f1c7cc3221038c6a358f27e	1651	60
 tools/foundation_systems_shards.ps1	tools/foundation_systems_shards.ps1	authored	static-screen	reviewed	S1	52e45471d3dd2f31971c48b4ce7d0ed95ad859ea	33314	906
 tools/foundation_systems_shards_test.ps1	tools/foundation_systems_shards_test.ps1	authored	static-screen	reviewed	S1	174cc07cce8d632882a967faf9900b29ff6fc3eb	33406	389
 tools/foundation_visual_qa.gd	tools/foundation_visual_qa.gd	authored	static-screen	reviewed	S1	6240f895c85324db2f06896cc70b0b7d413c71cd	274103	4898
@@ -3569,7 +3569,7 @@ tools/heat_feedback_capture.gd	tools/heat_feedback_capture.gd	authored	static-sc
 tools/heat_feedback_capture.ps1	tools/heat_feedback_capture.ps1	authored	source-review	no-change	M:batch64-full-explicit-local-or-PATH-discovery-required-vs-optional-skip-real-viewport-renderer-requirement-and-exit-wrapper-retained-source-only-no-capture	049e5ccd720a66020e1c6e6a6d6a79326a0b27b0	862	23
 tools/heat_feedback_probe.gd	tools/heat_feedback_probe.gd	authored	static-screen	reviewed	S1	0b8d0b91ef16a05c380eb29b7aefd6878764ecb3	9723	211
 tools/heat_feedback_probe.ps1	tools/heat_feedback_probe.ps1	authored	source-review	no-change	M:batch63-full-explicit-local-console-or-PATH-engine-discovery-require-vs-optional-skip-structured-args-and-exit-propagation-review-source-only-no-runtime	7b338010fd0604d5650ecaa7bdd1c044397020de	742	21
-tools/install_export_templates.ps1	tools/install_export_templates.ps1	authored	static-screen	reviewed	S1	e4f613428aa4c8a789812f69125d0a22697f3621	2480	62
+tools/install_export_templates.ps1	tools/install_export_templates.ps1	authored	source-review	no-change	M:batch72-full-official-version-template-download-existing-marker-force-reinstall-archive-layout-and-final-marker-check-review-retained-source-only-no-install-download-cleanup-or-toolchain-change	e4f613428aa4c8a789812f69125d0a22697f3621	2480	62
 tools/install_godot.ps1	tools/install_godot.ps1	authored	source-review	no-change	M:batch64-full-explicit-version-official-release-existing-binary-reuse-console-preference-extraction-and-missing-binary-failure-toolchain-installer-review-source-only-no-install	ee8a2997bc68efa97798559f3c7de57fe58559b5	1288	31
 tools/integ06_1_terminal_soak_launcher_contract_test.ps1	tools/integ06_1_terminal_soak_launcher_contract_test.ps1	authored	source-review	no-change	M:batch64-full-exact-candidate-descriptor-derived-two-host-library-names-and-rejection-of-obsolete-or-cross-worktree-binaries-source-contract-retained-not-launched	cc3a8adb163bdeb81065a2da36b1a8a8657fae77	1450	21
 tools/inventory_art_screenshots.gd	tools/inventory_art_screenshots.gd	authored	static-screen	reviewed	S1	82eda6ee35496a7534c8373ce2afb302abafcf87	3740	85
@@ -3607,7 +3607,7 @@ tools/pull_tabs_seed_audit.gd	tools/pull_tabs_seed_audit.gd	authored	source-revi
 tools/render_trailer.ps1	tools/render_trailer.ps1	authored	static-screen	reviewed	S1	b964b701a8d7b940e18063dfb278a6fabf2a22bc	14225	349
 tools/repository_root.ps1	tools/repository_root.ps1	authored	source-review	no-change	M:root-resolution	e7e9f29a7de60eab4111e537d4604b4327be624a	803	22
 tools/restore_reconciled_copy.py	tools/restore_reconciled_copy.py	authored	source-review	no-change	M:batch39-full-explicit-indexed-recovery-raw-Git-byte-hash-ADS-long-path-no-overwrite-and-generated-partial-lifecycle-review-no-behavior-change	02b2213bcce7499556e913b6e530f185f1919cf6	6556	151
-tools/rotate_tmp_runs.ps1	tools/rotate_tmp_runs.ps1	authored	static-screen	reviewed	S1	19a7dc3ed1d181aff61607455107a0056a9e4b2a	2244	57
+tools/rotate_tmp_runs.ps1	tools/rotate_tmp_runs.ps1	authored	source-review	no-change	M:batch72-full-explicit-repository-tmp-root-contained-stage-run-selection-default-dry-run-Keep-range-ShouldProcess-and-Apply-only-deletion-review-source-only-no-enumeration-or-cleanup-run	19a7dc3ed1d181aff61607455107a0056a9e4b2a	2244	57
 tools/roulette_audio_audit.gd	tools/roulette_audio_audit.gd	authored	source-review	no-change	M:batch57-full-fourteen-event-22050Hz-16bit-PCM-size-loop-and-disposable-report-contract-review-retained-no-audio-runtime	f1f279d216b397eeaaf01bd413d69bf25e6d82ce	2648	78
 tools/roulette_rule_audit.gd	tools/roulette_rule_audit.gd	authored	source-review	no-change	M:batch57-full-157-authored-target-counts-payoff-and-hitbox-priority-zero-half-loss-and-report-contract-review-retained-source-only-no-full-rerun	53a172075709d53a3cc34e3712cd505ce5383d5e	12783	340
 tools/roulette_seed_audit.gd	tools/roulette_seed_audit.gd	authored	source-review	no-change	M:batch57-full-authenticated-host-arm-resolve-money-heat-rebet-RNG-trajectory-forced-payout-fixtures-1000-view-timing-statistics-and-report-contract-review-retained-no-new-latency-claim	a5e6f74d45a46a51aca86d8872cb3923b33fa7c6	30801	662
@@ -3669,7 +3669,7 @@ tools/split_test_runner_helpers.ps1	tools/split_test_runner_helpers.ps1	authored
 tools/street_craps_visual_capture.gd	tools/street_craps_visual_capture.gd	authored	static-screen	reviewed	S1	d4401544d1710b082e84f2b764592543e74ed226	7179	171
 tools/street_craps_visual_capture.ps1	tools/street_craps_visual_capture.ps1	authored	source-review	no-change	M:batch64-full-windowed-capture-engine-console-sibling-fallback-required-vs-optional-skip-and-exit-wrapper-retained-source-only-no-visible-runtime	945fb6ec2feee365644e43dd97518dd73f022c58	723	21
 tools/test_environment_fixed_slot_static_check_v2.py	tools/test_environment_fixed_slot_static_check_v2.py	authored	static-screen	reviewed	S1	8489f0d970caa54f25699a03826305925f5b3f36	6971	182
-tools/test_environment_placement_report.py	tools/test_environment_placement_report.py	authored	static-screen	reviewed	S1	ae05d27def47652d958bb3ebecd0f38a3f95e470	6215	148
+tools/test_environment_placement_report.py	tools/test_environment_placement_report.py	authored	source-review	no-change	M:batch72-full-owned-temporary-Git-and20room55scenario-fixtures-deterministic-preview-and-hash-coverage-slot-coordinate-provenance-tamper-rejections-review;both-existing-tests-passed-unchanged	ae05d27def47652d958bb3ebecd0f38a3f95e470	6215	148
 tools/test_environment_slot_consolidation.py	tools/test_environment_slot_consolidation.py	authored	static-screen	reviewed	S1	e20ee0fa6fbf2bdebb9221d347d1487aca9848a3	7896	201
 tools/test_environment_slot_migration_v2.py	tools/test_environment_slot_migration_v2.py	authored	static-screen	reviewed	S1	037fc1dcff6bee375b179cd881fa3fd722fb4fed	7768	168
 tools/test_scenario_slot_layouts.py	tools/test_scenario_slot_layouts.py	authored	static-screen	reviewed	S1	e06f64eff691d42dcb80447f06fe29e93f79656c	62340	1341
