@@ -3712,3 +3712,27 @@ record contains a cellist line, and Finch's pianist record contains a drummer
 line; these are editorial choices to review separately, not permission to alter
 content semantics. All authored bytes remain unchanged. No offer or gameplay
 suite ran. Coverage is 700 full source reviews.
+
+## Batch 136: complete cold-save probe review and retain explicit deferrals
+
+Read the remaining scratch cold-stage and Punchline witness/chairs probes in
+full. Preserve raw codec inspection before restore, authored-slot tamper
+rejection even after re-digesting, portable ticket ownership, exactly-once filing
+and redemption, the original semantic seals, independent detached queue checks,
+forged-correlation rejection and real rendered commands. No synthetic bundle or
+user save was opened, no test was weakened, and no recovery run was repeated.
+Coverage is 702 full source reviews.
+
+The twelve deferred paths remain explicit: ten belong to coordinated physical,
+presentation or save ownership, one is the unmeasured native support-buffer
+proposal, and one is the PCK-search cleanup whose release qualification failed.
+Source review is complete for six of those paths; the six remaining owned large
+files retain screening status until their full read finishes. Runtime closure
+does not imply permission to edit an owner's source. The three recorded
+diagnostic/alias/animation issues still need their specific evidence or owner.
+
+CH-14 is not a current baseline failure: batch 12 reconciled its source-location
+check with the resolver while retaining all three shuffles and adding explicit
+site guards. The old baseline failure and successful focused reconciliation
+remain as history; neither the test nor RNG behavior was removed. These current
+deferrals are distinct from the Hold'em candidate resolved in batch 128.
