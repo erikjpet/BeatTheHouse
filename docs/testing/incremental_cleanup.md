@@ -2478,3 +2478,38 @@ Archive SHA-256:
 Independent13:12:37.925 census found exportroot27404/allnewGodot absent;
 existing10%/2GiB guardian42856/watcher42252 and retention remained error-free.
 No successful prior test or export was repeated for this verification.
+
+
+## Batch 79: use the detached feature profile inside its owned contract
+
+`_feature_contract_for_context` already deep-copies the entire cached feature
+contract before adding outcome labels. It then deep-copied the profile inside
+that newly owned contract a second time. Use that detached dictionary directly;
+the whole-contract ownership boundary, missing-profile insertion, physical
+AudioStream identity and return shape remain intact. There is no callback
+between the defensive copy and local profile writes. The two delivered-pack
+cache/new-pack callers remain unchanged, as does the procedural fallback path.
+
+A finite private native comparison passed765 complete contracts, including
+missing/empty profiles,80 nested profiles, repeated cue/palette combinations,
+shared input-container aliases and a real AudioStreamWAV resource. Returned
+profile/nested-array writes did not mutate the original cache. Complete output
+bytes and physical stream identity matched the baseline. The unchanged
+no-pointer animation check passed. This checks ownership behavior; no audible
+playback, new audio assets, user save or elapsed-time improvement is claimed.
+
+The complete6706-line music implementation has now been read. Generation tokens,
+thread joins, PCM formats/provider, authored selection, phrase/tempo/choreography
+save restoration, transition timing, stingers and output math remain intact.
+Repeated manifest normalization across an arrangement-selection signal remains:
+external callbacks can run there, so the later snapshot cannot be assumed to
+match the earlier one. Potential DSP-local cleanup remains separate from this
+single ownership-copy change.
+
+Batch78 promoted as`27902ed0ec405ce9bb61f93082339cbcc14612ac`, tree
+`c1689905ae71207590e40eae9034ab97f2e7b506`. All15 archive/HTTPS hashes, dev
+redirect, WASM MIME, stable0.6.0 and final pointer passed13:25:40 UTC.
+Archive SHA-256:
+`2c0fe177f97d93cb529918435ac5f2367aff7b81aa677140c55a92b9c723d4d6`.
+Independent13:26:35.891 census found exportroot26668/allnewGodot absent;
+existing10%/2GiB guardian42856/watcher42252 and retention remained error-free.

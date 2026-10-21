@@ -4468,7 +4468,7 @@ func _feature_contract_for_context(cached: Dictionary, cue_id: String, palette_i
 	var result := cached.duplicate(true)
 	result["palette_id"] = palette_id
 	result["delivery_cue_id"] = cue_id
-	var profile: Dictionary = (result.get("profile", {}) as Dictionary).duplicate(true)
+	var profile: Dictionary = result.get("profile", {}) as Dictionary
 	profile["palette_id"] = palette_id
 	result["profile"] = profile
 	return result
