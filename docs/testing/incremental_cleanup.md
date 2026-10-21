@@ -3467,3 +3467,20 @@ check passed in 0.297 seconds with EOF, Job0 and no engine errors. Three earlier
 private fixture failures remain recorded and are not qualification. All four
 owned process IDs were independently absent. No real capture, gameplay, timing
 sample or speedup claim is included. Full-file review count is 639.
+
+## Batch 122: review capture, session and release-tool boundaries
+
+Read the full scratch redesign capture, agent-session wrapper and itch export
+helpers. Retained explicit art fixtures, process start-time/path identity,
+contained roots, bounded result/log handling, deadlines, atomic publication,
+typed native exit codes and recover-before-replacement candidate stages. The
+scratch tool's output-write failure propagation remains a specific follow-up
+requiring a scoped reproduction; no validation was removed.
+
+Also fully reviewed the delivery consumer API, cold-Continue fixture provenance,
+scratch scalper compatibility notes, historical music listening pass and archive
+rules. Existing travel/save boundaries and private-authority requirements remain.
+Historical listening and fixture evidence are not fresh gameplay qualification;
+archived prompts are context, not work instructions. No capture, export, updater,
+player session, audio run or unchanged suite was executed for these eight reviews.
+Coverage is 647 full reviews; the audit remains unfinished.
