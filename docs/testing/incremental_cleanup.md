@@ -466,6 +466,32 @@ reduced-motion policies remain unchanged. Inventory now records 102 targeted
 source/contract reviews; the remaining static screens are not semantic signoff.
 This batch remains local while the parent's publication/export pause applies.
 
+## Batch 17: clip raster loops to their image
+
+IconSpriteRenderer tested image bounds for every rectangle/circle pixel,
+including every off-image coordinate. Intersect the iteration bounds once;
+preserve ascending write order, circle inclusion math, line interpolation,
+colors, glyph data and canvas drawing. Public texture/image factories and the
+badge/canvas callers retain their interfaces. No scheduling or cache changes.
+
+Native comparison with the prior renderer passed 7,444 exact RGBA8 image cases:
+6,048 rectangles, 756 circles, 20 lines and 620 variants of all 31 authored
+glyphs. Cases include negative/zero dimensions and radii, off-image coordinates,
+three image shapes, five glyph sizes, two frame modes and two accents. Authored
+sprite dictionaries remained unchanged. The required no-pointer animation gate
+passed. Both capped muted Jobs closed naturally with EOF/Job0 and no forced
+cleanup; independent host census confirmed both owned processes absent. This
+proves pixel equivalence and eliminated off-image iterations, not a timing gain.
+
+VisualStyle, both pure music decision helpers, InventoryContainerCatalog and
+the Bar Dice/Craps/Scratch Ticket prop painters were also reviewed in full.
+Palette accessibility, cue ordering/deadlines, stage and fill priorities,
+catalog copy boundaries/capacity validation and full/low-detail prop visuals
+were retained. In particular, music recipe normalization is repeated through
+public methods; bypassing it requires a separate compatibility argument and is
+not slipped into this raster cleanup. Targeted coverage is now 110 files.
+Publication remains paused for the parent's shared capacity dependency.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was

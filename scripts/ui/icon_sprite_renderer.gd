@@ -99,19 +99,22 @@ static func _color(value: Variant, accent: Color) -> Color:
 
 
 static func _img_rect(image: Image, x: int, y: int, w: int, h: int, color: Color) -> void:
-	for px in range(x, x + w):
-		for py in range(y, y + h):
-			if px >= 0 and py >= 0 and px < image.get_width() and py < image.get_height():
-				image.set_pixel(px, py, color)
+	var first_y := maxi(0, y)
+	var last_y := mini(image.get_height(), y + h)
+	for px in range(maxi(0, x), mini(image.get_width(), x + w)):
+		for py in range(first_y, last_y):
+			image.set_pixel(px, py, color)
 
 
 static func _img_circle(image: Image, cx: int, cy: int, radius: int, color: Color) -> void:
 	var r2 := radius * radius
-	for px in range(cx - radius, cx + radius + 1):
-		for py in range(cy - radius, cy + radius + 1):
+	var first_y := maxi(0, cy - radius)
+	var last_y := mini(image.get_height(), cy + radius + 1)
+	for px in range(maxi(0, cx - radius), mini(image.get_width(), cx + radius + 1)):
+		for py in range(first_y, last_y):
 			var dx := px - cx
 			var dy := py - cy
-			if dx * dx + dy * dy <= r2 and px >= 0 and py >= 0 and px < image.get_width() and py < image.get_height():
+			if dx * dx + dy * dy <= r2:
 				image.set_pixel(px, py, color)
 
 
