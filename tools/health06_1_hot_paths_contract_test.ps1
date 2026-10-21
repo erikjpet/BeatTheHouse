@@ -43,7 +43,10 @@ Test-Contract (-not $rng.Contains("values.duplicate(true)")) "CH-14: pick_many s
 $eventResolver = Get-Content -Raw -LiteralPath (Join-Path $projectRoot "scripts/core/environment_event_resolver.gd")
 $environmentInstance = Get-Content -Raw -LiteralPath (Join-Path $projectRoot "scripts/core/environment_instance.gd")
 Test-Contract ($eventResolver.Contains("rng.shuffled(resolved)")) "CH-14: event resolver still implements a full shuffle with pick_many."
-Test-Contract (([regex]::Matches($environmentInstance, 'rng\.shuffled\(')).Count -ge 3) "CH-14: all three audited EnvironmentInstance full shuffles were not migrated."
+Test-Contract ($environmentInstance.Contains("return rng.shuffled(pool)")) "CH-14: environment pool selection does not use the shared full shuffle."
+Test-Contract ($environmentInstance.Contains("return rng.shuffled(selected)")) "CH-14: environment selected candidates do not use the shared full shuffle."
+Test-Contract ($environmentInstance.Contains("return EnvironmentEventResolverScript.select_ids(archetype, definitions, rng)")) "CH-14: environment event selection does not delegate to the audited resolver."
+Test-Contract (([regex]::Matches($environmentInstance + $eventResolver, 'rng\.shuffled\(')).Count -ge 3) "CH-14: all three audited environment/resolver full shuffles were not migrated."
 
 if ($failures.Count -gt 0) {
 	$failures | ForEach-Object { Write-Error $_ -ErrorAction Continue }

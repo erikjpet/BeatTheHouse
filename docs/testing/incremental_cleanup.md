@@ -200,9 +200,9 @@ exhaustiveness or a proof that no future cleanup is possible.
 | --- | ---: |
 | No change | 2,347 |
 | Reviewed by screening | 1,317 |
-| Fixed | 14 |
+| Fixed | 15 |
 | Deferred | 12 |
-| Known baseline check issue | 1 |
+| Unresolved baseline check issue | 0 |
 
 The categories are 731 other authored files, 498 authored documents, 582 media
 or metadata files, 1,658 historical evidence files, 11 first-party native files,
@@ -249,9 +249,10 @@ Evidence codes in the TSV:
 - `P1`: the tested PCK reverse scan requires separate exporter/native-reuse
   qualification. Its original source is restored exactly; the current pipeline
   remains qualified. Do not relax its guard to ship this cleanup.
-- `B1`: the unchanged CH-14 shuffle-count source assertion fails on baseline as
-  recorded in batch 5. Keep the test and environment code; reconcile it with
-  the environment owner after verifying actual shuffle/RNG behavior.
+- `B1`: the original CH-14 source-location mismatch recorded in batch 5 was
+  resolved in batch 12. Runtime environment/RNG code and the three-shuffle
+  requirement are preserved; new checks explicitly guard all three sites and
+  the resolver delegation.
 - Shared canonicalization/bounded-copy helpers in Bar Dice and Grand Casino
   projections are deliberately retained. A shared codec proposal must prove
   unchanged fingerprints and supported old-save behavior for both authorities.
@@ -354,6 +355,24 @@ selection, unique-class priorities/tie order, exact selection envelope and final
 injected-RNG shuffle. It explains the CH-14 source-location mismatch: two full
 shuffle sites remain in EnvironmentInstance and the third lives in this resolver.
 No environment/resolver runtime source was changed.
+
+## Batch 12: reconcile the CH-14 source-location contract
+
+The baseline source contract counted three full shuffles inside
+EnvironmentInstance even though event selection already delegates to
+EnvironmentEventResolver. Count across those two audited sources, preserving
+the minimum of three. Also require the exact pool shuffle, selected-candidate
+shuffle and resolver delegation; retain the existing resolver-shuffle and
+shallow-copy checks. No runtime source, RNG sequence, validation threshold or
+other source-contract assertion is removed or weakened.
+
+Verification used an exact source-copy fixture with all existing checks intact:
+the canonical tree passed; individually replacing the pool shuffle, selected
+shuffle, resolver shuffle or resolver delegation was rejected with its specific
+diagnostic. Existing shallow-RNG-copy and drawn-card-isolation violations were
+also rejected. All six negative cases failed closed, and runtime source bytes
+remained unchanged. This is source-contract diagnostic evidence, not a new
+gameplay or performance claim.
 
 ## Release receipts
 
