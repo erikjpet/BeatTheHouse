@@ -4921,7 +4921,7 @@
                     "actor_id": "motel_desk_clerk",
                     "anchor_id": "package_b_motel_service_top_right",
                     "behavior": "work",
-                    "description": "The clerk guards the back-wall key hooks, watching for the ribbon match that will settle the room assignments.",
+                    "description": "The clerk guards the back-wall key hooks. Match ribbons to settle the room assignments.",
                     "description_variants": {
 
                     },
