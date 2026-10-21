@@ -10976,7 +10976,7 @@ func _draw_slot_prop_nudge_chain_overlay(screen: Rect2, preview: Dictionary, pro
 	var radius := clampf(minf(screen.size.x, screen.size.y) * 0.09, 3.0, 9.0)
 	var edge_x := screen.position.x + 2.0 if side == "left" else screen.end.x - 2.0
 	var x := edge_x - radius + peek * radius * 2.0 if side == "left" else edge_x + radius - peek * radius * 2.0
-	var zone := Rect2(Vector2(edge_x - radius * 1.5, y - radius * 1.6), Vector2(radius * 3.0, radius * 3.2)) if side == "left" else Rect2(Vector2(edge_x - radius * 1.5, y - radius * 1.6), Vector2(radius * 3.0, radius * 3.2))
+	var zone := Rect2(Vector2(edge_x - radius * 1.5, y - radius * 1.6), Vector2(radius * 3.0, radius * 3.2))
 	draw_rect(zone, Color(accent_color.r, accent_color.g, accent_color.b, 0.24 + pulse * 0.22), false, 1)
 	draw_circle(Vector2(x, y), radius, Color(trim_color.r, trim_color.g, trim_color.b, 0.92))
 	draw_circle(Vector2(x - radius * 0.25, y - radius * 0.25), radius * 0.28, Color(1.0, 1.0, 1.0, 0.45))

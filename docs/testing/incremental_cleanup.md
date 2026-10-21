@@ -2656,3 +2656,24 @@ other owners' private browsers are recorded separately. Later small promotions
 will establish exact identity and entry readiness, reusing unchanged native and
 engine qualifications rather than repeating full release checks.
 No successful prior test or export was repeated for this verification.
+
+
+## Batch 84: keep one expression for the nudge highlight rectangle
+
+The nudge-chain painter selected between two byte-identical `Rect2` expressions
+using a local String comparison. Keep that exact expression once. Left/right
+coin positions, clipping rectangle, draw calls, colour, phase and motion remain
+unchanged. A focused source-equivalence check proved both original branches are
+identical and every other source byte is retained. The removed local String
+comparison has no callback or side effect. No speedup is claimed.
+
+This one-line simplification does not change scheduling or introduce an untested
+expression; no native/gameplay replay was needed under the user's development
+policy. Existing animation evidence is reused. Eight further test files received
+full source review: dead-code compatibility, coercion/cache contracts, complete
+serialization, transaction-boundary fixtures, stale-save scalper repair, Rourke
+object handoff, spatial inventory routes and exact-once ticket redemption.
+Deliberate test seams, independent legacy hash oracles, complete schema checks,
+unknown-field preservation and save round trips remain intact. These tests were
+reviewed, not rerun. Publication remains behind the owners' actual finite Web
+case and brief watcher activation; local source work continues.
