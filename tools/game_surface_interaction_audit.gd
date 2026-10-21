@@ -226,16 +226,18 @@ func _reachable_point(canvas: Control, regions: Array[Dictionary], target_index:
 	var resolved: Dictionary = canvas.call("_resolved_surface_action_binding", str(target.get("action", "")), int(target.get("index", -1)))
 	var expected_action := str(resolved.get("action", target.get("action", "")))
 	var expected_index := int(resolved.get("index", target.get("index", -1)))
-	var candidates: Array[Vector2] = [rect.get_center()]
+	var center := rect.get_center()
+	var owner := _topmost_target_at(canvas, regions, center)
+	if str(owner.get("action", "")) == expected_action and int(owner.get("index", -1)) == expected_index:
+		return center
 	for y_index in range(SAMPLE_STEPS):
 		for x_index in range(SAMPLE_STEPS):
 			var x_ratio := (float(x_index) + 0.5) / float(SAMPLE_STEPS)
 			var y_ratio := (float(y_index) + 0.5) / float(SAMPLE_STEPS)
-			candidates.append(rect.position + Vector2(rect.size.x * x_ratio, rect.size.y * y_ratio))
-	for point in candidates:
-		var owner := _topmost_target_at(canvas, regions, point)
-		if str(owner.get("action", "")) == expected_action and int(owner.get("index", -1)) == expected_index:
-			return point
+			var point := rect.position + Vector2(rect.size.x * x_ratio, rect.size.y * y_ratio)
+			owner = _topmost_target_at(canvas, regions, point)
+			if str(owner.get("action", "")) == expected_action and int(owner.get("index", -1)) == expected_index:
+				return point
 	return Vector2(-1.0, -1.0)
 
 

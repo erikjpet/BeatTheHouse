@@ -3413,3 +3413,22 @@ and rejected persistence. Snapshot calls changed from four to one per case
 (112 to 28 total). The 0.296-second private 5% CPU/512 MiB check exited naturally
 with EOF and Job0; its process was independently absent. No main scene, gameplay,
 timing sample or save operation ran, and no gameplay speed improvement is claimed.
+
+
+## Batch 119: generate pointer-audit sample points only when needed
+
+Full review of the cross-game pointer audit found that reachability built all
+290 candidate points before checking the center. Check the center and then
+generate the same 17x17 row-major grid as it is consumed. Floating-point formulas,
+reverse hit priority, action/index resolution, failure thresholds, real dispatch
+checks, reports and production canvas code remain. No sampling point or rule
+was removed, and no animation scheduling changed.
+
+Ninety-two focused cases ran the exact old/new methods and production binding
+resolver, including overlaps, full occlusion, subpixel/empty rectangles, aliases
+and callbacks that mutate region data. Returned points, all 1,853 ordered query
+positions, binding-call traces, inputs and final callback state matched exactly.
+Seventy-two cases stopped at the center and avoid the eager 290-point array.
+No timing speedup is claimed. The private 5% CPU/512 MiB check passed in 0.297
+seconds with natural exit, EOF and Job0, and independent process absence. The
+eleven-game full pointer audit, actual input dispatch and gameplay were not rerun.
