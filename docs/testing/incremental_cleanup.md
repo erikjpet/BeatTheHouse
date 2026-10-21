@@ -1434,6 +1434,40 @@ source/contract reviews, 1,172 static screens and 2,272 role classifications
 across 3,699 paths. Screening and classification do not complete the remaining
 semantic audit.
 
+## Batch 53: test delta-array presence without copying its payload
+
+`RunActionService.result_deltas_have_mutation` needs only the type and emptiness
+of six delta arrays. Check those directly instead of deep-copying nested data
+before inspecting the outer size. Packed arrays and other non-Array values
+remain ignored. The exact scalar, ended and Dictionary checks, public method,
+caller decisions, transaction/revalidation boundaries and all other function
+bodies are unchanged. No timing gain is claimed.
+
+Native comparison against exact3dccb294 passed702 complete decisions, including
+112 authored item/service/lender/event delta dictionaries, malformed container
+shapes, nested/nonempty arrays, packed arrays, ignored fields and scalar early
+returns. Input bytes matched throughout. Six complete old authored saves were
+also traversed unchanged, but contained zero nested delta dictionaries; they
+are not positive mutation or migration coverage. The initial private probe
+included two string-valued `ended` inputs: both baseline and current emitted
+the same bool(String) engine error. The runner rejected that run; its fixture
+and receipt remain preserved. The supported-value comparison then passed
+without changing production validation or any tracked test. Required
+no-pointer animation liveness passed. All three processes exited naturally,
+reader EOF/Job0/no forced cleanup, and were independently absent at10:09 UTC;
+exact closure is recorded in `mutation-predicate-native-closure.json`.
+
+Completed the full3,483-line Crew poker game review without changing it. The
+legacy draw path finishes paid pre-v3 live hands before switching to ordered
+Hold'em. Preserve injected RNG order, honest NPC public inputs, per-seat
+relative thinking timers, no-pointer automatic turns, all-in side pots,
+bounded session settlement and hidden-card projections. The tell producer's
+existing fail-closed host-authority dependency remains explicit; do not delete
+its verifier or infer that restored queue data authorizes a tell reward. Drawing,
+flight landing, reduced motion and lamp/dealer idle scheduling remain intact.
+Coverage is256 targeted source/contract reviews,1,171 static screens and2,272
+role classifications across3,699 paths; the comprehensive audit continues.
+
 ## Release receipts
 
 `16d73614` was refused by the unchanged qualification guard; previous NEXT was
@@ -1583,3 +1617,12 @@ capped guardian40948/watcher43120 remained intentionally active and error-free.
 Retention completed without error. Actual push and release handoffs returned
 the thread transport's AbsolutePathBuf error, so delivery is uncertain. No
 duplicate watcher, export, browser or retry loop was started.
+
+Batch52 promoted as`3dccb29476b072b90799a19bf4f36115d51b6511`, tree
+`26556f73643f819c7a46c288600d780b013bd894`, at10:06:11 UTC. All15 archive files
+matched trusted HTTPS, redirect/WASM MIME/stable0.6.0 and the final pointer
+at10:06:45. Archive SHA-256:
+`5d29980aaacf815d49ab45dd30f340011ce288884818e21115e1e8fc5f511d17`.
+Independent10:06:46 census confirmed root32928/allnewGodot absent; the existing
+capped watcher remained error-free and its retention hook completed. No browser
+journey or elapsed-time speedup is claimed by this release verification.

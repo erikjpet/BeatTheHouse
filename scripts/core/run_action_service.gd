@@ -1446,7 +1446,8 @@ func result_deltas_have_mutation(deltas: Dictionary) -> bool:
 	if bool(deltas.get("ended", false)):
 		return true
 	for key in ["debt_changes", "inventory_add", "inventory_remove", "travel_hooks_add", "story_log", "pending_bags"]:
-		if not JsonCoerceScript._copy_array(deltas.get(key, [])).is_empty():
+		var value: Variant = deltas.get(key, [])
+		if typeof(value) == TYPE_ARRAY and not (value as Array).is_empty():
 			return true
 	for key in ["flags_set", "travel_changes"]:
 		var value: Variant = deltas.get(key, {})
