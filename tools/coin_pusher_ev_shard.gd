@@ -182,7 +182,7 @@ func _run() -> void:
 	opening_tray_coin_value += int(final_accounting["opening_coin_value"])
 	feature_tray_count += int(final_accounting["feature_count"])
 	var ending_stock := _body_kind_counts(simulation.get("bodies", []))
-	var gutter_stock := _ledger_kind_counts(simulation.get("gutter_ledger", []))
+	var gutter_stock := _body_kind_counts(simulation.get("gutter_ledger", []))
 	var ending_origin := _body_origin_counts(simulation.get("bodies", []))
 	var gutter_origin := _ledger_origin_counts(simulation.get("gutter_ledger", []))
 	var feature_insert_count := int(simulation.get("accepted_inserts", 0)) - player_accepted
@@ -612,15 +612,6 @@ func _finish_liveness_failure(started_usec: int, simulation: Dictionary, accepte
 
 
 func _body_kind_counts(values: Array) -> Dictionary:
-	var result := {}
-	for value in values:
-		if typeof(value) == TYPE_DICTIONARY:
-			var kind := str((value as Dictionary).get("kind", "coin"))
-			result[kind] = int(result.get(kind, 0)) + 1
-	return result
-
-
-func _ledger_kind_counts(values: Array) -> Dictionary:
 	var result := {}
 	for value in values:
 		if typeof(value) == TYPE_DICTIONARY:
