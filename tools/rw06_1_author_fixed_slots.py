@@ -946,8 +946,6 @@ def scenario_state_graph(
 
     for snapshot in snapshots:
         active: list[str] = []
-        classes: dict[str, str] = {}
-        movement_starts: list[tuple[str, str]] = []
         for semantic in snapshot:
             if bool(semantic.get("_slot_interaction_only", False)) or bool(semantic.get("_slot_nonvisual", False)):
                 continue
@@ -1001,12 +999,9 @@ def scenario_state_graph(
                         if len(next_label) > len(str(states[route_key].get("label", ""))):
                             states[route_key]["label"] = next_label
                 active.extend(route_keys)
-                classes[route_keys[0]] = placement_class
-                classes[route_keys[1]] = placement_class
                 continue
             key = ensure(stable_id, semantic, placement_class)
             active.append(key)
-            classes[key] = placement_class
             # Release-week timebox: set_position receipts snap to the authored
             # target slot at the phase boundary. They do not reserve the prior
             # phase's slot or author a walking sweep. This preserves exact
@@ -1016,12 +1011,7 @@ def scenario_state_graph(
                 if left != right:
                     conflicts[left].add(right)
                     conflicts[right].add(left)
-        for from_key, placement_class in movement_starts:
-            for other in active:
-                if from_key != other:
-                    conflicts[from_key].add(other)
-                    conflicts[other].add(from_key)
-        active_state_sets.append(set(active) | {from_key for from_key, _placement_class in movement_starts})
+        active_state_sets.append(set(active))
     return states, conflicts, movements, authored_routes, active_state_sets
 
 
@@ -1496,8 +1486,8 @@ def author_map(
             category_used[placement_class].add(str(selected["id"]))
 
     # Scenario state identities are colored against every reachable composition.
-    # A set_position target reserves both its previous and target slots, giving
-    # the renderer a reconstructible authored replay route instead of a teleport.
+    # set_position snaps at phase boundaries; only explicit actor routes reserve
+    # distinct endpoints for reconstructed movement.
     states, conflicts, movements, authored_route_states, active_state_sets = scenario_state_graph(
         map_data,
         archetype,
