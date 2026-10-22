@@ -7189,11 +7189,8 @@ def build_consolidation_disposition_ledger(
         )
 
     targets_by_origin: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
-    final_index: dict[tuple[str, str], dict[str, Any]] = {}
     introduced: list[dict[str, Any]] = []
     for map_id, family, slot in _slot_rows(traced):
-        slot_id = str(slot.get("id", ""))
-        final_index[(map_id, slot_id)] = slot
         origins = slot.get(CONSOLIDATION_ORIGIN_FIELD, [])
         clean_origins = sorted(set(str(value) for value in origins)) \
             if isinstance(origins, list) else []
