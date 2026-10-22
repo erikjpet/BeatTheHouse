@@ -548,10 +548,11 @@ under a stable receipt and may not silently confirm an empty or illegal set.
   "phases": ["open"],
   "accepted_action": "commit.place",
   "rejection": "return_to_source",
+  "rejection_effects": [],
   "equivalents": {
-    "keyboard": {"action": "commit.place", "target_selection": "focus"},
-    "controller": {"action": "commit.place", "target_selection": "focus"},
-    "reduced_motion": {"action": "commit.place", "travel": "instant"}
+    "keyboard": {"action_id": "commit.place", "target_selection": "focus"},
+    "controller": {"action_id": "commit.place", "target_selection": "focus"},
+    "reduced_motion": {"action_id": "commit.place", "target_selection": "focus", "staging": "instant"}
   }
 }
 ```
