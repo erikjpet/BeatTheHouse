@@ -13,12 +13,12 @@ performance/storage, and exact-source automated acceptance are complete.
 `main`, `v0.5.0`, the GitHub Release, and its attached Web/Windows archives
 form the release boundary. Further changes begin after 0.5.
 
-Current identity:
+Technical-baseline snapshot (before the GitHub publication recorded above):
 
 - technical code baseline: `84ae3fc6` (closure records follow as docs only);
 - exact-source Full report: `.tmp/v05_release_candidate_green/summary.json`;
 - all implementation/regression prompt work is committed and archived;
-- no `v0.5.0` tag exists;
+- no `v0.5.0` tag existed at this snapshot;
 - generic files under `builds/` are not approved 0.5 artifacts.
 
 ## Binding execution order
