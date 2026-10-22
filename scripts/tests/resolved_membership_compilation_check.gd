@@ -5,11 +5,11 @@ const Placement := preload("res://scripts/core/environment_placement.gd")
 const Manifest := preload("res://scripts/core/environment_object_manifest.gd")
 
 class OriginalMembershipRun extends RunState:
-	func prepare_resolved_event_membership_for_publication(event_id: String, profile_stages: bool = false) -> Dictionary:
+	func prepare_resolved_event_membership_for_publication(event_id: String, profile_stages: bool = false, next_archetype_additions: Array = []) -> Dictionary:
 		# Select the unchanged implementation retained immediately below the owned
 		# compiler. The old implementation never consumed this runtime publication.
 		_room_presentation_publication = null
-		return super.prepare_resolved_event_membership_for_publication(event_id, profile_stages)
+		return super.prepare_resolved_event_membership_for_publication(event_id, profile_stages, next_archetype_additions)
 
 
 static func check(restored: RunState, library: ContentLibrary) -> Dictionary:

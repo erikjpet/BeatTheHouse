@@ -1784,7 +1784,7 @@ func prepare_current_environment_object_membership_for_publication() -> Dictiona
 # Consuming an ordinary event removes one already-bound room object. Preserve all
 # unaffected immutable bindings instead of repacking the entire room. Complex
 # aliasing and any mutation that adds physical membership retain the full seam.
-func prepare_resolved_event_membership_for_publication(event_id: String, profile_stages: bool = false) -> Dictionary:
+func prepare_resolved_event_membership_for_publication(event_id: String, profile_stages: bool = false, next_archetype_additions: Array = []) -> Dictionary:
 	var profile_started_usec := Time.get_ticks_usec()
 	var profile_stage_started_usec := profile_started_usec
 	var profile_timing: Dictionary = {}
@@ -1819,7 +1819,7 @@ func prepare_resolved_event_membership_for_publication(event_id: String, profile
 
 	_sync_all_runtime_object_manifest_entries(current_environment)
 	if _room_presentation_publication != null:
-		var compiled: RefCounted = _room_presentation_publication.compile_resolved_event_membership(current_environment, clean_event_id)
+		var compiled: RefCounted = _room_presentation_publication.compile_resolved_event_membership(current_environment, clean_event_id, next_archetype_additions)
 		if compiled != null and compiled.commit_compiled_event_membership(current_environment):
 			_room_presentation_publication = compiled
 			var compiled_result := {"ok": true, "errors": [], "manifest": JsonCoerceScript._copy_dict(current_environment.get("object_manifest", {})), "storage_deferred_until_departure": true}
@@ -1903,10 +1903,20 @@ func prepare_resolved_event_membership_for_publication(event_id: String, profile
 # can share one deterministic manifest input without erasing each other.
 func _sync_all_runtime_object_manifest_entries(environment: Dictionary) -> bool:
 	var prior_entries := JsonCoerceScript._copy_array(environment.get("runtime_object_manifest_entries", []))
-	var changed := _sync_contextual_runtime_object_manifest_entries(environment)
-	changed = _sync_numbers_runtime_object_manifest_entries(environment) or changed
-	changed = _sync_crew_heist_runtime_object_manifest_entries(environment) or changed
-	changed = _sync_grand_casino_runtime_object_manifest_entries(environment) or changed
+	var staged_change := _sync_contextual_runtime_object_manifest_entries(environment)
+	staged_change = _sync_numbers_runtime_object_manifest_entries(environment) or staged_change
+	staged_change = _sync_crew_heist_runtime_object_manifest_entries(environment) or staged_change
+	staged_change = _sync_grand_casino_runtime_object_manifest_entries(environment) or staged_change
+	# Each owner replaces only its rows. Crew and Numbers can move their rows
+	# past one another transiently even when the completed projection is exact.
+	# Only a NET change requires geometry/publication reconstruction; all owners
+	# still execute, and real additions/removals/metadata/type changes remain dirty.
+	var changed := var_to_bytes(prior_entries) != var_to_bytes(JsonCoerceScript._copy_array(environment.get("runtime_object_manifest_entries", [])))
+	if not changed and staged_change:
+		# An old/stale/tampered envelope still takes the original repair path. Only
+		# the host's exact accepted publication authenticates this net no-op.
+		changed = not is_same(environment, current_environment) or _room_presentation_publication == null \
+				or not _room_presentation_publication.matches_environment(environment)
 	# Repair baselines captured by older builds while a runtime occupant was
 	# visible. Include both sides of the projection update so an actor that leaves
 	# on this boundary cannot reappear as immutable scenario geometry.
@@ -5215,6 +5225,9 @@ func scenario_flush_facts(boundary_serial: int = -1) -> Dictionary:
 	if not _scenario_semantic_ready():
 		return {"ok": false, "processed": [], "errors": ["Dynamic room sequence semantic records are not finalized."]}
 	var target := _crew_action_index() if boundary_serial < 0 else boundary_serial
+	if _room_presentation_publication != null:
+		var repeated: Dictionary = _room_presentation_publication.repeat_verified_empty_flush(current_environment, definition, target)
+		if not repeated.is_empty(): return repeated
 	var candidate := current_environment.duplicate(false)
 	var prepared := ScenarioEngineScript.prepare_sequence_fact_flush(candidate, definition, target)
 	# No public cache flag authorizes this shortcut. Causal authentication and
@@ -5226,9 +5239,13 @@ func scenario_flush_facts(boundary_serial: int = -1) -> Dictionary:
 			and _room_presentation_publication.matches_environment(current_environment):
 		var unchanged := ScenarioEngineScript.unchanged_sequence_flush_result(candidate, prepared)
 		if not unchanged.is_empty():
+			_room_presentation_publication.retain_verified_empty_flush(definition, target, unchanged)
 			return unchanged
 	var result := ScenarioEngineScript._commit_sequence_candidate(candidate, prepared["candidate"], prepared["definition"], prepared["result"])
-	return _publish_scenario_membership_candidate(candidate, result, "fact flush")
+	var published := _publish_scenario_membership_candidate(candidate, result, "fact flush")
+	if bool(published.get("ok", false)) and _room_presentation_publication != null:
+		_room_presentation_publication.retain_verified_empty_flush(definition, target, published)
+	return published
 
 
 func scenario_publish_game_result(result: Dictionary, deltas: Dictionary) -> void:
@@ -14004,7 +14021,7 @@ func _debt_story_entry(entry_type: String, debt_data: Dictionary, message: Strin
 
 
 # Marks an environment event as resolved.
-func resolve_event(event_id: String, profile_stages: bool = false) -> Dictionary:
+func resolve_event(event_id: String, profile_stages: bool = false, next_archetype_additions: Array = []) -> Dictionary:
 	if current_environment.is_empty() or event_id.is_empty():
 		return {}
 	var resolved: Array = current_environment.get("resolved_event_ids", [])
@@ -14030,7 +14047,7 @@ func resolve_event(event_id: String, profile_stages: bool = false) -> Dictionary
 	# Seal the matching layout and durable room aliases at this same boundary. A
 	# consumed event-family object releases its rectangle; an event-shaped fixed
 	# fixture keeps its guaranteed room presence while losing only its live action.
-	return prepare_resolved_event_membership_for_publication(event_id, profile_stages)
+	return prepare_resolved_event_membership_for_publication(event_id, profile_stages, next_archetype_additions)
 
 
 func set_story_flag(flag_id: String, value: Variant = true) -> void:

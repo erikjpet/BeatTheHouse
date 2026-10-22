@@ -16598,12 +16598,20 @@ func _advance_event_response_transaction(schedule_next: bool = true, expected_ge
 			transaction["step"] = 1
 		1:
 			var prepared: Dictionary = transaction["prepared"]
-			var resolution: Dictionary = prepared["module"].begin_owned_resolution(run_state, prepared["environment"], str(prepared["choice_id"]))
-			if bool(resolution["complete"]):
-				transaction["result"] = resolution["result"]
+			var module: EventModule = prepared["module"]
+			if module.can_resolve_ordinary_atomically(run_state, str(prepared["choice_id"])):
+				# No partial model escapes this call. The existing rollback owner and
+				# all synchronous authority/RNG/event ordering remain intact.
+				transaction["result"] = module.resolve(run_state, prepared["environment"], str(prepared["choice_id"]), true)
+				transaction["atomic_model"] = true
 				transaction["step"] = 3
 			else:
-				transaction["step"] = 2
+				var resolution: Dictionary = module.begin_owned_resolution(run_state, prepared["environment"], str(prepared["choice_id"]))
+				if bool(resolution["complete"]):
+					transaction["result"] = resolution["result"]
+					transaction["step"] = 3
+				else:
+					transaction["step"] = 2
 		2:
 			transaction["result"] = transaction["prepared"]["module"].finish_owned_resolution()
 			transaction["step"] = 3

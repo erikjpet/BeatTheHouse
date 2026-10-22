@@ -8,6 +8,7 @@ const EnvironmentObjectManifestScript := preload("res://scripts/core/environment
 const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const ScenarioSequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const MAX_AUTHORITY_GAME_INPUT_BYTES := 64 * 1024
 
 var _environment: Dictionary
@@ -17,6 +18,67 @@ var _proof_reuse_safe := false
 var _surface_input_bytes := PackedByteArray()
 var _compilation_input_bytes := PackedByteArray()
 var _compilation_kind := ""
+var _empty_flush_definition_bytes := PackedByteArray()
+var _empty_flush_input_bytes := PackedByteArray()
+var _empty_flush_boundary := -1
+var _empty_flush_result: Dictionary = {}
+
+
+func retain_verified_empty_flush(definition: Dictionary, boundary: int, result: Dictionary) -> void:
+	# Called only after RunState's real Runtime/Engine flush and physical commit.
+	# A physical publication or a saved readiness flag alone cannot mint this.
+	_empty_flush_result = {}
+	if not _proof_reuse_safe or not bool(result.get("ok", false)): return
+	var state := _dict(_environment.get("scenario_sequence_state", {}))
+	if str(state.get("status", "")) == "cleaned" \
+			or typeof(state.get("fact_queue")) != TYPE_ARRAY \
+			or not (state["fact_queue"] as Array).is_empty(): return
+	# Verify the next empty batch's status/capacity/counter rules, not just the
+	# preceding operation's success. Retain only Runtime's exact no-op outcome.
+	var next_empty := ScenarioSequenceRuntimeScript.flush_facts(state, definition, boundary, true)
+	if not bool(next_empty.get("ok", false)) or not is_same(next_empty.get("state"), state) \
+			or not (next_empty.get("processed", []) as Array).is_empty(): return
+	var fields := {
+		"state": state, "projection": _environment.get("scenario_sequence_projection", {}),
+		"layout_authority": _environment.get("scenario_layout_authority", {}),
+		"layout_authority_digest": _environment.get("scenario_layout_authority_digest", ""),
+		"layout_audit": _environment.get("scenario_layout_audit", {}),
+		"renderer_snapshot": _environment.get("scenario_render_snapshot", {}),
+	}
+	var offered: Dictionary = {}
+	for key in fields: offered[key] = result.get(key)
+	if var_to_bytes(fields) != var_to_bytes(offered): return
+	var definition_bytes := var_to_bytes(definition)
+	var input_bytes := _empty_flush_inputs(_environment)
+	if definition_bytes.size() + input_bytes.size() > 256 * 1024: return
+	_empty_flush_definition_bytes = definition_bytes
+	_empty_flush_input_bytes = input_bytes
+	_empty_flush_boundary = boundary
+	# Every child belongs to this immutable publication. Getters still detach it.
+	_empty_flush_result = {"ok": true, "unchanged": true, "processed": [], "errors": [],
+		"state": fields["state"], "projection": fields["projection"],
+		"layout_authority": fields["layout_authority"], "layout_authority_digest": fields["layout_authority_digest"],
+		"layout_audit": fields["layout_audit"], "renderer_snapshot": fields["renderer_snapshot"], "warnings": []}
+
+
+func repeat_verified_empty_flush(environment: Dictionary, definition: Dictionary, boundary: int) -> Dictionary:
+	if _empty_flush_result.is_empty() or boundary != _empty_flush_boundary \
+			or var_to_bytes(definition) != _empty_flush_definition_bytes \
+			or not matches_environment(environment) \
+			or _empty_flush_inputs(environment) != _empty_flush_input_bytes: return {}
+	return _empty_flush_result.duplicate(true)
+
+
+static func _empty_flush_inputs(environment: Dictionary) -> PackedByteArray:
+	var inputs := environment.duplicate(false)
+	# The owned event-removal compiler changes only this physical envelope and
+	# resolved journal. None is read by Runtime's empty batch or Engine's scenario
+	# projection/materialization. Match EVERY other field exactly, including state,
+	# causal digests, scenario geometry, baselines and materialized catalogs.
+	# Full live physical/game authority also remains bound by matches_environment.
+	for key in ["game_states", "layout", "object_manifest", "object_manifest_digest", "object_manifest_revision", "resolved_event_ids"]:
+		inputs.erase(key)
+	return var_to_bytes(inputs)
 
 
 func _init(environment: Dictionary, proof: Dictionary) -> void:
@@ -106,7 +168,7 @@ func advanced_turn_counter(environment: Dictionary, previous: int, next: int) ->
 	return publication
 
 
-func compile_resolved_event_membership(environment: Dictionary, event_id: String) -> RefCounted:
+func compile_resolved_event_membership(environment: Dictionary, event_id: String, next_archetype_additions: Array = []) -> RefCounted:
 	if not _proof_reuse_safe or not bool(_proof.get("ok", false)) or event_id.is_empty(): return null
 	# Construct the only supported transition from PRIVATE immutable input. No
 	# live child is recaptured, recursively rescanned or shared into the candidate.
@@ -114,6 +176,17 @@ func compile_resolved_event_membership(environment: Dictionary, event_id: String
 	var resolved := _array(_environment.get("resolved_event_ids", [])).duplicate(true)
 	if not resolved.has(event_id): resolved.append(event_id)
 	input["resolved_event_ids"] = resolved
+	# The event owner captured these authored additions before applying its result.
+	# Reconstruct the exact same bounded append from PRIVATE prior input; never
+	# accept an arbitrary replacement copied from the changed live environment.
+	if not next_archetype_additions.is_empty():
+		if next_archetype_additions.size() > 16 or typeof(input.get("next_archetypes", [])) != TYPE_ARRAY: return null
+		var next := _array(input.get("next_archetypes", [])).duplicate(true)
+		for value in next_archetype_additions:
+			if typeof(value) != TYPE_STRING: return null
+			var id := str(value).strip_edges()
+			if not id.is_empty() and not next.has(id): next.append(id)
+		input["next_archetypes"] = next
 	var shell := environment.duplicate(false)
 	shell.erase("game_states")
 	var expected_bytes := var_to_bytes(input)
@@ -208,6 +281,13 @@ func compile_resolved_event_membership(environment: Dictionary, event_id: String
 	publication._compilation_input_bytes = expected_bytes
 	publication._compilation_kind = "authenticated_event_removal"
 	publication._surface_input_bytes = _surface_input_bytes
+	# The compiler preserves all scenario inputs/outputs byte-exact and changes
+	# only the explicitly excluded physical envelope above. Carry this private
+	# verified empty-batch receipt, never a caller-provided readiness token.
+	publication._empty_flush_definition_bytes = _empty_flush_definition_bytes
+	publication._empty_flush_input_bytes = _empty_flush_input_bytes
+	publication._empty_flush_boundary = _empty_flush_boundary
+	publication._empty_flush_result = _empty_flush_result
 	return publication
 
 

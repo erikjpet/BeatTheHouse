@@ -15,6 +15,43 @@ var content_library: ContentLibrary = null
 var _owned_resolution: Dictionary = {}
 
 
+func can_resolve_ordinary_atomically(run_state: RunState, choice_id: String) -> bool:
+	# A small, unobserved consumption has no expensive post-turn command. Keeping
+	# its existing model operation synchronous removes the newly introduced yield
+	# and both full-run continuation encodings, rather than weakening their check.
+	# Dynamic services, explicit hooks and subscribed scenario events retain the
+	# existing guarded continuation. Resolution still runs every normal validator.
+	if run_state == null or not _owned_resolution.is_empty(): return false
+	if run_state.is_layered_environment() or run_state._is_grand_casino_environment(run_state.current_environment) \
+			or bool(run_state.current_environment.get("scenario_restore_pending_trusted_rebuild", false)) \
+			or run_state._scenario_observes_event_result(get_id()): return false
+	if typeof(definition.get("payload", {})) != TYPE_DICTIONARY: return false
+	var payload: Dictionary = definition.get("payload", {})
+	if not str(payload.get("kind", "")).is_empty(): return false
+	if typeof(payload.get("choices", [])) != TYPE_ARRAY: return false
+	for value in payload.get("choices", []):
+		if typeof(value) != TYPE_DICTIONARY or str(value.get("id", "")) != choice_id: continue
+		if typeof(value.get("consequences", {})) != TYPE_DICTIONARY: return false
+		var consequences: Dictionary = value.get("consequences", {})
+		if typeof(consequences.get("resolve_event")) != TYPE_BOOL or consequences.get("resolve_event") != true: return false
+		for key in consequences:
+			if key not in ["resolve_event", "bankroll_delta", "suspicion_delta", "flags", "add_next_archetypes"]: return false
+		for key in ["bankroll_delta", "suspicion_delta"]:
+			var amount: Variant = consequences.get(key, 0)
+			if typeof(amount) not in [TYPE_INT, TYPE_FLOAT] or not is_finite(float(amount)) or absf(float(amount)) > 1000000.0: return false
+		if typeof(consequences.get("flags", {})) != TYPE_DICTIONARY \
+				or typeof(consequences.get("add_next_archetypes", [])) != TYPE_ARRAY: return false
+		if (consequences.get("flags", {}) as Dictionary).size() > 64: return false
+		for flag in consequences.get("flags", {}):
+			if typeof(consequences["flags"][flag]) != TYPE_BOOL: return false
+		var next: Array = consequences.get("add_next_archetypes", [])
+		# Revealing world-map nodes is a materially larger model command. It keeps
+		# the checked turn/result continuation, even with the cheaper room compiler.
+		if not next.is_empty(): return false
+		return true
+	return false
+
+
 func begin_owned_resolution(run_state: RunState, environment: Dictionary, choice_id: String) -> Dictionary:
 	if not _owned_resolution.is_empty():
 		return {"complete": true, "result": _empty_result(choice_id, environment, "An owned event response is already completing.")}
@@ -666,6 +703,10 @@ func _finish_event_result_application(run_state: RunState, result: Dictionary, c
 	var profile_started_usec: int = context["profile_started_usec"]
 	var profile_stage_started_usec: int = context["profile_stage_started_usec"]
 	var profile_timing: Dictionary = context["profile_timing"]
+	# Own the authored command before shared application mutates the room/map.
+	# The membership compiler reconstructs only these appends from its private
+	# prior room; every other live input still has to match exactly.
+	var membership_next_additions := JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(deltas.get("travel_changes", {})).get("add_next_archetypes", []))
 	# The River Queen normally keeps the player aboard for its authored action
 	# window. Accepting the Grand invitation is a concrete departure handoff:
 	# the host's launch is waiting at the dock. Release only that venue-authored
@@ -689,7 +730,7 @@ func _finish_event_result_application(run_state: RunState, result: Dictionary, c
 		var hook_data := JsonCoerceScript._copy_dict(hook)
 		match str(hook_data.get("type", "")):
 			"resolve_event":
-				var membership_result := run_state.resolve_event(str(hook_data.get("event_id", "")), profile_stages)
+				var membership_result := run_state.resolve_event(str(hook_data.get("event_id", "")), profile_stages, membership_next_additions)
 				if profile_stages and not membership_result.is_empty():
 					result["debug_event_membership_usec"] = JsonCoerceScript._copy_dict(membership_result.get("debug_membership_usec", {}))
 			"trigger_event":

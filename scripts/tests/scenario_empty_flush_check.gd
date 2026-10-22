@@ -42,14 +42,34 @@ static func check(restored: RunState, library: ContentLibrary) -> Dictionary:
 	expect.call(bool(result.get("ok", false)) and bool(result.get("unchanged", false)), "authenticated_empty_flush_skips_republication")
 	expect.call(before == var_to_bytes(fast.to_dict()) and fast.room_presentation_revision() == revision, "empty_flush_preserves_full_state_rng_publication")
 	expect.call(fast.to_dict() == legacy.to_dict() and _without_marker(result) == reference, "empty_flush_matches_full_commit")
+	var retained: Dictionary = result.duplicate(true)
+	var publication: RefCounted = fast._room_presentation_publication
+	var definition_at_flush := fast._scenario_sequence_definition_readonly()
+	expect.call(not publication.repeat_verified_empty_flush(fast.current_environment, definition_at_flush, fast._crew_action_index()).is_empty(), "verified_flush_receipt_is_available")
+	expect.call(publication.repeat_verified_empty_flush(fast.current_environment, definition_at_flush, fast._crew_action_index() + 1).is_empty(), "different_boundary_cannot_reuse_empty_flush")
+	var changed_definition := definition_at_flush.duplicate(true)
+	changed_definition["display_name"] = "changed after verification"
+	expect.call(publication.repeat_verified_empty_flush(fast.current_environment, changed_definition, fast._crew_action_index()).is_empty(), "changed_definition_cannot_reuse_empty_flush")
 	(result["state"] as Dictionary).clear()
 	(result["projection"] as Dictionary).clear()
 	expect.call(before == var_to_bytes(fast.to_dict()), "noop_outputs_are_owned")
+	expect.call(fast.scenario_flush_facts() == retained, "retained_empty_flush_result_is_owned_and_exact")
+	var invalid_environment := fast.current_environment.duplicate(true)
+	var invalid_records: Array = []
+	invalid_records.resize(RuntimeScript.MAX_RECEIPTS + 1)
+	invalid_records.fill({})
+	invalid_environment["scenario_sequence_state"]["fact_receipt_records"] = invalid_records
+	var invalid_publication: RefCounted = publication.get_script().new(invalid_environment, publication.get("_proof"))
+	var invalid_result := retained.duplicate(true)
+	invalid_result["state"] = invalid_environment["scenario_sequence_state"]
+	invalid_publication.retain_verified_empty_flush(definition_at_flush, fast._crew_action_index(), invalid_result)
+	expect.call(invalid_publication.repeat_verified_empty_flush(invalid_environment, definition_at_flush, fast._crew_action_index()).is_empty(), "runtime_capacity_rejection_cannot_mint_empty_flush_receipt")
 
 	# Aliases changed after publication cannot retain its no-op authorization.
 	for field in ["scenario_sequence_projection", "layout", "service_ids", "scenario_layout_context", "scenario_sequence_state"]:
 		fast = _clone(primed)
 		legacy = _clone(primed)
+		fast.scenario_flush_facts()
 		_mutate(fast.current_environment, field)
 		_mutate(legacy.current_environment, field)
 		result = fast.scenario_flush_facts()
@@ -59,6 +79,7 @@ static func check(restored: RunState, library: ContentLibrary) -> Dictionary:
 	# Even a newly captured physical publication is not sufficient to authorize a
 	# stale causal projection/materialization; Engine checks those separately.
 	fast = _clone(primed)
+	fast.scenario_flush_facts()
 	(fast.current_environment["scenario_sequence_projection"] as Dictionary)["last_feedback"] = "stale"
 	fast.publish_room_presentation()
 	result = fast.scenario_flush_facts()
@@ -75,6 +96,7 @@ static func check(restored: RunState, library: ContentLibrary) -> Dictionary:
 	# Real room subscription through the full Engine/RunState publication seam.
 	fast = _clone(primed)
 	legacy = _clone(primed)
+	fast.scenario_flush_facts()
 	var payload := {"source_id": fast.current_world_node_id(), "target_id": "motel_node", "travel_kind": "world"}
 	var ingress := fast.scenario_enqueue_fact("travel_departed", "travel", payload, "empty-flush:travel:1")
 	legacy.scenario_enqueue_fact("travel_departed", "travel", payload, "empty-flush:travel:1")
