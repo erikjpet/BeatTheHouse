@@ -1,8 +1,57 @@
 # Incremental code cleanup, 2026-10-21
 
+Completed authored-file semantic audit, 2026-10-22. The final inventory accounts
+for all 3,720 tracked paths: 1,408 authored semantic reviews and 2,312 explicit
+role classifications, with zero screened-only paths remaining. The classifications
+are 582 media/metadata, 1,659 historical evidence, 39 generated fixtures and 32 UID
+sidecars. They are retained roles, not claims of full binary or third-party review.
+
+The reviewed authored set is 751 code/data/configuration paths, 505 documents,
+82 historical tools, 59 authored fixtures and 11 first-party native files.
+Disposition is 129 fixed paths, 41 issue paths, 12 deferred-edit paths and 3,538
+no-change paths. Fixed files can also have separate retained findings in their
+batch narrative. Review completion does not claim every finding was fixed.
+
+The numbered batches below are historical snapshots. Their old coverage counts,
+ownership holds, model-independent check results and release states describe those
+boundaries; the final accounting supersedes them. Early targeted reads were
+extended by subsequent full file/consumer reviews. Large declarative catalogs
+were reviewed using complete parsed control/ownership tables and lossless row
+factoring; retained prose and opaque authoring receipts were not copyedited.
+No full-suite, all-gameplay or measured timing improvement is inferred from this
+audit. Specific behavior/copy/RNG/save evidence and limitations remain per batch.
+
+The former 1,446 semantic denominator became 1,407 when exactly 36 generated
+engine saves and three historical digest inventories were reclassified in
+21d36d3a, with unchanged paths and blobs. No entry was removed. The later peer
+room-response ownership test adds one reviewed authored path, making 1,408.
+The original 3,691 input paths and all 29 later tracked additions are retained.
+
+Remaining findings include content choice/aftermath mappings and an unsatisfiable
+normal town-day predicate (350-353), a stale layout audit counter (355), reporting
+and test-oracle limitations, custody/cleanup concerns in historical tools, and
+specific native/finalization/save proposals. They remain explicit proposals;
+there is no broad refactor, content remap, test removal or guard relaxation.
+The twelve deferred edits are listed by exact path in the inventory. CH-14's
+original source-location mismatch was resolved in12 with all three actual shuffle
+sites guarded; the early failure is retained as historical evidence.
+
+The final local group retains separate commits for the three small cleanups:
+two unread test allocations (343), an unread migration index (344), and an
+overwritten pure scenario snapshot (349). Their exact-source/AST evidence is
+reused; no broad runtime campaign was repeated. All other final changes are audit
+records. Gameplay, approved content, actual old saves, RNG, payouts, time/heat,
+native contracts, autonomous animation and peer fixes remain preserved.
+
+Existing NEXT recovery verified main01059d67/tree92dc1322 at05:34UTC after the
+deployment owner's specifically approved pipeline repair. Its trusted identity/
+entry receipt and independent build closure are reused; four earlier failed
+imports remain failures. The final cleanup main/NEXT outcome is recorded in the
+task's final publication receipt, without repeating exports for these records.
+
 Input: fresh `origin/main` at
 `4d4eb062f3fb3fa547dd61e66c4e3dd9888e4ac8` (3,691 tracked files).
-This is an ongoing file-by-file audit; unreviewed files are not certified clean.
+This is the original file-by-file audit scope; the final accounting is above.
 Historical cleanup reports are leads, not deletion evidence. Existing saves,
 generated media, native contracts, content and historical evidence are retained.
 
@@ -5512,3 +5561,53 @@ Read the complete 9,088-line baseline (9,087 after cleanup), including every sui
 The revisit fixture read before_revisit immediately before advancing two actions and then overwrote it without any intervening read. Removed that first snapshot and moved the local declaration to the existing second read. Traced RunState.scenario_for_node, seeded_scenario_for_node and environment_situation_cycle through ScenarioEngine normalization and TownState/TownNetwork copy-only accessors: the discarded call has no RNG, mutation or observer effect. The exact source replacement proof verifies every other byte and every failure assertion unchanged. git diff --check passed. No gameplay source, test assertion, save fixture, public method, state key, statistical budget or liveness scheduling changed. No measured speedup or full-suite pass is claimed.
 
 Retained findings: _foundation_write_report819-824 silently ignores an open failure rather than adding a failure to the report/exit result. The older base _slot_complete_feature_total_for_seed8559-8564 adds _slot_input_policy_signature to the real award, so input inequality alone cannot establish input-caused payout variation; the same limitation was recorded for the later slot shard in334. These require explicit contract repair, not assertion deletion/relaxation. No broad harness changes were made.
+
+## Batch 350: review all twelve shop and street sequence graphs
+
+Reviewed all twelve complete parsed scenario trees: every phase/command/fact/condition, objective prerequisite, owned target, ordered operation, expiry/reentry policy, completion contract and material aftermath. Repeated descriptive copy and opaque authoring receipts are retained content/metadata; this is a semantic catalog review rather than a prose copyedit or runtime campaign. Strict duplicate-key parsing and exhaustive leaf traversal are recorded privately; geometry/receipt/graph checks are bounded structural evidence, not a replacement for engine validation.
+
+Delivery Day has five reachable phases, its stock event requires the correlated canonical event_result, and both base route and cashier-tip gates have explicit repaired/broken/refused/interrupted dispositions. The other eleven have explicit arrival/work/resolution branches: Lotto Fever, investigation aftermath, dead shift, inventory, Street Craps, cruiser, fence, Nothing Moving, estate sale, serial and Sal's mood. Reviewed all success/failure/ignored/refused/interrupted/public outcomes, service gates, sweep/heat/game/service/town public facts and cleanup. Traced ScenarioSequenceCatalog copy-on-overlay, package allowlists/dispatch, the shops handler and ScenarioSequenceRuntime's validated commands, bounded consequence/event queues and receipt deduplication. No data or engine source changed.
+
+Source finding: back_alley_nothing_moving subscribes to town_transition with payload day_type=weekday. TownState.DAY_TYPE_IDS permits payday/midweek, its snapshot reports that normalized day type, and RunState emits that snapshot in town_transition. The ordinary valid producer cannot satisfy weekday. Preserve the branch pending an authored-content decision and focused qualification; no runtime failure, legacy-save impossibility or guessed replacement is claimed.
+
+## Batch 351: review all eight public Queen sequence graphs
+
+Reviewed all eight complete parsed catalogs and all nine-phase graphs: wedding, whale, fog, engine, Captain's game, gala, convention and audit. Accounted for every command, objective prerequisite, local field, public interrupt, owned prop/service/route operation, terminal disposition, receipt and cleanup. Every declared phase is reachable in the structural graph. Wedding ring recovery/best-man event bridge, alternate ring cash receipt and charter outcomes were traced independently. No game campaign, RNG trial, authored-copy rewrite or authority bypass was run.
+
+Retained an authored mapping finding: several named choices lead to a different named material aftermath. For example shadow_whale_entourage goes to terminal_success/earned_whale_access while trigger_whale_security_lock goes to terminal_failure/shadowed_entourage and refusal to security_lock. Ration engine power leads to travel_resumed, evacuation to limited_power, refusal to evacuation_staged. Analogous rotations occur in fog, Captain's final, gala, convention and audit terminal tables. The source paths are explicit; intended content semantics need confirmation before any remap. This audit does not silently change gameplay outcomes, remove choices or weaken tests.
+
+The strict parsed-tree/ordered control-table evidence distinguishes all control/ownership leaves from retained prose and authoring receipts. Consumer validation and event/consequence queue boundaries were traced as in350; no full runtime qualification is claimed.
+
+## Batch 352: review all twelve roadside and shelter sequence graphs
+
+Reviewed all twelve complete parsed scenario trees: Motel Conventioneers, stakeout, weekly rates, wedding overflow, trucker convoy, tour bus, graveyard shift, Road Crew Payday, storm shelter, bonfire, storm warning and festival. Followed each objective step through its decision gate, two material success choices, failure/refusal/interruption, public-fact interrupt, safe exit, expiry and terminal cleanup. Checked scenario ownership, receipt presence, positive geometry, graph reachability and all external operation boundaries. Bus counting/lost-ticket/boarding and storm-shelter canonical event-bridge receipt paths remain intact. Road Crew's layout overrides are separate and untouched.
+
+Every leaf is accounted for through the strict parsed-tree traversal and ordered semantic tables; descriptive variants and opaque authoring receipts remain retained copy/metadata. Reviewed one-visit/night/town-action expiry and reentry distinctions without declaring unobserved clocks equivalent. No useful behavior-preserving deletion or deduplication was established. Preserve the peer's qualified driver and Motel Clerk copy fixes and every scenario effect. No native game, old generator, save mutation or full suite was executed.
+
+## Batch 353: review all eleven Bar and Jazz sequence graphs
+
+Reviewed the complete parsed Bar/Jazz catalog: wake, fight, payday, lock-in, darts, live band, dead Tuesday, guest legend, rent party, recording and union trouble. Followed every objective/alternate command through each ordered phase, public interrupt, terminal aftermath and cleanup; retained all night-end expiry, reentry and travel interruption rules. Accounted for item/cash consequence commands, Knuckles' correlated canonical event bridge, actor/interaction ownership, disabled aftermath service and every parsed leaf. No reward, choice, scene, RNG or geometry changed; no runtime campaign was run.
+
+Retained source-level choice/outcome concerns: choose_fight_side grants the betting slip but routes to terminal_failure/broken_room, while generic refusal routes to side_chosen. defer_payday_tabs routes to orders_spilled, whereas generic refusal routes to tabs_deferred. overturn_disputed_dart leads to dispute_upheld. These mappings need an authored decision and focused behavior qualification, not a guessed cleanup remap. Other apparently repetitive phases remain live data loaded by catalog/runtime registries. Exhaustive structural traversal and manual control tables are evidence of semantic review; retained descriptive prose and authoring receipts were not rewritten or represented as a runtime pass.
+
+## Batch 354: review all twelve Punchline and Lounge sequence graphs
+
+Reviewed all complete parsed scenario trees and ordered control tables: Open Mic, Headliner, Bringer, High Stakes, Greased Week, Debt Court, New Muscle, Raid Jitters, Amateur Night, buyout, slow night and bachelorette storm. Followed every objective/alternate choice, fact predicate, owned prop/actor/interaction operation, terminal material aftermath, expiry/reentry and cleanup. Preserved ordered_v1 Crew night IDs and authenticated package/renderer routing: the underground_lounge filename deliberately declares the allowlisted env06_7_punchline_clubs package and is not dead data.
+
+High Stakes uses the exact underground_high_stakes/session_ended public game predicate; Debt Court uses crew_draw_poker/room_duty_boundary and the correlated office-hours event bridge. These remain distinct from generic game-result subscriptions. Club/layer labels, guests, bypass and reopened floor state are content, not unused helpers. Strict complete traversal accounts for every field, with control/ownership tables manually reviewed and repeated descriptive/opaque authoring leaves retained as copy/metadata. No useful behavior-preserving deletion was established. No native run, archived generator, save edit, scene rewrite or broad suite was executed.
+
+## Batch 355: review every scenario-specific slot layout
+
+Reviewed all 55 headers and 604 scenario slot rows using a lossless view: common fields, exact geometry/support profiles, every row delta, semantic position key, occupant alternative and source-slot lineage. Reconstruction checks account for every JSON field; duplicate-key parsing, all slot/footprint counts, positive hit sizes, every declared slot mapping and actor-route endpoint are consistent. Read all action-only IDs, material art keys, conditional recruitment/game/item/service overrides and explicit ownership-family maps. These are declarative/source checks, not a claim that all layouts were newly played or rendered.
+
+Traced EnvironmentPlacement loading and _with_scenario_instance_layout: clean base contexts retain only explicit runtime reserves, exact layouts append reserves, deep-copy instance views and replace relevant fixed/event/exit mappings. Phase-specific position keys, shared slots for mutually exclusive aftermaths, actor route endpoints, action-only host attachment and legacy diagnostic preferences are deliberate live contracts. DeveloperPlacementStore and the existing runtime/layout tests consume these identities. Provisional geometry/source hints remain provenance; they are not deletion evidence. The unreachable layered parent remains template-only while the three room IDs stay separate. User Road Crew overrides remain untouched in their separate authority file.
+
+One retained metadata finding: delta_queen_engine_trouble.audit.action_host_count says1 although scenario_instance_action_host_ids contains2 (repairs event plus task2/evacuation-bench attachment). Every actual binding is preserved; no regeneration or guessed counter rewrite was performed. No source/data/runtime change, generator execution, broad native suite or save mutation.
+
+## Batch 356: close the audit records and reconcile the complete scope
+
+Reviewed the complete audit report as the maintained chronological record and reconciled its final claims against every inventory row, retained review record and original/added Git path. All355 numbered records are present exactly once (including the13 Review batch headings); all187 pre-final private review bodies match the retained report. The two reporting files are now semantically reviewed themselves, with their input/first-recorded blob columns deliberately immutable rather than a self-referential current-file hash.
+
+The final semantic denominator is1408, classified roles2312 and total3720, with no screened-only path. The historical39-entry change is exactly36 generated engine saves plus3 digest inventories, unchanged and retained, followed by one authored peer test addition. No original tracked file is dropped. Current counts supersede dated intermediate counts without rewriting their evidence history. All41 issue rows and12 deferred-edit rows are explicit; separate findings within fixed files remain in their narratives. No source finding is represented as a newly reproduced runtime defect.
+
+Existing source/AST proofs for343/344/349 and catalog/layout traversal evidence are retained with exact hashes. The final data files are unchanged. No repeated gameplay suite, archived generator, new testing infrastructure, storage operation or watcher recovery was performed. The deployment owner's exact01059 identity/entry/closure receipt resolves the prior pending recovery; final ordinary publication follows separately through the existing watcher. The final resume pointers record completed source coverage and the exact publication stage, rather than a stale source cursor or obsolete approval hold.
