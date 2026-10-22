@@ -3539,7 +3539,6 @@ func _check_grand_casino_spatial_split(library: ContentLibrary, main_archetype: 
 	var clean_run := _grand_casino_spatial_fixture_run(library, "GC-SPATIAL-CLEAN", failures)
 	if clean_run == null:
 		return
-	var clean_generator: RunGenerator = RunGeneratorScript.new(library)
 	clean_run.record_grand_casino_game_result({"ok": true, "game_id": "slot", "action_kind": "legal", "stake": 5})
 	if not _prepare_players_card_gold_ready(clean_run, library, failures):
 		failures.append("Grand Casino split clean-route fixture could not complete its sequential card path.")
@@ -6648,7 +6647,6 @@ func _check_contracts(library: ContentLibrary, failures: Array) -> void:
 	if not bool(run_state.narrative_flags.get("fixture_event_flag", false)):
 		failures.append("Event module did not apply flag consequences.")
 
-	var item_effect := ItemEffect.new()
 func _music_track_validation_errors(track: Dictionary) -> Array:
 	var fixture: ContentLibrary = ContentLibraryScript.new()
 	fixture.music_tracks = [track]
