@@ -15,7 +15,6 @@ const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 
 const WATCHDOG_GRACE_MSEC := 2200
-const GENERAL_GAME_IDS := ["slot", "pull_tabs", "blackjack", "baccarat", "roulette", "video_poker", "bar_dice"]
 const ROULETTE_PAST_POST_SURFACE_MSEC := 5700
 const PULL_TAB_ANIMATION_SETTLED_MSEC := 2500
 const BAR_DICE_TUMBLE_SETTLED_MSEC := 1400
@@ -846,20 +845,6 @@ func _write_game_state_to_context(context: Dictionary, game_id: String, state: D
 	var states: Dictionary = run_state.current_environment.get("game_states", {}) if typeof(run_state.current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	states[game_id] = state.duplicate(true)
 	run_state.current_environment["game_states"] = states
-
-
-func _roulette_bet(stake: int) -> Dictionary:
-	return {
-		"id": "straight:17",
-		"type": "straight",
-		"numbers": ["17"],
-		"stake": maxi(1, stake),
-		"payout": 35,
-		"label": "17",
-		"family": "inside",
-		"origin": "sb6_stuck_sweep",
-		"placement": {"x": 480.0, "y": 190.0},
-	}
 
 
 func _scenario_ok(scenario: String) -> Dictionary:
