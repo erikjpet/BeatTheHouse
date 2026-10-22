@@ -396,7 +396,6 @@ def simulate_scenario_binding(
         selected: dict[str, Any] | None = None
         route = routes.get(route_id, {}) if route_id else {}
         stable_id = identity.removeprefix("scenario::")
-        semantic = next((item for item in snapshot if str(item.get("identity", "")) == identity), {})
         if not physical:
             bindings[identity] = {"mode": "attached", "slot_id": "", "placement_class": "", "overflow_reason": "", "art_key": ""}
             continue
