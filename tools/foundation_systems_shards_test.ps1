@@ -113,6 +113,22 @@ Assert-True $selectedAggregate.passed "Selected-shard aggregate rejected the run
 Assert-True (($selectedAggregate.report.registered_check_ids -join "|") -eq "alpha|beta") "Selected-shard aggregate dropped the full canonical registration evidence."
 Assert-True (($selectedAggregate.report.requested_check_ids -join "|") -eq "beta") "Selected-shard aggregate widened its requested coverage."
 
+$registrationCases = @(
+    @{ name = "reordered"; ids = @("beta", "alpha") },
+    @{ name = "missing"; ids = @("beta") },
+    @{ name = "unexpected"; ids = @("alpha", "beta", "intruder") }
+)
+foreach ($registrationCase in $registrationCases) {
+    $hostileRegistrationReport = $passedReport.PSObject.Copy()
+    $hostileRegistrationReport.registered_check_ids = $registrationCase.ids
+    $registrationAggregate = Merge-FoundationSystemsShardReports -ExpectedIds @("beta") -RegisteredIds @("alpha", "beta") -ShardResults @(
+        [pscustomobject]@{ shard_id = "registration"; expected_check_ids = @("beta"); exit_code = 0; raw_exit_code = 0; timed_out = $false; duration_msec = 1; report = $hostileRegistrationReport; report_path = "registration.json"; stdout_path = "registration.out"; stderr_path = "registration.err"; stderr_issues = @(); last_started_check = "beta" }
+    )
+    Assert-True (-not $registrationAggregate.passed) "Hostile $($registrationCase.name) canonical registration was accepted."
+    Assert-True ((@($registrationAggregate.report.failures) -join " | ").Contains("canonical systems registration")) "Registration rejection lost its diagnostic."
+    Assert-True (($registrationAggregate.report.registered_check_ids -join "|") -eq "alpha|beta") "Child registration overwrote the canonical aggregate registration."
+}
+
 $unknownPlan = [ordered]@{ first = @("alpha", "intruder"); second = @("beta") }
 $unknownResult = Test-FoundationSystemsShardPlan -ExpectedIds @("alpha", "beta") -Shards $unknownPlan
 Assert-True (-not $unknownResult.valid) "Hostile unknown-id shard plan was accepted."

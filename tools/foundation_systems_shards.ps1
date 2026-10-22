@@ -777,8 +777,8 @@ function Merge-FoundationSystemsShardReports {
             if ([string]$report.tool -ne "foundation_check" -or [string]$report.suite -ne $SuiteName) {
                 $harnessFailures.Add("Systems shard '$shardId' produced a report with the wrong tool or suite.")
             }
-            $registeredIds = @($report.registered_check_ids)
-            if (($registeredIds -join "|") -ne ($RegisteredIds -join "|")) {
+            $reportedRegisteredIds = @($report.registered_check_ids)
+            if (($reportedRegisteredIds -join "|") -ne ($RegisteredIds -join "|")) {
                 $harnessFailures.Add("Systems shard '$shardId' did not observe the canonical systems registration in its original order.")
             }
             foreach ($check in @($report.checks)) {
