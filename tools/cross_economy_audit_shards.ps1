@@ -217,7 +217,7 @@ function Get-SpecialistCoverageFailures([string]$Style, [object[]]$Runs) {
                 }).Count -gt 0
                 if ((Get-OpportunityCounter $run "heists" "accepted") -gt 0 -and
                     (Get-OpportunityCounter $run "heists" "settled") -gt 0 -and $hasProgress) {
-                    $hasQualifiedRun = $true; break
+                    $hasQualifiedRun = $true
                 }
             }
             if (-not $hasQualifiedRun) {
@@ -305,6 +305,29 @@ if ($SelfTest) {
     }
     if (@(Get-SpecialistCoverageFailures "coin_pusher_grinder" @($qualifiedRun)).Count -ne 0) {
         throw "Self-test failed: complete specialist evidence was rejected."
+    }
+    $countRun = [pscustomobject]@{
+        style_state = [pscustomobject]@{ heist_plan_id = "the_count" }
+        ledger = @([pscustomobject]@{ label = "heist_lock:the_count" })
+        opportunities = [pscustomobject]@{ heists = [pscustomobject]@{ accepted = 1; settled = 1 } }
+    }
+    $whaleRun = [pscustomobject]@{
+        style_state = [pscustomobject]@{ heist_plan_id = "the_whale" }
+        ledger = @([pscustomobject]@{ label = "heist_lock:the_whale" })
+        opportunities = [pscustomobject]@{ heists = [pscustomobject]@{ accepted = 1; settled = 1 } }
+    }
+    for ($whaleIndex = 0; $whaleIndex -lt 8; $whaleIndex++) {
+        $heistRuns = @(for ($i = 0; $i -lt 8; $i++) { if ($i -eq $whaleIndex) { $whaleRun } else { $countRun } })
+        if (@(Get-SpecialistCoverageFailures "heist_rusher" $heistRuns).Count -ne 0) {
+            throw "Self-test failed: complete heist coverage depended on run order."
+        }
+    }
+    foreach ($singlePlan in @($countRun, $whaleRun)) {
+        $heistRuns = @(for ($i = 0; $i -lt 8; $i++) { $singlePlan })
+        $heistFailures = @(Get-SpecialistCoverageFailures "heist_rusher" $heistRuns)
+        if ($heistFailures.Count -ne 1 -or $heistFailures[0] -cne "heist_rusher did not cover both production heist plans.") {
+            throw "Self-test failed: missing heist plan coverage was accepted."
+        }
     }
     Write-Host "CROSS_ECONOMY_SHARDS_SELF_TEST_PASS mixed_manifest_rejected=true changed_engine_resume_rejected=true reduced_final_rejected=true diagnostic_counts_separate=true zero_specialist_rejected=true"
     exit 0
