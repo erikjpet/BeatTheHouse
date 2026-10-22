@@ -555,8 +555,8 @@ func _check_delivery_failure_injection_matrix(failures: Array) -> void:
 			resumed = run_state.world_sequence_consume_delivery_outcome(token, receipt_id, target_node_id)
 		_assert_delivered_resume(stage, run_state, token, receipt_id, resumed, bankroll_before, heat_before, command_receipts_before, failures)
 
-	_check_owner_lifecycle_retry(library, "expired", false, failures)
-	_check_owner_lifecycle_retry(library, "abandoned", true, failures)
+	_check_owner_lifecycle_retry(library, "expired", failures)
+	_check_owner_lifecycle_retry(library, "abandoned", failures)
 	_check_after_cleanup_replay(library, failures)
 	_check_delivery_checkpoint_hostile_matrix(library, failures)
 
@@ -640,7 +640,7 @@ func _check_delivery_checkpoint_hostile_matrix(library: ContentLibrary, failures
 	_append_checkpoint_field_mutations(cases, authentic_checkpoint)
 	for case_value in cases:
 		var case := _dict(case_value)
-		_assert_hostile_checkpoint_case(library, authentic, str(case.get("id", "hostile")), _dict(case.get("checkpoint", {})), failures)
+		_assert_hostile_checkpoint_case(authentic, str(case.get("id", "hostile")), _dict(case.get("checkpoint", {})), failures)
 	_check_authentic_checkpoint_round_trip(library, failures)
 
 
@@ -650,7 +650,6 @@ func _prepared_checkpoint_fixture(library: ContentLibrary, label: String, failur
 		return {}
 	var run_state: RunState = fixture.get("run_state")
 	var token := str(fixture.get("token", ""))
-	var receipt_id := str(fixture.get("receipt_id", ""))
 	var target_node_id := str(fixture.get("target_node_id", ""))
 	var owner_result := run_state.world_sequence_commit_delivery_outcome(token, target_node_id)
 	if not bool(owner_result.get("ok", false)):
@@ -719,7 +718,7 @@ func _wrong_checkpoint_field_type(field: String, authentic_value: Variant) -> Va
 	return "wrong-type"
 
 
-func _assert_hostile_checkpoint_case(library: ContentLibrary, fixture: Dictionary, case_id: String, hostile_checkpoint: Dictionary, failures: Array) -> void:
+func _assert_hostile_checkpoint_case(fixture: Dictionary, case_id: String, hostile_checkpoint: Dictionary, failures: Array) -> void:
 	var source_run: RunState = fixture.get("run_state")
 	var hostile := RunStateScript.new()
 	var saved := source_run.to_dict()
@@ -786,7 +785,7 @@ func _assert_delivered_resume(stage: String, run_state: RunState, token: String,
 		failures.append("P1 %s replay was not an exact idempotent no-op." % stage)
 
 
-func _check_owner_lifecycle_retry(library: ContentLibrary, outcome: String, inject_after_sync: bool, failures: Array) -> void:
+func _check_owner_lifecycle_retry(library: ContentLibrary, outcome: String, failures: Array) -> void:
 	var fixture := _prepared_delivery_outcome(library, "WORLD-SEQUENCE-P1-%s-SYNC" % outcome, failures, false)
 	if fixture.is_empty(): return
 	var run_state: RunState = fixture.get("run_state")
