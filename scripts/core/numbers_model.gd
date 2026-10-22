@@ -1067,7 +1067,37 @@ func _depth_state_is_valid() -> bool:
 		seen_slips[slip_id] = true
 	if not _draw_occasions_are_valid():
 		return false
-	return bookmaker_aftermath == _expected_bookmaker_aftermath() and _all_slip_causes_are_referenced()
+	return _bookmaker_aftermath_matches(_expected_bookmaker_aftermath()) and _all_slip_causes_are_referenced()
+
+
+func _bookmaker_aftermath_matches(expected: Dictionary) -> bool:
+	if bookmaker_aftermath.size() != expected.size():
+		return false
+	for venue_id in expected:
+		var actual_value: Variant = bookmaker_aftermath.get(venue_id)
+		if typeof(actual_value) != TYPE_DICTIONARY:
+			return false
+		var actual: Dictionary = actual_value
+		var wanted: Dictionary = expected[venue_id]
+		if actual.size() != wanted.size():
+			return false
+		for key in wanted:
+			if not actual.has(key):
+				return false
+			# JSON parses integral numbers as floats. Compare only these closed
+			# integer fields numerically; retain exact keys, types and values elsewhere.
+			if key == "last_day":
+				if typeof(actual[key]) not in [TYPE_INT, TYPE_FLOAT] or float(actual[key]) != float(wanted[key]):
+					return false
+			elif key == "_cause_sequences":
+				if typeof(actual[key]) != TYPE_ARRAY or actual[key].size() != wanted[key].size():
+					return false
+				for index in range(wanted[key].size()):
+					if typeof(actual[key][index]) not in [TYPE_INT, TYPE_FLOAT] or float(actual[key][index]) != float(wanted[key][index]):
+						return false
+			elif typeof(actual[key]) != typeof(wanted[key]) or actual[key] != wanted[key]:
+				return false
+	return true
 
 
 func _core_slip_is_valid(slip: Dictionary) -> bool:

@@ -159,6 +159,22 @@ func _check_versioned_migration_and_causal_restore(failures: Array) -> void:
 	var valid: Dictionary = settled.snapshot()
 	if not _model(1201).restore(valid, 1201):
 		failures.append("Complete current causal Numbers save did not restore.")
+	var json_valid: Dictionary = JSON.parse_string(JSON.stringify(valid))
+	if not _model(1201).restore(json_valid, 1201):
+		failures.append("Settled Numbers history did not survive an actual JSON save round trip.")
+	for altered_field in ["last_day", "_cause_sequences", "extra_memory"]:
+		var altered := json_valid.duplicate(true)
+		var memory: Dictionary = altered["bookmaker_aftermath"]["bar"]
+		if altered_field == "last_day":
+			memory["last_day"] = 0.5
+		elif altered_field == "_cause_sequences":
+			memory["_cause_sequences"][0] = float(memory["_cause_sequences"][0]) + 0.5
+		else:
+			memory["extra_memory"] = true
+		var rejected = _model(1201)
+		var rejected_before := JSON.stringify(rejected.snapshot())
+		if rejected.restore(altered, 1201) or JSON.stringify(rejected.snapshot()) != rejected_before:
+			failures.append("Altered Numbers aftermath %s was accepted or mutated the target." % altered_field)
 	var impossible := valid.duplicate(true)
 	var impossible_slips: Array = (impossible.get("slips", []) as Array).duplicate(true)
 	var impossible_slip: Dictionary = (impossible_slips[0] as Dictionary).duplicate(true)
