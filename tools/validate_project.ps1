@@ -1511,9 +1511,6 @@ function Read-JsonArray {
     }
     try {
         $parsed = Get-Content -LiteralPath $path -Raw | ConvertFrom-Json
-        if ($parsed -is [System.Array]) {
-            return @($parsed)
-        }
         return @($parsed)
     }
     catch {
