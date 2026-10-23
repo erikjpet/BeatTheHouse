@@ -25,6 +25,23 @@ static func build(pending: Dictionary, push_currency: String = "", chip_cash_rat
 	return entries
 
 
+# Accumulate only entries already released to the HUD. Never exchange units or
+# infer a settlement/push from a visible total crossing zero.
+static func accumulate_visible(visible: Array, incoming: Array) -> Array:
+	var totals: Dictionary = {}
+	for group in [visible, incoming]:
+		for entry in group:
+			var currency := str(entry.get("currency", ""))
+			if currency in ["cash", "chips", "gold"]:
+				totals[currency] = int(totals.get(currency, 0)) + int(entry.get("delta", 0))
+	var entries: Array = []
+	for currency in totals:
+		_append(entries, int(totals[currency]), str(currency))
+	if entries.is_empty() and not totals.is_empty():
+		entries.append({"delta": 0, "currency": totals.keys()[0], "text": "0", "tone": "text_muted"})
+	return entries
+
+
 static func _append(entries: Array, amount: int, currency: String) -> void:
 	if amount == 0:
 		return

@@ -10,6 +10,7 @@ const SegmentedMeterScript := preload("res://scripts/ui/segmented_meter.gd")
 const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const HudTimeWatchScript := preload("res://scripts/ui/hud_time_watch.gd")
 const HeatFeedbackVisualsScript := preload("res://scripts/ui/heat_feedback_visuals.gd")
+const MoneyFeedbackViewModelScript := preload("res://scripts/ui/money_feedback_view_model.gd")
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 
 var wallet_value: Label
@@ -43,6 +44,7 @@ var _wallet_delta_tone := ""
 const MONEY_FEEDBACK_DURATION_SEC := 1.6
 var _money_feedback_elapsed_sec := MONEY_FEEDBACK_DURATION_SEC
 var _money_feedback_presentations := 0
+var _money_feedback_entries: Array = []
 var _has_rendered := false
 var _status_icons_key := ""
 var _heat_feedback_elapsed_sec := HeatFeedbackVisualsScript.GAIN_DURATION_SEC
@@ -72,6 +74,7 @@ func reset_wallet_delta() -> void:
 		wallet_delta.text = ""
 		wallet_delta.modulate = Color.WHITE
 	_money_feedback_elapsed_sec = MONEY_FEEDBACK_DURATION_SEC
+	_money_feedback_entries = []
 	if wallet_delta_panel != null:
 		wallet_delta_panel.modulate.a = 0.0
 	cancel_heat_feedback()
@@ -421,6 +424,8 @@ func _process(delta: float) -> void:
 		_money_feedback_elapsed_sec += maxf(0.0, delta)
 		var remaining := MONEY_FEEDBACK_DURATION_SEC - _money_feedback_elapsed_sec
 		wallet_delta_panel.modulate.a = 1.0 if reduce_motion and remaining > 0.0 else clampf(remaining / 0.22, 0.0, 1.0)
+		if remaining <= 0.0:
+			_money_feedback_entries = []
 	if _heat_feedback_active():
 		_heat_feedback_elapsed_sec += maxf(0.0, delta)
 		if not _heat_feedback_active():
@@ -473,6 +478,9 @@ func _cancel_heat_feedback() -> void:
 func present_money_feedback(entries: Array) -> void:
 	if entries.is_empty() or wallet_delta_panel == null:
 		return
+	var visible: Array = _money_feedback_entries if _money_feedback_elapsed_sec < MONEY_FEEDBACK_DURATION_SEC else []
+	_money_feedback_entries = MoneyFeedbackViewModelScript.accumulate_visible(visible, entries)
+	entries = _money_feedback_entries
 	var amounts: PackedStringArray = []
 	var tone := str((entries[0] as Dictionary).get("tone", "text_muted"))
 	for entry_value in entries:
