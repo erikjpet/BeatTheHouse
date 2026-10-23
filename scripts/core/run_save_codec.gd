@@ -67,6 +67,41 @@ const WEB_Z85_DECODE := """(function(source, expectedSize, alphabet) {
     }
     return result;
 })"""
+const WEB_JSON_CONTENT_VALID := """(function bthValidateSaveJson(source) {
+    try {
+        const root = JSON.parse(source);
+        if (!root || typeof root !== 'object' || Array.isArray(root)) return false;
+        const own = (key) => Object.prototype.hasOwnProperty.call(root, key);
+        if (!own('seed_text') || !own('rng_state') || !own('current_environment')) return false;
+        // Stay inside the common strict-JSON subset. Unusual numbers, Unicode
+        // or depth use the existing Godot parser rather than changing acceptance.
+        const stringOK = (value) => {
+            for (let i = 0; i < value.length; i++) {
+                const code = value.charCodeAt(i);
+                if (code === 0) return false;
+                if (code >= 0xD800 && code <= 0xDBFF) {
+                    const low = value.charCodeAt(++i);
+                    if (!(low >= 0xDC00 && low <= 0xDFFF)) return false;
+                } else if (code >= 0xDC00 && code <= 0xDFFF) return false;
+            }
+            return true;
+        };
+        const pending = [[root, 0]];
+        while (pending.length) {
+            const [value, depth] = pending.pop();
+            if (depth > 64) return false;
+            if (typeof value === 'number' && !Number.isFinite(value)) return false;
+            if (typeof value === 'string' && !stringOK(value)) return false;
+            if (value && typeof value === 'object') {
+                for (const key of Object.keys(value)) {
+                    if (!stringOK(key)) return false;
+                    pending.push([value[key], depth + 1]);
+                }
+            }
+        }
+        return true;
+    } catch (_) { return false; }
+})"""
 const SEEDED_SCENARIO_DEFINITIONS_KEY := "seeded_scenario_definitions_by_node"
 const SCENARIO_DEFINITION_REF_KEY := "__bth_scenario_definition_ref"
 const SCENARIO_DEFINITION_PATCH_KEY := "p"
@@ -189,17 +224,8 @@ static func storage_envelope_valid(value: Dictionary) -> bool:
 static func unpack_from_storage(stored_state: Dictionary, preserve_legacy_authority_integers: bool = true) -> Dictionary:
 	if not stored_state.has(STORAGE_MARKER_KEY):
 		return stored_state.duplicate(true)
-	if not storage_envelope_valid(stored_state):
-		return {}
-	var compressed := _z85_decode(
-		str(stored_state.get(STORAGE_DATA_KEY, "")),
-		int(stored_state.get(STORAGE_COMPRESSED_SIZE_KEY, 0))
-	)
-	if compressed.is_empty():
-		return {}
-	var source := compressed.decompress(int(stored_state.get(STORAGE_SIZE_KEY, 0)), FileAccess.COMPRESSION_ZSTD)
-	if source.size() != int(stored_state.get(STORAGE_SIZE_KEY, 0)) \
-			or _sha256(source) != str(stored_state.get(STORAGE_HASH_KEY, "")):
+	var source := _validated_storage_source(stored_state)
+	if source.is_empty():
 		return {}
 	var json := JSON.new()
 	var json_text := source.get_string_from_utf8()
@@ -210,6 +236,43 @@ static func unpack_from_storage(stored_state: Dictionary, preserve_legacy_author
 	# This parser was created for this one call. Its complete JSON graph is
 	# already privately owned; another deep copy cannot detach it any further.
 	return json.data as Dictionary
+
+
+static func storage_contents_valid(stored_state: Dictionary) -> bool:
+	if not stored_state.has(STORAGE_MARKER_KEY):
+		return _required_content_roots(stored_state)
+	var source := _validated_storage_source(stored_state)
+	if source.is_empty():
+		return false
+	var json_text := source.get_string_from_utf8()
+	if OS.has_feature("web") and Thread.is_main_thread():
+		var fast: Variant = JavaScriptBridge.eval(WEB_JSON_CONTENT_VALID + "(" + JSON.stringify(json_text) + ")")
+		if typeof(fast) == TYPE_BOOL and fast:
+			return true
+	# Keep historical parser acceptance, including Godot's JSON extensions, and
+	# retain the full native path if the browser bridge is absent or declines.
+	var json := JSON.new()
+	return json.parse(json_text) == OK and typeof(json.data) == TYPE_DICTIONARY and _required_content_roots(json.data)
+
+
+static func _required_content_roots(value: Dictionary) -> bool:
+	return not value.is_empty() and value.has("seed_text") and value.has("rng_state") and value.has("current_environment")
+
+
+static func _validated_storage_source(stored_state: Dictionary) -> PackedByteArray:
+	if not storage_envelope_valid(stored_state):
+		return PackedByteArray()
+	var compressed := _z85_decode(
+		str(stored_state.get(STORAGE_DATA_KEY, "")),
+		int(stored_state.get(STORAGE_COMPRESSED_SIZE_KEY, 0))
+	)
+	if compressed.is_empty():
+		return PackedByteArray()
+	var source := compressed.decompress(int(stored_state.get(STORAGE_SIZE_KEY, 0)), FileAccess.COMPRESSION_ZSTD)
+	if source.size() != int(stored_state.get(STORAGE_SIZE_KEY, 0)) \
+			or _sha256(source) != str(stored_state.get(STORAGE_HASH_KEY, "")):
+		return PackedByteArray()
+	return source
 
 
 # Prior packed saves wrote the authority ledger as ordinary JSON. Godot parses

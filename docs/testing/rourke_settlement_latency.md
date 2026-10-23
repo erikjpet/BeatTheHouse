@@ -193,3 +193,23 @@ still receive the original dictionary projection. Exact JSON parity and source
 alias invalidation, prior-generation isolation and removed-room release are
 checked by the same focused encoding contract. Native capture on the genuine
 hand-three save falls to about 2.1 ms, with no state or format reduction.
+
+The remaining ordinary Web save-install interval reached 109 ms renderer CPU on
+`9a1a733b`. A diagnostic copy of the exact durable writer, using the genuine
+hand-three save, measured about 55 ms natively for a known primary: approximately
+51 ms in temporary-generation validation, versus 1–2 ms for rotation/install and
+less than 1 ms for each digest check. An unknown primary correctly receives an
+additional full validation. The writer's durability/rollback code is unchanged.
+
+Content-only validation now uses the existing browser bridge to parse strict JSON
+and check the same required roots without constructing and releasing the whole
+Godot Variant graph. Envelope size, decompression and exact content hash are
+still checked first. Nonfinite numbers, unpaired Unicode surrogates or depth over
+64 decline the fast path; all declined/failed bridge cases use the previous Godot
+parser. Actual loads retain their existing integer repair and restore path.
+`save_content_validation_check.gd` creates a Godot acceptance oracle for malformed
+and legacy grammar, numeric/Unicode/depth edges and the genuine prepared/terminal
+saves. The companion `.cjs` runs the exact shipped bridge expression and asserts
+that it never accepts content rejected by that oracle. Packed cases also check
+hash-damage rejection. The finite corpus is compatibility evidence, not a proof
+for every possible input; final Web timing belongs to the task receipt.
