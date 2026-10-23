@@ -12823,7 +12823,7 @@ func _render_run_report() -> void:
 	if key == run_report_model_key:
 		return
 	run_report_model_key = key
-	var run_data := run_state.to_dict()
+	var run_data: Dictionary = RunReportViewModelScript.snapshot_run(run_state)
 	run_data["terminal_score"] = run_state.terminal_score_summary()
 	run_report_model = RunReportViewModelScript.build(run_data, {
 		"outcomes": RunReportViewModelScript.load_outcome_registry(),
@@ -20745,7 +20745,7 @@ func _profile_run_result_snapshot(terminal_result: Dictionary = {}) -> Dictionar
 		"bankroll_lost": maxi(0, int(run_state.narrative_flags.get("profile_bankroll_lost", maxi(0, RunState.DEFAULT_BANKROLL - run_state.bankroll)))),
 		"biggest_single_win": maxi(0, int(run_state.narrative_flags.get("profile_biggest_single_win", 0))),
 		"games_played": JsonCoerceScript._copy_dict(run_state.narrative_flags.get("profile_games_played", {})),
-		"release_0_6": RunReportViewModelScript.release_profile_snapshot(run_state.to_dict()),
+		"release_0_6": RunReportViewModelScript.release_profile_snapshot(RunReportViewModelScript.snapshot_run(run_state)),
 		"terminal_message": str(terminal_result.get("message", "")),
 	}
 

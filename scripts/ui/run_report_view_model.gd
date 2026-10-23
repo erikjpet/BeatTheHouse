@@ -39,6 +39,36 @@ const GAME_LABELS := {
 }
 
 
+# Report readers need route geometry and scenario labels, never the generated
+# rooms' full machines and authored scenario programs. Preserve their public
+# metadata before the existing model builders take their own copies.
+static func snapshot_run(run: RunState) -> Dictionary:
+	var snapshot := run.to_action_snapshot_without_world()
+	var map := run.world_map.duplicate(false)
+	var nodes: Array = []
+	for value in map.get("nodes", []):
+		if typeof(value) != TYPE_DICTIONARY:
+			continue
+		var node: Dictionary = value.duplicate(false)
+		if typeof(node.get("environment")) == TYPE_DICTIONARY:
+			var environment: Dictionary = node.environment
+			var report_environment: Dictionary = {}
+			for key in ["scenario_id", "scenario_display_name"]:
+				if environment.has(key): report_environment[key] = environment[key]
+			if typeof(environment.get("scenario_state")) == TYPE_DICTIONARY:
+				var scenario: Dictionary = {}
+				for key in ["id", "display_name"]:
+					if environment.scenario_state.has(key): scenario[key] = environment.scenario_state[key]
+				report_environment["scenario_state"] = scenario
+			node["environment"] = report_environment
+		nodes.append(node)
+	map["nodes"] = nodes
+	snapshot["world_map"] = WorldMap.normalize(map)
+	if run.town_state != null and run.town_state.living_world != null:
+		snapshot["town_state"] = {"living_world": {"heard_by_node": run.town_state.living_world.heard_by_node.duplicate(true)}}
+	return snapshot
+
+
 static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary:
 	var story_log := _dict_array(run_data.get("story_log", []))
 	var outcome := build_outcome(run_data, JsonCoerceScript._copy_dict(catalogs.get("outcomes", {})))

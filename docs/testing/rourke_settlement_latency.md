@@ -47,3 +47,26 @@ The initial isolated native Foundation measurement after the change was about
 0.12 seconds per settlement. Final native receipts and the current deployed Web
 identity/observations are kept in the task evidence directory. Do not treat the
 earlier `4b043333` screenshots as qualification of later user placement changes.
+
+The first deployed `907fb140` Web check reduced hands 1-4 to 382-410 ms
+maximum frame gaps, with no Crew package modal. The fifth hand still reached
+the correct ending but took 1,947 ms to enter the run report. A focused native
+trace separated 205 ms of synchronous saving, 141 ms of report input snapshot,
+65 ms of report model building, and 18 ms of screen installation. The profile
+ledger also requested a full-world snapshot.
+
+The terminal follow-up retains synchronous checkpoint durability. It passes the
+same immutable environment compilations already used by asynchronous autosaves
+into the existing codec. Report/profile readers instead receive route geometry,
+scenario labels and the heard-rumor ledger, without unrelated machine or
+scenario-program storage. The preserved fixture and an explicitly annotated
+terminal copy match the full visible report model and profile ledger; only
+unrendered map-node environment storage differs. Projection plus model building
+takes about 7 ms natively in that focused check. The Rourke authority check also
+compares old/new encoded terminal payloads before checking actual save/Continue.
+Final Web timing belongs to the task's exact-build receipt, not these native
+measurements.
+
+The same native terminal-route diagnostic after this follow-up took about
+195 ms total (168 ms synchronous save, 1 ms report snapshot, 8 ms model, 4 ms
+screen installation), compared with 587 ms before. No save phase was deferred.

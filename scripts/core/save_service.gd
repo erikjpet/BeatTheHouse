@@ -54,7 +54,9 @@ func save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 		if async_error != OK:
 			return async_error
 	var clean_slot := _slot_id(slot_id)
-	var payload_result := _save_payload_result(run_state.to_save_snapshot(), clean_slot)
+	# Use the same immutable environment compilations as begin_save_run. The
+	# codec owns its encoded output; synchronous durability still completes here.
+	var payload_result := _save_payload_result(run_state.to_save_snapshot_for_encoding(), clean_slot)
 	if not bool(payload_result.get("ok", false)):
 		trusted_primary_fingerprints.erase(clean_slot)
 		last_save_outcome = payload_result.duplicate(true)
