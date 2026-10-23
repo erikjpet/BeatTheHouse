@@ -3311,12 +3311,12 @@
 					183.0
 				],
 				"fixed.game_floor_1": [
-					210.0,
-					190.0
-				],
-				"fixed.game_floor_2": [
 					74.0,
 					262.0
+				],
+				"fixed.game_floor_2": [
+					210.0,
+					190.0
 				],
 				"fixed.lender_group_1": [
 					845.0,
