@@ -16901,6 +16901,9 @@ func _activate_meta_interactable_object(object_id: String) -> bool:
 	if _sal_starter_offer_is_pending():
 		_resume_sal_starter_offer()
 		return true
+	var sell_requested := object_id == "meta_sal:sell"
+	if sell_requested:
+		object_id = "meta_sal:talk"
 	if object_id == "travel:leave":
 		focus_interactable_object(object_id)
 		return open_world_map()
@@ -16939,6 +16942,9 @@ func _activate_meta_interactable_object(object_id: String) -> bool:
 			open_meta_sal_shelf(int(source_id))
 			return true
 		CONTEXT_MODE_META_SAL_TALK:
+			if sell_requested:
+				open_meta_sell_counter()
+				return true
 			return _talk_to_sal()
 		CONTEXT_MODE_TRAVEL:
 			return open_world_map()

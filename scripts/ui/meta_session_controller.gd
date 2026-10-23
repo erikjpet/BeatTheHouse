@@ -732,6 +732,10 @@ func _pawn_interactable_objects(run_state: RunState, hover_target_id: String, fo
 				{"id": "talk_sal", "label": "Talk"},
 				{"id": "open_sell_counter", "label": "Sell"},
 			],
+			"inline_actions": [
+				{"label": "Talk", "emit_object_id": "meta_sal:talk"},
+				{"label": "Sell", "emit_object_id": "meta_sal:sell"},
+			],
 			"confirm_action_id": "talk_sal",
 			"focus_rect": _interaction_rect_for_object(run_state, "staff:pawn_counter_sal", CONTEXT_MODE_META_SAL_TALK, 0),
 		}, hover_target_id, focus_target_id, selected_object_id),
