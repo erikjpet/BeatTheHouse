@@ -122,10 +122,7 @@ func _sealed_action_host_trusted_context(candidate: RunState, stake: int, action
 		if typeof(evidence_value) == TYPE_DICTIONARY:
 			compact_evidence = evidence_value as Dictionary
 	if not compact_evidence.is_empty():
-		var native_json_predicate := StringName(_foundation.action_authority_contract.get("compact_authority_native_json_predicate_method", &""))
-		var native_json: bool = not native_json_predicate.is_empty() and _foundation.current_game.has_method(native_json_predicate) \
-			and bool(_foundation.current_game.call(native_json_predicate, candidate))
-		canonical_run_fingerprint = GameRitualRuntimeScript.canonical_json_native(compact_evidence).sha256_text() if native_json else GameRitualRuntimeScript.canonical_fingerprint(compact_evidence)
+		canonical_run_fingerprint = _sealed_action_host_evidence_fingerprint(compact_evidence, candidate)
 	else:
 		var snapshot := candidate.to_save_snapshot()
 		# These are host presentation caches, not simulation authority. The UI can
@@ -163,6 +160,13 @@ func _sealed_action_host_trusted_context(candidate: RunState, stake: int, action
 		"canonical_run_fingerprint": canonical_run_fingerprint,
 		"account_rng_checkpoint_fingerprint": candidate.action_authority_checkpoint_fingerprint(),
 	}
+
+
+func _sealed_action_host_evidence_fingerprint(evidence: Dictionary, candidate: RunState) -> String:
+	var predicate := StringName(_foundation.action_authority_contract.get("compact_authority_native_json_predicate_method", &""))
+	var native_json: bool = not predicate.is_empty() and _foundation.current_game.has_method(predicate) \
+		and bool(_foundation.current_game.call(predicate, candidate))
+	return GameRitualRuntimeScript.canonical_json_native(evidence).sha256_text() if native_json else GameRitualRuntimeScript.canonical_fingerprint(evidence)
 
 
 func _sealed_action_host_transient_run_snapshot(candidate: RunState) -> Dictionary:
@@ -541,6 +545,7 @@ func _sealed_action_host_surface_intent_impl(surface_action: String, index: int,
 			"ledger": ledger,
 			"delivery": command.get("_sealed_action_host_delivery", {}),
 		}
+		_sealed_action_host_prepare_direct_resolution(command, candidate)
 	# Publication staged an isolated copy in the ledger. Avoid another recursive
 	# copy when Foundation retains this command session for presentation.
 	command["surface_transient"] = true
@@ -637,7 +642,23 @@ func _sealed_action_host_auto_intent(surface_time_msec: int) -> Dictionary:
 			"ledger": ledger,
 			"delivery": command.get("_sealed_action_host_delivery", {}),
 		}
+		_sealed_action_host_prepare_direct_resolution(command, candidate)
 	return command
+
+
+func _sealed_action_host_prepare_direct_resolution(command: Dictionary, candidate: RunState) -> void:
+	var predicate := StringName(_foundation.action_authority_contract.get("prepared_surface_direct_resolve_predicate_method", &""))
+	if predicate == &"" or not _foundation.current_game.has_method(predicate):
+		return
+	if not bool(_foundation.current_game.call(predicate, candidate, str(command.get("action_id", "")))):
+		return
+	# This exact published candidate already has a sealed action and wager. The
+	# generic selection route refreshes the table and recomputes its stake before
+	# handing it straight back to the same resolver. Keep the normal receipt and
+	# replay checks while using the existing direct-command handoff instead.
+	var delivery: Dictionary = command.get("_sealed_action_host_delivery", {})
+	command["direct_resolve"] = true
+	command["set_stake"] = int(delivery.get("stake", 0))
 
 
 func _sealed_action_host_preview_wager_cost(action_id: String, stake: int) -> int:
@@ -881,7 +902,7 @@ func _sealed_action_host_candidate_proposal(resolve_method: StringName, action_i
 		# apply/commit receipts bind that result separately; hashing the same dense
 		# presentation here a third time added no independent validation.
 		compact_component_fingerprints = {
-			"authority_fingerprint": GameRitualRuntimeScript.canonical_fingerprint(authority_evidence),
+			"authority_fingerprint": _sealed_action_host_evidence_fingerprint(authority_evidence, proposal_candidate),
 			"rng_fingerprint": GameRitualRuntimeScript.canonical_fingerprint(proposal.get("rng_snapshot", {})),
 		}
 		proposal["output_fingerprint"] = GameRitualRuntimeScript.canonical_fingerprint({
@@ -1185,13 +1206,13 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 			var input_evidence := _sealed_action_host_compact_evidence(candidate, action_id, stake, session)
 			if input_evidence.is_empty():
 				return _sealed_action_host_rejection("invalid_proposal", "Game authority evidence was unavailable.", request_key)
-			compact_input_fingerprint = GameRitualRuntimeScript.canonical_fingerprint({
+			compact_input_fingerprint = _sealed_action_host_evidence_fingerprint({
 				"action_id": action_id,
 				"stake": stake,
 				"authority_evidence": input_evidence,
 				"rng_snapshot": proposal_input.get("rng_snapshot", {}),
 				"ui_state": session,
-			})
+			}, candidate)
 		else:
 			compact_input_fingerprint = GameRitualRuntimeScript.canonical_fingerprint(compact_proposal_input)
 		var runtime_checkpoint_method := StringName(provider_contract.get("proposal_runtime_checkpoint_method", &""))

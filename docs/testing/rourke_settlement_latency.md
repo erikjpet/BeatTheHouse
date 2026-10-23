@@ -89,3 +89,27 @@ terminal saving and other games retain their existing paths.
 
 The popup-containing descendant startup receipt proves basic startup only. It
 does not visually qualify popup amount accumulation.
+
+Further narrow timing found redundant generic action selection before an already
+prepared Rourke settlement. Only the non-tutorial, non-scenario Rourke
+`play_basic` settlement now uses the existing direct-command route, carrying the
+exact sealed stake; receipt verification, independent full replay and publication
+remain in the same resolver. Other actions and tables retain their existing route.
+The native sorted encoding also covers the compact proposal input and output,
+where the older serializer was still walking the broad Rourke evidence again.
+
+Detached turn snapshots already own their complete TownState/NumbersModel data
+and definitions. Restoring a candidate now transfers those owned records instead
+of recursively copying each complete wrapper and then its members again. Legacy
+publication fallback still copies incoming data; accepted publication retains live
+model identities. No state or validation coverage is removed.
+
+`rourke_prepared_surface_route_check.gd` compares a real Foundation Deal/Stand with
+the former selection route and serializer: all public state, RNG, balances and
+the complete authority ledger/receipts match; the duplicate selection is absent.
+Its native fixture input clock is fixed for parity, so it does not qualify Web
+animation. `owned_model_snapshot_check.gd` checks legacy value parity, nested
+candidate isolation/discard, publication and retained model identities. The
+existing five-hand authority, mismatch rejection and terminal save/Continue check
+and no-pointer liveness check cover the material adjacent risks. Exact deployed
+Web timing and cleanup are recorded separately in the task evidence.

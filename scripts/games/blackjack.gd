@@ -181,6 +181,7 @@ func sealed_action_authority_contract() -> Dictionary:
 		"compact_authority_evidence_predicate_method": &"_blackjack_compact_authority_allowed",
 		"compact_authority_full_replay_predicate_method": &"_blackjack_full_authority_replay_required",
 		"compact_authority_native_json_predicate_method": &"_blackjack_full_authority_replay_required",
+		"prepared_surface_direct_resolve_predicate_method": &"_blackjack_prepared_direct_resolve_allowed",
 		"trusted_candidate_structural_replay_match": true,
 		# The current response and its predecessor cover synchronous duplicate input
 		# and automatic recovery. Retaining four complete two-boundary hands made every
@@ -2382,6 +2383,11 @@ func _blackjack_full_authority_replay_required(candidate: RunState) -> bool:
 		return false
 	var flags := _local_copy_dict(candidate.current_environment.get("local_narrative_flags", {}))
 	return str(flags.get("blackjack_boss_variant", "")) == ROURKE_DUEL_VARIANT
+
+
+func _blackjack_prepared_direct_resolve_allowed(candidate: RunState, action_id: String) -> bool:
+	return action_id == "play_basic" and _blackjack_full_authority_replay_required(candidate) and not candidate.is_tutorial_run() \
+		and _blackjack_compact_authority_allowed(candidate, action_id, 0)
 
 
 func _blackjack_in_place_commit_allowed(action_id: String, run_state: RunState, environment: Dictionary) -> bool:

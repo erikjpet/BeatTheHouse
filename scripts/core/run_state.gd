@@ -13217,7 +13217,9 @@ func _apply_environment_turn_snapshot(snapshot: Dictionary, preserve_live_aliase
 		if preserve_live_aliases and _publish_mutable_variant_in_place(current, incoming):
 			continue
 		set(field_name, incoming.duplicate(true) if typeof(incoming) in [TYPE_DICTIONARY, TYPE_ARRAY] else incoming)
-	var town_record := JsonCoerceScript._copy_dict(snapshot.get("town_state_object", {}))
+	# These records are read-only wrappers around the already detached snapshot.
+	# Copying a record recursively copied its complete model again before restore.
+	var town_record: Dictionary = snapshot.get("town_state_object", {}) if typeof(snapshot.get("town_state_object", {})) == TYPE_DICTIONARY else {}
 	if bool(town_record.get("present", false)):
 		if town_state == null:
 			town_state = TownStateScript.new()
@@ -13226,10 +13228,14 @@ func _apply_environment_turn_snapshot(snapshot: Dictionary, preserve_live_aliase
 		if preserve_live_aliases and typeof(town_source) == TYPE_OBJECT and is_instance_valid(town_source):
 			_publish_refcounted_script_state(town_state, town_source as Object)
 		else:
-			town_state.restore(JsonCoerceScript._copy_dict(town_record.get("state", {})), seed_value, JsonCoerceScript._copy_dict(town_record.get("conditions", {})))
+			var state_data: Dictionary = town_record.get("state", {}) if typeof(town_record.get("state", {})) == TYPE_DICTIONARY else {}
+			var conditions_data: Dictionary = town_record.get("conditions", {}) if typeof(town_record.get("conditions", {})) == TYPE_DICTIONARY else {}
+			# False transfers the owned snapshot graph, just like the collection
+			# roots above. Retain defensive copies for legacy publication fallback.
+			town_state.restore(state_data.duplicate(true) if preserve_live_aliases else state_data, seed_value, conditions_data.duplicate(true) if preserve_live_aliases else conditions_data)
 	else:
 		town_state = null
-	var numbers_record := JsonCoerceScript._copy_dict(snapshot.get("numbers_state_object", {}))
+	var numbers_record: Dictionary = snapshot.get("numbers_state_object", {}) if typeof(snapshot.get("numbers_state_object", {})) == TYPE_DICTIONARY else {}
 	if bool(numbers_record.get("present", false)):
 		if numbers_state == null:
 			numbers_state = _new_numbers_model()
@@ -13237,7 +13243,9 @@ func _apply_environment_turn_snapshot(snapshot: Dictionary, preserve_live_aliase
 		if preserve_live_aliases and typeof(numbers_source) == TYPE_OBJECT and is_instance_valid(numbers_source):
 			_publish_refcounted_script_state(numbers_state, numbers_source as Object)
 		else:
-			numbers_state.restore(JsonCoerceScript._copy_dict(numbers_record.get("state", {})), seed_value, JsonCoerceScript._copy_dict(numbers_record.get("config", {})))
+			var state_data: Dictionary = numbers_record.get("state", {}) if typeof(numbers_record.get("state", {})) == TYPE_DICTIONARY else {}
+			var config_data: Dictionary = numbers_record.get("config", {}) if typeof(numbers_record.get("config", {})) == TYPE_DICTIONARY else {}
+			numbers_state.restore(state_data.duplicate(true) if preserve_live_aliases else state_data, seed_value, config_data.duplicate(true) if preserve_live_aliases else config_data)
 	else:
 		numbers_state = null
 	# Restore this immutable pointer last: installing current_environment above
