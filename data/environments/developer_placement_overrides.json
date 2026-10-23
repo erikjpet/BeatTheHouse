@@ -1398,7 +1398,7 @@
 					}
 				},
 				"gas_station_storm_shelter": {
-					"saved": true,
+					"saved": false,
 					"slot_positions": {
 						"scenario.local_doorway_1": [
 							868.0,
@@ -1530,8 +1530,8 @@
 					305.0
 				],
 				"event.standing_person_4": [
-					866.0,
-					341.0
+					868.0,
+					294.0
 				],
 				"event.standing_person_5": [
 					565.0,
@@ -2970,7 +2970,7 @@
 					}
 				},
 				"pawn_shop_sals_mood": {
-					"saved": true,
+					"saved": false,
 					"slot_layers": {
 						"scenario.local_floor_fixture_2": -1.0,
 						"scenario.local_standing_person_1": -1.0
@@ -3015,7 +3015,7 @@
 					}
 				},
 				"pawn_shop_serial_check_day": {
-					"saved": false,
+					"saved": true,
 					"slot_layers": {
 						"scenario.local_standing_person_1": -1.0
 					},
@@ -3076,7 +3076,7 @@
 					394.0
 				],
 				"fixed.game_slot": [
-					537.0,
+					540.0,
 					269.0
 				],
 			"fixed.item_shop_1": [
@@ -3119,6 +3119,9 @@
 					237.0,
 					338.0
 				]
+			},
+			"slot_scales": {
+				"fixed.game_slot": 0.5
 			}
 		},
 		"small_underground_casino:back_room": {
@@ -3362,6 +3365,54 @@
 		"small_underground_casino:club": {
 			"base_saved": true,
 			"scenario_layouts": {
+				"punchline_bringer_show": {
+					"saved": true,
+					"slot_layers": {
+						"scenario.local_floor_fixture_1": 1
+					},
+					"slot_positions": {
+						"scenario.local_doorway_1": [
+							868.0,
+							306.0
+						],
+						"scenario.local_floor_fixture_1": [
+							58.0,
+							308.0
+						],
+						"scenario.local_floor_fixture_2": [
+							133.0,
+							256.0
+						],
+						"scenario.local_floor_fixture_3": [
+							246.0,
+							285.0
+						],
+						"scenario.local_ground_marker_1": [
+							253.0,
+							335.0
+						],
+						"scenario.local_group_1": [
+							162.0,
+							396.0
+						],
+						"scenario.local_standing_person_1": [
+							133.0,
+							232.0
+						],
+						"scenario.local_standing_person_2": [
+							254.0,
+							430.0
+						],
+						"scenario.local_surface_item_1": [
+							55.0,
+							300.0
+						],
+						"scenario.local_surface_item_2": [
+							661.0,
+							256.0
+						]
+					}
+				},
 				"punchline_raid_jitters": {
 					"saved": true,
 					"slot_positions": {
