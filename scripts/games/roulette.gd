@@ -610,12 +610,9 @@ func draw_surface(surface, surface_state: Dictionary, _render_context: Dictionar
 	_draw_roulette_room(surface, surface_state)
 	_draw_roulette_table(surface, surface_state)
 	_draw_roulette_wheel(surface, surface_state, low_detail)
-	if low_detail:
-		_draw_static_table_patrons(surface, surface_state)
-		_draw_static_croupier_station(surface, surface_state)
-	else:
-		_draw_table_patrons(surface, surface_state)
-		_draw_croupier_station(surface, surface_state)
+	# Keep character identity and poses consistent across idle and active frames.
+	_draw_table_patrons(surface, surface_state)
+	_draw_croupier_station(surface, surface_state)
 	_draw_recent_numbers(surface, surface_state)
 	_draw_betting_layout(surface, surface_state)
 	_draw_bet_chips(surface, surface_state)
@@ -2965,62 +2962,6 @@ func _roulette_wheel_motion(surface, surface_state: Dictionary) -> Dictionary:
 		"ball_angle": ball_angle,
 		"ball_radius": ball_radius,
 	}
-
-
-func _draw_static_croupier_station(surface, surface_state: Dictionary) -> void:
-	var focus: Dictionary = TableVisualsScript.dealer_focus_for_state(surface_state)
-	var rect := DEALER_STATION_RECT
-	var danger := clampi(int(focus.get("peek_danger", 0)), 0, 100)
-	var attention := clampi(int(focus.get("attention_meter", 0)), 0, 100)
-	var accent := C_PINK if danger >= 70 else C_YELLOW if danger >= 42 else C_TEAL
-	surface.draw_rect(rect, Color("#0b0d16"))
-	surface.draw_rect(rect, Color(accent.r, accent.g, accent.b, 0.18), false, 1)
-	surface.draw_rect(Rect2(rect.position + Vector2(26, 26), Vector2(44, 54)), Color("#111827"))
-	surface.draw_rect(Rect2(rect.position + Vector2(34, 12), Vector2(28, 26)), Color("#c49371"))
-	surface.draw_rect(Rect2(rect.position + Vector2(34, 12), Vector2(28, 8)), Color("#2a1a25"))
-	surface.draw_rect(Rect2(rect.position + Vector2(40, 25), Vector2(5, 3)), C_DARK)
-	surface.draw_rect(Rect2(rect.position + Vector2(52, 25), Vector2(5, 3)), C_DARK)
-	surface.surface_label(str(surface_state.get("dealer_name", "Croupier")).to_upper().left(14), rect.position + Vector2(84, 26), 10, C_WHITE)
-	surface.surface_label(str(focus.get("status", "watching")).left(18), rect.position + Vector2(84, 43), 8, accent)
-	var meter := Rect2(rect.position + Vector2(84, 54), Vector2(86, 6))
-	surface.draw_rect(meter, Color("#070810"))
-	surface.draw_rect(Rect2(meter.position, Vector2(meter.size.x * float(attention) / 100.0, meter.size.y)), accent)
-	surface.surface_label(str(focus.get("body_language", "tracks the felt")).left(23), rect.position + Vector2(84, 75), 8, C_SOFT)
-
-
-func _draw_static_table_patrons(surface, surface_state: Dictionary) -> void:
-	var patrons := _array_ref(surface_state.get("patrons", []))
-	var layout := _array_ref(surface_state.get("patron_layout", []))
-	if layout.size() < patrons.size():
-		layout = _roulette_patron_layout(patrons)
-	var focused_index := _focused_patron_index(surface_state, patrons)
-	for i in range(patrons.size()):
-		if i >= layout.size():
-			break
-		var patron: Dictionary = patrons[i]
-		var slot: Dictionary = layout[i]
-		var rect := _rect_from_dict(slot.get("rect", {}))
-		var foot := _vector_from_dict(slot.get("foot", {}), _patron_seat_position(i))
-		var watching := bool(patron.get("watching_player", false))
-		var covered := bool(patron.get("covered", false))
-		var risk := int(patron.get("active_snitch_risk", patron.get("snitch_risk", 0)))
-		var accent := C_PINK if watching else C_TEAL if covered else C_SOFT
-		var selected := focused_index == i
-		if selected or bool(surface.surface_region_hovered("roulette_patron_focus", i)):
-			TableVisualsScript.draw_flat_neon_panel(surface, rect.grow(3), accent, 0.14 if selected else 0.08)
-		surface.draw_rect(Rect2(foot.x - 22, foot.y - 58, 44, 54), Color("#05060a"))
-		surface.draw_rect(Rect2(foot.x - 16, foot.y - 48, 32, 42), Color("#172633" if covered else "#251930"))
-		surface.draw_rect(Rect2(foot.x - 12, foot.y - 66, 24, 22), Color("#c49371"))
-		surface.draw_rect(Rect2(foot.x - 12, foot.y - 66, 24, 7), _patron_hair_color(patron))
-		surface.draw_rect(Rect2(foot.x - 6, foot.y - 57, 4, 3), C_DARK)
-		surface.draw_rect(Rect2(foot.x + 6, foot.y - 57, 4, 3), C_DARK)
-		surface.draw_rect(Rect2(foot.x - 22, foot.y - 2, 44, 4), Color(0, 0, 0, 0.28))
-		surface.draw_rect(Rect2(rect.position.x + 8, rect.end.y - 22, 54, 4), Color("#040509"))
-		surface.draw_rect(Rect2(rect.position.x + 8, rect.end.y - 22, clampf(float(risk) / 60.0, 0.0, 1.0) * 54.0, 4), accent)
-		surface.surface_label(str(patron.get("behavior", str(patron.get("mood", "watching")))).left(13), rect.position + Vector2(8, rect.size.y - 8), 8, accent)
-		surface.draw_circle(foot + Vector2(30, -8), 6.0, _chip_color_name(str(patron.get("chip_color", "cyan"))))
-		surface.surface_add_exact_hit(rect, "roulette_patron_focus", i)
-	_draw_focused_patron_panel(surface, surface_state, patrons, focused_index)
 
 
 func _draw_table_patrons(surface, surface_state: Dictionary) -> void:

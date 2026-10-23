@@ -2,6 +2,28 @@ extends SceneTree
 
 const Blackjack := preload("res://scripts/games/blackjack.gd")
 const TableVisuals := preload("res://scripts/games/table_game_visuals.gd")
+const Roulette := preload("res://scripts/games/roulette.gd")
+
+class RouletteCastProbe:
+	extends Roulette
+	var visited: Array[String] = []
+	func _draw_table_patrons(_surface, _state: Dictionary) -> void: visited.append("patrons")
+	func _draw_croupier_station(_surface, _state: Dictionary) -> void: visited.append("dealer")
+	func _draw_static_table_patrons(_surface, _state: Dictionary) -> void: visited.append("obsolete patrons")
+	func _draw_static_croupier_station(_surface, _state: Dictionary) -> void: visited.append("obsolete dealer")
+	func _draw_roulette_room(_surface, _state: Dictionary) -> void: pass
+	func _draw_roulette_table(_surface, _state: Dictionary) -> void: pass
+	func _draw_roulette_wheel(_surface, _state: Dictionary, _low_detail: bool = false) -> void: pass
+	func _draw_recent_numbers(_surface, _state: Dictionary) -> void: pass
+	func _draw_betting_layout(_surface, _state: Dictionary) -> void: pass
+	func _draw_bet_chips(_surface, _state: Dictionary) -> void: pass
+	func _draw_table_notice(_surface, _state: Dictionary) -> void: pass
+	func _draw_round_timer(_surface, _state: Dictionary) -> void: pass
+	func _draw_chip_rack(_surface, _state: Dictionary) -> void: pass
+	func _draw_table_actions(_surface, _state: Dictionary) -> void: pass
+	func _draw_spin_result(_surface, _state: Dictionary) -> void: pass
+	func _draw_rule_hover_overlay(_surface, _state: Dictionary) -> void: pass
+	func _draw_payout_animation(_surface, _state: Dictionary) -> void: pass
 
 class SurfaceProbe:
 	extends RefCounted
@@ -12,6 +34,7 @@ class SurfaceProbe:
 	func surface_low_detail_idle() -> bool: return low_detail
 	func surface_flicker() -> float: return clock
 	func surface_board_size() -> Vector2: return Vector2(900, 430)
+	func surface_begin_design_space(_size: Vector2) -> void: pass
 	func surface_animation_active(_channel: String) -> bool: return false
 	func surface_elapsed(_channel: String) -> float: return 100.0
 	func draw_rect(rect: Rect2, color: Color, filled: bool = true, width: float = -1.0) -> void:
@@ -31,6 +54,17 @@ class SurfaceProbe:
 	func surface_add_invisible_hit(_rect: Rect2, _action: String, _index: int = -1) -> void: pass
 
 func _initialize() -> void:
+	var roulette := RouletteCastProbe.new()
+	for focused in [-1, 0, 1]:
+		for low_detail in [false, true, false]:
+			var surface := SurfaceProbe.new()
+			surface.low_detail = low_detail
+			roulette.visited.clear()
+			roulette.draw_surface(surface, {"surface_renderer": "roulette", "focused_patron_index": focused})
+			if roulette.visited != ["patrons", "dealer"]:
+				push_error("Roulette cast switched painters across idle/selection: %s" % [roulette.visited])
+				quit(1)
+				return
 	var blackjack := Blackjack.new()
 	var checks := 0
 	# Hold simulation time and semantic state fixed: cadence, hover, and action
@@ -71,5 +105,5 @@ func _initialize() -> void:
 						push_error("Drawing mutated the shared character snapshot.")
 						quit(1)
 						return
-	print("TABLE_CHARACTER_FIDELITY_CHECK PASS: %d draw comparisons; blackjack/shared cast, all hand phases, expressions and silhouettes" % checks)
+	print("TABLE_CHARACTER_FIDELITY_CHECK PASS: %d draw comparisons; blackjack/shared cast, all hand phases, expressions and silhouettes; 9 roulette idle/selection dispatch checks" % checks)
 	quit(0)
