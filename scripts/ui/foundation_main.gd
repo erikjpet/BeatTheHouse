@@ -14238,7 +14238,11 @@ func _modal_contract_blocks_player_input() -> bool:
 
 
 func _simulation_progression_paused() -> bool:
-	if not _event_response_transaction.is_empty() or not _rourke_resolution.is_empty():
+	return not _rourke_resolution.is_empty() or _simulation_paused_outside_rourke_resolution()
+
+
+func _simulation_paused_outside_rourke_resolution() -> bool:
+	if not _event_response_transaction.is_empty():
 		return true
 	# Conversations remain modal to player input, but only Pal owns the tutorial
 	# time-freeze contract. Natural dealer, patron, and event conversations keep
@@ -14271,7 +14275,9 @@ func set_application_pause_owner(owner: String, paused: bool) -> void:
 
 func _sync_simulation_pause_owners() -> void:
 	var should_pause := _simulation_progression_paused()
-	var pause_timed_feedback := should_pause and not (_pal_tutorial_time_freeze_active() and application_pause_owners.is_empty())
+	var live_presentation := (_pal_tutorial_time_freeze_active() and application_pause_owners.is_empty()) \
+		or (not _rourke_resolution.is_empty() and not _simulation_paused_outside_rourke_resolution())
+	var pause_timed_feedback := should_pause and not live_presentation
 	var now_msec := Time.get_ticks_msec()
 	if should_pause and environment_pause_started_msec <= 0:
 		environment_pause_started_msec = now_msec

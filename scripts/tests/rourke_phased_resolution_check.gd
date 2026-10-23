@@ -32,9 +32,10 @@ class ObservedMain extends Main:
 
 	func _advance_rourke_resolution(schedule_next: bool = true, generation: int = -1) -> void:
 		var before := int(_rourke_resolution.get("step", -1))
+		var presentation: float = float(game_surface_canvas.get("surface_presentation_clock_msec")) if game_surface_canvas != null else -1.0
 		super._advance_rourke_resolution(schedule_next, generation)
 		if before >= 0 and int(_rourke_resolution.get("step", -1)) != before:
-			phase_frames.append({"step": before, "frame": Engine.get_process_frames()})
+			phase_frames.append({"step": before, "frame": Engine.get_process_frames(), "presentation_before": presentation})
 			if before == 3: completed_snapshot = run_state.to_save_snapshot().duplicate(true)
 
 	func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery: Dictionary = {}, prepared: Dictionary = {}) -> Dictionary:
@@ -89,6 +90,8 @@ func _run() -> void:
 	if _public_data(app.completed_snapshot) != expected: _diff(JSON.parse_string(expected), JSON.parse_string(_public_data(app.completed_snapshot)))
 	_check(app.actual_resolutions == 1, "post-action presentation reuses the committed result exactly once")
 	_check(app.phase_frames.size() == 4, "all scheduled phases execute once")
+	if app.phase_frames.size() >= 2:
+		_check(app.phase_frames[1].presentation_before > app.phase_frames[0].presentation_before, "presentation animation advances while host simulation/input wait")
 	for i in range(1, app.phase_frames.size()):
 		_check(app.phase_frames[i].frame > app.phase_frames[i-1].frame, "scheduled phases have separate real engine frames")
 	print("ROURKE_PHASE_FRAMES ", JSON.stringify(app.phase_frames))

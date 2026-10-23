@@ -122,6 +122,8 @@ result once, construct the terminal report, then release the host owner after a
 draw. Canvas animation processing remains autonomous. Input, simulation and
 background persistence wait while this one action is pending. Result consumption
 does not invoke a second authoritative resolution.
+The presentation clock remains live during that transaction pause; other focus
+and modal pause owners still pause timed feedback normally.
 
 Save and normal navigation synchronously drain the accepted action before their
 existing durable write. Pre-commit cancellation uses the existing pending-delivery
