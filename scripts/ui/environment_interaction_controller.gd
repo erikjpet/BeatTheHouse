@@ -78,6 +78,9 @@ static func _event_option_with_exact_host(option_value: Dictionary, action_hosts
 
 
 static func interactable_object_view_list(host: Variant) -> Array:
+	# Meta fixtures are profile projections and do not use run-room publication.
+	if host._is_meta_session():
+		return host._meta_interactable_object_view_list()
 	# The owner refresh publishes this detached catalog. Looking it up cannot
 	# synchronize runtime producers, finalize semantics or repair physical state.
 	return host.room_catalog_snapshot()
