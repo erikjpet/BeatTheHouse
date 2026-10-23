@@ -14953,6 +14953,15 @@ func to_save_snapshot(deep_copy_seeded_scenario_definitions: bool = true) -> Dic
 	return _save_snapshot(deep_copy_seeded_scenario_definitions, false)
 
 
+# Evidence projection for trusted providers that bind required world inputs
+# separately, without serializing unrelated room/scenario storage.
+# This is not a save or a transaction candidate: callers still isolate the full
+# run before execution, including world and room storage. The current room and
+# every non-world run root remain present, including terminal/accounting state.
+func to_action_snapshot_without_world() -> Dictionary:
+	return _save_snapshot(false, false, false, false)
+
+
 # Private immutable room compilations may be carried only to RunSaveCodec,
 # never through the ordinary save-shaped dictionary/transaction APIs.
 func to_save_snapshot_for_encoding() -> Dictionary:
@@ -14967,7 +14976,7 @@ func to_travel_preview_snapshot() -> Dictionary:
 	return _save_snapshot(false, true)
 
 
-func _save_snapshot(deep_copy_seeded_scenario_definitions: bool, travel_preview: bool, for_encoding: bool = false) -> Dictionary:
+func _save_snapshot(deep_copy_seeded_scenario_definitions: bool, travel_preview: bool, for_encoding: bool = false, include_world: bool = true) -> Dictionary:
 	var preview_heat_history: Array = []
 	if travel_preview:
 		var preview_heat_sample: Dictionary = {}
@@ -15003,11 +15012,11 @@ func _save_snapshot(deep_copy_seeded_scenario_definitions: bool, travel_preview:
 		"pending_drunk_absorption": pending_drunk_absorption.duplicate(false),
 		"drunk_distortion_suppression_turns": drunk_distortion_suppression_turns,
 		"current_environment": environment_context_snapshot(current_environment) if travel_preview else _environment_for_persistent_storage(current_environment, false, true),
-		"world_map": WorldMap.normalize_topology(world_map) if travel_preview else _owned_world_map_for_save_snapshot(world_map, for_encoding),
+		"world_map": {} if not include_world else WorldMap.normalize_topology(world_map) if travel_preview else _owned_world_map_for_save_snapshot(world_map, for_encoding),
 		"scenario_state_schema_version": ScenarioEngineScript.STATE_SCHEMA_VERSION,
 		"scenario_recent_by_archetype": scenario_recent_by_archetype.duplicate(false),
 		"environment_situation_cycles_by_node": environment_situation_cycles_by_node.duplicate(true),
-		"grand_casino_room_states": {} if travel_preview else _grand_casino_room_states_for_save(false),
+		"grand_casino_room_states": {} if travel_preview or not include_world else _grand_casino_room_states_for_save(false),
 		"grand_casino_staffing": grand_casino_staffing.duplicate(false),
 		"rourke_current_room": rourke_current_room,
 		"rourke_current_spot": rourke_current_spot,
@@ -15039,7 +15048,7 @@ func _save_snapshot(deep_copy_seeded_scenario_definitions: bool, travel_preview:
 		"active_delivery_run": active_delivery_run.duplicate(false),
 		"numbers_state": numbers_state.snapshot() if numbers_state != null else {},
 		"heat_history": preview_heat_history if travel_preview else heat_history.duplicate(false),
-		"town_state": town_state.snapshot(deep_copy_seeded_scenario_definitions) if town_state != null else {},
+		"town_state": town_state.snapshot(deep_copy_seeded_scenario_definitions) if include_world and town_state != null else {},
 		"simulation_msec": simulation_msec,
 		"game_clock_minutes": game_clock_minutes,
 		"grand_casino_atm_interest_boundary_index": grand_casino_atm_interest_boundary_index,

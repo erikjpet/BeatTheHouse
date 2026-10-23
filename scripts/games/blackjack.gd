@@ -175,10 +175,11 @@ func sealed_action_authority_contract() -> Dictionary:
 		# Ordinary Blackjack resolution mutates only its bound table. Bind and replay
 		# that table plus the exact account/risk inputs instead of serializing a late
 		# run's world, travel history, and unrelated machines for every settlement.
-		# Rourke and Crew actions can mutate broader RunState roots and deliberately
-		# remain on the conservative full transaction path.
+		# Rourke keeps fully isolated run candidates and broader run evidence;
+		# Crew and scenario-bound actions retain the full snapshot proof.
 		"compact_authority_evidence_method": &"_blackjack_authority_evidence",
 		"compact_authority_evidence_predicate_method": &"_blackjack_compact_authority_allowed",
+		"compact_authority_full_replay_predicate_method": &"_blackjack_full_authority_replay_required",
 		"trusted_candidate_structural_replay_match": true,
 		# The current response and its predecessor cover synchronous duplicate input
 		# and automatic recovery. Retaining four complete two-boundary hands made every
@@ -2368,7 +2369,18 @@ func _blackjack_compact_authority_allowed(candidate: RunState, action_id: String
 	if action_id == "peek_hole_card" \
 			and candidate.blackjack_tutorial_peek_reprieve_eligible(action_id, candidate.current_environment):
 		return false
-	return not _is_rourke_duel(candidate, candidate.current_environment)
+	if _blackjack_full_authority_replay_required(candidate):
+		return not candidate.scenario_sequence_present()
+	return true
+
+
+func _blackjack_full_authority_replay_required(candidate: RunState) -> bool:
+	# The room variant survives the last hand clearing the active-duel flags.
+	# Its terminal proposal still needs the same broad evidence and isolation.
+	if candidate == null:
+		return false
+	var flags := _local_copy_dict(candidate.current_environment.get("local_narrative_flags", {}))
+	return str(flags.get("blackjack_boss_variant", "")) == ROURKE_DUEL_VARIANT
 
 
 func _blackjack_in_place_commit_allowed(action_id: String, run_state: RunState, environment: Dictionary) -> bool:
@@ -2393,6 +2405,44 @@ func _blackjack_in_place_commit_allowed(action_id: String, run_state: RunState, 
 func _blackjack_authority_evidence(candidate: RunState, action_id: String, stake: int, ui_state: Dictionary = {}) -> Dictionary:
 	if not _blackjack_compact_authority_allowed(candidate, action_id, stake, ui_state):
 		return {}
+	if _blackjack_full_authority_replay_required(candidate):
+		# Rourke changes narrative, inventory, Crew, accounting and terminal roots,
+		# all of which remain in this proof. Large world storage is projected out;
+		# required room configuration and reputation state are bound separately.
+		# Both accepted and replay candidates nevertheless own the complete graph.
+		var snapshot := candidate.to_action_snapshot_without_world()
+		snapshot.erase("music_tempo_state")
+		snapshot.erase("music_choreography_state")
+		var crew: Dictionary = snapshot.get("crew_state", {}).duplicate(false)
+		crew.erase("a")
+		crew.erase("z")
+		snapshot["crew_state"] = crew
+		var environment: Dictionary = snapshot.get("current_environment", {}).duplicate(false)
+		environment.erase("environment_runtime_revision")
+		var states: Dictionary = environment.get("game_states", {}).duplicate(false)
+		var state_key := transient_state_key_context().strip_edges()
+		if state_key.is_empty(): state_key = get_id()
+		var table: Dictionary = states.get(state_key, {}).duplicate(false)
+		table.erase(ActionAuthorityScript.LEDGER_KEY)
+		table.erase(ActionAuthorityScript.PENDING_APPLY_RECEIPT_KEY)
+		states[state_key] = table
+		environment["game_states"] = states
+		snapshot["current_environment"] = environment
+		var reputation: Dictionary = {}
+		if candidate.town_state != null and candidate.town_state.living_world != null:
+			var network := candidate.town_state.living_world
+			# A taken-out-back ending records a reputation incident. Bind its full
+			# mutable ledger and the exact topology/type inputs used for propagation.
+			reputation = {
+				"action_index": network.action_index,
+				"node_metadata": network.node_metadata,
+				"edges": network.edges,
+				"reputation_type_registry": network.reputation_type_registry,
+				"reputation_incidents": network.reputation_incidents,
+				"reputation_sequence": network.reputation_sequence,
+				"current_node_id": candidate.current_world_node_id(),
+			}
+		return {"rourke_run_state": snapshot, "room_context": _blackjack_authority_room_context(candidate), "town_reputation": reputation}
 	var environment := candidate.current_environment
 	# The sealed host has already materialized and normalized the bound table before
 	# asking for compact evidence. Evidence is read-only and immediately
@@ -2419,17 +2469,7 @@ func _blackjack_authority_evidence(candidate: RunState, action_id: String, stake
 	# Staffing can fall back to the authored main-floor room when the current room
 	# has no rotation config. Preserve only that configuration context, never the
 	# unrelated machines retained inside those rooms.
-	var room_context: Dictionary = {}
-	for room_id_value in candidate.grand_casino_room_states.keys():
-		var room_value: Variant = candidate.grand_casino_room_states.get(room_id_value)
-		if typeof(room_value) != TYPE_DICTIONARY:
-			continue
-		var room := room_value as Dictionary
-		room_context[str(room_id_value)] = {
-			"id": room.get("id", ""),
-			"archetype_id": room.get("archetype_id", ""),
-			"local_narrative_flags": room.get("local_narrative_flags", {}),
-		}
+	var room_context := _blackjack_authority_room_context(candidate)
 	return {
 		"version": 1,
 		"game_id": get_id(),
@@ -2483,6 +2523,21 @@ func foreground_blocks_environment_runtime(run_state: RunState, environment: Dic
 			or typeof(dealer_value) != TYPE_ARRAY or (dealer_value as Array).is_empty():
 		return false
 	return not _all_hands_complete(session)
+
+
+func _blackjack_authority_room_context(candidate: RunState) -> Dictionary:
+	var context: Dictionary = {}
+	for room_id_value in candidate.grand_casino_room_states.keys():
+		var room_value: Variant = candidate.grand_casino_room_states.get(room_id_value)
+		if typeof(room_value) != TYPE_DICTIONARY:
+			continue
+		var room := room_value as Dictionary
+		context[str(room_id_value)] = {
+			"id": room.get("id", ""),
+			"archetype_id": room.get("archetype_id", ""),
+			"local_narrative_flags": room.get("local_narrative_flags", {}),
+		}
+	return context
 
 
 func _blackjack_resolve_candidate(action_id: String, stake: int, candidate: RunState, rng: RngStream, ui_state: Dictionary = {}) -> Dictionary:

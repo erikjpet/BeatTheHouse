@@ -1093,6 +1093,10 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 			and _foundation.current_game.has_method(candidate_resolve_method)
 	var uses_compact_authority_evidence = uses_trusted_candidate_provider \
 			and _sealed_action_host_compact_evidence_allowed(candidate, action_id, stake, session)
+	var full_replay_predicate := StringName(provider_contract.get("compact_authority_full_replay_predicate_method", &""))
+	var full_compact_replay = uses_compact_authority_evidence and not full_replay_predicate.is_empty() \
+			and _foundation.current_game.has_method(full_replay_predicate) \
+			and bool(_foundation.current_game.call(full_replay_predicate, candidate))
 	var first_proposal_owns_transaction = uses_trusted_candidate_provider \
 			and not commits_in_place \
 			and bool(provider_contract.get("trusted_candidate_first_proposal_owns_transaction", false))
@@ -1208,7 +1212,12 @@ func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_
 				and bool(provider_contract.get("trusted_candidate_structural_replay_match", false))
 		var lightweight_resolution_candidate := bool(provider_contract.get("lightweight_resolution_candidate", false))
 		var replay_source: RunState
-		if first_proposal_owns_transaction:
+		if full_compact_replay:
+			# A compact proof can omit a read-only world while still covering broad
+			# run mutations. Such providers require an independent full run clone;
+			# the ordinary machine-only candidate aliases those broader collections.
+			replay_source = candidate.detached_host_action_candidate(_sealed_action_host_state_key())
+		elif first_proposal_owns_transaction:
 			# Providers that only mutate their bound table do not need a second copy
 			# of the complete run graph. The machine remains deeply detached for the
 			# independent replay; unrelated collections are read-only aliases.
