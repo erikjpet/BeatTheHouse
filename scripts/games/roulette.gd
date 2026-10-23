@@ -118,6 +118,7 @@ const OUTSIDE_LABELS := [
 ]
 
 var bet_targets_cache: Dictionary = {}
+var completed_presentation_spin_id := ""
 
 
 func sealed_action_authority_script() -> Script:
@@ -176,6 +177,9 @@ func checkpoint_surface_ui_state_for_save_requires_ui_state() -> bool:
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var result: Dictionary = super.enter(run_state, environment)
 	var table := _table_state_preview(run_state, environment)
+	# A reopened table shows its durable, already-paid result. A process-local
+	# animation timestamp from before Continue/exit must never mask that wallet.
+	completed_presentation_spin_id = str(_last_result_source(table).get("spin_id", ""))
 	if bool(table.get("table_barred", false)):
 		result["message"] = str(table.get("barred_reason", "The croupier refuses more roulette action at this wheel."))
 		return result
@@ -443,6 +447,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"bias_read": _copy_dict(table.get("bias_read", {})),
 		"result_reveal_active": result_reveal_active,
 		"roulette_result_settled": result_settled_for_display,
+		"money_presentation_pending": not result_settled_for_display,
 		"roulette_motion_active": roulette_motion_active,
 		"result_message": str(last_result.get("summary", "")) if result_settled_for_display else "",
 		"surface_back_rect": {"x": 690, "y": 90, "w": 86, "h": 34},
@@ -579,6 +584,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 		"wheel_read_active": wheel_read_active,
 		"result_reveal_active": result_reveal_active,
 		"roulette_result_settled": result_settled_for_display,
+		"money_presentation_pending": not result_settled_for_display,
 		"roulette_motion_active": roulette_motion_active,
 		"result_message": str(last_result.get("summary", "")) if result_settled_for_display else "",
 		"table_notice": table_notice,
@@ -1048,6 +1054,7 @@ func _resolve_roulette_proposal_core(action_id: String, stake: int, run_state: R
 		"message": message,
 	})
 	result["roulette_winning_number"] = winning_number
+	result["hold_money_for_presentation"] = true
 	result["roulette_winning_color"] = str(spin.get("winning_color", ""))
 	result["roulette_bets"] = bets
 	result["roulette_bet_results"] = bet_results
@@ -3652,6 +3659,7 @@ func _update_table_after_spin(table: Dictionary, bets: Array, bet_results: Array
 		"trajectory": spin.get("trajectory", []) if typeof(spin.get("trajectory", [])) == TYPE_ARRAY else [],
 		"resolved_at_msec": maxi(0, result_msec),
 		"rng_state": rng.snapshot() if rng != null else {},
+		"presentation_patrons": _dictionary_array(table.get("patrons", [])),
 	}
 	table["last_result"] = last_result
 	table["last_bets"] = bets.duplicate(true)
@@ -3779,7 +3787,7 @@ func _roulette_visible_bankroll(run_state: RunState, environment: Dictionary, la
 	var bankroll := run_state.wager_capacity_for_game(get_id(), environment)
 	if result_settled or last_result.is_empty():
 		return bankroll
-	return bankroll - _roulette_pending_display_bankroll_delta(last_result)
+	return bankroll - _roulette_pending_display_bankroll_delta(last_result) - _total_wager(_bet_array(last_result.get("bets", [])))
 
 
 func _roulette_pending_display_bankroll_delta(last_result: Dictionary) -> int:
@@ -4121,6 +4129,10 @@ func _normalize_patrons(value: Variant, table: Dictionary) -> Array:
 func _patrons_for_surface(table: Dictionary, last_result: Dictionary, now_msec: int = -1) -> Array:
 	var patrons := _dictionary_array(table.get("patrons", []))
 	var now := now_msec if now_msec >= 0 else Time.get_ticks_msec()
+	if bool(_roulette_phase_status_for_result(last_result, now).get("spin_active", false)):
+		# Rapport/risk labels and grins can identify a winner as clearly as money.
+		patrons = _dictionary_array(last_result.get("presentation_patrons", patrons))
+		last_result = {}
 	var visible_count := mini(patrons.size(), MAX_VISIBLE_PATRONS)
 	var visible_patrons: Array = []
 	for i in range(visible_count):
@@ -4271,6 +4283,8 @@ func _roulette_phase_status_for_result(last_result_value: Variant, now_msec: int
 	if typeof(last_result_value) == TYPE_DICTIONARY and not (last_result_value as Dictionary).is_empty():
 		var last_result: Dictionary = last_result_value as Dictionary
 		elapsed_msec = now_msec - int(last_result.get("resolved_at_msec", 0))
+		if not completed_presentation_spin_id.is_empty() and str(last_result.get("spin_id", "")) == completed_presentation_spin_id:
+			elapsed_msec = maxi(elapsed_msec, SPIN_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC + ROULETTE_RESULT_REVEAL_MSEC)
 		spin_active = elapsed_msec >= 0 and elapsed_msec < SPIN_ANIMATION_DURATION_MSEC
 		payout_active = elapsed_msec >= SPIN_ANIMATION_DURATION_MSEC and elapsed_msec < SPIN_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC
 		result_reveal_active = _roulette_result_reveal_active(last_result, elapsed_msec)

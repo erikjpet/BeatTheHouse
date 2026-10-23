@@ -47,12 +47,13 @@ static func run_status_model(run_state: RunState, data: Dictionary) -> Dictionar
 	var inventory_items: Array = data.get("inventory_items", [])
 	var environment := run_state.current_environment
 	var bankroll := int(data.get("presented_bankroll", run_state.bankroll))
+	var chips := int(data.get("presented_chips", run_state.grand_casino_chips))
 	var bankroll_text := "Bankroll $%d" % bankroll
 	if bankroll_delta != 0:
 		bankroll_text += " (%+d)" % bankroll_delta
 	var chips_delta := int(recent_result.get("chips_delta", deltas.get("chips_delta", 0)))
 	if run_state.is_grand_casino_environment():
-		bankroll_text += "  Chips %d" % run_state.grand_casino_chips
+		bankroll_text += "  Chips %d" % chips
 		if chips_delta != 0:
 			bankroll_text += " (%+d)" % chips_delta
 	var heat_text := "Heat %d · %s" % [run_state.suspicion_level(), run_state.security_pressure_label().capitalize()]
@@ -122,7 +123,7 @@ static func run_status_model(run_state: RunState, data: Dictionary) -> Dictionar
 		"bankroll": bankroll,
 		"bankroll_delta": bankroll_delta,
 		"show_chips": run_state.is_grand_casino_environment(),
-		"chips": run_state.grand_casino_chips,
+		"chips": chips,
 		"chips_delta": chips_delta,
 		"heat_text": heat_text,
 		"heat_meter": {"value": run_state.suspicion_level(), "maximum": 100, "ticks": [35, 70]},

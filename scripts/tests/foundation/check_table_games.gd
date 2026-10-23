@@ -2424,8 +2424,8 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 		failures.append("Roulette result message appeared before the result animation settled.")
 	if bool(early_result_surface.get("roulette_result_settled", true)):
 		failures.append("Roulette surface marked an in-flight result as settled.")
-	if int(early_result_surface.get("bankroll", -999999)) != int(before.get("bankroll", -1)):
-		failures.append("Roulette visible bankroll settled before the payout animation finished.")
+	if int(early_result_surface.get("bankroll", -999999)) != int(before.get("bankroll", -1)) - int(result.get("roulette_total_wager", 0)):
+		failures.append("Roulette visible bankroll must deduct the stake while keeping returns hidden until result presentation.")
 	var payout_surface := game.surface_state(run_state, environment, {"surface_time_msec": resolved_at_msec + 5600 + 400})
 	var payout_channels: Array = payout_surface.get("surface_animation_channels", []) if typeof(payout_surface.get("surface_animation_channels", [])) == TYPE_ARRAY else []
 	var payout_channel: Dictionary = {}

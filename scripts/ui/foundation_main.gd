@@ -386,6 +386,9 @@ var presented_bankroll_game_id := ""
 var presented_bankroll_action_id := ""
 var presented_bankroll_release_screen := ""
 var presented_bankroll_started_msec := 0
+var presented_money_withheld: Dictionary = {}
+var presented_money_feedback: Dictionary = {}
+var presented_money_push_currency := ""
 var financial_hud_dirty := false
 var financial_hud_refresh_callable: Callable
 # Per-frame work is routed through _timed(); binding each step once keeps the
@@ -2386,7 +2389,7 @@ func _advance_presented_bankroll() -> void:
 	if run_state == null:
 		_clear_presented_bankroll_hold()
 		return
-	if current_screen != SCREEN_GAME or current_game == null:
+	if current_screen != SCREEN_GAME or current_game == null or current_game.get_id() != presented_bankroll_game_id:
 		_sync_presented_bankroll_to_actual()
 		_refresh_runtime_environment_views()
 		return
@@ -2408,25 +2411,66 @@ func _advance_presented_bankroll() -> void:
 func _presented_bankroll() -> int:
 	if run_state == null:
 		return 0
-	return run_state.bankroll
+	return run_state.bankroll - int(presented_money_withheld.get("cash", 0)) if presented_bankroll_hold_active else run_state.bankroll
+
+
+func _presented_chips() -> int:
+	if run_state == null:
+		return 0
+	return run_state.grand_casino_chips - int(presented_money_withheld.get("chips", 0)) if presented_bankroll_hold_active else run_state.grand_casino_chips
+
+
+func _presented_game_funds() -> int:
+	if run_state != null and current_game != null and run_state.grand_casino_game_uses_chips(current_game.get_id(), run_state.current_environment):
+		return _presented_bankroll() + _presented_chips()
+	return _presented_bankroll()
 
 
 func _visible_recent_bankroll_delta(bankroll_delta: int) -> int:
-	return bankroll_delta
+	return 0 if presented_bankroll_hold_active else bankroll_delta
 
 
-func _begin_presented_bankroll_hold(_result: Dictionary, _before_bankroll: int, _wager_cost: int) -> void:
-	# Money is authoritative as soon as the deterministic action settles. Result
-	# animations may continue, but they must never hold the visible wallet back.
-	_clear_presented_bankroll_hold()
+func _begin_presented_bankroll_hold(result: Dictionary, _before_bankroll: int, wager_cost: int) -> void:
+	# Settlement/RNG stay synchronous and durable. Opted-in surfaces own only the
+	# reveal: stake leaves the visible wallet now, returns and outcome cues wait.
+	if not bool(result.get("hold_money_for_presentation", false)) and not presented_bankroll_hold_active:
+		return
+	var starting := not presented_bankroll_hold_active
+	var deltas: Dictionary = result.get("deltas", {})
+	var currency := GameModule.presentation_currency_for_game(run_state, current_game.get_id(), run_state.current_environment)
+	for unit in ["cash", "chips"]:
+		var delta := int(deltas.get("chips_delta" if unit == "chips" else "bankroll_delta", 0))
+		MoneyFeedbackViewModelScript.add_delta(money_feedback_pending, unit, -delta)
+		MoneyFeedbackViewModelScript.add_delta(presented_money_feedback, unit, delta)
+		var returned := delta + (wager_cost if starting and unit == currency else 0)
+		presented_money_withheld[unit] = int(presented_money_withheld.get(unit, 0)) + returned
+	presented_bankroll_hold_active = true
+	presented_bankroll_game_id = current_game.get_id()
+	presented_bankroll_action_id = str(result.get("action_id", ""))
+	financial_hud_dirty = true
+
+
 func _sync_presented_bankroll_to_actual() -> void:
 	if run_state != null:
 		presented_bankroll_value = run_state.bankroll
+	var reveal_outcome := presented_bankroll_hold_active
+	for unit in presented_money_feedback:
+		MoneyFeedbackViewModelScript.add_delta(money_feedback_pending, str(unit), int(presented_money_feedback[unit]))
+	if not presented_money_push_currency.is_empty():
+		money_feedback_push_currency = presented_money_push_currency
 	_clear_presented_bankroll_hold()
+	financial_hud_dirty = true
+	if reveal_outcome and current_game != null:
+		var schedule := _schedule_game_result_music_outcome(last_game_result, str(last_game_result.get("action_id", "")))
+		if not schedule.is_empty():
+			last_game_result["music_outcome_schedule"] = schedule
 
 
 func _clear_presented_bankroll_hold() -> void:
 	presented_bankroll_hold_active = false
+	presented_money_withheld = {}
+	presented_money_feedback = {}
+	presented_money_push_currency = ""
 	presented_bankroll_game_id = ""
 	presented_bankroll_action_id = ""
 	presented_bankroll_release_screen = ""
@@ -2436,6 +2480,8 @@ func _clear_presented_bankroll_hold() -> void:
 func _game_surface_presentation_active() -> bool:
 	if game_surface_canvas == null:
 		return false
+	if presented_bankroll_hold_active:
+		return bool(game_surface_canvas.state.get("money_presentation_pending", false))
 	return game_surface_canvas.surface_bankroll_presentation_active()
 
 
@@ -6978,6 +7024,8 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 	}
 	var fields: Dictionary = snapshot["fields"]
 	for field_name in [
+		"presented_bankroll_hold_active", "presented_money_withheld", "presented_money_feedback", "presented_money_push_currency",
+		"presented_bankroll_game_id", "presented_bankroll_action_id",
 		"money_feedback_pending", "money_feedback_push_currency", "money_feedback_run_id",
 		"_room_catalog_publication", "interactable_object_catalog_cache", "interactable_object_catalog_cache_valid", "interactable_object_catalog_cache_key", "interactable_object_view_cache", "interactable_object_view_cache_valid", "interactable_object_view_cache_key",
 		"meta_session_active", "meta_session_location_id", "meta_last_panel_message", "dev_game_test_mode", "dev_environment_test_mode",
@@ -11352,6 +11400,7 @@ func _bind_run_state_presentation_signals() -> void:
 	if run_state == null:
 		return
 	if money_feedback_run_id != run_state.get_instance_id():
+		_clear_presented_bankroll_hold()
 		money_feedback_run_id = run_state.get_instance_id()
 		money_feedback_pending = {}
 		money_feedback_push_currency = ""
@@ -11405,6 +11454,9 @@ func _on_meta_gold_delta_applied(amount: int) -> void:
 
 func _queue_settled_push_feedback(result: Dictionary) -> void:
 	var currency := MoneyFeedbackViewModelScript.explicit_push_currency(result)
+	if presented_bankroll_hold_active:
+		presented_money_push_currency = currency
+		return
 	if not currency.is_empty():
 		money_feedback_push_currency = currency
 
@@ -11445,7 +11497,7 @@ func _refresh_financial_hud_if_dirty() -> void:
 		structured_hud.render(hud_model)
 	if current_screen == SCREEN_GAME and game_surface_canvas != null and current_game != null:
 		game_surface_canvas.apply_surface_state_patch({
-			"bankroll": run_state.wager_capacity_for_game(current_game.get_id(), run_state.current_environment),
+			"bankroll": _presented_game_funds(),
 			"money_revision": run_state.money_revision(),
 		})
 
@@ -12458,8 +12510,10 @@ func _music_room_scale_for_visual_context(visual_context: Dictionary, environmen
 func _music_bankroll_pressure_amount() -> float:
 	if run_state == null:
 		return 0.0
-	var bankroll := maxi(0, run_state.bankroll)
+	var bankroll := maxi(0, _presented_bankroll())
 	var cash_pressure := clampf(float(70 - bankroll) / 70.0, 0.0, 1.0)
+	if presented_bankroll_hold_active:
+		return cash_pressure
 	var economy := run_state.economy()
 	if economy == "insolvent":
 		return 1.0
@@ -12508,7 +12562,7 @@ func _music_win_momentum_snapshot() -> Dictionary:
 		"big_win_event_token": "",
 		"last_bankroll_delta": 0,
 	}
-	if run_state == null:
+	if run_state == null or presented_bankroll_hold_active:
 		return result
 	var streak := 0
 	var captured_latest := false
@@ -12538,7 +12592,7 @@ func _music_win_momentum_snapshot() -> Dictionary:
 
 
 func _schedule_game_result_music_outcome(result: Dictionary, action_id: String) -> Dictionary:
-	if procedural_music_player == null or run_state == null or result.is_empty():
+	if procedural_music_player == null or run_state == null or result.is_empty() or presented_bankroll_hold_active:
 		return {}
 	if bool(result.get("suppress_music_outcome", false)):
 		return {}
@@ -20012,7 +20066,7 @@ func _run_status_hud_model() -> Dictionary:
 	# FoundationHudViewModel reads only scalar result/delta fields and never
 	# mutates this dictionary. The public snapshot API remains deep-safe; this
 	# private render path keeps the dense Coin Pusher trace under single ownership.
-	var recent_result := _recent_result_readonly()
+	var recent_result := {} if presented_bankroll_hold_active else _recent_result_readonly()
 	var deltas: Dictionary = recent_result.get("deltas", {})
 	var state: String = FoundationHudViewModelScript.objective_presentation_state(pressure, objective)
 	return FoundationHudViewModelScript.run_status_model(run_state, {
@@ -20025,6 +20079,7 @@ func _run_status_hud_model() -> Dictionary:
 		"debt_items": _debt_view_list(),
 		"inventory_items": _inventory_view_list(),
 		"presented_bankroll": _presented_bankroll(),
+		"presented_chips": _presented_chips(),
 		# File installation completes on the worker; publish availability to HUD
 		# consumers only when the main thread accepts that generation.
 		"has_save": autosave_loadable_available,
@@ -20255,6 +20310,8 @@ func _has_enabled_game_object() -> bool:
 
 
 func _economy_cue_text() -> String:
+	if presented_bankroll_hold_active:
+		return "Stake on table"
 	match run_state.economy():
 		"insolvent":
 			return "Broke: get help fast"

@@ -52,7 +52,7 @@ static func game_view_snapshot(host: Variant, read_only_render_result: bool = fa
 	if result_message.is_empty():
 		if host.current_game == null and result.is_empty():
 			result_message = "Pick a game from the choices to start playing."
-		elif host.message_label != null:
+		elif host.message_label != null and not host.presented_bankroll_hold_active:
 			result_message = host._player_facing_text(host.message_label.text)
 	var drunk_time_scale = host.run_state.drunk_time_scale()
 	var drunk_world_speed_percent = host.run_state.drunk_time_scale_percent()
@@ -120,7 +120,7 @@ static func game_view_snapshot(host: Variant, read_only_render_result: bool = fa
 	for time_key in ["surface_time_msec", "surface_presentation_time_msec", "drunk_scaled_surface_time_msec"]:
 		if surface_ui_state.has(time_key):
 			snapshot[time_key] = surface_ui_state[time_key]
-	snapshot["bankroll"] = host._presented_bankroll()
+	snapshot["bankroll"] = host._presented_game_funds() if host.presented_bankroll_hold_active or game_id == "roulette" else host._presented_bankroll()
 	snapshot["stake_min"] = int(stake_range.get("min", 1))
 	snapshot["stake_max"] = int(stake_range.get("max", 1))
 	snapshot["selected_stake"] = snapshot_selected_stake
@@ -345,6 +345,8 @@ static func focused_talk_speaker_snapshot(host: Variant) -> Dictionary:
 
 
 static func current_game_result_snapshot(host: Variant, read_only_render_result: bool = false) -> Dictionary:
+	if host.presented_bankroll_hold_active:
+		return {}
 	if host.last_game_result.is_empty():
 		return {}
 	if host.current_game == null:
