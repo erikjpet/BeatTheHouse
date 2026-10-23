@@ -1274,8 +1274,9 @@ func _grand_casino_result_pit_boss_heat_bonus(result: Dictionary) -> int:
 	return bonus
 
 
-func _grand_casino_room_states_for_save(deep_copy: bool = true) -> Dictionary:
+func _grand_casino_room_states_for_save(deep_copy: bool = true, for_encoding: bool = false) -> Dictionary:
 	var result: Dictionary = {}
+	var present: Dictionary = {}
 	var active_room_id := ""
 	if _run._is_grand_casino_environment(_run.current_environment):
 		active_room_id = str(_run.current_environment.get("archetype_id", _run.GRAND_CASINO_ARCHETYPE_ID)).strip_edges()
@@ -1287,5 +1288,10 @@ func _grand_casino_room_states_for_save(deep_copy: bool = true) -> Dictionary:
 			continue
 		var room: Variant = grand_casino_room_states.get(room_id, {})
 		if typeof(room) == TYPE_DICTIONARY and not (room as Dictionary).is_empty():
-			result[room_id] = _run._environment_for_persistent_storage(room as Dictionary, deep_copy)
+			var cache_key: String = _run.INACTIVE_CASINO_STORAGE_PREFIX + room_id
+			present[cache_key] = true
+			var compiled: RefCounted = _run._inactive_storage_projection(cache_key, room) if for_encoding else null
+			result[room_id] = compiled if compiled != null else _run._environment_for_persistent_storage(room as Dictionary, deep_copy)
+	if for_encoding:
+		_run._prune_inactive_storage_projections(present, true)
 	return result

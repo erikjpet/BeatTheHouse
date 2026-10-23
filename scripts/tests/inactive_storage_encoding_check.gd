@@ -22,6 +22,10 @@ func _run() -> void:
 	if run == null:
 		quit(3)
 		return
+	if run._grand_casino_run_facade == null:
+		push_error("Grand Casino facade failed to initialize.")
+		quit(4)
+		return
 	var result := Check.check(run)
 	var snapshot := run.to_save_snapshot_for_encoding()
 	var started := Time.get_ticks_usec()

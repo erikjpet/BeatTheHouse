@@ -4,6 +4,7 @@ extends RefCounted
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 const PersistentEnvironmentProjectionScript := preload("res://scripts/core/persistent_environment_projection.gd")
 const INACTIVE_STORAGE_PROJECTION_BUDGET := 4 * 1024 * 1024
+const INACTIVE_CASINO_STORAGE_PREFIX := "casino-room::"
 const RunStateSchemaScript := preload("res://scripts/core/run_state_schema.gd")
 const CrewRunFacadeScript := preload("res://scripts/core/crew_run_facade.gd")
 const GrandCasinoRunFacadeScript := preload("res://scripts/core/grand_casino_run_facade.gd")
@@ -15024,7 +15025,7 @@ func _save_snapshot(deep_copy_seeded_scenario_definitions: bool, travel_preview:
 		"scenario_state_schema_version": ScenarioEngineScript.STATE_SCHEMA_VERSION,
 		"scenario_recent_by_archetype": scenario_recent_by_archetype.duplicate(false),
 		"environment_situation_cycles_by_node": environment_situation_cycles_by_node.duplicate(true),
-		"grand_casino_room_states": {} if travel_preview or not include_world else _grand_casino_room_states_for_save(false),
+		"grand_casino_room_states": {} if travel_preview or not include_world else _grand_casino_room_states_for_save(false, for_encoding),
 		"grand_casino_staffing": grand_casino_staffing.duplicate(false),
 		"rourke_current_room": rourke_current_room,
 		"rourke_current_spot": rourke_current_spot,
@@ -15744,12 +15745,20 @@ func _prime_inactive_storage_projections() -> void:
 		var environment_value: Variant = node_value.get("environment", {})
 		if typeof(environment_value) == TYPE_DICTIONARY and not (environment_value as Dictionary).is_empty():
 			_inactive_storage_projection(str(node_value.get("id", "")), environment_value)
+	_grand_casino_room_states_for_save(false, true)
+
+
+func _prune_inactive_storage_projections(present: Dictionary, casino_rooms: bool = false) -> void:
+	for key in _inactive_storage_projections.keys():
+		if str(key).begins_with(INACTIVE_CASINO_STORAGE_PREFIX) != casino_rooms or present.has(key):
+			continue
+		_inactive_storage_projection_bytes -= _inactive_storage_projections[key].retained_bytes
+		_inactive_storage_projections.erase(key)
 
 
 func _owned_world_map_for_save_snapshot(map_data: Dictionary, for_encoding: bool = false) -> Dictionary:
 	if map_data.is_empty():
-		_inactive_storage_projections = {}
-		_inactive_storage_projection_bytes = 0
+		_prune_inactive_storage_projections({})
 		return {}
 	var snapshot := map_data.duplicate(false)
 	var nodes_value: Variant = map_data.get("nodes", [])
@@ -15772,10 +15781,7 @@ func _owned_world_map_for_save_snapshot(map_data: Dictionary, for_encoding: bool
 			else:
 				node["environment"] = _environment_for_persistent_storage(environment_value, false)
 		nodes.append(node)
-	for key in _inactive_storage_projections.keys():
-		if not present.has(key):
-			_inactive_storage_projection_bytes -= _inactive_storage_projections[key].retained_bytes
-			_inactive_storage_projections.erase(key)
+	_prune_inactive_storage_projections(present)
 	snapshot["nodes"] = nodes
 	return snapshot
 
@@ -16405,9 +16411,9 @@ static func _normalize_rourke_escort_state(data: Dictionary) -> Dictionary:
 	}
 
 
-func _grand_casino_room_states_for_save(deep_copy: bool = true) -> Dictionary:
+func _grand_casino_room_states_for_save(deep_copy: bool = true, for_encoding: bool = false) -> Dictionary:
 	_grand_casino_run_facade.bind(self)
-	return _grand_casino_run_facade._grand_casino_room_states_for_save(deep_copy)
+	return _grand_casino_run_facade._grand_casino_room_states_for_save(deep_copy, for_encoding)
 
 
 # Normalizes story entries after JSON save/load.

@@ -182,3 +182,14 @@ same root fields. Only actual loads need the repaired numeric identities and
 retain the default repair path. The storage check explicitly covers an intact
 legacy 64-bit authority integer, real-load precision, damaged content and missing
 root fields, alongside the existing atomic-failure and retry cases.
+
+A subsequent root-level snapshot probe found that rebuilding the one stored
+casino room cost about 13.6 ms of a 15 ms native capture. Inactive casino rooms
+now use the same immutable projection/encoded compilation and total admission
+budget as stored world rooms. World pruning and casino pruning retain each
+other's entries; removed or active casino rooms release their inactive entry.
+Cold restore primes both sets before gameplay. Normal full snapshot callers
+still receive the original dictionary projection. Exact JSON parity and source
+alias invalidation, prior-generation isolation and removed-room release are
+checked by the same focused encoding contract. Native capture on the genuine
+hand-three save falls to about 2.1 ms, with no state or format reduction.

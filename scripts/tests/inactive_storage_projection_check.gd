@@ -69,7 +69,12 @@ static func check(run: RunState) -> Dictionary:
 	var removed := input.duplicate(true)
 	removed["nodes"] = []
 	run._owned_world_map_for_save_snapshot(removed)
-	expect.call(run._inactive_storage_projections.is_empty() and run._inactive_storage_projection_bytes == 0, "removed_rooms_release_retained_projection")
+	var world_entries := 0
+	var remaining_bytes := 0
+	for cache_key in run._inactive_storage_projections:
+		if not str(cache_key).begins_with(RunState.INACTIVE_CASINO_STORAGE_PREFIX): world_entries += 1
+		remaining_bytes += run._inactive_storage_projections[cache_key].retained_bytes
+	expect.call(world_entries == 0 and run._inactive_storage_projection_bytes == remaining_bytes, "removed_world_rooms_release_retained_projection_without_evicting_casino")
 	run._prime_inactive_storage_projections()
 	var expected_encoded := CodecScript.encode(run.to_save_snapshot(false))
 	var captured_generation := run.to_save_snapshot_for_encoding()
@@ -112,7 +117,32 @@ static func check(run: RunState) -> Dictionary:
 	var fresh_registry: Dictionary = {}
 	packed_entry.encode_into(fresh_registry, {})
 	expect.call(fresh_registry == expected_registry, "packed_output_alias_cannot_mutate_compilation")
+	var original_rooms: Dictionary = run.grand_casino_room_states
+	var casino_capture := run._grand_casino_room_states_for_save(false, true)
+	var casino_legacy := run._grand_casino_room_states_for_save(false)
+	var casino_encoded := CodecScript.encode({"rooms":casino_capture})
+	expect.call(not casino_capture.is_empty() and casino_encoded == CodecScript.encode({"rooms":casino_legacy}), "stored_casino_room_compilation_matches_original_codec")
+	var room_id: String = casino_capture.keys()[0]
+	var casino_key := RunState.INACTIVE_CASINO_STORAGE_PREFIX + room_id
+	expect.call(run._inactive_storage_projections.has(casino_key), "inactive_casino_room_admitted_to_same_bounded_cache")
+	var changed_rooms: Dictionary = ProjectionScript.owned(original_rooms)
+	changed_rooms[room_id]["description"] = "mutated stored casino room"
+	run.grand_casino_room_states = changed_rooms
+	var next_casino := run._grand_casino_room_states_for_save(false, true)
+	expect.call(CodecScript.encode({"rooms":next_casino}) == CodecScript.encode({"rooms":run._grand_casino_room_states_for_save(false)}), "stored_casino_alias_mutation_invalidates_compilation")
+	expect.call(CodecScript.encode({"rooms":casino_capture}) == casino_encoded, "prior_casino_generation_remains_owned_after_invalidation")
+	var prior_environment: Dictionary = run.current_environment
+	run.current_environment = changed_rooms[room_id]
+	var active_casino := run._grand_casino_room_states_for_save(false, true)
+	expect.call(not active_casino.has(room_id) and not run._inactive_storage_projections.has(casino_key), "room_activation_releases_inactive_compilation_and_uses_current_environment")
+	expect.call(CodecScript.encode({"rooms":active_casino}) == CodecScript.encode({"rooms":run._grand_casino_room_states_for_save(false)}), "active_room_exclusion_retains_legacy_codec_parity")
+	run.current_environment = prior_environment
+	run.grand_casino_room_states = {}
+	run._grand_casino_room_states_for_save(false, true)
+	expect.call(not run._inactive_storage_projections.has(casino_key), "removed_casino_room_releases_compilation")
+	run.grand_casino_room_states = original_rooms
 	run._prime_inactive_storage_projections()
+	expect.call(var_to_bytes(run.to_dict()) == before and [run.rng_seed,run.rng_state] == rng, "casino_cache_checks_restore_full_live_state_and_rng")
 	var started := Time.get_ticks_usec()
 	RunState._world_map_for_save_snapshot(run.world_map)
 	var original_usec := Time.get_ticks_usec() - started
