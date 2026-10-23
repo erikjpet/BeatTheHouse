@@ -1,7 +1,7 @@
 class_name CrapsRoomProp
 extends RefCounted
 
-# Lightweight room-scale Craps table painter with full and low-detail paths;
+# Current room-scale Craps table painter;
 # playable table rules and input stay in CrapsGame.
 
 const KitScript := preload("res://scripts/ui/game_props/game_prop_kit.gd")
@@ -31,17 +31,6 @@ static func draw(canvas: CanvasItem, rect: Rect2, object_data: Dictionary, accen
 	else:
 		_draw_casino(canvas, safe, visual, pulse, bool(object_data.get("hide_prop_text", false)))
 	KitScript.draw_state(canvas, safe, selected, disabled)
-
-
-static func draw_low_detail(canvas: CanvasItem, rect: Rect2, object_data: Dictionary, accent: Color, disabled: bool, flicker: float) -> void:
-	var safe := rect.grow(-3.0)
-	var visual: Dictionary = object_data.get("visual_state", EMPTY_STATE) if typeof(object_data.get("visual_state", EMPTY_STATE)) == TYPE_DICTIONARY else EMPTY_STATE
-	var variant: String = visual.get("variant", "casino")
-	var street := variant == "street_craps"
-	KitScript.draw_base_shadow(canvas, safe, accent)
-	_draw_small(canvas, safe, street)
-	if disabled:
-		KitScript.draw_state(canvas, safe, false, true)
 
 
 static func _draw_casino(canvas: CanvasItem, safe: Rect2, visual: Dictionary, pulse: float, hide_text: bool) -> void:

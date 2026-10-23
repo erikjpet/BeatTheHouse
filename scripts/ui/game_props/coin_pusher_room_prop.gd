@@ -68,19 +68,6 @@ static func draw(canvas: CanvasItem, rect: Rect2, object_data: Dictionary, accen
 	KitScript.draw_state(canvas, safe, selected, disabled)
 
 
-static func draw_low_detail(canvas: CanvasItem, rect: Rect2, object_data: Dictionary, accent: Color, disabled: bool, flicker: float) -> void:
-	var safe := rect.grow(-3.0)
-	var visual: Dictionary = object_data.get("visual_state", EMPTY_STATE) if typeof(object_data.get("visual_state", EMPTY_STATE)) == TYPE_DICTIONARY else EMPTY_STATE
-	var identity: String = visual.get("identity", "quarter_falls")
-	var body_color: Color = visual.get("body_color", Color("#6f2028"))
-	var trim_color: Color = visual.get("trim_color", C_YELLOW)
-	var glass_color: Color = visual.get("glass_color", C_CYAN)
-	KitScript.draw_base_shadow(canvas, safe, accent)
-	_draw_small(canvas, safe, identity, body_color, trim_color, glass_color)
-	if disabled:
-		KitScript.draw_state(canvas, safe, false, true)
-
-
 static func _draw_topper(canvas: CanvasItem, safe: Rect2, identity: String, style: String, trim: Color, light: Color, pulse: float) -> void:
 	var center_x := safe.get_center().x
 	if style == "peak" or identity == "jackpot_ridge":

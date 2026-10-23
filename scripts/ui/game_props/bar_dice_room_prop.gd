@@ -67,14 +67,6 @@ static func draw(canvas: CanvasItem, rect: Rect2, object_data: Dictionary, accen
 	KitScript.draw_state(canvas, safe, selected, disabled)
 
 
-static func draw_low_detail(canvas: CanvasItem, rect: Rect2, object_data: Dictionary, accent: Color, disabled: bool, flicker: float) -> void:
-	var safe := rect.grow(-3.0)
-	KitScript.draw_base_shadow(canvas, safe, accent)
-	_draw_small(canvas, safe)
-	if disabled:
-		KitScript.draw_state(canvas, safe, false, true)
-
-
 static func _die_value(visual: Dictionary, index: int, fallback: int) -> int:
 	match index:
 		0: return clampi(int(visual.get("die_0", fallback)), 1, 6)

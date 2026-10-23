@@ -81,16 +81,6 @@ static func draw(canvas: CanvasItem, rect: Rect2, object_data: Dictionary, accen
 	KitScript.draw_state(canvas, safe, selected, disabled)
 
 
-static func draw_low_detail(canvas: CanvasItem, rect: Rect2, object_data: Dictionary, accent: Color, disabled: bool, flicker: float) -> void:
-	var safe := rect.grow(-3.0)
-	var visual: Dictionary = object_data.get("visual_state", EMPTY_STATE) if typeof(object_data.get("visual_state", EMPTY_STATE)) == TYPE_DICTIONARY else EMPTY_STATE
-	var rows: Array = visual.get("stock_rows", EMPTY_ROWS) if typeof(visual.get("stock_rows", EMPTY_ROWS)) == TYPE_ARRAY else EMPTY_ROWS
-	KitScript.draw_base_shadow(canvas, safe, accent)
-	_draw_small(canvas, safe, rows)
-	if disabled:
-		KitScript.draw_state(canvas, safe, false, true)
-
-
 static func _draw_basket(canvas: CanvasItem, rect: Rect2) -> void:
 	canvas.draw_rect(Rect2(rect.position + Vector2(2.0, rect.size.y * 0.20), Vector2(rect.size.x - 4.0, rect.size.y * 0.72)), Color("#48505a"))
 	canvas.draw_rect(Rect2(rect.position, Vector2(rect.size.x, maxf(2.0, rect.size.y * 0.18))), C_SOFT)

@@ -9569,19 +9569,14 @@ func _draw_game_prop(rect: Rect2, object_data: Dictionary, selected: bool) -> vo
 		accent = C_SOFT
 	var prop := str(object_data.get("prop", "card_table"))
 	var game_key := str(object_data.get("source_id", object_data.get("icon_key", "")))
-	# Generated machines keep their own cabinet identity on every platform. The
-	# Grand Casino's Web simplification remains available to other game props,
-	# but may never replace a live machine with placeholder art.
+	# Every room and focus state uses the current prop painter. Web room detail
+	# budgets control ambient work/cadence, never a different game-art identity.
 	if prop == "machine":
 		_draw_interactable_light(rect, accent, selected)
 		if game_key == "pull_tabs":
 			_draw_pull_tab_machine_prop(rect, object_data, accent, selected, disabled)
 		else:
 			_draw_slot_cabinet_prop(rect, object_data, accent, selected, disabled)
-		_draw_game_runtime_badge(rect, object_data, accent)
-		return
-	if _grand_casino_web_low_detail() and not selected:
-		_draw_low_detail_game_prop(rect, object_data, accent, disabled)
 		_draw_game_runtime_badge(rect, object_data, accent)
 		return
 	# The street circle is painted directly on the alley floor. The generic
@@ -9614,48 +9609,6 @@ func _draw_game_prop(rect: Rect2, object_data: Dictionary, selected: bool) -> vo
 				_card_back(Rect2(rect.position + Vector2(26 + i * 28, 6 + i % 2 * 6), Vector2(20, 28)))
 			_draw_game_object_icon(object_data, _centered_icon_rect(rect, 32.0, Vector2(34, -9)), accent, selected, disabled)
 	_draw_game_runtime_badge(rect, object_data, accent)
-
-
-func _draw_low_detail_game_prop(rect: Rect2, object_data: Dictionary, accent: Color, disabled: bool = false) -> void:
-	var prop := str(object_data.get("prop", "card_table"))
-	if prop == "street_craps_circle":
-		StreetCrapsCirclePropScript.draw_low_detail(self, rect, object_data, accent, disabled, flicker)
-		return
-	var base_alpha := 0.18 if disabled else 0.30
-	draw_rect(Rect2(rect.position + Vector2(rect.size.x * 0.12, rect.size.y * 0.82), Vector2(rect.size.x * 0.76, 4)), Color(accent.r, accent.g, accent.b, base_alpha))
-	if prop == "coin_pusher_room":
-		CoinPusherRoomPropScript.draw_low_detail(self, rect, object_data, accent, disabled, flicker)
-		return
-	if prop == "scratch_ticket_room":
-		ScratchTicketRoomPropScript.draw_low_detail(self, rect, object_data, accent, disabled, flicker)
-		return
-	if prop == "craps_room":
-		CrapsRoomPropScript.draw_low_detail(self, rect, object_data, accent, disabled, flicker)
-		return
-	if prop == "bar_dice_room":
-		BarDiceRoomPropScript.draw_low_detail(self, rect, object_data, accent, disabled, flicker)
-		return
-	if prop == "video_poker_machine":
-		var cabinet := Rect2(rect.position + Vector2(rect.size.x * 0.24, rect.size.y * 0.18), Vector2(rect.size.x * 0.52, rect.size.y * 0.58))
-		draw_rect(cabinet, Color("#090a14"))
-		draw_rect(cabinet, Color(accent.r, accent.g, accent.b, 0.18), false, 1)
-		var screen := Rect2(cabinet.position + Vector2(cabinet.size.x * 0.18, cabinet.size.y * 0.26), Vector2(cabinet.size.x * 0.64, cabinet.size.y * 0.26))
-		draw_rect(screen, Color("#07131b"))
-		draw_rect(screen, Color(accent.r, accent.g, accent.b, 0.28), false, 1)
-		for i in range(3):
-			var reel := Rect2(screen.position + Vector2(3.0 + float(i) * screen.size.x * 0.30, 3.0), Vector2(screen.size.x * 0.18, maxf(5.0, screen.size.y - 6.0)))
-			draw_rect(reel, _cycle_color(i * 23 + int(rect.position.x)).darkened(0.10))
-		var font := get_theme_default_font()
-		draw_string(font, cabinet.position + Vector2(2.0, cabinet.size.y * 0.82), _fit_draw_text("POKER", font, 7, cabinet.size.x - 4.0), HORIZONTAL_ALIGNMENT_CENTER, cabinet.size.x - 4.0, 7, C_YELLOW)
-	else:
-		var table := Rect2(rect.position + Vector2(rect.size.x * 0.08, rect.size.y * 0.44), Vector2(rect.size.x * 0.84, rect.size.y * 0.30))
-		draw_rect(table, Color("#123f30"))
-		draw_rect(Rect2(table.position + Vector2(table.size.x * 0.08, table.size.y * 0.18), Vector2(table.size.x * 0.84, table.size.y * 0.48)), Color("#1a7755"))
-		draw_rect(table, Color(accent.r, accent.g, accent.b, 0.20), false, 1)
-		for i in range(2):
-			_card_back(Rect2(table.position + Vector2(table.size.x * (0.28 + float(i) * 0.24), -8.0 + float(i) * 2.0), Vector2(16, 22)))
-	if disabled:
-		draw_rect(rect.grow(-3.0), Color(0.0, 0.0, 0.0, 0.38))
 
 
 func _draw_game_runtime_badge(rect: Rect2, object_data: Dictionary, accent: Color) -> void:

@@ -34,16 +34,6 @@ static func draw(canvas: CanvasItem, rect: Rect2, object_data: Dictionary, accen
 	KitScript.draw_state(canvas, safe, selected, disabled)
 
 
-# Draws the cheap ground-level silhouette used by distant Web scenes.
-static func draw_low_detail(canvas: CanvasItem, rect: Rect2, object_data: Dictionary, accent: Color, disabled: bool, _flicker: float) -> void:
-	var safe := rect.grow(-3.0)
-	var visual: Dictionary = object_data.get("visual_state", EMPTY_STATE) if typeof(object_data.get("visual_state", EMPTY_STATE)) == TYPE_DICTIONARY else EMPTY_STATE
-	_draw_pavement_marks(canvas, safe)
-	_draw_small(canvas, safe, visual)
-	if disabled:
-		KitScript.draw_state(canvas, safe, false, true)
-
-
 # Adds cracks without introducing a filled platform beneath the game.
 static func _draw_pavement_marks(canvas: CanvasItem, safe: Rect2) -> void:
 	var ground_y := safe.position.y + safe.size.y * 0.43
