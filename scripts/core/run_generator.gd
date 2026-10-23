@@ -301,7 +301,7 @@ func enter_grand_casino_room_result(run_state: RunState, target_archetype_id: St
 	if not _enter_grand_casino_room(run_state, target_id, rollback, true, false):
 		if not caller_owns_rollback:
 			_restore_travel_snapshot(run_state, rollback)
-		return {"ok": false, "errors": ["The interior casino room could not be installed."]}
+		return {"ok": false, "errors": _last_environment_install_errors.duplicate(true)}
 	return {"ok": true, "errors": [], "source_id": source_id, "target_id": target_id, "environment": run_state.current_environment.duplicate(true), "scenario_finalized": true}
 
 
@@ -501,6 +501,7 @@ func enter_grand_casino_room(run_state: RunState, target_archetype_id: String) -
 
 
 func _enter_grand_casino_room(run_state: RunState, target_archetype_id: String, prepared_rollback: Dictionary = {}, source_preflight_complete: bool = false, restore_on_failure: bool = true) -> bool:
+	_last_environment_install_errors = ["The interior casino room could not be installed."]
 	if run_state == null or not run_state.is_grand_casino_environment(run_state.current_environment):
 		return false
 	var target_id := target_archetype_id.strip_edges()
@@ -509,6 +510,7 @@ func _enter_grand_casino_room(run_state: RunState, target_archetype_id: String, 
 	var flags: Dictionary = run_state.current_environment.get("local_narrative_flags", {}) if typeof(run_state.current_environment.get("local_narrative_flags", {})) == TYPE_DICTIONARY else {}
 	var access := run_state.grand_casino_room_access_status(target_id, int(flags.get("casino_high_limit_buy_in", 60)))
 	if not bool(access.get("available", false)):
+		_last_environment_install_errors = [str(access.get("reason", "That casino room is locked."))]
 		return false
 	var source_room_id := str(run_state.current_environment.get("archetype_id", "")).strip_edges()
 	if source_room_id != target_id and not source_preflight_complete and not bool(run_state.scenario_preflight_environment_change(source_room_id, target_id, "grand_room").get("ok", false)):
@@ -521,6 +523,15 @@ func _enter_grand_casino_room(run_state: RunState, target_archetype_id: String, 
 			return false
 	run_state.store_grand_casino_room_environment(run_state.current_environment)
 	var environment_data := run_state.grand_casino_room_environment(target_id)
+	# A cache key is not proof of the saved room's identity. Reject mismatches
+	# without regenerating over its stock, games, or progression. Older rooms
+	# can name themselves as their node; the room id still has to match exactly.
+	if not environment_data.is_empty() and (str(environment_data.get("archetype_id", "")) != target_id \
+			or str(environment_data.get("world_node_id", "")) not in ["", target_id, RunState.GRAND_CASINO_ARCHETYPE_ID]):
+		_last_environment_install_errors = ["The saved casino room does not match destination %s." % target_id]
+		if restore_on_failure:
+			_restore_travel_snapshot(run_state, rollback)
+		return false
 	if environment_data.is_empty():
 		var archetype := _archetype_by_id(target_id)
 		if archetype.is_empty():
@@ -546,12 +557,39 @@ func _enter_grand_casino_room(run_state: RunState, target_archetype_id: String, 
 	_align_world_map_scenario_layout_baseline(environment_data)
 	var installed := _install_environment_with_rollback(run_state, environment_data, rollback, false)
 	if not bool(installed.get("ok", false)):
+		_last_environment_install_errors = JsonCoerceScript._copy_array(installed.get("errors", []))
+		if restore_on_failure:
+			_restore_travel_snapshot(run_state, rollback)
+		return false
+	# A room without a scenario still needs a complete physical envelope. In
+	# particular, a late Crew encounter must not turn a successful Cage arrival
+	# into a blank room when the renderer first authenticates its slots.
+	var room_errors := _grand_casino_room_install_errors(run_state.current_environment, target_id)
+	if not room_errors.is_empty():
+		_last_environment_install_errors = room_errors
 		if restore_on_failure:
 			_restore_travel_snapshot(run_state, rollback)
 		return false
 	if source_room_id != target_id:
 		run_state.scenario_publish_travel("travel_arrived", source_room_id, target_id, "grand_room")
 	return true
+
+
+func _grand_casino_room_install_errors(environment: Dictionary, target_id: String) -> Array:
+	var errors := EnvironmentInstance.object_manifest_errors(environment)
+	var authority := EnvironmentSlotBinderScript.validate_base_layout_authority(environment)
+	errors.append_array(JsonCoerceScript._copy_array(authority.get("errors", [])))
+	errors.append_array(JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(environment.get("layout", {})).get("placement_errors", [])))
+	if target_id == RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID:
+		var flags := JsonCoerceScript._copy_dict(environment.get("local_narrative_flags", {}))
+		var authored_flags := JsonCoerceScript._copy_dict(_archetype_by_id(target_id).get("local_narrative_flags", {}))
+		if JsonCoerceScript._raw_string_array(flags.get("casino_room_targets", [])) != JsonCoerceScript._raw_string_array(authored_flags.get("casino_room_targets", [])):
+			errors.append("The saved Cage doors do not match the authored room destinations.")
+		var bindings := JsonCoerceScript._copy_dict(authority.get("slot_bindings", {}))
+		for object_id in ["casino_fixture:cage_counter", "casino_fixture:cage_atm", "travel:grand_casino"]:
+			if str(JsonCoerceScript._copy_dict(bindings.get(object_id, {})).get("presentation_mode", "")) != "room":
+				errors.append("The Cage requires its authored counter, ATM, and Main Floor exit: %s." % object_id)
+	return errors
 
 
 # Changes floors inside one layered venue without world travel or route cost.

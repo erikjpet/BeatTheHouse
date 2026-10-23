@@ -29083,7 +29083,26 @@
           "occupancy_required": true
         }
       ],
-      "event_slots": [],
+      "event_slots": [
+        {
+          "id": "event.recruitment_bishop",
+          "kind": "event",
+          "pos": [620.0, 350.0],
+          "footprint_class": "standing_person",
+          "physical_role": "Bishop at the Cage window",
+          "occupant_ids": ["event:recruitment_bishop"],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [584.0, 270.0, 72.0, 80.0],
+          "label_anchor": [620.0, 264.0],
+          "facing": "left",
+          "priority": 10,
+          "zone_id": "room",
+          "support_id": "floor",
+          "walk_lane_ids": ["lane.public"],
+          "occupancy_required": false
+        }
+      ],
       "scenario_slots": [
         {
           "id": "scenario.floor_fixture_1",
@@ -29277,7 +29296,7 @@
         "casino_fixture:cage_counter": "fixed.fixture_cage_counter",
         "staff:grand_casino_linda": "fixed.staff_linda"
       },
-      "event_object_slot_ids": {},
+      "event_object_slot_ids": {"event:recruitment_bishop": "event.recruitment_bishop"},
       "scenario_object_slot_ids": {},
       "exit_object_slot_ids": {
         "travel:grand_casino": "exit.casino_floor_door",
@@ -29302,6 +29321,7 @@
         "casino_fixture:cage_counter": "fixed",
         "staff:grand_casino_linda": "fixed",
         "event:heist_live_table": "scenario",
+        "event:recruitment_bishop": "event",
         "travel:grand_casino": "exit",
         "travel:leave": "exit"
       },
