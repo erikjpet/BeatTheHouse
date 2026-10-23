@@ -61,7 +61,7 @@ func _run() -> void:
 	_driver_hand(app, reference, 500000)
 	_queue(app)
 	_check(not app.run_state.is_terminal(), "pending terminal proposal is not presented as a final commit")
-	app._advance_rourke_resolution(false)
+	for step in range(5): app._advance_rourke_resolution(false)
 	_check(app.run_state.is_terminal() and app.current_screen == app.SCREEN_GAME, "terminal authority commits before report presentation")
 	_check(app.run_state.rng_state == reference.rng_state and app.run_state.bankroll == reference.bankroll and app.run_state.grand_casino_duel_status() == reference.grand_casino_duel_status(), "terminal money, RNG and complete duel match synchronous resolution")
 	app._advance_rourke_resolution(false)

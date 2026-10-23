@@ -2151,11 +2151,13 @@ func _sealed_action_host_advance_environment_turn(candidate: RunState) -> Dictio
 
 
 func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_claim: Dictionary = {}, prepared_claim: Dictionary = {}) -> Dictionary:
-	if _rourke_resolution_dispatch_active and int(_rourke_resolution.get("step", -1)) == 1:
+	if _rourke_resolution_dispatch_active and int(_rourke_resolution.get("step", -1)) in [4, 5]:
 		var command: Dictionary = _rourke_resolution.get("command", {})
 		var delivery: Dictionary = command.get("_sealed_action_host_delivery", {})
 		if action_id == str(command.get("action_id", "")) and stake == int(delivery.get("stake", -1)) \
 				and GameRitualRuntimeScript.canonical_json(delivery_claim) == GameRitualRuntimeScript.canonical_json(delivery):
+			if int(_rourke_resolution["step"]) == 4:
+				return _sealed_action_host.advance_rourke_owned_resolution(_rourke_resolution["authority"])
 			return _rourke_resolution.get("result", {})
 		return _sealed_action_host_rejection("stale_boundary", "Rourke result no longer matches its pending action.")
 	_sealed_action_host.bind(self)
@@ -2275,7 +2277,7 @@ func _advance_rourke_resolution(schedule_next: bool = true, generation: int = -1
 		return
 	var transaction := _rourke_resolution
 	var step := int(transaction["step"])
-	if transaction.get("run") != run_state or (step <= 1 and (transaction.get("game") != current_game or str(transaction.get("state_key", "")) != current_game_state_key)):
+	if transaction.get("run") != run_state or (step <= 5 and (transaction.get("game") != current_game or str(transaction.get("state_key", "")) != current_game_state_key)):
 		_end_rourke_resolution()
 		return
 	if schedule_next and int(transaction.get("last_step_frame", -1)) == Engine.get_process_frames():
@@ -2287,24 +2289,45 @@ func _advance_rourke_resolution(schedule_next: bool = true, generation: int = -1
 		0:
 			var command: Dictionary = transaction["command"]
 			var delivery: Dictionary = command.get("_sealed_action_host_delivery", {})
-			# The pending delivery was published before this draw boundary. Recheck
-			# complete live authority before using the isolated prepared candidate.
+			var authority: Dictionary = _sealed_action_host.begin_rourke_owned_resolution(str(command.get("action_id", "")),
+				int(delivery.get("stake", 0)), delivery, command.get("_sealed_action_host_prepared", {}))
+			if not authority.has("owned_step"):
+				transaction["result"] = authority
+				transaction["step"] = 5
+			else:
+				transaction["authority"] = authority
+				transaction["step"] = 1
+		1, 2, 3:
+			var result: Dictionary = _sealed_action_host.advance_rourke_owned_resolution(transaction["authority"])
+			if result.is_empty(): transaction["step"] = step + 1
+			else:
+				transaction["result"] = result
+				transaction["step"] = 5
+		4:
+			var command: Dictionary = transaction["command"]
+			var delivery: Dictionary = command.get("_sealed_action_host_delivery", {})
+			# Both speculative executions remained private. Validate the complete live
+			# authority immediately before the unchanged atomic receipt/apply/publish.
 			var context: Dictionary = _sealed_action_host._sealed_action_host_trusted_context(run_state, int(delivery.get("stake", 0)), str(command.get("action_id", "")))
 			if GameRitualRuntimeScript.canonical_fingerprint(context) != str(delivery.get("trusted_context_fingerprint", "")):
 				transaction["result"] = _sealed_action_host_rejection("stale_boundary", "Rourke state changed while the hand was pending.")
 			else:
 				transaction["result"] = _sealed_action_host_resolve_intent(str(command.get("action_id", "")), int(delivery.get("stake", 0)), delivery, command.get("_sealed_action_host_prepared", {}))
-			transaction["step"] = 1
-		1:
+			transaction["step"] = 5
+		5:
 			_apply_game_surface_command(transaction["command"], int(transaction["index"]), bool(transaction["confirm"]), bool(transaction["notify_coach"]), true)
-			transaction["step"] = 2
-		2:
+			transaction["step"] = 6
+		6:
+			if transaction.has("terminal_profile_result"):
+				_record_profile_run_result_once(transaction["terminal_profile_result"])
+			transaction["step"] = 7
+		7:
 			if bool(transaction.get("terminal_presentation_pending", false)):
 				_present_terminal_run_screen()
 			elif bool(transaction.get("refresh_requested", false)):
 				_finish_foundation_refresh()
-			transaction["step"] = 3
-		3:
+			transaction["step"] = 8
+		8:
 			_end_rourke_resolution()
 			return
 	_rourke_resolution_dispatch_active = false
@@ -2323,7 +2346,7 @@ func _drain_rourke_resolution() -> void:
 		return
 	# The existing event-response exit rule also finishes its one accepted action
 	# before the normal synchronous Save/navigation durability boundary.
-	for _step in range(4):
+	for _step in range(9):
 		if _rourke_resolution.is_empty():
 			return
 		_advance_rourke_resolution(false)
@@ -2332,7 +2355,7 @@ func _drain_rourke_resolution() -> void:
 func _cancel_rourke_resolution(refresh_view: bool = true) -> bool:
 	if _rourke_resolution.is_empty():
 		return true
-	if int(_rourke_resolution.get("step", 0)) > 0:
+	if bool(_rourke_resolution.get("result", {}).get(ActionAuthorityScript.HOST_COMMITTED_KEY, false)):
 		if refresh_view: _drain_rourke_resolution()
 		else: _end_rourke_resolution()
 		return false
@@ -12930,7 +12953,7 @@ func _settle_delivery_action_layout() -> void:
 
 
 func _render_run_report() -> void:
-	if not _rourke_resolution.is_empty() and int(_rourke_resolution.get("step", -1)) <= 1 and run_state != null and run_state.is_terminal():
+	if not _rourke_resolution.is_empty() and int(_rourke_resolution.get("step", -1)) <= 6 and run_state != null and run_state.is_terminal():
 		_rourke_resolution["terminal_presentation_pending"] = true
 		return
 	if run_report_screen == null:
@@ -20734,7 +20757,7 @@ func _terminal_checkpoint_uses_web_phases() -> bool:
 
 
 func _present_terminal_run_screen() -> void:
-	if not _rourke_resolution.is_empty() and int(_rourke_resolution.get("step", -1)) <= 1 and run_state != null and run_state.is_terminal():
+	if not _rourke_resolution.is_empty() and int(_rourke_resolution.get("step", -1)) <= 6 and run_state != null and run_state.is_terminal():
 		_rourke_resolution["terminal_presentation_pending"] = true
 		return
 	# Terminal state can be discovered outside the broad refresh path (for
@@ -20847,6 +20870,9 @@ func _terminal_reward_selection_pending() -> bool:
 
 
 func _record_profile_run_result_once(terminal_result: Dictionary = {}) -> void:
+	if _rourke_resolution_dispatch_active and int(_rourke_resolution.get("step", -1)) == 5:
+		_rourke_resolution["terminal_profile_result"] = terminal_result.duplicate(true)
+		return
 	if run_state == null or not run_state.is_terminal():
 		return
 	if run_state.excludes_profile_stats():

@@ -105,6 +105,7 @@ func _run() -> void:
 	old_game.enter(legacy, legacy.current_environment)
 	_check(game._is_rourke_duel(current, current.current_environment), "preserved fixture reaches the real Rourke variant")
 	var times: Array = []
+	var terminal_rejection_source: RunState
 	for hand in range(5):
 		var now := current.simulation_msec + (hand + 1) * 100000
 		var result := _hand(game, current, now)
@@ -130,6 +131,7 @@ func _run() -> void:
 		times.append({"hand":hand + 1,"current_usec":current_usec,"legacy_usec":legacy_usec})
 		var evidence := game._blackjack_authority_evidence(current,"play_basic",20)
 		_check(Runtime.canonical_json_native(evidence)==Runtime.canonical_json(evidence), "hand %d compact fingerprint bytes remain identical"%(hand+1))
+		if hand == 3: terminal_rejection_source = current.detached_host_action_candidate("blackjack")
 	_check(game.world_mutations == 0 and old_game.world_mutations == 0, "every proposal preserves unrelated world storage and mirrors only its proved table")
 	_check(current.is_terminal() and legacy.is_terminal(), "fifth-hand ending reached through both paths")
 	var prior_payload := SaveService._save_payload_result(current.to_save_snapshot(), "rourke_evidence_check")
@@ -161,6 +163,12 @@ func _run() -> void:
 	var before_sequence := reputation_run.town_state.living_world.reputation_sequence
 	var reputation_rejected := _hand(reputation_game, reputation_run, reputation_run.simulation_msec + 100000)
 	_check(not bool(reputation_rejected.get("ok", false)) and reputation_run.town_state.living_world.reputation_sequence == before_sequence, "reputation replay mismatch fails closed without touching the live town")
+	var ending_game := AuditedGame.new()
+	ending_game.setup(library.game("blackjack"), library)
+	ending_game.enter(terminal_rejection_source, terminal_rejection_source.current_environment)
+	ending_game.corrupt_reputation_replay = true
+	var ending_rejected := _hand(ending_game, terminal_rejection_source, terminal_rejection_source.simulation_msec + 600000, true)
+	_check(not bool(ending_rejected.get("ok", false)) and not terminal_rejection_source.is_terminal(), "rejected ending cannot leak its town incident or terminal mutations")
 	var narrow := original.to_action_snapshot_without_world()
 	var full := original.to_save_snapshot()
 	for key in ["town_state", "world_map", "grand_casino_room_states"]: full[key] = {}
@@ -169,10 +177,11 @@ func _run() -> void:
 	for failure in failures: push_error(failure)
 	quit(0 if failures.is_empty() else 1)
 
-func _hand(game: Blackjack, run: RunState, now: int) -> Dictionary:
+func _hand(game: Blackjack, run: RunState, now: int, audit_rejection: bool = false) -> Dictionary:
 	var deal: Dictionary = Driver.surface_intent(game, "blackjack_deal", 20, run, run.current_environment, 0, false, now)
 	_check(bool(deal.get("handled", false)), "deal handled")
 	var command: Dictionary = Driver.surface_intent(game, "blackjack_stand", 20, run, run.current_environment, 0, false, now + 5000)
+	var pending_snapshot := _public_snapshot(run, true) if audit_rejection else ""
 	var host: Control = Driver._new_production_host()
 	host.current_game = game
 	host.game_module_cache = {"blackjack":game}
@@ -183,6 +192,8 @@ func _hand(game: Blackjack, run: RunState, now: int) -> Dictionary:
 	var start := Time.get_ticks_usec()
 	var result: Dictionary = host._sealed_action_host_resolve_intent(str(command.get("action_id", "")), int(delivery.get("stake", 20)), delivery, command.get("_sealed_action_host_prepared", {}))
 	last_hand_elapsed_usec = Time.get_ticks_usec() - start
+	if audit_rejection:
+		_check(not bool(result.get("ok", false)) and _public_snapshot(run, true) == pending_snapshot, "rejected ending preserves every live model, authority, money and RNG field")
 	if not bool(result.get("ok", false)):
 		print("ROURKE_REJECTION ", JSON.stringify({"code":result.get("error_code"),"detail":result.get("diagnostic_detail"),"action":command.get("action_id"),"stake":delivery.get("stake"),"deal_message":deal.get("message"),"stand_message":command.get("message"),"deal_keys":deal.keys(),"stand_keys":command.keys()}))
 	host.free()

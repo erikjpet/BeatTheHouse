@@ -13,6 +13,7 @@ class ObservedMain extends Main:
 	var phase_frames: Array = []
 	var actual_resolutions := 0
 	var completed_snapshot: Dictionary = {}
+	var uncommitted_snapshots: Array = []
 	var auto_clock := false
 	var background_calls := 0
 
@@ -36,10 +37,11 @@ class ObservedMain extends Main:
 		super._advance_rourke_resolution(schedule_next, generation)
 		if before >= 0 and int(_rourke_resolution.get("step", -1)) != before:
 			phase_frames.append({"step": before, "frame": Engine.get_process_frames(), "presentation_before": presentation})
-			if before == 3: completed_snapshot = run_state.to_save_snapshot().duplicate(true)
+			if before <= 3: uncommitted_snapshots.append(run_state.to_save_snapshot().duplicate(true))
+			if before == 8: completed_snapshot = run_state.to_save_snapshot().duplicate(true)
 
 	func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery: Dictionary = {}, prepared: Dictionary = {}) -> Dictionary:
-		if not (_rourke_resolution_dispatch_active and int(_rourke_resolution.get("step", -1)) == 1):
+		if not (_rourke_resolution_dispatch_active and int(_rourke_resolution.get("step", -1)) == 5):
 			actual_resolutions += 1
 		return super._sealed_action_host_resolve_intent(action_id, stake, delivery, prepared)
 
@@ -84,12 +86,15 @@ func _run() -> void:
 	var pending := _public(app.run_state)
 	app._on_game_surface_action("blackjack_deal", 0)
 	_check(_public(app.run_state) == pending, "repeated input cannot mutate the pending action")
-	for frame in range(7): await process_frame
+	for frame in range(12): await process_frame
 	_check(app._rourke_resolution.is_empty(), "finite scheduled transaction finishes")
 	_check(_public_data(app.completed_snapshot) == expected, "all public state, money and RNG match at the completed action boundary")
 	if _public_data(app.completed_snapshot) != expected: _diff(JSON.parse_string(expected), JSON.parse_string(_public_data(app.completed_snapshot)))
 	_check(app.actual_resolutions == 1, "post-action presentation reuses the committed result exactly once")
-	_check(app.phase_frames.size() == 4, "all scheduled phases execute once")
+	_check(app.phase_frames.size() == 9, "all scheduled phases execute once")
+	for snapshot in app.uncommitted_snapshots:
+		_check(_public_data(snapshot) == pending, "speculative candidates never publish partial model or money/RNG changes")
+		if _public_data(snapshot) != pending: _diff(JSON.parse_string(pending), JSON.parse_string(_public_data(snapshot)), "uncommitted", [0])
 	if app.phase_frames.size() >= 2:
 		_check(app.phase_frames[1].presentation_before > app.phase_frames[0].presentation_before, "presentation animation advances while host simulation/input wait")
 	for i in range(1, app.phase_frames.size()):
@@ -113,12 +118,22 @@ func _run() -> void:
 	app._advance_rourke_resolution(false, stale_generation)
 	_check(int(app._rourke_resolution.get("step", -1)) == 0, "old generation cannot advance the replacement hand")
 	app.run_state.narrative_flags["phase_stale_probe"] = true
-	app._advance_rourke_resolution(false)
+	for step in range(5): app._advance_rourke_resolution(false)
 	_check(str(app._rourke_resolution.get("result", {}).get("error_code")) == "stale_boundary", "authority is rechecked after the asynchronous boundary")
 	app._drain_rourke_resolution()
 	_check(app.actual_resolutions == 0 and app.run_state.rng_state == prior_rng and int(app.run_state.grand_casino_duel_status().get("player_stack")) == prior_stack, "stale rejection cannot execute or account the isolated proposal")
 	app.free()
 	await process_frame
+	for cancelled_step in [2, 3, 4]:
+		app = _open("cancel_speculative_%d" % cancelled_step)
+		_deal(app)
+		before = _public(app.run_state)
+		app._on_game_surface_action("blackjack_stand", 0)
+		for step in range(cancelled_step): app._advance_rourke_resolution(false)
+		_check(app._cancel_rourke_resolution(), "speculative boundary %d can be cancelled" % cancelled_step)
+		_check(_public(app.run_state) == before and app.actual_resolutions == 0, "speculative boundary %d preserves live cards, money and RNG" % cancelled_step)
+		app.free()
+		await process_frame
 	app = _open("automatic")
 	app.auto_clock = true
 	app._on_game_surface_action("blackjack_deal", 0)
@@ -135,7 +150,8 @@ func _run() -> void:
 		app = _open("menu_%d" % boundary)
 		_deal(app)
 		app._on_game_surface_action("blackjack_stand", 0)
-		if boundary == 1: app._advance_rourke_resolution(false)
+		if boundary == 1:
+			for step in range(5): app._advance_rourke_resolution(false)
 		var service: SaveService = app.save_service
 		var slot: String = app.autosave_slot_id
 		_check(app.return_to_main_menu(), "Main Menu drains pending boundary %d" % boundary)

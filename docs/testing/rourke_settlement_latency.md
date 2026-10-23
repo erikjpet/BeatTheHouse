@@ -140,3 +140,19 @@ side of commit. `rourke_phased_interruption_check.gd` adds terminal money/RNG/du
 parity, delayed report construction, durable terminal navigation, failed Save and
 retry, scene teardown, and normal auto recovery of a genuinely persisted pending
 delivery. Its save service uses the existing Web encode/pack/install phases.
+
+The next follow-up separates the authoritative proposal work itself: input
+sealing/replay candidate construction, accepted execution, independent replay,
+live revalidation plus atomic commit, UI result consumption, terminal profile
+recording, and report construction run on successive frames. Synchronous callers
+retain the same proposal branch and share the extracted preparation/commit code;
+the phased proposal path is restricted to Rourke without a native runtime owner.
+
+Pending-delivery publication transfers stored model fields into retained live
+objects. Broad replay therefore detaches those models again before speculative
+rules execute. This protects intermediate frames and rejected synchronous endings.
+The five-hand check now injects a final-hand reputation replay mismatch and
+compares every live field with the pending boundary, proving that the rejected
+ending cannot leak reputation, terminal state, money or RNG changes. The phased
+check also audits live state after every speculative step and cancels at each
+pre-commit boundary. The storage codec and save format are unchanged.
