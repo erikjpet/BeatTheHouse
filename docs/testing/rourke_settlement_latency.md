@@ -209,7 +209,7 @@ still checked first. Nonfinite numbers, unpaired Unicode surrogates or depth ove
 parser. Actual loads retain their existing integer repair and restore path.
 `save_content_validation_check.gd` creates a Godot acceptance oracle for malformed
 and legacy grammar, numeric/Unicode/depth edges and the genuine prepared/terminal
-saves. The companion `.cjs` runs the exact shipped bridge expression and asserts
+saves. `tools/tests/save_content_validation_browser_check.cjs` runs the exact shipped bridge expression and asserts
 that it never accepts content rejected by that oracle. Packed cases also check
 hash-damage rejection. The finite corpus is compatibility evidence, not a proof
 for every possible input; final Web timing belongs to the task receipt.

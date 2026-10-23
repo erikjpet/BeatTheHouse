@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
-const source = fs.readFileSync(path.join(__dirname, '../core/run_save_codec.gd'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '../../scripts/core/run_save_codec.gd'), 'utf8');
 const expression = source.match(/const WEB_JSON_CONTENT_VALID := """([\s\S]*?)"""/)[1];
 const validate = vm.runInNewContext(expression);
 const cases = JSON.parse(fs.readFileSync(process.env.BTH_CONTENT_VALIDATION_CORPUS, 'utf8'));
