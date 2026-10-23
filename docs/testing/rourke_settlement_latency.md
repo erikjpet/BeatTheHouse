@@ -156,3 +156,22 @@ compares every live field with the pending boundary, proving that the rejected
 ending cannot leak reputation, terminal state, money or RNG changes. The phased
 check also audits live state after every speculative step and cancels at each
 pre-commit boundary. The storage codec and save format are unchanged.
+
+Exact-build Web observations on `287aa0cc` put the action-related renderer tasks
+within the first 500 ms of Stand at at most 80.9 ms thread CPU. Later autosave
+tasks still reached 145–155 ms CPU. A narrow native component probe found that
+unchanged inactive rooms dominated the codec's remaining recursive encode walk.
+The existing bounded immutable room compilation now retains its encoded form
+when the graph contains only plain containers and scalar values. Each save gets
+a native deep copy before registry compaction; packed mutable leaves retain the
+original explicit-copy path. Encoded storage counts against the same 4 MiB
+admission budget, and exact source equality still controls invalidation.
+
+`inactive_storage_encoding_check.gd` compares exact JSON bytes with the original
+uncached projection and audits nested output mutation, alias invalidation,
+rollback, cold restore, packed fallback and cache-budget refusal. On the preserved
+fixture, native encode time was approximately 15 ms versus 26 ms without encoded
+compilations. This is native component evidence; final Web timing is recorded
+separately. Compressed-save parsing also returns its already private fresh JSON
+graph directly, avoiding one redundant full copy. Storage content/hash validation,
+legacy integer repair, atomic installation, backups and format remain unchanged.

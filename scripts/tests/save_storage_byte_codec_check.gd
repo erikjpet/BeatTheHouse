@@ -51,6 +51,10 @@ func _run() -> void:
 	_check(Codec._z85_decode(text, raw.size()) == raw, "real save exact decoded bytes")
 	var unpacked := Codec.unpack_from_storage(packed)
 	_check(not unpacked.is_empty(), "original compressed content/hash validated")
+	var detached := Codec.unpack_from_storage(packed)
+	detached.get("current_environment", {}).clear()
+	detached["owned_parse_probe"] = [1, 2, 3]
+	_check(Codec.unpack_from_storage(packed) == unpacked and not unpacked.has("owned_parse_probe"), "each fresh JSON parse owns its graph independently of returned mutations")
 	var roundtrip := Codec.unpack_from_storage(Codec.pack_for_storage(unpacked).get("packed", {}))
 	_check(roundtrip == unpacked, "complete storage state/RNG roundtrip")
 	var damaged := packed.duplicate(true)

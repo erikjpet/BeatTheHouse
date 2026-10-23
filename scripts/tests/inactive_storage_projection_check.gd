@@ -83,8 +83,35 @@ static func check(run: RunState) -> Dictionary:
 	expect.call(CodecScript.encode(later_generation) == CodecScript.encode(run.to_save_snapshot(false)), "later_generation_rebuilds_exact_encoded_output")
 	run.world_map = retained_map
 	var actual_encoded := CodecScript.encode(captured_generation)
+	for ref in actual_encoded["environment_registry"]:
+		var body: Dictionary = actual_encoded["environment_registry"][ref]
+		body["description"] = "mutated encoded output"
+		if typeof(body.get("layout")) == TYPE_DICTIONARY:
+			body["layout"]["cache_alias_probe"] = true
+	expect.call(CodecScript.encode(captured_generation) == expected_encoded, "nested_encoded_output_cannot_mutate_compiled_generation")
 	actual_encoded["environment_registry"].clear()
 	expect.call(CodecScript.encode(captured_generation) == expected_encoded, "encoded_output_cannot_mutate_compiled_generation")
+	var plain := {"id":"encoded_cache_probe", "kind":"test", "game_states":{}, "nested":[{"n":7}]}
+	var cached := ProjectionScript.compile(plain, identity, 8192)
+	expect.call(not cached._encoded_projection.is_empty(), "plain_graph_uses_encoded_cache")
+	expect.call(cached.retained_bytes == var_to_bytes(cached._source).size() + var_to_bytes(cached._projection).size() + var_to_bytes(cached._encoded_projection).size(), "encoded_graph_counts_toward_same_byte_budget")
+	var shallow_budget := var_to_bytes(plain).size() * 2
+	var uncached := ProjectionScript.compile(plain, identity, shallow_budget)
+	expect.call(uncached != null and uncached._encoded_projection.is_empty() and uncached.retained_bytes <= shallow_budget, "encoded_cache_declines_without_growing_budget")
+	var packed_room := plain.duplicate(true)
+	packed_room["nested"][0]["bytes"] = PackedByteArray([1,2,3])
+	var packed_entry := ProjectionScript.compile(packed_room, identity, 8192)
+	expect.call(packed_entry._encoded_projection.is_empty(), "packed_mutable_leaf_retains_explicit_owned_codec_path")
+	var expected_registry: Dictionary = {}
+	var expected_fingerprints: Dictionary = {}
+	var expected_ref := CodecScript._encode_environment_reference(packed_room, expected_registry, expected_fingerprints)
+	var actual_registry: Dictionary = {}
+	var actual_ref: Dictionary = packed_entry.encode_into(actual_registry, {})
+	expect.call(actual_ref == expected_ref and actual_registry == expected_registry, "packed_fallback_preserves_full_reference_bytes")
+	actual_registry[actual_ref[CodecScript.ENVIRONMENT_REF_KEY]]["nested"][0]["bytes"][0] = 99
+	var fresh_registry: Dictionary = {}
+	packed_entry.encode_into(fresh_registry, {})
+	expect.call(fresh_registry == expected_registry, "packed_output_alias_cannot_mutate_compilation")
 	run._prime_inactive_storage_projections()
 	var started := Time.get_ticks_usec()
 	RunState._world_map_for_save_snapshot(run.world_map)

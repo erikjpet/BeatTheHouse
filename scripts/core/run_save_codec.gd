@@ -202,7 +202,9 @@ static func unpack_from_storage(stored_state: Dictionary) -> Dictionary:
 	var json := JSON.new()
 	if json.parse(preserve_blackjack_ledger_integer_tokens(source.get_string_from_utf8())) != OK or typeof(json.data) != TYPE_DICTIONARY:
 		return {}
-	return (json.data as Dictionary).duplicate(true)
+	# This parser was created for this one call. Its complete JSON graph is
+	# already privately owned; another deep copy cannot detach it any further.
+	return json.data as Dictionary
 
 
 # Prior packed saves wrote the authority ledger as ordinary JSON. Godot parses
@@ -430,13 +432,17 @@ static func _encode_environment_reference(environment: Dictionary, registry: Dic
 	var encoded_value: Variant = _encode_value(environment, registry, fingerprints, true)
 	var encoded: Dictionary = encoded_value as Dictionary if typeof(encoded_value) == TYPE_DICTIONARY else {}
 	_compact_slot_game_states(encoded)
+	return _register_encoded_environment_reference(encoded, registry, fingerprints, str(environment.get("id", "environment")))
+
+
+static func _register_encoded_environment_reference(encoded: Dictionary, registry: Dictionary, fingerprints: Dictionary, environment_id: String) -> Dictionary:
 	var fingerprint := str(hash(encoded))
 	var candidate_refs: Array = fingerprints.get(fingerprint, []) if typeof(fingerprints.get(fingerprint, [])) == TYPE_ARRAY else []
 	for candidate_ref_value in candidate_refs:
 		var candidate_ref := str(candidate_ref_value)
 		if registry.get(candidate_ref, {}) == encoded:
 			return {ENVIRONMENT_REF_KEY: candidate_ref}
-	var base_ref := str(environment.get("id", "environment")).strip_edges()
+	var base_ref := environment_id.strip_edges()
 	if base_ref.is_empty():
 		base_ref = "environment"
 	var ref := base_ref
