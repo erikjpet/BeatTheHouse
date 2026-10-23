@@ -113,6 +113,10 @@ const ENVIRONMENT_BASE_REF_KEY := "__bth_environment_base_ref"
 static var _scenario_definition_cache: Dictionary = {}
 static var debug_storage_byte_limit_override: int = 0
 static var debug_force_compression_failure: bool = false
+static var _web_json_content_validator: Variant = null
+static var _web_json_content_validator_attempted := false
+static var _web_content_probe_checked := false
+static var _web_content_probe_enabled := false
 
 
 static func encode(runtime_state: Dictionary) -> Dictionary:
@@ -241,18 +245,45 @@ static func unpack_from_storage(stored_state: Dictionary, preserve_legacy_author
 static func storage_contents_valid(stored_state: Dictionary) -> bool:
 	if not stored_state.has(STORAGE_MARKER_KEY):
 		return _required_content_roots(stored_state)
+	var probe := _content_probe_enabled()
+	var started := Time.get_ticks_usec() if probe else 0
 	var source := _validated_storage_source(stored_state)
 	if source.is_empty():
 		return false
+	var decoded_usec := Time.get_ticks_usec() - started if probe else 0
+	var text_started := Time.get_ticks_usec() if probe else 0
 	var json_text := source.get_string_from_utf8()
+	var text_usec := Time.get_ticks_usec() - text_started if probe else 0
+	var bridge_started := Time.get_ticks_usec() if probe else 0
+	var fast: Variant = null
 	if OS.has_feature("web") and Thread.is_main_thread():
-		var fast: Variant = JavaScriptBridge.eval(WEB_JSON_CONTENT_VALID + "(" + JSON.stringify(json_text) + ")")
+		if not _web_json_content_validator_attempted:
+			_web_json_content_validator_attempted = true
+			# Compile fixed code once; pass save text as a string argument. Quoting
+			# the entire JSON document into a new eval expression repeats that work.
+			_web_json_content_validator = JavaScriptBridge.create_object("Function", "source", "return (" + WEB_JSON_CONTENT_VALID + ")(source);")
+		if _web_json_content_validator != null:
+			fast = _web_json_content_validator.call("call", null, json_text)
 		if typeof(fast) == TYPE_BOOL and fast:
+			if probe:
+				print("BTH_SAVE_CONTENT_TIMING ", JSON.stringify({"decoded_usec":decoded_usec,"text_usec":text_usec,"bridge_usec":Time.get_ticks_usec()-bridge_started,"fast_type":type_string(typeof(fast)),"fast_accepted":true,"total_usec":Time.get_ticks_usec()-started}))
 			return true
 	# Keep historical parser acceptance, including Godot's JSON extensions, and
 	# retain the full native path if the browser bridge is absent or declines.
 	var json := JSON.new()
-	return json.parse(json_text) == OK and typeof(json.data) == TYPE_DICTIONARY and _required_content_roots(json.data)
+	var parse_started := Time.get_ticks_usec() if probe else 0
+	var valid: bool = json.parse(json_text) == OK and typeof(json.data) == TYPE_DICTIONARY and _required_content_roots(json.data)
+	if probe:
+		print("BTH_SAVE_CONTENT_TIMING ", JSON.stringify({"decoded_usec":decoded_usec,"text_usec":text_usec,"bridge_usec":parse_started-bridge_started,"fast_type":type_string(typeof(fast)),"fast_accepted":false,"fallback_parse_usec":Time.get_ticks_usec()-parse_started,"total_usec":Time.get_ticks_usec()-started}))
+	return valid
+
+
+static func _content_probe_enabled() -> bool:
+	if not OS.has_feature("web") or not Thread.is_main_thread(): return false
+	if not _web_content_probe_checked:
+		_web_content_probe_checked = true
+		_web_content_probe_enabled = JavaScriptBridge.eval("globalThis.__bthSaveStageProbe === true") == true
+	return _web_content_probe_enabled
 
 
 static func _required_content_roots(value: Dictionary) -> bool:

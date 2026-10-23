@@ -213,3 +213,14 @@ saves. `tools/tests/save_content_validation_browser_check.cjs` runs the exact sh
 that it never accepts content rejected by that oracle. Packed cases also check
 hash-damage rejection. The finite corpus is compatibility evidence, not a proof
 for every possible input; final Web timing belongs to the task receipt.
+
+The first eval-based bridge attempt did not reduce the observed interval:
+132 ms ordinary CPU with sampling, and 128 ms without it. Captured exact inputs
+both passed the same predicate, with maximum depth 15, ruling out fallback.
+The retained-function follow-up constructs fixed code once with the existing
+JavaScript object bridge, then passes source text as a string argument instead
+of quoting it into newly compiled code. The same corpus compares both invocation
+forms. An opt-in `__bthSaveStageProbe` flag, set before startup only by the isolated
+test, reports decode/text/bridge/fallback durations and result type. It is off by
+default and does not change acceptance or save data. No performance improvement
+is claimed until the exact-build browser observation is recorded.
