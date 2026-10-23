@@ -56,9 +56,10 @@ func _run() -> void:
 	_check(app._save_terminal_resume_checkpoint(),"terminal checkpoint accepted")
 	_check(app.pending_autosave and service.steps.is_empty(),"input callback queues without encoding or installation")
 	await _wait_write(app)
-	_check(service.steps.size()==3,"encode, pack and install execute once")
-	if service.steps.size()==3:
-		_check(service.steps[0].frame<service.steps[1].frame and service.steps[1].frame<service.steps[2].frame,"each save phase runs on a distinct frame")
+	_check(service.steps.size()==5,"encode, pack, bytes/hash, JSON and install execute once")
+	if service.steps.size()==5:
+		for index in range(1,service.steps.size()):
+			_check(service.steps[index-1].frame<service.steps[index].frame,"each save phase runs on a distinct frame")
 	var restored: RunState=service.load_run(app.autosave_slot_id)
 	_check(restored!=null and restored.is_terminal() and restored.rng_state==rng,"completed phased checkpoint restores terminal state and RNG")
 	app.free()

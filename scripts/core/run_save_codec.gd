@@ -67,41 +67,6 @@ const WEB_Z85_DECODE := """(function(source, expectedSize, alphabet) {
     }
     return result;
 })"""
-const WEB_JSON_CONTENT_VALID := """(function bthValidateSaveJson(source) {
-    try {
-        const root = JSON.parse(source);
-        if (!root || typeof root !== 'object' || Array.isArray(root)) return false;
-        const own = (key) => Object.prototype.hasOwnProperty.call(root, key);
-        if (!own('seed_text') || !own('rng_state') || !own('current_environment')) return false;
-        // Stay inside the common strict-JSON subset. Unusual numbers, Unicode
-        // or depth use the existing Godot parser rather than changing acceptance.
-        const stringOK = (value) => {
-            for (let i = 0; i < value.length; i++) {
-                const code = value.charCodeAt(i);
-                if (code === 0) return false;
-                if (code >= 0xD800 && code <= 0xDBFF) {
-                    const low = value.charCodeAt(++i);
-                    if (!(low >= 0xDC00 && low <= 0xDFFF)) return false;
-                } else if (code >= 0xDC00 && code <= 0xDFFF) return false;
-            }
-            return true;
-        };
-        const pending = [[root, 0]];
-        while (pending.length) {
-            const [value, depth] = pending.pop();
-            if (depth > 64) return false;
-            if (typeof value === 'number' && !Number.isFinite(value)) return false;
-            if (typeof value === 'string' && !stringOK(value)) return false;
-            if (value && typeof value === 'object') {
-                for (const key of Object.keys(value)) {
-                    if (!stringOK(key)) return false;
-                    pending.push([value[key], depth + 1]);
-                }
-            }
-        }
-        return true;
-    } catch (_) { return false; }
-})"""
 const SEEDED_SCENARIO_DEFINITIONS_KEY := "seeded_scenario_definitions_by_node"
 const SCENARIO_DEFINITION_REF_KEY := "__bth_scenario_definition_ref"
 const SCENARIO_DEFINITION_PATCH_KEY := "p"
@@ -113,10 +78,7 @@ const ENVIRONMENT_BASE_REF_KEY := "__bth_environment_base_ref"
 static var _scenario_definition_cache: Dictionary = {}
 static var debug_storage_byte_limit_override: int = 0
 static var debug_force_compression_failure: bool = false
-static var _web_json_content_validator: Variant = null
-static var _web_json_content_validator_attempted := false
-static var _web_content_probe_checked := false
-static var _web_content_probe_enabled := false
+
 
 
 static func encode(runtime_state: Dictionary) -> Dictionary:
@@ -245,45 +207,13 @@ static func unpack_from_storage(stored_state: Dictionary, preserve_legacy_author
 static func storage_contents_valid(stored_state: Dictionary) -> bool:
 	if not stored_state.has(STORAGE_MARKER_KEY):
 		return _required_content_roots(stored_state)
-	var probe := _content_probe_enabled()
-	var started := Time.get_ticks_usec() if probe else 0
 	var source := _validated_storage_source(stored_state)
-	if source.is_empty():
-		return false
-	var decoded_usec := Time.get_ticks_usec() - started if probe else 0
-	var text_started := Time.get_ticks_usec() if probe else 0
-	var json_text := source.get_string_from_utf8()
-	var text_usec := Time.get_ticks_usec() - text_started if probe else 0
-	var bridge_started := Time.get_ticks_usec() if probe else 0
-	var fast: Variant = null
-	if OS.has_feature("web") and Thread.is_main_thread():
-		if not _web_json_content_validator_attempted:
-			_web_json_content_validator_attempted = true
-			# Compile fixed code once; pass save text as a string argument. Quoting
-			# the entire JSON document into a new eval expression repeats that work.
-			_web_json_content_validator = JavaScriptBridge.create_object("Function", "source", "return (" + WEB_JSON_CONTENT_VALID + ")(source);")
-		if _web_json_content_validator != null:
-			fast = _web_json_content_validator.call("call", null, json_text)
-		if typeof(fast) == TYPE_BOOL and fast:
-			if probe:
-				print("BTH_SAVE_CONTENT_TIMING ", JSON.stringify({"decoded_usec":decoded_usec,"text_usec":text_usec,"bridge_usec":Time.get_ticks_usec()-bridge_started,"fast_type":type_string(typeof(fast)),"fast_accepted":true,"total_usec":Time.get_ticks_usec()-started}))
-			return true
-	# Keep historical parser acceptance, including Godot's JSON extensions, and
-	# retain the full native path if the browser bridge is absent or declines.
+	return not source.is_empty() and _json_content_roots_valid(source.get_string_from_utf8())
+
+
+static func _json_content_roots_valid(json_text: String) -> bool:
 	var json := JSON.new()
-	var parse_started := Time.get_ticks_usec() if probe else 0
-	var valid: bool = json.parse(json_text) == OK and typeof(json.data) == TYPE_DICTIONARY and _required_content_roots(json.data)
-	if probe:
-		print("BTH_SAVE_CONTENT_TIMING ", JSON.stringify({"decoded_usec":decoded_usec,"text_usec":text_usec,"bridge_usec":parse_started-bridge_started,"fast_type":type_string(typeof(fast)),"fast_accepted":false,"fallback_parse_usec":Time.get_ticks_usec()-parse_started,"total_usec":Time.get_ticks_usec()-started}))
-	return valid
-
-
-static func _content_probe_enabled() -> bool:
-	if not OS.has_feature("web") or not Thread.is_main_thread(): return false
-	if not _web_content_probe_checked:
-		_web_content_probe_checked = true
-		_web_content_probe_enabled = JavaScriptBridge.eval("globalThis.__bthSaveStageProbe === true") == true
-	return _web_content_probe_enabled
+	return json.parse(json_text) == OK and typeof(json.data) == TYPE_DICTIONARY and _required_content_roots(json.data)
 
 
 static func _required_content_roots(value: Dictionary) -> bool:

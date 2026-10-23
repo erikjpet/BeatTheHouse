@@ -7,10 +7,11 @@ var cases: Array = []
 func _initialize() -> void:
 	call_deferred("_run")
 
-func _case(label: String, source: String, require_fast: bool = false) -> void:
+func _case(label: String, source: String, require_valid: bool = false) -> void:
 	var parser := JSON.new()
 	var expected: bool = parser.parse(source) == OK and typeof(parser.data) == TYPE_DICTIONARY and Codec._required_content_roots(parser.data)
-	cases.append({"label":label,"source":source,"expected":expected,"require_fast":require_fast})
+	if require_valid and not expected: failures.append(label + ": required genuine/normal content invalid")
+	cases.append({"label":label,"source":source,"expected":expected})
 	var bytes := source.to_utf8_buffer()
 	var compressed := bytes.compress(FileAccess.COMPRESSION_ZSTD)
 	var packed := {Codec.STORAGE_MARKER_KEY:Codec.STORAGE_FORMAT,Codec.STORAGE_DATA_KEY:Codec._z85_encode(compressed),

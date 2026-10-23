@@ -201,26 +201,26 @@ hand-three save, measured about 55 ms natively for a known primary: approximatel
 less than 1 ms for each digest check. An unknown primary correctly receives an
 additional full validation. The writer's durability/rollback code is unchanged.
 
-Content-only validation now uses the existing browser bridge to parse strict JSON
-and check the same required roots without constructing and releasing the whole
-Godot Variant graph. Envelope size, decompression and exact content hash are
-still checked first. Nonfinite numbers, unpaired Unicode surrogates or depth over
-64 decline the fast path; all declined/failed bridge cases use the previous Godot
-parser. Actual loads retain their existing integer repair and restore path.
-`save_content_validation_check.gd` creates a Godot acceptance oracle for malformed
-and legacy grammar, numeric/Unicode/depth edges and the genuine prepared/terminal
-saves. `tools/tests/save_content_validation_browser_check.cjs` runs the exact shipped bridge expression and asserts
-that it never accepts content rejected by that oracle. Packed cases also check
-hash-damage rejection. The finite corpus is compatibility evidence, not a proof
-for every possible input; final Web timing belongs to the task receipt.
+A browser-parser experiment (0faaeb34 through 6444bd0c) did not reduce the
+remaining interval and is removed. Native Godot JSON acceptance remains unchanged.
+The existing Web save job instead separates decompressed-byte/hash validation,
+JSON/root validation and final atomic installation into individual frames after
+packing. Only after both content stages succeed does it retain a private copy
+of the exact compressed envelope as a validation proof. The durable writer still
+reads/parses the actual temporary file and verifies installed bytes; its validator
+reuses the proof only for the identical envelope. Changed or unknown content,
+including a different old primary, takes the original full content validator.
 
-The first eval-based bridge attempt did not reduce the observed interval:
-132 ms ordinary CPU with sampling, and 128 ms without it. Captured exact inputs
-both passed the same predicate, with maximum depth 15, ruling out fallback.
-The retained-function follow-up constructs fixed code once with the existing
-JavaScript object bridge, then passes source text as a string argument instead
-of quoting it into newly compiled code. The same corpus compares both invocation
-forms. An opt-in `__bthSaveStageProbe` flag, set before startup only by the isolated
-test, reports decode/text/bridge/fallback durations and result type. It is off by
-default and does not change acceptance or save data. No performance improvement
-is claimed until the exact-build browser observation is recorded.
+The encoded generation remains owned before the first yield. Save/navigation
+drain the bounded remaining phases; acknowledgement still follows successful
+atomic installation. No temporary file is created by prevalidation, so failure
+or raw teardown before install leaves both durable generations untouched.
+The phased-save check covers exact bytes, distinct engine frames, mutation after
+byte validation, corrupt content/JSON, unknown-primary validation, failed install,
+retry and extra drains. The native JSON corpus retains malformed grammar,
+numeric/Unicode/depth and content-hash cases, including genuine saved states.
+In the same genuine native saved-state diagnostic, the actual production writer
+took about 53.4 ms with full inline validation versus 13.4 ms with the exact
+prevalidated envelope. This excludes the validation already performed on prior
+frames; total save work is preserved. Both installs returned the digest of their
+actual installed bytes. Final Web timing is recorded separately.

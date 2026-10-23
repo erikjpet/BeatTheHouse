@@ -80,7 +80,7 @@ func save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 
 # Captures one RunState generation. Threaded builds project and install on a
 # worker. No-thread Web builds own the encoded generation before yielding, then
-# pack and atomically install on separate frames. FoundationMain coalesces newer
+# pack, validate bytes/JSON and atomically install on separate frames. FoundationMain coalesces newer
 # dirty generations while this one bounded job is in flight.
 func begin_save_run(run_state: RunState, slot_id: String = "autosave") -> Error:
 	if run_state == null:
@@ -116,7 +116,8 @@ func async_save_in_flight() -> bool:
 # No-thread Web exports run WorkerThreadPool.add_task synchronously. Capture
 # and encode before yielding: the codec owns all output containers, so later
 # frame/input mutations cannot change this generation. Keep one job, with two
-# remaining bounded phases (pack, then validated atomic install), one per frame.
+# remaining bounded phases (pack, bytes/hash, JSON roots, atomic install), one
+# per frame. Each proof binds the exact owned compressed envelope.
 # Foundation retains its existing single coalesced newer dirty generation.
 func _begin_web_save(runtime_snapshot: Dictionary, slot_id: String, path: String, primary_digest: String) -> Error:
 	if async_save_in_flight():
@@ -146,17 +147,47 @@ func _advance_web_save_step() -> void:
 			_web_save_job["phase"] = "done"
 			return
 		_web_save_job["payload"] = payload_result.get("payload", {})
+		_web_save_job["phase"] = "validate_bytes"
+		return
+	if phase == "validate_bytes":
+		var payload: Dictionary = _web_save_job.get("payload", {})
+		var storage: Dictionary = (payload.get("run_state", {}) as Dictionary).duplicate(true)
+		var source := RunSaveCodecScript._validated_storage_source(storage)
+		if source.is_empty():
+			_fail_web_content_validation()
+			return
+		# Capture the envelope now, with its verified bytes. A later mutation of
+		# the pending payload must never acquire a proof for different content.
+		_web_save_job["verified_storage"] = storage
+		_web_save_job["source"] = source
+		_web_save_job["phase"] = "validate_json"
+		return
+	if phase == "validate_json":
+		var source: PackedByteArray = _web_save_job.get("source", PackedByteArray())
+		var valid := RunSaveCodecScript._json_content_roots_valid(source.get_string_from_utf8())
+		_web_save_job.erase("source")
+		if not valid:
+			_fail_web_content_validation()
+			return
 		_web_save_job["phase"] = "install"
 		return
 	if phase == "install":
 		io_mutex.lock()
 		async_result_box["error"] = _write_payload_atomic(
 			_web_save_job.get("payload", {}), str(_web_save_job.get("path", "")), "",
-			str(_web_save_job.get("primary_digest", "")), async_result_box
+			str(_web_save_job.get("primary_digest", "")), async_result_box,
+			_web_save_job.get("verified_storage", {})
 		)
 		io_mutex.unlock()
 		_web_save_job.erase("payload")
 		_web_save_job["phase"] = "done"
+
+
+func _fail_web_content_validation() -> void:
+	async_result_box = {"error": ERR_FILE_CORRUPT, "error_code": "temporary_generation_invalid", "slot_id": async_slot_id}
+	_web_save_job.erase("source")
+	_web_save_job.erase("verified_storage")
+	_web_save_job["phase"] = "done"
 
 
 func poll_async_save() -> Dictionary:
@@ -214,8 +245,8 @@ func _finish_async_save_result() -> Dictionary:
 func wait_for_async_save() -> Error:
 	if not _web_save_job.is_empty():
 		# Explicit Save/Continue/clear/navigation boundaries still drain and wait.
-		# There can only be pack and install; do not create an unbounded queue.
-		for _step in range(2):
+		# Four finite remaining phases; do not create an unbounded queue.
+		for _step in range(4):
 			if str(_web_save_job.get("phase", "")) == "done":
 				break
 			_advance_web_save_step()
@@ -248,11 +279,32 @@ func _async_save_worker(runtime_snapshot: Dictionary, slot_id: String, path: Str
 	io_mutex.unlock()
 
 
-func _write_payload_atomic(payload: Dictionary, path: String, _backup_path: String, primary_digest: String = "", result_box: Dictionary = {}) -> Error:
-	var result := DurableStoreScript.write_json(path, payload, Callable(self, "_payload_dictionary_loadable"), true, primary_digest)
+func _write_payload_atomic(payload: Dictionary, path: String, _backup_path: String, primary_digest: String = "", result_box: Dictionary = {}, verified_storage: Dictionary = {}) -> Error:
+	var validator := Callable(self, "_payload_dictionary_loadable")
+	if not verified_storage.is_empty():
+		validator = Callable(self, "_payload_with_verified_storage_loadable").bind(verified_storage)
+	var result := DurableStoreScript.write_json(path, payload, validator, true, primary_digest)
 	if bool(result.get("ok", false)):
 		result_box["validated_sha256"] = str(result.get("validated_sha256", ""))
 	return int(result.get("error", FAILED))
+
+
+static func _payload_with_verified_storage_loadable(payload: Dictionary, verified: Dictionary) -> bool:
+	var storage_value: Variant = payload.get("run_state", {})
+	if payload.get("schema", "") == SAVE_SCHEMA and typeof(storage_value) == TYPE_DICTIONARY:
+		var storage: Dictionary = storage_value
+		# Match every envelope field using the same coercions as the original
+		# validator. Parsed JSON numbers may be floats; all content bytes and the
+		# content hash must still be exactly those checked on the prior frames.
+		if storage.size() == 5 and str(storage.get(RunSaveCodecScript.STORAGE_MARKER_KEY, "")) == str(verified.get(RunSaveCodecScript.STORAGE_MARKER_KEY, "")) \
+				and str(storage.get(RunSaveCodecScript.STORAGE_DATA_KEY, "")) == str(verified.get(RunSaveCodecScript.STORAGE_DATA_KEY, "")) \
+				and str(storage.get(RunSaveCodecScript.STORAGE_HASH_KEY, "")) == str(verified.get(RunSaveCodecScript.STORAGE_HASH_KEY, "")) \
+				and int(storage.get(RunSaveCodecScript.STORAGE_SIZE_KEY, 0)) == int(verified.get(RunSaveCodecScript.STORAGE_SIZE_KEY, 0)) \
+				and int(storage.get(RunSaveCodecScript.STORAGE_COMPRESSED_SIZE_KEY, 0)) == int(verified.get(RunSaveCodecScript.STORAGE_COMPRESSED_SIZE_KEY, 0)):
+			return true
+	# The old primary may be a different generation, or temporary content may
+	# have changed. Preserve full validation rather than trusting that image.
+	return _payload_dictionary_loadable(payload)
 
 
 static func _worker_payload_loadable(absolute_path: String) -> bool:
