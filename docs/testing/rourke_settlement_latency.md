@@ -113,3 +113,28 @@ candidate isolation/discard, publication and retained model identities. The
 existing five-hand authority, mismatch rejection and terminal save/Continue check
 and no-pointer liveness check cover the material adjacent risks. Exact deployed
 Web timing and cleanup are recorded separately in the task evidence.
+
+The Rourke Web/nothreads UI now uses the existing finite, per-frame transaction
+scheduling pattern also used for event responses. Preparation still publishes the
+pending delivery synchronously. Subsequent frames revalidate live authority and
+resolve/replay/commit through the unchanged sealed host, consume that committed
+result once, construct the terminal report, then release the host owner after a
+draw. Canvas animation processing remains autonomous. Input, simulation and
+background persistence wait while this one action is pending. Result consumption
+does not invoke a second authoritative resolution.
+
+Save and normal navigation synchronously drain the accepted action before their
+existing durable write. Pre-commit cancellation uses the existing pending-delivery
+rollback. Rourke stores its cards in both the host ledger and its serialized duel
+session; the provider recovery hook now restores both, including after a pending
+save is reloaded. A committed settlement is completed rather than undone. Late
+callbacks carry a generation guard and cannot affect a replacement action.
+
+`rourke_phased_resolution_check.gd` emulates only the Web selection predicate
+natively. It covers full public-state parity at the same completed-action boundary,
+separate actual engine frames, repeated input, stale authority, cancellation,
+automatic settlement after card animation, and Main Menu/cold Continue on either
+side of commit. `rourke_phased_interruption_check.gd` adds terminal money/RNG/duel
+parity, delayed report construction, durable terminal navigation, failed Save and
+retry, scene teardown, and normal auto recovery of a genuinely persisted pending
+delivery. Its save service uses the existing Web encode/pack/install phases.

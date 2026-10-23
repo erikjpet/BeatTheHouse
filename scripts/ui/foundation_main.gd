@@ -2,6 +2,7 @@ class_name FoundationMain
 extends Control
 
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const GameRitualRuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 const MoneyFeedbackViewModelScript := preload("res://scripts/ui/money_feedback_view_model.gd")
 
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
@@ -301,6 +302,9 @@ var event_choice_resolution_pending := false
 var _event_response_transaction: Dictionary = {}
 var _event_response_dispatch_active := false
 var _event_response_generation := 0
+var _rourke_resolution: Dictionary = {}
+var _rourke_resolution_dispatch_active := false
+var _rourke_resolution_generation := 0
 var scenario_sequence_action_pending := false
 var selected_lender_hook_id: String = ""
 var selected_lender_hook_label: String = ""
@@ -798,7 +802,7 @@ func _process(delta: float) -> void:
 	_sync_simulation_pause_owners()
 	# Canvas nodes retain their own autonomous processing/redraw. Only the host
 	# clock, HUD and persistence owners wait for this accepted transaction.
-	if not _event_response_transaction.is_empty():
+	if not _event_response_transaction.is_empty() or not _rourke_resolution.is_empty():
 		return
 	_foundation_perf_sink.call("begin_foundation_frame")
 	if run_layout_dirty:
@@ -807,6 +811,8 @@ func _process(delta: float) -> void:
 	_timed("environment_runtime", _advance_run_game_clock_callable)
 	if current_screen == SCREEN_GAME:
 		_timed("snapshot_builds", _advance_game_surface_frame_callable)
+		if not _rourke_resolution.is_empty():
+			return
 	if financial_hud_dirty:
 		_timed("snapshot_builds", financial_hud_refresh_callable)
 	if presented_bankroll_hold_active:
@@ -820,6 +826,8 @@ func _process(delta: float) -> void:
 
 func _advance_game_surface_frame() -> void:
 	_timed("surface_automation", _advance_game_surface_automation_callable)
+	if not _rourke_resolution.is_empty():
+		return
 	_timed("surface_realtime", _advance_game_surface_realtime_callable)
 
 
@@ -899,7 +907,7 @@ func _advance_environment_turns_checked(amount: int = 1, debug_timing: Dictionar
 
 
 func _input(event: InputEvent) -> void:
-	if not _event_response_transaction.is_empty():
+	if not _event_response_transaction.is_empty() or not _rourke_resolution.is_empty():
 		get_viewport().set_input_as_handled()
 		return
 	if _is_web_audio_unlock_gesture(event):
@@ -952,6 +960,7 @@ func _notification(what: int) -> void:
 
 
 func _exit_tree() -> void:
+	_cancel_rourke_resolution(false)
 	if modal_focus_scope != null and modal_focus_scope.has_method("clear"):
 		modal_focus_scope.call("clear")
 	_drain_script_prewarm_requests_for_shutdown()
@@ -1437,6 +1446,7 @@ func _enter_grand_casino_duel_surface() -> bool:
 
 
 func back_to_environment() -> void:
+	_drain_rourke_resolution()
 	if _resolve_pending_all_in_terminal_result():
 		return
 	if run_state != null and current_game != null and run_state.grand_casino_duel_active(run_state.current_environment):
@@ -2141,6 +2151,13 @@ func _sealed_action_host_advance_environment_turn(candidate: RunState) -> Dictio
 
 
 func _sealed_action_host_resolve_intent(action_id: String, stake: int, delivery_claim: Dictionary = {}, prepared_claim: Dictionary = {}) -> Dictionary:
+	if _rourke_resolution_dispatch_active and int(_rourke_resolution.get("step", -1)) == 1:
+		var command: Dictionary = _rourke_resolution.get("command", {})
+		var delivery: Dictionary = command.get("_sealed_action_host_delivery", {})
+		if action_id == str(command.get("action_id", "")) and stake == int(delivery.get("stake", -1)) \
+				and GameRitualRuntimeScript.canonical_json(delivery_claim) == GameRitualRuntimeScript.canonical_json(delivery):
+			return _rourke_resolution.get("result", {})
+		return _sealed_action_host_rejection("stale_boundary", "Rourke result no longer matches its pending action.")
 	_sealed_action_host.bind(self)
 	return _sealed_action_host._sealed_action_host_resolve_intent(action_id, stake, delivery_claim, prepared_claim)
 
@@ -2164,6 +2181,9 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 		deferred_embedded_refresh_blocked_surface_input_count += 1
 		return true
 	if not game_surface_auto_resolving and not input_route_guarded and _guard_player_input_route(false, "ui:any", notify_coach):
+		return true
+	if not _rourke_resolution_dispatch_active and _rourke_resolution_uses_frames(command):
+		_begin_rourke_resolution(command, index, confirm_requested, notify_coach)
 		return true
 	var preference_patch_value: Variant = command.get("surface_ui_preference_patch", {})
 	# Patch presence is authoritative even when no durable selection differs from
@@ -2226,6 +2246,106 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 	if environment_changed:
 		_autosave_foundation_run("Autosaved.")
 	_refresh()
+	return true
+
+
+func _rourke_resolution_uses_frames(command: Dictionary) -> bool:
+	if not OS.has_feature("web") or not OS.has_feature("nothreads") or current_game == null:
+		return false
+	var predicate := StringName(action_authority_contract.get("prepared_surface_direct_resolve_predicate_method", &""))
+	return bool(command.get("direct_resolve", false)) and command.has("_sealed_action_host_prepared") \
+		and not predicate.is_empty() and current_game.has_method(predicate) \
+		and bool(current_game.call(predicate, run_state, str(command.get("action_id", ""))))
+
+
+func _begin_rourke_resolution(command: Dictionary, index: int, confirm_requested: bool, notify_coach: bool) -> void:
+	if not _rourke_resolution.is_empty():
+		return
+	_rourke_resolution_generation += 1
+	_rourke_resolution = {"step": 0, "generation": _rourke_resolution_generation,
+		"last_step_frame": Engine.get_process_frames(), "command": command.duplicate(false),
+		"run": run_state, "game": current_game, "state_key": current_game_state_key,
+		"index": index, "confirm": confirm_requested, "notify_coach": notify_coach}
+	_show_message("Settling hand...")
+	get_tree().process_frame.connect(Callable(self, "_advance_rourke_resolution").bind(true, _rourke_resolution_generation), CONNECT_ONE_SHOT)
+
+
+func _advance_rourke_resolution(schedule_next: bool = true, generation: int = -1) -> void:
+	if _rourke_resolution.is_empty() or (generation >= 0 and generation != int(_rourke_resolution.get("generation", -1))):
+		return
+	var transaction := _rourke_resolution
+	var step := int(transaction["step"])
+	if transaction.get("run") != run_state or (step <= 1 and (transaction.get("game") != current_game or str(transaction.get("state_key", "")) != current_game_state_key)):
+		_end_rourke_resolution()
+		return
+	if schedule_next and int(transaction.get("last_step_frame", -1)) == Engine.get_process_frames():
+		get_tree().process_frame.connect(Callable(self, "_advance_rourke_resolution").bind(true, int(transaction["generation"])), CONNECT_ONE_SHOT)
+		return
+	transaction["last_step_frame"] = Engine.get_process_frames()
+	_rourke_resolution_dispatch_active = true
+	match step:
+		0:
+			var command: Dictionary = transaction["command"]
+			var delivery: Dictionary = command.get("_sealed_action_host_delivery", {})
+			# The pending delivery was published before this draw boundary. Recheck
+			# complete live authority before using the isolated prepared candidate.
+			var context: Dictionary = _sealed_action_host._sealed_action_host_trusted_context(run_state, int(delivery.get("stake", 0)), str(command.get("action_id", "")))
+			if GameRitualRuntimeScript.canonical_fingerprint(context) != str(delivery.get("trusted_context_fingerprint", "")):
+				transaction["result"] = _sealed_action_host_rejection("stale_boundary", "Rourke state changed while the hand was pending.")
+			else:
+				transaction["result"] = _sealed_action_host_resolve_intent(str(command.get("action_id", "")), int(delivery.get("stake", 0)), delivery, command.get("_sealed_action_host_prepared", {}))
+			transaction["step"] = 1
+		1:
+			_apply_game_surface_command(transaction["command"], int(transaction["index"]), bool(transaction["confirm"]), bool(transaction["notify_coach"]), true)
+			transaction["step"] = 2
+		2:
+			if bool(transaction.get("terminal_presentation_pending", false)):
+				_present_terminal_run_screen()
+			elif bool(transaction.get("refresh_requested", false)):
+				_finish_foundation_refresh()
+			transaction["step"] = 3
+		3:
+			_end_rourke_resolution()
+			return
+	_rourke_resolution_dispatch_active = false
+	if schedule_next:
+		get_tree().process_frame.connect(Callable(self, "_advance_rourke_resolution").bind(true, int(transaction["generation"])), CONNECT_ONE_SHOT)
+
+
+func _end_rourke_resolution() -> void:
+	_rourke_resolution = {}
+	_rourke_resolution_dispatch_active = false
+	_sync_simulation_pause_owners()
+
+
+func _drain_rourke_resolution() -> void:
+	if _rourke_resolution_dispatch_active:
+		return
+	# The existing event-response exit rule also finishes its one accepted action
+	# before the normal synchronous Save/navigation durability boundary.
+	for _step in range(4):
+		if _rourke_resolution.is_empty():
+			return
+		_advance_rourke_resolution(false)
+
+
+func _cancel_rourke_resolution(refresh_view: bool = true) -> bool:
+	if _rourke_resolution.is_empty():
+		return true
+	if int(_rourke_resolution.get("step", 0)) > 0:
+		if refresh_view: _drain_rourke_resolution()
+		else: _end_rourke_resolution()
+		return false
+	if _rourke_resolution.get("run") != run_state or _rourke_resolution.get("game") != current_game:
+		_end_rourke_resolution()
+		return true
+	var recovered := _sealed_action_host_rollback_pending_delivery()
+	if not bool(recovered.get("ok", false)):
+		return false
+	if typeof(recovered.get("ui_state")) == TYPE_DICTIONARY:
+		_store_current_game_surface_ui_state(recovered["ui_state"])
+	_end_rourke_resolution()
+	if refresh_view: _refresh()
 	return true
 
 
@@ -6526,6 +6646,7 @@ func _enqueue_game_hook_followup_dialogue(result: Dictionary, game_id: String, h
 
 # Saves the current foundation run.
 func save_foundation_run() -> void:
+	_drain_rourke_resolution()
 	_autosave_foundation_run("Saved run.", true)
 	_refresh_run_menu()
 	_refresh_start_screen()
@@ -11723,6 +11844,9 @@ func _prepare_room_presentation_at_boundary() -> void:
 
 
 func _refresh() -> void:
+	if not _rourke_resolution.is_empty() and not _rourke_resolution_dispatch_active:
+		_rourke_resolution["refresh_requested"] = true
+		return
 	if not _event_response_transaction.is_empty() and not _event_response_dispatch_active:
 		_event_response_transaction["refresh_requested"] = true
 		return
@@ -12806,6 +12930,9 @@ func _settle_delivery_action_layout() -> void:
 
 
 func _render_run_report() -> void:
+	if not _rourke_resolution.is_empty() and int(_rourke_resolution.get("step", -1)) <= 1 and run_state != null and run_state.is_terminal():
+		_rourke_resolution["terminal_presentation_pending"] = true
+		return
 	if run_report_screen == null:
 		return
 	var terminal := _is_failure_screen() or _is_victory_screen()
@@ -14111,7 +14238,7 @@ func _modal_contract_blocks_player_input() -> bool:
 
 
 func _simulation_progression_paused() -> bool:
-	if not _event_response_transaction.is_empty():
+	if not _event_response_transaction.is_empty() or not _rourke_resolution.is_empty():
 		return true
 	# Conversations remain modal to player input, but only Pal owns the tutorial
 	# time-freeze contract. Natural dealer, patron, and event conversations keep
@@ -14212,6 +14339,8 @@ func _blocking_modal_message() -> String:
 
 func _guard_player_input_route(force_closing_allowed: bool = false, coach_action_id: String = "ui:any", notify_coach: bool = true) -> bool:
 	input_route_guard_visit_count += 1
+	if not _rourke_resolution.is_empty() and not _rourke_resolution_dispatch_active:
+		return true
 	# A step is synchronous and never yields while dispatching its existing
 	# internal host calls. Between steps, every other public input stays blocked.
 	if not _event_response_transaction.is_empty() and not _event_response_dispatch_active:
@@ -18281,6 +18410,7 @@ func _apply_meta_collection_loadout_to_run() -> void:
 
 
 func _save_foundation_run_before_leaving(status_text: String) -> bool:
+	_drain_rourke_resolution()
 	if run_state == null or _is_meta_session() or dev_game_test_mode:
 		return true
 	if _room_recovery_active_for_current_room():
@@ -20598,6 +20728,9 @@ func _terminal_checkpoint_uses_web_phases() -> bool:
 
 
 func _present_terminal_run_screen() -> void:
+	if not _rourke_resolution.is_empty() and int(_rourke_resolution.get("step", -1)) <= 1 and run_state != null and run_state.is_terminal():
+		_rourke_resolution["terminal_presentation_pending"] = true
+		return
 	# Terminal state can be discovered outside the broad refresh path (for
 	# example by an offscreen cabinet tick or autosave preparation). Apply the
 	# exclusive report immediately instead of depending on the caller to refresh.

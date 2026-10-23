@@ -368,6 +368,9 @@ func _sealed_action_host_rollback_pending_candidate(candidate: RunState, ledger:
 		return rolled_back
 	var restored_ledger: Dictionary = rolled_back.get("ledger", ledger)
 	_sealed_action_host_store_ledger(candidate, restored_ledger)
+	var recovery_method := StringName(_foundation.action_authority_contract.get("restore_recovery_session_method", &""))
+	if not recovery_method.is_empty() and _foundation.current_game.has_method(recovery_method):
+		_foundation.current_game.call(recovery_method, candidate, restored_ledger.get("session", {}))
 	return {
 		"ok": true,
 		"handled": true,

@@ -182,6 +182,7 @@ func sealed_action_authority_contract() -> Dictionary:
 		"compact_authority_full_replay_predicate_method": &"_blackjack_full_authority_replay_required",
 		"compact_authority_native_json_predicate_method": &"_blackjack_full_authority_replay_required",
 		"prepared_surface_direct_resolve_predicate_method": &"_blackjack_prepared_direct_resolve_allowed",
+		"restore_recovery_session_method": &"_blackjack_restore_recovery_session",
 		"trusted_candidate_structural_replay_match": true,
 		# The current response and its predecessor cover synchronous duplicate input
 		# and automatic recovery. Retaining four complete two-boundary hands made every
@@ -2388,6 +2389,13 @@ func _blackjack_full_authority_replay_required(candidate: RunState) -> bool:
 func _blackjack_prepared_direct_resolve_allowed(candidate: RunState, action_id: String) -> bool:
 	return action_id == "play_basic" and _blackjack_full_authority_replay_required(candidate) and not candidate.is_tutorial_run() \
 		and _blackjack_compact_authority_allowed(candidate, action_id, 0)
+
+
+func _blackjack_restore_recovery_session(candidate: RunState, session: Dictionary) -> void:
+	# Rourke owns a serialized duel session in addition to the table ledger. Both
+	# must return to the same pre-intent cards when a pending delivery is cancelled.
+	if _blackjack_full_authority_replay_required(candidate):
+		candidate.persist_grand_casino_duel_session(session)
 
 
 func _blackjack_in_place_commit_allowed(action_id: String, run_state: RunState, environment: Dictionary) -> bool:
