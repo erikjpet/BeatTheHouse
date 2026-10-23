@@ -96,7 +96,6 @@ static func dealer_station_occupied_rects(status_layout: Dictionary = {}) -> Arr
 static func draw_dealer_station(surface, state: Dictionary, label_override: String = "", status_layout: Dictionary = {}) -> Array:
 	var focus := dealer_focus_for_state(state)
 	var profile := _dict_view(state.get("dealer_profile", {}))
-	var low_detail := _surface_low_detail_idle(surface)
 	var looking_away := bool(focus.get("lookaway_active", false))
 	var peek_window := bool(focus.get("peek_window_open", looking_away))
 	var blink := bool(focus.get("blink", false))
@@ -112,23 +111,20 @@ static func draw_dealer_station(surface, state: Dictionary, label_override: Stri
 	var character_scale := clampf(float(status_layout.get("character_scale", 1.06)), 0.50, 1.40)
 	surface.draw_rect(station_rect, Color("#0b0d16"))
 	surface.draw_rect(station_rect, Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.18), false, 1)
-	if low_detail:
-		_draw_static_character(surface, character_foot, character_scale, attention_color, Color("#1b2230"), str(state.get("dealer_name", profile.get("name", "Dealer"))))
-	else:
-		_draw_dealer_gaze(surface, focus, character_foot + Vector2(0, -65) * character_scale)
-		_draw_table_character(surface, {
-			"name": str(state.get("dealer_name", profile.get("name", "Dealer"))),
-			"skin": Color("#d8b18a"),
-			"hair": Color("#2a1a25"),
-			"jacket": Color("#1b2230"),
-			"accent": attention_color,
-			"role": "dealer",
-			"pose": "lookaway" if peek_window else "watching",
-			"eye_offset": eye_offset,
-			"blink": blink,
-			"holding_card": bool(state.get("dealer_holding_card", false)),
-			"uniform_accent": str(profile.get("uniform_accent", "")),
-		}, character_foot, character_scale, idle)
+	_draw_dealer_gaze(surface, focus, character_foot + Vector2(0, -65) * character_scale)
+	_draw_table_character(surface, {
+		"name": str(state.get("dealer_name", profile.get("name", "Dealer"))),
+		"skin": Color("#d8b18a"),
+		"hair": Color("#2a1a25"),
+		"jacket": Color("#1b2230"),
+		"accent": attention_color,
+		"role": "dealer",
+		"pose": "lookaway" if peek_window else "watching",
+		"eye_offset": eye_offset,
+		"blink": blink,
+		"holding_card": bool(state.get("dealer_holding_card", false)),
+		"uniform_accent": str(profile.get("uniform_accent", "")),
+	}, character_foot, character_scale, idle)
 	var meter := clampi(int(focus.get("attention_meter", 0)), 0, 100)
 	_draw_status_meter(surface, attention_rect, meter, "dealer %s" % str(focus.get("status", "watching")), C_PINK if meter >= 70 else C_YELLOW if meter >= 42 else C_TEAL)
 	_draw_status_meter(surface, danger_rect, int(focus.get("peek_danger", 0)), str(focus.get("gaze_phase", "read")).left(20), attention_color)
@@ -151,25 +147,6 @@ static func draw_table_patrons(surface, state: Dictionary, positions: Array = []
 	var patrons := _dictionary_array_view(state.get("patrons", []))
 	var seat_positions := positions if not positions.is_empty() else DEFAULT_PATRON_POSITIONS
 	var compact_overlays := str(state.get("patron_overlay_mode", "")) == "compact"
-	if _surface_low_detail_idle(surface):
-		for i in range(patrons.size()):
-			var patron: Dictionary = patrons[i]
-			var base_pos: Vector2 = seat_positions[clampi(i, 0, seat_positions.size() - 1)]
-			var watching := bool(patron.get("watching_player", false))
-			var covered := bool(patron.get("covered", false))
-			var risk := int(patron.get("active_snitch_risk", patron.get("snitch_risk", 0)))
-			var accent := C_PINK if watching else C_TEAL if covered else C_SOFT
-			_draw_static_character(surface, base_pos + Vector2(0, 52), 0.86, accent, _patron_jacket_color(patron), str(patron.get("name", "Seat")))
-			var risk_width := clampf(float(risk) / 60.0, 0.0, 1.0) * 46.0
-			var risk_y := base_pos.y + (88.0 if compact_overlays else 61.0)
-			surface.draw_rect(Rect2(base_pos.x - 28, risk_y, 56, 5), Color("#070810"))
-			surface.draw_rect(Rect2(base_pos.x - 28, risk_y, risk_width, 5), accent)
-			_draw_patron_chip_stack(surface, base_pos + Vector2(30, 42), clampi(int(patron.get("chip_stack", 0)) / 20, 1, 4), accent)
-			if compact_overlays:
-				surface.surface_label(str(patron.get("behavior", patron.get("mood", "watching"))).left(12), base_pos + Vector2(-30, 76), 9, accent)
-			if not compact_overlays:
-				draw_patron_wager_badge(surface, state, patron, base_pos, i)
-		return
 	for i in range(patrons.size()):
 		var patron: Dictionary = patrons[i]
 		var base_pos: Vector2 = seat_positions[clampi(i, 0, seat_positions.size() - 1)]
@@ -215,28 +192,11 @@ static func draw_table_patrons(surface, state: Dictionary, positions: Array = []
 
 
 static func _surface_low_detail_idle(surface) -> bool:
-	# Web tables keep cards, wagers, controls, and tells at full fidelity, while
-	# the room/dealer/patron chrome uses the existing static treatment. Rebuilding
-	# the articulated background cast during every active animation doubled the
-	# throttled-Web frame cost without adding actionable information.
+	# Web room chrome retains its measured detail budget. Character identity,
+	# expressions and articulated poses do not depend on this budget.
 	if OS.has_feature("web"):
 		return true
 	return bool(surface.surface_low_detail_idle()) if surface != null and surface.has_method("surface_low_detail_idle") else false
-
-
-static func _draw_static_character(surface, foot: Vector2, scale_value: float, accent: Color, jacket: Color, label: String = "") -> void:
-	var head := Rect2(foot + Vector2(-12, -78) * scale_value, Vector2(24, 24) * scale_value)
-	var body := Rect2(foot + Vector2(-22, -54) * scale_value, Vector2(44, 52) * scale_value)
-	surface.draw_rect(Rect2(foot.x - 24 * scale_value, foot.y - 6 * scale_value, 48 * scale_value, 5 * scale_value), Color(0, 0, 0, 0.30))
-	surface.draw_rect(body, Color("#05060a"))
-	surface.draw_rect(Rect2(body.position + Vector2(4, 5) * scale_value, body.size - Vector2(8, 9) * scale_value), jacket)
-	surface.draw_rect(Rect2(foot + Vector2(-17, -56) * scale_value, Vector2(34, 5) * scale_value), accent)
-	surface.draw_rect(head, Color("#c49371"))
-	surface.draw_rect(Rect2(head.position, Vector2(head.size.x, 8 * scale_value)), Color("#2a1a25"))
-	surface.draw_rect(Rect2(head.position + Vector2(6, 12) * scale_value, Vector2(4, 3) * scale_value), Color("#05060a"))
-	surface.draw_rect(Rect2(head.position + Vector2(16, 12) * scale_value, Vector2(4, 3) * scale_value), Color("#05060a"))
-	if not label.is_empty():
-		surface.surface_label(label.left(10), foot + Vector2(-26, 10) * scale_value, int(10 * scale_value), accent)
 
 
 static func draw_patron_wager_badge(surface, state: Dictionary, patron: Dictionary, pos: Vector2, index: int) -> void:

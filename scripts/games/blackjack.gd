@@ -3300,9 +3300,10 @@ func _draw_blackjack_table(surface, surface_state: Dictionary) -> void:
 
 
 func _draw_dealer_station(surface, surface_state: Dictionary) -> void:
+	# Cadence may change between hand phases; the cast's identity and articulated
+	# expressions always use the same painter, including during decisions.
 	var focus: Dictionary = _dealer_focus_for_surface_state(surface, surface_state)
 	var profile: Dictionary = surface_state.get("dealer_profile", {}) if typeof(surface_state.get("dealer_profile", {})) == TYPE_DICTIONARY else {}
-	var low_detail := _blackjack_character_cast_uses_low_detail(surface, surface_state)
 	var looking_away := bool(focus.get("lookaway_active", false))
 	var peek_window := bool(focus.get("peek_window_open", looking_away))
 	var blink := bool(focus.get("blink", false))
@@ -3311,34 +3312,29 @@ func _draw_dealer_station(surface, surface_state: Dictionary) -> void:
 	var attention_color := C_PINK if int(focus.get("peek_danger", 0)) >= 70 else C_YELLOW if int(focus.get("peek_danger", 0)) >= 42 else C_TEAL
 	surface.draw_rect(Rect2(352, 54, 196, 104), Color("#0b0d16"))
 	surface.draw_rect(Rect2(352, 54, 196, 104), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.18), false, 1)
-	if low_detail:
-		var dealer_foot := Vector2(450, 156) + Vector2(sin(idle * 1.8) * 2.0, 0)
-		TableVisualsScript._draw_dealer_gaze(surface, focus, Vector2(450, 91))
-		_draw_static_table_character(surface, dealer_foot, 1.06, attention_color, Color("#1b2230"), str(surface_state.get("dealer_name", "Dealer")), eye_offset, blink)
-	else:
-		TableVisualsScript._draw_dealer_gaze(surface, focus, Vector2(450, 91))
-		draw_dealer_character_style.clear()
-		draw_dealer_character_style["name"] = str(surface_state.get("dealer_name", "Dealer"))
-		draw_dealer_character_style["skin"] = Color("#d8b18a")
-		draw_dealer_character_style["hair"] = Color("#2a1a25")
-		draw_dealer_character_style["jacket"] = Color("#1b2230")
-		draw_dealer_character_style["accent"] = attention_color
-		draw_dealer_character_style["role"] = "dealer"
-		var dealer_pose := "lookaway" if peek_window else "watching"
-		if _blackjack_between_hand_cast_active(surface_state) and not peek_window:
-			var dealer_motion := _blackjack_between_hand_character_motion(idle, float(int(profile.get("blink_offset", 0))) / 3700.0)
-			dealer_pose = ["counter_tap", "card_check", "wrist_check"][int(dealer_motion.get("gesture_index", 0))]
-			draw_dealer_character_style["body_bob"] = float(dealer_motion.get("body_bob", 0.0))
-			draw_dealer_character_style["head_x"] = float(dealer_motion.get("head_x", 0.0))
-			draw_dealer_character_style["head_y"] = float(dealer_motion.get("head_y", 0.0))
-			draw_dealer_character_style["gesture_amount"] = float(dealer_motion.get("gesture_amount", 0.0))
-			draw_dealer_character_style["gesture_side"] = int(dealer_motion.get("gesture_side", 0))
-		draw_dealer_character_style["pose"] = dealer_pose
-		draw_dealer_character_style["eye_offset"] = eye_offset
-		draw_dealer_character_style["blink"] = blink
-		draw_dealer_character_style["holding_card"] = surface.surface_animation_active(DEAL_ANIMATION_CHANNEL)
-		draw_dealer_character_style["uniform_accent"] = str(profile.get("uniform_accent", ""))
-		_draw_table_character(surface, draw_dealer_character_style, Vector2(450, 156), 1.06, idle)
+	TableVisualsScript._draw_dealer_gaze(surface, focus, Vector2(450, 91))
+	draw_dealer_character_style.clear()
+	draw_dealer_character_style["name"] = str(surface_state.get("dealer_name", "Dealer"))
+	draw_dealer_character_style["skin"] = Color("#d8b18a")
+	draw_dealer_character_style["hair"] = Color("#2a1a25")
+	draw_dealer_character_style["jacket"] = Color("#1b2230")
+	draw_dealer_character_style["accent"] = attention_color
+	draw_dealer_character_style["role"] = "dealer"
+	var dealer_pose := "lookaway" if peek_window else "watching"
+	if _blackjack_between_hand_cast_active(surface_state) and not peek_window:
+		var dealer_motion := _blackjack_between_hand_character_motion(idle, float(int(profile.get("blink_offset", 0))) / 3700.0)
+		dealer_pose = ["counter_tap", "card_check", "wrist_check"][int(dealer_motion.get("gesture_index", 0))]
+		draw_dealer_character_style["body_bob"] = float(dealer_motion.get("body_bob", 0.0))
+		draw_dealer_character_style["head_x"] = float(dealer_motion.get("head_x", 0.0))
+		draw_dealer_character_style["head_y"] = float(dealer_motion.get("head_y", 0.0))
+		draw_dealer_character_style["gesture_amount"] = float(dealer_motion.get("gesture_amount", 0.0))
+		draw_dealer_character_style["gesture_side"] = int(dealer_motion.get("gesture_side", 0))
+	draw_dealer_character_style["pose"] = dealer_pose
+	draw_dealer_character_style["eye_offset"] = eye_offset
+	draw_dealer_character_style["blink"] = blink
+	draw_dealer_character_style["holding_card"] = surface.surface_animation_active(DEAL_ANIMATION_CHANNEL)
+	draw_dealer_character_style["uniform_accent"] = str(profile.get("uniform_accent", ""))
+	_draw_table_character(surface, draw_dealer_character_style, Vector2(450, 156), 1.06, idle)
 	var meter := clampi(int(focus.get("attention_meter", 0)), 0, 100)
 	TableVisualsScript._draw_status_meter(surface, Rect2(566, 92, 118, 9), meter, "dealer %s" % str(focus.get("status", "watching")), C_PINK if meter >= 70 else C_YELLOW if meter >= 42 else C_TEAL)
 	TableVisualsScript._draw_status_meter(surface, Rect2(566, 116, 118, 6), int(focus.get("peek_danger", 0)), str(focus.get("gaze_phase", "read")).left(20), attention_color)
@@ -3355,32 +3351,6 @@ func _draw_dealer_station(surface, surface_state: Dictionary) -> void:
 func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 	var patrons: Array = surface_state.get("patrons", []) if typeof(surface_state.get("patrons", [])) == TYPE_ARRAY else []
 	var clock := TableVisualsScript._surface_clock(surface)
-	if _blackjack_character_cast_uses_low_detail(surface, surface_state):
-		for i in range(patrons.size()):
-			if typeof(patrons[i]) != TYPE_DICTIONARY:
-				continue
-			var patron: Dictionary = patrons[i]
-			var base_pos := _patron_seat_position(i)
-			var patron_clock := clock + float(int(patron.get("animation_offset", 0))) / 1000.0
-			var phase := fmod(patron_clock / 2.2, 1.0)
-			var bob := sin(phase * PI * 2.0) * (2.0 if bool(patron.get("watching_player", false)) else 1.0)
-			var lean := float(patron.get("lean", 0.0))
-			var pos := base_pos + Vector2(lean, bob)
-			var watching := bool(patron.get("watching_player", false))
-			var covered := bool(patron.get("covered", false))
-			var risk := int(patron.get("active_snitch_risk", 0))
-			var accent := C_PINK if watching else C_TEAL if covered else C_SOFT
-			_draw_static_table_character(surface, pos + Vector2(0, 52), 0.86, accent, TableVisualsScript._patron_jacket_color(patron), str(patron.get("name", "Seat")), -2.0 if covered else 2.0 if watching else 0.0, phase > 0.92)
-			var risk_width := clampf(float(risk) / 60.0, 0.0, 1.0) * 46.0
-			surface.draw_rect(Rect2(pos.x - 28, pos.y + 61, 56, 5), Color("#070810"))
-			surface.draw_rect(Rect2(pos.x - 28, pos.y + 61, risk_width, 5), accent)
-			var patron_chip_count := clampi(int(patron.get("chip_stack", 0)) / 20, 1, 4)
-			for chip_index in range(patron_chip_count):
-				_draw_casino_chip(surface, pos + Vector2(30, 42 - float(chip_index) * 3.0 * 0.42), 5, 11.0 * 0.42, 0.92, false)
-			TableVisualsScript.draw_patron_wager_badge(surface, surface_state, patron, pos, i)
-			_draw_patron_hand(surface, surface_state, patron, i)
-			surface.surface_add_invisible_hit(Rect2(pos.x - 34, pos.y - 24, 68, 94), "blackjack_patron_cover", i)
-		return
 	for i in range(patrons.size()):
 		if typeof(patrons[i]) != TYPE_DICTIONARY:
 			continue
@@ -3434,17 +3404,6 @@ func _draw_table_patrons(surface, surface_state: Dictionary) -> void:
 		_draw_patron_hand(surface, surface_state, patron, i)
 		surface.surface_label("cover", pos + Vector2(-18, 92), 8, Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.62))
 		surface.surface_add_invisible_hit(Rect2(pos.x - 34, pos.y - 24, 68, 94), "blackjack_patron_cover", i)
-
-
-func _blackjack_character_cast_uses_low_detail(surface, surface_state: Dictionary) -> bool:
-	if not TableVisualsScript._surface_low_detail_idle(surface):
-		return false
-	# Keep the 12/15 FPS idle cadence for an inexpensive no-hand scene, but do not
-	# replace its cast with static stand-ins. "between_hands" is deliberately
-	# narrower than the actual wagering phase (for example before the first hand
-	# or while a lightweight wager patch is landing), so phase is the durable
-	# boundary for deciding whether every visible character must remain articulated.
-	return not _blackjack_between_hand_cast_active(surface_state)
 
 
 func _blackjack_between_hand_cast_active(surface_state: Dictionary) -> bool:
@@ -3546,22 +3505,6 @@ func _draw_compact_patron_card(surface, card_value: Variant, pos: Vector2, scale
 			if row.substr(column_index, 1) == "1":
 				surface.draw_rect(Rect2(rank_origin + Vector2(column_index, row_index) * pixel, Vector2(pixel, pixel)), ink)
 	PlayingCardRendererScript.draw_suit(surface, rect.position + Vector2(rect.size.x * 0.66, rect.size.y * 0.69), suit, ink, maxf(0.20, scale_value * 0.52))
-
-
-func _draw_static_table_character(surface, foot: Vector2, scale_value: float, accent: Color, jacket: Color, label: String = "", eye_offset: float = 0.0, blink: bool = false) -> void:
-	var head := Rect2(foot + Vector2(-12, -78) * scale_value, Vector2(24, 24) * scale_value)
-	var body := Rect2(foot + Vector2(-22, -54) * scale_value, Vector2(44, 52) * scale_value)
-	surface.draw_rect(Rect2(foot.x - 24 * scale_value, foot.y - 6 * scale_value, 48 * scale_value, 5 * scale_value), Color(0, 0, 0, 0.30))
-	surface.draw_rect(body, Color("#05060a"))
-	surface.draw_rect(Rect2(body.position + Vector2(4, 5) * scale_value, body.size - Vector2(8, 9) * scale_value), jacket)
-	surface.draw_rect(Rect2(foot + Vector2(-17, -56) * scale_value, Vector2(34, 5) * scale_value), accent)
-	surface.draw_rect(head, Color("#c49371"))
-	surface.draw_rect(Rect2(head.position, Vector2(head.size.x, 8 * scale_value)), Color("#2a1a25"))
-	var eye_size := Vector2(4, 1 if blink else 3) * scale_value
-	surface.draw_rect(Rect2(head.position + Vector2(6 + eye_offset, 12) * scale_value, eye_size), Color("#05060a"))
-	surface.draw_rect(Rect2(head.position + Vector2(16 + eye_offset, 12) * scale_value, eye_size), Color("#05060a"))
-	if not label.is_empty():
-		surface.surface_label(label.left(10), foot + Vector2(-26, 10) * scale_value, int(10 * scale_value), accent)
 
 
 func _patron_active_action_event(surface, surface_state: Dictionary, patron_index: int) -> Dictionary:

@@ -6,13 +6,6 @@ const BlackjackGameScript := preload("res://scripts/games/blackjack.gd")
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 
 
-class LowDetailSurfaceProbe:
-	extends RefCounted
-
-	func surface_low_detail_idle() -> bool:
-		return true
-
-
 func _initialize() -> void:
 	call_deferred("_run")
 
@@ -87,18 +80,6 @@ func _run() -> void:
 		return
 	if not is_equal_approx(float(game_canvas.call("surface_idle_animation_fps")), 15.0):
 		push_error("Blackjack between-hand liveness no longer uses its 15 FPS native idle cadence.")
-		quit(1)
-		return
-	if bool(blackjack.call("_blackjack_character_cast_uses_low_detail", LowDetailSurfaceProbe.new(), {"between_hands": true})):
-		push_error("Blackjack between-hand liveness replaced its animated character cast with static stand-ins.")
-		quit(1)
-		return
-	if bool(blackjack.call("_blackjack_character_cast_uses_low_detail", LowDetailSurfaceProbe.new(), {"phase": "betting", "between_hands": false})):
-		push_error("Blackjack wagering-phase liveness still depended on the narrower between_hands marker.")
-		quit(1)
-		return
-	if not bool(blackjack.call("_blackjack_character_cast_uses_low_detail", LowDetailSurfaceProbe.new(), {"between_hands": false})):
-		push_error("Blackjack discarded its low-detail cast outside the between-hand regression boundary.")
 		quit(1)
 		return
 	if not bool(cast_start.get("between_hand_cast_active", false)) \
