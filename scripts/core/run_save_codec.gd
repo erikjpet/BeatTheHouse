@@ -184,7 +184,9 @@ static func storage_envelope_valid(value: Dictionary) -> bool:
 		and expected_hash.length() == 64
 
 
-static func unpack_from_storage(stored_state: Dictionary) -> Dictionary:
+# Only content/shape validation may skip the legacy token repair. Real loads
+# keep the default so authority hashes receive exact historical integer values.
+static func unpack_from_storage(stored_state: Dictionary, preserve_legacy_authority_integers: bool = true) -> Dictionary:
 	if not stored_state.has(STORAGE_MARKER_KEY):
 		return stored_state.duplicate(true)
 	if not storage_envelope_valid(stored_state):
@@ -200,7 +202,10 @@ static func unpack_from_storage(stored_state: Dictionary) -> Dictionary:
 			or _sha256(source) != str(stored_state.get(STORAGE_HASH_KEY, "")):
 		return {}
 	var json := JSON.new()
-	if json.parse(preserve_blackjack_ledger_integer_tokens(source.get_string_from_utf8())) != OK or typeof(json.data) != TYPE_DICTIONARY:
+	var json_text := source.get_string_from_utf8()
+	if preserve_legacy_authority_integers:
+		json_text = preserve_blackjack_ledger_integer_tokens(json_text)
+	if json.parse(json_text) != OK or typeof(json.data) != TYPE_DICTIONARY:
 		return {}
 	# This parser was created for this one call. Its complete JSON graph is
 	# already privately owned; another deep copy cannot detach it any further.

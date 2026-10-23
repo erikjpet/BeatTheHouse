@@ -57,6 +57,18 @@ func _run() -> void:
 	_check(Codec.unpack_from_storage(packed) == unpacked and not unpacked.has("owned_parse_probe"), "each fresh JSON parse owns its graph independently of returned mutations")
 	var roundtrip := Codec.unpack_from_storage(Codec.pack_for_storage(unpacked).get("packed", {}))
 	_check(roundtrip == unpacked, "complete storage state/RNG roundtrip")
+	var legacy := {"seed_text":"legacy-int-probe", "rng_state":"9223372036854775806", "current_environment":{Codec.BLACKJACK_LEDGER_KEY:{"counter":9223372036854775806}}}
+	var legacy_packed: Dictionary = Codec.pack_for_storage(legacy).get("packed", {})
+	var restored := Codec.decode(Codec.unpack_from_storage(legacy_packed))
+	_check(restored["current_environment"][Codec.BLACKJACK_LEDGER_KEY]["counter"] == 9223372036854775806, "real legacy load retains exact authority integer repair")
+	var validation_payload := {"schema":Saves.SAVE_SCHEMA, "run_state":legacy_packed}
+	_check(Saves._payload_dictionary_loadable(validation_payload), "validation accepts intact legacy content without restoring integer types")
+	var invalid_legacy := legacy_packed.duplicate(true)
+	invalid_legacy[Codec.STORAGE_HASH_KEY] = "0".repeat(64)
+	validation_payload["run_state"] = invalid_legacy
+	_check(not Saves._payload_dictionary_loadable(validation_payload), "validation still rejects legacy content hash damage")
+	validation_payload["run_state"] = Codec.pack_for_storage({"current_environment":{}}).get("packed", {})
+	_check(not Saves._payload_dictionary_loadable(validation_payload), "validation still requires complete root fields")
 	var damaged := packed.duplicate(true)
 	damaged["sha256"] = "0".repeat(64)
 	_check(Codec.unpack_from_storage(damaged).is_empty(), "content hash mismatch rejected")

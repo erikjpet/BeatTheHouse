@@ -175,3 +175,10 @@ compilations. This is native component evidence; final Web timing is recorded
 separately. Compressed-save parsing also returns its already private fresh JSON
 graph directly, avoiding one redundant full copy. Storage content/hash validation,
 legacy integer repair, atomic installation, backups and format remain unchanged.
+
+The content-only save validator skips legacy ledger integer-token repair: it
+still decompresses, checks the exact source hash, parses JSON and requires the
+same root fields. Only actual loads need the repaired numeric identities and
+retain the default repair path. The storage check explicitly covers an intact
+legacy 64-bit authority integer, real-load precision, damaged content and missing
+root fields, alongside the existing atomic-failure and retry cases.

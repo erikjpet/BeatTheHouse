@@ -272,7 +272,10 @@ static func _payload_dictionary_loadable(payload: Dictionary) -> bool:
 		# Slot discovery must reject damaged compressed data, not merely an
 		# envelope whose field names and lengths look plausible.  Decompression
 		# and the content hash are still much cheaper than constructing RunState.
-		var unpacked := RunSaveCodecScript.unpack_from_storage(run_data as Dictionary)
+		# This is only a content/hash/JSON/root-field check, not a restore. Legacy
+		# ledger integer-token repair belongs to the real load below; rewriting
+		# every ledger here adds work to each temporary/installed validation.
+		var unpacked := RunSaveCodecScript.unpack_from_storage(run_data as Dictionary, false)
 		return not unpacked.is_empty() and unpacked.has("seed_text") and unpacked.has("rng_state") and unpacked.has("current_environment")
 	return payload.has("seed_text") and payload.has("rng_state") and payload.has("current_environment")
 
