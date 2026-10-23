@@ -5,6 +5,7 @@ extends RefCounted
 # physical projection, checkpoints, cargo, timing, and terminal validation.
 
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const CrewDeliveryScheduleScript := preload("res://scripts/core/crew_delivery_schedule.gd")
 
 const SCHEMA_VERSION := 3
 const LEGACY_SCHEMA_VERSION := 2
@@ -413,7 +414,7 @@ static func advance_clock(state_value: Variant, current_game_clock_minutes: int)
 	if deadline_clock <= 0:
 		return state
 	state["deadline_remaining"] = maxi(0, deadline_clock - maxi(0, current_game_clock_minutes))
-	if int(state.get("deadline_remaining", 0)) <= 0:
+	if current_game_clock_minutes >= CrewDeliveryScheduleScript.next_deadline(state):
 		state = _resolve(state, "failed", "deadline", false)
 	return state
 
@@ -452,6 +453,7 @@ static func complete_handoff(state_value: Variant, node_id: String, current_arch
 			or not _required_target_room_matches(state, current_archetype_id):
 		return state
 	var clean_node_id := node_id.strip_edges()
+	if not CrewDeliveryScheduleScript.handoff_open(state, clean_node_id): return state
 	if clean_node_id.is_empty() or clean_node_id != str(state.get("handoff_pending_node_id", "")):
 		return state
 	var depth := JsonCoerceScript._copy_dict(state.get("depth_state", {}))

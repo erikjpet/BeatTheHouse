@@ -554,6 +554,9 @@ var top_settings_button: Button
 var top_inventory_button: Button
 var active_item_button: Button
 var delivery_action_strip: HFlowContainer
+var crew_delivery_event_modules: Dictionary = {}
+var crew_delivery_event_run_ref: WeakRef
+var crew_delivery_event_context: String = ""
 var delivery_action_buttons: Dictionary = {}
 var run_menu_overlay: Control
 var run_menu_panel: PanelContainer
@@ -849,8 +852,11 @@ func _advance_run_game_clock(delta: float) -> void:
 		return
 	environment_clock_fractional_minutes -= float(elapsed_minutes)
 	if bool(clock_result.get("delivery_resolved", false)):
-		_show_message("The delivery window closed before the handoff.")
+		_show_message(str(run_state.active_delivery_run.get("receipt", {}).get("failure_message", "The delivery window closed before the handoff.")))
 		_autosave_foundation_run("Delivery deadline saved.")
+		_refresh()
+		return
+	if bool(clock_result.get("delivery_window_opened", false)):
 		_refresh()
 		return
 	var boundary_changed := _apply_closing_time_clock_boundary()
@@ -3591,6 +3597,23 @@ func resolve_event_choice(event_id: String, choice_id: String, lifecycle_rollbac
 	return _complete_event_choice_resolution(prepared, _resolve_prepared_event_choice(prepared))
 
 
+func _crew_delivery_event_module(event_definition: Dictionary) -> EventModule:
+	var event_id := str(event_definition.get("id", ""))
+	var kind := str(JsonCoerceScript._copy_dict(event_definition.get("payload", {})).get("kind", ""))
+	var quoted_offer := event_id == "crew_favor_delivery" or kind in ["crew_job_board", "crew_contact"]
+	if quoted_offer and run_state != null:
+		var context := "%s:%s:%d" % [str(run_state.current_environment.get("id", "")), str(run_state.current_environment.get("current_layer_id", "")), run_state.crew_job_sequence]
+		if crew_delivery_event_run_ref == null or crew_delivery_event_run_ref.get_ref() != run_state or crew_delivery_event_context != context:
+			crew_delivery_event_modules.clear()
+			crew_delivery_event_run_ref = weakref(run_state)
+			crew_delivery_event_context = context
+		if crew_delivery_event_modules.has(event_id): return crew_delivery_event_modules[event_id]
+	var event_module := EventModule.new()
+	event_module.setup(event_definition, library)
+	if quoted_offer: crew_delivery_event_modules[event_id] = event_module
+	return event_module
+
+
 func _prepare_event_choice_resolution(event_id: String, choice_id: String, lifecycle_rollback: Dictionary) -> Dictionary:
 	if travel_transition_active:
 		_show_message("Travel is already in progress.")
@@ -3615,8 +3638,7 @@ func _prepare_event_choice_resolution(event_id: String, choice_id: String, lifec
 	if event_definition.is_empty():
 		_show_message("Event definition is missing.")
 		return {"terminal_result": {"ok": false, "errors": ["Event definition is missing."]}}
-	var event_module := EventModule.new()
-	event_module.setup(event_definition, library)
+	var event_module := _crew_delivery_event_module(event_definition)
 	var event_context := _pending_event_trigger_context(event_id)
 	if resolving_talk:
 		event_context = JsonCoerceScript._copy_dict(talk_entry.get("context", {}))
@@ -4481,8 +4503,7 @@ func _show_triggered_event_popup(entry: Dictionary) -> bool:
 	var event_definition := library.event(event_id)
 	if event_definition.is_empty() or event_choice_popup_overlay == null or event_choice_popup_choices_list == null:
 		return false
-	var event_module := EventModule.new()
-	event_module.setup(event_definition, library)
+	var event_module := _crew_delivery_event_module(event_definition)
 	var context: Dictionary = entry.get("context", {}) if typeof(entry.get("context", {})) == TYPE_DICTIONARY else {}
 	var event_environment := _event_environment_for_context(context)
 	if not event_module.can_trigger(run_state, event_environment, context):
@@ -8065,7 +8086,7 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 		# room doors do not consume the promised ride.
 		run_state.crew_rook_finish_ride()
 	if bool(delivery_arrival.get("handoff_ready", false)):
-		var delivery_message := " The marked hand is waiting inside."
+		var delivery_message := " " + str(delivery_arrival.get("message", "The marked hand is waiting inside."))
 		travel_result["message"] = "%s%s" % [str(travel_result.get("message", "")), delivery_message]
 		var delivery_deltas: Dictionary = travel_result.get("deltas", {}) if typeof(travel_result.get("deltas", {})) == TYPE_DICTIONARY else {}
 		delivery_deltas["messages"] = [str(travel_result.get("message", ""))]
@@ -20041,9 +20062,12 @@ func _refresh_delivery_action_strip() -> void:
 	if run_state != null and not _is_meta_session() and current_screen in [SCREEN_ENVIRONMENT, SCREEN_RESULT] and current_game == null \
 			and run_state.has_method("delivery_top_actions"):
 		actions = JsonCoerceScript._copy_array(run_state.delivery_top_actions())
-	var signature := JSON.stringify(actions)
+	var timing_text := ""
+	if run_state != null and current_screen in [SCREEN_ENVIRONMENT, SCREEN_RESULT] and current_game == null:
+		timing_text = run_state.delivery_timing_text() if run_state.delivery_has_active_run() else str(run_state.active_delivery_run.get("receipt", {}).get("failure_message", ""))
+	var signature := JSON.stringify([actions, timing_text])
 	if str(delivery_action_strip.get_meta("action_signature", "")) == signature:
-		var next_visible := not actions.is_empty()
+		var next_visible := not actions.is_empty() or not timing_text.is_empty()
 		if delivery_action_strip.visible != next_visible:
 			delivery_action_strip.visible = next_visible
 			_schedule_delivery_action_layout_refresh()
@@ -20053,15 +20077,17 @@ func _refresh_delivery_action_strip() -> void:
 		delivery_action_strip.remove_child(child)
 		child.queue_free()
 	delivery_action_buttons.clear()
-	if actions.is_empty():
+	if actions.is_empty() and timing_text.is_empty():
 		delivery_action_strip.visible = false
 		# This strip is a second row inside the clipped HUD. Recompute the info
 		# band whenever its contents disappear so the room canvas can reclaim the
 		# released height instead of retaining the previous delivery footprint.
 		_schedule_delivery_action_layout_refresh()
 		return
-	var heading := _muted_label("PACKAGE", 12)
-	heading.tooltip_text = "Actions for the delivery currently in your possession."
+	var heading := _muted_label("PACKAGE | " + timing_text, 12)
+	heading.tooltip_text = timing_text
+	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	heading.custom_minimum_size.x = 720
 	delivery_action_strip.add_child(heading)
 	for action_value in actions:
 		var action := JsonCoerceScript._copy_dict(action_value)
@@ -20073,7 +20099,7 @@ func _refresh_delivery_action_strip() -> void:
 		button.custom_minimum_size.y = MIN_NATIVE_TOUCH_TARGET_HEIGHT
 		delivery_action_strip.add_child(button)
 		delivery_action_buttons[verb] = button
-	delivery_action_strip.visible = delivery_action_strip.get_child_count() > 1
+	delivery_action_strip.visible = delivery_action_strip.get_child_count() > 0
 	# The HUD height is cached by viewport size, but delivery actions can appear
 	# without a resize (for example, after entering the Count's Cage room). Mark
 	# the layout dirty after rebuilding this second row so clip_contents cannot
@@ -22114,10 +22140,7 @@ func _world_map_title_text(current_label: String) -> String:
 		current_label,
 	]
 	if run_state.delivery_has_active_run():
-		title += " | Courier: %s" % PlayerTextScript.count_text(
-			"action",
-			int(run_state.delivery_snapshot().get("deadline_remaining", 0))
-		)
+		title += " | Courier: %s" % run_state.delivery_timing_text()
 	return title
 
 
@@ -22192,7 +22215,7 @@ func _refresh_world_map_detail() -> void:
 		for target_value in JsonCoerceScript._copy_array(delivery_layer.get("targets", [])):
 			if typeof(target_value) == TYPE_DICTIONARY and str((target_value as Dictionary).get("node_id", "")) == selected_world_map_node_id:
 				detail_lines.append("Courier target · %s · %s" % [
-					PlayerTextScript.count_text("action", int(delivery_layer.get("deadline_remaining", 0))),
+					str((target_value as Dictionary).get("timing_text", delivery_layer.get("timing_text", ""))),
 					str((target_value as Dictionary).get("status", "pending")),
 				])
 				break

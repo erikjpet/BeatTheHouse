@@ -13,6 +13,7 @@ const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
 var definition: Dictionary = {}
 var content_library: ContentLibrary = null
 var _owned_resolution: Dictionary = {}
+var _crew_offer_clock: int = -1
 
 
 func can_resolve_ordinary_atomically(run_state: RunState, choice_id: String) -> bool:
@@ -117,6 +118,7 @@ static func is_person_conversation_definition(event_definition: Dictionary) -> b
 func setup(p_definition: Dictionary, p_library: ContentLibrary = null) -> void:
 	definition = p_definition.duplicate(true)
 	content_library = p_library
+	_crew_offer_clock = -1
 
 
 # Returns this event id.
@@ -151,9 +153,9 @@ func choices(run_state: RunState = null, environment: Dictionary = {}) -> Array:
 	if str(payload.get("kind", "")) == "crew_rook_leads":
 		return CrewRecruitmentModelScript.rook_signpost_choices(run_state, false) if run_state != null else []
 	if str(payload.get("kind", "")) == "crew_contact":
-		return CrewRecruitmentModelScript.contact_choices(run_state, environment, str(payload.get("member_id", "")), content_library) if run_state != null else []
+		return _crew_timed_choices(CrewRecruitmentModelScript.contact_choices(run_state, environment, str(payload.get("member_id", "")), content_library), run_state) if run_state != null else []
 	if str(payload.get("kind", "")) == "crew_job_board":
-		return run_state.crew_job_board_choices(payload) if run_state != null else []
+		return _crew_timed_choices(run_state.crew_job_board_choices(payload), run_state) if run_state != null else []
 	if str(payload.get("kind", "")) == "crew_practice_rig":
 		return run_state.crew_practice_rig_choices() if run_state != null else []
 	if str(payload.get("kind", "")) == "crew_stake_horse_loss":
@@ -281,10 +283,43 @@ func _short_conversation_summary(value: String) -> String:
 
 func _contextualized_choice(choice_data: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	var resolved := _rumor_delivery_choice(choice_data, run_state, environment)
+	if get_id() == "crew_favor_delivery" and str(resolved.get("id", "")) == "run_package" and run_state != null:
+		if _crew_offer_clock < 0: _crew_offer_clock = run_state.game_clock_minutes
+		var preview := run_state.delivery_crew_offer("crew_favor_delivery", _crew_offer_clock)
+		resolved["text"] = "%s Missing the window loses the package and payment, reduces Crew trust by 5 and adds 9 Heat." % str(preview.get("message", ""))
+		resolved["crew_offer_clock"] = _crew_offer_clock
 	resolved = _traveler_context_choice(resolved, run_state)
 	resolved = _reputation_context_choice(resolved, environment)
 	resolved = CharacterChainModelScript.contextualize_choice(get_id(), resolved, run_state)
 	return _lender_terms_choice(resolved, run_state)
+
+
+func _crew_timed_choices(rows: Array, run_state: RunState) -> Array:
+	if _crew_offer_clock < 0: _crew_offer_clock = run_state.game_clock_minutes
+	var result: Array = []
+	for row_value in rows:
+		var row: Dictionary = row_value.duplicate(true)
+		var omit := false
+		var consequences := JsonCoerceScript._copy_dict(row.get("consequences", {}))
+		for hook in consequences.get("event_hooks", []):
+			if str(hook.get("type", "")) != "crew_job_accept": continue
+			var definition_id := str(hook.get("definition_id", ""))
+			var definition := CrewStateModel.job_definition(definition_id)
+			if not run_state.CrewDeliveryScheduleScript.is_package_kind(str(definition.get("kind", ""))): continue
+			if run_state.delivery_has_active_run() or not run_state.crew_package_scene_allows_offer():
+				omit = true
+				break
+			var preview := run_state.delivery_crew_offer(definition_id, _crew_offer_clock)
+			if not bool(preview.get("ok", false)) or not run_state.crew_package_scene_allows_offer():
+				omit = true
+				break
+			hook["offered_clock"] = _crew_offer_clock
+			var original_lines := str(row.get("text", "")).split("\n", false)
+			row["text"] = "%s\n$%d / trust +%d. Missing a drop loses payment and %d trust; the Crew records the failure." % [str(preview.get("message", "")), int(definition.get("rewards", {}).get("cash", 0)), int(definition.get("rewards", {}).get("trust", 0)), -int(definition.get("failure", {}).get("trust", 0))]
+			if original_lines.size() > 1: row["text"] = "%s\n%s" % [original_lines[0], row["text"]]
+		row["consequences"] = consequences
+		if not omit: result.append(row)
+	return result
 
 
 func _choice_disabled_reason(conditions: Dictionary, run_state: RunState) -> String:
@@ -361,6 +396,7 @@ func _mags_bench_choices(payload: Dictionary, run_state: RunState, environment: 
 
 # Checks whether this event can fire in the current run context.
 func can_trigger(run_state: RunState, environment: Dictionary, context: Dictionary = {}) -> bool:
+	if get_id() == "crew_favor_delivery" and (run_state.delivery_has_active_run() or not run_state.crew_package_scene_allows_offer(environment) or (not run_state.crew_package_solicitation_available(environment) and not run_state.triggered_event_pending(get_id()))): return false
 	var min_suspicion := int(definition.get("min_suspicion", 0))
 	var tier_min := int(definition.get("tier_min", 1))
 	if int(run_state.suspicion.get("level", 0)) < min_suspicion:
@@ -443,6 +479,7 @@ func _resolve_event_choice(
 	if str(payload.get("kind", "")) == "grand_casino_high_roller_cashout":
 		return _resolve_grand_casino_high_roller_cashout(run_state, environment, payload, choice_id)
 	var selected_choice := choice(choice_id, run_state, environment)
+	_crew_offer_clock = -1
 	if not choice_id.is_empty() and selected_choice.is_empty():
 		return _empty_result(choice_id, environment, "Event choice is not available.")
 	var consequences := _consequences(selected_choice)
@@ -515,7 +552,11 @@ func _resolve_event_choice(
 		var delivery_result := run_state.resolve_crew_favor_delivery_job(choice_key, {
 			"success": consequences,
 			"failure": JsonCoerceScript._copy_dict(selected_choice.get("streets_failure", {})),
-		})
+		}, int(selected_choice.get("crew_offer_clock", -1)))
+		if not bool(delivery_result.get("ok", false)):
+			result["ok"] = false
+			result["message"] = str(delivery_result.get("message", "That package is no longer available."))
+			return result
 		var sequence_schedule := {"ok": true, "inactive": true}
 		if bool(delivery_result.get("ok", false)):
 			sequence_schedule = _schedule_choice_world_sequence(run_state, selected_choice, delivery_result)
@@ -653,7 +694,7 @@ func _begin_event_result_application(run_state: RunState, result: Dictionary, ex
 			"crew_lucky_collection":
 				service_result = run_state.numbers_begin_collection_route()
 			"crew_job_accept":
-				service_result = run_state.crew_job_accept_definition(str(pre_hook.get("definition_id", "")))
+				service_result = run_state.crew_job_accept_definition(str(pre_hook.get("definition_id", "")), int(pre_hook.get("offered_clock", -1)))
 			"crew_practice_rig":
 				service_result = run_state.crew_practice_rig_session(str(pre_hook.get("window", "")))
 			"crew_stake_loss_choice":

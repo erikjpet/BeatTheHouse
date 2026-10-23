@@ -6,6 +6,53 @@ extends RefCounted
 
 const DeliveryRunModelScript := preload("res://scripts/core/delivery_run_model.gd")
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const CrewDeliveryScheduleScript := preload("res://scripts/core/crew_delivery_schedule.gd")
+
+
+func delivery_crew_offer(definition_id: String, offered_clock: int = -1) -> Dictionary:
+	var definition: Dictionary = CrewStateModel.job_definition(definition_id)
+	if not CrewDeliveryScheduleScript.is_package_kind(str(definition.get("kind", ""))): return {}
+	if delivery_has_active_run(): return {"ok": false, "message": "Finish your current delivery before taking another package."}
+	var spec := JsonCoerceScript._copy_dict(definition.get("payload", {}))
+	spec["run_id"] = "crew_offer:%s" % definition_id
+	spec["mode"] = "multi_stop" if str(definition.get("kind", "")) == "numbers_route" else "package"
+	var clock: int = _run.game_clock_minutes if offered_clock < 0 else mini(offered_clock, _run.game_clock_minutes)
+	spec["target_selection_clock"] = clock
+	var resolved := _delivery_resolve_targets(spec)
+	if not bool(resolved.get("ok", false)): return resolved
+	spec["targets"] = resolved.get("targets", [])
+	var windows := CrewDeliveryScheduleScript.windows_for(_run, spec["targets"], clock)
+	if windows.is_empty(): return {"ok": false, "message": "No recipient is available on that route."}
+	spec["consumer_payload"] = {"meeting_windows": windows}
+	spec["deadline_kind"] = DeliveryRunModelScript.DEADLINE_CLOCK
+	spec["deadline_game_clock_minutes"] = int((windows.back() as Dictionary).get("closes", 0))
+	spec["deadline_minutes"] = int(spec["deadline_game_clock_minutes"]) - _run.game_clock_minutes
+	if spec["deadline_minutes"] <= 0 or _run.game_clock_minutes >= CrewDeliveryScheduleScript.next_deadline(spec):
+		return {"ok": false, "message": "That meeting window has passed. Ask for a new route."}
+	return {"ok": true, "spec": spec, "message": CrewDeliveryScheduleScript.timing_text(spec, true)}
+
+
+func delivery_timing_text() -> String:
+	return CrewDeliveryScheduleScript.timing_text(active_delivery_run)
+
+
+func delivery_migrate_crew_window() -> void:
+	if not delivery_has_active_run() or not CrewDeliveryScheduleScript.is_crew_route(active_delivery_run): return
+	var payload := JsonCoerceScript._copy_dict(active_delivery_run.get("consumer_payload", {}))
+	if payload.has("meeting_windows"): return
+	var windows := CrewDeliveryScheduleScript.windows_for(_run, active_delivery_run.get("targets", []), _run.game_clock_minutes)
+	if windows.is_empty(): return
+	# A legacy action-count promise gets a fresh feasible appointment on Continue.
+	# Resolved records and their receipts never pass through this migration.
+	payload["meeting_windows"] = windows
+	payload["clock_window_migrated"] = true
+	active_delivery_run["consumer_payload"] = payload
+	active_delivery_run["deadline_kind"] = DeliveryRunModelScript.DEADLINE_CLOCK
+	active_delivery_run["started_game_clock_minutes"] = _run.game_clock_minutes
+	active_delivery_run["deadline_game_clock_minutes"] = int((windows.back() as Dictionary).get("closes", 0))
+	active_delivery_run["deadline_total"] = int(active_delivery_run["deadline_game_clock_minutes"]) - _run.game_clock_minutes
+	active_delivery_run["deadline_remaining"] = active_delivery_run["deadline_total"]
+	_run.log_story({"type": "delivery_window_updated", "message": "The Crew confirms a new appointment for your saved package. %s" % delivery_timing_text()})
 
 var active_run: Dictionary = {}
 var _run_ref: WeakRef
@@ -96,11 +143,21 @@ func _delivery_begin(spec: Dictionary) -> Dictionary:
 	normalized["targets"] = JsonCoerceScript._copy_array(resolved_targets.get("targets", []))
 	normalized["start_node_id"] = _run.current_world_node_id()
 	normalized["current_node_id"] = _run.current_world_node_id()
+	if CrewDeliveryScheduleScript.is_crew_route(normalized):
+		var payload := JsonCoerceScript._copy_dict(normalized.get("consumer_payload", {}))
+		if not payload.has("meeting_windows"):
+			payload["meeting_windows"] = CrewDeliveryScheduleScript.windows_for(_run, normalized["targets"], _run.game_clock_minutes)
+		var windows: Array = payload.get("meeting_windows", [])
+		if windows.is_empty(): return {"ok": false, "message": "No recipient is available on that route."}
+		normalized["consumer_payload"] = payload
+		normalized["deadline_kind"] = DeliveryRunModelScript.DEADLINE_CLOCK
+		normalized["deadline_game_clock_minutes"] = int((windows.back() as Dictionary).get("closes", 0))
+		normalized["deadline_minutes"] = int(normalized["deadline_game_clock_minutes"]) - _run.game_clock_minutes
 	if str(normalized.get("deadline_kind", DeliveryRunModelScript.DEADLINE_ACTIONS)) == DeliveryRunModelScript.DEADLINE_CLOCK:
 		var deadline_minutes := maxi(1, int(normalized.get("deadline_minutes", 180)))
 		normalized["deadline_minutes"] = deadline_minutes
 		normalized["started_game_clock_minutes"] = _run.game_clock_minutes
-		normalized["deadline_game_clock_minutes"] = _run.game_clock_minutes + deadline_minutes
+		normalized["deadline_game_clock_minutes"] = int(normalized.get("deadline_game_clock_minutes", _run.game_clock_minutes + deadline_minutes))
 	var state := DeliveryRunModelScript.begin(normalized, _run._crew_action_index())
 	if state.is_empty():
 		return {"ok": false, "message": "That route cannot be carried on this town map."}
@@ -115,7 +172,7 @@ func _delivery_begin(spec: Dictionary) -> Dictionary:
 	var target := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_array(delivery_snapshot().get("targets", []))[0])
 	var message := "The route is marked. Find %s at %s." % [str(target.get("contact_label", "the marked contact")), str(target.get("label", "the destination"))]
 	if str(active_delivery_run.get("deadline_kind", DeliveryRunModelScript.DEADLINE_ACTIONS)) == DeliveryRunModelScript.DEADLINE_CLOCK:
-		message += " Make the handoff by %s." % _run._clock_display_for_absolute_minutes(int(active_delivery_run.get("deadline_game_clock_minutes", 0)))
+		message = "Package accepted. %s" % CrewDeliveryScheduleScript.timing_text(active_delivery_run, true)
 	return {"ok": true, "snapshot": delivery_snapshot(), "message": message}
 
 
@@ -309,12 +366,14 @@ func delivery_arrival_interaction() -> Dictionary:
 		return {}
 	if _delivery_target_room_blocked():
 		return {}
+	var available := CrewDeliveryScheduleScript.handoff_open(active_delivery_run, node_id)
 	return {
 		"object_id": "delivery:handoff:%s" % node_id,
 		"node_id": node_id,
-		"label": "Make the handoff",
+		"label": "Make the handoff" if available else "Check recipient's appointment",
+		"available": available,
 		"cargo_label": str(active_delivery_run.get("cargo_label", "Crew package")),
-		"message": "A quiet hand waits inside the room. Pass it over.",
+		"message": "The recipient is available. %s" % delivery_timing_text() if available else "You are early. Recipient available %s" % delivery_timing_text(),
 	}
 
 
@@ -329,6 +388,8 @@ func delivery_complete_handoff(node_id: String = "") -> Dictionary:
 	var target := _delivery_pending_target_at(target_id)
 	if target.is_empty():
 		return {"ok": false, "message": "This is not the marked handoff."}
+	if not CrewDeliveryScheduleScript.handoff_open(active_delivery_run, target_id):
+		return {"ok": false, "message": "Recipient unavailable now. %s" % delivery_timing_text()}
 	if _delivery_target_room_blocked():
 		return {"ok": false, "message": _delivery_required_room_message()}
 	var before := JSON.stringify(delivery_snapshot())
@@ -521,6 +582,7 @@ func delivery_resolve_travel_arrival(route: Dictionary = {}, route_risk: Diction
 		"ok": true,
 		"resolved": not delivery_has_active_run(),
 		"handoff_ready": not delivery_arrival_interaction().is_empty(),
+		"message": str(delivery_arrival_interaction().get("message", "")),
 		"route_id": str(route.get("id", route.get("target_node_id", node_id))),
 		"snapshot": delivery_snapshot(),
 	}
@@ -561,6 +623,10 @@ func delivery_map_layer() -> Dictionary:
 	if not delivery_has_active_run():
 		return {}
 	var delivery_view := delivery_snapshot()
+	var timed_targets := JsonCoerceScript._copy_array(delivery_view.get("targets", []))
+	for target in timed_targets:
+		var window := CrewDeliveryScheduleScript.window_for(active_delivery_run, str(target.get("node_id", "")))
+		if not window.is_empty(): target["timing_text"] = CrewDeliveryScheduleScript.window_text(window)
 	var physical := JsonCoerceScript._copy_dict(delivery_view.get("physical", {}))
 	var public_sweep = _run.sweep_status()
 	var edge_reads: Array = []
@@ -606,8 +672,10 @@ func delivery_map_layer() -> Dictionary:
 	return {
 		"active": true,
 		"mode": str(active_delivery_run.get("mode", "package")),
-		"targets": JsonCoerceScript._copy_array(delivery_view.get("targets", [])),
+		"targets": timed_targets,
 		"deadline_remaining": int(active_delivery_run.get("deadline_remaining", 0)),
+		"deadline_kind": str(active_delivery_run.get("deadline_kind", "actions")),
+		"timing_text": delivery_timing_text(),
 		"cargo": {
 			"id": str(active_delivery_run.get("cargo_id", "")),
 			"label": str(active_delivery_run.get("cargo_label", "Crew package")),
@@ -662,7 +730,7 @@ func _delivery_resolve_targets(spec: Dictionary) -> Dictionary:
 			var bucket_index := 0 if str(node.get("state", "hidden")) == WorldMap.STATE_VISITED else 1 if WorldMap.prepared_is_node_visible(offer_path_query, node_id) else 2
 			(buckets[bucket_index] as Array).append(node_id)
 	var candidates: Array = []
-	var target_rng = _run.create_rng("delivery_targets:%s:%d" % [str(spec.get("run_id", spec.get("route_id", "delivery"))), _run._crew_action_index()])
+	var target_rng = _run.create_rng("delivery_targets:%s:%d" % [str(spec.get("run_id", spec.get("route_id", "delivery"))), int(spec.get("target_selection_clock", _run._crew_action_index()))])
 	for bucket_value in buckets:
 		var bucket: Array = bucket_value
 		bucket.sort()

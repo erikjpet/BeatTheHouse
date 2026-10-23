@@ -100,7 +100,7 @@ static func enriched_world_map_snapshot(host: Variant, snapshot: Dictionary) -> 
 			node["delivery_target"] = true
 			node["delivery_target_status"] = str(courier_target.get("status", "pending"))
 			node["delivery_deadline_remaining"] = int(courier_layer.get("deadline_remaining", 0))
-			node["delivery_marker_label"] = "DONE" if str(courier_target.get("status", "pending")) == "delivered" else "DROP · %d" % int(courier_layer.get("deadline_remaining", 0))
+			node["delivery_marker_label"] = "DONE" if str(courier_target.get("status", "pending")) == "delivered" else "DROP" if str(courier_layer.get("deadline_kind", "actions")) == "clock" else "DROP · %d" % int(courier_layer.get("deadline_remaining", 0))
 		node["travel_target"] = visible_travel_target
 		node["travel_enabled"] = enabled
 		node["travel_disabled_reason"] = ""

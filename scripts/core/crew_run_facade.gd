@@ -1882,6 +1882,7 @@ func crew_job_board_offers() -> Array:
 			continue
 		var definition: Dictionary = definition_value
 		var definition_id := str(definition.get("id", ""))
+		if _run.CrewDeliveryScheduleScript.is_package_kind(str(definition.get("kind", ""))) and (_run.delivery_has_active_run() or not _run.crew_package_scene_allows_offer()): continue
 		if definition_id == "crew_favor_delivery" or crew_job_definition_pending(definition_id):
 			continue
 		var member_id := str(definition.get("member_id", ""))
@@ -1930,10 +1931,17 @@ func crew_job_board_choices(payload: Dictionary = {}) -> Array:
 	return result
 
 
-func crew_job_accept_definition(definition_id: String) -> Dictionary:
+func crew_job_accept_definition(definition_id: String, offered_clock: int = -1) -> Dictionary:
 	var definition := CrewStateModelScript.job_definition(definition_id)
 	if definition.is_empty() or crew_job_definition_pending(definition_id):
 		return {"ok": false, "message": "That note is no longer open."}
+	if _run.CrewDeliveryScheduleScript.is_route_kind(str(definition.get("kind", ""))) and _run.delivery_has_active_run():
+		return {"ok": false, "message": "Finish your current delivery before taking another route."}
+	var is_package: bool = _run.CrewDeliveryScheduleScript.is_package_kind(str(definition.get("kind", "")))
+	if is_package and (_run.delivery_has_active_run() or not _run.crew_package_scene_allows_offer()):
+		return {"ok": false, "message": "A new package is unavailable during this delivery or encounter."}
+	var preview: Dictionary = _run.delivery_crew_offer(definition_id, offered_clock) if is_package else {}
+	if is_package and not bool(preview.get("ok", false)): return preview
 	var member_id := str(definition.get("member_id", ""))
 	var min_rank := str(definition.get("min_rank", "associate"))
 	if not crew_member_present(member_id):
@@ -1947,18 +1955,21 @@ func crew_job_accept_definition(definition_id: String) -> Dictionary:
 	var payload := JsonCoerceScript._copy_dict(definition.get("payload", {}))
 	var kind := str(definition.get("kind", ""))
 	if kind in ["package_run", "package_delivery", "numbers_route", "lookout_hold", "collection"]:
-		var spec := payload.duplicate(true)
+		var spec := JsonCoerceScript._copy_dict(preview.get("spec", payload))
 		spec["run_id"] = "crew_job:%s" % job_id
 		spec["job_id"] = "" if kind == "collection" else job_id
 		spec["deadline_actions"] = int(definition.get("expiry_in_actions", 1))
-		spec["consumer_payload"] = {"success": {"cash": 0, "heat": 0}, "failure": {"cash": 0, "heat": 0}}
+		var consumer := JsonCoerceScript._copy_dict(spec.get("consumer_payload", {}))
+		consumer.merge({"success": {"cash": 0, "heat": 0}, "failure": {"cash": 0, "heat": 0}}, true)
+		spec["consumer_payload"] = consumer
 		var started = _run.delivery_begin_multi_stop(spec) if kind == "numbers_route" else _run.delivery_begin_hold(spec) if kind == "lookout_hold" else _run.delivery_begin_package(spec)
 		if not bool(started.get("ok", false)):
 			_run.job_resolve(job_id, "failed", _crew_job_host_capability)
 			return started
 		if kind == "collection":
 			_run.active_delivery_run["run_id"] = "crew_collection:%s" % job_id
-		return {"ok": true, "job_id": job_id, "kind": kind, "delivery": started, "message": "The real-map route is marked."}
+		if is_package: _run.narrative_flags["crew_package_next_offer_clock"] = _run.game_clock_minutes + _run.CREW_PACKAGE_OFFER_COOLDOWN_MINUTES
+		return {"ok": true, "job_id": job_id, "kind": kind, "delivery": started, "message": str(started.get("message", "The real-map route is marked."))}
 	if kind == "stake_horse":
 		var stake := maxi(1, int(payload.get("crew_stake", 1)))
 		payload["session_net"] = 0

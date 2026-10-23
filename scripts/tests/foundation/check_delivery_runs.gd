@@ -416,7 +416,7 @@ func _check_crew_package_player_flow(failures: Array) -> void:
 		top_ids.append(str((action_value as Dictionary).get("id", "")))
 	if not bool(started.get("ok", false)) or bool(run_state.narrative_flags.get("crew_favor_pending", true)) \
 			or not run_state.inventory.has("crew_package") or str((snapshot.get("physical", {}) as Dictionary).get("cargo_state", "")) != DeliveryRunModelTestScript.CARGO_CARRIED \
-			or str(snapshot.get("deadline_kind", "")) != DeliveryRunModelTestScript.DEADLINE_CLOCK or int(snapshot.get("deadline_remaining", 0)) != 180 \
+			or str(snapshot.get("deadline_kind", "")) != DeliveryRunModelTestScript.DEADLINE_CLOCK or int(snapshot.get("deadline_remaining", 0)) <= 0 \
 			or str(target.get("contact_label", "")).is_empty() or str(started.get("message", "")).find(str(target.get("contact_label", ""))) < 0 \
 			or str(target_node.get("kind", "")) == "home" or not run_state.delivery_physical_interactions().is_empty() \
 			or not top_ids.has("wait") or not top_ids.has("duck") or not top_ids.has("stash") or not top_ids.has("ditch"):
@@ -452,7 +452,7 @@ func _check_crew_package_player_flow(failures: Array) -> void:
 	if not bool(retrieved.get("ok", false)) or not run_state.inventory.has("crew_package") or not run_state.delivery_physical_interactions().is_empty():
 		failures.append("Retrieving The Package did not return it to inventory and clear the room object.")
 		return
-	var almost_expired := run_state.advance_game_clock_minutes(179)
+	var almost_expired := run_state.advance_game_clock_minutes(int(run_state.active_delivery_run.get("deadline_game_clock_minutes", 0)) - run_state.game_clock_minutes - 1)
 	var expired := run_state.advance_game_clock_minutes(1)
 	if not bool(almost_expired.get("ok", false)) or not bool(expired.get("delivery_resolved", false)) or run_state.delivery_has_active_run() \
 			or run_state.inventory.has("crew_package") or str((run_state.delivery_snapshot().get("resolution", {}) as Dictionary).get("reason", "")) != "deadline":

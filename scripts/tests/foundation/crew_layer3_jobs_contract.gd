@@ -295,7 +295,9 @@ static func _complete_all_handoffs(run: RunState) -> void:
 			break
 		run.world_map["current_node_id"] = pending
 		run.delivery_resolve_travel_arrival()
-		run.delivery_complete_handoff(pending)
+		var window := run.CrewDeliveryScheduleScript.window_for(run.active_delivery_run, pending)
+		if not window.is_empty(): run.advance_game_clock_minutes(int(window.get("opens", 0)) - run.game_clock_minutes)
+		if not bool(run.delivery_complete_handoff(pending).get("ok", false)): break
 
 
 static func _accept_job(run: RunState, definition_id: String) -> Dictionary:

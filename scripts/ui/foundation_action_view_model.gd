@@ -792,8 +792,7 @@ static func eligible_event_option_with_context(host: Variant, event_id: String, 
 	var event_definition = host.library.event(event_id)
 	if event_definition.is_empty():
 		return {}
-	var event_module = EventModule.new()
-	event_module.setup(event_definition, host.library)
+	var event_module: EventModule = host._crew_delivery_event_module(event_definition)
 	var event_environment = environment_override if not environment_override.is_empty() else host.run_state.current_environment
 	if not event_module.can_trigger(host.run_state, event_environment, context):
 		return {}

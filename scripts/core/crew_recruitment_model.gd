@@ -393,6 +393,7 @@ static func _append_member_job_choices(existing: Array, run_state: RunState, mem
 		var job: Dictionary = job_value
 		var definition_id := str(job.get("id", "")).strip_edges()
 		var target_event_id := str(_dict(job.get("payload", {})).get("event_id", "")).strip_edges()
+		if run_state.CrewDeliveryScheduleScript.is_package_kind(str(job.get("kind", ""))) and (run_state.delivery_has_active_run() or not run_state.crew_package_scene_allows_offer()): continue
 		if definition_id.is_empty() or run_state.crew_job_definition_pending(definition_id):
 			continue
 		var offer_line := str(member_definition(member_id).get("job_offer_line", "There is work if you want it."))

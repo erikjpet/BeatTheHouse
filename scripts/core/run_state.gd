@@ -25,6 +25,9 @@ signal money_changed(revision: int)
 signal money_delta_applied(currency: String, amount: int)
 
 const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino_showdown_model.gd")
+const CrewDeliveryScheduleScript := preload("res://scripts/core/crew_delivery_schedule.gd")
+const CREW_PACKAGE_OFFER_COOLDOWN_MINUTES := 360
+
 const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
 const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.gd")
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
@@ -944,8 +947,15 @@ func advance_game_clock_minutes(amount: int) -> Dictionary:
 	var next_day := maxi(1, int(floor(float(next_minutes) / 1440.0)) + 1)
 	var clock_delivery_will_resolve := delivery_has_active_run() \
 		and str(active_delivery_run.get("deadline_kind", DeliveryRunModelScript.DEADLINE_ACTIONS)) == DeliveryRunModelScript.DEADLINE_CLOCK \
-		and int(active_delivery_run.get("deadline_game_clock_minutes", 0)) <= next_minutes
-	var clock_membership_will_change := clock_delivery_will_resolve or next_day > previous_day
+		and CrewDeliveryScheduleScript.next_deadline(active_delivery_run) <= next_minutes
+	var delivery_window_opened := false
+	if delivery_has_active_run():
+		for target in active_delivery_run.get("targets", []):
+			if str(target.get("status", "pending")) == "delivered": continue
+			var window := CrewDeliveryScheduleScript.window_for(active_delivery_run, str(target.get("node_id", "")))
+			if previous_minutes < int(window.get("opens", 0)) and next_minutes >= int(window.get("opens", 0)) and next_minutes < int(window.get("closes", 0)):
+				delivery_window_opened = true
+	var clock_membership_will_change := clock_delivery_will_resolve or delivery_window_opened or next_day > previous_day
 	var rollback_run := to_dict() if clock_membership_will_change else {}
 	game_clock_minutes = next_minutes
 	var delivery_resolved := false
@@ -967,7 +977,7 @@ func advance_game_clock_minutes(amount: int) -> Dictionary:
 			from_dict(rollback_run)
 			return {"ok": false, "applied": false, "errors": JsonCoerceScript._copy_array(membership.get("errors", []))}
 	CharacterOfferModelScript.synchronize(self)
-	return {"ok": true, "applied": true, "delivery_resolved": delivery_resolved, "errors": []}
+	return {"ok": true, "applied": true, "delivery_resolved": delivery_resolved, "delivery_window_opened": delivery_window_opened, "errors": []}
 
 
 # True only during the discovered solo race between a published handle and the
@@ -2302,6 +2312,7 @@ func event_cadence_advance_actions(amount: int = 1) -> void:
 
 # Returns whether a world-initiated event can be queued under the room budget.
 func event_cadence_allows_world_event(event_id: String, trigger_type: String, source: String, event_definition: Dictionary = {}) -> bool:
+	if event_id == "crew_favor_delivery" and not crew_package_solicitation_available(): return false
 	_ensure_event_cadence()
 	var cadence_value: Variant = event_definition.get("cadence", {})
 	var cadence: Dictionary = cadence_value if typeof(cadence_value) == TYPE_DICTIONARY else {}
@@ -10398,9 +10409,9 @@ func crew_job_board_choices(payload: Dictionary = {}) -> Array:
 	return _crew_run_facade.crew_job_board_choices(payload)
 
 
-func crew_job_accept_definition(definition_id: String) -> Dictionary:
+func crew_job_accept_definition(definition_id: String, offered_clock: int = -1) -> Dictionary:
 	_crew_run_facade.bind(self)
-	return _crew_run_facade.crew_job_accept_definition(definition_id)
+	return _crew_run_facade.crew_job_accept_definition(definition_id, offered_clock)
 
 
 # Central game-result seam: a stake horse advances only at its authored venue
@@ -10481,14 +10492,23 @@ func _crew_add_room_event(event_id: String) -> void:
 
 # Starts or declines the Crew favor without changing ordinary travel. The
 # shipped event rewards are applied only after the real in-venue handoff.
-func resolve_crew_favor_delivery_job(choice_id: String, authored_consequences: Dictionary = {}) -> Dictionary:
+func resolve_crew_favor_delivery_job(choice_id: String, authored_consequences: Dictionary = {}, offered_clock: int = -1) -> Dictionary:
+	# Guard before creating a job: a repeated click must not create and fail a
+	# second job, charge trust, or replace the original route.
+	if delivery_has_active_run():
+		return {"ok": false, "message": "Finish your current delivery before taking another package."}
+	if not crew_package_scene_allows_offer(): return {"ok": false, "message": "The Crew waits until this encounter is over."}
+	var preview := delivery_crew_offer("crew_favor_delivery", offered_clock) if choice_id == "run_package" else {}
+	if choice_id == "run_package" and not bool(preview.get("ok", false)): return preview
+	narrative_flags["crew_package_next_offer_clock"] = game_clock_minutes + CREW_PACKAGE_OFFER_COOLDOWN_MINUTES
 	var offered := job_offer(CrewStateModelScript.job_definition("crew_favor_delivery"), _crew_job_host_capability)
 	var job_id := str(offered.get("id", ""))
 	if job_id.is_empty() or job_accept(job_id, _crew_job_host_capability).is_empty() or job_activate(job_id, _crew_job_host_capability).is_empty():
 		return {}
 	if choice_id != "run_package":
 		return job_resolve(job_id, "failed", _crew_job_host_capability)
-	var started := delivery_begin_package({
+	var favor_spec := JsonCoerceScript._copy_dict(preview.get("spec", {}))
+	favor_spec.merge({
 		"run_id": "crew_favor_delivery",
 		"job_id": job_id,
 		"source_event_id": "crew_favor_delivery",
@@ -10500,7 +10520,9 @@ func resolve_crew_favor_delivery_job(choice_id: String, authored_consequences: D
 		"cargo_label": "The Package",
 		"cargo_heat_per_travel": 0,
 		"consumer_payload": _delivery_event_consumer_payload(authored_consequences),
-	})
+	}, true)
+	(favor_spec["consumer_payload"] as Dictionary)["meeting_windows"] = JsonCoerceScript._copy_dict((preview.get("spec", {}) as Dictionary).get("consumer_payload", {})).get("meeting_windows", [])
+	var started := delivery_begin_package(favor_spec)
 	if not bool(started.get("ok", false)):
 		job_resolve(job_id, "failed", _crew_job_host_capability)
 	else:
@@ -10514,6 +10536,32 @@ func resolve_crew_favor_delivery_job(choice_id: String, authored_consequences: D
 func _crew_favor_delivery_is_active() -> bool:
 	_crew_run_facade.bind(self)
 	return _crew_run_facade._crew_favor_delivery_is_active()
+
+
+func crew_package_scene_allows_offer(environment: Dictionary = {}) -> bool:
+	var scene := current_environment if environment.is_empty() else environment
+	if is_terminal() or is_tutorial_run() or bool(scene.get("environment_test", false)): return false
+	# Use the encounter owners' existing state, including pre-duel walk/pat-down
+	# and interrogation, rather than only hiding the final duel's popup.
+	if bool(narrative_flags.get("grand_casino_showdown_active", false)) or bool(narrative_flags.get("grand_casino_showdown_pending", false)) or grand_casino_duel_active(scene): return false
+	if closing_time_active(): return false
+	if str(crew_heist_state.get("status", "")) in ["setup", "play", "interview", "getaway"]: return false
+	if not active_triggered_event.is_empty() and str(active_triggered_event.get("event_id", "")) != "crew_favor_delivery": return false
+	return true
+
+
+func crew_package_solicitation_available(environment: Dictionary = {}) -> bool:
+	return not delivery_has_active_run() and crew_package_scene_allows_offer(environment) and game_clock_minutes >= int(narrative_flags.get("crew_package_next_offer_clock", 0))
+
+
+func delivery_crew_offer(definition_id: String, offered_clock: int = -1) -> Dictionary:
+	_delivery_run_facade.bind(self)
+	return _delivery_run_facade.delivery_crew_offer(definition_id, offered_clock)
+
+
+func delivery_timing_text() -> String:
+	_delivery_run_facade.bind(self)
+	return _delivery_run_facade.delivery_timing_text()
 
 
 func _delivery_event_consumer_payload(consequences: Dictionary) -> Dictionary:
@@ -11137,6 +11185,14 @@ func _apply_delivery_resolution(expected_receipt: Dictionary = {}, materialize_a
 			world_map = rollback_world_map
 			grand_casino_room_states = rollback_room_states
 			return {"ok": false, "errors": ["successful Crew favor delivery could not clear one active favor"]}
+	if not succeeded and reason == "deadline" and str(active_delivery_run.get("mode", "")) in [DeliveryRunModelScript.MODE_PACKAGE, DeliveryRunModelScript.MODE_MULTI_STOP]:
+		var failure_text := "Missed delivery: %s. The package is lost; no payment." % delivery_timing_text()
+		var failed_job := _crew_job(job_id)
+		var configured_failure := JsonCoerceScript._copy_dict(failed_job.get("failure", {}))
+		if not configured_failure.is_empty(): failure_text += " Crew trust %+d; the missed job is recorded." % int(configured_failure.get("trust", 0))
+		if heat > 0: failure_text += " Heat +%d." % heat
+		active_delivery_run["receipt"] = {"failure_message": failure_text}
+		log_story({"type": "delivery_missed_window", "message": failure_text})
 	# Reporting-only counters share this existing, idempotent resolution boundary.
 	# Lookout holds and heist getaways are not package-delivery ledger entries.
 	var reporting_mode := str(active_delivery_run.get("mode", ""))
@@ -11144,7 +11200,7 @@ func _apply_delivery_resolution(expected_receipt: Dictionary = {}, materialize_a
 		var reporting_key := "profile_delivery_runs_completed" if succeeded else "profile_delivery_packages_lost"
 		narrative_flags[reporting_key] = maxi(0, int(narrative_flags.get(reporting_key, 0))) + 1
 	var delivery_receipt := JsonCoerceScript._copy_dict(active_delivery_run.get("receipt", {}))
-	var public_result := {"ok": true, "resolved": true, "message": str(delivery_receipt.get("payment_note", "The package changes hands. Nothing else does.")) if succeeded else ""}
+	var public_result := {"ok": true, "resolved": true, "message": str(delivery_receipt.get("payment_note", "The package changes hands. Nothing else does.")) if succeeded else str(delivery_receipt.get("failure_message", "The delivery failed."))}
 	if not succeeded: public_result["outcome"] = outcome_id
 	if mounted:
 		var checkpointed := DeliveryRunModelScript.commit_closed_checkpoint(active_delivery_run, _world_sequence_delivery_binding(receipt), public_result)
@@ -13759,11 +13815,11 @@ func _tick_recurring_debt_pressure(index: int, debt_data: Dictionary, amount: in
 				"message": "Your brother-in-law calls again. The family version of interest compounds out loud.",
 			})
 		"crew_favor_due":
-			if _crew_favor_delivery_is_active():
+			if delivery_has_active_run():
 				# The debt remains open until delivery resolves, but its recurring
 				# pressure must not reopen the accepted offer over the live route.
 				narrative_flags["crew_favor_pending"] = false
-			else:
+			elif crew_package_solicitation_available():
 				narrative_flags["crew_favor_pending"] = true
 				log_story({
 					"type": "debt_favor_due",
@@ -14061,6 +14117,7 @@ func set_story_flag(flag_id: String, value: Variant = true) -> void:
 # Enqueues a world-acting event for modal resolution.
 func enqueue_triggered_event(event_id: String, source: String = "", context: Dictionary = {}, entry_overrides: Dictionary = {}) -> bool:
 	var normalized_id := event_id.strip_edges()
+	if normalized_id == "crew_favor_delivery" and not crew_package_solicitation_available(): return false
 	if normalized_id.is_empty():
 		return false
 	# Conversations belong to the live run. Event producers can finish their
@@ -14088,6 +14145,8 @@ func enqueue_triggered_event(event_id: String, source: String = "", context: Dic
 	}
 	for key in entry_overrides.keys():
 		entry[str(key)] = entry_overrides[key]
+	if normalized_id == "crew_favor_delivery":
+		narrative_flags["crew_package_next_offer_clock"] = game_clock_minutes + CREW_PACKAGE_OFFER_COOLDOWN_MINUTES
 	pending_triggered_events.append(_normalize_triggered_event_entry(entry))
 	return true
 
@@ -14183,6 +14242,7 @@ func next_pending_talk_event() -> Dictionary:
 				return tutorial_entry
 	for entry_value in pending_triggered_events:
 		var entry := _normalize_triggered_event_entry(entry_value)
+		if str(entry.get("event_id", "")) == "crew_favor_delivery" and (delivery_has_active_run() or not crew_package_scene_allows_offer()): continue
 		if str(entry.get("presentation", "modal")) == "talk":
 			return entry
 	return {}
@@ -14837,6 +14897,8 @@ func world_sequence_checkpoint_delivery_outcome(token: String, node_id: String =
 	var target_id := node_id.strip_edges()
 	if target_id.is_empty(): target_id = current_world_node_id()
 	if not delivery_has_active_run(): return {"ok": false, "errors": ["delivery owner is not active at the terminal handoff"]}
+	if not CrewDeliveryScheduleScript.handoff_open(active_delivery_run, target_id):
+		return {"ok": false, "errors": ["Recipient unavailable now. %s" % delivery_timing_text()]}
 	if target_id != current_world_node_id() or delivery_arrival_interaction().is_empty():
 		return {"ok": false, "errors": ["delivery owner is not present at the terminal handoff"]}
 	var before := JSON.stringify(delivery_snapshot())
@@ -15121,8 +15183,12 @@ func _run_state_schema_restore(data: Dictionary) -> void:
 		narrative_flags[str(story_flag_key)] = story_flags[story_flag_key]
 	# Old or interrupted saves can contain both a live Crew route and the offer
 	# flag. The route is authoritative; suppress the obsolete popup on restore.
-	if _crew_favor_delivery_is_active():
+	if delivery_has_active_run():
 		narrative_flags["crew_favor_pending"] = false
+		for index in range(pending_triggered_events.size() - 1, -1, -1):
+			if str(JsonCoerceScript._copy_dict(pending_triggered_events[index]).get("event_id", "")) == "crew_favor_delivery":
+				pending_triggered_events.remove_at(index)
+		if str(active_triggered_event.get("event_id", "")) == "crew_favor_delivery": active_triggered_event = {}
 	# Repair saves made before Tier-2 casino spawning had an explicit progression
 	# milestone. The visited-node state is already authoritative.
 	_reconcile_tier_two_casino_spawn_eligibility()
@@ -15138,6 +15204,11 @@ func _run_state_schema_restore(data: Dictionary) -> void:
 	# Restore the authoritative clock before synthesizing any missing timeline
 	# sample. Older saves without heat history must not receive a fake Day-1 row.
 	game_clock_minutes = maxi(0, int(data.get("game_clock_minutes", GAME_CLOCK_START_MINUTE)))
+	_delivery_run_facade.bind(self)
+	_delivery_run_facade.delivery_migrate_crew_window()
+	# A queued old call starts a persistent cooldown without issuing another call.
+	if not narrative_flags.has("crew_package_next_offer_clock") and triggered_event_pending("crew_favor_delivery"):
+		narrative_flags["crew_package_next_offer_clock"] = game_clock_minutes + CREW_PACKAGE_OFFER_COOLDOWN_MINUTES
 	heat_history = normalize_heat_history(JsonCoerceScript._copy_array(data.get("heat_history", [])))
 	if heat_history.is_empty():
 		_record_heat_history(not current_environment.is_empty())
