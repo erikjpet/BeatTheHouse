@@ -6659,6 +6659,8 @@ func _poll_async_foundation_save() -> void:
 		var failed_generation := autosave_inflight_generation
 		var result_error: Error = int(result.get("error", FAILED))
 		autosave_inflight_generation = 0
+		if failed_generation == autosave_dirty_generation and _terminal_checkpoint_uses_web_phases():
+			run_state.narrative_flags.erase(TERMINAL_RESUME_CHECKPOINT_FLAG)
 		_record_autosave_failure(
 			result_error,
 			str(result.get("error_code", "async_save_failed")),
@@ -20573,6 +20575,12 @@ func _save_terminal_resume_checkpoint() -> bool:
 	if bool(run_state.narrative_flags.get(TERMINAL_RESUME_CHECKPOINT_FLAG, false)):
 		return true
 	run_state.narrative_flags[TERMINAL_RESUME_CHECKPOINT_FLAG] = true
+	if _terminal_checkpoint_uses_web_phases():
+		# The report can render while the existing no-thread Web save job encodes,
+		# packs and installs on separate frames. Navigation still waits and saves
+		# synchronously through _save_foundation_run_before_leaving.
+		_queue_pending_autosave("Completed run saved.", 1, 0, 0)
+		return true
 	_mark_autosave_dirty()
 	if _write_foundation_run_save("Completed run saved.", true):
 		return true
@@ -20580,6 +20588,13 @@ func _save_terminal_resume_checkpoint() -> bool:
 	# the main-menu transition gets a later chance to write it.
 	run_state.narrative_flags.erase(TERMINAL_RESUME_CHECKPOINT_FLAG)
 	return false
+
+
+func _terminal_checkpoint_uses_web_phases() -> bool:
+	if run_state == null or not OS.has_feature("web") or not OS.has_feature("nothreads"):
+		return false
+	var flags: Dictionary = JsonCoerceScript._copy_dict(run_state.current_environment.get("local_narrative_flags", {}))
+	return str(flags.get("blackjack_boss_variant", "")) == "rourke_duel"
 
 
 func _present_terminal_run_screen() -> void:

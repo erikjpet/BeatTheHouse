@@ -128,6 +128,8 @@ func _run() -> void:
 		_check(replay.has(Authority.HOST_REPLAY_KEY) and committed == _public_snapshot(current, true), "hand %d exactly-once replay" % (hand + 1))
 		host.free()
 		times.append({"hand":hand + 1,"current_usec":current_usec,"legacy_usec":legacy_usec})
+		var evidence := game._blackjack_authority_evidence(current,"play_basic",20)
+		_check(Runtime.canonical_json_native(evidence)==Runtime.canonical_json(evidence), "hand %d compact fingerprint bytes remain identical"%(hand+1))
 	_check(game.world_mutations == 0 and old_game.world_mutations == 0, "every proposal preserves unrelated world storage and mirrors only its proved table")
 	_check(current.is_terminal() and legacy.is_terminal(), "fifth-hand ending reached through both paths")
 	var prior_payload := SaveService._save_payload_result(current.to_save_snapshot(), "rourke_evidence_check")

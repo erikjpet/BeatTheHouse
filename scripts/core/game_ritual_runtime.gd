@@ -287,6 +287,35 @@ static func canonical_json(value: Variant) -> String:
 	return JSON.stringify(_canonical_json_value(value))
 
 
+# Compact provider evidence is normally already JSON-shaped. The native encoder
+# sorts dictionary keys itself; avoid rebuilding that graph in GDScript first.
+# Preserve the historical coercion for non-string keys and unsupported values.
+static func canonical_json_native(value: Variant) -> String:
+	var pending: Array = [value]
+	while not pending.is_empty():
+		var item: Variant = pending.pop_back()
+		match typeof(item):
+			TYPE_NIL, TYPE_BOOL, TYPE_INT, TYPE_STRING:
+				pass
+			TYPE_FLOAT:
+				if not is_finite(item): return canonical_json(value)
+			TYPE_ARRAY:
+				for child in item:
+					var kind := typeof(child)
+					if kind > TYPE_STRING: pending.append(child)
+					elif kind == TYPE_FLOAT and not is_finite(child): return canonical_json(value)
+			TYPE_DICTIONARY:
+				for key in item:
+					if typeof(key) != TYPE_STRING: return canonical_json(value)
+					var child: Variant = item[key]
+					var kind := typeof(child)
+					if kind > TYPE_STRING: pending.append(child)
+					elif kind == TYPE_FLOAT and not is_finite(child): return canonical_json(value)
+			_:
+				return canonical_json(value)
+	return JSON.stringify(value)
+
+
 static func _canonical_json_value(value: Variant) -> Variant:
 	match typeof(value):
 		TYPE_NIL, TYPE_BOOL, TYPE_INT, TYPE_FLOAT, TYPE_STRING:

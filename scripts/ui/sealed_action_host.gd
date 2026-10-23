@@ -122,7 +122,10 @@ func _sealed_action_host_trusted_context(candidate: RunState, stake: int, action
 		if typeof(evidence_value) == TYPE_DICTIONARY:
 			compact_evidence = evidence_value as Dictionary
 	if not compact_evidence.is_empty():
-		canonical_run_fingerprint = GameRitualRuntimeScript.canonical_fingerprint(compact_evidence)
+		var native_json_predicate := StringName(_foundation.action_authority_contract.get("compact_authority_native_json_predicate_method", &""))
+		var native_json: bool = not native_json_predicate.is_empty() and _foundation.current_game.has_method(native_json_predicate) \
+			and bool(_foundation.current_game.call(native_json_predicate, candidate))
+		canonical_run_fingerprint = GameRitualRuntimeScript.canonical_json_native(compact_evidence).sha256_text() if native_json else GameRitualRuntimeScript.canonical_fingerprint(compact_evidence)
 	else:
 		var snapshot := candidate.to_save_snapshot()
 		# These are host presentation caches, not simulation authority. The UI can

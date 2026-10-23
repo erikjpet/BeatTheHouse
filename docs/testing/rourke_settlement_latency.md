@@ -70,3 +70,22 @@ measurements.
 The same native terminal-route diagnostic after this follow-up took about
 195 ms total (168 ms synchronous save, 1 ms report snapshot, 8 ms model, 4 ms
 screen installation), compared with 587 ms before. No save phase was deferred.
+
+A later two-hand trace on `d5c9c568`, under the same 12%/2 GiB limit, recorded
+301.846 ms elapsed / 300.500 ms renderer-thread CPU for the ordinary settlement
+task and 742.809 ms elapsed / 742.344 ms CPU for the terminal task. These are
+synchronous computation costs rather than animation waits or substantial CPU
+throttling. Raw Chromium `dur`/`tdur` events are retained in the task evidence.
+
+The next follow-up opts only Rourke compact evidence into native sorted JSON
+encoding after a JSON-shape check, with the historical coercion path retained.
+Canonical bytes are compared with the old path in 318 focused cases and at all
+five preserved-fixture hand boundaries. Rourke terminal Web checkpoints use the
+existing encode/pack/install phases on separate frames; report navigation still
+drains pending work and writes synchronously before leaving. Failed checkpoint
+installation clears its acknowledgement for retry. Native Web-phase emulation
+covers completion, queued/in-flight navigation, and failure/recovery. Native
+terminal saving and other games retain their existing paths.
+
+The popup-containing descendant startup receipt proves basic startup only. It
+does not visually qualify popup amount accumulation.

@@ -180,6 +180,7 @@ func sealed_action_authority_contract() -> Dictionary:
 		"compact_authority_evidence_method": &"_blackjack_authority_evidence",
 		"compact_authority_evidence_predicate_method": &"_blackjack_compact_authority_allowed",
 		"compact_authority_full_replay_predicate_method": &"_blackjack_full_authority_replay_required",
+		"compact_authority_native_json_predicate_method": &"_blackjack_full_authority_replay_required",
 		"trusted_candidate_structural_replay_match": true,
 		# The current response and its predecessor cover synchronous duplicate input
 		# and automatic recovery. Retaining four complete two-boundary hands made every
