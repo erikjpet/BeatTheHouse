@@ -1132,6 +1132,39 @@
             "lane.public"
           ],
           "occupancy_required": false
+        },
+        {
+          "id": "event.lucky_recruitment",
+          "kind": "event",
+          "pos": [
+            120.0,
+            294.0
+          ],
+          "footprint_class": "standing_person",
+          "physical_role": "Lucky recruitment",
+          "occupant_ids": [
+            "event:recruitment_lucky"
+          ],
+          "runtime_reserve": true,
+          "reserve_reason": "Lucky can visit alongside Dave's traveling encounter and the current Store scenario.",
+          "hit_rect": [
+            84.0,
+            214.0,
+            72.0,
+            80.0
+          ],
+          "label_anchor": [
+            120.0,
+            204.0
+          ],
+          "facing": "front",
+          "priority": 145,
+          "zone_id": "left",
+          "support_id": "floor",
+          "walk_lane_ids": [
+            "lane.public"
+          ],
+          "occupancy_required": false
         }
       ],
       "scenario_slots": [
