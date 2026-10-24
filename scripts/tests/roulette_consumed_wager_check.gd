@@ -101,6 +101,19 @@ func _check_actual_legacy_projection(app: ClockHost) -> void:
 	print("ROULETTE_LEGACY_REBET_DIAGNOSTIC " + JSON.stringify({"message": rebet.get("message")}))
 	_check(int(app.current_game._total_wager((rebet.get("ui_state", {}) as Dictionary).get("roulette_bets", []))) == 9, "Explicit REBET must still recover the actual old save's nine-unit layout.")
 	_check(JSON.stringify(state.to_dict()) == before, "Legacy presentation and command proposal must not mutate saved authority, money or RNG.")
+	# Native cold-clock boundary using the unchanged actual Web save. A fresh
+	# browser's monotonic epoch must not wait to catch up with the old timer.
+	var cold_frame := {"surface_time_msec": 1000, "surface_presentation_time_msec": 1000, "drunk_scaled_surface_time_msec": 1000}
+	var cold_cash := state.bankroll
+	var cold_rng := state.rng_state
+	_check(app.current_game._table_game_host_needs_auto_tick(1000, state, state.current_environment), "A future saved timer must request a non-economic cold-clock reconciliation.")
+	app.current_game.surface_auto_action_command(cold_frame, state, state.current_environment, {})
+	var rebased_table: Dictionary = state.current_environment.get("game_states", {}).get("roulette", {})
+	_check(int(rebased_table.get("table_round_timer_started_msec", 0)) == 1000, "A future saved deadline must restart from the current host clock.")
+	_check(state.bankroll == cold_cash and state.rng_state == cold_rng, "Clock reconciliation must not fund, resolve, pay or advance RNG.")
+	var due_frame := {"surface_time_msec": 42000, "surface_presentation_time_msec": 42000, "drunk_scaled_surface_time_msec": 42000}
+	var due: Dictionary = app.current_game.surface_auto_action_command(due_frame, state, state.current_environment, {})
+	_check(bool(due.get("direct_resolve", false)) and bool((due.get("ui_state", {}) as Dictionary).get("roulette_sit_out", false)), "The rebased automatic deadline must produce an ordinary unwagered round.")
 
 func _pending_total(app: ClockHost) -> int:
 	var table: Dictionary = app.run_state.current_environment.get("game_states", {}).get("roulette", {})

@@ -680,6 +680,8 @@ func _table_game_host_needs_auto_tick(surface_time_msec: int, _run_state: RunSta
 	var elapsed_msec := surface_time_msec - int((last_result_value as Dictionary).get("resolved_at_msec", 0))
 	var reveal_end_msec := SPIN_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC + ROULETTE_RESULT_REVEAL_MSEC
 	var timer_started_msec := int(table.get("table_round_timer_started_msec", 0))
+	if timer_started_msec > surface_time_msec:
+		return true
 	var timer_due := timer_started_msec != 0 and maxi(0, surface_time_msec - timer_started_msec) >= ROULETTE_ROUND_DELAY_MSEC
 	if elapsed_msec >= 0 and elapsed_msec < reveal_end_msec and not timer_due:
 		return false
@@ -693,6 +695,12 @@ func surface_auto_action_command(ui_state: Dictionary, run_state: RunState, envi
 	var session := _normalized_session(run_state, environment, ui_state, table)
 	var now_msec := _surface_time_msec_for_result(ui_state, _last_result_source(table))
 	var timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next spin", ROULETTE_ROUND_DELAY_MSEC)
+	# A restored browser has a new monotonic epoch. Rebase a future saved
+	# deadline through this existing candidate boundary, without buying a spin.
+	if int(table.get("table_round_timer_started_msec", 0)) > now_msec:
+		GameModule.reset_table_round_timer(table, now_msec)
+		_update_environment_table(environment, table)
+		return {"handled": false}
 	if _roulette_motion_active(table, now_msec) and not bool(timer.get("due", false)):
 		return {"handled": false}
 	if bool(table.get("table_barred", false)):
