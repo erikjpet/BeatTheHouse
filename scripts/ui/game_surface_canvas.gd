@@ -1101,6 +1101,12 @@ func _ready() -> void:
 
 
 func _gui_input(event: InputEvent) -> void:
+	# This canvas handles physical mouse and touch itself. Godot also emits a
+	# marked copy for the other pointer API; a slow action can delay that copy
+	# past the time heuristic and otherwise buy twice or end capture early.
+	if event.device == InputEvent.DEVICE_ID_EMULATION and (event is InputEventMouse or event is InputEventScreenTouch or event is InputEventScreenDrag):
+		accept_event()
+		return
 	if event is InputEventKey or event is InputEventJoypadButton:
 		if event is InputEventKey and (event as InputEventKey).echo:
 			return
