@@ -1749,7 +1749,7 @@ func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 		arrival_mouse_release_pending = physical_room_mouse_down
 		arrival_touch_releases_pending = active_room_touches.duplicate()
 		arrival_hover_requires_motion = true
-		arrival_pointer_position = get_global_mouse_position()
+		arrival_pointer_position = get_global_mouse_position() if is_inside_tree() else Vector2.ZERO
 	if not selected_object_id.is_empty() and _scene_object(selected_object_id).is_empty():
 		selected_object_id = ""
 	if not hovered_object_id.is_empty() and _scene_object(hovered_object_id).is_empty():

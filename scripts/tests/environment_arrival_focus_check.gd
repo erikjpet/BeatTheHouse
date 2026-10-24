@@ -23,8 +23,9 @@ func _snapshot() -> Dictionary:
 func _canvas() -> PixelSceneCanvas:
 	var canvas := Canvas.new()
 	canvas.size = Vector2(1280, 720)
-	root.add_child(canvas)
+	# Production may install the first snapshot before attaching its viewport.
 	canvas.render_environment_snapshot(_snapshot())
+	root.add_child(canvas)
 	return canvas
 
 func _run() -> void:
