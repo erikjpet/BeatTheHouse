@@ -8,6 +8,7 @@ const INACTIVE_CASINO_STORAGE_PREFIX := "casino-room::"
 const RunStateSchemaScript := preload("res://scripts/core/run_state_schema.gd")
 const CrewRunFacadeScript := preload("res://scripts/core/crew_run_facade.gd")
 const GrandCasinoRunFacadeScript := preload("res://scripts/core/grand_casino_run_facade.gd")
+const CrapsRulesScript := preload("res://scripts/games/craps/craps_rules.gd")
 const DeliveryRunFacadeScript := preload("res://scripts/core/delivery_run_facade.gd")
 
 # Source of truth for one active run: deterministic RNG/time, economy, Heat,
@@ -5874,6 +5875,32 @@ func grand_casino_total_money() -> int:
 
 func has_liquid_run_funds() -> bool:
 	return bankroll > 0 or (_is_grand_casino_environment(current_environment) and grand_casino_chips > 0)
+
+
+func has_working_craps_wagers() -> bool:
+	if _environment_has_working_craps_wagers(current_environment):
+		return true
+	if not _is_grand_casino_environment(current_environment):
+		return false
+	var current_room_id := str(current_environment.get("archetype_id", current_environment.get("id", "")))
+	for room_id in grand_casino_room_states:
+		# The live environment owns its current bets; its cached entry can be older.
+		if str(room_id) == current_room_id:
+			continue
+		var room_value: Variant = grand_casino_room_states.get(room_id)
+		if typeof(room_value) == TYPE_DICTIONARY and _environment_has_working_craps_wagers(room_value):
+			return true
+	return false
+
+
+func _environment_has_working_craps_wagers(environment: Dictionary) -> bool:
+	var states_value: Variant = environment.get("game_states", {})
+	if typeof(states_value) != TYPE_DICTIONARY:
+		return false
+	var table_value: Variant = (states_value as Dictionary).get("craps", {})
+	if typeof(table_value) != TYPE_DICTIONARY:
+		return false
+	return CrapsRulesScript.working_wager_total((table_value as Dictionary).get("working_bets", {})) > 0
 
 
 func grand_casino_chip_exchange_rate() -> int:
@@ -12667,11 +12694,12 @@ func recovery_pressure_status(recovery_available: bool = false, bankroll_zero_de
 			"terminal": true,
 			"reason": run_failure_reason,
 		}
-	if not has_liquid_run_funds() and bankroll_zero_deferred:
+	var working_craps_wagers := has_working_craps_wagers()
+	if not has_liquid_run_funds() and (bankroll_zero_deferred or working_craps_wagers):
 		return {
 			"state": "recovery",
-			"title": "All-in result pending",
-			"summary": "Your last wager is still resolving.",
+			"title": "Wagers still on the table" if working_craps_wagers else "All-in result pending",
+			"summary": "Your working craps wagers can still be resolved." if working_craps_wagers else "Your last wager is still resolving.",
 			"failed": false,
 			"recovery_available": true,
 			"terminal": false,
@@ -14767,7 +14795,7 @@ func _evaluate_immediate_terminal_state(defer_bankroll_zero: bool = false) -> vo
 			return
 		fail_run(FAILURE_POLICE_CAPTURE, POLICE_CAPTURE_FAILURE_MESSAGE)
 		return
-	if not has_liquid_run_funds() and not defer_bankroll_zero and not closing_time_forced_travel_required():
+	if not has_liquid_run_funds() and not defer_bankroll_zero and not closing_time_forced_travel_required() and not has_working_craps_wagers():
 		fail_run(FAILURE_BANKROLL_ZERO, BANKROLL_ZERO_FAILURE_MESSAGE)
 
 
@@ -17217,7 +17245,7 @@ func _refresh_economy(defer_bankroll_zero: bool = false) -> void:
 		return
 	var economy_balance := bankroll + grand_casino_chips if _is_grand_casino_environment(current_environment) else bankroll
 	if economy_balance <= 0:
-		if defer_bankroll_zero or closing_time_forced_travel_required():
+		if defer_bankroll_zero or closing_time_forced_travel_required() or has_working_craps_wagers():
 			bankroll = 0
 			economic_state = "insolvent"
 			return

@@ -36,6 +36,15 @@ static func pending_wager_total(pending_value: Variant) -> int:
 	return total
 
 
+static func working_wager_total(value: Variant) -> int:
+	var working := _dict(value)
+	var total := maxi(0, int(working.get("pass_line", 0))) + maxi(0, int(working.get("dont_pass", 0))) + maxi(0, int(working.get("pass_odds", 0))) + maxi(0, int(working.get("dont_pass_odds", 0)))
+	for group_key in ["come", "dont_come", "come_odds", "dont_come_odds", "place", "buy", "lay", "hardways", "big"]:
+		for stake_value in _dict(working.get(group_key, {})).values():
+			total += maxi(0, int(stake_value))
+	return total
+
+
 static func can_place_bet(bet_id: String, amount: int, table: Dictionary, pending: Dictionary, rules: Dictionary) -> Dictionary:
 	if amount <= 0:
 		return {"ok": false, "message": "Select a chip before placing that wager."}

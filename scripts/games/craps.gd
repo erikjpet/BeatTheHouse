@@ -1863,12 +1863,7 @@ func _street_disperse_reason(run_state: RunState, environment: Dictionary, heat_
 
 
 func _working_wager_total(value: Variant) -> int:
-	var working := _dict(value)
-	var total := maxi(0, int(working.get("pass_line", 0))) + maxi(0, int(working.get("dont_pass", 0))) + maxi(0, int(working.get("pass_odds", 0))) + maxi(0, int(working.get("dont_pass_odds", 0)))
-	for group_key in ["come", "dont_come", "come_odds", "dont_come_odds", "place", "buy", "lay", "hardways", "big"]:
-		for stake_value in _dict(working.get(group_key, {})).values():
-			total += maxi(0, int(stake_value))
-	return total
+	return CrapsRulesScript.working_wager_total(value)
 
 
 func _mark_street_dispersed(table: Dictionary, reason: String) -> void:

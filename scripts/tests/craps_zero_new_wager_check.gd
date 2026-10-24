@@ -83,10 +83,20 @@ func _run() -> void:
 	_check(app.load_foundation_run() and app.enter_game("craps"), "The saved point must remain usable for another isolated boundary case.")
 	app.run_state.bankroll = 0
 	app.run_state.grand_casino_chips = 0
+	app.run_state._refresh_economy()
+	_check(not app.run_state.is_terminal(), "Paid working wagers must defer a zero-liquid-funds failure.")
 	app.test_msec += 10000
 	_sample(app)
 	app._on_game_surface_action("craps_throw", 0)
 	_check(bool(app.last_game_result.get("ok", false)) and int(app.last_game_result.get("craps_total_wager", -1)) == 0, "An existing point must remain rollable with zero spendable funds.")
+	_check(not app.run_state.is_terminal(), "The deterministic non-settling continuation must keep the working wager alive.")
+	var saved_cash := app.run_state.bankroll
+	var saved_chips := app.run_state.grand_casino_chips
+	var saved_rng := app.run_state.rng_state
+	app.autosave_slot_id = "craps-working-zero-liquid"
+	_check(app.save_service.save_run(app.run_state, app.autosave_slot_id) == OK, "A zero-liquid-funds run with working stakes must save.")
+	_check(app.load_foundation_run(), "Continue must restore the zero-liquid-funds working stake.")
+	_check(not app.run_state.is_terminal() and app.run_state.bankroll == saved_cash and app.run_state.grand_casino_chips == saved_chips and app.run_state.rng_state == saved_rng, "Continue must preserve active status, money and RNG without replaying the stake.")
 	_finish(app)
 
 func _answer_table(app: ClockHost) -> void:
