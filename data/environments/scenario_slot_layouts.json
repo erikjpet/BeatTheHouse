@@ -42,7 +42,7 @@
     "small_underground_casino:club"
   ],
   "layout_count": 55,
-  "scenario_slot_count": 604,
+  "scenario_slot_count": 605,
   "layouts": [
     {
       "layout_id": "back_alley::back_alley_cruiser_parked",
@@ -36191,7 +36191,6 @@
           "scenario_role": "floor_fixture",
           "scenario_ordinal": 3,
           "scenario_position_keys": [
-            "punchline_open_mic_night_signup_lectern|punchline_open_mic_lectern_work_1|center|",
             "punchline_open_mic_night_signup_lectern||center|"
           ],
           "scenario_object_ids": [
@@ -36511,6 +36510,56 @@
           "source_slot_id": "scenario.surface_item_1",
           "source_slot_family": "scenario",
           "provisional_geometry": true
+        },
+        {
+          "id": "scenario.local_floor_fixture_4",
+          "kind": "scenario",
+          "pos": [
+            372.0,
+            304.0
+          ],
+          "footprint_class": "floor_fixture",
+          "physical_role": "Open-mic signup lectern",
+          "occupant_ids": [
+            "scenario::punchline_open_mic_night_signup_lectern"
+          ],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [
+            326.0,
+            240.0,
+            92.0,
+            64.0
+          ],
+          "label_anchor": [
+            372.0,
+            234.0
+          ],
+          "facing": "none",
+          "priority": 11,
+          "zone_id": "room",
+          "support_id": "floor",
+          "walk_lane_ids": [],
+          "occupancy_required": false,
+          "scenario_occupant_labels": [
+            "Open-mic signup lectern"
+          ],
+          "scenario_zone_ids": [
+            "center"
+          ],
+          "scenario_id": "punchline_open_mic_night",
+          "scenario_instance": true,
+          "scenario_role": "floor_fixture",
+          "scenario_ordinal": 4,
+          "scenario_position_keys": [
+            "punchline_open_mic_night_signup_lectern|punchline_open_mic_lectern_work_1|center|"
+          ],
+          "scenario_object_ids": [
+            "scenario::punchline_open_mic_night_signup_lectern"
+          ],
+          "source_slot_id": "scenario.floor_fixture_3",
+          "source_slot_family": "scenario",
+          "provisional_geometry": false
         }
       ],
       "scenario_instance_slot_ids": {
@@ -36531,7 +36580,7 @@
         "punchline_open_mic_night_safe_exit": "scenario.local_doorway_1",
         "punchline_open_mic_night_safe_exit|punchline_headliner_door_guard|exit_lane|": "scenario.local_doorway_1",
         "punchline_open_mic_night_signup_lectern": "scenario.local_floor_fixture_3",
-        "punchline_open_mic_night_signup_lectern|punchline_open_mic_lectern_work_1|center|": "scenario.local_floor_fixture_3",
+        "punchline_open_mic_night_signup_lectern|punchline_open_mic_lectern_work_1|center|": "scenario.local_floor_fixture_4",
         "punchline_open_mic_night_signup_lectern||center|": "scenario.local_floor_fixture_3",
         "punchline_open_mic_night_stage_steps": "scenario.local_floor_fixture_2",
         "punchline_open_mic_night_stage_steps||background|": "scenario.local_floor_fixture_2",
@@ -36569,12 +36618,12 @@
       "actor_routes": [],
       "audit": {
         "snapshot_count": 30,
-        "slot_count": 10,
+        "slot_count": 11,
         "semantic_position_count": 13,
-        "reused_semantic_position_count": 3,
+        "reused_semantic_position_count": 2,
         "slots_by_class": {
           "doorway": 1,
-          "floor_fixture": 3,
+          "floor_fixture": 4,
           "ground_marker": 1,
           "standing_person": 3,
           "surface_item": 2
