@@ -89,6 +89,7 @@ var lifecycle_protected_attention_tweens: Array[Tween] = []
 var lifecycle_attention_checkpoints: Dictionary = {}
 var lifecycle_attention_checkpoint_counter := 0
 var tutorial_input_owner: Control
+var dismiss_pointer_active := false
 
 
 func _ready() -> void:
@@ -436,8 +437,31 @@ func set_tutorial_input_owner(owner: Control) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if _consume_blocked_pointer_input(event):
+	if _consume_dismiss_pointer_input(event) or _consume_blocked_pointer_input(event):
 		get_viewport().set_input_as_handled()
+
+
+func _consume_dismiss_pointer_input(event: InputEvent) -> bool:
+	if not (event is InputEventMouseButton) or (event as InputEventMouseButton).button_index != MOUSE_BUTTON_LEFT:
+		return false
+	var pointer := event as InputEventMouseButton
+	var over_dismiss := visible and not active_lesson.is_empty() \
+		and panel != null and panel.is_visible_in_tree() \
+		and ok_button != null and ok_button.is_visible_in_tree() \
+		and panel.get_global_rect().has_point(pointer.position) \
+		and ok_button.get_global_rect().has_point(pointer.position)
+	# A later modal may own GUI picking even while our z_index draws Skip tip
+	# above it. Own this visible button's complete gesture before GUI dispatch,
+	# so dismiss cannot press a covered menu action (including Abandon Run).
+	if pointer.pressed:
+		dismiss_pointer_active = over_dismiss
+		return dismiss_pointer_active
+	if not dismiss_pointer_active:
+		return false
+	dismiss_pointer_active = false
+	if over_dismiss:
+		_on_ok_pressed()
+	return true
 
 
 func _consume_blocked_pointer_input(event: InputEvent) -> bool:
