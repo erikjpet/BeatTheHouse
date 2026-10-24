@@ -5,10 +5,18 @@ const Catalog := preload("res://scripts/games/slots/slot_catalog.gd")
 
 class Surface extends RefCounted:
 	var labels: Array[String] = []
-	func draw_rect(_rect: Rect2, _color: Color, _filled: bool = true, _width: float = -1.0) -> void:
-		pass
+	var rectangles: Array[Rect2] = []
+	var circles: Array[Vector2] = []
+	var circle_colors: Array[Color] = []
+	func draw_rect(rect: Rect2, _color: Color, _filled: bool = true, _width: float = -1.0) -> void:
+		rectangles.append(rect)
 	func surface_label(text: String, _position: Vector2, _size: int, _color: Color) -> void:
 		labels.append(text)
+	func surface_label_centered(text: String, _rect: Rect2, _size: int, _color: Color) -> void:
+		labels.append(text)
+	func draw_circle(position: Vector2, _radius: float, color: Color) -> void:
+		circles.append(position)
+		circle_colors.append(color)
 
 class CapturedRenderer extends Renderer:
 	var previews := 0
@@ -25,6 +33,30 @@ func _init() -> void:
 	var renderer := CapturedRenderer.new()
 	var catalog := Catalog.new()
 	var surface := Surface.new()
+	var actual_renderer := Renderer.new()
+	for format_id in ["classic_3_reel", "line_5x3"]:
+		var skin: Dictionary = catalog.skin_for_machine({"type_id": "pinball", "format_id": format_id}, {})
+		var preview_rect: Rect2 = actual_renderer._rect_from_dict(skin.playfield_rect)
+		var result_rect: Rect2 = actual_renderer._rect_from_dict(skin.result_strip)
+		for bonus in [{}, {"active": false, "complete": true, "mode": "full_table", "feature_total": 8}]:
+			var state := {"slot_type_id": "pinball", "slot_skin": skin, "slot_active_bonus": bonus, "bankroll": 118, "rng_state": 12345}
+			var original := JSON.stringify(state)
+			var idle_surface := Surface.new()
+			actual_renderer._draw_feature_area(idle_surface, state, {}, skin, Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE, 0, 2000, 0)
+			_check(idle_surface.labels == [str(skin.feature_name).to_upper()], "Idle/completed %s must show its cabinet title without live counters or a fallback callout." % format_id)
+			var clear_of_result := true
+			for drawn_rect in idle_surface.rectangles:
+				clear_of_result = clear_of_result and preview_rect.encloses(drawn_rect) and not drawn_rect.intersects(result_rect)
+			_check(clear_of_result, "Idle/completed %s preview drawing must stay inside its area and clear of the result strip." % format_id)
+			var later_surface := Surface.new()
+			actual_renderer._draw_feature_area(later_surface, state, {}, skin, Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE, 1, 2100, 0)
+			_check(not idle_surface.circles.is_empty() and idle_surface.circle_colors != later_surface.circle_colors, "Separate idle %s preview must retain autonomous attract animation." % format_id)
+			_check(JSON.stringify(state) == original, "Idle preview must not mutate money, RNG or completed bonus state.")
+	var lane_skin: Dictionary = catalog.skin_for_machine({"type_id": "pinball", "format_id": "line_5x3"}, {})
+	for bonus in [{"active": true, "mode": "lane_multiball"}, {"active": true, "complete": true, "visual_replay": true, "animation_duration_msec": 1000, "mode": "lane_multiball"}]:
+		var live_surface := Surface.new()
+		actual_renderer._draw_pinball_playfield(live_surface, Rect2(0, 0, 900, 600), {"slot_skin": lane_skin}, bonus, Color.WHITE, Color.WHITE, Color.WHITE, 0, 600)
+		_check(live_surface.labels.has("LEFT 0  LIVE 0") and live_surface.labels.has("DROP AND CASCADE"), "Live and completed visual replay must retain their existing playfield HUD.")
 	for format_id in ["classic_3_reel", "line_5x3", "video_feature"]:
 		var skin: Dictionary = catalog.skin_for_machine({"type_id": "pinball", "format_id": format_id}, {})
 		for bonus in [{}, {"active": false, "complete": true, "mode": "full_table", "feature_total": 8}]:

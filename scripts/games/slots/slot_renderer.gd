@@ -1134,6 +1134,12 @@ func _draw_feature_area(surface, state: Dictionary, definition: Dictionary, skin
 	var panel_shows_ready := not bool(active.get("active", false)) or bool(active.get("complete", false))
 	if panel_shows_ready and rect.intersects(_rect_from_dict(skin.get("feature_panel", {}))):
 		return
+	if family == "pinball" and not _pinball_live_feature_active(active) and not _pinball_visual_replay_active(active, feature_msec):
+		var result_rect := _rect_from_dict(skin.get("result_strip", {}))
+		if rect.intersects(result_rect):
+			rect.size.y = maxf(0.0, result_rect.position.y - rect.position.y - 4.0)
+		if rect.size.y <= 0.0:
+			return
 	surface.draw_rect(rect, Color(0.0, 0.0, 0.0, 0.34))
 	surface.draw_rect(rect, Color(glass.r, glass.g, glass.b, 0.18), false, 1)
 	if family == "pinball":
@@ -1245,6 +1251,19 @@ func _draw_pinball_playfield(surface, rect: Rect2, state: Dictionary, active: Di
 	var recent_ids: Dictionary = _pinball_recent_event_ids(events, playback_sec, 0.24)
 	var live_feature_active := _pinball_live_feature_active(active)
 	var feature_active := live_feature_active or _pinball_visual_replay_active(active, feature_msec)
+	if not feature_active:
+		var skin: Dictionary = _read_dict(state.get("slot_skin", {}))
+		var preview_rect := rect.grow(-8)
+		surface.draw_rect(preview_rect, Color("#08101a"))
+		surface.draw_rect(preview_rect, Color(light.r, light.g, light.b, 0.18), false, 2)
+		var title_rect := preview_rect.grow(-8)
+		title_rect.size.y -= 10.0
+		surface.surface_label_centered(str(skin.get("feature_name", "PINBALL")).to_upper(), title_rect, 14, light)
+		for x in range(32):
+			var lit := posmod(bucket + x, 5) == 0
+			var lamp := preview_rect.position + Vector2(10.0 + x * (preview_rect.size.x - 20.0) / 31.0, preview_rect.size.y - 7.0)
+			surface.draw_circle(lamp, 1.8, Color(trim.r, trim.g, trim.b, 0.68 if lit else 0.18))
+		return
 	var trajectory: Array = []
 	var positions: Array = []
 	if feature_active:
