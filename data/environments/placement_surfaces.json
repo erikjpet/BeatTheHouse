@@ -19218,6 +19218,39 @@
             "lane.public"
           ],
           "occupancy_required": false
+        },
+        {
+          "id": "event.sal_address_note",
+          "kind": "event",
+          "pos": [
+            128.0,
+            308.0
+          ],
+          "footprint_class": "surface_item",
+          "physical_role": "Sal address note",
+          "occupant_ids": [
+            "event:chain06_sal_trail_one",
+            "event:chain06_sal_trail_two",
+            "event:chain06_sal_trail_three"
+          ],
+          "runtime_reserve": true,
+          "reserve_reason": "A carried Sal estate map can place one address note alongside the current Lounge scenario.",
+          "hit_rect": [
+            106.0,
+            264.0,
+            44.0,
+            44.0
+          ],
+          "label_anchor": [
+            128.0,
+            254.0
+          ],
+          "facing": "none",
+          "priority": 30,
+          "zone_id": "left",
+          "support_id": "floor_table_left",
+          "walk_lane_ids": [],
+          "occupancy_required": false
         }
       ],
       "scenario_slots": [
