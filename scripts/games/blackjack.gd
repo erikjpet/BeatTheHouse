@@ -3683,6 +3683,10 @@ func _draw_hand_state_badge(surface, pos: Vector2, hand: Dictionary, active: boo
 
 func _draw_blackjack_table_notice(surface, surface_state: Dictionary) -> void:
 	var notice := str(surface_state.get("table_notice", ""))
+	# The final summary also contains dealer totals and settlement amounts.
+	# Keep this secondary copy behind the result board's existing reveal gate.
+	if _settlement_reveal_waiting(surface, surface_state):
+		notice = "Cards still moving; settlement follows."
 	if notice.is_empty():
 		notice = str(surface_state.get("active_hand_status", ""))
 	if notice.is_empty():
