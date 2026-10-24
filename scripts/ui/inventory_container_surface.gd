@@ -1037,6 +1037,7 @@ func _change_container(delta: int) -> void:
 		_reconcile_selection_in_active_container()
 	_render_active_container()
 	container_changed.emit(active_container_key())
+	slot_selected.emit(_selected_key)
 
 
 func _reconcile_selection(previous_hint: Dictionary = {}) -> void:

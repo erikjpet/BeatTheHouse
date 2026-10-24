@@ -1,6 +1,7 @@
 extends SceneTree
 
 const SurfaceScript := preload("res://scripts/ui/inventory_container_surface.gd")
+const MetaScreenScript := preload("res://scripts/ui/meta_item_interaction_screen.gd")
 var failures: Array[String] = []
 var checks := 0
 var confirmed := 0
@@ -47,6 +48,7 @@ func _run() -> void:
 		_check(next_button.visible and previous_button.visible, "An empty carried container hides the ticket switcher.")
 		surface.queue_free()
 		await process_frame
+	await _check_parent_detail()
 	if failures.is_empty(): print("INVENTORY_CARD_CONTAINER_NAVIGATION PASS checks=%d desktop_and_compact=true model_unchanged=true no_item_confirmation=true" % checks)
 	else:
 		for failure in failures: push_error(failure)
@@ -57,6 +59,45 @@ func _container(key: String, title: String, count: int) -> Dictionary:
 	for index in range(count):
 		slots.append({"slot_index": index, "occupied": true, "selection_key": "%s:%d" % [key, index], "item": {"id": "%s_%d" % [key, index], "display_name": "%s %d" % [title, index]}})
 	return {"key": key, "container_type": "loose_carry", "display_name": title, "capacity": 0, "slots": slots}
+
+func _check_parent_detail() -> void:
+	var screen := MetaScreenScript.new()
+	root.add_child(screen)
+	screen.configure(Callable())
+	var carried := _container("carried", "Carried Items", 1)
+	var tickets := _container("tickets", "Pawn Tickets", 1)
+	var backpack: Dictionary = carried.slots[0].item
+	backpack.merge({"selection_key": "carried:0", "display_name": "Backpack", "actions": [{"id": "pawn", "label": "Pawn for $28", "enabled": true}]}, true)
+	var ticket: Dictionary = tickets.slots[0].item
+	ticket.merge({"selection_key": "tickets:0", "display_name": "Timing Bracelet", "actions": [{"id": "redeem", "label": "Redeem for $25", "enabled": true}]}, true)
+	var selections: Array = []
+	var actions: Array = []
+	screen.selection_changed.connect(func(key: String): selections.append(key))
+	screen.action_requested.connect(func(id: String, _payload: Dictionary): actions.append(id))
+	screen.open({"title": "Pawn Counter", "layout": {"presentation": "grouped_card_grid"}, "items": [backpack, ticket], "containers": [carried, tickets], "selected_key": "carried:0"})
+	await process_frame
+	var surface: InventoryContainerSurface = screen.get("_surface")
+	_check(_detail_text(screen).contains("Pawn for $28"), "Parent fixture did not start on the Backpack quote.")
+	(surface.get("_next_button") as Button).pressed.emit()
+	await process_frame
+	var detail := _detail_text(screen)
+	_check(detail.contains("Timing Bracelet") and detail.contains("Redeem for $25") and not detail.contains("Pawn for $28"), "Container navigation left the previous item's quote in the parent detail pane.")
+	_check(selections == ["tickets:0"], "Container navigation did not publish exactly one selection intent.")
+	_check(actions.is_empty(), "Container navigation submitted a financial action.")
+	(surface.get("_previous_button") as Button).pressed.emit()
+	await process_frame
+	_check(_detail_text(screen).contains("Backpack") and _detail_text(screen).contains("Pawn for $28"), "Previous did not restore the carried item's detail.")
+	screen.queue_free()
+	await process_frame
+
+func _detail_text(screen: Control) -> String:
+	var text := ""
+	var pending: Array = [screen.get("_detail_box")]
+	while not pending.is_empty():
+		var node: Node = pending.pop_back()
+		if node is Label or node is Button: text += str(node.get("text")) + "\n"
+		pending.append_array(node.get_children())
+	return text
 
 func _check(condition: bool, message: String) -> void:
 	checks += 1
