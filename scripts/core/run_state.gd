@@ -11388,6 +11388,9 @@ func _travel_route_cost(route_data: Dictionary) -> int:
 	if tutorial_override >= 0:
 		return tutorial_override
 	var base_cost := maxi(0, int(route_data.get("cost", 0)))
+	# Interior admission charges retain their authored price across travel modifiers.
+	if bool(route_data.get("local_casino_room", false)):
+		return base_cost
 	if _travel_route_is_walk(route_data):
 		return 0
 	var current_archetype_id := str(current_environment.get("archetype_id", current_environment.get("id", ""))).strip_edges()
