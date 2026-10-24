@@ -516,11 +516,15 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 
 
 func _throw_resolve_command(session: Dictionary, pending: Dictionary, direct: bool = false) -> Dictionary:
+	# An empty staged set is an explicit zero-new-wager throw, even when the
+	# host retains a positive chip selection for placing the next wager.
+	session["craps_pending_bets"] = pending
 	var command := {
 		"ui_state": session,
 		"action_id": "roll_craps",
 		"action_kind": "legal",
 		"set_stake": CrapsRulesScript.pending_wager_total(pending),
+		"skip_stake_validation": pending.is_empty(),
 		"preserve_surface_ui_state": true,
 		"surface_audio_cue": "dice_roll",
 	}
@@ -545,7 +549,7 @@ func wager_cost_for_context(action_id: String, stake: int, _run_state: RunState,
 	if action_id in ["take_down_craps_bet", "pass_craps_dice"]:
 		return 0
 	var pending_total := CrapsRulesScript.pending_wager_total(ui_state.get("craps_pending_bets", {}))
-	return pending_total if pending_total > 0 else maxi(0, stake)
+	return pending_total if ui_state.has("craps_pending_bets") else maxi(0, stake)
 
 
 func resolve(action_id: String, stake: int, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
@@ -566,7 +570,7 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	if street and bool(table.get("street_dispersed", false)):
 		return _empty_result(action_id, stake, environment, "The chalk ring is empty for the rest of tonight.")
 	var pending := _pending_bets(ui_state.get("craps_pending_bets", {}))
-	if pending.is_empty() and stake > 0:
+	if not ui_state.has("craps_pending_bets") and pending.is_empty() and stake > 0:
 		if not street or int(table.get("point", 0)) == 0:
 			pending["pass_line" if int(table.get("point", 0)) == 0 else "come"] = stake
 	var pre_disperse_reason := _street_disperse_reason(run_state, environment, 0) if street else ""
