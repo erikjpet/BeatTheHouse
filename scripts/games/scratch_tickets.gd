@@ -208,6 +208,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var last_dispense_id := str(machine.get("last_dispense_id", ""))
 	var dispense_events := _scratch_dispense_event_array(machine.get("last_dispense_events", []))
 	var dispense_duration_msec := _scratch_dispense_duration_msec(dispense_events)
+	var dispense_can_animate := _scratch_dispense_can_animate(machine, ui_state)
 	var last_file_id := str(machine.get("last_file_id", ""))
 	var reduce_motion := _reduce_motion_enabled(ui_state)
 	var compact_mode := _small_screen_enabled(ui_state)
@@ -266,7 +267,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_discard_rule": "Discarded winners are filed safely and remain payable at the sales counter.",
 		"scratch_discard_interaction": "Deliberately drag the ticket into the highlighted basket opening.",
 		"scratch_discard_available": not active_ticket.is_empty(),
-		"scratch_dispense_animation": not last_dispense_id.is_empty(),
+		"scratch_dispense_animation": dispense_can_animate,
 		"scratch_dispense_events": dispense_events,
 		"scratch_crumbs": crumbs,
 		"scratch_drag_active": bool(ui_state.get("scratch_drag_active", false)),
@@ -295,7 +296,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_penalty_shields": int(machine.get("penalty_shields_remaining", 0)),
 		"scratch_rules": "%s Winners wait for the sales counter." % _ticket_play_label(str(active_ticket.get("type_id", "")), _dict_ref(active_ticket.get("mechanic", {}))) if not active_ticket.is_empty() else _machine_empty_rules(machine, stock),
 		"surface_animation_channels": [
-			GameModule.surface_animation_channel(DISPENSE_CHANNEL, last_dispense_id, dispense_duration_msec, int(machine.get("dispense_started_msec", 0)), {"clock_source": "presentation", "metadata": {"event_count": dispense_events.size(), "ticket_id": str(machine.get("last_ticket_id", "")), "slot": int(machine.get("last_dispense_slot", 0))}}),
+			GameModule.surface_animation_channel(DISPENSE_CHANNEL, last_dispense_id, dispense_duration_msec, int(machine.get("dispense_started_msec", 0)), {"active": dispense_can_animate, "clock_source": "presentation", "metadata": {"event_count": dispense_events.size(), "ticket_id": str(machine.get("last_ticket_id", "")), "slot": int(machine.get("last_dispense_slot", 0))}}),
 			GameModule.surface_animation_channel(FILE_CHANNEL, last_file_id, FILE_DURATION_MSEC, int(machine.get("file_started_msec", 0)), {"metadata": {"pile": str(machine.get("last_settled_pile", ""))}}),
 			GameModule.surface_animation_channel(SWEEP_CHANNEL, str(machine.get("last_sweep_id", "")), sweep_duration, int(machine.get("sweep_started_msec", 0)), {"metadata": {"region": str(machine.get("last_sweep_section", ""))}}),
 		],
@@ -554,7 +555,7 @@ func _scratch_pointer_surface_command(machine: Dictionary, ui_state: Dictionary,
 		"scratch_reduce_motion": reduce_motion,
 	}
 	if refresh_animation_channels:
-		patch["surface_animation_channels"] = _scratch_animation_channels(machine, reduce_motion)
+		patch["surface_animation_channels"] = _scratch_animation_channels(machine, reduce_motion, ui_state)
 	command["surface_state_patch"] = patch
 	return command
 
@@ -3043,10 +3044,31 @@ func _small_screen_enabled(ui_state: Dictionary) -> bool:
 	return bool(runtime.get("small_screen_mode", false))
 
 
-func _scratch_animation_channels(machine: Dictionary, reduce_motion: bool) -> Array:
+func restored_surface_ui_state(run_state: RunState, environment: Dictionary) -> Dictionary:
+	var machine := _ensure_machine_state(run_state, environment, false)
+	# Paid tickets stay in their tray or play area. An earlier surface's lift
+	# receipt must stay settled even when the new clock eventually catches up.
+	return {"scratch_settled_dispense_id": str(machine.get("last_dispense_id", ""))}
+
+
+func _scratch_dispense_can_animate(machine: Dictionary, ui_state: Dictionary) -> bool:
+	var receipt := str(machine.get("last_dispense_id", ""))
+	if receipt.is_empty() or receipt == str(ui_state.get("scratch_settled_dispense_id", "")):
+		return false
+	var tray_value: Variant = machine.get("tray_stack", [])
+	if typeof(tray_value) != TYPE_ARRAY or (tray_value as Array).is_empty():
+		return false
+	var started_msec := int(machine.get("dispense_started_msec", 0))
+	var now_msec := int(ui_state.get("surface_presentation_time_msec", ui_state.get("surface_time_msec", started_msec)))
+	# Retain the existing Pull Tabs cold-clock fallback for callers without a
+	# restored surface snapshot. An old lift cannot keep paid tickets trapped.
+	return started_msec > 0 and now_msec >= started_msec
+
+
+func _scratch_animation_channels(machine: Dictionary, reduce_motion: bool, ui_state: Dictionary = {}) -> Array:
 	var dispense_events := _scratch_dispense_event_array(machine.get("last_dispense_events", []))
 	return [
-		GameModule.surface_animation_channel(DISPENSE_CHANNEL, str(machine.get("last_dispense_id", "")), _scratch_dispense_duration_msec(dispense_events), int(machine.get("dispense_started_msec", 0)), {"clock_source": "presentation", "metadata": {"event_count": dispense_events.size(), "ticket_id": str(machine.get("last_ticket_id", "")), "slot": int(machine.get("last_dispense_slot", 0))}}),
+		GameModule.surface_animation_channel(DISPENSE_CHANNEL, str(machine.get("last_dispense_id", "")), _scratch_dispense_duration_msec(dispense_events), int(machine.get("dispense_started_msec", 0)), {"active": _scratch_dispense_can_animate(machine, ui_state), "clock_source": "presentation", "metadata": {"event_count": dispense_events.size(), "ticket_id": str(machine.get("last_ticket_id", "")), "slot": int(machine.get("last_dispense_slot", 0))}}),
 		GameModule.surface_animation_channel(FILE_CHANNEL, str(machine.get("last_file_id", "")), FILE_DURATION_MSEC, int(machine.get("file_started_msec", 0)), {"metadata": {"pile": str(machine.get("last_settled_pile", ""))}}),
 		GameModule.surface_animation_channel(SWEEP_CHANNEL, str(machine.get("last_sweep_id", "")), 0 if reduce_motion else SWEEP_DURATION_MSEC, int(machine.get("sweep_started_msec", 0)), {"metadata": {"region": str(machine.get("last_sweep_section", ""))}}),
 	]

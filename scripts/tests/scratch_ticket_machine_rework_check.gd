@@ -44,7 +44,8 @@ func _run() -> void:
 	environment["game_states"] = {"scratch_tickets": machine}
 	run_state.current_environment = environment
 
-	var buy := game.surface_action_command("scratch_buy", 0, false, {}, run_state, environment)
+	var purchase_ui := {"surface_time_msec": 400000, "surface_presentation_time_msec": 400000}
+	var buy := game.surface_action_command("scratch_buy", 0, false, purchase_ui, run_state, environment)
 	var pre_purchase_machine: Dictionary = game.call("_ensure_machine_state", run_state, environment, false)
 	if int(((pre_purchase_machine.get("stock", []) as Array)[0] as Dictionary).get("remaining", -1)) != 5 or int((buy.get("ui_state", {}) as Dictionary).get("scratch_buy_quantity", -1)) != 1:
 		failures.append("Focused purchase fixture drifted before resolution.")
@@ -61,7 +62,7 @@ func _run() -> void:
 	var surface := game.surface_state(run_state, environment, buy.get("ui_state", {}))
 	var events: Array = surface.get("scratch_dispense_events", [])
 	var channels: Array = surface.get("surface_animation_channels", [])
-	if events.size() != 1 or channels.is_empty() or int((channels[0] as Dictionary).get("duration_msec", 0)) != 1500:
+	if events.size() != 1 or channels.is_empty() or int((channels[0] as Dictionary).get("duration_msec", 0)) != 1500 or not bool((channels[0] as Dictionary).get("active", false)):
 		failures.append("Single-ticket dispense is not exactly 1.5 seconds.")
 	var animation_ticket: Dictionary = (events[0] as Dictionary).get("ticket", {}) if not events.is_empty() else {}
 	if animation_ticket.has("payout") or animation_ticket.has("outcome") or animation_ticket.has("mechanic_result"):
@@ -85,10 +86,50 @@ func _run() -> void:
 	MachineRendererScript.draw(delivered_harness, surface, Rect2(18, 13, 278, 404))
 	if not delivered_harness.actions.has("scratch_collect_tray"):
 		failures.append("Delivered ticket tray is not clickable after the animation.")
-	var collect := game.surface_action_command("scratch_collect_tray", 0, false, buy.get("ui_state", {}), run_state, environment)
+	var cold_ui := game.restored_surface_ui_state(restored, restored.current_environment)
+	cold_ui.merge({"surface_time_msec": 1000, "surface_presentation_time_msec": 1000}, true)
+	var cold_surface := game.surface_state(restored, restored.current_environment, cold_ui)
+	var cold_channels: Array = cold_surface.get("surface_animation_channels", [])
+	if bool((cold_channels[0] as Dictionary).get("active", true)):
+		failures.append("Cold Continue must not wait for a previous presentation clock before exposing paid tray tickets.")
+	var later_ui := cold_ui.duplicate(true)
+	later_ui.merge({"surface_time_msec": 500000, "surface_presentation_time_msec": 500000}, true)
+	var later_surface := game.surface_state(restored, restored.current_environment, later_ui)
+	if bool(((later_surface.get("surface_animation_channels", []) as Array)[0] as Dictionary).get("active", true)):
+		failures.append("An old lift must not resurrect when the new presentation clock catches up.")
+	var restored_cash := restored.bankroll
+	var restored_ticket_id := str((restored_tray[0] as Dictionary).get("id", ""))
+	game.surface_action_command("scratch_collect_tray", 0, false, cold_ui, restored, restored.current_environment)
+	var restored_machine: Dictionary = (restored.current_environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
+	if restored.bankroll != restored_cash or str((restored_machine.get("active_ticket", {}) as Dictionary).get("id", "")) != restored_ticket_id or not (restored_machine.get("tray_stack", []) as Array).is_empty():
+		failures.append("Cold collection must expose the same already-paid ticket without another charge.")
+	var delivery_ui := {"surface_time_msec": 402000, "surface_presentation_time_msec": 402000}
+	var collect := game.surface_action_command("scratch_collect_tray", 0, false, delivery_ui, run_state, environment)
 	machine = (environment.get("game_states", {}) as Dictionary).get("scratch_tickets", {})
 	if not bool(collect.get("environment_changed", false)) or (machine.get("active_ticket", {}) as Dictionary).is_empty() or not (machine.get("tray_stack", []) as Array).is_empty():
 		failures.append("Tray click did not move the delivered ticket to the play area.")
+	var cash_before := run_state.bankroll
+	var rng_before: Variant = run_state.to_dict().get("rng_state")
+	var payout_before := int((machine.get("active_ticket", {}) as Dictionary).get("payout", 0))
+	var collected_surface := game.surface_state(run_state, environment, cold_ui)
+	var collected_channels: Array = collected_surface.get("surface_animation_channels", [])
+	if bool((collected_channels[0] as Dictionary).get("active", true)) or bool(collected_surface.get("scratch_dispense_animation", true)):
+		failures.append("An empty collected tray must not replay LIFTING on cold Continue.")
+	var pointer_patch: Dictionary = game.call("_scratch_pointer_surface_command", machine, cold_ui, {}, true)
+	var pointer_channels: Array = (pointer_patch.get("surface_state_patch", {}) as Dictionary).get("surface_animation_channels", [])
+	if bool((pointer_channels[0] as Dictionary).get("active", true)):
+		failures.append("A lightweight pointer update must not restart a completed cold dispense.")
+	var repeat_collect := game.surface_action_command("scratch_collect_tray", 0, false, cold_ui, run_state, environment)
+	if bool(repeat_collect.get("environment_changed", false)) or run_state.bankroll != cash_before or run_state.to_dict().get("rng_state") != rng_before or int((machine.get("active_ticket", {}) as Dictionary).get("payout", 0)) != payout_before:
+		failures.append("Cold presentation and repeated tray clicks must preserve money, RNG, ticket outcome and exactly-once collection.")
+	var next_ui := cold_ui.duplicate(true)
+	next_ui.merge({"surface_time_msec": 5000, "surface_presentation_time_msec": 5000}, true)
+	var next_buy := game.surface_action_command("scratch_buy", 0, false, next_ui, restored, restored.current_environment)
+	game.resolve_with_context("buy_scratch_ticket", int(next_buy.get("set_stake", 0)), restored, restored.current_environment, restored.create_rng("buy_after_cold"), next_buy.get("ui_state", {}))
+	var next_surface := game.surface_state(restored, restored.current_environment, next_buy.get("ui_state", {}))
+	var next_channel: Dictionary = (next_surface.get("surface_animation_channels", []) as Array)[0]
+	if not bool(next_channel.get("active", false)) or str(next_channel.get("active_id", "")) == str((cold_channels[0] as Dictionary).get("active_id", "")) or int(next_channel.get("duration_msec", 0)) != 1500:
+		failures.append("A new purchase after Continue must animate its new receipt for the normal 1.5 seconds.")
 	_finish()
 
 
