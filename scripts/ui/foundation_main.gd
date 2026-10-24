@@ -17378,6 +17378,11 @@ func _cheat_dock_model_key(game_state: Dictionary) -> String:
 func _render_environment_canvas_snapshot() -> void:
 	if environment_canvas == null:
 		return
+	if run_state != null and environment_canvas.interaction_context_changes(run_state.current_environment):
+		# All arrival paths publish here, including event/service-driven layers.
+		# Retire source focus and any queued card before building the new view.
+		clear_interaction_focus(false, false)
+		pending_action_panel_object = {}
 	environment_canvas.set_reserved_overlay_rect(_current_talk_dock_environment_reserved_rect())
 	# _environment_view_snapshot() returns a new presentation root which no host
 	# code retains or mutates. Transfer it directly; the public canvas entry point

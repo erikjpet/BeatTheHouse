@@ -183,6 +183,13 @@ var drunk_time_scale := 1.0
 var scene_objects: Array = []
 var hovered_object_id: String = ""
 var selected_object_id: String = ""
+var interaction_context_generation := 0
+var physical_room_mouse_down := false
+var arrival_mouse_release_pending := false
+var arrival_touch_releases_pending: Dictionary = {}
+var active_room_touches: Dictionary = {}
+var arrival_hover_requires_motion := false
+var arrival_pointer_position := Vector2.ZERO
 var foundation_snapshot: Dictionary = {}
 var foundation_scene_objects: Array = []
 var uses_foundation_snapshot := false
@@ -1688,6 +1695,7 @@ func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 	# its composition actually changed; the rebuilt scene array does not mutate
 	# the outgoing dictionary.
 	var previous_camera_focus_source := _camera_focus_source()
+	var interaction_context_changed := interaction_context_changes(snapshot)
 	var previous_slot_context := _developer_slot_snapshot_context_key(foundation_snapshot)
 	var next_slot_context := _developer_slot_snapshot_context_key(snapshot)
 	_preserve_developer_slot_edit_before_context_change(snapshot)
@@ -1733,6 +1741,15 @@ func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 	overlay_repositioned_object_ids.clear()
 	_rebuild_scene_object_cache()
 	_prune_object_animation_phase_cache()
+	if interaction_context_changed:
+		interaction_context_generation += 1
+		developer_slot_selected_id = ""
+		developer_slot_hovered_id = ""
+		set_selected_object("", true)
+		arrival_mouse_release_pending = physical_room_mouse_down
+		arrival_touch_releases_pending = active_room_touches.duplicate()
+		arrival_hover_requires_motion = true
+		arrival_pointer_position = get_global_mouse_position()
 	if not selected_object_id.is_empty() and _scene_object(selected_object_id).is_empty():
 		selected_object_id = ""
 	if not hovered_object_id.is_empty() and _scene_object(hovered_object_id).is_empty():
@@ -1747,6 +1764,37 @@ func _render_owned_environment_snapshot(snapshot: Dictionary) -> void:
 		_update_camera_target_if_needed()
 	queue_redraw()
 	view_geometry_changed.emit()
+
+
+# Room identity is independent of ambient snapshots, scenario phases and moving
+# actors. Shared object/slot IDs must never carry focus into another room/visit.
+func interaction_context_changes(snapshot: Dictionary) -> bool:
+	return _interaction_context_key(foundation_snapshot) != _interaction_context_key(snapshot)
+
+
+func _interaction_context_key(snapshot: Dictionary) -> String:
+	return JSON.stringify([
+		snapshot.get("id", ""), snapshot.get("archetype_id", ""),
+		snapshot.get("world_node_id", ""), snapshot.get("current_layer_id", snapshot.get("layer_id", "")),
+		snapshot.get("environment_visit_id", ""), snapshot.get("context_instance_id", ""),
+	])
+
+
+# Observe releases even when a travel overlay/menu owns them. This does not
+# consume global input; only the outgoing gesture is barred from the room canvas.
+func _input(event: InputEvent) -> void:
+	if event.device == InputEvent.DEVICE_ID_EMULATION:
+		return
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		physical_room_mouse_down = event.pressed
+		if not event.pressed:
+			arrival_mouse_release_pending = false
+	elif event is InputEventScreenTouch:
+		if event.pressed:
+			active_room_touches[event.index] = true
+		else:
+			active_room_touches.erase(event.index)
+			arrival_touch_releases_pending.erase(event.index)
 
 
 func _preserve_developer_slot_edit_before_context_change(next_snapshot: Dictionary) -> void:
@@ -2234,6 +2282,16 @@ func local_position_for_selected_info_action_button(action_index: int = 0) -> Ve
 
 
 func _gui_input(event: InputEvent) -> void:
+	if event is InputEventMouse or event is InputEventScreenTouch or event is InputEventScreenDrag:
+		if arrival_mouse_release_pending or not arrival_touch_releases_pending.is_empty():
+			accept_event()
+			return
+		if event.device != InputEvent.DEVICE_ID_EMULATION and event is InputEventMouseMotion and arrival_hover_requires_motion:
+			if event.global_position.is_equal_approx(arrival_pointer_position):
+				return
+			arrival_hover_requires_motion = false
+		elif event.device != InputEvent.DEVICE_ID_EMULATION and (event is InputEventMouseButton or event is InputEventScreenTouch) and event.pressed:
+			arrival_hover_requires_motion = false
 	# Placement owns ordinary room input, but its safe exit must remain usable so
 	# an author can leave the current room without first disabling the tool.
 	if _developer_placement_mode_active() and _handle_developer_placement_safe_exit_input(event):
@@ -7296,8 +7354,13 @@ func _activate_selected_info_action_at_local_position(local_position: Vector2) -
 	var object_id := str(info.get("object_id", selected_object_id))
 	if object_id.is_empty():
 		return false
+	var input_context := interaction_context_generation
 	set_selected_object(object_id)
+	if interaction_context_generation != input_context:
+		return false
 	object_focused.emit(object_id)
+	if interaction_context_generation != input_context:
+		return false
 	var emit_object_id := str(action_entry.get("emit_object_id", "")).strip_edges()
 	object_activated.emit(emit_object_id if not emit_object_id.is_empty() else object_id)
 	return true
@@ -7331,8 +7394,13 @@ func _activate_selected_info_action_entry(action_entry: Dictionary) -> bool:
 	var object_id := str(info.get("object_id", selected_object_id))
 	if object_id.is_empty():
 		return false
+	var input_context := interaction_context_generation
 	set_selected_object(object_id)
+	if interaction_context_generation != input_context:
+		return false
 	object_focused.emit(object_id)
+	if interaction_context_generation != input_context:
+		return false
 	var emit_object_id := str(action_entry.get("emit_object_id", "")).strip_edges()
 	object_activated.emit(emit_object_id if not emit_object_id.is_empty() else object_id)
 	return true
@@ -7883,8 +7951,13 @@ func _activate_object_at_local_position(local_position: Vector2) -> void:
 		set_selected_object("", false)
 		object_focused.emit("")
 		return
+	var input_context := interaction_context_generation
 	set_selected_object(object_id)
+	if interaction_context_generation != input_context:
+		return
 	object_focused.emit(object_id)
+	if interaction_context_generation != input_context:
+		return
 	object_activated.emit(object_id)
 
 
