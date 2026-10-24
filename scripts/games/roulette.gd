@@ -1071,6 +1071,9 @@ func _resolve_roulette_proposal_core(action_id: String, stake: int, run_state: R
 	result["roulette_pit_boss_watched"] = bool(pit_boss_status.get("watched", false))
 	result["roulette_pit_boss_heat_bonus"] = pit_boss_bonus
 	result["roulette_table_pressure"] = table_pressure
+	# The sealed host owns the next pending layout. Keeping the input session
+	# here would let the table timer buy the same paid chips again without REBET.
+	result["ui_state"] = _roulette_session_after_spin(session)
 	result["table_game_proposal_requires_apply"] = true
 	return result
 
@@ -3582,6 +3585,8 @@ func _normalized_session(_run_state: RunState, _environment: Dictionary, ui_stat
 	var host_session_initialized := bool(host_ledger.get("initialized", false))
 	var session: Dictionary = (host_ledger.get("session", {}) as Dictionary).duplicate(true) if host_session_initialized and typeof(host_ledger.get("session", {})) == TYPE_DICTIONARY else ui_state.duplicate(true)
 	if host_session_initialized:
+		if _roulette_session_is_committed_legacy_intent(host_ledger, table):
+			session = _roulette_session_after_spin(session)
 		for key in TABLE_GAME_HOST_TRANSIENT_UI_KEYS:
 			if ui_state.has(key):
 				session[key] = ui_state[key]
@@ -3617,6 +3622,39 @@ func _normalized_session(_run_state: RunState, _environment: Dictionary, ui_stat
 	else:
 		session["wheel_read_challenge"] = wheel_read_challenge
 	return session
+
+
+func _roulette_session_after_spin(session: Dictionary) -> Dictionary:
+	var next := session.duplicate(true)
+	var consumed := _bet_array(session.get("roulette_bets", []))
+	if not consumed.is_empty():
+		next["roulette_rebet"] = consumed
+	next["roulette_bets"] = []
+	next["locked_bets"] = []
+	next["roulette_undo_stack"] = []
+	next["roulette_focused_stack_id"] = ""
+	next["roulette_spin_armed"] = false
+	next["roulette_sit_out"] = true
+	return next
+
+
+func _roulette_session_is_committed_legacy_intent(ledger: Dictionary, table: Dictionary) -> bool:
+	# Older saves retained the resolving input instead of an authored next
+	# session. Recover only that exact committed intent; a later chip move or
+	# explicit REBET has a different session and must remain pending.
+	if not _dict_ref(ledger.get("pending_delivery", {})).is_empty():
+		return false
+	var session := _dict_ref(ledger.get("session", {}))
+	var order := _array_ref(ledger.get("request_order", []))
+	if order.is_empty() or _array_ref(session.get("roulette_bets", [])).is_empty():
+		return false
+	var request := _dict_ref(_dict_ref(ledger.get("request_cache", {})).get(str(order.back()), {}))
+	var response := _dict_ref(request.get("response", {}))
+	if str(request.get("action_id", "")) != "spin_roulette" or response.has("ui_state") or response.has(ActionAuthorityScript.SURFACE_UI_STATE_KEY):
+		return false
+	if str(response.get("roulette_spin_id", "")).is_empty() or str(response.get("roulette_spin_id", "")) != str(_last_result_source(table).get("spin_id", "")):
+		return false
+	return RuntimeScript.canonical_fingerprint({"action_id": "spin_roulette", "session": session}) == str(request.get("intent_fingerprint", ""))
 
 
 func _roulette_rebet_layout(session: Dictionary, table: Dictionary) -> Array:
