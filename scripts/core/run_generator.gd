@@ -1161,6 +1161,25 @@ func _stored_environment_matches_situation_cycle(run_state: RunState, archetype_
 	if library == null or library._scenarios_for_archetype_readonly(archetype_id).is_empty():
 		return true
 	var stored_cycle := str(environment.get(ENVIRONMENT_SITUATION_CYCLE_KEY, "")).strip_edges()
+	if stored_cycle.is_empty():
+		# Older layer handoffs dropped the top-level stamp while the retained
+		# source floor still carried it. Recover only an unambiguous stamp from
+		# this exact venue; never rebind scenario identity or edit saved progress.
+		var layers_value: Variant = environment.get("layer_states", {})
+		if typeof(layers_value) == TYPE_DICTIONARY:
+			for layer_value in (layers_value as Dictionary).values():
+				if typeof(layer_value) != TYPE_DICTIONARY:
+					continue
+				var layer: Dictionary = layer_value
+				if str(layer.get("archetype_id", "")) != str(environment.get("archetype_id", archetype_id)) \
+					or str(layer.get("world_node_id", "")) != archetype_id:
+					continue
+				var layer_cycle := str(layer.get(ENVIRONMENT_SITUATION_CYCLE_KEY, "")).strip_edges()
+				if layer_cycle.is_empty():
+					continue
+				if not stored_cycle.is_empty() and stored_cycle != layer_cycle:
+					return true
+				stored_cycle = layer_cycle
 	# Existing saves predate cycle metadata. Preserve their room once and stamp it
 	# on restoration instead of silently deleting in-progress player state.
 	if stored_cycle.is_empty():

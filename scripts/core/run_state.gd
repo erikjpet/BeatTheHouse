@@ -5575,7 +5575,7 @@ func install_environment_layer_state(layer_id: String, layer_state: Dictionary) 
 	target["world_map_travel"] = bool(source.get("world_map_travel", false))
 	target["display_name"] = str(source.get("display_name", target.get("display_name", "")))
 	target["turns"] = int(source.get("turns", target.get("turns", 0)))
-	for clock_key in ["entered_game_clock_minutes", "departed_game_clock_minutes", "environment_visit_id", "night_instance_id", "context_instance_id"]:
+	for clock_key in ["entered_game_clock_minutes", "departed_game_clock_minutes", "environment_visit_id", "night_instance_id", "context_instance_id", "environment_situation_cycle_id"]:
 		if source.has(clock_key):
 			target[clock_key] = source.get(clock_key)
 	var scenario_state := ScenarioEngineScript.normalize_state(source.get("scenario_state", {}))
