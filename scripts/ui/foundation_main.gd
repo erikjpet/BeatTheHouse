@@ -20128,8 +20128,9 @@ func _refresh_run_menu() -> void:
 	if run_menu_overlay == null:
 		return
 	var has_save := _has_foundation_save()
-	var can_save := run_state != null and not dev_game_test_mode
-	var can_abandon := run_state != null and run_state.run_status == RunState.RUN_STATUS_ACTIVE
+	var meta_context := _is_meta_session()
+	var can_save := run_state != null and not dev_game_test_mode and not meta_context
+	var can_abandon := run_state != null and run_state.run_status == RunState.RUN_STATUS_ACTIVE and not meta_context
 	if run_menu_status_label != null:
 		var venue := "No active venue"
 		var status := "No active run"
@@ -20142,12 +20143,17 @@ func _refresh_run_menu() -> void:
 				run_state.suspicion_level(),
 			]
 		var save_note := "Resume Slot ready." if has_save else "Resume Slot empty."
-		run_menu_status_label.text = "%s\n%s Save overwrites this slot; Load replaces this run." % [status, save_note]
+		if meta_context:
+			var location_label := "Home" if meta_session_location_id == META_LOCATION_HOME else "Town"
+			var resume_note := "Your run's Resume Slot is unchanged." if has_save else "No run in the Resume Slot."
+			run_menu_status_label.text = "%s | %s\nProgress here saves automatically. %s" % [location_label, venue, resume_note]
+		else:
+			run_menu_status_label.text = "%s\n%s Save overwrites this slot; Load replaces this run." % [status, save_note]
 	if run_menu_resume_button != null:
 		run_menu_resume_button.disabled = false
 	if run_menu_save_button != null:
 		run_menu_save_button.disabled = not can_save
-		run_menu_save_button.tooltip_text = "Overwrite the Resume Slot with this run." if can_save else "No active savable run."
+		run_menu_save_button.tooltip_text = "Progress here saves automatically." if meta_context else ("Overwrite the Resume Slot with this run." if can_save else "No active savable run.")
 	if run_menu_load_button != null:
 		run_menu_load_button.disabled = not has_save
 		run_menu_load_button.tooltip_text = "Load the Resume Slot and replace this run." if has_save else "No saved run in the Resume Slot."
@@ -20158,7 +20164,7 @@ func _refresh_run_menu() -> void:
 		run_menu_settings_button.disabled = false
 	if run_menu_abandon_button != null:
 		run_menu_abandon_button.disabled = not can_abandon
-		run_menu_abandon_button.tooltip_text = "End this run immediately." if can_abandon else "This run is already over."
+		run_menu_abandon_button.tooltip_text = "Home and town visits are separate from your saved run." if meta_context else ("End this run immediately." if can_abandon else "This run is already over.")
 	if run_menu_main_menu_button != null:
 		run_menu_main_menu_button.disabled = false
 	if run_menu_skip_tutorial_button != null:
