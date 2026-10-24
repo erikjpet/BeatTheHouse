@@ -7,6 +7,7 @@ const ContentLibraryScript := preload("res://scripts/core/content_library.gd")
 const RunGeneratorScript := preload("res://scripts/core/run_generator.gd")
 const RunStateScript := preload("res://scripts/core/run_state.gd")
 const DeliveryRunModelScript := preload("res://scripts/core/delivery_run_model.gd")
+const CrewDeliveryScheduleScript := preload("res://scripts/core/crew_delivery_schedule.gd")
 const SequenceRuntimeScript := preload("res://scripts/core/scenario_sequence_runtime.gd")
 const FoundationMainScript := preload("res://scripts/ui/foundation_main.gd")
 const CrewTurnModelScript := preload("res://scripts/core/crew_turn_model.gd")
@@ -39,6 +40,18 @@ const DELIVERY_CHECKPOINT_FIELDS := [
 
 func _initialize() -> void:
 	var failures: Array = []
+	if OS.get_cmdline_user_args().has("--delivery-reentry-only"):
+		var reentry_library := ContentLibraryScript.new()
+		reentry_library.load(false)
+		_check_offsite_resolved_reentry(reentry_library, failures)
+		if failures.is_empty():
+			_check_owner_lifecycle_retry(reentry_library, "expired", failures)
+			_check_owner_lifecycle_retry(reentry_library, "abandoned", failures)
+			_check_after_cleanup_replay(reentry_library, failures)
+		for failure in failures: push_error(str(failure))
+		if failures.is_empty(): print("Delivery reentry passed: offsite resolution, active-owner preservation, Save/Continue, lifecycle retries, cleanup replay")
+		quit(0 if failures.is_empty() else 1)
+		return
 	var packages := _load_json_array(PACKAGE_PATH, failures)
 	var package := _first_package(packages, failures)
 	var entry := _first_definition(package, failures)
@@ -57,6 +70,65 @@ func _initialize() -> void:
 	for failure in failures:
 		push_error(str(failure))
 	quit(1)
+
+
+func _check_offsite_resolved_reentry(library: ContentLibrary, failures: Array) -> void:
+	var fixture := _prepared_delivery_outcome(library, "WORLD-SEQUENCE-OFFSITE-REENTRY", failures, false)
+	if fixture.is_empty(): return
+	var run: RunState = fixture.get("run_state")
+	var token := str(fixture.get("token", ""))
+	var target := str(fixture.get("target_node_id", ""))
+	var active_before := run.world_sequence_registrations.duplicate(true)
+	run._cleanup_resolved_delivery_presentations()
+	if run.world_sequence_registrations != active_before:
+		failures.append("Delivery reentry cleanup changed an active owner.")
+	var away := ""
+	for edge_value in _array(run.world_map.get("edges", [])):
+		var edge := _dict(edge_value)
+		if str(edge.get("a", "")) == target: away = str(edge.get("b", ""))
+		elif str(edge.get("b", "")) == target: away = str(edge.get("a", ""))
+		if not away.is_empty(): break
+	var generator := RunGeneratorScript.new(library)
+	generator.next_environment(run, away, true)
+	if away.is_empty() or run.current_world_node_id() != away:
+		failures.append("Delivery reentry fixture could not leave the mounted target.")
+		return
+	var abandoned := run.delivery_abandon("offsite_reentry_contract")
+	if not bool(abandoned.get("ok", false)) or str(_dict(run.world_sequence_registrations.get(token, {})).get("lifecycle", "")) != "mounted":
+		failures.append("Delivery reentry fixture did not retain its offsite resolved presentation.")
+		return
+	run.scenario_finalize_installed_environment(library, {})
+	generator.next_environment(run, target, true)
+	if run.current_world_node_id() != target:
+		failures.append("Delivery reentry fixture could not return to the old destination.")
+		return
+	run._cleanup_resolved_delivery_presentations()
+	if str(_dict(run.world_sequence_registrations.get(token, {})).get("lifecycle", "")) != "mounted":
+		failures.append("Cleanup retired the retained current delivery before its recovery owner finished.")
+	var replacement := run.delivery_begin_package({"run_id": "offsite_reentry_replacement", "targets": [{"node_id": away}], "deadline_actions": 100})
+	if not bool(replacement.get("ok", false)):
+		failures.append("Delivery reentry fixture could not start its next package: %s." % JSON.stringify(replacement))
+		return
+	var cash := run.bankroll
+	var rng := run.rng_state
+	var jobs := run.crew_jobs.duplicate(true)
+	var delivery := run.active_delivery_run.duplicate(true)
+	var finalized := _finalize_delivery_target(run, library)
+	if not bool(finalized.get("ok", false)) or str(_dict(run.world_sequence_registrations.get(token, {})).get("lifecycle", "")) != "cleaned":
+		failures.append("Resolved offsite delivery retained its exclusive room claims on reentry: %s." % JSON.stringify(finalized))
+	if run.bankroll != cash or run.rng_state != rng or run.crew_jobs != jobs or run.active_delivery_run != delivery:
+		failures.append("Presentation cleanup changed delivery accounting, jobs or RNG.")
+	var service := SaveServiceScript.new()
+	var slot := "delivery_offsite_reentry_contract"
+	var saved := service.save_run(run, slot)
+	var restored: Variant = service.load_run(slot) if saved == OK else null
+	service.clear_run(slot)
+	if not restored is RunState:
+		failures.append("Cleaned delivery reentry did not survive SaveService.")
+		return
+	_finalize_delivery_target(restored, library)
+	if str(_dict(restored.world_sequence_registrations.get(token, {})).get("lifecycle", "")) != "cleaned" or restored.bankroll != cash or restored.rng_state != rng:
+		failures.append("Save/Continue remounted or repaid the resolved delivery.")
 
 
 func _check_adapter_envelope(entry: Dictionary, failures: Array) -> void:
@@ -577,7 +649,7 @@ func _prepared_delivery_outcome(library: ContentLibrary, seed: String, failures:
 	var targets := _array(delivery_snapshot.get("targets", []))
 	var target_node_id := str(_dict(targets[0]).get("node_id", "")) if not targets.is_empty() else ""
 	if token.is_empty() or target_node_id.is_empty():
-		failures.append("P1 injection fixture could not schedule a public delivery owner.")
+		failures.append("P1 injection fixture could not schedule a public delivery owner: %s." % JSON.stringify(started))
 		return {}
 	_pickup_delivery(run_state, "checkpoint")
 	var travel := RunGeneratorScript.new(library).travel_environment_result(run_state, target_node_id, true)
@@ -598,6 +670,11 @@ func _prepared_delivery_outcome(library: ContentLibrary, seed: String, failures:
 	}
 	if not issue_command:
 		return base_fixture
+	var window := CrewDeliveryScheduleScript.window_for(run_state.active_delivery_run, target_node_id)
+	var wait_minutes := maxi(0, int(window.get("opens", run_state.game_clock_minutes)) - run_state.game_clock_minutes)
+	if wait_minutes > 0 and not bool(run_state.advance_game_clock_minutes(wait_minutes).get("ok", false)):
+		failures.append("P1 injection fixture could not reach its normal recipient appointment.")
+		return {}
 	var actions := _array(handoff.get("available_actions", []))
 	var action := _dict(actions[0]) if not actions.is_empty() else {}
 	var command := run_state.world_sequence_command(FunctionOptions.world_sequence_command(token, "make_handoff", "proof:p1:%s:handoff" % seed.to_lower().replace("-", "_"), {
@@ -878,16 +955,11 @@ func _world_sequence_command_receipt_count(run_state: RunState, token: String) -
 func _production_run(library: ContentLibrary, seed: String) -> RunState:
 	var run_state := RunStateScript.new()
 	run_state.start_new(seed)
-	RunGeneratorScript.new(library).next_environment(run_state)
-	run_state.current_environment = {
-		"id": run_state.current_world_node_id(),
-		"archetype_id": run_state.current_world_node_id(),
-		"world_node_id": run_state.current_world_node_id(),
-		"kind": "casino",
-		"tier": 1,
-		"turns": 0,
-		"resolved_event_ids": [],
-	}
+	var generator := RunGeneratorScript.new(library)
+	generator.next_environment(run_state)
+	# Use an authored offer room and its sealed manifest. A hand-written room
+	# dictionary is rejected before the real delivery operation can be exercised.
+	generator.next_environment(run_state, "back_alley", true)
 	# The release offer is backed by the shipped $70 one-favor Crew marker.
 	# Preserve that debt authority so the success checkpoint can prove it clears
 	# the favor atomically with the delivery rewards.
@@ -913,6 +985,7 @@ func _production_run(library: ContentLibrary, seed: String) -> RunState:
 	# real host queue instead of relying on the pre-authority fixture shortcut
 	# where the narrative flag alone made a copied EventModule resolvable.
 	run_state.enqueue_triggered_event("crew_favor_delivery", "world06_1_contract")
+	run_state.prepare_current_environment_object_membership_for_publication()
 	return run_state
 
 

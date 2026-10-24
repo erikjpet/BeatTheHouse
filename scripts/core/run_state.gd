@@ -2989,6 +2989,8 @@ func world_sequence_activate_current_mounts() -> Dictionary:
 	if world_sequence_registrations.is_empty(): return {"ok": true, "inactive": true, "mounted": [], "errors": []}
 	if not bool(current_environment.get("scenario_semantic_ready", false)):
 		return {"ok": true, "pending": true, "mounted": [], "errors": []}
+	var cleanup := _cleanup_resolved_delivery_presentations()
+	if not bool(cleanup.get("ok", false)): return cleanup
 	# Environment installation is atomic: the destination plane becomes current
 	# before the world-map cursor is committed. Mount against that physical plane,
 	# not the briefly stale cursor, or a source-room sequence can be projected onto
@@ -3024,6 +3026,35 @@ func world_sequence_activate_current_mounts() -> Dictionary:
 		_world_sequence_definition_cache[token] = definition.duplicate(true)
 		mounted.append(token)
 	return {"ok": errors.is_empty(), "mounted": mounted, "errors": errors}
+
+
+func _cleanup_resolved_delivery_presentations() -> Dictionary:
+	# A clock deadline can settle a Crew job while its destination is offscreen.
+	# Its old presentation must not remount and claim the next job's handoff.
+	# Keep unfinished outcome transactions under their existing recovery owner.
+	var node_id := str(current_environment.get("world_node_id", current_environment.get("archetype_id", "")))
+	var retained_instance := str(active_delivery_run.get("job_id", ""))
+	if retained_instance.is_empty(): retained_instance = str(active_delivery_run.get("run_id", ""))
+	for token_value in world_sequence_registrations.keys():
+		var token := str(token_value)
+		var registration := JsonCoerceScript._copy_dict(world_sequence_registrations[token])
+		if str(registration.get("node_id", "")) != node_id or str(registration.get("lifecycle", "")) == "cleaned": continue
+		if not JsonCoerceScript._copy_dict(registration.get("outcome_channels", {})).values().has("delivery_handoff"): continue
+		var instance := str(registration.get("public_instance_token", ""))
+		if instance == retained_instance: continue
+		var job := _crew_job(instance)
+		if str(job.get("status", "")) != "resolved": continue
+		if not world_sequence_pending_outcomes(token).is_empty(): continue
+		registration = JsonCoerceScript._copy_dict(world_sequence_registrations[token])
+		if not JsonCoerceScript._copy_dict(registration.get("owner_outcome_results", {})).is_empty(): continue
+		var result := world_sequence_sync_owner(token, false, "owner_ended")
+		if not bool(result.get("ok", false)): return result
+		# A restored base plane can legitimately omit the old room-local adapter.
+		# The resolved job still authorizes retiring its dormant registration.
+		if bool(result.get("inactive", false)):
+			registration["lifecycle"] = "cleaned"
+			world_sequence_registrations[token] = registration
+	return {"ok": true, "errors": []}
 
 
 func world_sequence_snapshot(token: String) -> Dictionary:
@@ -3233,6 +3264,8 @@ func world_sequence_sync_owner(token: String, owner_active: bool, reason: String
 			world_sequence_registrations[token] = registration
 	if bool(result.get("ok", false)) and not bool(result.get("inactive", false)):
 		_room_presentation_publication = null
+		if not owner_active:
+			current_environment["scenario_restore_pending_trusted_rebuild"] = true
 	return result
 
 
@@ -3399,9 +3432,12 @@ func world_sequence_prepare_semantic_finalization() -> Dictionary:
 	# commits. Resolve against the installed room, matching activation, so the
 	# first destination catalog cannot cache an eligible owner as inactive.
 	var node_id := str(current_environment.get("world_node_id", current_environment.get("archetype_id", current_environment.get("id", "")))).strip_edges()
+	var world_instances: Variant = current_environment.get(CrewWorldSequenceAdapterScript.CONTAINER_KEY, {})
 	for registration_value in world_sequence_registrations.values():
 		var registration := JsonCoerceScript._copy_dict(registration_value)
-		if str(registration.get("node_id", "")) == node_id and str(registration.get("lifecycle", "")) in ["eligible", "mounted"]:
+		var lifecycle := str(registration.get("lifecycle", ""))
+		var retained_cleanup := lifecycle == "cleaned" and typeof(world_instances) == TYPE_DICTIONARY and (world_instances as Dictionary).has(str(registration.get("owner_token", "")))
+		if str(registration.get("node_id", "")) == node_id and (lifecycle in ["eligible", "mounted"] or retained_cleanup):
 			_ensure_scenario_host_public_context()
 			return {"ok": true, "active": true, "errors": []}
 	return {"ok": true, "inactive": true, "errors": []}
@@ -3457,6 +3493,7 @@ func world_sequence_finalize_base_semantics(interactable_records: Array, library
 	composed["world_sequences"] = activation
 	composed["records"] = sealed_records
 	composed["state"] = {}
+	current_environment.erase("scenario_restore_pending_trusted_rebuild")
 	return composed
 
 
@@ -15665,7 +15702,14 @@ static func _strip_scenario_semantic_ephemera(environment: Dictionary) -> void:
 
 
 static func _mark_scenario_restore_pending_trusted_rebuild(environment: Dictionary) -> void:
-	if not JsonCoerceScript._copy_dict(environment.get("scenario_sequence_state", {})).is_empty():
+	var has_world_state := false
+	var world_instances: Variant = environment.get(CrewWorldSequenceAdapterScript.CONTAINER_KEY, {})
+	if typeof(world_instances) == TYPE_DICTIONARY:
+		for entry in (world_instances as Dictionary).values():
+			if typeof(entry) == TYPE_DICTIONARY and str(entry.get("lifecycle", "")) in ["active", "cleanup_pending", "cleaned"]:
+				has_world_state = true
+				break
+	if not JsonCoerceScript._copy_dict(environment.get("scenario_sequence_state", {})).is_empty() or has_world_state:
 		environment["scenario_restore_pending_trusted_rebuild"] = true
 	var layer_states := JsonCoerceScript._copy_dict(environment.get("layer_states", {}))
 	for layer_id_value in layer_states.keys():

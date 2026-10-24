@@ -521,7 +521,11 @@ static func _join_object_manifest(records: Array, environment: Dictionary, synth
 		var direct_delivery_contact := family == "scenario" \
 				and str(row.get("spot_field", "")) == "runtime_object_manifest_entries" \
 				and _array(row.get("action_ids", [])).has("delivery_handoff_direct")
-		if host_index < 0 and synthesize_missing_hosts and (family != "scenario" or direct_delivery_contact):
+		# Projected owners return from their authenticated composition below. A
+		# saved event-family contact is not a new base event or fixture.
+		if host_index < 0 and synthesize_missing_hosts \
+				and str(row.get("source_kind", "")) != "scenario_projection" \
+				and (family != "scenario" or direct_delivery_contact):
 			var host := _manifest_host_record(row, manifest_object_id, presentation_id, family)
 			result.append(host)
 			host_index = result.size() - 1

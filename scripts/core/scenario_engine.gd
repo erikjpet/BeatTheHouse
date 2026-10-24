@@ -931,6 +931,15 @@ static func _sequence_is_suppressed(environment: Dictionary, preferred: Dictiona
 
 
 static func _clear_environment_sequence(environment: Dictionary) -> void:
+	# A world-only owner shares the sealed host layout, but is not the primary
+	# environment sequence being cleared. Its causal proof must survive restore.
+	var retain_world_layout := false
+	var world_instances: Variant = environment.get("world_sequence_instances", {})
+	if not environment.has("scenario_sequence_state") and typeof(world_instances) == TYPE_DICTIONARY:
+		for entry in (world_instances as Dictionary).values():
+			if typeof(entry) == TYPE_DICTIONARY and str(entry.get("lifecycle", "")) in ["active", "cleanup_pending", "cleaned"]:
+				retain_world_layout = true
+				break
 	var baseline_arrays := {
 		"scenario_sequence_base_game_ids": "game_ids",
 		"scenario_sequence_base_service_ids": "service_ids",
@@ -951,6 +960,8 @@ static func _clear_environment_sequence(environment: Dictionary) -> void:
 		"scenario_layout_base_records", "scenario_layout_context", "scenario_layout_authority",
 		"scenario_layout_audit", "scenario_layout_authority_digest",
 	]:
+		if retain_world_layout and key in ["scenario_layout_base_records", "scenario_layout_authority", "scenario_layout_authority_digest"]:
+			continue
 		environment.erase(key)
 	environment.erase(TRUSTED_STATE_REFERENCE_KEY)
 	environment.erase(TRUSTED_LAYOUT_INPUT_DIGEST_KEY)

@@ -11852,8 +11852,12 @@ func _prepare_room_presentation_at_boundary() -> void:
 		return
 	# Restore can publish a valid base envelope before its non-causal scenario
 	# projection is rebuilt. That publication is not yet a reusable room catalog.
+	var delivery_node_id := str(run_state.current_environment.get("world_node_id", run_state.current_environment.get("archetype_id", "")))
+	var delivery_mount_pending := not bool(run_state.current_environment.get("scenario_semantic_ready", false)) \
+			and not run_state.delivery_world_sequence_owner_for_presentation(delivery_node_id).is_empty()
 	if run_state.room_presentation_revision() == 0 \
-			or bool(run_state.current_environment.get("scenario_restore_pending_trusted_rebuild", false)):
+			or bool(run_state.current_environment.get("scenario_restore_pending_trusted_rebuild", false)) \
+			or delivery_mount_pending:
 		EnvironmentInteractionControllerScript.compile_room_catalog_at_boundary(self)
 		run_state.publish_room_presentation()
 	_room_catalog_publication = EnvironmentInteractionViewModelScript.deduplicated_scenario_instruction_records(
