@@ -12908,6 +12908,11 @@ func _apply_run_screen_layout() -> void:
 	run_hud_panel.visible = not terminal_report
 	var proportional_info_height: float = floor(screen_size.y * RUN_INFO_BAND_RATIO)
 	var hud_content_height: float = ceil(run_hud_panel.get_combined_minimum_size().y)
+	# Panel does not propagate its content's minimum size. Include the margin
+	# container so the persistent delivery row stays inside the clipped HUD.
+	for child in run_hud_panel.get_children():
+		if child is Control and child.visible:
+			hud_content_height = maxf(hud_content_height, ceil(child.get_combined_minimum_size().y))
 	var max_info_height: float = floor(screen_size.y * 0.35)
 	var info_height := 0.0 if terminal_report else minf(maxf(maxf(RUN_INFO_MIN_HEIGHT, proportional_info_height), hud_content_height), max_info_height)
 	run_hud_panel.set_anchors_preset(Control.PRESET_FULL_RECT)

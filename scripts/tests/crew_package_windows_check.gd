@@ -10,6 +10,11 @@ const Schedule := preload("res://scripts/core/crew_delivery_schedule.gd")
 const Fidelity := preload("res://scripts/tests/foundation/harness_production_fidelity.gd")
 const CrewFixture := preload("res://scripts/tests/foundation/crew_layer3_jobs_contract.gd")
 const Main := preload("res://scripts/ui/foundation_main.gd")
+
+class LayoutHost extends Main:
+	func _ready() -> void:
+		set_process(false)
+
 var failures: Array = []
 var library: ContentLibrary
 
@@ -72,11 +77,53 @@ func save_continue(run: RunState, slot: String) -> RunState:
 	return restored if restored is RunState else run
 
 
+func check_delivery_hud(run: RunState) -> void:
+	# Build the production run shell without startup/gameplay. The package is
+	# accepted through the normal event API above; UI projection must be read-only.
+	var before := JSON.stringify([run.bankroll, run.rng_state, run.game_clock_minutes, run.active_delivery_run, run.debt])
+	var host := LayoutHost.new()
+	host.library = library
+	host.run_state = run
+	host.current_screen = host.SCREEN_ENVIRONMENT
+	host.continuous_environment_clock_enabled = false
+	root.add_child(host)
+	host.screen_stack_root = Control.new()
+	host.screen_stack_root.set_anchors_preset(Control.PRESET_FULL_RECT)
+	host.add_child(host.screen_stack_root)
+	check(host._build_next_run_ui_stage(), "production HUD could not build")
+	host.run_screen.visible = true
+	for viewport_size in [Vector2(1280, 720), Vector2(1920, 1080)]:
+		host.size = viewport_size
+		host._refresh_delivery_action_strip()
+		host._invalidate_run_screen_layout()
+		host._apply_run_screen_layout()
+		for frame in range(8):
+			await process_frame
+		var strip := host.delivery_action_strip
+		var panel_rect := host.run_hud_panel.get_global_rect()
+		check(strip.visible and strip.get_child_count() > 0, "active package HUD is missing at %s" % viewport_size)
+		check(panel_rect.encloses(strip.get_global_rect()), "package HUD is clipped at %s" % viewport_size)
+		for child in strip.get_children():
+			check(panel_rect.encloses(child.get_global_rect()), "package term/action is outside clipped HUD at %s" % viewport_size)
+		check(str(strip.get_child(0).text).contains("Day "), "persistent HUD omits appointment day/time")
+		check(host.visual_panel_container.get_global_rect().position.y >= panel_rect.end.y, "room covers persistent package HUD")
+	var active_height := host.run_hud_panel.size.y
+	host.run_state = RunStateScript.new()
+	host._refresh_delivery_action_strip()
+	for frame in range(8):
+		await process_frame
+	check(not host.delivery_action_strip.visible and host.run_hud_panel.size.y < active_height, "finished delivery leaves stale HUD footprint")
+	check(JSON.stringify([run.bankroll, run.rng_state, run.game_clock_minutes, run.active_delivery_run, run.debt]) == before, "HUD changed money/RNG/clock/delivery/debt")
+	host.queue_free()
+	await process_frame
+
+
 func _run() -> void:
 	library = ContentLibraryScript.new()
 	library.load()
 	var run := make_run("CREW-WINDOW-REAL-ROUTE")
 	accept_favor(run)
+	await check_delivery_hud(run)
 	print("CREW_PACKAGE_APPOINTMENT " + run.delivery_timing_text())
 	var original := run.active_delivery_run.duplicate(true)
 	var jobs := run.crew_jobs.duplicate(true)
