@@ -22468,6 +22468,8 @@ func _refresh_world_map_detail() -> void:
 	var travel_line := "0 min * 0$ * Walk"
 	if not choice.is_empty():
 		travel_line = _world_map_travel_summary_line(choice)
+	elif selected_world_map_node_id != current_id:
+		travel_line = "Not on the route list from here right now."
 	var detail_lines: Array = [
 		str(node.get("label", selected_world_map_node_id)),
 		_world_map_hours_line(open_status),
