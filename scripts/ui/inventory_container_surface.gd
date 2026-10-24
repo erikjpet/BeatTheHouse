@@ -466,8 +466,8 @@ func _render_grouped_card_container() -> void:
 		(_slot_markers[index] as Label).text = str(slot.get("state_marker", "")) if occupied else ""
 		button.tooltip_text = str(card.get("tooltip", _slot_tooltip(slot)))
 	_container_label.text = _surface_summary_label(page_count)
-	_previous_button.visible = page_count > 1
-	_next_button.visible = page_count > 1
+	_previous_button.visible = page_count > 1 or _containers.size() > 1
+	_next_button.visible = page_count > 1 or _containers.size() > 1
 	_empty_label.visible = _occupied_slot_count(container) == 0
 	_layout_slots()
 	_apply_slot_styles()
@@ -594,7 +594,7 @@ func _occupied_slot_count(container: Dictionary) -> int:
 
 
 func _surface_summary_label(page_count: int) -> String:
-	if _containers.size() == 1 or _small_screen_mode:
+	if _containers.size() == 1 or _small_screen_mode or _grouped_card_mode():
 		var container := _active_container()
 		var presentation := CatalogScript.presentation(str(container.get("container_type", "loose_carry")), _catalog)
 		var used_count := _occupied_slot_count(container)
