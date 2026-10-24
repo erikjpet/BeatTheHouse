@@ -184,6 +184,7 @@ var scene_objects: Array = []
 var hovered_object_id: String = ""
 var selected_object_id: String = ""
 var interaction_context_generation := 0
+var room_pointer_focus_gestures: Dictionary = {}
 var physical_room_mouse_down := false
 var arrival_mouse_release_pending := false
 var arrival_touch_releases_pending: Dictionary = {}
@@ -1786,11 +1787,15 @@ func _input(event: InputEvent) -> void:
 	if event.device == InputEvent.DEVICE_ID_EMULATION:
 		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		if event.pressed and not event.double_click:
+			room_pointer_focus_gestures["mouse"] = {"context": interaction_context_generation, "external": true}
 		physical_room_mouse_down = event.pressed
 		if not event.pressed:
 			arrival_mouse_release_pending = false
 	elif event is InputEventScreenTouch:
 		if event.pressed:
+			if not event.double_tap:
+				room_pointer_focus_gestures["touch:%d" % event.index] = {"context": interaction_context_generation, "external": true}
 			active_room_touches[event.index] = true
 		else:
 			active_room_touches.erase(event.index)
@@ -2358,16 +2363,21 @@ func _gui_input(event: InputEvent) -> void:
 				accept_event()
 				return
 			_remember_mouse_press(mouse_event.position)
+			if _begin_room_pointer_focus_gesture("mouse", mouse_event.double_click, mouse_event.position):
+				accept_event()
+				return
 			if _activate_selected_info_action_at_local_position(mouse_event.position):
 				accept_event()
 				return
 			if _focus_hovered_info_at_local_position(mouse_event.position):
+				_remember_room_pointer_focus("mouse")
 				accept_event()
 				return
 			if mouse_event.double_click:
 				_activate_object_at_local_position(mouse_event.position)
 			else:
 				_focus_object_at_local_position(mouse_event.position)
+				_remember_room_pointer_focus("mouse")
 			accept_event()
 		return
 	if event is InputEventScreenTouch:
@@ -2377,16 +2387,22 @@ func _gui_input(event: InputEvent) -> void:
 				accept_event()
 				return
 			_remember_touch_press(touch_event.position)
+			var pointer_key := "touch:%d" % touch_event.index
+			if _begin_room_pointer_focus_gesture(pointer_key, touch_event.double_tap, touch_event.position):
+				accept_event()
+				return
 			if _activate_selected_info_action_at_local_position(touch_event.position):
 				accept_event()
 				return
 			if _focus_hovered_info_at_local_position(touch_event.position):
+				_remember_room_pointer_focus(pointer_key)
 				accept_event()
 				return
 			if touch_event.double_tap:
 				_activate_object_at_local_position(touch_event.position)
 			else:
 				_focus_object_at_local_position(touch_event.position)
+				_remember_room_pointer_focus(pointer_key)
 			accept_event()
 		return
 	if event is InputEventScreenDrag:
@@ -7941,11 +7957,44 @@ func _focus_object_at_local_position(local_position: Vector2) -> void:
 	object_focused.emit(object_id)
 
 
-func _activate_object_at_local_position(local_position: Vector2) -> void:
-	var object_ids := _object_ids_at_local_position(local_position)
-	var object_id := selected_object_id if object_ids.has(selected_object_id) else ""
-	if object_id.is_empty() and not object_ids.is_empty():
-		object_id = object_ids[0]
+# A recognized double-click/tap belongs to the first room press. Camera focus
+# can move a neighbor beneath that same screen point before the second press.
+# Keep the originating room epoch even if its focus callback changes rooms;
+# that gesture must not activate a shared ID in the destination. Global first
+# presses mark external ownership until this canvas claims the press.
+func _begin_room_pointer_focus_gesture(pointer_key: String, multi: bool, local_position: Vector2) -> bool:
+	var previous: Dictionary = room_pointer_focus_gestures.get(pointer_key, {})
+	room_pointer_focus_gestures.erase(pointer_key)
+	if not multi:
+		room_pointer_focus_gestures[pointer_key] = {"context": interaction_context_generation, "object_id": ""}
+		return false
+	if previous.is_empty():
+		return false
+	if bool(previous.get("external", false)) or int(previous.get("context", -1)) != interaction_context_generation:
+		return true
+	var object_id := str(previous.get("object_id", ""))
+	if object_id.is_empty():
+		return false
+	_activate_object_at_local_position(local_position, object_id)
+	return true
+
+
+func _remember_room_pointer_focus(pointer_key: String) -> void:
+	var gesture: Dictionary = room_pointer_focus_gestures.get(pointer_key, {})
+	if int(gesture.get("context", -1)) == interaction_context_generation:
+		gesture["object_id"] = selected_object_id
+
+
+func _activate_object_at_local_position(local_position: Vector2, intended_object_id: String = "") -> void:
+	var object_id := intended_object_id
+	if not object_id.is_empty():
+		if not _object_info_is_actionable(_scene_object(object_id)):
+			return
+	else:
+		var object_ids := _object_ids_at_local_position(local_position)
+		object_id = selected_object_id if object_ids.has(selected_object_id) else ""
+		if object_id.is_empty() and not object_ids.is_empty():
+			object_id = object_ids[0]
 	if object_id.is_empty():
 		_set_hovered_object("")
 		set_selected_object("", false)
