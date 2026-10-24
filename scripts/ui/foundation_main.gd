@@ -15770,6 +15770,8 @@ func _activate_attached_room_action(target_object_id: String, action_key: String
 		CONTEXT_MODE_LENDER:
 			if _lender_is_pawn_counter(source_id):
 				return open_pawn_counter(source_id)
+			if str(action.get("id", record.get("confirm_action_id", ""))) == "repay_lender_debt":
+				return repay_lender_debt(source_id)
 			return select_lender_hook(source_id) and confirm_selected_lender_hook()
 		CONTEXT_MODE_TRAVEL:
 			return select_travel_option(source_id) and confirm_selected_travel()
@@ -15962,6 +15964,8 @@ func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, ca
 		CONTEXT_MODE_LENDER:
 			if _lender_is_pawn_counter(source_id):
 				return _open_pawn_counter_after_input_guard(source_id)
+			if str(object_data.get("confirm_action_id", "")) == "repay_lender_debt":
+				return repay_lender_debt(source_id)
 			if select_lender_hook(source_id):
 				return confirm_selected_lender_hook()
 			return false

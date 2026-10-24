@@ -2526,8 +2526,15 @@ static func hook_interactable_objects(host: Variant, object_type: String, option
 		# must remain openable with empty pockets so players can inspect the counter,
 		# redeem existing tickets, or return after their carried inventory changes.
 		var is_pawn_counter := str(lender_definition.get("lender_type", "")) == "pawn"
-		var enabled = (bool(option.get("enabled", supported)) or is_pawn_counter) and not run_failed_without_recovery
-		var disabled_reason = "" if enabled else failed_reason if run_failed_without_recovery else str(option.get("disabled_reason", option.get("status", "Display-only.")))
+		var repayment: Dictionary = {}
+		if object_type == host.CONTEXT_MODE_LENDER and supported and not is_pawn_counter and not bool(option.get("enabled", true)) and host.run_state != null:
+			repayment = host.run_state.lender_repayment_status(hook_id)
+		var is_repayment := bool(repayment.get("available", false))
+		var action_enabled := bool(repayment.get("enabled", false)) if is_repayment else bool(option.get("enabled", supported)) or is_pawn_counter
+		var enabled = action_enabled and not run_failed_without_recovery
+		var disabled_reason = "" if enabled else failed_reason if run_failed_without_recovery else str(repayment.get("disabled_reason", "")) if is_repayment else str(option.get("disabled_reason", option.get("status", "Display-only.")))
+		var action_id := "repay_lender_debt" if is_repayment else "use_%s_hook" % object_type
+		var action_label := "Pay $%d" % int(repayment.get("payoff_amount", 0)) if is_repayment else "Use"
 		var availability_class := str(option.get("availability_class", RunState.AVAILABILITY_AVAILABLE))
 		var category := str(option.get("category", ""))
 		var duration_minutes := maxi(0, int(option.get("duration_minutes", 0)))
@@ -2558,10 +2565,10 @@ static func hook_interactable_objects(host: Variant, object_type: String, option
 			"interactive": enabled or availability_class == RunState.AVAILABILITY_TRANSIENT_BLOCKED,
 			"enabled": enabled,
 			"disabled_reason": disabled_reason,
-			"action_summary": "Double-click to use." if enabled else "",
+			"action_summary": "Double-click to repay." if enabled and is_repayment else "Double-click to use." if enabled else "",
 			"status_summary": duration_summary,
 			"risk_summary": "",
-			"cost_summary": "Cost: %d" % int(option.get("cost", 0)) if option.has("cost") else "",
+			"cost_summary": "Payoff: $%d" % int(repayment.get("payoff_amount", 0)) if is_repayment else "Cost: %d" % int(option.get("cost", 0)) if option.has("cost") else "",
 			"effect_summary": str(option.get("delta_summary", "")),
 			"attribute_badges": JsonCoerceScript._copy_array(option.get("attribute_badges", [])),
 			"visual_key": visual_type,
@@ -2571,8 +2578,8 @@ static func hook_interactable_objects(host: Variant, object_type: String, option
 			"asset_path": str(option.get("asset_path", "")),
 			"character_actor": character_actor,
 			"slot_binding_source_id": str(option.get("slot_binding_source_id", "")).strip_edges(),
-			"available_actions": [{"id": "use_%s_hook" % object_type, "label": "Use"}] if enabled else [],
-			"confirm_action_id": "use_%s_hook" % object_type if enabled else "",
+			"available_actions": [{"id": action_id, "label": action_label}] if enabled else [],
+			"confirm_action_id": action_id if enabled else "",
 			"focus_rect": host._interaction_rect_for_object(object_id, object_type, index),
 		}))
 	return objects
