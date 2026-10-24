@@ -2245,6 +2245,12 @@ func _gui_input(event: InputEvent) -> void:
 	if developer_placement_mode and _handle_developer_placement_input(event):
 		accept_event()
 		return
+	# Ordinary room input handles physical mouse and touch itself. A slow
+	# counter action can outlast the time heuristic, so its marked emulated
+	# partner must not repeat the action. Placement handlers retain precedence.
+	if event.device == InputEvent.DEVICE_ID_EMULATION and (event is InputEventMouse or event is InputEventScreenTouch or event is InputEventScreenDrag):
+		accept_event()
+		return
 	# Authored action bindings own their declared input. Navigation is the
 	# fallback only when the selected interaction does not consume the event.
 	if _activate_selected_info_action_for_authored_input(event):
