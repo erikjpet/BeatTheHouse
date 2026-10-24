@@ -1127,9 +1127,15 @@ func _slot_reels_spinning(state: Dictionary, time_msec: int) -> bool:
 func _draw_feature_area(surface, state: Dictionary, definition: Dictionary, skin: Dictionary, accent: Color, light: Color, trim: Color, glass: Color, bucket: int, feature_msec: int, spin_msec: int) -> void:
 	var rect := _rect_from_dict(skin.get("playfield_rect", skin.get("feature_panel", {})))
 	var active: Dictionary = _read_dict(state.get("slot_active_bonus", {}))
+	var family := str(active.get("family", state.get("slot_type_id", "pinball"))) if bool(active.get("active", false)) else str(state.get("slot_type_id", "pinball"))
+	# Full Table shares its idle preview space with the READY panel. Active
+	# pinball uses the full-screen takeover; the idle fallback must not paint
+	# a second board and its default title underneath that status text.
+	if family == "pinball" and not _pinball_takeover_active(state) \
+			and rect.intersects(_rect_from_dict(skin.get("feature_panel", {}))):
+		return
 	surface.draw_rect(rect, Color(0.0, 0.0, 0.0, 0.34))
 	surface.draw_rect(rect, Color(glass.r, glass.g, glass.b, 0.18), false, 1)
-	var family := str(active.get("family", state.get("slot_type_id", "pinball"))) if bool(active.get("active", false)) else str(state.get("slot_type_id", "pinball"))
 	if family == "pinball":
 		_draw_pinball_playfield(surface, rect, state, active, accent, light, trim, bucket, feature_msec)
 	else:
