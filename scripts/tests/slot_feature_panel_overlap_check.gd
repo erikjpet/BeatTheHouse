@@ -39,9 +39,21 @@ func _init() -> void:
 			_check(JSON.stringify(state) == original, "Rendering must not mutate money, RNG or bonus state.")
 		var active_state := {"slot_type_id": "pinball", "slot_active_bonus": {"active": true, "mode": "full_table"}}
 		_check(renderer._pinball_takeover_active(active_state), "Active pinball must retain the existing full-screen takeover route.")
-	var buffalo_skin: Dictionary = catalog.skin_for_machine({"type_id": "buffalo", "format_id": "video_feature"}, {})
-	renderer._draw_feature_area(surface, {"slot_type_id": "buffalo"}, {}, buffalo_skin, Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE, 0, 0, 0)
-	_check(renderer.buffalo_previews == 1, "Buffalo feature drawing must retain its existing route.")
+	for format_id in ["classic_3_reel", "line_5x3", "video_feature"]:
+		var buffalo_skin: Dictionary = catalog.skin_for_machine({"type_id": "buffalo", "format_id": format_id}, {})
+		for bonus in [{}, {"active": false, "complete": true, "mode": "free_games", "feature_total": 11}]:
+			var state := {"slot_type_id": "buffalo", "slot_active_bonus": bonus, "bankroll": 37, "slot_selected_bet": 2, "rng_state": 1491348284}
+			var original := JSON.stringify(state)
+			renderer.buffalo_previews = 0
+			renderer._draw_feature_area(surface, state, {}, buffalo_skin, Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE, 0, 0, 0)
+			_check(renderer.buffalo_previews == (0 if format_id == "video_feature" else 1), "Idle/completed Buffalo %s must reserve overlapping READY panel while retaining separate previews." % format_id)
+			surface.labels.clear()
+			renderer._draw_status_panel(surface, state, buffalo_skin, Color.WHITE, Color.WHITE, Color.WHITE)
+			_check(surface.labels.has(str(buffalo_skin.feature_name).to_upper().left(18)) and surface.labels.has("READY"), "Buffalo's actual feature name and READY must remain visible.")
+			_check(JSON.stringify(state) == original, "Buffalo rendering must not mutate money, RNG or completed bonus state.")
+		renderer.buffalo_previews = 0
+		renderer._draw_feature_area(surface, {"slot_type_id": "buffalo", "slot_active_bonus": {"active": true, "mode": "free_games"}}, {}, buffalo_skin, Color.WHITE, Color.WHITE, Color.WHITE, Color.WHITE, 0, 0, 0)
+		_check(renderer.buffalo_previews == 1, "Live Buffalo %s feature drawing must retain its existing route." % format_id)
 	print("SLOT_FEATURE_PANEL_OVERLAP_RESULT " + JSON.stringify({"checks": checks, "failures": failures}))
 	quit(0 if failures.is_empty() else 1)
 
