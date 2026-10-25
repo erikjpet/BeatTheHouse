@@ -8353,6 +8353,10 @@ func _interaction_rect_for_object(object_data: Dictionary) -> Rect2:
 	if bool(object_data.get("person_transit_active", false)):
 		return Rect2()
 	var rect := _natural_model_rect_for_object(object_data)
+	# A format's reserved footprint includes transparent cabinet margins. Use
+	# the drawn frame so those margins cannot steal a visible neighbor's click.
+	if not str(_slot_prop_visual_state(object_data).get("machine_format", "")).strip_edges().is_empty():
+		rect = _slot_cabinet_frame_rect(rect)
 	if not bool(object_data.get("interactive", true)) or not rect.has_area() \
 			or is_equal_approx(_scene_object_slot_scale(object_data), 1.0):
 		return rect
@@ -10533,6 +10537,13 @@ func _draw_slot_cabinet_prop(rect: Rect2, object_data: Dictionary, accent: Color
 		draw_line(safe.position + Vector2(safe.size.x * 0.12, safe.size.y * 0.20), safe.position + Vector2(safe.size.x * 0.88, safe.size.y * 0.78), C_SOFT, 3)
 
 
+func _slot_cabinet_frame_rect(rect: Rect2) -> Rect2:
+	return Rect2(
+		rect.position + Vector2(rect.size.x * 0.14, rect.size.y * 0.03),
+		Vector2(rect.size.x * 0.72, rect.size.y * 0.92)
+	)
+
+
 func _slot_prop_static_layer(rect: Rect2, object_data: Dictionary, fallback_accent: Color) -> Dictionary:
 	var object_id := str(object_data.get("id", object_data.get("label", "generated_machine")))
 	# Spin previews are animated independently and can be large. Key this static
@@ -10563,10 +10574,7 @@ func _slot_prop_static_layer(rect: Rect2, object_data: Dictionary, fallback_acce
 			return cached
 	var profile := _slot_prop_profile(object_data, fallback_accent)
 	var phase := float(abs(hash(object_id)) % 1000) / 1000.0
-	var safe := Rect2(
-		rect.position + Vector2(rect.size.x * 0.14, rect.size.y * 0.03),
-		Vector2(rect.size.x * 0.72, rect.size.y * 0.92)
-	)
+	var safe := _slot_cabinet_frame_rect(rect)
 	var format_id := str(profile.get("format_id", "classic_3_reel"))
 	var reel_count := maxi(3, int(profile.get("reel_count", 3)))
 	var row_count := maxi(1, int(profile.get("row_count", 1)))
