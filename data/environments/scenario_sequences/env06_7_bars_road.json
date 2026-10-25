@@ -1828,6 +1828,24 @@
               "resolution_id": "keep_off_the_book",
               "resolved": true
             }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "choice_id": "take_the_other_corner",
+              "event_id": "scenario_fight_night_swing_bet",
+              "ok": true,
+              "resolved": true
+            }
+          },
+          {
+            "fact_type": "event_result",
+            "payload_equals": {
+              "choice_id": "keep_off_the_book",
+              "event_id": "scenario_fight_night_swing_bet",
+              "ok": true,
+              "resolved": true
+            }
           }
         ],
         "local_state_schema": {
