@@ -780,8 +780,12 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var between_hands_count_visible := between_hands and bool(table.get("counting_enabled", false))
 	var rules_for_surface: Dictionary = _table_rules(table)
 	var effective_stake_ceiling := _max_table_stake_for_blackjack(session, table, run_state, environment)
+	var effective_floor := _surface_stake_floor(run_state, environment)
+	var wager_blocked := not dealt and not barred and not _is_rourke_duel(run_state, environment) and effective_stake_ceiling < effective_floor
+	var wager_blocked_reason := "Minimum wager $%d; $%d available." % [effective_floor, maxi(0, effective_stake_ceiling)] if wager_blocked else ""
+	if wager_blocked and last_result.is_empty() and not deal_animation_active and not payout_animation_active:
+		table_notice = wager_blocked_reason
 	if not dealt and not bool(session.get("locked_stake", false)):
-		var effective_floor := _surface_stake_floor(run_state, environment)
 		selected_stake = effective_floor if effective_stake_ceiling < effective_floor else clampi(selected_stake, effective_floor, effective_stake_ceiling)
 		session["selected_stake"] = selected_stake
 	var main_wager_cost := _main_wager_cost(selected_stake, session)
@@ -891,6 +895,9 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"distractions": _dictionary_array(table.get("distractions", [])),
 		"chip_denominations": chip_denominations,
 		"selected_stake": selected_stake,
+		"minimum_wager": effective_floor,
+		"wager_blocked": wager_blocked,
+		"wager_blocked_reason": wager_blocked_reason,
 		"stake_ceiling": effective_stake_ceiling,
 		"economy_stake_ceiling": effective_stake_ceiling,
 		"chip_stack": _chip_stack_for_stake(selected_stake, chip_denominations),
@@ -913,7 +920,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"side_bet_stakes": side_bet_stakes,
 		"main_wager_cost": main_wager_cost,
 		"total_wager_cost": total_wager_cost,
-		"can_deal": not dealt and not barred,
+		"can_deal": not dealt and not barred and not wager_blocked,
 		"can_hit": _can_hit(session) and not barred,
 		"can_stand": _can_stand(session) and not barred,
 		"can_double": _can_double(session, table, selected_stake, run_state) and not barred,
@@ -3640,7 +3647,8 @@ func _draw_player_station(surface, surface_state: Dictionary, include_betting_ch
 		surface.surface_label_centered("SHOWDOWN HELD ON FELT", Rect2(342, 226, 216, 16), 10, C_YELLOW)
 	if include_betting_chrome and display_hands.is_empty():
 		TableVisualsScript._draw_neon_panel(surface, Rect2(346, 236, 208, 36), C_CYAN, 0.12)
-		surface.surface_label_centered("slide chips, then deal", Rect2(358, 246, 184, 16), 13, C_SOFT)
+		var hint := "Minimum $%d" % int(surface_state.get("minimum_wager", 1)) if bool(surface_state.get("wager_blocked", false)) else "slide chips, then deal"
+		surface.surface_label_centered(hint, Rect2(358, 246, 184, 16), 13, C_SOFT)
 	if include_betting_chrome:
 		_draw_player_wager_chips(surface, surface_state)
 		_draw_side_bet_felt(surface, surface_state)
@@ -3649,6 +3657,7 @@ func _draw_player_station(surface, surface_state: Dictionary, include_betting_ch
 func _draw_player_wager_chips(surface, surface_state: Dictionary) -> void:
 	var center := Vector2(452, 310)
 	var stack: Array = surface_state.get("chip_stack", []) if typeof(surface_state.get("chip_stack", [])) == TYPE_ARRAY else []
+	if bool(surface_state.get("wager_blocked", false)): stack = []
 	_draw_chip_stack(surface, center, stack, 0.58)
 	surface.draw_rect(Rect2(center - Vector2(24, 20), Vector2(48, 46)), Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.72), false, 1)
 	surface.surface_label_centered("YOU", Rect2(center + Vector2(-18, 22), Vector2(36, 10)), 7, C_CYAN)
@@ -3813,18 +3822,20 @@ func _draw_chip_rack(surface, surface_state: Dictionary) -> void:
 	surface.draw_rect(rack, Color("#120b14"))
 	surface.draw_rect(rack, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.28), false, 1)
 	surface.surface_label("CHIP RAIL", rack.position + Vector2(12, 15), 10, C_SOFT)
-	surface.surface_label("BET $%d" % int(surface_state.get("selected_stake", 1)), rack.position + Vector2(112, 15), 12, C_YELLOW)
+	var wager_blocked := bool(surface_state.get("wager_blocked", false))
+	var wager_label := "MIN $%d" % int(surface_state.get("minimum_wager", 1)) if wager_blocked else "BET $%d" % int(surface_state.get("selected_stake", 1))
+	surface.surface_label(wager_label, rack.position + Vector2(112, 15), 12, C_YELLOW)
 	var chips: Array = surface_state.get("chip_denominations", []) if typeof(surface_state.get("chip_denominations", [])) == TYPE_ARRAY else []
 	var chip_origin := rack.position + Vector2(22.0, 34.0)
 	var chip_spacing := 22.0
 	for i in range(chips.size()):
 		var chip_center := chip_origin + Vector2(float(i) * chip_spacing, 0.0)
-		_draw_chip_button(surface, chip_center, int(chips[i]), BLACKJACK_WAGER_PLACE_GESTURE, i)
+		_draw_chip_button(surface, chip_center, int(chips[i]), BLACKJACK_WAGER_PLACE_GESTURE, i, not wager_blocked)
 		var remove_rect := Rect2(chip_center.x - 7, chip_center.y + 10, 14, 10)
 		_draw_table_button(surface, remove_rect, "", "blackjack_remove_chip", i, C_SOFT, true)
 		surface.draw_line(remove_rect.position + Vector2(3, 5), remove_rect.end - Vector2(3, 5), C_SOFT, 1.0)
 	_draw_table_button(surface, Rect2(rack.position.x + 154, rack.position.y + 25, 40, 16), "CLR", "blackjack_clear_bet", 0, C_SOFT, true)
-	_draw_table_button(surface, Rect2(rack.position.x + 200, rack.position.y + 25, 36, 16), "MAX", "blackjack_max_bet", 0, C_YELLOW, true)
+	_draw_table_button(surface, Rect2(rack.position.x + 200, rack.position.y + 25, 36, 16), "MAX", "blackjack_max_bet", 0, C_YELLOW, not wager_blocked)
 	_draw_table_button(surface, Rect2(rack.position.x + 154, rack.position.y + 47, 26, 16), "UNDO", "blackjack_undo_bet", 0, C_CYAN, true)
 	_draw_table_button(surface, Rect2(rack.position.x + 184, rack.position.y + 47, 26, 16), "RPT", "blackjack_repeat_bet", 0, C_CYAN, true)
 	_draw_table_button(surface, Rect2(rack.position.x + 214, rack.position.y + 47, 22, 16), "RE", "blackjack_rebet", 0, C_TEAL, true)
@@ -3845,8 +3856,12 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 	surface.surface_label("Snitch %d" % snitch, panel.position + Vector2(210, 15), 9, C_PINK if snitch > 0 else C_SOFT)
 	var counting_enabled := bool(surface_state.get("counting_enabled", false))
 	_draw_table_button(surface, Rect2(panel.position.x + 112, panel.position.y + 7, 88, 16), "COUNT ON" if counting_enabled else "COUNT OFF", "blackjack_count_toggle", 0, C_PINK_2 if counting_enabled else C_SOFT, true, counting_enabled)
-	if bool(surface_state.get("can_deal", false)):
-		_draw_table_button(surface, Rect2(panel.position.x + 14, panel.position.y + 28, 132, 38), "DEAL", "blackjack_deal", 0, C_YELLOW, true, surface.surface_native_action_selected("blackjack_deal"))
+	if bool(surface_state.get("can_deal", false)) or bool(surface_state.get("wager_blocked", false)):
+		_draw_table_button(surface, Rect2(panel.position.x + 14, panel.position.y + 28, 132, 38), "DEAL", "blackjack_deal", 0, C_YELLOW, bool(surface_state.get("can_deal", false)), surface.surface_native_action_selected("blackjack_deal"))
+		if bool(surface_state.get("wager_blocked", false)):
+			surface.surface_label("MIN $%d" % int(surface_state.get("minimum_wager", 1)), panel.position + Vector2(154, 40), 9, C_ORANGE)
+			if not _settlement_reveal_waiting(surface, surface_state) and not surface.surface_animation_active(PAYOUT_ANIMATION_CHANNEL):
+				surface.surface_label("HAVE $%d" % maxi(0, int(surface_state.get("stake_ceiling", 0))), panel.position + Vector2(154, 54), 8, C_SOFT)
 	else:
 		surface.surface_add_invisible_hit(Rect2(panel.position.x + 14, panel.position.y + 7, 84, 16), "blackjack_deal", 0)
 		_draw_table_button(surface, Rect2(panel.position.x + 12, panel.position.y + 24, 84, 26), "HIT", "blackjack_hit", 0, C_TEAL, bool(surface_state.get("can_hit", false)))
@@ -4320,10 +4335,10 @@ func _draw_table_button(surface, rect: Rect2, label: String, action: String, ind
 		surface.surface_add_exact_hit(rect, action, index)
 
 
-func _draw_chip_button(surface, center: Vector2, value: int, action: String, index: int) -> void:
+func _draw_chip_button(surface, center: Vector2, value: int, action: String, index: int, enabled: bool = true) -> void:
 	var hovered := bool(surface.surface_region_hovered(action, index))
-	_draw_casino_chip(surface, center, value, 9.0, 1.0, hovered)
-	surface.surface_add_drag_hit(Rect2(center - Vector2(10, 10), Vector2(20, 20)), action, index)
+	_draw_casino_chip(surface, center, value, 9.0, 1.0 if enabled else 0.35, hovered and enabled)
+	if enabled: surface.surface_add_drag_hit(Rect2(center - Vector2(10, 10), Vector2(20, 20)), action, index)
 
 
 func _draw_chip_stack(surface, pos: Vector2, stack_value: Variant, scale: float = 1.0) -> void:
