@@ -6135,7 +6135,8 @@ func _use_active_item(item_id: String) -> bool:
 	if active_target == "global" or active_target == "run":
 		return _use_global_active_item(item_id, detail)
 	if current_game == null:
-		_show_message("That active item needs a game surface.")
+		_show_environment_action_acknowledgement("That active item needs a game surface.")
+		_refresh_environment_result_feedback()
 		return false
 	var boundary_rollback_run := run_state.to_dict()
 	var boundary_rollback_environment := run_state.current_environment.duplicate(true)
