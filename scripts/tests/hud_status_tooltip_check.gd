@@ -1,5 +1,6 @@
 extends SceneTree
 
+const Model := preload("res://scripts/ui/foundation_hud_view_model.gd")
 const Hud := preload("res://scripts/ui/foundation_hud_bar.gd")
 var checks := 0
 var failures: Array[String] = []
@@ -8,52 +9,52 @@ func check(ok: bool, message: String) -> void:
 	checks += 1
 	if not ok: failures.append(message)
 
+func friendly(text: String) -> String:
+	return text.replace("RAW_LENDER", "The Crew")
+
+func project(items: Array) -> Dictionary:
+	# Synthetic projection of the same complete debt lines passed by the host.
+	# This is not a debt action, authority fixture or Web rendering check.
+	return Model.run_status_model(RunState.new(), {"debt_items":items, "player_facing_text":Callable(self, "friendly")})
+
+func debt_icon(model: Dictionary) -> Dictionary:
+	for status in model.get("status_icons", []):
+		if str(status.get("id", "")) == "debt": return status
+	return {}
+
 func _initialize() -> void:
 	call_deferred("run_checks")
 
 func run_checks() -> void:
-	# Synthetic UI records matching the clipped normal Web debt badge. This
-	# checks tooltip layout, not a game action or debt/accounting authority.
-	root.size = Vector2i(1280, 720)
+	var lines := [
+		"The Crew wants 1 favor, due in 1 turn (Active)",
+		"The Crew wants 1 favor, favor due now (Favor Due)",
+		"Nico balance 22, due in 4 turns (Active)",
+		"Sal holds Trunk; borrowed 68, buy-back 85, due in 5 turns (Active)",
+	]
+	for text in lines:
+		check(str(debt_icon(project([text])).get("tooltip", "")) == text, "HUD tooltip truncates debt details: " + text)
+	var multiple := [lines[0], lines[2]]
+	var original := multiple.duplicate()
+	check(str(debt_icon(project(multiple)).get("tooltip", "")) == "\n".join(multiple), "Multiple debt deadlines are replaced with a count.")
+	check(multiple == original, "Debt projection mutates its input.")
+	check(str(debt_icon(project([" RAW_LENDER wants 1 favor, due in 1 turn (Active) "])).get("tooltip", "")) == lines[0], "Full tooltip skips player-facing normalization.")
+	check(debt_icon(project([])).is_empty(), "Debt badge appears without debt.")
+	check(Model.hud_debt_text([lines[0]], Callable()) == "The Crew wants 1 favor, due...", "Compact HUD summary unexpectedly changed.")
 	var hud := Hud.new()
 	root.add_child(hud)
 	await process_frame
-	var text := "The Crew wants 1 favor, due in 1 turn (Active)"
-	var statuses := [{"id":"debt", "icon":"debt", "tooltip":text}]
+	var statuses: Array = project([lines[0]])["status_icons"]
 	hud.call("_render_status_icons", statuses)
 	await process_frame
-	var icon: Control = hud.status_tray.get_child(0)
-	check(icon.tooltip_text == text, "Debt schedule was shortened before tooltip rendering.")
-	var original_id := icon.get_instance_id()
+	check(hud.status_tray.get_child(0).tooltip_text == lines[0], "Model-to-HUD path loses the full deadline.")
+	var original_id := hud.status_tray.get_child(0).get_instance_id()
 	hud.call("_render_status_icons", statuses)
-	check(hud.status_tray.get_child(0).get_instance_id() == original_id, "Unchanged statuses unnecessarily rebuilt the hovered icon.")
-	check(icon.has_method("_make_custom_tooltip"), "HUD status uses an unwrapped default tooltip that clips the due date.")
-	if icon.has_method("_make_custom_tooltip"):
-		var popup: Control = icon.call("_make_custom_tooltip", text)
-		root.add_child(popup)
-		for frame in range(3): await process_frame
-		var label: Label = popup.get_child(0)
-		check(label.text == text, "Tooltip lost part of the debt schedule or status.")
-		check(label.autowrap_mode == TextServer.AUTOWRAP_WORD_SMART, "Tooltip does not wrap complete words.")
-		check(popup.size.x <= VisualStyle.TOOLTIP_MAX_WIDTH + 1.0, "Tooltip exceeds the existing bounded width.")
-		var text_width := label.get_theme_font("font").get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, label.get_theme_font_size("font_size")).x
-		check(label.get_line_count() > 1 or label.size.x >= text_width, "Debt summary does not fit its rendered line.")
-		check(popup.size.y >= label.get_minimum_size().y, "Tooltip height clips wrapped lines.")
-		popup.queue_free()
-	var replacement := "A very long lender name wants 12 favors, next pressure in 123 turns (Overdue)"
-	hud.call("_render_status_icons", [{"id":"debt", "icon":"debt", "tooltip":replacement}])
+	check(hud.status_tray.get_child(0).get_instance_id() == original_id, "Unchanged status unnecessarily rebuilds the hovered icon.")
+	hud.call("_render_status_icons", project([lines[1]])["status_icons"])
 	await process_frame
-	var updated_icon: Control = hud.status_tray.get_child(0)
-	check(updated_icon.tooltip_text == replacement, "Changed debt schedule retained stale tooltip text.")
-	if updated_icon.has_method("_make_custom_tooltip"):
-		var popup: Control = updated_icon.call("_make_custom_tooltip", replacement)
-		root.add_child(popup)
-		for frame in range(3): await process_frame
-		var label: Label = popup.get_child(0)
-		check(label.text == replacement and label.get_line_count() > 1, "Long lender and schedule do not wrap in full.")
-		check(popup.size.y >= label.get_minimum_size().y, "Long lender schedule is cut off vertically.")
-		popup.queue_free()
+	check(hud.status_tray.get_child(0).tooltip_text == lines[1], "Updated due status retains stale text.")
 	hud.queue_free()
 	for failure in failures: push_error(failure)
-	print("HUD status tooltip checks: ", checks, " failures=", failures.size())
+	print("HUD debt tooltip projection checks: ", checks, " failures=", failures.size())
 	quit(0 if failures.is_empty() else 1)

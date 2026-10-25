@@ -13,10 +13,6 @@ const HeatFeedbackVisualsScript := preload("res://scripts/ui/heat_feedback_visua
 const MoneyFeedbackViewModelScript := preload("res://scripts/ui/money_feedback_view_model.gd")
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 
-class StatusIcon extends TextureRect:
-	func _make_custom_tooltip(for_text: String) -> Object:
-		return FoundationWidgets.tooltip(for_text)
-
 var wallet_value: Label
 var wallet_delta: Label
 var wallet_delta_panel: PanelContainer
@@ -540,7 +536,7 @@ func _render_status_icons(statuses_value: Variant) -> void:
 		if typeof(status_value) != TYPE_DICTIONARY:
 			continue
 		var status: Dictionary = status_value
-		var icon_rect := StatusIcon.new()
+		var icon_rect := TextureRect.new()
 		icon_rect.set_meta("status_id", str(status.get("id", "")))
 		icon_rect.texture = UIArtScript.icon(str(status.get("icon", "alert")))
 		icon_rect.custom_minimum_size = VisualStyle.ICON_SMALL

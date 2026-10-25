@@ -100,7 +100,7 @@ static func run_status_model(run_state: RunState, data: Dictionary) -> Dictionar
 		objective_parts.insert(5, home_text)
 	var status_icons: Array = []
 	if not debt_items.is_empty():
-		status_icons.append({"id": "debt", "icon": "debt", "label": "Debt", "tooltip": hud_debt_text(debt_items, player_text)})
+		status_icons.append({"id": "debt", "icon": "debt", "label": "Debt", "tooltip": hud_debt_tooltip(debt_items, player_text)})
 	if not home_text.is_empty():
 		status_icons.append({"id": "home", "icon": "home", "label": "Home", "tooltip": home_text})
 	if bool(pit_boss.get("active", false)):
@@ -320,6 +320,13 @@ static func objective_for_object(object_type: String, object_id: String, hint: S
 static func hud_debt_text(items: Array, player_facing_text: Callable) -> String:
 	if items.is_empty(): return "none"
 	return hud_short(str(items[0]), 30, player_facing_text) if items.size() == 1 else "%d active debts" % items.size()
+
+
+static func hud_debt_tooltip(items: Array, player_facing_text: Callable) -> String:
+	var lines: Array[String] = []
+	for item in items:
+		lines.append(_call_string(player_facing_text, str(item)).strip_edges())
+	return "\n".join(lines)
 
 
 static func hud_inventory_text(items: Array, player_facing_text: Callable) -> String:
