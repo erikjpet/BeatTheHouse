@@ -1129,7 +1129,11 @@ static func _event_placement_hints(event_ids: Array, library: ContentLibrary, en
 		return result
 	var surfaces := EnvironmentPlacementScript.surface_map(environment_data)
 	var has_counters := not JsonCoerceScript._copy_array(surfaces.get("counters", [])).is_empty()
-	var has_seats := not JsonCoerceScript._copy_array(surfaces.get("seats", [])).is_empty()
+	# Background stools are not bindable event slots. Only infer a seated
+	# patron where the authored event inventory can actually place one.
+	var has_event_seats := JsonCoerceScript._copy_array(surfaces.get("event_slots", [])).any(
+		func(slot: Dictionary) -> bool: return str(slot.get("footprint_class", "")) == "seated_person"
+	)
 	for event_id in JsonCoerceScript._string_array(event_ids):
 		var definition := library.event(event_id)
 		if definition.is_empty():
@@ -1152,7 +1156,7 @@ static func _event_placement_hints(event_ids: Array, library: ContentLibrary, en
 		if not hint.has("placement_class") and has_counters and counter_staff \
 				and speaker_role in ["staff", "clerk", "cashier", "dealer", "vendor"]:
 			hint["placement_class"] = "behind_counter_person"
-		elif not hint.has("placement_class") and has_seats and str(environment_data.get("archetype_id", "")) == "bar" \
+		elif not hint.has("placement_class") and has_event_seats and str(environment_data.get("archetype_id", "")) == "bar" \
 				and visual_prop in ["bar_patron", "patron", "patron_talk", "rowdy_patron"]:
 			hint["placement_class"] = "seated_person"
 		elif not hint.has("placement_class") and not str(speaker.get("character_id", "")).strip_edges().is_empty():
