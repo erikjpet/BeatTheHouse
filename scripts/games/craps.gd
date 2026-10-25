@@ -759,6 +759,15 @@ func resolve_with_context(action_id: String, stake: int, run_state: RunState, en
 	if action_kind == "cheat":
 		GameModule.normalize_skill_cheat_contract(result, result)
 	GameModule.apply_result(run_state, result, rng)
+	# These chips are now paid working wagers (or settled), not a new draft.
+	# Keep selections, but never let THROW or Undo submit the consumed set again.
+	var next_ui_state := ui_state.duplicate(true)
+	next_ui_state["craps_pending_bets"] = {}
+	next_ui_state["craps_pending_history"] = []
+	next_ui_state.erase("craps_last_pending_id")
+	next_ui_state.erase("_host_wager_funding")
+	result["ui_state"] = next_ui_state
+	result["preserve_surface_ui_state"] = true
 	return result
 
 
