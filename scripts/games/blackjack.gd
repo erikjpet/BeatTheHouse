@@ -1463,6 +1463,13 @@ func _draw_blackjack_ritual_layer(surface, surface_state: Dictionary) -> void:
 	var phase_id := str(projection.get("phase_id", "wagering"))
 	var energy_tier := str(projection.get("energy_tier", "quiet"))
 	var totals := _draw_dict_view(projection.get("readable_totals", {}))
+	if not bool(surface_state.get("boss_duel_active", false)) and surface.surface_animation_active(DEAL_ANIMATION_CHANNEL):
+		totals = totals.duplicate(false)
+		if bool(surface_state.get("between_hands", false)):
+			var accepted_return := int(_draw_dict_view(surface_state.get("last_result", {})).get("bankroll_delta", 0))
+			totals["available_funds"] = maxi(0, int(totals.get("available_funds", 0)) - accepted_return)
+		totals["returned_stake"] = 0
+		totals["payout"] = 0
 	var accent := C_PINK if energy_tier == "hot" else C_YELLOW if energy_tier == "watched" else C_TEAL if energy_tier == "engaged" else C_CYAN
 	var phase_rect := Rect2(28, 120, 164, 20)
 	TableVisualsScript._draw_neon_panel(surface, phase_rect, accent, 0.13)

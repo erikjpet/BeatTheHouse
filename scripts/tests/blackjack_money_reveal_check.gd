@@ -2,6 +2,7 @@ extends SceneTree
 
 const Main := preload("res://scripts/ui/foundation_main.gd")
 const Blackjack := preload("res://scripts/games/blackjack.gd")
+const PlayerText := preload("res://scripts/ui/player_text.gd")
 
 class ClockHost extends Main:
 	var test_msec := 100000
@@ -18,6 +19,17 @@ class QuietAudio extends Node:
 	func play_money_feedback(amount: int) -> bool:
 		signs.append(amount)
 		return true
+
+# Exercise the real ritual draw call, retaining its real animation clock.
+class LedgerSurface extends RefCounted:
+	var canvas: Control
+	var labels: Array[String] = []
+	func surface_animation_active(channel: String) -> bool: return canvas.surface_animation_active(channel)
+	func draw_rect(_rect: Rect2, _color: Color, _filled: bool = true, _width: float = -1.0) -> void: pass
+	func surface_label(_text: String, _position: Vector2, _size: int, _color: Color) -> void: pass
+	func surface_label_centered(text: String, _rect: Rect2, _size: int, _color: Color) -> void: labels.append(text)
+	func surface_add_hold_hit(_rect: Rect2, _action: String, _index: int) -> void: pass
+	func surface_add_drag_hit(_rect: Rect2, _action: String, _index: int) -> void: pass
 
 var checks := 0
 var failures: Array[String] = []
@@ -56,6 +68,9 @@ func _run() -> void:
 		var before := app.run_state.wager_capacity_for_game("blackjack", app.run_state.current_environment)
 		app._on_game_surface_action("blackjack_deal", 0)
 		for frame in range(12): await process_frame
+		var opening_currency := str(app.game_surface_canvas.state.get("wager_currency", "cash"))
+		var opening_balance := app._presented_game_funds()
+		_check(_ledger_line(app).contains("AVAILABLE " + PlayerText.format_currency_amount(opening_currency, opening_balance, true)), "A new deal must not subtract the preceding hand's return again.")
 		_sample(app, app.test_msec + 5000)
 		await process_frame
 		app._on_game_surface_action("blackjack_stand", 0)
@@ -84,6 +99,11 @@ func _run() -> void:
 		_check(app._presented_game_funds() == actual - returned, "Wallet hides the accepted return before final card.")
 		_check(int(app.game_surface_canvas.state.get("bankroll", -1)) == actual - returned, "Table funds do not overwrite masked wallet.")
 		_check(app._current_game_result_snapshot().is_empty(), "Generic result cannot spoil dealer reveal.")
+		var currency := str(app.game_surface_canvas.state.get("wager_currency", "cash"))
+		var line := _ledger_line(app)
+		var visible_unit := app._presented_game_funds()
+		_check(line.contains("AVAILABLE " + PlayerText.format_currency_amount(currency, visible_unit, true)), "Drawn table ledger uses the same masked currency balance as the wallet.")
+		_check(line.contains("RETURN " + PlayerText.format_currency_amount(currency, 0, true)) and line.contains("PAYS " + PlayerText.format_currency_amount(currency, 0, true)), "Drawn table ledger cannot reveal returned stake or payout before final card.")
 		_check(audio.signs.size() == sounds, "Money sound cannot expose the accepted return before final card.")
 		_check(app.run_state.bankroll == cash and app.run_state.grand_casino_chips == chips and app.run_state.rng_state == rng, "Presentation leaves committed money/RNG unchanged.")
 		if round_index == 3:
@@ -106,11 +126,31 @@ func _run() -> void:
 			_check(app.enter_game("blackjack") and not app.presented_bankroll_hold_active, "Scene re-entry remains usable without replaying the hold.")
 		_sample(app, started + duration)
 		_check(not app.presented_bankroll_hold_active and app._presented_game_funds() == actual, "Final-card boundary releases accepted wallet.")
+		var final_totals: Dictionary = (app.game_surface_canvas.state.get("ritual_projection", {}) as Dictionary).get("readable_totals", {})
+		var final_line := _ledger_line(app)
+		_check(final_line.contains("AVAILABLE " + PlayerText.format_currency_amount(currency, int(final_totals.get("available_funds", 0)), true)), "Completed ledger retains its existing available currency balance.")
+		_check(final_line.contains("RETURN " + PlayerText.format_currency_amount(currency, int(final_totals.get("returned_stake", 0)), true)) and final_line.contains("PAYS " + PlayerText.format_currency_amount(currency, int(final_totals.get("payout", 0)), true)), "Completed ledger reveals its existing returned-stake and payout labels.")
 		var released_sounds := audio.signs.size()
 		_sample(app, started + duration + 1)
 		_check(app.run_state.bankroll == cash and app.run_state.grand_casino_chips == chips and app.run_state.rng_state == rng, "Repeated reveal frame cannot resettle or draw RNG.")
 		_check(audio.signs.size() == released_sounds, "Repeated reveal frame cannot repeat payout feedback audio.")
 	_finish(app)
+
+func _ledger_line(app: ClockHost) -> String:
+	var state: Dictionary = app.game_surface_canvas.state.duplicate(false)
+	var original := JSON.stringify(app.game_surface_canvas.state.get("ritual_projection", {}))
+	var projection: Dictionary = (state.get("ritual_projection", {}) as Dictionary).duplicate(false)
+	# Characters are verified separately; only this draw call's money text matters.
+	projection["actors"] = []
+	projection["scene_objects"] = []
+	state["ritual_projection"] = projection
+	var surface := LedgerSurface.new()
+	surface.canvas = app.game_surface_canvas
+	app.current_game._draw_blackjack_ritual_layer(surface, state)
+	_check(JSON.stringify(app.game_surface_canvas.state.get("ritual_projection", {})) == original, "Drawing does not alter authoritative ritual totals.")
+	for line in surface.labels:
+		if line.begins_with("AVAILABLE "): return line
+	return ""
 
 func _sample(app: ClockHost, msec: int) -> void:
 	app.test_msec = msec
