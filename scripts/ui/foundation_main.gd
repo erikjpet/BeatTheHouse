@@ -2597,12 +2597,15 @@ func _sync_presented_bankroll_to_actual() -> void:
 	if run_state != null:
 		presented_bankroll_value = run_state.bankroll
 	var reveal_outcome := presented_bankroll_hold_active
+	var reveal_surface_audio := reveal_outcome and current_screen == SCREEN_GAME and current_game != null and current_game.get_id() == presented_bankroll_game_id and bool(last_game_result.get("hold_surface_audio_for_presentation", false))
 	for unit in presented_money_feedback:
 		MoneyFeedbackViewModelScript.add_delta(money_feedback_pending, str(unit), int(presented_money_feedback[unit]))
 	if not presented_money_push_currency.is_empty():
 		money_feedback_push_currency = presented_money_push_currency
 	_clear_presented_bankroll_hold()
 	financial_hud_dirty = true
+	if reveal_surface_audio:
+		_play_result_surface_audio_cue(last_game_result)
 	if reveal_outcome and current_game != null:
 		var schedule := _schedule_game_result_music_outcome(last_game_result, str(last_game_result.get("action_id", "")))
 		if not schedule.is_empty():
@@ -14085,6 +14088,8 @@ func _invalidate_deferred_embedded_action_refresh() -> void:
 
 func _play_result_surface_audio_cue(result: Dictionary) -> void:
 	if game_surface_canvas == null or result.is_empty() or not bool(result.get("ok", false)):
+		return
+	if presented_bankroll_hold_active and bool(result.get("hold_surface_audio_for_presentation", false)):
 		return
 	_bind_game_surface_audio_authority()
 	var cue_id := str(result.get("surface_audio_cue", "")).strip_edges()

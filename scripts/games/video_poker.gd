@@ -629,6 +629,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_fixed_price_actions": true,
 		"surface_stake_controls_required": false,
 		"surface_embeds_outcomes": true,
+		"money_presentation_animation_channel": FLIP_CHANNEL,
 		"surface_animates_idle": true,
 		"surface_realtime_state_refresh": double_result_phase or (marked and str(holdout_challenge.get("skill_grade", "")).is_empty() and not bool(ui.get("reduce_motion", false))),
 		"reduce_motion": bool(ui.get("reduce_motion", false)),
@@ -724,6 +725,11 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				{"clock_source": "surface"}
 			),
 		],
+		"surface_action_blocks": [{
+			"actions": ["video_poker_deal", "video_poker_draw", "video_poker_double", "video_poker_double_pick", "video_poker_bet_down", "video_poker_bet_one", "video_poker_bet_max", "video_poker_denom", "video_poker_hold", "video_poker_mark", "video_poker_palm"],
+			"while_animation": FLIP_CHANNEL,
+			"reason": "Let the cards finish revealing before the next play.",
+		}],
 		"surface_action_bindings": _video_poker_surface_action_bindings(phase),
 		"surface_audio": GameModule.surface_audio_spec({
 			"profile_id": "video_poker_machine",
@@ -1462,6 +1468,8 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 	# host otherwise retains the active Draw input after this hand has settled.
 	result["ui_state"] = {"bet_level": bet_level, "denomination_index": denomination_index}
 	result["preserve_surface_ui_state"] = false
+	result["hold_money_for_presentation"] = true
+	result["hold_surface_audio_for_presentation"] = true
 	result["surface_audio_cue"] = "video_poker_win" if gross_payout > 0 else ("video_poker_cheat_beat" if is_cheat else "video_poker_draw")
 	result["surface_audio_context"] = {"action": action_id, "cabinet_id": str(state.get("cabinet_id", "")), "won": gross_payout > 0}
 	result["video_poker_hand"] = final_hand

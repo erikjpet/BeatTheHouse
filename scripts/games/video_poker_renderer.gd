@@ -6,6 +6,7 @@ extends RefCounted
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
 const PlayingCardRendererScript := preload("res://scripts/games/playing_card_renderer.gd")
+const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 
 const DESIGN_SIZE := Vector2(960, 540)
 const HEADER := Rect2(18, 14, 924, 58)
@@ -51,6 +52,10 @@ func draw(surface, state: Dictionary, _context: Dictionary = {}) -> bool:
 	return true
 
 
+func _result_reveal_pending(surface, state: Dictionary) -> bool:
+	return str(state.get("phase", "idle")) == "settled" and bool(surface.surface_animation_active("video_poker_flip"))
+
+
 func _draw_machine_ritual_layer(surface, state: Dictionary, palette: Dictionary) -> void:
 	var projection_value: Variant = state.get("ritual_projection", {})
 	if typeof(projection_value) != TYPE_DICTIONARY:
@@ -63,6 +68,10 @@ func _draw_machine_ritual_layer(surface, state: Dictionary, palette: Dictionary)
 	var scene_objects: Dictionary = projection.get("scene_objects", {}) if typeof(projection.get("scene_objects", {})) == TYPE_DICTIONARY else {}
 	var tower_object: Dictionary = scene_objects.get("cabinet_tower_light", {}) if typeof(scene_objects.get("cabinet_tower_light", {})) == TYPE_DICTIONARY else {}
 	var tower_state := str(tower_object.get("visual_state", "off"))
+	var revealing := _result_reveal_pending(surface, state)
+	var handpay_pending := revealing and tower_state == "handpay"
+	if handpay_pending:
+		tower_state = "off"
 	var tower_color := C_ORANGE if tower_state in ["handpay", "security"] else C_YELLOW if tower_state == "service" else Color("#334057")
 	var tower := Rect2(872, 18, 54, 48)
 	surface.draw_rect(tower, Color("#02050b"))
@@ -81,7 +90,7 @@ func _draw_machine_ritual_layer(surface, state: Dictionary, palette: Dictionary)
 			surface.draw_circle(Vector2(x, 286), 12, Color(0.10, 0.13, 0.18, 0.94))
 			surface.draw_rect(Rect2(x - 11, 298, 22, 46), Color(0.06, 0.08, 0.12, 0.90))
 	var attendant: Dictionary = actors.get("attendant_primary", {}) if typeof(actors.get("attendant_primary", {})) == TYPE_DICTIONARY else {}
-	if bool(attendant.get("visible", false)):
+	if bool(attendant.get("visible", false)) and not handpay_pending:
 		surface.draw_circle(Vector2(846, 188), 14, Color("#d8b287"))
 		surface.draw_rect(Rect2(832, 202, 28, 64), Color("#26344d"))
 		surface.surface_label("ATTENDANT", Vector2(796, 280), 8, tower_color)
@@ -90,7 +99,7 @@ func _draw_machine_ritual_layer(surface, state: Dictionary, palette: Dictionary)
 		var stage_rect := Rect2(708, 438, 204, 22)
 		surface.draw_rect(stage_rect, Color("#02050b"))
 		surface.draw_rect(stage_rect, primary, false, 1)
-		var stage_text := "REPLACING UNHELD CARDS" if stage == "card_replacements" else "READ: %s" % str(projection.get("paytable_line", "NO PAY")).to_upper()
+		var stage_text := "REPLACING UNHELD CARDS" if revealing or stage == "card_replacements" else "READ: %s" % str(projection.get("paytable_line", "NO PAY")).to_upper()
 		surface.surface_label_centered(stage_text.left(30), stage_rect.grow(-3), 8, C_WHITE)
 
 
@@ -216,7 +225,7 @@ func _draw_marquee(surface, state: Dictionary, palette: Dictionary) -> void:
 func _draw_paytable(surface, state: Dictionary, palette: Dictionary) -> void:
 	var rows := _paytable_render_rows(state.get("paytable_rows", []))
 	var active_coin := clampi(int(state.get("coin_count", 1)), 1, MAX_COIN_COUNT)
-	var win_keys: Array = state.get("winning_pay_keys", [])
+	var win_keys: Array = [] if _result_reveal_pending(surface, state) else state.get("winning_pay_keys", [])
 	var primary: Color = palette["primary"]
 	var secondary: Color = palette["secondary"]
 	var trim: Color = palette["trim"]
@@ -308,7 +317,7 @@ func _draw_guidance(surface, state: Dictionary, palette: Dictionary) -> void:
 		surface.surface_label_centered("FRED'S PICK  •  %s" % str(state.get("recommended_hold_text", "DRAW ALL FIVE")), strip.grow(-3), 10, C_TEAL)
 		return
 	if phase == "settled":
-		var result_detail := str(state.get("result_detail", state.get("outcome_headline", ""))).strip_edges()
+		var result_detail := "CARDS REVEALING. PAYOUT FOLLOWS." if _result_reveal_pending(surface, state) else str(state.get("result_detail", state.get("outcome_headline", ""))).strip_edges()
 		surface.draw_rect(strip, Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.20))
 		surface.draw_rect(strip, C_YELLOW, false, 2)
 		surface.surface_label_centered(result_detail.left(128), strip.grow(-3), 9, C_YELLOW)
@@ -353,11 +362,11 @@ func _draw_hand_panel(options: FunctionOptions.VideoPokerHandPanelOptions) -> vo
 	var secondary: Color = palette["secondary"]
 	var recommended_holds: Array = state.get("recommended_holds", [])
 	var poker_hat_active := bool(state.get("poker_hat_strategy_active", false))
-	var winning := int(result.get("total", 0)) > 0
+	var winning := not flip_active and int(result.get("total", 0)) > 0
 	surface.draw_rect(panel, Color("#020611"))
 	surface.draw_rect(panel, C_YELLOW if winning else (primary if hand_index == 0 else secondary), false, 2)
 	var label := "HAND %d" % (hand_index + 1)
-	if phase == "settled":
+	if phase == "settled" and not flip_active:
 		label = "%s  •  %s  •  PAY %d" % [label, str(result.get("pay_label", "NO PAY")).to_upper().left(18), int(result.get("total", 0))]
 	surface.surface_label(label, panel.position + Vector2(8, 14), 9, C_YELLOW if winning else C_CYAN)
 	var label_h := 18.0
@@ -411,8 +420,9 @@ func _draw_controls(surface, state: Dictionary, palette: Dictionary) -> void:
 	var primary: Color = palette["button"]
 	var secondary: Color = palette["secondary"]
 	var trim: Color = palette["trim"]
-	var betting := phase == "idle" or phase == "settled"
-	var result_hold := phase == "double_result"
+	var revealing := _result_reveal_pending(surface, state)
+	var betting := (phase == "idle" or phase == "settled") and not revealing
+	var result_hold := phase == "double_result" or revealing
 	var y := CONTROL_DECK.position.y + 10.0
 	_button(surface, Rect2(44, y, 76, 40), "BET -", "video_poker_bet_down", 0, trim, betting)
 	_button(surface, Rect2(128, y, 76, 40), "BET +", "video_poker_bet_one", 0, trim, betting)
@@ -432,7 +442,7 @@ func _draw_controls(surface, state: Dictionary, palette: Dictionary) -> void:
 		else:
 			cheat_label = "HIT THE SWEEP"
 			cheat_action = "video_poker_palm"
-	if phase == "settled" and bool(state.get("double_up_available", false)):
+	if phase == "settled" and not revealing and bool(state.get("double_up_available", false)):
 		cheat_label = "DOUBLE UP"
 		cheat_action = "video_poker_double"
 		cheat_enabled = true
@@ -444,6 +454,9 @@ func _draw_controls(surface, state: Dictionary, palette: Dictionary) -> void:
 	surface.draw_rect(meters, trim.darkened(0.25), false, 2)
 	var account_balance_text := str(state.get("account_balance_text", "CASH $%d" % int(state.get("bankroll", 0))))
 	var win_amount_text := str(state.get("win_amount_text", "$%d" % int(state.get("win_credits", 0))))
+	if revealing:
+		account_balance_text = PlayerTextScript.format_currency_account_balance(str(state.get("wager_currency", "cash")), int(state.get("bankroll", 0)))
+		win_amount_text = "--"
 	var bet_amount_text := str(state.get("bet_amount_text", "$%d" % wager))
 	surface.surface_label("%s    WIN %s" % [account_balance_text, win_amount_text], Vector2(meters.position.x + 8, meters.position.y + 15), 9, C_YELLOW)
 	surface.surface_label("BET %s (%d COIN/HAND)" % [bet_amount_text, coins], Vector2(meters.position.x + 8, meters.position.y + 31), 9, C_CYAN)
