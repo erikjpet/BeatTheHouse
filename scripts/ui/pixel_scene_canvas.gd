@@ -5442,7 +5442,10 @@ func _draw_scene_object_body(object_data: Dictionary) -> void:
 		"event":
 			_draw_event_prop(rect, object_data, active)
 		"character":
-			_draw_character_actor(rect, object_data)
+			if bool(object_data.get("delivery_contact", false)) and (object_data.get("character_actor", {}) as Dictionary).is_empty():
+				_draw_scenario_actor(rect, object_data, active)
+			else:
+				_draw_character_actor(rect, object_data)
 		"scenario_actor":
 			_draw_scenario_actor(rect, object_data, active)
 		"scenario_object":
