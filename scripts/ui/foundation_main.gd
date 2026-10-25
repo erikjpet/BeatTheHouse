@@ -5292,7 +5292,10 @@ func _dialogue_choice_views(dialogue_id: String, node: Dictionary) -> Array:
 func _silas_dialogue_choice_status(today_number: bool) -> Dictionary:
 	if run_state == null or not run_state.numbers_silas_is_here():
 		return {"enabled": false, "reason": "Silas is drinking somewhere else."}
-	if today_number and not bool(run_state.numbers_silas_status().get("handle_available", false)):
+	var status := run_state.numbers_silas_status()
+	if not today_number and not bool(status.get("tip_available", false)):
+		return {"enabled": false, "reason": "Silas already sold you that route."}
+	if today_number and not bool(status.get("handle_available", false)):
 		return {"enabled": false, "reason": "Silas has no handle for you."}
 	var price := 24 if today_number else 12
 	if run_state.bankroll < price:
@@ -5436,7 +5439,8 @@ func _resolve_silas_numbers_dialogue_choice(today_number: bool) -> void:
 	var message := str(result.get("message", "Silas folds the paper away."))
 	if bool(result.get("ok", false)) and today_number and not str(result.get("number", "")).is_empty():
 		message = "%s Today's handle: %s." % [message, str(result.get("number", ""))]
-	_show_message(message)
+	result["message"] = message
+	_publish_numbers_result(result, "buy_today_handle" if today_number else "buy_route_tip", "silas")
 	_refresh_talk_dock()
 	_refresh()
 
