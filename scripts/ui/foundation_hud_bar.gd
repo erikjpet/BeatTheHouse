@@ -151,6 +151,9 @@ func render_bankroll(bankroll: int, _bankroll_delta: int = 0) -> void:
 	var wallet_text := "$%d" % bankroll
 	if wallet_value.text != wallet_text:
 		wallet_value.text = wallet_text
+		# Invalidate the backing HUD draw with a shortened wallet label; Web can
+		# otherwise retain the previous amount until an ancestor is resized.
+		queue_redraw()
 	_last_bankroll = bankroll
 	_has_rendered = true
 
