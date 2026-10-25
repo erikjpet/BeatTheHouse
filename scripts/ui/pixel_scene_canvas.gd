@@ -6125,6 +6125,7 @@ func _objects_from_interactable_records(records: Array) -> Array:
 			"inline_actions": _array_view(record.get("inline_actions", [])),
 			"attached_room_actions": _array_view(record.get("attached_room_actions", [])),
 			"confirm_action_id": str(record.get("confirm_action_id", "")),
+			"delivery_contact": bool(record.get("delivery_contact", false)),
 			"scenario_owner_namespace": str(record.get("scenario_owner_namespace", "")),
 			"scenario_stable_object_id": str(record.get("scenario_stable_object_id", "")),
 			"scenario_command_id": str(record.get("scenario_command_id", "")),
@@ -6177,6 +6178,13 @@ func _sync_person_transits() -> void:
 	var departures: Array[String] = []
 	for id_value in current_settled.keys():
 		var object_id := str(id_value)
+		# Delivery recipients are already waiting at the destination. A late
+		# owner projection must not spend their appointment on an ambient walk-in
+		# that disables the authenticated handoff target.
+		if bool((current_settled[object_id] as Dictionary).get("delivery_contact", false)):
+			person_transits.erase(object_id)
+			person_transit_ids.erase(object_id)
+			continue
 		if not settled_person_objects_cache.has(object_id) and not person_transits.has(object_id):
 			arrivals.append(object_id)
 	for id_value in settled_person_objects_cache.keys():
