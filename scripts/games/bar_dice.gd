@@ -393,6 +393,12 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	)
 	var ritual_phase := str(ui.get("bar_dice_ritual_phase", "agree_wager"))
 	action_buttons = _bar_dice_ritual_action_buttons(ritual_phase, action_buttons)
+	var ante_block_reason := _ante_block_reason(state, ui, run_state, environment) if ritual_phase in ["agree_wager", "settle"] else ""
+	if not ante_block_reason.is_empty():
+		for button in action_buttons:
+			if str(button.get("action", "")) in ["bar_dice_roll", "bar_dice_resolve"]:
+				button["enabled"] = false
+				button["detail"] = "Cannot cover ante"
 	var ritual_authority := _bar_dice_ritual_authority(run_state, environment, state, ui, active_stake, last_result)
 	var ritual_state := {
 		"schema_version": RitualProjectionScript.STATE_VERSION,
@@ -465,6 +471,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"selected_stake_index": _selected_stake_index(state, ui),
 		"selected_stake": active_stake,
 		"active_stake": active_stake,
+		"ante_block_reason": ante_block_reason,
 		"side_bet": 0,
 		"bet_meter": active_stake,
 		"chips_meter": maxi(0, run_state.wager_capacity_for_game(get_id(), environment)) if run_state != null else 0,
@@ -591,6 +598,10 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 	var state := _dice_state_preview(run_state, environment)
 	var next := _normalized_ui_state(run_state, environment, ui_state, state)
 	var ritual_phase := str(next.get("bar_dice_ritual_phase", "agree_wager"))
+	if surface_action in ["bar_dice_roll", "bar_dice_resolve"] and ritual_phase in ["agree_wager", "settle"]:
+		var ante_block_reason := _ante_block_reason(state, next, run_state, environment)
+		if not ante_block_reason.is_empty():
+			return _message_command(next, ante_block_reason)
 	match surface_action:
 		"bar_dice_rail_bet":
 			if ritual_phase not in ["agree_wager", "settle"]:
@@ -2322,20 +2333,34 @@ func _selected_stake_index(state: Dictionary, ui_state: Dictionary) -> int:
 	return clampi(int(ui_state.get("selected_stake_index", state.get("selected_stake_index", 0))), 0, maxi(0, ladder.size() - 1))
 
 
-func _active_stake_from_context(stake: int, state: Dictionary, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> int:
+func _active_stake_from_context(stake: int, state: Dictionary, ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> int:
 	var ladder := _int_array(state.get("stake_ladder", []))
 	if ladder.is_empty():
 		return 0
 	var selected := _selected_stake_index(state, ui_state)
 	if not ui_state.has("selected_stake_index") and stake > 0:
 		selected = _nearest_chip_index(ladder, stake)
-	var economic_profile: Dictionary = environment.get("economic_profile", {}) if typeof(environment.get("economic_profile", {})) == TYPE_DICTIONARY else {}
-	var bankroll_limit := int(ladder[selected])
-	var stake_ceiling := int(ladder[selected])
-	if run_state != null:
-		bankroll_limit = maxi(0, run_state.wager_capacity_for_game(get_id(), environment))
-		stake_ceiling = run_state.wager_stake_ceiling(int(economic_profile.get("stake_ceiling", bankroll_limit)))
-	return mini(mini(int(ladder[selected]), maxi(0, stake_ceiling)), bankroll_limit)
+	# The resolver accepts exact ladder chips. Clamping to a wallet balance can
+	# advertise an unauthored ante and allow an entire cup that cannot settle.
+	return int(ladder[selected])
+
+
+func _ante_block_reason(state: Dictionary, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> String:
+	var stake := _active_stake_from_context(0, state, ui_state, run_state, environment)
+	var capacity := run_state.wager_capacity_for_game(get_id(), environment) if run_state != null else 0
+	if _sealed_bar_dice_stake(stake, state, ui_state, run_state, environment) > 0 and stake <= capacity:
+		return ""
+	var minimum := 0
+	for chip in _int_array(state.get("stake_ladder", [])):
+		# Find the table's minimum before the current wallet ceiling is applied.
+		if _sealed_bar_dice_stake(chip, state, {}, null, environment) > 0:
+			minimum = chip if minimum == 0 else mini(minimum, chip)
+	var currency := GameModule.presentation_currency_for_game(run_state, get_id(), environment)
+	if minimum > capacity:
+		return "Need %s to play this table." % PlayerTextScript.format_currency_amount(currency, minimum)
+	if stake > capacity:
+		return "Choose a lower ante you can cover."
+	return "Choose an ante within the table limits."
 
 
 func _sealed_bar_dice_stake(stake: int, state: Dictionary, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> int:
@@ -3492,6 +3517,8 @@ func _draw_console(surface, state: Dictionary) -> void:
 
 
 func _bar_dice_console_prompt(state: Dictionary, phase: String, _guide: Dictionary) -> String:
+	if not str(state.get("ante_block_reason", "")).is_empty():
+		return str(state["ante_block_reason"])
 	match str(state.get("bar_dice_ritual_phase", "agree_wager")):
 		"cover":
 			return "Opponent covers. Confirm to take the cup."
