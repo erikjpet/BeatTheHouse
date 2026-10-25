@@ -514,7 +514,9 @@ static func objects_with_closing_time_lock(objects: Array, disabled_reason: Stri
 		if typeof(object_value) != TYPE_DICTIONARY:
 			continue
 		var object_data: Dictionary = (object_value as Dictionary).duplicate(true)
-		if str(object_data.get("object_type", "")) == "travel":
+		# Issued-ticket recovery remains available at closing, matching the host
+		# action guard. Keep only the exact cashout records, never shop or wagers.
+		if str(object_data.get("object_type", "")) == "travel" or _is_ticket_redemption_record(object_data):
 			locked.append(object_data)
 			continue
 		object_data["enabled"] = false
@@ -525,6 +527,19 @@ static func objects_with_closing_time_lock(objects: Array, disabled_reason: Stri
 		object_data["confirm_action_id"] = ""
 		locked.append(object_data)
 	return locked
+
+
+static func _is_ticket_redemption_record(record: Dictionary) -> bool:
+	if str(record.get("object_type", "")) != "game_hook":
+		return false
+	var action_id := ""
+	match "%s|%s" % [str(record.get("parent_id", "")), str(record.get("source_id", ""))]:
+		"pull_tabs|ticket_redeemer": action_id = "redeem_pull_tab_winners"
+		"scratch_tickets|scratch_ticket_clerk": action_id = "redeem_scratch_winners"
+	var actions := JsonCoerceScript._copy_array(record.get("available_actions", []))
+	return not action_id.is_empty() and str(record.get("confirm_action_id", "")) == action_id \
+		and actions.size() == 1 and typeof(actions[0]) == TYPE_DICTIONARY \
+		and str((actions[0] as Dictionary).get("id", "")) == action_id
 
 
 static func make_interactable_object(source: Dictionary, selection: Dictionary) -> Dictionary:
