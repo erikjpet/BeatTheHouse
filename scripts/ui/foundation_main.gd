@@ -4190,6 +4190,17 @@ func _acknowledge_closing_time_talk(choice_id: String) -> void:
 	if choice_id != CLOSING_TIME_TALK_CHOICE_ID or run_state == null:
 		_show_message("Choose how to respond.")
 		return
+	if run_state.pending_talk_event(CLOSING_TIME_TALK_EVENT_ID).is_empty():
+		return
+	# Closing disables the ordinary actions that would finish the boat ride.
+	# Serve its remaining beats through the normal checked turn transaction;
+	# never clear the lock or charge for another service just to reach the dock.
+	if _closing_time_blocks_environment_actions() \
+			and str(run_state.current_environment.get("archetype_id", "")) == "delta_queen" \
+			and str(run_state.current_environment.get("travel_lock_source", "")).is_empty():
+		var docking_actions := run_state.current_travel_lock_remaining()
+		if docking_actions > 0 and not _advance_environment_turns_checked(docking_actions):
+			return
 	run_state.complete_talk_event_resolution(CLOSING_TIME_TALK_EVENT_ID)
 	_refresh_talk_dock()
 	_show_message(_closing_time_disabled_reason())
