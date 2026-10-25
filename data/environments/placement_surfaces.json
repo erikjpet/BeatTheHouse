@@ -24725,6 +24725,37 @@
             "lane.public"
           ],
           "occupancy_required": false
+        },
+        {
+          "id": "event.standing_person_4",
+          "kind": "event",
+          "pos": [
+            672.0,
+            414.0
+          ],
+          "footprint_class": "standing_person",
+          "physical_role": "Standing person",
+          "occupant_ids": [],
+          "runtime_reserve": true,
+          "reserve_reason": "A delivery handoff contact and resident Crew member may coexist with both ordinary shop events.",
+          "hit_rect": [
+            640.0,
+            332.0,
+            64.0,
+            82.0
+          ],
+          "label_anchor": [
+            672.0,
+            326.0
+          ],
+          "facing": "left",
+          "priority": 10,
+          "zone_id": "right",
+          "support_id": "floor",
+          "walk_lane_ids": [
+            "lane.public"
+          ],
+          "occupancy_required": false
         }
       ],
       "scenario_slots": [
