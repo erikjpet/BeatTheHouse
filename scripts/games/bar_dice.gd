@@ -203,6 +203,8 @@ func sealed_action_authority_contract() -> Dictionary:
 		"host_auto_tick_method": &"",
 		"surface_intent_key": BAR_DICE_SURFACE_INTENT_KEY,
 		"surface_intent_index_key": BAR_DICE_SURFACE_INTENT_INDEX_KEY,
+		"automatic_pending_recovery": true,
+		"restore_recovery_session_method": &"_bar_dice_restore_recovery_session",
 		"retry_surface_actions": [],
 		"cancel_surface_actions": [],
 		"proposal_requires_apply_key": BAR_DICE_PROPOSAL_REQUIRES_APPLY_KEY,
@@ -210,6 +212,21 @@ func sealed_action_authority_contract() -> Dictionary:
 		"place_bet_action": "",
 		"host_pointer_intent": false,
 	}
+
+
+func _bar_dice_restore_recovery_session(candidate: RunState, session: Dictionary) -> void:
+	var environment := candidate.current_environment
+	var table := _dice_state_preview(candidate, environment)
+	if _ante_block_reason(table, session, candidate, environment).is_empty():
+		return
+	# The host has authenticated cancellation of an uncommitted delivery. An
+	# unfundable legacy preview cannot be settled; return it to choosing an ante.
+	# Fundable interrupted cups retain their exact dice and normal call sequence.
+	session["rolled"] = false
+	session["shake_number"] = 0
+	session["bar_dice_ritual_phase"] = "agree_wager"
+	for key in ["dice", "reroll", "last_rerolled", "tumble_id", "tumble_started_msec", "tumble_indices", "bar_dice_pending_action_id", "loaded_armed", "palm_armed", "loaded_value", "controlled_roll", "palmed_swap_challenge", "selected_action_id", "selected_action_kind"]:
+		session.erase(key)
 
 
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
