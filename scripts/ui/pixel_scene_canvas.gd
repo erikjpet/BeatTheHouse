@@ -6845,7 +6845,7 @@ func _object_info_lines(object_data: Dictionary) -> Array:
 	if bool(object_data.get("disabled", false)):
 		var reason := str(object_data.get("disabled_reason", "")).strip_edges()
 		if not reason.is_empty():
-			_append_wrapped_info_lines(lines, reason, max_chars, 1)
+			_append_wrapped_info_lines(lines, reason, max_chars, 2)
 	elif not action.is_empty():
 		_append_wrapped_info_lines(lines, action, max_chars, 1)
 	var capped: Array = []
