@@ -42,7 +42,7 @@ class ReplayAuditHost:
 	func _advance_alcohol_absorption() -> void:
 		absorption_calls += 1
 
-	func _apply_post_action_environment_interrupt(_source: String) -> bool:
+	func _apply_post_action_environment_interrupt(_source: String, _forced_travel_just_armed: bool = false) -> bool:
 		interrupt_calls += 1
 		return false
 

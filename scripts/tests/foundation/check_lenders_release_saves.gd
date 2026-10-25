@@ -93,11 +93,11 @@ class EmbeddedRefreshProbeHost:
 		embedded_probe_log.append("autosave_prepare")
 		super._prepare_foundation_run_save()
 
-	func _apply_post_action_environment_interrupt(source: String) -> bool:
+	func _apply_post_action_environment_interrupt(source: String, forced_travel_just_armed: bool = false) -> bool:
 		embedded_probe_log.append("post_action_interrupt")
 		embedded_probe_interrupt_saw_pending_autosave = pending_autosave
 		embedded_probe_interrupt_environment_id = str(run_state.current_environment.get("id", "")) if run_state != null else ""
-		return super._apply_post_action_environment_interrupt(source)
+		return super._apply_post_action_environment_interrupt(source, forced_travel_just_armed)
 
 	func _refresh_after_embedded_game_action(embeds_result_feedback: bool = false, action_boundary_preflight_complete: bool = false) -> void:
 		embedded_probe_log.append("embedded_refresh")
