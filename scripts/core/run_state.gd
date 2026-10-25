@@ -3189,6 +3189,12 @@ func world_sequence_command(options: FunctionOptions.WorldSequenceCommandOptions
 	var candidate := current_environment.duplicate(true)
 	var result := CrewWorldSequenceAdapterScript.execute(candidate, token, definition, command, {"available_funds": bankroll, "host_interaction_availability": host_interaction_availability})
 	if not bool(result.get("ok", false)): return result
+	# The public room sequence cannot retire its contact before the owning
+	# delivery accepts the appointment. Keep a rejected terminal candidate private.
+	var channels := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(world_sequence_registrations.get(token, {})).get("outcome_channels", {}))
+	if not bool(result.get("replayed", false)) and JsonCoerceScript._copy_array(result.get("outcomes", [])).has("delivered") and str(channels.get("delivered", "")) == "delivery_handoff":
+		var handoff_errors := _world_sequence_delivery_handoff_errors(current_world_node_id())
+		if not handoff_errors.is_empty(): return {"ok": false, "errors": handoff_errors, "cost": 0}
 	var cost := 0 if bool(result.get("replayed", false)) else maxi(0, int(result.get("cost", 0)))
 	if cost > bankroll: return {"ok": false, "errors": ["world sequence command cost is not payable"], "cost": 0}
 	bankroll -= cost
@@ -14973,11 +14979,8 @@ func world_sequence_checkpoint_delivery_outcome(token: String, node_id: String =
 	if not bool(preview.get("ok", false)): return preview
 	var target_id := node_id.strip_edges()
 	if target_id.is_empty(): target_id = current_world_node_id()
-	if not delivery_has_active_run(): return {"ok": false, "errors": ["delivery owner is not active at the terminal handoff"]}
-	if not CrewDeliveryScheduleScript.handoff_open(active_delivery_run, target_id):
-		return {"ok": false, "errors": ["Recipient unavailable now. %s" % delivery_timing_text()]}
-	if target_id != current_world_node_id() or delivery_arrival_interaction().is_empty():
-		return {"ok": false, "errors": ["delivery owner is not present at the terminal handoff"]}
+	var handoff_errors := _world_sequence_delivery_handoff_errors(target_id)
+	if not handoff_errors.is_empty(): return {"ok": false, "errors": handoff_errors}
 	var before := JSON.stringify(delivery_snapshot())
 	active_delivery_run = DeliveryRunModelScript.complete_handoff(
 		active_delivery_run,
@@ -14989,6 +14992,15 @@ func world_sequence_checkpoint_delivery_outcome(token: String, node_id: String =
 	var applied := _apply_delivery_resolution(JsonCoerceScript._copy_dict(preview.get("receipt", {})), false)
 	if not bool(applied.get("ok", false)): return applied
 	return {"ok": true, "resolved": true, "message": str(JsonCoerceScript._copy_dict(applied.get("public_result", {})).get("message", "")), "public_result": JsonCoerceScript._copy_dict(applied.get("public_result", {})), "errors": []}
+
+
+func _world_sequence_delivery_handoff_errors(target_id: String) -> Array:
+	if not delivery_has_active_run(): return ["delivery owner is not active at the terminal handoff"]
+	if not CrewDeliveryScheduleScript.handoff_open(active_delivery_run, target_id):
+		return ["Recipient unavailable now. %s" % delivery_timing_text()]
+	if target_id != current_world_node_id() or delivery_arrival_interaction().is_empty():
+		return ["delivery owner is not present at the terminal handoff"]
+	return []
 
 
 func world_sequence_materialize_delivery_checkpoint(token: String) -> Dictionary:
@@ -15013,7 +15025,25 @@ func world_sequence_materialize_delivery_checkpoint(token: String) -> Dictionary
 
 func world_sequence_resume_delivery_checkpoint() -> Dictionary:
 	var checkpoint := DeliveryRunModelScript.closed_checkpoint(active_delivery_run)
-	if checkpoint.is_empty(): return {"ok": true, "inactive": true, "errors": []}
+	if checkpoint.is_empty():
+		# Older hosts could persist a delivered room command before the owner
+		# rejected an early appointment. Resume that authenticated command only at
+		# its actual target/window; the existing owner checkpoint controls payment.
+		if not delivery_has_active_run():
+			return {"ok": true, "inactive": true, "errors": []}
+		var instance := str(active_delivery_run.get("job_id", ""))
+		if instance.is_empty(): instance = str(active_delivery_run.get("run_id", ""))
+		for token_value in world_sequence_registrations:
+			var pending_token := str(token_value)
+			var pending := JsonCoerceScript._copy_dict(world_sequence_registrations[pending_token])
+			if str(pending.get("public_instance_token", "")) != instance or str(pending.get("node_id", "")) != current_world_node_id(): continue
+			if str(pending.get("lifecycle", "")) != "cleanup_pending" or str(JsonCoerceScript._copy_dict(pending.get("outcome_channels", {})).get("delivered", "")) != "delivery_handoff": continue
+			if not JsonCoerceScript._copy_dict(pending.get("outcome_acknowledgements", {})).is_empty() or not JsonCoerceScript._copy_dict(pending.get("owner_outcome_results", {})).is_empty(): continue
+			if bool(world_sequence_preview_delivery_outcome(pending_token, "delivered").get("ok", false)):
+				if not _world_sequence_delivery_handoff_errors(current_world_node_id()).is_empty():
+					return {"ok": true, "inactive": true, "errors": []}
+				return world_sequence_commit_delivery_outcome(pending_token)
+		return {"ok": true, "inactive": true, "errors": []}
 	var token := str(checkpoint.get("owner_token", ""))
 	var registration := JsonCoerceScript._copy_dict(world_sequence_registrations.get(token, {}))
 	if str(registration.get("lifecycle", "")) == "cleaned" and JsonCoerceScript._copy_dict(registration.get("outcome_acknowledgements", {})).has(str(checkpoint.get("outcome_receipt_id", ""))):
