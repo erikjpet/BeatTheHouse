@@ -3965,7 +3965,10 @@ func _complete_event_choice_resolution(prepared: Dictionary, result: Dictionary)
 		_set_current_screen(SCREEN_ENVIRONMENT)
 		_refresh()
 		return result
-	if bool(result.get("ok", false)) and _apply_post_action_environment_interrupt("event"):
+	# Grant the inspector's last move before counting the next action. This
+	# response arms the allowance; it must not spend that allowance itself.
+	var forced_travel_just_armed := int(resolved_event_flags.get("health_inspector_closing_actions", 0)) > 0
+	if bool(result.get("ok", false)) and _apply_post_action_environment_interrupt("event", forced_travel_just_armed):
 		_refresh()
 		return result
 	if resolving_talk:
@@ -4004,7 +4007,7 @@ func _on_talk_dock_choice_requested(event_id: String, choice_id: String) -> void
 	resolve_event_choice(event_id, choice_id)
 
 
-func _apply_post_action_environment_interrupt(source: String) -> bool:
+func _apply_post_action_environment_interrupt(source: String, forced_travel_just_armed: bool = false) -> bool:
 	if run_state == null or library == null or run_state.is_terminal():
 		return false
 	# The Web game-library launcher is an isolated practice room. It has no
@@ -4035,7 +4038,9 @@ func _apply_post_action_environment_interrupt(source: String) -> bool:
 		return true
 	post_interrupt_forced_travel_visit_count += 1
 	debug_stage_started_usec = Time.get_ticks_usec() if debug_enabled else 0
-	var forced_travel := _apply_forced_environment_travel(source)
+	var forced_travel := {"ok": true, "applied": false}
+	if not forced_travel_just_armed:
+		forced_travel = _apply_forced_environment_travel(source)
 	var travel_applied := bool(forced_travel.get("ok", false)) and bool(forced_travel.get("applied", false))
 	if debug_enabled:
 		debug_timing["interrupt_forced_travel"] = Time.get_ticks_usec() - debug_stage_started_usec
