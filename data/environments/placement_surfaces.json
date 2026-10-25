@@ -25151,6 +25151,7 @@
         "staff:pawn_counter_sal": "fixed.staff_pawn_counter"
       },
       "event_object_slot_ids": {
+        "crew::package_handoff": "event.standing_person_4",
         "event:chatty_clerk": "event.standing_person_1",
         "event:town_rumor_staff": "event.standing_person_1"
       },

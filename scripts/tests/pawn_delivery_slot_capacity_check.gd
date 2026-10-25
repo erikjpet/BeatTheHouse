@@ -27,6 +27,7 @@ func _run() -> void:
 		_check(bool(result.get("ok", false)), "Four concurrent Pawn people rejected: %s" % str(result.get("errors", [])))
 		var bindings: Dictionary = result.get("slot_bindings", {})
 		_check(bindings.size() == entries.size(), "A concurrent person lost its physical binding")
+		_check(str(bindings.get("crew::package_handoff", {}).get("slot_id", "")) == "event.standing_person_4", "Handoff contact did not use its clear reserve slot")
 		var slots: Array = []
 		var rectangles: Array[Rect2] = []
 		for entry in entries:
