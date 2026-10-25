@@ -2624,6 +2624,9 @@ func _game_surface_presentation_active() -> bool:
 	if game_surface_canvas == null:
 		return false
 	if presented_bankroll_hold_active:
+		var channel := str(game_surface_canvas.state.get("money_presentation_animation_channel", ""))
+		if not channel.is_empty():
+			return game_surface_canvas.surface_animation_active(channel)
 		return bool(game_surface_canvas.state.get("money_presentation_pending", false))
 	return game_surface_canvas.surface_bankroll_presentation_active()
 

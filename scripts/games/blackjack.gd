@@ -813,6 +813,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_web_idle_animation_fps": 12.0,
 		"surface_dynamic_overlay_channels": [DEAL_ANIMATION_CHANNEL, ATTENTION_ANIMATION_CHANNEL, COUNT_ANIMATION_CHANNEL, PAYOUT_ANIMATION_CHANNEL],
 		"surface_realtime_state_refresh": false,
+		"money_presentation_animation_channel": DEAL_ANIMATION_CHANNEL,
 		"surface_ui_protected_regions": _blackjack_ui_protected_regions(count_challenge),
 		"surface_ui_preference_keys": ["blackjack_side_bets"],
 		"surface_action_blocks": [{
@@ -2101,6 +2102,7 @@ func _blackjack_in_place_session_surface_patch(session: Dictionary, run_state: R
 		"surface_time_msec": now_msec,
 		"surface_presentation_time_msec": presentation_msec,
 		"surface_ui_protected_regions": _blackjack_ui_protected_regions(challenge),
+		"money_presentation_animation_channel": DEAL_ANIMATION_CHANNEL,
 		"surface_animation_channels": [
 			GameModule.surface_animation_channel(DEAL_ANIMATION_CHANNEL, deal_id, deal_duration_msec, deal_started_msec, {
 				"active": deal_active,
@@ -2782,6 +2784,8 @@ func _resolve_blackjack_proposal_core(action_id: String, stake: int, run_state: 
 		"environment_archetype_id": environment.get("archetype_id", ""),
 		"message": message,
 	})
+	# Keep the committed return private until the existing final-card channel ends.
+	result["hold_money_for_presentation"] = true
 	result["blackjack_player_hands"] = hands
 	result["blackjack_dealer"] = dealer_cards
 	result["blackjack_patron_hands"] = patron_hands
