@@ -229,6 +229,37 @@ func _bar_dice_restore_recovery_session(candidate: RunState, session: Dictionary
 		session.erase(key)
 
 
+func restored_surface_ui_state(run_state: RunState, environment: Dictionary) -> Dictionary:
+	if run_state == null:
+		return {}
+	var state := _dice_state_preview(run_state, environment)
+	var state_key := transient_state_key_context()
+	if state_key != get_id() and not state_key.begins_with("%s:" % get_id()):
+		state_key = get_id()
+	var binding := RunState.action_authority_table_binding(state_key, environment)
+	# Entry already recovers an interrupted delivery. Read only the remaining
+	# validated session; caller UI must never invent a covered cup or its dice.
+	# Cold loading strips checkpoint-mismatched ledgers, while a trusted live
+	# balance change can retain a delivery-free, still-fundable session.
+	var ledger := ActionAuthorityScript.validate_persisted_ledger_cow(state.get(ActionAuthorityScript.LEDGER_KEY, {}), binding)
+	if ledger.is_empty() or not (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
+		return {}
+	var session: Dictionary = ledger.get("session", {})
+	var rolled := bool(session.get("rolled", false))
+	if not rolled and str(session.get("bar_dice_ritual_phase", "")) != "cover":
+		return {}
+	if rolled and _int_dice(session.get("dice", [])).size() != DICE_COUNT:
+		return {}
+	if not _ante_block_reason(state, session, run_state, environment).is_empty():
+		return {}
+	var restored := session.duplicate(true)
+	# The cup and marked dice are durable; an old process's cosmetic tumble
+	# clock is not. Keep accepted skill challenges and grades unchanged.
+	for key in ["tumble_id", "tumble_started_msec", "tumble_indices"]:
+		restored.erase(key)
+	return restored
+
+
 func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var result: Dictionary = super.enter(run_state, environment)
 	var state := _dice_state_preview(run_state, environment)
