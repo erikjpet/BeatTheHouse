@@ -42,7 +42,7 @@
     "small_underground_casino:club"
   ],
   "layout_count": 55,
-  "scenario_slot_count": 605,
+  "scenario_slot_count": 607,
   "layouts": [
     {
       "layout_id": "back_alley::back_alley_cruiser_parked",
@@ -36856,7 +36856,6 @@
           "scenario_ordinal": 3,
           "scenario_position_keys": [
             "punchline_raid_jitters_aftermath_night_aborted_prop||center|",
-            "punchline_raid_jitters_hide_cart|punchline_raid_cart_work_1|center|",
             "punchline_raid_jitters_hide_cart||center|"
           ],
           "scenario_object_ids": [
@@ -37018,7 +37017,6 @@
           "scenario_ordinal": 2,
           "scenario_position_keys": [
             "punchline_raid_jitters_aftermath_altered_floor_reopened_actor||background|",
-            "punchline_raid_jitters_reopen_steward|punchline_raid_reopen_steward|background|punchline_raid_jitters_lane_clear_position",
             "punchline_raid_jitters_reopen_steward|punchline_raid_steward_arrival|background|"
           ],
           "scenario_object_ids": [
@@ -37081,6 +37079,108 @@
           "source_slot_id": "scenario.wall_item_1",
           "source_slot_family": "scenario",
           "provisional_geometry": true
+        },
+        {
+          "id": "scenario.local_floor_fixture_4",
+          "kind": "scenario",
+          "pos": [
+            560.0,
+            321.0
+          ],
+          "footprint_class": "floor_fixture",
+          "physical_role": "Layer 1 hide cart",
+          "occupant_ids": [
+            "scenario::punchline_raid_jitters_hide_cart"
+          ],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [
+            514.0,
+            257.0,
+            92.0,
+            64.0
+          ],
+          "label_anchor": [
+            560.0,
+            251.0
+          ],
+          "facing": "none",
+          "priority": 9,
+          "zone_id": "room",
+          "support_id": "floor",
+          "walk_lane_ids": [],
+          "occupancy_required": false,
+          "scenario_occupant_labels": [
+            "Layer 1 hide cart"
+          ],
+          "scenario_zone_ids": [
+            "center"
+          ],
+          "scenario_id": "punchline_raid_jitters",
+          "scenario_instance": true,
+          "scenario_role": "floor_fixture",
+          "scenario_ordinal": 4,
+          "scenario_position_keys": [
+            "punchline_raid_jitters_hide_cart|punchline_raid_cart_work_1|center|"
+          ],
+          "scenario_object_ids": [
+            "scenario::punchline_raid_jitters_hide_cart"
+          ],
+          "source_slot_id": "scenario.floor_fixture_3",
+          "source_slot_family": "scenario",
+          "provisional_geometry": false
+        },
+        {
+          "id": "scenario.local_standing_person_3",
+          "kind": "scenario",
+          "pos": [
+            250.0,
+            190.0
+          ],
+          "footprint_class": "standing_person",
+          "physical_role": "Reopen steward",
+          "occupant_ids": [
+            "scenario::punchline_raid_jitters_reopen_steward"
+          ],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [
+            214.0,
+            110.0,
+            72.0,
+            80.0
+          ],
+          "label_anchor": [
+            250.0,
+            104.0
+          ],
+          "facing": "front",
+          "priority": 10,
+          "zone_id": "room",
+          "support_id": "floor",
+          "walk_lane_ids": [
+            "lane.public"
+          ],
+          "occupancy_required": false,
+          "scenario_occupant_labels": [
+            "Reopen steward"
+          ],
+          "scenario_zone_ids": [
+            "background"
+          ],
+          "scenario_id": "punchline_raid_jitters",
+          "scenario_instance": true,
+          "scenario_role": "standing_person",
+          "scenario_ordinal": 3,
+          "scenario_position_keys": [
+            "punchline_raid_jitters_reopen_steward|punchline_raid_reopen_steward|background|punchline_raid_jitters_lane_clear_position"
+          ],
+          "scenario_object_ids": [
+            "scenario::punchline_raid_jitters_reopen_steward"
+          ],
+          "source_slot_id": "scenario.standing_person_2",
+          "source_slot_family": "scenario",
+          "provisional_geometry": false
         }
       ],
       "scenario_instance_slot_ids": {
@@ -37097,12 +37197,12 @@
         "punchline_raid_jitters_clear_bins": "scenario.local_floor_fixture_1",
         "punchline_raid_jitters_clear_bins|env06_8_raid_bins|service_lane|": "scenario.local_floor_fixture_1",
         "punchline_raid_jitters_hide_cart": "scenario.local_floor_fixture_3",
-        "punchline_raid_jitters_hide_cart|punchline_raid_cart_work_1|center|": "scenario.local_floor_fixture_3",
+        "punchline_raid_jitters_hide_cart|punchline_raid_cart_work_1|center|": "scenario.local_floor_fixture_4",
         "punchline_raid_jitters_hide_cart||center|": "scenario.local_floor_fixture_3",
         "punchline_raid_jitters_raid_lookout": "scenario.local_standing_person_1",
         "punchline_raid_jitters_raid_lookout||right|": "scenario.local_standing_person_1",
         "punchline_raid_jitters_reopen_steward": "scenario.local_standing_person_2",
-        "punchline_raid_jitters_reopen_steward|punchline_raid_reopen_steward|background|punchline_raid_jitters_lane_clear_position": "scenario.local_standing_person_2",
+        "punchline_raid_jitters_reopen_steward|punchline_raid_reopen_steward|background|punchline_raid_jitters_lane_clear_position": "scenario.local_standing_person_3",
         "punchline_raid_jitters_reopen_steward|punchline_raid_steward_arrival|background|": "scenario.local_standing_person_2",
         "punchline_raid_jitters_room_screen": "scenario.local_floor_fixture_2",
         "punchline_raid_jitters_room_screen||left|": "scenario.local_floor_fixture_2",
@@ -37139,14 +37239,14 @@
       "actor_routes": [],
       "audit": {
         "snapshot_count": 39,
-        "slot_count": 8,
+        "slot_count": 10,
         "semantic_position_count": 13,
-        "reused_semantic_position_count": 5,
+        "reused_semantic_position_count": 3,
         "slots_by_class": {
           "doorway": 1,
-          "floor_fixture": 3,
+          "floor_fixture": 4,
           "ground_marker": 1,
-          "standing_person": 2,
+          "standing_person": 3,
           "wall_mounted": 1
         },
         "max_simultaneous_slot_count": 6,
