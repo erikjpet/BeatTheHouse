@@ -37233,7 +37233,8 @@
         "punchline_raid_jitters_safe_exit|punchline_headliner_door_guard|exit_lane|": "side_door"
       },
       "scenario_instance_action_host_ids": {
-        "event:scenario_raid_jitters_check": "scenario::punchline_raid_jitters_raid_lookout"
+        "event:scenario_raid_jitters_check": "scenario::punchline_raid_jitters_raid_lookout",
+        "scenario::punchline_raid_jitters_task_4": "scenario::punchline_raid_jitters_clear_bins"
       },
       "scenario_instance_object_family_ids": {},
       "actor_routes": [],
@@ -37251,7 +37252,7 @@
         },
         "max_simultaneous_slot_count": 6,
         "concrete_art_key_count": 8,
-        "action_host_count": 1,
+        "action_host_count": 2,
         "action_only_ids": [
           "punchline_raid_jitters_task_0",
           "punchline_raid_jitters_task_1",
