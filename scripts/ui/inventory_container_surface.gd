@@ -277,7 +277,7 @@ func _build() -> void:
 	_stage.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_stage.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_stage.clip_contents = true
-	_stage.resized.connect(_layout_slots)
+	_stage.resized.connect(_on_stage_resized)
 	stack.add_child(_stage)
 
 	_container_art_layer = Control.new()
@@ -711,6 +711,14 @@ func _render_compact_badges(host: HBoxContainer, badges_value: Variant) -> void:
 		icon.tooltip_text = str(badge.get("tooltip", ""))
 		icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		host.add_child(icon)
+
+
+func _on_stage_resized() -> void:
+	if _grouped_card_mode():
+		# Page capacity depends on the settled stage size, not just card bounds.
+		_render_active_container()
+	else:
+		_layout_slots()
 
 
 func _layout_slots() -> void:
