@@ -11411,14 +11411,14 @@ func _apply_delivery_resolution(expected_receipt: Dictionary = {}, materialize_a
 			world_map = rollback_world_map
 			grand_casino_room_states = rollback_room_states
 			return {"ok": false, "errors": ["successful Crew delivery has no outstanding obligation"]}
+		# Every Crew package outcome owns this context, including voluntary work
+		# at zero owed. It affects a later eligible request, never creates a duty.
+		narrative_flags["crew_delivery_post_miss"] = not succeeded
 		if succeeded and crew_delivery_obligation_count() > 0:
 			narrative_flags["crew_delivery_obligations"] = crew_delivery_obligation_count() - 1
-			narrative_flags["crew_delivery_post_miss"] = false
 			if crew_delivery_obligation_count() == 0:
 				narrative_flags["crew_delivery_loan_locations"] = []
 				narrative_flags["crew_marker_clear"] = true
-		elif not succeeded and crew_delivery_obligation_count() > 0:
-			narrative_flags["crew_delivery_post_miss"] = true
 		narrative_flags["crew_favor_pending"] = false
 	# The shared package slot also covers unrelated delivery jobs. Whichever
 	# package just ended, the Crew must give the player six hours before asking.

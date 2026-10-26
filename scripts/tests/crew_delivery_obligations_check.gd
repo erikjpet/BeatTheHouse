@@ -58,6 +58,7 @@ func _run() -> void:
 	elif OS.get_environment("BTH_CREW_RULES_CASE")=="legacy_blackjack":_check_legacy_blackjack_route()
 	elif OS.get_environment("BTH_CREW_RULES_CASE")=="clock_presentation":_check_clock_presentation();_check_reputation()
 	elif OS.get_environment("BTH_CREW_RULES_CASE")=="first_meeting_presence":_check_first_meeting_presence()
+	elif OS.get_environment("BTH_CREW_RULES_CASE")=="voluntary_context":_check_voluntary_context();_check_miss_and_denial()
 	else:_check_borrows();_check_migration();_check_stale_presence();_check_delivery();_check_first_meeting_presence()
 	print("CREW_DELIVERY_OBLIGATIONS checks=%d failures=%s" % [checks,JSON.stringify(failures)])
 	quit(0 if failures.is_empty() else 1)
@@ -239,8 +240,9 @@ func _check_last_obligation(prepared_state: Dictionary, target: String) -> void:
 	run.advance_game_clock_minutes(360);run.advance_environment_turns(5)
 	check(run.crew_delivery_obligation_count()==0 and not run.enqueue_triggered_event("crew_favor_delivery"),"cleared queue resumed unsolicited requests")
 
-func _check_board_package() -> void:
-	var run:=delivery_fixture("CREW-OBLIGATIONS-BOARD",2)
+func _check_board_package(owed: int = 2, post_miss: bool = false) -> RunState:
+	var run:=delivery_fixture("CREW-OBLIGATIONS-BOARD",owed)
+	run.narrative_flags["crew_delivery_post_miss"]=post_miss
 	var started:=run.crew_job_accept_definition("rook_quiet_package")
 	check(bool(started.get("ok",false)),"manual Crew package did not start")
 	if str(run.delivery_snapshot().get("physical",{}).get("cargo_state",""))=="pickup_pending":
@@ -252,8 +254,24 @@ func _check_board_package() -> void:
 	run.delivery_resolve_travel_arrival({}, {})
 	var completed:=run.delivery_complete_handoff()
 	if not bool(completed.get("ok",false)):print("CREW_BOARD_HANDOFF ",JSON.stringify(completed))
-	check(bool(completed.get("ok",false)) and run.crew_delivery_obligation_count()==1,"manual Crew package failed to satisfy one obligation")
+	check(bool(completed.get("ok",false)) and run.crew_delivery_obligation_count()==maxi(0,owed-1),"manual Crew package settled the wrong obligation count")
 	check(int(run.narrative_flags.get("crew_package_next_offer_clock",0))==run.game_clock_minutes+360,"manual package end bypassed Crew cooldown")
+	if post_miss: check(not bool(run.narrative_flags.get("crew_delivery_post_miss",true)),"successful voluntary Crew delivery did not clear post-miss context")
+	return run
+
+func _check_voluntary_context() -> void:
+	var succeeded := _check_board_package(0,true)
+	succeeded=restore(succeeded,"crew_voluntary_success_context")
+	check(succeeded.crew_delivery_obligation_count()==0 and not bool(succeeded.narrative_flags.get("crew_delivery_post_miss",true)),"voluntary success/Continue retained pushy context or created a duty")
+	var missed := delivery_fixture("CREW-VOLUNTARY-MISS-CONTEXT",0)
+	check(bool(missed.crew_job_accept_definition("rook_quiet_package").get("ok",false)),"voluntary miss fixture did not start")
+	if str(missed.delivery_snapshot().get("physical",{}).get("cargo_state",""))=="pickup_pending":
+		check(bool(missed.delivery_apply_physical_action("pickup","crew-voluntary-context-pickup").get("ok",false)),"voluntary miss fixture pickup failed")
+	missed.advance_game_clock_minutes(Schedule.next_deadline(missed.active_delivery_run)-missed.game_clock_minutes)
+	check(not missed.delivery_has_active_run() and missed.crew_delivery_obligation_count()==0 and bool(missed.narrative_flags.get("crew_delivery_post_miss",false)),"voluntary miss did not retain pushy context without creating a duty")
+	check(not missed.enqueue_triggered_event("crew_favor_delivery"),"voluntary miss created unsolicited work at zero duties")
+	missed=restore(missed,"crew_voluntary_missed_context")
+	check(missed.crew_delivery_obligation_count()==0 and bool(missed.narrative_flags.get("crew_delivery_post_miss",false)),"Continue lost voluntary post-miss context")
 
 func _check_miss_and_denial() -> void:
 	var run:=delivery_fixture("CREW-OBLIGATIONS-MISS",2)
