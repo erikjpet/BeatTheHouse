@@ -1030,7 +1030,7 @@
           "id": "take_comp",
           "label": "Take the comp",
           "text": "The room is free. Your name is not.",
-          "consequence_summary": "Bankroll +10, drink +8, heat +5",
+          "consequence_summary": "Bankroll +10, drink +8, heat +5, one suite rest",
           "consequences": {
             "bankroll_delta": 10,
             "alcohol_intake": 8,

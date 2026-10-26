@@ -15219,10 +15219,30 @@ func _save_snapshot(deep_copy_seeded_scenario_definitions: bool, travel_preview:
 # Restores the run from saved data.
 func from_dict(data: Dictionary) -> void:
 	RunStateSchemaScript.restore(self, data)
+	_restore_missing_comped_suite_credit()
 	# Cold restore already owns the complete migration boundary. Compile stored
 	# rooms here once; ordinary autosaves must not regenerate their layouts on
 	# every player action. Later alias mutations invalidate by complete equality.
 	_prime_inactive_storage_projections()
+
+
+# A suite offer and Players Card awards share Linda's existing rest counter.
+# Project into the accepted event's normal deltas; reading this never grants it.
+func comped_suite_offer_grant_flags() -> Dictionary:
+	return {
+		"grand_casino_comp_suite_rests": maxi(0, int(narrative_flags.get("grand_casino_comp_suite_rests", 0))) + 1,
+		"grand_casino_comp_suite_offer_grants": maxi(0, int(narrative_flags.get("grand_casino_comp_suite_offer_grants", 0))) + 1,
+	}
+
+
+func _restore_missing_comped_suite_credit() -> void:
+	# Old offers recorded acceptance but never credited a rest. Preserve other
+	# credits and repair one known acceptance once, without replaying its money,
+	# alcohol, Heat or RNG. The saved grant count also protects a spent credit.
+	if not bool(narrative_flags.get("grand_casino_event_comped_suite_offer_take_comp", false)) \
+			or int(narrative_flags.get("grand_casino_comp_suite_offer_grants", 0)) > 0:
+		return
+	narrative_flags.merge(comped_suite_offer_grant_flags(), true)
 
 
 func _run_state_schema_restore(data: Dictionary) -> void:

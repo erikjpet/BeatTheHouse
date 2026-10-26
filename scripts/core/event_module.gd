@@ -485,6 +485,10 @@ func _resolve_event_choice(
 	var consequences := _consequences(selected_choice)
 	consequences = _resolved_checked_consequences(run_state, environment, selected_choice, consequences)
 	consequences = _resolved_lender_hook_consequences(run_state, consequences)
+	if get_id() == "comped_suite_offer" and str(selected_choice.get("id", "")) == "take_comp":
+		var comp_flags := JsonCoerceScript._copy_dict(consequences.get("flags", {}))
+		comp_flags.merge(run_state.comped_suite_offer_grant_flags(), true)
+		consequences["flags"] = comp_flags
 	var debt_settlement: Dictionary = {}
 	if consequences.has("debt_settlement_discount_percent"):
 		debt_settlement = run_state.discounted_debt_settlement_preview(int(consequences.get("debt_settlement_discount_percent", 0)))
