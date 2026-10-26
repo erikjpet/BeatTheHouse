@@ -292,9 +292,42 @@ static func sealed_renderer_snapshot(layout_result: Dictionary) -> Dictionary:
 	}
 
 
+# Entry inventory authentication retains consumed event identities. The derived
+# live layout must omit their event-family presence before claiming slots; fixed
+# fixtures and scenario-owned objects keep their own lifetime authority.
+static func _live_layout_records(records: Array, projection: Dictionary, environment: Dictionary) -> Array:
+	var resolved := _array(environment.get("resolved_event_ids", []))
+	if resolved.is_empty(): return records
+	var result: Array = []
+	var removed: Dictionary = {}
+	for value in records:
+		var record := _dict(value)
+		var object_id := str(record.get("object_id", ""))
+		var source_id := str(record.get("source_id", object_id.trim_prefix("event:")))
+		if str(record.get("object_type", "")) == "event" \
+				and str(record.get("slot_family", record.get("manifest_family", ""))) == "event" \
+				and str(record.get("owner_namespace", "")) != "scenario" and resolved.has(source_id):
+			removed[object_id] = true
+		else:
+			result.append(value)
+	if not removed.is_empty():
+		var semantic := _dict(projection.get("semantic_state", {}))
+		for collection in ["scene_objects", "actors", "interactions"]:
+			var entries := _dict(semantic.get(collection, {}))
+			for identity in entries.keys():
+				var entry := _dict(entries.get(identity, {}))
+				if str(entry.get("owner_namespace", "")) == "scenario": continue
+				var presentation_id := str(entry.get("presentation_object_id", str(identity).trim_prefix("event::")))
+				if removed.has(presentation_id): entries.erase(identity)
+			semantic[collection] = entries
+		projection["semantic_state"] = semantic
+	return result
+
+
 static func resolve(base_records: Array, projection: Dictionary, environment: Dictionary = {}) -> Dictionary:
-	var semantic_state := _dict(projection.get("semantic_state", {}))
 	var resolved_projection := projection.duplicate(true)
+	base_records = _live_layout_records(base_records, resolved_projection, environment)
+	var semantic_state := _dict(resolved_projection.get("semantic_state", {}))
 	var passive_audit := {
 		"active": false,
 		"valid": true,

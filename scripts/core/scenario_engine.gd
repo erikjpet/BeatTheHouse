@@ -1047,6 +1047,7 @@ static func _sequence_layout_input_digest(candidate: Dictionary, projection: Dic
 		"semantic_state": projection.get("semantic_state", {}),
 		"active_stages": projection.get("active_stages", []),
 		"base_records": candidate.get("scenario_layout_base_records", []),
+		"resolved_event_ids": candidate.get("resolved_event_ids", []),
 		"layout_context": candidate.get("scenario_layout_context", {}),
 	})
 
