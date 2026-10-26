@@ -17,7 +17,7 @@
       "style": "Low, economical, and always sounds ready to leave.",
       "lines": {
         "loan_offer": [
-          "Forty-five now. When the phone rings, you drive where we say.",
+          "Seventy now. Two package deliveries. Keep the engine warm.",
           "Cash is easy. Being ready when we call is the part you owe.",
           "Take the bills. Keep the engine warm. We hate waiting."
         ],
@@ -108,7 +108,7 @@
       "lines": {
         "loan_offer": [
           "You need cash. We need someone useful. Keep it simple.",
-          "Forty-five bucks buys you a chance. The favor buys us even.",
+          "Seventy bucks. Two packages delivered gets us even.",
           "Take it or don't. My evening survives either way."
         ],
         "favor_due": [
@@ -152,7 +152,7 @@
       "style": "Fast, alert, and constantly halfway through the next plan.",
       "lines": {
         "loan_offer": [
-          "Quick deal: our cash, your legs, one future call. Yes or no?",
+          "Quick deal: our cash, your legs, two package deliveries. Yes or no?",
           "You can keep circling broke, or take the shortcut we brought.",
           "Door is open now. Doors are rude like that; they close."
         ],
@@ -242,7 +242,7 @@
       "style": "Patient and formal, speaking as if every deal is already recorded.",
       "lines": {
         "loan_offer": [
-          "Accepting means the Crew may call twice. Declining means this conversation ends cleanly.",
+          "Accepting means two successful package deliveries. Misses do not count. No cash repayment.",
           "We offer liquidity without interest. Reliability is the collateral.",
           "The record can show generosity tonight and obedience later. Elegant, yes?"
         ],
@@ -287,8 +287,8 @@
       "style": "Bright, reckless, and delighted that the stakes are real.",
       "lines": {
         "loan_offer": [
-          "Free money tonight, one exciting favor later. Best odds in town.",
-          "Take the forty-five. Future you loves solving future problems.",
+          "Cash tonight, two successful deliveries later. Best odds in town.",
+          "Take the seventy. Future you has two deliveries to make.",
           "Come on, it's practically charity with a steering wheel."
         ],
         "favor_due": [

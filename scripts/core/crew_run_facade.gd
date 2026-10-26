@@ -115,7 +115,10 @@ func crew_add_trust(member_id: String, amount: int, _reason: String = "") -> int
 	if not CrewStateModelScript.MEMBER_IDS.has(member_id) or amount == 0:
 		return crew_trust(member_id)
 	var previous := crew_trust(member_id)
-	crew_trust_by_member[member_id] = maxi(0, crew_trust(member_id) + amount)
+	# Initialize before the member mutation so a legacy maximum is not counted twice.
+	_run.crew_change_reputation(0)
+	crew_trust_by_member[member_id] = maxi(0, previous + amount)
+	_run.crew_change_reputation(amount if amount < 0 else crew_trust(member_id) - previous)
 	_run._reconcile_crew_recruitment_perks()
 	if crew_trust(member_id) != previous:
 		_run._scenario_publish_crew_change(member_id, "trust", crew_trust(member_id))
@@ -524,7 +527,7 @@ func crew_switch_reveal_node(node_id: String) -> Dictionary:
 
 
 func crew_rook_escort_available() -> bool:
-	return crew_rank_perks("crew_rook").has("rook_l3_escort")
+	return _run.crew_reputation() >= CrewStateModelScript.rank_threshold("made") and crew_rank_perks("crew_rook").has("rook_l3_escort")
 
 
 func crew_knuckles_stash_status() -> Dictionary:
@@ -594,7 +597,6 @@ func crew_knuckles_retrieve_stash_entry(stash_index: int, expected_item_id: Stri
 
 func crew_standing() -> Dictionary:
 	var total_trust := 0
-	var highest_rank_index := 0
 	var ranks := {}
 	var made_members: Array = []
 	var inner_circle_members: Array = []
@@ -603,7 +605,6 @@ func crew_standing() -> Dictionary:
 		var rank_id := crew_rank(member_id)
 		total_trust += trust
 		ranks[member_id] = rank_id
-		highest_rank_index = maxi(highest_rank_index, CrewStateModelScript.RANK_IDS.find(rank_id))
 		if CrewStateModelScript.RANK_IDS.find(rank_id) >= CrewStateModelScript.RANK_IDS.find("made"):
 			made_members.append(member_id)
 		if rank_id == "inner_circle":
@@ -611,7 +612,7 @@ func crew_standing() -> Dictionary:
 	var heist_eligibility := {}
 	for plan_id_value in _run.CrewHeistModelScript.release_plan_ids():
 		var plan_id := str(plan_id_value)
-		var eligible := true
+		var eligible: bool = _run.crew_reputation() >= CrewStateModelScript.rank_threshold("inner_circle")
 		for criterion_value in JsonCoerceScript._copy_array(_run.CrewHeistModelScript.plan(plan_id).get("crew_criteria", [])):
 			var criterion := JsonCoerceScript._copy_dict(criterion_value)
 			var required_rank := str(criterion.get("rank", "inner_circle"))
@@ -620,13 +621,14 @@ func crew_standing() -> Dictionary:
 				break
 		heist_eligibility[plan_id] = eligible
 	return {
-		"rank": CrewStateModelScript.RANK_IDS[highest_rank_index],
+		"rank": CrewStateModelScript.rank_for_trust(_run.crew_reputation()),
+		"reputation": _run.crew_reputation(),
 		"total_trust": total_trust,
 		"average_trust": int(floor(float(total_trust) / float(CrewStateModelScript.MEMBER_IDS.size()))),
 		"member_ranks": ranks,
 		"made_members": made_members,
 		"inner_circle_members": inner_circle_members,
-		"layer_3_access": not made_members.is_empty(),
+		"layer_3_access": _run.crew_reputation() >= CrewStateModelScript.rank_threshold("made"),
 		"heist_eligibility": heist_eligibility,
 	}
 
@@ -637,7 +639,8 @@ func crew_heist_planning_status() -> Dictionary:
 	for plan_id in _run.CrewHeistModelScript.release_plan_ids():
 		var definition = _run.CrewHeistModelScript.plan(plan_id)
 		var missing: Array = []
-		var crew_ready := true
+		var crew_ready: bool = _run.crew_reputation() >= CrewStateModelScript.rank_threshold("inner_circle")
+		if not crew_ready: missing.append("Crew reputation must reach inner circle (90).")
 		for criterion_value in JsonCoerceScript._copy_array(definition.get("crew_criteria", [])):
 			var criterion := JsonCoerceScript._copy_dict(criterion_value)
 			var required_rank := str(criterion.get("rank", "inner_circle"))
@@ -2206,35 +2209,20 @@ func _crew_lender_repeat_status(current_location_id: String) -> Dictionary:
 	}
 	var location_lookup := {}
 	var open_locations := 0
-	for debt_entry in _run.debt:
-		if typeof(debt_entry) != TYPE_DICTIONARY:
-			continue
-		var debt_data := debt_entry as Dictionary
-		if str(debt_data.get("lender_id", "")) != _run.CREW_LENDER_ID:
-			continue
-		var debt_status := str(debt_data.get("status", "active"))
-		if debt_status != "active" and debt_status != "overdue" and debt_status != "favor_due":
-			continue
-		for location_value in JsonCoerceScript._copy_array(debt_data.get("source_location_ids", [])):
+	if _run.crew_delivery_obligation_count() > 0:
+		for location_value in JsonCoerceScript._copy_array(_run.narrative_flags.get("crew_delivery_loan_locations", [])):
 			var location_id := str(location_value)
-			if location_id.is_empty() or location_lookup.has(location_id):
-				continue
+			if location_id.is_empty() or location_lookup.has(location_id): continue
 			location_lookup[location_id] = true
-			open_locations += 1
-		var single_location_id := str(debt_data.get("source_location_id", ""))
-		if not single_location_id.is_empty() and not location_lookup.has(single_location_id):
-			location_lookup[single_location_id] = true
 			open_locations += 1
 	if not current_location_id.is_empty() and location_lookup.has(current_location_id):
 		status["available"] = false
-		status["disabled_reason"] = "The Crew already marked this location."
-		status["active_debt"] = true
+		status["disabled_reason"] = "The Crew already helped here. Complete the outstanding deliveries first."
 		status["availability_class"] = _run.AVAILABILITY_TRANSIENT_BLOCKED
 		return status
 	if open_locations >= _run.CREW_MAX_LOAN_LOCATIONS:
 		status["available"] = false
-		status["disabled_reason"] = "The Crew will not open more than three markers."
-		status["active_debt"] = true
+		status["disabled_reason"] = "The Crew already helped at three locations. Complete the outstanding deliveries first."
 		status["availability_class"] = _run.AVAILABILITY_TRANSIENT_BLOCKED
 	return status
 

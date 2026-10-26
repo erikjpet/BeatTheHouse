@@ -862,6 +862,16 @@ func _advance_run_game_clock(delta: float) -> void:
 	if not bool(clock_result.get("ok", false)):
 		return
 	environment_clock_fractional_minutes -= float(elapsed_minutes)
+	# Poll the current eligible hour only. Sleeping/travel time jumps do not loop
+	# over missed hours, and the persisted attempt prevents click/re-entry rolls.
+	if _crew_hourly_room_boundary_ready() and run_state.crew_package_solicitation_available():
+		var before_attempt := int(run_state.narrative_flags.get("crew_package_last_attempt_hour", -1))
+		var queued := run_state.enqueue_triggered_event("crew_favor_delivery", "crew_hourly", {}, _triggered_entry_overrides(library.event("crew_favor_delivery")))
+		if before_attempt != int(run_state.narrative_flags.get("crew_package_last_attempt_hour", -1)):
+			_autosave_foundation_run("Crew request timing saved.")
+		# Crew requests use TalkDock. The ordinary action path refreshes it after
+		# enqueue; a clock boundary must publish that same presentation itself.
+		if queued: _refresh()
 	if bool(clock_result.get("delivery_resolved", false)):
 		_show_message(str(run_state.active_delivery_run.get("receipt", {}).get("failure_message", "The delivery window closed before the handoff.")))
 		_autosave_foundation_run("Delivery deadline saved.")
@@ -877,6 +887,14 @@ func _advance_run_game_clock(delta: float) -> void:
 		_refresh()
 	else:
 		_refresh_character_offer_visibility()
+
+
+func _crew_hourly_room_boundary_ready() -> bool:
+	# Keep table reveals, owned settlements, navigation and existing talks intact.
+	return library != null and current_screen == SCREEN_ENVIRONMENT \
+		and _event_response_transaction.is_empty() and _rourke_resolution.is_empty() \
+		and _blocking_modal_message().is_empty() \
+		and (talk_dock == null or not talk_dock.conversation_active)
 
 
 func _refresh_character_offer_visibility() -> void:
@@ -4297,9 +4315,11 @@ func _maybe_trigger_unavoidable_event(source: String) -> bool:
 	if not _source_allows_action_triggered_events(source):
 		return false
 	var context := _event_action_trigger_context(source)
-	if _enqueue_triggered_events_for_context(source, context, run_state.current_environment):
+	var before_attempt := int(run_state.narrative_flags.get("crew_package_last_attempt_hour", -1))
+	var queued := _enqueue_triggered_events_for_context(source, context, run_state.current_environment)
+	if queued or before_attempt != int(run_state.narrative_flags.get("crew_package_last_attempt_hour", -1)):
 		_autosave_foundation_run("Autosaved.")
-		return _show_next_pending_triggered_event()
+	if queued: return _show_next_pending_triggered_event()
 	return false
 
 
@@ -4360,6 +4380,13 @@ func _enqueue_triggered_events_for_context(source: String, context: Dictionary, 
 		if event_module == null:
 			continue
 		if not event_module.can_trigger(run_state, environment, context):
+			continue
+		if event_id == "crew_favor_delivery":
+			# This event owns one persisted hourly roll, independent of click count,
+			# weighted world selection and the visit's ordinary random-event budget.
+			if run_state.enqueue_triggered_event(event_id, source, _event_context_with_environment(context, environment), _triggered_entry_overrides(event_definition)):
+				enqueued = true
+				break
 			continue
 		if trigger_type == "random":
 			candidates.append({"id": event_id, "trigger": trigger, "event": event_definition})
@@ -4820,7 +4847,8 @@ func _refresh_talk_dock() -> void:
 	# Dynamic dialogue summaries can contain exact run-state information such as
 	# Vince's next scratch-machine restock. Never replace that information with
 	# a generic randomized character bark.
-	if not voice_line.is_empty() and not authored_guide_dialogue and summary_override.is_empty():
+	var pushy_crew_request := event_id == "crew_favor_delivery" and bool(run_state.narrative_flags.get("crew_delivery_post_miss", false))
+	if not voice_line.is_empty() and not authored_guide_dialogue and not pushy_crew_request and summary_override.is_empty():
 		option = option.duplicate(true)
 		var voice_name := str(entry_speaker.get("speaking_character_name", "")).strip_edges()
 		var spoken_summary := "%s: \"%s\"" % [voice_name, voice_line] if not voice_name.is_empty() else voice_line
@@ -20348,6 +20376,8 @@ func _refresh_delivery_action_strip() -> void:
 	var timing_text := ""
 	if run_state != null and current_screen in [SCREEN_ENVIRONMENT, SCREEN_RESULT] and current_game == null:
 		timing_text = run_state.delivery_timing_text() if run_state.delivery_has_active_run() else str(run_state.active_delivery_run.get("receipt", {}).get("failure_message", ""))
+		var owed := run_state.crew_delivery_obligation_count()
+		if owed > 0: timing_text = "%d Crew deliveries owed%s" % [owed, " | " + timing_text if not timing_text.is_empty() else ". Requests only where the Crew is present."]
 	var signature := JSON.stringify([actions, timing_text])
 	if str(delivery_action_strip.get_meta("action_signature", "")) == signature:
 		var next_visible := not actions.is_empty() or not timing_text.is_empty()
@@ -20367,7 +20397,8 @@ func _refresh_delivery_action_strip() -> void:
 		# released height instead of retaining the previous delivery footprint.
 		_schedule_delivery_action_layout_refresh()
 		return
-	var heading := _muted_label("PACKAGE | " + timing_text, 12)
+	var heading_prefix := "CREW | " if run_state != null and not run_state.delivery_has_active_run() and run_state.crew_delivery_obligation_count() > 0 else "PACKAGE | "
+	var heading := _muted_label(heading_prefix + timing_text, 12)
 	heading.tooltip_text = timing_text
 	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	heading.custom_minimum_size.x = 720

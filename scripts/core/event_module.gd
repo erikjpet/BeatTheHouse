@@ -237,6 +237,10 @@ func choice_views(run_state: RunState = null, environment: Dictionary = {}) -> A
 
 
 func conversation_summary(run_state: RunState = null, environment: Dictionary = {}, projected_choices: Array = []) -> String:
+	if get_id() == "crew_favor_delivery" and run_state != null:
+		if bool(run_state.narrative_flags.get("crew_delivery_post_miss", false)):
+			return "You missed the last package. No more excuses: take the replacement and finish the job. Refusing adds 18 Heat. %d deliveries still owed." % run_state.crew_delivery_obligation_count()
+		return "The Crew wants a package delivered. %d deliveries owed; no cash repayment. Refusing adds 9 Heat." % run_state.crew_delivery_obligation_count()
 	var payload := JsonCoerceScript._copy_dict(definition.get("payload", {}))
 	var views := projected_choices if not projected_choices.is_empty() else choice_views(run_state, environment)
 	var summary := str(payload.get("summary", "")).strip_edges()
@@ -283,7 +287,7 @@ func _short_conversation_summary(value: String) -> String:
 
 func _contextualized_choice(choice_data: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	var resolved := _rumor_delivery_choice(choice_data, run_state, environment)
-	if get_id() == "crew_favor_delivery" and str(resolved.get("id", "")) == "run_package" and run_state != null:
+	if get_id() == "crew_favor_delivery" and str(resolved.get("id", "")) in ["run_package", "run_package_after_miss"] and run_state != null:
 		if _crew_offer_clock < 0: _crew_offer_clock = run_state.game_clock_minutes
 		var preview := run_state.delivery_crew_offer("crew_favor_delivery", _crew_offer_clock)
 		resolved["text"] = "%s Missing the window loses the package and payment, reduces Crew trust by 5 and adds 9 Heat." % str(preview.get("message", ""))
@@ -396,7 +400,7 @@ func _mags_bench_choices(payload: Dictionary, run_state: RunState, environment: 
 
 # Checks whether this event can fire in the current run context.
 func can_trigger(run_state: RunState, environment: Dictionary, context: Dictionary = {}) -> bool:
-	if get_id() == "crew_favor_delivery" and (run_state.delivery_has_active_run() or not run_state.crew_package_scene_allows_offer(environment) or (not run_state.crew_package_solicitation_available(environment) and not run_state.triggered_event_pending(get_id()))): return false
+	if get_id() == "crew_favor_delivery" and (run_state.delivery_has_active_run() or not run_state.crew_delivery_request_context_valid() or (not run_state.crew_package_solicitation_available() and not run_state.triggered_event_pending(get_id()))): return false
 	var min_suspicion := int(definition.get("min_suspicion", 0))
 	var tier_min := int(definition.get("tier_min", 1))
 	if int(run_state.suspicion.get("level", 0)) < min_suspicion:
@@ -419,6 +423,9 @@ func can_trigger(run_state: RunState, environment: Dictionary, context: Dictiona
 		return false
 	if not _conditions_allow(run_state, environment, context):
 		return false
+	# Crew's persisted hourly policy owns eligibility; elapsed room turns are
+	# not an additional requirement for a clock-generated package request.
+	if get_id() == "crew_favor_delivery": return true
 	return _trigger_allows(environment, context)
 
 
@@ -473,6 +480,8 @@ func _resolve_event_choice(
 		host_authorized = run_state.triggered_event_pending(get_id()) if get_interaction_mode() == "triggered" else can_trigger(run_state, run_state.current_environment)
 	if not host_authorized:
 		return _empty_result(choice_id, environment, "Event is no longer available.")
+	if get_id() == "crew_favor_delivery" and (run_state.delivery_has_active_run() or not run_state.crew_delivery_request_context_valid()):
+		return _empty_result(choice_id, environment, "The Crew cannot make that package request here now.")
 	var payload := JsonCoerceScript._copy_dict(definition.get("payload", {}))
 	if str(payload.get("kind", "")) == "grand_casino_showdown":
 		return _resolve_grand_casino_showdown(run_state, environment, payload, choice_id)
@@ -548,7 +557,7 @@ func _resolve_event_choice(
 	if conclusion_animation.is_empty() and bankroll_delta > 0:
 		conclusion_animation = "bankroll_transfer"
 	result["conclusion_animation"] = conclusion_animation
-	if get_id() == "crew_favor_delivery" and choice_key == "run_package":
+	if get_id() == "crew_favor_delivery" and choice_key in ["run_package", "run_package_after_miss"]:
 		var delivery_rollback := run_state.to_dict()
 		var delivery_rollback_environment := run_state.current_environment.duplicate(true)
 		var delivery_rollback_world_map := run_state.world_map.duplicate(true)
@@ -769,6 +778,10 @@ func _finish_event_result_application(run_state: RunState, result: Dictionary, c
 	# path and outcome; consequence payloads never write Crew state directly.
 	if get_id().begins_with("recruitment_") and get_id() not in ["recruitment_rook_signpost", "recruitment_rook_leads"]:
 		result["crew_recruitment_result"] = run_state.crew_record_recruitment_event_result(result)
+	var contact_payload := JsonCoerceScript._copy_dict(definition.get("payload", {}))
+	if str(contact_payload.get("kind", "")) == "crew_contact":
+		for contact_hook in deltas.get("event_hooks", []):
+			run_state.crew_reward_contact(str(contact_payload.get("member_id", "")), str(JsonCoerceScript._copy_dict(contact_hook).get("type", "")))
 	for hook in deltas.get("event_hooks", []):
 		if typeof(hook) != TYPE_DICTIONARY:
 			continue

@@ -1726,10 +1726,15 @@ func _dynamic_lender_result(lender_id: String, definition: Dictionary, status: D
 	return result
 
 
-# Derives player-facing loan terms from the exact debt delta that acceptance
-# will apply. This keeps repeat-loan scaling, ceil rounding, favors, and pawn
-# fees synchronized with the owning debt model.
+# Derives terms from the exact transaction acceptance will apply. Crew delivery
+# obligations are separate from monetary debt, interest and pawn redemption.
 func lender_loan_terms(definition: Dictionary, deltas: Dictionary) -> Dictionary:
+	if str(definition.get("id", "")) == "the_crew":
+		var principal := maxi(0, int(deltas.get("bankroll_delta", 0)))
+		if principal <= 0:
+			return {"lender_id": "the_crew", "debt_kind": "delivery_obligations", "repayment_total": 0, "delivery_obligations_added": 0, "summary": "%d Crew deliveries owed. No cash repayment or interest." % run_state.crew_delivery_obligation_count()}
+		return {"lender_id": "the_crew", "debt_kind": "delivery_obligations", "principal": principal, "repayment_total": 0, "interest_rate": 0.0, "deadline_turns": 0, "delivery_obligations_added": 2,
+			"summary": "Receive $%d; total after this borrow: %d deliveries. No cash repayment or interest." % [principal, run_state.crew_delivery_obligation_count() + 2]}
 	var debt_changes := JsonCoerceScript._copy_array(deltas.get("debt_changes", []))
 	if debt_changes.is_empty() or typeof(debt_changes[0]) != TYPE_DICTIONARY:
 		return {}
@@ -1804,30 +1809,18 @@ func _dynamic_lender_deltas(definition: Dictionary, status: Dictionary, pawn_quo
 func _crew_lender_deltas(definition: Dictionary, profile: Dictionary) -> Dictionary:
 	var lender_id := str(definition.get("id", "the_crew"))
 	var loan_amount := _profile_loan_amount(profile, lender_id)
-	var favor_count := maxi(1, int(profile.get("favor_count", 2)))
-	var deadline_turns := maxi(0, int(profile.get("deadline_turns", 2)))
 	var location_id := _current_lender_location_id()
-	var debt_change := {
-		"id": "%s_marker" % lender_id,
-		"lender_id": lender_id,
-		"balance": favor_count,
-		"principal": loan_amount,
-		"status": "active",
-		"debt_kind": "favor",
-		"deadline_turns": deadline_turns,
-		"turns_remaining": deadline_turns,
-		"loan_count": 1,
-		"source_location_id": location_id,
-		"source_location_ids": [location_id] if not location_id.is_empty() else [],
-		"interest_rate": 0.0,
-		"default_consequence": str(profile.get("default_consequence", "crew_favor_due")),
-		"refuse_consequence": str(profile.get("refuse_consequence", "crew_convert_to_cash")),
-		"cash_conversion_balance_per_favor": maxi(1, int(profile.get("cash_conversion_balance_per_favor", 45))),
-		"cash_conversion_interest_rate": maxf(0.0, float(profile.get("cash_conversion_interest_rate", 0.35))),
-	}
-	return _dynamic_lender_delta_payload(definition, loan_amount, [debt_change], {
-		"crew_marker_open": true,
-	}, ["The Crew wants favors, not interest."])
+	var locations := JsonCoerceScript._copy_array(run_state.narrative_flags.get("crew_delivery_loan_locations", []))
+	if not location_id.is_empty() and not locations.has(location_id): locations.append(location_id)
+	# Absolute values belong to the same detached, exactly-once hook transaction
+	# as the cash. A stale confirmation cannot apply either half independently.
+	return _dynamic_lender_delta_payload(definition, loan_amount, [], {
+		"crew_delivery_rules_version": 1,
+		"crew_delivery_obligations": run_state.crew_delivery_obligation_count() + 2,
+		"crew_delivery_borrow_count": int(run_state.narrative_flags.get("crew_delivery_borrow_count", 0)) + 1,
+		"crew_delivery_loan_locations": locations,
+		"crew_marker_open": true, "crew_marker_clear": false,
+	}, ["The cash is yours. Two successful package deliveries are owed; no cash repayment."])
 
 
 func _apply_crew_loan_trust(definition: Dictionary) -> void:

@@ -646,7 +646,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	environment_history = []
 	environment_history_archive_count = 0
 	unlocked_travel = []
-	narrative_flags = {}
+	narrative_flags = {"crew_delivery_rules_version": 1, "crew_delivery_obligations": 0, "crew_delivery_post_miss": false}
 	story_flags = {}
 	story_log = []
 	story_log_archive_count = 0
@@ -2314,7 +2314,8 @@ func event_cadence_advance_actions(amount: int = 1) -> void:
 
 # Returns whether a world-initiated event can be queued under the room budget.
 func event_cadence_allows_world_event(event_id: String, trigger_type: String, source: String, event_definition: Dictionary = {}) -> bool:
-	if event_id == "crew_favor_delivery" and not crew_package_solicitation_available(): return false
+	# Crew's persisted six-hour/hourly policy replaces the action-based breather.
+	if event_id == "crew_favor_delivery": return crew_package_solicitation_available()
 	_ensure_event_cadence()
 	var cadence_value: Variant = event_definition.get("cadence", {})
 	var cadence: Dictionary = cadence_value if typeof(cadence_value) == TYPE_DICTIONARY else {}
@@ -4865,7 +4866,12 @@ func _apply_scenario_host_result(result_value: Dictionary) -> Dictionary:
 		bankroll = int(JsonCoerceScript._copy_dict(accounts.get("player_bankroll", {})).get("balance", bankroll))
 		grand_casino_chips = maxi(0, int(JsonCoerceScript._copy_dict(accounts.get("grand_casino_chips", {})).get("balance", grand_casino_chips)))
 		current_environment["game_states"] = JsonCoerceScript._copy_dict(state.get("table_states", {}))
-		crew_trust_by_member = JsonCoerceScript._copy_dict(state.get("trust", {}))
+		var next_trust := JsonCoerceScript._copy_dict(state.get("trust", {}))
+		var reputation_delta := 0
+		for member_id in CrewStateModelScript.MEMBER_IDS:
+			reputation_delta += int(next_trust.get(member_id, 0)) - crew_trust(member_id)
+		crew_change_reputation(reputation_delta)
+		crew_trust_by_member = next_trust
 		_apply_scenario_host_tell_snapshot(JsonCoerceScript._copy_dict(state.get("tells", {})))
 	scenario_host_transaction_ledger = ScenarioHostTransactionScript.persisted_ledger(state)
 	return result
@@ -5689,6 +5695,8 @@ func install_environment_layer_state(layer_id: String, layer_state: Dictionary) 
 
 
 func _environment_layer_access_path_allows(path: Dictionary, discovery: Dictionary, target_id: String) -> bool:
+	if target_id == "back_room" and str(current_environment.get("archetype_id", "")) == "small_underground_casino" and crew_reputation() < CrewStateModelScript.rank_threshold("made"):
+		return false
 	if bool(path.get("requires_discovered", false)) and not bool(discovery.get(target_id, false)):
 		return false
 	var minimum_rank := str(path.get("min_crew_rank", "")).strip_edges()
@@ -6540,6 +6548,8 @@ func add_suspicion(cue_id: String, amount: int, visibility: String = "behavior",
 	})
 	suspicion["cues"] = cues
 	if applied_amount > 0:
+		if active_location and str(current_environment.get("archetype_id", "")) == "small_underground_casino":
+			crew_change_reputation(-applied_amount)
 		record_grand_casino_room_heat_gain(_grand_casino_room_id_from_context(context), applied_amount)
 		var distraction_liability := CrewPlayModelScript.distraction_grievance_candidate(
 			crew_play_state, _crew_action_index(), base_level, level
@@ -7136,27 +7146,12 @@ func apply_blackjack_heat_backoff(result: Dictionary) -> Dictionary:
 	var consequence_ids: Array = []
 	var crew_payback := str(current_environment.get("archetype_id", "")) == "small_underground_casino" or location_id == "small_underground_casino"
 	if crew_payback:
-		for member_id in CrewStateModelScript.MEMBER_IDS:
-			crew_trust_by_member[member_id] = 0
+		# Retain the established full standing loss, solely in shared reputation.
+		# Table backoff is the once-only receipt; no loan, package or obligation.
+		crew_change_reputation(-crew_reputation())
 		narrative_flags.erase("rook_escort_punchline_back_room")
-		_reconcile_crew_recruitment_perks()
-		add_debt({
-			"id": "crew_blackjack_backoff:%s" % location_id,
-			"lender_id": CREW_LENDER_ID,
-			"lender_name": "The Crew",
-			"balance": 1,
-			"debt_kind": "favor",
-			"status": "active",
-			"deadline_turns": 2,
-			"turns_remaining": 2,
-			"default_consequence": "crew_favor_due",
-			"cash_conversion_balance_per_favor": 45,
-			"cash_conversion_interest_rate": 0.35,
-			"source_location_id": location_id,
-			"source": "blackjack_backoff",
-		})
 		narrative_flags["crew_blackjack_backoff_payback"] = true
-		message += " The Crew strips your standing and adds one favor to your marker: payback for taking from the operation."
+		message += " The Crew strips your reputation for taking from the operation."
 		consequence_ids.append("crew_payback")
 
 	var hook_ids := JsonCoerceScript._string_array(JsonCoerceScript._copy_array(current_environment.get("blackjack_backoff_event_ids", [])))
@@ -9866,6 +9861,29 @@ func refuse_debt_favor(debt_id: String) -> Dictionary:
 
 
 # Returns one member's hidden within-run trust value.
+# Shared standing is distinct from member relationships and owns both public
+# access gates. Legacy runs retain their highest achieved relationship standing.
+func crew_reputation() -> int:
+	if narrative_flags.has("crew_reputation"): return maxi(0, int(narrative_flags["crew_reputation"]))
+	var highest := 0
+	for member_id in CrewStateModelScript.MEMBER_IDS: highest = maxi(highest, crew_trust(member_id))
+	return highest
+
+
+func crew_change_reputation(amount: int) -> int:
+	narrative_flags["crew_reputation"] = maxi(0, crew_reputation() + amount)
+	return int(narrative_flags["crew_reputation"])
+
+
+func crew_reward_contact(member_id: String, interaction: String) -> bool:
+	if not crew_member_present(member_id) or interaction not in ["crew_switch_reveal", "crew_knuckles_stash", "crew_knuckles_retrieve"]: return false
+	var key := "crew_contact_reputation:%s:%s" % [member_id, interaction]
+	if bool(narrative_flags.get(key, false)): return false
+	narrative_flags[key] = true
+	crew_add_trust(member_id, maxi(0, int(CrewPokerModelScript.config().get("session_trust", 2))), "meaningful_contact")
+	return true
+
+
 func crew_trust(member_id: String) -> int:
 	_crew_run_facade.bind(self)
 	return _crew_run_facade.crew_trust(member_id)
@@ -10609,15 +10627,19 @@ func resolve_crew_favor_delivery_job(choice_id: String, authored_consequences: D
 	# second job, charge trust, or replace the original route.
 	if delivery_has_active_run():
 		return {"ok": false, "message": "Finish your current delivery before taking another package."}
-	if not crew_package_scene_allows_offer(): return {"ok": false, "message": "The Crew waits until this encounter is over."}
-	var preview := delivery_crew_offer("crew_favor_delivery", offered_clock) if choice_id == "run_package" else {}
-	if choice_id == "run_package" and not bool(preview.get("ok", false)): return preview
+	if not crew_delivery_request_context_valid(): return {"ok": false, "message": "A package request requires outstanding deliveries and Crew present here."}
+	if not triggered_event_pending("crew_favor_delivery") and not crew_package_solicitation_available(): return {"ok": false, "message": "The Crew waits six game hours before another package request."}
+	if not choice_id in ["run_package", "run_package_after_miss", "refuse", "refuse_after_miss"]: return {"ok": false, "message": "That package response is unavailable."}
+	if choice_id.ends_with("_after_miss") != bool(narrative_flags.get("crew_delivery_post_miss", false)): return {"ok": false, "message": "The package request has changed. Read the current offer."}
+	var accepting := choice_id in ["run_package", "run_package_after_miss"]
+	var preview := delivery_crew_offer("crew_favor_delivery", offered_clock) if accepting else {}
+	if accepting and not bool(preview.get("ok", false)): return preview
 	narrative_flags["crew_package_next_offer_clock"] = game_clock_minutes + CREW_PACKAGE_OFFER_COOLDOWN_MINUTES
 	var offered := job_offer(CrewStateModelScript.job_definition("crew_favor_delivery"), _crew_job_host_capability)
 	var job_id := str(offered.get("id", ""))
 	if job_id.is_empty() or job_accept(job_id, _crew_job_host_capability).is_empty() or job_activate(job_id, _crew_job_host_capability).is_empty():
 		return {}
-	if choice_id != "run_package":
+	if not accepting:
 		return job_resolve(job_id, "failed", _crew_job_host_capability)
 	var favor_spec := JsonCoerceScript._copy_dict(preview.get("spec", {}))
 	favor_spec.merge({
@@ -10653,6 +10675,7 @@ func _crew_favor_delivery_is_active() -> bool:
 func crew_package_scene_allows_offer(environment: Dictionary = {}) -> bool:
 	var scene := current_environment if environment.is_empty() else environment
 	if is_terminal() or is_tutorial_run() or bool(scene.get("environment_test", false)): return false
+	if str(active_delivery_run.get("status", "")) == "resolved" and not bool(active_delivery_run.get("world_applied", true)): return false
 	# Use the encounter owners' existing state, including pre-duel walk/pat-down
 	# and interrogation, rather than only hiding the final duel's popup.
 	if bool(narrative_flags.get("grand_casino_showdown_active", false)) or bool(narrative_flags.get("grand_casino_showdown_pending", false)) or grand_casino_duel_active(scene): return false
@@ -10663,7 +10686,108 @@ func crew_package_scene_allows_offer(environment: Dictionary = {}) -> bool:
 
 
 func crew_package_solicitation_available(environment: Dictionary = {}) -> bool:
-	return not delivery_has_active_run() and crew_package_scene_allows_offer(environment) and game_clock_minutes >= int(narrative_flags.get("crew_package_next_offer_clock", 0))
+	return not delivery_has_active_run() and crew_delivery_request_context_valid(environment) and game_clock_minutes >= int(narrative_flags.get("crew_package_next_offer_clock", 0))
+
+
+func _crew_package_hourly_attempt() -> bool:
+	if not crew_package_solicitation_available() or triggered_event_pending("crew_favor_delivery"): return false
+	if game_clock_minutes < int(narrative_flags.get("crew_package_next_attempt_clock", 0)): return false
+	var hour := int(floor(float(game_clock_minutes) / 60.0))
+	if hour <= int(narrative_flags.get("crew_package_last_attempt_hour", -1)): return false
+	var stream_seed := text_to_seed("%s|crew_package_hourly" % seed_text)
+	var rng := RngStream.new()
+	rng.configure(stream_seed, int(narrative_flags.get("crew_package_offer_rng_state", stream_seed)))
+	var roll := rng.randi_range(1, 100)
+	narrative_flags["crew_package_offer_rng_state"] = rng.state_value
+	narrative_flags["crew_package_last_attempt_hour"] = hour
+	narrative_flags["crew_package_next_attempt_clock"] = game_clock_minutes + 60
+	narrative_flags["crew_package_last_attempt_roll"] = roll
+	return roll <= 25
+
+
+func crew_delivery_obligation_count() -> int:
+	return maxi(0, int(narrative_flags.get("crew_delivery_obligations", 0)))
+
+
+func crew_delivery_request_context_valid(environment: Dictionary = {}) -> bool:
+	if crew_delivery_obligation_count() <= 0: return false
+	var scene := current_environment if environment.is_empty() else environment
+	# Residents, authored lender groups and live first meetings are physical Crew
+	# presence. A member need not be recruited before their visible actor counts.
+	var present := not crew_present_member_ids(scene).is_empty() or JsonCoerceScript._copy_array(scene.get("lender_hooks", [])).has(CREW_LENDER_ID)
+	if not present:
+		var events := JsonCoerceScript._copy_array(scene.get("event_ids", []))
+		var retired := JsonCoerceScript._copy_array(scene.get("resolved_event_ids", []))
+		for member_id in CrewStateModelScript.MEMBER_IDS:
+			var event_id := str(CrewRecruitmentModelScript.member_definition(str(member_id)).get("event_id", ""))
+			if not event_id.is_empty() and events.has(event_id) and not retired.has(event_id):
+				present = true
+				break
+	return present and crew_package_scene_allows_offer(scene)
+
+
+func _migrate_crew_delivery_obligations() -> void:
+	if int(narrative_flags.get("crew_delivery_rules_version", 0)) >= 1: return
+	var obligations := 0
+	var known_borrows := 0
+	var unknown_borrow_count := false
+	var unknown_completion_credit := false
+	var legacy_blackjack_marker := false
+	var locations: Array = []
+	var retained_debt: Array = []
+	for value in debt:
+		var entry := JsonCoerceScript._copy_dict(value)
+		if str(entry.get("lender_id", "")) != CREW_LENDER_ID:
+			retained_debt.append(value)
+			continue
+		# The old blackjack standing loss already happened. Remove its non-loan
+		# marker without imposing another penalty or creating delivery duties.
+		if str(entry.get("id", "")).begins_with("crew_blackjack_backoff:"):
+			legacy_blackjack_marker = true
+			continue
+		if str(entry.get("status", "active")) not in ["active", "overdue", "favor_due"] or int(entry.get("balance", 0)) <= 0: continue
+		var recorded_loans := maxi(0, int(entry.get("loan_count", 0)))
+		known_borrows += recorded_loans
+		if str(entry.get("debt_kind", "")) == "favor":
+			var remaining := maxi(0, int(entry.get("balance", 0)))
+			# Shipped markers owed one favor per borrow. Credit the completed
+			# portion of an open marker; do not reopen already-cleared markers.
+			obligations += mini(recorded_loans * 2, recorded_loans + remaining) if recorded_loans > 0 else remaining
+		else:
+			# Converted cash cannot identify partial favor completion reliably.
+			# Use recorded borrows, or retain one known unfinished legacy duty.
+			obligations += recorded_loans * 2 if recorded_loans > 0 else 1
+			unknown_completion_credit = true
+		unknown_borrow_count = unknown_borrow_count or recorded_loans == 0
+		for location in _unique_lender_source_locations(entry, {}):
+			if not locations.has(location): locations.append(location)
+	debt = retained_debt
+	var favor_route := str(active_delivery_run.get("run_id", "")) == "crew_favor_delivery"
+	var pending_route := favor_route and (delivery_has_active_run() or not bool(active_delivery_run.get("world_applied", true)))
+	if pending_route and obligations == 0:
+		if legacy_blackjack_marker:
+			# Keep the already accepted route, but do not turn a removed penalty
+			# into a new queued obligation. Its eventual receipt remains once-only.
+			narrative_flags["crew_delivery_legacy_nonloan_job"] = str(active_delivery_run.get("job_id", ""))
+		else:
+			obligations = 1
+			unknown_borrow_count = true
+	var last_missed := CrewDeliveryScheduleScript.is_crew_route(active_delivery_run) and str(active_delivery_run.get("status", "")) == "resolved" and str(JsonCoerceScript._copy_dict(active_delivery_run.get("resolution", {})).get("reason", "")) == "deadline"
+	narrative_flags["crew_delivery_rules_version"] = 1
+	narrative_flags["crew_delivery_obligations"] = obligations
+	narrative_flags["crew_delivery_borrow_count"] = known_borrows
+	narrative_flags["crew_delivery_loan_locations"] = locations if obligations > 0 else []
+	narrative_flags["crew_delivery_post_miss"] = obligations > 0 and last_missed
+	narrative_flags["crew_delivery_migration"] = {"recorded_open_borrows": known_borrows, "historical_count_scope": "Open markers only; cleared borrowing history is not reconstructed.", "unknown_historical_borrow_count": unknown_borrow_count, "unknown_prior_completion_credit": unknown_completion_credit, "outstanding_deliveries": obligations}
+	narrative_flags["crew_favor_pending"] = false
+	narrative_flags["crew_marker_converted_to_cash"] = false
+	# Cancel unaccepted pre-rule prompts, preserving their existing clock anchor.
+	# No package/job is removed or recreated by this migration.
+	for index in range(pending_triggered_events.size() - 1, -1, -1):
+		if str(JsonCoerceScript._copy_dict(pending_triggered_events[index]).get("event_id", "")) == "crew_favor_delivery": pending_triggered_events.remove_at(index)
+	if str(active_triggered_event.get("event_id", "")) == "crew_favor_delivery": active_triggered_event = {}
+	if obligations > 0 and str(active_delivery_run.get("mode", "")) in [DeliveryRunModelScript.MODE_PACKAGE, DeliveryRunModelScript.MODE_MULTI_STOP] and str(active_delivery_run.get("status", "")) == "resolved" and not pending_route:
+		narrative_flags["crew_package_next_offer_clock"] = maxi(int(narrative_flags.get("crew_package_next_offer_clock", 0)), game_clock_minutes + CREW_PACKAGE_OFFER_COOLDOWN_MINUTES)
 
 
 func delivery_crew_offer(definition_id: String, offered_clock: int = -1) -> Dictionary:
@@ -11280,23 +11404,26 @@ func _apply_delivery_resolution(expected_receipt: Dictionary = {}, materialize_a
 				grievance_add({"member_id": "crew_lucky", "kind": "job_abandoned", "weight": 1, "source_ref": str(active_delivery_run.get("job_id", run_id))})
 		elif run_id.begins_with("numbers_fix_bribe:"):
 			numbers_state.fix_record_bribe(succeeded, resolution)
-	if succeeded and run_id == "crew_favor_delivery":
-		var favor_debt_id := ""
-		for debt_value in debt:
-			var debt_data := JsonCoerceScript._copy_dict(debt_value)
-			if str(debt_data.get("lender_id", "")) != CREW_LENDER_ID \
-					or str(debt_data.get("debt_kind", "")) != "favor" \
-					or str(debt_data.get("status", "active")) not in ["active", "overdue", "favor_due"]:
-				continue
-			favor_debt_id = str(debt_data.get("id", "")).strip_edges()
-			break
-		var favor_result := complete_debt_favor(favor_debt_id)
-		if favor_debt_id.is_empty() or not bool(favor_result.get("ok", false)):
+	if CrewDeliveryScheduleScript.is_crew_route(active_delivery_run):
+		if succeeded and run_id == "crew_favor_delivery" and crew_delivery_obligation_count() <= 0 and str(narrative_flags.get("crew_delivery_legacy_nonloan_job", "")) != job_id:
 			from_dict(rollback_run)
 			current_environment = rollback_environment
 			world_map = rollback_world_map
 			grand_casino_room_states = rollback_room_states
-			return {"ok": false, "errors": ["successful Crew favor delivery could not clear one active favor"]}
+			return {"ok": false, "errors": ["successful Crew delivery has no outstanding obligation"]}
+		if succeeded and crew_delivery_obligation_count() > 0:
+			narrative_flags["crew_delivery_obligations"] = crew_delivery_obligation_count() - 1
+			narrative_flags["crew_delivery_post_miss"] = false
+			if crew_delivery_obligation_count() == 0:
+				narrative_flags["crew_delivery_loan_locations"] = []
+				narrative_flags["crew_marker_clear"] = true
+		elif not succeeded and crew_delivery_obligation_count() > 0:
+			narrative_flags["crew_delivery_post_miss"] = true
+		narrative_flags["crew_favor_pending"] = false
+	# The shared package slot also covers unrelated delivery jobs. Whichever
+	# package just ended, the Crew must give the player six hours before asking.
+	if str(active_delivery_run.get("mode", "")) in [DeliveryRunModelScript.MODE_PACKAGE, DeliveryRunModelScript.MODE_MULTI_STOP]:
+		narrative_flags["crew_package_next_offer_clock"] = game_clock_minutes + CREW_PACKAGE_OFFER_COOLDOWN_MINUTES
 	if not succeeded and reason == "deadline" and str(active_delivery_run.get("mode", "")) in [DeliveryRunModelScript.MODE_PACKAGE, DeliveryRunModelScript.MODE_MULTI_STOP]:
 		var failure_text := "Missed delivery: %s. The package is lost; no payment." % delivery_timing_text()
 		var failed_job := _crew_job(job_id)
@@ -11859,7 +11986,7 @@ func swept_window(node_id: String = "") -> Dictionary:
 
 
 func town_status_line() -> String:
-	return town_state.status_line() if town_state != null else "Clear outside · Midweek"
+	return town_state.status_line() if town_state != null else "Clear outside Â· Midweek"
 
 
 func configure_town_world(map_data: Dictionary, initialize_discovery_facts: bool = true) -> void:
@@ -14259,6 +14386,7 @@ func enqueue_triggered_event(event_id: String, source: String = "", context: Dic
 			return false
 	if pending_triggered_events.size() >= MAX_PENDING_TRIGGERED_EVENTS:
 		return false
+	if normalized_id == "crew_favor_delivery" and not _crew_package_hourly_attempt(): return false
 	var queued_context := context.duplicate(true)
 	var entry := {
 		"event_id": normalized_id,
@@ -15383,6 +15511,11 @@ func _run_state_schema_restore(data: Dictionary) -> void:
 	game_clock_minutes = maxi(0, int(data.get("game_clock_minutes", GAME_CLOCK_START_MINUTE)))
 	_delivery_run_facade.bind(self)
 	_delivery_run_facade.delivery_migrate_crew_window()
+	_migrate_crew_delivery_obligations()
+	# Also retire old non-loan penalties in already-migrated draft saves.
+	for index in range(debt.size() - 1, -1, -1):
+		if str(JsonCoerceScript._copy_dict(debt[index]).get("id", "")).begins_with("crew_blackjack_backoff:"): debt.remove_at(index)
+	crew_change_reputation(0)
 	# A queued old call starts a persistent cooldown without issuing another call.
 	if not narrative_flags.has("crew_package_next_offer_clock") and triggered_event_pending("crew_favor_delivery"):
 		narrative_flags["crew_package_next_offer_clock"] = game_clock_minutes + CREW_PACKAGE_OFFER_COOLDOWN_MINUTES
@@ -16118,7 +16251,7 @@ func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
 
 static func environment_context_snapshot(environment: Dictionary) -> Dictionary:
 	# Dialogue/event predicates consume the room identity, offers, hooks, layout,
-	# and routing fields—not live machine internals. Keeping game_states here
+	# and routing fieldsâ€”not live machine internals. Keeping game_states here
 	# made every focus/refresh copy high-resolution ticket masks and other game
 	# runtime buffers into presentation and queued-event records.
 	var snapshot: Dictionary = {}

@@ -2238,8 +2238,8 @@
   },
   {
     "id": "crew_favor_delivery",
-    "display_name": "Crew Favor",
-    "type": "debt",
+    "display_name": "Crew Package",
+    "type": "crew",
     "interaction_mode": "triggered",
     "repeatable": true,
     "presentation": "talk",
@@ -2250,7 +2250,7 @@
       "portrait_count": 3,
       "face_layers": [],
       "bind": "none",
-      "environment_actor": false,
+      "environment_actor": true,
       "character_pool_id": "crew_regulars",
       "character_identity_key": "the_crew",
       "voice_line_key": "favor_due"
@@ -2262,19 +2262,15 @@
     "trigger": {
       "type": "random",
       "turns": 1,
-      "chance_percent": 45,
+      "chance_percent": 25,
       "unavoidable": true
     },
     "cadence": {
       "bypass_budget": true
     },
-    "conditions": {
-      "requires_flags": {
-        "crew_favor_pending": true
-      }
-    },
+    "conditions": {},
     "payload": {
-      "summary": "The Crew comes for one favor.",
+      "summary": "The Crew wants a package delivered. No cash repayment.",
       "choices": [
         {
           "id": "run_package",
@@ -2297,6 +2293,11 @@
               "crew_favor_completed": true
             },
             "resolve_event": true
+          },
+          "conditions": {
+            "blocked_by_flags": [
+              "crew_delivery_post_miss"
+            ]
           }
         },
         {
@@ -2311,6 +2312,58 @@
               "crew_favor_refused": true
             },
             "resolve_event": true
+          },
+          "conditions": {
+            "blocked_by_flags": [
+              "crew_delivery_post_miss"
+            ]
+          }
+        },
+        {
+          "id": "run_package_after_miss",
+          "label": "Take the replacement package",
+          "text": "You missed the last one. This delivery still counts toward what you owe.",
+          "world_sequence_package_id": "world06_1_crew_favor_delivery",
+          "consequence_summary": "Bankroll +22, heat +4",
+          "streets_failure": {
+            "suspicion_delta": 9,
+            "flags": {
+              "crew_favor_pending": false,
+              "crew_favor_failed": true
+            }
+          },
+          "consequences": {
+            "bankroll_delta": 22,
+            "suspicion_delta": 4,
+            "flags": {
+              "crew_favor_pending": false,
+              "crew_favor_completed": true
+            },
+            "resolve_event": true
+          },
+          "conditions": {
+            "requires_flags": {
+              "crew_delivery_post_miss": true
+            }
+          }
+        },
+        {
+          "id": "refuse_after_miss",
+          "label": "Refuse the final warning",
+          "text": "You missed a package and refuse the replacement. The Crew turns up the pressure.",
+          "consequence_summary": "Heat +18; deliveries still owed",
+          "consequences": {
+            "suspicion_delta": 18,
+            "flags": {
+              "crew_favor_pending": false,
+              "crew_favor_refused": true
+            },
+            "resolve_event": true
+          },
+          "conditions": {
+            "requires_flags": {
+              "crew_delivery_post_miss": true
+            }
           }
         }
       ]
@@ -4556,11 +4609,11 @@
     "id": "crew_mags_bench", "display_name": "Mags' Bench", "type": "crew", "interaction_mode": "interactable", "scopes": ["crew"],
     "asset_path": "res://assets/art/events/back_alley_offer.png", "icon_key": "trunk_offer", "environment_prop": "table", "start_summary": "Labeled cases and a clean repair mat.", "trigger": {"type": "manual"},
     "payload": {"kind": "crew_mags_bench", "summary": "Mags labels each price, part, and risk.", "choices": [], "catalog": [
-      {"id": "craft_loaded_dice", "label": "Build loaded dice", "text": "$32 · Associate · False-Bottom Cup + Weighted Keyring", "min_member_rank": "associate", "cash_cost": 32, "requires_items": ["false_bottom_cup", "weighted_keyring"], "output_item": "mags_loaded_dice", "risk_delta_note": "Control windows widen; base dice heat -3; contraband heat remains +2."},
-      {"id": "craft_tuned_loupe", "label": "Tune the loupe", "text": "$38 · Made · Edge-Sort Loupe", "min_member_rank": "made", "cash_cost": 38, "requires_items": ["edge_sort_loupe"], "output_item": "mags_tuned_loupe", "risk_delta_note": "Cue count -2, memory tolerance +2, edge-sort heat -3; contraband heat remains +1."},
-      {"id": "craft_lined_sleeve", "label": "Line the sleeve", "text": "$44 · Inner Circle · Foil Sleeve", "min_member_rank": "inner_circle", "cash_cost": 44, "requires_items": ["foil_sleeve"], "output_item": "mags_lined_sleeve", "risk_delta_note": "Slot chance +7; past-post perfect window +30 ms and base heat -4; contraband heat +1."},
-      {"id": "craft_nudge_dampener", "label": "Fit the nudge dampener", "text": "$42 · Made · Timing Bracelet", "min_member_rank": "made", "cash_cost": 42, "requires_items": ["timing_bracelet"], "output_item": "mags_nudge_dampener", "risk_delta_note": "Jackpot Ridge nudge tolerance widens by one authored band; contraband heat +1."},
-      {"id": "craft_gutter_kit", "label": "File the gutter kit", "text": "$34 · Associate · Coin-Return Shim + Cold Quarters", "min_member_rank": "associate", "cash_cost": 34, "requires_items": ["coin_return_shim", "cold_quarters"], "output_item": "mags_shim_kit", "risk_delta_note": "Existing gutter-recovery hook rises from three uses to four; contraband heat +1."}
+      {"id": "craft_loaded_dice", "label": "Build loaded dice", "text": "$32 Â· Associate Â· False-Bottom Cup + Weighted Keyring", "min_member_rank": "associate", "cash_cost": 32, "requires_items": ["false_bottom_cup", "weighted_keyring"], "output_item": "mags_loaded_dice", "risk_delta_note": "Control windows widen; base dice heat -3; contraband heat remains +2."},
+      {"id": "craft_tuned_loupe", "label": "Tune the loupe", "text": "$38 Â· Made Â· Edge-Sort Loupe", "min_member_rank": "made", "cash_cost": 38, "requires_items": ["edge_sort_loupe"], "output_item": "mags_tuned_loupe", "risk_delta_note": "Cue count -2, memory tolerance +2, edge-sort heat -3; contraband heat remains +1."},
+      {"id": "craft_lined_sleeve", "label": "Line the sleeve", "text": "$44 Â· Inner Circle Â· Foil Sleeve", "min_member_rank": "inner_circle", "cash_cost": 44, "requires_items": ["foil_sleeve"], "output_item": "mags_lined_sleeve", "risk_delta_note": "Slot chance +7; past-post perfect window +30 ms and base heat -4; contraband heat +1."},
+      {"id": "craft_nudge_dampener", "label": "Fit the nudge dampener", "text": "$42 Â· Made Â· Timing Bracelet", "min_member_rank": "made", "cash_cost": 42, "requires_items": ["timing_bracelet"], "output_item": "mags_nudge_dampener", "risk_delta_note": "Jackpot Ridge nudge tolerance widens by one authored band; contraband heat +1."},
+      {"id": "craft_gutter_kit", "label": "File the gutter kit", "text": "$34 Â· Associate Â· Coin-Return Shim + Cold Quarters", "min_member_rank": "associate", "cash_cost": 34, "requires_items": ["coin_return_shim", "cold_quarters"], "output_item": "mags_shim_kit", "risk_delta_note": "Existing gutter-recovery hook rises from three uses to four; contraband heat +1."}
     ]}
   },
   {
