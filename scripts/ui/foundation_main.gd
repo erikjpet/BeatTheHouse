@@ -6541,7 +6541,7 @@ func _execute_lender_repayment(lender_id: String) -> bool:
 		_refresh()
 		return false
 	_clear_selected_lender_hook()
-	_show_message(str(result.get("message", "Loan settled.")))
+	_show_environment_action_acknowledgement(str(result.get("message", "Loan settled.")))
 	_autosave_foundation_run("Autosaved.")
 	_refresh()
 	return true
