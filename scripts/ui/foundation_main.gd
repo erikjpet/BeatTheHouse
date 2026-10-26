@@ -16418,7 +16418,7 @@ func _inspect_casino_fixture(object_data: Dictionary) -> bool:
 		_refresh()
 		return true
 	if fixture_id == "host_desk":
-		_show_message("The host desk points you toward Linda's barred counter in the Cage.")
+		_show_environment_action_acknowledgement("The host desk points you toward Linda's barred counter in the Cage.")
 		_refresh()
 		return true
 	var message := str(object_data.get("interaction_message", object_data.get("short_description", "The casino staff acknowledge you."))).strip_edges()
