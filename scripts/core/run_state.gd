@@ -3515,7 +3515,12 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 		layout_context = layout_context.duplicate(true)
 		layout_context["authoring_preview"] = true
 	var definition := _scenario_sequence_definition_readonly()
-	if not ScenarioSequenceSchemaScript.is_sequence(definition):
+	var scenario_active := ScenarioSequenceSchemaScript.is_sequence(definition)
+	# A scheduled Crew contact also needs a trusted base inventory when this
+	# destination has no authored room sequence. Catalog getters only project
+	# committed rooms, so they cannot perform the former UI-side mount later.
+	var world_only := not scenario_active and bool(world_sequence_prepare_semantic_finalization().get("active", false))
+	if not scenario_active and not world_only:
 		publish_room_presentation()
 		return {"ok": true, "inactive": true, "errors": []}
 	var authoritative_environment := _scenario_authoritative_environment_for_finalization(definition)
@@ -3550,6 +3555,14 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 		return _scenario_semantic_finalization_failure(JsonCoerceScript._copy_array(bound.get("errors", [])), bool(current_environment.get("scenario_semantic_ready", false)))
 	var finalization_context := layout_context.duplicate(true)
 	finalization_context["slot_occupancy"] = finalization_occupancy
+	if world_only:
+		var finalized := world_sequence_finalize_base_semantics(JsonCoerceScript._copy_array(bound.get("records", [])), library, finalization_context)
+		if not bool(finalized.get("ok", false)):
+			return finalized
+		var publication := publish_room_presentation()
+		if not bool(publication.get("ok", false)):
+			return publication
+		return finalized
 	return _scenario_finalize_trusted_base_semantics(JsonCoerceScript._copy_array(bound.get("records", [])), library, finalization_context)
 
 

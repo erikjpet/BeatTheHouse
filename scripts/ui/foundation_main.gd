@@ -11882,9 +11882,17 @@ func _prepare_room_presentation_at_boundary() -> void:
 	var delivery_node_id := str(run_state.current_environment.get("world_node_id", run_state.current_environment.get("archetype_id", "")))
 	var delivery_mount_pending := not bool(run_state.current_environment.get("scenario_semantic_ready", false)) \
 			and not run_state.delivery_world_sequence_owner_for_presentation(delivery_node_id).is_empty()
-	if run_state.room_presentation_revision() == 0 \
-			or bool(run_state.current_environment.get("scenario_restore_pending_trusted_rebuild", false)) \
-			or delivery_mount_pending:
+	if delivery_mount_pending:
+		var finalized := run_state.scenario_finalize_installed_environment(library, JsonCoerceScript._copy_dict(run_state.current_environment.get("scenario_layout_context", {})))
+		if not bool(finalized.get("ok", false)):
+			_room_catalog_publication = []
+			interactable_object_catalog_cache_valid = false
+			interactable_object_view_cache_valid = false
+			var errors := JsonCoerceScript._copy_array(finalized.get("errors", []))
+			_show_message(str(errors[0]) if not errors.is_empty() else "The delivery room could not be prepared safely.")
+			return
+	elif run_state.room_presentation_revision() == 0 \
+			or bool(run_state.current_environment.get("scenario_restore_pending_trusted_rebuild", false)):
 		EnvironmentInteractionControllerScript.compile_room_catalog_at_boundary(self)
 		run_state.publish_room_presentation()
 	_room_catalog_publication = EnvironmentInteractionViewModelScript.deduplicated_scenario_instruction_records(
