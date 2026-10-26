@@ -5479,7 +5479,12 @@
         "bar_lock_in_safe_exit||exit_lane|": "side_door"
       },
       "scenario_instance_action_host_ids": {
-        "event:scenario_lock_in_private_game": "scenario::bar_lock_in_private_bench"
+        "event:scenario_lock_in_private_game": "scenario::bar_lock_in_private_bench",
+        "scenario::bar_lock_in_task_0": "scenario::bar_lock_in_locked_shutters",
+        "scenario::bar_lock_in_task_1": "scenario::bar_lock_in_cellar_hatch",
+        "scenario::bar_lock_in_task_2": "scenario::bar_lock_in_lockin_host",
+        "scenario::bar_lock_in_task_3": "scenario::bar_lock_in_private_bench",
+        "scenario::bar_lock_in_task_4": "scenario::bar_lock_in_lockin_host"
       },
       "scenario_instance_object_family_ids": {},
       "actor_routes": [],
@@ -5498,7 +5503,7 @@
         },
         "max_simultaneous_slot_count": 6,
         "concrete_art_key_count": 8,
-        "action_host_count": 1,
+        "action_host_count": 6,
         "action_only_ids": [
           "bar_lock_in_task_0",
           "bar_lock_in_task_1",
