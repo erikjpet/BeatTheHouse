@@ -3545,16 +3545,25 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 	# no environment-board rectangle.
 	var authoritative_layout := JsonCoerceScript._copy_dict(authoritative_environment.get("layout", {}))
 	var finalization_occupancy := JsonCoerceScript._copy_dict(layout_context.get("slot_occupancy", {}))
+	var proof_occupancy := finalization_occupancy.duplicate(true)
+	var baseline_event_ids := JsonCoerceScript._copy_array(authoritative_environment.get("event_ids", []))
+	var historical_event_slots := false
+	for slot_id in proof_occupancy.keys():
+		var occupant := str(proof_occupancy.get(slot_id, ""))
+		if occupant.begins_with("event:") and not baseline_event_ids.has(occupant.trim_prefix("event:")):
+			proof_occupancy.erase(slot_id)
+			historical_event_slots = true
 	var bound := EnvironmentSlotBinderScript.bind_base_records(
 		authoritative_environment,
 		JsonCoerceScript._copy_array(authoritative.get("records", [])),
 		JsonCoerceScript._copy_dict(authoritative_layout.get("slot_bindings", {})),
-		finalization_occupancy
+		proof_occupancy
 	)
 	if not bool(bound.get("ok", false)):
 		return _scenario_semantic_finalization_failure(JsonCoerceScript._copy_array(bound.get("errors", [])), bool(current_environment.get("scenario_semantic_ready", false)))
 	var finalization_context := layout_context.duplicate(true)
-	finalization_context["slot_occupancy"] = finalization_occupancy
+	# Historical proof binding must not replace the live room's reservations.
+	finalization_context["slot_occupancy"] = finalization_occupancy if historical_event_slots else proof_occupancy
 	if world_only:
 		var finalized := world_sequence_finalize_base_semantics(JsonCoerceScript._copy_array(bound.get("records", [])), library, finalization_context)
 		if not bool(finalized.get("ok", false)):
@@ -3683,6 +3692,25 @@ func _scenario_authoritative_environment_for_finalization(definition: Dictionary
 			if str(binding.get("presentation_mode", "")) == "room" and live_rects.has(object_id):
 				reconciled_rects[object_id] = JsonCoerceScript._copy_dict(live_rects.get(object_id, {}))
 		layout["object_rects"] = reconciled_rects
+		# Rebuilding the immutable entry inventory temporarily restores its event
+		# ids, including consumed events. Later live events must not reserve those
+		# historical slots on this detached proof envelope (for example Named
+		# replacing Noticed). The live room and its bindings remain untouched, and
+		# the rebuilt inventory must still match the original sealed digest.
+		var baseline_event_ids := JsonCoerceScript._copy_array(result.get("event_ids", []))
+		var removed_event_binding := false
+		var overflow_ids := JsonCoerceScript._copy_array(layout.get("slot_overflow_ids", []))
+		for binding_id_value in bindings.keys():
+			var binding_id := str(binding_id_value)
+			if binding_id.begins_with("event:") and not baseline_event_ids.has(binding_id.trim_prefix("event:")):
+				bindings.erase(binding_id_value)
+				overflow_ids.erase(binding_id)
+				removed_event_binding = true
+		if removed_event_binding:
+			layout["slot_bindings"] = bindings
+			layout["slot_overflow_ids"] = overflow_ids
+			layout["slot_binding_digest"] = EnvironmentSlotBinderScript.binding_digest(bindings)
+			layout.erase("grounding_signature")
 		result["layout"] = layout
 		if not sealed_crew_ids.is_empty():
 			# The semantic inventory reads this baseline hint as well as layout.
@@ -4346,6 +4374,38 @@ func _scenario_canonical_base_interaction_geometry(records: Array) -> Array:
 	return result
 
 
+# Entry inventory authentication retains consumed event identities. The derived
+# live layout must omit their event-family presence before claiming slots; fixed
+# fixtures and scenario-owned objects keep their own lifetime authority.
+func _scenario_live_layout_records(records: Array, projection: Dictionary, environment: Dictionary) -> Array:
+	var resolved := JsonCoerceScript._copy_array(environment.get("resolved_event_ids", []))
+	if resolved.is_empty(): return records
+	var result: Array = []
+	var removed: Dictionary = {}
+	for value in records:
+		var record := JsonCoerceScript._copy_dict(value)
+		var object_id := str(record.get("object_id", ""))
+		var source_id := str(record.get("source_id", object_id.trim_prefix("event:")))
+		if str(record.get("object_type", "")) == "event" \
+				and str(record.get("slot_family", record.get("manifest_family", ""))) == "event" \
+				and str(record.get("owner_namespace", "")) != "scenario" and resolved.has(source_id):
+			removed[object_id] = true
+		else:
+			result.append(value)
+	if not removed.is_empty():
+		var semantic := JsonCoerceScript._copy_dict(projection.get("semantic_state", {}))
+		for collection in ["scene_objects", "actors", "interactions"]:
+			var entries := JsonCoerceScript._copy_dict(semantic.get(collection, {}))
+			for identity in entries.keys():
+				var entry := JsonCoerceScript._copy_dict(entries.get(identity, {}))
+				if str(entry.get("owner_namespace", "")) == "scenario": continue
+				var presentation_id := str(entry.get("presentation_object_id", str(identity).trim_prefix("event::")))
+				if removed.has(presentation_id): entries.erase(identity)
+			semantic[collection] = entries
+		projection["semantic_state"] = semantic
+	return result
+
+
 func _resolve_scenario_layout_candidate(candidate: Dictionary, stamped_records: Array, definition: Dictionary, layout_context: Dictionary) -> Dictionary:
 	var projection := ScenarioEngineScript.sequence_projection(candidate, definition)
 	# A room scenario and a mounted Crew sequence occupy one authored environment
@@ -4355,6 +4415,7 @@ func _resolve_scenario_layout_candidate(candidate: Dictionary, stamped_records: 
 	projection = CrewWorldSequenceAdapterScript.composed_projection(candidate, _world_sequence_definition_cache, projection)
 	if not bool(projection.get("ok", true)):
 		return {"ok": false, "errors": JsonCoerceScript._copy_array(projection.get("errors", ["Room and Crew sequence projection composition failed closed."]))}
+	stamped_records = _scenario_live_layout_records(stamped_records, projection, candidate)
 	# ScenarioLayoutResolver deep-owns every nested value it consumes and never
 	# mutates the environment argument. Only the private context field differs.
 	var layout_environment := candidate.duplicate(false)
@@ -4386,6 +4447,7 @@ func _resolve_world_sequence_composed_layout(stamped_records: Array, layout_cont
 	var projection := world_sequence_composed_projection()
 	if not bool(projection.get("ok", true)):
 		return {"ok": false, "errors": JsonCoerceScript._copy_array(projection.get("errors", ["World sequence projection composition failed closed."]))}
+	stamped_records = _scenario_live_layout_records(stamped_records, projection, current_environment)
 	var layout_environment := current_environment.duplicate(false)
 	if not layout_context.is_empty(): layout_environment["_scenario_layout_context"] = layout_context.duplicate(true)
 	var layout_result := ScenarioLayoutResolverScript.resolve(stamped_records, projection, layout_environment)

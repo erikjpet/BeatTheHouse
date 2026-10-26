@@ -14,7 +14,7 @@ const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slo
 const RoomPresentationPublicationScript := preload("res://scripts/core/room_presentation_publication.gd")
 const CharacterOfferModelScript := preload("res://scripts/core/character_offer_model.gd")
 
-const LIVE_MEMBERSHIP_OBJECT_TYPES := ["service", "lender"]
+const LIVE_MEMBERSHIP_OBJECT_TYPES := ["event", "service", "lender"]
 const LIVE_PRESENTATION_FIELDS := [
 	"visual_type", "short_description", "identity_summary", "presence",
 	"status_summary", "effect_summary", "impact_summary", "risk_summary",
@@ -102,7 +102,7 @@ static func prepare_room_catalog_at_boundary(host: Variant) -> Array:
 	var finalized := _dict(publication.get("finalized", {}))
 	var result := live
 	if not bool(finalized.get("inactive", true)):
-		var sealed := _array(finalized.get("records", []))
+		var sealed := _without_resolved_event_presence(_array(finalized.get("records", [])), _array(environment.get("resolved_event_ids", [])))
 		var projected := project_finalized_sequence_interaction_result(sealed, finalized)
 		if not bool(projected.get("ok", false)):
 			return _fail_closed_room_records(live, "Committed room projection is invalid.")
@@ -349,7 +349,7 @@ static func compile_room_catalog_at_boundary(host: Variant) -> Array:
 			var finalization_failure := projection_failure_result(result, _array(finalized.get("errors", [])), _dict(finalized.get("layout_audit", {})))
 			var committed_finalization_failure := committed_projection_status_result(host.run_state, finalization_failure, trusted_base_result)
 			return _attach_action_only_records(_array(committed_finalization_failure.get("records", trusted_base_result)))
-		var sealed_base_records: Array = JsonCoerceScript._copy_array(finalized.get("records", []))
+		var sealed_base_records: Array = _without_resolved_event_presence(JsonCoerceScript._copy_array(finalized.get("records", [])), _array(host.run_state.current_environment.get("resolved_event_ids", [])))
 		result = sealed_base_records.duplicate(true)
 		var projection_result := project_finalized_sequence_interaction_result(result, finalized)
 		var committed_result := committed_projection_status_result(host.run_state, projection_result, trusted_base_result)
@@ -369,7 +369,7 @@ static func compile_room_catalog_at_boundary(host: Variant) -> Array:
 			var world_finalization_failure := projection_failure_result(result, _array(world_finalized.get("errors", [])), _dict(world_finalized.get("layout_audit", {})))
 			var committed_world_finalization_failure := committed_projection_status_result(host.run_state, world_finalization_failure, trusted_base_result)
 			return _attach_action_only_records(_array(committed_world_finalization_failure.get("records", trusted_base_result)))
-		var sealed_world_base_records := JsonCoerceScript._copy_array(world_finalized.get("records", []))
+		var sealed_world_base_records := _without_resolved_event_presence(JsonCoerceScript._copy_array(world_finalized.get("records", [])), _array(host.run_state.current_environment.get("resolved_event_ids", [])))
 		result = sealed_world_base_records.duplicate(true)
 		var world_projection_result := project_finalized_sequence_interaction_result(result, world_finalized)
 		var committed_world_result := committed_projection_status_result(host.run_state, world_projection_result, trusted_base_result)
@@ -1094,18 +1094,25 @@ static func _runtime_layout_reservation_id(object_id: String) -> bool:
 	return false
 
 
-# Scenario authority seals identity and geometry. Its compact base inventory is
-# an immutable authorization baseline, not current dynamic membership: hidden
-# services/lenders may be absent now, while present records carry the current
-# public availability, actions, and presentation. Reconcile only the closed
-# public allowlists below; arbitrary live runtime/local state never crosses this
-# boundary and sealed identity/provenance/geometry always wins.
-# Resolved base events remain in the immutable semantic seal for authorization,
-# but they no longer own a live room object and must be removed after the sealed
-# projection passes. Scenario-owned event records remain governed by their own
-# projection lifecycle. This keeps authored event art, character identity, and
-# direct response buttons visible without resurrecting a consumed event as a
-# generic fallback object.
+# Consumed ordinary event-family presence has no live layout authority. Retain
+# its immutable semantic identity, fixed fixtures, and scenario-owned lifetimes.
+static func _without_resolved_event_presence(records: Array, resolved_event_ids: Array) -> Array:
+	if resolved_event_ids.is_empty(): return records
+	var result: Array = []
+	for value in records:
+		var record := _dict(value)
+		if str(record.get("object_type", "")) == "event" \
+				and str(record.get("slot_family", record.get("manifest_family", ""))) == "event" \
+				and str(record.get("owner_namespace", "")) != "scenario" \
+				and resolved_event_ids.has(str(record.get("source_id", ""))):
+			continue
+		result.append(value)
+	return result
+
+
+# Scenario seals own identity and geometry, while live producers own current
+# event/service/lender membership and the closed presentation allowlists below.
+# Arbitrary runtime state never crosses this boundary.
 static func restore_live_presentation_fields(projected_records: Array, live_records: Array, resolved_event_ids: Array = []) -> Array:
 	var live_by_id: Dictionary = {}
 	for live_value in live_records:
@@ -1124,7 +1131,10 @@ static func restore_live_presentation_fields(projected_records: Array, live_reco
 			and resolved_event_ids.has(str(record.get("source_id", "")).strip_edges())
 		if resolved_base_event:
 			continue
-		if owner_namespace != "scenario" and _requires_live_membership(record) and live.is_empty():
+		# Sealed identity/geometry does not keep a gated or departed event alive.
+		# An inert manifest placeholder is placement authority, not live presence.
+		if owner_namespace != "scenario" and _requires_live_membership(record) \
+				and (live.is_empty() or bool(live.get("manifest_live_membership_missing_event", false))):
 			continue
 		if not live.is_empty() and owner_namespace != "scenario":
 			var scenario_augmented_inline_actions := _array(record.get("scenario_augmented_inline_actions", []))
