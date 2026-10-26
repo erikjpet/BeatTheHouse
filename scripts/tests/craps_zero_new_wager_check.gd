@@ -70,10 +70,18 @@ func _run() -> void:
 	var table: Dictionary = app.current_game._table_state_preview(app.run_state, app.run_state.current_environment)
 	_check((table.get("last_committed_bets", {}) as Dictionary).is_empty(), "No unstaged wager may enter the committed bet set.")
 	_check(app.run_state.wager_capacity_for_game("craps", app.run_state.current_environment) == before + int(result.get("bankroll_delta", 0)), "Only the existing wager settlement may change funds.")
+	_answer_table(app)
+	_check(bool(app.game_surface_canvas.state.get("interaction_locked", false)), "The moving dice must lock table inputs before their presentation boundary.")
+	_check(app.game_surface_canvas.surface_realtime_state_refresh_enabled(), "An active roll must request the existing timed state refresh.")
 	var after_rng := app.run_state.rng_state
 	var after_cash := app.run_state.bankroll
 	var after_chips := app.run_state.grand_casino_chips
+	app.test_msec += 10000
 	_sample(app)
+	_check(not bool(app.game_surface_canvas.state.get("interaction_locked", true)), "The table must unlock at roll completion without a pointer or unrelated refresh.")
+	_check(str(app.game_surface_canvas.state.get("phase", "")) == "betting", "The completed roll must publish its betting phase.")
+	_check(bool(app.game_surface_canvas.state.get("can_roll", false)), "The surviving funded wager must remain rollable after presentation.")
+	_check(not app.game_surface_canvas.surface_realtime_state_refresh_enabled(), "Idle betting must stop requesting full realtime state patches.")
 	_sample(app)
 	_check(app.run_state.rng_state == after_rng and app.run_state.bankroll == after_cash and app.run_state.grand_casino_chips == after_chips, "Presentation refreshes must not repeat the roll or accounting.")
 	_check(app.current_game.wager_cost_for_context("roll_craps", 5, app.run_state, app.run_state.current_environment, {}) == 5, "Legacy calls without explicit staged-bet context must retain their stake shorthand.")

@@ -172,7 +172,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"surface_suppresses_game_result_burst": true,
 		"interaction_locked": roll_active or table_talk_active,
 		"surface_animates_idle": true,
-		"surface_realtime_state_refresh": setting_active or switching_active,
+		"surface_realtime_state_refresh": roll_active or setting_active or switching_active,
 		"surface_dynamic_overlay_channels": [ROLL_CHANNEL],
 		"surface_animation_channels": [GameModule.surface_animation_channel(
 			ROLL_CHANNEL,
