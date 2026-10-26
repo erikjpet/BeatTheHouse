@@ -54,12 +54,7 @@ const GRAND_CASINO_FIXED_GAME_VISUAL_SIZES := {
 	"fixed.game_table_left": Vector2(72.0, 48.0),
 	"fixed.game_table_right": Vector2(72.0, 48.0),
 }
-const SLOT_MACHINE_WORLD_VISUAL_SIZES := {
-	"classic_3_reel": Vector2(116.0, 88.0),
-	"line_5x3": Vector2(142.0, 112.0),
-	"video_feature": Vector2(148.0, 120.0),
-}
-const SLOT_MACHINE_COMPACT_SCALE_FLOOR := 0.82
+const SLOT_MACHINE_REGULAR_MODEL_SIZE := Vector2(116.0, 88.0)
 const DEVELOPER_PANEL_MARGIN := 8.0
 const DEVELOPER_PANEL_MIN_WIDTH := 320.0
 const DEVELOPER_PANEL_PREFERRED_WIDTH := 552.0
@@ -3066,6 +3061,15 @@ func _developer_slot_visual_rect(slot: Dictionary, base_rect: Rect2 = Rect2()) -
 	var authored_rect := _developer_slot_rect(slot)
 	var rect := base_rect if base_rect.has_area() else authored_rect
 	var scale := _developer_slot_object_scale(slot)
+	# Keep sealed slot anchors unchanged. An occupied cabinet's movable bounds
+	# follow its drawn frame, including while previewing a drag, rather than the
+	# unrelated compact space reserved by the room layout.
+	for occupant in _developer_slot_occupant_records(str(slot.get("id", ""))):
+		if typeof(occupant) != TYPE_DICTIONARY:
+			continue
+		var model := _slot_machine_world_visual_rect(occupant, rect, scale)
+		if model.has_area():
+			return _slot_cabinet_frame_rect(model)
 	if not rect.has_area() or is_equal_approx(scale, 1.0):
 		return rect
 	var anchor := _developer_slot_position(slot) + rect.position - authored_rect.position
@@ -8161,29 +8165,20 @@ func _natural_model_rect_for_object(object_data: Dictionary) -> Rect2:
 	return Rect2(center - model_size * 0.5, model_size)
 
 
-# Slot anchors remain compact layout authority, but the displayed cabinet needs
-# enough room for its actual reel format. A 5x3 or feature cabinet cannot be
-# squeezed into the classic 3-reel silhouette without erasing the live result it
-# is meant to showcase. Developer scales below 1.0 stay useful but ease toward a
-# legibility floor instead of collapsing the reel cells to a few pixels.
+# Reel format controls the contents of a cabinet, not its physical size. Use
+# one regular housing in every room and apply the authored percentage literally.
+# Camera transforms are applied later and never change these world dimensions.
+func _is_slot_cabinet(object_data: Dictionary) -> bool:
+	var object_id := str(object_data.get("id", ""))
+	return str(object_data.get("source_id", "")) == "slot" \
+		or object_id == "game:slot" or object_id.begins_with("game:slot:") \
+		or not str(_slot_prop_visual_state(object_data).get("machine_format", "")).strip_edges().is_empty()
+
+
 func _slot_machine_world_visual_rect(object_data: Dictionary, slot_rect: Rect2, object_scale: float) -> Rect2:
-	var visual := _slot_prop_visual_state(object_data)
-	var format_id := str(visual.get("machine_format", "")).strip_edges().to_lower()
-	if format_id.is_empty():
+	if not _is_slot_cabinet(object_data):
 		return Rect2()
-	var visual_size_value: Variant = SLOT_MACHINE_WORLD_VISUAL_SIZES.get(format_id, Vector2.ZERO)
-	var visual_size: Vector2 = visual_size_value if typeof(visual_size_value) == TYPE_VECTOR2 else Vector2.ZERO
-	if visual_size.x <= 0.0 or visual_size.y <= 0.0:
-		var reel_count := maxi(3, int(visual.get("reel_count", 3)))
-		var row_count := maxi(1, int(visual.get("row_count", 1)))
-		visual_size = Vector2(116.0 + float(maxi(0, reel_count - 3)) * 13.0, 88.0 + float(maxi(0, row_count - 1)) * 12.0)
-	var reel_overflow := maxi(0, int(visual.get("reel_count", 3)) - (3 if format_id == "classic_3_reel" else 5))
-	var row_overflow := maxi(0, int(visual.get("row_count", 1)) - (1 if format_id == "classic_3_reel" else 3))
-	visual_size += Vector2(float(reel_overflow) * 10.0, float(row_overflow) * 10.0)
-	var effective_scale := object_scale
-	if object_scale < 1.0:
-		effective_scale = lerpf(SLOT_MACHINE_COMPACT_SCALE_FLOOR, 1.0, clampf((object_scale - SLOT_OBJECT_SCALE_MIN) / (1.0 - SLOT_OBJECT_SCALE_MIN), 0.0, 1.0))
-	visual_size *= effective_scale
+	var visual_size := SLOT_MACHINE_REGULAR_MODEL_SIZE * object_scale
 	var placement_class := str(object_data.get("placement_class", "")).strip_edges()
 	if placement_class.is_empty():
 		placement_class = EnvironmentPlacementScript.classify(
@@ -8355,7 +8350,7 @@ func _interaction_rect_for_object(object_data: Dictionary) -> Rect2:
 	var rect := _natural_model_rect_for_object(object_data)
 	# A format's reserved footprint includes transparent cabinet margins. Use
 	# the drawn frame so those margins cannot steal a visible neighbor's click.
-	if not str(_slot_prop_visual_state(object_data).get("machine_format", "")).strip_edges().is_empty():
+	if _is_slot_cabinet(object_data):
 		rect = _slot_cabinet_frame_rect(rect)
 	if not bool(object_data.get("interactive", true)) or not rect.has_area() \
 			or is_equal_approx(_scene_object_slot_scale(object_data), 1.0):
@@ -10580,9 +10575,11 @@ func _slot_prop_static_layer(rect: Rect2, object_data: Dictionary, fallback_acce
 	var row_count := maxi(1, int(profile.get("row_count", 1)))
 	var video_feature := format_id == "video_feature"
 	var classic := format_id == "classic_3_reel" or row_count <= 1
-	var base := Rect2(safe.position + Vector2(safe.size.x * (0.10 if classic else 0.08), safe.size.y * 0.86), Vector2(safe.size.x * (0.80 if classic else 0.84), safe.size.y * 0.10))
-	var body := Rect2(safe.position + Vector2(safe.size.x * (0.15 if classic else 0.08), safe.size.y * (0.20 if classic else 0.15)), Vector2(safe.size.x * (0.70 if classic else 0.84), safe.size.y * (0.68 if classic else 0.73)))
-	var topper := Rect2(safe.position + Vector2(safe.size.x * (0.10 if classic else 0.04), safe.size.y * 0.04), Vector2(safe.size.x * (0.80 if classic else 0.92), safe.size.y * (0.17 if classic else 0.15)))
+	# All formats share the physical housing. Reels, feature panels, lever and
+	# palette retain their own design inside it without stretching raster art.
+	var base := Rect2(safe.position + Vector2(safe.size.x * 0.08, safe.size.y * 0.86), Vector2(safe.size.x * 0.84, safe.size.y * 0.10))
+	var body := Rect2(safe.position + Vector2(safe.size.x * 0.08, safe.size.y * 0.15), Vector2(safe.size.x * 0.84, safe.size.y * 0.73))
+	var topper := Rect2(safe.position + Vector2(safe.size.x * 0.04, safe.size.y * 0.04), Vector2(safe.size.x * 0.92, safe.size.y * 0.15))
 	var screen := Rect2(body.position + Vector2(body.size.x * (0.18 if classic else 0.10), body.size.y * (0.30 if classic else 0.22)), Vector2(body.size.x * (0.64 if classic else 0.80), body.size.y * (0.26 if classic else 0.42)))
 	if video_feature:
 		screen = Rect2(body.position + Vector2(body.size.x * 0.09, body.size.y * 0.20), Vector2(body.size.x * 0.58, body.size.y * 0.48))

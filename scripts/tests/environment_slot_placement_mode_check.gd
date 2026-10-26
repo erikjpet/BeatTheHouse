@@ -892,9 +892,9 @@ func _check_canvas_contract() -> void:
 	var grand_game_visual: Rect2 = canvas.call("_natural_model_rect_for_object", grand_game_object)
 	_check(
 		grand_game_anchor.size.is_equal_approx(Vector2(44.0, 48.0))
-			and grand_game_visual.size.is_equal_approx(Vector2(110.0, 72.0))
+			and grand_game_visual.size.is_equal_approx(Vector2(116.0, 88.0))
 			and grand_game_visual.get_center().is_equal_approx(grand_game_anchor.get_center()),
-		"Grand Casino game artwork must use full cabinet scale without changing or offsetting its compact placement anchor."
+		"A Slot without live format metadata must use the regular cabinet size without changing its compact placement anchor."
 	)
 	var classic_slot_object := grand_game_object.duplicate(true)
 	classic_slot_object["visual_state"] = {
@@ -922,18 +922,18 @@ func _check_canvas_contract() -> void:
 	var feature_slot_visual: Rect2 = canvas.call("_natural_model_rect_for_object", feature_slot_object)
 	_check(
 		classic_slot_visual.size.is_equal_approx(Vector2(116.0, 88.0))
-			and line_slot_visual.size.is_equal_approx(Vector2(142.0, 112.0))
-			and feature_slot_visual.size.is_equal_approx(Vector2(148.0, 120.0))
+			and line_slot_visual.size.is_equal_approx(Vector2(116.0, 88.0))
+			and feature_slot_visual.size.is_equal_approx(Vector2(116.0, 88.0))
 			and classic_slot_visual.get_center().is_equal_approx(grand_game_anchor.get_center())
 			and line_slot_visual.get_center().is_equal_approx(grand_game_anchor.get_center())
 			and feature_slot_visual.get_center().is_equal_approx(grand_game_anchor.get_center()),
-		"World slot cabinets must select a readable footprint from the live 3-reel, 5x3, or feature format while retaining the compact placement anchor."
+		"World slot formats must share the regular physical size while retaining their compact placement anchors."
 	)
 	var compact_feature_visual: Rect2 = canvas.call("_slot_machine_world_visual_rect", feature_slot_object, grand_game_anchor, 0.5)
 	_check(
-		compact_feature_visual.size.is_equal_approx(Vector2(148.0, 120.0) * 0.82)
+		compact_feature_visual.size.is_equal_approx(Vector2(116.0, 88.0) * 0.5)
 			and compact_feature_visual.get_center().is_equal_approx(grand_game_anchor.get_center()),
-		"The smallest authored slot scale must retain a legible feature-cabinet design and its placement anchor."
+		"The smallest authored slot scale must apply the literal percentage and preserve its placement anchor."
 	)
 	var live_preview_object := feature_slot_object.duplicate(true)
 	live_preview_object["id"] = "game:slot:preview-cache"
