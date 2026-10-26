@@ -56,16 +56,16 @@ func pop_scope(modal_root: Control) -> void:
 	if not was_top:
 		return
 	_redirecting = true
-	var restore := entry.get("previous", null) as Control
+	var restore := _live_control(entry.get("previous", null))
 	if not _is_focusable(restore) or _belongs_to(restore, modal_root):
 		restore = null
 	if not _stack.is_empty():
 		var top: Dictionary = _stack[_stack.size() - 1]
-		var top_root := top.get("root", null) as Control
+		var top_root := _live_control(top.get("root", null))
 		if restore == null or not _belongs_to(restore, top_root):
 			restore = _preferred_control(top)
 	else:
-		var fallback := entry.get("fallback", null) as Control
+		var fallback := _live_control(entry.get("fallback", null))
 		if _is_focusable(fallback) and not _belongs_to(fallback, modal_root):
 			restore = fallback
 		elif restore == null:
@@ -112,7 +112,7 @@ func handle_input(event: InputEvent) -> bool:
 			return true
 		return false
 	var entry: Dictionary = _stack[_stack.size() - 1]
-	var modal_root := entry.get("root", null) as Control
+	var modal_root := _live_control(entry.get("root", null))
 	var owner := dispatch_owner
 	var accept_pressed := event.is_action_pressed("ui_accept") or (event is InputEventJoypadButton and (event as InputEventJoypadButton).button_index == JOY_BUTTON_A)
 	if accept_pressed and _block_accept_once:
@@ -176,7 +176,7 @@ func active_root() -> Control:
 	_prune_invalid_scopes()
 	if _stack.is_empty():
 		return null
-	return _stack[_stack.size() - 1].get("root", null) as Control
+	return _live_control(_stack[_stack.size() - 1].get("root", null))
 
 
 func debug_movement_history() -> Array:
@@ -222,7 +222,7 @@ func _on_gui_focus_changed(control: Control) -> void:
 		return
 	var index := _stack.size() - 1
 	var entry: Dictionary = _stack[index]
-	var modal_root := entry.get("root", null) as Control
+	var modal_root := _live_control(entry.get("root", null))
 	if _is_focusable(control) and _belongs_to(control, modal_root):
 		entry["last"] = control
 		_stack[index] = entry
@@ -247,9 +247,9 @@ func _focus_top_scope() -> void:
 
 
 func _preferred_control(entry: Dictionary) -> Control:
-	var modal_root := entry.get("root", null) as Control
+	var modal_root := _live_control(entry.get("root", null))
 	for key in ["last", "preferred"]:
-		var candidate := entry.get(key, null) as Control
+		var candidate := _live_control(entry.get(key, null))
 		if _is_focusable(candidate) and _belongs_to(candidate, modal_root):
 			return candidate
 	var controls := _controls_for_entry(entry)
@@ -275,7 +275,7 @@ func _move_focus(entry: Dictionary, owner: Control, direction: int) -> void:
 
 func _controls_for_entry(entry: Dictionary) -> Array[Control]:
 	var controls: Array[Control] = []
-	var modal_root := entry.get("root", null) as Control
+	var modal_root := _live_control(entry.get("root", null))
 	var explicit: Array = entry.get("controls", [])
 	if not explicit.is_empty():
 		# Preserve the authored order for controls that are still live, then merge
@@ -284,7 +284,7 @@ func _controls_for_entry(entry: Dictionary) -> Array[Control]:
 		# array in that exact frame; traversal must reflect the live modal, not a
 		# stale visibility snapshot.
 		for value in explicit:
-			var control := value as Control
+			var control := _live_control(value)
 			if _is_focusable(control) and _belongs_to(control, modal_root) and not controls.has(control):
 				controls.append(control)
 		if modal_root != null:
@@ -324,7 +324,7 @@ func _scope_index(modal_root: Control) -> int:
 
 func _prune_invalid_scopes() -> void:
 	for index in range(_stack.size() - 1, -1, -1):
-		var modal_root := _stack[index].get("root", null) as Control
+		var modal_root := _live_control(_stack[index].get("root", null))
 		if not is_instance_valid(modal_root) or not modal_root.is_inside_tree() or not modal_root.is_visible_in_tree():
 			_stack.remove_at(index)
 	if _stack.is_empty():
@@ -350,7 +350,7 @@ func _debug_record(kind: String, event: InputEvent, source: Control, target: Con
 		"target": _debug_control_identity(target),
 		"direction": direction,
 		"claimed_or_redirecting": claimed_or_redirecting,
-		"active_root": _debug_control_identity(_stack[_stack.size() - 1].get("root", null) as Control) if not _stack.is_empty() else "<none>",
+		"active_root": _debug_control_identity(_live_control(_stack[_stack.size() - 1].get("root", null))) if not _stack.is_empty() else "<none>",
 	})
 	if _debug_movement_history.size() > 128:
 		_debug_movement_history.pop_front()
@@ -368,8 +368,16 @@ func _belongs_to(control: Control, modal_root: Control) -> bool:
 	return control != null and modal_root != null and (control == modal_root or modal_root.is_ancestor_of(control))
 
 
+func _live_control(value: Variant) -> Control:
+	# Focus owners and modal contents can be retired while another scope is open.
+	# A cast itself fails on a freed Object, before _is_focusable can reject it.
+	if typeof(value) != TYPE_OBJECT or not is_instance_valid(value):
+		return null
+	return value as Control
+
+
 func _is_focusable(control: Control) -> bool:
-	if not is_instance_valid(control) or not control.is_inside_tree() or not control.is_visible_in_tree() or control.focus_mode == Control.FOCUS_NONE:
+	if not is_instance_valid(control) or control.is_queued_for_deletion() or not control.is_inside_tree() or not control.is_visible_in_tree() or control.focus_mode == Control.FOCUS_NONE:
 		return false
 	if control.focus_mode == Control.FOCUS_ACCESSIBILITY and (control.get_tree() == null or not control.get_tree().is_accessibility_enabled()):
 		return false
