@@ -29,6 +29,8 @@ signal money_delta_applied(currency: String, amount: int)
 const GrandCasinoShowdownModelScript := preload("res://scripts/core/grand_casino_showdown_model.gd")
 const CrewDeliveryScheduleScript := preload("res://scripts/core/crew_delivery_schedule.gd")
 const CREW_PACKAGE_OFFER_COOLDOWN_MINUTES := 360
+const CREW_REPUTATION_MAX := 100
+const CREW_PACKAGE_SUCCESS_REPUTATION := 25
 
 const GrandCasinoDuelModelScript := preload("res://scripts/core/grand_casino_duel_model.gd")
 const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.gd")
@@ -9862,16 +9864,17 @@ func refuse_debt_favor(debt_id: String) -> Dictionary:
 
 # Returns one member's hidden within-run trust value.
 # Shared standing is distinct from member relationships and owns both public
-# access gates. Legacy runs retain their highest achieved relationship standing.
+# access gates. Legacy runs retain their highest relationship standing, capped100;
+# individual member relationships are not rescaled.
 func crew_reputation() -> int:
-	if narrative_flags.has("crew_reputation"): return maxi(0, int(narrative_flags["crew_reputation"]))
+	if narrative_flags.has("crew_reputation"): return clampi(int(narrative_flags["crew_reputation"]), 0, CREW_REPUTATION_MAX)
 	var highest := 0
 	for member_id in CrewStateModelScript.MEMBER_IDS: highest = maxi(highest, crew_trust(member_id))
-	return highest
+	return mini(highest, CREW_REPUTATION_MAX)
 
 
 func crew_change_reputation(amount: int) -> int:
-	narrative_flags["crew_reputation"] = maxi(0, crew_reputation() + amount)
+	narrative_flags["crew_reputation"] = clampi(crew_reputation() + amount, 0, CREW_REPUTATION_MAX)
 	return int(narrative_flags["crew_reputation"])
 
 
@@ -9896,9 +9899,9 @@ func crew_rank(member_id: String) -> String:
 
 
 # Changes hidden trust without emitting story, UI, or log copy.
-func crew_add_trust(member_id: String, amount: int, _reason: String = "") -> int:
+func crew_add_trust(member_id: String, amount: int, _reason: String = "", reputation_reward: int = -1) -> int:
 	_crew_run_facade.bind(self)
-	return _crew_run_facade.crew_add_trust(member_id, amount, _reason)
+	return _crew_run_facade.crew_add_trust(member_id, amount, _reason, reputation_reward)
 
 
 # Legacy lifecycle names remain fail-closed for compatibility with callers that
@@ -10498,7 +10501,9 @@ func job_resolve(job_id: String, outcome: String, host_capability: RefCounted = 
 		var cash_reward := maxi(0, int(payment.get("paid", posted_cash)))
 		if cash_reward > 0:
 			change_bankroll(cash_reward, true)
-		crew_add_trust(member_id, int(rewards.get("trust", 0)), "job:%s" % str(job.get("definition_id", "")))
+		# Package standing is shared; individual relationships keep their authored reward.
+		var reputation_reward := CREW_PACKAGE_SUCCESS_REPUTATION if CrewDeliveryScheduleScript.is_package_kind(str(job.get("kind", ""))) else -1
+		crew_add_trust(member_id, int(rewards.get("trust", 0)), "job:%s" % str(job.get("definition_id", "")), reputation_reward)
 		if cash_reward != posted_cash:
 			job["posted_cash"] = posted_cash
 			job["paid_cash"] = cash_reward

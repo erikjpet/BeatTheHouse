@@ -111,14 +111,14 @@ func crew_rank(member_id: String) -> String:
 	return rank(member_id)
 
 
-func crew_add_trust(member_id: String, amount: int, _reason: String = "") -> int:
-	if not CrewStateModelScript.MEMBER_IDS.has(member_id) or amount == 0:
+func crew_add_trust(member_id: String, amount: int, _reason: String = "", reputation_reward: int = -1) -> int:
+	if not CrewStateModelScript.MEMBER_IDS.has(member_id) or (amount == 0 and reputation_reward < 0):
 		return crew_trust(member_id)
 	var previous := crew_trust(member_id)
 	# Initialize before the member mutation so a legacy maximum is not counted twice.
 	_run.crew_change_reputation(0)
 	crew_trust_by_member[member_id] = maxi(0, previous + amount)
-	_run.crew_change_reputation(amount if amount < 0 else crew_trust(member_id) - previous)
+	_run.crew_change_reputation(reputation_reward if reputation_reward >= 0 else (amount if amount < 0 else crew_trust(member_id) - previous))
 	_run._reconcile_crew_recruitment_perks()
 	if crew_trust(member_id) != previous:
 		_run._scenario_publish_crew_change(member_id, "trust", crew_trust(member_id))
