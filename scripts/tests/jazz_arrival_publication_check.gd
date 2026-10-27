@@ -50,7 +50,7 @@ func _run() -> void:
 			# H22 itself was saved earlier while the normal clock kept running.
 			app.run_state.game_clock_minutes = 2880
 			app._refresh()
-		if mode == "rejected":
+		if mode in ["rejected", "rejected_ui"]:
 			# Explicit test fault: remove only the new slot from the process-local
 			# authored cache, faithfully recreating the original missing-slot cause.
 			# This survives the ordinary scenario retry's fresh RunState instance.
@@ -86,16 +86,31 @@ func _run() -> void:
 		facts["travel_result"] = {"ok": travel.get("ok"), "errors": travel.get("errors", [])}
 		facts["after"] = _state(app.run_state)
 		print("JAZZ_CHECK stage=settled")
-		if mode == "rejected":
+		if mode in ["rejected", "rejected_ui"]:
 			_check(not bool(travel.get("ok", true)), "missing destination publication rejects generator travel")
 			facts["install_failure"] = app.generator.environment_install_failure_snapshot()
 			_check(not bool(travel.get("ok", true)) and not travel.get("errors", []).is_empty(), "real missing-slot rejection is returned through the public generator facade")
 			_check(_equal(app.run_state.to_save_snapshot(), before), "failed travel restores complete source snapshot, fare/clock/RNG/slips/receipts")
 			_check(not app._room_recovery_active_for_current_room() and bool(Publication.validate(app.run_state.current_environment).get("ok", false)), "rejected destination leaves valid source controls and save boundary")
+			if mode == "rejected_ui":
+				_check(app.environment_canvas.environment_id == "corner_store", "failed UI travel still renders the original Store")
+				_check((app.world_map_overlay.visible or app.open_world_map()) and app.select_world_map_node("jazz_club"), "source map remains usable after rejected travel")
+				var repeated := app.confirm_world_map_travel()
+				_check(not bool(repeated.get("ok", true)), "repeated user confirmation also terminates with rejection")
+				_check(_equal(app.run_state.to_save_snapshot(), before), "repeated rejection keeps exact source state and no extra fare, RNG or receipt")
 			Placement._surface_maps.clear()
 			Placement._surface_maps_loaded = false
 			Placement._effective_surface_maps.clear()
 			Placement._runtime_surface_maps.clear()
+			if mode == "rejected_ui":
+				_check((app.world_map_overlay.visible or app.open_world_map()) and app.select_world_map_node("jazz_club"), "fresh user attempt is enabled after destination data becomes valid")
+				var safe_retry := app.confirm_world_map_travel()
+				_check(bool(safe_retry.get("ok", false)), "fresh valid route succeeds after bounded failed attempts")
+				for frame in range(8): await process_frame
+				_check(app.run_state.bankroll == 48 and app.run_state.current_world_node_id() == "jazz_club", "successful retry charges exactly one4-dollar fare")
+				_check(_travel_receipts(app.run_state).size() == _travel_receipts_from_dict(before).size() + 1, "only successful retry adds one travel receipt")
+				_check(bool(Publication.validate(app.run_state.current_environment).get("ok", false)) and not app._room_recovery_active_for_current_room(), "successful retry publishes authenticated playable Jazz")
+				facts["after_safe_retry"] = _state(app.run_state)
 		else:
 			_check(bool(travel.get("ok", false)), "normal advertised Jazz travel succeeds")
 			_check(app.run_state.bankroll == 48 and app.run_state.current_world_node_id() == "jazz_club", "exactly one4-dollar fare reaches Jazz48")
@@ -198,7 +213,7 @@ func _check(ok: bool, message: String) -> bool:
 
 
 func _finish() -> void:
-	var report := {"checks": checks, "failures": failures, "facts": facts, "fidelity": "Official copied H22/H26 bytes with original companions; native public map/menu callbacks on arrival, public generator facade on rejection, actual generation and fresh SaveService/host restore in same engine. Midnight is explicitly time-adjusted; rejection mode removes the new authored slot in process-local test caches only. Host scenario-overlay retry is not qualified. No OS pointer/Web claim."}
+	var report := {"checks": checks, "failures": failures, "facts": facts, "fidelity": "Official copied H22/H26 bytes with original companions; native public map/menu callbacks on arrival/rejected_ui, public generator facade on rejected. rejected_ui checks repeated rejected confirmations and fresh valid retry after a process-local missing-slot fault; all modes use actual generation and fresh SaveService/host restore in same engine. Midnight is explicitly time-adjusted. No OS pointer/Web claim."}
 	var output := OS.get_environment("BTH_TARGET_OUTPUT")
 	if not output.is_empty():
 		var file := FileAccess.open(output, FileAccess.WRITE)

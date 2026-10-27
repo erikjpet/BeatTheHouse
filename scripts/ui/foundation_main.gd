@@ -8460,6 +8460,10 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 
 
 func _retry_travel_without_invalid_scenario(target_id: String, target_label: String, choice_data: Dictionary, require_immediate_result: bool, lifecycle_rollback: Dictionary) -> Dictionary:
+	# The caller-owned snapshot predates scenario suppression. Keep the attempt
+	# outside that restored state so an invalid base room cannot recurse forever.
+	if bool(choice_data.get("scenario_install_retry", false)):
+		return {}
 	# An offered ride owns claim and optional waiting before this travel call.
 	# Replaying only travel from its earlier rollback would lose those effects.
 	if not str(choice_data.get("expected_offer_target_node_id", "")).strip_edges().is_empty() \
@@ -8478,7 +8482,9 @@ func _retry_travel_without_invalid_scenario(target_id: String, target_label: Str
 		return {}
 	generator = RunGenerator.new(library)
 	_publish_cached_game_module_scripts_to_generator()
-	return _travel_to(target_id, target_label, choice_data, require_immediate_result)
+	var retry_choice := choice_data.duplicate(true)
+	retry_choice["scenario_install_retry"] = true
+	return _travel_to(target_id, target_label, retry_choice, require_immediate_result)
 
 
 func _queue_normal_grand_host_greeting(previous_environment: Dictionary) -> void:
