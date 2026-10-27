@@ -1673,6 +1673,20 @@ func _slot_resolve_cross_effects(payout: int, stake: int, stake_cost: int, bankr
 	return effects
 
 
+func preview_nudge_heat(machine: Dictionary, run_state: RunState, definition: Dictionary, environment: Dictionary, item_effects: Dictionary) -> Dictionary:
+	# Use the settlement helpers on detached item state. Forecast the worst
+	# skill outcome cost without spending a Cold Quarter or resolving an action.
+	var projected_machine := {"slot_item_state": JsonCoerceScript._copy_dict(machine.get("slot_item_state", {}))}
+	var projected_effects := item_effects.duplicate(true)
+	var offer := JsonCoerceScript._copy_dict(machine.get("last_nudge_offer", {}))
+	_apply_slot_nudge_item_heat_state(projected_machine, projected_effects, {
+		"skill_outcome": "blown",
+		"lucky_reel_grease_active": bool(offer.get("lucky_reel_grease_active", false)),
+	})
+	var stake := maxi(1, int(StateScript.selected_bet(machine).get("total_credits", 2)))
+	return _slot_cheat_heat(NUDGE_ACTION, stake, run_state, definition, environment, projected_effects)
+
+
 func _slot_cheat_heat(action_id: String, stake: int, run_state: RunState, definition: Dictionary, environment: Dictionary, item_effects: Dictionary) -> Dictionary:
 	var cheat_def: Dictionary = _cheat_action_def(definition, action_id)
 	var base_heat := int(cheat_def.get("suspicion_delta", 12))

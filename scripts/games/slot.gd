@@ -1293,27 +1293,28 @@ func environment_runtime_state(_run_state: RunState, environment: Dictionary) ->
 	return _slot_environment_runtime_state_for_machine(machine)
 
 
-func environment_object_state(_run_state: RunState, environment: Dictionary) -> Dictionary:
+func environment_object_state(run_state: RunState, environment: Dictionary) -> Dictionary:
 	var machine: Dictionary = _read_machine(environment)
 	if machine.is_empty():
 		return {}
-	return _slot_environment_object_state_for_machine(machine)
+	return _slot_environment_object_state_for_machine(machine, run_state, environment)
 
 
-func environment_object_state_for_state_key(_run_state: RunState, environment: Dictionary, state_key: String) -> Dictionary:
+func environment_object_state_for_state_key(run_state: RunState, environment: Dictionary, state_key: String) -> Dictionary:
 	var machine: Dictionary = StateScript.read_machine(environment, _normalized_fixture_state_key(state_key))
 	if machine.is_empty():
 		return {}
-	return _slot_environment_object_state_for_machine(machine)
+	return _slot_environment_object_state_for_machine(machine, run_state, environment)
 
 
-func _slot_environment_object_state_for_machine(machine: Dictionary) -> Dictionary:
+func _slot_environment_object_state_for_machine(machine: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	var preview := _slot_environment_preview(machine)
 	var runtime := _slot_environment_runtime_state_for_machine(machine, preview)
 	return {
 		"display_name": str(machine.get("environment_display_name", "Slot")),
 		"status_summary": str(runtime.get("status_summary", "")),
 		"state_badge": str(runtime.get("status_label", "")),
+		"nudge_heat_preview": resolver.preview_nudge_heat(machine, run_state, definition, environment, _slot_cross_game_item_effects(run_state, machine, true)),
 		"runtime_state": runtime,
 		"visual_state": _slot_environment_visual_state(machine, preview),
 	}

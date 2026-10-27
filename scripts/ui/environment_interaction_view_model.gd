@@ -236,7 +236,7 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 				"effect_summary": str(fixture_object_state.get("effect_summary", "")),
 				"impact_summary": str(fixture_object_state.get("impact_summary", "")),
 				"state_badge": str(fixture_object_state.get("state_badge", "")),
-				"risk_summary": game_risk_summary(definition),
+				"risk_summary": game_risk_summary(definition, JsonCoerceScript._copy_dict(fixture_object_state.get("nudge_heat_preview", {}))),
 				"runtime_state": fixture_runtime_state,
 				"visual_state": JsonCoerceScript._copy_dict(fixture_object_state.get("visual_state", {})),
 				"visual_key": str(definition.get("family", definition.get("type", "game"))),
@@ -418,7 +418,7 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 	return filter_unique_objects(objects)
 
 
-static func game_risk_summary(definition: Dictionary) -> String:
+static func game_risk_summary(definition: Dictionary, nudge_heat_preview: Dictionary = {}) -> String:
 	var summaries: Array[String] = []
 	var highest_heat := 0
 	var cheat_actions_value: Variant = definition.get("cheat_actions", [])
@@ -434,6 +434,11 @@ static func game_risk_summary(definition: Dictionary) -> String:
 	if summaries.is_empty():
 		return "No cheat action is offered at this game."
 	var result := str(summaries[0])
+	if str(definition.get("id", "")) == "slot":
+		if not nudge_heat_preview.is_empty():
+			var heat := maxi(0, int(nudge_heat_preview.get("suspicion_delta", highest_heat)))
+			return "%s Heat can rise by as much as %d per nudge with current modifiers." % [result, heat] if heat > 0 else "%s Nudging adds no Heat with current modifiers." % result
+		return "%s Base Heat can rise by as much as %d before modifiers." % [result, highest_heat]
 	if highest_heat > 0:
 		result = "%s Heat can rise by as much as %d." % [result, highest_heat]
 	return result
