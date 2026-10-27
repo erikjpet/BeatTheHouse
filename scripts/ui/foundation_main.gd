@@ -18460,7 +18460,7 @@ func start_meta_quick_run() -> bool:
 		generated_menu_seed_text = seed_text
 		if seed_input != null:
 			seed_input.text = seed_text
-		if start_foundation_run(seed_text, {}, false):
+		if start_foundation_run(seed_text):
 			return true
 	return false
 
