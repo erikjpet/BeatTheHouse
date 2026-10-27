@@ -16993,6 +16993,35 @@
             "lane.public"
           ],
           "occupancy_required": false
+        },
+        {
+          "id": "event.surface_item_1",
+          "kind": "event",
+          "pos": [
+            419.0,
+            404.0
+          ],
+          "footprint_class": "surface_item",
+          "physical_role": "Paper lead on the front service shelf",
+          "occupant_ids": [],
+          "runtime_reserve": true,
+          "reserve_reason": "A physical paper lead can coexist with the performers, independent contacts, and authored Jazz scenario props.",
+          "hit_rect": [
+            389.0,
+            360.0,
+            60.0,
+            44.0
+          ],
+          "label_anchor": [
+            419.0,
+            354.0
+          ],
+          "facing": "none",
+          "priority": 10,
+          "zone_id": "foreground",
+          "support_id": "front_service_shelf",
+          "walk_lane_ids": [],
+          "occupancy_required": false
         }
       ],
       "scenario_slots": [

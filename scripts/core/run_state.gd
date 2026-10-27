@@ -3528,8 +3528,10 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 	# committed rooms, so they cannot perform the former UI-side mount later.
 	var world_only := not scenario_active and bool(world_sequence_prepare_semantic_finalization().get("active", false))
 	if not scenario_active and not world_only:
-		publish_room_presentation()
-		return {"ok": true, "inactive": true, "errors": []}
+		# An inactive sequence still needs valid physical room authority. Let the
+		# existing installation transaction roll back a rejected publication.
+		var publication := publish_room_presentation()
+		return {"ok": bool(publication.get("ok", false)), "inactive": true, "errors": JsonCoerceScript._copy_array(publication.get("errors", []))}
 	var authoritative_environment := _scenario_authoritative_environment_for_finalization(definition)
 	# Runtime membership (for example the Crew heist Live Table) may change after
 	# the prior scenario seal. Rebuild the detached baseline's manifest and slot
