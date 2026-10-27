@@ -16186,6 +16186,14 @@ func _execute_scenario_sequence_action(object_data: Dictionary, action: Dictiona
 		_show_message(str(errors[0]) if not errors.is_empty() else "That room action is no longer available.")
 		_refresh()
 		return false
+	var next_sequence_state: Dictionary = run_state.current_environment.get("scenario_sequence_state", {})
+	if str(next_sequence_state.get("phase_id", "")) != str(sequence_state.get("phase_id", "")) \
+			or str(next_sequence_state.get("status", "")) != str(sequence_state.get("status", "")):
+		# A consumed phase card must not turn a queued press into a different
+		# choice, including Web presses whose delayed callback is not multi-click.
+		clear_interaction_focus(false, false)
+		if environment_canvas != null:
+			environment_canvas.set_selected_object("")
 	# Confirm the accepted click at its point of interaction before the deferred
 	# room rebuild. This covers set_local and other presentation-light handlers
 	# without exposing the private value they changed or changing simulation.
