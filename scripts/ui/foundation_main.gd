@@ -6639,6 +6639,8 @@ func _pawn_counter_pawn_item(lender_id: String, item_id: String) -> void:
 	_advance_alcohol_absorption()
 	_autosave_foundation_run("Autosaved.")
 	if _apply_post_action_environment_interrupt("lender"):
+		if _run_inventory_popup_is_visible():
+			_render_run_inventory_popup_contents()
 		_refresh()
 		return
 	_open_pawn_counter_after_input_guard(lender_id)
