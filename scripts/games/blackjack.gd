@@ -2890,21 +2890,28 @@ func _resolve_rourke_duel_hand(action_id: String, run_state: RunState, environme
 		var detection_rng := run_state.create_rng("grand_casino_duel").fork("attempt:%d:hand:%d:player_cheat_detection" % [attempt, hand_index])
 		caught = detection_rng.randi_range(1, 100) <= catch_chance
 	var caught_penalty := maxi(0, int(_local_copy_dict(terms.get("rules", {})).get("player_cheat_caught_penalty", 18))) if caught else 0
+	var net_transfer := clampi(transfer - caught_penalty, -maxi(0, int(duel.get("player_stack", 0))), maxi(0, int(duel.get("rourke_stack", 0))))
+	var short_stack := net_transfer != transfer - caught_penalty
 	var outcome_word := "wins" if transfer > 0 else "loses" if transfer < 0 else "pushes"
 	var message := "The hand %s %d duel chips." % [outcome_word, absi(transfer)]
 	if caught:
 		message = "%s Rourke catches the move and takes %d more." % [message, caught_penalty]
+	if short_stack:
+		outcome_word = "wins" if net_transfer > 0 else "loses" if net_transfer < 0 else "pushes"
+		message = "The hand %s %d duel chips in total." % [outcome_word, absi(net_transfer)]
+		if caught:
+			message += " Rourke catches the move; the available stack limits the total."
 	var hand_index_for_rng := maxi(0, int(duel.get("hand_index", 0)))
 	var settlement_rng := run_state.create_rng("grand_casino_duel").fork("attempt:%d:hand:%d:settlement" % [maxi(1, int(duel.get("attempt", 1))), hand_index_for_rng])
 	var used_cards := _cards_used_for_counting(hands, dealer_cards, [])
 	var actual_count_delta := _count_cards_delta(used_cards)
 	_update_table_after_hand(table, session, dealer_cards, actual_count_delta, actual_count_delta if bool(session.get("count_answered", false)) else 0, settlement_rng, presentation_msec)
 	table["last_result"] = _blackjack_last_result_payload(FunctionOptions.BlackjackResultOptions.from({
-		"message": message, "hand_results": hand_results, "side_results": [], "main_delta": transfer,
-		"side_delta": 0, "bankroll_delta": transfer - caught_penalty, "suspicion_delta": 0,
+		"message": message, "hand_results": hand_results, "side_results": [], "main_delta": net_transfer if short_stack else transfer,
+		"side_delta": 0, "bankroll_delta": net_transfer, "suspicion_delta": 0,
 		"dealer_cards": dealer_cards, "player_hands": hands, "patron_hands": [],
 		"patron_action_events": [], "cheat": {"caught": caught}, "result_msec": presentation_msec,
-		"round_net_delta_value": transfer - caught_penalty,
+		"round_net_delta_value": net_transfer,
 	}))
 	_update_environment_table(environment, table)
 	var applied := run_state.apply_grand_casino_duel_hand({

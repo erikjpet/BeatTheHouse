@@ -107,7 +107,11 @@ static func apply_hand(state: Dictionary, hand_result: Dictionary, terms: Dictio
 	var transfer := int(hand_result.get("transfer", 0))
 	var caught_penalty := maxi(0, int(hand_result.get("caught_penalty", 0)))
 	transfer -= caught_penalty
+	var player_before := maxi(0, int(next_state.get("player_stack", 0)))
 	_apply_transfer(next_state, transfer)
+	# The settlement already caps movement at the available stacks. Its receipt
+	# must describe that actual movement, including a short final stack.
+	transfer = int(next_state.get("player_stack", 0)) - player_before
 	var hands := JsonCoerceScript._copy_array(next_state.get("hands", []))
 	var recorded := hand_result.duplicate(true)
 	recorded["hand_index"] = maxi(0, int(next_state.get("hand_index", 0)))
