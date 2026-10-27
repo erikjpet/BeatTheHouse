@@ -219,6 +219,21 @@ func prestige_config() -> Dictionary:
 	return JsonCoerceScript._copy_dict(meta_home_config().get("prestige", {}))
 
 
+func players_card_help() -> Dictionary:
+	# Prestige is granted at run start, outside the ordinary scaled item effects.
+	# Both inventory presentations must describe that same authored configuration.
+	var prestige := prestige_config()
+	var lines: Array = [
+		"First Grand Casino entry: Heat %d (minimum 0)." % mini(0, int(prestige.get("recognition_heat_delta", -10))),
+		"Clean-play maximum Heat: %d from the usual ceiling." % mini(0, int(prestige.get("clean_heat_ceiling_delta", -5))),
+		"Collection reward drops improve by %d tier(s), up to Gold." % maxi(0, int(prestige.get("drop_tier_bonus_steps", 1))),
+	]
+	return {
+		"effect_lines": lines,
+		"use_instructions": "Pack this Card before starting a standard run. No activation is needed. If carried during a failed or abandoned run, it is permanently destroyed; Cards left in home storage stay safe. Its Critical condition does not decay and cannot be repaired.",
+	}
+
+
 func bag_item_options_for_bag(bagdef_id: int) -> Array:
 	var bag := bag_definition(bagdef_id)
 	if bag.is_empty():

@@ -195,6 +195,11 @@ static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: 
 		# projection for every collection instance is unnecessary work in large vaults.
 		var exact_effect: Dictionary = resolver.resolved_effect(definition, instance)
 		var exact_effect_lines := _meta_effect_lines(exact_effect)
+		var use_instructions := _meta_use_instructions(packable, exact_effect_lines.is_empty())
+		if item_class == CollectionItemResolverScript.ITEM_CLASS_PLAYERS_CARD:
+			var card_help: Dictionary = resolver.players_card_help()
+			exact_effect_lines = card_help.get("effect_lines", [])
+			use_instructions = str(card_help.get("use_instructions", ""))
 		var item_disabled_reason := trade_reason
 		if mode == MODE_CONTAINER and not packable:
 			item_disabled_reason = "This meta-only item stays in home storage."
@@ -207,7 +212,7 @@ static func _owned_item_models(meta_service: Variant, resolver: Variant, owned: 
 			"description": presentation_description,
 			"effect_summary": ". ".join(exact_effect_lines),
 			"effect_lines": exact_effect_lines,
-			"use_instructions": _meta_use_instructions(packable, exact_effect_lines.is_empty()),
+			"use_instructions": use_instructions,
 			"effect": exact_effect.duplicate(true),
 			"collection_display_name": str(collection.get("display_name", "Grand Casino Rewards" if item_class != CollectionItemResolverScript.ITEM_CLASS_COLLECTION else "Collection")),
 			"collection_id": str(definition.get("collection_id", "")),

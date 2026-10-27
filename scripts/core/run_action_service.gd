@@ -18,6 +18,7 @@ const ItemEffectScript := preload("res://scripts/core/item_effect.gd")
 const CharacterRosterScript := preload("res://scripts/core/character_roster.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
+const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
 
 const JAZZ_CLUB_ARCHETYPE_ID := "jazz_club"
 const JAZZ_SAX_ROUND_SERVICE_ID := "jazz_sax_round"
@@ -525,6 +526,13 @@ func _inventory_item_detail(item_id: String, selected_id_override: String, runti
 	item_context["sale_price"] = sale_price
 	var inventory_effect_lines := _inventory_effect_lines(effect)
 	var inventory_effect_summary := str(definition.get("effect_description", "")).strip_edges()
+	var use_instructions := _inventory_use_instructions(item_class, effect)
+	var meta: Dictionary = definition.get("meta_collection", {}) if typeof(definition.get("meta_collection", {})) == TYPE_DICTIONARY else {}
+	if str(meta.get("item_class", "")) == CollectionItemResolverScript.ITEM_CLASS_PLAYERS_CARD:
+		var card_help := CollectionItemResolverScript.new().players_card_help()
+		inventory_effect_lines = card_help.get("effect_lines", [])
+		inventory_effect_summary = ". ".join(inventory_effect_lines)
+		use_instructions = str(card_help.get("use_instructions", ""))
 	if inventory_effect_summary.is_empty():
 		inventory_effect_summary = ". ".join(inventory_effect_lines)
 	var detail := {
@@ -539,7 +547,7 @@ func _inventory_item_detail(item_id: String, selected_id_override: String, runti
 		"sale_breakdown": sale_breakdown,
 		"effect_summary": inventory_effect_summary,
 		"effect_lines": inventory_effect_lines,
-		"use_instructions": _inventory_use_instructions(item_class, effect),
+		"use_instructions": use_instructions,
 		"synergy_lines": _inventory_synergy_lines(effect),
 		"effect": effect.duplicate(true),
 		"behavior_summary": _inventory_behavior_summary(item_class, is_active, item_id == selected_id),
