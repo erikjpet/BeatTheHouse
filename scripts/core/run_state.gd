@@ -2460,7 +2460,7 @@ func _event_cadence_visit_key(environment_data: Dictionary) -> String:
 # close/reopen boundary. The stable travel hook also keeps a Rourke summons
 # inside the casino while allowing its required internal room transitions.
 func scenario_preflight_environment_change(source_id: String = "", target_id: String = "", travel_kind: String = "") -> Dictionary:
-	if travel_kind == "world" and grand_casino_outward_travel_locked():
+	if travel_kind == "world" and not GRAND_CASINO_ARCHETYPE_IDS.has(target_id) and grand_casino_outward_travel_locked():
 		return {"ok": false, "inactive": false, "errors": [GRAND_CASINO_ROURKE_TRAVEL_LOCK_MESSAGE]}
 	return {"ok": true, "inactive": true, "errors": []}
 
@@ -11631,7 +11631,11 @@ func travel_route_status(route_data: Dictionary) -> Dictionary:
 		"requires_travel_count_min": maxi(0, int(route_data.get("requires_travel_count_min", 0))),
 		"travel_count": environment_travel_count(),
 	}
-	if grand_casino_outward_travel_locked():
+	var route_target_id := str(route_data.get(
+		"target_node_id",
+		route_data.get("destination_archetype", route_data.get("id", ""))
+	)).strip_edges()
+	if not GRAND_CASINO_ARCHETYPE_IDS.has(route_target_id) and grand_casino_outward_travel_locked():
 		status["available"] = false
 		status["disabled_reason"] = GRAND_CASINO_ROURKE_TRAVEL_LOCK_MESSAGE
 		return _finalize_travel_route_status(status, route_data)
@@ -11652,10 +11656,6 @@ func travel_route_status(route_data: Dictionary) -> Dictionary:
 			_apply_locked_route_hint(status)
 		return _finalize_travel_route_status(status, route_data)
 	var route_window := _route_availability_status(route_data)
-	var route_target_id := str(route_data.get(
-		"target_node_id",
-		route_data.get("destination_archetype", route_data.get("id", ""))
-	)).strip_edges()
 	_crew_run_facade.bind(self)
 	var active_count_getaway_route: bool = _crew_run_facade.crew_heist_getaway_route_open(current_world_node_id(), route_target_id)
 	status["venue_hours_override"] = active_count_getaway_route

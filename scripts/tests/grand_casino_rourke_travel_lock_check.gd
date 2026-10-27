@@ -30,6 +30,10 @@ func _run() -> void:
 				_expect(not bool(preflight.get("ok",true)), "authoritative world boundary rejects stale route")
 			_expect(not bool(generator.travel_environment_result(run,"motel",true).get("ok",true)), "generator cannot bypass restriction with prevalidated target")
 			_expect(bool(run.scenario_preflight_environment_change(room,"grand_casino_back_room","grand_room").get("ok",false)), "required casino room transitions remain allowed")
+			for target in ["grand_casino", "grand_casino_high_limit", "grand_casino_cage", "grand_casino_back_room"]:
+				var inside := run.travel_route_status({"id":target,"destination_archetype":target,"target_node_id":"grand_casino","local_casino_room":true,"cost":0})
+				_expect(bool(inside.get("available",false)), "actual internal room route projection remains available to existing room access checks")
+				_expect(bool(run.scenario_preflight_environment_change(room,target,"world").get("ok",false)), "Grand destination is preserved even through world-kind preflight")
 			_expect(bool(run.scenario_preflight_environment_change(room,"","layer").get("ok",false)), "internal layer transitions remain allowed")
 			_expect(JSON.stringify(run.to_dict()) == before, "blocked routes and projections change no money, RNG, clock or state")
 			run.run_status = State.RUN_STATUS_ENDED
