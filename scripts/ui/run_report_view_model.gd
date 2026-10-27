@@ -22,6 +22,7 @@ const RUN_REPORT_MAP_BACKGROUND_PATH := RUN_MAP_BACKGROUND_PATH
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
+const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.gd")
 
 const CREW_MEMBER_LABELS := {
 	"crew_rook": "Rook",
@@ -628,6 +629,14 @@ static func build_debt_ledger(live_debt: Array, story_log: Array) -> Array:
 			for debt_value in _dict_array(entry.get("debt_changes", [])):
 				var loan := _loan_row(debt_value, str(entry.get("label", entry.get("id", "Lender"))))
 				loans[str(loan.get("id", ""))] = loan
+		elif entry_type == "grand_casino_chip_cashout" and int(entry.get("debt_paid", 0)) > 0 and int(entry.get("debt_remaining", -1)) == 0:
+			# Linda's debt-first redemption records its payoff outside debt_* events.
+			var debt_id := CageEconomyModelScript.ATM_DEBT_ID
+			if loans.has(debt_id):
+				var loan := JsonCoerceScript._copy_dict(loans[debt_id])
+				loan["outcome"] = "settled"
+				loan["tone"] = "settled"
+				loans[debt_id] = loan
 		elif entry_type.begins_with("debt_"):
 			var debt_id := str(entry.get("debt_id", ""))
 			if debt_id.is_empty():
