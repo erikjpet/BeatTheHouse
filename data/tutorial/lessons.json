@@ -340,7 +340,7 @@
     "trigger": {"depends_on": ["tutorial_blackjack_clean_finish"], "screen": "GAME", "environment_archetype": "small_underground_casino", "game_id": "blackjack", "state_predicates": [{"path": "game.hands_played", "op": "gte", "value": 1}, {"path": "game.between_hands", "op": "equals", "value": true}]},
     "anchor": {"kind": "surface_action", "id": "blackjack_wager_place_gesture"},
     "copy": "Raise the next bet with an on-felt chip control.",
-    "completion": {"type": "one_of_actions", "action_ids": ["blackjack_wager_place_gesture", "surface_stake_up", "blackjack_chip"]},
+    "completion": {"type": "state_predicate", "state_predicates": [{"path": "game.wager_raised", "op": "equals", "value": true}]},
     "gating": {"allowed_action_ids": ["blackjack_wager_place_gesture", "blackjack_chip", "surface_stake_up"]}
   },
   {

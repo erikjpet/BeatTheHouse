@@ -1404,9 +1404,16 @@ func _enter_game_after_input_guard(clean_game_id: String, clean_state_key: Strin
 	_queue_settled_push_feedback(result)
 	_reset_selected_stake()
 	_store_current_game_surface_ui_state(current_game.restored_surface_ui_state(run_state, run_state.current_environment))
+	# A validated pending Blackjack wager must replace the entry default before
+	# host UI projection supplies that selector to the table and its next DEAL.
+	var restored_blackjack_wager := int(game_surface_ui_state.get("selected_stake", 0)) if clean_game_id == "blackjack" else 0
+	if restored_blackjack_wager > 0:
+		selected_stake = restored_blackjack_wager
 	_show_message(str(result.get("message", "")))
 	_refresh()
 	_clear_selected_stake()
+	if restored_blackjack_wager > 0:
+		selected_stake = restored_blackjack_wager
 	_refresh_stake_input()
 	return current_screen == SCREEN_GAME and current_game == game_module
 

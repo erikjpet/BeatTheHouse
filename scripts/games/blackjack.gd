@@ -157,6 +157,24 @@ func checkpoint_surface_ui_state_for_save_requires_ui_state() -> bool:
 	return false
 
 
+func restored_surface_ui_state(run_state: RunState, environment: Dictionary) -> Dictionary:
+	if run_state == null or _is_rourke_duel(run_state, environment):
+		return {}
+	var table := _table_state_preview(run_state, environment)
+	var state_key := transient_state_key_context()
+	if state_key != get_id() and not state_key.begins_with("%s:" % get_id()):
+		state_key = get_id()
+	var binding := RunState.action_authority_table_binding(state_key, environment)
+	var ledger := ActionAuthorityScript.validate_persisted_ledger_cow(table.get(BLACKJACK_HOST_LEDGER_KEY, {}), binding)
+	if ledger.is_empty() or not bool(ledger.get("initialized", false)) or not _local_copy_dict(ledger.get("pending_delivery", {})).is_empty():
+		return {}
+	var session := _local_copy_dict(ledger.get("session", {}))
+	if _has_dealt_hand(session):
+		return {}
+	var pending_wager := int(session.get("selected_stake", 0))
+	return {"selected_stake": pending_wager} if pending_wager > 0 else {}
+
+
 func embedded_action_view_patch(run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
 	# The Blackjack surface projection is the complete post-action table view. Send
 	# it directly to the live canvas after a sealed action instead of rebuilding the
@@ -1808,6 +1826,8 @@ func coach_state(run_state: RunState, environment: Dictionary, ui_state: Diction
 	var table := _table_state_preview(run_state, environment)
 	var hand_active := _has_dealt_hand(ui_state)
 	var hands_played := int(table.get("hands_played", 0))
+	var previous_wager := int(_local_copy_dict(table.get("last_result", {})).get("main_stake", 0))
+	var pending_wager := _effective_table_stake(int(ui_state.get("selected_stake", 1)), ui_state, run_state, environment)
 	var distractions: Array = _dictionary_array(table.get("distractions", []))
 	for index in range(mini(distractions.size(), 3)):
 		var distraction: Dictionary = distractions[index]
@@ -1822,6 +1842,7 @@ func coach_state(run_state: RunState, environment: Dictionary, ui_state: Diction
 		"hands_played": hands_played,
 		"hand_active": hand_active,
 		"between_hands": not hand_active and not _local_copy_dict(table.get("last_result", {})).is_empty(),
+		"wager_raised": not hand_active and previous_wager > 0 and pending_wager > previous_wager,
 		"counting_enabled": bool(ui_state.get("counting_enabled", table.get("counting_enabled", false))),
 		"count_started": not count_challenge.is_empty(),
 		"count_all_selected": not count_icons.is_empty() and clicked_icons.size() >= count_icons.size(),
