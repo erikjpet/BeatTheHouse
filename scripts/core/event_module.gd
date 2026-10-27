@@ -1608,7 +1608,7 @@ func _grand_casino_showdown_walk_choices(payload: Dictionary, run_state: RunStat
 			var item_id := str(item_value)
 			if item_id.is_empty():
 				continue
-			var item_label := _grand_casino_showdown_item_label(item_id)
+			var item_label := _grand_casino_showdown_item_label(item_value)
 			var choice_data := option.duplicate(true)
 			choice_data["id"] = "%s__%s" % [str(option.get("id", method)), item_id]
 			choice_data["label"] = str(option.get("label", item_label)).replace("{item}", item_label)
@@ -1621,12 +1621,21 @@ func _grand_casino_showdown_walk_choices(payload: Dictionary, run_state: RunStat
 	return result
 
 
-func _grand_casino_showdown_item_label(item_id: String) -> String:
-	if content_library != null:
+func _grand_casino_showdown_item_label(item_value: Variant) -> String:
+	var item_id := RunState._inventory_item_id(item_value)
+	var entry := JsonCoerceScript._copy_dict(item_value)
+	var label := str(entry.get("display_name", "")).strip_edges()
+	if label.is_empty() and content_library != null:
 		var definition := content_library.item(item_id)
 		if not definition.is_empty():
-			return str(definition.get("display_name", item_id.replace("_", " ").capitalize()))
-	return item_id.replace("_", " ").capitalize()
+			label = str(definition.get("display_name", ""))
+	if label.is_empty():
+		label = item_id.replace("_", " ").capitalize()
+	var meta := JsonCoerceScript._copy_dict(entry.get("meta_collection", {}))
+	var instance_id := int(meta.get("instance_id", entry.get("instance_id", 0)))
+	if instance_id > 0:
+		label += " #%d" % instance_id
+	return label
 
 
 func _grand_casino_interrogation_scene_summary(status: Dictionary) -> String:
