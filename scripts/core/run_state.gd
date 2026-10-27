@@ -15544,8 +15544,8 @@ func _run_state_schema_restore(data: Dictionary) -> void:
 	run_failure_reason = str(data.get("run_failure_reason", FAILURE_NONE))
 	run_failure_message = str(data.get("run_failure_message", ""))
 	run_spending_score = maxi(0, int(data.get("run_spending_score", 0)))
-	var blackjack_unsettled_wager := _blackjack_authority_has_unsettled_wager()
-	_refresh_economy(blackjack_unsettled_wager)
+	var pending_paid_game := _blackjack_authority_has_unsettled_wager() or _pull_tab_has_pending_resolution()
+	_refresh_economy(pending_paid_game)
 	_activate_current_local_suspicion(true)
 	_initialize_grand_casino_objective_runtime()
 	_initialize_grand_casino_staffing()
@@ -15554,7 +15554,7 @@ func _run_state_schema_restore(data: Dictionary) -> void:
 	# never trusted from serialized placement output.
 	reconcile_current_environment_object_manifest(true)
 	if saved_run_status != RUN_STATUS_ENDED and saved_run_status != RUN_STATUS_FAILED:
-		_evaluate_immediate_terminal_state(blackjack_unsettled_wager)
+		_evaluate_immediate_terminal_state(pending_paid_game)
 	if saved_run_status == RUN_STATUS_ENDED:
 		run_status = saved_run_status
 	elif saved_run_status == RUN_STATUS_FAILED:
@@ -17533,6 +17533,24 @@ func _refresh_economy(defer_bankroll_zero: bool = false) -> void:
 	if run_status == RUN_STATUS_ACTIVE:
 		run_failure_reason = FAILURE_NONE
 		run_failure_message = ""
+
+
+static func pull_tab_ticket_resolution_pending(ticket_state: Dictionary) -> bool:
+	for field in ["tray_stack", "ticket_stack", "winner_pile"]:
+		var tickets: Variant = ticket_state.get(field, [])
+		if typeof(tickets) == TYPE_ARRAY and not (tickets as Array).is_empty():
+			return true
+	return false
+
+
+func _pull_tab_has_pending_resolution() -> bool:
+	# Player-owned piles supersede location stock, matching the live cabinet.
+	var player_state := portable_ticket_state("pull_tabs", current_environment)
+	if not player_state.is_empty():
+		return pull_tab_ticket_resolution_pending(player_state)
+	var states: Dictionary = current_environment.get("game_states", {}) if typeof(current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var machine: Dictionary = states.get("pull_tabs", {}) if typeof(states.get("pull_tabs", {})) == TYPE_DICTIONARY else {}
+	return pull_tab_ticket_resolution_pending(machine)
 
 
 func _blackjack_authority_has_unsettled_wager() -> bool:

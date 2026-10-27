@@ -3155,9 +3155,7 @@ func _unresolved_pull_tab_ticket_count(machine: Dictionary) -> int:
 
 
 func _pull_tab_bankroll_zero_failure_deferred(machine: Dictionary) -> bool:
-	return _unresolved_pull_tab_ticket_count(machine) > 0 \
-		or _array_size(machine.get("winner_pile", [])) > 0 \
-		or _pending_winner_payout(machine) > 0
+	return RunState.pull_tab_ticket_resolution_pending(machine)
 
 
 func _should_defer_bankroll_zero_failure(run_state: RunState, bankroll_delta: int, machine: Dictionary) -> bool:
