@@ -2361,9 +2361,18 @@ func _advance_rourke_resolution(schedule_next: bool = true, generation: int = -1
 
 
 func _end_rourke_resolution() -> void:
+	_clear_pending_rourke_terminal_surface()
 	_rourke_resolution = {}
 	_rourke_resolution_dispatch_active = false
 	_sync_simulation_pause_owners()
+
+
+func _clear_pending_rourke_terminal_surface() -> void:
+	if not bool(_rourke_resolution.get("terminal_surface_cleanup_pending", false)):
+		return
+	_rourke_resolution.erase("terminal_surface_cleanup_pending")
+	if game_surface_canvas != null:
+		game_surface_canvas.clear_runtime_state()
 
 
 func _drain_rourke_resolution() -> void:
@@ -3303,7 +3312,7 @@ func _checkpoint_current_game_surface_ui_state() -> void:
 		current_game.checkpoint_surface_ui_state(_current_game_surface_ui_state(), run_state, run_state.current_environment)
 
 
-func _reset_game_surface_runtime_state(checkpoint_source: bool = true) -> void:
+func _reset_game_surface_runtime_state(checkpoint_source: bool = true, preserve_terminal_surface: bool = false) -> void:
 	game_surface_session_generation += 1
 	_invalidate_deferred_embedded_action_refresh()
 	if checkpoint_source:
@@ -3318,7 +3327,11 @@ func _reset_game_surface_runtime_state(checkpoint_source: bool = true) -> void:
 	if current_game != null:
 		current_game.set_transient_state_key_context("")
 	if game_surface_canvas != null:
-		game_surface_canvas.clear_runtime_state()
+		if preserve_terminal_surface:
+			game_surface_canvas.stop_surface_audio()
+			_rourke_resolution["terminal_surface_cleanup_pending"] = true
+		else:
+			game_surface_canvas.clear_runtime_state()
 	_stop_surface_feature_music()
 	game_surface_ui_state = {}
 	game_surface_auto_resolving = false
@@ -20747,7 +20760,10 @@ func _clear_terminal_interaction_state() -> void:
 	if talk_dock != null:
 		talk_dock.clear_entry()
 	item_found_talk_dock_suspended = false
-	_reset_game_surface_runtime_state()
+	# Input/session ownership ends now; the last table image remains until the
+	# populated terminal report replaces it at the existing phase-7 boundary.
+	var preserve_surface := not _rourke_resolution.is_empty() and int(_rourke_resolution.get("step", -1)) <= 6
+	_reset_game_surface_runtime_state(true, preserve_surface)
 	_set_active_game_binding()
 	current_game = null
 	game_surface_ui_state = {}
@@ -20893,6 +20909,7 @@ func _present_terminal_run_screen() -> void:
 	run_screen.visible = true
 	_invalidate_run_screen_layout()
 	_apply_focus_layout()
+	_clear_pending_rourke_terminal_surface()
 	_refresh_environment_result_feedback()
 	_render_run_report()
 

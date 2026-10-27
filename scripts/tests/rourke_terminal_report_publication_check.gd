@@ -34,16 +34,25 @@ func _run() -> void:
 		app.run_report_screen.hide()
 		app.run_report_screen.clear_report()
 		app.run_report_model_key = ""
+		var game := preload("res://scripts/games/blackjack.gd").new()
+		app.current_game = game
+		app.game_surface_canvas.set_game_module(game)
+		app.game_surface_canvas.render_game_snapshot({"game_id":"blackjack","display_name":"Rourke table"})
+		app._rourke_resolution = {"step":5}
+		app._clear_terminal_interaction_state()
+		_expect(app.current_game == null and app.game_surface_canvas.game_id == "blackjack", "terminal input clears while prior table presentation is retained")
 		var before := JSON.stringify(run.to_dict())
 		for step in [5, 6]:
-			app._rourke_resolution = {"step":step}
+			app._rourke_resolution["step"] = step
 			app._rourke_resolution_dispatch_active = true
 			app._finish_foundation_refresh(step == 6)
 			_expect(not app.run_report_screen.visible and app.run_report_screen.report_model.is_empty(), "phase5/6 do not publish blank or stale report, including prepared-room path")
 			_expect(bool(app._rourke_resolution.get("terminal_presentation_pending",false)), "publication remains scheduled for phase7")
+			_expect(app.game_surface_canvas.game_id == "blackjack", "no generic Foundation Game fallback during deferred report")
 		app._rourke_resolution["step"] = 7
 		app._present_terminal_run_screen()
 		_expect(app.run_report_screen.visible and not app.run_report_screen.report_model.is_empty(), "phase7 immediately publishes populated final report")
+		_expect(not app.game_surface_canvas.visible and app.game_surface_canvas.game_id.is_empty(), "table resources clear only after terminal layout replaces them")
 		_expect(app.run_report_screen.seed_label.text == "Seed: " + run.seed_text, "published result belongs to current run")
 		var installs: int = app.run_report_screen.timeline_install_count
 		app._present_terminal_run_screen()
