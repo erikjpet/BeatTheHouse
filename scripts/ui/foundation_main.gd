@@ -18536,7 +18536,9 @@ func _save_foundation_run_before_leaving(status_text: String) -> bool:
 		pending_autosave = false
 		pending_autosave_after_frame = -1
 		return true
-	if run_state.is_tutorial_run():
+	# Main Menu/quit preserve unfinished lessons just like an ordinary run.
+	# Skip Lessons owns explicit abandonment; terminal lessons still retire.
+	if run_state.is_tutorial_run() and run_state.is_terminal():
 		return _complete_tutorial_profile() and _clear_tutorial_resume_slot()
 	# Keep the active state key until the machine has published its settled
 	# authority. A failed write must leave that state available for retry.
