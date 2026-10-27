@@ -3239,6 +3239,8 @@ func _game_surface_realtime_state_patch(now_msec: int, current_surface_state_ove
 			if bool(typed_patch.get("request_foundation_autosave", false)):
 				typed_patch.erase("request_foundation_autosave")
 				call_deferred("_autosave_foundation_run", "Autosaved.", false)
+			if str(typed_patch.get("coin_pusher_settlement_outcome", "")) == "no_payout" and not run_state.has_liquid_run_funds():
+				call_deferred("_evaluate_run_terminal_state")
 			var realtime_augment_started_usec := Time.get_ticks_usec()
 			_augment_game_surface_realtime_patch(typed_patch, ui_state)
 			if perf_telemetry_overlay != null:

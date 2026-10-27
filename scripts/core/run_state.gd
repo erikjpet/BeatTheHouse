@@ -15045,7 +15045,7 @@ func _evaluate_immediate_terminal_state(defer_bankroll_zero: bool = false) -> vo
 			return
 		fail_run(FAILURE_POLICE_CAPTURE, POLICE_CAPTURE_FAILURE_MESSAGE)
 		return
-	if not has_liquid_run_funds() and not defer_bankroll_zero and not closing_time_forced_travel_required() and not has_working_craps_wagers():
+	if not has_liquid_run_funds() and not defer_bankroll_zero and not closing_time_forced_travel_required() and not has_working_craps_wagers() and not has_pending_coin_pusher_resolution():
 		fail_run(FAILURE_BANKROLL_ZERO, BANKROLL_ZERO_FAILURE_MESSAGE)
 
 
@@ -15582,7 +15582,7 @@ func _run_state_schema_restore(data: Dictionary) -> void:
 	run_failure_reason = str(data.get("run_failure_reason", FAILURE_NONE))
 	run_failure_message = str(data.get("run_failure_message", ""))
 	run_spending_score = maxi(0, int(data.get("run_spending_score", 0)))
-	var pending_paid_game := _blackjack_authority_has_unsettled_wager() or _pull_tab_has_pending_resolution()
+	var pending_paid_game := _blackjack_authority_has_unsettled_wager() or _pull_tab_has_pending_resolution() or has_pending_coin_pusher_resolution()
 	_refresh_economy(pending_paid_game)
 	_activate_current_local_suspicion(true)
 	_initialize_grand_casino_objective_runtime()
@@ -17551,7 +17551,7 @@ func _refresh_economy(defer_bankroll_zero: bool = false) -> void:
 		return
 	var economy_balance := bankroll + grand_casino_chips if _is_grand_casino_environment(current_environment) else bankroll
 	if economy_balance <= 0:
-		if defer_bankroll_zero or closing_time_forced_travel_required() or has_working_craps_wagers():
+		if defer_bankroll_zero or closing_time_forced_travel_required() or has_working_craps_wagers() or has_pending_coin_pusher_resolution():
 			bankroll = 0
 			economic_state = "insolvent"
 			return
@@ -17571,6 +17571,18 @@ func _refresh_economy(defer_bankroll_zero: bool = false) -> void:
 	if run_status == RUN_STATUS_ACTIVE:
 		run_failure_reason = FAILURE_NONE
 		run_failure_message = ""
+
+
+func has_pending_coin_pusher_resolution() -> bool:
+	var states: Dictionary = current_environment.get("game_states", {}) if typeof(current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var machine: Dictionary = states.get("coin_pusher", {}) if typeof(states.get("coin_pusher", {})) == TYPE_DICTIONARY else {}
+	if str(machine.get("schema", "")) != "coin_pusher_discrete_pile":
+		return false
+	# The machine owns this receipt from accepted payment until its existing
+	# all-steady or exit-settle boundary. Save readiness still requires that
+	# boundary; this is not permission to save an unfinished live simulation.
+	return typeof(machine.get("paid_drop_pending")) == TYPE_BOOL and bool(machine.get("paid_drop_pending", false)) and int(machine.get("total_cost", 0)) > 0 \
+		or int(machine.get("tray_value", 0)) > 0
 
 
 static func pull_tab_ticket_resolution_pending(ticket_state: Dictionary) -> bool:

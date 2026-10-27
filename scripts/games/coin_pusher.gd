@@ -29,7 +29,7 @@ const SHIM_ITEM_ID := "coin_return_shim"
 const RUMOR_CLASS := "pusher_pile"
 const DROP_DURABLE_KEYS := [
 	"motor_started", "cold_quarters_armed", "cold_quarters_density_armed",
-	"drop_queue", "action_count", "total_cost", "last_message",
+	"drop_queue", "action_count", "total_cost", "last_message", "paid_drop_pending",
 ]
 const V3_RAIL_DRAG_RECT := Rect2(176, 142, 548, 112)
 const JackpotRidgeScript := preload("res://scripts/games/coin_pusher/jackpot_ridge.gd")
@@ -738,6 +738,7 @@ func resolve_with_context(action_id: String, _stake: int, run_state: RunState, e
 		var nozzle_id := _selected_nozzle_id(machine, simulation)
 		var queued_count := CoinPusherLiveSessionScript.enqueue_drops(machine, {"nozzle_id": nozzle_id, "density": density, "provenance": provenance, "chain_depth": 0, "bonus_origin": false}, requested_count)
 		if queued_count > 0:
+			machine["paid_drop_pending"] = true
 			var settlement_session: Dictionary = machine.get("live_session", {}) if typeof(machine.get("live_session", {})) == TYPE_DICTIONARY else {}
 			settlement_session["pending_settlement_drop_count"] = maxi(0, int(settlement_session.get("pending_settlement_drop_count", 0))) + queued_count
 		if debug_action_timing:
@@ -832,6 +833,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 			session["durable_ready"] = true
 			session["durable_dirty"] = false
 			session["last_persisted_tick"] = int(simulation.get("tick", 0))
+			machine["paid_drop_pending"] = false
 			_write_live_durable(run_state, environment, machine, true)
 			request_autosave = true
 			var settled_tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
@@ -990,6 +992,7 @@ func advance_chunked_exit_settle(run_state: RunState, environment: Dictionary, t
 	# arrangement before the surface is dismissed.
 	result["surface_state_patch"] = _v3_headless_surface_state(machine)
 	if bool(result.get("done", false)):
+		machine["paid_drop_pending"] = false
 		_write_live_durable(run_state, environment, machine, false)
 		_live_machines.erase(key)
 		_live_machine_generations.erase(key)

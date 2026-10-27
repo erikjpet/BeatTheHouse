@@ -50,7 +50,7 @@ static func _evaluate(run_state: RunState, library: ContentLibrary, include_reco
 		result["message"] = RunState.POLICE_CAPTURE_FAILURE_MESSAGE
 		return result
 	if run_state.bankroll <= 0:
-		if run_state.has_working_craps_wagers():
+		if run_state.has_working_craps_wagers() or run_state.has_pending_coin_pusher_resolution():
 			result["bankroll_zero_deferred"] = true
 			result["recovery_available"] = true
 			return result
