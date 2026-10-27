@@ -2362,6 +2362,7 @@ func _gui_input(event: InputEvent) -> void:
 				accept_event()
 				return
 			if _activate_selected_info_action_at_local_position(mouse_event.position):
+				_remember_room_pointer_focus("mouse", true)
 				accept_event()
 				return
 			if _focus_hovered_info_at_local_position(mouse_event.position):
@@ -2387,6 +2388,7 @@ func _gui_input(event: InputEvent) -> void:
 				accept_event()
 				return
 			if _activate_selected_info_action_at_local_position(touch_event.position):
+				_remember_room_pointer_focus(pointer_key, true)
 				accept_event()
 				return
 			if _focus_hovered_info_at_local_position(touch_event.position):
@@ -7985,7 +7987,8 @@ func _begin_room_pointer_focus_gesture(pointer_key: String, multi: bool, local_p
 		return false
 	if previous.is_empty():
 		return false
-	if bool(previous.get("external", false)) or int(previous.get("context", -1)) != interaction_context_generation:
+	if bool(previous.get("external", false)) or bool(previous.get("action_consumed", false)) \
+			or int(previous.get("context", -1)) != interaction_context_generation:
 		return true
 	var object_id := str(previous.get("object_id", ""))
 	if object_id.is_empty():
@@ -7994,10 +7997,11 @@ func _begin_room_pointer_focus_gesture(pointer_key: String, multi: bool, local_p
 	return true
 
 
-func _remember_room_pointer_focus(pointer_key: String) -> void:
+func _remember_room_pointer_focus(pointer_key: String, action_consumed: bool = false) -> void:
 	var gesture: Dictionary = room_pointer_focus_gestures.get(pointer_key, {})
 	if int(gesture.get("context", -1)) == interaction_context_generation:
 		gesture["object_id"] = selected_object_id
+		gesture["action_consumed"] = action_consumed
 
 
 func _activate_object_at_local_position(local_position: Vector2, intended_object_id: String = "") -> void:
