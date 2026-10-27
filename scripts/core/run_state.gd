@@ -6367,6 +6367,39 @@ func action_authority_checkpoint_fingerprint() -> String:
 	return blackjack_authority_checkpoint_fingerprint()
 
 
+func _blackjack_checkpoint_before_external_event() -> String:
+	var value: Variant = current_environment.get("game_states", {})
+	if typeof(value) != TYPE_DICTIONARY: return ""
+	var states: Dictionary = value
+	for key in states:
+		if (str(key) == "blackjack" or str(key).begins_with("blackjack:")) and typeof(states[key]) == TYPE_DICTIONARY and (states[key] as Dictionary).has(BlackjackActionAuthorityScript.LEDGER_KEY):
+			return action_authority_checkpoint_fingerprint()
+	return ""
+
+
+func _rebind_blackjack_checkpoint_after_external_event(previous_checkpoint: String) -> void:
+	if previous_checkpoint.is_empty(): return
+	var checkpoint := action_authority_checkpoint_fingerprint()
+	if checkpoint == previous_checkpoint: return
+	var value: Variant = current_environment.get("game_states", {})
+	if typeof(value) != TYPE_DICTIONARY: return
+	var states: Dictionary = (value as Dictionary).duplicate(false)
+	for key in states:
+		if str(key) != "blackjack" and not str(key).begins_with("blackjack:"): continue
+		if typeof(states[key]) != TYPE_DICTIONARY: continue
+		var table: Dictionary = states[key]
+		# This live event owns the balance/RNG transition. Rebase only a ledger
+		# that validated against its actual pre-event checkpoint; never bless an
+		# already mismatched save, forged journal, or another fixture binding.
+		var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger(table.get(BlackjackActionAuthorityScript.LEDGER_KEY), action_authority_table_binding(str(key), current_environment), previous_checkpoint)
+		if ledger.is_empty(): continue
+		ledger["checkpoint_fingerprint"] = checkpoint
+		var next_table := table.duplicate(false)
+		next_table[BlackjackActionAuthorityScript.LEDGER_KEY] = ledger
+		states[key] = next_table
+	current_environment["game_states"] = states
+
+
 func _reconcile_blackjack_authority_restore() -> void:
 	# A not-yet-started room is represented by an empty dictionary. Preserve that
 	# byte-exact save state instead of materializing a synthetic game_states key.

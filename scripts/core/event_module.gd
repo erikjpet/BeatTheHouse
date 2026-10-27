@@ -662,6 +662,7 @@ func apply_event_result(run_state: RunState, result: Dictionary, external_rollba
 func _begin_event_result_application(run_state: RunState, result: Dictionary, external_rollback_owner: bool = false, profile_stages: bool = false) -> Dictionary:
 	if run_state == null or not bool(result.get("ok", false)):
 		return {}
+	var blackjack_checkpoint_before := run_state._blackjack_checkpoint_before_external_event()
 	var profile_started_usec := Time.get_ticks_usec() if profile_stages else 0
 	var profile_stage_started_usec := profile_started_usec
 	var profile_timing: Dictionary = {}
@@ -747,7 +748,7 @@ func _begin_event_result_application(run_state: RunState, result: Dictionary, ex
 		result["message"] = str(advance_errors[0]) if not advance_errors.is_empty() else "The event boundary could not advance safely."
 		result["errors"] = advance_errors.duplicate(true)
 		return {}
-	return {"deltas": deltas, "profile_stages": profile_stages, "profile_started_usec": profile_started_usec, "profile_stage_started_usec": profile_stage_started_usec, "profile_timing": profile_timing}
+	return {"deltas": deltas, "profile_stages": profile_stages, "profile_started_usec": profile_started_usec, "profile_stage_started_usec": profile_stage_started_usec, "profile_timing": profile_timing, "blackjack_checkpoint_before": blackjack_checkpoint_before}
 
 
 func _finish_event_result_application(run_state: RunState, result: Dictionary, context: Dictionary) -> void:
@@ -819,6 +820,7 @@ func _finish_event_result_application(run_state: RunState, result: Dictionary, c
 	# Consume its correlated scenario fact on that same boundary so an accepted
 	# choice cannot leave sequence aftermath pending until another player action.
 	run_state.scenario_flush_facts()
+	run_state._rebind_blackjack_checkpoint_after_external_event(str(context.get("blackjack_checkpoint_before", "")))
 	if profile_stages:
 		profile_timing["scenario_publish"] = Time.get_ticks_usec() - profile_stage_started_usec
 		profile_timing["apply_measured_total"] = Time.get_ticks_usec() - profile_started_usec
