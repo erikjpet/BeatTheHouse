@@ -2038,7 +2038,7 @@ func _draw_street_dice(surface, state: Dictionary) -> void:
 		var rect := Rect2(center - Vector2(14, 14), Vector2(28, 28))
 		surface.draw_rect(rect, Color("#d7c9ad"))
 		surface.draw_rect(rect, Color("#4a4034"), false, 2.0)
-		surface.surface_label_centered(str(dice[index]), rect, 14, Color("#171717"))
+		surface.surface_label_centered(str(int(dice[index])), rect, 14, Color("#171717"))
 
 
 func _draw_street_side_panel(surface, state: Dictionary) -> void:
@@ -2266,7 +2266,7 @@ func _draw_dice(surface, state: Dictionary) -> void:
 		var rect := Rect2(center - Vector2(18, 18), Vector2(36, 36))
 		surface.draw_rect(rect, Color("#eee7d2"))
 		surface.draw_rect(rect, Color("#9a7735"), false, 2)
-		surface.surface_label_centered(str(dice[index]), rect, 16, Color("#171b19"))
+		surface.surface_label_centered(str(int(dice[index])), rect, 16, Color("#171b19"))
 
 
 func _draw_history(surface, state: Dictionary) -> void:
