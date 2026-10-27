@@ -6027,6 +6027,12 @@ func cash_out_grand_casino_chips(chip_amount: int = -1, cash_rate: int = 1) -> D
 		return {"ok": false, "message": "Rourke closed the Cage account after the door found you."}
 	if bool(narrative_flags.get("grand_casino_showdown_active", false)) and str(narrative_flags.get("grand_casino_duel_outcome", "")) != GrandCasinoDuelModelScript.OUTCOME_WALK_OUT_CLEAN:
 		return {"ok": false, "message": "The Cage goes quiet while Rourke deals."}
+	return _settle_grand_casino_chip_cashout(chip_amount, cash_rate)
+
+
+# Shared settlement after the caller establishes Cage access or the completed
+# clean-duel entitlement. The finale does not move the player to another room.
+func _settle_grand_casino_chip_cashout(chip_amount: int, cash_rate: int) -> Dictionary:
 	var amount := grand_casino_chips if chip_amount < 0 else chip_amount
 	var rate := maxi(1, cash_rate)
 	var preview := CageEconomyModelScript.cashout_preview(
@@ -8130,7 +8136,7 @@ func apply_grand_casino_duel_hand(hand_result: Dictionary) -> Dictionary:
 
 
 func _finalize_grand_casino_duel_if_complete(state: Dictionary) -> void:
-	if str(state.get("status", "")) != "complete":
+	if is_terminal() or str(state.get("status", "")) != "complete":
 		return
 	var outcome := str(state.get("outcome", ""))
 	var margin := int(state.get("margin", int(state.get("player_stack", 0)) - int(state.get("rourke_stack", 0))))
@@ -8142,7 +8148,9 @@ func _finalize_grand_casino_duel_if_complete(state: Dictionary) -> void:
 		GrandCasinoDuelModelScript.OUTCOME_WALK_OUT_CLEAN:
 			var cashed_chips := grand_casino_chips
 			if cashed_chips > 0:
-				cash_out_grand_casino_chips(cashed_chips, grand_casino_chip_exchange_rate())
+				var cashout := _settle_grand_casino_chip_cashout(cashed_chips, grand_casino_chip_exchange_rate())
+				if not bool(cashout.get("ok", false)):
+					return
 			narrative_flags["grand_casino_duel_cashed_chip_amount"] = cashed_chips
 			_complete_grand_casino_showdown_success("You take Rourke's stack. Linda kisses the rack goodbye. The elevator opens.")
 		GrandCasinoDuelModelScript.OUTCOME_SHOWN_THE_DOOR:

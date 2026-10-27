@@ -2615,13 +2615,17 @@ func _blackjack_resolve_candidate(action_id: String, stake: int, candidate: RunS
 		false,
 		action_id == "play_basic"
 	)
-	if bool(result.get("ok", false)) and action_id.begins_with("crew_play:"):
+	var clean_duel_cashout := bool(result.get("blackjack_boss_duel", false)) \
+		and str(result.get("grand_casino_duel_outcome", "")) == "walk_out_clean" \
+		and candidate.is_terminal() \
+		and int(candidate.narrative_flags.get("grand_casino_duel_cashed_chip_amount", 0)) > 0
+	if bool(result.get("ok", false)) and (action_id.begins_with("crew_play:") or clean_duel_cashout):
 		_rebind_pending_authority_checkpoint(candidate)
 	return result
 
 
-# Crew plays are the only Blackjack proposals that apply their visible fee and
-# Crew state directly to the detached candidate. Keep the already sealed pending
+# Crew plays and a clean-duel cashout apply their money directly to the detached
+# candidate. Keep the already sealed pending
 # delivery intact while rebinding its restore checkpoint to those canonical
 # balances; otherwise the proposal's own save/load validation discards the
 # ledger before the host can verify and commit it.
