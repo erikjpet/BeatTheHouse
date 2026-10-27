@@ -16081,6 +16081,8 @@ func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, ca
 func _activate_scenario_action_token(token: String) -> bool:
 	var descriptor := ScenarioSemanticViewModelScript.action_descriptor_for_token(_interactable_object_view_list(), token)
 	if not descriptor.is_empty():
+		if descriptor.has("sequence_action"):
+			return _activate_scenario_sequence_action(descriptor.sequence_record, descriptor.sequence_action)
 		return _activate_scenario_action(
 			str(descriptor.get("owner_namespace", "scenario")),
 			str(descriptor.get("stable_object_id", "")),

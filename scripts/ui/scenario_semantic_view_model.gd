@@ -115,6 +115,12 @@ static func action_descriptor_for_token(records: Array, token: String) -> Dictio
 			var action := _dict(action_value)
 			if str(action.get("emit_object_id", "")) != wanted or not bool(action.get("enabled", true)):
 				continue
+			# Physical sequence records retain their existing deferred command path.
+			# Do not run them through the legacy scenario action's extra room turn.
+			for sequence_value in _array(record.get("scenario_sequence_actions", [])):
+				var sequence_action := _dict(sequence_value)
+				if str(sequence_action.get("id", "")) == str(action.get("id", "")):
+					return {"sequence_record": record, "sequence_action": sequence_action}
 			return {
 				"owner_namespace": str(action.get("scenario_owner_namespace", record.get("scenario_owner_namespace", "scenario"))),
 				"stable_object_id": str(action.get("scenario_stable_object_id", record.get("scenario_stable_object_id", ""))),
@@ -198,25 +204,26 @@ static func _append_augmented_actions(record: Dictionary, augment_descriptors: A
 	return result
 
 
-static func _scenario_record(interaction: Dictionary, visual: Dictionary, selection: Dictionary, boundary_serial: int) -> Dictionary:
-	if visual.is_empty(): return {}
+static func inline_actions_for_interaction(interaction: Dictionary, boundary_serial: int) -> Array:
 	var owner := str(interaction.get("owner_namespace", ""))
 	var stable_id := str(interaction.get("stable_object_id", ""))
-	var object_id := "scenario:%s:%s" % [owner, stable_id]
 	var actions := _array(interaction.get("available_actions", []))
 	var inline_actions: Array = []
 	for value in actions:
 		var action := _dict(value)
+		if not bool(action.get("visible", true)) or not bool(action.get("presentation_visible", true)) \
+				or bool(action.get("hidden", false)) or bool(action.get("hidden_only", false)):
+			continue
 		var action_id := str(action.get("id", ""))
 		var token := _action_token(boundary_serial, owner, stable_id, action_id)
 		inline_actions.append({
 			"id": action_id,
 			"label": str(action.get("label", action_id.replace("_", " ").capitalize())),
-			"enabled": bool(interaction.get("enabled", true)),
+			"enabled": bool(interaction.get("enabled", true)) and bool(action.get("enabled", true)) and not bool(action.get("disabled", false)),
 			"emit_object_id": token,
 			"scenario_idempotency_key": _action_idempotency_key(boundary_serial, owner, stable_id, action_id),
-			"scenario_owner_namespace": owner,
-			"scenario_stable_object_id": stable_id,
+			"scenario_owner_namespace": str(action.get("attached_owner_namespace", owner)),
+			"scenario_stable_object_id": str(action.get("attached_stable_object_id", stable_id)),
 			"scenario_command_id": action_id,
 			"action_origin_owner_namespace": str(action.get("action_origin_owner_namespace", owner)),
 			"action_origin_stable_object_id": str(action.get("action_origin_stable_object_id", stable_id)),
@@ -227,6 +234,16 @@ static func _scenario_record(interaction: Dictionary, visual: Dictionary, select
 			"input_action": str(action.get("input_action", "confirm")),
 			"non_color_state": str(action.get("non_color_state", "ready")),
 		})
+	return inline_actions
+
+
+static func _scenario_record(interaction: Dictionary, visual: Dictionary, selection: Dictionary, boundary_serial: int) -> Dictionary:
+	if visual.is_empty(): return {}
+	var owner := str(interaction.get("owner_namespace", ""))
+	var stable_id := str(interaction.get("stable_object_id", ""))
+	var object_id := "scenario:%s:%s" % [owner, stable_id]
+	var actions := _array(interaction.get("available_actions", []))
+	var inline_actions := inline_actions_for_interaction(interaction, boundary_serial)
 	var enabled := bool(interaction.get("enabled", true))
 	var cost := maxi(0, int(_dict(actions[0] if not actions.is_empty() else {}).get("cost", 0)))
 	return {

@@ -1528,7 +1528,7 @@ static func _compose_projected_records(base_records: Array, resolved_projection:
 		if not authority.has(identity):
 			errors.append("Projected interaction %s lost its exact sealed layout authority." % identity)
 			continue
-		var merged := _merge_projected_interaction(record, semantic_interaction, _dict(authority.get(identity, {})), authority_digest)
+		var merged := _merge_projected_interaction(record, semantic_interaction, _dict(authority.get(identity, {})), authority_digest, int(resolved_projection.get("boundary_serial", 0)))
 		projected.append(merged)
 		used_presentation_ids[str(merged.get("object_id", ""))] = true
 		consumed[identity] = true
@@ -1544,7 +1544,7 @@ static func _compose_projected_records(base_records: Array, resolved_projection:
 		var visual_base: Dictionary = {}
 		if semantic_visuals.has(identity):
 			visual_base = _merge_projected_visual({}, _dict(semantic_visuals.get(identity, {})), _dict(authority.get(identity, {})), authority_digest)
-		var merged := _merge_projected_interaction(visual_base, semantic, _dict(authority.get(identity, {})), authority_digest)
+		var merged := _merge_projected_interaction(visual_base, semantic, _dict(authority.get(identity, {})), authority_digest, int(resolved_projection.get("boundary_serial", 0)))
 		var presentation_id := str(merged.get("object_id", ""))
 		if used_presentation_ids.has(presentation_id): continue
 		pending.append(merged)
@@ -1574,7 +1574,7 @@ static func _compose_projected_records(base_records: Array, resolved_projection:
 	return {"ok": errors.is_empty(), "records": projected if errors.is_empty() else [], "errors": errors}
 
 
-static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary, authority: Dictionary, authority_digest: String) -> Dictionary:
+static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary, authority: Dictionary, authority_digest: String, boundary_serial: int = 0) -> Dictionary:
 	var result := base.duplicate(true)
 	var world_owner_token := str(semantic.get("world_sequence_owner_token", ""))
 	var scenario_owned := str(semantic.get("owner_namespace", "")) == "scenario" or not world_owner_token.is_empty()
@@ -1609,6 +1609,10 @@ static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary,
 		var action := _dict(action_value)
 		if scenario_owned or not str(action.get("action_origin_receipt_key", "")).is_empty() or not str(action.get("world_sequence_owner_token", "")).is_empty(): sequence_actions.append(action)
 	result["scenario_sequence_actions"] = sequence_actions
+	# The floating mouse card uses inline choices for multiple commands; its
+	# generic fallback exposes only the first action on an ordinary object.
+	if str(semantic.get("owner_namespace", "")) == "scenario" and world_owner_token.is_empty() and actions.size() > 1:
+		result["inline_actions"] = ScenarioSemanticViewModelScript.inline_actions_for_interaction(semantic, boundary_serial)
 	return result
 
 
