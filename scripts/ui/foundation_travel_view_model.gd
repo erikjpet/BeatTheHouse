@@ -570,7 +570,7 @@ static func travel_base_cache_key(host: Variant) -> String:
 				int(delivery.get("delivered_count", 0)),
 				str(delivery.get("handoff_pending_node_id", "")),
 			]
-	return "%s|%s|%s|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%s|%d|%d|%s|%d|%s|%s" % [
+	return "%s|%s|%s|%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%d|%s|%d|%d|%s|%d|%s|%s|%s" % [
 		host.current_screen,
 		host.run_state.seed_text,
 		str(host.run_state.current_environment.get("id", "")),
@@ -593,6 +593,7 @@ static func travel_base_cache_key(host: Variant) -> String:
 		int(closing_status.get("grace_actions_remaining", 0)),
 		tutorial_route_stage,
 		delivery_cache_key,
+		str(host.run_state.grand_casino_outward_travel_locked()),
 	]
 
 

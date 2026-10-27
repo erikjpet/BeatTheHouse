@@ -155,6 +155,7 @@ const GRAND_CASINO_INVITATION_TABLE_WIN_THRESHOLD := 300
 const GRAND_CASINO_INVITATION_TABLE_WIN_FLAG := "grand_casino_invite_table_win_spawned"
 const GRAND_CASINO_OBJECTIVE_ID := "grand_casino_demo_bankroll"
 const GRAND_CASINO_SHOWDOWN_EVENT_ID := "the_house_calls"
+const GRAND_CASINO_ROURKE_TRAVEL_LOCK_MESSAGE := "Rourke is waiting. Settle this before leaving the Grand Casino."
 const GRAND_CASINO_HIGH_ROLLER_EVENT_ID := "high_roller_cashout"
 const GRAND_CASINO_STATE_PRE := "pre-grand"
 const GRAND_CASINO_STATE_INCOMPLETE := "grand-incomplete"
@@ -2456,8 +2457,11 @@ func _event_cadence_visit_key(environment_data: Dictionary) -> String:
 
 # Leaving a room does not end its situation. Situation lifecycle is tied to the
 # venue's operating cycle and is replaced by RunGenerator only after a real
-# close/reopen boundary. This preflight remains as the stable travel API hook.
+# close/reopen boundary. The stable travel hook also keeps a Rourke summons
+# inside the casino while allowing its required internal room transitions.
 func scenario_preflight_environment_change(source_id: String = "", target_id: String = "", travel_kind: String = "") -> Dictionary:
+	if travel_kind == "world" and grand_casino_outward_travel_locked():
+		return {"ok": false, "inactive": false, "errors": [GRAND_CASINO_ROURKE_TRAVEL_LOCK_MESSAGE]}
 	return {"ok": true, "inactive": true, "errors": []}
 
 
@@ -8057,6 +8061,16 @@ func _begin_grand_casino_duel(terms: Dictionary) -> Dictionary:
 	return duel
 
 
+func grand_casino_outward_travel_locked() -> bool:
+	if is_terminal() or not _is_grand_casino_environment(current_environment):
+		return false
+	var value: Variant = narrative_flags.get("grand_casino_duel_state", {})
+	var duel: Dictionary = value if typeof(value) == TYPE_DICTIONARY else {}
+	return bool(narrative_flags.get("grand_casino_showdown_pending", false)) \
+		or bool(narrative_flags.get("grand_casino_showdown_active", false)) \
+		or str(duel.get("status", "")) == "active"
+
+
 func grand_casino_duel_active(environment: Dictionary = {}) -> bool:
 	_grand_casino_run_facade.bind(self)
 	return _grand_casino_run_facade.grand_casino_duel_active(environment)
@@ -11617,6 +11631,10 @@ func travel_route_status(route_data: Dictionary) -> Dictionary:
 		"requires_travel_count_min": maxi(0, int(route_data.get("requires_travel_count_min", 0))),
 		"travel_count": environment_travel_count(),
 	}
+	if grand_casino_outward_travel_locked():
+		status["available"] = false
+		status["disabled_reason"] = GRAND_CASINO_ROURKE_TRAVEL_LOCK_MESSAGE
+		return _finalize_travel_route_status(status, route_data)
 	if _route_locked_hint_enabled(route_data):
 		status["locked"] = false
 	var lock_remaining := current_travel_lock_remaining()
