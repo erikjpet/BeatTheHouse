@@ -12,9 +12,8 @@ const CONTEXT_MODE_META_TRADE_UP := "meta_trade_up"
 const CONTEXT_MODE_META_PAWN_COUNTER := "meta_pawn_counter"
 const CONTEXT_MODE_META_SAL_SHELF := "meta_sal_shelf"
 const CONTEXT_MODE_META_SAL_TALK := "meta_sal_talk"
-# Three authored bag positions fit every housing tier without sharing furniture.
-# Larger collections remain reachable through one Bag Shelf object in the third
-# position instead of drawing multiple bags on top of the same room surface.
+# Cap visible rewards at three, within the room's authored surface capacity.
+# Larger collections remain reachable through the existing Bag Shelf object.
 const MAX_VISIBLE_HOME_BAG_OBJECTS := 3
 const META_LOCATION_HOME := "home"
 const META_LOCATION_START_RUN := "start_run"
@@ -22,6 +21,7 @@ const META_LOCATION_START_RUN := "start_run"
 const MetaCollectionServiceScript := preload("res://scripts/core/meta_collection_service.gd")
 const CollectionItemResolverScript := preload("res://scripts/core/collection_item_resolver.gd")
 const EnvironmentSlotBinderScript := preload("res://scripts/core/environment_slot_binder.gd")
+const EnvironmentPlacementScript := preload("res://scripts/core/environment_placement.gd")
 const MetaCollectionViewModelScript := preload("res://scripts/ui/meta_collection_view_model.gd")
 const WorldMapScript := preload("res://scripts/core/world_map.gd")
 const AttributeBadgesScript := preload("res://scripts/core/attribute_badges.gd")
@@ -556,7 +556,18 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 			"focus_rect": _interaction_rect_for_object(run_state, "meta_container:%s" % container_id, CONTEXT_MODE_HOME_CONTAINER, index),
 		}, hover_target_id, focus_target_id, selected_object_id))
 	var bag_count := meta_collection_service.unopened_bag_count() if meta_collection_service != null else 0
-	var direct_bag_limit := MAX_VISIBLE_HOME_BAG_OBJECTS if bag_count <= MAX_VISIBLE_HOME_BAG_OBJECTS else MAX_VISIBLE_HOME_BAG_OBJECTS - 1
+	var trade_unlocked := bool(home.get("trade_up_unlocked", false))
+	var trade_station_visible := trade_unlocked or str(home.get("housing_tier", "")) != MetaCollectionServiceScript.HOUSING_BACK_ALLEY
+	var surface_map := EnvironmentPlacementScript.surface_map(run_state.current_environment)
+	var bag_slots := 0
+	for slot_value in JsonCoerceScript._copy_array(surface_map.get("fixed_slots", [])):
+		if typeof(slot_value) == TYPE_DICTIONARY and str((slot_value as Dictionary).get("footprint_class", "")) == "surface_item":
+			bag_slots += 1
+	# The Trade-Up Station shares this slot family. Back Alley has only one
+	# surface-item slot: show one shelf for multiple rewards, not two required
+	# objects that make the unchanged closed-envelope binder reject the room.
+	var visible_bag_limit := clampi(bag_slots - (1 if trade_station_visible else 0), 0, MAX_VISIBLE_HOME_BAG_OBJECTS)
+	var direct_bag_limit := visible_bag_limit if bag_count <= visible_bag_limit else maxi(0, visible_bag_limit - 1)
 	var bags := unopened_bag_rows(direct_bag_limit)
 	for index in range(bags.size()):
 		var bag := JsonCoerceScript._copy_dict(bags[index])
@@ -631,8 +642,7 @@ func _home_interactable_objects(run_state: RunState, hover_target_id: String, fo
 		"confirm_action_id": "buy_home_upgrade" if upgrade_enabled else "",
 		"focus_rect": _interaction_rect_for_object(run_state, "meta_upgrade:home", CONTEXT_MODE_META_UPGRADE, 0),
 	}, hover_target_id, focus_target_id, selected_object_id))
-	var trade_unlocked := bool(home.get("trade_up_unlocked", false))
-	if trade_unlocked or str(home.get("housing_tier", "")) != MetaCollectionServiceScript.HOUSING_BACK_ALLEY:
+	if trade_station_visible:
 		objects.append(_make_interactable_object({
 			"object_id": "meta_trade_up:station",
 			"object_type": CONTEXT_MODE_META_TRADE_UP,
