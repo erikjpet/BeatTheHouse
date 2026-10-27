@@ -11987,6 +11987,11 @@ func _finish_foundation_refresh(room_prepared: bool = false) -> void:
 	if run_state == null or current_screen == SCREEN_START:
 		_render_start_screen()
 		return
+	# The report model is published in phase 7. Keep its visibility/layout at
+	# that same boundary instead of exposing default labels during settlement.
+	if not _rourke_resolution.is_empty() and int(_rourke_resolution.get("step", -1)) <= 6 and run_state.is_terminal():
+		_rourke_resolution["terminal_presentation_pending"] = true
+		return
 	if room_prepared:
 		_render_prepared_environment_screen()
 	else:
