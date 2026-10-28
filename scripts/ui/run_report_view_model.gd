@@ -23,6 +23,7 @@ const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 const CrewStateModelScript := preload("res://scripts/core/crew_state_model.gd")
 const CageEconomyModelScript := preload("res://scripts/core/cage_economy_model.gd")
+const MoneyFlowArchiveScript := preload("res://scripts/core/run_money_flow_archive.gd")
 
 const CREW_MEMBER_LABELS := {
 	"crew_rook": "Rook",
@@ -72,6 +73,7 @@ static func snapshot_run(run: RunState) -> Dictionary:
 
 static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary:
 	var story_log := _dict_array(run_data.get("story_log", []))
+	var money_flow := build_money_flow(story_log, catalogs, run_data.get("story_money_archive", {}), int(run_data.get("story_log_archive_count", 0)))
 	var outcome := build_outcome(run_data, JsonCoerceScript._copy_dict(catalogs.get("outcomes", {})))
 	var score := JsonCoerceScript._copy_dict(run_data.get("terminal_score", {}))
 	if score.is_empty():
@@ -105,7 +107,8 @@ static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary
 		"bag_reward": build_bag_reward(run_data),
 		"meta_reward": build_meta_reward(run_data),
 		"debts": build_debt_ledger(_dict_array(run_data.get("debt", [])), story_log),
-		"money_rows": build_money_rows(story_log, catalogs),
+		"money_rows": money_flow.rows,
+		"money_coverage": money_flow.coverage,
 		"release_0_6": build_release_ledger(run_data),
 		"timeline": timeline,
 		"map_snapshot": report_map,
@@ -541,33 +544,30 @@ static func build_outcome(run_data: Dictionary, registry: Dictionary) -> Diction
 	}
 
 
-static func build_money_rows(story_log: Array, catalogs: Dictionary = {}) -> Array:
-	var totals := {}
-	var labels := {}
-	for value in story_log:
-		if typeof(value) != TYPE_DICTIONARY:
-			continue
-		var entry: Dictionary = value
-		var entry_type := str(entry.get("type", ""))
-		if entry_type == "travel_risk_event":
-			continue
-		var delta := _story_bankroll_delta(entry)
-		if delta == 0:
-			continue
-		var source := _money_source(entry)
-		var key := str(source.get("key", "other"))
-		totals[key] = int(totals.get(key, 0)) + delta
-		labels[key] = _source_label(entry, source, catalogs)
+static func build_money_rows(story_log: Array, catalogs: Dictionary = {}, raw_archive: Variant = {}, archive_count: int = 0) -> Array:
+	return build_money_flow(story_log, catalogs, raw_archive, archive_count).rows
+
+
+static func build_money_flow(story_log: Array, catalogs: Dictionary = {}, raw_archive: Variant = {}, archive_count: int = 0) -> Dictionary:
+	var summary := MoneyFlowArchiveScript.summarize(raw_archive, archive_count, story_log, {
+		"chip_game_ids": RunState.GRAND_CASINO_CHIP_GAME_IDS,
+		"grand_archetype_ids": RunState.GRAND_CASINO_ARCHETYPE_IDS,
+	})
 	var rows: Array = []
-	for key_value in totals.keys():
-		var key := str(key_value)
-		rows.append({"key": key, "label": str(labels.get(key, key.replace("_", " ").capitalize())), "net": int(totals[key])})
+	for bucket_key in summary.sources:
+		var source: Dictionary = summary.sources[bucket_key]
+		rows.append({
+			"key": source.key, "currency": source.currency, "net": int(source.net),
+			"label": _source_label({"label": source.label_hint}, source, catalogs),
+		})
 	rows.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
-		var absolute_a := absi(int(a.get("net", 0)))
-		var absolute_b := absi(int(b.get("net", 0)))
-		return absolute_a > absolute_b if absolute_a != absolute_b else str(a.get("label", "")) < str(b.get("label", ""))
+		if a.currency != b.currency:
+			return a.currency < b.currency
+		var absolute_a := absi(int(a.net))
+		var absolute_b := absi(int(b.net))
+		return absolute_a > absolute_b if absolute_a != absolute_b else str(a.label) < str(b.label)
 	)
-	return rows
+	return {"rows": rows, "coverage": summary.coverage}
 
 
 static func build_item_fates(inventory: Array, live_debt: Array, story_log: Array, item_catalog: Dictionary = {}) -> Dictionary:
@@ -1201,29 +1201,6 @@ static func catalog_by_id(entries: Array) -> Dictionary:
 			var entry: Dictionary = value
 			result[str(entry.get("id", ""))] = entry
 	return result
-
-
-static func _story_bankroll_delta(entry: Dictionary) -> int:
-	if entry.has("bankroll_delta"):
-		return int(entry.get("bankroll_delta", 0))
-	match str(entry.get("type", "")):
-		"item_sale": return maxi(0, int(entry.get("sale_price", 0)))
-		"item_purchase": return -maxi(0, int(entry.get("price", 0)))
-	return 0
-
-
-static func _money_source(entry: Dictionary) -> Dictionary:
-	var entry_type := str(entry.get("type", "other"))
-	if entry_type == "game_action":
-		var game_id := str(entry.get("game_id", entry.get("id", "game")))
-		return {"key": "game:%s" % game_id, "id": game_id, "kind": "game"}
-	if entry_type == "travel": return {"key": "travel", "id": "travel", "kind": "travel"}
-	if entry_type == "item_purchase": return {"key": "items_bought", "id": "items_bought", "kind": "items"}
-	if entry_type == "item_sale": return {"key": "items_sold", "id": "items_sold", "kind": "items"}
-	if entry_type == "lender_hook" or entry_type.begins_with("debt_"): return {"key": "lender:%s" % str(entry.get("lender_id", entry.get("id", "loans"))), "id": str(entry.get("lender_id", entry.get("id", "loans"))), "kind": "lender"}
-	if entry_type == "service_hook": return {"key": "services", "id": "services", "kind": "service"}
-	if entry_type.find("event") != -1 or entry.has("event_id"): return {"key": "events", "id": "events", "kind": "event"}
-	return {"key": entry_type, "id": str(entry.get("id", entry_type)), "kind": entry_type}
 
 
 static func _source_label(entry: Dictionary, source: Dictionary, catalogs: Dictionary) -> String:

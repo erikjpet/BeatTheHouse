@@ -94,7 +94,7 @@ func set_report(model: Dictionary) -> void:
 	score_formula.text = "$%d × %d = %d" % [base, multiplier, final_score] if bool(score.get("show_winner_bonus", false)) else "$%d = %d" % [base, final_score]
 	score_detail.text = "Money put to work  ×  Winner's bonus  =  Final score" if bool(score.get("show_winner_bonus", false)) else "Money put to work  =  Final score"
 	seed_label.text = "Seed: %s" % str(model.get("seed", ""))
-	_render_story(model.get("money_rows", []))
+	_render_story(model.get("money_rows", []), _dict(model.get("money_coverage", {})))
 	_render_release_ledger(_dict(model.get("release_0_6", {})))
 	_render_take_home_item_reward(_dict(model.get("take_home_item_reward", {})))
 	_render_bag_reward(_dict(model.get("bag_reward", {})))
@@ -465,14 +465,20 @@ func _notification(what: int) -> void:
 		_layout_sections()
 
 
-func _render_story(rows_value: Variant) -> void:
+func _render_story(rows_value: Variant, coverage: Dictionary = {}) -> void:
 	_clear(story_rows, 1)
 	var rows: Array = rows_value if typeof(rows_value) == TYPE_ARRAY else []
-	var maximum := 1
+	var unknown := maxi(0, int(coverage.get("unknown_entry_count", 0)))
+	if unknown > 0:
+		var notice := _label("Partial: %d older entries unknown." % unknown, 9, VisualStyle.AMBER)
+		notice.tooltip_text = "Money Flow includes recorded totals only; %d older story entries have no saved money summary." % unknown
+		story_rows.add_child(notice)
+	var maxima := {"cash": 1, "chips": 1}
 	for value in rows:
 		if typeof(value) == TYPE_DICTIONARY:
-			maximum = maxi(maximum, absi(int((value as Dictionary).get("net", 0))))
-	for value in rows.slice(0, 6):
+			var currency := str((value as Dictionary).get("currency", "cash"))
+			maxima[currency] = maxi(int(maxima.get(currency, 1)), absi(int(value.get("net", 0))))
+	for value in rows.slice(0, 5 if unknown > 0 else 6):
 		if typeof(value) != TYPE_DICTIONARY:
 			continue
 		var row: Dictionary = value
@@ -483,7 +489,7 @@ func _render_story(rows_value: Variant) -> void:
 		line.add_child(label)
 		var bar := ProgressBar.new()
 		bar.min_value = 0
-		bar.max_value = maximum
+		bar.max_value = int(maxima.get(str(row.get("currency", "cash")), 1))
 		bar.value = absi(int(row.get("net", 0)))
 		bar.show_percentage = false
 		bar.custom_minimum_size = Vector2(70, 12)
@@ -491,13 +497,15 @@ func _render_story(rows_value: Variant) -> void:
 		var tone := VisualStyle.TEAL if int(row.get("net", 0)) >= 0 else VisualStyle.PINK
 		bar.add_theme_stylebox_override("fill", VisualStyle.pixel_box(Color(tone, 0.78), tone, 1))
 		line.add_child(bar)
-		var amount := _label("%+d" % int(row.get("net", 0)), 10, tone)
+		var amount_text := "%+d chips" % int(row.get("net", 0)) if str(row.get("currency", "cash")) == "chips" else "%s$%d" % ["+" if int(row.get("net", 0)) >= 0 else "-", absi(int(row.get("net", 0)))]
+		var amount := _label(amount_text, 10, tone)
 		amount.custom_minimum_size = Vector2(55, 0)
+		amount.tooltip_text = amount_text
 		amount.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 		line.add_child(amount)
 		story_rows.add_child(line)
 	if rows.is_empty():
-		story_rows.add_child(_label("No money moved.", 10, VisualStyle.SOFT))
+		story_rows.add_child(_label("No recorded money moved." if unknown > 0 else "No money moved.", 10, VisualStyle.SOFT))
 
 
 func _render_release_ledger(ledger: Dictionary) -> void:
