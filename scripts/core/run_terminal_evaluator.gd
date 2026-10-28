@@ -49,7 +49,7 @@ static func _evaluate(run_state: RunState, library: ContentLibrary, include_reco
 		result["reason"] = RunState.FAILURE_POLICE_CAPTURE
 		result["message"] = RunState.POLICE_CAPTURE_FAILURE_MESSAGE
 		return result
-	if run_state.bankroll <= 0:
+	if not run_state.has_liquid_run_funds():
 		if run_state.has_working_craps_wagers() or run_state.has_pending_coin_pusher_resolution():
 			result["bankroll_zero_deferred"] = true
 			result["recovery_available"] = true
@@ -149,8 +149,9 @@ static func _has_valid_wager(run_state: RunState, library: ContentLibrary) -> bo
 			continue
 		var economic_profile: Dictionary = run_state.current_environment.get("economic_profile", {})
 		var floor := maxi(1, int(economic_profile.get("stake_floor", 1)))
-		var ceiling := run_state.wager_stake_ceiling(int(economic_profile.get("stake_ceiling", run_state.bankroll)))
-		if mini(ceiling, run_state.bankroll) >= floor:
+		var capacity := run_state.wager_capacity_for_game(game_id, run_state.current_environment)
+		var ceiling := run_state.wager_stake_ceiling(int(economic_profile.get("stake_ceiling", capacity)))
+		if mini(ceiling, capacity) >= floor:
 			return true
 	return false
 
