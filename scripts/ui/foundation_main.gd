@@ -7115,6 +7115,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 		run_report_model = {}
 		run_report_model_key = ""
 		if run_state.run_status == RunState.RUN_STATUS_ENDED:
+			_persist_victory_bag_claim("", true)
 			_route_ended_run_if_needed()
 		else:
 			_route_failed_run_if_needed()
@@ -20958,16 +20959,36 @@ func _process_terminal_meta_bag_drops() -> void:
 func claim_victory_collection_bag(marker_id: String) -> void:
 	if run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
 		return
-	if meta_collection_service == null or collection_drop_service == null:
-		_initialize_meta_collection()
-	var result: Dictionary = collection_drop_service.flush_selected_pending_bag(run_state, meta_collection_service, marker_id)
-	if bool(result.get("ok", false)):
-		var save_error := meta_collection_service.save()
-		if save_error == OK and not JsonCoerceScript._copy_array(result.get("summary_lines", [])).is_empty():
-			save_status_message = "Collection bag stored."
+	var result := _persist_victory_bag_claim(marker_id)
 	_show_message(str(result.get("message", "Collection choice updated.")))
 	run_report_model_key = ""
 	_render_run_report()
+
+
+func _persist_victory_bag_claim(marker_id: String, recover_only: bool = false) -> Dictionary:
+	if run_state == null or run_state.run_status != RunState.RUN_STATUS_ENDED:
+		return {"ok": false, "message": "No completed reward is available."}
+	if save_service == null:
+		return {"ok": false, "message": "Run storage is unavailable. The reward remains pending."}
+	if meta_collection_service == null or collection_drop_service == null:
+		_initialize_meta_collection()
+	var before_flags := run_state.narrative_flags.duplicate(true)
+	var before_pending := run_state.pending_bag_markers()
+	var result: Dictionary = collection_drop_service.reconcile_terminal_bag_claim(run_state, meta_collection_service) if recover_only \
+		else collection_drop_service.flush_selected_pending_bag(run_state, meta_collection_service, marker_id)
+	if not bool(result.get("ok", false)) or not bool(result.get("resolved", false)):
+		return result
+	# The meta bag and receipt are durable first. Do not unlock the report until
+	# the run acknowledges that same choice durably. On failure retain the meta
+	# receipt, but restore pending UI state so a retry cannot allocate twice.
+	var save_error := save_service.save_run(run_state, autosave_slot_id)
+	if save_error != OK:
+		run_state.narrative_flags = before_flags
+		run_state.pending_bags = before_pending
+		save_status_message = "Bag stored; run receipt save failed. Please retry."
+		return {"ok": false, "save_error": save_error, "message": save_status_message}
+	save_status_message = "Collection bag stored."
+	return result
 
 
 func claim_victory_container_item(item_id: String) -> void:

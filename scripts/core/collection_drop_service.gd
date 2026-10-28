@@ -269,6 +269,9 @@ func flush_selected_pending_bag(run_state: RunState, meta_collection_service: Va
 	var existing_lines := JsonCoerceScript._copy_array(run_state.narrative_flags.get(GRANTS_FLAG, []))
 	if bool(run_state.narrative_flags.get(FLUSHED_FLAG, false)):
 		return {"ok": true, "granted": [], "summary_lines": existing_lines, "message": "A bag was already brought home."}
+	var recovery := reconcile_terminal_bag_claim(run_state, meta_collection_service)
+	if not bool(recovery.get("ok", false)) or bool(recovery.get("resolved", false)):
+		return recovery
 	var selected_id := marker_id.strip_edges()
 	if selected_id.is_empty():
 		return {"ok": false, "granted": [], "summary_lines": [], "message": "Choose a bag to bring home."}
@@ -283,20 +286,57 @@ func flush_selected_pending_bag(run_state: RunState, meta_collection_service: Va
 	var bagdef_id := int(selected_marker.get("bagdef_id", -1))
 	if bagdef_id < 0:
 		return {"ok": false, "granted": [], "summary_lines": [], "message": "That bag cannot be extracted."}
-	var grant: Dictionary = meta_collection_service.grant_bag(bagdef_id, str(selected_marker.get("rng_seed", "")), selected_marker)
-	var granted: Array = []
-	if not grant.is_empty():
-		granted.append(grant)
-	var summary_lines := summary_lines_for_markers(granted)
+	var committed: Dictionary = meta_collection_service.commit_terminal_bag_claim(str(run_state.narrative_flags.get(SAL_STOCK_RECEIPT_FLAG, "")), selected_marker)
+	if not bool(committed.get("ok", false)):
+		return committed
+	return _apply_terminal_bag_claim(run_state, JsonCoerceScript._copy_dict(committed.get("bag", {})))
+
+
+# Called once at Continue, or by an explicit retry. It never chooses/grants a
+# new reward: only a durable per-run receipt or a proven legacy grant qualifies.
+func reconcile_terminal_bag_claim(run_state: RunState, meta_collection_service: Variant) -> Dictionary:
+	if run_state == null or meta_collection_service == null or run_state.run_status != RunState.RUN_STATUS_ENDED \
+			or not run_state.meta_collection_enabled_for_run() or bool(run_state.narrative_flags.get(FLUSHED_FLAG, false)):
+		return {"ok": true, "resolved": false}
+	var receipt := str(run_state.narrative_flags.get(SAL_STOCK_RECEIPT_FLAG, "")).strip_edges()
+	if receipt.is_empty():
+		return {"ok": false, "message": "The completed run's reward receipt is unavailable."}
+	var markers: Array = []
+	for value in run_state.pending_bag_markers():
+		markers.append(_enriched_marker(JsonCoerceScript._copy_dict(value)))
+	var bag: Dictionary = meta_collection_service.terminal_bag_claim(receipt)
+	if bag.is_empty():
+		var legacy: Dictionary = meta_collection_service.legacy_terminal_bag_claim(receipt, markers)
+		if not bool(legacy.get("ok", false)):
+			return legacy
+		bag = JsonCoerceScript._copy_dict(legacy.get("bag", {}))
+		if bag.is_empty():
+			return {"ok": true, "resolved": false}
+		var committed: Dictionary = meta_collection_service.commit_terminal_bag_claim(receipt, bag, bag)
+		if not bool(committed.get("ok", false)):
+			return committed
+	var selected_id := str(bag.get("marker_id", ""))
+	var matches := false
+	for value in markers:
+		if str(value.get("marker_id", "")) == selected_id:
+			matches = true
+	if not matches or int(bag.get("instance_id", 0)) <= 0:
+		return {"ok": false, "message": "The stored reward does not match this completed run. No additional bag was granted."}
+	return _apply_terminal_bag_claim(run_state, bag)
+
+
+func _apply_terminal_bag_claim(run_state: RunState, bag: Dictionary) -> Dictionary:
+	var summary_lines := summary_lines_for_markers([bag])
 	run_state.narrative_flags[GRANTS_FLAG] = summary_lines
-	run_state.narrative_flags[SELECTED_FLAG] = selected_id
+	run_state.narrative_flags[SELECTED_FLAG] = str(bag.get("marker_id", ""))
 	run_state.narrative_flags[FLUSHED_FLAG] = true
 	run_state.clear_pending_bag_markers()
 	return {
 		"ok": true,
-		"granted": granted,
+		"resolved": true,
+		"granted": [bag],
 		"summary_lines": summary_lines,
-		"message": "Collection bag stored." if not granted.is_empty() else "No collection bag was stored.",
+		"message": "Collection bag stored.",
 	}
 
 

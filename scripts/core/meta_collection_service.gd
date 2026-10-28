@@ -50,7 +50,7 @@ const STORE_STORAGE_KEYS := [
 	"housing_tier", "owned_containers", "loadout",
 	"starter_card_home_grant_applied", "meta_home", "trade_up_history",
 	"sale_history", "pending_sale", "pending_trade_up", "meta_rng",
-	"next_instance_id", "sal_resale",
+	"next_instance_id", "sal_resale", "terminal_bag_claims",
 ]
 
 const FIXTURE_PROVENANCE_TOKENS := [
@@ -232,6 +232,82 @@ func grant_bag(bagdef_id: int, rng_seed: String = "", metadata: Dictionary = {})
 	_unopened_bag_index[int(bag.get("instance_id", 0))] = bag
 	_unopened_bag_index_source_count = bags.size()
 	return bag.duplicate(true)
+
+
+# One durable choice per completed run, retained even after its bag is opened.
+# The run receipt is unique across runs; a deterministic marker alone is not.
+func terminal_bag_claim(run_receipt: String) -> Dictionary:
+	return JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(_store.get("terminal_bag_claims", {})).get(run_receipt, {}))
+
+
+func commit_terminal_bag_claim(run_receipt: String, marker: Dictionary, existing_bag: Dictionary = {}) -> Dictionary:
+	var receipt := run_receipt.strip_edges()
+	if receipt.is_empty():
+		return {"ok": false, "message": "The completed run's reward receipt is unavailable."}
+	var claims := JsonCoerceScript._copy_dict(_store.get("terminal_bag_claims", {}))
+	if claims.has(receipt):
+		var recorded := terminal_bag_claim(receipt)
+		if int(recorded.get("instance_id", 0)) <= 0 or str(recorded.get("marker_id", "")).is_empty():
+			return {"ok": false, "message": "The stored reward receipt could not be verified."}
+		return {"ok": true, "bag": recorded, "reused": true}
+	if int(marker.get("bagdef_id", -1)) < 0 or str(marker.get("marker_id", "")).is_empty():
+		return {"ok": false, "message": "That bag cannot be extracted."}
+	var before := snapshot()
+	var bag := existing_bag.duplicate(true)
+	if bag.is_empty():
+		bag = grant_bag(int(marker.get("bagdef_id", -1)), str(marker.get("rng_seed", "")), marker)
+	claims[receipt] = bag.duplicate(true)
+	_store["terminal_bag_claims"] = claims
+	var save_error := save()
+	if save_error != OK:
+		# Only discard this uncommitted staging; never reload an older generation
+		# over other in-memory profile work or acknowledge an unsaved allocation.
+		_store = before
+		_rebuild_owned_instance_index()
+		_state_revision += 1
+		return {"ok": false, "save_error": save_error, "message": "Collection bag could not be saved. Please try again."}
+	return {"ok": true, "bag": bag, "reused": not existing_bag.is_empty()}
+
+
+# Old versions saved the bag without the run's claimed flag. Recover only the
+# unique matching last grant, proved by the preceding durable meta generation.
+func legacy_terminal_bag_claim(run_receipt: String, markers: Array) -> Dictionary:
+	var marker_ids := {}
+	var marker_seeds := {}
+	for value in markers:
+		var marker := JsonCoerceScript._copy_dict(value)
+		marker_ids[str(marker.get("marker_id", ""))] = true
+		marker_seeds[str(marker.get("rng_seed", ""))] = true
+	var recorded_ids := {}
+	for value in JsonCoerceScript._copy_dict(_store.get("terminal_bag_claims", {})).values():
+		recorded_ids[int(JsonCoerceScript._copy_dict(value).get("instance_id", 0))] = true
+	var matches: Array = []
+	for bag in unopened_bags():
+		if not recorded_ids.has(int(bag.get("instance_id", 0))) and marker_ids.has(str(bag.get("marker_id", ""))):
+			matches.append(bag)
+	for item in owned_instances():
+		if not recorded_ids.has(int(item.get("source_bag_instance_id", 0))) and marker_seeds.has(str(item.get("source_rng_seed", ""))):
+			return {"ok": false, "message": "An earlier reward may already have been opened. Its claim needs recovery before another bag can be chosen."}
+	if matches.is_empty():
+		return {"ok": true, "bag": {}}
+	var ambiguous := {"ok": false, "message": "An earlier matching reward could not be verified safely. No additional bag was granted."}
+	if matches.size() != 1:
+		return ambiguous
+	var bag := JsonCoerceScript._copy_dict(matches[0])
+	var bag_id := int(bag.get("instance_id", 0))
+	var backup := DurableStoreScript.read_json(DurableStoreScript.backup_path(store_path()), Callable(self, "_meta_payload_valid"))
+	if not bool(backup.get("ok", false)):
+		return ambiguous
+	var previous := JsonCoerceScript._copy_dict(backup.get("data", {}))
+	var previous_ids: Array = []
+	for value in JsonCoerceScript._copy_array(previous.get("unopened_bags", [])):
+		previous_ids.append(int(JsonCoerceScript._copy_dict(value).get("instance_id", 0)))
+	var prior_receipts := JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(previous.get("sal_resale", {})).get("processed_run_receipts", []))
+	if bag_id <= 0 or previous_ids.has(bag_id) or int(previous.get("next_instance_id", 0)) != bag_id \
+			or int(_store.get("next_instance_id", 0)) != bag_id + 1 or not prior_receipts.has(run_receipt) \
+			or not sal_run_receipt_processed(run_receipt):
+		return ambiguous
+	return {"ok": true, "bag": bag}
 
 
 func open_bag(instance_id: int) -> Dictionary:
@@ -1264,6 +1340,7 @@ func _normalize_store(data: Dictionary) -> Dictionary:
 	normalized["sale_history"] = _bounded_array(JsonCoerceScript._copy_array(normalized.get("sale_history", [])), META_TRANSACTION_HISTORY_LIMIT)
 	normalized["pending_sale"] = JsonCoerceScript._copy_dict(normalized.get("pending_sale", {}))
 	normalized["pending_trade_up"] = JsonCoerceScript._copy_dict(normalized.get("pending_trade_up", {}))
+	normalized["terminal_bag_claims"] = JsonCoerceScript._copy_dict(normalized.get("terminal_bag_claims", {}))
 	normalized["meta_rng"] = _normalize_meta_rng(normalized.get("meta_rng", {}))
 	normalized["next_instance_id"] = maxi(
 		maxi(FIRST_INSTANCE_ID, int(normalized.get("next_instance_id", FIRST_INSTANCE_ID))),
