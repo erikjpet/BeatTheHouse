@@ -657,7 +657,11 @@ func enter_environment_layer(run_state: RunState, target_layer_id: String, advan
 	# rebuild the identical inventory in a fresh process. The post-reconciliation
 	# application below remains necessary because scenario projection can replace
 	# the flat event arrays.
-	CrewRecruitmentModelScript.apply_to_environment(run_state, run_state.current_environment)
+	var crew_membership := _prepare_layer_crew_membership(run_state)
+	if not bool(crew_membership.get("ok", false)):
+		_restore_travel_snapshot(run_state, rollback)
+		var membership_errors := JsonCoerceScript._copy_array(crew_membership.get("errors", []))
+		return {"ok": false, "message": str(membership_errors[0]) if not membership_errors.is_empty() else "The room's Crew presence could not be prepared safely."}
 	var layer_finalized := run_state.scenario_finalize_installed_environment(library)
 	if not bool(layer_finalized.get("ok", false)):
 		_restore_travel_snapshot(run_state, rollback)
@@ -665,10 +669,16 @@ func enter_environment_layer(run_state: RunState, target_layer_id: String, advan
 		return {"ok": false, "message": str(layer_errors[0]) if not layer_errors.is_empty() else "The room semantic contract could not be finalized."}
 	# Scenario reconciliation and layer installation can replace flat event
 	# arrays. Recompute recruitment against the final layer before publication.
-	CrewRecruitmentModelScript.apply_to_environment(run_state, run_state.current_environment)
-	if target_id == "back_room":
-		# Seal final ordinary-event membership before testing this private door.
-		run_state.reconcile_current_environment_object_manifest(true)
+	var final_membership := _prepare_layer_crew_membership(run_state)
+	if not bool(final_membership.get("ok", false)):
+		_restore_travel_snapshot(run_state, rollback)
+		var final_membership_errors := JsonCoerceScript._copy_array(final_membership.get("errors", []))
+		return {"ok": false, "message": str(final_membership_errors[0]) if not final_membership_errors.is_empty() else "The room's final Crew presence could not be prepared safely."}
+	var publication := run_state.publish_room_presentation()
+	if not bool(publication.get("ok", false)):
+		_restore_travel_snapshot(run_state, rollback)
+		var publication_errors := JsonCoerceScript._copy_array(publication.get("errors", []))
+		return {"ok": false, "message": str(publication_errors[0]) if not publication_errors.is_empty() else "The room could not be published safely."}
 	var exit_errors := _crew_room_exit_errors(run_state.current_environment)
 	if not exit_errors.is_empty():
 		_restore_travel_snapshot(run_state, rollback)
@@ -683,6 +693,19 @@ func enter_environment_layer(run_state: RunState, target_layer_id: String, advan
 		"access_method": str(access.get("access_method", "open")),
 		"message": str(layer_state.get("layer_entry_message", "You pass through the interior door.")),
 	}
+
+
+func _prepare_layer_crew_membership(run_state: RunState) -> Dictionary:
+	# Authenticate the installed baseline before this owner changes its derived
+	# Crew inputs. Reconciliation below authorizes that mutation, never a repair
+	# of arbitrary stale or edited incoming room authority.
+	var errors := EnvironmentInstance.object_manifest_errors(run_state.current_environment)
+	var authority := EnvironmentSlotBinderScript.validate_base_layout_authority(run_state.current_environment)
+	errors.append_array(JsonCoerceScript._copy_array(authority.get("errors", [])))
+	if not errors.is_empty():
+		return {"ok": false, "errors": errors}
+	CrewRecruitmentModelScript.apply_to_environment(run_state, run_state.current_environment)
+	return run_state.reconcile_environment_object_membership(run_state.current_environment)
 
 
 # A failed room projection must not trap a run. This deliberately narrow route

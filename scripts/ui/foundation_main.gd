@@ -16449,13 +16449,13 @@ func _enter_environment_layer(layer_id: String) -> bool:
 		return false
 	var result := generator.enter_environment_layer(run_state, layer_id, true)
 	if not bool(result.get("ok", false)):
-		_show_message(str(result.get("message", "The door stays shut.")))
+		_show_environment_action_acknowledgement(str(result.get("message", "The door stays shut.")))
 		_refresh()
 		return false
 	clear_interaction_focus()
 	_queue_room_publication_check()
 	_set_current_screen(SCREEN_ENVIRONMENT)
-	_show_message(str(result.get("message", "You pass through the interior door.")))
+	_show_environment_action_acknowledgement(str(result.get("message", "You pass through the interior door.")))
 	_autosave_foundation_run("Autosaved.")
 	_refresh()
 	return true
