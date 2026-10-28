@@ -92,6 +92,7 @@ func item_offer_view_list(selected_item_id: String = "") -> Array:
 		item_context["pickup"] = pickup
 		var game_affinity := AttributeBadgesScript.item_game_affinity_id(item_context)
 		var addition_count := _effect_addition_count(item_definition.get("effect", {}))
+		var eligibility := runtime_item_purchase_eligibility(item_id)
 		offers.append({
 			"id": item_id,
 			"display_name": display_name,
@@ -111,6 +112,9 @@ func item_offer_view_list(selected_item_id: String = "") -> Array:
 			"game_affinity": game_affinity,
 			"game_affinity_label": AttributeBadgesScript.item_game_affinity_label(item_context),
 			"affordable": run_state.bankroll >= price,
+			"already_carried": not bool(eligibility.get("enabled", false)),
+			"enabled": bool(eligibility.get("enabled", false)) and run_state.bankroll >= price,
+			"disabled_reason": str(eligibility.get("reason", "")) if not bool(eligibility.get("enabled", false)) else "Not enough bankroll." if run_state.bankroll < price else "",
 			"selected": item_id == selected_item_id,
 		})
 	# The Cage shop uses the same room-item contract as every other merchant.
@@ -239,6 +243,9 @@ func buy_item_offer(item_id: String) -> Dictionary:
 		return _service_error("Item definition is missing.")
 	if not _item_enabled_for_run(item_id):
 		return _service_error("That item is not part of this run.")
+	var eligibility := runtime_item_purchase_eligibility(item_id)
+	if not bool(eligibility.get("enabled", false)):
+		return _service_error(str(eligibility.get("reason", "Already carried.")))
 	var price := int(offer.get("price", 0))
 	if price < 0:
 		return _service_error("Item price is invalid.")
@@ -266,6 +273,7 @@ func cage_gift_shop_offer_view_list() -> Array:
 		var sold := bool(stock.get("sold", false))
 		var item_context := definition.duplicate(true)
 		item_context["price"] = price
+		var eligibility := runtime_item_purchase_eligibility(item_id)
 		result.append({
 			"id": item_id,
 			"item_id": item_id,
@@ -290,8 +298,9 @@ func cage_gift_shop_offer_view_list() -> Array:
 			"chip_price": price,
 			"sold": sold,
 			"affordable": not sold and run_state.grand_casino_chips >= price,
-			"enabled": not sold and run_state.grand_casino_chips >= price,
-			"disabled_reason": "Sold." if sold else "Need %d chips." % price if run_state.grand_casino_chips < price else "",
+			"already_carried": not bool(eligibility.get("enabled", false)),
+			"enabled": not sold and bool(eligibility.get("enabled", false)) and run_state.grand_casino_chips >= price,
+			"disabled_reason": "Sold." if sold else str(eligibility.get("reason", "")) if not bool(eligibility.get("enabled", false)) else "Need %d chips." % price if run_state.grand_casino_chips < price else "",
 		})
 	return result
 
@@ -306,6 +315,9 @@ func buy_cage_gift_shop_offer(item_id: String) -> Dictionary:
 			break
 	if offer.is_empty() or bool(offer.get("sold", false)):
 		return _service_error("That gift-case item is no longer available.")
+	var eligibility := runtime_item_purchase_eligibility(item_id)
+	if not bool(eligibility.get("enabled", false)):
+		return _service_error(str(eligibility.get("reason", "Already carried.")))
 	var price := maxi(1, int(offer.get("chip_price", 1)))
 	if run_state.grand_casino_chips < price:
 		return _service_error("Need %d chips for %s." % [price, str(offer.get("display_name", item_id))])
@@ -360,6 +372,9 @@ func _cage_gift_purchase_result(item_id: String, offer: Dictionary, item_definit
 
 
 func _commit_cage_gift_transaction(item_id: String, quoted_price: int) -> Dictionary:
+	var eligibility := runtime_item_purchase_eligibility(item_id)
+	if not bool(eligibility.get("enabled", false)):
+		return _service_error(str(eligibility.get("reason", "Already carried.")))
 	var candidate := run_state.detached_host_action_candidate()
 	if candidate == null:
 		return _service_error("The gift-case purchase could not create a safe state snapshot.")
@@ -387,6 +402,9 @@ func _commit_cage_gift_transaction(item_id: String, quoted_price: int) -> Dictio
 	var item_definition := library.item(item_id)
 	if item_definition.is_empty() or not candidate_service._item_enabled_for_run(item_id):
 		return _service_error("That item is no longer part of this run.")
+	var candidate_eligibility := candidate_service.runtime_item_purchase_eligibility(item_id)
+	if not bool(candidate_eligibility.get("enabled", false)):
+		return _service_error(str(candidate_eligibility.get("reason", "Already carried.")))
 	var result := candidate_service._cage_gift_purchase_result(item_id, candidate_offer, item_definition)
 	if not bool(result.get("ok", false)):
 		return _service_error(str(result.get("message", "The gift case declines the purchase.")))
@@ -398,6 +416,8 @@ func _commit_cage_gift_transaction(item_id: String, quoted_price: int) -> Dictio
 	var applied := GameModule.apply_result(candidate, applied_result)
 	if not bool(applied.get("ok", false)):
 		return _service_error(str(applied.get("message", "The gift-case purchase could not settle safely.")))
+	if not candidate.inventory.has(item_id):
+		return _service_error("The gift-case item could not be added safely.")
 	if candidate.is_terminal() or candidate.closing_time_forced_travel_required():
 		return _service_error("The gift-case purchase was cancelled because its settlement ended the run.")
 	if candidate_service._definition_is_active_item(item_definition):
@@ -1152,6 +1172,9 @@ func _hook_present_in_current_environment(kind: String, hook_id: String) -> bool
 # as one detached publication. The item effect is rebuilt from candidate state
 # after the boundary so no live-state proposal can become stale.
 func _commit_money_transaction(price: int, transaction_kind: String, source_id: String) -> Dictionary:
+	var eligibility := runtime_item_purchase_eligibility(source_id)
+	if transaction_kind == "item" and not bool(eligibility.get("enabled", false)):
+		return _service_error(str(eligibility.get("reason", "Already carried.")))
 	var candidate := run_state.detached_host_action_candidate()
 	if candidate == null:
 		return _service_error("The transaction could not create a safe state snapshot.")
@@ -1174,6 +1197,9 @@ func _commit_money_transaction(price: int, transaction_kind: String, source_id: 
 	var item_definition := library.item(source_id)
 	if item_definition.is_empty() or not candidate_service._item_enabled_for_run(source_id):
 		return _service_error("That item is no longer part of this run.")
+	var candidate_eligibility := candidate_service.runtime_item_purchase_eligibility(source_id)
+	if not bool(candidate_eligibility.get("enabled", false)):
+		return _service_error(str(candidate_eligibility.get("reason", "Already carried.")))
 	var item_effect := ItemEffectScript.new()
 	item_effect.setup(item_definition)
 	var effect_result: Dictionary = item_effect.apply({
@@ -1195,6 +1221,8 @@ func _commit_money_transaction(price: int, transaction_kind: String, source_id: 
 	var applied := GameModule.apply_result(candidate, applied_result)
 	if not bool(applied.get("ok", false)):
 		return _service_error(str(applied.get("message", "The item purchase could not settle safely.")))
+	if not candidate.inventory.has(source_id):
+		return _service_error("The purchased item could not be added safely.")
 	if candidate.is_terminal() or candidate.closing_time_forced_travel_required():
 		return _service_error("The item purchase was cancelled because its settlement ended the run.")
 	candidate.remove_item_offer(source_id)
@@ -1281,6 +1309,13 @@ func _money_transaction_cancelled(boundary_result: Dictionary, fallback: String)
 func _membership_reconciliation_error(result: Dictionary, fallback: String) -> String:
 	var errors := JsonCoerceScript._copy_array(result.get("errors", []))
 	return str(errors[0]) if not errors.is_empty() else fallback
+
+
+# Runtime string grants follow add_item's carried-only uniqueness. Distinct
+# collection-instance dictionaries and stored/collateral items remain eligible.
+func runtime_item_purchase_eligibility(item_id: String) -> Dictionary:
+	var already_carried := run_state != null and run_state.inventory.has(item_id)
+	return {"enabled": not already_carried, "reason": "Already carried." if already_carried else ""}
 
 
 # Converts an ItemEffect result plus offer data into a purchase result.

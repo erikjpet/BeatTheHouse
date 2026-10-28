@@ -301,7 +301,8 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 		var item_id := str(offer.get("id", ""))
 		if item_id.is_empty():
 			continue
-		var enabled := bool(offer.get("affordable", true)) and not failed
+		var enabled := bool(offer.get("enabled", true)) and bool(offer.get("affordable", true)) and not failed
+		var offer_disabled_reason := str(offer.get("disabled_reason", "")).strip_edges()
 		var object_id := str(offer.get("object_id", "item:%s" % item_id))
 		var action_label := "Pickup" if bool(offer.get("pickup", false)) else str(offer.get("action_label", "Buy"))
 		var price := maxi(0, int(offer.get("price", 0)))
@@ -321,7 +322,7 @@ static func interactable_object_view_list(run_state: RunState, library: ContentL
 			"presence": "dynamic",
 			"enabled": enabled,
 			"disabled_reason": "" if enabled else failed_reason if failed else str(offer.get("disabled_reason", "Not enough chips." if currency == "chips" else "Not enough bankroll.")),
-			"action_summary": "" if enabled else "Needs more chips before it can be bought." if currency == "chips" else "Needs more bankroll before it can be used.",
+			"action_summary": "" if enabled else failed_reason if failed else offer_disabled_reason if not offer_disabled_reason.is_empty() else "Needs more chips before it can be bought." if currency == "chips" else "Needs more bankroll before it can be used.",
 			"effect_summary": str(offer.get("effect_summary", "")),
 			"addition_count": maxi(0, int(offer.get("addition_count", 0))),
 			"impact_summary": str(offer.get("purpose_summary", "")).strip_edges(),
