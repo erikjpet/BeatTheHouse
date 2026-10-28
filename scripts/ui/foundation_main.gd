@@ -4068,6 +4068,10 @@ func _on_talk_dock_choice_requested(event_id: String, choice_id: String) -> void
 	if _is_lender_conversation_entry(lender_entry):
 		_resolve_lender_conversation_choice(lender_entry, choice_id)
 		return
+	var authored_choice := _event_choice(_eligible_event_option(event_id), choice_id)
+	if not authored_choice.is_empty() and bool(authored_choice.get("enabled", true)) and bool(authored_choice.get("dismissal", false)):
+		_close_talk_without_effect(event_id)
+		return
 	if _talk_choice_is_ignore(choice_id) and not _is_authored_talk_choice(event_id, choice_id) and _ignore_talk_event(event_id, "choice"):
 		_refresh()
 		return
