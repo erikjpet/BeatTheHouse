@@ -57,6 +57,7 @@ const FIELDS := [
 	{"key": "story_flags"},
 	{"key": "story_log"},
 	{"key": "story_log_archive_count", "transform": "exact_integer"},
+	{"key": "story_money_archive"},
 	{"key": "crew_state"},
 	{"key": "scenario_host_transaction_ledger"},
 	{"key": "world_sequence_registrations"},

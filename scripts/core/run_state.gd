@@ -2,6 +2,7 @@ class_name RunState
 extends RefCounted
 
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const RunMoneyFlowArchiveScript := preload("res://scripts/core/run_money_flow_archive.gd")
 const PersistentEnvironmentProjectionScript := preload("res://scripts/core/persistent_environment_projection.gd")
 const INACTIVE_STORAGE_PROJECTION_BUDGET := 4 * 1024 * 1024
 const INACTIVE_CASINO_STORAGE_PREFIX := "casino-room::"
@@ -433,6 +434,7 @@ var narrative_flags: Dictionary = {}
 var story_flags: Dictionary = {}
 var story_log: Array = []
 var story_log_archive_count: int = 0
+var story_money_archive: Dictionary = {}
 var crew_trust_by_member: Dictionary:
 	get: return _crew_run_facade.trust_by_member
 	set(value): _crew_run_facade.trust_by_member = value
@@ -554,7 +556,7 @@ const TURN_TRANSACTION_COLLECTION_FIELDS := [
 	"rourke_escort_state", "pending_triggered_events", "pending_bags",
 	"active_triggered_event", "event_cadence", "music_arrangement_state",
 	"music_tempo_state", "music_choreography_state", "environment_history",
-	"unlocked_travel", "narrative_flags", "story_flags", "story_log",
+	"unlocked_travel", "narrative_flags", "story_flags", "story_log", "story_money_archive",
 	"crew_trust_by_member", "crew_grievance_ledger", "crew_jobs",
 	"active_delivery_run", "crew_pattern_memory",
 	"scenario_host_transaction_ledger", "crew_match_marks",
@@ -653,6 +655,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	story_flags = {}
 	story_log = []
 	story_log_archive_count = 0
+	story_money_archive = RunMoneyFlowArchiveScript.normalize_archive({}, 0)
 	crew_trust_by_member = CrewStateModelScript.default_trust()
 	crew_grievance_ledger = []
 	crew_jobs = {}
@@ -13090,8 +13093,13 @@ func _compact_story_log() -> void:
 	var overflow := story_log.size() - MAX_STORY_LOG_ENTRIES
 	if overflow <= 0:
 		return
+	story_money_archive = RunMoneyFlowArchiveScript.append_evicted_rows(story_money_archive, story_log_archive_count, story_log.slice(0, overflow), _story_money_currency_rules())
 	story_log = story_log.slice(overflow, story_log.size())
 	story_log_archive_count = maxi(0, story_log_archive_count) + overflow
+
+
+func _story_money_currency_rules() -> Dictionary:
+	return {"chip_game_ids": GRAND_CASINO_CHIP_GAME_IDS, "grand_archetype_ids": GRAND_CASINO_ARCHETYPE_IDS}
 
 
 func _remember_story_seen_flags(story_entry: Dictionary) -> void:
@@ -15256,6 +15264,7 @@ func _run_state_schema_values() -> Dictionary:
 		"story_flags": story_flags.duplicate(true),
 		"story_log": _normalize_story_log(story_log),
 		"story_log_archive_count": story_log_archive_count,
+		"story_money_archive": story_money_archive.duplicate(true),
 		# Every serialized projection is observer-safe. Hidden Turn authority and
 		# grievances live only in the authenticated fixed-size private capsule.
 		"crew_state": _crew_state_for_save(true, false),
@@ -15471,6 +15480,7 @@ func _save_snapshot(deep_copy_seeded_scenario_definitions: bool, travel_preview:
 		"story_flags": story_flags.duplicate(false),
 		"story_log": [] if travel_preview else story_log.duplicate(false),
 		"story_log_archive_count": story_log_entry_count() if travel_preview else story_log_archive_count,
+		"story_money_archive": RunMoneyFlowArchiveScript.append_evicted_rows(story_money_archive, story_log_archive_count, story_log, _story_money_currency_rules()) if travel_preview else story_money_archive.duplicate(true),
 		"crew_state": _crew_state_for_save(false, true),
 		"scenario_host_transaction_ledger": scenario_host_transaction_ledger.duplicate(true),
 		"active_delivery_run": active_delivery_run.duplicate(false),
@@ -15651,6 +15661,7 @@ func _run_state_schema_restore(data: Dictionary) -> void:
 	_reconcile_tier_two_casino_spawn_eligibility()
 	_reconcile_grand_casino_invitation_uniqueness()
 	story_log_archive_count = maxi(0, int(data.get("story_log_archive_count", 0)))
+	story_money_archive = RunMoneyFlowArchiveScript.normalize_archive(data.get("story_money_archive", {}), story_log_archive_count)
 	story_log = _normalize_story_log(JsonCoerceScript._copy_array(data.get("story_log", [])))
 	for story_entry_value in story_log:
 		if typeof(story_entry_value) == TYPE_DICTIONARY:
