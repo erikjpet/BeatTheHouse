@@ -18248,6 +18248,13 @@ func _result_from_story_log(entries: Array) -> Dictionary:
 			if story_entry.has(key):
 				var value: Variant = story_entry[key]
 				restored[key] = value.duplicate(true) if typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY] else value
+		if _recorded_baccarat_uses_chips(story_entry):
+			# Older Baccarat rows retain the net amount under the cash-named alias.
+			# Recover its denomination from the recorded venue, never today's room.
+			restored["currency"] = "chips"
+			if not restored.has("currency_delta"):
+				var recorded_settlement := JsonCoerceScript._copy_dict(restored.get("settlement", {}))
+				restored["currency_delta"] = int(recorded_settlement.get("delta", story_entry.get("bankroll_delta", 0)))
 		var applied := GameModule.applied_currency_settlement(story_entry)
 		if not applied.is_empty():
 			restored["applied_currency_settlement"] = applied
@@ -18281,6 +18288,24 @@ func _result_from_story_log(entries: Array) -> Dictionary:
 			restored["deltas"]["chips_delta"] = chip_delta
 		return restored
 	return {}
+
+
+func _recorded_baccarat_uses_chips(entry: Dictionary) -> bool:
+	if run_state == null or str(entry.get("type", "")) != "game_action" or str(entry.get("game_id", "")) != "baccarat":
+		return false
+	if entry.has("currency"):
+		return str(entry.get("currency", "")) == "chips"
+	var recorded_archetype := str(entry.get("environment_archetype_id", "")).strip_edges()
+	var recorded_id := str(entry.get("environment_id", "")).strip_edges()
+	var recorded_environment := {}
+	if not recorded_archetype.is_empty():
+		# An explicit source archetype takes precedence over a conflicting ID.
+		recorded_environment["archetype_id"] = recorded_archetype
+	elif not recorded_id.is_empty():
+		recorded_environment["id"] = recorded_id
+	else:
+		return false
+	return GameModule.presentation_currency_for_game(run_state, "baccarat", recorded_environment) == "chips"
 
 
 func _story_is_unmeasured_blackjack_penalty(entry: Dictionary) -> bool:
@@ -21329,7 +21354,7 @@ func _game_result_from_story_log(entries: Array) -> Dictionary:
 		var entry: Dictionary = entries[index]
 		if str(entry.get("type", "")) != "game_action":
 			continue
-		if entry.has("currency") or not GameModule.applied_currency_settlement(entry).is_empty() or _story_is_unmeasured_blackjack_penalty(entry):
+		if entry.has("currency") or not GameModule.applied_currency_settlement(entry).is_empty() or _story_is_unmeasured_blackjack_penalty(entry) or _recorded_baccarat_uses_chips(entry):
 			var result := _result_from_story_log([entry])
 			result["type"] = "game_action_summary"
 			result["action_kind"] = "summary"
