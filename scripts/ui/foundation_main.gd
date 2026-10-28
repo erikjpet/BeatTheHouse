@@ -18195,10 +18195,11 @@ func _result_from_story_log(entries: Array) -> Dictionary:
 		var message := str(story_entry.get("message", ""))
 		if message.is_empty():
 			message = _story_entry_label(story_entry)
-		return GameModule.build_action_result({
+		var restored := GameModule.build_action_result({
 			"ok": true,
 			"type": str(story_entry.get("type", "story_summary")),
 			"source_id": str(story_entry.get("id", story_entry.get("game_id", story_entry.get("item_id", "")))),
+			"game_id": str(story_entry.get("game_id", "")),
 			"action_id": str(story_entry.get("action_id", "")),
 			"bankroll_delta": int(story_entry.get("bankroll_delta", 0)),
 			"suspicion_delta": int(story_entry.get("suspicion_delta", 0)),
@@ -18211,7 +18212,49 @@ func _result_from_story_log(entries: Array) -> Dictionary:
 			"message": message,
 			"environment_id": str(story_entry.get("environment_id", "")),
 		})
+		for key in ["currency", "currency_delta", "chips_delta", "settlement", "message_key", "message_params", "nominal_bankroll_delta"]:
+			if story_entry.has(key):
+				var value: Variant = story_entry[key]
+				restored[key] = value.duplicate(true) if typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY] else value
+		var applied := GameModule.applied_currency_settlement(story_entry)
+		if not applied.is_empty():
+			restored["applied_currency_settlement"] = applied
+			restored["currency"] = "chips"
+			restored["currency_delta"] = int(applied.delta)
+			restored["chips_delta"] = int(applied.chips_delta)
+			restored["bankroll_delta"] = int(applied.cash_delta)
+			restored["deltas"]["bankroll_delta"] = int(applied.cash_delta)
+			restored["deltas"]["chips_delta"] = int(applied.chips_delta)
+		elif _story_is_unmeasured_watched_peek(story_entry):
+			# The old instruction cannot establish what a clamped account lost.
+			# Report its recorded nominal amount without inventing a measured zero.
+			restored["currency"] = "chips"
+			restored["applied_currency_unknown"] = true
+			restored["nominal_bankroll_delta"] = int(story_entry.get("nominal_bankroll_delta", story_entry.get("bankroll_delta", 0)))
+			restored.erase("currency_delta")
+			restored.erase("chips_delta")
+			restored.erase("settlement")
+			restored["bankroll_delta"] = 0
+			restored["deltas"]["bankroll_delta"] = 0
+			restored["message"] = "Caught peeking. Recorded penalty: %d chips. The actual applied loss was not recorded in this older save." % absi(int(restored.nominal_bankroll_delta))
+			restored["messages"] = [restored.message]
+			restored["deltas"]["messages"] = [restored.message]
+		elif str(restored.get("currency", "")) == "chips":
+			# Structured older chip receipts still keep their original units.
+			var chip_delta := int(restored.get("currency_delta", story_entry.get("bankroll_delta", 0)))
+			restored["chips_delta"] = chip_delta
+			restored["bankroll_delta"] = 0
+			restored["deltas"]["bankroll_delta"] = 0
+			restored["deltas"]["chips_delta"] = chip_delta
+		return restored
 	return {}
+
+
+func _story_is_unmeasured_watched_peek(entry: Dictionary) -> bool:
+	var room := str(entry.get("environment_archetype_id", entry.get("environment_id", "")))
+	return str(entry.get("game_id", "")) == "blackjack" and str(entry.get("action_id", "")) == "peek_hole_card" \
+			and bool(entry.get("dealer_caught_cheat", false)) and bool(entry.get("pit_boss_watched", entry.get("watched", false))) \
+			and (room == "grand_casino" or room.begins_with("grand_casino_"))
 
 
 func _suspicion_cue_view_list() -> Array:
@@ -21245,6 +21288,20 @@ func _run_summary_text(state: RunState) -> String:
 
 
 func _game_result_from_story_log(entries: Array) -> Dictionary:
+	for index in range(entries.size() - 1, -1, -1):
+		if typeof(entries[index]) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = entries[index]
+		if str(entry.get("type", "")) != "game_action":
+			continue
+		if entry.has("currency") or not GameModule.applied_currency_settlement(entry).is_empty() or _story_is_unmeasured_watched_peek(entry):
+			var result := _result_from_story_log([entry])
+			result["type"] = "game_action_summary"
+			result["action_kind"] = "summary"
+			result["display_name"] = "%s Saved Result" % _game_display_name(str(entry.get("game_id", "")))
+			result["summary_source"] = "saved_story_log"
+			return result
+		break
 	return TerminalConsequenceViewModelScript.game_result_from_story_log(entries, Callable(self, "_game_display_name"), Callable(self, "_label_from_id"))
 
 

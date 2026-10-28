@@ -75,6 +75,7 @@ func _caught_case(available: int) -> void:
 		facts[str(available)] = {"result":result}
 		return
 	var applied := -mini(available,40)
+	check(int(run.narrative_flags.get("profile_bankroll_lost",0))==40-applied,"%s integrated profile counts paid40 plus actual Peek loss" % available)
 	var witness := GameModule.applied_currency_settlement(result)
 	check(not witness.is_empty() and int(witness.get("delta",1)) == applied,"%s explicit measured applied loss" % available)
 	check(int(witness.get("cash_delta",1)) == 0 and int(witness.get("nominal_chips_delta",0)) == -40 and int(witness.get("nominal_cash_delta",1)) == 0,"witness retains routed nominal instructions")

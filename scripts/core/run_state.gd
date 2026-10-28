@@ -7387,6 +7387,22 @@ func record_profile_game_result(result: Dictionary) -> void:
 	var bankroll_delta := int(deltas.get("bankroll_delta", result.get("bankroll_delta", 0)))
 	if str(result.get("currency", "")) == "chips":
 		bankroll_delta = int(deltas.get("chips_delta", result.get("chips_delta", 0)))
+		# A clamped watched-Peek instruction is nominal. Only an explicit measured
+		# witness can replace it; older aggregate/history entries are not rewritten.
+		var applied: Variant = result.get("applied_currency_settlement")
+		var valid_applied := typeof(applied) == TYPE_DICTIONARY
+		if valid_applied:
+			valid_applied = str(applied.get("schema", "")) == "bth.applied_currency_settlement/v1" and str(applied.get("currency", "")) == "chips"
+			for key in ["delta", "cash_delta", "chips_delta", "nominal_cash_delta", "nominal_chips_delta"]:
+				var value: Variant = applied.get(key)
+				if typeof(value) not in [TYPE_INT, TYPE_FLOAT] or not is_finite(float(value)) or float(value) != float(int(value)):
+					valid_applied = false
+			if valid_applied:
+				valid_applied = int(applied.cash_delta) == 0 and int(applied.nominal_cash_delta) == 0 \
+						and int(applied.delta) == int(applied.chips_delta) \
+						and int(applied.chips_delta) <= 0 and int(applied.chips_delta) >= int(applied.nominal_chips_delta)
+		if valid_applied:
+			bankroll_delta = int(applied.delta)
 	if bankroll_delta > 0:
 		narrative_flags["profile_bankroll_won"] = maxi(0, int(narrative_flags.get("profile_bankroll_won", 0))) + bankroll_delta
 		narrative_flags["profile_biggest_single_win"] = maxi(maxi(0, int(narrative_flags.get("profile_biggest_single_win", 0))), bankroll_delta)
