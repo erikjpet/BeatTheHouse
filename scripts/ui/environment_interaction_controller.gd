@@ -111,7 +111,7 @@ static func prepare_room_catalog_at_boundary(host: Variant) -> Array:
 		if not bool(projected.get("ok", false)):
 			return _fail_closed_room_records(live, "Committed room projection is invalid.")
 		result = restore_live_presentation_fields(_array(projected.get("records", [])), live, _array(environment.get("resolved_event_ids", [])))
-		result = append_unsealed_live_records(result, live, sealed)
+		result = append_unsealed_live_records(result, live, sealed, environment)
 	result = _join_object_manifest(result, environment, false, proof)
 	return _attach_action_only_records(_attach_delivery_handoff_to_contact(host, result))
 
@@ -364,7 +364,7 @@ static func compile_room_catalog_at_boundary(host: Variant) -> Array:
 				trusted_base_result,
 				JsonCoerceScript._copy_array(host.run_state.current_environment.get("resolved_event_ids", []))
 			)
-			result = append_unsealed_live_records(result, trusted_base_result, sealed_base_records)
+			result = append_unsealed_live_records(result, trusted_base_result, sealed_base_records, host.run_state.current_environment)
 	elif world_sequence_active:
 		var world_finalized: Dictionary = _dict(host.run_state.world_sequence_finalize_base_semantics(result, host.library, layout_context))
 		if not bool(world_finalized.get("ok", false)):
@@ -384,7 +384,7 @@ static func compile_room_catalog_at_boundary(host: Variant) -> Array:
 				trusted_base_result,
 				JsonCoerceScript._copy_array(host.run_state.current_environment.get("resolved_event_ids", []))
 			)
-			result = append_unsealed_live_records(result, trusted_base_result, sealed_world_base_records)
+			result = append_unsealed_live_records(result, trusted_base_result, sealed_world_base_records, host.run_state.current_environment)
 	else:
 		host.run_state.current_environment.erase("scenario_sequence_lifecycle_errors")
 		host.run_state.current_environment.erase("scenario_layout_audit")
@@ -1196,10 +1196,11 @@ static func _requires_live_membership(record: Dictionary) -> bool:
 # those ordinary controls only when their presentation id was never admitted to
 # the scenario base inventory; a sealed tombstone can therefore never be
 # resurrected by the live presentation pass.
-static func append_unsealed_live_records(projected_records: Array, live_records: Array, sealed_base_records: Array) -> Array:
+static func append_unsealed_live_records(projected_records: Array, live_records: Array, sealed_base_records: Array, environment: Dictionary = {}) -> Array:
 	var result := projected_records.duplicate(true)
 	var sealed_ids: Dictionary = {}
 	var visible_ids: Dictionary = {}
+	var appended_ids: Dictionary = {}
 	for record_value in sealed_base_records:
 		var record := _dict(record_value)
 		var object_id := str(record.get("object_id", "")).strip_edges()
@@ -1215,7 +1216,81 @@ static func append_unsealed_live_records(projected_records: Array, live_records:
 		if object_id.is_empty() or sealed_ids.has(object_id) or visible_ids.has(object_id): continue
 		result.append(record)
 		visible_ids[object_id] = true
-	return result
+		appended_ids[object_id] = true
+	return _reconcile_unsealed_record_slots(result, appended_ids, environment)
+
+
+# Live and sealed inventories are bound independently. A late traveler can
+# therefore claim a slot already retained by a sealed contact. Keep every
+# projected record fixed and reconcile only newcomers through the existing
+# authored-slot guard, before the combined catalog reaches the Canvas guard.
+static func _reconcile_unsealed_record_slots(records: Array, appended_ids: Dictionary, environment: Dictionary) -> Array:
+	if environment.is_empty() or appended_ids.is_empty():
+		return records
+	var slots := EnvironmentPlacementScript.all_slots(EnvironmentPlacementScript.surface_map(environment))
+	var slots_by_id: Dictionary = {}
+	for value in slots:
+		var slot := _dict(value)
+		slots_by_id[str(slot.get("id", ""))] = slot
+	var occupied: Dictionary = {}
+	var newcomers: Dictionary = {}
+	for value in records:
+		var record := _dict(value)
+		if not bool(record.get("visible", true)) or str(record.get("presentation_mode", "room")) != "room" \
+				or not EnvironmentSlotBinderScript.base_record_requires_room_slot(record):
+			continue
+		var identity := str(record.get("object_id", ""))
+		var slot_id := str(record.get("slot_id", ""))
+		if identity.is_empty() or not slots_by_id.has(slot_id):
+			return _fail_closed_room_records(records, "Composed room record has no authored slot.")
+		if appended_ids.has(identity):
+			var binding := EnvironmentSlotBinderScript._room_binding(identity, str(record.get("placement_class", "")), str(record.get("slot_family", "")), _dict(slots_by_id[slot_id]))
+			var route := _dict(record.get("actor_route_stage", {}))
+			if not route.is_empty(): binding["route"] = route.duplicate(true)
+			newcomers[identity] = binding
+			continue
+		var claims: Array = [slot_id]
+		var route := _dict(record.get("actor_route_stage", {}))
+		for field in ["start_slot_id", "end_slot_id"]:
+			var endpoint := str(route.get(field, ""))
+			if not endpoint.is_empty() and not claims.has(endpoint): claims.append(endpoint)
+		for claim in claims:
+			if occupied.has(claim) and str(occupied[claim]) != identity:
+				return _fail_closed_room_records(records, "Projected room records conflict on a sealed slot.")
+			occupied[claim] = identity
+	if newcomers.is_empty():
+		return records
+	# Reserve uncontested newcomer slots first. A displaced actor must not steal
+	# the valid position of a later row; colliding newcomers resolve by stable ID.
+	var ordered := newcomers.keys()
+	ordered.sort()
+	for identity in ordered:
+		var slot_id := str(newcomers[identity].slot_id)
+		if not occupied.has(slot_id): occupied[slot_id] = identity
+	var guarded := EnvironmentSlotBinderScript.guard_unique_slot_bindings(newcomers, appended_ids, occupied, slots, "sealed/live room composition")
+	if not _array(guarded.get("errors", [])).is_empty():
+		return _fail_closed_room_records(records, "Live room slot allocation failed: %s" % JSON.stringify(guarded.errors))
+	var bindings := _dict(guarded.get("slot_bindings", {}))
+	for index in range(records.size()):
+		var record := _dict(records[index])
+		var identity := str(record.get("object_id", ""))
+		if not bindings.has(identity): continue
+		var binding := _dict(bindings[identity])
+		if str(record.get("slot_id", "")) == str(binding.get("slot_id", "")): continue
+		var rect := EnvironmentSlotBinderScript.rect_from_binding(binding)
+		var normalized := EnvironmentSlotBinderScript.normalized_rect(rect)
+		var label_rect := EnvironmentSlotBinderScript.normalized_rect(EnvironmentSlotBinderScript.label_rect_from_binding(binding, str(record.get("label", ""))))
+		record["slot_id"] = str(binding.slot_id)
+		record["slot_family"] = str(binding.slot_family)
+		record["normalized_rect"] = normalized.duplicate(true)
+		record["focus_rect"] = normalized.duplicate(true)
+		record["small_screen_rect"] = EnvironmentSlotBinderScript.normalized_rect(EnvironmentSlotBinderScript.expanded_rect(rect))
+		record["label_rect"] = label_rect.duplicate(true)
+		record["small_screen_label_rect"] = label_rect.duplicate(true)
+		record["focus_point"] = {"x": rect.get_center().x, "y": rect.get_center().y}
+		record["fixed_slot_geometry"] = true
+		records[index] = record
+	return records
 
 
 static func project_sequence_interactions(base_records: Array, projection: Dictionary, environment: Dictionary = {}) -> Array:
