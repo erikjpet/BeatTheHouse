@@ -4350,6 +4350,8 @@ func _enqueue_talk_events_for_action_boundary(source: String) -> bool:
 func _apply_forced_environment_travel(_source: String) -> Dictionary:
 	if run_state == null:
 		return {"ok": false, "applied": false, "errors": ["Forced travel requires an active run."]}
+	if not run_state.reconcile_health_inspector_venue_scope():
+		return {"ok": true, "applied": false, "errors": []}
 	var closing_actions := int(run_state.narrative_flags.get("health_inspector_closing_actions", 0))
 	if closing_actions <= 0:
 		return {"ok": true, "applied": false, "errors": []}

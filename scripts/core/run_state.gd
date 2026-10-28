@@ -2465,6 +2465,36 @@ func scenario_preflight_environment_change(source_id: String = "", target_id: St
 	return {"ok": true, "inactive": true, "errors": []}
 
 
+func reconcile_health_inspector_venue_scope() -> bool:
+	if int(narrative_flags.get("health_inspector_closing_actions", 0)) <= 0:
+		return false
+	var origin := str(narrative_flags.get("health_inspector_origin_environment_id", "")).strip_edges()
+	if origin.is_empty():
+		# Legacy saves retain the accepted event's venue in history. Never attach
+		# an unknown old allowance to whichever room happens to be loaded now.
+		for index in range(story_log.size() - 1, -1, -1):
+			var entry: Dictionary = story_log[index]
+			if str(entry.get("type", "")) != "event" or str(entry.get("event_id", "")) != "health_inspector":
+				continue
+			if str(entry.get("choice_id", "")) == "finish_one":
+				origin = str(entry.get("environment_id", "")).strip_edges()
+			break
+		if not origin.is_empty():
+			narrative_flags["health_inspector_origin_environment_id"] = origin
+	if origin.is_empty():
+		return false
+	if str(current_environment.get("id", "")) == origin:
+		return true
+	# Internal layers share the venue's stored room family. An actual departure
+	# retires its allowance; later actions in another venue cannot spend it.
+	var layers := JsonCoerceScript._copy_dict(current_environment.get("layer_states", {}))
+	for layer_value in layers.values():
+		if typeof(layer_value) == TYPE_DICTIONARY and str((layer_value as Dictionary).get("id", "")) == origin:
+			return true
+	narrative_flags["health_inspector_closing_actions"] = 0
+	return false
+
+
 # Sets the current environment and records the previous one.
 func set_environment(environment_data: Dictionary, debug_timing: Dictionary = {}) -> Dictionary:
 	var perf_timing_enabled := not debug_timing.is_empty()
@@ -2640,6 +2670,7 @@ func set_environment(environment_data: Dictionary, debug_timing: Dictionary = {}
 	if perf_timing_enabled:
 		debug_timing["destination_models"] = Time.get_ticks_usec() - perf_stage_started_usec
 	CharacterOfferModelScript.synchronize(self)
+	reconcile_health_inspector_venue_scope()
 	return {"ok": true, "applied": true, "errors": []}
 
 
@@ -13039,6 +13070,10 @@ func recovery_pressure_status(recovery_available: bool = false, bankroll_zero_de
 func log_story(event_data: Dictionary) -> void:
 	var story_entry := event_data.duplicate(true)
 	story_log.append(story_entry)
+	if str(story_entry.get("type", "")) == "event" and str(story_entry.get("event_id", "")) == "health_inspector" and str(story_entry.get("choice_id", "")) == "finish_one":
+		var inspector_origin := str(story_entry.get("environment_id", "")).strip_edges()
+		if not inspector_origin.is_empty():
+			narrative_flags["health_inspector_origin_environment_id"] = inspector_origin
 	_remember_story_seen_flags(story_entry)
 	_compact_story_log()
 
@@ -15621,6 +15656,7 @@ func _run_state_schema_restore(data: Dictionary) -> void:
 		if typeof(story_entry_value) == TYPE_DICTIONARY:
 			_remember_story_seen_flags(story_entry_value as Dictionary)
 	_compact_story_log()
+	reconcile_health_inspector_venue_scope()
 	if active_delivery_run.is_empty() and not legacy_streets_migration.is_empty():
 		_migrate_legacy_streets_run(legacy_streets_migration)
 	# Restore the authoritative clock before synthesizing any missing timeline

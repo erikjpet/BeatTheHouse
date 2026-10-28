@@ -45,6 +45,7 @@ func _run() -> void:
 		_check(app.run_state.current_world_node_id() == "bar", "The inspector response spent its own last move.")
 		_check(app.run_state.bankroll == cash and app.run_state.rng_state == rng, "Arming the allowance charged travel or consumed gameplay RNG.")
 		_check(int(app.run_state.narrative_flags.get("health_inspector_closing_actions", 0)) == 1, "One last move was not left armed.")
+		_check(str(app.run_state.narrative_flags.get("health_inspector_origin_environment_id", "")) == str(app.run_state.current_environment.get("id", "")), "Inspector allowance did not bind the accepted venue.")
 		_check(not bool(app.run_state.narrative_flags.get("health_inspector_forced_travel", false)), "Forced travel was published before the next action.")
 		_check(app.run_state.active_triggered_event.is_empty(), "Resolved inspector still owns the modal.")
 		_check(JSON.stringify(app.run_state.event_cadence.get("rng_state", 0)) == event_rng, "Resolving the inspector rerolled event cadence.")
@@ -70,6 +71,10 @@ func _run() -> void:
 		_check(app.run_state.current_world_node_id() == "bar" and int(app.run_state.narrative_flags.get("health_inspector_closing_actions", 0)) == 0, "Bribe unexpectedly armed or applied forced travel.")
 		_check(app.run_state.rng_state == rng, "Bribe changed gameplay RNG.")
 	if app.save_service != null and app.save_service.async_save_in_flight(): app.save_service.wait_for_async_save()
+	_check(app.return_to_main_menu(), "Normal final Main Menu cleanup failed.")
+	await process_frame
+	app.queue_free()
+	for frame in range(3): await process_frame
 	for failure in failures: push_error(failure)
 	print("Health Inspector last-move checks: ", checks, " failures=", failures.size())
 	quit(0 if failures.is_empty() else 1)
