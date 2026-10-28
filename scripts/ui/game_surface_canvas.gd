@@ -1336,21 +1336,23 @@ func _process(delta: float) -> void:
 	# audio. Sync before the visual early return so completed actions still land
 	# their terminal cues without advancing any presentation state.
 	_sync_surface_audio()
+	var clamped_delta := maxf(0.0, delta)
+	# Input and game deadlines remain live when only visual motion is reduced.
+	# Keep the existing pause owner and tick exactly once in either setting.
+	if not environment_activity_paused:
+		surface_simulation_clock_msec += clamped_delta * 1000.0
 	if reduce_motion:
 		flicker = 0.0
 		surface_render_elapsed_sec = 0.0
 		continuous_redraw_was_active = false
 		surface_animation_redraw_accumulator = 0.0
 		return
-	var clamped_delta := maxf(0.0, delta)
 	flicker += clamped_delta
 	surface_render_elapsed_sec += clamped_delta
 	# Presentation must remain live while a tutorial conversation freezes game
-	# logic. Channels opt into this clock explicitly; the simulation clock below
+	# logic. Channels opt into this clock explicitly; the simulation clock above
 	# still stops, so timers and automated game actions cannot advance.
 	surface_presentation_clock_msec += clamped_delta * 1000.0
-	if not environment_activity_paused:
-		surface_simulation_clock_msec += clamped_delta * 1000.0
 	_schedule_surface_animation_redraws(clamped_delta)
 
 
