@@ -436,7 +436,7 @@ static func game_risk_summary(definition: Dictionary, nudge_heat_preview: Dictio
 		return "No cheat action is offered at this game."
 	var result := str(summaries[0])
 	if str(definition.get("id", "")) == "blackjack":
-		return "%s A caught Peek can forfeit the hand, bar this table, and push total Heat as high as %d. Risk depends on dealer attention and current modifiers." % [result, RunState.BLACKJACK_BACKOFF_HEAT]
+		return "Caught Peek can forfeit the hand, bar this table, and raise total Heat up to %d; dealer attention and modifiers affect risk." % RunState.BLACKJACK_BACKOFF_HEAT
 	if str(definition.get("id", "")) == "slot":
 		if not nudge_heat_preview.is_empty():
 			var heat := maxi(0, int(nudge_heat_preview.get("suspicion_delta", highest_heat)))
