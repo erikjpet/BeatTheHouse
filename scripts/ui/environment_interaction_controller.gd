@@ -102,7 +102,11 @@ static func prepare_room_catalog_at_boundary(host: Variant) -> Array:
 	var finalized := _dict(publication.get("finalized", {}))
 	var result := live
 	if not bool(finalized.get("inactive", true)):
-		var sealed := _without_resolved_event_presence(_array(finalized.get("records", [])), _array(environment.get("resolved_event_ids", [])))
+		# Authenticate the complete immutable baseline first. Filtering a consumed
+		# clerk/contact here makes the sealed-coverage validator reject every room
+		# control. restore_live_presentation_fields below already suppresses resolved
+		# ordinary events against the committed journal, after strict validation.
+		var sealed := _array(finalized.get("records", []))
 		var projected := project_finalized_sequence_interaction_result(sealed, finalized)
 		if not bool(projected.get("ok", false)):
 			return _fail_closed_room_records(live, "Committed room projection is invalid.")

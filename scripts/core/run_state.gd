@@ -5657,7 +5657,7 @@ func environment_layer_state(layer_id: String) -> Dictionary:
 	return JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(current_environment.get("layer_states", {})).get(layer_id.strip_edges(), {}))
 
 
-func install_environment_layer_state(layer_id: String, layer_state: Dictionary) -> bool:
+func install_environment_layer_state(layer_id: String, layer_state: Dictionary, library: ContentLibrary = null) -> bool:
 	var target_id := layer_id.strip_edges()
 	if not is_layered_environment() or layer_state.is_empty():
 		return false
@@ -5697,7 +5697,7 @@ func install_environment_layer_state(layer_id: String, layer_state: Dictionary) 
 			# never publish an empty one that would make the side-door entry fail.
 			_ensure_scenario_host_public_context()
 			current_environment["scenario_sequence_pending_visit_id"] = str(current_environment.get("environment_visit_id", ""))
-	CharacterChainModelScript.apply_to_environment(self, current_environment)
+	CharacterChainModelScript.apply_to_environment(self, current_environment, library)
 	reconcile_current_environment_object_manifest(true)
 	return true
 
@@ -14452,6 +14452,10 @@ func enqueue_triggered_event(event_id: String, source: String = "", context: Dic
 			return false
 	if pending_triggered_events.size() >= MAX_PENDING_TRIGGERED_EVENTS:
 		return false
+	var manual_talk := source == "event_object" or str(context.get("source", "")) == "event_object"
+	if str(entry_overrides.get("presentation", "modal")) == "talk" and not manual_talk:
+		if neutral_talk_dismissed_at_current_boundary(normalized_id):
+			return false
 	if normalized_id == "crew_favor_delivery" and not _crew_package_hourly_attempt(): return false
 	var queued_context := context.duplicate(true)
 	var entry := {
@@ -14595,6 +14599,37 @@ func complete_talk_event_resolution(event_id: String = "") -> void:
 		if expected_id.is_empty() or str(entry.get("event_id", "")) == expected_id:
 			pending_triggered_events.remove_at(index)
 			return
+
+
+func _neutral_dialogue_dismissal_context(event_id: String) -> Dictionary:
+	return {
+		"environment_id": str(current_environment.get("id", "")),
+		"action_index": int(event_cadence.get("action_index", 0)),
+		"crew_hour": int(game_clock_minutes / 60) if event_id == "crew_favor_delivery" else -1,
+	}
+
+
+func neutral_talk_dismissed_at_current_boundary(event_id: String) -> bool:
+	var dismissed := JsonCoerceScript._copy_dict(narrative_flags.get("neutral_dialogue_dismissals", {}))
+	var prior := JsonCoerceScript._copy_dict(dismissed.get(event_id, {}))
+	var current := _neutral_dialogue_dismissal_context(event_id)
+	return not prior.is_empty() and str(prior.get("environment_id", "")) == str(current.environment_id) \
+			and int(prior.get("action_index", -1)) == int(current.action_index) \
+			and int(prior.get("crew_hour", -2)) == int(current.crew_hour)
+
+
+func dismiss_talk_event_without_effect(event_id: String) -> bool:
+	# Closing is UI/request ownership, never an event outcome. Keep all authored
+	# flags, rewards, jobs and clocks untouched so a later valid response remains
+	# possible. The same automatic prompt cannot reopen on its current boundary.
+	var entry := pending_talk_event(event_id)
+	if entry.is_empty():
+		return false
+	var dismissed := JsonCoerceScript._copy_dict(narrative_flags.get("neutral_dialogue_dismissals", {}))
+	dismissed[event_id] = _neutral_dialogue_dismissal_context(event_id)
+	narrative_flags["neutral_dialogue_dismissals"] = dismissed
+	complete_talk_event_resolution(event_id)
+	return true
 
 
 # Retires every unresolved conversation without applying its choices. Terminal
@@ -15610,7 +15645,7 @@ func _run_state_schema_restore(data: Dictionary) -> void:
 	run_failure_reason = str(data.get("run_failure_reason", FAILURE_NONE))
 	run_failure_message = str(data.get("run_failure_message", ""))
 	run_spending_score = maxi(0, int(data.get("run_spending_score", 0)))
-	var pending_paid_game := _blackjack_authority_has_unsettled_wager() or _pull_tab_has_pending_resolution() or has_pending_coin_pusher_resolution()
+	var pending_paid_game := _blackjack_authority_has_unsettled_wager() or _pull_tab_has_pending_resolution() or _scratch_ticket_has_pending_resolution() or has_pending_coin_pusher_resolution()
 	_refresh_economy(pending_paid_game)
 	_activate_current_local_suspicion(true)
 	_initialize_grand_casino_objective_runtime()
@@ -16220,7 +16255,7 @@ func _restore_crew_state(saved: Dictionary, legacy: bool) -> void:
 	crew_pattern_memory = CrewPokerModelScript.unpack_observations(saved.get("p", {}))
 	crew_match_marks = {}
 	crew_contraband_stash = _normalize_inventory_entries(saved.get("stash", []))
-	crew_recruitment_encounters = CrewRecruitmentModelScript.normalize_encounter_state(saved.get("encounters", CrewRecruitmentModelScript.new_encounter_state()))
+	crew_recruitment_encounters = CrewRecruitmentModelScript.encounter_state_from_save(saved.get("encounters", CrewRecruitmentModelScript.new_encounter_state()))
 	if crew_recruitment_encounters.is_empty():
 		crew_recruitment_encounters = CrewRecruitmentModelScript.new_encounter_state()
 	else:
@@ -17619,6 +17654,42 @@ static func pull_tab_ticket_resolution_pending(ticket_state: Dictionary) -> bool
 		if typeof(tickets) == TYPE_ARRAY and not (tickets as Array).is_empty():
 			return true
 	return false
+
+
+static func scratch_ticket_resolution_pending(ticket_state: Dictionary) -> bool:
+	# Only issued player tickets can keep a broke run open. Venue stock, filed
+	# losers and display receipts do not own an unsettled purchase or payout.
+	var active: Variant = ticket_state.get("active_ticket", {})
+	if typeof(active) == TYPE_DICTIONARY and _scratch_ticket_is_unresolved(active):
+		return true
+	for field in ["tray_stack", "pending_queue"]:
+		var tickets: Variant = ticket_state.get(field, [])
+		if typeof(tickets) != TYPE_ARRAY:
+			continue
+		for ticket in tickets:
+			if typeof(ticket) == TYPE_DICTIONARY and _scratch_ticket_is_unresolved(ticket):
+				return true
+	var winners: Variant = ticket_state.get("winner_pile", [])
+	if typeof(winners) == TYPE_ARRAY:
+		for ticket in winners:
+			if typeof(ticket) == TYPE_DICTIONARY and not str(ticket.get("id", "")).is_empty() and int(ticket.get("payout", 0)) > 0:
+				return true
+	return false
+
+
+static func _scratch_ticket_is_unresolved(ticket: Dictionary) -> bool:
+	return not str(ticket.get("id", "")).is_empty() and int(ticket.get("price", 0)) > 0 and not bool(ticket.get("settled", false))
+
+
+func _scratch_ticket_has_pending_resolution() -> bool:
+	# Portable player state supersedes stale venue fields, including an
+	# explicitly empty player tray. Older saves retain the machine fallback.
+	var player_state := portable_ticket_state("scratch_tickets", current_environment)
+	if not player_state.is_empty():
+		return scratch_ticket_resolution_pending(player_state)
+	var states: Dictionary = current_environment.get("game_states", {}) if typeof(current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	var machine: Dictionary = states.get("scratch_tickets", {}) if typeof(states.get("scratch_tickets", {})) == TYPE_DICTIONARY else {}
+	return scratch_ticket_resolution_pending(machine)
 
 
 func _pull_tab_has_pending_resolution() -> bool:

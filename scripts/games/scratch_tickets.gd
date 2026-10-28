@@ -790,13 +790,15 @@ func environment_runtime_state(run_state: RunState, environment: Dictionary) -> 
 	var machine := _ensure_machine_state(run_state, environment, false)
 	var active := _dict_ref(machine.get("active_ticket", {}))
 	var payout := _pending_payout(machine)
+	var pending := RunState.scratch_ticket_resolution_pending(machine)
+	var unresolved_count := _dictionary_array(machine.get("tray_stack", [])).size() + _dictionary_array(machine.get("pending_queue", [])).size() + (0 if active.is_empty() else 1)
 	return {
-		"active": not active.is_empty() or payout > 0,
-		"bankroll_zero_failure_deferred": run_state != null and run_state.bankroll <= 0 and (not active.is_empty() or payout > 0),
+		"active": pending,
+		"bankroll_zero_failure_deferred": run_state != null and run_state.bankroll <= 0 and pending,
 		"pending_payout": payout,
-		"unresolved_ticket_count": 0 if active.is_empty() else 1,
-		"status_label": "CASH $%d" % payout if payout > 0 else "SCRATCHING" if not active.is_empty() else "",
-		"status_summary": "$%d in scratched winners; %s." % [payout, "one ticket in progress" if not active.is_empty() else "surface clear"],
+		"unresolved_ticket_count": unresolved_count,
+		"status_label": "CASH $%d" % payout if payout > 0 else "SCRATCHING" if not active.is_empty() else "TICKETS" if pending else "",
+		"status_summary": "$%d in scratched winners; %s." % [payout, "%d tickets to finish" % unresolved_count if unresolved_count > 0 else "surface clear"],
 	}
 
 
@@ -1087,7 +1089,7 @@ func _resolve_reveal(run_state: RunState, environment: Dictionary, rng: RngStrea
 		"environment_id": str(environment.get("id", "")),
 		"message": message,
 	})
-	result["defer_bankroll_zero_failure"] = not _dictionary_array(machine.get("tray_stack", [])).is_empty() or not _dict_ref(machine.get("active_ticket", {})).is_empty() or not _dictionary_array(machine.get("pending_queue", [])).is_empty() or _pending_payout(machine) > 0
+	result["defer_bankroll_zero_failure"] = RunState.scratch_ticket_resolution_pending(machine)
 	result["scratch_discarded_unfinished"] = discard_unfinished
 	result["scratch_discard_preserved_winner"] = discard_unfinished and payout > 0
 	result["suppress_music_outcome"] = settle

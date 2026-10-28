@@ -3817,9 +3817,23 @@ func _finish_event_choice_action(caller_rollback: Dictionary, event_result: Dict
 	# live game buffer, before a Counter Phone response could begin.
 	if not bool(event_result.get("ok", false)):
 		_restore_foundation_lifecycle_snapshot(caller_rollback)
+		_present_event_resolution_failure(event_result)
+		_refresh_after_foundation_lifecycle_rollback(caller_rollback)
 		return false
 	_commit_foundation_coach_attention(caller_rollback)
 	return true
+
+
+func _present_event_resolution_failure(result: Dictionary) -> void:
+	var errors := JsonCoerceScript._copy_array(result.get("errors", []))
+	var message := str(result.get("message", errors[0] if not errors.is_empty() else "The event could not be resolved safely."))
+	if bool(result.get("crew_offer_requote", false)):
+		# Discard only the rejected quote. The pending request and its hourly roll,
+		# cooldown and obligations remain untouched. TalkDock's changed-option
+		# signature requires a new confirmation of the newly displayed route.
+		crew_delivery_event_modules.erase("crew_favor_delivery")
+		message += " Review the new route and confirm again."
+	_show_environment_action_acknowledgement(message)
 
 
 # Resolves one selected event choice through EventModule.
@@ -3927,7 +3941,7 @@ func _complete_event_choice_resolution(prepared: Dictionary, result: Dictionary)
 	if not bool(result.get("ok", false)):
 		if not caller_owns_event_rollback:
 			_restore_foundation_lifecycle_snapshot(event_rollback)
-			_show_message(str(result.get("message", "The event could not be resolved safely.")))
+			_present_event_resolution_failure(result)
 			_refresh_after_foundation_lifecycle_rollback(event_rollback)
 		return result
 	var result_deltas: Dictionary = result.get("deltas", {}) if typeof(result.get("deltas", {})) == TYPE_DICTIONARY else {}
@@ -4040,6 +4054,12 @@ func _event_resolution_returns_to_active_game(popup_type: String, event_context:
 
 
 func _on_talk_dock_choice_requested(event_id: String, choice_id: String) -> void:
+	if run_state == null or talk_dock == null or str(talk_dock.entry.get("event_id", "")) != event_id:
+		return
+	if choice_id == TalkDock.NEUTRAL_CLOSE_CHOICE_ID \
+			or event_id == "chain06_cass_first_contact" and choice_id == "keep_counting":
+		_close_talk_without_effect(event_id)
+		return
 	if event_id == CLOSING_TIME_TALK_EVENT_ID:
 		_acknowledge_closing_time_talk(choice_id)
 		return
@@ -4047,10 +4067,38 @@ func _on_talk_dock_choice_requested(event_id: String, choice_id: String) -> void
 	if _is_lender_conversation_entry(lender_entry):
 		_resolve_lender_conversation_choice(lender_entry, choice_id)
 		return
-	if _talk_choice_is_ignore(choice_id) and _ignore_talk_event(event_id, "choice"):
+	if _talk_choice_is_ignore(choice_id) and not _is_authored_talk_choice(event_id, choice_id) and _ignore_talk_event(event_id, "choice"):
 		_refresh()
 		return
 	resolve_event_choice(event_id, choice_id)
+
+
+func _is_authored_talk_choice(event_id: String, choice_id: String) -> bool:
+	if library == null:
+		return false
+	var entry := run_state.pending_talk_event(event_id) if run_state != null else {}
+	if str(entry.get("type", "")) == "dialogue":
+		var dialogue := library.dialogue(str(entry.get("dialogue_id", "")))
+		var node := _dialogue_node(dialogue, str(entry.get("current_node", dialogue.get("start", ""))))
+		return not _dialogue_choice_definition(node, choice_id).is_empty()
+	for row in JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(library.event(event_id).get("payload", {})).get("choices", [])):
+		if typeof(row) == TYPE_DICTIONARY and str(row.get("id", "")) == choice_id:
+			return true
+	return false
+
+
+func _close_talk_without_effect(event_id: String) -> bool:
+	if run_state == null or not _event_response_transaction.is_empty() or talk_dock == null \
+			or str(talk_dock.entry.get("event_id", "")) != event_id:
+		return false
+	if not run_state.dismiss_talk_event_without_effect(event_id):
+		return false
+	_clear_selected_event_choice()
+	_show_environment_action_acknowledgement("Conversation closed. No effect.")
+	_queue_pending_autosave("Conversation closed.", 1)
+	_refresh_talk_dock()
+	_refresh()
+	return true
 
 
 func _apply_post_action_environment_interrupt(source: String, forced_travel_just_armed: bool = false) -> bool:
@@ -4193,7 +4241,7 @@ func _current_wager_activity_incomplete() -> bool:
 	return current_game.wager_activity_incomplete(run_state, run_state.current_environment, _current_game_surface_ui_state())
 
 
-func _ensure_closing_time_departure_talk() -> bool:
+func _ensure_closing_time_departure_talk(manual_reopen: bool = false) -> bool:
 	if run_state == null or library == null:
 		return false
 	if not run_state.pending_talk_event(CLOSING_TIME_TALK_EVENT_ID).is_empty():
@@ -4206,7 +4254,7 @@ func _ensure_closing_time_departure_talk() -> bool:
 		"trigger": "closing_time",
 		"type": "dialogue",
 		"dialogue_id": CLOSING_TIME_DIALOGUE_ID,
-		"source": "closing_time",
+		"source": "event_object" if manual_reopen else "closing_time",
 		"environment_snapshot": RunState.environment_context_snapshot(run_state.current_environment),
 	}
 	var start_node := str(dialogue.get("start", "notice")).strip_edges()
@@ -4883,6 +4931,21 @@ func _refresh_talk_dock() -> void:
 		else:
 			option["summary"] = spoken_summary
 	talk_dock_avoid_sync_active = true
+	if event_id == "chain06_cass_first_contact":
+		option = option.duplicate(true)
+		var cass_choices := JsonCoerceScript._copy_array(option.get("choices", []))
+		for index in range(cass_choices.size()):
+			var choice:Variant=cass_choices[index]
+			if typeof(choice) == TYPE_DICTIONARY and str(choice.get("id", "")) == "keep_counting":
+				choice["enabled"] = true
+				choice["disabled_reason"] = ""
+				choice["requires_confirm"] = false
+				choice["consequences"] = {}
+				choice["check"] = {}
+				choice["consequence_summary"] = "No effect"
+				choice["text"] = "End the conversation. You can speak to Cass again later."
+				cass_choices[index]=choice
+		option["choices"]=cass_choices
 	talk_dock.set_entry(entry, option, run_state.pending_talk_event_count())
 	talk_dock_avoid_sync_active = false
 	_sync_coach_panel_for_talk_dock()
@@ -11941,7 +12004,10 @@ func _prepare_room_presentation_at_boundary() -> void:
 	var delivery_node_id := str(run_state.current_environment.get("world_node_id", run_state.current_environment.get("archetype_id", "")))
 	var delivery_mount_pending := not bool(run_state.current_environment.get("scenario_semantic_ready", false)) \
 			and not run_state.delivery_world_sequence_owner_for_presentation(delivery_node_id).is_empty()
-	if delivery_mount_pending:
+	var scenario_rebuild_pending := run_state.scenario_sequence_present() and (
+			not bool(run_state.current_environment.get("scenario_semantic_ready", false)) \
+			or bool(run_state.current_environment.get("scenario_restore_pending_trusted_rebuild", false)))
+	if delivery_mount_pending or scenario_rebuild_pending:
 		var finalized := run_state.scenario_finalize_installed_environment(library, JsonCoerceScript._copy_dict(run_state.current_environment.get("scenario_layout_context", {})))
 		if not bool(finalized.get("ok", false)):
 			_room_catalog_publication = []
@@ -14487,7 +14553,7 @@ func _guard_player_input_route(force_closing_allowed: bool = false, coach_action
 	var message := _blocking_modal_message()
 	if message.is_empty():
 		if not force_closing_allowed and _closing_time_blocks_environment_actions():
-			if not _ensure_closing_time_departure_talk():
+			if not _ensure_closing_time_departure_talk(true):
 				_show_message(_closing_time_disabled_reason())
 			return true
 		if notify_coach:
@@ -17022,7 +17088,8 @@ func _drain_event_response_before_exit() -> void:
 
 
 func _activate_meta_interactable_object(object_id: String) -> bool:
-	if _sal_starter_offer_is_pending():
+	if _sal_starter_offer_is_pending() and (run_state == null \
+			or not run_state.neutral_talk_dismissed_at_current_boundary("dialogue:sal_starter_offer")):
 		_resume_sal_starter_offer()
 		return true
 	var sell_requested := object_id == "meta_sal:sell"
@@ -18290,7 +18357,10 @@ func _story_entry_label(entry: Dictionary) -> String:
 		"travel":
 			return "Traveled to %s" % str(entry.get("to_environment_name", entry.get("to_archetype_id", "destination")))
 		"event":
-			return "Event: %s" % str(entry.get("event_id", entry.get("id", "event")))
+			var event_id := str(entry.get("event_id", entry.get("id", "event")))
+			var definition := library.event(event_id) if library != null else {}
+			var title := str(definition.get("display_name", "")).strip_edges()
+			return "Event: %s" % _player_facing_text(title if not title.is_empty() else _label_from_id(event_id))
 		_:
 			return _label_from_id(type)
 

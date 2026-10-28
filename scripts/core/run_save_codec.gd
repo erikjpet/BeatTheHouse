@@ -425,7 +425,8 @@ static func _encode_value(value: Variant, registry: Dictionary, fingerprints: Di
 			if key == SEEDED_SCENARIO_DEFINITIONS_KEY and typeof(child) == TYPE_DICTIONARY:
 				encoded_dict[key_value] = _encode_seeded_scenario_definitions(child as Dictionary)
 			else:
-				encoded_dict[key_value] = _encode_exact_integers(child) if key.begins_with("scenario_") or key in EXACT_INTEGER_ROOT_KEYS or key == BLACKJACK_LEDGER_KEY else _encode_value(child, registry, fingerprints, inside_environment)
+				var crew_encounters := key == "encounters" and source.has("recruitment_schema_version")
+				encoded_dict[key_value] = _encode_exact_integers(child) if key.begins_with("scenario_") or key in EXACT_INTEGER_ROOT_KEYS or key == BLACKJACK_LEDGER_KEY or crew_encounters else _encode_value(child, registry, fingerprints, inside_environment)
 		return encoded_dict
 	if typeof(value) == TYPE_ARRAY:
 		var source_array: Array = value

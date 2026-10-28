@@ -95,6 +95,42 @@ static func normalize_encounter_state(value: Variant) -> Dictionary:
 	return {"schema_version": ENCOUNTER_STATE_SCHEMA_VERSION, "meetings": meetings, "contacts": contacts}
 
 
+static func encounter_state_from_save(value: Variant) -> Dictionary:
+	# Legacy JSON transported these bounded counters as floats. Convert only the
+	# schema-declared integer fields, then run the unchanged strict normalizer.
+	# Unknown keys, fractional/nonfinite values and malformed rows still fail.
+	if typeof(value) != TYPE_DICTIONARY:
+		return {}
+	var restored := (value as Dictionary).duplicate(true)
+	if not _restore_encounter_integer(restored, "schema_version"):
+		return {}
+	for collection in ["meetings", "contacts"]:
+		if typeof(restored.get(collection)) != TYPE_DICTIONARY:
+			return {}
+		for row in (restored[collection] as Dictionary).values():
+			if typeof(row) != TYPE_DICTIONARY or not _restore_encounter_integer(row, "action_index"):
+				return {}
+			if collection == "meetings":
+				if typeof(row.get("history")) != TYPE_ARRAY:
+					return {}
+				for fact in row["history"]:
+					if typeof(fact) != TYPE_DICTIONARY or not _restore_encounter_integer(fact, "action_index"):
+						return {}
+	return normalize_encounter_state(restored)
+
+
+static func _restore_encounter_integer(row: Dictionary, key: String) -> bool:
+	var value: Variant = row.get(key)
+	if typeof(value) == TYPE_INT:
+		return value >= 0
+	# Above the exact JSON integer range the original counter is unknowable.
+	if typeof(value) != TYPE_FLOAT or not is_finite(value) or value < 0 \
+			or value > 9007199254740991.0 or value != floor(value):
+		return false
+	row[key] = int(value)
+	return true
+
+
 static func meeting_path_public(member_id: String, path_kind: String) -> Dictionary:
 	var definition := member_definition(member_id.strip_edges())
 	var clean_path := path_kind.strip_edges().to_lower()

@@ -109,7 +109,7 @@ func snapshot() -> Dictionary:
 		"finalized": {
 			"ok": true,
 			"inactive": projection.is_empty(),
-			"records": _array(_environment.get("scenario_layout_base_records", [])).duplicate(true),
+			"records": _presentation_base_records(),
 			"state": _dict(_environment.get("scenario_sequence_state", {})).duplicate(true),
 			"projection": projection.duplicate(true),
 			"layout_authority": _dict(_environment.get("scenario_layout_authority", {})).duplicate(true),
@@ -118,6 +118,29 @@ func snapshot() -> Dictionary:
 			"errors": [],
 		},
 	}
+
+
+func _presentation_base_records() -> Array:
+	# Immutable source records authenticate the entry inventory. A later trusted
+	# layout compilation intentionally retires consumed ordinary event hosts.
+	# Publish the corresponding live inputs, rather than pairing the entry list
+	# with an authority that no longer contains those retired hosts. Warm seals
+	# that still contain the host retain it until strict coverage has been checked.
+	var authority := _dict(_environment.get("scenario_layout_authority", {}))
+	var resolved := _array(_environment.get("resolved_event_ids", []))
+	var records: Array = []
+	for value in _array(_environment.get("scenario_layout_base_records", [])):
+		var record := _dict(value)
+		var identity := "%s::%s" % [str(record.get("owner_namespace", "")), str(record.get("stable_object_id", ""))]
+		var object_id := str(record.get("object_id", ""))
+		var retired_ordinary_event := str(record.get("object_type", "")) == "event" \
+				and str(record.get("slot_family", record.get("manifest_family", ""))) == "event" \
+				and str(record.get("owner_namespace", "")) != "scenario" \
+				and resolved.has(str(record.get("source_id", object_id.trim_prefix("event:"))))
+		if retired_ordinary_event and not authority.is_empty() and not authority.has(identity):
+			continue
+		records.append(record.duplicate(true))
+	return records
 
 
 func matches_environment(environment: Dictionary) -> bool:

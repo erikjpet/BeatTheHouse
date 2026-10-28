@@ -24,6 +24,7 @@ const CHOICE_ICON_FOOTPRINT := 34.0
 const CHOICE_LINE_SPACING := 3.0
 const MAX_CHOICES := 4
 const IGNORE_PENALTY_HEAT := 5
+const NEUTRAL_CLOSE_CHOICE_ID := "__close_dialogue_without_effect"
 const PRESENTATION_Z_INDEX := 100
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 
@@ -709,7 +710,8 @@ func _build() -> void:
 	badge_label.custom_minimum_size = Vector2(VisualStyle.TALK_BADGE_WIDTH, VisualStyle.FLEXIBLE_SIZE)
 	header_row.add_child(badge_label)
 
-	collapse_button = FoundationWidgets.button("Hide", Callable(self, "_toggle_expanded"))
+	collapse_button = FoundationWidgets.button("Close", Callable(self, "_request_neutral_close"))
+	collapse_button.tooltip_text = "End this conversation. No effect."
 	collapse_button.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
 	collapse_button.custom_minimum_size = Vector2(VisualStyle.TALK_COLLAPSE_WIDTH, VisualStyle.TALK_CHOICE_HEIGHT)
 	header_row.add_child(collapse_button)
@@ -1070,6 +1072,12 @@ func _toggle_expanded() -> void:
 	_render()
 
 
+func _request_neutral_close() -> void:
+	if _entry_open_input_guard_active() or entry.is_empty():
+		return
+	choice_requested.emit(str(entry.get("event_id", "")), NEUTRAL_CLOSE_CHOICE_ID)
+
+
 func _on_choice_pressed(choice_id: String) -> void:
 	if _entry_open_input_guard_active():
 		return
@@ -1079,7 +1087,7 @@ func _on_choice_pressed(choice_id: String) -> void:
 
 func _entry_open_input_guard_active() -> bool:
 	# Room objects activate on press. If the new dock is laid out beneath that
-	# pointer, the opening gesture must not also reach Hide or a response control.
+	# pointer, the opening gesture must not also reach Close or a response control.
 	return entry_open_input_frame >= 0 and Engine.get_process_frames() <= entry_open_input_frame
 
 

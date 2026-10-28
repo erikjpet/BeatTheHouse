@@ -133,7 +133,7 @@ func _install_environment_test_layer(run_state: RunState, layer_id: String) -> D
 	layer_state["world_map_travel"] = false
 	_stamp_environment_test_exit(layer_state)
 	layer_state["layout"] = EnvironmentInstance.ensure_generated_layout(layer_state, library)
-	if not run_state.install_environment_layer_state(target_id, layer_state):
+	if not run_state.install_environment_layer_state(target_id, layer_state, library):
 		return {"ok": false, "message": "The selected starting area could not be installed."}
 	CrewRecruitmentModelScript.apply_to_environment(run_state, run_state.current_environment)
 	var finalized := run_state.scenario_finalize_installed_environment(library)
@@ -649,7 +649,7 @@ func enter_environment_layer(run_state: RunState, target_layer_id: String, advan
 		if not bool(departed.get("ok", false)):
 			_restore_travel_snapshot(run_state, rollback)
 			return {"ok": false, "message": str(JsonCoerceScript._copy_array(departed.get("errors", []))[0]) if not JsonCoerceScript._copy_array(departed.get("errors", [])).is_empty() else "The room departure could not be recorded."}
-	if not run_state.install_environment_layer_state(target_id, layer_state):
+	if not run_state.install_environment_layer_state(target_id, layer_state, library):
 		_restore_travel_snapshot(run_state, rollback)
 		return {"ok": false, "message": "The room could not be entered."}
 	# Crew presence is an authoritative dynamic actor input to scenario semantic
@@ -728,7 +728,7 @@ func recover_punchline_back_room_exit(run_state: RunState) -> Dictionary:
 	preserved.erase("layer_states")
 	states["back_room"] = preserved
 	run_state.current_environment["layer_states"] = states
-	if not run_state.install_environment_layer_state("casino", target):
+	if not run_state.install_environment_layer_state("casino", target, library):
 		_restore_travel_snapshot(run_state, rollback)
 		return {"ok": false, "message": "The saved casino could not be restored; your run has been kept intact."}
 	CrewRecruitmentModelScript.apply_to_environment(run_state, run_state.current_environment)

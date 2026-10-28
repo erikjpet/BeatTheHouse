@@ -419,7 +419,10 @@ func can_trigger(run_state: RunState, environment: Dictionary, context: Dictiona
 	var scopes := _readonly_array(definition.get("scopes", []))
 	if not scopes.is_empty() and not scopes.has("any") and not scopes.has(str(environment.get("kind", ""))):
 		return false
-	if _event_requires_room_actor(context) and not _environment_allows_room_actor(environment):
+	# Crew obligations already require authoritative physical Crew presence above.
+	# Recovery venues still exclude unrelated ambient actors, but must not retire
+	# a valid request made by the Crew member actually present there.
+	if _event_requires_room_actor(context) and not _environment_allows_room_actor(environment) and get_id() != "crew_favor_delivery":
 		return false
 	if not _conditions_allow(run_state, environment, context):
 		return false
@@ -521,6 +524,7 @@ func _resolve_event_choice(
 		"type": "event",
 		"event_id": get_id(),
 		"choice_id": choice_key,
+		"message": message,
 		"environment_id": environment.get("id", ""),
 		"bankroll_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
@@ -569,6 +573,7 @@ func _resolve_event_choice(
 		if not bool(delivery_result.get("ok", false)):
 			result["ok"] = false
 			result["message"] = str(delivery_result.get("message", "That package is no longer available."))
+			result["crew_offer_requote"] = not bool(run_state.delivery_crew_offer("crew_favor_delivery", int(selected_choice.get("crew_offer_clock", -1))).get("ok", false))
 			return result
 		var sequence_schedule := {"ok": true, "inactive": true}
 		if bool(delivery_result.get("ok", false)):
