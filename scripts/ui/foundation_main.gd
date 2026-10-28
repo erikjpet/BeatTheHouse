@@ -3969,6 +3969,7 @@ func _complete_event_choice_resolution(prepared: Dictionary, result: Dictionary)
 		last_game_result = {}
 		last_item_result = {}
 		last_hook_result = result.duplicate(true)
+		immediate_environment_acknowledgement = ""
 	var showdown_continues := (
 		event_id == RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID
 		and run_state != null
