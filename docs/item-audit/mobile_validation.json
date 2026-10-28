@@ -1,0 +1,33 @@
+{
+  "status": "passed",
+  "browser": "Bundled isolated Chromium headless shell",
+  "viewport": {
+    "width": 375,
+    "height": 812
+  },
+  "additional_width": 320,
+  "all_item_cards_checked": 153,
+  "one_card_at_a_time": true,
+  "all_full_analysis_visible": true,
+  "no_horizontal_overflow": true,
+  "max_document_width_at_375": 375,
+  "default_shop_filter_count": 60,
+  "shop_contraband_filter_count": 13,
+  "all_contraband_filter_count": 20,
+  "collection_gear_filter_count": 28,
+  "search_and_empty_state": true,
+  "previous_next_and_selector": true,
+  "review_flags_verified": [
+    "lucky_penny",
+    "xray_glasses"
+  ],
+  "javascript_errors": [],
+  "network_requests": [],
+  "network_dependencies": 0,
+  "touch_controls_at_least_44px": true,
+  "screenshot_paths_internal": [
+    "mobile_375_initial_internal.png",
+    "mobile_375_expanded_internal.png"
+  ],
+  "scope": "Local report artifact only; no game/browser gameplay or existing browser sessions touched"
+}

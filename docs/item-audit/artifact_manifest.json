@@ -1,0 +1,51 @@
+{
+  "audit_source_commit": "9adf460d1ad0d716e91049bda0d9477483e7aebe",
+  "saved_utc": "2026-10-28T00:37:42.412742+00:00",
+  "repository": "erikjpet/BeatTheHouse",
+  "repo_directory": "docs/item-audit/",
+  "worktree_branch": "codex/item-audit-report-20261028",
+  "scope": "Documentation and offline report artifacts only; no gameplay or authored item-description edits.",
+  "baseline_preserved": true,
+  "expanded_data_rows": 153,
+  "expanded_columns": 15,
+  "duplicate_canonical_ids": 0,
+  "first_four_columns_equal_baseline": true,
+  "delivery_destination": "Durable local BTH repository copy; user-facing CSV, offline HTML and guide also attached in ChatGPT at owner request; no hosted page.",
+  "artifacts": [
+    {
+      "path": "beat_the_house_item_audit.csv",
+      "bytes": 351240,
+      "sha256": "34b8909ce25b5ecf3feae248265c722635dd9b688aa82028393baac19b53d97f"
+    },
+    {
+      "path": "beat_the_house_item_audit_categorized.csv",
+      "bytes": 638416,
+      "sha256": "38ace845692c5108804ec6f4ee6a680a3c848780aed577985fa97b4e19303c86"
+    },
+    {
+      "path": "beat_the_house_item_audit_mobile.html",
+      "bytes": 910619,
+      "sha256": "fd4bd426ab9278da7b7265834902126113e1d1497a2af94a1c424f2059542874"
+    },
+    {
+      "path": "categorized_coverage_guide.md",
+      "bytes": 37917,
+      "sha256": "623824306225c2c57d58d84367f18b8c426d08ab4d912aa4e79ee2f8ce340815"
+    },
+    {
+      "path": "categorized_acquisition_evidence.json",
+      "bytes": 438817,
+      "sha256": "f5b2eacd78d0a9846ea1fcda668f6115531ab7dcd476664720ea131c9ac01972"
+    },
+    {
+      "path": "categorized_validation.json",
+      "bytes": 2873,
+      "sha256": "029bdeaf26e4f4df4f0fda6153f266c1527135222b30d432e5c564a4d68f1836"
+    },
+    {
+      "path": "mobile_validation.json",
+      "bytes": 970,
+      "sha256": "9f1990c621efd512a727330245354c38d1ae0320e694ee183d2fc4d39f52116a"
+    }
+  ]
+}
