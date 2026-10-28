@@ -15,6 +15,7 @@ const GAMEPLAY_MODEL_GENERIC_ODDS := "generic_odds"
 const GAMEPLAY_MODEL_FULL_SIMULATION := "full_simulation"
 const TABLE_ROUND_START_DELAY_MSEC := 20000
 const TABLE_ROUND_WARNING_MSEC := 5000
+const APPLIED_CURRENCY_SETTLEMENT_SCHEMA := "bth.applied_currency_settlement/v1"
 
 var definition: Dictionary = {}
 var library: ContentLibrary
@@ -850,7 +851,8 @@ static func normalize_skill_cheat_contract(result: Dictionary, payload: Dictiona
 			entry["skill_margin_msec"] = skill_margin_msec
 			entry["suspicion_delta"] = suspicion_delta
 			entry["base_suspicion_delta"] = base_suspicion_delta
-			entry["bankroll_delta"] = bankroll_delta
+			var applied := applied_currency_settlement(entry)
+			entry["bankroll_delta"] = int(applied.get("delta", bankroll_delta))
 			entry["skill_watched"] = watched
 			entry["watched"] = watched
 			entry["pit_boss_watched"] = watched
@@ -911,9 +913,10 @@ static func finalize_routed_player_message(result: Dictionary, deltas: Dictionar
 # presentation. Zero-net results are intentional records too: a push still has
 # a routed account and must not fall back to pre-routing Bankroll/CASH copy.
 static func finalize_routed_settlement(run_state: RunState, result: Dictionary, deltas: Dictionary, sync_persisted: bool = true) -> void:
-	var cash_delta := int(deltas.get("bankroll_delta", 0))
-	var chips_delta := int(deltas.get("chips_delta", 0))
-	if cash_delta == 0 and chips_delta == 0 and not _zero_routed_settlement_is_authoritative(run_state, result):
+	var applied := applied_currency_settlement(result)
+	var cash_delta := int(applied.get("cash_delta", deltas.get("bankroll_delta", 0)))
+	var chips_delta := int(applied.get("chips_delta", deltas.get("chips_delta", 0)))
+	if applied.is_empty() and cash_delta == 0 and chips_delta == 0 and not _zero_routed_settlement_is_authoritative(run_state, result):
 		return
 	var currency := _routed_settlement_currency(result, cash_delta, chips_delta)
 	var delta := chips_delta if currency == "chips" else cash_delta
@@ -947,6 +950,8 @@ static func finalize_routed_settlement(run_state: RunState, result: Dictionary, 
 	deltas["message_params"] = message_params.duplicate(true)
 	deltas["message"] = player_message
 	deltas["messages"] = player_messages.duplicate()
+	if not applied.is_empty():
+		_sync_applied_currency_story_settlement(deltas, settlement, message_key, message_params, player_message)
 	result["deltas"] = deltas
 	if sync_persisted:
 		_sync_persisted_routed_settlement(run_state, result, settlement, message_key, message_params)
@@ -1044,6 +1049,70 @@ static func _replace_cash_amounts_with_chips(message: String) -> String:
 	return result
 
 
+# A measured zero differs from missing legacy history. Never infer this witness
+# from a wallet observed after a later action or after Continue.
+static func applied_currency_settlement(value: Dictionary) -> Dictionary:
+	var raw: Variant = value.get("applied_currency_settlement", null)
+	if typeof(raw) != TYPE_DICTIONARY:
+		return {}
+	var applied := raw as Dictionary
+	if str(applied.get("schema", "")) != APPLIED_CURRENCY_SETTLEMENT_SCHEMA or str(applied.get("currency", "")) != "chips":
+		return {}
+	for key in ["delta", "cash_delta", "chips_delta", "nominal_cash_delta", "nominal_chips_delta"]:
+		if not applied.has(key) or typeof(applied[key]) not in [TYPE_INT, TYPE_FLOAT] or not is_finite(float(applied[key])) or float(applied[key]) != float(int(applied[key])):
+			return {}
+	if int(applied.cash_delta) != 0 or int(applied.nominal_cash_delta) != 0 \
+			or int(applied.delta) != int(applied.chips_delta) \
+			or int(applied.chips_delta) > 0 or int(applied.chips_delta) < int(applied.nominal_chips_delta):
+		return {}
+	return applied.duplicate(true)
+
+
+static func _record_watched_peek_applied_currency(run_state: RunState, result: Dictionary, deltas: Dictionary, cash_before: int, chips_before: int) -> void:
+	# The original debit already ran. Preserve its nominal instructions and
+	# confiscation metadata; the receipt records the observed wallet difference.
+	var applied := {
+		"schema": APPLIED_CURRENCY_SETTLEMENT_SCHEMA, "currency": "chips",
+		"delta": run_state.grand_casino_chips - chips_before,
+		"cash_delta": run_state.bankroll - cash_before,
+		"chips_delta": run_state.grand_casino_chips - chips_before,
+		"nominal_cash_delta": int(deltas.get("bankroll_delta", 0)),
+		"nominal_chips_delta": int(deltas.get("chips_delta", 0)),
+	}
+	result["applied_currency_settlement"] = applied.duplicate(true)
+	deltas["applied_currency_settlement"] = applied.duplicate(true)
+	var story := _copy_array(deltas.get("story_log", []))
+	for index in range(story.size()):
+		if typeof(story[index]) != TYPE_DICTIONARY:
+			continue
+		var entry: Dictionary = story[index]
+		if str(entry.get("type", "")) != "game_action" or str(entry.get("game_id", "")) != "blackjack" or str(entry.get("action_id", "")) != "peek_hole_card":
+			continue
+		entry = entry.duplicate(true)
+		entry["nominal_bankroll_delta"] = int(entry.get("bankroll_delta", 0))
+		entry["bankroll_delta"] = int(applied.delta)
+		entry["chips_delta"] = int(applied.chips_delta)
+		entry["currency"] = "chips"
+		entry["applied_currency_settlement"] = applied.duplicate(true)
+		story[index] = entry
+	deltas["story_log"] = story
+
+
+static func _sync_applied_currency_story_settlement(deltas: Dictionary, settlement: Dictionary, message_key: String, message_params: Dictionary, message: String) -> void:
+	var story := _copy_array(deltas.get("story_log", []))
+	for index in range(story.size()):
+		if typeof(story[index]) != TYPE_DICTIONARY or applied_currency_settlement(story[index]).is_empty():
+			continue
+		var entry := _copy_dict(story[index])
+		entry["currency_delta"] = int(settlement.get("delta", 0))
+		entry["settlement"] = settlement.duplicate(true)
+		entry["message_key"] = message_key
+		entry["message_params"] = message_params.duplicate(true)
+		entry["message"] = message
+		story[index] = entry
+	deltas["story_log"] = story
+
+
 static func _sync_persisted_routed_settlement(run_state: RunState, result: Dictionary, settlement: Dictionary, message_key: String, message_params: Dictionary) -> void:
 	if run_state == null or settlement.is_empty():
 		return
@@ -1077,6 +1146,11 @@ static func _sync_persisted_routed_settlement(run_state: RunState, result: Dicti
 	last_result["message_params"] = message_params.duplicate(true)
 	last_result["message"] = persisted_message
 	last_result["summary"] = persisted_message
+	var applied := applied_currency_settlement(result)
+	if not applied.is_empty():
+		last_result["applied_currency_settlement"] = applied
+		last_result["nominal_bankroll_delta"] = int(last_result.get("nominal_bankroll_delta", last_result.get("bankroll_delta", 0)))
+		last_result["bankroll_delta"] = int(applied.delta)
 	state["last_result"] = last_result
 	states[state_key] = state
 	environment["game_states"] = states
@@ -1132,17 +1206,27 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 	var deltas := _normalize_result_deltas(result.get("deltas", {}))
 	run_state.record_score_spending_from_result(result, deltas)
 	deltas = run_state.route_grand_casino_game_currency(result, deltas)
-	finalize_routed_settlement(run_state, result, deltas, false)
+	var observe_peek_loss := result_game_id == "blackjack" \
+		and str(result.get("action_id", "")) == "peek_hole_card" \
+		and bool(result.get("blackjack_watched_peek", false)) \
+		and str(result.get("currency", "")) == "chips"
+	if not observe_peek_loss:
+		finalize_routed_settlement(run_state, result, deltas, false)
 	var defer_bankroll_zero := bool(result.get("defer_bankroll_zero_failure", false)) or run_state.defer_next_bankroll_zero_failure
 	if defer_bankroll_zero:
 		result["defer_bankroll_zero_failure"] = true
 	var bankroll_delta := int(deltas.get(KeysScript.BANKROLL_DELTA, 0))
 	var failed_before_money := run_state.run_status == RunState.RUN_STATUS_FAILED
+	var cash_before := run_state.bankroll
+	var chips_before := run_state.grand_casino_chips
 	if bankroll_delta != 0:
 		run_state.change_bankroll(bankroll_delta, defer_bankroll_zero)
 	var chips_delta := int(deltas.get("chips_delta", 0))
 	if chips_delta != 0:
 		run_state.change_grand_casino_chips(chips_delta, defer_bankroll_zero)
+	if observe_peek_loss:
+		_record_watched_peek_applied_currency(run_state, result, deltas, cash_before, chips_before)
+		finalize_routed_settlement(run_state, result, deltas, false)
 	if not failed_before_money and run_state.run_status == RunState.RUN_STATUS_FAILED and not bool(result.get("terminal_settlement", false)):
 		run_state.clear_deferred_bankroll_zero_resolution()
 		return IoResultScript.failed(FAILED, "terminal_settlement_rejected", "The game settlement ended the run before it could be published.")
