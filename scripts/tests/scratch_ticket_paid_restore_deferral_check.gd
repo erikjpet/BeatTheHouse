@@ -8,6 +8,19 @@ var failures: Array[String] = []
 func _initialize() -> void:
 	var base := RunState.new()
 	base.start_new("SCRATCH-PAID-RESTORE-REGRESSION")
+	# Synthetic shape control for the shared predicate's other paid-game leg.
+	# Real caught-Peek saves retain debit/session display fields after barring.
+	var blackjack := RunState.new()
+	blackjack.start_new("PAID-CLOSED-BLACKJACK-CONTROL")
+	blackjack.bankroll=0
+	blackjack.current_environment={"id":"grand_paid_control","archetype_id":"grand_casino","game_states":{"blackjack":{"_blackjack_action_authority":{"session":{"bankroll_wager_debited":true,"wager_debited":40,"player_hands":[{}]}}}}}
+	_check(blackjack.has_pending_paid_game_resolution(),"existing paid live Blackjack hand defers zero funds")
+	blackjack.change_bankroll(0)
+	_check(blackjack.run_status=="active","zero-funds economy boundary preserves live paid hand")
+	blackjack.current_environment.game_states.blackjack.barred=true
+	_check(not blackjack.has_pending_paid_game_resolution(),"closed barred hand is not an unresolved paid asset")
+	blackjack.evaluate_immediate_terminal_state()
+	_check(blackjack.run_status=="failed","barred display receipt cannot keep zero funds alive")
 	var env := {"id":"scratch_restore_fixture","world_node_id":"gas_station_casino","archetype_id":"gas_station_casino","game_ids":["scratch_tickets"],"game_states":{}}
 	var origin := RunState.portable_ticket_origin_key(env)
 	var ticket := {"id":"issued-paid-ticket","price":2,"payout":0,"settled":false}
@@ -50,6 +63,15 @@ func _initialize() -> void:
 		var restored := RunState.new()
 		restored.from_dict(data)
 		var expected_active:bool = row.pending and str(row.get("saved_status","active"))=="active"
+		if expected_active:
+			restored.change_bankroll(0)
+			_check(restored.run_status=="active","intervening zero-delta economy boundary: "+row.name)
+			restored.change_bankroll(-3)
+			_check(restored.run_status=="active" and restored.bankroll==0,"intervening clamped event charge: "+row.name)
+			restored.evaluate_immediate_terminal_state()
+			_check(restored.run_status=="active","immediate terminal boundary: "+row.name)
+			var evaluated := RunTerminalEvaluator.evaluate_terminal(restored)
+			_check(not bool(evaluated.failed) and bool(evaluated.bankroll_zero_deferred),"shared evaluator needs no library to recognize paid assets: "+row.name)
 		_check((restored.run_status=="active")==expected_active,"restore terminal boundary: "+row.name)
 		_check(restored.bankroll==0 and restored.rng_state==base.rng_state,"no cash or RNG replay: "+row.name)
 		_check(data==before,"input snapshot unchanged: "+row.name)
@@ -59,6 +81,13 @@ func _initialize() -> void:
 		again.from_dict(Codec.decode(parsed))
 		_check(again.run_status==restored.run_status and again.rng_state==restored.rng_state,"JSON cold restore stable: "+row.name)
 		_check(_identities(again.portable_ticket_piles)==_identities(restored.portable_ticket_piles),"portable ticket identities stable: "+row.name)
+		if expected_active:
+			# Synthetic terminal boundary: all issued tickets are now filed losers
+			# and any old venue state is superseded by the empty portable pile.
+			restored.portable_ticket_piles={"scratch_tickets":{origin:{"tray_stack":[],"pending_queue":[],"active_ticket":{},"winner_pile":[]}}}
+			restored.current_environment.game_states={"scratch_tickets":{"loser_pile":[ticket.merged({"settled":true},true)]}}
+			restored.evaluate_immediate_terminal_state()
+			_check(restored.run_status=="failed" and restored.run_failure_reason==RunState.FAILURE_BANKROLL_ZERO,"no permanent deferral after final worthless settlement: "+row.name)
 	print("SCRATCH_PAID_RESTORE checks=",checks," failures=",JSON.stringify(failures))
 	quit(0 if failures.is_empty() else 1)
 

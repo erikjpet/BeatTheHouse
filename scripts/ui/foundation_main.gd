@@ -20756,6 +20756,8 @@ func _run_pressure_view() -> Dictionary:
 func _has_deferred_bankroll_zero_failure() -> bool:
 	if _all_in_result_terminal_check_is_pending():
 		return true
+	if run_state != null and not run_state.has_liquid_run_funds() and run_state.has_pending_paid_game_resolution():
+		return true
 	if run_state == null or library == null or run_state.has_liquid_run_funds() or run_state.current_environment.is_empty():
 		return false
 	for game_id in JsonCoerceScript._raw_string_array(run_state.current_environment.get("game_ids", [])):

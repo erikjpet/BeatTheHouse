@@ -15124,7 +15124,7 @@ func _evaluate_immediate_terminal_state(defer_bankroll_zero: bool = false) -> vo
 			return
 		fail_run(FAILURE_POLICE_CAPTURE, POLICE_CAPTURE_FAILURE_MESSAGE)
 		return
-	if not has_liquid_run_funds() and not defer_bankroll_zero and not closing_time_forced_travel_required() and not has_working_craps_wagers() and not has_pending_coin_pusher_resolution():
+	if not has_liquid_run_funds() and not defer_bankroll_zero and not closing_time_forced_travel_required() and not has_pending_paid_game_resolution():
 		fail_run(FAILURE_BANKROLL_ZERO, BANKROLL_ZERO_FAILURE_MESSAGE)
 
 
@@ -15661,7 +15661,7 @@ func _run_state_schema_restore(data: Dictionary) -> void:
 	run_failure_reason = str(data.get("run_failure_reason", FAILURE_NONE))
 	run_failure_message = str(data.get("run_failure_message", ""))
 	run_spending_score = maxi(0, int(data.get("run_spending_score", 0)))
-	var pending_paid_game := _blackjack_authority_has_unsettled_wager() or _pull_tab_has_pending_resolution() or _scratch_ticket_has_pending_resolution() or has_pending_coin_pusher_resolution()
+	var pending_paid_game := has_pending_paid_game_resolution()
 	_refresh_economy(pending_paid_game)
 	_activate_current_local_suspicion(true)
 	_initialize_grand_casino_objective_runtime()
@@ -17630,7 +17630,7 @@ func _refresh_economy(defer_bankroll_zero: bool = false) -> void:
 		return
 	var economy_balance := bankroll + grand_casino_chips if _is_grand_casino_environment(current_environment) else bankroll
 	if economy_balance <= 0:
-		if defer_bankroll_zero or closing_time_forced_travel_required() or has_working_craps_wagers() or has_pending_coin_pusher_resolution():
+		if defer_bankroll_zero or closing_time_forced_travel_required() or has_pending_paid_game_resolution():
 			bankroll = 0
 			economic_state = "insolvent"
 			return
@@ -17650,6 +17650,17 @@ func _refresh_economy(defer_bankroll_zero: bool = false) -> void:
 	if run_status == RUN_STATUS_ACTIVE:
 		run_failure_reason = FAILURE_NONE
 		run_failure_message = ""
+
+
+# One authoritative zero-funds deferral for accepted purchases and outstanding
+# payouts. Intervening world events use the same evidence as game settlement
+# and Continue; a temporary zero balance must not strand a paid asset.
+func has_pending_paid_game_resolution() -> bool:
+	return _blackjack_authority_has_unsettled_wager() \
+		or _pull_tab_has_pending_resolution() \
+		or _scratch_ticket_has_pending_resolution() \
+		or has_working_craps_wagers() \
+		or has_pending_coin_pusher_resolution()
 
 
 func has_pending_coin_pusher_resolution() -> bool:
@@ -17721,6 +17732,10 @@ func _pull_tab_has_pending_resolution() -> bool:
 func _blackjack_authority_has_unsettled_wager() -> bool:
 	var game_states: Dictionary = current_environment.get("game_states", {}) if typeof(current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var table: Dictionary = game_states.get("blackjack", {}) if typeof(game_states.get("blackjack", {})) == TYPE_DICTIONARY else {}
+	# A caught Peek retains the paid session for its closed-table display. The
+	# confiscated hand is no longer an actionable stake or a collectible asset.
+	if bool(table.get("barred", false)):
+		return false
 	var ledger: Dictionary = table.get("_blackjack_action_authority", {}) if typeof(table.get("_blackjack_action_authority", {})) == TYPE_DICTIONARY else {}
 	var session: Dictionary = ledger.get("session", {}) if typeof(ledger.get("session", {})) == TYPE_DICTIONARY else {}
 	var hands: Array = session.get("player_hands", session.get("blackjack_hands", [])) if typeof(session.get("player_hands", session.get("blackjack_hands", []))) == TYPE_ARRAY else []
