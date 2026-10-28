@@ -124,10 +124,10 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 	# hold is transient and must not be restarted by reopening this table.
 	completed_presentation_hand_id = str(_draw_dict_view(table.get("last_result", {})).get("hand_id", ""))
 	var rules := _table_rules(table)
-	result["message"] = "%s steadies the shoe at %s. Table minimum $%d; Banker commission %.0f%%." % [
+	result["message"] = "%s steadies the shoe at %s. Table minimum %s; Banker commission %.0f%%." % [
 		str(table.get("dealer_name", "The croupier")),
 		str(table.get("table_name", "Baccarat")),
-		int(table.get("table_minimum", 20)),
+		PlayerTextScript.format_currency_amount(GameModule.presentation_currency_for_game(run_state, get_id(), environment), int(table.get("table_minimum", 20))),
 		float(rules.get("banker_commission_rate", 0.05)) * 100.0,
 	]
 	return result
@@ -226,14 +226,16 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 	var elapsed_msec := _baccarat_elapsed_msec(last_result, now_msec)
 	var deal_active := not last_result.is_empty() and elapsed_msec >= 0 and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC
 	var payout_active := not last_result.is_empty() and elapsed_msec >= DEAL_ANIMATION_DURATION_MSEC and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC
-	var min_ready := total_wager >= int(table.get("table_minimum", 20))
+	var table_minimum := int(table.get("table_minimum", 20))
+	var min_ready := total_wager >= table_minimum
+	var can_deal := (total_wager <= 0 or min_ready) and not deal_active and not payout_active
 	var timer_active := not deal_active and not payout_active
 	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand") if timer_active else {}
 	var table_notice := _table_notice(table, session, last_result, deal_active, payout_active, round_timer, wager_currency)
 	var rules := _table_rules(table)
 	var targets := _baccarat_bet_targets(table)
 	var surface_patrons := GameModule.patrons_with_talk_focus(_patrons_for_surface(table, {} if deal_active else last_result, now_msec), ui_state.get("focused_talk_speaker", {}))
-	var hand_explainer := _baccarat_hand_explainer(session, last_result, deal_active, payout_active, round_timer, wager_currency)
+	var hand_explainer := _baccarat_hand_explainer(session, last_result, deal_active, payout_active, round_timer, wager_currency, can_deal, table_minimum)
 	var edge_challenge := _normalized_edge_sort_challenge(table.get("edge_sort_challenge", {}))
 	var edge := _normalized_edge_sort_edge(table.get("edge_sort_edge", {}), table)
 	var edge_status := _edge_sort_surface_status(table, edge_challenge, edge, session)
@@ -322,7 +324,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"total_wager_cost": total_wager,
 		"table_minimum": int(table.get("table_minimum", 20)),
 		"table_maximum": int(table.get("table_maximum", 500)),
-		"can_deal": (total_wager <= 0 or min_ready) and not deal_active and not payout_active,
+		"can_deal": can_deal,
 		"can_clear": not bets.is_empty() and not deal_active and not payout_active,
 		"can_undo": not (_array(session.get("baccarat_undo_stack", [])).is_empty()) and not deal_active and not payout_active,
 		"can_rebet": not rebet.is_empty() and not deal_active and not payout_active,
@@ -434,11 +436,13 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	var elapsed_msec := _baccarat_elapsed_msec(last_result, now_msec)
 	var deal_active := not last_result.is_empty() and elapsed_msec >= 0 and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC
 	var payout_active := not last_result.is_empty() and elapsed_msec >= DEAL_ANIMATION_DURATION_MSEC and elapsed_msec < DEAL_ANIMATION_DURATION_MSEC + PAYOUT_ANIMATION_DURATION_MSEC
-	var min_ready := total_wager >= int(table.get("table_minimum", current_surface_state.get("table_minimum", 20)))
+	var table_minimum := int(table.get("table_minimum", current_surface_state.get("table_minimum", 20)))
+	var min_ready := total_wager >= table_minimum
+	var can_deal := (total_wager <= 0 or min_ready) and not deal_active and not payout_active
 	var timer_active := not deal_active and not payout_active
 	var round_timer := GameModule.table_round_timer_status_peek(table, now_msec, "Next hand") if timer_active else {}
 	var table_notice := _table_notice(table, session, last_result, deal_active, payout_active, round_timer, wager_currency)
-	var hand_explainer := _baccarat_hand_explainer(session, last_result, deal_active, payout_active, round_timer, wager_currency)
+	var hand_explainer := _baccarat_hand_explainer(session, last_result, deal_active, payout_active, round_timer, wager_currency, can_deal, table_minimum)
 	var shoe_read_challenge := _normalized_shoe_read_challenge(session.get("shoe_read_challenge", current_surface_state.get("shoe_read_challenge", {})))
 	var shoe_read_status := _shoe_read_status(shoe_read_challenge, now_msec)
 	var shoe_read_active := not shoe_read_challenge.is_empty() and str(shoe_read_challenge.get("skill_grade", "")).is_empty()
@@ -470,7 +474,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 		"baccarat_squeeze_progress": 1.0 if bool(ui_state.get("reduce_motion", false)) else clampf(float(session.get("baccarat_squeeze_progress", current_surface_state.get("baccarat_squeeze_progress", 0.0))), 0.0, 1.0),
 		"baccarat_squeeze_available": ritual_phase == "squeeze_reveal" and not _baccarat_squeeze_state(last_result).is_empty(),
 		"dealer_attention_pressure": 10 if deal_active else 6 if payout_active else 0,
-		"can_deal": (total_wager <= 0 or min_ready) and not deal_active and not payout_active,
+		"can_deal": can_deal,
 		"can_clear": not bets.is_empty() and not deal_active and not payout_active,
 		"can_undo": not (_array(session.get("baccarat_undo_stack", [])).is_empty()) and not deal_active and not payout_active,
 		"can_rebet": not _bet_dict(session.get("baccarat_rebet", table.get("last_bets", {}))).is_empty() and not deal_active and not payout_active,
@@ -648,7 +652,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 		return _message_command(session, "No more bets while the hand is being dealt.")
 	match surface_action:
 		"baccarat_chip":
-			return _chip_command(index, session, table)
+			return _chip_command(index, session, table, GameModule.presentation_currency_for_game(run_state, get_id(), environment))
 		"baccarat_bet":
 			return _place_bet_command(index, session, run_state, table)
 		"baccarat_patron_bet":
@@ -670,7 +674,7 @@ func surface_action_command(surface_action: String, index: int, confirm_requeste
 			if total <= 0:
 				session["baccarat_sit_out"] = true
 			elif total < int(table.get("table_minimum", 20)):
-				return _message_command(session, "Baccarat table minimum is $%d." % int(table.get("table_minimum", 20)))
+				return _message_command(session, "Baccarat table minimum is %s." % PlayerTextScript.format_currency_amount(GameModule.presentation_currency_for_game(run_state, get_id(), environment), int(table.get("table_minimum", 20))))
 			return GameModule.surface_command({
 				"handled": true,
 				"ui_state": session,
@@ -927,7 +931,7 @@ func _resolve_baccarat_proposal_core(action_id: String, stake: int, run_state: R
 		return _empty_baccarat_result(action_id, total_wager, environment, "You do not have enough bankroll for those baccarat chips.")
 	var min_total := int(table.get("table_minimum", 20))
 	if total_wager > 0 and total_wager < min_total:
-		return _empty_baccarat_result(action_id, total_wager, environment, "Baccarat table minimum is $%d." % min_total)
+		return _empty_baccarat_result(action_id, total_wager, environment, "Baccarat table minimum is %s." % PlayerTextScript.format_currency_amount(GameModule.presentation_currency_for_game(run_state, get_id(), environment), min_total))
 
 	var edge_before := _normalized_edge_sort_edge(table.get("edge_sort_edge", {}), table)
 	var edge_used := _edge_sort_edge_used(edge_before, bets)
@@ -955,6 +959,8 @@ func _resolve_baccarat_proposal_core(action_id: String, stake: int, run_state: R
 		"stake_cost": total_wager,
 		"sat_out": sit_out,
 		"bankroll_delta": bankroll_delta,
+		"currency": GameModule.presentation_currency_for_game(run_state, get_id(), environment),
+		"currency_delta": bankroll_delta,
 		"suspicion_delta": 0,
 		"environment_id": environment.get("id", ""),
 		"baccarat_winner": str(hand.get("winner", "")),
@@ -1050,6 +1056,8 @@ func _resolve_read_shoe(action_id: String, stake: int, run_state: RunState, envi
 		"action_kind": "cheat",
 		"won": false,
 		"bankroll_delta": bankroll_delta,
+		"currency": GameModule.presentation_currency_for_game(run_state, get_id(), environment),
+		"currency_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
 		"base_suspicion_delta": base_suspicion_delta,
 		"skill_outcome": GameModule.skill_outcome_for_grade("shoe_read", grade),
@@ -1722,7 +1730,7 @@ func _baccarat_bet_targets(table: Dictionary) -> Array:
 	return result
 
 
-func _chip_command(index: int, session: Dictionary, table: Dictionary) -> Dictionary:
+func _chip_command(index: int, session: Dictionary, table: Dictionary, wager_currency: String = "cash") -> Dictionary:
 	var denoms := _chip_denominations(table)
 	var current := int(session.get("selected_chip", denoms[0]))
 	var next_index := denoms.find(current)
@@ -1732,7 +1740,7 @@ func _chip_command(index: int, session: Dictionary, table: Dictionary) -> Dictio
 		next_index = (next_index + 1) % denoms.size()
 	session["selected_chip"] = int(denoms[next_index])
 	session["selected_stake"] = int(denoms[next_index])
-	session["table_notice"] = "$%d chip selected." % int(denoms[next_index])
+	session["table_notice"] = "%s selected." % PlayerTextScript.format_currency_amount(wager_currency, int(denoms[next_index]))
 	return GameModule.surface_command({"handled": true, "ui_state": session})
 
 
@@ -1758,7 +1766,7 @@ func _place_bet_command(index: int, session: Dictionary, run_state: RunState, ta
 	bets[bet_id] = int(bets.get(bet_id, 0)) + chip
 	session["baccarat_bets"] = bets
 	session.erase("table_social_alignment")
-	session["table_notice"] = "$%d on %s." % [chip, str(target.get("label", bet_id))]
+	session["table_notice"] = "%s on %s." % [PlayerTextScript.format_currency_amount(GameModule.presentation_currency_for_game(run_state, get_id()), chip), str(target.get("label", bet_id))]
 	return GameModule.surface_command({"handled": true, "ui_state": session})
 
 
@@ -1796,11 +1804,11 @@ func _patron_bet_command(index: int, session: Dictionary, run_state: RunState, t
 		"bet_id": bet_id,
 		"stake": chip,
 	}
-	session["table_notice"] = "%s %s %s: $%d on %s." % [
+	session["table_notice"] = "%s %s %s: %s on %s." % [
 		"Fading" if fade else "Following",
 		str(patron.get("name", "Guest")),
 		"against" if fade else "with",
-		chip,
+		PlayerTextScript.format_currency_amount(GameModule.presentation_currency_for_game(run_state, get_id()), chip),
 		_target_label(bet_id),
 	]
 	return GameModule.surface_command({"handled": true, "ui_state": session})
@@ -1898,7 +1906,7 @@ func _max_bet_command(session: Dictionary, run_state: RunState, table: Dictionar
 		return _message_command(session, "No bankroll left for another baccarat chip.")
 	session["selected_chip"] = allowed
 	session["selected_stake"] = allowed
-	return GameModule.surface_command({"handled": true, "ui_state": session, "message": "$%d chip selected." % allowed})
+	return GameModule.surface_command({"handled": true, "ui_state": session, "message": "%s selected." % PlayerTextScript.format_currency_amount(GameModule.presentation_currency_for_game(run_state, get_id()), allowed)})
 
 
 func _shoe_read_context(table: Dictionary) -> Dictionary:
@@ -2275,6 +2283,8 @@ func _resolve_edge_sort(action_id: String, run_state: RunState, environment: Dic
 		"action_kind": "cheat",
 		"stake": 0,
 		"bankroll_delta": bankroll_delta,
+		"currency": GameModule.presentation_currency_for_game(run_state, get_id(), environment),
+		"currency_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
 		"cheated": true,
 		"skill_outcome": skill_outcome,
@@ -2855,7 +2865,7 @@ func _table_notice(table: Dictionary, session: Dictionary, last_result: Dictiona
 	return "%s working across %d baccarat space%s." % [PlayerTextScript.format_currency_amount(wager_currency, _total_wager(bets)), bets.size(), "" if bets.size() == 1 else "s"]
 
 
-func _baccarat_hand_explainer(session: Dictionary, last_result: Dictionary, deal_active: bool, payout_active: bool, round_timer: Dictionary = {}, wager_currency: String = "cash") -> Dictionary:
+func _baccarat_hand_explainer(session: Dictionary, last_result: Dictionary, deal_active: bool, payout_active: bool, round_timer: Dictionary = {}, wager_currency: String = "cash", can_deal: bool = true, table_minimum: int = 0) -> Dictionary:
 	var bets := _bet_dict(session.get("baccarat_bets", {}))
 	if deal_active:
 		return {
@@ -2903,9 +2913,9 @@ func _baccarat_hand_explainer(session: Dictionary, last_result: Dictionary, deal
 		}
 	return {
 		"mode": "betting",
-		"title": "READY TO DEAL",
+		"title": "READY TO DEAL" if can_deal else "MINIMUM NOT MET",
 		"primary": "%s placed on %s." % [PlayerTextScript.format_currency_amount(wager_currency, _total_wager(bets)), _bets_display(bets, wager_currency)],
-		"secondary": "Player and Banker compare final totals.",
+		"secondary": "Player and Banker compare final totals." if can_deal else "Table minimum: %s." % PlayerTextScript.format_currency_amount(wager_currency, table_minimum),
 		"bet_summary": "Pair side bets need matching first two cards.",
 		"winner": "",
 		"player_total": -1,
