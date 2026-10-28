@@ -18078,6 +18078,12 @@ func _environment_result_feedback_view() -> Dictionary:
 	var bankroll_delta := int(result.get("outcome_bankroll_delta", result.get("bankroll_delta", deltas.get("bankroll_delta", 0))))
 	var suspicion_delta := int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0)))
 	var message := immediate_environment_acknowledgement if not immediate_environment_acknowledgement.is_empty() else _outcome_message(result)
+	var currency_lead := _environment_result_currency_lead(result, suspicion_delta)
+	if not currency_lead.is_empty():
+		# The bounded HUD must show the financial outcome before a long dealer
+		# narrative can consume its visible lines. Keep the full message below.
+		bankroll_delta = 0
+		message = "%s\n%s" % [currency_lead, message]
 	if message.is_empty() and message_label != null:
 		message = _player_facing_text(message_label.text)
 	if message.strip_edges().is_empty() and bankroll_delta == 0 and suspicion_delta == 0:
@@ -18088,7 +18094,7 @@ func _environment_result_feedback_view() -> Dictionary:
 		"interaction_kind": "informational_result",
 		"dismissible": true,
 		"title": "Result",
-		"text": _environment_result_feedback_text(message, bankroll_delta, suspicion_delta),
+		"text": _environment_result_feedback_text(message, bankroll_delta, 0 if not currency_lead.is_empty() else suspicion_delta),
 		"message": message,
 		"bankroll_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
@@ -18111,6 +18117,25 @@ func _environment_result_feedback_text(message: String, bankroll_delta: int, sus
 		return base
 	var suffix := "  %s" % " / ".join(delta_parts)
 	return "%s%s" % [base, suffix]
+
+
+func _environment_result_currency_lead(result: Dictionary, suspicion_delta: int) -> String:
+	if bool(result.get("applied_currency_unknown", false)):
+		var unknown_lead := "Chip loss unknown; penalty %d chips." % absi(int(result.get("nominal_bankroll_delta", 0)))
+		return unknown_lead + (" Heat %+d" % suspicion_delta if suspicion_delta != 0 else "")
+	var applied := GameModule.applied_currency_settlement(result)
+	var settlement := JsonCoerceScript._copy_dict(result.get("settlement", {}))
+	if applied.is_empty():
+		if str(result.get("currency", settlement.get("currency", ""))) != "chips" or not result.has("currency_delta") and not settlement.has("delta"):
+			return ""
+	var raw_delta: Variant = applied.get("delta", result.get("currency_delta", settlement.get("delta", null)))
+	if typeof(raw_delta) not in [TYPE_INT, TYPE_FLOAT] or not is_finite(float(raw_delta)) or float(raw_delta) != float(int(raw_delta)):
+		return ""
+	var delta := int(raw_delta)
+	var lead := "Chip change: %+d chips." % delta
+	if suspicion_delta != 0:
+		lead += " Heat %+d" % suspicion_delta
+	return lead
 
 
 func _environment_result_feedback_accent(result: Dictionary, bankroll_delta: int, suspicion_delta: int) -> Color:
@@ -18227,7 +18252,7 @@ func _result_from_story_log(entries: Array) -> Dictionary:
 			restored["bankroll_delta"] = int(applied.cash_delta)
 			restored["deltas"]["bankroll_delta"] = int(applied.cash_delta)
 			restored["deltas"]["chips_delta"] = int(applied.chips_delta)
-		elif _story_is_unmeasured_watched_peek(story_entry):
+		elif _story_is_unmeasured_blackjack_penalty(story_entry):
 			# The old instruction cannot establish what a clamped account lost.
 			# Report its recorded nominal amount without inventing a measured zero.
 			restored["currency"] = "chips"
@@ -18238,7 +18263,8 @@ func _result_from_story_log(entries: Array) -> Dictionary:
 			restored.erase("settlement")
 			restored["bankroll_delta"] = 0
 			restored["deltas"]["bankroll_delta"] = 0
-			restored["message"] = "Caught peeking. Recorded penalty: %d chips. The actual applied loss was not recorded in this older save." % absi(int(restored.nominal_bankroll_delta))
+			var penalty_label := "Caught peeking" if str(story_entry.get("action_id", "")) == "peek_hole_card" else "Blackjack penalty"
+			restored["message"] = "%s. Recorded penalty: %d chips. The actual applied loss was not recorded in this older save." % [penalty_label, absi(int(restored.nominal_bankroll_delta))]
 			restored["messages"] = [restored.message]
 			restored["deltas"]["messages"] = [restored.message]
 		elif str(restored.get("currency", "")) == "chips":
@@ -18252,10 +18278,10 @@ func _result_from_story_log(entries: Array) -> Dictionary:
 	return {}
 
 
-func _story_is_unmeasured_watched_peek(entry: Dictionary) -> bool:
+func _story_is_unmeasured_blackjack_penalty(entry: Dictionary) -> bool:
 	var room := str(entry.get("environment_archetype_id", entry.get("environment_id", "")))
-	return str(entry.get("game_id", "")) == "blackjack" and str(entry.get("action_id", "")) == "peek_hole_card" \
-			and bool(entry.get("dealer_caught_cheat", false)) and bool(entry.get("pit_boss_watched", entry.get("watched", false))) \
+	return str(entry.get("game_id", "")) == "blackjack" and int(entry.get("bankroll_delta", 0)) <= 0 \
+			and bool(entry.get("dealer_caught_cheat", false)) \
 			and (room == "grand_casino" or room.begins_with("grand_casino_"))
 
 
@@ -21298,7 +21324,7 @@ func _game_result_from_story_log(entries: Array) -> Dictionary:
 		var entry: Dictionary = entries[index]
 		if str(entry.get("type", "")) != "game_action":
 			continue
-		if entry.has("currency") or not GameModule.applied_currency_settlement(entry).is_empty() or _story_is_unmeasured_watched_peek(entry):
+		if entry.has("currency") or not GameModule.applied_currency_settlement(entry).is_empty() or _story_is_unmeasured_blackjack_penalty(entry):
 			var result := _result_from_story_log([entry])
 			result["type"] = "game_action_summary"
 			result["action_kind"] = "summary"

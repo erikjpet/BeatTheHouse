@@ -1068,7 +1068,7 @@ static func applied_currency_settlement(value: Dictionary) -> Dictionary:
 	return applied.duplicate(true)
 
 
-static func _record_watched_peek_applied_currency(run_state: RunState, result: Dictionary, deltas: Dictionary, cash_before: int, chips_before: int) -> void:
+static func _record_blackjack_penalty_applied_currency(run_state: RunState, result: Dictionary, deltas: Dictionary, cash_before: int, chips_before: int) -> void:
 	# The original debit already ran. Preserve its nominal instructions and
 	# confiscation metadata; the receipt records the observed wallet difference.
 	var applied := {
@@ -1086,7 +1086,8 @@ static func _record_watched_peek_applied_currency(run_state: RunState, result: D
 		if typeof(story[index]) != TYPE_DICTIONARY:
 			continue
 		var entry: Dictionary = story[index]
-		if str(entry.get("type", "")) != "game_action" or str(entry.get("game_id", "")) != "blackjack" or str(entry.get("action_id", "")) != "peek_hole_card":
+		if str(entry.get("type", "")) != "game_action" or str(entry.get("game_id", "")) != "blackjack" \
+				or int(entry.get("bankroll_delta", 0)) != int(applied.nominal_chips_delta):
 			continue
 		entry = entry.duplicate(true)
 		entry["nominal_bankroll_delta"] = int(entry.get("bankroll_delta", 0))
@@ -1206,11 +1207,11 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 	var deltas := _normalize_result_deltas(result.get("deltas", {}))
 	run_state.record_score_spending_from_result(result, deltas)
 	deltas = run_state.route_grand_casino_game_currency(result, deltas)
-	var observe_peek_loss := result_game_id == "blackjack" \
-		and str(result.get("action_id", "")) == "peek_hole_card" \
-		and bool(result.get("blackjack_watched_peek", false)) \
-		and str(result.get("currency", "")) == "chips"
-	if not observe_peek_loss:
+	var observe_chip_penalty := result_game_id == "blackjack" \
+		and (bool(result.get("blackjack_watched_peek", false)) or bool(result.get("blackjack_cheat_caught", false))) \
+		and str(result.get("currency", "")) == "chips" \
+		and int(deltas.get("bankroll_delta", 0)) == 0 and int(deltas.get("chips_delta", 0)) <= 0
+	if not observe_chip_penalty:
 		finalize_routed_settlement(run_state, result, deltas, false)
 	var defer_bankroll_zero := bool(result.get("defer_bankroll_zero_failure", false)) or run_state.defer_next_bankroll_zero_failure
 	if defer_bankroll_zero:
@@ -1224,8 +1225,8 @@ static func apply_result(run_state: RunState, result: Dictionary, rng: RngStream
 	var chips_delta := int(deltas.get("chips_delta", 0))
 	if chips_delta != 0:
 		run_state.change_grand_casino_chips(chips_delta, defer_bankroll_zero)
-	if observe_peek_loss:
-		_record_watched_peek_applied_currency(run_state, result, deltas, cash_before, chips_before)
+	if observe_chip_penalty:
+		_record_blackjack_penalty_applied_currency(run_state, result, deltas, cash_before, chips_before)
 		finalize_routed_settlement(run_state, result, deltas, false)
 	if not failed_before_money and run_state.run_status == RunState.RUN_STATUS_FAILED and not bool(result.get("terminal_settlement", false)):
 		run_state.clear_deferred_bankroll_zero_resolution()
