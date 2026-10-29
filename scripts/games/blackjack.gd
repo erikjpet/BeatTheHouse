@@ -4166,7 +4166,7 @@ func _dealer_focus_for_surface_state(surface, surface_state: Dictionary) -> Dict
 	var started := int(runtime.get("dealer_lookaway_started_msec", 0))
 	var duration := int(runtime.get("dealer_lookaway_duration_msec", 0))
 	var now := int(surface.call("surface_simulation_time_msec")) if surface != null and surface.has_method("surface_simulation_time_msec") else int(surface_state.get("surface_time_msec", Time.get_ticks_msec()))
-	var active := started > 0 and duration > 0 and now <= started + duration
+	var active := started > 0 and duration > 0 and now >= started and now <= started + duration
 	var remaining := maxi(0, started + duration - now) if active else 0
 	var cycle_msec := maxi(900, int(320000 / maxi(45, int(profile.get("gaze_speed", 95)))))
 	var phase := float((now + int(profile.get("blink_offset", 0))) % cycle_msec) / float(cycle_msec)
@@ -8306,7 +8306,8 @@ func _dealer_lookaway_active(session: Dictionary) -> bool:
 	var duration := int(session.get("dealer_lookaway_duration_msec", 0))
 	if started <= 0 or duration <= 0:
 		return false
-	return _session_time_msec(session) <= started + duration
+	var now := _session_time_msec(session)
+	return now >= started and now <= started + duration
 
 
 func _dealer_peek_window_open(table: Dictionary, session: Dictionary, run_state: RunState) -> bool:
@@ -8320,7 +8321,7 @@ func _dealer_focus_state(table: Dictionary, session: Dictionary, run_state: RunS
 	var started := int(session.get("dealer_lookaway_started_msec", 0))
 	var duration := int(session.get("dealer_lookaway_duration_msec", 0))
 	var now := _session_time_msec(session)
-	var active := started > 0 and duration > 0 and now <= started + duration
+	var active := started > 0 and duration > 0 and now >= started and now <= started + duration
 	var remaining := maxi(0, started + duration - now) if active else 0
 	var cycle_msec := maxi(900, int(320000 / maxi(45, int(profile.get("gaze_speed", 95)))))
 	var phase := float((now + int(profile.get("blink_offset", 0))) % cycle_msec) / float(cycle_msec)

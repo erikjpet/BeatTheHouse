@@ -66,6 +66,7 @@ const FIELDS := [
 	{"key": "heat_history"},
 	{"key": "town_state"},
 	{"key": "simulation_msec", "transform": "exact_integer"},
+	{"key": "surface_clock_checkpoint_msec", "transform": "exact_integer"},
 	{"key": "game_clock_minutes", "transform": "exact_integer"},
 	{"key": "grand_casino_atm_interest_boundary_index", "transform": "exact_integer"},
 	{"key": "grand_casino_atm_interest_notifications"},

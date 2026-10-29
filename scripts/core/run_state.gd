@@ -499,6 +499,10 @@ var _numbers_host_capability: RefCounted
 var heat_history: Array = []
 var town_state: TownState
 var simulation_msec: int = 0
+# Pause-safe UI clock epoch, separate from game-time/action progression. Old
+# saves have no checkpoint; their validated last Blackjack action is the only
+# known timing boundary and must never be compared with a new process clock.
+var surface_clock_checkpoint_msec: int = -1
 var game_clock_minutes: int = GAME_CLOCK_START_MINUTE
 var grand_casino_atm_interest_boundary_index: int:
 	get: return _grand_casino_run_facade.atm_interest_boundary_index
@@ -538,7 +542,7 @@ const TURN_TRANSACTION_SCALAR_FIELDS := [
 	"rourke_floor_action_index", "rival_cheater_day",
 	"event_cadence_rng_create_call_count", "event_cadence_rng_save_call_count",
 	"environment_history_archive_count", "story_log_archive_count",
-	"crew_grievance_sequence", "crew_job_sequence", "simulation_msec",
+	"crew_grievance_sequence", "crew_job_sequence", "simulation_msec", "surface_clock_checkpoint_msec",
 	"game_clock_minutes", "grand_casino_atm_interest_boundary_index", "act_index",
 	"run_status", "run_failure_reason", "run_failure_message",
 	"run_spending_score", "defer_next_bankroll_zero_failure",
@@ -687,6 +691,7 @@ func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dict
 	town_state.generate(seed_value)
 	town_state.bind_host_capability(_world1_host_capability)
 	simulation_msec = 0
+	surface_clock_checkpoint_msec = -1
 	game_clock_minutes = GAME_CLOCK_START_MINUTE
 	grand_casino_atm_interest_boundary_index = CageEconomyModelScript.boundary_index_at_or_before(game_clock_minutes)
 	grand_casino_atm_interest_notifications = []
@@ -6471,6 +6476,28 @@ func _reconcile_blackjack_authority_restore() -> void:
 			table[BlackjackActionAuthorityScript.LEDGER_KEY] = ledger
 		game_states[game_id] = table
 	current_environment["game_states"] = game_states
+
+
+func restored_surface_clock_msec() -> int:
+	var checkpoint := surface_clock_checkpoint_msec
+	var game_states: Dictionary = current_environment.get("game_states", {}) if typeof(current_environment.get("game_states", {})) == TYPE_DICTIONARY else {}
+	for state_key in game_states:
+		if typeof(game_states[state_key]) != TYPE_DICTIONARY:
+			continue
+		var table: Dictionary = game_states[state_key]
+		if not table.has(BlackjackActionAuthorityScript.LEDGER_KEY):
+			continue
+		var ledger := BlackjackActionAuthorityScript.validate_persisted_ledger_cow(
+			table[BlackjackActionAuthorityScript.LEDGER_KEY],
+			action_authority_table_binding(str(state_key), current_environment),
+			blackjack_authority_checkpoint_fingerprint()
+		)
+		if not ledger.is_empty():
+			# A legacy save cannot recover time never recorded after its last action.
+			# Preserve that known boundary; a new checkpoint additionally records idle
+			# elapsed time. Neither can rewind a later accepted session timestamp.
+			checkpoint = maxi(checkpoint, int((ledger.get("session", {}) as Dictionary).get("surface_time_msec", -1)))
+	return checkpoint
 
 
 func _grand_casino_result_wager_funding_amount(result: Dictionary, bankroll_delta: int) -> int:
@@ -15275,6 +15302,7 @@ func _run_state_schema_values() -> Dictionary:
 		"heat_history": normalize_heat_history(heat_history),
 		"town_state": town_state.snapshot() if town_state != null else {},
 		"simulation_msec": simulation_msec,
+		"surface_clock_checkpoint_msec": surface_clock_checkpoint_msec,
 		"game_clock_minutes": game_clock_minutes,
 		"grand_casino_atm_interest_boundary_index": grand_casino_atm_interest_boundary_index,
 		"grand_casino_atm_interest_notifications": grand_casino_atm_interest_notifications.duplicate(true),
@@ -15488,6 +15516,7 @@ func _save_snapshot(deep_copy_seeded_scenario_definitions: bool, travel_preview:
 		"heat_history": preview_heat_history if travel_preview else heat_history.duplicate(false),
 		"town_state": town_state.snapshot(deep_copy_seeded_scenario_definitions) if include_world and town_state != null else {},
 		"simulation_msec": simulation_msec,
+		"surface_clock_checkpoint_msec": surface_clock_checkpoint_msec,
 		"game_clock_minutes": game_clock_minutes,
 		"grand_casino_atm_interest_boundary_index": grand_casino_atm_interest_boundary_index,
 		"grand_casino_atm_interest_notifications": [] if travel_preview else grand_casino_atm_interest_notifications.duplicate(false),
@@ -15688,6 +15717,7 @@ func _run_state_schema_restore(data: Dictionary) -> void:
 		_record_heat_history(not current_environment.is_empty())
 	_compact_heat_history()
 	simulation_msec = maxi(0, int(data.get("simulation_msec", int(JsonCoerceScript._copy_dict(data.get("event_cadence", {})).get("action_index", 0)) * SIMULATION_ACTION_MSEC)))
+	surface_clock_checkpoint_msec = maxi(-1, int(data.get("surface_clock_checkpoint_msec", -1)))
 	if bool(narrative_flags.get("grand_casino_showdown_active", false)) and str(narrative_flags.get("grand_casino_showdown_step", "")) == GRAND_CASINO_SHOWDOWN_STEP_LEGACY_CHECK and not JsonCoerceScript._copy_dict(narrative_flags.get("grand_casino_duel_terms", {})).is_empty():
 		_begin_grand_casino_duel(JsonCoerceScript._copy_dict(narrative_flags.get("grand_casino_duel_terms", {})))
 	grand_casino_atm_interest_boundary_index = int(data.get(

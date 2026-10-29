@@ -435,6 +435,7 @@ var drunk_time_last_scale := 1.0
 var continuous_environment_clock_enabled := true
 var environment_pause_started_msec := 0
 var environment_paused_total_msec := 0
+var environment_clock_epoch_offset_msec := 0
 var application_pause_owners: Dictionary = {}
 var environment_clock_fractional_minutes := 0.0
 var stored_grand_casino_runtime_last_msec := -100000
@@ -1245,6 +1246,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	_clear_input_guard_modal_state()
 	_reset_game_surface_runtime_state()
 	var resolved_seed := seed_text.strip_edges()
+	environment_clock_epoch_offset_msec = 0
 	if resolved_seed.is_empty():
 		resolved_seed = DEFAULT_SEED
 	var resolved_challenge_config := _challenge_with_meta_home_for_run(resolved_seed, challenge_config) if include_meta_home_modifiers else RunState.normalize_challenge(resolved_seed, challenge_config)
@@ -6858,6 +6860,10 @@ func _prepare_foundation_run_save() -> void:
 		if current_game.checkpoint_surface_ui_state_for_save_requires_ui_state():
 			checkpoint_ui_state = _current_game_surface_ui_state()
 		current_game.checkpoint_surface_ui_state_for_save(checkpoint_ui_state, run_state, run_state.current_environment)
+	if run_state != null:
+		# Save the pause-safe frame used to grade inputs, not wall time spent in
+		# menus or a prior action's sealed session. This is timing metadata only.
+		run_state.surface_clock_checkpoint_msec = maxi(run_state.surface_clock_checkpoint_msec, _current_game_surface_input_time_msec())
 	_evaluate_run_terminal_state()
 	if procedural_music_player != null:
 		run_state.remember_music_tempo_state(procedural_music_player.adaptive_tempo_save_state())
@@ -7139,6 +7145,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	environment_runtime_active_keys_scratch.clear()
 	environment_runtime_scheduler.clear()
 	run_state = loaded
+	environment_clock_epoch_offset_msec = 0
 	var loaded_terminal := run_state.is_terminal()
 	var recovered_broken_environment := false
 	var broken_environment_requires_map := false
@@ -7212,6 +7219,9 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	if environment_canvas != null:
 		environment_canvas.settle_person_transits()
 	_refresh()
+	# Room verification/rebuilding can take longer than a short timing window.
+	# Resume its saved epoch only once Continue has published the playable room.
+	_restore_loaded_surface_clock_epoch()
 	if run_state.grand_casino_duel_active(run_state.current_environment):
 		if _enter_grand_casino_duel_surface():
 			return true
@@ -7325,7 +7335,7 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 		"money_feedback_pending", "money_feedback_push_currency", "money_feedback_run_id",
 		"_room_catalog_publication", "interactable_object_catalog_cache", "interactable_object_catalog_cache_valid", "interactable_object_catalog_cache_key", "interactable_object_view_cache", "interactable_object_view_cache_valid", "interactable_object_view_cache_key",
 		"meta_session_active", "meta_session_location_id", "meta_last_panel_message", "dev_game_test_mode", "dev_environment_test_mode",
-		"environment_pause_started_msec", "environment_paused_total_msec", "talk_dock_avoid_sync_active", "item_found_talk_dock_suspended",
+		"environment_pause_started_msec", "environment_paused_total_msec", "environment_clock_epoch_offset_msec", "talk_dock_avoid_sync_active", "item_found_talk_dock_suspended",
 		"current_game", "current_game_state_key", "game_exit_settle_active", "last_game_exit_final_projection_rendered",
 		"last_game_result", "last_environment_runtime_result", "last_item_result", "last_hook_result", "game_surface_ui_state",
 		"selected_action_category", "current_screen", "selected_action_id", "selected_action_kind", "selected_action_label", "selected_stake",
@@ -10166,7 +10176,16 @@ func _talk_entry_is_pal_tutorial_dialogue(entry: Dictionary) -> bool:
 func _environment_simulation_time_msec() -> int:
 	var now_msec := Time.get_ticks_msec()
 	var current_pause := maxi(0, now_msec - environment_pause_started_msec) if environment_pause_started_msec > 0 else 0
-	return maxi(0, now_msec - environment_paused_total_msec - current_pause)
+	return maxi(0, now_msec - environment_paused_total_msec - current_pause + environment_clock_epoch_offset_msec)
+
+
+func _restore_loaded_surface_clock_epoch() -> void:
+	# Saved absolute deadlines remain in their existing epoch. Move only the
+	# host's clock origin; never rewrite sealed sessions, durations or receipts.
+	environment_clock_epoch_offset_msec = 0
+	var checkpoint := run_state.restored_surface_clock_msec() if run_state != null else -1
+	if checkpoint >= 0:
+		environment_clock_epoch_offset_msec = checkpoint - _environment_simulation_time_msec()
 
 
 func _on_talk_dock_occupied_rect_changed(_rect: Rect2) -> void:
