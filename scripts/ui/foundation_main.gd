@@ -4927,7 +4927,10 @@ func _refresh_talk_dock() -> void:
 	# Vince's next scratch-machine restock. Never replace that information with
 	# a generic randomized character bark.
 	var pushy_crew_request := event_id == "crew_favor_delivery" and bool(run_state.narrative_flags.get("crew_delivery_post_miss", false))
-	if not voice_line.is_empty() and not authored_guide_dialogue and not pushy_crew_request and summary_override.is_empty():
+	# A dialogue node is the authored answer to the selected question. Character
+	# barks are a fallback, never a replacement for that answer (or its greeting).
+	var authored_dialogue_summary := not dialogue_id.is_empty() and not str(option.get("summary", "")).strip_edges().is_empty()
+	if not voice_line.is_empty() and not authored_guide_dialogue and not authored_dialogue_summary and not pushy_crew_request and summary_override.is_empty():
 		option = option.duplicate(true)
 		var voice_name := str(entry_speaker.get("speaking_character_name", "")).strip_edges()
 		var spoken_summary := "%s: \"%s\"" % [voice_name, voice_line] if not voice_name.is_empty() else voice_line
