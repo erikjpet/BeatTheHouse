@@ -2840,7 +2840,7 @@ func _table_notice(table: Dictionary, session: Dictionary, last_result: Dictiona
 		var winner_text := _winner_display(str(last_result.get("winner", "")))
 		return "%s is settling. Winning chips are marked." % winner_text if not winner_text.is_empty() else "The croupier marks winners and collects commission."
 	if not str(session.get("table_notice", "")).is_empty():
-		return str(session.get("table_notice", ""))
+		return _stored_table_notice_for_currency(str(session.get("table_notice", "")), wager_currency)
 	var edge := _normalized_edge_sort_edge(table.get("edge_sort_edge", {}), table)
 	if not edge.is_empty():
 		return "Edge-sort lean: %s at %d%% for %d hands." % [_winner_display(str(edge.get("predicted_bet", ""))), int(edge.get("confidence", 0)), int(edge.get("hands_remaining", 0))]
@@ -2863,6 +2863,45 @@ func _table_notice(table: Dictionary, session: Dictionary, last_result: Dictiona
 	if not last_result.is_empty():
 		return str(last_result.get("summary", "The shoe is ready."))
 	return "%s working across %d baccarat space%s." % [PlayerTextScript.format_currency_amount(wager_currency, _total_wager(bets)), bets.size(), "" if bets.size() == 1 else "s"]
+
+
+func _stored_table_notice_for_currency(notice: String, wager_currency: String) -> String:
+	if wager_currency != "chips" or not notice.contains("$"):
+		return notice
+	# Old table sessions retained these authored cash-shaped staging strings.
+	# Format their recorded amount in the table's known denomination for display;
+	# never replace arbitrary prose or derive an amount from today's wager/wallet.
+	var suffix := ""
+	var display_suffix := ""
+	for selected_suffix in [" chip selected.", " selected."]:
+		if notice.begins_with("$") and notice.ends_with(selected_suffix):
+			suffix = selected_suffix
+			display_suffix = " selected."
+			break
+	if suffix.is_empty():
+		for target in BET_TARGETS:
+			var target_suffix := " on %s." % str(target.get("label", ""))
+			if notice.ends_with(target_suffix):
+				suffix = target_suffix
+				display_suffix = target_suffix
+				break
+	if suffix.is_empty():
+		return notice
+	var amount_start := notice.rfind("$")
+	var prefix := notice.left(amount_start)
+	if not prefix.is_empty() and not (
+			(prefix.begins_with("Following ") and prefix.ends_with(" with: "))
+			or (prefix.begins_with("Fading ") and prefix.ends_with(" against: "))):
+		return notice
+	var recorded_amount := notice.substr(amount_start + 1, notice.length() - amount_start - 1 - suffix.length())
+	if not recorded_amount.is_valid_int():
+		return notice
+	if recorded_amount.length() > 19 or (recorded_amount.length() == 19 and recorded_amount > "9223372036854775807"):
+		return notice
+	var amount := recorded_amount.to_int()
+	if amount < 0 or str(amount) != recorded_amount:
+		return notice
+	return prefix + PlayerTextScript.format_currency_amount(wager_currency, amount) + display_suffix
 
 
 func _baccarat_hand_explainer(session: Dictionary, last_result: Dictionary, deal_active: bool, payout_active: bool, round_timer: Dictionary = {}, wager_currency: String = "cash", can_deal: bool = true, table_minimum: int = 0) -> Dictionary:
