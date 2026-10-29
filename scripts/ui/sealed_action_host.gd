@@ -1059,6 +1059,12 @@ func _sealed_action_host_proposal_fingerprints(proposal: Dictionary, proposal_in
 
 
 func _sealed_action_host_advance_environment_turn(candidate: RunState) -> Dictionary:
+	# A detached sealed action already owns rollback for result + environment
+	# turn. Re-cloning and republishing that entire graph inside this transaction
+	# duplicates the expensive scenario boundary on short live table controls.
+	# A rejected turn is discarded by the outer host before any live publication.
+	if candidate != _foundation.run_state:
+		return candidate.advance_environment_turns_with_external_rollback(1)
 	return candidate.advance_environment_turns(1)
 
 

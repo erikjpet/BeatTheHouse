@@ -778,7 +778,9 @@ static func object_manifest_errors(environment_data: Dictionary) -> Array:
 static func ticket_redemption_manifest_errors(environment_data: Dictionary) -> Array:
 	var errors: Array = []
 	var hooks := {"pull_tabs": "ticket_redeemer", "scratch_tickets": "scratch_ticket_clerk"}
-	var states := JsonCoerceScript._copy_dict(environment_data.get("game_states", {}))
+	# Membership consumes only hooks/presence. Read opaque paid-machine buffers
+	# in place; copying their complete ledgers here repeats on every room proof.
+	var states: Dictionary = environment_data.get("game_states", {}) if typeof(environment_data.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var rows := active_object_manifest_rows(environment_data)
 	for game_id in JsonCoerceScript._string_array(environment_data.get("game_ids", [])):
 		if not hooks.has(game_id) or JsonCoerceScript._copy_dict(states.get(game_id, {})).is_empty():
@@ -1437,7 +1439,7 @@ static func _is_grand_casino_archetype(environment_data: Dictionary) -> bool:
 
 static func _game_hook_layout_entries(environment_data: Dictionary) -> Array:
 	var result: Array = []
-	var game_states := JsonCoerceScript._copy_dict(environment_data.get("game_states", {}))
+	var game_states: Dictionary = environment_data.get("game_states", {}) if typeof(environment_data.get("game_states", {})) == TYPE_DICTIONARY else {}
 	var counter_service_game_ids := _lottery_counter_game_ids(environment_data, "service_game_ids")
 	for game_id in JsonCoerceScript._string_array(environment_data.get("game_ids", [])):
 		var machine: Variant = game_states.get(game_id, {})

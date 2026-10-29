@@ -531,6 +531,10 @@ var _scenario_sequence_definition_cache: Dictionary = {}
 # Fail-closed forced-rejection probe used by the retained-alias transaction contract.
 # It can only reject a turn; it cannot grant authority or alter a consequence.
 var _turn_transaction_test_failure_stage: String = ""
+# Runtime-only: an outer isolated transaction publishes one complete room proof.
+var _owned_turn_publication_depth := 0
+var _owned_turn_publication_pending := false
+
 
 const TURN_TRANSACTION_SCALAR_FIELDS := [
 	"_room_presentation_publication",
@@ -1621,7 +1625,11 @@ func reconcile_current_environment_object_manifest(refresh_layout: bool = false)
 		current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(current_environment)
 	else:
 		EnvironmentInstance.reconcile_object_manifest(current_environment)
-	publish_room_presentation()
+	if _owned_turn_publication_depth > 0:
+		_room_presentation_publication = null
+		_owned_turn_publication_pending = true
+	else:
+		publish_room_presentation()
 	return JsonCoerceScript._copy_dict(current_environment.get("object_manifest", {}))
 
 
@@ -1697,7 +1705,11 @@ func _publish_scenario_membership_candidate(candidate: Dictionary, result_value:
 	# pointed at the pre-operation room.
 	current_environment.clear()
 	current_environment.merge(candidate, true)
-	publish_room_presentation()
+	if _owned_turn_publication_depth > 0:
+		_room_presentation_publication = null
+		_owned_turn_publication_pending = true
+	else:
+		publish_room_presentation()
 	return result
 
 
@@ -13228,7 +13240,15 @@ func advance_environment_turns_with_external_rollback(amount: int = 1, profile_s
 	if current_environment.is_empty() or is_terminal():
 		return {"ok": true, "applied": false, "errors": []}
 	var profile_started_usec := Time.get_ticks_usec() if profile_stages else 0
+	_owned_turn_publication_depth += 1
 	var result := _advance_environment_turns_candidate(amount)
+	_owned_turn_publication_depth -= 1
+	if _owned_turn_publication_depth == 0 and _owned_turn_publication_pending:
+		_owned_turn_publication_pending = false
+		if bool(result.get("ok", false)):
+			var proof := publish_room_presentation()
+			if not bool(proof.get("ok", false)):
+				return {"ok": false, "applied": false, "errors": proof.get("errors", []), "physical_membership_rejected": true}
 	if profile_stages:
 		result["debug_turn_transaction_usec"] = {
 			"candidate_create": 0,
