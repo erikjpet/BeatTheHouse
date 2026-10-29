@@ -228,7 +228,7 @@ func sealed_action_authority_contract() -> Dictionary:
 		# automatically fall back to the transaction path.
 		"in_place_session_intents": [
 			"blackjack_count_icon", BLACKJACK_SETTLE_ACTION, "blackjack_hit", "blackjack_stand",
-			"blackjack_double", "blackjack_split", "blackjack_surrender",
+			"blackjack_double", "blackjack_split", "blackjack_surrender", "blackjack_distraction",
 		],
 		"in_place_session_intent_predicate_method": &"_blackjack_in_place_session_intent_allowed",
 		"in_place_session_intent_method": &"_blackjack_in_place_session_intent_command",
@@ -2068,6 +2068,9 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 
 
 func _blackjack_in_place_session_intent_command(surface_action: String, index: int, _confirm_requested: bool, session: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if surface_action == "blackjack_distraction":
+		var table := _peek_table_state(environment)
+		return _start_distraction_command(index, session, table, run_state)
 	if surface_action == "blackjack_count_icon":
 		var table := _peek_table_state(environment)
 		if table.is_empty():
@@ -2127,6 +2130,15 @@ func _blackjack_in_place_session_surface_patch(session: Dictionary, run_state: R
 	var total_info := _hand_total_info(active_cards)
 	var selected_stake := _effective_table_stake(_session_stake(int(session.get("selected_stake", 1)), session), session, run_state, environment)
 	return {
+		"dealer_focus_runtime": {
+			"dealer_lookaway_started_msec": attention_started_msec,
+			"dealer_lookaway_duration_msec": attention_duration_msec,
+			"dealer_distraction_noise": int(session.get("dealer_distraction_noise", 0)),
+			"dealer_distraction_cover": int(session.get("dealer_distraction_cover", 0)),
+			"count_active": count_active,
+			"count_attention_risk": int(challenge.get("dealer_attention_risk", 0)),
+			"strategy_attention_boost": int(session.get("strategy_attention_boost", 0)),
+		},
 		"surface_time_msec": now_msec,
 		"surface_presentation_time_msec": presentation_msec,
 		"surface_ui_protected_regions": _blackjack_ui_protected_regions(challenge),
@@ -6445,6 +6457,9 @@ func _action_command(action_id: String, action_kind: String, confirm_requested: 
 		"action_id": action_id,
 		"action_kind": action_kind,
 		"resolve": force_resolve or confirm_requested or (already_selected and resolve_when_selected),
+		# Resolving Peek already carries a sealed delivery and exact stake. Do not
+		# rebuild the whole room/action selection just before consuming it.
+		"direct_resolve": action_id == "peek_hole_card" and (force_resolve or confirm_requested or (already_selected and resolve_when_selected)),
 		"preserve_surface_ui_state": preserve_surface_ui_state,
 		"selected_index": index,
 		"message": message,
