@@ -5028,7 +5028,7 @@ func _pending_talk_event_entry(event_id: String) -> Dictionary:
 	return run_state.pending_talk_event(event_id)
 
 
-func start_dialogue(dialogue_id: String, source_data: Dictionary = {}) -> bool:
+func start_dialogue(dialogue_id: String, source_data: Dictionary = {}, manual_room_request: bool = false) -> bool:
 	if run_state == null or library == null:
 		return false
 	var clean_id := dialogue_id.strip_edges()
@@ -5069,7 +5069,10 @@ func start_dialogue(dialogue_id: String, source_data: Dictionary = {}) -> bool:
 		speaker[override_key] = speaker_override[override_key]
 	speaker = _resolve_character_speaker(_normalized_talk_speaker(speaker), clean_id, str(speaker.get("voice_line_key", "")))
 	var start_node := str(source_data.get("start_node", dialogue.get("start", ""))).strip_edges()
-	if not run_state.enqueue_dialogue(clean_id, event_id, speaker, start_node, "dialogue", context):
+	# Only deliberate room input bypasses same-boundary automatic-prompt
+	# suppression. Keep the dismissal journal and original context source intact.
+	var queue_source := "event_object" if manual_room_request else "dialogue"
+	if not run_state.enqueue_dialogue(clean_id, event_id, speaker, start_node, queue_source, context):
 		_show_message("Conversation is already queued.")
 		_refresh()
 		return false
@@ -13345,7 +13348,7 @@ func _add_context_object_actions(card: VBoxContainer, object_data: Dictionary) -
 		CONTEXT_MODE_GAME_HOOK:
 			_add_context_game_hook_actions(card, object_data)
 		CONTEXT_MODE_DIALOGUE:
-			_add_card_button(card, "Talk", Callable(self, "start_dialogue").bind(source_id, object_data), false, true)
+			_add_card_button(card, "Talk", Callable(self, "start_dialogue").bind(source_id, object_data, true), false, true)
 		CONTEXT_MODE_CASINO_FIXTURE:
 			_add_card_button(card, "Inspect", Callable(self, "_inspect_casino_fixture").bind(object_data), false, true)
 		CONTEXT_MODE_NUMBERS:
@@ -15973,7 +15976,7 @@ func _activate_attached_room_action(target_object_id: String, action_key: String
 			var dialogue_action_id := str(record.get("object_id", "dialogue:%s" % source_id)).strip_edges()
 			if _guard_player_input_route(false, dialogue_action_id):
 				return false
-			return start_dialogue(source_id, record)
+			return start_dialogue(source_id, record, true)
 		CONTEXT_MODE_GAME:
 			return enter_game(source_id)
 		CONTEXT_MODE_GAME_HOOK:
@@ -16134,7 +16137,7 @@ func _activate_interactable_object_with_lifecycle_snapshot(object_id: String, ca
 		CONTEXT_MODE_GAME_HOOK:
 			return use_game_environment_hook(str(object_data.get("parent_id", "")), source_id, str(object_data.get("confirm_action_id", "")))
 		CONTEXT_MODE_DIALOGUE:
-			return start_dialogue(source_id, object_data)
+			return start_dialogue(source_id, object_data, true)
 		CONTEXT_MODE_CASINO_FIXTURE:
 			var fixture_ok := _inspect_casino_fixture(object_data)
 			if not fixture_ok and str(object_data.get("source_id", "")).strip_edges() == "cage":
