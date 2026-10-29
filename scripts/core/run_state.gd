@@ -2870,6 +2870,11 @@ func _scenario_sequence_definition_readonly() -> Dictionary:
 	if scenario_id.is_empty():
 		return {}
 	var definition := _seeded_scenario_definition_for_node_readonly(node_id)
+	# Lazy retirement can authenticate an older saved room after the town has
+	# selected its next opening. A different scenario's seed cannot describe this
+	# installed room; only its own validated cache/embedded definition may do so.
+	if str(definition.get("id", "")).strip_edges() != scenario_id:
+		definition = {}
 	if definition.is_empty():
 		definition = embedded_definition
 	if scenario_sequence_is_suppressed(scenario_id, str(current_environment.get("archetype_id", node_id))):

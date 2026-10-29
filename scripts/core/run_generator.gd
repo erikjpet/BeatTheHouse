@@ -191,6 +191,8 @@ func _install_environment_with_rollback(run_state: RunState, environment_data: D
 
 
 func _trusted_scenario_install_data(run_state: RunState, environment_data: Dictionary) -> Dictionary:
+	if environment_data.is_empty() or str(environment_data.get("id", "")).strip_edges().is_empty() or str(environment_data.get("archetype_id", "")).strip_edges().is_empty():
+		return {"ok": false, "environment": {}, "errors": ["Travel destination has no valid room identity."]}
 	var install_data := environment_data.duplicate(true)
 	# Never trust a caller-carried definition. Production reconstructs it from the
 	# selected destination authority immediately before the environment is sealed.
@@ -894,7 +896,12 @@ func _next_world_environment(run_state: RunState, target_archetype_id: String, r
 	if _world_environment_timing_enabled:
 		perf_stages["environment_build"] = Time.get_ticks_usec() - perf_stage_started_usec
 		perf_stage_started_usec = Time.get_ticks_usec()
-	var installed := _install_environment_with_rollback(run_state, environment_data, rollback, false)
+	# A failed lazy restore is an explicit rejection, never a Base / No Scenario
+	# room. Do not let set_environment() evaluate the economy against an empty
+	# destination, even when the outer UI owns transaction rollback.
+	var installed := {"ok": false, "errors": _last_environment_install_errors.duplicate(true)} if environment_data.is_empty() else _install_environment_with_rollback(run_state, environment_data, rollback, false)
+	if environment_data.is_empty() and JsonCoerceScript._copy_array(installed.get("errors", [])).is_empty():
+		installed["errors"] = ["Travel destination could not be generated."]
 	if not bool(installed.get("ok", false)):
 		_last_environment_install_errors = JsonCoerceScript._copy_array(installed.get("errors", []))
 		_last_environment_install_failure = {
@@ -1256,6 +1263,11 @@ func _refresh_venue_scenario_cycle_candidate(run_state: RunState, archetype: Dic
 		run_state.current_environment = room
 		if not definition_id.is_empty():
 			# Rebuild saved causal authority before invoking its authored cleanup.
+			# The town's selection already belongs to the NEW cycle. Retirement
+			# must authenticate the saved room against its own exact old catalog
+			# definition, without reseeding the town or replaying its selector.
+			if definition.is_empty() or not run_state.cache_runtime_scenario_definition(definition):
+				return {"ok": false, "errors": ["Retiring scenario %s has no validated catalog definition." % definition_id]}
 			var before := run_state.scenario_finalize_installed_environment(library)
 			if not bool(before.get("ok", false)): return before
 			room = run_state.current_environment
@@ -1273,8 +1285,13 @@ func _refresh_venue_scenario_cycle_candidate(run_state: RunState, archetype: Dic
 		base_rooms[layer] = base
 	# A nonempty prior record prevents the legacy-seed compatibility branch from
 	# reusing an expired selection. The ordinary selector owns its new RNG lease.
-	record.merge({"history": history, "base_profiles": profiles, "cycle_id": "retired:%s" % str(old_cycle.cycle_id),
-		"scenario_id": "", "schedule_version": 1, "phase": "closed", "opened_at": cycle.opened_at, "closes_at": cycle.closes_at}, true)
+	record.merge({"history": history, "base_profiles": profiles}, true)
+	# _prime_town_scenarios may already have selected this opening's situation.
+	# Keep that selection (including None) instead of rolling again with a changed
+	# recent-scenario history when a previously visited room is retired lazily.
+	if str(record.get("cycle_id", "")) != str(cycle.cycle_id):
+		record.merge({"cycle_id": "retired:%s" % str(old_cycle.cycle_id), "scenario_id": "", "schedule_version": 1,
+			"phase": "closed", "opened_at": cycle.opened_at, "closes_at": cycle.closes_at}, true)
 	run_state.environment_situation_cycles_by_node[archetype_id] = record
 	var selected: Dictionary = {}
 	if bool(cycle.active):

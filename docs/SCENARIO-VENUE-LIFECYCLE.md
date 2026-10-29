@@ -50,6 +50,12 @@ rollover restores its prior state. A rejected lazy destination restores the
 actual source room's context, including its room-scoped Heat. Closing grace
 and ordinary venue access rules are unchanged.
 
+A saved destination can still contain its previous opening's scenario after the
+town has selected the next opening. Lazy retirement authenticates that saved
+room using its own validated catalog definition and keeps the already-selected
+new cycle, including a no-scenario selection. A failed destination build never
+installs an empty room or evaluates bankruptcy/stranding against it.
+
 ## Focused checks
 
 - `scenario_venue_cycle_schedule_check.gd`: exact scheduled/overnight and 24-hour
@@ -61,6 +67,10 @@ and ordinary venue access rules are unchanged.
   installation, strict tamper rollback and accepted delivery preservation on
   a rejected historical destination. This destination-stage check does not
   claim an actual paid UI trip.
+- `travel_destination_rejection_check.gd`: the preserved Gas-to-Store revisit
+  through the normal map confirmation, one fare/time boundary, old causal
+  journal and paid machines, repeated publication, Save/fresh-process Continue,
+  synthetic invalid-destination rollback and historical terminal non-revival.
 
 The tests use isolated saves and authority companions. Original QA profiles
 and private authority material are not repository test fixtures.
