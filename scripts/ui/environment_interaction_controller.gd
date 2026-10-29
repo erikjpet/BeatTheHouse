@@ -1148,12 +1148,8 @@ static func restore_live_presentation_fields(projected_records: Array, live_reco
 			_restore_live_slot_visual_state(record, live)
 			# Live base actions replace their stale sealed snapshot. Authenticated
 			# scenario augments remain additive and must still resolve by token.
-			if live.has("inline_actions") and not scenario_augmented_inline_actions.is_empty():
-				var reconciled_inline_actions := _array(record.get("inline_actions", []))
-				for action_value in scenario_augmented_inline_actions:
-					if not reconciled_inline_actions.has(action_value):
-						reconciled_inline_actions.append(_duplicate_variant(action_value))
-				record["inline_actions"] = reconciled_inline_actions
+			if not scenario_augmented_inline_actions.is_empty():
+				record["inline_actions"] = _base_inline_actions_with_scenario_augments(live, scenario_augmented_inline_actions)
 		result.append(record)
 	return result
 
@@ -1692,6 +1688,59 @@ static func _merge_projected_interaction(base: Dictionary, semantic: Dictionary,
 	# generic fallback exposes only the first action on an ordinary object.
 	if str(semantic.get("owner_namespace", "")) == "scenario" and world_owner_token.is_empty() and actions.size() > 1:
 		result["inline_actions"] = ScenarioSemanticViewModelScript.inline_actions_for_interaction(semantic, boundary_serial)
+	elif not scenario_owned and world_owner_token.is_empty():
+		# Abstract scenario tasks may be hosted by an ordinary event or fixture.
+		# Keep their exact origin/proof, but publish their choices additively so
+		# the live base refresh and floating card cannot reduce them to just Talk.
+		var attached_actions: Array = []
+		for action_value in sequence_actions:
+			var action := _dict(action_value)
+			if str(action.get("attached_owner_namespace", "")) == "scenario" \
+					and not str(action.get("attached_stable_object_id", "")).is_empty() \
+					and not str(action.get("action_origin_receipt_key", "")).is_empty():
+				attached_actions.append(action)
+		if not attached_actions.is_empty():
+			var attached_interaction := semantic.duplicate(true)
+			attached_interaction["available_actions"] = attached_actions
+			var augments := ScenarioSemanticViewModelScript.inline_actions_for_interaction(attached_interaction, boundary_serial)
+			if not augments.is_empty():
+				result["scenario_augmented_inline_actions"] = augments
+				result["inline_actions"] = _base_inline_actions_with_scenario_augments(base, augments)
+	return result
+
+
+static func _base_inline_actions_with_scenario_augments(base: Dictionary, augments: Array) -> Array:
+	var own_inline: Array = []
+	for value in _array(base.get("inline_actions", [])):
+		var action := _dict(value)
+		if bool(action.get("visible", true)) and bool(action.get("presentation_visible", true)) \
+				and not bool(action.get("hidden", false)) and not bool(action.get("hidden_only", false)):
+			own_inline.append(action)
+	if own_inline.is_empty():
+		# The ordinary floating card normally emits the host identity for its
+		# primary action. Retain that same dispatch when adding inline tasks.
+		for value in _array(base.get("available_actions", [])):
+			var action := _dict(value)
+			if action.is_empty() or not bool(action.get("visible", true)) or not bool(action.get("presentation_visible", true)) \
+					or bool(action.get("hidden", false)) or bool(action.get("hidden_only", false)):
+				continue
+			var primary := action.duplicate(true)
+			var emit_id := str(primary.get("emit_object_id", base.get("object_id", ""))).strip_edges()
+			if emit_id.is_empty() or str(primary.get("label", "")).strip_edges().is_empty():
+				continue
+			primary["emit_object_id"] = emit_id
+			primary["enabled"] = bool(base.get("enabled", true)) and bool(primary.get("enabled", true)) and not bool(primary.get("disabled", false))
+			own_inline.append(primary)
+			break
+	var result: Array = []
+	var seen: Dictionary = {}
+	for value in own_inline + augments:
+		var action := _dict(value)
+		var dispatch_id := str(action.get("emit_object_id", action.get("id", ""))).strip_edges()
+		if action.is_empty() or dispatch_id.is_empty() or seen.has(dispatch_id):
+			continue
+		seen[dispatch_id] = true
+		result.append(action.duplicate(true))
 	return result
 
 
