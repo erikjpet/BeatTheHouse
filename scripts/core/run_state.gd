@@ -2804,6 +2804,15 @@ func scenario_for_node(node_id: String) -> Dictionary:
 	var wanted := node_id.strip_edges()
 	if wanted.is_empty():
 		return {}
+	var cycle := environment_situation_cycle(wanted)
+	if int(cycle.get("schedule_version", 0)) == 1 and game_clock_minutes >= int(cycle.get("closes_at", game_clock_minutes + 1)):
+		# An unvisited stored room may be rebuilt lazily, but its expired situation
+		# must not remain advertised by map/help reads after the venue boundary.
+		return {}
+	if int(cycle.get("schedule_version", 0)) == 1 and str(cycle.get("scenario_id", "")).is_empty():
+		# A legitimate empty selection must not expose the previous cycle's town
+		# seed through the informational fallback below.
+		return {}
 	var current_node := str(current_environment.get("world_node_id", "")).strip_edges()
 	if current_node.is_empty():
 		current_node = str(current_environment.get("archetype_id", "")).strip_edges()
@@ -4055,7 +4064,10 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	# This atomic finalizer only consumes migration success and activity. Computing
 	# the public informational `changed` bit would serialize the complete scenario
 	# projection before and after migration, even though that evidence is discarded.
-	var migration := ScenarioEngineScript.migrate_environment_sequence(candidate, definition, str(candidate.get("id", candidate.get("environment_visit_id", ""))), false, true)
+	var scenario_seed := str(candidate.get("id", candidate.get("environment_visit_id", "")))
+	var venue_cycle := str(candidate.get("environment_situation_cycle_id", ""))
+	if venue_cycle.begins_with("venue:v1:"): scenario_seed = "venue_cycle_v1:%s:%s" % [scenario_seed, venue_cycle]
+	var migration := ScenarioEngineScript.migrate_environment_sequence(candidate, definition, scenario_seed, false, true)
 	if not bool(migration.get("ok", false)) or not bool(migration.get("active", false)):
 		return _scenario_semantic_finalization_failure(JsonCoerceScript._copy_array(migration.get("errors", ["Scenario sequence migration did not activate after semantic finalization."])), refresh_attempt)
 	var initialized_state := JsonCoerceScript._copy_dict(candidate.get("scenario_sequence_state", {}))
@@ -5563,10 +5575,10 @@ func remember_environment_situation_cycle(node_id: String, cycle_id: String, sce
 	var clean_cycle := cycle_id.strip_edges()
 	if clean_node.is_empty() or clean_cycle.is_empty():
 		return
-	environment_situation_cycles_by_node[clean_node] = {
-		"cycle_id": clean_cycle,
-		"scenario_id": scenario_id.strip_edges(),
-	}
+	var record := environment_situation_cycle(clean_node).duplicate(true)
+	record["cycle_id"] = clean_cycle
+	record["scenario_id"] = scenario_id.strip_edges()
+	environment_situation_cycles_by_node[clean_node] = record
 
 
 func _scenario_base_producer_context_valid(context: Dictionary) -> bool:
@@ -17391,6 +17403,10 @@ static func _normalize_environment_situation_cycles(value: Dictionary) -> Dictio
 			"cycle_id": cycle_id,
 			"scenario_id": str(record.get("scenario_id", "")).strip_edges(),
 		}
+		for key in ["schedule_version", "phase", "opened_at", "closes_at", "history", "base_profiles"]:
+			if record.has(key):
+				var retained: Variant = record.get(key)
+				result[node_id][key] = retained.duplicate(true) if typeof(retained) in [TYPE_ARRAY, TYPE_DICTIONARY] else retained
 	return result
 
 

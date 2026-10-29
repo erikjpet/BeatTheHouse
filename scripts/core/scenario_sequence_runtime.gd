@@ -866,6 +866,26 @@ static func apply_owner_lifecycle_outcome(state_value: Dictionary, definition: D
 	return resolved
 
 
+# The venue owner retires room-local material at its authored closing boundary.
+# Keep the original causal journal for history; cleanup is separately receipted
+# by the venue cycle, never reintroduced as a playable scenario or reward cause.
+static func prepare_venue_cycle_retirement(state_value: Dictionary, definition: Dictionary, cycle_id: String) -> Dictionary:
+	var state := normalize_state(state_value, definition)
+	if state.is_empty() or not _array(state.get("errors", [])).is_empty():
+		return {"ok": false, "errors": ["Venue cycle retirement requires a valid scenario journal."]}
+	var cleaned := _apply_cleanup(state, definition, "venue_cycle:%s" % cycle_id.sha256_text().substr(0, 20))
+	if not bool(cleaned.get("ok", false)): return cleaned
+	var retired := _dict(cleaned.get("state", {}))
+	var expiry_policy := str(_dict(SequenceSchemaScript.sequence(definition).get("expiry", {})).get("policy", "cleanup"))
+	if str(state.get("status", "")) == STATUS_ACTIVE:
+		retired = _set_objective_outcomes(retired, definition, "failure" if expiry_policy == "fail" else "ignore" if expiry_policy == "ignore" else "cancel")
+	return {"ok": true, "errors": [], "original_state": state,
+		"cleanup_receipts": _array(retired.get("cleanup_receipt_records", [])),
+		"retired_objectives": _dict(retired.get("objective_progress", {})),
+		"cleanup_fingerprint": cleanup_definition_content_fingerprint(definition),
+		"retired_status": str(state.get("status", ""))}
+
+
 static func public_projection(state_value: Dictionary, definition: Dictionary = {}, prevalidated_state: bool = false) -> Dictionary:
 	# Engine-owned transactions have already passed the strict normalization and
 	# host-authority checks in ensure_sequence_state(). Re-normalizing the same
@@ -1399,7 +1419,10 @@ static func _enter_phase(state: Dictionary, definition: Dictionary, phase_id: St
 	var next := state.duplicate(false)
 	var semantic := _dict(next.get("semantic_state", {}))
 	var transition_receipts := JsonCoerceScript._unique_string_array(next.get("transition_receipts", []))
-	var boundary_id := "%s:%s:phase:%s:%s" % [str(next.get("scenario_id", "")), str(next.get("node_id", "")), phase_id, source_receipt]
+	var cycle_scope := ""
+	var seed := str(next.get("seed_token", ""))
+	if seed.begins_with("venue_cycle_v1:"): cycle_scope = ":cycle:%s" % seed.sha256_text().substr(0, 20)
+	var boundary_id := "%s:%s%s:phase:%s:%s" % [str(next.get("scenario_id", "")), str(next.get("node_id", "")), cycle_scope, phase_id, source_receipt]
 	if not _valid_persisted_text(boundary_id) or not _valid_persisted_text(source_receipt):
 		return {"ok": false, "state": state, "errors": ["scenario transition boundary exceeds the persisted text boundary"]}
 	var phase_receipt := _structural_receipt("transition", [str(next.get("scenario_id", "")), str(next.get("node_id", "")), phase_id, source_receipt])

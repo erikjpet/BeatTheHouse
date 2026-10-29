@@ -14,6 +14,7 @@ const CrewRecruitmentModelScript := preload("res://scripts/core/crew_recruitment
 const ScenarioEngineScript := preload("res://scripts/core/scenario_engine.gd")
 const ScenarioSequenceSchemaScript := preload("res://scripts/core/scenario_sequence_schema.gd")
 const TutorialFlowScript := preload("res://scripts/core/tutorial_flow.gd")
+const ScenarioVenueCycleScript := preload("res://scripts/core/scenario_venue_cycle.gd")
 const ENVIRONMENT_SITUATION_NONE_PERCENT := 25
 const ENVIRONMENT_SITUATION_CYCLE_KEY := "environment_situation_cycle_id"
 
@@ -1066,6 +1067,15 @@ func _world_environment_data_for_node(run_state: RunState, map_data: Dictionary,
 	_world_environment_build_stages_usec = {}
 	var node_id := str(node.get("id", "")).strip_edges()
 	var stored_environment: Dictionary = node.get("environment", {}) if typeof(node.get("environment", {})) == TYPE_DICTIONARY else {}
+	if generation_options.is_empty() and not stored_environment.is_empty() and str(node.get("state", "")) == WorldMap.STATE_VISITED:
+		var actual_source := run_state.current_environment
+		run_state.current_environment = stored_environment.duplicate(true)
+		var refreshed := refresh_current_venue_scenario_cycle(run_state, false, actual_source)
+		stored_environment = run_state.current_environment.duplicate(true)
+		run_state.current_environment = actual_source
+		if not bool(refreshed.get("ok", false)):
+			_last_environment_install_errors = JsonCoerceScript._copy_array(refreshed.get("errors", []))
+			return {}
 	var restore_stored := generation_options.is_empty() and not stored_environment.is_empty() \
 		and str(node.get("state", "")) == WorldMap.STATE_VISITED \
 		and _stored_environment_matches_situation_cycle(run_state, node_id, stored_environment)
@@ -1177,7 +1187,126 @@ func _stamp_environment_test_exit(environment_data: Dictionary) -> void:
 
 
 func _environment_situation_cycle_id(run_state: RunState, archetype_id: String) -> String:
-	return EnvironmentHours.operating_cycle_id(_archetype_by_id(archetype_id), run_state.game_clock_minutes)
+	return str(EnvironmentHours.scenario_cycle_status(_archetype_by_id(archetype_id), run_state.game_clock_minutes).get("cycle_id", ""))
+
+
+# One owner transaction for clock, action, Continue and lazy destination entry.
+# No visit, wager, reward or root-RNG boundary is manufactured by a rollover.
+func refresh_current_venue_scenario_cycle(run_state: RunState, persist_world_room: bool = true, rollback_source_environment: Dictionary = {}) -> Dictionary:
+	if run_state == null or library == null or run_state.current_environment.is_empty() or run_state.is_terminal():
+		return {"ok": true, "changed": false}
+	var source := run_state.current_environment
+	var archetype_id := str(source.get("archetype_id", ""))
+	if library._scenarios_for_archetype_readonly(archetype_id).is_empty(): return {"ok": true, "changed": false}
+	if bool(JsonCoerceScript._copy_dict(source.get("local_narrative_flags", {})).get("environment_test_session", false)):
+		return {"ok": true, "changed": false}
+	var archetype := _archetype_by_id(archetype_id)
+	var now := run_state.game_clock_minutes
+	var cycle := EnvironmentHours.scenario_cycle_status(archetype, now)
+	var record := run_state.environment_situation_cycle(archetype_id)
+	var phase := "active" if bool(cycle.active) else "closed"
+	var stamp := str(source.get(ENVIRONMENT_SITUATION_CYCLE_KEY, ""))
+	if stamp == str(cycle.cycle_id) and int(record.get("schedule_version", 0)) == 1 and str(record.get("phase", "")) == phase:
+		return {"ok": true, "changed": false}
+	var old_cycle := ScenarioVenueCycleScript.cycle_for_existing_room(source, archetype, now)
+	# Adopt a legacy accepted situation only while its recorded opening is still
+	# current. Closed/dead-zone and elapsed-cycle saves retire before rendering.
+	if int(record.get("schedule_version", 0)) != 1 and bool(cycle.active) and str(old_cycle.cycle_id) == str(cycle.cycle_id):
+		source[ENVIRONMENT_SITUATION_CYCLE_KEY] = cycle.cycle_id
+		record.merge({"cycle_id": cycle.cycle_id, "scenario_id": str(source.get("scenario_id", "")), "schedule_version": 1,
+			"phase": phase, "opened_at": cycle.opened_at, "closes_at": cycle.closes_at}, true)
+		run_state.environment_situation_cycles_by_node[archetype_id] = record
+		return {"ok": true, "changed": true, "adopted_legacy": true}
+	# A lazy destination is temporarily current, but failed installation must
+	# restore the actual source context (including its room-scoped Heat), not
+	# normalize the player's economy against an unaccepted destination.
+	if not rollback_source_environment.is_empty(): run_state.current_environment = rollback_source_environment
+	var rollback := _travel_rollback_snapshot(run_state)
+	run_state.current_environment = source
+	var result := _refresh_venue_scenario_cycle_candidate(run_state, archetype, cycle, old_cycle, record)
+	if not bool(result.get("ok", false)):
+		_restore_travel_snapshot(run_state, rollback)
+		return result
+	var candidate := run_state.current_environment
+	# Retain canonical aliases used by Grand room storage and world snapshots.
+	source.clear(); source.merge(candidate, true); run_state.current_environment = source
+	if persist_world_room:
+		run_state.store_current_world_node_environment()
+		run_state.store_grand_casino_room_environment(source)
+	return {"ok": true, "changed": true, "phase": phase, "cycle_id": cycle.cycle_id, "scenario_id": source.get("scenario_id", "")}
+
+
+func _refresh_venue_scenario_cycle_candidate(run_state: RunState, archetype: Dictionary, cycle: Dictionary, old_cycle: Dictionary, record: Dictionary) -> Dictionary:
+	var source := run_state.current_environment.duplicate(true)
+	var archetype_id := str(source.get("archetype_id", ""))
+	var node_id := str(source.get("world_node_id", archetype_id))
+	var current_layer := str(source.get("current_layer_id", "room"))
+	var rooms := JsonCoerceScript._copy_dict(source.get("layer_states", {}))
+	var current_body := source.duplicate(true); current_body.erase("layer_states")
+	rooms[current_layer] = current_body
+	var history := JsonCoerceScript._copy_dict(record.get("history", {}))
+	var profiles := JsonCoerceScript._copy_dict(record.get("base_profiles", {}))
+	var base_rooms: Dictionary = {}
+	var layer_keys := rooms.keys(); layer_keys.sort()
+	for layer_value in layer_keys:
+		var layer := str(layer_value)
+		var room := JsonCoerceScript._copy_dict(rooms[layer])
+		var definition_id := str(room.get("scenario_id", JsonCoerceScript._copy_dict(room.get("scenario_state", {})).get("id", "")))
+		var definition := library._runtime_validated_scenario_definition(library._scenario_readonly(definition_id)) if not definition_id.is_empty() else {}
+		run_state.current_environment = room
+		if not definition_id.is_empty():
+			# Rebuild saved causal authority before invoking its authored cleanup.
+			var before := run_state.scenario_finalize_installed_environment(library)
+			if not bool(before.get("ok", false)): return before
+			room = run_state.current_environment
+			var retired := ScenarioVenueCycleScript.retirement_record(room, definition, old_cycle, run_state.game_clock_minutes)
+			if not bool(retired.get("ok", false)): return retired
+			var retirement := JsonCoerceScript._copy_dict(retired.get("record", {}))
+			var history_key := "%s|%s" % [str(old_cycle.cycle_id), layer]
+			if history.has(history_key) and str(JsonCoerceScript._copy_dict(history[history_key]).get("source_fingerprint", "")) != str(retirement.get("source_fingerprint", "")):
+				return {"ok": false, "errors": ["Venue retirement journal conflicts with accepted scenario history."]}
+			if not history.has(history_key): history[history_key] = retirement
+		var flat := EnvironmentInstance._archetype_for_layer(archetype, layer) if layer != "room" else archetype
+		var base := ScenarioVenueCycleScript.clear_scenario(room, flat, JsonCoerceScript._copy_dict(profiles.get(layer, {})))
+		profiles[layer] = ScenarioVenueCycleScript.base_profiles(base)
+		base[ENVIRONMENT_SITUATION_CYCLE_KEY] = cycle.cycle_id
+		base_rooms[layer] = base
+	# A nonempty prior record prevents the legacy-seed compatibility branch from
+	# reusing an expired selection. The ordinary selector owns its new RNG lease.
+	record.merge({"history": history, "base_profiles": profiles, "cycle_id": "retired:%s" % str(old_cycle.cycle_id),
+		"scenario_id": "", "schedule_version": 1, "phase": "closed", "opened_at": cycle.opened_at, "closes_at": cycle.closes_at}, true)
+	run_state.environment_situation_cycles_by_node[archetype_id] = record
+	var selected: Dictionary = {}
+	if bool(cycle.active):
+		var rng := RngStream.new(); rng.configure(run_state.seed_value, run_state.seed_value)
+		selected = _select_scenario(run_state, archetype_id, rng)
+		if not selected.is_empty():
+			run_state.seed_scenario_for_node(node_id, selected)
+			run_state.cache_runtime_scenario_definition(selected)
+	else:
+		_remember_scenario_situation(run_state, archetype_id, str(cycle.cycle_id), "")
+	record = run_state.environment_situation_cycle(archetype_id).duplicate(true)
+	record.merge({"schedule_version": 1, "phase": "active" if bool(cycle.active) else "closed", "opened_at": cycle.opened_at, "closes_at": cycle.closes_at}, true)
+	run_state.environment_situation_cycles_by_node[archetype_id] = record
+	var finished: Dictionary = {}
+	for layer_value in layer_keys:
+		var layer := str(layer_value)
+		var room := JsonCoerceScript._copy_dict(base_rooms[layer])
+		ScenarioVenueCycleScript.attach(room, selected)
+		if bool(room.get("world_map_travel", false)):
+			_apply_world_travel_targets(room, run_state, run_state.world_map, node_id)
+		_apply_scenario_sequence_travel_targets(room, selected)
+		run_state.current_environment = room
+		run_state.reconcile_current_environment_object_manifest(true)
+		var membership_errors := EnvironmentInstance.object_manifest_errors(run_state.current_environment)
+		if not membership_errors.is_empty(): return {"ok": false, "errors": membership_errors}
+		var finalized := run_state.scenario_finalize_installed_environment(library)
+		if not bool(finalized.get("ok", false)): return finalized
+		finished[layer] = run_state.current_environment
+	var final := JsonCoerceScript._copy_dict(finished[current_layer])
+	if source.has("layer_states"): final["layer_states"] = finished
+	run_state.current_environment = final
+	return {"ok": true, "errors": []}
 
 
 func _stored_environment_matches_situation_cycle(run_state: RunState, archetype_id: String, environment: Dictionary) -> bool:
@@ -1480,6 +1609,14 @@ func _prime_town_scenarios(run_state: RunState, map_data: Dictionary) -> void:
 			}
 
 
+func _remember_scenario_situation(run_state: RunState, archetype_id: String, cycle_id: String, scenario_id: String) -> void:
+	run_state.remember_environment_situation_cycle(archetype_id, cycle_id, scenario_id)
+	var record := run_state.environment_situation_cycle(archetype_id).duplicate(true)
+	var cycle := EnvironmentHours.scenario_cycle_status(_archetype_by_id(archetype_id), run_state.game_clock_minutes)
+	record.merge({"schedule_version": 1, "phase": "active" if bool(cycle.active) else "closed", "opened_at": cycle.opened_at, "closes_at": cycle.closes_at}, true)
+	run_state.environment_situation_cycles_by_node[archetype_id] = record
+
+
 func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream, validate_runtime: bool = true) -> Dictionary:
 	var perf_started_usec := Time.get_ticks_usec() if _world_environment_timing_enabled else 0
 	var perf_stage_usec := perf_started_usec
@@ -1502,6 +1639,9 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 			_world_scenario_select_stages_usec[archetype_id] = perf_stages
 		return {}
 	var cycle_id := _environment_situation_cycle_id(run_state, archetype_id)
+	if not bool(EnvironmentHours.scenario_cycle_status(_archetype_by_id(archetype_id), run_state.game_clock_minutes).get("active", false)):
+		_remember_scenario_situation(run_state, archetype_id, cycle_id, "")
+		return {}
 	var lifecycle := run_state.environment_situation_cycle(archetype_id)
 	if str(lifecycle.get("cycle_id", "")) == cycle_id:
 		var retained_id := str(lifecycle.get("scenario_id", "")).strip_edges()
@@ -1514,12 +1654,12 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 		var legacy_seeded := run_state._seeded_scenario_definition_for_node_readonly(archetype_id)
 		var legacy_id := str(legacy_seeded.get("id", "")).strip_edges()
 		if not legacy_id.is_empty():
-			run_state.remember_environment_situation_cycle(archetype_id, cycle_id, legacy_id)
+			_remember_scenario_situation(run_state, archetype_id, cycle_id, legacy_id)
 			var resolved_legacy := library._runtime_validated_scenario_definition(legacy_seeded) if validate_runtime else legacy_seeded
 			return _apply_scenario_pin_suppression(run_state, archetype_id, resolved_legacy)
 	# Tutorial overrides author the complete room unless explicitly pinned.
 	if tutorial_overrides.has(archetype_id) and pinned_id.is_empty():
-		run_state.remember_environment_situation_cycle(archetype_id, cycle_id, "")
+		_remember_scenario_situation(run_state, archetype_id, cycle_id, "")
 		return {}
 	if not pinned_id.is_empty():
 		for definition_value in pool:
@@ -1528,10 +1668,10 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 			var pinned: Dictionary = definition_value
 			if str(pinned.get("id", "")) == pinned_id:
 				run_state.remember_scenario_selection(archetype_id, pinned_id)
-				run_state.remember_environment_situation_cycle(archetype_id, cycle_id, pinned_id)
+				_remember_scenario_situation(run_state, archetype_id, cycle_id, pinned_id)
 				var resolved_pinned := library._runtime_validated_scenario_definition(pinned) if validate_runtime else library._runtime_scenario_definition_unvalidated(pinned)
 				return _apply_scenario_pin_suppression(run_state, archetype_id, resolved_pinned)
-		run_state.remember_environment_situation_cycle(archetype_id, cycle_id, "")
+		_remember_scenario_situation(run_state, archetype_id, cycle_id, "")
 		return {}
 	var excludes := JsonCoerceScript._copy_dict(modifiers.get("scenario_excludes", {}))
 	var excluded_ids := JsonCoerceScript._raw_string_array(excludes.get(archetype_id, []))
@@ -1545,7 +1685,7 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 			continue
 		candidates.append(definition)
 	if candidates.is_empty():
-		run_state.remember_environment_situation_cycle(archetype_id, cycle_id, "")
+		_remember_scenario_situation(run_state, archetype_id, cycle_id, "")
 		return {}
 	# Situation identity belongs to the venue cycle, not to whichever unrelated
 	# RNG-consuming UI preview or travel-risk check happened immediately before it.
@@ -1553,7 +1693,7 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 	situation_rng.configure(run_state.seed_value, run_state.seed_value)
 	situation_rng = situation_rng.fork("environment_situation:%s:%s" % [archetype_id, cycle_id])
 	if situation_rng.randi_range(1, 100) <= ENVIRONMENT_SITUATION_NONE_PERCENT:
-		run_state.remember_environment_situation_cycle(archetype_id, cycle_id, "")
+		_remember_scenario_situation(run_state, archetype_id, cycle_id, "")
 		return {}
 	var recent := run_state.recent_scenario_ids(archetype_id)
 	if _world_environment_timing_enabled:
@@ -1581,7 +1721,7 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 		total_weight += scaled_weight
 		weighted.append({"definition": definition, "ceiling": total_weight})
 	if weighted.is_empty() or total_weight <= 0:
-		run_state.remember_environment_situation_cycle(archetype_id, cycle_id, "")
+		_remember_scenario_situation(run_state, archetype_id, cycle_id, "")
 		return {}
 	if _world_environment_timing_enabled:
 		perf_stages["weights"] = Time.get_ticks_usec() - perf_stage_usec
@@ -1595,7 +1735,7 @@ func _select_scenario(run_state: RunState, archetype_id: String, rng: RngStream,
 			break
 	var selected_id := str(selected.get("id", ""))
 	run_state.remember_scenario_selection(archetype_id, selected_id)
-	run_state.remember_environment_situation_cycle(archetype_id, cycle_id, selected_id)
+	_remember_scenario_situation(run_state, archetype_id, cycle_id, selected_id)
 	if _world_environment_timing_enabled:
 		perf_stages["choose"] = Time.get_ticks_usec() - perf_stage_usec
 		perf_stage_usec = Time.get_ticks_usec()

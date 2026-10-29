@@ -103,6 +103,23 @@ static func operating_cycle_id(archetype: Dictionary, absolute_minutes: int) -> 
 	return "open:%d:%d" % [opening_day, open_minute]
 
 
+# Scenario lifetime is independent of access/closing grace and game-command
+# night contexts. A24h venue has no scenario from02:30 through03:59.
+static func scenario_cycle_status(archetype: Dictionary, absolute_minutes: int) -> Dictionary:
+	var now := maxi(0, absolute_minutes)
+	var hours := _hours_dict(archetype.get("open_hours", null))
+	var always_open := hours.is_empty() or int(hours.get("open_minute", 0)) == int(hours.get("close_minute", 0))
+	var opening := 240 if always_open else _normalize_minute(int(hours.get("open_minute", 0)))
+	var closing := 150 if always_open else _normalize_minute(int(hours.get("close_minute", 0)))
+	var opening_day := int(floor(float(now - opening) / float(MINUTES_PER_DAY)))
+	var opened_at := opening_day * MINUTES_PER_DAY + opening
+	var duration := (closing - opening + MINUTES_PER_DAY) % MINUTES_PER_DAY
+	var closes_at := opened_at + duration
+	return {"schema": "bth.venue_scenario_cycle/v1", "cycle_id": "venue:v1:%d" % opened_at,
+		"active": now < closes_at, "always_open": always_open, "opened_at": opened_at,
+		"closes_at": closes_at, "next_open_at": opened_at + MINUTES_PER_DAY}
+
+
 static func _hours_dict(value: Variant) -> Dictionary:
 	if typeof(value) != TYPE_DICTIONARY:
 		return {}

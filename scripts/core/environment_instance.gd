@@ -28,6 +28,7 @@ var archetype_id: String = ""
 var world_node_id: String = ""
 var environment_visit_id: String = ""
 var night_instance_id: String = ""
+var environment_situation_cycle_id: String = ""
 var context_instance_id: String = ""
 var world_map_travel: bool = false
 var kind: String = ""
@@ -305,6 +306,7 @@ static func from_dict(data: Dictionary) -> EnvironmentInstance:
 	environment.world_node_id = str(data.get("world_node_id", environment.archetype_id)).strip_edges()
 	environment.environment_visit_id = str(data.get("environment_visit_id", "")).strip_edges()
 	environment.night_instance_id = str(data.get("night_instance_id", "")).strip_edges()
+	environment.environment_situation_cycle_id = str(data.get("environment_situation_cycle_id", "")).strip_edges()
 	environment.context_instance_id = str(data.get("context_instance_id", "")).strip_edges()
 	environment.world_map_travel = bool(data.get("world_map_travel", false))
 	environment.kind = str(data.get("kind", ""))
@@ -476,6 +478,7 @@ func to_dict() -> Dictionary:
 		result["environment_visit_id"] = environment_visit_id
 		result["night_instance_id"] = night_instance_id
 		result["context_instance_id"] = context_instance_id
+	if not environment_situation_cycle_id.is_empty(): result["environment_situation_cycle_id"] = environment_situation_cycle_id
 	if environment_layer_schema_version > 0 and not current_layer_id.is_empty():
 		result["environment_layer_schema_version"] = environment_layer_schema_version
 		result["current_layer_id"] = current_layer_id

@@ -400,6 +400,7 @@ var financial_hud_refresh_callable: Callable
 var _process_frame_delta := 0.0
 var _apply_run_screen_layout_callable: Callable
 var _advance_run_game_clock_callable: Callable
+var _scenario_cycle_publication_failed := false
 var _advance_game_surface_frame_callable: Callable
 var _advance_game_surface_automation_callable: Callable
 var _advance_game_surface_realtime_callable: Callable
@@ -863,6 +864,10 @@ func _advance_run_game_clock(delta: float) -> void:
 	if not bool(clock_result.get("ok", false)):
 		return
 	environment_clock_fractional_minutes -= float(elapsed_minutes)
+	var scenario_cycle_changed := _refresh_venue_scenario_cycle_at_boundary()
+	if scenario_cycle_changed:
+		_autosave_foundation_run("Venue situation changed.")
+		_refresh()
 	# Poll the current eligible hour only. Sleeping/travel time jumps do not loop
 	# over missed hours, and the persisted attempt prevents click/re-entry rolls.
 	if _crew_hourly_room_boundary_ready() and run_state.crew_package_solicitation_available():
@@ -12052,6 +12057,9 @@ func _prepare_room_presentation_at_boundary() -> void:
 			or bool(run_state.current_environment.get("scenario_restore_pending_trusted_rebuild", false)):
 		EnvironmentInteractionControllerScript.compile_room_catalog_at_boundary(self)
 		run_state.publish_room_presentation()
+	var cycle_changed := _refresh_venue_scenario_cycle_at_boundary()
+	if _scenario_cycle_publication_failed: return
+	if cycle_changed: _autosave_foundation_run("Venue situation changed.")
 	# A read-only game hook may project a visit/restock-driven person. Its owner
 	# must commit that state and the complete physical envelope before the shared
 	# catalog joins it to sealed records; getters cannot mint room membership.
@@ -12074,6 +12082,25 @@ func _prepare_room_presentation_at_boundary() -> void:
 	interactable_object_catalog_cache_valid = true
 	interactable_object_catalog_cache_key = _interactable_object_cache_key()
 	interactable_object_view_cache_valid = false
+
+
+func _refresh_venue_scenario_cycle_at_boundary() -> bool:
+	_scenario_cycle_publication_failed = false
+	if run_state == null or library == null or generator == null or _is_meta_session(): return false
+	var changed := generator.refresh_current_venue_scenario_cycle(run_state)
+	if not bool(changed.get("ok", false)):
+		_scenario_cycle_publication_failed = true
+		_room_catalog_publication = []
+		interactable_object_catalog_cache_valid = false
+		interactable_object_view_cache_valid = false
+		var errors := JsonCoerceScript._copy_array(changed.get("errors", []))
+		_show_message(str(errors[0]) if not errors.is_empty() else "The venue situation could not change safely.")
+		return false
+	if not bool(changed.get("changed", false)): return false
+	interactable_object_catalog_cache_valid = false
+	interactable_object_view_cache_valid = false
+	_invalidate_travel_view_cache()
+	return true
 
 
 func _refresh() -> void:

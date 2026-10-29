@@ -185,12 +185,12 @@ static func _append_augmented_actions(record: Dictionary, augment_descriptors: A
 			var action_id := str(action.get("id", ""))
 			var owner := str(descriptor.get("owner_namespace", "scenario"))
 			var stable_id := str(descriptor.get("stable_object_id", ""))
-			var idempotency_key := _action_idempotency_key(boundary_serial, owner, stable_id, action_id)
+			var idempotency_key := _action_idempotency_key(boundary_serial, owner, stable_id, action_id) + _venue_cycle_action_scope(action)
 			inline.append({
 				"id": action_id,
 				"label": str(action.get("label", action_id.replace("_", " ").capitalize())),
 				"enabled": bool(result.get("enabled", true)),
-				"emit_object_id": _action_token(boundary_serial, owner, stable_id, action_id),
+				"emit_object_id": _cycle_scoped_action_token(boundary_serial, owner, stable_id, action_id, action),
 				"scenario_idempotency_key": idempotency_key,
 				"scenario_owner_namespace": owner,
 				"scenario_stable_object_id": stable_id,
@@ -215,13 +215,13 @@ static func inline_actions_for_interaction(interaction: Dictionary, boundary_ser
 				or bool(action.get("hidden", false)) or bool(action.get("hidden_only", false)):
 			continue
 		var action_id := str(action.get("id", ""))
-		var token := _action_token(boundary_serial, owner, stable_id, action_id)
+		var token := _cycle_scoped_action_token(boundary_serial, owner, stable_id, action_id, action)
 		inline_actions.append({
 			"id": action_id,
 			"label": str(action.get("label", action_id.replace("_", " ").capitalize())),
 			"enabled": bool(interaction.get("enabled", true)) and bool(action.get("enabled", true)) and not bool(action.get("disabled", false)),
 			"emit_object_id": token,
-			"scenario_idempotency_key": _action_idempotency_key(boundary_serial, owner, stable_id, action_id),
+			"scenario_idempotency_key": _action_idempotency_key(boundary_serial, owner, stable_id, action_id) + _venue_cycle_action_scope(action),
 			"scenario_owner_namespace": str(action.get("attached_owner_namespace", owner)),
 			"scenario_stable_object_id": str(action.get("attached_stable_object_id", stable_id)),
 			"scenario_command_id": action_id,
@@ -301,6 +301,18 @@ static func _scenario_record(interaction: Dictionary, visual: Dictionary, select
 
 static func _action_idempotency_key(boundary_serial: int, owner: String, stable_id: String, action_id: String) -> String:
 	return "ui:%d:%s:%s:%s" % [maxi(0, boundary_serial), _token_component(owner), _token_component(stable_id), _token_component(action_id)]
+
+
+static func _cycle_scoped_action_token(boundary_serial: int, owner: String, stable_id: String, action_id: String, action: Dictionary) -> String:
+	return _action_token(boundary_serial, owner, stable_id, action_id) + _venue_cycle_action_scope(action)
+
+
+static func _venue_cycle_action_scope(action: Dictionary) -> String:
+	var origin := str(action.get("action_origin_boundary_id", ""))
+	# Older journals retain their established tokens. New venue instances use an
+	# authenticated operation scope so an old prepared click cannot bind to an
+	# identical command at boundary0 of a later instance of the same scenario.
+	return ":cycle:%s" % origin.sha256_text().substr(0, 20) if origin.contains(":cycle:") else ""
 
 
 static func _action_token(boundary_serial: int, owner: String, stable_id: String, action_id: String) -> String:
