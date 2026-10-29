@@ -455,6 +455,13 @@ func environment_interactable_objects(_run_state: RunState, _environment: Dictio
 	return []
 
 
+# Causal room publication calls this before discovering read-only hooks. A
+# module with visit/time-driven physical occupants must commit its own state
+# and matching membership here; ordinary modules have nothing to prepare.
+func prepare_environment_presentation_boundary(_run_state: RunState, _environment: Dictionary) -> Dictionary:
+	return {"ok": true, "changed": false, "errors": []}
+
+
 # Optional action resolver for game-authored room objects.
 func environment_action_command(_hook_id: String, _action_id: String, _run_state: RunState, _environment: Dictionary, _rng: RngStream) -> Dictionary:
 	return {"handled": false}

@@ -12046,6 +12046,20 @@ func _prepare_room_presentation_at_boundary() -> void:
 			or bool(run_state.current_environment.get("scenario_restore_pending_trusted_rebuild", false)):
 		EnvironmentInteractionControllerScript.compile_room_catalog_at_boundary(self)
 		run_state.publish_room_presentation()
+	# A read-only game hook may project a visit/restock-driven person. Its owner
+	# must commit that state and the complete physical envelope before the shared
+	# catalog joins it to sealed records; getters cannot mint room membership.
+	for game_id in JsonCoerceScript._raw_string_array(run_state.current_environment.get("game_ids", [])):
+		var game := _game_module_for_id(str(game_id))
+		if game == null: continue
+		var prepared: Dictionary = game.prepare_environment_presentation_boundary(run_state, run_state.current_environment)
+		if not bool(prepared.get("ok", false)):
+			_room_catalog_publication = []
+			interactable_object_catalog_cache_valid = false
+			interactable_object_view_cache_valid = false
+			var errors := JsonCoerceScript._copy_array(prepared.get("errors", []))
+			_show_message(str(errors[0]) if not errors.is_empty() else "That room's game objects could not be prepared safely.")
+			return
 	_room_catalog_publication = EnvironmentInteractionViewModelScript.deduplicated_scenario_instruction_records(
 		EnvironmentInteractionControllerScript.prepare_room_catalog_at_boundary(self)
 	).duplicate(true)

@@ -662,6 +662,30 @@ func environment_interactable_objects(run_state: RunState, environment: Dictiona
 	return objects
 
 
+func prepare_environment_presentation_boundary(run_state: RunState, environment: Dictionary) -> Dictionary:
+	if run_state == null or not is_same(environment, run_state.current_environment):
+		return {"ok": false, "changed": false, "errors": ["Scratch presence requires the owned current room boundary."]}
+	var prior_proof := run_state.validate_room_action_authority()
+	if not bool(prior_proof.get("ok", false)):
+		return {"ok": false, "changed": false, "errors": JsonCoerceScript._copy_array(prior_proof.get("errors", []))}
+	var prior: Dictionary = _dict_ref(_dict_ref(environment.get("game_states", {})).get(get_id(), {}))
+	var projected := _ensure_machine_state(run_state, environment, false)
+	if projected == prior:
+		return {"ok": true, "changed": false, "errors": []}
+	# The same deterministic visit/restock projection used by observers belongs
+	# to this causal boundary. Commit it before the room manifest and hook list
+	# are paired, including a negative visit roll so later reads cannot reroll it.
+	var rollback := run_state.to_dict()
+	_ensure_machine_state(run_state, environment, true)
+	var membership := run_state.prepare_current_environment_object_membership_for_publication()
+	var proof := run_state.validate_room_action_authority() if bool(membership.get("ok", false)) else membership
+	if not bool(proof.get("ok", false)):
+		var errors := JsonCoerceScript._copy_array(proof.get("errors", []))
+		run_state.from_dict(rollback)
+		return {"ok": false, "changed": false, "errors": errors}
+	return {"ok": true, "changed": true, "errors": []}
+
+
 func environment_action_command(hook_id: String, action_id: String, run_state: RunState, environment: Dictionary, rng: RngStream) -> Dictionary:
 	if hook_id != REDEEM_HOOK_ID or action_id != REDEEM_ACTION_ID:
 		return {"handled": false}
