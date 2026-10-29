@@ -1465,7 +1465,7 @@ func _sealed_action_host_commit_resolution(context: Dictionary, proposal_state: 
 		return _sealed_action_host_rejection("invalid_proposal", "Blackjack proposal changed its delivery authority.", request_key)
 	var proposed_rng := RngStream.new()
 	proposed_rng.restore(proposal.get("rng_snapshot", {}))
-	var skip_environment_turn := _sealed_action_host_normalize_environment_turn(result, action_id)
+	var skip_environment_turn := _sealed_action_host_normalize_environment_turn(result, action_id, session)
 	var requires_apply := _sealed_action_host_normalize_result_authority(result, provider_contract)
 	result[_foundation.ActionAuthorityScript.HOST_COMMITTED_KEY] = true
 	result[_foundation.ActionAuthorityScript.HOST_REQUEST_KEY] = request_key
@@ -1579,7 +1579,7 @@ func _sealed_action_host_normalize_result_authority(result: Dictionary, provider
 	return requires_apply
 
 
-func _sealed_action_host_normalize_environment_turn(result: Dictionary, action_id: String) -> bool:
+func _sealed_action_host_normalize_environment_turn(result: Dictionary, action_id: String, session: Dictionary = {}) -> bool:
 	# A proposal may describe an internal preference, but it cannot grant itself
 	# authority over the host's environment clock. Erase the inbound marker and
 	# derive the exception only from this host-owned, exact game/action allowlist.
@@ -1587,6 +1587,14 @@ func _sealed_action_host_normalize_environment_turn(result: Dictionary, action_i
 	if _foundation.current_game == null:
 		return false
 	var game_id = _foundation.current_game.get_id()
+	# The original paid Deal still advances one turn. Funding a split/double is
+	# internal to that same hand, as those surface decisions were before funding
+	# moved here. Require both the authenticated prior session and accepted result.
+	if game_id == "blackjack" and action_id == "blackjack_place_bet" \
+		and bool(session.get("incremental_hand_wager", false)) \
+		and int(session.get("wager_debited", 0)) > 0 \
+		and bool(result.get("blackjack_incremental_hand_wager", false)):
+		return true
 	var allowed_value: Variant = _foundation.SEALED_ACTION_HOST_SKIP_ENVIRONMENT_TURN_ALLOWLIST.get(game_id, [])
 	var provider_allowed_value: Variant = _foundation.action_authority_contract.get("skip_environment_turn_actions", [])
 	var legacy_allowed := typeof(allowed_value) == TYPE_ARRAY and (allowed_value as Array).has(action_id)

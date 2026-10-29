@@ -228,7 +228,7 @@ func sealed_action_authority_contract() -> Dictionary:
 		# automatically fall back to the transaction path.
 		"in_place_session_intents": [
 			"blackjack_count_icon", BLACKJACK_SETTLE_ACTION, "blackjack_hit", "blackjack_stand",
-			"blackjack_double", "blackjack_split", "blackjack_surrender", "blackjack_distraction",
+			"blackjack_double", "blackjack_split", "blackjack_surrender", "blackjack_distraction", "blackjack_peek",
 		],
 		"in_place_session_intent_predicate_method": &"_blackjack_in_place_session_intent_allowed",
 		"in_place_session_intent_method": &"_blackjack_in_place_session_intent_command",
@@ -562,7 +562,7 @@ func generate_environment_state(run_state: RunState, environment: Dictionary, rn
 	var rule_variants: Array = [
 		{"dealer_hits_soft_17": false, "double_after_split": true, "split_aces_one_card": false, "max_split_hands": 4, "late_surrender": true},
 		{"dealer_hits_soft_17": true, "double_after_split": true, "split_aces_one_card": false, "max_split_hands": 3, "late_surrender": false},
-		{"dealer_hits_soft_17": false, "double_after_split": false, "split_aces_one_card": false, "max_split_hands": 4, "late_surrender": true},
+		{"dealer_hits_soft_17": false, "double_after_split": true, "split_aces_one_card": false, "max_split_hands": 4, "late_surrender": true},
 	]
 	var rules: Dictionary = (rng.pick(rule_variants, rule_variants[0]) as Dictionary).duplicate(true)
 	var side_bet_min: int = 2
@@ -2008,12 +2008,7 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 			_double_active_hand(next_state, table)
 			_autoadvance_finished_hands(next_state, table)
 			_sync_count_challenge_icons(next_state, run_state)
-			if _all_hands_complete(next_state):
-				var terminal_double_message := _terminal_round_message(next_state)
-				if not double_strategy_notice.is_empty():
-					terminal_double_message = "%s %s" % [terminal_double_message, double_strategy_notice]
-				return _settle_completed_round_command(next_state, index, terminal_double_message, table, run_state)
-			return _message_command(next_state, _append_strategy_notice(_post_hand_action_message(next_state, doubled_hand_index, "Double"), double_strategy_notice))
+			return _additional_hand_wager_command(next_state, index, _append_strategy_notice(_post_hand_action_message(next_state, doubled_hand_index, "Double"), double_strategy_notice))
 		"blackjack_split":
 			if _dealer_has_blackjack(_card_array(next_state.get("dealer_cards", []))):
 				return _settle_completed_round_command(next_state, index, "Dealer reveals blackjack before the split can play.", table, run_state)
@@ -2022,12 +2017,7 @@ func _blackjack_surface_action_command(surface_action: String, index: int, confi
 			var split_strategy_notice := _record_strategy_deviation(next_state, table, run_state, "split")
 			_split_active_hand(next_state, table)
 			_sync_count_challenge_icons(next_state, run_state)
-			if _all_hands_complete(next_state):
-				var terminal_split_message := _terminal_round_message(next_state)
-				if not split_strategy_notice.is_empty():
-					terminal_split_message = "%s %s" % [terminal_split_message, split_strategy_notice]
-				return _settle_completed_round_command(next_state, index, terminal_split_message, table, run_state)
-			return _message_command(next_state, _append_strategy_notice("Pair split. Each hand gets its own decision.", split_strategy_notice))
+			return _additional_hand_wager_command(next_state, index, _append_strategy_notice("Pair split. Each hand gets its own decision.", split_strategy_notice))
 		"blackjack_surrender":
 			if _dealer_has_blackjack(_card_array(next_state.get("dealer_cards", []))):
 				return _settle_completed_round_command(next_state, index, "Dealer has blackjack; surrender is not available.", table, run_state)
@@ -2076,13 +2066,13 @@ func _blackjack_in_place_session_intent_command(surface_action: String, index: i
 		if table.is_empty():
 			return _message_command(session, "The count pulse is no longer available.")
 		return _hit_count_icon(index, session, table, run_state)
-	if not surface_action in [BLACKJACK_SETTLE_ACTION, "blackjack_hit", "blackjack_stand", "blackjack_double", "blackjack_split", "blackjack_surrender"]:
+	if not surface_action in [BLACKJACK_SETTLE_ACTION, "blackjack_hit", "blackjack_stand", "blackjack_double", "blackjack_split", "blackjack_surrender", "blackjack_peek"]:
 		return {"handled": false}
 	# The ordinary hand buttons first transform only the authenticated session.
 	# Foundation stages non-terminal results directly in that ledger. A card that
 	# completes the round returns a resolve command, which Foundation detects and
 	# reruns through the isolated wager/settlement transaction before publishing.
-	return _blackjack_surface_action_command(surface_action, index, false, session, run_state, environment)
+	return _blackjack_surface_action_command(surface_action, index, _confirm_requested if surface_action == "blackjack_peek" else false, session, run_state, environment)
 
 
 func _blackjack_in_place_session_surface_patch(session: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
@@ -2201,6 +2191,8 @@ func _blackjack_in_place_session_surface_patch(session: Dictionary, run_state: R
 
 func _blackjack_in_place_session_intent_allowed(surface_action: String, run_state: RunState, environment: Dictionary) -> bool:
 	if run_state == null or _is_rourke_duel(run_state, environment):
+		return false
+	if surface_action in ["blackjack_split", "blackjack_double"]:
 		return false
 	var table := _peek_table_state(environment)
 	var ledger_value: Variant = table.get(BLACKJACK_HOST_LEDGER_KEY, null)
@@ -3013,12 +3005,14 @@ func _resolve_place_bet(stake: int, run_state: RunState, environment: Dictionary
 	if bool(table.get("barred", false)):
 		return _empty_result("blackjack_place_bet", stake, environment, str(table.get("barred_reason", "The dealer refuses to let you play this blackjack table.")))
 	var session: Dictionary = _normalized_session(run_state, environment, ui_state, table)
+	var incremental := bool(session.get("incremental_hand_wager", false)) and _has_dealt_hand(session) and _session_debited_wager(session) > 0
+	session.erase("incremental_hand_wager")
 	if not _has_dealt_hand(session):
 		_start_initial_hand(session, table, maxi(1, stake), run_state, result_msec)
 	if bool(session.get("blackjack_sit_out", false)):
 		session["bankroll_wager_debited"] = true
 		session["wager_debited"] = 0
-		return _place_bet_result(run_state, environment, rng, session, 0, "You watch this blackjack hand without wagering.")
+		return _place_bet_result(run_state, environment, rng, session, 0, "You watch this blackjack hand without wagering.", incremental)
 	var table_stake := _session_stake(stake, session)
 	var total_wager := _wager_cost_from_session(table_stake, session, table, run_state)
 	var already_debited := _session_debited_wager(session)
@@ -3026,16 +3020,16 @@ func _resolve_place_bet(stake: int, run_state: RunState, environment: Dictionary
 	if debit <= 0:
 		session["bankroll_wager_debited"] = true
 		session["wager_debited"] = maxi(already_debited, total_wager)
-		return _place_bet_result(run_state, environment, rng, session, 0, "Blackjack wager is already on the felt.")
+		return _place_bet_result(run_state, environment, rng, session, 0, "Blackjack wager is already on the felt.", incremental)
 	if debit > maxi(0, run_state.wager_balance_for_game(get_id(), environment) if run_state != null else debit):
 		return _empty_result("blackjack_place_bet", stake, environment, "You do not have enough bankroll for that table action.")
 	session["bankroll_wager_debited"] = true
 	session["wager_debited"] = already_debited + debit
 	var message := "Blackjack wager placed: $%d on the felt." % int(session.get("wager_debited", debit))
-	return _place_bet_result(run_state, environment, rng, session, -debit, message)
+	return _place_bet_result(run_state, environment, rng, session, -debit, message, incremental)
 
 
-func _place_bet_result(run_state: RunState, environment: Dictionary, rng: RngStream, session: Dictionary, bankroll_delta: int, message: String) -> Dictionary:
+func _place_bet_result(run_state: RunState, environment: Dictionary, rng: RngStream, session: Dictionary, bankroll_delta: int, message: String, incremental: bool = false) -> Dictionary:
 	var deltas := GameModule.empty_result_deltas()
 	deltas["bankroll_delta"] = bankroll_delta
 	deltas["messages"] = [message]
@@ -3064,6 +3058,7 @@ func _place_bet_result(run_state: RunState, environment: Dictionary, rng: RngStr
 		"environment_archetype_id": environment.get("archetype_id", ""),
 		"message": message,
 	})
+	result["blackjack_incremental_hand_wager"] = incremental
 	result["ui_state"] = _compact_session_for_ui(session.duplicate(true))
 	result["preserve_surface_ui_state"] = true
 	result["surface_embeds_outcomes"] = true
@@ -5582,7 +5577,7 @@ func _split_active_hand(session: Dictionary, table: Dictionary) -> void:
 		"stood": false,
 		"doubled": false,
 		"split": true,
-		"blackjack_eligible": false,
+		"blackjack_eligible": _card_rank_value(cards[0]) == RANK_ACE,
 	}
 	var second_hand := {
 		"cards": [cards[1], second_draw],
@@ -5590,7 +5585,7 @@ func _split_active_hand(session: Dictionary, table: Dictionary) -> void:
 		"stood": false,
 		"doubled": false,
 		"split": true,
-		"blackjack_eligible": false,
+		"blackjack_eligible": _card_rank_value(cards[1]) == RANK_ACE,
 	}
 	hands.remove_at(active_index)
 	hands.insert(active_index, second_hand)
@@ -6464,6 +6459,16 @@ func _action_command(action_id: String, action_kind: String, confirm_requested: 
 		"selected_index": index,
 		"message": message,
 	})
+
+
+func _additional_hand_wager_command(session: Dictionary, index: int, message: String) -> Dictionary:
+	# Keep the existing paid hand, shoe, sibling and ritual phase. Only the
+	# difference from wager_debited is charged by the sealed placement resolver.
+	session["incremental_hand_wager"] = true
+	var command := _action_command(BLACKJACK_CHARGED_DEAL_ACTION, "legal", true, session, index, message, true, true, true)
+	command["direct_resolve"] = true
+	command["skip_stake_validation"] = true
+	return command
 
 
 func _opening_deal_command(ui_state: Dictionary, index: int, message: String) -> Dictionary:
@@ -8265,7 +8270,7 @@ func _table_rules(table: Dictionary) -> Dictionary:
 	var rules: Dictionary = table.get("rules", {}) if typeof(table.get("rules", {})) == TYPE_DICTIONARY else {}
 	return {
 		"dealer_hits_soft_17": bool(rules.get("dealer_hits_soft_17", false)),
-		"double_after_split": bool(rules.get("double_after_split", true)),
+		"double_after_split": bool(rules.get("double_after_split", false)) if int(rules.get("max_split_hands", 4)) == 1 else true,
 		"split_aces_one_card": bool(rules.get("split_aces_one_card", false)),
 		"max_split_hands": clampi(int(rules.get("max_split_hands", 4)), 2, 4),
 		"late_surrender": bool(rules.get("late_surrender", true)),
@@ -8751,7 +8756,14 @@ func _is_bust(cards: Array) -> bool:
 
 
 func _is_natural_blackjack(hand: Dictionary) -> bool:
-	return bool(hand.get("blackjack_eligible", false)) and _card_array(hand.get("cards", [])).size() == 2 and _hand_total(_card_array(hand.get("cards", []))) == 21
+	var cards := _card_array(hand.get("cards", []))
+	if cards.size() != 2 or _hand_total(cards) != 21:
+		return false
+	# Active saves from the old rule carry explicit false on every split hand.
+	# Recognize only an Ace-origin two-card split; settled history is untouched.
+	var split_ace := bool(hand.get("split", false)) and _card_rank_value(cards[0]) == RANK_ACE \
+		and not bool(hand.get("doubled", false)) and not bool(hand.get("surrendered", false))
+	return bool(hand.get("blackjack_eligible", false)) or split_ace
 
 
 func _dealer_has_blackjack(dealer_cards: Array) -> bool:

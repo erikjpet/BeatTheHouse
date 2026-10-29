@@ -1761,7 +1761,7 @@ func _clear_recent_result_feedback() -> void:
 
 
 # Selects a GameModule action without mutating simulation state.
-func select_game_action(action_id: String, action_kind: String, input_route_guarded: bool = false) -> void:
+func select_game_action(action_id: String, action_kind: String, input_route_guarded: bool = false, refresh_presentation: bool = true) -> void:
 	if current_game == null:
 		_show_message("Enter a game before choosing an action.")
 		return
@@ -1779,7 +1779,8 @@ func select_game_action(action_id: String, action_kind: String, input_route_guar
 	selected_action_label = _action_label(action)
 	_set_current_screen(SCREEN_GAME)
 	_show_message("Selected %s action: %s." % [_action_kind_label(action_kind), selected_action_label])
-	_refresh_after_game_selection()
+	if refresh_presentation:
+		_refresh_after_game_selection()
 
 
 func _on_game_surface_action(action: String, index: int, confirm_requested: bool = false) -> void:
@@ -2259,7 +2260,11 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 	if not action_id.is_empty() and not action_kind.is_empty():
 		var already_selected := selected_action_id == action_id and selected_action_kind == action_kind
 		if not already_selected:
-			select_game_action(action_id, action_kind, true)
+			# A host-staged incremental patch owns this same-screen presentation.
+			# Keep validation/selection/message; apply its live table patch below.
+			var selection_patch: Variant = command.get("surface_state_patch", {})
+			var has_selection_patch := typeof(selection_patch) == TYPE_DICTIONARY and not (selection_patch as Dictionary).is_empty()
+			select_game_action(action_id, action_kind, true, not has_selection_patch)
 		if bool(command.get("resolve", false)) or confirm_requested or already_selected:
 			_resolve_game_action(action_id, bool(command.get("skip_stake_validation", false)), bool(command.get("preserve_surface_ui_state", false)), false, resolved_surface_ui_state, true, 0, authority_delivery, authority_prepared)
 			return true
