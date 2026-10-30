@@ -10820,7 +10820,7 @@
                     "type": "command"
                   },
                   "id": "grand_casino_gala_night_work_2_identity_1",
-                  "next_phase": "terminal_success",
+                  "next_phase": "terminal_public_floor",
                   "objective_outcomes": {
                     "main_task": "success"
                   }
@@ -11410,14 +11410,14 @@
             {
               "actor_ops": [],
               "advance_after_actions": 0.0,
-              "arrival_feedback": "The lift has settled level with the deck, and removed gala ropes are coiled beside a clear route to the ballroom.",
+              "arrival_feedback": "The host keeps a red-circled badge at the shut credential lane, its number visibly different from the coat claim.",
               "branches": [
                 {
                   "condition": {
                     "type": "always"
                   },
                   "id": "grand_casino_gala_night_terminal_failure",
-                  "outcome": "public_floor_reopened"
+                  "outcome": "credential_failed"
                 }
               ],
               "entry_conditions": [],
@@ -11432,11 +11432,44 @@
                 {
                   "channel": "room",
                   "family": "transition_ops",
-                  "message": "The lift has settled level with the deck, and removed gala ropes are coiled beside a clear route to the ballroom.",
+                  "message": "The host keeps a red-circled badge at the shut credential lane, its number visibly different from the coat claim.",
                   "op": "feedback",
                   "owner_namespace": "scenario",
                   "receipt_id": "grand_casino_gala_night_terminal_failure_transition_feedback",
                   "stable_object_id": "grand_casino_gala_night_terminal_failure_transition"
+                }
+              ]
+            },
+            {
+              "actor_ops": [],
+              "advance_after_actions": 0.0,
+              "arrival_feedback": "The lift has settled level with the deck, and removed gala ropes are coiled beside a clear route to the ballroom.",
+              "branches": [
+                {
+                  "condition": {
+                    "type": "always"
+                  },
+                  "id": "grand_casino_gala_night_terminal_public_floor",
+                  "outcome": "public_floor_reopened"
+                }
+              ],
+              "entry_conditions": [],
+              "exit_prompt": "Exit through coat-check.",
+              "id": "terminal_public_floor",
+              "interaction_ops": [],
+              "label": "Public Floor Reopened",
+              "objective_ids": [],
+              "scene_ops": [],
+              "terminal": true,
+              "transition_ops": [
+                {
+                  "channel": "room",
+                  "family": "transition_ops",
+                  "message": "The lift has settled level with the deck, and removed gala ropes are coiled beside a clear route to the ballroom.",
+                  "op": "feedback",
+                  "owner_namespace": "scenario",
+                  "receipt_id": "grand_casino_gala_night_terminal_public_floor_transition_feedback",
+                  "stable_object_id": "grand_casino_gala_night_terminal_public_floor_transition"
                 }
               ]
             },
@@ -11514,7 +11547,7 @@
           "terminal": "aftermath"
         },
         "schema_version": 2.0,
-        "sequence_signature": "36fed1c760ea6674b24048fb0963ed4a6d7af87b4ffe9dd67ddafd8e5dff8c0d"
+        "sequence_signature": "af4404fa28b0d512f0f41ffce8f574365eb64cd5a98b9fb8c0d2d2dfbf1ac2d4"
       }
     },
     {

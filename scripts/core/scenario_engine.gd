@@ -16,6 +16,9 @@ const TRUSTED_STATE_REFERENCE_KEY := "_scenario_trusted_state_digest"
 const TRUSTED_LAYOUT_INPUT_DIGEST_KEY := "_scenario_trusted_layout_input_digest"
 const SEQUENCE_SUPPRESSION_KEY := "sequence_suppressed"
 const EnvironmentSemanticInventoryScript := preload("res://scripts/core/environment_semantic_inventory.gd")
+const LEGACY_GALA_TERMINAL_PATH := "res://data/environments/scenario_sequence_compatibility/grand_casino_gala_night_v1.json"
+const LEGACY_GALA_TERMINAL_TEXT_SHA256 := "ebc129f575b5c286bd6989fdc8eb445dac7ba326f8dda4ca918680b54856aa93"
+static var _legacy_gala_terminal_definition: Dictionary = {}
 
 # Deterministic scenario overlays. Selection belongs to RunGenerator; this
 # module only builds and advances the selected node-owned state.
@@ -161,6 +164,9 @@ static func sequence_definition_for_environment(environment: Dictionary, preferr
 	if _sequence_is_suppressed(environment, preferred):
 		var suppressed_source := preferred if not preferred.is_empty() and str(preferred.get("id", preferred.get("scenario_id", ""))).strip_edges() == scenario_id else {"id": scenario_id, "archetype_id": str(JsonCoerceScript._copy_dict(environment.get("scenario_state", {})).get("archetype_id", environment.get("archetype_id", "")))}
 		return suppress_sequence_definition(suppressed_source)
+	var recorded_definition := recorded_terminal_definition(environment, preferred)
+	if not recorded_definition.is_empty():
+		return recorded_definition
 	# RunState caches the immutable resolved definition. Preserve that owned
 	# validation receipt so refresh/presentation reads never re-run the schema.
 	if not preferred.is_empty() \
@@ -189,6 +195,50 @@ static func sequence_definition_for_environment(environment: Dictionary, preferr
 			return _without_sequence_overlay(candidate)
 		candidate[VALIDATED_SEQUENCE_MARKER] = true
 	return candidate
+
+
+static func recorded_terminal_definition(environment: Dictionary, preferred: Dictionary = {}) -> Dictionary:
+	# These two old Gala routes committed different authored outcomes. Keep their
+	# exact trusted content for causal replay; never rewrite accepted journals or
+	# interpret an active/new run through the historical definition.
+	var installed_id := str(JsonCoerceScript._copy_dict(environment.get("scenario_state", {})).get("id", environment.get("scenario_id", "")))
+	if installed_id != "grand_casino_gala_night" or (not preferred.is_empty() and str(preferred.get("id", "")) != installed_id):
+		return {}
+	var state := JsonCoerceScript._copy_dict(environment.get("scenario_sequence_state", {}))
+	if str(state.get("scenario_id", "")) != "grand_casino_gala_night" or str(state.get("status", "")) != SequenceRuntimeScript.STATUS_AFTERMATH:
+		return {}
+	var outcomes := JsonCoerceScript._copy_array(state.get("resolved_outcomes", []))
+	var old_failure := str(state.get("phase_id", "")) == "terminal_failure" and outcomes == ["public_floor_reopened"]
+	var old_public_floor := false
+	if str(state.get("phase_id", "")) == "terminal_success" and outcomes == ["cover_identity_accepted"]:
+		for record_value in JsonCoerceScript._copy_array(state.get("command_receipt_records", [])):
+			var record := JsonCoerceScript._copy_dict(record_value)
+			if str(JsonCoerceScript._copy_dict(record.get("envelope", {})).get("command_id", "")) == "reopen_public_gala_floor": old_public_floor = true
+	if not old_failure and not old_public_floor:
+		return {}
+	if not _legacy_gala_terminal_definition.is_empty():
+		return _legacy_gala_terminal_definition
+	if not FileAccess.file_exists(LEGACY_GALA_TERMINAL_PATH):
+		return {}
+	var trusted_text := FileAccess.get_file_as_string(LEGACY_GALA_TERMINAL_PATH).replace("\r\n", "\n")
+	if trusted_text.sha256_text() != LEGACY_GALA_TERMINAL_TEXT_SHA256:
+		return {}
+	var parsed: Variant = JSON.parse_string(trusted_text)
+	if typeof(parsed) != TYPE_DICTIONARY or str(parsed.get("scenario_id", "")) != "grand_casino_gala_night":
+		return {}
+	var legacy := preferred.duplicate(true) if not preferred.is_empty() else SequenceCatalogScript.legacy_definition("grand_casino_gala_night")
+	if str(legacy.get("id", "")) != "grand_casino_gala_night":
+		return {}
+	legacy["sequence"] = JsonCoerceScript._copy_dict(parsed.get("sequence", {})).duplicate(true)
+	legacy["sequence_authoring"] = JsonCoerceScript._copy_dict(parsed.get("authoring", {})).duplicate(true)
+	legacy.erase(VALIDATED_SEQUENCE_MARKER)
+	if SequenceSchemaScript.calculated_signature_hash(legacy) != str(legacy.sequence.get("sequence_signature", "")):
+		return {}
+	# Like an embedded definition, this remains provisional until the installed
+	# room finalizer validates it against the independently sealed target catalog.
+	# The finalizer stamps the shared immutable definition only after that proof.
+	_legacy_gala_terminal_definition = legacy
+	return _legacy_gala_terminal_definition
 
 
 static func migrate_environment_sequence(environment: Dictionary, preferred: Dictionary = {}, seed_token: String = "", compute_changed: bool = true, definition_prevalidated: bool = false) -> Dictionary:

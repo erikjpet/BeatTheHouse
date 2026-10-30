@@ -1,0 +1,1842 @@
+{
+  "authoring": {
+    "arrival_summary": "Coat check, charity credentials, and a stalled stage lift replace the normal floor route without touching the duel or invite gate.",
+    "capture_ids": [
+      "grand_casino_gala_night_arrival",
+      "grand_casino_gala_night_partial",
+      "grand_casino_gala_night_success",
+      "grand_casino_gala_night_failure",
+      "grand_casino_gala_night_refused",
+      "grand_casino_gala_night_interrupted",
+      "grand_casino_gala_night_reduced_motion",
+      "grand_casino_gala_night_small_screen",
+      "grand_casino_gala_night_hit_overlay",
+      "grand_casino_gala_night_obstruction"
+    ],
+    "masked_visual_explanations": {},
+    "player_verbs": [
+      "claim_coat_token",
+      "verify_charity_badge",
+      "reset_stage_lift",
+      "choose_gala_identity",
+      "assume_gala_cover_identity",
+      "reopen_public_gala_floor",
+      "fail_gala_credentials",
+      "refuse_grand_casino_gala_night"
+    ],
+    "references": {
+      "objects": [
+        "base::travel:leave"
+      ]
+    },
+    "seed_evidence": {
+      "expected_outcomes": [
+        "cover_identity_accepted",
+        "public_floor_reopened",
+        "credential_failed",
+        "gala_interrupted"
+      ],
+      "identity_decision_phase": "work_2",
+      "identity_decision_verbs": [
+        "assume_gala_cover_identity",
+        "reopen_public_gala_floor",
+        "fail_gala_credentials"
+      ],
+      "minimum_target_size": 44.0,
+      "proof_seed": "grand_casino_gala_night_seed",
+      "save_boundaries": [
+        "arrival",
+        "partial",
+        "success",
+        "failure",
+        "refused",
+        "interrupted"
+      ]
+    },
+    "world_connections": [
+      "service_result",
+      "travel_departed"
+    ]
+  },
+  "scenario_id": "grand_casino_gala_night",
+  "sequence": {
+    "aftermath": {
+      "cover_identity_accepted": {
+        "actor_ops": [
+          {
+            "actor": {
+              "actor_id": "actor_cover_identity_accepted",
+              "anchor_id": "grand_aftermath_actor",
+              "behavior": "work",
+              "description": "A badge-wearing guest waits beyond the accepted-credential rope, coat claim pinned visibly beneath the charity seal.",
+              "description_variants": {},
+              "label": "Accepted gala guest",
+              "pose": "arrival",
+              "zone_id": "background"
+            },
+            "family": "actor_ops",
+            "op": "spawn",
+            "owner_namespace": "scenario",
+            "receipt_id": "grand_casino_gala_night_aftermath_cover_identity_accepted_spawn_grand_casino_gala_night_aftermath_cover_identity_accepted_actor",
+            "stable_object_id": "grand_casino_gala_night_aftermath_cover_identity_accepted_actor",
+            "zone_id": "background"
+          }
+        ],
+        "label": "Cover Identity Accepted",
+        "revisit_feedback": "An accepted charity badge is paired with a coat-check claim, opening a roped lane past the stalled stage lift.",
+        "scene_ops": [
+          {
+            "family": "scene_ops",
+            "object": {
+              "anchor_id": "grand_aftermath_scene",
+              "appearance": "cover_identity_accepted",
+              "bounds": {
+                "h": 48.0,
+                "w": 64.0
+              },
+              "description": "An accepted charity badge is paired with a coat-check claim, opening a roped lane past the stalled stage lift.",
+              "description_variants": {},
+              "enabled": true,
+              "icon_key": "paper_note",
+              "label": "Verified charity badge",
+              "role": "arrangement",
+              "state": "cover_identity_accepted",
+              "visible": true,
+              "zone_id": "left"
+            },
+            "op": "spawn",
+            "owner_namespace": "scenario",
+            "receipt_id": "grand_casino_gala_night_aftermath_cover_identity_accepted_spawn_grand_casino_gala_night_aftermath_cover_identity_accepted_prop",
+            "stable_object_id": "grand_casino_gala_night_aftermath_cover_identity_accepted_prop",
+            "zone_id": "left"
+          }
+        ]
+      },
+      "credential_failed": {
+        "actor_ops": [
+          {
+            "actor": {
+              "actor_id": "actor_credential_failed",
+              "anchor_id": "grand_aftermath_actor",
+              "behavior": "watch",
+              "description": "The gala host holds a rejected badge beside the closed credential lane; its mismatched number is circled in red.",
+              "description_variants": {},
+              "label": "Gala verifier",
+              "pose": "arrival",
+              "zone_id": "right"
+            },
+            "family": "actor_ops",
+            "op": "spawn",
+            "owner_namespace": "scenario",
+            "receipt_id": "grand_casino_gala_night_aftermath_credential_failed_spawn_grand_casino_gala_night_aftermath_credential_failed_actor",
+            "stable_object_id": "grand_casino_gala_night_aftermath_credential_failed_actor",
+            "zone_id": "right"
+          }
+        ],
+        "label": "Credential Failed",
+        "revisit_feedback": "The gala host holds a rejected badge beside the closed credential lane; its mismatched number is circled in red."
+      },
+      "gala_interrupted": {
+        "label": "Gala Interrupted",
+        "revisit_feedback": "The stage lift remains stopped above deck level, with its control cover open and gala ropes drawn across the floor.",
+        "scene_ops": [
+          {
+            "family": "scene_ops",
+            "object": {
+              "anchor_id": "grand_aftermath_scene",
+              "appearance": "gala_interrupted",
+              "bounds": {
+                "h": 66.0,
+                "w": 88.0
+              },
+              "description": "The stage lift remains stopped above deck level, with its control cover open and gala ropes drawn across the floor.",
+              "description_variants": {},
+              "enabled": true,
+              "icon_key": "jammed_machine",
+              "label": "Raised stage lift",
+              "role": "route_marker",
+              "state": "gala_interrupted",
+              "visible": true,
+              "zone_id": "foreground"
+            },
+            "op": "spawn",
+            "owner_namespace": "scenario",
+            "receipt_id": "grand_casino_gala_night_aftermath_gala_interrupted_spawn_grand_casino_gala_night_aftermath_gala_interrupted_prop",
+            "stable_object_id": "grand_casino_gala_night_aftermath_gala_interrupted_prop",
+            "zone_id": "foreground"
+          }
+        ]
+      },
+      "public_floor_reopened": {
+        "actor_ops": [
+          {
+            "actor": {
+              "actor_id": "actor_public_floor_reopened",
+              "anchor_id": "grand_aftermath_actor",
+              "behavior": "guard",
+              "description": "A stage hand coils the removed queue rope beside the lowered lift while guests cross the reopened public floor.",
+              "description_variants": {},
+              "label": "Lift operator",
+              "pose": "arrival",
+              "zone_id": "left"
+            },
+            "family": "actor_ops",
+            "op": "spawn",
+            "owner_namespace": "scenario",
+            "receipt_id": "grand_casino_gala_night_aftermath_public_floor_reopened_spawn_grand_casino_gala_night_aftermath_public_floor_reopened_actor",
+            "stable_object_id": "grand_casino_gala_night_aftermath_public_floor_reopened_actor",
+            "zone_id": "left"
+          }
+        ],
+        "label": "Public Floor Reopened",
+        "revisit_feedback": "The stage lift is parked flush with the deck, and coiled queue ropes leave the public floor open from coat check to ballroom.",
+        "scene_ops": [
+          {
+            "family": "scene_ops",
+            "object": {
+              "anchor_id": "grand_aftermath_scene",
+              "appearance": "public_floor_reopened",
+              "bounds": {
+                "h": 54.0,
+                "w": 72.0
+              },
+              "description": "The stage lift is parked flush with the deck, and coiled queue ropes leave the public floor open from coat check to ballroom.",
+              "description_variants": {},
+              "enabled": true,
+              "icon_key": "room_barrier",
+              "label": "Coiled queue ropes",
+              "role": "debris",
+              "state": "public_floor_reopened",
+              "visible": true,
+              "zone_id": "background"
+            },
+            "op": "spawn",
+            "owner_namespace": "scenario",
+            "receipt_id": "grand_casino_gala_night_aftermath_public_floor_reopened_spawn_grand_casino_gala_night_aftermath_public_floor_reopened_prop",
+            "stable_object_id": "grand_casino_gala_night_aftermath_public_floor_reopened_prop",
+            "zone_id": "background"
+          }
+        ]
+      }
+    },
+    "cleanup": {
+      "operations": [
+        {
+          "family": "scene_ops",
+          "op": "remove",
+          "owner_namespace": "scenario",
+          "receipt_id": "grand_casino_gala_night_cleanup_scene_ops_remove_grand_casino_gala_night_coat_check",
+          "stable_object_id": "grand_casino_gala_night_coat_check",
+          "zone_id": "service_lane"
+        },
+        {
+          "family": "scene_ops",
+          "op": "remove",
+          "owner_namespace": "scenario",
+          "receipt_id": "grand_casino_gala_night_cleanup_scene_ops_remove_grand_casino_gala_night_charity_badges",
+          "stable_object_id": "grand_casino_gala_night_charity_badges",
+          "zone_id": "center"
+        },
+        {
+          "family": "scene_ops",
+          "op": "remove",
+          "owner_namespace": "scenario",
+          "receipt_id": "grand_casino_gala_night_cleanup_scene_ops_remove_grand_casino_gala_night_stage_lift",
+          "stable_object_id": "grand_casino_gala_night_stage_lift",
+          "zone_id": "service_lane"
+        },
+        {
+          "family": "actor_ops",
+          "op": "despawn",
+          "owner_namespace": "scenario",
+          "receipt_id": "grand_casino_gala_night_cleanup_despawn_grand_casino_gala_night_gala_host",
+          "stable_object_id": "grand_casino_gala_night_gala_host",
+          "zone_id": "background"
+        },
+        {
+          "family": "actor_ops",
+          "op": "despawn",
+          "owner_namespace": "scenario",
+          "receipt_id": "grand_casino_gala_night_cleanup_despawn_grand_casino_gala_night_stage_hand",
+          "stable_object_id": "grand_casino_gala_night_stage_hand",
+          "zone_id": "left"
+        },
+        {
+          "family": "scene_ops",
+          "op": "remove",
+          "owner_namespace": "scenario",
+          "receipt_id": "grand_casino_gala_night_cleanup_scene_ops_remove_grand_casino_gala_night_safe_exit",
+          "stable_object_id": "grand_casino_gala_night_safe_exit",
+          "zone_id": "exit_lane"
+        },
+        {
+          "family": "scene_ops",
+          "op": "remove",
+          "owner_namespace": "scenario",
+          "receipt_id": "grand_casino_gala_night_cleanup_scene_ops_remove_grand_casino_gala_night_task_0",
+          "stable_object_id": "grand_casino_gala_night_task_0",
+          "zone_id": "right"
+        },
+        {
+          "family": "interaction_ops",
+          "op": "remove",
+          "owner_namespace": "scenario",
+          "receipt_id": "grand_casino_gala_night_cleanup_interaction_ops_remove_grand_casino_gala_night_safe_exit",
+          "stable_object_id": "grand_casino_gala_night_safe_exit"
+        },
+        {
+          "family": "interaction_ops",
+          "op": "remove",
+          "owner_namespace": "scenario",
+          "receipt_id": "grand_casino_gala_night_cleanup_interaction_ops_remove_grand_casino_gala_night_task_0",
+          "stable_object_id": "grand_casino_gala_night_task_0"
+        },
+        {
+          "family": "scene_ops",
+          "op": "remove",
+          "owner_namespace": "scenario",
+          "receipt_id": "grand_casino_gala_night_cleanup_scene_ops_remove_grand_casino_gala_night_task_1",
+          "stable_object_id": "grand_casino_gala_night_task_1",
+          "zone_id": "foreground"
+        },
+        {
+          "family": "interaction_ops",
+          "op": "remove",
+          "owner_namespace": "scenario",
+          "receipt_id": "grand_casino_gala_night_cleanup_interaction_ops_remove_grand_casino_gala_night_task_1",
+          "stable_object_id": "grand_casino_gala_night_task_1"
+        },
+        {
+          "family": "interaction_ops",
+          "op": "remove",
+          "owner_namespace": "scenario",
+          "receipt_id": "grand_casino_gala_night_cleanup_interaction_ops_remove_grand_casino_gala_night_work_2_choice_0",
+          "stable_object_id": "grand_casino_gala_night_work_2_choice_0"
+        },
+        {
+          "family": "scene_ops",
+          "op": "remove",
+          "owner_namespace": "scenario",
+          "receipt_id": "grand_casino_gala_night_cleanup_scene_ops_remove_grand_casino_gala_night_work_2_choice_0",
+          "stable_object_id": "grand_casino_gala_night_work_2_choice_0",
+          "zone_id": "center"
+        },
+        {
+          "family": "interaction_ops",
+          "op": "remove",
+          "owner_namespace": "scenario",
+          "receipt_id": "grand_casino_gala_night_cleanup_interaction_ops_remove_grand_casino_gala_night_work_2_choice_1",
+          "stable_object_id": "grand_casino_gala_night_work_2_choice_1"
+        },
+        {
+          "family": "scene_ops",
+          "op": "remove",
+          "owner_namespace": "scenario",
+          "receipt_id": "grand_casino_gala_night_cleanup_scene_ops_remove_grand_casino_gala_night_work_2_choice_1",
+          "stable_object_id": "grand_casino_gala_night_work_2_choice_1",
+          "zone_id": "background"
+        },
+        {
+          "family": "interaction_ops",
+          "op": "remove",
+          "owner_namespace": "scenario",
+          "receipt_id": "grand_casino_gala_night_cleanup_interaction_ops_remove_grand_casino_gala_night_work_2_choice_2",
+          "stable_object_id": "grand_casino_gala_night_work_2_choice_2"
+        },
+        {
+          "family": "scene_ops",
+          "op": "remove",
+          "owner_namespace": "scenario",
+          "receipt_id": "grand_casino_gala_night_cleanup_scene_ops_remove_grand_casino_gala_night_work_2_choice_2",
+          "stable_object_id": "grand_casino_gala_night_work_2_choice_2",
+          "zone_id": "left"
+        },
+        {
+          "family": "scene_ops",
+          "op": "remove",
+          "owner_namespace": "scenario",
+          "receipt_id": "grand_casino_gala_night_cleanup_scene_ops_remove_grand_casino_gala_night_task_3",
+          "stable_object_id": "grand_casino_gala_night_task_3",
+          "zone_id": "right"
+        },
+        {
+          "family": "interaction_ops",
+          "op": "remove",
+          "owner_namespace": "scenario",
+          "receipt_id": "grand_casino_gala_night_cleanup_interaction_ops_remove_grand_casino_gala_night_task_3",
+          "stable_object_id": "grand_casino_gala_night_task_3"
+        }
+      ]
+    },
+    "completion_contract": {
+      "action_boundaries": true,
+      "arrival_readable": true,
+      "choice_or_failure": true,
+      "feedback_and_exit": true,
+      "material_outcomes": true,
+      "primary_verb": true,
+      "revisit_coverage": true,
+      "scenario_interaction": true,
+      "semantic_changes": true,
+      "world_connection": true
+    },
+    "declared_targets": {
+      "actors": [],
+      "anchors": [
+        "base::anchor:grand_aftermath_actor",
+        "base::anchor:grand_aftermath_scene",
+        "base::anchor:grand_decision_left",
+        "base::anchor:grand_decision_middle",
+        "base::anchor:grand_decision_middle_right",
+        "base::anchor:grand_scenario_bottom_830",
+        "base::anchor:grand_scenario_safe_exit",
+        "base::anchor:grand_scenario_top_400",
+        "base::anchor:grand_scenario_top_520",
+        "base::anchor:grand_scenario_top_650_low",
+        "base::anchor:grand_scenario_top_800",
+        "base::anchor:grand_work_actor_right",
+        "base::anchor:grand_work_object_left",
+        "base::anchor:grand_work_object_middle",
+        "base::anchor:env06_8_gala_coat_check",
+        "base::anchor:env06_8_gala_host",
+        "base::anchor:env06_8_gala_lift",
+        "base::anchor:env06_8_gala_stagehand"
+      ],
+      "games": [],
+      "interactions": [
+        "base::travel:grand_casino_high_limit",
+        "base::travel:grand_casino_back_room",
+        "base::travel:grand_casino_cage"
+      ],
+      "routes": [],
+      "scene_objects": [
+        "base::travel:grand_casino_high_limit",
+        "base::travel:grand_casino_back_room",
+        "base::travel:grand_casino_cage"
+      ],
+      "services": [],
+      "zones": [
+        "base::zone:left",
+        "base::zone:right",
+        "base::zone:center",
+        "base::zone:background",
+        "base::zone:service_lane",
+        "base::zone:foreground",
+        "base::zone:exit_lane"
+      ]
+    },
+    "expiry": {
+      "after": 1.0,
+      "boundary": "night_end",
+      "policy": "cleanup"
+    },
+    "fact_subscriptions": [
+      "service_result",
+      "travel_departed"
+    ],
+    "local_state_schema": {
+      "pressure_seen": {
+        "default": false,
+        "type": "bool",
+        "visibility": "public"
+      }
+    },
+    "mechanic_tags": [
+      "gala_cover",
+      "charity_crowd",
+      "boss_gate_sacred"
+    ],
+    "objectives": [
+      {
+        "id": "main_task",
+        "label": "Grand Casino Gala Night room sequence",
+        "outcomes": [
+          "success",
+          "failure",
+          "ignore",
+          "cancel"
+        ],
+        "progress_label": "Physical task progress",
+        "steps": [
+          {
+            "command_id": "claim_coat_token",
+            "id": "claim_coat_token",
+            "kind": "command",
+            "label": "Claim Coat Token"
+          },
+          {
+            "command_id": "verify_charity_badge",
+            "id": "verify_charity_badge",
+            "kind": "command",
+            "label": "Verify Charity Badge"
+          },
+          {
+            "command_id": "reset_stage_lift",
+            "id": "reset_stage_lift",
+            "kind": "command",
+            "label": "Reset Stage Lift"
+          },
+          {
+            "command_id": "choose_gala_identity",
+            "id": "choose_gala_identity",
+            "kind": "command",
+            "label": "Choose Gala Identity"
+          }
+        ]
+      }
+    ],
+    "owner_exceptions": [],
+    "phase_graph": {
+      "initial_phase": "arrival",
+      "phases": [
+        {
+          "actor_ops": [
+            {
+              "actor": {
+                "actor_id": "actor_gala_host",
+                "anchor_id": "env06_8_gala_host",
+                "behavior": "guard",
+                "description": "The gala host works from the lower edge between the busy coat check and charity desk, keeping the stalled lift in sight.",
+                "description_variants": {
+                  "grand_work_actor_right": "The gala host returns to the back wall, opening the route between coat check and the charity desk.",
+                  "token_move": "The gala host steps toward coat check to hand over a numbered token, narrowing the service lane.",
+                  "watch": "The gala host watches the charity reader and coat-claim queue from behind the credential desk."
+                },
+                "label": "Host",
+                "pose": "arrival",
+                "zone_id": "background"
+              },
+              "family": "actor_ops",
+              "op": "spawn",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_arrival_spawn_grand_casino_gala_night_gala_host",
+              "stable_object_id": "grand_casino_gala_night_gala_host",
+              "zone_id": "background"
+            },
+            {
+              "actor": {
+                "actor_id": "actor_stage_hand",
+                "anchor_id": "env06_8_gala_stagehand",
+                "behavior": "work",
+                "description": "A stage hand waits at the lower right edge of the gala floor, cut off from the stalled lift's controls by the crowd.",
+                "description_variants": {
+                  "grand_scenario_bottom_830": "The stage hand moves to the lift controls at the lower edge of the floor, clearing the left aisle."
+                },
+                "label": "Stagehand",
+                "pose": "arrival",
+                "zone_id": "left"
+              },
+              "family": "actor_ops",
+              "op": "spawn",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_arrival_spawn_grand_casino_gala_night_stage_hand",
+              "stable_object_id": "grand_casino_gala_night_stage_hand",
+              "zone_id": "left"
+            }
+          ],
+          "advance_after_actions": 0.0,
+          "arrival_feedback": "A stalled stage lift cuts across the gala floor between coat check and the charity-credential desk.",
+          "branches": [
+            {
+              "condition": {
+                "command_id": "claim_coat_token",
+                "type": "command"
+              },
+              "id": "grand_casino_gala_night_arrival_begin",
+              "next_phase": "work_1",
+              "objective_outcomes": {
+                "main_task": "success"
+              }
+            },
+            {
+              "condition": {
+                "command_id": "fail_grand_casino_gala_night",
+                "type": "command"
+              },
+              "id": "grand_casino_gala_night_arrival_fail",
+              "next_phase": "terminal_failure",
+              "objective_outcomes": {
+                "main_task": "failure"
+              }
+            },
+            {
+              "condition": {
+                "command_id": "refuse_grand_casino_gala_night",
+                "type": "command"
+              },
+              "id": "grand_casino_gala_night_arrival_refuse",
+              "next_phase": "terminal_refused",
+              "objective_outcomes": {
+                "main_task": "ignore"
+              }
+            },
+            {
+              "condition": {
+                "fact_type": "travel_departed",
+                "type": "fact"
+              },
+              "id": "grand_casino_gala_night_arrival_interrupt",
+              "next_phase": "terminal_interrupted",
+              "objective_outcomes": {
+                "main_task": "cancel"
+              }
+            }
+          ],
+          "entry_conditions": [],
+          "exit_prompt": "Exit through coat-check.",
+          "id": "arrival",
+          "interaction_ops": [
+            {
+              "family": "interaction_ops",
+              "interaction": {
+                "alternate_exit": false,
+                "available_actions": [
+                  {
+                    "handler": "change_scene_object",
+                    "id": "refuse_grand_casino_gala_night",
+                    "input_action": "ui_cancel",
+                    "inputs": {
+                      "message": "You walk away; your numbered token remains hanging above the coat rack.",
+                      "owner_namespace": "scenario",
+                      "stable_object_id": "grand_casino_gala_night_safe_exit",
+                      "state": "acted_refuse_grand_casino_gala_night"
+                    },
+                    "label": "Refuse the task",
+                    "non_color_state": "ready"
+                  }
+                ],
+                "disabled_reason": "",
+                "enabled": true,
+                "focus_order": 1.0,
+                "hit_bounds": {
+                  "h": 56.0,
+                  "w": 64.0
+                },
+                "input_actions": [
+                  "ui_cancel"
+                ],
+                "label": "Clear exit",
+                "min_target_size": 44.0,
+                "non_color_state": "arrival_ready",
+                "owner_namespace": "scenario",
+                "presentation_object_id": "scenario::grand_casino_gala_night_safe_exit",
+                "prompt": "Leave outside the coat-check queue and stalled stage lift.",
+                "safe_exit": true,
+                "stable_object_id": "grand_casino_gala_night_safe_exit",
+                "state_label": "Coat-check bypass open"
+              },
+              "op": "add",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_arrival_add_grand_casino_gala_night_safe_exit",
+              "stable_object_id": "grand_casino_gala_night_safe_exit"
+            },
+            {
+              "family": "interaction_ops",
+              "interaction": {
+                "alternate_exit": false,
+                "available_actions": [
+                  {
+                    "handler": "complete_objective_step",
+                    "id": "claim_coat_token",
+                    "input_action": "ui_accept",
+                    "inputs": {
+                      "objective_id": "main_task",
+                      "step_id": "claim_coat_token"
+                    },
+                    "label": "Claim Coat Token",
+                    "non_color_state": "work"
+                  },
+                  {
+                    "handler": "change_scene_object",
+                    "id": "fail_grand_casino_gala_night",
+                    "input_action": "ui_right",
+                    "inputs": {
+                      "message": "Your coat token remains on its hook while the gala queue closes around the service lane.",
+                      "owner_namespace": "scenario",
+                      "stable_object_id": "grand_casino_gala_night_task_0",
+                      "state": "changed_by_fail_grand_casino_gala_night"
+                    },
+                    "label": "Lose your gala credentials",
+                    "non_color_state": "ready"
+                  }
+                ],
+                "disabled_reason": "",
+                "enabled": true,
+                "focus_order": 1.0,
+                "hit_bounds": {
+                  "h": 56.0,
+                  "w": 64.0
+                },
+                "input_actions": [
+                  "ui_accept",
+                  "ui_right"
+                ],
+                "label": "Claim Coat Token",
+                "min_target_size": 44.0,
+                "non_color_state": "arrival_ready",
+                "owner_namespace": "scenario",
+                "presentation_object_id": "scenario::grand_casino_gala_night_task_0",
+                "prompt": "Claim the numbered token for your coat at the crowded service counter.",
+                "safe_exit": false,
+                "stable_object_id": "grand_casino_gala_night_task_0",
+                "state_label": "Coat token waiting"
+              },
+              "op": "add",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_arrival_add_grand_casino_gala_night_task_0",
+              "stable_object_id": "grand_casino_gala_night_task_0"
+            }
+          ],
+          "label": "Arrival",
+          "objective_ids": [
+            "main_task"
+          ],
+          "scene_ops": [
+            {
+              "family": "scene_ops",
+              "object": {
+                "anchor_id": "env06_8_gala_coat_check",
+                "appearance": "busy",
+                "bounds": {
+                  "h": 46.0,
+                  "w": 52.0
+                },
+                "description": "The gala coat check overflows into the service lane, with numbered tokens hanging above rows of unclaimed coats.",
+                "description_variants": {
+                  "foreground": "The overflowing coat rack has been pulled forward, exposing its unmatched numbered tokens.",
+                  "service_lane": "The coat-check queue has been pulled into the service side, reopening the public floor beside it."
+                },
+                "enabled": true,
+                "label": "Gala coat check",
+                "role": "service",
+                "state": "busy",
+                "visible": true,
+                "zone_id": "service_lane"
+              },
+              "op": "spawn",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_arrival_spawn_grand_casino_gala_night_coat_check",
+              "stable_object_id": "grand_casino_gala_night_coat_check",
+              "zone_id": "service_lane"
+            },
+            {
+              "family": "scene_ops",
+              "object": {
+                "anchor_id": "grand_scenario_top_520",
+                "appearance": "checking",
+                "bounds": {
+                  "h": 52.0,
+                  "w": 60.0
+                },
+                "description": "The charity desk is checking badges one by one, creating a second queue across the normal floor route.",
+                "description_variants": {
+                  "badge_state_changed": "A verified stamp now crosses the charity badge on the desk.",
+                  "grand_work_object_middle": "The credential desk has shifted to center floor, leaving its former place beside coat check open."
+                },
+                "enabled": true,
+                "label": "Charity credential desk",
+                "role": "credential",
+                "state": "checking",
+                "visible": true,
+                "zone_id": "center"
+              },
+              "op": "spawn",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_arrival_spawn_grand_casino_gala_night_charity_badges",
+              "stable_object_id": "grand_casino_gala_night_charity_badges",
+              "zone_id": "center"
+            },
+            {
+              "family": "scene_ops",
+              "object": {
+                "anchor_id": "env06_8_gala_lift",
+                "appearance": "stalled",
+                "bounds": {
+                  "h": 58.0,
+                  "w": 68.0
+                },
+                "description": "The stage lift is stalled beside the service lane, its platform stopped below floor level and controls dark.",
+                "description_variants": {
+                  "grand_work_object_left": "The lift platform rises flush with the service-side floor, reopening the route around it.",
+                  "lift_appearance_resolved": "The stage lift sits level with the floor and its control lamps glow green."
+                },
+                "enabled": true,
+                "icon_key": "jammed_machine",
+                "label": "Stalled Stage Lift",
+                "role": "workstation",
+                "state": "stalled",
+                "visible": true,
+                "zone_id": "service_lane"
+              },
+              "op": "spawn",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_arrival_spawn_grand_casino_gala_night_stage_lift",
+              "stable_object_id": "grand_casino_gala_night_stage_lift",
+              "zone_id": "service_lane"
+            },
+            {
+              "family": "scene_ops",
+              "object": {
+                "anchor_id": "grand_scenario_safe_exit",
+                "appearance": "marked_lane",
+                "bounds": {
+                  "h": 56.0,
+                  "w": 56.0
+                },
+                "description": "A marked public exit passes outside the coat-check queue and stalled stage lift.",
+                "description_variants": {
+                  "acted_refuse_grand_casino_gala_night": "You walk away; your numbered token remains hanging above the coat rack."
+                },
+                "enabled": true,
+                "label": "Clear exit",
+                "role": "exit",
+                "state": "marked_lane",
+                "visible": true,
+                "zone_id": "exit_lane"
+              },
+              "op": "spawn",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_arrival_spawn_grand_casino_gala_night_safe_exit",
+              "stable_object_id": "grand_casino_gala_night_safe_exit",
+              "zone_id": "exit_lane"
+            },
+            {
+              "family": "scene_ops",
+              "object": {
+                "anchor_id": "grand_scenario_top_800",
+                "appearance": "task_ready",
+                "bounds": {
+                  "h": 56.0,
+                  "w": 64.0
+                },
+                "description": "Your numbered coat token waits at the busy service counter, the first requirement for moving through the gala floor.",
+                "description_variants": {
+                  "changed_by_fail_grand_casino_gala_night": "Your coat token remains on its hook while the gala queue closes around the service lane."
+                },
+                "enabled": true,
+                "icon_key": "room_storage",
+                "label": "Claim Coat Token",
+                "role": "task_station",
+                "state": "ready",
+                "visible": true,
+                "zone_id": "right"
+              },
+              "op": "spawn",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_arrival_spawn_grand_casino_gala_night_task_0",
+              "stable_object_id": "grand_casino_gala_night_task_0",
+              "zone_id": "right"
+            }
+          ],
+          "transition_ops": [
+            {
+              "channel": "room",
+              "duration_boundaries": 1.0,
+              "family": "transition_ops",
+              "message": "The unclaimed coat token stays hooked.",
+              "op": "stage",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_arrival_transition_stage",
+              "reduced_motion_message": "The coat token is in hand; the charity desk is ready to check your badge.",
+              "stable_object_id": "grand_casino_gala_night_arrival_transition",
+              "stage_id": "grand_casino_gala_night_arrival_stage"
+            }
+          ]
+        },
+        {
+          "actor_ops": [
+            {
+              "family": "actor_ops",
+              "op": "set_pose",
+              "owner_namespace": "scenario",
+              "pose": "token_move",
+              "receipt_id": "grand_casino_gala_night_token_move_pose",
+              "stable_object_id": "grand_casino_gala_night_gala_host",
+              "zone_id": "background"
+            }
+          ],
+          "advance_after_actions": 0.0,
+          "arrival_feedback": "Badge reaches the reader.",
+          "branches": [
+            {
+              "condition": {
+                "command_id": "verify_charity_badge",
+                "type": "command"
+              },
+              "id": "grand_casino_gala_night_work_1_complete",
+              "next_phase": "work_2",
+              "objective_outcomes": {
+                "main_task": "success"
+              }
+            },
+            {
+              "condition": {
+                "fact_type": "service_result",
+                "type": "fact"
+              },
+              "id": "grand_casino_gala_night_work_1_pressure",
+              "next_phase": "terminal_failure",
+              "objective_outcomes": {
+                "main_task": "failure"
+              }
+            },
+            {
+              "condition": {
+                "command_id": "fail_grand_casino_gala_night",
+                "type": "command"
+              },
+              "id": "grand_casino_gala_night_work_1_fail",
+              "next_phase": "terminal_failure",
+              "objective_outcomes": {
+                "main_task": "failure"
+              }
+            },
+            {
+              "condition": {
+                "command_id": "refuse_grand_casino_gala_night",
+                "type": "command"
+              },
+              "id": "grand_casino_gala_night_work_1_refuse",
+              "next_phase": "terminal_refused",
+              "objective_outcomes": {
+                "main_task": "ignore"
+              }
+            },
+            {
+              "condition": {
+                "fact_type": "travel_departed",
+                "type": "fact"
+              },
+              "id": "grand_casino_gala_night_work_1_interrupt",
+              "next_phase": "terminal_interrupted",
+              "objective_outcomes": {
+                "main_task": "cancel"
+              }
+            }
+          ],
+          "entry_conditions": [],
+          "exit_prompt": "Exit through coat-check.",
+          "id": "work_1",
+          "interaction_ops": [
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_1_interaction_remove_grand_casino_gala_night_task_0",
+              "stable_object_id": "grand_casino_gala_night_task_0"
+            },
+            {
+              "family": "interaction_ops",
+              "interaction": {
+                "alternate_exit": false,
+                "available_actions": [
+                  {
+                    "handler": "complete_objective_step",
+                    "id": "verify_charity_badge",
+                    "input_action": "ui_accept",
+                    "inputs": {
+                      "objective_id": "main_task",
+                      "step_id": "verify_charity_badge"
+                    },
+                    "label": "Verify Charity Badge",
+                    "non_color_state": "work"
+                  },
+                  {
+                    "handler": "change_scene_object",
+                    "id": "fail_grand_casino_gala_night",
+                    "input_action": "ui_right",
+                    "inputs": {
+                      "message": "The charity reader rejects the unstamped badge and the desk queue stops behind it.",
+                      "owner_namespace": "scenario",
+                      "stable_object_id": "grand_casino_gala_night_task_1",
+                      "state": "changed_by_fail_grand_casino_gala_night"
+                    },
+                    "label": "Lose your gala credentials",
+                    "non_color_state": "ready"
+                  },
+                  {
+                    "handler": "change_scene_object",
+                    "id": "refuse_grand_casino_gala_night",
+                    "input_action": "ui_cancel",
+                    "inputs": {
+                      "message": "You return the coat token and step away as the host carries the badge to the reader.",
+                      "owner_namespace": "scenario",
+                      "stable_object_id": "grand_casino_gala_night_task_1",
+                      "state": "acted_refuse_grand_casino_gala_night"
+                    },
+                    "label": "Refuse and leave",
+                    "non_color_state": "ready"
+                  }
+                ],
+                "disabled_reason": "",
+                "enabled": true,
+                "focus_order": 1.0,
+                "hit_bounds": {
+                  "h": 56.0,
+                  "w": 64.0
+                },
+                "input_actions": [
+                  "ui_accept",
+                  "ui_right",
+                  "ui_cancel"
+                ],
+                "label": "Verify Charity Badge",
+                "min_target_size": 44.0,
+                "non_color_state": "work_1_ready",
+                "owner_namespace": "scenario",
+                "presentation_object_id": "scenario::grand_casino_gala_night_task_1",
+                "prompt": "Present your charity badge to the reader and receive its public stamp.",
+                "safe_exit": false,
+                "stable_object_id": "grand_casino_gala_night_task_1",
+                "state_label": "Charity badge unstamped"
+              },
+              "op": "add",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_1_add_grand_casino_gala_night_task_1",
+              "stable_object_id": "grand_casino_gala_night_task_1"
+            }
+          ],
+          "label": "Work beat 1",
+          "objective_ids": [
+            "main_task"
+          ],
+          "scene_ops": [
+            {
+              "family": "scene_ops",
+              "op": "move",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_token_move_move",
+              "stable_object_id": "grand_casino_gala_night_coat_check",
+              "zone_id": "service_lane"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_1_remove_grand_casino_gala_night_task_0",
+              "stable_object_id": "grand_casino_gala_night_task_0",
+              "zone_id": "right"
+            },
+            {
+              "family": "scene_ops",
+              "object": {
+                "anchor_id": "grand_scenario_top_800",
+                "appearance": "task_ready",
+                "bounds": {
+                  "h": 56.0,
+                  "w": 64.0
+                },
+                "description": "The charity desk's reader waits near the front for your badge while the queue holds behind you.",
+                "description_variants": {
+                  "acted_refuse_grand_casino_gala_night": "You return the coat token and step away as the host carries the badge to the reader.",
+                  "changed_by_fail_grand_casino_gala_night": "The charity reader rejects the unstamped badge and the desk queue stops behind it."
+                },
+                "enabled": true,
+                "icon_key": "paper_note",
+                "label": "Verify Charity Badge",
+                "role": "task_station",
+                "state": "ready",
+                "visible": true,
+                "zone_id": "foreground"
+              },
+              "op": "spawn",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_1_spawn_grand_casino_gala_night_task_1",
+              "stable_object_id": "grand_casino_gala_night_task_1",
+              "zone_id": "foreground"
+            }
+          ],
+          "transition_ops": [
+            {
+              "channel": "room",
+              "family": "transition_ops",
+              "message": "Badge reaches the reader.",
+              "op": "feedback",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_1_transition_feedback",
+              "stable_object_id": "grand_casino_gala_night_work_1_transition"
+            }
+          ]
+        },
+        {
+          "actor_ops": [
+            {
+              "anchor_id": "grand_scenario_bottom_830",
+              "family": "actor_ops",
+              "op": "set_position",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_badge_state_position",
+              "stable_object_id": "grand_casino_gala_night_stage_hand",
+              "zone_id": "foreground"
+            },
+            {
+              "anchor_id": "grand_work_actor_right",
+              "family": "actor_ops",
+              "op": "set_position",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_2_relocate_gala_host",
+              "stable_object_id": "grand_casino_gala_night_gala_host",
+              "zone_id": "center"
+            }
+          ],
+          "advance_after_actions": 0.0,
+          "arrival_feedback": "Verified badge opens the lane.",
+          "branches": [
+            {
+              "condition": {
+                "command_id": "reset_stage_lift",
+                "type": "command"
+              },
+              "id": "grand_casino_gala_night_work_2_complete",
+              "next_phase": "work_3",
+              "objective_outcomes": {
+                "main_task": "success"
+              }
+            },
+            {
+              "condition": {
+                "fact_type": "service_result",
+                "type": "fact"
+              },
+              "id": "grand_casino_gala_night_work_2_pressure",
+              "next_phase": "terminal_failure",
+              "objective_outcomes": {
+                "main_task": "failure"
+              }
+            },
+            {
+              "condition": {
+                "command_id": "refuse_grand_casino_gala_night",
+                "type": "command"
+              },
+              "id": "grand_casino_gala_night_work_2_refuse",
+              "next_phase": "terminal_refused",
+              "objective_outcomes": {
+                "main_task": "ignore"
+              }
+            },
+            {
+              "condition": {
+                "fact_type": "travel_departed",
+                "type": "fact"
+              },
+              "id": "grand_casino_gala_night_work_2_interrupt",
+              "next_phase": "terminal_interrupted",
+              "objective_outcomes": {
+                "main_task": "cancel"
+              }
+            },
+            {
+              "condition": {
+                "command_id": "assume_gala_cover_identity",
+                "type": "command"
+              },
+              "id": "grand_casino_gala_night_work_2_identity_0",
+              "next_phase": "work_3",
+              "objective_outcomes": {
+                "main_task": "success"
+              }
+            },
+            {
+              "condition": {
+                "command_id": "reopen_public_gala_floor",
+                "type": "command"
+              },
+              "id": "grand_casino_gala_night_work_2_identity_1",
+              "next_phase": "terminal_success",
+              "objective_outcomes": {
+                "main_task": "success"
+              }
+            },
+            {
+              "condition": {
+                "command_id": "fail_gala_credentials",
+                "type": "command"
+              },
+              "id": "grand_casino_gala_night_work_2_identity_2",
+              "next_phase": "terminal_failure",
+              "objective_outcomes": {
+                "main_task": "failure"
+              }
+            }
+          ],
+          "entry_conditions": [],
+          "exit_prompt": "Exit through coat-check.",
+          "id": "work_2",
+          "interaction_ops": [
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_2_interaction_remove_grand_casino_gala_night_task_1",
+              "stable_object_id": "grand_casino_gala_night_task_1"
+            },
+            {
+              "family": "interaction_ops",
+              "interaction": {
+                "alternate_exit": false,
+                "available_actions": [
+                  {
+                    "handler": "change_scene_object",
+                    "id": "assume_gala_cover_identity",
+                    "input_action": "ui_left",
+                    "inputs": {
+                      "message": "You pin the verified badge to your coat and enter under the gala name.",
+                      "owner_namespace": "scenario",
+                      "stable_object_id": "grand_casino_gala_night_work_2_choice_0",
+                      "state": "acted_assume_gala_cover_identity"
+                    },
+                    "label": "Assume Gala Cover Identity",
+                    "non_color_state": "ready"
+                  },
+                  {
+                    "handler": "complete_objective_step",
+                    "id": "reset_stage_lift",
+                    "input_action": "ui_accept",
+                    "inputs": {
+                      "objective_id": "main_task",
+                      "step_id": "reset_stage_lift"
+                    },
+                    "label": "Reset Stage Lift",
+                    "non_color_state": "work"
+                  }
+                ],
+                "disabled_reason": "",
+                "enabled": true,
+                "focus_order": 10.0,
+                "hit_bounds": {
+                  "h": 56.0,
+                  "w": 64.0
+                },
+                "input_actions": [
+                  "ui_left",
+                  "ui_accept"
+                ],
+                "label": "Route 1",
+                "min_target_size": 44.0,
+                "non_color_state": "route_0_ready",
+                "owner_namespace": "scenario",
+                "presentation_object_id": "scenario::grand_casino_gala_night_work_2_choice_0",
+                "prompt": "Sign the cover card and enter the gala under its public identity.",
+                "safe_exit": false,
+                "stable_object_id": "grand_casino_gala_night_work_2_choice_0",
+                "state_label": "Cover card ready"
+              },
+              "op": "add",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_2_add_grand_casino_gala_night_work_2_choice_0",
+              "stable_object_id": "grand_casino_gala_night_work_2_choice_0"
+            },
+            {
+              "family": "interaction_ops",
+              "interaction": {
+                "alternate_exit": false,
+                "available_actions": [
+                  {
+                    "handler": "change_scene_object",
+                    "id": "reopen_public_gala_floor",
+                    "input_action": "ui_up",
+                    "inputs": {
+                      "message": "You return the verified badge to the public queue, reopening the gala floor.",
+                      "owner_namespace": "scenario",
+                      "stable_object_id": "grand_casino_gala_night_work_2_choice_1",
+                      "state": "acted_reopen_public_gala_floor"
+                    },
+                    "label": "Reopen Public Gala Floor",
+                    "non_color_state": "ready"
+                  }
+                ],
+                "disabled_reason": "",
+                "enabled": true,
+                "focus_order": 11.0,
+                "hit_bounds": {
+                  "h": 56.0,
+                  "w": 64.0
+                },
+                "input_actions": [
+                  "ui_up"
+                ],
+                "label": "Route 2",
+                "min_target_size": 44.0,
+                "non_color_state": "route_1_ready",
+                "owner_namespace": "scenario",
+                "presentation_object_id": "scenario::grand_casino_gala_night_work_2_choice_1",
+                "prompt": "Use the level stage lift to reopen the public gala floor.",
+                "safe_exit": false,
+                "stable_object_id": "grand_casino_gala_night_work_2_choice_1",
+                "state_label": "Stage lift level"
+              },
+              "op": "add",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_2_add_grand_casino_gala_night_work_2_choice_1",
+              "stable_object_id": "grand_casino_gala_night_work_2_choice_1"
+            },
+            {
+              "family": "interaction_ops",
+              "interaction": {
+                "alternate_exit": false,
+                "available_actions": [
+                  {
+                    "handler": "change_scene_object",
+                    "id": "fail_gala_credentials",
+                    "input_action": "ui_right",
+                    "inputs": {
+                      "message": "The reader rejects your badge; the host closes the credential lane.",
+                      "owner_namespace": "scenario",
+                      "stable_object_id": "grand_casino_gala_night_work_2_choice_2",
+                      "state": "acted_fail_gala_credentials"
+                    },
+                    "label": "Fail Gala Credentials",
+                    "non_color_state": "ready"
+                  }
+                ],
+                "disabled_reason": "",
+                "enabled": true,
+                "focus_order": 12.0,
+                "hit_bounds": {
+                  "h": 56.0,
+                  "w": 64.0
+                },
+                "input_actions": [
+                  "ui_right"
+                ],
+                "label": "Route 3",
+                "min_target_size": 44.0,
+                "non_color_state": "route_2_ready",
+                "owner_namespace": "scenario",
+                "presentation_object_id": "scenario::grand_casino_gala_night_work_2_choice_2",
+                "prompt": "Present the rejected badge and accept a visible credential failure.",
+                "safe_exit": false,
+                "stable_object_id": "grand_casino_gala_night_work_2_choice_2",
+                "state_label": "Rejected badge ready"
+              },
+              "op": "add",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_2_add_grand_casino_gala_night_work_2_choice_2",
+              "stable_object_id": "grand_casino_gala_night_work_2_choice_2"
+            }
+          ],
+          "label": "Work beat 2",
+          "objective_ids": [
+            "main_task"
+          ],
+          "scene_ops": [
+            {
+              "appearance": "badge_state_changed",
+              "family": "scene_ops",
+              "op": "set_appearance",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_badge_state_appearance",
+              "stable_object_id": "grand_casino_gala_night_charity_badges",
+              "zone_id": "center"
+            },
+            {
+              "anchor_id": "grand_work_object_middle",
+              "family": "scene_ops",
+              "op": "move",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_2_relocate_charity_badges",
+              "stable_object_id": "grand_casino_gala_night_charity_badges",
+              "zone_id": "center"
+            },
+            {
+              "anchor_id": "grand_work_object_left",
+              "family": "scene_ops",
+              "op": "move",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_2_relocate_stage_lift",
+              "stable_object_id": "grand_casino_gala_night_stage_lift",
+              "zone_id": "center"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_2_remove_grand_casino_gala_night_task_1",
+              "stable_object_id": "grand_casino_gala_night_task_1",
+              "zone_id": "foreground"
+            },
+            {
+              "family": "scene_ops",
+              "object": {
+                "anchor_id": "grand_decision_left",
+                "appearance": "route_0_ready",
+                "bounds": {
+                  "h": 56.0,
+                  "w": 68.0
+                },
+                "description": "The cover-identity card pairs an accepted charity badge with its matching coat claim.",
+                "description_variants": {
+                  "acted_assume_gala_cover_identity": "You pin the verified badge to your coat and enter under the gala name."
+                },
+                "enabled": true,
+                "label": "Route 1",
+                "role": "decision_route",
+                "state": "route_0_ready",
+                "visible": true,
+                "zone_id": "center"
+              },
+              "op": "spawn",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_2_spawn_grand_casino_gala_night_work_2_choice_0",
+              "stable_object_id": "grand_casino_gala_night_work_2_choice_0",
+              "zone_id": "center"
+            },
+            {
+              "family": "scene_ops",
+              "object": {
+                "anchor_id": "grand_decision_middle",
+                "appearance": "route_1_ready",
+                "bounds": {
+                  "h": 56.0,
+                  "w": 68.0
+                },
+                "description": "The public-floor card points from the lift controls to the ropes blocking the ballroom route.",
+                "description_variants": {
+                  "acted_reopen_public_gala_floor": "You return the verified badge to the public queue, reopening the gala floor."
+                },
+                "enabled": true,
+                "label": "Route 2",
+                "role": "decision_route",
+                "state": "route_1_ready",
+                "visible": true,
+                "zone_id": "background"
+              },
+              "op": "spawn",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_2_spawn_grand_casino_gala_night_work_2_choice_1",
+              "stable_object_id": "grand_casino_gala_night_work_2_choice_1",
+              "zone_id": "background"
+            },
+            {
+              "family": "scene_ops",
+              "object": {
+                "anchor_id": "grand_decision_middle_right",
+                "appearance": "route_2_ready",
+                "bounds": {
+                  "h": 56.0,
+                  "w": 68.0
+                },
+                "description": "The failed-credential card returns a mismatched badge to the host at the closed lane.",
+                "description_variants": {
+                  "acted_fail_gala_credentials": "The reader rejects your badge; the host closes the credential lane."
+                },
+                "enabled": true,
+                "label": "Route 3",
+                "role": "decision_route",
+                "state": "route_2_ready",
+                "visible": true,
+                "zone_id": "left"
+              },
+              "op": "spawn",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_2_spawn_grand_casino_gala_night_work_2_choice_2",
+              "stable_object_id": "grand_casino_gala_night_work_2_choice_2",
+              "zone_id": "left"
+            }
+          ],
+          "transition_ops": [
+            {
+              "channel": "room",
+              "duration_boundaries": 1.0,
+              "family": "transition_ops",
+              "message": "Verified badge opens the lane.",
+              "op": "stage",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_2_transition_stage",
+              "reduced_motion_message": "The badge is verified and the stage lift is level; three public gala roles are ready to choose.",
+              "stable_object_id": "grand_casino_gala_night_work_2_transition",
+              "stage_id": "grand_casino_gala_night_work_2_stage"
+            }
+          ]
+        },
+        {
+          "actor_ops": [
+            {
+              "behavior": "watch",
+              "family": "actor_ops",
+              "op": "set_behavior",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_lift_appearance_behavior",
+              "stable_object_id": "grand_casino_gala_night_gala_host",
+              "zone_id": "center"
+            }
+          ],
+          "advance_after_actions": 0.0,
+          "arrival_feedback": "Three credential responses remain.",
+          "branches": [
+            {
+              "condition": {
+                "command_id": "choose_gala_identity",
+                "type": "command"
+              },
+              "id": "grand_casino_gala_night_work_3_complete",
+              "next_phase": "terminal_success",
+              "objective_outcomes": {
+                "main_task": "success"
+              }
+            },
+            {
+              "condition": {
+                "fact_type": "service_result",
+                "type": "fact"
+              },
+              "id": "grand_casino_gala_night_work_3_pressure",
+              "next_phase": "terminal_failure",
+              "objective_outcomes": {
+                "main_task": "failure"
+              }
+            },
+            {
+              "condition": {
+                "command_id": "fail_grand_casino_gala_night",
+                "type": "command"
+              },
+              "id": "grand_casino_gala_night_work_3_fail",
+              "next_phase": "terminal_failure",
+              "objective_outcomes": {
+                "main_task": "failure"
+              }
+            },
+            {
+              "condition": {
+                "command_id": "refuse_grand_casino_gala_night",
+                "type": "command"
+              },
+              "id": "grand_casino_gala_night_work_3_refuse",
+              "next_phase": "terminal_refused",
+              "objective_outcomes": {
+                "main_task": "ignore"
+              }
+            },
+            {
+              "condition": {
+                "fact_type": "travel_departed",
+                "type": "fact"
+              },
+              "id": "grand_casino_gala_night_work_3_interrupt",
+              "next_phase": "terminal_interrupted",
+              "objective_outcomes": {
+                "main_task": "cancel"
+              }
+            }
+          ],
+          "entry_conditions": [],
+          "exit_prompt": "Exit through coat-check.",
+          "id": "work_3",
+          "interaction_ops": [
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_3_interaction_remove_grand_casino_gala_night_work_2_choice_0",
+              "stable_object_id": "grand_casino_gala_night_work_2_choice_0"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_3_interaction_remove_grand_casino_gala_night_work_2_choice_1",
+              "stable_object_id": "grand_casino_gala_night_work_2_choice_1"
+            },
+            {
+              "family": "interaction_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_3_interaction_remove_grand_casino_gala_night_work_2_choice_2",
+              "stable_object_id": "grand_casino_gala_night_work_2_choice_2"
+            },
+            {
+              "family": "interaction_ops",
+              "interaction": {
+                "alternate_exit": false,
+                "available_actions": [
+                  {
+                    "handler": "complete_objective_step",
+                    "id": "choose_gala_identity",
+                    "input_action": "ui_accept",
+                    "inputs": {
+                      "objective_id": "main_task",
+                      "step_id": "choose_gala_identity"
+                    },
+                    "label": "Choose Gala Identity",
+                    "non_color_state": "work"
+                  },
+                  {
+                    "handler": "change_scene_object",
+                    "id": "fail_grand_casino_gala_night",
+                    "input_action": "ui_right",
+                    "inputs": {
+                      "message": "All three gala role cards remain unsigned while the restarted lift waits empty.",
+                      "owner_namespace": "scenario",
+                      "stable_object_id": "grand_casino_gala_night_task_3",
+                      "state": "acted_fail_grand_casino_gala_night"
+                    },
+                    "label": "Lose your gala credentials",
+                    "non_color_state": "ready"
+                  },
+                  {
+                    "handler": "change_scene_object",
+                    "id": "refuse_grand_casino_gala_night",
+                    "input_action": "ui_cancel",
+                    "inputs": {
+                      "message": "You decline the gala identity; the three credential cards remain spread across the desk.",
+                      "owner_namespace": "scenario",
+                      "stable_object_id": "grand_casino_gala_night_task_3",
+                      "state": "acted_refuse_grand_casino_gala_night"
+                    },
+                    "label": "Refuse and leave",
+                    "non_color_state": "ready"
+                  }
+                ],
+                "disabled_reason": "",
+                "enabled": true,
+                "focus_order": 1.0,
+                "hit_bounds": {
+                  "h": 56.0,
+                  "w": 64.0
+                },
+                "input_actions": [
+                  "ui_accept",
+                  "ui_right",
+                  "ui_cancel"
+                ],
+                "label": "Choose Gala Identity",
+                "min_target_size": 44.0,
+                "non_color_state": "work_3_ready",
+                "owner_namespace": "scenario",
+                "presentation_object_id": "scenario::grand_casino_gala_night_task_3",
+                "prompt": "Choose one of the three credential cards beside the level stage lift.",
+                "safe_exit": false,
+                "stable_object_id": "grand_casino_gala_night_task_3",
+                "state_label": "Identity cards posted"
+              },
+              "op": "add",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_3_add_grand_casino_gala_night_task_3",
+              "stable_object_id": "grand_casino_gala_night_task_3"
+            }
+          ],
+          "label": "Work beat 3",
+          "objective_ids": [
+            "main_task"
+          ],
+          "scene_ops": [
+            {
+              "family": "scene_ops",
+              "op": "set_state",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_lift_appearance_state",
+              "stable_object_id": "grand_casino_gala_night_stage_lift",
+              "state": "lift_appearance_resolved",
+              "zone_id": "center"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_3_remove_grand_casino_gala_night_work_2_choice_0",
+              "stable_object_id": "grand_casino_gala_night_work_2_choice_0",
+              "zone_id": "center"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_3_remove_grand_casino_gala_night_work_2_choice_1",
+              "stable_object_id": "grand_casino_gala_night_work_2_choice_1",
+              "zone_id": "background"
+            },
+            {
+              "family": "scene_ops",
+              "op": "remove",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_3_remove_grand_casino_gala_night_work_2_choice_2",
+              "stable_object_id": "grand_casino_gala_night_work_2_choice_2",
+              "zone_id": "left"
+            },
+            {
+              "family": "scene_ops",
+              "object": {
+                "anchor_id": "grand_scenario_top_800",
+                "appearance": "task_ready",
+                "bounds": {
+                  "h": 56.0,
+                  "w": 64.0
+                },
+                "description": "Three credential cards wait on the right side of the restarted lift, each opening a different public role on the gala floor.",
+                "description_variants": {
+                  "acted_fail_grand_casino_gala_night": "All three gala role cards remain unsigned while the restarted lift waits empty.",
+                  "acted_refuse_grand_casino_gala_night": "You decline the gala identity; the three credential cards remain spread across the desk."
+                },
+                "enabled": true,
+                "icon_key": "paper_note",
+                "label": "Choose Gala Identity",
+                "role": "task_station",
+                "state": "ready",
+                "visible": true,
+                "zone_id": "right"
+              },
+              "op": "spawn",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_3_spawn_grand_casino_gala_night_task_3",
+              "stable_object_id": "grand_casino_gala_night_task_3",
+              "zone_id": "right"
+            }
+          ],
+          "transition_ops": [
+            {
+              "change_id": "grand_casino_gala_night_work_3_change",
+              "channel": "room",
+              "family": "transition_ops",
+              "message": "Three credential responses remain.",
+              "op": "scene_change",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_work_3_transition_scene_change",
+              "stable_object_id": "grand_casino_gala_night_work_3_transition"
+            }
+          ]
+        },
+        {
+          "actor_ops": [],
+          "advance_after_actions": 0.0,
+          "arrival_feedback": "A verified charity badge and its matching coat claim hang together beside the newly opened lane around the lift.",
+          "branches": [
+            {
+              "condition": {
+                "type": "always"
+              },
+              "id": "grand_casino_gala_night_terminal_success",
+              "outcome": "cover_identity_accepted"
+            }
+          ],
+          "entry_conditions": [],
+          "exit_prompt": "Exit through coat-check.",
+          "id": "terminal_success",
+          "interaction_ops": [],
+          "label": "Success",
+          "objective_ids": [],
+          "scene_ops": [],
+          "terminal": true,
+          "transition_ops": [
+            {
+              "channel": "room",
+              "family": "transition_ops",
+              "message": "A verified charity badge and its matching coat claim hang together beside the newly opened lane around the lift.",
+              "op": "feedback",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_terminal_success_transition_feedback",
+              "stable_object_id": "grand_casino_gala_night_terminal_success_transition"
+            }
+          ]
+        },
+        {
+          "actor_ops": [],
+          "advance_after_actions": 0.0,
+          "arrival_feedback": "The lift has settled level with the deck, and removed gala ropes are coiled beside a clear route to the ballroom.",
+          "branches": [
+            {
+              "condition": {
+                "type": "always"
+              },
+              "id": "grand_casino_gala_night_terminal_failure",
+              "outcome": "public_floor_reopened"
+            }
+          ],
+          "entry_conditions": [],
+          "exit_prompt": "Exit through coat-check.",
+          "id": "terminal_failure",
+          "interaction_ops": [],
+          "label": "Failure",
+          "objective_ids": [],
+          "scene_ops": [],
+          "terminal": true,
+          "transition_ops": [
+            {
+              "channel": "room",
+              "family": "transition_ops",
+              "message": "The lift has settled level with the deck, and removed gala ropes are coiled beside a clear route to the ballroom.",
+              "op": "feedback",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_terminal_failure_transition_feedback",
+              "stable_object_id": "grand_casino_gala_night_terminal_failure_transition"
+            }
+          ]
+        },
+        {
+          "actor_ops": [],
+          "advance_after_actions": 0.0,
+          "arrival_feedback": "The host keeps a red-circled badge at the shut credential lane, its number visibly different from the coat claim.",
+          "branches": [
+            {
+              "condition": {
+                "type": "always"
+              },
+              "id": "grand_casino_gala_night_terminal_refused",
+              "outcome": "credential_failed"
+            }
+          ],
+          "entry_conditions": [],
+          "exit_prompt": "Exit through coat-check.",
+          "id": "terminal_refused",
+          "interaction_ops": [],
+          "label": "Refused",
+          "objective_ids": [],
+          "scene_ops": [],
+          "terminal": true,
+          "transition_ops": [
+            {
+              "channel": "room",
+              "family": "transition_ops",
+              "message": "The host keeps a red-circled badge at the shut credential lane, its number visibly different from the coat claim.",
+              "op": "feedback",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_terminal_refused_transition_feedback",
+              "stable_object_id": "grand_casino_gala_night_terminal_refused_transition"
+            }
+          ]
+        },
+        {
+          "actor_ops": [],
+          "advance_after_actions": 0.0,
+          "arrival_feedback": "Gala ropes cross beneath the raised lift, whose open control box shows where the floor operation stopped.",
+          "branches": [
+            {
+              "condition": {
+                "type": "always"
+              },
+              "id": "grand_casino_gala_night_terminal_interrupted",
+              "outcome": "gala_interrupted"
+            }
+          ],
+          "entry_conditions": [],
+          "exit_prompt": "Exit through coat-check.",
+          "id": "terminal_interrupted",
+          "interaction_ops": [],
+          "label": "Interrupted",
+          "objective_ids": [],
+          "scene_ops": [],
+          "terminal": true,
+          "transition_ops": [
+            {
+              "channel": "room",
+              "family": "transition_ops",
+              "message": "Gala ropes cross beneath the raised lift, whose open control box shows where the floor operation stopped.",
+              "op": "feedback",
+              "owner_namespace": "scenario",
+              "receipt_id": "grand_casino_gala_night_terminal_interrupted_transition_feedback",
+              "stable_object_id": "grand_casino_gala_night_terminal_interrupted_transition"
+            }
+          ]
+        }
+      ]
+    },
+    "reentry_policy": {
+      "expired": "expired",
+      "partial": "resume",
+      "terminal": "aftermath"
+    },
+    "schema_version": 2.0,
+    "sequence_signature": "36fed1c760ea6674b24048fb0963ed4a6d7af87b4ffe9dd67ddafd8e5dff8c0d"
+  }
+}

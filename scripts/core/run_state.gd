@@ -2916,6 +2916,10 @@ func _scenario_sequence_definition_readonly() -> Dictionary:
 		definition = embedded_definition
 	if scenario_sequence_is_suppressed(scenario_id, str(current_environment.get("archetype_id", node_id))):
 		definition = ScenarioEngineScript.suppress_sequence_definition(definition if not definition.is_empty() else {"id": scenario_id, "archetype_id": str(current_environment.get("archetype_id", node_id))})
+	else:
+		var recorded_definition := ScenarioEngineScript.recorded_terminal_definition(current_environment, definition)
+		if not recorded_definition.is_empty():
+			return recorded_definition
 	if not scenario_id.is_empty() and _scenario_sequence_definition_cache.has(scenario_id):
 		var cached_definition := _scenario_sequence_definition_cache.get(scenario_id, {}) as Dictionary
 		if definition.is_empty() or _scenario_cached_definition_matches_source(cached_definition, definition):
