@@ -1669,16 +1669,41 @@ func _publish_scenario_membership_candidate(candidate: Dictionary, result_value:
 	var result := result_value.duplicate(false)
 	if not bool(result.get("ok", false)):
 		return result
+	var membership_errors: Array = []
+	var world_instances: Variant = candidate.get("world_sequence_instances", {})
+	if typeof(world_instances) == TYPE_DICTIONARY and not (world_instances as Dictionary).is_empty():
+		# Engine commits the primary room sequence. A mounted world owner shares
+		# that physical plane, so rebuild the same authenticated composition used
+		# on entry before publishing a later event/fact/command candidate. Otherwise
+		# its actor can disappear while its authoritative owner remains active.
+		var definition := _scenario_sequence_definition_readonly()
+		var primary_projection := ScenarioEngineScript.sequence_projection(candidate, definition)
+		var combined := CrewWorldSequenceAdapterScript.composed_projection(candidate, _world_sequence_definition_cache, primary_projection)
+		if not bool(combined.get("ok", true)):
+			membership_errors.append("Mounted world sequence composition failed closed.")
+			membership_errors.append_array(JsonCoerceScript._copy_array(combined.get("errors", [])))
+		elif not is_same(combined, primary_projection):
+			# No mounted contributor returns the exact primary Dictionary, keeping
+			# ordinary rooms and cleaned owner history on their existing path.
+			var composed_layout := _resolve_scenario_layout_candidate(candidate, JsonCoerceScript._copy_array(candidate.get("scenario_layout_base_records", [])), definition, JsonCoerceScript._copy_dict(candidate.get("scenario_layout_context", {})))
+			if not bool(composed_layout.get("ok", false)):
+				membership_errors.append("Mounted world sequence layout reconciliation failed closed.")
+				membership_errors.append_array(JsonCoerceScript._copy_array(composed_layout.get("errors", [])))
+			else:
+				for field in ["projection", "layout_authority", "layout_authority_digest", "layout_audit", "warnings"]:
+					result[field] = composed_layout.get(field)
+				result["renderer_snapshot"] = candidate.get("scenario_render_snapshot", {}).duplicate(true)
 	# Do not run the live runtime-owner projector on this detached candidate:
 	# contextual projectors intentionally distinguish the current environment by
 	# identity and would remove valid delivery/crew rows before publication.
-	_resolve_terminal_scenario_action_aliases(candidate)
-	candidate["layout"] = EnvironmentInstance.ensure_generated_layout(candidate)
-	var membership_errors := JsonCoerceScript._copy_array(EnvironmentInstance.object_manifest_errors(candidate))
-	for error_value in JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(candidate.get("layout", {})).get("placement_errors", [])):
-		var placement_error := str(error_value).strip_edges()
-		if not placement_error.is_empty() and not membership_errors.has(placement_error):
-			membership_errors.append(placement_error)
+	if membership_errors.is_empty():
+		_resolve_terminal_scenario_action_aliases(candidate)
+		candidate["layout"] = EnvironmentInstance.ensure_generated_layout(candidate)
+		membership_errors = JsonCoerceScript._copy_array(EnvironmentInstance.object_manifest_errors(candidate))
+		for error_value in JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(candidate.get("layout", {})).get("placement_errors", [])):
+			var placement_error := str(error_value).strip_edges()
+			if not placement_error.is_empty() and not membership_errors.has(placement_error):
+				membership_errors.append(placement_error)
 	if not membership_errors.is_empty():
 		var errors: Array = ["Scenario %s physical membership reconciliation failed closed." % operation_label]
 		for error_value in membership_errors:
