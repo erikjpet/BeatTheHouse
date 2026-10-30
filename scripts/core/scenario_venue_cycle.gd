@@ -91,10 +91,17 @@ static func clear_scenario(environment: Dictionary, archetype: Dictionary, prior
 	return result
 
 
-static func attach(environment: Dictionary, definition: Dictionary) -> void:
+static func attach(environment: Dictionary, definition: Dictionary, archetype: Dictionary = {}) -> void:
 	if definition.is_empty(): return
 	var state := ScenarioEngineScript.initial_state(definition)
 	if ScenarioEngineScript.state_targets_environment(state, environment):
+		# Base/None generation intentionally omits expanded semantic context. A
+		# newly installed cycle needs the same authored inputs as fresh generation;
+		# carrying the old empty context makes valid scene anchors unavailable.
+		if not archetype.is_empty():
+			environment["semantic_anchors"] = Json._copy_dict(archetype.get("semantic_anchors", {}))
+			environment["semantic_actors"] = Json._copy_array(archetype.get("semantic_actors", []))
+			environment["semantic_zones"] = Json._copy_dict(archetype.get("semantic_zones", {}))
 		ScenarioEngineScript._apply_mutations(environment, Json._copy_dict(state.get("mutations", {})), false)
 		environment["scenario_applied_phase_index"] = -1
 		ScenarioEngineScript.reconcile_environment(environment, state)

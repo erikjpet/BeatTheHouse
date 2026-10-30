@@ -1309,7 +1309,8 @@ func _refresh_venue_scenario_cycle_candidate(run_state: RunState, archetype: Dic
 	for layer_value in layer_keys:
 		var layer := str(layer_value)
 		var room := JsonCoerceScript._copy_dict(base_rooms[layer])
-		ScenarioVenueCycleScript.attach(room, selected)
+		var flat := EnvironmentInstance._archetype_for_layer(archetype, layer) if layer != "room" else archetype
+		ScenarioVenueCycleScript.attach(room, selected, flat)
 		if bool(room.get("world_map_travel", false)):
 			_apply_world_travel_targets(room, run_state, run_state.world_map, node_id)
 		_apply_scenario_sequence_travel_targets(room, selected)

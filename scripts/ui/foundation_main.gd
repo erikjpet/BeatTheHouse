@@ -3711,6 +3711,14 @@ func confirm_world_map_travel() -> Dictionary:
 	var travel_result := _travel_to_with_lifecycle_snapshot(str(result.get("target_id", "")), str(result.get("label", result.get("target_id", ""))), result.get("choice", {}) as Dictionary, true, caller_rollback)
 	if bool(travel_result.get("ok", false)):
 		_commit_foundation_coach_attention(caller_rollback)
+	else:
+		# The transaction has already restored its source. Publish its rejection
+		# as the immediate acknowledgement so an older game receipt cannot hide
+		# the reason an enabled trip did not commit.
+		var travel_errors := JsonCoerceScript._copy_array(travel_result.get("errors", []))
+		var rejection := str(travel_errors[0]) if not travel_errors.is_empty() else "The trip could not be completed safely."
+		_show_environment_action_acknowledgement(rejection)
+		_refresh_after_foundation_lifecycle_rollback(caller_rollback)
 	return travel_result
 
 

@@ -3597,6 +3597,20 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 		# existing installation transaction roll back a rejected publication.
 		var publication := publish_room_presentation()
 		return {"ok": bool(publication.get("ok", false)), "inactive": true, "errors": JsonCoerceScript._copy_array(publication.get("errors", []))}
+	if world_only:
+		# Authenticate the incoming physical envelope before an owned runtime
+		# membership change. This boundary must not repair edited room authority.
+		var incoming_errors := EnvironmentInstance.object_manifest_errors(current_environment)
+		var incoming_authority := EnvironmentSlotBinderScript.validate_base_layout_authority(current_environment)
+		incoming_errors.append_array(JsonCoerceScript._copy_array(incoming_authority.get("errors", [])))
+		if not incoming_errors.is_empty():
+			return {"ok": false, "errors": incoming_errors}
+		# Runtime owners such as the local Numbers book must join the physical
+		# envelope before the world host is sealed, not during its final manifest
+		# publication after the base inventory/bindings were already captured.
+		var membership := reconcile_environment_object_membership(current_environment)
+		if not bool(membership.get("ok", false)):
+			return {"ok": false, "errors": JsonCoerceScript._copy_array(membership.get("errors", []))}
 	var authoritative_environment := _scenario_authoritative_environment_for_finalization(definition)
 	# Runtime membership (for example the Crew heist Live Table) may change after
 	# the prior scenario seal. Rebuild the detached baseline's manifest and slot
@@ -3693,8 +3707,18 @@ func _scenario_authoritative_environment_for_finalization(definition: Dictionary
 		var restored_event_ids := JsonCoerceScript._copy_array(persisted_event_source.get("event_ids", []))
 		if not bool(persisted_event_source.get("authenticated", false)):
 			restored_event_ids = JsonCoerceScript._copy_array(result.get("event_ids", []))
+			# Without an authenticated prior seal this is a fresh baseline, for
+			# either a room scenario or a world owner. Layer transitions share the
+			# resolved-event journal; it cannot create physical baseline members.
+			# Restore an absent event only if this room's manifest owns it.
+			var physical_event_ids: Dictionary = {}
+			for row_value in JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(result.get("object_manifest", {})).get("rows", [])):
+				var row := JsonCoerceScript._copy_dict(row_value)
+				var object_id := str(row.get("object_id", ""))
+				if object_id.begins_with("event:"): physical_event_ids[object_id.trim_prefix("event:")] = true
 			for resolved_event_id_value in JsonCoerceScript._copy_array(result.get("resolved_event_ids", [])):
 				var resolved_event_id := str(resolved_event_id_value).strip_edges()
+				if not physical_event_ids.has(resolved_event_id): continue
 				if not resolved_event_id.is_empty() and not restored_event_ids.has(resolved_event_id):
 					restored_event_ids.append(resolved_event_id)
 		result["event_ids"] = restored_event_ids

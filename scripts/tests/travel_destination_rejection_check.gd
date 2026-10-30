@@ -38,6 +38,9 @@ func _run() -> void:
 			_check(app.open_world_map() and app.select_world_map_node("corner_store"), "normal invalid destination map selection")
 			var rejected := app.confirm_world_map_travel(); facts["rejected"] = rejected
 			_check(not bool(rejected.get("ok", true)) and not rejected.get("errors", []).is_empty(), "explicit invalid destination error")
+			facts["rejection_hud"] = app._environment_result_feedback_view()
+			_check(str(facts.rejection_hud.get("text", "")).contains(str(rejected.get("errors", [""])[0])), "rejection HUD displays the actual returned error")
+			_check(app.environment_result_body_label.text.contains(str(rejected.get("errors", [""])[0])), "actual rendered Result label displays rejection")
 			_check(run.current_world_node_id() == "gas_station_casino" and run.bankroll == 52 and not run.is_terminal(), "rejection playable Gas52 no fare/terminal")
 			_check(_different_paths(protected, _protected(run)).is_empty(), "rejection preserves funds/items/debt/paid games/Heat/history/RNG")
 			facts["rollback_diffs"] = _different_paths(baseline, run.to_dict())
