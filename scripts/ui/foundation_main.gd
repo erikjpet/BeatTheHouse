@@ -7198,7 +7198,10 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	dev_environment_test_mode = false
 	_refresh_run_action_service()
 	current_game = null
-	last_game_result = _saved_world_sequence_feedback_from_story_log(run_state.story_log)
+	_clear_recent_result_feedback()
+	last_game_result = _saved_scenario_action_feedback_from_story_log(run_state.story_log)
+	if last_game_result.is_empty():
+		last_game_result = _saved_world_sequence_feedback_from_story_log(run_state.story_log)
 	if last_game_result.is_empty():
 		last_game_result = _game_result_from_story_log(run_state.story_log)
 	last_item_result = {}
@@ -16325,6 +16328,7 @@ func _activate_scenario_action(owner_namespace: String, stable_object_id: String
 	# acknowledgement is written only to the intentionally hidden legacy label.
 	_clear_recent_result_feedback()
 	_show_environment_action_acknowledgement(message)
+	_record_scenario_action_feedback(result, message)
 	_autosave_foundation_run("Room sequence saved.")
 	_refresh()
 	return true
@@ -16396,6 +16400,7 @@ func _execute_scenario_sequence_action(object_data: Dictionary, action: Dictiona
 	var accepted_acknowledgement: String = EnvironmentInteractionViewModelScript.accepted_scenario_action_acknowledgement(object_data, action)
 	_clear_recent_result_feedback()
 	_show_environment_action_acknowledgement(accepted_acknowledgement)
+	_record_scenario_action_feedback(result, accepted_acknowledgement)
 	# State, causal receipts, layout authority, and renderer snapshot are already
 	# committed synchronously. Drain presentation envelopes and consume the
 	# prepared snapshot at the next UI boundary so the input callback does not
@@ -16404,6 +16409,50 @@ func _execute_scenario_sequence_action(object_data: Dictionary, action: Dictiona
 	# last_feedback here would replay a prior action's stale message, so retain
 	# this action-local public acknowledgement as the exact fallback.
 	call_deferred("_finish_scenario_sequence_action", accepted_acknowledgement)
+	return true
+
+
+func _record_scenario_action_feedback(command_result: Dictionary, message: String) -> bool:
+	if run_state == null or message.strip_edges().is_empty():
+		return false
+	if typeof(command_result.get("ok")) != TYPE_BOOL or not bool(command_result.ok):
+		return false
+	if typeof(command_result.get("replayed", false)) != TYPE_BOOL or bool(command_result.get("replayed", false)):
+		return false
+	var receipt_value: Variant = command_result.get("result_receipt")
+	if typeof(receipt_value) != TYPE_DICTIONARY:
+		return false
+	var receipt: Dictionary = receipt_value
+	if typeof(receipt.get("replayed", false)) != TYPE_BOOL or bool(receipt.get("replayed", false)):
+		return false
+	for key in ["receipt_id", "command_id", "scenario_id", "node_id"]:
+		if typeof(receipt.get(key)) != TYPE_STRING or str(receipt.get(key)).strip_edges().is_empty():
+			return false
+	var visit_value: Variant = run_state.current_environment.get("environment_visit_id")
+	if typeof(visit_value) != TYPE_STRING or str(visit_value).strip_edges().is_empty():
+		return false
+	var visit_id := str(visit_value)
+	var feedback_id := JSON.stringify([receipt.scenario_id, receipt.node_id, visit_id, receipt.command_id, receipt.receipt_id])
+	for value in run_state.story_log:
+		if typeof(value) == TYPE_DICTIONARY and str(value.get("type", "")) == "scenario_action_feedback" and str(value.get("feedback_id", "")) == feedback_id:
+			return false
+	# Core has already accepted this exact command. Record only the public text
+	# already shown at its UI boundary; never apply or recount money/Heat here.
+	# Later consequence records keep their natural position after this stamp.
+	run_state.log_story({
+		"type": "scenario_action_feedback",
+		"feedback_schema": "bth.scenario_action_feedback/v1",
+		"feedback_id": feedback_id,
+		"scenario_id": str(receipt.scenario_id),
+		"node_id": str(receipt.node_id),
+		"environment_visit_id": visit_id,
+		"command_id": str(receipt.command_id),
+		"command_receipt_id": str(receipt.receipt_id),
+		"message": message,
+		"bankroll_delta": 0,
+		"chips_delta": 0,
+		"suspicion_delta": 0,
+	})
 	return true
 
 
@@ -21475,6 +21524,35 @@ func _outcome_message(result: Dictionary) -> String:
 func _run_summary_text(state: RunState) -> String:
 	var pressure: Dictionary = _run_pressure_view() if state == run_state else state.recovery_pressure_status()
 	return TerminalConsequenceViewModelScript.run_summary_text(state, pressure)
+
+
+func _saved_scenario_action_feedback_from_story_log(entries: Array) -> Dictionary:
+	# A final recorded UI acknowledgement supplies order, never the scenario's
+	# current phase or its old accepted-command count. Do not scan past any tail.
+	if entries.is_empty() or typeof(entries.back()) != TYPE_DICTIONARY:
+		return {}
+	var entry: Dictionary = entries.back()
+	for key in ["type", "feedback_schema", "feedback_id", "scenario_id", "node_id", "environment_visit_id", "command_id", "command_receipt_id", "message"]:
+		if typeof(entry.get(key)) != TYPE_STRING or str(entry.get(key)).strip_edges().is_empty():
+			return {}
+	if str(entry.type) != "scenario_action_feedback" or str(entry.feedback_schema) != "bth.scenario_action_feedback/v1":
+		return {}
+	var feedback_id := JSON.stringify([entry.scenario_id, entry.node_id, entry.environment_visit_id, entry.command_id, entry.command_receipt_id])
+	if str(entry.feedback_id) != feedback_id:
+		return {}
+	for key in ["bankroll_delta", "chips_delta", "suspicion_delta"]:
+		var delta: Variant = entry.get(key, 0)
+		if typeof(delta) not in [TYPE_INT, TYPE_FLOAT] or float(delta) != 0.0:
+			return {}
+	var result := _result_from_story_log([{
+		"type": "scenario_action_feedback", "id": feedback_id,
+		"message": str(entry.message), "bankroll_delta": 0, "chips_delta": 0, "suspicion_delta": 0,
+	}])
+	result["type"] = "environment_feedback"
+	result["display_name"] = "Saved room action"
+	result["summary_source"] = "saved_scenario_action_feedback"
+	result["feedback_id"] = feedback_id
+	return result
 
 
 func _saved_world_sequence_feedback_from_story_log(entries: Array) -> Dictionary:
