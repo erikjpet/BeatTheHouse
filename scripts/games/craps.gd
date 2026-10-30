@@ -89,6 +89,25 @@ func generate_environment_state(_run_state: RunState, environment: Dictionary, r
 	return table
 
 
+func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
+	var result: Dictionary = super.actions(run_state, environment)
+	var table := _table_state_preview(run_state, environment)
+	if not _is_street_table(table, environment):
+		return result
+	# The chalk ring already owns its limits. Its surrounding Alley can have a
+	# zero generic ceiling, which must not reject an enabled, legal table wager
+	# at the host boundary before the Craps resolver can validate and fund it.
+	var table_ceiling := maxi(0, int(table.get("table_maximum", 0)))
+	var wager_ceiling := mini(table_ceiling, _wager_capacity(run_state, environment))
+	var economy_ceiling := run_state.economy_stake_ceiling(table_ceiling)
+	result["stake_floor"] = int(table.get("table_minimum", 0))
+	result["stake_ceiling"] = wager_ceiling
+	result["base_stake_ceiling"] = table_ceiling
+	result["economy_stake_ceiling"] = economy_ceiling
+	result["economy_pressure_applied"] = economy_ceiling < wager_ceiling
+	return result
+
+
 func cheat_actions(run_state: RunState, environment: Dictionary) -> Array:
 	var actions := super.cheat_actions(run_state, environment)
 	if not _is_street_variant(environment):
