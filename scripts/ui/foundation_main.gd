@@ -13622,9 +13622,14 @@ func _add_event_choice_action_option(stack: VBoxContainer, event_id: String, cho
 
 func _event_choice_action_detail(choice_data: Dictionary) -> String:
 	var choice_text := str(choice_data.get("text", "")).strip_edges()
-	if choice_text.is_empty():
-		return "Resolve this response."
-	return choice_text
+	var impact := str(choice_data.get("impact_summary", "")).strip_edges()
+	if impact.is_empty():
+		impact = str(choice_data.get("consequence_summary", "")).strip_edges()
+	# These are the already-public choice terms. Put them before the prose so
+	# both native and inline cards retain the cost within their visible lines.
+	if impact.is_empty() or choice_text.contains(impact):
+		return choice_text if not choice_text.is_empty() else "Resolve this response."
+	return impact if choice_text.is_empty() else "%s\n%s" % [impact, choice_text]
 
 
 func _event_inline_response_actions(event_id: String, choices: Array) -> Array:
