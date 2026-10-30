@@ -860,6 +860,7 @@ func _advance_run_game_clock(delta: float) -> void:
 	var elapsed_minutes := int(floor(environment_clock_fractional_minutes))
 	if elapsed_minutes <= 0:
 		return
+	var previous_cage_marker := run_state.grand_casino_atm_debt()
 	var clock_result := run_state.advance_game_clock_minutes(elapsed_minutes)
 	if not bool(clock_result.get("ok", false)):
 		return
@@ -893,6 +894,16 @@ func _advance_run_game_clock(delta: float) -> void:
 		_refresh()
 	else:
 		_refresh_character_offer_visibility()
+		# Interest changes the live account while Linda's existing page remains
+		# open. Rebuild only that conversation's display, not room/game reveals or
+		# the clock/financial transaction, and never reopen a dismissed dialogue.
+		if previous_cage_marker != run_state.grand_casino_atm_debt() \
+				and current_screen == SCREEN_ENVIRONMENT \
+				and str(run_state.current_environment.get("archetype_id", "")) == RunState.GRAND_CASINO_CAGE_ARCHETYPE_ID \
+				and talk_dock != null and talk_dock.conversation_active:
+			var entry := run_state.next_pending_talk_event()
+			if str(entry.get("dialogue_id", "")) == "linda_cage_services":
+				_refresh_talk_dock()
 
 
 func _crew_hourly_room_boundary_ready() -> bool:
@@ -8478,11 +8489,13 @@ func _travel_to(target_id: String, target_label: String, choice_data: Dictionary
 	if perf_corner_store_timing:
 		perf_corner_store_stages["destination_postprocess_ms"] = float(Time.get_ticks_usec() - perf_corner_store_stage_started_usec) / 1000.0
 		perf_corner_store_stage_started_usec = Time.get_ticks_usec()
-	if not expected_offer_target_id.is_empty():
-		# Settle the complete quoted ride before evaluating a zero-cash ending.
-		travel_result["defer_bankroll_zero_failure"] = true
+	# Publish the complete accepted trip, including its risk history, before a
+	# zero-cash ending. Otherwise apply_result stops after charging the fare/risk
+	# and the terminal save loses both travel rows. This is the same settlement
+	# boundary used for an offered ride; terminal evaluation still precedes save.
+	travel_result["defer_bankroll_zero_failure"] = true
 	var applied_travel_result := GameModule.apply_result(run_state, travel_result)
-	if not expected_offer_target_id.is_empty() and bool(applied_travel_result.get("ok", false)):
+	if bool(applied_travel_result.get("ok", false)):
 		run_state.evaluate_immediate_terminal_state(false)
 	if not ignored_talk_entries.is_empty():
 		_apply_talk_ignore_penalty(ignored_talk_entries, "travel")
@@ -18304,6 +18317,7 @@ func _result_from_story_log(entries: Array) -> Dictionary:
 			"source_id": str(story_entry.get("id", story_entry.get("game_id", story_entry.get("item_id", "")))),
 			"game_id": str(story_entry.get("game_id", "")),
 			"action_id": str(story_entry.get("action_id", "")),
+			"won": bool(story_entry.get("won", false)),
 			"bankroll_delta": int(story_entry.get("bankroll_delta", 0)),
 			"suspicion_delta": int(story_entry.get("suspicion_delta", 0)),
 			"deltas": {
@@ -18319,13 +18333,14 @@ func _result_from_story_log(entries: Array) -> Dictionary:
 			if story_entry.has(key):
 				var value: Variant = story_entry[key]
 				restored[key] = value.duplicate(true) if typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY] else value
-		if _recorded_baccarat_uses_chips(story_entry):
-			# Older Baccarat rows retain the net amount under the cash-named alias.
-			# Recover its denomination from the recorded venue, never today's room.
+		if _recorded_game_uses_chips(story_entry):
+			# Older game rows retain the actual movement under the cash-named alias.
+			# Recover denomination from the recorded venue, never today's room.
+			# A surrender return stays +5; its earlier debit/round net is separate.
 			restored["currency"] = "chips"
 			if not restored.has("currency_delta"):
 				var recorded_settlement := JsonCoerceScript._copy_dict(restored.get("settlement", {}))
-				restored["currency_delta"] = int(recorded_settlement.get("delta", story_entry.get("bankroll_delta", 0)))
+				restored["currency_delta"] = int(recorded_settlement.get("delta", story_entry.get("chips_delta", story_entry.get("bankroll_delta", 0))))
 		var applied := GameModule.applied_currency_settlement(story_entry)
 		if not applied.is_empty():
 			restored["applied_currency_settlement"] = applied
@@ -18361,22 +18376,29 @@ func _result_from_story_log(entries: Array) -> Dictionary:
 	return {}
 
 
-func _recorded_baccarat_uses_chips(entry: Dictionary) -> bool:
-	if run_state == null or str(entry.get("type", "")) != "game_action" or str(entry.get("game_id", "")) != "baccarat":
+func _recorded_game_uses_chips(entry: Dictionary) -> bool:
+	var game_id := str(entry.get("game_id", ""))
+	if run_state == null or str(entry.get("type", "")) != "game_action" or not RunState.GRAND_CASINO_CHIP_GAME_IDS.has(game_id):
 		return false
 	if entry.has("currency"):
 		return str(entry.get("currency", "")) == "chips"
+	var settlement := JsonCoerceScript._copy_dict(entry.get("settlement", {}))
+	if settlement.has("currency"):
+		return str(settlement.get("currency", "")) == "chips"
 	var recorded_archetype := str(entry.get("environment_archetype_id", "")).strip_edges()
 	var recorded_id := str(entry.get("environment_id", "")).strip_edges()
 	var recorded_environment := {}
 	if not recorded_archetype.is_empty():
-		# An explicit source archetype takes precedence over a conflicting ID.
+		# Explicit recorded archetype wins over a conflicting generated ID.
 		recorded_environment["archetype_id"] = recorded_archetype
+	elif RunState.GRAND_CASINO_ARCHETYPE_IDS.has(recorded_id):
+		recorded_environment["archetype_id"] = recorded_id
 	elif not recorded_id.is_empty():
 		recorded_environment["id"] = recorded_id
 	else:
+		# Never fall back to the current room or wallet for an unknown source.
 		return false
-	return GameModule.presentation_currency_for_game(run_state, "baccarat", recorded_environment) == "chips"
+	return GameModule.presentation_currency_for_game(run_state, game_id, recorded_environment) == "chips"
 
 
 func _story_is_unmeasured_blackjack_penalty(entry: Dictionary) -> bool:
@@ -21425,7 +21447,7 @@ func _game_result_from_story_log(entries: Array) -> Dictionary:
 		var entry: Dictionary = entries[index]
 		if str(entry.get("type", "")) != "game_action":
 			continue
-		if entry.has("currency") or not GameModule.applied_currency_settlement(entry).is_empty() or _story_is_unmeasured_blackjack_penalty(entry) or _recorded_baccarat_uses_chips(entry):
+		if entry.has("currency") or not GameModule.applied_currency_settlement(entry).is_empty() or _story_is_unmeasured_blackjack_penalty(entry) or _recorded_game_uses_chips(entry):
 			var result := _result_from_story_log([entry])
 			result["type"] = "game_action_summary"
 			result["action_kind"] = "summary"
@@ -22863,6 +22885,11 @@ func _refresh_world_map_detail() -> void:
 		description = _world_map_node_flavor(node)
 	if description.is_empty():
 		description = "A stop on the city map."
+	var risk_summary: String = FoundationTravelViewModelScript.travel_risk_event_summary(choice)
+	if not risk_summary.is_empty():
+		# The map uses a compact description instead of the classic route-risk
+		# field. Keep the actual chance and cash consequence in that visible quote.
+		description = "%s. %s" % [risk_summary, description]
 	var travel_line := "0 min * 0$ * Walk"
 	if not choice.is_empty():
 		travel_line = _world_map_travel_summary_line(choice)

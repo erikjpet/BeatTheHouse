@@ -737,21 +737,27 @@ static func travel_risk_summary(host: Variant, choice: Dictionary) -> String:
 	var risk_text = str(choice.get("risk_text", "")).strip_edges()
 	if not risk_text.is_empty():
 		parts.append(risk_text)
-	var risk_event = JsonCoerceScript._copy_dict(choice.get("risk_event", {}))
-	if not risk_event.is_empty():
-		var chance = int(risk_event.get("chance_percent", 0))
-		var event_bits: Array = []
-		var bankroll_delta = int(risk_event.get("bankroll_delta", 0))
-		var event_heat = int(risk_event.get("suspicion_delta", 0))
-		if bankroll_delta != 0:
-			event_bits.append("%+d cash" % bankroll_delta)
-		if event_heat > 0:
-			event_bits.append("heat +%d" % event_heat)
-		var consequence = ", ".join(event_bits)
-		if consequence.is_empty():
-			consequence = str(risk_event.get("label", "route event"))
-		parts.append("%d%% %s" % [chance, consequence])
+	var event_summary := travel_risk_event_summary(choice)
+	if not event_summary.is_empty():
+		parts.append(event_summary)
 	return ", ".join(parts)
+
+
+static func travel_risk_event_summary(choice: Dictionary) -> String:
+	var risk_event = JsonCoerceScript._copy_dict(choice.get("risk_event", {}))
+	if risk_event.is_empty():
+		return ""
+	var chance = int(risk_event.get("chance_percent", 0))
+	var event_bits: Array = []
+	var bankroll_delta = int(risk_event.get("bankroll_delta", 0))
+	var event_heat = int(risk_event.get("suspicion_delta", 0))
+	if bankroll_delta != 0:
+		event_bits.append("%+d cash" % bankroll_delta)
+	if event_heat > 0:
+		event_bits.append("heat +%d" % event_heat)
+	var label = str(risk_event.get("label", "Route event"))
+	var consequence = ", ".join(event_bits)
+	return "%s: %d%% chance%s" % [label, chance, ", " + consequence if not consequence.is_empty() else ""]
 
 
 static func closing_time_walk_fallback_target_id(host: Variant) -> String:
