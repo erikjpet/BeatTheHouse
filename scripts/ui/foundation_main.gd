@@ -7198,7 +7198,9 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	dev_environment_test_mode = false
 	_refresh_run_action_service()
 	current_game = null
-	last_game_result = _game_result_from_story_log(run_state.story_log)
+	last_game_result = _saved_world_sequence_feedback_from_story_log(run_state.story_log)
+	if last_game_result.is_empty():
+		last_game_result = _game_result_from_story_log(run_state.story_log)
 	last_item_result = {}
 	last_hook_result = {}
 	pending_post_purchase_affinity_result = {}
@@ -16472,8 +16474,35 @@ func _consume_world_sequence_outcomes(owner_token: String) -> Dictionary:
 			_: return {"ok": false, "errors": ["World sequence outcome channel is not registered in the UI: %s" % channel_id]}
 		var consumed := run_state.world_sequence_consume_delivery_outcome(owner_token, receipt_id, run_state.current_world_node_id())
 		if not bool(consumed.get("ok", false)): return consumed
-		return {"ok": true, "message": str(consumed.get("message", "")), "errors": []}
+		var message := str(consumed.get("message", ""))
+		_record_world_sequence_outcome_feedback(owner_token, receipt_id, message)
+		return {"ok": true, "message": message, "errors": []}
 	return {"ok": true, "inactive": true, "errors": []}
+
+
+func _record_world_sequence_outcome_feedback(owner_token: String, receipt_id: String, message: String) -> bool:
+	if run_state == null or owner_token.is_empty() or receipt_id.is_empty() or message.strip_edges().is_empty():
+		return false
+	var feedback_id := "%s|%s" % [owner_token, receipt_id]
+	# Core consumption owns exactly-once settlement. This retained-row guard
+	# prevents a duplicate presentation stamp without replacing that authority.
+	for value in run_state.story_log:
+		if typeof(value) == TYPE_DICTIONARY and str(value.get("type", "")) == "world_sequence_feedback" and str(value.get("feedback_id", "")) == feedback_id:
+			return false
+	# The outcome has already committed. Persist only its existing public text;
+	# no reward is applied or counted again in the money-history aggregate.
+	run_state.log_story({
+		"type": "world_sequence_feedback",
+		"feedback_schema": "bth.world_sequence_feedback/v1",
+		"feedback_id": feedback_id,
+		"channel_id": "delivery_handoff",
+		"owner_token": owner_token,
+		"outcome_receipt_id": receipt_id,
+		"message": message,
+		"bankroll_delta": 0,
+		"suspicion_delta": 0,
+	})
+	return true
 
 
 func _resume_pending_world_sequence_outcomes() -> Dictionary:
@@ -21446,6 +21475,29 @@ func _outcome_message(result: Dictionary) -> String:
 func _run_summary_text(state: RunState) -> String:
 	var pressure: Dictionary = _run_pressure_view() if state == run_state else state.recovery_pressure_status()
 	return TerminalConsequenceViewModelScript.run_summary_text(state, pressure)
+
+
+func _saved_world_sequence_feedback_from_story_log(entries: Array) -> Dictionary:
+	# Log position is the ordering witness. Never revive an older acknowledgement
+	# over any later record, or infer recency from a resolved job/action index.
+	if entries.is_empty() or typeof(entries.back()) != TYPE_DICTIONARY:
+		return {}
+	var entry: Dictionary = entries.back()
+	if str(entry.get("type", "")) != "world_sequence_feedback" or str(entry.get("feedback_schema", "")) != "bth.world_sequence_feedback/v1":
+		return {}
+	if str(entry.get("channel_id", "")) != "delivery_handoff" or str(entry.get("feedback_id", "")).is_empty() or str(entry.get("owner_token", "")).is_empty() or str(entry.get("outcome_receipt_id", "")).is_empty() or str(entry.get("message", "")).strip_edges().is_empty():
+		return {}
+	if float(entry.get("bankroll_delta", 0)) != 0.0 or float(entry.get("suspicion_delta", 0)) != 0.0 or float(entry.get("chips_delta", 0)) != 0.0:
+		return {}
+	var result := _result_from_story_log([{
+		"type": "world_sequence_feedback", "id": str(entry.feedback_id),
+		"message": str(entry.message), "bankroll_delta": 0, "suspicion_delta": 0,
+	}])
+	result["type"] = "environment_feedback"
+	result["display_name"] = "Saved delivery outcome"
+	result["summary_source"] = "saved_world_sequence_feedback"
+	result["feedback_id"] = str(entry.feedback_id)
+	return result
 
 
 func _game_result_from_story_log(entries: Array) -> Dictionary:
