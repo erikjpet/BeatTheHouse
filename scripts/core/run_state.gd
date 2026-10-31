@@ -11464,9 +11464,9 @@ func delivery_arrival_interaction() -> Dictionary:
 	return _delivery_run_facade.delivery_arrival_interaction()
 
 
-func delivery_complete_handoff(node_id: String = "") -> Dictionary:
+func delivery_complete_handoff(node_id: String = "", library: ContentLibrary = null) -> Dictionary:
 	_delivery_run_facade.bind(self)
-	return _delivery_run_facade.delivery_complete_handoff(node_id)
+	return _delivery_run_facade.delivery_complete_handoff(node_id, library)
 
 
 func _delivery_pending_target_at(node_id: String) -> Dictionary:

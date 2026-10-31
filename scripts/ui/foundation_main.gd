@@ -16662,7 +16662,7 @@ func _complete_delivery_handoff(node_id: String) -> bool:
 			return _activate_world_sequence_action(owner_token, object_data, actions[0] as Dictionary)
 		# A cleaned sequence leaves an audited owner tombstone. If no live owned
 		# action remains, the canonical delivery object must still complete.
-	var result := run_state.delivery_complete_handoff(node_id)
+	var result := run_state.delivery_complete_handoff(node_id, library)
 	if not bool(result.get("ok", false)):
 		_show_message(str(result.get("message", "This is not the marked handoff.")))
 		_refresh()

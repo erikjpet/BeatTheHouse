@@ -377,7 +377,7 @@ func delivery_arrival_interaction() -> Dictionary:
 	}
 
 
-func delivery_complete_handoff(node_id: String = "") -> Dictionary:
+func delivery_complete_handoff(node_id: String = "", library: ContentLibrary = null) -> Dictionary:
 	if not delivery_has_active_run():
 		return {"ok": false, "message": "There is no package to hand over."}
 	var target_id := node_id.strip_edges()
@@ -410,6 +410,12 @@ func delivery_complete_handoff(node_id: String = "") -> Dictionary:
 		_run.from_dict(rollback_run)
 		var apply_errors := JsonCoerceScript._copy_array(applied.get("errors", []))
 		return {"ok": false, "message": str(apply_errors[0]) if not apply_errors.is_empty() else "The delivery consequence could not be committed.", "errors": apply_errors}
+	# A collection handoff can append its final decision event. Existing hints
+	# cannot describe that new event's physical art, so rebuild from the host's
+	# loaded content before committing the manifest, slots and durable aliases.
+	# No event/action is replayed and the normal strict membership proof remains.
+	if library != null:
+		_run.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(_run.current_environment, library)
 	var membership: Dictionary = _run.prepare_current_environment_object_membership_for_publication()
 	if not bool(membership.get("ok", false)):
 		_run.from_dict(rollback_run)
