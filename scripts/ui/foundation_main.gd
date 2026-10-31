@@ -14973,7 +14973,7 @@ func _add_wager_confirmation_card(label: String, text: String, _impact: String, 
 	body.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	body.max_lines_visible = -1 if full_text else EVENT_CHOICE_TEXT_MAX_LINES
-	body.clip_text = true
+	body.clip_text = not (full_text and rendered_event_id == "crew_planning_table")
 	body.custom_minimum_size.y = EVENT_CHOICE_TEXT_MIN_HEIGHT
 	stack.add_child(body)
 	_add_attribute_badge_row(stack, badges_value, 16)
@@ -16960,6 +16960,10 @@ func _activate_cage_atm_action(object_id: String) -> bool:
 
 
 func _event_allows_canvas_inline_response(event_id: String, choices: Array) -> bool:
+	# A locked planning map has more detailed rows than the floating room card
+	# can hold. Keep every response on the existing scrollable offer surface.
+	if event_id == "crew_planning_table":
+		return false
 	if event_id != RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID:
 		return true
 	if run_state != null and bool(run_state.narrative_flags.get("grand_casino_showdown_active", false)):
@@ -16972,7 +16976,7 @@ func _event_allows_canvas_inline_response(event_id: String, choices: Array) -> b
 
 
 func _event_uses_canonical_popup_choice_surface(event_id: String) -> bool:
-	return event_id == RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID
+	return event_id in [RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID, "crew_planning_table"]
 
 
 func _start_linda_cage_services(object_data: Dictionary) -> bool:
@@ -17386,14 +17390,20 @@ func _show_interactable_event_popup(event_id: String) -> bool:
 		var choice_callback := Callable(self, "_dismiss_interactable_event_popup") if bool(choice.get("dismissal", false)) else Callable(self, "_activate_event_response_action").bind("event_response:%s:%s" % [event_id, str(choice.get("id", ""))])
 		_add_wager_confirmation_card(
 			str(choice.get("label", choice.get("id", ""))),
-			str(choice.get("text", "")),
+			_event_choice_action_detail(choice) if event_id == "crew_planning_table" else str(choice.get("text", "")),
 			str(choice.get("consequence_summary", "")),
 			choice_callback,
 			false,
 			[],
 			event_id,
-			str(choice.get("id", ""))
+			str(choice.get("id", "")),
+			event_id == "crew_planning_table"
 		)
+		if event_id == "crew_planning_table":
+			var choice_card := event_choice_popup_choices_list.get_child(event_choice_popup_choices_list.get_child_count() - 1)
+			for button in choice_card.find_children("*", "Button", true, false):
+				if button is Button and button.has_meta("choice_id"):
+					button.disabled = bool(choice.get("disabled", false)) or not bool(choice.get("enabled", true))
 	if not has_explicit_dismissal and not showdown_sequence:
 		_add_wager_confirmation_card(
 			"Leave It",
