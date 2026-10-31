@@ -6,6 +6,7 @@ extends RefCounted
 
 const ROURKE_MOVE_EVALUATION_ACTIONS := 3
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
+const PLAYERS_CARD_COMP_FEEDBACK_SCHEMA := "bth.players_card_comp_feedback/v1"
 
 var chips := 0
 var room_states: Dictionary = {}
@@ -154,6 +155,10 @@ func grand_casino_atm_pending_interest_notifications() -> Array:
 	return grand_casino_atm_interest_notifications.duplicate(true)
 
 
+static func players_card_comp_feedback_identity(entry: Dictionary) -> String:
+	return JSON.stringify([str(entry.get("id", "")), str(entry.get("environment_id", "")), int(entry.get("comp_uses_before", 0)), int(entry.get("comp_uses_after", 0)), str(entry.get("message", ""))])
+
+
 func grand_casino_players_card_comp_result(comp_id: String) -> Dictionary:
 	if not _run._is_grand_casino_environment(_run.current_environment):
 		return {"ok": false, "message": "Players Card comps are available only inside the Grand Casino."}
@@ -175,11 +180,13 @@ func grand_casino_players_card_comp_result(comp_id: String) -> Dictionary:
 	}
 	var message := ""
 	var duration_minutes := 0
+	var comp_uses_before := 0
 	match clean_id:
 		"drink":
 			var tokens := maxi(0, int(_run.narrative_flags.get("grand_casino_comp_drink_tokens", 0)))
 			if tokens <= 0:
 				return {"ok": false, "message": "No drink comps remain."}
+			comp_uses_before = tokens
 			var alcohol := maxi(0, int(config.get("players_card_comp_drink_alcohol", 0)))
 			var service_status = _run.service_hook_status({"id": "players_card_drink_comp", "cost": 0, "category": "alcohol", "effect": {"alcohol_intake": alcohol}})
 			if not bool(service_status.get("available", false)):
@@ -191,6 +198,7 @@ func grand_casino_players_card_comp_result(comp_id: String) -> Dictionary:
 			var rests := maxi(0, int(_run.narrative_flags.get("grand_casino_comp_suite_rests", 0)))
 			if rests <= 0:
 				return {"ok": false, "message": "No suite rests remain."}
+			comp_uses_before = rests
 			var heat_recovery := mini(_run.suspicion_level(), maxi(0, int(config.get("players_card_suite_heat_recovery", 0))))
 			var drunk_recovery := mini(_run.drunk_level, maxi(0, int(config.get("players_card_suite_drunk_recovery", 0))))
 			duration_minutes = maxi(0, int(config.get("players_card_suite_rest_minutes", 0)))
@@ -211,7 +219,13 @@ func grand_casino_players_card_comp_result(comp_id: String) -> Dictionary:
 		"drunk_delta": int(deltas.get("drunk_delta", 0)),
 		"duration_minutes": duration_minutes,
 		"message": message,
+		# Presentation evidence on the existing consequence row. It is committed
+		# or rolled back with that same service, never applied by a report reader.
+		"feedback_schema": PLAYERS_CARD_COMP_FEEDBACK_SCHEMA,
+		"comp_uses_before": comp_uses_before,
+		"comp_uses_after": comp_uses_before - 1,
 	}
+	story_entry["feedback_id"] = players_card_comp_feedback_identity(story_entry)
 	deltas["story_log"] = [story_entry]
 	deltas["messages"] = [message]
 	return {

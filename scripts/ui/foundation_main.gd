@@ -7203,6 +7203,8 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	if last_game_result.is_empty():
 		last_game_result = _saved_world_sequence_feedback_from_story_log(run_state.story_log)
 	if last_game_result.is_empty():
+		last_game_result = _saved_players_card_comp_feedback_from_story_log(run_state.story_log)
+	if last_game_result.is_empty():
 		last_game_result = _game_result_from_story_log(run_state.story_log)
 	last_item_result = {}
 	last_hook_result = {}
@@ -21589,6 +21591,47 @@ func _saved_world_sequence_feedback_from_story_log(entries: Array) -> Dictionary
 	result["type"] = "environment_feedback"
 	result["display_name"] = "Saved delivery outcome"
 	result["summary_source"] = "saved_world_sequence_feedback"
+	result["feedback_id"] = str(entry.feedback_id)
+	return result
+
+
+func _saved_players_card_comp_feedback_from_story_log(entries: Array) -> Dictionary:
+	# Only a new, final comp acknowledgement supplies order. Unstamped legacy
+	# rows and acknowledgements behind any later action keep existing fallback.
+	if entries.is_empty() or typeof(entries.back()) != TYPE_DICTIONARY:
+		return {}
+	var entry: Dictionary = entries.back()
+	for key in ["type", "id", "feedback_schema", "feedback_id", "environment_id", "environment_archetype_id", "message"]:
+		if typeof(entry.get(key)) != TYPE_STRING or str(entry.get(key)).strip_edges().is_empty():
+			return {}
+	if str(entry.type) != "service_hook" or str(entry.feedback_schema) != RunState.GrandCasinoRunFacadeScript.PLAYERS_CARD_COMP_FEEDBACK_SCHEMA \
+			or str(entry.id) not in ["players_card_drink_comp", "players_card_suite_rest_comp"] \
+			or str(entry.environment_archetype_id) not in RunState.GRAND_CASINO_ARCHETYPE_IDS:
+		return {}
+	for key in ["comp_uses_before", "comp_uses_after"]:
+		var count: Variant = entry.get(key)
+		if typeof(count) not in [TYPE_INT, TYPE_FLOAT] or not is_finite(float(count)) \
+				or float(count) < 0 or float(count) > 9007199254740991.0 or floor(float(count)) != float(count):
+			return {}
+	if int(entry.comp_uses_before) <= 0 or int(entry.comp_uses_after) != int(entry.comp_uses_before) - 1 \
+			or str(entry.feedback_id) != RunState.GrandCasinoRunFacadeScript.players_card_comp_feedback_identity(entry):
+		return {}
+	var counter_flag := "grand_casino_comp_drink_tokens" if str(entry.id) == "players_card_drink_comp" else "grand_casino_comp_suite_rests"
+	var current_uses: Variant = run_state.narrative_flags.get(counter_flag) if run_state != null else null
+	if typeof(current_uses) not in [TYPE_INT, TYPE_FLOAT] or not is_finite(float(current_uses)) \
+			or float(current_uses) != float(entry.comp_uses_after):
+		return {}
+	for key in ["bankroll_delta", "cash_delta", "chips_delta", "currency_delta"]:
+		var delta: Variant = entry.get(key, 0)
+		if typeof(delta) not in [TYPE_INT, TYPE_FLOAT] or not is_finite(float(delta)) or float(delta) != 0.0:
+			return {}
+	var result := _result_from_story_log([{
+		"type": "service_hook", "id": str(entry.id), "message": str(entry.message),
+		"bankroll_delta": 0, "chips_delta": 0, "suspicion_delta": 0,
+	}])
+	result["type"] = "environment_feedback"
+	result["display_name"] = "Saved Players Card service"
+	result["summary_source"] = "saved_players_card_comp_feedback"
 	result["feedback_id"] = str(entry.feedback_id)
 	return result
 
