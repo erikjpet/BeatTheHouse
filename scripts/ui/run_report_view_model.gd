@@ -73,7 +73,7 @@ static func snapshot_run(run: RunState) -> Dictionary:
 
 static func build(run_data: Dictionary, catalogs: Dictionary = {}) -> Dictionary:
 	var story_log := _dict_array(run_data.get("story_log", []))
-	var money_flow := build_money_flow(story_log, catalogs, run_data.get("story_money_archive", {}), int(run_data.get("story_log_archive_count", 0)))
+	var money_flow := build_money_flow(_money_story_with_recorded_heist_payout(run_data, story_log), catalogs, run_data.get("story_money_archive", {}), int(run_data.get("story_log_archive_count", 0)))
 	var outcome := build_outcome(run_data, JsonCoerceScript._copy_dict(catalogs.get("outcomes", {})))
 	var score := JsonCoerceScript._copy_dict(run_data.get("terminal_score", {}))
 	if score.is_empty():
@@ -542,6 +542,42 @@ static func build_outcome(run_data: Dictionary, registry: Dictionary) -> Diction
 		"icon_key": str(definition.get("icon_key", outcome_key)),
 		"icon_path": str(definition.get("icon_path", "res://assets/art/run_outcomes/%s.png" % str(definition.get("icon_key", outcome_key)))),
 	}
+
+
+static func _money_story_with_recorded_heist_payout(run_data: Dictionary, story_log: Array) -> Array:
+	# Old endings saved the committed payout in Crew state, but omitted the
+	# financial leg on demo_victory. Enrich only this report's copy. A wallet
+	# difference, current payout tuning or an unknown prefix is not evidence.
+	if str(run_data.get("run_status", "")) != "ended": return story_log
+	var heist := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(run_data.get("crew_state", {})).get("crew_heist", {}))
+	var flags := JsonCoerceScript._copy_dict(run_data.get("narrative_flags", {}))
+	if str(heist.get("status", "")) != "completed" or str(heist.get("plan_id", "")) not in RunState.CrewHeistModelScript.PLAN_IDS \
+			or not bool(flags.get("demo_victory", false)) or str(flags.get("crew_heist_outcome", "")) != str(heist.get("outcome", "")) \
+			or str(flags.get("crew_heist_plan_id", "")) != str(heist.get("plan_id", "")):
+		return story_log
+	var payout: Variant = heist.get("payout")
+	if typeof(payout) not in [TYPE_INT, TYPE_FLOAT] or not is_finite(float(payout)) \
+			or float(payout) < 0 or float(payout) > 9007199254740991.0 or floor(float(payout)) != float(payout):
+		return story_log
+	var archive := MoneyFlowArchiveScript.normalize_archive(run_data.get("story_money_archive", {}), int(run_data.get("story_log_archive_count", 0)))
+	if int(archive.known_entry_count) != int(archive.archived_entry_count) or archive.sources.has("cash|crew_heist"):
+		return story_log
+	var ending_index := -1
+	for index in range(story_log.size()):
+		var row := JsonCoerceScript._copy_dict(story_log[index])
+		if str(row.get("type", "")) != "demo_victory" or str(row.get("objective_id", "")) != "crew_heist": continue
+		if ending_index >= 0 or str(row.get("finale_event_id", "")) != "heist_finale" \
+				or str(row.get("demo_victory_route", "")) != "crew_heist" or not bool(row.get("ended", false)) \
+				or str(row.get("finale_branch", "")) != str(heist.get("outcome", "")):
+			return story_log
+		# Explicit amounts (including a measured zero) always take precedence.
+		for key in ["bankroll_delta", "currency_delta", "cash_delta", "chips_delta"]:
+			if row.has(key): return story_log
+		ending_index = index
+	if ending_index < 0: return story_log
+	var report_story := story_log.duplicate(true)
+	report_story[ending_index].merge({"label": "Heist payout", "currency": "cash", "currency_delta": int(payout), "bankroll_delta": int(payout)}, true)
+	return report_story
 
 
 static func build_money_rows(story_log: Array, catalogs: Dictionary = {}, raw_archive: Variant = {}, archive_count: int = 0) -> Array:

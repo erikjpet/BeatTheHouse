@@ -123,6 +123,8 @@ static func _story_delta(entry: Dictionary) -> int:
 
 static func money_source(entry: Dictionary) -> Dictionary:
 	var entry_type := str(entry.get("type", "other"))
+	if entry_type == "demo_victory" and str(entry.get("objective_id", "")) == "crew_heist":
+		return {"key": "crew_heist", "id": "crew_heist", "kind": "crew_heist"}
 	if entry_type == "game_action":
 		var game_id := str(entry.get("game_id", entry.get("id", "game")))
 		return {"key": "game:%s" % game_id, "id": game_id, "kind": "game"}

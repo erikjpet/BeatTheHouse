@@ -1403,7 +1403,7 @@ func _crew_heist_finish_whale_exposure(state_value: Dictionary, round_index: int
 	var message = _run.CrewHeistModelScript.ending_line(_run.CrewHeistModelScript.PLAN_WHALE, outcome)
 	_run.narrative_flags["crew_heist_outcome"] = outcome
 	_run.narrative_flags["crew_heist_plan_id"] = _run.CrewHeistModelScript.PLAN_WHALE
-	_run._complete_demo_objective({"id": _run.CREW_HEIST_ROUTE, "target_bankroll": _run.bankroll, "victory_message": message}, message, {"finale_event_id": "heist_finale", "finale_branch": outcome, "demo_victory_route": _run.CREW_HEIST_ROUTE})
+	_run._complete_demo_objective({"id": _run.CREW_HEIST_ROUTE, "target_bankroll": _run.bankroll, "victory_message": message}, message, _crew_heist_payout_story_context(outcome, payout))
 	_run.narrative_flags["act_two_seam_ready"] = true
 	return {"ok": true, "resolved": true, "outcome": outcome, "payout": payout, "message": message}
 
@@ -1819,9 +1819,19 @@ func _crew_heist_apply_delivery_resolution(run_id: String, succeeded: bool, reso
 	var message = _run.CrewHeistModelScript.ending_line(str(state.get("plan_id", "")), outcome)
 	_run.narrative_flags["crew_heist_outcome"] = outcome
 	_run.narrative_flags["crew_heist_plan_id"] = str(state.get("plan_id", ""))
-	_run._complete_demo_objective({"id": _run.CREW_HEIST_ROUTE, "target_bankroll": _run.bankroll, "victory_message": message}, message, {"finale_event_id": "heist_finale", "finale_branch": outcome, "demo_victory_route": _run.CREW_HEIST_ROUTE})
+	_run._complete_demo_objective({"id": _run.CREW_HEIST_ROUTE, "target_bankroll": _run.bankroll, "victory_message": message}, message, _crew_heist_payout_story_context(outcome, payout))
 	_run.narrative_flags["act_two_seam_ready"] = true
 	return true
+
+
+func _crew_heist_payout_story_context(outcome: String, payout: int) -> Dictionary:
+	# The award already happened at the settlement boundary. Record that same
+	# amount on the existing, one-time ending row; never award it from a reader.
+	return {
+		"finale_event_id": "heist_finale", "finale_branch": outcome,
+		"demo_victory_route": _run.CREW_HEIST_ROUTE, "label": "Heist payout",
+		"currency": "cash", "currency_delta": payout, "bankroll_delta": payout,
+	}
 
 
 func crew_grievances(member_id: String = "") -> Array:
