@@ -14,6 +14,7 @@ signal take_home_item_claim_requested(item_id: String)
 const WorldMapCanvasScript := preload("res://scripts/ui/world_map_canvas.gd")
 const TimelineCanvasScript := preload("res://scripts/ui/run_report_timeline_canvas.gd")
 const RunReportViewModelScript := preload("res://scripts/ui/run_report_view_model.gd")
+const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const REPLAY_SECONDS := 7.0
 
 var report_model: Dictionary = {}
@@ -108,7 +109,7 @@ func set_report(model: Dictionary) -> void:
 	replay_progress = 1.0 if reduce_motion else 0.0
 	timeline_canvas.set_replay_progress(replay_progress)
 	_update_replay_clock()
-	play_button.text = "Replay ready" if reduce_motion else "▶ Play"
+	_set_play_button_content("Replay ready" if reduce_motion else "Play", "play")
 	play_button.disabled = reduce_motion
 	play_button.visible = not reduce_motion
 	replay_playing = false
@@ -198,7 +199,7 @@ func _process(delta: float) -> void:
 	_update_replay_clock()
 	if replay_progress >= 1.0:
 		replay_playing = false
-		play_button.text = "↻ Replay"
+		_set_play_button_content("Replay", "replay")
 		set_process(false)
 
 
@@ -211,7 +212,7 @@ func _on_play_pressed() -> void:
 	timeline_canvas.set_replay_progress(replay_progress)
 	_update_replay_clock()
 	replay_playing = true
-	play_button.text = "Playing…"
+	_set_play_button_content("Playing…", "play")
 	set_process(true)
 
 
@@ -221,8 +222,14 @@ func _on_timeline_seek(progress: float) -> void:
 	map_canvas.set_run_report_replay_progress(replay_progress)
 	timeline_canvas.set_replay_progress(replay_progress)
 	_update_replay_clock()
-	play_button.text = "▶ Continue" if replay_progress < 1.0 else "↻ Replay"
+	_set_play_button_content("Continue" if replay_progress < 1.0 else "Replay", "play" if replay_progress < 1.0 else "replay")
 	set_process(false)
+
+
+func _set_play_button_content(label: String, icon_id: String) -> void:
+	play_button.text = label
+	UIArtScript.apply_control_icon(play_button, icon_id, label, 18)
+	play_button.tooltip_text = label
 
 
 func _ensure_built() -> void:
@@ -290,7 +297,7 @@ func _build() -> void:
 	map_canvas.tooltip_text = "Scroll to zoom. Click and drag to move the map."
 	travel_holder.add_child(map_canvas)
 	play_button = Button.new()
-	play_button.text = "▶ Play"
+	_set_play_button_content("Play", "play")
 	play_button.position = Vector2(8, 8)
 	play_button.custom_minimum_size = Vector2(104, 38)
 	play_button.pressed.connect(_on_play_pressed)

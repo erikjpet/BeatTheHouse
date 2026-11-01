@@ -1,6 +1,13 @@
 {
   "icon_source": "call_74DnnqcTIhnlR3gbur8A8gi6.png",
   "portrait_source": "call_OlVJGR3J3Lc50pnVcWXCNrn4.png",
+  "control_icon_source": {
+    "origin": "Original repository-authored SVG geometry; no font, embedded text or external artwork",
+    "directory": "icons/controls",
+    "size": [32, 32],
+    "treatment": "Transparent monochrome silhouettes, shared with native Button icons",
+    "exports": ["settings", "run_setup", "close", "previous", "next", "decrease", "increase", "play", "replay", "selected", "focused", "hovered", "cash_transfer"]
+  },
   "main_menu_button_plate": {
     "source": "C:/Users/theep/.codex/generated_images/019fd762-cd94-7fe3-86ac-14e1366ba6c4/exec-ad77004d-9c36-4e79-9792-b1aefed97553.png",
     "export": "main_menu_button_plate.png",

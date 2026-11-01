@@ -4,6 +4,7 @@ extends RefCounted
 # FoundationMain; behavior and state transitions remain in their owners.
 
 const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd")
+const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 
 
 static func build_start_screen(host: Variant) -> void:
@@ -68,9 +69,9 @@ static func _build_redesigned_start_screen(host: Variant) -> void:
 	host.career_button.custom_minimum_size = Vector2(124, 48)
 	host._set_control_font_size(host.career_button, 15)
 	top_bar.add_child(host.career_button)
-	host.settings_button = host._main_menu_icon_button(String.chr(0x2699), "Settings", Callable(host, "open_settings_menu"), VisualStyle.CYAN)
+	host.settings_button = host._main_menu_icon_button("settings", "Settings", Callable(host, "open_settings_menu"), VisualStyle.CYAN)
 	top_bar.add_child(host.settings_button)
-	host.exit_game_button = host._main_menu_icon_button("X", "Exit Game", Callable(host, "exit_game"), VisualStyle.PINK)
+	host.exit_game_button = host._main_menu_icon_button("close", "Exit Game", Callable(host, "exit_game"), VisualStyle.PINK)
 	top_bar.add_child(host.exit_game_button)
 
 	host.start_menu_intro = VBoxContainer.new()
@@ -133,7 +134,8 @@ static func _build_redesigned_start_screen(host: Variant) -> void:
 	secondary_row.add_theme_constant_override("separation", 12)
 	secondary_row.custom_minimum_size = Vector2(916, 106)
 	action_grid.add_child(secondary_row)
-	host.run_config_button = host._main_menu_button("%s  RUN SETUP" % String.chr(0x2699), "Seed, challenges, content, and saved run", Callable(host, "toggle_run_configuration"))
+	host.run_config_button = host._main_menu_button("RUN SETUP", "Seed, challenges, content, and saved run", Callable(host, "toggle_run_configuration"))
+	UIArtScript.apply_control_icon(host.run_config_button, "run_setup", "Run setup", 28)
 	host.run_config_button.custom_minimum_size = Vector2(296, 106)
 	secondary_row.add_child(host.run_config_button)
 	host.replay_tutorial_button = host._main_menu_button("REPLAY LESSONS", "Replay the guided First Night", Callable(host, "start_tutorial_run"))

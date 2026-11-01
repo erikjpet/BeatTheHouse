@@ -46,8 +46,9 @@ static func _append(entries: Array, amount: int, currency: String) -> void:
 	if amount == 0:
 		return
 	var sign_text := "+" if amount > 0 else "−"
-	var unit := "$" if currency == "cash" else "◈" if currency == "chips" else ""
-	var text := "%s%s%d%s" % [sign_text, unit, absi(amount), "g" if currency == "gold" else ""]
+	var unit := "$" if currency == "cash" else ""
+	var suffix := "g" if currency == "gold" else " chips" if currency == "chips" else ""
+	var text := "%s%s%d%s" % [sign_text, unit, absi(amount), suffix]
 	entries.append({"delta": amount, "currency": currency, "text": text, "tone": "success" if amount > 0 else "danger"})
 
 

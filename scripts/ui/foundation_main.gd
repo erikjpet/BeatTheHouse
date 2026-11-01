@@ -17481,14 +17481,15 @@ func _start_conclusion_animation(result: Dictionary, popup_rect: Rect2) -> void:
 	start -= overlay_rect.position
 	end -= overlay_rect.position
 	for index in range(bill_count):
-		var bill := Label.new()
-		bill.text = "$"
-		bill.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-		bill.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+		var bill := TextureRect.new()
+		bill.texture = UIArtScript.control_icon("cash_transfer")
+		bill.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		bill.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		bill.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		bill.custom_minimum_size = Vector2(18, 18)
+		bill.size = Vector2(18, 18)
 		bill.position = start + Vector2(float(index % 3) * 5.0, float(index / 3) * 4.0)
-		_set_control_font_color(bill, Color("#69f0ae"))
+		bill.modulate = Color("#69f0ae")
 		conclusion_animation_overlay.add_child(bill)
 		var tween := create_tween()
 		conclusion_animation_tweens.append(tween)
@@ -24308,8 +24309,9 @@ func _main_menu_button_plate_style(tint: Color) -> StyleBoxTexture:
 	return style
 
 
-func _main_menu_icon_button(glyph: String, tooltip: String, callback: Callable, accent: Color) -> Button:
-	var button := _button(glyph, callback)
+func _main_menu_icon_button(icon_id: String, tooltip: String, callback: Callable, accent: Color) -> Button:
+	var button := _button("", callback)
+	UIArtScript.apply_control_icon(button, icon_id, tooltip, 24, true)
 	button.tooltip_text = tooltip
 	button.accessibility_name = tooltip
 	button.custom_minimum_size = Vector2(48, 48)

@@ -23,6 +23,7 @@ signal developer_placement_undo_requested(request: Dictionary)
 signal developer_slot_placement_shortcut_toggled(enabled: bool)
 
 const VisualStyleScript := preload("res://scripts/ui/visual_style.gd")
+const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const IconSpriteRendererScript := preload("res://scripts/ui/icon_sprite_renderer.gd")
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
@@ -964,7 +965,7 @@ func _ensure_developer_placement_panel() -> void:
 	developer_slot_layer_row.add_child(size_label)
 	developer_slot_scale_decrease_button = Button.new()
 	developer_slot_scale_decrease_button.name = "DecreaseSlotObjectSize"
-	developer_slot_scale_decrease_button.text = "-"
+	UIArtScript.apply_control_icon(developer_slot_scale_decrease_button, "decrease", "Decrease object size", 18, true)
 	developer_slot_scale_decrease_button.custom_minimum_size = Vector2(38.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
 	developer_slot_scale_decrease_button.tooltip_text = "Make the selected slot's object 10% smaller."
 	developer_slot_scale_decrease_button.disabled = true
@@ -980,7 +981,7 @@ func _ensure_developer_placement_panel() -> void:
 	developer_slot_layer_row.add_child(developer_slot_scale_reset_button)
 	developer_slot_scale_increase_button = Button.new()
 	developer_slot_scale_increase_button.name = "IncreaseSlotObjectSize"
-	developer_slot_scale_increase_button.text = "+"
+	UIArtScript.apply_control_icon(developer_slot_scale_increase_button, "increase", "Increase object size", 18, true)
 	developer_slot_scale_increase_button.custom_minimum_size = Vector2(38.0, DEVELOPER_PANEL_CONTROL_HEIGHT)
 	developer_slot_scale_increase_button.tooltip_text = "Make the selected slot's object 10% larger."
 	developer_slot_scale_increase_button.disabled = true

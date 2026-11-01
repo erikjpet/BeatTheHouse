@@ -15,6 +15,7 @@ const CatalogScript := preload("res://scripts/ui/inventory_container_catalog.gd"
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
 const ItemCardViewModelScript := preload("res://scripts/ui/item_card_view_model.gd")
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
+const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const DEFAULT_STAGE_SIZE := Vector2(350, 350)
 const SMALL_SCREEN_PAGE_SIZE := 5
 
@@ -258,7 +259,8 @@ func _build() -> void:
 	var switcher := HBoxContainer.new()
 	switcher.add_theme_constant_override("separation", 6)
 	stack.add_child(switcher)
-	_previous_button = FoundationWidgets.button("<", Callable(self, "_change_container").bind(-1))
+	_previous_button = FoundationWidgets.button("", Callable(self, "_change_container").bind(-1))
+	UIArtScript.apply_control_icon(_previous_button, "previous", "Previous container", 20, true)
 	_previous_button.custom_minimum_size = Vector2(42, FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	_previous_button.tooltip_text = "Previous container"
 	switcher.add_child(_previous_button)
@@ -267,7 +269,8 @@ func _build() -> void:
 	_container_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	FoundationWidgets.set_control_font_color(_container_label, VisualStyle.YELLOW)
 	switcher.add_child(_container_label)
-	_next_button = FoundationWidgets.button(">", Callable(self, "_change_container").bind(1))
+	_next_button = FoundationWidgets.button("", Callable(self, "_change_container").bind(1))
+	UIArtScript.apply_control_icon(_next_button, "next", "Next container", 20, true)
 	_next_button.custom_minimum_size = Vector2(42, FoundationWidgets.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	_next_button.tooltip_text = "Next container"
 	switcher.add_child(_next_button)
@@ -655,6 +658,17 @@ func _ensure_slot_pool(count: int) -> void:
 		marker.add_theme_font_size_override("font_size", 11)
 		marker.add_theme_constant_override("outline_size", 3)
 		marker.add_theme_color_override("font_outline_color", Color(VisualStyle.DARK, 0.96))
+		var cue_icon := TextureRect.new()
+		cue_icon.name = "StateCue"
+		cue_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		cue_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		cue_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		cue_icon.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
+		cue_icon.offset_top = -14.0
+		cue_icon.offset_bottom = -2.0
+		cue_icon.offset_right = 12.0
+		cue_icon.visible = false
+		marker.add_child(cue_icon)
 		button.add_child(marker)
 		_slot_markers.append(marker)
 
@@ -876,13 +890,13 @@ func _apply_slot_styles() -> void:
 		var cue := ""
 		var accent := Color.TRANSPARENT
 		if selected:
-			cue = "◆"
+			cue = "selected"
 			accent = VisualStyle.YELLOW
 		elif focused:
-			cue = "◇"
+			cue = "focused"
 			accent = VisualStyle.CYAN
 		elif hovered:
-			cue = "•"
+			cue = "hovered"
 			accent = VisualStyle.TEAL
 		var empty_style := StyleBoxEmpty.new()
 		for state in ["normal", "hover", "focus", "pressed", "hover_pressed", "disabled"]:
@@ -890,8 +904,7 @@ func _apply_slot_styles() -> void:
 		underline.visible = not cue.is_empty()
 		underline.color = accent
 		var state_marker := str(slot.get("state_marker", "")).strip_edges()
-		marker.text = "%s %s" % [cue, state_marker] if not cue.is_empty() and not state_marker.is_empty() else cue if not cue.is_empty() else state_marker
-		marker.add_theme_color_override("font_color", accent if not cue.is_empty() else Color(VisualStyle.SOFT, 0.68))
+		_set_slot_marker(marker, cue, state_marker, accent if not cue.is_empty() else Color(VisualStyle.SOFT, 0.68))
 		var disabled_reason := str(slot.get("disabled_reason", "")).strip_edges()
 		icon.modulate = Color(1.0, 1.0, 1.0, 0.55) if not disabled_reason.is_empty() and not selected else Color.WHITE
 		# The underline/marker already communicates focus. Scaling the object itself
@@ -900,6 +913,26 @@ func _apply_slot_styles() -> void:
 		icon.scale = Vector2.ONE
 		button.modulate = Color.WHITE
 		button.scale = Vector2.ONE
+
+
+func _set_slot_marker(marker: Label, cue_id: String, state_marker: String, accent: Color) -> void:
+	# Trade-position numerals remain text; selection/focus/hover are bundled art.
+	marker.text = state_marker
+	marker.add_theme_color_override("font_color", accent)
+	marker.accessibility_name = ("%s %s" % [cue_id.capitalize(), state_marker]).strip_edges()
+	var cue_icon := marker.get_node("StateCue") as TextureRect
+	cue_icon.texture = UIArtScript.control_icon(cue_id)
+	cue_icon.modulate = accent
+	cue_icon.visible = cue_icon.texture != null
+	cue_icon.set_meta("local_ui_icon_id", cue_id)
+	# Keep the cue beside the numeric marker at both inventory layout sizes.
+	# Only the ordinary numeral needs font measurement; the cue is a texture.
+	var text_width := marker.get_theme_font("font").get_string_size(state_marker, HORIZONTAL_ALIGNMENT_LEFT, -1, marker.get_theme_font_size("font_size")).x if not state_marker.is_empty() else 0.0
+	cue_icon.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_RIGHT)
+	cue_icon.offset_right = -text_width - 4.0 if text_width > 0.0 else 0.0
+	cue_icon.offset_left = cue_icon.offset_right - 12.0
+	cue_icon.offset_top = -14.0
+	cue_icon.offset_bottom = -2.0
 
 
 func _apply_grouped_card_styles() -> void:
@@ -927,12 +960,11 @@ func _apply_grouped_card_styles() -> void:
 		var style := VisualStyle.pixel_box(fill, outline, border_width)
 		for state in ["normal", "hover", "focus", "pressed", "hover_pressed", "disabled"]:
 			button.add_theme_stylebox_override(state, style)
-		var cue := "◆" if selected else "◇" if focused else "•" if hovered else ""
+		var cue := "selected" if selected else "focused" if focused else "hovered" if hovered else ""
 		underline.visible = not cue.is_empty()
 		underline.color = outline
 		var state_marker := str(slot.get("state_marker", "")).strip_edges()
-		marker.text = "%s %s" % [cue, state_marker] if not cue.is_empty() and not state_marker.is_empty() else cue if not cue.is_empty() else state_marker
-		marker.add_theme_color_override("font_color", outline)
+		_set_slot_marker(marker, cue, state_marker, outline)
 		FoundationWidgets.set_control_font_color(group_label, outline)
 		FoundationWidgets.set_control_font_color(count_label, outline)
 		FoundationWidgets.set_control_font_color(name_label, VisualStyle.role("text_primary"))

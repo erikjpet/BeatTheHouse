@@ -15,6 +15,7 @@ const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
 
 var wallet_value: Label
 var wallet_delta: Label
+var wallet_delta_icon: TextureRect
 var wallet_delta_panel: PanelContainer
 var wallet_chip: HBoxContainer
 var meta_wallet_chip: HBoxContainer
@@ -73,6 +74,8 @@ func reset_wallet_delta() -> void:
 	if wallet_delta != null:
 		wallet_delta.text = ""
 		wallet_delta.modulate = Color.WHITE
+	if wallet_delta_icon != null:
+		wallet_delta_icon.visible = false
 	_money_feedback_elapsed_sec = MONEY_FEEDBACK_DURATION_SEC
 	_money_feedback_entries = []
 	if wallet_delta_panel != null:
@@ -186,6 +189,7 @@ func current_snapshot() -> Dictionary:
 		"rect": get_global_rect(),
 		"wallet": wallet_value.text if wallet_value != null else "",
 		"wallet_delta": wallet_delta.text if wallet_delta != null else "",
+		"wallet_delta_icon": wallet_delta_icon.texture.resource_path if wallet_delta_icon != null and wallet_delta_icon.visible and wallet_delta_icon.texture != null else "",
 		"wallet_delta_alpha": wallet_delta.modulate.a if wallet_delta != null else 0.0,
 		"wallet_delta_tone": _wallet_delta_tone,
 		"wallet_delta_static": reduce_motion,
@@ -254,11 +258,25 @@ func _build() -> void:
 	wallet_delta_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	wallet_delta_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	wallet_delta_panel.modulate.a = 0.0
+	var delta_row := HBoxContainer.new()
+	delta_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	delta_row.add_theme_constant_override("separation", 4)
+	delta_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	wallet_delta_panel.add_child(delta_row)
+	wallet_delta_icon = TextureRect.new()
+	wallet_delta_icon.name = "ChipDeltaIcon"
+	wallet_delta_icon.texture = UIArtScript.icon("casino_chips")
+	wallet_delta_icon.custom_minimum_size = Vector2(18, 18)
+	wallet_delta_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	wallet_delta_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	wallet_delta_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	wallet_delta_icon.visible = false
+	delta_row.add_child(wallet_delta_icon)
 	wallet_delta = FoundationWidgets.label("", VisualStyle.TYPE_BODY_LARGE)
 	wallet_delta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	wallet_delta.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	wallet_delta.autowrap_mode = TextServer.AUTOWRAP_OFF
-	wallet_delta_panel.add_child(wallet_delta)
+	delta_row.add_child(wallet_delta)
 	wallet_chip.add_child(wallet_delta_panel)
 
 	chips_chip = _value_chip("casino_chips", "Chips")
@@ -488,12 +506,15 @@ func present_money_feedback(entries: Array) -> void:
 	entries = _money_feedback_entries
 	var amounts: PackedStringArray = []
 	var tone := str((entries[0] as Dictionary).get("tone", "text_muted"))
+	var has_chips := false
 	for entry_value in entries:
 		var entry: Dictionary = entry_value
 		amounts.append(str(entry.get("text", "")))
+		has_chips = has_chips or str(entry.get("currency", "")) == "chips"
 		if str(entry.get("tone", "text_muted")) != tone:
 			tone = "text_muted"
 	wallet_delta.text = "  ".join(amounts)
+	wallet_delta_icon.visible = has_chips
 	_wallet_delta_tone = tone
 	var accent := VisualStyle.role(tone)
 	var style := VisualStyle.pixel_box(VisualStyle.DARK_2, accent, 2)

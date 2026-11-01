@@ -42,7 +42,7 @@ func _run() -> void:
 	_check(Model.build(pending).is_empty(), "Chip redemption must not count the same money as fresh income.")
 	pending.clear()
 	run.change_grand_casino_chips(3)
-	_check(Model.build(pending)[0].text == "+◈3", "Chip gains must keep their monetary unit.")
+	_check(Model.build(pending)[0].text == "+3 chips", "Chip gains must keep their monetary unit without a symbol font.")
 	pending.clear()
 	_check(bool(run.borrow_from_grand_casino_atm(50).get("ok", false)), "Loan fixture was rejected.")
 	_check(Model.build(pending)[0].text == "+$50", "Loan cash must use the same applied-mutation feedback.")

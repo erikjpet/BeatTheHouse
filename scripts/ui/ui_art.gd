@@ -1,11 +1,29 @@
 class_name UIArt
 extends RefCounted
 
-# Single runtime door for artist-swappable 0.5 UI raster art.
+# Single runtime door for bundled UI raster art and original control SVGs.
 
 const ICON_ROOT := "res://assets/art/ui/icons"
 const TITLE_ROOT := "res://assets/art/ui/environment_titles"
 const PORTRAIT_ROOT := "res://assets/art/ui/portraits"
+
+# Explicit dependencies are exported with the UI. These contain geometry only,
+# never text, a system font, a remote reference or an emoji fallback.
+const CONTROL_ICONS := {
+	"settings": preload("res://assets/art/ui/icons/controls/settings.svg"),
+	"run_setup": preload("res://assets/art/ui/icons/controls/run_setup.svg"),
+	"close": preload("res://assets/art/ui/icons/controls/close.svg"),
+	"previous": preload("res://assets/art/ui/icons/controls/previous.svg"),
+	"next": preload("res://assets/art/ui/icons/controls/next.svg"),
+	"decrease": preload("res://assets/art/ui/icons/controls/decrease.svg"),
+	"increase": preload("res://assets/art/ui/icons/controls/increase.svg"),
+	"play": preload("res://assets/art/ui/icons/controls/play.svg"),
+	"replay": preload("res://assets/art/ui/icons/controls/replay.svg"),
+	"selected": preload("res://assets/art/ui/icons/controls/selected.svg"),
+	"focused": preload("res://assets/art/ui/icons/controls/focused.svg"),
+	"hovered": preload("res://assets/art/ui/icons/controls/hovered.svg"),
+	"cash_transfer": preload("res://assets/art/ui/icons/controls/cash_transfer.svg"),
+}
 
 const ICON_IDS := [
 	"wallet",
@@ -59,6 +77,24 @@ static func icon(icon_id: String) -> Texture2D:
 	return _texture_or_fallback("%s/%s.png" % [ICON_ROOT, icon_id], "icon:%s" % icon_id, Vector2i(64, 64))
 
 
+static func control_icon(icon_id: String) -> Texture2D:
+	return CONTROL_ICONS.get(icon_id) as Texture2D
+
+
+static func apply_control_icon(button: Button, icon_id: String, accessible_label: String, size: int = 24, icon_only: bool = false) -> void:
+	button.icon = control_icon(icon_id)
+	button.expand_icon = true
+	button.add_theme_constant_override("icon_max_width", size)
+	button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER if icon_only else HORIZONTAL_ALIGNMENT_LEFT
+	button.accessibility_name = accessible_label
+	button.set_meta("local_ui_icon_id", icon_id)
+	if button.tooltip_text.is_empty():
+		button.tooltip_text = accessible_label
+	if icon_only:
+		# Unknown IDs remain usable text controls, never empty glyph boxes.
+		button.text = "" if button.icon != null else accessible_label
+
+
 static func environment_title(archetype_id: String) -> Texture2D:
 	return _texture_or_fallback(
 		"%s/%s.png" % [TITLE_ROOT, archetype_id],
@@ -77,6 +113,8 @@ static func portrait(portrait_id: String) -> Texture2D:
 
 static func expected_runtime_paths() -> Array[String]:
 	var paths: Array[String] = []
+	for texture in CONTROL_ICONS.values():
+		paths.append(texture.resource_path)
 	for icon_id in ICON_IDS:
 		paths.append("%s/%s.png" % [ICON_ROOT, icon_id])
 	for title_id in ENVIRONMENT_TITLE_IDS:
@@ -84,6 +122,8 @@ static func expected_runtime_paths() -> Array[String]:
 	for portrait_id in PORTRAIT_IDS:
 		paths.append("%s/%s.png" % [PORTRAIT_ROOT, portrait_id])
 	return paths
+
+
 static func fallback_for_test(kind: String, key: String) -> Texture2D:
 	var size := Vector2i(64, 64)
 	if kind == "title":
