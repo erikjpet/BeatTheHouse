@@ -16989,7 +16989,7 @@ func _start_linda_cage_services(object_data: Dictionary) -> bool:
 	return start_dialogue("linda_cage_services", {
 		"source": "casino_cage_counter",
 		"source_object_id": str(object_data.get("object_id", "casino_fixture:cage_counter")),
-	})
+	}, true) # Inspect is deliberate room input; retain automatic-close suppression.
 
 
 func _buy_cage_chips(amount: int) -> bool:
