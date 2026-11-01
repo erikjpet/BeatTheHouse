@@ -370,6 +370,7 @@ var alcoholic_level: int = 0
 var pending_drunk_absorption: Array = []
 var drunk_distortion_suppression_turns: int = 0
 var _room_presentation_publication: RefCounted = null
+var _room_event_membership_pending_context: Dictionary = {}
 var _inactive_storage_projections: Dictionary = {}
 var _inactive_storage_projection_bytes := 0
 var current_environment: Dictionary = {}:
@@ -605,6 +606,7 @@ const ENVIRONMENT_TEST_PLAYER_STATE_FIELDS := [
 
 # Resets the run from a seed and optional challenge.
 func start_new(p_seed_text: String = "FOUNDATION-SEED", p_challenge_config: Dictionary = {}) -> void:
+	_room_event_membership_pending_context = {}
 	challenge_config = normalize_challenge(p_seed_text, p_challenge_config)
 	seed_text = str(challenge_config.get("seed_text", "FOUNDATION-SEED"))
 	seed_value = text_to_seed(challenge_key(challenge_config))
@@ -1839,6 +1841,68 @@ func prepare_current_environment_object_membership_for_publication() -> Dictiona
 	)
 	reconciled["stored_world_node_id"] = node_id
 	return reconciled
+
+
+# Room events appended by a committed owner can arrive after the initial
+# content-aware layout build. Materialize only missing catalog metadata at the
+# owner publication boundary; getters and the Canvas never create physical rows.
+func prepare_new_room_event_membership_for_publication(library: ContentLibrary) -> Dictionary:
+	if library == null or current_environment.is_empty():
+		return {"ok": false, "changed": false, "errors": ["Room event publication requires loaded content and a current environment."]}
+	var context := _room_event_membership_context(current_environment)
+	if not _room_event_membership_pending_context.is_empty() and _room_event_membership_pending_context != context:
+		_room_event_membership_pending_context = {}
+	var retry_pending := not _room_event_membership_pending_context.is_empty()
+	var hints := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(current_environment.get("layout", {})).get("object_placement_hints", {}))
+	var resolved := JsonCoerceScript._copy_array(current_environment.get("resolved_event_ids", []))
+	var missing := false
+	for event_id in JsonCoerceScript._raw_string_array(current_environment.get("event_ids", [])):
+		if not resolved.has(event_id) and not hints.has("event:%s" % event_id) and not library.event(str(event_id)).is_empty():
+			missing = true
+			break
+	if not missing and not retry_pending:
+		return {"ok": true, "changed": false, "errors": []}
+	# Authenticate the existing envelope before deriving any new art/slot inputs.
+	# Missing metadata is not permission to repair an edited incoming authority.
+	var incoming := validate_room_action_authority()
+	if not bool(incoming.get("ok", false)):
+		return incoming
+	# Bind the retry to the same trusted visit identity the normal compiler uses.
+	_ensure_scenario_host_public_context()
+	context = _room_event_membership_context(current_environment)
+	if missing:
+		var candidate := current_environment.duplicate(false)
+		candidate["layout"] = EnvironmentInstance.ensure_generated_layout(candidate, library)
+		var proof := RoomPresentationPublicationScript.validate(candidate)
+		if not bool(proof.get("ok", false)):
+			return proof
+		# Keep game/state aliases and every scenario owner unchanged. Only the
+		# validated physical envelope transfers from this detached content projection.
+		for field in ["layout", "object_manifest", "object_manifest_digest", "object_manifest_revision"]:
+			current_environment[field] = candidate[field]
+		# Runtime-only intent survives a rejected alias store and a live catalog
+		# rebuild. Completed hints alone do not finish this owner transaction.
+		_room_event_membership_pending_context = context
+	var membership := prepare_current_environment_object_membership_for_publication()
+	if not bool(membership.get("ok", false)):
+		# Keep the attempt pending, but retire its rejected publication cache.
+		_room_presentation_publication = null
+		return membership
+	var published := publish_room_presentation()
+	if bool(published.get("ok", false)):
+		_room_event_membership_pending_context = {}
+	published["changed"] = bool(published.get("ok", false))
+	return published
+
+
+static func _room_event_membership_context(environment: Dictionary) -> Dictionary:
+	return {
+		"id": str(environment.get("id", "")),
+		"archetype_id": str(environment.get("archetype_id", "")),
+		"world_node_id": str(environment.get("world_node_id", "")),
+		"current_layer_id": str(environment.get("current_layer_id", "")),
+		"environment_visit_id": str(environment.get("environment_visit_id", "")),
+	}
 
 
 # Consuming an ordinary event removes one already-bound room object. Preserve all
@@ -15627,6 +15691,7 @@ func _save_snapshot(deep_copy_seeded_scenario_definitions: bool, travel_preview:
 
 # Restores the run from saved data.
 func from_dict(data: Dictionary) -> void:
+	_room_event_membership_pending_context = {}
 	RunStateSchemaScript.restore(self, data)
 	_restore_missing_comped_suite_credit()
 	# Cold restore already owns the complete migration boundary. Compile stored

@@ -5720,7 +5720,7 @@ func _sal_starter_offer_is_pending() -> bool:
 	return meta_collection_service != null and not meta_collection_service.pending_starter_buyback().is_empty()
 
 
-func _resume_sal_starter_offer() -> bool:
+func _resume_sal_starter_offer(manual_room_request: bool = false) -> bool:
 	if not _sal_starter_offer_is_pending():
 		return false
 	_hide_event_choice_popup()
@@ -5728,16 +5728,16 @@ func _resume_sal_starter_offer() -> bool:
 		"event_id": "dialogue:sal_starter_offer",
 		"source": "sal_resale_tutorial",
 		"source_object_id": "meta_sal:talk",
-	})
+	}, manual_room_request)
 
 
 func _talk_to_sal() -> bool:
 	if _sal_starter_offer_is_pending():
-		return _resume_sal_starter_offer()
+		return _resume_sal_starter_offer(true)
 	return start_dialogue("sal_shop_talk", {
 		"source": "sal_pawn_shop",
 		"source_object_id": "meta_sal:talk",
-	})
+	}, true)
 
 
 func _start_sal_routine_dialogue(kind: String) -> bool:
@@ -8724,7 +8724,7 @@ func _resolve_linda_cage_service_choice(entry: Dictionary, choice_id: String) ->
 		"cage_finish_tutorial_card":
 			run_state.complete_talk_event_resolution(str(entry.get("event_id", "")))
 			_refresh_talk_dock()
-			_resume_tutorial_linda_bronze_finish()
+			_resume_tutorial_linda_bronze_finish(true)
 		"cage_comp_drink":
 			_use_cage_players_card_comp("drink")
 		"cage_comp_suite":
@@ -8739,7 +8739,7 @@ func _resolve_linda_cage_service_choice(entry: Dictionary, choice_id: String) ->
 	_refresh()
 
 
-func _resume_tutorial_linda_bronze_finish() -> bool:
+func _resume_tutorial_linda_bronze_finish(manual_room_request: bool = false) -> bool:
 	if run_state == null or not run_state.is_tutorial_run() \
 			or bool(run_state.narrative_flags.get("demo_victory", false)) \
 			or str(run_state.demo_objective_status().get("players_card_tier", "")) != RunState.GRAND_CASINO_PLAYERS_CARD_TIER_BRONZE:
@@ -8748,7 +8748,7 @@ func _resume_tutorial_linda_bronze_finish() -> bool:
 		"event_id": "dialogue:tutorial_linda_bronze_finish",
 		"source": "tutorial_bronze_review_resume",
 		"source_object_id": "casino_fixture:cage_counter",
-	})
+	}, manual_room_request)
 
 
 func _queue_tutorial_linda_exit_guardrail() -> bool:
@@ -12093,6 +12093,14 @@ func _prepare_room_presentation_at_boundary() -> void:
 	var cycle_changed := _refresh_venue_scenario_cycle_at_boundary()
 	if _scenario_cycle_publication_failed: return
 	if cycle_changed: _autosave_foundation_run("Venue situation changed.")
+	var room_events := run_state.prepare_new_room_event_membership_for_publication(library)
+	if not bool(room_events.get("ok", false)):
+		_room_catalog_publication = []
+		interactable_object_catalog_cache_valid = false
+		interactable_object_view_cache_valid = false
+		var event_errors := JsonCoerceScript._copy_array(room_events.get("errors", []))
+		_show_message(str(event_errors[0]) if not event_errors.is_empty() else "The room's new event could not be prepared safely.")
+		return
 	# A read-only game hook may project a visit/restock-driven person. Its owner
 	# must commit that state and the complete physical envelope before the shared
 	# catalog joins it to sealed records; getters cannot mint room membership.
@@ -17061,7 +17069,7 @@ func _complete_cage_players_card_review() -> void:
 		return
 	if coach_overlay != null: coach_overlay.notify_action("cage:review")
 	var dialogue_id := "tutorial_linda_gold_review" if run_state.is_tutorial_run() else "linda_gold_review"
-	if not start_dialogue(dialogue_id, {"source": "cage_gold_review", "source_object_id": "casino_fixture:cage_counter"}):
+	if not start_dialogue(dialogue_id, {"source": "cage_gold_review", "source_object_id": "casino_fixture:cage_counter"}, true):
 		_show_message("Linda's Gold review is unavailable.")
 
 

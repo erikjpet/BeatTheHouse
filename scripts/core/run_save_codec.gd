@@ -3,6 +3,7 @@ extends RefCounted
 
 const ScenarioSequenceCatalogScript := preload("res://scripts/core/scenario_sequence_catalog.gd")
 const PersistentEnvironmentProjectionScript := preload("res://scripts/core/persistent_environment_projection.gd")
+const StorageNumericJsonScript := preload("res://scripts/core/storage_numeric_json.gd")
 
 # Save-only projection. Runtime dictionaries keep their full authored state;
 # persisted data deduplicates identical environments and omits slot definition
@@ -150,8 +151,10 @@ static func _expand_environment_registry_deltas(source: Dictionary) -> Dictionar
 # storage layer removes the repeated authored/runtime payload cost on disk and
 # is transparently accepted alongside every previously shipped unpacked save.
 static func pack_for_storage(encoded_state: Dictionary) -> Dictionary:
-	var source := JSON.stringify(encoded_state).to_utf8_buffer()
+	# Persist enough float digits to recover gameplay/physics values exactly.
+	# This is storage text only; authority canonicalization keeps its own format.
 	var storage_limit := debug_storage_byte_limit_override if debug_storage_byte_limit_override > 0 else MAX_STORAGE_BYTES
+	var source := StorageNumericJsonScript.stringify(encoded_state, storage_limit).to_utf8_buffer()
 	if source.is_empty():
 		return {"ok": false, "error": ERR_INVALID_DATA, "error_code": PACK_ERROR_EMPTY, "packed": {}}
 	if source.size() > storage_limit:
@@ -193,15 +196,15 @@ static func unpack_from_storage(stored_state: Dictionary, preserve_legacy_author
 	var source := _validated_storage_source(stored_state)
 	if source.is_empty():
 		return {}
-	var json := JSON.new()
 	var json_text := source.get_string_from_utf8()
 	if preserve_legacy_authority_integers:
 		json_text = preserve_blackjack_ledger_integer_tokens(json_text)
-	if json.parse(json_text) != OK or typeof(json.data) != TYPE_DICTIONARY:
+	var parsed := StorageNumericJsonScript.parse(json_text)
+	if int(parsed.error) != OK or typeof(parsed.data) != TYPE_DICTIONARY:
 		return {}
 	# This parser was created for this one call. Its complete JSON graph is
 	# already privately owned; another deep copy cannot detach it any further.
-	return json.data as Dictionary
+	return parsed.data as Dictionary
 
 
 static func storage_contents_valid(stored_state: Dictionary) -> bool:

@@ -8,6 +8,7 @@ const PersistencePathsScript := preload("res://scripts/core/persistence_paths.gd
 const SAVE_SCHEMA := "beat_the_house.foundation_run"
 const SAVE_VERSION := 2
 const RunSaveCodecScript := preload("res://scripts/core/run_save_codec.gd")
+const StorageNumericJsonScript := preload("res://scripts/core/storage_numeric_json.gd")
 const DurableStoreScript := preload("res://scripts/core/durable_store.gd")
 const LOAD_OUTCOME_PRIMARY := "loaded-primary"
 const LOAD_OUTCOME_BACKUP := "loaded-backup"
@@ -485,9 +486,9 @@ func _read_run_state_from_path(path: String) -> Dictionary:
 	if not FileAccess.file_exists(path):
 		return {"exists": false, "loadable": false, "run_state": null}
 	var text := FileAccess.get_file_as_string(path)
-	var json := JSON.new()
 	var load_text := RunSaveCodecScript.preserve_blackjack_ledger_integer_tokens(text)
-	if json.parse(load_text) != OK:
+	var json := StorageNumericJsonScript.parse(load_text)
+	if int(json.error) != OK:
 		return {"exists": true, "loadable": false, "run_state": null}
 	var parsed: Variant = json.data
 	if typeof(parsed) != TYPE_DICTIONARY:

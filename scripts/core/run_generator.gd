@@ -136,11 +136,25 @@ func _install_environment_test_layer(run_state: RunState, layer_id: String) -> D
 	layer_state["layout"] = EnvironmentInstance.ensure_generated_layout(layer_state, library)
 	if not run_state.install_environment_layer_state(target_id, layer_state, library):
 		return {"ok": false, "message": "The selected starting area could not be installed."}
-	CrewRecruitmentModelScript.apply_to_environment(run_state, run_state.current_environment)
+	# Practice uses the same authenticated Crew-owner boundary as ordinary
+	# layer entry. Never mutate selected event inputs behind an installed seal.
+	var crew_membership := _prepare_layer_crew_membership(run_state)
+	if not bool(crew_membership.get("ok", false)):
+		var membership_errors := JsonCoerceScript._copy_array(crew_membership.get("errors", []))
+		return {"ok": false, "message": str(membership_errors[0]) if not membership_errors.is_empty() else "The starting area's Crew presence could not be prepared safely."}
 	var finalized := run_state.scenario_finalize_installed_environment(library)
 	if not bool(finalized.get("ok", false)):
 		var errors := JsonCoerceScript._copy_array(finalized.get("errors", []))
 		return {"ok": false, "message": str(errors[0]) if not errors.is_empty() else "The selected starting area could not be finalized."}
+	# Scenario projection can replace flat actor/event arrays during finalization.
+	var final_membership := _prepare_layer_crew_membership(run_state)
+	if not bool(final_membership.get("ok", false)):
+		var final_errors := JsonCoerceScript._copy_array(final_membership.get("errors", []))
+		return {"ok": false, "message": str(final_errors[0]) if not final_errors.is_empty() else "The starting area's final Crew presence could not be prepared safely."}
+	var publication := run_state.publish_room_presentation()
+	if not bool(publication.get("ok", false)):
+		var publication_errors := JsonCoerceScript._copy_array(publication.get("errors", []))
+		return {"ok": false, "message": str(publication_errors[0]) if not publication_errors.is_empty() else "The selected starting area could not be published safely."}
 	return {"ok": true, "layer_id": target_id, "warnings": JsonCoerceScript._copy_array(finalized.get("warnings", []))}
 
 
@@ -708,6 +722,9 @@ func _prepare_layer_crew_membership(run_state: RunState) -> Dictionary:
 	if not errors.is_empty():
 		return {"ok": false, "errors": errors}
 	CrewRecruitmentModelScript.apply_to_environment(run_state, run_state.current_environment)
+	# Newly selected Crew events need their authored physical/art metadata before
+	# membership is sealed. The installed baseline was authenticated above.
+	run_state.current_environment["layout"] = EnvironmentInstance.ensure_generated_layout(run_state.current_environment, library)
 	return run_state.reconcile_environment_object_membership(run_state.current_environment)
 
 

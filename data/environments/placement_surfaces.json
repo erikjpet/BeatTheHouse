@@ -9014,6 +9014,37 @@
             "lane.public"
           ],
           "occupancy_required": false
+        },
+        {
+          "id": "event.surface_item_1",
+          "kind": "event",
+          "pos": [
+            530.0,
+            122.0
+          ],
+          "footprint_class": "surface_item",
+          "physical_role": "Crew Money note on the machine bank",
+          "occupant_ids": [
+            "event:crew_stake_horse_loss"
+          ],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [
+            500.0,
+            78.0,
+            60.0,
+            44.0
+          ],
+          "label_anchor": [
+            530.0,
+            72.0
+          ],
+          "facing": "none",
+          "priority": 10,
+          "zone_id": "center",
+          "support_id": "machine_bank_top",
+          "walk_lane_ids": [],
+          "occupancy_required": false
         }
       ],
       "scenario_slots": [
@@ -14545,6 +14576,37 @@
           "walk_lane_ids": [
             "lane.public"
           ],
+          "occupancy_required": false
+        },
+        {
+          "id": "event.surface_item_1",
+          "kind": "event",
+          "pos": [
+            300.0,
+            154.0
+          ],
+          "footprint_class": "surface_item",
+          "physical_role": "Crew Money note on the left table",
+          "occupant_ids": [
+            "event:crew_stake_horse_loss"
+          ],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [
+            270.0,
+            110.0,
+            60.0,
+            44.0
+          ],
+          "label_anchor": [
+            300.0,
+            104.0
+          ],
+          "facing": "none",
+          "priority": 10,
+          "zone_id": "left",
+          "support_id": "left_table",
+          "walk_lane_ids": [],
           "occupancy_required": false
         }
       ],
@@ -22078,6 +22140,37 @@
           "walk_lane_ids": [
             "lane.public"
           ],
+          "occupancy_required": false
+        },
+        {
+          "id": "event.surface_item_1",
+          "kind": "event",
+          "pos": [
+            272.0,
+            150.0
+          ],
+          "footprint_class": "surface_item",
+          "physical_role": "Crew Money note on the scoreboard ledge",
+          "occupant_ids": [
+            "event:crew_stake_horse_loss"
+          ],
+          "runtime_reserve": false,
+          "reserve_reason": "",
+          "hit_rect": [
+            242.0,
+            106.0,
+            60.0,
+            44.0
+          ],
+          "label_anchor": [
+            272.0,
+            100.0
+          ],
+          "facing": "none",
+          "priority": 10,
+          "zone_id": "left",
+          "support_id": "scoreboard_ledge",
+          "walk_lane_ids": [],
           "occupancy_required": false
         }
       ],
