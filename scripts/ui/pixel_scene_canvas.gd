@@ -1783,6 +1783,9 @@ func _input(event: InputEvent) -> void:
 	if event.device == InputEvent.DEVICE_ID_EMULATION:
 		return
 	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT:
+		# A new physical down is a new gesture even if the OS lost the old up.
+		if event.pressed:
+			arrival_mouse_release_pending = false
 		if event.pressed and not event.double_click:
 			room_pointer_focus_gestures["mouse"] = {"context": interaction_context_generation, "external": true}
 		physical_room_mouse_down = event.pressed
@@ -1790,6 +1793,9 @@ func _input(event: InputEvent) -> void:
 			arrival_mouse_release_pending = false
 	elif event is InputEventScreenTouch:
 		if event.pressed:
+			# Touch identifiers may be reused after a canceled/lost release.
+			# Only a fresh down retires that identifier's outgoing gesture.
+			arrival_touch_releases_pending.erase(event.index)
 			if not event.double_tap:
 				room_pointer_focus_gestures["touch:%d" % event.index] = {"context": interaction_context_generation, "external": true}
 			active_room_touches[event.index] = true
@@ -2284,7 +2290,14 @@ func local_position_for_selected_info_action_button(action_index: int = 0) -> Ve
 
 func _gui_input(event: InputEvent) -> void:
 	if event is InputEventMouse or event is InputEventScreenTouch or event is InputEventScreenDrag:
-		if arrival_mouse_release_pending or not arrival_touch_releases_pending.is_empty():
+		# Quarantine the outgoing pointer, not every future room gesture. A
+		# lost touch-end must not lock unrelated new fingers or the mouse.
+		var blocked_arrival_pointer: bool = event is InputEventMouse and arrival_mouse_release_pending
+		if event is InputEventScreenTouch:
+			blocked_arrival_pointer = arrival_touch_releases_pending.has(event.index)
+		elif event is InputEventScreenDrag:
+			blocked_arrival_pointer = arrival_touch_releases_pending.has(event.index)
+		if blocked_arrival_pointer:
 			accept_event()
 			return
 		if event.device != InputEvent.DEVICE_ID_EMULATION and event is InputEventMouseMotion and arrival_hover_requires_motion:
