@@ -6601,7 +6601,8 @@ func confirm_selected_lender_hook() -> bool:
 		return false
 	return _start_lender_conversation(
 		selected_lender_hook_id,
-		"pawn" if _lender_is_pawn_counter(selected_lender_hook_id) else "borrow"
+		"pawn" if _lender_is_pawn_counter(selected_lender_hook_id) else "borrow",
+		true
 	)
 
 
@@ -6681,7 +6682,7 @@ func repay_lender_debt(lender_id: String) -> bool:
 		_show_message(str(status.get("disabled_reason", "Not enough bankroll to repay this loan.")))
 		_refresh()
 		return false
-	return _start_lender_conversation(lender_id, "repay")
+	return _start_lender_conversation(lender_id, "repay", true)
 
 
 func _execute_lender_repayment(lender_id: String) -> bool:
@@ -13814,7 +13815,7 @@ func _add_context_lender_actions(card: VBoxContainer, lender_id: String) -> void
 			card.add_child(_muted_label(str(option.get("disabled_reason", "Sal needs a sellable item as collateral.")), 13))
 		else:
 			card.add_child(_muted_label("%d item%s to pawn, %d ticket%s open." % [quotes.size(), "" if quotes.size() == 1 else "s", tickets.size(), "" if tickets.size() == 1 else "s"], 13))
-		_add_card_button(card, "Talk to Sal", Callable(self, "_start_lender_conversation").bind(lender_id, "pawn"), false, true)
+		_add_card_button(card, "Talk to Sal", Callable(self, "_start_lender_conversation").bind(lender_id, "pawn", true), false, true)
 		return
 	if not bool(option.get("enabled", true)):
 		if run_state != null:
@@ -16764,7 +16765,7 @@ func _inspect_casino_fixture(object_data: Dictionary) -> bool:
 	return true
 
 
-func _start_lender_conversation(lender_id: String, mode: String) -> bool:
+func _start_lender_conversation(lender_id: String, mode: String, manual_request: bool = false) -> bool:
 	if not _room_action_authority_available():
 		return false
 	if run_state == null or library == null:
@@ -16800,6 +16801,10 @@ func _start_lender_conversation(lender_id: String, mode: String) -> bool:
 		"lender_mode": clean_mode,
 		"source_object_id": "lender:%s" % clean_id,
 	}
+	# Only deliberate lender controls carry manual intent. Keep the lender
+	# source and neutral-dismissal journal; duplicate/automatic guards stay live.
+	if manual_request:
+		context["source"] = "event_object"
 	var lender_line_key := "loan_offer" if clean_mode == "borrow" else "loan_repayment" if clean_mode == "repay" else "pawn_offer"
 	speaker = _resolve_character_speaker(_normalized_talk_speaker(speaker), clean_id, lender_line_key)
 	if not run_state.enqueue_triggered_event(event_id, "lender", context, {
