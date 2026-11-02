@@ -10207,7 +10207,10 @@ func _sync_coach_panel_for_talk_dock() -> void:
 	var natural_conversation_active: bool = talk_dock != null \
 		and talk_dock.conversation_active \
 		and not _talk_entry_is_pal_tutorial_dialogue(talk_dock.entry)
-	coach_overlay.set_panel_suppressed(natural_conversation_active)
+	# The Run Menu temporarily owns its controls. Preserve the active lesson so
+	# closing the menu restores its card without requiring Skip tip or progress.
+	# Include both owners here so a TalkDock refresh cannot uncover the menu.
+	coach_overlay.set_panel_suppressed(natural_conversation_active or _run_menu_is_visible())
 
 
 func _talk_entry_is_pal_tutorial_dialogue(entry: Dictionary) -> bool:
@@ -23691,6 +23694,7 @@ func _sync_coach_focus_visibility() -> void:
 		var anchor_id: String = coach_overlay.active_anchor_id()
 		enabled = anchor_kind == "hud_element" and (anchor_id == "map" or anchor_id.begins_with("travel:"))
 	coach_overlay.set_focus_visual_enabled(enabled)
+	_sync_coach_panel_for_talk_dock()
 
 
 func _clear_run_guidance_for_start_screen() -> void:
