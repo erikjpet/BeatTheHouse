@@ -7750,6 +7750,12 @@ func _talk_dock_lifecycle_snapshot() -> Dictionary:
 		"speaker_control": _talk_dock_control_lifecycle_snapshot(talk_dock.speaker_label),
 		"summary_control": _talk_dock_control_lifecycle_snapshot(talk_dock.summary_label),
 		"body_control": _talk_dock_control_lifecycle_snapshot(talk_dock.body_label),
+		"package_terms_scroll_control": _talk_dock_control_lifecycle_snapshot(talk_dock.package_terms_scroll),
+		"package_terms_label_control": _talk_dock_control_lifecycle_snapshot(talk_dock.package_terms_label),
+		"package_terms_text": talk_dock.package_terms_label.text if talk_dock.package_terms_label != null else "",
+		"package_terms_scroll_value": talk_dock.package_terms_scroll.scroll_vertical if talk_dock.package_terms_scroll != null else 0,
+		"package_terms_scroll_max": talk_dock.package_terms_scroll.get_v_scroll_bar().max_value if talk_dock.package_terms_scroll != null else 0.0,
+		"package_terms_scroll_page": talk_dock.package_terms_scroll.get_v_scroll_bar().page if talk_dock.package_terms_scroll != null else 0.0,
 		"choice_list_control": _talk_dock_control_lifecycle_snapshot(talk_dock.choice_list),
 		"choice_controls": _talk_dock_choice_lifecycle_snapshot(),
 		"urgency_bar_control": _talk_dock_control_lifecycle_snapshot(talk_dock.urgency_bar),
@@ -7830,6 +7836,8 @@ func _restore_talk_dock_lifecycle_snapshot(snapshot: Dictionary) -> void:
 	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.speaker_label, JsonCoerceScript._copy_dict(snapshot.get("speaker_control", {})), container_layout_restorations)
 	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.summary_label, JsonCoerceScript._copy_dict(snapshot.get("summary_control", {})), container_layout_restorations)
 	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.body_label, JsonCoerceScript._copy_dict(snapshot.get("body_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.package_terms_scroll, JsonCoerceScript._copy_dict(snapshot.get("package_terms_scroll_control", {})), container_layout_restorations)
+	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.package_terms_label, JsonCoerceScript._copy_dict(snapshot.get("package_terms_label_control", {})), container_layout_restorations)
 	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.choice_list, JsonCoerceScript._copy_dict(snapshot.get("choice_list_control", {})), container_layout_restorations)
 	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.urgency_bar, JsonCoerceScript._copy_dict(snapshot.get("urgency_bar_control", {})), container_layout_restorations)
 	_restore_talk_dock_control_lifecycle_snapshot(talk_dock.badge_label, JsonCoerceScript._copy_dict(snapshot.get("badge_control", {})), container_layout_restorations)
@@ -7847,6 +7855,13 @@ func _restore_talk_dock_lifecycle_snapshot(snapshot: Dictionary) -> void:
 		talk_dock.body_label.text = str(snapshot.get("body_text", ""))
 		talk_dock.body_label.visible_characters = int(snapshot.get("body_visible_characters", -1))
 		talk_dock.body_label.max_lines_visible = int(snapshot.get("body_max_lines", 0))
+	if talk_dock.package_terms_label != null:
+		talk_dock.package_terms_label.text = str(snapshot.get("package_terms_text", ""))
+	if talk_dock.package_terms_scroll != null:
+		var terms_scrollbar: VScrollBar = talk_dock.package_terms_scroll.get_v_scroll_bar()
+		terms_scrollbar.max_value = float(snapshot.get("package_terms_scroll_max", 0.0))
+		terms_scrollbar.page = float(snapshot.get("package_terms_scroll_page", 0.0))
+		talk_dock.package_terms_scroll.scroll_vertical = int(snapshot.get("package_terms_scroll_value", 0))
 	if talk_dock.choice_list != null:
 		talk_dock.choice_list.columns = int(snapshot.get("choice_columns", 1))
 		_restore_talk_dock_choice_lifecycle_snapshot(JsonCoerceScript._copy_array(snapshot.get("choice_controls", [])), container_layout_restorations)

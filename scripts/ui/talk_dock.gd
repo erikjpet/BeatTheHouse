@@ -287,6 +287,9 @@ var speaker_name_plate: PanelContainer
 var speaker_label: Label
 var summary_label: Label
 var body_label: Label
+var package_terms_scroll: ScrollContainer
+var package_terms_content: VBoxContainer
+var package_terms_label: Label
 var choice_list: GridContainer
 var urgency_bar: ProgressBar
 var badge_label: Label
@@ -312,6 +315,21 @@ func _process(delta: float) -> void:
 	body_label.visible_characters = mini(full_body_text.length(), maxi(1, int(floor(reveal_elapsed))))
 	if body_label.visible_characters >= full_body_text.length():
 		_complete_body_reveal()
+
+
+func _input(event: InputEvent) -> void:
+	var canceled_touch := event is InputEventScreenTouch and (event as InputEventScreenTouch).canceled
+	var canceled_mouse := event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT and (event as InputEventMouseButton).canceled
+	if not canceled_touch and not canceled_mouse:
+		return
+	if package_terms_scroll == null or not package_terms_scroll.is_visible_in_tree():
+		return
+	# Godot dispatches the canceled emulated mouse release before raw touch.
+	# Neither is a completed package response. A new press resets this flag.
+	for response in choice_list.get_children():
+		for child in response.get_children():
+			if child is Button:
+				child.set_meta("package_touch_cancelled", true)
 
 
 func set_entry(next_entry: Dictionary, next_option: Dictionary, next_queue_count: int) -> void:
@@ -359,6 +377,10 @@ func clear_entry() -> void:
 	if choice_list != null:
 		FoundationWidgets.clear(choice_list)
 	full_body_text = ""
+	if package_terms_scroll != null:
+		package_terms_scroll.visible = false
+		package_terms_scroll.scroll_vertical = 0
+		package_terms_label.text = ""
 	typewriter_active = false
 	set_process(false)
 	_notify_occupied_rect_changed()
@@ -453,6 +475,10 @@ func current_snapshot() -> Dictionary:
 		"body_line_count": body_label.get_line_count() if body_label != null else 0,
 		"body_visible_line_count": body_label.get_visible_line_count() if body_label != null else 0,
 		"body_text_clipped": body_label != null and body_label.get_line_count() > body_label.get_visible_line_count(),
+		"package_terms_visible": package_terms_scroll != null and package_terms_scroll.is_visible_in_tree(),
+		"package_terms_text": package_terms_label.text if package_terms_label != null else "",
+		"package_terms_scroll": package_terms_scroll.scroll_vertical if package_terms_scroll != null else 0,
+		"package_terms_rect": package_terms_scroll.get_global_rect() if package_terms_scroll != null else Rect2(),
 		"urgency_bar_visible": urgency_bar != null and urgency_bar.is_visible_in_tree(),
 		"click_to_skip": true,
 		"reduce_motion": reduce_motion,
@@ -725,6 +751,27 @@ func _build() -> void:
 	body_label.mouse_filter = Control.MOUSE_FILTER_STOP
 	body_label.gui_input.connect(Callable(self, "_on_body_gui_input"))
 	stack.add_child(body_label)
+	# Keep full offer terms and all responses accessible even on short screens.
+	# Ordinary dialogue retains its existing body/typewriter and layout.
+	package_terms_scroll = ScrollContainer.new()
+	package_terms_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	package_terms_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	package_terms_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	package_terms_scroll.mouse_filter = Control.MOUSE_FILTER_STOP
+	package_terms_scroll.clip_contents = true
+	package_terms_scroll.visible = false
+	stack.add_child(package_terms_scroll)
+	package_terms_content = VBoxContainer.new()
+	package_terms_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	package_terms_content.add_theme_constant_override("separation", VisualStyle.SPACE_2)
+	package_terms_scroll.add_child(package_terms_content)
+	package_terms_label = FoundationWidgets.label("", VisualStyle.TYPE_SMALL)
+	package_terms_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	package_terms_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	package_terms_label.max_lines_visible = -1
+	package_terms_label.clip_text = false
+	package_terms_label.mouse_filter = Control.MOUSE_FILTER_PASS
+	package_terms_content.add_child(package_terms_label)
 
 	urgency_bar = ProgressBar.new()
 	urgency_bar.min_value = 0.0
@@ -758,7 +805,6 @@ func _render() -> void:
 	speaker_label.text = _speaker_display_name()
 	summary_label.text = str(option.get("display_name", "Talk"))
 	summary_label.visible = expanded
-	_begin_body_reveal(summary)
 	var timing: Dictionary = entry.get("timing", {}) if typeof(entry.get("timing", {})) == TYPE_DICTIONARY else {}
 	urgency_label.text = _urgency_text(timing)
 	badge_label.text = "+%d" % maxi(0, queue_count - 1) if queue_count > 1 else ""
@@ -772,7 +818,6 @@ func _render() -> void:
 	portrait_panel.visible = expanded
 	collapsed_button.visible = not expanded
 	header_row.visible = expanded
-	body_label.visible = expanded
 	urgency_label.visible = expanded and bool(timing.get("expires", false))
 	choice_list.visible = expanded
 	portrait_model.set_animation_active(expanded)
@@ -820,6 +865,7 @@ func _on_body_gui_input(event: InputEvent) -> void:
 func _render_choices() -> void:
 	FoundationWidgets.clear(choice_list)
 	rendered_response_icon_kinds.clear()
+	_render_package_terms()
 	if not expanded:
 		return
 	var choices := _choices()
@@ -853,9 +899,19 @@ func _render_choices() -> void:
 		button.set_meta("event_id", str(entry.get("event_id", "")).strip_edges())
 		button.set_meta("choice_id", choice_id)
 		button.action_mode = BaseButton.ACTION_MODE_BUTTON_PRESS
+		if not _package_offer_terms().is_empty():
+			# A scroll beginning over Confirm must be cancellable before release.
+			button.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE
+			button.mouse_filter = Control.MOUSE_FILTER_PASS
+			button.pressed.disconnect(Callable(self, "_on_choice_pressed").bind(choice_id))
+			button.pressed.connect(Callable(self, "_on_package_choice_released").bind(choice_id, button))
+			button.button_down.connect(Callable(self, "_capture_package_choice_press").bind(button))
+		var size_label := label
+		if _choice_has_package_terms(choice_data) and _choice_requires_confirm(choice_data) and armed_choice_id != choice_id:
+			size_label = "Confirm: %s" % label
 		button.custom_minimum_size = Vector2(
 			VisualStyle.FLEXIBLE_SIZE,
-			_choice_button_minimum_height(label, icon_kinds.size(), anticipated_panel_width, choice_list.columns)
+			_choice_button_minimum_height(size_label, icon_kinds.size(), anticipated_panel_width, choice_list.columns)
 		)
 		FoundationWidgets.set_control_font_size(button, VisualStyle.TYPE_SMALL)
 		button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -886,6 +942,8 @@ func _choice_layout_panel_width(choice_count: int) -> float:
 	var compact_layout := _compact_layout_enabled()
 	var portrait_width := SMALL_SCREEN_PORTRAIT_SIZE.x if compact_layout else minf(EXPANDED_PORTRAIT_SIZE.x, maxf(150.0, size.x * 0.18))
 	var desired_width := SMALL_SCREEN_PANEL_WIDTH if compact_layout else (EXPANDED_PANEL_WIDTH if choice_count > 1 else SINGLE_CHOICE_PANEL_WIDTH)
+	if not _package_offer_terms().is_empty():
+		desired_width = EXPANDED_PANEL_WIDTH
 	var minimum_panel_width := 160.0 if compact_layout else 280.0
 	var panel_available_width := maxf(minimum_panel_width, size.x - portrait_width - VIEWPORT_MARGIN.x * 2.0 + 12.0)
 	return minf(desired_width, panel_available_width)
@@ -941,7 +999,7 @@ func _estimated_choice_grid_height(panel_width: float, columns: int, reserve_max
 			var disabled_reason := str(choice_data.get("disabled_reason", "")).strip_edges()
 			if not enabled and not disabled_reason.is_empty():
 				label = "%s\n%s" % [label, disabled_reason]
-			if _choice_requires_confirm(choice_data) and armed_choice_id == str(choice_data.get("id", "")):
+			if _choice_requires_confirm(choice_data) and (armed_choice_id == str(choice_data.get("id", "")) or _choice_has_package_terms(choice_data)):
 				label = "Confirm: %s" % label
 			row_height = maxf(row_height, _choice_button_minimum_height(label, _response_icon_kinds(choice_data).size(), panel_width, clean_columns))
 		grid_height += row_height
@@ -1091,6 +1149,17 @@ func _entry_open_input_guard_active() -> bool:
 	return entry_open_input_frame >= 0 and Engine.get_process_frames() <= entry_open_input_frame
 
 
+func _capture_package_choice_press(button: Button) -> void:
+	button.set_meta("package_entry_press_blocked", _entry_open_input_guard_active())
+	button.set_meta("package_touch_cancelled", false)
+
+
+func _on_package_choice_released(choice_id: String, button: Button) -> void:
+	if bool(button.get_meta("package_entry_press_blocked", false)) or bool(button.get_meta("package_touch_cancelled", false)):
+		return
+	_on_choice_pressed(choice_id)
+
+
 func _choose(choice_id: String, choice: Dictionary) -> void:
 	if choice_id.is_empty():
 		return
@@ -1178,6 +1247,8 @@ func _position_panel() -> void:
 	portrait_panel.size = next_portrait_rect.size
 	panel.position = next_panel_rect.position
 	panel.size = next_panel_rect.size
+	if package_terms_scroll != null and package_terms_scroll.visible:
+		package_terms_scroll.custom_minimum_size.y = float(layout.get("package_terms_height", 0.0))
 	_record_layout_position_change(previous_panel_rect, previous_portrait_rect)
 	_notify_occupied_rect_changed()
 
@@ -1198,6 +1269,9 @@ func _expanded_layout_rects_for(side: String, _vertical: String, reserve_maximum
 	)
 	var choice_count := MAX_CHOICES if reserve_maximum_capacity else _choices().size()
 	var desired_width := SMALL_SCREEN_PANEL_WIDTH if compact_layout else (EXPANDED_PANEL_WIDTH if reserve_maximum_capacity or choice_count > 1 else SINGLE_CHOICE_PANEL_WIDTH)
+	var has_package_terms := not _package_offer_terms().is_empty()
+	if has_package_terms:
+		desired_width = EXPANDED_PANEL_WIDTH
 	var portrait_x := VIEWPORT_MARGIN.x + 12.0
 	if side == "right":
 		portrait_x = maxf(VIEWPORT_MARGIN.x, size.x - portrait_size.x - VIEWPORT_MARGIN.x - 12.0)
@@ -1217,6 +1291,14 @@ func _expanded_layout_rects_for(side: String, _vertical: String, reserve_maximum
 	desired_height += maxf(0.0, choice_grid_height - VisualStyle.TALK_CHOICE_HEIGHT)
 	var body_line_count := reserved_body_line_count if reserve_maximum_capacity else _estimated_body_line_count(panel_width)
 	desired_height += float(maxi(0, body_line_count - 2)) * EXPANDED_PANEL_EXTRA_BODY_LINE_HEIGHT
+	var terms_height := 0.0
+	if has_package_terms:
+		var header_height := maxf(64.0, header_row.get_combined_minimum_size().y)
+		# Responses share the scroll content; long labels/disabled reasons must
+		# never consume the fixed viewport until the terms become a 1px strip.
+		var chrome_height := header_height + VisualStyle.SPACE_2 + VisualStyle.SPACE_4 * 2.0
+		terms_height = maxf(SmallScreenPolicyScript.CONTROL_TOUCH_TARGET_HEIGHT, minf(360.0, available_size.y - chrome_height))
+		desired_height = chrome_height + terms_height
 	var panel_size := Vector2(panel_width, minf(desired_height, available_size.y))
 	var panel_left := portrait_rect.position.x + portrait_size.x - 12.0
 	if side == "right":
@@ -1228,7 +1310,47 @@ func _expanded_layout_rects_for(side: String, _vertical: String, reserve_maximum
 		"portrait_rect": portrait_rect,
 		"panel_rect": panel_rect,
 		"side": side,
+		"package_terms_height": terms_height,
 	}
+
+
+func _choice_has_package_terms(choice: Dictionary) -> bool:
+	return typeof(choice.get("package_offer_terms")) == TYPE_STRING and not str(choice.package_offer_terms).strip_edges().is_empty()
+
+
+func _package_offer_terms() -> String:
+	var parts := PackedStringArray()
+	for choice_value in _choices():
+		if typeof(choice_value) != TYPE_DICTIONARY:
+			continue
+		var choice: Dictionary = choice_value
+		if _choice_has_package_terms(choice):
+			parts.append("%s\n%s" % [_choice_display_label(choice), str(choice.package_offer_terms).strip_edges()])
+	return "\n\n".join(parts)
+
+
+func _render_package_terms() -> void:
+	if package_terms_scroll == null:
+		return
+	var terms := _package_offer_terms()
+	var summary := str(option.get("summary", "")).strip_edges()
+	# Choice rebuilds also run after restoring option data. Keep both body
+	# surfaces coherent, preserving an unchanged generic reveal in progress.
+	_begin_body_reveal(summary)
+	body_label.visible = expanded and terms.is_empty()
+	package_terms_scroll.visible = expanded and not terms.is_empty()
+	var choice_parent: Node = stack if terms.is_empty() else package_terms_content
+	if choice_list != null and choice_list.get_parent() != choice_parent:
+		choice_list.reparent(choice_parent, false)
+	if terms.is_empty():
+		package_terms_label.text = ""
+		package_terms_scroll.custom_minimum_size.y = 0.0
+		return
+	_complete_body_reveal()
+	var text := "%s\n\nPackage terms\n%s" % [summary, terms] if not summary.is_empty() else "Package terms\n%s" % terms
+	if text != package_terms_label.text:
+		package_terms_label.text = text
+		package_terms_scroll.scroll_vertical = 0
 
 
 func _reconsider_current_placement() -> void:

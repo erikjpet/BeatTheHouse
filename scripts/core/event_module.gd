@@ -291,6 +291,12 @@ func _contextualized_choice(choice_data: Dictionary, run_state: RunState, enviro
 		if _crew_offer_clock < 0: _crew_offer_clock = run_state.game_clock_minutes
 		var preview := run_state.delivery_crew_offer("crew_favor_delivery", _crew_offer_clock)
 		resolved["text"] = "%s Missing the window loses the package and payment, reduces Crew trust by 5 and adds 9 Heat." % str(preview.get("message", ""))
+		# Presentation only: generic choice.text can describe a result instead of
+		# an offer, so explicitly identify the existing package preview for the UI.
+		resolved["package_offer_terms"] = resolved["text"]
+		var delivery_summary := str(resolved.get("consequence_summary", "")).strip_edges()
+		if not delivery_summary.is_empty():
+			resolved["package_offer_terms"] = "%s\nOn delivery: %s" % [resolved["package_offer_terms"], delivery_summary]
 		resolved["crew_offer_clock"] = _crew_offer_clock
 	resolved = _traveler_context_choice(resolved, run_state)
 	resolved = _reputation_context_choice(resolved, environment)
@@ -321,6 +327,7 @@ func _crew_timed_choices(rows: Array, run_state: RunState) -> Array:
 			var original_lines := str(row.get("text", "")).split("\n", false)
 			row["text"] = "%s\n$%d / trust +%d. Missing a drop loses payment and %d trust; the Crew records the failure." % [str(preview.get("message", "")), int(definition.get("rewards", {}).get("cash", 0)), int(definition.get("rewards", {}).get("trust", 0)), -int(definition.get("failure", {}).get("trust", 0))]
 			if original_lines.size() > 1: row["text"] = "%s\n%s" % [original_lines[0], row["text"]]
+			row["package_offer_terms"] = row["text"]
 		row["consequences"] = consequences
 		if not omit: result.append(row)
 	return result
