@@ -153,9 +153,7 @@ static func _detail_lines(entry: Dictionary, callbacks: Dictionary) -> Array:
 	var venue := _environment_label(entry, callbacks)
 	if not venue.is_empty():
 		lines.append("Venue: %s" % venue)
-	var bankroll_delta := int(entry.get("bankroll_delta", 0))
-	if bankroll_delta != 0:
-		lines.append("Bankroll %+d" % bankroll_delta)
+	lines.append_array(_recorded_money_detail_lines(entry))
 	var heat_delta := int(entry.get("suspicion_delta", entry.get("heat_delta", 0)))
 	if heat_delta != 0:
 		lines.append("Heat %+d" % heat_delta)
@@ -185,6 +183,38 @@ static func _detail_lines(entry: Dictionary, callbacks: Dictionary) -> Array:
 	if not inventory_remove.is_empty():
 		lines.append("Used: %s" % _label_list(inventory_remove, callbacks))
 	return lines
+
+
+static func _recorded_money_detail_lines(entry: Dictionary) -> Array:
+	var lines: Array = []
+	# Explicit legs are distinct units. Never add their bankroll alias again.
+	for leg_currency in ["cash", "chips"]:
+		var leg_key: String = "%s_delta" % leg_currency
+		if entry.has(leg_key) and _recorded_integer(entry[leg_key]):
+			lines.append("%s %+d" % ["Bankroll" if leg_currency == "cash" else "Chips", int(entry[leg_key])])
+	var currency := str(entry.get("currency", ""))
+	if currency in ["cash", "chips"] and not entry.has("%s_delta" % currency):
+		var primary_delta: Variant = entry.get("currency_delta", entry.get("bankroll_delta", null))
+		if _recorded_integer(primary_delta):
+			lines.append("%s %+d" % ["Bankroll" if currency == "cash" else "Chips", int(primary_delta)])
+	if not lines.is_empty():
+		return lines
+	var delta: Variant = entry.get("bankroll_delta", null)
+	if not _recorded_integer(delta) or int(delta) == 0:
+		return lines
+	# Unstamped game history can be either wallet cash or a chip alias.
+	# Neither the current wallet nor a room ID establishes its recorded unit.
+	var unknown_unit: bool = str(entry.get("type", "")) == "game_action" \
+		or not str(entry.get("game_id", "")).is_empty() \
+		or entry.has("currency") or entry.has("currency_delta") \
+		or entry.has("cash_delta") or entry.has("chips_delta")
+	lines.append("Recorded change %+d (currency not recorded)" % int(delta) if unknown_unit else "Bankroll %+d" % int(delta))
+	return lines
+
+
+static func _recorded_integer(value: Variant) -> bool:
+	return typeof(value) == TYPE_INT or (typeof(value) == TYPE_FLOAT and is_finite(value) \
+		and absf(value) <= 9007199254740991.0 and floor(value) == value)
 
 
 static func _environment_label(entry: Dictionary, callbacks: Dictionary) -> String:
