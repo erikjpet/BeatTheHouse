@@ -839,6 +839,9 @@ static func eligible_event_option_with_context(host: Variant, event_id: String, 
 		})
 		var last_index = option_choices.size() - 1
 		var option_choice: Dictionary = option_choices[last_index]
+		var package_terms: Variant = choice_data.get("package_offer_terms", "")
+		if typeof(package_terms) == TYPE_STRING and not str(package_terms).strip_edges().is_empty():
+			option_choice["package_offer_terms"] = package_terms
 		option_choice["attribute_badges"] = host.AttributeBadgesScript.for_event_choice(option_choice)
 		option_choices[last_index] = option_choice
 	scene_summary = event_module.conversation_summary(host.run_state, event_environment, conversation_choices)
