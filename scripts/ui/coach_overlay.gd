@@ -678,6 +678,12 @@ func _normal_tip_pending() -> bool:
 func _render_active(play_motion: bool) -> void:
 	if active_lesson.is_empty():
 		return
+	# A written fallback may be shown before its live anchor arrives. Layout or
+	# Menu suppression must not retract that same unfinished instruction later.
+	# Keep presentation history in the already-checkpointed prepared snapshot;
+	# a different/completed lesson or suspend clears it through the normal path.
+	var panel_was_presented: bool = str(prepared_snapshot.get("lesson_id", "")) == str(active_lesson.get("id", "")) \
+		and bool(prepared_snapshot.get("panel_was_presented", false))
 	active_context["reduce_motion"] = reduce_motion
 	active_context["small_screen"] = small_screen
 	prepared_snapshot = CoachViewModelScript.build(active_lesson, active_context)
@@ -707,7 +713,8 @@ func _render_active(play_motion: bool) -> void:
 	var dialogue_delivery := str(prepared_snapshot.get("delivery", "coach")) == "dialogue" \
 		and not _dialogue_acknowledged_instruction() \
 		and primary_anchor_found
-	panel.visible = not dialogue_delivery and not panel_suppressed
+	panel.visible = (not dialogue_delivery or panel_was_presented) and not panel_suppressed
+	prepared_snapshot["panel_was_presented"] = panel_was_presented or panel.visible
 	visible = true
 	move_to_front()
 	_request_active_dialogue_once()
