@@ -349,6 +349,7 @@ var pending_wager_confirm_preserve_surface_ui_state := false
 var pending_wager_confirm_stake: int = 0
 var pending_wager_confirm_source_game_id: String = ""
 var pending_wager_confirm_source_game_state_key: String = ""
+var pending_slot_auto_wager_context: Dictionary = {}
 var pending_all_in_result_terminal_check := false
 var terminal_evaluator_call_count := 0
 var recent_result_deep_snapshot_call_count := 0
@@ -1418,6 +1419,7 @@ func _enter_game_after_input_guard(clean_game_id: String, clean_state_key: Strin
 	current_game = game_module
 	current_game_state_key = clean_state_key
 	current_game.set_transient_state_key_context(clean_state_key)
+	var slot_wager_recovery := _recover_stranded_slot_wager_on_entry()
 	if _current_game_uses_action_authority() and bool(action_authority_contract.get("automatic_pending_recovery", false)):
 		var entry_recovery := _sealed_action_host_rollback_pending_delivery()
 		if not bool(entry_recovery.get("ok", false)):
@@ -1439,12 +1441,46 @@ func _enter_game_after_input_guard(clean_game_id: String, clean_state_key: Strin
 	if restored_blackjack_wager > 0:
 		selected_stake = restored_blackjack_wager
 	_show_message(str(result.get("message", "")))
+	if bool(slot_wager_recovery.get("handled", false)):
+		_show_message(str(slot_wager_recovery.get("message", "")))
+		_autosave_foundation_run("Autosaved recovered wager.")
 	_refresh()
 	_clear_selected_stake()
 	if restored_blackjack_wager > 0:
 		selected_stake = restored_blackjack_wager
 	_refresh_stake_input()
 	return current_screen == SCREEN_GAME and current_game == game_module
+
+
+func _recover_stranded_slot_wager_on_entry() -> Dictionary:
+	if run_state == null or current_game == null or current_game.get_id() != "slot":
+		return {}
+	# Recover only an intact, uncommitted spin at the legacy bankroll boundary.
+	# Read without creating/rebasing: foreign, changed-checkpoint or malformed
+	# evidence must never become fresh authority merely because the cabinet opens.
+	var ledger := _sealed_action_host_ledger(run_state, false, true)
+	if ledger.is_empty():
+		return {}
+	var pending: Dictionary = ledger.get("pending_delivery", {})
+	if pending.is_empty() or str(pending.get("action_id", "")) != "spin":
+		return {}
+	var cost := current_game.wager_cost_for_context("spin", 0, run_state, run_state.current_environment)
+	var capacity := run_state.wager_capacity_for_game("slot", run_state.current_environment)
+	if cost <= 0 or int(pending.get("stake", 0)) != cost or capacity <= 0 or capacity > cost:
+		return {}
+	var request_key := str(pending.get("request_key", ""))
+	if request_key.is_empty() or (ledger.get("request_cache", {}) as Dictionary).has(request_key):
+		return {}
+	for entry_value in ledger.get("journal", []):
+		if typeof(entry_value) == TYPE_DICTIONARY and str((entry_value as Dictionary).get("request_key", "")) == request_key:
+			return {}
+	# Use the existing explicit cancellation protocol, including delivery and
+	# recovery-session identity validation. Never resolve/replay the saved spin.
+	var canceled := _sealed_action_host_surface_intent("slot_cancel_pending", 0, false, _current_game_surface_input_time_msec())
+	if not bool(canceled.get("handled", false)):
+		return {}
+	current_game.surface_pause_repeating_action_for_confirmation({}, run_state, run_state.current_environment)
+	return {"handled": true, "message": "Unfinished Auto wager canceled. Choose a bet to continue."}
 
 
 func _set_active_game_binding(game_id: String = "") -> void:
@@ -1501,6 +1537,8 @@ func _enter_grand_casino_duel_surface() -> bool:
 
 func back_to_environment() -> void:
 	_drain_rourke_resolution()
+	if not pending_slot_auto_wager_context.is_empty():
+		cancel_pending_wager_confirmation()
 	if _resolve_pending_all_in_terminal_result():
 		return
 	if run_state != null and current_game != null and run_state.grand_casino_duel_active(run_state.current_environment):
@@ -2271,6 +2309,23 @@ func _apply_game_surface_command(command: Dictionary, index: int = -1, confirm_r
 		set_selected_stake(int(command.get("set_stake", 0)), true)
 	_play_surface_command_audio(command, index)
 	var environment_changed := bool(command.get("environment_changed", false))
+	if bool(command.get("request_wager_confirmation", false)):
+		var confirmation_action_id := str(command.get("wager_confirmation_action_id", ""))
+		var confirmation_stake := int(command.get("wager_confirmation_stake", 0))
+		var confirmation_cost := _wager_cost_for_action(confirmation_action_id, confirmation_stake)
+		if environment_changed:
+			_autosave_foundation_run("Autosaved.")
+		# Publish the paused cabinet before the popup takes input ownership.
+		_refresh()
+		if _wager_needs_final_bankroll_confirmation(current_game, confirmation_action_id, confirmation_stake, confirmation_cost):
+			_show_wager_confirmation_popup(confirmation_action_id, confirmation_stake, confirmation_cost, false, false)
+			pending_slot_auto_wager_context = {
+				"run": run_state, "game": current_game,
+				"environment_id": str(run_state.current_environment.get("id", "")),
+				"state_key": current_game_state_key, "session": game_surface_session_generation,
+				"bankroll": run_state.bankroll, "cost": confirmation_cost,
+			}
+		return true
 	var action_id := str(command.get("action_id", ""))
 	var action_kind := str(command.get("action_kind", ""))
 	var resolved_surface_ui_state := _surface_command_resolution_ui_state(command)
@@ -3347,6 +3402,8 @@ func _checkpoint_current_game_surface_ui_state() -> void:
 
 
 func _reset_game_surface_runtime_state(checkpoint_source: bool = true, preserve_terminal_surface: bool = false) -> void:
+	if not pending_slot_auto_wager_context.is_empty():
+		_hide_event_choice_popup()
 	game_surface_session_generation += 1
 	_invalidate_deferred_embedded_action_refresh()
 	if checkpoint_source:
@@ -7399,7 +7456,7 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 		"hover_target_id", "focus_target_id", "selected_object_id", "camera_focus_rect", "camera_focus_point", "current_context_mode",
 		"action_panel_refresh_scheduled", "action_panel_refresh_active_generation", "pending_action_panel_object",
 		"pending_event_choice_popup_event_id", "pending_event_choice_popup_focus_choice_id", "pending_event_choice_popup_snapshot",
-		"pending_wager_confirm_action_id", "pending_wager_confirm_skip_stake_validation", "pending_wager_confirm_preserve_surface_ui_state", "pending_wager_confirm_stake", "pending_wager_confirm_source_game_id", "pending_wager_confirm_source_game_state_key",
+		"pending_wager_confirm_action_id", "pending_wager_confirm_skip_stake_validation", "pending_wager_confirm_preserve_surface_ui_state", "pending_wager_confirm_stake", "pending_wager_confirm_source_game_id", "pending_wager_confirm_source_game_state_key", "pending_slot_auto_wager_context",
 		"run_inventory_popup_mode", "run_inventory_context_container_id", "selected_run_inventory_item_id", "selected_run_inventory_item_source",
 		"travel_transition_active", "travel_transition_target_id", "travel_transition_target_label",
 		"game_surface_session_generation", "deferred_coach_refresh_active_generation", "tutorial_action_resume_active_generation", "deferred_embedded_refresh_generation", "deferred_embedded_refresh_pending", "deferred_embedded_refresh_run_state", "deferred_embedded_refresh_game", "deferred_embedded_refresh_environment", "deferred_embedded_refresh_result", "deferred_embedded_refresh_canvas", "deferred_embedded_refresh_game_state_key", "deferred_embedded_refresh_surface_session_generation",
@@ -14571,7 +14628,14 @@ func confirm_pending_wager_action() -> void:
 	if pending_wager_confirm_action_id.is_empty():
 		_hide_event_choice_popup()
 		return
+	var slot_auto_confirmation := not pending_slot_auto_wager_context.is_empty()
+	if slot_auto_confirmation and not _pending_slot_auto_wager_is_current():
+		_hide_event_choice_popup()
+		_show_message("The bet or bankroll changed. Choose your bet again.")
+		_refresh()
+		return
 	var action_id := pending_wager_confirm_action_id
+	var confirmed_stake := pending_wager_confirm_stake if slot_auto_confirmation else 0
 	var skip_stake_validation := pending_wager_confirm_skip_stake_validation
 	var preserve_surface_ui_state := pending_wager_confirm_preserve_surface_ui_state
 	var source_game_id := pending_wager_confirm_source_game_id
@@ -14587,7 +14651,18 @@ func confirm_pending_wager_action() -> void:
 	if not source_game_id.is_empty() and not source_is_foreground:
 		_resolve_environment_runtime_wager_action(source_game_id, action_id, true, source_game_state_key)
 	else:
-		_resolve_game_action(action_id, skip_stake_validation, preserve_surface_ui_state, true)
+		_resolve_game_action(action_id, skip_stake_validation, preserve_surface_ui_state, true, {}, false, confirmed_stake)
+
+
+func _pending_slot_auto_wager_is_current() -> bool:
+	var context := pending_slot_auto_wager_context
+	if run_state == null or current_game == null or context.get("run") != run_state or context.get("game") != current_game:
+		return false
+	return str(context.get("environment_id", "")) == str(run_state.current_environment.get("id", "")) \
+		and str(context.get("state_key", "")) == current_game_state_key \
+		and int(context.get("session", -1)) == game_surface_session_generation \
+		and int(context.get("bankroll", -1)) == run_state.bankroll \
+		and int(context.get("cost", -1)) == _wager_cost_for_action(pending_wager_confirm_action_id, pending_wager_confirm_stake)
 
 
 func cancel_pending_wager_confirmation() -> void:
@@ -14646,7 +14721,7 @@ func _wager_needs_final_bankroll_confirmation(game: GameModule, action_id: Strin
 		ui_state
 	))
 	var wager_balance := run_state.wager_capacity_for_game(game.get_id(), wager_environment)
-	return wager_balance > 0 and wager_balance - wager_cost + guaranteed_return <= 0
+	return wager_balance > 0 and wager_cost <= wager_balance and wager_balance - wager_cost + guaranteed_return <= 0
 
 
 func _pause_environment_runtime_for_wager_confirmation(game: GameModule, _game_id: String, environment_data: Dictionary = {}) -> void:
@@ -15327,6 +15402,7 @@ func _clear_event_choice_popup_button_press() -> void:
 
 
 func _clear_pending_wager_confirmation() -> void:
+	pending_slot_auto_wager_context = {}
 	_ensure_wager_confirmation_controller()
 	wager_confirmation_controller.clear()
 	_sync_wager_confirmation_controller_to_host()

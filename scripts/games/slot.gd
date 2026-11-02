@@ -1182,6 +1182,27 @@ func surface_auto_action_command(ui_state: Dictionary, _run_state: RunState, env
 		})
 	if surface_time < autoplay_next_msec:
 		return {"handled": false}
+	# Decide whether paid Auto may continue before the host seals a spin. A
+	# rejected unaffordable delivery otherwise owns the controls indefinitely;
+	# pausing after sealing also changes the delivery's trusted machine context.
+	var wager_cost := wager_cost_for_context("spin", 0, _run_state, environment, ui_state)
+	var capacity := _run_state.wager_capacity_for_game(get_id(), environment) if _run_state != null else 0
+	var guaranteed_return := minimum_wager_return_for_context("spin", 0, wager_cost, _run_state, environment, ui_state) if wager_cost == capacity else 0
+	if wager_cost > 0 and (wager_cost > capacity or capacity - wager_cost + guaranteed_return <= 0):
+		machine = _read_machine(environment)
+		machine["slot_autoplay_active"] = false
+		machine["slot_autoplay_next_msec"] = 0
+		_write_machine(environment, machine)
+		return GameModule.surface_command({
+			"handled": true,
+			"environment_changed": true,
+			# This is a presentation request, not a wager delivery. Acceptance
+			# enters the ordinary sealed resolver once the player has decided.
+			"request_wager_confirmation": wager_cost <= capacity,
+			"wager_confirmation_action_id": "spin",
+			"wager_confirmation_stake": int(StateScript.selected_bet(machine).get("total_credits", 2)),
+			"message": "Autoplay paused for all-in confirmation." if wager_cost <= capacity else "Autoplay paused. Choose a smaller bet to keep playing.",
+		})
 	return GameModule.surface_command({
 		"handled": true,
 		"action_id": "spin",
@@ -1246,6 +1267,11 @@ func environment_runtime_tick(run_state: RunState, environment: Dictionary, rng:
 			"audio_cue": _slot_feature_audio_cue(machine),
 			"audio_cue_volume_db": _slot_feature_audio_volume_db(machine),
 		}
+	if wager_cost_for_context("spin", 0, run_state, environment) > run_state.wager_capacity_for_game(get_id(), environment):
+		machine["slot_autoplay_active"] = false
+		machine["slot_autoplay_next_msec"] = 0
+		_write_machine(environment, machine)
+		return {"handled": true, "message": "Autoplay paused. Choose a smaller bet to keep playing."}
 	machine["slot_autoplay_next_msec"] = now_msec + _slot_autoplay_delay_msec(machine)
 	_write_machine(environment, machine)
 	var selected_bet: Dictionary = StateScript.selected_bet(machine)
