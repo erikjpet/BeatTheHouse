@@ -174,7 +174,7 @@ static func _build_redesigned_start_screen(host: Variant) -> void:
 	config_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host._set_control_font_color(config_title, VisualStyle.YELLOW)
 	config_header.add_child(config_title)
-	var config_done: Button = host._button("Done", Callable(host, "close_run_configuration"))
+	var config_done: Button = host._button("Done", host._portrait_menu_callback(Callable(host, "close_run_configuration")))
 	config_done.custom_minimum_size = Vector2(100, 42)
 	config_header.add_child(config_done)
 	var seed_row := HBoxContainer.new()
@@ -202,20 +202,20 @@ static func _build_redesigned_start_screen(host: Variant) -> void:
 	var config_actions := HBoxContainer.new()
 	config_actions.add_theme_constant_override("separation", 10)
 	host.run_config_content_stack.add_child(config_actions)
-	host.content_group_config_button = host._button("RUN CONTENT", Callable(host, "toggle_content_group_config"))
+	host.content_group_config_button = host._button("RUN CONTENT", host._portrait_menu_callback(Callable(host, "toggle_content_group_config")))
 	host.content_group_config_button.tooltip_text = "Choose which content groups can appear"
 	host.content_group_config_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	config_actions.add_child(host.content_group_config_button)
-	host.challenge_select_button = host._button("CHALLENGES", Callable(host, "toggle_challenge_selection"))
+	host.challenge_select_button = host._button("CHALLENGES", host._portrait_menu_callback(Callable(host, "toggle_challenge_selection")))
 	host.challenge_select_button.tooltip_text = "Choose an authored challenge"
 	host.challenge_select_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	config_actions.add_child(host.challenge_select_button)
-	host.delete_saved_run_button = host._button("DELETE SAVED RUN", Callable(host, "request_delete_saved_run"))
+	host.delete_saved_run_button = host._button("DELETE SAVED RUN", host._portrait_menu_callback(Callable(host, "request_delete_saved_run")))
 	host.delete_saved_run_button.tooltip_text = "Permanently remove the current resume slot"
 	host.delete_saved_run_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	host.delete_saved_run_button.add_theme_stylebox_override("normal", VisualStyle.pixel_box(Color("#1b0914", 0.96), VisualStyle.PINK_2, 2))
 	config_actions.add_child(host.delete_saved_run_button)
-	host.run_config_start_button = host._button("START NEW RUN", Callable(host, "_on_start_pressed"))
+	host.run_config_start_button = host._button("START NEW RUN", host._portrait_menu_callback(Callable(host, "_on_start_pressed")))
 	host.run_config_start_button.tooltip_text = "Start a new run with this seed, content, and challenge configuration"
 	host.run_config_start_button.custom_minimum_size = Vector2(0, 48)
 	host.run_config_start_button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -260,6 +260,205 @@ static func _build_redesigned_start_screen(host: Variant) -> void:
 		if host.show_game_library_launcher:
 			host._build_game_test_menu(stack)
 			host._build_environment_test_menu(stack)
+	var portrait_scroll := ScrollContainer.new()
+	portrait_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	portrait_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	portrait_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	portrait_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	portrait_scroll.visible = false
+	menu_margin.add_child(portrait_scroll)
+	var portrait_actions := VBoxContainer.new()
+	portrait_actions.add_theme_constant_override("separation", 12)
+	portrait_actions.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	portrait_actions.visible = false
+	action_grid.add_child(portrait_actions)
+	var action_nodes: Array = []
+	for row in [primary_row, secondary_row]:
+		for child in row.get_children():
+			var control := child as Control
+			action_nodes.append({"control": control, "parent": row, "minimum_width": control.custom_minimum_size.x, "flags": control.size_flags_horizontal})
+	var gesture_buttons: Array = [config_done, host.run_config_start_button]
+	for row in [top_bar, primary_row, secondary_row, config_actions]:
+		for child in row.get_children():
+			if child is BaseButton:
+				child.set_meta("bth31_action_mode", child.action_mode)
+				child.set_meta("bth31_mouse_filter", child.mouse_filter)
+				gesture_buttons.append(child)
+	for button in [config_done, host.run_config_start_button]:
+		button.set_meta("bth31_action_mode", button.action_mode)
+		button.set_meta("bth31_mouse_filter", button.mouse_filter)
+	host.portrait_start_layout = {
+		"active": false, "margin": menu_margin, "stack": stack, "scroll": portrait_scroll,
+		"actions": portrait_actions, "action_grid": action_grid, "action_nodes": action_nodes,
+		"primary": primary_row, "secondary": secondary_row,
+		"left_spacer": grid_left_spacer, "right_spacer": grid_right_spacer,
+		"logo": host.main_menu_logo, "config": host.run_config_panel,
+		"gesture_buttons": gesture_buttons,
+		"rows": [_mobile_row_pair(top_bar, false, true), _mobile_row_pair(config_header), _mobile_row_pair(config_actions)],
+	}
+	host._apply_mobile_start_layout()
+
+
+static func _mobile_row_pair(row: HBoxContainer, vertical: bool = false, buttons_only: bool = false) -> Dictionary:
+	var target: Container = VBoxContainer.new() if vertical else HFlowContainer.new()
+	target.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	if target is HFlowContainer:
+		target.add_theme_constant_override("h_separation", 8)
+		target.add_theme_constant_override("v_separation", 8)
+	else:
+		target.add_theme_constant_override("separation", 4)
+	target.visible = false
+	row.get_parent().add_child(target)
+	row.get_parent().move_child(target, row.get_index())
+	var controls: Array = []
+	for child in row.get_children():
+		if not child is Control or (buttons_only and not child is BaseButton):
+			continue
+		controls.append(child)
+	return {"active": false, "landscape": row, "portrait": target, "controls": controls, "visible": row.visible}
+
+
+static func _switch_mobile_row(pair: Dictionary, enabled: bool) -> void:
+	if bool(pair.get("active", false)) == enabled:
+		return
+	var source: Container = pair["landscape"] if enabled else pair["portrait"]
+	var target: Container = pair["portrait"] if enabled else pair["landscape"]
+	for value in pair["controls"]:
+		var control := value as Control
+		control.reparent(target, false)
+	source.visible = false
+	target.visible = bool(pair["visible"])
+	pair["active"] = enabled
+
+
+static func _set_mobile_minimum_width(host: Variant, control: Control, width: float) -> void:
+	if not is_equal_approx(control.custom_minimum_size.x, width):
+		control.custom_minimum_size.x = width
+	# Accessibility captures a base minimum once. Keep its width consistent with
+	# the active layout, retaining the original height instead of compounding it.
+	var key: String = host.ACCESSIBILITY_BASE_MIN_SIZE_META
+	if control.has_meta(key):
+		var base: Vector2 = control.get_meta(key)
+		base.x = width
+		control.set_meta(key, base)
+
+
+static func apply_portrait_start_layout(host: Variant, enabled: bool, canvas_width: float) -> void:
+	var layout: Dictionary = host.portrait_start_layout
+	if layout.is_empty():
+		return
+	if not is_instance_valid(layout.get("stack")) or not is_instance_valid(layout.get("margin")):
+		return
+	var was_enabled := bool(layout["active"])
+	if not enabled and not was_enabled:
+		return
+	var margin := layout["margin"] as MarginContainer
+	var scroll := layout["scroll"] as ScrollContainer
+	var stack := layout["stack"] as VBoxContainer
+	var grid := layout["action_grid"] as VBoxContainer
+	var actions := layout["actions"] as VBoxContainer
+	if enabled != was_enabled:
+		for side in ["left", "right"]:
+			margin.add_theme_constant_override("margin_" + side, 16 if enabled else 38)
+		for side in ["top", "bottom"]:
+			margin.add_theme_constant_override("margin_" + side, 16 if enabled else (24 if side == "top" else 20))
+		stack.reparent(scroll if enabled else margin, false)
+		scroll.visible = enabled
+		grid.custom_minimum_size.x = 0.0 if enabled else 916.0
+		grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL if enabled else Control.SIZE_SHRINK_CENTER
+		for value in layout["action_nodes"]:
+			var row: Dictionary = value
+			var control := row["control"] as Control
+			control.reparent(actions if enabled else row["parent"], false)
+			_set_mobile_minimum_width(host, control, 0.0 if enabled else float(row["minimum_width"]))
+			control.size_flags_horizontal = Control.SIZE_EXPAND_FILL if enabled else int(row["flags"])
+		actions.visible = enabled
+		for name in ["primary", "secondary", "left_spacer", "right_spacer"]:
+			(layout[name] as Control).visible = not enabled
+		_set_mobile_minimum_width(host, layout["config"] as Control, 0.0 if enabled else 760.0)
+		for pair in layout["rows"]:
+			_switch_mobile_row(pair, enabled)
+		for value in layout["gesture_buttons"]:
+			var button := value as BaseButton
+			button.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE if enabled else int(button.get_meta("bth31_action_mode"))
+			button.mouse_filter = Control.MOUSE_FILTER_PASS if enabled else int(button.get_meta("bth31_mouse_filter"))
+		layout["active"] = enabled
+	for value in layout["gesture_buttons"]:
+		var button := value as BaseButton
+		if button == null:
+			continue
+		# Recompute from the unchanged accessibility base, never from the snapped
+		# result. Integer scroll offsets must be able to reveal the full control.
+		host._apply_accessibility_minimum_size(button, host._accessibility_control_scale())
+		if enabled:
+			var height: float = ceilf(button.custom_minimum_size.y)
+			if not is_equal_approx(button.custom_minimum_size.y, height):
+				button.custom_minimum_size.y = height
+	_set_mobile_minimum_width(host, layout["logo"] as Control, minf(520.0, maxf(160.0, canvas_width - 48.0)) if enabled else 520.0)
+
+
+static func apply_portrait_run_layout(host: Variant, enabled: bool, canvas_width: float) -> void:
+	var layout: Dictionary = host.portrait_run_layout
+	if layout.is_empty():
+		return
+	var scroll := layout["scroll"] as ScrollContainer
+	var margin := layout["hud_margin"] as MarginContainer
+	var switching := bool(layout["active"]) != enabled
+	var previous_focus := host.get_viewport().gui_get_focus_owner() as Control
+	var restore_hud_focus: bool = switching and previous_focus != null and host.run_hud_panel.is_ancestor_of(previous_focus)
+	if switching:
+		margin.reparent(scroll if enabled else host.run_hud_panel, false)
+		if enabled:
+			margin.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			margin.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+		else:
+			margin.size_flags_horizontal = int(layout["margin_h_flags"])
+			margin.size_flags_vertical = int(layout["margin_v_flags"])
+			margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+		scroll.visible = enabled
+		layout["active"] = enabled
+	var available_width := maxf(1.0, canvas_width - float(VisualStyle.SPACE_4 * 2))
+	if enabled:
+		# Reserve the scrollbar's themed width even before overflow appears. A
+		# bar appearing later must not widen a fixed child beyond its viewport.
+		available_width = maxf(1.0, available_width - ceil(scroll.get_v_scroll_bar().get_combined_minimum_size().x))
+	else:
+		host.portrait_hud_pointer_cancelled = false
+	if host.structured_hud != null:
+		host.structured_hud.set_portrait_layout(enabled, available_width)
+		configure_portrait_hud_button(host.structured_hud.time_button, enabled)
+		if not enabled:
+			host.structured_hud.time_button.set_meta("bth31_canceled_gesture", false)
+	for button in [host.top_menu_button, host.top_settings_button, host.top_inventory_button, host.active_item_button]:
+		configure_portrait_hud_button(button, enabled)
+	for child in host.delivery_action_strip.get_children():
+		if child is Label:
+			if not child.has_meta("bth31_heading_width"):
+				child.set_meta("bth31_heading_width", child.custom_minimum_size.x)
+			var original_width := float(child.get_meta("bth31_heading_width"))
+			_set_mobile_minimum_width(host, child, minf(original_width, available_width) if enabled else original_width)
+		elif child is BaseButton:
+			configure_portrait_hud_button(child, enabled)
+	_switch_mobile_row(layout["header"], enabled)
+	# Reparenting releases GUI focus. Preserve the eligible old HUD control,
+	# while leaving a different/new modal focus owner alone.
+	if restore_hud_focus and is_instance_valid(previous_focus) and previous_focus.is_visible_in_tree() and previous_focus.focus_mode != Control.FOCUS_NONE:
+		var eligible := not (previous_focus is BaseButton and (previous_focus as BaseButton).disabled)
+		if eligible and host.get_viewport().gui_get_focus_owner() == null:
+			previous_focus.grab_focus()
+	var current_focus := host.get_viewport().gui_get_focus_owner() as Control
+	if enabled and current_focus != null and scroll.is_ancestor_of(current_focus):
+		scroll.call_deferred("ensure_control_visible", current_focus)
+
+
+static func configure_portrait_hud_button(button: BaseButton, enabled: bool) -> void:
+	if button == null:
+		return
+	if not button.has_meta("bth31_hud_action_mode"):
+		button.set_meta("bth31_hud_action_mode", button.action_mode)
+		button.set_meta("bth31_hud_mouse_filter", button.mouse_filter)
+	button.action_mode = BaseButton.ACTION_MODE_BUTTON_RELEASE if enabled else int(button.get_meta("bth31_hud_action_mode"))
+	button.mouse_filter = Control.MOUSE_FILTER_PASS if enabled else int(button.get_meta("bth31_hud_mouse_filter"))
 
 
 static func build_run_screen(host: Variant) -> void:
@@ -275,6 +474,16 @@ static func build_run_screen(host: Variant) -> void:
 	hud_margin.add_theme_constant_override("margin_top", VisualStyle.SPACE_1)
 	hud_margin.add_theme_constant_override("margin_bottom", VisualStyle.SPACE_1)
 	host.run_hud_panel.add_child(hud_margin)
+	hud_margin.minimum_size_changed.connect(host._on_run_hud_content_minimum_changed)
+	var portrait_hud_scroll := ScrollContainer.new()
+	portrait_hud_scroll.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	portrait_hud_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	portrait_hud_scroll.vertical_scroll_mode = ScrollContainer.SCROLL_MODE_AUTO
+	portrait_hud_scroll.mouse_filter = Control.MOUSE_FILTER_STOP
+	portrait_hud_scroll.clip_contents = true
+	portrait_hud_scroll.follow_focus = true
+	portrait_hud_scroll.visible = false
+	host.run_hud_panel.add_child(portrait_hud_scroll)
 	var hud_stack := VBoxContainer.new()
 	hud_stack.add_theme_constant_override("separation", VisualStyle.SPACE_1)
 	hud_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -394,6 +603,9 @@ static func build_run_screen(host: Variant) -> void:
 	title_row.size_flags_horizontal = Control.SIZE_SHRINK_END
 	compact_environment_row.add_child(title_row)
 	visual_stack.add_child(compact_environment_row)
+	host.portrait_run_layout = {"header": _mobile_row_pair(compact_environment_row, true),
+		"active": false, "scroll": portrait_hud_scroll, "hud_margin": hud_margin,
+		"margin_h_flags": hud_margin.size_flags_horizontal, "margin_v_flags": hud_margin.size_flags_vertical}
 	visual_stack.add_child(host.summary_label)
 	host._build_run_report_screen(visual_stack)
 	host.environment_canvas = PixelSceneCanvasScript.new()

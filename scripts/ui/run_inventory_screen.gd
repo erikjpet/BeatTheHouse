@@ -67,6 +67,7 @@ var _search_query := ""
 var _filter_mode := "all"
 var _sort_mode := "name"
 var _display_model: Dictionary = {}
+var _popup_layout_queued := false
 
 
 func _init() -> void:
@@ -236,6 +237,8 @@ func _build() -> void:
 	_panel.clip_contents = true
 	_panel.mouse_filter = Control.MOUSE_FILTER_STOP
 	add_child(_panel)
+	_panel.minimum_size_changed.connect(_queue_popup_layout)
+	resized.connect(_queue_popup_layout)
 
 	var stack := VBoxContainer.new()
 	stack.add_theme_constant_override("separation", 8)
@@ -289,7 +292,8 @@ func _build() -> void:
 	_inventory_hint_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	inventory_stack.add_child(_inventory_hint_label)
 
-	_browse_toolbar = HBoxContainer.new()
+	_browse_toolbar = BoxContainer.new()
+	_browse_toolbar.vertical = false
 	_browse_toolbar.add_theme_constant_override("separation", 6)
 	_browse_toolbar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	inventory_stack.add_child(_browse_toolbar)
@@ -862,6 +866,19 @@ func _add_attribute_badges(item: Dictionary) -> void:
 	_detail_box.add_child(AttributeBadgeRowScript.control_row(badges, 16))
 
 
+func _queue_popup_layout() -> void:
+	if not visible or not is_inside_tree() or _popup_layout_queued:
+		return
+	_popup_layout_queued = true
+	call_deferred("_settle_popup_layout")
+
+
+func _settle_popup_layout() -> void:
+	_popup_layout_queued = false
+	if visible and is_inside_tree():
+		_position_popup()
+
+
 func _position_popup() -> void:
 	if _panel == null:
 		return
@@ -882,6 +899,15 @@ func _position_popup() -> void:
 		minf(preferred_size.y, available_size.y)
 	)
 	var stacked_layout := popup_size.x < 820.0
+	var portrait := overlay_rect.size.y > overlay_rect.size.x
+	# The existing stacked panes still inherited a414px horizontal toolbar.
+	# Reflow the same controls before measuring; retain the desktop toolbar.
+	if _browse_toolbar != null:
+		_browse_toolbar.vertical = portrait
+	if _title_label != null:
+		_title_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if portrait else TextServer.AUTOWRAP_OFF
+	if _inventory_header_label != null:
+		_inventory_header_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if portrait else TextServer.AUTOWRAP_OFF
 	# On short phone-sized viewports the title and browser controls already convey
 	# this context. Hiding the two explanatory lines keeps the modal inside the
 	# viewport while leaving the item list and full detail pane scrollable.

@@ -147,6 +147,7 @@ const PixelSceneCanvasScript := preload("res://scripts/ui/pixel_scene_canvas.gd"
 const FoundationWidgetsScript := preload("res://scripts/ui/foundation_widgets.gd")
 const UIArtScript := preload("res://scripts/ui/ui_art.gd")
 const SmallScreenPolicyScript := preload("res://scripts/ui/small_screen_policy.gd")
+const MobileViewportPolicyScript := preload("res://scripts/ui/mobile_viewport_policy.gd")
 const AttributeBadgeRowScript := preload("res://scripts/ui/attribute_badge_row.gd")
 const CareerStatsScreenScript := preload("res://scripts/ui/career_stats_screen.gd")
 const FoundationScreenBuilderScript := preload("res://scripts/ui/foundation_screen_builder.gd")
@@ -485,6 +486,12 @@ var start_menu_controls: VBoxContainer
 var start_menu_intro: VBoxContainer
 var start_menu_stack: VBoxContainer
 var main_menu_action_row: HBoxContainer
+var portrait_start_layout: Dictionary = {}
+var portrait_run_layout: Dictionary = {}
+var mobile_viewport_policy_applying := false
+var run_hud_layout_settle_queued := false
+var portrait_menu_pointer_cancelled := false
+var portrait_hud_pointer_cancelled := false
 var run_config_button: Button
 var run_config_panel: PanelContainer
 var run_config_content_stack: VBoxContainer
@@ -773,6 +780,7 @@ func _ready() -> void:
 	boot_telemetry_events = []
 	_mark_boot_event("engine_ready_start", {"autoload_count": _project_autoload_count()})
 	_initialize_user_settings()
+	_initialize_mobile_viewport_policy()
 	_mark_boot_event("user_settings_ready")
 	if _defer_start_menu_secondary_panels():
 		_mark_boot_event("music_deferred")
@@ -942,6 +950,8 @@ func _advance_environment_turns_checked(amount: int = 1, debug_timing: Dictionar
 
 
 func _input(event: InputEvent) -> void:
+	_cancel_portrait_start_pointer(event)
+	_cancel_portrait_hud_pointer(event)
 	if not _event_response_transaction.is_empty() or not _rourke_resolution.is_empty():
 		get_viewport().set_input_as_handled()
 		return
@@ -983,6 +993,7 @@ func _notification(what: int) -> void:
 		if DisplayServer.get_name() != "headless":
 			set_application_pause_owner("window_minimized", DisplayServer.window_get_mode() == DisplayServer.WINDOW_MODE_MINIMIZED)
 		_invalidate_run_screen_layout()
+		_apply_mobile_start_layout()
 		_apply_run_screen_layout()
 		_layout_world_map_panel()
 		_layout_run_menu_panel()
@@ -9128,6 +9139,127 @@ func _initialize_user_settings() -> void:
 	user_settings.apply()
 
 
+func _mobile_viewport_platform_supported() -> bool:
+	return OS.has_feature("web") or OS.has_feature("android") or OS.has_feature("ios")
+
+
+func _initialize_mobile_viewport_policy() -> void:
+	var window := get_window()
+	if window == null:
+		return
+	var callback := Callable(self, "_apply_mobile_viewport_policy")
+	if not window.size_changed.is_connected(callback):
+		# Window emits this while its old viewport update is still on the stack.
+		# Re-entering content_scale_size there lets that outer update overwrite
+		# the new screen attachment after our logical size has already changed.
+		window.size_changed.connect(callback, CONNECT_DEFERRED)
+	_apply_mobile_viewport_policy()
+
+
+func _apply_mobile_viewport_policy() -> void:
+	if mobile_viewport_policy_applying or not is_inside_tree():
+		return
+	var window := get_window()
+	if window == null or window.size.x <= 0 or window.size.y <= 0:
+		return
+	var authored := Vector2i(
+		int(ProjectSettings.get_setting("display/window/size/viewport_width", 1280)),
+		int(ProjectSettings.get_setting("display/window/size/viewport_height", 720))
+	)
+	var target: Vector2i = MobileViewportPolicyScript.target_size(window.size, _mobile_viewport_platform_supported(), authored)
+	if window.content_scale_size == target:
+		return
+	mobile_viewport_policy_applying = true
+	window.content_scale_size = target
+	mobile_viewport_policy_applying = false
+	_apply_mobile_start_layout()
+	_invalidate_run_screen_layout()
+	_apply_run_screen_layout()
+
+
+func _apply_mobile_start_layout() -> void:
+	if not is_inside_tree() or portrait_start_layout.is_empty():
+		return
+	var canvas_size := get_viewport_rect().size
+	FoundationScreenBuilderScript.apply_portrait_start_layout(self, MobileViewportPolicyScript.portrait_layout(canvas_size), canvas_size.x)
+
+
+func _cancel_portrait_start_pointer(event: InputEvent) -> void:
+	if not _portrait_start_pointer_guard_active():
+		return
+	var pointer_press := (event is InputEventScreenTouch and (event as InputEventScreenTouch).pressed) or (event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT and (event as InputEventMouseButton).pressed)
+	if pointer_press or ((event is InputEventKey or event is InputEventJoypadButton) and event.is_pressed()):
+		portrait_menu_pointer_cancelled = false
+	var canceled_touch := event is InputEventScreenTouch and (event as InputEventScreenTouch).canceled
+	var canceled_mouse := event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT and (event as InputEventMouseButton).canceled
+	if canceled_touch or canceled_mouse:
+		portrait_menu_pointer_cancelled = true
+
+
+func _portrait_start_pointer_guard_active() -> bool:
+	if current_screen != SCREEN_START or portrait_start_layout.is_empty() or not bool(portrait_start_layout.get("active", false)):
+		return false
+	var scroll := portrait_start_layout.get("scroll") as ScrollContainer
+	return scroll != null and scroll.is_visible_in_tree() and not (settings_overlay != null and settings_overlay.visible)
+
+
+func _portrait_menu_callback(callback: Callable) -> Callable:
+	return Callable(self, "_on_portrait_menu_button_pressed").bind(callback)
+
+
+func _on_portrait_menu_button_pressed(callback: Callable) -> void:
+	# Release mode alone does not reject OS canceled releases. Suppress only
+	# this canceled portrait-menu gesture, without changing enabled states or
+	# disconnecting the authoritative action. The next fresh input resets it.
+	if portrait_menu_pointer_cancelled and _portrait_start_pointer_guard_active():
+		return
+	callback.call()
+
+
+func _on_run_hud_content_minimum_changed() -> void:
+	if not is_inside_tree():
+		return
+	_invalidate_run_screen_layout()
+	if not run_hud_layout_settle_queued:
+		run_hud_layout_settle_queued = true
+		call_deferred("_settle_run_hud_layout")
+
+
+func _settle_run_hud_layout() -> void:
+	run_hud_layout_settle_queued = false
+	# A size signal may arrive inside the previous layout pass, before that pass
+	# clears its dirty bit. Re-read the settled minimum instead of losing it.
+	_invalidate_run_screen_layout()
+	_apply_run_screen_layout()
+
+
+func _portrait_hud_pointer_guard_active() -> bool:
+	if current_screen == SCREEN_START or not bool(portrait_run_layout.get("active", false)):
+		return false
+	var scroll := portrait_run_layout.get("scroll") as ScrollContainer
+	return scroll != null and scroll.is_visible_in_tree()
+
+
+func _cancel_portrait_hud_pointer(event: InputEvent) -> void:
+	if not _portrait_hud_pointer_guard_active():
+		return
+	var fresh_press := (event is InputEventScreenTouch and (event as InputEventScreenTouch).pressed) or (event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT and (event as InputEventMouseButton).pressed)
+	if fresh_press or ((event is InputEventKey or event is InputEventJoypadButton) and event.is_pressed()):
+		portrait_hud_pointer_cancelled = false
+	var canceled_touch := event is InputEventScreenTouch and (event as InputEventScreenTouch).canceled
+	var canceled_mouse := event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT and (event as InputEventMouseButton).canceled
+	if canceled_touch or canceled_mouse:
+		portrait_hud_pointer_cancelled = true
+	if structured_hud != null and structured_hud.time_button != null:
+		structured_hud.time_button.set_meta("bth31_canceled_gesture", portrait_hud_pointer_cancelled)
+
+
+func _on_portrait_hud_button_pressed(callback: Callable) -> void:
+	if portrait_hud_pointer_cancelled and _portrait_hud_pointer_guard_active():
+		return
+	callback.call()
+
+
 func _surface_user_settings_load_outcome() -> void:
 	if settings_menu != null and settings_menu.has_method("set_recovery_banner"):
 		settings_menu.call("set_recovery_banner", user_settings_load_outcome)
@@ -10223,10 +10355,21 @@ func _sync_coach_panel_for_talk_dock() -> void:
 	var natural_conversation_active: bool = talk_dock != null \
 		and talk_dock.conversation_active \
 		and not _talk_entry_is_pal_tutorial_dialogue(talk_dock.entry)
-	# The Run Menu temporarily owns its controls. Preserve the active lesson so
-	# closing the menu restores its card without requiring Skip tip or progress.
-	# Include both owners here so a TalkDock refresh cannot uncover the menu.
-	coach_overlay.set_panel_suppressed(natural_conversation_active or _run_menu_is_visible())
+	# Existing modals temporarily own their controls. Preserve the active lesson
+	# so closing a modal restores its card without Skip tip or lesson progress.
+	coach_overlay.set_panel_suppressed(natural_conversation_active \
+		or _tutorial_talk_suspended_by_modal() \
+		or _run_journal_popup_is_visible() \
+		or _blocking_decision_popup_is_visible())
+	# Pal's dock remains drawn above the simultaneous coach. Coach refreshes
+	# raise its STOP panel in GUI tree order, which is separate from z_index.
+	# Keep the visible dialogue controls ahead in picking order too.
+	if talk_dock != null and talk_dock.visible and talk_dock.conversation_active \
+			and _talk_entry_is_pal_tutorial_dialogue(talk_dock.entry) \
+			and not _tutorial_talk_suspended_by_modal() \
+			and not _run_journal_popup_is_visible() \
+			and not _blocking_decision_popup_is_visible():
+		talk_dock.move_to_front()
 
 
 func _talk_entry_is_pal_tutorial_dialogue(entry: Dictionary) -> bool:
@@ -10651,6 +10794,8 @@ func _layout_run_journal_panel() -> void:
 func _settings_panel_rect_for_viewport(viewport_size: Vector2) -> Rect2:
 	var compact := _small_screen_enabled() or viewport_size.x < 960.0 or viewport_size.y < 540.0
 	var horizontal_margin := 72.0 if compact else minf(220.0, maxf(24.0, (viewport_size.x - 480.0) * 0.5))
+	if MobileViewportPolicyScript.portrait_layout(viewport_size):
+		horizontal_margin = 12.0
 	var vertical_margin := 12.0 if compact else 48.0
 	return Rect2(Vector2(horizontal_margin, vertical_margin), Vector2(maxf(1.0, viewport_size.x - horizontal_margin * 2.0), maxf(1.0, viewport_size.y - vertical_margin * 2.0)))
 
@@ -10682,6 +10827,8 @@ func _layout_settings_overlay() -> void:
 		return
 	var viewport_size := _modal_viewport_size()
 	var rect := _settings_panel_rect_for_viewport(viewport_size)
+	if settings_menu != null:
+		settings_menu.apply_viewport_layout(viewport_size)
 	settings_margin.add_theme_constant_override("margin_left", int(round(rect.position.x)))
 	settings_margin.add_theme_constant_override("margin_right", int(round(viewport_size.x - rect.end.x)))
 	settings_margin.add_theme_constant_override("margin_top", int(round(rect.position.y)))
@@ -13206,6 +13353,8 @@ func _apply_run_screen_layout() -> void:
 		return
 	if not run_layout_dirty and run_layout_last_screen_size == screen_size:
 		return
+	var portrait := MobileViewportPolicyScript.portrait_layout(screen_size)
+	FoundationScreenBuilderScript.apply_portrait_run_layout(self, portrait, screen_size.x)
 	var terminal_report := _is_failure_screen() or _is_victory_screen()
 	run_hud_panel.visible = not terminal_report
 	var proportional_info_height: float = floor(screen_size.y * RUN_INFO_BAND_RATIO)
@@ -13215,7 +13364,12 @@ func _apply_run_screen_layout() -> void:
 	for child in run_hud_panel.get_children():
 		if child is Control and child.visible:
 			hud_content_height = maxf(hud_content_height, ceil(child.get_combined_minimum_size().y))
-	var max_info_height: float = floor(screen_size.y * 0.35)
+	var hud_margin := portrait_run_layout.get("hud_margin") as MarginContainer
+	if hud_margin != null and hud_margin.is_visible_in_tree():
+		# In portrait this content lives inside the bounded scroll viewport. Size
+		# from its real contents, while the scroll keeps overflow reachable.
+		hud_content_height = maxf(hud_content_height, ceil(hud_margin.get_combined_minimum_size().y))
+	var max_info_height: float = floor(screen_size.y * (0.55 if portrait else 0.35))
 	var info_height := 0.0 if terminal_report else minf(maxf(maxf(RUN_INFO_MIN_HEIGHT, proportional_info_height), hud_content_height), max_info_height)
 	run_hud_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	run_hud_panel.offset_left = 0.0
@@ -19153,6 +19307,7 @@ func close_settings_menu() -> void:
 
 
 func _on_settings_applied() -> void:
+	_apply_mobile_viewport_policy()
 	_apply_accessibility_settings()
 	if coach_overlay != null and user_settings != null:
 		coach_overlay.set_tips_enabled(user_settings.coach_tips_enabled)
@@ -24167,6 +24322,7 @@ func _apply_accessibility_settings() -> void:
 	if transform_active or accessibility_tree_transform_active:
 		_apply_accessibility_to_node(self, font_scale, control_scale)
 	accessibility_tree_transform_active = transform_active
+	_apply_mobile_start_layout()
 	_layout_settings_overlay()
 	_layout_world_map_panel()
 	_layout_run_menu_panel()
@@ -24291,16 +24447,17 @@ func _button(text: String, callback: Callable) -> Button:
 
 
 func _hud_nav_button(text: String, callback: Callable) -> Button:
-	var button := _button(text, callback)
+	var button := _button(text, Callable(self, "_on_portrait_hud_button_pressed").bind(callback))
 	button.custom_minimum_size = Vector2(92, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	button.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	_set_control_font_size(button, 12)
 	button.tooltip_text = "Open the run menu." if text == "Menu" else "Open settings."
+	FoundationScreenBuilderScript.configure_portrait_hud_button(button, _portrait_hud_pointer_guard_active())
 	return button
 
 
 func _main_menu_button(title: String, subtitle: String, callback: Callable) -> Button:
-	var button := _button(title, callback)
+	var button := _button(title, _portrait_menu_callback(callback))
 	button.tooltip_text = subtitle
 	button.custom_minimum_size = Vector2(148, 46)
 	button.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -24334,7 +24491,7 @@ func _main_menu_button_plate_style(tint: Color) -> StyleBoxTexture:
 
 
 func _main_menu_icon_button(icon_id: String, tooltip: String, callback: Callable, accent: Color) -> Button:
-	var button := _button("", callback)
+	var button := _button("", _portrait_menu_callback(callback))
 	UIArtScript.apply_control_icon(button, icon_id, tooltip, 24, true)
 	button.tooltip_text = tooltip
 	button.accessibility_name = tooltip

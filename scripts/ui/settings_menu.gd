@@ -62,6 +62,9 @@ var focus_controls: Array[Control] = []
 var previous_focus_owner: Control
 var draft_committed := false
 var recovery_banner_message := ""
+var responsive_rows: Array[BoxContainer] = []
+var responsive_labels: Array[Label] = []
+var action_row: BoxContainer
 
 
 # Stores the settings object and builds the view.
@@ -181,25 +184,26 @@ func _build() -> void:
 	status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	add_child(status)
 
-	var actions := HBoxContainer.new()
-	actions.add_theme_constant_override("separation", 10)
-	add_child(actions)
+	action_row = BoxContainer.new()
+	action_row.add_theme_constant_override("separation", 10)
+	add_child(action_row)
 
 	back_button = _button("Back")
 	back_button.pressed.connect(_request_cancel)
-	actions.add_child(back_button)
+	action_row.add_child(back_button)
 
 	defaults_button = _button("Restore Defaults")
 	defaults_button.pressed.connect(_on_defaults)
-	actions.add_child(defaults_button)
+	action_row.add_child(defaults_button)
 
 	apply_button = _button("Apply")
 	apply_button.pressed.connect(_on_apply)
-	actions.add_child(apply_button)
+	action_row.add_child(apply_button)
 	_cache_focus_controls()
 	for control in focus_controls:
 		control.focus_entered.connect(Callable(self, "_ensure_focused_control_visible").bind(control))
 	visibility_changed.connect(_on_visibility_changed)
+	resized.connect(_on_layout_resized)
 	_apply_accessibility_settings()
 
 
@@ -354,17 +358,47 @@ func _slider(parent: Control, label_text: String, min_value: float = 0, max_valu
 
 
 # Creates the label portion shared by option and slider rows.
-func _row(parent: Control, label_text: String) -> HBoxContainer:
-	var row := HBoxContainer.new()
+func _row(parent: Control, label_text: String) -> BoxContainer:
+	var row := BoxContainer.new()
 	row.add_theme_constant_override("separation", 12)
 	parent.add_child(row)
+	responsive_rows.append(row)
 
 	var label := Label.new()
 	label.text = label_text
 	label.custom_minimum_size = Vector2(170, 0)
 	label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	row.add_child(label)
+	responsive_labels.append(label)
 	return row
+
+
+func _on_layout_resized() -> void:
+	if is_inside_tree():
+		apply_viewport_layout(get_viewport_rect().size)
+
+
+# Stacked rows and a persistent stacked footer keep every setting and action
+# reachable at large phone text sizes. Wide layouts retain their authored rows.
+func apply_viewport_layout(viewport_size: Vector2) -> void:
+	var narrow := viewport_size.x > 0.0 and viewport_size.x < 560.0
+	for row in responsive_rows:
+		row.vertical = narrow
+	for label in responsive_labels:
+		label.custom_minimum_size.x = 0.0 if narrow else 170.0
+		label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if narrow else TextServer.AUTOWRAP_OFF
+	for control in focus_controls:
+		# Scroll offsets and container placements use whole pixels. Fractional
+		# scaled minima can leave a control bottom outside ensure-visible.
+		# Preserve the unscaled metadata used on the next accessibility pass.
+		if control is BaseButton or control is HSlider:
+			control.custom_minimum_size.y = ceilf(control.custom_minimum_size.y)
+		if control is Button:
+			control.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART if narrow else TextServer.AUTOWRAP_OFF
+		if control is OptionButton:
+			control.fit_to_longest_item = not narrow
+	if action_row != null:
+		action_row.vertical = narrow
 
 
 # Creates a standard settings action button.
@@ -621,6 +655,10 @@ func _apply_accessibility_settings() -> void:
 			control_scale = maxf(control_scale, SmallScreenPolicyScript.CONTROL_SCALE)
 		high_contrast_enabled = bool(active_settings.high_contrast)
 	_apply_accessibility_to_node(self, font_scale, control_scale, high_contrast_enabled)
+	# setup builds the menu before the host attaches it. The host supplies its
+	# viewport after attachment; detached controls have no viewport to query.
+	if is_inside_tree():
+		apply_viewport_layout(get_viewport_rect().size)
 
 
 func _apply_accessibility_to_node(node: Node, font_scale: float, control_scale: float, high_contrast_enabled: bool) -> void:

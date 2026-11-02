@@ -32,8 +32,13 @@ var time_watch: HudTimeWatch
 var time_day_label: Label
 var time_exact_label: Label
 var time_detail: Label
-var run_bar: HBoxContainer
-var meta_bar: HBoxContainer
+var run_bar: Container
+var meta_bar: Container
+var landscape_run_bar: HBoxContainer
+var landscape_meta_bar: HBoxContainer
+var portrait_run_bar: HFlowContainer
+var portrait_meta_bar: HFlowContainer
+var portrait_layout_enabled := false
 var meta_location_value: Label
 var meta_gold_value: Label
 var meta_goal_value: Label
@@ -245,6 +250,7 @@ func global_rect_for_element(element_id: String) -> Rect2:
 func _build() -> void:
 	var row := HBoxContainer.new()
 	run_bar = row
+	landscape_run_bar = row
 	row.add_theme_constant_override("separation", VisualStyle.SPACE_5)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(row)
@@ -346,6 +352,7 @@ func _build() -> void:
 	time_stack.add_child(time_detail)
 
 	meta_bar = HBoxContainer.new()
+	landscape_meta_bar = meta_bar as HBoxContainer
 	meta_bar.add_theme_constant_override("separation", VisualStyle.SPACE_5)
 	meta_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	meta_bar.visible = false
@@ -360,6 +367,44 @@ func _build() -> void:
 	var goal_chip := _value_chip("luck", "Next tier")
 	meta_goal_value = goal_chip.get_meta("value_label") as Label
 	meta_bar.add_child(goal_chip)
+
+
+func set_portrait_layout(enabled: bool, available_width: float) -> void:
+	if landscape_run_bar == null:
+		return
+	if enabled != portrait_layout_enabled:
+		if portrait_run_bar == null:
+			portrait_run_bar = _portrait_flow()
+			portrait_meta_bar = _portrait_flow()
+			add_child(portrait_run_bar)
+			add_child(portrait_meta_bar)
+		var next_run: Container = portrait_run_bar if enabled else landscape_run_bar
+		var next_meta: Container = portrait_meta_bar if enabled else landscape_meta_bar
+		_move_row_contents(run_bar, next_run)
+		_move_row_contents(meta_bar, next_meta)
+		run_bar = next_run
+		meta_bar = next_meta
+		portrait_layout_enabled = enabled
+	var minimum_width := maxf(1.0, available_width) if enabled else 0.0
+	if not is_equal_approx(custom_minimum_size.x, minimum_width):
+		custom_minimum_size.x = minimum_width
+
+
+func _portrait_flow() -> HFlowContainer:
+	var flow := HFlowContainer.new()
+	flow.add_theme_constant_override("h_separation", VisualStyle.SPACE_5)
+	flow.add_theme_constant_override("v_separation", VisualStyle.SPACE_2)
+	flow.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	flow.visible = false
+	return flow
+
+
+func _move_row_contents(source: Container, target: Container) -> void:
+	var was_visible := source.visible
+	for child in source.get_children():
+		child.reparent(target, false)
+	source.visible = false
+	target.visible = was_visible
 
 
 func _render_meta(model: Dictionary) -> void:
@@ -568,6 +613,8 @@ func _render_status_icons(statuses_value: Variant) -> void:
 
 
 func _on_time_pressed() -> void:
+	if bool(time_button.get_meta("bth31_canceled_gesture", false)):
+		return
 	time_detail.visible = not time_detail.visible
 	time_requested.emit()
 
