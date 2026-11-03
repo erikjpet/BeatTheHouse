@@ -443,7 +443,20 @@ static func composed_projection(environment: Dictionary, definitions: Dictionary
 			for identity_value in _dict(owner_semantic.get(collection, {})).keys():
 				var identity := str(identity_value)
 				var record := _dict(_dict(owner_semantic.get(collection, {})).get(identity_value, {}))
-				if creation_owners.has(str(record.get("owner_namespace", ""))):
+				var created_by_owner := creation_owners.has(str(record.get("owner_namespace", "")))
+				# A mounted sequence snapshots its host semantics when created. A venue
+				# scenario can legitimately change while the sequence remains live;
+				# the new scenario projection owns base/scenario records the sequence
+				# never claimed. Replaying those stale snapshots as competing records
+				# rejects the whole room, including every ordinary door and game.
+				var claimed_by_owner := false
+				for claim_value in _array(entry.get("ownership_claims", [])):
+					if str(_dict(claim_value).get("target", "")) == identity:
+						claimed_by_owner = true
+						break
+				if not created_by_owner and not claimed_by_owner:
+					continue
+				if created_by_owner:
 					record["world_sequence_owner_token"] = token
 				if collection == "interactions":
 					var actions: Array = []
