@@ -103,8 +103,8 @@ func _check_offsite_resolved_reentry(library: ContentLibrary, failures: Array) -
 		failures.append("Delivery reentry fixture could not return to the old destination.")
 		return
 	run._cleanup_resolved_delivery_presentations()
-	if str(_dict(run.world_sequence_registrations.get(token, {})).get("lifecycle", "")) != "mounted":
-		failures.append("Cleanup retired the retained current delivery before its recovery owner finished.")
+	if str(_dict(run.world_sequence_registrations.get(token, {})).get("lifecycle", "")) != "cleaned":
+		failures.append("Cleanup retained a fully settled offsite delivery without pending recovery work.")
 	var replacement := run.delivery_begin_package({"run_id": "offsite_reentry_replacement", "targets": [{"node_id": away}], "deadline_actions": 100})
 	if not bool(replacement.get("ok", false)):
 		failures.append("Delivery reentry fixture could not start its next package: %s." % JSON.stringify(replacement))
