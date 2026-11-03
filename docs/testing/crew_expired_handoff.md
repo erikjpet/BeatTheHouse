@@ -144,3 +144,16 @@ acceptance and records missing original fixtures as gaps. Accordingly,
 acceptance: that latest save was inaccessible and untouched. Synthetic native
 compatibility evidence and fresh Web startup do not assert that unobserved
 player-state or deployed Web deadline-race gameplay acceptance.
+
+A later promoted descendant, `e641f0c81af36c399d5fea5c1504963455f63cc2`
+(tree `2e44862d148cf92ba256aa50daf23e5dd732b71e`, promotion **22:31:13 UTC**),
+also passed the same served-identity/actual-redirect/REF/VERSION/six-payload/PCK
+verification and fresh visible correct-version menu startup. Its served PCK
+SHA-256 is `a8952f563fc74dc0c743411fd6965200ead39358c4c99d07ccc601b3eef017bb`;
+version `0.6.0-dev+e641f0c81af3`. It retains the unchanged Crew core/regression
+code and includes the separately owned fixed-HUD update. Browser/context closed
+with no page errors, one autoplay warning and zero owned processes. The matching
+`next-e641f0c81af36c399d5fea5c1504963455f63cc2-{release,startup}.json`, screenshot
+and `web-next-e641-startup.{json,log}` preserve this later observation. No fresh
+389-check native run or full HUD/gameplay certification is inferred for its
+separately changed UI; the original-source qualification remains attributed above.
