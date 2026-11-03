@@ -65,5 +65,34 @@ through `29931ab9`. The exact merged source passes the808 layout checks again
 (`merged-main-layout.log`, exit0, active0). Other passing receipts above retain
 their original source60d88551 scope; they are not relabeled as new-build runs.
 
-Main publication and the existing watcher/served-build/startup verification are
-pending. No NEXT, stable/itch publication or audience change is claimed.
+Main publication succeeded at `e641f0c81af36c399d5fea5c1504963455f63cc2`, tree
+`2e44862d148cf92ba256aa50daf23e5dd732b71e`. The existing watcher observed it,
+built it at22:31:08UTC and promoted it at22:31:13UTC on2026-11-03.
+Served NEXT metadata, redirect, REF and VERSION select that exact SHA and
+`0.6.0-dev+e641f0c81af3`. Archive SHA256:
+`e9c73df7b7f7b9a9e1c571c039c3430f7f5eec73fbff901b34dd79051871249b`.
+
+`next-http.json` verifies ten served files against the actual watcher archive,
+including HTML/JS, PCK, engine WASM, engine side module, native Coin Pusher
+WASM and metadata. All return200 and match archive SHA256; WASM MIME types are
+`application/wasm`. The clean manifest's guarded native source objects equal
+the qualified tuple. This is asset/provenance verification, not visual play.
+The HTTP check exits0 with owned Job active0. No watcher restart, manual build,
+stable/itch publication or audience change was made.
+
+Basic launch and changed-behavior Web acceptance remain **unverified**. The first
+isolated browser failed during restricted-account GPU launch, before visiting
+the game; its owned Job released with active0. A second fresh-profile desktop
+account browser retains the GPU sandbox and the same5%CPU/2GiB/deadline limits;
+it fetched the required engine/PCK/native resources with200 responses, but did
+not reach startup readiness before its300-second supervisor deadline. Its
+GPU sandbox was enabled, page-error list was empty, peak aggregate memory was
+1,293,193,216bytes and the owned Job terminated/released with active0.
+`next-web-desktop-runtime.json` records timeout=true/exit1; browser state and
+logs are retained under `next-web-desktop/`. No screenshots or game actions
+were obtained, and no further launch/security relaxation was attempted.
+The earlier restricted-account attempt is retained under `next-web/` and
+`next-web-runtime.json` (exit1/active0). The timeout is a verification/runtime
+blocker, not an attributed product defect. Native layout/pointer checks above
+are not relabeled as visual Web gameplay. Keep the task open for exact-build
+browser startup and deployed layout acceptance.
