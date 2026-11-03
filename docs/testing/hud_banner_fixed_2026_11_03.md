@@ -155,3 +155,17 @@ until strict repaired Web startup qualification.
 The combined implementation retains the published204 top-level Control topology and local8f lifetime/profile guards. The external-sibling8f layout variant is historical, not the selected overlay owner. Both original native receipts remain scoped to their respective commits; the combined source is checked separately before publication.
 
 Combined source qualification: `combined-web-control-layout.log` passes **933 checks**, including both owners' geometry, real backdrop corner clicks, resize/hide/disposal and the locked Web profile guard. Receipt exit0/active0. It retains the published top-level ownership plus the local validity/lifetime guards; exact new Web validation follows publication.
+
+
+### Web parse blocker accepted on current729
+
+`BTH061-HUD-001-WEB-CANVASLAYER` is complete. Both implementation2041585d and
+8f330c51 are in deployed72945567. Exact combined source passes933 native HUD
+checks in task-11 `hud-current-729` (exit0/active0). Served source/tree, redirect,
+archive/PCK and six runtime assets pass; strict fresh Chromium startup reaches
+the matching729 menu with no page or console script errors. Only the expected
+no-user-gesture audio warning remains. Browser/context closure is awaited and
+the owned Job records active0. Raw rejected92 startup evidence remains intact.
+Receipts: task-11 `next-72945567...-release.json`, `-startup.json`, `-startup.png`
+and `web-current-729-host.json`. Parent HUD visual layout acceptance stays with
+its existing task owner; this receipt closes the unsupported-class blocker.

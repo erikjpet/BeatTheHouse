@@ -1,9 +1,9 @@
 # BTH061-TABLE-ENDING: finish the hand before the run report
 
 Implementation commit: `776a819d0420c8801708b20b5e9376c5fd0d15fe`.
-Status: table fix committed, native-tested and verified on NEXT `a8941ccf`.
-Current combined NEXT acceptance is temporarily blocked by the later HUD
-`CanvasLayer` parse issue, tracked as `BTH061-HUD-001-WEB-CANVASLAYER`.
+Status: complete. Table fix and table-only compatibility follow-up are committed,
+native-qualified and included in strictly verified current NEXT 72945567. The
+intervening HUD Web parse blocker is repaired and verified.
 Owner report: a final table decision immediately opens the ending before the
 player can see the losing hand. No original player save was supplied or changed.
 
@@ -135,3 +135,43 @@ The user subsequently supplied explicit standing authorization for tested fixes
 to `erikjpet/BeatTheHouse main`. The one permitted retry succeeded, publishing
 `a8941ccf`; the normal watcher and served/startup verification above completed.
 The earlier denial is resolved and is preserved here as historical evidence.
+
+## Final current acceptance (2026-11-03)
+
+Table-only compatibility follow-up `da24704d7a5b037a9b3771e68133553c054a393b`
+retains the established Slot, Coin Pusher and ticket terminal behavior. The new
+presentation owner and persistent all-in hand marker apply only to Blackjack,
+Baccarat, Roulette, Craps, Bar Dice, Crew Hold'em and Video Poker. The focused
+test passes **73 checks**, adding a clearly synthetic Slot host-boundary test
+for deferred all-in acknowledgement, explicit report routing and unchanged RNG.
+This contract fixture is not claimed as actual machine payout gameplay.
+Receipt: `task-11/evidence/terminal-table-scope-final.json` (exit0, active0).
+
+The deployed descendant is `72945567dda09bff4feb236e44885a7850211a19`, tree
+`c0a63da385eba9c641d83442203b1900fdd8d0cb`. It contains both table commits and
+the combined HUD Web repair. Its main/core/game files are identical to the
+native73 source; the intervening HUD is separately qualified by **933 checks**
+on exact729 (`hud-current-729.json`, exit0/active0). Two earlier misleadingly
+named owner-integration receipts ran before the fast-forward and remain da
+source evidence, not fresh729 qualification.
+
+Existing watcher built729 at22:58:00Z and promoted at22:58:07Z. Exact served
+metadata/tree,302 redirect, six asset responses, REF/VERSION and archive/PCK
+provenance agree. Archive SHA256:
+`6badd64382077bbf5a505b1a7157635ac84518d02eaea85d517e745f28be0fe9`.
+Served PCK SHA256:
+`e8fcb8703acc997a1ca30dbb7d73616c0b847a99598c2c3b8c53b1b3f833c848`.
+
+Fresh Chromium with its sandbox enabled reached the matching729 start menu.
+Strict startup rejects console errors, unlike the earlier menu-only predicate:
+page errors and console errors are empty; four required payloads return200.
+The one no-user-gesture AudioContext warning is retained. Context/browser close
+was awaited; `web-current-729-host.json` records exit0/active0. See matching
+`next-72945567...-release.json`, `-startup.json` and `-startup.png` under task-11
+evidence. This is exact Web startup, not a visual Web table-hand playtest.
+
+Current table acceptance and the Web CanvasLayer blocker are complete with
+associated commits. The parent HUD layout task retains its own acceptance
+status. This closing record changes documentation only; no further native
+campaign is required for its publication. Original profiles/saves, stable/itch
+and hosting audience remain untouched.
