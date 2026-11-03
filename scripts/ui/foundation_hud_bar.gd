@@ -12,6 +12,14 @@ const HudTimeWatchScript := preload("res://scripts/ui/hud_time_watch.gd")
 const HeatFeedbackVisualsScript := preload("res://scripts/ui/heat_feedback_visuals.gd")
 const MoneyFeedbackViewModelScript := preload("res://scripts/ui/money_feedback_view_model.gd")
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
+const ModalFocusScopeScript := preload("res://scripts/ui/modal_focus_scope.gd")
+
+# The shell reserves the remaining width for its four persistent actions. Text
+# must not alter these columns; exact values are available from Run details.
+const HUD_VALUE_WIDTH := 60.0
+const HUD_CHIPS_WIDTH := 44.0
+const HUD_METER_WIDTH := 76.0
+const HUD_CLOCK_WIDTH := 146.0
 
 var wallet_value: Label
 var wallet_delta: Label
@@ -56,11 +64,24 @@ var _status_icons_key := ""
 var _heat_feedback_elapsed_sec := HeatFeedbackVisualsScript.GAIN_DURATION_SEC
 var _heat_feedback_amount := 0
 var _heat_feedback_intensity := 0.0
+var status_button: Button
+var meta_details_button: Button
+var details_overlay: Control
+var details_panel: PanelContainer
+var details_scroll: ScrollContainer
+var details_text: Label
+var details_close: Button
+var _details_focus_scope := ModalFocusScopeScript.new()
+var _status_details: Array[Dictionary] = []
+var _clock_explanation := "Open the day/night schedule."
+var _details_opener: Control
 
 
 func _ready() -> void:
 	add_theme_stylebox_override("panel", VisualStyle.state_box("normal"))
 	_build()
+	visibility_changed.connect(_on_hud_visibility_changed)
+	resized.connect(_position_money_feedback)
 	set_process(false)
 
 
@@ -109,7 +130,7 @@ func set_compact_mode(enabled: bool) -> void:
 	if compact_mode == enabled:
 		return
 	compact_mode = enabled
-	var meter_size := VisualStyle.HUD_METER_COMPACT_SIZE if compact_mode else VisualStyle.HUD_METER_SIZE
+	var meter_size := Vector2(HUD_METER_WIDTH, 14.0 if compact_mode else 18.0)
 	if heat_meter != null:
 		heat_meter.custom_minimum_size = meter_size
 	if drunk_meter != null:
@@ -140,6 +161,7 @@ func render(model: Dictionary) -> void:
 
 	render_clock(model)
 	_render_status_icons(model.get("status_icons", []))
+	_refresh_open_details()
 
 
 func render_money(bankroll: int, chips: int, show_chips: bool, bankroll_delta: int = 0) -> void:
@@ -151,6 +173,8 @@ func render_money(bankroll: int, chips: int, show_chips: bool, bankroll_delta: i
 	var chips_text := "%d" % chips
 	if chips_value.text != chips_text:
 		chips_value.text = chips_text
+	chips_value.tooltip_text = "Chips: " + chips_text
+	_refresh_open_details()
 
 
 func render_bankroll(bankroll: int, _bankroll_delta: int = 0) -> void:
@@ -159,13 +183,14 @@ func render_bankroll(bankroll: int, _bankroll_delta: int = 0) -> void:
 	var wallet_text := "$%d" % bankroll
 	if wallet_value.text != wallet_text:
 		wallet_value.text = wallet_text
-		# A shorter amount needs the wallet's container allocation refreshed too;
-		# redrawing the backing panel alone leaves the old Web glyph allocation.
-		wallet_value.reset_size()
-		wallet_chip.queue_sort()
+		# Refresh the immediate value stack without resetting this clipped label
+		# to its 1px text minimum when the balance changes.
+		(wallet_value.get_parent() as Container).queue_sort()
 		wallet_value.queue_redraw()
 	_last_bankroll = bankroll
 	_has_rendered = true
+	wallet_value.tooltip_text = "Bankroll: " + wallet_text
+	_refresh_open_details()
 
 
 func render_clock(model: Dictionary) -> void:
@@ -182,10 +207,12 @@ func render_clock(model: Dictionary) -> void:
 		time_exact_label.text = exact_display
 	time_watch.set_minute_of_day(minute_of_day)
 	var clock_tooltip := str(model.get("clock_tooltip", "Open the day/night schedule."))
+	_clock_explanation = clock_tooltip
 	if time_button.tooltip_text != clock_tooltip:
 		time_button.tooltip_text = clock_tooltip
 	if time_detail.text != clock_tooltip:
 		time_detail.text = clock_tooltip
+	_refresh_open_details()
 
 
 func current_snapshot() -> Dictionary:
@@ -212,12 +239,16 @@ func current_snapshot() -> Dictionary:
 		"heat_feedback_elapsed_sec": _heat_feedback_elapsed_sec,
 		"heat_feedback_duration_sec": HeatFeedbackVisualsScript.GAIN_DURATION_SEC,
 		"drunk": drunk_meter.current_snapshot() if drunk_meter != null else {},
-		"status_icon_count": status_tray.get_child_count() if status_tray != null else 0,
+		"status_icon_count": _status_details.size(),
+		"visible_status_icon_count": status_tray.get_child_count() if status_tray != null else 0,
 		"time_interactive": time_button != null and not time_button.disabled,
 		"time_day": time_day_label.text if time_day_label != null else "",
 		"time_exact": time_exact_label.text if time_exact_label != null else "",
 		"time_watch": time_watch.current_snapshot() if time_watch != null else {},
-		"time_detail_visible": time_detail != null and time_detail.visible,
+		"time_detail_visible": details_overlay != null and details_overlay.visible,
+		"details_visible": details_overlay != null and details_overlay.visible,
+		"details_text": details_text.text if details_text != null else "",
+		"details_rect": details_panel.get_global_rect() if details_panel != null else Rect2(),
 		"compact_mode": compact_mode,
 		"reduce_motion": reduce_motion,
 	}
@@ -237,7 +268,7 @@ func global_rect_for_element(element_id: String) -> Rect2:
 		"clock":
 			control = time_button
 		"debt":
-			control = status_tray
+			control = status_button
 		_:
 			control = self
 	if control != null and control.is_visible_in_tree():
@@ -251,7 +282,7 @@ func _build() -> void:
 	var row := HBoxContainer.new()
 	run_bar = row
 	landscape_run_bar = row
-	row.add_theme_constant_override("separation", VisualStyle.SPACE_5)
+	row.add_theme_constant_override("separation", VisualStyle.SPACE_3)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	add_child(row)
 
@@ -260,7 +291,7 @@ func _build() -> void:
 	row.add_child(wallet_chip)
 	wallet_delta_panel = PanelContainer.new()
 	wallet_delta_panel.name = "WalletDelta"
-	wallet_delta_panel.custom_minimum_size = Vector2(68, 36)
+	wallet_delta_panel.custom_minimum_size = Vector2(84, 26)
 	wallet_delta_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	wallet_delta_panel.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	wallet_delta_panel.modulate.a = 0.0
@@ -278,27 +309,47 @@ func _build() -> void:
 	wallet_delta_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	wallet_delta_icon.visible = false
 	delta_row.add_child(wallet_delta_icon)
-	wallet_delta = FoundationWidgets.label("", VisualStyle.TYPE_BODY_LARGE)
+	wallet_delta = FoundationWidgets.label("", VisualStyle.TYPE_MICRO)
 	wallet_delta.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	wallet_delta.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	wallet_delta.autowrap_mode = TextServer.AUTOWRAP_OFF
+	wallet_delta.clip_text = true
+	wallet_delta.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	wallet_delta.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	delta_row.add_child(wallet_delta)
-	wallet_chip.add_child(wallet_delta_panel)
+	# A plain Control owns the badge so its text cannot participate in the row's
+	# minimum-size calculation. Feedback briefly replaces the caption above the
+	# bottom-aligned balance, leaving the current amount readable throughout.
+	var feedback_overlay := Control.new()
+	feedback_overlay.name = "MoneyFeedbackOverlay"
+	feedback_overlay.z_index = 1
+	feedback_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(feedback_overlay)
+	feedback_overlay.add_child(wallet_delta_panel)
+	wallet_delta_panel.position = Vector2.ZERO
+	wallet_delta_panel.size = Vector2(84, 26)
 
 	chips_chip = _value_chip("casino_chips", "Chips")
+	(chips_chip.get_meta("value_stack") as Control).custom_minimum_size.x = HUD_CHIPS_WIDTH
 	chips_value = chips_chip.get_meta("value_label") as Label
 	row.add_child(chips_chip)
 
 	var heat_group := _meter_group("heat", "Heat")
 	heat_meter = heat_group.get_meta("meter") as SegmentedMeter
 	heat_value = heat_group.get_meta("value_label") as Label
-	var heat_heading_row := heat_group.get_meta("heading_row") as HBoxContainer
 	heat_delta_badge = FoundationWidgets.label("", VisualStyle.TYPE_MICRO)
 	heat_delta_badge.autowrap_mode = TextServer.AUTOWRAP_OFF
 	heat_delta_badge.visible = false
 	heat_delta_badge.tooltip_text = "Heat gained by the last action."
+	heat_delta_badge.clip_text = true
+	heat_delta_badge.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	FoundationWidgets.set_control_font_color(heat_delta_badge, Color("#ffd166"))
-	heat_heading_row.add_child(heat_delta_badge)
+	# This transient badge overlays the meter instead of creating a new
+	# minimum-width column when Heat changes.
+	heat_meter.add_child(heat_delta_badge)
+	heat_delta_badge.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	heat_delta_badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	heat_delta_badge.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	row.add_child(heat_group)
 
 	var drunk_group := _meter_group("drink", "Drunk")
@@ -309,20 +360,34 @@ func _build() -> void:
 	status_tray = HBoxContainer.new()
 	status_tray.add_theme_constant_override("separation", VisualStyle.SPACE_2)
 	status_tray.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	row.add_child(status_tray)
+	status_tray.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	status_button = FoundationWidgets.variant_button("Info", _on_details_pressed)
+	status_button.name = "RunDetails"
+	status_button.custom_minimum_size = Vector2(64, 40)
+	status_button.clip_text = true
+	status_button.accessibility_name = "Run details and status effects"
+	status_button.tooltip_text = "Read exact values and all status effects."
+	row.add_child(status_button)
+	status_button.add_child(status_tray)
+	status_tray.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	status_tray.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	status_tray.grow_vertical = Control.GROW_DIRECTION_BOTH
 
 	var time_stack := VBoxContainer.new()
 	time_stack.add_theme_constant_override("separation", VisualStyle.SPACE_1)
+	time_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	row.add_child(time_stack)
 	time_button = FoundationWidgets.variant_button("", _on_time_pressed)
-	time_button.custom_minimum_size = VisualStyle.HUD_TIME_WIDGET_SIZE
+	time_button.custom_minimum_size = Vector2(HUD_CLOCK_WIDTH, 40)
+	time_button.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	time_button.accessibility_name = "Clock and run details"
 	time_button.tooltip_text = "Open the day/night schedule."
 	var time_margin := MarginContainer.new()
 	time_margin.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	time_margin.add_theme_constant_override("margin_left", VisualStyle.SPACE_3)
 	time_margin.add_theme_constant_override("margin_right", VisualStyle.SPACE_3)
-	time_margin.add_theme_constant_override("margin_top", VisualStyle.SPACE_3)
-	time_margin.add_theme_constant_override("margin_bottom", VisualStyle.SPACE_3)
+	time_margin.add_theme_constant_override("margin_top", 0)
+	time_margin.add_theme_constant_override("margin_bottom", 0)
 	time_margin.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	time_button.add_child(time_margin)
 	var time_row := HBoxContainer.new()
@@ -334,14 +399,19 @@ func _build() -> void:
 	var time_copy := VBoxContainer.new()
 	time_copy.add_theme_constant_override("separation", VisualStyle.SPACE_1)
 	time_copy.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	time_copy.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	time_copy.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	time_row.add_child(time_copy)
 	time_day_label = FoundationWidgets.muted_label("DAY 1", VisualStyle.TYPE_MICRO)
 	time_day_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	time_day_label.clip_text = true
+	time_day_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	time_day_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	time_copy.add_child(time_day_label)
 	time_exact_label = FoundationWidgets.label("12:00 AM", VisualStyle.TYPE_BODY_LARGE)
 	time_exact_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	time_exact_label.clip_text = true
+	time_exact_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	time_exact_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	time_copy.add_child(time_exact_label)
 	time_stack.add_child(time_button)
@@ -349,7 +419,8 @@ func _build() -> void:
 	time_detail.visible = false
 	time_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	time_detail.custom_minimum_size.x = VisualStyle.TOOLTIP_MAX_WIDTH
-	time_stack.add_child(time_detail)
+	# Retain the source label for snapshot/API compatibility, outside the row.
+	feedback_overlay.add_child(time_detail)
 
 	meta_bar = HBoxContainer.new()
 	landscape_meta_bar = meta_bar as HBoxContainer
@@ -367,6 +438,14 @@ func _build() -> void:
 	var goal_chip := _value_chip("luck", "Next tier")
 	meta_goal_value = goal_chip.get_meta("value_label") as Label
 	meta_bar.add_child(goal_chip)
+	meta_details_button = FoundationWidgets.variant_button("Info", _on_details_pressed)
+	meta_details_button.custom_minimum_size = Vector2(64, 40)
+	meta_details_button.clip_text = true
+	meta_details_button.accessibility_name = "Home details and exact values"
+	meta_bar.add_child(meta_details_button)
+	_build_details_overlay()
+	heat_meter.custom_minimum_size = Vector2(HUD_METER_WIDTH, 14)
+	drunk_meter.custom_minimum_size = Vector2(HUD_METER_WIDTH, 14)
 
 
 func set_portrait_layout(enabled: bool, available_width: float) -> void:
@@ -412,16 +491,21 @@ func _render_meta(model: Dictionary) -> void:
 	meta_location_value.text = str(model.get("location_text", "Home"))
 	meta_gold_value.text = str(model.get("gold_text", "%dg" % int(model.get("gold", 0))))
 	meta_goal_value.text = str(model.get("next_goal_text", "Top tier"))
+	_refresh_open_details()
 
 
 func _set_meta_mode(enabled: bool) -> void:
-	var feedback_parent := meta_wallet_chip if enabled else wallet_chip
-	if wallet_delta_panel != null and feedback_parent != null and wallet_delta_panel.get_parent() != feedback_parent:
-		wallet_delta_panel.reparent(feedback_parent, false)
 	if run_bar != null and run_bar.visible == enabled:
 		run_bar.visible = not enabled
 	if meta_bar != null and meta_bar.visible != enabled:
 		meta_bar.visible = enabled
+	call_deferred("_position_money_feedback")
+
+
+func _position_money_feedback() -> void:
+	var target := meta_wallet_chip if meta_bar != null and meta_bar.visible else wallet_chip
+	if wallet_delta_panel != null and target != null and target.is_inside_tree():
+		wallet_delta_panel.global_position = target.global_position
 
 
 func _meta_field_snapshot() -> Array:
@@ -439,21 +523,30 @@ func _value_chip(icon_id: String, title: String) -> HBoxContainer:
 	chip.add_theme_constant_override("separation", VisualStyle.SPACE_2)
 	var icon_rect := TextureRect.new()
 	icon_rect.texture = UIArtScript.icon(icon_id)
-	icon_rect.custom_minimum_size = VisualStyle.ICON_MEDIUM
+	icon_rect.custom_minimum_size = VisualStyle.ICON_SMALL
 	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	chip.add_child(icon_rect)
 	var stack := VBoxContainer.new()
+	stack.custom_minimum_size.x = HUD_VALUE_WIDTH
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.add_theme_constant_override("separation", VisualStyle.SPACE_1)
 	chip.add_child(stack)
 	var title_label := FoundationWidgets.muted_label(title, VisualStyle.TYPE_MICRO)
 	title_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	title_label.clip_text = true
+	title_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	stack.add_child(title_label)
 	var value_label := FoundationWidgets.label("", VisualStyle.TYPE_BODY_LARGE)
 	value_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	value_label.clip_text = true
+	value_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	value_label.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	value_label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
 	stack.add_child(value_label)
 	chip.set_meta("value_label", value_label)
+	chip.set_meta("value_stack", stack)
 	return chip
 
 
@@ -462,12 +555,14 @@ func _meter_group(icon_id: String, title: String) -> HBoxContainer:
 	group.add_theme_constant_override("separation", VisualStyle.SPACE_2)
 	var icon_rect := TextureRect.new()
 	icon_rect.texture = UIArtScript.icon(icon_id)
-	icon_rect.custom_minimum_size = VisualStyle.ICON_MEDIUM
+	icon_rect.custom_minimum_size = VisualStyle.ICON_SMALL
 	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	group.add_child(icon_rect)
 	var stack := VBoxContainer.new()
+	stack.custom_minimum_size.x = HUD_METER_WIDTH
+	stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	stack.add_theme_constant_override("separation", VisualStyle.SPACE_1)
 	group.add_child(stack)
 	var heading_row := HBoxContainer.new()
@@ -475,11 +570,18 @@ func _meter_group(icon_id: String, title: String) -> HBoxContainer:
 	stack.add_child(heading_row)
 	var title_label := FoundationWidgets.muted_label(title, VisualStyle.TYPE_MICRO)
 	title_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	title_label.clip_text = true
+	title_label.custom_minimum_size.x = 42.0
+	title_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	heading_row.add_child(title_label)
 	var value_label := FoundationWidgets.label("", VisualStyle.TYPE_CAPTION)
 	value_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	value_label.clip_text = true
+	value_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	value_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	heading_row.add_child(value_label)
 	var meter: SegmentedMeter = SegmentedMeterScript.new()
+	meter.custom_minimum_size = Vector2(HUD_METER_WIDTH, 14)
 	stack.add_child(meter)
 	group.set_meta("meter", meter)
 	group.set_meta("value_label", value_label)
@@ -563,16 +665,21 @@ func present_money_feedback(entries: Array) -> void:
 	_wallet_delta_tone = tone
 	var accent := VisualStyle.role(tone)
 	var style := VisualStyle.pixel_box(VisualStyle.DARK_2, accent, 2)
-	style.content_margin_left = 8.0
-	style.content_margin_right = 8.0
-	style.content_margin_top = 5.0
-	style.content_margin_bottom = 5.0
+	style.content_margin_left = 4.0
+	style.content_margin_right = 4.0
+	style.content_margin_top = 2.0
+	style.content_margin_bottom = 2.0
 	wallet_delta_panel.add_theme_stylebox_override("panel", style)
+	# A Control retains a prior larger theme minimum after that theme changes.
+	# Reapply the bounded badge size once its compact style is installed.
+	wallet_delta_panel.size = Vector2(84, 26)
 	FoundationWidgets.set_control_font_color(wallet_delta, accent)
 	wallet_delta.modulate = Color.WHITE
 	wallet_delta_panel.modulate.a = 1.0
+	_position_money_feedback()
 	_money_feedback_elapsed_sec = 0.0
 	_money_feedback_presentations += 1
+	_refresh_open_details()
 	set_process(true)
 
 
@@ -581,6 +688,8 @@ func _render_status_icons(statuses_value: Variant) -> void:
 		if not _status_icons_key.is_empty():
 			FoundationWidgets.clear(status_tray)
 			_status_icons_key = ""
+		_status_details.clear()
+		status_button.text = "Info"
 		return
 	var statuses: Array = statuses_value
 	var key_parts: Array[String] = []
@@ -598,10 +707,14 @@ func _render_status_icons(statuses_value: Variant) -> void:
 		return
 	_status_icons_key = next_key
 	FoundationWidgets.clear(status_tray)
+	_status_details.clear()
 	for status_value in statuses:
 		if typeof(status_value) != TYPE_DICTIONARY:
 			continue
 		var status: Dictionary = status_value
+		_status_details.append(status.duplicate(true))
+		if status_tray.get_child_count() >= 2:
+			continue
 		var icon_rect := TextureRect.new()
 		icon_rect.set_meta("status_id", str(status.get("id", "")))
 		icon_rect.texture = UIArtScript.icon(str(status.get("icon", "alert")))
@@ -609,14 +722,173 @@ func _render_status_icons(statuses_value: Variant) -> void:
 		icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 		icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 		icon_rect.tooltip_text = str(status.get("tooltip", status.get("label", "")))
+		icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		status_tray.add_child(icon_rect)
+	status_button.text = "Info" if _status_details.is_empty() else ""
+	status_button.tooltip_text = "Run details: %d status effects. Read all exact values and effects." % _status_details.size()
+	status_button.accessibility_name = "Run details, %d status effects" % _status_details.size()
 
 
 func _on_time_pressed() -> void:
 	if bool(time_button.get_meta("bth31_canceled_gesture", false)):
 		return
-	time_detail.visible = not time_detail.visible
+	_open_details(time_button)
 	time_requested.emit()
+
+
+func _on_details_pressed() -> void:
+	_open_details(meta_details_button if meta_bar.visible else status_button)
+
+
+func _build_details_overlay() -> void:
+	# A viewport layer keeps detail outside the clipped, fixed-height HUD. It is
+	# deliberately separate from the information row's minimum-size hierarchy.
+	var layer := CanvasLayer.new()
+	layer.name = "HudDetailsLayer"
+	layer.layer = 90
+	add_child(layer)
+	details_overlay = Control.new()
+	details_overlay.name = "HudDetails"
+	details_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	details_overlay.visible = false
+	layer.add_child(details_overlay)
+	var shade := ColorRect.new()
+	shade.color = Color(0.0, 0.0, 0.0, 0.72)
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shade.gui_input.connect(_on_details_shade_input)
+	details_overlay.add_child(shade)
+	details_panel = PanelContainer.new()
+	details_panel.add_theme_stylebox_override("panel", VisualStyle.state_box("normal"))
+	details_overlay.add_child(details_panel)
+	var stack := VBoxContainer.new()
+	stack.add_theme_constant_override("separation", VisualStyle.SPACE_5)
+	details_panel.add_child(stack)
+	var heading := FoundationWidgets.label("Run details", VisualStyle.TYPE_HEADING)
+	heading.name = "HudDetailsHeading"
+	heading.autowrap_mode = TextServer.AUTOWRAP_OFF
+	heading.clip_text = true
+	stack.add_child(heading)
+	details_scroll = ScrollContainer.new()
+	details_scroll.name = "HudDetailsScroll"
+	details_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	details_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	details_scroll.follow_focus = true
+	details_scroll.focus_mode = Control.FOCUS_ALL
+	details_scroll.accessibility_name = "Exact values and status effects; scroll to read"
+	stack.add_child(details_scroll)
+	details_text = FoundationWidgets.label("", VisualStyle.TYPE_BODY_LARGE)
+	details_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	details_text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	details_scroll.add_child(details_text)
+	details_close = FoundationWidgets.variant_button("Close", close_details)
+	details_close.name = "CloseHudDetails"
+	details_close.custom_minimum_size.y = 52
+	stack.add_child(details_close)
+	details_overlay.resized.connect(_layout_details)
+	set_process_input(true)
+
+
+func _open_details(opener: Control) -> void:
+	if details_overlay == null:
+		return
+	_details_opener = opener
+	_refresh_details_text()
+	details_overlay.show()
+	_layout_details()
+	details_scroll.scroll_vertical = 0
+	_details_focus_scope.push_scope(details_overlay, details_close, opener, [details_scroll, details_close])
+
+
+func close_details() -> void:
+	if details_overlay == null or not details_overlay.visible:
+		return
+	details_overlay.hide()
+	_details_focus_scope.pop_scope(details_overlay)
+	_details_opener = null
+
+
+func details_is_visible() -> bool:
+	return details_overlay != null and details_overlay.visible
+
+
+func _layout_details() -> void:
+	if details_panel == null or not is_inside_tree():
+		return
+	var available := get_viewport_rect().size
+	var panel_size := Vector2(minf(600.0, maxf(1.0, available.x - 32.0)), minf(520.0, maxf(1.0, available.y - 32.0)))
+	details_panel.position = (available - panel_size) * 0.5
+	details_panel.size = panel_size
+
+
+func _refresh_open_details() -> void:
+	if details_overlay != null and details_overlay.visible:
+		_refresh_details_text()
+
+
+func _refresh_details_text() -> void:
+	if details_text == null:
+		return
+	var lines: PackedStringArray = []
+	if meta_bar != null and meta_bar.visible:
+		for field in _meta_field_snapshot():
+			lines.append("%s: %s" % [str(field.get("label", "")), str(field.get("value", ""))])
+	else:
+		lines.append("Bankroll: " + wallet_value.text)
+		if chips_chip.visible:
+			lines.append("Chips: " + chips_value.text)
+		lines.append("Heat: " + heat_value.text)
+		if _heat_feedback_amount > 0:
+			lines.append("Last Heat gain: +%d" % _heat_feedback_amount)
+		lines.append("Drunk: " + drunk_value.text)
+		lines.append("%s, %s" % [time_day_label.text, time_exact_label.text])
+		lines.append(_clock_explanation)
+		for status in _status_details:
+			lines.append("%s: %s" % [str(status.get("label", status.get("id", "Status"))), str(status.get("tooltip", ""))])
+	if not wallet_delta.text.is_empty():
+		lines.append("Last money change: " + wallet_delta.text)
+	details_text.text = "\n\n".join(lines)
+
+
+func _on_details_shade_input(event: InputEvent) -> void:
+	if (event is InputEventMouseButton and (event as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT and event.is_pressed()) \
+			or (event is InputEventScreenTouch and event.is_pressed()):
+		close_details()
+		get_viewport().set_input_as_handled()
+
+
+func _input(event: InputEvent) -> void:
+	if details_overlay == null or not details_overlay.visible:
+		return
+	if event.is_action_pressed("ui_cancel"):
+		close_details()
+		get_viewport().set_input_as_handled()
+		return
+	if event.is_pressed() and get_viewport().gui_get_focus_owner() == details_scroll:
+		var amount := 0
+		if event.is_action_pressed("ui_up"):
+			amount = -40
+		elif event.is_action_pressed("ui_down"):
+			amount = 40
+		elif event.is_action_pressed("ui_page_up"):
+			amount = -int(details_scroll.size.y)
+		elif event.is_action_pressed("ui_page_down"):
+			amount = int(details_scroll.size.y)
+		if amount != 0:
+			details_scroll.scroll_vertical += amount
+			get_viewport().set_input_as_handled()
+			return
+	_details_focus_scope.handle_input(event)
+
+
+func _on_hud_visibility_changed() -> void:
+	if not is_visible_in_tree():
+		close_details()
+
+
+func _exit_tree() -> void:
+	if details_overlay != null:
+		_details_focus_scope.pop_scope(details_overlay)
+	_details_focus_scope.clear()
 
 
 func _clock_parts(model: Dictionary) -> Dictionary:

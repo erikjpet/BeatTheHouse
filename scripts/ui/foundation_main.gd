@@ -61,7 +61,6 @@ const CONTEXT_MODE_SCENARIO := "scenario"
 const CONTEXT_MODE_SCENARIO_SEQUENCE := "scenario_sequence"
 const META_LOCATION_HOME := "home"
 const META_LOCATION_START_RUN := "start_run"
-const RUN_INFO_BAND_RATIO := 0.10
 const RUN_INFO_MIN_HEIGHT := 72.0
 const RUN_HUD_COMPACT_MAX_WIDTH := 1280.0
 const ENVIRONMENT_CANVAS_MIN_SIZE := Vector2.ZERO
@@ -570,11 +569,10 @@ var top_menu_button: Button
 var top_settings_button: Button
 var top_inventory_button: Button
 var active_item_button: Button
-var delivery_action_strip: HFlowContainer
+var delivery_action_button: Button
 var crew_delivery_event_modules: Dictionary = {}
 var crew_delivery_event_run_ref: WeakRef
 var crew_delivery_event_context: String = ""
-var delivery_action_buttons: Dictionary = {}
 var run_menu_overlay: Control
 var run_menu_panel: PanelContainer
 var run_menu_header: Control
@@ -733,7 +731,6 @@ var environment_canvas: PixelSceneCanvas
 var game_surface_canvas
 var run_layout_dirty := true
 var run_layout_last_screen_size := Vector2(-1.0, -1.0)
-var delivery_action_layout_refresh_deferred := false
 var accessibility_tree_transform_active := false
 var web_audio_unlock_refresh_scheduled := false
 var web_audio_unlock_refresh_count := 0
@@ -950,6 +947,10 @@ func _advance_environment_turns_checked(amount: int = 1, debug_timing: Dictionar
 
 
 func _input(event: InputEvent) -> void:
+	# The HUD disclosure owns its own focused controls. Do not let a response
+	# hotkey or another modal's scope act on the room behind it.
+	if _hud_details_is_visible():
+		return
 	_cancel_portrait_start_pointer(event)
 	_cancel_portrait_hud_pointer(event)
 	if not _event_response_transaction.is_empty() or not _rourke_resolution.is_empty():
@@ -13409,20 +13410,9 @@ func _apply_run_screen_layout() -> void:
 	FoundationScreenBuilderScript.apply_portrait_run_layout(self, portrait, screen_size.x)
 	var terminal_report := _is_failure_screen() or _is_victory_screen()
 	run_hud_panel.visible = not terminal_report
-	var proportional_info_height: float = floor(screen_size.y * RUN_INFO_BAND_RATIO)
-	var hud_content_height: float = ceil(run_hud_panel.get_combined_minimum_size().y)
-	# Panel does not propagate its content's minimum size. Include the margin
-	# container so the persistent delivery row stays inside the clipped HUD.
-	for child in run_hud_panel.get_children():
-		if child is Control and child.visible:
-			hud_content_height = maxf(hud_content_height, ceil(child.get_combined_minimum_size().y))
-	var hud_margin := portrait_run_layout.get("hud_margin") as MarginContainer
-	if hud_margin != null and hud_margin.is_visible_in_tree():
-		# In portrait this content lives inside the bounded scroll viewport. Size
-		# from its real contents, while the scroll keeps overflow reachable.
-		hud_content_height = maxf(hud_content_height, ceil(hud_margin.get_combined_minimum_size().y))
-	var max_info_height: float = floor(screen_size.y * (0.55 if portrait else 0.35))
-	var info_height := 0.0 if terminal_report else minf(maxf(maxf(RUN_INFO_MIN_HEIGHT, proportional_info_height), hud_content_height), max_info_height)
+	# The 1280x720 run viewport has one 72px information row. Transient
+	# content must never resize the room or move an action onto another row.
+	var info_height := 0.0 if terminal_report else RUN_INFO_MIN_HEIGHT
 	run_hud_panel.set_anchors_preset(Control.PRESET_FULL_RECT)
 	run_hud_panel.offset_left = 0.0
 	run_hud_panel.offset_top = 0.0
@@ -13447,22 +13437,6 @@ func _apply_run_screen_layout() -> void:
 
 func _invalidate_run_screen_layout() -> void:
 	run_layout_dirty = true
-
-
-func _schedule_delivery_action_layout_refresh() -> void:
-	_invalidate_run_screen_layout()
-	if delivery_action_layout_refresh_deferred:
-		return
-	delivery_action_layout_refresh_deferred = true
-	call_deferred("_settle_delivery_action_layout")
-
-
-func _settle_delivery_action_layout() -> void:
-	delivery_action_layout_refresh_deferred = false
-	# Container minimum-size propagation is deferred too. Re-arm and apply the
-	# layout after the strip's children have received their real dimensions.
-	_invalidate_run_screen_layout()
-	_apply_run_screen_layout()
 
 
 func _render_run_report() -> void:
@@ -14736,7 +14710,11 @@ func _blocking_decision_popup_is_visible() -> bool:
 
 
 func _modal_contract_blocks_player_input() -> bool:
-	return travel_transition_active or (talk_dock != null and talk_dock.conversation_active) or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible()
+	return _hud_details_is_visible() or travel_transition_active or (talk_dock != null and talk_dock.conversation_active) or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _world_map_overlay_is_visible() or _run_menu_is_visible()
+
+
+func _hud_details_is_visible() -> bool:
+	return structured_hud != null and structured_hud.details_is_visible()
 
 
 func _simulation_progression_paused() -> bool:
@@ -14812,10 +14790,12 @@ func _pal_tutorial_time_freeze_active() -> bool:
 func _talk_dock_input_is_blocked() -> bool:
 	# A map can intentionally host a tutorial conversation. It remains modal to
 	# the room behind it, but must not make its own TalkDock unresponsive.
-	return travel_transition_active or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _run_menu_is_visible()
+	return _hud_details_is_visible() or travel_transition_active or _event_choice_popup_is_visible() or _meta_item_interaction_is_visible() or _run_inventory_popup_is_visible() or _run_journal_popup_is_visible() or _run_menu_is_visible()
 
 
 func _clear_input_guard_modal_state() -> void:
+	if structured_hud != null:
+		structured_hud.close_details()
 	# Each close helper is idempotent, so this also repairs a partially torn-down
 	# modal stack at lifecycle boundaries.
 	_hide_event_choice_popup()
@@ -14828,6 +14808,8 @@ func _clear_input_guard_modal_state() -> void:
 
 
 func _blocking_modal_message() -> String:
+	if _hud_details_is_visible():
+		return "Close run details before doing anything else."
 	if travel_transition_active:
 		return "Travel is already in progress."
 	if _event_choice_popup_is_visible():
@@ -15212,6 +15194,8 @@ func _defer_event_choice_popup_button_press_recovery() -> void:
 
 
 func _present_event_choice_popup() -> void:
+	if structured_hud != null:
+		structured_hud.close_details()
 	if event_choice_popup_overlay == null:
 		return
 	if not event_choice_popup_overlay.visible:
@@ -15269,6 +15253,9 @@ func _trap_event_choice_popup_focus(event: InputEvent) -> bool:
 
 
 func _route_topmost_modal_cancel() -> bool:
+	if _hud_details_is_visible():
+		structured_hud.close_details()
+		return true
 	if _event_choice_popup_is_visible():
 		if bool(pending_event_choice_popup_snapshot.get("dismissible", false)):
 			if str(pending_event_choice_popup_snapshot.get("popup_type", "")) == "interactable_event":
@@ -20924,12 +20911,26 @@ func _apply_hud_mode_visibility() -> void:
 		top_inventory_button.visible = not meta_mode
 	if active_item_button != null:
 		active_item_button.visible = not meta_mode
-	_refresh_delivery_action_strip()
+	_refresh_delivery_action_button()
 
 
-func _refresh_delivery_action_strip() -> void:
-	if delivery_action_strip == null:
+func _refresh_delivery_action_button() -> void:
+	if delivery_action_button == null:
 		return
+	var model := _delivery_action_model()
+	var actions: Array = model.get("actions", [])
+	var timing_text := str(model.get("timing_text", ""))
+	delivery_action_button.visible = not actions.is_empty() or not timing_text.is_empty()
+	delivery_action_button.tooltip_text = "Package: %s\nOpen delivery timing and street actions." % timing_text
+	if _event_choice_popup_is_visible() and str(pending_event_choice_popup_snapshot.get("popup_type", "")) == "delivery_actions":
+		if not delivery_action_button.visible:
+			_hide_event_choice_popup()
+		elif str(delivery_action_button.get_meta("action_signature", "")) != JSON.stringify(model):
+			_show_delivery_actions_popup()
+	delivery_action_button.set_meta("action_signature", JSON.stringify(model))
+
+
+func _delivery_action_model() -> Dictionary:
 	var actions: Array = []
 	if run_state != null and not _is_meta_session() and current_screen in [SCREEN_ENVIRONMENT, SCREEN_RESULT] and current_game == null \
 			and run_state.has_method("delivery_top_actions"):
@@ -20939,47 +20940,37 @@ func _refresh_delivery_action_strip() -> void:
 		timing_text = run_state.delivery_timing_text() if run_state.delivery_has_active_run() else str(run_state.active_delivery_run.get("receipt", {}).get("failure_message", ""))
 		var owed := run_state.crew_delivery_obligation_count()
 		if owed > 0: timing_text = "%d Crew deliveries owed%s" % [owed, " | " + timing_text if not timing_text.is_empty() else ". Requests only where the Crew is present."]
-	var signature := JSON.stringify([actions, timing_text])
-	if str(delivery_action_strip.get_meta("action_signature", "")) == signature:
-		var next_visible := not actions.is_empty() or not timing_text.is_empty()
-		if delivery_action_strip.visible != next_visible:
-			delivery_action_strip.visible = next_visible
-			_schedule_delivery_action_layout_refresh()
+	return {"actions": actions, "timing_text": timing_text}
+
+
+func _show_delivery_actions_popup() -> void:
+	if event_choice_popup_overlay == null or event_choice_popup_choices_list == null:
 		return
-	delivery_action_strip.set_meta("action_signature", signature)
-	for child in delivery_action_strip.get_children():
-		delivery_action_strip.remove_child(child)
-		child.queue_free()
-	delivery_action_buttons.clear()
+	var model := _delivery_action_model()
+	var actions: Array = model.get("actions", [])
+	var timing_text := str(model.get("timing_text", ""))
 	if actions.is_empty() and timing_text.is_empty():
-		delivery_action_strip.visible = false
-		# This strip is a second row inside the clipped HUD. Recompute the info
-		# band whenever its contents disappear so the room canvas can reclaim the
-		# released height instead of retaining the previous delivery footprint.
-		_schedule_delivery_action_layout_refresh()
 		return
-	var heading_prefix := "CREW | " if run_state != null and not run_state.delivery_has_active_run() and run_state.crew_delivery_obligation_count() > 0 else "PACKAGE | "
-	var heading := _muted_label(heading_prefix + timing_text, 12)
-	heading.tooltip_text = timing_text
+	_show_meta_popup("Package", "Delivery timing and street actions.", "delivery_actions")
+	event_choice_popup_scroll.follow_focus = true
+	var heading := _label(timing_text, 13)
 	heading.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	heading.custom_minimum_size.x = 720
-	delivery_action_strip.add_child(heading)
+	heading.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	event_choice_popup_choices_list.add_child(heading)
 	for action_value in actions:
 		var action := JsonCoerceScript._copy_dict(action_value)
 		var verb := str(action.get("id", ""))
 		if verb.is_empty():
 			continue
-		var button := _hud_nav_button(str(action.get("label", verb.replace("_", " ").capitalize())), Callable(self, "_activate_delivery_physical_action").bind(verb))
-		button.tooltip_text = str(action.get("message", "Act on the current delivery."))
-		button.custom_minimum_size.y = MIN_NATIVE_TOUCH_TARGET_HEIGHT
-		delivery_action_strip.add_child(button)
-		delivery_action_buttons[verb] = button
-	delivery_action_strip.visible = delivery_action_strip.get_child_count() > 0
-	# The HUD height is cached by viewport size, but delivery actions can appear
-	# without a resize (for example, after entering the Count's Cage room). Mark
-	# the layout dirty after rebuilding this second row so clip_contents cannot
-	# leave an authenticated action rendered below the old one-row HUD boundary.
-	_schedule_delivery_action_layout_refresh()
+		_add_wager_confirmation_card(str(action.get("label", verb.replace("_", " ").capitalize())), str(action.get("message", "Act on the current delivery.")), "", Callable(self, "_activate_delivery_popup_action").bind(verb), false, [], "", "", true)
+	_add_meta_close_card()
+	_apply_accessibility_to_node(heading, _accessibility_font_scale(), _accessibility_control_scale())
+	call_deferred("_position_event_choice_popup")
+
+
+func _activate_delivery_popup_action(verb: String) -> void:
+	_hide_event_choice_popup()
+	_activate_delivery_physical_action(verb)
 
 
 func _objective_goal_text(pressure: Dictionary, demo_objective: Dictionary = {}) -> String:

@@ -431,14 +431,7 @@ static func apply_portrait_run_layout(host: Variant, enabled: bool, canvas_width
 			host.structured_hud.time_button.set_meta("bth31_canceled_gesture", false)
 	for button in [host.top_menu_button, host.top_settings_button, host.top_inventory_button, host.active_item_button]:
 		configure_portrait_hud_button(button, enabled)
-	for child in host.delivery_action_strip.get_children():
-		if child is Label:
-			if not child.has_meta("bth31_heading_width"):
-				child.set_meta("bth31_heading_width", child.custom_minimum_size.x)
-			var original_width := float(child.get_meta("bth31_heading_width"))
-			_set_mobile_minimum_width(host, child, minf(original_width, available_width) if enabled else original_width)
-		elif child is BaseButton:
-			configure_portrait_hud_button(child, enabled)
+	configure_portrait_hud_button(host.delivery_action_button, enabled)
 	_switch_mobile_row(layout["header"], enabled)
 	# Reparenting releases GUI focus. Preserve the eligible old HUD control,
 	# while leaving a different/new modal focus owner alone.
@@ -489,14 +482,14 @@ static func build_run_screen(host: Variant) -> void:
 	hud_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	hud_stack.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	hud_margin.add_child(hud_stack)
-	var hud_row := HFlowContainer.new()
-	hud_row.add_theme_constant_override("h_separation", VisualStyle.SPACE_4)
-	hud_row.add_theme_constant_override("v_separation", VisualStyle.SPACE_1)
+	var hud_row := HBoxContainer.new()
+	hud_row.add_theme_constant_override("separation", VisualStyle.SPACE_4)
 	hud_row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	hud_row.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	hud_stack.add_child(hud_row)
 	host.structured_hud = host.FoundationHudBarScript.new()
-	host.structured_hud.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	host.structured_hud.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	host.structured_hud.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	host.structured_hud.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	hud_row.add_child(host.structured_hud)
 	host.top_menu_button = host._hud_nav_button("Menu", Callable(host, "open_run_menu"))
 	host.top_menu_button.custom_minimum_size = Vector2(VisualStyle.SPACE_9 * 2.0 + VisualStyle.SPACE_4, host.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
@@ -509,11 +502,12 @@ static func build_run_screen(host: Variant) -> void:
 	host.top_inventory_button.tooltip_text = "Inspect current run items."
 	hud_row.add_child(host.top_inventory_button)
 	host.active_item_button = host._hud_nav_button("Use Item: Empty", Callable(host, "use_active_item_slot"))
-	# Keep the action cluster on one line even when the Grand Casino HUD adds
-	# its chips meter. Button content otherwise expands past this width and the
-	# HFlowContainer wraps the active item below the clipped HUD panel.
+	# Reserve the action widths; variable HUD content must fit the remaining
+	# space instead of wrapping actions into the room's fixed play area.
 	host.active_item_button.custom_minimum_size = Vector2(VisualStyle.SPACE_9 * 5.0 + VisualStyle.SPACE_6, host.MIN_NATIVE_TOUCH_TARGET_HEIGHT)
 	host.active_item_button.clip_text = true
+	host.active_item_button.expand_icon = true
+	host.active_item_button.add_theme_constant_override("icon_max_width", 24)
 	host.active_item_button.tooltip_text = "Use or choose the equipped active item."
 	hud_row.add_child(host.active_item_button)
 	host.status_label = host._label("", VisualStyle.TYPE_BODY_LARGE)
@@ -529,15 +523,12 @@ static func build_run_screen(host: Variant) -> void:
 	host.save_status_label.clip_text = true
 	host.save_status_label.custom_minimum_size = Vector2(VisualStyle.ENVIRONMENT_TITLE_COMPACT_SIZE.x, VisualStyle.FLEXIBLE_SIZE)
 	hud_row.add_child(host.save_status_label)
-	# Delivery choices are persistent run actions, not loose props in the room.
-	# Keep them in a dedicated top strip so accepting a package never fills the
-	# environment with abstract objects such as "hold sightline" or "ditch".
-	host.delivery_action_strip = HFlowContainer.new()
-	host.delivery_action_strip.add_theme_constant_override("h_separation", VisualStyle.SPACE_2)
-	host.delivery_action_strip.add_theme_constant_override("v_separation", VisualStyle.SPACE_1)
-	host.delivery_action_strip.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	host.delivery_action_strip.visible = false
-	hud_stack.add_child(host.delivery_action_strip)
+	# Timing and street choices remain persistent actions, disclosed from one
+	# touch/focus target rather than adding another row to the banner.
+	host.delivery_action_button = host._hud_nav_button("Package", Callable(host, "_show_delivery_actions_popup"))
+	host.delivery_action_button.custom_minimum_size.x = 84
+	host.delivery_action_button.visible = false
+	hud_row.add_child(host.delivery_action_button)
 
 	var title_row := HBoxContainer.new()
 	title_row.add_theme_constant_override("separation", VisualStyle.SPACE_4)

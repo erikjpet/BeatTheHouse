@@ -113,7 +113,7 @@ func _run() -> void:
 	hud.render({"mode": "meta", "gold": 100})
 	hud.reset_wallet_delta()
 	hud.present_money_feedback(Model.build({"gold": 4}))
-	_check(hud.wallet_delta_panel.get_parent() == hud.meta_wallet_chip and hud.wallet_delta.text == "+4g", "Home gold must reuse the same component, not another indicator.")
+	_check(hud.wallet_delta_panel.get_parent().name == "MoneyFeedbackOverlay" and hud.wallet_delta.text == "+4g", "Home gold must reuse the same overlay component without growing the HUD.")
 	hud.call("_process", 2.0)
 	_check(not bool(hud.current_snapshot().wallet_delta_active), "Money animation did not end promptly.")
 	var restored := Run.new()
