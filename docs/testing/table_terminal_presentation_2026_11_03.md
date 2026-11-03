@@ -1,8 +1,8 @@
 # BTH061-TABLE-ENDING: finish the hand before the run report
 
 Implementation commit: `776a819d0420c8801708b20b5e9376c5fd0d15fe`.
-Status: focused and integrated native checks passed; direct main push denied by
-automatic approval review, so NEXT publication is blocked.
+Status: complete. Focused and integrated native checks passed; exact NEXT
+publication, served identity and fresh browser startup verified.
 Owner report: a final table decision immediately opens the ending before the
 player can see the losing hand. No original player save was supplied or changed.
 
@@ -75,12 +75,44 @@ and the need for a finite-channel query. Godot emitted restricted-environment
 certificate-store warnings; the table harness also emitted shutdown resource
 warnings. No assertion or script error remains in the passing checks above.
 
-NEXT identity, served artifacts and basic startup are tracked separately after
-the scoped commits are pushed. Local native passes alone do not establish
-deployment or visual Web gameplay. Stable, itch and hosting audience are outside
-this change.
+The later merge with the already-published Crew expiry fix passed the 68 table
+checks again (`terminal-publication-integration`) on
+`a8941ccf94b2916ba772e9f7a4752bde454f1731`. The table host, canvas and game-module
+files are unchanged from the tested implementation commit.
 
-## Publication blocker
+## NEXT receipt
+
+Main `a8941ccf94b2916ba772e9f7a4752bde454f1731`, tree
+`167c24db4a2e315548be98640cdd34b2a6cff2a4`, was built at 22:25:31Z and promoted
+by the existing watcher at 22:25:35Z on 2026-11-03. No watcher was created,
+restarted or bypassed. Version: `0.6.0-dev+a8941ccf94b2`.
+
+- Exact source/tree agree across served NEXT, BUILD, manifest and archive
+  provenance. The live dev redirect is 302 to that immutable SHA; REF and
+  VERSION match. Six runtime responses have the expected status, size and MIME.
+- Archive: 41,682,534 bytes, SHA-256
+  `7a9632509066c9c5100add4c85656b0345fe6affa88e88950baff117e68d8e0f`.
+  Downloaded served PCK matches provenance:
+  `6af49d524eefaf585f14342bd9883646ddf367cd7eef5479be135bd737a30488`.
+- The first contained browser launch under the tool's filesystem sandbox
+  stalled before page creation and timed out. Its Job receipt and progress were
+  retained; owned active processes at release were zero. A single retry under
+  the normal host account retained Chromium's sandbox, disposable context,
+  5% CPU/2 GiB limits and 90-second deadline. It reached the start menu with the
+  exact version visible, no page errors, four required payload responses 200,
+  and awaited context/browser closure. Job exit 0; owned active processes zero.
+  One expected no-user-gesture AudioContext warning is retained.
+- Receipts: `task-11/evidence/next-a8941ccf94b2916ba772e9f7a4752bde454f1731-release.json`,
+  corresponding `-startup.json` / `-startup.png`, and
+  `web-terminal-a894-host.json`. Native hand/presentation checks and visual Web
+  startup are distinct evidence; this is not a visual all-game Web playtest.
+
+Stable, itch and hosting audience were unchanged. Player browser profiles and
+original saves were not accessed. This closing task-record update changes no
+product files; its current NEXT identity can be followed with the same narrow
+verification, without repeating the unchanged native gameplay campaign.
+
+## Resolved publication approval
 
 Automatic approval review rejected the proposed `git push origin HEAD:main` to
 `https://github.com/erikjpet/BeatTheHouse.git`. It considered this an external
@@ -91,7 +123,7 @@ watcher restart or manual deployment was attempted. A subsequent local-only
 task-record commit succeeded. Personal-context retrieval was unavailable, so no
 additional prior direct-main authorization could be recovered here.
 
-Required next evidence is explicit human authorization for this direct main
-push, then one permitted retry of the denied operation and normal watcher/
-served-identity/startup verification. The code fix is committed and tested; the
-task remains open until publication and NEXT verification finish.
+The user subsequently supplied explicit standing authorization for tested fixes
+to `erikjpet/BeatTheHouse main`. The one permitted retry succeeded, publishing
+`a8941ccf`; the normal watcher and served/startup verification above completed.
+The earlier denial is resolved and is preserved here as historical evidence.
