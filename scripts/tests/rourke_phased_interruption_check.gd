@@ -56,6 +56,7 @@ func _run() -> void:
 		quit(2)
 		return
 	var app := _open("terminal")
+	app.auto_clock = true
 	for hand in range(4): _driver_hand(app, app.run_state, (hand + 1) * 100000)
 	var reference := app.run_state.detached_host_action_candidate("blackjack")
 	_driver_hand(app, reference, 500000)
@@ -65,8 +66,23 @@ func _run() -> void:
 	_check(app.run_state.is_terminal() and app.current_screen == app.SCREEN_GAME, "terminal authority commits before report presentation")
 	_check(app.run_state.rng_state == reference.rng_state and app.run_state.bankroll == reference.bankroll and app.run_state.grand_casino_duel_status() == reference.grand_casino_duel_status(), "terminal money, RNG and complete duel match synchronous resolution")
 	app._advance_rourke_resolution(false)
-	_check(app.current_screen == app.SCREEN_FAILURE and app.run_report_model.is_empty() and bool(app._rourke_resolution.get("terminal_presentation_pending", false)), "profile/result processing yields before terminal report construction")
+	_check(app.current_screen == app.SCREEN_GAME and app.current_game != null and not app.terminal_game_result_presentation.is_empty() and app.run_report_model.is_empty(), "committed Rourke result keeps the live table under the shared presentation gate before report construction")
+	_check(app._rourke_resolution.has("terminal_profile_result"), "phased terminal hand stages its profile result while the table remains visible")
+	for step in range(3): app._advance_rourke_resolution(false)
+	_check(app._rourke_resolution.is_empty() and app.current_screen == app.SCREEN_GAME and app.current_game != null and not app.terminal_game_result_presentation.is_empty() and app.run_report_model.is_empty(), "remaining phases release host work without replacing the final table with a report")
 	var rng: int = app.run_state.rng_state
+	var committed_money: int = app.run_state.bankroll
+	var committed_duel := Runtime.canonical_json(app.run_state.grand_casino_duel_status())
+	var result_clock: int = app.input_clock
+	_sample_terminal_presentation(app, result_clock)
+	_check(app.current_screen == app.SCREEN_GAME and app.terminal_game_result_ready_msec < 0, "Rourke final card and payout transitions finish before result readability begins")
+	_sample_terminal_presentation(app, result_clock + 20000)
+	_check(app.current_screen == app.SCREEN_GAME and app.terminal_game_result_ready_msec == app.input_clock + 1200 and app.run_report_model.is_empty(), "completed Rourke animation starts the bounded shared result-reading interval")
+	_sample_terminal_presentation(app, app.input_clock + 1199)
+	_check(app.current_screen == app.SCREEN_GAME and app.run_report_model.is_empty(), "Rourke result stays on the table for the full reading interval")
+	_sample_terminal_presentation(app, app.input_clock + 1)
+	_check(app.current_screen == app.SCREEN_FAILURE and app.current_game == null and app.terminal_game_result_presentation.is_empty() and not app.run_report_model.is_empty(), "Rourke terminal hand automatically advances to its failure report after presentation")
+	_check(app.actual_resolutions == 1 and app.run_state.rng_state == rng and app.run_state.bankroll == committed_money and Runtime.canonical_json(app.run_state.grand_casino_duel_status()) == committed_duel, "Rourke animation, reading interval and report route never repeat settlement or alter committed money/RNG")
 	var service: SaveService = app.save_service
 	var slot: String = app.autosave_slot_id
 	_check(app.return_to_main_menu(), "Main Menu drains committed result/report and durable terminal save")
@@ -106,8 +122,16 @@ func _run() -> void:
 	app.free()
 	await process_frame
 	for message in failures: push_error(message)
-	print("ROURKE_PHASED_INTERRUPTION_CHECK ", JSON.stringify({"failures": failures, "cases": ["terminal parity", "delayed report", "terminal Main Menu and cold Continue", "failed Save and retry", "scene teardown", "pending save auto recovery"]}))
+	print("ROURKE_PHASED_INTERRUPTION_CHECK ", JSON.stringify({"failures": failures, "cases": ["terminal parity", "shared animation and result-reading gate", "automatic terminal report", "terminal Main Menu and cold Continue", "failed Save and retry", "scene teardown", "pending save auto recovery"]}))
 	quit(0 if failures.is_empty() else 1)
+
+func _sample_terminal_presentation(app: TerminalMain, now: int) -> void:
+	app.input_clock = now
+	app.game_surface_canvas.apply_surface_state_patch({"surface_time_msec": now, "surface_presentation_time_msec": now})
+	app.last_game_surface_realtime_refresh_msec = 0
+	app._advance_game_surface_realtime_state()
+	app.game_surface_canvas.set_process(false)
+	app._advance_terminal_game_result_presentation()
 
 func _check(ok: bool, message: String) -> void:
 	if not ok: failures.append(message)

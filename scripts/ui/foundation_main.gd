@@ -350,6 +350,9 @@ var pending_wager_confirm_source_game_id: String = ""
 var pending_wager_confirm_source_game_state_key: String = ""
 var pending_slot_auto_wager_context: Dictionary = {}
 var pending_all_in_result_terminal_check := false
+const TERMINAL_GAME_RESULT_READ_MSEC := 1200
+var terminal_game_result_presentation: Dictionary = {}
+var terminal_game_result_ready_msec := -1
 var terminal_evaluator_call_count := 0
 var recent_result_deep_snapshot_call_count := 0
 var action_trigger_candidate_visit_count := 0
@@ -829,6 +832,7 @@ func _process(delta: float) -> void:
 	if pending_autosave or (save_service != null and save_service.async_save_in_flight()):
 		_timed("autosave_flush", _flush_pending_autosave_callable)
 	_flush_money_feedback()
+	_advance_terminal_game_result_presentation()
 
 
 func _advance_game_surface_frame() -> void:
@@ -1539,6 +1543,8 @@ func _enter_grand_casino_duel_surface() -> bool:
 
 
 func back_to_environment() -> void:
+	if not terminal_game_result_presentation.is_empty():
+		return
 	_drain_rourke_resolution()
 	if not pending_slot_auto_wager_context.is_empty():
 		cancel_pending_wager_confirmation()
@@ -2440,7 +2446,8 @@ func _advance_rourke_resolution(schedule_next: bool = true, generation: int = -1
 			transaction["step"] = 7
 		7:
 			if bool(transaction.get("terminal_presentation_pending", false)):
-				_present_terminal_run_screen()
+				if terminal_game_result_presentation.is_empty():
+					_present_terminal_run_screen()
 			elif bool(transaction.get("refresh_requested", false)):
 				_finish_foundation_refresh()
 			transaction["step"] = 8
@@ -2586,6 +2593,8 @@ func _set_surface_stake_to_bound(bound_name: String, input_route_guarded: bool =
 
 
 func _advance_game_surface_automation() -> void:
+	if not terminal_game_result_presentation.is_empty():
+		return
 	if game_surface_auto_resolving or run_state == null or current_game == null:
 		return
 	if _simulation_progression_paused():
@@ -3405,6 +3414,8 @@ func _checkpoint_current_game_surface_ui_state() -> void:
 
 
 func _reset_game_surface_runtime_state(checkpoint_source: bool = true, preserve_terminal_surface: bool = false) -> void:
+	terminal_game_result_presentation = {}
+	terminal_game_result_ready_msec = -1
 	if not pending_slot_auto_wager_context.is_empty():
 		_hide_event_choice_popup()
 	game_surface_session_generation += 1
@@ -14345,7 +14356,11 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 			last_game_result["music_outcome_schedule"] = outcome_schedule
 	_play_result_surface_audio_cue(result)
 	_play_result_drink_audio_cue(result)
-	pending_all_in_result_terminal_check = confirmed_all_in_wager and bool(result.get("ok", false)) and run_state != null and not run_state.has_liquid_run_funds() and not bool(result.get("won", false))
+	# A later zero-cost Hit/Stand can still belong to the confirmed all-in hand.
+	# Keep its protection until that hand has actually settled, including any
+	# automatic reveal/settlement action after the final player decision.
+	if bool(result.get("ok", false)):
+		pending_all_in_result_terminal_check = (confirmed_all_in_wager or pending_all_in_result_terminal_check) and run_state != null and not run_state.has_liquid_run_funds() and not bool(result.get("won", false))
 	if runtime_tick_in_progress:
 		if game_surface_canvas != null and current_screen == SCREEN_GAME:
 			game_surface_canvas.render_game_snapshot(_game_view_snapshot(true))
@@ -14829,6 +14844,8 @@ func _blocking_modal_message() -> String:
 
 func _guard_player_input_route(force_closing_allowed: bool = false, coach_action_id: String = "ui:any", notify_coach: bool = true) -> bool:
 	input_route_guard_visit_count += 1
+	if not terminal_game_result_presentation.is_empty():
+		return true
 	if not _rourke_resolution.is_empty() and not _rourke_resolution_dispatch_active:
 		return true
 	# A step is synchronous and never yields while dispatching its existing
@@ -21166,7 +21183,8 @@ func _evaluate_run_terminal_state(force: bool = false) -> Dictionary:
 		return {}
 	_queue_pending_tutorial_heat_intervention()
 	_queue_pending_tutorial_drunk_coffee_interventions()
-	if _all_in_result_terminal_check_is_pending() and not force:
+	if _all_in_result_terminal_check_is_pending() and not force and (not _current_game_embeds_result_feedback() \
+			or current_game.wager_activity_incomplete(run_state, run_state.current_environment, _current_game_surface_ui_state())):
 		return {
 			"failed": false,
 			"terminal": false,
@@ -21178,9 +21196,56 @@ func _evaluate_run_terminal_state(force: bool = false) -> Dictionary:
 	if force:
 		pending_all_in_result_terminal_check = false
 	var result := _run_terminal_evaluator_evaluate_and_apply()
+	if run_state.is_terminal() and _defer_terminal_game_result_presentation(result):
+		return result
 	_route_ended_run_if_needed(result)
 	_route_failed_run_if_needed(result)
 	return result
+
+
+func _defer_terminal_game_result_presentation(result: Dictionary) -> bool:
+	if current_screen != SCREEN_GAME or current_game == null or game_surface_canvas == null \
+			or not _current_game_embeds_result_feedback() or not bool(last_game_result.get("ok", false)):
+		return false
+	if terminal_game_result_presentation.is_empty():
+		# Accounting and terminal classification are already final. Publish the
+		# accepted hand before querying its channels: the pre-action canvas can
+		# still contain an idle table when autosave first evaluates this boundary.
+		terminal_game_result_presentation = {"result": result.duplicate(true)}
+		terminal_game_result_ready_msec = -1
+		if _rourke_resolution_dispatch_active and int(_rourke_resolution.get("step", -1)) == 5:
+			# Keep Rourke's existing profile phase, then let its action owner release
+			# before the shared result wait publishes the terminal report.
+			_rourke_resolution["terminal_profile_result"] = result.duplicate(true)
+		_render_foundation_snapshots()
+	return true
+
+
+func _advance_terminal_game_result_presentation() -> void:
+	if terminal_game_result_presentation.is_empty():
+		return
+	if run_state == null or not run_state.is_terminal() or current_screen != SCREEN_GAME or current_game == null:
+		terminal_game_result_presentation = {}
+		terminal_game_result_ready_msec = -1
+		return
+	if game_surface_canvas != null and (game_surface_canvas.surface_finite_result_presentation_active() \
+			or bool(game_surface_canvas.state.get("money_presentation_pending", false))):
+		terminal_game_result_ready_msec = -1
+		return
+	var now_msec := _environment_simulation_time_msec()
+	if terminal_game_result_ready_msec < 0:
+		# Includes reduced motion: even without transitions the final cards/dice
+		# and loss copy need time on screen before the report replaces them.
+		terminal_game_result_ready_msec = now_msec + TERMINAL_GAME_RESULT_READ_MSEC
+		return
+	if now_msec < terminal_game_result_ready_msec:
+		return
+	var result: Dictionary = terminal_game_result_presentation.get("result", {})
+	terminal_game_result_presentation = {}
+	terminal_game_result_ready_msec = -1
+	_route_ended_run_if_needed(result)
+	_route_failed_run_if_needed(result)
+	_refresh()
 
 
 func _queue_pending_tutorial_heat_intervention() -> void:
