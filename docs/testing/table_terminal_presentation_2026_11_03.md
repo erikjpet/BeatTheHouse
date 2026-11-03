@@ -1,7 +1,8 @@
 # BTH061-TABLE-ENDING: finish the hand before the run report
 
 Implementation commit: `776a819d0420c8801708b20b5e9376c5fd0d15fe`.
-Status: focused and integrated native checks passed; NEXT pending.
+Status: focused and integrated native checks passed; direct main push denied by
+automatic approval review, so NEXT publication is blocked.
 Owner report: a final table decision immediately opens the ending before the
 player can see the losing hand. No original player save was supplied or changed.
 
@@ -78,3 +79,19 @@ NEXT identity, served artifacts and basic startup are tracked separately after
 the scoped commits are pushed. Local native passes alone do not establish
 deployment or visual Web gameplay. Stable, itch and hosting audience are outside
 this change.
+
+## Publication blocker
+
+Automatic approval review rejected the proposed `git push origin HEAD:main` to
+`https://github.com/erikjpet/BeatTheHouse.git`. It considered this an external
+commitment to the remote default branch and said the visible authorization for
+NEXT did not explicitly authorize that exact destination. The compound command
+was rejected before execution; no push occurred. No alternative remote write,
+watcher restart or manual deployment was attempted. A subsequent local-only
+task-record commit succeeded. Personal-context retrieval was unavailable, so no
+additional prior direct-main authorization could be recovered here.
+
+Required next evidence is explicit human authorization for this direct main
+push, then one permitted retry of the denied operation and normal watcher/
+served-identity/startup verification. The code fix is committed and tested; the
+task remains open until publication and NEXT verification finish.
