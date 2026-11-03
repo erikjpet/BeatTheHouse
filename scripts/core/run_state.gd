@@ -1814,6 +1814,13 @@ func prepare_current_environment_object_membership_for_publication() -> Dictiona
 	var reconciled := reconcile_environment_object_membership(current_environment)
 	if not bool(reconciled.get("ok", false)):
 		return reconciled
+	# Physical membership alone is not a published room. A completed loan or
+	# service must not commit its economy while the manifest/layout join rejects
+	# every control. Validate at this publication boundary, after any pending
+	# scenario rebuild, and propagate rejection before storing durable aliases.
+	var publication := publish_room_presentation()
+	if not bool(publication.get("ok", false)):
+		return publication
 	if is_layered_environment():
 		_store_current_environment_layer_state_reconciled()
 	if _is_grand_casino_environment(current_environment):
@@ -3715,7 +3722,7 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 	# envelope before asking the semantic producer to authenticate it; otherwise
 	# the producer rejects an internally stale binding digest before the trusted
 	# finalizer gets its own reconciliation opportunity below.
-	authoritative_environment["layout"] = EnvironmentInstance.ensure_generated_layout(authoritative_environment, library)
+	authoritative_environment["layout"] = _scenario_refresh_authoritative_baseline_layout(authoritative_environment, library)
 	var authoritative_physical_errors := JsonCoerceScript._copy_array(EnvironmentInstance.object_manifest_errors(authoritative_environment))
 	for error_value in JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(authoritative_environment.get("layout", {})).get("placement_errors", [])):
 		var message := str(error_value).strip_edges()
@@ -4000,6 +4007,43 @@ func _scenario_persisted_base_event_ids(environment: Dictionary) -> Dictionary:
 	return {"authenticated": true, "event_ids": result}
 
 
+func _scenario_refresh_authoritative_baseline_layout(environment: Dictionary, library: ContentLibrary) -> Dictionary:
+	var layout := EnvironmentInstance.ensure_generated_layout(environment, library)
+	if not environment.has("scenario_sequence_base_layout_object_rects"):
+		return layout
+	var semantic := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(environment.get("scenario_sequence_state", {})).get("semantic_state", {}))
+	var expected_version := int(environment.get("scenario_semantic_inventory_version", 0))
+	var expected_digest := str(environment.get("scenario_semantic_digest", ""))
+	if expected_version <= 0 or not JsonCoerceScript._valid_sha256(expected_digest) \
+			or int(semantic.get("inventory_schema_version", 0)) != expected_version \
+			or str(semantic.get("inventory_digest", "")) != expected_digest:
+		return layout
+	# Consumed events disappear from live geometry but remain in the immutable
+	# entry inventory. Its detached proof rebuild restores their exact bindings;
+	# keep the historical rectangle hint in that same coordinate envelope too.
+	# Only frozen physical event targets already restored into the baseline qualify.
+	# The original inventory digest is still checked by finalization below.
+	var baseline := JsonCoerceScript._copy_dict(environment.get("scenario_sequence_base_layout_object_rects", {}))
+	var rects := JsonCoerceScript._copy_dict(layout.get("object_rects", {}))
+	var bindings := JsonCoerceScript._copy_dict(layout.get("slot_bindings", {}))
+	var event_ids := JsonCoerceScript._copy_array(environment.get("event_ids", []))
+	var targets := JsonCoerceScript._copy_dict(semantic.get("target_inventory", {}))
+	for identity_value in JsonCoerceScript._copy_array(targets.get("scene_objects", [])):
+		var identity := str(identity_value)
+		if not identity.begins_with("event::event:"):
+			continue
+		var object_id := identity.trim_prefix("event::")
+		if not event_ids.has(object_id.trim_prefix("event:")):
+			continue
+		var binding := JsonCoerceScript._copy_dict(bindings.get(object_id, {}))
+		if str(binding.get("presentation_mode", "")) == "room" and rects.has(object_id):
+			baseline[object_id] = JsonCoerceScript._copy_dict(rects.get(object_id, {}))
+		elif str(binding.get("presentation_mode", "")) == "overflow":
+			baseline.erase(object_id)
+	environment["scenario_sequence_base_layout_object_rects"] = baseline
+	return layout
+
+
 func _scenario_terminal_authoritative_environment(definition: Dictionary) -> Dictionary:
 	if not _scenario_terminal_semantic_refresh(definition):
 		return current_environment
@@ -4059,7 +4103,7 @@ func _scenario_finalize_trusted_base_semantics(trusted_records: Array, library: 
 	# inventory. A refresh may arrive with a missing or stale manifest even when
 	# its source selections are valid; hashing that incomplete envelope first
 	# would manufacture a different proof and only reconcile it afterward.
-	semantic_environment["layout"] = EnvironmentInstance.ensure_generated_layout(semantic_environment, library)
+	semantic_environment["layout"] = _scenario_refresh_authoritative_baseline_layout(semantic_environment, library)
 	var semantic_physical_errors := JsonCoerceScript._copy_array(EnvironmentInstance.object_manifest_errors(semantic_environment))
 	for error_value in JsonCoerceScript._copy_array(JsonCoerceScript._copy_dict(semantic_environment.get("layout", {})).get("placement_errors", [])):
 		var message := str(error_value).strip_edges()
@@ -4624,7 +4668,13 @@ func _resolve_world_sequence_composed_layout(stamped_records: Array, layout_cont
 	current_environment["scenario_layout_audit"] = JsonCoerceScript._copy_dict(layout_result.get("layout_audit", {}))
 	current_environment["scenario_layout_authority_digest"] = str(layout_result.get("layout_authority_digest", ""))
 	current_environment["scenario_render_snapshot"] = renderer_snapshot.duplicate(true)
-	reconcile_current_environment_object_manifest()
+	# Replacing a composed projection can return a formerly scenario-owned
+	# catalog object to the base plane. Its manifest and bindings must change
+	# together, including bindings removed by the previous publication.
+	reconcile_current_environment_object_manifest(true)
+	var publication := publish_room_presentation()
+	if not bool(publication.get("ok", false)):
+		return publication
 	return {
 		"ok": true,
 		"projection": JsonCoerceScript._copy_dict(layout_result.get("projection", projection)),
