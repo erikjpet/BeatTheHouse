@@ -86,5 +86,14 @@ Commands are recorded in the native job receipts. The targeted entry points are
 The engine-free placement checker is
 `python tools/environment_fixed_slot_static_check.py <source> <report>`.
 
-Deployment, served identity and browser startup are separate evidence stages;
-local source checks alone do not establish that NEXT contains these removals.
+## NEXT follow-through
+
+The removal commit and tracking commit `8d3c52756d99a315050e62601b5da3531ddef0c4`
+were pushed to main. At 22:02:29 UTC the existing watcher retained NEXT
+`87a06b9a4acbe86b0f761d2cd0ab929f5584b716` and reported
+`Asset/importer/settings inputs changed; cold-import qualification required`.
+The seven PNG deletions and inert JSON deletion change eight guarded input paths.
+Follow-through uses the existing exact-input cold-import request workflow, with
+normal cache-free import/export/audit by the same capped watcher. No cache
+classification, guard, exporter, watcher, resource cap or deployment audience is
+changed. Served identity and browser startup remain unverified at this stage.
