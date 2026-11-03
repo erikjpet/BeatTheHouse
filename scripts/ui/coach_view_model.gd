@@ -223,9 +223,16 @@ static func completion_matches(lesson: Dictionary, action_id: String) -> bool:
 
 static func state_completion_matches(lesson: Dictionary, context: Dictionary) -> bool:
 	var completion := _dict(lesson.get("completion", {}))
+	var predicate_key := "state_predicates"
 	if str(completion.get("type", "")) != "state_predicate":
-		return false
-	var predicates: Variant = completion.get("state_predicates", [])
+		# An authored anchored lesson may name durable proof of a missed action.
+		# This opt-in never replaces its normal action completion or invents play.
+		if str(completion.get("type", "")) != "anchored_action" \
+				or str(lesson.get("scope", "")) != "tutorial_run" \
+				or _path_value(context, "run.tutorial") != true:
+			return false
+		predicate_key = "recovery_state_predicates"
+	var predicates: Variant = completion.get(predicate_key, [])
 	if typeof(predicates) != TYPE_ARRAY or (predicates as Array).is_empty():
 		return false
 	for predicate_value in predicates:

@@ -316,7 +316,17 @@
     "trigger": {"depends_on": ["tutorial_underground_table"], "screen": "GAME", "environment_archetype": "small_underground_casino", "game_id": "blackjack", "state_predicates": [{"path": "game.hands_played", "op": "equals", "value": 0}]},
     "anchor": {"kind": "surface_action", "id": "blackjack_deal"},
     "copy": "Deal one clean blackjack hand.",
-    "completion": {"type": "anchored_action", "action_id": "blackjack_deal"},
+    "completion": {
+      "type": "anchored_action",
+      "action_id": "blackjack_deal",
+      "recovery_state_predicates": [
+        {"path": "screen", "op": "equals", "value": "GAME"},
+        {"path": "environment_archetype", "op": "equals", "value": "small_underground_casino"},
+        {"path": "game_id", "op": "equals", "value": "blackjack"},
+        {"path": "game.hands_played", "op": "gte", "value": 1},
+        {"path": "game.between_hands", "op": "equals", "value": true}
+      ]
+    },
     "gating": {"allowed_action_ids": ["blackjack_deal"]}
   },
   {
