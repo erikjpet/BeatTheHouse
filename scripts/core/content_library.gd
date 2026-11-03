@@ -1163,6 +1163,15 @@ func environment_archetype_for_challenge(archetype: Dictionary, challenge_config
 	var override := _as_dict(overrides.get(archetype_id, {}))
 	if override.is_empty():
 		return archetype
+	# A layered tutorial names the floor that owns its required table. Applying
+	# that game's override to every flat floor puts Blackjack in the public Club,
+	# where it can consume the Numbers book's otherwise unused fixed slot.
+	var layer_id := str(archetype.get("current_layer_id", "")).strip_edges()
+	var target_layer := str(_as_dict(modifiers.get("environment_layer_overrides", {})).get(archetype_id, "")).strip_edges()
+	if not layer_id.is_empty() and not target_layer.is_empty() and layer_id != target_layer:
+		override = override.duplicate(true)
+		for key in ["game_pool", "required_game_ids", "game_count"]:
+			override.erase(key)
 	return _deep_merge_dict(archetype, override)
 
 

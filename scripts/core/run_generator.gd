@@ -1296,6 +1296,8 @@ func _refresh_venue_scenario_cycle_candidate(run_state: RunState, archetype: Dic
 				return {"ok": false, "errors": ["Venue retirement journal conflicts with accepted scenario history."]}
 			if not history.has(history_key): history[history_key] = retirement
 		var flat := EnvironmentInstance._archetype_for_layer(archetype, layer) if layer != "room" else archetype
+		var tutorial_layer := _prepare_legacy_tutorial_layer_for_cycle(run_state, room, flat)
+		if not bool(tutorial_layer.get("ok", false)): return tutorial_layer
 		var base := ScenarioVenueCycleScript.clear_scenario(room, flat, JsonCoerceScript._copy_dict(profiles.get(layer, {})))
 		profiles[layer] = ScenarioVenueCycleScript.base_profiles(base)
 		base[ENVIRONMENT_SITUATION_CYCLE_KEY] = cycle.cycle_id
@@ -1342,6 +1344,38 @@ func _refresh_venue_scenario_cycle_candidate(run_state: RunState, archetype: Dic
 	if source.has("layer_states"): final["layer_states"] = finished
 	run_state.current_environment = final
 	return {"ok": true, "errors": []}
+
+
+func _prepare_legacy_tutorial_layer_for_cycle(run_state: RunState, room: Dictionary, archetype: Dictionary) -> Dictionary:
+	# Old tutorial generation copied the configured Casino game's override onto
+	# inactive floors too. Retire only that exact, never-played accidental table
+	# when the authored floor has no games. This happens inside the existing cycle
+	# transaction: publication failure restores the complete incoming room/run.
+	if not run_state.is_tutorial_run() or not JsonCoerceScript._copy_array(archetype.get("game_pool", [])).is_empty():
+		return {"ok": true}
+	var modifiers := JsonCoerceScript._copy_dict(run_state.challenge_config.get("modifiers", {}))
+	var archetype_id := str(room.get("archetype_id", ""))
+	var layer := str(room.get("current_layer_id", ""))
+	var target := str(JsonCoerceScript._copy_dict(modifiers.get("environment_layer_overrides", {})).get(archetype_id, ""))
+	if layer.is_empty() or target.is_empty() or layer == target:
+		return {"ok": true}
+	var override := JsonCoerceScript._copy_dict(JsonCoerceScript._copy_dict(modifiers.get("tutorial_environment_overrides", {})).get(archetype_id, {}))
+	var injected := JsonCoerceScript._raw_string_array(override.get("game_pool", []))
+	var games := JsonCoerceScript._raw_string_array(room.get("game_ids", []))
+	if injected.is_empty() or games != injected or not str(room.get("scenario_id", "")).is_empty() \
+			or not JsonCoerceScript._copy_dict(room.get("scenario_state", {})).is_empty() \
+			or room.has("scenario_sequence_state"):
+		return {"ok": true}
+	# Authenticate before the owned membership change. Never bless edited slot or
+	# manifest proofs, and never discard a historical hand, stake or game result.
+	var errors := EnvironmentInstance.object_manifest_errors(room)
+	errors.append_array(JsonCoerceScript._copy_array(EnvironmentSlotBinderScript.validate_base_layout_authority(room).get("errors", [])))
+	if not errors.is_empty(): return {"ok": false, "errors": errors}
+	var stored_games: Variant = room.get("game_states", {})
+	if typeof(stored_games) != TYPE_DICTIONARY or not (stored_games as Dictionary).is_empty():
+		return {"ok": false, "errors": ["Off-layer tutorial table has stored play state; its game state was preserved."]}
+	room["game_ids"] = []
+	return {"ok": true}
 
 
 func _stored_environment_matches_situation_cycle(run_state: RunState, archetype_id: String, environment: Dictionary) -> bool:
