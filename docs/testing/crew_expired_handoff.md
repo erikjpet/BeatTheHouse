@@ -136,5 +136,11 @@ Task-10 release evidence:
 - `evidence/final-qualification.json`, `publication-resumed.json` and preserved
   historical blocker/custody receipts
 
-`BTH061-CREW-EXPIRED-HANDOFF` is complete with the associated fix commit and
-the separately identified deployed verification above.
+The implementation and NEXT verification are complete with the associated fix
+commit above. The restored named task ledger additionally requires original
+acceptance and records missing original fixtures as gaps. Accordingly,
+`BTH061-CREW-EXPIRED-HANDOFF` (alias
+`BTH-CREW-EXPIRED-JAZZ-HANDOFF-001`) remains Open only for original-player-state
+acceptance: that latest save was inaccessible and untouched. Synthetic native
+compatibility evidence and fresh Web startup do not assert that unobserved
+player-state or deployed Web deadline-race gameplay acceptance.
