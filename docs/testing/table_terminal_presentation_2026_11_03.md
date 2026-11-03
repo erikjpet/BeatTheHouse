@@ -1,6 +1,7 @@
 # BTH061-TABLE-ENDING: finish the hand before the run report
 
-Status: implementation and focused native checks passed; commit pending.
+Implementation commit: `776a819d0420c8801708b20b5e9376c5fd0d15fe`.
+Status: focused and integrated native checks passed; NEXT pending.
 Owner report: a final table decision immediately opens the ending before the
 player can see the losing hand. No original player save was supplied or changed.
 
@@ -56,6 +57,16 @@ processes at release. Raw receipts remain in `task-11/evidence/` outside Git.
 | `terminal_run_resume_check.gd` / `terminal-resume` | PASS: both failed and successful terminal checkpoints persist and Continue returns to the correct report. |
 | `craps_working_stakes_terminal_check.gd` / `terminal-craps` | PASS, 16 checks: working stakes and terminal evaluation retain their financial contract. |
 | `animation_liveness_without_pointer_check.gd` / `terminal-liveness` | PASS: autonomous environment, placement-overlay and game animation remain live without pointer input. |
+
+After integration with concurrent native-renderer cleanup and Back Alley fixes,
+the exact implementation commit `776a819d` passed the table check again (68
+checks, `terminal-integrated`) and the complete Rourke interruption check again
+(`terminal-rourke-integrated`). Product files did not change between these
+checks and the subsequent task-record update. The terminal-resume, Craps and
+liveness receipts above qualify the unchanged contracts tested before that
+integration; they are not relabeled as fresh passes on a new build. Independent
+source review found no remaining concrete issue in the terminal wait or its
+Rourke integration.
 
 Earlier failed exploratory checks are retained rather than overwritten. They
 identified the initial all-in hand boundary, the actual accessibility setting,
