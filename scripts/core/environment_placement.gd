@@ -362,10 +362,6 @@ static func _filtered_route_mapping(source: Dictionary, routes: Array) -> Dictio
 	return result
 
 
-static func surface_map_by_id(archetype_id: String, layer_id: String = "") -> Dictionary:
-	return surface_map({"archetype_id": archetype_id, "current_layer_id": layer_id})
-
-
 static func slots_for_family(surface_data: Dictionary, family: String) -> Array:
 	var collection := str(SLOT_COLLECTIONS.get(family, ""))
 	return _array(surface_data.get(collection, [])).duplicate(true) if not collection.is_empty() else []
@@ -382,12 +378,6 @@ static func slot_family(slot: Dictionary) -> String:
 	var family := str(slot.get("kind", "")).strip_edges()
 	var slot_id := str(slot.get("id", "")).strip_edges()
 	return family if family in SLOT_FAMILIES and slot_id.begins_with("%s." % family) else ""
-
-
-# Reusable slot geometry is already live through surface_map(), so locked slot
-# moves persist when the overlay is disabled and in newly generated rooms.
-static func authoring_surface_map(environment: Dictionary) -> Dictionary:
-	return surface_map(environment)
 
 
 # A locked reusable-slot edit is runtime authority on this machine immediately.

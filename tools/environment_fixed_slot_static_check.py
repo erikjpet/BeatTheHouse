@@ -4025,9 +4025,12 @@ def main() -> int:
         "static func _ordered_values",
     ):
         check.require(token not in placement_source, f"superseded placement candidate search survived deletion: {token}")
-    surface_body = placement_source.split("static func surface_map(environment", 1)[-1].split("static func surface_map_by_id", 1)[0]
+    surface_body = placement_source.split("static func surface_map(environment", 1)[-1].split("static func _shipping_surface_map", 1)[0]
     check.require("_with_developer_slots" not in surface_body, "developer placement overrides leak into shipping surface_map")
-    check.require("static func authoring_surface_map" in placement_source, "developer placement has no isolated authoring API")
+    check.require(
+        "_with_runtime_slot_geometry(environment, _shipping_surface_map(environment))" in surface_body,
+        "surface_map does not compose reusable slot edits through current runtime authority",
+    )
     record_binding_source = binder_source.split("static func bind_base_records", 1)[-1].split("static func bind_scenario_visuals", 1)[0]
     check.require(
         "slot_binding_source_id" in record_binding_source

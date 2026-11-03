@@ -11579,10 +11579,6 @@ func _delivery_contact_label(node: Dictionary) -> String:
 	return _delivery_run_facade._delivery_contact_label(node)
 
 
-func _clock_display_for_absolute_minutes(absolute_minutes: int) -> String:
-	return PlayerTextScript.format_game_clock(absolute_minutes, true, ", ")
-
-
 func _delivery_add_inventory_cargo() -> void:
 	_delivery_run_facade.bind(self)
 	_delivery_run_facade._delivery_add_inventory_cargo()

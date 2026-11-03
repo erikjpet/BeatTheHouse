@@ -220,8 +220,8 @@ func _check_slot_geometry_export_and_promotion(user_path: String, project_path: 
 
 	var normal_local := EnvironmentPlacementScript.surface_map(environment)
 	var scenario_local := EnvironmentPlacementScript.surface_map(scenario_environment)
-	var authoring_local := EnvironmentPlacementScript.authoring_surface_map(environment)
-	var scenario_authoring_local := EnvironmentPlacementScript.authoring_surface_map(scenario_environment)
+	var authoring_local := EnvironmentPlacementScript.surface_map(environment)
+	var scenario_authoring_local := EnvironmentPlacementScript.surface_map(scenario_environment)
 	_check(_slot_position(_slot(normal_local, "fixed.item_shop_1")).is_equal_approx(fixed_target), "A locked fixed-slot edit must remain active after placement mode is disabled.")
 	_check(_slot_position(_slot(normal_local, "event.standing_person_1")).is_equal_approx(event_target), "Normal rendering must consume the locked event-slot edit before project promotion.")
 	_check(_slot_position(_slot(scenario_local, LOCAL_SCENARIO_SURFACE_1)).is_equal_approx(scenario_target), "Normal rendering must consume the active layout's locked scenario-slot edit before project promotion.")
@@ -265,7 +265,7 @@ func _check_slot_geometry_export_and_promotion(user_path: String, project_path: 
 		"Slot object-size choices must survive a durable reload."
 	)
 	var other_environment := {"archetype_id": "bar"}
-	_check(_slot(EnvironmentPlacementScript.authoring_surface_map(other_environment), "fixed.item_shop_1").is_empty(), "A slot edit must not leak into another environment.")
+	_check(_slot(EnvironmentPlacementScript.surface_map(other_environment), "fixed.item_shop_1").is_empty(), "A slot edit must not leak into another environment.")
 	var no_catalog_environment := {"archetype_id": "house"}
 	var no_catalog_slot := _slot(EnvironmentPlacementScript.surface_map(no_catalog_environment), "scenario.surface_item_1")
 	var no_catalog_saved := DeveloperPlacementStoreScript.save_position(
