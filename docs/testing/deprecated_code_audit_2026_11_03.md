@@ -96,4 +96,28 @@ The seven PNG deletions and inert JSON deletion change eight guarded input paths
 Follow-through uses the existing exact-input cold-import request workflow, with
 normal cache-free import/export/audit by the same capped watcher. No cache
 classification, guard, exporter, watcher, resource cap or deployment audience is
-changed. Served identity and browser startup remain unverified at this stage.
+changed.
+
+The watcher consumed the exact request (SHA-256
+`0f2720104ce44ef195bb60cf5566227cc37e126d003c964c13994cfcbaf1ffb9`) and promoted
+`be4cd6716e3e1f7614008c9cc70a27cee7b48def`, tree
+`11de9feffd8d3c505e504c92321f2babb45f0f89`, at 22:08:22 UTC. Served metadata,
+redirect, `BUILD.json`, `build_manifest.json`, `REF` and `VERSION` match the exact
+pipeline provenance. Four engine/PCK/native payload HEAD requests return 200,
+with matching recorded lengths and correct WASM MIME; exact-build pipeline
+payload hashes were reused. The PCK audit passes with all eight retired source
+inputs and old imported textures absent, all seventeen live scratch symbols
+present, and all three changed production bytecode files present.
+
+A fresh, sandboxed headless Chromium at trusted localhost loads that immutable
+build and visually reaches the main menu showing `0.6.0-dev+be4cd6716e3e`.
+All four required payload responses are 200, page errors are empty, and browser
+and context close normally. The maintained private Job reports exit 0 and zero
+active owned processes. No game input, existing browser profile or player save
+was used. This is basic Web startup, not an all-game playtest. Stable, itch and
+hosting audience remain outside the change. Final raw receipts are
+`evidence/next-identity.json`, `evidence/next-startup/startup.json`,
+`evidence/next-startup/job.json` and the reviewed startup screenshot in the
+isolated task workspace. This closes `BTH061-AUDIT-001` against the removal
+commit above; remaining compatibility and inherited-check ambiguities remain
+explicit rather than being marked fixed.
