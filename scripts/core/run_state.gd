@@ -11944,7 +11944,9 @@ func _travel_route_cost(route_data: Dictionary) -> int:
 
 
 func _tutorial_travel_route_cost_override(route_data: Dictionary) -> int:
-	if not is_tutorial_run():
+	# Tutorial fares price trips between venues, not doors inside the Grand.
+	# Interior routes retain their authored admission price, including free exits.
+	if not is_tutorial_run() or bool(route_data.get("local_casino_room", false)):
 		return -1
 	var modifiers := challenge_modifiers()
 	var overrides_value: Variant = modifiers.get("tutorial_travel_cost_overrides", {})
