@@ -148,12 +148,20 @@ player-state or deployed Web deadline-race gameplay acceptance.
 A later promoted descendant, `e641f0c81af36c399d5fea5c1504963455f63cc2`
 (tree `2e44862d148cf92ba256aa50daf23e5dd732b71e`, promotion **22:31:13 UTC**),
 also passed the same served-identity/actual-redirect/REF/VERSION/six-payload/PCK
-verification and fresh visible correct-version menu startup. Its served PCK
+verification and reached a visible correct-version menu. Its served PCK
 SHA-256 is `a8952f563fc74dc0c743411fd6965200ead39358c4c99d07ccc601b3eef017bb`;
 version `0.6.0-dev+e641f0c81af3`. It retains the unchanged Crew core/regression
 code and includes the separately owned fixed-HUD update. Browser/context closed
-with no page errors, one autoplay warning and zero owned processes. The matching
+with no page errors and zero owned processes. However, this startup is **not
+qualified**: final console review found one autoplay warning and eight error
+lines, including `Identifier "CanvasLayer" not declared in the current scope`
+at `foundation_hud_bar.gd:746`, type inference failure, failed HUD script load and
+null `rp_child`. The raw smoke JSON's `passed=true` was a false positive because
+its original gate checked JavaScript page errors but ignored console errors;
+that local gate is corrected. The original raw evidence is preserved. The matching
 `next-e641f0c81af36c399d5fea5c1504963455f63cc2-{release,startup}.json`, screenshot
-and `web-next-e641-startup.{json,log}` preserve this later observation. No fresh
+and `web-next-e641-startup.{json,log}` preserve this later observation. The blocker
+is tracked as `BTH061-HUD-001-WEB-CANVASLAYER` under the active HUD owner. The
+earlier a8941ccf startup has only the autoplay warning and remains valid. No fresh
 389-check native run or full HUD/gameplay certification is inferred for its
 separately changed UI; the original-source qualification remains attributed above.
