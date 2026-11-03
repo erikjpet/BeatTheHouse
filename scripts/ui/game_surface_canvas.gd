@@ -127,6 +127,10 @@ func set_game_module(game_module: GameModule) -> void:
 	if surface_game_module != null and surface_game_module.has_method("release_surface_host"):
 		surface_game_module.call("release_surface_host", self)
 	surface_game_module = game_module
+	# A different renderer must publish its own controls on its next draw. Never
+	# leave the previous module's hit regions actionable while that draw is queued.
+	hit_regions.clear()
+	hit_region_state_revision = -1
 	surface_render_state_dirty = true
 	queue_redraw()
 
@@ -549,7 +553,6 @@ func stop_surface_audio() -> void:
 
 
 func local_position_for_surface_action(action: String, index: int = -1) -> Vector2:
-	_ensure_snapshot_proxy_hit_regions()
 	var exact_position := _local_position_for_hit_region(action, index)
 	if exact_position.x >= 0.0 and exact_position.y >= 0.0:
 		return exact_position
@@ -560,7 +563,6 @@ func local_position_for_surface_action(action: String, index: int = -1) -> Vecto
 
 
 func global_rect_for_surface_action(action: String, index: int = -1) -> Rect2:
-	_ensure_snapshot_proxy_hit_regions()
 	var board_hit_rect := _board_hit_rect_for_action(action, index)
 	if not board_hit_rect.has_area():
 		var resolved := _resolved_surface_action_binding(action, index)
@@ -1421,15 +1423,15 @@ func _draw() -> void:
 			"surface_dynamic_overlay_active": _surface_dynamic_overlay_channel_active(),
 		}))
 	surface_end_design_space()
-	if not rendered:
-		_draw_foundation_result()
-	_draw_foundation_result_burst()
-	_draw_pressure_overlay()
-	_draw_drunk_overlay()
-	_draw_foundation_play_overlay()
+	if rendered:
+		_draw_foundation_result_burst()
+		_draw_pressure_overlay()
+		_draw_drunk_overlay()
+		_draw_foundation_play_overlay()
+	else:
+		_draw_game_surface_unavailable()
 	draw_set_transform(Vector2.ZERO, 0.0, Vector2.ONE)
 	_update_drunk_distortion_protected_rects()
-	_ensure_snapshot_proxy_hit_regions()
 	hit_region_state_revision = surface_state_revision
 	_notify_hit_region_geometry_changed()
 	_record_draw_performance(draw_started_usec)
@@ -1800,8 +1802,6 @@ func _surface_ui_protected_board_rects() -> Array:
 		protected_rects.append(Rect2(776, 22, 86, 34))
 		if not bool(state.get("surface_embeds_outcomes", false)) and not bool(state.get("surface_suppresses_game_result_burst", false)) and not str(state.get("result_message", "")).is_empty():
 			protected_rects.append(Rect2(560, 266, 316, 36))
-	else:
-		protected_rects.append(Rect2(22, 248, 856, 72))
 	if bool(state.get("has_recent_outcome", false)) and not bool(state.get("surface_embeds_outcomes", false)) and not bool(state.get("surface_suppresses_game_result_burst", false)):
 		protected_rects.append(Rect2(250, 70, 400, 54))
 	return protected_rects
@@ -1905,39 +1905,6 @@ func _hit_region_snapshots() -> Array:
 	return snapshots
 
 
-func _ensure_snapshot_proxy_hit_regions() -> void:
-	if not uses_foundation_snapshot or surface_game_module != null:
-		return
-	if _surface_renderer() == "slot_machine":
-		return
-	if bool(state.get("has_valid_stake", false)):
-		_add_proxy_hit_region(Rect2(98, 258, 26, 42), "surface_stake_down", -1)
-		_add_proxy_hit_region(Rect2(128, 258, 26, 42), "surface_stake_up", -1)
-		_add_proxy_hit_region(Rect2(158, 258, 44, 42), "surface_stake_max", -1)
-	if not JsonCoerceScript._dictionary_array(state.get("legal_actions", [])).is_empty():
-		_add_proxy_hit_region(Rect2(212, 258, 150, 42), "surface_legal", 0)
-	if not JsonCoerceScript._dictionary_array(state.get("cheat_actions", [])).is_empty():
-		_add_proxy_hit_region(Rect2(372, 258, 174, 42), "surface_cheat", 0)
-
-
-func _add_proxy_hit_region(rect: Rect2, action: String, index: int = -1) -> void:
-	if _has_hit_region(action, index):
-		return
-	hit_regions.append({"rect": rect, "action": action, "index": index})
-
-
-func _has_hit_region(action: String, index: int = -1) -> bool:
-	for region in hit_regions:
-		if typeof(region) != TYPE_DICTIONARY:
-			continue
-		if str((region as Dictionary).get("action", "")) != action:
-			continue
-		if index >= 0 and int((region as Dictionary).get("index", -1)) != index:
-			continue
-		return true
-	return false
-
-
 func _rect_snapshot(rect: Rect2) -> Dictionary:
 	return {
 		"x": rect.position.x,
@@ -2039,21 +2006,12 @@ func _surface_action_audio_cue(action: String) -> String:
 	return str(cue_value)
 
 
-func _draw_foundation_result() -> void:
-	var title := str(state.get("display_name", "Foundation Game"))
-	surface_title(title.to_upper().left(28), Vector2(260, 46), C_CYAN)
-	draw_rect(Rect2(142, 96, 616, 168), Color("#101022"))
-	draw_rect(Rect2(154, 108, 592, 144), Color("#06060d"))
-	surface_label("BANKROLL " + str(state.get("bankroll", 0)), Vector2(184, 136), 20, C_YELLOW)
-	surface_label("HEAT " + str(state.get("suspicion_level", 0)), Vector2(520, 136), 20, C_PINK_2)
-	var message := str(state.get("result_message", state.get("message", "")))
-	if message.is_empty():
-		message = "Choose an action to resolve the game."
-	surface_label(message.left(74), Vector2(184, 178), 16, C_SOFT)
-	var bankroll_delta := int(state.get("bankroll_delta", 0))
-	var suspicion_delta := int(state.get("suspicion_delta", 0))
-	surface_label("BANKROLL %+d" % bankroll_delta, Vector2(268, 226), 18, C_TEAL if bankroll_delta >= 0 else C_ORANGE)
-	surface_label("HEAT %+d" % suspicion_delta, Vector2(510, 226), 18, C_PINK if suspicion_delta > 0 else C_CYAN)
+# A missing renderer cannot expose wager controls from a different game UI.
+# Leaving remains available so a presentation failure cannot trap the player.
+func _draw_game_surface_unavailable() -> void:
+	hit_regions.clear()
+	surface_label_centered("Game surface unavailable", Rect2(200, 120, 500, 42), 20, C_SOFT)
+	_draw_surface_back_control(Rect2(407, 184, 86, 34))
 
 
 func _draw_foundation_play_overlay() -> void:
@@ -2077,9 +2035,6 @@ func _draw_foundation_play_overlay() -> void:
 			if candidate.has_area():
 				back_rect = candidate
 		_draw_surface_back_control(back_rect)
-		if surface_game_module == null:
-			_draw_foundation_control_strip(Rect2(22, 248, 856, 72), true)
-			return
 		if bool(state.get("surface_embeds_outcomes", false)) or bool(state.get("surface_suppresses_game_result_burst", false)):
 			return
 		var message := str(state.get("result_message", ""))
@@ -2093,38 +2048,6 @@ func _draw_foundation_play_overlay() -> void:
 				result_text = "%s  $%+d / heat %+d" % [result_text.left(18), bankroll_delta, suspicion_delta]
 			surface_label(result_text.left(34), Vector2(572, 289), 14, C_WHITE)
 		return
-	var panel := Rect2(22, 248, 856, 72)
-	_draw_foundation_control_strip(panel, true)
-
-
-func _draw_foundation_control_strip(panel: Rect2, include_back: bool) -> void:
-	draw_rect(panel, Color(0.02, 0.02, 0.05, 0.84))
-	draw_rect(panel, Color(C_CYAN.r, C_CYAN.g, C_CYAN.b, 0.28), false, 1)
-	var stake_text := "Stake -"
-	if bool(state.get("has_valid_stake", false)):
-		stake_text = "Stake %d" % int(state.get("selected_stake", 0))
-	surface_label(stake_text, Vector2(38, 280), 15, C_YELLOW)
-	surface_draw_stake_control(Rect2(98, 258, 26, 42), "-", bool(state.get("has_valid_stake", false)), "surface_stake_down")
-	surface_draw_stake_control(Rect2(128, 258, 26, 42), "+", bool(state.get("has_valid_stake", false)), "surface_stake_up")
-	surface_draw_stake_control(Rect2(158, 258, 44, 42), "MAX", bool(state.get("has_valid_stake", false)), "surface_stake_max")
-	var legal_actions := JsonCoerceScript._dictionary_array(state.get("legal_actions", []))
-	var cheat_actions := JsonCoerceScript._dictionary_array(state.get("cheat_actions", []))
-	var legal_action := _first_dictionary(legal_actions)
-	var cheat_action := _first_dictionary(cheat_actions)
-	_draw_surface_action_tile(Rect2(212, 258, 150, 42), "Safe: %s" % _surface_action_label(legal_action, "Safe action"), _surface_action_summary(legal_action, "legal"), "legal", not legal_action.is_empty(), _surface_action_selected("legal", legal_action), "surface_legal", 0)
-	_draw_surface_action_tile(Rect2(372, 258, 174, 42), "Risk: %s" % _surface_action_label(cheat_action, "Risky move"), _surface_action_summary(cheat_action, "cheat"), "cheat", not cheat_action.is_empty(), _surface_action_selected("cheat", cheat_action), "surface_cheat", 0)
-	if include_back:
-		_draw_surface_back_control(Rect2(776, 258, 86, 42))
-	surface_label("Click surface controls. Click selected action again to resolve.", Vector2(38, 314), 12, C_SOFT)
-	var message := str(state.get("result_message", ""))
-	if message.is_empty():
-		message = "Resolve an action to see what happens."
-	var bankroll_delta := int(state.get("bankroll_delta", 0))
-	var suspicion_delta := int(state.get("suspicion_delta", 0))
-	var result_text := message.left(30)
-	if bankroll_delta != 0 or suspicion_delta != 0:
-		result_text = "%s  $%+d / heat %+d" % [result_text.left(20), bankroll_delta, suspicion_delta]
-	surface_label(result_text.left(28), Vector2(564, 280), 14, C_WHITE)
 
 
 func _draw_surface_back_control(rect: Rect2) -> void:
@@ -2136,27 +2059,6 @@ func _draw_surface_back_control(rect: Rect2) -> void:
 	if hovered:
 		surface_draw_ready_badge(rect, "BACK")
 	surface_add_hit(rect, "surface_back")
-
-
-func _draw_surface_action_tile(rect: Rect2, label: String, summary: String, kind: String, enabled: bool, selected: bool, action: String, index: int) -> void:
-	var accent := C_PINK_2 if kind == "cheat" else C_TEAL
-	var hovered := surface_region_hovered(action, index)
-	var fill := Color(accent.r, accent.g, accent.b, 0.22) if selected else Color(0.08, 0.09, 0.14, 0.88)
-	if hovered and not selected:
-		fill = Color(accent.r, accent.g, accent.b, 0.16)
-	if not enabled:
-		fill = Color(0.04, 0.04, 0.07, 0.74)
-	draw_rect(rect, fill)
-	draw_rect(rect, C_WHITE if hovered and enabled else accent if enabled else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.28), false, 2 if selected or hovered else 1)
-	surface_label(label.left(21), rect.position + Vector2(10, 18), 13, accent if enabled else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.52))
-	if not summary.is_empty():
-		surface_label(summary.left(30), rect.position + Vector2(10, 34), 10, C_SOFT if enabled else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.42))
-	if selected:
-		surface_draw_ready_badge(rect, "CLICK AGAIN")
-	elif hovered and enabled:
-		surface_draw_ready_badge(rect, "CLICK")
-	if enabled:
-		surface_add_hit(rect, action, index)
 
 
 func _draw_foundation_result_burst() -> void:
@@ -2227,46 +2129,3 @@ func _draw_drunk_overlay_on(canvas: Control) -> void:
 		canvas.draw_rect(Rect2(0, y, board_size.x, 2), Color(color.r, color.g, color.b, alpha * 1.55))
 		if level >= 45:
 			canvas.draw_rect(Rect2(0, y + 6, board_size.x, 1), Color(color.r, color.g, color.b, alpha * 0.85))
-
-
-func _surface_action_selected(kind: String, action: Dictionary) -> bool:
-	if action.is_empty():
-		return false
-	return str(state.get("selected_action_kind", "")) == kind and str(state.get("selected_action_id", "")) == str(action.get("id", ""))
-
-
-func _surface_action_label(action: Dictionary, fallback: String) -> String:
-	if action.is_empty():
-		return fallback
-	var label := str(action.get("label", ""))
-	if label.is_empty():
-		label = str(action.get("id", fallback)).replace("_", " ").capitalize()
-	return label
-
-
-func _surface_action_summary(action: Dictionary, kind: String) -> String:
-	if action.is_empty():
-		return ""
-	var summary := str(action.get("summary", "")).strip_edges()
-	if not summary.is_empty():
-		return summary
-	var parts: Array = []
-	var win_chance := int(action.get("win_chance", 0))
-	if win_chance > 0:
-		parts.append("Win %d%%" % win_chance)
-	var payout_mult := int(action.get("payout_mult", 0))
-	if payout_mult > 0:
-		parts.append("Pay %dx" % payout_mult)
-	var heat := int(action.get("suspicion_delta", 0))
-	if heat != 0:
-		parts.append("heat %+d" % heat)
-	elif kind == "cheat":
-		parts.append("heat risk")
-	return " / ".join(parts)
-
-
-func _first_dictionary(value: Array) -> Dictionary:
-	for entry in value:
-		if typeof(entry) == TYPE_DICTIONARY:
-			return entry
-	return {}

@@ -632,21 +632,6 @@ static func selected_action_summary(host: Variant) -> String:
 	]
 
 
-static func game_recent_outcome_text(host: Variant) -> String:
-	var result = host._current_game_result_snapshot()
-	if result.is_empty():
-		return "No game outcome yet."
-	var message = host._player_facing_text(str(result.get("message", "")))
-	var deltas: Dictionary = result.get("deltas", {})
-	var bankroll_delta = int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
-	var suspicion_delta = int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0)))
-	return "%s Bankroll %+d, heat %+d." % [
-		message if not message.is_empty() else "Recent play resolved.",
-		bankroll_delta,
-		suspicion_delta,
-	]
-
-
 static func stake_range(host: Variant, action_view: Dictionary = {}) -> Dictionary:
 	if host.run_state == null:
 		return {"min": 1, "max": 1, "default": 1, "has_valid": false}
