@@ -3704,7 +3704,12 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 		var membership := reconcile_environment_object_membership(current_environment)
 		if not bool(membership.get("ok", false)):
 			return {"ok": false, "errors": JsonCoerceScript._copy_array(membership.get("errors", []))}
-	var authoritative_environment := _scenario_authoritative_environment_for_finalization(definition)
+	# A world-only host seals the current live room, not an immutable primary
+	# scenario baseline. Restoring consumed events here would produce records
+	# whose slots no longer exist when the world finalizer authenticates them
+	# against current_environment. Keep historical reconstruction for authored
+	# room sequences only.
+	var authoritative_environment := current_environment.duplicate(false) if world_only else _scenario_authoritative_environment_for_finalization(definition)
 	# Runtime membership (for example the Crew heist Live Table) may change after
 	# the prior scenario seal. Rebuild the detached baseline's manifest and slot
 	# envelope before asking the semantic producer to authenticate it; otherwise
