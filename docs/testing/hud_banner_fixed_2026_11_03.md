@@ -25,7 +25,7 @@ kill-on-close containment. Passing job receipts record exit0 and active0.
 
 - Current-main rendered row reproduction uses the production HUD plus the
   original row/margin/height rules from `8d3c5275`: normal72px becomes150px,
-  with the active item moving below Menu. See `current-main-row-repro.log`.
+  with the active item moving below Menu. See `current-main-row-parity-repro.log`.
   This is a source-based UI fixture, not a captured player route.
 - `hud_banner_fixed_layout_check.gd`: **808 checks pass**, four rendered
   production-shell cases (1280x720 and1920x1080, ordinary and maximum
@@ -59,5 +59,11 @@ root-certificate-store warning; it is not a passing TLS/network check.
 
 ## NEXT
 
-Pending the existing watcher and served-build/startup verification. This report
-does not authorize or claim stable/itch publication or audience changes.
+Local integration `b31b323d15b0e04f8d4aaed50f48514ca13abba2`, tree
+`29f353e8da70b26bd6907a15c986f25a8bdb1752`, includes concurrent main fixes
+through `29931ab9`. The exact merged source passes the808 layout checks again
+(`merged-main-layout.log`, exit0, active0). Other passing receipts above retain
+their original source60d88551 scope; they are not relabeled as new-build runs.
+
+Main publication and the existing watcher/served-build/startup verification are
+pending. No NEXT, stable/itch publication or audience change is claimed.
