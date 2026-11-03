@@ -18151,54 +18151,6 @@ func _interactable_object_cache_key() -> String:
 	]
 
 
-func _interactable_environment_cache_token(environment: Dictionary) -> String:
-	# Interaction availability changes at authored room/visit/action revisions.
-	# Hashing the complete environment also traversed live game buffers, including
-	# 256x192 scratch masks, on every focus click. Those buffers are irrelevant to
-	# the room object catalog and made late-run lender selection take hundreds of
-	# milliseconds. Include the small authored interaction collections explicitly
-	# so in-place host/test updates cannot reuse a stale catalog.
-	var layout_value: Variant = environment.get("layout", {})
-	var layout: Dictionary = layout_value as Dictionary if typeof(layout_value) == TYPE_DICTIONARY else {}
-	var manifest_value: Variant = environment.get("object_manifest", {})
-	var manifest: Dictionary = manifest_value as Dictionary if typeof(manifest_value) == TYPE_DICTIONARY else {}
-	return JSON.stringify([
-		str(environment.get("id", "")),
-		str(environment.get("world_node_id", "")),
-		str(environment.get("environment_visit_id", "")),
-		int(environment.get("turns", 0)),
-		int(environment.get("environment_runtime_revision", 0)),
-		str(environment.get("scenario_semantic_digest", "")),
-		str(environment.get("scenario_layout_authority_digest", "")),
-		int(environment.get("object_manifest_revision", manifest.get("revision", 0))),
-		str(environment.get("object_manifest_digest", manifest.get("digest", ""))),
-		environment.get("runtime_object_manifest_entries", []),
-		bool(environment.get("scenario_semantic_ready", false)),
-		bool(environment.get("scenario_restore_pending_trusted_rebuild", false)),
-		str(environment.get("scenario_sequence_pending_visit_id", "")),
-		str(environment.get("scenario_restore_contract", "")),
-		environment.has("scenario_layout_audit"),
-		environment.has("scenario_render_snapshot"),
-		environment.has("scenario_sequence_projection"),
-		str(environment.get("current_layer_id", "")),
-		str(environment.get("kind", "")),
-		int(layout.get("slot_schema_version", 0)),
-		str(layout.get("slot_map_digest", "")),
-		str(layout.get("slot_binding_digest", "")),
-		layout.get("slot_overflow_ids", []),
-		layout.get("object_rects", {}),
-		environment.get("game_ids", []),
-		environment.get("event_ids", []),
-		environment.get("resolved_event_ids", []),
-		environment.get("item_offers", []),
-		environment.get("service_ids", []),
-		environment.get("lender_hooks", []),
-		environment.get("travel_hooks", []),
-		environment.get("next_archetypes", []),
-		environment.get("object_fixtures", []),
-	])
-
-
 func _game_hook_interactable_objects(apply_failure_lock: bool = true) -> Array:
 	return EnvironmentInteractionControllerScript.game_hook_interactable_objects(self, apply_failure_lock)
 
