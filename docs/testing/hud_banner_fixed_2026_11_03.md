@@ -169,3 +169,69 @@ the owned Job records active0. Raw rejected92 startup evidence remains intact.
 Receipts: task-11 `next-72945567...-release.json`, `-startup.json`, `-startup.png`
 and `web-current-729-host.json`. Parent HUD visual layout acceptance stays with
 its existing task owner; this receipt closes the unsupported-class blocker.
+
+## Final HUD acceptance on corrected NEXT
+
+`BTH061-HUD-001` is complete with implementation
+`60d8855191bc204a38ac390c1b8af2656f087aca`, Web repairs
+`2041585d42ae5f9f609d351a7aa0bdd48b1ae094` and
+`8f330c51c858ac6e82f3e307c6009bf330cfcd81`, integrated and pushed as
+`72945567dda09bff4feb236e44885a7850211a19` (tree
+`c0a63da385eba9c641d83442203b1900fdd8d0cb`). Keyboard coverage is committed as
+`e194813a3695cc4333a6568ab51a387f681a8815`. The earlier failed startup and timeout receipts above remain
+historical evidence, superseded by the corrected exact-build acceptance here.
+
+The existing watcher promoted729 at22:58:07UTC. `corrected-next-http.log`
+records **ten served-file checks pass**: exact source/tree, clean manifest,
+qualified guarded native objects, archive digest, NEXT redirect, metadata,
+PCK, engine JS/WASM/side module and native WASM. The corresponding owned-job
+receipt records exit0, no deadline exceeded and active0. The helper and its
+supervisor accidentally shared a receipt filename, so the final JSON contains
+the supervisor record; the ten-check result remains in its log. Later main
+promotion does not change729's immutable served files.
+
+Actual Web gameplay used a fresh ephemeral Chromium153 context and ordinary
+mouse/touch/keyboard input against the served immutable729 URL. GPU and browser
+sandboxes remained enabled; no engine commands or storage import/export were
+used. The previously selected5% cap stalled first Play. Using the maintained
+12% CPU allowance, still with2GiB memory,270-second browser/300-second Job
+deadlines and kill-on-close, Play completed. This establishes the corrected
+game's behavior; it does not diagnose the earlier capacity-related timeout.
+
+- `next-ui-12/desktop-start.png` shows version `0.6.0-dev+72945567dda0`.
+  `run.png` and `desktop-final-hud.png` show the actual normal72px banner,
+  with Menu, Settings, Inventory and Use Item on the same row.
+- Live resize to390x844,375x667 and844x390 retains the fixed16:9 game image,
+  the same HUD row, and complete modal bounds. `portrait390-hud.png`,
+  `portrait375-hud.png`, `landscape844-hud.png`, `portrait390-details.png`
+  and `landscape844-details.png` preserve the reviewed images. The game uses
+  its existing letterboxing; no portrait reflow was introduced.
+- Clock click and touch open Run details with exact balances, Heat, Drunk,
+  day/time, clock explanation, home and save information. Actual touch Close
+  in portrait and Escape in landscape dismiss it. Normal item selection and
+  pickup also complete, with feedback remaining readable and actions on one row.
+- `next-ui-keyboard/` repeats fresh Play and records initial Close focus,
+  Tab to scroll, Tab back to Close, Enter dismissal and clock-focus restoration
+  (`details-initial.png`, `details-scroll-focus.png`,
+  `details-close-focus.png`, `details-keyboard-closed.png`). A gold Inventory
+  coach highlight seen behind another modal capture was already present
+  before keyboard input; it was not escaped keyboard focus.
+- Both Web state files finish `completed=true`, `closed=true`, with **zero
+  page errors and zero console errors**. Only the expected pre-gesture audio
+  warning remains. `corrected-next-ui-12.json` and
+  `corrected-next-keyboard.json` record exit0, no timeout, GPU sandbox checked,
+  and active0 at release; peak memory1,366,450,176 and1,373,184,000 bytes.
+
+`keyboard-web-control-layout.log` passes **957 checks** on the production shell;
+`final-integrated-hud-layout.log` repeats all 957 after merging concurrent main
+through `3b4bd90d` (exit 0, no timeout, active 0).
+In addition to the combined933 geometry/profile cases, it dispatches actual
+Tab/Enter press and release events through both host and HUD, asserts each
+focus owner, activates Close and verifies opener restoration. Test fidelity
+remains explicit: maximum scalar values,12 long statuses, item art,6 package
+actions and maximum text/touch settings are synthetic native presentation
+models. Physical Web captures exercise ordinary fresh-run content and live
+orientation changes. The251 viewport/input checks separately cover physical
+sizes with the fixed1280x720 logical viewport. No original player state was
+required or altered. The obsolete Crew-window fixture's separate failure
+remains unqualified, without blocking this independently covered HUD repair.
