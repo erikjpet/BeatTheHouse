@@ -143,6 +143,29 @@ func _exercise(viewport_size: Vector2i, large_text: bool) -> void:
 			_check(details_text.text.contains("STATUS_SENTINEL_%d" % index), prefix + ": all status explanations must be present")
 		_check(details_text.max_lines_visible == -1, prefix + ": details must retain all lines")
 		_check(details_scroll.vertical_scroll_mode != ScrollContainer.SCROLL_MODE_DISABLED, prefix + ": long details must be scrollable")
+		# Dispatch the real keyboard press/release through the production host as
+		# well as the HUD. A tutorial highlight behind the shade can resemble a
+		# focus ring; check the actual owner and the resulting Close action.
+		app.set_process_input(true)
+		for expected in [details_scroll, details_close, details_scroll, details_close]:
+			for pressed in [true, false]:
+				var tab := InputEventKey.new()
+				tab.keycode = KEY_TAB
+				tab.pressed = pressed
+				viewport.push_input(tab, true)
+			await _settle()
+			_check(viewport.gui_get_focus_owner() == expected, prefix + ": Tab must cycle only within run details")
+		for pressed in [true, false]:
+			var accept := InputEventKey.new()
+			accept.keycode = KEY_ENTER
+			accept.pressed = pressed
+			viewport.push_input(accept, true)
+		await _settle()
+		_check(not details_overlay.visible, prefix + ": keyboard activation of Close must dismiss details")
+		_check(viewport.gui_get_focus_owner() == hud.time_button, prefix + ": keyboard close must restore its opener")
+		app.set_process_input(false)
+		hud.time_button.pressed.emit()
+		await _settle()
 		details_close.grab_focus()
 		await _settle()
 		_check(_encloses(details_scroll.get_global_rect(), details_close.get_global_rect()) or _encloses(details_panel.get_global_rect(), details_close.get_global_rect()), prefix + ": close must remain accessible")
