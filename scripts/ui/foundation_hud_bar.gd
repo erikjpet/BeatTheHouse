@@ -741,17 +741,18 @@ func _on_details_pressed() -> void:
 
 
 func _build_details_overlay() -> void:
-	# A viewport layer keeps detail outside the clipped, fixed-height HUD. It is
-	# deliberately separate from the information row's minimum-size hierarchy.
-	var layer := CanvasLayer.new()
-	layer.name = "HudDetailsLayer"
-	layer.layer = 90
-	add_child(layer)
+	# The pinned Web runtime omits CanvasLayer. A top-level Control remains a
+	# separate GUI root outside the clipped HUD's layout and transform hierarchy,
+	# while staying owned by the HUD for visibility, focus and lifetime cleanup.
 	details_overlay = Control.new()
 	details_overlay.name = "HudDetails"
-	details_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	details_overlay.set_as_top_level(true)
+	details_overlay.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	details_overlay.z_as_relative = false
+	details_overlay.z_index = 4095
+	details_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	details_overlay.visible = false
-	layer.add_child(details_overlay)
+	add_child(details_overlay)
 	var shade := ColorRect.new()
 	shade.color = Color(0.0, 0.0, 0.0, 0.72)
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -784,7 +785,8 @@ func _build_details_overlay() -> void:
 	details_close.name = "CloseHudDetails"
 	details_close.custom_minimum_size.y = 52
 	stack.add_child(details_close)
-	details_overlay.resized.connect(_layout_details)
+	get_viewport().size_changed.connect(_layout_details)
+	_layout_details()
 	set_process_input(true)
 
 
@@ -815,6 +817,8 @@ func _layout_details() -> void:
 	if details_panel == null or not is_inside_tree():
 		return
 	var available := get_viewport_rect().size
+	details_overlay.position = Vector2.ZERO
+	details_overlay.size = available
 	var panel_size := Vector2(minf(600.0, maxf(1.0, available.x - 32.0)), minf(520.0, maxf(1.0, available.y - 32.0)))
 	details_panel.position = (available - panel_size) * 0.5
 	details_panel.size = panel_size

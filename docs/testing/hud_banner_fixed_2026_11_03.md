@@ -67,3 +67,32 @@ their original source60d88551 scope; they are not relabeled as new-build runs.
 
 Main publication and the existing watcher/served-build/startup verification are
 pending. No NEXT, stable/itch publication or audience change is claimed.
+
+## BTH061-HUD-001-WEB-CANVASLAYER integration repair
+
+Current Web acceptance found a blocker after the native qualification: exact
+NEXT `92b97d9a3cbc99c166eab164bb72f8e36c237e7d` logs `CanvasLayer` undeclared
+at `foundation_hud_bar.gd:746`, followed by a failed HUD script load and null
+`rp_child`. The pinned Web template omits that class. A visible start menu is
+insufficient qualification; the original raw smoke flag was rejected because
+its recorded console contained those script errors. Preserved evidence is
+`task-11/evidence/next-92b97d9a3cbc99c166eab164bb72f8e36c237e7d-startup.json`
+and its `-startup-review.json`. The local smoke predicate now rejects console
+errors as well as page errors.
+
+The scoped repair replaces the unsupported layer with a top-level `Control`
+owned directly by the HUD. It stays outside the clipped fixed-height layout,
+covers the logical viewport, follows viewport resizing and retains existing
+modal shade, focus, scrolling, visibility and disposal behavior. No game rules,
+economy, saves, renderer cadence, native code or toolchain changes are involved.
+
+`hud_banner_fixed_layout_check.gd` now passes **848 checks**, adding actual
+production GUI corner clicks, complete backdrop bounds, live viewport resize,
+HUD hide and disposal to the prior qualification. The table presentation check
+also passes **68 checks** with the repaired overlay. Receipts are
+`task-11/evidence/hud-web-overlay-layout-typed.json` and
+`terminal-web-overlay-integration.json`, each exit 0, deadline not exceeded and
+zero owned processes at release. A test-only type inference parse failure in
+the first attempt remains preserved in `hud-web-overlay-layout.log`.
+Independent source review found no remaining concrete issue. Exact repaired
+Web publication and startup remain pending; this subtask stays open until then.
