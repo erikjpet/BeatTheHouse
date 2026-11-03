@@ -6977,28 +6977,42 @@ func _selected_info_inline_actions(object_data: Dictionary) -> Array:
 	if str(object_data.get("id", "")) != selected_object_id:
 		return []
 	var actions := _array_view(object_data.get("inline_actions", [])).duplicate()
-	var has_attached_redemption := false
-	# Cash-out aliases share the physical counter NPC. They must also be
-	# reachable from the visible card, not only the legacy context sidebar.
+	var has_attached_service := false
+	# Services and cash-out aliases share tangible room hosts. Use the same
+	# published descriptors as the context sidebar, including their eligibility.
 	for descriptor_value in _array_view(object_data.get("attached_room_actions", [])):
 		var descriptor := descriptor_value as Dictionary
 		var record: Dictionary = descriptor.get("record", {})
 		var action: Dictionary = descriptor.get("action", {})
-		if str(action.get("id", "")) not in ["redeem_pull_tab_winners", "redeem_scratch_winners"]:
+		var is_service := str(record.get("object_type", "")) == "service" and str(action.get("id", "")) == "use_service_hook"
+		var is_redemption := str(action.get("id", "")) in ["redeem_pull_tab_winners", "redeem_scratch_winners"]
+		if not (is_service or is_redemption) or not _selected_info_action_is_visible(action):
 			continue
 		var key := str(descriptor.get("key", ""))
 		if key.is_empty():
 			continue
-		has_attached_redemption = true
+		has_attached_service = true
+		var detail := str(record.get("action_summary", ""))
+		if is_service:
+			var service_details: Array[String] = []
+			for field in ["cost_summary", "effect_summary", "status_summary"]:
+				var value := str(record.get(field, "")).strip_edges()
+				if not value.is_empty():
+					service_details.append(value)
+			if not bool(descriptor.get("enabled", false)):
+				var reason := str(descriptor.get("disabled_reason", "")).strip_edges()
+				if not reason.is_empty():
+					service_details.append(reason)
+			detail = "\n".join(service_details)
 		actions.append({
-			"label": str(descriptor.get("label", "Cash In Tickets")),
+			"label": str(record.get("label", descriptor.get("label", "Use"))) if is_service else str(descriptor.get("label", "Cash In Tickets")),
 			"enabled": bool(descriptor.get("enabled", false)),
 			"disabled": not bool(descriptor.get("enabled", false)),
 			"host_independent_service": true,
-			"text": str(record.get("action_summary", "")),
+			"text": detail,
 			"emit_object_id": "room_action:%s:%s" % [str(object_data.get("id", "")).uri_encode(), key.uri_encode()],
 		})
-	if has_attached_redemption:
+	if has_attached_service:
 		var own_actions := _selected_info_available_actions(object_data)
 		if not own_actions.is_empty():
 			actions.append({"label": str((own_actions[0] as Dictionary).get("label", "Talk")), "emit_object_id": str(object_data.get("id", "")), "enabled": bool(object_data.get("enabled", true))})
