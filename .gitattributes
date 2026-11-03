@@ -1,0 +1,4 @@
+# These historical inventories are authenticated as exact BOM+CRLF bytes.
+/scripts/tests/fixtures/integ06_1/mid_0_6/mid06_pre_environment_depth_bar_dice.custody.json -text
+/scripts/tests/fixtures/integ06_1/mid_0_6/mid06_pre_game_depth_slot.custody.json -text
+/scripts/tests/fixtures/integ06_1/mid_0_6/mid06_pre_world_depth_crew_debt.custody.json -text
