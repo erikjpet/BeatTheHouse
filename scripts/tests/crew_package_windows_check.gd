@@ -91,31 +91,70 @@ func check_delivery_hud(run: RunState) -> void:
 	host.screen_stack_root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	host.add_child(host.screen_stack_root)
 	check(host._build_next_run_ui_stage(), "production HUD could not build")
+	check(host._ensure_run_ui_stage_scripts(4), "package popup controller could not load")
+	host._build_event_choice_popup_overlay()
 	host.run_screen.visible = true
 	for viewport_size in [Vector2(1280, 720), Vector2(1920, 1080)]:
 		host.size = viewport_size
-		host._refresh_delivery_action_strip()
+		host._refresh_delivery_action_button()
 		host._invalidate_run_screen_layout()
 		host._apply_run_screen_layout()
 		for frame in range(8):
 			await process_frame
-		var strip := host.delivery_action_strip
+		var button := host.delivery_action_button
 		var panel_rect := host.run_hud_panel.get_global_rect()
-		check(strip.visible and strip.get_child_count() > 0, "active package HUD is missing at %s" % viewport_size)
-		check(panel_rect.encloses(strip.get_global_rect()), "package HUD is clipped at %s" % viewport_size)
-		for child in strip.get_children():
-			check(panel_rect.encloses(child.get_global_rect()), "package term/action is outside clipped HUD at %s" % viewport_size)
-		check(str(strip.get_child(0).text).contains("Day "), "persistent HUD omits appointment day/time")
+		check(button.visible, "active package HUD is missing at %s" % viewport_size)
+		check(panel_rect.grow(1.0).encloses(button.get_global_rect()), "package disclosure is clipped at %s" % viewport_size)
+		check(is_equal_approx(panel_rect.size.y, 72.0), "package must not grow the fixed information banner")
+		check(button.tooltip_text.contains("Day "), "persistent package disclosure omits appointment day/time")
 		check(host.visual_panel_container.get_global_rect().position.y >= panel_rect.end.y, "room covers persistent package HUD")
+		var play_rect := host.visual_panel_container.get_global_rect()
+		button.grab_focus()
+		button.pressed.emit()
+		for frame in range(8):
+			await process_frame
+		host._position_event_choice_popup()
+		for frame in range(8):
+			await process_frame
+		check(host.event_choice_popup_overlay.visible, "package disclosure did not open")
+		var timing := find_hud_label(host.event_choice_popup_choices_list, str(host._delivery_action_model().get("timing_text", "")))
+		check(timing != null and timing.max_lines_visible == -1, "package popup omits full appointment day/time")
+		var controls := host._event_choice_focus_controls()
+		var actions := run.delivery_top_actions()
+		check(controls.size() == actions.size() + 1, "package popup must expose every street action and Back")
+		for action_value in actions:
+			var action: Dictionary = action_value
+			var detail := find_hud_label(host.event_choice_popup_choices_list, str(action.get("message", "Act on the current delivery.")))
+			check(detail != null and detail.max_lines_visible == -1, "package action detail is truncated")
+		for control in controls:
+			control.grab_focus()
+			host.event_choice_popup_scroll.ensure_control_visible(control)
+			for frame in range(4):
+				await process_frame
+			check(host.event_choice_popup_scroll.get_global_rect().grow(1.0).encloses(control.get_global_rect()), "package action cannot be reached by focus/scroll")
+		host._hide_event_choice_popup()
+		for frame in range(4):
+			await process_frame
+		check(host.visual_panel_container.get_global_rect() == play_rect, "package details resized the play area")
 	var active_height := host.run_hud_panel.size.y
 	host.run_state = RunStateScript.new()
-	host._refresh_delivery_action_strip()
+	host._refresh_delivery_action_button()
 	for frame in range(8):
 		await process_frame
-	check(not host.delivery_action_strip.visible and host.run_hud_panel.size.y < active_height, "finished delivery leaves stale HUD footprint")
+	check(not host.delivery_action_button.visible and is_equal_approx(host.run_hud_panel.size.y, active_height), "finished delivery must hide its disclosure without resizing the HUD")
 	check(JSON.stringify([run.bankroll, run.rng_state, run.game_clock_minutes, run.active_delivery_run, run.debt]) == before, "HUD changed money/RNG/clock/delivery/debt")
 	host.queue_free()
 	await process_frame
+
+
+func find_hud_label(node: Node, text: String) -> Label:
+	if node is Label and node.text == text:
+		return node as Label
+	for child in node.get_children():
+		var found := find_hud_label(child, text)
+		if found != null:
+			return found
+	return null
 
 
 func _run() -> void:
