@@ -3740,6 +3740,15 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 	var authoritative := EnvironmentBaseSemanticRecordsScript.authoritative_interactable_records(authoritative_environment, library)
 	if not bool(authoritative.get("ok", false)):
 		return _scenario_semantic_finalization_failure(JsonCoerceScript._copy_array(authoritative.get("errors", [])), bool(current_environment.get("scenario_semantic_ready", false)))
+	var base_records := JsonCoerceScript._copy_array(authoritative.get("records", []))
+	if world_only:
+		# The Live Table is a Crew-owned runtime presentation, even when it was
+		# mounted before this room acquired its first world-only semantic seal.
+		# Immutable base geometry correctly excludes runtime rows; carrying its
+		# ordinary event record into that seal mismatched the two authorities and
+		# made a valid cold Count room unavailable. Keep the live event, rectangle,
+		# and owner untouched for the subsequent composed world publication.
+		base_records = _world_only_without_crew_live_table_base_record(base_records)
 	# Finalization must cross the same fixed-slot seam as the live production UI.
 	# In particular, slot overflow remains actionable authority even though it has
 	# no environment-board rectangle.
@@ -3755,7 +3764,7 @@ func scenario_finalize_installed_environment(library: ContentLibrary, layout_con
 			historical_event_slots = true
 	var bound := EnvironmentSlotBinderScript.bind_base_records(
 		authoritative_environment,
-		JsonCoerceScript._copy_array(authoritative.get("records", [])),
+		base_records,
 		JsonCoerceScript._copy_dict(authoritative_layout.get("slot_bindings", {})),
 		proof_occupancy
 	)
@@ -18044,3 +18053,31 @@ func _blackjack_authority_has_unsettled_wager() -> bool:
 	return bool(session.get("bankroll_wager_debited", false)) \
 		and int(session.get("wager_debited", 0)) > 0 \
 		and not hands.is_empty()
+
+
+func _world_only_without_crew_live_table_base_record(records: Array) -> Array:
+	if str(current_environment.get("archetype_id", "")) not in GRAND_CASINO_ARCHETYPE_IDS \
+			or not JsonCoerceScript._copy_array(current_environment.get("event_ids", [])).has("heist_live_table"):
+		return records
+	var heist := CrewHeistModelScript.normalize_state(crew_heist_state)
+	if str(heist.get("status", "")) not in [CrewHeistModelScript.STATUS_PLAY, CrewHeistModelScript.STATUS_INTERVIEW]:
+		return records
+	var owners := 0
+	for row_value in JsonCoerceScript._copy_array(current_environment.get("runtime_object_manifest_entries", [])):
+		var row := JsonCoerceScript._copy_dict(row_value)
+		if str(row.get("object_id", "")) == "event:heist_live_table" \
+				and str(row.get("runtime_owner", "")) == "crew_heist_live_table":
+			owners += 1
+	if owners != 1:
+		return records
+	var result: Array = []
+	for record_value in records:
+		var record := JsonCoerceScript._copy_dict(record_value)
+		if str(record.get("object_id", "")) == "event:heist_live_table" \
+				and str(record.get("source_id", "")) == "heist_live_table" \
+				and str(record.get("object_type", "")) == "event" \
+				and str(record.get("manifest_family", "")) == "scenario" \
+				and str(record.get("slot_family", "")) == "scenario":
+			continue
+		result.append(record_value)
+	return result
