@@ -95,3 +95,73 @@ claiming a pass. The valid Jazz fixture supplies the focused recovery/rejection
 evidence above. Earlier harness-only errors (reserved helper name and an
 interaction-only task incorrectly counted as a visual) are retained in local
 logs and corrected in the final test; they were not product failures.
+
+## NEXT verification and closeout
+
+Main push `29931ab9706df2dc45955f52fa1125fe77b78079` succeeded after the existing
+approval blocker was addressed with new trusted human authorization. The
+existing watcher promoted the newer descendant
+`a8941ccf94b2916ba772e9f7a4752bde454f1731` at **2026-11-03 22:25:35 UTC**.
+Its tree is `167c24db4a2e315548be98640cdd34b2a6cff2a4`; version is
+`0.6.0-dev+a8941ccf94b2`. Ancestry proves it contains the fix. Crew delivery/core
+and this regression script are unchanged from the pushed/tested version; the
+superseding commit adds a separately owned terminal-table presentation change.
+The 389 native checks above are attributed to their actual tested source, not
+claimed as a fresh full native run on this later UI source.
+
+Served `next.json`, `BUILD.json`, manifest, `REF`, `VERSION`, local current pointer
+and actual HTTP NEXT-entry redirect agree with that SHA/tree. Six payload HEAD
+requests return 200 with matching provenance sizes and correct WASM MIME.
+Downloaded PCK SHA-256 is
+`6af49d524eefaf585f14342bd9883646ddf367cd7eef5479be135bd737a30488`;
+it matches exact-build provenance. Archive SHA-256 is
+`7a9632509066c9c5100add4c85656b0345fe6affa88e88950baff117e68d8e0f`.
+The pipeline's matching engine/native qualification is reused; no substitute
+build, watcher restart, stable/itch publication or audience change occurred.
+
+A fresh disposable Chromium context loaded this exact immutable build and
+visibly reached the main menu with the matching version. All four engine/PCK/
+native requests returned 200; no page errors occurred. One ordinary AudioContext
+autoplay warning is retained. Browser/context closure completed, and the capped
+job exited 0 with zero owned processes. This is basic visual Web startup, not
+Web reproduction of the Jazz deadline race. The restricted-account browser
+attempt timed out before navigation; its owned tree was closed and evidence
+preserved before the successful check under the installed-browser account.
+
+Task-10 release evidence:
+
+- `evidence/next-a8941ccf94b2916ba772e9f7a4752bde454f1731-release.json`
+- `evidence/next-a8941ccf94b2916ba772e9f7a4752bde454f1731-startup.json`
+- corresponding startup screenshot, `web-next-a894-startup-r3.{json,log}`
+- `evidence/final-qualification.json`, `publication-resumed.json` and preserved
+  historical blocker/custody receipts
+
+The implementation and NEXT verification are complete with the associated fix
+commit above. The restored named task ledger additionally requires original
+acceptance and records missing original fixtures as gaps. Accordingly,
+`BTH061-CREW-EXPIRED-HANDOFF` (alias
+`BTH-CREW-EXPIRED-JAZZ-HANDOFF-001`) remains Open only for original-player-state
+acceptance: that latest save was inaccessible and untouched. Synthetic native
+compatibility evidence and fresh Web startup do not assert that unobserved
+player-state or deployed Web deadline-race gameplay acceptance.
+
+A later promoted descendant, `e641f0c81af36c399d5fea5c1504963455f63cc2`
+(tree `2e44862d148cf92ba256aa50daf23e5dd732b71e`, promotion **22:31:13 UTC**),
+also passed the same served-identity/actual-redirect/REF/VERSION/six-payload/PCK
+verification and reached a visible correct-version menu. Its served PCK
+SHA-256 is `a8952f563fc74dc0c743411fd6965200ead39358c4c99d07ccc601b3eef017bb`;
+version `0.6.0-dev+e641f0c81af3`. It retains the unchanged Crew core/regression
+code and includes the separately owned fixed-HUD update. Browser/context closed
+with no page errors and zero owned processes. However, this startup is **not
+qualified**: final console review found one autoplay warning and eight error
+lines, including `Identifier "CanvasLayer" not declared in the current scope`
+at `foundation_hud_bar.gd:746`, type inference failure, failed HUD script load and
+null `rp_child`. The raw smoke JSON's `passed=true` was a false positive because
+its original gate checked JavaScript page errors but ignored console errors;
+that local gate is corrected. The original raw evidence is preserved. The matching
+`next-e641f0c81af36c399d5fea5c1504963455f63cc2-{release,startup}.json`, screenshot
+and `web-next-e641-startup.{json,log}` preserve this later observation. The blocker
+is tracked as `BTH061-HUD-001-WEB-CANVASLAYER` under the active HUD owner. The
+earlier a8941ccf startup has only the autoplay warning and remains valid. No fresh
+389-check native run or full HUD/gameplay certification is inferred for its
+separately changed UI; the original-source qualification remains attributed above.
