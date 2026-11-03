@@ -83,5 +83,37 @@ minimum/capacity/additive behavior and all result-reveal guards. A normal import
 was completed after reusing the exact source import/native support. Only the
 scoped files are staged; private evidence and generated support remain excluded.
 
-NEXT artifact identity and permitted browser acceptance are recorded separately
-after publication. Native checks alone do not establish deployed Web acceptance.
+## NEXT publication and remaining acceptance
+
+Fix `226e25833dc8e863f940011fee6cb275cdd73097` and qualification commit
+`8bdfdbedb98e37eaf781952439df3877b80b6c46` were pushed to main. The existing
+watcher promoted the latter at `2026-11-03T23:55:59Z`, with no watcher error.
+At `23:56:36Z` its served identity was independently verified:
+
+- source `8bdfdbedb98e37eaf781952439df3877b80b6c46`, tree
+  `32951690e68d97a856a832b2c503e2acdde0ad84`;
+- version `0.6.0-dev+8bdfdbedb98e`; actual NEXT redirect, current pointer,
+  `next.json`, `BUILD.json`, manifest, REF/VERSION and archive provenance agree;
+- all six game payload HEAD requests returned 200 with provenance sizes and
+  correct WASM MIME; downloaded PCK SHA-256
+  `13850d0682398cb4b834067d65d22fe842814a7e654ebe865de6db6682d06902`
+  matches export provenance;
+- archive SHA-256
+  `8d8478e13af1ad07b16fd2e6a7f9bf24097a2fc0a2247618c05b3c2ce798c4a1`.
+
+Receipt: task-10 `evidence/next-8bdfdbedb98e37eaf781952439df3877b80b6c46-release.json`.
+These are pipeline and documented local HTTP asset checks, not Web play.
+
+Normal permitted browser navigation to the existing LAN HTTPS NEXT entry at
+`https://192.168.0.36:8443/p/beat-the-house/play/dev/` stopped before the game
+loaded with **NET::ERR_CERT_AUTHORITY_INVALID** / Privacy error. At
+`2026-11-03T23:56:53.908Z`, captured warning/error console logs were empty;
+that is not a clean application-startup result because the application never
+loaded. No warning was bypassed, trust setting changed or alternate browser/
+route used for gameplay. The temporary owned tab was closed. Receipt:
+`evidence/roulette-social-next-browser-blocked.json`.
+
+The task remains **Open**: native quote/staging qualification and deployed
+artifact identity pass, while permitted Web startup and actual deployed
+quote/staging acceptance remain unverified. Stable, itch and hosting audience
+were unchanged.
