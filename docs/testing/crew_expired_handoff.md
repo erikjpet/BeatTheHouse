@@ -78,6 +78,14 @@ result is **60 checks passed**, exit 0, recorded in
 and both close with zero owned processes. Preserved baseline hashes remain
 unchanged after recovery testing.
 
+After main advanced to `f3a2f0b1` with the Back Alley publication fixes, merge
+`5e054f51b439028fd8417a0dc7bca97ca4e1d179` retained the original fix commit and
+both task records. The same **329 + 60 checks passed again** on that integrated
+runtime, with no script/check failures and zero owned processes after each job.
+Receipts: `evidence/authorized-integration-jazz-boundaries.{json,log}` and
+`evidence/authorized-integration-legacy-cold.{json,log}`. This specifically
+qualifies the shared composed-layout helper's stronger publication validation.
+
 The older `world_sequence_delivery_proof_contract.gd --delivery-reentry-only`
 runtime could not construct its pre-existing triggered-event fixture (`Event is
 no longer available`) before any checkpoint assertion. One bounded cadence-fixture
