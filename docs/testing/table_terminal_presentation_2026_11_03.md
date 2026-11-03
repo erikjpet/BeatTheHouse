@@ -1,8 +1,9 @@
 # BTH061-TABLE-ENDING: finish the hand before the run report
 
 Implementation commit: `776a819d0420c8801708b20b5e9376c5fd0d15fe`.
-Status: complete. Focused and integrated native checks passed; exact NEXT
-publication, served identity and fresh browser startup verified.
+Status: table fix committed, native-tested and verified on NEXT `a8941ccf`.
+Current combined NEXT acceptance is temporarily blocked by the later HUD
+`CanvasLayer` parse issue, tracked as `BTH061-HUD-001-WEB-CANVASLAYER`.
 Owner report: a final table decision immediately opens the ending before the
 player can see the losing hand. No original player save was supplied or changed.
 
@@ -111,6 +112,13 @@ Stable, itch and hosting audience were unchanged. Player browser profiles and
 original saves were not accessed. This closing task-record update changes no
 product files; its current NEXT identity can be followed with the same narrow
 verification, without repeating the unchanged native gameplay campaign.
+
+The later exact `92b97d9a` artifact passes served-identity checks but its browser
+console rejects the concurrent HUD's unsupported `CanvasLayer` reference. Its
+menu-only raw startup flag is not accepted. The focused Web-safe overlay repair
+is recorded in [the HUD report](hud_banner_fixed_2026_11_03.md); table checks
+still pass 68 assertions with that repair. Current Web acceptance remains open
+until the repaired artifact is verified.
 
 ## Resolved publication approval
 

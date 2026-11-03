@@ -741,21 +741,19 @@ func _on_details_pressed() -> void:
 
 
 func _build_details_overlay() -> void:
-	# The locked Web template strips CanvasLayer. Host this ordinary Control
-	# beside the run screen, outside its clipped/minimum-size hierarchy.
+	# The pinned Web runtime omits CanvasLayer. A top-level Control remains a
+	# separate GUI root outside the clipped HUD's layout and transform hierarchy,
+	# while staying owned by the HUD for visibility, focus and lifetime cleanup.
 	var viewport := get_viewport()
-	var overlay_host: Node = viewport
-	var ancestor: Node = get_parent()
-	while ancestor != null and ancestor != viewport:
-		if ancestor is Control:
-			overlay_host = ancestor
-		ancestor = ancestor.get_parent()
 	details_overlay = Control.new()
 	details_overlay.name = "HudDetails"
+	details_overlay.set_as_top_level(true)
 	details_overlay.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
-	details_overlay.z_index = 200
+	details_overlay.z_as_relative = false
+	details_overlay.z_index = 4095
+	details_overlay.mouse_filter = Control.MOUSE_FILTER_STOP
 	details_overlay.visible = false
-	overlay_host.add_child(details_overlay)
+	add_child(details_overlay)
 	var shade := ColorRect.new()
 	shade.color = Color(0.0, 0.0, 0.0, 0.72)
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -789,6 +787,7 @@ func _build_details_overlay() -> void:
 	details_close.custom_minimum_size.y = 52
 	stack.add_child(details_close)
 	viewport.size_changed.connect(_layout_details)
+	_layout_details()
 	set_process_input(true)
 
 

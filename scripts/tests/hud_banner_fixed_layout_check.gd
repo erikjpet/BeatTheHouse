@@ -130,10 +130,12 @@ func _exercise(viewport_size: Vector2i, large_text: bool) -> void:
 	var details_text := hud.get("details_text") as Label
 	var details_close := hud.get("details_close") as Button
 	_check(details_overlay != null and details_overlay.visible, prefix + ": clock must open the details disclosure")
-	_check(not app.run_screen.is_ancestor_of(details_overlay), prefix + ": details must live outside the clipped run screen")
+	_check(details_overlay.is_set_as_top_level() or not app.run_screen.is_ancestor_of(details_overlay), prefix + ": details must escape the clipped run screen")
 	_check(details_overlay.z_index > 100, prefix + ": details must cover TalkDock and item-found overlays")
 	_check(app._talk_dock_input_is_blocked() and app._modal_contract_blocks_player_input(), prefix + ": details must block underlying conversation and room input")
 	if details_overlay != null and details_overlay.visible and details_panel != null and details_text != null and details_scroll != null and details_close != null:
+		_check(details_overlay.is_set_as_top_level(), prefix + ": disclosure must escape the clipped HUD without a platform-specific layer")
+		_check(details_overlay.get_global_rect() == Rect2(Vector2.ZERO, Vector2(viewport_size)), prefix + ": disclosure backdrop must cover the complete viewport")
 		_check(_encloses(Rect2(Vector2.ZERO, Vector2(viewport_size)), details_panel.get_global_rect()), prefix + ": details must fit the viewport")
 		_check(details_scroll.follow_focus, prefix + ": details must follow keyboard focus")
 		_check(details_text.text.contains("2147483647") and details_text.text.contains("11:59 PM") and details_text.text.contains("Pocket Watch"), prefix + ": exact values and clock explanation must be available in details")
@@ -148,6 +150,28 @@ func _exercise(viewport_size: Vector2i, large_text: bool) -> void:
 		await _settle()
 		_check(not details_overlay.visible, prefix + ": details must close")
 		_check(viewport.gui_get_focus_owner() == hud.time_button, prefix + ": closing details must restore clock focus")
+		for corner in [Vector2(2, 2), Vector2(viewport_size.x - 2, 2), Vector2(2, viewport_size.y - 2), Vector2(viewport_size.x - 2, viewport_size.y - 2)]:
+			hud.time_button.pressed.emit()
+			await _settle()
+			for pressed in [true, false]:
+				var pointer := InputEventMouseButton.new()
+				pointer.button_index = MOUSE_BUTTON_LEFT
+				pointer.pressed = pressed
+				pointer.position = corner
+				viewport.push_input(pointer, true)
+			await _settle()
+			_check(not details_overlay.visible, prefix + ": backdrop pointer at %s must reach the disclosure instead of the room" % corner)
+		hud.time_button.pressed.emit()
+		viewport.size = viewport_size + Vector2i(160, 90)
+		await _settle()
+		_check(details_overlay.get_global_rect() == Rect2(Vector2.ZERO, Vector2(viewport.size)), prefix + ": an open disclosure must follow viewport resize")
+		_check(_encloses(Rect2(Vector2.ZERO, Vector2(viewport.size)), details_panel.get_global_rect()), prefix + ": resized disclosure must remain reachable")
+		viewport.size = viewport_size
+		await _settle()
+		hud.hide()
+		await _settle()
+		_check(not details_overlay.visible, prefix + ": hiding the HUD must dismiss its top-level disclosure")
+		hud.show()
 	await _settle_layout(app)
 	_check(app.visual_panel_container.get_global_rect() == normal_play, prefix + ": opening/closing clock detail must preserve play area")
 
@@ -204,8 +228,10 @@ func _exercise(viewport_size: Vector2i, large_text: bool) -> void:
 	_check(app.visual_panel_container.get_global_rect() == normal_play, prefix + ": meta content must preserve play area")
 	_check(not app.top_inventory_button.visible and not app.active_item_button.visible, prefix + ": meta mode must retain existing action visibility")
 	cases.append({"viewport": {"width": viewport_size.x, "height": viewport_size.y}, "large_touch": large_text, "font_scale": app._accessibility_font_scale(), "control_scale": app._accessibility_control_scale(), "normal": normal, "worst": worst, "package": package_geometry, "package_action_count": controls.size(), "full_status_count": statuses.size(), "play_rect_unchanged": app.visual_panel_container.get_global_rect() == normal_play})
+	var disclosure_ref: WeakRef = weakref(details_overlay)
 	viewport.queue_free()
 	await _settle()
+	_check(disclosure_ref.get_ref() == null, prefix + ": HUD disposal must release its top-level disclosure")
 
 
 func _geometry(app: ShellOnly, label: String, large_text: bool) -> Dictionary:
