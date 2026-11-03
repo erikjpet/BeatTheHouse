@@ -2,6 +2,7 @@
 
 Baseline: `87a06b9a4acbe86b0f761d2cd0ab929f5584b716`.
 Task: `BTH061-AUDIT-001` on the existing stability release task list.
+Removal commit: `6a784623bdedd6b253d41ef42110adbfd4d67a12`.
 
 This audit is separate from the Crew-delivery/game-surface repair. It removes
 confirmed superseded implementations and assets; it does not claim to fix the
