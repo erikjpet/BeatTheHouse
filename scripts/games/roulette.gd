@@ -404,6 +404,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"patron_layout": patron_layout,
 		"focused_patron_index": _focused_patron_index(session, surface_patrons),
 		"patron_wager_action": "roulette_patron_bet",
+		"patron_wager_quotes": _patron_wager_quotes(session, table, run_state, environment) if not barred and not roulette_motion_active and result_settled_for_display else {},
 		"snitch_pressure": _patron_snitch_pressure(surface_patrons),
 		"suspicion_level": run_state.suspicion_level() if run_state != null else 0,
 		"dealer_attention_pressure": 12 if spin_active else 8 if payout_active else 0,
@@ -566,6 +567,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 		"surface_action_blocks": _surface_action_blocks(roulette_wheel_locked),
 		"phase": "barred" if barred else "spinning" if spin_active else "payout" if payout_active or result_reveal_active else "betting",
 		"ritual_phase": ritual_phase,
+		"patron_wager_quotes": _patron_wager_quotes(session, table, run_state, environment) if not barred and not roulette_motion_active and result_settled_for_display else {},
 		"dealer_attention_pressure": 12 if spin_active else 8 if payout_active else 0,
 		"can_spin": not barred and not roulette_wheel_locked,
 		"can_undo": not barred and not roulette_wheel_locked and not (_array(session.get("roulette_undo_stack", [])).is_empty()),
@@ -776,6 +778,15 @@ func _roulette_in_place_session_surface_patch(session: Dictionary, run_state: Ru
 	var table := _peek_table_state(environment)
 	if table.is_empty():
 		return {}
+	var last_result_source := _last_result_source(table)
+	var last_result := _surface_last_result(last_result_source)
+	var now_msec := _surface_time_msec_for_result(session, last_result_source)
+	var phase_status := _roulette_phase_status_for_result(last_result_source, now_msec)
+	var result_settled_for_display := _roulette_result_settled_for_surface(last_result_source, phase_status)
+	var past_post_available := bool(_past_post_window_status(table, session, last_result, now_msec, run_state).get("available", false))
+	var wheel_read_challenge := _normalized_wheel_read_challenge(session.get("wheel_read_challenge", {}))
+	var wheel_read_active := not wheel_read_challenge.is_empty() and str(wheel_read_challenge.get("skill_grade", "")).is_empty()
+	var roulette_motion_active := bool(phase_status.get("motion_active", false)) or past_post_available or wheel_read_active
 	var bets := _bet_array(session.get("roulette_bets", []))
 	var denominations := _chip_denominations(table)
 	var selected_chip := int(session.get("selected_chip", denominations[0]))
@@ -802,6 +813,7 @@ func _roulette_in_place_session_surface_patch(session: Dictionary, run_state: Ru
 		"can_remove": not barred and not bets.is_empty(),
 		"can_rebet": not barred and not _roulette_rebet_layout(session, table).is_empty(),
 		"focused_patron_index": _focused_patron_index(session, _dictionary_array(table.get("patrons", []))),
+		"patron_wager_quotes": _patron_wager_quotes(session, table, run_state, environment) if not barred and not roulette_motion_active and result_settled_for_display else {},
 		"wheel_read_challenge": _normalized_wheel_read_challenge(session.get("wheel_read_challenge", {})),
 		"past_post_challenge": _normalized_past_post_challenge(session.get("past_post_challenge", {})),
 		"native_selected_surface_actions": _selected_surface_actions(session),
@@ -2242,19 +2254,38 @@ func _patron_focus_command(index: int, state: Dictionary, table: Dictionary) -> 
 	})
 
 
-func _patron_bet_command(index: int, state: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+func _patron_wager_quotes(state: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	var focused_index := _focused_patron_index(state, _dictionary_array(table.get("patrons", [])))
+	if focused_index < 0:
+		return {}
+	var quotes: Dictionary = {}
+	for direction in ["with", "fade"]:
+		var proposal := _patron_bet_proposal(focused_index + (100 if direction == "fade" else 0), state, table, run_state, environment)
+		quotes[direction] = {
+			"ok": bool(proposal.get("ok", false)),
+			"stake": int(proposal.get("stake", 0)),
+			"message": str(proposal.get("message", "")),
+			"target_id": str(proposal.get("bet_id", "")),
+			"target_label": str(proposal.get("target_label", "")),
+		}
+	return quotes
+
+
+# The quote and staging command share one validated, read-only candidate. Patron
+# chips remain their wager; the player's added chip can differ at table limits.
+func _patron_bet_proposal(index: int, state: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
 	var fade := index >= 100
 	var patron_index := index % 100
 	var patrons := _dictionary_array(table.get("patrons", []))
 	if patron_index < 0 or patron_index >= patrons.size():
-		return _message_command(state, "That roulette player is no longer seated.")
+		return {"ok": false, "message": "That roulette player is no longer seated."}
 	var patron: Dictionary = patrons[patron_index]
 	var source_target := _patron_roulette_wager(patron, table, patron_index)
 	if source_target.is_empty():
-		return _message_command(state, "That player's roulette action is not on the layout.")
+		return {"ok": false, "message": "That player's roulette action is not on the layout."}
 	var target := _roulette_fade_target(source_target, table, patron_index) if fade else source_target
 	if target.is_empty():
-		return _message_command(state, "There is no legal opposing bet for that wager.")
+		return {"ok": false, "message": "There is no legal opposing bet for that wager."}
 	var bets := _bet_array(state.get("roulette_bets", []))
 	var rules := _table_rules(table)
 	var wager := maxi(1, int(source_target.get("patron_stake", source_target.get("stake", 1))))
@@ -2262,15 +2293,14 @@ func _patron_bet_command(index: int, state: Dictionary, table: Dictionary, run_s
 	var table_room := maxi(0, int(rules.get("table_max", 100)) - _total_wager(bets))
 	var chip := mini(wager, mini(bankroll_room, table_room))
 	if chip <= 0:
-		return _message_command(state, "No bankroll left to take that social roulette action.")
+		return {"ok": false, "message": "No bankroll left to take that social roulette action."}
 	if str(target.get("family", "")) == "outside":
 		var outside_min := int(rules.get("outside_min_each", 1))
 		if chip < outside_min:
 			if mini(bankroll_room, table_room) >= outside_min:
 				chip = outside_min
 			else:
-				return _message_command(state, "That outside bet cannot meet the table minimum.")
-	_push_undo_state(state)
+				return {"ok": false, "message": "That outside bet cannot meet the table minimum."}
 	var placed := false
 	for i in range(bets.size()):
 		var bet: Dictionary = bets[i]
@@ -2283,18 +2313,36 @@ func _patron_bet_command(index: int, state: Dictionary, table: Dictionary, run_s
 		var next_bet := target.duplicate(true)
 		next_bet["stake"] = chip
 		bets.append(next_bet)
-	state["roulette_bets"] = bets
 	var validation := _validate_roulette_bets(bets, table, run_state, environment)
 	if not bool(validation.get("ok", false)):
-		state["roulette_bets"] = _pop_undo_state(state)
-		return _message_command(state, str(validation.get("message", "Those social roulette chips cannot stay on the layout.")))
-	state["table_social_alignment"] = {
-		"game": "roulette",
+		return {"ok": false, "message": str(validation.get("message", "Those social roulette chips cannot stay on the layout."))}
+	return {
+		"ok": true, "bets": bets, "stake": chip, "fade": fade,
+		"patron_index": patron_index,
 		"patron_id": str(patron.get("id", "patron_%d" % patron_index)),
 		"patron_name": str(patron.get("name", "Patron")),
-		"stance": "against" if fade else "with",
 		"source_bet": str(source_target.get("id", "")),
 		"bet_id": str(target.get("id", "")),
+		"target_label": str(target.get("label", "roulette")),
+	}
+
+
+func _patron_bet_command(index: int, state: Dictionary, table: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	var proposal := _patron_bet_proposal(index, state, table, run_state, environment)
+	if not bool(proposal.get("ok", false)):
+		return _message_command(state, str(proposal.get("message", "Those social roulette chips cannot stay on the layout.")))
+	var chip := int(proposal.get("stake", 0))
+	var patron_index := int(proposal.get("patron_index", -1))
+	var fade := bool(proposal.get("fade", false))
+	_push_undo_state(state)
+	state["roulette_bets"] = proposal.get("bets", [])
+	state["table_social_alignment"] = {
+		"game": "roulette",
+		"patron_id": str(proposal.get("patron_id", "")),
+		"patron_name": str(proposal.get("patron_name", "Patron")),
+		"stance": "against" if fade else "with",
+		"source_bet": str(proposal.get("source_bet", "")),
+		"bet_id": str(proposal.get("bet_id", "")),
 		"stake": chip,
 	}
 	return GameModule.surface_command({
@@ -2304,7 +2352,7 @@ func _patron_bet_command(index: int, state: Dictionary, table: Dictionary, run_s
 		"selected_index": patron_index,
 		"surface_audio_cue": "roulette_chip_place",
 		"surface_audio_context": {"action": "roulette_patron_bet", "index": patron_index},
-		"message": "%s %s: $%d on %s." % ["Fading" if fade else "Following", str(patron.get("name", "Patron")), chip, str(target.get("label", "roulette"))],
+		"message": "%s %s: $%d on %s." % ["Fading" if fade else "Following", str(proposal.get("patron_name", "Patron")), chip, str(proposal.get("target_label", "roulette"))],
 	})
 
 
@@ -3055,16 +3103,21 @@ func _draw_focused_patron_panel(surface, surface_state: Dictionary, patrons: Arr
 	var action := str(surface_state.get("patron_wager_action", ""))
 	if action.is_empty():
 		return
-	var rect := Rect2(710, 18, 176, 58)
+	var rect := Rect2(710, 18, 176, 64)
 	var accent := C_PINK if bool(patron.get("watching_player", false)) else C_TEAL
 	TableVisualsScript.draw_flat_neon_panel(surface, rect, accent, 0.15)
-	surface.surface_label(str(patron.get("name", "Patron")).to_upper().left(16), rect.position + Vector2(10, 14), 10, C_WHITE)
-	surface.surface_label(str(patron.get("behavior", str(patron.get("mood", "watching")))).left(22), rect.position + Vector2(10, 29), 8, accent)
-	_draw_table_button(surface, Rect2(rect.position.x + 84, rect.position.y + 10, 38, 20), "WITH", action, focused_index, C_TEAL, true)
-	_draw_table_button(surface, Rect2(rect.position.x + 128, rect.position.y + 10, 38, 20), "FADE", action, focused_index + 100, C_PINK, true)
+	surface.surface_label(str(patron.get("name", "Patron")).to_upper().left(12), rect.position + Vector2(10, 14), 10, C_WHITE)
+	surface.surface_label(str(patron.get("behavior", str(patron.get("mood", "watching")))).left(14), rect.position + Vector2(94, 14), 7, accent)
 	var wager := _dict_ref(patron.get("visible_bet", {}))
-	var wager_text := "%s %s" % [_roulette_surface_amount(surface_state, int(wager.get("stake", 0))), str(wager.get("label", "bet"))]
-	surface.surface_label(wager_text.left(22), rect.position + Vector2(84, 45), 8, C_YELLOW)
+	var wager_text := "PATRON %s %s" % [_roulette_surface_amount(surface_state, int(wager.get("stake", 0))), str(wager.get("label", "bet"))]
+	surface.surface_label(wager_text.left(31), rect.position + Vector2(10, 29), 8, C_YELLOW)
+	var quotes := _dict_ref(surface_state.get("patron_wager_quotes", {}))
+	for direction in ["with", "fade"]:
+		var quote := _dict_ref(quotes.get(direction, {}))
+		var enabled := bool(quote.get("ok", false))
+		var label: String = "%s %s" % [str(direction).to_upper(), _roulette_surface_amount(surface_state, int(quote.get("stake", 0)))] if enabled else str(direction).to_upper()
+		var is_fade: bool = direction == "fade"
+		_draw_table_button(surface, Rect2(rect.position + Vector2(92 if is_fade else 8, 35), Vector2(76, 22)), label, action, focused_index + (100 if is_fade else 0), C_PINK if is_fade else C_TEAL, enabled, false, true)
 
 
 func _draw_small_color_chip(surface, center: Vector2, color: Color, value: int) -> void:
@@ -4518,14 +4571,14 @@ func _surface_clock(surface) -> float:
 	return float(Time.get_ticks_msec()) / 1000.0
 
 
-func _draw_table_button(surface, rect: Rect2, label: String, action: String, index: int, accent: Color, enabled: bool = true, selected: bool = false) -> void:
+func _draw_table_button(surface, rect: Rect2, label: String, action: String, index: int, accent: Color, enabled: bool = true, selected: bool = false, full_label: bool = false) -> void:
 	var hovered: bool = bool(surface.surface_region_hovered(action, index))
 	var color := accent if enabled else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.30)
 	surface.draw_rect(rect, Color(color.r, color.g, color.b, 0.22 if selected or hovered else 0.10))
 	surface.draw_rect(rect, color, false, 1)
 	if selected:
 		surface.draw_rect(rect.grow(2), Color(color.r, color.g, color.b, 0.32), false, 2)
-	surface.surface_label_centered_plain(label.left(13), rect.grow(-2), 8 if rect.size.y < 24 else 10, color)
+	surface.surface_label_centered_plain(label if full_label else label.left(13), rect.grow(-2), 8 if rect.size.y < 24 else 10, color)
 	if enabled:
 		surface.surface_add_exact_hit(rect, action, index)
 
