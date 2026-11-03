@@ -96,3 +96,7 @@ zero owned processes at release. A test-only type inference parse failure in
 the first attempt remains preserved in `hud-web-overlay-layout.log`.
 Independent source review found no remaining concrete issue. Exact repaired
 Web publication and startup remain pending; this subtask stays open until then.
+
+Repair implementation commit: `2041585d42ae5f9f609d351a7aa0bdd48b1ae094`.
+The canonical Web blocker row is associated with this commit and remains open
+until strict repaired Web startup qualification.
