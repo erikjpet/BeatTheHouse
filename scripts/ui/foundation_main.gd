@@ -1322,7 +1322,12 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 	_clear_selected_item_offer()
 	_clear_selected_service_hook()
 	_clear_selected_lender_hook()
-	clear_interaction_focus()
+	# The first canvas snapshot must use the new room's completed publication.
+	# Rendering here would seed arrival tracking with an empty/previous catalog.
+	clear_interaction_focus(false, false)
+	if environment_canvas != null:
+		environment_canvas.settle_person_transits()
+		environment_canvas.set_selected_object("", true)
 	_show_message("The run begins.")
 	_autosave_foundation_run("Autosaved.")
 	_refresh()
