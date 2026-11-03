@@ -96,3 +96,25 @@ The earlier restricted-account attempt is retained under `next-web/` and
 blocker, not an attributed product defect. Native layout/pointer checks above
 are not relabeled as visual Web gameplay. Keep the task open for exact-build
 browser startup and deployed layout acceptance.
+
+## BTH061-HUD-001-WEB-CANVASLAYER correction
+
+Independent task-10 console review on exacte641f0c8 confirmed a product error:
+`CanvasLayer` is disabled by the pinned
+`native/coin_pusher/godot_web_release_build_profile.json`. Full native Godot
+therefore parsed code that the actual Web engine rejected at HUD line746.
+The dependent issue is tracked separately and supersedes a startup-only claim
+based on seeing a menu/canvas without reviewing Godot console errors.
+
+Correction `8f330c51c858ac6e82f3e307c6009bf330cfcd81` uses an ordinary Control
+beside the run screen, outside the clipped HUD hierarchy. It retains viewport
+dimensions, draws above TalkDock, moves to the front for pointer ordering, and
+releases its external overlay/focus scope during teardown. No engine/profile
+or native toolchain change is required.
+
+`web-profile-control-layout.log`: **893 checks pass**, including the existing
+layout cases, out-of-HUD overlay ownership, draw order and a new locked-profile
+compatibility check for disabled class references. `web-control-money.log`:
+**46 pass**; `web-control-hud-design.log`: **PASS**. All three jobs exit0/active0.
+Corrected exact Web deployment, startup-console review and actual HUD acceptance
+remain pending until the existing NEXT watcher promotes this correction.
