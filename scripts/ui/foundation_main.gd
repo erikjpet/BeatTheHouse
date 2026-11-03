@@ -728,7 +728,6 @@ var consequence_cards_list: BoxContainer
 var action_panel_container: PanelContainer
 var action_heading_label: Label
 var action_hint_label: Label
-var stake_input: SpinBox
 var actions_list: VBoxContainer
 var environment_canvas: PixelSceneCanvas
 var game_surface_canvas
@@ -1453,7 +1452,6 @@ func _enter_game_after_input_guard(clean_game_id: String, clean_state_key: Strin
 	_clear_selected_stake()
 	if restored_blackjack_wager > 0:
 		selected_stake = restored_blackjack_wager
-	_refresh_stake_input()
 	return current_screen == SCREEN_GAME and current_game == game_module
 
 
@@ -1536,7 +1534,6 @@ func _enter_grand_casino_duel_surface() -> bool:
 	_show_message(str(result.get("message", "Rourke cuts the cards.")))
 	_autosave_foundation_run("Duel autosaved.")
 	_refresh()
-	_refresh_stake_input()
 	return true
 
 
@@ -3497,17 +3494,14 @@ func set_selected_stake(stake: int, input_route_guarded: bool = false) -> bool:
 	var range := _stake_range()
 	if not bool(range.get("has_valid", false)):
 		_show_message("No valid stake is available.")
-		_refresh_stake_input()
 		return false
 	var min_stake := int(range.get("min", 1))
 	var max_stake := int(range.get("max", min_stake))
 	if stake < min_stake or stake > max_stake:
 		_show_message("Stake must be between %d and %d." % [min_stake, max_stake])
-		_refresh_stake_input()
 		return false
 	selected_stake = stake
 	_show_message("Stake set to %d." % selected_stake)
-	_refresh_stake_input()
 	return true
 
 
@@ -4009,7 +4003,9 @@ func _prepare_event_choice_resolution(event_id: String, choice_id: String, lifec
 	var had_event_popup := bool(pending_event_choice_popup_snapshot.get("visible", false))
 	var popup_type := str(pending_event_choice_popup_snapshot.get("popup_type", ""))
 	var was_triggered_popup := popup_type == "triggered_event"
-	var return_to_game_after_event := _event_resolution_returns_to_active_game(popup_type, event_context)
+	# A conversation can originate from debt or another world boundary while a
+	# table is active. Its trigger source does not transfer that table's ownership.
+	var return_to_game_after_event := current_game != null
 	var inventory_before := _run_inventory_id_set()
 	var caller_owns_event_rollback := not lifecycle_rollback.is_empty()
 	var event_rollback := lifecycle_rollback if caller_owns_event_rollback else _foundation_lifecycle_snapshot()
@@ -4033,7 +4029,6 @@ func _resolve_prepared_event_choice(prepared: Dictionary) -> Dictionary:
 
 func _complete_event_choice_resolution(prepared: Dictionary, result: Dictionary) -> Dictionary:
 	var event_id: String = prepared["event_id"]
-	var event_context: Dictionary = prepared["context"]
 	var popup_rect: Rect2 = prepared["popup_rect"]
 	var had_event_popup: bool = prepared["had_event_popup"]
 	var was_triggered_popup: bool = prepared["was_triggered_popup"]
@@ -4121,13 +4116,17 @@ func _complete_event_choice_resolution(prepared: Dictionary, result: Dictionary)
 		if not _show_interactable_event_popup(event_id):
 			_show_message("Rourke's next showdown beat could not open.")
 		return result
+	# Selection temporarily uses EVENT. Restore the existing game before checking
+	# further interrupts so navigation or a chained prompt can own its next screen.
+	if return_to_game_after_event and current_game != null and not run_state.is_terminal() and not entered_layer:
+		_set_current_screen(SCREEN_GAME)
 	if bool(result.get("delivery_started", false)):
-		# The package begins as a physical object in the room where the offer was
-		# accepted. Keep that room interactive until the player takes it; a closing
-		# or forced-travel boundary here would strand pickup authority behind them.
+		# Some packages require a pickup in the origin room. Keep the current table
+		# intact until its normal Leave action; outside a game, keep that room
+		# available. Acceptance must not advance closing or forced travel first.
 		_hide_run_inventory_popup()
 		_hide_run_journal_popup()
-		_set_current_screen(SCREEN_ENVIRONMENT)
+		_set_current_screen(SCREEN_GAME if current_game != null and not run_state.is_terminal() and not entered_layer else SCREEN_ENVIRONMENT)
 		_refresh()
 		return result
 	# Grant the inspector's last move before counting the next action. This
@@ -4141,21 +4140,12 @@ func _complete_event_choice_resolution(prepared: Dictionary, result: Dictionary)
 		return result
 	_hide_run_inventory_popup()
 	_hide_run_journal_popup()
-	if return_to_game_after_event and run_state != null and not run_state.is_terminal():
+	if return_to_game_after_event and current_game != null and run_state != null and not run_state.is_terminal() and not entered_layer:
 		_set_current_screen(SCREEN_GAME)
 	else:
 		_set_current_screen(SCREEN_RESULT)
 	_refresh()
 	return result
-
-
-func _event_resolution_returns_to_active_game(popup_type: String, event_context: Dictionary) -> bool:
-	if current_game == null:
-		return false
-	if not ["triggered_event", "unavoidable_event"].has(popup_type):
-		return false
-	var source := str(event_context.get("source", "")).strip_edges().to_lower()
-	return ["game_action", "game_hook"].has(source)
 
 
 func _on_talk_dock_choice_requested(event_id: String, choice_id: String) -> void:
@@ -13523,7 +13513,6 @@ func _screen_for_action_category(category_id: String) -> String:
 
 
 func _rebuild_actions(focused_object_override: Dictionary = {}) -> void:
-	stake_input = null
 	_clear(actions_list)
 	_render_focused_context_panel(focused_object_override)
 
@@ -13533,7 +13522,7 @@ func _render_focused_context_panel(focused_object_override: Dictionary = {}) -> 
 	if object_data.is_empty() or str(object_data.get("object_id", "")) != selected_object_id:
 		object_data = _interactable_object(selected_object_id)
 	if current_game != null and (object_data.is_empty() or str(object_data.get("object_type", "")) == CONTEXT_MODE_GAME):
-		_add_current_game_panel(run_state.current_environment)
+		# Active games own their controls on the native surface and CheatDock.
 		return
 	if object_data.is_empty():
 		_render_empty_context_panel()
@@ -14153,58 +14142,6 @@ func _focus_first_interactable_for_category(category_id: String) -> void:
 	clear_interaction_focus()
 
 
-func _add_current_game_panel(environment: Dictionary) -> void:
-	var action_view := current_game.actions(run_state, environment)
-	var panel := _panel_container(VisualStyle.DARK_2, VisualStyle.YELLOW)
-	panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	actions_list.add_child(panel)
-	var previous_actions_list := actions_list
-	var panel_stack := VBoxContainer.new()
-	panel_stack.add_theme_constant_override("separation", 3)
-	panel_stack.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	panel.add_child(panel_stack)
-	actions_list = panel_stack
-	actions_list.add_child(_section("Game"))
-	actions_list.add_child(_label(current_game.get_display_name(), 15))
-	var description := _current_game_description()
-	if not description.is_empty():
-		var description_label := _label(description, 11)
-		description_label.max_lines_visible = 1
-		description_label.clip_text = true
-		actions_list.add_child(description_label)
-	var balance_text := "Current bankroll: %d" % _presented_bankroll()
-	if run_state.grand_casino_game_uses_chips(current_game.get_id(), environment):
-		balance_text = "Current chips: %d  |  Cash: %d" % [run_state.grand_casino_chips, run_state.bankroll]
-	actions_list.add_child(_label(balance_text, 12))
-	actions_list.add_child(_button("Back to environment", Callable(self, "back_to_environment")))
-	actions_list.add_child(_section("Stake"))
-	_add_stake_controls(action_view)
-	actions_list.add_child(_section("Selected action"))
-	if selected_action_id.is_empty():
-		actions_list.add_child(_label("Click a glowing action region on the game surface.", 12))
-	else:
-		var selected_label := _label(_selected_action_summary(), 11)
-		selected_label.max_lines_visible = 1
-		selected_label.clip_text = true
-		actions_list.add_child(selected_label)
-		var resolve_text := "Accessibility confirm risky action" if selected_action_kind == "cheat" else "Accessibility confirm safe action"
-		actions_list.add_child(_button("%s: %s" % [resolve_text, selected_action_label], Callable(self, "resolve_selected_game_action")))
-	actions_list.add_child(_section("Legal actions"))
-	_add_game_action_buttons(action_view.get("legal_actions", []), "legal")
-	actions_list.add_child(_section("Cheat / advantage actions"))
-	var risk_label := _label(_cheat_action_risk_cue(action_view.get("cheat_actions", [])), 11)
-	risk_label.max_lines_visible = 1
-	risk_label.clip_text = true
-	actions_list.add_child(risk_label)
-	_add_game_action_buttons(action_view.get("cheat_actions", []), "cheat")
-	actions_list.add_child(_section("Recent outcome"))
-	var outcome_label := _label(_game_recent_outcome_text(), 11)
-	outcome_label.max_lines_visible = 1
-	outcome_label.clip_text = true
-	actions_list.add_child(outcome_label)
-	actions_list = previous_actions_list
-
-
 func _resolve_game_action(action_id: String, skip_stake_validation: bool = false, preserve_surface_ui_state: bool = false, wager_confirmed: bool = false, resolved_surface_ui_state: Dictionary = {}, input_route_guarded: bool = false, stake_override: int = 0, authority_delivery: Dictionary = {}, authority_prepared: Dictionary = {}) -> void:
 	if action_id.is_empty() or current_game == null:
 		return
@@ -14270,7 +14207,6 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 			and stake <= int(current_stake_range.get("max", 1))
 	if not skip_stake_validation and not stake_is_valid:
 		_show_message("Stake must be between %d and %d." % [int(current_stake_range.get("min", 1)), int(current_stake_range.get("max", 1))])
-		_refresh_stake_input()
 		return
 	if bool(current_stake_range.get("has_valid", false)):
 		selected_stake = stake
@@ -17916,16 +17852,16 @@ func select_environment_view_object(index: int = 0) -> void:
 
 func _render_foundation_snapshots() -> void:
 	var terminal_report := _is_failure_screen() or _is_victory_screen()
-	var environment_visible := not terminal_report and (current_screen != SCREEN_GAME or current_game == null)
-	var game_visible := current_screen == SCREEN_GAME and current_game != null
+	# Match _apply_focus_layout(): event/detail overlays retain the active table.
+	# Releasing its renderer while that canvas is visible exposed obsolete controls.
+	var game_visible := _is_game_focus_mode() and not terminal_report
+	var environment_visible := not terminal_report and not game_visible
 	var game_snapshot: Dictionary = _game_view_snapshot(true) if game_visible else {}
 	if environment_canvas != null and environment_visible:
 		_render_environment_canvas_snapshot()
 	if game_surface_canvas != null:
-		# Item/service/lender detail panels can remain inside an active game session,
-		# but the game canvas is hidden there. Release renderer-owned viewport caches
-		# until the player returns to GAME; the module simulation remains live and the
-		# normal game snapshot rebuilds the identical presentation on re-entry.
+		# The visible canvas and its renderer share the same ownership predicate,
+		# including while a conversation temporarily selects the EVENT screen.
 		game_surface_canvas.set_game_module(current_game if game_visible else null)
 		if game_visible:
 			# A realtime module's first boundary is an entry anchor, not a gameplay
@@ -22038,71 +21974,6 @@ func _selected_action_summary() -> String:
 	return FoundationActionViewModelScript.selected_action_summary(self)
 
 
-func _game_recent_outcome_text() -> String:
-	return FoundationActionViewModelScript.game_recent_outcome_text(self)
-
-
-func _add_stake_controls(action_view: Dictionary) -> void:
-	var surface_state := current_game.surface_state(run_state, run_state.current_environment, _current_game_surface_ui_state()) if current_game != null and run_state != null else {}
-	if typeof(surface_state) == TYPE_DICTIONARY and bool((surface_state as Dictionary).get("slot_fixed_bet_ladder", false)):
-		var bet_options: Array = (surface_state as Dictionary).get("bet_options", []) if typeof((surface_state as Dictionary).get("bet_options", [])) == TYPE_ARRAY else []
-		actions_list.add_child(_label("Fixed slot bet", 12))
-		var selected_total := int((surface_state as Dictionary).get("selected_bet_total_credits", 0))
-		var locked_reason := str((surface_state as Dictionary).get("bet_locked_reason", ""))
-		if not locked_reason.is_empty():
-			actions_list.add_child(_muted_label("Locked: %s" % locked_reason, 11))
-		else:
-			actions_list.add_child(_muted_label("Spin cost is the selected cabinet bet: %d credits." % selected_total, 11))
-		for option_value in bet_options:
-			if typeof(option_value) != TYPE_DICTIONARY:
-				continue
-			var option: Dictionary = option_value
-			var id := str(option.get("id", ""))
-			var label := "%s  %s credits" % [str(option.get("display_tier", "")).capitalize(), str(option.get("total_credits", 0))]
-			if bool(option.get("selected", false)):
-				label = "Selected: %s" % label
-			var button := _button(label, Callable(self, "_handle_module_surface_action").bind("select_bet_option:%s" % id, 0, true))
-			button.disabled = not bool(option.get("enabled", true))
-			actions_list.add_child(button)
-		stake_input = null
-		return
-	var range := _stake_range(action_view)
-	var min_stake := int(range.get("min", 1))
-	var max_stake := int(range.get("max", min_stake))
-	if not bool(range.get("has_valid", false)):
-		actions_list.add_child(_label("No valid stake available.", 13))
-		actions_list.add_child(_muted_label(run_state.economy_pressure_summary(), 12))
-		return
-	actions_list.add_child(_label("Stake range: %d-%d" % [min_stake, max_stake], 12))
-	var recommended_max := int(range.get("recommended_max", max_stake))
-	if bool(range.get("economy_pressure_applied", false)) and recommended_max < max_stake:
-		actions_list.add_child(_muted_label("Economy pressure recommends stakes up to %d; all-in wagers require confirmation." % recommended_max, 12))
-	else:
-		actions_list.add_child(_muted_label(run_state.economy_pressure_summary(), 12))
-	stake_input = SpinBox.new()
-	stake_input.min_value = min_stake
-	stake_input.max_value = max_stake
-	stake_input.step = 1.0
-	stake_input.rounded = true
-	stake_input.value = _current_selected_stake(action_view)
-	stake_input.custom_minimum_size = Vector2(0, MIN_NATIVE_TOUCH_TARGET_HEIGHT)
-	stake_input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	stake_input.value_changed.connect(_on_stake_value_changed)
-	actions_list.add_child(stake_input)
-
-
-func _on_stake_value_changed(value: float) -> void:
-	set_selected_stake(int(value))
-
-
-func _refresh_stake_input() -> void:
-	if stake_input == null:
-		return
-	var stake := _current_selected_stake()
-	if int(stake_input.value) != stake:
-		stake_input.set_value_no_signal(stake)
-
-
 func _reset_selected_stake() -> void:
 	selected_stake = _default_stake()
 
@@ -22130,29 +22001,6 @@ func _stake_range_from_action_view(action_view: Dictionary = {}) -> Dictionary:
 	if FoundationActionViewModelScript == null and not _ensure_run_ui_stage_scripts(0):
 		return {"min": 0, "max": 0, "default": 0, "has_valid": false}
 	return FoundationActionViewModelScript.stake_range_from_action_view(self, action_view)
-
-
-func _add_game_action_buttons(actions: Variant, action_kind: String) -> void:
-	if typeof(actions) != TYPE_ARRAY or (actions as Array).is_empty():
-		actions_list.add_child(_label("None available.", 13))
-		return
-	for action in actions:
-		if typeof(action) != TYPE_DICTIONARY:
-			continue
-		var action_data := action as Dictionary
-		var action_id := str(action_data.get("id", ""))
-		if action_id.is_empty():
-			continue
-		var label := _action_label(action_data)
-		if action_id == selected_action_id and action_kind == selected_action_kind:
-			label = "Selected: %s" % label
-		actions_list.add_child(_button(label, Callable(self, "select_game_action").bind(action_id, action_kind)))
-		var summary := _game_action_choice_summary(action_data, action_kind)
-		if not summary.is_empty():
-			var summary_label := _muted_label("Choice info: %s" % summary, 11)
-			summary_label.max_lines_visible = 1
-			summary_label.clip_text = true
-			actions_list.add_child(summary_label)
 
 
 func _game_action_view_list(action_kind: String) -> Array:
@@ -22185,7 +22033,6 @@ func _clear_selected_game_action() -> void:
 
 func _clear_selected_stake() -> void:
 	selected_stake = 0
-	stake_input = null
 
 
 func _eligible_event_option_view_list() -> Array:

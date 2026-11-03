@@ -6593,10 +6593,10 @@ func _run_main_flow(app: Control) -> void:
 			push_error("M1.6B game surface did not expose selected surface state after a surface click.")
 			quit(1)
 			return
-	if generic_surface_selection:
-		if not _visible_text_fits_viewport(actions_list, "Click the highlighted surface action", viewport_rect, "game-mode surface resolve guidance"):
-			quit(1)
-			return
+	if focused_game_surface.get("surface_game_module") != app.get("current_game") or not bool(game_snapshot_before.get("surface_controls_native", false)):
+		push_error("Game surface did not retain its concrete game module and native controls after selection.")
+		quit(1)
+		return
 	if not _control_fits_viewport(app.get("consequence_cards_scroll"), viewport_rect, "game-mode recent consequence strip"):
 		quit(1)
 		return
@@ -6643,8 +6643,10 @@ func _run_main_flow(app: Control) -> void:
 		quit(1)
 		return
 	var legal_embeds_outcome := bool(selected_legal_snapshot.get("surface_embeds_outcomes", false)) or bool(selected_legal_snapshot.get("surface_suppresses_game_result_burst", false))
-	if str(selected_legal_snapshot.get("selected_action_summary", "")).is_empty() or not _has_visible_text(actions_list, "Click the highlighted surface action"):
-		push_error("M1.5 dedicated game panel did not show selected legal action summary and surface resolve guidance.")
+	if str(selected_legal_snapshot.get("selected_action_summary", "")).is_empty() \
+			or focused_game_surface.get("surface_game_module") != app.get("current_game") \
+			or not bool(selected_legal_snapshot.get("surface_controls_native", false)):
+		push_error("Native game surface did not retain its module and selected legal action summary.")
 		quit(1)
 		return
 	app.call("resolve_selected_game_action")
@@ -6951,8 +6953,11 @@ func _run_main_flow(app: Control) -> void:
 		quit(1)
 		return
 	var cheat_embeds_outcome := bool(selected_cheat_snapshot.get("surface_embeds_outcomes", false)) or bool(selected_cheat_snapshot.get("surface_suppresses_game_result_burst", false))
-	if str(selected_cheat_snapshot.get("risk_cue", "")).is_empty() or not _has_visible_text(actions_list, "Click the highlighted surface action"):
-		push_error("M1.5 dedicated game panel did not show selected risky action cue and surface resolve guidance.")
+	if str(selected_cheat_snapshot.get("risk_cue", "")).is_empty() \
+			or str(selected_cheat_snapshot.get("selected_action_summary", "")).is_empty() \
+			or focused_game_surface.get("surface_game_module") != app.get("current_game") \
+			or not bool(selected_cheat_snapshot.get("surface_controls_native", false)):
+		push_error("Native game surface did not retain its module, selected risky action summary and risk cue.")
 		quit(1)
 		return
 	app.call("resolve_selected_game_action")
