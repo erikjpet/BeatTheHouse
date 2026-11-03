@@ -69,6 +69,7 @@ func _run() -> void:
 	for fixture in ["stand", "hit", "nonending", "reduced"]:
 		await _blackjack(fixture)
 	await _baccarat()
+	await _machine_terminal_boundary()
 	print("TABLE_TERMINAL_PRESENTATION_RESULT " + JSON.stringify({"checks": checks, "rows": rows, "boundaries": boundaries, "failures": failures}))
 	quit(0 if failures.is_empty() else 1)
 
@@ -160,6 +161,27 @@ func _baccarat() -> void:
 	_boundary(app, "settled", "baccarat")
 	await _terminal_wait(app, "baccarat", false)
 	await _close(app)
+
+func _machine_terminal_boundary() -> void:
+	var app := await _new_host("slot_legacy_boundary", 10)
+	if not _start(app, "slot"):
+		await _close(app)
+		return
+	# Synthetic host-boundary fixture: no wager/outcome is manufactured. This
+	# checks that the table-only fix preserves the established machine all-in
+	# acknowledgement and explicit force/Back routing contract.
+	app.run_state.bankroll = 0
+	app.pending_all_in_result_terminal_check = true
+	app.last_game_result = {"ok": true}
+	var rng := app.run_state.rng_state
+	var result := app._evaluate_run_terminal_state()
+	_check(not app.run_state.is_terminal() and bool(result.get("bankroll_zero_deferred", false)), "Machine all-in result retains its existing deferred terminal contract")
+	_check(app.current_screen == "GAME" and app.terminal_game_result_presentation.is_empty(), "Table presentation wait does not take ownership of a machine result")
+	app._evaluate_run_terminal_state(true)
+	_check(app.run_state.is_terminal() and app.current_screen == "FAILURE" and app.current_game == null, "Explicit machine acknowledgement keeps its existing immediate report route")
+	_check(app.run_state.rng_state == rng, "Machine terminal boundary does not advance RNG")
+	await _close(app)
+
 
 func _terminal_wait(app: ClockHost, game_id: String, check_save: bool) -> void:
 	var run := app.run_state

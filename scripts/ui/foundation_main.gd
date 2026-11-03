@@ -14359,8 +14359,10 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	# A later zero-cost Hit/Stand can still belong to the confirmed all-in hand.
 	# Keep its protection until that hand has actually settled, including any
 	# automatic reveal/settlement action after the final player decision.
-	if bool(result.get("ok", false)):
+	if _current_game_has_table_result_presentation() and bool(result.get("ok", false)):
 		pending_all_in_result_terminal_check = (confirmed_all_in_wager or pending_all_in_result_terminal_check) and run_state != null and not run_state.has_liquid_run_funds() and not bool(result.get("won", false))
+	elif not _current_game_has_table_result_presentation():
+		pending_all_in_result_terminal_check = confirmed_all_in_wager and bool(result.get("ok", false)) and run_state != null and not run_state.has_liquid_run_funds() and not bool(result.get("won", false))
 	if runtime_tick_in_progress:
 		if game_surface_canvas != null and current_screen == SCREEN_GAME:
 			game_surface_canvas.render_game_snapshot(_game_view_snapshot(true))
@@ -21183,7 +21185,7 @@ func _evaluate_run_terminal_state(force: bool = false) -> Dictionary:
 		return {}
 	_queue_pending_tutorial_heat_intervention()
 	_queue_pending_tutorial_drunk_coffee_interventions()
-	if _all_in_result_terminal_check_is_pending() and not force and (not _current_game_embeds_result_feedback() \
+	if _all_in_result_terminal_check_is_pending() and not force and (not _current_game_has_table_result_presentation() \
 			or current_game.wager_activity_incomplete(run_state, run_state.current_environment, _current_game_surface_ui_state())):
 		return {
 			"failed": false,
@@ -21203,9 +21205,13 @@ func _evaluate_run_terminal_state(force: bool = false) -> Dictionary:
 	return result
 
 
+func _current_game_has_table_result_presentation() -> bool:
+	return current_game != null and current_game.get_id() in ["blackjack", "baccarat", "roulette", "craps", "bar_dice", "crew_draw_poker", "video_poker"]
+
+
 func _defer_terminal_game_result_presentation(result: Dictionary) -> bool:
 	if current_screen != SCREEN_GAME or current_game == null or game_surface_canvas == null \
-			or not _current_game_embeds_result_feedback() or not bool(last_game_result.get("ok", false)):
+			or not _current_game_has_table_result_presentation() or not _current_game_embeds_result_feedback() or not bool(last_game_result.get("ok", false)):
 		return false
 	if terminal_game_result_presentation.is_empty():
 		# Accounting and terminal classification are already final. Publish the
