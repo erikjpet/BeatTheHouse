@@ -421,6 +421,18 @@ func surface_bankroll_presentation_active() -> bool:
 	return surface_transition_animation_active() or _surface_animation_handoff_active()
 
 
+func surface_finite_result_presentation_active() -> bool:
+	# An unanswered interactive challenge can have a duration of zero. Terminal
+	# routing blocks gameplay input, so only finite result channels may hold it.
+	for channel_id_value in surface_animation_channels.keys():
+		var channel_id := str(channel_id_value)
+		if surface_animation_duration(channel_id) > 0.0 and surface_animation_active(channel_id):
+			return true
+	# The caller's readable-result pause also covers the final 250 ms hit-region
+	# handoff. It must not restart that pause whenever a refresh retires a channel.
+	return false
+
+
 func reset_performance_counters() -> void:
 	perf_full_snapshot_calls = 0
 	perf_runtime_status_calls = 0
