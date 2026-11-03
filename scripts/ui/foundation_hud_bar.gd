@@ -245,7 +245,7 @@ func current_snapshot() -> Dictionary:
 		"time_day": time_day_label.text if time_day_label != null else "",
 		"time_exact": time_exact_label.text if time_exact_label != null else "",
 		"time_watch": time_watch.current_snapshot() if time_watch != null else {},
-		"time_detail_visible": details_overlay != null and details_overlay.visible,
+		"time_detail_visible": is_instance_valid(details_overlay) and details_overlay.visible,
 		"details_visible": details_overlay != null and details_overlay.visible,
 		"details_text": details_text.text if details_text != null else "",
 		"details_rect": details_panel.get_global_rect() if details_panel != null else Rect2(),
@@ -741,17 +741,21 @@ func _on_details_pressed() -> void:
 
 
 func _build_details_overlay() -> void:
-	# A viewport layer keeps detail outside the clipped, fixed-height HUD. It is
-	# deliberately separate from the information row's minimum-size hierarchy.
-	var layer := CanvasLayer.new()
-	layer.name = "HudDetailsLayer"
-	layer.layer = 90
-	add_child(layer)
+	# The locked Web template strips CanvasLayer. Host this ordinary Control
+	# beside the run screen, outside its clipped/minimum-size hierarchy.
+	var viewport := get_viewport()
+	var overlay_host: Node = viewport
+	var ancestor: Node = get_parent()
+	while ancestor != null and ancestor != viewport:
+		if ancestor is Control:
+			overlay_host = ancestor
+		ancestor = ancestor.get_parent()
 	details_overlay = Control.new()
 	details_overlay.name = "HudDetails"
-	details_overlay.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	details_overlay.set_anchors_and_offsets_preset(Control.PRESET_TOP_LEFT)
+	details_overlay.z_index = 200
 	details_overlay.visible = false
-	layer.add_child(details_overlay)
+	overlay_host.add_child(details_overlay)
 	var shade := ColorRect.new()
 	shade.color = Color(0.0, 0.0, 0.0, 0.72)
 	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -784,23 +788,24 @@ func _build_details_overlay() -> void:
 	details_close.name = "CloseHudDetails"
 	details_close.custom_minimum_size.y = 52
 	stack.add_child(details_close)
-	details_overlay.resized.connect(_layout_details)
+	viewport.size_changed.connect(_layout_details)
 	set_process_input(true)
 
 
 func _open_details(opener: Control) -> void:
-	if details_overlay == null:
+	if not is_instance_valid(details_overlay):
 		return
 	_details_opener = opener
 	_refresh_details_text()
 	details_overlay.show()
+	details_overlay.move_to_front()
 	_layout_details()
 	details_scroll.scroll_vertical = 0
 	_details_focus_scope.push_scope(details_overlay, details_close, opener, [details_scroll, details_close])
 
 
 func close_details() -> void:
-	if details_overlay == null or not details_overlay.visible:
+	if not is_instance_valid(details_overlay) or not details_overlay.visible:
 		return
 	details_overlay.hide()
 	_details_focus_scope.pop_scope(details_overlay)
@@ -808,20 +813,22 @@ func close_details() -> void:
 
 
 func details_is_visible() -> bool:
-	return details_overlay != null and details_overlay.visible
+	return is_instance_valid(details_overlay) and details_overlay.visible
 
 
 func _layout_details() -> void:
-	if details_panel == null or not is_inside_tree():
+	if not is_instance_valid(details_panel) or not is_instance_valid(details_overlay) or not is_inside_tree():
 		return
 	var available := get_viewport_rect().size
+	details_overlay.global_position = Vector2.ZERO
+	details_overlay.size = available
 	var panel_size := Vector2(minf(600.0, maxf(1.0, available.x - 32.0)), minf(520.0, maxf(1.0, available.y - 32.0)))
 	details_panel.position = (available - panel_size) * 0.5
 	details_panel.size = panel_size
 
 
 func _refresh_open_details() -> void:
-	if details_overlay != null and details_overlay.visible:
+	if is_instance_valid(details_overlay) and details_overlay.visible:
 		_refresh_details_text()
 
 
@@ -857,7 +864,7 @@ func _on_details_shade_input(event: InputEvent) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if details_overlay == null or not details_overlay.visible:
+	if not is_instance_valid(details_overlay) or not details_overlay.visible:
 		return
 	if event.is_action_pressed("ui_cancel"):
 		close_details()
@@ -886,8 +893,10 @@ func _on_hud_visibility_changed() -> void:
 
 
 func _exit_tree() -> void:
-	if details_overlay != null:
+	if is_instance_valid(details_overlay):
+		details_overlay.hide()
 		_details_focus_scope.pop_scope(details_overlay)
+		details_overlay.queue_free()
 	_details_focus_scope.clear()
 
 

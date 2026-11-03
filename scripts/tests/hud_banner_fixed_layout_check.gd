@@ -36,6 +36,7 @@ func _init() -> void:
 
 
 func _run() -> void:
+	_check_locked_web_profile()
 	# Physical portrait/landscape use this same fixed logical viewport. The
 	# larger direct viewport also checks that content cannot change the band.
 	for viewport_size in [Vector2i(1280, 720), Vector2i(1920, 1080)]:
@@ -51,6 +52,21 @@ func _run() -> void:
 	for failure in failures:
 		push_error(failure)
 	quit(0 if failures.is_empty() else 1)
+
+
+func _check_locked_web_profile() -> void:
+	# Native Godot includes classes deliberately removed from the shipped Web
+	# engine; native parsing alone cannot establish this export compatibility.
+	var profile: Variant = JSON.parse_string(FileAccess.get_file_as_string("res://native/coin_pusher/godot_web_release_build_profile.json"))
+	_check(profile is Dictionary, "locked Web build profile must load")
+	if not profile is Dictionary:
+		return
+	var source := FileAccess.get_file_as_string("res://scripts/ui/foundation_hud_bar.gd")
+	for class_name_value in profile.get("disabled_classes", []):
+		var class_id := str(class_name_value)
+		var forbidden := RegEx.new()
+		forbidden.compile("\\b%s\\s*\\.\\s*new\\s*\\(|:\\s*%s\\b|\\b(?:as|is)\\s+%s\\b" % [class_id, class_id, class_id])
+		_check(forbidden.search(source) == null, "HUD must not require disabled Web class " + class_id)
 
 
 func _exercise(viewport_size: Vector2i, large_text: bool) -> void:
@@ -114,6 +130,8 @@ func _exercise(viewport_size: Vector2i, large_text: bool) -> void:
 	var details_text := hud.get("details_text") as Label
 	var details_close := hud.get("details_close") as Button
 	_check(details_overlay != null and details_overlay.visible, prefix + ": clock must open the details disclosure")
+	_check(not app.run_screen.is_ancestor_of(details_overlay), prefix + ": details must live outside the clipped run screen")
+	_check(details_overlay.z_index > 100, prefix + ": details must cover TalkDock and item-found overlays")
 	_check(app._talk_dock_input_is_blocked() and app._modal_contract_blocks_player_input(), prefix + ": details must block underlying conversation and room input")
 	if details_overlay != null and details_overlay.visible and details_panel != null and details_text != null and details_scroll != null and details_close != null:
 		_check(_encloses(Rect2(Vector2.ZERO, Vector2(viewport_size)), details_panel.get_global_rect()), prefix + ": details must fit the viewport")
