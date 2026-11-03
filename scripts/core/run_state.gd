@@ -3190,23 +3190,29 @@ func world_sequence_activate_current_mounts() -> Dictionary:
 		_refresh_world_sequence_registration(token)
 		_world_sequence_definition_cache[token] = definition.duplicate(true)
 		mounted.append(token)
-	return {"ok": errors.is_empty(), "mounted": mounted, "errors": errors}
+	return {"ok": errors.is_empty(), "mounted": mounted, "cleaned": JsonCoerceScript._copy_array(cleanup.get("cleaned", [])), "errors": errors}
 
 
 func _cleanup_resolved_delivery_presentations() -> Dictionary:
 	# A clock deadline can settle a Crew job while its destination is offscreen.
-	# Its old presentation must not remount and claim the next job's handoff.
+	# Its old presentation must not remount, even before another job replaces it.
 	# Keep unfinished outcome transactions under their existing recovery owner.
 	var node_id := str(current_environment.get("world_node_id", current_environment.get("archetype_id", "")))
 	var retained_instance := str(active_delivery_run.get("job_id", ""))
 	if retained_instance.is_empty(): retained_instance = str(active_delivery_run.get("run_id", ""))
+	var cleaned: Array = []
 	for token_value in world_sequence_registrations.keys():
 		var token := str(token_value)
 		var registration := JsonCoerceScript._copy_dict(world_sequence_registrations[token])
 		if str(registration.get("node_id", "")) != node_id or str(registration.get("lifecycle", "")) == "cleaned": continue
 		if not JsonCoerceScript._copy_dict(registration.get("outcome_channels", {})).values().has("delivery_handoff"): continue
 		var instance := str(registration.get("public_instance_token", ""))
-		if instance == retained_instance: continue
+		if instance == retained_instance:
+			if str(active_delivery_run.get("status", "")) != "resolved" or not bool(active_delivery_run.get("world_applied", false)): continue
+			# Mounted settlements retain their checkpoint/retry recovery owner.
+			# Offscreen settlements have no such transaction; the resolved job and
+			# empty pending queues below authorize retiring only its presentation.
+			if not DeliveryRunModelScript.closed_checkpoint(active_delivery_run).is_empty() or not JsonCoerceScript._copy_dict(active_delivery_run.get("world_sequence_lifecycle_retry", {})).is_empty(): continue
 		var job := _crew_job(instance)
 		if str(job.get("status", "")) != "resolved": continue
 		if not world_sequence_pending_outcomes(token).is_empty(): continue
@@ -3219,7 +3225,8 @@ func _cleanup_resolved_delivery_presentations() -> Dictionary:
 		if bool(result.get("inactive", false)):
 			registration["lifecycle"] = "cleaned"
 			world_sequence_registrations[token] = registration
-	return {"ok": true, "errors": []}
+		cleaned.append(token)
+	return {"ok": true, "cleaned": cleaned, "errors": []}
 
 
 func world_sequence_snapshot(token: String) -> Dictionary:
@@ -4609,8 +4616,8 @@ func _resolve_scenario_layout_candidate(candidate: Dictionary, stamped_records: 
 	return layout_result
 
 
-func _resolve_world_sequence_composed_layout(stamped_records: Array, layout_context: Dictionary) -> Dictionary:
-	var projection := world_sequence_composed_projection()
+func _resolve_world_sequence_composed_layout(stamped_records: Array, layout_context: Dictionary, finalized_primary_projection: Variant = null) -> Dictionary:
+	var projection := world_sequence_composed_projection() if typeof(finalized_primary_projection) != TYPE_DICTIONARY else CrewWorldSequenceAdapterScript.composed_projection(current_environment, _world_sequence_definition_cache, finalized_primary_projection)
 	if not bool(projection.get("ok", true)):
 		return {"ok": false, "errors": JsonCoerceScript._copy_array(projection.get("errors", ["World sequence projection composition failed closed."]))}
 	var layout_environment := current_environment.duplicate(false)
@@ -4656,14 +4663,20 @@ func _finalized_scenario_layout_result(replayed: bool, digest: String, state: Di
 	if not bool(world_activation.get("ok", false)):
 		result["ok"] = false
 		result["errors"] = JsonCoerceScript._copy_array(world_activation.get("errors", []))
-	elif not JsonCoerceScript._copy_array(world_activation.get("mounted", [])).is_empty():
-		var composed := _resolve_world_sequence_composed_layout(records, JsonCoerceScript._copy_dict(current_environment.get("scenario_layout_context", {})))
+	elif not JsonCoerceScript._copy_array(world_activation.get("mounted", [])).is_empty() or not JsonCoerceScript._copy_array(world_activation.get("cleaned", [])).is_empty():
+		# The primary scenario was just finalized above. Owner cleanup requests a
+		# trusted rebuild, which intentionally blocks ordinary projection readers.
+		# Compose its authenticated engine projection explicitly until the new room
+		# seal succeeds, so retiring a handoff cannot suppress the room's scenario.
+		var primary_projection := ScenarioEngineScript.sequence_projection(current_environment, _scenario_sequence_definition_readonly())
+		var composed := _resolve_world_sequence_composed_layout(records, JsonCoerceScript._copy_dict(current_environment.get("scenario_layout_context", {})), primary_projection)
 		if not bool(composed.get("ok", false)):
 			result["ok"] = false
 			result["errors"] = JsonCoerceScript._copy_array(composed.get("errors", []))
 		else:
 			for key in ["projection", "layout_authority", "layout_authority_digest", "layout_audit", "renderer_snapshot", "warnings"]:
 				result[key] = composed.get(key).duplicate(true) if typeof(composed.get(key)) in [TYPE_DICTIONARY, TYPE_ARRAY] else composed.get(key)
+			current_environment.erase("scenario_restore_pending_trusted_rebuild")
 	if bool(result.get("ok", false)):
 		publish_room_presentation()
 	else:
