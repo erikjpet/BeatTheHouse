@@ -843,8 +843,8 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	# The production Web canvas intentionally presents idle machine motion at a
 	# measured low-detail cadence. Keep the authority/solver at 60 Hz, but only
 	# project its 300-body presentation tuple when that tuple can become visible.
-	# Input boundaries mark themselves due so accepted controls still appear on
-	# the very next live tick.
+	# Accepted controls patch immediately; continuous input cannot postpone the
+	# regular coin-body publication cadence.
 	var simulation := _simulation(machine)
 	var tray_value: Variant = simulation.get("tray_ledger")
 	var invariants_value: Variant = simulation.get("last_invariants")

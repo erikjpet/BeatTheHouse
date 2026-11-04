@@ -1,0 +1,173 @@
+{
+  "bankroll": 476,
+  "emitted_drops": 18,
+  "failures": [],
+  "fidelity": "synthetic 60Hz clock through production module APIs; no rendered frame or full-host performance claim",
+  "ok": true,
+  "pending_drops": 6,
+  "phases": [
+    {
+      "authority_ticks": 119,
+      "frames": 120,
+      "input_trace_count": 0,
+      "invariants": {
+        "active": 153,
+        "collected": 0,
+        "conservation_ok": true,
+        "cup_consumed": 0,
+        "energy_ok": true,
+        "gutter": 0,
+        "origin": 153,
+        "refused": 0,
+        "tray": 0
+      },
+      "max_backlog_ticks": 1,
+      "max_publication_age_msec": 17,
+      "module_realtime_call_usec": {
+        "count": 120,
+        "max": 473860,
+        "mean": 9124.08333333333,
+        "p95": 2415
+      },
+      "native_step_usec": {
+        "count": 120,
+        "max": 4630,
+        "mean": 891.208333333333,
+        "p95": 1655
+      },
+      "nozzle_updates": 0,
+      "phase": "idle",
+      "pointer_call_usec": {
+        "count": 0
+      },
+      "published_frames": 60
+    },
+    {
+      "authority_ticks": 120,
+      "frames": 120,
+      "input_trace_count": 6,
+      "invariants": {
+        "active": 159,
+        "collected": 0,
+        "conservation_ok": true,
+        "cup_consumed": 0,
+        "energy_ok": true,
+        "gutter": 0,
+        "origin": 159,
+        "refused": 0,
+        "tray": 0
+      },
+      "max_backlog_ticks": 1,
+      "max_publication_age_msec": 17,
+      "module_realtime_call_usec": {
+        "count": 120,
+        "max": 477660,
+        "mean": 5217.45833333333,
+        "p95": 2220
+      },
+      "native_step_usec": {
+        "count": 120,
+        "max": 476265,
+        "mean": 4737.20833333333,
+        "p95": 1485
+      },
+      "nozzle_updates": 0,
+      "phase": "feeding",
+      "pointer_call_usec": {
+        "count": 0
+      },
+      "published_frames": 60
+    },
+    {
+      "authority_ticks": 180,
+      "frames": 180,
+      "input_trace_count": 196,
+      "invariants": {
+        "active": 168,
+        "collected": 0,
+        "conservation_ok": true,
+        "cup_consumed": 0,
+        "energy_ok": true,
+        "gutter": 0,
+        "origin": 168,
+        "refused": 0,
+        "tray": 0
+      },
+      "max_backlog_ticks": 1,
+      "max_publication_age_msec": 17,
+      "module_realtime_call_usec": {
+        "count": 180,
+        "max": 460020,
+        "mean": 3766.08333333333,
+        "p95": 1975
+      },
+      "native_step_usec": {
+        "count": 180,
+        "max": 1480,
+        "mean": 801.083333333333,
+        "p95": 1340
+      },
+      "nozzle_updates": 180,
+      "phase": "continuous_drag_feeding",
+      "pointer_call_usec": {
+        "count": 180,
+        "max": 380,
+        "mean": 177.166666666667,
+        "p95": 250
+      },
+      "published_frames": 90
+    },
+    {
+      "authority_ticks": 60,
+      "frames": 60,
+      "input_trace_count": 199,
+      "invariants": {
+        "active": 171,
+        "collected": 0,
+        "conservation_ok": true,
+        "cup_consumed": 0,
+        "energy_ok": true,
+        "gutter": 0,
+        "origin": 171,
+        "refused": 0,
+        "tray": 0
+      },
+      "max_backlog_ticks": 1,
+      "max_publication_age_msec": 17,
+      "module_realtime_call_usec": {
+        "count": 60,
+        "max": 388080,
+        "mean": 7701.91666666667,
+        "p95": 1785
+      },
+      "native_step_usec": {
+        "count": 60,
+        "max": 387490,
+        "mean": 7256.16666666667,
+        "p95": 1020
+      },
+      "nozzle_updates": 0,
+      "phase": "released",
+      "pointer_call_usec": {
+        "count": 0
+      },
+      "published_frames": 30
+    }
+  ],
+  "platform": "Web",
+  "reserved_drops": 24,
+  "solver_backend": "native_v3",
+  "turns_after": 0,
+  "turns_before": 0,
+  "web_feature": true,
+  "browser": {
+    "version": "156.0.8078.74",
+    "viewport": {
+      "width": 1280,
+      "height": 720
+    },
+    "headless": true,
+    "url": "http://127.0.0.1:51210/index.html",
+    "errors": []
+  }
+}

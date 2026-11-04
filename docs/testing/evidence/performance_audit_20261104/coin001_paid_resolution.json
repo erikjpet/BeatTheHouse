@@ -1,0 +1,5 @@
+{
+  "checks": 23,
+  "failures": [],
+  "fidelity": "Synthetic native payment/receipt/terminal boundaries including positive payout, empty settlement, malformed/unpaid marker and Heat capture; actual F54 host physics separately qualified."
+}
