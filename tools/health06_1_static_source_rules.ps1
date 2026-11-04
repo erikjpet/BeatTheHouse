@@ -1,3 +1,44 @@
+function Get-GdScriptStyleScanText {
+    param([AllowEmptyString()][string]$Source)
+
+    # Tokenize comments and both string forms together so a triple delimiter in
+    # a comment or ordinary string cannot hide subsequent GDScript. Keep normal
+    # quoted resource paths intact for the preload suffix rule.
+    $tokens = @'
+(?<comment>\#[^\r\n]*)|(?<multiline>"""(?:\\[\s\S]|"(?!"")|[^"\\])*"""|'''(?:\\[\s\S]|'(?!'')|[^'\\])*''')|"(?:\\[\s\S]|[^"\\\r\n])*"|'(?:\\[\s\S]|[^'\\\r\n])*'
+'@
+    return [regex]::Replace($Source, $tokens.Trim(), [Text.RegularExpressions.MatchEvaluator]{
+        param($token)
+        if (-not $token.Groups['multiline'].Success) { return $token.Value }
+        # The opening delimiter is a real GDScript token: preserve it so space
+        # indentation on the declaration still fails. Preserve line boundaries
+        # while masking the payload and closing delimiter, including JavaScript.
+        return $token.Value.Substring(0, 3) + [regex]::Replace($token.Value.Substring(3), '[^\r\n]', ' ')
+    })
+}
+
+function Get-GdScriptStyleSourceIssues {
+    param([AllowEmptyString()][string]$Source, [string]$PathLabel)
+
+    $issues = New-Object System.Collections.Generic.List[string]
+    $lineNumber = 0
+    foreach ($sourceLine in [regex]::Split((Get-GdScriptStyleScanText $Source), '\r\n|\r|\n')) {
+        $lineNumber++
+        if ($sourceLine -match '^ +\S') {
+            $issues.Add("GDScript indentation must use tabs: ${PathLabel}:$lineNumber")
+        }
+        if ($sourceLine -match '^const\s+(?<name>[A-Za-z0-9_]+)\s*(?::?=)\s*preload\("(?<path>[^"]+)"\)') {
+            $constantName = $Matches.name
+            $resourcePath = $Matches.path
+            $requiredSuffix = if ($resourcePath.EndsWith(".gd")) { "Script" } elseif ($resourcePath.EndsWith(".tscn")) { "Scene" } else { "" }
+            if ($requiredSuffix -and -not $constantName.EndsWith($requiredSuffix)) {
+                $issues.Add("Preload constant must end in ${requiredSuffix}: ${PathLabel}:$lineNumber ($constantName)")
+            }
+        }
+    }
+    return $issues
+}
+
 function Invoke-Health06StaticSourceRules {
     param(
         [Parameter(Mandatory = $true)]

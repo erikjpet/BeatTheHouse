@@ -24,6 +24,19 @@ function Test-JsonObjectRoot {
     return $null -ne $Value -and $Value.GetType() -eq [System.Management.Automation.PSCustomObject]
 }
 
+function ConvertFrom-ProjectJsonDocument {
+    param([string]$Source)
+    if ((Get-Command ConvertFrom-Json).Parameters.ContainsKey("NoEnumerate")) {
+        return ,(ConvertFrom-Json -InputObject $Source -NoEnumerate)
+    }
+    # Windows PowerShell 5 unwraps singleton arrays and emits nothing for [].
+    # Validate the original document before using a property to preserve its
+    # exact root value; otherwise malformed text could inject envelope members.
+    $null = ConvertFrom-Json -InputObject $Source
+    $envelope = ConvertFrom-Json -InputObject ('{"root":' + $Source + '}')
+    return ,$envelope.root
+}
+
 function Test-FinitePlacementCoordinate {
     param([AllowNull()][object]$Value)
     $isJsonNumber =
@@ -56,6 +69,52 @@ function Test-PlacementSlotScale {
     }
     $number = [double]$Value
     return $number -ge 0.5 -and $number -le 2.0
+}
+
+function Test-PlacementPositionIdsMatch {
+    param([AllowNull()][object]$Positions, [object]$ExpectedIds)
+    if ($null -eq $Positions) {
+        return $ExpectedIds.Count -eq 0
+    }
+    if (-not (Test-JsonObjectRoot $Positions)) {
+        return $false
+    }
+    $properties = @($Positions.PSObject.Properties)
+    if ($properties.Count -ne $ExpectedIds.Count) {
+        return $false
+    }
+    foreach ($property in $properties) {
+        if (-not $ExpectedIds.Contains($property.Name)) {
+            return $false
+        }
+    }
+    return $true
+}
+
+function Get-PlacementCompletionState {
+    param(
+        [AllowNull()][object]$SavedFlag,
+        [AllowNull()][object]$SharedPositions,
+        [object]$ExpectedSharedIds,
+        [AllowNull()][object]$ScenarioPositions = $null,
+        [AllowNull()][object]$ExpectedScenarioIds = $null
+    )
+    # Match DeveloperPlacementStore's read-only catalog recovery. The separate
+    # schema/coordinate checks below and the runtime strict write gate remain.
+    $rawSaved = $SavedFlag -is [bool] -and $SavedFlag
+    $sharedComplete = Test-PlacementPositionIdsMatch $SharedPositions $ExpectedSharedIds
+    $scenarioComplete = $true
+    if ($null -ne $ExpectedScenarioIds) {
+        $scenarioComplete = Test-PlacementPositionIdsMatch $ScenarioPositions $ExpectedScenarioIds
+    }
+    $saved = $rawSaved -and $sharedComplete -and $scenarioComplete
+    return [pscustomobject]@{
+        raw_saved = $rawSaved
+        saved = $saved
+        recovered_catalog_drift = $rawSaved -and -not $saved
+        shared_complete = $sharedComplete
+        scenario_complete = $scenarioComplete
+    }
 }
 
 function Test-ExactJsonString {
@@ -578,7 +637,7 @@ function Get-Rw061ValidatorFileIdentityCensus {
 }
 
 function Get-FoundationUiContentSelectionScan {
-    param([string]$Source)
+    param([string]$Source, [switch]$RequireReviewedBindings)
     $normalized = $Source.Replace("`r`n", "`n")
     $hostSecurityAllowlist = @'
 const SEALED_ACTION_HOST_SKIP_ENVIRONMENT_TURN_ALLOWLIST := {
@@ -587,12 +646,78 @@ const SEALED_ACTION_HOST_SKIP_ENVIRONMENT_TURN_ALLOWLIST := {
 '@
     $hostSecurityAllowlist = $hostSecurityAllowlist.Replace("`r`n", "`n")
     $matchCount = [regex]::Matches($normalized, [regex]::Escape($hostSecurityAllowlist)).Count
-    $scanText = $normalized
+    $spans = [System.Collections.Generic.List[object]]::new()
+    $issues = [System.Collections.Generic.List[string]]::new()
+    $classified = [System.Collections.Generic.List[object]]::new()
     if ($matchCount -eq 1) {
-        $scanText = $normalized.Replace($hostSecurityAllowlist, "")
+        $spans.Add(@{ Start = $normalized.IndexOf($hostSecurityAllowlist, [StringComparison]::Ordinal); Length = $hostSecurityAllowlist.Length })
+    }
+    # Current callback/presentation/compatibility bindings are reviewed source
+    # fragments, not duplicated content definitions. Bind each exact fragment
+    # to one named function; future or ambiguous literals remain in ScanText.
+    $reviewedBindings = @(
+        @{ Function = '_advance_run_game_clock'; Role = 'Crew hourly event dispatch uses the catalog definition and persisted cadence.'; Lines = @('		var queued := run_state.enqueue_triggered_event("crew_favor_delivery", "crew_hourly", {}, _triggered_entry_overrides(library.event("crew_favor_delivery")))') },
+        @{ Function = '_enter_game_after_input_guard'; Role = 'Restore a validated Blackjack wager selector after module entry.'; Lines = @('	var restored_blackjack_wager := int(game_surface_ui_state.get("selected_stake", 0)) if clean_game_id == "blackjack" else 0') },
+        @{ Function = '_recover_stranded_slot_wager_on_entry'; Role = 'Cancel intact legacy Slot pending delivery through sealed host authority.'; Lines = @('	if run_state == null or current_game == null or current_game.get_id() != "slot":') },
+        @{ Function = '_recover_stranded_slot_wager_on_entry'; Role = 'Cancel intact legacy Slot pending delivery through sealed host authority.'; Lines = @('	var capacity := run_state.wager_capacity_for_game("slot", run_state.current_environment)') },
+        @{ Function = '_present_event_resolution_failure'; Role = 'Invalidate the current Crew delivery quote module after a failed response.'; Lines = @('		crew_delivery_event_modules.erase("crew_favor_delivery")') },
+        @{ Function = '_crew_delivery_event_module'; Role = 'Reuse an EventModule built from the catalog definition for Crew quote identity.'; Lines = @('	var quoted_offer := event_id == "crew_favor_delivery" or kind in ["crew_job_board", "crew_contact"]') },
+        @{ Function = '_on_talk_dock_choice_requested'; Role = 'Cass neutral-close callback preserves its existing no-effect dismissal.'; Lines = @('			or event_id == "chain06_cass_first_contact" and choice_id == "keep_counting":') },
+        @{ Function = '_acknowledge_closing_time_talk'; Role = 'Finish remaining Delta docking turns through the checked turn transaction.'; Lines = @('			and str(run_state.current_environment.get("archetype_id", "")) == "delta_queen" \') },
+        @{ Function = '_enqueue_triggered_events_for_context'; Role = 'Project the current Crew delivery offer before eligible event enqueue.'; Lines = @('		if event_id == "crew_favor_delivery":') },
+        @{ Function = '_refresh_talk_dock'; Role = 'Project Crew offer and Cass count details into the current TalkDock entry.'; Lines = @('	var pushy_crew_request := event_id == "crew_favor_delivery" and bool(run_state.narrative_flags.get("crew_delivery_post_miss", false))') },
+        @{ Function = '_refresh_talk_dock'; Role = 'Project Crew offer and Cass count details into the current TalkDock entry.'; Lines = @('	if event_id == "chain06_cass_first_contact":') },
+        @{ Function = 'use_game_environment_hook'; Role = 'Existing scratch/pull-tab redemption contacts remain usable during closing.'; Lines = @('	var ticket_redemption := (game_id == "scratch_tickets" and hook_id == "scratch_ticket_clerk" and action_id in ["", "redeem_scratch_winners"]) \', '		or (game_id == "pull_tabs" and hook_id == "ticket_redeemer" and action_id in ["", "redeem_pull_tab_winners"])') },
+        @{ Function = '_family_loan_menu_repayment_status'; Role = 'Expose repayment only when the current room declares the family lender hook.'; Lines = @('	if not JsonCoerceScript._string_array(run_state.current_environment.get("lender_hooks", [])).has("brother_in_law"):', '		return {}', '	return run_state.lender_repayment_status("brother_in_law")') },
+        @{ Function = 'repay_family_loan_from_menu'; Role = 'Dispatch the visible family-loan repayment through the ordinary lender service.'; Lines = @('	repay_lender_debt("brother_in_law")') },
+        @{ Function = '_crew_room_needs_recovery'; Role = 'Limit Crew room recovery UI to its authored back-room context.'; Lines = @('	if run_state == null or current_screen != SCREEN_ENVIRONMENT or str(run_state.current_environment.get("archetype_id", "")) != "small_underground_casino" or str(run_state.current_environment.get("current_layer_id", "")) != "back_room":') },
+        @{ Function = '_refresh_crew_room_recovery_control'; Role = 'Project Crew room recovery control in the authored back-room context.'; Lines = @('	if run_state != null and current_screen == SCREEN_ENVIRONMENT and str(run_state.current_environment.get("archetype_id", "")) == "small_underground_casino" and str(run_state.current_environment.get("current_layer_id", "")) == "back_room":') },
+        @{ Function = '_add_wager_confirmation_card'; Role = 'Keep the current Crew planning text readable in its full popup card.'; Lines = @('	body.clip_text = not (full_text and rendered_event_id == "crew_planning_table")') },
+        @{ Function = '_event_allows_canvas_inline_response'; Role = 'Use the current Crew planning canonical popup response surface.'; Lines = @('	if event_id == "crew_planning_table":') },
+        @{ Function = '_event_uses_canonical_popup_choice_surface'; Role = 'Route current planning/showdown events through their canonical popup.'; Lines = @('	return event_id in [RunState.GRAND_CASINO_SHOWDOWN_EVENT_ID, "crew_planning_table"]') },
+        @{ Function = '_show_interactable_event_popup'; Role = 'Render and enable current planning choices through existing action callbacks.'; Lines = @('			_event_choice_action_detail(choice) if event_id == "crew_planning_table" else str(choice.get("text", "")),', '			str(choice.get("consequence_summary", "")),', '			choice_callback,', '			false,', '			[],', '			event_id,', '			str(choice.get("id", "")),', '			event_id == "crew_planning_table"', '		)', '		if event_id == "crew_planning_table":') },
+        @{ Function = '_story_is_unmeasured_blackjack_penalty'; Role = 'Interpret a legacy casino Blackjack penalty row without inventing currency.'; Lines = @('	return str(entry.get("game_id", "")) == "blackjack" and int(entry.get("bankroll_delta", 0)) <= 0 \', '			and bool(entry.get("dealer_caught_cheat", false)) \', '			and (room == "grand_casino" or room.begins_with("grand_casino_"))') },
+        @{ Function = '_current_game_has_table_result_presentation'; Role = 'Select current table-result presentation for reviewed module surfaces.'; Lines = @('	return current_game != null and current_game.get_id() in ["blackjack", "baccarat", "roulette", "craps", "bar_dice", "crew_draw_poker", "video_poker"]') },
+        @{ Function = '_coach_context_snapshot'; Role = 'Read the retained tutorial Pull Tabs redemption receipt without entering a game.'; Lines = @('			and archetype_id == "gas_station_casino" and _coach_visible_surface_screen() == SCREEN_ENVIRONMENT:') },
+        @{ Function = '_coach_context_snapshot'; Role = 'Read the retained tutorial Pull Tabs redemption receipt without entering a game.'; Lines = @('		var pull_tab_game := _game_module_for_id("pull_tabs")') }
+    )
+    $declarations = [regex]::Matches($normalized, '(?m)^(?:static[ \t]+)?func[ \t]+(?<name>[A-Za-z_][A-Za-z0-9_]*)[ \t]*\(')
+    foreach ($binding in $reviewedBindings) {
+        $owners = @($declarations | Where-Object { $_.Groups['name'].Value -ceq $binding.Function })
+        if ($owners.Count -ne 1) {
+            if ($RequireReviewedBindings -or $owners.Count -gt 1) {
+                $issues.Add("Reviewed content binding requires one function owner: $($binding.Function)")
+            }
+            continue
+        }
+        $ownerStart = [int]$owners[0].Index
+        $ownerEnd = $normalized.Length
+        foreach ($declaration in $declarations) {
+            if ($declaration.Index -gt $ownerStart) { $ownerEnd = [int]$declaration.Index; break }
+        }
+        $extent = $normalized.Substring($ownerStart, $ownerEnd - $ownerStart)
+        if ($extent.Contains('"""') -or $extent.Contains("'''")) {
+            $issues.Add("Reviewed content binding refuses multiline-string ambiguity: $($binding.Function)")
+            continue
+        }
+        $snippet = $binding.Lines -join "`n"
+        $matches = [regex]::Matches($extent, '(?m)^' + [regex]::Escape($snippet) + '$')
+        if ($matches.Count -ne 1) {
+            $issues.Add("Reviewed content binding changed or is ambiguous: $($binding.Function) / $($binding.Role)")
+            continue
+        }
+        $spans.Add(@{ Start = $ownerStart + [int]$matches[0].Index; Length = $matches[0].Length })
+        $classified.Add(@{ Function = $binding.Function; Role = $binding.Role })
+    }
+    $scanText = $normalized
+    foreach ($span in ($spans | Sort-Object -Property Start -Descending)) {
+        $scanText = $scanText.Remove($span.Start, $span.Length).Insert($span.Start, (' ' * $span.Length))
     }
     return @{
         HostSecurityAllowlistCount = $matchCount
+        ReviewedBindingCount = $classified.Count
+        ReviewedBindings = $classified.ToArray()
+        Issues = $issues.ToArray()
         ScanText = $scanText
     }
 }
@@ -716,13 +841,7 @@ $requiredFiles = @(
     "assets/art/environments/jazz_club.png",
     "assets/art/environments/gas_station_casino.png",
     "assets/art/environments/small_underground_casino.png",
-    "assets/art/environments/grand_casino.png",
-    "assets/art/game_scenes/slot.png",
-    "assets/art/game_scenes/pull_tabs.png",
-    "assets/art/game_scenes/bar_dice.png",
-    "assets/art/game_scenes/blackjack.png",
-    "assets/art/game_scenes/video_poker.png",
-    "assets/art/game_scenes/poker.png"
+    "assets/art/environments/grand_casino.png"
 )
 
 $failures = New-Object System.Collections.Generic.List[string]
@@ -748,20 +867,9 @@ foreach ($sourceRuleError in $healthSourceRuleErrors) {
     $failures.Add($sourceRuleError)
 }
 foreach ($gdFile in $shippingGdFiles) {
-    $lineNumber = 0
-    foreach ($sourceLine in Get-Content -LiteralPath $gdFile.FullName) {
-        $lineNumber++
-        if ($sourceLine -match '^ +\S') {
-            $failures.Add("GDScript indentation must use tabs: $(Get-ProjectRelativePath $gdFile.FullName):$lineNumber")
-        }
-        if ($sourceLine -match '^const\s+(?<name>[A-Za-z0-9_]+)\s*(?::?=)\s*preload\("(?<path>[^"]+)"\)') {
-            $constantName = $Matches.name
-            $resourcePath = $Matches.path
-            $requiredSuffix = if ($resourcePath.EndsWith(".gd")) { "Script" } elseif ($resourcePath.EndsWith(".tscn")) { "Scene" } else { "" }
-            if ($requiredSuffix -and -not $constantName.EndsWith($requiredSuffix)) {
-                $failures.Add("Preload constant must end in ${requiredSuffix}: $(Get-ProjectRelativePath $gdFile.FullName):$lineNumber ($constantName)")
-            }
-        }
+    $styleIssues = @(Get-GdScriptStyleSourceIssues -Source (Get-Content -LiteralPath $gdFile.FullName -Raw) -PathLabel (Get-ProjectRelativePath $gdFile.FullName))
+    foreach ($styleIssue in $styleIssues) {
+        $failures.Add($styleIssue)
     }
 }
 
@@ -1019,12 +1127,6 @@ $assetDimensions = @{
     "assets/art/environments/gas_station_casino.png" = @(900, 430)
     "assets/art/environments/small_underground_casino.png" = @(900, 430)
     "assets/art/environments/grand_casino.png" = @(900, 430)
-    "assets/art/game_scenes/slot.png" = @(900, 430)
-    "assets/art/game_scenes/pull_tabs.png" = @(900, 430)
-    "assets/art/game_scenes/bar_dice.png" = @(900, 430)
-    "assets/art/game_scenes/blackjack.png" = @(900, 430)
-    "assets/art/game_scenes/video_poker.png" = @(900, 430)
-    "assets/art/game_scenes/poker.png" = @(900, 430)
 }
 
 $iconFolders = @("assets/art/items", "assets/art/events", "assets/art/games", "assets/art/ui")
@@ -1064,6 +1166,7 @@ foreach ($entry in $assetDimensions.GetEnumerator()) {
 }
 
 $objectJsonFiles = @(
+    "data/environments/scenario_sequence_compatibility/grand_casino_gala_night_v1.json",
     "data/art/art_manifest.json",
     "data/art/attribute_glyphs.json",
     "data/games/bar_dice_game_ritual_v1.json",
@@ -1085,7 +1188,7 @@ $jsonFiles = Get-ChildItem -LiteralPath (Join-Path $root "data") -Filter "*.json
 foreach ($jsonFile in $jsonFiles) {
     try {
         $content = Get-Content -LiteralPath $jsonFile.FullName -Raw
-        $parsed = $content | ConvertFrom-Json
+        $parsed = ConvertFrom-ProjectJsonDocument $content
         if ($null -eq $parsed) {
             $failures.Add("JSON file parsed to null: $($jsonFile.FullName)")
         }
@@ -1111,6 +1214,7 @@ foreach ($jsonFile in $jsonFiles) {
     }
 }
 
+$placementCompletionRecoveries = New-Object System.Collections.Generic.List[object]
 $placementOverridePath = Join-Path $root "data/environments/developer_placement_overrides.json"
 try {
     $placementSurfaceAuthority = Get-Content -LiteralPath (Join-Path $root "data/environments/placement_surfaces.json") -Raw | ConvertFrom-Json
@@ -1269,15 +1373,12 @@ try {
                                 }
                             }
                         }
-                        if ($scenarioProperty.Value.saved -eq $true) {
-                            $savedScenarioSlots = @($scenarioProperty.Value.slot_positions.PSObject.Properties)
-                            if ($savedScenarioSlots.Count -ne $scenarioPlacementSlots[$layoutKey].Count) {
-                                $failures.Add("Saved developer placement scenario layout $layoutKey does not contain its complete authored slot set.")
-                            }
-                            $savedSharedSlots = @($roomProperty.Value.slot_positions.PSObject.Properties)
-                            if ($savedSharedSlots.Count -ne $sharedPlacementSlots[$roomProperty.Name].Count) {
-                                $failures.Add("Saved developer placement scenario layout $layoutKey does not contain its complete shared room slot set.")
-                            }
+                        $completion = Get-PlacementCompletionState -SavedFlag $scenarioProperty.Value.saved `
+                            -SharedPositions $roomProperty.Value.slot_positions -ExpectedSharedIds $sharedPlacementSlots[$roomProperty.Name] `
+                            -ScenarioPositions $scenarioProperty.Value.slot_positions -ExpectedScenarioIds $scenarioPlacementSlots[$layoutKey]
+                        if ($completion.recovered_catalog_drift) {
+                            $placementCompletionRecoveries.Add([pscustomobject]@{ layout_id = $layoutKey; completion = $completion })
+                            Write-Host "Developer placement catalog recovery: $layoutKey raw_saved=true effective_saved=false; shared_complete=$($completion.shared_complete), scenario_complete=$($completion.scenario_complete). Existing valid coordinates retained; layout is incomplete."
                         }
                     }
                     continue
@@ -1312,11 +1413,12 @@ try {
                     }
                 }
             }
-            if ($roomProperty.Value.base_saved -eq $true) {
-                $savedBaseSlots = @($roomProperty.Value.slot_positions.PSObject.Properties)
-                if ($savedBaseSlots.Count -ne $sharedPlacementSlots[$roomProperty.Name].Count) {
-                    $failures.Add("Saved developer placement base layout $($roomProperty.Name) does not contain its complete authored slot set.")
-                }
+            $completion = Get-PlacementCompletionState -SavedFlag $roomProperty.Value.base_saved `
+                -SharedPositions $roomProperty.Value.slot_positions -ExpectedSharedIds $sharedPlacementSlots[$roomProperty.Name]
+            if ($completion.recovered_catalog_drift) {
+                $baseLayoutKey = "$($roomProperty.Name)::__base"
+                $placementCompletionRecoveries.Add([pscustomobject]@{ layout_id = $baseLayoutKey; completion = $completion })
+                Write-Host "Developer placement catalog recovery: $baseLayoutKey raw_saved=true effective_saved=false; shared_complete=$($completion.shared_complete). Existing valid coordinates retained; layout is incomplete."
             }
         }
     }
@@ -2555,6 +2657,9 @@ Forbid-Text $visualQa "res://data/runtime" "Foundation visual QA must not load d
 $gameDefinitions = Read-JsonArray "data/games/games.json"
 foreach ($gameDefinition in $gameDefinitions) {
     $gameId = [string]$gameDefinition.id
+    if ($gameDefinition.PSObject.Properties.Name -contains "scene_asset_path") {
+        $failures.Add("Game catalog must use the module-owned surface, not retired scene_asset_path: $gameId")
+    }
     Assert-ObjectInfoTextLength "games $gameId description" ([string](Get-JsonProperty $gameDefinition "description"))
     Assert-ObjectInfoTextLength "games $gameId intro" ([string](Get-JsonProperty $gameDefinition "intro"))
     $modulePath = [string]$gameDefinition.module_path
@@ -2590,9 +2695,12 @@ foreach ($contentFile in $contentIdFiles) {
     }
 }
 $foundationUiText = Get-ProjectText $foundationUi
-$foundationUiContentSelectionScan = Get-FoundationUiContentSelectionScan $foundationUiText
+$foundationUiContentSelectionScan = Get-FoundationUiContentSelectionScan $foundationUiText -RequireReviewedBindings
 if ([int]$foundationUiContentSelectionScan.HostSecurityAllowlistCount -ne 1) {
     $failures.Add("Foundation UI host security allowlist classification must match exactly once.")
+}
+foreach ($bindingIssue in $foundationUiContentSelectionScan.Issues) {
+    $failures.Add("Foundation UI content binding classification failed: $bindingIssue")
 }
 $foundationUiContentSelectionText = [string]$foundationUiContentSelectionScan.ScanText
 foreach ($id in $contentIds) {
@@ -3411,6 +3519,13 @@ try {
 }
 catch {
     $failures.Add("Foundation systems shard hostile contracts failed: $($_.Exception.Message)")
+}
+
+try {
+    & (Join-Path $root "tools/foundation_ui_content_selection_contract_test.ps1") -Quiet
+}
+catch {
+    $failures.Add("Foundation content selection hostile contracts failed: $($_.Exception.Message)")
 }
 
 if ($failures.Count -gt 0) {

@@ -5,6 +5,8 @@ from __future__ import annotations
 
 import sys
 import unittest
+import copy
+import json
 from pathlib import Path
 from typing import Any
 
@@ -176,6 +178,69 @@ class V2ScenarioSlotReplayTest(unittest.TestCase):
         self.assertEqual(result["missing_count"], 0)
         self.assertEqual(result["attached_count"], 1)
         self.assertEqual(result["bindings"]["scenario::primary_task"]["mode"], "attached")
+
+
+class ReviewedCurrentSlotAuthorityTest(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls) -> None:
+        root = TOOLS_ROOT.parent
+        placement = json.loads((root / "data/environments/placement_surfaces.json").read_text(encoding="utf-8"))
+        cls.maps = {row["id"]: row for row in placement["maps"]}
+        cls.archetypes = {row["id"]: row for row in json.loads((root / "data/environments/archetypes.json").read_text(encoding="utf-8"))}
+        cls.layouts = json.loads((root / "data/environments/scenario_slot_layouts.json").read_text(encoding="utf-8"))["layouts"]
+
+    def errors_for(self, surface: dict[str, Any]) -> list[str]:
+        check = SlotCheck.Check()
+        archetype_id = surface.get("archetype_id", surface["id"].split(":", 1)[0])
+        SlotCheck.validate_map_v2(check, surface, self.archetypes[archetype_id], (900.0, 430.0))
+        return check.errors
+
+    def test_current_reviewed_maps_preserve_their_full_authority(self) -> None:
+        for map_id in ("corner_store", "gas_station_casino", "small_underground_casino:casino", "jazz_club", "kitty_cat_lounge", "delta_queen", "pawn_shop", "grand_casino", "grand_casino_cage"):
+            with self.subTest(map_id=map_id):
+                self.assertEqual(self.errors_for(self.maps[map_id]), [])
+
+    def test_unknown_named_slot_is_not_a_generic_exception(self) -> None:
+        surface = copy.deepcopy(self.maps["corner_store"])
+        next(row for row in surface["event_slots"] if row["id"] == "event.lucky_recruitment")["id"] = "event.some_other_recruit"
+        self.assertTrue(any("canonical id" in error for error in self.errors_for(surface)))
+
+    def test_sal_supported_order_does_not_admit_changed_or_duplicate_occupants(self) -> None:
+        for occupants in (
+            ["event:chain06_sal_trail_one"],
+            ["event:chain06_sal_trail_one", "event:chain06_sal_trail_two", "event:chain06_sal_trail_three", "event:unexpected_note"],
+            ["event:chain06_sal_trail_one", "event:chain06_sal_trail_two", "event:chain06_sal_trail_three", "event:chain06_sal_trail_one"],
+        ):
+            with self.subTest(occupants=occupants):
+                surface = copy.deepcopy(self.maps["kitty_cat_lounge"])
+                next(row for row in surface["event_slots"] if row["id"] == "event.sal_address_note")["occupant_ids"] = occupants
+                self.assertTrue(self.errors_for(surface))
+
+    def test_unreviewed_prop_reserve_and_capacity_loss_remain_rejected(self) -> None:
+        surface = copy.deepcopy(self.maps["gas_station_casino"])
+        note = next(row for row in surface["event_slots"] if row["id"] == "event.surface_item_1")
+        note["runtime_reserve"] = True
+        note["reserve_reason"] = "Unreviewed generic capacity."
+        self.assertTrue(any("non-person event" in error for error in self.errors_for(surface)))
+        surface["event_slots"].remove(note)
+        self.assertTrue(any("capacity matrix drift" in error for error in self.errors_for(surface)))
+
+    def test_moved_punchline_props_trace_exact_reserved_source_owners(self) -> None:
+        source = next(row for row in self.maps["small_underground_casino:club"]["scenario_slots"] if row["id"] == "scenario.floor_fixture_3")
+        for scenario_id in ("punchline_open_mic_night", "punchline_raid_jitters"):
+            with self.subTest(scenario_id=scenario_id):
+                layout = next(row for row in self.layouts if row["scenario_id"] == scenario_id)
+                local = next(row for row in layout["scenario_slots"] if row["id"] == "scenario.local_floor_fixture_4")
+                self.assertNotEqual(local["pos"], source["pos"])
+                self.assertTrue(SlotCheck._v2_scenario_source_matches(local, source))
+                unrelated = copy.deepcopy(local)
+                unrelated["scenario_object_ids"] = ["scenario::unrelated_prop"]
+                self.assertFalse(SlotCheck._v2_scenario_source_matches(unrelated, source))
+                unrelated["scenario_object_ids"] = []
+                self.assertFalse(SlotCheck._v2_scenario_source_matches(unrelated, source))
+                wrong_class = dict(source, footprint_class="wall_mounted")
+                self.assertFalse(SlotCheck._v2_scenario_source_matches(local, wrong_class))
+                self.assertFalse(SlotCheck._v2_scenario_source_matches(local, {}))
 
 
 if __name__ == "__main__":
