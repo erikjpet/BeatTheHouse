@@ -313,6 +313,7 @@ foreach ($platform in $targets) {
         if ([string]$registeredIdentity.aggregate_sha256 -cne [string]$registeredPlatform.export_identity_sha256) {
             throw "$platform staging tree changed after candidate registration."
         }
+        Invoke-WebGlHandlesStage -Platform $platform -Mode verify -Stage $registeredAttempt.final_stage -ToolPath (Join-Path $PSScriptRoot "web_gl_handles.mjs")
         Write-Host "Reusing registered immutable $platform candidate: $($registeredAttempt.final_stage)"
         continue
     }
@@ -334,6 +335,14 @@ foreach ($platform in $targets) {
         }
         if (-not $SkipExport) {
             [IO.File]::WriteAllText((Join-Path $stage "build_manifest.json"), ($buildManifest | ConvertTo-Json -Depth 12), [Text.UTF8Encoding]::new($false))
+        }
+        if ($platform -eq "web") {
+            if ($SkipExport) {
+                Invoke-WebGlHandlesStage -Platform web -Mode verify -Stage $stage -ToolPath (Join-Path $PSScriptRoot "web_gl_handles.mjs")
+            }
+            else {
+                Invoke-WebGlHandlesStage -Platform web -Mode apply -Stage $stage -OwnedRoot (Split-Path -Parent $stage) -ToolPath (Join-Path $PSScriptRoot "web_gl_handles.mjs")
+            }
         }
         Assert-CleanDistributionOutput $stage
         $pipelineState.native_output = Assert-NativeSolverExport $stage $platform
@@ -413,6 +422,7 @@ foreach ($required in @("windows", "web")) {
     $stage = Join-Path $root ([string]$entry.staging_root)
     $actual = Get-ExportTreeIdentityFromDirectory $stage
     if ([string]$actual.aggregate_sha256 -cne [string]$entry.export_identity_sha256) { throw "$required staging tree changed after candidate registration." }
+    Invoke-WebGlHandlesStage -Platform $required -Mode verify -Stage $stage -ToolPath (Join-Path $PSScriptRoot "web_gl_handles.mjs")
 }
 
 $distDir = Join-Path $root "builds/itch"

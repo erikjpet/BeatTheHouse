@@ -1,0 +1,165 @@
+{
+  "schema": "bth.web_gl_handles.lock/v1",
+  "policy_version": 1,
+  "profile": "godot-4.6-emscripten-4.0.20-dlink-nothreads-release",
+  "godot_commit": "89cea143987d564363e15d207438530651d943ac",
+  "emscripten_version": "4.0.20",
+  "template_sha256": "cf371f607aa9cb18e690bd595976c1baaf00c8cec24078e4a307fd515ad07913",
+  "input_sha256": "8cf4a21cded9270718a67c6f1aab3d794eca91e3903ad866532c925565dd1fc4",
+  "output_sha256": "0c8aacc2bab394c10845a65d3b6624df7f4678a1aea87f80612a554b28d04c8c",
+  "allocator_file": "web_gl_handles_allocator.txt",
+  "allocator_sha256": "e07f1157319c45dce251b06ad9cb73cae20c96745f689ee1b7f8332390be4da8",
+  "tables": [
+    "buffers",
+    "textures",
+    "vaos",
+    "syncs"
+  ],
+  "tracking_cap": 65536,
+  "receipt_file": "web-gl-handles.json",
+  "anchors": [
+    {
+      "name": "allocator",
+      "before": "getNewId:table=>{var ret=GL.counter++;for(var i=table.length;i<ret;i++){table[i]=null}return ret}",
+      "bytes": 97,
+      "sha256": "8f6b2ef16bda3236f9450fd08b32fdef059e21138971dad598ab623cc8f5a72d"
+    },
+    {
+      "name": "delete_buffers",
+      "before": "var _emscripten_glDeleteBuffers=(n,buffers)=>{for(var i=0;i<n;i++){var id=HEAP32[buffers+i*4>>2];var buffer=GL.buffers[id];if(!buffer)continue;GLctx.deleteBuffer(buffer);buffer.name=0;GL.buffers[id]=null;if(id==GLctx.currentPixelPackBufferBinding)GLctx.currentPixelPackBufferBinding=0;if(id==GLctx.currentPixelUnpackBufferBinding)GLctx.currentPixelUnpackBufferBinding=0}}",
+      "bytes": 371,
+      "sha256": "ef56a5ea0250bd8e1b3327519a0fd7aa1601c4e108990534c7297aab9f024714"
+    },
+    {
+      "name": "delete_textures",
+      "before": "var _emscripten_glDeleteTextures=(n,textures)=>{for(var i=0;i<n;i++){var id=HEAP32[textures+i*4>>2];var texture=GL.textures[id];if(!texture)continue;GLctx.deleteTexture(texture);texture.name=0;GL.textures[id]=null}}",
+      "bytes": 215,
+      "sha256": "84b94c9c2f0a512194008aae882792fb811cc51c658f100e80bc54857f108ff7"
+    },
+    {
+      "name": "delete_vaos",
+      "before": "var _emscripten_glDeleteVertexArrays=(n,vaos)=>{for(var i=0;i<n;i++){var id=HEAP32[vaos+i*4>>2];GLctx.deleteVertexArray(GL.vaos[id]);GL.vaos[id]=null}}",
+      "bytes": 151,
+      "sha256": "888730b6ca7e39ad55b2542a0a6b01e217dd4e74903be94bb7e3018205498e0c"
+    },
+    {
+      "name": "delete_syncs",
+      "before": "var _emscripten_glDeleteSync=id=>{if(!id)return;var sync=GL.syncs[id];if(!sync){GL.recordError(1281);return}GLctx.deleteSync(sync);sync.name=0;GL.syncs[id]=null}",
+      "bytes": 161,
+      "sha256": "a543c2c6aba48a9be8cda259f6ed91cdf6737930110922438abbf6c5e365d9dc"
+    }
+  ],
+  "support_anchors": [
+    {
+      "name": "genObject",
+      "source": "genObject:(n,buffers,createFunction,objectTable)=>{for(var i=0;i<n;i++){var buffer=GLctx[createFunction]();var id=buffer&&GL.getNewId(objectTable);if(buffer){buffer.name=id;objectTable[id]=buffer}else{GL.recordError(1282)}HEAP32[buffers+i*4>>2]=id}}",
+      "bytes": 249,
+      "sha256": "4e0e6b28eda8eb8831f7171d70b991d1c31b3bc75364fa4e9a76529894ed127c"
+    },
+    {
+      "name": "_emscripten_glGenBuffers",
+      "source": "var _emscripten_glGenBuffers=(n,buffers)=>{GL.genObject(n,buffers,\"createBuffer\",GL.buffers)}",
+      "bytes": 93,
+      "sha256": "2be1560e0d9594e530336703db1efa44452dbfa5071efc22683b4c8e6566a111"
+    },
+    {
+      "name": "_emscripten_glGenTextures",
+      "source": "var _emscripten_glGenTextures=(n,textures)=>{GL.genObject(n,textures,\"createTexture\",GL.textures)}",
+      "bytes": 98,
+      "sha256": "664d4eb42f656a90ff771d8cc618cc576fea01b0a32e7e5cd19ad392fdc2566a"
+    },
+    {
+      "name": "_emscripten_glGenVertexArrays",
+      "source": "var _emscripten_glGenVertexArrays=(n,arrays)=>{GL.genObject(n,arrays,\"createVertexArray\",GL.vaos)}",
+      "bytes": 98,
+      "sha256": "fbe6be3a2797e62e26bb5d7b6c9a635700f707609ca7a54c483ce9f81ea8d418"
+    },
+    {
+      "name": "_emscripten_glFenceSync",
+      "source": "var _emscripten_glFenceSync=(condition,flags)=>{var sync=GLctx.fenceSync(condition,flags);if(sync){var id=GL.getNewId(GL.syncs);sync.name=id;GL.syncs[id]=sync;return id}return 0}",
+      "bytes": 178,
+      "sha256": "4051904d90e4ef8292bfeb4e51f868eb9abc16b23264e48f72016d59b7f423a5"
+    },
+    {
+      "name": "_glGenBuffers",
+      "source": "var _glGenBuffers=_emscripten_glGenBuffers",
+      "bytes": 42,
+      "sha256": "02b95883acab12eb3a1d90911ea2f046d276a009a9b75197a173dc09f4166109"
+    },
+    {
+      "name": "_glGenTextures",
+      "source": "var _glGenTextures=_emscripten_glGenTextures",
+      "bytes": 44,
+      "sha256": "25048b5f1383dba8c879d390b5ecf762d082a10676437773b226d6f4269e189f"
+    },
+    {
+      "name": "_glGenVertexArrays",
+      "source": "var _glGenVertexArrays=_emscripten_glGenVertexArrays",
+      "bytes": 52,
+      "sha256": "bd560893f7aec9c08273eb04e0b66c1e481f04acb4eeb77d42591bc1797e8b03"
+    },
+    {
+      "name": "_glDeleteBuffers",
+      "source": "var _glDeleteBuffers=_emscripten_glDeleteBuffers",
+      "bytes": 48,
+      "sha256": "75fbf250d357b5f8724fd093c877ad098be3ab4031aa3e438e8f8f3be95806b1"
+    },
+    {
+      "name": "_glDeleteTextures",
+      "source": "var _glDeleteTextures=_emscripten_glDeleteTextures",
+      "bytes": 50,
+      "sha256": "bc1426d9ae26b9401e7f38dcb0d0361cde50cb6b6a96242d47ca945ccf23f002"
+    },
+    {
+      "name": "_glDeleteVertexArrays",
+      "source": "var _glDeleteVertexArrays=_emscripten_glDeleteVertexArrays",
+      "bytes": 58,
+      "sha256": "1365380df627f5482b47b035a01092f019584daf922fa47992683e69dfa1ab08"
+    },
+    {
+      "name": "_glFenceSync",
+      "source": "var _glFenceSync=_emscripten_glFenceSync",
+      "bytes": 40,
+      "sha256": "fbbf11791936403c60a5861bfccc37d80df1f11eb415b83370de3054517b8737"
+    },
+    {
+      "name": "_glDeleteSync",
+      "source": "var _glDeleteSync=_emscripten_glDeleteSync",
+      "bytes": 42,
+      "sha256": "83fb853a1ff6ef88c7e4f09499a78b3369483419ad12b57f216d89381609f814"
+    },
+    {
+      "name": "_emscripten_glGenVertexArraysOES",
+      "source": "var _emscripten_glGenVertexArraysOES=_emscripten_glGenVertexArrays",
+      "bytes": 66,
+      "sha256": "487c51826ba956cedfbb72ee21da99b2787482207171d4ff2c84d9dcbf80f0fe"
+    },
+    {
+      "name": "_glGenVertexArraysOES",
+      "source": "var _glGenVertexArraysOES=_emscripten_glGenVertexArrays",
+      "bytes": 55,
+      "sha256": "b771d2e61d611d76ec55c46e372d46d54b1bbee1ab197ab8708b4206616b0360"
+    },
+    {
+      "name": "_emscripten_glDeleteVertexArraysOES",
+      "source": "var _emscripten_glDeleteVertexArraysOES=_emscripten_glDeleteVertexArrays",
+      "bytes": 72,
+      "sha256": "2995441ecbfff7e45640843daff8acac108e7e41a56392f6a1eeb1f10d0a7a45"
+    },
+    {
+      "name": "_glDeleteVertexArraysOES",
+      "source": "var _glDeleteVertexArraysOES=_emscripten_glDeleteVertexArrays",
+      "bytes": 61,
+      "sha256": "dedf715346f3b7f101dbd9e080e37ebcdef3fcafd3b5608289991d5669ee1480"
+    }
+  ],
+  "qualification": "Only this exact generated Web release engine is qualified. Every Web export/Debug/reuse must match this policy or fail closed; native outputs are outside the transform.",
+  "source_hash_format": "utf8_lf_v1",
+  "build_profile_sha256": "19fbf7144046b52dc6888ec0064d115587e751108fb07994ba5deaba1f4676e7",
+  "engine_assets": {
+    "index.wasm": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8",
+    "index.side.wasm": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0"
+  },
+  "emscripten_commit": "e4fe26ef59168ff44f4c23c466e497bf60b3411e",
+  "compiler_commit": "6913738ec5371a88c4af5a80db0ab42bad3de681"
+}
