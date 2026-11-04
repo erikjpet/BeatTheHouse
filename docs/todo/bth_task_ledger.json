@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T16:57:53.833Z",
+  "updated_at": "2026-11-04T17:03:36.963035+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -516,7 +516,7 @@
       ],
       "group": "current",
       "objective": {
-        "text": "Video Poker cold strategy-hint cost. Generated3hands show1.17–1.33s cold versus17–40us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain.",
+        "text": "Video Poker cold strategy-hint cost. Generated3hands show1.17\u20131.33s cold versus17\u201340us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain.",
         "source": "docs/plans/performance_audit_2026-11-04.md",
         "scope_confirmed": true,
         "acceptance": [
@@ -575,7 +575,7 @@
         {
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-          "summary": "Generated3hands show1.17–1.33s cold versus17–40us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain."
+          "summary": "Generated3hands show1.17\u20131.33s cold versus17\u201340us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain."
         }
       ],
       "implementation_batches": [],
@@ -5036,13 +5036,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop → Main Menu → Continue → full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
+        "text": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop \u2192 Main Menu \u2192 Continue \u2192 full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
         "source": "docs/plans/0.6.1_stability_release_plan.md#prioritized-task-list",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop → Main Menu → Continue → full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
+            "description": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop \u2192 Main Menu \u2192 Continue \u2192 full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
             "required": true,
             "state": "unknown",
             "evidence": [
@@ -5253,13 +5253,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3–5, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
+        "text": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3\u20135, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
         "source": "docs/plans/0.6.1_stability_release_plan.md#prioritized-task-list",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3–5, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
+            "description": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3\u20135, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
             "required": true,
             "state": "unknown",
             "evidence": [
@@ -13610,7 +13610,7 @@
         }
       },
       "state": "open",
-      "status": "FOCUSED_AND_FULL_AGGREGATE_QUALIFIED_NEXT_PENDING",
+      "status": "FOCUSED_QUALIFIED_NEXT_CAPACITY_BLOCKED",
       "owner": {
         "name": "Audit host helper review",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -13630,7 +13630,8 @@
         "state": "pending",
         "commit": null,
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_003.md"
+          "docs/testing/deprecated_code_audit_continuation_003.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json"
         ],
         "scope": "Only the40-line host cleanup and its focused qualification; Exact R9 aggregate passes; current scoped publication/NEXT evidence remains pending."
       },
@@ -13647,16 +13648,16 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish the qualified associated repair through the authorized current NEXT path, then record exact deployed identity, served assets/startup and the required focused acceptance. Reuse passed exact R9 aggregate evidence without claiming whole-parent or global runtime completion.",
+      "next_action": "Publish the finished qualified source; preserve required NEXT acceptance as Open. Re-observe the existing watcher after storage capacity is restored, without lowering reserves, deleting retained builds or restarting machinery.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "No external blocker; required scoped publication/NEXT evidence and the recorded remaining parent work remain unfinished.",
+        "state": "active",
+        "kind": "resource_capacity",
+        "description": "Existing NEXT admission rejected at 2026-11-04T17:03:21.459162+00:00: 12982358016 bytes free; 13958643712 required. Guard and retained builds are unchanged.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:57:53.833Z",
+        "observed_at": "2026-11-04T17:03:36.963035+00:00",
         "evidence": [
-          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json",
-          "docs/testing/deprecated_code_audit_continuation_003.md"
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
+          "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
         ]
       },
       "planned_app_changes": [],
@@ -13710,7 +13711,7 @@
         }
       },
       "state": "open",
-      "status": "CLASSIFIER_AND_FULL_AGGREGATE_QUALIFIED_NEXT_PENDING",
+      "status": "FOCUSED_QUALIFIED_NEXT_CAPACITY_BLOCKED",
       "owner": {
         "name": "Audit validator regression follow-up",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -13730,7 +13731,8 @@
         "state": "pending",
         "commit": null,
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_003.md"
+          "docs/testing/deprecated_code_audit_continuation_003.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json"
         ],
         "scope": "Function-bound classifier qualification only; exact R9 full aggregate passes; current scoped publication/NEXT evidence remains pending."
       },
@@ -13747,16 +13749,16 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish the qualified associated repair through the authorized current NEXT path, then record exact deployed identity, served assets/startup and the required focused acceptance. Reuse passed exact R9 aggregate evidence without claiming whole-parent or global runtime completion.",
+      "next_action": "Publish the finished qualified source; preserve required NEXT acceptance as Open. Re-observe the existing watcher after storage capacity is restored, without lowering reserves, deleting retained builds or restarting machinery.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "No external blocker; required scoped publication/NEXT evidence and the recorded remaining parent work remain unfinished.",
+        "state": "active",
+        "kind": "resource_capacity",
+        "description": "Existing NEXT admission rejected at 2026-11-04T17:03:21.459162+00:00: 12982358016 bytes free; 13958643712 required. Guard and retained builds are unchanged.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:57:53.833Z",
+        "observed_at": "2026-11-04T17:03:36.963035+00:00",
         "evidence": [
-          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json",
-          "docs/testing/deprecated_code_audit_continuation_003.md"
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
+          "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
         ]
       },
       "planned_app_changes": [],
@@ -13810,7 +13812,7 @@
         }
       },
       "state": "open",
-      "status": "FIXTURE_AND_FULL_AGGREGATE_QUALIFIED_NEXT_PENDING",
+      "status": "FOCUSED_QUALIFIED_NEXT_CAPACITY_BLOCKED",
       "owner": {
         "name": "Audit focused fixture follow-up",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -13830,7 +13832,8 @@
         "state": "pending",
         "commit": null,
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_003.md"
+          "docs/testing/deprecated_code_audit_continuation_003.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json"
         ],
         "scope": "Test-only ownership/identity contract repair and focused native qualification; exact R9 full aggregate passes; current scoped publication/NEXT acceptance pending."
       },
@@ -13847,16 +13850,16 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish the qualified associated repair through the authorized current NEXT path, then record exact deployed identity, served assets/startup and the required focused acceptance. Reuse passed exact R9 aggregate evidence without claiming whole-parent or global runtime completion.",
+      "next_action": "Publish the finished qualified source; preserve required NEXT acceptance as Open. Re-observe the existing watcher after storage capacity is restored, without lowering reserves, deleting retained builds or restarting machinery.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "No external blocker; required scoped publication/NEXT evidence and the recorded remaining parent work remain unfinished.",
+        "state": "active",
+        "kind": "resource_capacity",
+        "description": "Existing NEXT admission rejected at 2026-11-04T17:03:21.459162+00:00: 12982358016 bytes free; 13958643712 required. Guard and retained builds are unchanged.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:57:53.833Z",
+        "observed_at": "2026-11-04T17:03:36.963035+00:00",
         "evidence": [
-          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json",
-          "docs/testing/deprecated_code_audit_continuation_003.md"
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
+          "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
         ]
       },
       "planned_app_changes": [],
@@ -14025,13 +14028,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Band free listen once:177cash,Heat2→1; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
+        "text": "Band free listen once:177cash,Heat2\u21921; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
         "source": "C:\\Users\\theep\\Documents\\Codex\\2026-10-23\\task-2\\evidence\\named-fix-acceptance-registry-current.json#$.pending_named_acceptance_followups.9",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Band free listen once:177cash,Heat2→1; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
+            "description": "Band free listen once:177cash,Heat2\u21921; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
             "required": true,
             "state": "pass",
             "evidence": [
@@ -15386,7 +15389,7 @@
         }
       },
       "state": "open",
-      "status": "FULL_SOURCE_AND_GLOBAL_ACCEPTANCE_PASS_NEXT_PENDING",
+      "status": "FULL_AGGREGATE_PASS_NEXT_CAPACITY_BLOCKED",
       "owner": {
         "name": "Audit tooling repair",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -15414,7 +15417,9 @@
         "state": "pending",
         "commit": null,
         "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
+          "docs/testing/deprecated_code_audit_2026_11_04.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
+          "docs/testing/deprecated_code_audit_continuation_003.md"
         ],
         "scope": "Full source/global aggregate acceptance now passes at exact488d86fa; required scoped current publication/NEXT and UI-LITERAL-003 child delivery remain unfinished."
       },
@@ -15431,16 +15436,16 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Complete the authorized scoped publication and exact current NEXT identity/acceptance for the qualified validator/classifier work, including UI-LITERAL-003. Retain passed exact R9 source/global acceptance and historical failures separately; keep this task and the codebase-wide parent Open until their remaining required delivery/scope acceptance is met.",
+      "next_action": "Publish the finished qualified source; preserve required NEXT acceptance as Open. Re-observe the existing watcher after storage capacity is restored, without lowering reserves, deleting retained builds or restarting machinery.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "No external blocker; required scoped publication/NEXT evidence and the recorded remaining parent work remain unfinished.",
+        "state": "active",
+        "kind": "resource_capacity",
+        "description": "Existing NEXT admission rejected at 2026-11-04T17:03:21.459162+00:00: 12982358016 bytes free; 13958643712 required. Guard and retained builds are unchanged.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:57:53.833Z",
+        "observed_at": "2026-11-04T17:03:36.963035+00:00",
         "evidence": [
-          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json",
-          "docs/testing/deprecated_code_audit_continuation_003.md"
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
+          "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
         ]
       },
       "planned_app_changes": [],

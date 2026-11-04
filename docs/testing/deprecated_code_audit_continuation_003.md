@@ -159,3 +159,15 @@ the assigned records. The existing51current/517all-scope findings are preserved
 unchanged, including ownership/provenance/runtime gaps; this is not a global
 ledger/runtime-cleanup pass. Reports remain private under
 `evidence/metadata-r9-reconciliation-r1/`.
+
+## NEXT resource admission
+
+Finished source remains qualified, but the existing watcher's capacity guard
+rejects export at 2026-11-04T17:03:21.459162+00:00: **12982358016 bytes free**
+versus **13958643712 required** (10GiB service reserve,
+1GiB safety margin and2GiB export budget). The last served NEXT remains `f3058b6d`.
+No reserve, pipeline, audience or retained build is changed. Source publication
+can proceed; the three code-fix tasks and original validator task remain Open
+for their required scoped delivery. This observed resource dependency does not
+close or pause the broader audit. Exact capacity receipt:
+`evidence/continuation003-capacity-checkpoint-r1.json`.
