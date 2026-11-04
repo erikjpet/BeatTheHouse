@@ -462,3 +462,22 @@ associate it with the Open parent. Reconciliation retains241 unique IDs,0
 assigned-scope findings and54 existing findings across17 other tasks. The
 current check is task-14/evidence/r08-seed-b-association-check.json. This is
 investigation publication, not a product fix or full warm-Web acceptance.
+
+## Concurrent-main integration
+
+Git rejected the first publication because concurrent audit main advanced to
+253454b7ff0449fcb216248bbeaaa3c53d23cdd2. No force push was used. Semantic
+resolution retained our R08 objective/actualowner and every other incoming
+record. The merged registry has247 unique IDs: all241 prior IDs and six incoming
+audit IDs, with no loss. Incoming audit product changes remain intact; this
+investigation has no product-source delta from that incoming main.
+
+Merged candidate9f1e2e17897351773df5da5da1a3fa09fd0d948f passed a fresh36-check
+zero-game-input officialSave/Continue preparation gate on separate privateE
+state. It validates linked mergedsource, not another gameplay outcome or new
+Webacceptance. TestSHAf7650d183acca32a325efdd9bc5a96fa3b4376d0b17c0a158a035285dbbfef12.
+Job r08-roulette-web-prepare-b-merge-2 exited0/no timeout/owned0; this adds the
+18th actualclosed owned Job after the17-casecheckpoint. All previous fixtures,
+profiles, errors and evidence remain preserved. Merged reconciliation reports
+0 assigned-scope findings and54 existing findings across17 other tasks; current
+report task-14/evidence/r08-seed-b-merged-final-check.json.

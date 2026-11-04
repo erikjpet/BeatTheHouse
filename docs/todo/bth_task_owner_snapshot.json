@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-04T21:36:25.198845+00:00",
+  "observed_at": "2026-11-04T21:40:02.088159+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -55,8 +55,8 @@
       "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
       "title": "Fix pull-tab save boundary",
       "state": "active",
-      "observed_at": "2026-11-04T21:33:36.372589+00:00",
-      "source": "Actual active task14: tested seed-B investigation committeda67a95d5, associating/publishing main;17ownJobsclosed, fullwarmWeb/originalcauseOpen. Otherobservationsunchanged."
+      "observed_at": "2026-11-04T21:40:02.088159+00:00",
+      "source": "Actual task14: concurrentmain integrated preserving247IDs; zero-input36mergegate passed,18ownJobsclosed; publishing evidence with original/fullwarmWebOpen. Allotherincomingownerobservations preserved."
     },
     {
       "task_ref": "01a1a3e1-a613-7284-8bba-092f690190c9",

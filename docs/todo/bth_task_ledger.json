@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T21:36:25.198845+00:00",
+  "updated_at": "2026-11-04T21:40:02.088159+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -20170,6 +20170,14 @@
             "docs/testing/roulette_sealed_pending_r08.json",
             "Tested predeclared seed-B diagnostic and cold financial investigation evidence only; no product fix/full warm-Web qualification or parent closure."
           ]
+        },
+        {
+          "sha": "9f1e2e17897351773df5da5da1a3fa09fd0d948f",
+          "evidence": [
+            "docs/testing/roulette_sealed_pending_r08.md",
+            "docs/testing/roulette_sealed_pending_r08.json",
+            "Concurrent audit merge candidate: preserved all247IDs and existing incoming work; zero-input nativeSave/Continue36 gate only. No own product change or fullwarmWeb/fix qualification."
+          ]
         }
       ],
       "deployment": {
@@ -20211,7 +20219,12 @@
         {
           "kind": "runtime_closure",
           "reference": "docs/todo/bth_runtime_inventory_20261104.json",
-          "summary": "17 actual owned test Jobs have closed/owned0 receipts, including all failed controller segments. Initial denied launch did not execute and is not counted as a runtime. All private profiles/evidence preserved; no original/shared cleanup or D gate bypass."
+          "summary": "18 actual owned test Jobs have closed/owned0 receipts:17at seed-B financial checkpoint plus1zero-input mergevalidation. Denied unexecuted launch not counted. All private evidence/profiles and original/shared resources preserved."
+        },
+        {
+          "kind": "merged_source_gate",
+          "reference": "docs/testing/roulette_sealed_pending_r08.json",
+          "summary": "Incoming main253454b7 retained, mergedcandidate9f1e2e17. Fresh separate E nativezero-input Save/Continue36 gate passes/no timeout/owned0; no new Web/gameplay run. All247IDs and otherincomingrecords preserved. Ownproductdelta fromincomingnone; sourceWebfinancialcase remainsf305 with documentedwarmgap."
         }
       ],
       "implementation_batches": [],
@@ -20221,14 +20234,14 @@
         "kind": "unqualified_warm_web_and_original_rejection",
         "description": "New seed-B financial settlement is verified after cold, but Jobwork/terminal boundaries separated Blackjack and firstRouletteConfirm and prevented warmfinalJournal. WarmHUD59/NoSpins progression remains unqualified; directsame-processWeb bridge and livehistoryrelease are unqualified. OriginalDay3/Heat1 rejection stillnotcaptured; no responsibleproductdefect proven. No permission/scheduling/user-save wait. Existing NEXTdiskgate remainsunchanged.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T21:29:20.269427+00:00",
+        "observed_at": "2026-11-04T21:40:02.088159+00:00",
         "evidence": [
           "docs/testing/roulette_sealed_pending_r08.md",
           "docs/testing/roulette_sealed_pending_r08.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T21:33:36.372589+00:00"
+      "updated_at": "2026-11-04T21:40:02.088159+00:00"
     }
   ],
   "batches": [

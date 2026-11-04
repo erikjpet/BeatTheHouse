@@ -1,6 +1,6 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-04T21:27:04.369247+00:00",
+  "observed_at": "2026-11-04T21:38:45.189375+00:00",
   "scope": {
     "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed.",
     "complete": false,
@@ -3952,6 +3952,93 @@
         "evidence": [
           "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-readonly-8.json",
           "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-readonly-8.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ],
+        "limit": "Own bounded E-storage test only. All fixtures/profiles/evidence preserved, no original/shared cleanup or D reserve bypass."
+      }
+    },
+    {
+      "instance_id": "task14:r08-roulette-web-prepare-b-merge-2",
+      "task_id": "BTH061-ROULETTE-SEALED-PENDING-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "r08-roulette-web-prepare-b-merge-2",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-merge-2.start.json:pid:23624",
+        "started_at": "2026-11-04T21:37:32.277933+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-merge-2.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-merge-2.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Actual no-reuse pre-execution launch label, not retrospective random nonce/global census."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T21:38:04.424624+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-merge-2.start.json:pid:23624",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-merge-2.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-merge-2.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Only the owned Job drained active_at_release=0 before release."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T21:38:04.424624+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-merge-2.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-merge-2.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-merge-2.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-merge-2.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-merge-2.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-merge-2.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T21:38:04.424624+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "r08-roulette-web-prepare-b-merge-2",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-merge-2.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-merge-2.start.json",
+            "docs/testing/roulette_sealed_pending_r08.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T21:38:04.424624+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-merge-2.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-merge-2.start.json",
           "docs/testing/roulette_sealed_pending_r08.json"
         ],
         "limit": "Own bounded E-storage test only. All fixtures/profiles/evidence preserved, no original/shared cleanup or D reserve bypass."

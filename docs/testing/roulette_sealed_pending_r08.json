@@ -2740,6 +2740,75 @@
         "test": "f7650d183acca32a325efdd9bc5a96fa3b4376d0b17c0a158a035285dbbfef12"
       },
       "local_log": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-1.log"
+    },
+    {
+      "label": "r08-roulette-web-prepare-b-merge-2",
+      "classification": "MERGED_SOURCE_ZERO_INPUT_SAVE_CONTINUE_QUALIFIED",
+      "source_base": "9f1e2e17897351773df5da5da1a3fa09fd0d948f",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/roulette_sealed_pending_check.gd",
+        "--",
+        "--prepare-web-b"
+      ],
+      "receipt": {
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "started_utc": "2026-11-04T21:37:32.277933+00:00",
+        "finished_utc": "2026-11-04T21:38:04.424624+00:00",
+        "cpu_seconds": 15.453125
+      },
+      "checks": 36,
+      "failures": [],
+      "completed": true,
+      "fidelity": "New own explicitly staged generated Riverboat prepaid cash80/min9 floor with shipped three-game set. Official synchronous production-slot Save, own official companion saves, and native normal Continue proof only. Zero game inputs. Reports new private source paths/sizes/hashes for root staging; no asset export, fixture copy, old private fixture access, Web launch, f305 compatibility or deployed acceptance claim.",
+      "facts": {
+        "boundaries": [],
+        "fixture": "New own staged generated Riverboat cash80/min9 with shipped three-game set; prepaid floor only, no game input or normal-travel claim",
+        "fixture_authority": {
+          "continuous_clock_enabled": true,
+          "errors": [],
+          "ok": true,
+          "publication_checked": 1,
+          "publication_generation": 1
+        },
+        "mode": "prepare-web-b-prepaid-floor",
+        "original_state_used": false,
+        "outcome_selection": false,
+        "practice_used": false,
+        "preparation_limit": "Own new files remain in the native private root; no bundle copy, asset export, Web launch or f305 Continue claim. Root stages only these files after validating this job.",
+        "retry_or_cancel_used": false,
+        "seed": "BTH061-ROULETTE-SEALED-PENDING-001-B",
+        "web_fixture_preparation": {
+          "facts": {
+            "cash": 80,
+            "game_inputs": 0,
+            "generated_table_name": "Copper Rotor",
+            "outside_minimum": 9,
+            "room_authority_valid": true,
+            "seed": "BTH061-ROULETTE-SEALED-PENDING-001-B",
+            "spin_count": 0
+          },
+          "native_continue_validated": true,
+          "file_count": 5,
+          "total_bytes": 105924,
+          "limit": "Only new own seed-B fixture; save/profile/authority bytes and private source paths excluded from committed report."
+        }
+      },
+      "source_sha256": {
+        "foundation": "85fa91fd979c99c84e986ee915642c9030de93a5e318f4fc28627f5ac8b93ee6",
+        "host": "8b9711b7d220688286b2e0d2db097b33b50b7428b101485940a6681f45482241",
+        "roulette": "cb4de4f65f44eba538e7cf466a90d15485c1d95d4a9bbe1af1c7e5db5ab0451c",
+        "test": "f7650d183acca32a325efdd9bc5a96fa3b4376d0b17c0a158a035285dbbfef12"
+      },
+      "local_log": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-merge-2.log"
     }
   ],
   "web": [
@@ -3948,7 +4017,7 @@
     "Seed-B warm result showed23red/BET0/SITOUT/REBET, but HUD59 and NO SPINS YET remained displayed. Cold77/publicJournal verify saved financial settlement, not the cause or release of that warm display.",
     "The extra Roulette+0 journal row is observed; its cause and authoritative total round/request count are unclassified. Exactly one explicit Spin and one explicit Confirm were sent."
   ],
-  "updated_at": "2026-11-04T21:33:36.372589+00:00",
+  "updated_at": "2026-11-04T21:40:02.088159+00:00",
   "continuation_source_base": "25b2f152cc7d82ddf86990c94e290fb401efa5e7",
   "continuation_investigation_commit": "7648f1d908468fd783cd19bc5c4562ab69573be1",
   "unobscured_web_continuation": {
@@ -4024,5 +4093,17 @@
   },
   "unobscured_source_base": "05a9e79808d2520583507312a6ffe17ef4ff9621",
   "seed_b_investigation_commit": "a67a95d5926600b27908f375590e31123122740d",
-  "seed_b_fix_commit": null
+  "seed_b_fix_commit": null,
+  "integration_validation": {
+    "source_candidate": "9f1e2e17897351773df5da5da1a3fa09fd0d948f",
+    "checks": 36,
+    "label": "r08-roulette-web-prepare-b-merge-2",
+    "game_inputs": 0,
+    "limit": "Fresh separate native compile/official Save/Continue gate after concurrent audit merge; no new Web/gameplay qualification or outcome replay.",
+    "incoming_commit": "253454b7ff0449fcb216248bbeaaa3c53d23cdd2",
+    "registry_ids": 247,
+    "own_product_delta_from_incoming": [],
+    "merge_resolution": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-seed-b-merge-resolution.json",
+    "reconciliation": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-seed-b-merged-final-check.json"
+  }
 }
