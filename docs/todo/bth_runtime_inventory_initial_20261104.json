@@ -1,0 +1,688 @@
+{
+  "schema": "bth.runtime_inventory/v1",
+  "observed_at": "2026-11-04T00:33:15.557511+00:00",
+  "scope": {
+    "description": "Ten unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory.",
+    "complete": false,
+    "evidence": [
+      "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\known-job-receipts.json",
+      "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\historical-receipt-gaps.json",
+      "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json"
+    ]
+  },
+  "instances": [
+    {
+      "instance_id": "general:qa-batch-160-campaign-g:job.json",
+      "task_id": "BTH-RUNTIME-CLEANUP-001",
+      "owner_task_ref": "01a17a2d-6218-7018-80e9-5c3e6b3260ec",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "superseded",
+      "launch_identity": {
+        "nonce": null,
+        "key": null,
+        "started_at": "2026-10-27T17:37:27.131435+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-10-26\\task\\evidence\\qa-batch-160-campaign-g\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\historical-receipt-gaps.json"
+        ]
+      },
+      "current_identity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "key": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: current desktop existence not checked"
+        ]
+      },
+      "activity": {
+        "state": "unknown",
+        "observed_at": "2026-10-27T17:39:19.096619+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-10-26\\task\\evidence\\qa-batch-160-campaign-g\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\historical-receipt-gaps.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {},
+        "receipt": null
+      }
+    },
+    {
+      "instance_id": "general:qa-batch-183-campaign-h:job.json",
+      "task_id": "BTH-RUNTIME-CLEANUP-001",
+      "owner_task_ref": "01a17a2d-6218-7018-80e9-5c3e6b3260ec",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "superseded",
+      "launch_identity": {
+        "nonce": null,
+        "key": null,
+        "started_at": "2026-10-27T20:30:26.484668+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-10-26\\task\\evidence\\qa-batch-183-campaign-h\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\historical-receipt-gaps.json"
+        ]
+      },
+      "current_identity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "key": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: current desktop existence not checked"
+        ]
+      },
+      "activity": {
+        "state": "unknown",
+        "observed_at": "2026-10-27T20:30:28.525710+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-10-26\\task\\evidence\\qa-batch-183-campaign-h\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\historical-receipt-gaps.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {},
+        "receipt": null
+      }
+    },
+    {
+      "instance_id": "general:qa-batch-210-campaign-j:job.json",
+      "task_id": "BTH-RUNTIME-CLEANUP-001",
+      "owner_task_ref": "01a17a2d-6218-7018-80e9-5c3e6b3260ec",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "superseded",
+      "launch_identity": {
+        "nonce": null,
+        "key": null,
+        "started_at": "2026-10-27T23:58:11.293811+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-10-26\\task\\evidence\\qa-batch-210-campaign-j\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\historical-receipt-gaps.json"
+        ]
+      },
+      "current_identity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "key": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: current desktop existence not checked"
+        ]
+      },
+      "activity": {
+        "state": "unknown",
+        "observed_at": "2026-10-27T23:59:44.027630+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-10-26\\task\\evidence\\qa-batch-210-campaign-j\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\historical-receipt-gaps.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {},
+        "receipt": null
+      }
+    },
+    {
+      "instance_id": "crew:crew7588-Alley-delivery-019:job.json",
+      "task_id": "BTH-RUNTIME-CLEANUP-001",
+      "owner_task_ref": "01a17dc5-9c58-7169-a1e8-99b89f2120ea",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "superseded",
+      "launch_identity": {
+        "nonce": null,
+        "key": null,
+        "started_at": "2026-10-30T14:09:39.827537+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-10-27\\task\\evidence\\crew7588-Alley-delivery-019\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\historical-receipt-gaps.json"
+        ]
+      },
+      "current_identity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "key": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: current desktop existence not checked"
+        ]
+      },
+      "activity": {
+        "state": "unknown",
+        "observed_at": "2026-10-30T14:12:05.422079+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-10-27\\task\\evidence\\crew7588-Alley-delivery-019\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\historical-receipt-gaps.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {},
+        "receipt": null
+      }
+    },
+    {
+      "instance_id": "grand:grand-ordinary-07:job.json",
+      "task_id": "BTH-RUNTIME-CLEANUP-001",
+      "owner_task_ref": "01a17dca-1b23-7167-b5a6-fb6a4247d0ee",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "superseded",
+      "launch_identity": {
+        "nonce": null,
+        "key": null,
+        "started_at": "2026-10-28T07:05:30.604098+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-10-27\\task-2\\evidence\\grand-ordinary-07\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\historical-receipt-gaps.json"
+        ]
+      },
+      "current_identity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "key": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: current desktop existence not checked"
+        ]
+      },
+      "activity": {
+        "state": "unknown",
+        "observed_at": "2026-10-28T07:06:58.526545+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-10-27\\task-2\\evidence\\grand-ordinary-07\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\historical-receipt-gaps.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {},
+        "receipt": null
+      }
+    },
+    {
+      "instance_id": "grand:grand-ordinary-08:job.json",
+      "task_id": "BTH-RUNTIME-CLEANUP-001",
+      "owner_task_ref": "01a17dca-1b23-7167-b5a6-fb6a4247d0ee",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "superseded",
+      "launch_identity": {
+        "nonce": null,
+        "key": null,
+        "started_at": "2026-10-28T07:08:43.471662+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-10-27\\task-2\\evidence\\grand-ordinary-08\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\historical-receipt-gaps.json"
+        ]
+      },
+      "current_identity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "key": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: current desktop existence not checked"
+        ]
+      },
+      "activity": {
+        "state": "unknown",
+        "observed_at": "2026-10-28T07:14:42.729373+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-10-27\\task-2\\evidence\\grand-ordinary-08\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\historical-receipt-gaps.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {},
+        "receipt": null
+      }
+    },
+    {
+      "instance_id": "grand:grand-rourke-13:job.json",
+      "task_id": "BTH-RUNTIME-CLEANUP-001",
+      "owner_task_ref": "01a17dca-1b23-7167-b5a6-fb6a4247d0ee",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "superseded",
+      "launch_identity": {
+        "nonce": null,
+        "key": null,
+        "started_at": "2026-10-27T17:36:04.237372+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-10-27\\task-2\\evidence\\grand-rourke-13\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\historical-receipt-gaps.json"
+        ]
+      },
+      "current_identity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "key": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: current desktop existence not checked"
+        ]
+      },
+      "activity": {
+        "state": "unknown",
+        "observed_at": "2026-10-27T17:37:28.190432+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-10-27\\task-2\\evidence\\grand-rourke-13\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\historical-receipt-gaps.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {},
+        "receipt": null
+      }
+    },
+    {
+      "instance_id": "grand:grand-rourke-25:job.json",
+      "task_id": "BTH-RUNTIME-CLEANUP-001",
+      "owner_task_ref": "01a17dca-1b23-7167-b5a6-fb6a4247d0ee",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "superseded",
+      "launch_identity": {
+        "nonce": null,
+        "key": null,
+        "started_at": "2026-10-27T19:09:42.086686+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-10-27\\task-2\\evidence\\grand-rourke-25\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\historical-receipt-gaps.json"
+        ]
+      },
+      "current_identity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "key": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: current desktop existence not checked"
+        ]
+      },
+      "activity": {
+        "state": "unknown",
+        "observed_at": "2026-10-27T19:12:54.916602+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-10-27\\task-2\\evidence\\grand-rourke-25\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\historical-receipt-gaps.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {},
+        "receipt": null
+      }
+    },
+    {
+      "instance_id": "debug:runtime-resolution:job.json",
+      "task_id": "BTH-RUNTIME-CLEANUP-001",
+      "owner_task_ref": "01a16736-0a2f-7668-8ad8-a6074981c01e",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "superseded",
+      "launch_identity": {
+        "nonce": null,
+        "key": null,
+        "started_at": "2026-10-23T16:58:39.314941+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-10-23\\task-2\\evidence\\runtime-resolution\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\historical-receipt-gaps.json"
+        ]
+      },
+      "current_identity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "key": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: current desktop existence not checked"
+        ]
+      },
+      "activity": {
+        "state": "unknown",
+        "observed_at": "2026-10-23T17:01:18.777020+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-10-23\\task-2\\evidence\\runtime-resolution\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\historical-receipt-gaps.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {},
+        "receipt": null
+      }
+    },
+    {
+      "instance_id": "debug:runtime-rourke-explore-20261024-kg:job.json",
+      "task_id": "BTH-RUNTIME-CLEANUP-001",
+      "owner_task_ref": "01a16736-0a2f-7668-8ad8-a6074981c01e",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "superseded",
+      "launch_identity": {
+        "nonce": null,
+        "key": null,
+        "started_at": "2026-10-26T17:49:38.803669+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-10-23\\task-2\\evidence\\runtime-rourke-explore-20261024-kg\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\historical-receipt-gaps.json"
+        ]
+      },
+      "current_identity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "key": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: current desktop existence not checked"
+        ]
+      },
+      "activity": {
+        "state": "unknown",
+        "observed_at": "2026-10-26T17:53:00.240722+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-10-23\\task-2\\evidence\\runtime-rourke-explore-20261024-kg\\job.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\historical-receipt-gaps.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {},
+        "receipt": null
+      }
+    },
+    {
+      "instance_id": "tls-check:failed-warning-tab1",
+      "task_id": "BTH-RUNTIME-CLEANUP-001",
+      "owner_task_ref": "01a1a3e1-a613-7284-8bba-092f690190c9",
+      "kind": "browser",
+      "ownership": "task_owned",
+      "state": "unknown",
+      "launch_identity": {
+        "nonce": null,
+        "key": null,
+        "started_at": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: denials_and_unknowns"
+        ]
+      },
+      "current_identity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "key": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: current desktop existence not checked"
+        ]
+      },
+      "activity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: denials_and_unknowns"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {},
+        "receipt": {
+          "observed_at": "2026-11-04T00:33:15.557511+00:00",
+          "outcome": "uncertain",
+          "identity_nonce": null,
+          "remaining_count": null,
+          "evidence": [
+            "Prior warning-page cleanup denied; automatic turn cleanup outcome unverified; no retry"
+          ]
+        }
+      }
+    },
+    {
+      "instance_id": "shared-site-preview",
+      "task_id": "BTH-RUNTIME-CLEANUP-001",
+      "owner_task_ref": null,
+      "kind": "temporary_server",
+      "ownership": "shared_service",
+      "state": "active",
+      "launch_identity": {
+        "nonce": null,
+        "key": null,
+        "started_at": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: intended site services preserved"
+        ]
+      },
+      "current_identity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "key": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: current desktop existence not checked"
+        ]
+      },
+      "activity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: intended site services preserved"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": true
+      },
+      "cleanup": {
+        "contract": {},
+        "receipt": null
+      }
+    },
+    {
+      "instance_id": "shared-NEXT-watcher",
+      "task_id": "BTH-RUNTIME-CLEANUP-001",
+      "owner_task_ref": null,
+      "kind": "temporary_server",
+      "ownership": "shared_service",
+      "state": "active",
+      "launch_identity": {
+        "nonce": null,
+        "key": null,
+        "started_at": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: intended site services preserved"
+        ]
+      },
+      "current_identity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "key": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: current desktop existence not checked"
+        ]
+      },
+      "activity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: intended site services preserved"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": true
+      },
+      "cleanup": {
+        "contract": {},
+        "receipt": null
+      }
+    },
+    {
+      "instance_id": "general-resident-profile",
+      "task_id": "BTH-RUNTIME-CLEANUP-001",
+      "owner_task_ref": "01a17a2d-6218-7018-80e9-5c3e6b3260ec",
+      "kind": "profile",
+      "ownership": "task_owned",
+      "state": "active",
+      "launch_identity": {
+        "nonce": null,
+        "key": null,
+        "started_at": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: retained tester custody"
+        ]
+      },
+      "current_identity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "key": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: current desktop existence not checked"
+        ]
+      },
+      "activity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: retained tester custody"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {},
+        "receipt": null
+      }
+    },
+    {
+      "instance_id": "crew-resident-profile",
+      "task_id": "BTH-RUNTIME-CLEANUP-001",
+      "owner_task_ref": "01a17dc5-9c58-7169-a1e8-99b89f2120ea",
+      "kind": "profile",
+      "ownership": "task_owned",
+      "state": "active",
+      "launch_identity": {
+        "nonce": null,
+        "key": null,
+        "started_at": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: retained tester custody"
+        ]
+      },
+      "current_identity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "key": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: current desktop existence not checked"
+        ]
+      },
+      "activity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: retained tester custody"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {},
+        "receipt": null
+      }
+    },
+    {
+      "instance_id": "grand-resident-profile",
+      "task_id": "BTH-RUNTIME-CLEANUP-001",
+      "owner_task_ref": "01a17dca-1b23-7167-b5a6-fb6a4247d0ee",
+      "kind": "profile",
+      "ownership": "task_owned",
+      "state": "active",
+      "launch_identity": {
+        "nonce": null,
+        "key": null,
+        "started_at": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: retained tester custody"
+        ]
+      },
+      "current_identity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "key": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: current desktop existence not checked"
+        ]
+      },
+      "activity": {
+        "state": "unknown",
+        "observed_at": "2026-11-04T00:33:15.557511+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\ownership-thread-audit.json: retained tester custody"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {},
+        "receipt": null
+      }
+    }
+  ],
+  "source_snapshot": {
+    "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\runtime-inventory.json",
+    "implementation_commit": "de3f27930a0ddec47f835eff64963cd7eef3417f",
+    "limit": "Historical known-task receipt inventory copied for reproducible manual reconciliation. No current desktop inventory, live cleanup or fresh original-save check was performed by integration."
+  }
+}

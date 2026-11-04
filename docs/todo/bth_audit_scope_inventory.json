@@ -1,0 +1,1455 @@
+{
+  "schema": "bth.audit_scope_inventory/v1",
+  "observed_at": "2026-11-04T01:24:20.765383+00:00",
+  "source_commit": "ecdccee418c2297a0fb864d00c902a4c159dfd5c",
+  "full_objective_complete": false,
+  "core": {
+    "files": 95,
+    "same_previously_reviewed_blob": 46,
+    "changed_or_unreviewed": 49,
+    "never_previously_reviewed": 4,
+    "records": [
+      {
+        "path": "scripts/core/art_contracts.gd",
+        "functions": "0",
+        "constants": "4",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:shared-geometry",
+        "blob": "d3b7a8fa201b1c30eee2064b921e7b90af54b4bb"
+      },
+      {
+        "path": "scripts/core/attribute_badges.gd",
+        "functions": "43",
+        "constants": "3",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:c3f972f8+2f205b9f",
+        "blob": "030b260ed759436156cf954bc6bd186469d46db7"
+      },
+      {
+        "path": "scripts/core/bar_dice_ritual_projection.gd",
+        "functions": "21",
+        "constants": "6",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:batch22-full-presentation-only-transition-receipts-public-fields-and-hidden-dice-boundaries-retained",
+        "blob": "5366835fc83f453ccbdcd7d3fae7102f387931f1"
+      },
+      {
+        "path": "scripts/core/blackjack_action_authority.gd",
+        "functions": "30",
+        "constants": "37",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:batch32-full-v3-ledger-exact-pending-recovery-replay-COW-cache-journal-chain-and-host-fingerprint-validation-review",
+        "blob": "eed95889e5a1df3a2f6b6c1dea414194379d10e0"
+      },
+      {
+        "path": "scripts/core/build_identity.gd",
+        "functions": "6",
+        "constants": "3",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:identity",
+        "blob": "b270e7e36eb65d98fe72a805237b485b091748bb"
+      },
+      {
+        "path": "scripts/core/cage_economy_model.gd",
+        "functions": "7",
+        "constants": "6",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:payout-and-interest-preserved",
+        "blob": "ef0553fd7ec960ffa35050807354a995f5f92c09"
+      },
+      {
+        "path": "scripts/core/card_shoe.gd",
+        "functions": "12",
+        "constants": "4",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:copy-and-RNG-preserved",
+        "blob": "f30aca729257a74b78e54efefea72cc47722378c"
+      },
+      {
+        "path": "scripts/core/character_chain_model.gd",
+        "functions": "20",
+        "constants": "7",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch94-only-tuning-second-deep-copy-removed-public-data-deep-copy-keeps-return-owned;ten-value-mutation-cache-and-next-call-parity-cases-plus-unchanged-existing-inventory-method-PASS-natural0-EOF-Job0-independent6148absence;no-story-RNG-heat-clock-or-scheduling-change",
+        "blob": "bbc0bd8706e6434b021bc393635df40bbed37410"
+      },
+      {
+        "path": "scripts/core/character_offer_model.gd",
+        "functions": "29",
+        "constants": "5",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "M:batch23-full-cycle-RNG-visibility-eligibility-callback-save-snapshot-and-claim-resolution-retained",
+        "blob": "16fc59455b88b3ee5b6c945c3c1e69cc954e3d90"
+      },
+      {
+        "path": "scripts/core/character_roster.gd",
+        "functions": "6",
+        "constants": "1",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:batch10-full-seed-derived-selection-and-snapshot-boundaries",
+        "blob": "66a5ede71a9eb7864cf0dd624611729ba26efb1e"
+      },
+      {
+        "path": "scripts/core/collection_drop_service.gd",
+        "functions": "17",
+        "constants": "20",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "M:batch22-full-terminal-meta-flags-grants-selection-RNG-and-card-chip-rewards-retained",
+        "blob": "de9b931c7fbfe41c260c7afd73abfba254ec9236"
+      },
+      {
+        "path": "scripts/core/collection_item_resolver.gd",
+        "functions": "41",
+        "constants": "15",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "M:batch18-full-definition-cache-schema-validation-instance-roll-and-effects-retained",
+        "blob": "a3338eab7c151a9ca5f792566be88276ca22d6e6"
+      },
+      {
+        "path": "scripts/core/content_library.gd",
+        "functions": "171",
+        "constants": "39",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch73+batch74",
+        "blob": "5ed6939520f4adc1c32f0d1efb5426ade47aa549"
+      },
+      {
+        "path": "scripts/core/craps06_3_environment_binding.gd",
+        "functions": "11",
+        "constants": "6",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:batch10-full-receipt-fact-and-account-binding-review",
+        "blob": "aa3526d9724050646a9ab10c2dc5f439f9efcfd3"
+      },
+      {
+        "path": "scripts/core/crew_delivery_schedule.gd",
+        "functions": "9",
+        "constants": "5",
+        "prior_review": "False",
+        "prior_same_blob": "False",
+        "prior_evidence": "",
+        "blob": "d3147131ff4c833a068b373c1b0940da7b03cf70"
+      },
+      {
+        "path": "scripts/core/crew_heist_model.gd",
+        "functions": "28",
+        "constants": "20",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch24",
+        "blob": "9e53c55419de3ea499f17372314239dc99f3074f"
+      },
+      {
+        "path": "scripts/core/crew_play_model.gd",
+        "functions": "33",
+        "constants": "10",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:batch25-full-presence-rank-host-authorization-conservation-detection-window-and-save-contract-review",
+        "blob": "41b0c16fc1be718d73f35657d7a34f4f2bf9523a"
+      },
+      {
+        "path": "scripts/core/crew_poker_model.gd",
+        "functions": "34",
+        "constants": "9",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch10",
+        "blob": "bcd29dae8ed8e2f5192419f3da6491e2e396c0b1"
+      },
+      {
+        "path": "scripts/core/crew_recruitment_model.gd",
+        "functions": "41",
+        "constants": "10",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch26",
+        "blob": "a31a8ccb41c24e019c156395e505937b68543156"
+      },
+      {
+        "path": "scripts/core/crew_run_facade.gd",
+        "functions": "135",
+        "constants": "5",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch46",
+        "blob": "4d3cd66dce70f941cb165ca8f2ee8ed9cb0f8530"
+      },
+      {
+        "path": "scripts/core/crew_state_model.gd",
+        "functions": "26",
+        "constants": "11",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:batch24-full-trust-jobs-private-grievance-proposal-only-authority-and-validation-review",
+        "blob": "de16ff20ccc8256b09658d83008bef6223ec102c"
+      },
+      {
+        "path": "scripts/core/crew_turn_model.gd",
+        "functions": "37",
+        "constants": "22",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:batch25-full-private-save-legacy-capsule-migration-RNG-weighting-and-public-only-authority-review",
+        "blob": "d66e182932bba0118d66f6f3d76b7c357a2a0982"
+      },
+      {
+        "path": "scripts/core/crew_world_sequence_adapter.gd",
+        "functions": "55",
+        "constants": "14",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "M:batch33-full-pure-eligibility-sealed-command-mount-ownership-terminal-receipt-tombstone-rehydration-and-hidden-identifier-review",
+        "blob": "3d8f56f1b0b063f61f71b14b4874fe3e4e11e86a"
+      },
+      {
+        "path": "scripts/core/delivery_run_facade.gd",
+        "functions": "39",
+        "constants": "3",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "M:batch25-full-transaction-rollback-authenticated-local-room-arrival-real-route-and-physical-cargo-review",
+        "blob": "91f7d3d11d28513e44d4d83cc3f7788f4f65c011"
+      },
+      {
+        "path": "scripts/core/delivery_run_model.gd",
+        "functions": "44",
+        "constants": "28",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch28",
+        "blob": "6936baf55f8fe7a72e55763a1221ca47f4209deb"
+      },
+      {
+        "path": "scripts/core/developer_placement_store.gd",
+        "functions": "66",
+        "constants": "21",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:batch42-full-project-vs-local-authority-exact-scenario-scope-manual-completion-shadow-invalidation-durable-write-rollback-catalog-drift-recovery-and-export-sanitization-review",
+        "blob": "70aea6e1ba984b0f9059f08a2ed295fc68c39102"
+      },
+      {
+        "path": "scripts/core/durable_store.gd",
+        "functions": "14",
+        "constants": "10",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch13",
+        "blob": "2f4a4a546a7603f9f0003499739e873d26245a91"
+      },
+      {
+        "path": "scripts/core/environment_base_semantic_records.gd",
+        "functions": "42",
+        "constants": "5",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "O1:batch120-full-983line-catalog-authentication-base-hosted-action-records-slot-overflow-and-pixelbounds-provenance-dynamic-producer-context-identity-duplicate-and-spoof-rejection-authored-actors-exact-parent-door-casino-layers-review;legacy-geometry-clearing-save-compatibility-owned-deepcopies-and-authority-checks-retained-performance-owned-no-edit-or-runtime",
+        "blob": "87a04c40c9bdaa899ab35e0878b8f18431d2fd6e"
+      },
+      {
+        "path": "scripts/core/environment_event_resolver.gd",
+        "functions": "12",
+        "constants": "1",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:batch11-full-selection-envelope-unique-priority-and-RNG-delegation-review",
+        "blob": "a0a3c35846536482f0f2ee65aea2617b536c3b36"
+      },
+      {
+        "path": "scripts/core/environment_hours.gd",
+        "functions": "8",
+        "constants": "3",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "M:time-rules-preserved",
+        "blob": "77193099b50cd04f8f9ad144b8174bac986498b4"
+      },
+      {
+        "path": "scripts/core/environment_instance.gd",
+        "functions": "63",
+        "constants": "15",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "O1:batch138-full-1657line-deterministic-flat-and-layered-generation-selected-state-vs-definition-compatibility-primary-layer-stream-travel-preview-RNG-name-and-music-sideeffects-bounded-durable-save-migration-live-vs-sealed-context-manifest-before-layout-three-distinct-authorities-cashout-hosts-zeroRNG-fixedpresence-late-scalper-projection-canonical-lotterycounter-home-and-uniqueclass-policies-review;all-RNG-order-legacy-fields-empty-numbers-runtime-contract-and-owned-copies-retained-no-edit;_durable_layer_states-repeated-wholemap-copies-specific-unmeasured-reuse-proposal-requires-legacy-save-alias-invalidshape-parity-owner-coordination",
+        "blob": "f1896d3f64a85c15ccf0a41d7f9cff6f3cf38f43"
+      },
+      {
+        "path": "scripts/core/environment_object_manifest.gd",
+        "functions": "36",
+        "constants": "6",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "O1:batch138-full-932line-zeroRNG-durable-physical-inventory-v1-512row-canonical-dual-identities-ordered-family-index-rowmerge-fixed-action-hosts-authenticated-rendererless-scenario-retention-runtimeprojection-exclusion-world-ownertokens-causal-snapshot-source-and-row-digests-JSONintegral-canonicalization-review;all-ownership-copies-validators-public-private-compatibility-wrappers-and-recent-scratch-save-fixes-retained-owner-scope-no-edit;legacy-dictionary-fixeddeclaration-missingidentity-inplace-assignment-sourceconcern-only-repro-required",
+        "blob": "ed0eb156700a5065031610b0f8ad1b85fc737242"
+      },
+      {
+        "path": "scripts/core/environment_placement.gd",
+        "functions": "32",
+        "constants": "25",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch27",
+        "blob": "1184a7712ed6f37b16a98105916ef8282f643d11"
+      },
+      {
+        "path": "scripts/core/environment_runtime_scheduler.gd",
+        "functions": "9",
+        "constants": "1",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:scheduling-preserved",
+        "blob": "be713e48c04f68daca229f9dbbd1bae16cd2a6a0"
+      },
+      {
+        "path": "scripts/core/environment_semantic_inventory.gd",
+        "functions": "80",
+        "constants": "23",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "O1:batch139-full-1696line-closed-v2-catalog-guaranteed-vs-possible-and-instance-exact-domain-identities-deterministic-diagnostics-collection-crosscoverage-sourcebinding-provenance-digest-finite-geometry-fixed-declaration-host-and-authenticated-overflow-checks-review;immutable-sequence-base-vs-live-runtime-projection-geometry-consumed-items-actors-home-and-event-producer-authority-legacy-optional-overflow-shape-deepcopies-and-reflective-library-event-discovery-retained-no-edit;repeated-whole-layout-binding-dictionary-copies-source-only-reuse-proposal-needs-owner-and-seal-alias-invalidshape-parity-no-speedclaim",
+        "blob": "281961ca2f56d7e34b7fdd405bd7f8aa2d72b002"
+      },
+      {
+        "path": "scripts/core/environment_slot_binder.gd",
+        "functions": "72",
+        "constants": "27",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:batch45-full-four-family-exact-slot-authority-manifest-replay-dormant-item-reservations-late-alias-transfer-scenario-host-policy-route-geometry-and-atomic-candidate-commit-proof-retained-read-only-physical-lane",
+        "blob": "df629bd3c2d80b41b1c090d56aec85578bded1e9"
+      },
+      {
+        "path": "scripts/core/event_module.gd",
+        "functions": "67",
+        "constants": "4",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "M:full-review;lines505-565-pre_hooks-timer-effectively-zero-and-advance_turn-includes-hooks;diagnostic-owner-notified-no-production-change",
+        "blob": "b4677d83e30557aadd0a785e2a9778a1bb011f2d"
+      },
+      {
+        "path": "scripts/core/function_options.gd",
+        "functions": "3",
+        "constants": "0",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:option-contract",
+        "blob": "fa358e4ea4e42a1e511369a61c57c066f6422b14"
+      },
+      {
+        "path": "scripts/core/game_module.gd",
+        "functions": "134",
+        "constants": "11",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "M:batch41-full-optional-inherited-host-interfaces-sealed-receipt-terminal-currency-heat-delta-ownership-and-legacy-result-coercions-retained",
+        "blob": "8eb2b148128128bb097f632d19814c62e333e730"
+      },
+      {
+        "path": "scripts/core/game_module_registry.gd",
+        "functions": "6",
+        "constants": "1",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:5751d748",
+        "blob": "20186053faa696b778cbc4332a35d7a1d1dc6230"
+      },
+      {
+        "path": "scripts/core/game_ritual_host_authority.gd",
+        "functions": "28",
+        "constants": "6",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch22",
+        "blob": "4dcf21362ffb04631a5e50add29993c24193eb17"
+      },
+      {
+        "path": "scripts/core/game_ritual_layout.gd",
+        "functions": "3",
+        "constants": "1",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:hit-geometry-contract",
+        "blob": "3e68f9005f53d53c3eb7f2fdac68895e4c411a38"
+      },
+      {
+        "path": "scripts/core/game_ritual_runtime.gd",
+        "functions": "77",
+        "constants": "9",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "M:batch33-full-sealed-proposals-request-replay-closed-envelopes-commitment-conservation-causal-receipts-and-raw-authority-rejection-review",
+        "blob": "0aee5a304a635cf7ce23e263a6fab992e190fe1b"
+      },
+      {
+        "path": "scripts/core/game_ritual_schema.gd",
+        "functions": "31",
+        "constants": "19",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:batch32-full-closed-shapes-vocabulary-reachability-pointer-equivalents-persistence-and-unsafe-value-review",
+        "blob": "c82d0431a989054e809fd3adab6fc9187c2dfd47"
+      },
+      {
+        "path": "scripts/core/grand_casino_duel_model.gd",
+        "functions": "7",
+        "constants": "4",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch11",
+        "blob": "ae07477645b8b7f0ced2e2e503cef3cb1b1c6613"
+      },
+      {
+        "path": "scripts/core/grand_casino_duel_ritual_projection.gd",
+        "functions": "29",
+        "constants": "8",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:batch25-full-receipts-closed-public-projection-fingerprint-and-ending-presentation-review",
+        "blob": "74e51d845a605a0a7f71ab050998a9521dbb9b94"
+      },
+      {
+        "path": "scripts/core/grand_casino_run_facade.gd",
+        "functions": "67",
+        "constants": "3",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch37",
+        "blob": "8b4188ec72b2d0133e6c188d2f78af8d248b6724"
+      },
+      {
+        "path": "scripts/core/grand_casino_showdown_model.gd",
+        "functions": "10",
+        "constants": "2",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch11",
+        "blob": "b6fecc43b8e96659653a788bada92577a7b4904a"
+      },
+      {
+        "path": "scripts/core/io_result.gd",
+        "functions": "4",
+        "constants": "5",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:copy-boundary",
+        "blob": "e7a777fa82f2954d2224dce9c7a185af80ea3998"
+      },
+      {
+        "path": "scripts/core/item_effect.gd",
+        "functions": "16",
+        "constants": "3",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch25",
+        "blob": "76b491838a32b5d02dc41e961f4dd30d0373a510"
+      },
+      {
+        "path": "scripts/core/json_coerce.gd",
+        "functions": "14",
+        "constants": "0",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:compat-hashes",
+        "blob": "da57e6db2ae84165e24f6976a5a725f056527d4b"
+      },
+      {
+        "path": "scripts/core/keys.gd",
+        "functions": "0",
+        "constants": "40",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:key-vocabulary",
+        "blob": "f9c80350e2c5d6568e24ef3a4501b3364d915f88"
+      },
+      {
+        "path": "scripts/core/meta_collection_service.gd",
+        "functions": "106",
+        "constants": "39",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch43;batch187-complete-af91-peer-diff-reviewed-authoritative-applied-money-signals-frame-coalescing-cash/chip-conversion-separate-gold-explicit-only-pushes-silent-load/redraw-bounded-transparent-HUD-panel-and-muted/cadenced-existing-audio-cues-no-peer-code-edit;exact-owner45money-and-UI05-check-evidence-reused-not-rerun",
+        "blob": "317ff406cd9bfaf3e423490fedb5d5c47b565ddc"
+      },
+      {
+        "path": "scripts/core/music_delivery_index.gd",
+        "functions": "7",
+        "constants": "1",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:authored-filename-contract",
+        "blob": "65d3b8830254ec265d876c03f827cd3e5d8c0f9a"
+      },
+      {
+        "path": "scripts/core/numbers_model.gd",
+        "functions": "80",
+        "constants": "11",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch39-full/batch40-cleanup;batch203-prior-complete-review-retained-plus-exactfa0e0c87-peer-diff-and-context1020-1135-reviewed;aftermath-exactkey/size/type-shape-retained-onlyclosedintegerlast_day/cause_sequences-JSONfloat-numericequality-repair-no-cleanupedit-or-repeated-runtime",
+        "blob": "798918dc2e97ce24a7c0d7978128649692f445c3"
+      },
+      {
+        "path": "scripts/core/persistence_paths.gd",
+        "functions": "6",
+        "constants": "5",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch14",
+        "blob": "ec50e61435d5de5a29828bc70cf8409a504f457a"
+      },
+      {
+        "path": "scripts/core/persistent_environment_projection.gd",
+        "functions": "7",
+        "constants": "0",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "M:batch145-full-72line-runtime-only-owned-source-working-and-output-graphs-recursive-opaque-object-callable-signal-rejection-packedleaf-ownership-before-and-after-serialized-budget-and-source-equality-invalidation-review;codec-only-reference-route-kept-private-to-exact-type-dispatch-no-callback-compiledgraph-exposure-no-edit-budget-not-RSS-guarantee-no-performance-retest",
+        "blob": "4297d4b9304d027a854000811061f1c4e36792ba"
+      },
+      {
+        "path": "scripts/core/platform_services.gd",
+        "functions": "7",
+        "constants": "0",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:adapter-contract",
+        "blob": "f59b29b434fdddab508239d371ba2ad6650af709"
+      },
+      {
+        "path": "scripts/core/police_sweep_model.gd",
+        "functions": "51",
+        "constants": "9",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch29",
+        "blob": "7540c948d4535336d5e3fafc43331762fbcee26f"
+      },
+      {
+        "path": "scripts/core/profile_inventory.gd",
+        "functions": "53",
+        "constants": "14",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch15",
+        "blob": "941a582eb5c6f42cf028a346a9c6a498d1e87dbc"
+      },
+      {
+        "path": "scripts/core/rng_stream.gd",
+        "functions": "11",
+        "constants": "2",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:rng-preserved",
+        "blob": "11f5287e01ba9f6f526a520fe259dd90c100d452"
+      },
+      {
+        "path": "scripts/core/room_presentation_publication.gd",
+        "functions": "21",
+        "constants": "7",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "O1:batch120-full-150line-runtime-only-detached-publication-ownership-manifest-base-slot-and-scenario-authority-correlations-exact-exit-slots-renderer-proof-gates-and-sorted-digest-review;RunState-live-authority-vs-publication-callers-targeted-only-no-whole-RunState-review;all-copies-and-distinct-validations-retained-performance-owner-reservation-no-edit-or-runtime;batch141-incremental-dfb2-source-diff-review-preserves-authenticated-noop-current-owned-publication-alias-detection-separate-causal-and-physical-seals-original-fullcommit-fallback-rejection-order-and-owned-results-no-edit;batch149-incremental16f-counter-transition-review-requires-exact-old-new-integer-turns-positive-advance-and-every-other-owned-authority-field-equality-except-preexisting-game-state-exclusion-fresh-owned-generation-retains-rejection-fallback-no-edit;batch157-incremental5f24-full68line-diff-review-closed-game-installation-hook-scalper-input-view64KiB-serialized-budget-opaque-deep-decline-exact-shell-equality-and-immutable-private-counter-generation-sharing-owned-output-retained-no-edit-or-performance-retest;batch170-complete12dd173addedline-diff-review-owned-resolved-event-only-input-construction-exact-typed-shell-game-hooks-and-external-surface-checks-generated-canonical-envelope-tickethost-validation-retained-row-spatial-correlation-removal-only-binding-release-unsupported-scenario-decline-atomic-commit-recheck-private-generation-sharing-and-live-detached-values-retained-no-edit",
+        "blob": "40804591d2d196a61cf97308c167deafb501f62a"
+      },
+      {
+        "path": "scripts/core/run_action_service.gd",
+        "functions": "123",
+        "constants": "31",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch52+batch53",
+        "blob": "60ac05618dfa5a44c47a1191a46410a7312a5ffb"
+      },
+      {
+        "path": "scripts/core/run_generator.gd",
+        "functions": "79",
+        "constants": "11",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "M:batch41-full-atomic-travel-practice-preview-reentry-cycle-selection-RNG-order-recent-Punchline-recovery-and-persistent-game-machines-retained-read-only",
+        "blob": "7b9d73dfda4308a8b72b7b1b8fbe0c021e07d7fe"
+      },
+      {
+        "path": "scripts/core/run_money_flow_archive.gd",
+        "functions": "9",
+        "constants": "1",
+        "prior_review": "False",
+        "prior_same_blob": "False",
+        "prior_evidence": "",
+        "blob": "a8d6a4c2748657e1d57f20a9aa21860b578b6d72"
+      },
+      {
+        "path": "scripts/core/run_save_codec.gd",
+        "functions": "33",
+        "constants": "32",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "M:batch23-full-packed-storage-exact-integer-environment-and-scenario-delta-compatibility-review;batch145-incremental-b0-to-fec-peer-diff-review-Numbers-own-receipt-closed-fields-pending-result-masking-and-no-UI-mutation-exact-compiled-projection-type-codec-dispatch-private-encoding-capture-preserve-default-owned-public-snapshots-no-edit",
+        "blob": "b0bf12307afa69a87895fe3c3f1ff1c9790429c1"
+      },
+      {
+        "path": "scripts/core/run_state.gd",
+        "functions": "1011",
+        "constants": "203",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "O1:batch151-full17119line-current16f-source-review-completes-continuous-read-and-reviewed-peer-diffs;RNG-clock-heat-payout-Crew-privatecapsule-historical-scratch-Punchline-access-ticket-liveownership-Blackjack-escrow-transaction-rollback-publication-and-semantic-save-authorities-retained;three-specific-source-leads-home-loss-order-discarded-terminal-copy-and-focused-talk-timer-selection-require-owner-or-faithful-reproduction-before-change-no-productionedit-no-runtime-or-speedclaim;batch157-incremental5f24-full-diff-review-exact-live-room-authority-cache-return-only-for-owned-accepted-input-identity-otherwise-original-validator-and-flags-retained-no-edit;batch170-complete12dd10addedline-diff-review-runtime-manifest-sync-before-owned-compilation-commit-then-new-generation-install-original-full-path-on-any-decline-detached-return-manifest-and-optional-timing-only-result-retained-no-edit;batch187-complete-af91-peer-diff-reviewed-authoritative-applied-money-signals-frame-coalescing-cash/chip-conversion-separate-gold-explicit-only-pushes-silent-load/redraw-bounded-transparent-HUD-panel-and-muted/cadenced-existing-audio-cues-no-peer-code-edit;exact-owner45money-and-UI05-check-evidence-reused-not-rerun",
+        "blob": "eca7961934da355c40ace95392f15cfe127486d5"
+      },
+      {
+        "path": "scripts/core/run_state_schema.gd",
+        "functions": "4",
+        "constants": "2",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "M:batch10-full-key-vocabulary-and-legacy-restore-review",
+        "blob": "e625c8c02d8e21c8e28dde6807d2e3d32ac81673"
+      },
+      {
+        "path": "scripts/core/run_terminal_evaluator.gd",
+        "functions": "23",
+        "constants": "2",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "M:batch25-full-terminal-order-practice-recovery-wager-travel-and-recent-Punchline-recovery-retained",
+        "blob": "40768e80096531039924109413b0e7558529a8ad"
+      },
+      {
+        "path": "scripts/core/save_service.gd",
+        "functions": "35",
+        "constants": "10",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "O2:performance-owner-save-lane;shipped9fbd-frame-pipeline-and-prior-full-source-review-retained;no-cleanup-edit-or-inferred-source-ownership-release",
+        "blob": "01af5bbd91778fd3679563caab01737328f0d03c"
+      },
+      {
+        "path": "scripts/core/scenario_engine.gd",
+        "functions": "70",
+        "constants": "21",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "M:batch40-full-legacy-layer-migration-exact-causal-replay-typed-receipts-inventory-host-seals-atomic-layout-drains-and-public-projection-review-read-only-performance-finalization-lane-preserved;batch141-incremental-dfb2-source-diff-review-preserves-authenticated-noop-current-owned-publication-alias-detection-separate-causal-and-physical-seals-original-fullcommit-fallback-rejection-order-and-owned-results-no-edit",
+        "blob": "e79ab94af07a397a5c8213a4013d794079be04e0"
+      },
+      {
+        "path": "scripts/core/scenario_extension_dispatch.gd",
+        "functions": "10",
+        "constants": "5",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:batch10-full-allowlist-and-authority-boundary-review",
+        "blob": "455ae198de7bcf1c3bac07a92fa4800adc8cbd60"
+      },
+      {
+        "path": "scripts/core/scenario_handlers/bars_road.gd",
+        "functions": "2",
+        "constants": "0",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:fixed-allowlisted-extension-identity",
+        "blob": "cfb486a7c3b8451ab423b7c22e3c05836ae7d769"
+      },
+      {
+        "path": "scripts/core/scenario_handlers/punchline_clubs.gd",
+        "functions": "2",
+        "constants": "0",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:fixed-allowlisted-extension-identity",
+        "blob": "ba5440cadcd54df10b84220fc7518104429c3eec"
+      },
+      {
+        "path": "scripts/core/scenario_handlers/queen_public.gd",
+        "functions": "2",
+        "constants": "0",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:fixed-allowlisted-extension-identity",
+        "blob": "3c04a65e305159389980bea3f96a572b4089608e"
+      },
+      {
+        "path": "scripts/core/scenario_handlers/roadside_shelter.gd",
+        "functions": "2",
+        "constants": "0",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:fixed-allowlisted-extension-identity",
+        "blob": "284c380f9f2dc8fefa06ff155aa00425a8bb5462"
+      },
+      {
+        "path": "scripts/core/scenario_handlers/semantic_v1.gd",
+        "functions": "2",
+        "constants": "0",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:fixed-allowlisted-extension-identity",
+        "blob": "a0d678c49d057fa3262d62e3f77de3edf812e5a2"
+      },
+      {
+        "path": "scripts/core/scenario_handlers/shops_streets.gd",
+        "functions": "2",
+        "constants": "0",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:fixed-allowlisted-extension-identity",
+        "blob": "32383d8b0534a637a2bfbda7fc55cf45c90528b9"
+      },
+      {
+        "path": "scripts/core/scenario_host_transaction.gd",
+        "functions": "64",
+        "constants": "16",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:batch28-full-account-table-producer-CAS-fact-order-RNG-lease-and-prepared-request-authority-review",
+        "blob": "3ff12479bcff991d23d1426bf016355424e5246b"
+      },
+      {
+        "path": "scripts/core/scenario_layout_resolver.gd",
+        "functions": "86",
+        "constants": "22",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "O1:batch143-full-2187line-compatibility-prepare-vs-authoritative-resolve-passive-seal-fixed-room-slots-vs-overflow-abstract-command-exact-hosts-semantic-score-tiebreak-navigation-vs-safe-exit-authored-route-normal-smallgeometry-reachability-tombstone-membership-closed-authority-renderer-signature-and-owner-repair-preview-review;all-validators-owned-copies-public-compatibility-methods-tolerances-diagnostics-and-test-called-overlap-helpers-retained-no-edit;_assign_z_order-comparator-deepcopies-entries-containing-whole-scene-actor-collections-specific-unmeasured-scalar-sort-proposal-needs-owner-fullparity-and-measurement-unused-base_small-local-proposal-only",
+        "blob": "7c5331c3e2701b295a526dc56aad604ae5852969"
+      },
+      {
+        "path": "scripts/core/scenario_operation_registry.gd",
+        "functions": "62",
+        "constants": "25",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:batch37-full-closed-handler-inputs-bounded-cycle-safe-envelopes-atomic-receipt-replay-owner-priority-overlay-tombstone-and-live-target-authority-review-no-change",
+        "blob": "89cdc2b3bb4078242269d533f91876d1ea1db710"
+      },
+      {
+        "path": "scripts/core/scenario_sequence_catalog.gd",
+        "functions": "22",
+        "constants": "8",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch23",
+        "blob": "5a99b4203146a5f0a7757ec8b6dd0e805b2b39e3"
+      },
+      {
+        "path": "scripts/core/scenario_sequence_rollout_manifest.gd",
+        "functions": "2",
+        "constants": "3",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:55-sequence-census",
+        "blob": "6c0d0f26b837bf265fa8abd5abf86ac1ab4f7dd5"
+      },
+      {
+        "path": "scripts/core/scenario_sequence_runtime.gd",
+        "functions": "114",
+        "constants": "18",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch66+batch67+batch68",
+        "blob": "dab75c7a9682de4f0251380d8a5be03dd5f55840"
+      },
+      {
+        "path": "scripts/core/scenario_sequence_schema.gd",
+        "functions": "97",
+        "constants": "36",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:batch44-full-bounded-typed-content-validation-target-authority-phase-reachability-termination-per-path-material-cleanup-event-bridge-proofs-canonical-signatures-and-memo-receipts-retained-read-only-performance-lane",
+        "blob": "90b5195552927860ea71aef6c80233ccf0093d2c"
+      },
+      {
+        "path": "scripts/core/scenario_venue_cycle.gd",
+        "functions": "6",
+        "constants": "4",
+        "prior_review": "False",
+        "prior_same_blob": "False",
+        "prior_evidence": "",
+        "blob": "55a7afa8b689ff96ce412d433aef68acab26e0ce"
+      },
+      {
+        "path": "scripts/core/static_data_cache.gd",
+        "functions": "8",
+        "constants": "0",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:copy-and-LRU-preserved",
+        "blob": "67f2f39e91bf7dba166c208b1790db1226d62c44"
+      },
+      {
+        "path": "scripts/core/storage_numeric_json.gd",
+        "functions": "18",
+        "constants": "11",
+        "prior_review": "False",
+        "prior_same_blob": "False",
+        "prior_evidence": "",
+        "blob": "0c668ed3b4dbeb768b518e80836ac96fb057cc4b"
+      },
+      {
+        "path": "scripts/core/surface_sfx_manifest.gd",
+        "functions": "14",
+        "constants": "8",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:batch22-full-profile-validation-public-only-events-variation-and-voice-policy-retained",
+        "blob": "d1287b17e222da6cf8d0bc6716cf13d643842b54"
+      },
+      {
+        "path": "scripts/core/town_network.gd",
+        "functions": "54",
+        "constants": "10",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:batch25-full-detached-preview-rumor-truth-schedules-incident-decay-and-RNG-review",
+        "blob": "f34eb8b86f20b6a8ed5892c9d25441a42f696713"
+      },
+      {
+        "path": "scripts/core/town_state.gd",
+        "functions": "81",
+        "constants": "11",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:batch28-full-town-clock-seeded-weather-calendar-progressive-rumor-cache-and-legacy-sweep-restore-review",
+        "blob": "334dacc3df5b1af33ebfff0fe96f6314384f2fdb"
+      },
+      {
+        "path": "scripts/core/tutorial_flow.gd",
+        "functions": "14",
+        "constants": "9",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:batch10-full-legacy-repair-tutorial-and-progress-policy-review",
+        "blob": "6950ffbed6d8f2339307ff872d6fafdb7c66f4c4"
+      },
+      {
+        "path": "scripts/core/user_settings.gd",
+        "functions": "31",
+        "constants": "17",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:batch13-full-schema-legacy-recovery-clamping-and-engine-application-review",
+        "blob": "4db9bd1fbe7192f2ed1f02eee3d771434fb789e0"
+      },
+      {
+        "path": "scripts/core/world_map.gd",
+        "functions": "114",
+        "constants": "29",
+        "prior_review": "True",
+        "prior_same_blob": "False",
+        "prior_evidence": "C:batch47",
+        "blob": "7dbba8483d3c9039999e46cd4df3f05c2803990a"
+      },
+      {
+        "path": "scripts/core/world_sequence_package_catalog.gd",
+        "functions": "6",
+        "constants": "3",
+        "prior_review": "True",
+        "prior_same_blob": "True",
+        "prior_evidence": "M:allowlisted-package-boundary",
+        "blob": "055bb9b752df5315f95ef5a18f2888cf3fe57fe5"
+      }
+    ]
+  },
+  "ui_game_scan": {
+    "files": 127,
+    "ui_files": 80,
+    "game_files": 47,
+    "functions": 7322,
+    "ui_functions": 4128,
+    "game_functions": 3194
+  },
+  "ui_game_semantic_review_complete": false,
+  "core_symbol_candidate_count": 79,
+  "core_symbol_candidates": [
+    {
+      "path": "scripts/core/content_library.gd",
+      "kind": "func",
+      "symbol": "_scenarios_for_archetype_readonly",
+      "local_count": "1",
+      "active_count": "7"
+    },
+    {
+      "path": "scripts/core/content_library.gd",
+      "kind": "func",
+      "symbol": "_runtime_validated_scenario_definition",
+      "local_count": "1",
+      "active_count": "10"
+    },
+    {
+      "path": "scripts/core/content_library.gd",
+      "kind": "func",
+      "symbol": "_runtime_scenario_definition_unvalidated",
+      "local_count": "1",
+      "active_count": "6"
+    },
+    {
+      "path": "scripts/core/content_library.gd",
+      "kind": "func",
+      "symbol": "_scenario_readonly",
+      "local_count": "1",
+      "active_count": "20"
+    },
+    {
+      "path": "scripts/core/content_library.gd",
+      "kind": "func",
+      "symbol": "_scenario_uniqueness_audit_from_rollout_report",
+      "local_count": "1",
+      "active_count": "2"
+    },
+    {
+      "path": "scripts/core/crew_run_facade.gd",
+      "kind": "func",
+      "symbol": "_crew_clock_label",
+      "local_count": "1",
+      "active_count": "3"
+    },
+    {
+      "path": "scripts/core/crew_run_facade.gd",
+      "kind": "func",
+      "symbol": "_crew_heist_boundary_sync",
+      "local_count": "1",
+      "active_count": "9"
+    },
+    {
+      "path": "scripts/core/crew_run_facade.gd",
+      "kind": "func",
+      "symbol": "_crew_heist_capture_whale_attention",
+      "local_count": "1",
+      "active_count": "4"
+    },
+    {
+      "path": "scripts/core/crew_run_facade.gd",
+      "kind": "func",
+      "symbol": "_crew_heist_apply_delivery_resolution",
+      "local_count": "1",
+      "active_count": "10"
+    },
+    {
+      "path": "scripts/core/crew_run_facade.gd",
+      "kind": "func",
+      "symbol": "_crew_heist_job_payment",
+      "local_count": "1",
+      "active_count": "4"
+    },
+    {
+      "path": "scripts/core/crew_run_facade.gd",
+      "kind": "func",
+      "symbol": "_crew_favor_delivery_is_active",
+      "local_count": "1",
+      "active_count": "3"
+    },
+    {
+      "path": "scripts/core/crew_run_facade.gd",
+      "kind": "func",
+      "symbol": "_crew_lender_repeat_status",
+      "local_count": "1",
+      "active_count": "4"
+    },
+    {
+      "path": "scripts/core/crew_run_facade.gd",
+      "kind": "func",
+      "symbol": "_crew_debt_lead_member",
+      "local_count": "1",
+      "active_count": "4"
+    },
+    {
+      "path": "scripts/core/crew_run_facade.gd",
+      "kind": "func",
+      "symbol": "_crew_unpack_ledger",
+      "local_count": "1",
+      "active_count": "5"
+    },
+    {
+      "path": "scripts/core/crew_run_facade.gd",
+      "kind": "func",
+      "symbol": "_crew_jobs_from_save",
+      "local_count": "1",
+      "active_count": "4"
+    },
+    {
+      "path": "scripts/core/crew_run_facade.gd",
+      "kind": "func",
+      "symbol": "_crew_state_for_save",
+      "local_count": "1",
+      "active_count": "6"
+    },
+    {
+      "path": "scripts/core/crew_run_facade.gd",
+      "kind": "func",
+      "symbol": "_crew_plays_from_save",
+      "local_count": "1",
+      "active_count": "4"
+    },
+    {
+      "path": "scripts/core/crew_run_facade.gd",
+      "kind": "func",
+      "symbol": "_crew_distraction_grievance_source",
+      "local_count": "1",
+      "active_count": "4"
+    },
+    {
+      "path": "scripts/core/crew_run_facade.gd",
+      "kind": "func",
+      "symbol": "_crew_private_restore_failed",
+      "local_count": "1",
+      "active_count": "6"
+    },
+    {
+      "path": "scripts/core/delivery_run_facade.gd",
+      "kind": "func",
+      "symbol": "_delivery_checkpoint_outcome",
+      "local_count": "1",
+      "active_count": "4"
+    },
+    {
+      "path": "scripts/core/delivery_run_facade.gd",
+      "kind": "func",
+      "symbol": "_delivery_event_consumer_payload",
+      "local_count": "1",
+      "active_count": "4"
+    },
+    {
+      "path": "scripts/core/environment_semantic_inventory.gd",
+      "kind": "func",
+      "symbol": "_semantic_actor",
+      "local_count": "1",
+      "active_count": "5"
+    },
+    {
+      "path": "scripts/core/game_module.gd",
+      "kind": "func",
+      "symbol": "_item_effect_total",
+      "local_count": "1",
+      "active_count": "67"
+    },
+    {
+      "path": "scripts/core/game_module.gd",
+      "kind": "func",
+      "symbol": "_fallback_state",
+      "local_count": "1",
+      "active_count": "8"
+    },
+    {
+      "path": "scripts/core/game_module.gd",
+      "kind": "func",
+      "symbol": "_peek_table_state",
+      "local_count": "1",
+      "active_count": "21"
+    },
+    {
+      "path": "scripts/core/grand_casino_run_facade.gd",
+      "kind": "func",
+      "symbol": "_grand_casino_result_wager_funding_amount",
+      "local_count": "1",
+      "active_count": "4"
+    },
+    {
+      "path": "scripts/core/grand_casino_run_facade.gd",
+      "kind": "func",
+      "symbol": "_grand_casino_demo_objective_status",
+      "local_count": "1",
+      "active_count": "4"
+    },
+    {
+      "path": "scripts/core/grand_casino_run_facade.gd",
+      "kind": "func",
+      "symbol": "_grand_casino_has_prior_visit",
+      "local_count": "1",
+      "active_count": "4"
+    },
+    {
+      "path": "scripts/core/grand_casino_run_facade.gd",
+      "kind": "func",
+      "symbol": "_grand_casino_dominant_memory_key",
+      "local_count": "1",
+      "active_count": "4"
+    },
+    {
+      "path": "scripts/core/grand_casino_run_facade.gd",
+      "kind": "func",
+      "symbol": "_grand_casino_room_id_from_context",
+      "local_count": "1",
+      "active_count": "4"
+    },
+    {
+      "path": "scripts/core/grand_casino_run_facade.gd",
+      "kind": "func",
+      "symbol": "_grand_casino_room_display_name",
+      "local_count": "1",
+      "active_count": "4"
+    },
+    {
+      "path": "scripts/core/grand_casino_run_facade.gd",
+      "kind": "func",
+      "symbol": "_grand_casino_players_card_tier_definition",
+      "local_count": "1",
+      "active_count": "4"
+    },
+    {
+      "path": "scripts/core/grand_casino_run_facade.gd",
+      "kind": "func",
+      "symbol": "_grand_casino_result_has_wager",
+      "local_count": "1",
+      "active_count": "4"
+    },
+    {
+      "path": "scripts/core/grand_casino_run_facade.gd",
+      "kind": "func",
+      "symbol": "_grand_casino_result_pit_boss_heat_bonus",
+      "local_count": "1",
+      "active_count": "4"
+    },
+    {
+      "path": "scripts/core/grand_casino_run_facade.gd",
+      "kind": "func",
+      "symbol": "_grand_casino_room_states_for_save",
+      "local_count": "1",
+      "active_count": "13"
+    },
+    {
+      "path": "scripts/core/json_coerce.gd",
+      "kind": "func",
+      "symbol": "_copy_dict",
+      "local_count": "1",
+      "active_count": "2729"
+    },
+    {
+      "path": "scripts/core/json_coerce.gd",
+      "kind": "func",
+      "symbol": "_copy_array",
+      "local_count": "1",
+      "active_count": "1359"
+    },
+    {
+      "path": "scripts/core/json_coerce.gd",
+      "kind": "func",
+      "symbol": "_literal_string_array",
+      "local_count": "1",
+      "active_count": "6"
+    },
+    {
+      "path": "scripts/core/json_coerce.gd",
+      "kind": "func",
+      "symbol": "_unique_string_array",
+      "local_count": "1",
+      "active_count": "161"
+    },
+    {
+      "path": "scripts/core/json_coerce.gd",
+      "kind": "func",
+      "symbol": "_dictionary_array",
+      "local_count": "1",
+      "active_count": "438"
+    },
+    {
+      "path": "scripts/core/json_coerce.gd",
+      "kind": "func",
+      "symbol": "_int_array",
+      "local_count": "1",
+      "active_count": "67"
+    },
+    {
+      "path": "scripts/core/json_coerce.gd",
+      "kind": "func",
+      "symbol": "_stable_hash",
+      "local_count": "1",
+      "active_count": "79"
+    },
+    {
+      "path": "scripts/core/json_coerce.gd",
+      "kind": "func",
+      "symbol": "_stable_hash_allow_zero",
+      "local_count": "1",
+      "active_count": "10"
+    },
+    {
+      "path": "scripts/core/json_coerce.gd",
+      "kind": "func",
+      "symbol": "_utf8_stable_hash",
+      "local_count": "1",
+      "active_count": "7"
+    },
+    {
+      "path": "scripts/core/json_coerce.gd",
+      "kind": "func",
+      "symbol": "_overflow_stable_hash",
+      "local_count": "1",
+      "active_count": "11"
+    },
+    {
+      "path": "scripts/core/json_coerce.gd",
+      "kind": "func",
+      "symbol": "_valid_sha256",
+      "local_count": "1",
+      "active_count": "37"
+    },
+    {
+      "path": "scripts/core/keys.gd",
+      "kind": "const",
+      "symbol": "LABEL",
+      "local_count": "1",
+      "active_count": "1"
+    },
+    {
+      "path": "scripts/core/keys.gd",
+      "kind": "const",
+      "symbol": "UI_STATE",
+      "local_count": "1",
+      "active_count": "1"
+    },
+    {
+      "path": "scripts/core/keys.gd",
+      "kind": "const",
+      "symbol": "STATUS",
+      "local_count": "1",
+      "active_count": "1"
+    },
+    {
+      "path": "scripts/core/keys.gd",
+      "kind": "const",
+      "symbol": "ERRORS",
+      "local_count": "1",
+      "active_count": "1"
+    },
+    {
+      "path": "scripts/core/keys.gd",
+      "kind": "const",
+      "symbol": "GAME_STATES",
+      "local_count": "1",
+      "active_count": "1"
+    },
+    {
+      "path": "scripts/core/keys.gd",
+      "kind": "const",
+      "symbol": "TYPE",
+      "local_count": "1",
+      "active_count": "1"
+    },
+    {
+      "path": "scripts/core/keys.gd",
+      "kind": "const",
+      "symbol": "ENABLED",
+      "local_count": "1",
+      "active_count": "1"
+    },
+    {
+      "path": "scripts/core/keys.gd",
+      "kind": "const",
+      "symbol": "RUN_STATE",
+      "local_count": "1",
+      "active_count": "1"
+    },
+    {
+      "path": "scripts/core/keys.gd",
+      "kind": "const",
+      "symbol": "SUSPICION_DELTA",
+      "local_count": "1",
+      "active_count": "1"
+    },
+    {
+      "path": "scripts/core/keys.gd",
+      "kind": "const",
+      "symbol": "STABLE_OBJECT_ID",
+      "local_count": "1",
+      "active_count": "1"
+    },
+    {
+      "path": "scripts/core/keys.gd",
+      "kind": "const",
+      "symbol": "ACTION_ID",
+      "local_count": "1",
+      "active_count": "1"
+    },
+    {
+      "path": "scripts/core/keys.gd",
+      "kind": "const",
+      "symbol": "PHASE_ID",
+      "local_count": "1",
+      "active_count": "1"
+    },
+    {
+      "path": "scripts/core/keys.gd",
+      "kind": "const",
+      "symbol": "OWNER_NAMESPACE",
+      "local_count": "1",
+      "active_count": "1"
+    },
+    {
+      "path": "scripts/core/keys.gd",
+      "kind": "const",
+      "symbol": "SEMANTIC_STATE",
+      "local_count": "1",
+      "active_count": "1"
+    },
+    {
+      "path": "scripts/core/keys.gd",
+      "kind": "const",
+      "symbol": "RECT",
+      "local_count": "1",
+      "active_count": "1"
+    },
+    {
+      "path": "scripts/core/keys.gd",
+      "kind": "const",
+      "symbol": "INSTANCE_ID",
+      "local_count": "1",
+      "active_count": "1"
+    },
+    {
+      "path": "scripts/core/run_generator.gd",
+      "kind": "func",
+      "symbol": "_install_environment",
+      "local_count": "1",
+      "active_count": "5"
+    },
+    {
+      "path": "scripts/core/run_state.gd",
+      "kind": "func",
+      "symbol": "_scenario_publish_crew_change",
+      "local_count": "1",
+      "active_count": "2"
+    },
+    {
+      "path": "scripts/core/run_state.gd",
+      "kind": "func",
+      "symbol": "_blackjack_checkpoint_before_external_event",
+      "local_count": "1",
+      "active_count": "6"
+    },
+    {
+      "path": "scripts/core/run_state.gd",
+      "kind": "func",
+      "symbol": "_rebind_blackjack_checkpoint_after_external_event",
+      "local_count": "1",
+      "active_count": "6"
+    },
+    {
+      "path": "scripts/core/run_state.gd",
+      "kind": "func",
+      "symbol": "_showdown_evidence_definition",
+      "local_count": "1",
+      "active_count": "2"
+    },
+    {
+      "path": "scripts/core/run_state.gd",
+      "kind": "func",
+      "symbol": "_signed_showdown_value",
+      "local_count": "1",
+      "active_count": "3"
+    },
+    {
+      "path": "scripts/core/run_state.gd",
+      "kind": "func",
+      "symbol": "_remove_heist_live_table_event",
+      "local_count": "1",
+      "active_count": "4"
+    },
+    {
+      "path": "scripts/core/run_state.gd",
+      "kind": "func",
+      "symbol": "_pending_crew_job",
+      "local_count": "1",
+      "active_count": "5"
+    },
+    {
+      "path": "scripts/core/run_state.gd",
+      "kind": "func",
+      "symbol": "_run_state_schema_values",
+      "local_count": "1",
+      "active_count": "2"
+    },
+    {
+      "path": "scripts/core/run_state.gd",
+      "kind": "func",
+      "symbol": "_run_state_schema_restore",
+      "local_count": "1",
+      "active_count": "2"
+    },
+    {
+      "path": "scripts/core/run_state.gd",
+      "kind": "func",
+      "symbol": "_world_map_for_save_snapshot",
+      "local_count": "1",
+      "active_count": "6"
+    },
+    {
+      "path": "scripts/core/save_service.gd",
+      "kind": "func",
+      "symbol": "_save_payload",
+      "local_count": "1",
+      "active_count": "5"
+    },
+    {
+      "path": "scripts/core/scenario_layout_resolver.gd",
+      "kind": "func",
+      "symbol": "_expanded_overlaps",
+      "local_count": "1",
+      "active_count": "3"
+    },
+    {
+      "path": "scripts/core/scenario_layout_resolver.gd",
+      "kind": "func",
+      "symbol": "_overlap_identities",
+      "local_count": "1",
+      "active_count": "3"
+    },
+    {
+      "path": "scripts/core/scenario_sequence_schema.gd",
+      "kind": "func",
+      "symbol": "_clear_successful_validation_memo_for_tests",
+      "local_count": "1",
+      "active_count": "5"
+    },
+    {
+      "path": "scripts/core/scenario_sequence_schema.gd",
+      "kind": "func",
+      "symbol": "_successful_validation_memo_stats_for_tests",
+      "local_count": "1",
+      "active_count": "6"
+    },
+    {
+      "path": "scripts/core/scenario_sequence_schema.gd",
+      "kind": "func",
+      "symbol": "_catalog_uniqueness_report_after_same_call_validation",
+      "local_count": "1",
+      "active_count": "2"
+    }
+  ],
+  "remaining_scope": [
+    "Classify changed and never-reviewed core files.",
+    "Semantically review UI/game graph candidates and caller/dispatch/compatibility evidence.",
+    "Inventory/disposition remaining data/tool/generator/native/other code areas rather than assuming the scanned areas are exhaustive.",
+    "Name and reconcile inherited failing checks, external parity-wrapper callers and finalization ownership wording."
+  ],
+  "sources": [
+    {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit_core_coverage_20261104.csv",
+      "sha256": "ce2812b4b8f2478e3f506662ef117c053f88b3a471d705026922f8ba88ed791b"
+    },
+    {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\ui-game-graph.json",
+      "sha256": "a214f433435caea8a14ca9965f1c05e957ac8be0e299af92187df6229d3fb9fd"
+    },
+    {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\audit_core_symbol_candidates_20261104.csv",
+      "sha256": "fb92c94fa486531025fda8c7590b249a481d40bc9aecaff5bfad35cb0c8e8462"
+    }
+  ],
+  "limit": "A scan or unchanged blob is not evidence of complete whole-codebase audit. Prior reviewed unchanged blobs retain only their stated historical review scope."
+}

@@ -1,0 +1,140 @@
+{
+  "schema": "bth.owner_snapshot/v1",
+  "observed_at": "2026-11-04T01:24:20.765383+00:00",
+  "tasks": [
+    {
+      "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "title": "Audit obsolete game code",
+      "state": "active",
+      "observed_at": "2026-11-04T00:42:29.105Z",
+      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+    },
+    {
+      "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",
+      "title": "Fix top banner height",
+      "state": "idle",
+      "observed_at": "2026-11-04T00:42:29.105Z",
+      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+    },
+    {
+      "task_ref": "01a1a363-26c7-74e2-9c9c-e164d89ae033",
+      "title": "Finish hand before ending",
+      "state": "idle",
+      "observed_at": "2026-11-04T00:42:29.105Z",
+      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+    },
+    {
+      "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "title": "Fix Back Alley travel",
+      "state": "idle",
+      "observed_at": "2026-11-04T00:42:29.105Z",
+      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+    },
+    {
+      "task_ref": "01a16736-0a2f-7668-8ad8-a6074981c01e",
+      "title": "Restore baccarat deal animation",
+      "state": "idle",
+      "observed_at": "2026-11-04T00:42:29.105Z",
+      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+    },
+    {
+      "task_ref": "01a1a35e-1c74-7319-bd64-f9d654f2800c",
+      "title": "Remove obsolete game fallbacks",
+      "state": "idle",
+      "observed_at": "2026-11-04T00:42:29.105Z",
+      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+    },
+    {
+      "task_ref": "01a1a360-a1b6-733f-a372-b09b3015a03e",
+      "title": "Fix expired Crew handoff",
+      "state": "active",
+      "observed_at": "2026-11-04T00:42:29.105Z",
+      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+    },
+    {
+      "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "title": "Fix pull-tab save boundary",
+      "state": "active",
+      "observed_at": "2026-11-04T00:42:29.105Z",
+      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+    },
+    {
+      "task_ref": "01a1a3e1-a613-7284-8bba-092f690190c9",
+      "title": "Resolve testing certificate",
+      "state": "idle",
+      "observed_at": "2026-11-04T00:42:29.105Z",
+      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+    },
+    {
+      "task_ref": "01a1a3e5-607c-73bf-b678-e3e03f5e40f6",
+      "title": "Resume scenario improvements",
+      "state": "active",
+      "observed_at": "2026-11-04T00:42:29.105Z",
+      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+    },
+    {
+      "task_ref": "01a17a2d-6218-7018-80e9-5c3e6b3260ec",
+      "title": "Continuously playtest Beat the House",
+      "state": "active",
+      "observed_at": "2026-11-04T00:42:29.105Z",
+      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+    },
+    {
+      "task_ref": "01a17dc5-9c58-7169-a1e8-99b89f2120ea",
+      "title": "Playtest heist ending reachability",
+      "state": "active",
+      "observed_at": "2026-11-04T00:42:29.105Z",
+      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+    },
+    {
+      "task_ref": "01a17dca-1b23-7167-b5a6-fb6a4247d0ee",
+      "title": "Playtest Grand Casino endings",
+      "state": "idle",
+      "observed_at": "2026-11-04T00:42:29.105Z",
+      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+    },
+    {
+      "task_ref": "01a19d8e-241f-74bf-8d62-cb2617a700f1",
+      "title": "Finish near-complete tasks",
+      "state": "idle",
+      "observed_at": "2026-11-04T00:42:29.105Z",
+      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+    },
+    {
+      "task_ref": "01a1a36a-b7dd-709a-b4a0-b93eca365000",
+      "title": "Reconcile named todo queue",
+      "state": "active",
+      "observed_at": "2026-11-04T00:42:29.105Z",
+      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+    },
+    {
+      "task_ref": "01a1a3f0-cfcd-74e1-9dd9-3a7e0178b0e1",
+      "title": "Clean obsolete test instances",
+      "state": "active",
+      "observed_at": "2026-11-04T00:42:29.105Z",
+      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+    },
+    {
+      "task_ref": "01a1a3f3-52a8-76d7-951b-423c1bdfd0d4",
+      "title": "Fix Slot Collect action",
+      "state": "active",
+      "observed_at": "2026-11-04T00:42:29.105Z",
+      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+    },
+    {
+      "task_ref": "01a1a3e7-10b6-71d9-919c-3afe91d860ce",
+      "title": "Resume item improvements",
+      "state": "active",
+      "observed_at": "2026-11-04T00:42:29.105Z",
+      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+    },
+    {
+      "task_ref": "01a1a3e8-562c-7169-a765-f4b4f9ae60cc",
+      "title": "Audit gameplay performance",
+      "state": "active",
+      "observed_at": "2026-11-04T00:42:29.105Z",
+      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+    }
+  ],
+  "scope": "Read-only snapshot of observed task states. Missing entries are unknown, not proof of ended work. No worker management or runtime was performed."
+}
