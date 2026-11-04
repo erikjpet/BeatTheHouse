@@ -17,19 +17,26 @@ var completed := false
 var paced := false
 var after_blackjack := false
 var prepare_web := false
+var observe_blackjack := false
 
 
 func _initialize() -> void:
 	prepare_web = OS.get_cmdline_user_args().has("--prepare-web")
 	after_blackjack = OS.get_cmdline_user_args().has("--after-blackjack")
+	observe_blackjack = OS.get_cmdline_user_args().has("--observe-blackjack")
 	paced = after_blackjack or OS.get_cmdline_user_args().has("--paced")
-	facts["mode"] = "prepare-web-prepaid-floor" if prepare_web else "after-blackjack-frame-paced" if after_blackjack else "frame-paced" if paced else "immediate"
-	if prepare_web:
+	facts["mode"] = "observe-blackjack-counts" if observe_blackjack else "prepare-web-prepaid-floor" if prepare_web else "after-blackjack-frame-paced" if after_blackjack else "frame-paced" if paced else "immediate"
+	if observe_blackjack:
+		facts["fixture"] = "New own staged generated Riverboat cash80/min9 with shipped three-game set; one declared Blackjack Deal then count-only observation, no Stand or Roulette input"
+	elif prepare_web:
 		facts["fixture"] = "New own staged generated Riverboat cash80/min9 with shipped three-game set; prepaid floor only, no game input or normal-travel claim"
 	elif after_blackjack:
 		facts["fixture"] = "Explicit staged generated Riverboat initial cash80/min9, shipped Blackjack/Roulette/VideoPoker game set; one natural Blackjack hand then paced Roulette with actual remaining wallet/RNG, no normal-travel claim"
 	private_root = OS.get_environment("BTH_R08_ROULETTE_PRIVATE_ROOT").replace("\\", "/").simplify_path().trim_suffix("/")
 	if not _private_paths():
+		_finish()
+		return
+	if observe_blackjack and not _check(not (prepare_web or after_blackjack or paced), "Count-only Blackjack observation must run separately from all other diagnostic modes"):
 		_finish()
 		return
 	call_deferred("_run")
@@ -93,14 +100,14 @@ func _case() -> void:
 		return
 	# Explicit independent input configuration, entirely before table generation.
 	# Retain the shipped Riverboat room/slots/content; no scenario or wheel is set.
-	if not after_blackjack and not prepare_web:
+	if not after_blackjack and not prepare_web and not observe_blackjack:
 		archetype["game_pool"] = ["roulette"]
 		archetype["required_game_ids"] = ["roulette"]
 		archetype["game_count"] = [1, 1]
 	var economy: Dictionary = archetype.get("economic_profile", {}).duplicate(true)
 	economy["stake_floor"] = STAKE
 	economy["stake_ceiling"] = 100
-	economy["game_stake_floor_overrides"] = {"roulette": STAKE, "blackjack": STAKE} if after_blackjack or prepare_web else {"roulette": STAKE}
+	economy["game_stake_floor_overrides"] = {"roulette": STAKE, "blackjack": STAKE} if after_blackjack or prepare_web or observe_blackjack else {"roulette": STAKE}
 	economy["game_stake_ceiling_overrides"] = {"roulette": 100}
 	archetype["economic_profile"] = economy
 	var generator := RunGenerator.new(library)
@@ -138,6 +145,10 @@ func _case() -> void:
 		await _close(app)
 		return
 	if not _check(bool(app.get("continuous_environment_clock_enabled")) and app.is_processing(), "Normal host processing and continuous clock remain enabled"):
+		await _close(app)
+		return
+	if observe_blackjack:
+		await _observe_blackjack(app)
 		await _close(app)
 		return
 	if prepare_web:
@@ -263,6 +274,77 @@ func _prepare_web_fixture(app: Control) -> void:
 	facts["preparation_limit"] = "Own new files remain in the native private root; no bundle copy, asset export, Web launch or f305 Continue claim. Root stages only these files after validating this job."
 
 
+func _observe_blackjack(app: Control) -> void:
+	var run: RunState = app.get("run_state")
+	var game_ids: Array = run.current_environment.get("game_ids", [])
+	if not _check(game_ids.size() == 3 and game_ids.has("blackjack") and game_ids.has("roulette") and game_ids.has("video_poker") and run.bankroll == 80 and run.grand_casino_chips == 0, "Count observation starts in the new prepaid three-game fixture"):
+		return
+	if not _check(bool(app.call("enter_game", "blackjack")) and str(app.get("current_game_state_key")) == "blackjack", "Count observation uses normal Blackjack entry and binding"):
+		return
+	if not _check(bool(app.call("set_selected_stake", STAKE)), "Count observation selects its predeclared nine-unit wager"):
+		return
+	var rows: Array = []
+	facts["blackjack_count_observation"] = rows
+	facts["blackjack_observation_scope"] = "One declared native Deal only; then ordinary process frames without Deal, Stand, other game input or forced refresh. Counts and guards are diagnostic evidence, not prior-Blackjack/Roulette acceptance."
+	var before := _blackjack_count_snapshot(app, "before-single-deal")
+	rows.append(before)
+	if not _check(not bool(before.get("pending_delivery", false)) and int(before.get("committed_request_count", -1)) == 0 and not bool((before.get("ledger_session", {}) as Dictionary).get("dealt", true)), "Fresh count observation has no prior hand or delivery before its single Deal"):
+		return
+	facts["blackjack_observation_dispatch"] = {"action": "blackjack_deal", "index": 0, "confirm_requested": false}
+	app.call("_on_game_surface_action", "blackjack_deal", 0, false)
+	var immediate := _blackjack_count_snapshot(app, "single-deal-immediate")
+	rows.append(immediate)
+	var opening: Dictionary = app.get("last_game_result")
+	_check(bool(opening.get("ok", false)) and bool(opening.get(Authority.HOST_COMMITTED_KEY, false)) and str(opening.get("action_id", "")) == "blackjack_place_bet" and run.bankroll == 80 - STAKE and not bool(immediate.get("pending_delivery", true)) and int(immediate.get("committed_request_count", -1)) == 1, "The declared Deal records exactly one opening debit/request before count-only observation")
+	# No further gameplay callback occurs in this mode. Keep the ordinary host
+	# and canvas processing live; the samples only observe real frame boundaries.
+	for elapsed_frames in range(1, 9):
+		await process_frame
+		if elapsed_frames in [1, 3, 8]:
+			rows.append(_blackjack_count_snapshot(app, "after-%d-real-frames" % elapsed_frames))
+	_check(rows.size() == 5, "Count observation retains before/immediate and 1/3/8-frame samples")
+
+
+func _blackjack_hand_counts(source: Dictionary) -> Dictionary:
+	var hands_value: Variant = source.get("player_hands", [])
+	var hands: Array = hands_value as Array if typeof(hands_value) == TYPE_ARRAY else []
+	var hand_card_counts: Array[int] = []
+	for hand_value in hands:
+		var hand: Dictionary = hand_value as Dictionary if typeof(hand_value) == TYPE_DICTIONARY else {}
+		var cards_value: Variant = hand.get("cards", [])
+		hand_card_counts.append((cards_value as Array).size() if typeof(cards_value) == TYPE_ARRAY else 0)
+	var dealer_value: Variant = source.get("dealer_cards", [])
+	var dealer_count := (dealer_value as Array).size() if typeof(dealer_value) == TYPE_ARRAY else 0
+	var sit_out := bool(source.get("blackjack_sit_out", false))
+	return {"player_hand_count": hands.size(), "player_card_counts": hand_card_counts, "dealer_card_count": dealer_count, "cards_consumed": int(source.get("cards_consumed", 0)), "dealt": dealer_count > 0 and (not hands.is_empty() or sit_out), "blackjack_sit_out": sit_out, "bankroll_wager_debited": bool(source.get("bankroll_wager_debited", false)), "wager_debited": int(source.get("wager_debited", 0)), "phase": str(source.get("phase", "")), "round_terminal": bool(source.get("round_terminal", false)), "settlement_pending": bool(source.get("settlement_pending", false))}
+
+
+func _blackjack_count_snapshot(app: Control, label: String) -> Dictionary:
+	var run: RunState = app.get("run_state")
+	var table: Dictionary = run.current_environment.get("game_states", {}).get("blackjack", {})
+	var ledger: Dictionary = table.get(Authority.LEDGER_KEY, {})
+	var session: Dictionary = ledger.get("session", {})
+	var result: Dictionary = app.get("last_game_result")
+	var result_ui: Dictionary = result.get("ui_state", {}) if typeof(result.get("ui_state", {})) == TYPE_DICTIONARY else {}
+	var canvas: Control = app.get("game_surface_canvas")
+	var surface: Dictionary = canvas.call("realtime_surface_state")
+	var projection: Dictionary = surface.get("ritual_projection", {})
+	var states: Dictionary = projection.get("action_states", {})
+	var refresh_pending := bool(app.get("deferred_embedded_refresh_pending"))
+	var game: GameModule = app.get("current_game")
+	return {
+		"label": label, "process_frame": Engine.get_process_frames(), "clocks": _clocks(app), "cash": run.bankroll, "chips": run.grand_casino_chips,
+		"pending_delivery": not (ledger.get("pending_delivery", {}) as Dictionary).is_empty(), "committed_request_count": (ledger.get("request_order", []) as Array).size(),
+		"ledger_session": _blackjack_hand_counts(session), "last_game_result_ui": _blackjack_hand_counts(result_ui), "canvas_counts": _blackjack_hand_counts(surface),
+		"result": {"ok": bool(result.get("ok", false)), "action_id": str(result.get("action_id", "")), "committed": bool(result.get(Authority.HOST_COMMITTED_KEY, false))},
+		"public_readiness": {"phase": str(surface.get("phase", "")), "ritual_phase": str(projection.get("phase_id", "")), "can_deal": bool(surface.get("can_deal", false)), "can_stand": bool(surface.get("can_stand", false)), "deal_enabled": bool((states.get("blackjack_deal", {}) as Dictionary).get("enabled", false)), "stand_enabled": bool((states.get("blackjack_stand", {}) as Dictionary).get("enabled", false)), "deal_animation_active": bool(canvas.call("surface_animation_active", "blackjack_deal"))},
+		"deferred_refresh": {"pending": refresh_pending, "generation": int(app.get("deferred_embedded_refresh_generation")), "scheduled": int(app.get("deferred_embedded_refresh_schedule_count")), "executed": int(app.get("deferred_embedded_refresh_execution_count")), "stale": int(app.get("deferred_embedded_refresh_stale_count")), "blocked_input": int(app.get("deferred_embedded_refresh_blocked_surface_input_count")), "identity_checked": refresh_pending, "identity_current": bool(app.call("_deferred_embedded_action_refresh_identity_is_current")) if refresh_pending else false},
+		"binding": {"screen": str(app.get("current_screen")), "module_id": game.get_id() if game != null else "", "state_key": str(app.get("current_game_state_key")), "active_game_id": str(run.current_environment.get("active_game_id", ""))},
+		"processing": {"host": app.is_processing(), "canvas": canvas.is_processing(), "canvas_visible": canvas.is_visible_in_tree(), "tree_paused": paused, "lifecycle": app.call("application_lifecycle_snapshot")},
+		"modal_message": str(app.call("_blocking_modal_message")),
+	}
+
+
 func _blackjack_before_roulette(app: Control) -> bool:
 	var run: RunState = app.get("run_state")
 	var game_ids: Array = run.current_environment.get("game_ids", [])
@@ -276,72 +358,84 @@ func _blackjack_before_roulette(app: Control) -> bool:
 	var before_rng := run.rng_state
 	var rows: Array = []
 	facts["prior_blackjack"] = rows
+	var count_rows: Array = []
+	facts["prior_blackjack_counts"] = count_rows
+	facts["prior_blackjack_dispatch_counts"] = {"deal": 1, "stand": 0}
 	rows.append(_blackjack_boundary(app, "before-one-deal", before_rng))
-	app.call("_on_game_surface_action", "blackjack_deal", 0)
+	app.call("_on_game_surface_action", "blackjack_deal", 0, false)
 	rows.append(_blackjack_boundary(app, "one-deal-immediate", before_rng))
 	var opening: Dictionary = app.get("last_game_result")
 	if not _check(bool(opening.get("ok", false)) and bool(opening.get(Authority.HOST_COMMITTED_KEY, false)) and str(opening.get("action_id", "")) == "blackjack_place_bet" and run.bankroll == before_cash - STAKE, "One normal Blackjack Deal commits exactly the nine-unit opening debit"):
 		facts["fixture_limit"] = "The single normal Blackjack Deal did not accept; no financial input repeated"
 		return false
-	var deadline := Time.get_ticks_msec() + 20000
+	var wait_started_msec := Time.get_ticks_msec()
+	var deadline := wait_started_msec + 20000
 	var stood := false
 	var settled := false
-	var funded_deal_attempted := false
-	var first_public_readiness := true
+	var recorded_first_clear := false
+	var recorded_one_second := false
+	var recorded_five_seconds := false
 	while Time.get_ticks_msec() < deadline:
 		await process_frame
 		var table: Dictionary = run.current_environment.get("game_states", {}).get("blackjack", {})
 		var ledger: Dictionary = table.get(Authority.LEDGER_KEY, {})
+		var current_result: Dictionary = app.get("last_game_result")
+		if not bool(current_result.get("ok", false)):
+			rows.append(_blackjack_boundary(app, "first-rejection-stop", before_rng))
+			count_rows.append(_blackjack_count_snapshot(app, "prior-hand-first-rejection-stop"))
+			facts["fixture_limit"] = "Prior Blackjack returned its first rejection; no gameplay input repeated"
+			return _check(false, "Prior Blackjack must retain an accepted action state before further input")
 		if not (ledger.get("pending_delivery", {}) as Dictionary).is_empty():
 			rows.append(_blackjack_boundary(app, "pending-stop", before_rng))
+			count_rows.append(_blackjack_count_snapshot(app, "prior-hand-pending-stop"))
 			facts["fixture_limit"] = "Prior Blackjack left pending; no Retry/Cancel or repeated financial input"
 			return _check(false, "Prior Blackjack must not leave pending authority before Roulette")
-		if int(table.get("hands_played", 0)) == 1:
+		var elapsed_msec := Time.get_ticks_msec() - wait_started_msec
+		if not recorded_one_second and elapsed_msec >= 1000:
+			recorded_one_second = true
+			count_rows.append(_blackjack_count_snapshot(app, "prior-hand-after-one-second"))
+		if not recorded_five_seconds and elapsed_msec >= 5000:
+			recorded_five_seconds = true
+			count_rows.append(_blackjack_count_snapshot(app, "prior-hand-after-five-seconds"))
+		var refresh_pending := bool(app.get("deferred_embedded_refresh_pending"))
+		if not recorded_first_clear and not refresh_pending:
+			recorded_first_clear = true
+			count_rows.append(_blackjack_count_snapshot(app, "prior-hand-first-deferred-clear"))
+		if int(table.get("hands_played", 0)) == 1 and not refresh_pending:
 			settled = true
 			break
 		var canvas: Control = app.get("game_surface_canvas")
 		var surface: Dictionary = canvas.call("realtime_surface_state")
-		var projection: Dictionary = surface.get("ritual_projection", {})
-		var action_states: Dictionary = projection.get("action_states", {})
-		if first_public_readiness:
-			first_public_readiness = false
-			rows.append(_blackjack_boundary(app, "first-funded-public-readiness", before_rng))
-		var deal_state: Dictionary = action_states.get("blackjack_deal", {})
-		var session: Dictionary = ledger.get("session", {})
-		# Only a publicly enabled, still-undealt funded phase can take one further
-		# Deal. This is not a retry of a rejected action: the first placement was
-		# accepted, and the source wager calculator subtracts its recorded debit.
-		if not funded_deal_attempted and bool(surface.get("can_deal", false)) and bool(deal_state.get("enabled", false)) and str(projection.get("phase_id", "")) == "wagering" and (surface.get("player_hands", []) as Array).is_empty() and bool(session.get("bankroll_wager_debited", false)) and int(session.get("wager_debited", 0)) == STAKE:
-			funded_deal_attempted = true
-			rows.append(_blackjack_boundary(app, "funded-deal-public-ready-before", before_rng))
-			var funded_cash := run.bankroll
-			var prior_requests := (ledger.get("request_order", []) as Array).size()
-			app.call("_on_game_surface_action", "blackjack_deal", 0)
-			rows.append(_blackjack_boundary(app, "single-funded-deal-immediate", before_rng))
-			var dealt_result: Dictionary = app.get("last_game_result")
-			var dealt_table: Dictionary = run.current_environment.get("game_states", {}).get("blackjack", {})
-			var dealt_ledger: Dictionary = dealt_table.get(Authority.LEDGER_KEY, {})
-			var dealt_surface: Dictionary = canvas.call("realtime_surface_state")
-			var dealt_projection: Dictionary = dealt_surface.get("ritual_projection", {})
-			var dealt_phase := str(dealt_projection.get("phase_id", ""))
-			var cards_present := not (dealt_surface.get("player_hands", []) as Array).is_empty()
-			if not _check(bool(dealt_result.get("ok", false)) and bool(dealt_result.get(Authority.HOST_COMMITTED_KEY, false)) and run.bankroll == funded_cash and (dealt_ledger.get("request_order", []) as Array).size() == prior_requests + 1 and (dealt_ledger.get("pending_delivery", {}) as Dictionary).is_empty() and (cards_present or dealt_phase in ["initial_deal", "player_turn", "dealer_procedure"] or int(dealt_table.get("hands_played", 0)) == 1), "One publicly enabled funded Deal must accept a new phase without another debit and expose dealt-hand progression"):
-				facts["fixture_limit"] = "Single funded Deal failed its no-second-debit/accepted-phase contract; stop this setup path without further input"
-				return false
-			continue
-		var stand_state: Dictionary = action_states.get("blackjack_stand", {})
-		if not stood and bool(stand_state.get("enabled", false)) and not bool(canvas.call("surface_animation_active", "blackjack_deal")):
+		# Match the actual native Stand button. The retained ritual projection is
+		# diagnostic only; its initial-deal phase need not tick with the canvas clock.
+		if not stood and not refresh_pending and bool(surface.get("can_stand", false)) and not bool(canvas.call("surface_animation_active", "blackjack_deal")):
 			stood = true
-			app.call("_on_game_surface_action", "blackjack_stand", 0)
+			facts["prior_blackjack_dispatch_counts"] = {"deal": 1, "stand": 1}
+			var game: GameModule = app.get("current_game")
+			var session: Dictionary = ledger.get("session", {})
+			var complete_before := bool(game.call("_all_hands_complete", session))
+			var result_before := _result_summary(app)
+			app.call("_on_game_surface_action", "blackjack_stand", 0, false)
 			rows.append(_blackjack_boundary(app, "single-stand-immediate", before_rng))
+			count_rows.append(_blackjack_count_snapshot(app, "prior-hand-single-stand-immediate"))
 			var stood_result: Dictionary = app.get("last_game_result")
-			if not bool(stood_result.get("ok", false)) or not bool(stood_result.get(Authority.HOST_COMMITTED_KEY, false)) or str(stood_result.get("action_id", "")) == "blackjack_place_bet":
-				facts["fixture_limit"] = "The single publicly enabled Stand was refused; no financial input repeated"
-				return _check(false, "One publicly enabled Blackjack Stand must accept")
+			var stood_table: Dictionary = run.current_environment.get("game_states", {}).get("blackjack", {})
+			var stood_ledger: Dictionary = stood_table.get(Authority.LEDGER_KEY, {})
+			var complete_after := bool(game.call("_all_hands_complete", stood_ledger.get("session", {})))
+			var result_changed := _result_summary(app) != result_before
+			var returned_rejection := result_changed and not bool(stood_result.get("ok", false))
+			var pending_after := not (stood_ledger.get("pending_delivery", {}) as Dictionary).is_empty()
+			var fresh_committed_result := result_changed and bool(stood_result.get("ok", false)) and bool(stood_result.get(Authority.HOST_COMMITTED_KEY, false)) and str(stood_result.get("action_id", "")) != "blackjack_place_bet"
+			var phase_progressed := not complete_before and complete_after
+			facts["prior_blackjack_single_stand"] = {"all_hands_complete_before": complete_before, "all_hands_complete_after": complete_after, "result_changed": result_changed, "returned_rejection": returned_rejection, "pending_after": pending_after, "fresh_committed_result": fresh_committed_result, "canonical_phase_progressed": phase_progressed}
+			if not _check(not returned_rejection and not pending_after and (fresh_committed_result or phase_progressed), "One native-ready Stand must produce an accepted result or canonical completed-hand progression"):
+				facts["fixture_limit"] = "The single native-ready Stand was rejected or made no accepted phase progression; no gameplay input repeated"
+				return false
 		await create_timer(0.05).timeout
 	rows.append(_blackjack_boundary(app, "prior-hand-finished-or-limit", before_rng))
-	if not _check(settled, "One natural Blackjack hand must settle through public Stand readiness or normal automatic terminal settlement within20s"):
-		facts["fixture_limit"] = "Public prior-Blackjack settlement did not complete within20s; no guessed/repeated input"
+	count_rows.append(_blackjack_count_snapshot(app, "prior-hand-settled" if settled else "prior-hand-time-limit"))
+	if not _check(settled, "One natural Blackjack hand must settle through the native Stand gate or normal automatic terminal settlement within20s"):
+		facts["fixture_limit"] = "Prior-Blackjack native readiness/settlement did not complete within20s; no repeated Deal or Stand"
 		return false
 	var settled_result: Dictionary = app.get("last_game_result")
 	if not _check(bool(settled_result.get("ok", false)) and bool(settled_result.get(Authority.HOST_COMMITTED_KEY, false)) and not (settled_result.get("blackjack_hand_results", []) as Array).is_empty() and run.grand_casino_chips == 0 and run.bankroll >= STAKE, "Prior natural hand has a committed result and leaves an affordable cash Roulette wager"):
@@ -356,7 +450,7 @@ func _blackjack_before_roulette(app: Control) -> bool:
 		if int(app.get("room_publication_checked_generation")) >= int(app.get("room_publication_generation")):
 			break
 	var proof := run.validate_room_action_authority()
-	facts["after_blackjack_floor"] = {"cash": run.bankroll, "chips": run.grand_casino_chips, "clock": run.game_clock_minutes, "heat": run.suspicion_level(), "authority_ok": proof.get("ok", false), "rng_unchanged_since_leave": run.rng_state == leave_rng, "stand_used": stood, "funded_deal_used": funded_deal_attempted, "automatic_terminal_settlement": not stood}
+	facts["after_blackjack_floor"] = {"cash": run.bankroll, "chips": run.grand_casino_chips, "clock": run.game_clock_minutes, "heat": run.suspicion_level(), "authority_ok": proof.get("ok", false), "rng_unchanged_since_leave": run.rng_state == leave_rng, "stand_used": stood, "deal_dispatches": 1, "stand_dispatches": 1 if stood else 0, "automatic_terminal_settlement": not stood}
 	return _check(bool(proof.get("ok", false)) and int(app.get("room_publication_checked_generation")) >= int(app.get("room_publication_generation")) and run.bankroll == leave_cash and run.rng_state == leave_rng, "Normal floor publication retains the accepted prior hand before Roulette entry")
 
 
@@ -458,7 +552,9 @@ func _check(ok: bool, message: String) -> bool:
 
 func _finish() -> void:
 	var fidelity := "Independent explicitly staged trusted generated Riverboat initial cash80/min9 fixture; actual MainScene callbacks through full Foundation dispatch. Default immediate, --paced, or --after-blackjack (one natural hand in shipped three-game set, normal Leave, actual remaining wallet/RNG retained). Paced modes measure normal native host/canvas progression. One RED bet, SPIN arm, single native CONFIRM then stop. No Practice, normal-travel claim, Day3/Heat1 reconstruction, outcome filtering, original R08 state, wheel forcing, Retry/Cancel, Save/Continue or deployed acceptance."
-	if prepare_web:
+	if observe_blackjack:
+		fidelity = "New own staged generated three-game Riverboat fixture. --observe-blackjack enters normally, selects9, dispatches one declared Deal, then records only hand/card counts, wager flags, public readiness and host/presentation guards before/immediately/after1/3/8 real process frames. No further Deal/Stand/gameplay, forced refresh, raw card/shoe/RNG/key data, prior-Blackjack/Roulette acceptance, original state or product change. Earlier diagnostic modes and their limits remain separate."
+	elif prepare_web:
 		fidelity = "New own explicitly staged generated Riverboat prepaid cash80/min9 floor with shipped three-game set. Official synchronous production-slot Save, own official companion saves, and native normal Continue proof only. Zero game inputs. Reports new private source paths/sizes/hashes for root staging; no asset export, fixture copy, old private fixture access, Web launch, f305 compatibility or deployed acceptance claim."
 	var report := {"id": "BTH061-ROULETTE-SEALED-PENDING-001", "checks": checks, "failures": failures, "completed": completed, "facts": facts, "source_sha256": {"test": FileAccess.get_sha256("res://scripts/tests/roulette_sealed_pending_check.gd"), "foundation": FileAccess.get_sha256("res://scripts/ui/foundation_main.gd"), "roulette": FileAccess.get_sha256("res://scripts/games/roulette.gd"), "host": FileAccess.get_sha256("res://scripts/ui/sealed_action_host.gd")}, "fidelity": fidelity}
 	print("ROULETTE_SEALED_PENDING_RESULT " + JSON.stringify(report))
