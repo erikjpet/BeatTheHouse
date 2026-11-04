@@ -788,7 +788,7 @@ $requiredFiles = @(
     "tools/environment_grounding_static_check.ps1",
     "tools/environment_grounding_contract.gd",
     "tools/environment_fixed_slot_static_check.py",
-    "tools/author_scenario_slot_layouts.py",
+    "tools/scenario_slot_layout_contracts.py",
     "tools/generate_environment_scenario_layout_breakdown.py",
     "tools/test_scenario_slot_layouts.py",
     "tools/test_environment_fixed_slot_static_check_v2.py",
@@ -2745,9 +2745,9 @@ catch {
 }
 
 try {
-    & python (Join-Path $root "tools/author_scenario_slot_layouts.py") --check | Out-Null
+    & python (Join-Path $root "tools/scenario_slot_layout_contracts.py") --check | Out-Null
     if ($LASTEXITCODE -ne 0) {
-        throw "Scenario slot authoring check exited with code $LASTEXITCODE."
+        throw "Scenario slot authority check exited with code $LASTEXITCODE."
     }
     & python (Join-Path $root "tools/test_scenario_slot_layouts.py") | Out-Null
     if ($LASTEXITCODE -ne 0) {

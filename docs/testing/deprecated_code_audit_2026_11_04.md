@@ -48,6 +48,7 @@ an all-game playtest. The tracked inventory records these levels explicitly.
 | Three unused HUD constants and hidden clock label | Fixed HUD dimensions and the real details overlay replaced them. The active `time_detail_visible` snapshot key remains. |
 | Dormant GameSurfaceCanvas external-background path | Both fields had only null/false writers. The current procedural stripe body is preserved exactly. Active PixelSceneCanvas/main-menu and native game backgrounds remain. |
 | Obsolete external-game backdrop data and assets | Eleven unused `scene_asset_path` fields, obsolete art-manifest sections and nine PNGs (125,776 bytes) are removed. Remaining game/manifest values match independently parsed baseline objects. No active generator recreates this subsystem. The current tutorial whole-definition pin is independently updated only for this removed field; other fixture assertions/baseline remain. |
+| Superseded procedural slot writer | Eighteen allocation, clone, regeneration and writer functions are removed with `author_scenario_slot_layouts.py`. Thirteen independently consumed semantic helpers remain AST-identical in `scenario_slot_layout_contracts.py`. The read-only replacement checks current accepted authority instead of reconstructing an older 604-slot version. |
 
 Active save migrations, paid-hand completion, registered native paths, current
 rendering fallbacks and meaningful authority/reference tests remain because
@@ -87,6 +88,8 @@ receipts preserve the failing test source before fixture changes.
 | `BTH061-AUDIT-TOUCH-CANCEL-001` | Canceled native/emulated touch must not activate Continue, clock details or a Package action; current geometry/policy stay identical. | Native acceptance passes; `b3337406`, NEXT `b94f3938` verified. |
 | `BTH061-AUDIT-POPUP-SCROLL-001` | Resolve current popup scroll/drag acceptance while retaining reachable actions, canceled/deliberate-touch criteria, focus and protected run state under the fixed canvas. | Native acceptance passes; `b3337406`, NEXT `b94f3938` verified. |
 | `BTH061-AUDIT-TUTORIAL-FIXTURE-001` | Investigate the inherited canonical tutorial full-fixture pin mismatch independently of the approved Blackjack definition-pin update; preserve the trusted full-fixture oracle. | Open; `NONE - OPEN`. |
+| `BTH061-AUDIT-SLOT-AUTHOR-001` | Remove superseded writer while preserving independently consumed structural/semantic checks and current accepted authority. | Repair/removal `8e9951c3`, focused acceptance passes; NEXT pending. |
+| `BTH061-AUDIT-SLOT-MIGRATION-001` | Separate historical conversion pins from current authored additions without changing either authority. | Repair `8e9951c3`, focused acceptance passes; NEXT pending. |
 
 The fresh pre-repair fixtures fail on current source as well as the older
 baseline. Placement and offer-cache now pass (36 assertions/zero failures for
@@ -119,6 +122,42 @@ work independently. Separately, the hostile-launcher contract detected other
 authorized concurrent tasks in its global process census; no peer process was
 stopped or guard weakened. These are distinct limitations, not a claim that
 concurrency is the only remaining validator failure.
+
+The authoring disposition is established by accepted history, not failure count:
+`46474bc8` adds Delta action hosting, `b92b79a5` adds a distinct Open Mic phase
+slot, `bf894fcd` adds two Raid phase slots, `9cfb2ad7` binds the Reopen host and
+`4f7778a2` adds Bar Lock-In task hosts. Those focused fixes intentionally update
+the stored authority without rerunning the older allocation recipe. Runtime
+loads that JSON directly. Independent semantic/snapshot/structural helpers are
+still used and must remain; the superseded regeneration/write/equality path is
+being replaced separately. Current PixelSceneCanvas explicitly treats local
+scenario/capacity overlaps as advisory and applies its hard route rule only to
+active shared bindings, so a replacement must follow those actual semantics
+and retain hostile active-route rejection rather than waive named pairs.
+
+Commit `8e9951c3228f28843c0576bb29ff3323f1894b0e` delivers that extraction and
+the migration follow-up. The current read-only checker passes all 55 layouts /
+607 slots, 25 scenario tests and the derived guide's 75 contexts. Ten migration
+and four consolidation tests pass; both unchanged historical ledgers validate
+their original 468-to-525 and 525-to-525 conversions. An exact reviewed overlay
+handles subsequent authored additions independently. The legacy capacity
+writer rejects current authority. A genuinely missing row-local `slot_id`
+assignment in consolidation reporting is restored; it is not masked by new
+counts or pins. All 1,391 protected runtime/data/assets/native/scene/ledger and
+project inputs remain byte-identical to the qualified batch.
+
+Complete validator receipts are preserved, including failures. The final
+source/authoring/migration stages pass. Host run r3 reached a missing canonical
+Q-009 lease directory; its existing atomic identity helper initialized only
+that empty container under the real launch mutex, with no guard code change.
+Host run r4 then completed its checks but was rejected by the final global
+process census after other authorized work started. Aggregate validator
+acceptance remains Open under `BTH061-AUDIT-VALIDATOR-001`; no process guard was
+weakened and no other task's process was stopped. The exact pending acceptance
+is one complete invocation whose global process census remains unchanged.
+Raw receipts `tool_audit/validator_complete_result-host-r3.json` and
+`validator_complete_result-host-r4.json` stay private in the task workspace;
+peer command lines are not published.
 
 ## Commits and current acceptance
 
