@@ -77,15 +77,15 @@ receipts preserve the failing test source before fixture changes.
 
 | ID | Scope | Status |
 | --- | --- | --- |
-| `BTH061-AUDIT-CREW-WINDOW-001` | Current obligation/physical-Crew eligibility and real world-sequence terminal handoff; retain once-only payout and Save/Continue. | Focused acceptance passes; repair `dec71ae8`, NEXT pending. |
-| `BTH061-AUDIT-PLACEMENT-MODE-001` | Separate independent Runtime reserves and Empty capacity switches in the fixture. | Focused acceptance passes; repair `dec71ae8`, NEXT pending. |
-| `BTH061-AUDIT-OFFER-CACHE-001` | Initialize current lazy collaborators and initial authenticated room publication. | Focused acceptance passes; repair `dec71ae8`, NEXT pending. |
-| `BTH061-AUDIT-SLOT-STATIC-001` | Resolve all nineteen stale audit expectations with precise current identities and hostile checks; keep runtime layout/authority bytes. | Focused acceptance passes; repair `dec71ae8`, NEXT pending. |
+| `BTH061-AUDIT-CREW-WINDOW-001` | Current obligation/physical-Crew eligibility and real world-sequence terminal handoff; retain once-only payout and Save/Continue. | Focused acceptance passes; repair `dec71ae8`, NEXT `b94f3938` verified. |
+| `BTH061-AUDIT-PLACEMENT-MODE-001` | Separate independent Runtime reserves and Empty capacity switches in the fixture. | Focused acceptance passes; repair `dec71ae8`, NEXT `b94f3938` verified. |
+| `BTH061-AUDIT-OFFER-CACHE-001` | Initialize current lazy collaborators and initial authenticated room publication. | Focused acceptance passes; repair `dec71ae8`, NEXT `b94f3938` verified. |
+| `BTH061-AUDIT-SLOT-STATIC-001` | Resolve all nineteen stale audit expectations with precise current identities and hostile checks; keep runtime layout/authority bytes. | Focused acceptance passes; repair `dec71ae8`, NEXT `b94f3938` verified. |
 | `BTH061-AUDIT-VALIDATOR-001` | Repair internal preload aliases and current source/JSON contracts. | Repair `dec71ae8`; focused contracts pass, full validator remains Open. |
-| `BTH061-AUDIT-MOBILE-CONTRACT-001` | Replace obsolete direct HUD fields/responsive-policy assertions with current fixed-canvas popup contracts, retaining behavioral criteria. | Native five-case acceptance passes; `b3337406`, NEXT pending. |
-| `BTH061-AUDIT-BACKDROP-001` | Remove the closed obsolete external-game backdrop subsystem, preserving live backgrounds and old-state sanitization. | Removal `d641ce2d`, native acceptance passes; cold-import/NEXT pending. |
-| `BTH061-AUDIT-TOUCH-CANCEL-001` | Canceled native/emulated touch must not activate Continue, clock details or a Package action; current geometry/policy stay identical. | Native acceptance passes; `b3337406`, NEXT pending. |
-| `BTH061-AUDIT-POPUP-SCROLL-001` | Resolve current popup scroll/drag acceptance while retaining reachable actions, canceled/deliberate-touch criteria, focus and protected run state under the fixed canvas. | Native acceptance passes; `b3337406`, NEXT pending. |
+| `BTH061-AUDIT-MOBILE-CONTRACT-001` | Replace obsolete direct HUD fields/responsive-policy assertions with current fixed-canvas popup contracts, retaining behavioral criteria. | Native five-case acceptance passes; `b3337406`, NEXT `b94f3938` verified. |
+| `BTH061-AUDIT-BACKDROP-001` | Remove the closed obsolete external-game backdrop subsystem, preserving live backgrounds and old-state sanitization. | Removal `d641ce2d`, native acceptance passes; cold-import/NEXT `b94f3938` verified. |
+| `BTH061-AUDIT-TOUCH-CANCEL-001` | Canceled native/emulated touch must not activate Continue, clock details or a Package action; current geometry/policy stay identical. | Native acceptance passes; `b3337406`, NEXT `b94f3938` verified. |
+| `BTH061-AUDIT-POPUP-SCROLL-001` | Resolve current popup scroll/drag acceptance while retaining reachable actions, canceled/deliberate-touch criteria, focus and protected run state under the fixed canvas. | Native acceptance passes; `b3337406`, NEXT `b94f3938` verified. |
 | `BTH061-AUDIT-TUTORIAL-FIXTURE-001` | Investigate the inherited canonical tutorial full-fixture pin mismatch independently of the approved Blackjack definition-pin update; preserve the trusted full-fixture oracle. | Open; `NONE - OPEN`. |
 
 The fresh pre-repair fixtures fail on current source as well as the older
@@ -151,7 +151,34 @@ owned processes after release. Final parser and rotation receipts identify the
 exact final fixture SHA-256
 `3813149509bd298cf82dfe846fbc2c41d634874e453f6c67fc326ac1949c88e3`;
 the other four case receipts precede only that precise rotation-oracle repair.
-NEXT and exact cold-import acceptance remain pending.
+NEXT acceptance for this batch is recorded below.
+
+## Verified NEXT batch
+
+The existing watcher promoted
+`b94f39382c8e181014140ae2600f13eef63a60f5`, tree
+`f55e85c8e1bc1baa28ac7c5803c3287e1a4b3f02`, at
+2026-11-04 01:31:15 UTC. Its exact-input request covers nine removed backdrops
+and the two metadata files. The recorded cold qualification uses zero imported
+cache files/bytes and the normal serial importer/exporter and unchanged caps.
+Native/export guarded inputs are unchanged; the qualified native tuple is
+reused by the normal watcher.
+
+Served NEXT/BUILD/manifest/REF/VERSION, tree, redirect, pipeline metadata hashes,
+PCK audit/hash and four payload size/MIME checks pass. All nine backdrop source
+and imported texture identities are absent; all eleven current game icons and
+seventeen current scratch symbols remain. Fresh sandboxed Chromium startup
+reaches the visually reviewed correct-version menu with zero page or console
+errors and zero owned processes after closure. The restricted-token attempt
+stopped before navigation because its GPU-sandbox check failed; the normal host
+attempt preserved that check and passed. No browser protection or TLS check was
+disabled. Raw receipts are `evidence/next-identity-20261104-r2.json` and
+`evidence/next-startup-20261104-r3/` in the isolated task workspace.
+
+This qualifies the removal, four original fixture/check repairs and narrow
+input/fixture batch on NEXT. It does not claim a full tutorial playthrough,
+physical-phone or Web gesture acceptance, or a passing complete validator.
+The umbrella, author/migration and inherited tutorial follow-ups remain Open.
 
 The frozen cleanup candidate passes editor import and thirteen focused native
 stages: the three repaired baseline checks, all 75 layout contexts, Back Alley
