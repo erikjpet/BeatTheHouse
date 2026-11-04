@@ -177,6 +177,13 @@ func draw(surface, surface_state: Dictionary, definition: Dictionary) -> bool:
 	if str(surface_state.get("surface_renderer", "")) != "slot_machine":
 		return false
 	surface.surface_begin_design_space_inset(DESIGN_SIZE, Vector2.ZERO)
+	if bool(surface_state.get("slot_bonus_recovery_required", false)):
+		surface.draw_rect(Rect2(Vector2.ZERO, DESIGN_SIZE), Color("#04080f"))
+		surface.surface_label_centered("SAVED BONUS", Rect2(100, 150, 760, 50), 24, Color("#f8fafc"))
+		surface.surface_label_centered(str(surface_state.get("slot_bonus_recovery_message", "")), Rect2(60, 225, 840, 72), 17, Color("#f8fafc"))
+		surface.surface_label_centered("You can leave this machine and continue your run.", Rect2(100, 315, 760, 46), 15, Color("#9bd5ff"))
+		_draw_back_control(surface, Color("#ff4fb3"), Color("#35e0ff"))
+		return true
 	var skin: Dictionary = _read_dict(surface_state.get("slot_skin", {}))
 	var palette: Dictionary = _read_dict(skin.get("palette", {}))
 	var primary := Color(str(palette.get("primary", "#24112f")))
@@ -1149,6 +1156,8 @@ func _draw_feature_area(surface, state: Dictionary, definition: Dictionary, skin
 
 
 func _pinball_takeover_active(state: Dictionary) -> bool:
+	if bool(state.get("slot_bonus_recovery_required", false)):
+		return false
 	var active: Dictionary = _read_dict(state.get("slot_active_bonus", {}))
 	if active.is_empty() or not bool(active.get("active", false)):
 		return false
@@ -2702,10 +2711,8 @@ func _draw_controls(surface, state: Dictionary, skin: Dictionary, accent: Color,
 			else:
 				_draw_button(surface, Rect2(rect.position.x + 220, rect.position.y + 10, 220, 56), "FREE SPIN", "slot_bonus_launch", 0, light)
 			return
-		_draw_button(surface, Rect2(rect.position.x + 28, rect.position.y + 18, 132, 42), "LEFT", "slot_bonus_left", 0, accent)
-		_draw_button(surface, Rect2(rect.position.x + 190, rect.position.y + 10, 220, 56), "LAUNCH", "slot_bonus_launch", 0, light)
-		_draw_button(surface, Rect2(rect.position.x + 438, rect.position.y + 18, 132, 42), "RIGHT", "slot_bonus_right", 0, accent)
-		_draw_button(surface, Rect2(rect.position.x + 600, rect.position.y + 18, 132, 42), "TILT", "slot_bonus_tilt", 0, trim)
+		# Pinball owns its fullscreen native controls; unresolved records have
+		# already selected the noninteractive recovery surface.
 		return
 	var options: Array = _read_array(state.get("slot_bet_options", []))
 	var selected_id := str(state.get("slot_selected_bet_id", "bet_2"))

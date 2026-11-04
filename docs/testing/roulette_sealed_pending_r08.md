@@ -182,6 +182,14 @@ Manual reconciliation reports0 assigned-scope findings;54 existing findings
 across17 other tasks remain outside this investigation. Eight own Jobs have
 recorded closed/owned0 receipts; no original or shared runtime was cleaned up.
 
+Concurrent upstream Slot work was retained during integration. The merged
+registry has241 unique IDs (all240 upstream IDs plus this new R08 ID), with no
+loss or duplication. The investigation has no product-source delta from that
+upstream main; the native controls remain qualified at their recordedc54 base,
+and the Web control remains the exact retainedf305 runtime. An existing blank
+line at EOF in an upstream Slot file is outside this change; no unrelated
+product edit was made to alter it.
+
 Current task reconciliation checks both ledger views with the actual active
 owner snapshot and retained runtime snapshot. Registration check exit1 reports
 54 pre-existing/out-of-scope findings across17 other tasks, with0 findings for

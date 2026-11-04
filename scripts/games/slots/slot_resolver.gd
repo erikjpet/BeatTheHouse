@@ -8,6 +8,7 @@ const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const MathScript := preload("res://scripts/games/slots/slot_rng_math.gd")
 const StateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
+const BonusRecoveryScript := preload("res://scripts/games/slots/slot_bonus_recovery.gd")
 const PinballScript := preload("res://scripts/games/slots/slot_family_pinball.gd")
 const BuffaloScript := preload("res://scripts/games/slots/slot_family_buffalo.gd")
 
@@ -319,6 +320,12 @@ func resolve_bonus_action_owned(machine: Dictionary, action_id: String, rng: Rng
 
 
 func _resolve_bonus_action(machine: Dictionary, action_id: String, rng: RngStream, definition: Dictionary, environment: Dictionary, run_state: RunState, item_effects: Dictionary, ui_state: Dictionary, machine_is_owned: bool) -> Dictionary:
+	machine = BonusRecoveryScript.machine_view(machine, definition)
+	if BonusRecoveryScript.recovery_required(machine, definition):
+		var rejected := _zero_result(machine, action_id, environment, BonusRecoveryScript.recovery_message())
+		rejected["ok"] = false
+		rejected["host_apply_result"] = false
+		return {"machine": machine, "result": rejected}
 	machine = StateScript.normalize_owned(machine) if machine_is_owned else StateScript.normalize(machine)
 	var normalized_action := _normalize_bonus_action(action_id)
 	var active_before: Dictionary = JsonCoerceScript._copy_dict(machine.get("active_bonus", {}))

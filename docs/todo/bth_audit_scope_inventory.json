@@ -1524,6 +1524,36 @@
       ],
       "qualification_limits": "Focused native/report/parse checks pass; composed game and recovery suites remain failing with exact same ordered failures as originalff8 runtime and fixtures. No current full aggregate or NEXT delivery acceptance claimed.",
       "evidence": "docs/testing/deprecated_code_audit_continuation_004.md"
+    },
+    {
+      "phase": "005",
+      "parent_id": "BTH061-AUDIT-001",
+      "task_id": "BTH061-AUDIT-SLOT-LEGACY-FAMILY-004",
+      "base": "828f55c24e1edc47520ff83e214cd8542b74e1ba",
+      "source_commits": [
+        "b83d0909588b75a5f197326d4b18d631e7da1f62",
+        "4bf7b928eea0140d65e6711f7e22f84c9e25a27b"
+      ],
+      "scope": "Only reachable Slot missing-family recovery and qualified obsolete4buttonrow replacement; no whole-codebase semantic closure.",
+      "removed": "Exactly4obsoletePinball drawcalls after replacement/saves qualified.",
+      "qualification": {
+        "native_core_checks": 2025,
+        "postdelete_surface_checks": 1815,
+        "final_cold_writer_checks": 67,
+        "final_cold_reader_checks": 200,
+        "final_cold_cases": 9,
+        "existing_legacy_pending_checks": 134,
+        "animation_liveness": "pass",
+        "current_full_aggregate": "failed_closed_at_unchanged_time_budget_before_Godot",
+        "NEXT": "pending_existing_capacity_gate"
+      },
+      "retained_compatibility": [
+        "Canonical explicitfamily scalar/durable behavior",
+        "recordedRNG/awards/pendingdelivery/retry/cancel/rollback",
+        "incomplete/conflictingdata preserved through currentRecovery+Leave"
+      ],
+      "remaining": "All prior broad coverage gaps and5phase004baselinegroups remainOpen; new aggregate timeout follow-upOpen; item/scenario userpause preserved.",
+      "evidence": "docs/testing/slot_legacy_family_recovery.md"
     }
   ]
 }
