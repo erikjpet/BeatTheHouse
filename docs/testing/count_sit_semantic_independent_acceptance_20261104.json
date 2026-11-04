@@ -1,0 +1,166 @@
+{
+  "schema": "bth.count_sit_semantic_acceptance/v1",
+  "task_id": "BTH-COUNT-SIT-SEMANTIC-001",
+  "recorded_at": "2026-11-04T02:16:19.099184+00:00",
+  "result": "PASS_SCOPED_ORIGINAL_R06_WEB_SIT_SAVE_COLD_AND_NEXT",
+  "fix_commit": "01aaac3256f88634a7498e56497f9d63960f14ea",
+  "played_commit": "f2992a978de1c1f55b3e0d4eda47b107d2d69d86",
+  "played_tree": "96dd35d064529882c3106a0acfdc1c5b7b46fb01",
+  "manifest_sha256": "d9d945841435020284c9b7af456a121094206b2caa5a5930733957f835938412",
+  "source_ledger_before_acceptance": {
+    "repository": "erikjpet/BeatTheHouse",
+    "path": "docs/plans/0.6.1_stability_release_plan.md",
+    "blob_sha": "335375d6d1f948a040921038af935d470c3e76aa",
+    "row": "| BTH-COUNT-SIT-SEMANTIC-001 | Count live-table Sit rejects while room semantic rebuild is pending | - | Primary BTH implementation | Open | DEPLOYED_NEXT_NATIVE_PASS_ORIGINAL_R06_ACCEPTANCE_PENDING | 01aaac3256f88634a7498e56497f9d63960f14ea | Mounted heist package replacement required trusted finalization before event turn preflight. Synthetic active-scenario Sit reproduced the exact rejection before fix; fixed warm 12/12, fresh-process cold 3/3, and Count cycle 28/28 passed on a newer combined head. NEXT `2d62e3c04837d4ca3bc7158f1821abb2f2dd3afa` served at 2026-11-04T01:50:03Z with exact main/tree, PCK audit1164 and HTTP assets; code commit is its ancestor. Original R06 $163/23 chips/Heat27 save remains untouched; owner-run genuine Sit/Save/cold behavior without replay remains required before closure. |"
+  },
+  "independent_acceptance": {
+    "original_evidence_preserved": "R06 case044 failure evidence and all previous hand/grant histories; R07/R08 resident profiles and R08 zero-byte job unchanged",
+    "provenance": "Current pointer/REF/buildmanifest verified. Owner handoff names f299 as status successor carrying01aa; local D clone lacks new Git objects, so independent Git ancestry is not claimed. No deploy or production change by QA.",
+    "played_build": "f2992a978de1c1f55b3e0d4eda47b107d2d69d86",
+    "played_tree": "96dd35d064529882c3106a0acfdc1c5b7b46fb01",
+    "fix_code_commit": "01aaac3256f88634a7498e56497f9d63960f14ea",
+    "manifest_sha256": "d9d945841435020284c9b7af456a121094206b2caa5a5930733957f835938412",
+    "warm": {
+      "result": "Set the distraction, then play exactly one more $8–$30 blackjack hand before returning here.",
+      "semantic_error": false,
+      "cash": 163,
+      "heat": 33,
+      "chips": 23
+    },
+    "save": "Normal Menu Save once, then clean browser close",
+    "jobs": [
+      {
+        "case": "crew-r06-045-count-sit-fix-acceptance",
+        "browser_exit": 0,
+        "active_at_release": 0,
+        "completed": true,
+        "context_close_completed": true,
+        "page_errors": 0,
+        "commands": 4,
+        "initial_pages_blank": true,
+        "initial_page_count": 1,
+        "job_bytes": 21313
+      },
+      {
+        "case": "crew-r06-046-count-sit-cold-proof",
+        "browser_exit": 0,
+        "active_at_release": 0,
+        "completed": true,
+        "context_close_completed": true,
+        "page_errors": 0,
+        "commands": 2,
+        "initial_pages_blank": true,
+        "initial_page_count": 1,
+        "job_bytes": 10814
+      }
+    ],
+    "remaining": [
+      "Fresh R06 ending still pending: hand2 after Sit, then ordinary exit decision/hand3/getaway. Previously paid8 loss before Sit remains preserved and is not Count round2. No pacing or new ending claim.",
+      "R08 custody recovery still pending: zero-byte original job/counter not fabricated; source-supported cleanup diagnosis retained.",
+      "R07 cold proves no delivery/payout committed; underlying callback dispatch cause still unproved."
+    ],
+    "result": "PASS original resident R06 warm action, normal Save and fresh cold persistence",
+    "pre": {
+      "prompt": "Next: choose Sit or Dump",
+      "cash": 163,
+      "heat": 27,
+      "displayed_clock": "Day4 02:15",
+      "chips": 23
+    },
+    "resource_limits": "12percentCPU/2GiB; unchanged300scontroller/270sbrowser; sandbox enabled",
+    "profile": "original crew-fresh-r06 resident profile at127.0.0.1:8089; no copy/export/import",
+    "qa_receipt_writer": {
+      "scope": "New own R06 f299 QA launcher only; old launchers and R08 failed receipt/custody unchanged",
+      "runtime": "Both actual sessions emitted and persisted actual active_at_release0, exit0 and clean custody",
+      "checks": "2/2 synthetic QA metadata cases in crew-atomic-receipt-writer-check-002/result.json; first attempt retained after wrong expected partial-string test literal, not writer failure",
+      "change": "same-directory pending write/flush/fsync thenreplace for job/custody; actual cleanup summary to console before finaldiskwrite"
+    },
+    "issue": "BTH-COUNT-SIT-SEMANTIC-001",
+    "cold": {
+      "cash": 163,
+      "wager": false,
+      "grant_replayed": false,
+      "save": false,
+      "prompt": "Next: play blackjack hand 2 of 3",
+      "repeated_sit": false,
+      "chips": 23,
+      "choice": "Go play one blackjack hand",
+      "heat": 33
+    },
+    "action": "One visible Sit at990,603 after Menu Resume250ms. No repeated prior grant, hand, stake or travel.",
+    "browser_source_sha256": "a1814bec01df794282ae95aa59af92418e8ce69b914a386907e5c51dc57a7538"
+  },
+  "source_files": [
+    {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-10-27\\task\\evidence\\crew-count-sit-f299-independent-acceptance.json",
+      "sha256": "91817edc1076b6068ad75efe472c0d7afb35080d66740206494063c23b2e2dcc"
+    },
+    {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-10-27\\task\\evidence\\crew-r06-count-sit-semantic-rejection-handoff.md",
+      "sha256": "df2c5c75c36b28e95d00b0e5750c67bbdda75b21165ddefb40a1953700205a98"
+    },
+    {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-10-27\\task\\evidence\\crew-r06-045-count-sit-fix-acceptance\\job.json",
+      "sha256": "440bd64e0dc0dd24d1955eab6d8d2857d32c43f7818f932eb47322afc7491aae"
+    },
+    {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-10-27\\task\\evidence\\crew-r06-045-count-sit-fix-acceptance\\state.json",
+      "sha256": "5973ea1a5e12537aa04cb9e2da1a100c4df93865c627b288ddfc8265a7818be5"
+    },
+    {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-10-27\\task\\evidence\\crew-r06-046-count-sit-cold-proof\\job.json",
+      "sha256": "06000966482b04a195905a4f38ff8da1f3658b7f3bd67eada55c845cc3bfdfae"
+    },
+    {
+      "path": "C:\\Users\\theep\\Documents\\Codex\\2026-10-27\\task\\evidence\\crew-r06-046-count-sit-cold-proof\\state.json",
+      "sha256": "19331dfcc8efef8c5d9d8d189c668fc81f073296b3976c948062fbf648e77973"
+    }
+  ],
+  "git_identity_and_ancestry": {
+    "task_id": "BTH-COUNT-SIT-SEMANTIC-001",
+    "verified_via": "GitHub authorized read-only commit/compare APIs",
+    "fix_commit": "01aaac3256f88634a7498e56497f9d63960f14ea",
+    "played_commit": "f2992a978de1c1f55b3e0d4eda47b107d2d69d86",
+    "played_tree": "96dd35d064529882c3106a0acfdc1c5b7b46fb01",
+    "status": "ahead",
+    "ahead_by": 3,
+    "behind_by": 0,
+    "merge_base": "01aaac3256f88634a7498e56497f9d63960f14ea",
+    "changed_files_since_fix": [
+      "docs/plans/0.6.1_stability_release_plan.md",
+      "docs/testing/pull_tab_grand_save_boundary.md",
+      "tools/web_save_durability_bridge_check.cjs"
+    ],
+    "source": "https://github.com/erikjpet/BeatTheHouse/compare/01aaac3256f88634a7498e56497f9d63960f14ea...f2992a978de1c1f55b3e0d4eda47b107d2d69d86"
+  },
+  "served_metadata_review": {
+    "review": "Independent collaborator read normal maintained immutable HTTP metadata; source QA job/state receipts were inspected and screenshots visually reviewed.",
+    "REF": {
+      "status": 200,
+      "content": "f2992a978de1c1f55b3e0d4eda47b107d2d69d86"
+    },
+    "BUILD.json": {
+      "status": 200,
+      "source_commit": "f2992a978de1c1f55b3e0d4eda47b107d2d69d86",
+      "source_tree": "96dd35d064529882c3106a0acfdc1c5b7b46fb01",
+      "version": "0.6.0-dev+f2992a978de1"
+    },
+    "build_manifest.json": {
+      "status": 200,
+      "sha256": "d9d945841435020284c9b7af456a121094206b2caa5a5930733957f835938412",
+      "matches_both_jobs": true
+    },
+    "recorded_payloads": "Both state.json receipts record HTML, JS, PCK, index.wasm, index.side.wasm and native nothreads WASM responses200 in ordinary Chromium153 at1280x720."
+  },
+  "closure_scope": "Count live-table Sit semantic rejection, legitimate single action, normal Save and separate-browser cold persistence in original retained R06.",
+  "remaining_separate_scope": [
+    "Fresh R06 ending still pending: hand2 after Sit, then ordinary exit decision/hand3/getaway. Previously paid8 loss before Sit remains preserved and is not Count round2. No pacing or new ending claim.",
+    "R08 custody recovery still pending: zero-byte original job/counter not fabricated; source-supported cleanup diagnosis retained.",
+    "R07 cold proves no delivery/payout committed; underlying callback dispatch cause still unproved."
+  ],
+  "prior_failure_and_financial_history_preserved": true,
+  "item_scenario_pause_unchanged": true,
+  "runtime_started_by_this_review": false,
+  "publication_retried": false,
+  "local_metadata_record_only": true
+}

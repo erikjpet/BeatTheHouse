@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T02:09:36.494218+00:00",
+  "updated_at": "2026-11-04T02:16:19.099184+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -15644,6 +15644,127 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-04T02:09:36.494218+00:00"
+    },
+    {
+      "id": "BTH-COUNT-SIT-SEMANTIC-001",
+      "name": "Count live-table Sit rejects while room semantic rebuild is pending",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Allow the mounted Count live-table Sit decision to finish its trusted room semantic rebuild before event-turn preflight, preserving strict validation, rollback, legitimate action/finance history, normal Save and genuine original-R06 cold continuation.",
+        "source": "docs/testing/count_sit_semantic_independent_acceptance_20261104.json",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "focused_fix",
+            "description": "Verified source fix preserves strict semantic validation and rollback; recorded native reproduction/regressions pass warm12, fresh-cold3 and Count-cycle28.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/count_sit_semantic_independent_acceptance_20261104.json"
+            ]
+          },
+          {
+            "id": "genuine_original_r06",
+            "description": "Original resident R06 ordinary Web cold prestate passes exactly one visible Sit without semantic rejection or finance replay.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/count_sit_semantic_independent_acceptance_20261104.json"
+            ]
+          },
+          {
+            "id": "official_save_and_cold",
+            "description": "Normal Menu Save once followed by fresh-browser cold Continue preserves accepted Sit and legitimate hand2 prompt without repeated Sit/wager/grant/Save.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/count_sit_semantic_independent_acceptance_20261104.json"
+            ]
+          },
+          {
+            "id": "next_identity",
+            "description": "Full f299 immutable served commit/tree/manifest match both Web jobs and verified GitHub tree/ancestry includes fix01aa.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/count_sit_semantic_independent_acceptance_20261104.json"
+            ]
+          },
+          {
+            "id": "qa_custody",
+            "description": "Both independent QA browser jobs close cleanly with zero page errors and active_at_release0.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/count_sit_semantic_independent_acceptance_20261104.json"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "complete",
+      "status": "VERIFIED_ORIGINAL_R06_WEB_SIT_SAVE_COLD_AND_NEXT",
+      "owner": {
+        "name": "Primary BTH implementation",
+        "task_ref": "01a16736-0a2f-7668-8ad8-a6074981c01e",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "01aaac3256f88634a7498e56497f9d63960f14ea",
+          "evidence": [
+            "https://github.com/erikjpet/BeatTheHouse/commit/01aaac3256f88634a7498e56497f9d63960f14ea",
+            "docs/testing/count_sit_semantic_independent_acceptance_20261104.json"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "verified",
+        "commit": "f2992a978de1c1f55b3e0d4eda47b107d2d69d86",
+        "evidence": [
+          "docs/testing/count_sit_semantic_independent_acceptance_20261104.json"
+        ],
+        "scope": "Actual original-R06 ordinary Chromium NEXT interaction, Save and separate-browser cold continuation; exact served identity and fix ancestry verified."
+      },
+      "evidence": [
+        {
+          "kind": "independent_original_web_acceptance",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-10-27\\task\\evidence\\crew-count-sit-f299-independent-acceptance.json",
+          "summary": "Receipt SHA25691817edc1076b6068ad75efe472c0d7afb35080d66740206494063c23b2e2dcc; originalR06 oneSit, officialSave and freshcold pass."
+        },
+        {
+          "kind": "original_failure",
+          "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-10-27\\task\\evidence\\crew-r06-count-sit-semantic-rejection-handoff.md",
+          "summary": "Original case044 semantic rejection and prior histories preserved."
+        },
+        {
+          "kind": "closure_review",
+          "reference": "docs/testing/count_sit_semantic_independent_acceptance_20261104.json",
+          "summary": "Commit, independent original-state acceptance, served identity/ancestry and cleanup gates pass for this defect only."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "None within this accepted Sit semantic-rejection defect. Remaining R06 hands/getaway/ending and R07/R08 issues retain their separate existing QA scope; item/scenario implementation stays paused.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T02:16:19.099184+00:00",
+        "evidence": [
+          "docs/testing/count_sit_semantic_independent_acceptance_20261104.json"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T02:16:19.099184+00:00"
     }
   ],
   "batches": [

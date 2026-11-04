@@ -1,7 +1,7 @@
 {
   "schema": "bth.task_reconciliation/v1",
-  "checked_at": "2026-11-04T02:09:37.935020Z",
-  "ledger_updated_at": "2026-11-04T02:09:36.494218+00:00",
+  "checked_at": "2026-11-04T02:16:47.513060Z",
+  "ledger_updated_at": "2026-11-04T02:16:19.099184+00:00",
   "group": "current",
   "owner_snapshot_supplied": true,
   "runtime_inventory_supplied": true,
@@ -87,15 +87,15 @@
   ],
   "git_verification_requested": false,
   "markdown_checked": true,
-  "markdown_rows_checked": 196,
+  "markdown_rows_checked": 197,
   "freshness_limit_hours": 24,
   "summary": {
-    "objectives_checked": 46,
+    "objectives_checked": 47,
     "batches_checked": 4,
     "open_objectives": 37,
     "open_batches": 3,
     "open_work_items": 40,
-    "complete_objectives": 9,
+    "complete_objectives": 10,
     "errors": 46,
     "warnings": 0,
     "tasks_with_errors": 9
