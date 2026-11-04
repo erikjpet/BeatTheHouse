@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T18:03:04.268399+00:00",
+  "updated_at": "2026-11-04T19:55:26.505512+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -517,7 +517,7 @@
       ],
       "group": "current",
       "objective": {
-        "text": "Video Poker cold strategy-hint cost. Generated3hands show1.17–1.33s cold versus17–40us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain.",
+        "text": "Video Poker cold strategy-hint cost. Generated3hands show1.17\u20131.33s cold versus17\u201340us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain.",
         "source": "docs/plans/performance_audit_2026-11-04.md",
         "scope_confirmed": true,
         "acceptance": [
@@ -576,7 +576,7 @@
         {
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-          "summary": "Generated3hands show1.17–1.33s cold versus17–40us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain."
+          "summary": "Generated3hands show1.17\u20131.33s cold versus17\u201340us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain."
         }
       ],
       "implementation_batches": [],
@@ -5037,13 +5037,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop → Main Menu → Continue → full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
+        "text": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop \u2192 Main Menu \u2192 Continue \u2192 full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
         "source": "docs/plans/0.6.1_stability_release_plan.md#prioritized-task-list",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop → Main Menu → Continue → full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
+            "description": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop \u2192 Main Menu \u2192 Continue \u2192 full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
             "required": true,
             "state": "unknown",
             "evidence": [
@@ -5254,13 +5254,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3–5, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
+        "text": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3\u20135, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
         "source": "docs/plans/0.6.1_stability_release_plan.md#prioritized-task-list",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3–5, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
+            "description": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3\u20135, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
             "required": true,
             "state": "unknown",
             "evidence": [
@@ -13563,13 +13563,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Band free listen once:177cash,Heat2→1; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
+        "text": "Band free listen once:177cash,Heat2\u21921; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
         "source": "C:\\Users\\theep\\Documents\\Codex\\2026-10-23\\task-2\\evidence\\named-fix-acceptance-registry-current.json#$.pending_named_acceptance_followups.9",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Band free listen once:177cash,Heat2→1; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
+            "description": "Band free listen once:177cash,Heat2\u21921; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
             "required": true,
             "state": "pass",
             "evidence": [
@@ -18647,9 +18647,9 @@
             "id": "authority-and-replacement",
             "description": "Equivalent missing/empty/conflicting identity states prove authoritative upgrade or current recovery and no legacy control row remains; preserve current Pinball/Buffalo state, RNG and awards.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_004.md"
+              "docs/testing/slot_legacy_family_recovery.md"
             ]
           },
           {
@@ -18667,39 +18667,72 @@
         }
       },
       "state": "open",
-      "status": "REACHABLE_LEGACY_PATH_AUTHORITY_REVIEW_OPEN",
+      "status": "NATIVE_RECOVERY_AND_OBSOLETE_ROW_REMOVAL_COMMITTED_NEXT_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "b83d0909588b75a5f197326d4b18d631e7da1f62",
+          "evidence": [
+            "docs/testing/slot_legacy_family_recovery.md"
+          ]
+        },
+        {
+          "sha": "4bf7b928eea0140d65e6711f7e22f84c9e25a27b",
+          "evidence": [
+            "docs/testing/slot_legacy_family_recovery.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
         "commit": null,
         "evidence": [],
-        "scope": "No implementation, removal commit or delivery yet."
+        "scope": "Qualified source fixes committed locally. Main publication and exact NEXT delivery pending; aggregate timeout remains separately Open."
       },
       "evidence": [
         {
           "kind": "reachable_legacy_presentation",
           "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
           "summary": "Already-v2 pinball machine with active/incomplete bonus and explicitly empty family bypasses native Pinball takeover, reaches legacy four-button controls and conflicts with strict resolver family rejection. A missing family normalizes to empty; raw unnormalized missing-key rendering differs. No player-save provenance or safe blind rehydration is claimed."
+        },
+        {
+          "kind": "resumed_authorized_investigation",
+          "reference": "docs/testing/slot_legacy_family_recovery.md",
+          "summary": "Parent explicitly directs authority-preserving state recovery and regression coverage; retain old row until replacement and saves qualify. Current baseline828f55c2; no new source changes or qualification yet."
+        },
+        {
+          "kind": "uncommitted_replacement_checkpoint",
+          "reference": "docs/testing/slot_legacy_family_recovery.md",
+          "summary": "Exact828 baseline real51failures/340checks retained. Current nativeSurface1152checks pass (all98hits,15actualdraws), independent-processCold writer67/reader200checks pass9cases withdistinctPIDs/cache0/exactsolver+RNG/newclock. Replacement and pending-write guards uncommitted; oldrow deliberately retained. Pending test failures also occur forcanonicalfixture; exactcontext diagnostics preserved, not reported green. No new source publication or fullaggregate/Webacceptance."
+        },
+        {
+          "kind": "qualified_replacement_before_row_removal",
+          "reference": "docs/testing/slot_legacy_family_recovery.md",
+          "summary": "Replacement committed b83d0909 with oldrow retained. Core2025, actualSurface1815, separateprocessCold267/9saves, legacyPending134 and animation pass; recorded receipt before deletion. Exactly4old drawcalls now removed; maintainedpostdeleteSurface validation active. Officialr2 validator failed environment Get-FileHash beforeSurface, retained. No aggregate/Web pass claimed."
+        },
+        {
+          "kind": "post_deletion_and_final_source_cold_acceptance",
+          "reference": "docs/testing/slot_legacy_family_recovery.md",
+          "summary": "Core2025, postdeleteSurface1815, exactfinalSourceCold67+200/9saves, existingLegacy134 and animation PASS. Removed4drawcalls only after priorqualification;127physics methods unchanged. Maintainedentrypoint stops beforeGodot at unchanged validateProject403.094s/402.018s budget; separateBTH061-AUDIT-AGGREGATE-TIME-BUDGET-005 retains guard failure. No fullaggregate/NEXT/browser acceptance."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Finish canonical legacy identity/durable checkpoint authority classification using equivalent states, then implement and qualify upgrade/recovery before deleting the reachable fallback. Do not infer a default physics seed/session or wait for a vanished personal save.",
+      "next_action": "Integrate and publish tested source commits preserving concurrent main, then observe exact existing NEXT watcher admission. Keep delivery open until actual deployment/assets/behavior qualify; profile aggregate timeout under its separate stable task without weakening guards.",
       "blocker": {
         "state": "none",
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:47:19.676244+00:00",
+        "observed_at": "2026-11-04T19:55:26.505512+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T17:47:19.676244+00:00"
+      "updated_at": "2026-11-04T19:55:26.505512+00:00"
     },
     {
       "id": "BTH061-AUDIT-BLACKJACK-BASELINE-004",
@@ -19025,6 +19058,80 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-04T17:53:05.677951+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005",
+      "name": "Qualify current aggregate validation within its unchanged time guard",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Attribute the current maintained validate_project time-budget failure, preserving every guard, assertion and owned-job boundary. Establish whether environment/load or substantive code/test work causes the overrun; profile owned stages and qualify the complete entry point under its unchanged admitted budget. Do not treat independent focused checks or historical aggregate passes as a current full pass.",
+        "source": "Current official-surface-r3 exact retained summary; parent directs continued audit and aggregate evidence without weakening guards or stopping workers.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "timeout-attribution",
+            "description": "Profile the owned failing invocation and establish its factual cause without stopping other workers or weakening guard budgets.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/slot_legacy_family_recovery.md"
+            ]
+          },
+          {
+            "id": "unchanged-guard-full-pass",
+            "description": "A fresh complete maintained entry point passes under unchanged time/resource/assertion guards, or a concrete remaining blocker is recorded.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CURRENT_VALIDATE_PROJECT_TIME_GUARD_FAILURE_OPEN",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Read-only profiling/acceptance follow-up; no new source repair exists."
+      },
+      "evidence": [
+        {
+          "kind": "bounded_maintained_stage_failure",
+          "reference": "docs/testing/slot_legacy_family_recovery.md",
+          "summary": "Clean WinPS5/shortTEMP officialSurface-r3 exits124 at validateProject403.094s vs402.018s. No Godot/focused stage ran. Entire owned Job closed0active. Prior Get-FileHash environment failure retained separately; historical phase003 fullpass not relabeled."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Profile retained owned-stage evidence and make any authorized scoped repair concrete under unchanged guards; run a fresh full entry point only when new evidence justifies it. Independent tested Slot fix proceeds with its explicit aggregate qualification limit.",
+      "blocker": {
+        "state": "active",
+        "kind": "maintained_stage_time_guard",
+        "description": "The maintained aggregate invocation times out before Godot at403.094seconds against402.018second limit. The cause is not yet attributed; independent focused native acceptance passes.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T19:55:26.505512+00:00",
+        "evidence": [
+          "docs/testing/slot_legacy_family_recovery.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T19:55:26.505512+00:00"
     }
   ],
   "batches": [
