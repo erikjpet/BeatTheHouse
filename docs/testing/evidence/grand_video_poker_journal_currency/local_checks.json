@@ -1,0 +1,703 @@
+{
+  "id": "GRAND-VIDEO-POKER-NEW-UNIT-001",
+  "base": "66cd97dd18c78350b0194f824186772b30039938",
+  "baseline_video_poker_sha256": "2bc66f3f250829a094c9b6964d7c50744a4654b995cb1d48a189ff5a4052bd82",
+  "fixed_video_poker_sha256": "fdcb59a4744f398dc57c5170607f93213c147112e38a6740b5eb67d59a0f25d7",
+  "checks": [
+    {
+      "label": "baseline-chips-r2",
+      "receipt": {
+        "label": "baseline-chips-r2",
+        "args": [
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--headless",
+          "--audio-driver",
+          "Dummy",
+          "--path",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-21\\source",
+          "--script",
+          "res://scripts/tests/video_poker_journal_currency_check.gd",
+          "--",
+          "--matrix-only"
+        ],
+        "timeout_seconds": 150,
+        "worker_kind": "isolated-native",
+        "started_utc": "2026-11-03T19:30:34.030452-06:00",
+        "private_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-21\\private-runtime\\baseline-r2",
+        "error": null,
+        "video_poker_sha256": "2bc66f3f250829a094c9b6964d7c50744a4654b995cb1d48a189ff5a4052bd82",
+        "script_sha256": "61162e9b8e6b607d84ccf9cec3dd80c920c81e1d2b5a7ded56952888647b2a2b",
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "pid": 26996,
+        "assigned_before_execution": true,
+        "timed_out": false,
+        "exit_code": 1,
+        "peak_job_memory_bytes": 673218560,
+        "active_at_release": 0,
+        "cpu_seconds": 13.953125,
+        "finished_utc": "2026-11-03T19:30:50.155783-06:00"
+      },
+      "target_sha256": "a3a825b59548f40def2d48779346caf6e54d3e2c8c6221865ccd6bcb1a17a227",
+      "checks": 86,
+      "failures": [
+        "synthetic draw win records current action currency and net including zero",
+        "synthetic draw win journal shows one correct account and amount",
+        "synthetic draw lose records current action currency and net including zero",
+        "synthetic draw lose journal shows one correct account and amount",
+        "synthetic draw push records current action currency and net including zero",
+        "synthetic draw push journal shows one correct account and amount",
+        "synthetic double_up win records current action currency and net including zero",
+        "synthetic double_up win journal shows one correct account and amount",
+        "synthetic double_up lose records current action currency and net including zero",
+        "synthetic double_up lose journal shows one correct account and amount",
+        "synthetic double_up push records current action currency and net including zero",
+        "synthetic double_up push journal shows one correct account and amount"
+      ],
+      "matrix": [
+        {
+          "action": "draw",
+          "cash": 92,
+          "chips": 19,
+          "currency": "chips",
+          "expected_delta": 1,
+          "outcome": "win",
+          "slot": "vp_journal_chips_draw_win"
+        },
+        {
+          "action": "draw",
+          "cash": 92,
+          "chips": 17,
+          "currency": "chips",
+          "expected_delta": -1,
+          "outcome": "lose",
+          "slot": "vp_journal_chips_draw_lose"
+        },
+        {
+          "action": "draw",
+          "cash": 92,
+          "chips": 18,
+          "currency": "chips",
+          "expected_delta": 0,
+          "outcome": "push",
+          "slot": "vp_journal_chips_draw_push"
+        },
+        {
+          "action": "double_up",
+          "cash": 92,
+          "chips": 23,
+          "currency": "chips",
+          "expected_delta": 5,
+          "outcome": "win",
+          "slot": "vp_journal_chips_double_up_win"
+        },
+        {
+          "action": "double_up",
+          "cash": 92,
+          "chips": 13,
+          "currency": "chips",
+          "expected_delta": -5,
+          "outcome": "lose",
+          "slot": "vp_journal_chips_double_up_lose"
+        },
+        {
+          "action": "double_up",
+          "cash": 92,
+          "chips": 18,
+          "currency": "chips",
+          "expected_delta": 0,
+          "outcome": "push",
+          "slot": "vp_journal_chips_double_up_push"
+        }
+      ],
+      "host_draws": [],
+      "cold": []
+    },
+    {
+      "label": "fixed-chips",
+      "receipt": {
+        "label": "fixed-chips",
+        "args": [
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--headless",
+          "--audio-driver",
+          "Dummy",
+          "--path",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-21\\source",
+          "--script",
+          "res://scripts/tests/video_poker_journal_currency_check.gd"
+        ],
+        "timeout_seconds": 240,
+        "worker_kind": "isolated-native",
+        "started_utc": "2026-11-03T19:31:02.371581-06:00",
+        "private_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-21\\private-runtime\\chips",
+        "error": null,
+        "video_poker_sha256": "fdcb59a4744f398dc57c5170607f93213c147112e38a6740b5eb67d59a0f25d7",
+        "script_sha256": "61162e9b8e6b607d84ccf9cec3dd80c920c81e1d2b5a7ded56952888647b2a2b",
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "pid": 39140,
+        "assigned_before_execution": true,
+        "timed_out": false,
+        "exit_code": 0,
+        "peak_job_memory_bytes": 673538048,
+        "active_at_release": 0,
+        "cpu_seconds": 18.90625,
+        "finished_utc": "2026-11-03T19:31:21.979589-06:00"
+      },
+      "target_sha256": "41be453ecdb3c01a340ab01a6fe78e4797da77348cd65f5ceb27d3f8527513fe",
+      "checks": 130,
+      "failures": [],
+      "matrix": [
+        {
+          "action": "draw",
+          "cash": 92,
+          "chips": 19,
+          "currency": "chips",
+          "expected_delta": 1,
+          "outcome": "win",
+          "slot": "vp_journal_chips_draw_win"
+        },
+        {
+          "action": "draw",
+          "cash": 92,
+          "chips": 17,
+          "currency": "chips",
+          "expected_delta": -1,
+          "outcome": "lose",
+          "slot": "vp_journal_chips_draw_lose"
+        },
+        {
+          "action": "draw",
+          "cash": 92,
+          "chips": 18,
+          "currency": "chips",
+          "expected_delta": 0,
+          "outcome": "push",
+          "slot": "vp_journal_chips_draw_push"
+        },
+        {
+          "action": "double_up",
+          "cash": 92,
+          "chips": 23,
+          "currency": "chips",
+          "expected_delta": 5,
+          "outcome": "win",
+          "slot": "vp_journal_chips_double_up_win"
+        },
+        {
+          "action": "double_up",
+          "cash": 92,
+          "chips": 13,
+          "currency": "chips",
+          "expected_delta": -5,
+          "outcome": "lose",
+          "slot": "vp_journal_chips_double_up_lose"
+        },
+        {
+          "action": "double_up",
+          "cash": 92,
+          "chips": 18,
+          "currency": "chips",
+          "expected_delta": 0,
+          "outcome": "push",
+          "slot": "vp_journal_chips_double_up_push"
+        }
+      ],
+      "host_draws": [
+        {
+          "round": 0,
+          "currency": "chips",
+          "delta": -2,
+          "sealed": true
+        },
+        {
+          "round": 1,
+          "currency": "chips",
+          "delta": 2,
+          "sealed": true
+        },
+        {
+          "round": 2,
+          "currency": "chips",
+          "delta": 2,
+          "sealed": true
+        },
+        {
+          "round": 3,
+          "currency": "chips",
+          "delta": -2,
+          "sealed": true
+        },
+        {
+          "round": 4,
+          "currency": "chips",
+          "delta": -2,
+          "sealed": true
+        },
+        {
+          "round": 5,
+          "currency": "chips",
+          "delta": -2,
+          "sealed": true
+        }
+      ],
+      "cold": []
+    },
+    {
+      "label": "fixed-chips-cold",
+      "receipt": {
+        "label": "fixed-chips-cold",
+        "args": [
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--headless",
+          "--audio-driver",
+          "Dummy",
+          "--path",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-21\\source",
+          "--script",
+          "res://scripts/tests/video_poker_journal_currency_check.gd",
+          "--",
+          "--cold"
+        ],
+        "timeout_seconds": 120,
+        "worker_kind": "isolated-native",
+        "started_utc": "2026-11-03T19:31:41.977372-06:00",
+        "private_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-21\\private-runtime\\chips",
+        "error": null,
+        "video_poker_sha256": "fdcb59a4744f398dc57c5170607f93213c147112e38a6740b5eb67d59a0f25d7",
+        "script_sha256": "61162e9b8e6b607d84ccf9cec3dd80c920c81e1d2b5a7ded56952888647b2a2b",
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "pid": 33832,
+        "assigned_before_execution": true,
+        "timed_out": false,
+        "exit_code": 0,
+        "peak_job_memory_bytes": 674263040,
+        "active_at_release": 0,
+        "cpu_seconds": 16.15625,
+        "finished_utc": "2026-11-03T19:31:58.734285-06:00"
+      },
+      "target_sha256": "effd92ce1a2ee3d0a1b953674367a560f5c4dbe6225608ef47ad8054c4de8398",
+      "checks": 28,
+      "failures": [],
+      "matrix": [],
+      "host_draws": [],
+      "cold": [
+        {
+          "cash": 92,
+          "chips": 19,
+          "lines": [
+            [
+              "Recorded change -7 (currency not recorded)"
+            ],
+            [
+              "Chips +1"
+            ]
+          ],
+          "slot": "vp_journal_chips_draw_win"
+        },
+        {
+          "cash": 92,
+          "chips": 17,
+          "lines": [
+            [
+              "Recorded change -7 (currency not recorded)"
+            ],
+            [
+              "Chips -1"
+            ]
+          ],
+          "slot": "vp_journal_chips_draw_lose"
+        },
+        {
+          "cash": 92,
+          "chips": 18,
+          "lines": [
+            [
+              "Recorded change -7 (currency not recorded)"
+            ],
+            [
+              "Chips +0"
+            ]
+          ],
+          "slot": "vp_journal_chips_draw_push"
+        },
+        {
+          "cash": 92,
+          "chips": 23,
+          "lines": [
+            [
+              "Recorded change -7 (currency not recorded)"
+            ],
+            [
+              "Chips +5"
+            ]
+          ],
+          "slot": "vp_journal_chips_double_up_win"
+        },
+        {
+          "cash": 92,
+          "chips": 13,
+          "lines": [
+            [
+              "Recorded change -7 (currency not recorded)"
+            ],
+            [
+              "Chips -5"
+            ]
+          ],
+          "slot": "vp_journal_chips_double_up_lose"
+        },
+        {
+          "cash": 92,
+          "chips": 18,
+          "lines": [
+            [
+              "Recorded change -7 (currency not recorded)"
+            ],
+            [
+              "Chips +0"
+            ]
+          ],
+          "slot": "vp_journal_chips_double_up_push"
+        }
+      ]
+    },
+    {
+      "label": "fixed-cash",
+      "receipt": {
+        "label": "fixed-cash",
+        "args": [
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--headless",
+          "--audio-driver",
+          "Dummy",
+          "--path",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-21\\source",
+          "--script",
+          "res://scripts/tests/video_poker_journal_currency_check.gd",
+          "--",
+          "--cash"
+        ],
+        "timeout_seconds": 240,
+        "worker_kind": "isolated-native",
+        "started_utc": "2026-11-03T19:31:58.857806-06:00",
+        "private_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-21\\private-runtime\\cash",
+        "error": null,
+        "video_poker_sha256": "fdcb59a4744f398dc57c5170607f93213c147112e38a6740b5eb67d59a0f25d7",
+        "script_sha256": "61162e9b8e6b607d84ccf9cec3dd80c920c81e1d2b5a7ded56952888647b2a2b",
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "pid": 18440,
+        "assigned_before_execution": true,
+        "timed_out": false,
+        "exit_code": 0,
+        "peak_job_memory_bytes": 672202752,
+        "active_at_release": 0,
+        "cpu_seconds": 25.84375,
+        "finished_utc": "2026-11-03T19:32:28.978608-06:00"
+      },
+      "target_sha256": "089c6a9c4329238572feee74a787a015857454bf768fca75427377aa7a5c2c5a",
+      "checks": 130,
+      "failures": [],
+      "matrix": [
+        {
+          "action": "draw",
+          "cash": 93,
+          "chips": 18,
+          "currency": "cash",
+          "expected_delta": 1,
+          "outcome": "win",
+          "slot": "vp_journal_cash_draw_win"
+        },
+        {
+          "action": "draw",
+          "cash": 91,
+          "chips": 18,
+          "currency": "cash",
+          "expected_delta": -1,
+          "outcome": "lose",
+          "slot": "vp_journal_cash_draw_lose"
+        },
+        {
+          "action": "draw",
+          "cash": 92,
+          "chips": 18,
+          "currency": "cash",
+          "expected_delta": 0,
+          "outcome": "push",
+          "slot": "vp_journal_cash_draw_push"
+        },
+        {
+          "action": "double_up",
+          "cash": 97,
+          "chips": 18,
+          "currency": "cash",
+          "expected_delta": 5,
+          "outcome": "win",
+          "slot": "vp_journal_cash_double_up_win"
+        },
+        {
+          "action": "double_up",
+          "cash": 87,
+          "chips": 18,
+          "currency": "cash",
+          "expected_delta": -5,
+          "outcome": "lose",
+          "slot": "vp_journal_cash_double_up_lose"
+        },
+        {
+          "action": "double_up",
+          "cash": 92,
+          "chips": 18,
+          "currency": "cash",
+          "expected_delta": 0,
+          "outcome": "push",
+          "slot": "vp_journal_cash_double_up_push"
+        }
+      ],
+      "host_draws": [
+        {
+          "round": 0,
+          "currency": "cash",
+          "delta": -2,
+          "sealed": true
+        },
+        {
+          "round": 1,
+          "currency": "cash",
+          "delta": 2,
+          "sealed": true
+        },
+        {
+          "round": 2,
+          "currency": "cash",
+          "delta": 2,
+          "sealed": true
+        },
+        {
+          "round": 3,
+          "currency": "cash",
+          "delta": -2,
+          "sealed": true
+        },
+        {
+          "round": 4,
+          "currency": "cash",
+          "delta": -2,
+          "sealed": true
+        },
+        {
+          "round": 5,
+          "currency": "cash",
+          "delta": -2,
+          "sealed": true
+        }
+      ],
+      "cold": []
+    },
+    {
+      "label": "fixed-cash-cold",
+      "receipt": {
+        "label": "fixed-cash-cold",
+        "args": [
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--headless",
+          "--audio-driver",
+          "Dummy",
+          "--path",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-21\\source",
+          "--script",
+          "res://scripts/tests/video_poker_journal_currency_check.gd",
+          "--",
+          "--cash",
+          "--cold"
+        ],
+        "timeout_seconds": 120,
+        "worker_kind": "isolated-native",
+        "started_utc": "2026-11-03T19:32:29.152643-06:00",
+        "private_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-21\\private-runtime\\cash",
+        "error": null,
+        "video_poker_sha256": "fdcb59a4744f398dc57c5170607f93213c147112e38a6740b5eb67d59a0f25d7",
+        "script_sha256": "61162e9b8e6b607d84ccf9cec3dd80c920c81e1d2b5a7ded56952888647b2a2b",
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 1200,
+          "aggregate_job_cpu_percent": 12.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "pid": 14368,
+        "assigned_before_execution": true,
+        "timed_out": false,
+        "exit_code": 0,
+        "peak_job_memory_bytes": 672968704,
+        "active_at_release": 0,
+        "cpu_seconds": 15.9375,
+        "finished_utc": "2026-11-03T19:32:47.909379-06:00"
+      },
+      "target_sha256": "216391a295bc50af62d2d48d6f2d995e1e76a5f539612ebeb8f34a0fbb5b1d2d",
+      "checks": 28,
+      "failures": [],
+      "matrix": [],
+      "host_draws": [],
+      "cold": [
+        {
+          "cash": 93,
+          "chips": 18,
+          "lines": [
+            [
+              "Recorded change -7 (currency not recorded)"
+            ],
+            [
+              "Bankroll +1"
+            ]
+          ],
+          "slot": "vp_journal_cash_draw_win"
+        },
+        {
+          "cash": 91,
+          "chips": 18,
+          "lines": [
+            [
+              "Recorded change -7 (currency not recorded)"
+            ],
+            [
+              "Bankroll -1"
+            ]
+          ],
+          "slot": "vp_journal_cash_draw_lose"
+        },
+        {
+          "cash": 92,
+          "chips": 18,
+          "lines": [
+            [
+              "Recorded change -7 (currency not recorded)"
+            ],
+            [
+              "Bankroll +0"
+            ]
+          ],
+          "slot": "vp_journal_cash_draw_push"
+        },
+        {
+          "cash": 97,
+          "chips": 18,
+          "lines": [
+            [
+              "Recorded change -7 (currency not recorded)"
+            ],
+            [
+              "Bankroll +5"
+            ]
+          ],
+          "slot": "vp_journal_cash_double_up_win"
+        },
+        {
+          "cash": 87,
+          "chips": 18,
+          "lines": [
+            [
+              "Recorded change -7 (currency not recorded)"
+            ],
+            [
+              "Bankroll -5"
+            ]
+          ],
+          "slot": "vp_journal_cash_double_up_lose"
+        },
+        {
+          "cash": 92,
+          "chips": 18,
+          "lines": [
+            [
+              "Recorded change -7 (currency not recorded)"
+            ],
+            [
+              "Bankroll +0"
+            ]
+          ],
+          "slot": "vp_journal_cash_double_up_push"
+        }
+      ]
+    },
+    {
+      "label": "journal-reader",
+      "receipt": {
+        "label": "journal-reader",
+        "args": [
+          "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+          "--headless",
+          "--audio-driver",
+          "Dummy",
+          "--path",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-21\\source",
+          "--script",
+          "res://scripts/tests/grand_journal_recorded_currency_check.gd"
+        ],
+        "timeout_seconds": 120,
+        "worker_kind": "isolated-native",
+        "started_utc": "2026-11-03T19:28:55.083417-06:00",
+        "private_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-21\\private-runtime\\contract",
+        "error": null,
+        "video_poker_sha256": "fdcb59a4744f398dc57c5170607f93213c147112e38a6740b5eb67d59a0f25d7",
+        "script_sha256": "941031d2d51a1c272c92761b4fa16ed73cbb432be27dc779156ece08cdb842d4",
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 500,
+          "aggregate_job_cpu_percent": 5.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        },
+        "pid": 37264,
+        "assigned_before_execution": true,
+        "timed_out": false,
+        "exit_code": 0,
+        "peak_job_memory_bytes": 410333184,
+        "active_at_release": 0,
+        "cpu_seconds": 5.78125,
+        "finished_utc": "2026-11-03T19:29:02.326055-06:00"
+      },
+      "target_sha256": "cf421eec808bb0a0f004eea3913d541603adcc34af559da40b7ab33fd57ef615",
+      "checks": 80,
+      "failures": [],
+      "matrix": null,
+      "host_draws": [],
+      "cold": null
+    }
+  ]
+}
