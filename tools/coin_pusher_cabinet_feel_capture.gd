@@ -2,7 +2,6 @@ extends SceneTree
 
 const MainScene := preload("res://scenes/main.tscn")
 const Solver := preload("res://scripts/games/coin_pusher/coin_pusher_solver_api.gd")
-const Renderer := preload("res://scripts/games/coin_pusher/coin_pusher_renderer.gd")
 const OUTPUT_DIR := "res://.tmp/coin_pusher_v3_cabinet_feel"
 const CAPTURE_SIZE := Vector2i(1280, 720)
 

@@ -31,11 +31,7 @@ def rgb(h):
 
 PINK = rgb("#ff2d78")
 CYAN = rgb("#00f5ff")
-TEAL = rgb("#00ffd5")
-PURPLE2 = rgb("#c44dff")
-AMBER = rgb("#ffb32d")
 SOFT = rgb("#d8e8ea")
-NEONS = [PINK, CYAN, TEAL, PURPLE2, AMBER]
 FONT_BOLD = "C:/Windows/Fonts/arialbd.ttf"
 
 

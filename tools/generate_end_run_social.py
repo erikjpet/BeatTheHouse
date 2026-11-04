@@ -11,16 +11,13 @@ SCREENSHOT = ROOT / "branding" / "screenshots" / "19_end_of_run_report.png"
 BACKDROP = ROOT / "assets" / "art" / "map_backgrounds" / "cyberpunk_city_overhead.png"
 FONT_DIR = Path("C:/Windows/Fonts")
 
-BLACK = (5, 6, 10, 255)
 PANEL = (11, 11, 24, 255)
 PINK = (255, 45, 120, 255)
 CYAN = (0, 245, 255, 255)
 TEAL = (0, 255, 213, 255)
 YELLOW = (255, 228, 92, 255)
 AMBER = (255, 179, 45, 255)
-PURPLE = (196, 77, 255, 255)
 WHITE = (255, 255, 255, 255)
-SOFT = (216, 232, 234, 255)
 
 
 def font(name: str, size: int) -> ImageFont.FreeTypeFont:
