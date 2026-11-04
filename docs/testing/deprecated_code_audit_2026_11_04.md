@@ -82,10 +82,10 @@ receipts preserve the failing test source before fixture changes.
 | `BTH061-AUDIT-OFFER-CACHE-001` | Initialize current lazy collaborators and initial authenticated room publication. | Focused acceptance passes; repair `dec71ae8`, NEXT pending. |
 | `BTH061-AUDIT-SLOT-STATIC-001` | Resolve all nineteen stale audit expectations with precise current identities and hostile checks; keep runtime layout/authority bytes. | Focused acceptance passes; repair `dec71ae8`, NEXT pending. |
 | `BTH061-AUDIT-VALIDATOR-001` | Repair internal preload aliases and current source/JSON contracts. | Repair `dec71ae8`; focused contracts pass, full validator remains Open. |
-| `BTH061-AUDIT-MOBILE-CONTRACT-001` | Replace obsolete direct HUD fields/responsive-policy assertions with current fixed-canvas popup contracts, retaining behavioral criteria. | In progress, no completion commit yet. |
+| `BTH061-AUDIT-MOBILE-CONTRACT-001` | Replace obsolete direct HUD fields/responsive-policy assertions with current fixed-canvas popup contracts, retaining behavioral criteria. | Native five-case acceptance passes; `b3337406`, NEXT pending. |
 | `BTH061-AUDIT-BACKDROP-001` | Remove the closed obsolete external-game backdrop subsystem, preserving live backgrounds and old-state sanitization. | Removal `d641ce2d`, native acceptance passes; cold-import/NEXT pending. |
-| `BTH061-AUDIT-TOUCH-CANCEL-001` | Canceled native/emulated touch must not activate Continue, clock details or a Package action; current geometry/policy stay identical. | In progress, no completion commit yet. |
-| `BTH061-AUDIT-POPUP-SCROLL-001` | Resolve current popup scroll/drag acceptance while retaining reachable actions, canceled/deliberate-touch criteria, focus and protected run state under the fixed canvas. | Open; `NONE - OPEN`. |
+| `BTH061-AUDIT-TOUCH-CANCEL-001` | Canceled native/emulated touch must not activate Continue, clock details or a Package action; current geometry/policy stay identical. | Native acceptance passes; `b3337406`, NEXT pending. |
+| `BTH061-AUDIT-POPUP-SCROLL-001` | Resolve current popup scroll/drag acceptance while retaining reachable actions, canceled/deliberate-touch criteria, focus and protected run state under the fixed canvas. | Native acceptance passes; `b3337406`, NEXT pending. |
 | `BTH061-AUDIT-TUTORIAL-FIXTURE-001` | Investigate the inherited canonical tutorial full-fixture pin mismatch independently of the approved Blackjack definition-pin update; preserve the trusted full-fixture oracle. | Open; `NONE - OPEN`. |
 
 The fresh pre-repair fixtures fail on current source as well as the older
@@ -132,12 +132,26 @@ No task is closed merely because it has a commit.
 The current fixed-canvas mobile contract passes policy, portrait390, title390
 and desktop1280 under isolated native input, including ordinary/maximum-font
 Package scrolling, cancellation and deliberate exactly-once action checks.
-The rotation case still rejects focused-control visibility after each of its
-four orientations. That failure is retained and investigated separately; this
-is not an all-mobile or physical-phone acceptance claim. The Package fix passes
+The initial rotation case rejected a 0.6 logical-pixel bottom remainder despite
+retaining focus in all four orientations. Godot's integer scroll offset explains
+that remainder. The corrected fixture requires exact horizontal bounds, a
+positive visible intersection and strictly less than one logical pixel of
+vertical remainder, recording all rectangles and offsets. Rotation now passes
+477 checks with zero failures. This is not an all-mobile or physical-phone
+acceptance claim. The Package fix passes
 events through its own buttons and card panels only, while the existing
 cancellation guard is enabled under the active fixed canvas. Shared popup
 protocols, physical layout and portrait policy are unchanged.
+
+Input/fixture commit `b33374061f1be396e1c6a73a6af690d618fc4b64` is qualified by
+native policy (26 checks), portrait390 (380), title390 (70), desktop1280 (380)
+and rotation (477). Ordinary and maximum-font gesture completion have separate
+required phases. The integrated thirteen-stage suite also passes with zero
+owned processes after release. Final parser and rotation receipts identify the
+exact final fixture SHA-256
+`3813149509bd298cf82dfe846fbc2c41d634874e453f6c67fc326ac1949c88e3`;
+the other four case receipts precede only that precise rotation-oracle repair.
+NEXT and exact cold-import acceptance remain pending.
 
 The frozen cleanup candidate passes editor import and thirteen focused native
 stages: the three repaired baseline checks, all 75 layout contexts, Back Alley
