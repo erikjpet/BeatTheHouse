@@ -207,3 +207,47 @@ tests. The test now lives under the repository's existing `tools/` boundary,
 with its source-relative read adjusted. Its 16 checks are rerun there. Production
 scripts and export/import policy are unchanged; the normal watcher retries the
 new source identity.
+
+## Verified NEXT delivery
+
+The existing watcher promoted **2d62e3c04837d4ca3bc7158f1821abb2f2dd3afa** at
+2026-11-04 01:50:09 UTC, tree
+`d2e7100fea341bb1525bb4acf09a4ef4360a089f`, version
+`0.6.0-dev+2d62e3c04837`. That source contains fix c43c95a9 and the CLI relocation.
+At 01:50:47 UTC, served next/BUILD/manifest/REF/VERSION, the actual NEXT redirect,
+six payload HEAD requests and PCK bytes matched exact clean-source provenance.
+Archive SHA-256:
+`9c1a2c8c71db4cf02bc45419d5e7c74e5c04a99167e85b3d475ef940f69909b1`;
+served PCK SHA-256:
+`6b33fd771b6daa17c3b5525a8977b3356a21252c0b28e83c91e5442d92904177`.
+Receipt: `task-14/evidence/next-2d62e3c04837d4ca3bc7158f1821abb2f2dd3afa-release.json`.
+
+Two new disposable sessions use the **unaltered served NEXT shell/runtime** at
+its immutable localhost SHA URL, with no imported fixture or existing profile.
+`next-save-2d62-create-01` visibly launches the matching version. Normal Play,
+the player's Skip Lessons option and a new ordinary Back Alley run lead to
+manual Save at Day 1 1:00 PM, $100 and Heat 0. The rendered menu displays Saving
+with disabled controls before dismissing. Visual acknowledgment is observed
+581 ms after Save-click return; context close begins in the same millisecond
+as the full success screenshot returns. There is no wager, reveal or payout.
+
+`next-save-2d62-cold-01` reopens the same profile/origin, uses ordinary Continue,
+and visibly retains Day 1 1:00 PM, $100, Heat 0 and the same Back Alley scenario.
+It closes without another Save. This verifies deployed explicit-Save behavior
+and basic launch, while the closer Grand machine/floor custody evidence above
+remains the separately labeled private candidate qualification.
+
+Receipts `grand-next-web-create` and `grand-next-web-cold` both confirm exit 0,
+no timeout, zero owned processes, and empty page/console error lists. Screenshots,
+typed commands and dispatch timing remain under `task-14/evidence/web-next-save/`.
+The integrated native rerun passes warm59/cold21 (`grand-integrated-native-*`);
+the relocated exact-adapter contract passes16 (`grand-save-bridge-tools-contract`).
+No broad suite was repeated. Existing watcher/import/export policy, stable/itch
+and hosting audience were unchanged. Only an unused, clean, non-link diagnostic
+clone inside task-14 was removed to recover local disk space; working source,
+used profiles, fixtures, saves and evidence were retained.
+
+The **narrow Save acknowledgment correction is committed, pushed and NEXT
+verified**. **BTH061-PULLTABS-SAVE-001 remains Open** for the unconfirmed original
+ticket rollback and unavailable exact precollection generation. Later receipt-only
+commits do not change or retroactively broaden the tested deployment identity.
