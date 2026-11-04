@@ -149,4 +149,8 @@ defect**, so no speculative production change is made.
 the corrected two-Save chronology and the attribution limit. Passing new cases
 or committing their evidence does not close the parent task.
 
-Investigation commit association and publication receipt follow integration.
+Investigation commit: `d18586d11c9321bd1caf7582d0d9c94db467232f`.
+The canonical ledger associates this evidence without closing the task. The
+resulting pushed main/NEXT publication state is recorded separately in
+task-14/outcome-custody-followup.json. This test/documentation follow-up changes
+no production runtime behavior.
