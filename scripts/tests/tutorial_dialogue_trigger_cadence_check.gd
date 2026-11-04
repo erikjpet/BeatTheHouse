@@ -153,6 +153,12 @@ func _run_dialogue_trigger_cadence_check() -> void:
 	# coach boundary instead of racing the production deferred refresh.
 	await _settle(190)
 	_stage_blackjack_raised_bet_surface()
+	# The capture helper installs a restored RunState. All later observers must
+	# follow that current run instead of retaining the pre-capture reference.
+	run_state = app.get("run_state")
+	if run_state == null:
+		_fail("The raised-bet capture fixture did not retain a current run.")
+		return
 	_stage_guide_lesson("tutorial_blackjack_raise")
 	# The capture helper relaxes triggers to stage arbitrary visual states. Restore
 	# the production game ownership used by the recovery guard under test.
@@ -802,6 +808,11 @@ func _blackjack_count_hand_is_mandatory() -> bool:
 
 
 func _game_dialogue_waits_for_transition(run_state: RunState) -> bool:
+	var current_run: RunState = app.get("run_state")
+	var talk_dock: TalkDock = app.get("talk_dock")
+	if current_run == null or not is_same(run_state, current_run) or talk_dock == null:
+		_fail("Transition cadence fixture requires the current Main run and TalkDock.")
+		return false
 	_clear_guide_state()
 	run_state.narrative_flags["tutorial_actions_performed"] = {}
 	var library: ContentLibrary = app.get("library")
@@ -809,35 +820,98 @@ func _game_dialogue_waits_for_transition(run_state: RunState) -> bool:
 	var first := library.tutorial_lesson("tutorial_blackjack_raise").duplicate(true)
 	var second := library.tutorial_lesson("tutorial_blackjack_raised_deal").duplicate(true)
 	first["trigger"] = {"screen": "GAME", "game_id": "blackjack", "state_predicates": []}
+	# This synthetic cadence fixture owns its action completion. The production
+	# Raise lesson now requires durable wager state, which this stimulus does not set.
+	first["completion"] = {"type": "anchored_action", "action_id": "surface_stake_up"}
 	second["trigger"] = {"depends_on": ["tutorial_blackjack_raise"], "screen": "GAME", "game_id": "blackjack", "state_predicates": []}
 	coach.set_lessons([first, second])
 	coach.begin_tutorial_run({})
 	coach.evaluate_at_boundary(app.call("_coach_context_snapshot"))
 	app.call("_refresh_talk_dock")
 	await _settle(3)
-	if coach.active_lesson_id() != "tutorial_blackjack_raise":
-		_fail("Transition cadence fixture could not activate its first voiced table lesson.")
+	var first_event_id: String = "tutorial_guide:tutorial_blackjack_raise"
+	var next_event_id: String = "tutorial_guide:tutorial_blackjack_raised_deal"
+	var first_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	var first_entry: Dictionary = talk_dock.entry.duplicate(true)
+	var first_pending: Dictionary = run_state.pending_talk_event(first_event_id)
+	if coach.active_lesson_id() != "tutorial_blackjack_raise" \
+			or str(first_talk.get("event_id", "")) != first_event_id \
+			or str(first_entry.get("event_id", "")) != first_event_id \
+			or str(first_entry.get("dialogue_id", "")) != str(first.get("dialogue_id", "")) \
+			or str(first_entry.get("current_node", "")) != str(first.get("dialogue_node", "")) \
+			or JSON.stringify(first_entry) != JSON.stringify(first_pending) \
+			or not run_state.pending_talk_event(next_event_id).is_empty():
+		_fail("Transition cadence fixture could not activate its first voiced table lesson: lesson=%s entry=%s pending=%s talk=%s." % [coach.active_lesson_id(), str(first_entry), str(first_pending), str(first_talk)])
+		return false
+	# Complete the first line's ordinary acknowledgement before staging a
+	# canvas-only channel. Its dialogue refresh would replace that synthetic
+	# channel with the genuine Blackjack snapshot after the action otherwise.
+	app.call("_on_talk_dock_choice_requested", first_event_id, "continue")
+	await _settle(3)
+	var acknowledged_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	var acknowledged_entry: Dictionary = talk_dock.entry.duplicate(true)
+	if coach.active_lesson_id() != "tutorial_blackjack_raise" \
+			or not run_state.pending_talk_event(first_event_id).is_empty() \
+			or not run_state.pending_talk_event(next_event_id).is_empty() \
+			or not acknowledged_entry.is_empty() \
+			or not str(acknowledged_talk.get("event_id", "")).is_empty():
+		_fail("Transition cadence fixture did not acknowledge only its first line: lesson=%s first=%s next=%s displayed=%s." % [coach.active_lesson_id(), str(run_state.pending_talk_event(first_event_id)), str(run_state.pending_talk_event(next_event_id)), str(acknowledged_entry)])
 		return false
 	var canvas: Control = app.get("game_surface_canvas")
+	var fixture_channel_id: String = "tutorial_cadence_fixture"
 	canvas.call("apply_surface_state_patch", {"surface_animation_channels": [{
-		"id": "tutorial_cadence_fixture",
+		"id": fixture_channel_id,
 		"active": true,
 		"active_id": "hand_result",
 		"duration_msec": 60000,
 	}]})
-	coach.notify_action("surface_stake_up")
-	await _settle(5)
-	if not coach.active_lesson_id().is_empty() \
-			or not run_state.pending_talk_event("tutorial_guide:tutorial_blackjack_raised_deal").is_empty():
-		_fail("Pal started the next table lesson before the finite hand animation finished.")
+	if not bool(canvas.call("surface_animation_active", fixture_channel_id)):
+		_fail("Transition cadence fixture did not install its finite animation channel.")
 		return false
+	var action_consumed: bool = coach.notify_action("surface_stake_up")
+	if not action_consumed or not coach.active_lesson_id().is_empty():
+		_fail("Transition cadence stimulus did not complete the synthetic first lesson: consumed=%s lesson=%s." % [str(action_consumed), coach.active_lesson_id()])
+		return false
+	for blocked_frame: int in range(5):
+		await _settle(1)
+		var channel_active: bool = bool(canvas.call("surface_animation_active", fixture_channel_id))
+		var blocked_lesson_id: String = coach.active_lesson_id()
+		var blocked_next_entry: Dictionary = run_state.pending_talk_event(next_event_id)
+		var blocked_talk: Dictionary = app.call("current_talk_dock_snapshot")
+		var blocked_displayed_entry: Dictionary = talk_dock.entry.duplicate(true)
+		if not channel_active:
+			_fail("Transition cadence fixture lost its synthetic channel before release: frame=%d lesson=%s next=%s." % [blocked_frame, blocked_lesson_id, str(blocked_next_entry)])
+			return false
+		if not blocked_lesson_id.is_empty() \
+				or not blocked_next_entry.is_empty() \
+				or not blocked_displayed_entry.is_empty() \
+				or not str(blocked_talk.get("event_id", "")).is_empty():
+			_fail("Pal started a table lesson before the finite hand animation finished: frame=%d channel_active=%s lesson=%s next=%s displayed=%s." % [blocked_frame, str(channel_active), blocked_lesson_id, str(blocked_next_entry), str(blocked_displayed_entry)])
+			return false
 	canvas.call("apply_surface_state_patch", {"surface_animation_channels": []})
 	await _settle(8)
 	var next_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	var next_entry: Dictionary = talk_dock.entry.duplicate(true)
+	var next_pending: Dictionary = run_state.pending_talk_event(next_event_id)
 	if coach.active_lesson_id() != "tutorial_blackjack_raised_deal" \
-			or str(next_talk.get("event_id", "")) != "tutorial_guide:tutorial_blackjack_raised_deal":
-		_fail("Pal did not start the next table lesson after the hand animation settled: %s." % str(next_talk))
+			or str(next_talk.get("event_id", "")) != next_event_id \
+			or str(next_entry.get("event_id", "")) != next_event_id \
+			or str(next_entry.get("dialogue_id", "")) != str(second.get("dialogue_id", "")) \
+			or str(next_entry.get("current_node", "")) != str(second.get("dialogue_node", "")) \
+			or JSON.stringify(next_entry) != JSON.stringify(next_pending):
+		_fail("Pal did not start the next table lesson after the hand animation settled: lesson=%s entry=%s pending=%s talk=%s." % [coach.active_lesson_id(), str(next_entry), str(next_pending), str(next_talk)])
 		return false
+	print("TUTORIAL_ANIMATION_CADENCE ", JSON.stringify({
+		"task_id": "BTH061-AUDIT-TUTORIAL-ANIMATION-001",
+		"synthetic_first_action_consumed": action_consumed,
+		"run_reference_is_current": is_same(run_state, app.get("run_state")),
+		"displayed_guide_matches_current_run": true,
+		"first_event_before_action": str(first_talk.get("event_id", "")),
+		"blocked_process_frames": 5,
+		"synthetic_channel_active_throughout_block": true,
+		"next_lesson_after_release": coach.active_lesson_id(),
+		"next_event_after_release": str(next_talk.get("event_id", "")),
+	}))
 	return true
 
 
