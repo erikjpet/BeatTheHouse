@@ -1,7 +1,7 @@
 {
   "schema": "bth.task_reconciliation/v1",
-  "checked_at": "2026-11-04T02:08:15.195164Z",
-  "ledger_updated_at": "2026-11-04T02:07:49.868676+00:00",
+  "checked_at": "2026-11-04T02:09:37.935020Z",
+  "ledger_updated_at": "2026-11-04T02:09:36.494218+00:00",
   "group": "current",
   "owner_snapshot_supplied": true,
   "runtime_inventory_supplied": true,
@@ -92,10 +92,10 @@
   "summary": {
     "objectives_checked": 46,
     "batches_checked": 4,
-    "open_objectives": 38,
+    "open_objectives": 37,
     "open_batches": 3,
-    "open_work_items": 41,
-    "complete_objectives": 8,
+    "open_work_items": 40,
+    "complete_objectives": 9,
     "errors": 46,
     "warnings": 0,
     "tasks_with_errors": 9
@@ -5333,86 +5333,6 @@
           "docs/testing/deprecated_code_audit_2026_11_04.md"
         ],
         "observed_at": "2026-11-04T01:32:35.703920+00:00"
-      },
-      "completed_batch_ids": []
-    },
-    {
-      "id": "BTH-TODO-PAUSE-ITEM-SCENARIO-001",
-      "name": "Record user-requested item/scenario pause",
-      "state": "open",
-      "item_type": "objective",
-      "kind": "operation",
-      "parent_ids": [],
-      "full_objective": {
-        "text": "Record the explicit user-requested pause for the eight named item/scenario entries in the local authoritative queue, preserving IDs, incomplete state, commits, acceptance and evidence; leave unrelated testing/fixes/audits active and do not retry denied publication.",
-        "source": "docs/todo/bth_user_item_scenario_pause_20261104.json",
-        "scope_confirmed": true
-      },
-      "batch_scope": [],
-      "owner": {
-        "name": "Reconcile named todo queue",
-        "task_ref": "01a1a36a-b7dd-709a-b4a0-b93eca365000",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
-        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
-        "observation_stale": false
-      },
-      "status": "USER_PAUSE_METADATA_RECORDED_LOCAL_COMMIT_PENDING",
-      "commits": [],
-      "deployment": {
-        "required": false,
-        "state": "not_applicable",
-        "commit": null,
-        "evidence": []
-      },
-      "progress_scope_id": "BTH-TODO-PAUSE-ITEM-SCENARIO-001",
-      "acceptance": [
-        {
-          "id": "scoped-pause-recorded",
-          "description": "Exactly the eight named open entries have the current user pause, with prior next actions/evidence retained and unrelated entries unchanged.",
-          "required": true,
-          "state": "pass",
-          "evidence": [
-            "docs/todo/bth_user_item_scenario_pause_20261104.json"
-          ]
-        },
-        {
-          "id": "authoritative-local-indexes",
-          "description": "Existing local named queue/indexes show the scoped pause and preserved IDs; no main push retry.",
-          "required": true,
-          "state": "open",
-          "evidence": []
-        }
-      ],
-      "acceptance_progress": {
-        "required_total": 2,
-        "passed_with_evidence": 1,
-        "remaining_ids": [
-          "authoritative-local-indexes"
-        ]
-      },
-      "coverage": {
-        "required": false,
-        "complete": false,
-        "areas": []
-      },
-      "coverage_progress": {
-        "required": false,
-        "declared_complete": false,
-        "total_areas": 0,
-        "reviewed_with_evidence": 0,
-        "remaining_ids": []
-      },
-      "next_action": "Commit the local pause metadata, apply it to the existing authoritative indexes, verify exactly the eight scoped entries and associate the actual commit before closing this metadata action.",
-      "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": null,
-        "requires_user_input": false,
-        "observed_at": "2026-11-04T02:07:49.868676+00:00",
-        "evidence": [
-          "docs/todo/bth_user_item_scenario_pause_20261104.json"
-        ]
       },
       "completed_batch_ids": []
     },

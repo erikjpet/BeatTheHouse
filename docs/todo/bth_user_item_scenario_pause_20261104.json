@@ -20,5 +20,19 @@
   "other_testing_fixes_audits_continue": true,
   "existing_main_publication_rejection_unchanged": true,
   "publication_retry_authorized": false,
-  "scope_limit": "Named item/scenario objectives and their associated unfinished batches/finding. Does not pause unrelated item UI bugs, scenario-engine bug fixes, playtesting, performance or audits."
+  "scope_limit": "Named item/scenario objectives and their associated unfinished batches/finding. Does not pause unrelated item UI bugs, scenario-engine bug fixes, playtesting, performance or audits.",
+  "local_index_verification": {
+    "verified_at": "2026-11-04T02:09:36.494218+00:00",
+    "metadata_commit": "d00a37629587445629f527eb57d20799b65a6a11",
+    "indexes": [
+      "named-fix-acceptance-registry-current.json",
+      "approved-fix-queue-current.json",
+      "named-todo-current.md"
+    ],
+    "scoped_entries": 8,
+    "all_paused_remain_incomplete": true,
+    "existing_ids_preserved": 195,
+    "other_work_status_unchanged": true,
+    "publication_retried": false
+  }
 }

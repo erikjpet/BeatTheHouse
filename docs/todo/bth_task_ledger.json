@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T02:07:49.868676+00:00",
+  "updated_at": "2026-11-04T02:09:36.494218+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -15589,8 +15589,10 @@
             "id": "authoritative-local-indexes",
             "description": "Existing local named queue/indexes show the scoped pause and preserved IDs; no main push retry.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/todo/bth_user_item_scenario_pause_20261104.json"
+            ]
           }
         ],
         "coverage": {
@@ -15599,14 +15601,22 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "USER_PAUSE_METADATA_RECORDED_LOCAL_COMMIT_PENDING",
+      "state": "complete",
+      "status": "COMPLETE_USER_PAUSE_RECORDED_LOCAL_ONLY",
       "owner": {
         "name": "Reconcile named todo queue",
         "task_ref": "01a1a36a-b7dd-709a-b4a0-b93eca365000",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "d00a37629587445629f527eb57d20799b65a6a11",
+          "evidence": [
+            "docs/todo/bth_user_item_scenario_pause_20261104.json",
+            "Local metadata commit and successful hash-guarded application to both existing indexes; no main publication required by this scoped request."
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -15621,7 +15631,7 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Commit the local pause metadata, apply it to the existing authoritative indexes, verify exactly the eight scoped entries and associate the actual commit before closing this metadata action.",
+      "next_action": "Local queue update is verified. Keep the eight item/scenario entries paused and incomplete until the user resumes them. Other testing, fixes and audits continue; the earlier publication rejection remains in force.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -15633,7 +15643,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T02:07:49.868676+00:00"
+      "updated_at": "2026-11-04T02:09:36.494218+00:00"
     }
   ],
   "batches": [
