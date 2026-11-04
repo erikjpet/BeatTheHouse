@@ -127,3 +127,33 @@ and the checkout was proven clean before integration. A disposable private-test
 Godot editor documentation cache was removed; the retained baseline tar was
 losslessly NTFS-compressed with its SHA-256 unchanged. No source evidence,
 pipeline cache, build, save or other worker was deleted or stopped.
+
+## Finished-work NEXT delivery acceptance
+
+The approved push succeeded. The existing watcher detected and automatically
+promoted `df7d77a820b59f787701fb578cdd4a3b08bbb974`, tree
+`d4806443bb4d548ba1e09154119333315521f2b4`, at **2026-11-04 15:56:28 UTC**.
+Before publication, concurrent main `ee02497f` was merged and the focused
+HUD12/design-system/wager150/full tutorial checks passed again on that exact
+combined source. The durable73 hostile controls and unchanged generator/capture
+structural/parser evidence retain their stated scope; image parity was not run.
+
+Served NEXT metadata, redirect, BUILD/manifest/REF/VERSION, archive provenance,
+exact PCK audit and four required payload size/MIME checks match this SHA/tree.
+A fresh disposable browser renders the correct-version menu with zero page or
+console errors, GPU sandbox enabled, zero inputs and all owned processes closed.
+This proves basic Web launch; changed tooltip/wager/tutorial behavior is qualified
+by the focused native checks, not a claim of replayed Web gameplay or phone tests.
+No stable/itch/audience, item/scenario, scheduling, guard or pipeline change was
+introduced. The preserved sibling repair branch and tutorial hashes are unchanged.
+
+The five scoped tutorial/UI/tool/publication tasks now have associated commits
+and exact NEXT evidence. The codebase-wide umbrella and aggregate-validator task
+remain Open. The prior host-r5 global-process-census failure and its four
+unreached postconditions have not been waived or misreported as passing.
+
+Private receipts: `evidence/approved-audit-scope-20261104-r1.json`,
+`evidence/independent-ui-final-publish-20261104-r2/job.json`,
+`evidence/approved-audit-next-identity-20261104-r1.json`,
+`evidence/next-startup-approved-audit-20261104-r1/` and
+`evidence/approved-audit-next-acceptance-20261104-r1.json`.
