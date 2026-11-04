@@ -174,6 +174,14 @@ more guesses at the failed fixture. Do not introduce a speculative settlement,
 automatic retry/cancel or weaker seal validation. This is an attribution limit,
 not a missing-personal-save or user-approval dependency.
 
+Investigation and diagnostic evidence are associated with commit
+`3292cc0dd866d3c4b60e94d345d3471aa69b5822`. This is not a product-fix commit and
+does not close the task. Both ledger views retain the complete objective, actual
+owner, negative controls, unqualified setup paths and next supported action.
+Manual reconciliation reports0 assigned-scope findings;54 existing findings
+across17 other tasks remain outside this investigation. Eight own Jobs have
+recorded closed/owned0 receipts; no original or shared runtime was cleaned up.
+
 Current task reconciliation checks both ledger views with the actual active
 owner snapshot and retained runtime snapshot. Registration check exit1 reports
 54 pre-existing/out-of-scope findings across17 other tasks, with0 findings for

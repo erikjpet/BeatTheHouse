@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T20:04:50.892040+00:00",
+  "updated_at": "2026-11-04T20:09:04.373320+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -19434,10 +19434,11 @@
             "id": "review-commit",
             "description": "Record scoped review, tested commit association and both ledger views; retain actual release/blocker evidence before completion.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
               "docs/testing/roulette_sealed_pending_r08.md",
-              "docs/testing/roulette_sealed_pending_r08.json"
+              "docs/testing/roulette_sealed_pending_r08.json",
+              "commit:3292cc0dd866d3c4b60e94d345d3471aa69b5822"
             ]
           }
         ],
@@ -19454,7 +19455,16 @@
         "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "3292cc0dd866d3c4b60e94d345d3471aa69b5822",
+          "evidence": [
+            "docs/testing/roulette_sealed_pending_r08.md",
+            "docs/testing/roulette_sealed_pending_r08.json",
+            "Investigation/diagnostic evidence commit only; no product fix is claimed."
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -19494,14 +19504,14 @@
         "kind": "unclassified_rejection",
         "description": "Original failed host branch/exception is not captured; public JavaScript page_errors0 does not identify it. Independent native and same-build Cyan Dolly Web controls resolve normally; prior-Blackjack reconstruction is unqualified after bounded setup failures. No confirmed responsible product contract exists for a safe fix. No original-personal-save or user-approval dependency is imposed.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T20:04:50.892040+00:00",
+        "observed_at": "2026-11-04T20:09:04.373320+00:00",
         "evidence": [
           "docs/testing/roulette_sealed_pending_r08.md",
           "docs/testing/roulette_sealed_pending_r08.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T20:04:50.892040+00:00"
+      "updated_at": "2026-11-04T20:09:04.373320+00:00"
     }
   ],
   "batches": [

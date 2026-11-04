@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-04T20:04:50.892040+00:00",
+  "observed_at": "2026-11-04T20:09:04.373320+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -55,7 +55,7 @@
       "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
       "title": "Fix pull-tab save boundary",
       "state": "active",
-      "observed_at": "2026-11-04T20:04:50.892040+00:00",
+      "observed_at": "2026-11-04T20:09:04.373320+00:00",
       "source": "Actual active task14 R08 investigation checkpoint: bounded native/Web controls and setup limits recorded, all eight owned Jobs closed, original pending untouched. Current execution is recording/reviewing committed evidence. Other owners were not re-observed."
     },
     {
