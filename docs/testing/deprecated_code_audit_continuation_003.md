@@ -121,3 +121,41 @@ uses installed Windows PowerShell, unchanged canonical native/process/resource
 guards and the reviewed classifier version. Private after-failure diagnostics
 may compare retained baselines separately if actual postchecks are unreached;
 they never forge actual post variables or convert failure into full acceptance.
+
+## Full aggregate acceptance: host-r9
+
+Full validation passes at exact source
+`488d86fa5f25efc460a74847305fe301f374017b`. The reviewed validator SHA-256
+`7a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b`
+is unchanged during the invocation. Exit0, zero failures,40native launcher
+contracts and11independent hostile contracts pass. Every actual terminal file,
+process, lease, residue, cache and environment comparison is reached and passes.
+The shadow reaches `validator-terminal-green`, sequence7, and is removed through
+the original checked cleanup; all native handles terminate and owned Job count
+is zero. No independent late comparison substitutes for actual acceptance.
+Sanitized receipt: `tool_audit/validator_host_r9_safe_summary.json`.
+
+The private launcher uses canonical Windows PowerShell, normal module discovery
+and a short fresh task-private temp root. Preserve the intermediate attempts:
+host-r7 did not start validation because inherited PS7 module discovery could
+not load Get-FileHash; host-r8 reached native cleanup but failed closed on a
+258-character private quarantine directory with a273-character owner child.
+Its selftest root and shadow were deliberately preserved by unchanged guards;
+no finalized selftest report exists and no40-case pass is claimed for r8.
+All r8 processes/handles did close. The short-root r9 invocation passes those
+same native cleanup cases without changing guard code or touching other workers.
+The exact first failing .NET API in r8 is not proven by its saved exception.
+Evidence: `tool_audit/validator_host_r8_safe_summary.json` and
+`evidence/independent-tools-r1/host-r8-owned-path-readonly-r1.json`.
+
+The central ledger added on concurrent main is reconciled with the existing
+named plan. All five continuation IDs have actual owner, evidence, commits,
+acceptance, next action and blocker fields; the aggregate check is Complete at
+its exact associated source commit, while the three fixes await required NEXT
+delivery. The bounded controller review is Complete; the original validator task
+stays Open until its publication/child acceptance, and the umbrella stays Open
+for whole-repository coverage. Manual reconciliation reports zero findings for
+the assigned records. The existing51current/517all-scope findings are preserved
+unchanged, including ownership/provenance/runtime gaps; this is not a global
+ledger/runtime-cleanup pass. Reports remain private under
+`evidence/metadata-r9-reconciliation-r1/`.

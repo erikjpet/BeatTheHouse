@@ -1,6 +1,6 @@
 {
   "schema": "bth.audit_scope_inventory/v1",
-  "observed_at": "2026-11-04T16:23:29.672223+00:00",
+  "observed_at": "2026-11-04T16:59:53.130053+00:00",
   "source_commit": "ecdccee418c2297a0fb864d00c902a4c159dfd5c",
   "full_objective_complete": false,
   "core": {
@@ -1451,5 +1451,39 @@
       "sha256": "fb92c94fa486531025fda8c7590b249a481d40bc9aecaff5bfad35cb0c8e8462"
     }
   ],
-  "limit": "A scan or unchanged blob is not evidence of complete whole-codebase audit. Prior reviewed unchanged blobs retain only their stated historical review scope."
+  "limit": "A scan or unchanged blob is not evidence of complete whole-codebase audit. Prior reviewed unchanged blobs retain only their stated historical review scope.",
+  "continuations": [
+    {
+      "source_commit": "488d86fa5f25efc460a74847305fe301f374017b",
+      "scope": "Bounded nonpaused host/controller review and validator follow-up; not whole-codebase semantic completion",
+      "core_review": {
+        "modules": 8,
+        "top_level_functions": 312,
+        "nested_factories": 10,
+        "constants": 84,
+        "confirmed_removals": 0,
+        "evidence": "docs/testing/deprecated_code_audit_continuation_003.md"
+      },
+      "host_cleanup": {
+        "commit": "cd1ce774b94083c193d95ea881ee0a3b5a051f4c",
+        "deleted_lines": 40,
+        "unrelated_methods_identical": 1306,
+        "removed": "Superseded private menu sizing island and unused bankroll marker",
+        "evidence": "docs/testing/deprecated_code_audit_continuation_003.md"
+      },
+      "retained_candidates": [
+        "Live cancel_delivery helper with inherited/shared consumers; not classified obsolete",
+        "SaveService reflective consumers and saved numeric/archive compatibility remain active"
+      ],
+      "validator": {
+        "full_pass": true,
+        "exact_commit": "488d86fa5f25efc460a74847305fe301f374017b",
+        "source_guard_scope": "Five exact function-bound UI classification additions; native/process/resource guards unchanged",
+        "historical_failures_preserved": true
+      },
+      "remaining": "Prior inventory and remaining_scope are historical baseline leads requiring current semantic dispositions; paused objectives remain open; this bounded continuation does not close parent coverage.",
+      "parent_id": "BTH061-AUDIT-001",
+      "phase": "003"
+    }
+  ]
 }
