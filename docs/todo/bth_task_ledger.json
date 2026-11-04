@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T19:55:26.505512+00:00",
+  "updated_at": "2026-11-04T19:59:38.708404+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13460,12 +13460,17 @@
           "kind": "bounded_phase004_progress",
           "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
           "summary": "Three meaningful removals committed and targeted-qualified with exact inherited-failure comparison;6model and current host/game path reviews bounded only. Remaining legacy-family production path, five contract diagnosis groups, NEXT delivery and wider semantic coverage keep this umbrella Open."
+        },
+        {
+          "kind": "qualified_slot_child_with_delivery_open",
+          "reference": "docs/testing/slot_legacy_family_recovery.md",
+          "summary": "Slot missing-family replacement and4button deletion qualified and published at81f3ecf69a70bcbdc7d4d1d6c71efd1668e8c54c; NEXT capacity gate and broadcoverage remainOpen. New aggregate-time-budget follow-up retains current maintained stage failure."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Continue remaining nonpaused semantic coverage and phase004 legacy-family authority/recovery plus named inherited contract diagnoses. Publish qualified removals and verify NEXT when reserve admission permits. Preserve explicit item/scenario pause and active save/public compatibility.",
+      "next_action": "Continue remaining nonpaused semantic coverage and five named inherited contract diagnoses; Slot legacy-family source replacement/removal is now qualified and published, with exact NEXT acceptance Open behind capacity admission. Attribute current aggregate timeout under BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005 without weakening guards. Preserve item/scenario user pause and active save/public compatibility.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -13475,7 +13480,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T17:59:41.789985+00:00"
+      "updated_at": "2026-11-04T19:59:38.708404+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -18172,10 +18177,15 @@
           "kind": "bounded_review_evidence_with_open_children",
           "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
           "summary": "Bounded review evidence committed in e3fd55cad883a67e40000a90b15549b62eadeb1b. Required child removal/delivery and legacy-family work remain Open; reconciliation therefore retains this review parent Open despite its completed read-only disposition."
+        },
+        {
+          "kind": "qualified_slot_child_with_delivery_open",
+          "reference": "docs/testing/slot_legacy_family_recovery.md",
+          "summary": "Slot missing-family replacement and4button deletion qualified and published at81f3ecf69a70bcbdc7d4d1d6c71efd1668e8c54c; NEXT capacity gate and broadcoverage remainOpen. New aggregate-time-budget follow-up retains current maintained stage failure."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Bounded read-only review evidence is committed. Complete the separately named removal/delivery and legacy-family required child work before closing this record; the full-codebase audit remains Open.",
+      "next_action": "Bounded review and Slot legacy-family replacement/removal are committed; finish separately named required child NEXT delivery after capacity admission, retaining full-codebase audit Open.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -18185,7 +18195,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T18:00:40.852984+00:00"
+      "updated_at": "2026-11-04T19:59:38.708404+00:00"
     },
     {
       "id": "BTH061-AUDIT-HOST-GAMEPLAY-004",
@@ -18667,7 +18677,7 @@
         }
       },
       "state": "open",
-      "status": "NATIVE_RECOVERY_AND_OBSOLETE_ROW_REMOVAL_COMMITTED_NEXT_OPEN",
+      "status": "RECOVERY_AND_OBSOLETE_ROW_REMOVAL_PUBLISHED_NEXT_CAPACITY_BLOCKED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -18691,8 +18701,11 @@
         "required": true,
         "state": "pending",
         "commit": null,
-        "evidence": [],
-        "scope": "Qualified source fixes committed locally. Main publication and exact NEXT delivery pending; aggregate timeout remains separately Open."
+        "evidence": [
+          "docs/testing/slot_legacy_family_recovery.md",
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/slot-family005-source-publication-r1.json"
+        ],
+        "scope": "Qualified source published on main at 81f3ecf69a70bcbdc7d4d1d6c71efd1668e8c54c; exact source observed by existing watcher, capacity admission prevents export. Served NEXT remains f3058b6daab820e9d747c4c4aabc2d983e9ae32e. No new artifact/served-changed-code/browser acceptance."
       },
       "evidence": [
         {
@@ -18719,20 +18732,27 @@
           "kind": "post_deletion_and_final_source_cold_acceptance",
           "reference": "docs/testing/slot_legacy_family_recovery.md",
           "summary": "Core2025, postdeleteSurface1815, exactfinalSourceCold67+200/9saves, existingLegacy134 and animation PASS. Removed4drawcalls only after priorqualification;127physics methods unchanged. Maintainedentrypoint stops beforeGodot at unchanged validateProject403.094s/402.018s budget; separateBTH061-AUDIT-AGGREGATE-TIME-BUDGET-005 retains guard failure. No fullaggregate/NEXT/browser acceptance."
+        },
+        {
+          "kind": "exact_source_publication_capacity_blocked",
+          "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/slot-family005-source-publication-r1.json",
+          "summary": "Main push81f3ecf69a70bcbdc7d4d1d6c71efd1668e8c54c verified; watcher exactavailableSource matches. Capacity13110951936/13958643712bytes false; HTTPSservedNEXT remainsf3058b6daab820e9d747c4c4aabc2d983e9ae32e. No new export/Webacceptance. IncomingCoin/Roulette main preserved and12coldsourcehashes unchanged."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Integrate and publish tested source commits preserving concurrent main, then observe exact existing NEXT watcher admission. Keep delivery open until actual deployment/assets/behavior qualify; profile aggregate timeout under its separate stable task without weakening guards.",
+      "next_action": "Observe exact NEXT deployment/assets/changed behavior after existing capacity admission recovers; keep delivery Open meanwhile. Source is published and focused native/save acceptance passes. Continue broader nonpaused audit and separately tracked aggregate-time-budget attribution without weakening guards.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": null,
+        "state": "active",
+        "kind": "resource_capacity",
+        "description": "Insufficient shared disk reserve for export: 13110951936 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T19:55:26.505512+00:00",
-        "evidence": []
+        "observed_at": "2026-11-04T19:58:20.161569Z",
+        "evidence": [
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/slot-family005-source-publication-r1.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T19:55:26.505512+00:00"
+      "updated_at": "2026-11-04T19:59:38.708404+00:00"
     },
     {
       "id": "BTH061-AUDIT-BLACKJACK-BASELINE-004",
