@@ -33,6 +33,60 @@ const NORMALIZED_PLACEMENT_DIGEST := "placement-authority-digest"
 const BLACKJACK_DEFINITION_SHA256 := "d2ccf97e7108a4fda3ac6bfae2faf56099ae45d46d55d3e72fd51e4cff516989"
 const NORMALIZED_CREW_AUTHORITY_ID := "0000000000000000000000000000000000000000000000000000000000000000"
 
+# Fixture-only compatibility authority for four reviewed post-pin commits:
+# 26d399aa (Crew door), cd769f18 (Crew restore), fa3de446 (archive), accef469 (clock).
+# Every projected value must first match its complete intended current shape.
+# These are exact guards, not new whole-fixture fingerprints or general masks.
+const BLACKJACK_FIXTURE_ACCEPTED_SAVE_EXTENSIONS := {
+	"story_money_archive": {
+		"archived_entry_count": 0,
+		"known_entry_count": 0,
+		"schema": "bth.story_money_archive/v1",
+		"sources": {},
+	},
+	"surface_clock_checkpoint_msec": -1,
+}
+const BLACKJACK_FIXTURE_ACCEPTED_CREW_RESTORE_FLAGS := {
+	"crew_delivery_borrow_count": 0,
+	"crew_delivery_loan_locations": [],
+	"crew_delivery_migration": {
+		"historical_count_scope": "Open markers only; cleared borrowing history is not reconstructed.",
+		"outstanding_deliveries": 0,
+		"recorded_open_borrows": 0,
+		"unknown_historical_borrow_count": false,
+		"unknown_prior_completion_credit": false,
+	},
+	"crew_delivery_obligations": 0,
+	"crew_delivery_post_miss": false,
+	"crew_delivery_rules_version": 1,
+	"crew_favor_pending": false,
+	"crew_marker_converted_to_cash": false,
+	"crew_reputation": 0,
+}
+const BLACKJACK_FIXTURE_CURRENT_BACK_ROOM_TRANSITION := {
+	"access_paths": [
+		{"method": "crew_rank", "min_crew_rank": "made"},
+		{"flags_any": ["rook_escort_punchline_back_room"], "method": "rook_escort"},
+	],
+	"description": "A private door behind the tables.",
+	"label": "Crew Back Room",
+	"locked_reason": "Rook keeps this door for made company or people he escorts.",
+	"requires_current_access": true,
+	"requires_discovered": true,
+	"target_layer_id": "back_room",
+}
+const BLACKJACK_FIXTURE_HISTORICAL_BACK_ROOM_TRANSITION := {
+	"access_paths": [
+		{"method": "crew_rank", "min_crew_rank": "associate"},
+		{"flags_any": ["rook_escort_punchline_back_room"], "method": "rook_escort"},
+	],
+	"description": "A private door behind the tables.",
+	"label": "Crew Back Room",
+	"locked_reason": "Rook keeps this door for associates.",
+	"requires_discovered": true,
+	"target_layer_id": "back_room",
+}
+
 
 func _init() -> void:
 	call_deferred("_run_dialogue_trigger_cadence_check")
@@ -427,12 +481,14 @@ func _blackjack_count_fixture_baseline() -> Dictionary:
 	normalized.from_dict(JSON.parse_string(JSON.stringify(run_state.to_dict())))
 	var bytes := JSON.stringify(normalized.to_dict())
 	var fingerprint := JSON.stringify(_normalize_fixture_private_capsules(normalized.to_dict())).sha256_text()
+	var historical_fingerprint: String = _blackjack_fixture_historical_fingerprint(normalized.to_dict())
 	return {
 		"bytes": bytes,
 		"data": normalized.to_dict(),
 		"fingerprint": fingerprint,
 		"heat": normalized.suspicion_level(),
-		"valid": fingerprint == BLACKJACK_FIXTURE_BASELINE_SHA256
+		"historical_fingerprint": historical_fingerprint,
+		"valid": historical_fingerprint == BLACKJACK_FIXTURE_BASELINE_SHA256
 			and normalized.suspicion_level() == 0
 			and normalized.is_tutorial_run()
 			and bool(normalized.narrative_flags.get("tutorial_blackjack_peek_reprieve_used", false)),
@@ -532,6 +588,53 @@ func _normalize_fixture_private_capsules(value: Variant) -> Variant:
 		crew_state["z"] = "A".repeat(capsule_text.length())
 		normalized["crew_state"] = crew_state
 	return normalized
+
+
+func _blackjack_fixture_historical_fingerprint(data: Dictionary) -> String:
+	# The old trusted SHA remains the authority for every other normalized byte.
+	# Work on a detached observer copy; current full-state fingerprints and
+	# round-trip/clone comparisons continue to cover all current fields below.
+	var projected: Dictionary = _normalize_fixture_private_capsules(data)
+	if not _fixture_require_and_erase_extensions(projected, BLACKJACK_FIXTURE_ACCEPTED_SAVE_EXTENSIONS):
+		return ""
+	if typeof(projected.get("narrative_flags")) != TYPE_DICTIONARY:
+		return ""
+	if not _fixture_require_and_erase_extensions(projected["narrative_flags"], BLACKJACK_FIXTURE_ACCEPTED_CREW_RESTORE_FLAGS):
+		return ""
+	if typeof(projected.get("current_environment")) != TYPE_DICTIONARY:
+		return ""
+	var environment: Dictionary = projected["current_environment"]
+	if not _fixture_revert_accepted_back_room_transition(environment):
+		return ""
+	if typeof(environment.get("layer_states")) != TYPE_DICTIONARY:
+		return ""
+	var layer_states: Dictionary = environment["layer_states"]
+	if typeof(layer_states.get("casino")) != TYPE_DICTIONARY:
+		return ""
+	if not _fixture_revert_accepted_back_room_transition(layer_states["casino"]):
+		return ""
+	return JSON.stringify(projected).sha256_text()
+
+
+func _fixture_require_and_erase_extensions(data: Dictionary, accepted: Dictionary) -> bool:
+	for key_value: String in accepted.keys():
+		if not data.has(key_value) or JSON.stringify(data[key_value]) != JSON.stringify(accepted[key_value]):
+			return false
+	for key_value: String in accepted.keys():
+		data.erase(key_value)
+	return true
+
+
+func _fixture_revert_accepted_back_room_transition(environment: Dictionary) -> bool:
+	if typeof(environment.get("layer_transitions")) != TYPE_ARRAY:
+		return false
+	var transitions: Array = environment["layer_transitions"]
+	if transitions.size() != 2 \
+			or JSON.stringify(transitions[1]) != JSON.stringify(BLACKJACK_FIXTURE_CURRENT_BACK_ROOM_TRANSITION):
+		return false
+	transitions[1] = BLACKJACK_FIXTURE_HISTORICAL_BACK_ROOM_TRANSITION.duplicate(true)
+	environment["layer_transitions"] = transitions
+	return true
 
 
 func _blackjack_fixture_matches_baseline(fixture: Dictionary, baseline: Dictionary) -> bool:
