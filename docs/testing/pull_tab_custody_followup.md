@@ -154,3 +154,69 @@ The canonical ledger associates this evidence without closing the task. The
 resulting pushed main/NEXT publication state is recorded separately in
 task-14/outcome-custody-followup.json. This test/documentation follow-up changes
 no production runtime behavior.
+
+## Remaining evidence limit review — 2026-11-04
+
+**The parent remains Open.** Review at source
+`2954398c011ed4a01d6894b8fe129dba5bb213f6` found no additional ordinary-action
+reconstruction supported by the available evidence. No new gameplay, injected
+storage failure, production change or original campaign save/profile/authority
+access was performed. Preserved action logs and launch receipts were read.
+
+The qualified f299 Pull Tabs, SaveService, DurableStore, Web durability adapter
+and adapter contract test retain identical Git blobs on this source. The
+LF-normalized manual Menu Save and forced-autosave methods are also unchanged.
+The existing 177 custody assertions and two Web arms remain retained evidence
+for their exact builds and inputs, not fresh passes on the later source.
+The six Web sessions comprise two initial sessions and four cold sessions.
+
+Two independent source/evidence reviews reached the same result:
+
+| Candidate explanation | Existing evidence and remaining limit |
+| --- | --- |
+| Collection omitted from machine/floor Save | N01/N02 and R01/R02 cover the normal collection, forced Save, cold floor Save and re-entry boundaries. |
+| An older save job or room copy overwrites canonical custody | N01 covers registered older-tray overlap; N03/N04 cover valid stale copies and read-only projections. Active disk I/O was not claimed for N01. |
+| A successful acknowledgment accepts an older browser sync | The c43 correction waits for a distinct future engine promise. Sixteen adapter contracts cover older promises, error/rejection, unsupported persistence, busy requests, timeout and late completion; positive pending/success UI was rendered. |
+| Primary rejection loads the backup | SaveService loads one complete valid primary, or one complete backup only after primary rejection. Generic storage tests already cover fallback and failed-install/retry contracts. The original load outcome and generation fingerprints were not captured; a Pull Tabs corruption fixture would supply an unobserved fault, not attribute this incident. |
+| Failed focus attempts or a changed browser scope cause the first rollback | The first cold 4:45 clock precedes the focus attempts. All three retained sessions declare the same persistent profile/origin and no import. Their launch receipts bind the same served build. |
+
+The original controllers' `state.json` fields label the build as 87a06b9a and
+tree812983bf. Those are inherited constants in the identical controllers, not
+runtime discovery. Each window's retained `job.json` and server log instead
+binds the actual served root to `3fd56aebde05182a02a6babf096ae8b7fe430f7f`.
+Thus there is no evidence of a build change between windows121–123. This review
+uses retained launch identity; it does not claim a fresh rehash of the historical
+served payload. The original source predates c43.
+
+Rendered error/unsupported/retry UI remains an adjacent unqualified surface:
+its failure handling has source and JavaScript contract evidence, while the
+original logs do not report a sync error. That gap is not counted as a rendered
+failure-path pass or used to invent a new cause of the two successful-looking
+historical Saves.
+
+### Exact limitation and next trigger
+
+The two clock rollbacks show that the acknowledged newer clocks were not
+restored. They do not identify an older persisted primary versus backup
+fallback, nor which generation retained the tray. There was no custody
+inspection between the machine Save and the intermediate floor Save. The
+advanced campaign and a substitute save cannot recover those missing facts.
+The missing original save is not requested or made a prerequisite.
+
+Further reconstruction is warranted by one of these new observations:
+
+- A c43-descendant build acknowledges Save, then a cold load unexpectedly
+  regresses clock or ticket custody.
+- Raw machine and canonical ticket custody unexpectedly diverge before Save.
+- A new independent fixture reports an unexplained backup load.
+
+For that new disposable case, preserve evidence **before another Save**:
+exact served build, slot and origin; acknowledgment clock/custody; first cold
+clock/custody; and the primary/backup fingerprints plus
+`SaveService.last_load_result()`. These distinguish persistence lag, fallback
+and a custody mismatch without replaying a purchase or outcome. Until such
+evidence exists, no further production correction is established.
+
+Task-14 `evidence/pulltabs-provenance-review.json` records the source-equivalence
+checks, original session identity and next triggers. The canonical task remains
+Open with c43/d185 and the original observation preserved. Gas work stays paused.
