@@ -19132,6 +19132,356 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-04T19:55:26.505512+00:00"
+    },
+    {
+      "id": "BTH-COINPUSHER-DROP-PRICE-001",
+      "name": "Show canonical Drop price and affordable Hold total in Quarter Falls",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Investigate warm/cold missing visible Drop/Hold price in Quarter Falls, including the observed Vault Drop native variation. Display canonical unit cash cost before paid Drop and the actual affordable held-input total before release, distinguish already-paid queue, preserve charging, machine/queue/save state, RNG/clocks, input geometry and idle animation. Reproduce, test and commit a focused fix; preserve item/scenario pause and storage gate.\n\nNew authorized follow-through: publish this tested scoped fix to main and verify delivery through the existing NEXT watcher, including exact source/tree, served asset identity and basic startup. Retain the completed local qualification and keep the expanded objective Open until publication and NEXT acceptance are evidenced; preserve the resource gate and existing hosting audience/stable/itch scope.",
+        "source": "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-quarter-falls-drop-price-886887-finding.json; trusted parent delegation2026-11-04 requesting accurate displayed terms without charging changes, test and commit; Trusted parent delegation2026-11-04: publish the tested Quarter Falls price and Roulette journal fixes to main, follow existing NEXT watcher, retain NEXT acceptance Open until the reserve blocker resolves and delivery is verified. User transcript: Yes push all finished work to next. Do not bypass the existing gate.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "baseline",
+            "description": "Reproduce missing visible terms safely without using or playing the original R07 save.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/coin_pusher_drop_price_20261104.md",
+              "docs/testing/coin_pusher_drop_price_20261104.json",
+              "commit:62490ab186657cbfff49839589863e851eef7bcd"
+            ]
+          },
+          {
+            "id": "terms",
+            "description": "All three native variants show canonical price and affordable held count/total for default and nondefault costs, clamp60, insufficient funds, cancel and already-paid queue.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/coin_pusher_drop_price_20261104.md",
+              "docs/testing/coin_pusher_drop_price_20261104.json",
+              "commit:62490ab186657cbfff49839589863e851eef7bcd"
+            ]
+          },
+          {
+            "id": "accounting",
+            "description": "Actual tap/Hold request or settlement checks demonstrate unchanged debit/queue/paid-state behavior; price reads never transact or alter RNG/history.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/coin_pusher_drop_price_20261104.md",
+              "docs/testing/coin_pusher_drop_price_20261104.json",
+              "commit:62490ab186657cbfff49839589863e851eef7bcd"
+            ]
+          },
+          {
+            "id": "cold",
+            "description": "Official Save/fresh-process cold retains machine and wallet and displays the same price; no original paid outcome replay.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/coin_pusher_drop_price_20261104.md",
+              "docs/testing/coin_pusher_drop_price_20261104.json",
+              "commit:62490ab186657cbfff49839589863e851eef7bcd"
+            ]
+          },
+          {
+            "id": "render_liveness",
+            "description": "Production font-fit/render contract and cache invalidation preserve existing hitboxes/fixed16:9 and no-input animation.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/coin_pusher_drop_price_20261104.md",
+              "docs/testing/coin_pusher_drop_price_20261104.json",
+              "commit:62490ab186657cbfff49839589863e851eef7bcd"
+            ]
+          },
+          {
+            "id": "review_commit",
+            "description": "Independent review, focused tests, exact implementation commit and both ledger views associated.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/coin_pusher_drop_price_20261104.md",
+              "docs/testing/coin_pusher_drop_price_20261104.json",
+              "commit:62490ab186657cbfff49839589863e851eef7bcd"
+            ]
+          },
+          {
+            "id": "publication",
+            "description": "Publish the separately tested scoped implementation commit to main under existing user authorization; record exact resulting main SHA/tree and included fix ancestry without unrelated changes.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/quarter_roulette_publication_20261104.md",
+              "docs/testing/quarter_roulette_publication_20261104.json",
+              "commit:d361c21e47990cf50222242e07dca2568c33d3d4"
+            ]
+          },
+          {
+            "id": "next_delivery",
+            "description": "After the existing resource gate permits the watcher to progress, verify exact promoted/served source and tree, redirect/current identity, matching engine/PCK/native asset evidence and basic startup. Retain native changed-behavior qualification distinctly; leave unobserved deployed gameplay unclaimed.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "PUBLISHED_MAIN_NATIVE_QUALIFIED_NEXT_RESERVE_PENDING",
+      "owner": {
+        "name": "Fix Back Alley travel / Quarter Falls visible terms",
+        "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "62490ab186657cbfff49839589863e851eef7bcd",
+          "evidence": [
+            "docs/testing/coin_pusher_drop_price_20261104.md",
+            "docs/testing/coin_pusher_drop_price_20261104.json",
+            "Independent source review and 263 native assertions plus no-pointer liveness; local scope only."
+          ]
+        },
+        {
+          "sha": "d361c21e47990cf50222242e07dca2568c33d3d4",
+          "evidence": [
+            "docs/testing/quarter_roulette_publication_20261104.md",
+            "docs/testing/quarter_roulette_publication_20261104.json",
+            "Parent-confirmed published main identity; original implementation commit retained separately."
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "d361c21e47990cf50222242e07dca2568c33d3d4",
+        "evidence": [
+          "docs/testing/quarter_roulette_publication_20261104.md",
+          "docs/testing/quarter_roulette_publication_20261104.json"
+        ],
+        "scope": "Published main exact source; NEXT remains prior build behind existing disk reserve. Identity/assets/startup acceptance Open."
+      },
+      "evidence": [
+        {
+          "kind": "qa_observation",
+          "reference": "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-quarter-falls-drop-price-886887-finding.json",
+          "summary": "R07 onf305: Store Quarter Falls/Vault Drop cabinet cash54, no unit cost on card/cabinet/hover warm886 and cold887. No paid Drop/Hold/Collect input or charging claim. Related same cabinet term presentation, not financial mismatch."
+        },
+        {
+          "kind": "regression_test",
+          "reference": "docs/testing/coin_pusher_drop_price_20261104.json",
+          "summary": "Native producer228 + fresh-process cold35 pass; separate liveness PASS; initial cold6 JSON numeric-type comparison failures retained and corrected in test only; all six owned Jobs closed."
+        },
+        {
+          "kind": "review",
+          "reference": "docs/testing/coin_pusher_drop_price_20261104.md",
+          "summary": "Independent source review approved canonical terms, matching gesture/price merges, actual paid queue and preserved transaction/geometry/scheduling scope."
+        },
+        {
+          "kind": "authorization",
+          "reference": "docs/testing/quarter_roulette_publication_20261104.json",
+          "summary": "Trusted parent delegation2026-11-04: publish the tested Quarter Falls price and Roulette journal fixes to main, follow existing NEXT watcher, retain NEXT acceptance Open until the reserve blocker resolves and delivery is verified. User transcript: Yes push all finished work to next. Do not bypass the existing gate."
+        },
+        {
+          "kind": "verification",
+          "reference": "docs/testing/quarter_roulette_publication_20261104.json",
+          "summary": "Parent-confirmed main publication and723 fresh merged-source native assertions plus liveness; NEXT identity/assets/startup remain reserve-blocked/unverified."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Observe the existing NEXT watcher after its reserve permits progression, then verify the published source/tree through promoted/served identity, matching assets and basic startup. Retain the prior NEXT and keep delivery acceptance Open until evidenced.",
+      "blocker": {
+        "state": "active",
+        "kind": "pipeline_disk_reserve",
+        "description": "Main publication is confirmed. Existing NEXT disk reserve at watcher status2026-11-04T18:11:48Z: free13111173120 bytes below required13958643712; prior NEXTf3058b6daab820e9d747c4c4aabc2d983e9ae32e retained. Existing watcher delivery remains blocked; no approval/user-input hold or gate bypass.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T18:11:48Z",
+        "evidence": [
+          "docs/testing/quarter_roulette_publication_20261104.md",
+          "docs/testing/quarter_roulette_publication_20261104.json"
+        ]
+      },
+      "planned_app_changes": [
+        {
+          "scope": "cash_price_presentation",
+          "description": "Expose/read-only canonical Drop and Hold terms in existing surface/control geometry; no charging, paused gameplay, viewport/touch or storage guard change."
+        }
+      ],
+      "updated_at": "2026-11-04T18:12:12.227039+00:00"
+    },
+    {
+      "id": "BTH-JOURNAL-ROULETTE-CURRENCY-001",
+      "name": "Record actual currency in new Roulette journal receipts",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Investigate the distinct new Roulette journal-currency omission in R07 Lounge settlement893894, trace the actual producer/host path and correct new recorded cash/chip provenance if warranted. Preserve staged unpaid draft, one confirmed settlement/debit, wallet/RNG/rules/authority and historical unknown rows. Test and commit separately from Bar Dice and Quarter Falls work.\n\nNew authorized follow-through: publish this tested scoped fix to main and verify delivery through the existing NEXT watcher, including exact source/tree, served asset identity and basic startup. Retain the completed local qualification and keep the expanded objective Open until publication and NEXT acceptance are evidenced; preserve the resource gate and existing hosting audience/stable/itch scope.",
+        "source": "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-roulette-journal-currency-893894-finding.json; trusted parent delegation2026-11-04 requests add/investigate with wallet preservation and independent attribution; Quarter Falls remains first; Trusted parent delegation2026-11-04: publish the tested Quarter Falls price and Roulette journal fixes to main, follow existing NEXT watcher, retain NEXT acceptance Open until the reserve blocker resolves and delivery is verified. User transcript: Yes push all finished work to next. Do not bypass the existing gate.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "trace_reproduce",
+            "description": "Trace Roulette-specific producer/host attribution and reproduce using labeled synthetic normal cash/chip action boundaries, no original R07 replay.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/roulette_journal_currency_20261104.md",
+              "docs/testing/roulette_journal_currency_20261104.json",
+              "commit:61e77b909b0ca2cb496df54066ba13ffb68ea755"
+            ]
+          },
+          {
+            "id": "accounting_contract",
+            "description": "Preserve unpaid draft/Save, confirm-exactly-once settlement and explicit current-net units, refund/zero/legacy boundaries as materially relevant.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/roulette_journal_currency_20261104.md",
+              "docs/testing/roulette_journal_currency_20261104.json",
+              "commit:61e77b909b0ca2cb496df54066ba13ffb68ea755"
+            ]
+          },
+          {
+            "id": "save_cold",
+            "description": "Relevant official Save/fresh-process cold preserves wallets, full paid/draft table state, RNG/clocks/history without new wager or outcome.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/roulette_journal_currency_20261104.md",
+              "docs/testing/roulette_journal_currency_20261104.json",
+              "commit:61e77b909b0ca2cb496df54066ba13ffb68ea755"
+            ]
+          },
+          {
+            "id": "review_commit",
+            "description": "Focused tests, independent scoped review and separately associated implementation commit; update both ledgers with actual evidence and limits.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/roulette_journal_currency_20261104.md",
+              "docs/testing/roulette_journal_currency_20261104.json",
+              "commit:61e77b909b0ca2cb496df54066ba13ffb68ea755"
+            ]
+          },
+          {
+            "id": "publication",
+            "description": "Publish the separately tested scoped implementation commit to main under existing user authorization; record exact resulting main SHA/tree and included fix ancestry without unrelated changes.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/quarter_roulette_publication_20261104.md",
+              "docs/testing/quarter_roulette_publication_20261104.json",
+              "commit:d361c21e47990cf50222242e07dca2568c33d3d4"
+            ]
+          },
+          {
+            "id": "next_delivery",
+            "description": "After the existing resource gate permits the watcher to progress, verify exact promoted/served source and tree, redirect/current identity, matching engine/PCK/native asset evidence and basic startup. Retain native changed-behavior qualification distinctly; leave unobserved deployed gameplay unclaimed.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "PUBLISHED_MAIN_NATIVE_QUALIFIED_NEXT_RESERVE_PENDING",
+      "owner": {
+        "name": "Fix Back Alley travel / Roulette journal follow-up",
+        "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "61e77b909b0ca2cb496df54066ba13ffb68ea755",
+          "evidence": [
+            "docs/testing/roulette_journal_currency_20261104.md",
+            "docs/testing/roulette_journal_currency_20261104.json",
+            "Independent source/test review; native334 + draft-cold35 + final-cold75 + adjacent consumed16 qualified assertions."
+          ]
+        },
+        {
+          "sha": "d361c21e47990cf50222242e07dca2568c33d3d4",
+          "evidence": [
+            "docs/testing/quarter_roulette_publication_20261104.md",
+            "docs/testing/quarter_roulette_publication_20261104.json",
+            "Parent-confirmed published main identity; original implementation commit retained separately."
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": "d361c21e47990cf50222242e07dca2568c33d3d4",
+        "evidence": [
+          "docs/testing/quarter_roulette_publication_20261104.md",
+          "docs/testing/quarter_roulette_publication_20261104.json"
+        ],
+        "scope": "Published main exact source; NEXT remains prior build behind existing disk reserve. Identity/assets/startup acceptance Open."
+      },
+      "evidence": [
+        {
+          "kind": "qa_observation",
+          "reference": "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-roulette-journal-currency-893894-finding.json",
+          "summary": "R07 onf305 Lounge: one unpaid14-on17 draft survivescold with cash33, confirmnatural36red loses14 once tocash19; cold retains one row unknowncurrency. Accounting/exactlyonce correct; distinct Roulette attribution pending."
+        },
+        {
+          "kind": "regression_test",
+          "reference": "docs/testing/roulette_journal_currency_20261104.json",
+          "summary": "460 qualified assertions including separate consumed16; all generated cash/chip action, draft-cold and final-cold checks pass. Both harness diagnostics retained; no original replay."
+        },
+        {
+          "kind": "review",
+          "reference": "docs/testing/roulette_journal_currency_20261104.md",
+          "summary": "Independent loan_room_review source/test approval; six product metadata additions and unchanged shared Journal. Exact implementation SHA associated."
+        },
+        {
+          "kind": "authorization",
+          "reference": "docs/testing/quarter_roulette_publication_20261104.json",
+          "summary": "Trusted parent delegation2026-11-04: publish the tested Quarter Falls price and Roulette journal fixes to main, follow existing NEXT watcher, retain NEXT acceptance Open until the reserve blocker resolves and delivery is verified. User transcript: Yes push all finished work to next. Do not bypass the existing gate."
+        },
+        {
+          "kind": "verification",
+          "reference": "docs/testing/quarter_roulette_publication_20261104.json",
+          "summary": "Parent-confirmed main publication and723 fresh merged-source native assertions plus liveness; NEXT identity/assets/startup remain reserve-blocked/unverified."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Observe the existing NEXT watcher after its reserve permits progression, then verify the published source/tree through promoted/served identity, matching assets and basic startup. Retain the prior NEXT and keep delivery acceptance Open until evidenced.",
+      "blocker": {
+        "state": "active",
+        "kind": "pipeline_disk_reserve",
+        "description": "Main publication is confirmed. Existing NEXT disk reserve at watcher status2026-11-04T18:11:48Z: free13111173120 bytes below required13958643712; prior NEXTf3058b6daab820e9d747c4c4aabc2d983e9ae32e retained. Existing watcher delivery remains blocked; no approval/user-input hold or gate bypass.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T18:11:48Z",
+        "evidence": [
+          "docs/testing/quarter_roulette_publication_20261104.md",
+          "docs/testing/quarter_roulette_publication_20261104.json"
+        ]
+      },
+      "planned_app_changes": [
+        {
+          "scope": "roulette_story_currency_metadata",
+          "description": "Six new producer metadata fields only: actual currency and current action net. No charging, authority, rules, history rewrite, input, viewport, scheduling or paused feature change."
+        }
+      ],
+      "updated_at": "2026-11-04T18:12:12.227039+00:00"
     }
   ],
   "batches": [

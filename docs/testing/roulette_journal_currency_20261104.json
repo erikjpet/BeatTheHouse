@@ -1,0 +1,1041 @@
+{
+  "task_id": "BTH-JOURNAL-ROULETTE-CURRENCY-001",
+  "recorded_at": "2026-11-04T17:56:46.554449+00:00",
+  "state": "LOCAL_FIX_TEST_COMMIT_COMPLETE",
+  "implementation_commit": "61e77b909b0ca2cb496df54066ba13ffb68ea755",
+  "base_commit": "de6ed444cb8bfe63d661dfb39e43073dc976b0f5",
+  "source_sha256": {
+    "game": "cb4de4f65f44eba538e7cf466a90d15485c1d95d4a9bbe1af1c7e5db5ab0451c",
+    "journal": "a426e4451a112d279e7c7f9fa4a47f2ae0e0426c9ebefbad8d9d07fa87744d45",
+    "test": "846e9166b604dc119692a497612d66b56a1089d3a013c8d6a44e541d2177697b"
+  },
+  "scope": "Six metadata additions across Roulette spin/sit-out, late-chip and wheel-read story producers. Record current action-time currency and local action net, including zero. No wallet, wager, RNG, spin/grade, authority, shared Journal, save-schema, input/viewport, scheduler, paused work or storage-gate changes.",
+  "fidelity": "Synthetic generated cash and Grand chip tables. Bounded uncommitted model seed selection; retained normal spins, paid zero-net red/black layouts, generated timed wheel reads and perfect late chips use real sealed Foundation Host. Official SaveService unpaid draft cold settlement and independent final cold read. Receipt fingerprint/replay/direct-apply guards and unchanged legacy row. No original R07 save, forced wheel/grade, renderer/Web input or deployed acceptance claim. Late-chip negative/miss grades and new RNG/economy rules are outside this metadata check.",
+  "original_observation": {
+    "reference": "E:\\CodexQA\\BTH\\Broad\\r07-20261104\\evidence\\qa-r07-roulette-journal-currency-893894-finding.json",
+    "sha256": "3a6acd369fc41452f710b36acc314be9b90e056ed986ef8b81ffaad85ea9cfd2",
+    "tested_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+    "summary": "R07 Lounge: unpaid14 draft survives cold at cash33; natural36 red settlement loses14 once to cash19; new cold journal row omits currency. Original profile not accessed or replayed by fix."
+  },
+  "baseline": {
+    "checks": 29,
+    "facts": {
+      "auxiliary": [],
+      "cold": [],
+      "normal": [
+        {
+          "case": "loss",
+          "cash": 19,
+          "chips": 42,
+          "currency": "cash",
+          "net": -14,
+          "number": "4",
+          "rows": 2,
+          "stake": 14
+        }
+      ],
+      "original_profiles_used": false,
+      "seed_selection": [
+        {
+          "case": "loss",
+          "currency": "cash",
+          "seed": "ROULETTE-JOURNAL-cash-loss-0",
+          "uncommitted_probes": 1
+        }
+      ]
+    },
+    "failures": [
+      "cash loss producer freezes currency and exact local net including zero",
+      "cash loss journal shows one exact account amount"
+    ],
+    "fidelity": "Synthetic generated cash and Grand chip tables. Bounded uncommitted model seed selection; retained normal spins, paid zero-net red/black layouts, generated timed wheel reads and perfect late chips use real sealed Foundation Host. Official SaveService unpaid draft cold settlement and independent final cold read. Receipt fingerprint/replay/direct-apply guards and unchanged legacy row. No original R07 save, forced wheel/grade, renderer/Web input or deployed acceptance claim. Late-chip negative/miss grades and new RNG/economy rules are outside this metadata check.",
+    "id": "BTH-JOURNAL-ROULETTE-CURRENCY-001",
+    "mode": "baseline",
+    "source_sha256": {
+      "game": "c17da402c47d541ac3458f9aa1ee52a91af950bcac7dd481b266cf2da63e914c",
+      "journal": "a426e4451a112d279e7c7f9fa4a47f2ae0e0426c9ebefbad8d9d07fa87744d45",
+      "test": "234abeb3679932027a75df8df25d42e1fb094e47b51c6a8c8bda644bd57a1124"
+    }
+  },
+  "qualified": {
+    "producer": {
+      "checks": 334,
+      "failures": [],
+      "facts": {
+        "auxiliary": [
+          {
+            "action": "read_wheel_bias",
+            "currency": "cash",
+            "net": 0,
+            "security": false
+          },
+          {
+            "action": "read_wheel_bias",
+            "currency": "cash",
+            "net": -3,
+            "security": true
+          },
+          {
+            "action": "past_post",
+            "currency": "cash",
+            "current_net": 483,
+            "original_net": -14
+          },
+          {
+            "action": "read_wheel_bias",
+            "currency": "chips",
+            "net": 0,
+            "security": false
+          },
+          {
+            "action": "read_wheel_bias",
+            "currency": "chips",
+            "net": -3,
+            "security": true
+          },
+          {
+            "action": "past_post",
+            "currency": "chips",
+            "current_net": 483,
+            "original_net": -14
+          }
+        ],
+        "cold": [],
+        "diagnostics": [
+          {
+            "case": "spin",
+            "command_resolves": true,
+            "error_code": "",
+            "has_delivery": true,
+            "message": "Roulette lands 4 black. 0 winning bets. Bankroll -14. Cash change: -14.",
+            "nominal_stake": 14,
+            "ok": true
+          },
+          {
+            "case": "spin",
+            "command_resolves": true,
+            "error_code": "",
+            "has_delivery": true,
+            "message": "Roulette lands 14 red. 1 winning bet. Bankroll +14. Cash change: +14.",
+            "nominal_stake": 14,
+            "ok": true
+          },
+          {
+            "case": "spin",
+            "command_resolves": true,
+            "error_code": "",
+            "has_delivery": true,
+            "message": "Roulette lands 26 black. 1 winning bet. Bankroll +0. Cash change: +0.",
+            "nominal_stake": 14,
+            "ok": true
+          },
+          {
+            "case": "spin",
+            "command_resolves": true,
+            "error_code": "",
+            "has_delivery": true,
+            "message": "Roulette lands 25 red. 0 winning bets. Chip balance -14. Chip change: -14 chips.",
+            "nominal_stake": 14,
+            "ok": true
+          },
+          {
+            "case": "spin",
+            "command_resolves": true,
+            "error_code": "",
+            "has_delivery": true,
+            "message": "Roulette lands 5 red. 1 winning bet. Chip balance +14. Chip change: +14 chips.",
+            "nominal_stake": 14,
+            "ok": true
+          },
+          {
+            "case": "spin",
+            "command_resolves": true,
+            "error_code": "",
+            "has_delivery": true,
+            "message": "Roulette lands 28 black. 1 winning bet. Chip balance +0. Chip change: +0 chips.",
+            "nominal_stake": 14,
+            "ok": true
+          },
+          {
+            "case": "cash wheel read false",
+            "command_resolves": true,
+            "error_code": "",
+            "has_delivery": true,
+            "message": "TABLE READ: On non-green spins, 1-18 is favored 60/40 over 19-36. A patron follows the stare and looks toward staff.",
+            "nominal_stake": 14,
+            "ok": true
+          },
+          {
+            "case": "cash wheel read true",
+            "command_resolves": true,
+            "error_code": "",
+            "has_delivery": true,
+            "message": "The croupier catches your stare and the wheel read gives you nothing. Heat +20. Security pressure turns into a small, ugly shakedown. Cash change: -3.",
+            "nominal_stake": 14,
+            "ok": true
+          },
+          {
+            "case": "spin",
+            "command_resolves": true,
+            "error_code": "",
+            "has_delivery": true,
+            "message": "Roulette lands 9 red. 0 winning bets. Bankroll -14. Cash change: -14.",
+            "nominal_stake": 14,
+            "ok": true
+          },
+          {
+            "case": "cash late chip",
+            "command_resolves": true,
+            "error_code": "",
+            "has_delivery": true,
+            "message": "Perfect late chip: $14 lands on 9 before the dolly. Bankroll +483; heat +19. A patron follows the stare and looks toward staff. Security pressure turns into a small, ugly shakedown. Cash change: +483.",
+            "nominal_stake": 14,
+            "ok": true
+          },
+          {
+            "case": "chips wheel read false",
+            "command_resolves": true,
+            "error_code": "",
+            "has_delivery": true,
+            "message": "TABLE READ: On non-green spins, EVEN is favored 60/40 over ODD. A patron follows the stare and looks toward staff.",
+            "nominal_stake": 14,
+            "ok": true
+          },
+          {
+            "case": "chips wheel read true",
+            "command_resolves": true,
+            "error_code": "",
+            "has_delivery": true,
+            "message": "The croupier catches your stare and the wheel read gives you nothing. Heat +20. A patron follows the stare and looks toward staff. Security pressure turns into a small, ugly shakedown. Chip change: -3 chips.",
+            "nominal_stake": 14,
+            "ok": true
+          },
+          {
+            "case": "spin",
+            "command_resolves": true,
+            "error_code": "",
+            "has_delivery": true,
+            "message": "Roulette lands 2 black. 0 winning bets. Chip balance -14. Chip change: -14 chips.",
+            "nominal_stake": 14,
+            "ok": true
+          },
+          {
+            "case": "chips late chip",
+            "command_resolves": true,
+            "error_code": "",
+            "has_delivery": true,
+            "message": "Perfect late chip: 14 chips lands on 2 before the dolly. Chip balance +483; heat +19. A patron follows the stare and looks toward staff. Security pressure turns into a small, ugly shakedown. Chip change: +483 chips.",
+            "nominal_stake": 14,
+            "ok": true
+          }
+        ],
+        "normal": [
+          {
+            "case": "loss",
+            "cash": 19,
+            "chips": 42,
+            "currency": "cash",
+            "net": -14,
+            "number": "4",
+            "rows": 2,
+            "stake": 14
+          },
+          {
+            "case": "win",
+            "cash": 47,
+            "chips": 42,
+            "currency": "cash",
+            "net": 14,
+            "number": "14",
+            "rows": 2,
+            "stake": 14
+          },
+          {
+            "case": "zero",
+            "cash": 33,
+            "chips": 42,
+            "currency": "cash",
+            "net": 0,
+            "number": "26",
+            "rows": 2,
+            "stake": 28
+          },
+          {
+            "case": "loss",
+            "cash": 33,
+            "chips": 28,
+            "currency": "chips",
+            "net": -14,
+            "number": "25",
+            "rows": 2,
+            "stake": 14
+          },
+          {
+            "case": "win",
+            "cash": 33,
+            "chips": 56,
+            "currency": "chips",
+            "net": 14,
+            "number": "5",
+            "rows": 2,
+            "stake": 14
+          },
+          {
+            "case": "zero",
+            "cash": 33,
+            "chips": 42,
+            "currency": "chips",
+            "net": 0,
+            "number": "28",
+            "rows": 2,
+            "stake": 28
+          }
+        ],
+        "original_profiles_used": false,
+        "seed_selection": [
+          {
+            "case": "loss",
+            "currency": "cash",
+            "seed": "ROULETTE-JOURNAL-cash-loss-0",
+            "uncommitted_probes": 1
+          },
+          {
+            "case": "win",
+            "currency": "cash",
+            "seed": "ROULETTE-JOURNAL-cash-win-4",
+            "uncommitted_probes": 5
+          },
+          {
+            "case": "zero",
+            "currency": "cash",
+            "seed": "ROULETTE-JOURNAL-cash-zero-0",
+            "uncommitted_probes": 1
+          },
+          {
+            "case": "loss",
+            "currency": "chips",
+            "seed": "ROULETTE-JOURNAL-chips-loss-0",
+            "uncommitted_probes": 1
+          },
+          {
+            "case": "win",
+            "currency": "chips",
+            "seed": "ROULETTE-JOURNAL-chips-win-2",
+            "uncommitted_probes": 3
+          },
+          {
+            "case": "zero",
+            "currency": "chips",
+            "seed": "ROULETTE-JOURNAL-chips-zero-0",
+            "uncommitted_probes": 1
+          },
+          {
+            "case": "loss",
+            "currency": "cash",
+            "seed": "ROULETTE-JOURNAL-cash-loss-0",
+            "uncommitted_probes": 1
+          }
+        ],
+        "story_additions": [
+          {
+            "case": "cash loss",
+            "earned_invitation_rows": 0,
+            "invitation_spawned": false,
+            "new_rival_escort": false,
+            "rival_escort_rows": 0,
+            "roulette_action_rows": 1
+          },
+          {
+            "case": "cash win",
+            "earned_invitation_rows": 0,
+            "invitation_spawned": false,
+            "new_rival_escort": false,
+            "rival_escort_rows": 0,
+            "roulette_action_rows": 1
+          },
+          {
+            "case": "cash zero",
+            "earned_invitation_rows": 0,
+            "invitation_spawned": false,
+            "new_rival_escort": false,
+            "rival_escort_rows": 0,
+            "roulette_action_rows": 1
+          },
+          {
+            "case": "chips loss",
+            "earned_invitation_rows": 0,
+            "invitation_spawned": false,
+            "new_rival_escort": false,
+            "rival_escort_rows": 0,
+            "roulette_action_rows": 1
+          },
+          {
+            "case": "chips win",
+            "earned_invitation_rows": 0,
+            "invitation_spawned": false,
+            "new_rival_escort": false,
+            "rival_escort_rows": 0,
+            "roulette_action_rows": 1
+          },
+          {
+            "case": "chips zero",
+            "earned_invitation_rows": 0,
+            "invitation_spawned": false,
+            "new_rival_escort": false,
+            "rival_escort_rows": 0,
+            "roulette_action_rows": 1
+          },
+          {
+            "case": "cash wheel read",
+            "earned_invitation_rows": 0,
+            "invitation_spawned": false,
+            "new_rival_escort": false,
+            "rival_escort_rows": 0,
+            "roulette_action_rows": 1
+          },
+          {
+            "case": "cash wheel read",
+            "earned_invitation_rows": 0,
+            "invitation_spawned": false,
+            "new_rival_escort": false,
+            "rival_escort_rows": 0,
+            "roulette_action_rows": 1
+          },
+          {
+            "case": "cash late chip",
+            "earned_invitation_rows": 1,
+            "invitation_spawned": true,
+            "new_rival_escort": false,
+            "rival_escort_rows": 0,
+            "roulette_action_rows": 1
+          },
+          {
+            "case": "chips wheel read",
+            "earned_invitation_rows": 0,
+            "invitation_spawned": false,
+            "new_rival_escort": false,
+            "rival_escort_rows": 0,
+            "roulette_action_rows": 1
+          },
+          {
+            "case": "chips wheel read",
+            "earned_invitation_rows": 0,
+            "invitation_spawned": false,
+            "new_rival_escort": false,
+            "rival_escort_rows": 0,
+            "roulette_action_rows": 1
+          },
+          {
+            "case": "chips late chip",
+            "earned_invitation_rows": 1,
+            "invitation_spawned": true,
+            "new_rival_escort": true,
+            "rival_escort_rows": 1,
+            "roulette_action_rows": 1
+          }
+        ]
+      }
+    },
+    "draft_cold": {
+      "checks": 35,
+      "failures": [],
+      "facts": {
+        "auxiliary": [],
+        "cold": [],
+        "diagnostics": [
+          {
+            "case": "spin",
+            "command_resolves": true,
+            "error_code": "",
+            "has_delivery": true,
+            "message": "Roulette lands 4 black. 0 winning bets. Bankroll -14. Cash change: -14.",
+            "nominal_stake": 14,
+            "ok": true
+          }
+        ],
+        "normal": [],
+        "original_profiles_used": false,
+        "seed_selection": [],
+        "story_additions": [
+          {
+            "case": "cold draft settlement",
+            "earned_invitation_rows": 0,
+            "invitation_spawned": false,
+            "new_rival_escort": false,
+            "rival_escort_rows": 0,
+            "roulette_action_rows": 1
+          }
+        ]
+      }
+    },
+    "cold": {
+      "checks": 75,
+      "failures": [],
+      "facts": {
+        "auxiliary": [],
+        "cold": [
+          {
+            "cash": 19,
+            "chips": 42,
+            "lines": [
+              [
+                "Recorded change -7 (currency not recorded)"
+              ],
+              [
+                "Bankroll -14"
+              ]
+            ],
+            "rows": 2,
+            "slot": "roulette_journal_cash_loss"
+          },
+          {
+            "cash": 47,
+            "chips": 42,
+            "lines": [
+              [
+                "Recorded change -7 (currency not recorded)"
+              ],
+              [
+                "Bankroll +14"
+              ]
+            ],
+            "rows": 2,
+            "slot": "roulette_journal_cash_win"
+          },
+          {
+            "cash": 33,
+            "chips": 42,
+            "lines": [
+              [
+                "Recorded change -7 (currency not recorded)"
+              ],
+              [
+                "Bankroll +0"
+              ]
+            ],
+            "rows": 2,
+            "slot": "roulette_journal_cash_zero"
+          },
+          {
+            "cash": 33,
+            "chips": 28,
+            "lines": [
+              [
+                "Recorded change -7 (currency not recorded)"
+              ],
+              [
+                "Chips -14"
+              ]
+            ],
+            "rows": 2,
+            "slot": "roulette_journal_chips_loss"
+          },
+          {
+            "cash": 33,
+            "chips": 56,
+            "lines": [
+              [
+                "Recorded change -7 (currency not recorded)"
+              ],
+              [
+                "Chips +14"
+              ]
+            ],
+            "rows": 2,
+            "slot": "roulette_journal_chips_win"
+          },
+          {
+            "cash": 33,
+            "chips": 42,
+            "lines": [
+              [
+                "Recorded change -7 (currency not recorded)"
+              ],
+              [
+                "Chips +0"
+              ]
+            ],
+            "rows": 2,
+            "slot": "roulette_journal_chips_zero"
+          },
+          {
+            "cash": 33,
+            "chips": 42,
+            "lines": [
+              [
+                "Recorded change -7 (currency not recorded)"
+              ],
+              [
+                "Bankroll +0"
+              ]
+            ],
+            "rows": 2,
+            "slot": "roulette_journal_read_cash_zero"
+          },
+          {
+            "cash": 30,
+            "chips": 42,
+            "lines": [
+              [
+                "Recorded change -7 (currency not recorded)"
+              ],
+              [
+                "Bankroll -3"
+              ]
+            ],
+            "rows": 2,
+            "slot": "roulette_journal_read_cash_security"
+          },
+          {
+            "cash": 502,
+            "chips": 42,
+            "lines": [
+              [
+                "Recorded change -7 (currency not recorded)"
+              ],
+              [
+                "Bankroll -14"
+              ],
+              [
+                "Bankroll +483"
+              ],
+              [
+                "Recorded change +483 (currency not recorded)"
+              ]
+            ],
+            "rows": 4,
+            "slot": "roulette_journal_past_cash"
+          },
+          {
+            "cash": 33,
+            "chips": 42,
+            "lines": [
+              [
+                "Recorded change -7 (currency not recorded)"
+              ],
+              [
+                "Chips +0"
+              ]
+            ],
+            "rows": 2,
+            "slot": "roulette_journal_read_chips_zero"
+          },
+          {
+            "cash": 33,
+            "chips": 39,
+            "lines": [
+              [
+                "Recorded change -7 (currency not recorded)"
+              ],
+              [
+                "Chips -3"
+              ]
+            ],
+            "rows": 2,
+            "slot": "roulette_journal_read_chips_security"
+          },
+          {
+            "cash": 33,
+            "chips": 511,
+            "lines": [
+              [
+                "Recorded change -7 (currency not recorded)"
+              ],
+              [
+                "Chips -14"
+              ],
+              [
+                "Chips +483"
+              ],
+              [
+                "Recorded change +483 (currency not recorded)"
+              ],
+              []
+            ],
+            "rows": 5,
+            "slot": "roulette_journal_past_chips"
+          },
+          {
+            "cash": 19,
+            "chips": 42,
+            "lines": [
+              [
+                "Recorded change -7 (currency not recorded)"
+              ],
+              [
+                "Bankroll -14"
+              ]
+            ],
+            "rows": 2,
+            "slot": "roulette_journal_draft_paid"
+          }
+        ],
+        "diagnostics": [],
+        "normal": [],
+        "original_profiles_used": false,
+        "seed_selection": [],
+        "story_additions": []
+      }
+    }
+  },
+  "adjacent_consumed_wager": {
+    "checks": 16,
+    "failures": [],
+    "log_sha256": "715f19c24f13a4a6f9a224d58902c433d305a4717f80248afd354dfa48b5d8c4",
+    "scope": "Actual full Foundation warm Save/Continue; consumed pending wager, sit-out, rebet/undo and one guard. No legacy original-fixture environment supplied."
+  },
+  "qualified_assertions_total": 460,
+  "diagnostic_history": [
+    {
+      "label": "roulette-currency-final-producer",
+      "checks": 182,
+      "failures": [
+        "two ordinary SPIN inputs seal the exact draft cost",
+        "cash zero real host accepts one natural spin",
+        "two ordinary SPIN inputs seal the exact draft cost",
+        "chips zero real host accepts one natural spin",
+        "cash timed wheel read commits through real host",
+        "cash timed wheel read commits through real host",
+        "cash late chip appends exactly one durable action receipt",
+        "cash late chip producer freezes currency and exact local net including zero",
+        "cash late chip journal shows one exact account amount",
+        "chips timed wheel read commits through real host",
+        "chips timed wheel read commits through real host",
+        "chips late chip appends exactly one durable action receipt",
+        "chips late chip producer freezes currency and exact local net including zero",
+        "chips late chip journal shows one exact account amount"
+      ],
+      "source_sha256": {
+        "game": "cb4de4f65f44eba538e7cf466a90d15485c1d95d4a9bbe1af1c7e5db5ab0451c",
+        "journal": "a426e4451a112d279e7c7f9fa4a47f2ae0e0426c9ebefbad8d9d07fa87744d45",
+        "test": "234abeb3679932027a75df8df25d42e1fb094e47b51c6a8c8bda644bd57a1124"
+      },
+      "cause": "Test confused nominal delivery stake14 with total wager28 / free-action cost0; correlated Roulette event receipt selector corrected. Actual production prices were unchanged and correct; only test pricing/selection changed.",
+      "result_sha256": "e1b21803bdf838e366f151ca5bd96ff20c09449089d490fe982b194191a403d8"
+    },
+    {
+      "label": "roulette-currency-qualified-producer",
+      "checks": 331,
+      "failures": [
+        "chips late chip exact expected earned-event count is preserved"
+      ],
+      "source_sha256": {
+        "game": "cb4de4f65f44eba538e7cf466a90d15485c1d95d4a9bbe1af1c7e5db5ab0451c",
+        "journal": "a426e4451a112d279e7c7f9fa4a47f2ae0e0426c9ebefbad8d9d07fa87744d45",
+        "test": "12cd9d86e765be8cc9d4cb078811abee6554e6ce7b5fdf3d0718b47574e6eadc"
+      },
+      "cause": "Test harness earned-event expectation omitted the genuine earned Rourke rival escort event. Final exact public event/state guards require one Roulette action, one invitation and one rival escort event; no loose earned-row allowance. Metadata/accounting/authority checks already passed; product bytes unchanged.",
+      "result_sha256": "8e658d7fc280860fe17ba49e213a068692108ed2a5f8310a8dd2714a45f4e5ce"
+    }
+  ],
+  "independent_review": {
+    "result": "approved",
+    "reviewer": "/root/loan_room_review",
+    "scope": "Independent source and final focused-test review reported by parent; exact implementation commit associated. Separate final-proof read is not a new engine run."
+  },
+  "local_acceptance": {
+    "state": "complete",
+    "criteria": 4,
+    "implementation_commit": "61e77b909b0ca2cb496df54066ba13ffb68ea755",
+    "deployment_required": false,
+    "deployment_state": "not_applicable"
+  },
+  "jobs": [
+    {
+      "label": "roulette-currency-accepted-cold",
+      "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-cold.json",
+      "receipt_sha256": "984723f4967b9352e51bee8697fa9527b75269c688591f2141cab446f4921124",
+      "launch_nonce": "3d5736659dee4f379bf60253cdea9b82",
+      "pid": 37224,
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\source-numbers",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "res://scripts/tests/roulette_journal_currency_check.gd",
+        "--",
+        "--cold"
+      ],
+      "started_at_utc": "2026-11-04T17:54:23.875435+00:00",
+      "finished_at_utc": "2026-11-04T17:54:37.728990+00:00",
+      "exit_code": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "timed_out": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "result_sha256": "273f8983e17fda2b7a1e754672cec88af7d8407f439e7c2bcf9c057b22d23e25",
+      "disposition": "pass"
+    },
+    {
+      "label": "roulette-currency-accepted-draft-cold",
+      "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-draft-cold.json",
+      "receipt_sha256": "cea50b613bd4988a17d5a47d4142f331fee5cd638367e019ca1a69578dda1b66",
+      "launch_nonce": "6b26c150cd2445df802ed463fe614756",
+      "pid": 32444,
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\source-numbers",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "res://scripts/tests/roulette_journal_currency_check.gd",
+        "--",
+        "--draft-cold"
+      ],
+      "started_at_utc": "2026-11-04T17:54:03.531128+00:00",
+      "finished_at_utc": "2026-11-04T17:54:15.597946+00:00",
+      "exit_code": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "timed_out": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "result_sha256": "508113873a0e40d15ecf20486b3e064d8ad45fe679f39fde48fa7478fc931696",
+      "disposition": "pass"
+    },
+    {
+      "label": "roulette-currency-accepted-producer",
+      "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-producer.json",
+      "receipt_sha256": "c18790fe421a948c53de1142d70ecaaa9cba8e52aa5f77b6d7d706111db902f4",
+      "launch_nonce": "5d659b7603ea42858e3699b9beed6ce4",
+      "pid": 24964,
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\source-numbers",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "res://scripts/tests/roulette_journal_currency_check.gd"
+      ],
+      "started_at_utc": "2026-11-04T17:53:19.016260+00:00",
+      "finished_at_utc": "2026-11-04T17:53:34.947232+00:00",
+      "exit_code": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "timed_out": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "result_sha256": "f32461965fe0812285c2f7ea2d7523775d8eac81215e389d943855f0a3b2f8f2",
+      "disposition": "pass"
+    },
+    {
+      "label": "roulette-currency-baseline",
+      "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-baseline.json",
+      "receipt_sha256": "7e5cefa8000ed255b11f88fb5e6e3b67176cec8357bdca316b06c627ff23dc65",
+      "launch_nonce": "3e15109c25324742be1ea13d7e4447d6",
+      "pid": 32076,
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\source-numbers",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "res://scripts/tests/roulette_journal_currency_check.gd",
+        "--",
+        "--baseline"
+      ],
+      "started_at_utc": "2026-11-04T17:46:00.060678+00:00",
+      "finished_at_utc": "2026-11-04T17:46:11.934015+00:00",
+      "exit_code": 1,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "timed_out": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "result_sha256": "0ae56ec024daa40811be55e430c7b3d98a1626ea7f439621e39bb7d8d8acebc7",
+      "disposition": "expected baseline omission"
+    },
+    {
+      "label": "roulette-currency-consumed",
+      "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-consumed.json",
+      "receipt_sha256": "68cda1719e5b6616b46312acd8a7082f2df06c15c4f1fc06a6e6cda6d083d4c1",
+      "launch_nonce": "52bda30ba66448208b908f23fea80e1a",
+      "pid": 7636,
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\source-numbers",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "res://scripts/tests/roulette_consumed_wager_check.gd"
+      ],
+      "started_at_utc": "2026-11-04T17:51:45.699955+00:00",
+      "finished_at_utc": "2026-11-04T17:52:04.406501+00:00",
+      "exit_code": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "timed_out": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "result_sha256": null,
+      "disposition": "pass"
+    },
+    {
+      "label": "roulette-currency-final-producer",
+      "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-final-producer.json",
+      "receipt_sha256": "fb47a6727823091ad66c2b24e6a9eb63ed851aa6899ef0e66802cae8ec430db4",
+      "launch_nonce": "19d187d4dfe34e0aa342102b7d757582",
+      "pid": 37960,
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\source-numbers",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "res://scripts/tests/roulette_journal_currency_check.gd"
+      ],
+      "started_at_utc": "2026-11-04T17:47:45.314274+00:00",
+      "finished_at_utc": "2026-11-04T17:47:58.990684+00:00",
+      "exit_code": 1,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "timed_out": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "result_sha256": "e1b21803bdf838e366f151ca5bd96ff20c09449089d490fe982b194191a403d8",
+      "disposition": "retained harness diagnostic failure"
+    },
+    {
+      "label": "roulette-currency-qualified-producer",
+      "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-qualified-producer.json",
+      "receipt_sha256": "a7a96af183a0869ab502f220e32cdfc7d67e8ace22d00c553a7cb76e7340177b",
+      "launch_nonce": "cf92ded422524e81a536fc75939d9be1",
+      "pid": 37480,
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\source-numbers",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "res://scripts/tests/roulette_journal_currency_check.gd"
+      ],
+      "started_at_utc": "2026-11-04T17:50:51.055017+00:00",
+      "finished_at_utc": "2026-11-04T17:51:06.387204+00:00",
+      "exit_code": 1,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "timed_out": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "result_sha256": "8e658d7fc280860fe17ba49e213a068692108ed2a5f8310a8dd2714a45f4e5ce",
+      "disposition": "retained harness diagnostic failure"
+    }
+  ],
+  "limits": [
+    "Synthetic generated cash/Grand chip tables with normal sealed Foundation Host actions, not original R07, renderer/Web/OS-pointer or deployed acceptance.",
+    "Bounded uncommitted model seed selection finds natural outcomes; no forced wheel or timing grade. Negative/miss late-chip grades are outside this metadata runtime matrix.",
+    "Historical unknown rows remain unchanged. Journal source is unchanged; read/preview does not transact, reroll or append rows.",
+    "Local investigation/test/commit objective is complete with exact implementation SHA association. Deployment is not required by this scoped task. All listed nonce-bound owned Jobs closed; no global desktop census or shared-service cleanup claim."
+  ],
+  "manual_reconciliation": {
+    "current": {
+      "report": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-ledger-current.json",
+      "checked_at": "2026-11-04T17:56:57.072725Z",
+      "exit_code": 1,
+      "summary": {
+        "objectives_checked": 75,
+        "batches_checked": 8,
+        "open_objectives": 36,
+        "open_batches": 4,
+        "open_work_items": 40,
+        "user_paused_items": 8,
+        "complete_objectives": 39,
+        "errors": 57,
+        "warnings": 0,
+        "tasks_with_errors": 20
+      },
+      "scope_findings": [],
+      "limit": "Quarter Falls, Roulette and all seven Roulette runtime records have zero findings; unrelated backlog/runtime errors remain and neither check is a global pass."
+    },
+    "all": {
+      "report": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-ledger-all.json",
+      "checked_at": "2026-11-04T17:56:57.697277Z",
+      "exit_code": 1,
+      "summary": {
+        "objectives_checked": 219,
+        "batches_checked": 8,
+        "open_objectives": 166,
+        "open_batches": 4,
+        "open_work_items": 170,
+        "user_paused_items": 8,
+        "complete_objectives": 51,
+        "errors": 523,
+        "warnings": 0,
+        "tasks_with_errors": 160
+      },
+      "scope_findings": [],
+      "limit": "Quarter Falls, Roulette and all seven Roulette runtime records have zero findings; unrelated backlog/runtime errors remain and neither check is a global pass."
+    }
+  },
+  "release_followthrough": {
+    "state": "open",
+    "receipt": "docs/testing/quarter_roulette_publication_20261104.json",
+    "authorization_added_at": "2026-11-04T18:02:51.923373+00:00",
+    "scope": "New main/NEXT publication request extends the parent objective; the local completed qualification above remains valid and unchanged."
+  }
+}

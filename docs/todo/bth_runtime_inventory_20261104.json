@@ -1,8 +1,8 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-04T16:50:00.547913+00:00",
+  "observed_at": "2026-11-04T18:12:12.227039+00:00",
   "scope": {
-    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed.",
+    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed.",
     "complete": false,
     "evidence": [
       "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\known-job-receipts.json",
@@ -12,7 +12,10 @@
       "docs/testing/runtime_cleanup_verification_2026_11_04.md",
       "docs/testing/runtime_cleanup_audit_2026_11_04.md",
       "docs/todo/bth_runtime_inventory_initial_20261104.json",
-      "docs/testing/bar_dice_journal_currency_20261104.json"
+      "docs/testing/bar_dice_journal_currency_20261104.json",
+      "docs/testing/coin_pusher_drop_price_20261104.json",
+      "docs/testing/roulette_journal_currency_20261104.json",
+      "docs/testing/quarter_roulette_publication_20261104.json"
     ]
   },
   "instances": [
@@ -812,6 +815,1666 @@
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\bardice-journal-final-cold.json"
         ],
         "limit": "Nonce-bound owned-Job process closure, not a global desktop census"
+      }
+    },
+    {
+      "instance_id": "task6:pusher-price-baseline:67d139063cb7468a9c683f8ee44b8895",
+      "task_id": "BTH-COINPUSHER-DROP-PRICE-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "67d139063cb7468a9c683f8ee44b8895",
+        "key": "owned-native-job:67d139063cb7468a9c683f8ee44b8895:pid:11272",
+        "started_at": "2026-11-04T17:25:41.379949+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-baseline.json",
+          "Nonce-bound private Windows Job assigned before execution; assigned_before_execution=true."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T17:25:48.756085+00:00",
+        "key": "owned-native-job:67d139063cb7468a9c683f8ee44b8895:pid:11272",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-baseline.json",
+          "Owned Job drained; active_at_release=0. This is not a global desktop census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T17:25:48.756085+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-baseline.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-baseline.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-baseline.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-baseline.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-baseline.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T17:25:48.756085+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "67d139063cb7468a9c683f8ee44b8895",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-baseline.json",
+            "Owned process closure only; disposable synthetic saves/references retained."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T17:25:48.756085+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-baseline.json",
+          "docs/testing/coin_pusher_drop_price_20261104.json"
+        ],
+        "limit": "Nonce-bound owned Job closure; expected baseline and diagnostic test failure remain recorded separately from process closure."
+      }
+    },
+    {
+      "instance_id": "task6:pusher-price-liveness:e6df50eddabf4fb79a96e5201ce53ac4",
+      "task_id": "BTH-COINPUSHER-DROP-PRICE-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "e6df50eddabf4fb79a96e5201ce53ac4",
+        "key": "owned-native-job:e6df50eddabf4fb79a96e5201ce53ac4:pid:11756",
+        "started_at": "2026-11-04T17:35:30.137387+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-liveness.json",
+          "Nonce-bound private Windows Job assigned before execution; assigned_before_execution=true."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T17:35:39.764638+00:00",
+        "key": "owned-native-job:e6df50eddabf4fb79a96e5201ce53ac4:pid:11756",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-liveness.json",
+          "Owned Job drained; active_at_release=0. This is not a global desktop census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T17:35:39.764638+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-liveness.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-liveness.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-liveness.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-liveness.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-liveness.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T17:35:39.764638+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "e6df50eddabf4fb79a96e5201ce53ac4",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-liveness.json",
+            "Owned process closure only; disposable synthetic saves/references retained."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T17:35:39.764638+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-liveness.json",
+          "docs/testing/coin_pusher_drop_price_20261104.json"
+        ],
+        "limit": "Nonce-bound owned Job closure; expected baseline and diagnostic test failure remain recorded separately from process closure."
+      }
+    },
+    {
+      "instance_id": "task6:pusher-price-final-producer:afec8881ee0b4928b3b81e04c8464474",
+      "task_id": "BTH-COINPUSHER-DROP-PRICE-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "afec8881ee0b4928b3b81e04c8464474",
+        "key": "owned-native-job:afec8881ee0b4928b3b81e04c8464474:pid:18328",
+        "started_at": "2026-11-04T17:40:26.903570+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-final-producer.json",
+          "Nonce-bound private Windows Job assigned before execution; assigned_before_execution=true."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T17:40:36.914741+00:00",
+        "key": "owned-native-job:afec8881ee0b4928b3b81e04c8464474:pid:18328",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-final-producer.json",
+          "Owned Job drained; active_at_release=0. This is not a global desktop census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T17:40:36.914741+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-final-producer.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-final-producer.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-final-producer.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-final-producer.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-final-producer.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T17:40:36.914741+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "afec8881ee0b4928b3b81e04c8464474",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-final-producer.json",
+            "Owned process closure only; disposable synthetic saves/references retained."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T17:40:36.914741+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-final-producer.json",
+          "docs/testing/coin_pusher_drop_price_20261104.json"
+        ],
+        "limit": "Nonce-bound owned Job closure; expected baseline and diagnostic test failure remain recorded separately from process closure."
+      }
+    },
+    {
+      "instance_id": "task6:pusher-price-final-cold:e0883718497348f38430422d838261e8",
+      "task_id": "BTH-COINPUSHER-DROP-PRICE-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "e0883718497348f38430422d838261e8",
+        "key": "owned-native-job:e0883718497348f38430422d838261e8:pid:35488",
+        "started_at": "2026-11-04T17:40:49.233877+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-final-cold.json",
+          "Nonce-bound private Windows Job assigned before execution; assigned_before_execution=true."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T17:40:57.849797+00:00",
+        "key": "owned-native-job:e0883718497348f38430422d838261e8:pid:35488",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-final-cold.json",
+          "Owned Job drained; active_at_release=0. This is not a global desktop census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T17:40:57.849797+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-final-cold.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-final-cold.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-final-cold.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-final-cold.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-final-cold.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T17:40:57.849797+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "e0883718497348f38430422d838261e8",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-final-cold.json",
+            "Owned process closure only; disposable synthetic saves/references retained."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T17:40:57.849797+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-final-cold.json",
+          "docs/testing/coin_pusher_drop_price_20261104.json"
+        ],
+        "limit": "Nonce-bound owned Job closure; expected baseline and diagnostic test failure remain recorded separately from process closure."
+      }
+    },
+    {
+      "instance_id": "task6:pusher-price-qualified-producer:d517016a7dc2411bb8fd38cb804d9d00",
+      "task_id": "BTH-COINPUSHER-DROP-PRICE-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "d517016a7dc2411bb8fd38cb804d9d00",
+        "key": "owned-native-job:d517016a7dc2411bb8fd38cb804d9d00:pid:30068",
+        "started_at": "2026-11-04T17:42:05.904820+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-qualified-producer.json",
+          "Nonce-bound private Windows Job assigned before execution; assigned_before_execution=true."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T17:42:16.733432+00:00",
+        "key": "owned-native-job:d517016a7dc2411bb8fd38cb804d9d00:pid:30068",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-qualified-producer.json",
+          "Owned Job drained; active_at_release=0. This is not a global desktop census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T17:42:16.733432+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-qualified-producer.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-qualified-producer.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-qualified-producer.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-qualified-producer.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-qualified-producer.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T17:42:16.733432+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "d517016a7dc2411bb8fd38cb804d9d00",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-qualified-producer.json",
+            "Owned process closure only; disposable synthetic saves/references retained."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T17:42:16.733432+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-qualified-producer.json",
+          "docs/testing/coin_pusher_drop_price_20261104.json"
+        ],
+        "limit": "Nonce-bound owned Job closure; expected baseline and diagnostic test failure remain recorded separately from process closure."
+      }
+    },
+    {
+      "instance_id": "task6:pusher-price-qualified-cold:975f280ae7de456bb7c8f53602df032f",
+      "task_id": "BTH-COINPUSHER-DROP-PRICE-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "975f280ae7de456bb7c8f53602df032f",
+        "key": "owned-native-job:975f280ae7de456bb7c8f53602df032f:pid:29900",
+        "started_at": "2026-11-04T17:42:26.531937+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-qualified-cold.json",
+          "Nonce-bound private Windows Job assigned before execution; assigned_before_execution=true."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T17:42:35.314940+00:00",
+        "key": "owned-native-job:975f280ae7de456bb7c8f53602df032f:pid:29900",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-qualified-cold.json",
+          "Owned Job drained; active_at_release=0. This is not a global desktop census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T17:42:35.314940+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-qualified-cold.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-qualified-cold.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-qualified-cold.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-qualified-cold.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-qualified-cold.json",
+            "docs/testing/coin_pusher_drop_price_20261104.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T17:42:35.314940+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "975f280ae7de456bb7c8f53602df032f",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-qualified-cold.json",
+            "Owned process closure only; disposable synthetic saves/references retained."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T17:42:35.314940+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-qualified-cold.json",
+          "docs/testing/coin_pusher_drop_price_20261104.json"
+        ],
+        "limit": "Nonce-bound owned Job closure; expected baseline and diagnostic test failure remain recorded separately from process closure."
+      }
+    },
+    {
+      "instance_id": "task6:roulette-currency-accepted-cold:3d5736659dee4f379bf60253cdea9b82",
+      "task_id": "BTH-JOURNAL-ROULETTE-CURRENCY-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "3d5736659dee4f379bf60253cdea9b82",
+        "key": "owned-native-job:3d5736659dee4f379bf60253cdea9b82:pid:37224",
+        "started_at": "2026-11-04T17:54:23.875435+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-cold.json",
+          "Nonce-bound owned Windows Job assigned before execution."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T17:54:37.728990+00:00",
+        "key": "owned-native-job:3d5736659dee4f379bf60253cdea9b82:pid:37224",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-cold.json",
+          "Owned Job drained; active_at_release=0; not a global process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T17:54:37.728990+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-cold.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-cold.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-cold.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-cold.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-cold.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T17:54:37.728990+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "3d5736659dee4f379bf60253cdea9b82",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-cold.json",
+            "Owned processes only; private fixture saves/references retained."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T17:54:37.728990+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-cold.json",
+          "docs/testing/roulette_journal_currency_20261104.json"
+        ],
+        "limit": "Actual nonce-bound owned Job closure; retained baseline/test failures are separate from process closure."
+      }
+    },
+    {
+      "instance_id": "task6:roulette-currency-accepted-draft-cold:6b26c150cd2445df802ed463fe614756",
+      "task_id": "BTH-JOURNAL-ROULETTE-CURRENCY-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "6b26c150cd2445df802ed463fe614756",
+        "key": "owned-native-job:6b26c150cd2445df802ed463fe614756:pid:32444",
+        "started_at": "2026-11-04T17:54:03.531128+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-draft-cold.json",
+          "Nonce-bound owned Windows Job assigned before execution."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T17:54:15.597946+00:00",
+        "key": "owned-native-job:6b26c150cd2445df802ed463fe614756:pid:32444",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-draft-cold.json",
+          "Owned Job drained; active_at_release=0; not a global process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T17:54:15.597946+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-draft-cold.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-draft-cold.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-draft-cold.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-draft-cold.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-draft-cold.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T17:54:15.597946+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "6b26c150cd2445df802ed463fe614756",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-draft-cold.json",
+            "Owned processes only; private fixture saves/references retained."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T17:54:15.597946+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-draft-cold.json",
+          "docs/testing/roulette_journal_currency_20261104.json"
+        ],
+        "limit": "Actual nonce-bound owned Job closure; retained baseline/test failures are separate from process closure."
+      }
+    },
+    {
+      "instance_id": "task6:roulette-currency-accepted-producer:5d659b7603ea42858e3699b9beed6ce4",
+      "task_id": "BTH-JOURNAL-ROULETTE-CURRENCY-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "5d659b7603ea42858e3699b9beed6ce4",
+        "key": "owned-native-job:5d659b7603ea42858e3699b9beed6ce4:pid:24964",
+        "started_at": "2026-11-04T17:53:19.016260+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-producer.json",
+          "Nonce-bound owned Windows Job assigned before execution."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T17:53:34.947232+00:00",
+        "key": "owned-native-job:5d659b7603ea42858e3699b9beed6ce4:pid:24964",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-producer.json",
+          "Owned Job drained; active_at_release=0; not a global process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T17:53:34.947232+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-producer.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-producer.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-producer.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-producer.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-producer.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T17:53:34.947232+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "5d659b7603ea42858e3699b9beed6ce4",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-producer.json",
+            "Owned processes only; private fixture saves/references retained."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T17:53:34.947232+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-accepted-producer.json",
+          "docs/testing/roulette_journal_currency_20261104.json"
+        ],
+        "limit": "Actual nonce-bound owned Job closure; retained baseline/test failures are separate from process closure."
+      }
+    },
+    {
+      "instance_id": "task6:roulette-currency-baseline:3e15109c25324742be1ea13d7e4447d6",
+      "task_id": "BTH-JOURNAL-ROULETTE-CURRENCY-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "3e15109c25324742be1ea13d7e4447d6",
+        "key": "owned-native-job:3e15109c25324742be1ea13d7e4447d6:pid:32076",
+        "started_at": "2026-11-04T17:46:00.060678+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-baseline.json",
+          "Nonce-bound owned Windows Job assigned before execution."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T17:46:11.934015+00:00",
+        "key": "owned-native-job:3e15109c25324742be1ea13d7e4447d6:pid:32076",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-baseline.json",
+          "Owned Job drained; active_at_release=0; not a global process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T17:46:11.934015+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-baseline.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-baseline.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-baseline.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-baseline.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-baseline.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T17:46:11.934015+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "3e15109c25324742be1ea13d7e4447d6",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-baseline.json",
+            "Owned processes only; private fixture saves/references retained."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T17:46:11.934015+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-baseline.json",
+          "docs/testing/roulette_journal_currency_20261104.json"
+        ],
+        "limit": "Actual nonce-bound owned Job closure; retained baseline/test failures are separate from process closure."
+      }
+    },
+    {
+      "instance_id": "task6:roulette-currency-consumed:52bda30ba66448208b908f23fea80e1a",
+      "task_id": "BTH-JOURNAL-ROULETTE-CURRENCY-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "52bda30ba66448208b908f23fea80e1a",
+        "key": "owned-native-job:52bda30ba66448208b908f23fea80e1a:pid:7636",
+        "started_at": "2026-11-04T17:51:45.699955+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-consumed.json",
+          "Nonce-bound owned Windows Job assigned before execution."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T17:52:04.406501+00:00",
+        "key": "owned-native-job:52bda30ba66448208b908f23fea80e1a:pid:7636",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-consumed.json",
+          "Owned Job drained; active_at_release=0; not a global process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T17:52:04.406501+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-consumed.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-consumed.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-consumed.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-consumed.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-consumed.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T17:52:04.406501+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "52bda30ba66448208b908f23fea80e1a",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-consumed.json",
+            "Owned processes only; private fixture saves/references retained."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T17:52:04.406501+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-consumed.json",
+          "docs/testing/roulette_journal_currency_20261104.json"
+        ],
+        "limit": "Actual nonce-bound owned Job closure; retained baseline/test failures are separate from process closure."
+      }
+    },
+    {
+      "instance_id": "task6:roulette-currency-final-producer:19d187d4dfe34e0aa342102b7d757582",
+      "task_id": "BTH-JOURNAL-ROULETTE-CURRENCY-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "19d187d4dfe34e0aa342102b7d757582",
+        "key": "owned-native-job:19d187d4dfe34e0aa342102b7d757582:pid:37960",
+        "started_at": "2026-11-04T17:47:45.314274+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-final-producer.json",
+          "Nonce-bound owned Windows Job assigned before execution."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T17:47:58.990684+00:00",
+        "key": "owned-native-job:19d187d4dfe34e0aa342102b7d757582:pid:37960",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-final-producer.json",
+          "Owned Job drained; active_at_release=0; not a global process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T17:47:58.990684+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-final-producer.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-final-producer.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-final-producer.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-final-producer.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-final-producer.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T17:47:58.990684+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "19d187d4dfe34e0aa342102b7d757582",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-final-producer.json",
+            "Owned processes only; private fixture saves/references retained."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T17:47:58.990684+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-final-producer.json",
+          "docs/testing/roulette_journal_currency_20261104.json"
+        ],
+        "limit": "Actual nonce-bound owned Job closure; retained baseline/test failures are separate from process closure."
+      }
+    },
+    {
+      "instance_id": "task6:roulette-currency-qualified-producer:cf92ded422524e81a536fc75939d9be1",
+      "task_id": "BTH-JOURNAL-ROULETTE-CURRENCY-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "cf92ded422524e81a536fc75939d9be1",
+        "key": "owned-native-job:cf92ded422524e81a536fc75939d9be1:pid:37480",
+        "started_at": "2026-11-04T17:50:51.055017+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-qualified-producer.json",
+          "Nonce-bound owned Windows Job assigned before execution."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T17:51:06.387204+00:00",
+        "key": "owned-native-job:cf92ded422524e81a536fc75939d9be1:pid:37480",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-qualified-producer.json",
+          "Owned Job drained; active_at_release=0; not a global process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T17:51:06.387204+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-qualified-producer.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-qualified-producer.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-qualified-producer.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-qualified-producer.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-qualified-producer.json",
+            "docs/testing/roulette_journal_currency_20261104.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T17:51:06.387204+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "cf92ded422524e81a536fc75939d9be1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-qualified-producer.json",
+            "Owned processes only; private fixture saves/references retained."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T17:51:06.387204+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\roulette-currency-qualified-producer.json",
+          "docs/testing/roulette_journal_currency_20261104.json"
+        ],
+        "limit": "Actual nonce-bound owned Job closure; retained baseline/test failures are separate from process closure."
+      }
+    },
+    {
+      "instance_id": "task6:quarter-roulette-release-q-producer:7111c20b01ae4ec0abbe70f9ba776f51",
+      "task_id": "BTH-COINPUSHER-DROP-PRICE-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "7111c20b01ae4ec0abbe70f9ba776f51",
+        "key": "owned-native-job:7111c20b01ae4ec0abbe70f9ba776f51:pid:37928",
+        "started_at": "2026-11-04T18:07:16.946107+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-q-producer.json",
+          "Private owned Windows Job assigned before execution."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T18:07:26.562885+00:00",
+        "key": "owned-native-job:7111c20b01ae4ec0abbe70f9ba776f51:pid:37928",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-q-producer.json",
+          "Owned Job drained; active_at_release=0; not a global process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T18:07:26.562885+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-q-producer.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-q-producer.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-q-producer.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-q-producer.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-q-producer.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T18:07:26.562885+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "7111c20b01ae4ec0abbe70f9ba776f51",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-q-producer.json",
+            "Owned processes only; private synthetic saves/references retained."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T18:07:26.562885+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-q-producer.json",
+          "docs/testing/quarter_roulette_publication_20261104.json"
+        ],
+        "limit": "Nonce-bound owned Job closure on the merged-source release qualification."
+      }
+    },
+    {
+      "instance_id": "task6:quarter-roulette-release-q-cold:d9eec3fa3e9149a4b4881fa47c74c57d",
+      "task_id": "BTH-COINPUSHER-DROP-PRICE-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "d9eec3fa3e9149a4b4881fa47c74c57d",
+        "key": "owned-native-job:d9eec3fa3e9149a4b4881fa47c74c57d:pid:14640",
+        "started_at": "2026-11-04T18:07:26.664222+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-q-cold.json",
+          "Private owned Windows Job assigned before execution."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T18:07:34.846941+00:00",
+        "key": "owned-native-job:d9eec3fa3e9149a4b4881fa47c74c57d:pid:14640",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-q-cold.json",
+          "Owned Job drained; active_at_release=0; not a global process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T18:07:34.846941+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-q-cold.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-q-cold.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-q-cold.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-q-cold.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-q-cold.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T18:07:34.846941+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "d9eec3fa3e9149a4b4881fa47c74c57d",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-q-cold.json",
+            "Owned processes only; private synthetic saves/references retained."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T18:07:34.846941+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-q-cold.json",
+          "docs/testing/quarter_roulette_publication_20261104.json"
+        ],
+        "limit": "Nonce-bound owned Job closure on the merged-source release qualification."
+      }
+    },
+    {
+      "instance_id": "task6:quarter-roulette-release-r-producer:5a91b0cfa16e480c87f4dba2f721e358",
+      "task_id": "BTH-JOURNAL-ROULETTE-CURRENCY-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "5a91b0cfa16e480c87f4dba2f721e358",
+        "key": "owned-native-job:5a91b0cfa16e480c87f4dba2f721e358:pid:31348",
+        "started_at": "2026-11-04T18:07:34.940101+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-producer.json",
+          "Private owned Windows Job assigned before execution."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T18:07:51.080723+00:00",
+        "key": "owned-native-job:5a91b0cfa16e480c87f4dba2f721e358:pid:31348",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-producer.json",
+          "Owned Job drained; active_at_release=0; not a global process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T18:07:51.080723+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-producer.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-producer.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-producer.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-producer.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-producer.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T18:07:51.080723+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "5a91b0cfa16e480c87f4dba2f721e358",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-producer.json",
+            "Owned processes only; private synthetic saves/references retained."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T18:07:51.080723+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-producer.json",
+          "docs/testing/quarter_roulette_publication_20261104.json"
+        ],
+        "limit": "Nonce-bound owned Job closure on the merged-source release qualification."
+      }
+    },
+    {
+      "instance_id": "task6:quarter-roulette-release-r-draft-cold:ba4a20903b35462cb3a4af1d4ebea576",
+      "task_id": "BTH-JOURNAL-ROULETTE-CURRENCY-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "ba4a20903b35462cb3a4af1d4ebea576",
+        "key": "owned-native-job:ba4a20903b35462cb3a4af1d4ebea576:pid:26612",
+        "started_at": "2026-11-04T18:07:51.177528+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-draft-cold.json",
+          "Private owned Windows Job assigned before execution."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T18:08:02.836686+00:00",
+        "key": "owned-native-job:ba4a20903b35462cb3a4af1d4ebea576:pid:26612",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-draft-cold.json",
+          "Owned Job drained; active_at_release=0; not a global process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T18:08:02.836686+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-draft-cold.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-draft-cold.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-draft-cold.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-draft-cold.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-draft-cold.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T18:08:02.836686+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "ba4a20903b35462cb3a4af1d4ebea576",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-draft-cold.json",
+            "Owned processes only; private synthetic saves/references retained."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T18:08:02.836686+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-draft-cold.json",
+          "docs/testing/quarter_roulette_publication_20261104.json"
+        ],
+        "limit": "Nonce-bound owned Job closure on the merged-source release qualification."
+      }
+    },
+    {
+      "instance_id": "task6:quarter-roulette-release-r-cold:10ef2b92b0ea4dabb7d9dcbad2f34456",
+      "task_id": "BTH-JOURNAL-ROULETTE-CURRENCY-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "10ef2b92b0ea4dabb7d9dcbad2f34456",
+        "key": "owned-native-job:10ef2b92b0ea4dabb7d9dcbad2f34456:pid:29976",
+        "started_at": "2026-11-04T18:08:02.932760+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-cold.json",
+          "Private owned Windows Job assigned before execution."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T18:08:16.635187+00:00",
+        "key": "owned-native-job:10ef2b92b0ea4dabb7d9dcbad2f34456:pid:29976",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-cold.json",
+          "Owned Job drained; active_at_release=0; not a global process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T18:08:16.635187+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-cold.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-cold.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-cold.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-cold.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-cold.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T18:08:16.635187+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "10ef2b92b0ea4dabb7d9dcbad2f34456",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-cold.json",
+            "Owned processes only; private synthetic saves/references retained."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T18:08:16.635187+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-cold.json",
+          "docs/testing/quarter_roulette_publication_20261104.json"
+        ],
+        "limit": "Nonce-bound owned Job closure on the merged-source release qualification."
+      }
+    },
+    {
+      "instance_id": "task6:quarter-roulette-release-consumed:7da5bfc00ddb499ab4b53297f9c0f498",
+      "task_id": "BTH-JOURNAL-ROULETTE-CURRENCY-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "7da5bfc00ddb499ab4b53297f9c0f498",
+        "key": "owned-native-job:7da5bfc00ddb499ab4b53297f9c0f498:pid:29172",
+        "started_at": "2026-11-04T18:08:16.728028+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-consumed.json",
+          "Private owned Windows Job assigned before execution."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T18:08:34.857269+00:00",
+        "key": "owned-native-job:7da5bfc00ddb499ab4b53297f9c0f498:pid:29172",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-consumed.json",
+          "Owned Job drained; active_at_release=0; not a global process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T18:08:34.857269+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-consumed.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-consumed.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-consumed.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-consumed.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-consumed.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T18:08:34.857269+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "7da5bfc00ddb499ab4b53297f9c0f498",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-consumed.json",
+            "Owned processes only; private synthetic saves/references retained."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T18:08:34.857269+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-consumed.json",
+          "docs/testing/quarter_roulette_publication_20261104.json"
+        ],
+        "limit": "Nonce-bound owned Job closure on the merged-source release qualification."
+      }
+    },
+    {
+      "instance_id": "task6:quarter-roulette-release-liveness:da68b1e73b264877b5492a4bdf04e888",
+      "task_id": "BTH-COINPUSHER-DROP-PRICE-001",
+      "owner_task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "da68b1e73b264877b5492a4bdf04e888",
+        "key": "owned-native-job:da68b1e73b264877b5492a4bdf04e888:pid:18072",
+        "started_at": "2026-11-04T18:08:34.953240+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-liveness.json",
+          "Private owned Windows Job assigned before execution."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T18:08:44.127934+00:00",
+        "key": "owned-native-job:da68b1e73b264877b5492a4bdf04e888:pid:18072",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-liveness.json",
+          "Owned Job drained; active_at_release=0; not a global process census."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T18:08:44.127934+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-liveness.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-liveness.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-liveness.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-liveness.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-liveness.json",
+            "docs/testing/quarter_roulette_publication_20261104.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T18:08:44.127934+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "da68b1e73b264877b5492a4bdf04e888",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-liveness.json",
+            "Owned processes only; private synthetic saves/references retained."
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T18:08:44.127934+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-liveness.json",
+          "docs/testing/quarter_roulette_publication_20261104.json"
+        ],
+        "limit": "Nonce-bound owned Job closure on the merged-source release qualification."
       }
     }
   ],

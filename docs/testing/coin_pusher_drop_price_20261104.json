@@ -1,0 +1,1063 @@
+{
+  "task_id": "BTH-COINPUSHER-DROP-PRICE-001",
+  "recorded_at": "2026-11-04T17:46:15.004156+00:00",
+  "state": "LOCAL_FIX_TEST_COMMIT_COMPLETE",
+  "base_commit": "9a7da76a0dd6f19580e7e380bc8aca4010ff1e7f",
+  "implementation_commit": "62490ab186657cbfff49839589863e851eef7bcd",
+  "source_sha256": {
+    "game": "2384ef5bd3025bd8a23c0064aead518c514ed57647dba1a2bfc3c54343185fa3",
+    "renderer": "6306094cf3cc5961baf0da5f7e1bb83eb77b40d5b486539f9766a810f682581b",
+    "test": "3ab75d704acfa86f1977b3cb4dc48b627ac2e47a167ffb9c8dd6d5ec57a4f51f"
+  },
+  "scope": "Read-only canonical cash price and affordable held-input total in existing Coin Pusher controls; all three variants. No transaction, RNG, solver, save schema, viewport, touch/focus, scheduling, item/scenario or storage-gate change.",
+  "fidelity": "Disposable synthetic module/native-solver fixtures. Hardware label observed from actual renderer draw callback and real Canvas font fitting; no original R07 profile, screenshot/pixel or Web acceptance claim.",
+  "original_observation": {
+    "reference": "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-quarter-falls-drop-price-886887-finding.json",
+    "tested_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+    "warm_batch": 886,
+    "cold_batch": 887,
+    "cash": 54,
+    "paid_inputs": 0,
+    "original_profile_accessed_by_fix": false
+  },
+  "baseline": {
+    "canonical_drop_cost": 1,
+    "cash": 54,
+    "drop_label": "DROP",
+    "failures": [
+      "Surface omits canonical unit cash price",
+      "Drop binding omits unit cash price"
+    ],
+    "hold_label": "HOLD TO DROP",
+    "id": "BTH-COINPUSHER-DROP-PRICE-001",
+    "native_solver_available": true,
+    "paid_inputs": 0,
+    "source_sha256": "02209f6c281be5a5b918e49a334e00b735216c5e33e094c69770ef6499d33bb2",
+    "synthetic": true,
+    "variation": "vault_drop",
+    "view_has_price": false
+  },
+  "qualified_producer": {
+    "checks": 228,
+    "failures": [],
+    "facts": {
+      "actions": [
+        {
+          "cash_after": 51,
+          "cash_before": 54,
+          "label": "ordinary tap",
+          "paid_count": 1,
+          "paid_total": 3,
+          "queued": 1,
+          "unit_cost": 3
+        },
+        {
+          "cash_after": 42,
+          "cash_before": 51,
+          "label": "ordinary Hold release",
+          "paid_count": 3,
+          "paid_total": 9,
+          "queued": 3,
+          "unit_cost": 3
+        },
+        {
+          "cash_after": 39,
+          "cash_before": 54,
+          "label": "five-drop paid reservation",
+          "paid_count": 5,
+          "paid_total": 15,
+          "queued": 5,
+          "unit_cost": 3
+        }
+      ],
+      "baseline": {
+        "cash": 54,
+        "drawn_label": {
+          "drop_hits": [
+            [
+              540.0,
+              352.0,
+              72.0,
+              48.0
+            ]
+          ],
+          "fitted_font": 6,
+          "height": 9.0,
+          "label": "DROP/HOLD $1",
+          "rect": [
+            538.0,
+            391.0,
+            76.0,
+            9.0
+          ],
+          "requested_font": 8,
+          "width": 45.0
+        },
+        "fields": {
+          "coin_pusher_drop_cost": 1,
+          "coin_pusher_drop_payable_count": 0,
+          "coin_pusher_drop_payable_total": 0
+        },
+        "solver_native": true
+      },
+      "cold": [],
+      "generic_patch_boundary": {
+        "clear_label": "DROP/HOLD $3",
+        "clear_price": {
+          "coin_pusher_drop_cost": 3,
+          "coin_pusher_drop_payable_count": 0,
+          "coin_pusher_drop_payable_total": 0
+        },
+        "retained_label": "HOLD 3 $9",
+        "retained_price": {
+          "coin_pusher_drop_cost": 3,
+          "coin_pusher_drop_payable_count": 3,
+          "coin_pusher_drop_payable_total": 9
+        }
+      },
+      "labels": [
+        {
+          "actual": {
+            "drop_hits": [
+              [
+                540.0,
+                352.0,
+                72.0,
+                48.0
+              ]
+            ],
+            "fitted_font": 6,
+            "height": 9.0,
+            "label": "DROP/HOLD $3",
+            "rect": [
+              538.0,
+              391.0,
+              76.0,
+              9.0
+            ],
+            "requested_font": 8,
+            "width": 45.0
+          },
+          "expected": "DROP/HOLD $3",
+          "variation": "quarter_falls"
+        },
+        {
+          "actual": {
+            "drop_hits": [
+              [
+                540.0,
+                352.0,
+                72.0,
+                48.0
+              ]
+            ],
+            "fitted_font": 6,
+            "height": 9.0,
+            "label": "HOLD 3 $9",
+            "rect": [
+              538.0,
+              391.0,
+              76.0,
+              9.0
+            ],
+            "requested_font": 8,
+            "width": 31.0
+          },
+          "expected": "HOLD 3 $9",
+          "variation": "quarter_falls"
+        },
+        {
+          "actual": {
+            "drop_hits": [
+              [
+                540.0,
+                352.0,
+                72.0,
+                48.0
+              ]
+            ],
+            "fitted_font": 6,
+            "height": 9.0,
+            "label": "HOLD 60 $180",
+            "rect": [
+              538.0,
+              391.0,
+              76.0,
+              9.0
+            ],
+            "requested_font": 8,
+            "width": 41.0
+          },
+          "expected": "HOLD 60 $180",
+          "variation": "quarter_falls"
+        },
+        {
+          "actual": {
+            "drop_hits": [
+              [
+                540.0,
+                352.0,
+                72.0,
+                48.0
+              ]
+            ],
+            "fitted_font": 6,
+            "height": 9.0,
+            "label": "HOLD 3 $9",
+            "rect": [
+              538.0,
+              391.0,
+              76.0,
+              9.0
+            ],
+            "requested_font": 8,
+            "width": 31.0
+          },
+          "expected": "HOLD 3 $9",
+          "variation": "quarter_falls"
+        },
+        {
+          "actual": {
+            "drop_hits": [
+              [
+                540.0,
+                352.0,
+                72.0,
+                48.0
+              ]
+            ],
+            "fitted_font": 6,
+            "height": 9.0,
+            "label": "NEED $3",
+            "rect": [
+              538.0,
+              391.0,
+              76.0,
+              9.0
+            ],
+            "requested_font": 8,
+            "width": 25.0
+          },
+          "expected": "NEED $3",
+          "variation": "quarter_falls"
+        },
+        {
+          "actual": {
+            "drop_hits": [
+              [
+                540.0,
+                352.0,
+                72.0,
+                48.0
+              ]
+            ],
+            "fitted_font": 6,
+            "height": 9.0,
+            "label": "DROP/HOLD $3",
+            "rect": [
+              538.0,
+              391.0,
+              76.0,
+              9.0
+            ],
+            "requested_font": 8,
+            "width": 45.0
+          },
+          "expected": "DROP/HOLD $3",
+          "variation": "jackpot_ridge"
+        },
+        {
+          "actual": {
+            "drop_hits": [
+              [
+                540.0,
+                352.0,
+                72.0,
+                48.0
+              ]
+            ],
+            "fitted_font": 6,
+            "height": 9.0,
+            "label": "HOLD 3 $9",
+            "rect": [
+              538.0,
+              391.0,
+              76.0,
+              9.0
+            ],
+            "requested_font": 8,
+            "width": 31.0
+          },
+          "expected": "HOLD 3 $9",
+          "variation": "jackpot_ridge"
+        },
+        {
+          "actual": {
+            "drop_hits": [
+              [
+                540.0,
+                352.0,
+                72.0,
+                48.0
+              ]
+            ],
+            "fitted_font": 6,
+            "height": 9.0,
+            "label": "HOLD 60 $180",
+            "rect": [
+              538.0,
+              391.0,
+              76.0,
+              9.0
+            ],
+            "requested_font": 8,
+            "width": 41.0
+          },
+          "expected": "HOLD 60 $180",
+          "variation": "jackpot_ridge"
+        },
+        {
+          "actual": {
+            "drop_hits": [
+              [
+                540.0,
+                352.0,
+                72.0,
+                48.0
+              ]
+            ],
+            "fitted_font": 6,
+            "height": 9.0,
+            "label": "HOLD 3 $9",
+            "rect": [
+              538.0,
+              391.0,
+              76.0,
+              9.0
+            ],
+            "requested_font": 8,
+            "width": 31.0
+          },
+          "expected": "HOLD 3 $9",
+          "variation": "jackpot_ridge"
+        },
+        {
+          "actual": {
+            "drop_hits": [
+              [
+                540.0,
+                352.0,
+                72.0,
+                48.0
+              ]
+            ],
+            "fitted_font": 6,
+            "height": 9.0,
+            "label": "NEED $3",
+            "rect": [
+              538.0,
+              391.0,
+              76.0,
+              9.0
+            ],
+            "requested_font": 8,
+            "width": 25.0
+          },
+          "expected": "NEED $3",
+          "variation": "jackpot_ridge"
+        },
+        {
+          "actual": {
+            "drop_hits": [
+              [
+                540.0,
+                352.0,
+                72.0,
+                48.0
+              ]
+            ],
+            "fitted_font": 6,
+            "height": 9.0,
+            "label": "DROP/HOLD $3",
+            "rect": [
+              538.0,
+              391.0,
+              76.0,
+              9.0
+            ],
+            "requested_font": 8,
+            "width": 45.0
+          },
+          "expected": "DROP/HOLD $3",
+          "variation": "vault_drop"
+        },
+        {
+          "actual": {
+            "drop_hits": [
+              [
+                540.0,
+                352.0,
+                72.0,
+                48.0
+              ]
+            ],
+            "fitted_font": 6,
+            "height": 9.0,
+            "label": "HOLD 3 $9",
+            "rect": [
+              538.0,
+              391.0,
+              76.0,
+              9.0
+            ],
+            "requested_font": 8,
+            "width": 31.0
+          },
+          "expected": "HOLD 3 $9",
+          "variation": "vault_drop"
+        },
+        {
+          "actual": {
+            "drop_hits": [
+              [
+                540.0,
+                352.0,
+                72.0,
+                48.0
+              ]
+            ],
+            "fitted_font": 6,
+            "height": 9.0,
+            "label": "HOLD 60 $180",
+            "rect": [
+              538.0,
+              391.0,
+              76.0,
+              9.0
+            ],
+            "requested_font": 8,
+            "width": 41.0
+          },
+          "expected": "HOLD 60 $180",
+          "variation": "vault_drop"
+        },
+        {
+          "actual": {
+            "drop_hits": [
+              [
+                540.0,
+                352.0,
+                72.0,
+                48.0
+              ]
+            ],
+            "fitted_font": 6,
+            "height": 9.0,
+            "label": "HOLD 3 $9",
+            "rect": [
+              538.0,
+              391.0,
+              76.0,
+              9.0
+            ],
+            "requested_font": 8,
+            "width": 31.0
+          },
+          "expected": "HOLD 3 $9",
+          "variation": "vault_drop"
+        },
+        {
+          "actual": {
+            "drop_hits": [
+              [
+                540.0,
+                352.0,
+                72.0,
+                48.0
+              ]
+            ],
+            "fitted_font": 6,
+            "height": 9.0,
+            "label": "NEED $3",
+            "rect": [
+              538.0,
+              391.0,
+              76.0,
+              9.0
+            ],
+            "requested_font": 8,
+            "width": 25.0
+          },
+          "expected": "NEED $3",
+          "variation": "vault_drop"
+        },
+        {
+          "actual": {
+            "drop_hits": [
+              [
+                540.0,
+                352.0,
+                72.0,
+                48.0
+              ]
+            ],
+            "fitted_font": 6,
+            "height": 9.0,
+            "label": "PAID 5; DROP $3",
+            "rect": [
+              538.0,
+              391.0,
+              76.0,
+              9.0
+            ],
+            "requested_font": 8,
+            "width": 48.0
+          },
+          "expected": "PAID 5; DROP $3",
+          "variation": "already-paid queue"
+        }
+      ],
+      "native_backend": "native_v3",
+      "paid_hold_merged_view": {
+        "label": "PAID 3; DROP $3",
+        "price": {
+          "coin_pusher_drop_cost": 3,
+          "coin_pusher_drop_payable_count": 0,
+          "coin_pusher_drop_payable_total": 0
+        },
+        "queue": 3,
+        "raw_charge": 0
+      },
+      "pricing": [
+        {
+          "authored_cost": 1,
+          "canonical_cost": 1,
+          "cash": 200,
+          "full": {
+            "coin_pusher_drop_cost": 1,
+            "coin_pusher_drop_payable_count": 3,
+            "coin_pusher_drop_payable_total": 3
+          },
+          "variation": "quarter_falls"
+        },
+        {
+          "authored_cost": 3,
+          "canonical_cost": 3,
+          "cash": 200,
+          "full": {
+            "coin_pusher_drop_cost": 3,
+            "coin_pusher_drop_payable_count": 3,
+            "coin_pusher_drop_payable_total": 9
+          },
+          "variation": "quarter_falls"
+        },
+        {
+          "authored_cost": 0,
+          "canonical_cost": 1,
+          "cash": 200,
+          "full": {
+            "coin_pusher_drop_cost": 1,
+            "coin_pusher_drop_payable_count": 3,
+            "coin_pusher_drop_payable_total": 3
+          },
+          "variation": "quarter_falls"
+        },
+        {
+          "authored_cost": 1,
+          "canonical_cost": 1,
+          "cash": 200,
+          "full": {
+            "coin_pusher_drop_cost": 1,
+            "coin_pusher_drop_payable_count": 3,
+            "coin_pusher_drop_payable_total": 3
+          },
+          "variation": "jackpot_ridge"
+        },
+        {
+          "authored_cost": 3,
+          "canonical_cost": 3,
+          "cash": 200,
+          "full": {
+            "coin_pusher_drop_cost": 3,
+            "coin_pusher_drop_payable_count": 3,
+            "coin_pusher_drop_payable_total": 9
+          },
+          "variation": "jackpot_ridge"
+        },
+        {
+          "authored_cost": 0,
+          "canonical_cost": 1,
+          "cash": 200,
+          "full": {
+            "coin_pusher_drop_cost": 1,
+            "coin_pusher_drop_payable_count": 3,
+            "coin_pusher_drop_payable_total": 3
+          },
+          "variation": "jackpot_ridge"
+        },
+        {
+          "authored_cost": 1,
+          "canonical_cost": 1,
+          "cash": 200,
+          "full": {
+            "coin_pusher_drop_cost": 1,
+            "coin_pusher_drop_payable_count": 3,
+            "coin_pusher_drop_payable_total": 3
+          },
+          "variation": "vault_drop"
+        },
+        {
+          "authored_cost": 3,
+          "canonical_cost": 3,
+          "cash": 200,
+          "full": {
+            "coin_pusher_drop_cost": 3,
+            "coin_pusher_drop_payable_count": 3,
+            "coin_pusher_drop_payable_total": 9
+          },
+          "variation": "vault_drop"
+        },
+        {
+          "authored_cost": 0,
+          "canonical_cost": 1,
+          "cash": 200,
+          "full": {
+            "coin_pusher_drop_cost": 1,
+            "coin_pusher_drop_payable_count": 3,
+            "coin_pusher_drop_payable_total": 3
+          },
+          "variation": "vault_drop"
+        }
+      ]
+    }
+  },
+  "qualified_cold": {
+    "checks": 35,
+    "failures": [],
+    "facts": {
+      "actions": [],
+      "baseline": {},
+      "cold": [
+        {
+          "cash": 200,
+          "paid_inputs": 0,
+          "price": {
+            "coin_pusher_drop_cost": 1,
+            "coin_pusher_drop_payable_count": 3,
+            "coin_pusher_drop_payable_total": 3
+          },
+          "slot": "pusher_price_quarter_falls_1"
+        },
+        {
+          "cash": 200,
+          "paid_inputs": 0,
+          "price": {
+            "coin_pusher_drop_cost": 3,
+            "coin_pusher_drop_payable_count": 3,
+            "coin_pusher_drop_payable_total": 9
+          },
+          "slot": "pusher_price_quarter_falls_3"
+        },
+        {
+          "cash": 200,
+          "paid_inputs": 0,
+          "price": {
+            "coin_pusher_drop_cost": 1,
+            "coin_pusher_drop_payable_count": 3,
+            "coin_pusher_drop_payable_total": 3
+          },
+          "slot": "pusher_price_jackpot_ridge_1"
+        },
+        {
+          "cash": 200,
+          "paid_inputs": 0,
+          "price": {
+            "coin_pusher_drop_cost": 3,
+            "coin_pusher_drop_payable_count": 3,
+            "coin_pusher_drop_payable_total": 9
+          },
+          "slot": "pusher_price_jackpot_ridge_3"
+        },
+        {
+          "cash": 200,
+          "paid_inputs": 0,
+          "price": {
+            "coin_pusher_drop_cost": 1,
+            "coin_pusher_drop_payable_count": 3,
+            "coin_pusher_drop_payable_total": 3
+          },
+          "slot": "pusher_price_vault_drop_1"
+        },
+        {
+          "cash": 200,
+          "paid_inputs": 0,
+          "price": {
+            "coin_pusher_drop_cost": 3,
+            "coin_pusher_drop_payable_count": 3,
+            "coin_pusher_drop_payable_total": 9
+          },
+          "slot": "pusher_price_vault_drop_3"
+        }
+      ],
+      "labels": [],
+      "pricing": []
+    },
+    "scope": "Six idle/prepayment variant/cost fixtures only; no in-flight or paid-queue cold qualification."
+  },
+  "qualified_assertions_total": 263,
+  "liveness": {
+    "result": "PASS",
+    "script": "scripts/tests/animation_liveness_without_pointer_check.gd",
+    "log_sha256": "0260602a3c0aef4ce405b48dc92c8f10b6ede134f7e440b8afe6574545e077db"
+  },
+  "diagnostic_history": {
+    "producer_checks": 228,
+    "producer_failures": [],
+    "cold_checks": 35,
+    "cold_failures": [
+      "cold pre-payment view keeps identical authored unit count and total: pusher_price_quarter_falls_1",
+      "cold pre-payment view keeps identical authored unit count and total: pusher_price_quarter_falls_3",
+      "cold pre-payment view keeps identical authored unit count and total: pusher_price_jackpot_ridge_1",
+      "cold pre-payment view keeps identical authored unit count and total: pusher_price_jackpot_ridge_3",
+      "cold pre-payment view keeps identical authored unit count and total: pusher_price_vault_drop_1",
+      "cold pre-payment view keeps identical authored unit count and total: pusher_price_vault_drop_3"
+    ],
+    "prior_test_sha256": "e221508dca7c769c325d91cc4bb9b452cd8252f6aadc6541b3b5bdc51ae5199b",
+    "cause": "Six whole-dictionary comparisons crossed JSON persistence with float/int number types despite equal numeric prices. Test-only correction normalizes both complete dictionaries through _persistent before comparison; the full durable-state guard is unchanged. Product source hashes are unchanged.",
+    "result_sha256": "e796a56c1feef0d08dcd2b53f341e37b6018c5e03f8e3a8ba47088d48d061c70"
+  },
+  "native_bootstrap": {
+    "source_commit": "9a7da76a0dd6f19580e7e380bc8aca4010ff1e7f",
+    "qualified_public_build": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+    "provenance": "D:\\Projects\\site\\state\\bth-next\\artifacts\\f3058b6daab820e9d747c4c4aabc2d983e9ae32e-1793808305720861800.zip.provenance.json",
+    "donor": "D:\\Projects\\site\\state\\bth-next\\sources\\f3058b6daab820e9d747c4c4aabc2d983e9ae32e-1793808293053589900\\addons\\coin_pusher_native",
+    "native_source_and_project_unchanged": true,
+    "extension_config_sha256": "407b2cc4b2c3ca01775158518e44b1caca3fb929be0e46eca44429733825d115",
+    "editor_pins": [
+      {
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\source-numbers\\addons\\coin_pusher_native\\bin\\coin_pusher_native_v3_10.windows.template_debug.x86_64.nothreads.dll",
+        "sha256": "9ed33e21a00a8be3ef2429550451ed6c766debde8d0d21c4f3a4c39e25eb3f82"
+      },
+      {
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\source-numbers\\addons\\coin_pusher_native\\bin\\coin_pusher_native_v3_10.windows.template_release.x86_64.nothreads.dll",
+        "sha256": "ab3e74ad695dd9e6527d05cf09370b56a7b3b80168724862757de7711d837d69"
+      }
+    ],
+    "setup_note": "Initial original developer config had different bytes and was rejected before runtime; exact public donor config used. DLL bytes were already pinned and unchanged.",
+    "scope": "Only exact deployed-proof pinned Windows editor DLLs/config in task-owned ignored dependency folder; no build, original profiles, trust, caps or shared storage changes. Actual test must assert native availability."
+  },
+  "independent_review": {
+    "result": "approved after fixes",
+    "reviewer": "/root/pusher_price_review",
+    "scope": "Source-only; corrected direct-resolution raw-count/price merge and generic action patches with or without gesture context. Immutable setup-time tuning requires no action-catalog dependency change. No additional runtime performed by reviewer."
+  },
+  "jobs": [
+    {
+      "label": "pusher-price-baseline",
+      "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-baseline.json",
+      "receipt_sha256": "b53b90e0c7da95fade3aec0b39502ed1be5c6b7d67cb23f14c09fab716eaa25d",
+      "launch_nonce": "67d139063cb7468a9c683f8ee44b8895",
+      "pid": 11272,
+      "started_at_utc": "2026-11-04T17:25:41.379949+00:00",
+      "finished_at_utc": "2026-11-04T17:25:48.756085+00:00",
+      "exit_code": 1,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "timed_out": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\source-numbers",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\pusher_price_baseline.gd"
+      ],
+      "result_sha256": "e0b4f1936ae8c04dde528eb6dd10973be4ddd0b5a4e91c937b82b03ddbc9f734",
+      "disposition": "expected baseline omission"
+    },
+    {
+      "label": "pusher-price-liveness",
+      "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-liveness.json",
+      "receipt_sha256": "7837278a722d3e8e5c058cc809bdde868fad1fbd5fd2168482957fcd788e388d",
+      "launch_nonce": "e6df50eddabf4fb79a96e5201ce53ac4",
+      "pid": 11756,
+      "started_at_utc": "2026-11-04T17:35:30.137387+00:00",
+      "finished_at_utc": "2026-11-04T17:35:39.764638+00:00",
+      "exit_code": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "timed_out": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\source-numbers",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "res://scripts/tests/animation_liveness_without_pointer_check.gd"
+      ],
+      "result_sha256": null,
+      "disposition": "pass"
+    },
+    {
+      "label": "pusher-price-final-producer",
+      "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-final-producer.json",
+      "receipt_sha256": "86d8eca6305ccee33aaa9c160398a4ec4996f8b230c4374bc1cd47d3d78ebed5",
+      "launch_nonce": "afec8881ee0b4928b3b81e04c8464474",
+      "pid": 18328,
+      "started_at_utc": "2026-11-04T17:40:26.903570+00:00",
+      "finished_at_utc": "2026-11-04T17:40:36.914741+00:00",
+      "exit_code": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "timed_out": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\source-numbers",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "res://scripts/tests/coin_pusher_drop_price_check.gd"
+      ],
+      "result_sha256": "3e91218a2f4dee77c5008b7128f2d4c4dbb460be9b1f607f7f142a44c3ddffd2",
+      "disposition": "pass"
+    },
+    {
+      "label": "pusher-price-final-cold",
+      "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-final-cold.json",
+      "receipt_sha256": "918a62a2b671a9575cef379a44fe0aa45a788434cff9988f50a9892faaf7e3b6",
+      "launch_nonce": "e0883718497348f38430422d838261e8",
+      "pid": 35488,
+      "started_at_utc": "2026-11-04T17:40:49.233877+00:00",
+      "finished_at_utc": "2026-11-04T17:40:57.849797+00:00",
+      "exit_code": 1,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "timed_out": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\source-numbers",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "res://scripts/tests/coin_pusher_drop_price_check.gd",
+        "--",
+        "--cold"
+      ],
+      "result_sha256": "e796a56c1feef0d08dcd2b53f341e37b6018c5e03f8e3a8ba47088d48d061c70",
+      "disposition": "diagnostic test-comparison failure; retained"
+    },
+    {
+      "label": "pusher-price-qualified-producer",
+      "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-qualified-producer.json",
+      "receipt_sha256": "a8bfcfa2187337c516de247ed5d148b1ea8456d81d4655b4f0bf01807e7937fe",
+      "launch_nonce": "d517016a7dc2411bb8fd38cb804d9d00",
+      "pid": 30068,
+      "started_at_utc": "2026-11-04T17:42:05.904820+00:00",
+      "finished_at_utc": "2026-11-04T17:42:16.733432+00:00",
+      "exit_code": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "timed_out": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\source-numbers",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "res://scripts/tests/coin_pusher_drop_price_check.gd"
+      ],
+      "result_sha256": "6c5857a0f9370238f966eea16dc8f3122d1b4b4435b7a66ecb46ed8239edfe43",
+      "disposition": "pass"
+    },
+    {
+      "label": "pusher-price-qualified-cold",
+      "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-qualified-cold.json",
+      "receipt_sha256": "a9a3b4f51d72e1e499a88e704dad6943e4ec77c17f3ff704ac4f20170a422da0",
+      "launch_nonce": "975f280ae7de456bb7c8f53602df032f",
+      "pid": 29900,
+      "started_at_utc": "2026-11-04T17:42:26.531937+00:00",
+      "finished_at_utc": "2026-11-04T17:42:35.314940+00:00",
+      "exit_code": 0,
+      "assigned_before_execution": true,
+      "active_at_release": 0,
+      "timed_out": false,
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "argv": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\source-numbers",
+        "--audio-driver",
+        "Dummy",
+        "--script",
+        "res://scripts/tests/coin_pusher_drop_price_check.gd",
+        "--",
+        "--cold"
+      ],
+      "result_sha256": "373e285f43dfbc232ecf0df91c727fce19c5bf68719109ef136579bf5dd07c78",
+      "disposition": "pass"
+    }
+  ],
+  "limits": [
+    "Synthetic module/native-solver and renderer callback/font-fit checks, not OS-pointer play or screenshot/pixel or deployed Web acceptance.",
+    "Official Save/fresh-process cold uses disposable fixtures; no original R07 save or missed outcome was replayed.",
+    "All six nonce-bound owned Windows Jobs ended with zero owned processes; no global desktop census or shared-service cleanup claim.",
+    "Implementation commit is associated; deployment is outside this local fix/test/commit scope. Item/scenario pause and existing disk reserve remain unchanged."
+  ],
+  "manual_reconciliation": {
+    "current": {
+      "report": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-ledger-current.json",
+      "checked_at": "2026-11-04T17:46:29.294516Z",
+      "exit_code": 1,
+      "summary": {
+        "objectives_checked": 75,
+        "batches_checked": 8,
+        "open_objectives": 38,
+        "open_batches": 4,
+        "open_work_items": 42,
+        "user_paused_items": 8,
+        "complete_objectives": 37,
+        "errors": 57,
+        "warnings": 0,
+        "tasks_with_errors": 20
+      },
+      "scope_findings": [],
+      "limit": "Existing backlog and historical runtime findings remain outside this scope; exit 1 is preserved, not reported as a global pass."
+    },
+    "all": {
+      "report": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-ledger-all.json",
+      "checked_at": "2026-11-04T17:46:29.940515Z",
+      "exit_code": 1,
+      "summary": {
+        "objectives_checked": 219,
+        "batches_checked": 8,
+        "open_objectives": 168,
+        "open_batches": 4,
+        "open_work_items": 172,
+        "user_paused_items": 8,
+        "complete_objectives": 49,
+        "errors": 523,
+        "warnings": 0,
+        "tasks_with_errors": 160
+      },
+      "scope_findings": [],
+      "limit": "Existing backlog and historical runtime findings remain outside this scope; exit 1 is preserved, not reported as a global pass."
+    },
+    "commit_associated_current": {
+      "report": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-ledger-committed-current.json",
+      "checked_at": "2026-11-04T17:50:07.580446Z",
+      "exit_code": 1,
+      "summary": {
+        "objectives_checked": 75,
+        "batches_checked": 8,
+        "open_objectives": 37,
+        "open_batches": 4,
+        "open_work_items": 41,
+        "user_paused_items": 8,
+        "complete_objectives": 38,
+        "errors": 57,
+        "warnings": 0,
+        "tasks_with_errors": 20
+      },
+      "scope_findings": [],
+      "limit": "After associating exact implementation commit and completing the six local acceptances. Quarter Falls, Roulette and six pusher runtime rows have no findings; unrelated backlog/runtime errors remain."
+    },
+    "commit_associated_all": {
+      "report": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-ledger-committed-all.json",
+      "checked_at": "2026-11-04T17:50:08.211603Z",
+      "exit_code": 1,
+      "summary": {
+        "objectives_checked": 219,
+        "batches_checked": 8,
+        "open_objectives": 167,
+        "open_batches": 4,
+        "open_work_items": 171,
+        "user_paused_items": 8,
+        "complete_objectives": 50,
+        "errors": 523,
+        "warnings": 0,
+        "tasks_with_errors": 160
+      },
+      "scope_findings": [],
+      "limit": "After associating exact implementation commit and completing the six local acceptances. Quarter Falls, Roulette and six pusher runtime rows have no findings; unrelated backlog/runtime errors remain."
+    }
+  },
+  "commit_associated_at": "2026-11-04T17:49:57.547271+00:00",
+  "local_acceptance": {
+    "state": "complete",
+    "criteria": 6,
+    "implementation_commit": "62490ab186657cbfff49839589863e851eef7bcd",
+    "deployment_required": false,
+    "deployment_state": "not_applicable",
+    "scope": "Local investigation, display terms, regression qualification and associated commit only; no deployed Web or original-save acceptance."
+  },
+  "release_followthrough": {
+    "state": "open",
+    "receipt": "docs/testing/quarter_roulette_publication_20261104.json",
+    "authorization_added_at": "2026-11-04T18:02:51.923373+00:00",
+    "scope": "New main/NEXT publication request extends the parent objective; the local completed qualification above remains valid and unchanged."
+  }
+}
