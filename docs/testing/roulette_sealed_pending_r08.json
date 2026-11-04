@@ -4104,6 +4104,17 @@
     "registry_ids": 247,
     "own_product_delta_from_incoming": [],
     "merge_resolution": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-seed-b-merge-resolution.json",
-    "reconciliation": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-seed-b-merged-final-check.json"
+    "reconciliation": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-seed-b-merged-final-check.json",
+    "metadata_followup": {
+      "incoming_commit": "df3d1e7fb1703507de6fcc949e4a1f5f173624e8",
+      "runtime_delta": [],
+      "registry_ids": 247,
+      "other_incoming_records_preserved": true,
+      "resolution": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-seed-b-merge-resolution-df3d1e7fb170.json",
+      "reconciliation": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-seed-b-publication-final-check.json",
+      "assigned_scope_findings": 0,
+      "other_findings": 54,
+      "other_tasks_with_findings": 17
+    }
   }
 }

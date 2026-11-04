@@ -1602,7 +1602,9 @@
         "BTH061-AUDIT-CONTENT-TIMEOUT-006",
         "BTH061-AUDIT-AUDIO-LEGACY-006",
         "BTH061-AUDIT-SCRATCH-HELD-SALE-006"
-      ]
+      ],
+      "published_source": "253454b7ff0449fcb216248bbeaaa3c53d23cdd2",
+      "NEXT": "Existingwatcherstopped21:22:11Z/PIDabsent; exactnewsourceackpending; lastreservefalse; servedf3058b6d. No serviceintervention."
     }
   ]
 }

@@ -481,3 +481,10 @@ Job r08-roulette-web-prepare-b-merge-2 exited0/no timeout/owned0; this adds the
 profiles, errors and evidence remain preserved. Merged reconciliation reports
 0 assigned-scope findings and54 existing findings across17 other tasks; current
 report task-14/evidence/r08-seed-b-merged-final-check.json.
+
+A subsequent documentation-only audit association at `df3d1e7fb1703507de6fcc949e4a1f5f173624e8`
+was also retained. Runtime code did not change, so the36-check merged gate
+remains applicable without another game/input run. All247 IDs and other
+incoming records remain intact. Final publication reconciliation reports0
+assigned-scope findings and54 existing findings across17 other tasks;
+report task-14/evidence/r08-seed-b-publication-final-check.json.
