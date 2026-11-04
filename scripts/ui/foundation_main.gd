@@ -110,9 +110,6 @@ const ENVIRONMENT_RUNTIME_STATE_KEY_CACHE_LIMIT := 64
 const RUN_ITEM_ICON_TEXTURE_CACHE_LIMIT := 64
 const RESULT_FEEDBACK_WIDTH := 340.0
 const RESULT_FEEDBACK_HEIGHT := 72.0
-const MAIN_MENU_COLLAPSED_SIZE := Vector2(1200, 680)
-const MAIN_MENU_EXPANDED_SIZE := Vector2(1100, 620)
-const MAIN_MENU_VIEWPORT_MARGIN := Vector2(32, 24)
 const ACCESSIBILITY_BASE_FONT_META := "accessibility_base_font_size"
 const ACCESSIBILITY_BASE_MIN_SIZE_META := "accessibility_base_min_size"
 const ACCESSIBILITY_BASE_COLOR_META := "accessibility_base_font_color"
@@ -393,7 +390,6 @@ var presented_bankroll_hold_active := false
 var presented_bankroll_value := 0
 var presented_bankroll_game_id := ""
 var presented_bankroll_action_id := ""
-var presented_bankroll_release_screen := ""
 var presented_bankroll_started_msec := 0
 var presented_money_withheld: Dictionary = {}
 var presented_money_feedback: Dictionary = {}
@@ -2762,7 +2758,6 @@ func _clear_presented_bankroll_hold() -> void:
 	presented_money_push_currency = ""
 	presented_bankroll_game_id = ""
 	presented_bankroll_action_id = ""
-	presented_bankroll_release_screen = ""
 	presented_bankroll_started_msec = 0
 
 
@@ -9899,39 +9894,6 @@ func _build_challenge_controls(parent: VBoxContainer) -> void:
 	scroll.add_child(challenge_list)
 	_rebuild_challenge_options()
 	_refresh_challenge_controls()
-
-
-func _apply_main_menu_panel_size(size: Vector2) -> void:
-	if main_menu_panel == null:
-		return
-	# The redesigned menu is a transparent full-viewport composition. Legacy
-	# secondary pages still call this helper, but must not recreate the old card.
-	if main_menu_logo != null:
-		return
-	var viewport_size := Vector2(
-		float(ProjectSettings.get_setting("display/window/size/viewport_width", 1280)),
-		float(ProjectSettings.get_setting("display/window/size/viewport_height", 720))
-	)
-	if is_inside_tree():
-		viewport_size = get_viewport_rect().size
-	var max_size := Vector2(
-		maxf(1.0, viewport_size.x - MAIN_MENU_VIEWPORT_MARGIN.x * 2.0),
-		maxf(1.0, viewport_size.y - MAIN_MENU_VIEWPORT_MARGIN.y * 2.0)
-	)
-	var applied_size := Vector2(minf(size.x, max_size.x), minf(size.y, max_size.y))
-	var centered_top := -applied_size.y * 0.5
-	var min_top := -viewport_size.y * 0.5 + MAIN_MENU_VIEWPORT_MARGIN.y
-	var max_top := viewport_size.y * 0.5 - MAIN_MENU_VIEWPORT_MARGIN.y - applied_size.y
-	var top_offset := centered_top
-	if max_top >= min_top:
-		top_offset = clampf(centered_top, min_top, max_top)
-	else:
-		top_offset = min_top
-	main_menu_panel.custom_minimum_size = applied_size
-	main_menu_panel.offset_left = -applied_size.x * 0.5
-	main_menu_panel.offset_top = top_offset
-	main_menu_panel.offset_right = applied_size.x * 0.5
-	main_menu_panel.offset_bottom = top_offset + applied_size.y
 
 
 func toggle_content_group_config() -> void:
@@ -20583,7 +20545,6 @@ func open_career_stats_screen() -> void:
 		start_menu_controls.visible = false
 	_refresh_career_stats_screen()
 	career_stats_screen.visible = true
-	_apply_main_menu_panel_size(MAIN_MENU_EXPANDED_SIZE)
 
 
 func close_career_stats_screen() -> void:
@@ -20593,7 +20554,6 @@ func close_career_stats_screen() -> void:
 		start_menu_intro.visible = true
 	if start_menu_controls != null:
 		start_menu_controls.visible = true
-	_apply_main_menu_panel_size(MAIN_MENU_COLLAPSED_SIZE)
 	_refresh_start_screen()
 
 
