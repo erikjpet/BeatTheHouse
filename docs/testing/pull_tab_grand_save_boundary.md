@@ -5,7 +5,9 @@ Audit Night fixture confirmed a separate, relevant Save acknowledgment defect:
 warm Load restored a newer saved clock while cold Continue could restore an
 older clock. The scoped correction below passed the independent Web boundaries.
 It does not establish the cause of the original campaign's lost collection.
-Commit association and NEXT verification are recorded separately below.
+Commit association and NEXT verification are recorded separately below. The
+later [custody follow-up](pull_tab_custody_followup.md) corrects the condensed
+original chronology and adds 177 native assertions and two Web arms across six sessions.
 
 ## Original evidence and limits
 
@@ -14,15 +16,21 @@ campaign `grand-fresh-r01`, seed `RUN-20261103-988450-001`. It had an earned,
 carried Gold Players Card and an unclaimed Blue Bag. One ordinary $2 Pull Tabs
 purchase retained $94 cash and Heat 0, reducing chips 15 to 13. Collection and
 in-machine Menu Save showed unopened Moonlight Bars #008, pile 1/1, empty tray,
-Day 3 8:00 AM. Cold entry showed that ticket back in the tray at 4:45 AM while
-retaining the debit. Recollection and floor Save subsequently preserved custody.
+Day 3 8:00 AM. The next cold floor Continue showed 4:45 AM. It then saved from
+the floor at 8:45 AM without entering Pull Tabs; a second cold Continue again
+showed 4:45 AM. Only after navigation did the first machine inspection show the
+ticket in the tray, pile 0/0, at 6:15 AM, retaining the debit. Recollection and a
+later floor Save subsequently preserved custody. The full two-Save chronology
+is documented in the linked follow-up; custody was not inspected between saves.
 
 The original case-121 screenshot identifies Audit Night by its signage
 `EVERY DRAWER GETS COUNTED.`; authored data identifies
 `grand_casino_audit_night`. The preserved command log contains Buy, wait 900 ms,
 Collect, wait 350 ms, Menu, Save, screenshot, close. Although narrative evidence
 mentions Open, that command log contains **no Open input**. The closer fixture
-therefore follows the recorded inputs without a reveal.
+therefore follows the recorded inputs without a reveal. The fuller log review
+also identifies 132.828 seconds from Buy to Collect across separate commands;
+the explicit 900 ms wait is not the whole tray dwell.
 
 The original report remains unchanged at
 `C:\Users\theep\Documents\Codex\2026-10-27\task-2\evidence\grand-r01-window-125\PULL-TABS-ONE-TICKET-COLD-ROUTE-REPORT.md`.
