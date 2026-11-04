@@ -2576,6 +2576,10 @@ func _draw_status_panel(surface, state: Dictionary, skin: Dictionary, accent: Co
 			hint = str(int(state.get("slot_nudge_chain_collected_count", 0))) + "/" + str(_array_read_size(state.get("slot_nudge_chain_coins", []))) + " BANK $" + str(int(state.get("slot_nudge_chain_banked_payout", 0)))
 		if not hint.is_empty():
 			surface.surface_label(hint.to_upper().left(16), left.position + Vector2(14, 154), 10, trim)
+		surface.surface_label("HEAT / CATCH RISK", left.position + Vector2(14, 172), 9, Color("#ff3f75"))
+		surface.surface_label("AT GRAND:", left.position + Vector2(14, 186), 9, trim)
+		surface.surface_label("CLOSES CARDS", left.position + Vector2(14, 200), 9, Color("#ff3f75"))
+		surface.surface_label("FOR THIS RUN", left.position + Vector2(14, 214), 9, Color("#ff3f75"))
 	_draw_panel(surface, right, "FEATURE", light)
 	var active: Dictionary = _read_dict(state.get("slot_active_bonus", {}))
 	if bool(active.get("active", false)) and not bool(active.get("complete", false)):
@@ -2716,8 +2720,7 @@ func _draw_controls(surface, state: Dictionary, skin: Dictionary, accent: Color,
 		_draw_button(surface, bet_rect, "$%d" % int(option.get("total_credits", 0)), "slot_bet", index, light if selected else trim, selected)
 	_draw_button(surface, control_layout.get("spin_rect", Rect2()), "SPIN", "slot_spin", 0, light)
 	if bool(state.get("slot_nudge_available", false)):
-		var nudge_text := "COLLECT" if bool(state.get("slot_nudge_chain_active", false)) else "NUDGE!"
-		_draw_button(surface, control_layout.get("nudge_rect", Rect2()), nudge_text, "slot_nudge", 0, accent)
+		_draw_button(surface, control_layout.get("nudge_rect", Rect2()), "NUDGE", "slot_nudge", 0, accent, false, "CHEAT")
 	_draw_button(surface, control_layout.get("auto_rect", Rect2()), "AUTO" if not bool(state.get("slot_autoplay_active", false)) else "AUTO ON", "slot_auto_toggle", 0, trim, bool(state.get("slot_autoplay_active", false)))
 
 
@@ -2762,12 +2765,17 @@ func _slot_control_layout(rect: Rect2, bet_count: int, show_nudge: bool) -> Dict
 	}
 
 
-func _draw_button(surface, rect: Rect2, label: String, action: String, index: int, color: Color, selected: bool = false) -> void:
+func _draw_button(surface, rect: Rect2, label: String, action: String, index: int, color: Color, selected: bool = false, detail: String = "") -> void:
 	var hovered := bool(surface.surface_region_hovered(action, index))
 	var fill_alpha := 0.30 if selected else 0.22 if hovered else 0.12
 	surface.draw_rect(rect, Color(color.r, color.g, color.b, fill_alpha))
 	surface.draw_rect(rect, Color("#f8fafc") if hovered else color, false, 2 if hovered or selected else 1)
-	surface.surface_label_centered(label, rect.grow(-4), 15, Color("#f8fafc") if hovered else color)
+	var text_color := Color("#f8fafc") if hovered else color
+	if detail.is_empty():
+		surface.surface_label_centered(label, rect.grow(-4), 15, text_color)
+	else:
+		surface.surface_label_centered(label, Rect2(rect.position + Vector2(4, 3), Vector2(rect.size.x - 8, rect.size.y * 0.55)), 14, text_color)
+		surface.surface_label_centered(detail, Rect2(rect.position + Vector2(4, rect.size.y * 0.55), Vector2(rect.size.x - 8, rect.size.y * 0.38)), 10, text_color)
 	surface.surface_add_hit(rect, action, index)
 
 
