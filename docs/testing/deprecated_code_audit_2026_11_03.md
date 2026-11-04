@@ -4,6 +4,13 @@ Baseline: `87a06b9a4acbe86b0f761d2cd0ab929f5584b716`.
 Task: `BTH061-AUDIT-001` on the existing stability release task list.
 Removal commit: `6a784623bdedd6b253d41ef42110adbfd4d67a12`.
 
+Status correction, 2026-11-04: this report establishes the scoped removals and
+their deployed acceptance. Its closing statement did not establish completion
+of the original codebase-wide audit. The umbrella task is reopened in the
+[continuation](deprecated_code_audit_2026_11_04.md). Previous coordination
+deferrals are not intentional user holds; remaining candidates and inherited
+check failures are being actively resolved without removing live compatibility.
+
 This audit is separate from the Crew-delivery/game-surface repair. It removes
 confirmed superseded implementations and assets; it does not claim to fix the
 reported game fallback or room-publication failures.
