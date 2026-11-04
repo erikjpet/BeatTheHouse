@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T23:01:27.860244+00:00",
+  "updated_at": "2026-11-04T23:07:45.294490+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13709,6 +13709,11 @@
           "kind": "active_continuation007",
           "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
           "summary": "Current main/NEXT aece9cff; catalog profiling and bounded coverage/runtime review actively progressing. Historical stopped-service/disk observations are superseded, not current blockers."
+        },
+        {
+          "kind": "current_next_donor_guard_block",
+          "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
+          "summary": "Continuation007 finishedreviewrecords publishednormally; newNEXT sourceadmission blocked bycurrentdonorlifecycleproof, notstoppedwatcher/capacity. Namedfollowup BTH061-AUDIT-PUBLISH-NEXT-007; otheraudit remainsactive."
         }
       ],
       "implementation_batches": [
@@ -13724,7 +13729,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T22:59:02.792520+00:00"
+      "updated_at": "2026-11-04T23:07:45.294490+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -20735,6 +20740,99 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-04T23:01:27.860244+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-PUBLISH-NEXT-007",
+      "name": "Follow published audit continuation007 through existing NEXT",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Follow the already-published continuation007 audit evidence and bounded task records to the existing NEXT deployment. Record exact source/artifact identity and launch limits. Preserve the last good build and existing lifecycle/capacity/resource guards; do not edit pipeline machinery or fabricate donor release evidence.",
+        "source": "Standing trusted approval to push finished audit work to NEXT; actual watcher observation after normal5647e6a8 mainpush.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "published-main",
+            "description": "Scoped review and task association commits are normally published to main with clean source proof.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_007.md"
+            ]
+          },
+          {
+            "id": "next-artifact",
+            "description": "Existing watcher qualifies lifecycle and deploys the exact published descendant, or retains precise factual blocker without bypass.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_007.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "MAIN_PUBLISHED_NEXT_DONOR_LIFECYCLE_GUARD_BLOCKED",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "9e0de522d25c3774c84ad7d73f83c44438b75e4c",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_007.md"
+          ]
+        },
+        {
+          "sha": "5647e6a8ababa00bde8b1f1507895438221b5272",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_007.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation007-next-donor-block-r1.json"
+        ],
+        "scope": "Main5647e6a8 observed; import-cache lifecycle admissionfailsbeforeexport. Stillservedaece9cff exactassetsverified. New007doc deployment andbasicbrowserlaunch unverified."
+      },
+      "evidence": [
+        {
+          "kind": "actual_next_admission_failure",
+          "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
+          "summary": "Watcher acknowledges5647e6a8 thenfailsbeforeexport with No qualified owned lifecycle release for this donor. Currentaece donor differsfromimmutablef305 releaseproof. Lastgoodaece retained; no pipelineedit/retry/guardchange."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Report exact current donor release mismatch to parent/pipeline owner through task handoff. Continue independent audit; await actual qualified lifecycle evidence through existing machinery, then verify resulting exact served identity. Do not create a second watcher, force cold import, change reserves or synthesize a release proof.",
+      "blocker": {
+        "state": "active",
+        "kind": "next_donor_lifecycle_release",
+        "description": "Currentaece9cff donor has no qualified lifecycle release in the maintained verifier; its immutable proof accepts only f3058b6d donor/attempt/archive. Watcher raises No qualified owned lifecycle release for this donor before new export. Requires pipeline-owned lifecycle qualification; audit must not alter proof/guards or stop workers. Independent audit work can continue.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T23:07:45.294490+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation007-next-donor-block-r1.json"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T23:07:45.294490+00:00"
     }
   ],
   "batches": [

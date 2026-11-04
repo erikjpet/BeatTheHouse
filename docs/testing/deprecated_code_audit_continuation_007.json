@@ -323,5 +323,28 @@
     "gpu007-probe-r1",
     "gpu007-probe-r2"
   ],
-  "limits": "Prior source qualification remains historical/current-exact-path evidence; no new native regression, full aggregate, whole catalog, Web gameplay or full consumer coverage pass."
+  "limits": "Prior source qualification remains historical/current-exact-path evidence; no new native regression, full aggregate, whole catalog, Web gameplay or full consumer coverage pass.",
+  "later_next_admission": {
+    "observed_at": "2026-11-04T23:07:45.294490+00:00",
+    "failed_target": "5647e6a8ababa00bde8b1f1507895438221b5272",
+    "failed_phase": "import-cache donor lifecycle admission, before new source/build attempt",
+    "last_good_served": "aece9cffa8c17c53f90943e108e1194403a496db",
+    "release_guard": {
+      "path": "D:\\Projects\\site\\scripts\\bth_owned_source_release.py",
+      "sha256": "a45227a944fda8dfe92d711603df27c6b09fa5a21f9c39174becf7789f7ecdf9",
+      "line": 65,
+      "qualified_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+      "meaning": "Immutable old donor proof accepts only f305 identity/archive/attempt. Current aece donor needs newly qualified lifecycle evidence; this is active ownership protection, not proven obsolete code."
+    },
+    "cache_entry": {
+      "path": "D:\\Projects\\site\\scripts\\bth_import_cache.py",
+      "sha256": "ecd61102233c74384121bc3b4dfd72aa451695295b050fa4acea17a032426b63",
+      "line": 146,
+      "meaning": "validate selects exact current deployed attempt, then requires released_donor before any donor cache reuse."
+    },
+    "pipeline_modified": false,
+    "manual_build_retry": false,
+    "guard_weakened": false,
+    "last_good_preserved": true
+  }
 }
