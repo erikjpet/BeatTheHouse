@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T17:25:47.651556+00:00",
+  "updated_at": "2026-11-04T17:53:05.677951+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -517,7 +517,7 @@
       ],
       "group": "current",
       "objective": {
-        "text": "Video Poker cold strategy-hint cost. Generated3hands show1.17\u20131.33s cold versus17\u201340us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain.",
+        "text": "Video Poker cold strategy-hint cost. Generated3hands show1.17–1.33s cold versus17–40us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain.",
         "source": "docs/plans/performance_audit_2026-11-04.md",
         "scope_confirmed": true,
         "acceptance": [
@@ -576,7 +576,7 @@
         {
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-          "summary": "Generated3hands show1.17\u20131.33s cold versus17\u201340us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain."
+          "summary": "Generated3hands show1.17–1.33s cold versus17–40us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain."
         }
       ],
       "implementation_batches": [],
@@ -5037,13 +5037,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop \u2192 Main Menu \u2192 Continue \u2192 full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
+        "text": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop → Main Menu → Continue → full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
         "source": "docs/plans/0.6.1_stability_release_plan.md#prioritized-task-list",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop \u2192 Main Menu \u2192 Continue \u2192 full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
+            "description": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop → Main Menu → Continue → full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
             "required": true,
             "state": "unknown",
             "evidence": [
@@ -5254,13 +5254,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3\u20135, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
+        "text": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3–5, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
         "source": "docs/plans/0.6.1_stability_release_plan.md#prioritized-task-list",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3\u20135, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
+            "description": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3–5, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
             "required": true,
             "state": "unknown",
             "evidence": [
@@ -13558,13 +13558,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Band free listen once:177cash,Heat2\u21921; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
+        "text": "Band free listen once:177cash,Heat2→1; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
         "source": "C:\\Users\\theep\\Documents\\Codex\\2026-10-23\\task-2\\evidence\\named-fix-acceptance-registry-current.json#$.pending_named_acceptance_followups.9",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Band free listen once:177cash,Heat2\u21921; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
+            "description": "Band free listen once:177cash,Heat2→1; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
             "required": true,
             "state": "pass",
             "evidence": [
@@ -18294,6 +18294,619 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-04T17:25:47.651556+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-GENERIC-CONTROLS-004",
+      "name": "Remove retired generic game control drawing helpers",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-HOST-GAMEPLAY-004"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Delete the three orphan GameSurfaceCanvas control drawers plus their unused SurfaceHarness stubs/counters. History and complete current receiver/reflection closure establish these are remnants of the removed prototype game forms. Preserve native controls, input, scheduling and every retained rendering method.",
+        "source": "docs/testing/deprecated_code_audit_continuation_004.md; trusted parent direction to continue meaningful production-code audit",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "focused-qualified",
+            "description": "Deletion closure, actual current game draw contracts against SurfaceHarness, native ownership and autonomous animation checks.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_004.md"
+            ]
+          },
+          {
+            "id": "next-current",
+            "description": "Associated cleanup commit is delivered and exact NEXT identity and available behavior evidence recorded.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CONFIRMED_REMOVAL_QUALIFICATION_PENDING",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Scoped removal is not implemented, committed or delivered yet. Existing NEXT reserve guard remains authoritative."
+      },
+      "evidence": [
+        {
+          "kind": "confirmed_obsolete_candidate",
+          "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
+          "summary": "Delete the three orphan GameSurfaceCanvas control drawers plus their unused SurfaceHarness stubs/counters. History and complete current receiver/reflection closure establish these are remnants of the removed prototype game forms. Preserve native controls, input, scheduling and every retained rendering method."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Apply the reviewed bounded patch, run the focused acceptance, associate its commit and publish authorized finished work; observe NEXT without bypassing its reserve guard.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T17:43:26.925449+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T17:43:26.925449+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-SLOT-TICK-004",
+      "name": "Retire obsolete Slot action-pipeline runtime tick protocol",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-HOST-GAMEPLAY-004"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Remove the obsolete slot_runtime_tick result-mode gates after retirement of its real Slot producer. Migrate only the synthetic obsolete fixture phase to the current canonical realtime surface boundary, preserving completed-action assertions and run/RNG/clock conservation; close passive tooling readers. Preserve saved result dictionaries and active action authority/rollback.",
+        "source": "docs/testing/deprecated_code_audit_continuation_004.md; trusted parent direction to continue meaningful production-code audit",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "focused-qualified",
+            "description": "Historical producer retirement, current protocol closure and focused canonical realtime plus completed embedded-action qualification.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_004.md"
+            ]
+          },
+          {
+            "id": "next-current",
+            "description": "Associated cleanup commit is delivered and exact NEXT identity and available behavior evidence recorded.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CONFIRMED_REMOVAL_QUALIFICATION_PENDING",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Scoped removal is not implemented, committed or delivered yet. Existing NEXT reserve guard remains authoritative."
+      },
+      "evidence": [
+        {
+          "kind": "confirmed_obsolete_candidate",
+          "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
+          "summary": "Remove the obsolete slot_runtime_tick result-mode gates after retirement of its real Slot producer. Migrate only the synthetic obsolete fixture phase to the current canonical realtime surface boundary, preserving completed-action assertions and run/RNG/clock conservation; close passive tooling readers. Preserve saved result dictionaries and active action authority/rollback."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Apply the reviewed bounded patch, run the focused acceptance, associate its commit and publish authorized finished work; observe NEXT without bypassing its reserve guard.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T17:43:26.925449+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T17:43:26.925449+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-REPORT-FALLBACK-004",
+      "name": "Remove unreachable empty replay segment fallback",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-REPORT-MODELS-004"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Delete exactly five unreachable lines in RunReportViewModel replay reconstruction: the first helper call always appends for every nonempty path, so the subsequent empty-segments/nonempty-path conjunction is impossible. Preserve all reachable historical visit reconstruction, payload and recorded-visit authority.",
+        "source": "docs/testing/deprecated_code_audit_continuation_004.md; trusted parent direction to continue meaningful production-code audit",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "focused-qualified",
+            "description": "Structural reachability proof and an existing focused report contract check.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_004.md"
+            ]
+          },
+          {
+            "id": "next-current",
+            "description": "Associated cleanup commit is delivered and exact NEXT identity and available behavior evidence recorded.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CONFIRMED_REMOVAL_QUALIFICATION_PENDING",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Scoped removal is not implemented, committed or delivered yet. Existing NEXT reserve guard remains authoritative."
+      },
+      "evidence": [
+        {
+          "kind": "confirmed_obsolete_candidate",
+          "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
+          "summary": "Delete exactly five unreachable lines in RunReportViewModel replay reconstruction: the first helper call always appends for every nonempty path, so the subsequent empty-segments/nonempty-path conjunction is impossible. Preserve all reachable historical visit reconstruction, payload and recorded-visit authority."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Apply the reviewed bounded patch, run the focused acceptance, associate its commit and publish authorized finished work; observe NEXT without bypassing its reserve guard.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T17:43:26.925449+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T17:43:26.925449+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-SLOT-LEGACY-FAMILY-004",
+      "name": "Replace reachable legacy Slot controls after missing bonus identity",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-GAME-PATHS-004"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Replace the legacy four-button Slot bonus presentation reached by accepted active-bonus states with empty family. Establish canonical missing-identity upgrade from recorded machine and durable bonus authority, preserve all progress/RNG/awards, and provide current recovery for incomplete/conflicting state without manufacturing a physics session. This is a static equivalent-state finding, not an original player-save reproduction.",
+        "source": "docs/testing/deprecated_code_audit_continuation_004.md; trusted parent direction to continue meaningful production-code audit",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "authority-and-replacement",
+            "description": "Equivalent missing/empty/conflicting identity states prove authoritative upgrade or current recovery and no legacy control row remains; preserve current Pinball/Buffalo state, RNG and awards.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_004.md"
+            ]
+          },
+          {
+            "id": "next-current",
+            "description": "Associated fix is committed, delivered and relevant NEXT acceptance recorded.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "REACHABLE_LEGACY_PATH_AUTHORITY_REVIEW_OPEN",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "No implementation, removal commit or delivery yet."
+      },
+      "evidence": [
+        {
+          "kind": "reachable_legacy_presentation",
+          "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
+          "summary": "Already-v2 pinball machine with active/incomplete bonus and explicitly empty family bypasses native Pinball takeover, reaches legacy four-button controls and conflicts with strict resolver family rejection. A missing family normalizes to empty; raw unnormalized missing-key rendering differs. No player-save provenance or safe blind rehydration is claimed."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Finish canonical legacy identity/durable checkpoint authority classification using equivalent states, then implement and qualify upgrade/recovery before deleting the reachable fallback. Do not infer a default physics seed/session or wait for a vanished personal save.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T17:47:19.676244+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T17:47:19.676244+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-BLACKJACK-BASELINE-004",
+      "name": "Reconcile inherited Blackjack game contract failures",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Three original-base assertions fail: all-in zero-bankroll completion, split-ace natural classification, and no-DAS double-after-split. Reconcile current rules and existing BTH-BJ-SPLIT-ACE-PAYOUT-ACCEPTANCE-001 provenance before changing assertions or gameplay; preserve that task and owner.",
+        "source": "docs/testing/deprecated_code_audit_continuation_004.md; trusted parent direction to continue meaningful production-code audit",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "diagnose-and-repair",
+            "description": "Determine intended authority from existing code/history; implement a scoped repair if justified and commit meaningful focused evidence without suppressing a failure.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_004.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "ORIGINAL_BASE_FAILURE_TRIAGE_OPEN",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Diagnosis only. No repair or deployment claimed; establish delivery scope if a product change is justified."
+      },
+      "evidence": [
+        {
+          "kind": "exact_original_base_reproduction",
+          "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
+          "summary": "All scripts/data/native/tools were exact ff8eb28c during baseline, including original fixtures; maintained composition and fresh private roots reproduced the exact candidate failure arrays (9 game occurrences and1 recovery failure). Candidate bytes and generated runner restored exactly. Three original-base assertions fail: all-in zero-bankroll completion, split-ace natural classification, and no-DAS double-after-split. Reconcile current rules and existing BTH-BJ-SPLIT-ACE-PAYOUT-ACCEPTANCE-001 provenance before changing assertions or gameplay; preserve that task and owner."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Trace the failing original-base assertion and current authoritative contract, preserve all guards and user scopes, then register and qualify the bounded repair. This diagnosis is independent of the deletion-only cleanup.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T17:53:05.677951+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T17:53:05.677951+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-ACTION-RESULT-BASELINE-004",
+      "name": "Diagnose inherited ActionResult UI-state contract mismatch",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "The original-base generic ActionResult shape guard reports ui_state three times across game_surface_contracts and all_game_module_contracts. Establish the action-result versus transient host-result contract before repairing the correct producer or fixture; do not weaken the generic guard.",
+        "source": "docs/testing/deprecated_code_audit_continuation_004.md; trusted parent direction to continue meaningful production-code audit",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "diagnose-and-repair",
+            "description": "Determine intended authority from existing code/history; implement a scoped repair if justified and commit meaningful focused evidence without suppressing a failure.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_004.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "ORIGINAL_BASE_FAILURE_TRIAGE_OPEN",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Diagnosis only. No repair or deployment claimed; establish delivery scope if a product change is justified."
+      },
+      "evidence": [
+        {
+          "kind": "exact_original_base_reproduction",
+          "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
+          "summary": "All scripts/data/native/tools were exact ff8eb28c during baseline, including original fixtures; maintained composition and fresh private roots reproduced the exact candidate failure arrays (9 game occurrences and1 recovery failure). Candidate bytes and generated runner restored exactly. The original-base generic ActionResult shape guard reports ui_state three times across game_surface_contracts and all_game_module_contracts. Establish the action-result versus transient host-result contract before repairing the correct producer or fixture; do not weaken the generic guard."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Trace the failing original-base assertion and current authoritative contract, preserve all guards and user scopes, then register and qualify the bounded repair. This diagnosis is independent of the deletion-only cleanup.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T17:53:05.677951+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T17:53:05.677951+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-CRAPS-BASELINE-004",
+      "name": "Diagnose inherited resolved Craps timing snapshot failure",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "The original-base direct Craps module contract reports full snapshot rebuilding after resolution. Trace the timing-state identity/revision boundary and existing performance contract before repair; preserve current module scheduling and result settlement.",
+        "source": "docs/testing/deprecated_code_audit_continuation_004.md; trusted parent direction to continue meaningful production-code audit",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "diagnose-and-repair",
+            "description": "Determine intended authority from existing code/history; implement a scoped repair if justified and commit meaningful focused evidence without suppressing a failure.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_004.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "ORIGINAL_BASE_FAILURE_TRIAGE_OPEN",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Diagnosis only. No repair or deployment claimed; establish delivery scope if a product change is justified."
+      },
+      "evidence": [
+        {
+          "kind": "exact_original_base_reproduction",
+          "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
+          "summary": "All scripts/data/native/tools were exact ff8eb28c during baseline, including original fixtures; maintained composition and fresh private roots reproduced the exact candidate failure arrays (9 game occurrences and1 recovery failure). Candidate bytes and generated runner restored exactly. The original-base direct Craps module contract reports full snapshot rebuilding after resolution. Trace the timing-state identity/revision boundary and existing performance contract before repair; preserve current module scheduling and result settlement."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Trace the failing original-base assertion and current authoritative contract, preserve all guards and user scopes, then register and qualify the bounded repair. This diagnosis is independent of the deletion-only cleanup.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T17:53:05.677951+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T17:53:05.677951+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-CREW-BASELINE-004",
+      "name": "Diagnose inherited neutral Crew poker save identity failures",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Two original-base direct RunState roundtrip assertions fail: fresh neutral Crew poker byte identity and empty legacy projections acquiring neutral member keys. Determine intentional save migration versus regression without editing paused item/scenario code or removing compatibility.",
+        "source": "docs/testing/deprecated_code_audit_continuation_004.md; trusted parent direction to continue meaningful production-code audit",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "diagnose-and-repair",
+            "description": "Determine intended authority from existing code/history; implement a scoped repair if justified and commit meaningful focused evidence without suppressing a failure.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_004.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "ORIGINAL_BASE_FAILURE_TRIAGE_OPEN",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Diagnosis only. No repair or deployment claimed; establish delivery scope if a product change is justified."
+      },
+      "evidence": [
+        {
+          "kind": "exact_original_base_reproduction",
+          "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
+          "summary": "All scripts/data/native/tools were exact ff8eb28c during baseline, including original fixtures; maintained composition and fresh private roots reproduced the exact candidate failure arrays (9 game occurrences and1 recovery failure). Candidate bytes and generated runner restored exactly. Two original-base direct RunState roundtrip assertions fail: fresh neutral Crew poker byte identity and empty legacy projections acquiring neutral member keys. Determine intentional save migration versus regression without editing paused item/scenario code or removing compatibility."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Trace the failing original-base assertion and current authoritative contract, preserve all guards and user scopes, then register and qualify the bounded repair. This diagnosis is independent of the deletion-only cleanup.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T17:53:05.677951+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T17:53:05.677951+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-INTERRUPT-BASELINE-004",
+      "name": "Diagnose inherited embedded Health Inspector interruption failure",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "The original-base recovery_loss_pressure_foundation reports a post-action Health Inspector interruption failing to reroute into forced travel. Localize the old fixture versus current interruption contract using equivalent state; preserve paused scenario implementation and all existing assertions.",
+        "source": "docs/testing/deprecated_code_audit_continuation_004.md; trusted parent direction to continue meaningful production-code audit",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "diagnose-and-repair",
+            "description": "Determine intended authority from existing code/history; implement a scoped repair if justified and commit meaningful focused evidence without suppressing a failure.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_004.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "ORIGINAL_BASE_FAILURE_TRIAGE_OPEN",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Diagnosis only. No repair or deployment claimed; establish delivery scope if a product change is justified."
+      },
+      "evidence": [
+        {
+          "kind": "exact_original_base_reproduction",
+          "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
+          "summary": "All scripts/data/native/tools were exact ff8eb28c during baseline, including original fixtures; maintained composition and fresh private roots reproduced the exact candidate failure arrays (9 game occurrences and1 recovery failure). Candidate bytes and generated runner restored exactly. The original-base recovery_loss_pressure_foundation reports a post-action Health Inspector interruption failing to reroute into forced travel. Localize the old fixture versus current interruption contract using equivalent state; preserve paused scenario implementation and all existing assertions."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Trace the failing original-base assertion and current authoritative contract, preserve all guards and user scopes, then register and qualify the bounded repair. This diagnosis is independent of the deletion-only cleanup.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T17:53:05.677951+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T17:53:05.677951+00:00"
     }
   ],
   "batches": [
