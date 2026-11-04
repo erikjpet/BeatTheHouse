@@ -197,8 +197,10 @@ not Pull Tabs custody failures.
 
 ## Remaining acceptance
 
-Record the associated investigation/test commit and its authorized publication
-evidence. Keep the original report **Open / ORIGINAL_GRAND_NOT_REPRODUCED**:
+The investigation and regression are committed in
+`436a707f8ed1ca6b5464e083326d9d1fb6bb7de7`. Publication and exact NEXT verification
+have a separate release receipt; this associated evidence commit is not a bug-fix
+claim. Keep the original report **Open / ORIGINAL_GRAND_NOT_REPRODUCED**:
 the original campaign's precollection state and its Grand chip-wallet route
 have not been reproduced from a preserved failing generation. The passing
 fresh current-build route does not explain why that earlier build/campaign
