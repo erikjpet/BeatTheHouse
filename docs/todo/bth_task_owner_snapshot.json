@@ -54,9 +54,9 @@
     {
       "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
       "title": "Fix pull-tab save boundary",
-      "state": "idle",
-      "observed_at": "2026-11-04T15:55:05Z",
-      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+      "state": "active",
+      "observed_at": "2026-11-04T20:45:24.625482+00:00",
+      "source": "Actual active task14: tested continuation committed7648f1d9, associating evidence and publishing authorized main; original Open/no product fix, other owner observations unchanged."
     },
     {
       "task_ref": "01a1a3e1-a613-7284-8bba-092f690190c9",

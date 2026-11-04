@@ -1,0 +1,3435 @@
+{
+  "task_id": "BTH061-ROULETTE-SEALED-PENDING-001",
+  "state": "Open",
+  "source_base": "c54a4018a7ec5e1b979e3d33eff52dc1c432c6b3",
+  "original_runtime_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+  "original_evidence": {
+    "report": "E:/CodexQA/BTH/Broad/r08-20261104/evidence/r08-roulette-sealed-pending-917918-observation.json",
+    "sha256": "b304b248d4777152111943eaf74b10da05e41c340586e3151b95b4c5ae7afd7a",
+    "confirm_point": [
+      471,
+      666
+    ],
+    "cash": 80,
+    "heat": 1,
+    "bet": 9,
+    "warm_sealed_before_cold": true,
+    "semantic_acceptance_was_asserted": false,
+    "public_godot_console_captured": false,
+    "private_state_accessed": false,
+    "original_retry_cancel_or_action_replay": false
+  },
+  "native": [
+    {
+      "label": "r08-roulette-baseline-1",
+      "classification": "NEGATIVE_REPRODUCTION_CONFIRMED_ONCE",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/roulette_sealed_pending_check.gd"
+      ],
+      "receipt": {
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "started_utc": "2026-11-04T19:15:34.383794+00:00",
+        "finished_utc": "2026-11-04T19:16:04.683871+00:00",
+        "cpu_seconds": 14.53125
+      },
+      "checks": 31,
+      "failures": [],
+      "completed": true,
+      "fidelity": "Independent explicitly staged trusted generated Riverboat cash80/min9 fixture; actual MainScene callbacks through full Foundation dispatch. One RED bet, SPIN arm, single native CONFIRM then stop. No Practice, normal-travel claim, prior Blackjack, outcome filtering, original R08 state, wheel forcing, Retry/Cancel, Save/Continue or deployed acceptance.",
+      "facts": {
+        "after_confirm_stake_ranges": {
+          "fresh_range": {
+            "base_max": 100,
+            "default": 9,
+            "economy_pressure_applied": false,
+            "economy_state": "stable",
+            "has_valid": true,
+            "max": 71,
+            "min": 9,
+            "recommended_max": 71
+          },
+          "raw_host_selected_stake": 9,
+          "rendered_has_valid": true,
+          "rendered_max": 71,
+          "rendered_min": 9,
+          "rendered_selected_stake": 9,
+          "resolver_range": {
+            "base_max": 100,
+            "default": 9,
+            "economy_pressure_applied": false,
+            "economy_state": "stable",
+            "has_valid": true,
+            "max": 71,
+            "min": 9,
+            "recommended_max": 71
+          }
+        },
+        "before_confirm_stake_ranges": {
+          "fresh_range": {
+            "base_max": 100,
+            "default": 9,
+            "economy_pressure_applied": false,
+            "economy_state": "stable",
+            "has_valid": true,
+            "max": 80,
+            "min": 9,
+            "recommended_max": 80
+          },
+          "raw_host_selected_stake": 9,
+          "rendered_has_valid": true,
+          "rendered_max": 80,
+          "rendered_min": 9,
+          "rendered_selected_stake": 9,
+          "resolver_range": {
+            "base_max": 100,
+            "default": 9,
+            "economy_pressure_applied": false,
+            "economy_state": "stable",
+            "has_valid": true,
+            "max": 80,
+            "min": 9,
+            "recommended_max": 80
+          }
+        },
+        "boundaries": [
+          {
+            "armed": false,
+            "bet_total": 9,
+            "blocking_modal": "",
+            "cash": 80,
+            "chips": 0,
+            "clock": 720,
+            "committed_request_count": 0,
+            "heat": 0,
+            "label": "one-red-bet",
+            "message": "$9 on RED.",
+            "pending": false,
+            "pending_action": "",
+            "pending_boundary_ordinal": -1,
+            "pending_stake": -1,
+            "result": {
+              "action_id": "",
+              "committed": false,
+              "diagnostic_detail": "",
+              "error_code": "",
+              "game_id": "roulette",
+              "has_apply_receipt": false,
+              "has_request_identity": false,
+              "message": "Vega palms the dolly beside the double-zero wheel. Inside minimum $9; outside minimum $9.",
+              "ok": true
+            },
+            "rng_unchanged_from_prebet": true,
+            "screen": "GAME",
+            "selected_action_id": "",
+            "simulation_msec": 0,
+            "spin_count": 0
+          },
+          {
+            "armed": true,
+            "bet_total": 9,
+            "blocking_modal": "",
+            "cash": 80,
+            "chips": 0,
+            "clock": 720,
+            "committed_request_count": 0,
+            "heat": 0,
+            "label": "spin-arms",
+            "message": "Selected legal action: Spin.",
+            "pending": false,
+            "pending_action": "",
+            "pending_boundary_ordinal": -1,
+            "pending_stake": -1,
+            "result": {
+              "action_id": "",
+              "committed": false,
+              "diagnostic_detail": "",
+              "error_code": "",
+              "game_id": "roulette",
+              "has_apply_receipt": false,
+              "has_request_identity": false,
+              "message": "Vega palms the dolly beside the double-zero wheel. Inside minimum $9; outside minimum $9.",
+              "ok": true
+            },
+            "rng_unchanged_from_prebet": true,
+            "screen": "GAME",
+            "selected_action_id": "spin_roulette",
+            "simulation_msec": 0,
+            "spin_count": 0
+          },
+          {
+            "armed": false,
+            "bet_total": 0,
+            "blocking_modal": "",
+            "cash": 71,
+            "chips": 0,
+            "clock": 720,
+            "committed_request_count": 1,
+            "heat": 0,
+            "label": "single-native-confirm-immediate",
+            "message": "Roulette lands 2 black. 0 winning bets. Bankroll -9. Cash change: -9.",
+            "pending": false,
+            "pending_action": "",
+            "pending_boundary_ordinal": -1,
+            "pending_stake": -1,
+            "result": {
+              "action_id": "spin_roulette",
+              "committed": true,
+              "diagnostic_detail": "",
+              "error_code": "",
+              "game_id": "roulette",
+              "has_apply_receipt": true,
+              "has_request_identity": true,
+              "message": "Roulette lands 2 black. 0 winning bets. Bankroll -9. Cash change: -9.",
+              "ok": true
+            },
+            "rng_unchanged_from_prebet": false,
+            "screen": "GAME",
+            "selected_action_id": "",
+            "simulation_msec": 3000,
+            "spin_count": 1
+          }
+        ],
+        "fixture": "Explicit staged generated Riverboat cash80/min9, Roulette only; no normal-travel claim",
+        "fixture_authority": {
+          "continuous_clock_enabled": true,
+          "errors": [],
+          "ok": true,
+          "publication_checked": 1,
+          "publication_generation": 1
+        },
+        "generated_table": {
+          "cash": 80,
+          "chips": 0,
+          "name": "Copper Rotor",
+          "outside_minimum": 9,
+          "spin_count": 0
+        },
+        "last_result_changed_on_confirm": true,
+        "original_state_used": false,
+        "outcome_selection": false,
+        "practice_used": false,
+        "retry_or_cancel_used": false,
+        "seed": "BTH061-ROULETTE-SEALED-PENDING-001-A"
+      },
+      "source_sha256": {
+        "foundation": "85fa91fd979c99c84e986ee915642c9030de93a5e318f4fc28627f5ac8b93ee6",
+        "host": "8b9711b7d220688286b2e0d2db097b33b50b7428b101485940a6681f45482241",
+        "roulette": "cb4de4f65f44eba538e7cf466a90d15485c1d95d4a9bbe1af1c7e5db5ab0451c",
+        "test": "55c45092dbb92577c8919aa1b2b0661f66d99003587c31bf012d17943cf3f572"
+      },
+      "local_log": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-baseline-1.log"
+    },
+    {
+      "label": "r08-roulette-paced-1",
+      "classification": "NEGATIVE_REPRODUCTION_CONFIRMED_ONCE",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/roulette_sealed_pending_check.gd",
+        "--",
+        "--paced"
+      ],
+      "receipt": {
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "started_utc": "2026-11-04T19:20:31.283037+00:00",
+        "finished_utc": "2026-11-04T19:21:04.590322+00:00",
+        "cpu_seconds": 15.890625
+      },
+      "checks": 34,
+      "failures": [],
+      "completed": true,
+      "fidelity": "Independent explicitly staged trusted generated Riverboat cash80/min9 fixture; actual MainScene callbacks through full Foundation dispatch. Default immediate case or optional --paced real native frames/timers with unchanged seed/inputs and measured host/canvas progression. One RED bet, SPIN arm, single native CONFIRM then stop. No Practice, normal-travel claim, prior Blackjack, Day3/Heat1 reconstruction, outcome filtering, original R08 state, wheel forcing, Retry/Cancel, Save/Continue or deployed acceptance.",
+      "facts": {
+        "after_confirm_stake_ranges": {
+          "fresh_range": {
+            "base_max": 100,
+            "default": 9,
+            "economy_pressure_applied": false,
+            "economy_state": "stable",
+            "has_valid": true,
+            "max": 71,
+            "min": 9,
+            "recommended_max": 71
+          },
+          "raw_host_selected_stake": 9,
+          "rendered_has_valid": true,
+          "rendered_max": 71,
+          "rendered_min": 9,
+          "rendered_selected_stake": 9,
+          "resolver_range": {
+            "base_max": 100,
+            "default": 9,
+            "economy_pressure_applied": false,
+            "economy_state": "stable",
+            "has_valid": true,
+            "max": 71,
+            "min": 9,
+            "recommended_max": 71
+          }
+        },
+        "before_confirm_stake_ranges": {
+          "fresh_range": {
+            "base_max": 100,
+            "default": 9,
+            "economy_pressure_applied": false,
+            "economy_state": "stable",
+            "has_valid": true,
+            "max": 80,
+            "min": 9,
+            "recommended_max": 80
+          },
+          "raw_host_selected_stake": 9,
+          "rendered_has_valid": true,
+          "rendered_max": 80,
+          "rendered_min": 9,
+          "rendered_selected_stake": 9,
+          "resolver_range": {
+            "base_max": 100,
+            "default": 9,
+            "economy_pressure_applied": false,
+            "economy_state": "stable",
+            "has_valid": true,
+            "max": 80,
+            "min": 9,
+            "recommended_max": 80
+          }
+        },
+        "boundaries": [
+          {
+            "armed": false,
+            "bet_total": 9,
+            "blocking_modal": "",
+            "cash": 80,
+            "chips": 0,
+            "clock": 721,
+            "clock_tuple": {
+              "canvas_presentation_msec": 27410,
+              "canvas_simulation_msec": 27410,
+              "game_clock_minutes": 721,
+              "host_simulation_msec": 27905,
+              "input_time_msec": 27410,
+              "process_frame": 26,
+              "rendered_drunk_scaled_msec": 26852,
+              "rendered_presentation_msec": 26852,
+              "rendered_raw_msec": 26852,
+              "run_action_simulation_msec": 0
+            },
+            "committed_request_count": 0,
+            "heat": 0,
+            "label": "one-red-bet",
+            "message": "$9 on RED.",
+            "pending": false,
+            "pending_action": "",
+            "pending_boundary_ordinal": -1,
+            "pending_stake": -1,
+            "result": {
+              "action_id": "",
+              "committed": false,
+              "diagnostic_detail": "",
+              "error_code": "",
+              "game_id": "roulette",
+              "has_apply_receipt": false,
+              "has_request_identity": false,
+              "message": "Vega palms the dolly beside the double-zero wheel. Inside minimum $9; outside minimum $9.",
+              "ok": true
+            },
+            "rng_unchanged_from_prebet": true,
+            "screen": "GAME",
+            "selected_action_id": "",
+            "simulation_msec": 0,
+            "spin_count": 0
+          },
+          {
+            "armed": true,
+            "bet_total": 9,
+            "blocking_modal": "",
+            "cash": 80,
+            "chips": 0,
+            "clock": 721,
+            "clock_tuple": {
+              "canvas_presentation_msec": 27818,
+              "canvas_simulation_msec": 27818,
+              "game_clock_minutes": 721,
+              "host_simulation_msec": 28578,
+              "input_time_msec": 27818,
+              "process_frame": 68,
+              "rendered_drunk_scaled_msec": 26852,
+              "rendered_presentation_msec": 26852,
+              "rendered_raw_msec": 26852,
+              "run_action_simulation_msec": 0
+            },
+            "committed_request_count": 0,
+            "heat": 0,
+            "label": "spin-arms",
+            "message": "Selected legal action: Spin.",
+            "pending": false,
+            "pending_action": "",
+            "pending_boundary_ordinal": -1,
+            "pending_stake": -1,
+            "result": {
+              "action_id": "",
+              "committed": false,
+              "diagnostic_detail": "",
+              "error_code": "",
+              "game_id": "roulette",
+              "has_apply_receipt": false,
+              "has_request_identity": false,
+              "message": "Vega palms the dolly beside the double-zero wheel. Inside minimum $9; outside minimum $9.",
+              "ok": true
+            },
+            "rng_unchanged_from_prebet": true,
+            "screen": "GAME",
+            "selected_action_id": "spin_roulette",
+            "simulation_msec": 0,
+            "spin_count": 0
+          },
+          {
+            "armed": false,
+            "bet_total": 0,
+            "blocking_modal": "",
+            "cash": 71,
+            "chips": 0,
+            "clock": 723,
+            "clock_tuple": {
+              "canvas_presentation_msec": 30392,
+              "canvas_simulation_msec": 30392,
+              "game_clock_minutes": 723,
+              "host_simulation_msec": 30401,
+              "input_time_msec": 30392,
+              "process_frame": 158,
+              "rendered_drunk_scaled_msec": 30392,
+              "rendered_presentation_msec": 30392,
+              "rendered_raw_msec": 30392,
+              "run_action_simulation_msec": 3000
+            },
+            "committed_request_count": 1,
+            "heat": 0,
+            "label": "single-native-confirm-immediate",
+            "message": "Roulette lands 2 black. 0 winning bets. Bankroll -9. Cash change: -9.",
+            "pending": false,
+            "pending_action": "",
+            "pending_boundary_ordinal": -1,
+            "pending_stake": -1,
+            "result": {
+              "action_id": "spin_roulette",
+              "committed": true,
+              "diagnostic_detail": "",
+              "error_code": "",
+              "game_id": "roulette",
+              "has_apply_receipt": true,
+              "has_request_identity": true,
+              "message": "Roulette lands 2 black. 0 winning bets. Bankroll -9. Cash change: -9.",
+              "ok": true
+            },
+            "rng_unchanged_from_prebet": false,
+            "screen": "GAME",
+            "selected_action_id": "",
+            "simulation_msec": 3000,
+            "spin_count": 1
+          }
+        ],
+        "fixture": "Explicit staged generated Riverboat cash80/min9, Roulette only; no normal-travel claim",
+        "fixture_authority": {
+          "continuous_clock_enabled": true,
+          "errors": [],
+          "ok": true,
+          "publication_checked": 1,
+          "publication_generation": 1
+        },
+        "generated_table": {
+          "cash": 80,
+          "chips": 0,
+          "name": "Copper Rotor",
+          "outside_minimum": 9,
+          "spin_count": 0
+        },
+        "last_result_changed_on_confirm": true,
+        "mode": "frame-paced",
+        "original_state_used": false,
+        "outcome_selection": false,
+        "paced_intervals": [
+          {
+            "after": {
+              "canvas_presentation_msec": 27410,
+              "canvas_simulation_msec": 27410,
+              "game_clock_minutes": 721,
+              "host_simulation_msec": 27902,
+              "input_time_msec": 27410,
+              "process_frame": 26,
+              "rendered_drunk_scaled_msec": 26852,
+              "rendered_presentation_msec": 26852,
+              "rendered_raw_msec": 26852,
+              "run_action_simulation_msec": 0
+            },
+            "before": {
+              "canvas_presentation_msec": 26852,
+              "canvas_simulation_msec": 26852,
+              "game_clock_minutes": 720,
+              "host_simulation_msec": 26865,
+              "input_time_msec": 26852,
+              "process_frame": 4,
+              "rendered_drunk_scaled_msec": 26852,
+              "rendered_presentation_msec": 26852,
+              "rendered_raw_msec": 26852,
+              "run_action_simulation_msec": 0
+            },
+            "label": "chip-to-red",
+            "observed_progression": true,
+            "requested_timer_seconds": 0.4
+          },
+          {
+            "after": {
+              "canvas_presentation_msec": 27818,
+              "canvas_simulation_msec": 27818,
+              "game_clock_minutes": 721,
+              "host_simulation_msec": 28575,
+              "input_time_msec": 27818,
+              "process_frame": 68,
+              "rendered_drunk_scaled_msec": 26852,
+              "rendered_presentation_msec": 26852,
+              "rendered_raw_msec": 26852,
+              "run_action_simulation_msec": 0
+            },
+            "before": {
+              "canvas_presentation_msec": 27410,
+              "canvas_simulation_msec": 27410,
+              "game_clock_minutes": 721,
+              "host_simulation_msec": 27905,
+              "input_time_msec": 27410,
+              "process_frame": 26,
+              "rendered_drunk_scaled_msec": 26852,
+              "rendered_presentation_msec": 26852,
+              "rendered_raw_msec": 26852,
+              "run_action_simulation_msec": 0
+            },
+            "label": "red-to-spin",
+            "observed_progression": true,
+            "requested_timer_seconds": 0.4
+          },
+          {
+            "after": {
+              "canvas_presentation_msec": 28827,
+              "canvas_simulation_msec": 28827,
+              "game_clock_minutes": 723,
+              "host_simulation_msec": 30337,
+              "input_time_msec": 28827,
+              "process_frame": 158,
+              "rendered_drunk_scaled_msec": 26852,
+              "rendered_presentation_msec": 26852,
+              "rendered_raw_msec": 26852,
+              "run_action_simulation_msec": 0
+            },
+            "before": {
+              "canvas_presentation_msec": 27818,
+              "canvas_simulation_msec": 27818,
+              "game_clock_minutes": 721,
+              "host_simulation_msec": 28578,
+              "input_time_msec": 27818,
+              "process_frame": 68,
+              "rendered_drunk_scaled_msec": 26852,
+              "rendered_presentation_msec": 26852,
+              "rendered_raw_msec": 26852,
+              "run_action_simulation_msec": 0
+            },
+            "label": "armed-spin-to-confirm",
+            "observed_progression": true,
+            "requested_timer_seconds": 1.0
+          }
+        ],
+        "passive_game_minutes_before_confirm": 3,
+        "practice_used": false,
+        "preconfirm_clock": {
+          "canvas_presentation_msec": 28827,
+          "canvas_simulation_msec": 28827,
+          "game_clock_minutes": 723,
+          "host_simulation_msec": 30337,
+          "input_time_msec": 28827,
+          "process_frame": 158,
+          "rendered_drunk_scaled_msec": 26852,
+          "rendered_presentation_msec": 26852,
+          "rendered_raw_msec": 26852,
+          "run_action_simulation_msec": 0
+        },
+        "retry_or_cancel_used": false,
+        "seed": "BTH061-ROULETTE-SEALED-PENDING-001-A"
+      },
+      "source_sha256": {
+        "foundation": "85fa91fd979c99c84e986ee915642c9030de93a5e318f4fc28627f5ac8b93ee6",
+        "host": "8b9711b7d220688286b2e0d2db097b33b50b7428b101485940a6681f45482241",
+        "roulette": "cb4de4f65f44eba538e7cf466a90d15485c1d95d4a9bbe1af1c7e5db5ab0451c",
+        "test": "859d31dc45baae375d525d806398d077f4e49aa7abd3abd1144f15d7c1931227"
+      },
+      "local_log": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-paced-1.log"
+    },
+    {
+      "label": "r08-roulette-after-bj-1",
+      "classification": "FIXTURE_LIMIT_BEFORE_ROULETTE_NOT_A_REPRODUCTION",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/roulette_sealed_pending_check.gd",
+        "--",
+        "--after-blackjack"
+      ],
+      "receipt": {
+        "exit_code": 1,
+        "timed_out": false,
+        "active_at_release": 0,
+        "started_utc": "2026-11-04T19:28:33.298953+00:00",
+        "finished_utc": "2026-11-04T19:29:20.296648+00:00",
+        "cpu_seconds": 19.484375
+      },
+      "checks": 26,
+      "failures": [
+        "One natural Blackjack hand must settle through public Stand readiness or normal automatic terminal settlement within20s"
+      ],
+      "completed": true,
+      "fidelity": "Independent explicitly staged trusted generated Riverboat initial cash80/min9 fixture; actual MainScene callbacks through full Foundation dispatch. Default immediate, --paced, or --after-blackjack (one natural hand in shipped three-game set, normal Leave, actual remaining wallet/RNG retained). Paced modes measure normal native host/canvas progression. One RED bet, SPIN arm, single native CONFIRM then stop. No Practice, normal-travel claim, Day3/Heat1 reconstruction, outcome filtering, original R08 state, wheel forcing, Retry/Cancel, Save/Continue or deployed acceptance.",
+      "facts": {
+        "boundaries": [],
+        "fixture": "Explicit staged generated Riverboat initial cash80/min9, shipped Blackjack/Roulette/VideoPoker game set; one natural Blackjack hand then paced Roulette with actual remaining wallet/RNG, no normal-travel claim",
+        "fixture_authority": {
+          "continuous_clock_enabled": true,
+          "errors": [],
+          "ok": true,
+          "publication_checked": 1,
+          "publication_generation": 1
+        },
+        "fixture_limit": "Public prior-Blackjack settlement did not complete within20s; no guessed/repeated input",
+        "mode": "after-blackjack-frame-paced",
+        "original_state_used": false,
+        "outcome_selection": false,
+        "practice_used": false,
+        "prior_blackjack": [
+          {
+            "bankroll_delta": 0,
+            "cash": 80,
+            "chips": 0,
+            "clock": 720,
+            "committed_request_count": 0,
+            "hands_played": 0,
+            "label": "before-one-deal",
+            "message": "Stake set to 9.",
+            "pending": false,
+            "result": {
+              "action_id": "",
+              "committed": false,
+              "diagnostic_detail": "",
+              "error_code": "",
+              "game_id": "blackjack",
+              "has_apply_receipt": false,
+              "has_request_identity": false,
+              "message": "June watches the shoe. Side bets: 21+3, Insurance. Blackjack pays 3:2; dealer hits soft 17; insurance opens on an ace.",
+              "ok": true
+            },
+            "rng_changed_from_before_deal": false,
+            "round_net_delta": null,
+            "wager_debited": 0
+          },
+          {
+            "bankroll_delta": -9,
+            "cash": 71,
+            "chips": 0,
+            "clock": 720,
+            "committed_request_count": 1,
+            "hands_played": 0,
+            "label": "one-deal-immediate",
+            "message": "Blackjack wager placed: $9 on the felt. Cash change: -9.",
+            "pending": false,
+            "result": {
+              "action_id": "blackjack_place_bet",
+              "committed": true,
+              "diagnostic_detail": "",
+              "error_code": "",
+              "game_id": "blackjack",
+              "has_apply_receipt": true,
+              "has_request_identity": true,
+              "message": "Blackjack wager placed: $9 on the felt. Cash change: -9.",
+              "ok": true
+            },
+            "rng_changed_from_before_deal": false,
+            "round_net_delta": null,
+            "wager_debited": 0
+          },
+          {
+            "bankroll_delta": -9,
+            "cash": 71,
+            "chips": 0,
+            "clock": 744,
+            "committed_request_count": 1,
+            "hands_played": 0,
+            "label": "prior-hand-finished-or-limit",
+            "message": "Blackjack wager placed: $9 on the felt. Cash change: -9.",
+            "pending": false,
+            "result": {
+              "action_id": "blackjack_place_bet",
+              "committed": true,
+              "diagnostic_detail": "",
+              "error_code": "",
+              "game_id": "blackjack",
+              "has_apply_receipt": true,
+              "has_request_identity": true,
+              "message": "Blackjack wager placed: $9 on the felt. Cash change: -9.",
+              "ok": true
+            },
+            "rng_changed_from_before_deal": false,
+            "round_net_delta": null,
+            "wager_debited": 0
+          }
+        ],
+        "retry_or_cancel_used": false,
+        "seed": "BTH061-ROULETTE-SEALED-PENDING-001-A"
+      },
+      "source_sha256": {
+        "foundation": "85fa91fd979c99c84e986ee915642c9030de93a5e318f4fc28627f5ac8b93ee6",
+        "host": "8b9711b7d220688286b2e0d2db097b33b50b7428b101485940a6681f45482241",
+        "roulette": "cb4de4f65f44eba538e7cf466a90d15485c1d95d4a9bbe1af1c7e5db5ab0451c",
+        "test": "4943671074549d12662615e81cf0c0ae878b30f63a8755ed22360e1959255845"
+      },
+      "local_log": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-1.log"
+    },
+    {
+      "label": "r08-roulette-after-bj-2",
+      "classification": "FIXTURE_LIMIT_BEFORE_ROULETTE_NOT_A_REPRODUCTION",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/roulette_sealed_pending_check.gd",
+        "--",
+        "--after-blackjack"
+      ],
+      "receipt": {
+        "exit_code": 1,
+        "timed_out": false,
+        "active_at_release": 0,
+        "started_utc": "2026-11-04T19:40:17.429445+00:00",
+        "finished_utc": "2026-11-04T19:40:50.152757+00:00",
+        "cpu_seconds": 15.640625
+      },
+      "checks": 26,
+      "failures": [
+        "One publicly enabled funded Deal must accept a new phase without another debit and expose dealt-hand progression"
+      ],
+      "completed": true,
+      "fidelity": "Independent explicitly staged trusted generated Riverboat initial cash80/min9 fixture; actual MainScene callbacks through full Foundation dispatch. Default immediate, --paced, or --after-blackjack (one natural hand in shipped three-game set, normal Leave, actual remaining wallet/RNG retained). Paced modes measure normal native host/canvas progression. One RED bet, SPIN arm, single native CONFIRM then stop. No Practice, normal-travel claim, Day3/Heat1 reconstruction, outcome filtering, original R08 state, wheel forcing, Retry/Cancel, Save/Continue or deployed acceptance.",
+      "facts": {
+        "boundaries": [],
+        "fixture": "Explicit staged generated Riverboat initial cash80/min9, shipped Blackjack/Roulette/VideoPoker game set; one natural Blackjack hand then paced Roulette with actual remaining wallet/RNG, no normal-travel claim",
+        "fixture_authority": {
+          "continuous_clock_enabled": true,
+          "errors": [],
+          "ok": true,
+          "publication_checked": 1,
+          "publication_generation": 1
+        },
+        "fixture_limit": "Single funded Deal failed its no-second-debit/accepted-phase contract; stop this setup path without further input",
+        "mode": "after-blackjack-frame-paced",
+        "original_state_used": false,
+        "outcome_selection": false,
+        "practice_used": false,
+        "prior_blackjack": [
+          {
+            "bankroll_delta": 0,
+            "cash": 80,
+            "chips": 0,
+            "clock": 720,
+            "committed_request_count": 0,
+            "hands_played": 0,
+            "label": "before-one-deal",
+            "message": "Stake set to 9.",
+            "pending": false,
+            "public_readiness": {
+              "can_deal": true,
+              "can_stand": false,
+              "deal_animation_active": false,
+              "deal_enabled": true,
+              "phase": "betting",
+              "public_player_hand_count": 0,
+              "ritual_phase": "wagering",
+              "session_wager_debited": 0,
+              "stand_enabled": false
+            },
+            "result": {
+              "action_id": "",
+              "committed": false,
+              "diagnostic_detail": "",
+              "error_code": "",
+              "game_id": "blackjack",
+              "has_apply_receipt": false,
+              "has_request_identity": false,
+              "message": "June watches the shoe. Side bets: 21+3, Insurance. Blackjack pays 3:2; dealer hits soft 17; insurance opens on an ace.",
+              "ok": true
+            },
+            "rng_changed_from_before_deal": false,
+            "round_net_delta": null,
+            "wager_debited": 0
+          },
+          {
+            "bankroll_delta": -9,
+            "cash": 71,
+            "chips": 0,
+            "clock": 720,
+            "committed_request_count": 1,
+            "hands_played": 0,
+            "label": "one-deal-immediate",
+            "message": "Blackjack wager placed: $9 on the felt. Cash change: -9.",
+            "pending": false,
+            "public_readiness": {
+              "can_deal": true,
+              "can_stand": false,
+              "deal_animation_active": false,
+              "deal_enabled": true,
+              "phase": "betting",
+              "public_player_hand_count": 0,
+              "ritual_phase": "wagering",
+              "session_wager_debited": 9,
+              "stand_enabled": false
+            },
+            "result": {
+              "action_id": "blackjack_place_bet",
+              "committed": true,
+              "diagnostic_detail": "",
+              "error_code": "",
+              "game_id": "blackjack",
+              "has_apply_receipt": true,
+              "has_request_identity": true,
+              "message": "Blackjack wager placed: $9 on the felt. Cash change: -9.",
+              "ok": true
+            },
+            "rng_changed_from_before_deal": false,
+            "round_net_delta": null,
+            "wager_debited": 0
+          },
+          {
+            "bankroll_delta": -9,
+            "cash": 71,
+            "chips": 0,
+            "clock": 720,
+            "committed_request_count": 1,
+            "hands_played": 0,
+            "label": "first-funded-public-readiness",
+            "message": "Blackjack wager placed: $9 on the felt. Cash change: -9.",
+            "pending": false,
+            "public_readiness": {
+              "can_deal": true,
+              "can_stand": false,
+              "deal_animation_active": false,
+              "deal_enabled": true,
+              "phase": "betting",
+              "public_player_hand_count": 0,
+              "ritual_phase": "wagering",
+              "session_wager_debited": 9,
+              "stand_enabled": false
+            },
+            "result": {
+              "action_id": "blackjack_place_bet",
+              "committed": true,
+              "diagnostic_detail": "",
+              "error_code": "",
+              "game_id": "blackjack",
+              "has_apply_receipt": true,
+              "has_request_identity": true,
+              "message": "Blackjack wager placed: $9 on the felt. Cash change: -9.",
+              "ok": true
+            },
+            "rng_changed_from_before_deal": false,
+            "round_net_delta": null,
+            "wager_debited": 0
+          },
+          {
+            "bankroll_delta": -9,
+            "cash": 71,
+            "chips": 0,
+            "clock": 720,
+            "committed_request_count": 1,
+            "hands_played": 0,
+            "label": "funded-deal-public-ready-before",
+            "message": "Blackjack wager placed: $9 on the felt. Cash change: -9.",
+            "pending": false,
+            "public_readiness": {
+              "can_deal": true,
+              "can_stand": false,
+              "deal_animation_active": false,
+              "deal_enabled": true,
+              "phase": "betting",
+              "public_player_hand_count": 0,
+              "ritual_phase": "wagering",
+              "session_wager_debited": 9,
+              "stand_enabled": false
+            },
+            "result": {
+              "action_id": "blackjack_place_bet",
+              "committed": true,
+              "diagnostic_detail": "",
+              "error_code": "",
+              "game_id": "blackjack",
+              "has_apply_receipt": true,
+              "has_request_identity": true,
+              "message": "Blackjack wager placed: $9 on the felt. Cash change: -9.",
+              "ok": true
+            },
+            "rng_changed_from_before_deal": false,
+            "round_net_delta": null,
+            "wager_debited": 0
+          },
+          {
+            "bankroll_delta": -9,
+            "cash": 71,
+            "chips": 0,
+            "clock": 720,
+            "committed_request_count": 1,
+            "hands_played": 0,
+            "label": "single-funded-deal-immediate",
+            "message": "Blackjack wager placed: $9 on the felt. Cash change: -9.",
+            "pending": false,
+            "public_readiness": {
+              "can_deal": true,
+              "can_stand": false,
+              "deal_animation_active": false,
+              "deal_enabled": true,
+              "phase": "betting",
+              "public_player_hand_count": 0,
+              "ritual_phase": "wagering",
+              "session_wager_debited": 9,
+              "stand_enabled": false
+            },
+            "result": {
+              "action_id": "blackjack_place_bet",
+              "committed": true,
+              "diagnostic_detail": "",
+              "error_code": "",
+              "game_id": "blackjack",
+              "has_apply_receipt": true,
+              "has_request_identity": true,
+              "message": "Blackjack wager placed: $9 on the felt. Cash change: -9.",
+              "ok": true
+            },
+            "rng_changed_from_before_deal": false,
+            "round_net_delta": null,
+            "wager_debited": 0
+          }
+        ],
+        "retry_or_cancel_used": false,
+        "seed": "BTH061-ROULETTE-SEALED-PENDING-001-A"
+      },
+      "source_sha256": {
+        "foundation": "85fa91fd979c99c84e986ee915642c9030de93a5e318f4fc28627f5ac8b93ee6",
+        "host": "8b9711b7d220688286b2e0d2db097b33b50b7428b101485940a6681f45482241",
+        "roulette": "cb4de4f65f44eba538e7cf466a90d15485c1d95d4a9bbe1af1c7e5db5ab0451c",
+        "test": "1caac0cf292aa3dffb815ac95c5098594915b2008a00fb2bac65c54e404e818e"
+      },
+      "local_log": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-2.log"
+    },
+    {
+      "label": "r08-roulette-web-prepare-1",
+      "classification": "PREPAID_NATIVE_SAVE_CONTINUE_QUALIFIED",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/roulette_sealed_pending_check.gd",
+        "--",
+        "--prepare-web"
+      ],
+      "receipt": {
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "started_utc": "2026-11-04T19:38:31.362788+00:00",
+        "finished_utc": "2026-11-04T19:39:05.275313+00:00",
+        "cpu_seconds": 16.203125
+      },
+      "checks": 36,
+      "failures": [],
+      "completed": true,
+      "fidelity": "New own explicitly staged generated Riverboat prepaid cash80/min9 floor with shipped three-game set. Official synchronous production-slot Save, own official companion saves, and native normal Continue proof only. Zero game inputs. Reports new private source paths/sizes/hashes for root staging; no asset export, fixture copy, old private fixture access, Web launch, f305 compatibility or deployed acceptance claim.",
+      "facts": {
+        "boundaries": [],
+        "fixture": "New own staged generated Riverboat cash80/min9 with shipped three-game set; prepaid floor only, no game input or normal-travel claim",
+        "fixture_authority": {
+          "continuous_clock_enabled": true,
+          "errors": [],
+          "ok": true,
+          "publication_checked": 1,
+          "publication_generation": 1
+        },
+        "mode": "prepare-web-prepaid-floor",
+        "original_state_used": false,
+        "outcome_selection": false,
+        "practice_used": false,
+        "preparation_limit": "Own new files remain in the native private root; no bundle copy, asset export, Web launch or f305 Continue claim. Root stages only these files after validating this job.",
+        "retry_or_cancel_used": false,
+        "seed": "BTH061-ROULETTE-SEALED-PENDING-001-A",
+        "web_fixture_preparation": {
+          "facts": {
+            "cash": 80,
+            "game_inputs": 0,
+            "generated_table_name": "Cyan Dolly",
+            "outside_minimum": 9,
+            "room_authority_valid": true,
+            "seed": "BTH061-ROULETTE-SEALED-PENDING-001-A",
+            "spin_count": 0
+          },
+          "native_continue_validated": true,
+          "game_inputs": 0,
+          "file_count": 5,
+          "total_bytes": 105069,
+          "limit": "Save/profile/authority bytes and source paths deliberately excluded from committed report; only new own fixture used."
+        }
+      },
+      "source_sha256": {
+        "foundation": "85fa91fd979c99c84e986ee915642c9030de93a5e318f4fc28627f5ac8b93ee6",
+        "host": "8b9711b7d220688286b2e0d2db097b33b50b7428b101485940a6681f45482241",
+        "roulette": "cb4de4f65f44eba538e7cf466a90d15485c1d95d4a9bbe1af1c7e5db5ab0451c",
+        "test": "1caac0cf292aa3dffb815ac95c5098594915b2008a00fb2bac65c54e404e818e"
+      },
+      "local_log": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-web-prepare-1.log"
+    },
+    {
+      "label": "r08-roulette-after-bj-corrected-1",
+      "classification": "NEGATIVE_REPRODUCTION_AFTER_BLACKJACK_CONFIRMED_ONCE",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/roulette_sealed_pending_check.gd",
+        "--",
+        "--after-blackjack"
+      ],
+      "receipt": {
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "started_utc": "2026-11-04T20:33:44.287551+00:00",
+        "finished_utc": "2026-11-04T20:34:27.833396+00:00",
+        "cpu_seconds": 20.59375
+      },
+      "checks": 43,
+      "failures": [],
+      "completed": true,
+      "fidelity": "Independent explicitly staged trusted generated Riverboat initial cash80/min9 fixture; actual MainScene callbacks through full Foundation dispatch. Default immediate, --paced, or --after-blackjack (one natural hand in shipped three-game set, normal Leave, actual remaining wallet/RNG retained). Paced modes measure normal native host/canvas progression. One RED bet, SPIN arm, single native CONFIRM then stop. No Practice, normal-travel claim, Day3/Heat1 reconstruction, outcome filtering, original R08 state, wheel forcing, Retry/Cancel, Save/Continue or deployed acceptance.",
+      "facts": {
+        "after_blackjack_floor": {
+          "authority_ok": true,
+          "automatic_terminal_settlement": false,
+          "cash": 71,
+          "chips": 0,
+          "clock": 724,
+          "deal_dispatches": 1,
+          "heat": 0,
+          "rng_unchanged_since_leave": true,
+          "stand_dispatches": 1,
+          "stand_used": true
+        },
+        "after_confirm_stake_ranges": {
+          "fresh_range": {
+            "base_max": 100,
+            "default": 9,
+            "economy_pressure_applied": false,
+            "economy_state": "stable",
+            "has_valid": true,
+            "max": 62,
+            "min": 9,
+            "recommended_max": 80
+          },
+          "raw_host_selected_stake": 9,
+          "rendered_has_valid": true,
+          "rendered_max": 62,
+          "rendered_min": 9,
+          "rendered_selected_stake": 9,
+          "resolver_range": {
+            "base_max": 100,
+            "default": 9,
+            "economy_pressure_applied": false,
+            "economy_state": "stable",
+            "has_valid": true,
+            "max": 62,
+            "min": 9,
+            "recommended_max": 80
+          }
+        },
+        "before_confirm_stake_ranges": {
+          "fresh_range": {
+            "base_max": 100,
+            "default": 9,
+            "economy_pressure_applied": false,
+            "economy_state": "stable",
+            "has_valid": true,
+            "max": 71,
+            "min": 9,
+            "recommended_max": 71
+          },
+          "raw_host_selected_stake": 9,
+          "rendered_has_valid": true,
+          "rendered_max": 71,
+          "rendered_min": 9,
+          "rendered_selected_stake": 9,
+          "resolver_range": {
+            "base_max": 100,
+            "default": 9,
+            "economy_pressure_applied": false,
+            "economy_state": "stable",
+            "has_valid": true,
+            "max": 71,
+            "min": 9,
+            "recommended_max": 71
+          }
+        },
+        "boundaries": [
+          {
+            "armed": false,
+            "bet_total": 9,
+            "blocking_modal": "",
+            "cash": 71,
+            "chips": 0,
+            "clock": 724,
+            "clock_tuple": {
+              "canvas_presentation_msec": 37247,
+              "canvas_simulation_msec": 37247,
+              "game_clock_minutes": 724,
+              "host_simulation_msec": 37406,
+              "input_time_msec": 37247,
+              "process_frame": 212,
+              "rendered_drunk_scaled_msec": 36834,
+              "rendered_presentation_msec": 36834,
+              "rendered_raw_msec": 36834,
+              "run_action_simulation_msec": 6000
+            },
+            "committed_request_count": 0,
+            "heat": 0,
+            "label": "one-red-bet",
+            "message": "$9 on RED.",
+            "pending": false,
+            "pending_action": "",
+            "pending_boundary_ordinal": -1,
+            "pending_stake": -1,
+            "result": {
+              "action_id": "",
+              "committed": false,
+              "diagnostic_detail": "",
+              "error_code": "",
+              "game_id": "roulette",
+              "has_apply_receipt": false,
+              "has_request_identity": false,
+              "message": "June palms the dolly beside the double-zero wheel. Inside minimum $9; outside minimum $9.",
+              "ok": true
+            },
+            "rng_unchanged_from_prebet": true,
+            "screen": "GAME",
+            "selected_action_id": "",
+            "simulation_msec": 6000,
+            "spin_count": 0
+          },
+          {
+            "armed": true,
+            "bet_total": 9,
+            "blocking_modal": "",
+            "cash": 71,
+            "chips": 0,
+            "clock": 725,
+            "clock_tuple": {
+              "canvas_presentation_msec": 37655,
+              "canvas_simulation_msec": 37655,
+              "game_clock_minutes": 725,
+              "host_simulation_msec": 38078,
+              "input_time_msec": 37655,
+              "process_frame": 251,
+              "rendered_drunk_scaled_msec": 36834,
+              "rendered_presentation_msec": 36834,
+              "rendered_raw_msec": 36834,
+              "run_action_simulation_msec": 6000
+            },
+            "committed_request_count": 0,
+            "heat": 0,
+            "label": "spin-arms",
+            "message": "Selected legal action: Spin.",
+            "pending": false,
+            "pending_action": "",
+            "pending_boundary_ordinal": -1,
+            "pending_stake": -1,
+            "result": {
+              "action_id": "",
+              "committed": false,
+              "diagnostic_detail": "",
+              "error_code": "",
+              "game_id": "roulette",
+              "has_apply_receipt": false,
+              "has_request_identity": false,
+              "message": "June palms the dolly beside the double-zero wheel. Inside minimum $9; outside minimum $9.",
+              "ok": true
+            },
+            "rng_unchanged_from_prebet": true,
+            "screen": "GAME",
+            "selected_action_id": "spin_roulette",
+            "simulation_msec": 6000,
+            "spin_count": 0
+          },
+          {
+            "armed": false,
+            "bet_total": 0,
+            "blocking_modal": "Choose a response before doing anything else.",
+            "cash": 80,
+            "chips": 0,
+            "clock": 726,
+            "clock_tuple": {
+              "canvas_presentation_msec": 40485,
+              "canvas_simulation_msec": 40485,
+              "game_clock_minutes": 726,
+              "host_simulation_msec": 40508,
+              "input_time_msec": 40485,
+              "process_frame": 340,
+              "rendered_drunk_scaled_msec": 40485,
+              "rendered_presentation_msec": 40485,
+              "rendered_raw_msec": 40485,
+              "run_action_simulation_msec": 9000
+            },
+            "committed_request_count": 1,
+            "heat": 0,
+            "label": "single-native-confirm-immediate",
+            "message": "Roulette lands 9 red. 1 winning bet. Bankroll +9. Cash change: +9.",
+            "pending": false,
+            "pending_action": "",
+            "pending_boundary_ordinal": -1,
+            "pending_stake": -1,
+            "result": {
+              "action_id": "spin_roulette",
+              "committed": true,
+              "diagnostic_detail": "",
+              "error_code": "",
+              "game_id": "roulette",
+              "has_apply_receipt": true,
+              "has_request_identity": true,
+              "message": "Roulette lands 9 red. 1 winning bet. Bankroll +9. Cash change: +9.",
+              "ok": true
+            },
+            "rng_unchanged_from_prebet": false,
+            "screen": "GAME",
+            "selected_action_id": "",
+            "simulation_msec": 9000,
+            "spin_count": 1
+          }
+        ],
+        "fixture": "Explicit staged generated Riverboat initial cash80/min9, shipped Blackjack/Roulette/VideoPoker game set; one natural Blackjack hand then paced Roulette with actual remaining wallet/RNG, no normal-travel claim",
+        "fixture_authority": {
+          "continuous_clock_enabled": true,
+          "errors": [],
+          "ok": true,
+          "publication_checked": 1,
+          "publication_generation": 1
+        },
+        "generated_table": {
+          "cash": 71,
+          "chips": 0,
+          "name": "Cyan Dolly",
+          "outside_minimum": 9,
+          "spin_count": 0
+        },
+        "last_result_changed_on_confirm": true,
+        "mode": "after-blackjack-frame-paced",
+        "original_state_used": false,
+        "outcome_selection": false,
+        "paced_intervals": [
+          {
+            "after": {
+              "canvas_presentation_msec": 37247,
+              "canvas_simulation_msec": 37247,
+              "game_clock_minutes": 724,
+              "host_simulation_msec": 37404,
+              "input_time_msec": 37247,
+              "process_frame": 212,
+              "rendered_drunk_scaled_msec": 36834,
+              "rendered_presentation_msec": 36834,
+              "rendered_raw_msec": 36834,
+              "run_action_simulation_msec": 6000
+            },
+            "before": {
+              "canvas_presentation_msec": 36834,
+              "canvas_simulation_msec": 36834,
+              "game_clock_minutes": 724,
+              "host_simulation_msec": 36848,
+              "input_time_msec": 36834,
+              "process_frame": 205,
+              "rendered_drunk_scaled_msec": 36834,
+              "rendered_presentation_msec": 36834,
+              "rendered_raw_msec": 36834,
+              "run_action_simulation_msec": 6000
+            },
+            "label": "chip-to-red",
+            "observed_progression": true,
+            "requested_timer_seconds": 0.4
+          },
+          {
+            "after": {
+              "canvas_presentation_msec": 37655,
+              "canvas_simulation_msec": 37655,
+              "game_clock_minutes": 725,
+              "host_simulation_msec": 38076,
+              "input_time_msec": 37655,
+              "process_frame": 251,
+              "rendered_drunk_scaled_msec": 36834,
+              "rendered_presentation_msec": 36834,
+              "rendered_raw_msec": 36834,
+              "run_action_simulation_msec": 6000
+            },
+            "before": {
+              "canvas_presentation_msec": 37247,
+              "canvas_simulation_msec": 37247,
+              "game_clock_minutes": 724,
+              "host_simulation_msec": 37406,
+              "input_time_msec": 37247,
+              "process_frame": 212,
+              "rendered_drunk_scaled_msec": 36834,
+              "rendered_presentation_msec": 36834,
+              "rendered_raw_msec": 36834,
+              "run_action_simulation_msec": 6000
+            },
+            "label": "red-to-spin",
+            "observed_progression": true,
+            "requested_timer_seconds": 0.4
+          },
+          {
+            "after": {
+              "canvas_presentation_msec": 38665,
+              "canvas_simulation_msec": 38665,
+              "game_clock_minutes": 726,
+              "host_simulation_msec": 39887,
+              "input_time_msec": 38665,
+              "process_frame": 340,
+              "rendered_drunk_scaled_msec": 36834,
+              "rendered_presentation_msec": 36834,
+              "rendered_raw_msec": 36834,
+              "run_action_simulation_msec": 6000
+            },
+            "before": {
+              "canvas_presentation_msec": 37655,
+              "canvas_simulation_msec": 37655,
+              "game_clock_minutes": 725,
+              "host_simulation_msec": 38078,
+              "input_time_msec": 37655,
+              "process_frame": 251,
+              "rendered_drunk_scaled_msec": 36834,
+              "rendered_presentation_msec": 36834,
+              "rendered_raw_msec": 36834,
+              "run_action_simulation_msec": 6000
+            },
+            "label": "armed-spin-to-confirm",
+            "observed_progression": true,
+            "requested_timer_seconds": 1.0
+          }
+        ],
+        "passive_game_minutes_before_confirm": 2,
+        "practice_used": false,
+        "preconfirm_clock": {
+          "canvas_presentation_msec": 38665,
+          "canvas_simulation_msec": 38665,
+          "game_clock_minutes": 726,
+          "host_simulation_msec": 39887,
+          "input_time_msec": 38665,
+          "process_frame": 340,
+          "rendered_drunk_scaled_msec": 36834,
+          "rendered_presentation_msec": 36834,
+          "rendered_raw_msec": 36834,
+          "run_action_simulation_msec": 6000
+        },
+        "prior_blackjack": [
+          {
+            "bankroll_delta": 0,
+            "cash": 80,
+            "chips": 0,
+            "clock": 720,
+            "committed_request_count": 0,
+            "hands_played": 0,
+            "label": "before-one-deal",
+            "message": "Stake set to 9.",
+            "pending": false,
+            "public_readiness": {
+              "can_deal": true,
+              "can_stand": false,
+              "deal_animation_active": false,
+              "deal_enabled": true,
+              "phase": "betting",
+              "public_player_hand_count": 0,
+              "ritual_phase": "wagering",
+              "session_wager_debited": 0,
+              "stand_enabled": false
+            },
+            "result": {
+              "action_id": "",
+              "committed": false,
+              "diagnostic_detail": "",
+              "error_code": "",
+              "game_id": "blackjack",
+              "has_apply_receipt": false,
+              "has_request_identity": false,
+              "message": "June watches the shoe. Side bets: 21+3, Insurance. Blackjack pays 3:2; dealer hits soft 17; insurance opens on an ace.",
+              "ok": true
+            },
+            "rng_changed_from_before_deal": false,
+            "round_net_delta": null,
+            "wager_debited": 0
+          },
+          {
+            "bankroll_delta": -9,
+            "cash": 71,
+            "chips": 0,
+            "clock": 720,
+            "committed_request_count": 1,
+            "hands_played": 0,
+            "label": "one-deal-immediate",
+            "message": "Blackjack wager placed: $9 on the felt. Cash change: -9.",
+            "pending": false,
+            "public_readiness": {
+              "can_deal": true,
+              "can_stand": false,
+              "deal_animation_active": false,
+              "deal_enabled": true,
+              "phase": "betting",
+              "public_player_hand_count": 0,
+              "ritual_phase": "wagering",
+              "session_wager_debited": 9,
+              "stand_enabled": false
+            },
+            "result": {
+              "action_id": "blackjack_place_bet",
+              "committed": true,
+              "diagnostic_detail": "",
+              "error_code": "",
+              "game_id": "blackjack",
+              "has_apply_receipt": true,
+              "has_request_identity": true,
+              "message": "Blackjack wager placed: $9 on the felt. Cash change: -9.",
+              "ok": true
+            },
+            "rng_changed_from_before_deal": false,
+            "round_net_delta": null,
+            "wager_debited": 0
+          },
+          {
+            "bankroll_delta": 0,
+            "cash": 71,
+            "chips": 0,
+            "clock": 723,
+            "committed_request_count": 2,
+            "hands_played": 1,
+            "label": "single-stand-immediate",
+            "message": "Dealer 20. H1 12 loses to 20 (-9). Main -9. Risky play adds heat. Cash change: +0.",
+            "pending": false,
+            "public_readiness": {
+              "can_deal": false,
+              "can_stand": false,
+              "deal_animation_active": false,
+              "deal_enabled": false,
+              "phase": "settling",
+              "public_player_hand_count": 1,
+              "ritual_phase": "dealer_procedure",
+              "session_wager_debited": 0,
+              "stand_enabled": false
+            },
+            "result": {
+              "action_id": "play_basic",
+              "committed": true,
+              "diagnostic_detail": "",
+              "error_code": "",
+              "game_id": "blackjack",
+              "has_apply_receipt": true,
+              "has_request_identity": true,
+              "message": "Dealer 20. H1 12 loses to 20 (-9). Main -9. Risky play adds heat. Cash change: +0.",
+              "ok": true
+            },
+            "rng_changed_from_before_deal": true,
+            "round_net_delta": null,
+            "wager_debited": 0
+          },
+          {
+            "bankroll_delta": 0,
+            "cash": 71,
+            "chips": 0,
+            "clock": 724,
+            "committed_request_count": 2,
+            "hands_played": 1,
+            "label": "prior-hand-finished-or-limit",
+            "message": "Dealer 20. H1 12 loses to 20 (-9). Main -9. Risky play adds heat. Cash change: +0.",
+            "pending": false,
+            "public_readiness": {
+              "can_deal": true,
+              "can_stand": false,
+              "deal_animation_active": false,
+              "deal_enabled": false,
+              "phase": "betting",
+              "public_player_hand_count": 0,
+              "ritual_phase": "settlement",
+              "session_wager_debited": 0,
+              "stand_enabled": false
+            },
+            "result": {
+              "action_id": "play_basic",
+              "committed": true,
+              "diagnostic_detail": "",
+              "error_code": "",
+              "game_id": "blackjack",
+              "has_apply_receipt": true,
+              "has_request_identity": true,
+              "message": "Dealer 20. H1 12 loses to 20 (-9). Main -9. Risky play adds heat. Cash change: +0.",
+              "ok": true
+            },
+            "rng_changed_from_before_deal": true,
+            "round_net_delta": null,
+            "wager_debited": 0
+          }
+        ],
+        "prior_blackjack_counts": [
+          {
+            "binding": {
+              "active_game_id": "blackjack",
+              "module_id": "blackjack",
+              "screen": "GAME",
+              "state_key": "blackjack"
+            },
+            "canvas_counts": {
+              "bankroll_wager_debited": false,
+              "blackjack_sit_out": false,
+              "cards_consumed": 0,
+              "dealer_card_count": 2,
+              "dealt": true,
+              "phase": "decision",
+              "player_card_counts": [
+                2
+              ],
+              "player_hand_count": 1,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 0
+            },
+            "cash": 71,
+            "chips": 0,
+            "clocks": {
+              "canvas_presentation_msec": 31128,
+              "canvas_simulation_msec": 31106,
+              "game_clock_minutes": 720,
+              "host_simulation_msec": 31455,
+              "input_time_msec": 31106,
+              "process_frame": 6,
+              "rendered_drunk_scaled_msec": 30864,
+              "rendered_presentation_msec": 31000,
+              "rendered_raw_msec": 30978,
+              "run_action_simulation_msec": 3000
+            },
+            "committed_request_count": 1,
+            "deferred_refresh": {
+              "blocked_input": 0,
+              "executed": 1,
+              "generation": 2,
+              "identity_checked": false,
+              "identity_current": false,
+              "pending": false,
+              "scheduled": 1,
+              "stale": 0
+            },
+            "label": "prior-hand-first-deferred-clear",
+            "last_game_result_ui": {
+              "bankroll_wager_debited": true,
+              "blackjack_sit_out": false,
+              "cards_consumed": 8,
+              "dealer_card_count": 2,
+              "dealt": true,
+              "phase": "",
+              "player_card_counts": [
+                2
+              ],
+              "player_hand_count": 1,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 9
+            },
+            "ledger_session": {
+              "bankroll_wager_debited": true,
+              "blackjack_sit_out": false,
+              "cards_consumed": 8,
+              "dealer_card_count": 2,
+              "dealt": true,
+              "phase": "",
+              "player_card_counts": [
+                2
+              ],
+              "player_hand_count": 1,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 9
+            },
+            "modal_message": "",
+            "pending_delivery": false,
+            "process_frame": 6,
+            "processing": {
+              "canvas": true,
+              "canvas_visible": true,
+              "host": true,
+              "lifecycle": {
+                "application_paused": false,
+                "environment_canvas_paused": false,
+                "game_canvas_paused": false,
+                "game_timed_feedback_paused": false,
+                "pause_owners": [],
+                "simulation_paused": false
+              },
+              "tree_paused": false
+            },
+            "public_readiness": {
+              "can_deal": false,
+              "can_stand": true,
+              "deal_animation_active": true,
+              "deal_enabled": false,
+              "phase": "decision",
+              "ritual_phase": "initial_deal",
+              "stand_enabled": false
+            },
+            "result": {
+              "action_id": "blackjack_place_bet",
+              "committed": true,
+              "ok": true
+            }
+          },
+          {
+            "binding": {
+              "active_game_id": "blackjack",
+              "module_id": "blackjack",
+              "screen": "GAME",
+              "state_key": "blackjack"
+            },
+            "canvas_counts": {
+              "bankroll_wager_debited": false,
+              "blackjack_sit_out": false,
+              "cards_consumed": 0,
+              "dealer_card_count": 2,
+              "dealt": true,
+              "phase": "decision",
+              "player_card_counts": [
+                2
+              ],
+              "player_hand_count": 1,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 0
+            },
+            "cash": 71,
+            "chips": 0,
+            "clocks": {
+              "canvas_presentation_msec": 31618,
+              "canvas_simulation_msec": 31596,
+              "game_clock_minutes": 721,
+              "host_simulation_msec": 32056,
+              "input_time_msec": 31596,
+              "process_frame": 36,
+              "rendered_drunk_scaled_msec": 30864,
+              "rendered_presentation_msec": 31000,
+              "rendered_raw_msec": 30978,
+              "run_action_simulation_msec": 3000
+            },
+            "committed_request_count": 1,
+            "deferred_refresh": {
+              "blocked_input": 0,
+              "executed": 1,
+              "generation": 2,
+              "identity_checked": false,
+              "identity_current": false,
+              "pending": false,
+              "scheduled": 1,
+              "stale": 0
+            },
+            "label": "prior-hand-after-one-second",
+            "last_game_result_ui": {
+              "bankroll_wager_debited": true,
+              "blackjack_sit_out": false,
+              "cards_consumed": 8,
+              "dealer_card_count": 2,
+              "dealt": true,
+              "phase": "",
+              "player_card_counts": [
+                2
+              ],
+              "player_hand_count": 1,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 9
+            },
+            "ledger_session": {
+              "bankroll_wager_debited": true,
+              "blackjack_sit_out": false,
+              "cards_consumed": 8,
+              "dealer_card_count": 2,
+              "dealt": true,
+              "phase": "",
+              "player_card_counts": [
+                2
+              ],
+              "player_hand_count": 1,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 9
+            },
+            "modal_message": "",
+            "pending_delivery": false,
+            "process_frame": 36,
+            "processing": {
+              "canvas": true,
+              "canvas_visible": true,
+              "host": true,
+              "lifecycle": {
+                "application_paused": false,
+                "environment_canvas_paused": false,
+                "game_canvas_paused": false,
+                "game_timed_feedback_paused": false,
+                "pause_owners": [],
+                "simulation_paused": false
+              },
+              "tree_paused": false
+            },
+            "public_readiness": {
+              "can_deal": false,
+              "can_stand": true,
+              "deal_animation_active": true,
+              "deal_enabled": false,
+              "phase": "decision",
+              "ritual_phase": "initial_deal",
+              "stand_enabled": false
+            },
+            "result": {
+              "action_id": "blackjack_place_bet",
+              "committed": true,
+              "ok": true
+            }
+          },
+          {
+            "binding": {
+              "active_game_id": "blackjack",
+              "module_id": "blackjack",
+              "screen": "GAME",
+              "state_key": "blackjack"
+            },
+            "canvas_counts": {
+              "bankroll_wager_debited": false,
+              "blackjack_sit_out": false,
+              "cards_consumed": 0,
+              "dealer_card_count": 2,
+              "dealt": true,
+              "phase": "settling",
+              "player_card_counts": [
+                2
+              ],
+              "player_hand_count": 1,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 0
+            },
+            "cash": 71,
+            "chips": 0,
+            "clocks": {
+              "canvas_presentation_msec": 35147,
+              "canvas_simulation_msec": 35147,
+              "game_clock_minutes": 723,
+              "host_simulation_msec": 35655,
+              "input_time_msec": 35147,
+              "process_frame": 202,
+              "rendered_drunk_scaled_msec": 35147,
+              "rendered_presentation_msec": 35147,
+              "rendered_raw_msec": 35147,
+              "run_action_simulation_msec": 6000
+            },
+            "committed_request_count": 2,
+            "deferred_refresh": {
+              "blocked_input": 0,
+              "executed": 1,
+              "generation": 3,
+              "identity_checked": true,
+              "identity_current": true,
+              "pending": true,
+              "scheduled": 2,
+              "stale": 0
+            },
+            "label": "prior-hand-single-stand-immediate",
+            "last_game_result_ui": {
+              "bankroll_wager_debited": false,
+              "blackjack_sit_out": false,
+              "cards_consumed": 0,
+              "dealer_card_count": 0,
+              "dealt": false,
+              "phase": "",
+              "player_card_counts": [],
+              "player_hand_count": 0,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 0
+            },
+            "ledger_session": {
+              "bankroll_wager_debited": false,
+              "blackjack_sit_out": false,
+              "cards_consumed": 0,
+              "dealer_card_count": 0,
+              "dealt": false,
+              "phase": "",
+              "player_card_counts": [],
+              "player_hand_count": 0,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 0
+            },
+            "modal_message": "",
+            "pending_delivery": false,
+            "process_frame": 202,
+            "processing": {
+              "canvas": true,
+              "canvas_visible": true,
+              "host": true,
+              "lifecycle": {
+                "application_paused": false,
+                "environment_canvas_paused": false,
+                "game_canvas_paused": false,
+                "game_timed_feedback_paused": false,
+                "pause_owners": [],
+                "simulation_paused": false
+              },
+              "tree_paused": false
+            },
+            "public_readiness": {
+              "can_deal": false,
+              "can_stand": false,
+              "deal_animation_active": false,
+              "deal_enabled": false,
+              "phase": "settling",
+              "ritual_phase": "dealer_procedure",
+              "stand_enabled": false
+            },
+            "result": {
+              "action_id": "play_basic",
+              "committed": true,
+              "ok": true
+            }
+          },
+          {
+            "binding": {
+              "active_game_id": "blackjack",
+              "module_id": "blackjack",
+              "screen": "GAME",
+              "state_key": "blackjack"
+            },
+            "canvas_counts": {
+              "bankroll_wager_debited": false,
+              "blackjack_sit_out": false,
+              "cards_consumed": 0,
+              "dealer_card_count": 2,
+              "dealt": false,
+              "phase": "betting",
+              "player_card_counts": [],
+              "player_hand_count": 0,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 0
+            },
+            "cash": 71,
+            "chips": 0,
+            "clocks": {
+              "canvas_presentation_msec": 36360,
+              "canvas_simulation_msec": 36360,
+              "game_clock_minutes": 724,
+              "host_simulation_msec": 36239,
+              "input_time_msec": 36360,
+              "process_frame": 204,
+              "rendered_drunk_scaled_msec": 35783,
+              "rendered_presentation_msec": 36220,
+              "rendered_raw_msec": 36220,
+              "run_action_simulation_msec": 6000
+            },
+            "committed_request_count": 2,
+            "deferred_refresh": {
+              "blocked_input": 0,
+              "executed": 2,
+              "generation": 3,
+              "identity_checked": false,
+              "identity_current": false,
+              "pending": false,
+              "scheduled": 2,
+              "stale": 0
+            },
+            "label": "prior-hand-after-five-seconds",
+            "last_game_result_ui": {
+              "bankroll_wager_debited": false,
+              "blackjack_sit_out": false,
+              "cards_consumed": 0,
+              "dealer_card_count": 0,
+              "dealt": false,
+              "phase": "",
+              "player_card_counts": [],
+              "player_hand_count": 0,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 0
+            },
+            "ledger_session": {
+              "bankroll_wager_debited": false,
+              "blackjack_sit_out": false,
+              "cards_consumed": 0,
+              "dealer_card_count": 0,
+              "dealt": false,
+              "phase": "",
+              "player_card_counts": [],
+              "player_hand_count": 0,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 0
+            },
+            "modal_message": "",
+            "pending_delivery": false,
+            "process_frame": 204,
+            "processing": {
+              "canvas": true,
+              "canvas_visible": true,
+              "host": true,
+              "lifecycle": {
+                "application_paused": false,
+                "environment_canvas_paused": false,
+                "game_canvas_paused": false,
+                "game_timed_feedback_paused": false,
+                "pause_owners": [],
+                "simulation_paused": false
+              },
+              "tree_paused": false
+            },
+            "public_readiness": {
+              "can_deal": true,
+              "can_stand": false,
+              "deal_animation_active": false,
+              "deal_enabled": false,
+              "phase": "betting",
+              "ritual_phase": "settlement",
+              "stand_enabled": false
+            },
+            "result": {
+              "action_id": "play_basic",
+              "committed": true,
+              "ok": true
+            }
+          },
+          {
+            "binding": {
+              "active_game_id": "blackjack",
+              "module_id": "blackjack",
+              "screen": "GAME",
+              "state_key": "blackjack"
+            },
+            "canvas_counts": {
+              "bankroll_wager_debited": false,
+              "blackjack_sit_out": false,
+              "cards_consumed": 0,
+              "dealer_card_count": 2,
+              "dealt": false,
+              "phase": "betting",
+              "player_card_counts": [],
+              "player_hand_count": 0,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 0
+            },
+            "cash": 71,
+            "chips": 0,
+            "clocks": {
+              "canvas_presentation_msec": 36360,
+              "canvas_simulation_msec": 36360,
+              "game_clock_minutes": 724,
+              "host_simulation_msec": 36240,
+              "input_time_msec": 36360,
+              "process_frame": 204,
+              "rendered_drunk_scaled_msec": 35783,
+              "rendered_presentation_msec": 36220,
+              "rendered_raw_msec": 36220,
+              "run_action_simulation_msec": 6000
+            },
+            "committed_request_count": 2,
+            "deferred_refresh": {
+              "blocked_input": 0,
+              "executed": 2,
+              "generation": 3,
+              "identity_checked": false,
+              "identity_current": false,
+              "pending": false,
+              "scheduled": 2,
+              "stale": 0
+            },
+            "label": "prior-hand-settled",
+            "last_game_result_ui": {
+              "bankroll_wager_debited": false,
+              "blackjack_sit_out": false,
+              "cards_consumed": 0,
+              "dealer_card_count": 0,
+              "dealt": false,
+              "phase": "",
+              "player_card_counts": [],
+              "player_hand_count": 0,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 0
+            },
+            "ledger_session": {
+              "bankroll_wager_debited": false,
+              "blackjack_sit_out": false,
+              "cards_consumed": 0,
+              "dealer_card_count": 0,
+              "dealt": false,
+              "phase": "",
+              "player_card_counts": [],
+              "player_hand_count": 0,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 0
+            },
+            "modal_message": "",
+            "pending_delivery": false,
+            "process_frame": 204,
+            "processing": {
+              "canvas": true,
+              "canvas_visible": true,
+              "host": true,
+              "lifecycle": {
+                "application_paused": false,
+                "environment_canvas_paused": false,
+                "game_canvas_paused": false,
+                "game_timed_feedback_paused": false,
+                "pause_owners": [],
+                "simulation_paused": false
+              },
+              "tree_paused": false
+            },
+            "public_readiness": {
+              "can_deal": true,
+              "can_stand": false,
+              "deal_animation_active": false,
+              "deal_enabled": false,
+              "phase": "betting",
+              "ritual_phase": "settlement",
+              "stand_enabled": false
+            },
+            "result": {
+              "action_id": "play_basic",
+              "committed": true,
+              "ok": true
+            }
+          }
+        ],
+        "prior_blackjack_dispatch_counts": {
+          "deal": 1,
+          "stand": 1
+        },
+        "prior_blackjack_single_stand": {
+          "all_hands_complete_after": false,
+          "all_hands_complete_before": false,
+          "canonical_phase_progressed": false,
+          "fresh_committed_result": true,
+          "pending_after": false,
+          "result_changed": true,
+          "returned_rejection": false
+        },
+        "retry_or_cancel_used": false,
+        "roulette_initial_cash": 71,
+        "seed": "BTH061-ROULETTE-SEALED-PENDING-001-A"
+      },
+      "source_sha256": {
+        "foundation": "85fa91fd979c99c84e986ee915642c9030de93a5e318f4fc28627f5ac8b93ee6",
+        "host": "8b9711b7d220688286b2e0d2db097b33b50b7428b101485940a6681f45482241",
+        "roulette": "cb4de4f65f44eba538e7cf466a90d15485c1d95d4a9bbe1af1c7e5db5ab0451c",
+        "test": "e2a4cba2d1b6b252dfea2748bb16a45b19b6ccf4b664674920204244b8a4f340"
+      },
+      "local_log": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-corrected-1.log"
+    },
+    {
+      "label": "r08-roulette-observe-bj-1",
+      "classification": "COUNT_ONLY_PRIOR_BLACKJACK_SETUP_OBSERVATION",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/roulette_sealed_pending_check.gd",
+        "--",
+        "--observe-blackjack"
+      ],
+      "receipt": {
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "started_utc": "2026-11-04T20:29:13.673809+00:00",
+        "finished_utc": "2026-11-04T20:29:45.023138+00:00",
+        "cpu_seconds": 15.125
+      },
+      "checks": 28,
+      "failures": [],
+      "completed": true,
+      "fidelity": "New own staged generated three-game Riverboat fixture. --observe-blackjack enters normally, selects9, dispatches one declared Deal, then records only hand/card counts, wager flags, public readiness and host/presentation guards before/immediately/after1/3/8 real process frames. No further Deal/Stand/gameplay, forced refresh, raw card/shoe/RNG/key data, prior-Blackjack/Roulette acceptance, original state or product change. Earlier diagnostic modes and their limits remain separate.",
+      "facts": {
+        "blackjack_count_observation": [
+          {
+            "binding": {
+              "active_game_id": "blackjack",
+              "module_id": "blackjack",
+              "screen": "GAME",
+              "state_key": "blackjack"
+            },
+            "canvas_counts": {
+              "bankroll_wager_debited": false,
+              "blackjack_sit_out": false,
+              "cards_consumed": 0,
+              "dealer_card_count": 0,
+              "dealt": false,
+              "phase": "betting",
+              "player_card_counts": [],
+              "player_hand_count": 0,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 0
+            },
+            "cash": 80,
+            "chips": 0,
+            "clocks": {
+              "canvas_presentation_msec": 27300,
+              "canvas_simulation_msec": 27300,
+              "game_clock_minutes": 720,
+              "host_simulation_msec": 27319,
+              "input_time_msec": 27300,
+              "process_frame": 4,
+              "rendered_drunk_scaled_msec": 27300,
+              "rendered_presentation_msec": 27300,
+              "rendered_raw_msec": 27300,
+              "run_action_simulation_msec": 0
+            },
+            "committed_request_count": 0,
+            "deferred_refresh": {
+              "blocked_input": 0,
+              "executed": 0,
+              "generation": 1,
+              "identity_checked": false,
+              "identity_current": false,
+              "pending": false,
+              "scheduled": 0,
+              "stale": 0
+            },
+            "label": "before-single-deal",
+            "last_game_result_ui": {
+              "bankroll_wager_debited": false,
+              "blackjack_sit_out": false,
+              "cards_consumed": 0,
+              "dealer_card_count": 0,
+              "dealt": false,
+              "phase": "",
+              "player_card_counts": [],
+              "player_hand_count": 0,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 0
+            },
+            "ledger_session": {
+              "bankroll_wager_debited": false,
+              "blackjack_sit_out": false,
+              "cards_consumed": 0,
+              "dealer_card_count": 0,
+              "dealt": false,
+              "phase": "",
+              "player_card_counts": [],
+              "player_hand_count": 0,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 0
+            },
+            "modal_message": "",
+            "pending_delivery": false,
+            "process_frame": 4,
+            "processing": {
+              "canvas": true,
+              "canvas_visible": true,
+              "host": true,
+              "lifecycle": {
+                "application_paused": false,
+                "environment_canvas_paused": false,
+                "game_canvas_paused": false,
+                "game_timed_feedback_paused": false,
+                "pause_owners": [],
+                "simulation_paused": false
+              },
+              "tree_paused": false
+            },
+            "public_readiness": {
+              "can_deal": true,
+              "can_stand": false,
+              "deal_animation_active": false,
+              "deal_enabled": true,
+              "phase": "betting",
+              "ritual_phase": "wagering",
+              "stand_enabled": false
+            },
+            "result": {
+              "action_id": "",
+              "committed": false,
+              "ok": true
+            }
+          },
+          {
+            "binding": {
+              "active_game_id": "blackjack",
+              "module_id": "blackjack",
+              "screen": "GAME",
+              "state_key": "blackjack"
+            },
+            "canvas_counts": {
+              "bankroll_wager_debited": false,
+              "blackjack_sit_out": false,
+              "cards_consumed": 0,
+              "dealer_card_count": 0,
+              "dealt": false,
+              "phase": "betting",
+              "player_card_counts": [],
+              "player_hand_count": 0,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 0
+            },
+            "cash": 71,
+            "chips": 0,
+            "clocks": {
+              "canvas_presentation_msec": 27300,
+              "canvas_simulation_msec": 27300,
+              "game_clock_minutes": 720,
+              "host_simulation_msec": 27365,
+              "input_time_msec": 27300,
+              "process_frame": 4,
+              "rendered_drunk_scaled_msec": 27300,
+              "rendered_presentation_msec": 27300,
+              "rendered_raw_msec": 27300,
+              "run_action_simulation_msec": 3000
+            },
+            "committed_request_count": 1,
+            "deferred_refresh": {
+              "blocked_input": 0,
+              "executed": 0,
+              "generation": 2,
+              "identity_checked": true,
+              "identity_current": true,
+              "pending": true,
+              "scheduled": 1,
+              "stale": 0
+            },
+            "label": "single-deal-immediate",
+            "last_game_result_ui": {
+              "bankroll_wager_debited": true,
+              "blackjack_sit_out": false,
+              "cards_consumed": 8,
+              "dealer_card_count": 2,
+              "dealt": true,
+              "phase": "",
+              "player_card_counts": [
+                2
+              ],
+              "player_hand_count": 1,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 9
+            },
+            "ledger_session": {
+              "bankroll_wager_debited": true,
+              "blackjack_sit_out": false,
+              "cards_consumed": 8,
+              "dealer_card_count": 2,
+              "dealt": true,
+              "phase": "",
+              "player_card_counts": [
+                2
+              ],
+              "player_hand_count": 1,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 9
+            },
+            "modal_message": "",
+            "pending_delivery": false,
+            "process_frame": 4,
+            "processing": {
+              "canvas": true,
+              "canvas_visible": true,
+              "host": true,
+              "lifecycle": {
+                "application_paused": false,
+                "environment_canvas_paused": false,
+                "game_canvas_paused": false,
+                "game_timed_feedback_paused": false,
+                "pause_owners": [],
+                "simulation_paused": false
+              },
+              "tree_paused": false
+            },
+            "public_readiness": {
+              "can_deal": true,
+              "can_stand": false,
+              "deal_animation_active": false,
+              "deal_enabled": true,
+              "phase": "betting",
+              "ritual_phase": "wagering",
+              "stand_enabled": false
+            },
+            "result": {
+              "action_id": "blackjack_place_bet",
+              "committed": true,
+              "ok": true
+            }
+          },
+          {
+            "binding": {
+              "active_game_id": "blackjack",
+              "module_id": "blackjack",
+              "screen": "GAME",
+              "state_key": "blackjack"
+            },
+            "canvas_counts": {
+              "bankroll_wager_debited": false,
+              "blackjack_sit_out": false,
+              "cards_consumed": 0,
+              "dealer_card_count": 0,
+              "dealt": false,
+              "phase": "betting",
+              "player_card_counts": [],
+              "player_hand_count": 0,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 0
+            },
+            "cash": 71,
+            "chips": 0,
+            "clocks": {
+              "canvas_presentation_msec": 27428,
+              "canvas_simulation_msec": 27428,
+              "game_clock_minutes": 720,
+              "host_simulation_msec": 27404,
+              "input_time_msec": 27428,
+              "process_frame": 5,
+              "rendered_drunk_scaled_msec": 27300,
+              "rendered_presentation_msec": 27300,
+              "rendered_raw_msec": 27300,
+              "run_action_simulation_msec": 3000
+            },
+            "committed_request_count": 1,
+            "deferred_refresh": {
+              "blocked_input": 0,
+              "executed": 0,
+              "generation": 2,
+              "identity_checked": true,
+              "identity_current": true,
+              "pending": true,
+              "scheduled": 1,
+              "stale": 0
+            },
+            "label": "after-1-real-frames",
+            "last_game_result_ui": {
+              "bankroll_wager_debited": true,
+              "blackjack_sit_out": false,
+              "cards_consumed": 8,
+              "dealer_card_count": 2,
+              "dealt": true,
+              "phase": "",
+              "player_card_counts": [
+                2
+              ],
+              "player_hand_count": 1,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 9
+            },
+            "ledger_session": {
+              "bankroll_wager_debited": true,
+              "blackjack_sit_out": false,
+              "cards_consumed": 8,
+              "dealer_card_count": 2,
+              "dealt": true,
+              "phase": "",
+              "player_card_counts": [
+                2
+              ],
+              "player_hand_count": 1,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 9
+            },
+            "modal_message": "",
+            "pending_delivery": false,
+            "process_frame": 5,
+            "processing": {
+              "canvas": true,
+              "canvas_visible": true,
+              "host": true,
+              "lifecycle": {
+                "application_paused": false,
+                "environment_canvas_paused": false,
+                "game_canvas_paused": false,
+                "game_timed_feedback_paused": false,
+                "pause_owners": [],
+                "simulation_paused": false
+              },
+              "tree_paused": false
+            },
+            "public_readiness": {
+              "can_deal": true,
+              "can_stand": false,
+              "deal_animation_active": false,
+              "deal_enabled": true,
+              "phase": "betting",
+              "ritual_phase": "wagering",
+              "stand_enabled": false
+            },
+            "result": {
+              "action_id": "blackjack_place_bet",
+              "committed": true,
+              "ok": true
+            }
+          },
+          {
+            "binding": {
+              "active_game_id": "blackjack",
+              "module_id": "blackjack",
+              "screen": "GAME",
+              "state_key": "blackjack"
+            },
+            "canvas_counts": {
+              "bankroll_wager_debited": false,
+              "blackjack_sit_out": false,
+              "cards_consumed": 0,
+              "dealer_card_count": 2,
+              "dealt": true,
+              "phase": "decision",
+              "player_card_counts": [
+                2
+              ],
+              "player_hand_count": 1,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 0
+            },
+            "cash": 71,
+            "chips": 0,
+            "clocks": {
+              "canvas_presentation_msec": 27582,
+              "canvas_simulation_msec": 27561,
+              "game_clock_minutes": 720,
+              "host_simulation_msec": 27424,
+              "input_time_msec": 27561,
+              "process_frame": 7,
+              "rendered_drunk_scaled_msec": 27300,
+              "rendered_presentation_msec": 27428,
+              "rendered_raw_msec": 27407,
+              "run_action_simulation_msec": 3000
+            },
+            "committed_request_count": 1,
+            "deferred_refresh": {
+              "blocked_input": 0,
+              "executed": 1,
+              "generation": 2,
+              "identity_checked": false,
+              "identity_current": false,
+              "pending": false,
+              "scheduled": 1,
+              "stale": 0
+            },
+            "label": "after-3-real-frames",
+            "last_game_result_ui": {
+              "bankroll_wager_debited": true,
+              "blackjack_sit_out": false,
+              "cards_consumed": 8,
+              "dealer_card_count": 2,
+              "dealt": true,
+              "phase": "",
+              "player_card_counts": [
+                2
+              ],
+              "player_hand_count": 1,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 9
+            },
+            "ledger_session": {
+              "bankroll_wager_debited": true,
+              "blackjack_sit_out": false,
+              "cards_consumed": 8,
+              "dealer_card_count": 2,
+              "dealt": true,
+              "phase": "",
+              "player_card_counts": [
+                2
+              ],
+              "player_hand_count": 1,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 9
+            },
+            "modal_message": "",
+            "pending_delivery": false,
+            "process_frame": 7,
+            "processing": {
+              "canvas": true,
+              "canvas_visible": true,
+              "host": true,
+              "lifecycle": {
+                "application_paused": false,
+                "environment_canvas_paused": false,
+                "game_canvas_paused": false,
+                "game_timed_feedback_paused": false,
+                "pause_owners": [],
+                "simulation_paused": false
+              },
+              "tree_paused": false
+            },
+            "public_readiness": {
+              "can_deal": false,
+              "can_stand": true,
+              "deal_animation_active": true,
+              "deal_enabled": false,
+              "phase": "decision",
+              "ritual_phase": "initial_deal",
+              "stand_enabled": false
+            },
+            "result": {
+              "action_id": "blackjack_place_bet",
+              "committed": true,
+              "ok": true
+            }
+          },
+          {
+            "binding": {
+              "active_game_id": "blackjack",
+              "module_id": "blackjack",
+              "screen": "GAME",
+              "state_key": "blackjack"
+            },
+            "canvas_counts": {
+              "bankroll_wager_debited": false,
+              "blackjack_sit_out": false,
+              "cards_consumed": 0,
+              "dealer_card_count": 2,
+              "dealt": true,
+              "phase": "decision",
+              "player_card_counts": [
+                2
+              ],
+              "player_hand_count": 1,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 0
+            },
+            "cash": 71,
+            "chips": 0,
+            "clocks": {
+              "canvas_presentation_msec": 27761,
+              "canvas_simulation_msec": 27740,
+              "game_clock_minutes": 720,
+              "host_simulation_msec": 27899,
+              "input_time_msec": 27740,
+              "process_frame": 12,
+              "rendered_drunk_scaled_msec": 27300,
+              "rendered_presentation_msec": 27428,
+              "rendered_raw_msec": 27407,
+              "run_action_simulation_msec": 3000
+            },
+            "committed_request_count": 1,
+            "deferred_refresh": {
+              "blocked_input": 0,
+              "executed": 1,
+              "generation": 2,
+              "identity_checked": false,
+              "identity_current": false,
+              "pending": false,
+              "scheduled": 1,
+              "stale": 0
+            },
+            "label": "after-8-real-frames",
+            "last_game_result_ui": {
+              "bankroll_wager_debited": true,
+              "blackjack_sit_out": false,
+              "cards_consumed": 8,
+              "dealer_card_count": 2,
+              "dealt": true,
+              "phase": "",
+              "player_card_counts": [
+                2
+              ],
+              "player_hand_count": 1,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 9
+            },
+            "ledger_session": {
+              "bankroll_wager_debited": true,
+              "blackjack_sit_out": false,
+              "cards_consumed": 8,
+              "dealer_card_count": 2,
+              "dealt": true,
+              "phase": "",
+              "player_card_counts": [
+                2
+              ],
+              "player_hand_count": 1,
+              "round_terminal": false,
+              "settlement_pending": false,
+              "wager_debited": 9
+            },
+            "modal_message": "",
+            "pending_delivery": false,
+            "process_frame": 12,
+            "processing": {
+              "canvas": true,
+              "canvas_visible": true,
+              "host": true,
+              "lifecycle": {
+                "application_paused": false,
+                "environment_canvas_paused": false,
+                "game_canvas_paused": false,
+                "game_timed_feedback_paused": false,
+                "pause_owners": [],
+                "simulation_paused": false
+              },
+              "tree_paused": false
+            },
+            "public_readiness": {
+              "can_deal": false,
+              "can_stand": true,
+              "deal_animation_active": true,
+              "deal_enabled": false,
+              "phase": "decision",
+              "ritual_phase": "initial_deal",
+              "stand_enabled": false
+            },
+            "result": {
+              "action_id": "blackjack_place_bet",
+              "committed": true,
+              "ok": true
+            }
+          }
+        ],
+        "blackjack_observation_dispatch": {
+          "action": "blackjack_deal",
+          "confirm_requested": false,
+          "index": 0
+        },
+        "blackjack_observation_scope": "One declared native Deal only; then ordinary process frames without Deal, Stand, other game input or forced refresh. Counts and guards are diagnostic evidence, not prior-Blackjack/Roulette acceptance.",
+        "boundaries": [],
+        "fixture": "New own staged generated Riverboat cash80/min9 with shipped three-game set; one declared Blackjack Deal then count-only observation, no Stand or Roulette input",
+        "fixture_authority": {
+          "continuous_clock_enabled": true,
+          "errors": [],
+          "ok": true,
+          "publication_checked": 1,
+          "publication_generation": 1
+        },
+        "mode": "observe-blackjack-counts",
+        "original_state_used": false,
+        "outcome_selection": false,
+        "practice_used": false,
+        "retry_or_cancel_used": false,
+        "seed": "BTH061-ROULETTE-SEALED-PENDING-001-A"
+      },
+      "source_sha256": {
+        "foundation": "85fa91fd979c99c84e986ee915642c9030de93a5e318f4fc28627f5ac8b93ee6",
+        "host": "8b9711b7d220688286b2e0d2db097b33b50b7428b101485940a6681f45482241",
+        "roulette": "cb4de4f65f44eba538e7cf466a90d15485c1d95d4a9bbe1af1c7e5db5ab0451c",
+        "test": "9ded0649c8a4bc2511d3f5e3925883a71bca5dc1b441179af11b5b4103899328"
+      },
+      "local_log": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-observe-bj-1.log"
+    }
+  ],
+  "web": [
+    {
+      "summary": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-acceptance.json",
+      "summary_sha256": "6897b1b359e919acacb974e637b5ac2aa4dd1acc9740874b09624d1c9313105f",
+      "data": {
+        "task_id": "BTH061-ROULETTE-SEALED-PENDING-001",
+        "result": "INDEPENDENT_WEB_F305_SINGLE_CONFIRM_RESOLVED",
+        "original_r08_status": "Open; original pending action untouched and cause unattributed",
+        "created_utc": "2026-11-04T19:45:18.9978407Z",
+        "source_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+        "source_tree": "4c4ec494b5c22b1a5c57cc1e8bbf73041140a753",
+        "official_url": "http://localhost:8088/p/beat-the-house/play/dev/f3058b6daab820e9d747c4c4aabc2d983e9ae32e/index.html#fixture",
+        "identity_scope": "Pinned official immutable URL and exact small manifest/shell hashes; runtime assets passed through unchanged, no new export or runtime/PCK copy. This case did not independently hash large served asset bytes.",
+        "official_manifest_sha256": "6d2876050b6c8b38e4f79f9b129b85e4c55738e6b78b2b15bb5008b651681b02",
+        "official_html_sha256": "70d050cf644d7aeecd3fa0ce6a343f478c0800d589774599108cd7739e5a7b05",
+        "wrapper_sha256": "ab405413c5eb4c4037eb1d2ed2f1107b26dd317ece38ca153555163b0845bda8",
+        "fixture_manifest_sha256": "542c11c1403161b03ac3e208a7f1e433d89d8cee1427804d2e0bb3b5416c4e70",
+        "controller": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\web_r08_roulette.cjs",
+          "sha256": "ea968eb1c433510359488b7a6616b632868aa94168cabdf36700916605389c04",
+          "syntax_check_exit": 0,
+          "no_browser_contract_checks": 16,
+          "review": "Independent read-only scope/phase/preload review passed before launch"
+        },
+        "fixture": {
+          "seed": "BTH061-ROULETTE-SEALED-PENDING-001-A",
+          "generation": "Fresh independently generated shipped three-game Riverboat floor; official Save/Continue and own new companions validated by parent before Web launch",
+          "staged_fixture_files": 5,
+          "staged_fixture_bytes": 105069,
+          "first_visible_cash": 80,
+          "first_visible_heat": 0,
+          "day": 1,
+          "actual_table": "Cyan Dolly",
+          "actual_wheel": "American double zero",
+          "scatter": 24,
+          "selected_chip": 9,
+          "prebet_bet": 0,
+          "prebet_recent": "NO SPINS YET",
+          "fidelity_limits": [
+            "Synthetic staged room, cash80/min9 inputs; no normal-travel claim",
+            "Day1/Heat0, no prior Blackjack; original observation was Day3/Heat1",
+            "No original R08 save/profile/authority/key/RNG access or action replay",
+            "No outcome filtering, wheel forcing, result reroll, or post-generation ticket/cash/RNG editing"
+          ]
+        },
+        "paid_dispatches": [
+          {
+            "id": "one-red-chip",
+            "point": [
+              683,
+              565
+            ],
+            "dispatch_started_utc": "2026-11-04T19:42:34.9190000Z",
+            "dispatch_completed_utc": "2026-11-04T19:42:34.9270000Z",
+            "dispatch_status": "api_returned",
+            "semantic_game_acceptance": "not_asserted"
+          },
+          {
+            "id": "arm-spin",
+            "point": [
+              471,
+              666
+            ],
+            "dispatch_started_utc": "2026-11-04T19:42:51.8880000Z",
+            "dispatch_completed_utc": "2026-11-04T19:42:51.8960000Z",
+            "dispatch_status": "api_returned",
+            "semantic_game_acceptance": "not_asserted"
+          },
+          {
+            "id": "confirm-once",
+            "point": [
+              471,
+              666
+            ],
+            "dispatch_started_utc": "2026-11-04T19:43:04.4170000Z",
+            "dispatch_completed_utc": "2026-11-04T19:43:04.4730000Z",
+            "dispatch_status": "api_returned",
+            "semantic_game_acceptance": "not_asserted"
+          }
+        ],
+        "observed_result": {
+          "four_seconds_after_confirm": "Cash71, Heat0, BET0, marked2black, SITOUT/REBET, no SEALED ACTION",
+          "final_no_input_frame": "Cash71, Heat0, BET0, Recent2; later NO MORE BETS phase under normal live clock",
+          "semantic_basis": "Visible screenshots after the one input; API dispatch alone is not treated as acceptance",
+          "save_or_cold_performed": false,
+          "reason_no_save_or_cold": "The independent Confirm resolved; optional pending-state persistence arm was not needed",
+          "forbidden_actions_performed": []
+        },
+        "diagnostics": {
+          "console_total": 4,
+          "console_warning_error_count": 0,
+          "page_errors": [],
+          "request_failures": [],
+          "console_messages": [
+            {
+              "at_ms": 1793821250758,
+              "type": "log",
+              "text": "BTH061-ROULETTE-SEALED-PENDING-001: fresh independent prepaid fixture preloaded; no original R08 data.",
+              "location": {
+                "url": "http://localhost:8088/p/beat-the-house/play/dev/f3058b6daab820e9d747c4c4aabc2d983e9ae32e/index.html",
+                "line": 126,
+                "column": 12,
+                "lineNumber": 126,
+                "columnNumber": 12
+              }
+            },
+            {
+              "at_ms": 1793821251474,
+              "type": "log",
+              "text": "Godot Engine v4.6.stable.custom_build.89cea1439 (2026-01-25 12:41:41 UTC) - https://godotengine.org",
+              "location": {
+                "url": "http://localhost:8088/p/beat-the-house/play/dev/f3058b6daab820e9d747c4c4aabc2d983e9ae32e/index.js",
+                "line": 451,
+                "column": 15,
+                "lineNumber": 451,
+                "columnNumber": 15
+              }
+            },
+            {
+              "at_ms": 1793821252324,
+              "type": "log",
+              "text": "OpenGL API OpenGL ES 3.0 (WebGL 2.0 (OpenGL ES 3.0 Chromium)) - Compatibility - Using Device: WebKit - WebKit WebGL",
+              "location": {
+                "url": "http://localhost:8088/p/beat-the-house/play/dev/f3058b6daab820e9d747c4c4aabc2d983e9ae32e/index.js",
+                "line": 451,
+                "column": 15,
+                "lineNumber": 451,
+                "columnNumber": 15
+              }
+            },
+            {
+              "at_ms": 1793821252440,
+              "type": "log",
+              "text": "Build configuration: Emscripten 4.0.20, single-threaded, GDExtension support.",
+              "location": {
+                "url": "http://localhost:8088/p/beat-the-house/play/dev/f3058b6daab820e9d747c4c4aabc2d983e9ae32e/index.js",
+                "line": 451,
+                "column": 15,
+                "lineNumber": 451,
+                "columnNumber": 15
+              }
+            }
+          ]
+        },
+        "closure": {
+          "state_completed": true,
+          "state_closed": true,
+          "exit_code": 0,
+          "timed_out": false,
+          "active_at_release": 0,
+          "cpu_percent": 12.0,
+          "memory_bytes": 2147483648,
+          "timeout_seconds": 300,
+          "chromium_sandbox_enabled": true,
+          "profile_bytes": 28513837.0,
+          "receipt_path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-create-1.json",
+          "receipt_sha256": "fcc58fa2c6cc594ece8ec5d21f9522ce3429ec71cd9dc946e58298cca28494f9"
+        },
+        "artifacts": [
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette\\sessions\\r08-f305-create-01\\startup.png",
+            "bytes": 278464,
+            "sha256": "cab3932b058e0e540d0d975bb40b861c0d9fb1709d3a20654a8f347d9c869b2d"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette\\sessions\\r08-f305-create-01\\independent-floor-before-input.png",
+            "bytes": 80199,
+            "sha256": "45ff0b37b4a79daa9c15a62300b0652aab05bff701e77322869267d4e9522a09"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette\\sessions\\r08-f305-create-01\\independent-seed-menu.png",
+            "bytes": 74861,
+            "sha256": "55df6712ff288496ae7280cfa2521643dc06a6813dffed2782cbfcd343e5b275"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette\\sessions\\r08-f305-create-01\\actual-cyan-dolly-before-bet.png",
+            "bytes": 92605,
+            "sha256": "0672c8adefb40c608711b0f4971f7a017a806e03ea1896333b4676f4c80ac8f8"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette\\sessions\\r08-f305-create-01\\fresh-nine-dollar-red-terms.png",
+            "bytes": 94030,
+            "sha256": "511e122466dbc81d07f7e660323994bde273223cc4329704e9ae0a73e51163bd"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette\\sessions\\r08-f305-create-01\\one-red-nine-placement.png",
+            "bytes": 95198,
+            "sha256": "019ef72d4f3317bd78f2a26294fede9b65f345ed8c50f7b9c1813c2f6707c9e4"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette\\sessions\\r08-f305-create-01\\fresh-existing-red-confirm.png",
+            "bytes": 94513,
+            "sha256": "d9154041edaad8c81738b95992e365dc0e35d574caae5372706676c895e8833a"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette\\sessions\\r08-f305-create-01\\after-one-confirm-four-seconds.png",
+            "bytes": 91800,
+            "sha256": "e60f458e3ab12ba296fefb8b91b56333040c280c3f5b0290e2e74dfbd38335e1"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette\\sessions\\r08-f305-create-01\\final-no-input-result-before-close.png",
+            "bytes": 96887,
+            "sha256": "903fd956d4bc2f72d737c91a0a9ca72b463258ca3c62c17818500ae92de48e09"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette\\sessions\\r08-f305-create-01\\state.json",
+            "bytes": 34036,
+            "sha256": "3938ccafb94698b195d0b29ee1e06198624ded337b476f78163dcb937a3ea10c"
+          }
+        ],
+        "product_files_modified": false,
+        "next_export_or_watcher_modified": false
+      }
+    },
+    {
+      "summary": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-setup-limit.json",
+      "summary_sha256": "09709a3c18d52c9778ac4c0da8674e367f4a680bf5acb0372699ae19dc709dfb",
+      "data": {
+        "task_id": "BTH061-ROULETTE-SEALED-PENDING-001",
+        "result": "HARNESS_ROUTE_SELECTION_LIMIT_NO_PAID_INPUT",
+        "original_r08_status": "Open; pending action untouched and cause unattributed",
+        "prior_blackjack_roulette_coverage": "Not qualified: this case stopped before entering Blackjack",
+        "source_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+        "source_tree": "4c4ec494b5c22b1a5c57cc1e8bbf73041140a753",
+        "official_url": "http://localhost:8088/p/beat-the-house/play/dev/f3058b6daab820e9d747c4c4aabc2d983e9ae32e/index.html#fixture",
+        "fixture_manifest_sha256": "542c11c1403161b03ac3e208a7f1e433d89d8cee1427804d2e0bb3b5416c4e70",
+        "fixture": "Same separately generated initial cash80/min9/shipped three-game Riverboat bundle as qualified direct Web arm; a NEW own fresh profile, no prior-case outcome reuse",
+        "observed_sequence": [
+          "Visible f305 title Continue, then normal Continue to new Riverboat floor cash80/Heat0/Day1",
+          "One card-selection click at(200,420), intended for the visible Blackjack table, returned through browser API",
+          "Resulting screenshot shows THE CREW lender card; no Enter/Use/Borrow/financial input dispatched",
+          "Scoped fixed controller cannot reselect from that phase; capture and explicitclose rather than guessing input or restarting"
+        ],
+        "selection_dispatch": [
+          {
+            "sequence": 2,
+            "id": "select-blackjack-card",
+            "index": 0,
+            "action": {
+              "type": "click",
+              "x": 200,
+              "y": 420
+            },
+            "dispatch_started_at_ms": 1793821882065,
+            "semantic_game_acceptance": "not_asserted",
+            "dispatch_completed_at_ms": 1793821882072,
+            "dispatch_status": "api_returned"
+          },
+          {
+            "sequence": 2,
+            "id": "select-blackjack-card",
+            "index": 1,
+            "action": {
+              "type": "wait",
+              "milliseconds": 400
+            },
+            "dispatch_started_at_ms": 1793821882073,
+            "semantic_game_acceptance": "not_asserted",
+            "dispatch_completed_at_ms": 1793821882488,
+            "dispatch_status": "api_returned"
+          },
+          {
+            "sequence": 2,
+            "id": "select-blackjack-card",
+            "index": 2,
+            "action": {
+              "type": "screenshot",
+              "name": "blackjack-card-before-entry.png"
+            },
+            "dispatch_started_at_ms": 1793821882488,
+            "semantic_game_acceptance": "not_asserted",
+            "dispatch_completed_at_ms": 1793821882574,
+            "dispatch_status": "api_returned"
+          }
+        ],
+        "fidelity_limits": [
+          "Unexpected card selection is a fixture/harness navigation limit; no product hit-test defect established",
+          "No Blackjack Deal/Stand, Roulette bet/Spin/Confirm, Save/Load, Retry/Cancel, loan/item/scenario action",
+          "Zero financial commands; the prior-Blackjack chronology gap remains",
+          "No original campaign/profile/save/authority/key/RNG inspection or action replay"
+        ],
+        "diagnostics": {
+          "console_messages": [
+            {
+              "at_ms": 1793821843237,
+              "type": "log",
+              "text": "BTH061-ROULETTE-SEALED-PENDING-001: fresh independent prepaid fixture preloaded; no original R08 data.",
+              "location": {
+                "url": "http://localhost:8088/p/beat-the-house/play/dev/f3058b6daab820e9d747c4c4aabc2d983e9ae32e/index.html",
+                "line": 126,
+                "column": 12,
+                "lineNumber": 126,
+                "columnNumber": 12
+              }
+            },
+            {
+              "at_ms": 1793821843932,
+              "type": "log",
+              "text": "Godot Engine v4.6.stable.custom_build.89cea1439 (2026-01-25 12:41:41 UTC) - https://godotengine.org",
+              "location": {
+                "url": "http://localhost:8088/p/beat-the-house/play/dev/f3058b6daab820e9d747c4c4aabc2d983e9ae32e/index.js",
+                "line": 451,
+                "column": 15,
+                "lineNumber": 451,
+                "columnNumber": 15
+              }
+            },
+            {
+              "at_ms": 1793821844761,
+              "type": "log",
+              "text": "OpenGL API OpenGL ES 3.0 (WebGL 2.0 (OpenGL ES 3.0 Chromium)) - Compatibility - Using Device: WebKit - WebKit WebGL",
+              "location": {
+                "url": "http://localhost:8088/p/beat-the-house/play/dev/f3058b6daab820e9d747c4c4aabc2d983e9ae32e/index.js",
+                "line": 451,
+                "column": 15,
+                "lineNumber": 451,
+                "columnNumber": 15
+              }
+            },
+            {
+              "at_ms": 1793821844889,
+              "type": "log",
+              "text": "Build configuration: Emscripten 4.0.20, single-threaded, GDExtension support.",
+              "location": {
+                "url": "http://localhost:8088/p/beat-the-house/play/dev/f3058b6daab820e9d747c4c4aabc2d983e9ae32e/index.js",
+                "line": 451,
+                "column": 15,
+                "lineNumber": 451,
+                "columnNumber": 15
+              }
+            }
+          ],
+          "warning_error_count": 0,
+          "page_errors": [],
+          "request_failures": []
+        },
+        "closure": {
+          "state_completed": true,
+          "state_completed_meaning": "Orderly explicit closure only, not gameplay acceptance",
+          "state_closed": true,
+          "exit_code": 0,
+          "timed_out": false,
+          "active_at_release": 0,
+          "limits": {
+            "control_flags": 5,
+            "cpu_rate": 1200,
+            "aggregate_job_cpu_percent": 12.0,
+            "kill_on_close": true,
+            "breakaway_allowed": false,
+            "job_memory_limit_bytes": 2147483648,
+            "active_processes": 0
+          },
+          "chromium_sandbox_enabled": true,
+          "profile_bytes": 28236661.0,
+          "receipt_path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-1.json",
+          "receipt_sha256": "83a4c9f20d5d45c179f84ee04f068b014f2ae3ce616d4acdc22bc8d59360f5cc"
+        },
+        "controller": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\web_r08_roulette_after_bj.cjs",
+          "sha256": "0e4c7ef277f4b4200fbdce688755e92cf9c05336e51d3ae2b8eb207a44d4c14f",
+          "syntax_check_exit": 0,
+          "no_browser_contract_checks": 17
+        },
+        "artifacts": [
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-after-bj\\sessions\\r08-f305-after-bj-create-01\\startup.png",
+            "bytes": 278099,
+            "sha256": "416835a86310d8a9da90fb89550583695fc1fdb991977810e6aaf7fa0e289c21"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-after-bj\\sessions\\r08-f305-after-bj-create-01\\independent-floor-before-blackjack.png",
+            "bytes": 79748,
+            "sha256": "2ab63d9bbf11caf117ac876de479cba611a9e369a3f19c9c985f166fe3f6e433"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-after-bj\\sessions\\r08-f305-after-bj-create-01\\blackjack-card-before-entry.png",
+            "bytes": 82682,
+            "sha256": "21dc0faaaf67d27c81a62c7c43b1aba60269dc0f3b77085de8b97bb1df5accdd"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-after-bj\\sessions\\r08-f305-after-bj-create-01\\setup-limit-before-any-financial-input.png",
+            "bytes": 82558,
+            "sha256": "6fdf55436ddb0ae2dfdc1669ca49a39a7a2490482a4831d6962d0e1a06b48f2b"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-after-bj\\sessions\\r08-f305-after-bj-create-01\\state.json",
+            "bytes": 21781,
+            "sha256": "e66685e7ed520d0c8ef978a9be1d2d4892362d146c2f717b8730ebc85bb18f8b"
+          }
+        ],
+        "first_direct_case_evidence_preserved": true,
+        "product_or_export_changes": false,
+        "new_jobs_after_stop": false
+      }
+    },
+    {
+      "summary": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-resume-limit.json",
+      "summary_sha256": "50fd955f70f070f40a2cba238b45dca69fe843853d4281253d8066d05452593d",
+      "data": {
+        "task_id": "BTH061-ROULETTE-SEALED-PENDING-001",
+        "result": "SAME_PROFILE_CONTINUE_UNAVAILABLE_NO_INPUT",
+        "original_r08_status": "Open; pending action untouched, cause unattributed",
+        "requested_action": "Resume the same expense-free own floor, then corrected Blackjack selection and one hand before Roulette",
+        "action_outcome": "Not executed: title showed PLAY rather than CONTINUE at startup and after a no-input wait. No PLAY click, new run, fixture reimport, financial action or selection correction was attempted.",
+        "blocker_classification": "Observed fixture/persistence precondition limit; not an approval denial and not a classified product failure",
+        "source_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+        "source_tree": "4c4ec494b5c22b1a5c57cc1e8bbf73041140a753",
+        "url": "http://localhost:8088/p/beat-the-house/play/dev/f3058b6daab820e9d747c4c4aabc2d983e9ae32e/index.html",
+        "profile_label": "r08-f305-after-bj-01",
+        "profile_mode": "resume",
+        "independent_fixture_preload": false,
+        "fixture_manifest_sha256": "542c11c1403161b03ac3e208a7f1e433d89d8cee1427804d2e0bb3b5416c4e70",
+        "profile_provenance": "Exactly the own r08-f305-after-bj-01 profile from prior zero-expense navigation attempt; no profile copies or original R08 access",
+        "correction": {
+          "controller": "Separate resume-only driver; all preceding files preserved",
+          "selection_change": "Nonfinancial hover/close/reselect before expense, bj-selection-pending until reviewed own Blackjack PNG hash/operator attestation, then Enter",
+          "syntax_check_exit": 0,
+          "no_browser_contract_checks": 20,
+          "exercised": false,
+          "reason": "Normal Continue precondition absent before any correction input"
+        },
+        "input_counts": {
+          "clicks": 0,
+          "keys": 0,
+          "paid_commands": 0
+        },
+        "diagnostics": {
+          "console_messages": [
+            {
+              "at_ms": 1793822270743,
+              "type": "log",
+              "text": "Godot Engine v4.6.stable.custom_build.89cea1439 (2026-01-25 12:41:41 UTC) - https://godotengine.org",
+              "location": {
+                "url": "http://localhost:8088/p/beat-the-house/play/dev/f3058b6daab820e9d747c4c4aabc2d983e9ae32e/index.js",
+                "line": 451,
+                "column": 15,
+                "lineNumber": 451,
+                "columnNumber": 15
+              }
+            },
+            {
+              "at_ms": 1793822270878,
+              "type": "log",
+              "text": "OpenGL API OpenGL ES 3.0 (WebGL 2.0 (OpenGL ES 3.0 Chromium)) - Compatibility - Using Device: WebKit - WebKit WebGL",
+              "location": {
+                "url": "http://localhost:8088/p/beat-the-house/play/dev/f3058b6daab820e9d747c4c4aabc2d983e9ae32e/index.js",
+                "line": 451,
+                "column": 15,
+                "lineNumber": 451,
+                "columnNumber": 15
+              }
+            },
+            {
+              "at_ms": 1793822270990,
+              "type": "log",
+              "text": "Build configuration: Emscripten 4.0.20, single-threaded, GDExtension support.",
+              "location": {
+                "url": "http://localhost:8088/p/beat-the-house/play/dev/f3058b6daab820e9d747c4c4aabc2d983e9ae32e/index.js",
+                "line": 451,
+                "column": 15,
+                "lineNumber": 451,
+                "columnNumber": 15
+              }
+            }
+          ],
+          "console_warning_error_count": 0,
+          "page_errors": [],
+          "request_failures": [],
+          "fixture_urls_requested": []
+        },
+        "fidelity_limits": [
+          "No Blackjack/Roulette acceptance or chronology coverage qualified in this resume session",
+          "Why the prior fresh preloaded baseline did not yield Continue was not inspected or classified; original data and all profile/save/key/RNG contents remain uninspected",
+          "Earlier independent direct f305 case resolved normally and its evidence is preserved",
+          "No runtime export, PCK copy, product source change or NEXT watcher/resource guard change"
+        ],
+        "closure": {
+          "state_completed": true,
+          "state_completed_meaning": "Explicit orderly closure only; not successful gameplay acceptance",
+          "state_closed": true,
+          "exit_code": 0,
+          "timed_out": false,
+          "active_at_release": 0,
+          "limits": {
+            "control_flags": 5,
+            "cpu_rate": 1200,
+            "aggregate_job_cpu_percent": 12.0,
+            "kill_on_close": true,
+            "breakaway_allowed": false,
+            "job_memory_limit_bytes": 2147483648,
+            "active_processes": 0
+          },
+          "chromium_sandbox_enabled": true,
+          "profile_bytes": 28255875.0,
+          "receipt_path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-2.json",
+          "receipt_sha256": "b3ddf6f90e406e54279f9038ba8b38a4f26975f32418a88fc7beee9040782950"
+        },
+        "controller": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\web_r08_roulette_after_bj_resume.cjs",
+          "sha256": "04d1405648fb5e6cadd9418e84f0db9b6033417c57f4c11e69f1edc196053e46"
+        },
+        "artifacts": [
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-after-bj\\sessions\\r08-f305-after-bj-resume-02\\startup.png",
+            "bytes": 276450,
+            "sha256": "cb7cd73a147ee18783f8ce38ab1bf1e12296e538806b101cc2daa1b4d5d20f33"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-after-bj\\sessions\\r08-f305-after-bj-resume-02\\same-profile-title-after-wait.png",
+            "bytes": 276446,
+            "sha256": "a8ccd44a9b9be0a348965924f23ae8a14e0704d636c0a56cf81da1f883634c4a"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-after-bj\\sessions\\r08-f305-after-bj-resume-02\\no-continue-before-any-input.png",
+            "bytes": 276456,
+            "sha256": "8d28ce2760ce57d140f6ac25cdd10b7aeaa2b0a081ee5ea4a256ca1b05fc3096"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-after-bj\\sessions\\r08-f305-after-bj-resume-02\\state.json",
+            "bytes": 18330,
+            "sha256": "b21ab235ba67bdb614e6ef2a2654f197b3bbbfb04ae4e343f850dcbcbf92f9ed"
+          }
+        ]
+      }
+    },
+    {
+      "summary": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-bj-reserve-stop.json",
+      "summary_sha256": "55c4f2987e6500d058b07871960bae7a11424c50633d6f1a39f1b6e8e1636828",
+      "data": {
+        "task_id": "BTH061-ROULETTE-SEALED-PENDING-001",
+        "result": "OWN_BLACKJACK_ACCEPTED_ROULETTE_ENTRY_REACHED_HARNESS_RESERVE_STOP",
+        "source_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+        "profile_label": "r08-f305-after-bj-persist-03",
+        "bootstrap": "New independent own fixture official MenuSave followed by cold Continue withoutpreload succeeded atcash80/Heat0/Day1noon; Savingtransientnotcaptured, afterclick+ackMenuclosedverified",
+        "accepted_actions": [
+          "One visible9Deal80->71 withplayer12/dealerJ+hole",
+          "OneStand settleddealer20 vsplayer12,net-9,cash71",
+          "NormalLeave thenCyanDollyentrycash71,BET0,NO SPINS"
+        ],
+        "no_revealed_rng_state": true,
+        "no_outcome_reset_or_replay": true,
+        "no_npc_dialogue_choice": true,
+        "stop": {
+          "error": "Error: WORK_DEADLINE_CHECKPOINT_RESERVE",
+          "queued_command": "012 one-red-chip",
+          "dispatched": false,
+          "basis": "Reserve check threw before command/action was appended; only prior acceptedDeal andStand paid commands exist",
+          "final_official_save_after_hand": false,
+          "only_official_save": "Pre-expensebootstrapSave",
+          "persisted_post_hand_checkpoint": "Unknown; parentauthorizednextpubliccoldprobeonly; no silentresumeorreset"
+        },
+        "paid_commands": [
+          {
+            "id": "deal-bj-once",
+            "dispatch_started_at_ms": 1793823863081,
+            "dispatch_completed_at_ms": 1793823867205
+          },
+          {
+            "id": "stand-bj-once",
+            "dispatch_started_at_ms": 1793823891140,
+            "dispatch_completed_at_ms": 1793823895255
+          }
+        ],
+        "roulettedraft_spin_confirm_dispatched": false,
+        "console_warning_error": [],
+        "page_errors": [],
+        "request_failures": [],
+        "job": {
+          "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-prior-bj-4.json",
+          "exit_code": 1,
+          "timed_out": false,
+          "active_at_release": 0,
+          "limits": {
+            "control_flags": 5,
+            "cpu_rate": 1200,
+            "aggregate_job_cpu_percent": 12.0,
+            "kill_on_close": true,
+            "breakaway_allowed": false,
+            "job_memory_limit_bytes": 2147483648,
+            "active_processes": 0
+          }
+        },
+        "artifacts": [
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-bootstrap\\sessions\\r08-f305-bootstrap-cold-prior-bj-04\\startup.png",
+            "sha256": "1b50d77939a264f196ba4df0ef4fe7150d0d526f72e7d99e1050565d2058d3c3"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-bootstrap\\sessions\\r08-f305-bootstrap-cold-prior-bj-04\\cold-persisted-floor-before-expense.png",
+            "sha256": "942ac2bad654e0e98105ff9363c3b5015bc9080c27ccfce4b441fafc66091cd4"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-bootstrap\\sessions\\r08-f305-bootstrap-cold-prior-bj-04\\upper-blackjack-hover-proof.png",
+            "sha256": "348d25d78f987ccabeb4e26345cbf4b3f7cf4d28415f4030a0bb7699565f1377"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-bootstrap\\sessions\\r08-f305-bootstrap-cold-prior-bj-04\\actual-selected-blackjack-card.png",
+            "sha256": "40f662e04eb809484ad4c45d6980cc3c891571d11b4459e3cb3ad6d0a496c1a8"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-bootstrap\\sessions\\r08-f305-bootstrap-cold-prior-bj-04\\blackjack-before-any-wager.png",
+            "sha256": "bd87f74a2cc9683da10a9d60b72b4084f82d30818a66ea93368cdebef2e4d31c"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-bootstrap\\sessions\\r08-f305-bootstrap-cold-prior-bj-04\\blackjack-after-one-nine-deal.png",
+            "sha256": "7648c26d1a92d274d3d792e20b86708d742d48c5f8eae391237228021f020013"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-bootstrap\\sessions\\r08-f305-bootstrap-cold-prior-bj-04\\blackjack-after-one-stand.png",
+            "sha256": "2a25ce5464b60877d2d8014f4f121ef016cb3d18e60ec3f3df3ceccf90258b92"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-bootstrap\\sessions\\r08-f305-bootstrap-cold-prior-bj-04\\after-natural-blackjack-leave.png",
+            "sha256": "f03586dd825e68b957bd746e19d9ef6ca09ab8fff768660fa325bcafd4430f20"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-bootstrap\\sessions\\r08-f305-bootstrap-cold-prior-bj-04\\roulette-card-after-blackjack.png",
+            "sha256": "65ba797bca89f2718988e58c5884fb21ec630af9f9753d1ae3b159c660d20086"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-bootstrap\\sessions\\r08-f305-bootstrap-cold-prior-bj-04\\fresh-red-nine-terms-after-blackjack.png",
+            "sha256": "8cac774fa030319136755edbe94e3c0defdc80a6f62d7dc533ab1873fe18bb8a"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-bootstrap\\sessions\\r08-f305-bootstrap-cold-prior-bj-04\\failure.png",
+            "sha256": "588914733cc3ca63e6ec6a9c4f3ce071e4920cd4e5affb7b97e97ed37a7bf552"
+          },
+          {
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-bootstrap\\sessions\\r08-f305-bootstrap-cold-prior-bj-04\\state.json",
+            "sha256": "e8b61b69e1dce6ae1e69eda9b9316fc6e26cab0bf032a793a0b670cbb9931834"
+          }
+        ],
+        "original_r08_status": "Open; originalpendinguntouchedandcauseunclassified",
+        "product_files_modified": false
+      }
+    },
+    {
+      "summary": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-web-curated-summary.json",
+      "summary_sha256": "da1922683c703239f8833c650f76c332b3d4855c0a4a093aabde8248f9d6c76c",
+      "data": {
+        "task_id": "BTH061-ROULETTE-SEALED-PENDING-001",
+        "status": "OriginalOpen; independent financial transition observed, final Roulette settlement/pending obscured",
+        "build": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+        "profile": "r08-f305-after-bj-persist-03",
+        "scope": "Own independently generated Day1/Heat0 Riverboat seedBTH061-ROULETTE-SEALED-PENDING-001-A/cash80/min9/shipped3games; no original state, runtime introspection, outcome filtering/reset/replay, newexport or assetcopy",
+        "sessions": [
+          {
+            "name": "r08-f305-bootstrap-create-03",
+            "receipt": "evidence/r08-independent-web-bootstrap-3.json",
+            "exit": 0,
+            "result": "Newownpreload; normalContinuecash80/noon; verifiedMenu; oneofficialSave; fullafterclick/ackMenuclosedfloor80; transientSavingnotcaptured; close"
+          },
+          {
+            "name": "r08-f305-bootstrap-cold-prior-bj-04",
+            "receipt": "evidence/r08-independent-web-prior-bj-4.json",
+            "exit": 1,
+            "result": "ColdplainURL/no preload provedContinuecash80/noon. Hover154388/selectedBlackjackPNGproof thenEnter515522; one9Deal939675 debited80->71 and dealt12; oneStand1030661 settleddealer20 vs12 loss9; normalLeave1150180. EnteredCyan71/BET0. Our240s reserve rejected queuedRed BEFOREdispatch. No finalManualSave, noRouletteinput."
+          },
+          {
+            "name": "r08-f305-persisted-bj-roulette-05",
+            "receipt": "evidence/r08-independent-web-persisted-bj-5.json",
+            "exit": 0,
+            "result": "SameprofilecoldplainURL/no preload: floor71/Day1 3PM, settledBlackjacktext; Journal3rowsBJ-9,+0Heat1,+0 provehandpersisted. NoBJreplay. OnlyambientClose gaveNoeffect. ActualCyan71/min9/BET0; firstRed9,Spin,Confirm once. Fourseconds:62/BET0/NO MORE BETS+MachineJammodal. Neitherchoice, gameplay,Save,coldorRecovery afterward; finalnoinputPNG+close."
+          }
+        ],
+        "first_confirm": {
+          "point": [
+            471,
+            666
+          ],
+          "started_utc": "2026-11-04T20:36:20.233Z",
+          "returned_utc": "2026-11-04T20:36:20.433Z",
+          "semantic_api_acceptance": "not_asserted",
+          "visible": "cash71->62/BET0; originalunchangedcash/BET9/CONFIRM shape not reproduced",
+          "limit": "MachineJam obscures finalresult/history and visiblepending; do not claim fullsettlement/no-pending acceptance"
+        },
+        "public_trace": {
+          "first": "Godot4.6 startup log at1793824404023ms",
+          "messages": 3,
+          "warnings_errors": 0,
+          "page_errors": 0,
+          "failed_requests": 0,
+          "first_public_exception": null
+        },
+        "guards": {
+          "job_cpu_percent": 12,
+          "memory_bytes": 2147483648,
+          "timeout_seconds": 300,
+          "chromium_sandbox": true,
+          "all3timed_out": false,
+          "all3active_at_release": 0,
+          "profile_bytes": 28624284.0,
+          "no_further_jobs": true
+        },
+        "proofs": [
+          {
+            "session": "r08-f305-bootstrap-create-03",
+            "name": "official-bootstrap-save-ack.png",
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-bootstrap\\sessions\\r08-f305-bootstrap-create-03\\official-bootstrap-save-ack.png",
+            "sha256": "67911db6e735fc2c2c5e11a4042156cbaa2c92a3eeab54035d6e475a910153cb"
+          },
+          {
+            "session": "r08-f305-bootstrap-cold-prior-bj-04",
+            "name": "cold-persisted-floor-before-expense.png",
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-bootstrap\\sessions\\r08-f305-bootstrap-cold-prior-bj-04\\cold-persisted-floor-before-expense.png",
+            "sha256": "942ac2bad654e0e98105ff9363c3b5015bc9080c27ccfce4b441fafc66091cd4"
+          },
+          {
+            "session": "r08-f305-bootstrap-cold-prior-bj-04",
+            "name": "blackjack-after-one-stand.png",
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-bootstrap\\sessions\\r08-f305-bootstrap-cold-prior-bj-04\\blackjack-after-one-stand.png",
+            "sha256": "2a25ce5464b60877d2d8014f4f121ef016cb3d18e60ec3f3df3ceccf90258b92"
+          },
+          {
+            "session": "r08-f305-persisted-bj-roulette-05",
+            "name": "post-bj-cold-floor.png",
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-bootstrap\\sessions\\r08-f305-persisted-bj-roulette-05\\post-bj-cold-floor.png",
+            "sha256": "e45dcd7e6d87bc2989ca77a1b665738af8687935b1a84cae0641fd62a7def940"
+          },
+          {
+            "session": "r08-f305-persisted-bj-roulette-05",
+            "name": "post-bj-cold-journal.png",
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-bootstrap\\sessions\\r08-f305-persisted-bj-roulette-05\\post-bj-cold-journal.png",
+            "sha256": "b54d98e4c2073e80f319a945ba3b4ac38d7b15869b25eb40ea16f3799f74f285"
+          },
+          {
+            "session": "r08-f305-persisted-bj-roulette-05",
+            "name": "after-first-confirm-after-persisted-blackjack.png",
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-bootstrap\\sessions\\r08-f305-persisted-bj-roulette-05\\after-first-confirm-after-persisted-blackjack.png",
+            "sha256": "ae6badb8f57c093a0a7275fbc1ac95cdb8618b063ae99f5e60fb385268162fe9"
+          },
+          {
+            "session": "r08-f305-persisted-bj-roulette-05",
+            "name": "machine-jam-no-choice-before-close.png",
+            "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\web-r08-roulette-bootstrap\\sessions\\r08-f305-persisted-bj-roulette-05\\machine-jam-no-choice-before-close.png",
+            "sha256": "ae6badb8f57c093a0a7275fbc1ac95cdb8618b063ae99f5e60fb385268162fe9"
+          }
+        ],
+        "full_report": {
+          "path": "evidence/r08-independent-web-prior-bj-followup.json",
+          "sha256": "ed43782b5a9bf0dff5adaaeed199d6d62a35d5b6cbc350fe7eedc753bff47ee1"
+        }
+      }
+    }
+  ],
+  "product_changes": [],
+  "fix_commit": null,
+  "limits": [
+    "No reproduced Roulette rejection or responsible production cause established by the negative controls; original R08 stays Open.",
+    "Two initial native prior-Blackjack setup failures and two initial Web setup failures remain preserved; later controls supersede their coverage gaps, not their history.",
+    "The native harness incorrectly used a stale canvas/ritual projection to justify a second Deal. Canonical hand counts and the actual native Stand gate correct the diagnostic; no product fix is claimed.",
+    "Independent staged fixtures remain Day1/Heat0, not the original Day3/Heat1 campaign or normal-travel acceptance.",
+    "The original first unsuccessful host boundary/public Godot rejection or exception was not captured; original JavaScript page_errors0 cannot supply it.",
+    "No independently reproduced pending request exists for new pending-state Save/cold/recovery qualification; no Retry/Cancel or manufactured fault.",
+    "No product, animation/scheduling, seal, accounting or resource-guard change. Existing NEXT disk reserve retains f305."
+  ],
+  "updated_at": "2026-11-04T20:45:24.625482+00:00",
+  "continuation_source_base": "25b2f152cc7d82ddf86990c94e290fb401efa5e7",
+  "continuation_investigation_commit": "7648f1d908468fd783cd19bc5c4562ab69573be1"
+}

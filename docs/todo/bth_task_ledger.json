@@ -20033,6 +20033,167 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-04T21:28:34.938136+00:00"
+    },
+    {
+      "id": "BTH061-ROULETTE-SEALED-PENDING-001",
+      "name": "Roulette Confirm leaves SEALED ACTION pending across Save and cold re-entry",
+      "aliases": [
+        "OBS-R08-ROULETTE-SEALED-PENDING-917"
+      ],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Investigate R08 cash Roulette BET9 on Red: one Spin arms Confirm, one Confirm click returns but no settlement/debit occurs, and Save/refresh/cold entry exposes SEALED ACTION. Preserve the original pending request and all evidence without Retry, Cancel, repeat Confirm, original profile/save/authority/key/RNG access or action replay. Reconstruct independently, classify the exact failure, and fix/test only a confirmed defect while preserving rules, economy, RNG, semantic seals, exactly-once delivery and persistence. A bounded fixture is not the original campaign. Respect item/scenario pause and existing resource/disk gates.",
+        "source": "Trusted parent delegation2026-11-04; E:/CodexQA/BTH/Broad/r08-20261104/evidence/r08-roulette-sealed-pending-917918-observation.json (SHA256 b304b248d4777152111943eaf74b10da05e41c340586e3151b95b4c5ae7afd7a); original source f3058b6daab820e9d747c4c4aabc2d983e9ae32e. Trusted parent continuation2026-11-04: resolve the independent prior-Blackjack setup failures and test that path without touching R08 original pending request; capture first public rejection/exception before further input; keep Open absent causal evidence; retain pauses and storage guard.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "preserve-original",
+            "description": "Preserve original pending action and distinguish public input dispatch/visible observation from accepted settlement; no original Retry/Cancel/replay or private state access.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/roulette_sealed_pending_r08.md",
+              "docs/testing/roulette_sealed_pending_r08.json"
+            ]
+          },
+          {
+            "id": "independent-cause",
+            "description": "Bounded independently generated/staged full-host Roulette reconstruction exercises actual input/Confirm/application guards and records exact failure or supported attribution limit; no outcome filtering.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/roulette_sealed_pending_r08.md",
+              "docs/testing/roulette_sealed_pending_r08.json"
+            ]
+          },
+          {
+            "id": "confirmed-fix",
+            "description": "Change only a confirmed responsible contract; preserve cash/chips/RNG/clock, seals, exactly-once settlement and rejection/late/recovery boundaries as materially relevant.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/roulette_sealed_pending_r08.md",
+              "docs/testing/roulette_sealed_pending_r08.json"
+            ]
+          },
+          {
+            "id": "focused-persistence",
+            "description": "Test the material Save/fresh-process Continue and pending/committed accounting boundaries without manipulating the original request.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/roulette_sealed_pending_r08.md",
+              "docs/testing/roulette_sealed_pending_r08.json"
+            ]
+          },
+          {
+            "id": "review-commit",
+            "description": "Record scoped review, tested commit association and both ledger views; retain actual release/blocker evidence before completion.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/roulette_sealed_pending_r08.md",
+              "docs/testing/roulette_sealed_pending_r08.json",
+              "commit:3292cc0dd866d3c4b60e94d345d3471aa69b5822",
+              "commit:7648f1d908468fd783cd19bc5c4562ab69573be1"
+            ]
+          },
+          {
+            "id": "prior-blackjack-path",
+            "description": "Resolve independent fixture bootstrap and Blackjack selection/readiness setup, then exercise one legitimate natural Blackjack hand followed by normal Leave and a first Roulette Confirm; retain actual wallet/RNG and capture first failure before more input. No original R08 Retry/Cancel/replay.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/roulette_sealed_pending_r08.md",
+              "docs/testing/roulette_sealed_pending_r08.json"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "OPEN_PRIOR_BLACKJACK_PATH_TESTED_ORIGINAL_CAUSE_UNCLASSIFIED",
+      "owner": {
+        "name": "R08 Roulette investigation (task-14)",
+        "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "3292cc0dd866d3c4b60e94d345d3471aa69b5822",
+          "evidence": [
+            "docs/testing/roulette_sealed_pending_r08.md",
+            "docs/testing/roulette_sealed_pending_r08.json",
+            "Investigation/diagnostic evidence commit only; no product fix is claimed."
+          ]
+        },
+        {
+          "sha": "7648f1d908468fd783cd19bc5c4562ab69573be1",
+          "evidence": [
+            "docs/testing/roulette_sealed_pending_r08.md",
+            "docs/testing/roulette_sealed_pending_r08.json",
+            "Tested prior-Blackjack diagnostic and investigation evidence only; no production fix or task closure."
+          ]
+        }
+      ],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [
+          "docs/testing/roulette_sealed_pending_r08.md",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ],
+        "scope": "No production change or bug-fix deployment exists. Existing NEXT disk guard retains f305; do not bypass it or call test/evidence publication a resolved incident."
+      },
+      "evidence": [
+        {
+          "kind": "qa_observation",
+          "reference": "E:/CodexQA/BTH/Broad/r08-20261104/evidence/r08-roulette-sealed-pending-917918-observation.json",
+          "summary": "Actual f305 case917 oneRed9 and Confirm click: cash80/Heat1/noSpins; later Save/refresh already shows warm SEALED ACTION, cold918 retains it. No Retry/Cancel/repeated Confirm. Public dispatch is not semantic acceptance; no public Godot-console capture."
+        },
+        {
+          "kind": "independent_native_controls",
+          "reference": "docs/testing/roulette_sealed_pending_r08.json",
+          "summary": "31 immediate and34 frame-paced full-host Roulette checks pass, one Red9/Confirm settles once;36 official native prepaid Save/Continue preparation checks pass. Prior-BJ arms stop before Roulette and remain fixture limits, not acceptance or original reproduction."
+        },
+        {
+          "kind": "independent_same_build_web",
+          "reference": "docs/testing/roulette_sealed_pending_r08.json",
+          "summary": "Official f305 runtime, fresh independently staged Cyan Dolly/cash80/min9, one Red9/Spin/Confirm resolves natural2black/cash71/BET0, laterRecent2, no sealed state or captured public errors. No original data. Day1/Heat0 and no priorBJ; priorBJ Web selection and resume-precondition limits are retained, not passes."
+        },
+        {
+          "kind": "prior_blackjack_continuation",
+          "reference": "docs/testing/roulette_sealed_pending_r08.json",
+          "summary": "28 count-only native checks establish dealt canonical hand and deferred canvas refresh; corrected native path passes43 with exactly one Deal/Stand, normal Leave and one Cyan Dolly Red9 Confirm, cash80\u219271\u219280, one spin/receipt/no pending. Web official Save/cold bootstrap and persisted legitimate hand qualify first-Confirm input, cash71\u219262/BET0; Machine Jam obscures final result/history/pending controls, so full Web settlement is not claimed. Original setup/controller failures retained. No production fix."
+        },
+        {
+          "kind": "runtime_closure",
+          "reference": "docs/todo/bth_runtime_inventory_20261104.json",
+          "summary": "13 task14 native/browser Jobs have actual no-reuse pre-execution label identity and owned-zero closure receipts; failed setup/controller cases and all private profiles preserved. No shared/original cleanup."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Keep original R08 pending request untouched. On the next independently observed same-shape first-Confirm failure, capture public Godot rejection/exception and first unsuccessful host boundary, build/seed/table/wager/cash/time and first unchanged frame before additional financial input or Save; compare with direct and prior-Blackjack native/Web controls. Change only a reproduced responsible contract, then qualify material pending persistence/recovery and NEXT. No original Retry/Cancel/replay or speculative automatic settlement.",
+      "blocker": {
+        "state": "active",
+        "kind": "unclassified_original_rejection",
+        "description": "Prior-Blackjack independent setup/path coverage is resolved, but the original R08 rejection or exception remains unrecorded and no responsible production defect is reproduced. Original Day3/Heat1 campaign and pending persistence/recovery are not qualified by Day1/Heat0 passing controls. No permission, scheduling or personal-save wait; NEXT export remains subject to its existing disk guard.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T20:40:39.322793+00:00",
+        "evidence": [
+          "docs/testing/roulette_sealed_pending_r08.md",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T20:45:24.625482+00:00"
     }
   ],
   "batches": [
