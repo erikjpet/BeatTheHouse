@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T17:53:05.677951+00:00",
+  "updated_at": "2026-11-04T17:58:26.799842+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -16641,8 +16641,8 @@
       "status": "SCOPED_CLEANUPS_DEPLOYED_PARENT_REMAINDER_OPEN",
       "owner": {
         "name": "Local independent audit",
-        "task_ref": null,
-        "assignment_state": "unassigned"
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
       },
       "commits": [
         {
@@ -16668,13 +16668,18 @@
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
           "summary": "Reviewed UI/tool removals delivered on NEXT df7d77a820b59f787701fb578cdd4a3b08bbb974 with exact identity and fresh browser startup. The codebase-wide audit, aggregate validator and paused-area remainder stay Open. [Evidence](../testing/deprecated_code_audit_independent_2026_11_04.md)."
+        },
+        {
+          "kind": "actual_current_execution",
+          "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
+          "summary": "Current delegated audit worker continues this independent nonpaused audit through phase003 and004; actual task reference restored from this active execution, without changing any other owner or prior accepted deployment."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-UI-LEGACY-002",
         "BTH061-AUDIT-TOOL-LEGACY-002"
       ],
-      "next_action": "Reuse the committed bounded core/native reviews and accepted UI/tool cleanup. Inventory and disposition the remaining nonpaused independent scope, reconcile the unchanged aggregate validator and full-audit coverage, and preserve paused-area remainder without expanding or silently closing the parent.",
+      "next_action": "Continue remaining nonpaused semantic audit and phase004 legacy-family/contract findings; preserve prior accepted delivery and keep current cleanup NEXT acceptance separate. Reuse the exact phase003 R9 aggregate only within its pinned scope.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -16684,7 +16689,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-04T17:58:26.799842+00:00"
     },
     {
       "id": "BTH061-AUDIT-PUBLISH-NEXT-002",
@@ -18313,9 +18318,10 @@
             "id": "focused-qualified",
             "description": "Deletion closure, actual current game draw contracts against SurfaceHarness, native ownership and autonomous animation checks.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_004.md"
+              "docs/testing/deprecated_code_audit_continuation_004.md",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation004-applied-source-proof-r1.json"
             ]
           },
           {
@@ -18333,39 +18339,51 @@
         }
       },
       "state": "open",
-      "status": "CONFIRMED_REMOVAL_QUALIFICATION_PENDING",
+      "status": "FOCUSED_NONREGRESSION_COMMITTED_NEXT_PENDING",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "d1f03773ebc3f6d4306bcabf11482dcb5ffede09",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_004.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
         "commit": null,
         "evidence": [],
-        "scope": "Scoped removal is not implemented, committed or delivered yet. Existing NEXT reserve guard remains authoritative."
+        "scope": "Source removal is committed locally; main publication and exact NEXT delivery remain pending. Existing reserve guard and retained NEXT are unchanged."
       },
       "evidence": [
         {
           "kind": "confirmed_obsolete_candidate",
           "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
           "summary": "Delete the three orphan GameSurfaceCanvas control drawers plus their unused SurfaceHarness stubs/counters. History and complete current receiver/reflection closure establish these are remnants of the removed prototype game forms. Preserve native controls, input, scheduling and every retained rendering method."
+        },
+        {
+          "kind": "scoped_qualification_with_baseline_limits",
+          "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
+          "summary": "Three retired canvas drawers plus orphan test stubs/counters:52deletions,169retained canvas methods identical. Native ownership27, routed pointer13 and autonomous liveness pass. Real unavailable draw observed. Maintained game contracts execute with9failures identical to exact original base; not a green game suite."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Apply the reviewed bounded patch, run the focused acceptance, associate its commit and publish authorized finished work; observe NEXT without bypassing its reserve guard.",
+      "next_action": "Publish the committed qualified source under the existing user authorization, then observe the existing watcher and verify exact NEXT identity/assets/startup once capacity admission allows it.",
       "blocker": {
         "state": "none",
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:43:26.925449+00:00",
+        "observed_at": "2026-11-04T17:57:37.314596+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T17:43:26.925449+00:00"
+      "updated_at": "2026-11-04T17:57:37.314596+00:00"
     },
     {
       "id": "BTH061-AUDIT-SLOT-TICK-004",
@@ -18385,9 +18403,10 @@
             "id": "focused-qualified",
             "description": "Historical producer retirement, current protocol closure and focused canonical realtime plus completed embedded-action qualification.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_004.md"
+              "docs/testing/deprecated_code_audit_continuation_004.md",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation004-applied-source-proof-r1.json"
             ]
           },
           {
@@ -18405,39 +18424,51 @@
         }
       },
       "state": "open",
-      "status": "CONFIRMED_REMOVAL_QUALIFICATION_PENDING",
+      "status": "FOCUSED_NONREGRESSION_COMMITTED_NEXT_PENDING",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "6711b1adafa053debe07262f76d5e22f639e5586",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_004.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
         "commit": null,
         "evidence": [],
-        "scope": "Scoped removal is not implemented, committed or delivered yet. Existing NEXT reserve guard remains authoritative."
+        "scope": "Source removal is committed locally; main publication and exact NEXT delivery remain pending. Existing reserve guard and retained NEXT are unchanged."
       },
       "evidence": [
         {
           "kind": "confirmed_obsolete_candidate",
           "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
           "summary": "Remove the obsolete slot_runtime_tick result-mode gates after retirement of its real Slot producer. Migrate only the synthetic obsolete fixture phase to the current canonical realtime surface boundary, preserving completed-action assertions and run/RNG/clock conservation; close passive tooling readers. Preserve saved result dictionaries and active action authority/rollback."
+        },
+        {
+          "kind": "scoped_qualification_with_baseline_limits",
+          "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
+          "summary": "Removed retired Slot action-result mode and all4passive tool readers.1308other FoundationMain and278other tool method bodies identical. Migrated synthetic fixture to actual current realtime host boundary with exact-once/time/fullstate conservation; completed-action assertions retained. Original recovery wrapper failure repeats identically on exact original base. All4modified tools parse; no retired flag occurrence remains in scripts/tools."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Apply the reviewed bounded patch, run the focused acceptance, associate its commit and publish authorized finished work; observe NEXT without bypassing its reserve guard.",
+      "next_action": "Publish the committed qualified source under the existing user authorization, then observe the existing watcher and verify exact NEXT identity/assets/startup once capacity admission allows it.",
       "blocker": {
         "state": "none",
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:43:26.925449+00:00",
+        "observed_at": "2026-11-04T17:57:37.314596+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T17:43:26.925449+00:00"
+      "updated_at": "2026-11-04T17:57:37.314596+00:00"
     },
     {
       "id": "BTH061-AUDIT-REPORT-FALLBACK-004",
@@ -18457,9 +18488,10 @@
             "id": "focused-qualified",
             "description": "Structural reachability proof and an existing focused report contract check.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_004.md"
+              "docs/testing/deprecated_code_audit_continuation_004.md",
+              "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation004-applied-source-proof-r1.json"
             ]
           },
           {
@@ -18477,39 +18509,51 @@
         }
       },
       "state": "open",
-      "status": "CONFIRMED_REMOVAL_QUALIFICATION_PENDING",
+      "status": "FOCUSED_NONREGRESSION_COMMITTED_NEXT_PENDING",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "51b7315664ef34a55521cf88bde681ac387ded7d",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_004.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
         "commit": null,
         "evidence": [],
-        "scope": "Scoped removal is not implemented, committed or delivered yet. Existing NEXT reserve guard remains authoritative."
+        "scope": "Source removal is committed locally; main publication and exact NEXT delivery remain pending. Existing reserve guard and retained NEXT are unchanged."
       },
       "evidence": [
         {
           "kind": "confirmed_obsolete_candidate",
           "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
           "summary": "Delete exactly five unreachable lines in RunReportViewModel replay reconstruction: the first helper call always appends for every nonempty path, so the subsequent empty-segments/nonempty-path conjunction is impossible. Preserve all reachable historical visit reconstruction, payload and recorded-visit authority."
+        },
+        {
+          "kind": "scoped_qualification_with_baseline_limits",
+          "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
+          "summary": "Five unreachable fallback lines deleted;54other method bodies identical. Existing preserved migrated/annotated terminal report contract passes2cases with complete model/profile parity and input/output isolation."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Apply the reviewed bounded patch, run the focused acceptance, associate its commit and publish authorized finished work; observe NEXT without bypassing its reserve guard.",
+      "next_action": "Publish the committed qualified source under the existing user authorization, then observe the existing watcher and verify exact NEXT identity/assets/startup once capacity admission allows it.",
       "blocker": {
         "state": "none",
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:43:26.925449+00:00",
+        "observed_at": "2026-11-04T17:57:37.314596+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T17:43:26.925449+00:00"
+      "updated_at": "2026-11-04T17:57:37.314596+00:00"
     },
     {
       "id": "BTH061-AUDIT-SLOT-LEGACY-FAMILY-004",
@@ -18616,7 +18660,7 @@
       "state": "open",
       "status": "ORIGINAL_BASE_FAILURE_TRIAGE_OPEN",
       "owner": {
-        "name": "Audit obsolete production code",
+        "name": "Audit inherited contract diagnosis",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
@@ -18681,7 +18725,7 @@
       "state": "open",
       "status": "ORIGINAL_BASE_FAILURE_TRIAGE_OPEN",
       "owner": {
-        "name": "Audit obsolete production code",
+        "name": "Audit inherited contract diagnosis",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
@@ -18746,7 +18790,7 @@
       "state": "open",
       "status": "ORIGINAL_BASE_FAILURE_TRIAGE_OPEN",
       "owner": {
-        "name": "Audit obsolete production code",
+        "name": "Audit inherited contract diagnosis",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
@@ -18811,7 +18855,7 @@
       "state": "open",
       "status": "ORIGINAL_BASE_FAILURE_TRIAGE_OPEN",
       "owner": {
-        "name": "Audit obsolete production code",
+        "name": "Audit inherited contract diagnosis",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
@@ -18876,7 +18920,7 @@
       "state": "open",
       "status": "ORIGINAL_BASE_FAILURE_TRIAGE_OPEN",
       "owner": {
-        "name": "Audit obsolete production code",
+        "name": "Audit inherited contract diagnosis",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },

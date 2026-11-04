@@ -1484,6 +1484,46 @@
       "remaining": "Prior inventory and remaining_scope are historical baseline leads requiring current semantic dispositions; paused objectives remain open; this bounded continuation does not close parent coverage.",
       "parent_id": "BTH061-AUDIT-001",
       "phase": "003"
+    },
+    {
+      "phase": "004",
+      "parent_id": "BTH061-AUDIT-001",
+      "base": "ff8eb28c95f1b5dfc26ab3e5dad1b641914923aa",
+      "source_commits": [
+        "d1f03773ebc3f6d4306bcabf11482dcb5ffede09",
+        "6711b1adafa053debe07262f76d5e22f639e5586",
+        "51b7315664ef34a55521cf88bde681ac387ded7d"
+      ],
+      "scope": "Bounded called-path host/game review and6presentation/report models; not complete whole-codebase semantic coverage.",
+      "model_review": {
+        "modules": 6,
+        "lines": 3474,
+        "functions": 172,
+        "constants": 33,
+        "evidence": "docs/testing/deprecated_code_audit_continuation_004.md"
+      },
+      "host_review": "Prototype helper island, action-result/realtime boundary, generic aliases, public payload/money/result bridges; unrelated host methods not claimed fully reviewed.",
+      "game_review": "Current called Slot/Roulette/CoinPusher presentation/authority branches;15pinned blobs, not a full body review of every game.",
+      "confirmed_removals": [
+        "Closed52line generic-control island",
+        "Retired Slot action tick protocol and4tool readers",
+        "Five unreachable report fallback lines"
+      ],
+      "retained_candidates": [
+        "Active generic host legal/cheat/stake command schema",
+        "Current Roulette manual controls and CoinPusher v1-named hardware rendering",
+        "Public snapshot/callback isolation and legacy save/result projections"
+      ],
+      "open_followups": [
+        "BTH061-AUDIT-SLOT-LEGACY-FAMILY-004",
+        "BTH061-AUDIT-BLACKJACK-BASELINE-004",
+        "BTH061-AUDIT-ACTION-RESULT-BASELINE-004",
+        "BTH061-AUDIT-CRAPS-BASELINE-004",
+        "BTH061-AUDIT-CREW-BASELINE-004",
+        "BTH061-AUDIT-INTERRUPT-BASELINE-004"
+      ],
+      "qualification_limits": "Focused native/report/parse checks pass; composed game and recovery suites remain failing with exact same ordered failures as originalff8 runtime and fixtures. No current full aggregate or NEXT delivery acceptance claimed.",
+      "evidence": "docs/testing/deprecated_code_audit_continuation_004.md"
     }
   ]
 }
