@@ -3761,6 +3761,10 @@ func _draw_blackjack_table_notice(surface, surface_state: Dictionary) -> void:
 	# Keep this secondary copy behind the result board's existing reveal gate.
 	if _settlement_reveal_waiting(surface, surface_state):
 		notice = "Cards still moving; settlement follows."
+	elif not str(surface_state.get("deal_animation_id", "")).is_empty() \
+			and not _deal_animation_event_array(surface_state.get("deal_animation_events", [])).is_empty() \
+			and surface.surface_animation_active(DEAL_ANIMATION_CHANNEL):
+		notice = "Let the cards finish moving before choosing the next play."
 	if notice.is_empty():
 		notice = str(surface_state.get("active_hand_status", ""))
 	if notice.is_empty():
@@ -3908,6 +3912,9 @@ func _draw_chip_rack(surface, surface_state: Dictionary) -> void:
 
 func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 	var panel := Rect2(586, BJ_CONSOLE_Y + 8.0, 292, BJ_CONSOLE_H - 16.0)
+	# The legal-action snapshot can outlive a presentation frame. Match the
+	# canvas's live deal-animation input block when drawing lit hit regions.
+	var deal_actions_ready: bool = not surface.surface_animation_active(DEAL_ANIMATION_CHANNEL)
 	TableVisualsScript._draw_neon_panel(surface, panel, C_CYAN, 0.10)
 	if bool(surface_state.get("boss_duel_active", false)):
 		_draw_rourke_duel_actions(surface, surface_state, panel)
@@ -3922,26 +3929,26 @@ func _draw_table_actions(surface, surface_state: Dictionary) -> void:
 	var counting_enabled := bool(surface_state.get("counting_enabled", false))
 	_draw_table_button(surface, Rect2(panel.position.x + 112, panel.position.y + 7, 88, 16), "COUNT ON" if counting_enabled else "COUNT OFF", "blackjack_count_toggle", 0, C_PINK_2 if counting_enabled else C_SOFT, true, counting_enabled)
 	if bool(surface_state.get("can_deal", false)) or bool(surface_state.get("wager_blocked", false)):
-		_draw_table_button(surface, Rect2(panel.position.x + 14, panel.position.y + 28, 132, 38), "DEAL", "blackjack_deal", 0, C_YELLOW, bool(surface_state.get("can_deal", false)), surface.surface_native_action_selected("blackjack_deal"))
+		_draw_table_button(surface, Rect2(panel.position.x + 14, panel.position.y + 28, 132, 38), "DEAL", "blackjack_deal", 0, C_YELLOW, deal_actions_ready and bool(surface_state.get("can_deal", false)), surface.surface_native_action_selected("blackjack_deal"))
 		if bool(surface_state.get("wager_blocked", false)):
 			surface.surface_label("MIN $%d" % int(surface_state.get("minimum_wager", 1)), panel.position + Vector2(154, 40), 9, C_ORANGE)
 			if not _settlement_reveal_waiting(surface, surface_state) and not surface.surface_animation_active(PAYOUT_ANIMATION_CHANNEL):
 				surface.surface_label("HAVE $%d" % maxi(0, int(surface_state.get("stake_ceiling", 0))), panel.position + Vector2(154, 54), 8, C_SOFT)
 	else:
 		surface.surface_add_invisible_hit(Rect2(panel.position.x + 14, panel.position.y + 7, 84, 16), "blackjack_deal", 0)
-		_draw_table_button(surface, Rect2(panel.position.x + 12, panel.position.y + 24, 84, 26), "HIT", "blackjack_hit", 0, C_TEAL, bool(surface_state.get("can_hit", false)))
+		_draw_table_button(surface, Rect2(panel.position.x + 12, panel.position.y + 24, 84, 26), "HIT", "blackjack_hit", 0, C_TEAL, deal_actions_ready and bool(surface_state.get("can_hit", false)))
 		var stand_rect := Rect2(panel.position.x + 104, panel.position.y + 24, 84, 26)
-		_draw_table_button(surface, stand_rect, "STAND", "blackjack_stand", 0, C_CYAN, bool(surface_state.get("can_stand", false)), surface.surface_native_action_selected("blackjack_stand"))
-		_draw_table_button(surface, Rect2(panel.position.x + 196, panel.position.y + 24, 72, 26), "DOUBLE", "blackjack_double", 0, C_YELLOW, bool(surface_state.get("can_double", false)))
-		_draw_table_button(surface, Rect2(panel.position.x + 12, panel.position.y + 54, 84, 22), "SPLIT", "blackjack_split", 0, C_AMBER, bool(surface_state.get("can_split", false)))
+		_draw_table_button(surface, stand_rect, "STAND", "blackjack_stand", 0, C_CYAN, deal_actions_ready and bool(surface_state.get("can_stand", false)), surface.surface_native_action_selected("blackjack_stand"))
+		_draw_table_button(surface, Rect2(panel.position.x + 196, panel.position.y + 24, 72, 26), "DOUBLE", "blackjack_double", 0, C_YELLOW, deal_actions_ready and bool(surface_state.get("can_double", false)))
+		_draw_table_button(surface, Rect2(panel.position.x + 12, panel.position.y + 54, 84, 22), "SPLIT", "blackjack_split", 0, C_AMBER, deal_actions_ready and bool(surface_state.get("can_split", false)))
 		var focus := _dealer_focus_for_surface_state(surface, surface_state)
 		var peek_available := bool(surface_state.get("peek_available", false))
 		var peek_dangerous := peek_available and not bool(focus.get("peek_window_open", false)) and not bool(surface_state.get("dealer_hole_visible", false))
 		_draw_table_button(surface, Rect2(panel.position.x + 104, panel.position.y + 54, 84, 22), "PEEK", "blackjack_peek", 0, C_PINK if peek_dangerous else C_TEAL, peek_available, surface.surface_native_action_selected("blackjack_peek"))
 		if bool(surface_state.get("settle_available", false)):
-			_draw_table_button(surface, Rect2(panel.position.x + 196, panel.position.y + 54, 72, 22), "SETTLE", BLACKJACK_SETTLE_ACTION, 0, C_YELLOW, true, surface.surface_native_action_selected(BLACKJACK_SETTLE_ACTION))
+			_draw_table_button(surface, Rect2(panel.position.x + 196, panel.position.y + 54, 72, 22), "SETTLE", BLACKJACK_SETTLE_ACTION, 0, C_YELLOW, deal_actions_ready, surface.surface_native_action_selected(BLACKJACK_SETTLE_ACTION))
 		elif bool(surface_state.get("can_surrender", false)):
-			_draw_table_button(surface, Rect2(panel.position.x + 196, panel.position.y + 54, 72, 22), "SURRENDER", "blackjack_surrender", 0, C_ORANGE, bool(surface_state.get("can_surrender", false)))
+			_draw_table_button(surface, Rect2(panel.position.x + 196, panel.position.y + 54, 72, 22), "SURRENDER", "blackjack_surrender", 0, C_ORANGE, deal_actions_ready and bool(surface_state.get("can_surrender", false)))
 	var distractions: Array = _draw_array_view(surface_state.get("distractions", []))
 	var strip := Rect2(692, 294, 168, 34)
 	TableVisualsScript._draw_neon_panel(surface, strip, C_TEAL, 0.08)
@@ -4004,18 +4011,19 @@ func _draw_showdown_duel_room_staging(surface, surface_state: Dictionary) -> voi
 
 
 func _draw_rourke_duel_actions(surface, surface_state: Dictionary, panel: Rect2) -> void:
+	var deal_actions_ready: bool = not surface.surface_animation_active(DEAL_ANIMATION_CHANNEL)
 	surface.surface_label("DUEL ACTIONS", panel.position + Vector2(10, 15), 10, C_SOFT)
 	var counting_enabled := bool(surface_state.get("counting_enabled", false))
 	_draw_table_button(surface, Rect2(panel.position.x + 184, panel.position.y + 6, 92, 18), "COUNT ON" if counting_enabled else "COUNT OFF", "blackjack_count_toggle", 0, C_PINK_2 if counting_enabled else C_SOFT, true, counting_enabled)
 	if bool(surface_state.get("can_deal", false)):
-		_draw_table_button(surface, Rect2(panel.position.x + 12, panel.position.y + 28, 116, 38), "DEAL", "blackjack_deal", 0, C_YELLOW, true)
+		_draw_table_button(surface, Rect2(panel.position.x + 12, panel.position.y + 28, 116, 38), "DEAL", "blackjack_deal", 0, C_YELLOW, deal_actions_ready)
 	else:
-		_draw_table_button(surface, Rect2(panel.position.x + 8, panel.position.y + 28, 62, 24), "HIT", "blackjack_hit", 0, C_TEAL, bool(surface_state.get("can_hit", false)))
-		_draw_table_button(surface, Rect2(panel.position.x + 74, panel.position.y + 28, 62, 24), "STAND", "blackjack_stand", 0, C_CYAN, bool(surface_state.get("can_stand", false)))
-		_draw_table_button(surface, Rect2(panel.position.x + 140, panel.position.y + 28, 62, 24), "DOUBLE", "blackjack_double", 0, C_YELLOW, bool(surface_state.get("can_double", false)))
+		_draw_table_button(surface, Rect2(panel.position.x + 8, panel.position.y + 28, 62, 24), "HIT", "blackjack_hit", 0, C_TEAL, deal_actions_ready and bool(surface_state.get("can_hit", false)))
+		_draw_table_button(surface, Rect2(panel.position.x + 74, panel.position.y + 28, 62, 24), "STAND", "blackjack_stand", 0, C_CYAN, deal_actions_ready and bool(surface_state.get("can_stand", false)))
+		_draw_table_button(surface, Rect2(panel.position.x + 140, panel.position.y + 28, 62, 24), "DOUBLE", "blackjack_double", 0, C_YELLOW, deal_actions_ready and bool(surface_state.get("can_double", false)))
 		_draw_table_button(surface, Rect2(panel.position.x + 206, panel.position.y + 28, 70, 24), "PEEK", "blackjack_peek", 0, C_PINK, bool(surface_state.get("peek_available", false)))
 		if bool(surface_state.get("settle_available", false)):
-			_draw_table_button(surface, Rect2(panel.position.x + 206, panel.position.y + 54, 70, 18), "SETTLE", BLACKJACK_SETTLE_ACTION, 0, C_YELLOW, true)
+			_draw_table_button(surface, Rect2(panel.position.x + 206, panel.position.y + 54, 70, 18), "SETTLE", BLACKJACK_SETTLE_ACTION, 0, C_YELLOW, deal_actions_ready)
 	var callouts_value: Variant = surface_state.get("boss_callouts", [])
 	var callouts: Array = callouts_value as Array if typeof(callouts_value) == TYPE_ARRAY else []
 	for i in range(mini(callouts.size(), 2)):

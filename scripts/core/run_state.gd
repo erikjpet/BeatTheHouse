@@ -11284,6 +11284,27 @@ func numbers_buy_slip(digits: String, stake: int, play_type: String) -> Dictiona
 	result["bankroll_delta"] = -stake
 	result["deltas"] = {"bankroll_delta": -stake}
 	_sync_numbers_inventory_marker()
+	# Record only the accepted purchase's public terms, not hidden slip state or
+	# a resolved game result. Readers and Continue must never reissue the wager.
+	var slip := JsonCoerceScript._copy_dict(result.get("slip", {}))
+	var draw := maxi(0, int(slip.get("day", 0))) + 1
+	var venue := numbers_state.venue_definition(venue_id)
+	log_story({
+		"type": "numbers_slip_purchase",
+		"slip_id": str(slip.get("id", "")),
+		"digits": str(slip.get("digits", "")),
+		"stake": stake,
+		"play_type": str(slip.get("play_type", "")),
+		"draw": draw,
+		"venue_id": venue_id,
+		"environment_id": str(current_environment.get("id", "")),
+		"environment_archetype_id": str(current_environment.get("archetype_id", "")),
+		"environment_name": str(venue.get("label", "Local book")),
+		"currency": "cash",
+		"currency_delta": -stake,
+		"bankroll_delta": -stake,
+		"message": "Bought Numbers slip %s %s for $%d (Draw %d) at %s." % [str(slip.get("digits", "")), str(slip.get("play_type", "")).capitalize(), stake, draw, str(venue.get("label", "Local book"))],
+	})
 	return result
 
 
