@@ -854,7 +854,7 @@ func _hardware_cache_signature(state: Dictionary, hover_action: String, enabled_
 	# Presentation serial is deliberately absent. It advances with the moving
 	# coin bed, while this retained layer contains only cabinet controls and
 	# readouts. Every state value consumed by _draw_hardware is represented here.
-	return "%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%s|%d|%s|%s" % [
+	return "%s|%d|%d|%d|%d|%d|%d|%d|%d|%d|%s|%d|%s|%s|%d|%d|%d" % [
 		str(state.get("coin_pusher_static_content_key", "")),
 		int(state.get("coin_pusher_carriage_x", 0)),
 		int(state.get("coin_pusher_selected_hole", 0)),
@@ -869,6 +869,9 @@ func _hardware_cache_signature(state: Dictionary, hover_action: String, enabled_
 		int(state.get("coin_pusher_vault_selected_cell", 0)),
 		str(state.get("coin_pusher_tell_label", "steady")),
 		_feature_hardware_cache_key(state),
+		int(state.get("coin_pusher_drop_cost", 1)),
+		int(state.get("coin_pusher_drop_payable_count", 0)),
+		int(state.get("coin_pusher_drop_payable_total", 0)),
 	]
 
 
@@ -1331,6 +1334,17 @@ func _draw_glass(surface, colors: Dictionary) -> void:
 	surface.draw_rect(PLAYFIELD_RECT, Color(colors["glass"], 0.45), false, 2.0)
 
 
+func _drop_control_label(state: Dictionary) -> String:
+	var cost := maxi(1, int(state.get("coin_pusher_drop_cost", 1)))
+	var charging := maxi(0, int(state.get("coin_pusher_drop_charge_count", 0)))
+	if charging > 0:
+		var count := maxi(0, int(state.get("coin_pusher_drop_payable_count", charging)))
+		var total := maxi(0, int(state.get("coin_pusher_drop_payable_total", count * cost)))
+		return "HOLD %d $%d" % [count, total] if count > 0 else "NEED $%d" % cost
+	var queued := maxi(0, int(state.get("coin_pusher_drop_queue_count", 0)))
+	return "PAID %d; DROP $%d" % [queued, cost] if queued > 0 else "DROP/HOLD $%d" % cost
+
+
 func _draw_hardware(surface, state: Dictionary, colors: Dictionary) -> void:
 	var bindings: Dictionary = state.get("surface_action_bindings", {}) if typeof(state.get("surface_action_bindings", {})) == TYPE_DICTIONARY else {}
 	var apparatus: Dictionary = state.get("coin_pusher_apparatus", {}) if typeof(state.get("coin_pusher_apparatus", {})) == TYPE_DICTIONARY else {}
@@ -1387,9 +1401,7 @@ func _draw_hardware(surface, state: Dictionary, colors: Dictionary) -> void:
 	surface.draw_circle(Vector2(576, 374), 19.0, colors["trim"].darkened(0.20))
 	surface.draw_circle(Vector2(576, 374), 15.0, colors["side"])
 	surface.draw_line(Vector2(566, 374), Vector2(586, 374), Color("#020305"), 5.0)
-	var queued := maxi(0, int(state.get("coin_pusher_drop_queue_count", 0)))
-	var charging := maxi(0, int(state.get("coin_pusher_drop_charge_count", 0)))
-	var drop_label := "HOLD %d" % charging if charging > 0 else "QUEUE %d" % queued if queued > 0 else "DROP / HOLD"
+	var drop_label := _drop_control_label(state)
 	surface.surface_label_centered_plain(drop_label, Rect2(538, 391, 76, 9), 8, colors["light"])
 	var drop_enabled := _binding_enabled(bindings, "coin_pusher_drop")
 	if drop_enabled:

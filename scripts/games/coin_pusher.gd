@@ -498,15 +498,15 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 		if phase == "cancel":
 			next_state.erase("coin_pusher_drop_charge_started_tick")
 			next_state["coin_pusher_drop_charge_count"] = 0
-			return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true, "surface_state_patch": {"coin_pusher_drop_charge_count": 0}}, true)
+			return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true, "surface_state_patch": {"coin_pusher_drop_charge_count": 0}.merged(_drop_price_view(run_state, environment, 0))}, true)
 		if phase == "begin":
 			next_state["coin_pusher_drop_charge_started_tick"] = int(charge_simulation.get("tick", 0))
 			next_state["coin_pusher_drop_charge_count"] = 1
-			return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true}, true)
+			return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true, "surface_state_patch": {"coin_pusher_drop_charge_count": 1}.merged(_drop_price_view(run_state, environment, 1))}, true)
 		if phase == "move":
 			var held_ticks := maxi(0, int(charge_simulation.get("tick", 0)) - int(next_state.get("coin_pusher_drop_charge_started_tick", charge_simulation.get("tick", 0))))
 			next_state["coin_pusher_drop_charge_count"] = clampi(maxi(1, held_ticks / 6), 1, 60)
-			return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true, "surface_state_patch": {"coin_pusher_drop_charge_count": int(next_state["coin_pusher_drop_charge_count"])}}, true)
+			return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true, "surface_state_patch": {"coin_pusher_drop_charge_count": int(next_state["coin_pusher_drop_charge_count"])}.merged(_drop_price_view(run_state, environment, int(next_state["coin_pusher_drop_charge_count"])))}, true)
 		if phase == "end":
 			var end_held_ticks := maxi(0, int(charge_simulation.get("tick", 0)) - int(next_state.get("coin_pusher_drop_charge_started_tick", charge_simulation.get("tick", 0))))
 			var requested := clampi(maxi(1, end_held_ticks / 6), 1, 60)
@@ -515,8 +515,8 @@ func surface_pointer_command(surface_action: String, _index: int, phase: String,
 			next_state.erase("coin_pusher_drop_charge_started_tick")
 			next_state["coin_pusher_drop_charge_count"] = 0
 			if count <= 0:
-				return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true, "message": "The slot needs another quarter."}, true)
-			return GameModule.surface_command({"handled": true, "ui_state": next_state, "direct_resolve": true, "action_id": DROP_ACTION, "action_kind": "legal", "set_stake": count * _drop_cost(), "skip_stake_validation": true, "preserve_surface_ui_state": true}, true)
+				return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true, "message": "The slot needs another quarter.", "surface_state_patch": {"coin_pusher_drop_charge_count": 0}.merged(_drop_price_view(run_state, environment, 0))}, true)
+			return GameModule.surface_command({"handled": true, "ui_state": next_state, "direct_resolve": true, "action_id": DROP_ACTION, "action_kind": "legal", "set_stake": count * _drop_cost(), "skip_stake_validation": true, "preserve_surface_ui_state": true, "surface_state_patch": {"coin_pusher_drop_charge_count": 0}.merged(_drop_price_view(run_state, environment, 0))}, true)
 		return GameModule.surface_command({"handled": true, "ui_state": next_state, "preserve_surface_ui_state": true}, true)
 	if phase == "begin":
 		next_state["coin_pusher_rail_drag_active"] = true
@@ -864,6 +864,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 		patch["coin_pusher_drop_charge_count"] = clampi(maxi(1, held_ticks / 6), 1, 60)
 	else:
 		patch["coin_pusher_drop_charge_count"] = 0
+	patch.merge(_drop_price_view(run_state, environment, int(patch["coin_pusher_drop_charge_count"])), true)
 	var audio_events := _presentation_audio_events(machine, physics_events)
 	if not audio_events.is_empty():
 		presentation_session["presentation_audio_serial"] = int(presentation_session.get("presentation_audio_serial", 0)) + 1
@@ -1410,7 +1411,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 	var goal := _machine_goal_state(machine, simulation)
 	if not session.is_empty():
 		session["presentation_binding_signature"] = _realtime_binding_signature(machine, simulation, tray)
-	return GameModule.surface_spec({
+	var surface_view := GameModule.surface_spec({
 		"surface_renderer": "coin_pusher",
 		"surface_renderer_opaque": true,
 		"surface_life": "coin_pusher_v3_alive_cabinet",
@@ -1493,6 +1494,8 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"surface_animation_channels": [],
 		"surface_audio": GameModule.surface_audio_spec({"profile_id": "coin_pusher", "selection_seed": run_state.seed_value if run_state != null else 1, "state_sync": {"method": "coin_pusher_state"}}),
 	})
+	surface_view.merge(_drop_price_view(run_state, environment, int(ui_state.get("coin_pusher_drop_charge_count", 0))), true)
+	return surface_view
 
 
 func _v3_realtime_presentation_patch(machine: Dictionary, current_surface_state: Dictionary = {}, run_state: RunState = null, environment: Dictionary = {}) -> Dictionary:
@@ -1687,8 +1690,8 @@ func _machine_goal_state(machine: Dictionary, simulation: Dictionary) -> Diction
 func _coin_pusher_action_bindings(machine: Dictionary, simulation: Dictionary, tray: Array, run_state: RunState = null, environment: Dictionary = {}) -> Dictionary:
 	var drop_refused := _drop_refused(machine)
 	var result := {
-		"coin_pusher_drop": {"label": "DROP", "enabled": not drop_refused},
-		DROP_CHARGE_ACTION: {"label": "HOLD TO DROP", "enabled": not drop_refused},
+		"coin_pusher_drop": {"label": "DROP $%d" % _drop_cost(), "enabled": not drop_refused},
+		DROP_CHARGE_ACTION: {"label": "HOLD TO DROP ($%d EACH)" % _drop_cost(), "enabled": not drop_refused},
 		SKILL_STOP_ACTION: {"label": "RELEASE" if bool(simulation.get("skill_stop_engaged", false)) else "SKILL STOP", "enabled": true, "lit": bool(simulation.get("skill_stop_engaged", false))},
 		COLLECT_ACTION: {"label": "COLLECT", "enabled": not tray.is_empty()},
 		"coin_pusher_nudge": {"action": "surface_cheat", "index": 0, "label": "NUDGE", "enabled": true},
@@ -1711,7 +1714,7 @@ func _surface_action_view_patch(machine: Dictionary, run_state: RunState, enviro
 	# so a DROP never copies the full 300-body surface merely to refresh the HUD.
 	var simulation := _simulation(machine)
 	var tray: Array = simulation.get("tray_ledger", []) if typeof(simulation.get("tray_ledger", [])) == TYPE_ARRAY else []
-	return {
+	var patch := {
 		# This surface already refreshes from its continuous live loop. Asking for
 		# another dense body projection inside the deferred action refresh would
 		# duplicate the same frame's work; the next live tick catches up from the
@@ -1728,6 +1731,12 @@ func _surface_action_view_patch(machine: Dictionary, run_state: RunState, enviro
 		"native_selected_surface_actions": _native_surface_actions(machine),
 		"surface_action_bindings": _coin_pusher_action_bindings(machine, simulation, tray, run_state, environment),
 	}
+	# Callers without gesture context (for example Collect) retain the coherent
+	# live quote until realtime publication refreshes it with the actual gesture.
+	if ui_state.has("coin_pusher_drop_charge_count"):
+		patch["coin_pusher_drop_charge_count"] = int(ui_state["coin_pusher_drop_charge_count"])
+		patch.merge(_drop_price_view(run_state, environment, int(ui_state["coin_pusher_drop_charge_count"])), true)
+	return patch
 
 
 func _drop_surface_action_view_patch(machine: Dictionary, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
@@ -1735,7 +1744,7 @@ func _drop_surface_action_view_patch(machine: Dictionary, run_state: RunState, e
 	# action-boundary scalars; catalog, stake, goal, tray, selected controls and
 	# bindings remain valid until the normal realtime publication owns any later
 	# physical insertion. Re-sending them here rebuilt the cold action UI twice.
-	return {
+	var patch := {
 		"surface_action_realtime_refresh_required": false,
 		# The host uses these two small authority records to retain the exact legal
 		# and cheat action arrays. Omitting them forces a catalog rebuild and leaves
@@ -1744,8 +1753,14 @@ func _drop_surface_action_view_patch(machine: Dictionary, run_state: RunState, e
 		"surface_action_stake_view": _surface_action_stake_view(run_state, environment),
 		"coin_pusher_action_count": int(machine.get("action_count", 0)),
 		"coin_pusher_last_message": str(machine.get("last_message", V3_HEADLESS_MESSAGE)),
+		# Direct-resolve commands publish through this result patch, rather than
+		# their pointer-command patch. Clear the old quote and show the paid queue.
+		"coin_pusher_drop_charge_count": 0,
+		"coin_pusher_drop_queue_count": _queued_drop_count(machine),
 		"coin_pusher_input_trace_count": (machine.get("live_session", {}).get("input_trace", []) as Array).size() if typeof(machine.get("live_session", {}).get("input_trace", [])) == TYPE_ARRAY else 0,
 	}
+	patch.merge(_drop_price_view(run_state, environment, 0), true)
+	return patch
 
 
 func _surface_action_catalog_key(machine: Dictionary, run_state: RunState, environment: Dictionary, ui_state: Dictionary = {}) -> String:
@@ -1775,6 +1790,22 @@ func _surface_action_catalog_key(machine: Dictionary, run_state: RunState, envir
 		int(pit_boss_status.get("cheat_heat_bonus", 0)),
 		str(pit_boss_status.get("summary", "")),
 	])
+
+
+func _drop_price_view(run_state: RunState, environment: Dictionary, held_count: int = 0) -> Dictionary:
+	# Quote the same per-gesture limit and cash affordability as Hold release.
+	# This is presentation only; the queue already contains paid drops.
+	var cost := _drop_cost()
+	var requested := clampi(held_count, 0, 60)
+	var affordable := requested
+	if requested > 0 and run_state != null:
+		affordable = maxi(0, run_state.wager_capacity_for_game(get_id(), environment)) / cost
+	var count := mini(requested, affordable)
+	return {
+		"coin_pusher_drop_cost": cost,
+		"coin_pusher_drop_payable_count": count,
+		"coin_pusher_drop_payable_total": count * cost,
+	}
 
 
 func _surface_action_stake_view(run_state: RunState, environment: Dictionary) -> Dictionary:

@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T17:09:19.993080+00:00",
+  "updated_at": "2026-11-04T17:46:15.004156+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -517,7 +517,7 @@
       ],
       "group": "current",
       "objective": {
-        "text": "Video Poker cold strategy-hint cost. Generated3hands show1.17\u20131.33s cold versus17\u201340us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain.",
+        "text": "Video Poker cold strategy-hint cost. Generated3hands show1.17–1.33s cold versus17–40us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain.",
         "source": "docs/plans/performance_audit_2026-11-04.md",
         "scope_confirmed": true,
         "acceptance": [
@@ -576,7 +576,7 @@
         {
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-          "summary": "Generated3hands show1.17\u20131.33s cold versus17\u201340us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain."
+          "summary": "Generated3hands show1.17–1.33s cold versus17–40us cached under5% CPU cap; synthetic attribution only. Web/runtime comparison and deterministic recommendation parity remain."
         }
       ],
       "implementation_batches": [],
@@ -5037,13 +5037,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop \u2192 Main Menu \u2192 Continue \u2192 full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
+        "text": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop → Main Menu → Continue → full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
         "source": "docs/plans/0.6.1_stability_release_plan.md#prioritized-task-list",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop \u2192 Main Menu \u2192 Continue \u2192 full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
+            "description": "Fixed in `ead6856`. Both original seeds pass the production-source regression and rebuilt Web paid Drop → Main Menu → Continue → full browser restart. Cash remains $96 instead of rolling back to $97; the source regression also compares full settled machine/tray state and RNG. Keep payout/item and other-cabinet coverage in 003.",
             "required": true,
             "state": "unknown",
             "evidence": [
@@ -5254,13 +5254,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3\u20135, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
+        "text": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3–5, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
         "source": "docs/plans/0.6.1_stability_release_plan.md#prioritized-task-list",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3\u20135, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
+            "description": "Expand normal-input seed batches beyond the old fixed closure seeds. Run batches of 3–5, recording seeds, actual generated scenarios, routes, legitimate losses and defects. Cover Clean, Rourke/Cheat, Crew/Count and a Crew-ignoring control where each route is supported. A catalog discovery or forced visit does not count as completing a playable route.",
             "required": true,
             "state": "unknown",
             "evidence": [
@@ -13558,13 +13558,13 @@
       "parent_ids": [],
       "group": "historical",
       "objective": {
-        "text": "Band free listen once:177cash,Heat2\u21921; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
+        "text": "Band free listen once:177cash,Heat2→1; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
         "source": "C:\\Users\\theep\\Documents\\Codex\\2026-10-23\\task-2\\evidence\\named-fix-acceptance-registry-current.json#$.pending_named_acceptance_followups.9",
         "scope_confirmed": true,
         "acceptance": [
           {
             "id": "original-scope",
-            "description": "Band free listen once:177cash,Heat2\u21921; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
+            "description": "Band free listen once:177cash,Heat2→1; Sax terms visible without purchase; Save/full-process cold retains service controls, journal and no replay.",
             "required": true,
             "state": "pass",
             "evidence": [
@@ -18095,6 +18095,221 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-04T16:33:01.150Z"
+    },
+    {
+      "id": "BTH-COINPUSHER-DROP-PRICE-001",
+      "name": "Show canonical Drop price and affordable Hold total in Quarter Falls",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Investigate warm/cold missing visible Drop/Hold price in Quarter Falls, including the observed Vault Drop native variation. Display canonical unit cash cost before paid Drop and the actual affordable held-input total before release, distinguish already-paid queue, preserve charging, machine/queue/save state, RNG/clocks, input geometry and idle animation. Reproduce, test and commit a focused fix; preserve item/scenario pause and storage gate.",
+        "source": "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-quarter-falls-drop-price-886887-finding.json; trusted parent delegation2026-11-04 requesting accurate displayed terms without charging changes, test and commit",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "baseline",
+            "description": "Reproduce missing visible terms safely without using or playing the original R07 save.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/coin_pusher_drop_price_20261104.md",
+              "docs/testing/coin_pusher_drop_price_20261104.json"
+            ]
+          },
+          {
+            "id": "terms",
+            "description": "All three native variants show canonical price and affordable held count/total for default and nondefault costs, clamp60, insufficient funds, cancel and already-paid queue.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/coin_pusher_drop_price_20261104.md",
+              "docs/testing/coin_pusher_drop_price_20261104.json"
+            ]
+          },
+          {
+            "id": "accounting",
+            "description": "Actual tap/Hold request or settlement checks demonstrate unchanged debit/queue/paid-state behavior; price reads never transact or alter RNG/history.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/coin_pusher_drop_price_20261104.md",
+              "docs/testing/coin_pusher_drop_price_20261104.json"
+            ]
+          },
+          {
+            "id": "cold",
+            "description": "Official Save/fresh-process cold retains machine and wallet and displays the same price; no original paid outcome replay.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/coin_pusher_drop_price_20261104.md",
+              "docs/testing/coin_pusher_drop_price_20261104.json"
+            ]
+          },
+          {
+            "id": "render_liveness",
+            "description": "Production font-fit/render contract and cache invalidation preserve existing hitboxes/fixed16:9 and no-input animation.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/coin_pusher_drop_price_20261104.md",
+              "docs/testing/coin_pusher_drop_price_20261104.json"
+            ]
+          },
+          {
+            "id": "review_commit",
+            "description": "Independent review, focused tests, exact implementation commit and both ledger views associated.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/coin_pusher_drop_price_20261104.md",
+              "docs/testing/coin_pusher_drop_price_20261104.json"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "LOCAL_NATIVE263_PASS_IMPLEMENTATION_COMMIT_PENDING",
+      "owner": {
+        "name": "Fix Back Alley travel / Quarter Falls visible terms",
+        "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Current delegation requests local fix/test/commit; no deployed acceptance is inferred."
+      },
+      "evidence": [
+        {
+          "kind": "qa_observation",
+          "reference": "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-quarter-falls-drop-price-886887-finding.json",
+          "summary": "R07 onf305: Store Quarter Falls/Vault Drop cabinet cash54, no unit cost on card/cabinet/hover warm886 and cold887. No paid Drop/Hold/Collect input or charging claim. Related same cabinet term presentation, not financial mismatch."
+        },
+        {
+          "kind": "regression_test",
+          "reference": "docs/testing/coin_pusher_drop_price_20261104.json",
+          "summary": "Native producer228 + fresh-process cold35 pass; separate liveness PASS; initial cold6 JSON numeric-type comparison failures retained and corrected in test only; all six owned Jobs closed."
+        },
+        {
+          "kind": "review",
+          "reference": "docs/testing/coin_pusher_drop_price_20261104.md",
+          "summary": "Independent source review approved canonical terms, matching gesture/price merges, actual paid queue and preserved transaction/geometry/scheduling scope."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Associate exact implementation commit with the completed independent source review and local qualification receipts, then reconcile the scoped six acceptance criteria. Deployment is outside this local delegation.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T17:46:15.004156+00:00",
+        "evidence": [
+          "docs/testing/coin_pusher_drop_price_20261104.json"
+        ]
+      },
+      "planned_app_changes": [
+        {
+          "scope": "cash_price_presentation",
+          "description": "Expose/read-only canonical Drop and Hold terms in existing surface/control geometry; no charging, paused gameplay, viewport/touch or storage guard change."
+        }
+      ],
+      "updated_at": "2026-11-04T17:46:15.004156+00:00"
+    },
+    {
+      "id": "BTH-JOURNAL-ROULETTE-CURRENCY-001",
+      "name": "Record actual currency in new Roulette journal receipts",
+      "aliases": [],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Investigate the distinct new Roulette journal-currency omission in R07 Lounge settlement893894, trace the actual producer/host path and correct new recorded cash/chip provenance if warranted. Preserve staged unpaid draft, one confirmed settlement/debit, wallet/RNG/rules/authority and historical unknown rows. Test and commit separately from Bar Dice and Quarter Falls work.",
+        "source": "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-roulette-journal-currency-893894-finding.json; trusted parent delegation2026-11-04 requests add/investigate with wallet preservation and independent attribution; Quarter Falls remains first",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "trace_reproduce",
+            "description": "Trace Roulette-specific producer/host attribution and reproduce using labeled synthetic normal cash/chip action boundaries, no original R07 replay.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "accounting_contract",
+            "description": "Preserve unpaid draft/Save, confirm-exactly-once settlement and explicit current-net units, refund/zero/legacy boundaries as materially relevant.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "save_cold",
+            "description": "Relevant official Save/fresh-process cold preserves wallets, full paid/draft table state, RNG/clocks/history without new wager or outcome.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          },
+          {
+            "id": "review_commit",
+            "description": "Focused tests, independent scoped review and separately associated implementation commit; update both ledgers with actual evidence and limits.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "ADDED_DISTINCT_FINDING_SOURCE_TRACE_IN_PROGRESS",
+      "owner": {
+        "name": "Fix Back Alley travel / Roulette journal follow-up",
+        "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Current addition requests isolated investigation/correction if warranted, tests and commit; deployed acceptance not inferred."
+      },
+      "evidence": [
+        {
+          "kind": "qa_observation",
+          "reference": "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-roulette-journal-currency-893894-finding.json",
+          "summary": "R07 onf305 Lounge: one unpaid14-on17 draft survivescold with cash33, confirmnatural36red loses14 once tocash19; cold retains one row unknowncurrency. Accounting/exactlyonce correct; distinct Roulette attribution pending."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Read-only Roulette producer/host trace proceeds independently while Quarter Falls price fix finishes; then reproduce and qualify a separately scoped currency correction if warranted.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T17:35:28.965297+00:00",
+        "evidence": [
+          "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-roulette-journal-currency-893894-finding.json"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T17:35:28.965297+00:00"
     }
   ],
   "batches": [
