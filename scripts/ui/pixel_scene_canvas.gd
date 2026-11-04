@@ -8025,6 +8025,22 @@ func _update_drunk_distortion_protected_rects() -> void:
 # otherwise valid placements. Legacy and otherwise unslotted room models retain
 # their natural dimensions and are anchored to the slot's physical contact.
 func _natural_model_rect_for_object(object_data: Dictionary) -> Rect2:
+	var rect := _unbounded_natural_model_rect_for_object(object_data)
+	if not bool(object_data.get("person_transit_active", false)):
+		return rect
+	# Exit connectors end at the doorway's center, which can put a departing
+	# person's body beyond the board. Translate the final displayed geometry
+	# after small-screen sizing and slot scaling; never crop or resize the actor.
+	# The normal layout inset also leaves room for idle gestures and feet shadows.
+	var inset := Vector2(OBJECT_LAYOUT_MARGIN, OBJECT_LAYOUT_MARGIN)
+	var last_position := (Vector2(BOARD_SIZE) - inset - rect.size).max(inset)
+	return Rect2(Vector2(
+		clampf(rect.position.x, inset.x, last_position.x),
+		clampf(rect.position.y, inset.y, last_position.y)
+	), rect.size)
+
+
+func _unbounded_natural_model_rect_for_object(object_data: Dictionary) -> Rect2:
 	var slot_rect := _board_rect_for_object(object_data)
 	var object_scale := _scene_object_slot_scale(object_data)
 	var slot_machine_visual_rect := _slot_machine_world_visual_rect(object_data, slot_rect, object_scale)
