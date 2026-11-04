@@ -2711,10 +2711,8 @@ func _draw_controls(surface, state: Dictionary, skin: Dictionary, accent: Color,
 			else:
 				_draw_button(surface, Rect2(rect.position.x + 220, rect.position.y + 10, 220, 56), "FREE SPIN", "slot_bonus_launch", 0, light)
 			return
-		_draw_button(surface, Rect2(rect.position.x + 28, rect.position.y + 18, 132, 42), "LEFT", "slot_bonus_left", 0, accent)
-		_draw_button(surface, Rect2(rect.position.x + 190, rect.position.y + 10, 220, 56), "LAUNCH", "slot_bonus_launch", 0, light)
-		_draw_button(surface, Rect2(rect.position.x + 438, rect.position.y + 18, 132, 42), "RIGHT", "slot_bonus_right", 0, accent)
-		_draw_button(surface, Rect2(rect.position.x + 600, rect.position.y + 18, 132, 42), "TILT", "slot_bonus_tilt", 0, trim)
+		# Pinball owns its fullscreen native controls; unresolved records have
+		# already selected the noninteractive recovery surface.
 		return
 	var options: Array = _read_array(state.get("slot_bet_options", []))
 	var selected_id := str(state.get("slot_selected_bet_id", "bet_2"))
