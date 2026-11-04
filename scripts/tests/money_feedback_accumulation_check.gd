@@ -27,11 +27,22 @@ func _run() -> void:
 	root.add_child(hud)
 	await process_frame
 	hud.set_process(false)
+	var initial_panel: PanelContainer = hud.wallet_delta_panel
+	var feedback_overlay := hud.get_node_or_null("MoneyFeedbackOverlay") as Control
 	for amount in [1, 1, 1, 2]:
 		_show("cash", amount)
 		hud._process(0.4)
 	_check(hud.wallet_delta.text == "+$5", "Visible +1,+1,+1,+2 must accumulate to +$5.")
-	_check(hud.wallet_delta_panel.get_parent() == hud.wallet_chip, "Accumulation must reuse the existing panel.")
+	_check(
+		is_instance_valid(initial_panel)
+		and is_instance_valid(feedback_overlay)
+		and is_same(hud.wallet_delta_panel, initial_panel)
+		and is_same(initial_panel.get_parent(), feedback_overlay)
+		and is_same(feedback_overlay.get_parent(), hud)
+		and feedback_overlay.get_child_count() == 1
+		and is_same(feedback_overlay.get_child(0), initial_panel),
+		"Accumulation must reuse the initial panel in the single HUD feedback overlay."
+	)
 	hud._process(0.5) # Past the first event's original expiry, within the newest.
 	_check(_active() and hud.wallet_delta_panel.modulate.a == 1.0, "An old expiry must not hide the extended popup.")
 	hud._process(0.55) # Last 0.15 seconds of the renewed lifetime.
