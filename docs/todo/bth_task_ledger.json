@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T02:16:19.099184+00:00",
+  "updated_at": "2026-11-04T15:42:58.227322+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -15765,6 +15765,129 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-04T02:16:19.099184+00:00"
+    },
+    {
+      "id": "BTH-NUMBERS-PURCHASE-JOURNAL-001",
+      "name": "Record accepted Numbers purchase in Run Journal",
+      "aliases": [
+        "QA-OBS-R05-NUMBERS-JOURNAL-001"
+      ],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Append exactly one public purchase receipt after a Numbers purchase is accepted and its slip/debit/marker succeeds. Preserve rejected requests, ticket custody, wallet, RNG, clocks, hidden state and prior history; retain the receipt across normal Save and cold Continue.",
+        "source": "docs/testing/numbers_purchase_independent_web_acceptance_20261104.json; docs/testing/numbers_purchase_journal.md",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "native_contract",
+            "description": "Existing producer105 and independentcold54 qualify original public CornerStoreDraw2 terms, successful/rejected requests and old-history/authority conservation.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/numbers_purchase_independent_web_acceptance_20261104.json"
+            ]
+          },
+          {
+            "id": "new_purchase_web",
+            "description": "Ordinary Web one-dollar new purchase produces one paid slip, one explicit Bankroll-1 purchase journal row and balance97to96.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/numbers_purchase_independent_web_acceptance_20261104.json"
+            ]
+          },
+          {
+            "id": "official_save_cold",
+            "description": "Normal Save and full-process cold Continue retain the same single purchase row/slip and balance96, with no purchase, payout, refund or replay in the cold verification.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/numbers_purchase_independent_web_acceptance_20261104.json"
+            ]
+          },
+          {
+            "id": "exact_NEXT",
+            "description": "Served REF/BUILD/manifest identity and four assetHEAD checks pass on989; GitHub tree and ancestry include fixeb4e with only documentation changes afterward.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/numbers_purchase_independent_web_acceptance_20261104.json"
+            ]
+          },
+          {
+            "id": "historical_QA_custody",
+            "description": "Historical cases858-861 completed dispatch, context closure and exit0/no timeout/pageerrors/owned children; current active campaign/session remains separate.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/numbers_purchase_independent_web_acceptance_20261104.json"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "complete",
+      "status": "VERIFIED_NATIVE159_AND_INDEPENDENT_WEB_PURCHASE_SAVE_COLD_NEXT",
+      "owner": {
+        "name": "Fix Back Alley travel / Numbers journal follow-up",
+        "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "eb4e66bb86f1aff99e74734aa3afd65fb5d25a3a",
+          "evidence": [
+            "https://github.com/erikjpet/BeatTheHouse/commit/eb4e66bb86f1aff99e74734aa3afd65fb5d25a3a",
+            "docs/testing/numbers_purchase_independent_web_acceptance_20261104.json"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "verified",
+        "commit": "9894795bfc71690ef49c25baa6c50702920e7ac9",
+        "evidence": [
+          "docs/testing/numbers_purchase_independent_web_acceptance_20261104.json"
+        ],
+        "scope": "Actual ordinary Web new Numbers purchase, normal Save and full-process cold Continue; exact served commit/tree/manifest/asset headers and fix ancestry verified."
+      },
+      "evidence": [
+        {
+          "kind": "independent_web_acceptance",
+          "reference": "E:\\CodexQA\\BTH\\Broad\\r06-20261104\\evidence\\qa-numbers-journal-989-independent-pass-861.json",
+          "summary": "SHA2568be733090e4fa9e03382f31136086e18f110ea9760dbad8f3d6cb8e60737e82b; one new1-dollar purchase, exactly one journal purchase row, normalSave and cold persistence."
+        },
+        {
+          "kind": "existing_native_and_release_acceptance",
+          "reference": "docs/testing/numbers_purchase_journal.md",
+          "summary": "Prior159 native assertions and exact5e04 NEXT/startup qualification preserved; current additional Web evidence played989."
+        },
+        {
+          "kind": "closure_review",
+          "reference": "docs/testing/numbers_purchase_independent_web_acceptance_20261104.json",
+          "summary": "Receipt/raw-state hashes, visual/source/custody review, immutable HTTP identity and GitHub code ancestry satisfy the scoped purchase-journal acceptance."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "None within this accepted prospective-purchase journal defect. Preserve old R05 state/history and separate adjacent-action/settlement/payout scopes; item/scenario implementation remains paused.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T15:42:58.227322+00:00",
+        "evidence": [
+          "docs/testing/numbers_purchase_independent_web_acceptance_20261104.json"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T15:42:58.227322+00:00"
     }
   ],
   "batches": [

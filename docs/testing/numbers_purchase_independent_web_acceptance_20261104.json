@@ -1,0 +1,349 @@
+{
+  "schema": "bth.numbers_purchase_independent_acceptance/v1",
+  "task_id": "BTH-NUMBERS-PURCHASE-JOURNAL-001",
+  "recorded_at": "2026-11-04T15:42:58.227322+00:00",
+  "result": "PASS_ADDITIVE_INDEPENDENT_WEB_NEW_PURCHASE_SAVE_COLD",
+  "fix_commit": "eb4e66bb86f1aff99e74734aa3afd65fb5d25a3a",
+  "played_commit": "9894795bfc71690ef49c25baa6c50702920e7ac9",
+  "played_tree": "b201c4fa5457b63faf03fa0f1d2e2170e82b3b96",
+  "manifest_sha256": "28478496a9b360e6f9f74acc25cc52a14bdc54a715bef3779d5dd0dd89c586ad",
+  "independent_acceptance": {
+    "finding": "QA-OBS-R05-NUMBERS-JOURNAL-001",
+    "fix": "eb4e66bb86f1aff99e74734aa3afd65fb5d25a3a",
+    "tested_commit": "9894795bfc71690ef49c25baa6c50702920e7ac9",
+    "manifest_sha256": "28478496a9b360e6f9f74acc25cc52a14bdc54a715bef3779d5dd0dd89c586ad",
+    "result": "PASS independent ordinary Web newpurchase/Save/fullprocesscold",
+    "campaign": "broad-standard-r06",
+    "seed": "RUN-20261104-747195-003",
+    "new_purchase": {
+      "venue": "Bar",
+      "draw": 1,
+      "digits": "000",
+      "play_type": "Straight",
+      "stake": 1,
+      "cash_before": 97,
+      "cash_after": 96,
+      "heat": 0,
+      "warm_slips": 1,
+      "cold_slips": 1,
+      "warm_journal_purchase_rows": 1,
+      "cold_journal_purchase_rows": 1,
+      "journal_total_rows": 2,
+      "journal_purchase_text": "Bought Numbers slip 000 Straight for $1 (Draw 1) at Bar.",
+      "currency_text": "Venue: Bar | Bankroll -1",
+      "no_payout_or_repeat": true
+    },
+    "accounting": "100 start -3fare -1newslip =96",
+    "original_R05": "Old paid slip/history untouched; no backfill/refund/replay claimed. R05unintendedadjacentaction recorded separately.",
+    "jobs": [
+      {
+        "case": 858,
+        "exit": 0,
+        "owned": 0,
+        "timed_out": false,
+        "page_errors": 0,
+        "context_closed": true
+      },
+      {
+        "case": 859,
+        "exit": 0,
+        "owned": 0,
+        "timed_out": false,
+        "page_errors": 0,
+        "context_closed": true
+      },
+      {
+        "case": 860,
+        "exit": 0,
+        "owned": 0,
+        "timed_out": false,
+        "page_errors": 0,
+        "context_closed": true
+      },
+      {
+        "case": 861,
+        "exit": 0,
+        "owned": 0,
+        "timed_out": false,
+        "page_errors": 0,
+        "context_closed": true
+      }
+    ],
+    "evidence": [
+      "qa-batch-860-r06-one-new-numbers-journal/actual860-new-slip-result.png",
+      "qa-batch-860-r06-one-new-numbers-journal/actual860-one-purchase-journal.png",
+      "qa-batch-861-r06-cold-numbers-journal/actual861-cold-once-purchase-journal.png",
+      "qa-batch-861-r06-cold-numbers-journal/actual861-cold-single-paid-slip.png"
+    ],
+    "limits": "12%CPU/2GiB; original caps unchanged; no storage export/import/profilecopy/keyaccess",
+    "utc": "2026-11-04T15:22:35.236027+00:00"
+  },
+  "source_summary": {
+    "path": "E:\\CodexQA\\BTH\\Broad\\r06-20261104\\evidence\\qa-numbers-journal-989-independent-pass-861.json",
+    "sha256": "8be733090e4fa9e03382f31136086e18f110ea9760dbad8f3d6cb8e60737e82b"
+  },
+  "source_files": [
+    {
+      "path": "E:\\CodexQA\\BTH\\Broad\\r06-20261104\\evidence\\qa-batch-860-r06-one-new-numbers-journal\\state.json",
+      "sha256": "b2bf9571c56616d161803062c65fe655444a935ae734245c0f9aac7289a67c7b"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\Broad\\r06-20261104\\evidence\\qa-batch-861-r06-cold-numbers-journal\\state.json",
+      "sha256": "623b185d21c3a15248c6f1af5ee30c3468886ed8a0e4ee9dc8ea013278c0ffba"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\Broad\\r06-20261104\\evidence\\qa-batch-860-r06-one-new-numbers-journal\\actual860-one-purchase-journal.png",
+      "sha256": "5d98c99a17059dfbb140adb94275b622ddb3ec5e4530ce320d51007783093618"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\Broad\\r06-20261104\\evidence\\qa-batch-861-r06-cold-numbers-journal\\actual861-cold-once-purchase-journal.png",
+      "sha256": "6657a1c8afb5c16521f00f76c46cc0d414f843ccf2f8dacb61d6dc8018dd48e3"
+    },
+    {
+      "path": "E:\\CodexQA\\BTH\\Broad\\r06-20261104\\evidence\\qa-batch-861-r06-cold-numbers-journal\\actual861-cold-single-paid-slip.png",
+      "sha256": "c27a31062e681f4896973268a847f776db9b9631c9093135cb78ed82e5bce086"
+    }
+  ],
+  "source_and_ancestry": {
+    "task_id": "BTH-NUMBERS-PURCHASE-JOURNAL-001",
+    "verified_via": "GitHub authorized read-only commit/compare APIs",
+    "fix_commit": "eb4e66bb86f1aff99e74734aa3afd65fb5d25a3a",
+    "played_commit": "9894795bfc71690ef49c25baa6c50702920e7ac9",
+    "played_tree": "b201c4fa5457b63faf03fa0f1d2e2170e82b3b96",
+    "status": "ahead",
+    "ahead_by": 2,
+    "behind_by": 0,
+    "merge_base": "eb4e66bb86f1aff99e74734aa3afd65fb5d25a3a",
+    "changed_files_since_fix": [
+      "docs/plans/0.6.1_stability_release_plan.md",
+      "docs/testing/numbers_purchase_journal.md"
+    ],
+    "source_compare": "https://github.com/erikjpet/BeatTheHouse/compare/eb4e66bb86f1aff99e74734aa3afd65fb5d25a3a...9894795bfc71690ef49c25baa6c50702920e7ac9",
+    "source_ledger_blob_sha": "153328f20f959c3c09d67100b42388dea4cd18c3",
+    "source_ledger_rows": [
+      "| BTH-NUMBERS-PURCHASE-JOURNAL-001 | Complete /159 native checks, independent review and exact NEXT accepted | Implementation `eb4e66bb86f1aff99e74734aa3afd65fb5d25a3a` records one successful public purchase receipt; ticket/wallet/RNG/clocks/old history preserved. Producer105 plus independentcold54 pass, including original public CornerStoreDraw2terms, ten rejected requests and legacy no-backfill. Isolated main5e04e409546ecc9c8c3d04087bddacbd316c818c promoted14:34:02UTC2026-11-04; exact identity/assets/PCK and fresh correct-version browser startup pass with zero owned children. [Acceptance and limits](../testing/numbers_purchase_journal.md). Web startup only; no originalR05 replay or WebNumberspurchase claim. Separate denied fixes excluded/untouched; no denied retry, item/scenario or portrait work. |",
+      "| BTH-NUMBERS-PURCHASE-JOURNAL-001 | Record accepted Numbers purchase in Run Journal | - | Fix Back Alley travel / Numbers journal follow-up | Complete | COMMIT_ASSOCIATED_NATIVE159_AND_EXACT_NEXT_ACCEPTANCE_VERIFIED | eb4e66bb86f1aff99e74734aa3afd65fb5d25a3a | Producer105+independentcold54 pass; independent product/test/result identity review clear. Isolated authorized push to main5e04e409546ecc9c8c3d04087bddacbd316c818c tree133e8a31132199ebff7ec61715a860d80e93a676 promoted2026-11-04T14:34:02Z. Exact served metadata/pointer/redirect/PCK/provenance/assets and fresh correct-version browser startup pass,0page/consoleerrors,onepre-gestureaudio warning,ownedJob0children. Changedbehavior qualified at native API/official Save+cold boundary; no originalR05replay/WebNumberspurchase claim. Separate denied fixes excluded/untouched and no denied retry; item/scenario/portrait boundaries maintained. See docs/testing/numbers_purchase_journal.md. |"
+    ],
+    "native_acceptance_document": {
+      "path": "docs/testing/numbers_purchase_journal.md",
+      "blob_sha": "d5a41c72f891bfce76a9a4fe2f10cd163d67a1fa",
+      "qualified_producer_assertions": 105,
+      "qualified_independent_cold_assertions": 54,
+      "scope": "Original public Corner Store Draw2 terms, successful and ten rejected requests, official Save/fresh-process cold, no legacy backfill or ticket/wallet/RNG/clocks/history mutation."
+    }
+  },
+  "served_identity_review": {
+    "schema": "bth.served_identity_review/v1",
+    "task_id": "BTH-NUMBERS-PURCHASE-JOURNAL-001",
+    "recorded_at": "2026-11-04T15:38:02.657838+00:00",
+    "route": "http://localhost:8088/p/beat-the-house/play/dev/9894795bfc71690ef49c25baa6c50702920e7ac9/",
+    "source_commit": "9894795bfc71690ef49c25baa6c50702920e7ac9",
+    "source_tree": "b201c4fa5457b63faf03fa0f1d2e2170e82b3b96",
+    "build": {
+      "source_commit": "9894795bfc71690ef49c25baa6c50702920e7ac9",
+      "source_branch": "main",
+      "source_tree": "b201c4fa5457b63faf03fa0f1d2e2170e82b3b96",
+      "built_at": "2026-11-04T14:38:46Z",
+      "version": "0.6.0-dev+9894795bfc71",
+      "native_reuse": {
+        "schema": "beat_the_house.verified_native_reuse/v1",
+        "qualified_source_commit": "b46fabb2853c312b67399606f59804eaefa62d47",
+        "native_source_tree": "44468126e25a30a86e5d58f1d85f620fe414f564",
+        "guarded_paths": [
+          "native",
+          "addons",
+          "export_presets.cfg",
+          "project.godot",
+          "tools/build_native_solver.ps1",
+          "tools/bootstrap_native_toolchain.ps1",
+          "tools/bootstrap_native_solver.ps1",
+          "tools/verify_native_solver_runtime.ps1",
+          "tools/build_godot_web_release_template.ps1",
+          "tools/export_itch.ps1",
+          "tools/export_itch_helpers.ps1",
+          "tools/export_tree_identity.ps1",
+          "tools/audit_pck_manifest.py"
+        ],
+        "qualified_git_objects": [
+          "100644 blob b9d92cd7c6b9a0e013fc5f33da611321babacd93\texport_presets.cfg",
+          "100644 blob 9165fcf6bea3904f6677564a695ba17594701229\tnative/coin_pusher/SConstruct",
+          "100644 blob d308c740cc668e1260a38a61bcbbbf9bfa932d13\tnative/coin_pusher/build_profile.json",
+          "100644 blob 10867076c4070d84f8b3c6becdc0185c7174259e\tnative/coin_pusher/coin_pusher_native.gdextension.template",
+          "100644 blob d99aa73e7e6d855ecd61f82e23d1a91cb2e86d3f\tnative/coin_pusher/godot_web_release_build_profile.json",
+          "100644 blob d9f6221b832222ee8a78ddfe016a8d89fa17ace7\tnative/coin_pusher/src/coin_pusher_native_core.cpp",
+          "100644 blob a0c4413523105a29e3508b0b8ed50366b606162a\tnative/coin_pusher/src/coin_pusher_native_core.h",
+          "100644 blob 52e13ee3e229b323e864a04051880a9e8e4f9c30\tnative/coin_pusher/src/coin_pusher_render_batch.cpp",
+          "100644 blob 14ab730df2c88fdacef7f64945131602c5448f75\tnative/coin_pusher/src/coin_pusher_step_kernel.cpp",
+          "100644 blob 5b9bc778c0d007d24da9335ad74c4acfc8a1c27c\tnative/coin_pusher/src/register_types.cpp",
+          "100644 blob da5b5e20dc4e57472a31799dbed09fee06d81abf\tnative/coin_pusher/src/register_types.h",
+          "100644 blob 322cbe3c15193c9b20cc1334da487b9f9d0fbc26\tnative/coin_pusher/toolchain.lock.json",
+          "100644 blob 7c80d4e964583372398be6da0ff504ff6074f395\tproject.godot",
+          "100644 blob 6ae4b0796b43ef34694fc232a92c1db5894cb054\ttools/audit_pck_manifest.py",
+          "100644 blob a6c0fe9f42ec6e2a2588122d71d268e28178ba6d\ttools/bootstrap_native_solver.ps1",
+          "100644 blob 69c4dbbf1f69ac1aa696e24dafe727968f1f74a9\ttools/build_godot_web_release_template.ps1",
+          "100644 blob a4bc8b62100d4bdada8f1fef4e2b9e535199a55b\ttools/build_native_solver.ps1",
+          "100644 blob 37ee86eb2367c984bfa8568718312c671d114a24\ttools/export_itch.ps1",
+          "100644 blob 338efd42316385902cd21313890216609572237d\ttools/export_itch_helpers.ps1",
+          "100644 blob de91c1644ce977ea437b3eb7a046fdcd04f3101d\ttools/export_tree_identity.ps1",
+          "100644 blob fe86a0ccdee8fe1fe95765af2f9ceeb543355dc4\ttools/verify_native_solver_runtime.ps1"
+        ],
+        "target_git_objects": [
+          "100644 blob b9d92cd7c6b9a0e013fc5f33da611321babacd93\texport_presets.cfg",
+          "100644 blob 9165fcf6bea3904f6677564a695ba17594701229\tnative/coin_pusher/SConstruct",
+          "100644 blob d308c740cc668e1260a38a61bcbbbf9bfa932d13\tnative/coin_pusher/build_profile.json",
+          "100644 blob 10867076c4070d84f8b3c6becdc0185c7174259e\tnative/coin_pusher/coin_pusher_native.gdextension.template",
+          "100644 blob d99aa73e7e6d855ecd61f82e23d1a91cb2e86d3f\tnative/coin_pusher/godot_web_release_build_profile.json",
+          "100644 blob d9f6221b832222ee8a78ddfe016a8d89fa17ace7\tnative/coin_pusher/src/coin_pusher_native_core.cpp",
+          "100644 blob a0c4413523105a29e3508b0b8ed50366b606162a\tnative/coin_pusher/src/coin_pusher_native_core.h",
+          "100644 blob 52e13ee3e229b323e864a04051880a9e8e4f9c30\tnative/coin_pusher/src/coin_pusher_render_batch.cpp",
+          "100644 blob 14ab730df2c88fdacef7f64945131602c5448f75\tnative/coin_pusher/src/coin_pusher_step_kernel.cpp",
+          "100644 blob 5b9bc778c0d007d24da9335ad74c4acfc8a1c27c\tnative/coin_pusher/src/register_types.cpp",
+          "100644 blob da5b5e20dc4e57472a31799dbed09fee06d81abf\tnative/coin_pusher/src/register_types.h",
+          "100644 blob 322cbe3c15193c9b20cc1334da487b9f9d0fbc26\tnative/coin_pusher/toolchain.lock.json",
+          "100644 blob 7c80d4e964583372398be6da0ff504ff6074f395\tproject.godot",
+          "100644 blob 6ae4b0796b43ef34694fc232a92c1db5894cb054\ttools/audit_pck_manifest.py",
+          "100644 blob a6c0fe9f42ec6e2a2588122d71d268e28178ba6d\ttools/bootstrap_native_solver.ps1",
+          "100644 blob 69c4dbbf1f69ac1aa696e24dafe727968f1f74a9\ttools/build_godot_web_release_template.ps1",
+          "100644 blob a4bc8b62100d4bdada8f1fef4e2b9e535199a55b\ttools/build_native_solver.ps1",
+          "100644 blob 37ee86eb2367c984bfa8568718312c671d114a24\ttools/export_itch.ps1",
+          "100644 blob 338efd42316385902cd21313890216609572237d\ttools/export_itch_helpers.ps1",
+          "100644 blob de91c1644ce977ea437b3eb7a046fdcd04f3101d\ttools/export_tree_identity.ps1",
+          "100644 blob fe86a0ccdee8fe1fe95765af2f9ceeb543355dc4\ttools/verify_native_solver_runtime.ps1"
+        ],
+        "tuple": "web/template_release/wasm32/nothreads",
+        "native_library_sha256": "82c71b7d743027817c8f5041ad2f052565bf27fe43ec60312a2473af08957943",
+        "template_sha256": "cf371f607aa9cb18e690bd595976c1baaf00c8cec24078e4a307fd515ad07913",
+        "engine_binary_sha256": "63913d01be2c2d1f929b4a626f5347117126b34e9c64cbf350ea9f35a9657ebf",
+        "console_binary_sha256": "fc759f9d296fe54f09ab66d41df6ddd2d278493b0e71109f6688ef029ad271ae",
+        "extension_config_sha256": "407b2cc4b2c3ca01775158518e44b1caca3fb929be0e46eca44429733825d115",
+        "editor_dependency_pins": [
+          {
+            "sha256": "9ed33e21a00a8be3ef2429550451ed6c766debde8d0d21c4f3a4c39e25eb3f82",
+            "name": "coin_pusher_native_v3_10.windows.template_debug.x86_64.nothreads.dll"
+          },
+          {
+            "sha256": "ab3e74ad695dd9e6527d05cf09370b56a7b3b80168724862757de7711d837d69",
+            "name": "coin_pusher_native_v3_10.windows.template_release.x86_64.nothreads.dll"
+          }
+        ],
+        "source_exporter_sha256": "d2677318b9087a679d35554063fd1368b0d6b49ad0194599b7acee0cd3f800cb",
+        "imported_source_functions": [
+          {
+            "name": "Get-Sha256",
+            "definition_sha256": "a61f8f613fe0932b2294d151e63b174f72bf3ab594df5b77db134ea87dc69966"
+          },
+          {
+            "name": "Get-StringSha256",
+            "definition_sha256": "bf030f9eaf89a312c2d92a6d3f95f7ae58e4d57799ffdbbc8b5befc110ce0342"
+          },
+          {
+            "name": "Get-ProjectVersion",
+            "definition_sha256": "52ad3b85277dbea88f6c59863daee603be5bd97d9e3f4271a6f4e0a8663ad7c4"
+          },
+          {
+            "name": "Get-SourceIdentity",
+            "definition_sha256": "9ed8e18d1d2b5fd36aa8e8892d6c12b8163db943d7b9968f76aa36edbccb3961"
+          },
+          {
+            "name": "Get-ExportPresetCustomFeatures",
+            "definition_sha256": "46a228498a539e034273abcb2177b60cb74a67c72d420f26cab4f1b506b45a71"
+          },
+          {
+            "name": "Get-ExportPresetOption",
+            "definition_sha256": "e4e2ebcd72b8366690737c3bd91174cf388866ffa06d482445d092a90bb1427c"
+          },
+          {
+            "name": "Assert-CleanDistributionOutput",
+            "definition_sha256": "a95f62e83b0290718fe9141b96cce8f24049f361602fcb2ab6a84a08b9f463a3"
+          },
+          {
+            "name": "Assert-NativeSolverExport",
+            "definition_sha256": "fb860ce9f83e3305f353d94ff1abd64672151f015224853d6a62433750f27bb1"
+          },
+          {
+            "name": "Invoke-WebExportWithLockedTemplate",
+            "definition_sha256": "684ac165e13fa58384338423413627d15a89c3ae04b6cf129042264025d7cdcd"
+          },
+          {
+            "name": "Invoke-WithEmbeddedManifest",
+            "definition_sha256": "66a9a333423b0bcf668b79b8013a0474bdc0f2bce1179162a7edf51d202ed431"
+          },
+          {
+            "name": "Get-RelativeFiles",
+            "definition_sha256": "8ec071129455b6b94e1eb84bd25d63264218428fe58dd3902f62dd090b1decfa"
+          },
+          {
+            "name": "Invoke-PckAudit",
+            "definition_sha256": "b548d65b7257ecff7cdcbebbbbe2982b5eb83d31964d9bfa303ca2011f1ff926"
+          },
+          {
+            "name": "Verify-ArchiveAgainstStaging",
+            "definition_sha256": "4b2eef6d8a828903d7c2c626801517f9b0337d56264bd372faeee706270a53e7"
+          }
+        ],
+        "native_compilation_performed": false
+      }
+    },
+    "manifest_sha256": "28478496a9b360e6f9f74acc25cc52a14bdc54a715bef3779d5dd0dd89c586ad",
+    "metadata": {
+      "REF": {
+        "status": 200,
+        "sha256": "8d6e351c7e86079f684667a0b6a81c6cdda8ea1e93317b3916720688e78a4fad"
+      },
+      "BUILD.json": {
+        "status": 200,
+        "sha256": "253ba7074170de99ec6265a4f4d8e44bb39d009f288500be620092709a8c6bcd"
+      },
+      "build_manifest.json": {
+        "status": 200,
+        "sha256": "28478496a9b360e6f9f74acc25cc52a14bdc54a715bef3779d5dd0dd89c586ad"
+      }
+    },
+    "payload_HEAD_checks": [
+      {
+        "path": "index.js",
+        "status": 200,
+        "bytes": 2823817,
+        "content_type": "text/javascript"
+      },
+      {
+        "path": "index.wasm",
+        "status": 200,
+        "bytes": 1508237,
+        "content_type": "application/wasm"
+      },
+      {
+        "path": "index.pck",
+        "status": 200,
+        "bytes": 47195132,
+        "content_type": "application/octet-stream"
+      },
+      {
+        "path": "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+        "status": 200,
+        "bytes": 340886,
+        "content_type": "application/wasm"
+      }
+    ],
+    "scope": "Read-only immutable metadata and asset headers through the maintained normal HTTP route; no browser/test runtime, state/profile access, trust change or publication."
+  },
+  "independent_visual_and_source_review": {
+    "warm_and_cold_screenshots_reviewed": true,
+    "journal": "Two total beats: fare and exactly one Numbers purchase, with explicit Bankroll -1. One paid waiting slip and balance96 persist after normal Save/full-process cold Continue.",
+    "profile_provenance": "Historical cases858create,859route,860purchase+Save,861cold use the same fixed R06 profile/origin. Ordinary controls and resident profile reopening; no recovery override, storage export/import, profile copy or key access.",
+    "historical_job_cleanup": "Cases858-861 each exited0 without timeout or page errors, context closure completed and zero owned processes at their release. This is historical case evidence, not current campaign closure.",
+    "current_custody_limit": "At review the campaign custody had advanced to active case866; no current session closure or process-control claim.",
+    "source_checks": "Job/browser/command helper hashes match; setup857 failed before profile creation or process launch and is separately reconciled."
+  },
+  "prior_native_and_NEXT_acceptance": "Existing producer105 plus independent official-Save/cold54 and exact5e04 NEXT startup acceptance retained. New Web evidence supplements that scope.",
+  "limits": [
+    "New prospective purchase and journal persistence only.",
+    "No old R05 backfill/refund/replay; old paid slip/history and accepted losses remain untouched.",
+    "Draw settlement, payout and every Numbers variation are not claimed by these Web cases.",
+    "Disclosed R05 adjacent Fight Night action remains a separate harness failure."
+  ],
+  "all_existing_queue_records_and_user_pauses_preserved": true,
+  "game_browser_test_runtime_started_by_this_review": false,
+  "publication_retried": false,
+  "local_metadata_record_only": true
+}
