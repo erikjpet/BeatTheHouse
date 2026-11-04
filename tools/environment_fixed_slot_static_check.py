@@ -87,27 +87,58 @@ V2_SCENARIO_CAPACITY_TARGETS = {
     "house": {"floor_fixture": 1, "standing_person": 1, "wall_mounted": 1},
 }
 V2_EVENT_CAPACITY_TARGETS = {
-    "corner_store": {"behind_counter_person": 2, "standing_person": 1, "ground_marker": 1},
+    "corner_store": {"behind_counter_person": 2, "standing_person": 2, "ground_marker": 1},
     "back_alley": {"behind_counter_person": 1, "ground_marker": 1, "floor_fixture": 1, "standing_person": 6},
     "motel": {"behind_counter_person": 1, "ground_marker": 1, "standing_person": 4},
     "bar": {"behind_counter_person": 1, "standing_person": 5, "doorway": 1},
-    "gas_station_casino": {"doorway": 1, "ground_marker": 1, "standing_person": 5},
+    "gas_station_casino": {"doorway": 1, "ground_marker": 1, "standing_person": 5, "surface_item": 1},
     "small_underground_casino": {},
     "small_underground_casino:club": {"standing_person": 8},
-    "small_underground_casino:casino": {"behind_counter_person": 1, "standing_person": 8},
+    "small_underground_casino:casino": {"behind_counter_person": 1, "standing_person": 8, "surface_item": 1},
     "small_underground_casino:back_room": {"standing_person": 6, "behind_counter_person": 1},
-    "jazz_club": {"standing_person": 3},
-    "kitty_cat_lounge": {"seated_person": 1, "doorway": 1, "standing_person": 5},
-    "delta_queen": {"seated_person": 1, "doorway": 1, "behind_counter_person": 1, "standing_person": 6},
+    "jazz_club": {"standing_person": 3, "surface_item": 1},
+    "kitty_cat_lounge": {"seated_person": 1, "doorway": 1, "standing_person": 5, "surface_item": 1},
+    "delta_queen": {"seated_person": 1, "doorway": 1, "behind_counter_person": 1, "standing_person": 6, "surface_item": 1},
     "beach": {"standing_person": 1},
-    "pawn_shop": {"standing_person": 3},
-    "grand_casino": {"behind_counter_person": 2, "wall_mounted": 1, "standing_person": 7},
+    "pawn_shop": {"standing_person": 4},
+    "grand_casino": {"behind_counter_person": 3, "wall_mounted": 1, "standing_person": 7},
     "grand_casino_high_limit": {"standing_person": 6},
     "grand_casino_back_room": {"standing_person": 5},
-    "grand_casino_cage": {},
+    "grand_casino_cage": {"standing_person": 1},
     "motel_room": {},
     "apartment": {},
     "house": {},
+}
+# These authored additions coexist with the original generic event banks.
+# Preserve their stable identities and current occupant authority rather than
+# renaming runtime data to satisfy the original migration's ordinal policy.
+V2_REVIEWED_EVENT_SLOTS = {
+    ("corner_store", "event.lucky_recruitment"): (
+        "standing_person", "Lucky recruitment", ("event:recruitment_lucky",), True,
+    ),
+    ("grand_casino_cage", "event.recruitment_bishop"): (
+        "standing_person", "Bishop at the Cage window", ("event:recruitment_bishop",), False,
+    ),
+    ("jazz_club", "event.surface_item_1"): (
+        "surface_item", "Paper lead on the front service shelf", (), True,
+    ),
+    ("kitty_cat_lounge", "event.sal_address_note"): (
+        "surface_item", "Sal address note", (
+            "event:chain06_sal_trail_one", "event:chain06_sal_trail_two", "event:chain06_sal_trail_three",
+        ), True,
+    ),
+}
+V2_NAMED_EVENT_SLOTS = {
+    ("corner_store", "event.lucky_recruitment"),
+    ("grand_casino_cage", "event.recruitment_bishop"),
+    ("kitty_cat_lounge", "event.sal_address_note"),
+}
+# slot_map_digest serializes complete slot records. This exact supported order
+# predates the checker update; changing runtime JSON merely to sort it would
+# change saved room authority. Other/new lists must remain sorted and unique.
+V2_SUPPORTED_OCCUPANT_ORDER = {
+    ("kitty_cat_lounge", "event.sal_address_note"):
+        V2_REVIEWED_EVENT_SLOTS[("kitty_cat_lounge", "event.sal_address_note")][2],
 }
 PULL_TABS_HOST_ACTION_IDS = {
     "game_hook:pull_tabs:ticket_redeemer",
@@ -1133,7 +1164,19 @@ def validate_map_v2(
             )
             placement_class = str(value.get("footprint_class", ""))
             check.require(placement_class in CLASSES, f"{map_id}.{slot_id}: invalid footprint_class {placement_class}")
-            if family in {"event", "scenario"} and placement_class in V2_GENERIC_ROLE:
+            reviewed_event = V2_REVIEWED_EVENT_SLOTS.get((map_id, slot_id)) if family == "event" else None
+            if reviewed_event is not None:
+                expected_class, expected_role, expected_occupants, expected_reserve = reviewed_event
+                check.require(
+                    placement_class == expected_class
+                    and value.get("physical_role") == expected_role
+                    and isinstance(value.get("occupant_ids"), list)
+                    and all(isinstance(item, str) for item in value["occupant_ids"])
+                    and set(value["occupant_ids"]) == set(expected_occupants)
+                    and value.get("runtime_reserve") is expected_reserve,
+                    f"{map_id}.{slot_id}: reviewed event role, occupants, class, or reserve authority drifted",
+                )
+            if family in {"event", "scenario"} and placement_class in V2_GENERIC_ROLE and (map_id, slot_id) not in V2_NAMED_EVENT_SLOTS:
                 role = V2_GENERIC_ROLE[placement_class]
                 canonical_ordinals[role] = canonical_ordinals.get(role, 0) + 1
                 expected_slot_id = f"{family}.{role}_{canonical_ordinals[role]}"
@@ -1186,7 +1229,8 @@ def validate_map_v2(
             )
             if isinstance(occupant_ids, list):
                 check.require(
-                    occupant_ids == sorted(set(occupant_ids)),
+                    occupant_ids == sorted(set(occupant_ids))
+                    or tuple(occupant_ids) == V2_SUPPORTED_OCCUPANT_ORDER.get((map_id, slot_id)),
                     f"{map_id}.{slot_id}: occupant_ids must be sorted and unique",
                 )
             runtime_reserve = value.get("runtime_reserve")
@@ -1206,7 +1250,7 @@ def validate_map_v2(
                 )
             if family == "event" and runtime_reserve is True:
                 check.require(
-                    placement_class == "standing_person",
+                    placement_class == "standing_person" or reviewed_event is not None,
                     f"{map_id}.{slot_id}: non-person event rows cannot be generic runtime reserves",
                 )
             family_slots[slot_id] = value
@@ -1524,6 +1568,24 @@ def _v2_effective_scenario_map(
     return result
 
 
+def _v2_scenario_source_matches(slot: dict[str, Any], source: dict[str, Any]) -> bool:
+    """Trace authored slot provenance without undoing reviewed local moves."""
+    if source.get("kind") != "scenario" or source.get("footprint_class") != slot.get("footprint_class"):
+        return False
+    if not source.get("runtime_reserve", False):
+        return True
+    # A shared bank may subsequently become a delivery reserve. It remains a
+    # valid source only for the exact scenario owners explicitly retained on
+    # that source, never as arbitrary spare geometry for unrelated scenarios.
+    owners = {
+        str(value).removeprefix("scenario::")
+        for value in values(slot.get("scenario_object_ids"))
+        if isinstance(value, str) and value.removeprefix("scenario::")
+    }
+    source_owners = {str(value).removeprefix("scenario::") for value in values(source.get("occupant_ids"))}
+    return bool(owners) and owners.issubset(source_owners)
+
+
 def _v2_load_scenario_layouts(
     check: Check,
     root: Path,
@@ -1579,11 +1641,6 @@ def _v2_load_scenario_layouts(
             f"{map_id}::{scenario_id}: compact bank exceeds semantic position count",
         )
         slot_ids: set[str] = set()
-        base_sources = {
-            str(slot.get("id", "")): slot
-            for slot in values(maps_by_id.get(map_id, {}).get("scenario_slots"))
-            if isinstance(slot, dict) and not bool(slot.get("runtime_reserve", False))
-        }
         all_sources = {
             str(slot.get("id", "")): slot
             for family in ("fixed", "event", "scenario", "exit")
@@ -1611,8 +1668,7 @@ def _v2_load_scenario_layouts(
                 )
             else:
                 check.require(
-                    source_id in base_sources
-                    and str(base_sources.get(source_id, {}).get("footprint_class", "")) == placement_class,
+                    _v2_scenario_source_matches(slot, all_sources.get(source_id, {})),
                     f"{slot_id}: source geometry {source_id} is missing or incompatible",
                 )
             for position_key in values(slot.get("scenario_position_keys")):
@@ -2267,8 +2323,8 @@ def main_v2(
     check.require(placement.get("schema_version") == 3, "placement_surfaces.json schema_version must be 3")
     check.require(placement.get("slot_schema_version") == 2, "placement_surfaces.json slot_schema_version must be 2")
     check.require(
-        sum(sum(class_counts.values()) for class_counts in V2_EVENT_CAPACITY_TARGETS.values()) == 101,
-        "producer-backed event capacity matrix must contain exactly 101 rows",
+        sum(sum(class_counts.values()) for class_counts in V2_EVENT_CAPACITY_TARGETS.values()) == 110,
+        "producer-backed event capacity matrix must contain exactly 110 rows",
     )
     check.require(board_raw is not None and board_raw[0] > 0 and board_raw[1] > 0, "invalid placement board_size")
     board = board_raw or (900.0, 430.0)
@@ -2320,10 +2376,10 @@ def main_v2(
         check.require(action_id in jazz_action_ids, f"jazz_club: fixed hosts do not attach {action_id}")
     check.require(
         len(values(jazz.get("fixed_slots"))) == 10
-        and len(values(jazz.get("event_slots"))) == 3
+        and len(values(jazz.get("event_slots"))) == 4
         and len(values(jazz.get("scenario_slots"))) == 12
         and len(values(jazz.get("exit_slots"))) == 1,
-        "jazz_club: reviewed fixed/event/scenario/exit counts must be 10/3/12/1",
+        "jazz_club: reviewed fixed/event/scenario/exit counts must be 10/4/12/1",
     )
     check.require(
         {
@@ -2466,7 +2522,7 @@ def main_v2(
 
     for map_id, retired_ids in {
         "motel": {"event.surface_item_2", "event.surface_item_3"},
-        "delta_queen": {"event.wall_item_1", "event.surface_item_1"},
+        "delta_queen": {"event.wall_item_1"},
         "small_underground_casino": {"fixed.service_stage_left"},
     }.items():
         remaining_ids = {

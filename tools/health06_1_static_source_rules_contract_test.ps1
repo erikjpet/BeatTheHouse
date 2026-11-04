@@ -80,8 +80,57 @@ if ($safeErrors.Count -ne 0) {
     exit 1
 }
 
+$styleSafe = @'
+extends RefCounted
+const ExampleScript := preload("res://example.gd")
+const ExampleScene := preload("res://example.tscn")
+# A delimiter in a comment is not a string: """
+const Ordinary := '""" # ordinary string'
+const Escaped := "\"\"\""
+const JavaScript := """(function(base64) {
+    const source = atob(base64);
+const FakeAlias := preload("res://not_gdscript.gd")
+    return source; // escaped delimiter: \"""
+})"""
+const Multiline := '''
+    This indentation is string content.
+const FakeSceneAlias := preload("res://not_gdscript.tscn")
+    '''
+func valid() -> void:
+	pass
+'@
+$styleSafe = $styleSafe.Replace("`r`n", "`n").Replace("`r", "`n")
+foreach ($styleSource in @($styleSafe, $styleSafe.Replace("`n", "`r`n"))) {
+    $styleErrors = @(Get-GdScriptStyleSourceIssues -Source $styleSource -PathLabel 'style_safe.gd')
+    $styleScan = Get-GdScriptStyleScanText $styleSource
+    if ($styleErrors.Count -ne 0 -or $styleScan.Length -ne $styleSource.Length -or
+        ([regex]::Matches($styleScan, '\r|\n')).Count -ne ([regex]::Matches($styleSource, '\r|\n')).Count) {
+        throw "GDScript style scan rejected multiline content or changed source coordinates: $($styleErrors -join '; ')"
+    }
+}
+
+$styleHostileCases = @(
+    @{ Source = "func actual() -> void:`n    pass"; Expected = 'GDScript indentation must use tabs: style_hostile.gd:2' },
+    @{ Source = '    const Text := """payload"""'; Expected = 'GDScript indentation must use tabs: style_hostile.gd:1' },
+    @{ Source = "    # Actual space-indented GDScript comment"; Expected = 'GDScript indentation must use tabs: style_hostile.gd:1' },
+    @{ Source = "# ignored delimiter: `"`"`"`nconst Wrong := preload(`"res://example.gd`")"; Expected = 'Preload constant must end in Script: style_hostile.gd:2 (Wrong)' },
+    @{ Source = ('const Text := ''"""''' + "`nconst Wrong := preload(`"res://example.tscn`")"); Expected = 'Preload constant must end in Scene: style_hostile.gd:2 (Wrong)' },
+    @{ Source = ($styleSafe + "`nconst Wrong := preload(`"res://example.gd`")"); Expected = 'Preload constant must end in Script: style_hostile.gd:18 (Wrong)' },
+    @{ Source = ($styleSafe + "`n    pass"); Expected = 'GDScript indentation must use tabs: style_hostile.gd:18' }
+)
+foreach ($styleCase in $styleHostileCases) {
+    $styleErrors = @(Get-GdScriptStyleSourceIssues -Source $styleCase.Source -PathLabel 'style_hostile.gd')
+    if ($styleErrors.Count -ne 1 -or $styleErrors[0] -cne $styleCase.Expected) {
+        throw "GDScript style hostile fixture escaped its exact rule/location: expected '$($styleCase.Expected)', got '$($styleErrors -join '; ')'."
+    }
+}
+$codecStyleErrors = @(Get-GdScriptStyleSourceIssues -Source (Get-Content -LiteralPath (Join-Path $root 'scripts/core/run_save_codec.gd') -Raw) -PathLabel 'scripts/core/run_save_codec.gd')
+if ($codecStyleErrors.Count -ne 0) {
+    throw "Embedded JavaScript in the save codec caused GDScript style errors: $($codecStyleErrors -join '; ')"
+}
+
 $validator = Get-Content -LiteralPath (Join-Path $PSScriptRoot "validate_project.ps1") -Raw
-if (-not $validator.Contains("Invoke-Health06StaticSourceRules")) {
+if (-not $validator.Contains("Invoke-Health06StaticSourceRules") -or -not $validator.Contains("Get-GdScriptStyleSourceIssues -Source")) {
     Write-Error "validate_project.ps1 does not invoke the permanent health06_1 source rules."
     exit 1
 }

@@ -157,7 +157,7 @@ function Get-SeedClasses {
 function Get-CallsFromBody {
     param([string[]]$BodyLines)
     $calls = New-Object System.Collections.Generic.List[string]
-    $body = [string]::Join("`n", $BodyLines)
+    $body = $BodyLines -join "`n"
     foreach ($match in [regex]::Matches($body, '(?<![\w])([A-Za-z_][A-Za-z0-9_]*)\s*\(')) {
         $callName = [string]$match.Groups[1].Value
         if ($excludedCallNames.ContainsKey($callName)) {

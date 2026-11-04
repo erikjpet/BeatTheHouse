@@ -4,8 +4,8 @@ extends RefCounted
 # Optional attributes on existing physical characters. Content owns bindings and
 # effects; RunState owns rolls, claims, time, inventory and money. No game RNG or
 # action boundary is consumed by discovering, reviewing or resolving an offer.
-const Hours := preload("res://scripts/core/environment_hours.gd")
-const Rng := preload("res://scripts/core/rng_stream.gd")
+const EnvironmentHoursScript := preload("res://scripts/core/environment_hours.gd")
+const RngStreamScript := preload("res://scripts/core/rng_stream.gd")
 const STATE_KEY := "character_offer_cycles"
 const DATA_PATH := "res://data/environments/character_offers.json"
 const ARCHETYPES_PATH := "res://data/environments/archetypes.json"
@@ -156,7 +156,7 @@ static func synchronize(run_state: RunState) -> void:
 	for character_id in characters:
 		var offers: Array = characters[character_id]
 		var offer: Dictionary = offers[0]
-		var cycle := Hours.operating_cycle_id(_cycle_archetype(offer), now)
+		var cycle := EnvironmentHoursScript.operating_cycle_id(_cycle_archetype(offer), now)
 		var state := _dict(cycles.get(character_id, {})).duplicate(true)
 		var present := false
 		for alternative in offers:
@@ -164,15 +164,15 @@ static func synchronize(run_state: RunState) -> void:
 				present = true
 				break
 		var venue := _archetype(str(run_state.current_environment.get("archetype_id", "")))
-		var open := Hours.environment_open_at(venue, now % 1440)
+		var open := EnvironmentHoursScript.environment_open_at(venue, now % 1440)
 		if str(state.get("status", "")) == "available" and (
 				str(state.get("cycle_id", "")) != cycle \
 				or str(state.get("visit_id", "")) != _visit_id(run_state) \
 				or not present or not open):
 			state["status"] = "expired"
 		if present and open and str(state.get("cycle_id", "")) != cycle and not run_state.is_terminal():
-			var rng := Rng.new()
-			rng.configure(Rng.derive_seed(run_state.seed_value, run_state.seed_value, "character_offer:%s:%s" % [character_id, cycle]))
+			var rng := RngStreamScript.new()
+			rng.configure(RngStreamScript.derive_seed(run_state.seed_value, run_state.seed_value, "character_offer:%s:%s" % [character_id, cycle]))
 			var roll := rng.randi_range(1, 100)
 			state = {
 				"offer_id": str(offer.get("id", "")) if offers.size() == 1 else "", "cycle_id": cycle,
@@ -287,7 +287,7 @@ static func _eligible(run_state: RunState, offer: Dictionary) -> bool:
 	if not _present(offer, run_state.current_environment):
 		return false
 	var minute := run_state.game_minute_of_day()
-	var hours := Hours.status_at(_archetype(str(run_state.current_environment.get("archetype_id", ""))), minute)
+	var hours := EnvironmentHoursScript.status_at(_archetype(str(run_state.current_environment.get("archetype_id", ""))), minute)
 	if not bool(hours.get("open", false)) \
 			or int(hours.get("minutes_until_close", 0)) < int(offer.get("minimum_minutes_before_close", 0)) \
 			or run_state.bankroll < int(offer.get("cash_cost", 0)) \

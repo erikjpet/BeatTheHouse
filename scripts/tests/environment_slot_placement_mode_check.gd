@@ -1144,10 +1144,14 @@ func _check_canvas_contract() -> void:
 		"The final All tab must show every available slot family together without hiding capacity."
 	)
 	canvas.set_developer_slot_family_visible("event", true)
+	# Runtime reserves have their own visibility switch. Isolate empty capacity
+	# so its toggle is tested against unused ordinary slots only.
+	canvas.set_developer_slot_show_runtime_reserves(false)
 	canvas.set_developer_slot_show_empty_capacity(false)
 	_check(int(canvas.developer_slot_placement_snapshot().get("visible_slot_count", -1)) == 0, "Turning off Empty capacity must temporarily hide unused event positions.")
 	canvas.set_developer_slot_show_empty_capacity(true)
 	_check(int(canvas.developer_slot_placement_snapshot().get("visible_slot_count", 0)) > 0, "The Empty capacity toggle must reveal unused slots in the active family.")
+	canvas.set_developer_slot_show_runtime_reserves(true)
 	_check(not bool(canvas.developer_placement_snapshot().get("enabled", true)), "Enabling slot mode must disable spawned-object placement mode.")
 	var wrapped_label: Array = canvas.call("_wrap_developer_slot_label", "scenario.local_wall_item_1", ThemeDB.fallback_font, 8, 42.0)
 	_check(wrapped_label.size() > 1 and "".join(wrapped_label) == "scenario.local_wall_item_1", "Slot overlay labels must wrap onto multiple rows without truncating their stable IDs.")
