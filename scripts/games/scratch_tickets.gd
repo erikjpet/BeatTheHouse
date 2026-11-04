@@ -61,7 +61,6 @@ const DEFAULT_BRUSH_RADIUS := 15.0
 const DEFAULT_SWEEP_THRESHOLD := 0.80
 const DEFAULT_MASK_COLUMNS := MaskScript.MASK_COLUMNS
 const DEFAULT_MASK_ROWS := MaskScript.MASK_ROWS
-const HELD_TICKET_TYPE_ID := ""
 const ACTIVE_TICKET_TYPE_IDS := ["two_fer", "lucky_7s", "tic_tac_gold", "crossword_corner", "bonus_bingo", "high_roller_holdem", "golden_vault"]
 const DISCARD_ARM_DISTANCE := 120.0
 const DISCARD_DROP_DISTANCE := 190.0
@@ -290,7 +289,7 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 		"scratch_collection_total": COLLECTION_TOTAL,
 		"scratch_collection_complete": collection_complete,
 		"scratch_collection_status": "FULL SET FOUND" if collection_complete else "%d/%d PRINTS FOUND" % [discovered.size(), COLLECTION_TOTAL],
-		"scratch_held_ticket_type": HELD_TICKET_TYPE_ID,
+		"scratch_held_ticket_type": "",
 		"scratch_xray_peeks": _dictionary_array(active_ticket.get("xray_peeks", [])) if result_ready else [],
 		"scratch_fortune": str(active_ticket.get("fortune_tier", "")) if result_ready else "",
 		"scratch_penalty_shields": int(machine.get("penalty_shields_remaining", 0)),
@@ -371,8 +370,6 @@ func surface_action_command(surface_action: String, index: int, _confirm_request
 			if stock_index < 0 or stock_index >= stock.size():
 				return GameModule.surface_command({"message": "That vending slot is empty."})
 			var slot: Dictionary = stock[stock_index]
-			if _ticket_type_is_held(str(slot.get("type_id", ""))):
-				return GameModule.surface_command({"message": "Crossword Corner is held from new sale. Previously issued tickets remain valid."})
 			var price := maxi(1, int(slot.get("price", 1)))
 			if int(slot.get("remaining", 0)) < quantity:
 				return GameModule.surface_command({"message": "%s is sold out." % str(slot.get("display_name", "That ticket"))})
@@ -586,8 +583,6 @@ func wager_cost_for_context(action_id: String, stake: int, run_state: RunState, 
 	var quantity := maxi(1, int(ui_state.get("scratch_buy_quantity", 1)))
 	if index < 0 or index >= stock.size():
 		return maxi(0, stake)
-	if _ticket_type_is_held(str((stock[index] as Dictionary).get("type_id", ""))):
-		return 0
 	return maxi(1, int((stock[index] as Dictionary).get("price", stake))) * quantity
 
 
@@ -869,8 +864,6 @@ func _resolve_purchase(_stake: int, run_state: RunState, environment: Dictionary
 	if stock_index < 0 or stock_index >= stock.size():
 		return _scratch_empty_result(BUY_ACTION, environment, "That vending slot is empty.")
 	var slot: Dictionary = stock[stock_index]
-	if _ticket_type_is_held(str(slot.get("type_id", ""))):
-		return _scratch_empty_result(BUY_ACTION, environment, "Crossword Corner is held from new sale. Previously issued tickets remain valid.")
 	var price := maxi(1, int(slot.get("price", 1)))
 	if int(slot.get("remaining", 0)) < quantity:
 		return _scratch_empty_result(BUY_ACTION, environment, "%s is sold out." % str(slot.get("display_name", "That ticket")))
@@ -1230,8 +1223,6 @@ func _scratch_counter_ritual(machine: Dictionary, active_ticket: Dictionary, run
 	var rack_rows: Array = []
 	for row_value in stock_rows:
 		var row: Dictionary = row_value
-		if _ticket_type_is_held(str(row.get("type_id", ""))):
-			continue
 		rack_rows.append({
 			"type_id": str(row.get("type_id", "")),
 			"remaining": maxi(0, int(row.get("remaining", 0))),
@@ -1279,8 +1270,7 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 		var stock_roll := machine_rng.randi_range(0, 19)
 		# Consume one stable roll per family so stock remains deterministic when
 		# ticket families are added or migrated.
-		var held := _ticket_type_is_held(str(ticket_type.get("id", "")))
-		var remaining := 0 if held else (PRACTICE_STOCK_COUNT if practice_session else (0 if stock_roll < 15 else mini(maximum, stock_roll - 14)))
+		var remaining := PRACTICE_STOCK_COUNT if practice_session else (0 if stock_roll < 15 else mini(maximum, stock_roll - 14))
 		stock.append({
 			"type_id": str(ticket_type.get("id", "")),
 			"display_name": str(ticket_type.get("display_name", "Ticket")),
@@ -1290,7 +1280,7 @@ func _generate_machine_state(run_state: RunState, environment: Dictionary, rng: 
 			"stock_weight": maxi(1, int(ticket_type.get("stock_weight", 1))),
 			"size_id": str(ticket_type.get("size_id", "medium_square")),
 			"palette": _copy_dict(_copy_dict(ticket_type.get("face", {})).get("palette", {})),
-			"release_availability": "held" if held else "active",
+			"release_availability": "active",
 		})
 	var initially_empty := _stock_total_from_rows(stock) <= 0
 	var initial_scalper_present := initially_empty and run_state != null and not run_state.is_tutorial_run()
@@ -2293,8 +2283,6 @@ func _stock_view(machine: Dictionary) -> Array:
 	var stock := _dictionary_array(machine.get("stock", []))
 	for index in range(stock.size()):
 		var value: Dictionary = stock[index]
-		if _ticket_type_is_held(str(value.get("type_id", ""))):
-			continue
 		var view := value.duplicate(true)
 		view["source_stock_index"] = index
 		result.append(view)
@@ -2395,8 +2383,7 @@ func _add_restock_tickets(machine: Dictionary, count: int, rng: RngStream) -> in
 		var total_weight := 0
 		for index in range(stock.size()):
 			var slot: Dictionary = stock[index]
-			var held := _ticket_type_is_held(str(slot.get("type_id", "")))
-			if not held and int(slot.get("remaining", 0)) >= int(slot.get("capacity", 5)):
+			if int(slot.get("remaining", 0)) >= int(slot.get("capacity", 5)):
 				continue
 			eligible_indexes.append(index)
 			total_weight += maxi(1, int(slot.get("stock_weight", 1)))
@@ -2410,10 +2397,6 @@ func _add_restock_tickets(machine: Dictionary, count: int, rng: RngStream) -> in
 				chosen_index = index
 				break
 		var chosen: Dictionary = stock[chosen_index]
-		if _ticket_type_is_held(str(chosen.get("type_id", ""))):
-			# Preserve the historical stock weight as a no-supply draw. Redistributing
-			# it would silently change the other six families' stock probabilities.
-			continue
 		chosen["remaining"] = int(chosen.get("remaining", 0)) + 1
 		stock[chosen_index] = chosen
 		added += 1
@@ -2461,11 +2444,6 @@ func _clear_machine_stock(machine: Dictionary) -> int:
 	var cleared := 0
 	for index in range(stock.size()):
 		var slot: Dictionary = stock[index]
-		if _ticket_type_is_held(str(slot.get("type_id", ""))):
-			# Historical unsold Crossword quantity is preserved as held evidence.
-			# A scalper can clear only active supply; holding is not confiscation,
-			# refund, conversion, or issuance.
-			continue
 		cleared += maxi(0, int(slot.get("remaining", 0)))
 		slot["remaining"] = 0
 		stock[index] = slot
@@ -2559,7 +2537,7 @@ func _stock_total_from_rows(stock: Array) -> int:
 	var total := 0
 	for slot_value in stock:
 		var slot: Dictionary = slot_value
-		if str(slot.get("type_id", "")) == HELD_TICKET_TYPE_ID:
+		if str(slot.get("type_id", "")).is_empty():
 			continue
 		total += maxi(0, int(slot.get("remaining", 0)))
 	return total
@@ -2642,10 +2620,7 @@ func _normalize_machine_state(machine: Dictionary, run_state: RunState = null) -
 		var default_capacity := clampi(int(count_range[1]) if count_range.size() > 1 else 5, 1, 5)
 		slot["capacity"] = maxi(1, int(slot.get("capacity", default_capacity)))
 		slot["remaining"] = clampi(int(slot.get("remaining", 0)), 0, int(slot.get("capacity", default_capacity)))
-		if _ticket_type_is_held(str(slot.get("type_id", ""))):
-			slot["release_availability"] = "held"
-		else:
-			slot["release_availability"] = "active"
+		slot["release_availability"] = "active"
 		stock[index] = slot
 	machine["stock"] = stock
 	machine["last_dispense_events"] = _scratch_dispense_event_array(machine.get("last_dispense_events", []))
@@ -2690,9 +2665,7 @@ func _machine_state_is_current(machine: Dictionary) -> bool:
 		if typeof(slot_value) != TYPE_DICTIONARY:
 			return false
 		var slot := slot_value as Dictionary
-		if _ticket_type_is_held(str(slot.get("type_id", ""))) and str(slot.get("release_availability", "")) != "held":
-			return false
-		if not _ticket_type_is_held(str(slot.get("type_id", ""))) and str(slot.get("release_availability", "")) != "active":
+		if str(slot.get("release_availability", "")) != "active":
 			return false
 	if typeof(machine.get("active_ticket", null)) != TYPE_DICTIONARY:
 		return false
@@ -2899,10 +2872,6 @@ func _ticket_types() -> Array:
 	if library != null:
 		return _dictionary_array(library.scratch_ticket_types)
 	return []
-
-
-func _ticket_type_is_held(type_id: String) -> bool:
-	return not HELD_TICKET_TYPE_ID.is_empty() and type_id == HELD_TICKET_TYPE_ID
 
 
 func _active_discovered_ticket_types(discovered_type_ids: Array) -> Array:
