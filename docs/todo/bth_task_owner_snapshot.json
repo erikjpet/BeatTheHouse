@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-04T16:52:45.793676+00:00",
+  "observed_at": "2026-11-04T16:57:12.765384+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -27,8 +27,8 @@
       "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
       "title": "Fix Back Alley travel",
       "state": "active",
-      "observed_at": "2026-11-04T16:52:45.793676+00:00",
-      "source": "Current delegated task6 worker associating tested Bar Dice journal commit and final reconciliation; actual active execution"
+      "observed_at": "2026-11-04T16:57:12.765384+00:00",
+      "source": "Current delegated worker preparing authorized Bar Dice journal publication and NEXT follow-through; actual active execution"
     },
     {
       "task_ref": "01a16736-0a2f-7668-8ad8-a6074981c01e",

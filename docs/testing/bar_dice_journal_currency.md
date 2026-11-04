@@ -111,3 +111,21 @@ blocker in the completed local fix/test/commit scope. Final manual reconciliatio
 reports51 current-group and517 all-group errors outside this task, zero findings
 for this ID, and all three owned native jobs closed with matching launch nonces.
 No publication action, prior denied retry or NEXT acceptance is claimed.
+
+## Authorized main/NEXT follow-through
+
+A later trusted delegation carries the user approval to push finished work to
+NEXT and specifically authorizes publishing fix `1e38b7885db21c5bee1d19a897c129ddf680b1f6`.
+The earlier local-only status above is historical. Both ledgers now require
+deployment acceptance and keep this task Open. Native299 evidence and the
+independent exact-source/receipt/outgoing review remain qualified; no gameplay
+change or new native rerun is needed for this tracking update.
+
+At this observation the watcher reports: `Insufficient shared disk reserve for export: 13115047936 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT`.
+This is a factual export-admission gate, not a publication denial or permission
+hold. The existing reserve,10% watcher/2GiB Job limits, last good NEXT, profiles
+and retained pipeline evidence remain unchanged. This follow-through has not
+run pipeline cleanup, a duplicate watcher, a manual substitute build or a
+guard/trust change.
+Actual push results and subsequent exact deployed identity/startup are recorded
+in task-6 evidence; no build/deployment success is inferred from a main push.

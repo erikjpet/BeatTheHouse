@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T16:52:45.793676+00:00",
+  "updated_at": "2026-11-04T16:57:12.765384+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -17033,8 +17033,8 @@
       "parent_ids": [],
       "group": "current",
       "objective": {
-        "text": "Investigate and correct missing currency on new Bar Dice journal receipts, including the related Press producer, while preserving wallet accounting, stake/settlement exactly once, RNG/clocks, authority, existing game rules and historical unknown-unit rows. Reproduce safely, test and commit the isolated correction.",
-        "source": "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-bardice-journal-currency-observation-878.json; trusted parent delegation 2026-11-04 requesting investigation, isolated correction, tests and commit",
+        "text": "Investigate and correct missing currency on new Bar Dice journal receipts, including the related Press producer, while preserving wallet accounting, stake/settlement exactly once, RNG/clocks, authority, existing game rules and historical unknown-unit rows. Reproduce safely, test and commit the isolated correction. Authorized release follow-through must publish the independently reviewed tested commit and verify exact NEXT identity/startup when the existing disk reserve allows, keeping acceptance Open until deployed and tested.",
+        "source": "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-bardice-journal-currency-observation-878.json; trusted parent delegation 2026-11-04 requesting investigation, isolated correction, tests and commit; trusted parent delegation carrying explicit user approval to push finished work to NEXT, received2026-11-04",
         "scope_confirmed": true,
         "acceptance": [
           {
@@ -17077,6 +17077,13 @@
               "docs/testing/bar_dice_journal_currency_20261104.json",
               "commit:1e38b7885db21c5bee1d19a897c129ddf680b1f6"
             ]
+          },
+          {
+            "id": "exact_next",
+            "description": "Publish reviewed fix under existing approval, preserve reserve and resource gates, then verify exact deployed source/tree/assets and correct-version startup with the native299 changed-behavior evidence retained.",
+            "required": true,
+            "state": "open",
+            "evidence": []
           }
         ],
         "coverage": {
@@ -17086,7 +17093,7 @@
         }
       },
       "state": "open",
-      "status": "LOCAL_FIX_COMMITTED_NATIVE299_PASS_REVIEW_CLEAR_ACCEPTANCE_OPEN",
+      "status": "COMMIT_ASSOCIATED_NATIVE299_RELEASE_AUTHORIZED_NEXT_PENDING",
       "owner": {
         "name": "Fix Back Alley travel / Bar Dice journal follow-up",
         "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
@@ -17102,11 +17109,13 @@
         }
       ],
       "deployment": {
-        "required": false,
-        "state": "not_applicable",
+        "required": true,
+        "state": "pending",
         "commit": null,
-        "evidence": [],
-        "scope": "Current delegation requests isolated investigation/fix/test/commit. Publication or deployed acceptance is not inferred from native qualification."
+        "evidence": [
+          "docs/testing/bar_dice_journal_currency.md"
+        ],
+        "scope": "Authorized main/NEXT publication follow-through underway; native299 qualifies changed behavior, not deployed Web play. Acceptance stays Open until served identity/startup verified."
       },
       "evidence": [
         {
@@ -17121,15 +17130,16 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Hand off tested commit1e38b7885 and299 native/official-cold assertions for acceptance and any separately requested release follow-through. No original R07 save check or renewed approval is needed for this completed local fix/test/commit scope.",
+      "next_action": "Publish the reviewed tested commit and follow its exact source through the existing NEXT watcher. Verify deployed identity/assets and fresh startup when capacity admission succeeds; preserve prior NEXT and all resource gates.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": null,
+        "state": "active",
+        "kind": "next_disk_reserve",
+        "description": "Insufficient shared disk reserve for export: 13115047936 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:38:00.124600+00:00",
+        "observed_at": "2026-11-04T16:57:12.765384+00:00",
         "evidence": [
-          "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-bardice-journal-currency-observation-878.json"
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-6/evidence/bardice-journal-watcher-before-publication.json",
+          "docs/testing/bar_dice_journal_currency.md"
         ]
       },
       "planned_app_changes": [
@@ -17138,7 +17148,7 @@
           "description": "Record existing Bar Dice monetary story unit/current-action delta only; no wallet, odds, items, scenarios, viewport or touch/focus change."
         }
       ],
-      "updated_at": "2026-11-04T16:52:45.793676+00:00"
+      "updated_at": "2026-11-04T16:57:12.765384+00:00"
     }
   ],
   "batches": [

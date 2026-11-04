@@ -411,7 +411,7 @@
     }
   ],
   "commit": "1e38b7885db21c5bee1d19a897c129ddf680b1f6",
-  "status": "Local tested fix committed;299 native assertions and independent review clear; task remainsOpen for acceptance, no publication attempted",
+  "status": "Native299 qualified and committed; authorized main/NEXT publication follow-through, deployment acceptance Open",
   "manual_reconciliation": {
     "current": {
       "errors_elsewhere": 51,
@@ -422,5 +422,16 @@
       "assigned_scope_findings": 0
     },
     "reports": "task-6/evidence/bardice-journal-ledger-final-{current,all}.json; exit1 is known unrelated findings, not a checker crash"
+  },
+  "initial_local_scope_status": "Local tested fix committed;299 native assertions and independent review clear; task remainsOpen for acceptance, no publication attempted",
+  "publication_followthrough": {
+    "authorization": "Trusted parent delegation includes explicit user approval to push finished work to NEXT",
+    "deployment_required": true,
+    "deployment_state": "pending",
+    "intended_fix": "1e38b7885db21c5bee1d19a897c129ddf680b1f6",
+    "watcher_observed_source": "9d20b10345db553816ad1a0d0502d3ef368e0998",
+    "last_good_NEXT": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+    "reserve_error": "Insufficient shared disk reserve for export: 13115047936 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+    "capacity_or_resource_guard_changed": false
   }
 }
