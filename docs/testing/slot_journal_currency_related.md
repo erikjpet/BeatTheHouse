@@ -142,3 +142,28 @@ The original476 checks remain attributed to their original source and scope.
 Craps and Bar Dice retain separate commits and acceptance records under the
 same new approval. No original profile or outcome is replayed; item/scenario
 and fixed16:9/touch/focus boundaries remain unchanged.
+
+### Verified current-main acceptance, 2026-11-04
+
+The separate exact implementation commit is preserved in public main. Current
+Host/official-cold qualification passes89 checks; the original476 checks
+remain attributed to their original identities and unchanged-path scopes.
+NEXT `f3058b6daab820e9d747c4c4aabc2d983e9ae32e`, tree
+`4c4ec494b5c22b1a5c57cc1e8bbf73041140a753`, promoted16:05:56UTC. Exact NEXT/current
+pointer/BUILD/manifest/provenance/generated LAN redirect and six asset lengths
+match; required WASM MIME is correct and served PCK hash matches provenance.
+Fresh disposable browser startup shows the correct version and four200
+engine/PCK/native requests, zero page/console errors, one pre-gesture AudioContext
+warning and complete context/browser closure. Its5%CPU/2GiB Job exits0 with no
+timeout/error and zero owned processes. Changed behavior remains native
+Host/API/official Save+cold qualification; no original profile or paid Web
+outcome replay, normal-menu Continue or direct LAN TLS acceptance is claimed.
+
+Evidence prefixes `next-f3058b6daab820e9d747c4c4aabc2d983e9ae32e-` and
+`web-next-f3058b6d-final` are in the task-6 evidence root, alongside
+`finished-journal-next-acceptance.json`. The task is Complete within this scoped
+acceptance, with its original implementation commit associated. A subsequent
+combined Bar Dice export hit Stack overflow and retained this accepted NEXT;
+that separate task remains Open and does not invalidate these served fixes.
+No resource guard, stable/itch/audience, trust, item/scenario or portrait setting
+changed.

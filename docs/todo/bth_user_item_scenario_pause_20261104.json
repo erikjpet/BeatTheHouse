@@ -1,0 +1,61 @@
+{
+  "schema": "bth.user_work_pause/v1",
+  "recorded_at": "2026-11-04T02:07:49.868676+00:00",
+  "instruction": "Pause item and scenario work.",
+  "source": "Current explicit user direction supplied through trusted parent delegation.",
+  "source_thread": "01a1a147-7f07-7583-baf0-771a839f1013",
+  "requested_by": "user",
+  "state": "active",
+  "task_ids": [
+    "BTH-11",
+    "BTH-SCENARIO-WEDDING-001",
+    "BTH-SCENARIO-ARRIVAL-002",
+    "BTH-15",
+    "BTH-17",
+    "BTH-15-FACTUAL-HELP-001",
+    "BTH-17-FACTUAL-HELP-001",
+    "LEDGER022"
+  ],
+  "resume_only_on_user_instruction": true,
+  "other_testing_fixes_audits_continue": true,
+  "existing_main_publication_rejection_unchanged": false,
+  "publication_retry_authorized": true,
+  "scope_limit": "Named item/scenario objectives and their associated unfinished batches/finding. Does not pause unrelated item UI bugs, scenario-engine bug fixes, playtesting, performance or audits.",
+  "local_index_verification": {
+    "verified_at": "2026-11-04T02:09:36.494218+00:00",
+    "metadata_commit": "d00a37629587445629f527eb57d20799b65a6a11",
+    "indexes": [
+      "named-fix-acceptance-registry-current.json",
+      "approved-fix-queue-current.json",
+      "named-todo-current.md"
+    ],
+    "scoped_entries": 8,
+    "all_paused_remain_incomplete": true,
+    "existing_ids_preserved": 195,
+    "other_work_status_unchanged": true,
+    "publication_retried": false
+  },
+  "direction_history": [
+    {
+      "recorded_at": "2026-11-04T15:58:58.336758+00:00",
+      "superseded_publication_fields": {
+        "existing_main_publication_rejection_unchanged": true,
+        "publication_retry_authorized": false
+      },
+      "note": "Only publication authorization changed; item/scenario pause remains active."
+    }
+  ],
+  "publication_retry_authorization": "Later explicit user instruction: Yes push all finished work to next",
+  "prior_publication_rejection": "Historical direct main push denied by automatic review and did not execute. New authorization permits one reviewed retry; a further denial must stop that action.",
+  "superseding_publication_authorization": {
+    "recorded_at": "2026-11-04T15:58:58.336758+00:00",
+    "source_thread": "01a1a147-7f07-7583-baf0-771a839f1013",
+    "source": "New explicit user instruction supplied through trusted parent delegation.",
+    "user_instruction": "Yes push all finished work to next",
+    "requested_action": "Reconcile tested scoped named-ledger/checker work with current main; publish to erikjpet/BeatTheHouse main and verify the existing NEXT pipeline.",
+    "retry_limit_for_previously_denied_push": 1,
+    "stop_on_further_denial": true,
+    "keep_incomplete_and_paused_items_open": true,
+    "audience_or_stable_itch_changes_authorized": false
+  }
+}

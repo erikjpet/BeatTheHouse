@@ -1,4 +1,4 @@
-# Deprecated implementation audit — 2026-11-03
+# Deprecated implementation audit ╬ô├ç├╢ 2026-11-03
 
 Baseline: `87a06b9a4acbe86b0f761d2cd0ab929f5584b716`.
 Task: `BTH061-AUDIT-001` on the existing stability release task list.
@@ -125,6 +125,13 @@ was used. This is basic Web startup, not an all-game playtest. Stable, itch and
 hosting audience remain outside the change. Final raw receipts are
 `evidence/next-identity.json`, `evidence/next-startup/startup.json`,
 `evidence/next-startup/job.json` and the reviewed startup screenshot in the
-isolated task workspace. This closes `BTH061-AUDIT-001` against the removal
+isolated task workspace. This closes only implementation batch `BTH061-AUDIT-001-BATCH-001`, not the full `BTH061-AUDIT-001` audit objective, against the removal
 commit above; remaining compatibility and inherited-check ambiguities remain
 explicit rather than being marked fixed.
+
+
+## Full audit objective remains active
+
+The user requested an audit to find other deprecated implementations and remove confirmed obsolete code completely. The first shipped removal batch and its NEXT verification do not establish whole-codebase review. Keep parent `BTH061-AUDIT-001` Open while recording subsequent batches separately.
+
+The current coverage inventory records95 core files (46 match previously reviewed blobs,49 differ;4 lack prior review) and a UI/game graph of127 files/7322 functions. A symbol/graph scan is not semantic review. Remaining work needs explicit removed/retained/reviewed dispositions, caller/dispatch and save-compatibility evidence, classification of every remaining candidate, named inherited-failure follow-ups, tested commits and relevant NEXT verification. See the [machine ledger](../todo/bth_task_ledger.json) and [manual reconciliation checks](../todo/bth_task_ledger_checks.md).
