@@ -4,6 +4,7 @@ extends Control
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 const GameRitualRuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 const MoneyFeedbackViewModelScript := preload("res://scripts/ui/money_feedback_view_model.gd")
+const WebSaveDurabilityBridgeScript := preload("res://scripts/ui/web_save_durability_bridge.gd")
 
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
@@ -591,6 +592,9 @@ var run_menu_abandon_button: Button
 var run_menu_main_menu_button: Button
 var run_menu_skip_tutorial_button: Button
 var run_menu_family_repay_button: Button
+var _web_manual_save_pending := false
+var _web_manual_save_error := ""
+var _web_save_durability_bridge: Variant = null
 var tutorial_skip_dialog: ConfirmationDialog
 var settings_overlay: Control
 var settings_margin: MarginContainer
@@ -951,6 +955,9 @@ func _advance_environment_turns_checked(amount: int = 1, debug_timing: Dictionar
 
 
 func _input(event: InputEvent) -> void:
+	if _web_manual_save_pending:
+		get_viewport().set_input_as_handled()
+		return
 	# The HUD disclosure owns its own focused controls. Do not let a response
 	# hotkey or another modal's scope act on the room behind it.
 	if _hud_details_is_visible():
@@ -6303,6 +6310,8 @@ func close_run_inventory() -> void:
 
 
 func open_run_journal() -> void:
+	if _web_manual_save_pending:
+		return
 	if run_state == null:
 		_show_message("No active run to review.")
 		return
@@ -7219,6 +7228,8 @@ func load_foundation_run() -> bool:
 
 
 func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
+	if _web_manual_save_pending:
+		return false
 	if not _ensure_run_ui_built():
 		return false
 	if save_service == null:
@@ -7376,6 +7387,8 @@ func open_run_menu() -> void:
 
 
 func close_run_menu() -> void:
+	if _web_manual_save_pending:
+		return
 	_hide_run_menu()
 	_sync_coach_focus_visibility()
 	_refresh()
@@ -7390,6 +7403,8 @@ func _family_loan_menu_repayment_status() -> Dictionary:
 
 
 func repay_family_loan_from_menu() -> void:
+	if _web_manual_save_pending:
+		return
 	if not _run_menu_is_visible():
 		return
 	var status := _family_loan_menu_repayment_status()
@@ -7401,15 +7416,46 @@ func repay_family_loan_from_menu() -> void:
 
 
 func save_run_from_menu() -> void:
+	if _web_manual_save_pending:
+		return
+	_web_manual_save_error = ""
 	if run_state == null:
 		save_status_message = "No active run to save."
 		_show_message("No active run to save.")
 		_refresh_run_menu()
 		return
-	if not _autosave_foundation_run("Saved to Resume Slot.", true):
+	var web_save := OS.has_feature("web")
+	if not _autosave_foundation_run("Saving to Resume Slot..." if web_save else "Saved to Resume Slot.", true):
 		_show_message(save_status_message)
 		_refresh()
 		return
+	if web_save:
+		var saved_run := run_state
+		var saved_slot := autosave_slot_id
+		_web_manual_save_pending = true
+		_refresh_run_menu()
+		if _web_save_durability_bridge == null:
+			_web_save_durability_bridge = WebSaveDurabilityBridgeScript.new()
+		var result: Dictionary = _web_save_durability_bridge.begin()
+		while bool(result.get("pending", false)):
+			await get_tree().process_frame
+			if not is_inside_tree():
+				return
+			result = _web_save_durability_bridge.poll()
+		_web_manual_save_pending = false
+		if run_state != saved_run or autosave_slot_id != saved_slot:
+			_web_manual_save_error = "Save was interrupted. Choose Save to retry."
+			save_status_message = _web_manual_save_error
+			_refresh_run_menu()
+			return
+		if not bool(result.get("ok", false)):
+			_web_manual_save_error = "Could not finish saving. Keep this tab open and choose Save to retry."
+			save_status_message = _web_manual_save_error
+			_refresh_run_menu()
+			_show_message(save_status_message)
+			_refresh()
+			return
+		save_status_message = "Saved to Resume Slot."
 	_clear_input_guard_modal_state()
 	_refresh()
 
@@ -7419,6 +7465,8 @@ func load_run_from_menu() -> void:
 
 
 func abandon_run_from_menu() -> void:
+	if _web_manual_save_pending:
+		return
 	if run_state == null:
 		_show_message("No active run to abandon.")
 		_refresh_run_menu()
@@ -15268,6 +15316,8 @@ func _trap_event_choice_popup_focus(event: InputEvent) -> bool:
 
 
 func _route_topmost_modal_cancel() -> bool:
+	if _web_manual_save_pending:
+		return true
 	if _hud_details_is_visible():
 		structured_hud.close_details()
 		return true
@@ -18944,12 +18994,16 @@ func _fresh_profile_needs_tutorial() -> bool:
 
 
 func request_skip_tutorial() -> void:
+	if _web_manual_save_pending:
+		return
 	if run_state == null or not run_state.is_tutorial_run() or tutorial_skip_dialog == null:
 		return
 	tutorial_skip_dialog.popup_centered(Vector2i(520, 190))
 
 
 func _confirm_skip_tutorial() -> void:
+	if _web_manual_save_pending:
+		return
 	if run_state == null or not run_state.is_tutorial_run():
 		return
 	if not _complete_tutorial_profile():
@@ -19120,6 +19174,8 @@ func _save_foundation_run_before_leaving(status_text: String) -> bool:
 
 
 func return_to_main_menu() -> bool:
+	if _web_manual_save_pending:
+		return false
 	if _is_meta_session():
 		_exit_meta_session()
 		return true
@@ -19204,6 +19260,8 @@ func _restore_main_menu_surface_visibility() -> void:
 
 
 func exit_game() -> void:
+	if _web_manual_save_pending:
+		return
 	_drain_event_response_before_exit()
 	if not _save_foundation_run_before_leaving("Autosaved before exit."):
 		return
@@ -19213,6 +19271,8 @@ func exit_game() -> void:
 
 
 func open_settings_menu() -> void:
+	if _web_manual_save_pending:
+		return
 	if settings_menu == null or settings_overlay == null:
 		# Native and web startup intentionally defer the run shell. Settings owns
 		# Environment Library placement controls, so a cold-start click must cross
@@ -20749,6 +20809,8 @@ func _run_menu_is_visible() -> bool:
 
 
 func _hide_run_menu() -> void:
+	if _web_manual_save_pending:
+		return
 	if run_menu_overlay != null:
 		if run_menu_overlay.visible and modal_focus_scope != null:
 			modal_focus_scope.call("pop_scope", run_menu_overlay)
@@ -20758,6 +20820,13 @@ func _hide_run_menu() -> void:
 
 func _refresh_run_menu() -> void:
 	if run_menu_overlay == null:
+		return
+	if _web_manual_save_pending:
+		for action_control in run_menu_action_controls:
+			if action_control is BaseButton:
+				(action_control as BaseButton).disabled = true
+		if run_menu_status_label != null:
+			run_menu_status_label.text = "Saving to Resume Slot... Keep this tab open."
 		return
 	var has_save := _has_foundation_save()
 	var meta_context := _is_meta_session()
@@ -20781,6 +20850,8 @@ func _refresh_run_menu() -> void:
 			run_menu_status_label.text = "%s | %s\nProgress here saves automatically. %s" % [location_label, venue, resume_note]
 		else:
 			run_menu_status_label.text = "%s\n%s Save overwrites this slot; Load replaces this run." % [status, save_note]
+		if not _web_manual_save_error.is_empty():
+			run_menu_status_label.text += "\n" + _web_manual_save_error
 	if run_menu_resume_button != null:
 		run_menu_resume_button.disabled = false
 	if run_menu_save_button != null:

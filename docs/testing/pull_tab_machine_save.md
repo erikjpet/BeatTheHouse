@@ -1,10 +1,11 @@
 # BTH061-PULLTABS-SAVE-001: collected ticket custody after Menu Save
 
-Status: **Open; evidence/test commit pending**. The reported rollback has not
-reproduced in the current native host or the tested Web machine/floor-save
-routes. No product root cause or gameplay fix is confirmed. A documentation/test
-commit does not close the original report. The named stability ledger retains
-its status and associated commit field.
+Status: **Open; original ticket rollback remains unattributed.** The initial
+investigation below was committed in 436a707f. The closer independent Grand
+follow-up confirms and corrects a Web Save acknowledgment gap, with native and
+Web acceptance. See [Grand Save boundary evidence](pull_tab_grand_save_boundary.md)
+for current results, commit/NEXT association and exact-save limitation. The
+original report remains preserved; the task is not Complete.
 
 ## Reported Web discrepancy and evidence custody
 
@@ -195,7 +196,10 @@ visibility; the served shell's completed-startup path removes the overlay, so
 no selector defect has been established. These are startup/harness limits,
 not Pull Tabs custody failures.
 
-## Remaining acceptance
+## Initial investigation acceptance
+
+This section records the first investigation's scope. The linked Grand
+follow-up above supersedes its pending work where expressly tested.
 
 The investigation and regression are committed in
 `436a707f8ed1ca6b5464e083326d9d1fb6bb7de7`. Publication and exact NEXT verification

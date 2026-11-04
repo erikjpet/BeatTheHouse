@@ -743,6 +743,25 @@ func _begin_event_result_application(run_state: RunState, result: Dictionary, ex
 			if str(pre_hook.get("type", "")) == "crew_heist":
 				for public_key in ["cost", "forced", "run_ended"]:
 					if service_result.has(public_key): result[public_key] = service_result.get(public_key)
+				# A live heist decision replaces its mounted presentation package.
+				# Unmounting invalidates the room's semantic seal until the trusted
+				# finalizer composes the next package. Do that inside this event's
+				# rollback boundary, before the ordinary environment-turn preflight.
+				if bool(run_state.current_environment.get("scenario_restore_pending_trusted_rebuild", false)):
+					var rebuilt := run_state.scenario_finalize_installed_environment(
+						content_library,
+						JsonCoerceScript._copy_dict(run_state.current_environment.get("scenario_layout_context", {}))
+					)
+					if not bool(rebuilt.get("ok", false)):
+						if not external_rollback_owner:
+							run_state.from_dict(rollback_run)
+							run_state.current_environment = rollback_environment
+							run_state.world_map = rollback_world_map
+							run_state.grand_casino_room_states = rollback_room_states
+						result["ok"] = false
+						result["errors"] = JsonCoerceScript._copy_array(rebuilt.get("errors", []))
+						result["message"] = str((result["errors"] as Array)[0]) if not (result["errors"] as Array).is_empty() else "The heist room could not be finalized safely."
+						return {}
 	var advance_result := run_state.advance_environment_turns_with_external_rollback(1) \
 		if external_rollback_owner else run_state.advance_environment_turns(1)
 	if profile_stages:
