@@ -1,6 +1,6 @@
 # DEPARTING_OBSERVER_CLIP — departing observer bounds
 
-Owner: task-14. Status: Open; native acceptance passed, NEXT verification pending.
+Owner: task-14. Status: Complete; scoped native acceptance and NEXT verification passed.
 Fix commit: `cc39dd5081df178484f24e786a919bd259724d2b`.
 
 The preserved primary observation is the independent QA-VIS-020 receipt at
@@ -99,3 +99,34 @@ for the observed body/shadow edge clipping; the existing label resolver can stil
 permit crowding and this task does not certify zero label overlap near Leave.
 The change is not a universal bounds guarantee for hypothetical oversized or
 unusually narrow multi-person layouts.
+
+An independent reviewer accepted the scoped closure after checking the baseline,
+801-check painter receipt, representative normal/small raster captures, adjacent
+semantics/liveness checks, exact NEXT receipt and matching-version startup. No
+closure blocker remained; the fidelity and label-crowding limits above apply.
+
+## Main and NEXT receipt
+
+Fix `cc39dd5081df178484f24e786a919bd259724d2b` reached main through task-association
+commit `77272db8800045e7d69d3367f34c2a79335743fe`, tree
+`675acdb9ffd42995a27526f199d4d7ca7314a500`. The existing watcher promoted it at
+2026-11-04 03:11:48 UTC. Exact served NEXT/BUILD/manifest/REF/VERSION, provenance,
+current pointer and actual redirect agree. All six payload HEAD checks passed;
+the downloaded changed PCK matched provenance SHA-256
+`8662b48f510d8f6134b9e45e1e4bcd19c824076c1bc50f871c35df8164d4c643`.
+
+The fresh disposable browser session `departure-next-77272-start2` loaded the
+exact immutable served build. Its inspected title screenshot shows
+`0.6.0-dev+77272db88000`; state records readiness/completion and empty page/console
+error lists. It closed normally with zero owned processes. The initial
+`departure-next-startup` attempt failed before browser creation because of a
+relative controller path; it is retained as a runner failure, not a game failure
+or successful launch. `departure-next-startup2` is the passing receipt.
+
+Release evidence: task-14 `evidence/next-77272db8800045e7d69d3367f34c2a79335743fe-release.json`,
+`evidence/web-next-save/sessions/departure-next-77272-start2/` and
+`outcome-departure.json`. Tested source hashes match the committed fix. Native
+changed-behavior checks and Web basic startup remain distinct; there is no claim
+of a deployed Web scenario replay. Stable, itch and the existing hosting audience
+were not changed. Closure is associated with the fix commit and these acceptance
+receipts; the historical primary evidence is preserved.
