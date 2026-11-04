@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T17:11:32.306961+00:00",
+  "updated_at": "2026-11-04T17:25:47.651556+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -18099,6 +18099,201 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-04T16:33:01.150Z"
+    },
+    {
+      "id": "BTH061-AUDIT-GAME-PATHS-004",
+      "name": "Trace superseded gameplay presentation paths in current game implementations",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Review called code paths and renderer/model payloads in Roulette, Coin Pusher and Slot for superseded prototype UI or unreachable implementation branches. Trace actual native/fallback, inheritance, dynamic and supported diagnostic consumers; preserve active physics portability, public/save compatibility and paused areas. This is a bounded review; whole-codebase audit remains Open.",
+        "source": "docs/testing/deprecated_code_audit_continuation_004.md; trusted parent direction to continue meaningful production-code audit",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "production-path-disposition",
+            "description": "Exact bounded production review and semantic/history/consumer dispositions; confirmed obsolete code gets a separately qualified removal/delivery scope before implementation.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_004.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "PRODUCTION_PATH_REVIEW_IN_PROGRESS",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Read-only bounded review until a concrete source removal is registered and qualified."
+      },
+      "evidence": [
+        {
+          "kind": "scoped_production_audit",
+          "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
+          "summary": "Review in progress; no new deletion or publication pass claimed."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Trace the scoped production paths at ff8eb28c; record concrete reachable/obsolete dispositions and propose exact meaningful removal only after evidence.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T17:25:47.651556+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T17:25:47.651556+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-HOST-GAMEPLAY-004",
+      "name": "Trace obsolete nonpaused host gameplay presentation after extractions",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Review further nonpaused FoundationMain gameplay/surface/money-result bridges after controller extractions, beyond the completed generic menu helper pass. Inspect called-method internals and stale payload/field lifecycles, not merely identifier counts. Preserve current behavior, scheduling, save/public and paused item/scenario boundaries. This is a bounded review; whole-codebase audit remains Open.",
+        "source": "docs/testing/deprecated_code_audit_continuation_004.md; trusted parent direction to continue meaningful production-code audit",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "production-path-disposition",
+            "description": "Exact bounded production review and semantic/history/consumer dispositions; confirmed obsolete code gets a separately qualified removal/delivery scope before implementation.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_004.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "PRODUCTION_PATH_REVIEW_IN_PROGRESS",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Read-only bounded review until a concrete source removal is registered and qualified."
+      },
+      "evidence": [
+        {
+          "kind": "scoped_production_audit",
+          "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
+          "summary": "Review in progress; no new deletion or publication pass claimed."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Trace the scoped production paths at ff8eb28c; record concrete reachable/obsolete dispositions and propose exact meaningful removal only after evidence.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T17:25:47.651556+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T17:25:47.651556+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-REPORT-MODELS-004",
+      "name": "Review production presentation and report models for superseded implementation",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Review current action/HUD/career/journal/report/terminal presentation models for obsolete private branches or duplicate implementations after extraction. Establish receiver, whole-payload, reflective, history, inherited and persisted consumer boundaries before proposing removal. Exclude item/scenario implementation and unrelated performance work. This is a bounded review; whole-codebase audit remains Open.",
+        "source": "docs/testing/deprecated_code_audit_continuation_004.md; trusted parent direction to continue meaningful production-code audit",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "production-path-disposition",
+            "description": "Exact bounded production review and semantic/history/consumer dispositions; confirmed obsolete code gets a separately qualified removal/delivery scope before implementation.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_004.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "PRODUCTION_PATH_REVIEW_IN_PROGRESS",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Read-only bounded review until a concrete source removal is registered and qualified."
+      },
+      "evidence": [
+        {
+          "kind": "scoped_production_audit",
+          "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
+          "summary": "Review in progress; no new deletion or publication pass claimed."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Trace the scoped production paths at ff8eb28c; record concrete reachable/obsolete dispositions and propose exact meaningful removal only after evidence.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T17:25:47.651556+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T17:25:47.651556+00:00"
     }
   ],
   "batches": [
