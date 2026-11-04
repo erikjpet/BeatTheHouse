@@ -18,7 +18,7 @@ function Assert-ContentClassification {
 
 $source = (Get-Content -LiteralPath (Join-Path $root "scripts/ui/foundation_main.gd") -Raw).Replace("`r`n", "`n")
 $actual = Get-FoundationUiContentSelectionScan $source -RequireReviewedBindings
-Assert-ContentClassification ($actual.HostSecurityAllowlistCount -eq 1 -and $actual.ReviewedBindingCount -eq 24 -and $actual.Issues.Count -eq 0) "Production must have exactly 24 unambiguous reviewed bindings and its sole security allowlist."
+Assert-ContentClassification ($actual.HostSecurityAllowlistCount -eq 1 -and $actual.ReviewedBindingCount -eq 29 -and $actual.Issues.Count -eq 0) "Production must have exactly 29 unambiguous reviewed bindings and its sole security allowlist."
 $contentIds = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 foreach ($relative in @("data/environments/archetypes.json", "data/games/games.json", "data/items/items.json", "data/events/events.json", "data/debt/lenders.json", "data/services/services.json", "data/travel/routes.json")) {
     foreach ($entry in (Get-Content -LiteralPath (Join-Path $root $relative) -Raw | ConvertFrom-Json)) {
@@ -30,9 +30,9 @@ foreach ($id in $contentIds) {
 }
 
 $outside = Get-FoundationUiContentSelectionScan ($source + "`nvar hostile_content_choice := `"motel`"") -RequireReviewedBindings
-Assert-ContentClassification ($outside.ScanText.Contains('"motel"') -and $outside.ReviewedBindingCount -eq 24) "An unbound future content choice must remain visible."
+Assert-ContentClassification ($outside.ScanText.Contains('"motel"') -and $outside.ReviewedBindingCount -eq 29) "An unbound future content choice must remain visible."
 $inside = Get-FoundationUiContentSelectionScan ($source.Replace("func _advance_run_game_clock(delta: float) -> void:", "func _advance_run_game_clock(delta: float) -> void:`n`tvar hostile_content_choice := `"motel`"")) -RequireReviewedBindings
-Assert-ContentClassification ($inside.ScanText.Contains('"motel"') -and $inside.ReviewedBindingCount -eq 24) "A new literal inside an approved function must remain visible."
+Assert-ContentClassification ($inside.ScanText.Contains('"motel"') -and $inside.ReviewedBindingCount -eq 29) "A new literal inside an approved function must remain visible."
 $approvedLine = "`t`tvar queued := run_state.enqueue_triggered_event(`"crew_favor_delivery`", `"crew_hourly`", {}, _triggered_entry_overrides(library.event(`"crew_favor_delivery`")))"
 Assert-ContentClassification ($source.Contains($approvedLine)) "Hostile probe requires the current hourly callback binding."
 $duplicated = Get-FoundationUiContentSelectionScan ($source.Replace($approvedLine, $approvedLine + "`n" + $approvedLine)) -RequireReviewedBindings
@@ -52,4 +52,53 @@ $securityBlock = "const SEALED_ACTION_HOST_SKIP_ENVIRONMENT_TURN_ALLOWLIST := {`
 $duplicateSecurity = Get-FoundationUiContentSelectionScan ($source + "`n" + $securityBlock) -RequireReviewedBindings
 Assert-ContentClassification ($duplicateSecurity.HostSecurityAllowlistCount -eq 2 -and $duplicateSecurity.ScanText.Contains('"slot"')) "Duplicate security allowlists must remain unclassified."
 
-if (-not $Quiet) { Write-Host "Foundation content selection classifier passed: 24 production bindings, current catalog scan, eight hostile classes." }
+# Each current feedback fragment must remain tied to its exact function and
+# predicate. A global Blackjack exception or whole-function mask would hide
+# the extra, moved, changed, duplicated, or ambiguous literals exercised here.
+$blackjackFeedbackBindings = @(
+    @{ Function = '_environment_result_feedback_view'; Lines = @('	if str(result.get("game_id", "")) == "blackjack" and round_net_lead.is_empty() and str(result.get("currency", "")) not in ["cash", "chips"]:') },
+    @{ Function = '_blackjack_round_net_feedback_delta'; Lines = @('	if str(result.get("game_id", result.get("source_id", ""))) != "blackjack" \', '			or bool(result.get("applied_currency_unknown", false)) \', '			or not GameModule.applied_currency_settlement(result).is_empty():', '		return null') },
+    @{ Function = '_story_is_unwagered_blackjack_watch'; Lines = @('	if str(entry.get("type", "")) != "game_action" or str(entry.get("game_id", "")) != "blackjack" or not bool(entry.get("sat_out", false)):', '		return false') },
+    @{ Function = '_result_from_story_log'; Lines = @('		if str(story_entry.get("game_id", "")) == "blackjack":', '			feedback_keys.append_array(["round_net_delta", "outcome_bankroll_delta", "blackjack_round_net_delta"])') },
+    @{ Function = '_result_from_story_log'; Lines = @('		if str(restored.get("game_id", "")) == "blackjack" and not restored.has("currency") and _blackjack_round_net_feedback_delta(restored) != null:') }
+)
+$feedbackHostileCount = 0
+foreach ($binding in $blackjackFeedbackBindings) {
+    $fragment = $binding.Lines -join "`n"
+    Assert-ContentClassification ([regex]::Matches($source, [regex]::Escape($fragment)).Count -eq 1) "Feedback hostile fixture requires one exact current fragment: $($binding.Function)."
+    $duplicatedFeedback = Get-FoundationUiContentSelectionScan ($source.Replace($fragment, $fragment + "`n" + $fragment)) -RequireReviewedBindings
+    Assert-ContentClassification ($duplicatedFeedback.Issues.Count -gt 0 -and $duplicatedFeedback.ScanText.Contains('"blackjack"')) "Duplicate feedback text must remain unclassified: $($binding.Function)."
+    $feedbackHostileCount += 1
+    $movedFeedbackSource = $source.Replace($fragment, "") + "`nfunc _hostile_blackjack_feedback_owner() -> void:`n" + $fragment
+    $movedFeedback = Get-FoundationUiContentSelectionScan $movedFeedbackSource -RequireReviewedBindings
+    Assert-ContentClassification ($movedFeedback.Issues.Count -gt 0 -and $movedFeedback.ScanText.Contains('"blackjack"')) "Feedback text moved to another function must remain unclassified: $($binding.Function)."
+    $feedbackHostileCount += 1
+    $changedFeedback = Get-FoundationUiContentSelectionScan ($source.Replace($fragment, $fragment.Replace('"blackjack"', '"motel"'))) -RequireReviewedBindings
+    Assert-ContentClassification ($changedFeedback.Issues.Count -gt 0 -and $changedFeedback.ScanText.Contains('"motel"')) "Changed feedback content identity must require review: $($binding.Function)."
+    $feedbackHostileCount += 1
+    $changedPredicate = if ($fragment.Contains('== "blackjack"')) { $fragment.Replace('== "blackjack"', '!= "blackjack"') } else { $fragment.Replace('!= "blackjack"', '== "blackjack"') }
+    $changedFeedbackPredicate = Get-FoundationUiContentSelectionScan ($source.Replace($fragment, $changedPredicate)) -RequireReviewedBindings
+    Assert-ContentClassification ($changedFeedbackPredicate.Issues.Count -gt 0 -and $changedFeedbackPredicate.ScanText.Contains('"blackjack"')) "Changed feedback predicate must require review: $($binding.Function)."
+    $feedbackHostileCount += 1
+}
+foreach ($ownerName in @($blackjackFeedbackBindings | ForEach-Object { $_.Function } | Select-Object -Unique)) {
+    $ownerDeclarations = [regex]::Matches($source, '(?m)^func ' + [regex]::Escape($ownerName) + '\([^\n]*$')
+    Assert-ContentClassification ($ownerDeclarations.Count -eq 1) "Feedback hostile fixture requires one function declaration: $ownerName."
+    $declaration = $ownerDeclarations[0].Value
+    $extraFeedback = Get-FoundationUiContentSelectionScan ($source.Replace($declaration, $declaration + "`n`tvar hostile_blackjack_choice := `"blackjack`"")) -RequireReviewedBindings
+    Assert-ContentClassification ($extraFeedback.ReviewedBindingCount -eq 29 -and $extraFeedback.ScanText.Contains('"blackjack"')) "An extra Blackjack literal inside a reviewed feedback function must remain visible: $ownerName."
+    $feedbackHostileCount += 1
+    $duplicateFeedbackOwner = Get-FoundationUiContentSelectionScan ($source + "`n" + $declaration + "`n`treturn {`"game_id`": `"blackjack`"}") -RequireReviewedBindings
+    Assert-ContentClassification ($duplicateFeedbackOwner.Issues.Count -gt 0 -and $duplicateFeedbackOwner.ScanText.Contains('"blackjack"')) "Duplicate feedback function owners must remain unclassified: $ownerName."
+    $feedbackHostileCount += 1
+    $ambiguousFeedbackSource = $source.Replace($declaration, $declaration + "`n`tvar embedded := $tripleQuote`n$tripleQuote")
+    $ambiguousFeedback = Get-FoundationUiContentSelectionScan $ambiguousFeedbackSource -RequireReviewedBindings
+    Assert-ContentClassification (($ambiguousFeedback.Issues -join "`n").Contains("multiline-string ambiguity") -and $ambiguousFeedback.ScanText.Contains('"blackjack"')) "Ambiguous feedback function text must remain unclassified: $ownerName."
+    $feedbackHostileCount += 1
+}
+$outsideFeedback = Get-FoundationUiContentSelectionScan ($source + "`nvar hostile_blackjack_choice := `"blackjack`"") -RequireReviewedBindings
+Assert-ContentClassification ($outsideFeedback.ReviewedBindingCount -eq 29 -and $outsideFeedback.ScanText.Contains('"blackjack"')) "An unbound Blackjack literal outside reviewed functions must remain visible."
+$feedbackHostileCount += 1
+Assert-ContentClassification ($feedbackHostileCount -eq 33) "All 33 current-feedback hostile mutations must execute."
+
+if (-not $Quiet) { Write-Host "Foundation content selection classifier passed: 29 production bindings, current catalog scan, eight existing hostile classes and 33 Blackjack feedback hostiles." }
