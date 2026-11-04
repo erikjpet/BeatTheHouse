@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T17:49:57.547271+00:00",
+  "updated_at": "2026-11-04T17:56:46.554449+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -18262,29 +18262,45 @@
             "id": "trace_reproduce",
             "description": "Trace Roulette-specific producer/host attribution and reproduce using labeled synthetic normal cash/chip action boundaries, no original R07 replay.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/roulette_journal_currency_20261104.md",
+              "docs/testing/roulette_journal_currency_20261104.json",
+              "commit:61e77b909b0ca2cb496df54066ba13ffb68ea755"
+            ]
           },
           {
             "id": "accounting_contract",
             "description": "Preserve unpaid draft/Save, confirm-exactly-once settlement and explicit current-net units, refund/zero/legacy boundaries as materially relevant.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/roulette_journal_currency_20261104.md",
+              "docs/testing/roulette_journal_currency_20261104.json",
+              "commit:61e77b909b0ca2cb496df54066ba13ffb68ea755"
+            ]
           },
           {
             "id": "save_cold",
             "description": "Relevant official Save/fresh-process cold preserves wallets, full paid/draft table state, RNG/clocks/history without new wager or outcome.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/roulette_journal_currency_20261104.md",
+              "docs/testing/roulette_journal_currency_20261104.json",
+              "commit:61e77b909b0ca2cb496df54066ba13ffb68ea755"
+            ]
           },
           {
             "id": "review_commit",
             "description": "Focused tests, independent scoped review and separately associated implementation commit; update both ledgers with actual evidence and limits.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/roulette_journal_currency_20261104.md",
+              "docs/testing/roulette_journal_currency_20261104.json",
+              "commit:61e77b909b0ca2cb496df54066ba13ffb68ea755"
+            ]
           }
         ],
         "coverage": {
@@ -18293,14 +18309,23 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "ADDED_DISTINCT_FINDING_SOURCE_TRACE_IN_PROGRESS",
+      "state": "complete",
+      "status": "LOCAL_FIX_TEST_COMMIT_COMPLETE",
       "owner": {
         "name": "Fix Back Alley travel / Roulette journal follow-up",
         "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "61e77b909b0ca2cb496df54066ba13ffb68ea755",
+          "evidence": [
+            "docs/testing/roulette_journal_currency_20261104.md",
+            "docs/testing/roulette_journal_currency_20261104.json",
+            "Independent source/test review; native334 + draft-cold35 + final-cold75 + adjacent consumed16 qualified assertions."
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -18313,22 +18338,37 @@
           "kind": "qa_observation",
           "reference": "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-roulette-journal-currency-893894-finding.json",
           "summary": "R07 onf305 Lounge: one unpaid14-on17 draft survivescold with cash33, confirmnatural36red loses14 once tocash19; cold retains one row unknowncurrency. Accounting/exactlyonce correct; distinct Roulette attribution pending."
+        },
+        {
+          "kind": "regression_test",
+          "reference": "docs/testing/roulette_journal_currency_20261104.json",
+          "summary": "460 qualified assertions including separate consumed16; all generated cash/chip action, draft-cold and final-cold checks pass. Both harness diagnostics retained; no original replay."
+        },
+        {
+          "kind": "review",
+          "reference": "docs/testing/roulette_journal_currency_20261104.md",
+          "summary": "Independent loan_room_review source/test approval; six product metadata additions and unchanged shared Journal. Exact implementation SHA associated."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Read-only Roulette producer/host trace proceeds independently while Quarter Falls price fix finishes; then reproduce and qualify a separately scoped currency correction if warranted.",
+      "next_action": "No remaining work within the local investigation, metadata fix, test and commit objective. No deployed, renderer/Web or original-save acceptance is inferred.",
       "blocker": {
         "state": "none",
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:35:28.965297+00:00",
+        "observed_at": "2026-11-04T17:56:46.554449+00:00",
         "evidence": [
-          "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-roulette-journal-currency-893894-finding.json"
+          "docs/testing/roulette_journal_currency_20261104.json"
         ]
       },
-      "planned_app_changes": [],
-      "updated_at": "2026-11-04T17:35:28.965297+00:00"
+      "planned_app_changes": [
+        {
+          "scope": "roulette_story_currency_metadata",
+          "description": "Six new producer metadata fields only: actual currency and current action net. No charging, authority, rules, history rewrite, input, viewport, scheduling or paused feature change."
+        }
+      ],
+      "updated_at": "2026-11-04T17:56:46.554449+00:00"
     }
   ],
   "batches": [
