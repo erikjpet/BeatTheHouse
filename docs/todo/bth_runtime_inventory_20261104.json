@@ -1,8 +1,8 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-04T18:12:12.227039+00:00",
+  "observed_at": "2026-11-04T20:03:06.073730+00:00",
   "scope": {
-    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed.",
+    "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed.",
     "complete": false,
     "evidence": [
       "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-19\\evidence\\known-job-receipts.json",
@@ -15,7 +15,8 @@
       "docs/testing/bar_dice_journal_currency_20261104.json",
       "docs/testing/coin_pusher_drop_price_20261104.json",
       "docs/testing/roulette_journal_currency_20261104.json",
-      "docs/testing/quarter_roulette_publication_20261104.json"
+      "docs/testing/quarter_roulette_publication_20261104.json",
+      "docs/testing/roulette_sealed_pending_r08.json"
     ]
   },
   "instances": [
@@ -2475,6 +2476,702 @@
           "docs/testing/quarter_roulette_publication_20261104.json"
         ],
         "limit": "Nonce-bound owned Job closure on the merged-source release qualification."
+      }
+    },
+    {
+      "instance_id": "task14:r08-roulette-baseline-1",
+      "task_id": "BTH061-ROULETTE-SEALED-PENDING-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "r08-roulette-baseline-1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-baseline-1.start.json:pid:19244",
+        "started_at": "2026-11-04T19:15:34.383794+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-baseline-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-baseline-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Identity is the actual launch label recorded before execution; wrapper refuses label reuse. Not a random nonce or a global process census."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T19:16:04.683871+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-baseline-1.start.json:pid:19244",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-baseline-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-baseline-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Private owned Job drained active_at_release=0 before handle release; only this Job membership is asserted."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T19:16:04.683871+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-baseline-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-baseline-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-baseline-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-baseline-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-baseline-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-baseline-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T19:16:04.683871+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "r08-roulette-baseline-1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-baseline-1.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-baseline-1.start.json",
+            "docs/testing/roulette_sealed_pending_r08.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T19:16:04.683871+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-baseline-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-baseline-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ],
+        "limit": "Own bounded test Job only. Setup failures are retained. Private fixtures/profiles preserved; original pending action and shared resources untouched."
+      }
+    },
+    {
+      "instance_id": "task14:r08-roulette-paced-1",
+      "task_id": "BTH061-ROULETTE-SEALED-PENDING-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "r08-roulette-paced-1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-paced-1.start.json:pid:32344",
+        "started_at": "2026-11-04T19:20:31.283037+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-paced-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-paced-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Identity is the actual launch label recorded before execution; wrapper refuses label reuse. Not a random nonce or a global process census."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T19:21:04.590322+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-paced-1.start.json:pid:32344",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-paced-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-paced-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Private owned Job drained active_at_release=0 before handle release; only this Job membership is asserted."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T19:21:04.590322+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-paced-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-paced-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-paced-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-paced-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-paced-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-paced-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T19:21:04.590322+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "r08-roulette-paced-1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-paced-1.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-paced-1.start.json",
+            "docs/testing/roulette_sealed_pending_r08.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T19:21:04.590322+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-paced-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-paced-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ],
+        "limit": "Own bounded test Job only. Setup failures are retained. Private fixtures/profiles preserved; original pending action and shared resources untouched."
+      }
+    },
+    {
+      "instance_id": "task14:r08-roulette-after-bj-1",
+      "task_id": "BTH061-ROULETTE-SEALED-PENDING-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "r08-roulette-after-bj-1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-1.start.json:pid:35688",
+        "started_at": "2026-11-04T19:28:33.298953+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Identity is the actual launch label recorded before execution; wrapper refuses label reuse. Not a random nonce or a global process census."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T19:29:20.296648+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-1.start.json:pid:35688",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Private owned Job drained active_at_release=0 before handle release; only this Job membership is asserted."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T19:29:20.296648+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T19:29:20.296648+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "r08-roulette-after-bj-1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-1.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-1.start.json",
+            "docs/testing/roulette_sealed_pending_r08.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T19:29:20.296648+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ],
+        "limit": "Own bounded test Job only. Setup failures are retained. Private fixtures/profiles preserved; original pending action and shared resources untouched."
+      }
+    },
+    {
+      "instance_id": "task14:r08-roulette-after-bj-2",
+      "task_id": "BTH061-ROULETTE-SEALED-PENDING-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "r08-roulette-after-bj-2",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-2.start.json:pid:10336",
+        "started_at": "2026-11-04T19:40:17.429445+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-2.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-2.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Identity is the actual launch label recorded before execution; wrapper refuses label reuse. Not a random nonce or a global process census."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T19:40:50.152757+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-2.start.json:pid:10336",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-2.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-2.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Private owned Job drained active_at_release=0 before handle release; only this Job membership is asserted."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T19:40:50.152757+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-2.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-2.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-2.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-2.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-2.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-2.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T19:40:50.152757+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "r08-roulette-after-bj-2",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-2.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-2.start.json",
+            "docs/testing/roulette_sealed_pending_r08.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T19:40:50.152757+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-2.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-after-bj-2.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ],
+        "limit": "Own bounded test Job only. Setup failures are retained. Private fixtures/profiles preserved; original pending action and shared resources untouched."
+      }
+    },
+    {
+      "instance_id": "task14:r08-roulette-web-prepare-1",
+      "task_id": "BTH061-ROULETTE-SEALED-PENDING-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "r08-roulette-web-prepare-1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-web-prepare-1.start.json:pid:29236",
+        "started_at": "2026-11-04T19:38:31.362788+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-web-prepare-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-web-prepare-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Identity is the actual launch label recorded before execution; wrapper refuses label reuse. Not a random nonce or a global process census."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T19:39:05.275313+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-web-prepare-1.start.json:pid:29236",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-web-prepare-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-web-prepare-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Private owned Job drained active_at_release=0 before handle release; only this Job membership is asserted."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T19:39:05.275313+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-web-prepare-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-web-prepare-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-web-prepare-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-web-prepare-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-web-prepare-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-web-prepare-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T19:39:05.275313+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "r08-roulette-web-prepare-1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-web-prepare-1.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-web-prepare-1.start.json",
+            "docs/testing/roulette_sealed_pending_r08.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T19:39:05.275313+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-web-prepare-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-web-prepare-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ],
+        "limit": "Own bounded test Job only. Setup failures are retained. Private fixtures/profiles preserved; original pending action and shared resources untouched."
+      }
+    },
+    {
+      "instance_id": "task14:r08-independent-web-after-bj-1",
+      "task_id": "BTH061-ROULETTE-SEALED-PENDING-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "r08-independent-web-after-bj-1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-1.start.json:pid:10336",
+        "started_at": "2026-11-04T19:50:41.950166+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Identity is the actual launch label recorded before execution; wrapper refuses label reuse. Not a random nonce or a global process census."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T19:52:28.375079+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-1.start.json:pid:10336",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Private owned Job drained active_at_release=0 before handle release; only this Job membership is asserted."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T19:52:28.375079+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T19:52:28.375079+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "r08-independent-web-after-bj-1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-1.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-1.start.json",
+            "docs/testing/roulette_sealed_pending_r08.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T19:52:28.375079+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ],
+        "limit": "Own bounded test Job only. Setup failures are retained. Private fixtures/profiles preserved; original pending action and shared resources untouched."
+      }
+    },
+    {
+      "instance_id": "task14:r08-independent-web-create-1",
+      "task_id": "BTH061-ROULETTE-SEALED-PENDING-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "r08-independent-web-create-1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-create-1.start.json:pid:32244",
+        "started_at": "2026-11-04T19:40:49.987548+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-create-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-create-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Identity is the actual launch label recorded before execution; wrapper refuses label reuse. Not a random nonce or a global process census."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T19:43:46.273594+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-create-1.start.json:pid:32244",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-create-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-create-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Private owned Job drained active_at_release=0 before handle release; only this Job membership is asserted."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T19:43:46.273594+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-create-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-create-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-create-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-create-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-create-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-create-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T19:43:46.273594+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "r08-independent-web-create-1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-create-1.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-create-1.start.json",
+            "docs/testing/roulette_sealed_pending_r08.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T19:43:46.273594+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-create-1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-create-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ],
+        "limit": "Own bounded test Job only. Setup failures are retained. Private fixtures/profiles preserved; original pending action and shared resources untouched."
+      }
+    },
+    {
+      "instance_id": "task14:r08-independent-web-after-bj-2",
+      "task_id": "BTH061-ROULETTE-SEALED-PENDING-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "r08-independent-web-after-bj-2",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-2.start.json:pid:17276",
+        "started_at": "2026-11-04T19:57:48.494379+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-2.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-2.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Identity is the actual launch label recorded before execution; wrapper refuses label reuse. Not a random nonce or a global process census."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T19:59:19.547246+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-2.start.json:pid:17276",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-2.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-2.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Private owned Job drained active_at_release=0 before handle release; only this Job membership is asserted."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T19:59:19.547246+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-2.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-2.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-2.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-2.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-2.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-2.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T19:59:19.547246+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "r08-independent-web-after-bj-2",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-2.json",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-2.start.json",
+            "docs/testing/roulette_sealed_pending_r08.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T19:59:19.547246+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-2.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-independent-web-after-bj-2.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ],
+        "limit": "Own bounded test Job only. Setup failures are retained. Private fixtures/profiles preserved; original pending action and shared resources untouched."
       }
     }
   ],
