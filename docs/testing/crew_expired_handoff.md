@@ -165,3 +165,81 @@ is tracked as `BTH061-HUD-001-WEB-CANVASLAYER` under the active HUD owner. The
 earlier a8941ccf startup has only the autoplay warning and remains valid. No fresh
 389-check native run or full HUD/gameplay certification is inferred for its
 separately changed UI; the original-source qualification remains attributed above.
+
+## Current recreated-case verification, 2026-11-04
+
+The owner confirmed the original save is gone and requested recreated-case
+verification. No original save is requested or represented as verified. The
+stable ID and original fix `b29d9b3985b5676aac2439f2f08aae359729a3e3` remain
+associated with this work.
+
+The current served build at the start of verification was
+`ecdccee418c2297a0fb864d00c902a4c159dfd5c`, tree
+`236253507e360411438c8945fd7a5f469c42cbdb`, version
+`0.6.0-dev+ecdccee418c2`. Git ancestry proves it contains the fix. Matching
+NEXT metadata/redirect/provenance and the directly downloaded PCK were verified
+at `2026-11-04T00:01:31Z`; the live NEXT metadata was rechecked for this task.
+That receipt is `evidence/next-ecdccee418c2297a0fb864d00c902a4c159dfd5c-release.json`
+in task-10. This identifies served artifacts; it is not browser gameplay.
+
+The recreated Jazz fixture was rerun on that source with a fresh isolated
+profile. **329 checks passed**, exit 0, followed by **60 checks passed** for a
+separate-process load of the preserved authentic synthetic pre-fix stale save.
+Its complete original profile/authority companions were hash-verified before
+copying and remain unchanged. The timing and compatibility assertions cover:
+
+- arrival at exact closing and closing+1, plus expiration while already mounted;
+- no expired Handoff in raw interactions, object manifest, renderer, layout
+  authority or normal Main catalog, including repeated refresh/fact boundaries;
+- cached stale UI dispatch returns without state mutation, retained transaction,
+  autosave or input/travel ownership, followed by two live process frames;
+- legitimate opening and closing-minus-one handoffs retain the existing $22,
+  Heat +4, trust +5, reputation +25 and one-obligation reward; misses retain
+  their existing trust/reputation penalty, cargo removal and cooldown;
+- unfinished checkpoint authority remains strict and settlement is exactly once.
+
+The stale dispatch took `73053` microseconds under the capped native worker.
+This is native dispatch timing, not a Web frame/input responsiveness measurement.
+
+The original fixture's `_restore` uses fresh SaveService/RunState instances in
+the same process. Its existing "cold Continue" strings denote serialization
+reload, not an OS process restart. To close that narrower evidence gap,
+`scripts/tests/crew_handoff_cold_continue_check.gd` loads all five authentic
+current saved outcomes in a **new Godot process**, without writing/regenerating
+the slots. **120 additional checks passed**, exit 0: exact/late/mounted misses
+remain cleaned, opening/last-minute successful outcomes remain complete, normal
+room finalization and inactive checkpoint resume preserve settlement, and no
+pending outcome or active delivery reappears. These comparisons begin after
+`load_run`; they link to the preceding fixture's verified save/reload accounting,
+rather than independently comparing against prior-process in-memory state.
+
+The three current jobs total **509 passing checks**. Commands use the same
+pinned Godot and bounded `run_owned.py` as above; all close with zero owned
+processes, no timeout and no script/check failures. Native root-certificate-store
+diagnostics remain in their logs. Receipts in task-10:
+
+- `evidence/crew-current-ecdc-boundaries.{json,log}` (`all`, host catalog enabled);
+- `evidence/crew-current-ecdc-legacy-cold.{json,log}` (`legacy`, preserved copy);
+- `evidence/crew-current-ecdc-legacy-custody.json`;
+- `evidence/crew-current-ecdc-process-cold.{json,log}` (five saved slots).
+
+While qualification ran, main/NEXT advanced with documentation and unrelated
+tests. Runtime source is byte-unchanged through `0ae2d2ceaa6e5b04b77e6bb3ea687f1f0e9f5f47`.
+The final current artifact observation is recorded separately in task-10's
+`evidence/crew-current-next-verification.json`, retaining its exact commit/tree
+and time instead of treating the initial build as permanently current.
+
+Normal permitted browser navigation to the existing HTTPS NEXT entry stopped
+before application startup with **NET::ERR_CERT_AUTHORITY_INVALID** / Privacy
+error at `2026-11-04T00:14:01.428Z`. Captured warning/error logs were empty;
+the game never loaded, so that does not establish clean application startup.
+No warning was bypassed, trust setting changed or alternate browser/route used
+for gameplay. The temporary owned tab was closed.
+
+**Acceptance remains Open solely for permitted deployed Web recreation and
+responsiveness verification.** Recreated native timing, legitimate handoff,
+warm serialization reload, historical stale-save cold recovery and five current
+process-cold outcomes pass. The fix is committed and present in NEXT. The lost
+original save is an attribution limit, not a request for the owner to provide it.
+No production, viewport, portrait-specific, touch or focus behavior changed in
+this verification update.
