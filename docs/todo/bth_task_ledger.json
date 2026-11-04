@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T20:40:39.322793+00:00",
+  "updated_at": "2026-11-04T20:45:24.625482+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -19565,7 +19565,8 @@
             "evidence": [
               "docs/testing/roulette_sealed_pending_r08.md",
               "docs/testing/roulette_sealed_pending_r08.json",
-              "commit:3292cc0dd866d3c4b60e94d345d3471aa69b5822"
+              "commit:3292cc0dd866d3c4b60e94d345d3471aa69b5822",
+              "commit:7648f1d908468fd783cd19bc5c4562ab69573be1"
             ]
           },
           {
@@ -19599,6 +19600,14 @@
             "docs/testing/roulette_sealed_pending_r08.md",
             "docs/testing/roulette_sealed_pending_r08.json",
             "Investigation/diagnostic evidence commit only; no product fix is claimed."
+          ]
+        },
+        {
+          "sha": "7648f1d908468fd783cd19bc5c4562ab69573be1",
+          "evidence": [
+            "docs/testing/roulette_sealed_pending_r08.md",
+            "docs/testing/roulette_sealed_pending_r08.json",
+            "Tested prior-Blackjack diagnostic and investigation evidence only; no production fix or task closure."
           ]
         }
       ],
@@ -19653,7 +19662,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T20:40:39.322793+00:00"
+      "updated_at": "2026-11-04T20:45:24.625482+00:00"
     }
   ],
   "batches": [

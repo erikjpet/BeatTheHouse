@@ -337,3 +337,7 @@ Additional preserved public-evidence fingerprints:
 
 The original public server diagnostics show matching f305 directory and asset
 200 responses; no new byte-level hash of those served assets was collected.
+
+Continuation diagnostic/evidence commit: `7648f1d908468fd783cd19bc5c4562ab69573be1`. Both ledger views
+associate it with this Open task. It is not a product-fix commit or new NEXT
+acceptance. The first public rejection remains unclassified.

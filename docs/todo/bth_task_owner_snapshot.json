@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-04T20:40:39.322793+00:00",
+  "observed_at": "2026-11-04T20:45:24.625482+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -55,8 +55,8 @@
       "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
       "title": "Fix pull-tab save boundary",
       "state": "active",
-      "observed_at": "2026-11-04T20:40:39.322793+00:00",
-      "source": "Actual active task14: prior-Blackjack native/Web controls recorded, original pending preserved; reviewing and publishing tested diagnostic/evidence only. Other owner observations unchanged."
+      "observed_at": "2026-11-04T20:45:24.625482+00:00",
+      "source": "Actual active task14: tested continuation committed7648f1d9, associating evidence and publishing authorized main; original Open/no product fix, other owner observations unchanged."
     },
     {
       "task_ref": "01a1a3e1-a613-7284-8bba-092f690190c9",
