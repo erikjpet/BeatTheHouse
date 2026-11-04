@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const source = fs.readFileSync(path.join(__dirname, '../ui/web_save_durability_bridge.gd'), 'utf8');
+const source = fs.readFileSync(path.join(__dirname, '../scripts/ui/web_save_durability_bridge.gd'), 'utf8');
 const script = source.match(/const WEB_ADAPTER_SCRIPT := """\r?\n([\s\S]*?)\r?\n"""/)[1];
 let checks = 0;
 function check(actual, expected) { assert.deepEqual(actual, expected); checks++; }
