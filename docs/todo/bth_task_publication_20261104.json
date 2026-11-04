@@ -1,8 +1,8 @@
 {
   "schema": "bth.task_publication/v1",
   "task_id": "BTH-TODO-RELIABILITY-001",
-  "current_status": "AUTHORIZED_TESTED_PUBLICATION_PENDING",
-  "recorded_at": "2026-11-04T15:58:58.336758+00:00",
+  "current_status": "MAIN_PUBLISHED_REMOTE_VERIFIED_NEXT_DISK_GUARD_PENDING",
+  "recorded_at": "2026-11-04T16:41:19.512207+00:00",
   "prior_denial": {
     "task_id": "BTH-TODO-RELIABILITY-001",
     "recorded_utc": "2026-11-04T01:33:13.639703+00:00",
@@ -32,7 +32,368 @@
     "keep_incomplete_and_paused_items_open": true,
     "audience_or_stable_itch_changes_authorized": false
   },
-  "push_retry_attempted": false,
-  "main_updated_by_this_task": false,
-  "NEXT_verified_for_this_implementation": false
+  "push_retry_attempted": true,
+  "main_updated_by_this_task": true,
+  "NEXT_verified_for_this_implementation": false,
+  "push_retry_successful": true,
+  "implementation_main_commit": "43a3901b8054b1a839d4ef93dd7423e578cd0e5d",
+  "implementation_main_tree": "4b3db8fe3b22cd57612b9868e9d01dd652621fec",
+  "remote_readback": {
+    "schema": "bth.published_task_files/v1",
+    "commit": "43a3901b8054b1a839d4ef93dd7423e578cd0e5d",
+    "tree": "4b3db8fe3b22cd57612b9868e9d01dd652621fec",
+    "verified_at": "2026-11-04T16:33:34.475Z",
+    "files": [
+      {
+        "path": "docs/plans/0.6.1_stability_release_plan.md",
+        "expected": "74ab449b4d2fd1b630faef1c9051fc201a9f76d5",
+        "actual": "74ab449b4d2fd1b630faef1c9051fc201a9f76d5",
+        "match": true
+      },
+      {
+        "path": "docs/testing/deprecated_code_audit_2026_11_03.md",
+        "expected": "851b6f1027c7ecfda388800d937f4e8128154ca9",
+        "actual": "851b6f1027c7ecfda388800d937f4e8128154ca9",
+        "match": true
+      },
+      {
+        "path": "docs/todo/bth_task_ledger.json",
+        "expected": "05f45c11c97bb92c0e1b09592b883a193033d9ef",
+        "actual": "05f45c11c97bb92c0e1b09592b883a193033d9ef",
+        "match": true
+      },
+      {
+        "path": "docs/todo/bth_task_owner_snapshot.json",
+        "expected": "89412ac4f30c653b72064453c7f9d6df2ca174a8",
+        "actual": "89412ac4f30c653b72064453c7f9d6df2ca174a8",
+        "match": true
+      },
+      {
+        "path": "docs/todo/bth_audit_scope_inventory.json",
+        "expected": "2c72b4bcba4467927dbe825fc297b14abb4a025d",
+        "actual": "2c72b4bcba4467927dbe825fc297b14abb4a025d",
+        "match": true
+      },
+      {
+        "path": "docs/todo/bth_task_ledger_checks.md",
+        "expected": "39255c565a0d4185d7b5c390b0196b9052176479",
+        "actual": "39255c565a0d4185d7b5c390b0196b9052176479",
+        "match": true
+      },
+      {
+        "path": "docs/todo/bth_task_reconciliation_20261104.json",
+        "expected": "57e0ab654aedc3f7b81aede0690594faef3e9b57",
+        "actual": "57e0ab654aedc3f7b81aede0690594faef3e9b57",
+        "match": true
+      },
+      {
+        "path": "tools/check_bth_task_ledger.py",
+        "expected": "7f582fd254b7f22a5b64faf51cac11d3a4f3149e",
+        "actual": "7f582fd254b7f22a5b64faf51cac11d3a4f3149e",
+        "match": true
+      },
+      {
+        "path": "tools/tests/test_check_bth_task_ledger.py",
+        "expected": "948c05ac70dc7a94c5f7cd8205d0b25c8ff247aa",
+        "actual": "948c05ac70dc7a94c5f7cd8205d0b25c8ff247aa",
+        "match": true
+      },
+      {
+        "path": "docs/testing/runtime_cleanup_audit_2026_11_04.md",
+        "expected": "4d157575a1185cec2222dc5ae389834f8a38c516",
+        "actual": "4d157575a1185cec2222dc5ae389834f8a38c516",
+        "match": true
+      },
+      {
+        "path": "docs/testing/runtime_cleanup_reconciliation.md",
+        "expected": "babc4fed5353632898129e550fc0f0d0360b3104",
+        "actual": "babc4fed5353632898129e550fc0f0d0360b3104",
+        "match": true
+      },
+      {
+        "path": "tools/check_bth_runtime_inventory.py",
+        "expected": "ff7ff6763ee633d27169a9ea9ecf9a1c15c2f16c",
+        "actual": "ff7ff6763ee633d27169a9ea9ecf9a1c15c2f16c",
+        "match": true
+      },
+      {
+        "path": "tools/tests/test_check_bth_runtime_inventory.py",
+        "expected": "f5ac92b6600794c56f502ad56d3e9606db762e04",
+        "actual": "f5ac92b6600794c56f502ad56d3e9606db762e04",
+        "match": true
+      },
+      {
+        "path": "tools/tests/test_runtime_ledger_integration.py",
+        "expected": "a9e305685022696c4c80d26d4a1a8bf79d29d5d3",
+        "actual": "a9e305685022696c4c80d26d4a1a8bf79d29d5d3",
+        "match": true
+      },
+      {
+        "path": "docs/todo/bth_runtime_inventory_20261104.json",
+        "expected": "7dd67433bcb9a3a55f22416375f3058efccd738d",
+        "actual": "7dd67433bcb9a3a55f22416375f3058efccd738d",
+        "match": true
+      },
+      {
+        "path": "AGENTS.md",
+        "expected": "f299692586e9f0cd7c3c10dddb19c138f074b5b5",
+        "actual": "f299692586e9f0cd7c3c10dddb19c138f074b5b5",
+        "match": true
+      },
+      {
+        "path": "docs/testing/runtime_cleanup_followup_2026_11_04.md",
+        "expected": "469d2f4d5d14497c9121e54b2e7a0d2e96a64419",
+        "actual": "469d2f4d5d14497c9121e54b2e7a0d2e96a64419",
+        "match": true
+      },
+      {
+        "path": "docs/testing/runtime_cleanup_verification_2026_11_04.md",
+        "expected": "a3487dcaacb099d6122b8c09ffedbabccb183e2d",
+        "actual": "a3487dcaacb099d6122b8c09ffedbabccb183e2d",
+        "match": true
+      },
+      {
+        "path": "docs/todo/bth_runtime_inventory_initial_20261104.json",
+        "expected": "9cb17e6d12db7ca202ee5b4f4a5932d484213b1b",
+        "actual": "9cb17e6d12db7ca202ee5b4f4a5932d484213b1b",
+        "match": true
+      },
+      {
+        "path": "docs/todo/bth_task_publication_20261104.json",
+        "expected": "dc1ec80fb403b6ec8e745eb75aeedfbc1140cc36",
+        "actual": "dc1ec80fb403b6ec8e745eb75aeedfbc1140cc36",
+        "match": true
+      },
+      {
+        "path": "docs/todo/bth_user_item_scenario_pause_20261104.json",
+        "expected": "ff3dbab7a34117e958730af2e8921644bd15da80",
+        "actual": "ff3dbab7a34117e958730af2e8921644bd15da80",
+        "match": true
+      },
+      {
+        "path": "docs/testing/count_sit_semantic_independent_acceptance_20261104.json",
+        "expected": "afdf7552c2193fc77a08cfd59af1e2b8878dac95",
+        "actual": "afdf7552c2193fc77a08cfd59af1e2b8878dac95",
+        "match": true
+      },
+      {
+        "path": "docs/testing/numbers_purchase_independent_web_acceptance_20261104.json",
+        "expected": "0c200529822b7e5c13809c6977f9a144e126005d",
+        "actual": "0c200529822b7e5c13809c6977f9a144e126005d",
+        "match": true
+      }
+    ]
+  },
+  "tests_passed": 66,
+  "watcher_observation": {
+    "automation": "enabled",
+    "source_branch": "main",
+    "poll_seconds": 120,
+    "pid": 11968,
+    "started_at": "2026-11-04T02:26:00Z",
+    "phase": "failed",
+    "cpu_limit_percent": 10,
+    "cpu_job_guardian_pid": "35380",
+    "updated_at": "2026-11-04T16:40:47Z",
+    "available_commit": "9d20b10345db553816ad1a0d0502d3ef368e0998",
+    "last_checked_at": "2026-11-04T16:40:47Z",
+    "check_error": null,
+    "building_commit": "345f94149609e828c76c7a9df6b2cffaff5862b9",
+    "build_started_at": "2026-11-04T16:09:30Z",
+    "error": "Insufficient shared disk reserve for export: 13074595840 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+    "import_cache": {
+      "donor_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+      "files": 777,
+      "bytes": 21566078,
+      "normal_godot_import_still_required": true
+    },
+    "build_pid": 28156,
+    "build_log": "state\\bth-next\\logs\\345f94149609e828c76c7a9df6b2cffaff5862b9-1793808589489629100.log",
+    "deployed_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+    "deployed_at": "2026-11-04T16:05:56Z",
+    "build_finished_at": "2026-11-04T16:10:25Z",
+    "mirror_handoff": {
+      "handoff_id": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e-dacbf8ebd0f2ce326c543c1e17d7e4bebfb5616494fa35bde9723487462f2f01",
+      "state": "PENDING",
+      "record": "D:\\Projects\\site\\state\\bth-next\\mirror-handoff\\records\\f3058b6daab820e9d747c4c4aabc2d983e9ae32e-dacbf8ebd0f2ce326c543c1e17d7e4bebfb5616494fa35bde9723487462f2f01.json",
+      "automatic_library_sync": false
+    },
+    "mirror_handoff_error": null,
+    "retention": {
+      "report": "D:\\Projects\\site\\state\\bth-next\\retention\\reports\\20261104T160556273370.json",
+      "mode": "apply",
+      "eligible": 0,
+      "reduced": 1,
+      "skipped": 323,
+      "deferred": 0
+    },
+    "retention_error": null
+  },
+  "served_pointer": {
+    "source_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+    "source_branch": "main",
+    "source_tree": "4c4ec494b5c22b1a5c57cc1e8bbf73041140a753",
+    "built_at": "2026-11-04T16:05:51Z",
+    "version": "0.6.0-dev+f3058b6daab8",
+    "native_reuse": {
+      "schema": "beat_the_house.verified_native_reuse/v1",
+      "qualified_source_commit": "b46fabb2853c312b67399606f59804eaefa62d47",
+      "native_source_tree": "44468126e25a30a86e5d58f1d85f620fe414f564",
+      "guarded_paths": [
+        "native",
+        "addons",
+        "export_presets.cfg",
+        "project.godot",
+        "tools/build_native_solver.ps1",
+        "tools/bootstrap_native_toolchain.ps1",
+        "tools/bootstrap_native_solver.ps1",
+        "tools/verify_native_solver_runtime.ps1",
+        "tools/build_godot_web_release_template.ps1",
+        "tools/export_itch.ps1",
+        "tools/export_itch_helpers.ps1",
+        "tools/export_tree_identity.ps1",
+        "tools/audit_pck_manifest.py"
+      ],
+      "qualified_git_objects": [
+        "100644 blob b9d92cd7c6b9a0e013fc5f33da611321babacd93\texport_presets.cfg",
+        "100644 blob 9165fcf6bea3904f6677564a695ba17594701229\tnative/coin_pusher/SConstruct",
+        "100644 blob d308c740cc668e1260a38a61bcbbbf9bfa932d13\tnative/coin_pusher/build_profile.json",
+        "100644 blob 10867076c4070d84f8b3c6becdc0185c7174259e\tnative/coin_pusher/coin_pusher_native.gdextension.template",
+        "100644 blob d99aa73e7e6d855ecd61f82e23d1a91cb2e86d3f\tnative/coin_pusher/godot_web_release_build_profile.json",
+        "100644 blob d9f6221b832222ee8a78ddfe016a8d89fa17ace7\tnative/coin_pusher/src/coin_pusher_native_core.cpp",
+        "100644 blob a0c4413523105a29e3508b0b8ed50366b606162a\tnative/coin_pusher/src/coin_pusher_native_core.h",
+        "100644 blob 52e13ee3e229b323e864a04051880a9e8e4f9c30\tnative/coin_pusher/src/coin_pusher_render_batch.cpp",
+        "100644 blob 14ab730df2c88fdacef7f64945131602c5448f75\tnative/coin_pusher/src/coin_pusher_step_kernel.cpp",
+        "100644 blob 5b9bc778c0d007d24da9335ad74c4acfc8a1c27c\tnative/coin_pusher/src/register_types.cpp",
+        "100644 blob da5b5e20dc4e57472a31799dbed09fee06d81abf\tnative/coin_pusher/src/register_types.h",
+        "100644 blob 322cbe3c15193c9b20cc1334da487b9f9d0fbc26\tnative/coin_pusher/toolchain.lock.json",
+        "100644 blob 7c80d4e964583372398be6da0ff504ff6074f395\tproject.godot",
+        "100644 blob 6ae4b0796b43ef34694fc232a92c1db5894cb054\ttools/audit_pck_manifest.py",
+        "100644 blob a6c0fe9f42ec6e2a2588122d71d268e28178ba6d\ttools/bootstrap_native_solver.ps1",
+        "100644 blob 69c4dbbf1f69ac1aa696e24dafe727968f1f74a9\ttools/build_godot_web_release_template.ps1",
+        "100644 blob a4bc8b62100d4bdada8f1fef4e2b9e535199a55b\ttools/build_native_solver.ps1",
+        "100644 blob 37ee86eb2367c984bfa8568718312c671d114a24\ttools/export_itch.ps1",
+        "100644 blob 338efd42316385902cd21313890216609572237d\ttools/export_itch_helpers.ps1",
+        "100644 blob de91c1644ce977ea437b3eb7a046fdcd04f3101d\ttools/export_tree_identity.ps1",
+        "100644 blob fe86a0ccdee8fe1fe95765af2f9ceeb543355dc4\ttools/verify_native_solver_runtime.ps1"
+      ],
+      "target_git_objects": [
+        "100644 blob b9d92cd7c6b9a0e013fc5f33da611321babacd93\texport_presets.cfg",
+        "100644 blob 9165fcf6bea3904f6677564a695ba17594701229\tnative/coin_pusher/SConstruct",
+        "100644 blob d308c740cc668e1260a38a61bcbbbf9bfa932d13\tnative/coin_pusher/build_profile.json",
+        "100644 blob 10867076c4070d84f8b3c6becdc0185c7174259e\tnative/coin_pusher/coin_pusher_native.gdextension.template",
+        "100644 blob d99aa73e7e6d855ecd61f82e23d1a91cb2e86d3f\tnative/coin_pusher/godot_web_release_build_profile.json",
+        "100644 blob d9f6221b832222ee8a78ddfe016a8d89fa17ace7\tnative/coin_pusher/src/coin_pusher_native_core.cpp",
+        "100644 blob a0c4413523105a29e3508b0b8ed50366b606162a\tnative/coin_pusher/src/coin_pusher_native_core.h",
+        "100644 blob 52e13ee3e229b323e864a04051880a9e8e4f9c30\tnative/coin_pusher/src/coin_pusher_render_batch.cpp",
+        "100644 blob 14ab730df2c88fdacef7f64945131602c5448f75\tnative/coin_pusher/src/coin_pusher_step_kernel.cpp",
+        "100644 blob 5b9bc778c0d007d24da9335ad74c4acfc8a1c27c\tnative/coin_pusher/src/register_types.cpp",
+        "100644 blob da5b5e20dc4e57472a31799dbed09fee06d81abf\tnative/coin_pusher/src/register_types.h",
+        "100644 blob 322cbe3c15193c9b20cc1334da487b9f9d0fbc26\tnative/coin_pusher/toolchain.lock.json",
+        "100644 blob 7c80d4e964583372398be6da0ff504ff6074f395\tproject.godot",
+        "100644 blob 6ae4b0796b43ef34694fc232a92c1db5894cb054\ttools/audit_pck_manifest.py",
+        "100644 blob a6c0fe9f42ec6e2a2588122d71d268e28178ba6d\ttools/bootstrap_native_solver.ps1",
+        "100644 blob 69c4dbbf1f69ac1aa696e24dafe727968f1f74a9\ttools/build_godot_web_release_template.ps1",
+        "100644 blob a4bc8b62100d4bdada8f1fef4e2b9e535199a55b\ttools/build_native_solver.ps1",
+        "100644 blob 37ee86eb2367c984bfa8568718312c671d114a24\ttools/export_itch.ps1",
+        "100644 blob 338efd42316385902cd21313890216609572237d\ttools/export_itch_helpers.ps1",
+        "100644 blob de91c1644ce977ea437b3eb7a046fdcd04f3101d\ttools/export_tree_identity.ps1",
+        "100644 blob fe86a0ccdee8fe1fe95765af2f9ceeb543355dc4\ttools/verify_native_solver_runtime.ps1"
+      ],
+      "tuple": "web/template_release/wasm32/nothreads",
+      "native_library_sha256": "82c71b7d743027817c8f5041ad2f052565bf27fe43ec60312a2473af08957943",
+      "template_sha256": "cf371f607aa9cb18e690bd595976c1baaf00c8cec24078e4a307fd515ad07913",
+      "engine_binary_sha256": "63913d01be2c2d1f929b4a626f5347117126b34e9c64cbf350ea9f35a9657ebf",
+      "console_binary_sha256": "fc759f9d296fe54f09ab66d41df6ddd2d278493b0e71109f6688ef029ad271ae",
+      "extension_config_sha256": "407b2cc4b2c3ca01775158518e44b1caca3fb929be0e46eca44429733825d115",
+      "editor_dependency_pins": [
+        {
+          "sha256": "9ed33e21a00a8be3ef2429550451ed6c766debde8d0d21c4f3a4c39e25eb3f82",
+          "name": "coin_pusher_native_v3_10.windows.template_debug.x86_64.nothreads.dll"
+        },
+        {
+          "sha256": "ab3e74ad695dd9e6527d05cf09370b56a7b3b80168724862757de7711d837d69",
+          "name": "coin_pusher_native_v3_10.windows.template_release.x86_64.nothreads.dll"
+        }
+      ],
+      "source_exporter_sha256": "d2677318b9087a679d35554063fd1368b0d6b49ad0194599b7acee0cd3f800cb",
+      "imported_source_functions": [
+        {
+          "name": "Get-Sha256",
+          "definition_sha256": "a61f8f613fe0932b2294d151e63b174f72bf3ab594df5b77db134ea87dc69966"
+        },
+        {
+          "name": "Get-StringSha256",
+          "definition_sha256": "bf030f9eaf89a312c2d92a6d3f95f7ae58e4d57799ffdbbc8b5befc110ce0342"
+        },
+        {
+          "name": "Get-ProjectVersion",
+          "definition_sha256": "52ad3b85277dbea88f6c59863daee603be5bd97d9e3f4271a6f4e0a8663ad7c4"
+        },
+        {
+          "name": "Get-SourceIdentity",
+          "definition_sha256": "9ed8e18d1d2b5fd36aa8e8892d6c12b8163db943d7b9968f76aa36edbccb3961"
+        },
+        {
+          "name": "Get-ExportPresetCustomFeatures",
+          "definition_sha256": "46a228498a539e034273abcb2177b60cb74a67c72d420f26cab4f1b506b45a71"
+        },
+        {
+          "name": "Get-ExportPresetOption",
+          "definition_sha256": "e4e2ebcd72b8366690737c3bd91174cf388866ffa06d482445d092a90bb1427c"
+        },
+        {
+          "name": "Assert-CleanDistributionOutput",
+          "definition_sha256": "a95f62e83b0290718fe9141b96cce8f24049f361602fcb2ab6a84a08b9f463a3"
+        },
+        {
+          "name": "Assert-NativeSolverExport",
+          "definition_sha256": "fb860ce9f83e3305f353d94ff1abd64672151f015224853d6a62433750f27bb1"
+        },
+        {
+          "name": "Invoke-WebExportWithLockedTemplate",
+          "definition_sha256": "684ac165e13fa58384338423413627d15a89c3ae04b6cf129042264025d7cdcd"
+        },
+        {
+          "name": "Invoke-WithEmbeddedManifest",
+          "definition_sha256": "66a9a333423b0bcf668b79b8013a0474bdc0f2bce1179162a7edf51d202ed431"
+        },
+        {
+          "name": "Get-RelativeFiles",
+          "definition_sha256": "8ec071129455b6b94e1eb84bd25d63264218428fe58dd3902f62dd090b1decfa"
+        },
+        {
+          "name": "Invoke-PckAudit",
+          "definition_sha256": "b548d65b7257ecff7cdcbebbbbe2982b5eb83d31964d9bfa303ca2011f1ff926"
+        },
+        {
+          "name": "Verify-ArchiveAgainstStaging",
+          "definition_sha256": "4b2eef6d8a828903d7c2c626801517f9b0337d56264bd372faeee706270a53e7"
+        }
+      ],
+      "native_compilation_performed": false
+    },
+    "archive_sha256": "dacbf8ebd0f2ce326c543c1e17d7e4bebfb5616494fa35bde9723487462f2f01"
+  },
+  "resource_dependency": {
+    "task_id": "BTH-NEXT-DISK-RESERVE-001",
+    "free_bytes": 13074595840,
+    "required_free_bytes": 13958643712,
+    "deficit_bytes": 884047872,
+    "guard_unchanged": true
+  },
+  "cold_import_request": {
+    "schema": "bth.cold_import_request/v1",
+    "target_commit": "43a3901b8054b1a839d4ef93dd7423e578cd0e5d",
+    "target_tree": "4b3db8fe3b22cd57612b9868e9d01dd652621fec",
+    "baseline_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+    "before_inputs_sha256": "52c1c1cb28eb4c07a29dd52c3b3d96da59ad63ea95614cd8176efc8e6f4bc627",
+    "after_inputs_sha256": "1dbcf632ff3961c4d7d04a6e245c4ff4cd82a5ad8f553a0c6b02e6167f041399",
+    "changed_paths": [
+      "AGENTS.md"
+    ],
+    "recorded_at": "2026-11-04T16:30:41.584392+00:00",
+    "reason": "Scoped task-continuity instructions changed AGENTS.md. All other import-guarded inputs are identical; docs/tools retain normal exclusion. Request one cache-free normal import through the existing capped watcher, retaining all importer/exporter/PCK guards.",
+    "task_id": "BTH-TODO-RELIABILITY-001"
+  }
 }
