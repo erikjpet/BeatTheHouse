@@ -282,10 +282,25 @@ function New-Census {
         }
     }
 
+    # Preserve the original case-insensitive invariant-culture file relation,
+    # record order and duplicate records without rescanning every function for
+    # every file. This index is derived only from this invocation's full census.
+    $functionsByFile = [System.Collections.Generic.Dictionary[string,object]]::new([StringComparer]::InvariantCultureIgnoreCase)
+    foreach ($functionRecord in $allFunctions) {
+        $fileKey = [string]$functionRecord.file
+        if (-not $functionsByFile.ContainsKey($fileKey)) {
+            $functionsByFile.Add($fileKey, (New-Object System.Collections.Generic.List[object]))
+        }
+        $functionsByFile[$fileKey].Add($functionRecord)
+    }
+
     $fileSummaries = New-Object System.Collections.Generic.List[object]
     $paths = @($allFiles | ForEach-Object { Get-ProjectRelativePath $_.FullName } | Sort-Object)
     foreach ($relativePath in $paths) {
-        $functionsForFile = @($allFunctions | Where-Object { $_.file -eq $relativePath })
+        $functionsForFile = @()
+        if ($functionsByFile.ContainsKey($relativePath)) {
+            $functionsForFile = @($functionsByFile[$relativePath].ToArray())
+        }
         $counts = [ordered]@{
             total = $functionsForFile.Count
             "PER-FRAME" = 0

@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-04T21:33:36.372589+00:00",
+  "observed_at": "2026-11-04T21:36:25.198845+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-04T19:59:38.708404+00:00",
-      "source": "Actual active final publication and ledger reconciliation; tested Slot source published, exact watcher capacity denial recorded, own Jobs0. Preparing bounded handoff with audit/aggregate/deliveryOpen. Other owners preserved."
+      "observed_at": "2026-11-04T21:28:34.938136+00:00",
+      "source": "Actualactive final006integration/publication:3testedsourcecommits, allownJobsclosed0, native/VM/fullsaveparity andScratchtarget pass. Timebudgetfixed; freshglobalguard failsactualnewexternalwork; contentprofile/delivery remainOpen. Otherowners preserved."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",

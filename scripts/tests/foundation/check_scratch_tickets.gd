@@ -170,8 +170,6 @@ func _check_crossword_active_release(game: GameModule, failures: Array) -> void:
 	var active_discovered: Array = game.call("_active_discovered_ticket_types", ["crossword_corner", "golden_vault", "two_fer", "golden_vault", "future_ticket"])
 	if active_discovered != ["two_fer", "crossword_corner", "golden_vault"]:
 		failures.append("Crossword active discovery did not return the exact canonical released subset.")
-	if bool(game.call("_ticket_type_is_held", "crossword_corner")):
-		failures.append("Crossword remains held after its completed art/mechanics reconciliation.")
 	var run_state: RunState = RunStateScript.new()
 	run_state.start_new("SCRATCH-CROSSWORD-ACTIVE")
 	run_state.bankroll = 500000
@@ -190,6 +188,16 @@ func _check_crossword_active_release(game: GameModule, failures: Array) -> void:
 	var crossword_slot: Dictionary = stock[crossword_index]
 	if int(crossword_slot.get("remaining", -1)) != 100 or str(crossword_slot.get("release_availability", "")) != "active":
 		failures.append("Released Crossword did not generate as active practice stock.")
+	# Exercise released public purchase readiness rather than the retired hold policy.
+	var preview_environment := environment.duplicate(true)
+	preview_environment["game_states"] = {"scratch_tickets": machine.duplicate(true)}
+	var purchase_preview := game.surface_action_command("scratch_buy", crossword_index, false, {}, run_state, preview_environment)
+	var purchase_ui: Dictionary = purchase_preview.get("ui_state", {})
+	var crossword_price := maxi(1, int(crossword_slot.get("price", 1)))
+	if str(purchase_preview.get("action_id", "")) != "buy_scratch_ticket" or not bool(purchase_preview.get("direct_resolve", false)) or int(purchase_preview.get("set_stake", 0)) != crossword_price:
+		failures.append("Released Crossword did not expose its normal native purchase command and price.")
+	if game.wager_cost_for_context("buy_scratch_ticket", 0, run_state, preview_environment, purchase_ui) != crossword_price:
+		failures.append("Released Crossword purchase readiness disagrees with its public wager cost.")
 	var issued: Dictionary = game.call("_roll_ticket", game.call("_ticket_type", "crossword_corner"), _scratch_rng("crossword-issued"), 0, "crossword-issued")
 	machine["stock"] = stock
 	machine["active_ticket"] = issued

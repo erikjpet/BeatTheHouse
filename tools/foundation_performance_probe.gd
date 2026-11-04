@@ -1979,14 +1979,12 @@ func _stocked_scratch_index(game: GameModule, run_state: RunState, environment: 
 	for offset in range(stock.size()):
 		var index := (sample_index + offset) % stock.size()
 		if typeof(stock[index]) == TYPE_DICTIONARY \
-				and int((stock[index] as Dictionary).get("remaining", 0)) > 0 \
-				and not bool(game.call("_ticket_type_is_held", str((stock[index] as Dictionary).get("type_id", "")))):
+				and int((stock[index] as Dictionary).get("remaining", 0)) > 0:
 			selected_index = index
 			break
 	if selected_index < 0:
 		for index in range(stock.size()):
-			if typeof(stock[index]) != TYPE_DICTIONARY \
-					or bool(game.call("_ticket_type_is_held", str((stock[index] as Dictionary).get("type_id", "")))):
+			if typeof(stock[index]) != TYPE_DICTIONARY:
 				continue
 			var slot: Dictionary = stock[index]
 			slot["remaining"] = 1
