@@ -5,6 +5,18 @@ recorded commit and required NEXT/behavior acceptance. There are no intentional
 holds. Current owner: `Resume scenario improvements`
 (`01a1a3e5-607c-73bf-b678-e3e03f5e40f6`).
 
+Fix on main: `1c201c9e341ac6f3e068c4d498fd00bf7298880e`, tree
+`da735bf6dd3bf2decbba8ab728ec207952596448`. The initial automatic publication
+review block cleared after the user's standing BTH main/NEXT authorization was
+provided. The scoped update preserves concurrent main commits.
+
+The existing watcher observed the fix but reports
+`Asset/importer/settings inputs changed; cold-import qualification required`.
+NEXT still serves `adb75dbe7f97e2b96279fbf401f7d7b8913072b3`; no deployment,
+startup or changed-behavior pass for the fix is claimed. Follow the maintained
+qualification path with its owner; do not bypass the guard or substitute a
+manual build. This is a concrete deployment dependency, not an intentional hold.
+
 ## Recovered report and correction
 
 The original Web report used source
