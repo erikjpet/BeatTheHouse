@@ -1131,10 +1131,9 @@ func _check_slot_content(library: ContentLibrary, failures: Array) -> void:
 		return
 	if str(definition.get("environment_prop", "")).strip_edges() != "machine":
 		failures.append("Slot content must render as a machine environment prop.")
-	for asset_key in ["asset_path", "scene_asset_path"]:
-		var asset_path := str(definition.get(asset_key, "")).strip_edges()
-		if asset_path.is_empty() or not FileAccess.file_exists(asset_path):
-			failures.append("Slot content is missing its loadable %s." % asset_key)
+	var asset_path := str(definition.get("asset_path", "")).strip_edges()
+	if asset_path.is_empty() or not FileAccess.file_exists(asset_path):
+		failures.append("Slot content is missing its loadable asset_path.")
 	var room_count := 0
 	for archetype_value in library.environment_archetypes:
 		if typeof(archetype_value) != TYPE_DICTIONARY:

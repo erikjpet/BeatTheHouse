@@ -3939,37 +3939,6 @@ func _chip_color(value: int) -> Color:
 	return C_TEAL
 
 
-func _draw_table_character(surface, style: Dictionary, foot: Vector2, scale_value: float) -> void:
-	var accent := _style_accent(style)
-	var body := Rect2(foot + Vector2(-15, -38) * scale_value, Vector2(30, 34) * scale_value)
-	var head := Rect2(foot + Vector2(-11, -60) * scale_value, Vector2(22, 22) * scale_value)
-	surface.draw_rect(body, Color("#171022"))
-	surface.draw_rect(body, Color(accent.r, accent.g, accent.b, 0.34), false, 1)
-	surface.draw_rect(head, Color("#c49371"))
-	surface.draw_rect(Rect2(head.position + Vector2(4, 8) * scale_value, Vector2(4, 3) * scale_value), C_DARK)
-	surface.draw_rect(Rect2(head.position + Vector2(14, 8) * scale_value, Vector2(4, 3) * scale_value), C_DARK)
-	surface.surface_label_centered(str(style.get("name", "")).left(8), Rect2(foot + Vector2(-34, 2), Vector2(68, 12)), 8, accent)
-
-
-func _style_accent(style: Dictionary) -> Color:
-	var accent_value: Variant = style.get("accent", {})
-	if typeof(accent_value) == TYPE_DICTIONARY:
-		match str((accent_value as Dictionary).get("name", "cyan")):
-			"pink":
-				return C_PINK
-			"teal":
-				return C_TEAL
-			"yellow":
-				return C_YELLOW
-			"orange":
-				return C_ORANGE
-			_:
-				return C_CYAN
-	if typeof(accent_value) == TYPE_COLOR:
-		return accent_value
-	return C_CYAN
-
-
 func _target_color(target_id: String) -> Color:
 	match target_id:
 		"player":

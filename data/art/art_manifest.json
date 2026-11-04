@@ -2,7 +2,6 @@
   "version": 2,
   "settings": {
     "use_external_environment_backgrounds": true,
-    "use_external_game_surfaces": false,
     "use_external_icons": true
   },
   "canvas_contracts": {
@@ -13,14 +12,6 @@
         "hud": "top 48px at 1280x720 design space",
         "inspector": "bottom 136px at 1280x720 design space",
         "scene_hotspots": "interactive objects should remain visually readable under translucent hit regions"
-      }
-    },
-    "game_surfaces": {
-      "size": [900, 430],
-      "camera": "first-person game/table/machine surface",
-      "safe_zones": {
-        "dynamic_cards_dice_reels": "leave center space open for procedural game pieces",
-        "cast": "right side can show dealer, bartender, camera, or watcher"
       }
     },
     "icons": {
@@ -39,18 +30,6 @@
     "punchline_club": {"path": "res://assets/art/environments/punchline_club.png", "brief": "legitimate under-attended comedy club, tired stage, cheap tables, side bar, plain door, no gambling signifiers"},
     "punchline_back_room": {"path": "res://assets/art/environments/punchline_back_room.png", "brief": "private lived-in crew room shell, low warm light, clear furniture zones, peripheral storage"},
     "grand_casino": {"path": "res://assets/art/environments/grand_casino.png", "brief": "boss casino floor, velvet ropes, cameras, polished tables, active pit boss"}
-  },
-  "game_surfaces": {
-    "slots": {"path": "res://assets/art/game_scenes/slot.png", "brief": "slot cabinet face with center reel space"},
-    "slot": {"path": "res://assets/art/game_scenes/slot.png", "brief": "slot cabinet face with center reel space"},
-    "blackjack": {"path": "res://assets/art/game_scenes/blackjack.png", "brief": "felt table with player/dealer card lanes"},
-    "baccarat": {"path": "res://assets/art/game_scenes/baccarat.png", "brief": "baccarat table with croupier, shoe, Player/Banker/Tie zones, and patrons"},
-    "roulette": {"path": "res://assets/art/game_scenes/roulette.png", "brief": "roulette wheel and felt betting layout with croupier space"},
-    "bar_dice": {"path": "res://assets/art/game_scenes/bar_dice.png", "brief": "bar dice table with cup and dice lanes"},
-    "pull_tabs": {"path": "res://assets/art/game_scenes/pull_tabs.png", "brief": "counter surface with three pull-tab windows"},
-    "scratch_tickets": {"path": "res://assets/art/game_scenes/scratch_tickets.png", "brief": "lottery counter with colorful scratch tickets and vending stock"},
-    "video_poker": {"path": "res://assets/art/game_scenes/video_poker.png", "brief": "machine screen with five-card row"},
-    "poker": {"path": "res://assets/art/game_scenes/poker.png", "brief": "felt table with player and house hand lanes"}
   },
   "ui_surfaces": {
     "main_menu_logo": {"path": "res://assets/art/ui/beat_the_house_logo.png", "size": [1141, 440]},

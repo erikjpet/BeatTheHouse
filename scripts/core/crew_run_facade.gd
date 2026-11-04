@@ -49,9 +49,6 @@ var crew_grievance_sequence: int:
 var crew_job_sequence: int:
 	get: return job_sequence
 	set(value): job_sequence = value
-var crew_heist_private_capsule: String:
-	get: return heist_private_capsule
-	set(value): heist_private_capsule = value
 var crew_pattern_memory: Dictionary:
 	get: return pattern_memory
 	set(value): pattern_memory = value
