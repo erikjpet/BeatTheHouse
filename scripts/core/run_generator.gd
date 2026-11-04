@@ -271,11 +271,10 @@ func travel_environment_result(run_state: RunState, target_archetype_id: String,
 	# The facade already owns the exact rollback snapshot and has accepted this
 	# source/destination scenario boundary. Pass both facts into the private world
 	# path instead of copying the entire run and repeating the same preflight.
-	var environment: EnvironmentInstance
 	if run_state.has_world_map() or run_state.current_environment.is_empty():
-		environment = _next_world_environment(run_state, target_id, run_state.create_rng(), target_prevalidated, rollback, true, false)
+		_next_world_environment(run_state, target_id, run_state.create_rng(), target_prevalidated, rollback, true, false)
 	else:
-		environment = next_environment(run_state, target_id, target_prevalidated)
+		next_environment(run_state, target_id, target_prevalidated)
 	var arrived_id := run_state.current_world_node_id()
 	if target_id.is_empty() or arrived_id != target_id:
 		if not caller_owns_rollback:
@@ -284,10 +283,18 @@ func travel_environment_result(run_state: RunState, target_archetype_id: String,
 		if errors.is_empty():
 			errors = ["Travel destination was not installed."]
 		return {"ok": false, "errors": errors, "environment": JsonCoerceScript._copy_dict(rollback.get("environment", run_state.current_environment))}
+	# Arrival belongs to the destination phase installed by this transaction.
+	# Leaving it queued lets zero-turn room commands advance the sequence before
+	# the next event/game flush, which then mistakes this trip for later pressure.
+	var arrival := run_state.scenario_flush_facts()
+	if not bool(arrival.get("ok", false)) and not bool(arrival.get("inactive", false)):
+		if not caller_owns_rollback:
+			_restore_travel_snapshot(run_state, rollback)
+		return {"ok": false, "errors": JsonCoerceScript._copy_array(arrival.get("errors", [])), "environment": JsonCoerceScript._copy_dict(rollback.get("environment", run_state.current_environment))}
 	return {
 		"ok": true,
 		"errors": [],
-		"environment": environment.to_dict(),
+		"environment": run_state.current_environment.duplicate(true),
 		"source_id": source_id,
 		"target_id": arrived_id,
 		# _install_environment_with_rollback is the authority that seals scenario
