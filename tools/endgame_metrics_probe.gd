@@ -1171,8 +1171,7 @@ func _try_play_game(run_state: RunState, run: Dictionary, policy: String) -> boo
 		GameModule.apply_result(run_state, result, rng)
 	else:
 		run_state.save_rng(rng)
-	if not bool(result.get("slot_runtime_tick", false)):
-		_integration_advance_turn(run_state, run, "game:%s:%s" % [game_id, action_id])
+	_integration_advance_turn(run_state, run, "game:%s:%s" % [game_id, action_id])
 	run["game_actions"] = int(run.get("game_actions", 0)) + 1
 	var action_kind := str(result.get("action_kind", ""))
 	if action_kind == "cheat" or action_kind == "risky" or action_kind == "advantage":

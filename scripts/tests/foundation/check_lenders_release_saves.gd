@@ -38,7 +38,8 @@ class BlackjackChipStakeRangeHost:
 class EmbeddedRefreshFixtureGame:
 	extends GameModule
 
-	var runtime_tick_result := false
+	var realtime_probe_mode := ""
+	var realtime_patch_calls := 0
 	var surface_serial := 0
 
 	func _init() -> void:
@@ -61,16 +62,24 @@ class EmbeddedRefreshFixtureGame:
 		})
 		result["host_apply_result"] = false
 		result["preserve_surface_ui_state"] = true
-		if runtime_tick_result:
-			result["slot_runtime_tick"] = true
-			result["slot_bonus_complete"] = false
 		return result
 
 	func surface_state(_run_state: RunState, _environment: Dictionary, _ui_state: Dictionary = {}) -> Dictionary:
 		return {
 			"game_id": get_id(), "surface_renderer": "slot_machine", "surface_life": "animated",
 			"surface_cast": "machine", "surface_embeds_outcomes": true, "runtime_serial": surface_serial,
+			"surface_realtime_state_refresh": not realtime_probe_mode.is_empty(),
 		}
+
+	func surface_realtime_patch_preserves_host_state() -> bool:
+		return true
+
+	func surface_realtime_state_patch(_run_state: RunState, _environment: Dictionary, ui_state: Dictionary, _current_surface_state: Dictionary = {}) -> Dictionary:
+		if realtime_probe_mode != "advance":
+			return {}
+		realtime_patch_calls += 1
+		surface_serial += 1
+		return {"runtime_serial": surface_serial, "realtime_fixture_clock_msec": int(ui_state.get("surface_time_msec", -1))}
 
 	func surface_action_command(surface_action: String, _index: int, _confirm_requested: bool, ui_state: Dictionary, _run_state: RunState, _environment: Dictionary) -> Dictionary:
 		if surface_action != "fixture_complete":
@@ -88,6 +97,10 @@ class EmbeddedRefreshProbeHost:
 	var embedded_probe_log: Array = []
 	var embedded_probe_interrupt_saw_pending_autosave := false
 	var embedded_probe_interrupt_environment_id := ""
+	var embedded_probe_time_msec := -1
+
+	func _environment_simulation_time_msec() -> int:
+		return embedded_probe_time_msec if embedded_probe_time_msec >= 0 else super._environment_simulation_time_msec()
 
 	func _prepare_foundation_run_save() -> void:
 		embedded_probe_log.append("autosave_prepare")
@@ -3889,7 +3902,7 @@ func _check_embedded_refresh_behavior(library: ContentLibrary, failures: Array) 
 	run_state.add_item("thermos_black_coffee")
 	run_state.set_active_item("thermos_black_coffee")
 	var fixture_game := EmbeddedRefreshFixtureGame.new()
-	var app := _embedded_refresh_fixture_app(library, run_state, fixture_game, true, "embedded refresh", failures)
+	var app := _embedded_refresh_fixture_app(library, run_state, fixture_game, true, "embedded refresh", failures, true)
 	if app == null:
 		return
 
@@ -3943,19 +3956,50 @@ func _check_embedded_refresh_behavior(library: ContentLibrary, failures: Array) 
 	if music_player == null or bool((music_player.get("_current_music_context") as Dictionary).get("embedded_refresh_sentinel", false)):
 		failures.append("Embedded action did not update the procedural-music context.")
 
-	# The runtime-tick branch must draw the new machine snapshot immediately while
-	# leaving the player on the same embedded surface.
+	# Live surface progress has its own host boundary; it is not a game action.
+	# Publish the module's actual opt-in through the normal snapshot route before
+	# arming the synthetic visual increment, so entry rendering cannot count as it.
 	run_state.complete_talk_event_resolution("embedded_refresh_talk")
 	app.call("_refresh_talk_dock")
-	fixture_game.runtime_tick_result = true
-	app.call("_resolve_game_action", "fixture_action", true, true, false, {})
+	app.set("embedded_probe_time_msec", 100000)
+	fixture_game.realtime_probe_mode = "publish"
+	app.call("_refresh")
 	var surface_canvas: Control = app.get("game_surface_canvas")
-	var immediate_surface: Dictionary = surface_canvas.call("realtime_surface_state") if surface_canvas != null else {}
+	if surface_canvas == null or not surface_canvas.is_visible_in_tree() \
+			or not bool(surface_canvas.call("surface_realtime_state_refresh_enabled")) \
+			or bool(app.call("_simulation_progression_paused")):
+		failures.append("Canonical realtime fixture did not establish an eligible visible module boundary.")
+		_sb4_dispose_app(app)
+		return
+	app.set("last_game_surface_realtime_refresh_msec", 0)
+	var run_before_realtime := JSON.stringify(run_state.to_dict())
+	var rng_before_realtime := JSON.stringify(run_state.rng_state)
+	var game_clock_before_realtime := run_state.game_clock_minutes
+	var action_index_before_realtime := int(run_state.event_cadence.get("action_index", 0))
+	var host_before_realtime: Dictionary = {}
+	for field_name in ["pending_autosave", "pending_autosave_after_frame", "pending_autosave_not_before_msec", "autosave_dirty_generation", "autosave_inflight_generation", "autosave_completed_generation", "last_game_result", "game_surface_ui_state", "selected_action_id", "selected_action_kind", "selected_action_label", "selected_stake"]:
+		host_before_realtime[field_name] = JSON.stringify(app.get(field_name))
+	var serial_before_realtime := fixture_game.surface_serial
+	var calls_before_realtime := fixture_game.realtime_patch_calls
+	fixture_game.realtime_probe_mode = "advance"
+	app.call("_advance_game_surface_realtime_state")
+	var immediate_surface: Dictionary = surface_canvas.call("realtime_surface_state")
 	if app.get("current_game") != fixture_game or str(app.get("current_screen")) != "GAME" \
-			or int(immediate_surface.get("runtime_serial", -1)) != 1 \
-			or not bool((app.get("last_game_result") as Dictionary).get("slot_runtime_tick", false)):
-		failures.append("In-progress embedded runtime action did not render its authoritative surface immediately in place.")
-	fixture_game.runtime_tick_result = false
+			or int(immediate_surface.get("runtime_serial", -1)) != serial_before_realtime + 1 \
+			or fixture_game.realtime_patch_calls != calls_before_realtime + 1 \
+			or int(immediate_surface.get("realtime_fixture_clock_msec", -1)) != 100000 \
+			or int(immediate_surface.get("surface_time_msec", -1)) != 100000 \
+			or int(app.get("last_game_surface_realtime_refresh_msec")) != 100000:
+		failures.append("Canonical realtime host boundary did not project exactly one current-clock visual update immediately in place.")
+	if JSON.stringify(run_state.to_dict()) != run_before_realtime \
+			or JSON.stringify(run_state.rng_state) != rng_before_realtime \
+			or run_state.game_clock_minutes != game_clock_before_realtime \
+			or int(run_state.event_cadence.get("action_index", 0)) != action_index_before_realtime:
+		failures.append("Realtime projection changed serialized run, RNG, game clock, or action cadence.")
+	for field_name in host_before_realtime:
+		if JSON.stringify(app.get(field_name)) != str(host_before_realtime[field_name]):
+			failures.append("Realtime projection changed action-owned host state: %s." % field_name)
+	fixture_game.realtime_probe_mode = ""
 
 	# A terminal transition is the exceptional context change: it must abandon the
 	# hot path, clear the game, reroute, and rebuild the header immediately.

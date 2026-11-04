@@ -896,8 +896,7 @@ func _resolve_game(run_state: RunState, checkpoints: Array, seed: String, game_i
 		if game_id in ["roulette", "baccarat"]:
 			result["host_apply_result"] = true
 		_apply_game_result(run_state, result, rng)
-		if not bool(result.get("slot_runtime_tick", false)):
-			run_state.advance_environment_turns(1)
+		run_state.advance_environment_turns(1)
 		_checkpoint(run_state, checkpoints, seed, "game_%s_%s" % [game_id, action_id])
 	return result
 
