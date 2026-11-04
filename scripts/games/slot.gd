@@ -882,6 +882,7 @@ func _apply_tutorial_first_night_match(resolved: Dictionary, machine: Dictionary
 	if not story_log.is_empty() and typeof(story_log[story_log.size() - 1]) == TYPE_DICTIONARY:
 		var story := _slot_copy_dict(story_log[story_log.size() - 1])
 		story["bankroll_delta"] = friendly_net
+		story["currency_delta"] = friendly_net
 		story["payout"] = payout
 		story["classification"] = "tutorial_match"
 		story["outcome_id"] = "tutorial_first_night_match"
