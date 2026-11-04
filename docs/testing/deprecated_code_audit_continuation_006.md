@@ -1,0 +1,69 @@
+# Deprecated-code audit continuation 006
+
+The whole-codebase objective `BTH061-AUDIT-001` remains Open. This continuation fixes the measured aggregate-validator bottleneck and removes two proven obsolete production families outside the paused item/scenario scope. It does not establish full codebase coverage. Baseline: `b70b52f134f17345e29f812778e86f90fa5a2e3b`.
+
+| Stable task | Scoped source commit | Result |
+| --- | --- | --- |
+| BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005 | 17e8eb390f3fd8f9785bf4fc5f591034f9820150 | Census index has complete output parity; time budget fixed; full entry acceptance remains Open for actual global-census failures. |
+| BTH061-AUDIT-AUDIO-LEGACY-006 | 42eafd35655dd6779fcba2ba55d1c426fcade5cf | Retired internal JS exports and private loader branches removed after native/JS qualification. NEXT remains Open. |
+| BTH061-AUDIT-SCRATCH-HELD-SALE-006 | fabd74951bc75ad832832da96b11afeea6acf2d9 | Retired Crossword hold policy removed after real saved-state qualification. NEXT remains Open. |
+
+## Aggregate time-budget attribution
+
+The unchanged-source bounded profile reproduces the time failure under the original 402.018-second ceiling. The historical R9 direct full pass also took about 404 seconds; it established complete assertions at that historical commit, not compliance with the maintained entry-point budget.
+
+Measured phases: health rules 8.85 seconds, style checks 4.55 seconds, census 197.4025 seconds, native 40-case launcher 117.10 seconds, independent 11-case phase 16.99 seconds. The profile reached post-file checks before its deadline; it is not reported as a full pass. All owned processes closed and validator/style/census bytes stayed unchanged during profiling.
+
+`New-Census` previously filtered all 20,325 function records separately for each of 791 files. Its local per-invocation index preserves invariant-culture case-insensitive matching, record order, duplicate paths/records, original labels, classification, counters, sorting, types and serialization. Parsing, call-graph propagation and every guard still execute. Ten other census functions and all source outside `New-Census` remain exact.
+
+The expanded existing AST contract retains the parser/span/reachability assertions, adds a real four-file/eight-function inventory and compares complete output against the old `-eq` filter for empty buckets, duplicates, case aliases, Unicode equivalents and Turkish culture. It passes on canonical Windows PowerShell. The actual complete CLI now takes 41.798 seconds. All 791 GDScript hashes were frozen before/after; its entire 22,758,780-byte JSON and 2,359,622-byte Markdown are byte-identical to the original outputs, not merely equal counts. Raw SHA256: JSON `dd6916cc68ce192d801d1355061d46a315f46c9bf884f83c5c4e97a61c2cd4cb`, Markdown `58a8eac511f5d770fbf30f56a230662ca74472869f37e751fb049840a9e8084f`.
+
+The validator (`7a9bebf0...1ff975b`), maintained runner (`5af024cd...602f4d`), stage budgets, assertions and native/process/resource ownership guards remain unchanged.
+
+First maintained attempt: `maintained006-scratch-final-r1` completes validator work in **228.205 seconds**, within the unchanged402.018second limit. It fails the unchanged machine-global process census after three peerQA processes launched during the run; it does not reach import orScratch. A sole outercensus failure does not prove every deferred inner/postcondition result. Exact read-only managed-identity checks later confirm allthree recorded identities ended. No peer was inspected beyond those recorded keys, paused, stopped orfilteredout. One fresh full entry attempt uses the existing audio-recovery standalone contract after independentcompleteScratchtarget acceptance. The historical broadScratch selection also remains failing/unqualified: its mandatory whole-catalog content case reaches180seconds beforeScratch begins. `BTH061-AUDIT-CONTENT-TIMEOUT-006` tracks attribution; no budget israised andno contentassertion ischanged.
+
+The independently composed maintained Scratch target passes: exact9source/34symbol recipe, supported `--check-ids=scratch_tickets_game_suite`, all target assertions retained and0failures. This is not a wholecatalog/suite pass. Evidence: `foundation006-composition-proof-r1.json`, `scratch006-maintained-target-check-r1`, `continuation006-current-global-census-failure-r1.json`, `continuation006-recorded-peer-state-r1.json`.
+
+The fresh unchanged-guard attempt `maintained006-audio-final-r2` runs validator work in **255.483 seconds**, also within402.018seconds, but reports a different concurrent external export process tree. It again stops before import/load/standalone execution. Both attempts preserve allnine measuredsource hashes and close their own Jobs withzeroactive processes. Neither is reported green, and a sole outercensus error doesnot prove every deferred innerpostcondition. The measured time-budget bottleneck isfixed; `BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005` remainsOpen forfullguardedacceptance. No furtherquiet-machine retry, workerstop, processfilter, assertionchange orbudgetincrease isperformed.
+
+## Production removals and preserved authority
+
+The audio child deletes only two internal constant-false JavaScript exports, `playMusic` and `sfx`, whose dispatch callers were removed by the same historical modernization and later wrapper cleanup. All 29 public GDScript bridge methods, the 19 live JS members, version handling and PCM/stem protocol remain intact. The private authored loader loses a bare-ADPCM branch unused by current supported WAV/OGG source producers and gzip delivery callers. Public bare-codec inspection and standalone codec tooling remain supported. A locally always-true PCM16 tail is simplified after the existing PCM24 early return; invalid bit-depth rejection remains. Arbitrary invalid hand-edited manifests/private calls are outside that supported input closure. All 327 player signatures and 324 other method bodies remain exact.
+
+The Scratch child removes the immutable empty hold constant, its always-false helper and twelve false calls across ten called methods, plus two passive performance-fixture reader predicates. The maintained implementation-only test assertion becomes public purchase/readiness/price checks using a private environment clone. All other existing assertions remain.
+
+Version-4 held-marker-to-active migration, version 5, saved quantity, complete issued ticket/mask/region/custody fields, RNG order and weighted restock remain. The empty public `scratch_held_ticket_type` key remains literal `""`; empty/missing type IDs still do not count toward stock, while unknown nonempty IDs retain their current behavior. The old constant's direct empty-ID check was deliberately replaced with `is_empty()`, not deleted. Only the retired helper is removed: 140 other production method sections, 57 other foundation-test sections and 72 other performance-tool sections remain exact. Five paused scalper/membership/gift boundary methods and all item/scenario implementations remain unchanged. No portrait or animation-scheduling code changed.
+
+## Qualification and limits
+
+| Check | Result and fidelity |
+| --- | --- |
+| Census AST contracts and complete CLI | PASS; all frozen inputs and complete JSON/Markdown bytes verified. |
+| Exact embedded audio bootstrap | PASS, 40 Node VM checks: retained properties/function sources/state, version identity, old cleanup paths and unavailable-context guards. No browser playback/marshalling claim. |
+| Original/candidate audio loaders | PASS, 109/107 checks on identical fixture bytes and one retained official account save. Complete 19-observation/account parity equals `e9813a270ddf6ab9ff6d79d35d89678b1af02aa11a11ad00fe9e37ea8e4f159d`. Two extra baseline checks create the save; the candidate cannot replace it. Real gzip and PCM16/24 stream bytes, rate/channels/loops/metadata, malformed-input rejection and public bare inspection remain exact. |
+| Existing audio checks | PASS: `fixsweep06_1_audio_recovery_contract.gd` and `postfix06_2_feature_pcm_runtime_contract_test.ps1`. |
+| Scratch fixture preparation | PASS, 79 recorded checks. Actual Canvas eligibility/completion and action blocking, autonomous expiry, fresh rendered Collect hit and one physical touch produce the real paid/collected ticket. Official SaveService files retain full mask/current regions and synthetic historical v4 held markers before game projection. |
+| Maintained Scratch target and tool parser | PASS: exact nine-source/34-symbol composition; all Scratch game-case assertions, including the public active-release check, run with zero failures via the existing check-ID selector. Passive performance consumer parses. The separate full-content case times out at 180 seconds and remains unqualified. |
+| Original/candidate Scratch save parity | PASS, 98/100 recorded semantic checks on the same driver bytes, same official saves and distinct processes. Entire stored semantic dictionaries compare equal, including raw machine Variant hashes, account, issued/portable custody, purchases, all generation cases, empty/unknown stock and restock. Fingerprint `1fb63e5033e0eebeb9a2db29b07bc14e79738fce39b1686b6ed066345232e43a`. Console counters add two receipt-open checks per process. |
+
+These are documented synthetic equivalent-state fixtures with actual current producers and official files, not original player saves or historical-engine-produced saves. Native audio qualification compares providers/encoded delivery; it does not claim audible or browser ADPCM decoding. Every owned Job uses the maintained suspended helper, 12% aggregate CPU, 2 GiB memory, no breakaway and kill-on-close. Completed Jobs report zero active processes.
+
+Historical attempts stay separate: Scratch prepare-r1 stopped on a fixture-only Variant type annotation; prepare-r2 exposed an incorrect fixture assertion that producer eligibility equals finite Canvas completion. Neither is a product regression. The corrected same-byte driver uses the real Canvas clock and physical input without scheduling/clock manipulation. Candidate-r3's semantic comparison passed, but its report writes were empty with only about 30 MB free on C:. That artifact attempt is not accepted as complete. Verified lossless gzip archives of task-generated duplicate reports recovered space; every raw byte remains recoverable, and no save, baseline reference, build, cache or other user's file was cleaned. Candidate-r4 then produced complete parsed reports and full external semantic equality. Storage receipts preserve the original paths, lengths and hashes.
+
+## Bounded audit coverage
+
+`BTH061-AUDIT-AUDIO-INFRA-006` fully reviewed six modules: music_delivery_index, music_float_pcm_stream, web_audio_bridge, music_arrangement_selector, music_outcome_director_model and music_layer_choreography (2,128 line records, 68 GD methods, 24 constants, plus the embedded JS). Those current body/caller/engine/JS/save/public dispositions advance explicit parent coverage.
+
+`BTH061-AUDIT-TOOL-RUNTIME-006` reviewed eight previously unscreened builders/codecs (526 lines, 13 functions), all retained as active, plus 36 complete targeted player/SFX methods. It does not claim the players' 517-method inventory was fully reviewed. Procedural synthesis remains the actual offline producer and supported runtime fallback.
+
+`BTH061-AUDIT-INSTANT-GAMES-006` inventoried eight production files/447 methods and semantically traced current purchase, physical tray/player/pile custody, animation, rendering and accepted-save families. The inventory count is not full-body semantic coverage. Pull Tabs individual/bulk buys, main symbols versus legend badges, finite legacy ticket-sleeve reconstruction and dispense/reveal/file channels remain active. Renderer branches reachable through accepted legacy saves/public drawing input remain retained; no migration or rejection policy was invented to remove them.
+
+The three bounded reviews remain Open while their required source children await delivery. Whole-codebase coverage, all five phase004 inherited failure groups and the separately registered `BTH061-AUDIT-CONTENT-TIMEOUT-006` remain Open. Source-only follow-up traces the content wrapper to nine live groups and its paired whole-library fingerprints; no subgroup cost or obsolete-wrapper proof is established. The next bounded profile retains all calls/order/assertions and times callable/fingerprints/subgroups separately under the same limit. Item/scenario work stays under the explicit user pause. No original-save request, new user decision or intentional hold is imposed.
+
+## Evidence and delivery
+
+Task evidence is under `C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/`: `aggregate-profile006-baseline-r1`, `aggregate-profile006-candidate-proposal`, `census006-candidate-r1`, `production-audio-infra-006-r1`, `production-tool-runtime-006-r1`, `production-instant-games-006-r1`, `audio006-*`, `scratch006-*` and `native-private-audit006`. Full report copies are losslessly archived where space required; `continuation006-lossless-report-storage-r{1,2}.json` maps raw paths/hashes to archives. Original saves and `baseline_semantic.json` remain plain and unchanged.
+
+PUBLICATION_RESULT_PENDING
+
+Manual reconciliation will be refreshed with actual owner/runtime observations before publication/completion. Other owners, existing source custody and all paused task records remain preserved.

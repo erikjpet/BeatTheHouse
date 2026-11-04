@@ -1554,6 +1554,55 @@
       ],
       "remaining": "All prior broad coverage gaps and5phase004baselinegroups remainOpen; new aggregate timeout follow-upOpen; item/scenario userpause preserved.",
       "evidence": "docs/testing/slot_legacy_family_recovery.md"
+    },
+    {
+      "phase": "006",
+      "parent_id": "BTH061-AUDIT-001",
+      "base": "b70b52f134f17345e29f812778e86f90fa5a2e3b",
+      "scope": "Boundednonpaused audioinfrastructure/productiontooling/instantgame calledpaths; no wholecodebase closure.",
+      "source_commits": [
+        "17e8eb390f3fd8f9785bf4fc5f591034f9820150",
+        "42eafd35655dd6779fcba2ba55d1c426fcade5cf",
+        "fabd74951bc75ad832832da96b11afeea6acf2d9"
+      ],
+      "full_body_review": {
+        "audio_infrastructure_files": 6,
+        "gd_methods": 68,
+        "constants": 24,
+        "audio_builder_files": 8,
+        "builder_functions": 13
+      },
+      "called_path_only": {
+        "runtime_audio_methods": 36,
+        "instant_game_files_inventoried": 8,
+        "instant_game_methods_inventoried": 447,
+        "limit": "447andlargeplayer517methodinventories arenotfullsemanticbodyreviews."
+      },
+      "confirmed_removed": [
+        "2retiredinternalJSfalseexports/privateaudioformatbranches/redundantPCM16tail",
+        "Scratchpermanentlydisabledheldsalegates/helper/constant plusrequiredtest/passiveperfreaders"
+      ],
+      "preserved": [
+        "PublicGD/PCM/codec/sourceauthoringinterfaces",
+        "Paid49152mask/regions/custody/account/RNG",
+        "v4heldstockmigrationandemptytypeexclusion",
+        "Pauseditem/scenario implementations and5Scratchmembershipboundary methods",
+        "Allnative/process/resource/time guards"
+      ],
+      "census": "197.4\u219241.8seconds; entireJSON/MD byteequalonfrozen791inputs20325declarations",
+      "qualification": "Native/VM/fullsavedstateparity andmaintainedScratchtarget/toolparser pass. Bothunchangedfullentry attempts hitglobalcensus fromnewexternalwork within228.205/255.483s vs402.018s; completeentryOpen. Broadcontent180stimeout separatelyOpen; NEXTpendingcapacity.",
+      "retained": [
+        "Activeaudio synthesis/producer/fallback families",
+        "PullTabsindividual/bulkbuy, physicalcustody, legend/mainicons, finitelegacysleeve/draw compatibility"
+      ],
+      "remaining": "Priorwholecodebasecoveragegaps and5phase004baselinegroups remainOpen.",
+      "evidence": "docs/testing/deprecated_code_audit_continuation_006.md",
+      "open_followups": [
+        "BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005",
+        "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+        "BTH061-AUDIT-AUDIO-LEGACY-006",
+        "BTH061-AUDIT-SCRATCH-HELD-SALE-006"
+      ]
     }
   ]
 }

@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T19:59:38.708404+00:00",
+  "updated_at": "2026-11-04T21:28:34.938136+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13050,11 +13050,11 @@
             },
             {
               "id": "scripts/core/music_delivery_index.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_006.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Full006semanticbody/caller/engine/JS/save/public review. Currentbridge derives byonly2closedlegacyJSstubremovals, independentlyexactsource+native/VMqualified. No wholecodebase orlargePMP/SFXbodycoverage claim."
             },
             {
               "id": "scripts/core/numbers_model.gd",
@@ -13404,6 +13404,46 @@
               "evidence": [
                 "docs/testing/deprecated_code_audit_2026_11_03.md"
               ]
+            },
+            {
+              "id": "scripts/ui/music_float_pcm_stream.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_006.md"
+              ],
+              "scope": "Full006semanticbody/caller/engine/JS/save/public review. Currentbridge derives byonly2closedlegacyJSstubremovals, independentlyexactsource+native/VMqualified. No wholecodebase orlargePMP/SFXbodycoverage claim."
+            },
+            {
+              "id": "scripts/ui/web_audio_bridge.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_006.md"
+              ],
+              "scope": "Full006semanticbody/caller/engine/JS/save/public review. Currentbridge derives byonly2closedlegacyJSstubremovals, independentlyexactsource+native/VMqualified. No wholecodebase orlargePMP/SFXbodycoverage claim."
+            },
+            {
+              "id": "scripts/ui/music_arrangement_selector.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_006.md"
+              ],
+              "scope": "Full006semanticbody/caller/engine/JS/save/public review. Currentbridge derives byonly2closedlegacyJSstubremovals, independentlyexactsource+native/VMqualified. No wholecodebase orlargePMP/SFXbodycoverage claim."
+            },
+            {
+              "id": "scripts/ui/music_outcome_director_model.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_006.md"
+              ],
+              "scope": "Full006semanticbody/caller/engine/JS/save/public review. Currentbridge derives byonly2closedlegacyJSstubremovals, independentlyexactsource+native/VMqualified. No wholecodebase orlargePMP/SFXbodycoverage claim."
+            },
+            {
+              "id": "scripts/ui/music_layer_choreography.gd",
+              "state": "reviewed",
+              "evidence": [
+                "docs/testing/deprecated_code_audit_continuation_006.md"
+              ],
+              "scope": "Full006semanticbody/caller/engine/JS/save/public review. Currentbridge derives byonly2closedlegacyJSstubremovals, independentlyexactsource+native/VMqualified. No wholecodebase orlargePMP/SFXbodycoverage claim."
             }
           ],
           "inventory": "docs/todo/bth_audit_scope_inventory.json",
@@ -13465,12 +13505,17 @@
           "kind": "qualified_slot_child_with_delivery_open",
           "reference": "docs/testing/slot_legacy_family_recovery.md",
           "summary": "Slot missing-family replacement and4button deletion qualified and published at81f3ecf69a70bcbdc7d4d1d6c71efd1668e8c54c; NEXT capacity gate and broadcoverage remainOpen. New aggregate-time-budget follow-up retains current maintained stage failure."
+        },
+        {
+          "kind": "phase006_qualified_source_and_explicit_remaining_gates",
+          "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
+          "summary": "3scopedtestedcommits:17e8eb39censusindex,42eafd35audiolegacy,fabd7495Scratchholdpolicy. Explicit6filefullsemanticcoverage; otherreviewinventoriesnotfullcoverage. Timefailurefixedbutglobalcensusentryblockedbynewexternalwork; broadcontent180stimeoutnewstablefollowup. AppchildNEXTstillrequired; umbrellaOpen."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Continue remaining nonpaused semantic coverage and five named inherited contract diagnoses; Slot legacy-family source replacement/removal is now qualified and published, with exact NEXT acceptance Open behind capacity admission. Attribute current aggregate timeout under BTH061-AUDIT-AGGREGATE-TIME-BUDGET-005 without weakening guards. Preserve item/scenario user pause and active save/public compatibility.",
+      "next_action": "Publishtestedphase006removals withoutweakeningguards, retainNEXT delivery Openbehindreserve, thencontinue remainingnonpaused semanticcoverage/fivebaselinegroups/contentprofiling andfreshglobalguardacceptance. Preserveexplicititem/scenariopause andactivecompatibility.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -13480,7 +13525,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T19:59:38.708404+00:00"
+      "updated_at": "2026-11-04T21:28:34.938136+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -19097,9 +19142,9 @@
             "id": "timeout-attribution",
             "description": "Profile the owned failing invocation and establish its factual cause without stopping other workers or weakening guard budgets.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
-              "docs/testing/slot_legacy_family_recovery.md"
+              "docs/testing/deprecated_code_audit_continuation_006.md"
             ]
           },
           {
@@ -19117,41 +19162,64 @@
         }
       },
       "state": "open",
-      "status": "CURRENT_VALIDATE_PROJECT_TIME_GUARD_FAILURE_OPEN",
+      "status": "TIME_BUDGET_FIXED_GLOBAL_CONCURRENCY_ACCEPTANCE_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "17e8eb390f3fd8f9785bf4fc5f591034f9820150",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_006.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
         "commit": null,
         "evidence": [],
-        "scope": "Read-only profiling/acceptance follow-up; no new source repair exists."
+        "scope": "Tool-only source optimization committed; complete maintained time-budget acceptance remains Open. No application delivery requirement is claimed for this derived census index."
       },
       "evidence": [
         {
           "kind": "bounded_maintained_stage_failure",
           "reference": "docs/testing/slot_legacy_family_recovery.md",
           "summary": "Clean WinPS5/shortTEMP officialSurface-r3 exits124 at validateProject403.094s vs402.018s. No Godot/focused stage ran. Entire owned Job closed0active. Prior Get-FileHash environment failure retained separately; historical phase003 fullpass not relabeled."
+        },
+        {
+          "kind": "resumed_profile_and_historical_timing_attribution",
+          "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
+          "summary": "HistoricalR9 full directrun404seconds didnotqualify maintained402.018budget. Current officialr3 timedout403.094 beforeGodot. CanonicalWinPS/privateenvironment issue separatelyresolved; no guard changed."
+        },
+        {
+          "kind": "measured_census_index_exact_output_acceptance",
+          "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
+          "summary": "Unchangedsource boundedprofile timedout402.018s, census197.4025s vshealth8.85/style4.55; nativeLauncher117.10s/independent16.99s preserved. CandidateactualCLI41.798s and expandedcontracts pass. EntireJSON22758780bytes+Markdown2359622bytes byte-identical onfrozen791GD/20325funcinputs; Job0. Source17e8eb390f3fd8f9785bf4fc5f591034f9820150; maintainedfullentrybudget stillOpen."
+        },
+        {
+          "kind": "time_fixed_fresh_global_guard_still_open",
+          "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
+          "summary": "Exact402.018guard retained; currentvalidator228.205/255.483s withnobudgetexceed or timeout. Bothfreshentryattempts failunmodifiedglobalcensus onactualnewexternalwork, with9sourcehashesfrozen/ownJobs0. Deferredinnerresult notinferredgreen. CompleteEntryacceptance remainsOpen; no morequiet-machine retries orpeerintervention."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Profile retained owned-stage evidence and make any authorized scoped repair concrete under unchanged guards; run a fresh full entry point only when new evidence justifies it. Independent tested Slot fix proceeds with its explicit aggregate qualification limit.",
+      "next_action": "Retain completeentryacceptance Open until a fresh unchangedguard invocation can qualify without newglobalprocess identities; nopeerstop/filter/budgetchange. Continue independent nonpausedcoverage and separatelyprofilecontenttimeout. Sourcecensusfix alreadyqualified byexactoutput/edgecasecontracts andcommitted.",
       "blocker": {
         "state": "active",
-        "kind": "maintained_stage_time_guard",
-        "description": "The maintained aggregate invocation times out before Godot at403.094seconds against402.018second limit. The cause is not yet attributed; independent focused native acceptance passes.",
+        "kind": "external_process_census",
+        "description": "Both unchangedmaintained attempts finishvalidatorworkwithin402.018s (228.205/255.483), butmachine-globalcensus reportsnewexternalQA/exportprocesses. Prior3identitiesendedbeforefreshretry; secondattemptreportsdifferent6. No import/load/standalone stage ran; no peer stopped or guard filtered.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T19:55:26.505512+00:00",
+        "observed_at": "2026-11-04T21:28:34.938136+00:00",
         "evidence": [
-          "docs/testing/slot_legacy_family_recovery.md"
+          "docs/testing/deprecated_code_audit_continuation_006.md",
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-current-global-census-failure-r2.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T19:55:26.505512+00:00"
+      "updated_at": "2026-11-04T21:28:34.938136+00:00"
     },
     {
       "id": "BTH-COINPUSHER-DROP-PRICE-001",
@@ -19502,6 +19570,469 @@
         }
       ],
       "updated_at": "2026-11-04T18:12:12.227039+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-AUDIO-INFRA-006",
+      "name": "Review remaining audio infrastructure for obsolete implementations",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Bounded semantic review of music_delivery_index, music_float_pcm_stream, web_audio_bridge, music_arrangement_selector, music_outcome_director_model and music_layer_choreography. Trace engine virtuals, JS/native dispatch, callers and saved/public metadata; ProceduralMusicPlayer is caller context, not claimed full-module coverage. Preserve paused item/scenario implementation, current portrait behavior and all active authority/compatibility. Any confirmed source removal needs its own tested commit and required delivery evidence; this bounded review never closes whole-codebase coverage.",
+        "source": "Trusted parent continuation to continue whole deprecated-code audit outside paused item/scenario and pursue substantive obsolete code only with preserved authority/recovery.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "bounded-semantic-dispositions",
+            "description": "Record exact reviewed files/bodies, actual caller/dispatch/save/native evidence, retained/obsolete dispositions and limits in a committed report.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_006.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "BOUNDED_DISPOSITIONS_RECORDED_REQUIRED_CHILD_DELIVERY_OPEN",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Read-only review until a concrete source removal is separately registered and qualified."
+      },
+      "evidence": [
+        {
+          "kind": "registered_nonpaused_review",
+          "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
+          "summary": "Explicit bounded review underway atb70b52f134f17345e29f812778e86f90fa5a2e3b; no new source removal, complete coverage, test or delivery acceptance claimed."
+        },
+        {
+          "kind": "bounded_semantic_dispositions",
+          "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
+          "summary": "Sixinfrastructurefiles/68GDmethods+embeddedJS fullyreviewed bycore; eightaudioBuilders/13functions allactive and36targetedruntime methods separatelyreviewed bytools. Combinedsourcechild42eafd35 qualified; remainingPMP/SFX bodies andwholecodebase notclaimedreviewed. RequiredchildNEXT acceptance remainsOpen."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Commit bounded evidence and finish the separately named qualifiedaudio child delivery aftercapacityadmission. Continue remaining nonpaused semanticcoverage; do notcloseparentwithOpenchild.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T20:06:53.044637+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T20:43:35.646779+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-TOOL-RUNTIME-006",
+      "name": "Review audio producer tooling and runtime lifecycle for obsolete code",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Bounded semantic review of previously unscreened audio master/build/codec producers and current runtime loading/caller lifecycle. Distinguish active retained asset/save compatibility from obsolete implementations using actual CLI/import/dynamic/build consumers. Preserve paused item/scenario implementation, current portrait behavior and all active authority/compatibility. Any confirmed source removal needs its own tested commit and required delivery evidence; this bounded review never closes whole-codebase coverage.",
+        "source": "Trusted parent continuation to continue whole deprecated-code audit outside paused item/scenario and pursue substantive obsolete code only with preserved authority/recovery.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "bounded-semantic-dispositions",
+            "description": "Record exact reviewed files/bodies, actual caller/dispatch/save/native evidence, retained/obsolete dispositions and limits in a committed report.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_006.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "BOUNDED_DISPOSITIONS_RECORDED_REQUIRED_CHILD_DELIVERY_OPEN",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Read-only review until a concrete source removal is separately registered and qualified."
+      },
+      "evidence": [
+        {
+          "kind": "registered_nonpaused_review",
+          "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
+          "summary": "Explicit bounded review underway atb70b52f134f17345e29f812778e86f90fa5a2e3b; no new source removal, complete coverage, test or delivery acceptance claimed."
+        },
+        {
+          "kind": "bounded_semantic_dispositions",
+          "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
+          "summary": "Sixinfrastructurefiles/68GDmethods+embeddedJS fullyreviewed bycore; eightaudioBuilders/13functions allactive and36targetedruntime methods separatelyreviewed bytools. Combinedsourcechild42eafd35 qualified; remainingPMP/SFX bodies andwholecodebase notclaimedreviewed. RequiredchildNEXT acceptance remainsOpen."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Commit bounded evidence and finish the separately named qualifiedaudio child delivery aftercapacityadmission. Continue remaining nonpaused semanticcoverage; do notcloseparentwithOpenchild.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T20:06:53.044637+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T20:43:35.646779+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-INSTANT-GAMES-006",
+      "name": "Review current instant-game implementation and presentation paths",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Bounded semantic review of current Pull Tabs and Scratch Tickets modules, renderers and control/save authority. Trace actual called native/public paths and any superseded implementation; do not remove state authority or current recovery. Preserve paused item/scenario implementation, current portrait behavior and all active authority/compatibility. Any confirmed source removal needs its own tested commit and required delivery evidence; this bounded review never closes whole-codebase coverage.",
+        "source": "Trusted parent continuation to continue whole deprecated-code audit outside paused item/scenario and pursue substantive obsolete code only with preserved authority/recovery.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "bounded-semantic-dispositions",
+            "description": "Record exact reviewed files/bodies, actual caller/dispatch/save/native evidence, retained/obsolete dispositions and limits in a committed report.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_006.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "BOUNDED_DISPOSITIONS_RECORDED_REQUIRED_CHILD_DELIVERY_OPEN",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Read-only review until a concrete source removal is separately registered and qualified."
+      },
+      "evidence": [
+        {
+          "kind": "registered_nonpaused_review",
+          "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
+          "summary": "Explicit bounded review underway atb70b52f134f17345e29f812778e86f90fa5a2e3b; no new source removal, complete coverage, test or delivery acceptance claimed."
+        },
+        {
+          "kind": "bounded_instant_game_dispositions",
+          "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
+          "summary": "Eightfile447methodinventory isnotfullbodycoverage. Purchase/custody/render/save families traced; activePullTabs legacyrender/save compatibilityretained. RetiredScratchholdpolicy closedandqualified inchildfabd74951bc75ad832832da96b11afeea6acf2d9;140otherproduction/57test/72perfmethodsections exact;5pausedboundary methods exact. RequiredchildNEXT stillOpen."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Commit bounded reviewevidence and finish childNEXT acceptance aftercapacityadmission. Continue remainingnonpaused codebasecoverage; keepactiveacceptedlegacy/publicrender paths until replacement authority qualifies.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T20:06:53.044637+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T21:04:52.412614+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-AUDIO-LEGACY-006",
+      "name": "Remove proven retired audio bridge and private-loader branches",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-AUDIO-INFRA-006",
+        "BTH061-AUDIT-TOOL-RUNTIME-006"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Remove internal legacy JS playMusic/sfx false stubs after exact current/history/public-ABI closure, private authored-loader bareADPCM branches after current producer/caller/save closure, and the locally proven redundant16bit WAV condition after24bit earlyreturn. Preserve public GDScript APIs, live PCM/JS exports, gz decoder/float outputs, supported authored WAV/OGG paths, saved selector authority and public standalone codec tools. Apply only after proposal independently closes; qualify exact baseline/candidate behavior before publication. This bounded removal does not close full audit.",
+        "source": "Trusted parent continuation plus current read-only bounded006closure proposals; explicit task9 request to remove confirmed obsolete implementations completely.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "authority-preserving-removal",
+            "description": "Independent source/caller/history closure, tested scoped commit and baseline/candidate parity preserve active behavior, state authority, recovery and compatibility.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_006.md"
+            ]
+          },
+          {
+            "id": "next-current",
+            "description": "Published source is delivered through existing NEXT watcher and relevant exact deployment/assets/behavior acceptance is recorded.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "NATIVE_AND_JS_PARITY_REMOVAL_COMMITTED_NEXT_OPEN",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "42eafd35655dd6779fcba2ba55d1c426fcade5cf",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_006.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Scoped source committed locally; current native/fullstream/account parity, JSbootstrap and existingaudio contracts pass. Main publication/NEXT delivery stillpending; maintained aggregate requalification remains separatelyOpen."
+      },
+      "evidence": [
+        {
+          "kind": "source_only_closed_proposal",
+          "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
+          "summary": "Read-only current production/history/caller proofs support narrow candidate. Actual source frozen during aggregate profiling and before census differential qualification; no native/runtime/fullaggregate/removal/publication pass claimed."
+        },
+        {
+          "kind": "qualified_scoped_audio_removal",
+          "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
+          "summary": "Source42eafd35655dd6779fcba2ba55d1c426fcade5cf removes2retiredinternalJSfalsestubs/privateunsupportedbareinputbranches/redundant16bittail. All29bridgeGDmethods+327PMPsignatures kept,324PMPbodies unchanged. Nativebaseline109/candidate107checks0fails samefixture+sameofficialSave, complete19observation/accountparity equal; VM40pass; existingAudioRecovery/FeaturePCMcontracts pass. No realbrowser/audio/Webacceptance."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Publish qualified scoped source after final composed native/guard acceptance; observeexactNEXT admission. KeepdeliveryOpen behindreserve; preservepubliccodec/rawinspection andsupportedWAV/OGG/gzip behavior.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T20:15:24.619833+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T20:43:35.646779+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-SCRATCH-HELD-SALE-006",
+      "name": "Remove retired Crossword held-sale policy while preserving migration",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-INSTANT-GAMES-006"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Remove permanently disabled temporary held-sale gates/helper/constant in current ScratchTickets and migrate its maintained direct-test/performance-fixture readers. Preserve v4held-to-active stock migration, all issued ticket/account/RNG state, the literal empty publicdiagnostic, empty-type stock-total exclusion, current readiness/purchases/stock/restock/order, all7game mechanics and active item/scenario consumers. Do not edit paused membership/effect/scenario implementations. Apply only after proposal independently closes; qualify exact baseline/candidate behavior before publication. This bounded removal does not close full audit.",
+        "source": "Trusted parent continuation plus current read-only bounded006closure proposals; explicit task9 request to remove confirmed obsolete implementations completely.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "authority-preserving-removal",
+            "description": "Independent source/caller/history closure, tested scoped commit and baseline/candidate parity preserve active behavior, state authority, recovery and compatibility.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_006.md"
+            ]
+          },
+          {
+            "id": "next-current",
+            "description": "Published source is delivered through existing NEXT watcher and relevant exact deployment/assets/behavior acceptance is recorded.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "FULL_SAVED_STATE_PARITY_REMOVAL_COMMITTED_NEXT_OPEN",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "fabd74951bc75ad832832da96b11afeea6acf2d9",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_006.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [],
+        "scope": "Qualified scopedsource committed; current native savedstate/Canvas proof passes. Main publication and exact NEXT delivery remain pending behind existing capacity gate."
+      },
+      "evidence": [
+        {
+          "kind": "source_only_closed_proposal",
+          "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
+          "summary": "Read-only current production/history/caller proofs support narrow candidate. Actual source frozen during aggregate profiling and before census differential qualification; no native/runtime/fullaggregate/removal/publication pass claimed."
+        },
+        {
+          "kind": "real_canvas_and_official_save_full_parity",
+          "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
+          "summary": "Sourcefabd74951bc75ad832832da96b11afeea6acf2d9 qualified after79recordedpreparechecks actualCanvasexpiry/currenthit/physicalcollect thenofficialv4held saves. Original98/candidate100recordedsemanticchecks same568ab98c driver/sameprimaryfiles; complete76.9MBsemanticdictionaries equal1fb63e50...232e43a inclrawVariant/account/paid49152mask/regions/issued/portable/RNG/restock. Externalcompleteartifactparity verified afterlosslessarchivingduplicate reports correctedCvolume writefailure. AllownJobs0; fullmaintainedScratchentry currentlyrunning unchangedguards."
+        },
+        {
+          "kind": "maintained_target_and_tool_parser_acceptance",
+          "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
+          "summary": "Exact9source/34symbol maintainedcomposition supportsScratchtargetselector; executesalltargetassertions0fails includingpublicreleasedCrossword purchasepreview. Separatebroadcontenttimeoutretained. Requiredpassiveperfconsumernativecheck-onlyPASS. AllOwnJobs0; source9eca/test5b689/perf844cd remainexact."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Publish qualifiedscoped source andobserveexistingNEXT exactadmission. KeepdeliveryOpen untilnewartifact/assets/changedbehavior qualify aftercapacityrecovers; fullaggregateglobalcensus andbroadcontent remainseparateOpenacceptance.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T20:15:24.619833+00:00",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T21:28:34.938136+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "name": "Attribute broad foundation content validation timeout",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Attribute the observed 180second whole-catalog content check timeout before the maintained Scratch game target began. Preserve source assertions and all resource/time/process guards, do not stop other workers or edit paused item/scenario implementations. Establish exact current baseline and appropriate scoped repair/acceptance without calling an unobserved broad suite green.",
+        "source": "Current phase006 complete nine-source/34symbol maintained foundation composition: --suite=scratch_tickets logged only content START, then owned180second cap; actual supported Scratch target selector separatelypasses withallassertions.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "content-attribution",
+            "description": "Profile/compare the current whole-catalog content check and attribute its timeout without weakening or skipping the selected content assertions.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_006.md"
+            ]
+          },
+          {
+            "id": "guarded-content-acceptance",
+            "description": "Qualify a scoped tested repair under unchanged applicable guards, or retain an exact factual blocker.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "BROAD_CONTENT_180S_TIMEOUT_UNATTRIBUTED_OPEN",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Read-only attribution/follow-up; no source repair exists."
+      },
+      "evidence": [
+        {
+          "kind": "bounded_whole_content_timeout",
+          "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
+          "summary": "scratch006-maintained-native-suite-r1:180s timeoutatcontent beforeScratchtarget,0ownprocesses aftercleanup. No originalbaseline/causality orbroadsuitepass claimed. Separate exactsamecomposedScratchtargetcheck completes with0failures, preservingallitsassertions."
+        },
+        {
+          "kind": "read_only_content_callgraph_attribution_limits",
+          "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
+          "summary": "Read-onlysourcefinds9livecontentgroups/core25checks andpairedfull-libraryfingerprints; broad180sreceipt lacks subgroup timing. The3614mstarget durationincludespost-callfingerprints, notisolatedbody. Wrapperremainslive, decompositionchangesobserverorder; noobsoleteproof/repair/testpassclaimed."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Profile generatedrunner callable andeachfingerprint separately, then9originalcontentchildren (andcore25ifdominant), underunchanged180s/resourceguards. Preserveobserverorder/allassertions/pausedimplementation. No stalledsubgroup orcatalogdefect attributedyet.",
+      "blocker": {
+        "state": "active",
+        "kind": "bounded_content_timeout",
+        "description": "Observed whole-catalog content check didnotfinish within owned180second limit; targetScratchcase hadnotstarted. Cause/baseline notyetattributed.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T21:17:43.534129+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_006.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T21:28:34.938136+00:00"
     }
   ],
   "batches": [
