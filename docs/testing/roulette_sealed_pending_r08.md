@@ -456,3 +456,9 @@ Scope clarification: 'masked' in retained controller summaries is an
 interpretation, not an established cause. The observations are warm59/NO SPINS
 YET after23red and later cold77. Warm display/history progression and its cause
 remain unqualified; no rendering or financial fix is claimed.
+
+Seed-B diagnostic/evidence commit: `a67a95d5926600b27908f375590e31123122740d`. Both ledger views
+associate it with the Open parent. Reconciliation retains241 unique IDs,0
+assigned-scope findings and54 existing findings across17 other tasks. The
+current check is task-14/evidence/r08-seed-b-association-check.json. This is
+investigation publication, not a product fix or full warm-Web acceptance.

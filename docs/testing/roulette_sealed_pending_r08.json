@@ -3948,7 +3948,7 @@
     "Seed-B warm result showed23red/BET0/SITOUT/REBET, but HUD59 and NO SPINS YET remained displayed. Cold77/publicJournal verify saved financial settlement, not the cause or release of that warm display.",
     "The extra Roulette+0 journal row is observed; its cause and authoritative total round/request count are unclassified. Exactly one explicit Spin and one explicit Confirm were sent."
   ],
-  "updated_at": "2026-11-04T21:29:20.269427+00:00",
+  "updated_at": "2026-11-04T21:33:36.372589+00:00",
   "continuation_source_base": "25b2f152cc7d82ddf86990c94e290fb401efa5e7",
   "continuation_investigation_commit": "7648f1d908468fd783cd19bc5c4562ab69573be1",
   "unobscured_web_continuation": {
@@ -4022,5 +4022,7 @@
     ],
     "fix_commit": null
   },
-  "unobscured_source_base": "05a9e79808d2520583507312a6ffe17ef4ff9621"
+  "unobscured_source_base": "05a9e79808d2520583507312a6ffe17ef4ff9621",
+  "seed_b_investigation_commit": "a67a95d5926600b27908f375590e31123122740d",
+  "seed_b_fix_commit": null
 }

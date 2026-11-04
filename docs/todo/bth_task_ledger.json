@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T21:29:20.269427+00:00",
+  "updated_at": "2026-11-04T21:33:36.372589+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -19566,7 +19566,8 @@
               "docs/testing/roulette_sealed_pending_r08.md",
               "docs/testing/roulette_sealed_pending_r08.json",
               "commit:3292cc0dd866d3c4b60e94d345d3471aa69b5822",
-              "commit:7648f1d908468fd783cd19bc5c4562ab69573be1"
+              "commit:7648f1d908468fd783cd19bc5c4562ab69573be1",
+              "commit:a67a95d5926600b27908f375590e31123122740d"
             ]
           },
           {
@@ -19596,7 +19597,8 @@
             "state": "pass",
             "evidence": [
               "docs/testing/roulette_sealed_pending_r08.md",
-              "docs/testing/roulette_sealed_pending_r08.json"
+              "docs/testing/roulette_sealed_pending_r08.json",
+              "commit:a67a95d5926600b27908f375590e31123122740d"
             ]
           }
         ],
@@ -19628,6 +19630,14 @@
             "docs/testing/roulette_sealed_pending_r08.md",
             "docs/testing/roulette_sealed_pending_r08.json",
             "Tested prior-Blackjack diagnostic and investigation evidence only; no production fix or task closure."
+          ]
+        },
+        {
+          "sha": "a67a95d5926600b27908f375590e31123122740d",
+          "evidence": [
+            "docs/testing/roulette_sealed_pending_r08.md",
+            "docs/testing/roulette_sealed_pending_r08.json",
+            "Tested predeclared seed-B diagnostic and cold financial investigation evidence only; no product fix/full warm-Web qualification or parent closure."
           ]
         }
       ],
@@ -19687,7 +19697,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T21:29:20.269427+00:00"
+      "updated_at": "2026-11-04T21:33:36.372589+00:00"
     }
   ],
   "batches": [
