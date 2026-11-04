@@ -29,9 +29,6 @@ var _run:
 	get: return _run_ref.get_ref() if _run_ref != null else null
 	set(value): _run_ref = weakref(value) if value != null else null
 
-var grand_casino_chips: int:
-	get: return chips
-	set(value): chips = value
 var grand_casino_room_states: Dictionary:
 	get: return room_states
 	set(value): room_states = value

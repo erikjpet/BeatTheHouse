@@ -140,7 +140,7 @@ def build_report() -> dict[str, object]:
             "run_items": "data/items/items.json asset_path -> RunActionService -> RunInventoryViewModel -> InventoryContainerSurface TextureRect",
             "meta_collection_items": "data/collections/collections.json icon_key -> MetaItemInteractionViewModel convention -> InventoryContainerSurface TextureRect",
             "environments": "data/environments/archetypes.json asset_path -> EnvironmentInstance/FoundationMain -> PixelSceneCanvas",
-            "games": "data/games/games.json asset_path/scene_asset_path -> EnvironmentInteractionViewModel/game surface",
+            "games": "data/games/games.json asset_path -> EnvironmentInteractionViewModel room icon; game modules render their own surfaces",
             "events": "data/events/events.json asset_path -> FoundationActionViewModel/EnvironmentInteractionViewModel -> PixelSceneCanvas",
             "map_icons": "world-map archetype_id -> assets/art/map_icons/<id>.png -> WorldMapCanvas",
             "run_outcomes": "data/art/run_outcome_icons.json icon_path -> RunReportViewModel -> RunReportScreen",

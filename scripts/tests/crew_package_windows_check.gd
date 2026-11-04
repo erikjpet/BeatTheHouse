@@ -15,6 +15,20 @@ class LayoutHost extends Main:
 	func _ready() -> void:
 		set_process(false)
 
+class HandoffHost extends Main:
+	var last_message: String = ""
+	func _refresh() -> void:
+		pass
+	func _show_message(text: String) -> void:
+		last_message = text
+	func _autosave_foundation_run(_status_text: String = "Autosaved.", _force: bool = false) -> bool:
+		# SaveService round trips on both sides of this UI dispatch are checked below.
+		return true
+	func clear_interaction_focus(_animate_camera_return: bool = false, _refresh_presentation: bool = true) -> void:
+		selected_object_id = ""
+		focus_target_id = ""
+		hover_target_id = ""
+
 var failures: Array = []
 var library: ContentLibrary
 
@@ -38,10 +52,16 @@ func make_run(seed: String) -> RunState:
 	run.start_new(seed)
 	var generator := RunGeneratorScript.new(library)
 	Fidelity.generate_and_finalize(generator, run, failures, seed)
+	Fidelity.travel_and_finalize(generator, run, "bar", true, library, failures, seed + " offer room")
+	# Appointment checks start from an eligible current obligation and physical
+	# Crew member. Legacy favor debt migration has its own obligation suite.
+	run.current_environment["crew_presence"] = [{"member_id": "crew_rook"}]
+	run.narrative_flags["crew_delivery_obligations"] = 2
 	run.crew_add_trust("crew_rook", 50, "fixture")
-	run.debt.append({"id": "crew_test_marker", "lender_id": "the_crew", "debt_kind": "favor", "balance": 1, "status": "favor_due", "default_consequence": "crew_favor_due", "turns_remaining": 1000, "next_pressure_turns": 1000})
-	run.narrative_flags["crew_favor_pending"] = true
-	run.advance_environment_turns(1)
+	run.reconcile_current_environment_object_manifest(true)
+	# This suite checks accepted appointments; the hourly solicitation suite
+	# covers failed rolls and the probability boundary. Retain the real gate.
+	run.narrative_flags["crew_package_offer_rng_state"] = 48
 	return run
 
 
@@ -191,8 +211,19 @@ func _run() -> void:
 	restored.advance_game_clock_minutes(int(window.get("opens", 0)) - restored.game_clock_minutes)
 	restored = save_continue(restored, "crew_window_at_open")
 	var cash_before := restored.bankroll
-	var handoff := restored.delivery_complete_handoff()
-	check(bool(handoff.get("ok", false)) and not restored.delivery_has_active_run(), "handoff at opening failed: %s" % handoff)
+	var handoff_host: HandoffHost = HandoffHost.new()
+	handoff_host.run_state = restored
+	handoff_host.library = library
+	handoff_host.generator = RunGeneratorScript.new(library)
+	for field in handoff_host.RUN_UI_SCRIPT_PATHS:
+		handoff_host.set(str(field), load(str(handoff_host.RUN_UI_SCRIPT_PATHS[field])))
+	handoff_host.current_screen = handoff_host.SCREEN_ENVIRONMENT
+	handoff_host._prepare_room_presentation_at_boundary()
+	# The real contact action executes the mounted world sequence before its
+	# terminal delivery outcome is consumed; the settlement API alone cannot.
+	var handoff: bool = handoff_host._complete_delivery_handoff(str(target.get("node_id", "")))
+	check(handoff and not restored.delivery_has_active_run(), "handoff at opening failed: %s" % handoff_host.last_message)
+	handoff_host.free()
 	check(restored.bankroll == cash_before + 22, "favor payout changed")
 	var paid_cash := restored.bankroll
 	restored = save_continue(restored, "crew_window_paid")

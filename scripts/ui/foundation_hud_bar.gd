@@ -39,7 +39,6 @@ var time_button: Button
 var time_watch: HudTimeWatch
 var time_day_label: Label
 var time_exact_label: Label
-var time_detail: Label
 var run_bar: Container
 var meta_bar: Container
 var landscape_run_bar: HBoxContainer
@@ -194,7 +193,7 @@ func render_bankroll(bankroll: int, _bankroll_delta: int = 0) -> void:
 
 
 func render_clock(model: Dictionary) -> void:
-	if time_watch == null or time_day_label == null or time_exact_label == null or time_button == null or time_detail == null:
+	if time_watch == null or time_day_label == null or time_exact_label == null or time_button == null:
 		return
 	var clock_parts := _clock_parts(model)
 	var clock_day := int(clock_parts.get("day", 1))
@@ -210,8 +209,6 @@ func render_clock(model: Dictionary) -> void:
 	_clock_explanation = clock_tooltip
 	if time_button.tooltip_text != clock_tooltip:
 		time_button.tooltip_text = clock_tooltip
-	if time_detail.text != clock_tooltip:
-		time_detail.text = clock_tooltip
 	_refresh_open_details()
 
 
@@ -415,12 +412,6 @@ func _build() -> void:
 	time_exact_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	time_copy.add_child(time_exact_label)
 	time_stack.add_child(time_button)
-	time_detail = FoundationWidgets.muted_label("", VisualStyle.TYPE_CAPTION)
-	time_detail.visible = false
-	time_detail.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	time_detail.custom_minimum_size.x = VisualStyle.TOOLTIP_MAX_WIDTH
-	# Retain the source label for snapshot/API compatibility, outside the row.
-	feedback_overlay.add_child(time_detail)
 
 	meta_bar = HBoxContainer.new()
 	landscape_meta_bar = meta_bar as HBoxContainer
