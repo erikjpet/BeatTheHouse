@@ -220,6 +220,9 @@ static func item_game_affinity_id(item: Dictionary) -> String:
 
 
 static func item_game_affinity_label(item: Dictionary) -> String:
+	var authored_label := str(item.get("game_affinity_label", "")).strip_edges()
+	if not authored_label.is_empty():
+		return authored_label
 	var game_id := item_game_affinity_id(item)
 	var config := _item_game_affinity_config()
 	var labels: Dictionary = config.get("game_labels", {}) if typeof(config.get("game_labels", {})) == TYPE_DICTIONARY else {}
@@ -357,7 +360,8 @@ static func _item_game_affinity_badge(item: Dictionary) -> Dictionary:
 	var glyphs: Dictionary = config.get("game_glyphs", {}) if typeof(config.get("game_glyphs", {})) == TYPE_DICTIONARY else {}
 	var glyph_id := str(glyphs.get(game_id, glyphs.get(str(config.get("default_game", "global")), "game_global")))
 	var label := item_game_affinity_label(item)
-	return _badge(glyph_id, label, "neutral", "Item affinity: %s" % _title_text(game_id))
+	var tooltip_label := label if not str(item.get("game_affinity_label", "")).strip_edges().is_empty() else _title_text(game_id)
+	return _badge(glyph_id, label, "neutral", "Item affinity: %s" % tooltip_label)
 
 
 static func _item_game_affinity_config() -> Dictionary:

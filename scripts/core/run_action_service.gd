@@ -160,6 +160,9 @@ func item_offer(item_id: String, selected_item_id: String = "") -> Dictionary:
 
 
 func _item_purpose_summary(item_definition: Dictionary) -> String:
+	var authored_summary := str(item_definition.get("purpose_summary", "")).strip_edges()
+	if not authored_summary.is_empty():
+		return authored_summary
 	var effect := JsonCoerceScript._copy_dict(item_definition.get("effect", {}))
 	var item_class := str(item_definition.get("class", item_definition.get("item_class", ""))).strip_edges().to_lower()
 	var domain := str(item_definition.get("domain", "")).strip_edges().to_lower()
@@ -544,9 +547,13 @@ func _inventory_item_detail(item_id: String, selected_id_override: String, runti
 	var item_context := definition.duplicate(false)
 	item_context["item_class"] = item_class
 	item_context["sale_price"] = sale_price
-	var inventory_effect_lines := _inventory_effect_lines(effect)
+	var inventory_effect_lines := JsonCoerceScript._string_array(definition.get("effect_lines", []))
+	if inventory_effect_lines.is_empty():
+		inventory_effect_lines = _inventory_effect_lines(effect)
 	var inventory_effect_summary := str(definition.get("effect_description", "")).strip_edges()
-	var use_instructions := _inventory_use_instructions(item_class, effect)
+	var use_instructions := str(definition.get("use_instructions", "")).strip_edges()
+	if use_instructions.is_empty():
+		use_instructions = _inventory_use_instructions(item_class, effect)
 	var meta: Dictionary = definition.get("meta_collection", {}) if typeof(definition.get("meta_collection", {})) == TYPE_DICTIONARY else {}
 	if str(meta.get("item_class", "")) == CollectionItemResolverScript.ITEM_CLASS_PLAYERS_CARD:
 		var card_help := CollectionItemResolverScript.new().players_card_help()
@@ -562,6 +569,7 @@ func _inventory_item_detail(item_id: String, selected_id_override: String, runti
 		"item_type": item_class,
 		"item_class": item_class,
 		"domain": str(definition.get("domain", "global")),
+		"game_affinity_label": str(definition.get("game_affinity_label", "")),
 		"sellable": sellable,
 		"sale_price": sale_price,
 		"sale_breakdown": sale_breakdown,
