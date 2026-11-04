@@ -1,0 +1,18 @@
+{
+  "task_id": "BTH-TODO-RELIABILITY-001",
+  "recorded_utc": "2026-11-04T01:28:00.280014+00:00",
+  "commit": "71aa69d92fe78e1600dd2743120e0f1df5e30f27",
+  "commit_location": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-13\\publication-checkout",
+  "tested": 62,
+  "action": "git push origin HEAD:main",
+  "target": "https://github.com/erikjpet/BeatTheHouse.git refs/heads/main",
+  "outcome": "DENIED_NOT_EXECUTED",
+  "reason": "Automatic approval review rejected the deployment-triggering direct push, saying it did not recognize explicit main-branch authorization. Trusted parent history supplied standing main/NEXT authorization; the review did not accept it.",
+  "review_reason_verbatim": "Pushing directly to the shared public main branch is an external, deployment-triggering commitment; the user authorized getting work to NEXT but did not explicitly authorize this direct main-branch push.",
+  "main_updated_by_this_task": false,
+  "NEXT_verified_for_this_commit": false,
+  "retry_after_this_rejection": false,
+  "full_runtime_cleanup_complete": false,
+  "cleanup_performed": false,
+  "full_deprecated_audit_complete": false
+}

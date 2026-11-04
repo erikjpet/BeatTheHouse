@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T01:24:20.765383+00:00",
+  "updated_at": "2026-11-04T01:28:00.280014+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -14254,18 +14254,29 @@
         }
       },
       "state": "open",
-      "status": "IMPLEMENTED_TESTED_PENDING_MAIN_NEXT",
+      "status": "COMMITTED_TESTED_MAIN_PUSH_REJECTED_AUTO_REVIEW_NEXT_UNVERIFIED",
       "owner": {
         "name": "Reconcile named todo queue",
         "task_ref": "01a1a36a-b7dd-709a-b4a0-b93eca365000",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "71aa69d92fe78e1600dd2743120e0f1df5e30f27",
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-13\\durable-publication-blocker.json",
+            "Local tested integration commit; main push denied and not executed."
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
         "commit": null,
-        "evidence": []
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-13\\durable-publication-blocker.json"
+        ],
+        "scope": "No main/NEXT publication for this integration commit."
       },
       "evidence": [
         {
@@ -14275,17 +14286,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Finish combined regression/preservation review, publish only the scoped manual reliability artifacts, verify remote readback/existing NEXT and record the actual implementation commit before closure.",
+      "next_action": "Obtain acceptance of explicit direct-main authorization after automatic approval review rejection; publish tested commit 71aa69d92fe78e1600dd2743120e0f1df5e30f27 and verify existing NEXT identity/ancestry. Keep this item Open until delivery evidence exists.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "Prepared artifacts and tests are active work; main/NEXT publication/readback remain unfinished. No intentional hold or new approval dependency.",
-        "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
-        "evidence": []
+        "state": "active",
+        "kind": "automatic_approval_review_rejection",
+        "description": "Direct main push rejected by automatic approval review despite standing authorization supplied in trusted parent history. Push did not execute. No denied-operation retry or alternate publication attempted.",
+        "requires_user_input": true,
+        "observed_at": "2026-11-04T01:28:00.280014+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-13\\durable-publication-blocker.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:28:00.280014+00:00"
     }
   ],
   "batches": [
@@ -14351,7 +14364,7 @@
       "aliases": [],
       "group": "current",
       "state": "open",
-      "status": "COMMITTED_LOCAL_INTEGRATED_MAIN_PUBLICATION_AND_VERIFICATION_PENDING",
+      "status": "COMMITTED_TESTED_MAIN_PUSH_REJECTED_AUTO_REVIEW_NEXT_UNVERIFIED",
       "owner": {
         "name": "Clean obsolete test instances",
         "task_ref": "01a1a3f0-cfcd-74e1-9dd9-3a7e0178b0e1",
@@ -14364,13 +14377,23 @@
             "recorded_in_named_ledger",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
+        },
+        {
+          "sha": "71aa69d92fe78e1600dd2743120e0f1df5e30f27",
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-13\\durable-publication-blocker.json",
+            "Local tested integration commit; main push denied and not executed."
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "pending",
         "commit": null,
-        "evidence": []
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-13\\durable-publication-blocker.json"
+        ],
+        "scope": "No main/NEXT publication for this integration commit."
       },
       "evidence": [
         {
@@ -14379,16 +14402,18 @@
           "summary": "Source commit adds read-only runtime inventory checks and --runtimes findings to the existing manual ledger report;54 focused source tests passed in task19. The patch is integrated into the prepared local artifacts only. Finish integration regressions, publish the scoped artifacts to main and verify the requested delivery before closing this batch. No live cleanup or full runtime-objective acceptance is implied; no scheduler, worker messaging, desktop discovery or automatic termination is added."
         }
       ],
-      "next_action": "Finish canonical integration tests, publish the scoped checker/docs commit and verify main/NEXT as applicable. Keep this committed local batch Open until publication evidence is recorded; do not close the parent cleanup objective.",
+      "next_action": "Obtain acceptance of explicit direct-main authorization after automatic approval review rejection; publish tested commit 71aa69d92fe78e1600dd2743120e0f1df5e30f27 and verify existing NEXT identity/ancestry. Keep this item Open until delivery evidence exists.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "No new permission or intentional hold asserted for local artifact integration. Main publication and requested verification remain unfinished.",
-        "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
-        "evidence": []
+        "state": "active",
+        "kind": "automatic_approval_review_rejection",
+        "description": "Direct main push rejected by automatic approval review despite standing authorization supplied in trusted parent history. Push did not execute. No denied-operation retry or alternate publication attempted.",
+        "requires_user_input": true,
+        "observed_at": "2026-11-04T01:28:00.280014+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-13\\durable-publication-blocker.json"
+        ]
       },
-      "updated_at": "2026-11-04T01:24:20.765383+00:00",
+      "updated_at": "2026-11-04T01:28:00.280014+00:00",
       "parent_id": "BTH-RUNTIME-CLEANUP-001",
       "scope": [
         "tools/check_bth_runtime_inventory.py reads explicit lifecycle inventory and returns findings",
