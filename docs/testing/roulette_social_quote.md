@@ -113,7 +113,68 @@ loaded. No warning was bypassed, trust setting changed or alternate browser/
 route used for gameplay. The temporary owned tab was closed. Receipt:
 `evidence/roulette-social-next-browser-blocked.json`.
 
-The task remains **Open**: native quote/staging qualification and deployed
+At that observation the task remained **Open**: native quote/staging qualification and deployed
 artifact identity pass, while permitted Web startup and actual deployed
 quote/staging acceptance remain unverified. Stable, itch and hosting audience
 were unchanged.
+
+## Authorized localhost Web acceptance, 2026-11-04
+
+The owner separately authorized the documented, independently intended
+`http://localhost:8088` testing route for fresh practice quote/staging/Clear only.
+This is local Web acceptance, not acceptance of the LAN HTTPS route. No security
+warning was bypassed and no certificate/trust configuration changed.
+
+The actual browser loaded immutable source
+`adb75dbe7f97e2b96279fbf401f7d7b8913072b3`, tree
+`fb2a52392fac32fc927ad0071a38fa744e85fb37`, showing version
+`0.6.0-dev+adb75dbe7f97`. Served BUILD/manifest/PCK HEAD agree, and ancestry
+contains fix `226e25833dc8e863f940011fee6cb275cdd73097`. Roulette and its
+721-check regression have exactly the tested fix's blobs. The earlier complete
+asset/provenance receipts remain attributed to their original exact builds.
+
+In the thread's fresh localhost browser session, the start menu showed PLAY
+without Continue. The normal Game Library controls were used: seed
+`QUOTE-001-089`, bankroll76, Min9, Max200, Security Boss, overrides `{}`.
+A bounded source-planning probe found this exposed seed; no patron, table or
+runtime state was injected into the browser. It generated Grand Casino /
+Midnight 00 with Trent and Nix. Nix naturally held a5-chip column wager.
+
+Actual rendered UI at1280x720, completed `2026-11-04T00:37:24.085Z`:
+
+1. Focus Nix: card reads `PATRON 5 CHIPS 2 TO 1`, `WITH 9 CHIPS` and
+   `FADE 9 CHIPS`; draft BET0, cash$76, chip wallet0, `NO SPINS YET`.
+2. Click FADE exactly once: draft BET9 with one9-chip player stack; cash$76,
+   chip wallet0 and `NO SPINS YET` remain unchanged.
+3. Click Clear exactly once: draft BET0 and the player stack is removed;
+   cash$76, chip wallet0 and `NO SPINS YET` remain unchanged.
+
+No Spin control was used in this acceptance, no spin resolved or wager was
+funded, and no Save was selected. Practice autosaving is explicitly suppressed
+by the existing `dev_game_test_mode` branch. No existing player profile/save was
+inspected or imported. Captured browser warning/error logs were empty, and the
+temporary owned tab was closed. Normal action clock advances are ephemeral
+practice state, not saved progression.
+
+Task-10 evidence:
+
+- `evidence/roulette-local-adb-served-identity.json`;
+- `evidence/roulette-local-adb-web-acceptance.json`;
+- `evidence/roulette-local-adb-{fresh-menu,practice-inputs,nix-quote,nix-staged,nix-cleared}.jpg`;
+- `evidence/roulette-local-adb-evidence-hashes.json`;
+- source-planning `evidence/roulette-seed-plan-r2.{json,log}` (5%CPU/2GiB,
+  exit0, no timeout, zero owned processes; this is not browser acceptance).
+
+Preflight is separate: default PRACTICE generated Sal/Milo, so no draft was
+staged there. One exploratory Sit Out selection armed CONFIRM but was never
+confirmed; `NO SPINS YET` remained, and that session was discarded at BET0.
+The successful Nix acceptance above touched only focus, one FADE and Clear.
+Earlier seed-planning setup/launcher failures are retained, not counted as passes.
+
+**UX-ROULETTE-SOCIAL-QUOTE-001 is Complete for its fix, native721 qualification,
+exact NEXT delivery and authorized localhost Web quote/staging/Clear acceptance.**
+This does not replay the original River Queen cash save: the actual Web case
+uses generated Grand Casino chips, while native coverage separately verifies
+both cash and chips. LAN HTTPS certificate repair/acceptance remains separately
+Open; localhost success neither repairs nor qualifies that route. No product,
+portrait, viewport, touch or focus implementation changed in this closeout.
