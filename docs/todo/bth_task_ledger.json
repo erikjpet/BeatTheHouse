@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T16:56:54.750756+00:00",
+  "updated_at": "2026-11-04T17:06:19.637296+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -42,7 +42,8 @@
     "markdown_ledger_section": "## Named playtest task ledger",
     "readable_index": "docs/plans/0.6.1_stability_release_plan.md",
     "snapshot_source_commit": "9c6f1e23a902ae4b707ff64b0db0f2692c8d4fa6",
-    "operator": "The user runs checks and decides actions; no coordinator, scheduler, messaging or worker launch behavior exists."
+    "operator": "The user runs checks and decides actions; no coordinator, scheduler, messaging or worker launch behavior exists.",
+    "reconciled_main_commit": "e1e71f26d37040142c5f851b3bbd3d1f89d61355"
   },
   "objectives": [
     {
@@ -17465,6 +17466,143 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-04T16:56:54.750756+00:00"
+    },
+    {
+      "id": "BTH-BARDICE-JOURNAL-CURRENCY-001",
+      "name": "Record actual currency in new Bar Dice journal receipts",
+      "aliases": [
+        "R07-BARDICE-JOURNAL-CURRENCY-RELATED-878"
+      ],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Investigate and correct missing currency on new Bar Dice journal receipts, including the related Press producer, while preserving wallet accounting, stake/settlement exactly once, RNG/clocks, authority, existing game rules and historical unknown-unit rows. Reproduce safely, test and commit the isolated correction. Authorized release follow-through must publish the independently reviewed tested commit and verify exact NEXT identity/startup when the existing disk reserve allows, keeping acceptance Open until deployed and tested.",
+        "source": "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-bardice-journal-currency-observation-878.json; trusted parent delegation 2026-11-04 requesting investigation, isolated correction, tests and commit; trusted parent delegation carrying explicit user approval to push finished work to NEXT, received2026-11-04",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "reproduce",
+            "description": "Reproduce the new cash loss journal omission at a labeled production boundary without replaying original R07 hand.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/bar_dice_journal_currency.md",
+              "docs/testing/bar_dice_journal_currency_20261104.json"
+            ]
+          },
+          {
+            "id": "producer_currency",
+            "description": "New round/Press rows record actual action-time cash/chip unit and current-action net; explicit truezero is source-reviewed unconditional metadata but not materialized by the eight ordinary cases. Preserve wallets/authority/rules and old unknown history.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/bar_dice_journal_currency.md",
+              "docs/testing/bar_dice_journal_currency_20261104.json"
+            ]
+          },
+          {
+            "id": "save_cold",
+            "description": "Focused normal Host and official Save/cold checks preserve settled table, wallets, RNG/clocks and history, with no repeat settlement or read-time transaction.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/bar_dice_journal_currency.md",
+              "docs/testing/bar_dice_journal_currency_20261104.json"
+            ]
+          },
+          {
+            "id": "review_commit",
+            "description": "Independent scoped review, tested implementation commit and both ledger views associated; report local/deployed evidence distinctly.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/bar_dice_journal_currency.md",
+              "docs/testing/bar_dice_journal_currency_20261104.json",
+              "commit:1e38b7885db21c5bee1d19a897c129ddf680b1f6"
+            ]
+          },
+          {
+            "id": "exact_next",
+            "description": "Publish reviewed fix under existing approval, preserve reserve and resource gates, then verify exact deployed source/tree/assets and correct-version startup with the native299 changed-behavior evidence retained.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "PUBLISHED_MAIN_NATIVE299_PASS_NEXT_RESERVE_PENDING",
+      "owner": {
+        "name": "Fix Back Alley travel / Bar Dice journal follow-up",
+        "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "1e38b7885db21c5bee1d19a897c129ddf680b1f6",
+          "evidence": [
+            "docs/testing/bar_dice_journal_currency.md",
+            "docs/testing/bar_dice_journal_currency_20261104.json"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/bar_dice_journal_currency.md"
+        ],
+        "scope": "Authorized main/NEXT publication follow-through underway; native299 qualifies changed behavior, not deployed Web play. Acceptance stays Open until served identity/startup verified."
+      },
+      "evidence": [
+        {
+          "kind": "qa_observation",
+          "reference": "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-bardice-journal-currency-observation-878.json",
+          "summary": "R07 onf305: new cash stake5 hand gives97to92 once; cold92 and one row correct, but row says Recorded change-5(currency not recorded). Related to existing Craps/Slot producer metadata family; no financial mismatch asserted."
+        },
+        {
+          "kind": "native_regression",
+          "reference": "docs/testing/bar_dice_journal_currency_20261104.json",
+          "summary": "Baseline34 has exactly2 missingmetadata/label failures with cash97to92 once; producer256+independentcold43 pass through real sealedHost and officialSaveService. Source/test review clear; no originalprofile or deployed play claim."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Observe the existing watcher for published Bar Dice journal fix; once the unchanged reserve admits its build, verify actual promoted SHA/tree/assets/PCK and fresh correct-version startup. Keep task Open until that deployed acceptance is recorded.",
+      "blocker": {
+        "state": "active",
+        "kind": "next_disk_reserve",
+        "description": "Insufficient shared disk reserve for export: 13115047936 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T16:57:12.765384+00:00",
+        "evidence": [
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-6/evidence/bardice-journal-watcher-before-publication.json",
+          "docs/testing/bar_dice_journal_currency.md"
+        ]
+      },
+      "planned_app_changes": [
+        {
+          "scope": "gameplay_receipt_metadata",
+          "description": "Record existing Bar Dice monetary story unit/current-action delta only; no wallet, odds, items, scenarios, viewport or touch/focus change."
+        }
+      ],
+      "updated_at": "2026-11-04T17:00:31.257133+00:00",
+      "publication": {
+        "state": "published",
+        "commit": "c0e94c361ca2000c229f815eb628d1bacf45d9c8",
+        "tree": "b59c578b7fb927634659a3461d9383b6352b9aec",
+        "implementation_commit": "1e38b7885db21c5bee1d19a897c129ddf680b1f6",
+        "evidence": [
+          "docs/testing/bar_dice_journal_currency.md",
+          "docs/testing/bar_dice_journal_currency_20261104.json"
+        ]
+      }
     }
   ],
   "batches": [

@@ -1,7 +1,7 @@
 {
   "schema": "bth.task_reconciliation/v1",
-  "checked_at": "2026-11-04T16:58:25.847403Z",
-  "ledger_updated_at": "2026-11-04T16:56:54.750756+00:00",
+  "checked_at": "2026-11-04T17:06:20.728100Z",
+  "ledger_updated_at": "2026-11-04T17:06:19.637296+00:00",
   "group": "current",
   "owner_snapshot_supplied": true,
   "runtime_inventory_supplied": true,
@@ -87,7 +87,7 @@
   ],
   "git_verification_requested": false,
   "markdown_checked": true,
-  "markdown_rows_checked": 219,
+  "markdown_rows_checked": 220,
   "freshness_limit_hours": 24,
   "user_requested_pauses": [
     {
@@ -118,11 +118,11 @@
     }
   ],
   "summary": {
-    "objectives_checked": 67,
+    "objectives_checked": 68,
     "batches_checked": 8,
-    "open_objectives": 32,
+    "open_objectives": 33,
     "open_batches": 4,
-    "open_work_items": 36,
+    "open_work_items": 37,
     "user_paused_items": 8,
     "complete_objectives": 35,
     "errors": 57,
@@ -5313,6 +5313,132 @@
         "observed_at": "2026-11-04T16:56:54.750756+00:00",
         "evidence": [
           "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md"
+        ]
+      },
+      "completed_batch_ids": []
+    },
+    {
+      "id": "BTH-BARDICE-JOURNAL-CURRENCY-001",
+      "name": "Record actual currency in new Bar Dice journal receipts",
+      "state": "open",
+      "item_type": "objective",
+      "kind": "objective",
+      "parent_ids": [],
+      "full_objective": {
+        "text": "Investigate and correct missing currency on new Bar Dice journal receipts, including the related Press producer, while preserving wallet accounting, stake/settlement exactly once, RNG/clocks, authority, existing game rules and historical unknown-unit rows. Reproduce safely, test and commit the isolated correction. Authorized release follow-through must publish the independently reviewed tested commit and verify exact NEXT identity/startup when the existing disk reserve allows, keeping acceptance Open until deployed and tested.",
+        "source": "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-bardice-journal-currency-observation-878.json; trusted parent delegation 2026-11-04 requesting investigation, isolated correction, tests and commit; trusted parent delegation carrying explicit user approval to push finished work to NEXT, received2026-11-04",
+        "scope_confirmed": true
+      },
+      "batch_scope": [],
+      "owner": {
+        "name": "Fix Back Alley travel / Bar Dice journal follow-up",
+        "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+        "observed_state": "active",
+        "observed_at": "2026-11-04T15:55:05Z",
+        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
+        "observation_stale": false
+      },
+      "status": "PUBLISHED_MAIN_NATIVE299_PASS_NEXT_RESERVE_PENDING",
+      "pause": null,
+      "pause_supported": false,
+      "commits": [
+        {
+          "sha": "1e38b7885db21c5bee1d19a897c129ddf680b1f6",
+          "evidence": [
+            "docs/testing/bar_dice_journal_currency.md",
+            "docs/testing/bar_dice_journal_currency_20261104.json"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/bar_dice_journal_currency.md"
+        ],
+        "scope": "Authorized main/NEXT publication follow-through underway; native299 qualifies changed behavior, not deployed Web play. Acceptance stays Open until served identity/startup verified."
+      },
+      "progress_scope_id": "BTH-BARDICE-JOURNAL-CURRENCY-001",
+      "acceptance": [
+        {
+          "id": "reproduce",
+          "description": "Reproduce the new cash loss journal omission at a labeled production boundary without replaying original R07 hand.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/bar_dice_journal_currency.md",
+            "docs/testing/bar_dice_journal_currency_20261104.json"
+          ]
+        },
+        {
+          "id": "producer_currency",
+          "description": "New round/Press rows record actual action-time cash/chip unit and current-action net; explicit truezero is source-reviewed unconditional metadata but not materialized by the eight ordinary cases. Preserve wallets/authority/rules and old unknown history.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/bar_dice_journal_currency.md",
+            "docs/testing/bar_dice_journal_currency_20261104.json"
+          ]
+        },
+        {
+          "id": "save_cold",
+          "description": "Focused normal Host and official Save/cold checks preserve settled table, wallets, RNG/clocks and history, with no repeat settlement or read-time transaction.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/bar_dice_journal_currency.md",
+            "docs/testing/bar_dice_journal_currency_20261104.json"
+          ]
+        },
+        {
+          "id": "review_commit",
+          "description": "Independent scoped review, tested implementation commit and both ledger views associated; report local/deployed evidence distinctly.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/bar_dice_journal_currency.md",
+            "docs/testing/bar_dice_journal_currency_20261104.json",
+            "commit:1e38b7885db21c5bee1d19a897c129ddf680b1f6"
+          ]
+        },
+        {
+          "id": "exact_next",
+          "description": "Publish reviewed fix under existing approval, preserve reserve and resource gates, then verify exact deployed source/tree/assets and correct-version startup with the native299 changed-behavior evidence retained.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        }
+      ],
+      "acceptance_progress": {
+        "required_total": 5,
+        "passed_with_evidence": 4,
+        "remaining_ids": [
+          "exact_next"
+        ]
+      },
+      "coverage": {
+        "required": false,
+        "complete": false,
+        "areas": []
+      },
+      "coverage_progress": {
+        "required": false,
+        "declared_complete": false,
+        "total_areas": 0,
+        "reviewed_with_evidence": 0,
+        "remaining_ids": []
+      },
+      "next_action": "Observe the existing watcher for published Bar Dice journal fix; once the unchanged reserve admits its build, verify actual promoted SHA/tree/assets/PCK and fresh correct-version startup. Keep task Open until that deployed acceptance is recorded.",
+      "blocker": {
+        "state": "active",
+        "kind": "next_disk_reserve",
+        "description": "Insufficient shared disk reserve for export: 13115047936 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T16:57:12.765384+00:00",
+        "evidence": [
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-6/evidence/bardice-journal-watcher-before-publication.json",
+          "docs/testing/bar_dice_journal_currency.md"
         ]
       },
       "completed_batch_ids": []
