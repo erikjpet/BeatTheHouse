@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T18:00:40.852984+00:00",
+  "updated_at": "2026-11-04T18:03:04.268399+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -18380,7 +18380,7 @@
         }
       },
       "state": "open",
-      "status": "FOCUSED_NONREGRESSION_COMMITTED_NEXT_PENDING",
+      "status": "FOCUSED_NONREGRESSION_PUBLISHED_NEXT_CAPACITY_BLOCKED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -18398,8 +18398,11 @@
         "required": true,
         "state": "pending",
         "commit": null,
-        "evidence": [],
-        "scope": "Source removal is committed locally; main publication and exact NEXT delivery remain pending. Existing reserve guard and retained NEXT are unchanged."
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_004.md",
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json"
+        ],
+        "scope": "Qualified source published on main at 55c31b0d91dcf678326dfe39e516cccda728aae2; existing watcher observes exact source but capacity admission prevents export. Served NEXT remains f3058b6daab820e9d747c4c4aabc2d983e9ae32e. No new artifact, served changed-code or Web startup acceptance."
       },
       "evidence": [
         {
@@ -18411,20 +18414,28 @@
           "kind": "scoped_qualification_with_baseline_limits",
           "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
           "summary": "Three retired canvas drawers plus orphan test stubs/counters:52deletions,169retained canvas methods identical. Native ownership27, routed pointer13 and autonomous liveness pass. Real unavailable draw observed. Maintained game contracts execute with9failures identical to exact original base; not a green game suite."
+        },
+        {
+          "kind": "published_source_next_admission_blocked",
+          "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json",
+          "summary": "Main push succeeded for 55c31b0d91dcf678326dfe39e516cccda728aae2; watcher available_commit matches, capacity not admitted, old NEXT retained. No machinery restart, reserve reduction, deletion or bypass."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish the committed qualified source under the existing user authorization, then observe the existing watcher and verify exact NEXT identity/assets/startup once capacity admission allows it.",
+      "next_action": "Source is published and exact target observed. After capacity is restored, let the existing watcher export/promote normally, then verify exact current NEXT identity, served assets and basic startup. Preserve reserve guards and retained builds; delivery remains Open.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": null,
+        "state": "active",
+        "kind": "resource_capacity",
+        "description": "Insufficient shared disk reserve for export: 13111214080 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:57:37.314596+00:00",
-        "evidence": []
+        "observed_at": "2026-11-04T12:02:02.009732-06:00",
+        "evidence": [
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json",
+          "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T17:57:37.314596+00:00"
+      "updated_at": "2026-11-04T18:03:04.268399+00:00"
     },
     {
       "id": "BTH061-AUDIT-SLOT-TICK-004",
@@ -18465,7 +18476,7 @@
         }
       },
       "state": "open",
-      "status": "FOCUSED_NONREGRESSION_COMMITTED_NEXT_PENDING",
+      "status": "FOCUSED_NONREGRESSION_PUBLISHED_NEXT_CAPACITY_BLOCKED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -18483,8 +18494,11 @@
         "required": true,
         "state": "pending",
         "commit": null,
-        "evidence": [],
-        "scope": "Source removal is committed locally; main publication and exact NEXT delivery remain pending. Existing reserve guard and retained NEXT are unchanged."
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_004.md",
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json"
+        ],
+        "scope": "Qualified source published on main at 55c31b0d91dcf678326dfe39e516cccda728aae2; existing watcher observes exact source but capacity admission prevents export. Served NEXT remains f3058b6daab820e9d747c4c4aabc2d983e9ae32e. No new artifact, served changed-code or Web startup acceptance."
       },
       "evidence": [
         {
@@ -18496,20 +18510,28 @@
           "kind": "scoped_qualification_with_baseline_limits",
           "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
           "summary": "Removed retired Slot action-result mode and all4passive tool readers.1308other FoundationMain and278other tool method bodies identical. Migrated synthetic fixture to actual current realtime host boundary with exact-once/time/fullstate conservation; completed-action assertions retained. Original recovery wrapper failure repeats identically on exact original base. All4modified tools parse; no retired flag occurrence remains in scripts/tools."
+        },
+        {
+          "kind": "published_source_next_admission_blocked",
+          "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json",
+          "summary": "Main push succeeded for 55c31b0d91dcf678326dfe39e516cccda728aae2; watcher available_commit matches, capacity not admitted, old NEXT retained. No machinery restart, reserve reduction, deletion or bypass."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish the committed qualified source under the existing user authorization, then observe the existing watcher and verify exact NEXT identity/assets/startup once capacity admission allows it.",
+      "next_action": "Source is published and exact target observed. After capacity is restored, let the existing watcher export/promote normally, then verify exact current NEXT identity, served assets and basic startup. Preserve reserve guards and retained builds; delivery remains Open.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": null,
+        "state": "active",
+        "kind": "resource_capacity",
+        "description": "Insufficient shared disk reserve for export: 13111214080 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:57:37.314596+00:00",
-        "evidence": []
+        "observed_at": "2026-11-04T12:02:02.009732-06:00",
+        "evidence": [
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json",
+          "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T17:57:37.314596+00:00"
+      "updated_at": "2026-11-04T18:03:04.268399+00:00"
     },
     {
       "id": "BTH061-AUDIT-REPORT-FALLBACK-004",
@@ -18550,7 +18572,7 @@
         }
       },
       "state": "open",
-      "status": "FOCUSED_NONREGRESSION_COMMITTED_NEXT_PENDING",
+      "status": "FOCUSED_NONREGRESSION_PUBLISHED_NEXT_CAPACITY_BLOCKED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -18568,8 +18590,11 @@
         "required": true,
         "state": "pending",
         "commit": null,
-        "evidence": [],
-        "scope": "Source removal is committed locally; main publication and exact NEXT delivery remain pending. Existing reserve guard and retained NEXT are unchanged."
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_004.md",
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json"
+        ],
+        "scope": "Qualified source published on main at 55c31b0d91dcf678326dfe39e516cccda728aae2; existing watcher observes exact source but capacity admission prevents export. Served NEXT remains f3058b6daab820e9d747c4c4aabc2d983e9ae32e. No new artifact, served changed-code or Web startup acceptance."
       },
       "evidence": [
         {
@@ -18581,20 +18606,28 @@
           "kind": "scoped_qualification_with_baseline_limits",
           "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
           "summary": "Five unreachable fallback lines deleted;54other method bodies identical. Existing preserved migrated/annotated terminal report contract passes2cases with complete model/profile parity and input/output isolation."
+        },
+        {
+          "kind": "published_source_next_admission_blocked",
+          "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json",
+          "summary": "Main push succeeded for 55c31b0d91dcf678326dfe39e516cccda728aae2; watcher available_commit matches, capacity not admitted, old NEXT retained. No machinery restart, reserve reduction, deletion or bypass."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish the committed qualified source under the existing user authorization, then observe the existing watcher and verify exact NEXT identity/assets/startup once capacity admission allows it.",
+      "next_action": "Source is published and exact target observed. After capacity is restored, let the existing watcher export/promote normally, then verify exact current NEXT identity, served assets and basic startup. Preserve reserve guards and retained builds; delivery remains Open.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": null,
+        "state": "active",
+        "kind": "resource_capacity",
+        "description": "Insufficient shared disk reserve for export: 13111214080 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:57:37.314596+00:00",
-        "evidence": []
+        "observed_at": "2026-11-04T12:02:02.009732-06:00",
+        "evidence": [
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json",
+          "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T17:57:37.314596+00:00"
+      "updated_at": "2026-11-04T18:03:04.268399+00:00"
     },
     {
       "id": "BTH061-AUDIT-SLOT-LEGACY-FAMILY-004",
