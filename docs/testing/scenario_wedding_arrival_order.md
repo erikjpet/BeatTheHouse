@@ -105,17 +105,17 @@ acceptance and recovery of the original campaign remain unverified.
 
 - Exercise the normal visible Wedding path on a matching build, including
   Save/Continue. This remaining acceptance keeps the Wedding item Open.
-- **BTH-SCENARIO-ARRIVAL-002:** the synthetic native control reaches real free
-  Side Door discovery and casino entry, then rejects the return to club with
-  `manifest physical object travel:leave has no authenticated slot binding.`
-  The delayed-arrival lead is still unconfirmed. A draft direct regression and
-  `bringer-layer-control-result.json` are retained in task-16. The normal Host calls this same generator boundary. Diagnostics show the
-  live exit.left_lower rectangle/binding exists but authenticated base inventory
-  omits it. A trial using the existing world/Grand alignment helper correctly
-  reached a second rejection: scenario semantic inventory version/digest changed,
-  explicit migration required. That experiment was reverted. Next trace initial
-  versus cached layer routing authority and implement compatible restoration;
-  preserve seals and working geometry/content. Delayed pressure remains untested.
+- **BTH-SCENARIO-ARRIVAL-002:** the prevalidated synthetic trip bypassed normal
+  route visibility/admission. Its first seal had next_archetypes=[] and no
+  travel:leave; entering the node revealed destinations, so return added a new
+  exit and correctly failed the frozen inventory. The alignment-only experiment
+  then correctly rejected a changed semantic digest and was reverted. These
+  observations do not establish a normal player layer-return defect. The
+  delayed-arrival lead remains source-supported. Next enter Punchline through a
+  genuinely visible, available source route, compare initial and cached club
+  exit authority, and complete the pending-arrival pressure regression. Keep
+  authority validation and working geometry/content intact. Native observer
+  drafts and all failed controls remain in task-16; no layer product change ships.
 - Keep BTH-11 open. The recovered original matrix contains all 55 stable IDs;
   its new game formats, controls, numeric tuning, APIs and release batches were
   proposals, not completed implementations. Select further bounded work from
