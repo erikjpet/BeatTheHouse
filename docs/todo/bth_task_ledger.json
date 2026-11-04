@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T21:42:55.970058+00:00",
+  "updated_at": "2026-11-04T21:47:26.094833+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -20241,7 +20241,7 @@
           "docs/testing/roulette_sealed_pending_r08.md",
           "docs/testing/roulette_sealed_pending_r08.json"
         ],
-        "scope": "No production change or bug-fix deployment exists. Existing NEXT disk guard retains f305; do not bypass it or call test/evidence publication a resolved incident."
+        "scope": "No product change or bug-fix deployment. Main published/verified11f4070e; NEXTautomation/phaseStopped, lastavailable05a9e798, servedf305. CurrentDcapacitypassesunchangedthreshold, priorcapacityerrorhistorical; stopcauseunconfirmed. Newsource notacknowledged/deployed; no export/restart/cleanup/guardchange attempted. See latestdeliveryobservation in report."
       },
       "evidence": [
         {
@@ -20294,7 +20294,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T21:40:02.088159+00:00"
+      "updated_at": "2026-11-04T21:47:26.094833+00:00"
     }
   ],
   "batches": [

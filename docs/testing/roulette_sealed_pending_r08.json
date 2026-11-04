@@ -4017,7 +4017,7 @@
     "Seed-B warm result showed23red/BET0/SITOUT/REBET, but HUD59 and NO SPINS YET remained displayed. Cold77/publicJournal verify saved financial settlement, not the cause or release of that warm display.",
     "The extra Roulette+0 journal row is observed; its cause and authoritative total round/request count are unclassified. Exactly one explicit Spin and one explicit Confirm were sent."
   ],
-  "updated_at": "2026-11-04T21:40:02.088159+00:00",
+  "updated_at": "2026-11-04T21:47:26.094833+00:00",
   "continuation_source_base": "25b2f152cc7d82ddf86990c94e290fb401efa5e7",
   "continuation_investigation_commit": "7648f1d908468fd783cd19bc5c4562ab69573be1",
   "unobscured_web_continuation": {
@@ -4116,5 +4116,23 @@
       "other_findings": 54,
       "other_tasks_with_findings": 17
     }
+  },
+  "latest_delivery_observation": {
+    "observed_at": "2026-11-04T21:47:26.094833+00:00",
+    "verified_published_main": "11f4070e7f17e917b8f76109f0db5b679e4f04f2",
+    "automation": "stopped",
+    "phase": "stopped",
+    "last_checked_at": "2026-11-04T21:20:41Z",
+    "available_commit": "05a9e79808d2520583507312a6ffe17ef4ff9621",
+    "deployed_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+    "last_recorded_capacity_error": "Insufficient shared disk reserve for export: 12982792192 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+    "current_D_free_bytes": 14426877952,
+    "unchanged_D_threshold_bytes": 13958643712,
+    "current_D_capacity_passes": true,
+    "stop_cause": "unconfirmed",
+    "target_acknowledged": false,
+    "new_export_or_restart_attempted": false,
+    "metadata_receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-seed-b-next-afterpublication-1.json",
+    "limit": "Main publication verified; stopped watcher has not acknowledged/deployed new source. Old capacity rejection is historical when current free exceeds threshold. No stop/restart/cleanup/guard change performed."
   }
 }

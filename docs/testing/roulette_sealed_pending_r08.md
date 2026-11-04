@@ -488,3 +488,18 @@ remains applicable without another game/input run. All247 IDs and other
 incoming records remain intact. Final publication reconciliation reports0
 assigned-scope findings and54 existing findings across17 other tasks;
 report task-14/evidence/r08-seed-b-publication-final-check.json.
+
+## Delivery observation after publication
+
+Main11f4070e7f17e917b8f76109f0db5b679e4f04f2 was pushed and remotely read back.
+Existing NEXTautomation/phase is stopped (updated21:22:11Z), lastavailable
+05a9e798 and servedf305. Seven smallmetadata endpoints returned200, with exact
+retained source/tree/REF/VERSION and testedmanifest identity verified. The new
+source has not been acknowledged or deployed. Stopcause is unconfirmed.
+
+CurrentDfree is14426877952 bytes against unchanged13958643712 required: capacity
+currentlypasses the gate. The retained error12982792192free is an older capacity
+rejection, not a new denial of this source. No export, watcher stop/restart,
+cleanup, limit reduction or guard bypass was attempted. The latest report
+observation distinguishes this stopped-service delivery block from the still
+Open warm-Web/original-cause gameplay scope.
