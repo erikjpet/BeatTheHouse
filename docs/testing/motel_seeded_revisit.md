@@ -139,8 +139,38 @@ sandbox are retained; no network/trust change was used to obtain a test pass.
 ## Release status
 
 Implementation: [`0adf3925fc3d816ea818e84a9afa41b29acf8c29`](https://github.com/erikjpet/BeatTheHouse/commit/0adf3925fc3d816ea818e84a9afa41b29acf8c29).
-The stable task stays Open until exact NEXT identity/basic startup is verified.
-No original-save handoff is needed: the
-captured original profile and no-charge evidence are already preserved, and
-tests use disposable copies only. Stable/itch and the hosting audience remain
-outside this change.
+Retirement identity safeguard:
+[`32052d05fe24b1c29623bdecd561f2f654f784ad`](https://github.com/erikjpet/BeatTheHouse/commit/32052d05fe24b1c29623bdecd561f2f654f784ad).
+The final generator source SHA256 is
+`ead59502b02cecf90bae06beab4412ac9874697a4b6a791983720c0e11e37ebd`,
+matching all three final native receipts. Concurrent main changes were safely
+integrated without changing this qualified production source.
+
+The existing watcher selected a newer documentation-only descendant instead of
+the initially pushed integrated head. It promoted
+**`14d532f353334e7635800b93743c33d91a7a6fc3`** at
+**2026-11-04 02:20:16 UTC**, tree
+`7240c2e88c6bfe6187ba9047b0e37908db1c8538`. Both implementation commits are
+ancestors. NEXT/current, generated LAN redirect, served BUILD/manifest and exact
+archive provenance agree. Archive SHA256:
+`7ccbee149e85781caff56986e5179373fc89bfec3cc60cb4913f5bf5fe9aa00d`.
+Six payload HEAD checks pass with provenance sizes and WASM MIME; the served PCK
+hash matches provenance:
+`149cfdfab4a512ade4fa77ef39dd5ceda3f311cc69d1053a7b5048159c63ac0d`.
+The unchanged engine/native tuple uses the existing qualified pipeline receipts.
+
+A fresh disposable browser reaches the visible menu at
+`0.6.0-dev+14d532f35333`. Four game payloads return200, with no page or console
+errors and one expected pre-gesture AudioContext warning. Context/browser closure
+is awaited; its existing5%/2GiB Job exits0 without timeout and leaves zero owned
+processes. These are documented local HTTP and generated redirect checks;
+direct LAN TLS is not qualified and trust was not bypassed. Web evidence is
+basic startup, distinct from the captured native changed-behavior acceptance.
+
+The stable task is **Complete**: associated implementation commits,130 focused
+assertions, original-profile/no-charge preservation and exact NEXT identity/basic
+startup are verified. No original-save handoff remains. Final local summary:
+`evidence/motel-seed-combined-receipt.json`, with exact-build release/startup
+receipts and screenshot under the same established task root. The initial22ff
+promotion is retained as an intermediate release before the identity safeguard,
+not the final qualification. Stable/itch and the hosting audience are unchanged.
