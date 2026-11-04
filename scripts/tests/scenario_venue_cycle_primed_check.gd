@@ -29,12 +29,20 @@ func _run() -> void:
 	if OS.get_environment("BTH_PRIMED_CASE") == "forged_retirement":
 		_reject_retirement_tamper(base, library)
 		_finish(); return
+	if OS.get_environment("BTH_PRIMED_CASE") == "blank_identity":
+		_reject_blank_identity(base, library)
+		_finish(); return
+	if OS.get_environment("BTH_PRIMED_CASE") == "missing_identity":
+		_reject_blank_identity(base, library, true)
+		_finish(); return
 	_boundary(base, library, "preclose", DAY_SEVEN + 149, "active", false)
 	_boundary(base, library, "exact_close", DAY_SEVEN + 150, "closed", true)
 	_boundary(base, library, "deadzone0330", DAY_SEVEN + 210, "closed", true)
 	_boundary(base, library, "reopen0400", DAY_SEVEN + 240, "active", true)
 	_reject_mismatch(base, library)
 	_reject_retirement_tamper(base, library)
+	_reject_blank_identity(base, library)
+	_reject_blank_identity(base, library, true)
 	_active_none(library)
 	_layer_presence_contract(library)
 	_finish()
@@ -195,6 +203,40 @@ func _active_none(library: ContentLibrary) -> void:
 		var room := _lazy(run, generator)
 		_check(not room.is_empty() and str(room.get("scenario_id", "")).is_empty() and Runtime.content_fingerprint(run.environment_situation_cycle("motel")) == record, "active no-primary current cycle remains empty on repeated prime and lazy refresh")
 	_check(Runtime.content_fingerprint(_protected(run)) == protected, "active no-primary repeat changes no protected gameplay")
+
+func _reject_blank_identity(base: Dictionary, library: ContentLibrary, missing_both_ids: bool = false) -> void:
+	var run := _restored(base, library, DAY_SEVEN + 210)
+	if run == null: return
+	var generator := RunGenerator.new(library)
+	var node := WorldMap.node_by_id(run.world_map, "motel")
+	var room: Dictionary = node.get("environment", {})
+	var legacy_id := str(room.get("scenario_state", {}).get("id", ""))
+	var legacy_state: Dictionary = room.get("scenario_state", {}).duplicate(true)
+	var before_state := Runtime.content_fingerprint(room.get("scenario_sequence_state", {}))
+	var label := "missing explicit and legacy IDs" if missing_both_ids else "explicit-empty identity"
+	if not _check(room.has("scenario_id") and str(room.get("scenario_id", "")) == SCENARIO and legacy_id == SCENARIO and not room.get("scenario_sequence_state", {}).is_empty(), label + " control begins with valid stored Wedding identities and accepted runtime"):
+		return
+	# Neither malformed shape models a valid legacy missing-key room whose
+	# retained scenario_state.id still provides the existing exact fallback.
+	if missing_both_ids:
+		room.erase("scenario_id")
+		legacy_state.erase("id")
+		room["scenario_state"] = legacy_state
+	else:
+		room["scenario_id"] = ""
+	run.world_map = WorldMap.store_runtime_environment(run.world_map, "motel", room)
+	var stored: Dictionary = WorldMap.node_by_id(run.world_map, "motel").get("environment", {})
+	var intended_identity_shape: bool = not stored.has("scenario_id") and not stored.get("scenario_state", {}).has("id") if missing_both_ids else stored.has("scenario_id") and str(stored.get("scenario_id", "")).is_empty()
+	_check(intended_identity_shape and Runtime.content_fingerprint(stored.get("scenario_state", {})) == Runtime.content_fingerprint(legacy_state) and Runtime.content_fingerprint(stored.get("scenario_sequence_state", {})) == before_state, label + " changes only targeted identity fields; accepted runtime remains intact")
+	generator._prime_town_scenarios(run, run.world_map)
+	var before := run.to_dict().duplicate(true)
+	var before_fingerprint := Runtime.content_fingerprint(before)
+	var result := _lazy(run, generator)
+	var after := run.to_dict()
+	var record := run.environment_situation_cycle("motel")
+	facts["missing_identity" if missing_both_ids else "blank_identity"] = {"explicit_key_present": stored.has("scenario_id"), "explicit_id": stored.get("scenario_id", ""), "retained_legacy_id": stored.get("scenario_state", {}).get("id", ""), "missing_id_legacy_scope": "Neither malformed shape resolves an exact identity under the existing explicit-key/fallback rules. A valid missing-key legacy room with retained scenario_state.id is a distinct compatibility path.", "result_empty": result.is_empty(), "result_scenario_id": result.get("scenario_id", ""), "result_runtime_empty": result.get("scenario_sequence_state", {}).is_empty(), "errors": generator._last_environment_install_errors.duplicate(true), "history_size": record.get("history", {}).size(), "full_before_fingerprint": before_fingerprint, "full_after_fingerprint": Runtime.content_fingerprint(after), "differences": _differences(before, after)}
+	_check(result.is_empty() and generator._last_environment_install_errors.has("Retiring room retains scenario authority without an exact scenario identity."), label + " cannot skip authentication and erase retained scenario authority")
+	_check(Runtime.content_fingerprint(after) == before_fingerprint, label + " rejection preserves complete serialized run and stored room")
 
 func _layer_presence_contract(library: ContentLibrary) -> void:
 	var generator := RunGenerator.new(library)

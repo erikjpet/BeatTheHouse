@@ -30,6 +30,14 @@ ownership. Active-cycle behavior, seeded-definition validation, semantic seals,
 the scenario schedule and fare/risk rules remain intact. No portrait, viewport,
 touch/focus or animation scheduling changes are included.
 
+Retirement also requires an exact scenario identity before clearing retained
+legacy/runtime state. It resolves the existing missing-key legacy fallback
+first. An explicit blank ID, or a missing ID with no valid fallback, rejects
+without clearing/re-signing the old runtime or altering its stored history.
+This closes a malformed-state control discovered during independent acceptance;
+the genuine captured room retains its authored Wedding identity throughout the
+authenticated retirement.
+
 ## Captured-state custody and actual native regression
 
 The closed original222-file R03 profile was hashed, copied into private local
@@ -71,7 +79,7 @@ Local receipts are under
 `motel-r03-682-snapshot-custody.json`,
 `motel-r03-682-capture-custody.json`,
 `motel-seed-before-result.json`, and
-`motel-seed-after-{warm,cold}-result.json`, with matching Job receipts and logs.
+`motel-seed-identity-final-{warm,cold}-result.json`, with matching Job receipts and logs.
 The maintained local `run_motel_pair.ps1` reuses the existing bounded runner,
 the captured bundle and the same isolated storage for warm and independent cold
 processes. Product regression entry point:
@@ -87,7 +95,7 @@ zero recursive differences and no extra trip.
 
 ## Primed-room boundaries and rejection controls
 
-`scripts/tests/scenario_venue_cycle_primed_check.gd` passes **73 assertions**.
+`scripts/tests/scenario_venue_cycle_primed_check.gd` passes **85 assertions**.
 This separately generated, pinned Motel fixture executes one real authenticated
 Wedding command, leaves normally, and uses ordinary clock APIs on disposable
 siblings. It explicitly primes the town before lazy destination refresh.
@@ -105,6 +113,10 @@ siblings. It explicitly primes the town before lazy destination refresh.
   mismatch. A forged old command fingerprint cannot be retired or re-signed;
   exact envelope/unauthenticated-entry errors remain. The complete raw serialized
   run and stored room are unchanged on rejection.
+- Present-but-blank identity and missing explicit/legacy identity controls both
+  retain the old runtime as input and reject with the exact identity error. Full
+  raw run fingerprints remain equal, with no recursive differences. A valid
+  missing-key legacy fallback remains available in the source contract.
 
 The fixture's ordinary Day6-to-Day7 advance produces a new rival cast without
 two neutral persisted defaults (`last_heat_gain` and `last_heat_action`). It uses
@@ -112,12 +124,14 @@ the existing production rival normalizer before taking negative snapshots,
 matching official loaded-save shape. Both defaults are0; no existing value or
 comparison field is dropped. Early setup/diagnostic failures are retained in
 local receipts and are not counted as passes. Final evidence:
-`evidence/motel-primed-final-result.json`, `.json` Job receipt and `.log`.
+`evidence/motel-primed-identity-qualified-final-result.json`, `.json` Job receipt and `.log`.
 This is generator-only synthetic qualification, not Host fare or Web input.
 
 Total focused qualification: **34 captured warm + 11 captured process-cold +
-73 synthetic = 118 passing assertions**. Independent review found no critical
-authority bypass, original-write or scope issue. All qualified native jobs use
+85 synthetic = 130 passing assertions** on the final source. The earlier118
+and124-assertion stages remain historical evidence. Independent review of the
+captured driver found no original-write or scope issue; the additional malformed
+identity rejection controls drove the final retirement safeguard. All qualified native jobs use
 the existing5% CPU /2GiB kill-on-close containment, exit0 without timeout and
 leave zero owned processes. Root-certificate-store diagnostics from the native
 sandbox are retained; no network/trust change was used to obtain a test pass.

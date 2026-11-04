@@ -1304,7 +1304,12 @@ func _refresh_venue_scenario_cycle_candidate(run_state: RunState, archetype: Dic
 	for layer_value in layer_keys:
 		var layer := str(layer_value)
 		var room := JsonCoerceScript._copy_dict(rooms[layer])
-		var definition_id := str(room.get("scenario_id", JsonCoerceScript._copy_dict(room.get("scenario_state", {})).get("id", "")))
+		# Keep the existing missing-key legacy fallback, but never clear retained
+		# authority when neither the explicit identity nor that fallback resolves.
+		var legacy_state := JsonCoerceScript._copy_dict(room.get("scenario_state", {}))
+		var definition_id := str(room.get("scenario_id", legacy_state.get("id", ""))).strip_edges()
+		if definition_id.is_empty() and (not legacy_state.is_empty() or not JsonCoerceScript._copy_dict(room.get("scenario_sequence_state", {})).is_empty()):
+			return {"ok": false, "errors": ["Retiring room retains scenario authority without an exact scenario identity."]}
 		var definition := library._runtime_validated_scenario_definition(library._scenario_readonly(definition_id)) if not definition_id.is_empty() else {}
 		run_state.current_environment = room
 		if not definition_id.is_empty():
