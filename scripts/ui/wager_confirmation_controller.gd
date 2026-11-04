@@ -4,9 +4,6 @@ extends RefCounted
 # Owns the pending UI state for high-risk/all-in wager confirmation without
 # resolving or charging the wager itself.
 
-signal confirm_requested()
-signal cancel_requested()
-
 var pending_action_id: String = ""
 var pending_skip_stake_validation := false
 var pending_preserve_surface_ui_state := false
