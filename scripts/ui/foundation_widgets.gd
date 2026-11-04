@@ -133,15 +133,6 @@ static func icon_label_row(icon: Texture2D, text_value: String, muted: bool = fa
 	text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(text)
 	return row
-static func tooltip(text_value: String) -> PanelContainer:
-	var panel_node := panel_container(VisualStyle.role("surface_overlay"), VisualStyle.role("focus"))
-	panel_node.custom_minimum_size.x = VisualStyle.TOOLTIP_MAX_WIDTH
-	var text := label(text_value, VisualStyle.TYPE_SMALL)
-	text.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	panel_node.add_child(text)
-	return panel_node
-
-
 static func autosize_popup(panel_node: Control, viewport_size: Vector2, content_minimum: Vector2) -> Vector2:
 	var width := clampf(
 		content_minimum.x + float(VisualStyle.SPACE_6 * 2),
