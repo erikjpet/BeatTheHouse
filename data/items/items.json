@@ -103,6 +103,17 @@
     "environment_prop": "notepad",
     "surface": "store_shelf",
     "description": "Tiny graphite. Nothing to trace.",
+    "game_affinity_label": "Selected games",
+    "purpose_summary": "Odds help in Bar Dice and Video Poker; loss cushion in selected games. No Roulette bonus.",
+    "effect_description": "Adds odds assistance in Bar Dice and Video Poker, and a 1-unit cushion on supported losses. Roulette receives neither bonus.",
+    "effect_lines": [
+      "Bar Dice: +1 percentage point to the losing-result rescue roll (combined luck and item chance capped at 45%) and Press odds (final chance capped at 85%).",
+      "Video Poker: +1 percentage point to improve a nonpaying legal draw (combined luck and item chance capped at 35%).",
+      "Reduces eligible losses by up to 1 unit of the game's currency: zero-payout Slot losses, Blackjack main hands, Bar Dice main results, and Video Poker. The cushion cannot turn a loss into profit.",
+      "Roulette, Baccarat, Craps, Pull Tabs, Scratch Tickets, Coin Pusher, and Crew Poker receive neither bonus.",
+      "With Instant Coffee: +1 more odds point where supported. With Cashout Envelope: +1 more loss-cushion unit where supported."
+    ],
+    "use_instructions": "No activation is needed. Carry it for the listed game-specific effects and combinations; storing, selling, or pawning it turns those effects off.",
     "effect": {
       "win_chance": 1,
       "loss_reduction": 1,
@@ -1752,6 +1763,15 @@
     "environment_prop": "coin",
     "surface": "counter_case",
     "description": "A copper apology from fate.",
+    "game_affinity_label": "Scratch tickets",
+    "purpose_summary": "New scratch tickets clear each region at 79% instead of 80%. Prizes are unchanged.",
+    "effect_description": "New tickets bought while carried auto-clear each scratch region at 79% coating removed instead of 80%. This changes cleanup, not prizes.",
+    "effect_lines": [
+      "Each new scratch ticket bought while the Penny is carried gets sweep assistance: a region clears its remaining coating at 79% removed instead of the usual 80%.",
+      "It does not change the ticket's odds or fixed prize, refund losses, or protect payouts.",
+      "The assistance is stamped on the ticket at purchase. Those tickets retain it after the Penny is stored, sold, or pawned; previously bought tickets do not gain it afterward."
+    ],
+    "use_instructions": "Carry it before buying scratch tickets; no activation or consumption is needed. Existing assisted tickets keep their aid when the Penny leaves your inventory.",
     "effect": {
       "scratch_penalty_shields": 1
     }
