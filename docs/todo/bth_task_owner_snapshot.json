@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-04T16:23:29.672223+00:00",
+  "observed_at": "2026-11-04T17:00:31.257133+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -27,8 +27,8 @@
       "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
       "title": "Fix Back Alley travel",
       "state": "active",
-      "observed_at": "2026-11-04T15:55:05Z",
-      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+      "observed_at": "2026-11-04T17:00:31.257133+00:00",
+      "source": "Current delegated worker has published Bar Dice journal fix and is observing exact NEXT admission; actual active execution"
     },
     {
       "task_ref": "01a16736-0a2f-7668-8ad8-a6074981c01e",

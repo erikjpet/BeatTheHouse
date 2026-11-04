@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T17:03:36.963035+00:00",
+  "updated_at": "2026-11-04T17:05:48.711401+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13454,493 +13454,22 @@
           "kind": "recorded_receipt",
           "reference": "https://github.com/erikjpet/BeatTheHouse/blob/main/docs/testing/deprecated_code_audit_2026_11_03.md",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
-        },
-        {
-          "kind": "exact_full_aggregate_pass",
-          "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json",
-          "summary": "Host-r9 full aggregate passed at exact488d86fa5f25efc460a74847305fe301f374017b, exit0, zero failures, validator SHA2567a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b unchanged during attempt.40native and11independent cases passed; actual File/Process/Lease/Residue/Cache/Environment postchecks all passed, terminal shadow sequence7green removed, all attempt handles terminal and owned Job0. No late independent substitution. r6/r7/r8 failures remain historical evidence; preserved r8 failed trees are not claimed cleaned. This proves the exact R9 aggregate scope, not global runtime or full parent audit coverage."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Reconcile remaining current whole-codebase coverage and candidate dispositions, reusing completed bounded reviews/removals and passed exact host-r9 aggregate at488d86fa. Complete required current repair publication/NEXT and remaining nonpaused semantic review; preserve explicit user item/scenario pauses and full parent scope independently of completed children.",
+      "next_action": "Reconcile current whole-codebase coverage and all candidate dispositions, reusing the first bounded batch, thirteen earlier qualified audit children, completed tutorial fixture/animation repairs and independent core/native/UI/tool work. Finish only remaining nonpaused semantic review and the unchanged aggregate validator/global-census acceptance; preserve the explicit user item/scenario pause and full parent scope independently of every completed child.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "No external blocker; required scoped publication/NEXT evidence and the recorded remaining parent work remain unfinished.",
+        "description": "No intentional hold or external decision blocks the audit; semantic review and candidate classification remain active work.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:57:53.833Z",
-        "evidence": [
-          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json",
-          "docs/testing/deprecated_code_audit_continuation_003.md"
-        ]
-      },
-      "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:57:53.833Z"
-    },
-    {
-      "id": "BTH061-AUDIT-AGGREGATE-RECHECK-003",
-      "name": "Recheck unchanged aggregate validator on current main",
-      "aliases": [],
-      "kind": "acceptance_check",
-      "parent_ids": [
-        "BTH061-AUDIT-VALIDATOR-001"
-      ],
-      "group": "current",
-      "objective": {
-        "text": "Run one fresh complete unchanged aggregate validator invocation on current merged main, preserving canonical Windows PowerShell, native launcher/process/lease/residue/cache/environment guards, owned-child containment and factual reached/unreached postconditions. Retain failed attempts; separate diagnostics never replace full acceptance.",
-        "source": "docs/testing/deprecated_code_audit_continuation_003.md; trusted current parent delegation and current HEAD named ledger row",
-        "scope_confirmed": true,
-        "acceptance": [
-          {
-            "id": "fresh-full-invocation",
-            "description": "Fresh complete validator invocation passes unchanged guards and records exact source/tool identity plus every actual postcondition.",
-            "required": true,
-            "state": "pass",
-            "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_003.md",
-              "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_complete_result-host-r6.json",
-              "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json"
-            ]
-          }
-        ],
-        "coverage": {
-          "required": false,
-          "complete": false,
-          "areas": []
-        }
-      },
-      "state": "complete",
-      "status": "FULL_AGGREGATE_R9_PASS_ACTUAL_POSTCHECKS_VERIFIED",
-      "owner": {
-        "name": "Audit validator evidence",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
-        "assignment_state": "assigned"
-      },
-      "commits": [
-        {
-          "sha": "488d86fa5f25efc460a74847305fe301f374017b",
-          "evidence": [
-            "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json",
-            "docs/testing/deprecated_code_audit_continuation_003.md"
-          ]
-        }
-      ],
-      "deployment": {
-        "required": false,
-        "state": "not_applicable",
-        "commit": null,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_003.md"
-        ],
-        "scope": "Exact source aggregate validator evidence at488d86fa only; no deployment, global runtime or full parent-audit completion claim."
-      },
-      "evidence": [
-        {
-          "kind": "bounded_audit_continuation",
-          "reference": "docs/testing/deprecated_code_audit_continuation_003.md",
-          "summary": "Host-r6 at8b936582 exited1 with four failures: two related Blackjack classifier failures, raw checkout CRLF/LF report drift, and incorrect PS7 launcher host. Its actual terminal process/lease/residue/cache/environment checks were reached; owned Job ended zero and shadow cleanup succeeded. Classifier948722e1, exact Git report bytes and installed Windows PowerShell address those causes; fresh WindowsPS r7 is being prepared, not passed."
-        },
-        {
-          "kind": "exact_full_aggregate_pass",
-          "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json",
-          "summary": "Host-r9 full aggregate passed at exact488d86fa5f25efc460a74847305fe301f374017b, exit0, zero failures, validator SHA2567a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b unchanged during attempt.40native and11independent cases passed; actual File/Process/Lease/Residue/Cache/Environment postchecks all passed, terminal shadow sequence7green removed, all attempt handles terminal and owned Job0. No late independent substitution. r6/r7/r8 failures remain historical evidence; preserved r8 failed trees are not claimed cleaned. This proves the exact R9 aggregate scope, not global runtime or full parent audit coverage."
-        }
-      ],
-      "implementation_batches": [],
-      "next_action": "No further action within this completed exact R9 aggregate recheck. Preserve failed r6/r7/r8 history and actual-postcheck evidence; required repair publication/NEXT and full codebase-wide parent acceptance remain separate Open work.",
-      "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": null,
-        "requires_user_input": false,
-        "observed_at": "2026-11-04T16:57:53.833Z",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:57:53.833Z"
-    },
-    {
-      "id": "BTH061-AUDIT-HOST-HELPERS-003",
-      "name": "Trace nonpaused host helper islands after controller extractions",
-      "aliases": [],
-      "kind": "acceptance_check",
-      "parent_ids": [
-        "BTH061-AUDIT-001"
-      ],
-      "group": "current",
-      "objective": {
-        "text": "Trace generic nonpaused FoundationMain support and disconnected helper islands left after controller extractions. Remove only confirmed obsolete private implementation with receiver/history/string/reflection/save evidence; preserve scheduling, item/scenario/shared boundaries and public behavior.",
-        "source": "docs/testing/deprecated_code_audit_continuation_003.md; trusted current parent delegation and current HEAD named ledger row",
-        "scope_confirmed": true,
-        "acceptance": [
-          {
-            "id": "focused-host-qualification",
-            "description": "Approved deletion proof and exact-MainScene Career open/close roundtrip preserve active behavior.",
-            "required": true,
-            "state": "pass",
-            "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_003.md",
-              "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/independent-host-helpers-r1/"
-            ]
-          },
-          {
-            "id": "aggregate-current",
-            "description": "Fresh current aggregate validation is accepted.",
-            "required": true,
-            "state": "pass",
-            "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_003.md",
-              "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json"
-            ]
-          },
-          {
-            "id": "next-current",
-            "description": "Associated cleanup commit is delivered and exact current NEXT identity/behavior evidence recorded.",
-            "required": true,
-            "state": "open",
-            "evidence": []
-          }
-        ],
-        "coverage": {
-          "required": false,
-          "complete": false,
-          "areas": []
-        }
-      },
-      "state": "open",
-      "status": "FOCUSED_QUALIFIED_NEXT_CAPACITY_BLOCKED",
-      "owner": {
-        "name": "Audit host helper review",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
-        "assignment_state": "assigned"
-      },
-      "commits": [
-        {
-          "sha": "cd1ce774b94083c193d95ea881ee0a3b5a051f4c",
-          "evidence": [
-            "docs/testing/deprecated_code_audit_continuation_003.md",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        }
-      ],
-      "deployment": {
-        "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_003.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json"
-        ],
-        "scope": "Only the40-line host cleanup and its focused qualification; Exact R9 aggregate passes; current scoped publication/NEXT evidence remains pending."
-      },
-      "evidence": [
-        {
-          "kind": "bounded_audit_continuation",
-          "reference": "docs/testing/deprecated_code_audit_continuation_003.md",
-          "summary": "Forty deletion-only FoundationMain lines removed;1306unrelated methods identical. Exact-MainScene native Career roundtrip17 passes. Existing money-feedback baseline mismatch was separately reproduced and repaired under MONEY-FIXTURE-003; corrected test passes30. No product scheduling/layout/item/scenario change."
-        },
-        {
-          "kind": "exact_full_aggregate_pass",
-          "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json",
-          "summary": "Host-r9 full aggregate passed at exact488d86fa5f25efc460a74847305fe301f374017b, exit0, zero failures, validator SHA2567a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b unchanged during attempt.40native and11independent cases passed; actual File/Process/Lease/Residue/Cache/Environment postchecks all passed, terminal shadow sequence7green removed, all attempt handles terminal and owned Job0. No late independent substitution. r6/r7/r8 failures remain historical evidence; preserved r8 failed trees are not claimed cleaned. This proves the exact R9 aggregate scope, not global runtime or full parent audit coverage."
-        }
-      ],
-      "implementation_batches": [],
-      "next_action": "Publish the finished qualified source; preserve required NEXT acceptance as Open. Re-observe the existing watcher after storage capacity is restored, without lowering reserves, deleting retained builds or restarting machinery.",
-      "blocker": {
-        "state": "active",
-        "kind": "resource_capacity",
-        "description": "Existing NEXT admission rejected at 2026-11-04T17:03:21.459162+00:00: 12982358016 bytes free; 13958643712 required. Guard and retained builds are unchanged.",
-        "requires_user_input": false,
-        "observed_at": "2026-11-04T17:03:36.963035+00:00",
-        "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
-          "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
-        ]
-      },
-      "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:57:53.833Z"
-    },
-    {
-      "id": "BTH061-AUDIT-UI-LITERAL-003",
-      "name": "Qualify new Blackjack feedback literals against function-bound UI classifier",
-      "aliases": [],
-      "kind": "acceptance_check",
-      "parent_ids": [
-        "BTH061-AUDIT-VALIDATOR-001"
-      ],
-      "group": "current",
-      "objective": {
-        "text": "Qualify five new exact current Blackjack feedback fragments through the existing function-bound UI classifier. Preserve all prior bindings, scanner/ambiguity rejection and native/process/resource guards; no global content-ID exception or product change.",
-        "source": "docs/testing/deprecated_code_audit_continuation_003.md; trusted current parent delegation and current HEAD named ledger row",
-        "scope_confirmed": true,
-        "acceptance": [
-          {
-            "id": "classifier-focused",
-            "description": "29production bindings and41hostile vectors pass in installed Windows PowerShell and PS7, retaining all24prior bindings and rejection behavior.",
-            "required": true,
-            "state": "pass",
-            "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_003.md"
-            ]
-          },
-          {
-            "id": "aggregate-current",
-            "description": "Fresh full aggregate accepts the reviewed classifier without guard weakening.",
-            "required": true,
-            "state": "pass",
-            "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_003.md",
-              "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json"
-            ]
-          },
-          {
-            "id": "next-current",
-            "description": "Associated classifier commit is published and exact current NEXT identity/evidence is recorded.",
-            "required": true,
-            "state": "open",
-            "evidence": []
-          }
-        ],
-        "coverage": {
-          "required": false,
-          "complete": false,
-          "areas": []
-        }
-      },
-      "state": "open",
-      "status": "FOCUSED_QUALIFIED_NEXT_CAPACITY_BLOCKED",
-      "owner": {
-        "name": "Audit validator regression follow-up",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
-        "assignment_state": "assigned"
-      },
-      "commits": [
-        {
-          "sha": "948722e1d18c078328d7bda6cf7175745f426d07",
-          "evidence": [
-            "docs/testing/deprecated_code_audit_continuation_003.md",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        }
-      ],
-      "deployment": {
-        "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_003.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json"
-        ],
-        "scope": "Function-bound classifier qualification only; exact R9 full aggregate passes; current scoped publication/NEXT evidence remains pending."
-      },
-      "evidence": [
-        {
-          "kind": "bounded_audit_continuation",
-          "reference": "docs/testing/deprecated_code_audit_continuation_003.md",
-          "summary": "Five exact reviewed function-bound fragments added. All24prior bindings and whole-shell scanner/ambiguity/native/process/resource logic preserved.29production bindings and eight preserved plus33new hostile mutations pass on Windows PowerShell and PS7. Host-r6 failed before this repair and is not retroactively passed."
-        },
-        {
-          "kind": "exact_full_aggregate_pass",
-          "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json",
-          "summary": "Host-r9 full aggregate passed at exact488d86fa5f25efc460a74847305fe301f374017b, exit0, zero failures, validator SHA2567a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b unchanged during attempt.40native and11independent cases passed; actual File/Process/Lease/Residue/Cache/Environment postchecks all passed, terminal shadow sequence7green removed, all attempt handles terminal and owned Job0. No late independent substitution. r6/r7/r8 failures remain historical evidence; preserved r8 failed trees are not claimed cleaned. This proves the exact R9 aggregate scope, not global runtime or full parent audit coverage."
-        }
-      ],
-      "implementation_batches": [],
-      "next_action": "Publish the finished qualified source; preserve required NEXT acceptance as Open. Re-observe the existing watcher after storage capacity is restored, without lowering reserves, deleting retained builds or restarting machinery.",
-      "blocker": {
-        "state": "active",
-        "kind": "resource_capacity",
-        "description": "Existing NEXT admission rejected at 2026-11-04T17:03:21.459162+00:00: 12982358016 bytes free; 13958643712 required. Guard and retained builds are unchanged.",
-        "requires_user_input": false,
-        "observed_at": "2026-11-04T17:03:36.963035+00:00",
-        "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
-          "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
-        ]
-      },
-      "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:57:53.833Z"
-    },
-    {
-      "id": "BTH061-AUDIT-MONEY-FIXTURE-003",
-      "name": "Preserve popup identity contract after HUD ownership change",
-      "aliases": [],
-      "kind": "acceptance_check",
-      "parent_ids": [
-        "BTH061-AUDIT-HOST-HELPERS-003"
-      ],
-      "group": "current",
-      "objective": {
-        "text": "Repair the inherited money-feedback fixture faithfully to the shipped HUD ownership contract while preserving original popup identity/reuse and all amount, timing, units, reset, hold and RNG assertions. No product reparenting or weakened reuse test.",
-        "source": "docs/testing/deprecated_code_audit_continuation_003.md; trusted current parent delegation and current HEAD named ledger row",
-        "scope_confirmed": true,
-        "acceptance": [
-          {
-            "id": "baseline-and-faithful-fixture",
-            "description": "Reproduce the same sole old wallet-parent assertion before/after host cleanup; corrected fixture requires the original panel as sole HUD-overlay child and passes all30native checks.",
-            "required": true,
-            "state": "pass",
-            "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_003.md"
-            ]
-          },
-          {
-            "id": "aggregate-current",
-            "description": "Fresh current aggregate validation accepts this unchanged product behavior.",
-            "required": true,
-            "state": "pass",
-            "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_003.md",
-              "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json"
-            ]
-          },
-          {
-            "id": "next-current",
-            "description": "Associated fixture repair is published and exact current NEXT identity/evidence is recorded.",
-            "required": true,
-            "state": "open",
-            "evidence": []
-          }
-        ],
-        "coverage": {
-          "required": false,
-          "complete": false,
-          "areas": []
-        }
-      },
-      "state": "open",
-      "status": "FOCUSED_QUALIFIED_NEXT_CAPACITY_BLOCKED",
-      "owner": {
-        "name": "Audit focused fixture follow-up",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
-        "assignment_state": "assigned"
-      },
-      "commits": [
-        {
-          "sha": "4f1d0adaa68a2414b0300f90a9e88ba296258b4f",
-          "evidence": [
-            "docs/testing/deprecated_code_audit_continuation_003.md",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        }
-      ],
-      "deployment": {
-        "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_003.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json"
-        ],
-        "scope": "Test-only ownership/identity contract repair and focused native qualification; exact R9 full aggregate passes; current scoped publication/NEXT acceptance pending."
-      },
-      "evidence": [
-        {
-          "kind": "bounded_audit_continuation",
-          "reference": "docs/testing/deprecated_code_audit_continuation_003.md",
-          "summary": "History60d88551 intentionally moved the popup to a plain HUD-owned overlay, leaving the old accumulation assertion behind. Same sole failure reproduced on preserveda1fd98c6. Repair captures the initial panel and requires exact object identity and single overlay ownership; other checks and product HUD unchanged. Native30checks pass; private owned Job zero."
-        },
-        {
-          "kind": "exact_full_aggregate_pass",
-          "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json",
-          "summary": "Host-r9 full aggregate passed at exact488d86fa5f25efc460a74847305fe301f374017b, exit0, zero failures, validator SHA2567a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b unchanged during attempt.40native and11independent cases passed; actual File/Process/Lease/Residue/Cache/Environment postchecks all passed, terminal shadow sequence7green removed, all attempt handles terminal and owned Job0. No late independent substitution. r6/r7/r8 failures remain historical evidence; preserved r8 failed trees are not claimed cleaned. This proves the exact R9 aggregate scope, not global runtime or full parent audit coverage."
-        }
-      ],
-      "implementation_batches": [],
-      "next_action": "Publish the finished qualified source; preserve required NEXT acceptance as Open. Re-observe the existing watcher after storage capacity is restored, without lowering reserves, deleting retained builds or restarting machinery.",
-      "blocker": {
-        "state": "active",
-        "kind": "resource_capacity",
-        "description": "Existing NEXT admission rejected at 2026-11-04T17:03:21.459162+00:00: 12982358016 bytes free; 13958643712 required. Guard and retained builds are unchanged.",
-        "requires_user_input": false,
-        "observed_at": "2026-11-04T17:03:36.963035+00:00",
-        "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
-          "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
-        ]
-      },
-      "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:57:53.833Z"
-    },
-    {
-      "id": "BTH061-AUDIT-CORE-CONTROLLERS-003",
-      "name": "Review nonpaused game interface and controller helpers for superseded code",
-      "aliases": [],
-      "kind": "acceptance_check",
-      "parent_ids": [
-        "BTH061-AUDIT-001"
-      ],
-      "group": "current",
-      "objective": {
-        "text": "Complete a bounded read-only obsolete-code review of eight nonpaused game base/interface and core controller modules beyond the prior sixteen support modules. Check receiver inheritance, string/reflection/public/save boundaries and extraction history; remove only confirmed obsolete implementation. Completion is this bounded review only, not the whole-codebase parent.",
-        "source": "docs/testing/deprecated_code_audit_continuation_003.md; trusted current parent delegation and current HEAD named ledger row",
-        "scope_confirmed": true,
-        "acceptance": [
-          {
-            "id": "bounded-review",
-            "description": "Eight modules receive exact scoped inventory and receiver/inheritance/history dispositions; live guard/save/public/paused shared consumers preserved and no unsupported deletion proposed.",
-            "required": true,
-            "state": "pass",
-            "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_003.md",
-              "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/independent-core-controllers-r1/report.md",
-              "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/independent-core-controllers-r1/controller-inventory.json"
-            ]
-          }
-        ],
-        "coverage": {
-          "required": false,
-          "complete": true,
-          "areas": []
-        }
-      },
-      "state": "complete",
-      "status": "BOUNDED_REVIEW_RESULT_COMMITTED_NO_REMOVAL_JUSTIFIED",
-      "owner": {
-        "name": "Audit controller review",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
-        "assignment_state": "assigned"
-      },
-      "commits": [
-        {
-          "sha": "40272a2c65f84090be3b8a1ec30287064eab8711",
-          "evidence": [
-            "docs/testing/deprecated_code_audit_continuation_003.md",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        }
-      ],
-      "deployment": {
-        "required": false,
-        "state": "not_applicable",
-        "commit": null,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_003.md"
-        ],
-        "scope": "Read-only bounded review evidence commit; no source removal or product/runtime/publication acceptance is claimed."
-      },
-      "evidence": [
-        {
-          "kind": "bounded_audit_continuation",
-          "reference": "docs/testing/deprecated_code_audit_continuation_003.md",
-          "summary": "Eight modules,4624lines,312top-level plus10nested functions and84constants reviewed. No justified removal. Live runtime refusal APIs, inherited wrappers, saved/public contracts and paused shared consumers retained. Fixed-false cancellation parameterization is documented as live, not obsolete. Evidence commit40272a2c associates only this bounded result."
-        }
-      ],
-      "implementation_batches": [],
-      "next_action": "No further action within this completed bounded review. Reuse its exact evidence in the Open parent full-scope audit; do not close the parent from this batch.",
-      "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": null,
-        "requires_user_input": false,
-        "observed_at": "2026-11-04T16:33:01.150Z",
-        "evidence": []
-      },
-      "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:33:01.150Z"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -17522,6 +17051,606 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-04T16:23:29.672223+00:00"
+    },
+    {
+      "id": "BTH-BARDICE-JOURNAL-CURRENCY-001",
+      "name": "Record actual currency in new Bar Dice journal receipts",
+      "aliases": [
+        "R07-BARDICE-JOURNAL-CURRENCY-RELATED-878"
+      ],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Investigate and correct missing currency on new Bar Dice journal receipts, including the related Press producer, while preserving wallet accounting, stake/settlement exactly once, RNG/clocks, authority, existing game rules and historical unknown-unit rows. Reproduce safely, test and commit the isolated correction. Authorized release follow-through must publish the independently reviewed tested commit and verify exact NEXT identity/startup when the existing disk reserve allows, keeping acceptance Open until deployed and tested.",
+        "source": "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-bardice-journal-currency-observation-878.json; trusted parent delegation 2026-11-04 requesting investigation, isolated correction, tests and commit; trusted parent delegation carrying explicit user approval to push finished work to NEXT, received2026-11-04",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "reproduce",
+            "description": "Reproduce the new cash loss journal omission at a labeled production boundary without replaying original R07 hand.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/bar_dice_journal_currency.md",
+              "docs/testing/bar_dice_journal_currency_20261104.json"
+            ]
+          },
+          {
+            "id": "producer_currency",
+            "description": "New round/Press rows record actual action-time cash/chip unit and current-action net; explicit truezero is source-reviewed unconditional metadata but not materialized by the eight ordinary cases. Preserve wallets/authority/rules and old unknown history.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/bar_dice_journal_currency.md",
+              "docs/testing/bar_dice_journal_currency_20261104.json"
+            ]
+          },
+          {
+            "id": "save_cold",
+            "description": "Focused normal Host and official Save/cold checks preserve settled table, wallets, RNG/clocks and history, with no repeat settlement or read-time transaction.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/bar_dice_journal_currency.md",
+              "docs/testing/bar_dice_journal_currency_20261104.json"
+            ]
+          },
+          {
+            "id": "review_commit",
+            "description": "Independent scoped review, tested implementation commit and both ledger views associated; report local/deployed evidence distinctly.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/bar_dice_journal_currency.md",
+              "docs/testing/bar_dice_journal_currency_20261104.json",
+              "commit:1e38b7885db21c5bee1d19a897c129ddf680b1f6"
+            ]
+          },
+          {
+            "id": "exact_next",
+            "description": "Publish reviewed fix under existing approval, preserve reserve and resource gates, then verify exact deployed source/tree/assets and correct-version startup with the native299 changed-behavior evidence retained.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "PUBLISHED_MAIN_NATIVE299_PASS_NEXT_RESERVE_PENDING",
+      "owner": {
+        "name": "Fix Back Alley travel / Bar Dice journal follow-up",
+        "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "1e38b7885db21c5bee1d19a897c129ddf680b1f6",
+          "evidence": [
+            "docs/testing/bar_dice_journal_currency.md",
+            "docs/testing/bar_dice_journal_currency_20261104.json"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/bar_dice_journal_currency.md"
+        ],
+        "scope": "Authorized main/NEXT publication follow-through underway; native299 qualifies changed behavior, not deployed Web play. Acceptance stays Open until served identity/startup verified."
+      },
+      "evidence": [
+        {
+          "kind": "qa_observation",
+          "reference": "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-bardice-journal-currency-observation-878.json",
+          "summary": "R07 onf305: new cash stake5 hand gives97to92 once; cold92 and one row correct, but row says Recorded change-5(currency not recorded). Related to existing Craps/Slot producer metadata family; no financial mismatch asserted."
+        },
+        {
+          "kind": "native_regression",
+          "reference": "docs/testing/bar_dice_journal_currency_20261104.json",
+          "summary": "Baseline34 has exactly2 missingmetadata/label failures with cash97to92 once; producer256+independentcold43 pass through real sealedHost and officialSaveService. Source/test review clear; no originalprofile or deployed play claim."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Observe the existing watcher for published Bar Dice journal fix; once the unchanged reserve admits its build, verify actual promoted SHA/tree/assets/PCK and fresh correct-version startup. Keep task Open until that deployed acceptance is recorded.",
+      "blocker": {
+        "state": "active",
+        "kind": "next_disk_reserve",
+        "description": "Insufficient shared disk reserve for export: 13115047936 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T16:57:12.765384+00:00",
+        "evidence": [
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-6/evidence/bardice-journal-watcher-before-publication.json",
+          "docs/testing/bar_dice_journal_currency.md"
+        ]
+      },
+      "planned_app_changes": [
+        {
+          "scope": "gameplay_receipt_metadata",
+          "description": "Record existing Bar Dice monetary story unit/current-action delta only; no wallet, odds, items, scenarios, viewport or touch/focus change."
+        }
+      ],
+      "updated_at": "2026-11-04T17:00:31.257133+00:00",
+      "publication": {
+        "state": "published",
+        "commit": "c0e94c361ca2000c229f815eb628d1bacf45d9c8",
+        "tree": "b59c578b7fb927634659a3461d9383b6352b9aec",
+        "implementation_commit": "1e38b7885db21c5bee1d19a897c129ddf680b1f6",
+        "evidence": [
+          "docs/testing/bar_dice_journal_currency.md",
+          "docs/testing/bar_dice_journal_currency_20261104.json"
+        ]
+      }
+    },
+    {
+      "id": "BTH061-AUDIT-AGGREGATE-RECHECK-003",
+      "name": "Recheck unchanged aggregate validator on current main",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-VALIDATOR-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Run one fresh complete unchanged aggregate validator invocation on current merged main, preserving canonical Windows PowerShell, native launcher/process/lease/residue/cache/environment guards, owned-child containment and factual reached/unreached postconditions. Retain failed attempts; separate diagnostics never replace full acceptance.",
+        "source": "docs/testing/deprecated_code_audit_continuation_003.md; trusted current parent delegation and current HEAD named ledger row",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "fresh-full-invocation",
+            "description": "Fresh complete validator invocation passes unchanged guards and records exact source/tool identity plus every actual postcondition.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_003.md",
+              "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_complete_result-host-r6.json",
+              "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "complete",
+      "status": "FULL_AGGREGATE_R9_PASS_ACTUAL_POSTCHECKS_VERIFIED",
+      "owner": {
+        "name": "Audit validator evidence",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "488d86fa5f25efc460a74847305fe301f374017b",
+          "evidence": [
+            "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json",
+            "docs/testing/deprecated_code_audit_continuation_003.md"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_003.md"
+        ],
+        "scope": "Exact source aggregate validator evidence at488d86fa only; no deployment, global runtime or full parent-audit completion claim."
+      },
+      "evidence": [
+        {
+          "kind": "bounded_audit_continuation",
+          "reference": "docs/testing/deprecated_code_audit_continuation_003.md",
+          "summary": "Host-r6 at8b936582 exited1 with four failures: two related Blackjack classifier failures, raw checkout CRLF/LF report drift, and incorrect PS7 launcher host. Its actual terminal process/lease/residue/cache/environment checks were reached; owned Job ended zero and shadow cleanup succeeded. Classifier948722e1, exact Git report bytes and installed Windows PowerShell address those causes; fresh WindowsPS r7 is being prepared, not passed."
+        },
+        {
+          "kind": "exact_full_aggregate_pass",
+          "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json",
+          "summary": "Host-r9 full aggregate passed at exact488d86fa5f25efc460a74847305fe301f374017b, exit0, zero failures, validator SHA2567a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b unchanged during attempt.40native and11independent cases passed; actual File/Process/Lease/Residue/Cache/Environment postchecks all passed, terminal shadow sequence7green removed, all attempt handles terminal and owned Job0. No late independent substitution. r6/r7/r8 failures remain historical evidence; preserved r8 failed trees are not claimed cleaned. This proves the exact R9 aggregate scope, not global runtime or full parent audit coverage."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "No further action within this completed exact R9 aggregate recheck. Preserve failed r6/r7/r8 history and actual-postcheck evidence; required repair publication/NEXT and full codebase-wide parent acceptance remain separate Open work.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T16:57:53.833Z",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T16:57:53.833Z"
+    },
+    {
+      "id": "BTH061-AUDIT-HOST-HELPERS-003",
+      "name": "Trace nonpaused host helper islands after controller extractions",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Trace generic nonpaused FoundationMain support and disconnected helper islands left after controller extractions. Remove only confirmed obsolete private implementation with receiver/history/string/reflection/save evidence; preserve scheduling, item/scenario/shared boundaries and public behavior.",
+        "source": "docs/testing/deprecated_code_audit_continuation_003.md; trusted current parent delegation and current HEAD named ledger row",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "focused-host-qualification",
+            "description": "Approved deletion proof and exact-MainScene Career open/close roundtrip preserve active behavior.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_003.md",
+              "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/independent-host-helpers-r1/"
+            ]
+          },
+          {
+            "id": "aggregate-current",
+            "description": "Fresh current aggregate validation is accepted.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_003.md",
+              "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json"
+            ]
+          },
+          {
+            "id": "next-current",
+            "description": "Associated cleanup commit is delivered and exact current NEXT identity/behavior evidence recorded.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "FOCUSED_QUALIFIED_NEXT_CAPACITY_BLOCKED",
+      "owner": {
+        "name": "Audit host helper review",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "cd1ce774b94083c193d95ea881ee0a3b5a051f4c",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_003.md",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_003.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json"
+        ],
+        "scope": "Only the40-line host cleanup and its focused qualification; Exact R9 aggregate passes; current scoped publication/NEXT evidence remains pending."
+      },
+      "evidence": [
+        {
+          "kind": "bounded_audit_continuation",
+          "reference": "docs/testing/deprecated_code_audit_continuation_003.md",
+          "summary": "Forty deletion-only FoundationMain lines removed;1306unrelated methods identical. Exact-MainScene native Career roundtrip17 passes. Existing money-feedback baseline mismatch was separately reproduced and repaired under MONEY-FIXTURE-003; corrected test passes30. No product scheduling/layout/item/scenario change."
+        },
+        {
+          "kind": "exact_full_aggregate_pass",
+          "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json",
+          "summary": "Host-r9 full aggregate passed at exact488d86fa5f25efc460a74847305fe301f374017b, exit0, zero failures, validator SHA2567a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b unchanged during attempt.40native and11independent cases passed; actual File/Process/Lease/Residue/Cache/Environment postchecks all passed, terminal shadow sequence7green removed, all attempt handles terminal and owned Job0. No late independent substitution. r6/r7/r8 failures remain historical evidence; preserved r8 failed trees are not claimed cleaned. This proves the exact R9 aggregate scope, not global runtime or full parent audit coverage."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Publish the finished qualified source; preserve required NEXT acceptance as Open. Re-observe the existing watcher after storage capacity is restored, without lowering reserves, deleting retained builds or restarting machinery.",
+      "blocker": {
+        "state": "active",
+        "kind": "resource_capacity",
+        "description": "Existing NEXT admission rejected at 2026-11-04T17:03:21.459162+00:00: 12982358016 bytes free; 13958643712 required. Guard and retained builds are unchanged.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T17:03:36.963035+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
+          "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T16:57:53.833Z"
+    },
+    {
+      "id": "BTH061-AUDIT-UI-LITERAL-003",
+      "name": "Qualify new Blackjack feedback literals against function-bound UI classifier",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-VALIDATOR-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Qualify five new exact current Blackjack feedback fragments through the existing function-bound UI classifier. Preserve all prior bindings, scanner/ambiguity rejection and native/process/resource guards; no global content-ID exception or product change.",
+        "source": "docs/testing/deprecated_code_audit_continuation_003.md; trusted current parent delegation and current HEAD named ledger row",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "classifier-focused",
+            "description": "29production bindings and41hostile vectors pass in installed Windows PowerShell and PS7, retaining all24prior bindings and rejection behavior.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_003.md"
+            ]
+          },
+          {
+            "id": "aggregate-current",
+            "description": "Fresh full aggregate accepts the reviewed classifier without guard weakening.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_003.md",
+              "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json"
+            ]
+          },
+          {
+            "id": "next-current",
+            "description": "Associated classifier commit is published and exact current NEXT identity/evidence is recorded.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "FOCUSED_QUALIFIED_NEXT_CAPACITY_BLOCKED",
+      "owner": {
+        "name": "Audit validator regression follow-up",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "948722e1d18c078328d7bda6cf7175745f426d07",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_003.md",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_003.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json"
+        ],
+        "scope": "Function-bound classifier qualification only; exact R9 full aggregate passes; current scoped publication/NEXT evidence remains pending."
+      },
+      "evidence": [
+        {
+          "kind": "bounded_audit_continuation",
+          "reference": "docs/testing/deprecated_code_audit_continuation_003.md",
+          "summary": "Five exact reviewed function-bound fragments added. All24prior bindings and whole-shell scanner/ambiguity/native/process/resource logic preserved.29production bindings and eight preserved plus33new hostile mutations pass on Windows PowerShell and PS7. Host-r6 failed before this repair and is not retroactively passed."
+        },
+        {
+          "kind": "exact_full_aggregate_pass",
+          "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json",
+          "summary": "Host-r9 full aggregate passed at exact488d86fa5f25efc460a74847305fe301f374017b, exit0, zero failures, validator SHA2567a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b unchanged during attempt.40native and11independent cases passed; actual File/Process/Lease/Residue/Cache/Environment postchecks all passed, terminal shadow sequence7green removed, all attempt handles terminal and owned Job0. No late independent substitution. r6/r7/r8 failures remain historical evidence; preserved r8 failed trees are not claimed cleaned. This proves the exact R9 aggregate scope, not global runtime or full parent audit coverage."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Publish the finished qualified source; preserve required NEXT acceptance as Open. Re-observe the existing watcher after storage capacity is restored, without lowering reserves, deleting retained builds or restarting machinery.",
+      "blocker": {
+        "state": "active",
+        "kind": "resource_capacity",
+        "description": "Existing NEXT admission rejected at 2026-11-04T17:03:21.459162+00:00: 12982358016 bytes free; 13958643712 required. Guard and retained builds are unchanged.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T17:03:36.963035+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
+          "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T16:57:53.833Z"
+    },
+    {
+      "id": "BTH061-AUDIT-MONEY-FIXTURE-003",
+      "name": "Preserve popup identity contract after HUD ownership change",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-HOST-HELPERS-003"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Repair the inherited money-feedback fixture faithfully to the shipped HUD ownership contract while preserving original popup identity/reuse and all amount, timing, units, reset, hold and RNG assertions. No product reparenting or weakened reuse test.",
+        "source": "docs/testing/deprecated_code_audit_continuation_003.md; trusted current parent delegation and current HEAD named ledger row",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "baseline-and-faithful-fixture",
+            "description": "Reproduce the same sole old wallet-parent assertion before/after host cleanup; corrected fixture requires the original panel as sole HUD-overlay child and passes all30native checks.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_003.md"
+            ]
+          },
+          {
+            "id": "aggregate-current",
+            "description": "Fresh current aggregate validation accepts this unchanged product behavior.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_003.md",
+              "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json"
+            ]
+          },
+          {
+            "id": "next-current",
+            "description": "Associated fixture repair is published and exact current NEXT identity/evidence is recorded.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "FOCUSED_QUALIFIED_NEXT_CAPACITY_BLOCKED",
+      "owner": {
+        "name": "Audit focused fixture follow-up",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "4f1d0adaa68a2414b0300f90a9e88ba296258b4f",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_003.md",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_003.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json"
+        ],
+        "scope": "Test-only ownership/identity contract repair and focused native qualification; exact R9 full aggregate passes; current scoped publication/NEXT acceptance pending."
+      },
+      "evidence": [
+        {
+          "kind": "bounded_audit_continuation",
+          "reference": "docs/testing/deprecated_code_audit_continuation_003.md",
+          "summary": "History60d88551 intentionally moved the popup to a plain HUD-owned overlay, leaving the old accumulation assertion behind. Same sole failure reproduced on preserveda1fd98c6. Repair captures the initial panel and requires exact object identity and single overlay ownership; other checks and product HUD unchanged. Native30checks pass; private owned Job zero."
+        },
+        {
+          "kind": "exact_full_aggregate_pass",
+          "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json",
+          "summary": "Host-r9 full aggregate passed at exact488d86fa5f25efc460a74847305fe301f374017b, exit0, zero failures, validator SHA2567a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b unchanged during attempt.40native and11independent cases passed; actual File/Process/Lease/Residue/Cache/Environment postchecks all passed, terminal shadow sequence7green removed, all attempt handles terminal and owned Job0. No late independent substitution. r6/r7/r8 failures remain historical evidence; preserved r8 failed trees are not claimed cleaned. This proves the exact R9 aggregate scope, not global runtime or full parent audit coverage."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Publish the finished qualified source; preserve required NEXT acceptance as Open. Re-observe the existing watcher after storage capacity is restored, without lowering reserves, deleting retained builds or restarting machinery.",
+      "blocker": {
+        "state": "active",
+        "kind": "resource_capacity",
+        "description": "Existing NEXT admission rejected at 2026-11-04T17:03:21.459162+00:00: 12982358016 bytes free; 13958643712 required. Guard and retained builds are unchanged.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T17:03:36.963035+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
+          "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T16:57:53.833Z"
+    },
+    {
+      "id": "BTH061-AUDIT-CORE-CONTROLLERS-003",
+      "name": "Review nonpaused game interface and controller helpers for superseded code",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Complete a bounded read-only obsolete-code review of eight nonpaused game base/interface and core controller modules beyond the prior sixteen support modules. Check receiver inheritance, string/reflection/public/save boundaries and extraction history; remove only confirmed obsolete implementation. Completion is this bounded review only, not the whole-codebase parent.",
+        "source": "docs/testing/deprecated_code_audit_continuation_003.md; trusted current parent delegation and current HEAD named ledger row",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "bounded-review",
+            "description": "Eight modules receive exact scoped inventory and receiver/inheritance/history dispositions; live guard/save/public/paused shared consumers preserved and no unsupported deletion proposed.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_003.md",
+              "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/independent-core-controllers-r1/report.md",
+              "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/independent-core-controllers-r1/controller-inventory.json"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": true,
+          "areas": []
+        }
+      },
+      "state": "complete",
+      "status": "BOUNDED_REVIEW_RESULT_COMMITTED_NO_REMOVAL_JUSTIFIED",
+      "owner": {
+        "name": "Audit controller review",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "40272a2c65f84090be3b8a1ec30287064eab8711",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_003.md",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_003.md"
+        ],
+        "scope": "Read-only bounded review evidence commit; no source removal or product/runtime/publication acceptance is claimed."
+      },
+      "evidence": [
+        {
+          "kind": "bounded_audit_continuation",
+          "reference": "docs/testing/deprecated_code_audit_continuation_003.md",
+          "summary": "Eight modules,4624lines,312top-level plus10nested functions and84constants reviewed. No justified removal. Live runtime refusal APIs, inherited wrappers, saved/public contracts and paused shared consumers retained. Fixed-false cancellation parameterization is documented as live, not obsolete. Evidence commit40272a2c associates only this bounded result."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "No further action within this completed bounded review. Reuse its exact evidence in the Open parent full-scope audit; do not close the parent from this batch.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T16:33:01.150Z",
+        "evidence": []
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T16:33:01.150Z"
     }
   ],
   "batches": [
