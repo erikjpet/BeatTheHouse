@@ -410,6 +410,17 @@
       "job_receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\bardice-journal-final-cold.json"
     }
   ],
-  "commit": null,
-  "status": "Native299 pass and independent review clear; implementation association pending"
+  "commit": "1e38b7885db21c5bee1d19a897c129ddf680b1f6",
+  "status": "Local tested fix committed;299 native assertions and independent review clear; task remainsOpen for acceptance, no publication attempted",
+  "manual_reconciliation": {
+    "current": {
+      "errors_elsewhere": 51,
+      "assigned_scope_findings": 0
+    },
+    "all": {
+      "errors_elsewhere": 517,
+      "assigned_scope_findings": 0
+    },
+    "reports": "task-6/evidence/bardice-journal-ledger-final-{current,all}.json; exit1 is known unrelated findings, not a checker crash"
+  }
 }

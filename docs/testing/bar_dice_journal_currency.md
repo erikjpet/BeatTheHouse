@@ -104,3 +104,10 @@ results and the exact implementation association are recorded at closeout.
 The local fix/test/commit request is concrete and native-qualified. The parent
 item remains Open for acceptance; publication or NEXT verification is not
 claimed by this follow-up, and no denied operation was retried.
+
+Implementation commit: `1e38b7885db21c5bee1d19a897c129ddf680b1f6`. Both ledger views associate
+that exact tested fix. The task remains Open for acceptance, with no factual
+blocker in the completed local fix/test/commit scope. Final manual reconciliation
+reports51 current-group and517 all-group errors outside this task, zero findings
+for this ID, and all three owned native jobs closed with matching launch nonces.
+No publication action, prior denied retry or NEXT acceptance is claimed.

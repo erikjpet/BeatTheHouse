@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T16:50:00.547913+00:00",
+  "updated_at": "2026-11-04T16:52:45.793676+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -17071,8 +17071,12 @@
             "id": "review_commit",
             "description": "Independent scoped review, tested implementation commit and both ledger views associated; report local/deployed evidence distinctly.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/bar_dice_journal_currency.md",
+              "docs/testing/bar_dice_journal_currency_20261104.json",
+              "commit:1e38b7885db21c5bee1d19a897c129ddf680b1f6"
+            ]
           }
         ],
         "coverage": {
@@ -17082,13 +17086,21 @@
         }
       },
       "state": "open",
-      "status": "LOCAL_FIX_NATIVE299_PASS_REVIEW_CLEAR_COMMIT_ASSOCIATION_PENDING",
+      "status": "LOCAL_FIX_COMMITTED_NATIVE299_PASS_REVIEW_CLEAR_ACCEPTANCE_OPEN",
       "owner": {
         "name": "Fix Back Alley travel / Bar Dice journal follow-up",
         "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "1e38b7885db21c5bee1d19a897c129ddf680b1f6",
+          "evidence": [
+            "docs/testing/bar_dice_journal_currency.md",
+            "docs/testing/bar_dice_journal_currency_20261104.json"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -17109,7 +17121,7 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Associate the tested implementation commit, report focused receipts/manual reconciliation and hand off the concrete fix for acceptance; no missing-save or approval dependency.",
+      "next_action": "Hand off tested commit1e38b7885 and299 native/official-cold assertions for acceptance and any separately requested release follow-through. No original R07 save check or renewed approval is needed for this completed local fix/test/commit scope.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -17126,7 +17138,7 @@
           "description": "Record existing Bar Dice monetary story unit/current-action delta only; no wallet, odds, items, scenarios, viewport or touch/focus change."
         }
       ],
-      "updated_at": "2026-11-04T16:50:00.547913+00:00"
+      "updated_at": "2026-11-04T16:52:45.793676+00:00"
     }
   ],
   "batches": [
