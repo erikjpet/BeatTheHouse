@@ -729,6 +729,30 @@ static func durable_runtime_checkpoint(active: Dictionary) -> Dictionary:
 	}
 
 
+static func complete_durable_runtime_checkpoint_valid(active: Dictionary, checkpoint: Dictionary) -> bool:
+	# Tag-only save recovery must not turn an incomplete/corrupt capsule into the
+	# ordinary fresh-session fallback. Decode object-free data into a detached,
+	# configured simulation; no runtime/session/template cache is read or changed.
+	var mode := str(active.get("mode", ""))
+	if not ["em_bumper_drop", "lane_multiball", "video_feature"].has(mode) \
+			or str(active.get("board_id", "")) != _board_id_for_mode(mode) \
+			or str(checkpoint.get("schema", "")) != DURABLE_RUNTIME_SCHEMA \
+			or typeof(checkpoint.get("payload", null)) != TYPE_STRING \
+			or str(checkpoint["payload"]).is_empty() \
+			or typeof(active.get("pinball_item_effects", null)) != TYPE_DICTIONARY:
+		return false
+	var decoded: Variant = Marshalls.base64_to_variant(str(checkpoint["payload"]), false)
+	if typeof(decoded) != TYPE_DICTIONARY:
+		return false
+	var modifiers: Dictionary = ItemsScript.compile_modifiers(active["pinball_item_effects"] as Dictionary)
+	var template := _compile_board_template(mode, modifiers)
+	var sim := SimScript.new()
+	sim.configure(template.get("compiled", {}), int(active.get("runtime_seed", 0)), {"cap": int(active.get("session_cap", 0))})
+	# v1 records no authenticated board/session provenance. A complete matching
+	# shape cannot authenticate an arbitrary same-shaped foreign payload.
+	return sim.complete_transaction_snapshot_valid(decoded as Dictionary)
+
+
 static func _restore_durable_runtime_checkpoint(active: Dictionary, checkpoint: Dictionary) -> bool:
 	var payload := str(checkpoint.get("payload", ""))
 	if payload.is_empty():
@@ -789,18 +813,22 @@ static func _board_template(mode: String, item_effects: Dictionary) -> Dictionar
 		var cached_value: Variant = _board_templates.get(key)
 		if typeof(cached_value) == TYPE_DICTIONARY:
 			return cached_value as Dictionary
-	var layout: Dictionary = BoardsScript.by_id(_board_id_for_mode(mode))
-	layout["mode"] = mode
-	var compiler := BoardScript.new()
-	var template := {
-		"layout": layout,
-		"compiled": compiler.compile(layout, modifiers),
-		"layout_view": _layout_view(layout),
-	}
+	var template := _compile_board_template(mode, modifiers)
 	_board_templates[key] = template
 	while _board_templates.size() > MAX_BOARD_TEMPLATES:
 		_board_templates.erase(_board_templates.keys()[0])
 	return template
+
+
+static func _compile_board_template(mode: String, modifiers: Dictionary) -> Dictionary:
+	var layout: Dictionary = BoardsScript.by_id(_board_id_for_mode(mode))
+	layout["mode"] = mode
+	var compiler := BoardScript.new()
+	return {
+		"layout": layout,
+		"compiled": compiler.compile(layout, modifiers),
+		"layout_view": _layout_view(layout),
+	}
 
 
 static func prewarm_board_templates() -> int:

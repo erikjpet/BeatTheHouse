@@ -511,6 +511,52 @@ func transaction_snapshot() -> Dictionary:
 	}
 
 
+func complete_transaction_snapshot_valid(snapshot: Dictionary) -> bool:
+	# Validate against this configured, detached simulation. Its own snapshot is
+	# the protocol prototype, including board/item-dependent array dimensions.
+	# This never restores state or advances either the simulation or its RNG.
+	var prototype := transaction_snapshot()
+	# Extra forward-compatible fields remain opaque; every current field must
+	# still be present with its exact Variant type.
+	for key in prototype:
+		var expected: Variant = prototype[key]
+		var value: Variant = snapshot.get(key, null)
+		if typeof(value) != typeof(expected):
+			return false
+		match typeof(expected):
+			TYPE_PACKED_INT32_ARRAY:
+				if value.size() != expected.size():
+					return false
+			TYPE_PACKED_FLOAT32_ARRAY:
+				if value.size() != expected.size():
+					return false
+				for number in value:
+					if not is_finite(float(number)):
+						return false
+			TYPE_PACKED_VECTOR2_ARRAY:
+				if value.size() != expected.size():
+					return false
+				for point in value:
+					if not (point as Vector2).is_finite():
+						return false
+			TYPE_INT:
+				# Snapshot integer scalars are counters, indices, multipliers and RNG.
+				if int(value) < 0:
+					return false
+			TYPE_FLOAT:
+				if not is_finite(float(value)):
+					return false
+	if int(snapshot["rng_state"]) < 1 or int(snapshot["rng_state"]) >= RNG_MODULUS \
+			or int(snapshot["session_multiplier"]) < 1 \
+			or int(snapshot["event_write_index"]) >= event_ring_size \
+			or int(snapshot["total_awarded"]) > session_cap:
+		return false
+	for flag in snapshot["active_flags"]:
+		if flag != 0 and flag != 1:
+			return false
+	return true
+
+
 func restore_transaction_snapshot(snapshot: Dictionary) -> bool:
 	var required := [
 		"bumper_ready_tick", "sensor_ready_tick", "flipper_ready_tick", "flipper_window_until_tick",

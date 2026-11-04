@@ -4,6 +4,7 @@ extends GameModule
 # Deterministic full-simulation slot machine module.
 
 const StateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
+const BonusRecoveryScript := preload("res://scripts/games/slots/slot_bonus_recovery.gd")
 const DefinitionCacheScript := preload("res://scripts/games/slots/slot_definition_cache.gd")
 const CatalogScript := preload("res://scripts/games/slots/slot_catalog.gd")
 const GeneratorScript := preload("res://scripts/games/slots/slot_machine_generator.gd")
@@ -223,6 +224,8 @@ func enter(run_state: RunState, environment: Dictionary) -> Dictionary:
 
 
 func checkpoint_surface_ui_state(ui_state: Dictionary, _run_state: RunState, environment: Dictionary) -> void:
+	if _tag_loss_has_pending_authority(_peek_machine(environment)) or _bonus_recovery_required(_peek_machine(environment)):
+		return
 	var machine: Dictionary = _read_machine(environment)
 	if machine.is_empty() or str(machine.get("slot_animation_id", "")).is_empty():
 		return
@@ -254,18 +257,22 @@ func checkpoint_surface_ui_state(ui_state: Dictionary, _run_state: RunState, env
 
 
 func checkpoint_surface_ui_state_for_save(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> void:
+	if _tag_loss_has_pending_authority(_peek_machine(environment)) or _bonus_recovery_required(_peek_machine(environment)):
+		return
 	checkpoint_surface_ui_state(ui_state, run_state, environment)
 	var machine: Dictionary = _read_machine(environment)
-	var active: Dictionary = machine.get("active_bonus", {}) if typeof(machine.get("active_bonus", {})) == TYPE_DICTIONARY else {}
+	var projected := BonusRecoveryScript.machine_view(machine, definition)
+	var active: Dictionary = projected.get("active_bonus", {}) if typeof(projected.get("active_bonus", {})) == TYPE_DICTIONARY else {}
 	if str(active.get("family", "")) != "pinball" or not bool(active.get("active", false)) or bool(active.get("complete", false)):
 		return
 	var durable := PinballFeatureScript.durable_runtime_checkpoint(active)
 	if durable.is_empty():
 		return
-	active = active.duplicate(false)
-	active[PinballFeatureScript.DURABLE_RUNTIME_KEY] = durable
-	machine = machine.duplicate(false)
-	machine["active_bonus"] = active
+	# Capture the real runtime while retaining the original family tag and all
+	# pending request fingerprints. Only accepted resolution migrates that tag.
+	var saved_active: Dictionary = (machine["active_bonus"] as Dictionary).duplicate(false)
+	saved_active[PinballFeatureScript.DURABLE_RUNTIME_KEY] = durable
+	machine["active_bonus"] = saved_active
 	_write_machine(environment, machine, false)
 
 
@@ -302,10 +309,14 @@ func actions(run_state: RunState, environment: Dictionary) -> Dictionary:
 
 
 func legal_actions(_run_state: RunState, _environment: Dictionary) -> Array:
+	if _bonus_recovery_required(_peek_machine(_environment)):
+		return []
 	return _slot_copy_array(definition.get("legal_actions", []))
 
 
 func cheat_actions(run_state: RunState, environment: Dictionary) -> Array:
+	if _bonus_recovery_required(_peek_machine(environment)):
+		return []
 	var actions: Array = super.cheat_actions(run_state, environment)
 	var machine: Dictionary = _read_machine(environment)
 	var nudge_ready := not _slot_copy_dict(machine.get("last_nudge_offer", {})).is_empty()
@@ -369,6 +380,27 @@ func _machine_state_key(environment: Dictionary) -> String:
 
 func _read_machine(environment: Dictionary) -> Dictionary:
 	return definition_cache.owned_runtime_machine(StateScript.peek_machine(environment, _machine_state_key(environment)))
+
+
+func _bonus_recovery_required(machine: Dictionary) -> bool:
+	return BonusRecoveryScript.recovery_required(BonusRecoveryScript.machine_view(machine, definition), definition)
+
+
+func _tag_loss_has_pending_authority(machine: Dictionary) -> bool:
+	var active_value: Variant = machine.get("active_bonus", null)
+	if typeof(active_value) != TYPE_DICTIONARY or not str((active_value as Dictionary).get("family", "")).is_empty():
+		return false
+	var projected := BonusRecoveryScript.machine_view(machine, definition)
+	var active: Dictionary = projected.get("active_bonus", {}) if typeof(projected.get("active_bonus", {})) == TYPE_DICTIONARY else {}
+	if str(active.get("family", "")) != "pinball" or not bool(active.get("active", false)) or bool(active.get("complete", false)):
+		return false
+	# A view can repair the tag, but presentation and save checkpoints must not
+	# change a sealed request's original machine context before it is accepted.
+	var ledger: Dictionary = machine.get(ActionAuthorityScript.LEDGER_KEY, {}) if typeof(machine.get(ActionAuthorityScript.LEDGER_KEY, {})) == TYPE_DICTIONARY else {}
+	for key in ["pending_delivery", "pending_recovery_session"]:
+		if typeof(ledger.get(key, {})) == TYPE_DICTIONARY and not (ledger.get(key, {}) as Dictionary).is_empty():
+			return true
+	return machine.has(ActionAuthorityScript.PENDING_APPLY_RECEIPT_KEY)
 
 
 func _peek_machine(environment: Dictionary) -> Dictionary:
@@ -635,7 +667,7 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 	# Machine mutations still rebuild canonically at action boundaries; frames in
 	# between only need the time-dependent presentation fields below.
 	var machine := _peek_machine(environment)
-	var patch: Dictionary = presentation.realtime_state_patch(machine, run_state, ui_state, current_surface_state)
+	var patch: Dictionary = presentation.realtime_state_patch(machine, run_state, ui_state, current_surface_state, definition)
 	if bool(patch.get("slot_bonus_trigger_revealed", false)):
 		_commit_bonus_trigger_reveal(environment, machine)
 	return patch
@@ -644,7 +676,10 @@ func surface_realtime_state_patch(run_state: RunState, environment: Dictionary, 
 func _commit_bonus_trigger_reveal(environment: Dictionary, machine: Dictionary) -> void:
 	if bool(machine.get("slot_bonus_trigger_revealed", false)):
 		return
-	var active: Dictionary = machine.get("active_bonus", {}) if typeof(machine.get("active_bonus", {})) == TYPE_DICTIONARY else {}
+	if _tag_loss_has_pending_authority(machine):
+		return
+	var projected := BonusRecoveryScript.machine_view(machine, definition)
+	var active: Dictionary = projected.get("active_bonus", {}) if typeof(projected.get("active_bonus", {})) == TYPE_DICTIONARY else {}
 	if str(active.get("family", "")) != "pinball" or not bool(active.get("active", false)) or bool(active.get("complete", false)):
 		return
 	# This mutation happens exactly once per triggered feature. It is a lifecycle
@@ -784,7 +819,9 @@ func _machine_game_authority_evidence(candidate: RunState, action_id: String, st
 func _machine_game_runtime_checkpoint(candidate: RunState) -> Dictionary:
 	if candidate == null:
 		return {}
-	var machine := _peek_machine(candidate.current_environment)
+	var machine := BonusRecoveryScript.machine_view(_peek_machine(candidate.current_environment), definition)
+	if BonusRecoveryScript.recovery_required(machine, definition):
+		return {}
 	var active: Dictionary = machine.get("active_bonus", {}) if typeof(machine.get("active_bonus", {})) == TYPE_DICTIONARY else {}
 	if str(active.get("family", "")) != "pinball":
 		return {}
@@ -807,6 +844,8 @@ func _machine_game_host_needs_auto_tick(surface_time_msec: int, run_state: RunSt
 
 
 func resolve_with_context(action_id: String, _stake: int, run_state: RunState, environment: Dictionary, rng: RngStream, _ui_state: Dictionary = {}) -> Dictionary:
+	if _bonus_recovery_required(_peek_machine(environment)):
+		return _empty_slot_result(action_id, environment, BonusRecoveryScript.recovery_message())
 	var machine: Dictionary = _ensure_machine_state(run_state, environment, rng)
 	var normalized_action := _normalize_action(action_id)
 	if normalized_action.begins_with("slot_bonus_"):
@@ -968,6 +1007,8 @@ func surface_pointer_command(surface_action: String, index: int, phase: String, 
 
 
 func surface_action_command(surface_action: String, index: int, confirm_requested: bool, ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> Dictionary:
+	if _bonus_recovery_required(_peek_machine(environment)):
+		return GameModule.surface_command({"handled": true, "message": BonusRecoveryScript.recovery_message()})
 	var machine: Dictionary = _ensure_machine_state(run_state, environment, run_state.create_rng("slot_surface_action") if run_state != null else null)
 	if surface_action.begins_with(SELECT_BET_PREFIX):
 		var bet_id := surface_action.substr(SELECT_BET_PREFIX.length())
@@ -1066,7 +1107,9 @@ func surface_uses_auto_tick() -> bool:
 
 func surface_needs_auto_tick(ui_state: Dictionary, run_state: RunState, environment: Dictionary) -> bool:
 	# Per-frame check: peek (zero-copy, read-only) instead of deep-copying the machine.
-	var machine: Dictionary = _peek_machine(environment)
+	var machine := BonusRecoveryScript.machine_view(_peek_machine(environment), definition)
+	if BonusRecoveryScript.recovery_required(machine, definition):
+		return false
 	var buffalo_bonus_action := _buffalo_bonus_auto_action(machine)
 	if not buffalo_bonus_action.is_empty():
 		var bonus_surface_time := _surface_timing_msec(ui_state)
@@ -1091,7 +1134,9 @@ func surface_auto_action_uses_lightweight_ui_state() -> bool:
 func surface_auto_action_command(ui_state: Dictionary, _run_state: RunState, environment: Dictionary, _surface_status: Dictionary = {}) -> Dictionary:
 	# The common autoplay path only inspects machine state. Take an owned copy
 	# solely in the recovery branches that actually mutate it.
-	var machine: Dictionary = _query_machine(_run_state, environment, "slot_auto_action")
+	var machine := BonusRecoveryScript.machine_view(_query_machine(_run_state, environment, "slot_auto_action"), definition)
+	if BonusRecoveryScript.recovery_required(machine, definition):
+		return {"handled": false}
 	if machine.is_empty():
 		return {"handled": false}
 	var surface_time := _surface_timing_msec(ui_state)
@@ -1835,7 +1880,7 @@ func _ensure_machine_state(run_state: RunState, environment: Dictionary, rng: Rn
 			generation_rng.configure(1)
 		machine = generator.generate_machine(run_state, environment, generation_rng, definition, get_id())
 		_write_machine(environment, machine, false)
-	elif int(machine.get("schema_version", 0)) != StateScript.SCHEMA_VERSION:
+	elif not _bonus_recovery_required(machine) and int(machine.get("schema_version", 0)) != StateScript.SCHEMA_VERSION:
 		machine = StateScript.normalize(machine)
 		_write_machine(environment, machine, false)
 	return machine

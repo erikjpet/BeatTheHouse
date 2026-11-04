@@ -177,6 +177,13 @@ func draw(surface, surface_state: Dictionary, definition: Dictionary) -> bool:
 	if str(surface_state.get("surface_renderer", "")) != "slot_machine":
 		return false
 	surface.surface_begin_design_space_inset(DESIGN_SIZE, Vector2.ZERO)
+	if bool(surface_state.get("slot_bonus_recovery_required", false)):
+		surface.draw_rect(Rect2(Vector2.ZERO, DESIGN_SIZE), Color("#04080f"))
+		surface.surface_label_centered("SAVED BONUS", Rect2(100, 150, 760, 50), 24, Color("#f8fafc"))
+		surface.surface_label_centered(str(surface_state.get("slot_bonus_recovery_message", "")), Rect2(60, 225, 840, 72), 17, Color("#f8fafc"))
+		surface.surface_label_centered("You can leave this machine and continue your run.", Rect2(100, 315, 760, 46), 15, Color("#9bd5ff"))
+		_draw_back_control(surface, Color("#ff4fb3"), Color("#35e0ff"))
+		return true
 	var skin: Dictionary = _read_dict(surface_state.get("slot_skin", {}))
 	var palette: Dictionary = _read_dict(skin.get("palette", {}))
 	var primary := Color(str(palette.get("primary", "#24112f")))
@@ -1149,6 +1156,8 @@ func _draw_feature_area(surface, state: Dictionary, definition: Dictionary, skin
 
 
 func _pinball_takeover_active(state: Dictionary) -> bool:
+	if bool(state.get("slot_bonus_recovery_required", false)):
+		return false
 	var active: Dictionary = _read_dict(state.get("slot_active_bonus", {}))
 	if active.is_empty() or not bool(active.get("active", false)):
 		return false

@@ -908,7 +908,10 @@ function Get-StandaloneContractScripts {
         "scripts/tests/fixsweep06_1_audio_recovery_contract.gd",
         "scripts/tests/fixsweep06_1_lifecycle_contract.gd",
         "scripts/tests/fixsweep06_1_packaging_runtime_contract.gd",
-        "scripts/tests/fixsweep06_1_player_text_contract.gd"
+        "scripts/tests/fixsweep06_1_player_text_contract.gd",
+        "scripts/tests/slot_bonus_family_recovery_check.gd",
+        "scripts/tests/slot_bonus_family_surface_check.gd",
+        "scripts/tests/slot_bonus_family_cold_check.gd"
     )
     $results = New-Object System.Collections.Generic.List[string]
     foreach ($relativePath in $priorityRelativePaths) {
@@ -966,6 +969,10 @@ function Invoke-StandaloneContracts {
             $contractName = [System.IO.Path]::GetFileNameWithoutExtension($resourcePath)
             $stageName = "standalone_contract_" + $contractName
             $stageUserRoot = Join-Path $script:ReportRoot ("standalone_user_data\" + $contractName)
+            $slotFamilyPrivateStage = $contractName -in @("slot_bonus_family_recovery_check", "slot_bonus_family_surface_check", "slot_bonus_family_cold_check")
+            if ($slotFamilyPrivateStage) {
+                $stageUserRoot = [System.IO.Path]::GetFullPath((Join-Path $stageUserRoot ("native-private-slot-family-" + [guid]::NewGuid().ToString("N"))))
+            }
             New-Item -ItemType Directory -Force -Path $stageUserRoot | Out-Null
             $env:BTH_DISTRIBUTION_BUILD = "1"
             $env:BTH_DISTRIBUTION_DATA_ROOT = $stageUserRoot
@@ -973,8 +980,40 @@ function Invoke-StandaloneContracts {
             $env:BTH_META_COLLECTION_PATH = Join-Path $stageUserRoot "meta_collection.json"
             $env:BTH_USER_SETTINGS_PATH = Join-Path $stageUserRoot "settings.json"
             $env:BTH_DEVELOPER_PLACEMENT_PATH = Join-Path $stageUserRoot "developer_placements.json"
-            $strictObjectDbLeaks = $script:StrictObjectDbLeakStageNames -contains $stageName
-            Invoke-GodotScript -Name $stageName -ScriptPath $resourcePath -StageTimeoutSec (Get-StageTimeout "standalone_contract") -StrictObjectDbLeaks:$strictObjectDbLeaks
+            $slotFamilyPrivateEnvironment = @{}
+            if ($slotFamilyPrivateStage) {
+                foreach ($environmentName in @("APPDATA", "LOCALAPPDATA", "XDG_DATA_HOME", "BTH_SAVE_DIR", "BTH_SLOT_FAMILY_PRIVATE_ROOT", "BTH_SLOT_FAMILY_COLD_STAGE")) {
+                    $slotFamilyPrivateEnvironment[$environmentName] = [System.Environment]::GetEnvironmentVariable($environmentName, "Process")
+                }
+            }
+            if ($contractName -eq "slot_bonus_family_cold_check") {
+                $slotFamilyPrivateEnvironment["BTH_TARGET_OUTPUT"] = [System.Environment]::GetEnvironmentVariable("BTH_TARGET_OUTPUT", "Process")
+            }
+            try {
+                if ($slotFamilyPrivateStage) {
+                    $env:APPDATA = $stageUserRoot
+                    $env:LOCALAPPDATA = $stageUserRoot
+                    $env:XDG_DATA_HOME = $stageUserRoot
+                    $env:BTH_SAVE_DIR = Join-Path $stageUserRoot "saves"
+                    $env:BTH_SLOT_FAMILY_PRIVATE_ROOT = $stageUserRoot
+                }
+                $strictObjectDbLeaks = $script:StrictObjectDbLeakStageNames -contains $stageName
+                if ($contractName -eq "slot_bonus_family_cold_check") {
+                    foreach ($coldStage in @("write", "read")) {
+                        $env:BTH_SLOT_FAMILY_COLD_STAGE = $coldStage
+                        $env:BTH_TARGET_OUTPUT = Join-Path $stageUserRoot ("slot_bonus_family_cold_" + $coldStage + ".json")
+                        Invoke-GodotScript -Name ($stageName + "_" + $coldStage) -ScriptPath $resourcePath -StageTimeoutSec (Get-StageTimeout "standalone_contract") -StrictObjectDbLeaks:$strictObjectDbLeaks
+                    }
+                }
+                else {
+                    Invoke-GodotScript -Name $stageName -ScriptPath $resourcePath -StageTimeoutSec (Get-StageTimeout "standalone_contract") -StrictObjectDbLeaks:$strictObjectDbLeaks
+                }
+            }
+            finally {
+                foreach ($environmentName in $slotFamilyPrivateEnvironment.Keys) {
+                    [System.Environment]::SetEnvironmentVariable($environmentName, $slotFamilyPrivateEnvironment[$environmentName], "Process")
+                }
+            }
         }
     }
     finally {

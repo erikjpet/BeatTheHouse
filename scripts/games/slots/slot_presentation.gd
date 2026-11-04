@@ -7,6 +7,7 @@ extends RefCounted
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 
 const StateScript := preload("res://scripts/games/slots/slot_machine_state.gd")
+const BonusRecoveryScript := preload("res://scripts/games/slots/slot_bonus_recovery.gd")
 const CatalogScript := preload("res://scripts/games/slots/slot_catalog.gd")
 const PinballFeatureScript := preload("res://scripts/games/slots/pinball/pinball_feature.gd")
 const BUFFALO_GRAND_BASE_MULTIPLIER := 50
@@ -24,6 +25,9 @@ func _init() -> void:
 
 
 func surface_state(machine: Dictionary, run_state: RunState, definition: Dictionary, ui_state: Dictionary = {}) -> Dictionary:
+	machine = BonusRecoveryScript.machine_view(machine, definition)
+	if BonusRecoveryScript.recovery_required(machine, definition):
+		return _bonus_recovery_surface_state(machine, ui_state)
 	machine = _surface_machine_view(machine)
 	var stored_active_bonus: Dictionary = machine.get("active_bonus", {}) if typeof(machine.get("active_bonus", {})) == TYPE_DICTIONARY else {}
 	var surface_time_msec := maxi(0, int(ui_state.get("drunk_scaled_surface_time_msec", ui_state.get("surface_time_msec", 0))))
@@ -97,6 +101,8 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 		# wager, feature, and machine authority still change only at action boundaries.
 		"surface_animates_idle": true,
 		"surface_realtime_state_refresh": true,
+		"slot_bonus_recovery_required": false,
+		"slot_bonus_recovery_message": "",
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
 		"surface_action_bindings": {
@@ -229,7 +235,10 @@ func surface_state(machine: Dictionary, run_state: RunState, definition: Diction
 	})
 
 
-func realtime_state_patch(machine: Dictionary, run_state: RunState, ui_state: Dictionary, current_surface_state: Dictionary = {}) -> Dictionary:
+func realtime_state_patch(machine: Dictionary, run_state: RunState, ui_state: Dictionary, current_surface_state: Dictionary = {}, definition: Dictionary = {}) -> Dictionary:
+	machine = BonusRecoveryScript.machine_view(machine, definition)
+	if BonusRecoveryScript.recovery_required(machine, definition):
+		return _bonus_recovery_surface_state(machine, ui_state)
 	var surface_time_msec := maxi(0, int(ui_state.get("drunk_scaled_surface_time_msec", ui_state.get("surface_time_msec", 0))))
 	var stored_active_bonus: Dictionary = machine.get("active_bonus", {}) if typeof(machine.get("active_bonus", {})) == TYPE_DICTIONARY else {}
 	var animation_id := str(machine.get("slot_animation_id", ""))
@@ -254,6 +263,8 @@ func realtime_state_patch(machine: Dictionary, run_state: RunState, ui_state: Di
 	var skin: Dictionary = current_surface_state.get("slot_skin", {}) if typeof(current_surface_state.get("slot_skin", {})) == TYPE_DICTIONARY else {}
 	return {
 		"surface_realtime_state_refresh": true,
+		"slot_bonus_recovery_required": false,
+		"slot_bonus_recovery_message": "",
 		# The canvas scheduler already owns Slot's visible cadence: active reel and
 		# feature channels draw at 60 fps, while Web attract mode intentionally uses
 		# its declared low-detail idle cadence. This 16 ms presentation patch only
@@ -305,6 +316,8 @@ func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary
 		var realtime_message := "Bonus active: %s." % str(live.get("mode", "feature")).replace("_", " ").capitalize()
 		return {
 			"surface_realtime_state_refresh": true,
+			"slot_bonus_recovery_required": false,
+			"slot_bonus_recovery_message": "",
 			# The installed slot_feature channel keeps live Pinball at 60 fps. Let
 			# that scheduler consume the newest simulation patch instead of queueing
 			# a duplicate redraw from the realtime refresh path.
@@ -363,6 +376,8 @@ func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary
 		"surface_stake_controls_required": false,
 		"surface_animates_idle": true,
 		"surface_realtime_state_refresh": true,
+		"slot_bonus_recovery_required": false,
+		"slot_bonus_recovery_message": "",
 		"surface_embeds_outcomes": true,
 		"surface_suppresses_game_result_burst": true,
 		"surface_action_bindings": {
@@ -437,6 +452,30 @@ func _pinball_active_surface_state(machine: Dictionary, active_bonus: Dictionary
 		"outcome_message": result_message,
 		"has_recent_outcome": true,
 	}
+
+
+func _bonus_recovery_surface_state(machine: Dictionary, ui_state: Dictionary) -> Dictionary:
+	return _slot_surface_spec({
+		"surface_renderer": "slot_machine", "surface_life": "reel_machine", "surface_cast": "machine",
+		"surface_controls_native": true, "surface_fixed_price_actions": true,
+		"surface_stake_controls_required": false, "surface_animates_idle": true,
+		"surface_realtime_state_refresh": true, "surface_embeds_outcomes": true,
+		"surface_suppresses_game_result_burst": true, "surface_action_bindings": {},
+		"surface_animation_channels": [], "surface_action_blocks": [],
+		"surface_audio": {}, "native_selected_surface_actions": {},
+		"slot_cabinet_identity": "slot_bonus_recovery", "slot_cabinet_signature": "slot_bonus_recovery",
+		"slot_cabinet_title": "Saved Bonus", "has_recent_outcome": false,
+		"slot_bonus_recovery_required": true,
+		"slot_bonus_recovery_message": BonusRecoveryScript.recovery_message(),
+		"slot_visual_time_msec": maxi(0, int(ui_state.get("drunk_scaled_surface_time_msec", ui_state.get("surface_time_msec", 0)))),
+		"machine_key": str(machine.get("machine_key", "")),
+		"slot_type_id": str(machine.get("type_id", "")), "slot_format_id": str(machine.get("format_id", "")),
+		"slot_skin": {}, "slot_active_bonus": machine.get("active_bonus", {}).duplicate(true),
+		"slot_active_bonus_active": false, "slot_feature_scene": {},
+		"slot_animation_id": "", "slot_reel_timeline": [], "slot_grid": [], "slot_previous_grid": [],
+		"slot_audio_cues": [], "slot_bet_options": [], "slot_nudge_available": false,
+		"result_message": BonusRecoveryScript.recovery_message(),
+	})
 
 
 func _surface_message(machine: Dictionary, active_bonus: Dictionary) -> String:
