@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-04T21:28:34.938136+00:00",
+  "observed_at": "2026-11-04T21:37:03.797570+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-04T21:28:34.938136+00:00",
-      "source": "Actualactive final006integration/publication:3testedsourcecommits, allownJobsclosed0, native/VM/fullsaveparity andScratchtarget pass. Timebudgetfixed; freshglobalguard failsactualnewexternalwork; contentprofile/delivery remainOpen. Otherowners preserved."
+      "observed_at": "2026-11-04T21:37:03.797570+00:00",
+      "source": "Actualactive final006publication/reconciliation:3testedsourcecommits+reportpublished,9qualifiedsourcesunchanged, ownJobs0. ExistingNEXTservicefoundstopped/PIDabsent; no restart. Globalguard/content/fullcoverage/deliveryOpen; preparingprecisehandoff. Otherownerspreserved."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",

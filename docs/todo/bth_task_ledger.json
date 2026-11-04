@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T21:28:34.938136+00:00",
+  "updated_at": "2026-11-04T21:37:03.797570+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13510,12 +13510,17 @@
           "kind": "phase006_qualified_source_and_explicit_remaining_gates",
           "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
           "summary": "3scopedtestedcommits:17e8eb39censusindex,42eafd35audiolegacy,fabd7495Scratchholdpolicy. Explicit6filefullsemanticcoverage; otherreviewinventoriesnotfullcoverage. Timefailurefixedbutglobalcensusentryblockedbynewexternalwork; broadcontent180stimeoutnewstablefollowup. AppchildNEXTstillrequired; umbrellaOpen."
+        },
+        {
+          "kind": "phase006_source_published_delivery_and_global_acceptance_open",
+          "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
+          "summary": "Published3testedsourcecommits+boundedreviewdocevidence onmain253454b7ff0449fcb216248bbeaaa3c53d23cdd2. Explicit6modulefullcoverage advanced; no wholeauditclosure. Globalprocesscensus/fullcontent/NEXT remainOpen; existingwatcherstopped/lastreservefalse. No peer/service intervention."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Publishtestedphase006removals withoutweakeningguards, retainNEXT delivery Openbehindreserve, thencontinue remainingnonpaused semanticcoverage/fivebaselinegroups/contentprofiling andfreshglobalguardacceptance. Preserveexplicititem/scenariopause andactivecompatibility.",
+      "next_action": "Continue remainingnonpaused semanticcoverage, fivebaselinegroups andnewcontentprofiling/globalguardacceptance. Published006removals remainOpenforNEXT becauseexistingserviceisstopped andlastreserveadmissionfalse; preservepauseditem/scenario andallactivecompatibility.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -13525,7 +13530,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T21:28:34.938136+00:00"
+      "updated_at": "2026-11-04T21:37:03.797570+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -18722,7 +18727,7 @@
         }
       },
       "state": "open",
-      "status": "RECOVERY_AND_OBSOLETE_ROW_REMOVAL_PUBLISHED_NEXT_CAPACITY_BLOCKED",
+      "status": "QUALIFIED_SOURCE_PUBLISHED_NEXT_STOPPED_AND_CAPACITY_BLOCKED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -18748,9 +18753,11 @@
         "commit": null,
         "evidence": [
           "docs/testing/slot_legacy_family_recovery.md",
-          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/slot-family005-source-publication-r1.json"
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/slot-family005-source-publication-r1.json",
+          "docs/testing/deprecated_code_audit_continuation_006.md",
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json"
         ],
-        "scope": "Qualified source published on main at 81f3ecf69a70bcbdc7d4d1d6c71efd1668e8c54c; exact source observed by existing watcher, capacity admission prevents export. Served NEXT remains f3058b6daab820e9d747c4c4aabc2d983e9ae32e. No new artifact/served-changed-code/browser acceptance."
+        "scope": "Qualifiedsource included in main253454b7ff0449fcb216248bbeaaa3c53d23cdd2. ExistingNEXTautomation nowstopped (recordedPIDabsent), lastavailable05a9e798 predatespublishedtarget. ServedNEXT remainsf3058b6daab820e9d747c4c4aabc2d983e9ae32e. Lastcapacity checkalsofailed. Noexactnewsourceack/export/assets/Webacceptance."
       },
       "evidence": [
         {
@@ -18782,22 +18789,27 @@
           "kind": "exact_source_publication_capacity_blocked",
           "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/slot-family005-source-publication-r1.json",
           "summary": "Main push81f3ecf69a70bcbdc7d4d1d6c71efd1668e8c54c verified; watcher exactavailableSource matches. Capacity13110951936/13958643712bytes false; HTTPSservedNEXT remainsf3058b6daab820e9d747c4c4aabc2d983e9ae32e. No new export/Webacceptance. IncomingCoin/Roulette main preserved and12coldsourcehashes unchanged."
+        },
+        {
+          "kind": "published_source_stopped_service_no_delivery",
+          "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json",
+          "summary": "Normalmainpush253454b7ff0449fcb216248bbeaaa3c53d23cdd2 succeeded afterpreservingRoulettecontinuation; qualified9sourcehashes unchanged. Existingwatcherstoppedbeforethispublication, no exactnewsourceack. Servedf3058b6dverifiedHTTPS; reservefailurealsoretained. No restart/workerstop/guardbypass; deliveryOpen."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Observe exact NEXT deployment/assets/changed behavior after existing capacity admission recovers; keep delivery Open meanwhile. Source is published and focused native/save acceptance passes. Continue broader nonpaused audit and separately tracked aggregate-time-budget attribution without weakening guards.",
+      "next_action": "Retainexactsource/deliveryrequirements Open. Afterauthorizedexistingservice resumption andunchangedcapacity admission, verify exactpublishedartifact/servedassets/changedbehavior. Continue independentnonpausedaudit; no watcherrestart or reservechange fromthisaudit.",
       "blocker": {
         "state": "active",
-        "kind": "resource_capacity",
-        "description": "Insufficient shared disk reserve for export: 13110951936 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+        "kind": "next_watcher_stopped_and_capacity",
+        "description": "NEXTstatusautomation/phase stopped, updated21:22:11Z; recordedPID11968 absent. Lastavailable05a9e798, newmain253454b7ff0449fcb216248bbeaaa3c53d23cdd2 notobserved. Lastreserve12982792192bytesfree/13958643712required; HTTPSservedNEXT remainsf3058b6d. Stopcause notestablished; auditperformedno serviceintervention.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T19:58:20.161569Z",
+        "observed_at": "2026-11-04T21:35:15.803809Z",
         "evidence": [
-          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/slot-family005-source-publication-r1.json"
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T19:59:38.708404+00:00"
+      "updated_at": "2026-11-04T21:37:03.797570+00:00"
     },
     {
       "id": "BTH061-AUDIT-BLACKJACK-BASELINE-004",
@@ -19602,13 +19614,20 @@
         }
       },
       "state": "open",
-      "status": "BOUNDED_DISPOSITIONS_RECORDED_REQUIRED_CHILD_DELIVERY_OPEN",
+      "status": "BOUNDED_REVIEW_COMMITTED_REQUIRED_CHILD_DELIVERY_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "e7891755e9ed4b085b4d535a0b73bfecd03204b7",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_006.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -19639,7 +19658,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T20:43:35.646779+00:00"
+      "updated_at": "2026-11-04T21:37:03.797570+00:00"
     },
     {
       "id": "BTH061-AUDIT-TOOL-RUNTIME-006",
@@ -19672,13 +19691,20 @@
         }
       },
       "state": "open",
-      "status": "BOUNDED_DISPOSITIONS_RECORDED_REQUIRED_CHILD_DELIVERY_OPEN",
+      "status": "BOUNDED_REVIEW_COMMITTED_REQUIRED_CHILD_DELIVERY_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "e7891755e9ed4b085b4d535a0b73bfecd03204b7",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_006.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -19709,7 +19735,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T20:43:35.646779+00:00"
+      "updated_at": "2026-11-04T21:37:03.797570+00:00"
     },
     {
       "id": "BTH061-AUDIT-INSTANT-GAMES-006",
@@ -19742,13 +19768,20 @@
         }
       },
       "state": "open",
-      "status": "BOUNDED_DISPOSITIONS_RECORDED_REQUIRED_CHILD_DELIVERY_OPEN",
+      "status": "BOUNDED_REVIEW_COMMITTED_REQUIRED_CHILD_DELIVERY_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "e7891755e9ed4b085b4d535a0b73bfecd03204b7",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_006.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -19779,7 +19812,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T21:04:52.412614+00:00"
+      "updated_at": "2026-11-04T21:37:03.797570+00:00"
     },
     {
       "id": "BTH061-AUDIT-AUDIO-LEGACY-006",
@@ -19820,7 +19853,7 @@
         }
       },
       "state": "open",
-      "status": "NATIVE_AND_JS_PARITY_REMOVAL_COMMITTED_NEXT_OPEN",
+      "status": "QUALIFIED_SOURCE_PUBLISHED_NEXT_STOPPED_AND_CAPACITY_BLOCKED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -19838,8 +19871,11 @@
         "required": true,
         "state": "pending",
         "commit": null,
-        "evidence": [],
-        "scope": "Scoped source committed locally; current native/fullstream/account parity, JSbootstrap and existingaudio contracts pass. Main publication/NEXT delivery stillpending; maintained aggregate requalification remains separatelyOpen."
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_006.md",
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json"
+        ],
+        "scope": "Qualifiedsource included in main253454b7ff0449fcb216248bbeaaa3c53d23cdd2. ExistingNEXTautomation nowstopped (recordedPIDabsent), lastavailable05a9e798 predatespublishedtarget. ServedNEXT remainsf3058b6daab820e9d747c4c4aabc2d983e9ae32e. Lastcapacity checkalsofailed. Noexactnewsourceack/export/assets/Webacceptance."
       },
       "evidence": [
         {
@@ -19851,20 +19887,27 @@
           "kind": "qualified_scoped_audio_removal",
           "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
           "summary": "Source42eafd35655dd6779fcba2ba55d1c426fcade5cf removes2retiredinternalJSfalsestubs/privateunsupportedbareinputbranches/redundant16bittail. All29bridgeGDmethods+327PMPsignatures kept,324PMPbodies unchanged. Nativebaseline109/candidate107checks0fails samefixture+sameofficialSave, complete19observation/accountparity equal; VM40pass; existingAudioRecovery/FeaturePCMcontracts pass. No realbrowser/audio/Webacceptance."
+        },
+        {
+          "kind": "published_source_stopped_service_no_delivery",
+          "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json",
+          "summary": "Normalmainpush253454b7ff0449fcb216248bbeaaa3c53d23cdd2 succeeded afterpreservingRoulettecontinuation; qualified9sourcehashes unchanged. Existingwatcherstoppedbeforethispublication, no exactnewsourceack. Servedf3058b6dverifiedHTTPS; reservefailurealsoretained. No restart/workerstop/guardbypass; deliveryOpen."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish qualified scoped source after final composed native/guard acceptance; observeexactNEXT admission. KeepdeliveryOpen behindreserve; preservepubliccodec/rawinspection andsupportedWAV/OGG/gzip behavior.",
+      "next_action": "Retainexactsource/deliveryrequirements Open. Afterauthorizedexistingservice resumption andunchangedcapacity admission, verify exactpublishedartifact/servedassets/changedbehavior. Continue independentnonpausedaudit; no watcherrestart or reservechange fromthisaudit.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": null,
+        "state": "active",
+        "kind": "next_watcher_stopped_and_capacity",
+        "description": "NEXTstatusautomation/phase stopped, updated21:22:11Z; recordedPID11968 absent. Lastavailable05a9e798, newmain253454b7ff0449fcb216248bbeaaa3c53d23cdd2 notobserved. Lastreserve12982792192bytesfree/13958643712required; HTTPSservedNEXT remainsf3058b6d. Stopcause notestablished; auditperformedno serviceintervention.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T20:15:24.619833+00:00",
-        "evidence": []
+        "observed_at": "2026-11-04T21:35:15.803809Z",
+        "evidence": [
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T20:43:35.646779+00:00"
+      "updated_at": "2026-11-04T21:37:03.797570+00:00"
     },
     {
       "id": "BTH061-AUDIT-SCRATCH-HELD-SALE-006",
@@ -19904,7 +19947,7 @@
         }
       },
       "state": "open",
-      "status": "FULL_SAVED_STATE_PARITY_REMOVAL_COMMITTED_NEXT_OPEN",
+      "status": "QUALIFIED_SOURCE_PUBLISHED_NEXT_STOPPED_AND_CAPACITY_BLOCKED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -19922,8 +19965,11 @@
         "required": true,
         "state": "pending",
         "commit": null,
-        "evidence": [],
-        "scope": "Qualified scopedsource committed; current native savedstate/Canvas proof passes. Main publication and exact NEXT delivery remain pending behind existing capacity gate."
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_006.md",
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json"
+        ],
+        "scope": "Qualifiedsource included in main253454b7ff0449fcb216248bbeaaa3c53d23cdd2. ExistingNEXTautomation nowstopped (recordedPIDabsent), lastavailable05a9e798 predatespublishedtarget. ServedNEXT remainsf3058b6daab820e9d747c4c4aabc2d983e9ae32e. Lastcapacity checkalsofailed. Noexactnewsourceack/export/assets/Webacceptance."
       },
       "evidence": [
         {
@@ -19940,20 +19986,27 @@
           "kind": "maintained_target_and_tool_parser_acceptance",
           "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
           "summary": "Exact9source/34symbol maintainedcomposition supportsScratchtargetselector; executesalltargetassertions0fails includingpublicreleasedCrossword purchasepreview. Separatebroadcontenttimeoutretained. Requiredpassiveperfconsumernativecheck-onlyPASS. AllOwnJobs0; source9eca/test5b689/perf844cd remainexact."
+        },
+        {
+          "kind": "published_source_stopped_service_no_delivery",
+          "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json",
+          "summary": "Normalmainpush253454b7ff0449fcb216248bbeaaa3c53d23cdd2 succeeded afterpreservingRoulettecontinuation; qualified9sourcehashes unchanged. Existingwatcherstoppedbeforethispublication, no exactnewsourceack. Servedf3058b6dverifiedHTTPS; reservefailurealsoretained. No restart/workerstop/guardbypass; deliveryOpen."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish qualifiedscoped source andobserveexistingNEXT exactadmission. KeepdeliveryOpen untilnewartifact/assets/changedbehavior qualify aftercapacityrecovers; fullaggregateglobalcensus andbroadcontent remainseparateOpenacceptance.",
+      "next_action": "Retainexactsource/deliveryrequirements Open. Afterauthorizedexistingservice resumption andunchangedcapacity admission, verify exactpublishedartifact/servedassets/changedbehavior. Continue independentnonpausedaudit; no watcherrestart or reservechange fromthisaudit.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": null,
+        "state": "active",
+        "kind": "next_watcher_stopped_and_capacity",
+        "description": "NEXTstatusautomation/phase stopped, updated21:22:11Z; recordedPID11968 absent. Lastavailable05a9e798, newmain253454b7ff0449fcb216248bbeaaa3c53d23cdd2 notobserved. Lastreserve12982792192bytesfree/13958643712required; HTTPSservedNEXT remainsf3058b6d. Stopcause notestablished; auditperformedno serviceintervention.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T20:15:24.619833+00:00",
-        "evidence": []
+        "observed_at": "2026-11-04T21:35:15.803809Z",
+        "evidence": [
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T21:28:34.938136+00:00"
+      "updated_at": "2026-11-04T21:37:03.797570+00:00"
     },
     {
       "id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
