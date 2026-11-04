@@ -1,0 +1,327 @@
+{
+  "schema": "bth.deprecated_audit_continuation007/v1",
+  "observed_at": "2026-11-04T22:59:02.792520+00:00",
+  "baseline_commit": "aece9cffa8c17c53f90943e108e1194403a496db",
+  "full_objective_complete": false,
+  "production_source_changes": [],
+  "coverage": {
+    "current_core_paths": 95,
+    "original_full_body_equivalent": 59,
+    "additional_targeted_only_equivalent": 7,
+    "whole_blob_delta_or_absent": 29,
+    "fresh_full_body_projection": 1,
+    "method_declarations": 4384,
+    "csv": "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+    "csv_sha256": "a2b8b38f47696d0e3a0a275e61feff3dedcba5a54b110ada8ff92790fb29fe1c",
+    "current_consumer_closure_inferred": false
+  },
+  "diagnostic": {
+    "task": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+    "observed_utc": "2026-11-04T22:51:34.630068+00:00",
+    "head": "aece9cffa8c17c53f90943e108e1194403a496db",
+    "job": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content007-profile-r1\\job.json",
+    "limits": {
+      "control_flags": 5,
+      "cpu_rate": 1200,
+      "aggregate_job_cpu_percent": 12.0,
+      "kill_on_close": true,
+      "breakaway_allowed": false,
+      "job_memory_limit_bytes": 2147483648,
+      "active_processes": 0
+    },
+    "deadline_seconds": 180,
+    "exit": null,
+    "timed_out": true,
+    "script_error": false,
+    "active_at_release": 0,
+    "cpu_seconds": 179.09375,
+    "trace_count": 71,
+    "completed": [
+      {
+        "stage": "init_content_load",
+        "detail": "",
+        "seconds": 16.598445
+      },
+      {
+        "stage": "init_fixture_library",
+        "detail": "",
+        "seconds": 0.000601
+      },
+      {
+        "stage": "init_content_fingerprint",
+        "detail": "",
+        "seconds": 0.047188
+      },
+      {
+        "stage": "init_fixture_fingerprint",
+        "detail": "",
+        "seconds": 0.000257
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_canonical_pack_paths",
+        "seconds": 0.000624
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_player_facing_description_copy",
+        "seconds": 0.001681
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_destination_decision_contract",
+        "seconds": 0.000439
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_release_copy_style_blockers",
+        "seconds": 0.840306
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_content_art_presentation",
+        "seconds": 0.009099
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_blackjack_item_content",
+        "seconds": 0.183532
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_m2_pack_availability",
+        "seconds": 0.000428
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_tier_two_venue_progression",
+        "seconds": 5.626492
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_baccarat_grand_casino_only",
+        "seconds": 0.000146
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_environment_game_pool_distribution",
+        "seconds": 1.795378
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_physical_game_fixture_capacity",
+        "seconds": 0.097332
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_environment_encounter_freshness",
+        "seconds": 0.45304
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_travel_unlock_event_copy",
+        "seconds": 0.001192
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_high_risk_table_limit_overrides",
+        "seconds": 0.012491
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_environment_open_hours",
+        "seconds": 0.0008
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_dialogue_system_content",
+        "seconds": 0.000244
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_talk_content_pass_content",
+        "seconds": 0.091174
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_content_validation_boot_surfacing",
+        "seconds": 0.058301
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_t4_3_event_pack",
+        "seconds": 1.840882
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_action_trigger_candidate_index",
+        "seconds": 0.007482
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_t4_4_item_pack",
+        "seconds": 0.238678
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_content_group_modularity",
+        "seconds": 0.031473
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_challenge_pack_content",
+        "seconds": 0.00065
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_s0_2_baseline_regression_fixtures",
+        "seconds": 0.027193
+      },
+      {
+        "stage": "content_core_child",
+        "detail": "_check_sa_2_per_frame_contracts",
+        "seconds": 0.620914
+      },
+      {
+        "stage": "content_child",
+        "detail": "_check_content_core",
+        "seconds": 11.941065
+      },
+      {
+        "stage": "content_child",
+        "detail": "_check_content_scenario_engine",
+        "seconds": 26.924281
+      },
+      {
+        "stage": "content_child",
+        "detail": "_check_punchline_layer_contract",
+        "seconds": 8.103925
+      },
+      {
+        "stage": "content_child",
+        "detail": "_check_tier2_scenario_contract",
+        "seconds": 16.296035
+      },
+      {
+        "stage": "content_child",
+        "detail": "_check_scenario_backlog_contract",
+        "seconds": 13.178387
+      }
+    ],
+    "unmatched_boundaries": [
+      {
+        "stage": "check_callable",
+        "detail": "content",
+        "entered_engine_seconds": 34.18359,
+        "observed_until_last_trace_seconds": 76.44408,
+        "last_trace_is_not_deadline": true
+      },
+      {
+        "stage": "content_child",
+        "detail": "_check_scenario_sequence_contract",
+        "entered_engine_seconds": 110.62767,
+        "observed_until_last_trace_seconds": 0.0,
+        "last_trace_is_not_deadline": true
+      }
+    ],
+    "diagnostic_only": true,
+    "fingerprint_guard_not_skipped": true,
+    "original_assertions_order_maintained": true,
+    "further_work": "Determine safe maintained orchestration preserving original observer order, or attribute remaining sequence/semantic cost before any repair. No source assertion skipped or guard changed."
+  },
+  "instrumentation": {
+    "base_sha256": "00a72c01c29d9db2acd1ccccd2e116a0167b255d63941fc4a401f1dc64c2037c",
+    "profile_sha256": "5ec70f202d65e24d659b754028f878160dc3564b3d6094c3aa520d84fc4ee7c1",
+    "source_count": 9,
+    "required_symbol_count": 34,
+    "base_method_count": 942,
+    "trace_call_count": 83,
+    "whole_runner_byte_exact_after_trace_removal": true,
+    "original_method_signatures_and_order_restored_exact": true,
+    "all_original_assertions_calls_arguments_and_order_restored_exact": true,
+    "maintained_sources": {
+      "scripts/tests/foundation/check_core_content.gd": "ad5581e6ea6bd49697a20d0d80150c92709fc0f871fc6c5f4c8a9591ac813385",
+      "scripts/tests/foundation/check_slots_surfaces.gd": "3852e23591ee287c4af64f3829471f4870cd583298be38d62fdaf803999428dc",
+      "scripts/tests/foundation/check_table_games.gd": "013f39f457f7399c4b88ea61057c321c1086112b786da81ab5a1fe9cece4cc9f",
+      "scripts/tests/foundation/check_items_events_world.gd": "7487cf457ae60cb49ec9d72822f387be3b2f4d2a9258a75435c1a6038ea8dc30",
+      "scripts/tests/foundation/check_delivery_runs.gd": "9eddd97c0fd1dc38243c4617b5a8685fcf4b48b54ec4976448091db602ef0c0c",
+      "scripts/tests/foundation/check_lenders_release_saves.gd": "c6043bb1db5476a3c4ae8f7d02d829885067e1b061d6d7ee7d4a82de838abbe2",
+      "scripts/tests/foundation/check_scratch_tickets.gd": "5b689d94e9c10f74da6148b930378b56d36dbb74026073d0809f00bff54f043d",
+      "scripts/tests/foundation/check_cage_environment_rework.gd": "e518b57cbfb9bd5741fbdecef2412131b7eff165f9c68c436b31991b0ff90fe3",
+      "scripts/tests/foundation/check_coin_pusher.gd": "b1c5a8e0f0d3cc9996c61c0e0d0de4ce5f740b1f439fc130f1cc02944e422791"
+    }
+  },
+  "frozen_production_source_sha256": {
+    "scripts/ui/web_audio_bridge.gd": "a5386ee1ffbb7ea746d6498528bab71fa8eb8947deda591178b1d1b0553d277e",
+    "scripts/ui/procedural_music_player.gd": "aec8aad65a3326092234e41f4eaeb93355e88db416ded561ce57acc5e0252ce6",
+    "scripts/games/scratch_tickets.gd": "9eca0cdde5b140653b6c40fafa3a857d4b3d828cef13577995bd5b1070b17756",
+    "scripts/tests/foundation/check_scratch_tickets.gd": "5b689d94e9c10f74da6148b930378b56d36dbb74026073d0809f00bff54f043d",
+    "tools/foundation_performance_probe.gd": "844cd2bc3aed3611c45f592fe5bbd290403025cf6609b758b6ff2fd010aa0687",
+    "tools/function_census.ps1": "e35bbbd8b382fc015ead34c7092a7b7bdfd70e87da55ab5a4822d47e0ae3203f",
+    "tools/validate_project.ps1": "7a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b",
+    "tools/check_godot.ps1": "5af024cdbd9ead0e16c3241eadd0d6273100590850b654a7cad812231b602f4d"
+  },
+  "next_artifact": {
+    "source_commit": "aece9cffa8c17c53f90943e108e1194403a496db",
+    "source_tree": "e24a5b02c25cad1e867d1535bee89d4aac1b74d6",
+    "version": "0.6.0-dev+aece9cffa8c1",
+    "archive_sha256": "38aca524daf47d74e5a2b1a643c56d9200169cf1fe9c18ee5367add1af6c3482",
+    "asset_checks": [
+      {
+        "pipeline_sha256": "924951524b7bc6789837f5d39c9610a0d1bcd7341cb32284a1074cdfd20023fb",
+        "status": 200,
+        "served_check": "HEAD size/MIME joined to exact-build export hashes",
+        "path": "index.pck",
+        "bytes": 47206712
+      },
+      {
+        "pipeline_sha256": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8",
+        "status": 200,
+        "served_check": "HEAD size/MIME joined to exact-build export hashes",
+        "path": "index.wasm",
+        "bytes": 1508237
+      },
+      {
+        "pipeline_sha256": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0",
+        "status": 200,
+        "served_check": "HEAD size/MIME joined to exact-build export hashes",
+        "path": "index.side.wasm",
+        "bytes": 21802358
+      },
+      {
+        "pipeline_sha256": "82c71b7d743027817c8f5041ad2f052565bf27fe43ec60312a2473af08957943",
+        "status": 200,
+        "served_check": "HEAD size/MIME joined to exact-build export hashes",
+        "path": "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+        "bytes": 340886
+      }
+    ],
+    "pck_audit": {
+      "passed": true,
+      "package_sha256": "924951524b7bc6789837f5d39c9610a0d1bcd7341cb32284a1074cdfd20023fb",
+      "changed_ui_present": [
+        "scripts/ui/web_audio_bridge.gdc",
+        "scripts/ui/procedural_music_player.gdc",
+        "scripts/games/scratch_tickets.gdc"
+      ],
+      "file_count": 1166
+    },
+    "basic_startup": "unverified",
+    "startup_error": "Error: GPU_SANDBOX_REQUIRED",
+    "page_navigation_attempted": false,
+    "gpu_probe_webgl": [
+      "disabled_off"
+    ],
+    "gpu_probe_sandboxed": [
+      false
+    ],
+    "gpu_probe_error": "Error: cdpSession.send: Target page, context or browser has been closed"
+  },
+  "owned_jobs_closed_zero": [
+    "content007-profile-r1",
+    "next-startup-audit007-r1",
+    "gpu007-probe-r1",
+    "gpu007-probe-r2"
+  ],
+  "limits": "Prior source qualification remains historical/current-exact-path evidence; no new native regression, full aggregate, whole catalog, Web gameplay or full consumer coverage pass."
+}

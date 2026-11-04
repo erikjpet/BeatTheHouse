@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T21:47:26.094833+00:00",
+  "updated_at": "2026-11-04T22:59:02.792520+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -12626,763 +12626,952 @@
           "areas": [
             {
               "id": "scripts/core/art_contracts.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/attribute_badges.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/bar_dice_ritual_projection.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/blackjack_action_authority.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/build_identity.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/cage_economy_model.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/card_shoe.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/character_chain_model.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/character_offer_model.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/character_roster.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/collection_drop_service.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/collection_item_resolver.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/content_library.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/craps06_3_environment_binding.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/crew_delivery_schedule.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/crew_heist_model.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/crew_play_model.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/crew_poker_model.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/crew_recruitment_model.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/crew_run_facade.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/crew_state_model.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/crew_turn_model.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/crew_world_sequence_adapter.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/delivery_run_facade.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/delivery_run_model.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/developer_placement_store.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/durable_store.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/environment_base_semantic_records.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/environment_event_resolver.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/environment_hours.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/environment_instance.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/environment_object_manifest.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/environment_placement.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/environment_runtime_scheduler.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/environment_semantic_inventory.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/environment_slot_binder.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/event_module.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/function_options.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/game_module.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Exact phase002/003 source-equivalent scoped receiver/history/private-graph review carries forward. Full present body/branch and consumer review remain unqualified; this is not counted as full-body coverage."
             },
             {
               "id": "scripts/core/game_module_registry.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/game_ritual_host_authority.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/game_ritual_layout.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/game_ritual_runtime.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Exact phase002/003 source-equivalent scoped receiver/history/private-graph review carries forward. Full present body/branch and consumer review remain unqualified; this is not counted as full-body coverage."
             },
             {
               "id": "scripts/core/game_ritual_schema.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/grand_casino_duel_model.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/grand_casino_duel_ritual_projection.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/grand_casino_run_facade.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/grand_casino_showdown_model.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/io_result.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/item_effect.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/json_coerce.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/keys.gd",
               "state": "unknown",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/meta_collection_service.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/music_delivery_index.gd",
               "state": "reviewed",
               "evidence": [
-                "docs/testing/deprecated_code_audit_continuation_006.md"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Full006semanticbody/caller/engine/JS/save/public review. Currentbridge derives byonly2closedlegacyJSstubremovals, independentlyexactsource+native/VMqualified. No wholecodebase orlargePMP/SFXbodycoverage claim."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/numbers_model.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/persistence_paths.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/persistent_environment_projection.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Fresh full current103line/7method body/history/delta review plus actual RunState/facade/SaveService/exact-Script codec receiver boundaries. Packed/budget/snapshot fallbacks remain active; no removal."
             },
             {
               "id": "scripts/core/platform_services.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/police_sweep_model.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/profile_inventory.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/rng_stream.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/room_presentation_publication.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/run_action_service.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/run_generator.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/run_money_flow_archive.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Exact phase002/003 source-equivalent scoped receiver/history/private-graph review carries forward. Full present body/branch and consumer review remain unqualified; this is not counted as full-body coverage."
             },
             {
               "id": "scripts/core/run_save_codec.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Exact phase002/003 source-equivalent scoped receiver/history/private-graph review carries forward. Full present body/branch and consumer review remain unqualified; this is not counted as full-body coverage."
             },
             {
               "id": "scripts/core/run_state.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/run_state_schema.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Exact phase002/003 source-equivalent scoped receiver/history/private-graph review carries forward. Full present body/branch and consumer review remain unqualified; this is not counted as full-body coverage."
             },
             {
               "id": "scripts/core/run_terminal_evaluator.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/save_service.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Exact phase002/003 source-equivalent scoped receiver/history/private-graph review carries forward. Full present body/branch and consumer review remain unqualified; this is not counted as full-body coverage."
             },
             {
               "id": "scripts/core/scenario_engine.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/scenario_extension_dispatch.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/scenario_handlers/bars_road.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/scenario_handlers/punchline_clubs.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/scenario_handlers/queen_public.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/scenario_handlers/roadside_shelter.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/scenario_handlers/semantic_v1.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/scenario_handlers/shops_streets.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/scenario_host_transaction.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/scenario_layout_resolver.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/scenario_operation_registry.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/scenario_sequence_catalog.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/scenario_sequence_rollout_manifest.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/scenario_sequence_runtime.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/scenario_sequence_schema.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/scenario_venue_cycle.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Prior original bodies can be reused where exact; current whole-blob delta requires explicit disposition. See current per-file method deltas and separately qualified historical cleanup/alias changes. This row is not an automatic user pause or a claim that no prior review exists."
             },
             {
               "id": "scripts/core/static_data_cache.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/storage_numeric_json.gd",
               "state": "remaining",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/todo/bth_audit_scope_inventory.json",
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Exact phase002/003 source-equivalent scoped receiver/history/private-graph review carries forward. Full present body/branch and consumer review remain unqualified; this is not counted as full-body coverage."
             },
             {
               "id": "scripts/core/surface_sfx_manifest.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/town_network.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/town_state.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/tutorial_flow.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/user_settings.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/world_map.gd",
-              "state": "remaining",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Changed or never reviewed; semantic/caller classification required."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "scripts/core/world_sequence_package_catalog.gd",
-              "state": "unknown",
+              "state": "reviewed",
               "evidence": [
-                "docs/todo/bth_audit_scope_inventory.json"
+                "docs/testing/deprecated_code_audit_continuation_007.md",
+                "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+                "docs/testing/incremental_cleanup.md"
               ],
-              "scope": "Prior reviewed blob is unchanged; confirm the prior review scope and record a current parent-audit disposition before counting full semantic coverage. Reuse adequate evidence rather than automatically repeating work."
+              "scope": "Exact current body source equals completed original authored semantic audit d1bab36c; reuse full prior body review. Present consumer closure is not inferred and remains in parent candidate/compatibility acceptance."
             },
             {
               "id": "ui_game_semantic_review_127_files",
@@ -13515,12 +13704,17 @@
           "kind": "phase006_source_published_delivery_and_global_acceptance_open",
           "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
           "summary": "Published3testedsourcecommits+boundedreviewdocevidence onmain253454b7ff0449fcb216248bbeaaa3c53d23cdd2. Explicit6modulefullcoverage advanced; no wholeauditclosure. Globalprocesscensus/fullcontent/NEXT remainOpen; existingwatcherstopped/lastreservefalse. No peer/service intervention."
+        },
+        {
+          "kind": "active_continuation007",
+          "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
+          "summary": "Current main/NEXT aece9cff; catalog profiling and bounded coverage/runtime review actively progressing. Historical stopped-service/disk observations are superseded, not current blockers."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Continue remainingnonpaused semanticcoverage, fivebaselinegroups andnewcontentprofiling/globalguardacceptance. Published006removals remainOpenforNEXT becauseexistingserviceisstopped andlastreserveadmissionfalse; preservepauseditem/scenario andallactivecompatibility.",
+      "next_action": "Continue remaining current body/consumer review outside the explicit item/scenario implementation boundary, using exact inherited evidence. Next bounded candidates: numeric JSON and money archive scoped-only branches; remaining sequence38-step timings if required. Keep full audit, baseline follow-ups and incomplete delivery acceptance Open.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -13530,7 +13724,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T21:37:03.797570+00:00"
+      "updated_at": "2026-11-04T22:59:02.792520+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -14998,7 +15192,7 @@
         }
       },
       "state": "open",
-      "status": "FULL_AGGREGATE_PASS_PUBLISHED_NEXT_CAPACITY_BLOCKED",
+      "status": "EXACT_NEXT_ARTIFACT_VERIFIED_BROWSER_PREFLIGHT_OPEN",
       "owner": {
         "name": "Audit tooling repair",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -15024,14 +15218,15 @@
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
+        "commit": "aece9cffa8c17c53f90943e108e1194403a496db",
         "evidence": [
           "docs/testing/deprecated_code_audit_2026_11_04.md",
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
           "docs/testing/deprecated_code_audit_continuation_003.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json"
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md"
         ],
-        "scope": "Source published at 9a7da76a0dd6f19580e7e380bc8aca4010ff1e7f; current watcher observes it but capacity admission prevents export. No artifact/deployment/Web-startup acceptance for this continuation."
+        "scope": "Existing watcher deployed aece9cff at22:14:29Z; exact served commit/tree/redirect/archive provenance/PCK/four asset size+MIME checks pass. Basic Web launch remains unverified: fresh owned sandboxed-browser request reports sandboxed=false/WebGL disabled and exits before navigation. No gameplay failure or passed startup claimed."
       },
       "evidence": [
         {
@@ -15043,23 +15238,29 @@
           "kind": "exact_full_aggregate_pass",
           "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json",
           "summary": "Host-r9 full aggregate passed at exact488d86fa5f25efc460a74847305fe301f374017b, exit0, zero failures, validator SHA2567a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b unchanged during attempt.40native and11independent cases passed; actual File/Process/Lease/Residue/Cache/Environment postchecks all passed, terminal shadow sequence7green removed, all attempt handles terminal and owned Job0. No late independent substitution. r6/r7/r8 failures remain historical evidence; preserved r8 failed trees are not claimed cleaned. This proves the exact R9 aggregate scope, not global runtime or full parent audit coverage."
+        },
+        {
+          "kind": "exact_artifact_delivery_startup_unverified",
+          "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
+          "summary": "Current exact aece9cff served metadata/redirect/provenance/PCK/four assets PASS; historical stopped watcher/capacity blocker superseded. Basic browser launch unverified due pre-navigation GPU sandbox/WebGL environment failure; all own Jobs closed0."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Qualified source is published on main at 9a7da76a0dd6f19580e7e380bc8aca4010ff1e7f. Observe the existing watcher after capacity is restored; verify exact promoted/served identity and basic startup before closing delivery. Preserve reserves, retained builds and other workers.",
+      "next_action": "Obtain trustworthy exact-build basic launch with working sandboxed WebGL, or reuse an available exact-build startup receipt; retain focused native qualification and historical failed attempts. No watcher restart, reserve change, unsafe browser flag or broad regression rerun is indicated.",
       "blocker": {
         "state": "active",
-        "kind": "resource_capacity",
-        "description": "Insufficient shared disk reserve for export: 13113303040 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+        "kind": "browser_gpu_preflight",
+        "description": "Fresh disposable Chromium requested sandboxing but SystemInfo reports GPU sandboxed=false, no renderer and WebGL disabled. Startup guard rejected before page creation/navigation; diagnostic probe also could not complete after its browser closed. Exact archive/assets verified. This is a verification-environment boundary, not proof the game fails to launch. No sandbox/TLS/CPU/resource guard was relaxed.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:11:32.306961+00:00",
+        "observed_at": "2026-11-04T22:56:16.910464+00:00",
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json",
-          "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\startup.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\result.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:57:53.833Z"
+      "updated_at": "2026-11-04T22:56:16.910464+00:00"
     },
     {
       "id": "BTH061-AUDIT-MOBILE-CONTRACT-001",
@@ -17830,7 +18031,7 @@
         }
       },
       "state": "open",
-      "status": "FOCUSED_QUALIFIED_PUBLISHED_NEXT_CAPACITY_BLOCKED",
+      "status": "EXACT_NEXT_ARTIFACT_VERIFIED_BROWSER_PREFLIGHT_OPEN",
       "owner": {
         "name": "Audit host helper review",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -17848,13 +18049,14 @@
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
+        "commit": "aece9cffa8c17c53f90943e108e1194403a496db",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_003.md",
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json"
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md"
         ],
-        "scope": "Source published at 9a7da76a0dd6f19580e7e380bc8aca4010ff1e7f; current watcher observes it but capacity admission prevents export. No artifact/deployment/Web-startup acceptance for this continuation."
+        "scope": "Existing watcher deployed aece9cff at22:14:29Z; exact served commit/tree/redirect/archive provenance/PCK/four asset size+MIME checks pass. Basic Web launch remains unverified: fresh owned sandboxed-browser request reports sandboxed=false/WebGL disabled and exits before navigation. No gameplay failure or passed startup claimed."
       },
       "evidence": [
         {
@@ -17866,23 +18068,29 @@
           "kind": "exact_full_aggregate_pass",
           "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json",
           "summary": "Host-r9 full aggregate passed at exact488d86fa5f25efc460a74847305fe301f374017b, exit0, zero failures, validator SHA2567a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b unchanged during attempt.40native and11independent cases passed; actual File/Process/Lease/Residue/Cache/Environment postchecks all passed, terminal shadow sequence7green removed, all attempt handles terminal and owned Job0. No late independent substitution. r6/r7/r8 failures remain historical evidence; preserved r8 failed trees are not claimed cleaned. This proves the exact R9 aggregate scope, not global runtime or full parent audit coverage."
+        },
+        {
+          "kind": "exact_artifact_delivery_startup_unverified",
+          "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
+          "summary": "Current exact aece9cff served metadata/redirect/provenance/PCK/four assets PASS; historical stopped watcher/capacity blocker superseded. Basic browser launch unverified due pre-navigation GPU sandbox/WebGL environment failure; all own Jobs closed0."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Qualified source is published on main at 9a7da76a0dd6f19580e7e380bc8aca4010ff1e7f. Observe the existing watcher after capacity is restored; verify exact promoted/served identity and basic startup before closing delivery. Preserve reserves, retained builds and other workers.",
+      "next_action": "Obtain trustworthy exact-build basic launch with working sandboxed WebGL, or reuse an available exact-build startup receipt; retain focused native qualification and historical failed attempts. No watcher restart, reserve change, unsafe browser flag or broad regression rerun is indicated.",
       "blocker": {
         "state": "active",
-        "kind": "resource_capacity",
-        "description": "Insufficient shared disk reserve for export: 13113303040 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+        "kind": "browser_gpu_preflight",
+        "description": "Fresh disposable Chromium requested sandboxing but SystemInfo reports GPU sandboxed=false, no renderer and WebGL disabled. Startup guard rejected before page creation/navigation; diagnostic probe also could not complete after its browser closed. Exact archive/assets verified. This is a verification-environment boundary, not proof the game fails to launch. No sandbox/TLS/CPU/resource guard was relaxed.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:11:32.306961+00:00",
+        "observed_at": "2026-11-04T22:56:16.910464+00:00",
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json",
-          "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\startup.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\result.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:57:53.833Z"
+      "updated_at": "2026-11-04T22:56:16.910464+00:00"
     },
     {
       "id": "BTH061-AUDIT-UI-LITERAL-003",
@@ -17932,7 +18140,7 @@
         }
       },
       "state": "open",
-      "status": "FOCUSED_QUALIFIED_PUBLISHED_NEXT_CAPACITY_BLOCKED",
+      "status": "EXACT_NEXT_ARTIFACT_VERIFIED_BROWSER_PREFLIGHT_OPEN",
       "owner": {
         "name": "Audit validator regression follow-up",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -17950,13 +18158,14 @@
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
+        "commit": "aece9cffa8c17c53f90943e108e1194403a496db",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_003.md",
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json"
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md"
         ],
-        "scope": "Source published at 9a7da76a0dd6f19580e7e380bc8aca4010ff1e7f; current watcher observes it but capacity admission prevents export. No artifact/deployment/Web-startup acceptance for this continuation."
+        "scope": "Existing watcher deployed aece9cff at22:14:29Z; exact served commit/tree/redirect/archive provenance/PCK/four asset size+MIME checks pass. Basic Web launch remains unverified: fresh owned sandboxed-browser request reports sandboxed=false/WebGL disabled and exits before navigation. No gameplay failure or passed startup claimed."
       },
       "evidence": [
         {
@@ -17968,23 +18177,29 @@
           "kind": "exact_full_aggregate_pass",
           "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json",
           "summary": "Host-r9 full aggregate passed at exact488d86fa5f25efc460a74847305fe301f374017b, exit0, zero failures, validator SHA2567a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b unchanged during attempt.40native and11independent cases passed; actual File/Process/Lease/Residue/Cache/Environment postchecks all passed, terminal shadow sequence7green removed, all attempt handles terminal and owned Job0. No late independent substitution. r6/r7/r8 failures remain historical evidence; preserved r8 failed trees are not claimed cleaned. This proves the exact R9 aggregate scope, not global runtime or full parent audit coverage."
+        },
+        {
+          "kind": "exact_artifact_delivery_startup_unverified",
+          "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
+          "summary": "Current exact aece9cff served metadata/redirect/provenance/PCK/four assets PASS; historical stopped watcher/capacity blocker superseded. Basic browser launch unverified due pre-navigation GPU sandbox/WebGL environment failure; all own Jobs closed0."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Qualified source is published on main at 9a7da76a0dd6f19580e7e380bc8aca4010ff1e7f. Observe the existing watcher after capacity is restored; verify exact promoted/served identity and basic startup before closing delivery. Preserve reserves, retained builds and other workers.",
+      "next_action": "Obtain trustworthy exact-build basic launch with working sandboxed WebGL, or reuse an available exact-build startup receipt; retain focused native qualification and historical failed attempts. No watcher restart, reserve change, unsafe browser flag or broad regression rerun is indicated.",
       "blocker": {
         "state": "active",
-        "kind": "resource_capacity",
-        "description": "Insufficient shared disk reserve for export: 13113303040 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+        "kind": "browser_gpu_preflight",
+        "description": "Fresh disposable Chromium requested sandboxing but SystemInfo reports GPU sandboxed=false, no renderer and WebGL disabled. Startup guard rejected before page creation/navigation; diagnostic probe also could not complete after its browser closed. Exact archive/assets verified. This is a verification-environment boundary, not proof the game fails to launch. No sandbox/TLS/CPU/resource guard was relaxed.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:11:32.306961+00:00",
+        "observed_at": "2026-11-04T22:56:16.910464+00:00",
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json",
-          "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\startup.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\result.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:57:53.833Z"
+      "updated_at": "2026-11-04T22:56:16.910464+00:00"
     },
     {
       "id": "BTH061-AUDIT-MONEY-FIXTURE-003",
@@ -18034,7 +18249,7 @@
         }
       },
       "state": "open",
-      "status": "FOCUSED_QUALIFIED_PUBLISHED_NEXT_CAPACITY_BLOCKED",
+      "status": "EXACT_NEXT_ARTIFACT_VERIFIED_BROWSER_PREFLIGHT_OPEN",
       "owner": {
         "name": "Audit focused fixture follow-up",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -18052,13 +18267,14 @@
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
+        "commit": "aece9cffa8c17c53f90943e108e1194403a496db",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_003.md",
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json"
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md"
         ],
-        "scope": "Source published at 9a7da76a0dd6f19580e7e380bc8aca4010ff1e7f; current watcher observes it but capacity admission prevents export. No artifact/deployment/Web-startup acceptance for this continuation."
+        "scope": "Existing watcher deployed aece9cff at22:14:29Z; exact served commit/tree/redirect/archive provenance/PCK/four asset size+MIME checks pass. Basic Web launch remains unverified: fresh owned sandboxed-browser request reports sandboxed=false/WebGL disabled and exits before navigation. No gameplay failure or passed startup claimed."
       },
       "evidence": [
         {
@@ -18070,23 +18286,29 @@
           "kind": "exact_full_aggregate_pass",
           "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/tool_audit/validator_host_r9_safe_summary.json",
           "summary": "Host-r9 full aggregate passed at exact488d86fa5f25efc460a74847305fe301f374017b, exit0, zero failures, validator SHA2567a9bebf0f24e2fb98e6cf43eb689e5187bc8333f83fd2da2cb7399bcb1ff975b unchanged during attempt.40native and11independent cases passed; actual File/Process/Lease/Residue/Cache/Environment postchecks all passed, terminal shadow sequence7green removed, all attempt handles terminal and owned Job0. No late independent substitution. r6/r7/r8 failures remain historical evidence; preserved r8 failed trees are not claimed cleaned. This proves the exact R9 aggregate scope, not global runtime or full parent audit coverage."
+        },
+        {
+          "kind": "exact_artifact_delivery_startup_unverified",
+          "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
+          "summary": "Current exact aece9cff served metadata/redirect/provenance/PCK/four assets PASS; historical stopped watcher/capacity blocker superseded. Basic browser launch unverified due pre-navigation GPU sandbox/WebGL environment failure; all own Jobs closed0."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Qualified source is published on main at 9a7da76a0dd6f19580e7e380bc8aca4010ff1e7f. Observe the existing watcher after capacity is restored; verify exact promoted/served identity and basic startup before closing delivery. Preserve reserves, retained builds and other workers.",
+      "next_action": "Obtain trustworthy exact-build basic launch with working sandboxed WebGL, or reuse an available exact-build startup receipt; retain focused native qualification and historical failed attempts. No watcher restart, reserve change, unsafe browser flag or broad regression rerun is indicated.",
       "blocker": {
         "state": "active",
-        "kind": "resource_capacity",
-        "description": "Insufficient shared disk reserve for export: 13113303040 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+        "kind": "browser_gpu_preflight",
+        "description": "Fresh disposable Chromium requested sandboxing but SystemInfo reports GPU sandboxed=false, no renderer and WebGL disabled. Startup guard rejected before page creation/navigation; diagnostic probe also could not complete after its browser closed. Exact archive/assets verified. This is a verification-environment boundary, not proof the game fails to launch. No sandbox/TLS/CPU/resource guard was relaxed.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:11:32.306961+00:00",
+        "observed_at": "2026-11-04T22:56:16.910464+00:00",
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json",
-          "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\startup.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\result.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:57:53.833Z"
+      "updated_at": "2026-11-04T22:56:16.910464+00:00"
     },
     {
       "id": "BTH061-AUDIT-CORE-CONTROLLERS-003",
@@ -18440,7 +18662,7 @@
         }
       },
       "state": "open",
-      "status": "FOCUSED_NONREGRESSION_PUBLISHED_NEXT_CAPACITY_BLOCKED",
+      "status": "EXACT_NEXT_ARTIFACT_VERIFIED_BROWSER_PREFLIGHT_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -18457,12 +18679,13 @@
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
+        "commit": "aece9cffa8c17c53f90943e108e1194403a496db",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_004.md",
-          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json"
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md"
         ],
-        "scope": "Qualified source published on main at 55c31b0d91dcf678326dfe39e516cccda728aae2; existing watcher observes exact source but capacity admission prevents export. Served NEXT remains f3058b6daab820e9d747c4c4aabc2d983e9ae32e. No new artifact, served changed-code or Web startup acceptance."
+        "scope": "Existing watcher deployed aece9cff at22:14:29Z; exact served commit/tree/redirect/archive provenance/PCK/four asset size+MIME checks pass. Basic Web launch remains unverified: fresh owned sandboxed-browser request reports sandboxed=false/WebGL disabled and exits before navigation. No gameplay failure or passed startup claimed."
       },
       "evidence": [
         {
@@ -18479,23 +18702,29 @@
           "kind": "published_source_next_admission_blocked",
           "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json",
           "summary": "Main push succeeded for 55c31b0d91dcf678326dfe39e516cccda728aae2; watcher available_commit matches, capacity not admitted, old NEXT retained. No machinery restart, reserve reduction, deletion or bypass."
+        },
+        {
+          "kind": "exact_artifact_delivery_startup_unverified",
+          "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
+          "summary": "Current exact aece9cff served metadata/redirect/provenance/PCK/four assets PASS; historical stopped watcher/capacity blocker superseded. Basic browser launch unverified due pre-navigation GPU sandbox/WebGL environment failure; all own Jobs closed0."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Source is published and exact target observed. After capacity is restored, let the existing watcher export/promote normally, then verify exact current NEXT identity, served assets and basic startup. Preserve reserve guards and retained builds; delivery remains Open.",
+      "next_action": "Obtain trustworthy exact-build basic launch with working sandboxed WebGL, or reuse an available exact-build startup receipt; retain focused native qualification and historical failed attempts. No watcher restart, reserve change, unsafe browser flag or broad regression rerun is indicated.",
       "blocker": {
         "state": "active",
-        "kind": "resource_capacity",
-        "description": "Insufficient shared disk reserve for export: 13111214080 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+        "kind": "browser_gpu_preflight",
+        "description": "Fresh disposable Chromium requested sandboxing but SystemInfo reports GPU sandboxed=false, no renderer and WebGL disabled. Startup guard rejected before page creation/navigation; diagnostic probe also could not complete after its browser closed. Exact archive/assets verified. This is a verification-environment boundary, not proof the game fails to launch. No sandbox/TLS/CPU/resource guard was relaxed.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T12:02:02.009732-06:00",
+        "observed_at": "2026-11-04T22:56:16.910464+00:00",
         "evidence": [
-          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json",
-          "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\startup.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\result.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T18:03:04.268399+00:00"
+      "updated_at": "2026-11-04T22:56:16.910464+00:00"
     },
     {
       "id": "BTH061-AUDIT-SLOT-TICK-004",
@@ -18536,7 +18765,7 @@
         }
       },
       "state": "open",
-      "status": "FOCUSED_NONREGRESSION_PUBLISHED_NEXT_CAPACITY_BLOCKED",
+      "status": "EXACT_NEXT_ARTIFACT_VERIFIED_BROWSER_PREFLIGHT_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -18553,12 +18782,13 @@
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
+        "commit": "aece9cffa8c17c53f90943e108e1194403a496db",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_004.md",
-          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json"
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md"
         ],
-        "scope": "Qualified source published on main at 55c31b0d91dcf678326dfe39e516cccda728aae2; existing watcher observes exact source but capacity admission prevents export. Served NEXT remains f3058b6daab820e9d747c4c4aabc2d983e9ae32e. No new artifact, served changed-code or Web startup acceptance."
+        "scope": "Existing watcher deployed aece9cff at22:14:29Z; exact served commit/tree/redirect/archive provenance/PCK/four asset size+MIME checks pass. Basic Web launch remains unverified: fresh owned sandboxed-browser request reports sandboxed=false/WebGL disabled and exits before navigation. No gameplay failure or passed startup claimed."
       },
       "evidence": [
         {
@@ -18575,23 +18805,29 @@
           "kind": "published_source_next_admission_blocked",
           "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json",
           "summary": "Main push succeeded for 55c31b0d91dcf678326dfe39e516cccda728aae2; watcher available_commit matches, capacity not admitted, old NEXT retained. No machinery restart, reserve reduction, deletion or bypass."
+        },
+        {
+          "kind": "exact_artifact_delivery_startup_unverified",
+          "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
+          "summary": "Current exact aece9cff served metadata/redirect/provenance/PCK/four assets PASS; historical stopped watcher/capacity blocker superseded. Basic browser launch unverified due pre-navigation GPU sandbox/WebGL environment failure; all own Jobs closed0."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Source is published and exact target observed. After capacity is restored, let the existing watcher export/promote normally, then verify exact current NEXT identity, served assets and basic startup. Preserve reserve guards and retained builds; delivery remains Open.",
+      "next_action": "Obtain trustworthy exact-build basic launch with working sandboxed WebGL, or reuse an available exact-build startup receipt; retain focused native qualification and historical failed attempts. No watcher restart, reserve change, unsafe browser flag or broad regression rerun is indicated.",
       "blocker": {
         "state": "active",
-        "kind": "resource_capacity",
-        "description": "Insufficient shared disk reserve for export: 13111214080 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+        "kind": "browser_gpu_preflight",
+        "description": "Fresh disposable Chromium requested sandboxing but SystemInfo reports GPU sandboxed=false, no renderer and WebGL disabled. Startup guard rejected before page creation/navigation; diagnostic probe also could not complete after its browser closed. Exact archive/assets verified. This is a verification-environment boundary, not proof the game fails to launch. No sandbox/TLS/CPU/resource guard was relaxed.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T12:02:02.009732-06:00",
+        "observed_at": "2026-11-04T22:56:16.910464+00:00",
         "evidence": [
-          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json",
-          "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\startup.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\result.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T18:03:04.268399+00:00"
+      "updated_at": "2026-11-04T22:56:16.910464+00:00"
     },
     {
       "id": "BTH061-AUDIT-REPORT-FALLBACK-004",
@@ -18632,7 +18868,7 @@
         }
       },
       "state": "open",
-      "status": "FOCUSED_NONREGRESSION_PUBLISHED_NEXT_CAPACITY_BLOCKED",
+      "status": "EXACT_NEXT_ARTIFACT_VERIFIED_BROWSER_PREFLIGHT_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -18649,12 +18885,13 @@
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
+        "commit": "aece9cffa8c17c53f90943e108e1194403a496db",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_004.md",
-          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json"
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md"
         ],
-        "scope": "Qualified source published on main at 55c31b0d91dcf678326dfe39e516cccda728aae2; existing watcher observes exact source but capacity admission prevents export. Served NEXT remains f3058b6daab820e9d747c4c4aabc2d983e9ae32e. No new artifact, served changed-code or Web startup acceptance."
+        "scope": "Existing watcher deployed aece9cff at22:14:29Z; exact served commit/tree/redirect/archive provenance/PCK/four asset size+MIME checks pass. Basic Web launch remains unverified: fresh owned sandboxed-browser request reports sandboxed=false/WebGL disabled and exits before navigation. No gameplay failure or passed startup claimed."
       },
       "evidence": [
         {
@@ -18671,23 +18908,29 @@
           "kind": "published_source_next_admission_blocked",
           "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json",
           "summary": "Main push succeeded for 55c31b0d91dcf678326dfe39e516cccda728aae2; watcher available_commit matches, capacity not admitted, old NEXT retained. No machinery restart, reserve reduction, deletion or bypass."
+        },
+        {
+          "kind": "exact_artifact_delivery_startup_unverified",
+          "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
+          "summary": "Current exact aece9cff served metadata/redirect/provenance/PCK/four assets PASS; historical stopped watcher/capacity blocker superseded. Basic browser launch unverified due pre-navigation GPU sandbox/WebGL environment failure; all own Jobs closed0."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Source is published and exact target observed. After capacity is restored, let the existing watcher export/promote normally, then verify exact current NEXT identity, served assets and basic startup. Preserve reserve guards and retained builds; delivery remains Open.",
+      "next_action": "Obtain trustworthy exact-build basic launch with working sandboxed WebGL, or reuse an available exact-build startup receipt; retain focused native qualification and historical failed attempts. No watcher restart, reserve change, unsafe browser flag or broad regression rerun is indicated.",
       "blocker": {
         "state": "active",
-        "kind": "resource_capacity",
-        "description": "Insufficient shared disk reserve for export: 13111214080 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+        "kind": "browser_gpu_preflight",
+        "description": "Fresh disposable Chromium requested sandboxing but SystemInfo reports GPU sandboxed=false, no renderer and WebGL disabled. Startup guard rejected before page creation/navigation; diagnostic probe also could not complete after its browser closed. Exact archive/assets verified. This is a verification-environment boundary, not proof the game fails to launch. No sandbox/TLS/CPU/resource guard was relaxed.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T12:02:02.009732-06:00",
+        "observed_at": "2026-11-04T22:56:16.910464+00:00",
         "evidence": [
-          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json",
-          "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\startup.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\result.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T18:03:04.268399+00:00"
+      "updated_at": "2026-11-04T22:56:16.910464+00:00"
     },
     {
       "id": "BTH061-AUDIT-SLOT-LEGACY-FAMILY-004",
@@ -18727,7 +18970,7 @@
         }
       },
       "state": "open",
-      "status": "QUALIFIED_SOURCE_PUBLISHED_NEXT_STOPPED_AND_CAPACITY_BLOCKED",
+      "status": "EXACT_NEXT_ARTIFACT_VERIFIED_BROWSER_PREFLIGHT_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -18750,14 +18993,15 @@
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
+        "commit": "aece9cffa8c17c53f90943e108e1194403a496db",
         "evidence": [
           "docs/testing/slot_legacy_family_recovery.md",
           "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/slot-family005-source-publication-r1.json",
           "docs/testing/deprecated_code_audit_continuation_006.md",
-          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json"
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md"
         ],
-        "scope": "Qualifiedsource included in main253454b7ff0449fcb216248bbeaaa3c53d23cdd2. ExistingNEXTautomation nowstopped (recordedPIDabsent), lastavailable05a9e798 predatespublishedtarget. ServedNEXT remainsf3058b6daab820e9d747c4c4aabc2d983e9ae32e. Lastcapacity checkalsofailed. Noexactnewsourceack/export/assets/Webacceptance."
+        "scope": "Existing watcher deployed aece9cff at22:14:29Z; exact served commit/tree/redirect/archive provenance/PCK/four asset size+MIME checks pass. Basic Web launch remains unverified: fresh owned sandboxed-browser request reports sandboxed=false/WebGL disabled and exits before navigation. No gameplay failure or passed startup claimed."
       },
       "evidence": [
         {
@@ -18794,22 +19038,29 @@
           "kind": "published_source_stopped_service_no_delivery",
           "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json",
           "summary": "Normalmainpush253454b7ff0449fcb216248bbeaaa3c53d23cdd2 succeeded afterpreservingRoulettecontinuation; qualified9sourcehashes unchanged. Existingwatcherstoppedbeforethispublication, no exactnewsourceack. Servedf3058b6dverifiedHTTPS; reservefailurealsoretained. No restart/workerstop/guardbypass; deliveryOpen."
+        },
+        {
+          "kind": "exact_artifact_delivery_startup_unverified",
+          "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
+          "summary": "Current exact aece9cff served metadata/redirect/provenance/PCK/four assets PASS; historical stopped watcher/capacity blocker superseded. Basic browser launch unverified due pre-navigation GPU sandbox/WebGL environment failure; all own Jobs closed0."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Retainexactsource/deliveryrequirements Open. Afterauthorizedexistingservice resumption andunchangedcapacity admission, verify exactpublishedartifact/servedassets/changedbehavior. Continue independentnonpausedaudit; no watcherrestart or reservechange fromthisaudit.",
+      "next_action": "Obtain trustworthy exact-build basic launch with working sandboxed WebGL, or reuse an available exact-build startup receipt; retain focused native qualification and historical failed attempts. No watcher restart, reserve change, unsafe browser flag or broad regression rerun is indicated.",
       "blocker": {
         "state": "active",
-        "kind": "next_watcher_stopped_and_capacity",
-        "description": "NEXTstatusautomation/phase stopped, updated21:22:11Z; recordedPID11968 absent. Lastavailable05a9e798, newmain253454b7ff0449fcb216248bbeaaa3c53d23cdd2 notobserved. Lastreserve12982792192bytesfree/13958643712required; HTTPSservedNEXT remainsf3058b6d. Stopcause notestablished; auditperformedno serviceintervention.",
+        "kind": "browser_gpu_preflight",
+        "description": "Fresh disposable Chromium requested sandboxing but SystemInfo reports GPU sandboxed=false, no renderer and WebGL disabled. Startup guard rejected before page creation/navigation; diagnostic probe also could not complete after its browser closed. Exact archive/assets verified. This is a verification-environment boundary, not proof the game fails to launch. No sandbox/TLS/CPU/resource guard was relaxed.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T21:35:15.803809Z",
+        "observed_at": "2026-11-04T22:56:16.910464+00:00",
         "evidence": [
-          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json"
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\startup.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\result.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T21:37:03.797570+00:00"
+      "updated_at": "2026-11-04T22:56:16.910464+00:00"
     },
     {
       "id": "BTH061-AUDIT-BLACKJACK-BASELINE-004",
@@ -19853,7 +20104,7 @@
         }
       },
       "state": "open",
-      "status": "QUALIFIED_SOURCE_PUBLISHED_NEXT_STOPPED_AND_CAPACITY_BLOCKED",
+      "status": "EXACT_NEXT_ARTIFACT_VERIFIED_BROWSER_PREFLIGHT_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -19870,12 +20121,13 @@
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
+        "commit": "aece9cffa8c17c53f90943e108e1194403a496db",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_006.md",
-          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json"
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md"
         ],
-        "scope": "Qualifiedsource included in main253454b7ff0449fcb216248bbeaaa3c53d23cdd2. ExistingNEXTautomation nowstopped (recordedPIDabsent), lastavailable05a9e798 predatespublishedtarget. ServedNEXT remainsf3058b6daab820e9d747c4c4aabc2d983e9ae32e. Lastcapacity checkalsofailed. Noexactnewsourceack/export/assets/Webacceptance."
+        "scope": "Existing watcher deployed aece9cff at22:14:29Z; exact served commit/tree/redirect/archive provenance/PCK/four asset size+MIME checks pass. Basic Web launch remains unverified: fresh owned sandboxed-browser request reports sandboxed=false/WebGL disabled and exits before navigation. No gameplay failure or passed startup claimed."
       },
       "evidence": [
         {
@@ -19892,22 +20144,29 @@
           "kind": "published_source_stopped_service_no_delivery",
           "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json",
           "summary": "Normalmainpush253454b7ff0449fcb216248bbeaaa3c53d23cdd2 succeeded afterpreservingRoulettecontinuation; qualified9sourcehashes unchanged. Existingwatcherstoppedbeforethispublication, no exactnewsourceack. Servedf3058b6dverifiedHTTPS; reservefailurealsoretained. No restart/workerstop/guardbypass; deliveryOpen."
+        },
+        {
+          "kind": "exact_artifact_delivery_startup_unverified",
+          "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
+          "summary": "Current exact aece9cff served metadata/redirect/provenance/PCK/four assets PASS; historical stopped watcher/capacity blocker superseded. Basic browser launch unverified due pre-navigation GPU sandbox/WebGL environment failure; all own Jobs closed0."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Retainexactsource/deliveryrequirements Open. Afterauthorizedexistingservice resumption andunchangedcapacity admission, verify exactpublishedartifact/servedassets/changedbehavior. Continue independentnonpausedaudit; no watcherrestart or reservechange fromthisaudit.",
+      "next_action": "Obtain trustworthy exact-build basic launch with working sandboxed WebGL, or reuse an available exact-build startup receipt; retain focused native qualification and historical failed attempts. No watcher restart, reserve change, unsafe browser flag or broad regression rerun is indicated.",
       "blocker": {
         "state": "active",
-        "kind": "next_watcher_stopped_and_capacity",
-        "description": "NEXTstatusautomation/phase stopped, updated21:22:11Z; recordedPID11968 absent. Lastavailable05a9e798, newmain253454b7ff0449fcb216248bbeaaa3c53d23cdd2 notobserved. Lastreserve12982792192bytesfree/13958643712required; HTTPSservedNEXT remainsf3058b6d. Stopcause notestablished; auditperformedno serviceintervention.",
+        "kind": "browser_gpu_preflight",
+        "description": "Fresh disposable Chromium requested sandboxing but SystemInfo reports GPU sandboxed=false, no renderer and WebGL disabled. Startup guard rejected before page creation/navigation; diagnostic probe also could not complete after its browser closed. Exact archive/assets verified. This is a verification-environment boundary, not proof the game fails to launch. No sandbox/TLS/CPU/resource guard was relaxed.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T21:35:15.803809Z",
+        "observed_at": "2026-11-04T22:56:16.910464+00:00",
         "evidence": [
-          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json"
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\startup.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\result.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T21:37:03.797570+00:00"
+      "updated_at": "2026-11-04T22:56:16.910464+00:00"
     },
     {
       "id": "BTH061-AUDIT-SCRATCH-HELD-SALE-006",
@@ -19947,7 +20206,7 @@
         }
       },
       "state": "open",
-      "status": "QUALIFIED_SOURCE_PUBLISHED_NEXT_STOPPED_AND_CAPACITY_BLOCKED",
+      "status": "EXACT_NEXT_ARTIFACT_VERIFIED_BROWSER_PREFLIGHT_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -19964,12 +20223,13 @@
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
+        "commit": "aece9cffa8c17c53f90943e108e1194403a496db",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_006.md",
-          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json"
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md"
         ],
-        "scope": "Qualifiedsource included in main253454b7ff0449fcb216248bbeaaa3c53d23cdd2. ExistingNEXTautomation nowstopped (recordedPIDabsent), lastavailable05a9e798 predatespublishedtarget. ServedNEXT remainsf3058b6daab820e9d747c4c4aabc2d983e9ae32e. Lastcapacity checkalsofailed. Noexactnewsourceack/export/assets/Webacceptance."
+        "scope": "Existing watcher deployed aece9cff at22:14:29Z; exact served commit/tree/redirect/archive provenance/PCK/four asset size+MIME checks pass. Basic Web launch remains unverified: fresh owned sandboxed-browser request reports sandboxed=false/WebGL disabled and exits before navigation. No gameplay failure or passed startup claimed."
       },
       "evidence": [
         {
@@ -19991,22 +20251,29 @@
           "kind": "published_source_stopped_service_no_delivery",
           "reference": "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json",
           "summary": "Normalmainpush253454b7ff0449fcb216248bbeaaa3c53d23cdd2 succeeded afterpreservingRoulettecontinuation; qualified9sourcehashes unchanged. Existingwatcherstoppedbeforethispublication, no exactnewsourceack. Servedf3058b6dverifiedHTTPS; reservefailurealsoretained. No restart/workerstop/guardbypass; deliveryOpen."
+        },
+        {
+          "kind": "exact_artifact_delivery_startup_unverified",
+          "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
+          "summary": "Current exact aece9cff served metadata/redirect/provenance/PCK/four assets PASS; historical stopped watcher/capacity blocker superseded. Basic browser launch unverified due pre-navigation GPU sandbox/WebGL environment failure; all own Jobs closed0."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Retainexactsource/deliveryrequirements Open. Afterauthorizedexistingservice resumption andunchangedcapacity admission, verify exactpublishedartifact/servedassets/changedbehavior. Continue independentnonpausedaudit; no watcherrestart or reservechange fromthisaudit.",
+      "next_action": "Obtain trustworthy exact-build basic launch with working sandboxed WebGL, or reuse an available exact-build startup receipt; retain focused native qualification and historical failed attempts. No watcher restart, reserve change, unsafe browser flag or broad regression rerun is indicated.",
       "blocker": {
         "state": "active",
-        "kind": "next_watcher_stopped_and_capacity",
-        "description": "NEXTstatusautomation/phase stopped, updated21:22:11Z; recordedPID11968 absent. Lastavailable05a9e798, newmain253454b7ff0449fcb216248bbeaaa3c53d23cdd2 notobserved. Lastreserve12982792192bytesfree/13958643712required; HTTPSservedNEXT remainsf3058b6d. Stopcause notestablished; auditperformedno serviceintervention.",
+        "kind": "browser_gpu_preflight",
+        "description": "Fresh disposable Chromium requested sandboxing but SystemInfo reports GPU sandboxed=false, no renderer and WebGL disabled. Startup guard rejected before page creation/navigation; diagnostic probe also could not complete after its browser closed. Exact archive/assets verified. This is a verification-environment boundary, not proof the game fails to launch. No sandbox/TLS/CPU/resource guard was relaxed.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T21:35:15.803809Z",
+        "observed_at": "2026-11-04T22:56:16.910464+00:00",
         "evidence": [
-          "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json"
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\startup.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\result.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T21:37:03.797570+00:00"
+      "updated_at": "2026-11-04T22:56:16.910464+00:00"
     },
     {
       "id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
@@ -20018,7 +20285,7 @@
       ],
       "group": "current",
       "objective": {
-        "text": "Attribute the observed 180second whole-catalog content check timeout before the maintained Scratch game target began. Preserve source assertions and all resource/time/process guards, do not stop other workers or edit paused item/scenario implementations. Establish exact current baseline and appropriate scoped repair/acceptance without calling an unobserved broad suite green.",
+        "text": "Attribute the observed whole-command 180-second timeout while the whole-catalog content callable remained active before Scratch began. Distinguish startup/loading, callable and fingerprint timings. Preserve all source assertions, observer ordering and resource/time/process guards; do not stop other workers or edit paused item/scenario implementations. Establish a scoped repair or exact remaining attribution limits without claiming an unobserved broad suite green.",
         "source": "Current phase006 complete nine-source/34symbol maintained foundation composition: --suite=scratch_tickets logged only content START, then owned180second cap; actual supported Scratch target selector separatelypasses withallassertions.",
         "scope_confirmed": true,
         "acceptance": [
@@ -20046,7 +20313,7 @@
         }
       },
       "state": "open",
-      "status": "BROAD_CONTENT_180S_TIMEOUT_UNATTRIBUTED_OPEN",
+      "status": "ORIGINAL_BUDGET_PROFILE_SEQUENCE_BOUNDARY_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -20070,22 +20337,33 @@
           "kind": "read_only_content_callgraph_attribution_limits",
           "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
           "summary": "Read-onlysourcefinds9livecontentgroups/core25checks andpairedfull-libraryfingerprints; broad180sreceipt lacks subgroup timing. The3614mstarget durationincludespost-callfingerprints, notisolatedbody. Wrapperremainslive, decompositionchangesobserverorder; noobsoleteproof/repair/testpassclaimed."
+        },
+        {
+          "kind": "active_continuation007",
+          "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
+          "summary": "Current main/NEXT aece9cff; catalog profiling and bounded coverage/runtime review actively progressing. Historical stopped-service/disk observations are superseded, not current blockers."
+        },
+        {
+          "kind": "exact_original_order_bounded_timing",
+          "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
+          "summary": "Disposable exact9source/34symbol runner restores byte-for-byte after83traces/helper removal; all942 original methods retained.71events: initialload16.598s; initialfingerprints47ms/0.257ms; core25returns11.941s, scenarioengine26.924,punchline8.104,tier216.296,backlog13.178. Sequenceentered110.628engine seconds andhasnoafterbeforeoriginal180wallcap. Later3groups/callableafter/finalfingerprints/Scratchunreached; no completedgroupPASSclaim. Job0, no script parse error."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Profile generatedrunner callable andeachfingerprint separately, then9originalcontentchildren (andcore25ifdominant), underunchanged180s/resourceguards. Preserveobserverorder/allassertions/pausedimplementation. No stalledsubgroup orcatalogdefect attributedyet.",
+      "next_action": "If further attribution is needed, time the38 original direct ScenarioSequenceContract steps in a disposable runner under the same budget/order/guards. Preserve later semantic/inventory/arrival assertions and final mutation checks. No production optimization is justified by this partial trace alone.",
       "blocker": {
         "state": "active",
-        "kind": "bounded_content_timeout",
-        "description": "Observed whole-catalog content check didnotfinish within owned180second limit; targetScratchcase hadnotstarted. Cause/baseline notyetattributed.",
+        "kind": "right_censored_content_sequence_boundary",
+        "description": "Original 180-second process cap expires while ScenarioSequenceContract.check is active after five returned content children. No complete sequence cost, post-fingerprint cost, single causal defect or safe obsolete-wrapper replacement is established. Existing live wrapper cannot be deleted based on partial timing.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T21:17:43.534129+00:00",
+        "observed_at": "2026-11-04T22:56:16.910464+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_006.md"
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content007-profile-r1\\timing-summary.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T21:28:34.938136+00:00"
+      "updated_at": "2026-11-04T22:56:16.910464+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
@@ -20295,6 +20573,136 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-04T21:47:26.094833+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-COVERAGE-RECONCILE-007",
+      "name": "Reconcile prior semantic audit coverage against current source",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Recover exact earlier body-review receipts and compare current blobs. Distinguish semantic review from inventory/scans; carry forward only evidenced unchanged scopes. Keep the whole-codebase objective Open.",
+        "source": "Trusted parent continuation: resume unfinished deprecated-code audit outside paused item/scenario areas; current bounded continuation007.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "bounded-review",
+            "description": "Record exact current body/caller/compatibility dispositions and remaining scope in an associated review commit.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "BOUNDED_REVIEW_READY_FOR_ASSOCIATED_COMMIT",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Read-only review and coverage evidence; no application change proposed."
+      },
+      "evidence": [
+        {
+          "kind": "bounded_source_review",
+          "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
+          "summary": "Exact prior/current blob provenance and changed103line7method projection body/consumer review complete; no obsolete removal confirmed. Full audit and present consumer remainder stay Open."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Commit bounded review evidence, then associate the actual full commit before marking this bounded task Complete.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "No blocker; bounded review actively progressing.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T22:47:55.967748+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_007.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T22:56:16.910464+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-REMAINING-RUNTIME-007",
+      "name": "Review changed persistent-environment projection and authority consumers",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Review the changed persistent-environment projection, its actual producers, callers and borrowed-state/save boundary. Classify proven obsolete code only after authority/compatibility closure. Preserve paused item/scenario implementations.",
+        "source": "Trusted parent continuation: resume unfinished deprecated-code audit outside paused item/scenario areas; current bounded continuation007.",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "bounded-review",
+            "description": "Record exact current body/caller/compatibility dispositions and remaining scope in an associated review commit.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "BOUNDED_REVIEW_READY_FOR_ASSOCIATED_COMMIT",
+      "owner": {
+        "name": "Audit obsolete production code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Read-only review and coverage evidence; no application change proposed."
+      },
+      "evidence": [
+        {
+          "kind": "bounded_source_review",
+          "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
+          "summary": "Exact prior/current blob provenance and changed103line7method projection body/consumer review complete; no obsolete removal confirmed. Full audit and present consumer remainder stay Open."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Commit bounded review evidence, then associate the actual full commit before marking this bounded task Complete.",
+      "blocker": {
+        "state": "none",
+        "kind": "none",
+        "description": "No blocker; bounded review actively progressing.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T22:47:55.967748+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_007.md"
+        ]
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T22:56:16.910464+00:00"
     }
   ],
   "batches": [

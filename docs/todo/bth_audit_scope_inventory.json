@@ -1589,7 +1589,7 @@
         "Pauseditem/scenario implementations and5Scratchmembershipboundary methods",
         "Allnative/process/resource/time guards"
       ],
-      "census": "197.4\u219241.8seconds; entireJSON/MD byteequalonfrozen791inputs20325declarations",
+      "census": "197.4→41.8seconds; entireJSON/MD byteequalonfrozen791inputs20325declarations",
       "qualification": "Native/VM/fullsavedstateparity andmaintainedScratchtarget/toolparser pass. Bothunchangedfullentry attempts hitglobalcensus fromnewexternalwork within228.205/255.483s vs402.018s; completeentryOpen. Broadcontent180stimeout separatelyOpen; NEXTpendingcapacity.",
       "retained": [
         "Activeaudio synthesis/producer/fallback families",
@@ -1605,6 +1605,33 @@
       ],
       "published_source": "253454b7ff0449fcb216248bbeaaa3c53d23cdd2",
       "NEXT": "Existingwatcherstopped21:22:11Z/PIDabsent; exactnewsourceackpending; lastreservefalse; servedf3058b6d. No serviceintervention."
+    },
+    {
+      "phase": "007",
+      "parent_id": "BTH061-AUDIT-001",
+      "source_commit": "aece9cffa8c17c53f90943e108e1194403a496db",
+      "observed_at": "2026-11-04T22:59:02.792520+00:00",
+      "scope": "Coverage provenance, changed persistent projection and original-budget content diagnostic; not whole-codebase closure.",
+      "core_current_inventory": {
+        "paths": 95,
+        "method_declarations": 4384,
+        "original_full_body_source_equivalent_files": 59,
+        "additional_targeted_only_source_equivalent_files": 7,
+        "raw_whole_blob_delta_or_absent_files": 29,
+        "fresh_full_body_inside_delta_files": 1,
+        "current_consumer_closure_inferred": false,
+        "per_file_dispositions": "docs/testing/deprecated_code_audit_core_coverage_007.csv",
+        "historical_closed_deltas": [
+          "keys.gd exact reviewed cleanup",
+          "environment_placement.gd exact reviewed cleanup",
+          "character_offer_model.gd same preload paths and identifier-only substitution"
+        ]
+      },
+      "confirmed_new_removals": [],
+      "profile": "Original180secondwholeJobcap;71traceevents;5outergroups returned76.443693scombined;sequenceentered110.627670engineclock withoutafter; final3groups/postfingerprints/Scratchunreached. Not a suitepass.",
+      "delivery": "Exactaece9cffartifact/redirect/PCK/provenance/fourassetheadsverified; freshbrowserGPU/WebGLpreflightfailsbeforenavigation; startupunverified. Historical capacity/stopped observations superseded.",
+      "evidence": "docs/testing/deprecated_code_audit_continuation_007.md",
+      "whole_objective_complete": false
     }
   ]
 }

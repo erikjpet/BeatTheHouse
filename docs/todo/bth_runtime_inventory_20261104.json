@@ -1,6 +1,6 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-04T21:38:45.189375+00:00",
+  "observed_at": "2026-11-04T22:56:16.910464+00:00",
   "scope": {
     "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed.",
     "complete": false,
@@ -4042,6 +4042,334 @@
           "docs/testing/roulette_sealed_pending_r08.json"
         ],
         "limit": "Own bounded E-storage test only. All fixtures/profiles/evidence preserved, no original/shared cleanup or D reserve bypass."
+      }
+    },
+    {
+      "instance_id": "task9:content007-profile-r1",
+      "task_id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "content007-profile-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content007-profile-r1\\job.json:pid:31852",
+        "started_at": "2026-11-04T22:48:10.319638+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content007-profile-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "Fresh no-reuse output/private directory selected before owned suspended launch; exactJob receipt, not global PID matching."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T22:51:10.639624+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content007-profile-r1\\job.json:pid:31852",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content007-profile-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "OwnedJob drained active_at_release=0 before release; no current reused-PID inference."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T22:51:10.639624+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content007-profile-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content007-profile-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content007-profile-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content007-profile-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content007-profile-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T22:51:10.639624+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "content007-profile-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content007-profile-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_007.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T22:51:10.639624+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\content007-profile-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md"
+        ],
+        "limit": "Owned diagnostic/browser verification only; all fixtures/saves/evidence retained, no peer cleanup or guard bypass. Functional failures retained separately from clean process closure."
+      }
+    },
+    {
+      "instance_id": "task9:next-startup-audit007-r1",
+      "task_id": "BTH061-AUDIT-001",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "next-startup-audit007-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\job.json:pid:37088",
+        "started_at": "2026-11-04T22:51:34.713238+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "Fresh no-reuse output/private directory selected before owned suspended launch; exactJob receipt, not global PID matching."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T22:51:35.480268+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\job.json:pid:37088",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "OwnedJob drained active_at_release=0 before release; no current reused-PID inference."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T22:51:35.480268+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\startup_job.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\startup_job.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\startup_job.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\startup_job.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T22:51:35.480268+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "next-startup-audit007-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_007.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T22:51:35.480268+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md"
+        ],
+        "limit": "Owned diagnostic/browser verification only; all fixtures/saves/evidence retained, no peer cleanup or guard bypass. Functional failures retained separately from clean process closure."
+      }
+    },
+    {
+      "instance_id": "task9:gpu007-probe-r1",
+      "task_id": "BTH061-AUDIT-001",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "gpu007-probe-r1",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r1\\job.json:pid:37324",
+        "started_at": "2026-11-04T22:53:22.645452+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "Fresh no-reuse output/private directory selected before owned suspended launch; exactJob receipt, not global PID matching."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T22:53:23.401790+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r1\\job.json:pid:37324",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "OwnedJob drained active_at_release=0 before release; no current reused-PID inference."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T22:53:23.401790+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r1\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r1\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r1\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r1\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T22:53:23.401790+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "gpu007-probe-r1",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r1\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_007.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T22:53:23.401790+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r1\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md"
+        ],
+        "limit": "Owned diagnostic/browser verification only; all fixtures/saves/evidence retained, no peer cleanup or guard bypass. Functional failures retained separately from clean process closure."
+      }
+    },
+    {
+      "instance_id": "task9:gpu007-probe-r2",
+      "task_id": "BTH061-AUDIT-001",
+      "owner_task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "gpu007-probe-r2",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\job.json:pid:35616",
+        "started_at": "2026-11-04T22:53:47.599375+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "Fresh no-reuse output/private directory selected before owned suspended launch; exactJob receipt, not global PID matching."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T22:53:49.944782+00:00",
+        "key": "owned-job:C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\job.json:pid:35616",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "OwnedJob drained active_at_release=0 before release; no current reused-PID inference."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T22:53:49.944782+00:00",
+        "lease_until": null,
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\job.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\job.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\job.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\run_stage006.py",
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\job.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T22:53:49.944782+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "gpu007-probe-r2",
+          "remaining_count": 0,
+          "evidence": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\job.json",
+            "docs/testing/deprecated_code_audit_continuation_007.md"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T22:53:49.944782+00:00",
+        "evidence": [
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\job.json",
+          "docs/testing/deprecated_code_audit_continuation_007.md"
+        ],
+        "limit": "Owned diagnostic/browser verification only; all fixtures/saves/evidence retained, no peer cleanup or guard bypass. Functional failures retained separately from clean process closure."
       }
     }
   ],
