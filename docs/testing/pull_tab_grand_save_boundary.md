@@ -179,4 +179,11 @@ solely because this correction is committed or deployed. Preserve the original
 observation and associate the tested fix commit, NEXT identity and remaining
 limitation in the canonical stability ledger.
 
-Commit/NEXT receipt: pending final integration.
+Tested fix commit: `c43c95a9da3a7d1c4ff595619cb3c6614ef5bb30`.
+Integration with concurrent main documentation:
+`a1079b0f722965d4145ad4639f239b1959fc7bde`; production files retain the tested
+hashes above. The separate task-14 release receipt records the resulting pushed
+main/deployed identity, served payload and basic-launch verification. None of
+those delivery stages changes this task's Open status or original-save limit.
+The canonical ledger update preserves all 173 named task rows and their order,
+with no removed IDs, new IDs or duplicate IDs.
