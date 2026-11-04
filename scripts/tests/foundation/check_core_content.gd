@@ -162,8 +162,6 @@ class SurfaceHarness:
 	var draw_transform_records: Array = []
 	var draw_texture_rect_count := 0
 	var record_draw_rects := false
-	var stake_control_count := 0
-	var native_stake_strip_count := 0
 	var animation_active := false
 	var animation_elapsed := 999.0
 	var animation_duration := 2.4
@@ -184,8 +182,6 @@ class SurfaceHarness:
 		draw_transform_records = []
 		draw_texture_rect_count = 0
 		record_draw_rects = false
-		stake_control_count = 0
-		native_stake_strip_count = 0
 		animation_active = false
 		animation_elapsed = 999.0
 		animation_duration = 2.4
@@ -287,17 +283,6 @@ class SurfaceHarness:
 
 	func surface_draw_ready_badge(_rect: Rect2, _label: String) -> void:
 		pass
-
-	func surface_draw_stake_control(rect: Rect2, _label: String, enabled: bool, action: String) -> void:
-		stake_control_count += 1
-		if enabled:
-			surface_add_hit(rect, action)
-
-	func surface_draw_native_stake_strip(_pos: Vector2) -> void:
-		native_stake_strip_count += 1
-
-	func surface_draw_action_button(rect: Rect2, _label: String, action: String, index: int, _accent: Color) -> void:
-		surface_add_hit(rect, action, index)
 
 	func surface_add_hit(rect: Rect2, action: String, index: int = -1, expand_touch_hit: bool = true) -> void:
 		hit_regions.append({"rect": rect, "action": action, "index": index, "exact": not expand_touch_hit})

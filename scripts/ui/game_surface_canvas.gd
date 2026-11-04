@@ -1062,43 +1062,6 @@ func surface_draw_ready_badge(rect: Rect2, label: String) -> void:
 	surface_label(label, badge.position + Vector2(5, 11), 9, C_YELLOW)
 
 
-func surface_draw_stake_control(rect: Rect2, label: String, enabled: bool, action: String) -> void:
-	var hovered := surface_region_hovered(action)
-	var fill := Color(C_YELLOW.r, C_YELLOW.g, C_YELLOW.b, 0.24 if hovered else 0.16) if enabled else Color(0.04, 0.04, 0.07, 0.74)
-	draw_rect(rect, fill)
-	draw_rect(rect, C_WHITE if hovered and enabled else C_YELLOW if enabled else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.28), false, 2 if hovered else 1)
-	surface_label_centered(label, rect.grow(-2.0), 18, C_YELLOW if enabled else Color(C_SOFT.r, C_SOFT.g, C_SOFT.b, 0.52))
-	if enabled:
-		surface_add_hit(rect, action)
-
-
-func surface_draw_native_stake_strip(pos: Vector2) -> void:
-	if _surface_renderer() == "slot_machine":
-		return
-	var stake_text := "Stake -"
-	var enabled := bool(state.get("has_valid_stake", false))
-	if enabled:
-		stake_text = "Stake %d" % int(state.get("selected_stake", 0))
-	surface_label(stake_text, pos + Vector2(0, 22), 15, C_YELLOW)
-	surface_draw_stake_control(Rect2(pos + Vector2(74, 0), Vector2(26, 34)), "-", enabled, "surface_stake_down")
-	surface_draw_stake_control(Rect2(pos + Vector2(104, 0), Vector2(26, 34)), "+", enabled, "surface_stake_up")
-	surface_draw_stake_control(Rect2(pos + Vector2(134, 0), Vector2(44, 34)), "MAX", enabled, "surface_stake_max")
-
-
-func surface_draw_action_button(rect: Rect2, label: String, action: String, index: int, accent: Color) -> void:
-	var hovered := surface_region_hovered(action, index)
-	var selected := surface_native_action_selected(action)
-	var fill := Color(accent.r, accent.g, accent.b, 0.26 if selected else 0.16 if hovered else 0.10)
-	draw_rect(rect, fill)
-	draw_rect(rect, C_WHITE if hovered or selected else accent, false, 2 if hovered or selected else 1)
-	surface_label_centered(label.left(22), Rect2(rect.position + Vector2(6.0, 6.0), Vector2(rect.size.x - 12.0, rect.size.y - 12.0)), 15, accent)
-	if selected:
-		surface_draw_ready_badge(rect, "CLICK AGAIN")
-	elif hovered:
-		surface_draw_ready_badge(rect, "CLICK")
-	surface_add_hit(rect, action, index)
-
-
 func _ready() -> void:
 	# Active surfaces own their animation heartbeat. Hover and selection redraws
 	# are supplemental and must never be required for visible game motion.
