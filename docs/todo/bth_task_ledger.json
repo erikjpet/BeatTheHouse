@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T17:58:26.799842+00:00",
+  "updated_at": "2026-11-04T18:00:40.852984+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13455,12 +13455,17 @@
           "kind": "recorded_receipt",
           "reference": "https://github.com/erikjpet/BeatTheHouse/blob/main/docs/testing/deprecated_code_audit_2026_11_03.md",
           "summary": "Retains its original source/platform/fixture limits; not a new test."
+        },
+        {
+          "kind": "bounded_phase004_progress",
+          "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
+          "summary": "Three meaningful removals committed and targeted-qualified with exact inherited-failure comparison;6model and current host/game path reviews bounded only. Remaining legacy-family production path, five contract diagnosis groups, NEXT delivery and wider semantic coverage keep this umbrella Open."
         }
       ],
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Reconcile current whole-codebase coverage and all candidate dispositions, reusing the first bounded batch, thirteen earlier qualified audit children, completed tutorial fixture/animation repairs and independent core/native/UI/tool work. Finish only remaining nonpaused semantic review and the unchanged aggregate validator/global-census acceptance; preserve the explicit user item/scenario pause and full parent scope independently of every completed child.",
+      "next_action": "Continue remaining nonpaused semantic coverage and phase004 legacy-family authority/recovery plus named inherited contract diagnoses. Publish qualified removals and verify NEXT when reserve admission permits. Preserve explicit item/scenario pause and active save/public compatibility.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -13470,7 +13475,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:23:29.672223+00:00"
+      "updated_at": "2026-11-04T17:59:41.789985+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -18123,7 +18128,7 @@
             "id": "production-path-disposition",
             "description": "Exact bounded production review and semantic/history/consumer dispositions; confirmed obsolete code gets a separately qualified removal/delivery scope before implementation.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
               "docs/testing/deprecated_code_audit_continuation_004.md"
             ]
@@ -18136,13 +18141,20 @@
         }
       },
       "state": "open",
-      "status": "PRODUCTION_PATH_REVIEW_IN_PROGRESS",
+      "status": "BOUNDED_REVIEW_COMMITTED_REQUIRED_CHILDREN_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "e3fd55cad883a67e40000a90b15549b62eadeb1b",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_004.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -18155,20 +18167,25 @@
           "kind": "scoped_production_audit",
           "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
           "summary": "Review in progress; no new deletion or publication pass claimed."
+        },
+        {
+          "kind": "bounded_review_evidence_with_open_children",
+          "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
+          "summary": "Bounded review evidence committed in e3fd55cad883a67e40000a90b15549b62eadeb1b. Required child removal/delivery and legacy-family work remain Open; reconciliation therefore retains this review parent Open despite its completed read-only disposition."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Trace the scoped production paths at ff8eb28c; record concrete reachable/obsolete dispositions and propose exact meaningful removal only after evidence.",
+      "next_action": "Bounded read-only review evidence is committed. Complete the separately named removal/delivery and legacy-family required child work before closing this record; the full-codebase audit remains Open.",
       "blocker": {
         "state": "none",
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:25:47.651556+00:00",
+        "observed_at": "2026-11-04T17:59:41.789985+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T17:25:47.651556+00:00"
+      "updated_at": "2026-11-04T18:00:40.852984+00:00"
     },
     {
       "id": "BTH061-AUDIT-HOST-GAMEPLAY-004",
@@ -18188,7 +18205,7 @@
             "id": "production-path-disposition",
             "description": "Exact bounded production review and semantic/history/consumer dispositions; confirmed obsolete code gets a separately qualified removal/delivery scope before implementation.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
               "docs/testing/deprecated_code_audit_continuation_004.md"
             ]
@@ -18201,13 +18218,20 @@
         }
       },
       "state": "open",
-      "status": "PRODUCTION_PATH_REVIEW_IN_PROGRESS",
+      "status": "BOUNDED_REVIEW_COMMITTED_REQUIRED_CHILDREN_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "e3fd55cad883a67e40000a90b15549b62eadeb1b",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_004.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -18220,20 +18244,25 @@
           "kind": "scoped_production_audit",
           "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
           "summary": "Review in progress; no new deletion or publication pass claimed."
+        },
+        {
+          "kind": "bounded_review_evidence_with_open_children",
+          "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
+          "summary": "Bounded review evidence committed in e3fd55cad883a67e40000a90b15549b62eadeb1b. Required child removal/delivery and legacy-family work remain Open; reconciliation therefore retains this review parent Open despite its completed read-only disposition."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Trace the scoped production paths at ff8eb28c; record concrete reachable/obsolete dispositions and propose exact meaningful removal only after evidence.",
+      "next_action": "Bounded read-only review evidence is committed. Complete the separately named removal/delivery and legacy-family required child work before closing this record; the full-codebase audit remains Open.",
       "blocker": {
         "state": "none",
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:25:47.651556+00:00",
+        "observed_at": "2026-11-04T17:59:41.789985+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T17:25:47.651556+00:00"
+      "updated_at": "2026-11-04T18:00:40.852984+00:00"
     },
     {
       "id": "BTH061-AUDIT-REPORT-MODELS-004",
@@ -18253,7 +18282,7 @@
             "id": "production-path-disposition",
             "description": "Exact bounded production review and semantic/history/consumer dispositions; confirmed obsolete code gets a separately qualified removal/delivery scope before implementation.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
               "docs/testing/deprecated_code_audit_continuation_004.md"
             ]
@@ -18266,13 +18295,20 @@
         }
       },
       "state": "open",
-      "status": "PRODUCTION_PATH_REVIEW_IN_PROGRESS",
+      "status": "BOUNDED_REVIEW_COMMITTED_REQUIRED_CHILDREN_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "e3fd55cad883a67e40000a90b15549b62eadeb1b",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_004.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -18285,20 +18321,25 @@
           "kind": "scoped_production_audit",
           "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
           "summary": "Review in progress; no new deletion or publication pass claimed."
+        },
+        {
+          "kind": "bounded_review_evidence_with_open_children",
+          "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
+          "summary": "Bounded review evidence committed in e3fd55cad883a67e40000a90b15549b62eadeb1b. Required child removal/delivery and legacy-family work remain Open; reconciliation therefore retains this review parent Open despite its completed read-only disposition."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Trace the scoped production paths at ff8eb28c; record concrete reachable/obsolete dispositions and propose exact meaningful removal only after evidence.",
+      "next_action": "Bounded read-only review evidence is committed. Complete the separately named removal/delivery and legacy-family required child work before closing this record; the full-codebase audit remains Open.",
       "blocker": {
         "state": "none",
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:25:47.651556+00:00",
+        "observed_at": "2026-11-04T17:59:41.789985+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T17:25:47.651556+00:00"
+      "updated_at": "2026-11-04T18:00:40.852984+00:00"
     },
     {
       "id": "BTH061-AUDIT-GENERIC-CONTROLS-004",
