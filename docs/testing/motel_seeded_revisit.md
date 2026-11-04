@@ -124,8 +124,9 @@ sandbox are retained; no network/trust change was used to obtain a test pass.
 
 ## Release status
 
-The stable task stays Open until its fix commit is associated and exact NEXT
-identity/basic startup is verified. No original-save handoff is needed: the
+Implementation: [`0adf3925fc3d816ea818e84a9afa41b29acf8c29`](https://github.com/erikjpet/BeatTheHouse/commit/0adf3925fc3d816ea818e84a9afa41b29acf8c29).
+The stable task stays Open until exact NEXT identity/basic startup is verified.
+No original-save handoff is needed: the
 captured original profile and no-charge evidence are already preserved, and
 tests use disposable copies only. Stable/itch and the hosting audience remain
 outside this change.
