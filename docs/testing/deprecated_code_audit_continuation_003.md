@@ -56,3 +56,68 @@ retroactively passing host-r5 or passing the full validator. Sanitized trace
 captures distinguish missing, present-null and reached values. Raw receipts and
 native Job evidence stay private in `tool_audit/validator_complete_result-host-r6.json`
 and `tool_audit/aggregate-host-r6/`.
+
+## Confirmed nonpaused host cleanup
+
+The host review confirms 40 deletion-only lines in FoundationMain: the obsolete
+card-style `_apply_main_menu_panel_size` implementation, three sole-use size
+constants, two no-op Career calls, and an unread release-screen marker plus its
+reset. The current sole builder unconditionally creates the full-viewport menu
+and logo; there is no current path into the former card layout. No raw/string,
+reflection, save or test consumer of the removed marker remains. The old layout
+was superseded in `547c0983`; the marker's meaningful write disappeared in
+`26632ef3` and the later real money hold uses different dictionaries.
+
+All 1,306 unrelated methods compare equal. Only the two Career callbacks and
+bankroll-clear method lose the approved no-op/reset lines. Actual money value,
+start-time/action diagnostic seams, controls, scheduling and profile APIs remain.
+Exact proof is under `evidence/independent-host-helpers-r1/`.
+
+Normal import and a private exact-MainScene native Career open/close roundtrip
+pass 17 assertions at fixed1280x720. The existing money-feedback test passes29
+checks but fails its popup-parent expectation. That exact sole failure is also
+reproduced on the unchanged preserved source `a1fd98c6`, with the same test hash.
+`BTH061-AUDIT-MONEY-FIXTURE-003` tracks a faithful current ownership/identity
+assertion repair; no product reparenting or weakened reuse requirement is implied.
+The old `main_menu_redesign_check` still expects Career/Inventory/Games absent
+despite current shipped controls; it is not treated as passing qualification.
+
+## Checkout-only report qualification
+
+The report freshness failure was raw checkout CRLF/LF drift, not a scenario
+semantic change. All eleven catalog inputs and the generator remain unchanged.
+Restoring only `docs/plans/environment_scenario_layout_breakdown.md` to its exact
+existing Git blob `0753df036a963f0bba648fc91e5a888cbcc75988` removes 1,833 CRLF
+pairs and produces the committed SHA-256
+`d7a9013146c0bdbecd74432023b5ca50ce322811d099f4aa03154ac4878f2e8d`.
+There is no Git content diff, report regeneration, EOL-policy change or paused
+item/scenario code/data edit. The unchanged `--check` then passes20base rooms,
+55scenarios,75contexts and607exact slots. Custody evidence is
+`evidence/scenario-report-checkout-eol-custody-r1.json`, independently corroborated
+by `evidence/independent-tools-r1/scenario-breakdown-eol-readonly-r1.json`.
+
+## Qualified repair commits and next aggregate attempt
+
+- `cd1ce774b94083c193d95ea881ee0a3b5a051f4c` associates the 40-line obsolete
+  host removal with `BTH061-AUDIT-HOST-HELPERS-003`. Career roundtrip17 passes.
+- `4f1d0adaa68a2414b0300f90a9e88ba296258b4f` associates the test-only money
+  fixture repair with `BTH061-AUDIT-MONEY-FIXTURE-003`. History `60d88551`
+  deliberately moved the existing popup to a plain HUD-owned overlay; the old
+  accumulation assertion was left behind. The repair captures the original
+  panel before events and requires that same object to remain the overlay's
+  sole child. All other behavioral checks and product HUD code are unchanged.
+  The corrected native test passes all30 checks, with private state and Job0.
+- `948722e1d18c078328d7bda6cf7175745f426d07` associates the function-bound
+  Blackjack classifier repair with `BTH061-AUDIT-UI-LITERAL-003`: five exact
+  current presentation/save-feedback fragments, retaining every24prior binding
+  and all scanner/ambiguity/native/process/resource logic outside the reviewed
+  table.29production bindings and eight preserved plus33new hostile mutations
+  pass on both Windows PowerShell and PS7. No global content-ID exemption exists.
+
+The bounded controller review is associated with evidence commit `40272a2c`;
+no source removal was justified there. Cleanup/fixture/classifier tasks remain
+Open pending required publication/NEXT evidence. The next aggregate invocation
+uses installed Windows PowerShell, unchanged canonical native/process/resource
+guards and the reviewed classifier version. Private after-failure diagnostics
+may compare retained baselines separately if actual postchecks are unreached;
+they never forge actual post variables or convert failure into full acceptance.
