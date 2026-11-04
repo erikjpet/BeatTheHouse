@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T16:23:29.672223+00:00",
+  "updated_at": "2026-11-04T16:50:00.547913+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -17022,6 +17022,111 @@
       },
       "planned_app_changes": [],
       "updated_at": "2026-11-04T16:23:29.672223+00:00"
+    },
+    {
+      "id": "BTH-BARDICE-JOURNAL-CURRENCY-001",
+      "name": "Record actual currency in new Bar Dice journal receipts",
+      "aliases": [
+        "R07-BARDICE-JOURNAL-CURRENCY-RELATED-878"
+      ],
+      "kind": "objective",
+      "parent_ids": [],
+      "group": "current",
+      "objective": {
+        "text": "Investigate and correct missing currency on new Bar Dice journal receipts, including the related Press producer, while preserving wallet accounting, stake/settlement exactly once, RNG/clocks, authority, existing game rules and historical unknown-unit rows. Reproduce safely, test and commit the isolated correction.",
+        "source": "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-bardice-journal-currency-observation-878.json; trusted parent delegation 2026-11-04 requesting investigation, isolated correction, tests and commit",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "reproduce",
+            "description": "Reproduce the new cash loss journal omission at a labeled production boundary without replaying original R07 hand.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/bar_dice_journal_currency.md",
+              "docs/testing/bar_dice_journal_currency_20261104.json"
+            ]
+          },
+          {
+            "id": "producer_currency",
+            "description": "New round/Press rows record actual action-time cash/chip unit and current-action net; explicit truezero is source-reviewed unconditional metadata but not materialized by the eight ordinary cases. Preserve wallets/authority/rules and old unknown history.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/bar_dice_journal_currency.md",
+              "docs/testing/bar_dice_journal_currency_20261104.json"
+            ]
+          },
+          {
+            "id": "save_cold",
+            "description": "Focused normal Host and official Save/cold checks preserve settled table, wallets, RNG/clocks and history, with no repeat settlement or read-time transaction.",
+            "required": true,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/bar_dice_journal_currency.md",
+              "docs/testing/bar_dice_journal_currency_20261104.json"
+            ]
+          },
+          {
+            "id": "review_commit",
+            "description": "Independent scoped review, tested implementation commit and both ledger views associated; report local/deployed evidence distinctly.",
+            "required": true,
+            "state": "open",
+            "evidence": []
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "LOCAL_FIX_NATIVE299_PASS_REVIEW_CLEAR_COMMIT_ASSOCIATION_PENDING",
+      "owner": {
+        "name": "Fix Back Alley travel / Bar Dice journal follow-up",
+        "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [],
+        "scope": "Current delegation requests isolated investigation/fix/test/commit. Publication or deployed acceptance is not inferred from native qualification."
+      },
+      "evidence": [
+        {
+          "kind": "qa_observation",
+          "reference": "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-bardice-journal-currency-observation-878.json",
+          "summary": "R07 onf305: new cash stake5 hand gives97to92 once; cold92 and one row correct, but row says Recorded change-5(currency not recorded). Related to existing Craps/Slot producer metadata family; no financial mismatch asserted."
+        },
+        {
+          "kind": "native_regression",
+          "reference": "docs/testing/bar_dice_journal_currency_20261104.json",
+          "summary": "Baseline34 has exactly2 missingmetadata/label failures with cash97to92 once; producer256+independentcold43 pass through real sealedHost and officialSaveService. Source/test review clear; no originalprofile or deployed play claim."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Associate the tested implementation commit, report focused receipts/manual reconciliation and hand off the concrete fix for acceptance; no missing-save or approval dependency.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T16:38:00.124600+00:00",
+        "evidence": [
+          "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-bardice-journal-currency-observation-878.json"
+        ]
+      },
+      "planned_app_changes": [
+        {
+          "scope": "gameplay_receipt_metadata",
+          "description": "Record existing Bar Dice monetary story unit/current-action delta only; no wallet, odds, items, scenarios, viewport or touch/focus change."
+        }
+      ],
+      "updated_at": "2026-11-04T16:50:00.547913+00:00"
     }
   ],
   "batches": [

@@ -1122,6 +1122,8 @@ func _resolve_bar_dice_proposal_core(action_id: String, stake: int, run_state: R
 		"stake_cost": adjusted_stake,
 		"bar_dice_stake": adjusted_stake,
 		"bankroll_delta": bankroll_delta,
+		"currency": GameModule.presentation_currency_for_game(run_state, get_id(), environment),
+		"currency_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
 		"loaded": action_id == "loaded_toss",
 		"palmed": action_id == "palmed_swap",
@@ -1493,6 +1495,8 @@ func _resolve_press(stake: int, run_state: RunState, environment: Dictionary, rn
 		"won": press_won,
 		"risk": risk,
 		"bankroll_delta": bankroll_delta,
+		"currency": GameModule.presentation_currency_for_game(run_state, get_id(), environment),
+		"currency_delta": bankroll_delta,
 		"environment_id": environment.get("id", ""),
 	}]
 	var result := GameModule.build_action_result({

@@ -1,0 +1,415 @@
+{
+  "task_id": "BTH-BARDICE-JOURNAL-CURRENCY-001",
+  "base": "9d20b10345db553816ad1a0d0502d3ef368e0998",
+  "scope": "Local metadata fix/test/commit; native sealedHost and officialSave/cold, not Web/renderer/OSpointer or originalR07 replay",
+  "product_additions": 4,
+  "baseline": {
+    "checks": 34,
+    "expected_failures": [
+      "cash lose round new story records current currency and exact action net",
+      "cash lose round journal shows one exact account and amount"
+    ],
+    "facts": [
+      {
+        "case": "lose",
+        "cash": 92,
+        "chips": 25,
+        "currency": "cash",
+        "current_action_net": -5,
+        "player_dice": [
+          3,
+          6,
+          1,
+          6,
+          5
+        ],
+        "round_net": -5,
+        "rounds": 1,
+        "rows": 2,
+        "seed_text": "BAR-DICE-JOURNAL-cash-0"
+      }
+    ]
+  },
+  "producer": {
+    "checks": 256,
+    "failures": [],
+    "public_cases": [
+      {
+        "case": "lose",
+        "cash": 92,
+        "chips": 25,
+        "currency": "cash",
+        "current_action_net": -5,
+        "player_dice": [
+          3,
+          6,
+          1,
+          6,
+          5
+        ],
+        "round_net": -5,
+        "rounds": 1,
+        "rows": 2,
+        "seed_text": "BAR-DICE-JOURNAL-cash-0"
+      },
+      {
+        "case": "win",
+        "cash": 105,
+        "chips": 25,
+        "currency": "cash",
+        "current_action_net": 8,
+        "player_dice": [
+          6,
+          6,
+          4,
+          5,
+          4
+        ],
+        "round_net": 8,
+        "rounds": 1,
+        "rows": 2,
+        "seed_text": "BAR-DICE-JOURNAL-cash-1"
+      },
+      {
+        "case": "press_lose",
+        "cash": 97,
+        "chips": 25,
+        "currency": "cash",
+        "current_action_net": -8,
+        "player_dice": [
+          6,
+          2,
+          4,
+          5,
+          5
+        ],
+        "round_net": 8,
+        "rounds": 1,
+        "rows": 3,
+        "seed_text": "BAR-DICE-JOURNAL-cash-2"
+      },
+      {
+        "case": "press_win",
+        "cash": 113,
+        "chips": 25,
+        "currency": "cash",
+        "current_action_net": 8,
+        "player_dice": [
+          6,
+          6,
+          4,
+          5,
+          4
+        ],
+        "round_net": 8,
+        "rounds": 1,
+        "rows": 3,
+        "seed_text": "BAR-DICE-JOURNAL-cash-1"
+      },
+      {
+        "case": "lose",
+        "cash": 97,
+        "chips": 20,
+        "currency": "chips",
+        "current_action_net": -5,
+        "player_dice": [
+          6,
+          5,
+          2,
+          3,
+          6
+        ],
+        "round_net": -5,
+        "rounds": 1,
+        "rows": 2,
+        "seed_text": "BAR-DICE-JOURNAL-chips-0"
+      },
+      {
+        "case": "win",
+        "cash": 97,
+        "chips": 33,
+        "currency": "chips",
+        "current_action_net": 8,
+        "player_dice": [
+          6,
+          5,
+          4,
+          5,
+          2
+        ],
+        "round_net": 8,
+        "rounds": 1,
+        "rows": 2,
+        "seed_text": "BAR-DICE-JOURNAL-chips-1"
+      },
+      {
+        "case": "press_lose",
+        "cash": 97,
+        "chips": 25,
+        "currency": "chips",
+        "current_action_net": -8,
+        "player_dice": [
+          4,
+          5,
+          6,
+          3,
+          6
+        ],
+        "round_net": 8,
+        "rounds": 1,
+        "rows": 3,
+        "seed_text": "BAR-DICE-JOURNAL-chips-2"
+      },
+      {
+        "case": "press_win",
+        "cash": 97,
+        "chips": 41,
+        "currency": "chips",
+        "current_action_net": 8,
+        "player_dice": [
+          6,
+          5,
+          4,
+          5,
+          2
+        ],
+        "round_net": 8,
+        "rounds": 1,
+        "rows": 3,
+        "seed_text": "BAR-DICE-JOURNAL-chips-1"
+      }
+    ],
+    "seed_selection_scope": [
+      {
+        "currency": "cash",
+        "probes": 1,
+        "seed_text": "BAR-DICE-JOURNAL-cash-0",
+        "wanted": "lose"
+      },
+      {
+        "currency": "cash",
+        "probes": 2,
+        "seed_text": "BAR-DICE-JOURNAL-cash-1",
+        "wanted": "win"
+      },
+      {
+        "currency": "cash",
+        "probes": 3,
+        "seed_text": "BAR-DICE-JOURNAL-cash-2",
+        "wanted": "press_lose"
+      },
+      {
+        "currency": "cash",
+        "probes": 2,
+        "seed_text": "BAR-DICE-JOURNAL-cash-1",
+        "wanted": "press_win"
+      },
+      {
+        "currency": "chips",
+        "probes": 1,
+        "seed_text": "BAR-DICE-JOURNAL-chips-0",
+        "wanted": "lose"
+      },
+      {
+        "currency": "chips",
+        "probes": 2,
+        "seed_text": "BAR-DICE-JOURNAL-chips-1",
+        "wanted": "win"
+      },
+      {
+        "currency": "chips",
+        "probes": 3,
+        "seed_text": "BAR-DICE-JOURNAL-chips-2",
+        "wanted": "press_lose"
+      },
+      {
+        "currency": "chips",
+        "probes": 2,
+        "seed_text": "BAR-DICE-JOURNAL-chips-1",
+        "wanted": "press_win"
+      }
+    ]
+  },
+  "cold": {
+    "checks": 43,
+    "failures": [],
+    "public_cold_results": [
+      {
+        "cash": 92,
+        "chips": 25,
+        "lines": [
+          [
+            "Recorded change -7 (currency not recorded)"
+          ],
+          [
+            "Bankroll -5"
+          ]
+        ],
+        "rounds": 1.0,
+        "rows": 2,
+        "slot": "bar_dice_journal_cash_lose"
+      },
+      {
+        "cash": 105,
+        "chips": 25,
+        "lines": [
+          [
+            "Recorded change -7 (currency not recorded)"
+          ],
+          [
+            "Bankroll +8"
+          ]
+        ],
+        "rounds": 1.0,
+        "rows": 2,
+        "slot": "bar_dice_journal_cash_win"
+      },
+      {
+        "cash": 97,
+        "chips": 25,
+        "lines": [
+          [
+            "Recorded change -7 (currency not recorded)"
+          ],
+          [
+            "Bankroll +8"
+          ],
+          [
+            "Bankroll -8"
+          ]
+        ],
+        "rounds": 1.0,
+        "rows": 3,
+        "slot": "bar_dice_journal_cash_press_lose"
+      },
+      {
+        "cash": 113,
+        "chips": 25,
+        "lines": [
+          [
+            "Recorded change -7 (currency not recorded)"
+          ],
+          [
+            "Bankroll +8"
+          ],
+          [
+            "Bankroll +8"
+          ]
+        ],
+        "rounds": 1.0,
+        "rows": 3,
+        "slot": "bar_dice_journal_cash_press_win"
+      },
+      {
+        "cash": 97,
+        "chips": 20,
+        "lines": [
+          [
+            "Recorded change -7 (currency not recorded)"
+          ],
+          [
+            "Chips -5"
+          ]
+        ],
+        "rounds": 1.0,
+        "rows": 2,
+        "slot": "bar_dice_journal_chips_lose"
+      },
+      {
+        "cash": 97,
+        "chips": 33,
+        "lines": [
+          [
+            "Recorded change -7 (currency not recorded)"
+          ],
+          [
+            "Chips +8"
+          ]
+        ],
+        "rounds": 1.0,
+        "rows": 2,
+        "slot": "bar_dice_journal_chips_win"
+      },
+      {
+        "cash": 97,
+        "chips": 25,
+        "lines": [
+          [
+            "Recorded change -7 (currency not recorded)"
+          ],
+          [
+            "Chips +8"
+          ],
+          [
+            "Chips -8"
+          ]
+        ],
+        "rounds": 1.0,
+        "rows": 3,
+        "slot": "bar_dice_journal_chips_press_lose"
+      },
+      {
+        "cash": 97,
+        "chips": 41,
+        "lines": [
+          [
+            "Recorded change -7 (currency not recorded)"
+          ],
+          [
+            "Chips +8"
+          ],
+          [
+            "Chips +8"
+          ]
+        ],
+        "rounds": 1.0,
+        "rows": 3,
+        "slot": "bar_dice_journal_chips_press_win"
+      }
+    ]
+  },
+  "passing_assertions": 299,
+  "source_sha256": {
+    "game": "0ef17740ef9a066ad3e7e9f146eeb64117dbc865f136cc48105edb2c34ae3bce",
+    "journal": "a426e4451a112d279e7c7f9fa4a47f2ae0e0426c9ebefbad8d9d07fa87744d45",
+    "test": "2b9c22f98a2baeacb5ff25f4188b5b7755f2f1151e84034dde6308bd5ae973cb"
+  },
+  "review": "Independent exact patch/test review clear. No forcedzero/carry/security/auto-funding/HMAC-tamper or deployed acceptance claim.",
+  "owned_jobs": [
+    {
+      "label": "bardice-journal-baseline",
+      "checks": 34,
+      "exit_code": 1,
+      "timed_out": false,
+      "active_at_release": 0,
+      "launch_nonce": "1220db7960d74417871e634c616c16b9",
+      "started_at": "2026-11-04T16:43:01.898283+00:00",
+      "finished_at": "2026-11-04T16:43:13.696206+00:00",
+      "job_receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\bardice-journal-baseline.json"
+    },
+    {
+      "label": "bardice-journal-final-producer",
+      "checks": 256,
+      "exit_code": 0,
+      "timed_out": false,
+      "active_at_release": 0,
+      "launch_nonce": "6fe491e7e1ec4600ab9f002e9b497516",
+      "started_at": "2026-11-04T16:44:26.510116+00:00",
+      "finished_at": "2026-11-04T16:44:41.631618+00:00",
+      "job_receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\bardice-journal-final-producer.json"
+    },
+    {
+      "label": "bardice-journal-final-cold",
+      "checks": 43,
+      "exit_code": 0,
+      "timed_out": false,
+      "active_at_release": 0,
+      "launch_nonce": "582b2a3aea464eb2b1f60d7bf221df2d",
+      "started_at": "2026-11-04T16:46:00.305496+00:00",
+      "finished_at": "2026-11-04T16:46:12.523149+00:00",
+      "job_receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\bardice-journal-final-cold.json"
+    }
+  ],
+  "commit": null,
+  "status": "Native299 pass and independent review clear; implementation association pending"
+}
