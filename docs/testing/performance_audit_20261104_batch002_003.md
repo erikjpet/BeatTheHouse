@@ -119,6 +119,7 @@ unconsumed de945903 request was hash-checked and archived; the consumed exact
 request and the prior good build remain preserved. Later NEXT heads are
 reported separately rather than pretending247 remains current forever.
 
-Findings002/003 require associated main commits and exact NEXT follow-through.
+Associated implementation commit for findings002/003: `e6fef69a19cf73b4805fda734724652d76e0e141`.
+Exact main integration and NEXT follow-through are recorded separately.
 Keep all parent coverage and residual normal-play acceptance open. No stable,
 itch or audience publication and no watcher/qualification bypass occurred.
