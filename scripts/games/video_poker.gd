@@ -2491,7 +2491,7 @@ func _evaluate(hand: Array, wild_ranks: Array) -> Dictionary:
 	return _evaluate_wild(hand, wild_ranks)
 
 
-func _evaluate_natural(hand: Array) -> Dictionary:
+func _evaluate_natural(hand: Array, include_scoring_indices: bool = true) -> Dictionary:
 	var ranks: Array = []
 	var suits: Array = []
 	for card_value in hand:
@@ -2528,7 +2528,7 @@ func _evaluate_natural(hand: Array) -> Dictionary:
 		base = "one_pair"
 		pair_high = _high_pair_rank(rank_counts) >= RANK_JACK
 
-	return {
+	var descriptor := {
 		"base": base,
 		"quad_rank": quad_rank,
 		"kicker": kicker,
@@ -2536,12 +2536,14 @@ func _evaluate_natural(hand: Array) -> Dictionary:
 		"straight_high": straight_high,
 		"suit": int(suits[0]) if is_flush and not suits.is_empty() else -1,
 		"rank_counts": rank_counts,
-		"scoring_indices": _natural_scoring_indices(ranks, base, rank_counts),
 	}
+	if include_scoring_indices:
+		descriptor["scoring_indices"] = _natural_scoring_indices(ranks, base, rank_counts)
+	return descriptor
 
 
 # Analytical wild-card evaluator. Picks the highest-paying achievable category.
-func _evaluate_wild(hand: Array, wild_ranks: Array) -> Dictionary:
+func _evaluate_wild(hand: Array, wild_ranks: Array, include_scoring_indices: bool = true) -> Dictionary:
 	var naturals: Array = []
 	var wilds := 0
 	for card_value in hand:
@@ -2573,12 +2575,14 @@ func _evaluate_wild(hand: Array, wild_ranks: Array) -> Dictionary:
 	achievable["three_kind"] = top + wilds >= 3
 	achievable["kings_or_better"] = _wild_kings_or_better(nat_counts, nat_ranks, wilds)
 
-	return {
+	var descriptor := {
 		"base": "wild",
 		"wild_achievable": achievable,
 		"wild_count": wilds,
-		"scoring_indices": [0, 1, 2, 3, 4],
 	}
+	if include_scoring_indices:
+		descriptor["scoring_indices"] = [0, 1, 2, 3, 4]
+	return descriptor
 
 
 func _can_wild_royal(nat_ranks: Array, nat_suits: Array, wilds: int) -> bool:
@@ -2919,30 +2923,39 @@ func _hold_expected_pay(hand: Array, deck: Array, holds: Array, variant: Diction
 		if not holds.has(index):
 			draw_slots.append(index)
 	var draw_count := draw_slots.size()
+	# Each mask owns one completion and one pay context. The hint evaluates tens
+	# of thousands of hands, but neither the paytable nor held cards change here.
+	var completed := hand.duplicate(false)
+	var pay_context := _strategy_pay_context(variant, state, coin_count, coin_value, is_max_bet)
 	if draw_count == 0:
-		return float(_strategy_hand_pay(hand, variant, state, coin_count, coin_value, is_max_bet))
+		return float(_strategy_hand_pay_with_context(completed, variant, pay_context))
 	var total := 0.0
 	var samples := 0
 	if draw_count == 1:
 		for first in range(deck.size()):
-			total += _strategy_completion_pay(hand, draw_slots, [deck[first]], variant, state, coin_count, coin_value, is_max_bet)
+			completed[int(draw_slots[0])] = deck[first]
+			total += _strategy_hand_pay_with_context(completed, variant, pay_context)
 			samples += 1
 	elif draw_count == 2:
 		for first in range(deck.size() - 1):
+			completed[int(draw_slots[0])] = deck[first]
 			for second in range(first + 1, deck.size()):
-				total += _strategy_completion_pay(hand, draw_slots, [deck[first], deck[second]], variant, state, coin_count, coin_value, is_max_bet)
+				completed[int(draw_slots[1])] = deck[second]
+				total += _strategy_hand_pay_with_context(completed, variant, pay_context)
 				samples += 1
 	else:
 		var sample_rng := RngStream.new()
 		sample_rng.configure(JsonCoerceScript._stable_hash("%s|%s" % [seed_key, JSON.stringify(holds)]))
+		var pool: Array = []
 		for _sample in range(STRATEGY_SAMPLE_CAP):
-			var pool := deck.duplicate(false)
-			var cards: Array = []
-			for _draw in range(draw_count):
+			# Preserve the original shrinking-pool order and every RNG draw. Reuse
+			# only owned storage, without changing the deterministic sample set.
+			pool.assign(deck)
+			for draw_index in range(draw_count):
 				var pick := sample_rng.randi_range(0, pool.size() - 1)
-				cards.append(pool[pick])
+				completed[int(draw_slots[draw_index])] = pool[pick]
 				pool.remove_at(pick)
-			total += _strategy_completion_pay(hand, draw_slots, cards, variant, state, coin_count, coin_value, is_max_bet)
+			total += _strategy_hand_pay_with_context(completed, variant, pay_context)
 			samples += 1
 	return total / float(maxi(1, samples))
 
@@ -2955,10 +2968,41 @@ func _strategy_completion_pay(hand: Array, draw_slots: Array, cards: Array, vari
 
 
 func _strategy_hand_pay(hand: Array, variant: Dictionary, state: Dictionary, coin_count: int, coin_value: int, is_max_bet: bool) -> int:
-	var descriptor := _evaluate(hand, _wild_ranks(variant))
-	var pay_row := _pay_for(descriptor, variant)
-	var base_pay := _row_pay(pay_row, coin_count, is_max_bet) * coin_value
-	return base_pay + int(_bonus_layer(hand, descriptor, pay_row, state, coin_count, coin_value, is_max_bet).get("bonus", 0))
+	return _strategy_hand_pay_with_context(hand, variant, _strategy_pay_context(variant, state, coin_count, coin_value, is_max_bet))
+
+
+func _strategy_pay_context(variant: Dictionary, state: Dictionary, coin_count: int, coin_value: int, is_max_bet: bool) -> Dictionary:
+	var pay_by_key: Dictionary = {}
+	for row_value in variant.get("rows", []):
+		var row: Dictionary = row_value
+		var key := str(row.get("key", ""))
+		# _pay_for selects the first row for a key, even if a malformed caller
+		# supplies duplicates. Retain that rule as well as max-bet multipliers.
+		if not pay_by_key.has(key):
+			pay_by_key[key] = _row_pay(row, coin_count, is_max_bet) * coin_value
+	return {
+		"wild_ranks": _wild_ranks(variant),
+		"pay_by_key": pay_by_key,
+		"progressive_bonus": int(state.get("progressive_meter", PROGRESSIVE_BASE)) if is_max_bet else 0,
+		"sequential_bonus": SEQUENTIAL_ROYAL_BONUS * coin_value * coin_count if is_max_bet else 0,
+	}
+
+
+func _strategy_hand_pay_with_context(hand: Array, variant: Dictionary, pay_context: Dictionary) -> int:
+	var wild_ranks: Array = pay_context.get("wild_ranks", [])
+	# Advice needs the same paying category as settlement, without its display
+	# highlights, row copies or bonus-label dictionaries for each sampled hand.
+	var descriptor := _evaluate_natural(hand, false) if wild_ranks.is_empty() else _evaluate_wild(hand, wild_ranks, false)
+	var key := _pay_key(descriptor, variant)
+	var pay_by_key: Dictionary = pay_context.get("pay_by_key", {})
+	if key.is_empty() or not pay_by_key.has(key):
+		return 0
+	var total := int(pay_by_key[key])
+	if key == "royal_flush" or key == "natural_royal":
+		total += int(pay_context.get("progressive_bonus", 0))
+		if int(pay_context.get("sequential_bonus", 0)) != 0 and _is_sequential_royal(hand):
+			total += int(pay_context.get("sequential_bonus", 0))
+	return total
 
 
 func _recommended_hold_text(holds: Array) -> String:

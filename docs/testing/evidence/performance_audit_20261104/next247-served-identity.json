@@ -1,0 +1,375 @@
+{
+  "verified_utc": "2026-11-04T00:55:27.319728+00:00",
+  "source_commit": "247ebe3277cee8bc46fc3cff084607441fa296d4",
+  "source_tree": "d6666d67326787155852e0fc51a91c354946e8ff",
+  "contains_coin001_main": "ea136553ce3f33236aa3ea22d23921e6f957e7a2",
+  "redirect": {
+    "url": "http://localhost:8088/p/beat-the-house/play/dev/247ebe3277cee8bc46fc3cff084607441fa296d4/",
+    "status": 200,
+    "content_type": "text/html"
+  },
+  "build": {
+    "source_commit": "247ebe3277cee8bc46fc3cff084607441fa296d4",
+    "source_branch": "main",
+    "source_tree": "d6666d67326787155852e0fc51a91c354946e8ff",
+    "built_at": "2026-11-04T00:52:29Z",
+    "version": "0.6.0-dev+247ebe3277ce",
+    "native_reuse": {
+      "schema": "beat_the_house.verified_native_reuse/v1",
+      "qualified_source_commit": "b46fabb2853c312b67399606f59804eaefa62d47",
+      "native_source_tree": "44468126e25a30a86e5d58f1d85f620fe414f564",
+      "guarded_paths": [
+        "native",
+        "addons",
+        "export_presets.cfg",
+        "project.godot",
+        "tools/build_native_solver.ps1",
+        "tools/bootstrap_native_toolchain.ps1",
+        "tools/bootstrap_native_solver.ps1",
+        "tools/verify_native_solver_runtime.ps1",
+        "tools/build_godot_web_release_template.ps1",
+        "tools/export_itch.ps1",
+        "tools/export_itch_helpers.ps1",
+        "tools/export_tree_identity.ps1",
+        "tools/audit_pck_manifest.py"
+      ],
+      "qualified_git_objects": [
+        "100644 blob b9d92cd7c6b9a0e013fc5f33da611321babacd93\texport_presets.cfg",
+        "100644 blob 9165fcf6bea3904f6677564a695ba17594701229\tnative/coin_pusher/SConstruct",
+        "100644 blob d308c740cc668e1260a38a61bcbbbf9bfa932d13\tnative/coin_pusher/build_profile.json",
+        "100644 blob 10867076c4070d84f8b3c6becdc0185c7174259e\tnative/coin_pusher/coin_pusher_native.gdextension.template",
+        "100644 blob d99aa73e7e6d855ecd61f82e23d1a91cb2e86d3f\tnative/coin_pusher/godot_web_release_build_profile.json",
+        "100644 blob d9f6221b832222ee8a78ddfe016a8d89fa17ace7\tnative/coin_pusher/src/coin_pusher_native_core.cpp",
+        "100644 blob a0c4413523105a29e3508b0b8ed50366b606162a\tnative/coin_pusher/src/coin_pusher_native_core.h",
+        "100644 blob 52e13ee3e229b323e864a04051880a9e8e4f9c30\tnative/coin_pusher/src/coin_pusher_render_batch.cpp",
+        "100644 blob 14ab730df2c88fdacef7f64945131602c5448f75\tnative/coin_pusher/src/coin_pusher_step_kernel.cpp",
+        "100644 blob 5b9bc778c0d007d24da9335ad74c4acfc8a1c27c\tnative/coin_pusher/src/register_types.cpp",
+        "100644 blob da5b5e20dc4e57472a31799dbed09fee06d81abf\tnative/coin_pusher/src/register_types.h",
+        "100644 blob 322cbe3c15193c9b20cc1334da487b9f9d0fbc26\tnative/coin_pusher/toolchain.lock.json",
+        "100644 blob 7c80d4e964583372398be6da0ff504ff6074f395\tproject.godot",
+        "100644 blob 6ae4b0796b43ef34694fc232a92c1db5894cb054\ttools/audit_pck_manifest.py",
+        "100644 blob a6c0fe9f42ec6e2a2588122d71d268e28178ba6d\ttools/bootstrap_native_solver.ps1",
+        "100644 blob 69c4dbbf1f69ac1aa696e24dafe727968f1f74a9\ttools/build_godot_web_release_template.ps1",
+        "100644 blob a4bc8b62100d4bdada8f1fef4e2b9e535199a55b\ttools/build_native_solver.ps1",
+        "100644 blob 37ee86eb2367c984bfa8568718312c671d114a24\ttools/export_itch.ps1",
+        "100644 blob 338efd42316385902cd21313890216609572237d\ttools/export_itch_helpers.ps1",
+        "100644 blob de91c1644ce977ea437b3eb7a046fdcd04f3101d\ttools/export_tree_identity.ps1",
+        "100644 blob fe86a0ccdee8fe1fe95765af2f9ceeb543355dc4\ttools/verify_native_solver_runtime.ps1"
+      ],
+      "target_git_objects": [
+        "100644 blob b9d92cd7c6b9a0e013fc5f33da611321babacd93\texport_presets.cfg",
+        "100644 blob 9165fcf6bea3904f6677564a695ba17594701229\tnative/coin_pusher/SConstruct",
+        "100644 blob d308c740cc668e1260a38a61bcbbbf9bfa932d13\tnative/coin_pusher/build_profile.json",
+        "100644 blob 10867076c4070d84f8b3c6becdc0185c7174259e\tnative/coin_pusher/coin_pusher_native.gdextension.template",
+        "100644 blob d99aa73e7e6d855ecd61f82e23d1a91cb2e86d3f\tnative/coin_pusher/godot_web_release_build_profile.json",
+        "100644 blob d9f6221b832222ee8a78ddfe016a8d89fa17ace7\tnative/coin_pusher/src/coin_pusher_native_core.cpp",
+        "100644 blob a0c4413523105a29e3508b0b8ed50366b606162a\tnative/coin_pusher/src/coin_pusher_native_core.h",
+        "100644 blob 52e13ee3e229b323e864a04051880a9e8e4f9c30\tnative/coin_pusher/src/coin_pusher_render_batch.cpp",
+        "100644 blob 14ab730df2c88fdacef7f64945131602c5448f75\tnative/coin_pusher/src/coin_pusher_step_kernel.cpp",
+        "100644 blob 5b9bc778c0d007d24da9335ad74c4acfc8a1c27c\tnative/coin_pusher/src/register_types.cpp",
+        "100644 blob da5b5e20dc4e57472a31799dbed09fee06d81abf\tnative/coin_pusher/src/register_types.h",
+        "100644 blob 322cbe3c15193c9b20cc1334da487b9f9d0fbc26\tnative/coin_pusher/toolchain.lock.json",
+        "100644 blob 7c80d4e964583372398be6da0ff504ff6074f395\tproject.godot",
+        "100644 blob 6ae4b0796b43ef34694fc232a92c1db5894cb054\ttools/audit_pck_manifest.py",
+        "100644 blob a6c0fe9f42ec6e2a2588122d71d268e28178ba6d\ttools/bootstrap_native_solver.ps1",
+        "100644 blob 69c4dbbf1f69ac1aa696e24dafe727968f1f74a9\ttools/build_godot_web_release_template.ps1",
+        "100644 blob a4bc8b62100d4bdada8f1fef4e2b9e535199a55b\ttools/build_native_solver.ps1",
+        "100644 blob 37ee86eb2367c984bfa8568718312c671d114a24\ttools/export_itch.ps1",
+        "100644 blob 338efd42316385902cd21313890216609572237d\ttools/export_itch_helpers.ps1",
+        "100644 blob de91c1644ce977ea437b3eb7a046fdcd04f3101d\ttools/export_tree_identity.ps1",
+        "100644 blob fe86a0ccdee8fe1fe95765af2f9ceeb543355dc4\ttools/verify_native_solver_runtime.ps1"
+      ],
+      "tuple": "web/template_release/wasm32/nothreads",
+      "native_library_sha256": "82c71b7d743027817c8f5041ad2f052565bf27fe43ec60312a2473af08957943",
+      "template_sha256": "cf371f607aa9cb18e690bd595976c1baaf00c8cec24078e4a307fd515ad07913",
+      "engine_binary_sha256": "63913d01be2c2d1f929b4a626f5347117126b34e9c64cbf350ea9f35a9657ebf",
+      "console_binary_sha256": "fc759f9d296fe54f09ab66d41df6ddd2d278493b0e71109f6688ef029ad271ae",
+      "extension_config_sha256": "407b2cc4b2c3ca01775158518e44b1caca3fb929be0e46eca44429733825d115",
+      "editor_dependency_pins": [
+        {
+          "sha256": "9ed33e21a00a8be3ef2429550451ed6c766debde8d0d21c4f3a4c39e25eb3f82",
+          "name": "coin_pusher_native_v3_10.windows.template_debug.x86_64.nothreads.dll"
+        },
+        {
+          "sha256": "ab3e74ad695dd9e6527d05cf09370b56a7b3b80168724862757de7711d837d69",
+          "name": "coin_pusher_native_v3_10.windows.template_release.x86_64.nothreads.dll"
+        }
+      ],
+      "source_exporter_sha256": "d2677318b9087a679d35554063fd1368b0d6b49ad0194599b7acee0cd3f800cb",
+      "imported_source_functions": [
+        {
+          "name": "Get-Sha256",
+          "definition_sha256": "a61f8f613fe0932b2294d151e63b174f72bf3ab594df5b77db134ea87dc69966"
+        },
+        {
+          "name": "Get-StringSha256",
+          "definition_sha256": "bf030f9eaf89a312c2d92a6d3f95f7ae58e4d57799ffdbbc8b5befc110ce0342"
+        },
+        {
+          "name": "Get-ProjectVersion",
+          "definition_sha256": "52ad3b85277dbea88f6c59863daee603be5bd97d9e3f4271a6f4e0a8663ad7c4"
+        },
+        {
+          "name": "Get-SourceIdentity",
+          "definition_sha256": "9ed8e18d1d2b5fd36aa8e8892d6c12b8163db943d7b9968f76aa36edbccb3961"
+        },
+        {
+          "name": "Get-ExportPresetCustomFeatures",
+          "definition_sha256": "46a228498a539e034273abcb2177b60cb74a67c72d420f26cab4f1b506b45a71"
+        },
+        {
+          "name": "Get-ExportPresetOption",
+          "definition_sha256": "e4e2ebcd72b8366690737c3bd91174cf388866ffa06d482445d092a90bb1427c"
+        },
+        {
+          "name": "Assert-CleanDistributionOutput",
+          "definition_sha256": "a95f62e83b0290718fe9141b96cce8f24049f361602fcb2ab6a84a08b9f463a3"
+        },
+        {
+          "name": "Assert-NativeSolverExport",
+          "definition_sha256": "fb860ce9f83e3305f353d94ff1abd64672151f015224853d6a62433750f27bb1"
+        },
+        {
+          "name": "Invoke-WebExportWithLockedTemplate",
+          "definition_sha256": "684ac165e13fa58384338423413627d15a89c3ae04b6cf129042264025d7cdcd"
+        },
+        {
+          "name": "Invoke-WithEmbeddedManifest",
+          "definition_sha256": "66a9a333423b0bcf668b79b8013a0474bdc0f2bce1179162a7edf51d202ed431"
+        },
+        {
+          "name": "Get-RelativeFiles",
+          "definition_sha256": "8ec071129455b6b94e1eb84bd25d63264218428fe58dd3902f62dd090b1decfa"
+        },
+        {
+          "name": "Invoke-PckAudit",
+          "definition_sha256": "b548d65b7257ecff7cdcbebbbbe2982b5eb83d31964d9bfa303ca2011f1ff926"
+        },
+        {
+          "name": "Verify-ArchiveAgainstStaging",
+          "definition_sha256": "4b2eef6d8a828903d7c2c626801517f9b0337d56264bd372faeee706270a53e7"
+        }
+      ],
+      "native_compilation_performed": false
+    }
+  },
+  "manifest": {
+    "schema": "beat_the_house.build_manifest/v1",
+    "build_version": "0.6.0-dev+247ebe3277ce",
+    "release_version": "0.6.0",
+    "source_commit": "247ebe3277cee8bc46fc3cff084607441fa296d4",
+    "source_tree": "d6666d67326787155852e0fc51a91c354946e8ff",
+    "source_dirty": false,
+    "dirty_state_digest": "a51a7c91930243bbc61ed7b8cea76c1e5db706ac82b1f5a92f8a5b1416fb2d7c",
+    "engine_sha256": "fc759f9d296fe54f09ab66d41df6ddd2d278493b0e71109f6688ef029ad271ae",
+    "export_presets_sha256": "ebf93c38034595a9ac7356250fe8378b55674e4cca5fa6015530733fef22fdad",
+    "platform": "web",
+    "native_library_path": "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+    "native_library_sha256": "82c71b7d743027817c8f5041ad2f052565bf27fe43ec60312a2473af08957943",
+    "editor_import": {
+      "scope": "temporary import only; removed before normal export",
+      "worker_pool_threads": 1,
+      "recovery_mode": true,
+      "parallel_resource_imports": false
+    },
+    "native_reuse": {
+      "schema": "beat_the_house.verified_native_reuse/v1",
+      "qualified_source_commit": "b46fabb2853c312b67399606f59804eaefa62d47",
+      "native_source_tree": "44468126e25a30a86e5d58f1d85f620fe414f564",
+      "guarded_paths": [
+        "native",
+        "addons",
+        "export_presets.cfg",
+        "project.godot",
+        "tools/build_native_solver.ps1",
+        "tools/bootstrap_native_toolchain.ps1",
+        "tools/bootstrap_native_solver.ps1",
+        "tools/verify_native_solver_runtime.ps1",
+        "tools/build_godot_web_release_template.ps1",
+        "tools/export_itch.ps1",
+        "tools/export_itch_helpers.ps1",
+        "tools/export_tree_identity.ps1",
+        "tools/audit_pck_manifest.py"
+      ],
+      "qualified_git_objects": [
+        "100644 blob b9d92cd7c6b9a0e013fc5f33da611321babacd93\texport_presets.cfg",
+        "100644 blob 9165fcf6bea3904f6677564a695ba17594701229\tnative/coin_pusher/SConstruct",
+        "100644 blob d308c740cc668e1260a38a61bcbbbf9bfa932d13\tnative/coin_pusher/build_profile.json",
+        "100644 blob 10867076c4070d84f8b3c6becdc0185c7174259e\tnative/coin_pusher/coin_pusher_native.gdextension.template",
+        "100644 blob d99aa73e7e6d855ecd61f82e23d1a91cb2e86d3f\tnative/coin_pusher/godot_web_release_build_profile.json",
+        "100644 blob d9f6221b832222ee8a78ddfe016a8d89fa17ace7\tnative/coin_pusher/src/coin_pusher_native_core.cpp",
+        "100644 blob a0c4413523105a29e3508b0b8ed50366b606162a\tnative/coin_pusher/src/coin_pusher_native_core.h",
+        "100644 blob 52e13ee3e229b323e864a04051880a9e8e4f9c30\tnative/coin_pusher/src/coin_pusher_render_batch.cpp",
+        "100644 blob 14ab730df2c88fdacef7f64945131602c5448f75\tnative/coin_pusher/src/coin_pusher_step_kernel.cpp",
+        "100644 blob 5b9bc778c0d007d24da9335ad74c4acfc8a1c27c\tnative/coin_pusher/src/register_types.cpp",
+        "100644 blob da5b5e20dc4e57472a31799dbed09fee06d81abf\tnative/coin_pusher/src/register_types.h",
+        "100644 blob 322cbe3c15193c9b20cc1334da487b9f9d0fbc26\tnative/coin_pusher/toolchain.lock.json",
+        "100644 blob 7c80d4e964583372398be6da0ff504ff6074f395\tproject.godot",
+        "100644 blob 6ae4b0796b43ef34694fc232a92c1db5894cb054\ttools/audit_pck_manifest.py",
+        "100644 blob a6c0fe9f42ec6e2a2588122d71d268e28178ba6d\ttools/bootstrap_native_solver.ps1",
+        "100644 blob 69c4dbbf1f69ac1aa696e24dafe727968f1f74a9\ttools/build_godot_web_release_template.ps1",
+        "100644 blob a4bc8b62100d4bdada8f1fef4e2b9e535199a55b\ttools/build_native_solver.ps1",
+        "100644 blob 37ee86eb2367c984bfa8568718312c671d114a24\ttools/export_itch.ps1",
+        "100644 blob 338efd42316385902cd21313890216609572237d\ttools/export_itch_helpers.ps1",
+        "100644 blob de91c1644ce977ea437b3eb7a046fdcd04f3101d\ttools/export_tree_identity.ps1",
+        "100644 blob fe86a0ccdee8fe1fe95765af2f9ceeb543355dc4\ttools/verify_native_solver_runtime.ps1"
+      ],
+      "target_git_objects": [
+        "100644 blob b9d92cd7c6b9a0e013fc5f33da611321babacd93\texport_presets.cfg",
+        "100644 blob 9165fcf6bea3904f6677564a695ba17594701229\tnative/coin_pusher/SConstruct",
+        "100644 blob d308c740cc668e1260a38a61bcbbbf9bfa932d13\tnative/coin_pusher/build_profile.json",
+        "100644 blob 10867076c4070d84f8b3c6becdc0185c7174259e\tnative/coin_pusher/coin_pusher_native.gdextension.template",
+        "100644 blob d99aa73e7e6d855ecd61f82e23d1a91cb2e86d3f\tnative/coin_pusher/godot_web_release_build_profile.json",
+        "100644 blob d9f6221b832222ee8a78ddfe016a8d89fa17ace7\tnative/coin_pusher/src/coin_pusher_native_core.cpp",
+        "100644 blob a0c4413523105a29e3508b0b8ed50366b606162a\tnative/coin_pusher/src/coin_pusher_native_core.h",
+        "100644 blob 52e13ee3e229b323e864a04051880a9e8e4f9c30\tnative/coin_pusher/src/coin_pusher_render_batch.cpp",
+        "100644 blob 14ab730df2c88fdacef7f64945131602c5448f75\tnative/coin_pusher/src/coin_pusher_step_kernel.cpp",
+        "100644 blob 5b9bc778c0d007d24da9335ad74c4acfc8a1c27c\tnative/coin_pusher/src/register_types.cpp",
+        "100644 blob da5b5e20dc4e57472a31799dbed09fee06d81abf\tnative/coin_pusher/src/register_types.h",
+        "100644 blob 322cbe3c15193c9b20cc1334da487b9f9d0fbc26\tnative/coin_pusher/toolchain.lock.json",
+        "100644 blob 7c80d4e964583372398be6da0ff504ff6074f395\tproject.godot",
+        "100644 blob 6ae4b0796b43ef34694fc232a92c1db5894cb054\ttools/audit_pck_manifest.py",
+        "100644 blob a6c0fe9f42ec6e2a2588122d71d268e28178ba6d\ttools/bootstrap_native_solver.ps1",
+        "100644 blob 69c4dbbf1f69ac1aa696e24dafe727968f1f74a9\ttools/build_godot_web_release_template.ps1",
+        "100644 blob a4bc8b62100d4bdada8f1fef4e2b9e535199a55b\ttools/build_native_solver.ps1",
+        "100644 blob 37ee86eb2367c984bfa8568718312c671d114a24\ttools/export_itch.ps1",
+        "100644 blob 338efd42316385902cd21313890216609572237d\ttools/export_itch_helpers.ps1",
+        "100644 blob de91c1644ce977ea437b3eb7a046fdcd04f3101d\ttools/export_tree_identity.ps1",
+        "100644 blob fe86a0ccdee8fe1fe95765af2f9ceeb543355dc4\ttools/verify_native_solver_runtime.ps1"
+      ],
+      "tuple": "web/template_release/wasm32/nothreads",
+      "native_library_sha256": "82c71b7d743027817c8f5041ad2f052565bf27fe43ec60312a2473af08957943",
+      "template_sha256": "cf371f607aa9cb18e690bd595976c1baaf00c8cec24078e4a307fd515ad07913",
+      "engine_binary_sha256": "63913d01be2c2d1f929b4a626f5347117126b34e9c64cbf350ea9f35a9657ebf",
+      "console_binary_sha256": "fc759f9d296fe54f09ab66d41df6ddd2d278493b0e71109f6688ef029ad271ae",
+      "extension_config_sha256": "407b2cc4b2c3ca01775158518e44b1caca3fb929be0e46eca44429733825d115",
+      "editor_dependency_pins": [
+        {
+          "sha256": "9ed33e21a00a8be3ef2429550451ed6c766debde8d0d21c4f3a4c39e25eb3f82",
+          "name": "coin_pusher_native_v3_10.windows.template_debug.x86_64.nothreads.dll"
+        },
+        {
+          "sha256": "ab3e74ad695dd9e6527d05cf09370b56a7b3b80168724862757de7711d837d69",
+          "name": "coin_pusher_native_v3_10.windows.template_release.x86_64.nothreads.dll"
+        }
+      ],
+      "source_exporter_sha256": "d2677318b9087a679d35554063fd1368b0d6b49ad0194599b7acee0cd3f800cb",
+      "imported_source_functions": [
+        {
+          "name": "Get-Sha256",
+          "definition_sha256": "a61f8f613fe0932b2294d151e63b174f72bf3ab594df5b77db134ea87dc69966"
+        },
+        {
+          "name": "Get-StringSha256",
+          "definition_sha256": "bf030f9eaf89a312c2d92a6d3f95f7ae58e4d57799ffdbbc8b5befc110ce0342"
+        },
+        {
+          "name": "Get-ProjectVersion",
+          "definition_sha256": "52ad3b85277dbea88f6c59863daee603be5bd97d9e3f4271a6f4e0a8663ad7c4"
+        },
+        {
+          "name": "Get-SourceIdentity",
+          "definition_sha256": "9ed8e18d1d2b5fd36aa8e8892d6c12b8163db943d7b9968f76aa36edbccb3961"
+        },
+        {
+          "name": "Get-ExportPresetCustomFeatures",
+          "definition_sha256": "46a228498a539e034273abcb2177b60cb74a67c72d420f26cab4f1b506b45a71"
+        },
+        {
+          "name": "Get-ExportPresetOption",
+          "definition_sha256": "e4e2ebcd72b8366690737c3bd91174cf388866ffa06d482445d092a90bb1427c"
+        },
+        {
+          "name": "Assert-CleanDistributionOutput",
+          "definition_sha256": "a95f62e83b0290718fe9141b96cce8f24049f361602fcb2ab6a84a08b9f463a3"
+        },
+        {
+          "name": "Assert-NativeSolverExport",
+          "definition_sha256": "fb860ce9f83e3305f353d94ff1abd64672151f015224853d6a62433750f27bb1"
+        },
+        {
+          "name": "Invoke-WebExportWithLockedTemplate",
+          "definition_sha256": "684ac165e13fa58384338423413627d15a89c3ae04b6cf129042264025d7cdcd"
+        },
+        {
+          "name": "Invoke-WithEmbeddedManifest",
+          "definition_sha256": "66a9a333423b0bcf668b79b8013a0474bdc0f2bce1179162a7edf51d202ed431"
+        },
+        {
+          "name": "Get-RelativeFiles",
+          "definition_sha256": "8ec071129455b6b94e1eb84bd25d63264218428fe58dd3902f62dd090b1decfa"
+        },
+        {
+          "name": "Invoke-PckAudit",
+          "definition_sha256": "b548d65b7257ecff7cdcbebbbbe2982b5eb83d31964d9bfa303ca2011f1ff926"
+        },
+        {
+          "name": "Verify-ArchiveAgainstStaging",
+          "definition_sha256": "4b2eef6d8a828903d7c2c626801517f9b0337d56264bd372faeee706270a53e7"
+        }
+      ],
+      "native_compilation_performed": false
+    }
+  },
+  "archive": "D:\\Projects\\site\\state\\bth-next\\artifacts\\247ebe3277cee8bc46fc3cff084607441fa296d4-1793753488858204000.zip",
+  "archive_sha256": "4973723cb4141541868fd6597a2bd61f2a71abfb78d63eb0627c81930c0ef0e1",
+  "served": [
+    {
+      "name": "index.pck",
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/247ebe3277cee8bc46fc3cff084607441fa296d4/index.pck",
+      "status": 200,
+      "content_type": "application/octet-stream",
+      "bytes": 47241432,
+      "sha256": "df69df074fb56263ea5585e53630002ce4114a30f21dd4dcf46fa4651bc4c6e7"
+    },
+    {
+      "name": "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/247ebe3277cee8bc46fc3cff084607441fa296d4/coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+      "status": 200,
+      "content_type": "application/wasm",
+      "bytes": 340886,
+      "sha256": "82c71b7d743027817c8f5041ad2f052565bf27fe43ec60312a2473af08957943"
+    },
+    {
+      "name": "REF",
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/247ebe3277cee8bc46fc3cff084607441fa296d4/REF",
+      "status": 200,
+      "content_type": "application/octet-stream",
+      "bytes": 41,
+      "sha256": "edb34f74d4473c45eab14f4a39b2481322d8526a8d9413080a1edc1d111f08dc"
+    },
+    {
+      "name": "VERSION",
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/247ebe3277cee8bc46fc3cff084607441fa296d4/VERSION",
+      "status": 200,
+      "content_type": "application/octet-stream",
+      "bytes": 23,
+      "sha256": "90173129b4405be6bf41ee1bbbd74c3554c59d43e403f9ad9cbd63c9ac97e755"
+    },
+    {
+      "name": "index.js",
+      "status": 200,
+      "bytes": 2823817,
+      "content_type": "text/javascript",
+      "archive_sha256": "8cf4a21cded9270718a67c6f1aab3d794eca91e3903ad866532c925565dd1fc4",
+      "scope": "HEAD connected to immutable archive; actual startup downloads checked separately"
+    },
+    {
+      "name": "index.wasm",
+      "status": 200,
+      "bytes": 1508237,
+      "content_type": "application/wasm",
+      "archive_sha256": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8",
+      "scope": "HEAD connected to immutable archive; actual startup downloads checked separately"
+    },
+    {
+      "name": "index.side.wasm",
+      "status": 200,
+      "bytes": 21802358,
+      "content_type": "application/wasm",
+      "archive_sha256": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0",
+      "scope": "HEAD connected to immutable archive; actual startup downloads checked separately"
+    }
+  ],
+  "limits": "HTTP identity and payload proof; fresh startup and changed behavior are separate. No stable/itch/audience mutation."
+}

@@ -1464,7 +1464,7 @@ func _v3_headless_surface_state(machine: Dictionary, run_state: RunState = null,
 		"coin_pusher_drop_charge_count": int(ui_state.get("coin_pusher_drop_charge_count", 0)),
 		"coin_pusher_tray_count": tray.size(),
 		"coin_pusher_tray_value": _ledger_value(tray),
-		"coin_pusher_input_trace_count": (session.get("input_trace", []) as Array).size() if typeof(session.get("input_trace", [])) == TYPE_ARRAY else 0,
+		"coin_pusher_input_trace_count": CoinPusherLiveSessionScript.total_input_count(machine),
 		"coin_pusher_liveness_ticks": int(session.get("liveness_ticks", 0)),
 		"coin_pusher_variation_id": variation_id,
 		"coin_pusher_variation_name": _variation_display_name(variation_id),
@@ -1554,8 +1554,7 @@ func _v3_realtime_presentation_patch(machine: Dictionary, current_surface_state:
 	_append_realtime_change(patch, current_surface_state, "coin_pusher_drop_queue_count", _queued_drop_count(machine))
 	_append_realtime_change(patch, current_surface_state, "coin_pusher_tray_count", tray.size())
 	_append_realtime_change(patch, current_surface_state, "coin_pusher_tray_value", _ledger_value(tray))
-	var input_trace: Array = session.get("input_trace", []) if typeof(session.get("input_trace", [])) == TYPE_ARRAY else []
-	_append_realtime_change(patch, current_surface_state, "coin_pusher_input_trace_count", input_trace.size())
+	_append_realtime_change(patch, current_surface_state, "coin_pusher_input_trace_count", CoinPusherLiveSessionScript.total_input_count(machine))
 	_append_realtime_change(patch, current_surface_state, "coin_pusher_last_message", str(machine.get("last_message", V3_HEADLESS_MESSAGE)))
 	_append_realtime_change(patch, current_surface_state, "coin_pusher_vault_cells", vault_views.get("cells", []))
 	_append_realtime_change(patch, current_surface_state, "coin_pusher_vault_round_active", bool(variation_state.get("vault_round_active", false)))
@@ -1724,7 +1723,7 @@ func _surface_action_view_patch(machine: Dictionary, run_state: RunState, enviro
 		"coin_pusher_goal": _machine_goal_state(machine, simulation),
 		"coin_pusher_tray_count": tray.size(),
 		"coin_pusher_tray_value": _ledger_value(tray),
-		"coin_pusher_input_trace_count": (machine.get("live_session", {}).get("input_trace", []) as Array).size() if typeof(machine.get("live_session", {}).get("input_trace", [])) == TYPE_ARRAY else 0,
+		"coin_pusher_input_trace_count": CoinPusherLiveSessionScript.total_input_count(machine),
 		"native_selected_surface_actions": _native_surface_actions(machine),
 		"surface_action_bindings": _coin_pusher_action_bindings(machine, simulation, tray, run_state, environment),
 	}
@@ -1744,7 +1743,7 @@ func _drop_surface_action_view_patch(machine: Dictionary, run_state: RunState, e
 		"surface_action_stake_view": _surface_action_stake_view(run_state, environment),
 		"coin_pusher_action_count": int(machine.get("action_count", 0)),
 		"coin_pusher_last_message": str(machine.get("last_message", V3_HEADLESS_MESSAGE)),
-		"coin_pusher_input_trace_count": (machine.get("live_session", {}).get("input_trace", []) as Array).size() if typeof(machine.get("live_session", {}).get("input_trace", [])) == TYPE_ARRAY else 0,
+		"coin_pusher_input_trace_count": CoinPusherLiveSessionScript.total_input_count(machine),
 	}
 
 
