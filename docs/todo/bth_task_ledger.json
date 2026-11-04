@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T17:46:15.004156+00:00",
+  "updated_at": "2026-11-04T17:49:57.547271+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -18119,7 +18119,8 @@
             "state": "pass",
             "evidence": [
               "docs/testing/coin_pusher_drop_price_20261104.md",
-              "docs/testing/coin_pusher_drop_price_20261104.json"
+              "docs/testing/coin_pusher_drop_price_20261104.json",
+              "commit:62490ab186657cbfff49839589863e851eef7bcd"
             ]
           },
           {
@@ -18129,7 +18130,8 @@
             "state": "pass",
             "evidence": [
               "docs/testing/coin_pusher_drop_price_20261104.md",
-              "docs/testing/coin_pusher_drop_price_20261104.json"
+              "docs/testing/coin_pusher_drop_price_20261104.json",
+              "commit:62490ab186657cbfff49839589863e851eef7bcd"
             ]
           },
           {
@@ -18139,7 +18141,8 @@
             "state": "pass",
             "evidence": [
               "docs/testing/coin_pusher_drop_price_20261104.md",
-              "docs/testing/coin_pusher_drop_price_20261104.json"
+              "docs/testing/coin_pusher_drop_price_20261104.json",
+              "commit:62490ab186657cbfff49839589863e851eef7bcd"
             ]
           },
           {
@@ -18149,7 +18152,8 @@
             "state": "pass",
             "evidence": [
               "docs/testing/coin_pusher_drop_price_20261104.md",
-              "docs/testing/coin_pusher_drop_price_20261104.json"
+              "docs/testing/coin_pusher_drop_price_20261104.json",
+              "commit:62490ab186657cbfff49839589863e851eef7bcd"
             ]
           },
           {
@@ -18159,17 +18163,19 @@
             "state": "pass",
             "evidence": [
               "docs/testing/coin_pusher_drop_price_20261104.md",
-              "docs/testing/coin_pusher_drop_price_20261104.json"
+              "docs/testing/coin_pusher_drop_price_20261104.json",
+              "commit:62490ab186657cbfff49839589863e851eef7bcd"
             ]
           },
           {
             "id": "review_commit",
             "description": "Independent review, focused tests, exact implementation commit and both ledger views associated.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
               "docs/testing/coin_pusher_drop_price_20261104.md",
-              "docs/testing/coin_pusher_drop_price_20261104.json"
+              "docs/testing/coin_pusher_drop_price_20261104.json",
+              "commit:62490ab186657cbfff49839589863e851eef7bcd"
             ]
           }
         ],
@@ -18179,14 +18185,23 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "LOCAL_NATIVE263_PASS_IMPLEMENTATION_COMMIT_PENDING",
+      "state": "complete",
+      "status": "LOCAL_FIX_TEST_COMMIT_COMPLETE",
       "owner": {
         "name": "Fix Back Alley travel / Quarter Falls visible terms",
         "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "62490ab186657cbfff49839589863e851eef7bcd",
+          "evidence": [
+            "docs/testing/coin_pusher_drop_price_20261104.md",
+            "docs/testing/coin_pusher_drop_price_20261104.json",
+            "Independent source review and 263 native assertions plus no-pointer liveness; local scope only."
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -18212,13 +18227,13 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Associate exact implementation commit with the completed independent source review and local qualification receipts, then reconcile the scoped six acceptance criteria. Deployment is outside this local delegation.",
+      "next_action": "No remaining work within the local investigation, price presentation, test and commit objective. No deployed Web or original-save acceptance is claimed.",
       "blocker": {
         "state": "none",
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:46:15.004156+00:00",
+        "observed_at": "2026-11-04T17:49:57.547271+00:00",
         "evidence": [
           "docs/testing/coin_pusher_drop_price_20261104.json"
         ]
@@ -18229,7 +18244,7 @@
           "description": "Expose/read-only canonical Drop and Hold terms in existing surface/control geometry; no charging, paused gameplay, viewport/touch or storage guard change."
         }
       ],
-      "updated_at": "2026-11-04T17:46:15.004156+00:00"
+      "updated_at": "2026-11-04T17:49:57.547271+00:00"
     },
     {
       "id": "BTH-JOURNAL-ROULETTE-CURRENCY-001",

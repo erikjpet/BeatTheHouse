@@ -1,9 +1,9 @@
 {
   "task_id": "BTH-COINPUSHER-DROP-PRICE-001",
   "recorded_at": "2026-11-04T17:46:15.004156+00:00",
-  "state": "LOCAL_NATIVE_QUALIFIED_IMPLEMENTATION_COMMIT_PENDING",
+  "state": "LOCAL_FIX_TEST_COMMIT_COMPLETE",
   "base_commit": "9a7da76a0dd6f19580e7e380bc8aca4010ff1e7f",
-  "implementation_commit": null,
+  "implementation_commit": "62490ab186657cbfff49839589863e851eef7bcd",
   "source_sha256": {
     "game": "2384ef5bd3025bd8a23c0064aead518c514ed57647dba1a2bfc3c54343185fa3",
     "renderer": "6306094cf3cc5961baf0da5f7e1bb83eb77b40d5b486539f9766a810f682581b",
@@ -965,7 +965,7 @@
     "Synthetic module/native-solver and renderer callback/font-fit checks, not OS-pointer play or screenshot/pixel or deployed Web acceptance.",
     "Official Save/fresh-process cold uses disposable fixtures; no original R07 save or missed outcome was replayed.",
     "All six nonce-bound owned Windows Jobs ended with zero owned processes; no global desktop census or shared-service cleanup claim.",
-    "Implementation commit association remains open; deployment is outside this local fix/test/commit scope. Item/scenario pause and existing disk reserve remain unchanged."
+    "Implementation commit is associated; deployment is outside this local fix/test/commit scope. Item/scenario pause and existing disk reserve remain unchanged."
   ],
   "manual_reconciliation": {
     "current": {
@@ -1005,6 +1005,53 @@
       },
       "scope_findings": [],
       "limit": "Existing backlog and historical runtime findings remain outside this scope; exit 1 is preserved, not reported as a global pass."
+    },
+    "commit_associated_current": {
+      "report": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-ledger-committed-current.json",
+      "checked_at": "2026-11-04T17:50:07.580446Z",
+      "exit_code": 1,
+      "summary": {
+        "objectives_checked": 75,
+        "batches_checked": 8,
+        "open_objectives": 37,
+        "open_batches": 4,
+        "open_work_items": 41,
+        "user_paused_items": 8,
+        "complete_objectives": 38,
+        "errors": 57,
+        "warnings": 0,
+        "tasks_with_errors": 20
+      },
+      "scope_findings": [],
+      "limit": "After associating exact implementation commit and completing the six local acceptances. Quarter Falls, Roulette and six pusher runtime rows have no findings; unrelated backlog/runtime errors remain."
+    },
+    "commit_associated_all": {
+      "report": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\pusher-price-ledger-committed-all.json",
+      "checked_at": "2026-11-04T17:50:08.211603Z",
+      "exit_code": 1,
+      "summary": {
+        "objectives_checked": 219,
+        "batches_checked": 8,
+        "open_objectives": 167,
+        "open_batches": 4,
+        "open_work_items": 171,
+        "user_paused_items": 8,
+        "complete_objectives": 50,
+        "errors": 523,
+        "warnings": 0,
+        "tasks_with_errors": 160
+      },
+      "scope_findings": [],
+      "limit": "After associating exact implementation commit and completing the six local acceptances. Quarter Falls, Roulette and six pusher runtime rows have no findings; unrelated backlog/runtime errors remain."
     }
+  },
+  "commit_associated_at": "2026-11-04T17:49:57.547271+00:00",
+  "local_acceptance": {
+    "state": "complete",
+    "criteria": 6,
+    "implementation_commit": "62490ab186657cbfff49839589863e851eef7bcd",
+    "deployment_required": false,
+    "deployment_state": "not_applicable",
+    "scope": "Local investigation, display terms, regression qualification and associated commit only; no deployed Web or original-save acceptance."
   }
 }

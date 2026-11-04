@@ -1,6 +1,6 @@
 # Coin Pusher visible Drop and Hold terms
 
-`BTH-COINPUSHER-DROP-PRICE-001` remains **Open** pending its implementation commit. Local native qualification passes **228 producer + 35 fresh-process cold assertions**, plus the separate no-pointer animation check. Deployment is outside this local fix/test/commit scope. [Structured receipt](coin_pusher_drop_price_20261104.json).
+`BTH-COINPUSHER-DROP-PRICE-001` is **Complete for its local fix/test/commit scope**, associated with exact implementation commit `62490ab186657cbfff49839589863e851eef7bcd`. Local native qualification passes **228 producer + 35 fresh-process cold assertions**, plus the separate no-pointer animation check. Deployment is outside this local fix/test/commit scope. [Structured receipt](coin_pusher_drop_price_20261104.json).
 
 The original R07 warm886/cold887 observation on `f3058b6daab820e9d747c4c4aabc2d983e9ae32e` showed Quarter Falls / Vault Drop with $54 and no visible Drop/Hold cost. It made no paid input. A disposable native baseline reproduced the omission with two expected failures and zero paid inputs; the original R07 profile was not accessed.
 
@@ -23,6 +23,8 @@ The actual renderer draw callback and real Canvas font fitter measured labels in
 
 Each owned job was assigned before execution with a 5% aggregate CPU cap, 2 GiB Job memory limit, kill-on-close and no breakaway. All six ended with `active_at_release=0`, including the expected baseline and diagnostic failure. Private disposable fixture saves/references remain local; no saves, keys or profile contents are included here. The scoped item/scenario pause, fixed 16:9/touch/focus behavior and storage reserve are preserved.
 
-Before closure: associate the implementation SHA with the independent review and these local qualification results. No deployment or original-save qualification is inferred.
+All six scoped local acceptance criteria are accepted with implementation commit `62490ab186657cbfff49839589863e851eef7bcd`, independent source review and the qualification receipts above. No deployment or original-save qualification is inferred.
 
 Manual ledger reconciliation completed with the current owner/runtime snapshots: current group exit 1, 57 existing errors across 20 tasks; all group exit 1, 523 existing errors across 160 tasks. This objective and all six new runtime records have zero findings. Unrelated backlog/runtime gaps remain recorded; neither check is a global pass. Local reports: `task-6/evidence/pusher-price-ledger-current.json` and `pusher-price-ledger-all.json`.
+
+After associating the exact implementation SHA and completing the six local acceptances, both manual checks were rerun: current exit 1 (57 unrelated errors/20 tasks), all exit 1 (523 unrelated errors/160 tasks). Quarter Falls, Roulette and all six new runtime records have zero findings in both reports. Evidence: `task-6/evidence/pusher-price-ledger-committed-current.json` and `pusher-price-ledger-committed-all.json`.
