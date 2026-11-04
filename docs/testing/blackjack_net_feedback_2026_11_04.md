@@ -77,3 +77,22 @@ Receipt: blackjack-net-integrated-cold.json/.log and
 blackjack-net-integrated-cold-observations.json. Exit0, no script errors,
 zero owned processes at release. Native synthetic hand acceptance and deployed
 Web acceptance remain distinct.
+
+## Publication blocker
+
+The2026-11-04 push to erikjpet/BeatTheHouse main was rejected before execution
+by automatic approval review: explicit publication approval was reported
+missing, despite the standing authorization supplied in this delegation.
+No push/deployment occurred. Local implementation255bbfc5, reviewed integration
+f3c3107e and native evidence06021a2b are retained. Explicit approval was requested
+asynchronously; it remains pending. The task stays Open.
+
+Scratch next_blackjack_feedback.cjs prepares a fresh-context synthetic browser
+storage fixture followed by ordinary Continue, with screenshots and strict
+resource/error checks. A bounded diagnostic against oldb94f3938 reaches its
+menu but times out during the subsequent input/capture at90seconds. The menu
+shows Play rather than Continue, so fixture restoration and changed Web
+behavior are unproven. The Job closes with zero owned processes. Do not count
+that run as acceptance or as a deployed product regression. The requested fix
+has not reached NEXT; exact identity, startup and changed Web feedback remain
+pending publication.
