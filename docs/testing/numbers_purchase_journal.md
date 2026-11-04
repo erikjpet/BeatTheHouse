@@ -93,8 +93,52 @@ and contained save/settings roots, supplied by the maintained owned runner.
 
 Implementation: `eb4e66bb86f1aff99e74734aa3afd65fb5d25a3a` on isolated branch
 `fix/numbers-purchase-journal-20261104`, based on public `f876fe41`.
-Independent source/test review found no blocking findings. No full suite,
-rendered Host, OS-pointer, original-profile, main-menu Continue or deployed Web
-acceptance is claimed. The task remains Open for parent acceptance with its
-implementation commit associated in the existing plan/ledger. This follow-up is local fix/test/commit
-only: no publication action, denied-operation retry or NEXT change was made.
+Independent source/test review and final159-result identity audit found no
+blocking findings. No full suite, rendered Host, OS-pointer, original-profile,
+main-menu Continue or Web Numbers-purchase gameplay acceptance is claimed.
+
+## Authorized NEXT acceptance
+
+A later delegation authorized isolated publication and NEXT verification if
+permitted, keeping separate denied fixes excluded. One normal push succeeded
+from `f876fe41` to `5e04e409546ecc9c8c3d04087bddacbd316c818c`, tree
+`133e8a31132199ebff7ec61715a860d80e93a676`. Its outgoing scope was exactly
+the Numbers RunState correction, focused test and these two tracking documents.
+The older denied Slot, Craps and Bar Dice checkouts remained clean and unchanged.
+No prior denied operation was retried.
+
+The existing120-second watcher observed that exact main at14:32:55UTC,
+completed its qualified-native Web export/PCK audit, and promoted it at
+**2026-11-04 14:34:02UTC**. No extra watcher or manual substitute build ran.
+Exact served identity passed at14:34:21UTC:
+
+- NEXT JSON, current pointer, generated LAN redirect, BUILD, manifest and
+  provenance match that SHA/tree and version `0.6.0-dev+5e04e409546e`.
+- Six required assets return200 with provenance lengths; all three WASM
+  responses use `application/wasm`.
+- Served PCK SHA256 is
+  `c03ce5d92673069df7c1541787d2fa7c2b8fe918ec2b349aa94699c831248f3d`,
+  matching provenance. Archive SHA256 is
+  `bb6ba4127aff1d65160fd1bffc453e14f56ecf98da2372758e2361f764b6e90e`.
+
+A fresh sandboxed disposable browser reached the correct-version main menu on
+the exact immutable URL, visually inspected in the startup screenshot. All
+four engine/PCK/native downloads return200; page errors and console errors are
+empty. One expected pre-gesture AudioContext warning is retained. Browser and
+context closure completed; the5% CPU/2GiB owned Job exited0, without timeout or
+error and with zero processes at release. The check uses documented localhost
+HTTP plus the generated LAN redirect; it does not claim direct LAN TLS testing
+or changed-behavior Web play. Existing159 native API/official Save/cold assertions
+remain the scoped changed-behavior qualification for the identical committed
+product diff. No original R05 profile was accessed or paid outcome replayed.
+
+Exact release/startup receipts and screenshot use prefix
+`next-5e04e409546ecc9c8c3d04087bddacbd316c818c-`; the browser Job/log use
+`web-next-5e04e409-final`. Publication and observed watcher states are in
+`numbers-journal-publication-attempt.json` and `numbers-next-observations.jsonl`.
+The existing plan/ledger records Complete with implementation commit associated
+and the scoped native plus NEXT acceptance above. A later documentation-only
+closeout commit records this already-observed acceptance; it is not substituted
+for the verified product identity. Any subsequent exact NEXT observations are
+recorded separately in the combined local receipt. Stable, itch, hosting audience,
+trust settings, item/scenario work and fixed16:9/touch/focus behavior are unchanged.
