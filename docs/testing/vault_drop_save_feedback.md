@@ -2,7 +2,8 @@
 
 Task `BTH061-VAULTDROP-SAVE-001` retains the original R04 observation. Child
 `BTH061-VAULTDROP-SAVE-FEEDBACK-001` tracks the independently testable feedback
-defect. Both remain Open until their own commit and required acceptance exist.
+defect. The feedback child is Complete with associated fix commit85c1782b and
+the acceptance below; the original R04 parent remains Open.
 
 ## Original evidence and limit
 
@@ -55,7 +56,7 @@ live state and primary/backup fingerprints, refresh/reopen retention, normal
 Leave settlement, floor Save, fresh-service/warm Continue, separate-process cold
 Continue and storage-busy recovery. The continuous environment clock is disabled
 only in the disposable test fixture, as in the established navigation test.
-Results, commit association and exact NEXT acceptance remain pending.
+Final results, commit association and exact NEXT acceptance are recorded below.
 
 The first unchanged-source attempt (`vault-save-red-1`) completed normally with
 owned processes0, but its compound startup/Corner Store assertion failed before
@@ -110,18 +111,83 @@ save is requested.
 | Corrected warm host |54 checks, no failures | `evidence/vault-save-green-1.json` and `.log` |
 | Separate-process cold Continue |12 checks, no failures; no paid action | `evidence/vault-save-cold-1.json` and `.log` |
 | Exact Web durability adapter |16 contracts, no failures; no profile/save/network I/O | `evidence/vault-save-web-adapter.log` |
-| Rendered native guidance | Pending | `evidence/vault-save-visual-1` |
-| Exact main/NEXT identity and served startup | Pending | Recorded after tested commit |
+| Rendered native guidance | Blocked before script initialization in two bounded attempts | `evidence/vault-save-visual-1.json` and `vault-save-visual-2.json` |
+| Actual NEXT ordinary-input refusal and recovery | Passed; visible guidance at1280x720 and960x540, one Drop only, normal Leave/floor Save and cold Continue | `evidence/vault-feedback-web-acceptance.json` |
+| Exact main/NEXT identity and served startup | Passed for85c1782b | `evidence/next-85c1782be759d4e50c50219945231312c2287640-release.json`; `vault-next-startup-85c1782b.json` |
 
-Completed capped jobs above ended without timeout and drained owned processes
-to0. Native behavioral acceptance, adapter contracts and eventual NEXT Web
+Passing functional and route-qualification jobs ended without timeout and
+drained owned processes to0. The two native graphics timeouts are described
+separately below. Native behavioral acceptance, adapter contracts and NEXT Web
 startup are separate scopes; no real Web live-machine refusal is claimed by a
 native test. No canvas scheduling/performance code changes in this correction.
 All191 existing ledger IDs are retained without duplication; the two named Vault
 tasks make193. Item and scenario implementation, including Gas, remains paused.
 
+Fix commit `85c1782be759d4e50c50219945231312c2287640`, tree
+`ca81af757c465ede98b6f07a252f97fffb28225a`, was pushed to main and promoted by
+the existing NEXT watcher at2026-11-04T08:07:37Z. Exact status/pointer/redirect,
+BUILD/manifest/REF/VERSION and provenance agree. All six payload HEAD checks
+passed; direct served PCK SHA-256 is
+`243f191e094861029a239e0521ac6d0447fab550b4bd0afc4485afac547552f0`.
+A fresh private browser displayed Version0.6.0-dev+85c1782be759, captured and
+closed with no page/console errors and owned processes0. It made no gameplay
+claim.
+
+The native GL attempts each reached the300s resource-bound deadline before the
+helper's initialization marker or any fixture/capture directory. CPU totals were
+209.421875s and225.53125s; each job drained to0. The second retained only its own
+first-attempt engine cache, since no fixture action had begun. Exact CLI
+forwarding was checked. No shader/fixture root cause is established, no canvas
+processing was disabled, and no performance change was made. These are
+incomplete native visual checks, not gameplay failures. Actual Web rendering
+qualifies the visible correction separately; no native raster pass is claimed.
+
+## Actual NEXT ordinary-input acceptance
+
+On the immutable85c NEXT build, a fresh disposable browser profile used visible
+PLAY, normal First Night Skip Lessons/confirmation and Run Setup. Its first
+restricted launch failed before navigation with a GPU-child access error and
+drained to0. The approved process-sandbox escalation retained Chromium's own
+sandbox and the12% CPU/2GiB Job cap. One unpaid preparation run revealed a
+controller `insertText` issue; it was closed before travel or gameplay. The
+controller changed to ordinary key events and verified the visible exact seedF
+before Start. Neither setup failure was counted as gameplay acceptance.
+
+Qualified session `vault-feedback-next-f-route-03` confirmed the normal Corner
+Store route and paid its3 bus fare, cash100 ->97. The actual Vault cabinet was
+visually confirmed before one ordinary Drop, cash97 ->96, Heat0. Manual Save
+while unsettled displayed the exact recovery notice inside the Run Menu at both
+1280x720 and960x540, fully readable and unclipped (independently viewed by the
+parent investigator). No second Drop, Stop, Nudge or Collect occurred.
+
+Resume and ordinary Leave completed settlement and returned to the floor.
+Manual floor Save dismissed the menu with its normal acknowledgment at Day1
+1:45PM, cash96, Heat0. The preceding capture showed "Saving to Resume Slot... Keep
+this tab open." with disabled visible buttons. The browser closed286ms after the Save-click return, with
+the post-ack screenshot before close. Separate-process session
+`vault-feedback-next-f-cold-04` used normal Continue and captured the first floor
+and menu at the same Day1 1:45PM/cash96/Heat0 and exactF seed. The old refusal
+notice was absent. There was no further Save, machine entry or gameplay input.
+Both qualified browser sessions completed with no page/console errors and owned
+processes0. Web acceptance compares visible wallet/clock/seed and recovery;
+native tests supply the full machine/tray/RNG comparisons. The floor's generic
+Quarter Falls room/action labels are not evidence of cold Vault identity; that
+identity is explicitly qualified by the native full-state comparisons.
+
+Screenshots and typed command receipts are retained under
+`task-14/evidence/web-vault-feedback/sessions/`. Key images in the route03 session:
+`not-saved-1280.png`, `not-saved-960.png`, `after-normal-leave.png` and
+`floor-save-ack.png`. The summary and all preparation classifications are in
+`task-14/evidence/vault-feedback-web-acceptance.json`.
+
+`BTH061-VAULTDROP-SAVE-FEEDBACK-001` is Complete: fix85c1782b is on main/NEXT,
+native warm/cold and storage recovery pass, Web durability contracts pass, and
+the actual deployed guidance/recovery/cold boundary passes. Its parent and
+`BTH061-PULLTABS-SAVE-001` remain Open; neither original observation is attributed
+or closed by this narrower correction.
+
 During setup, the C drive reached0 free bytes and one shell launch failed before
-execution (OS112). Three task14-derived served-PCK downloads were removed only
-after their hashes matched retained release receipts, freeing about142MB. All
+execution (OS112). Task14-derived served-PCK downloads were removed only
+after their hashes matched retained release receipts. All
 receipts, screenshots, source and private fixture expectations were preserved.
 Cleanup inventory: `task-14/evidence/derived-binary-cleanup-vault.json`.

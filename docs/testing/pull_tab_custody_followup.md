@@ -166,6 +166,12 @@ access was performed. Preserved action logs and launch receipts were read.
 The qualified f299 Pull Tabs, SaveService, DurableStore, Web durability adapter
 and adapter contract test retain identical Git blobs on this source. The
 LF-normalized manual Menu Save and forced-autosave methods are also unchanged.
+That identity statement is scoped to the source above. Subsequent Vault feedback
+fix `85c1782be759d4e50c50219945231312c2287640` changes the manual Save error-field
+name and visible immediate-refusal feedback. It does not change Pull Tabs
+custody, SaveService, DurableStore, forced-autosave readiness or the Web durability
+adapter. It supplies no new evidence about the original Pull Tabs generations;
+this parent remains Open.
 The existing 177 custody assertions and two Web arms remain retained evidence
 for their exact builds and inputs, not fresh passes on the later source.
 The six Web sessions comprise two initial sessions and four cold sessions.
