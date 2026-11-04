@@ -33,6 +33,60 @@ const NORMALIZED_PLACEMENT_DIGEST := "placement-authority-digest"
 const BLACKJACK_DEFINITION_SHA256 := "d2ccf97e7108a4fda3ac6bfae2faf56099ae45d46d55d3e72fd51e4cff516989"
 const NORMALIZED_CREW_AUTHORITY_ID := "0000000000000000000000000000000000000000000000000000000000000000"
 
+# Fixture-only compatibility authority for four reviewed post-pin commits:
+# 26d399aa (Crew door), cd769f18 (Crew restore), fa3de446 (archive), accef469 (clock).
+# Every projected value must first match its complete intended current shape.
+# These are exact guards, not new whole-fixture fingerprints or general masks.
+const BLACKJACK_FIXTURE_ACCEPTED_SAVE_EXTENSIONS := {
+	"story_money_archive": {
+		"archived_entry_count": 0,
+		"known_entry_count": 0,
+		"schema": "bth.story_money_archive/v1",
+		"sources": {},
+	},
+	"surface_clock_checkpoint_msec": -1,
+}
+const BLACKJACK_FIXTURE_ACCEPTED_CREW_RESTORE_FLAGS := {
+	"crew_delivery_borrow_count": 0,
+	"crew_delivery_loan_locations": [],
+	"crew_delivery_migration": {
+		"historical_count_scope": "Open markers only; cleared borrowing history is not reconstructed.",
+		"outstanding_deliveries": 0,
+		"recorded_open_borrows": 0,
+		"unknown_historical_borrow_count": false,
+		"unknown_prior_completion_credit": false,
+	},
+	"crew_delivery_obligations": 0,
+	"crew_delivery_post_miss": false,
+	"crew_delivery_rules_version": 1,
+	"crew_favor_pending": false,
+	"crew_marker_converted_to_cash": false,
+	"crew_reputation": 0,
+}
+const BLACKJACK_FIXTURE_CURRENT_BACK_ROOM_TRANSITION := {
+	"access_paths": [
+		{"method": "crew_rank", "min_crew_rank": "made"},
+		{"flags_any": ["rook_escort_punchline_back_room"], "method": "rook_escort"},
+	],
+	"description": "A private door behind the tables.",
+	"label": "Crew Back Room",
+	"locked_reason": "Rook keeps this door for made company or people he escorts.",
+	"requires_current_access": true,
+	"requires_discovered": true,
+	"target_layer_id": "back_room",
+}
+const BLACKJACK_FIXTURE_HISTORICAL_BACK_ROOM_TRANSITION := {
+	"access_paths": [
+		{"method": "crew_rank", "min_crew_rank": "associate"},
+		{"flags_any": ["rook_escort_punchline_back_room"], "method": "rook_escort"},
+	],
+	"description": "A private door behind the tables.",
+	"label": "Crew Back Room",
+	"locked_reason": "Rook keeps this door for associates.",
+	"requires_discovered": true,
+	"target_layer_id": "back_room",
+}
+
 
 func _init() -> void:
 	call_deferred("_run_dialogue_trigger_cadence_check")
@@ -99,6 +153,12 @@ func _run_dialogue_trigger_cadence_check() -> void:
 	# coach boundary instead of racing the production deferred refresh.
 	await _settle(190)
 	_stage_blackjack_raised_bet_surface()
+	# The capture helper installs a restored RunState. All later observers must
+	# follow that current run instead of retaining the pre-capture reference.
+	run_state = app.get("run_state")
+	if run_state == null:
+		_fail("The raised-bet capture fixture did not retain a current run.")
+		return
 	_stage_guide_lesson("tutorial_blackjack_raise")
 	# The capture helper relaxes triggers to stage arbitrary visual states. Restore
 	# the production game ownership used by the recovery guard under test.
@@ -427,12 +487,14 @@ func _blackjack_count_fixture_baseline() -> Dictionary:
 	normalized.from_dict(JSON.parse_string(JSON.stringify(run_state.to_dict())))
 	var bytes := JSON.stringify(normalized.to_dict())
 	var fingerprint := JSON.stringify(_normalize_fixture_private_capsules(normalized.to_dict())).sha256_text()
+	var historical_fingerprint: String = _blackjack_fixture_historical_fingerprint(normalized.to_dict())
 	return {
 		"bytes": bytes,
 		"data": normalized.to_dict(),
 		"fingerprint": fingerprint,
 		"heat": normalized.suspicion_level(),
-		"valid": fingerprint == BLACKJACK_FIXTURE_BASELINE_SHA256
+		"historical_fingerprint": historical_fingerprint,
+		"valid": historical_fingerprint == BLACKJACK_FIXTURE_BASELINE_SHA256
 			and normalized.suspicion_level() == 0
 			and normalized.is_tutorial_run()
 			and bool(normalized.narrative_flags.get("tutorial_blackjack_peek_reprieve_used", false)),
@@ -532,6 +594,53 @@ func _normalize_fixture_private_capsules(value: Variant) -> Variant:
 		crew_state["z"] = "A".repeat(capsule_text.length())
 		normalized["crew_state"] = crew_state
 	return normalized
+
+
+func _blackjack_fixture_historical_fingerprint(data: Dictionary) -> String:
+	# The old trusted SHA remains the authority for every other normalized byte.
+	# Work on a detached observer copy; current full-state fingerprints and
+	# round-trip/clone comparisons continue to cover all current fields below.
+	var projected: Dictionary = _normalize_fixture_private_capsules(data)
+	if not _fixture_require_and_erase_extensions(projected, BLACKJACK_FIXTURE_ACCEPTED_SAVE_EXTENSIONS):
+		return ""
+	if typeof(projected.get("narrative_flags")) != TYPE_DICTIONARY:
+		return ""
+	if not _fixture_require_and_erase_extensions(projected["narrative_flags"], BLACKJACK_FIXTURE_ACCEPTED_CREW_RESTORE_FLAGS):
+		return ""
+	if typeof(projected.get("current_environment")) != TYPE_DICTIONARY:
+		return ""
+	var environment: Dictionary = projected["current_environment"]
+	if not _fixture_revert_accepted_back_room_transition(environment):
+		return ""
+	if typeof(environment.get("layer_states")) != TYPE_DICTIONARY:
+		return ""
+	var layer_states: Dictionary = environment["layer_states"]
+	if typeof(layer_states.get("casino")) != TYPE_DICTIONARY:
+		return ""
+	if not _fixture_revert_accepted_back_room_transition(layer_states["casino"]):
+		return ""
+	return JSON.stringify(projected).sha256_text()
+
+
+func _fixture_require_and_erase_extensions(data: Dictionary, accepted: Dictionary) -> bool:
+	for key_value: String in accepted.keys():
+		if not data.has(key_value) or JSON.stringify(data[key_value]) != JSON.stringify(accepted[key_value]):
+			return false
+	for key_value: String in accepted.keys():
+		data.erase(key_value)
+	return true
+
+
+func _fixture_revert_accepted_back_room_transition(environment: Dictionary) -> bool:
+	if typeof(environment.get("layer_transitions")) != TYPE_ARRAY:
+		return false
+	var transitions: Array = environment["layer_transitions"]
+	if transitions.size() != 2 \
+			or JSON.stringify(transitions[1]) != JSON.stringify(BLACKJACK_FIXTURE_CURRENT_BACK_ROOM_TRANSITION):
+		return false
+	transitions[1] = BLACKJACK_FIXTURE_HISTORICAL_BACK_ROOM_TRANSITION.duplicate(true)
+	environment["layer_transitions"] = transitions
+	return true
 
 
 func _blackjack_fixture_matches_baseline(fixture: Dictionary, baseline: Dictionary) -> bool:
@@ -699,6 +808,11 @@ func _blackjack_count_hand_is_mandatory() -> bool:
 
 
 func _game_dialogue_waits_for_transition(run_state: RunState) -> bool:
+	var current_run: RunState = app.get("run_state")
+	var talk_dock: TalkDock = app.get("talk_dock")
+	if current_run == null or not is_same(run_state, current_run) or talk_dock == null:
+		_fail("Transition cadence fixture requires the current Main run and TalkDock.")
+		return false
 	_clear_guide_state()
 	run_state.narrative_flags["tutorial_actions_performed"] = {}
 	var library: ContentLibrary = app.get("library")
@@ -706,35 +820,98 @@ func _game_dialogue_waits_for_transition(run_state: RunState) -> bool:
 	var first := library.tutorial_lesson("tutorial_blackjack_raise").duplicate(true)
 	var second := library.tutorial_lesson("tutorial_blackjack_raised_deal").duplicate(true)
 	first["trigger"] = {"screen": "GAME", "game_id": "blackjack", "state_predicates": []}
+	# This synthetic cadence fixture owns its action completion. The production
+	# Raise lesson now requires durable wager state, which this stimulus does not set.
+	first["completion"] = {"type": "anchored_action", "action_id": "surface_stake_up"}
 	second["trigger"] = {"depends_on": ["tutorial_blackjack_raise"], "screen": "GAME", "game_id": "blackjack", "state_predicates": []}
 	coach.set_lessons([first, second])
 	coach.begin_tutorial_run({})
 	coach.evaluate_at_boundary(app.call("_coach_context_snapshot"))
 	app.call("_refresh_talk_dock")
 	await _settle(3)
-	if coach.active_lesson_id() != "tutorial_blackjack_raise":
-		_fail("Transition cadence fixture could not activate its first voiced table lesson.")
+	var first_event_id: String = "tutorial_guide:tutorial_blackjack_raise"
+	var next_event_id: String = "tutorial_guide:tutorial_blackjack_raised_deal"
+	var first_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	var first_entry: Dictionary = talk_dock.entry.duplicate(true)
+	var first_pending: Dictionary = run_state.pending_talk_event(first_event_id)
+	if coach.active_lesson_id() != "tutorial_blackjack_raise" \
+			or str(first_talk.get("event_id", "")) != first_event_id \
+			or str(first_entry.get("event_id", "")) != first_event_id \
+			or str(first_entry.get("dialogue_id", "")) != str(first.get("dialogue_id", "")) \
+			or str(first_entry.get("current_node", "")) != str(first.get("dialogue_node", "")) \
+			or JSON.stringify(first_entry) != JSON.stringify(first_pending) \
+			or not run_state.pending_talk_event(next_event_id).is_empty():
+		_fail("Transition cadence fixture could not activate its first voiced table lesson: lesson=%s entry=%s pending=%s talk=%s." % [coach.active_lesson_id(), str(first_entry), str(first_pending), str(first_talk)])
+		return false
+	# Complete the first line's ordinary acknowledgement before staging a
+	# canvas-only channel. Its dialogue refresh would replace that synthetic
+	# channel with the genuine Blackjack snapshot after the action otherwise.
+	app.call("_on_talk_dock_choice_requested", first_event_id, "continue")
+	await _settle(3)
+	var acknowledged_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	var acknowledged_entry: Dictionary = talk_dock.entry.duplicate(true)
+	if coach.active_lesson_id() != "tutorial_blackjack_raise" \
+			or not run_state.pending_talk_event(first_event_id).is_empty() \
+			or not run_state.pending_talk_event(next_event_id).is_empty() \
+			or not acknowledged_entry.is_empty() \
+			or not str(acknowledged_talk.get("event_id", "")).is_empty():
+		_fail("Transition cadence fixture did not acknowledge only its first line: lesson=%s first=%s next=%s displayed=%s." % [coach.active_lesson_id(), str(run_state.pending_talk_event(first_event_id)), str(run_state.pending_talk_event(next_event_id)), str(acknowledged_entry)])
 		return false
 	var canvas: Control = app.get("game_surface_canvas")
+	var fixture_channel_id: String = "tutorial_cadence_fixture"
 	canvas.call("apply_surface_state_patch", {"surface_animation_channels": [{
-		"id": "tutorial_cadence_fixture",
+		"id": fixture_channel_id,
 		"active": true,
 		"active_id": "hand_result",
 		"duration_msec": 60000,
 	}]})
-	coach.notify_action("surface_stake_up")
-	await _settle(5)
-	if not coach.active_lesson_id().is_empty() \
-			or not run_state.pending_talk_event("tutorial_guide:tutorial_blackjack_raised_deal").is_empty():
-		_fail("Pal started the next table lesson before the finite hand animation finished.")
+	if not bool(canvas.call("surface_animation_active", fixture_channel_id)):
+		_fail("Transition cadence fixture did not install its finite animation channel.")
 		return false
+	var action_consumed: bool = coach.notify_action("surface_stake_up")
+	if not action_consumed or not coach.active_lesson_id().is_empty():
+		_fail("Transition cadence stimulus did not complete the synthetic first lesson: consumed=%s lesson=%s." % [str(action_consumed), coach.active_lesson_id()])
+		return false
+	for blocked_frame: int in range(5):
+		await _settle(1)
+		var channel_active: bool = bool(canvas.call("surface_animation_active", fixture_channel_id))
+		var blocked_lesson_id: String = coach.active_lesson_id()
+		var blocked_next_entry: Dictionary = run_state.pending_talk_event(next_event_id)
+		var blocked_talk: Dictionary = app.call("current_talk_dock_snapshot")
+		var blocked_displayed_entry: Dictionary = talk_dock.entry.duplicate(true)
+		if not channel_active:
+			_fail("Transition cadence fixture lost its synthetic channel before release: frame=%d lesson=%s next=%s." % [blocked_frame, blocked_lesson_id, str(blocked_next_entry)])
+			return false
+		if not blocked_lesson_id.is_empty() \
+				or not blocked_next_entry.is_empty() \
+				or not blocked_displayed_entry.is_empty() \
+				or not str(blocked_talk.get("event_id", "")).is_empty():
+			_fail("Pal started a table lesson before the finite hand animation finished: frame=%d channel_active=%s lesson=%s next=%s displayed=%s." % [blocked_frame, str(channel_active), blocked_lesson_id, str(blocked_next_entry), str(blocked_displayed_entry)])
+			return false
 	canvas.call("apply_surface_state_patch", {"surface_animation_channels": []})
 	await _settle(8)
 	var next_talk: Dictionary = app.call("current_talk_dock_snapshot")
+	var next_entry: Dictionary = talk_dock.entry.duplicate(true)
+	var next_pending: Dictionary = run_state.pending_talk_event(next_event_id)
 	if coach.active_lesson_id() != "tutorial_blackjack_raised_deal" \
-			or str(next_talk.get("event_id", "")) != "tutorial_guide:tutorial_blackjack_raised_deal":
-		_fail("Pal did not start the next table lesson after the hand animation settled: %s." % str(next_talk))
+			or str(next_talk.get("event_id", "")) != next_event_id \
+			or str(next_entry.get("event_id", "")) != next_event_id \
+			or str(next_entry.get("dialogue_id", "")) != str(second.get("dialogue_id", "")) \
+			or str(next_entry.get("current_node", "")) != str(second.get("dialogue_node", "")) \
+			or JSON.stringify(next_entry) != JSON.stringify(next_pending):
+		_fail("Pal did not start the next table lesson after the hand animation settled: lesson=%s entry=%s pending=%s talk=%s." % [coach.active_lesson_id(), str(next_entry), str(next_pending), str(next_talk)])
 		return false
+	print("TUTORIAL_ANIMATION_CADENCE ", JSON.stringify({
+		"task_id": "BTH061-AUDIT-TUTORIAL-ANIMATION-001",
+		"synthetic_first_action_consumed": action_consumed,
+		"run_reference_is_current": is_same(run_state, app.get("run_state")),
+		"displayed_guide_matches_current_run": true,
+		"first_event_before_action": str(first_talk.get("event_id", "")),
+		"blocked_process_frames": 5,
+		"synthetic_channel_active_throughout_block": true,
+		"next_lesson_after_release": coach.active_lesson_id(),
+		"next_event_after_release": str(next_talk.get("event_id", "")),
+	}))
 	return true
 
 
