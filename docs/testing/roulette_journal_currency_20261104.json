@@ -1031,5 +1031,11 @@
       "scope_findings": [],
       "limit": "Quarter Falls, Roulette and all seven Roulette runtime records have zero findings; unrelated backlog/runtime errors remain and neither check is a global pass."
     }
+  },
+  "release_followthrough": {
+    "state": "open",
+    "receipt": "docs/testing/quarter_roulette_publication_20261104.json",
+    "authorization_added_at": "2026-11-04T18:02:51.923373+00:00",
+    "scope": "New main/NEXT publication request extends the parent objective; the local completed qualification above remains valid and unchanged."
   }
 }

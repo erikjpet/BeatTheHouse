@@ -1,6 +1,6 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-04T17:56:46.554449+00:00",
+  "observed_at": "2026-11-04T18:02:51.923373+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -27,8 +27,8 @@
       "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
       "title": "Fix Back Alley travel",
       "state": "active",
-      "observed_at": "2026-11-04T17:56:46.554449+00:00",
-      "source": "Current task6 parent completed local Roulette journal qualification, committed exact fix61e77b909b0ca2cb496df54066ba13ffb68ea755 and is associating receipts/tracking; actual active execution. Quarter Falls completed state remains separate."
+      "observed_at": "2026-11-04T18:02:51.923373+00:00",
+      "source": "Current task6 parent is publishing the tested Quarter Falls/Roulette work under new trusted main/NEXT authorization and following the existing reserve-blocked watcher. Actual active execution; local fixes remain accepted."
     },
     {
       "task_ref": "01a16736-0a2f-7668-8ad8-a6074981c01e",

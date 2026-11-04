@@ -1,0 +1,65 @@
+{
+  "schema": "bth.release_followthrough/v1",
+  "recorded_at": "2026-11-04T18:02:51.923373+00:00",
+  "task_ids": [
+    "BTH-COINPUSHER-DROP-PRICE-001",
+    "BTH-JOURNAL-ROULETTE-CURRENCY-001"
+  ],
+  "state": "AUTHORIZED_PUBLICATION_IN_PROGRESS_NEXT_RESERVE_BLOCKED",
+  "authorization": "Trusted parent delegation2026-11-04: publish the tested Quarter Falls price and Roulette journal fixes to main, follow existing NEXT watcher, retain NEXT acceptance Open until the reserve blocker resolves and delivery is verified. User transcript: Yes push all finished work to next. Do not bypass the existing gate.",
+  "prepared_branch_commit": "3f81238b64c64d5c11b0587112bed6cfc546cf47",
+  "implementation_commits": {
+    "BTH-COINPUSHER-DROP-PRICE-001": "62490ab186657cbfff49839589863e851eef7bcd",
+    "BTH-JOURNAL-ROULETTE-CURRENCY-001": "61e77b909b0ca2cb496df54066ba13ffb68ea755"
+  },
+  "local_qualification": {
+    "BTH-COINPUSHER-DROP-PRICE-001": {
+      "state": "complete",
+      "accepted_criteria": 6,
+      "assertions": 263,
+      "separate_liveness": "PASS",
+      "receipt": "docs/testing/coin_pusher_drop_price_20261104.json"
+    },
+    "BTH-JOURNAL-ROULETTE-CURRENCY-001": {
+      "state": "complete",
+      "accepted_criteria": 4,
+      "assertions": 460,
+      "receipt": "docs/testing/roulette_journal_currency_20261104.json"
+    }
+  },
+  "publication": {
+    "state": "authorized_in_progress",
+    "main_sha": null,
+    "main_tree": null,
+    "push_receipt": null
+  },
+  "next": {
+    "state": "reserve_blocked",
+    "observation_source": "Parent read-only watcher/status observation; this tracking update did not inspect or operate the pipeline.",
+    "observed_at": "2026-11-04T17:59:46+00:00",
+    "deployed_sha": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+    "free_bytes": 13064531968,
+    "required_bytes": 13958643712,
+    "target_promoted_sha": null,
+    "served_identity": "unverified",
+    "assets": "unverified",
+    "startup": "unverified"
+  },
+  "blocker": {
+    "state": "active",
+    "kind": "pipeline_disk_reserve",
+    "description": "Existing NEXT disk reserve blocked at parent observation2026-11-04T17:59:46Z: free13064531968 bytes below required13958643712 bytes; prior NEXT f3058b6daab820e9d747c4c4aabc2d983e9ae32e retained. Publication is authorized and proceeding; no approval or user-input hold.",
+    "requires_user_input": false,
+    "observed_at": "2026-11-04T17:59:46+00:00",
+    "evidence": [
+      "docs/testing/quarter_roulette_publication_20261104.md",
+      "docs/testing/quarter_roulette_publication_20261104.json"
+    ]
+  },
+  "limits": [
+    "Source-safe prepublication tracking only. No network, push, watcher operation, engine, stage or commit performed by the receipt editor.",
+    "Completed native local qualification remains historical and does not establish deployed Web identity or gameplay.",
+    "No bypass, second watcher or manual substitute build; preserve stable/itch/audience, item/scenario pause, fixed16:9/touch/focus and resource gates.",
+    "Original profiles and all thirteen owned Quarter Falls/Roulette job closure records remain unchanged."
+  ]
+}

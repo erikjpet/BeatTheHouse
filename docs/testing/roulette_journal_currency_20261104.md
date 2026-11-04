@@ -23,3 +23,5 @@ All 7 actual nonce-bound owned Jobs are recorded, assigned before execution unde
 All four local acceptance criteria are accepted with the exact implementation SHA, independent review and these tests. No deployed or original-save acceptance is inferred.
 
 Manual reconciliation with current owner/runtime snapshots: current exit 1 (57 unrelated errors across 20 tasks); all exit 1 (523 unrelated errors across 160 tasks). Quarter Falls, Roulette and all seven new Roulette runtime records have zero findings in both. No broad cleanup was performed. Local reports: `task-6/evidence/roulette-currency-ledger-current.json` and `roulette-currency-ledger-all.json`.
+
+A later authorized main/NEXT publication request extends the full objective, which is now Open for delivery verification. The completed local scope above remains accepted. See [shared release follow-through](quarter_roulette_publication_20261104.md); publication and deployed identity/assets/startup are not established by this local receipt.
