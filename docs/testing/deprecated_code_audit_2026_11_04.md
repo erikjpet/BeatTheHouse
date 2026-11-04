@@ -280,3 +280,167 @@ published after receipt; only read-only release verification and this evidence
 record followed. Further audit edits must stay outside the paused areas, and
 pending evidence is preserved. This new pause does not retroactively justify
 the earlier inaccurate hold or completion labels.
+
+## Remaining-findings investigation after the pause
+
+The continued investigation changes only general tutorial qualification tests
+and evidence. No product, item, authored scenario/sequence, venue-access or Crew
+implementation/data is edited. The umbrella remains Open.
+
+### Exact tutorial fingerprint cause
+
+The current fixture is still 121,008 normalized bytes with full SHA-256
+`fba86ca4c882f9e7425cce1eb5cb76e691d60d1b422eb35f18e786e4e6380105`.
+All drift from the original trusted pin is accounted for by 17 differences:
+
+| Later accepted change | Exact fixture differences |
+| --- | --- |
+| `fa3de446` | One complete `story_money_archive` saved-state extension. |
+| `accef469` | One `surface_clock_checkpoint_msec` extension. |
+| `cd769f18` | Nine Crew restoration flags created when the old fixture's three-flag assignment enters the supported legacy migration. |
+| `26d399aa` | Three venue-door leaves at each of two saved locations: made-rank access, current-access requirement and its explanation. |
+
+Reversing exactly those historical differences in an external forensic copy
+produces 120,254 bytes and the exact original
+`fbf5f57b1111a90bb650c5d8668eda8c90404b596c5ecbf91ca8a015acf44700`
+pin. This identifies stale whole-state acceptance, not a cleanup regression.
+The forensic copy is never supplied as gameplay or saved-state input.
+
+The test-only repair keeps that trusted pin and first requires each complete
+current extension/door record to match its reviewed current shape. Only a
+detached comparison view is projected to the historical authority. Unknown,
+missing, changed and wrong-type fields still reject. The current full-state
+fingerprint, constructed fixture, clone/restore equality and gameplay checks
+remain unchanged. The current-source private probe confirms the same actual
+and restored full hashes, heat zero and an empty round-trip diff.
+
+Native parser qualification and 73 hostile cases pass, including all 17
+wrong/missing/type cases, unknown additions, unchanged pinned values and
+structural corruption. Caller data remains unchanged. The durable checker is
+`scripts/tests/tutorial_fixture_historical_authority_check.gd`. Raw synthetic
+states and all private paths remain outside the repository in
+`evidence/tutorial-pin-history-20261104-r1/` and the isolated native receipts.
+
+### Separate synthetic animation-fixture finding
+
+The full guide gets past the former fingerprint failure, then fails its
+finite-transition assertion. This is tracked independently as
+`BTH061-AUDIT-TUTORIAL-ANIMATION-001`. The synthetic fixture still sends an
+anchored action after production lesson completion moved to the
+`game.wager_raised` state predicate in `c458224b`; its first lesson therefore
+remains active. The old assertion treats any active lesson as a prematurely
+started next lesson. That result is not evidence of a product animation bug.
+The test-only correction must explicitly author its synthetic completion,
+settle the first dialogue before its canvas injection, and assert exact
+first/next identities and active finite channel around the blocked interval.
+Production scheduling and gates remain unchanged. Full acceptance is pending.
+
+The strengthened observer also exposed a stale object reference: the capture
+helper deliberately installs a restored RunState, while its caller kept the
+old instance. Guide queue ownership itself is unchanged. The caller now
+rebinds immediately after that replacement, and the cadence method checks
+identity and complete displayed/current queue equality. It observes the
+synthetic channel active at each of five blocked frames, then requires the
+exact second lesson, event, dialogue and node after release.
+
+Both test-only fixes now have separate commits:
+`c3d92ba8728c744d48c53c959d608f2303a06e47` for historical fixture authority and
+its durable 73-case checker, and
+`4bc0147b7ae3667fbaba654985603ec8fe76f38a` for synthetic cadence/current-run
+custody. The published checker passes all 73 cases. The complete native
+`tutorial_dialogue_trigger_cadence_check.gd` now passes at exact test SHA-256
+`bf5fe28bc11b92d38e99acef3248af14304875730bc4b17dbd20e82a19830461`.
+All owned native jobs close with zero active processes. The existing isolated
+host certificate-store diagnostic is retained; no TLS behavior is changed.
+These are test repairs, not changes to current feature semantics. NEXT
+acceptance and the unchanged aggregate validator remain pending.
+
+### Aggregate validator evidence limit
+
+Host-r4's five new identities form the known other-workspace process chain,
+starting within 619.6096 ms. Baseline/post/live confirmation use the same
+PID/UTC-creation/name identity. Validator synthetic descendants use pinned
+Windows PowerShell; the external Python/Godot chain is not validator-owned.
+No guard correction or exclusion is justified.
+
+The global-process throw precedes later lease/residue/cache/environment checks
+and rethrow of the inner launcher failure. Consequently, the old receipt proves
+the earlier source/authoring/migration results, but does not by itself prove
+inner launcher or later postcondition success. A private capture extension now
+records missing versus null/empty variables, scalar custody/exit/cleanup facts,
+terminal boundary and inner exception type without raw command lines or error
+contents. Its diagnostic-only harness passes; this is not a project-validator
+pass. The next unchanged complete invocation will retain those facts even if
+external concurrency again prevents aggregate acceptance. Other workers,
+process guards and machinery are left unchanged.
+
+Host-r5 ran the unchanged validator from 02:59:02 to 03:05:44 UTC. Its captured
+inner launcher contracts pass 40/40 and the independent contracts pass 11/11.
+Both native exits are zero with clean executable pins, successful Job
+assignment/accounting/cleanup and zero final active members. The owned manifest
+reaches `validator-terminal-green`, sequence 7, with the shadow removed and
+handles terminal. There is no deferred inner failure. Validator source hashes
+before and after are identical.
+
+Complete qualification nevertheless fails at the unchanged global process
+guard: six new external-to-validator identities appeared. Four have a recorded
+other-workspace marker; the other two have unresolved workspace attribution.
+They are not silently excluded or assumed to be validator-owned. All four
+later lease/residue/cache/environment checks are unreached, so no pass is
+claimed for them. The exact remaining blocker for
+`BTH061-AUDIT-VALIDATOR-001` is an unchanged complete invocation whose global
+process census remains consistent through that boundary. No peer was stopped
+and no admission hold is inferred. The sanitized machine evidence is
+`tool_audit/validator_host_r5_safe_summary.json`; raw process commands and
+diagnostics stay private. The umbrella remains Open as requested.
+
+### Publication review blocker
+
+After preserving concurrent main updates, clean candidate
+`227a74eb337dffdadc2b32f93bd70db798dcd62d` passes the full native tutorial,
+the durable checker parser and all 73 hostile cases again. All three stages
+exit zero, with no script errors or owned processes after closure. Relative to
+the integrated remote base, the introduced paths are only two tutorial tests
+and the audit plan/report. No product, item, authored scenario, data, native,
+scene or scheduling input is changed by these repairs.
+
+Automatic approval review rejected the exact action `git push origin HEAD:main`
+to `erikjpet/BeatTheHouse:main`, stating that authorization for this exact shared
+main publication could not be verified and treating it as an external,
+deployment-like commitment. The Git process did not run. No alternate or
+indirect publication was attempted. The fixes remain committed locally as
+`c3d92ba8728c744d48c53c959d608f2303a06e47` and
+`4bc0147b7ae3667fbaba654985603ec8fe76f38a`; their task IDs remain Open pending
+publication/NEXT acceptance. The pause and all pending evidence are preserved.
+Recorded-context lookup was unavailable, so the rejection has not been resolved
+with new authorization evidence. This is an automated publication block, not an
+intentional user hold or an unfinished implementation.
+
+## Approved finished-work NEXT follow-through
+
+The user subsequently explicitly approved pushing all finished work to NEXT.
+`BTH061-AUDIT-PUBLISH-NEXT-002` tracks this follow-through. The earlier rejected
+push never ran; the new approval permits one retry, with any further rejection
+reported rather than bypassed. No prior acceptance gap is silently closed.
+
+Integration starts from current main `9894795bfc71690ef49c25baa6c50702920e7ac9`.
+Original tutorial fixes `c3d92ba8` and `4bc0147b` are integrated as
+`b5fb8d1979552f98cc4c8080e617ccf9384b4ad8` and
+`a735b135ac3c79b0125419b83f17b9c94b2f687e`. The independent reviewed UI/tool
+commits `8ba8ba8a` and `88cb119b` retain their original commit identities.
+Only two tutorial tests, three UI helpers, five tools and audit documentation
+are introduced. There are no product item/scenario/data/native/scheduling,
+validator or pipeline edits. The preserved `source` branch remains untouched.
+
+Combined current-main focused checks and exact existing-watcher NEXT acceptance
+are recorded below when available. The broad audit remains Open, including the
+unchanged aggregate-validator process-census acceptance and paused-area remainder.
+
+On integrated candidate `a735b135ac3c79b0125419b83f17b9c94b2f687e`, normal import,
+HUD12, UI design-system, wager150, full tutorial cadence, durable parser and all73
+hostile controls pass. Test scripts match their recorded exact file hashes and
+every owned Job closes with zero active processes. The source-owned validator,
+trusted fixture pin and native/toolchain inputs are unchanged. Private receipts
+are `evidence/independent-ui-publish-20261104-r1/`,
+`evidence/resume-tutorial-publish-20261104-r1/` and
+`evidence/resume-hostile-durable-tutorial-publish-20261104-r1/`.

@@ -110,3 +110,20 @@ executed because publication to shared `main` requires approval. The parent
 directed that approval is pending and forbids retry. Neither this local branch
 nor the preserved tutorial branch was published during this phase. Exact NEXT
 acceptance for these new commits is therefore pending, not denied or claimed.
+
+## Approved publication integration
+
+The parent supplied explicit user approval to push all finished work to NEXT.
+The earlier pending-publication statements above describe the completed local
+phase. `BTH061-AUDIT-PUBLISH-NEXT-002` now tracks current-main integration,
+focused qualification and the existing watcher through exact served identity.
+The new branch includes only the finished two tutorial tests and reviewed
+nonpaused cleanup; the sibling preserved repair remains unchanged. No further
+denial will be bypassed. The umbrella remains Open after scoped publication.
+
+An initial Git switch ran out of space before updating HEAD/index and left a
+partial working checkout. Only those task-owned partial files were recovered,
+and the checkout was proven clean before integration. A disposable private-test
+Godot editor documentation cache was removed; the retained baseline tar was
+losslessly NTFS-compressed with its SHA-256 unchanged. No source evidence,
+pipeline cache, build, save or other worker was deleted or stopped.
