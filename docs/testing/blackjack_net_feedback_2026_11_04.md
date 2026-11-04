@@ -96,3 +96,18 @@ behavior are unproven. The Job closes with zero owned processes. Do not count
 that run as acceptance or as a deployed product regression. The requested fix
 has not reached NEXT; exact identity, startup and changed Web feedback remain
 pending publication.
+
+## Authorized publication follow-through
+
+The owner subsequently approved pushing all finished work to NEXT. That new
+approval resolves the publication permission blocker above; no bypass is used.
+Current main9894795b is integrated ated9242d6b572db568a971e8e65276f6a667ba680.
+The ledger conflict retained every concurrent row and this stable task ID.
+Independent runtime review finds no net/accounting conflict or fixed16:9 change.
+
+Oned9242d6 the full179 host checks and52 separate-process cold checks pass
+again. The concurrent Blackjack deal-action dimming contract also passes17
+checks. No script errors, all exit0 and zero owned processes remain. Receipts:
+blackjack-net-current-main-host, blackjack-net-current-main-cold,
+blackjack-net-stand-animation-compat (.json/.log); corresponding raw host/cold
+observations are retained. Exact NEXT and synthetic Web Continue are pending.
