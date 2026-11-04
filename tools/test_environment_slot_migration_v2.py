@@ -8,6 +8,7 @@ import importlib.util
 import json
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 
@@ -109,8 +110,10 @@ class EnvironmentSlotMigrationV2Tests(unittest.TestCase):
             required_events=required_events,
             baseline_objects=baseline_objects,
         )
-        current = self._current_payload()
+        recorded = MIGRATION.load_json(MIGRATION.LEGACY_LEDGER_PATH)
+        target_bytes, current = MIGRATION._historical_migration_target(recorded["final"]["sha256"])
         self.assertEqual(converted, current)
+        self.assertEqual(MIGRATION._sha256(target_bytes), recorded["final"]["sha256"])
         current_bytes = MIGRATION._json_bytes(current)
         reserve_metadata = {
             (map_data["id"], slot["id"]): (
@@ -145,6 +148,64 @@ class EnvironmentSlotMigrationV2Tests(unittest.TestCase):
             },
             reserve_metadata,
         )
+
+    def test_current_authored_overlay_is_read_only_and_valid(self) -> None:
+        payload = self._current_payload()
+        before = copy.deepcopy(payload)
+        MIGRATION.validate(payload)
+        self.assertEqual(payload, before)
+        self.assertEqual(len(MIGRATION.CURRENT_AUTHORED_EVENT_ADDITIONS), 9)
+        with self.assertRaisesRegex(ValueError, "cannot rewrite current authored"):
+            MIGRATION.apply_capacity_repairs(payload)
+        self.assertEqual(payload, before)
+
+    def test_current_overlay_rejects_partial_changed_and_extra_authority(self) -> None:
+        payload = self._current_payload()
+        for mutation in (
+            "missing", "owner", "class", "reserve", "duplicate", "outside",
+            "extra", "pointer", "field", "existing_geometry",
+        ):
+            hostile = copy.deepcopy(payload)
+            corner = next(row for row in hostile["maps"] if row["id"] == "corner_store")
+            lucky = next(row for row in corner["event_slots"] if row["id"] == "event.lucky_recruitment")
+            if mutation == "missing":
+                corner["event_slots"].remove(lucky)
+            elif mutation == "owner":
+                lucky["occupant_ids"] = ["event:made_up"]
+            elif mutation == "class":
+                lucky["footprint_class"] = "surface_item"
+            elif mutation == "reserve":
+                lucky["runtime_reserve"] = False
+            elif mutation == "duplicate":
+                corner["event_slots"].append(copy.deepcopy(lucky))
+            elif mutation == "outside":
+                lucky["hit_rect"][0] = -1000
+            elif mutation == "extra":
+                extra = copy.deepcopy(lucky)
+                extra["id"] = "event.future_recruitment"
+                corner["event_slots"].append(extra)
+            elif mutation == "pointer":
+                pawn = next(row for row in hostile["maps"] if row["id"] == "pawn_shop")
+                pawn["event_object_slot_ids"]["crew::package_handoff"] = "event.standing_person_1"
+            elif mutation == "field":
+                lucky["unreviewed_field"] = "unexpected"
+            else:
+                corner["fixed_slots"][0]["hit_rect"][0] = -1000
+            with self.subTest(mutation=mutation):
+                with self.assertRaises((ValueError, AssertionError)):
+                    MIGRATION.validate(hostile)
+
+    def test_historical_ledger_checks_preserve_both_trusted_targets(self) -> None:
+        legacy = MIGRATION.load_json(MIGRATION.LEGACY_LEDGER_PATH)
+        consolidation = MIGRATION.load_json(MIGRATION.CONSOLIDATION_LEDGER_PATH)
+        self.assertEqual(MIGRATION.legacy_ledger_payload("check"), legacy)
+        self.assertEqual(MIGRATION.consolidation_ledger_payload("check"), consolidation)
+        with self.assertRaisesRegex(ValueError, "trusted ledger hash"):
+            MIGRATION._historical_migration_target("0" * 64)
+        raw, _target = MIGRATION._historical_migration_target(legacy["final"]["sha256"])
+        with patch.object(MIGRATION, "_git_blob", return_value=raw + b" "):
+            with self.assertRaisesRegex(ValueError, "trusted ledger hash"):
+                MIGRATION._historical_migration_target(legacy["final"]["sha256"])
 
     def test_ledger_check_uses_recorded_commit_instead_of_head(self) -> None:
         original = MIGRATION.LEGACY_LEDGER_PATH

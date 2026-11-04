@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Regression tests for compact, scenario-scoped environment placement.
 
-These tests deliberately exercise the checked-in authorities and the generator
+These tests exercise the current checked-in authored authorities and producers
 instead of duplicating a hand-maintained list of scenario props.  The catalog
 defines 20 reachable base contexts, one non-runtime template map, and 55
 scenario contexts; the generated companion file must cover that matrix exactly,
@@ -28,7 +28,7 @@ TOOLS_ROOT = ROOT / "tools"
 if str(TOOLS_ROOT) not in sys.path:
     sys.path.insert(0, str(TOOLS_ROOT))
 
-import author_scenario_slot_layouts as Authoring  # noqa: E402
+import scenario_slot_layout_contracts as Authoring  # noqa: E402
 import environment_fixed_slot_static_check as StaticCheck  # noqa: E402
 
 
@@ -96,14 +96,12 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
         }
         cls.snapshots = Authoring.snapshots_by_scenario()
 
-    def test_checked_in_authority_is_current_and_covers_all_75_contexts(self) -> None:
-        generated = Authoring.build_payload()
-        self.assertEqual(
-            generated,
-            self.payload,
-            "scenario_slot_layouts.json is stale; run author_scenario_slot_layouts.py",
-        )
-        self.assertEqual(Authoring.encoded(generated), Authoring.OUTPUT_PATH.read_bytes())
+    def test_current_authored_authority_covers_all_75_contexts(self) -> None:
+        generated = self.payload
+        check = StaticCheck.Check()
+        loaded, _count = StaticCheck._v2_load_scenario_layouts(check, ROOT, self.maps, self.catalog)
+        self.assertEqual(check.errors, [])
+        self.assertEqual(set(loaded), self.expected_pairs)
 
         map_ids = set(self.maps)
         self.assertEqual(len(map_ids), 21)
@@ -359,7 +357,7 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
             self.assertEqual(len(rects), len(set(rects)), f"{map_id} repeats base slot geometry")
             self.assertLessEqual(
                 len(base_slots),
-                30,
+                30 + int(map_id == "grand_casino" and Authoring.reviewed_grand_capacity_addition(map_data)),
                 f"{map_id} exceeds the reviewed total base-layout capacity",
             )
             for family, family_slots in slots_by_family.items():
@@ -418,26 +416,18 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
                     f"{map_id}::{scenario_id} places {slot_id} exactly on {owners.get(bounds, '')}",
                 )
                 owners[bounds] = slot_id
-            for index, slot in enumerate(local):
-                slot_id = str(slot.get("id", ""))
-                bounds = [float(value) for value in values(slot.get("hit_rect"))]
-                for other in shared:
-                    self.assertFalse(
-                        Authoring._rect_intersects(
-                            bounds,
-                            [float(value) for value in values(other.get("hit_rect"))],
-                        ),
-                        f"{map_id}::{scenario_id} partially overlaps shared target: {slot_id}",
-                    )
-                for other in local[index + 1 :]:
-                    self.assertFalse(
-                        Authoring._rect_intersects(
-                            bounds,
-                            [float(value) for value in values(other.get("hit_rect"))],
-                        ),
-                        f"{map_id}::{scenario_id} partially overlaps local targets: "
-                        f"{slot_id}/{other.get('id', '')}",
-                    )
+            effective = Authoring.current_effective_surface(self.maps[map_id], scenario_id, self.layouts)
+            for family in FAMILIES:
+                for slot in values(effective.get(family + "_slots")):
+                    bounds = slot["hit_rect"]
+                    self.assertEqual(len(bounds), 4)
+                    self.assertTrue(all(math.isfinite(value) for value in bounds))
+                    self.assertGreater(bounds[2], 0)
+                    self.assertGreater(bounds[3], 0)
+                    self.assertGreaterEqual(bounds[0], 0)
+                    self.assertGreaterEqual(bounds[1], 0)
+                    self.assertLessEqual(bounds[0] + bounds[2], 900)
+                    self.assertLessEqual(bounds[1] + bounds[3], 430)
 
     def test_retired_unreachable_source_markers_and_mappings_are_absent(self) -> None:
         retired = {
@@ -619,7 +609,7 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
                     else:
                         source = source_slots[source_id]
                         self.assertEqual(source.get("kind"), "scenario")
-                        self.assertIs(source.get("runtime_reserve"), False)
+                        self.assertTrue(StaticCheck._v2_scenario_source_matches(slot, source))
                         self.assertEqual(
                             source.get("footprint_class"),
                             slot.get("footprint_class"),
@@ -649,7 +639,7 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
 
     def test_reviewed_exact_art_class_and_labels_override_legacy_semantics(self) -> None:
         """Keep owner-facing exact props tied to their reviewed physical noun."""
-        generated = Authoring.build_payload()
+        generated = self.payload
         layouts = {
             (str(row.get("map_id", "")), str(row.get("scenario_id", ""))): row
             for row in values(generated.get("layouts"))
@@ -725,7 +715,7 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
         self.assertEqual(seen_label, set(Authoring.EXACT_SCENARIO_LABEL_OVERRIDES))
 
     def test_action_only_events_never_create_manual_markers(self) -> None:
-        generated = Authoring.build_payload()
+        generated = self.payload
         generated_layouts = {
             (str(row.get("map_id", "")), str(row.get("scenario_id", ""))): row
             for row in values(generated.get("layouts"))
@@ -824,7 +814,7 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
             )
 
     def test_attached_services_use_existing_hosts_without_manual_markers(self) -> None:
-        generated = Authoring.build_payload()
+        generated = self.payload
         generated_layouts = {
             (str(row.get("map_id", "")), str(row.get("scenario_id", ""))): row
             for row in values(generated.get("layouts"))
@@ -899,7 +889,7 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
         )
 
     def test_tangible_event_markers_match_runtime_object_semantics(self) -> None:
-        generated = Authoring.build_payload()
+        generated = self.payload
         generated_layouts = {
             (str(row.get("map_id", "")), str(row.get("scenario_id", ""))): row
             for row in values(generated.get("layouts"))
@@ -978,7 +968,7 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
         self.assertTrue(tangible_ids.isdisjoint(Authoring.ACTION_ONLY_BASE_OBJECT_IDS))
 
     def test_source_add_audit_skips_only_exact_action_aliases(self) -> None:
-        generated = Authoring.build_payload()
+        generated = self.payload
         generated_layouts = {
             (str(row.get("map_id", "")), str(row.get("scenario_id", ""))): row
             for row in values(generated.get("layouts"))
@@ -1079,69 +1069,27 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
             "attached",
         )
 
-    def test_zone_mismatch_adds_only_required_coloring_conflicts(self) -> None:
-        nodes = {
-            "left": {"placement_class": "surface_item", "zone_id": "left"},
-            "right": {"placement_class": "surface_item", "zone_id": "right"},
-            "left_alternative": {
-                "placement_class": "surface_item",
-                "zone_id": "left",
-            },
-            "other_class": {
-                "placement_class": "standing_person",
-                "zone_id": "right",
-            },
-        }
-        conflicts: dict[str, set[str]] = defaultdict(set)
-        Authoring.add_zone_mismatch_conflicts(nodes, conflicts)
-        self.assertIn("right", conflicts["left"])
-        self.assertNotIn("left_alternative", conflicts["left"])
-        self.assertNotIn("other_class", conflicts["left"])
-        colors = Authoring._color_graph(
-            ["left", "left_alternative", "right"], conflicts, 2
-        )
-        self.assertIsNotNone(colors)
-        if colors is not None:
-            self.assertEqual(colors["left"], colors["left_alternative"])
-            self.assertNotEqual(colors["left"], colors["right"])
+    def test_current_slot_zone_authority_and_hostile_alias(self) -> None:
+        checked = 0
+        for pair, snapshots in self.snapshots.items():
+            surface = Authoring.effective_map(self.maps[pair[0]], pair[1])
+            entries = [entry for snapshot in snapshots for semantic in snapshot
+                       if isinstance(semantic, dict)
+                       and (entry := Authoring.visual_entry(surface, semantic)) is not None]
+            self.assertEqual(Authoring.semantic_zone_conflicts(self.layouts[pair], entries), [])
+            checked += len(entries)
+        self.assertGreater(checked, 55)
+        layout = {"scenario_instance_slot_ids": {"left": "scenario.local_surface_item_1", "right": "scenario.local_surface_item_1"}}
+        entries = [{"position_key": "left", "zone_id": "left"}, {"position_key": "right", "zone_id": "right"}]
+        self.assertEqual(Authoring.semantic_zone_conflicts(layout, entries), ["scenario.local_surface_item_1"])
 
-    def test_obstruction_relocation_matches_runtime_small_screen_clearance(self) -> None:
+    def test_current_obstructions_match_runtime_small_screen_clearance(self) -> None:
         self.assertEqual(Authoring.SMALL_SCREEN_TARGET, (104.0, 76.0))
         self.assertEqual(
             Authoring._expanded_hit_rect([8.0, 290.0, 44.0, 44.0]),
             [0.0, 274.0, 104.0, 76.0],
             "small-screen expansion must clamp inside the 900x430 room like runtime",
         )
-
-        occupied = [72.0, 270.0, 44.0, 80.0]
-        obstruction = {
-            "id": "scenario.local_floor_fixture_1",
-            "priority": 1,
-            "hit_rect": [8.0, 322.0, 44.0, 44.0],
-            "_scenario_obstruction": True,
-        }
-        Authoring.clear_obstruction_conflicts(
-            [obstruction],
-            {
-                "id": "synthetic_obstruction_room",
-                "fixed_slots": [{"hit_rect": occupied}],
-                "event_slots": [],
-                "exit_slots": [],
-                "scenario_slots": [],
-            },
-        )
-        relocated = [float(value) for value in values(obstruction.get("hit_rect"))]
-        expanded = Authoring._expanded_hit_rect(relocated)
-        self.assertFalse(
-            Authoring._rect_intersects(relocated, Authoring.MANDATORY_ACCESS_LANE)
-        )
-        self.assertFalse(
-            Authoring._rect_intersects(expanded, Authoring.MANDATORY_ACCESS_LANE)
-        )
-        self.assertFalse(Authoring._rect_contains_center(expanded, occupied))
-        self.assertNotIn("_scenario_obstruction", obstruction)
-        self.assertIs(obstruction.get("provisional_geometry"), True)
-        self.assertEqual(obstruction.get("support_id"), "manual_placement_required")
 
         # Preserve the two exact compositions that exposed the bug in the full
         # room sweep: a low restroom marker and a barrier beside a moved auditor.
@@ -1243,12 +1191,7 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
                     layout.get("scenario_instance_object_slot_ids")
                 ).values()
             )
-            shared_rects = Authoring._shared_occupied_rects(
-                Authoring.effective_map(self.maps[map_id], scenario_id)
-            )
-            effective = StaticCheck._v2_effective_scenario_map(
-                self.maps[map_id], scenario_id, self.layouts
-            )
+            effective = Authoring.current_effective_surface(self.maps[map_id], scenario_id, self.layouts)
             for snapshot in snapshots[pair]:
                 replayed += 1
                 result = StaticCheck._v2_bind_scenario_snapshot(effective, snapshot)
@@ -1269,27 +1212,8 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
                             }
                             self.assertTrue(reserved_ids.issubset(local_slot_ids))
                             active_local_ids.update(reserved_ids)
-                    active_slots = [local_slots[slot_id] for slot_id in sorted(active_local_ids)]
-                    for index, slot in enumerate(active_slots):
-                        rect = [float(value) for value in values(slot.get("hit_rect"))]
-                        self.assertTrue(
-                            all(
-                                not Authoring._rect_intersects(rect, shared_rect)
-                                for shared_rect in shared_rects
-                            )
-                        )
-                        for other in active_slots[index + 1 :]:
-                            self.assertFalse(
-                                Authoring._rect_intersects(
-                                    rect,
-                                    [
-                                        float(value)
-                                        for value in values(other.get("hit_rect"))
-                                    ],
-                                ),
-                                f"{map_id}::{scenario_id} replay has intersecting "
-                                f"targets {slot.get('id', '')}/{other.get('id', '')}",
-                            )
+                    audit = Authoring.current_geometry_audit(effective, active_local_ids)
+                    self.assertEqual(audit["strict_conflicts"], [])
             self.assertTrue(snapshots[pair], f"{map_id}::{scenario_id} has no replay")
         self.assertGreater(replayed, 55)
 
@@ -1334,6 +1258,74 @@ class ScenarioSlotLayoutTests(unittest.TestCase):
                 if isinstance(slot, dict)
             },
         )
+
+
+    def test_grand_capacity_extension_requires_exact_current_owner(self) -> None:
+        current = self.maps["grand_casino"]
+        self.assertTrue(Authoring.reviewed_grand_capacity_addition(current))
+        for field, value in [("physical_role", "Generic staff"), ("occupant_ids", []), ("runtime_reserve", True), ("footprint_class", "standing_person")]:
+            hostile = copy.deepcopy(current)
+            row = next(row for row in hostile["event_slots"] if row["id"] == "event.behind_counter_person_3")
+            row[field] = value
+            with self.subTest(field=field):
+                self.assertFalse(Authoring.reviewed_grand_capacity_addition(hostile))
+
+    def test_effective_project_overlay_is_rigid_scoped_and_owned(self) -> None:
+        pair = ("corner_store", "corner_store_aftermath")
+        source = copy.deepcopy(self.maps[pair[0]])
+        slot = self.layouts[pair]["scenario_slots"][0]
+        layout_before = copy.deepcopy(self.layouts[pair])
+        slot_id = slot["id"]
+        rooms = {pair[0]: {"scenario_layouts": {pair[1]: {"slot_positions": {slot_id: [310.0, 220.0]}, "slot_layers": {slot_id: 1}, "slot_scales": {slot_id: 1.4}}, "unrelated": {"slot_positions": {slot_id: [1.0, 1.0]}}}}}
+        effective = Authoring.current_effective_surface(source, pair[1], self.layouts, rooms)
+        moved = next(row for row in effective["scenario_slots"] if row["id"] == slot_id)
+        delta = [310.0 - slot["pos"][0], 220.0 - slot["pos"][1]]
+        self.assertEqual(moved["pos"], [310.0, 220.0])
+        self.assertEqual(moved["hit_rect"], [slot["hit_rect"][0] + delta[0], slot["hit_rect"][1] + delta[1], *slot["hit_rect"][2:]])
+        self.assertEqual(moved["label_anchor"], [slot["label_anchor"][0] + delta[0], slot["label_anchor"][1] + delta[1]])
+        self.assertEqual(moved["draw_layer"], 1)
+        self.assertEqual(moved["object_scale"], 1.4)
+        self.assertEqual(source, self.maps[pair[0]])
+        self.assertEqual(self.layouts[pair], layout_before)
+        for field, value in [("slot_positions", [float("nan"), 1]), ("slot_positions", [True, 1]), ("slot_layers", True), ("slot_scales", 9)]:
+            hostile = copy.deepcopy(rooms)
+            hostile[pair[0]]["scenario_layouts"][pair[1]][field][slot_id] = value
+            with self.subTest(field=field, value=value), self.assertRaises(ValueError):
+                Authoring.current_effective_surface(source, pair[1], self.layouts, hostile)
+
+    def test_active_route_geometry_rejects_obstruction_but_not_capacity(self) -> None:
+        left = {"id": "fixed.route", "hit_rect": [100.0, 100.0, 64.0, 80.0]}
+        right = {"id": "fixed.prop", "hit_rect": [120.0, 110.0, 64.0, 80.0]}
+        surface = {"fixed_slots": [left, right], "actor_routes": [{"start_slot_id": "fixed.route"}]}
+        capacity = Authoring.current_geometry_audit(surface, set())
+        self.assertEqual(capacity["strict_conflicts"], [])
+        self.assertTrue(capacity["overlap_diagnostics"])
+        active = Authoring.current_geometry_audit(surface, {"fixed.route", "fixed.prop"})
+        self.assertEqual(active["strict_conflicts"], [("fixed.prop", "fixed.route")])
+        local = copy.deepcopy(surface)
+        local["fixed_slots"][1]["scenario_instance"] = True
+        advisory = Authoring.current_geometry_audit(local, {"fixed.route", "fixed.prop"})
+        self.assertEqual(advisory["strict_conflicts"], [])
+        self.assertTrue(advisory["overlap_diagnostics"][0]["scenario_local_advisory"])
+        with self.assertRaisesRegex(ValueError, "missing slots"):
+            Authoring.current_geometry_audit(surface, {"fixed.forged"})
+        canvas = (ROOT / "scripts/ui/pixel_scene_canvas.gd").read_text(encoding="utf-8")
+        self.assertIn("const DEVELOPER_ROUTE_COLLISION_EDGE_TOLERANCE := 1.01", canvas)
+        start = canvas.index("func _developer_slot_overlap_is_allowed(")
+        end = canvas.index("\n\nfunc ", start + 1)
+        self.assertIn('return _developer_slot_scope(selected_slot) == "scenario_local"', canvas[start:end])
+        self.assertIn('or _developer_slot_scope(other_slot) == "scenario_local"', canvas[start:end])
+        start = canvas.index("func _validate_developer_slot_placement_preview(")
+        end = canvas.index("\n\nfunc ", start + 1)
+        for required in ("and route_sensitive", "_developer_slot_is_context_active(slot) or _developer_slot_is_route_endpoint(slot_id)", "_developer_slot_rects_meaningfully_intersect(", "developer_slot_valid = false"):
+            self.assertIn(required, canvas[start:end])
+
+    def test_read_only_contract_has_no_retired_generator_entry(self) -> None:
+        import ast
+        module = ast.parse(Path(Authoring.__file__).read_text(encoding="utf-8"))
+        functions = {node.name for node in module.body if isinstance(node, ast.FunctionDef)}
+        self.assertTrue({"build_payload", "build_layout", "assign_geometry", "clone_slot", "resolve_starting_geometry", "encoded"}.isdisjoint(functions))
+        self.assertFalse(any(isinstance(node, ast.Attribute) and node.attr in {"write_text", "write_bytes", "store_string"} for node in ast.walk(module)))
 
 
 if __name__ == "__main__":

@@ -53,10 +53,10 @@ Both layout-save actions snapshot the full active context, including hidden fami
 | Reachable base contexts | 20 |
 | Exact scenario contexts | 55 |
 | Total manual save contexts | **75** |
-| Reachable base-scoped slot positions | 373 |
-| Exact scenario-local slot positions | 604 |
-| Unique manual position entries | **977** |
-| Slot appearances across all full save snapshots | 2098 |
+| Reachable base-scoped slot positions | 381 |
+| Exact scenario-local slot positions | 607 |
+| Unique manual position entries | **988** |
+| Slot appearances across all full save snapshots | 2138 |
 | Exact slots with provisional geometry | 354 |
 
 The unique manual-position count adds each room-scoped shared slot once and each scenario-local slot once. The larger full-snapshot count repeats shared geometry in every scenario snapshot, matching what both layout-save actions validate.
@@ -65,9 +65,9 @@ The unique manual-position count adds each room-scoped shared slot once and each
 
 | Scope | Fixed | Event | Scenario | Exit | Total |
 | --- | ---: | ---: | ---: | ---: | ---: |
-| All 21 raw placement maps | 180 | 102 | 211 | 33 | 526 |
+| All 21 raw placement maps | 180 | 110 | 211 | 33 | 534 |
 | Template-only <code>small_underground_casino</code> | 6 | 0 | 5 | 2 | 13 |
-| Reachable effective base contexts | 174 | 102 | 66 | 31 | 373 |
+| Reachable effective base contexts | 174 | 110 | 66 | 31 | 381 |
 
 The raw inventory includes generic source scenario capacity and the template-only parent. It is not the manual completion total.
 
@@ -75,37 +75,37 @@ The raw inventory includes generic source scenario capacity and the template-onl
 
 | Environment | Base layout ID | Fixed | Event | Shared scenario | Exit | Base total | Exact layouts | Exact local slots | Unique entries |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
-| Corner Store<br><code>corner_store</code> | <code>corner_store::__base</code> | 11 | 4 | 3 | 1 | 19 | 5 | 44 | 63 |
+| Corner Store<br><code>corner_store</code> | <code>corner_store::__base</code> | 11 | 5 | 3 | 1 | 20 | 5 | 44 | 64 |
 | Back Alley<br><code>back_alley</code> | <code>back_alley::__base</code> | 14 | 9 | 3 | 1 | 27 | 4 | 37 | 64 |
 | Motel<br><code>motel</code> | <code>motel::__base</code> | 11 | 6 | 3 | 2 | 22 | 4 | 53 | 75 |
 | Bar<br><code>bar</code> | <code>bar::__base</code> | 7 | 7 | 4 | 1 | 19 | 7 | 73 | 92 |
-| Gas Station Casino<br><code>gas_station_casino</code> | <code>gas_station_casino::__base</code> | 6 | 7 | 3 | 1 | 17 | 5 | 65 | 82 |
-| The Punchline — Comedy Club<br><code>small_underground_casino:club</code> | <code>small_underground_casino:club::__base</code> | 5 | 8 | 3 | 2 | 18 | 5 | 48 | 66 |
-| The Punchline — Hidden Casino<br><code>small_underground_casino:casino</code> | <code>small_underground_casino:casino::__base</code> | 10 | 9 | 3 | 3 | 25 | 3 | 30 | 55 |
+| Gas Station Casino<br><code>gas_station_casino</code> | <code>gas_station_casino::__base</code> | 6 | 8 | 3 | 1 | 18 | 5 | 65 | 83 |
+| The Punchline — Comedy Club<br><code>small_underground_casino:club</code> | <code>small_underground_casino:club::__base</code> | 5 | 8 | 3 | 2 | 18 | 5 | 51 | 69 |
+| The Punchline — Hidden Casino<br><code>small_underground_casino:casino</code> | <code>small_underground_casino:casino::__base</code> | 10 | 10 | 3 | 3 | 26 | 3 | 30 | 56 |
 | The Punchline — Crew Back Room<br><code>small_underground_casino:back_room</code> | <code>small_underground_casino:back_room::__base</code> | 8 | 7 | 3 | 2 | 20 | 0 | 0 | 20 |
-| Jazz Club<br><code>jazz_club</code> | <code>jazz_club::__base</code> | 10 | 3 | 3 | 1 | 17 | 4 | 45 | 62 |
-| Kitty Cat Lounge<br><code>kitty_cat_lounge</code> | <code>kitty_cat_lounge::__base</code> | 12 | 7 | 3 | 1 | 23 | 4 | 44 | 67 |
-| Delta Queen<br><code>delta_queen</code> | <code>delta_queen::__base</code> | 12 | 9 | 3 | 1 | 25 | 5 | 61 | 86 |
+| Jazz Club<br><code>jazz_club</code> | <code>jazz_club::__base</code> | 10 | 4 | 3 | 1 | 18 | 4 | 45 | 63 |
+| Kitty Cat Lounge<br><code>kitty_cat_lounge</code> | <code>kitty_cat_lounge::__base</code> | 12 | 8 | 3 | 1 | 24 | 4 | 44 | 68 |
+| Delta Queen<br><code>delta_queen</code> | <code>delta_queen::__base</code> | 12 | 10 | 3 | 1 | 26 | 5 | 61 | 87 |
 | The Beach<br><code>beach</code> | <code>beach::__base</code> | 2 | 1 | 4 | 1 | 8 | 3 | 38 | 46 |
-| Sal's Pawn Shop<br><code>pawn_shop</code> | <code>pawn_shop::__base</code> | 8 | 3 | 3 | 1 | 15 | 3 | 28 | 43 |
+| Sal's Pawn Shop<br><code>pawn_shop</code> | <code>pawn_shop::__base</code> | 8 | 4 | 3 | 1 | 16 | 3 | 28 | 44 |
 | Grand Casino Main Floor<br><code>grand_casino</code> | <code>grand_casino::__base</code> | 12 | 11 | 4 | 4 | 31 | 3 | 38 | 69 |
 | Grand Casino High-Limit Room<br><code>grand_casino_high_limit</code> | <code>grand_casino_high_limit::__base</code> | 4 | 6 | 4 | 3 | 17 | 0 | 0 | 17 |
 | Grand Casino Back Room<br><code>grand_casino_back_room</code> | <code>grand_casino_back_room::__base</code> | 2 | 5 | 4 | 1 | 12 | 0 | 0 | 12 |
-| Grand Casino Cage<br><code>grand_casino_cage</code> | <code>grand_casino_cage::__base</code> | 7 | 0 | 4 | 2 | 13 | 0 | 0 | 13 |
+| Grand Casino Cage<br><code>grand_casino_cage</code> | <code>grand_casino_cage::__base</code> | 7 | 1 | 4 | 2 | 14 | 0 | 0 | 14 |
 | Motel Room<br><code>motel_room</code> | <code>motel_room::__base</code> | 11 | 0 | 3 | 1 | 15 | 0 | 0 | 15 |
 | Apartment<br><code>apartment</code> | <code>apartment::__base</code> | 11 | 0 | 3 | 1 | 15 | 0 | 0 | 15 |
 | House<br><code>house</code> | <code>house::__base</code> | 11 | 0 | 3 | 1 | 15 | 0 | 0 | 15 |
-| **Reachable total** | **20 bases** | **174** | **102** | **66** | **31** | **373** | **55** | **604** | **977** |
+| **Reachable total** | **20 bases** | **174** | **110** | **66** | **31** | **381** | **55** | **607** | **988** |
 
 ### Exact scenario summary
 
 | Exact layout ID | Scenario | Shared slots | Local slots | Full save slots | Claimant labels | Provisional | Action-only IDs |
 | --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| <code>corner_store::corner_store_aftermath</code> | The Aftermath | 19 | 8 | 27 | 10 | 5 | 0 |
-| <code>corner_store::corner_store_dead_shift</code> | Dead Shift | 19 | 8 | 27 | 10 | 5 | 0 |
-| <code>corner_store::corner_store_delivery_day</code> | Delivery Day | 19 | 12 | 31 | 16 | 10 | 0 |
-| <code>corner_store::corner_store_inventory_night</code> | Inventory Night | 19 | 7 | 26 | 10 | 4 | 0 |
-| <code>corner_store::corner_store_lotto_fever</code> | Lotto Fever | 19 | 9 | 28 | 10 | 6 | 0 |
+| <code>corner_store::corner_store_aftermath</code> | The Aftermath | 20 | 8 | 28 | 10 | 5 | 0 |
+| <code>corner_store::corner_store_dead_shift</code> | Dead Shift | 20 | 8 | 28 | 10 | 5 | 0 |
+| <code>corner_store::corner_store_delivery_day</code> | Delivery Day | 20 | 12 | 32 | 16 | 10 | 0 |
+| <code>corner_store::corner_store_inventory_night</code> | Inventory Night | 20 | 7 | 27 | 10 | 4 | 0 |
+| <code>corner_store::corner_store_lotto_fever</code> | Lotto Fever | 20 | 9 | 29 | 10 | 6 | 0 |
 | <code>back_alley::back_alley_cruiser_parked</code> | Cruiser Parked | 27 | 9 | 36 | 11 | 7 | 0 |
 | <code>back_alley::back_alley_fence_night</code> | Fence Night | 27 | 11 | 38 | 11 | 8 | 0 |
 | <code>back_alley::back_alley_nothing_moving</code> | Nothing Moving | 27 | 8 | 35 | 11 | 4 | 0 |
@@ -121,38 +121,38 @@ The raw inventory includes generic source scenario capacity and the template-onl
 | <code>bar::bar_lock_in</code> | Lock-In | 19 | 9 | 28 | 12 | 4 | 5 |
 | <code>bar::bar_payday_rush</code> | Payday Rush | 19 | 12 | 31 | 13 | 7 | 3 |
 | <code>bar::bar_wake</code> | The Wake | 19 | 9 | 28 | 10 | 3 | 3 |
-| <code>gas_station_casino::gas_station_graveyard_shift</code> | Graveyard Shift | 17 | 14 | 31 | 16 | 10 | 1 |
-| <code>gas_station_casino::gas_station_road_crew_payday</code> | Road Crew Payday | 17 | 13 | 30 | 14 | 10 | 1 |
-| <code>gas_station_casino::gas_station_storm_shelter</code> | Storm Shelter | 17 | 14 | 31 | 16 | 10 | 1 |
-| <code>gas_station_casino::gas_station_tour_bus_stop</code> | Tour Bus Stop | 17 | 11 | 28 | 15 | 8 | 1 |
-| <code>gas_station_casino::gas_station_trucker_convoy</code> | Trucker Convoy | 17 | 13 | 30 | 17 | 8 | 1 |
+| <code>gas_station_casino::gas_station_graveyard_shift</code> | Graveyard Shift | 18 | 14 | 32 | 16 | 10 | 1 |
+| <code>gas_station_casino::gas_station_road_crew_payday</code> | Road Crew Payday | 18 | 13 | 31 | 14 | 10 | 1 |
+| <code>gas_station_casino::gas_station_storm_shelter</code> | Storm Shelter | 18 | 14 | 32 | 16 | 10 | 1 |
+| <code>gas_station_casino::gas_station_tour_bus_stop</code> | Tour Bus Stop | 18 | 11 | 29 | 15 | 8 | 1 |
+| <code>gas_station_casino::gas_station_trucker_convoy</code> | Trucker Convoy | 18 | 13 | 31 | 17 | 8 | 1 |
 | <code>small_underground_casino:club::punchline_bringer_show</code> | Bringer Show | 18 | 10 | 28 | 11 | 5 | 4 |
 | <code>small_underground_casino:club::punchline_debt_court</code> | Debt Court | 18 | 10 | 28 | 12 | 6 | 4 |
 | <code>small_underground_casino:club::punchline_headliner_night</code> | Headliner Night | 18 | 10 | 28 | 12 | 7 | 5 |
-| <code>small_underground_casino:club::punchline_open_mic_night</code> | Open Mic Night | 18 | 10 | 28 | 11 | 6 | 4 |
-| <code>small_underground_casino:club::punchline_raid_jitters</code> | Raid Jitters | 18 | 8 | 26 | 10 | 4 | 5 |
-| <code>small_underground_casino:casino::punchline_greased_week</code> | Greased Week | 25 | 10 | 35 | 12 | 7 | 5 |
-| <code>small_underground_casino:casino::punchline_high_stakes_night</code> | High-Stakes Night | 25 | 11 | 36 | 12 | 8 | 4 |
-| <code>small_underground_casino:casino::punchline_new_muscle</code> | New Muscle | 25 | 9 | 34 | 12 | 8 | 5 |
-| <code>jazz_club::jazz_club_guest_legend</code> | Guest Legend | 17 | 11 | 28 | 13 | 4 | 6 |
-| <code>jazz_club::jazz_club_recording_night</code> | Recording Night | 17 | 10 | 27 | 13 | 2 | 3 |
-| <code>jazz_club::jazz_club_rent_party</code> | Rent Party | 17 | 12 | 29 | 13 | 5 | 4 |
-| <code>jazz_club::jazz_club_union_trouble</code> | Union Trouble | 17 | 12 | 29 | 13 | 8 | 4 |
-| <code>kitty_cat_lounge::kitty_cat_lounge_amateur_night</code> | Amateur Night | 23 | 11 | 34 | 13 | 5 | 5 |
-| <code>kitty_cat_lounge::kitty_cat_lounge_bachelorette_storm</code> | Bachelorette Storm | 23 | 10 | 33 | 11 | 6 | 6 |
-| <code>kitty_cat_lounge::kitty_cat_lounge_buyout</code> | The Buyout | 23 | 11 | 34 | 12 | 6 | 5 |
-| <code>kitty_cat_lounge::kitty_cat_lounge_slow_night</code> | Slow Night | 23 | 12 | 35 | 13 | 8 | 4 |
-| <code>delta_queen::delta_queen_captains_invitational</code> | Captain's Invitational | 25 | 13 | 38 | 15 | 6 | 7 |
-| <code>delta_queen::delta_queen_engine_trouble</code> | Engine Trouble | 25 | 11 | 36 | 14 | 5 | 7 |
-| <code>delta_queen::delta_queen_fog_delay</code> | Fog Delay | 25 | 10 | 35 | 12 | 7 | 6 |
-| <code>delta_queen::delta_queen_wedding_charter</code> | Wedding Charter | 25 | 15 | 40 | 16 | 8 | 6 |
-| <code>delta_queen::delta_queen_whale_aboard</code> | Whale Aboard | 25 | 12 | 37 | 14 | 7 | 6 |
+| <code>small_underground_casino:club::punchline_open_mic_night</code> | Open Mic Night | 18 | 11 | 29 | 12 | 6 | 4 |
+| <code>small_underground_casino:club::punchline_raid_jitters</code> | Raid Jitters | 18 | 10 | 28 | 12 | 4 | 5 |
+| <code>small_underground_casino:casino::punchline_greased_week</code> | Greased Week | 26 | 10 | 36 | 12 | 7 | 5 |
+| <code>small_underground_casino:casino::punchline_high_stakes_night</code> | High-Stakes Night | 26 | 11 | 37 | 12 | 8 | 4 |
+| <code>small_underground_casino:casino::punchline_new_muscle</code> | New Muscle | 26 | 9 | 35 | 12 | 8 | 5 |
+| <code>jazz_club::jazz_club_guest_legend</code> | Guest Legend | 18 | 11 | 29 | 13 | 4 | 6 |
+| <code>jazz_club::jazz_club_recording_night</code> | Recording Night | 18 | 10 | 28 | 13 | 2 | 3 |
+| <code>jazz_club::jazz_club_rent_party</code> | Rent Party | 18 | 12 | 30 | 13 | 5 | 4 |
+| <code>jazz_club::jazz_club_union_trouble</code> | Union Trouble | 18 | 12 | 30 | 13 | 8 | 4 |
+| <code>kitty_cat_lounge::kitty_cat_lounge_amateur_night</code> | Amateur Night | 24 | 11 | 35 | 13 | 5 | 5 |
+| <code>kitty_cat_lounge::kitty_cat_lounge_bachelorette_storm</code> | Bachelorette Storm | 24 | 10 | 34 | 11 | 6 | 6 |
+| <code>kitty_cat_lounge::kitty_cat_lounge_buyout</code> | The Buyout | 24 | 11 | 35 | 12 | 6 | 5 |
+| <code>kitty_cat_lounge::kitty_cat_lounge_slow_night</code> | Slow Night | 24 | 12 | 36 | 13 | 8 | 4 |
+| <code>delta_queen::delta_queen_captains_invitational</code> | Captain's Invitational | 26 | 13 | 39 | 15 | 6 | 7 |
+| <code>delta_queen::delta_queen_engine_trouble</code> | Engine Trouble | 26 | 11 | 37 | 14 | 5 | 7 |
+| <code>delta_queen::delta_queen_fog_delay</code> | Fog Delay | 26 | 10 | 36 | 12 | 7 | 6 |
+| <code>delta_queen::delta_queen_wedding_charter</code> | Wedding Charter | 26 | 15 | 41 | 16 | 8 | 6 |
+| <code>delta_queen::delta_queen_whale_aboard</code> | Whale Aboard | 26 | 12 | 38 | 14 | 7 | 6 |
 | <code>beach::beach_bonfire_night</code> | Bonfire Night | 8 | 13 | 21 | 15 | 5 | 1 |
 | <code>beach::beach_festival_weekend</code> | Festival Weekend | 8 | 14 | 22 | 17 | 5 | 1 |
 | <code>beach::beach_storm_coming</code> | Storm Coming | 8 | 11 | 19 | 17 | 4 | 1 |
-| <code>pawn_shop::pawn_shop_estate_lot_day</code> | Estate Lot Day | 15 | 11 | 26 | 13 | 6 | 0 |
-| <code>pawn_shop::pawn_shop_sals_mood</code> | Sal's Mood | 15 | 9 | 24 | 10 | 5 | 0 |
-| <code>pawn_shop::pawn_shop_serial_check_day</code> | Serial-Check Day | 15 | 8 | 23 | 10 | 5 | 0 |
+| <code>pawn_shop::pawn_shop_estate_lot_day</code> | Estate Lot Day | 16 | 11 | 27 | 13 | 6 | 0 |
+| <code>pawn_shop::pawn_shop_sals_mood</code> | Sal's Mood | 16 | 9 | 25 | 10 | 5 | 0 |
+| <code>pawn_shop::pawn_shop_serial_check_day</code> | Serial-Check Day | 16 | 8 | 24 | 10 | 5 | 0 |
 | <code>grand_casino::grand_casino_audit_night</code> | Audit Night | 31 | 13 | 44 | 16 | 11 | 6 |
 | <code>grand_casino::grand_casino_convention_crowd</code> | Convention Crowd | 31 | 12 | 43 | 14 | 11 | 6 |
 | <code>grand_casino::grand_casino_gala_night</code> | Gala Night | 31 | 13 | 44 | 15 | 11 | 6 |
@@ -169,7 +169,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 #### Base / No Scenario — <code>corner_store::__base</code>
 
-**Save snapshot:** 19 slots = 11 fixed + 4 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 5.
+**Save snapshot:** 20 slots = 11 fixed + 5 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 5.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -188,6 +188,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>516, 370</code> | <code>floor</code> | Empty capacity | Optional empty capacity |
 | <code>event</code> | <code>event.ground_marker_1</code> | Floor marker | <code>ground_marker</code> | <code>41, 406</code> | <code>stage</code> | Parking Lot Tip | Mapped capacity |
 | <code>event</code> | <code>event.behind_counter_person_2</code> | Counter staff | <code>behind_counter_person</code> | <code>94, 212</code> | <code>delivery_clerk_rail_left</code> | Word from Across Town | Mapped capacity |
+| <code>event</code> | <code>event.lucky_recruitment</code> | Lucky recruitment | <code>standing_person</code> | <code>120, 294</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Lucky can visit alongside Dave's traveling encounter and the current Store scenario. |
 | <code>scenario</code> | <code>scenario.standing_person_4</code> | Runtime contact reserve | <code>standing_person</code> | <code>484, 164</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>486, 62</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
 | <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Delivery package reserve | <code>floor_fixture</code> | <code>174, 370</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
@@ -195,7 +196,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 #### Scenario — The Aftermath — <code>corner_store::corner_store_aftermath</code>
 
-**Full save:** 27 slots = 19 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 28 slots = 20 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -210,7 +211,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 #### Scenario — Dead Shift — <code>corner_store::corner_store_dead_shift</code>
 
-**Full save:** 27 slots = 19 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 28 slots = 20 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -225,7 +226,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 #### Scenario — Delivery Day — <code>corner_store::corner_store_delivery_day</code>
 
-**Full save:** 31 slots = 19 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 32 slots = 20 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -244,7 +245,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 #### Scenario — Inventory Night — <code>corner_store::corner_store_inventory_night</code>
 
-**Full save:** 26 slots = 19 shared + 7 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 27 slots = 20 shared + 7 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -258,7 +259,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 #### Scenario — Lotto Fever — <code>corner_store::corner_store_lotto_fever</code>
 
-**Full save:** 28 slots = 19 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 29 slots = 20 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -661,7 +662,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 #### Base / No Scenario — <code>gas_station_casino::__base</code>
 
-**Save snapshot:** 17 slots = 6 fixed + 7 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 5.
+**Save snapshot:** 18 slots = 6 fixed + 8 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 5.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -678,6 +679,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>670, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>100, 414</code> | <code>floor</code> | Scratch Ticket Scalper | Mapped capacity |
+| <code>event</code> | <code>event.surface_item_1</code> | Crew Money note on the machine bank | <code>surface_item</code> | <code>530, 122</code> | <code>machine_bank_top</code> | Crew Money | Mapped capacity |
 | <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Delivery package reserve | <code>floor_fixture</code> | <code>158, 152</code> | <code>stage</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
 | <code>scenario</code> | <code>scenario.wall_item_3</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>40, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
 | <code>scenario</code> | <code>scenario.standing_person_5</code> | Runtime contact reserve | <code>standing_person</code> | <code>492, 332</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
@@ -685,7 +687,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 #### Scenario — Graveyard Shift — <code>gas_station_casino::gas_station_graveyard_shift</code>
 
-**Full save:** 31 slots = 17 shared + 14 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 32 slots = 18 shared + 14 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -708,7 +710,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 #### Scenario — Road Crew Payday — <code>gas_station_casino::gas_station_road_crew_payday</code>
 
-**Full save:** 30 slots = 17 shared + 13 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 31 slots = 18 shared + 13 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -730,7 +732,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 #### Scenario — Storm Shelter — <code>gas_station_casino::gas_station_storm_shelter</code>
 
-**Full save:** 31 slots = 17 shared + 14 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 32 slots = 18 shared + 14 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -753,7 +755,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 #### Scenario — Tour Bus Stop — <code>gas_station_casino::gas_station_tour_bus_stop</code>
 
-**Full save:** 28 slots = 17 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 29 slots = 18 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -773,7 +775,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 #### Scenario — Trucker Convoy — <code>gas_station_casino::gas_station_trucker_convoy</code>
 
-**Full save:** 30 slots = 17 shared + 13 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 31 slots = 18 shared + 13 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -879,7 +881,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 #### Scenario — Open Mic Night — <code>small_underground_casino:club::punchline_open_mic_night</code>
 
-**Full save:** 28 slots = 18 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 29 slots = 18 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -893,12 +895,13 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>scenario.local_standing_person_3</code> | Scenario alternatives: Lingering Comic / Unbooked Comic | <code>standing_person</code> | <code>124, 328</code> | <code>manual_placement_required</code> | Lingering Comic<br>Unbooked Comic | Provisional geometry |
 | <code>scenario.local_surface_item_1</code> | Used Act Card Stack | <code>surface_item</code> | <code>128, 206</code> | <code>left_table</code> | Used Act Card Stack | Exact scenario |
 | <code>scenario.local_surface_item_2</code> | Crossed-Out Running Order | <code>surface_item</code> | <code>356, 256</code> | <code>manual_placement_required</code> | Crossed-Out Running Order | Provisional geometry |
+| <code>scenario.local_floor_fixture_4</code> | Open-mic signup lectern | <code>floor_fixture</code> | <code>372, 304</code> | <code>floor</code> | Open-mic signup lectern | Exact scenario |
 
 **Action-only IDs (4; no placement marker):** <code>punchline_open_mic_night_task_0</code><br><code>punchline_open_mic_night_task_1</code><br><code>punchline_open_mic_night_task_2</code><br><code>punchline_open_mic_night_task_3</code>
 
 #### Scenario — Raid Jitters — <code>small_underground_casino:club::punchline_raid_jitters</code>
 
-**Full save:** 26 slots = 18 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 28 slots = 18 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -910,6 +913,8 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>scenario.local_standing_person_1</code> | Scenario alternatives: Raid lookout / Watchful Lookout | <code>standing_person</code> | <code>284, 328</code> | <code>manual_placement_required</code> | Raid lookout<br>Watchful Lookout | Provisional geometry |
 | <code>scenario.local_standing_person_2</code> | Reopen Steward | <code>standing_person</code> | <code>460, 328</code> | <code>manual_placement_required</code> | Reopen Steward | Provisional geometry |
 | <code>scenario.local_wall_item_1</code> | Coiled Screen Seals | <code>wall_mounted</code> | <code>120, 48</code> | <code>manual_placement_required</code> | Coiled Screen Seals | Provisional geometry |
+| <code>scenario.local_floor_fixture_4</code> | Layer 1 hide cart | <code>floor_fixture</code> | <code>560, 321</code> | <code>floor</code> | Layer 1 hide cart | Exact scenario |
+| <code>scenario.local_standing_person_3</code> | Reopen steward | <code>standing_person</code> | <code>250, 190</code> | <code>floor</code> | Reopen steward | Exact scenario |
 
 **Action-only IDs (5; no placement marker):** <code>punchline_raid_jitters_task_0</code><br><code>punchline_raid_jitters_task_1</code><br><code>punchline_raid_jitters_task_2</code><br><code>punchline_raid_jitters_task_3</code><br><code>punchline_raid_jitters_task_4</code>
 
@@ -917,7 +922,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 #### Base / No Scenario — <code>small_underground_casino:casino::__base</code>
 
-**Save snapshot:** 25 slots = 10 fixed + 9 event + 3 shared scenario + 3 exit. Exact scenarios on this map: 3.
+**Save snapshot:** 26 slots = 10 fixed + 10 event + 3 shared scenario + 3 exit. Exact scenarios on this map: 3.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -940,6 +945,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 | <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>751.428571, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_7</code> | Standing person | <code>standing_person</code> | <code>860, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_8</code> | Standing person | <code>standing_person</code> | <code>100, 414</code> | <code>floor</code> | Silas | Mapped capacity |
+| <code>event</code> | <code>event.surface_item_1</code> | Crew Money note on the left table | <code>surface_item</code> | <code>300, 154</code> | <code>left_table</code> | Crew Money | Mapped capacity |
 | <code>scenario</code> | <code>scenario.wall_item_3</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>200, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
 | <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>400, 168</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>874, 370</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
@@ -949,7 +955,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 #### Scenario — Greased Week — <code>small_underground_casino:casino::punchline_greased_week</code>
 
-**Full save:** 35 slots = 25 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 36 slots = 26 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -968,7 +974,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 #### Scenario — High-Stakes Night — <code>small_underground_casino:casino::punchline_high_stakes_night</code>
 
-**Full save:** 36 slots = 25 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 37 slots = 26 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -988,7 +994,7 @@ Positions are canonical 900×430 board coordinates from the base slot authoritie
 
 #### Scenario — New Muscle — <code>small_underground_casino:casino::punchline_new_muscle</code>
 
-**Full save:** 34 slots = 25 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 35 slots = 26 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1039,7 +1045,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Base / No Scenario — <code>jazz_club::__base</code>
 
-**Save snapshot:** 17 slots = 10 fixed + 3 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 4.
+**Save snapshot:** 18 slots = 10 fixed + 4 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 4.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1056,6 +1062,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>810, 350</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>236, 258</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>744, 326</code> | <code>floor</code> | Silas | Mapped capacity |
+| <code>event</code> | <code>event.surface_item_1</code> | Paper lead on the front service shelf | <code>surface_item</code> | <code>419, 404</code> | <code>front_service_shelf</code> | Variable runtime content | Runtime reserve — A physical paper lead can coexist with the performers, independent contacts, and authored Jazz scenario props. |
 | <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>667, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
 | <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>216, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
 | <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>396, 244</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
@@ -1063,7 +1070,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Scenario — Guest Legend — <code>jazz_club::jazz_club_guest_legend</code>
 
-**Full save:** 28 slots = 17 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 29 slots = 18 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1083,7 +1090,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Scenario — Recording Night — <code>jazz_club::jazz_club_recording_night</code>
 
-**Full save:** 27 slots = 17 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 28 slots = 18 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1102,7 +1109,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Scenario — Rent Party — <code>jazz_club::jazz_club_rent_party</code>
 
-**Full save:** 29 slots = 17 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 30 slots = 18 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1123,7 +1130,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Scenario — Union Trouble — <code>jazz_club::jazz_club_union_trouble</code>
 
-**Full save:** 29 slots = 17 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 30 slots = 18 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1146,7 +1153,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Base / No Scenario — <code>kitty_cat_lounge::__base</code>
 
-**Save snapshot:** 23 slots = 12 fixed + 7 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 4.
+**Save snapshot:** 24 slots = 12 fixed + 8 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 4.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1169,6 +1176,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>78, 172</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>244, 170</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>704, 294</code> | <code>floor</code> | Silas | Mapped capacity |
+| <code>event</code> | <code>event.sal_address_note</code> | Sal address note | <code>surface_item</code> | <code>128, 308</code> | <code>floor_table_left</code> | Variable runtime content | Runtime reserve — A carried Sal estate map can place one address note alongside the current Lounge scenario. |
 | <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>302, 358</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
 | <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>108, 88</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>scenario</code> | <code>scenario.wall_item_3</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>220, 60</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
@@ -1176,7 +1184,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Scenario — Amateur Night — <code>kitty_cat_lounge::kitty_cat_lounge_amateur_night</code>
 
-**Full save:** 34 slots = 23 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 35 slots = 24 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1196,7 +1204,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Scenario — Bachelorette Storm — <code>kitty_cat_lounge::kitty_cat_lounge_bachelorette_storm</code>
 
-**Full save:** 33 slots = 23 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 34 slots = 24 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1215,7 +1223,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Scenario — The Buyout — <code>kitty_cat_lounge::kitty_cat_lounge_buyout</code>
 
-**Full save:** 34 slots = 23 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 35 slots = 24 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1235,7 +1243,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Scenario — Slow Night — <code>kitty_cat_lounge::kitty_cat_lounge_slow_night</code>
 
-**Full save:** 35 slots = 23 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 36 slots = 24 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1258,7 +1266,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Base / No Scenario — <code>delta_queen::__base</code>
 
-**Save snapshot:** 25 slots = 12 fixed + 9 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 5.
+**Save snapshot:** 26 slots = 12 fixed + 10 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 5.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1283,6 +1291,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>532, 258</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_5</code> | Standing person | <code>standing_person</code> | <code>322, 246</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_6</code> | Standing person | <code>standing_person</code> | <code>258, 246</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.surface_item_1</code> | Crew Money note on the scoreboard ledge | <code>surface_item</code> | <code>272, 150</code> | <code>scoreboard_ledge</code> | Crew Money | Mapped capacity |
 | <code>scenario</code> | <code>scenario.floor_fixture_3</code> | Delivery package reserve | <code>floor_fixture</code> | <code>704, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
 | <code>scenario</code> | <code>scenario.wall_item_4</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>426, 24</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
 | <code>scenario</code> | <code>scenario.standing_person_3</code> | Runtime contact reserve | <code>standing_person</code> | <code>784, 84</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
@@ -1290,7 +1299,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Scenario — Captain's Invitational — <code>delta_queen::delta_queen_captains_invitational</code>
 
-**Full save:** 38 slots = 25 shared + 13 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 39 slots = 26 shared + 13 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1312,7 +1321,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Scenario — Engine Trouble — <code>delta_queen::delta_queen_engine_trouble</code>
 
-**Full save:** 36 slots = 25 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 37 slots = 26 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1332,7 +1341,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Scenario — Fog Delay — <code>delta_queen::delta_queen_fog_delay</code>
 
-**Full save:** 35 slots = 25 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 36 slots = 26 shared + 10 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1351,7 +1360,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Scenario — Wedding Charter — <code>delta_queen::delta_queen_wedding_charter</code>
 
-**Full save:** 40 slots = 25 shared + 15 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 41 slots = 26 shared + 15 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1375,7 +1384,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Scenario — Whale Aboard — <code>delta_queen::delta_queen_whale_aboard</code>
 
-**Full save:** 37 slots = 25 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 38 slots = 26 shared + 12 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1480,7 +1489,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Base / No Scenario — <code>pawn_shop::__base</code>
 
-**Save snapshot:** 15 slots = 8 fixed + 3 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 3.
+**Save snapshot:** 16 slots = 8 fixed + 4 event + 3 shared scenario + 1 exit. Exact scenarios on this map: 3.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1495,6 +1504,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>event</code> | <code>event.standing_person_1</code> | Standing person | <code>standing_person</code> | <code>392, 414</code> | <code>floor</code> | Chatty Clerk<br>Word from Across Town | Mapped capacity |
 | <code>event</code> | <code>event.standing_person_2</code> | Standing person | <code>standing_person</code> | <code>528, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
 | <code>event</code> | <code>event.standing_person_3</code> | Standing person | <code>standing_person</code> | <code>592, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Independent reputation reaction, ambient traveler, Crew, Numbers, or delivery contact may coexist with mapped room events. |
+| <code>event</code> | <code>event.standing_person_4</code> | Standing person | <code>standing_person</code> | <code>672, 414</code> | <code>floor</code> | Variable runtime content | Runtime reserve — A delivery handoff contact and resident Crew member may coexist with both ordinary shop events. |
 | <code>scenario</code> | <code>scenario.standing_person_2</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 248</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
 | <code>scenario</code> | <code>scenario.wall_item_2</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>786, 60</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
 | <code>scenario</code> | <code>scenario.floor_fixture_2</code> | Delivery package reserve | <code>floor_fixture</code> | <code>192, 370</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
@@ -1502,7 +1512,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Scenario — Estate Lot Day — <code>pawn_shop::pawn_shop_estate_lot_day</code>
 
-**Full save:** 26 slots = 15 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 27 slots = 16 shared + 11 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1520,7 +1530,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Scenario — Sal's Mood — <code>pawn_shop::pawn_shop_sals_mood</code>
 
-**Full save:** 24 slots = 15 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 25 slots = 16 shared + 9 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1536,7 +1546,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Scenario — Serial-Check Day — <code>pawn_shop::pawn_shop_serial_check_day</code>
 
-**Full save:** 23 slots = 15 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
+**Full save:** 24 slots = 16 shared + 8 exact scenario-local. The shared slot positions remain keyed by the base table's slot IDs.
 
 | Slot ID | Physical role | Footprint | Position | Support | Actual claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- |
@@ -1709,7 +1719,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 
 #### Base / No Scenario — <code>grand_casino_cage::__base</code>
 
-**Save snapshot:** 13 slots = 7 fixed + 0 event + 4 shared scenario + 2 exit. Exact scenarios on this map: 0.
+**Save snapshot:** 14 slots = 7 fixed + 1 event + 4 shared scenario + 2 exit. Exact scenarios on this map: 0.
 
 | Family | Slot ID | Physical role | Footprint | Position | Support | Occupant/claimant labels | Placement state |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -1720,6 +1730,7 @@ This map has no exact catalog scenario. Its manual coverage ends with the base c
 | <code>fixed</code> | <code>fixed.fixture_cage_counter</code> | Cashier cage counter | <code>surface_item</code> | <code>500, 260</code> | <code>teller_counter</code> | Cage Counter | Mapped capacity |
 | <code>fixed</code> | <code>fixed.fixture_cage_atm</code> | Cage ATM | <code>wall_mounted</code> | <code>720, 203</code> | <code>atm</code> | Cage ATM | Mapped capacity |
 | <code>fixed</code> | <code>fixed.staff_linda</code> | Linda | <code>behind_counter_person</code> | <code>500, 340</code> | <code>teller_counter</code> | Linda | Required |
+| <code>event</code> | <code>event.recruitment_bishop</code> | Bishop at the Cage window | <code>standing_person</code> | <code>620, 350</code> | <code>floor</code> | Bishop | Mapped capacity |
 | <code>scenario</code> | <code>scenario.floor_fixture_1</code> | Delivery package reserve | <code>floor_fixture</code> | <code>160, 358</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Runtime delivery state can add a package or floor prop beside the authored scenario inventory. |
 | <code>scenario</code> | <code>scenario.wall_item_1</code> | Delivery hold reserve | <code>wall_mounted</code> | <code>690, 188</code> | <code>wall</code> | Variable runtime content | Runtime reserve — Runtime delivery or chain state can add a held wall object beside the authored scenario inventory. |
 | <code>scenario</code> | <code>scenario.standing_person_1</code> | Runtime contact reserve | <code>standing_person</code> | <code>448, 212</code> | <code>floor</code> | Variable runtime content | Runtime reserve — Injected chain, traveler, or delivery contact can coexist with the authored scenario cast. |
