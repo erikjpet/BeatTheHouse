@@ -43,8 +43,8 @@ for its unused preload. No artwork or saved schema is regenerated.
   tutorial, item/scenario and operational/validator/pipeline boundaries remain.
 - Native: 11 paths have the same native-tree identity as the earlier baseline.
   A 70-definition reference screen was checked against registration and API
-  boundaries. Eight public methods are bound and used through ClassDB/solver
-  dispatch; packed and dictionary render paths both remain active. The sole
+  boundaries. Eight public methods are bound; the solver uses ClassDB/string
+  dispatch and both packed and dictionary render paths. The sole
   low-token lead, `coin_pusher_native_library_init`, is the explicit template
   `entry_symbol`. No native code change or fresh build/parity claim is made.
 
@@ -81,3 +81,32 @@ receipts remain under the task's `evidence/independent-*-r1/` directories, with
 the successful wager rerun in `evidence/independent-wager-20261104-r2/`.
 The tutorial hash manifest belongs to the sibling preserved branch. New work is
 local-only while publication approval remains pending; the umbrella stays Open.
+
+## Commit custody and remaining acceptance
+
+| Task | Associated local commit | State |
+| --- | --- | --- |
+| `BTH061-AUDIT-CORE-SUPPORT-002` | `e0cb231b12bd99da8c6093509b235339024ccc19` | Bounded read-only review complete; no source removal justified. |
+| `BTH061-AUDIT-NATIVE-BOUNDARY-002` | `e0cb231b12bd99da8c6093509b235339024ccc19` | Bounded registration/reference review complete; no source removal justified. |
+| `BTH061-AUDIT-UI-LEGACY-002` | `8ba8ba8aee4d75e099d77dc554e20740473bb563` | Qualified locally; publication and NEXT acceptance pending. |
+| `BTH061-AUDIT-TOOL-LEGACY-002` | `88cb119bfb1ede48525a7015fe6619f1215a9e2c` | Qualified locally within the structural/parser scope above; publication and NEXT acceptance pending. |
+
+The final custody receipt, `evidence/independent-final-custody-r1.json`, links the
+tested UI diff fingerprint and exact tool hashes to these commits. The sibling
+`source` checkout remains clean at
+`a1fd98c647fc34139e7b20879cf1bb533d7ab878`; both preserved tutorial test hashes
+still match `evidence/preserved_tutorial_manifest_20261104_r1.json`.
+
+The earlier aggregate-validator run `host-r5` remains a failed full acceptance:
+its source/tool stages and inner 40 plus independent 11 checks passed, but the
+unchanged machine-global process census rejected six external identities.
+Four were the recorded task-14 process chain; the other two cannot be attributed
+to a workspace from safe recorded evidence. Four subsequent acceptance checks
+were not reached. This independent deletion phase does not resolve or waive
+that result; no other worker was stopped and no validation guard was weakened.
+
+Automatic approval review rejected the earlier tutorial-branch push before it
+executed because publication to shared `main` requires approval. The parent
+directed that approval is pending and forbids retry. Neither this local branch
+nor the preserved tutorial branch was published during this phase. Exact NEXT
+acceptance for these new commits is therefore pending, not denied or claimed.
