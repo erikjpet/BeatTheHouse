@@ -607,12 +607,6 @@ const WEB_AUDIO_SCRIPT := """
 			}
 			this.sfxOneShots = [];
 			return true;
-		},
-		playMusic: function (_payload) {
-			return false;
-		},
-		sfx: function (_payload) {
-			return false;
 		}
 	};
 	return true;

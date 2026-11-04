@@ -5519,7 +5519,7 @@ func _authored_playback_loop_frames(entry: Dictionary) -> int:
 
 func _load_authored_audio_stream(path: String, loop_frames: int, loop_enabled: bool = true):
 	var lowered := path.to_lower()
-	if lowered.ends_with(".bthadpcm") or lowered.ends_with(".bthadpcm.gz"):
+	if lowered.ends_with(".bthadpcm.gz"):
 		return _load_web_adpcm_stream(path, loop_frames, loop_enabled)
 	if lowered.ends_with(".wav"):
 		# Decode the untouched source master ourselves. This keeps 24-bit source
@@ -5540,8 +5540,7 @@ func _load_web_adpcm_stream(path: String, loop_frames: int, loop_enabled: bool =
 	if not FileAccess.file_exists(path):
 		return null
 	var bytes := FileAccess.get_file_as_bytes(path)
-	if path.to_lower().ends_with(".gz"):
-		bytes = bytes.decompress_dynamic(16 * 1024 * 1024, FileAccess.COMPRESSION_GZIP)
+	bytes = bytes.decompress_dynamic(16 * 1024 * 1024, FileAccess.COMPRESSION_GZIP)
 	if bytes.size() < 19 or _ascii_from_bytes(bytes, 0, 4) != "BTHA" or int(bytes[4]) != 1:
 		return null
 	var channels := int(bytes[5])
@@ -5630,9 +5629,7 @@ func _load_authored_wav_stream(path: String, loop_frames: int, loop_enabled: boo
 		var float_stream := MusicFloatPcmStream.new()
 		float_stream.configure(float_frames, sample_rate, channels, loop_enabled, 0, loop_frames if loop_enabled and loop_frames > 0 else source_frames, precision_samples, max_reconstruction_error_lsb)
 		return float_stream
-	var data := PackedByteArray()
-	if bits_per_sample == 16:
-		data = bytes.slice(data_start, data_start + data_size)
+	var data := bytes.slice(data_start, data_start + data_size)
 	var stream := AudioStreamWAV.new()
 	stream.format = AudioStreamWAV.FORMAT_16_BITS
 	stream.mix_rate = sample_rate
