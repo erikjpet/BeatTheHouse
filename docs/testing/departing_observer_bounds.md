@@ -1,6 +1,7 @@
 # DEPARTING_OBSERVER_CLIP — departing observer bounds
 
-Owner: task-14. Status: Open; no fix commit or acceptance yet.
+Owner: task-14. Status: Open; native acceptance passed, NEXT verification pending.
+Fix commit: `cc39dd5081df178484f24e786a919bd259724d2b`.
 
 The preserved primary observation is the independent QA-VIS-020 receipt at
 `2026-10-26/task/evidence/qa-vis020-independent-recheck-7cdd082e.json`, build
