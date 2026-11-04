@@ -6,8 +6,9 @@ Baseline: `ecdccee418c2297a0fb864d00c902a4c159dfd5c`.
 The earlier pass delivered confirmed removals in `6a784623` and verified them on
 NEXT `be4cd671`. It screened several areas but did not resolve the full original
 codebase-wide scope, inherited check failures or every deferred candidate.
-Calling the entire audit complete was premature. No intentional user hold
-applies; age, test-only use or a historical coordination note is not a decision
+Calling the entire audit complete was premature. At resumption no intentional
+user hold applied; the later explicit item/scenario pause is recorded below.
+Age, test-only use or a historical coordination note is not a decision
 to keep or delete code. Current consumer and compatibility evidence determines
 each disposition.
 
@@ -88,8 +89,8 @@ receipts preserve the failing test source before fixture changes.
 | `BTH061-AUDIT-TOUCH-CANCEL-001` | Canceled native/emulated touch must not activate Continue, clock details or a Package action; current geometry/policy stay identical. | Native acceptance passes; `b3337406`, NEXT `b94f3938` verified. |
 | `BTH061-AUDIT-POPUP-SCROLL-001` | Resolve current popup scroll/drag acceptance while retaining reachable actions, canceled/deliberate-touch criteria, focus and protected run state under the fixed canvas. | Native acceptance passes; `b3337406`, NEXT `b94f3938` verified. |
 | `BTH061-AUDIT-TUTORIAL-FIXTURE-001` | Investigate the inherited canonical tutorial full-fixture pin mismatch independently of the approved Blackjack definition-pin update; preserve the trusted full-fixture oracle. | Open; `NONE - OPEN`. |
-| `BTH061-AUDIT-SLOT-AUTHOR-001` | Remove superseded writer while preserving independently consumed structural/semantic checks and current accepted authority. | Repair/removal `8e9951c3`, focused acceptance passes; NEXT pending. |
-| `BTH061-AUDIT-SLOT-MIGRATION-001` | Separate historical conversion pins from current authored additions without changing either authority. | Repair `8e9951c3`, focused acceptance passes; NEXT pending. |
+| `BTH061-AUDIT-SLOT-AUTHOR-001` | Remove superseded writer while preserving independently consumed structural/semantic checks and current accepted authority. | Removal `8e9951c3`, focused acceptance and NEXT `788224c2` verified. |
+| `BTH061-AUDIT-SLOT-MIGRATION-001` | Separate historical conversion pins from current authored additions without changing either authority. | Repair `8e9951c3`, focused acceptance and NEXT `788224c2` verified. |
 
 The fresh pre-repair fixtures fail on current source as well as the older
 baseline. Placement and offer-cache now pass (36 assertions/zero failures for
@@ -146,8 +147,8 @@ assignment in consolidation reporting is restored; it is not masked by new
 counts or pins. All 1,391 protected runtime/data/assets/native/scene/ledger and
 project inputs remain byte-identical to the qualified batch.
 
-Complete validator receipts are preserved, including failures. The final
-source/authoring/migration stages pass. Host run r3 reached a missing canonical
+Complete validator receipts are preserved, including failures. All source/authoring/migration stages pass on the frozen tool candidate before
+the later main integrations. Host run r3 reached a missing canonical
 Q-009 lease directory; its existing atomic identity helper initialized only
 that empty container under the real launch mutex, with no guard code change.
 Host run r4 then completed its checks but was rejected by the final global
@@ -217,7 +218,9 @@ disabled. Raw receipts are `evidence/next-identity-20261104-r2.json` and
 This qualifies the removal, four original fixture/check repairs and narrow
 input/fixture batch on NEXT. It does not claim a full tutorial playthrough,
 physical-phone or Web gesture acceptance, or a passing complete validator.
-The umbrella, author/migration and inherited tutorial follow-ups remain Open.
+At that batch acceptance point, the author/migration follow-ups were still
+Open; their subsequent acceptance is recorded below. The umbrella, aggregate
+validator and inherited tutorial follow-ups remain Open.
 
 The frozen cleanup candidate passes editor import and thirteen focused native
 stages: the three repaired baseline checks, all 75 layout contexts, Back Alley
@@ -244,3 +247,36 @@ umbrella audit remains Open, with no intentional holds.
 No item is complete until its associated commit and applicable acceptance are
 recorded. Current raw receipts and graph inventories remain in the isolated
 task workspace; no player state is included in the repository.
+
+## Final tool batch acceptance
+
+The existing watcher promoted `788224c2b719141c17145e1d939ede72fba52aca`, tree
+`a072f8a5e3c8639e427306acc97199dc45064aa7`. Served identity/redirect/metadata hashes,
+matching PCK audit and four payload checks pass. The nine retired backdrops are
+absent; eleven live game icons and seventeen scratch symbols remain. Fresh
+sandboxed Chromium reaches the visually reviewed correct-version menu with
+zero page/console errors and zero owned processes after closure. Receipts are
+`evidence/next-identity-20261104-r4.json` and
+`evidence/next-startup-20261104-r4/` in the isolated task workspace.
+
+Concurrent Save, Count Sit, Video Poker and Motel commits were preserved. The
+focused scenario/guide/migration/ledger and source-rule contracts were rerun
+after the main integration; the last Motel integration changes no tool/data
+input to those checks. This tools patch changes no runtime, layout, asset,
+native or ledger input relative to that integrated main. Earlier native gesture
+and gameplay receipts retain their exact qualified source snapshots rather than
+being represented as fresh tests of every concurrent change.
+
+The author and migration tasks are Complete with code commit
+`8e9951c3228f28843c0576bb29ff3323f1894b0e` and exact NEXT acceptance. The
+umbrella stays Open for the precisely recorded aggregate process-census
+qualification and inherited tutorial-fixture investigation. The trusted tutorial
+pin is unchanged.
+
+A subsequent explicit user pause covers item and scenario work prospectively.
+Root received it after the above code had been pushed and NEXT had deployed
+`788224c2b719141c17145e1d939ede72fba52aca` at 02:12:46 UTC. No item/scenario code changes were made or
+published after receipt; only read-only release verification and this evidence
+record followed. Further audit edits must stay outside the paused areas, and
+pending evidence is preserved. This new pause does not retroactively justify
+the earlier inaccurate hold or completion labels.
