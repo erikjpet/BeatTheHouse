@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-04T18:02:51.923373+00:00",
+  "observed_at": "2026-11-04T18:06:35.780060+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-04T15:55:05Z",
-      "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+      "observed_at": "2026-11-04T17:57:37.314596+00:00",
+      "source": "Actual active delegated audit execution: phase004 removals committed, focused private checks and exact-base comparison finished, source publication pending. Other owner observations unchanged."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",

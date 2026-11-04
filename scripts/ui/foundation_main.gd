@@ -14302,36 +14302,31 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	if result_updates_surface_ui:
 		_store_current_game_surface_ui_state(result.get("ui_state", {}) as Dictionary)
 		preserve_surface_ui_state = bool(result.get("preserve_surface_ui_state", true))
-	var runtime_tick := bool(result.get("slot_runtime_tick", false))
-	var runtime_tick_in_progress := runtime_tick and not bool(result.get("slot_bonus_complete", false))
 	if debug_coin_pusher_host:
 		debug_host_timing["host_result_preapply"] = Time.get_ticks_usec() - debug_host_stage_started_usec
 		debug_host_stage_started_usec = Time.get_ticks_usec()
 	if bool(result.get("ok", false)) and (resolved_action_authority_script == null or not bool(result.get(resolved_action_authority_script.HOST_COMMITTED_KEY, false))):
-		if not runtime_tick_in_progress:
-			var debug_turn_started_usec := Time.get_ticks_usec() if debug_coin_pusher_host else 0
-			if not _advance_environment_turns_checked(1, debug_host_timing if debug_coin_pusher_host else {}):
-				if uses_compact_action_rollback:
-					if not current_game.restore_host_action_rollback(compact_action_rollback, run_state, run_state.current_environment):
-						run_state.from_dict(boundary_rollback_run)
-						run_state.current_environment = boundary_rollback_environment
-						var rollback_failure: Dictionary = current_game.call("host_action_rollback_failure_payload") as Dictionary if current_game.has_method("host_action_rollback_failure_payload") else {}
-						push_error("Game module failed to restore its declared compact host-action rollback token; full fallback applied: %s" % JSON.stringify(rollback_failure))
-				elif not authority_owns_action_rollback:
+		var debug_turn_started_usec := Time.get_ticks_usec() if debug_coin_pusher_host else 0
+		if not _advance_environment_turns_checked(1, debug_host_timing if debug_coin_pusher_host else {}):
+			if uses_compact_action_rollback:
+				if not current_game.restore_host_action_rollback(compact_action_rollback, run_state, run_state.current_environment):
 					run_state.from_dict(boundary_rollback_run)
 					run_state.current_environment = boundary_rollback_environment
-				run_state.defer_next_bankroll_zero_failure = boundary_rollback_deferred_failure
-				_refresh_runtime_environment_views()
-				return
-			if debug_coin_pusher_host:
-				debug_host_timing["host_advance_turn"] = Time.get_ticks_usec() - debug_turn_started_usec
-		if bool(result.get("host_apply_result", false)) and not runtime_tick_in_progress:
+					var rollback_failure: Dictionary = current_game.call("host_action_rollback_failure_payload") as Dictionary if current_game.has_method("host_action_rollback_failure_payload") else {}
+					push_error("Game module failed to restore its declared compact host-action rollback token; full fallback applied: %s" % JSON.stringify(rollback_failure))
+			elif not authority_owns_action_rollback:
+				run_state.from_dict(boundary_rollback_run)
+				run_state.current_environment = boundary_rollback_environment
+			run_state.defer_next_bankroll_zero_failure = boundary_rollback_deferred_failure
+			_refresh_runtime_environment_views()
+			return
+		if debug_coin_pusher_host:
+			debug_host_timing["host_advance_turn"] = Time.get_ticks_usec() - debug_turn_started_usec
+		if bool(result.get("host_apply_result", false)):
 			var debug_apply_started_usec := Time.get_ticks_usec() if debug_coin_pusher_host else 0
 			GameModule.apply_result(run_state, result, rng)
 			if debug_coin_pusher_host:
 				debug_host_timing["host_apply_result"] = Time.get_ticks_usec() - debug_apply_started_usec
-		elif runtime_tick_in_progress:
-			run_state.save_rng(rng)
 	elif confirmed_all_in_wager:
 		run_state.clear_deferred_bankroll_zero_resolution()
 	if debug_coin_pusher_host:
@@ -14360,11 +14355,11 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 	if bool(result.get("ok", false)) and not craps_table_talk_request.is_empty():
 		_enqueue_craps_table_talk(craps_table_talk_request)
 	var embeds_result_feedback := _current_game_embeds_result_feedback()
-	if bool(result.get("ok", false)) and embeds_result_feedback and not runtime_tick_in_progress:
+	if bool(result.get("ok", false)) and embeds_result_feedback:
 		_begin_presented_bankroll_hold(result, bankroll_before_result, wager_cost)
 	last_game_result = FoundationActionViewModelScript.stored_game_result_snapshot(result)
 	_queue_settled_push_feedback(result)
-	if bool(result.get("ok", false)) and (not runtime_tick_in_progress or _music_result_bankroll_delta(result) != 0):
+	if bool(result.get("ok", false)):
 		var outcome_schedule := _schedule_game_result_music_outcome(result, action_id)
 		if not outcome_schedule.is_empty():
 			last_game_result["music_outcome_schedule"] = outcome_schedule
@@ -14377,10 +14372,6 @@ func _resolve_game_action(action_id: String, skip_stake_validation: bool = false
 		pending_all_in_result_terminal_check = (confirmed_all_in_wager or pending_all_in_result_terminal_check) and run_state != null and not run_state.has_liquid_run_funds() and not bool(result.get("won", false))
 	elif not _current_game_has_table_result_presentation():
 		pending_all_in_result_terminal_check = confirmed_all_in_wager and bool(result.get("ok", false)) and run_state != null and not run_state.has_liquid_run_funds() and not bool(result.get("won", false))
-	if runtime_tick_in_progress:
-		if game_surface_canvas != null and current_screen == SCREEN_GAME:
-			game_surface_canvas.render_game_snapshot(_game_view_snapshot(true))
-		return
 	if not preserve_surface_ui_state:
 		game_surface_ui_state = _preserved_game_surface_preference_state(game_surface_ui_state)
 	_clear_selected_game_action()

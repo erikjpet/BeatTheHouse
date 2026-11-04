@@ -808,11 +808,6 @@ static func build_timeline(heat_entries: Array, world_map: Dictionary, final_act
 		_append_replay_segment(segments, "dwell", node_id, node_id, label, label, arrival_clock, departure_clock, start_clock, duration_minutes, index)
 		_append_replay_segment(segments, "travel", node_id, next_node_id, label, next_label, departure_clock, next_arrival_clock, start_clock, duration_minutes, index)
 		arrival_clock = next_arrival_clock
-	if segments.is_empty() and not path.is_empty():
-		var only_node_id := str(path[0])
-		var only_node := JsonCoerceScript._copy_dict(nodes_by_id.get(only_node_id, {}))
-		var only_label := str(only_node.get("display_name", only_node_id.replace("_", " ").capitalize()))
-		segments.append({"kind": "dwell", "node_id": only_node_id, "from_node_id": only_node_id, "to_node_id": only_node_id, "from_label": only_label, "to_label": only_label, "start_game_clock_minutes": start_clock, "end_game_clock_minutes": end_clock, "start_progress": 0.0, "end_progress": 1.0, "leg_index": 0})
 	# Exact compact visit clocks are the source of truth. The reconstruction
 	# above remains a migration fallback for old saves that lack complete visit
 	# boundaries, but must not override recorded multi-day dwell durations.

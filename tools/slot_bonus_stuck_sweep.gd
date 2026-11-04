@@ -805,11 +805,8 @@ func _resolve_context_action(context: Dictionary, action_id: String, label: Stri
 		preserve_surface_ui_state = bool(result.get("preserve_surface_ui_state", preserve_surface_ui_state))
 	if not bool(result.get("ok", false)):
 		return {"ok": false, "failure": "%s resolve %s failed: %s" % [label, action_id, str(result.get("message", "no message"))]}
-	var runtime_tick := bool(result.get("slot_runtime_tick", false))
-	var runtime_in_progress := runtime_tick and not bool(result.get("slot_bonus_complete", false))
-	if not runtime_in_progress:
-		run_state.advance_environment_turns(1)
-	if bool(result.get("host_apply_result", false)) and not runtime_in_progress:
+	run_state.advance_environment_turns(1)
+	if bool(result.get("host_apply_result", false)):
 		GameModule.apply_result(run_state, result, rng)
 	else:
 		run_state.save_rng(rng)

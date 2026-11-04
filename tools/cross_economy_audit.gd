@@ -1343,8 +1343,7 @@ func _play_specific_game_boundary(run_state: RunState, run: Dictionary, game_id:
 		GameModule.apply_result(run_state, result, rng)
 	else:
 		run_state.save_rng(rng)
-	if not bool(result.get("slot_runtime_tick", false)):
-		run_state.advance_environment_turns(1)
+	run_state.advance_environment_turns(1)
 	run["game_actions"] = int(run.get("game_actions", 0)) + 1
 	var action_kind := str(result.get("action_kind", ""))
 	if action_kind in ["cheat", "risky", "advantage"]:
