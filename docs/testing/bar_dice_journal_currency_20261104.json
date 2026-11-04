@@ -411,7 +411,7 @@
     }
   ],
   "commit": "1e38b7885db21c5bee1d19a897c129ddf680b1f6",
-  "status": "Native299 qualified and committed; authorized main/NEXT publication follow-through, deployment acceptance Open",
+  "status": "Reviewed native299 fix published to main; taskOpen pending reserve-admitted NEXT deployment and startup",
   "manual_reconciliation": {
     "current": {
       "errors_elsewhere": 51,
@@ -432,6 +432,12 @@
     "watcher_observed_source": "9d20b10345db553816ad1a0d0502d3ef368e0998",
     "last_good_NEXT": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
     "reserve_error": "Insufficient shared disk reserve for export: 13115047936 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
-    "capacity_or_resource_guard_changed": false
+    "capacity_or_resource_guard_changed": false,
+    "publication_state": "published",
+    "main_commit": "c0e94c361ca2000c229f815eb628d1bacf45d9c8",
+    "main_tree": "b59c578b7fb927634659a3461d9383b6352b9aec",
+    "normal_push_exit_code": 0,
+    "publication_attempts": 1,
+    "deployed_acceptance_claimed": false
   }
 }

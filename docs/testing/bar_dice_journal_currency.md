@@ -129,3 +129,21 @@ run pipeline cleanup, a duplicate watcher, a manual substitute build or a
 guard/trust change.
 Actual push results and subsequent exact deployed identity/startup are recorded
 in task-6 evidence; no build/deployment success is inferred from a main push.
+
+### Publication confirmed; acceptance remains Open
+
+The normal push succeeded from public9d20b1034 to
+`c0e94c361ca2000c229f815eb628d1bacf45d9c8`, tree
+`b59c578b7fb927634659a3461d9383b6352b9aec`. It contains exact implementation
+`1e38b7885db21c5bee1d19a897c129ddf680b1f6`, the tracking association and authorized
+release update. No publication denial or retry occurred in this follow-through.
+The four product metadata additions and test source remain exactly the
+independently reviewed native299 inputs.
+
+At publication NEXT still servesf3058b6daab820e9d747c4c4aabc2d983e9ae32e. The
+watcher reports13,115,047,936bytes free versus13,958,643,712required, retaining
+that prior NEXT. Both ledgers record published source separately from pending
+deployment. Follow the actual promoted SHA/tree and verify assets/startup only
+when normal admission allows; no deployed Bar Dice journal acceptance is
+claimed. Subsequent documentation-only tracking commits do not change the
+qualified runtime input and do not substitute for deployment proof.

@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T16:57:12.765384+00:00",
+  "updated_at": "2026-11-04T17:00:31.257133+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -17093,7 +17093,7 @@
         }
       },
       "state": "open",
-      "status": "COMMIT_ASSOCIATED_NATIVE299_RELEASE_AUTHORIZED_NEXT_PENDING",
+      "status": "PUBLISHED_MAIN_NATIVE299_PASS_NEXT_RESERVE_PENDING",
       "owner": {
         "name": "Fix Back Alley travel / Bar Dice journal follow-up",
         "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
@@ -17130,7 +17130,7 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish the reviewed tested commit and follow its exact source through the existing NEXT watcher. Verify deployed identity/assets and fresh startup when capacity admission succeeds; preserve prior NEXT and all resource gates.",
+      "next_action": "Observe the existing watcher for published Bar Dice journal fix; once the unchanged reserve admits its build, verify actual promoted SHA/tree/assets/PCK and fresh correct-version startup. Keep task Open until that deployed acceptance is recorded.",
       "blocker": {
         "state": "active",
         "kind": "next_disk_reserve",
@@ -17148,7 +17148,17 @@
           "description": "Record existing Bar Dice monetary story unit/current-action delta only; no wallet, odds, items, scenarios, viewport or touch/focus change."
         }
       ],
-      "updated_at": "2026-11-04T16:57:12.765384+00:00"
+      "updated_at": "2026-11-04T17:00:31.257133+00:00",
+      "publication": {
+        "state": "published",
+        "commit": "c0e94c361ca2000c229f815eb628d1bacf45d9c8",
+        "tree": "b59c578b7fb927634659a3461d9383b6352b9aec",
+        "implementation_commit": "1e38b7885db21c5bee1d19a897c129ddf680b1f6",
+        "evidence": [
+          "docs/testing/bar_dice_journal_currency.md",
+          "docs/testing/bar_dice_journal_currency_20261104.json"
+        ]
+      }
     }
   ],
   "batches": [
