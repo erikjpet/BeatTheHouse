@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T22:59:02.792520+00:00",
+  "updated_at": "2026-11-04T23:01:27.860244+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -20319,7 +20319,14 @@
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "9e0de522d25c3774c84ad7d73f83c44438b75e4c",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_007.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -20347,6 +20354,11 @@
           "kind": "exact_original_order_bounded_timing",
           "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
           "summary": "Disposable exact9source/34symbol runner restores byte-for-byte after83traces/helper removal; all942 original methods retained.71events: initialload16.598s; initialfingerprints47ms/0.257ms; core25returns11.941s, scenarioengine26.924,punchline8.104,tier216.296,backlog13.178. Sequenceentered110.628engine seconds andhasnoafterbeforeoriginal180wallcap. Later3groups/callableafter/finalfingerprints/Scratchunreached; no completedgroupPASSclaim. Job0, no script parse error."
+        },
+        {
+          "kind": "diagnostic_evidence_commit_not_repair",
+          "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
+          "summary": "Associated9e0de522 evidence commit preserves original failure/timing bounds. No source repair, completed catalog run or causal-defect proof; this task remains Open."
         }
       ],
       "implementation_batches": [],
@@ -20363,7 +20375,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T22:56:16.910464+00:00"
+      "updated_at": "2026-11-04T23:01:27.860244+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
@@ -20592,8 +20604,11 @@
             "id": "bounded-review",
             "description": "Record exact current body/caller/compatibility dispositions and remaining scope in an associated review commit.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_007.md",
+              "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+            ]
           }
         ],
         "coverage": {
@@ -20602,14 +20617,21 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "BOUNDED_REVIEW_READY_FOR_ASSOCIATED_COMMIT",
+      "state": "complete",
+      "status": "BOUNDED_REVIEW_COMMITTED_PARENT_REMAINDER_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "9e0de522d25c3774c84ad7d73f83c44438b75e4c",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_007.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -20625,19 +20647,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Commit bounded review evidence, then associate the actual full commit before marking this bounded task Complete.",
+      "next_action": "This bounded review is committed; preserve its exact depth and continue the separate whole-codebase parent. No production removal or runtime pass is implied.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "No blocker; bounded review actively progressing.",
+        "description": "No blocker for this completed bounded source review; full parent work remains Open.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T22:47:55.967748+00:00",
+        "observed_at": "2026-11-04T23:01:27.860244+00:00",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_007.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T22:56:16.910464+00:00"
+      "updated_at": "2026-11-04T23:01:27.860244+00:00"
     },
     {
       "id": "BTH061-AUDIT-REMAINING-RUNTIME-007",
@@ -20657,8 +20679,11 @@
             "id": "bounded-review",
             "description": "Record exact current body/caller/compatibility dispositions and remaining scope in an associated review commit.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_007.md",
+              "docs/testing/deprecated_code_audit_core_coverage_007.csv"
+            ]
           }
         ],
         "coverage": {
@@ -20667,14 +20692,21 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "BOUNDED_REVIEW_READY_FOR_ASSOCIATED_COMMIT",
+      "state": "complete",
+      "status": "BOUNDED_REVIEW_COMMITTED_PARENT_REMAINDER_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "9e0de522d25c3774c84ad7d73f83c44438b75e4c",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_007.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -20690,19 +20722,19 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Commit bounded review evidence, then associate the actual full commit before marking this bounded task Complete.",
+      "next_action": "This bounded review is committed; preserve its exact depth and continue the separate whole-codebase parent. No production removal or runtime pass is implied.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "No blocker; bounded review actively progressing.",
+        "description": "No blocker for this completed bounded source review; full parent work remains Open.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T22:47:55.967748+00:00",
+        "observed_at": "2026-11-04T23:01:27.860244+00:00",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_007.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T22:56:16.910464+00:00"
+      "updated_at": "2026-11-04T23:01:27.860244+00:00"
     }
   ],
   "batches": [

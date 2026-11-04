@@ -47,3 +47,5 @@ The affected prior delivery tasks retain their source commits and focused native
 ## Evidence
 
 [Portable measured receipt](deprecated_code_audit_continuation_007.json) and the 95 row coverage CSV accompany this report. Private original receipts remain in the task workspace under `evidence/content007-profile-r1`, `content-profile007-frozen-r1`, `content-profile007-attribution-r1`, `production-coverage-reconcile-007-r1`, `remaining-runtime-007-r1`, `approved-audit-next-identity-007-r1.json`, `next-startup-audit007-r1` and `gpu007-probe-r{1,2}`. Failed attempts and original saves remain retained. The bounded review tasks close only after their actual review commit is associated in both ledgers; they do not close the umbrella.
+
+Review evidence commit: `9e0de522d25c3774c84ad7d73f83c44438b75e4c`. Both bounded 007 review tasks now have this associated commit and may close independently of the Open umbrella and timeout task. Manual reconciliation before association reported zero audit/task9 findings; 54 current and 520 all findings remain outside this scope. All 16 qualified source hashes and the clean preserved tutorial checkout were verified unchanged.
