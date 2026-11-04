@@ -1237,7 +1237,11 @@ func refresh_current_venue_scenario_cycle(run_state: RunState, persist_world_roo
 	var record := run_state.environment_situation_cycle(archetype_id)
 	var phase := "active" if bool(cycle.active) else "closed"
 	var stamp := str(source.get(ENVIRONMENT_SITUATION_CYCLE_KEY, ""))
-	if stamp == str(cycle.cycle_id) and int(record.get("schedule_version", 0)) == 1 and str(record.get("phase", "")) == phase:
+	# Town-wide priming can close this selection before its stored room is
+	# revisited. The opening stamp stays the same at close, so the global phase
+	# alone cannot prove that every retained room body has retired its scenario.
+	if stamp == str(cycle.cycle_id) and int(record.get("schedule_version", 0)) == 1 and str(record.get("phase", "")) == phase \
+			and (bool(cycle.active) or not _venue_cycle_room_has_retained_scenario(source)):
 		return {"ok": true, "changed": false}
 	var old_cycle := ScenarioVenueCycleScript.cycle_for_existing_room(source, archetype, now)
 	# Adopt a legacy accepted situation only while its recorded opening is still
@@ -1267,6 +1271,24 @@ func refresh_current_venue_scenario_cycle(run_state: RunState, persist_world_roo
 	return {"ok": true, "changed": true, "phase": phase, "cycle_id": cycle.cycle_id, "scenario_id": source.get("scenario_id", "")}
 
 
+func _venue_cycle_room_has_retained_scenario(environment: Dictionary) -> bool:
+	var rooms: Array = [environment]
+	var current_layer := str(environment.get("current_layer_id", "room"))
+	var layers := JsonCoerceScript._copy_dict(environment.get("layer_states", {}))
+	for layer_value in layers.keys():
+		# The exposed body is authoritative for its current layer, just as in the
+		# retirement transaction below; its stored mirror may predate that body.
+		if str(layer_value) != current_layer:
+			rooms.append(JsonCoerceScript._copy_dict(layers[layer_value]))
+	for room_value in rooms:
+		var room: Dictionary = room_value
+		if not str(room.get("scenario_id", "")).strip_edges().is_empty() \
+				or not JsonCoerceScript._copy_dict(room.get("scenario_state", {})).is_empty() \
+				or not JsonCoerceScript._copy_dict(room.get("scenario_sequence_state", {})).is_empty():
+			return true
+	return false
+
+
 func _refresh_venue_scenario_cycle_candidate(run_state: RunState, archetype: Dictionary, cycle: Dictionary, old_cycle: Dictionary, record: Dictionary) -> Dictionary:
 	var source := run_state.current_environment.duplicate(true)
 	var archetype_id := str(source.get("archetype_id", ""))
@@ -1282,7 +1304,12 @@ func _refresh_venue_scenario_cycle_candidate(run_state: RunState, archetype: Dic
 	for layer_value in layer_keys:
 		var layer := str(layer_value)
 		var room := JsonCoerceScript._copy_dict(rooms[layer])
-		var definition_id := str(room.get("scenario_id", JsonCoerceScript._copy_dict(room.get("scenario_state", {})).get("id", "")))
+		# Keep the existing missing-key legacy fallback, but never clear retained
+		# authority when neither the explicit identity nor that fallback resolves.
+		var legacy_state := JsonCoerceScript._copy_dict(room.get("scenario_state", {}))
+		var definition_id := str(room.get("scenario_id", legacy_state.get("id", ""))).strip_edges()
+		if definition_id.is_empty() and (not legacy_state.is_empty() or not JsonCoerceScript._copy_dict(room.get("scenario_sequence_state", {})).is_empty()):
+			return {"ok": false, "errors": ["Retiring room retains scenario authority without an exact scenario identity."]}
 		var definition := library._runtime_validated_scenario_definition(library._scenario_readonly(definition_id)) if not definition_id.is_empty() else {}
 		run_state.current_environment = room
 		if not definition_id.is_empty():

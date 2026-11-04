@@ -28,7 +28,9 @@ class EnvironmentSlotConsolidationTests(unittest.TestCase):
         )
 
     def _placement(self) -> dict:
-        return json.loads(MIGRATION.PLACEMENT_PATH.read_text(encoding="utf-8"))
+        ledger = self._ledger()
+        _bytes, target = MIGRATION._historical_migration_target(ledger["target"]["sha256"])
+        return target
 
     def test_ledger_accounts_for_every_source_and_target_row(self) -> None:
         ledger = self._ledger()
@@ -148,9 +150,16 @@ class EnvironmentSlotConsolidationTests(unittest.TestCase):
         self.assertEqual(
             expected["target"]["sha256"],
             MIGRATION._sha256(
-                MIGRATION._canonical_text_bytes(MIGRATION.PLACEMENT_PATH.read_bytes())
+                MIGRATION._historical_migration_target(self._ledger()["target"]["sha256"])[0]
             ),
         )
+
+    def test_historical_target_slots_still_exist_in_current_authority(self) -> None:
+        current = json.loads(MIGRATION.PLACEMENT_PATH.read_text(encoding="utf-8"))
+        current_keys = {(row["id"], slot["id"]) for row in current["maps"] for family in MIGRATION.FAMILIES for slot in row[family + "_slots"]}
+        historical_keys = {(row["id"], slot["id"]) for row in self._placement()["maps"] for family in MIGRATION.FAMILIES for slot in row[family + "_slots"]}
+        self.assertTrue(historical_keys.issubset(current_keys))
+        MIGRATION.validate(current)
 
     def test_report_translation_prefers_exact_target_and_surfaces_losses(self) -> None:
         report = {

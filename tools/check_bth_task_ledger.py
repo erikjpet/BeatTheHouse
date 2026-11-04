@@ -119,6 +119,10 @@ def validate_ledger(ledger: Any) -> dict[str, Any]:
     policies = obj(ledger.get("policies"), "ledger.policies")
     if "runtime_cleanup_required" in policies and not isinstance(policies["runtime_cleanup_required"], bool):
         raise InputError("ledger.policies.runtime_cleanup_required must be boolean")
+    if "user_requested_pauses" in policies:
+        for index, pause_policy in enumerate(array(policies["user_requested_pauses"], "ledger.policies.user_requested_pauses")):
+            pause_policy = obj(pause_policy, f"ledger.policies.user_requested_pauses[{index}]")
+            strings(pause_policy.get("task_ids", []), f"ledger.policies.user_requested_pauses[{index}].task_ids")
     if "metadata" in ledger:
         metadata = obj(ledger["metadata"], "ledger.metadata")
         if "markdown_ledger_section" in metadata and not nonempty(metadata["markdown_ledger_section"]):
@@ -222,6 +226,23 @@ def markdown_text(value: str) -> str:
     value = re.sub(r"\[([^\]]+)\]\([^)]*\)", r"\1", value)
     value = re.sub(r"<br\s*/?>", " ", value, flags=re.IGNORECASE)
     return " ".join(html.unescape(value.replace("`", "").replace("**", "").replace("\\|", "|")).split())
+
+
+def supported_user_pause(item: dict[str, Any], policies: dict[str, Any]) -> bool:
+    """A row cannot exempt itself: require a matching explicit user policy."""
+    pause = item.get("pause")
+    if not isinstance(pause, dict) or pause.get("state") != "active" or pause.get("requested_by") != "user":
+        return False
+    if not nonempty(pause.get("source")) or not nonempty(pause.get("instruction")):
+        return False
+    for policy in policies.get("user_requested_pauses", []):
+        if (isinstance(policy, dict) and policy.get("state") == "active"
+                and policy.get("requested_by") == "user" and nonempty(policy.get("source"))
+                and isinstance(policy.get("task_ids"), list) and item["id"] in policy["task_ids"]
+                and nonempty(policy.get("instruction"))
+                and " ".join(policy["instruction"].split()) == " ".join(pause["instruction"].split())):
+            return True
+    return False
 
 
 def is_portrait_app_change(change: Any) -> bool:
@@ -341,13 +362,14 @@ def check_ledger(
     selected = [task for task in ledger["objectives"] if group == "all" or task["group"] == group]
     selected_ids = {task["id"] for task in selected}
     selected_batches = [batch for batch in ledger["batches"] if batch["parent_id"] in selected_ids]
+    paused_ids = {item["id"] for item in selected + selected_batches if supported_user_pause(item, ledger["policies"])}
     for key, count in Counter([task["id"] for task in ledger["objectives"]] + [batch["id"] for batch in ledger["batches"]]).items():
         if count > 1:
             add("DUPLICATE_ID", key, "A stable ID is used more than once in the ledger.")
     owner_tasks = {task["task_ref"]: task for task in owners["tasks"]} if owners else {}
-    if owners is None and any(task["state"] == "open" for task in selected + selected_batches):
+    if owners is None and any(task["state"] == "open" and task["id"] not in paused_ids for task in selected + selected_batches):
         add("OWNER_SNAPSHOT_NOT_SUPPLIED", None, "Live owner state was not checked; supply a fresh --owners snapshot.", severity="warning")
-    elif owners is not None and stale(owners["observed_at"]) and any(task["state"] == "open" for task in selected + selected_batches):
+    elif owners is not None and stale(owners["observed_at"]) and any(task["state"] == "open" and task["id"] not in paused_ids for task in selected + selected_batches):
         add("OWNER_SNAPSHOT_STALE", None, "The owner snapshot is older than the configured freshness limit.", [owners["observed_at"]])
 
     git_results: dict[str, bool] = {}
@@ -395,6 +417,16 @@ def check_ledger(
 
     def workflow_for(item: dict[str, Any]) -> None:
         task_id = item["id"]
+        paused = task_id in paused_ids
+        pause = item.get("pause")
+        if isinstance(pause, dict) and pause.get("state") == "active" and not paused:
+            add("UNSUPPORTED_USER_PAUSE", task_id, "Active pause lacks matching user authorization, task scope, instruction or source provenance.")
+        if not paused and not (isinstance(pause, dict) and pause.get("state") == "active"):
+            if any(policy.get("state") == "active" and policy.get("requested_by") == "user" and task_id in policy.get("task_ids", [])
+                   for policy in ledger["policies"].get("user_requested_pauses", [])):
+                add("USER_PAUSE_RECORD_MISSING", task_id, "The active user policy names this task, but its matching active pause record is missing.")
+        if paused and item["state"] != "open":
+            add("USER_PAUSED_TASK_NOT_OPEN", task_id, "An active user-paused item must remain Open; a pause does not complete or supersede the requested work.")
         if item["state"] == "open":
             owner = item.get("owner", {})
             if not nonempty(owner.get("name")):
@@ -402,7 +434,7 @@ def check_ledger(
             task_ref = owner.get("task_ref")
             if not nonempty(task_ref):
                 add("OWNER_TASK_REFERENCE_MISSING", task_id, "Open work needs the owner's current task reference.")
-            elif owners is not None:
+            elif owners is not None and not paused:
                 observation = owner_tasks.get(task_ref)
                 if observation is None:
                     add("OWNER_NOT_IN_SNAPSHOT", task_id, "The current task reference has no observation in the supplied owner snapshot.", [task_ref])
@@ -421,14 +453,14 @@ def check_ledger(
         if active_blocker:
             if not nonempty(blocker.get("description")):
                 add("BLOCKER_DESCRIPTION_MISSING", task_id, "A reported blocker needs a concrete description.")
-            if not blocker.get("observed_at") or stale(blocker["observed_at"]):
+            if not paused and (not blocker.get("observed_at") or stale(blocker["observed_at"])):
                 add("BLOCKER_STALE", task_id, "Revalidate this blocker; its observation is missing or stale.", [blocker.get("observed_at") or "no observation timestamp"])
             if not blocker.get("evidence"):
                 add("BLOCKER_EVIDENCE_MISSING", task_id, "A reported blocker needs supporting evidence.")
             if ledger["policies"].get("original_user_incident_saves") == "unavailable" and original_save_demand(blocker):
                 add("STALE_USER_SAVE_BLOCKER", task_id, "Original user incident saves are unavailable. Use retained fixtures or reconstructed independent checks; do not wait on the user for those saves.")
-        if item["state"] != "superseded" and has_intentional_hold(item.get("status"), blocker, active_blocker):
-            add("INTENTIONAL_HOLD_FORBIDDEN", task_id, "The user specified zero intentional holds; restore this item to the active queue.")
+        if not paused and item["state"] != "superseded" and has_intentional_hold(item.get("status"), blocker, active_blocker):
+            add("INTENTIONAL_HOLD_FORBIDDEN", task_id, "An imposed hold lacks matching explicit user-pause authorization; reconcile the recorded instruction.")
         # Only this dedicated field describes planned app changes. A portrait
         # screenshot, regression test, or historical note elsewhere is evidence.
         for change in item.get("planned_app_changes", []):
@@ -584,6 +616,8 @@ def check_ledger(
                       "source": observation.get("source") if observation else None,
                       "observation_stale": stale(observation["observed_at"]) if observation else None},
             "status": item.get("status"),
+            "pause": copy.deepcopy(item.get("pause")),
+            "pause_supported": item["id"] in paused_ids,
             "commits": copy.deepcopy(item.get("commits", [])),
             "deployment": copy.deepcopy(item["deployment"]),
             "progress_scope_id": objective_item["id"],
@@ -621,10 +655,12 @@ def check_ledger(
         "markdown_checked": markdown is not None,
         "markdown_rows_checked": markdown_row_count,
         "freshness_limit_hours": max_owner_age_hours,
+        "user_requested_pauses": copy.deepcopy(ledger["policies"].get("user_requested_pauses", [])),
         "summary": {"objectives_checked": len(selected), "batches_checked": len(selected_batches),
                     "open_objectives": sum(task["state"] == "open" for task in selected),
                     "open_batches": sum(batch["state"] == "open" for batch in selected_batches),
                     "open_work_items": len(open_work),
+                    "user_paused_items": len(paused_ids),
                     "complete_objectives": sum(task["state"] == "complete" for task in selected),
                     "errors": counts["error"], "warnings": counts["warning"],
                     "tasks_with_errors": len({entry["task_id"] for entry in findings if entry["severity"] == "error" and entry["task_id"] is not None})},
@@ -651,13 +687,16 @@ def render_text(report: dict[str, Any]) -> str:
     for entry in report["findings"]:
         lines.append(f"[{entry['severity'].upper()}] {entry['code']} {entry['task_id'] or '(ledger)'}: {entry['message']}")
         lines.extend(f"  Evidence: {reference}" for reference in entry["evidence"])
-    lines.append(f"Open work: {summary['open_objectives']} objective(s), {summary['open_batches']} implementation batch(es).")
+    lines.append(f"Open work: {summary['open_objectives']} objective(s), {summary['open_batches']} implementation batch(es); {summary['user_paused_items']} supported user pause(s).")
     for entry in report["open_work"]:
         owner = entry["owner"]
         acceptance, coverage = entry["acceptance_progress"], entry["coverage_progress"]
-        lines.append(f"[OPEN] {entry['id']} {entry.get('name') or ''} | owner: {owner.get('name') or '(missing)'} "
+        label = "PAUSED BY USER / OPEN" if entry["pause_supported"] else "OPEN"
+        lines.append(f"[{label}] {entry['id']} {entry.get('name') or ''} | owner: {owner.get('name') or '(missing)'} "
                      f"({owner['observed_state']}; task: {owner.get('task_ref') or '(missing)'}) | {entry.get('status') or '(no status)'}")
         lines.append(f"  Next: {entry.get('next_action') or '(missing)'}")
+        if entry["pause_supported"]:
+            lines.append(f"  User pause: {entry['pause']['instruction']} | source: {entry['pause']['source']}")
         progress_scope = f"parent {entry['progress_scope_id']}; " if entry["item_type"] == "implementation_batch" else ""
         lines.append(f"  Progress: {progress_scope}acceptance {acceptance['passed_with_evidence']}/{acceptance['required_total']}; "
                      f"coverage {coverage['reviewed_with_evidence']}/{coverage['total_areas']} areas with evidence; "

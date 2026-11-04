@@ -4,6 +4,7 @@ extends Control
 const JsonCoerceScript := preload("res://scripts/core/json_coerce.gd")
 const GameRitualRuntimeScript := preload("res://scripts/core/game_ritual_runtime.gd")
 const MoneyFeedbackViewModelScript := preload("res://scripts/ui/money_feedback_view_model.gd")
+const WebSaveDurabilityBridgeScript := preload("res://scripts/ui/web_save_durability_bridge.gd")
 
 const ScenarioSemanticViewModelScript := preload("res://scripts/ui/scenario_semantic_view_model.gd")
 const PlayerTextScript := preload("res://scripts/ui/player_text.gd")
@@ -591,6 +592,9 @@ var run_menu_abandon_button: Button
 var run_menu_main_menu_button: Button
 var run_menu_skip_tutorial_button: Button
 var run_menu_family_repay_button: Button
+var _web_manual_save_pending := false
+var _manual_save_error := ""
+var _web_save_durability_bridge: Variant = null
 var tutorial_skip_dialog: ConfirmationDialog
 var settings_overlay: Control
 var settings_margin: MarginContainer
@@ -951,6 +955,9 @@ func _advance_environment_turns_checked(amount: int = 1, debug_timing: Dictionar
 
 
 func _input(event: InputEvent) -> void:
+	if _web_manual_save_pending:
+		get_viewport().set_input_as_handled()
+		return
 	# The HUD disclosure owns its own focused controls. Do not let a response
 	# hotkey or another modal's scope act on the room behind it.
 	if _hud_details_is_visible():
@@ -1283,6 +1290,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 		resolved_seed = DEFAULT_SEED
 	var resolved_challenge_config := _challenge_with_meta_home_for_run(resolved_seed, challenge_config) if include_meta_home_modifiers else RunState.normalize_challenge(resolved_seed, challenge_config)
 	run_state = RunState.new()
+	_manual_save_error = ""
 	run_state.start_new(resolved_seed, resolved_challenge_config)
 	# A generator may retain failed-install diagnostics from a previous run. New
 	# run generation owns a fresh generator just as it owns a fresh RunState.
@@ -6303,6 +6311,8 @@ func close_run_inventory() -> void:
 
 
 func open_run_journal() -> void:
+	if _web_manual_save_pending:
+		return
 	if run_state == null:
 		_show_message("No active run to review.")
 		return
@@ -7219,6 +7229,8 @@ func load_foundation_run() -> bool:
 
 
 func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
+	if _web_manual_save_pending:
+		return false
 	if not _ensure_run_ui_built():
 		return false
 	if save_service == null:
@@ -7256,6 +7268,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	environment_runtime_active_keys_scratch.clear()
 	environment_runtime_scheduler.clear()
 	run_state = loaded
+	_manual_save_error = ""
 	environment_clock_epoch_offset_msec = 0
 	var loaded_terminal := run_state.is_terminal()
 	var recovered_broken_environment := false
@@ -7376,6 +7389,8 @@ func open_run_menu() -> void:
 
 
 func close_run_menu() -> void:
+	if _web_manual_save_pending:
+		return
 	_hide_run_menu()
 	_sync_coach_focus_visibility()
 	_refresh()
@@ -7390,6 +7405,8 @@ func _family_loan_menu_repayment_status() -> Dictionary:
 
 
 func repay_family_loan_from_menu() -> void:
+	if _web_manual_save_pending:
+		return
 	if not _run_menu_is_visible():
 		return
 	var status := _family_loan_menu_repayment_status()
@@ -7401,15 +7418,52 @@ func repay_family_loan_from_menu() -> void:
 
 
 func save_run_from_menu() -> void:
+	if _web_manual_save_pending:
+		return
+	_manual_save_error = ""
 	if run_state == null:
 		save_status_message = "No active run to save."
+		_manual_save_error = "Not saved. " + save_status_message
 		_show_message("No active run to save.")
 		_refresh_run_menu()
 		return
-	if not _autosave_foundation_run("Saved to Resume Slot.", true):
+	var web_save := OS.has_feature("web")
+	if not _autosave_foundation_run("Saving to Resume Slot..." if web_save else "Saved to Resume Slot.", true):
+		# The status message outside this modal is hidden. Keep a refused manual
+		# attempt visible here, including the normal exit path for live physics.
+		_manual_save_error = "Not saved. " + save_status_message
+		if current_game != null and not current_game.foundation_save_ready(run_state, run_state.current_environment):
+			_manual_save_error = "Not saved. Resume, then Leave the machine and save from the floor."
 		_show_message(save_status_message)
 		_refresh()
 		return
+	if web_save:
+		var saved_run := run_state
+		var saved_slot := autosave_slot_id
+		_web_manual_save_pending = true
+		_refresh_run_menu()
+		if _web_save_durability_bridge == null:
+			_web_save_durability_bridge = WebSaveDurabilityBridgeScript.new()
+		var result: Dictionary = _web_save_durability_bridge.begin()
+		while bool(result.get("pending", false)):
+			await get_tree().process_frame
+			if not is_inside_tree():
+				return
+			result = _web_save_durability_bridge.poll()
+		_web_manual_save_pending = false
+		if run_state != saved_run or autosave_slot_id != saved_slot:
+			_manual_save_error = "Save was interrupted. Choose Save to retry."
+			save_status_message = _manual_save_error
+			_refresh_run_menu()
+			return
+		if not bool(result.get("ok", false)):
+			_manual_save_error = "Could not finish saving. Keep this tab open and choose Save to retry."
+			save_status_message = _manual_save_error
+			_refresh_run_menu()
+			_show_message(save_status_message)
+			_refresh()
+			return
+		save_status_message = "Saved to Resume Slot."
 	_clear_input_guard_modal_state()
 	_refresh()
 
@@ -7419,6 +7473,8 @@ func load_run_from_menu() -> void:
 
 
 func abandon_run_from_menu() -> void:
+	if _web_manual_save_pending:
+		return
 	if run_state == null:
 		_show_message("No active run to abandon.")
 		_refresh_run_menu()
@@ -7469,7 +7525,7 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 		"game_surface_session_generation", "deferred_coach_refresh_active_generation", "tutorial_action_resume_active_generation", "deferred_embedded_refresh_generation", "deferred_embedded_refresh_pending", "deferred_embedded_refresh_run_state", "deferred_embedded_refresh_game", "deferred_embedded_refresh_environment", "deferred_embedded_refresh_result", "deferred_embedded_refresh_canvas", "deferred_embedded_refresh_game_state_key", "deferred_embedded_refresh_surface_session_generation",
 		"game_surface_auto_resolving", "last_game_surface_realtime_refresh_msec", "surface_feature_music_active", "surface_feature_music_ducking", "drunk_time_anchor_real_msec", "drunk_time_anchor_scaled_msec", "drunk_time_last_scale",
 		"pending_autosave", "pending_autosave_status_text", "pending_autosave_after_frame", "pending_autosave_not_before_msec", "pending_autosave_first_queued_msec",
-		"autosave_dirty_generation", "autosave_inflight_generation", "autosave_completed_generation", "save_status_message",
+		"autosave_dirty_generation", "autosave_inflight_generation", "autosave_completed_generation", "save_status_message", "_manual_save_error",
 		"autosave_failure_generation", "autosave_failure_count", "autosave_last_error", "autosave_last_error_code", "autosave_retry_blocked",
 	]:
 		var value: Variant = get(field_name)
@@ -15268,6 +15324,8 @@ func _trap_event_choice_popup_focus(event: InputEvent) -> bool:
 
 
 func _route_topmost_modal_cancel() -> bool:
+	if _web_manual_save_pending:
+		return true
 	if _hud_details_is_visible():
 		structured_hud.close_details()
 		return true
@@ -18414,15 +18472,28 @@ func _environment_result_feedback_view() -> Dictionary:
 		return {"visible": false}
 	var result := {} if not immediate_environment_acknowledgement.is_empty() else _recent_result_snapshot()
 	var deltas: Dictionary = result.get("deltas", {})
-	var bankroll_delta := int(result.get("outcome_bankroll_delta", result.get("bankroll_delta", deltas.get("bankroll_delta", 0))))
+	var bankroll_delta := int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
+	var outcome_delta: Variant = result.get("outcome_bankroll_delta", bankroll_delta)
+	if _feedback_is_integer(outcome_delta):
+		bankroll_delta = int(outcome_delta)
 	var suspicion_delta := int(result.get("suspicion_delta", deltas.get("suspicion_delta", 0)))
 	var message := immediate_environment_acknowledgement if not immediate_environment_acknowledgement.is_empty() else _outcome_message(result)
 	var currency_lead := _environment_result_currency_lead(result, suspicion_delta)
+	var round_net_lead := _blackjack_round_net_feedback_lead(result)
+	if str(result.get("game_id", "")) == "blackjack" and round_net_lead.is_empty() and str(result.get("currency", "")) not in ["cash", "chips"]:
+		# Preserve the legacy fallback when the recorded units are unknown; new
+		# net metadata alone cannot establish a cash-denominated outcome.
+		bankroll_delta = int(result.get("bankroll_delta", deltas.get("bankroll_delta", 0)))
 	if not currency_lead.is_empty():
 		# The bounded HUD must show the financial outcome before a long dealer
 		# narrative can consume its visible lines. Keep the full message below.
 		bankroll_delta = 0
 		message = "%s\n%s" % [currency_lead, message]
+	if not round_net_lead.is_empty():
+		# The wager debit and settlement credit are separate journal movements.
+		# Lead with the recorded whole-hand net, including a genuine zero push.
+		bankroll_delta = 0
+		message = "%s\n%s" % [round_net_lead, message]
 	if message.is_empty() and message_label != null:
 		message = _player_facing_text(message_label.text)
 	if message.strip_edges().is_empty() and bankroll_delta == 0 and suspicion_delta == 0:
@@ -18475,6 +18546,51 @@ func _environment_result_currency_lead(result: Dictionary, suspicion_delta: int)
 	if suspicion_delta != 0:
 		lead += " Heat %+d" % suspicion_delta
 	return lead
+
+
+func _blackjack_round_net_feedback_delta(result: Dictionary) -> Variant:
+	if str(result.get("game_id", result.get("source_id", ""))) != "blackjack" \
+			or bool(result.get("applied_currency_unknown", false)) \
+			or not GameModule.applied_currency_settlement(result).is_empty():
+		return null
+	for key in ["outcome_bankroll_delta", "round_net_delta", "blackjack_round_net_delta"]:
+		if result.has(key):
+			var value: Variant = result[key]
+			return int(value) if _feedback_is_integer(value) else null
+	return null
+
+
+func _blackjack_round_net_feedback_lead(result: Dictionary) -> String:
+	var net: Variant = _blackjack_round_net_feedback_delta(result)
+	if net == null:
+		return ""
+	var currency := str(result.get("currency", ""))
+	if currency == "chips":
+		return "Blackjack net: %+d chips." % int(net)
+	if currency == "cash":
+		return "Blackjack net: $%+d." % int(net)
+	return ""
+
+
+func _feedback_is_integer(value: Variant) -> bool:
+	return typeof(value) in [TYPE_INT, TYPE_FLOAT] and is_finite(float(value)) and float(value) == float(int(value))
+
+
+func _story_is_unwagered_blackjack_watch(entry: Dictionary) -> bool:
+	if str(entry.get("type", "")) != "game_action" or str(entry.get("game_id", "")) != "blackjack" or not bool(entry.get("sat_out", false)):
+		return false
+	# Watching the next automatic hand must not replace the last paid outcome.
+	# Retain any money, Heat, security or terminal consequence as a real result.
+	if bool(entry.get("ended", false)) or bool(entry.get("dealer_caught_cheat", false)) \
+			or not str(entry.get("security_message", "")).is_empty() or entry.has("applied_currency_settlement"):
+		return false
+	for key in ["bankroll_delta", "currency_delta", "chips_delta", "cash_delta", "round_net_delta", "outcome_bankroll_delta", "blackjack_round_net_delta", "suspicion_delta", "stake", "wager_debited", "total_wager", "settlement_return_delta", "main_delta", "side_delta", "nominal_bankroll_delta"]:
+		if entry.has(key) and (not _feedback_is_integer(entry[key]) or int(entry[key]) != 0):
+			return false
+	var settlement := JsonCoerceScript._copy_dict(entry.get("settlement", {}))
+	if settlement.has("delta") and (not _feedback_is_integer(settlement.delta) or int(settlement.delta) != 0):
+		return false
+	return true
 
 
 func _environment_result_feedback_accent(result: Dictionary, bankroll_delta: int, suspicion_delta: int) -> Color:
@@ -18558,6 +18674,8 @@ func _result_from_story_log(entries: Array) -> Dictionary:
 		if typeof(entry) != TYPE_DICTIONARY:
 			continue
 		var story_entry := entry as Dictionary
+		if _story_is_unwagered_blackjack_watch(story_entry):
+			continue
 		var message := str(story_entry.get("message", ""))
 		if message.is_empty():
 			message = _story_entry_label(story_entry)
@@ -18579,7 +18697,10 @@ func _result_from_story_log(entries: Array) -> Dictionary:
 			"message": message,
 			"environment_id": str(story_entry.get("environment_id", "")),
 		})
-		for key in ["currency", "currency_delta", "chips_delta", "settlement", "message_key", "message_params", "nominal_bankroll_delta"]:
+		var feedback_keys := ["currency", "currency_delta", "chips_delta", "settlement", "message_key", "message_params", "nominal_bankroll_delta"]
+		if str(story_entry.get("game_id", "")) == "blackjack":
+			feedback_keys.append_array(["round_net_delta", "outcome_bankroll_delta", "blackjack_round_net_delta"])
+		for key in feedback_keys:
 			if story_entry.has(key):
 				var value: Variant = story_entry[key]
 				restored[key] = value.duplicate(true) if typeof(value) in [TYPE_DICTIONARY, TYPE_ARRAY] else value
@@ -18622,6 +18743,20 @@ func _result_from_story_log(entries: Array) -> Dictionary:
 			restored["bankroll_delta"] = 0
 			restored["deltas"]["bankroll_delta"] = 0
 			restored["deltas"]["chips_delta"] = chip_delta
+		if str(restored.get("game_id", "")) == "blackjack" and not restored.has("currency") and _blackjack_round_net_feedback_delta(restored) != null:
+			# Only a known recorded non-Grand venue establishes old cash units.
+			# An unknown source must not borrow today's room or wallet.
+			var recorded_archetype := str(story_entry.get("environment_archetype_id", ""))
+			if not recorded_archetype.is_empty() and not RunState.GRAND_CASINO_ARCHETYPE_IDS.has(recorded_archetype) and not _environment_archetype(recorded_archetype).is_empty():
+				restored["currency"] = "cash"
+		var round_net: Variant = _blackjack_round_net_feedback_delta(restored)
+		if round_net != null:
+			restored["outcome_bankroll_delta"] = int(round_net)
+			if str(story_entry.get("message", "")).is_empty():
+				# Do not reuse the journal's credit-leg label as the hand outcome.
+				restored["message"] = "Blackjack hand settled."
+				restored["messages"] = [restored.message]
+				restored["deltas"]["messages"] = [restored.message]
 		return restored
 	return {}
 
@@ -18944,12 +19079,16 @@ func _fresh_profile_needs_tutorial() -> bool:
 
 
 func request_skip_tutorial() -> void:
+	if _web_manual_save_pending:
+		return
 	if run_state == null or not run_state.is_tutorial_run() or tutorial_skip_dialog == null:
 		return
 	tutorial_skip_dialog.popup_centered(Vector2i(520, 190))
 
 
 func _confirm_skip_tutorial() -> void:
+	if _web_manual_save_pending:
+		return
 	if run_state == null or not run_state.is_tutorial_run():
 		return
 	if not _complete_tutorial_profile():
@@ -19120,6 +19259,8 @@ func _save_foundation_run_before_leaving(status_text: String) -> bool:
 
 
 func return_to_main_menu() -> bool:
+	if _web_manual_save_pending:
+		return false
 	if _is_meta_session():
 		_exit_meta_session()
 		return true
@@ -19204,6 +19345,8 @@ func _restore_main_menu_surface_visibility() -> void:
 
 
 func exit_game() -> void:
+	if _web_manual_save_pending:
+		return
 	_drain_event_response_before_exit()
 	if not _save_foundation_run_before_leaving("Autosaved before exit."):
 		return
@@ -19213,6 +19356,8 @@ func exit_game() -> void:
 
 
 func open_settings_menu() -> void:
+	if _web_manual_save_pending:
+		return
 	if settings_menu == null or settings_overlay == null:
 		# Native and web startup intentionally defer the run shell. Settings owns
 		# Environment Library placement controls, so a cold-start click must cross
@@ -20749,6 +20894,8 @@ func _run_menu_is_visible() -> bool:
 
 
 func _hide_run_menu() -> void:
+	if _web_manual_save_pending:
+		return
 	if run_menu_overlay != null:
 		if run_menu_overlay.visible and modal_focus_scope != null:
 			modal_focus_scope.call("pop_scope", run_menu_overlay)
@@ -20758,6 +20905,13 @@ func _hide_run_menu() -> void:
 
 func _refresh_run_menu() -> void:
 	if run_menu_overlay == null:
+		return
+	if _web_manual_save_pending:
+		for action_control in run_menu_action_controls:
+			if action_control is BaseButton:
+				(action_control as BaseButton).disabled = true
+		if run_menu_status_label != null:
+			run_menu_status_label.text = "Saving to Resume Slot... Keep this tab open."
 		return
 	var has_save := _has_foundation_save()
 	var meta_context := _is_meta_session()
@@ -20781,6 +20935,8 @@ func _refresh_run_menu() -> void:
 			run_menu_status_label.text = "%s | %s\nProgress here saves automatically. %s" % [location_label, venue, resume_note]
 		else:
 			run_menu_status_label.text = "%s\n%s Save overwrites this slot; Load replaces this run." % [status, save_note]
+		if not _manual_save_error.is_empty():
+			run_menu_status_label.text += "\n" + _manual_save_error
 	if run_menu_resume_button != null:
 		run_menu_resume_button.disabled = false
 	if run_menu_save_button != null:
@@ -21853,15 +22009,17 @@ func _game_result_from_story_log(entries: Array) -> Dictionary:
 		var entry: Dictionary = entries[index]
 		if str(entry.get("type", "")) != "game_action":
 			continue
-		if entry.has("currency") or not GameModule.applied_currency_settlement(entry).is_empty() or _story_is_unmeasured_blackjack_penalty(entry) or _recorded_game_uses_chips(entry):
+		if _story_is_unwagered_blackjack_watch(entry):
+			continue
+		if entry.has("currency") or not GameModule.applied_currency_settlement(entry).is_empty() or _story_is_unmeasured_blackjack_penalty(entry) or _recorded_game_uses_chips(entry) or _blackjack_round_net_feedback_delta(entry) != null:
 			var result := _result_from_story_log([entry])
 			result["type"] = "game_action_summary"
 			result["action_kind"] = "summary"
 			result["display_name"] = "%s Saved Result" % _game_display_name(str(entry.get("game_id", "")))
 			result["summary_source"] = "saved_story_log"
 			return result
-		break
-	return TerminalConsequenceViewModelScript.game_result_from_story_log(entries, Callable(self, "_game_display_name"), Callable(self, "_label_from_id"))
+		return TerminalConsequenceViewModelScript.game_result_from_story_log([entry], Callable(self, "_game_display_name"), Callable(self, "_label_from_id"))
+	return {}
 
 
 func _game_display_name(game_id: String) -> String:

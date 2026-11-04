@@ -50,6 +50,8 @@ The report includes `findings` and `open_work`. The latter retains every selecte
 
 The checker flags open work with missing references, missing observations, idle/ended/missing owner tasks or stale observations. It also flags unsupported/stale blockers. The user decides whether to resume, reassign, investigate or update the record; the checker takes no such action.
 
+An explicit user pause is validated against `policies.user_requested_pauses`: row and policy must be active, name the user as requester, retain nonempty sources, match the instruction and name the task ID in the policy scope. A supported pause keeps the item Open with owner/task reference, full scope, evidence and next action visible. Idle or stale owner observations and stale blocker timestamps do not generate resumption findings for paused work. Missing owner references and scope/provenance gaps remain findings. Unsupported/mismatched pauses and paused items marked Complete are errors; normal commit, acceptance and deployment gates remain. Reports retain pause details and counts. The checker never resumes paused work.
+
 ## Current user direction
 
 The current explicit user instruction is **Pause item and scenario work.** The eight named entries in [the user pause record](bth_user_item_scenario_pause_20261104.json) remain Open/incomplete and resume only on user instruction. Their IDs, commits, acceptance, evidence and prior next actions are preserved. This scoped direction supersedes the earlier zero-holds direction for these entries; agents must not invent additional pauses. Other testing, fixes and audits continue. Actual security approvals and missing evidence remain separately recorded factual dependencies.
@@ -60,7 +62,7 @@ No portrait-mode application updates are authorized by this tracking work. Histo
 
 ## Snapshot findings and limits
 
-The committed example report, [bth_task_reconciliation_20261104.json](bth_task_reconciliation_20261104.json), records its check time and the recorded owner, ledger and runtime snapshots. It exposes observed ownership gaps when present, unresolved scope provenance and runtime identity/receipt evidence gaps. Those are follow-up items for the operator; they have not been disguised as passing tests or intentional holds. Lucky Penny and Ledger Pencil have an active implementation owner recorded in the current task snapshot.
+The committed example report, [bth_task_reconciliation_20261104.json](bth_task_reconciliation_20261104.json), records its check time and the recorded owner, ledger and runtime snapshots. It exposes observed ownership gaps when present, unresolved scope provenance and runtime identity/receipt evidence gaps. Those are follow-up items for the operator; they have not been disguised as passing tests or invented holds. Lucky Penny and Ledger Pencil retain their owners and Open scope under the explicit user pause.
 
 The recovered all-55 scenario plan and LEDGER022 QA report retain their own scope and provenance; neither proves full implementation of a parent objective. Lucky Penny (`BTH-15`) and Ledger Pencil (`BTH-17`) require their full effect-and-description reworks. LEDGER022 retains the concrete Roulette-loss mismatch and the bounded factual-help repair. Recover the original Ledger redesign direction separately; related QA evidence does not establish the full original mechanic or acceptance. Actual mechanic choices remain implementation work without a new user-selection hold.
 

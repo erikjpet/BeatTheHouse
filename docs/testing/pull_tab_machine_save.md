@@ -1,10 +1,13 @@
 # BTH061-PULLTABS-SAVE-001: collected ticket custody after Menu Save
 
-Status: **Open; evidence/test commit pending**. The reported rollback has not
-reproduced in the current native host or the tested Web machine/floor-save
-routes. No product root cause or gameplay fix is confirmed. A documentation/test
-commit does not close the original report. The named stability ledger retains
-its status and associated commit field.
+Status: **Open; original ticket rollback remains unattributed.** The initial
+investigation below was committed in 436a707f. The closer independent Grand
+follow-up confirms and corrects a Web Save acknowledgment gap, with native and
+Web acceptance. See [Grand Save boundary evidence](pull_tab_grand_save_boundary.md)
+for current results, commit/NEXT association and exact-save limitation. The
+original report remains preserved; the task is not Complete. The later
+[custody follow-up](pull_tab_custody_followup.md) adds 119 warm/58 cold assertions,
+two rendered comparison arms, and the corrected original two-Save chronology.
 
 ## Reported Web discrepancy and evidence custody
 
@@ -16,8 +19,11 @@ Grand's ordinary campaign `grand-fresh-r01` reported this sequence on NEXT sourc
 2. Collect the purchased ticket. The live machine shows Ticket Pile 1/1 and an
    empty purchase tray. Open the menu, use Save while inside the machine, then
    close the browser session.
-3. Cold Continue and machine re-entry retain $94/13 and the purchase debit, but
-   show Ticket Pile 0/0 with the same ticket in the purchase tray.
+3. The next cold Continue shows 4:45 AM on the floor. After unsuccessful focus
+   attempts, an intermediate floor Save shows 8:45 AM without machine entry.
+   A second cold Continue again shows 4:45 AM; subsequent machine re-entry retains
+   $94/13 and the debit but shows pile 0/0 and the ticket in the tray at 6:15 AM.
+   This fuller primary-log chronology corrects the earlier condensed narrative.
 4. Recollect the existing ticket, leave the machine and save from the floor.
    Cold re-entry preserves Ticket Pile 1/1. The subsequent ordinary loss and
    floor Save also survive cold re-entry without another debit or payout.
@@ -195,7 +201,10 @@ visibility; the served shell's completed-startup path removes the overlay, so
 no selector defect has been established. These are startup/harness limits,
 not Pull Tabs custody failures.
 
-## Remaining acceptance
+## Initial investigation acceptance
+
+This section records the first investigation's scope. The linked Grand
+follow-up above supersedes its pending work where expressly tested.
 
 The investigation and regression are committed in
 `436a707f8ed1ca6b5464e083326d9d1fb6bb7de7`. Publication and exact NEXT verification

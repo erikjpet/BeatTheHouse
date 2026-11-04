@@ -4951,6 +4951,8 @@ def apply_capacity_repairs(payload: dict[str, Any]) -> None:
     final visual placement to the in-game authoring tool.
     """
 
+    if _has_current_authored_additions(payload):
+        raise ValueError("historical capacity repair cannot rewrite current authored slot authority")
     if _uses_canonical_reusable_slot_ids(payload):
         _apply_slot_consolidation(payload)
         return
@@ -5412,7 +5414,155 @@ def migrate_map(
     return result
 
 
+# Historical conversion is independently pinned by the existing ledgers.
+# Current authored additions are a closed overlay, not a new migration recipe.
+LEGACY_REVIEWED_TARGET_COMMIT = "e1fc450bde9dd9bc231156335b12482102c65dff"
+CURRENT_AUTHORED_EVENT_ADDITIONS = {
+    ("corner_store", "event.lucky_recruitment"): (
+        "standing_person", "Lucky recruitment", ("event:recruitment_lucky",), True,
+    ),
+    ("gas_station_casino", "event.surface_item_1"): (
+        "surface_item", "Crew Money note on the machine bank", ("event:crew_stake_horse_loss",), False,
+    ),
+    ("small_underground_casino:casino", "event.surface_item_1"): (
+        "surface_item", "Crew Money note on the left table", ("event:crew_stake_horse_loss",), False,
+    ),
+    ("jazz_club", "event.surface_item_1"): (
+        "surface_item", "Paper lead on the front service shelf", (), True,
+    ),
+    ("kitty_cat_lounge", "event.sal_address_note"): (
+        "surface_item", "Sal address note", ("event:chain06_sal_trail_one", "event:chain06_sal_trail_two", "event:chain06_sal_trail_three"), True,
+    ),
+    ("delta_queen", "event.surface_item_1"): (
+        "surface_item", "Crew Money note on the scoreboard ledge", ("event:crew_stake_horse_loss",), False,
+    ),
+    ("pawn_shop", "event.standing_person_4"): (
+        "standing_person", "Standing person", (), True,
+    ),
+    ("grand_casino", "event.behind_counter_person_3"): (
+        "behind_counter_person", "Pit boss", ("event:the_house_calls",), False,
+    ),
+    ("grand_casino_cage", "event.recruitment_bishop"): (
+        "standing_person", "Bishop at the Cage window", ("event:recruitment_bishop",), False,
+    ),
+}
+CURRENT_AUTHORED_METADATA_EDITS = {
+    ("small_underground_casino:club", "class_overrides", "event:recruitment_knuckles"): (
+        None, "standing_person",
+    ),
+    ("small_underground_casino:club", "object_family_ids", "event:recruitment_knuckles"): (
+        None, "event",
+    ),
+    ("small_underground_casino:club", "object_family_ids", "event:recruitment_rook_leads"): (
+        None, "event",
+    ),
+    ("small_underground_casino:casino", "class_overrides", "event:recruitment_mags"): (
+        None, "standing_person",
+    ),
+    ("small_underground_casino:casino", "object_family_ids", "event:recruitment_mags"): (
+        None, "event",
+    ),
+    ("small_underground_casino:casino", "object_family_ids", "event:recruitment_rook_leads"): (
+        None, "event",
+    ),
+    ("pawn_shop", "event_object_slot_ids", "crew::package_handoff"): (
+        None, "event.standing_person_4",
+    ),
+    ("grand_casino", "event_object_slot_ids", "event:the_house_calls"): (
+        "event.behind_counter_person_1", "event.behind_counter_person_3",
+    ),
+    ("grand_casino_cage", "event_object_slot_ids", "event:recruitment_bishop"): (
+        None, "event.recruitment_bishop",
+    ),
+    ("grand_casino_cage", "object_family_ids", "event:recruitment_bishop"): (
+        None, "event",
+    ),
+}
+CURRENT_AUTHORED_EXISTING_SLOT_EDITS = {
+    ("grand_casino", "event.behind_counter_person_1", "occupant_ids"): (
+        ["event:chain06_cass_first_contact", "event:the_house_calls"], ["event:chain06_cass_first_contact"],
+    ),
+}
+
+
+def _has_current_authored_additions(payload: dict[str, Any]) -> bool:
+    return any(
+        (str(map_data.get("id", "")), str(slot.get("id", "")))
+        in {("corner_store", "event.lucky_recruitment"), ("kitty_cat_lounge", "event.sal_address_note"), ("grand_casino_cage", "event.recruitment_bishop")}
+        for map_data in payload.get("maps", [])
+        for slot in map_data.get("event_slots", [])
+    )
+
+
+def _current_authority_legacy_projection(payload: dict[str, Any]) -> dict[str, Any]:
+    """Remove only the reviewed authored overlay from an owned diagnostic copy."""
+    projected = copy.deepcopy(payload)
+    maps = {str(row.get("id", "")): row for row in projected.get("maps", [])}
+    for (map_id, slot_id), expected in CURRENT_AUTHORED_EVENT_ADDITIONS.items():
+        map_data = maps.get(map_id, {})
+        matches = [row for row in map_data.get("event_slots", []) if row.get("id") == slot_id]
+        if len(matches) != 1:
+            raise ValueError(f"current authored overlay requires one {map_id}/{slot_id}")
+        slot = matches[0]
+        actual = (slot.get("footprint_class"), slot.get("physical_role"), tuple(slot.get("occupant_ids", [])), slot.get("runtime_reserve"))
+        if actual != expected:
+            raise ValueError(f"current authored overlay metadata drift: {map_id}/{slot_id}")
+        map_data["event_slots"].remove(slot)
+    for (map_id, slot_id, field), (before, after) in CURRENT_AUTHORED_EXISTING_SLOT_EDITS.items():
+        slot = _slot_by_id(maps[map_id], slot_id)
+        if slot is None or slot.get(field) != after:
+            raise ValueError(f"current authored overlay existing-row drift: {map_id}/{slot_id}/{field}")
+        slot[field] = copy.deepcopy(before)
+    for (map_id, field, key), (before, after) in CURRENT_AUTHORED_METADATA_EDITS.items():
+        values = maps[map_id].get(field, {})
+        if key not in values or values[key] != after:
+            raise ValueError(f"current authored overlay pointer drift: {map_id}/{field}/{key}")
+        if before is None:
+            values.pop(key)
+        else:
+            values[key] = copy.deepcopy(before)
+    return projected
+
+
 def validate(
+    payload: dict[str, Any],
+    *,
+    baseline_objects: dict[str, set[str]] | None = None,
+    required_events: dict[str, set[str]] | None = None,
+    reviewed_authority: bool = True,
+) -> None:
+    current = _has_current_authored_additions(payload)
+    projected = _current_authority_legacy_projection(payload) if current else payload
+    _validate_legacy_snapshot(projected, baseline_objects=baseline_objects, required_events=required_events, reviewed_authority=reviewed_authority)
+    if current:
+        # Preserve the current independent closed schema, geometry and event-bank
+        # checks rather than weakening the frozen conversion's 101-row contract.
+        import environment_fixed_slot_static_check as SlotCheck
+        archetypes = {row["id"]: row for row in load_json(ARCHETYPE_PATH)}
+        check = SlotCheck.Check()
+        for map_data in payload["maps"]:
+            archetype_id = map_data.get("archetype_id", map_data["id"].split(":", 1)[0])
+            SlotCheck.validate_map_v2(check, map_data, archetypes[archetype_id], (900.0, 430.0))
+        if check.errors:
+            raise ValueError("current authored slot authority invalid: " + "; ".join(check.errors))
+
+
+def _historical_migration_target(expected_sha256: str) -> tuple[bytes, dict[str, Any]]:
+    """Read exact historical target bytes; the existing ledger hash is authority."""
+    if not re.fullmatch(r"[0-9a-f]{64}", expected_sha256):
+        raise ValueError("historical migration target requires an exact recorded SHA256")
+    revision = _resolved_git_commit(LEGACY_REVIEWED_TARGET_COMMIT)
+    relative = PLACEMENT_PATH.relative_to(ROOT).as_posix()
+    target_bytes = _canonical_text_bytes(_git_blob(revision, relative))
+    if _sha256(target_bytes) != expected_sha256:
+        raise ValueError("historical migration target does not match its trusted ledger hash")
+    target = _json_blob(target_bytes, relative)
+    if not isinstance(target, dict) or target.get("slot_schema_version") != 2:
+        raise ValueError("historical migration target is not a slot-schema-v2 object")
+    return target_bytes, target
+
+
+def _validate_legacy_snapshot(
     payload: dict[str, Any],
     *,
     baseline_objects: dict[str, set[str]] | None = None,
@@ -7088,8 +7238,12 @@ def legacy_ledger_payload(mode: str, explicit_source_ref: str = "") -> dict[str,
     )
     if traced is None:
         raise RuntimeError("legacy trace was not captured")
-    final_bytes = _canonical_text_bytes(PLACEMENT_PATH.read_bytes())
-    final_payload = load_json(PLACEMENT_PATH)
+    if mode == "check":
+        recorded = load_json(LEGACY_LEDGER_PATH)
+        final_bytes, final_payload = _historical_migration_target(str(recorded.get("final", {}).get("sha256", "")))
+    else:
+        final_bytes = _canonical_text_bytes(PLACEMENT_PATH.read_bytes())
+        final_payload = load_json(PLACEMENT_PATH)
     difference = _first_payload_difference(converted, final_payload)
     if difference:
         raise RuntimeError(
@@ -7123,7 +7277,7 @@ def run_legacy_ledger(mode: str, explicit_source_ref: str = "") -> None:
         return
     if not LEGACY_LEDGER_PATH.exists():
         raise RuntimeError(f"legacy slot ledger is missing: {LEGACY_LEDGER_PATH}")
-    actual_bytes = LEGACY_LEDGER_PATH.read_bytes()
+    actual_bytes = _canonical_text_bytes(LEGACY_LEDGER_PATH.read_bytes())
     if actual_bytes != expected_bytes:
         raise RuntimeError(
             "legacy slot ledger is stale or non-deterministic; regenerate with "
@@ -7191,6 +7345,7 @@ def build_consolidation_disposition_ledger(
     targets_by_origin: dict[tuple[str, str], list[dict[str, Any]]] = defaultdict(list)
     introduced: list[dict[str, Any]] = []
     for map_id, family, slot in _slot_rows(traced):
+        slot_id = str(slot.get("id", ""))
         origins = slot.get(CONSOLIDATION_ORIGIN_FIELD, [])
         clean_origins = sorted(set(str(value) for value in origins)) \
             if isinstance(origins, list) else []
@@ -7339,8 +7494,12 @@ def consolidation_ledger_payload(
         raise RuntimeError(
             f"pinned consolidation source at {source_revision} is not slot schema v2"
         )
-    final_bytes = _canonical_text_bytes(PLACEMENT_PATH.read_bytes())
-    final_payload = _json_blob(final_bytes, relative)
+    if mode == "check":
+        recorded = load_json(CONSOLIDATION_LEDGER_PATH)
+        final_bytes, final_payload = _historical_migration_target(str(recorded.get("target", {}).get("sha256", "")))
+    else:
+        final_bytes = _canonical_text_bytes(PLACEMENT_PATH.read_bytes())
+        final_payload = _json_blob(final_bytes, relative)
     if not isinstance(final_payload, dict):
         raise RuntimeError("working placement authority is not an object")
     return build_consolidation_disposition_ledger(
@@ -7367,13 +7526,13 @@ def run_consolidation_ledger(mode: str, explicit_source_ref: str = "") -> None:
         raise RuntimeError(
             f"consolidation disposition ledger is missing: {CONSOLIDATION_LEDGER_PATH}"
         )
-    if CONSOLIDATION_LEDGER_PATH.read_bytes() != expected_bytes:
+    if _canonical_text_bytes(CONSOLIDATION_LEDGER_PATH.read_bytes()) != expected_bytes:
         raise RuntimeError(
             "consolidation disposition ledger is stale or non-deterministic; "
             "regenerate with --consolidation-ledger generate"
         )
     print(
-        "current-v2 consolidation ledger valid: "
+        "historical-v2 consolidation ledger valid: "
         f"{expected['counts']['source_slots']} source rows -> "
         f"{expected['counts']['target_slots']} target rows"
     )

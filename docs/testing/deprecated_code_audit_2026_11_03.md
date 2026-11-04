@@ -1,4 +1,4 @@
-# Deprecated implementation audit ΓÇö 2026-11-03
+# Deprecated implementation audit ╬ô├ç├╢ 2026-11-03
 
 Baseline: `87a06b9a4acbe86b0f761d2cd0ab929f5584b716`.
 Task: `BTH061-AUDIT-001` on the existing stability release task list.

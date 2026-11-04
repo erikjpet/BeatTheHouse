@@ -1427,6 +1427,9 @@ func _resolve_draw(action_id: String, run_state: RunState, environment: Dictiona
 		"coin_value": coin_value,
 		"hand_count": hand_count,
 		"bankroll_delta": bankroll_delta,
+		# Record the account at action time; later journal reads cannot infer it.
+		"currency": GameModule.presentation_currency_for_game(run_state, get_id(), environment),
+		"currency_delta": bankroll_delta,
 		"suspicion_delta": suspicion_delta,
 		"cheated": is_cheat,
 		"held_count": holds.size(),
@@ -1573,6 +1576,8 @@ func _resolve_double_up(run_state: RunState, environment: Dictionary, rng: RngSt
 		"won": outcome == "win",
 		"double_outcome": outcome,
 		"bankroll_delta": bankroll_delta,
+		"currency": GameModule.presentation_currency_for_game(run_state, get_id(), environment),
+		"currency_delta": bankroll_delta,
 		"suspicion_delta": 0,
 		"at_risk": at_risk,
 		"environment_id": environment.get("id", ""),

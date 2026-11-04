@@ -219,6 +219,60 @@ class ReconciliationTests(unittest.TestCase):
         data["objectives"][0]["blocker"]["kind"] = "verification"
         self.assertIn("STALE_USER_SAVE_BLOCKER", self.codes(self.run_check(data)))
 
+    def pause_data(self, complete=False):
+        data = ledger(task(complete=complete))
+        data["policies"]["user_requested_pauses"] = [{"state": "active", "requested_by": "user",
+            "task_ids": [data["objectives"][0]["id"]], "instruction": "Pause item and scenario work.",
+            "source": "Trusted current user instruction"}]
+        data["objectives"][0]["pause"] = {"state": "active", "requested_by": "user",
+            "instruction": "Pause item and scenario work.", "source": "docs/todo/user-pause.json"}
+        return data
+
+    def test_supported_user_pause_keeps_idle_open_work_without_stale_penalties(self):
+        data = self.pause_data()
+        item = data["objectives"][0]
+        item["blocker"] = {"state": "active", "kind": "user_requested_pause", "description": "Explicit user pause.",
+            "observed_at": OLD, "evidence": ["docs/todo/user-pause.json"], "requires_user_input": True}
+        report = self.run_check(data, owners("idle", OLD))
+        self.assertEqual(report["summary"]["errors"], 0)
+        self.assertEqual(report["summary"]["user_paused_items"], 1)
+        self.assertEqual(item["state"], "open")
+        self.assertTrue(report["open_work"][0]["pause_supported"])
+        self.assertEqual(report["open_work"][0]["pause"], item["pause"])
+        self.assertIn("[PAUSED BY USER / OPEN]", checker.render_text(report))
+
+    def test_unsupported_or_mismatched_pause_does_not_exempt_owner_checks(self):
+        for change in ("no_policy", "wrong_instruction", "wrong_task", "missing_source", "agent_request"):
+            data = self.pause_data()
+            policy = data["policies"]["user_requested_pauses"][0]
+            if change == "no_policy":
+                data["policies"]["user_requested_pauses"] = []
+            elif change == "wrong_instruction":
+                policy["instruction"] = "Continue all work."
+            elif change == "wrong_task":
+                policy["task_ids"] = ["ANOTHER-ID"]
+            elif change == "missing_source":
+                data["objectives"][0]["pause"]["source"] = None
+            else:
+                data["objectives"][0]["pause"]["requested_by"] = "agent"
+            with self.subTest(change=change):
+                codes = self.codes(self.run_check(data, owners("idle")))
+                self.assertTrue({"UNSUPPORTED_USER_PAUSE", "OWNER_IDLE_WITH_OPEN_WORK"} <= codes)
+
+    def test_paused_complete_is_forbidden_and_commit_gates_remain(self):
+        data = self.pause_data(complete=True)
+        self.assertIn("USER_PAUSED_TASK_NOT_OPEN", self.codes(self.run_check(data)))
+        data["objectives"][0]["commits"] = []
+        self.assertTrue({"USER_PAUSED_TASK_NOT_OPEN", "COMPLETE_WITHOUT_COMMIT"} <= self.codes(self.run_check(data)))
+
+    def test_missing_pause_record_and_agent_imposed_hold_still_fail(self):
+        data = self.pause_data()
+        data["objectives"][0].pop("pause")
+        self.assertIn("USER_PAUSE_RECORD_MISSING", self.codes(self.run_check(data)))
+        data["policies"]["user_requested_pauses"][0]["task_ids"] = ["ANOTHER-ID"]
+        data["objectives"][0]["status"] = "HELD_USER_HANDS_ON"
+        self.assertIn("INTENTIONAL_HOLD_FORBIDDEN", self.codes(self.run_check(data)))
+
     def test_retained_fixtures_and_eligible_hand_prerequisite_are_allowed(self):
         data = ledger()
         data["objectives"][0]["blocker"] = {"state": "active", "kind": "eligible_hand",

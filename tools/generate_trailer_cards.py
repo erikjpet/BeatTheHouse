@@ -11,8 +11,6 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "branding" / "trailer" / "cards"
 FONT_DIR = Path("C:/Windows/Fonts")
 
-BLACK = (4, 5, 11, 255)
-PANEL = (8, 10, 22, 255)
 CYAN = (0, 245, 255, 255)
 PINK = (255, 45, 120, 255)
 YELLOW = (255, 224, 80, 255)

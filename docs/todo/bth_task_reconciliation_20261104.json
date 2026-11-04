@@ -1,7 +1,7 @@
 {
   "schema": "bth.task_reconciliation/v1",
-  "checked_at": "2026-11-04T15:43:55.721857Z",
-  "ledger_updated_at": "2026-11-04T15:42:58.227322+00:00",
+  "checked_at": "2026-11-04T16:14:21.430697Z",
+  "ledger_updated_at": "2026-11-04T16:13:18.036432+00:00",
   "group": "current",
   "owner_snapshot_supplied": true,
   "runtime_inventory_supplied": true,
@@ -87,18 +87,47 @@
   ],
   "git_verification_requested": false,
   "markdown_checked": true,
-  "markdown_rows_checked": 198,
+  "markdown_rows_checked": 212,
   "freshness_limit_hours": 24,
+  "user_requested_pauses": [
+    {
+      "schema": "bth.user_work_pause/v1",
+      "recorded_at": "2026-11-04T02:07:49.868676+00:00",
+      "instruction": "Pause item and scenario work.",
+      "source": "Current explicit user direction supplied through trusted parent delegation.",
+      "source_thread": "01a1a147-7f07-7583-baf0-771a839f1013",
+      "requested_by": "user",
+      "state": "active",
+      "task_ids": [
+        "BTH-11",
+        "BTH-SCENARIO-WEDDING-001",
+        "BTH-SCENARIO-ARRIVAL-002",
+        "BTH-15",
+        "BTH-17",
+        "BTH-15-FACTUAL-HELP-001",
+        "BTH-17-FACTUAL-HELP-001",
+        "LEDGER022"
+      ],
+      "resume_only_on_user_instruction": true,
+      "other_testing_fixes_audits_continue": true,
+      "existing_main_publication_rejection_unchanged": false,
+      "publication_retry_authorized": true,
+      "scope_limit": "Named item/scenario objectives and their associated unfinished batches/finding. Does not pause unrelated item UI bugs, scenario-engine bug fixes, playtesting, performance or audits.",
+      "publication_retry_authorization": "Later explicit user instruction: Yes push all finished work to next",
+      "prior_publication_rejection": "Historical direct main push denied by automatic review and did not execute. New authorization permits one reviewed retry; a further denial must stop that action."
+    }
+  ],
   "summary": {
-    "objectives_checked": 48,
-    "batches_checked": 4,
-    "open_objectives": 37,
+    "objectives_checked": 61,
+    "batches_checked": 7,
+    "open_objectives": 29,
     "open_batches": 3,
-    "open_work_items": 40,
-    "complete_objectives": 11,
-    "errors": 46,
+    "open_work_items": 32,
+    "user_paused_items": 8,
+    "complete_objectives": 32,
+    "errors": 51,
     "warnings": 0,
-    "tasks_with_errors": 9
+    "tasks_with_errors": 14
   },
   "findings": [
     {
@@ -594,11 +623,58 @@
       ]
     },
     {
+      "code": "OWNER_IDLE_WITH_OPEN_WORK",
+      "severity": "error",
+      "task_id": "BTH-SLOT-COLLECT-001",
+      "message": "Owner task is idle while requested work remains open.",
+      "evidence": [
+        "01a1a3f3-52a8-76d7-951b-423c1bdfd0d4",
+        "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+      ]
+    },
+    {
       "code": "OWNER_TASK_REFERENCE_MISSING",
       "severity": "error",
       "task_id": "BTH061-006",
       "message": "Open work needs the owner's current task reference.",
       "evidence": []
+    },
+    {
+      "code": "OWNER_TASK_REFERENCE_MISSING",
+      "severity": "error",
+      "task_id": "BTH061-AUDIT-INDEPENDENT-001",
+      "message": "Open work needs the owner's current task reference.",
+      "evidence": []
+    },
+    {
+      "code": "OWNER_IDLE_WITH_OPEN_WORK",
+      "severity": "error",
+      "task_id": "BTH061-CREW-EXPIRED-HANDOFF",
+      "message": "Owner task is idle while requested work remains open.",
+      "evidence": [
+        "01a1a360-a1b6-733f-a372-b09b3015a03e",
+        "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+      ]
+    },
+    {
+      "code": "OWNER_IDLE_WITH_OPEN_WORK",
+      "severity": "error",
+      "task_id": "BTH061-PULLTABS-SAVE-001",
+      "message": "Owner task is idle while requested work remains open.",
+      "evidence": [
+        "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+        "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+      ]
+    },
+    {
+      "code": "OWNER_IDLE_WITH_OPEN_WORK",
+      "severity": "error",
+      "task_id": "BTH061-VAULTDROP-SAVE-001",
+      "message": "Owner task is idle while requested work remains open.",
+      "evidence": [
+        "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+        "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+      ]
     },
     {
       "code": "OWNER_TASK_REFERENCE_MISSING",
@@ -626,11 +702,13 @@
         "name": "Dedicated performance audit / task-18",
         "task_ref": "01a1a3e8-562c-7169-a765-f4b4f9ae60cc",
         "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
       "status": "INVESTIGATING; full coverage remains open after any individual fix",
+      "pause": null,
+      "pause_supported": false,
       "commits": [],
       "deployment": {
         "required": false,
@@ -1023,7 +1101,7 @@
         "kind": null,
         "description": "Full coverage, current findings and exact main/NEXT acceptance remain active work; source inspection alone confirms no large leak.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:32:35.703920+00:00",
+        "observed_at": "2026-11-04T16:13:18.036432+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -1047,11 +1125,13 @@
         "name": "Dedicated performance audit / task-18",
         "task_ref": "01a1a3e8-562c-7169-a765-f4b4f9ae60cc",
         "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
       "status": "MAIN_COMMITTED_MODULE_CHECKS_PASS_NEXT_AND_NORMAL_INPUT_ACCEPTANCE_OPEN",
+      "pause": null,
+      "pause_supported": false,
       "commits": [
         {
           "sha": "ea136553ce3f33236aa3ea22d23921e6f957e7a2",
@@ -1127,7 +1207,7 @@
         "kind": null,
         "description": "Active measured investigation or delivery acceptance work; no intentional hold and no inferred leak/fix beyond recorded evidence.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:32:35.703920+00:00",
+        "observed_at": "2026-11-04T16:13:18.036432+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -1151,11 +1231,13 @@
         "name": "Dedicated performance audit / task-18",
         "task_ref": "01a1a3e8-562c-7169-a765-f4b4f9ae60cc",
         "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
       "status": "NATIVE_ATTRIBUTION_MEASURED_WEB_AND_FIX_PENDING",
+      "pause": null,
+      "pause_supported": false,
       "commits": [],
       "deployment": {
         "required": false,
@@ -1223,7 +1305,7 @@
         "kind": null,
         "description": "Active measured investigation or delivery acceptance work; no intentional hold and no inferred leak/fix beyond recorded evidence.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:32:35.703920+00:00",
+        "observed_at": "2026-11-04T16:13:18.036432+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -1247,11 +1329,13 @@
         "name": "Dedicated performance audit / task-18",
         "task_ref": "01a1a3e8-562c-7169-a765-f4b4f9ae60cc",
         "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
       "status": "CANDIDATE_UNMEASURED",
+      "pause": null,
+      "pause_supported": false,
       "commits": [],
       "deployment": {
         "required": false,
@@ -1310,14 +1394,14 @@
         "kind": null,
         "description": "Active measured investigation or delivery acceptance work; no intentional hold and no inferred leak/fix beyond recorded evidence.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:32:35.703920+00:00",
+        "observed_at": "2026-11-04T16:13:18.036432+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
     },
     {
       "id": "BTH061-PULLTABS-SAVE-001",
-      "name": "Collected Pull Tabs ticket returns to purchase tray after in-machine Save and cold browser Continue",
+      "name": "Collected Pull Tabs ticket returns to tray across machine/floor Save and cold Continue",
       "state": "open",
       "item_type": "objective",
       "kind": "acceptance_check",
@@ -1326,24 +1410,40 @@
       ],
       "full_objective": {
         "text": "Resolve the original Grand/chips discrepancy: an already-collected2-dollar Pull Tabs ticket returned to the purchase tray after in-machine Save and cold Continue while the debit remained. Preserve ticket/payment identity, one purchase/collection/payout and the full eleven-game continuation parent; current-route passes must not silently replace the unresolved original report.",
-        "source": "docs/testing/pull_tab_machine_save.md",
+        "source": "docs/testing/pull_tab_machine_save.md; docs/testing/pull_tab_custody_followup.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
         "scope_confirmed": true
       },
       "batch_scope": [],
       "owner": {
         "name": "Pull Tabs save investigation (task-14)",
         "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_state": "idle",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
-      "status": "OPEN_ORIGINAL_GRAND_NOT_REPRODUCED",
+      "status": "OPEN_ORIGINAL_GENERATION_UNKNOWN_NO_NEW_SUPPORTED_PATH",
+      "pause": null,
+      "pause_supported": false,
       "commits": [
         {
           "sha": "436a707f8ed1ca6b5464e083326d9d1fb6bb7de7",
           "evidence": [
             "published_durable_ledger_association",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        },
+        {
+          "sha": "c43c95a9da3a7d1c4ff595619cb3c6614ef5bb30",
+          "evidence": [
+            "recorded_in_named_ledger",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        },
+        {
+          "sha": "d18586d11c9321bd1caf7582d0d9c94db467232f",
+          "evidence": [
+            "recorded_in_named_ledger",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -1352,7 +1452,10 @@
         "required": false,
         "state": "not_applicable",
         "commit": null,
-        "evidence": []
+        "evidence": [
+          "docs/testing/pull_tab_custody_followup.md"
+        ],
+        "scope": "Acknowledgment/custody corrections are qualified only in their recorded scope; the original discrepancy remains Open."
       },
       "progress_scope_id": "BTH061-PULLTABS-SAVE-001",
       "acceptance": [
@@ -1389,11 +1492,20 @@
           "required": true,
           "state": "open",
           "evidence": []
+        },
+        {
+          "id": "acknowledgment-and-custody",
+          "description": "Recorded177 custody assertions, two Web arms/six sessions and16 adapter contracts qualify supported Save/restore and acknowledgment boundaries. c43 acknowledgment correction is verified; d185 preserves custody chronology. Original fingerprints/load outcome were absent, so these are not original-incident reproduction.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/pull_tab_custody_followup.md"
+          ]
         }
       ],
       "acceptance_progress": {
-        "required_total": 4,
-        "passed_with_evidence": 3,
+        "required_total": 5,
+        "passed_with_evidence": 4,
         "remaining_ids": [
           "original-discrepancy"
         ]
@@ -1410,13 +1522,13 @@
         "reviewed_with_evidence": 0,
         "remaining_ids": []
       },
-      "next_action": "Continue from the preserved original Grand/chip-wallet report and investigation/regression commit436a707f. Compare current public-route passes with declared equivalent-state original-build/chip-wallet reconstruction; resolve the original discrepancy without importing gone personal saves, replaying purchases/payouts or closing the broader eleven-game parent.",
+      "next_action": "Use the preserved custody matrix and provenance review; no new ordinary-action reconstruction is supported by current evidence. On a current post-ack cold rollback, raw/canonical divergence or unexplained backup load, preserve a disposable case build/slot/origin, first cold clock/custody and generation/load provenance before any further Save. Continue permitted cause classification from retained evidence without replay, Gas resumption or requesting Erik's gone original save.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "No intentional hold or missing-personal-save waiting dependency. Original Grand campaign advanced and original cause remains unconfirmed; equivalent-state reconstruction/classification is active investigation work.",
+        "description": "Original generation fingerprints/load outcome and between-Save custody were not captured. This is an evidence limitation, not a user-save request or an intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:32:35.703920+00:00",
+        "observed_at": "2026-11-04T16:13:18.036432+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -1438,11 +1550,13 @@
         "name": "Restore baccarat deal animation",
         "task_ref": "01a16736-0a2f-7668-8ad8-a6074981c01e",
         "observed_state": "idle",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
       "status": "OPEN_INDEPENDENT_RECONSTRUCTION_ORIGINAL_USER_SAVE_UNAVAILABLE",
+      "pause": null,
+      "pause_supported": false,
       "commits": [],
       "deployment": {
         "required": false,
@@ -1501,7 +1615,7 @@
         "kind": null,
         "description": "Exact personal-save evidence is unavailable, not an intentional hold or pending user action.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:32:35.703920+00:00",
+        "observed_at": "2026-11-04T16:13:18.036432+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -1523,11 +1637,30 @@
         "name": "Resume scenario improvements (01a1a3e5-607c-73bf-b678-e3e03f5e40f6)",
         "task_ref": "01a1a3e5-607c-73bf-b678-e3e03f5e40f6",
         "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
       "status": "PAUSED_AT_USER_REQUEST_ITEM_SCENARIO_WORK",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-04T02:07:49.868676+00:00",
+        "instruction": "Pause item and scenario work.",
+        "source": "docs/todo/bth_user_item_scenario_pause_20261104.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "ACTIVE_SCOPE_RECOVERED_WEDDING_DEPLOYED",
+        "resume_next_action": "Complete the ordinary visible Wedding route and Save/Continue on a matching build; NEXT247ebe identity/assets/scripted startup is verified. For Bringer Show, use a legitimately visible/available source route before attributing layer-return or arrival-pressure behavior. Continue bounded implementation across the recovered55-ID scenario matrix; one scene never closes the parent.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": null,
+          "description": "No intentional hold or requirement to choose a scenario with Erik. Specific activity rules, fees/time and success criteria are implementation decisions when the concrete activity needs them.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-04T01:32:35.703920+00:00",
+          "evidence": []
+        }
+      },
+      "pause_supported": true,
       "commits": [
         {
           "sha": "1c201c9e341ac6f3e068c4d498fd00bf7298880e",
@@ -1622,11 +1755,30 @@
         "name": "Resume scenario improvements",
         "task_ref": "01a1a3e5-607c-73bf-b678-e3e03f5e40f6",
         "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
       "status": "PAUSED_AT_USER_REQUEST_ITEM_SCENARIO_WORK",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-04T02:07:49.868676+00:00",
+        "instruction": "Pause item and scenario work.",
+        "source": "docs/todo/bth_user_item_scenario_pause_20261104.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "FIX_DEPLOYED_NATIVE_PASS_SCRIPTED_STARTUP_PASS_VISIBLE_WEB_ACCEPTANCE_OPEN",
+        "resume_next_action": "Fix1c201c9e341ac6f3e068c4d498fd00bf7298880e is included in verified NEXT247ebe3277cee8bc46fc3cff084607441fa296d4 with exact source/tree, archive/provenance, served PCK hash, redirect and scripted menu startup. Complete normal visible Secure Lane, Recover Rings, Steady Best Man, Leave him smiling, Deliver Rings and Save/Continue on a matching build. Preserve the original failed campaign and keep full BTH-11 Open.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": null,
+          "description": "Prior cold-import delivery dependency is resolved for verified NEXT247ebe identity and scripted startup. Ordinary visible route/Save-Continue acceptance remains active work, not a hold or completed behavior pass.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-04T01:32:35.703920+00:00",
+          "evidence": []
+        }
+      },
+      "pause_supported": true,
       "commits": [
         {
           "sha": "1c201c9e341ac6f3e068c4d498fd00bf7298880e",
@@ -1726,11 +1878,30 @@
         "name": "Resume scenario improvements",
         "task_ref": "01a1a3e5-607c-73bf-b678-e3e03f5e40f6",
         "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
       "status": "PAUSED_AT_USER_REQUEST_ITEM_SCENARIO_WORK",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-04T02:07:49.868676+00:00",
+        "instruction": "Pause item and scenario work.",
+        "source": "docs/todo/bth_user_item_scenario_pause_20261104.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "OPEN_FAITHFUL_AVAILABLE_ROUTE_REPRODUCTION_REQUIRED",
+        "resume_next_action": "Reproduce through a legitimately visible/available source route; compare initial and cached club exit authority, then exercise pending layer-arrival pressure. Preserve frozen inventory seals; do not restore the reverted alignment experiment or report its synthetic failure as a player defect.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": null,
+          "description": "Faithful available-route reproduction is active investigation. The invalid synthetic route was excluded and its experiment reverted; no intentional hold or confirmed new player failure.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-04T01:32:35.703920+00:00",
+          "evidence": []
+        }
+      },
+      "pause_supported": true,
       "commits": [],
       "deployment": {
         "required": false,
@@ -1804,12 +1975,31 @@
       "owner": {
         "name": "Resume item improvements",
         "task_ref": "01a1a3e7-10b6-71d9-919c-3afe91d860ce",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_state": "idle",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
       "status": "PAUSED_AT_USER_REQUEST_ITEM_SCENARIO_WORK",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-04T02:07:49.868676+00:00",
+        "instruction": "Pause item and scenario work.",
+        "source": "docs/todo/bth_user_item_scenario_pause_20261104.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "FACTUAL_HELP_COMMITTED_FULL_REWORK_OPEN",
+        "resume_next_action": "Resume item improvements owner recovers and records the substantive Lucky Penny replacement choice, then implements the full effect and matching description/help. Use the prepared options only as proposals, preserve X-Ray and issued-ticket/save semantics, and qualify actual behavior with a product commit and NEXT evidence; a scope/help-only commit does not close the parent. Verify bounded truthful-help batch BTH-15-FACTUAL-HELP-001 on NEXT separately; factual help does not finish the original full item rework.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": null,
+          "description": "No intentional hold. The substantive replacement effect is unfinished active design/implementation work; a historical proposal does not select the mechanic or justify a generic user-selection gate.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-04T01:32:35.703920+00:00",
+          "evidence": []
+        }
+      },
+      "pause_supported": true,
       "commits": [
         {
           "sha": "b63342bbdf04cfb799ba5405f3d4f4d0c416485e",
@@ -1899,12 +2089,31 @@
       "owner": {
         "name": "Resume item improvements",
         "task_ref": "01a1a3e7-10b6-71d9-919c-3afe91d860ce",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_state": "idle",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
       "status": "PAUSED_AT_USER_REQUEST_ITEM_SCENARIO_WORK",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-04T02:07:49.868676+00:00",
+        "instruction": "Pause item and scenario work.",
+        "source": "docs/todo/bth_user_item_scenario_pause_20261104.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "FACTUAL_HELP_COMMITTED_ORIGINAL_DESIGN_RECOVERY_OPEN",
+        "resume_next_action": "Resume item improvements owner recovers the original Ledger Pencil redesign and ordinary/meta scope, records concrete replacement effect/wording decisions and implements/tests the full selected rework. Use QA-ITEM-022 as a separate contract observation, preserving both IDs without assuming mapping or performing historical refunds. Verify bounded truthful-help batch BTH-17-FACTUAL-HELP-001 on NEXT separately; factual help does not finish the original full item rework.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": null,
+          "description": "No intentional hold or invented user-selection prerequisite. Original design recovery and the substantive replacement choice remain active owner work.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-04T01:32:35.703920+00:00",
+          "evidence": []
+        }
+      },
+      "pause_supported": true,
       "commits": [
         {
           "sha": "b63342bbdf04cfb799ba5405f3d4f4d0c416485e",
@@ -2003,11 +2212,13 @@
         "name": "Remove obsolete game fallbacks",
         "task_ref": "01a1a35e-1c74-7319-bd64-f9d654f2800c",
         "observed_state": "idle",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
       "status": "DEPLOYED_FIX_ALTERNATIVE_EVIDENCE_ACCEPTANCE_IN_PROGRESS",
+      "pause": null,
+      "pause_supported": false,
       "commits": [
         {
           "sha": "4355f5611f0f77f546d898e39524f6b8e974c161",
@@ -2079,7 +2290,7 @@
         "kind": null,
         "description": "Exact personal incident state is unavailable and no longer a completion prerequisite; deployed interaction evidence remains separately classified.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:32:35.703920+00:00",
+        "observed_at": "2026-11-04T16:13:18.036432+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -2093,7 +2304,7 @@
       "parent_ids": [],
       "full_objective": {
         "text": "Investigate and fix the reported Gas Casino objects disappearing after Scratchers, without confusing the authored scenario-free interval with a room-publication failure.",
-        "source": "Codex task 01a16736-0a2f-7668-8ad8-a6074981c01e; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "source": "Codex task 01a16736-0a2f-7668-8ad8-a6074981c01e; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger; docs/testing/gas_scratch_exit_followup.md",
         "scope_confirmed": true
       },
       "batch_scope": [],
@@ -2101,17 +2312,30 @@
         "name": "Restore baccarat deal animation",
         "task_ref": "01a16736-0a2f-7668-8ad8-a6074981c01e",
         "observed_state": "idle",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
-      "status": "OPEN_INDEPENDENT_EXIT_TIME_PUBLICATION_REPRODUCTION",
-      "commits": [],
+      "status": "OPEN_SCOPE_OWNER_AND_EXIT_BOUNDARY_RECONCILIATION",
+      "pause": null,
+      "pause_supported": false,
+      "commits": [
+        {
+          "sha": "52b5c04a65d272b83c8ddc320a8992b91d5b7eda",
+          "evidence": [
+            "recorded_in_named_ledger",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
         "commit": null,
-        "evidence": []
+        "evidence": [
+          "docs/testing/gas_scratch_exit_followup.md"
+        ],
+        "scope": "Diagnostic/ownership commit only; no product fix is established."
       },
       "progress_scope_id": "BTH-GAS-SCRATCHER-EXIT-001",
       "acceptance": [
@@ -2135,11 +2359,21 @@
           "required": true,
           "state": "open",
           "evidence": []
+        },
+        {
+          "id": "recovered-attempt-provenance",
+          "description": "Task14 stopped a separate attempt after recovering prior scenario assignment; three private before-purchase fixtures passed base controls while seeded scalper cleared stock. No paid-ticket exit/cold or production fix was established.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/gas_scratch_exit_followup.md",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
         }
       ],
       "acceptance_progress": {
-        "required_total": 3,
-        "passed_with_evidence": 0,
+        "required_total": 4,
+        "passed_with_evidence": 1,
         "remaining_ids": [
           "reproduce",
           "boundaries",
@@ -2158,13 +2392,13 @@
         "reviewed_with_evidence": 0,
         "remaining_ids": []
       },
-      "next_action": "Run independent declared-state exit/time/publication reproduction using retained fixtures; classify the symptom and preserve unknown historical clock/control details without requesting Erik's gone save.",
+      "next_action": "Reconcile the current bug-investigation owner and recovered prior scenario-assignment boundary against the eight explicit user-paused objectives. Then carry out permitted declared-state exit/time/room-publication investigation using retained evidence; preserve unrun fixture and do not request Erik's gone save or assume before-purchase passes exercised paid-ticket exit.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "Original user context is unavailable but no longer a waiting dependency; reconstruction and classification are active investigation work.",
+        "description": "Owner/scope reconciliation and paid-ticket exit acceptance remain unfinished. This bug row is not a newly imposed pause or missing-save dependency.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:32:35.703920+00:00",
+        "observed_at": "2026-11-04T16:13:18.036432+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -2191,6 +2425,8 @@
         "observation_stale": null
       },
       "status": "OPEN_LEGACY_STATUS_AND_COMMIT_RECONCILIATION; prior scoped result: High / coverage pending",
+      "pause": null,
+      "pause_supported": false,
       "commits": [],
       "deployment": {
         "required": false,
@@ -2321,7 +2557,7 @@
         "kind": null,
         "description": "No concrete technical blocker established for the full parent; current assignment and per-game acceptance coverage require reconciliation. Do not infer completion from a single subtask.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:32:35.703920+00:00",
+        "observed_at": "2026-11-04T16:13:18.036432+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -2342,12 +2578,14 @@
       "owner": {
         "name": "Fix expired Crew handoff",
         "task_ref": "01a1a360-a1b6-733f-a372-b09b3015a03e",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_state": "idle",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
       "status": "FIX_COMMITTED_CURRENT_RECREATED_NATIVE_509_PASS_WEB_BLOCKED_CERT",
+      "pause": null,
+      "pause_supported": false,
       "commits": [
         {
           "sha": "b29d9b3985b5676aac2439f2f08aae359729a3e3",
@@ -2431,7 +2669,7 @@
         "evidence": [
           "docs/testing/crew_expired_handoff.md"
         ],
-        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+        "observed_at": "2026-11-04T16:13:18.036432+00:00"
       },
       "completed_batch_ids": []
     },
@@ -2457,6 +2695,28 @@
         "observation_stale": null
       },
       "status": "PAUSED_AT_USER_REQUEST_ITEM_SCENARIO_WORK",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-04T02:07:49.868676+00:00",
+        "instruction": "Pause item and scenario work.",
+        "source": "docs/todo/bth_user_item_scenario_pause_20261104.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "FACTUAL_HELP_COMMITTED_EFFECT_POLICY_DECISION_OPEN",
+        "resume_next_action": "Reconcile the current owner for the retained physical-game policy finding, verify the factual-help delivery and applicable Web scope, and record a concrete original-finding disposition. Preserve BTH-17 full redesign independently; no new user-selection hold is established.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": null,
+          "description": "The finding and current bounded help implementation have retained evidence. Ownership and required acceptance remain work rather than an established external blocker.",
+          "requires_user_input": false,
+          "evidence": [
+            "C:/Users/theep/Documents/Codex/2026-10-26/task/evidence/qa-item022-ledger-pencil-roulette-loss-cushion-review.json",
+            "docs/testing/item_factual_help.md"
+          ],
+          "observed_at": "2026-11-04T01:32:35.703920+00:00"
+        }
+      },
+      "pause_supported": true,
       "commits": [
         {
           "sha": "b63342bbdf04cfb799ba5405f3d4f4d0c416485e",
@@ -2545,11 +2805,13 @@
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
       "status": "RESUMED_SCOPE_AND_CHECK_REPAIRS_IN_PROGRESS",
+      "pause": null,
+      "pause_supported": false,
       "commits": [
         {
           "sha": "6a784623bdedd6b253d41ef42110adbfd4d67a12",
@@ -3513,13 +3775,13 @@
           "external_parity_callers_and_inherited_failures"
         ]
       },
-      "next_action": "Reconcile the current audit continuation, explicit current dispositions and named repair/qualification follow-ups in docs/testing/deprecated_code_audit_2026_11_04.md with the earlier coverage snapshot. Reuse completed review and focused evidence; finish only remaining candidates, checks and NEXT acceptance before full-parent closure.",
+      "next_action": "Reconcile current whole-codebase coverage and all candidate dispositions, reusing the first bounded batch, thirteen earlier qualified audit children, completed tutorial fixture/animation repairs and independent core/native/UI/tool work. Finish only remaining nonpaused semantic review and the unchanged aggregate validator/global-census acceptance; preserve the explicit user item/scenario pause and full parent scope independently of every completed child.",
       "blocker": {
         "state": "none",
         "kind": null,
         "description": "No intentional hold or external decision blocks the audit; semantic review and candidate classification remain active work.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:32:35.703920+00:00",
+        "observed_at": "2026-11-04T16:13:18.036432+00:00",
         "evidence": []
       },
       "completed_batch_ids": [
@@ -3543,11 +3805,13 @@
         "name": "Resolve testing certificate",
         "task_ref": "01a1a3e1-a613-7284-8bba-092f690190c9",
         "observed_state": "idle",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
       "status": "ACTIVE_TRUST_APPROVAL_DEPENDENCY",
+      "pause": null,
+      "pause_supported": false,
       "commits": [],
       "deployment": {
         "required": false,
@@ -3611,38 +3875,51 @@
           "Codex task01a1a3e1-a613-7284-8bba-092f690190c9; observed2026-11-04T00:20:56Z",
           "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
         ],
-        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+        "observed_at": "2026-11-04T16:13:18.036432+00:00"
       },
       "completed_batch_ids": []
     },
     {
       "id": "BTH-NEXT-ALLOC-001",
-      "name": "Durable NEXT export allocation reliability",
+      "name": "NEXT Web export allocation crash",
       "state": "open",
       "item_type": "objective",
       "kind": "objective",
       "parent_ids": [],
       "full_objective": {
         "text": "Find a causally supported durable NEXT export allocation-reliability fix under the existing resource guards; do not misreport the reversed GC experiment as a fix.",
-        "source": "Codex task 01a16736-0a2f-7668-8ad8-a6074981c01e; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "source": "Codex task 01a16736-0a2f-7668-8ad8-a6074981c01e; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger; https://github.com/erikjpet/site/commit/5bfe3b6af4385c9cf837e8bcb1f5bc5b377338e5; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
         "scope_confirmed": true
       },
       "batch_scope": [],
       "owner": {
-        "name": "Restore baccarat deal animation",
+        "name": "Primary implementation / site watcher",
         "task_ref": "01a16736-0a2f-7668-8ad8-a6074981c01e",
         "observed_state": "idle",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
-      "status": "OPEN_CAUSAL_EVIDENCE_REQUIRED_NO_CONFIRMED_FIX",
-      "commits": [],
+      "status": "OWNED_JOB_TELEMETRY_COMMITTED_ROOT_UNRESOLVED",
+      "pause": null,
+      "pause_supported": false,
+      "commits": [
+        {
+          "sha": "5bfe3b6af4385c9cf837e8bcb1f5bc5b377338e5",
+          "evidence": [
+            "recorded_in_named_ledger",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
         "commit": null,
-        "evidence": []
+        "evidence": [
+          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+        ],
+        "scope": "Diagnostic site telemetry activation is distinct from an unimplemented durable export mitigation."
       },
       "progress_scope_id": "BTH-NEXT-ALLOC-001",
       "acceptance": [
@@ -3666,11 +3943,21 @@
           "required": true,
           "state": "open",
           "evidence": []
+        },
+        {
+          "id": "diagnostic-telemetry",
+          "description": "Site5bfe3b6a adds tested current-memory telemetry and was activated by graceful guardian restart with exact committed files, full samples and unchanged10%CPU/2GiB cap. This is diagnostic evidence only, with served game assets unchanged.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "https://github.com/erikjpet/site/commit/5bfe3b6af4385c9cf837e8bcb1f5bc5b377338e5",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
         }
       ],
       "acceptance_progress": {
-        "required_total": 3,
-        "passed_with_evidence": 0,
+        "required_total": 4,
+        "passed_with_evidence": 1,
         "remaining_ids": [
           "cause",
           "qualification",
@@ -3689,13 +3976,13 @@
         "reviewed_with_evidence": 0,
         "remaining_ids": []
       },
-      "next_action": "Assign/resume an implementation owner for the causal allocation investigation, using the preserved A/B export evidence and unchanged limits; record a tested mitigation commit before closure.",
+      "next_action": "Use the activated owned-process memory telemetry to reproduce/classify a failure, prove one causal mitigation under unchanged resource guards, commit that mitigation and verify watcher/artifact/served NEXT. Prior matched GC/no-GC exports both passed, so GC remains unproven and reversed.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "Causal mitigation is unproven. Primary owner is idle in the current snapshot, which the checker must expose.",
+        "description": "Telemetry is committed/activated; causal mitigation and qualification remain unproven active work.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:32:35.703920+00:00",
+        "observed_at": "2026-11-04T16:13:18.036432+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -3717,11 +4004,13 @@
         "name": "Clean obsolete test instances",
         "task_ref": "01a1a3f0-cfcd-74e1-9dd9-3a7e0178b0e1",
         "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
       "status": "OPEN_FIVE_OWNER_CONFIRMED_PROCESS_CLOSURE_UNKNOWNS",
+      "pause": null,
+      "pause_supported": false,
       "commits": [
         {
           "sha": "de3f27930a0ddec47f835eff64963cd7eef3417f",
@@ -3872,7 +4161,7 @@
           "docs/testing/runtime_cleanup_followup_2026_11_04.md",
           "docs/testing/runtime_cleanup_verification_2026_11_04.md"
         ],
-        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+        "observed_at": "2026-11-04T16:13:18.036432+00:00"
       },
       "completed_batch_ids": []
     },
@@ -3892,12 +4181,14 @@
       "owner": {
         "name": "Fix Slot Collect action",
         "task_ref": "01a1a3f3-52a8-76d7-951b-423c1bdfd0d4",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_state": "idle",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
       "status": "BASELINE_REPRODUCED_INPUT_ACCOUNTING_AND_COLD_TESTS_IN_PROGRESS",
+      "pause": null,
+      "pause_supported": false,
       "commits": [],
       "deployment": {
         "required": false,
@@ -3966,7 +4257,7 @@
         "kind": null,
         "description": "Current owner successfully fetched current main from the intended repository and created an isolated worktree. Focused testing is in progress; no current authorization/ownership blocker or intentional hold is established.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:32:35.703920+00:00",
+        "observed_at": "2026-11-04T16:13:18.036432+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -3979,7 +4270,7 @@
       "kind": "objective",
       "parent_ids": [],
       "full_objective": {
-        "text": "Keep every requested work item durably named under a stable ID with its full original objective, source and required acceptance preserved independently of implementation batches. Provide one user-operated manual checker/data/docs workflow exposing missing/idle/ended owners, stale blockers, missing commits/evidence/deployment, incomplete parent coverage, false batch-only completion and readable/structured drift, with explicit read-only runtime lifecycle/cleanup integration. Preserve zero intentional holds, no portrait app updates and unavailable personal-save policy without declaring retained agent fixtures lost.",
+        "text": "Keep every requested work item durably named under a stable ID with its full original objective, source and required acceptance preserved independently of implementation batches. Provide one user-operated manual checker/data/docs workflow exposing missing/idle/ended owners, stale blockers, missing commits/evidence/deployment, incomplete parent coverage, false batch-only completion and readable/structured drift, with explicit read-only runtime lifecycle/cleanup integration. Preserve the current explicit item/scenario pause and prevent invented holds, no portrait app updates and unavailable personal-save policy without declaring retained agent fixtures lost.",
         "source": "User2026-11-04 durable reliability/manual operator request in parent01a1a147-7f07-7583-baf0-771a839f1013; task01a1a36a-b7dd-709a-b4a0-b93eca365000",
         "scope_confirmed": true
       },
@@ -3988,17 +4279,19 @@
         "name": "Reconcile named todo queue",
         "task_ref": "01a1a36a-b7dd-709a-b4a0-b93eca365000",
         "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
-      "status": "COMMITTED_TESTED_MAIN_PUSH_REJECTED_AUTO_REVIEW_NEXT_UNVERIFIED",
+      "status": "COMMITTED_TESTED_PUBLICATION_RETRY_AUTHORIZED_NEXT_UNVERIFIED",
+      "pause": null,
+      "pause_supported": false,
       "commits": [
         {
           "sha": "71aa69d92fe78e1600dd2743120e0f1df5e30f27",
           "evidence": [
-            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-13\\durable-publication-blocker.json",
-            "Local tested integration commit; main push denied and not executed."
+            "published_durable_ledger_association",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
       ],
@@ -4007,9 +4300,9 @@
         "state": "pending",
         "commit": null,
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-13\\durable-publication-blocker.json"
+          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
         ],
-        "scope": "No main/NEXT publication for this integration commit."
+        "scope": "Publication retry is newly authorized, but main/NEXT delivery is not yet verified."
       },
       "progress_scope_id": "BTH-TODO-RELIABILITY-001",
       "acceptance": [
@@ -4072,356 +4365,14 @@
         "reviewed_with_evidence": 0,
         "remaining_ids": []
       },
-      "next_action": "Obtain acceptance of explicit direct-main authorization after automatic approval review rejection; publish tested commit 71aa69d92fe78e1600dd2743120e0f1df5e30f27 and verify existing NEXT identity/ancestry. Keep this item Open until delivery evidence exists.",
-      "blocker": {
-        "state": "active",
-        "kind": "automatic_approval_review_rejection",
-        "description": "Direct main push rejected by automatic approval review despite standing authorization supplied in trusted parent history. Push did not execute. No denied-operation retry or alternate publication attempted.",
-        "requires_user_input": true,
-        "observed_at": "2026-11-04T01:33:13.639703+00:00",
-        "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-13\\durable-publication-blocker.json"
-        ]
-      },
-      "completed_batch_ids": []
-    },
-    {
-      "id": "BTH061-AUDIT-CREW-WINDOW-001",
-      "name": "Repair current Crew appointment fixture and host handoff boundary",
-      "state": "open",
-      "item_type": "objective",
-      "kind": "acceptance_check",
-      "parent_ids": [
-        "BTH061-AUDIT-001"
-      ],
-      "full_objective": {
-        "text": "Repair current Crew appointment fixture and host handoff boundary. Reproduced current unavailable-favor fixture failure; preserve eligibility, real host terminal handoff, money, exact-once and Save/Continue assertions.",
-        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-        "scope_confirmed": true
-      },
-      "batch_scope": [],
-      "owner": {
-        "name": "Audit fixture repair",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
-        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
-        "observation_stale": false
-      },
-      "status": "FOCUSED_ACCEPTANCE_PASSED_NEXT_PENDING",
-      "commits": [
-        {
-          "sha": "dec71ae8b267e9adb27bd408b10cbad9f4644b82",
-          "evidence": [
-            "recorded_in_named_ledger",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        }
-      ],
-      "deployment": {
-        "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ]
-      },
-      "progress_scope_id": "BTH061-AUDIT-CREW-WINDOW-001",
-      "acceptance": [
-        {
-          "id": "recorded-current-scope",
-          "description": "Reproduced current unavailable-favor fixture failure; preserve eligibility, real host terminal handoff, money, exact-once and Save/Continue assertions.",
-          "required": true,
-          "state": "open",
-          "evidence": [
-            "docs/testing/deprecated_code_audit_2026_11_04.md"
-          ]
-        }
-      ],
-      "acceptance_progress": {
-        "required_total": 1,
-        "passed_with_evidence": 0,
-        "remaining_ids": [
-          "recorded-current-scope"
-        ]
-      },
-      "coverage": {
-        "required": false,
-        "complete": false,
-        "areas": []
-      },
-      "coverage_progress": {
-        "required": false,
-        "declared_complete": false,
-        "total_areas": 0,
-        "reviewed_with_evidence": 0,
-        "remaining_ids": []
-      },
-      "next_action": "Continue the specific remaining qualification/repair recorded here: Reproduced current unavailable-favor fixture failure; preserve eligibility, real host terminal handoff, money, exact-once and Save/Continue assertions. Keep the full audit parent Open and preserve existing focused evidence.",
+      "next_action": "Reconcile tested scoped artifacts with current main, then perform the single newly authorized publication retry and verify remote/main/existing NEXT. Stop on a further denial. Remain Open until actual associated implementation/delivery acceptance is recorded; no cleanup or full-audit closure is implied.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
+        "description": "New explicit user instruction authorizes publication of finished work. Earlier rejected push did not execute; tested publication/readback/NEXT verification remain unfinished.",
         "requires_user_input": false,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ],
-        "observed_at": "2026-11-04T01:32:35.703920+00:00"
-      },
-      "completed_batch_ids": []
-    },
-    {
-      "id": "BTH061-AUDIT-PLACEMENT-MODE-001",
-      "name": "Separate empty-capacity and runtime-reserve fixture controls",
-      "state": "open",
-      "item_type": "objective",
-      "kind": "acceptance_check",
-      "parent_ids": [
-        "BTH061-AUDIT-001"
-      ],
-      "full_objective": {
-        "text": "Separate empty-capacity and runtime-reserve fixture controls. Current independent runtime-reserve visibility makes the old zero-slot assertion invalid unless that separate toggle is off. Preserve original empty-capacity assertion and restore reserve visibility.",
-        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-        "scope_confirmed": true
-      },
-      "batch_scope": [],
-      "owner": {
-        "name": "Audit fixture repair",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
-        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
-        "observation_stale": false
-      },
-      "status": "FOCUSED_ACCEPTANCE_PASSED_NEXT_PENDING",
-      "commits": [
-        {
-          "sha": "dec71ae8b267e9adb27bd408b10cbad9f4644b82",
-          "evidence": [
-            "recorded_in_named_ledger",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        }
-      ],
-      "deployment": {
-        "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ]
-      },
-      "progress_scope_id": "BTH061-AUDIT-PLACEMENT-MODE-001",
-      "acceptance": [
-        {
-          "id": "recorded-current-scope",
-          "description": "Current independent runtime-reserve visibility makes the old zero-slot assertion invalid unless that separate toggle is off. Preserve original empty-capacity assertion and restore reserve visibility.",
-          "required": true,
-          "state": "open",
-          "evidence": [
-            "docs/testing/deprecated_code_audit_2026_11_04.md"
-          ]
-        }
-      ],
-      "acceptance_progress": {
-        "required_total": 1,
-        "passed_with_evidence": 0,
-        "remaining_ids": [
-          "recorded-current-scope"
-        ]
-      },
-      "coverage": {
-        "required": false,
-        "complete": false,
-        "areas": []
-      },
-      "coverage_progress": {
-        "required": false,
-        "declared_complete": false,
-        "total_areas": 0,
-        "reviewed_with_evidence": 0,
-        "remaining_ids": []
-      },
-      "next_action": "Continue the specific remaining qualification/repair recorded here: Current independent runtime-reserve visibility makes the old zero-slot assertion invalid unless that separate toggle is off. Preserve original empty-capacity assertion and restore reserve visibility. Keep the full audit parent Open and preserve existing focused evidence.",
-      "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
-        "requires_user_input": false,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ],
-        "observed_at": "2026-11-04T01:32:35.703920+00:00"
-      },
-      "completed_batch_ids": []
-    },
-    {
-      "id": "BTH061-AUDIT-OFFER-CACHE-001",
-      "name": "Initialize current UI and room publication in offer-cache fixture",
-      "state": "open",
-      "item_type": "objective",
-      "kind": "acceptance_check",
-      "parent_ids": [
-        "BTH061-AUDIT-001"
-      ],
-      "full_objective": {
-        "text": "Initialize current UI and room publication in offer-cache fixture. Current fixture lacks lazy UI collaborators and initial authenticated room publication. Preserve cache invalidation, physical-host actions and visibility assertions.",
-        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-        "scope_confirmed": true
-      },
-      "batch_scope": [],
-      "owner": {
-        "name": "Audit fixture repair",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
-        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
-        "observation_stale": false
-      },
-      "status": "FOCUSED_ACCEPTANCE_PASSED_NEXT_PENDING",
-      "commits": [
-        {
-          "sha": "dec71ae8b267e9adb27bd408b10cbad9f4644b82",
-          "evidence": [
-            "recorded_in_named_ledger",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        }
-      ],
-      "deployment": {
-        "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ]
-      },
-      "progress_scope_id": "BTH061-AUDIT-OFFER-CACHE-001",
-      "acceptance": [
-        {
-          "id": "recorded-current-scope",
-          "description": "Current fixture lacks lazy UI collaborators and initial authenticated room publication. Preserve cache invalidation, physical-host actions and visibility assertions.",
-          "required": true,
-          "state": "open",
-          "evidence": [
-            "docs/testing/deprecated_code_audit_2026_11_04.md"
-          ]
-        }
-      ],
-      "acceptance_progress": {
-        "required_total": 1,
-        "passed_with_evidence": 0,
-        "remaining_ids": [
-          "recorded-current-scope"
-        ]
-      },
-      "coverage": {
-        "required": false,
-        "complete": false,
-        "areas": []
-      },
-      "coverage_progress": {
-        "required": false,
-        "declared_complete": false,
-        "total_areas": 0,
-        "reviewed_with_evidence": 0,
-        "remaining_ids": []
-      },
-      "next_action": "Continue the specific remaining qualification/repair recorded here: Current fixture lacks lazy UI collaborators and initial authenticated room publication. Preserve cache invalidation, physical-host actions and visibility assertions. Keep the full audit parent Open and preserve existing focused evidence.",
-      "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
-        "requires_user_input": false,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ],
-        "observed_at": "2026-11-04T01:32:35.703920+00:00"
-      },
-      "completed_batch_ids": []
-    },
-    {
-      "id": "BTH061-AUDIT-SLOT-STATIC-001",
-      "name": "Reconcile stale fixed-slot audit with reviewed room authority",
-      "state": "open",
-      "item_type": "objective",
-      "kind": "acceptance_check",
-      "parent_ids": [
-        "BTH061-AUDIT-001"
-      ],
-      "full_objective": {
-        "text": "Reconcile stale fixed-slot audit with reviewed room authority. Reproduce all nineteen static errors; update reviewed capacity/named-reserve/provenance expectations with hostile guards, preserving runtime JSON, geometry and saved authority.",
-        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-        "scope_confirmed": true
-      },
-      "batch_scope": [],
-      "owner": {
-        "name": "Audit tooling repair",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
-        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
-        "observation_stale": false
-      },
-      "status": "FOCUSED_ACCEPTANCE_PASSED_NEXT_PENDING",
-      "commits": [
-        {
-          "sha": "dec71ae8b267e9adb27bd408b10cbad9f4644b82",
-          "evidence": [
-            "recorded_in_named_ledger",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        }
-      ],
-      "deployment": {
-        "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ]
-      },
-      "progress_scope_id": "BTH061-AUDIT-SLOT-STATIC-001",
-      "acceptance": [
-        {
-          "id": "recorded-current-scope",
-          "description": "Reproduce all nineteen static errors; update reviewed capacity/named-reserve/provenance expectations with hostile guards, preserving runtime JSON, geometry and saved authority.",
-          "required": true,
-          "state": "open",
-          "evidence": [
-            "docs/testing/deprecated_code_audit_2026_11_04.md"
-          ]
-        }
-      ],
-      "acceptance_progress": {
-        "required_total": 1,
-        "passed_with_evidence": 0,
-        "remaining_ids": [
-          "recorded-current-scope"
-        ]
-      },
-      "coverage": {
-        "required": false,
-        "complete": false,
-        "areas": []
-      },
-      "coverage_progress": {
-        "required": false,
-        "declared_complete": false,
-        "total_areas": 0,
-        "reviewed_with_evidence": 0,
-        "remaining_ids": []
-      },
-      "next_action": "Continue the specific remaining qualification/repair recorded here: Reproduce all nineteen static errors; update reviewed capacity/named-reserve/provenance expectations with hostile guards, preserving runtime JSON, geometry and saved authority. Keep the full audit parent Open and preserve existing focused evidence.",
-      "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
-        "requires_user_input": false,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ],
-        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "evidence": []
       },
       "completed_batch_ids": []
     },
@@ -4444,16 +4395,18 @@
         "name": "Audit tooling repair",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
-      "status": "CONTRACT_REPAIRS_PASS_FULL_VALIDATOR_OPEN",
+      "status": "SOURCE_CHECKS_PASS_GLOBAL_PROCESS_CENSUS_PENDING",
+      "pause": null,
+      "pause_supported": false,
       "commits": [
         {
           "sha": "dec71ae8b267e9adb27bd408b10cbad9f4644b82",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -4464,13 +4417,23 @@
         "commit": null,
         "evidence": [
           "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ]
+        ],
+        "scope": "Aggregate validation acceptance remains unfinished."
       },
       "progress_scope_id": "BTH061-AUDIT-VALIDATOR-001",
       "acceptance": [
         {
-          "id": "recorded-current-scope",
-          "description": "Rename CharacterOfferModel Hours/Rng aliases only; retain the existing validator rule and verify token-normalized behavior equality.",
+          "id": "source-authoring-migration",
+          "description": "Full source/authoring/migration stages pass after8e9951c3; preserve unchanged validation rules and source behavior.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_2026_11_04.md"
+          ]
+        },
+        {
+          "id": "global-process-census",
+          "description": "Final aggregate runr4 rejected concurrent authorized process identities; qualify unchanged global process census without terminating peer work or weakening the guard.",
           "required": true,
           "state": "open",
           "evidence": [
@@ -4479,10 +4442,10 @@
         }
       ],
       "acceptance_progress": {
-        "required_total": 1,
-        "passed_with_evidence": 0,
+        "required_total": 2,
+        "passed_with_evidence": 1,
         "remaining_ids": [
-          "recorded-current-scope"
+          "global-process-census"
         ]
       },
       "coverage": {
@@ -4497,46 +4460,144 @@
         "reviewed_with_evidence": 0,
         "remaining_ids": []
       },
-      "next_action": "Continue the specific remaining qualification/repair recorded here: Rename CharacterOfferModel Hours/Rng aliases only; retain the existing validator rule and verify token-normalized behavior equality. Keep the full audit parent Open and preserve existing focused evidence.",
+      "next_action": "Complete the unchanged aggregate validator/global-census qualification from the preservedr4 evidence using a permitted isolated/declared process environment. Do not stop authorized peer tasks or weaken the census guard. Keep the parent audit Open.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
+        "description": "The aggregate census rejected concurrent authorized process identities; remaining qualification is active work, not an intentional hold.",
         "requires_user_input": false,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ],
-        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "evidence": []
       },
       "completed_batch_ids": []
     },
     {
-      "id": "BTH061-AUDIT-MOBILE-CONTRACT-001",
-      "name": "Migrate stale HUD tests to current fixed-canvas controls",
+      "id": "BTH061-VAULTDROP-SAVE-001",
+      "name": "R04 Vault Drop manual Save followed by cold checkpoint rollback",
       "state": "open",
       "item_type": "objective",
       "kind": "acceptance_check",
       "parent_ids": [
-        "BTH061-AUDIT-001"
+        "BTH061-003"
       ],
       "full_objective": {
-        "text": "Migrate stale HUD tests to current fixed-canvas controls. Retain window-size, gesture, focus/scroll and state conservation criteria using the current details popup and fixed1280x720 policy. No portrait product behavior change.",
-        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "text": "Resolve the reported R04 Vault Drop manual Save followed by cold checkpoint rollback. Preserve recorded cases763/764, official save acknowledgment and first-cold/generation provenance; a visible refusal-feedback fix does not resolve an unproven rollback cause.",
+        "source": "docs/testing/vault_drop_save_feedback.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
         "scope_confirmed": true
       },
       "batch_scope": [],
       "owner": {
-        "name": "Audit fixture repair",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "name": "Vault save investigation (task-14)",
+        "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+        "observed_state": "idle",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
-      "status": "FOCUSED_ACCEPTANCE_PASSED_NEXT_PENDING",
+      "status": "OPEN_ORIGINAL_BRANCH_AND_GENERATIONS_UNCAPTURED",
+      "pause": null,
+      "pause_supported": false,
       "commits": [
         {
-          "sha": "b33374061f1be396e1c6a73a6af690d618fc4b64",
+          "sha": "85c1782be759d4e50c50219945231312c2287640",
+          "evidence": [
+            "recorded_in_named_ledger",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": [
+          "docs/testing/vault_drop_save_feedback.md",
+          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+        ],
+        "scope": "The separate feedback fix is verified, but this original rollback objective remains unproven."
+      },
+      "progress_scope_id": "BTH061-VAULTDROP-SAVE-001",
+      "acceptance": [
+        {
+          "id": "retained-observation",
+          "description": "Preserve cases763/764 and independently reconstructed correct no-write refusal while unsettled; no original action replay or false acknowledgment is established.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/vault_drop_save_feedback.md",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        },
+        {
+          "id": "original-rollback-cause",
+          "description": "Classify the original manual Save branch/generation/load outcome or a current supported equivalent before resolving the rollback report. Original branch and generations remain unknown.",
+          "required": true,
+          "state": "open",
+          "evidence": [
+            "docs/testing/vault_drop_save_feedback.md",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
+      "acceptance_progress": {
+        "required_total": 2,
+        "passed_with_evidence": 1,
+        "remaining_ids": [
+          "original-rollback-cause"
+        ]
+      },
+      "coverage": {
+        "required": false,
+        "complete": false,
+        "areas": []
+      },
+      "coverage_progress": {
+        "required": false,
+        "declared_complete": false,
+        "total_areas": 0,
+        "reviewed_with_evidence": 0,
+        "remaining_ids": []
+      },
+      "next_action": "On a current post-ack rollback or unexplained fallback, retain first-cold state and primary/backup generation/load provenance before another Save. Continue evidence-based classification without requesting the unavailable personal original or replaying actions.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "Original branch and generations were not captured; unavailable personal originals are not a pending user dependency.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "evidence": []
+      },
+      "completed_batch_ids": [
+        "BTH061-VAULTDROP-SAVE-FEEDBACK-001"
+      ]
+    },
+    {
+      "id": "BTH061-BLACKJACK-NET-FEEDBACK-001",
+      "name": "Preserve settled Blackjack hand net in floor feedback and cold Continue",
+      "state": "open",
+      "item_type": "objective",
+      "kind": "objective",
+      "parent_ids": [],
+      "full_objective": {
+        "text": "Show the recorded settled Blackjack hand net first in floor Result feedback and after ordinary Save/cold Continue, separating hand net+5/-5/0 from settlement account credit+10/0/+5. Preserve paid feedback across pure zero-consequence automatic watch hands while keeping explicit pushes zero and retaining measured/unknown watch or caught-penalty consequences. Preserve historical cash/chip units, financial authority, journal labels, RNG, clocks, shoe, result/history and the fixed16:9/touch/focus behavior; never infer net from wallet changes or replay a settlement.",
+        "source": "docs/testing/blackjack_net_feedback_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "scope_confirmed": true
+      },
+      "batch_scope": [],
+      "owner": {
+        "name": "Blackjack feedback fix",
+        "task_ref": "01a1a363-26c7-74e2-9c9c-e164d89ae033",
+        "observed_state": "active",
+        "observed_at": "2026-11-04T15:55:05Z",
+        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
+        "observation_stale": false
+      },
+      "status": "COMMITTED_NATIVE_179_PASS_NEXT_PENDING",
+      "pause": null,
+      "pause_supported": false,
+      "commits": [
+        {
+          "sha": "255bbfc53c69b3dd4dd4944fc98719e99c671376",
           "evidence": [
             "recorded_in_named_ledger",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
@@ -4548,26 +4609,77 @@
         "state": "pending",
         "commit": null,
         "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ]
+          "docs/testing/blackjack_net_feedback_2026_11_04.md"
+        ],
+        "scope": "Implementation255bbfc5 is commit-associated; native and integrated cold acceptance are recorded, while exact NEXT identity/startup and changed Web behavior remain pending."
       },
-      "progress_scope_id": "BTH061-AUDIT-MOBILE-CONTRACT-001",
+      "progress_scope_id": "BTH061-BLACKJACK-NET-FEEDBACK-001",
       "acceptance": [
         {
-          "id": "recorded-current-scope",
-          "description": "Retain window-size, gesture, focus/scroll and state conservation criteria using the current details popup and fixed1280x720 policy. No portrait product behavior change.",
+          "id": "native-host179",
+          "description": "Recorded final179-check synthetic production-host Deal/Stand/Back/official Save/new-host Continue acceptance passes win/loss/push, visible first-line net, genuine automatic watch and legacy/malformed/unknown-unit and measured/unknown-penalty controls. The earlier script-error exit0 and prematurely sampled watch Back remain rejected evidence.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/blackjack_net_feedback_2026_11_04.md",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        },
+        {
+          "id": "penalty-consumers74",
+          "description": "Existing separate penalty-consumer acceptance passes74 assertions with accounting/history unchanged and clean owned-process release.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/blackjack_net_feedback_2026_11_04.md",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        },
+        {
+          "id": "engine-cold52",
+          "description": "Recorded integrated sourcef3c3107e passes52 separate-process official Continue checks for win/loss/push, legacy net and paid-win then automatic watch, including exact money/RNG/clock/shoe/result/history conservation.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/blackjack_net_feedback_2026_11_04.md",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        },
+        {
+          "id": "integrated-current-main",
+          "description": "After integration with main989 ated9242d6, source records repeated179 host and52 cold passes plus17 concurrent deal-action dimming compatibility checks; all accepted jobs exit0/no script errors/owned0. These native checks remain distinct from deployed Web behavior.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/blackjack_net_feedback_2026_11_04.md",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        },
+        {
+          "id": "exact-NEXT",
+          "description": "Verify exact served commit/tree/provenance/assets and fresh matching-version startup containing code255bbfc53c69b3dd4dd4944fc98719e99c671376.",
           "required": true,
           "state": "open",
           "evidence": [
-            "docs/testing/deprecated_code_audit_2026_11_04.md"
+            "docs/testing/blackjack_net_feedback_2026_11_04.md"
+          ]
+        },
+        {
+          "id": "changed-Web-feedback",
+          "description": "Qualify actual Web ordinary Continue and displayed Blackjack net/watch/consequence behavior with declared fixture limits and clean owned-job closure. The oldb94 menu-only timeout showed Play, so restoration and changed behavior remain unproven.",
+          "required": true,
+          "state": "open",
+          "evidence": [
+            "docs/testing/blackjack_net_feedback_2026_11_04.md"
           ]
         }
       ],
       "acceptance_progress": {
-        "required_total": 1,
-        "passed_with_evidence": 0,
+        "required_total": 6,
+        "passed_with_evidence": 4,
         "remaining_ids": [
-          "recorded-current-scope"
+          "exact-NEXT",
+          "changed-Web-feedback"
         ]
       },
       "coverage": {
@@ -4582,46 +4694,47 @@
         "reviewed_with_evidence": 0,
         "remaining_ids": []
       },
-      "next_action": "Continue the specific remaining qualification/repair recorded here: Retain window-size, gesture, focus/scroll and state conservation criteria using the current details popup and fixed1280x720 policy. No portrait product behavior change. Keep the full audit parent Open and preserve existing focused evidence.",
+      "next_action": "Follow the authorized publication through the existing NEXT watcher, verify exact deployed identity/assets/startup, then run the declared fresh-context synthetic Web Continue/visible-feedback acceptance without touching or replaying the original campaign. Preserve native179/74/cold52/compat17 scopes and rejected oldb94 browser evidence. Keep Open until required NEXT and changed-Web acceptance are recorded.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
+        "description": "The later explicit user approval resolves the prior publication-permission blocker. Exact NEXT delivery and changed Web acceptance remain unfinished work; the old browser timeout is not accepted behavior evidence.",
         "requires_user_input": false,
         "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
+          "docs/testing/blackjack_net_feedback_2026_11_04.md",
+          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
         ],
-        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+        "observed_at": "2026-11-04T16:13:18.036432+00:00"
       },
       "completed_batch_ids": []
     },
     {
-      "id": "BTH061-AUDIT-BACKDROP-001",
-      "name": "Remove obsolete external-game backdrop subsystem",
+      "id": "BTH-CRAPS-JOURNAL-CURRENCY-001",
+      "name": "New Craps journal receipts omit currency despite correct wallets",
       "state": "open",
       "item_type": "objective",
-      "kind": "acceptance_check",
-      "parent_ids": [
-        "BTH061-AUDIT-001"
-      ],
+      "kind": "objective",
+      "parent_ids": [],
       "full_objective": {
-        "text": "Remove obsolete external-game backdrop subsystem. Dormant canvas branch, eleven unused catalog fields, manifest sections and nine PNGs; preserve active procedural/native/menu backgrounds, definition identity and save compatibility. Requires exact cold-import/NEXT qualification.",
-        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "text": "Record explicit cash/chip currency in new Craps journal receipts while preserving actual wallet movements, working paid-stake net, win/loss/zero, refund legs, game rules/RNG and existing readers.",
+        "source": "docs/testing/craps_journal_currency.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
         "scope_confirmed": true
       },
       "batch_scope": [],
       "owner": {
-        "name": "Audit obsolete game code",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "name": "Fix Back Alley travel",
+        "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
         "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
-      "status": "FOCUSED_ACCEPTANCE_PASSED_NEXT_PENDING",
+      "status": "EXACT_FIX_INTEGRATED_CURRENT_MAIN_CHECKS_AND_NEXT_PENDING",
+      "pause": null,
+      "pause_supported": false,
       "commits": [
         {
-          "sha": "d641ce2d36cd353730f69f4360f619f295333ff3",
+          "sha": "be4afc1558242dcbd483568a39da68ab1e331a88",
           "evidence": [
             "recorded_in_named_ledger",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
@@ -4633,26 +4746,50 @@
         "state": "pending",
         "commit": null,
         "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ]
+          "docs/testing/craps_journal_currency.md",
+          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+        ],
+        "scope": "Associated code exists on shared main; exact NEXT and current integration qualification remain pending."
       },
-      "progress_scope_id": "BTH061-AUDIT-BACKDROP-001",
+      "progress_scope_id": "BTH-CRAPS-JOURNAL-CURRENCY-001",
       "acceptance": [
         {
-          "id": "recorded-current-scope",
-          "description": "Dormant canvas branch, eleven unused catalog fields, manifest sections and nine PNGs; preserve active procedural/native/menu backgrounds, definition identity and save compatibility. Requires exact cold-import/NEXT qualification.",
+          "id": "recorded-native",
+          "description": "645 original native assertions pass at their recorded implementation identity; not refreshed integrated-main or deployed Web qualification.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/craps_journal_currency.md",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        },
+        {
+          "id": "current-integration",
+          "description": "Requalify the exact preserved implementation on current integrated main through changed producers/normal Host and official cold boundaries.",
           "required": true,
           "state": "open",
           "evidence": [
-            "docs/testing/deprecated_code_audit_2026_11_04.md"
+            "docs/testing/craps_journal_currency.md",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        },
+        {
+          "id": "exact-NEXT",
+          "description": "Verify actual published main, exact NEXT identity/assets/startup and required changed-behavior acceptance without inferring delivery from commit ancestry alone.",
+          "required": true,
+          "state": "open",
+          "evidence": [
+            "docs/testing/craps_journal_currency.md",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
       ],
       "acceptance_progress": {
-        "required_total": 1,
-        "passed_with_evidence": 0,
+        "required_total": 3,
+        "passed_with_evidence": 1,
         "remaining_ids": [
-          "recorded-current-scope"
+          "current-integration",
+          "exact-NEXT"
         ]
       },
       "coverage": {
@@ -4667,46 +4804,46 @@
         "reviewed_with_evidence": 0,
         "remaining_ids": []
       },
-      "next_action": "Continue the specific remaining qualification/repair recorded here: Dormant canvas branch, eleven unused catalog fields, manifest sections and nine PNGs; preserve active procedural/native/menu backgrounds, definition identity and save compatibility. Requires exact cold-import/NEXT qualification. Keep the full audit parent Open and preserve existing focused evidence.",
+      "next_action": "Original645 native checks pass; exact implementation commit preserved by merge onto current main9894795b. New explicit publication approval permits one retry; requalify changed producers/official cold on integrated main, then publish and verify exact NEXT. No accounting/rules/RNG/reader changes; item/scenario and portrait work remain paused.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
+        "description": "The later user publication approval resolves the prior approval dependency. Current integrated-source and exact NEXT qualification remain active unfinished work.",
         "requires_user_input": false,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ],
-        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "evidence": []
       },
       "completed_batch_ids": []
     },
     {
-      "id": "BTH061-AUDIT-TOUCH-CANCEL-001",
-      "name": "Ignore canceled Continue/HUD/Package touches under current fixed canvas",
+      "id": "BTH-CRAPS-JOURNAL-CURRENCY-001-SLOT",
+      "name": "Related Slot new-receipt cash currency metadata",
       "state": "open",
       "item_type": "objective",
       "kind": "acceptance_check",
       "parent_ids": [
-        "BTH061-AUDIT-001"
+        "BTH-CRAPS-JOURNAL-CURRENCY-001"
       ],
       "full_objective": {
-        "text": "Ignore canceled Continue/HUD/Package touches under current fixed canvas. Current real native touch fixture exposed retired portrait predicates disabling the existing cancellation guards. Correct those guards/callback only; no viewport, layout or portrait redesign. Retain deliberate-action, outside-release, scrolling and state-conservation criteria.",
-        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "text": "Record the existing cash-only Slot receipt policy explicitly at all seven metadata assignments, including Grand, while preserving paid accounting, autoplay, journal readers, outcomes and RNG.",
+        "source": "docs/testing/slot_journal_currency_related.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
         "scope_confirmed": true
       },
       "batch_scope": [],
       "owner": {
-        "name": "Audit input defect follow-up",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "name": "Fix Back Alley travel",
+        "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
         "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
-      "status": "FOCUSED_ACCEPTANCE_PASSED_NEXT_PENDING",
+      "status": "EXACT_FIX_INTEGRATED_CURRENT_MAIN_HOST_COLD_AND_NEXT_PENDING",
+      "pause": null,
+      "pause_supported": false,
       "commits": [
         {
-          "sha": "b33374061f1be396e1c6a73a6af690d618fc4b64",
+          "sha": "b5d24ea936fed55c59393678e057cbc3d85e3207",
           "evidence": [
             "recorded_in_named_ledger",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
@@ -4718,26 +4855,50 @@
         "state": "pending",
         "commit": null,
         "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ]
+          "docs/testing/slot_journal_currency_related.md",
+          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+        ],
+        "scope": "Associated code exists on shared main; exact NEXT and current integration qualification remain pending."
       },
-      "progress_scope_id": "BTH061-AUDIT-TOUCH-CANCEL-001",
+      "progress_scope_id": "BTH-CRAPS-JOURNAL-CURRENCY-001-SLOT",
       "acceptance": [
         {
-          "id": "recorded-current-scope",
-          "description": "Current real native touch fixture exposed retired portrait predicates disabling the existing cancellation guards. Correct those guards/callback only; no viewport, layout or portrait redesign. Retain deliberate-action, outside-release, scrolling and state-conservation criteria.",
+          "id": "recorded-native",
+          "description": "476 original native assertions pass at their recorded implementation identity; not refreshed integrated-main or deployed Web qualification.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/slot_journal_currency_related.md",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        },
+        {
+          "id": "current-integration",
+          "description": "Requalify the exact preserved implementation on current integrated main through changed producers/normal Host and official cold boundaries.",
           "required": true,
           "state": "open",
           "evidence": [
-            "docs/testing/deprecated_code_audit_2026_11_04.md"
+            "docs/testing/slot_journal_currency_related.md",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        },
+        {
+          "id": "exact-NEXT",
+          "description": "Verify actual published main, exact NEXT identity/assets/startup and required changed-behavior acceptance without inferring delivery from commit ancestry alone.",
+          "required": true,
+          "state": "open",
+          "evidence": [
+            "docs/testing/slot_journal_currency_related.md",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
       ],
       "acceptance_progress": {
-        "required_total": 1,
-        "passed_with_evidence": 0,
+        "required_total": 3,
+        "passed_with_evidence": 1,
         "remaining_ids": [
-          "recorded-current-scope"
+          "current-integration",
+          "exact-NEXT"
         ]
       },
       "coverage": {
@@ -4752,22 +4913,20 @@
         "reviewed_with_evidence": 0,
         "remaining_ids": []
       },
-      "next_action": "Continue the specific remaining qualification/repair recorded here: Current real native touch fixture exposed retired portrait predicates disabling the existing cancellation guards. Correct those guards/callback only; no viewport, layout or portrait redesign. Retain deliberate-action, outside-release, scrolling and state-conservation criteria. Keep the full audit parent Open and preserve existing focused evidence.",
+      "next_action": "Original476 native assertions pass. Exact implementation preserved by separate merge onto public7f03921e5. Refresh normal Slot Host and official cold against current shared Main; unchanged producer/autoplay/reader evidence retained at its original identity. Explicit user publication approval permits one retry; keep Open until exact NEXT acceptance. Item/scenario/portrait boundaries unchanged.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
+        "description": "The later user publication approval resolves the prior approval dependency. Current integrated-source and exact NEXT qualification remain active unfinished work.",
         "requires_user_input": false,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ],
-        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "evidence": []
       },
       "completed_batch_ids": []
     },
     {
-      "id": "BTH061-AUDIT-POPUP-SCROLL-001",
-      "name": "Complete current popup scroll and drag acceptance",
+      "id": "BTH061-AUDIT-INDEPENDENT-001",
+      "name": "Continue local audit outside paused item and scenario areas",
       "state": "open",
       "item_type": "objective",
       "kind": "acceptance_check",
@@ -4775,23 +4934,124 @@
         "BTH061-AUDIT-001"
       ],
       "full_objective": {
-        "text": "Complete current popup scroll and drag acceptance. Reproduce and resolve current popup scrolling while preserving reachable actions, canceled/deliberate-touch criteria, focus and run/RNG conservation. Preserve the fixed canvas, authored geometry and portrait behavior.",
-        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "text": "Continue the local codebase obsolete-code audit outside the explicitly paused item/scenario areas. Review actual consumers, reflection/save/native/public boundaries and remove only confirmed obsolete UI/tool code; preserve active behavior, full parent coverage and the user pause. Bounded reviews and delivered cleanup batches are distinct from the entire remaining audit.",
+        "source": "docs/testing/deprecated_code_audit_independent_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
         "scope_confirmed": true
       },
       "batch_scope": [],
       "owner": {
-        "name": "Audit popup gesture follow-up",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "name": "Local independent audit",
+        "task_ref": null,
+        "observed_state": "task_reference_missing",
+        "observed_at": null,
+        "source": null,
+        "observation_stale": null
+      },
+      "status": "SCOPED_CLEANUPS_DEPLOYED_PARENT_REMAINDER_OPEN",
+      "pause": null,
+      "pause_supported": false,
+      "commits": [
+        {
+          "sha": "e0cb231b12bd99da8c6093509b235339024ccc19",
+          "evidence": [
+            "recorded_in_named_ledger",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "verified",
+        "commit": "df7d77a820b59f787701fb578cdd4a3b08bbb974",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_independent_2026_11_04.md",
+          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+        ],
+        "scope": "Scoped UI/tool removals and source-recorded clean exact NEXT startup only; full audit and aggregate validator remain Open."
+      },
+      "progress_scope_id": "BTH061-AUDIT-INDEPENDENT-001",
+      "acceptance": [
+        {
+          "id": "bounded-progress",
+          "description": "Reviewed UI/tool removals delivered on NEXT df7d77a820b59f787701fb578cdd4a3b08bbb974 with exact identity and fresh browser startup. The codebase-wide audit, aggregate validator and paused-area remainder stay Open. [Evidence](../testing/deprecated_code_audit_independent_2026_11_04.md).",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_independent_2026_11_04.md",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        },
+        {
+          "id": "remaining-parent-scope",
+          "description": "Complete and reconcile the remaining independent audit coverage and candidate dispositions, unchanged aggregate validator and codebase-wide parent without treating completed children as exhaustive coverage. Respect the prospective user item/scenario pause.",
+          "required": true,
+          "state": "open",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_independent_2026_11_04.md",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
+      "acceptance_progress": {
+        "required_total": 2,
+        "passed_with_evidence": 1,
+        "remaining_ids": [
+          "remaining-parent-scope"
+        ]
+      },
+      "coverage": {
+        "required": false,
+        "complete": false,
+        "areas": []
+      },
+      "coverage_progress": {
+        "required": false,
+        "declared_complete": false,
+        "total_areas": 0,
+        "reviewed_with_evidence": 0,
+        "remaining_ids": []
+      },
+      "next_action": "Reuse the committed bounded core/native reviews and accepted UI/tool cleanup. Inventory and disposition the remaining nonpaused independent scope, reconcile the unchanged aggregate validator and full-audit coverage, and preserve paused-area remainder without expanding or silently closing the parent.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "No agent-imposed hold; the explicit user item/scenario pause applies only to its named scope. Remaining audit review/qualification is active work.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "evidence": []
+      },
+      "completed_batch_ids": [
+        "BTH061-AUDIT-UI-LEGACY-002",
+        "BTH061-AUDIT-TOOL-LEGACY-002"
+      ]
+    },
+    {
+      "id": "BTH-BARDICE-WARM-PROGRESSION-001",
+      "name": "Bar Dice warm Shake/Settle clock mismatch",
+      "state": "open",
+      "item_type": "objective",
+      "kind": "objective",
+      "parent_ids": [],
+      "full_objective": {
+        "text": "Bar Dice warm Shake/Settle clock mismatch. Preserve normal warm Shake/Settle timing, accounting/authority and no-pointer liveness; do not replay an original cup or redesign scheduler/rules.",
+        "source": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger (current main345f9414)",
+        "scope_confirmed": true
+      },
+      "batch_scope": [],
+      "owner": {
+        "name": "Fix Back Alley travel",
+        "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
         "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
-      "status": "FOCUSED_ACCEPTANCE_PASSED_NEXT_PENDING",
+      "status": "EXACT_FIX_INTEGRATED_CURRENT_MAIN_WARM_COLD_AND_NEXT_PENDING",
+      "pause": null,
+      "pause_supported": false,
       "commits": [
         {
-          "sha": "b33374061f1be396e1c6a73a6af690d618fc4b64",
+          "sha": "be3f1b2d99d6d6f36ee65637f9e8e75a788ecbe8",
           "evidence": [
             "recorded_in_named_ledger",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
@@ -4802,343 +5062,32 @@
         "required": true,
         "state": "pending",
         "commit": null,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ]
+        "evidence": []
       },
-      "progress_scope_id": "BTH061-AUDIT-POPUP-SCROLL-001",
+      "progress_scope_id": "BTH-BARDICE-WARM-PROGRESSION-001",
       "acceptance": [
         {
-          "id": "recorded-current-scope",
-          "description": "Reproduce and resolve current popup scrolling while preserving reachable actions, canceled/deliberate-touch criteria, focus and run/RNG conservation. Preserve the fixed canvas, authored geometry and portrait behavior.",
+          "id": "recorded-native",
+          "description": "Original166 native assertions and no-pointer liveness pass at their stated source identity.",
           "required": true,
-          "state": "open",
+          "state": "pass",
           "evidence": [
-            "docs/testing/deprecated_code_audit_2026_11_04.md"
-          ]
-        }
-      ],
-      "acceptance_progress": {
-        "required_total": 1,
-        "passed_with_evidence": 0,
-        "remaining_ids": [
-          "recorded-current-scope"
-        ]
-      },
-      "coverage": {
-        "required": false,
-        "complete": false,
-        "areas": []
-      },
-      "coverage_progress": {
-        "required": false,
-        "declared_complete": false,
-        "total_areas": 0,
-        "reviewed_with_evidence": 0,
-        "remaining_ids": []
-      },
-      "next_action": "Continue the specific remaining qualification/repair recorded here: Reproduce and resolve current popup scrolling while preserving reachable actions, canceled/deliberate-touch criteria, focus and run/RNG conservation. Preserve the fixed canvas, authored geometry and portrait behavior. Keep the full audit parent Open and preserve existing focused evidence.",
-      "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
-        "requires_user_input": false,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ],
-        "observed_at": "2026-11-04T01:32:35.703920+00:00"
-      },
-      "completed_batch_ids": []
-    },
-    {
-      "id": "BTH061-AUDIT-TUTORIAL-FIXTURE-001",
-      "name": "Resolve inherited canonical tutorial fixture mismatch",
-      "state": "open",
-      "item_type": "objective",
-      "kind": "acceptance_check",
-      "parent_ids": [
-        "BTH061-AUDIT-001"
-      ],
-      "full_objective": {
-        "text": "Resolve inherited canonical tutorial fixture mismatch. Paired exact baseline ecdccee4/candidate normalized states are byte-identical at 121,008 bytes with observed fba86ca4... versus untouched trusted fbf5f57b...; full hashes and limits are in the continuation and evidence/resume-probe-20261104-r1/comparison.json. No oracle update or passing tutorial claim; no intentional hold.",
-        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-        "scope_confirmed": true
-      },
-      "batch_scope": [],
-      "owner": {
-        "name": "Audit inherited fixture follow-up",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
-        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
-        "observation_stale": false
-      },
-      "status": "INHERITED_FULL_FIXTURE_PIN_MISMATCH",
-      "commits": [],
-      "deployment": {
-        "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ]
-      },
-      "progress_scope_id": "BTH061-AUDIT-TUTORIAL-FIXTURE-001",
-      "acceptance": [
-        {
-          "id": "recorded-current-scope",
-          "description": "Paired exact baseline ecdccee4/candidate normalized states are byte-identical at 121,008 bytes with observed fba86ca4... versus untouched trusted fbf5f57b...; full hashes and limits are in the continuation and evidence/resume-probe-20261104-r1/comparison.json. No oracle update or passing tutorial claim; no intentional hold.",
-          "required": true,
-          "state": "open",
-          "evidence": [
-            "docs/testing/deprecated_code_audit_2026_11_04.md"
-          ]
-        }
-      ],
-      "acceptance_progress": {
-        "required_total": 1,
-        "passed_with_evidence": 0,
-        "remaining_ids": [
-          "recorded-current-scope"
-        ]
-      },
-      "coverage": {
-        "required": false,
-        "complete": false,
-        "areas": []
-      },
-      "coverage_progress": {
-        "required": false,
-        "declared_complete": false,
-        "total_areas": 0,
-        "reviewed_with_evidence": 0,
-        "remaining_ids": []
-      },
-      "next_action": "Continue the specific remaining qualification/repair recorded here: Paired exact baseline ecdccee4/candidate normalized states are byte-identical at 121,008 bytes with observed fba86ca4... versus untouched trusted fbf5f57b...; full hashes and limits are in the continuation and evidence/resume-probe-20261104-r1/comparison.json. No oracle update or passing tutorial claim; no intentional hold. Keep the full audit parent Open and preserve existing focused evidence.",
-      "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
-        "requires_user_input": false,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ],
-        "observed_at": "2026-11-04T01:32:35.703920+00:00"
-      },
-      "completed_batch_ids": []
-    },
-    {
-      "id": "BTH061-AUDIT-SLOT-AUTHOR-001",
-      "name": "Resolve procedural authoring versus current stored authority",
-      "state": "open",
-      "item_type": "objective",
-      "kind": "acceptance_check",
-      "parent_ids": [
-        "BTH061-AUDIT-001"
-      ],
-      "full_objective": {
-        "text": "Resolve procedural authoring versus current stored authority. Author recipe/check and generated guide differ from current 607 authored slots; classify current authority workflow and preserve layout geometry, host mappings and saved digests. NEXT acceptance pending where applicable; umbrella remains Open.",
-        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-        "scope_confirmed": true
-      },
-      "batch_scope": [],
-      "owner": {
-        "name": "Audit tooling follow-up",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
-        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
-        "observation_stale": false
-      },
-      "status": "QUALIFICATION_OR_REPAIR_PENDING",
-      "commits": [],
-      "deployment": {
-        "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ]
-      },
-      "progress_scope_id": "BTH061-AUDIT-SLOT-AUTHOR-001",
-      "acceptance": [
-        {
-          "id": "recorded-current-scope",
-          "description": "Author recipe/check and generated guide differ from current 607 authored slots; classify current authority workflow and preserve layout geometry, host mappings and saved digests. NEXT acceptance pending where applicable; umbrella remains Open.",
-          "required": true,
-          "state": "open",
-          "evidence": [
-            "docs/testing/deprecated_code_audit_2026_11_04.md"
-          ]
-        }
-      ],
-      "acceptance_progress": {
-        "required_total": 1,
-        "passed_with_evidence": 0,
-        "remaining_ids": [
-          "recorded-current-scope"
-        ]
-      },
-      "coverage": {
-        "required": false,
-        "complete": false,
-        "areas": []
-      },
-      "coverage_progress": {
-        "required": false,
-        "declared_complete": false,
-        "total_areas": 0,
-        "reviewed_with_evidence": 0,
-        "remaining_ids": []
-      },
-      "next_action": "Continue the specific remaining qualification/repair recorded here: Author recipe/check and generated guide differ from current 607 authored slots; classify current authority workflow and preserve layout geometry, host mappings and saved digests. NEXT acceptance pending where applicable; umbrella remains Open. Keep the full audit parent Open and preserve existing focused evidence.",
-      "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
-        "requires_user_input": false,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ],
-        "observed_at": "2026-11-04T01:32:35.703920+00:00"
-      },
-      "completed_batch_ids": []
-    },
-    {
-      "id": "BTH061-AUDIT-SLOT-MIGRATION-001",
-      "name": "Resolve current additions and legacy slot migration expectations",
-      "state": "open",
-      "item_type": "objective",
-      "kind": "acceptance_check",
-      "parent_ids": [
-        "BTH061-AUDIT-001"
-      ],
-      "full_objective": {
-        "text": "Resolve current additions and legacy slot migration expectations. Two migration tests and the four-versus-five converted-ledger expectation fail; preserve hostile-pointer and canonical-ID protections and current runtime layouts. NEXT acceptance pending where applicable; umbrella remains Open.",
-        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-        "scope_confirmed": true
-      },
-      "batch_scope": [],
-      "owner": {
-        "name": "Audit tooling follow-up",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
-        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
-        "observation_stale": false
-      },
-      "status": "QUALIFICATION_OR_REPAIR_PENDING",
-      "commits": [],
-      "deployment": {
-        "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ]
-      },
-      "progress_scope_id": "BTH061-AUDIT-SLOT-MIGRATION-001",
-      "acceptance": [
-        {
-          "id": "recorded-current-scope",
-          "description": "Two migration tests and the four-versus-five converted-ledger expectation fail; preserve hostile-pointer and canonical-ID protections and current runtime layouts. NEXT acceptance pending where applicable; umbrella remains Open.",
-          "required": true,
-          "state": "open",
-          "evidence": [
-            "docs/testing/deprecated_code_audit_2026_11_04.md"
-          ]
-        }
-      ],
-      "acceptance_progress": {
-        "required_total": 1,
-        "passed_with_evidence": 0,
-        "remaining_ids": [
-          "recorded-current-scope"
-        ]
-      },
-      "coverage": {
-        "required": false,
-        "complete": false,
-        "areas": []
-      },
-      "coverage_progress": {
-        "required": false,
-        "declared_complete": false,
-        "total_areas": 0,
-        "reviewed_with_evidence": 0,
-        "remaining_ids": []
-      },
-      "next_action": "Continue the specific remaining qualification/repair recorded here: Two migration tests and the four-versus-five converted-ledger expectation fail; preserve hostile-pointer and canonical-ID protections and current runtime layouts. NEXT acceptance pending where applicable; umbrella remains Open. Keep the full audit parent Open and preserve existing focused evidence.",
-      "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
-        "requires_user_input": false,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ],
-        "observed_at": "2026-11-04T01:32:35.703920+00:00"
-      },
-      "completed_batch_ids": []
-    },
-    {
-      "id": "BTH061-AUDIT-VALIDATOR-UI-001",
-      "name": "Qualify current function-bound content selection classifier",
-      "state": "open",
-      "item_type": "objective",
-      "kind": "acceptance_check",
-      "parent_ids": [
-        "BTH061-AUDIT-001"
-      ],
-      "full_objective": {
-        "text": "Qualify current function-bound content selection classifier. Focused current-production and eight hostile classes pass in both PowerShell versions; exact function bindings retain rejection of every new unclassified literal. NEXT acceptance pending where applicable; umbrella remains Open.",
-        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-        "scope_confirmed": true
-      },
-      "batch_scope": [],
-      "owner": {
-        "name": "Audit tooling follow-up",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
-        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
-        "observation_stale": false
-      },
-      "status": "QUALIFICATION_OR_REPAIR_PENDING",
-      "commits": [
-        {
-          "sha": "dec71ae8b267e9adb27bd408b10cbad9f4644b82",
-          "evidence": [
-            "recorded_in_named_ledger",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
-        }
-      ],
-      "deployment": {
-        "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ]
-      },
-      "progress_scope_id": "BTH061-AUDIT-VALIDATOR-UI-001",
-      "acceptance": [
+        },
         {
-          "id": "recorded-current-scope",
-          "description": "Focused current-production and eight hostile classes pass in both PowerShell versions; exact function bindings retain rejection of every new unclassified literal. NEXT acceptance pending where applicable; umbrella remains Open.",
+          "id": "integrated-qualification",
+          "description": "Refresh current rendered-hit Host warm/cold and verify exact NEXT; retain original cup and accounting/authority/scheduler contracts.",
           "required": true,
           "state": "open",
-          "evidence": [
-            "docs/testing/deprecated_code_audit_2026_11_04.md"
-          ]
+          "evidence": []
         }
       ],
       "acceptance_progress": {
-        "required_total": 1,
-        "passed_with_evidence": 0,
+        "required_total": 2,
+        "passed_with_evidence": 1,
         "remaining_ids": [
-          "recorded-current-scope"
+          "integrated-qualification"
         ]
       },
       "coverage": {
@@ -5153,186 +5102,16 @@
         "reviewed_with_evidence": 0,
         "remaining_ids": []
       },
-      "next_action": "Continue the specific remaining qualification/repair recorded here: Focused current-production and eight hostile classes pass in both PowerShell versions; exact function bindings retain rejection of every new unclassified literal. NEXT acceptance pending where applicable; umbrella remains Open. Keep the full audit parent Open and preserve existing focused evidence.",
+      "next_action": "Exact implementation preserved by separate merge onto publicf3058b6da. Original166 native assertions and no-pointer liveness pass. Current rendered-hit Host warm/cold refresh and one newly authorized publication retry pending, then exact NEXT acceptance. No original cup replay or accounting/authority/scheduler redesign. Item/scenario/portrait boundaries remain unchanged.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
+        "description": "New publication authorization is recorded. Current Host warm/cold requalification and exact NEXT remain work; no renewed user approval or original cup replay is requested.",
         "requires_user_input": false,
         "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
+          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
         ],
-        "observed_at": "2026-11-04T01:32:35.703920+00:00"
-      },
-      "completed_batch_ids": []
-    },
-    {
-      "id": "BTH061-AUDIT-VALIDATOR-PLACEMENT-001",
-      "name": "Qualify stale completion flag recovery in validator",
-      "state": "open",
-      "item_type": "objective",
-      "kind": "acceptance_check",
-      "parent_ids": [
-        "BTH061-AUDIT-001"
-      ],
-      "full_objective": {
-        "text": "Qualify stale completion flag recovery in validator. Ninety-three focused checks pass in both PowerShell versions; six stale claims remain recovered incomplete and strict writes and runtime layout bytes are preserved. NEXT acceptance pending where applicable; umbrella remains Open.",
-        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-        "scope_confirmed": true
-      },
-      "batch_scope": [],
-      "owner": {
-        "name": "Audit tooling follow-up",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
-        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
-        "observation_stale": false
-      },
-      "status": "QUALIFICATION_OR_REPAIR_PENDING",
-      "commits": [
-        {
-          "sha": "dec71ae8b267e9adb27bd408b10cbad9f4644b82",
-          "evidence": [
-            "recorded_in_named_ledger",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        }
-      ],
-      "deployment": {
-        "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ]
-      },
-      "progress_scope_id": "BTH061-AUDIT-VALIDATOR-PLACEMENT-001",
-      "acceptance": [
-        {
-          "id": "recorded-current-scope",
-          "description": "Ninety-three focused checks pass in both PowerShell versions; six stale claims remain recovered incomplete and strict writes and runtime layout bytes are preserved. NEXT acceptance pending where applicable; umbrella remains Open.",
-          "required": true,
-          "state": "open",
-          "evidence": [
-            "docs/testing/deprecated_code_audit_2026_11_04.md"
-          ]
-        }
-      ],
-      "acceptance_progress": {
-        "required_total": 1,
-        "passed_with_evidence": 0,
-        "remaining_ids": [
-          "recorded-current-scope"
-        ]
-      },
-      "coverage": {
-        "required": false,
-        "complete": false,
-        "areas": []
-      },
-      "coverage_progress": {
-        "required": false,
-        "declared_complete": false,
-        "total_areas": 0,
-        "reviewed_with_evidence": 0,
-        "remaining_ids": []
-      },
-      "next_action": "Continue the specific remaining qualification/repair recorded here: Ninety-three focused checks pass in both PowerShell versions; six stale claims remain recovered incomplete and strict writes and runtime layout bytes are preserved. NEXT acceptance pending where applicable; umbrella remains Open. Keep the full audit parent Open and preserve existing focused evidence.",
-      "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
-        "requires_user_input": false,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ],
-        "observed_at": "2026-11-04T01:32:35.703920+00:00"
-      },
-      "completed_batch_ids": []
-    },
-    {
-      "id": "BTH061-AUDIT-VALIDATOR-CENSUS-001",
-      "name": "Qualify PowerShell empty-body function census",
-      "state": "open",
-      "item_type": "objective",
-      "kind": "acceptance_check",
-      "parent_ids": [
-        "BTH061-AUDIT-001"
-      ],
-      "full_objective": {
-        "text": "Qualify PowerShell empty-body function census. Null-safe join passes exact function spans, calls, startup classification and empty-body contracts in both PowerShell versions. NEXT acceptance pending where applicable; umbrella remains Open.",
-        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-        "scope_confirmed": true
-      },
-      "batch_scope": [],
-      "owner": {
-        "name": "Audit tooling follow-up",
-        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
-        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
-        "observation_stale": false
-      },
-      "status": "QUALIFICATION_OR_REPAIR_PENDING",
-      "commits": [
-        {
-          "sha": "dec71ae8b267e9adb27bd408b10cbad9f4644b82",
-          "evidence": [
-            "recorded_in_named_ledger",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        }
-      ],
-      "deployment": {
-        "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ]
-      },
-      "progress_scope_id": "BTH061-AUDIT-VALIDATOR-CENSUS-001",
-      "acceptance": [
-        {
-          "id": "recorded-current-scope",
-          "description": "Null-safe join passes exact function spans, calls, startup classification and empty-body contracts in both PowerShell versions. NEXT acceptance pending where applicable; umbrella remains Open.",
-          "required": true,
-          "state": "open",
-          "evidence": [
-            "docs/testing/deprecated_code_audit_2026_11_04.md"
-          ]
-        }
-      ],
-      "acceptance_progress": {
-        "required_total": 1,
-        "passed_with_evidence": 0,
-        "remaining_ids": [
-          "recorded-current-scope"
-        ]
-      },
-      "coverage": {
-        "required": false,
-        "complete": false,
-        "areas": []
-      },
-      "coverage_progress": {
-        "required": false,
-        "declared_complete": false,
-        "total_areas": 0,
-        "reviewed_with_evidence": 0,
-        "remaining_ids": []
-      },
-      "next_action": "Continue the specific remaining qualification/repair recorded here: Null-safe join passes exact function spans, calls, startup classification and empty-body contracts in both PowerShell versions. NEXT acceptance pending where applicable; umbrella remains Open. Keep the full audit parent Open and preserve existing focused evidence.",
-      "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
-        "requires_user_input": false,
-        "evidence": [
-          "docs/testing/deprecated_code_audit_2026_11_04.md"
-        ],
-        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+        "observed_at": "2026-11-04T16:13:18.036432+00:00"
       },
       "completed_batch_ids": []
     },
@@ -5359,11 +5138,13 @@
         "name": "Clean obsolete test instances",
         "task_ref": "01a1a3f0-cfcd-74e1-9dd9-3a7e0178b0e1",
         "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
-      "status": "COMMITTED_TESTED_MAIN_PUSH_REJECTED_AUTO_REVIEW_NEXT_UNVERIFIED",
+      "status": "COMMITTED_TESTED_PUBLICATION_RETRY_AUTHORIZED_NEXT_UNVERIFIED",
+      "pause": null,
+      "pause_supported": false,
       "commits": [
         {
           "sha": "de3f27930a0ddec47f835eff64963cd7eef3417f",
@@ -5375,8 +5156,8 @@
         {
           "sha": "71aa69d92fe78e1600dd2743120e0f1df5e30f27",
           "evidence": [
-            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-13\\durable-publication-blocker.json",
-            "Local tested integration commit; main push denied and not executed."
+            "published_durable_ledger_association",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
       ],
@@ -5385,9 +5166,9 @@
         "state": "pending",
         "commit": null,
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-13\\durable-publication-blocker.json"
+          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
         ],
-        "scope": "No main/NEXT publication for this integration commit."
+        "scope": "Publication retry is newly authorized, but main/NEXT delivery is not yet verified."
       },
       "progress_scope_id": "BTH-RUNTIME-CLEANUP-001",
       "acceptance": [
@@ -5498,16 +5279,14 @@
           "success-failure-timeout-interruption-cleanup-coverage"
         ]
       },
-      "next_action": "Obtain acceptance of explicit direct-main authorization after automatic approval review rejection; publish tested commit 71aa69d92fe78e1600dd2743120e0f1df5e30f27 and verify existing NEXT identity/ancestry. Keep this item Open until delivery evidence exists.",
+      "next_action": "Reconcile tested scoped artifacts with current main, then perform the single newly authorized publication retry and verify remote/main/existing NEXT. Stop on a further denial. Remain Open until actual associated implementation/delivery acceptance is recorded; no cleanup or full-audit closure is implied.",
       "blocker": {
-        "state": "active",
-        "kind": "automatic_approval_review_rejection",
-        "description": "Direct main push rejected by automatic approval review despite standing authorization supplied in trusted parent history. Push did not execute. No denied-operation retry or alternate publication attempted.",
-        "requires_user_input": true,
-        "observed_at": "2026-11-04T01:33:13.639703+00:00",
-        "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-13\\durable-publication-blocker.json"
-        ]
+        "state": "none",
+        "kind": null,
+        "description": "New explicit user instruction authorizes publication of finished work. Earlier rejected push did not execute; tested publication/readback/NEXT verification remain unfinished.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "evidence": []
       },
       "completed_batch_ids": []
     },
@@ -5531,12 +5310,31 @@
       "owner": {
         "name": "Resume item improvements",
         "task_ref": "01a1a3e7-10b6-71d9-919c-3afe91d860ce",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_state": "idle",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
       "status": "PAUSED_AT_USER_REQUEST_ITEM_SCENARIO_WORK",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-04T02:07:49.868676+00:00",
+        "instruction": "Pause item and scenario work.",
+        "source": "docs/todo/bth_user_item_scenario_pause_20261104.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "NATIVE_53_PLUS25_PASS_NEXT_PENDING",
+        "resume_next_action": "Verify exact existing NEXT promotion/served identity and applicable Web help acceptance; record deployed limits. Keep full item-rework parent Open.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": null,
+          "description": "Bounded help commit b63342bbdf04cfb799ba5405f3d4f4d0c416485e is on main; requested release qualification remains work, not a user hold.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-04T01:32:35.703920+00:00",
+          "evidence": []
+        }
+      },
+      "pause_supported": true,
       "commits": [
         {
           "sha": "b63342bbdf04cfb799ba5405f3d4f4d0c416485e",
@@ -5630,12 +5428,31 @@
       "owner": {
         "name": "Resume item improvements",
         "task_ref": "01a1a3e7-10b6-71d9-919c-3afe91d860ce",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T00:42:29.105Z",
+        "observed_state": "idle",
+        "observed_at": "2026-11-04T15:55:05Z",
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
       "status": "PAUSED_AT_USER_REQUEST_ITEM_SCENARIO_WORK",
+      "pause": {
+        "state": "active",
+        "requested_by": "user",
+        "requested_at": "2026-11-04T02:07:49.868676+00:00",
+        "instruction": "Pause item and scenario work.",
+        "source": "docs/todo/bth_user_item_scenario_pause_20261104.json",
+        "resume_only_on_user_instruction": true,
+        "previous_status": "NATIVE_53_PLUS25_PASS_NEXT_PENDING",
+        "resume_next_action": "Verify exact existing NEXT promotion/served identity and applicable Web help acceptance; record deployed limits. Keep full item-rework parent Open.",
+        "previous_blocker": {
+          "state": "none",
+          "kind": null,
+          "description": "Bounded help commit b63342bbdf04cfb799ba5405f3d4f4d0c416485e is on main; requested release qualification remains work, not a user hold.",
+          "requires_user_input": false,
+          "observed_at": "2026-11-04T01:32:35.703920+00:00",
+          "evidence": []
+        }
+      },
+      "pause_supported": true,
       "commits": [
         {
           "sha": "b63342bbdf04cfb799ba5405f3d4f4d0c416485e",

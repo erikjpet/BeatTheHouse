@@ -37,16 +37,13 @@ def rgb(value: str) -> tuple[int, int, int]:
 
 
 DARK = rgb("#05060a")
-DARK_2 = rgb("#0b0b18")
 DARK_3 = rgb("#101427")
 PINK = rgb("#ff2d78")
 PINK_2 = rgb("#ff6eb4")
 CYAN = rgb("#00f5ff")
-CYAN_2 = rgb("#0096a6")
 TEAL = rgb("#00ffd5")
 YELLOW = rgb("#ffe45c")
 AMBER = rgb("#ffb32d")
-SOFT = rgb("#d8e8ea")
 
 
 def load_capture(path: Path, fallback: str) -> Image.Image:
@@ -170,20 +167,6 @@ def add_center_scrim(
     scrim = Image.new("RGBA", image.size, (0, 0, 0, 0))
     ImageDraw.Draw(scrim).rectangle(box, fill=DARK + (alpha,))
     image.alpha_composite(scrim.filter(ImageFilter.GaussianBlur(blur)))
-
-
-def edge_scene_layer(source: Image.Image, size: tuple[int, int], side: str) -> Image.Image:
-    width, height = size
-    panel = cover(scene_only(source), size)
-    panel = darken(panel, 0.30, 0.78)
-    alpha_pixels = np.zeros((height, width), dtype=np.uint8)
-    ramp = np.linspace(205, 0, width, dtype=np.uint8)
-    if side == "right":
-        ramp = ramp[::-1]
-    alpha_pixels[:] = ramp
-    alpha = Image.fromarray(alpha_pixels, "L")
-    panel.putalpha(alpha)
-    return panel
 
 
 def make_cover_photo() -> Path:
