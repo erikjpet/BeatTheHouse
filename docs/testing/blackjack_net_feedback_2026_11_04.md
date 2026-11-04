@@ -1,6 +1,7 @@
 # BTH061-BLACKJACK-NET-FEEDBACK-001
 
-Status: Open. Implementation, acceptance and exact NEXT receipt pending.
+Status: Open. Implementation255bbfc53c69b3dd4dd4944fc98719e99c671376;
+native and integrated cold accepted; exact NEXT receipt pending.
 
 The Grand playtest records a five-chip Blackjack win: cash92 stays92,
 chips13 to8 on Deal then18 after dealer bust23; the journal retains debit-5
@@ -37,3 +38,42 @@ retain the distinct account movement, and preserve paid feedback across pure
 zero-consequence watch rows. Explicit pushes remain zero. Do not infer net
 from the wallet or replay a settlement. Preserve historical chip/cash units,
 measured and unknown penalty semantics, fixed16:9 and touch/focus behavior.
+
+## Native acceptance
+
+The final179-check host run on255bbfc5 passes win/loss/push, normal Back,
+official Save/new-host Continue, actual Result Label publication with net on
+the first line, a genuine automatically dealt watch hand, and legacy net
+metadata. Detached read-only controls cover surrender net-5/credit+5, cash,
+explicit zero, malformed metadata, unknown units, retained watch consequences
+and measured/unknown caught penalties. A separate existing penalty-consumer
+check passes74 assertions. No financial authority, journal labels or save
+projector changed. Both jobs exit0 with zero owned processes remaining.
+
+Receipts: task-11/evidence/blackjack-net-qualified.json/.log and
+blackjack-net-qualified-observations.json; blackjack-net-penalty-consumers
+.json/.log. Godot reports the sandbox account's unavailable root certificate
+store; no certificate/network operation is part of the native acceptance.
+There are no script errors in the accepted run. The earlier fixed-final run's
+exit0 is rejected because its malformed-null control logged script errors;
+the safe conversion is covered by the final accepted run.
+
+The unrelated Eye in the Sky decision correctly blocked the initial warm
+watch Back. The final synthetic host disables action-triggered world cadence
+from construction so ordinary economy/persistence remain active without an
+unrelated event. No committed popup was dismissed or authority state edited.
+
+Independent code review accepts the display-only patch and the intervening
+main integration. The latter repairs canceled touch on visible fixed controls
+under legacy portrait-named functions; it adds no portrait geometry or reflow.
+Viewport policy and screen builders are unchanged. Initial merge review was
+rejected automatically, then allowed after this specific read-only review.
+
+Integrated sourcef3c3107e25d749e3d50981e3f4c6152a2fc12d57 passes52 engine-cold
+checks in a separate process for win/loss/push, legacy net and paid-win then
+automatic watch. All five official Continue paths restore correct net, units,
+visible Label and exact protected money/RNG/clock/shoe/result/history signature.
+Receipt: blackjack-net-integrated-cold.json/.log and
+blackjack-net-integrated-cold-observations.json. Exit0, no script errors,
+zero owned processes at release. Native synthetic hand acceptance and deployed
+Web acceptance remain distinct.
