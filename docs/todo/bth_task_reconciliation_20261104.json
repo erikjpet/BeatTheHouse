@@ -1,7 +1,7 @@
 {
   "schema": "bth.task_reconciliation/v1",
-  "checked_at": "2026-11-04T01:33:15.665531Z",
-  "ledger_updated_at": "2026-11-04T01:33:13.639703+00:00",
+  "checked_at": "2026-11-04T02:08:15.195164Z",
+  "ledger_updated_at": "2026-11-04T02:07:49.868676+00:00",
   "group": "current",
   "owner_snapshot_supplied": true,
   "runtime_inventory_supplied": true,
@@ -87,14 +87,14 @@
   ],
   "git_verification_requested": false,
   "markdown_checked": true,
-  "markdown_rows_checked": 195,
+  "markdown_rows_checked": 196,
   "freshness_limit_hours": 24,
   "summary": {
-    "objectives_checked": 45,
+    "objectives_checked": 46,
     "batches_checked": 4,
-    "open_objectives": 37,
+    "open_objectives": 38,
     "open_batches": 3,
-    "open_work_items": 40,
+    "open_work_items": 41,
     "complete_objectives": 8,
     "errors": 46,
     "warnings": 0,
@@ -1527,7 +1527,7 @@
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
-      "status": "ACTIVE_SCOPE_RECOVERED_WEDDING_DEPLOYED",
+      "status": "PAUSED_AT_USER_REQUEST_ITEM_SCENARIO_WORK",
       "commits": [
         {
           "sha": "1c201c9e341ac6f3e068c4d498fd00bf7298880e",
@@ -1590,14 +1590,16 @@
         "reviewed_with_evidence": 0,
         "remaining_ids": []
       },
-      "next_action": "Complete the ordinary visible Wedding route and Save/Continue on a matching build; NEXT247ebe identity/assets/scripted startup is verified. For Bringer Show, use a legitimately visible/available source route before attributing layer-return or arrival-pressure behavior. Continue bounded implementation across the recovered55-ID scenario matrix; one scene never closes the parent.",
+      "next_action": "Keep paused until the user explicitly resumes item/scenario work. Preserve incomplete scope, acceptance, commits and evidence. On resumption: Complete the ordinary visible Wedding route and Save/Continue on a matching build; NEXT247ebe identity/assets/scripted startup is verified. For Bringer Show, use a legitimately visible/available source route before attributing layer-return or arrival-pressure behavior. Continue bounded implementation across the recovered55-ID scenario matrix; one scene never closes the parent.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "No intentional hold or requirement to choose a scenario with Erik. Specific activity rules, fees/time and success criteria are implementation decisions when the concrete activity needs them.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "The user explicitly requested: Pause item and scenario work. This scoped pause awaits a later user resumption instruction; other testing, fixes and audits continue.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:32:35.703920+00:00",
-        "evidence": []
+        "observed_at": "2026-11-04T02:07:49.868676+00:00",
+        "evidence": [
+          "docs/todo/bth_user_item_scenario_pause_20261104.json"
+        ]
       },
       "completed_batch_ids": []
     },
@@ -1624,7 +1626,7 @@
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
-      "status": "FIX_DEPLOYED_NATIVE_PASS_SCRIPTED_STARTUP_PASS_VISIBLE_WEB_ACCEPTANCE_OPEN",
+      "status": "PAUSED_AT_USER_REQUEST_ITEM_SCENARIO_WORK",
       "commits": [
         {
           "sha": "1c201c9e341ac6f3e068c4d498fd00bf7298880e",
@@ -1692,14 +1694,16 @@
         "reviewed_with_evidence": 0,
         "remaining_ids": []
       },
-      "next_action": "Fix1c201c9e341ac6f3e068c4d498fd00bf7298880e is included in verified NEXT247ebe3277cee8bc46fc3cff084607441fa296d4 with exact source/tree, archive/provenance, served PCK hash, redirect and scripted menu startup. Complete normal visible Secure Lane, Recover Rings, Steady Best Man, Leave him smiling, Deliver Rings and Save/Continue on a matching build. Preserve the original failed campaign and keep full BTH-11 Open.",
+      "next_action": "Keep paused until the user explicitly resumes item/scenario work. Preserve incomplete scope, acceptance, commits and evidence. On resumption: Fix1c201c9e341ac6f3e068c4d498fd00bf7298880e is included in verified NEXT247ebe3277cee8bc46fc3cff084607441fa296d4 with exact source/tree, archive/provenance, served PCK hash, redirect and scripted menu startup. Complete normal visible Secure Lane, Recover Rings, Steady Best Man, Leave him smiling, Deliver Rings and Save/Continue on a matching build. Preserve the original failed campaign and keep full BTH-11 Open.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "Prior cold-import delivery dependency is resolved for verified NEXT247ebe identity and scripted startup. Ordinary visible route/Save-Continue acceptance remains active work, not a hold or completed behavior pass.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "The user explicitly requested: Pause item and scenario work. This scoped pause awaits a later user resumption instruction; other testing, fixes and audits continue.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:32:35.703920+00:00",
-        "evidence": []
+        "observed_at": "2026-11-04T02:07:49.868676+00:00",
+        "evidence": [
+          "docs/todo/bth_user_item_scenario_pause_20261104.json"
+        ]
       },
       "completed_batch_ids": []
     },
@@ -1726,7 +1730,7 @@
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
-      "status": "OPEN_FAITHFUL_AVAILABLE_ROUTE_REPRODUCTION_REQUIRED",
+      "status": "PAUSED_AT_USER_REQUEST_ITEM_SCENARIO_WORK",
       "commits": [],
       "deployment": {
         "required": false,
@@ -1771,14 +1775,16 @@
         "reviewed_with_evidence": 0,
         "remaining_ids": []
       },
-      "next_action": "Reproduce through a legitimately visible/available source route; compare initial and cached club exit authority, then exercise pending layer-arrival pressure. Preserve frozen inventory seals; do not restore the reverted alignment experiment or report its synthetic failure as a player defect.",
+      "next_action": "Keep paused until the user explicitly resumes item/scenario work. Preserve incomplete scope, acceptance, commits and evidence. On resumption: Reproduce through a legitimately visible/available source route; compare initial and cached club exit authority, then exercise pending layer-arrival pressure. Preserve frozen inventory seals; do not restore the reverted alignment experiment or report its synthetic failure as a player defect.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "Faithful available-route reproduction is active investigation. The invalid synthetic route was excluded and its experiment reverted; no intentional hold or confirmed new player failure.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "The user explicitly requested: Pause item and scenario work. This scoped pause awaits a later user resumption instruction; other testing, fixes and audits continue.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:32:35.703920+00:00",
-        "evidence": []
+        "observed_at": "2026-11-04T02:07:49.868676+00:00",
+        "evidence": [
+          "docs/todo/bth_user_item_scenario_pause_20261104.json"
+        ]
       },
       "completed_batch_ids": []
     },
@@ -1803,7 +1809,7 @@
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
-      "status": "FACTUAL_HELP_COMMITTED_FULL_REWORK_OPEN",
+      "status": "PAUSED_AT_USER_REQUEST_ITEM_SCENARIO_WORK",
       "commits": [
         {
           "sha": "b63342bbdf04cfb799ba5405f3d4f4d0c416485e",
@@ -1864,14 +1870,16 @@
         "reviewed_with_evidence": 0,
         "remaining_ids": []
       },
-      "next_action": "Resume item improvements owner recovers and records the substantive Lucky Penny replacement choice, then implements the full effect and matching description/help. Use the prepared options only as proposals, preserve X-Ray and issued-ticket/save semantics, and qualify actual behavior with a product commit and NEXT evidence; a scope/help-only commit does not close the parent. Verify bounded truthful-help batch BTH-15-FACTUAL-HELP-001 on NEXT separately; factual help does not finish the original full item rework.",
+      "next_action": "Keep paused until the user explicitly resumes item/scenario work. Preserve incomplete scope, acceptance, commits and evidence. On resumption: Resume item improvements owner recovers and records the substantive Lucky Penny replacement choice, then implements the full effect and matching description/help. Use the prepared options only as proposals, preserve X-Ray and issued-ticket/save semantics, and qualify actual behavior with a product commit and NEXT evidence; a scope/help-only commit does not close the parent. Verify bounded truthful-help batch BTH-15-FACTUAL-HELP-001 on NEXT separately; factual help does not finish the original full item rework.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "No intentional hold. The substantive replacement effect is unfinished active design/implementation work; a historical proposal does not select the mechanic or justify a generic user-selection gate.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "The user explicitly requested: Pause item and scenario work. This scoped pause awaits a later user resumption instruction; other testing, fixes and audits continue.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:32:35.703920+00:00",
-        "evidence": []
+        "observed_at": "2026-11-04T02:07:49.868676+00:00",
+        "evidence": [
+          "docs/todo/bth_user_item_scenario_pause_20261104.json"
+        ]
       },
       "completed_batch_ids": []
     },
@@ -1896,7 +1904,7 @@
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
-      "status": "FACTUAL_HELP_COMMITTED_ORIGINAL_DESIGN_RECOVERY_OPEN",
+      "status": "PAUSED_AT_USER_REQUEST_ITEM_SCENARIO_WORK",
       "commits": [
         {
           "sha": "b63342bbdf04cfb799ba5405f3d4f4d0c416485e",
@@ -1965,14 +1973,16 @@
         "reviewed_with_evidence": 0,
         "remaining_ids": []
       },
-      "next_action": "Resume item improvements owner recovers the original Ledger Pencil redesign and ordinary/meta scope, records concrete replacement effect/wording decisions and implements/tests the full selected rework. Use QA-ITEM-022 as a separate contract observation, preserving both IDs without assuming mapping or performing historical refunds. Verify bounded truthful-help batch BTH-17-FACTUAL-HELP-001 on NEXT separately; factual help does not finish the original full item rework.",
+      "next_action": "Keep paused until the user explicitly resumes item/scenario work. Preserve incomplete scope, acceptance, commits and evidence. On resumption: Resume item improvements owner recovers the original Ledger Pencil redesign and ordinary/meta scope, records concrete replacement effect/wording decisions and implements/tests the full selected rework. Use QA-ITEM-022 as a separate contract observation, preserving both IDs without assuming mapping or performing historical refunds. Verify bounded truthful-help batch BTH-17-FACTUAL-HELP-001 on NEXT separately; factual help does not finish the original full item rework.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "No intentional hold or invented user-selection prerequisite. Original design recovery and the substantive replacement choice remain active owner work.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "The user explicitly requested: Pause item and scenario work. This scoped pause awaits a later user resumption instruction; other testing, fixes and audits continue.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:32:35.703920+00:00",
-        "evidence": []
+        "observed_at": "2026-11-04T02:07:49.868676+00:00",
+        "evidence": [
+          "docs/todo/bth_user_item_scenario_pause_20261104.json"
+        ]
       },
       "completed_batch_ids": []
     },
@@ -2446,7 +2456,7 @@
         "source": null,
         "observation_stale": null
       },
-      "status": "FACTUAL_HELP_COMMITTED_EFFECT_POLICY_DECISION_OPEN",
+      "status": "PAUSED_AT_USER_REQUEST_ITEM_SCENARIO_WORK",
       "commits": [
         {
           "sha": "b63342bbdf04cfb799ba5405f3d4f4d0c416485e",
@@ -2505,17 +2515,16 @@
         "reviewed_with_evidence": 0,
         "remaining_ids": []
       },
-      "next_action": "Reconcile the current owner for the retained physical-game policy finding, verify the factual-help delivery and applicable Web scope, and record a concrete original-finding disposition. Preserve BTH-17 full redesign independently; no new user-selection hold is established.",
+      "next_action": "Keep paused until the user explicitly resumes item/scenario work. Preserve incomplete scope, acceptance, commits and evidence. On resumption: Reconcile the current owner for the retained physical-game policy finding, verify the factual-help delivery and applicable Web scope, and record a concrete original-finding disposition. Preserve BTH-17 full redesign independently; no new user-selection hold is established.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "The finding and current bounded help implementation have retained evidence. Ownership and required acceptance remain work rather than an established external blocker.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "The user explicitly requested: Pause item and scenario work. This scoped pause awaits a later user resumption instruction; other testing, fixes and audits continue.",
         "requires_user_input": false,
+        "observed_at": "2026-11-04T02:07:49.868676+00:00",
         "evidence": [
-          "C:/Users/theep/Documents/Codex/2026-10-26/task/evidence/qa-item022-ledger-pencil-roulette-loss-cushion-review.json",
-          "docs/testing/item_factual_help.md"
-        ],
-        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+          "docs/todo/bth_user_item_scenario_pause_20261104.json"
+        ]
       },
       "completed_batch_ids": []
     },
@@ -5328,6 +5337,86 @@
       "completed_batch_ids": []
     },
     {
+      "id": "BTH-TODO-PAUSE-ITEM-SCENARIO-001",
+      "name": "Record user-requested item/scenario pause",
+      "state": "open",
+      "item_type": "objective",
+      "kind": "operation",
+      "parent_ids": [],
+      "full_objective": {
+        "text": "Record the explicit user-requested pause for the eight named item/scenario entries in the local authoritative queue, preserving IDs, incomplete state, commits, acceptance and evidence; leave unrelated testing/fixes/audits active and do not retry denied publication.",
+        "source": "docs/todo/bth_user_item_scenario_pause_20261104.json",
+        "scope_confirmed": true
+      },
+      "batch_scope": [],
+      "owner": {
+        "name": "Reconcile named todo queue",
+        "task_ref": "01a1a36a-b7dd-709a-b4a0-b93eca365000",
+        "observed_state": "active",
+        "observed_at": "2026-11-04T00:42:29.105Z",
+        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
+        "observation_stale": false
+      },
+      "status": "USER_PAUSE_METADATA_RECORDED_LOCAL_COMMIT_PENDING",
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "not_applicable",
+        "commit": null,
+        "evidence": []
+      },
+      "progress_scope_id": "BTH-TODO-PAUSE-ITEM-SCENARIO-001",
+      "acceptance": [
+        {
+          "id": "scoped-pause-recorded",
+          "description": "Exactly the eight named open entries have the current user pause, with prior next actions/evidence retained and unrelated entries unchanged.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/todo/bth_user_item_scenario_pause_20261104.json"
+          ]
+        },
+        {
+          "id": "authoritative-local-indexes",
+          "description": "Existing local named queue/indexes show the scoped pause and preserved IDs; no main push retry.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        }
+      ],
+      "acceptance_progress": {
+        "required_total": 2,
+        "passed_with_evidence": 1,
+        "remaining_ids": [
+          "authoritative-local-indexes"
+        ]
+      },
+      "coverage": {
+        "required": false,
+        "complete": false,
+        "areas": []
+      },
+      "coverage_progress": {
+        "required": false,
+        "declared_complete": false,
+        "total_areas": 0,
+        "reviewed_with_evidence": 0,
+        "remaining_ids": []
+      },
+      "next_action": "Commit the local pause metadata, apply it to the existing authoritative indexes, verify exactly the eight scoped entries and associate the actual commit before closing this metadata action.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": null,
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T02:07:49.868676+00:00",
+        "evidence": [
+          "docs/todo/bth_user_item_scenario_pause_20261104.json"
+        ]
+      },
+      "completed_batch_ids": []
+    },
+    {
       "id": "BTH-RUNTIME-CLEANUP-001-BATCH-001",
       "name": "Manual runtime-inventory checker integration",
       "state": "open",
@@ -5527,7 +5616,7 @@
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
-      "status": "NATIVE_53_PLUS25_PASS_NEXT_PENDING",
+      "status": "PAUSED_AT_USER_REQUEST_ITEM_SCENARIO_WORK",
       "commits": [
         {
           "sha": "b63342bbdf04cfb799ba5405f3d4f4d0c416485e",
@@ -5588,14 +5677,16 @@
         "reviewed_with_evidence": 0,
         "remaining_ids": []
       },
-      "next_action": "Verify exact existing NEXT promotion/served identity and applicable Web help acceptance; record deployed limits. Keep full item-rework parent Open.",
+      "next_action": "Keep paused until the user explicitly resumes item/scenario work. Preserve incomplete scope, acceptance, commits and evidence. On resumption: Verify exact existing NEXT promotion/served identity and applicable Web help acceptance; record deployed limits. Keep full item-rework parent Open.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "Bounded help commit b63342bbdf04cfb799ba5405f3d4f4d0c416485e is on main; requested release qualification remains work, not a user hold.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "The user explicitly requested: Pause item and scenario work. This scoped pause awaits a later user resumption instruction; other testing, fixes and audits continue.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:32:35.703920+00:00",
-        "evidence": []
+        "observed_at": "2026-11-04T02:07:49.868676+00:00",
+        "evidence": [
+          "docs/todo/bth_user_item_scenario_pause_20261104.json"
+        ]
       },
       "completed_batch_ids": []
     },
@@ -5624,7 +5715,7 @@
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
-      "status": "NATIVE_53_PLUS25_PASS_NEXT_PENDING",
+      "status": "PAUSED_AT_USER_REQUEST_ITEM_SCENARIO_WORK",
       "commits": [
         {
           "sha": "b63342bbdf04cfb799ba5405f3d4f4d0c416485e",
@@ -5693,14 +5784,16 @@
         "reviewed_with_evidence": 0,
         "remaining_ids": []
       },
-      "next_action": "Verify exact existing NEXT promotion/served identity and applicable Web help acceptance; record deployed limits. Keep full item-rework parent Open.",
+      "next_action": "Keep paused until the user explicitly resumes item/scenario work. Preserve incomplete scope, acceptance, commits and evidence. On resumption: Verify exact existing NEXT promotion/served identity and applicable Web help acceptance; record deployed limits. Keep full item-rework parent Open.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "Bounded help commit b63342bbdf04cfb799ba5405f3d4f4d0c416485e is on main; requested release qualification remains work, not a user hold.",
+        "state": "active",
+        "kind": "user_requested_pause",
+        "description": "The user explicitly requested: Pause item and scenario work. This scoped pause awaits a later user resumption instruction; other testing, fixes and audits continue.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:32:35.703920+00:00",
-        "evidence": []
+        "observed_at": "2026-11-04T02:07:49.868676+00:00",
+        "evidence": [
+          "docs/todo/bth_user_item_scenario_pause_20261104.json"
+        ]
       },
       "completed_batch_ids": []
     }

@@ -52,7 +52,7 @@ The checker flags open work with missing references, missing observations, idle/
 
 ## Current user direction
 
-There are **zero intentional holds**. BTH-11 scenario work, BTH-15 Lucky Penny and BTH-17 Ledger Pencil are active items. Prepared proposals or genuinely unresolved implementation choices are recorded as such; they do not create a blanket requirement for another user selection. Actual security approvals, unavailable eligible test conditions and missing evidence remain specific factual dependencies, not intentional holds.
+The current explicit user instruction is **Pause item and scenario work.** The eight named entries in [the user pause record](bth_user_item_scenario_pause_20261104.json) remain Open/incomplete and resume only on user instruction. Their IDs, commits, acceptance, evidence and prior next actions are preserved. This scoped direction supersedes the earlier zero-holds direction for these entries; agents must not invent additional pauses. Other testing, fixes and audits continue. Actual security approvals and missing evidence remain separately recorded factual dependencies.
 
 Erik's original personal incident saves are gone and will not be provided. Their exact-save checks are unavailable, not pending user actions. Use retained captured fixtures/tester profiles, documented equivalent-state warm/cold reconstruction and independent acceptance where feasible. Distinguish those evidence classes from a direct exact-personal-save check. Preserve recorded earlier failures and retained agent-owned saves; no item closes merely because an original personal save is unavailable.
 

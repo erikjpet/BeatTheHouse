@@ -1,0 +1,24 @@
+{
+  "schema": "bth.user_work_pause/v1",
+  "recorded_at": "2026-11-04T02:07:49.868676+00:00",
+  "instruction": "Pause item and scenario work.",
+  "source": "Current explicit user direction supplied through trusted parent delegation.",
+  "source_thread": "01a1a147-7f07-7583-baf0-771a839f1013",
+  "requested_by": "user",
+  "state": "active",
+  "task_ids": [
+    "BTH-11",
+    "BTH-SCENARIO-WEDDING-001",
+    "BTH-SCENARIO-ARRIVAL-002",
+    "BTH-15",
+    "BTH-17",
+    "BTH-15-FACTUAL-HELP-001",
+    "BTH-17-FACTUAL-HELP-001",
+    "LEDGER022"
+  ],
+  "resume_only_on_user_instruction": true,
+  "other_testing_fixes_audits_continue": true,
+  "existing_main_publication_rejection_unchanged": true,
+  "publication_retry_authorized": false,
+  "scope_limit": "Named item/scenario objectives and their associated unfinished batches/finding. Does not pause unrelated item UI bugs, scenario-engine bug fixes, playtesting, performance or audits."
+}
