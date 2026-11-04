@@ -1,0 +1,108 @@
+(() => {
+  // Build-time replacement of the pinned original property, before WASM imports.
+  // IDs grow through the original global allocator only at a new tracked peak.
+  const names = ["buffers", "textures", "vaos", "syncs"];
+  const cap = 65536;
+  const stats = {schema:"bth.web_gl_handles.stats/v1",version:1,cap:cap,
+    disabled:false,fault:"",context_handle:0,pools:{}};
+  for (const name of names) stats.pools[name] = {owned_count:0,free_count:0,
+    allocations:0,reuses:0,releases:0,new_ids:0,fallback_allocations:0};
+  let initialized = false;
+  let disabled = false;
+  let pools = null;
+  const original = table => {
+    var ret = GL.counter++;
+    for (var i = table.length; i < ret; i++) table[i] = null;
+    return ret;
+  };
+  const fault = code => {
+    disabled = true;
+    try { stats.disabled = true; if (!stats.fault) stats.fault = code; } catch (_) {}
+  };
+  const expose = () => {
+    if (GL.__bthGlHandles !== stats) GL.__bthGlHandles = stats;
+    const handle = GL.currentContext && GL.currentContext.handle;
+    stats.context_handle = Number.isSafeInteger(handle) && handle >= 0 ? handle : 0;
+  };
+  const hotName = table => {
+    for (const name of names) if (table === GL[name]) return name;
+    return null;
+  };
+  const initialize = () => {
+    const next = {};
+    for (const name of names) {
+      const table = GL[name];
+      if (!Array.isArray(table) || table.length !== 0) {
+        fault("nonfresh_initial_tables"); return false;
+      }
+      next[name] = {table:table,owned:new Set(),freeSet:new Set(),stack:[],metrics:stats.pools[name]};
+    }
+    pools = next; initialized = true; return true;
+  };
+  const invariant = pool => {
+    if (pool.table !== GL[pool.name] || pool.freeSet.size !== pool.stack.length ||
+        pool.freeSet.size > pool.owned.size || pool.owned.size > cap) {
+      fault("pool_invariant"); return false;
+    }
+    return true;
+  };
+  const fallback = (table, metrics) => {
+    try { if (metrics) metrics.fallback_allocations++; } catch (_) { fault("metadata_fault"); }
+    return original(table);
+  };
+  const allocate = table => {
+    let pool = null, metrics = null, useOriginal = false, excluded = false;
+    try {
+      expose(); const name = hotName(table);
+      if (name === null) { useOriginal = true; excluded = true; }
+      else {
+        metrics = stats.pools[name]; metrics.allocations++;
+        if (disabled) useOriginal = true;
+        else {
+          if (!initialized && !initialize()) useOriginal = true;
+          if (!useOriginal) {
+            pool = pools[name]; pool.name = name;
+            if (!invariant(pool)) useOriginal = true;
+            else if (pool.stack.length) {
+              const id = pool.stack[pool.stack.length - 1];
+              if (!Number.isSafeInteger(id) || id <= 0 || !pool.owned.has(id) ||
+                  !pool.freeSet.has(id) || table[id] !== null) {
+                fault("reuse_invariant"); useOriginal = true;
+              } else {
+                pool.stack.pop();
+                if (!pool.freeSet.delete(id)) { fault("reuse_membership"); useOriginal = true; }
+                else { metrics.free_count = pool.freeSet.size; metrics.reuses++; return id; }
+              }
+            } else if (pool.owned.size >= cap) { fault("tracking_cap"); useOriginal = true; }
+          }
+        }
+      }
+    } catch (_) { fault("bookkeeping_fault"); useOriginal = true; }
+    // No original allocator invocation is inside the bookkeeping catch. Original
+    // exceptions propagate unchanged and never cause a second allocation attempt.
+    if (useOriginal) return excluded ? original(table) : fallback(table, metrics);
+    const id = original(table);
+    try {
+      if (!Number.isSafeInteger(id) || id <= 0 || pool.owned.has(id) ||
+          pool.freeSet.has(id) || (table[id] !== undefined && table[id] !== null)) {
+        fault("fresh_id_invariant"); return id;
+      }
+      pool.owned.add(id); metrics.owned_count = pool.owned.size; metrics.new_ids++;
+    } catch (_) { fault("bookkeeping_after_original"); }
+    return id;
+  };
+  allocate.release = (table, id, prior) => {
+    if (disabled || !prior || !initialized) return;
+    try {
+      expose(); const name = hotName(table);
+      if (name === null) return;
+      const pool = pools[name]; pool.name = name;
+      if (!invariant(pool)) return;
+      if (!Number.isSafeInteger(id) || id <= 0 || !pool.owned.has(id) ||
+          pool.freeSet.has(id) || table[id] !== null) { fault("release_invariant"); return; }
+      pool.stack.push(id); pool.freeSet.add(id);
+      pool.metrics.free_count = pool.freeSet.size; pool.metrics.releases++;
+    } catch (_) { fault("release_bookkeeping_fault"); }
+  };
+  return allocate;
+})()

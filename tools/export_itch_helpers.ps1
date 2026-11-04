@@ -247,3 +247,28 @@ function Complete-CandidatePlatformAttempt {
     Move-Item -LiteralPath $attemptAudit -Destination $finalAudit
     return $Attempt
 }
+
+# Web-only build-time policy. Every immutable reuse rechecks current source policy.
+function Invoke-WebGlHandlesStage {
+    [CmdletBinding()]
+    param(
+        [Parameter(Mandatory)][ValidateSet("web", "windows")][string]$Platform,
+        [Parameter(Mandatory)][ValidateSet("apply", "verify")][string]$Mode,
+        [Parameter(Mandatory)][string]$Stage,
+        [Parameter(Mandatory)][string]$ToolPath,
+        [string]$OwnedRoot = ""
+    )
+    if ($Platform -ne "web") { return }
+    if (-not (Test-Path -LiteralPath $ToolPath -PathType Leaf)) { throw "Web GL handle policy tool is missing: $ToolPath" }
+    $node = Get-Command node -CommandType Application -ErrorAction Stop | Select-Object -First 1
+    if (-not $node -or -not (Test-Path -LiteralPath $node.Source -PathType Leaf)) { throw "Node.js is required for the Web GL handle policy." }
+    $arguments = @($ToolPath, $Mode, "--stage", $Stage)
+    if ($Mode -eq "apply") {
+        if ([string]::IsNullOrWhiteSpace($OwnedRoot)) { throw "Fresh Web mitigation requires its owned attempt root." }
+        $arguments += @("--owned-root", $OwnedRoot)
+    }
+    elseif (-not [string]::IsNullOrEmpty($OwnedRoot)) { throw "Immutable Web verification cannot accept an apply root." }
+    $result = @(Invoke-TypedConsoleProcess -FilePath $node.Source -ArgumentList $arguments)
+    if ($result.Count -ne 1 -or $result[0] -isnot [int]) { throw "Web GL handle policy must return one typed Int32 exit code." }
+    if ($result[0] -ne 0) { throw "Web GL handle policy rejected $Mode with exit $($result[0]); stage remains unregistered." }
+}
