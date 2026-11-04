@@ -5,7 +5,7 @@
     "BTH-COINPUSHER-DROP-PRICE-001",
     "BTH-JOURNAL-ROULETTE-CURRENCY-001"
   ],
-  "state": "AUTHORIZED_PUBLICATION_IN_PROGRESS_NEXT_RESERVE_BLOCKED",
+  "state": "PUBLISHED_MAIN_NATIVE723_PASS_NEXT_RESERVE_BLOCKED",
   "authorization": "Trusted parent delegation2026-11-04: publish the tested Quarter Falls price and Roulette journal fixes to main, follow existing NEXT watcher, retain NEXT acceptance Open until the reserve blocker resolves and delivery is verified. User transcript: Yes push all finished work to next. Do not bypass the existing gate.",
   "prepared_branch_commit": "3f81238b64c64d5c11b0587112bed6cfc546cf47",
   "implementation_commits": {
@@ -28,38 +28,310 @@
     }
   },
   "publication": {
-    "state": "authorized_in_progress",
-    "main_sha": null,
-    "main_tree": null,
-    "push_receipt": null
+    "state": "published",
+    "main_sha": "d361c21e47990cf50222242e07dca2568c33d3d4",
+    "main_tree": "d574cd9f1fa4b488b7d3968d53fadf9f55ce5eac",
+    "push_receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-main-push.json",
+    "source": "Parent-confirmed successful normal main push and exact identity.",
+    "earlier_attempt": {
+      "candidate_prefix": "7f6f9cdd5",
+      "outcome": "normal_non_fast_forward_no_remote_ref_update",
+      "policy_denial": false,
+      "remote_advanced_prefix": "828f55c24",
+      "resolved_by_merge": "d361c21e47990cf50222242e07dca2568c33d3d4"
+    }
   },
   "next": {
     "state": "reserve_blocked",
-    "observation_source": "Parent read-only watcher/status observation; this tracking update did not inspect or operate the pipeline.",
-    "observed_at": "2026-11-04T17:59:46+00:00",
+    "observation_source": "D:\\Projects\\site\\state\\bth-next\\status.json; read-only fields retained in task evidence/quarter-roulette-status-postpush.json",
+    "observed_at": "2026-11-04T18:11:48Z",
     "deployed_sha": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
-    "free_bytes": 13064531968,
+    "free_bytes": 13111173120,
     "required_bytes": 13958643712,
     "target_promoted_sha": null,
     "served_identity": "unverified",
     "assets": "unverified",
-    "startup": "unverified"
+    "startup": "unverified",
+    "target_source_sha": "d361c21e47990cf50222242e07dca2568c33d3d4",
+    "target_tree": "d574cd9f1fa4b488b7d3968d53fadf9f55ce5eac",
+    "status_snapshot": {
+      "source": "D:\\Projects\\site\\state\\bth-next\\status.json",
+      "read_at": "2026-11-04T18:12:12.227039+00:00",
+      "status_updated_at": "2026-11-04T18:11:48Z",
+      "available_commit": "d361c21e47990cf50222242e07dca2568c33d3d4",
+      "last_checked_at": "2026-11-04T18:11:03Z",
+      "building_commit": "345f94149609e828c76c7a9df6b2cffaff5862b9",
+      "deployed_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+      "phase": "failed",
+      "error": "Insufficient shared disk reserve for export: 13111173120 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+      "limit": "Read-only status fields; available/building are not proof of target promotion or serving."
+    },
+    "retained_served_observation": {
+      "reference": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-next-observation.json",
+      "source": "Parent HTTP next.json and local current-pointer proof2026-11-04T18:10:57Z",
+      "retained_sha": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+      "retained_tree": "4c4ec494b5c22b1a5c57cc1e8bbf73041140a753",
+      "retained_version": "0.6.0-dev+f3058b6daab8",
+      "scope": "Qualifies old retained identity only; target identity/assets/startup remain unverified."
+    },
+    "observed_target_matches": true,
+    "first_target_observation": {
+      "status_updated_at": "2026-11-04T18:11:03Z",
+      "last_checked_at": "2026-11-04T18:11:03Z",
+      "source": "Parent read-only watcher status observation; later direct snapshot retained separately."
+    },
+    "export_state": "pending_existing_disk_reserve",
+    "target_build_or_promotion_claim": "unverified; stale building_commit field is not target build evidence"
   },
   "blocker": {
     "state": "active",
     "kind": "pipeline_disk_reserve",
-    "description": "Existing NEXT disk reserve blocked at parent observation2026-11-04T17:59:46Z: free13064531968 bytes below required13958643712 bytes; prior NEXT f3058b6daab820e9d747c4c4aabc2d983e9ae32e retained. Publication is authorized and proceeding; no approval or user-input hold.",
+    "description": "Main publication is confirmed. Existing NEXT disk reserve at watcher status2026-11-04T18:11:48Z: free13111173120 bytes below required13958643712; prior NEXTf3058b6daab820e9d747c4c4aabc2d983e9ae32e retained. Existing watcher delivery remains blocked; no approval/user-input hold or gate bypass.",
     "requires_user_input": false,
-    "observed_at": "2026-11-04T17:59:46+00:00",
+    "observed_at": "2026-11-04T18:11:48Z",
     "evidence": [
       "docs/testing/quarter_roulette_publication_20261104.md",
       "docs/testing/quarter_roulette_publication_20261104.json"
     ]
   },
   "limits": [
-    "Source-safe prepublication tracking only. No network, push, watcher operation, engine, stage or commit performed by the receipt editor.",
+    "Parent-confirmed main publication and source-safe follow-through tracking. No network, push, watcher operation, engine, stage or commit performed by the receipt editor.",
     "Completed native local qualification remains historical and does not establish deployed Web identity or gameplay.",
     "No bypass, second watcher or manual substitute build; preserve stable/itch/audience, item/scenario pause, fixed16:9/touch/focus and resource gates.",
-    "Original profiles and all thirteen owned Quarter Falls/Roulette job closure records remain unchanged."
-  ]
+    "Original profiles and prior thirteen owned job closure records remain unchanged; seven fresh nonce-bound jobs are appended separately."
+  ],
+  "updated_at": "2026-11-04T18:12:12.227039+00:00",
+  "merged_source_qualification": {
+    "source_commit": "d361c21e47990cf50222242e07dca2568c33d3d4",
+    "reason": "New upstream Foundation Host/Canvas cleanup introduced a concrete adjacent risk; seven fresh serial focused jobs were run before the successful push.",
+    "assertions": 723,
+    "quarter_assertions": 263,
+    "roulette_assertions_including_consumed": 460,
+    "separate_liveness": "PASS",
+    "jobs": [
+      {
+        "label": "quarter-roulette-release-q-producer",
+        "task_id": "BTH-COINPUSHER-DROP-PRICE-001",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-q-producer.json",
+        "receipt_sha256": "c32cc3d633d156c9c8cba8be81117275940f241734a406edcea57f646d6411f4",
+        "result_sha256": "6c5857a0f9370238f966eea16dc8f3122d1b4b4435b7a66ecb46ed8239edfe43",
+        "checks": 228,
+        "result": "PASS",
+        "launch_nonce": "7111c20b01ae4ec0abbe70f9ba776f51",
+        "pid": 37928,
+        "started_at_utc": "2026-11-04T18:07:16.946107+00:00",
+        "finished_at_utc": "2026-11-04T18:07:26.562885+00:00",
+        "exit_code": 0,
+        "assigned_before_execution": true,
+        "active_at_release": 0,
+        "timed_out": false,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 500,
+          "aggregate_job_cpu_percent": 5.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        }
+      },
+      {
+        "label": "quarter-roulette-release-q-cold",
+        "task_id": "BTH-COINPUSHER-DROP-PRICE-001",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-q-cold.json",
+        "receipt_sha256": "16a91656af58162a4e5e96bca8bb20c473d80250f06677f40c927ac3f909d699",
+        "result_sha256": "373e285f43dfbc232ecf0df91c727fce19c5bf68719109ef136579bf5dd07c78",
+        "checks": 35,
+        "result": "PASS",
+        "launch_nonce": "d9eec3fa3e9149a4b4881fa47c74c57d",
+        "pid": 14640,
+        "started_at_utc": "2026-11-04T18:07:26.664222+00:00",
+        "finished_at_utc": "2026-11-04T18:07:34.846941+00:00",
+        "exit_code": 0,
+        "assigned_before_execution": true,
+        "active_at_release": 0,
+        "timed_out": false,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 500,
+          "aggregate_job_cpu_percent": 5.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        }
+      },
+      {
+        "label": "quarter-roulette-release-r-producer",
+        "task_id": "BTH-JOURNAL-ROULETTE-CURRENCY-001",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-producer.json",
+        "receipt_sha256": "1ca865ce709f9e0cb04ca6e84a2bacbfbcefe3e147aed4f3f80044c788cd3648",
+        "result_sha256": "f32461965fe0812285c2f7ea2d7523775d8eac81215e389d943855f0a3b2f8f2",
+        "checks": 334,
+        "result": "PASS",
+        "launch_nonce": "5a91b0cfa16e480c87f4dba2f721e358",
+        "pid": 31348,
+        "started_at_utc": "2026-11-04T18:07:34.940101+00:00",
+        "finished_at_utc": "2026-11-04T18:07:51.080723+00:00",
+        "exit_code": 0,
+        "assigned_before_execution": true,
+        "active_at_release": 0,
+        "timed_out": false,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 500,
+          "aggregate_job_cpu_percent": 5.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        }
+      },
+      {
+        "label": "quarter-roulette-release-r-draft-cold",
+        "task_id": "BTH-JOURNAL-ROULETTE-CURRENCY-001",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-draft-cold.json",
+        "receipt_sha256": "8b3da3b84a16a7cd7d2ba3464eab6ec0721c44ab751575b5b8acb46726600406",
+        "result_sha256": "508113873a0e40d15ecf20486b3e064d8ad45fe679f39fde48fa7478fc931696",
+        "checks": 35,
+        "result": "PASS",
+        "launch_nonce": "ba4a20903b35462cb3a4af1d4ebea576",
+        "pid": 26612,
+        "started_at_utc": "2026-11-04T18:07:51.177528+00:00",
+        "finished_at_utc": "2026-11-04T18:08:02.836686+00:00",
+        "exit_code": 0,
+        "assigned_before_execution": true,
+        "active_at_release": 0,
+        "timed_out": false,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 500,
+          "aggregate_job_cpu_percent": 5.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        }
+      },
+      {
+        "label": "quarter-roulette-release-r-cold",
+        "task_id": "BTH-JOURNAL-ROULETTE-CURRENCY-001",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-r-cold.json",
+        "receipt_sha256": "eba1336fc1329b0e30ccf7386ed7ff4fcc4d8d3d9d4eb9ee57a585174a970344",
+        "result_sha256": "273f8983e17fda2b7a1e754672cec88af7d8407f439e7c2bcf9c057b22d23e25",
+        "checks": 75,
+        "result": "PASS",
+        "launch_nonce": "10ef2b92b0ea4dabb7d9dcbad2f34456",
+        "pid": 29976,
+        "started_at_utc": "2026-11-04T18:08:02.932760+00:00",
+        "finished_at_utc": "2026-11-04T18:08:16.635187+00:00",
+        "exit_code": 0,
+        "assigned_before_execution": true,
+        "active_at_release": 0,
+        "timed_out": false,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 500,
+          "aggregate_job_cpu_percent": 5.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        }
+      },
+      {
+        "label": "quarter-roulette-release-consumed",
+        "task_id": "BTH-JOURNAL-ROULETTE-CURRENCY-001",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-consumed.json",
+        "receipt_sha256": "e33e124a0e059cff01386756a24a31ddde688715e46ea940022a1ac77daaa435",
+        "result_sha256": null,
+        "checks": 16,
+        "result": "PASS",
+        "launch_nonce": "7da5bfc00ddb499ab4b53297f9c0f498",
+        "pid": 29172,
+        "started_at_utc": "2026-11-04T18:08:16.728028+00:00",
+        "finished_at_utc": "2026-11-04T18:08:34.857269+00:00",
+        "exit_code": 0,
+        "assigned_before_execution": true,
+        "active_at_release": 0,
+        "timed_out": false,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 500,
+          "aggregate_job_cpu_percent": 5.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        }
+      },
+      {
+        "label": "quarter-roulette-release-liveness",
+        "task_id": "BTH-COINPUSHER-DROP-PRICE-001",
+        "receipt": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-release-liveness.json",
+        "receipt_sha256": "e821fcaf335ef2562768dcaba2aa36c081fc6c317b17e8ccf48da2c19effd258",
+        "result_sha256": null,
+        "checks": null,
+        "result": "PASS",
+        "launch_nonce": "da68b1e73b264877b5492a4bdf04e888",
+        "pid": 18072,
+        "started_at_utc": "2026-11-04T18:08:34.953240+00:00",
+        "finished_at_utc": "2026-11-04T18:08:44.127934+00:00",
+        "exit_code": 0,
+        "assigned_before_execution": true,
+        "active_at_release": 0,
+        "timed_out": false,
+        "limits": {
+          "control_flags": 5,
+          "cpu_rate": 500,
+          "aggregate_job_cpu_percent": 5.0,
+          "kill_on_close": true,
+          "breakaway_allowed": false,
+          "job_memory_limit_bytes": 2147483648,
+          "active_processes": 0
+        }
+      }
+    ],
+    "fidelity": "Fresh synthetic native/sealed-Host and renderer/font checks plus consumed-wager/liveness on merged source; no new original-profile, Web or deployed gameplay claim. Detailed unchanged test facts remain in the original scoped receipts."
+  },
+  "manual_reconciliation": {
+    "current": {
+      "report": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-postpublication-ledger-current.json",
+      "checked_at": "2026-11-04T18:12:53.139037Z",
+      "exit_code": 1,
+      "summary": {
+        "objectives_checked": 87,
+        "batches_checked": 8,
+        "open_objectives": 50,
+        "open_batches": 4,
+        "open_work_items": 54,
+        "user_paused_items": 8,
+        "complete_objectives": 37,
+        "errors": 56,
+        "warnings": 0,
+        "tasks_with_errors": 19
+      },
+      "scope_findings": [],
+      "limit": "Two published objectives and all seven fresh runtime records have zero findings. Existing unrelated ledger/runtime findings remain; not a global pass."
+    },
+    "all": {
+      "report": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-6\\evidence\\quarter-roulette-postpublication-ledger-all.json",
+      "checked_at": "2026-11-04T18:12:53.774269Z",
+      "exit_code": 1,
+      "summary": {
+        "objectives_checked": 231,
+        "batches_checked": 8,
+        "open_objectives": 180,
+        "open_batches": 4,
+        "open_work_items": 184,
+        "user_paused_items": 8,
+        "complete_objectives": 49,
+        "errors": 522,
+        "warnings": 0,
+        "tasks_with_errors": 159
+      },
+      "scope_findings": [],
+      "limit": "Two published objectives and all seven fresh runtime records have zero findings. Existing unrelated ledger/runtime findings remain; not a global pass."
+    }
+  }
 }

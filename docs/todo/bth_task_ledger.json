@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T18:06:35.583211+00:00",
+  "updated_at": "2026-11-04T18:12:12.227039+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -19108,8 +19108,12 @@
             "id": "publication",
             "description": "Publish the separately tested scoped implementation commit to main under existing user authorization; record exact resulting main SHA/tree and included fix ancestry without unrelated changes.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/quarter_roulette_publication_20261104.md",
+              "docs/testing/quarter_roulette_publication_20261104.json",
+              "commit:d361c21e47990cf50222242e07dca2568c33d3d4"
+            ]
           },
           {
             "id": "next_delivery",
@@ -19126,7 +19130,7 @@
         }
       },
       "state": "open",
-      "status": "LOCAL_FIX_COMPLETE_PUBLICATION_IN_PROGRESS_NEXT_RESERVE_BLOCKED",
+      "status": "PUBLISHED_MAIN_NATIVE_QUALIFIED_NEXT_RESERVE_PENDING",
       "owner": {
         "name": "Fix Back Alley travel / Quarter Falls visible terms",
         "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
@@ -19140,17 +19144,25 @@
             "docs/testing/coin_pusher_drop_price_20261104.json",
             "Independent source review and 263 native assertions plus no-pointer liveness; local scope only."
           ]
+        },
+        {
+          "sha": "d361c21e47990cf50222242e07dca2568c33d3d4",
+          "evidence": [
+            "docs/testing/quarter_roulette_publication_20261104.md",
+            "docs/testing/quarter_roulette_publication_20261104.json",
+            "Parent-confirmed published main identity; original implementation commit retained separately."
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
+        "commit": "d361c21e47990cf50222242e07dca2568c33d3d4",
         "evidence": [
           "docs/testing/quarter_roulette_publication_20261104.md",
           "docs/testing/quarter_roulette_publication_20261104.json"
         ],
-        "scope": "New authorized main/NEXT follow-through. Exact published main and deployed acceptance remain pending; completed local acceptance is preserved separately."
+        "scope": "Published main exact source; NEXT remains prior build behind existing disk reserve. Identity/assets/startup acceptance Open."
       },
       "evidence": [
         {
@@ -19172,16 +19184,21 @@
           "kind": "authorization",
           "reference": "docs/testing/quarter_roulette_publication_20261104.json",
           "summary": "Trusted parent delegation2026-11-04: publish the tested Quarter Falls price and Roulette journal fixes to main, follow existing NEXT watcher, retain NEXT acceptance Open until the reserve blocker resolves and delivery is verified. User transcript: Yes push all finished work to next. Do not bypass the existing gate."
+        },
+        {
+          "kind": "verification",
+          "reference": "docs/testing/quarter_roulette_publication_20261104.json",
+          "summary": "Parent-confirmed main publication and723 fresh merged-source native assertions plus liveness; NEXT identity/assets/startup remain reserve-blocked/unverified."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish the tested scoped work to main under existing authorization, record exact main identity, then observe the existing NEXT watcher and verify identity/assets/startup after its disk reserve permits progression. Keep NEXT acceptance Open until evidenced.",
+      "next_action": "Observe the existing NEXT watcher after its reserve permits progression, then verify the published source/tree through promoted/served identity, matching assets and basic startup. Retain the prior NEXT and keep delivery acceptance Open until evidenced.",
       "blocker": {
         "state": "active",
         "kind": "pipeline_disk_reserve",
-        "description": "Existing NEXT disk reserve blocked at parent observation2026-11-04T17:59:46Z: free13064531968 bytes below required13958643712 bytes; prior NEXT f3058b6daab820e9d747c4c4aabc2d983e9ae32e retained. Publication is authorized and proceeding; no approval or user-input hold.",
+        "description": "Main publication is confirmed. Existing NEXT disk reserve at watcher status2026-11-04T18:11:48Z: free13111173120 bytes below required13958643712; prior NEXTf3058b6daab820e9d747c4c4aabc2d983e9ae32e retained. Existing watcher delivery remains blocked; no approval/user-input hold or gate bypass.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:59:46+00:00",
+        "observed_at": "2026-11-04T18:11:48Z",
         "evidence": [
           "docs/testing/quarter_roulette_publication_20261104.md",
           "docs/testing/quarter_roulette_publication_20261104.json"
@@ -19193,7 +19210,7 @@
           "description": "Expose/read-only canonical Drop and Hold terms in existing surface/control geometry; no charging, paused gameplay, viewport/touch or storage guard change."
         }
       ],
-      "updated_at": "2026-11-04T18:02:51.923373+00:00"
+      "updated_at": "2026-11-04T18:12:12.227039+00:00"
     },
     {
       "id": "BTH-JOURNAL-ROULETTE-CURRENCY-001",
@@ -19255,8 +19272,12 @@
             "id": "publication",
             "description": "Publish the separately tested scoped implementation commit to main under existing user authorization; record exact resulting main SHA/tree and included fix ancestry without unrelated changes.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/quarter_roulette_publication_20261104.md",
+              "docs/testing/quarter_roulette_publication_20261104.json",
+              "commit:d361c21e47990cf50222242e07dca2568c33d3d4"
+            ]
           },
           {
             "id": "next_delivery",
@@ -19273,7 +19294,7 @@
         }
       },
       "state": "open",
-      "status": "LOCAL_FIX_COMPLETE_PUBLICATION_IN_PROGRESS_NEXT_RESERVE_BLOCKED",
+      "status": "PUBLISHED_MAIN_NATIVE_QUALIFIED_NEXT_RESERVE_PENDING",
       "owner": {
         "name": "Fix Back Alley travel / Roulette journal follow-up",
         "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
@@ -19287,17 +19308,25 @@
             "docs/testing/roulette_journal_currency_20261104.json",
             "Independent source/test review; native334 + draft-cold35 + final-cold75 + adjacent consumed16 qualified assertions."
           ]
+        },
+        {
+          "sha": "d361c21e47990cf50222242e07dca2568c33d3d4",
+          "evidence": [
+            "docs/testing/quarter_roulette_publication_20261104.md",
+            "docs/testing/quarter_roulette_publication_20261104.json",
+            "Parent-confirmed published main identity; original implementation commit retained separately."
+          ]
         }
       ],
       "deployment": {
         "required": true,
         "state": "pending",
-        "commit": null,
+        "commit": "d361c21e47990cf50222242e07dca2568c33d3d4",
         "evidence": [
           "docs/testing/quarter_roulette_publication_20261104.md",
           "docs/testing/quarter_roulette_publication_20261104.json"
         ],
-        "scope": "New authorized main/NEXT follow-through. Exact published main and deployed acceptance remain pending; completed local acceptance is preserved separately."
+        "scope": "Published main exact source; NEXT remains prior build behind existing disk reserve. Identity/assets/startup acceptance Open."
       },
       "evidence": [
         {
@@ -19319,16 +19348,21 @@
           "kind": "authorization",
           "reference": "docs/testing/quarter_roulette_publication_20261104.json",
           "summary": "Trusted parent delegation2026-11-04: publish the tested Quarter Falls price and Roulette journal fixes to main, follow existing NEXT watcher, retain NEXT acceptance Open until the reserve blocker resolves and delivery is verified. User transcript: Yes push all finished work to next. Do not bypass the existing gate."
+        },
+        {
+          "kind": "verification",
+          "reference": "docs/testing/quarter_roulette_publication_20261104.json",
+          "summary": "Parent-confirmed main publication and723 fresh merged-source native assertions plus liveness; NEXT identity/assets/startup remain reserve-blocked/unverified."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish the tested scoped work to main under existing authorization, record exact main identity, then observe the existing NEXT watcher and verify identity/assets/startup after its disk reserve permits progression. Keep NEXT acceptance Open until evidenced.",
+      "next_action": "Observe the existing NEXT watcher after its reserve permits progression, then verify the published source/tree through promoted/served identity, matching assets and basic startup. Retain the prior NEXT and keep delivery acceptance Open until evidenced.",
       "blocker": {
         "state": "active",
         "kind": "pipeline_disk_reserve",
-        "description": "Existing NEXT disk reserve blocked at parent observation2026-11-04T17:59:46Z: free13064531968 bytes below required13958643712 bytes; prior NEXT f3058b6daab820e9d747c4c4aabc2d983e9ae32e retained. Publication is authorized and proceeding; no approval or user-input hold.",
+        "description": "Main publication is confirmed. Existing NEXT disk reserve at watcher status2026-11-04T18:11:48Z: free13111173120 bytes below required13958643712; prior NEXTf3058b6daab820e9d747c4c4aabc2d983e9ae32e retained. Existing watcher delivery remains blocked; no approval/user-input hold or gate bypass.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:59:46+00:00",
+        "observed_at": "2026-11-04T18:11:48Z",
         "evidence": [
           "docs/testing/quarter_roulette_publication_20261104.md",
           "docs/testing/quarter_roulette_publication_20261104.json"
@@ -19340,7 +19374,7 @@
           "description": "Six new producer metadata fields only: actual currency and current action net. No charging, authority, rules, history rewrite, input, viewport, scheduling or paused feature change."
         }
       ],
-      "updated_at": "2026-11-04T18:02:51.923373+00:00"
+      "updated_at": "2026-11-04T18:12:12.227039+00:00"
     }
   ],
   "batches": [
