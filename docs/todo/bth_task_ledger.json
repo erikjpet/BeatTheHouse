@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T16:13:18.036432+00:00",
+  "updated_at": "2026-11-04T16:23:29.672223+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -41,7 +41,7 @@
   "metadata": {
     "markdown_ledger_section": "## Named playtest task ledger",
     "readable_index": "docs/plans/0.6.1_stability_release_plan.md",
-    "snapshot_source_commit": "345f94149609e828c76c7a9df6b2cffaff5862b9",
+    "snapshot_source_commit": "9c6f1e23a902ae4b707ff64b0db0f2692c8d4fa6",
     "operator": "The user runs checks and decides actions; no coordinator, scheduler, messaging or worker launch behavior exists."
   },
   "objectives": [
@@ -407,11 +407,11 @@
         "kind": null,
         "description": "Full coverage, current findings and exact main/NEXT acceptance remain active work; source inspection alone confirms no large leak.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-PERF-20261104-001",
@@ -500,11 +500,11 @@
         "kind": null,
         "description": "Active measured investigation or delivery acceptance work; no intentional hold and no inferred leak/fix beyond recorded evidence.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-PERF-20261104-002",
@@ -585,11 +585,11 @@
         "kind": null,
         "description": "Active measured investigation or delivery acceptance work; no intentional hold and no inferred leak/fix beyond recorded evidence.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-PERF-20261104-003",
@@ -661,11 +661,11 @@
         "kind": null,
         "description": "Active measured investigation or delivery acceptance work; no intentional hold and no inferred leak/fix beyond recorded evidence.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-PULLTABS-SAVE-001",
@@ -784,11 +784,11 @@
         "kind": null,
         "description": "Original generation fingerprints/load outcome and between-Save custody were not captured. This is an evidence limitation, not a user-save request or an intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "UX-ROULETTE-SOCIAL-QUOTE-001",
@@ -866,11 +866,11 @@
         "kind": null,
         "description": "Authorized localhost Web quote/staging acceptance passed without bypass. The separate LAN HTTPS trust task remains Open and no longer blocks this accepted scope.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BACCARAT_HISTORICAL_NOTICE",
@@ -939,11 +939,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BACK-ALLEY-INITIAL-SPAWN",
@@ -1017,11 +1017,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-05",
@@ -1082,11 +1082,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-06-INDEPENDENT-ACCEPTANCE",
@@ -1149,11 +1149,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-07",
@@ -1219,11 +1219,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-08",
@@ -1284,11 +1284,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-09",
@@ -1363,11 +1363,11 @@
         "kind": null,
         "description": "Exact personal-save evidence is unavailable, not an intentional hold or pending user action.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -1434,11 +1434,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-11",
@@ -1530,7 +1530,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "pause": {
         "state": "active",
         "requested_by": "user",
@@ -1643,7 +1643,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "pause": {
         "state": "active",
         "requested_by": "user",
@@ -1732,7 +1732,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "pause": {
         "state": "active",
         "requested_by": "user",
@@ -1811,11 +1811,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-13",
@@ -1876,11 +1876,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-15",
@@ -1971,7 +1971,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "decisions": [
         {
           "id": "replacement-effect",
@@ -2095,7 +2095,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "decisions": [
         {
           "id": "full-rework-design",
@@ -2182,11 +2182,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-19",
@@ -2247,11 +2247,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-20",
@@ -2312,11 +2312,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-25",
@@ -2382,11 +2382,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-26-A-ADJACENT-COFFEE-WEB",
@@ -2454,11 +2454,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-26-A-INDEPENDENT-UNFINISHED-LESSON",
@@ -2522,11 +2522,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-26-A-NATIVE-QUALIFICATION",
@@ -2589,11 +2589,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-26-A-NEXT-DELIVERY",
@@ -2656,11 +2656,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-26-A-ORIGINAL-VISIBLE-ACCEPTANCE",
@@ -2723,11 +2723,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-26-A-PHONE-COLD-CONTINUITY",
@@ -2795,11 +2795,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-26-A-PHONE-WARM-ACK-WEB",
@@ -2867,11 +2867,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-28",
@@ -2937,11 +2937,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-30-NATIVE-QUALIFICATION",
@@ -2999,11 +2999,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-30-NEXT-DELIVERY",
@@ -3061,11 +3061,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-30-PRESERVED-OFFER-ACCEPTANCE",
@@ -3123,11 +3123,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-31",
@@ -3210,11 +3210,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-31-ENG-STRESS-WEB-001",
@@ -3282,11 +3282,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-31-NATIVE-WHOLE-APP",
@@ -3344,11 +3344,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-31-NEXT-DELIVERY",
@@ -3406,11 +3406,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-31-WEB-VIEWPORT-TOUCH",
@@ -3468,11 +3468,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-32",
@@ -3541,11 +3541,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-BJ-SPLIT-ACE-PAYOUT-ACCEPTANCE-001",
@@ -3614,11 +3614,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-BJ-SPLIT-DOUBLE-ACCEPTANCE-001",
@@ -3692,11 +3692,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-COACH-CADENCE-FIXTURE-001",
@@ -3757,11 +3757,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-COUNT-ROOM-COLD-001",
@@ -3856,11 +3856,11 @@
         "kind": null,
         "description": "Preserved agent-owned R02 still exists; it is not Erik's gone personal save.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -3963,11 +3963,11 @@
         "kind": null,
         "description": "Exact personal incident state is unavailable and no longer a completion prerequisite; deployed interaction evidence remains separately classified.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -4071,11 +4071,11 @@
         "kind": null,
         "description": "Owner/scope reconciliation and paid-ticket exit acceptance remain unfinished. This bug row is not a newly imposed pause or missing-save dependency.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -4142,11 +4142,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-PRIMARY-QUEUE-RECONCILE-20261103",
@@ -4215,11 +4215,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-QA-BROAD-001",
@@ -4280,11 +4280,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-QA-CREW-ENDING-001",
@@ -4345,11 +4345,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -4418,11 +4418,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-QA-TIMING-WORKFLOW-001",
@@ -4483,11 +4483,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-RESTORE-06-ENVIRONMENT-001",
@@ -4556,11 +4556,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-RESTORE-06-PHYSICAL-PHONE-ACCEPTANCE",
@@ -4618,11 +4618,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-SELECTION-NARRATIVE-001",
@@ -4691,11 +4691,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-TODO-RESTORE-COMMIT-GATE-001",
@@ -4815,11 +4815,11 @@
         "kind": null,
         "description": "Historical tracking publication/readback is accepted; no app startup pass is inferred.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-TOUCH-01",
@@ -4893,11 +4893,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-TOUCH-01-OWNER-MOBILE-WEB",
@@ -4960,11 +4960,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-TOUCH-01-USER-PHONE-ACCEPTANCE",
@@ -5022,11 +5022,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-001",
@@ -5097,11 +5097,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-002",
@@ -5172,11 +5172,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-003",
@@ -5239,11 +5239,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-004",
@@ -5306,11 +5306,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-005",
@@ -5373,11 +5373,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-006",
@@ -5515,11 +5515,11 @@
         "kind": null,
         "description": "No concrete technical blocker established for the full parent; current assignment and per-game acceptance coverage require reconciliation. Do not infer completion from a single subtask.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-007",
@@ -5582,11 +5582,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-008",
@@ -5649,11 +5649,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-009",
@@ -5716,11 +5716,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-010",
@@ -5783,11 +5783,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-011",
@@ -5850,11 +5850,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-012",
@@ -5925,11 +5925,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-013",
@@ -5992,11 +5992,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-014",
@@ -6074,11 +6074,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-015",
@@ -6149,11 +6149,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-016",
@@ -6224,11 +6224,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-017",
@@ -6299,11 +6299,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-018",
@@ -6374,11 +6374,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-019",
@@ -6449,11 +6449,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-020",
@@ -6531,11 +6531,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-021",
@@ -6613,11 +6613,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-022",
@@ -6688,11 +6688,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-023",
@@ -6763,11 +6763,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-024",
@@ -6838,11 +6838,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-025",
@@ -6903,11 +6903,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-026",
@@ -6978,11 +6978,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-ALLEY-LOAN",
@@ -7085,11 +7085,11 @@
         "kind": null,
         "description": "Erik's original affected loan save is gone and is not awaited. Existing reconstructed fixtures remain usable.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -7210,11 +7210,11 @@
         "kind": null,
         "description": "Personal original save unavailable, not pending; captured R03 evidence and tester state remain available.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -7324,10 +7324,10 @@
         "evidence": [
           "docs/testing/crew_expired_handoff.md"
         ],
-        "observed_at": "2026-11-04T16:13:18.036432+00:00"
+        "observed_at": "2026-11-04T16:23:29.672223+00:00"
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -7420,11 +7420,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-HUD-001",
@@ -7530,11 +7530,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-TABLE-ENDING",
@@ -7626,11 +7626,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "CARD-INTEREST-DISPLAY-001",
@@ -7711,11 +7711,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "COUNT-MONEYFLOW-001",
@@ -7784,11 +7784,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "CREW-LENDER-REOPEN-001",
@@ -7879,11 +7879,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "CREW-LENDER-REOPEN-001-AC01",
@@ -7941,11 +7941,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "CREW-LENDER-REOPEN-001-AC02",
@@ -8003,11 +8003,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "CREW-LENDER-REOPEN-001-AC03",
@@ -8065,11 +8065,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "CREW-LENDER-REOPEN-001-AC04",
@@ -8127,11 +8127,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "CREW-LENDER-REOPEN-001-AC05",
@@ -8189,11 +8189,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "CREW-LENDER-REOPEN-001-AC06",
@@ -8251,11 +8251,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "CREW-LENDER-REOPEN-001-AC07",
@@ -8313,11 +8313,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "CREW-LENDER-REOPEN-001-COV-HTTPS",
@@ -8375,11 +8375,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "CREW-LENDER-REOPEN-001-COV-PAWN-REPAY",
@@ -8437,11 +8437,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "CREW-PACKAGE-TERMS-001",
@@ -8519,11 +8519,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "CREW-PLANNING-OVERFLOW",
@@ -8592,11 +8592,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "CREW-R02-PACKAGE-PROGRESSION",
@@ -8654,11 +8654,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "CREW-STAKE-LOSS-PUBLICATION-001",
@@ -8744,11 +8744,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "CREW-STAKE-LOSS-PUBLICATION-001-INDEPENDENT-ACCEPTANCE",
@@ -8808,11 +8808,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "DEPARTING_OBSERVER_CLIP",
@@ -8890,11 +8890,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "EXPLICIT_ENTRY_SAL_PENDING_OFFER",
@@ -8970,11 +8970,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "EXPLICIT_ENTRY_SAL_PENDING_OFFER-INDEPENDENT-ACCEPTANCE",
@@ -9034,11 +9034,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "EXPLICIT_ENTRY_SAL_TALK",
@@ -9114,11 +9114,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "EXPLICIT_ENTRY_TUTORIAL_BRONZE_COLLECT",
@@ -9194,11 +9194,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "EXPLICIT_ENTRY_TUTORIAL_BRONZE_COLLECT-INDEPENDENT-ACCEPTANCE",
@@ -9258,11 +9258,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "GAP-BJ-CAUGHT-STAND-INDEPENDENT-001",
@@ -9318,11 +9318,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "GAP-CREW-SHARE-READ-INDEPENDENT-001",
@@ -9378,11 +9378,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "GAP-INSPECTOR-ROLLBACK-WEB-001",
@@ -9438,11 +9438,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "GAP-RESTORE-06-LAN-HTTPS-001",
@@ -9500,11 +9500,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "GRAND-GOLD-REVIEW-RETALK-001",
@@ -9597,11 +9597,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "GRAND-GOLD-REVIEW-RETALK-001-INDEPENDENT-ACCEPTANCE",
@@ -9661,11 +9661,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "GRAND-JOURNAL-CURRENCY-001-CASH-EVENT",
@@ -9723,11 +9723,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "GRAND-JOURNAL-CURRENCY-001-CHIP-DEBIT",
@@ -9785,11 +9785,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "GRAND-JOURNAL-CURRENCY-001-LEGACY-MIXED",
@@ -9847,11 +9847,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "GRAND-JOURNAL-CURRENCY-001-NEXT-DELIVERY",
@@ -9909,11 +9909,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "GRAND-JOURNAL-CURRENCY-001-RECORD-INTEGRITY",
@@ -9971,11 +9971,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "GRAND-JOURNAL-CURRENCY-001-WARM-COLD",
@@ -10038,11 +10038,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "HISTORICAL_STAND_INPUT",
@@ -10098,11 +10098,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "LEDGER022",
@@ -10186,7 +10186,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "pause": {
         "state": "active",
         "requested_by": "user",
@@ -10263,11 +10263,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "LIMIT-HISTORICAL-RUMOR-TEXT-001",
@@ -10323,11 +10323,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "LIMIT-HISTORICAL-TIMER-IDLE-001",
@@ -10383,11 +10383,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "OBS-AMBIENT-EXPLICIT-ENTRY-001",
@@ -10443,11 +10443,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "OBS-CREW-WORD-LEAD-001",
@@ -10523,11 +10523,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "OBS-PAL-POST-RETURN-001-INDEPENDENT-NEXT-COLD",
@@ -10592,11 +10592,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "OPS-01",
@@ -10657,11 +10657,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "OPS-02",
@@ -10722,11 +10722,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "OPS-04",
@@ -10787,11 +10787,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "OPS-05",
@@ -10852,11 +10852,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "OPS-07",
@@ -10917,11 +10917,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "PRACTICE-CREW-LAYER-001",
@@ -11014,11 +11014,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "PRACTICE-CREW-LAYER-001-INDEPENDENT-ACCEPTANCE",
@@ -11078,11 +11078,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "QA-TRAVEL033",
@@ -11146,11 +11146,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "QA-TUT-002",
@@ -11211,11 +11211,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "QA-UX-001",
@@ -11276,11 +11276,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "QA-UX-005",
@@ -11341,11 +11341,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "QA-WEB-003",
@@ -11406,11 +11406,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "RAW_FLOAT_STORAGE_PRECISION",
@@ -11501,11 +11501,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "RAW_FLOAT_STORAGE_PRECISION-INDEPENDENT-ACCEPTANCE",
@@ -11565,11 +11565,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "REACH021",
@@ -11625,11 +11625,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "TUTORIAL-COACH-RUN-MENU-OCCLUSION",
@@ -11703,11 +11703,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "TUTORIAL-COACH-RUN-MENU-OCCLUSION-INDEPENDENT-ACCEPTANCE",
@@ -11772,11 +11772,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "USER_MOBILE_LOCAL_UI_ASSETS",
@@ -11862,11 +11862,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "USER_MOBILE_LOCAL_UI_ASSETS-INDEPENDENT-ACCEPTANCE",
@@ -11926,11 +11926,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "USER_MOBILE_LOCAL_UI_ASSETS-MENU-TOUCH-001",
@@ -11991,11 +11991,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "USER_MOBILE_LOCAL_UI_ASSETS-SURFACES-001",
@@ -12056,11 +12056,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "WARM_CREW_NO_ROLL",
@@ -12116,11 +12116,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-06",
@@ -12191,11 +12191,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-26-A",
@@ -12318,11 +12318,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-ROOM-PUNCHLINE-COLD-001",
@@ -12410,11 +12410,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-TRAVEL-CAGE-FLOOR-QUOTE-001",
@@ -12488,11 +12488,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-TRAVEL-CAGE-FLOOR-QUOTE-001-INDEPENDENT",
@@ -12561,11 +12561,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-AUDIT-001",
@@ -13465,11 +13465,11 @@
         "kind": null,
         "description": "No intentional hold or external decision blocks the audit; semantic review and candidate classification remain active work.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -13543,11 +13543,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001-INDEPENDENT",
@@ -13618,11 +13618,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "EXPLICIT_ENTRY_SAL_TALK-INDEPENDENT-ACCEPTANCE",
@@ -13695,11 +13695,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "GRAND-JOURNAL-CURRENCY-001",
@@ -13775,11 +13775,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "OBS-PAL-POST-RETURN-001",
@@ -13880,11 +13880,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "OPS07-LEGACY-CUSTODY-BYTES-001",
@@ -13953,11 +13953,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "QA-CREW-WORD-LEAD-MAP-COLD-001",
@@ -14030,11 +14030,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-LAN-TLS-TRUST-001",
@@ -14110,10 +14110,10 @@
           "Codex task01a1a3e1-a613-7284-8bba-092f690190c9; observed2026-11-04T00:20:56Z",
           "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
         ],
-        "observed_at": "2026-11-04T16:13:18.036432+00:00"
+        "observed_at": "2026-11-04T16:23:29.672223+00:00"
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-NEXT-ALLOC-001",
@@ -14178,7 +14178,9 @@
           "evidence": [
             "recorded_in_named_ledger",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
+          ],
+          "repository": "erikjpet/site",
+          "relationship": "external diagnostic only; not a Beat the House product fix"
         }
       ],
       "deployment": {
@@ -14194,21 +14196,23 @@
         {
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-          "summary": "Older Web PCK export failed at49% near the unchanged2GiB Job cap. Same-input private exports without/with GC both succeeded, so GC is not a proven fix. New owned-process current-memory telemetry passed private capped probes and site main push; local NEXT guardian gracefully restarted with exact committed telemetry files, complete current-memory sample and unchanged10% CPU/2GiB limits; served game assets unchanged by activation. Reproduce/classify a failure, validate one mitigation under the unchanged cap, then verify watcher, artifact and served NEXT. Keep open."
+          "summary": "Older Web PCK export failed at49% near the unchanged2GiB Job cap. Same-input private exports without/with GC both succeeded, so GC is not a proven fix. New owned-process current-memory telemetry passed private capped probes and site main push; local NEXT guardian gracefully restarted with exact committed telemetry files, complete current-memory sample and unchanged10% CPU/2GiB limits; served game assets unchanged by activation. Reproduce/classify a failure, validate one mitigation under the unchanged cap, then verify watcher, artifact and served NEXT. Keep open.  Additional observed export failure345f9414 at2026-11-04T16:10:25Z: Stack overflow, exit3221225725 (0xC00000FD),49% pack stage. This is not proven to share the allocation root cause. Priorf305 retained; raw log/status preserved in task-6 evidence. No cap/trust/guard change or mitigation claim."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Use the activated owned-process memory telemetry to reproduce/classify a failure, prove one causal mitigation under unchanged resource guards, commit that mitigation and verify watcher/artifact/served NEXT. Prior matched GC/no-GC exports both passed, so GC remains unproven and reversed.",
+      "next_action": "Older Web PCK export failed at49% near the unchanged2GiB Job cap. Same-input private exports without/with GC both succeeded, so GC is not a proven fix. New owned-process current-memory telemetry passed private capped probes and site main push; local NEXT guardian gracefully restarted with exact committed telemetry files, complete current-memory sample and unchanged10% CPU/2GiB limits; served game assets unchanged by activation. Reproduce/classify a failure, validate one mitigation under the unchanged cap, then verify watcher, artifact and served NEXT. Keep open.  Additional observed export failure345f9414 at2026-11-04T16:10:25Z: Stack overflow, exit3221225725 (0xC00000FD),49% pack stage. This is not proven to share the allocation root cause. Priorf305 retained; raw log/status preserved in task-6 evidence. No cap/trust/guard change or mitigation claim.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "Telemetry is committed/activated; causal mitigation and qualification remain unproven active work.",
+        "description": "Qualification/export failure diagnosis remains active work under unchanged guards; no invented hold or renewed approval request.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
-        "evidence": []
+        "evidence": [
+          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+        ],
+        "observed_at": "2026-11-04T16:23:29.672223+00:00"
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-RUNTIME-CLEANUP-001",
@@ -14367,10 +14371,10 @@
           "docs/testing/runtime_cleanup_followup_2026_11_04.md",
           "docs/testing/runtime_cleanup_verification_2026_11_04.md"
         ],
-        "observed_at": "2026-11-04T16:13:18.036432+00:00"
+        "observed_at": "2026-11-04T16:23:29.672223+00:00"
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-SLOT-COLLECT-001",
@@ -14450,11 +14454,11 @@
         "kind": null,
         "description": "Current owner successfully fetched current main from the intended repository and created an isolated worktree. Focused testing is in progress; no current authorization/ownership blocker or intentional hold is established.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-TODO-RELIABILITY-001",
@@ -14549,11 +14553,11 @@
         "kind": null,
         "description": "New explicit user instruction authorizes publication of finished work. Earlier rejected push did not execute; tested publication/readback/NEXT verification remain unfinished.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-AUDIT-CREW-WINDOW-001",
@@ -14626,11 +14630,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-AUDIT-PLACEMENT-MODE-001",
@@ -14703,11 +14707,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-AUDIT-OFFER-CACHE-001",
@@ -14780,11 +14784,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-AUDIT-SLOT-STATIC-001",
@@ -14857,11 +14861,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-AUDIT-VALIDATOR-001",
@@ -14941,11 +14945,11 @@
         "kind": null,
         "description": "The aggregate census rejected concurrent authorized process identities; remaining qualification is active work, not an intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-AUDIT-MOBILE-CONTRACT-001",
@@ -15018,11 +15022,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-AUDIT-BACKDROP-001",
@@ -15095,11 +15099,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-AUDIT-TOUCH-CANCEL-001",
@@ -15172,11 +15176,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-AUDIT-POPUP-SCROLL-001",
@@ -15249,11 +15253,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-AUDIT-TUTORIAL-FIXTURE-001",
@@ -15326,11 +15330,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-AUDIT-SLOT-AUTHOR-001",
@@ -15403,11 +15407,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-AUDIT-SLOT-MIGRATION-001",
@@ -15480,11 +15484,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-AUDIT-VALIDATOR-UI-001",
@@ -15557,11 +15561,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-AUDIT-VALIDATOR-PLACEMENT-001",
@@ -15634,11 +15638,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-AUDIT-VALIDATOR-CENSUS-001",
@@ -15711,11 +15715,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-TODO-PAUSE-ITEM-SCENARIO-001",
@@ -15796,7 +15800,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-COUNT-SIT-SEMANTIC-001",
@@ -15907,7 +15911,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-NUMBERS-PURCHASE-JOURNAL-001",
@@ -16020,7 +16024,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-VAULTDROP-SAVE-001",
@@ -16105,11 +16109,11 @@
         "kind": null,
         "description": "Original branch and generations were not captured; unavailable personal originals are not a pending user dependency.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -16193,11 +16197,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -16214,7 +16218,7 @@
       "group": "current",
       "objective": {
         "text": "Show the recorded settled Blackjack hand net first in floor Result feedback and after ordinary Save/cold Continue, separating hand net+5/-5/0 from settlement account credit+10/0/+5. Preserve paid feedback across pure zero-consequence automatic watch hands while keeping explicit pushes zero and retaining measured/unknown watch or caught-penalty consequences. Preserve historical cash/chip units, financial authority, journal labels, RNG, clocks, shoe, result/history and the fixed16:9/touch/focus behavior; never infer net from wallet changes or replay a settlement.",
-        "source": "docs/testing/blackjack_net_feedback_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "source": "docs/testing/blackjack_net_feedback_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger; docs/testing/blackjack_net_feedback_2026_11_04.md (current source9c6f1e23 acceptance)",
         "scope_confirmed": true,
         "acceptance": [
           {
@@ -16224,7 +16228,8 @@
             "state": "pass",
             "evidence": [
               "docs/testing/blackjack_net_feedback_2026_11_04.md",
-              "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+              "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+              "docs/testing/blackjack_net_feedback_2026_11_04.md"
             ]
           },
           {
@@ -16234,7 +16239,8 @@
             "state": "pass",
             "evidence": [
               "docs/testing/blackjack_net_feedback_2026_11_04.md",
-              "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+              "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+              "docs/testing/blackjack_net_feedback_2026_11_04.md"
             ]
           },
           {
@@ -16244,7 +16250,8 @@
             "state": "pass",
             "evidence": [
               "docs/testing/blackjack_net_feedback_2026_11_04.md",
-              "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+              "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+              "docs/testing/blackjack_net_feedback_2026_11_04.md"
             ]
           },
           {
@@ -16254,15 +16261,17 @@
             "state": "pass",
             "evidence": [
               "docs/testing/blackjack_net_feedback_2026_11_04.md",
-              "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+              "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+              "docs/testing/blackjack_net_feedback_2026_11_04.md"
             ]
           },
           {
             "id": "exact-NEXT",
             "description": "Verify exact served commit/tree/provenance/assets and fresh matching-version startup containing code255bbfc53c69b3dd4dd4944fc98719e99c671376.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
+              "docs/testing/blackjack_net_feedback_2026_11_04.md",
               "docs/testing/blackjack_net_feedback_2026_11_04.md"
             ]
           },
@@ -16270,8 +16279,9 @@
             "id": "changed-Web-feedback",
             "description": "Qualify actual Web ordinary Continue and displayed Blackjack net/watch/consequence behavior with declared fixture limits and clean owned-job closure. The oldb94 menu-only timeout showed Play, so restoration and changed behavior remain unproven.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
+              "docs/testing/blackjack_net_feedback_2026_11_04.md",
               "docs/testing/blackjack_net_feedback_2026_11_04.md"
             ]
           }
@@ -16282,8 +16292,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "COMMITTED_NATIVE_179_PASS_NEXT_PENDING",
+      "state": "complete",
+      "status": "VERIFIED_NATIVE_COLD_AND_EXACT_NEXT_CHANGED_FEEDBACK",
       "owner": {
         "name": "Blackjack feedback fix",
         "task_ref": "01a1a363-26c7-74e2-9c9c-e164d89ae033",
@@ -16296,39 +16306,45 @@
             "recorded_in_named_ledger",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
+        },
+        {
+          "sha": "ee02497f95183b61155b4a1357cc9346bf0815af",
+          "evidence": [
+            "recorded_in_named_ledger",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
         }
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
+        "state": "verified",
+        "commit": "ee02497f95183b61155b4a1357cc9346bf0815af",
         "evidence": [
           "docs/testing/blackjack_net_feedback_2026_11_04.md"
         ],
-        "scope": "Implementation255bbfc5 is commit-associated; native and integrated cold acceptance are recorded, while exact NEXT identity/startup and changed Web behavior remain pending."
+        "scope": "Native179host+52cold+17animation pass. Exact NEXTee02497f/tree40a3f489 promoted15:51:44UTC; source/archive/servedPCK/assets match. Independent normalWebContinue accepts paidwin-after-watch net+5/chips18 and lossnet-5/chips8, both cash92, visible/unclipped. Nativepushnet0 and legacy/penalty/accounting pass; supplemental Webpush Continue remains inconclusive under bounded load budgets, never claimed passed. Original criteria accepted; no paidWebhand/originalsave/portrait changes. [Evidence](../testing/blackjack_net_feedback_2026_11_04.md)."
       },
       "evidence": [
         {
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-          "summary": "Synthetic normal Deal/Stand/Back/Save and new-host Continue pass179 checks for win/loss/push, automatic watch and legacy/penalty controls; separate penalty consumers pass74. Source acceptance also records52 integrated separate-process cold checks, repeated179/52 on integrated current mained9242d6 plus17 deal-action compatibility checks. Net+5/-5/0 stays separate from account credit+10/0/+5; journal/accounting unchanged. Exact NEXT identity/startup and changed Web feedback remain pending. The prior oldb94 synthetic browser attempt did not restore Continue or prove changed behavior. No original campaign/save replay. [Evidence and limits](../testing/blackjack_net_feedback_2026_11_04.md)."
+          "summary": "Native179host+52cold+17animation pass. Exact NEXTee02497f/tree40a3f489 promoted15:51:44UTC; source/archive/servedPCK/assets match. Independent normalWebContinue accepts paidwin-after-watch net+5/chips18 and lossnet-5/chips8, both cash92, visible/unclipped. Nativepushnet0 and legacy/penalty/accounting pass; supplemental Webpush Continue remains inconclusive under bounded load budgets, never claimed passed. Original criteria accepted; no paidWebhand/originalsave/portrait changes. [Evidence](../testing/blackjack_net_feedback_2026_11_04.md)."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Follow the authorized publication through the existing NEXT watcher, verify exact deployed identity/assets/startup, then run the declared fresh-context synthetic Web Continue/visible-feedback acceptance without touching or replaying the original campaign. Preserve native179/74/cold52/compat17 scopes and rejected oldb94 browser evidence. Keep Open until required NEXT and changed-Web acceptance are recorded.",
+      "next_action": "None within the original source-accepted scope. Preserve stated evidence limits: Native179host+52cold+17animation pass. Exact NEXTee02497f/tree40a3f489 promoted15:51:44UTC; source/archive/servedPCK/assets match. Independent normalWebContinue accepts paidwin-after-watch net+5/chips18 and lossnet-5/chips8, both cash92, visible/unclipped. Nativepushnet0 and legacy/penalty/accounting pass; supplemental Webpush Continue remains inconclusive under bounded load budgets, never claimed passed. Original criteria accepted; no paidWebhand/originalsave/portrait changes. [Evidence](../testing/blackjack_net_feedback_2026_11_04.md).",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "The later explicit user approval resolves the prior publication-permission blocker. Exact NEXT delivery and changed Web acceptance remain unfinished work; the old browser timeout is not accepted behavior evidence.",
+        "description": null,
         "requires_user_input": false,
         "evidence": [
-          "docs/testing/blackjack_net_feedback_2026_11_04.md",
-          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          "docs/testing/blackjack_net_feedback_2026_11_04.md"
         ],
-        "observed_at": "2026-11-04T16:13:18.036432+00:00"
+        "observed_at": "2026-11-04T16:23:29.672223+00:00"
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-CRAPS-JOURNAL-CURRENCY-001",
@@ -16339,7 +16355,7 @@
       "group": "current",
       "objective": {
         "text": "Record explicit cash/chip currency in new Craps journal receipts while preserving actual wallet movements, working paid-stake net, win/loss/zero, refund legs, game rules/RNG and existing readers.",
-        "source": "docs/testing/craps_journal_currency.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "source": "docs/testing/craps_journal_currency.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger; docs/testing/craps_journal_currency.md (current source9c6f1e23 acceptance)",
         "scope_confirmed": true,
         "acceptance": [
           {
@@ -16349,27 +16365,30 @@
             "state": "pass",
             "evidence": [
               "docs/testing/craps_journal_currency.md",
-              "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+              "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+              "docs/testing/craps_journal_currency.md"
             ]
           },
           {
             "id": "current-integration",
             "description": "Requalify the exact preserved implementation on current integrated main through changed producers/normal Host and official cold boundaries.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
               "docs/testing/craps_journal_currency.md",
-              "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+              "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+              "docs/testing/craps_journal_currency.md"
             ]
           },
           {
             "id": "exact-NEXT",
             "description": "Verify actual published main, exact NEXT identity/assets/startup and required changed-behavior acceptance without inferring delivery from commit ancestry alone.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
               "docs/testing/craps_journal_currency.md",
-              "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+              "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+              "docs/testing/craps_journal_currency.md"
             ]
           }
         ],
@@ -16379,8 +16398,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "EXACT_FIX_INTEGRATED_CURRENT_MAIN_CHECKS_AND_NEXT_PENDING",
+      "state": "complete",
+      "status": "EXACT_COMMIT_CURRENT486_AND_NEXT_ACCEPTANCE_VERIFIED",
       "owner": {
         "name": "Fix Back Alley travel",
         "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
@@ -16397,33 +16416,34 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
+        "state": "verified",
+        "commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
         "evidence": [
-          "docs/testing/craps_journal_currency.md",
-          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          "docs/testing/craps_journal_currency.md"
         ],
-        "scope": "Associated code exists on shared main; exact NEXT and current integration qualification remain pending."
+        "scope": "Original645 checks retained; current-main producer380+independentcold106 pass. Exact fix preserved and published7f03921e5 after normal concurrent-main reconciliation. NEXTf3058b6daab820e9d747c4c4aabc2d983e9ae32e tree4c4ec494b5c22b1a5c57cc1e8bbf73041140a753 promoted2026-11-04T16:05:56Z; exact metadata/assets/PCK and correct-version fresh startup pass,0errors/0ownedchildren. Native changed-behavior scope; no originalprofile/WebCrapsplay claim. See docs/testing/craps_journal_currency.md."
       },
       "evidence": [
         {
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-          "summary": "Original645 native checks pass; exact implementation commit preserved by merge onto current main9894795b. New explicit publication approval permits one retry; requalify changed producers/official cold on integrated main, then publish and verify exact NEXT. No accounting/rules/RNG/reader changes; item/scenario and portrait work remain paused."
+          "summary": "Original645 checks retained; current-main producer380+independentcold106 pass. Exact fix preserved and published7f03921e5 after normal concurrent-main reconciliation. NEXTf3058b6daab820e9d747c4c4aabc2d983e9ae32e tree4c4ec494b5c22b1a5c57cc1e8bbf73041140a753 promoted2026-11-04T16:05:56Z; exact metadata/assets/PCK and correct-version fresh startup pass,0errors/0ownedchildren. Native changed-behavior scope; no originalprofile/WebCrapsplay claim. See docs/testing/craps_journal_currency.md."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Original645 native checks pass; exact implementation commit preserved by merge onto current main9894795b. New explicit publication approval permits one retry; requalify changed producers/official cold on integrated main, then publish and verify exact NEXT. No accounting/rules/RNG/reader changes; item/scenario and portrait work remain paused.",
+      "next_action": "None within the original source-accepted scope. Preserve stated evidence limits: Original645 checks retained; current-main producer380+independentcold106 pass. Exact fix preserved and published7f03921e5 after normal concurrent-main reconciliation. NEXTf3058b6daab820e9d747c4c4aabc2d983e9ae32e tree4c4ec494b5c22b1a5c57cc1e8bbf73041140a753 promoted2026-11-04T16:05:56Z; exact metadata/assets/PCK and correct-version fresh startup pass,0errors/0ownedchildren. Native changed-behavior scope; no originalprofile/WebCrapsplay claim. See docs/testing/craps_journal_currency.md.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "The later user publication approval resolves the prior approval dependency. Current integrated-source and exact NEXT qualification remain active unfinished work.",
+        "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
-        "evidence": []
+        "evidence": [
+          "docs/testing/craps_journal_currency.md"
+        ],
+        "observed_at": "2026-11-04T16:23:29.672223+00:00"
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-CRAPS-JOURNAL-CURRENCY-001-SLOT",
@@ -16436,7 +16456,7 @@
       "group": "current",
       "objective": {
         "text": "Record the existing cash-only Slot receipt policy explicitly at all seven metadata assignments, including Grand, while preserving paid accounting, autoplay, journal readers, outcomes and RNG.",
-        "source": "docs/testing/slot_journal_currency_related.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "source": "docs/testing/slot_journal_currency_related.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger; docs/testing/slot_journal_currency_related.md (current source9c6f1e23 acceptance)",
         "scope_confirmed": true,
         "acceptance": [
           {
@@ -16446,27 +16466,30 @@
             "state": "pass",
             "evidence": [
               "docs/testing/slot_journal_currency_related.md",
-              "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+              "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+              "docs/testing/slot_journal_currency_related.md"
             ]
           },
           {
             "id": "current-integration",
             "description": "Requalify the exact preserved implementation on current integrated main through changed producers/normal Host and official cold boundaries.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
               "docs/testing/slot_journal_currency_related.md",
-              "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+              "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+              "docs/testing/slot_journal_currency_related.md"
             ]
           },
           {
             "id": "exact-NEXT",
             "description": "Verify actual published main, exact NEXT identity/assets/startup and required changed-behavior acceptance without inferring delivery from commit ancestry alone.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
               "docs/testing/slot_journal_currency_related.md",
-              "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+              "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+              "docs/testing/slot_journal_currency_related.md"
             ]
           }
         ],
@@ -16476,8 +16499,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "EXACT_FIX_INTEGRATED_CURRENT_MAIN_HOST_COLD_AND_NEXT_PENDING",
+      "state": "complete",
+      "status": "EXACT_COMMIT_CURRENT89_AND_NEXT_ACCEPTANCE_VERIFIED",
       "owner": {
         "name": "Fix Back Alley travel",
         "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
@@ -16494,33 +16517,34 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
+        "state": "verified",
+        "commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
         "evidence": [
-          "docs/testing/slot_journal_currency_related.md",
-          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          "docs/testing/slot_journal_currency_related.md"
         ],
-        "scope": "Associated code exists on shared main; exact NEXT and current integration qualification remain pending."
+        "scope": "Original476 checks retained; current-main Host60+independentcold29 pass. Exact fix preserved and publishedf3058b6daab820e9d747c4c4aabc2d983e9ae32e; exact NEXT sameSHA/tree4c4ec494b5c22b1a5c57cc1e8bbf73041140a753 promoted2026-11-04T16:05:56Z. Metadata/assets/PCK and correct-version fresh startup pass,0errors/0ownedchildren. Cash-only policy and all cabinets/history/wallets/RNG/clocks preserved. Native changed-behavior scope; no originalprofile/WebSlotplay claim. See docs/testing/slot_journal_currency_related.md."
       },
       "evidence": [
         {
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-          "summary": "Original476 native assertions pass. Exact implementation preserved by separate merge onto public7f03921e5. Refresh normal Slot Host and official cold against current shared Main; unchanged producer/autoplay/reader evidence retained at its original identity. Explicit user publication approval permits one retry; keep Open until exact NEXT acceptance. Item/scenario/portrait boundaries unchanged."
+          "summary": "Original476 checks retained; current-main Host60+independentcold29 pass. Exact fix preserved and publishedf3058b6daab820e9d747c4c4aabc2d983e9ae32e; exact NEXT sameSHA/tree4c4ec494b5c22b1a5c57cc1e8bbf73041140a753 promoted2026-11-04T16:05:56Z. Metadata/assets/PCK and correct-version fresh startup pass,0errors/0ownedchildren. Cash-only policy and all cabinets/history/wallets/RNG/clocks preserved. Native changed-behavior scope; no originalprofile/WebSlotplay claim. See docs/testing/slot_journal_currency_related.md."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Original476 native assertions pass. Exact implementation preserved by separate merge onto public7f03921e5. Refresh normal Slot Host and official cold against current shared Main; unchanged producer/autoplay/reader evidence retained at its original identity. Explicit user publication approval permits one retry; keep Open until exact NEXT acceptance. Item/scenario/portrait boundaries unchanged.",
+      "next_action": "None within the original source-accepted scope. Preserve stated evidence limits: Original476 checks retained; current-main Host60+independentcold29 pass. Exact fix preserved and publishedf3058b6daab820e9d747c4c4aabc2d983e9ae32e; exact NEXT sameSHA/tree4c4ec494b5c22b1a5c57cc1e8bbf73041140a753 promoted2026-11-04T16:05:56Z. Metadata/assets/PCK and correct-version fresh startup pass,0errors/0ownedchildren. Cash-only policy and all cabinets/history/wallets/RNG/clocks preserved. Native changed-behavior scope; no originalprofile/WebSlotplay claim. See docs/testing/slot_journal_currency_related.md.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "The later user publication approval resolves the prior approval dependency. Current integrated-source and exact NEXT qualification remain active unfinished work.",
+        "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
-        "evidence": []
+        "evidence": [
+          "docs/testing/slot_journal_currency_related.md"
+        ],
+        "observed_at": "2026-11-04T16:23:29.672223+00:00"
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-AUDIT-INDEPENDENT-001",
@@ -16606,11 +16630,11 @@
         "kind": null,
         "description": "No agent-imposed hold; the explicit user item/scenario pause applies only to its named scope. Remaining audit review/qualification is active work.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-AUDIT-PUBLISH-NEXT-002",
@@ -16683,11 +16707,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-AUDIT-CORE-SUPPORT-002",
@@ -16760,11 +16784,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-AUDIT-NATIVE-BOUNDARY-002",
@@ -16837,11 +16861,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH061-AUDIT-TUTORIAL-ANIMATION-001",
@@ -16914,11 +16938,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     },
     {
       "id": "BTH-BARDICE-WARM-PROGRESSION-001",
@@ -16956,7 +16980,7 @@
         }
       },
       "state": "open",
-      "status": "EXACT_FIX_INTEGRATED_CURRENT_MAIN_WARM_COLD_AND_NEXT_PENDING",
+      "status": "EXACT_COMMIT_PUBLISHED_CURRENT94_PASS_NEXT_EXPORT_STACK_OVERFLOW",
       "owner": {
         "name": "Fix Back Alley travel",
         "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
@@ -16981,23 +17005,23 @@
         {
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-          "summary": "Exact implementation preserved by separate merge onto publicf3058b6da. Original166 native assertions and no-pointer liveness pass. Current rendered-hit Host warm/cold refresh and one newly authorized publication retry pending, then exact NEXT acceptance. No original cup replay or accounting/authority/scheduler redesign. Item/scenario/portrait boundaries remain unchanged."
+          "summary": "Exact implementation preserved and published345f94149609e828c76c7a9df6b2cffaff5862b9. Current-main warm69+cold25 pass, original166+liveness evidence retained. Existing NEXT exporter failed16:10:25UTC at49% with Stack overflow/exit3221225725; previousf305 retained, so BarDice is not live-accepted. Preserve failure log and original cup, keep taskOpen pending ordinary watcher promotion/served startup. No cap bypass, manual builder or original replay. See docs/testing/bar_dice_warm_progression.md."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Exact implementation preserved by separate merge onto publicf3058b6da. Original166 native assertions and no-pointer liveness pass. Current rendered-hit Host warm/cold refresh and one newly authorized publication retry pending, then exact NEXT acceptance. No original cup replay or accounting/authority/scheduler redesign. Item/scenario/portrait boundaries remain unchanged.",
+      "next_action": "Exact implementation preserved and published345f94149609e828c76c7a9df6b2cffaff5862b9. Current-main warm69+cold25 pass, original166+liveness evidence retained. Existing NEXT exporter failed16:10:25UTC at49% with Stack overflow/exit3221225725; previousf305 retained, so BarDice is not live-accepted. Preserve failure log and original cup, keep taskOpen pending ordinary watcher promotion/served startup. No cap bypass, manual builder or original replay. See docs/testing/bar_dice_warm_progression.md.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "New publication authorization is recorded. Current Host warm/cold requalification and exact NEXT remain work; no renewed user approval or original cup replay is requested.",
+        "description": "Qualification/export failure diagnosis remains active work under unchanged guards; no invented hold or renewed approval request.",
         "requires_user_input": false,
         "evidence": [
-          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          "docs/testing/bar_dice_warm_progression.md"
         ],
-        "observed_at": "2026-11-04T16:13:18.036432+00:00"
+        "observed_at": "2026-11-04T16:23:29.672223+00:00"
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T16:13:18.036432+00:00"
+      "updated_at": "2026-11-04T16:23:29.672223+00:00"
     }
   ],
   "batches": [
@@ -17044,10 +17068,10 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "parent_id": "BTH061-AUDIT-001",
       "scope": [
         "Four retired helpers/aliases",
@@ -17107,10 +17131,10 @@
         "kind": null,
         "description": "New explicit user instruction authorizes publication of finished work. Earlier rejected push did not execute; tested publication/readback/NEXT verification remain unfinished.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "parent_id": "BTH-RUNTIME-CLEANUP-001",
       "scope": [
         "tools/check_bth_runtime_inventory.py reads explicit lifecycle inventory and returns findings",
@@ -17164,7 +17188,7 @@
           "docs/todo/bth_user_item_scenario_pause_20261104.json"
         ]
       },
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "pause": {
         "state": "active",
         "requested_by": "user",
@@ -17234,7 +17258,7 @@
           "docs/todo/bth_user_item_scenario_pause_20261104.json"
         ]
       },
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "pause": {
         "state": "active",
         "requested_by": "user",
@@ -17303,10 +17327,10 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "parent_id": "BTH061-VAULTDROP-SAVE-001",
       "scope": [
         "Visible Run Menu refusal guidance only",
@@ -17358,10 +17382,10 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "parent_id": "BTH061-AUDIT-INDEPENDENT-001",
       "scope": [
         "Remove only the orphan tooltip island and unused wager signals, preserving active HUD/design-system/wager behavior."
@@ -17412,10 +17436,10 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-04T16:13:18.036432+00:00",
+      "updated_at": "2026-11-04T16:23:29.672223+00:00",
       "parent_id": "BTH061-AUDIT-INDEPENDENT-001",
       "scope": [
         "Remove only unused branding helper palettes and capture preload, preserving active tool outputs and consumers."

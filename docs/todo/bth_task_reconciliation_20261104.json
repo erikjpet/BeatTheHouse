@@ -1,7 +1,7 @@
 {
   "schema": "bth.task_reconciliation/v1",
-  "checked_at": "2026-11-04T16:14:21.430697Z",
-  "ledger_updated_at": "2026-11-04T16:13:18.036432+00:00",
+  "checked_at": "2026-11-04T16:23:30.953079Z",
+  "ledger_updated_at": "2026-11-04T16:23:29.672223+00:00",
   "group": "current",
   "owner_snapshot_supplied": true,
   "runtime_inventory_supplied": true,
@@ -120,11 +120,11 @@
   "summary": {
     "objectives_checked": 61,
     "batches_checked": 7,
-    "open_objectives": 29,
+    "open_objectives": 26,
     "open_batches": 3,
-    "open_work_items": 32,
+    "open_work_items": 29,
     "user_paused_items": 8,
-    "complete_objectives": 32,
+    "complete_objectives": 35,
     "errors": 51,
     "warnings": 0,
     "tasks_with_errors": 14
@@ -1101,7 +1101,7 @@
         "kind": null,
         "description": "Full coverage, current findings and exact main/NEXT acceptance remain active work; source inspection alone confirms no large leak.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -1207,7 +1207,7 @@
         "kind": null,
         "description": "Active measured investigation or delivery acceptance work; no intentional hold and no inferred leak/fix beyond recorded evidence.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -1305,7 +1305,7 @@
         "kind": null,
         "description": "Active measured investigation or delivery acceptance work; no intentional hold and no inferred leak/fix beyond recorded evidence.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -1394,7 +1394,7 @@
         "kind": null,
         "description": "Active measured investigation or delivery acceptance work; no intentional hold and no inferred leak/fix beyond recorded evidence.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -1528,7 +1528,7 @@
         "kind": null,
         "description": "Original generation fingerprints/load outcome and between-Save custody were not captured. This is an evidence limitation, not a user-save request or an intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -1615,7 +1615,7 @@
         "kind": null,
         "description": "Exact personal-save evidence is unavailable, not an intentional hold or pending user action.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -2290,7 +2290,7 @@
         "kind": null,
         "description": "Exact personal incident state is unavailable and no longer a completion prerequisite; deployed interaction evidence remains separately classified.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -2398,7 +2398,7 @@
         "kind": null,
         "description": "Owner/scope reconciliation and paid-ticket exit acceptance remain unfinished. This bug row is not a newly imposed pause or missing-save dependency.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -2557,7 +2557,7 @@
         "kind": null,
         "description": "No concrete technical blocker established for the full parent; current assignment and per-game acceptance coverage require reconciliation. Do not infer completion from a single subtask.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -2669,7 +2669,7 @@
         "evidence": [
           "docs/testing/crew_expired_handoff.md"
         ],
-        "observed_at": "2026-11-04T16:13:18.036432+00:00"
+        "observed_at": "2026-11-04T16:23:29.672223+00:00"
       },
       "completed_batch_ids": []
     },
@@ -3781,7 +3781,7 @@
         "kind": null,
         "description": "No intentional hold or external decision blocks the audit; semantic review and candidate classification remain active work.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "completed_batch_ids": [
@@ -3875,7 +3875,7 @@
           "Codex task01a1a3e1-a613-7284-8bba-092f690190c9; observed2026-11-04T00:20:56Z",
           "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
         ],
-        "observed_at": "2026-11-04T16:13:18.036432+00:00"
+        "observed_at": "2026-11-04T16:23:29.672223+00:00"
       },
       "completed_batch_ids": []
     },
@@ -3909,7 +3909,9 @@
           "evidence": [
             "recorded_in_named_ledger",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
+          ],
+          "repository": "erikjpet/site",
+          "relationship": "external diagnostic only; not a Beat the House product fix"
         }
       ],
       "deployment": {
@@ -3976,14 +3978,16 @@
         "reviewed_with_evidence": 0,
         "remaining_ids": []
       },
-      "next_action": "Use the activated owned-process memory telemetry to reproduce/classify a failure, prove one causal mitigation under unchanged resource guards, commit that mitigation and verify watcher/artifact/served NEXT. Prior matched GC/no-GC exports both passed, so GC remains unproven and reversed.",
+      "next_action": "Older Web PCK export failed at49% near the unchanged2GiB Job cap. Same-input private exports without/with GC both succeeded, so GC is not a proven fix. New owned-process current-memory telemetry passed private capped probes and site main push; local NEXT guardian gracefully restarted with exact committed telemetry files, complete current-memory sample and unchanged10% CPU/2GiB limits; served game assets unchanged by activation. Reproduce/classify a failure, validate one mitigation under the unchanged cap, then verify watcher, artifact and served NEXT. Keep open.  Additional observed export failure345f9414 at2026-11-04T16:10:25Z: Stack overflow, exit3221225725 (0xC00000FD),49% pack stage. This is not proven to share the allocation root cause. Priorf305 retained; raw log/status preserved in task-6 evidence. No cap/trust/guard change or mitigation claim.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "Telemetry is committed/activated; causal mitigation and qualification remain unproven active work.",
+        "description": "Qualification/export failure diagnosis remains active work under unchanged guards; no invented hold or renewed approval request.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
-        "evidence": []
+        "evidence": [
+          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+        ],
+        "observed_at": "2026-11-04T16:23:29.672223+00:00"
       },
       "completed_batch_ids": []
     },
@@ -4161,7 +4165,7 @@
           "docs/testing/runtime_cleanup_followup_2026_11_04.md",
           "docs/testing/runtime_cleanup_verification_2026_11_04.md"
         ],
-        "observed_at": "2026-11-04T16:13:18.036432+00:00"
+        "observed_at": "2026-11-04T16:23:29.672223+00:00"
       },
       "completed_batch_ids": []
     },
@@ -4257,7 +4261,7 @@
         "kind": null,
         "description": "Current owner successfully fetched current main from the intended repository and created an isolated worktree. Focused testing is in progress; no current authorization/ownership blocker or intentional hold is established.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -4371,7 +4375,7 @@
         "kind": null,
         "description": "New explicit user instruction authorizes publication of finished work. Earlier rejected push did not execute; tested publication/readback/NEXT verification remain unfinished.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -4466,7 +4470,7 @@
         "kind": null,
         "description": "The aggregate census rejected concurrent authorized process identities; remaining qualification is active work, not an intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "completed_batch_ids": []
@@ -4564,365 +4568,12 @@
         "kind": null,
         "description": "Original branch and generations were not captured; unavailable personal originals are not a pending user dependency.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "completed_batch_ids": [
         "BTH061-VAULTDROP-SAVE-FEEDBACK-001"
       ]
-    },
-    {
-      "id": "BTH061-BLACKJACK-NET-FEEDBACK-001",
-      "name": "Preserve settled Blackjack hand net in floor feedback and cold Continue",
-      "state": "open",
-      "item_type": "objective",
-      "kind": "objective",
-      "parent_ids": [],
-      "full_objective": {
-        "text": "Show the recorded settled Blackjack hand net first in floor Result feedback and after ordinary Save/cold Continue, separating hand net+5/-5/0 from settlement account credit+10/0/+5. Preserve paid feedback across pure zero-consequence automatic watch hands while keeping explicit pushes zero and retaining measured/unknown watch or caught-penalty consequences. Preserve historical cash/chip units, financial authority, journal labels, RNG, clocks, shoe, result/history and the fixed16:9/touch/focus behavior; never infer net from wallet changes or replay a settlement.",
-        "source": "docs/testing/blackjack_net_feedback_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-        "scope_confirmed": true
-      },
-      "batch_scope": [],
-      "owner": {
-        "name": "Blackjack feedback fix",
-        "task_ref": "01a1a363-26c7-74e2-9c9c-e164d89ae033",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T15:55:05Z",
-        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
-        "observation_stale": false
-      },
-      "status": "COMMITTED_NATIVE_179_PASS_NEXT_PENDING",
-      "pause": null,
-      "pause_supported": false,
-      "commits": [
-        {
-          "sha": "255bbfc53c69b3dd4dd4944fc98719e99c671376",
-          "evidence": [
-            "recorded_in_named_ledger",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        }
-      ],
-      "deployment": {
-        "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [
-          "docs/testing/blackjack_net_feedback_2026_11_04.md"
-        ],
-        "scope": "Implementation255bbfc5 is commit-associated; native and integrated cold acceptance are recorded, while exact NEXT identity/startup and changed Web behavior remain pending."
-      },
-      "progress_scope_id": "BTH061-BLACKJACK-NET-FEEDBACK-001",
-      "acceptance": [
-        {
-          "id": "native-host179",
-          "description": "Recorded final179-check synthetic production-host Deal/Stand/Back/official Save/new-host Continue acceptance passes win/loss/push, visible first-line net, genuine automatic watch and legacy/malformed/unknown-unit and measured/unknown-penalty controls. The earlier script-error exit0 and prematurely sampled watch Back remain rejected evidence.",
-          "required": true,
-          "state": "pass",
-          "evidence": [
-            "docs/testing/blackjack_net_feedback_2026_11_04.md",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        },
-        {
-          "id": "penalty-consumers74",
-          "description": "Existing separate penalty-consumer acceptance passes74 assertions with accounting/history unchanged and clean owned-process release.",
-          "required": true,
-          "state": "pass",
-          "evidence": [
-            "docs/testing/blackjack_net_feedback_2026_11_04.md",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        },
-        {
-          "id": "engine-cold52",
-          "description": "Recorded integrated sourcef3c3107e passes52 separate-process official Continue checks for win/loss/push, legacy net and paid-win then automatic watch, including exact money/RNG/clock/shoe/result/history conservation.",
-          "required": true,
-          "state": "pass",
-          "evidence": [
-            "docs/testing/blackjack_net_feedback_2026_11_04.md",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        },
-        {
-          "id": "integrated-current-main",
-          "description": "After integration with main989 ated9242d6, source records repeated179 host and52 cold passes plus17 concurrent deal-action dimming compatibility checks; all accepted jobs exit0/no script errors/owned0. These native checks remain distinct from deployed Web behavior.",
-          "required": true,
-          "state": "pass",
-          "evidence": [
-            "docs/testing/blackjack_net_feedback_2026_11_04.md",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        },
-        {
-          "id": "exact-NEXT",
-          "description": "Verify exact served commit/tree/provenance/assets and fresh matching-version startup containing code255bbfc53c69b3dd4dd4944fc98719e99c671376.",
-          "required": true,
-          "state": "open",
-          "evidence": [
-            "docs/testing/blackjack_net_feedback_2026_11_04.md"
-          ]
-        },
-        {
-          "id": "changed-Web-feedback",
-          "description": "Qualify actual Web ordinary Continue and displayed Blackjack net/watch/consequence behavior with declared fixture limits and clean owned-job closure. The oldb94 menu-only timeout showed Play, so restoration and changed behavior remain unproven.",
-          "required": true,
-          "state": "open",
-          "evidence": [
-            "docs/testing/blackjack_net_feedback_2026_11_04.md"
-          ]
-        }
-      ],
-      "acceptance_progress": {
-        "required_total": 6,
-        "passed_with_evidence": 4,
-        "remaining_ids": [
-          "exact-NEXT",
-          "changed-Web-feedback"
-        ]
-      },
-      "coverage": {
-        "required": false,
-        "complete": false,
-        "areas": []
-      },
-      "coverage_progress": {
-        "required": false,
-        "declared_complete": false,
-        "total_areas": 0,
-        "reviewed_with_evidence": 0,
-        "remaining_ids": []
-      },
-      "next_action": "Follow the authorized publication through the existing NEXT watcher, verify exact deployed identity/assets/startup, then run the declared fresh-context synthetic Web Continue/visible-feedback acceptance without touching or replaying the original campaign. Preserve native179/74/cold52/compat17 scopes and rejected oldb94 browser evidence. Keep Open until required NEXT and changed-Web acceptance are recorded.",
-      "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "The later explicit user approval resolves the prior publication-permission blocker. Exact NEXT delivery and changed Web acceptance remain unfinished work; the old browser timeout is not accepted behavior evidence.",
-        "requires_user_input": false,
-        "evidence": [
-          "docs/testing/blackjack_net_feedback_2026_11_04.md",
-          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-        ],
-        "observed_at": "2026-11-04T16:13:18.036432+00:00"
-      },
-      "completed_batch_ids": []
-    },
-    {
-      "id": "BTH-CRAPS-JOURNAL-CURRENCY-001",
-      "name": "New Craps journal receipts omit currency despite correct wallets",
-      "state": "open",
-      "item_type": "objective",
-      "kind": "objective",
-      "parent_ids": [],
-      "full_objective": {
-        "text": "Record explicit cash/chip currency in new Craps journal receipts while preserving actual wallet movements, working paid-stake net, win/loss/zero, refund legs, game rules/RNG and existing readers.",
-        "source": "docs/testing/craps_journal_currency.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-        "scope_confirmed": true
-      },
-      "batch_scope": [],
-      "owner": {
-        "name": "Fix Back Alley travel",
-        "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T15:55:05Z",
-        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
-        "observation_stale": false
-      },
-      "status": "EXACT_FIX_INTEGRATED_CURRENT_MAIN_CHECKS_AND_NEXT_PENDING",
-      "pause": null,
-      "pause_supported": false,
-      "commits": [
-        {
-          "sha": "be4afc1558242dcbd483568a39da68ab1e331a88",
-          "evidence": [
-            "recorded_in_named_ledger",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        }
-      ],
-      "deployment": {
-        "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [
-          "docs/testing/craps_journal_currency.md",
-          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-        ],
-        "scope": "Associated code exists on shared main; exact NEXT and current integration qualification remain pending."
-      },
-      "progress_scope_id": "BTH-CRAPS-JOURNAL-CURRENCY-001",
-      "acceptance": [
-        {
-          "id": "recorded-native",
-          "description": "645 original native assertions pass at their recorded implementation identity; not refreshed integrated-main or deployed Web qualification.",
-          "required": true,
-          "state": "pass",
-          "evidence": [
-            "docs/testing/craps_journal_currency.md",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        },
-        {
-          "id": "current-integration",
-          "description": "Requalify the exact preserved implementation on current integrated main through changed producers/normal Host and official cold boundaries.",
-          "required": true,
-          "state": "open",
-          "evidence": [
-            "docs/testing/craps_journal_currency.md",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        },
-        {
-          "id": "exact-NEXT",
-          "description": "Verify actual published main, exact NEXT identity/assets/startup and required changed-behavior acceptance without inferring delivery from commit ancestry alone.",
-          "required": true,
-          "state": "open",
-          "evidence": [
-            "docs/testing/craps_journal_currency.md",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        }
-      ],
-      "acceptance_progress": {
-        "required_total": 3,
-        "passed_with_evidence": 1,
-        "remaining_ids": [
-          "current-integration",
-          "exact-NEXT"
-        ]
-      },
-      "coverage": {
-        "required": false,
-        "complete": false,
-        "areas": []
-      },
-      "coverage_progress": {
-        "required": false,
-        "declared_complete": false,
-        "total_areas": 0,
-        "reviewed_with_evidence": 0,
-        "remaining_ids": []
-      },
-      "next_action": "Original645 native checks pass; exact implementation commit preserved by merge onto current main9894795b. New explicit publication approval permits one retry; requalify changed producers/official cold on integrated main, then publish and verify exact NEXT. No accounting/rules/RNG/reader changes; item/scenario and portrait work remain paused.",
-      "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "The later user publication approval resolves the prior approval dependency. Current integrated-source and exact NEXT qualification remain active unfinished work.",
-        "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
-        "evidence": []
-      },
-      "completed_batch_ids": []
-    },
-    {
-      "id": "BTH-CRAPS-JOURNAL-CURRENCY-001-SLOT",
-      "name": "Related Slot new-receipt cash currency metadata",
-      "state": "open",
-      "item_type": "objective",
-      "kind": "acceptance_check",
-      "parent_ids": [
-        "BTH-CRAPS-JOURNAL-CURRENCY-001"
-      ],
-      "full_objective": {
-        "text": "Record the existing cash-only Slot receipt policy explicitly at all seven metadata assignments, including Grand, while preserving paid accounting, autoplay, journal readers, outcomes and RNG.",
-        "source": "docs/testing/slot_journal_currency_related.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-        "scope_confirmed": true
-      },
-      "batch_scope": [],
-      "owner": {
-        "name": "Fix Back Alley travel",
-        "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
-        "observed_state": "active",
-        "observed_at": "2026-11-04T15:55:05Z",
-        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
-        "observation_stale": false
-      },
-      "status": "EXACT_FIX_INTEGRATED_CURRENT_MAIN_HOST_COLD_AND_NEXT_PENDING",
-      "pause": null,
-      "pause_supported": false,
-      "commits": [
-        {
-          "sha": "b5d24ea936fed55c59393678e057cbc3d85e3207",
-          "evidence": [
-            "recorded_in_named_ledger",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        }
-      ],
-      "deployment": {
-        "required": true,
-        "state": "pending",
-        "commit": null,
-        "evidence": [
-          "docs/testing/slot_journal_currency_related.md",
-          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-        ],
-        "scope": "Associated code exists on shared main; exact NEXT and current integration qualification remain pending."
-      },
-      "progress_scope_id": "BTH-CRAPS-JOURNAL-CURRENCY-001-SLOT",
-      "acceptance": [
-        {
-          "id": "recorded-native",
-          "description": "476 original native assertions pass at their recorded implementation identity; not refreshed integrated-main or deployed Web qualification.",
-          "required": true,
-          "state": "pass",
-          "evidence": [
-            "docs/testing/slot_journal_currency_related.md",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        },
-        {
-          "id": "current-integration",
-          "description": "Requalify the exact preserved implementation on current integrated main through changed producers/normal Host and official cold boundaries.",
-          "required": true,
-          "state": "open",
-          "evidence": [
-            "docs/testing/slot_journal_currency_related.md",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        },
-        {
-          "id": "exact-NEXT",
-          "description": "Verify actual published main, exact NEXT identity/assets/startup and required changed-behavior acceptance without inferring delivery from commit ancestry alone.",
-          "required": true,
-          "state": "open",
-          "evidence": [
-            "docs/testing/slot_journal_currency_related.md",
-            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
-          ]
-        }
-      ],
-      "acceptance_progress": {
-        "required_total": 3,
-        "passed_with_evidence": 1,
-        "remaining_ids": [
-          "current-integration",
-          "exact-NEXT"
-        ]
-      },
-      "coverage": {
-        "required": false,
-        "complete": false,
-        "areas": []
-      },
-      "coverage_progress": {
-        "required": false,
-        "declared_complete": false,
-        "total_areas": 0,
-        "reviewed_with_evidence": 0,
-        "remaining_ids": []
-      },
-      "next_action": "Original476 native assertions pass. Exact implementation preserved by separate merge onto public7f03921e5. Refresh normal Slot Host and official cold against current shared Main; unchanged producer/autoplay/reader evidence retained at its original identity. Explicit user publication approval permits one retry; keep Open until exact NEXT acceptance. Item/scenario/portrait boundaries unchanged.",
-      "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "The later user publication approval resolves the prior approval dependency. Current integrated-source and exact NEXT qualification remain active unfinished work.",
-        "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
-        "evidence": []
-      },
-      "completed_batch_ids": []
     },
     {
       "id": "BTH061-AUDIT-INDEPENDENT-001",
@@ -5017,7 +4668,7 @@
         "kind": null,
         "description": "No agent-imposed hold; the explicit user item/scenario pause applies only to its named scope. Remaining audit review/qualification is active work.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "completed_batch_ids": [
@@ -5046,7 +4697,7 @@
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
-      "status": "EXACT_FIX_INTEGRATED_CURRENT_MAIN_WARM_COLD_AND_NEXT_PENDING",
+      "status": "EXACT_COMMIT_PUBLISHED_CURRENT94_PASS_NEXT_EXPORT_STACK_OVERFLOW",
       "pause": null,
       "pause_supported": false,
       "commits": [
@@ -5102,16 +4753,16 @@
         "reviewed_with_evidence": 0,
         "remaining_ids": []
       },
-      "next_action": "Exact implementation preserved by separate merge onto publicf3058b6da. Original166 native assertions and no-pointer liveness pass. Current rendered-hit Host warm/cold refresh and one newly authorized publication retry pending, then exact NEXT acceptance. No original cup replay or accounting/authority/scheduler redesign. Item/scenario/portrait boundaries remain unchanged.",
+      "next_action": "Exact implementation preserved and published345f94149609e828c76c7a9df6b2cffaff5862b9. Current-main warm69+cold25 pass, original166+liveness evidence retained. Existing NEXT exporter failed16:10:25UTC at49% with Stack overflow/exit3221225725; previousf305 retained, so BarDice is not live-accepted. Preserve failure log and original cup, keep taskOpen pending ordinary watcher promotion/served startup. No cap bypass, manual builder or original replay. See docs/testing/bar_dice_warm_progression.md.",
       "blocker": {
         "state": "none",
         "kind": null,
-        "description": "New publication authorization is recorded. Current Host warm/cold requalification and exact NEXT remain work; no renewed user approval or original cup replay is requested.",
+        "description": "Qualification/export failure diagnosis remains active work under unchanged guards; no invented hold or renewed approval request.",
         "requires_user_input": false,
         "evidence": [
-          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          "docs/testing/bar_dice_warm_progression.md"
         ],
-        "observed_at": "2026-11-04T16:13:18.036432+00:00"
+        "observed_at": "2026-11-04T16:23:29.672223+00:00"
       },
       "completed_batch_ids": []
     },
@@ -5285,7 +4936,7 @@
         "kind": null,
         "description": "New explicit user instruction authorizes publication of finished work. Earlier rejected push did not execute; tested publication/readback/NEXT verification remain unfinished.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:13:18.036432+00:00",
+        "observed_at": "2026-11-04T16:23:29.672223+00:00",
         "evidence": []
       },
       "completed_batch_ids": []

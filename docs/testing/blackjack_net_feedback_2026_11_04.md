@@ -1,7 +1,9 @@
 # BTH061-BLACKJACK-NET-FEEDBACK-001
 
-Status: Open. Implementation255bbfc53c69b3dd4dd4944fc98719e99c671376;
-native and integrated cold accepted; exact NEXT receipt pending.
+Status: Complete against the original criteria. Implementation
+255bbfc53c69b3dd4dd4944fc98719e99c671376 is committed, published and native/cold
+qualified. Exact NEXT `ee02497f` is verified with independent changed-feedback
+acceptance. Supplemental Web push coverage remains explicitly unverified below.
 
 The Grand playtest records a five-chip Blackjack win: cash92 stays92,
 chips13 to8 on Deal then18 after dealer bust23; the journal retains debit-5
@@ -111,3 +113,65 @@ checks. No script errors, all exit0 and zero owned processes remain. Receipts:
 blackjack-net-current-main-host, blackjack-net-current-main-cold,
 blackjack-net-stand-animation-compat (.json/.log); corresponding raw host/cold
 observations are retained. Exact NEXT and synthetic Web Continue are pending.
+
+## Exact NEXT acceptance
+
+Published main/NEXT source: `ee02497f95183b61155b4a1357cc9346bf0815af`.
+Tree: `40a3f4890045c734c6817436d03d46151bb5aa24`.
+Promoted 2026-11-04T15:51:44Z by the existing watcher, without manual deployment,
+stable/itch publication or audience changes. The source/tree, clean manifest,
+archive/provenance, live redirect, version, six served runtime assets and MIME
+match. Direct served PCK SHA256:
+b4a26bdc809a69940aa7dca066dd1abdc46e0b9469de7ca6738284b81ae0e529.
+Receipt: task-11/evidence/next-ee02497f95183b61155b4a1357cc9346bf0815af-release.json.
+
+Fresh disposable 1280x720 Web contexts install only the exact official synthetic
+native Save and its matching generated signing companion before engine boot,
+then use ordinary Continue. No original profile access, paid Web command or
+post-boot state edit occurs. This verifies restored projection on Web;
+the normal paid hands and financial authority are tested natively above.
+
+Independent visual review accepts these actual floor screenshots:
+
+| Fixture | Visible first line | Separate account credit | Wallet |
+| --- | --- | --- | --- |
+| Paid win followed by genuine automatic watch | Blackjack net: +5 chips. | Chip change: +10 chips. | Cash $92 / chips 18 |
+| Losing hand | Blackjack net: -5 chips. | Chip change: +0 chips. Heat +1 | Cash $92 / chips 8 |
+
+All three Result lines fit the existing panel, with no clipping or dollar
+wording on chip results. Both captures have no page, console or request errors;
+loaded resources match the exact SHA, contexts/browsers close and owned jobs
+exit 0 with zero processes remaining. Evidence files share prefix
+next-ee02497f95183b61155b4a1357cc9346bf0815af-blackjack-feedback-
+win_sitout or loss (.json, -menu.png, -continued.png). Owned-job receipts:
+web-blackjack-net-ee-win-load45 and web-blackjack-net-ee-loss-prewarm45.
+
+The initial path diagnostic installed files outside the actual Web user://
+directory. The corrected path is /userfs/godot/app_userdata/Beat the House.
+Initial 10/45-second input budgets were also insufficient in some cold loads.
+The accepted loss run allows 45 seconds of ordinary menu UI prewarming (campaign
+clock paused) and 75 seconds for Continue inside a 180-second owned job, retaining
+the 5% aggregate CPU cap and 2 GiB memory limit. No application code or guards are
+changed to make the load finish.
+
+Supplemental Web push remains UNVERIFIED: both bounded ordinary Continue
+attempts timed out before a floor screenshot, without page/console errors.
+Final context/browser cleanup completes and zero owned processes remain.
+Receipts: web-blackjack-net-ee-push and
+web-blackjack-net-ee-push-prewarm45. Native normal Deal/Stand/Back/Save and
+separate-process Continue verify push net 0 / credit 5 / chips 13 and exact protected
+state. The Web timeout does not establish wrong feedback and is not counted
+as a pass. Different synthetic seeds also create different generated rooms,
+so it does not isolate a losing/pushing-result formatter regression.
+
+The independent acceptance reviewer confirms that the original requirements
+are met: committed fix, win/loss/push and save/cold correctness, preserved
+accounting and exact NEXT with changed behavior exercised. All-three-Web-case
+coverage was supplemental, not an original acceptance gate. The task closes
+with that explicit limitation; no all-three-Web or original-save replay claim.
+
+Concurrent main `f3058b6d` retains exact matching blobs for FoundationMain,
+GameModule, Blackjack, its action authority, FoundationActionViewModel and
+RunState versus the visually accepted `ee02497f`. Receipt:
+blackjack-net-current-lineage.json. This is compatibility evidence; actual
+visual acceptance identity remains the exact `ee02497f` build above.

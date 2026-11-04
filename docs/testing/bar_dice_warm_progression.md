@@ -128,3 +128,28 @@ NEXT acceptance are pending. Original166-check and no-input liveness evidence
 retains its original source and scope. No original R04 cup is opened or
 replayed; other finished fixes retain separate commits and acceptance records.
 Item/scenario and fixed16:9/touch/focus boundaries remain unchanged.
+
+### Published fix; NEXT export failure, 2026-11-04
+
+The separately reviewed normal push succeeded at
+`345f94149609e828c76c7a9df6b2cffaff5862b9`, preserving exact original fix
+`be3f1b2d99d6d6f36ee65637f9e8e75a788ecbe8`. Current-main warm69 and independent
+cold25 checks pass with zero owned processes; cold retains cash145, one settled
+round and zero new paid inputs. Existing166-check/liveness evidence remains
+historical unchanged-path qualification, not a fresh full-suite pass.
+
+The existing watcher attempted this exact source and failed at16:10:25UTC,
+49%PCK savepack, with `Stack overflow.` and exit3221225725 (0xC00000FD). The last
+logged asset is a generated Coin Pusher export-parity scene, but that location
+does not establish the cause. No allocation root cause or link to Bar Dice
+metadata is proven. Previous NEXTf3058b6daab820e9d747c4c4aabc2d983e9ae32e remains
+served and verified for the other two fixes. Bar Dice stays Open: published and
+native-qualified, but not yet built/deployed/startup accepted.
+
+Raw evidence `finished-stackoverflow-345.log` and
+`finished-combined-export-failure-status.json` are preserved in task-6 evidence;
+`finished-release-combined-receipt.json` distinguishes each task. This follow-up
+records real partial acceptance and the remaining blocker. The watcher keeps
+its ordinary15-minute same-SHA retry/new-main behavior; no restart, duplicate
+watcher, manual substitute build, cap/trust change or original-state access
+was used.
