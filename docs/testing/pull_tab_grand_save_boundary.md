@@ -140,7 +140,7 @@ roots, as recorded by `task-14/run_owned.py` and its receipts):
 ```text
 godot --headless --path . --script res://scripts/tests/pull_tab_grand_save_check.gd -- --audit --elapsed
 godot --headless --path . --script res://scripts/tests/pull_tab_grand_save_check.gd -- --audit --elapsed --cold
-node scripts/tests/web_save_durability_bridge_check.cjs
+node tools/web_save_durability_bridge_check.cjs
 ```
 
 The final warm native run passes **59** assertions, including 16 synthetic
@@ -199,3 +199,11 @@ supplied the relevant explicit standing main/NEXT authorization. Delivery resume
 the first executed push was safely rejected as non-fast-forward and concurrent
 main was integrated normally. The separate release receipt records the resulting
 push and exact NEXT verification; task completion remains Open independently.
+
+The first watcher attempt selected descendant main 1fda9e8e but refused import
+cache reuse. Exact input comparison identified only the new non-runtime CLI
+test `scripts/tests/web_save_durability_bridge_check.cjs`; the Web preset excludes
+tests. The test now lives under the repository's existing `tools/` boundary,
+with its source-relative read adjusted. Its 16 checks are rerun there. Production
+scripts and export/import policy are unchanged; the normal watcher retries the
+new source identity.
