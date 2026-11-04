@@ -1,0 +1,194 @@
+{
+  "finding": "BTH-PERF-20261104-001",
+  "baseline_source": "dc15b7d369f435d50fbf16e37af33952a4c58760",
+  "host": {
+    "platform": "Windows-10-10.0.19045-SP0",
+    "logical_processors": 16,
+    "processor_identifier": "Intel64 Family 6 Model 158 Stepping 13, GenuineIntel"
+  },
+  "limits": "5% aggregate host CPU; 2GiB private kill-on-close Job; diagnostic call timings only",
+  "jobs": {
+    "baseline-native-continuous-corrected": {
+      "label": "baseline-native-continuous-corrected",
+      "args": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\source",
+        "res://scripts/tests/coin_pusher_continuous_input_check.tscn"
+      ],
+      "timeout": 120,
+      "source_head": "dc15b7d369f435d50fbf16e37af33952a4c58760",
+      "source_diff_sha256": "39647f0030f83b585ffcc57b39b7bb3545f4a2c0ebf3495ce8bcde55774af714",
+      "private_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\private\\baseline-native-continuous-corrected",
+      "error": null,
+      "evidence_kind": "scripted-native-runtime",
+      "started_utc": "2026-11-04T00:28:18.910095+00:00",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "owner_membership": {
+        "supervisor_in_this_private_job": false,
+        "supervisor_in_any_ancestor_job": true
+      },
+      "pid": 38764,
+      "assigned_before_execution": true,
+      "timed_out": false,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cpu_seconds": 8.359375,
+      "finished_utc": "2026-11-04T00:28:30.076705+00:00"
+    },
+    "fixed-focused-checks": {
+      "label": "fixed-focused-checks",
+      "args": [
+        "D:\\Projects\\Beat-The-House\\.tools\\native_solver\\python\\python.exe",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\focused_checks.py"
+      ],
+      "timeout": 240,
+      "source_head": "dc15b7d369f435d50fbf16e37af33952a4c58760",
+      "source_diff_sha256": "147f8bbaa811e40d3b20d59633ab8e55417bb66346b9b778b428020a77c95178",
+      "private_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\private\\fixed-focused-checks",
+      "error": null,
+      "evidence_kind": "scripted-native-runtime",
+      "started_utc": "2026-11-04T00:30:09.805323+00:00",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "owner_membership": {
+        "supervisor_in_this_private_job": false,
+        "supervisor_in_any_ancestor_job": true
+      },
+      "pid": 22684,
+      "assigned_before_execution": true,
+      "timed_out": false,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cpu_seconds": 37.40625,
+      "finished_utc": "2026-11-04T00:30:57.784488+00:00"
+    },
+    "baseline-web-shipped-native": {
+      "label": "baseline-web-shipped-native",
+      "args": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\capture_probe.cjs",
+        "baseline-complete",
+        "browser_report_shipped"
+      ],
+      "timeout": 150,
+      "source_head": "dc15b7d369f435d50fbf16e37af33952a4c58760",
+      "source_diff_sha256": "147f8bbaa811e40d3b20d59633ab8e55417bb66346b9b778b428020a77c95178",
+      "private_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\private\\baseline-web-shipped-native",
+      "error": null,
+      "evidence_kind": "scripted-web-runtime",
+      "started_utc": "2026-11-04T00:32:14.918208+00:00",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "owner_membership": {
+        "supervisor_in_this_private_job": false,
+        "supervisor_in_any_ancestor_job": true
+      },
+      "pid": 38144,
+      "assigned_before_execution": true,
+      "timed_out": false,
+      "exit_code": 1,
+      "active_at_release": 0,
+      "cpu_seconds": 11.109375,
+      "finished_utc": "2026-11-04T00:32:29.099430+00:00"
+    },
+    "fixed-web-shipped-native": {
+      "label": "fixed-web-shipped-native",
+      "args": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\capture_probe.cjs",
+        "fixed",
+        "browser_report_shipped"
+      ],
+      "timeout": 150,
+      "source_head": "dc15b7d369f435d50fbf16e37af33952a4c58760",
+      "source_diff_sha256": "147f8bbaa811e40d3b20d59633ab8e55417bb66346b9b778b428020a77c95178",
+      "private_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\private\\fixed-web-shipped-native",
+      "error": null,
+      "evidence_kind": "scripted-web-runtime",
+      "started_utc": "2026-11-04T00:32:40.333337+00:00",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "owner_membership": {
+        "supervisor_in_this_private_job": false,
+        "supervisor_in_any_ancestor_job": true
+      },
+      "pid": 30240,
+      "assigned_before_execution": true,
+      "timed_out": false,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cpu_seconds": 16.125,
+      "finished_utc": "2026-11-04T00:33:01.261061+00:00"
+    }
+  },
+  "web_payloads": {
+    "baseline-complete": {
+      "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm": "82c71b7d743027817c8f5041ad2f052565bf27fe43ec60312a2473af08957943",
+      "index.pck": "1573d69923675fdbd153c93de78e82c9ca56435d22fda354c35e29c5feb7805c",
+      "index.side.wasm": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0",
+      "index.wasm": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8",
+      "probe_source.gd.txt": "b68bc22649ef6ce7199de8c1fff31324e1bcf36cacc977e382576556740d3f26"
+    },
+    "fixed": {
+      "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm": "82c71b7d743027817c8f5041ad2f052565bf27fe43ec60312a2473af08957943",
+      "index.pck": "c38df25b40ca99558e5d7c0c96f97cfa0c0950396f687c205611a7d40288a309",
+      "index.side.wasm": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0",
+      "index.wasm": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8",
+      "probe_source.gd.txt": "b68bc22649ef6ce7199de8c1fff31324e1bcf36cacc977e382576556740d3f26"
+    }
+  },
+  "probe_sources_match": true,
+  "qualified_native": {
+    "archive": "D:\\Projects\\site\\state\\bth-next\\artifacts\\adb75dbe7f97e2b96279fbf401f7d7b8913072b3-1793751956403593300.zip",
+    "entry": "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+    "qualified_sha256": "82c71b7d743027817c8f5041ad2f052565bf27fe43ec60312a2473af08957943",
+    "targets": [
+      {
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\source\\addons\\coin_pusher_native\\bin\\coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+        "prior_sha256": "ca1c43d30c442734f4ebd7a0574810cebe44f0ca9829cc6a3c3e7c048060097c"
+      },
+      {
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\web\\baseline-complete\\coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+        "prior_sha256": "ca1c43d30c442734f4ebd7a0574810cebe44f0ca9829cc6a3c3e7c048060097c"
+      },
+      {
+        "path": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\web\\fixed\\coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+        "prior_sha256": "ca1c43d30c442734f4ebd7a0574810cebe44f0ca9829cc6a3c3e7c048060097c"
+      }
+    ]
+  },
+  "claims": "Synthetic60Hz production module scheduling; actual native_v3 runtime and trueWeb branch. Not rendered normal-input play or FPS qualification."
+}

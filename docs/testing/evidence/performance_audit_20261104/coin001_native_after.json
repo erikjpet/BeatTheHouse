@@ -1,0 +1,163 @@
+{
+  "bankroll": 476,
+  "emitted_drops": 18,
+  "failures": [],
+  "fidelity": "synthetic 60Hz clock through production module APIs; no rendered frame or full-host performance claim",
+  "ok": true,
+  "pending_drops": 6,
+  "phases": [
+    {
+      "authority_ticks": 120,
+      "frames": 120,
+      "input_trace_count": 0,
+      "invariants": {
+        "active": 153,
+        "collected": 0,
+        "conservation_ok": true,
+        "cup_consumed": 0,
+        "energy_ok": true,
+        "gutter": 0,
+        "origin": 153,
+        "refused": 0,
+        "tray": 0
+      },
+      "max_backlog_ticks": 0,
+      "max_publication_age_msec": 16,
+      "module_realtime_call_usec": {
+        "count": 120,
+        "max": 4694,
+        "mean": 1845.75833333333,
+        "p95": 3843
+      },
+      "native_step_usec": {
+        "count": 120,
+        "max": 3201,
+        "mean": 1455.375,
+        "p95": 2446
+      },
+      "nozzle_updates": 0,
+      "phase": "idle",
+      "pointer_call_usec": {
+        "count": 0
+      },
+      "published_frames": 80
+    },
+    {
+      "authority_ticks": 120,
+      "frames": 120,
+      "input_trace_count": 6,
+      "invariants": {
+        "active": 159,
+        "collected": 0,
+        "conservation_ok": true,
+        "cup_consumed": 0,
+        "energy_ok": true,
+        "gutter": 0,
+        "origin": 159,
+        "refused": 0,
+        "tray": 0
+      },
+      "max_backlog_ticks": 0,
+      "max_publication_age_msec": 16,
+      "module_realtime_call_usec": {
+        "count": 120,
+        "max": 6533,
+        "mean": 2223.55,
+        "p95": 4543
+      },
+      "native_step_usec": {
+        "count": 120,
+        "max": 4136,
+        "mean": 1650.89166666667,
+        "p95": 2556
+      },
+      "nozzle_updates": 0,
+      "phase": "feeding",
+      "pointer_call_usec": {
+        "count": 0
+      },
+      "published_frames": 80
+    },
+    {
+      "authority_ticks": 180,
+      "frames": 180,
+      "input_trace_count": 196,
+      "invariants": {
+        "active": 168,
+        "collected": 0,
+        "conservation_ok": true,
+        "cup_consumed": 0,
+        "energy_ok": true,
+        "gutter": 0,
+        "origin": 168,
+        "refused": 0,
+        "tray": 0
+      },
+      "max_backlog_ticks": 0,
+      "max_publication_age_msec": 16,
+      "module_realtime_call_usec": {
+        "count": 180,
+        "max": 115758,
+        "mean": 3117.69444444444,
+        "p95": 5190
+      },
+      "native_step_usec": {
+        "count": 180,
+        "max": 114394,
+        "mean": 2558.64444444444,
+        "p95": 2880
+      },
+      "nozzle_updates": 180,
+      "phase": "continuous_drag_feeding",
+      "pointer_call_usec": {
+        "count": 180,
+        "max": 543,
+        "mean": 146.983333333333,
+        "p95": 212
+      },
+      "published_frames": 120
+    },
+    {
+      "authority_ticks": 60,
+      "frames": 60,
+      "input_trace_count": 199,
+      "invariants": {
+        "active": 171,
+        "collected": 0,
+        "conservation_ok": true,
+        "cup_consumed": 0,
+        "energy_ok": true,
+        "gutter": 0,
+        "origin": 171,
+        "refused": 0,
+        "tray": 0
+      },
+      "max_backlog_ticks": 0,
+      "max_publication_age_msec": 16,
+      "module_realtime_call_usec": {
+        "count": 60,
+        "max": 5677,
+        "mean": 2664.6,
+        "p95": 5105
+      },
+      "native_step_usec": {
+        "count": 60,
+        "max": 3721,
+        "mean": 2249.55,
+        "p95": 3151
+      },
+      "nozzle_updates": 0,
+      "phase": "released",
+      "pointer_call_usec": {
+        "count": 0
+      },
+      "published_frames": 40
+    }
+  ],
+  "platform": "Windows",
+  "reserved_drops": 24,
+  "solver_backend": "native_v3",
+  "turns_after": 0,
+  "turns_before": 0,
+  "web_feature": false
+}
