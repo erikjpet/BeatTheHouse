@@ -187,3 +187,14 @@ main/deployed identity, served payload and basic-launch verification. None of
 those delivery stages changes this task's Open status or original-save limit.
 The canonical ledger update preserves all 173 named task rows and their order,
 with no removed IDs, new IDs or duplicate IDs.
+
+Delivery is **blocked, not deployed**. Automatic approval review rejected
+`git push origin HEAD:main` while local HEAD was
+`c612db0a7a3fb6e4f6edc21bf8ffebb6aae64f38`, before execution. Its reason was:
+"Pushing directly to the repository’s default `main` branch is an external,
+potentially consequential commitment; the user authorized delivery to NEXT but
+did not explicitly authorize this exact main-branch push." No alternative push,
+manual release or watcher change was attempted. The commits remain local on
+`fix/bth061-pulltabs-save-001`; NEXT has not received this correction. The
+coordinator must supply explicit authorization addressing this rejection before
+the denied operation can resume.
