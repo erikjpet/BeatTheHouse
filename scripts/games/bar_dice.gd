@@ -593,7 +593,8 @@ func surface_state(run_state: RunState, environment: Dictionary, ui_state: Dicti
 				TUMBLE_CHANNEL,
 				str(tumble.get("id", "")),
 				TUMBLE_DURATION_MSEC if not str(tumble.get("id", "")).is_empty() else 0,
-				int(tumble.get("started", 0))
+				int(tumble.get("started", 0)),
+				{"clock_source": "surface"}
 			),
 		],
 		"surface_action_blocks": _tumble_action_blocks(),
