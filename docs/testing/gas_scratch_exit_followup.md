@@ -1,6 +1,7 @@
 # BTH-GAS-SCRATCHER-EXIT-001 — Gas Casino objects after Scratchers
 
-Owner: task-14. Status: Open; investigation only, no fix commit or acceptance.
+Status: Open; stopped after recovering a prior paused assignment under alias
+`BTH-GAS-SCRATCH-SCENARIO-001`. No production fix or acceptance.
 
 The reported failure is that Gas Casino objects disappear after leaving
 Scratchers. Original failure clock/control state and save identity are not
@@ -52,7 +53,32 @@ ordinary host Buy/Collect/Scratch/File controls and briefly enable the real host
 clock while inside the machine, recording the observed crossing rather than
 directly changing the installed run clock.
 
-Next: trace the actual Scratchers Back/time/publication path, reconstruct a
-bounded independent case using normal actions, and distinguish legitimate
-content availability from a rejected or stale room projection. Preserve the
-item as Open unless a fix commit and its required acceptance support closure.
+## Scope collision and retained attempts
+
+Later history recovery found that the previous worker had already taken the
+same report as `BTH-GAS-SCRATCH-SCENARIO-001` and paused it with scenario work.
+The reported symptom was described there as objects walking to the exit. The
+generic named row did not expose that reserved assignment. Task-14 therefore
+stopped this route under the instruction to select unowned non-scenario work.
+This is an ownership/scope correction, not a diagnosis of the original report.
+
+Three private attempts ended before purchase, all exit 1 with zero owned
+processes: `gas-clock-r1` (7 checks, Act 0 fixture), `gas-clock-r2` (9 checks,
+Act 1), and `gas-clock-r3` (9 checks, recorded pre-seal supply input). The third
+trace showed 14 tickets before first-visit presentation and none afterward,
+with the scalper present. `_refresh_scalper_for_visit` explicitly permits this
+seeded first-visit buyout. All observed base controls and raw authority remained
+valid. These are neither reproductions of disappearing room controls nor passes
+for the unexercised paid-ticket/clock/Save path.
+
+The final proposed already-visited fixture was not executed. Its complete source
+is preserved outside the checkout at task-14
+`evidence/gas-exit-clock-unrun-fixture-preserved.gd`, with its hash and reason in
+`gas-exit-clock-fixture-preservation.json`. No fixture was published as product
+code. No scenario/content edits, held-drag probe, original-state access or fix
+occurred. An unconfirmed source observation about held scratch masks remains
+unverified; it is not an accepted defect or closure basis.
+
+Ownership claim/evidence commit: `52b5c04a65d272b83c8ddc320a8992b91d5b7eda`.
+The item remains Open for its prior paused owner/coordinator to reconcile scope;
+no lost original save is made a prerequisite.
