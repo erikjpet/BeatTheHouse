@@ -91,8 +91,10 @@ and contained save/settings roots, supplied by the maintained owned runner.
 `numbers-native-cache-bootstrap.json` and
 `numbers-journal-combined-receipt.json`.
 
+Implementation: `eb4e66bb86f1aff99e74734aa3afd65fb5d25a3a` on isolated branch
+`fix/numbers-purchase-journal-20261104`, based on public `f876fe41`.
 Independent source/test review found no blocking findings. No full suite,
 rendered Host, OS-pointer, original-profile, main-menu Continue or deployed Web
-acceptance is claimed. The task remains Open for parent acceptance until its
-implementation commit is associated. This follow-up is local fix/test/commit
+acceptance is claimed. The task remains Open for parent acceptance with its
+implementation commit associated in the existing plan/ledger. This follow-up is local fix/test/commit
 only: no publication action, denied-operation retry or NEXT change was made.
