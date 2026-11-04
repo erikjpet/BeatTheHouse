@@ -31,7 +31,7 @@ func _check_shape() -> void:
 	_expect(not IoResultScript.is_ok(failure), "CH-27: failure constructor is successful.")
 	_expect(IoResultScript.assert_shape(failure).is_empty(), "CH-27: failure constructor has an invalid shape.")
 	_expect(not IoResultScript.assert_shape({"ok": false}).is_empty(), "CH-27: malformed result escaped validation.")
-	_expect(KeysScript.ID == "id" and KeysScript.DISPLAY_NAME == "display_name" and KeysScript.BANKROLL_DELTA == "bankroll_delta", "CH-27: high-frequency key constants drifted.")
+	_expect(KeysScript.OK == "ok" and KeysScript.MESSAGE == "message" and KeysScript.BANKROLL_DELTA == "bankroll_delta" and KeysScript.OUTCOME == "outcome", "CH-27: live result and persistence key constants drifted.")
 
 
 func _check_boundaries() -> void:

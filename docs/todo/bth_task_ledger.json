@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T01:28:00.280014+00:00",
+  "updated_at": "2026-11-04T01:33:13.639703+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -11,7 +11,7 @@
   "metadata": {
     "markdown_ledger_section": "## Named playtest task ledger",
     "readable_index": "docs/plans/0.6.1_stability_release_plan.md",
-    "snapshot_source_commit": "66cd97dd18c78350b0194f824186772b30039938",
+    "snapshot_source_commit": "b94f39382c8e181014140ae2600f13eef63a60f5",
     "operator": "The user runs checks and decides actions; no coordinator, scheduler, messaging or worker launch behavior exists."
   },
   "objectives": [
@@ -377,11 +377,11 @@
         "kind": null,
         "description": "Full coverage, current findings and exact main/NEXT acceptance remain active work; source inspection alone confirms no large leak.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-PERF-20261104-001",
@@ -445,7 +445,7 @@
         {
           "sha": "ea136553ce3f33236aa3ea22d23921e6f957e7a2",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -470,11 +470,11 @@
         "kind": null,
         "description": "Active measured investigation or delivery acceptance work; no intentional hold and no inferred leak/fix beyond recorded evidence.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-PERF-20261104-002",
@@ -555,11 +555,11 @@
         "kind": null,
         "description": "Active measured investigation or delivery acceptance work; no intentional hold and no inferred leak/fix beyond recorded evidence.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-PERF-20261104-003",
@@ -631,11 +631,11 @@
         "kind": null,
         "description": "Active measured investigation or delivery acceptance work; no intentional hold and no inferred leak/fix beyond recorded evidence.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-PULLTABS-SAVE-001",
@@ -703,7 +703,7 @@
         {
           "sha": "436a707f8ed1ca6b5464e083326d9d1fb6bb7de7",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -728,11 +728,11 @@
         "kind": null,
         "description": "No intentional hold or missing-personal-save waiting dependency. Original Grand campaign advanced and original cause remains unconfirmed; equivalent-state reconstruction/classification is active investigation work.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "UX-ROULETTE-SOCIAL-QUOTE-001",
@@ -782,7 +782,7 @@
         {
           "sha": "226e25833dc8e863f940011fee6cb275cdd73097",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -810,11 +810,11 @@
         "kind": null,
         "description": "Authorized localhost Web quote/staging acceptance passed without bypass. The separate LAN HTTPS trust task remains Open and no longer blocks this accepted scope.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BACCARAT_HISTORICAL_NOTICE",
@@ -853,7 +853,7 @@
         {
           "sha": "70ec8e7f2ad5d2df8318e6794f0811f4715da978",
           "evidence": [
-            "commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -883,11 +883,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BACK-ALLEY-INITIAL-SPAWN",
@@ -926,7 +926,7 @@
         {
           "sha": "8defad0a4e3c04320a651520c93e368a3a185c78",
           "evidence": [
-            "source_change",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -961,11 +961,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-05",
@@ -1026,11 +1026,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-06-INDEPENDENT-ACCEPTANCE",
@@ -1093,11 +1093,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-07",
@@ -1163,11 +1163,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-08",
@@ -1228,11 +1228,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-09",
@@ -1307,11 +1307,11 @@
         "kind": null,
         "description": "Exact personal-save evidence is unavailable, not an intentional hold or pending user action.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00",
+      "updated_at": "2026-11-04T01:32:35.703920+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -1378,11 +1378,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-11",
@@ -1438,7 +1438,7 @@
         {
           "sha": "1c201c9e341ac6f3e068c4d498fd00bf7298880e",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -1468,11 +1468,11 @@
         "kind": null,
         "description": "No intentional hold or requirement to choose a scenario with Erik. Specific activity rules, fees/time and success criteria are implementation decisions when the concrete activity needs them.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-SCENARIO-WEDDING-001",
@@ -1533,7 +1533,7 @@
         {
           "sha": "1c201c9e341ac6f3e068c4d498fd00bf7298880e",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -1561,11 +1561,11 @@
         "kind": null,
         "description": "Prior cold-import delivery dependency is resolved for verified NEXT247ebe identity and scripted startup. Ordinary visible route/Save-Continue acceptance remains active work, not a hold or completed behavior pass.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-SCENARIO-ARRIVAL-002",
@@ -1630,11 +1630,11 @@
         "kind": null,
         "description": "Faithful available-route reproduction is active investigation. The invalid synthetic route was excluded and its experiment reverted; no intentional hold or confirmed new player failure.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-12",
@@ -1695,11 +1695,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-13",
@@ -1760,11 +1760,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-15",
@@ -1817,7 +1817,7 @@
         {
           "sha": "b63342bbdf04cfb799ba5405f3d4f4d0c416485e",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -1849,11 +1849,11 @@
         "kind": null,
         "description": "No intentional hold. The substantive replacement effect is unfinished active design/implementation work; a historical proposal does not select the mechanic or justify a generic user-selection gate.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00",
+      "updated_at": "2026-11-04T01:32:35.703920+00:00",
       "decisions": [
         {
           "id": "replacement-effect",
@@ -1921,7 +1921,7 @@
         {
           "sha": "b63342bbdf04cfb799ba5405f3d4f4d0c416485e",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -1953,11 +1953,11 @@
         "kind": null,
         "description": "No intentional hold or invented user-selection prerequisite. Original design recovery and the substantive replacement choice remain active owner work.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00",
+      "updated_at": "2026-11-04T01:32:35.703920+00:00",
       "decisions": [
         {
           "id": "full-rework-design",
@@ -2026,11 +2026,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-19",
@@ -2091,11 +2091,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-20",
@@ -2156,11 +2156,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-25",
@@ -2226,11 +2226,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-26-A-ADJACENT-COFFEE-WEB",
@@ -2298,11 +2298,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-26-A-INDEPENDENT-UNFINISHED-LESSON",
@@ -2366,11 +2366,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-26-A-NATIVE-QUALIFICATION",
@@ -2433,11 +2433,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-26-A-NEXT-DELIVERY",
@@ -2500,11 +2500,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-26-A-ORIGINAL-VISIBLE-ACCEPTANCE",
@@ -2567,11 +2567,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-26-A-PHONE-COLD-CONTINUITY",
@@ -2639,11 +2639,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-26-A-PHONE-WARM-ACK-WEB",
@@ -2711,11 +2711,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-28",
@@ -2781,11 +2781,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-30-NATIVE-QUALIFICATION",
@@ -2843,11 +2843,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-30-NEXT-DELIVERY",
@@ -2905,11 +2905,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-30-PRESERVED-OFFER-ACCEPTANCE",
@@ -2967,11 +2967,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-31",
@@ -3012,14 +3012,14 @@
         {
           "sha": "8a87c8070424b6c2dc6a93ef60990c9cd81f3faf",
           "evidence": [
-            "commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         },
         {
           "sha": "8a87c8070424b6c2dc6a93ef60990c9cd81f3faf",
           "evidence": [
-            "historical_accepted_implementation",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -3054,11 +3054,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-31-ENG-STRESS-WEB-001",
@@ -3126,11 +3126,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-31-NATIVE-WHOLE-APP",
@@ -3188,11 +3188,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-31-NEXT-DELIVERY",
@@ -3250,11 +3250,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-31-WEB-VIEWPORT-TOUCH",
@@ -3312,11 +3312,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-32",
@@ -3355,7 +3355,7 @@
         {
           "sha": "de3529c8faee12df3d2671d1ee1812957f0fd734",
           "evidence": [
-            "previously_delivered_source_commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -3385,11 +3385,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-BJ-SPLIT-ACE-PAYOUT-ACCEPTANCE-001",
@@ -3428,7 +3428,7 @@
         {
           "sha": "6e68785b9a1030c24b75dda3e8bd308c1d7d2535",
           "evidence": [
-            "native_rules_release",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -3458,11 +3458,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-BJ-SPLIT-DOUBLE-ACCEPTANCE-001",
@@ -3501,7 +3501,7 @@
         {
           "sha": "6e68785b9a1030c24b75dda3e8bd308c1d7d2535",
           "evidence": [
-            "native_rules_release",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -3536,11 +3536,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-COACH-CADENCE-FIXTURE-001",
@@ -3601,11 +3601,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-COUNT-ROOM-COLD-001",
@@ -3655,14 +3655,14 @@
         {
           "sha": "f98f2076768eed5cd67a2f69bc6cbf0589cd4e7f",
           "evidence": [
-            "earlier_partial_room_fix_only",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         },
         {
           "sha": "0c71fdad33ebdcdecb4aa78e9e7dc9e3f6d0bd80",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -3700,11 +3700,11 @@
         "kind": null,
         "description": "Preserved agent-owned R02 still exists; it is not Erik's gone personal save.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00",
+      "updated_at": "2026-11-04T01:32:35.703920+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -3769,7 +3769,7 @@
         {
           "sha": "4355f5611f0f77f546d898e39524f6b8e974c161",
           "evidence": [
-            "tested_implementation",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -3807,11 +3807,11 @@
         "kind": null,
         "description": "Exact personal incident state is unavailable and no longer a completion prerequisite; deployed interaction evidence remains separately classified.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00",
+      "updated_at": "2026-11-04T01:32:35.703920+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -3892,11 +3892,11 @@
         "kind": null,
         "description": "Original user context is unavailable but no longer a waiting dependency; reconstruction and classification are active investigation work.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00",
+      "updated_at": "2026-11-04T01:32:35.703920+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -3963,11 +3963,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-PRIMARY-QUEUE-RECONCILE-20261103",
@@ -4006,7 +4006,7 @@
         {
           "sha": "8defad0a4e3c04320a651520c93e368a3a185c78",
           "evidence": [
-            "associated_delivered_back_alley_change",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -4036,11 +4036,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-QA-BROAD-001",
@@ -4101,11 +4101,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-QA-CREW-ENDING-001",
@@ -4166,11 +4166,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-QA-GRAND-ENDING-001",
@@ -4209,7 +4209,7 @@
         {
           "sha": "87a06b9a4acbe86b0f761d2cd0ab929f5584b716",
           "evidence": [
-            "exact_tested_build_only",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -4239,11 +4239,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-QA-TIMING-WORKFLOW-001",
@@ -4304,11 +4304,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-RESTORE-06-ENVIRONMENT-001",
@@ -4347,7 +4347,7 @@
         {
           "sha": "38bdfcb3d0b2219239d4e15d94bb86120ed8e726",
           "evidence": [
-            "source_commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -4377,11 +4377,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-RESTORE-06-PHYSICAL-PHONE-ACCEPTANCE",
@@ -4439,11 +4439,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-SELECTION-NARRATIVE-001",
@@ -4482,7 +4482,7 @@
         {
           "sha": "87a06b9a4acbe86b0f761d2cd0ab929f5584b716",
           "evidence": [
-            "source_change",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -4512,11 +4512,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-TODO-RESTORE-COMMIT-GATE-001",
@@ -4578,21 +4578,21 @@
         {
           "sha": "1567f51e0b45d71cbd5d8de8f6b0b3c6082eb070",
           "evidence": [
-            "documentation_ledger_restoration",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         },
         {
           "sha": "d8b1ef412ff28ecda2157780b62bf917b6efc54e",
           "evidence": [
-            "latest_verified_worker_implementation",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         },
         {
           "sha": "22ae5fa22ad60f4eac8c3295e65e1e39c7cd9832",
           "evidence": [
-            "published_main_documentation_commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -4636,11 +4636,11 @@
         "kind": null,
         "description": "Historical tracking publication/readback is accepted; no app startup pass is inferred.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-TOUCH-01",
@@ -4679,7 +4679,7 @@
         {
           "sha": "c23c47febd41bbeba273bfb84e31c0d429e6fd60",
           "evidence": [
-            "commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -4714,11 +4714,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-TOUCH-01-OWNER-MOBILE-WEB",
@@ -4781,11 +4781,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-TOUCH-01-USER-PHONE-ACCEPTANCE",
@@ -4843,11 +4843,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-001",
@@ -4888,7 +4888,7 @@
         {
           "sha": "ead68563a3fe2a5c548144b4e42681f74abd16ef",
           "evidence": [
-            "commit_reference_in_existing_release_plan",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -4918,11 +4918,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-002",
@@ -4963,7 +4963,7 @@
         {
           "sha": "ead68563a3fe2a5c548144b4e42681f74abd16ef",
           "evidence": [
-            "commit_reference_in_existing_release_plan",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -4993,11 +4993,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-003",
@@ -5060,11 +5060,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-004",
@@ -5127,11 +5127,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-005",
@@ -5194,11 +5194,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-006",
@@ -5336,11 +5336,11 @@
         "kind": null,
         "description": "No concrete technical blocker established for the full parent; current assignment and per-game acceptance coverage require reconciliation. Do not infer completion from a single subtask.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-007",
@@ -5403,11 +5403,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-008",
@@ -5470,11 +5470,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-009",
@@ -5537,11 +5537,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-010",
@@ -5604,11 +5604,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-011",
@@ -5671,11 +5671,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-012",
@@ -5716,7 +5716,7 @@
         {
           "sha": "ead68563a3fe2a5c548144b4e42681f74abd16ef",
           "evidence": [
-            "commit_reference_in_existing_release_plan",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -5746,11 +5746,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-013",
@@ -5813,11 +5813,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-014",
@@ -5858,14 +5858,14 @@
         {
           "sha": "4678a8bcc9dba653ab7f59c93fc18ac05c96f125",
           "evidence": [
-            "commit_reference_in_existing_release_plan",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         },
         {
           "sha": "cbd72764a4a4ab9015e4d9fa99b27fbe0edf5ac9",
           "evidence": [
-            "commit_reference_in_existing_release_plan",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -5895,11 +5895,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-015",
@@ -5940,7 +5940,7 @@
         {
           "sha": "0c7bb04383e2c604cfcf0e6a40cb282fb5bad8b0",
           "evidence": [
-            "commit_reference_in_existing_release_plan",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -5970,11 +5970,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-016",
@@ -6015,7 +6015,7 @@
         {
           "sha": "4f7778a230abb70dae98491b35f31f6647820a98",
           "evidence": [
-            "commit_reference_in_existing_release_plan",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -6045,11 +6045,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-017",
@@ -6090,7 +6090,7 @@
         {
           "sha": "1c3c736768057488a578a8cf71f98b6d9bfb1381",
           "evidence": [
-            "commit_reference_in_existing_release_plan",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -6120,11 +6120,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-018",
@@ -6165,7 +6165,7 @@
         {
           "sha": "74dc3edd8f8138d57f489728ab0415c925d283f5",
           "evidence": [
-            "commit_reference_in_existing_release_plan",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -6195,11 +6195,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-019",
@@ -6240,7 +6240,7 @@
         {
           "sha": "74dc3edd8f8138d57f489728ab0415c925d283f5",
           "evidence": [
-            "commit_reference_in_existing_release_plan",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -6270,11 +6270,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-020",
@@ -6315,14 +6315,14 @@
         {
           "sha": "da941037502ed33776e7ffcbe5528201c981b35b",
           "evidence": [
-            "commit_reference_in_existing_release_plan",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         },
         {
           "sha": "36e4c3e42396ad3a6b2c3ede3407cc557608d0b9",
           "evidence": [
-            "commit_reference_in_existing_release_plan",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -6352,11 +6352,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-021",
@@ -6397,14 +6397,14 @@
         {
           "sha": "ded24ecedc528919efbe1817a2722710d687651c",
           "evidence": [
-            "commit_reference_in_existing_release_plan",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         },
         {
           "sha": "994d3b63f41215d4af63bb35ec0eada730e66095",
           "evidence": [
-            "commit_reference_in_existing_release_plan",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -6434,11 +6434,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-022",
@@ -6479,7 +6479,7 @@
         {
           "sha": "943866a2b6e51e891411bfbd1054e31742e63235",
           "evidence": [
-            "commit_reference_in_existing_release_plan",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -6509,11 +6509,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-023",
@@ -6554,7 +6554,7 @@
         {
           "sha": "644af3a8441ea9b45333dacaffa42e2098968a5d",
           "evidence": [
-            "commit_reference_in_existing_release_plan",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -6584,11 +6584,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-024",
@@ -6629,7 +6629,7 @@
         {
           "sha": "a893cb07ef22213e551cc8d8ad473c0578ab0048",
           "evidence": [
-            "commit_reference_in_existing_release_plan",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -6659,11 +6659,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-025",
@@ -6724,11 +6724,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-026",
@@ -6769,7 +6769,7 @@
         {
           "sha": "e72434dab3f1d60f89fa53917b18ce76fb8989fc",
           "evidence": [
-            "commit_reference_in_existing_release_plan",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -6799,11 +6799,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-ALLEY-LOAN",
@@ -6873,7 +6873,7 @@
         {
           "sha": "29ba65a8531e3d260574ddb217f72d36b3df98df",
           "evidence": [
-            "combined_travel_and_loan_fix",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -6906,11 +6906,11 @@
         "kind": null,
         "description": "Erik's original affected loan save is gone and is not awaited. Existing reconstructed fixtures remain usable.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00",
+      "updated_at": "2026-11-04T01:32:35.703920+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -6986,14 +6986,14 @@
         {
           "sha": "124ee1677dadfc49ae845d90365cfc6ee918602c",
           "evidence": [
-            "earlier_partial_fix_only",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         },
         {
           "sha": "29ba65a8531e3d260574ddb217f72d36b3df98df",
           "evidence": [
-            "combined_travel_and_loan_fix",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -7031,11 +7031,11 @@
         "kind": null,
         "description": "Personal original save unavailable, not pending; captured R03 evidence and tester state remain available.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00",
+      "updated_at": "2026-11-04T01:32:35.703920+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -7109,7 +7109,7 @@
         {
           "sha": "b29d9b3985b5676aac2439f2f08aae359729a3e3",
           "evidence": [
-            "latest_verified_worker_implementation",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -7145,10 +7145,10 @@
         "evidence": [
           "docs/testing/crew_expired_handoff.md"
         ],
-        "observed_at": "2026-11-04T01:24:20.765383+00:00"
+        "observed_at": "2026-11-04T01:32:35.703920+00:00"
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00",
+      "updated_at": "2026-11-04T01:32:35.703920+00:00",
       "original_personal_save": {
         "state": "unavailable",
         "wait_on_user": false,
@@ -7206,14 +7206,14 @@
         {
           "sha": "2041585d42ae5f9f609d351a7aa0bdd48b1ae094",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         },
         {
           "sha": "8f330c51c858ac6e82f3e307c6009bf330cfcd81",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -7241,11 +7241,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-HUD-001",
@@ -7297,28 +7297,28 @@
         {
           "sha": "60d8855191bc204a38ac390c1b8af2656f087aca",
           "evidence": [
-            "latest_verified_worker_implementation",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         },
         {
           "sha": "2041585d42ae5f9f609d351a7aa0bdd48b1ae094",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         },
         {
           "sha": "8f330c51c858ac6e82f3e307c6009bf330cfcd81",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         },
         {
           "sha": "e194813a3695cc4333a6568ab51a387f681a8815",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -7351,11 +7351,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-TABLE-ENDING",
@@ -7407,14 +7407,14 @@
         {
           "sha": "776a819d0420c8801708b20b5e9376c5fd0d15fe",
           "evidence": [
-            "latest_verified_worker_implementation",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         },
         {
           "sha": "da24704d7a5b037a9b3771e68133553c054a393b",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -7447,11 +7447,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "CARD-INTEREST-DISPLAY-001",
@@ -7517,11 +7517,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "COUNT-MONEYFLOW-001",
@@ -7560,7 +7560,7 @@
         {
           "sha": "234e86474711c3d591df9c3719313d1af4224674",
           "evidence": [
-            "commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -7590,11 +7590,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "CREW-LENDER-REOPEN-001",
@@ -7635,7 +7635,7 @@
         {
           "sha": "c8cccdba1dda5ddd5d4a7afd0c331edb1c04b24e",
           "evidence": [
-            "commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -7685,11 +7685,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "CREW-LENDER-REOPEN-001-AC01",
@@ -7747,11 +7747,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "CREW-LENDER-REOPEN-001-AC02",
@@ -7809,11 +7809,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "CREW-LENDER-REOPEN-001-AC03",
@@ -7871,11 +7871,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "CREW-LENDER-REOPEN-001-AC04",
@@ -7933,11 +7933,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "CREW-LENDER-REOPEN-001-AC05",
@@ -7995,11 +7995,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "CREW-LENDER-REOPEN-001-AC06",
@@ -8057,11 +8057,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "CREW-LENDER-REOPEN-001-AC07",
@@ -8119,11 +8119,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "CREW-LENDER-REOPEN-001-COV-HTTPS",
@@ -8181,11 +8181,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "CREW-LENDER-REOPEN-001-COV-PAWN-REPAY",
@@ -8243,11 +8243,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "CREW-PACKAGE-TERMS-001",
@@ -8290,7 +8290,7 @@
         {
           "sha": "b12430136817595e92efb03e5c31881caa21d209",
           "evidence": [
-            "commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -8325,11 +8325,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "CREW-PLANNING-OVERFLOW",
@@ -8368,7 +8368,7 @@
         {
           "sha": "d68b49ccf4fb90389686628d68b0e9c56a8e6f53",
           "evidence": [
-            "commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -8398,11 +8398,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "CREW-R02-PACKAGE-PROGRESSION",
@@ -8460,11 +8460,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "CREW-STAKE-LOSS-PUBLICATION-001",
@@ -8505,7 +8505,7 @@
         {
           "sha": "a7464c13285c3102e9bd82719f223ae603e3f61c",
           "evidence": [
-            "deployed_commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -8550,11 +8550,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "CREW-STAKE-LOSS-PUBLICATION-001-INDEPENDENT-ACCEPTANCE",
@@ -8614,11 +8614,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "DEPARTING_OBSERVER_CLIP",
@@ -8674,11 +8674,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "EXPLICIT_ENTRY_SAL_PENDING_OFFER",
@@ -8719,7 +8719,7 @@
         {
           "sha": "a7464c13285c3102e9bd82719f223ae603e3f61c",
           "evidence": [
-            "deployed_commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -8754,11 +8754,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "EXPLICIT_ENTRY_SAL_PENDING_OFFER-INDEPENDENT-ACCEPTANCE",
@@ -8818,11 +8818,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "EXPLICIT_ENTRY_SAL_TALK",
@@ -8863,7 +8863,7 @@
         {
           "sha": "a7464c13285c3102e9bd82719f223ae603e3f61c",
           "evidence": [
-            "deployed_commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -8898,11 +8898,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "EXPLICIT_ENTRY_TUTORIAL_BRONZE_COLLECT",
@@ -8943,7 +8943,7 @@
         {
           "sha": "a7464c13285c3102e9bd82719f223ae603e3f61c",
           "evidence": [
-            "deployed_commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -8978,11 +8978,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "EXPLICIT_ENTRY_TUTORIAL_BRONZE_COLLECT-INDEPENDENT-ACCEPTANCE",
@@ -9042,11 +9042,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "GAP-BJ-CAUGHT-STAND-INDEPENDENT-001",
@@ -9102,11 +9102,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "GAP-CREW-SHARE-READ-INDEPENDENT-001",
@@ -9162,11 +9162,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "GAP-INSPECTOR-ROLLBACK-WEB-001",
@@ -9222,11 +9222,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "GAP-RESTORE-06-LAN-HTTPS-001",
@@ -9284,11 +9284,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "GRAND-GOLD-REVIEW-RETALK-001",
@@ -9331,7 +9331,7 @@
         {
           "sha": "a7464c13285c3102e9bd82719f223ae603e3f61c",
           "evidence": [
-            "deployed_commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -9381,11 +9381,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "GRAND-GOLD-REVIEW-RETALK-001-INDEPENDENT-ACCEPTANCE",
@@ -9445,11 +9445,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "GRAND-JOURNAL-CURRENCY-001-CASH-EVENT",
@@ -9507,11 +9507,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "GRAND-JOURNAL-CURRENCY-001-CHIP-DEBIT",
@@ -9569,11 +9569,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "GRAND-JOURNAL-CURRENCY-001-LEGACY-MIXED",
@@ -9631,11 +9631,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "GRAND-JOURNAL-CURRENCY-001-NEXT-DELIVERY",
@@ -9693,11 +9693,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "GRAND-JOURNAL-CURRENCY-001-RECORD-INTEGRITY",
@@ -9755,11 +9755,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "GRAND-JOURNAL-CURRENCY-001-WARM-COLD",
@@ -9822,11 +9822,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "HISTORICAL_STAND_INPUT",
@@ -9882,11 +9882,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "LEDGER022",
@@ -9937,7 +9937,7 @@
         {
           "sha": "b63342bbdf04cfb799ba5405f3d4f4d0c416485e",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -9968,10 +9968,10 @@
           "C:/Users/theep/Documents/Codex/2026-10-26/task/evidence/qa-item022-ledger-pencil-roulette-loss-cushion-review.json",
           "docs/testing/item_factual_help.md"
         ],
-        "observed_at": "2026-11-04T01:24:20.765383+00:00"
+        "observed_at": "2026-11-04T01:32:35.703920+00:00"
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "LIMIT-HISTORICAL-MONEY-FLOW-PREFIX-001",
@@ -10027,11 +10027,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "LIMIT-HISTORICAL-RUMOR-TEXT-001",
@@ -10087,11 +10087,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "LIMIT-HISTORICAL-TIMER-IDLE-001",
@@ -10147,11 +10147,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "OBS-AMBIENT-EXPLICIT-ENTRY-001",
@@ -10207,11 +10207,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "OBS-CREW-WORD-LEAD-001",
@@ -10287,11 +10287,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "OBS-PAL-POST-RETURN-001-INDEPENDENT-NEXT-COLD",
@@ -10356,11 +10356,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "OPS-01",
@@ -10421,11 +10421,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "OPS-02",
@@ -10486,11 +10486,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "OPS-04",
@@ -10551,11 +10551,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "OPS-05",
@@ -10616,11 +10616,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "OPS-07",
@@ -10681,11 +10681,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "PRACTICE-CREW-LAYER-001",
@@ -10728,7 +10728,7 @@
         {
           "sha": "a7464c13285c3102e9bd82719f223ae603e3f61c",
           "evidence": [
-            "deployed_commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -10778,11 +10778,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "PRACTICE-CREW-LAYER-001-INDEPENDENT-ACCEPTANCE",
@@ -10842,11 +10842,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "QA-TRAVEL033",
@@ -10885,7 +10885,7 @@
         {
           "sha": "6180646e155faa08cc12c7a79cb113f5d1d3a52e",
           "evidence": [
-            "commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -10910,11 +10910,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "QA-TUT-002",
@@ -10975,11 +10975,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "QA-UX-001",
@@ -11040,11 +11040,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "QA-UX-005",
@@ -11105,11 +11105,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "QA-WEB-003",
@@ -11170,11 +11170,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "RAW_FLOAT_STORAGE_PRECISION",
@@ -11215,7 +11215,7 @@
         {
           "sha": "a7464c13285c3102e9bd82719f223ae603e3f61c",
           "evidence": [
-            "deployed_commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -11265,11 +11265,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "RAW_FLOAT_STORAGE_PRECISION-INDEPENDENT-ACCEPTANCE",
@@ -11329,11 +11329,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "REACH021",
@@ -11389,11 +11389,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "TUTORIAL-COACH-RUN-MENU-OCCLUSION",
@@ -11432,7 +11432,7 @@
         {
           "sha": "43971e6b74022cdc60e870a72f83c482e3a3e61d",
           "evidence": [
-            "commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -11467,11 +11467,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "TUTORIAL-COACH-RUN-MENU-OCCLUSION-INDEPENDENT-ACCEPTANCE",
@@ -11536,11 +11536,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "USER_MOBILE_LOCAL_UI_ASSETS",
@@ -11581,7 +11581,7 @@
         {
           "sha": "f7360e5c45d9053eae8de97e1a4fa481a735bc30",
           "evidence": [
-            "commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -11626,11 +11626,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "USER_MOBILE_LOCAL_UI_ASSETS-INDEPENDENT-ACCEPTANCE",
@@ -11690,11 +11690,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "USER_MOBILE_LOCAL_UI_ASSETS-MENU-TOUCH-001",
@@ -11755,11 +11755,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "USER_MOBILE_LOCAL_UI_ASSETS-SURFACES-001",
@@ -11820,11 +11820,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "WARM_CREW_NO_ROLL",
@@ -11880,11 +11880,11 @@
         "kind": null,
         "description": "No concrete blocker has been established in the recovered record; do not invent a user decision or intentional hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-06",
@@ -11925,7 +11925,7 @@
         {
           "sha": "de3529c8faee12df3d2671d1ee1812957f0fd734",
           "evidence": [
-            "source_commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -11955,11 +11955,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-26-A",
@@ -12000,14 +12000,14 @@
         {
           "sha": "3a98ab2b5c1f2bccd7b5cea0bd1d8055d181010f",
           "evidence": [
-            "commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         },
         {
           "sha": "3a98ab2b5c1f2bccd7b5cea0bd1d8055d181010f",
           "evidence": [
-            "deployed_commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -12082,11 +12082,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-ROOM-PUNCHLINE-COLD-001",
@@ -12127,14 +12127,14 @@
         {
           "sha": "38defb7271e0cedb006f8e0ca3424cb7d1a80fb2",
           "evidence": [
-            "commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         },
         {
           "sha": "38defb7271e0cedb006f8e0ca3424cb7d1a80fb2",
           "evidence": [
-            "deployed_commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -12174,11 +12174,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-TRAVEL-CAGE-FLOOR-QUOTE-001",
@@ -12217,7 +12217,7 @@
         {
           "sha": "3755739cb640b6ddb7a7a477e24af27cc4076b27",
           "evidence": [
-            "commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -12252,11 +12252,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-TRAVEL-CAGE-FLOOR-QUOTE-001-INDEPENDENT",
@@ -12295,7 +12295,7 @@
         {
           "sha": "3755739cb640b6ddb7a7a477e24af27cc4076b27",
           "evidence": [
-            "commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -12325,15 +12325,15 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH061-AUDIT-001",
-      "name": "Remove confirmed obsolete game code",
+      "name": "Complete codebase-wide obsolete-code audit",
       "aliases": [
         "BTH-DEPRECATED-CODE-AUDIT-001"
       ],
@@ -12342,7 +12342,7 @@
       "group": "current",
       "objective": {
         "text": "Find other cases of deprecated code like the reported obsolete game implementations and remove confirmed obsolete code completely throughout the requested codebase. Preserve active behavior, save compatibility and historical evidence. Cover the full audit scope explicitly; one removal batch or a symbol scan is not the whole objective.",
-        "source": "Original task9 request: 'kick off an audit agent that will find other cases of depreciated code like these instances and remove them completely from the codebase'; docs/testing/deprecated_code_audit_2026_11_03.md",
+        "source": "Original task9 request: 'kick off an audit agent that will find other cases of depreciated code like these instances and remove them completely from the codebase'; docs/testing/deprecated_code_audit_2026_11_03.md; docs/testing/deprecated_code_audit_2026_11_04.md (current continuation)",
         "scope_confirmed": true,
         "acceptance": [
           {
@@ -13174,7 +13174,7 @@
         }
       },
       "state": "open",
-      "status": "ACTIVE_FULL_AUDIT_FIRST_REMOVAL_BATCH_DELIVERED",
+      "status": "RESUMED_SCOPE_AND_CHECK_REPAIRS_IN_PROGRESS",
       "owner": {
         "name": "Audit obsolete game code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -13184,7 +13184,7 @@
         {
           "sha": "6a784623bdedd6b253d41ef42110adbfd4d67a12",
           "evidence": [
-            "removal_implementation",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -13202,7 +13202,7 @@
         {
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-          "summary": "Parent objective: find other deprecated implementations throughout the requested codebase and remove confirmed obsolete code completely while preserving active behavior/save compatibility. Batch BTH061-AUDIT-001-BATCH-001 shipped6a784623 and NEXTbe4; that proves only its bounded removals, not full-audit completion. Remaining current inventory:95core files(46same prior-reviewed blobs,49changed;4without prior review),127UI/game files and7322functions scanned, not all semantically reviewed. Maintain explicit reviewed/retained/removed dispositions, classify every candidate/caller/compatibility path and name inherited-failure follow-ups; then test/commit/verify subsequent batches. Owner is active. Full objective stays Open until coverage and parent acceptance are satisfied."
+          "summary": "Prior scoped NEXTbe4cd671 acceptance retained. Full scope completion was premature; resumed audit and follow-ups below are active, with no intentional holds. [Continuation](../testing/deprecated_code_audit_2026_11_04.md)."
         },
         {
           "kind": "recorded_receipt",
@@ -13223,17 +13223,17 @@
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Review/classify the four never-reviewed core files and remaining changed core/UI/game candidates, update explicit dispositions and retain/remove evidence; keep the full parent Open while subsequent bounded batches are implemented and verified.",
+      "next_action": "Reconcile the current audit continuation, explicit current dispositions and named repair/qualification follow-ups in docs/testing/deprecated_code_audit_2026_11_04.md with the earlier coverage snapshot. Reuse completed review and focused evidence; finish only remaining candidates, checks and NEXT acceptance before full-parent closure.",
       "blocker": {
         "state": "none",
         "kind": null,
         "description": "No intentional hold or external decision blocks the audit; semantic review and candidate classification remain active work.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -13272,7 +13272,7 @@
         {
           "sha": "8b2ff3d25b59b388d761fb45950b57a11b9842fc",
           "evidence": [
-            "commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -13307,11 +13307,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001-INDEPENDENT",
@@ -13352,7 +13352,7 @@
         {
           "sha": "8b2ff3d25b59b388d761fb45950b57a11b9842fc",
           "evidence": [
-            "commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -13382,11 +13382,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "EXPLICIT_ENTRY_SAL_TALK-INDEPENDENT-ACCEPTANCE",
@@ -13429,7 +13429,7 @@
         {
           "sha": "8a87c8070424b6c2dc6a93ef60990c9cd81f3faf",
           "evidence": [
-            "source_commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -13459,11 +13459,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "GRAND-JOURNAL-CURRENCY-001",
@@ -13504,7 +13504,7 @@
         {
           "sha": "9ae03983c680b9fcc698426ced20e7f7a1892d0e",
           "evidence": [
-            "commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -13539,11 +13539,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "OBS-PAL-POST-RETURN-001",
@@ -13582,14 +13582,14 @@
         {
           "sha": "7529939470719e9bc4b95fda1849f71868bf5979",
           "evidence": [
-            "delivered_commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         },
         {
           "sha": "7529939470719e9bc4b95fda1849f71868bf5979",
           "evidence": [
-            "tested_commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -13644,11 +13644,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "OPS07-LEGACY-CUSTODY-BYTES-001",
@@ -13687,7 +13687,7 @@
         {
           "sha": "7e26586d05fa45d4aa8fead6edf13585a2656f83",
           "evidence": [
-            "commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -13717,11 +13717,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "QA-CREW-WORD-LEAD-MAP-COLD-001",
@@ -13764,7 +13764,7 @@
         {
           "sha": "7529939470719e9bc4b95fda1849f71868bf5979",
           "evidence": [
-            "accepted_commit",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -13794,11 +13794,11 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-LAN-TLS-TRUST-001",
@@ -13874,10 +13874,10 @@
           "Codex task01a1a3e1-a613-7284-8bba-092f690190c9; observed2026-11-04T00:20:56Z",
           "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
         ],
-        "observed_at": "2026-11-04T01:24:20.765383+00:00"
+        "observed_at": "2026-11-04T01:32:35.703920+00:00"
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-NEXT-ALLOC-001",
@@ -13947,11 +13947,11 @@
         "kind": null,
         "description": "Causal mitigation is unproven. Primary owner is idle in the current snapshot, which the checker must expose.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-RUNTIME-CLEANUP-001",
@@ -14063,21 +14063,21 @@
         {
           "sha": "de3f27930a0ddec47f835eff64963cd7eef3417f",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         },
         {
           "sha": "2427816a96fc7ec0d7704d341812cc7b2c76e7a7",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         },
         {
           "sha": "dc800d1256a5c9337b85d43ec6f9bb521f9be553",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -14110,10 +14110,10 @@
           "docs/testing/runtime_cleanup_followup_2026_11_04.md",
           "docs/testing/runtime_cleanup_verification_2026_11_04.md"
         ],
-        "observed_at": "2026-11-04T01:24:20.765383+00:00"
+        "observed_at": "2026-11-04T01:32:35.703920+00:00"
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-SLOT-COLLECT-001",
@@ -14193,11 +14193,11 @@
         "kind": null,
         "description": "Current owner successfully fetched current main from the intended repository and created an isolated worktree. Focused testing is in progress; no current authorization/ownership blocker or intentional hold is established.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:24:20.765383+00:00"
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     },
     {
       "id": "BTH-TODO-RELIABILITY-001",
@@ -14282,7 +14282,7 @@
         {
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-          "summary": "Preserve stable IDs and each full original objective/acceptance independently of implementation batches. Manual checks expose owner lifecycle/freshness, stale blockers, missing commits/evidence/deployment, readable/structured drift and batch-only closure; include explicit runtime cleanup evidence, zero intentional holds, no portrait app updates and unavailable personal-save policy. Finish reviewed regression-tested artifact publication and verify remote readback/existing NEXT as applicable. No coordinator service, scheduler, worker messages, live process discovery or automatic cleanup. Initial162-ID restoration does not satisfy this new objective."
+          "summary": "Tested integration commit 71aa69d92fe78e1600dd2743120e0f1df5e30f27 exists locally. Automatic approval review rejected direct main push; it did not execute. Main/NEXT publication and verification remain pending. Full audit/cleanup parents remain Open; no cleanup was performed."
         }
       ],
       "implementation_batches": [],
@@ -14292,13 +14292,1129 @@
         "kind": "automatic_approval_review_rejection",
         "description": "Direct main push rejected by automatic approval review despite standing authorization supplied in trusted parent history. Push did not execute. No denied-operation retry or alternate publication attempted.",
         "requires_user_input": true,
-        "observed_at": "2026-11-04T01:28:00.280014+00:00",
+        "observed_at": "2026-11-04T01:33:13.639703+00:00",
         "evidence": [
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-13\\durable-publication-blocker.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T01:28:00.280014+00:00"
+      "updated_at": "2026-11-04T01:33:13.639703+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-CREW-WINDOW-001",
+      "name": "Repair current Crew appointment fixture and host handoff boundary",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Repair current Crew appointment fixture and host handoff boundary. Reproduced current unavailable-favor fixture failure; preserve eligibility, real host terminal handoff, money, exact-once and Save/Continue assertions.",
+        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "recorded-current-scope",
+            "description": "Reproduced current unavailable-favor fixture failure; preserve eligibility, real host terminal handoff, money, exact-once and Save/Continue assertions.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_2026_11_04.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "FOCUSED_ACCEPTANCE_PASSED_NEXT_PENDING",
+      "owner": {
+        "name": "Audit fixture repair",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "dec71ae8b267e9adb27bd408b10cbad9f4644b82",
+          "evidence": [
+            "recorded_in_named_ledger",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "named_ledger",
+          "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+          "summary": "Reproduced current unavailable-favor fixture failure; preserve eligibility, real host terminal handoff, money, exact-once and Save/Continue assertions."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Continue the specific remaining qualification/repair recorded here: Reproduced current unavailable-favor fixture failure; preserve eligibility, real host terminal handoff, money, exact-once and Save/Continue assertions. Keep the full audit parent Open and preserve existing focused evidence.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
+        "requires_user_input": false,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ],
+        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-PLACEMENT-MODE-001",
+      "name": "Separate empty-capacity and runtime-reserve fixture controls",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Separate empty-capacity and runtime-reserve fixture controls. Current independent runtime-reserve visibility makes the old zero-slot assertion invalid unless that separate toggle is off. Preserve original empty-capacity assertion and restore reserve visibility.",
+        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "recorded-current-scope",
+            "description": "Current independent runtime-reserve visibility makes the old zero-slot assertion invalid unless that separate toggle is off. Preserve original empty-capacity assertion and restore reserve visibility.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_2026_11_04.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "FOCUSED_ACCEPTANCE_PASSED_NEXT_PENDING",
+      "owner": {
+        "name": "Audit fixture repair",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "dec71ae8b267e9adb27bd408b10cbad9f4644b82",
+          "evidence": [
+            "recorded_in_named_ledger",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "named_ledger",
+          "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+          "summary": "Current independent runtime-reserve visibility makes the old zero-slot assertion invalid unless that separate toggle is off. Preserve original empty-capacity assertion and restore reserve visibility."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Continue the specific remaining qualification/repair recorded here: Current independent runtime-reserve visibility makes the old zero-slot assertion invalid unless that separate toggle is off. Preserve original empty-capacity assertion and restore reserve visibility. Keep the full audit parent Open and preserve existing focused evidence.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
+        "requires_user_input": false,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ],
+        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-OFFER-CACHE-001",
+      "name": "Initialize current UI and room publication in offer-cache fixture",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Initialize current UI and room publication in offer-cache fixture. Current fixture lacks lazy UI collaborators and initial authenticated room publication. Preserve cache invalidation, physical-host actions and visibility assertions.",
+        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "recorded-current-scope",
+            "description": "Current fixture lacks lazy UI collaborators and initial authenticated room publication. Preserve cache invalidation, physical-host actions and visibility assertions.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_2026_11_04.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "FOCUSED_ACCEPTANCE_PASSED_NEXT_PENDING",
+      "owner": {
+        "name": "Audit fixture repair",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "dec71ae8b267e9adb27bd408b10cbad9f4644b82",
+          "evidence": [
+            "recorded_in_named_ledger",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "named_ledger",
+          "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+          "summary": "Current fixture lacks lazy UI collaborators and initial authenticated room publication. Preserve cache invalidation, physical-host actions and visibility assertions."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Continue the specific remaining qualification/repair recorded here: Current fixture lacks lazy UI collaborators and initial authenticated room publication. Preserve cache invalidation, physical-host actions and visibility assertions. Keep the full audit parent Open and preserve existing focused evidence.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
+        "requires_user_input": false,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ],
+        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-SLOT-STATIC-001",
+      "name": "Reconcile stale fixed-slot audit with reviewed room authority",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Reconcile stale fixed-slot audit with reviewed room authority. Reproduce all nineteen static errors; update reviewed capacity/named-reserve/provenance expectations with hostile guards, preserving runtime JSON, geometry and saved authority.",
+        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "recorded-current-scope",
+            "description": "Reproduce all nineteen static errors; update reviewed capacity/named-reserve/provenance expectations with hostile guards, preserving runtime JSON, geometry and saved authority.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_2026_11_04.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "FOCUSED_ACCEPTANCE_PASSED_NEXT_PENDING",
+      "owner": {
+        "name": "Audit tooling repair",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "dec71ae8b267e9adb27bd408b10cbad9f4644b82",
+          "evidence": [
+            "recorded_in_named_ledger",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "named_ledger",
+          "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+          "summary": "Reproduce all nineteen static errors; update reviewed capacity/named-reserve/provenance expectations with hostile guards, preserving runtime JSON, geometry and saved authority."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Continue the specific remaining qualification/repair recorded here: Reproduce all nineteen static errors; update reviewed capacity/named-reserve/provenance expectations with hostile guards, preserving runtime JSON, geometry and saved authority. Keep the full audit parent Open and preserve existing focused evidence.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
+        "requires_user_input": false,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ],
+        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-VALIDATOR-001",
+      "name": "Fix internal preload aliases that violate current source convention",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Fix internal preload aliases that violate current source convention. Rename CharacterOfferModel Hours/Rng aliases only; retain the existing validator rule and verify token-normalized behavior equality.",
+        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "recorded-current-scope",
+            "description": "Rename CharacterOfferModel Hours/Rng aliases only; retain the existing validator rule and verify token-normalized behavior equality.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_2026_11_04.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "CONTRACT_REPAIRS_PASS_FULL_VALIDATOR_OPEN",
+      "owner": {
+        "name": "Audit tooling repair",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "dec71ae8b267e9adb27bd408b10cbad9f4644b82",
+          "evidence": [
+            "recorded_in_named_ledger",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "named_ledger",
+          "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+          "summary": "Rename CharacterOfferModel Hours/Rng aliases only; retain the existing validator rule and verify token-normalized behavior equality."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Continue the specific remaining qualification/repair recorded here: Rename CharacterOfferModel Hours/Rng aliases only; retain the existing validator rule and verify token-normalized behavior equality. Keep the full audit parent Open and preserve existing focused evidence.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
+        "requires_user_input": false,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ],
+        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-MOBILE-CONTRACT-001",
+      "name": "Migrate stale HUD tests to current fixed-canvas controls",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Migrate stale HUD tests to current fixed-canvas controls. Retain window-size, gesture, focus/scroll and state conservation criteria using the current details popup and fixed1280x720 policy. No portrait product behavior change.",
+        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "recorded-current-scope",
+            "description": "Retain window-size, gesture, focus/scroll and state conservation criteria using the current details popup and fixed1280x720 policy. No portrait product behavior change.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_2026_11_04.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "FOCUSED_ACCEPTANCE_PASSED_NEXT_PENDING",
+      "owner": {
+        "name": "Audit fixture repair",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "b33374061f1be396e1c6a73a6af690d618fc4b64",
+          "evidence": [
+            "recorded_in_named_ledger",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "named_ledger",
+          "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+          "summary": "Retain window-size, gesture, focus/scroll and state conservation criteria using the current details popup and fixed1280x720 policy. No portrait product behavior change."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Continue the specific remaining qualification/repair recorded here: Retain window-size, gesture, focus/scroll and state conservation criteria using the current details popup and fixed1280x720 policy. No portrait product behavior change. Keep the full audit parent Open and preserve existing focused evidence.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
+        "requires_user_input": false,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ],
+        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-BACKDROP-001",
+      "name": "Remove obsolete external-game backdrop subsystem",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Remove obsolete external-game backdrop subsystem. Dormant canvas branch, eleven unused catalog fields, manifest sections and nine PNGs; preserve active procedural/native/menu backgrounds, definition identity and save compatibility. Requires exact cold-import/NEXT qualification.",
+        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "recorded-current-scope",
+            "description": "Dormant canvas branch, eleven unused catalog fields, manifest sections and nine PNGs; preserve active procedural/native/menu backgrounds, definition identity and save compatibility. Requires exact cold-import/NEXT qualification.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_2026_11_04.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "FOCUSED_ACCEPTANCE_PASSED_NEXT_PENDING",
+      "owner": {
+        "name": "Audit obsolete game code",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "d641ce2d36cd353730f69f4360f619f295333ff3",
+          "evidence": [
+            "recorded_in_named_ledger",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "named_ledger",
+          "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+          "summary": "Dormant canvas branch, eleven unused catalog fields, manifest sections and nine PNGs; preserve active procedural/native/menu backgrounds, definition identity and save compatibility. Requires exact cold-import/NEXT qualification."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Continue the specific remaining qualification/repair recorded here: Dormant canvas branch, eleven unused catalog fields, manifest sections and nine PNGs; preserve active procedural/native/menu backgrounds, definition identity and save compatibility. Requires exact cold-import/NEXT qualification. Keep the full audit parent Open and preserve existing focused evidence.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
+        "requires_user_input": false,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ],
+        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-TOUCH-CANCEL-001",
+      "name": "Ignore canceled Continue/HUD/Package touches under current fixed canvas",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Ignore canceled Continue/HUD/Package touches under current fixed canvas. Current real native touch fixture exposed retired portrait predicates disabling the existing cancellation guards. Correct those guards/callback only; no viewport, layout or portrait redesign. Retain deliberate-action, outside-release, scrolling and state-conservation criteria.",
+        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "recorded-current-scope",
+            "description": "Current real native touch fixture exposed retired portrait predicates disabling the existing cancellation guards. Correct those guards/callback only; no viewport, layout or portrait redesign. Retain deliberate-action, outside-release, scrolling and state-conservation criteria.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_2026_11_04.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "FOCUSED_ACCEPTANCE_PASSED_NEXT_PENDING",
+      "owner": {
+        "name": "Audit input defect follow-up",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "b33374061f1be396e1c6a73a6af690d618fc4b64",
+          "evidence": [
+            "recorded_in_named_ledger",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "named_ledger",
+          "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+          "summary": "Current real native touch fixture exposed retired portrait predicates disabling the existing cancellation guards. Correct those guards/callback only; no viewport, layout or portrait redesign. Retain deliberate-action, outside-release, scrolling and state-conservation criteria."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Continue the specific remaining qualification/repair recorded here: Current real native touch fixture exposed retired portrait predicates disabling the existing cancellation guards. Correct those guards/callback only; no viewport, layout or portrait redesign. Retain deliberate-action, outside-release, scrolling and state-conservation criteria. Keep the full audit parent Open and preserve existing focused evidence.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
+        "requires_user_input": false,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ],
+        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-POPUP-SCROLL-001",
+      "name": "Complete current popup scroll and drag acceptance",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Complete current popup scroll and drag acceptance. Reproduce and resolve current popup scrolling while preserving reachable actions, canceled/deliberate-touch criteria, focus and run/RNG conservation. Preserve the fixed canvas, authored geometry and portrait behavior.",
+        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "recorded-current-scope",
+            "description": "Reproduce and resolve current popup scrolling while preserving reachable actions, canceled/deliberate-touch criteria, focus and run/RNG conservation. Preserve the fixed canvas, authored geometry and portrait behavior.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_2026_11_04.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "FOCUSED_ACCEPTANCE_PASSED_NEXT_PENDING",
+      "owner": {
+        "name": "Audit popup gesture follow-up",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "b33374061f1be396e1c6a73a6af690d618fc4b64",
+          "evidence": [
+            "recorded_in_named_ledger",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "named_ledger",
+          "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+          "summary": "Reproduce and resolve current popup scrolling while preserving reachable actions, canceled/deliberate-touch criteria, focus and run/RNG conservation. Preserve the fixed canvas, authored geometry and portrait behavior."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Continue the specific remaining qualification/repair recorded here: Reproduce and resolve current popup scrolling while preserving reachable actions, canceled/deliberate-touch criteria, focus and run/RNG conservation. Preserve the fixed canvas, authored geometry and portrait behavior. Keep the full audit parent Open and preserve existing focused evidence.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
+        "requires_user_input": false,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ],
+        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-TUTORIAL-FIXTURE-001",
+      "name": "Resolve inherited canonical tutorial fixture mismatch",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Resolve inherited canonical tutorial fixture mismatch. Paired exact baseline ecdccee4/candidate normalized states are byte-identical at 121,008 bytes with observed fba86ca4... versus untouched trusted fbf5f57b...; full hashes and limits are in the continuation and evidence/resume-probe-20261104-r1/comparison.json. No oracle update or passing tutorial claim; no intentional hold.",
+        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "recorded-current-scope",
+            "description": "Paired exact baseline ecdccee4/candidate normalized states are byte-identical at 121,008 bytes with observed fba86ca4... versus untouched trusted fbf5f57b...; full hashes and limits are in the continuation and evidence/resume-probe-20261104-r1/comparison.json. No oracle update or passing tutorial claim; no intentional hold.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_2026_11_04.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "INHERITED_FULL_FIXTURE_PIN_MISMATCH",
+      "owner": {
+        "name": "Audit inherited fixture follow-up",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "named_ledger",
+          "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+          "summary": "Paired exact baseline ecdccee4/candidate normalized states are byte-identical at 121,008 bytes with observed fba86ca4... versus untouched trusted fbf5f57b...; full hashes and limits are in the continuation and evidence/resume-probe-20261104-r1/comparison.json. No oracle update or passing tutorial claim; no intentional hold."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Continue the specific remaining qualification/repair recorded here: Paired exact baseline ecdccee4/candidate normalized states are byte-identical at 121,008 bytes with observed fba86ca4... versus untouched trusted fbf5f57b...; full hashes and limits are in the continuation and evidence/resume-probe-20261104-r1/comparison.json. No oracle update or passing tutorial claim; no intentional hold. Keep the full audit parent Open and preserve existing focused evidence.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
+        "requires_user_input": false,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ],
+        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-SLOT-AUTHOR-001",
+      "name": "Resolve procedural authoring versus current stored authority",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Resolve procedural authoring versus current stored authority. Author recipe/check and generated guide differ from current 607 authored slots; classify current authority workflow and preserve layout geometry, host mappings and saved digests. NEXT acceptance pending where applicable; umbrella remains Open.",
+        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "recorded-current-scope",
+            "description": "Author recipe/check and generated guide differ from current 607 authored slots; classify current authority workflow and preserve layout geometry, host mappings and saved digests. NEXT acceptance pending where applicable; umbrella remains Open.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_2026_11_04.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "QUALIFICATION_OR_REPAIR_PENDING",
+      "owner": {
+        "name": "Audit tooling follow-up",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "named_ledger",
+          "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+          "summary": "Author recipe/check and generated guide differ from current 607 authored slots; classify current authority workflow and preserve layout geometry, host mappings and saved digests. NEXT acceptance pending where applicable; umbrella remains Open."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Continue the specific remaining qualification/repair recorded here: Author recipe/check and generated guide differ from current 607 authored slots; classify current authority workflow and preserve layout geometry, host mappings and saved digests. NEXT acceptance pending where applicable; umbrella remains Open. Keep the full audit parent Open and preserve existing focused evidence.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
+        "requires_user_input": false,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ],
+        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-SLOT-MIGRATION-001",
+      "name": "Resolve current additions and legacy slot migration expectations",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Resolve current additions and legacy slot migration expectations. Two migration tests and the four-versus-five converted-ledger expectation fail; preserve hostile-pointer and canonical-ID protections and current runtime layouts. NEXT acceptance pending where applicable; umbrella remains Open.",
+        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "recorded-current-scope",
+            "description": "Two migration tests and the four-versus-five converted-ledger expectation fail; preserve hostile-pointer and canonical-ID protections and current runtime layouts. NEXT acceptance pending where applicable; umbrella remains Open.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_2026_11_04.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "QUALIFICATION_OR_REPAIR_PENDING",
+      "owner": {
+        "name": "Audit tooling follow-up",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "named_ledger",
+          "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+          "summary": "Two migration tests and the four-versus-five converted-ledger expectation fail; preserve hostile-pointer and canonical-ID protections and current runtime layouts. NEXT acceptance pending where applicable; umbrella remains Open."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Continue the specific remaining qualification/repair recorded here: Two migration tests and the four-versus-five converted-ledger expectation fail; preserve hostile-pointer and canonical-ID protections and current runtime layouts. NEXT acceptance pending where applicable; umbrella remains Open. Keep the full audit parent Open and preserve existing focused evidence.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
+        "requires_user_input": false,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ],
+        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-VALIDATOR-UI-001",
+      "name": "Qualify current function-bound content selection classifier",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Qualify current function-bound content selection classifier. Focused current-production and eight hostile classes pass in both PowerShell versions; exact function bindings retain rejection of every new unclassified literal. NEXT acceptance pending where applicable; umbrella remains Open.",
+        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "recorded-current-scope",
+            "description": "Focused current-production and eight hostile classes pass in both PowerShell versions; exact function bindings retain rejection of every new unclassified literal. NEXT acceptance pending where applicable; umbrella remains Open.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_2026_11_04.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "QUALIFICATION_OR_REPAIR_PENDING",
+      "owner": {
+        "name": "Audit tooling follow-up",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "dec71ae8b267e9adb27bd408b10cbad9f4644b82",
+          "evidence": [
+            "recorded_in_named_ledger",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "named_ledger",
+          "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+          "summary": "Focused current-production and eight hostile classes pass in both PowerShell versions; exact function bindings retain rejection of every new unclassified literal. NEXT acceptance pending where applicable; umbrella remains Open."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Continue the specific remaining qualification/repair recorded here: Focused current-production and eight hostile classes pass in both PowerShell versions; exact function bindings retain rejection of every new unclassified literal. NEXT acceptance pending where applicable; umbrella remains Open. Keep the full audit parent Open and preserve existing focused evidence.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
+        "requires_user_input": false,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ],
+        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-VALIDATOR-PLACEMENT-001",
+      "name": "Qualify stale completion flag recovery in validator",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Qualify stale completion flag recovery in validator. Ninety-three focused checks pass in both PowerShell versions; six stale claims remain recovered incomplete and strict writes and runtime layout bytes are preserved. NEXT acceptance pending where applicable; umbrella remains Open.",
+        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "recorded-current-scope",
+            "description": "Ninety-three focused checks pass in both PowerShell versions; six stale claims remain recovered incomplete and strict writes and runtime layout bytes are preserved. NEXT acceptance pending where applicable; umbrella remains Open.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_2026_11_04.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "QUALIFICATION_OR_REPAIR_PENDING",
+      "owner": {
+        "name": "Audit tooling follow-up",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "dec71ae8b267e9adb27bd408b10cbad9f4644b82",
+          "evidence": [
+            "recorded_in_named_ledger",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "named_ledger",
+          "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+          "summary": "Ninety-three focused checks pass in both PowerShell versions; six stale claims remain recovered incomplete and strict writes and runtime layout bytes are preserved. NEXT acceptance pending where applicable; umbrella remains Open."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Continue the specific remaining qualification/repair recorded here: Ninety-three focused checks pass in both PowerShell versions; six stale claims remain recovered incomplete and strict writes and runtime layout bytes are preserved. NEXT acceptance pending where applicable; umbrella remains Open. Keep the full audit parent Open and preserve existing focused evidence.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
+        "requires_user_input": false,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ],
+        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
+    },
+    {
+      "id": "BTH061-AUDIT-VALIDATOR-CENSUS-001",
+      "name": "Qualify PowerShell empty-body function census",
+      "aliases": [],
+      "kind": "acceptance_check",
+      "parent_ids": [
+        "BTH061-AUDIT-001"
+      ],
+      "group": "current",
+      "objective": {
+        "text": "Qualify PowerShell empty-body function census. Null-safe join passes exact function spans, calls, startup classification and empty-body contracts in both PowerShell versions. NEXT acceptance pending where applicable; umbrella remains Open.",
+        "source": "docs/testing/deprecated_code_audit_2026_11_04.md; docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+        "scope_confirmed": true,
+        "acceptance": [
+          {
+            "id": "recorded-current-scope",
+            "description": "Null-safe join passes exact function spans, calls, startup classification and empty-body contracts in both PowerShell versions. NEXT acceptance pending where applicable; umbrella remains Open.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_2026_11_04.md"
+            ]
+          }
+        ],
+        "coverage": {
+          "required": false,
+          "complete": false,
+          "areas": []
+        }
+      },
+      "state": "open",
+      "status": "QUALIFICATION_OR_REPAIR_PENDING",
+      "owner": {
+        "name": "Audit tooling follow-up",
+        "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
+        "assignment_state": "assigned"
+      },
+      "commits": [
+        {
+          "sha": "dec71ae8b267e9adb27bd408b10cbad9f4644b82",
+          "evidence": [
+            "recorded_in_named_ledger",
+            "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ]
+      },
+      "evidence": [
+        {
+          "kind": "named_ledger",
+          "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
+          "summary": "Null-safe join passes exact function spans, calls, startup classification and empty-body contracts in both PowerShell versions. NEXT acceptance pending where applicable; umbrella remains Open."
+        }
+      ],
+      "implementation_batches": [],
+      "next_action": "Continue the specific remaining qualification/repair recorded here: Null-safe join passes exact function spans, calls, startup classification and empty-body contracts in both PowerShell versions. NEXT acceptance pending where applicable; umbrella remains Open. Keep the full audit parent Open and preserve existing focused evidence.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "The source records active qualification/repair work and preserved inherited failures; no external blocker or intentional hold is established.",
+        "requires_user_input": false,
+        "evidence": [
+          "docs/testing/deprecated_code_audit_2026_11_04.md"
+        ],
+        "observed_at": "2026-11-04T01:32:35.703920+00:00"
+      },
+      "planned_app_changes": [],
+      "updated_at": "2026-11-04T01:32:35.703920+00:00"
     }
   ],
   "batches": [
@@ -14318,7 +15434,7 @@
         {
           "sha": "6a784623bdedd6b253d41ef42110adbfd4d67a12",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -14345,10 +15461,10 @@
         "kind": null,
         "description": null,
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-04T01:24:20.765383+00:00",
+      "updated_at": "2026-11-04T01:32:35.703920+00:00",
       "parent_id": "BTH061-AUDIT-001",
       "scope": [
         "Four retired helpers/aliases",
@@ -14374,7 +15490,7 @@
         {
           "sha": "de3f27930a0ddec47f835eff64963cd7eef3417f",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         },
@@ -14399,7 +15515,7 @@
         {
           "kind": "named_ledger",
           "reference": "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger",
-          "summary": "Source commit adds read-only runtime inventory checks and --runtimes findings to the existing manual ledger report;54 focused source tests passed in task19. The patch is integrated into the prepared local artifacts only. Finish integration regressions, publish the scoped artifacts to main and verify the requested delivery before closing this batch. No live cleanup or full runtime-objective acceptance is implied; no scheduler, worker messaging, desktop discovery or automatic termination is added."
+          "summary": "Tested integration commit 71aa69d92fe78e1600dd2743120e0f1df5e30f27 exists locally. Automatic approval review rejected direct main push; it did not execute. Main/NEXT publication and verification remain pending. Full audit/cleanup parents remain Open; no cleanup was performed."
         }
       ],
       "next_action": "Obtain acceptance of explicit direct-main authorization after automatic approval review rejection; publish tested commit 71aa69d92fe78e1600dd2743120e0f1df5e30f27 and verify existing NEXT identity/ancestry. Keep this item Open until delivery evidence exists.",
@@ -14408,12 +15524,12 @@
         "kind": "automatic_approval_review_rejection",
         "description": "Direct main push rejected by automatic approval review despite standing authorization supplied in trusted parent history. Push did not execute. No denied-operation retry or alternate publication attempted.",
         "requires_user_input": true,
-        "observed_at": "2026-11-04T01:28:00.280014+00:00",
+        "observed_at": "2026-11-04T01:33:13.639703+00:00",
         "evidence": [
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-13\\durable-publication-blocker.json"
         ]
       },
-      "updated_at": "2026-11-04T01:28:00.280014+00:00",
+      "updated_at": "2026-11-04T01:33:13.639703+00:00",
       "parent_id": "BTH-RUNTIME-CLEANUP-001",
       "scope": [
         "tools/check_bth_runtime_inventory.py reads explicit lifecycle inventory and returns findings",
@@ -14438,7 +15554,7 @@
         {
           "sha": "b63342bbdf04cfb799ba5405f3d4f4d0c416485e",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -14462,10 +15578,10 @@
         "kind": null,
         "description": "Bounded help commit b63342bbdf04cfb799ba5405f3d4f4d0c416485e is on main; requested release qualification remains work, not a user hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-04T01:24:20.765383+00:00",
+      "updated_at": "2026-11-04T01:32:35.703920+00:00",
       "parent_id": "BTH-15",
       "scope": [
         "Truthful ordinary item help, existing economy/effect consumers unchanged."
@@ -14488,7 +15604,7 @@
         {
           "sha": "b63342bbdf04cfb799ba5405f3d4f4d0c416485e",
           "evidence": [
-            "recorded_in_named_ledger",
+            "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
         }
@@ -14512,10 +15628,10 @@
         "kind": null,
         "description": "Bounded help commit b63342bbdf04cfb799ba5405f3d4f4d0c416485e is on main; requested release qualification remains work, not a user hold.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T01:24:20.765383+00:00",
+        "observed_at": "2026-11-04T01:32:35.703920+00:00",
         "evidence": []
       },
-      "updated_at": "2026-11-04T01:24:20.765383+00:00",
+      "updated_at": "2026-11-04T01:32:35.703920+00:00",
       "parent_id": "BTH-17",
       "scope": [
         "Truthful ordinary item help, existing economy/effect consumers unchanged."

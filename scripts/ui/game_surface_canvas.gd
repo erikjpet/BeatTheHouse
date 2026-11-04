@@ -51,8 +51,6 @@ var state: Dictionary = {}
 var view_data: Dictionary = {}
 var selected_view_index: int = -1
 var uses_foundation_snapshot := false
-var background_texture: Texture2D
-var use_external_background := false
 var flicker: float = 0.0
 var hit_regions: Array = []
 var surface_state_revision := 0
@@ -170,8 +168,6 @@ func clear_runtime_state() -> void:
 	view_data = {}
 	selected_view_index = -1
 	uses_foundation_snapshot = false
-	background_texture = null
-	use_external_background = false
 	hit_regions = []
 	surface_state_revision += 1
 	hit_region_state_revision = -1
@@ -1423,11 +1419,8 @@ func _draw() -> void:
 	var renderer_owns_board_background := uses_foundation_snapshot and bool(state.get("surface_renderer_opaque", false))
 	if not renderer_owns_board_background:
 		draw_rect(Rect2(Vector2.ZERO, board_size), C_DARK)
-		if use_external_background and background_texture != null:
-			draw_texture_rect(background_texture, Rect2(Vector2.ZERO, board_size), false)
-		else:
-			for y in range(0, int(ceil(board_size.y)), 16):
-				draw_rect(Rect2(0, y, board_size.x, 16), C_DARK_2 if (y / 16) % 2 == 0 else C_PANEL)
+		for y in range(0, int(ceil(board_size.y)), 16):
+			draw_rect(Rect2(0, y, board_size.x, 16), C_DARK_2 if (y / 16) % 2 == 0 else C_PANEL)
 	var rendered := false
 	if surface_game_module != null and uses_foundation_snapshot:
 		rendered = bool(surface_game_module.draw_surface(self, state, {

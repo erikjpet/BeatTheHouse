@@ -23,6 +23,7 @@ func _run() -> void:
 	var installed := run.set_environment(environment)
 	_expect(bool(installed.get("ok", false)), "A generated production motel installs through its normal boundary.")
 	var host := _iris_host(run)
+	host._prepare_room_presentation_at_boundary()
 	var before_records: Array = host._interactable_object_view_list()
 	var before := _marco_record(before_records)
 	_expect(not before.is_empty() and before.has("character_offer"), "Winning Marco offer is published on its real authenticated host through the production cache.")
@@ -54,6 +55,8 @@ func _check_background_offer_refresh() -> void:
 	var host := OfferRefreshHost.new()
 	host.run_state = run
 	host.library = library
+	for field in host.RUN_UI_SCRIPT_PATHS:
+		host.set(str(field), load(str(host.RUN_UI_SCRIPT_PATHS[field])))
 	host.environment_canvas = PixelCanvas.new()
 	host._refresh_character_offer_visibility()
 	_expect(host.offer_refreshes == 1, "A visible coffee offer can request its initial card projection.")
@@ -110,6 +113,7 @@ func _check_fixed_ride_cache_refresh() -> void:
 		host.set(str(field), load(str(host.RUN_UI_SCRIPT_PATHS[field])))
 	host.current_screen = host.SCREEN_ENVIRONMENT
 	host.environment_canvas = PixelCanvas.new()
+	host._prepare_room_presentation_at_boundary()
 	var initial_records: Array = host._interactable_object_view_list()
 	var initial := _rafi_record(initial_records)
 	_expect(not initial.is_empty() and bool(initial.get("manifest_physical", false)) and str(initial.get("presentation_mode", "room")) == "room", "The production Bar fixture authenticates Rafi's physical card before cache checks; room authority errors: %s" % JSON.stringify(_room_authority_errors(initial_records)))

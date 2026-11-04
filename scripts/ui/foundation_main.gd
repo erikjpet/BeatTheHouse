@@ -9261,10 +9261,9 @@ func _cancel_portrait_start_pointer(event: InputEvent) -> void:
 
 
 func _portrait_start_pointer_guard_active() -> bool:
-	if current_screen != SCREEN_START or portrait_start_layout.is_empty() or not bool(portrait_start_layout.get("active", false)):
+	if current_screen != SCREEN_START or start_screen == null or not start_screen.is_visible_in_tree():
 		return false
-	var scroll := portrait_start_layout.get("scroll") as ScrollContainer
-	return scroll != null and scroll.is_visible_in_tree() and not (settings_overlay != null and settings_overlay.visible)
+	return not (settings_overlay != null and settings_overlay.visible)
 
 
 func _portrait_menu_callback(callback: Callable) -> Callable:
@@ -9298,10 +9297,7 @@ func _settle_run_hud_layout() -> void:
 
 
 func _portrait_hud_pointer_guard_active() -> bool:
-	if current_screen == SCREEN_START or not bool(portrait_run_layout.get("active", false)):
-		return false
-	var scroll := portrait_run_layout.get("scroll") as ScrollContainer
-	return scroll != null and scroll.is_visible_in_tree()
+	return current_screen != SCREEN_START and run_hud_panel != null and run_hud_panel.is_visible_in_tree()
 
 
 func _cancel_portrait_hud_pointer(event: InputEvent) -> void:
@@ -20983,11 +20979,17 @@ func _show_delivery_actions_popup() -> void:
 			continue
 		_add_wager_confirmation_card(str(action.get("label", verb.replace("_", " ").capitalize())), str(action.get("message", "Act on the current delivery.")), "", Callable(self, "_activate_delivery_popup_action").bind(verb), false, [], "", "", true)
 	_add_meta_close_card()
+	# Let the existing ScrollContainer own drags that start on an action or its card.
+	for node in event_choice_popup_choices_list.find_children("*", "Control", true, false):
+		if node is BaseButton or node is PanelContainer:
+			(node as Control).mouse_filter = Control.MOUSE_FILTER_PASS
 	_apply_accessibility_to_node(heading, _accessibility_font_scale(), _accessibility_control_scale())
 	call_deferred("_position_event_choice_popup")
 
 
 func _activate_delivery_popup_action(verb: String) -> void:
+	if portrait_hud_pointer_cancelled and _portrait_hud_pointer_guard_active():
+		return
 	_hide_event_choice_popup()
 	_activate_delivery_physical_action(verb)
 

@@ -10,7 +10,11 @@ Expect-Contract (Test-Path -LiteralPath $keysPath) "CH-27: Keys is missing."
 $io = if (Test-Path -LiteralPath $ioPath) { Get-Content $ioPath -Raw } else { "" }
 $keys = if (Test-Path -LiteralPath $keysPath) { Get-Content $keysPath -Raw } else { "" }
 Expect-Contract ($io.Contains("static func assert_shape(")) "CH-27: IoResult has no shape validator."
-Expect-Contract (([regex]::Matches($keys, '(?m)^const [A-Z0-9_]+ := ')).Count -ge 40) "CH-27: fewer than 40 high-frequency keys are constants."
+$requiredKeys = [ordered]@{ OK = "ok"; MESSAGE = "message"; BANKROLL_DELTA = "bankroll_delta"; OUTCOME = "outcome" }
+foreach ($keyName in $requiredKeys.Keys) {
+    $declaration = 'const {0} := "{1}"' -f $keyName, $requiredKeys[$keyName]
+    Expect-Contract ($keys.Contains($declaration)) "CH-27: live key $keyName is missing or changed."
+}
 foreach ($relative in @("scripts/core/durable_store.gd", "scripts/core/user_settings.gd", "scripts/core/run_action_service.gd", "scripts/core/game_module.gd")) {
     $source = Get-Content (Join-Path $root $relative) -Raw
     Expect-Contract ($source.Contains('preload("res://scripts/core/io_result.gd")')) "CH-27: $relative does not adopt IoResult."

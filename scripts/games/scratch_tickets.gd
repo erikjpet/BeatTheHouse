@@ -2767,21 +2767,6 @@ func _machine_state_for_pointer(run_state: RunState, environment: Dictionary) ->
 	return _ensure_machine_state(run_state, environment, true)
 
 
-func _read_machine_state(run_state: RunState, environment: Dictionary) -> Dictionary:
-	var states_value: Variant = environment.get("game_states", {})
-	if typeof(states_value) == TYPE_DICTIONARY:
-		var value: Variant = (states_value as Dictionary).get(get_id(), {})
-		if typeof(value) == TYPE_DICTIONARY and not (value as Dictionary).is_empty():
-			var machine := (value as Dictionary).duplicate(true)
-			_normalize_machine_state(machine, run_state)
-			_sync_portable_ticket_state(run_state, environment, machine)
-			return machine
-	var generated := _generate_machine_state(run_state, environment, null)
-	_normalize_machine_state(generated, run_state)
-	_sync_portable_ticket_state(run_state, environment, generated)
-	return generated
-
-
 func _write_machine_state(environment: Dictionary, machine: Dictionary, run_state: RunState = null, normalize_before_write: bool = true) -> void:
 	var prior_scalper_present := false
 	var prior_states_value: Variant = environment.get("game_states", {})
