@@ -14938,7 +14938,7 @@
         }
       },
       "state": "open",
-      "status": "FULL_AGGREGATE_PASS_NEXT_CAPACITY_BLOCKED",
+      "status": "FULL_AGGREGATE_PASS_PUBLISHED_NEXT_CAPACITY_BLOCKED",
       "owner": {
         "name": "Audit tooling repair",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -14968,9 +14968,10 @@
         "evidence": [
           "docs/testing/deprecated_code_audit_2026_11_04.md",
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
-          "docs/testing/deprecated_code_audit_continuation_003.md"
+          "docs/testing/deprecated_code_audit_continuation_003.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json"
         ],
-        "scope": "Full source/global aggregate acceptance now passes at exact488d86fa; required scoped current publication/NEXT and UI-LITERAL-003 child delivery remain unfinished."
+        "scope": "Source published at 9a7da76a0dd6f19580e7e380bc8aca4010ff1e7f; current watcher observes it but capacity admission prevents export. No artifact/deployment/Web-startup acceptance for this continuation."
       },
       "evidence": [
         {
@@ -14985,15 +14986,15 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish the finished qualified source; preserve required NEXT acceptance as Open. Re-observe the existing watcher after storage capacity is restored, without lowering reserves, deleting retained builds or restarting machinery.",
+      "next_action": "Qualified source is published on main at 9a7da76a0dd6f19580e7e380bc8aca4010ff1e7f. Observe the existing watcher after capacity is restored; verify exact promoted/served identity and basic startup before closing delivery. Preserve reserves, retained builds and other workers.",
       "blocker": {
         "state": "active",
         "kind": "resource_capacity",
-        "description": "Existing NEXT admission rejected at 2026-11-04T17:03:21.459162+00:00: 12982358016 bytes free; 13958643712 required. Guard and retained builds are unchanged.",
+        "description": "Insufficient shared disk reserve for export: 13113303040 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:03:36.963035+00:00",
+        "observed_at": "2026-11-04T17:11:32.306961+00:00",
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json",
           "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
         ]
       },
@@ -17764,7 +17765,7 @@
         }
       },
       "state": "open",
-      "status": "FOCUSED_QUALIFIED_NEXT_CAPACITY_BLOCKED",
+      "status": "FOCUSED_QUALIFIED_PUBLISHED_NEXT_CAPACITY_BLOCKED",
       "owner": {
         "name": "Audit host helper review",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -17785,9 +17786,10 @@
         "commit": null,
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_003.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json"
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json"
         ],
-        "scope": "Only the40-line host cleanup and its focused qualification; Exact R9 aggregate passes; current scoped publication/NEXT evidence remains pending."
+        "scope": "Source published at 9a7da76a0dd6f19580e7e380bc8aca4010ff1e7f; current watcher observes it but capacity admission prevents export. No artifact/deployment/Web-startup acceptance for this continuation."
       },
       "evidence": [
         {
@@ -17802,15 +17804,15 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish the finished qualified source; preserve required NEXT acceptance as Open. Re-observe the existing watcher after storage capacity is restored, without lowering reserves, deleting retained builds or restarting machinery.",
+      "next_action": "Qualified source is published on main at 9a7da76a0dd6f19580e7e380bc8aca4010ff1e7f. Observe the existing watcher after capacity is restored; verify exact promoted/served identity and basic startup before closing delivery. Preserve reserves, retained builds and other workers.",
       "blocker": {
         "state": "active",
         "kind": "resource_capacity",
-        "description": "Existing NEXT admission rejected at 2026-11-04T17:03:21.459162+00:00: 12982358016 bytes free; 13958643712 required. Guard and retained builds are unchanged.",
+        "description": "Insufficient shared disk reserve for export: 13113303040 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:03:36.963035+00:00",
+        "observed_at": "2026-11-04T17:11:32.306961+00:00",
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json",
           "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
         ]
       },
@@ -17865,7 +17867,7 @@
         }
       },
       "state": "open",
-      "status": "FOCUSED_QUALIFIED_NEXT_CAPACITY_BLOCKED",
+      "status": "FOCUSED_QUALIFIED_PUBLISHED_NEXT_CAPACITY_BLOCKED",
       "owner": {
         "name": "Audit validator regression follow-up",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -17886,9 +17888,10 @@
         "commit": null,
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_003.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json"
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json"
         ],
-        "scope": "Function-bound classifier qualification only; exact R9 full aggregate passes; current scoped publication/NEXT evidence remains pending."
+        "scope": "Source published at 9a7da76a0dd6f19580e7e380bc8aca4010ff1e7f; current watcher observes it but capacity admission prevents export. No artifact/deployment/Web-startup acceptance for this continuation."
       },
       "evidence": [
         {
@@ -17903,15 +17906,15 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish the finished qualified source; preserve required NEXT acceptance as Open. Re-observe the existing watcher after storage capacity is restored, without lowering reserves, deleting retained builds or restarting machinery.",
+      "next_action": "Qualified source is published on main at 9a7da76a0dd6f19580e7e380bc8aca4010ff1e7f. Observe the existing watcher after capacity is restored; verify exact promoted/served identity and basic startup before closing delivery. Preserve reserves, retained builds and other workers.",
       "blocker": {
         "state": "active",
         "kind": "resource_capacity",
-        "description": "Existing NEXT admission rejected at 2026-11-04T17:03:21.459162+00:00: 12982358016 bytes free; 13958643712 required. Guard and retained builds are unchanged.",
+        "description": "Insufficient shared disk reserve for export: 13113303040 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:03:36.963035+00:00",
+        "observed_at": "2026-11-04T17:11:32.306961+00:00",
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json",
           "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
         ]
       },
@@ -17966,7 +17969,7 @@
         }
       },
       "state": "open",
-      "status": "FOCUSED_QUALIFIED_NEXT_CAPACITY_BLOCKED",
+      "status": "FOCUSED_QUALIFIED_PUBLISHED_NEXT_CAPACITY_BLOCKED",
       "owner": {
         "name": "Audit focused fixture follow-up",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -17987,9 +17990,10 @@
         "commit": null,
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_003.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json"
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json"
         ],
-        "scope": "Test-only ownership/identity contract repair and focused native qualification; exact R9 full aggregate passes; current scoped publication/NEXT acceptance pending."
+        "scope": "Source published at 9a7da76a0dd6f19580e7e380bc8aca4010ff1e7f; current watcher observes it but capacity admission prevents export. No artifact/deployment/Web-startup acceptance for this continuation."
       },
       "evidence": [
         {
@@ -18004,15 +18008,15 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish the finished qualified source; preserve required NEXT acceptance as Open. Re-observe the existing watcher after storage capacity is restored, without lowering reserves, deleting retained builds or restarting machinery.",
+      "next_action": "Qualified source is published on main at 9a7da76a0dd6f19580e7e380bc8aca4010ff1e7f. Observe the existing watcher after capacity is restored; verify exact promoted/served identity and basic startup before closing delivery. Preserve reserves, retained builds and other workers.",
       "blocker": {
         "state": "active",
         "kind": "resource_capacity",
-        "description": "Existing NEXT admission rejected at 2026-11-04T17:03:21.459162+00:00: 12982358016 bytes free; 13958643712 required. Guard and retained builds are unchanged.",
+        "description": "Insufficient shared disk reserve for export: 13113303040 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:03:36.963035+00:00",
+        "observed_at": "2026-11-04T17:11:32.306961+00:00",
         "evidence": [
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json",
           "D:/Projects/site/state/bth-next/retention/capacity-plan.json"
         ]
       },

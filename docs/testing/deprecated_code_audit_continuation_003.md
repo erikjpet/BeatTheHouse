@@ -171,3 +171,19 @@ can proceed; the three code-fix tasks and original validator task remain Open
 for their required scoped delivery. This observed resource dependency does not
 close or pause the broader audit. Exact capacity receipt:
 `evidence/continuation003-capacity-checkpoint-r1.json`.
+
+## Source published; exact NEXT acceptance remains pending
+
+Normal main push succeeded at `9a7da76a0dd6f19580e7e380bc8aca4010ff1e7f` (tree `e064c6b052d9582e2781ec29fe23a7f831d04c85`), preserving concurrent
+exporter and Bar Dice work. All four owned code/test blobs remain identical to
+the R9-qualified source. The existing watcher observed this exact source commit
+at 2026-11-04T17:10:53Z; capacity admission still rejected export. Its last
+served NEXT remains `f3058b6daab820e9d747c4c4aabc2d983e9ae32e`. No new artifact, promoted
+identity or Web-startup acceptance is claimed for this continuation.
+
+The three fixes and original validator task remain Open only for required
+scoped delivery; the full aggregate recheck and bounded controller review are
+Complete with associated commits. Source publication is no longer the next
+action. Preserve the existing service/export reserve and retained artifacts;
+observe the watcher and verify the exact served build once capacity is restored.
+Source/watcher receipt: `evidence/continuation003-source-publication-r1.json`.
