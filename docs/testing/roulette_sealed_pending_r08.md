@@ -341,3 +341,118 @@ The original public server diagnostics show matching f305 directory and asset
 Continuation diagnostic/evidence commit: `7648f1d908468fd783cd19bc5c4562ab69573be1`. Both ledger views
 associate it with this Open task. It is not a product-fix commit or new NEXT
 acceptance. The first public rejection remains unclassified.
+
+## New unobscured-Web continuation
+
+The parent requested a new independent legitimate prior-Blackjack-to-Roulette
+case to address the Machine Jam visibility limit. The same task remains Open;
+both ledger views add required unobscured-Web acceptance without discarding
+the previous passing native case or limited Web observation.
+
+At20:49UTC C had27406336 bytes free and D12970721280, below the unchanged
+13958643712 NEXT reserve. A fresh own directory was explicitly approved/created
+at E:\CodexQA\BTH\Task14Independent\20261104\r08-unobscured-06. All new browser
+profile/temp/evidence will stay there; no engine/PCK/asset copy or export is
+needed. Existing fixtures/profiles and original R08 remain untouched. The new
+case uses normal public input/cadence, no clock/event/RNG edits, outcome search,
+scenario choices or previous-case reset. Capture first rejection/exception and
+stop; retain final result/history/accounting or the exact new limitation. No
+new runtime result or product fix is claimed at this preparation checkpoint.
+
+Before launch, source review established that Machine Jam is synchronous and
+turn-based, so the faster same-A repeat was withdrawn with zero runtime/input.
+Seed B was predeclared before generation, without inspecting cadence or outcomes;
+its normal seeded visit cadence can differ. Exactly one B case is admitted,
+with no seed iteration or selection based on a desired event/result.
+
+The pause record explicitly says its scope does not pause playtesting. The
+initial blanket no-choice restriction was therefore revised for this new
+disposable case: at most one existing Machine Jam Wait response may clear a
+blocking prompt. Its normal3fee/Heat reduction must be journaled separately
+from Roulette. Source confirms this event route does not resolve/retry Roulette;
+wait for the normal reveal, then use actual pre-spin cash plus Roulette net
+minus3fee to reconcile final cash. Pre-reveal displayed cash may be masked.
+Unknown/second decisions or the first rejection/exception stop the case. Named
+item/scenario implementation remains paused; original R08 stays untouched.
+
+The new native B preparation passed36 checks with zero game input, official
+Save/Continue and valid room authority. It generated Copper Rotor naturally,
+cash80/min9/spin0. Five new own files total105934 bytes; manifest SHA256
+57f94de7af9e07a7c76583e00d538ff820bfcd1ad07757010588d427716e44a2.
+Job exit0/no timeout/owned0 at20:58:57UTC,3percent/2GiB/120s, all state/temp/
+evidence on E. Diagnostic SHA256 f7650d183acca32a325efdd9bc5a96fa3b4376d0b17c0a158a035285dbbfef12.
+No Web result or product fix is claimed by preparation.
+
+The seed-B browser launch was initially rejected before execution by automatic
+approval review, which treated virtual gameplay counters as requiring exact
+financial commitment authorization. Newly verified source proof established
+generated RunState80, no real payment/account, localhost-only GET asset whitelist
+and all WebSockets closed. Exactly one unchanged-operation reviewed retry was
+approved; one browser Job actually executed. No workaround or second retry.
+
+That first browser case dealt18 versus dealer20. One Stand and the planned
+Machine Jam Wait revealed HOUSE TAKES9 and actualcash68 (80-9-3). Normal Leave,
+Copper Rotor entry and one Red9 draft followed. Its workreserve rejected queued
+Spin before command/click dispatch; no Spin/Confirm occurred. No public error
+was captured. Job exit1/no outertimeout/owned0, with its failed controller
+receipt preserved. No final manual Save or persisted-checkpoint claim is made.
+
+The same independent seed-B case continues through a new bounded cold public
+checkpoint probe, with no preload/reimport/newrun or BJ/Wait replay. Only matching
+68/Blackjackloss9/Waitfee3 history and no Roulette transaction/SEALED request
+can admit the first Spin/Confirm. RetainedBET9 will be reused; if staging was
+unsaved and BET0 is visible, that loss is recorded before one fresh draft. No
+committed wager/outcome is repeated. Unknown/inconsistent checkpoint or first
+rejection/exception stops. Both existing per-Job caps and D reserve stay intact.
+
+## Latest seed-B result and remaining scope
+
+Seed B was run once without inspecting cadence or choosing a result. Its normal
+Machine Jam response was permitted playtesting under the explicit pause scope;
+no named item/scenario implementation resumed. The one Blackjack hand lost9
+(dealer20 versus18), and one ordinary Wait fee3 left68.
+
+The first segment's workreserve stopped before Spin. Cold public cash68 and
+four journal rows (-9,0,Wait-3,0) proved the completed hand/fee were retained.
+Roulette entry showed BET0/NO SPINS/no SEALED: the prior unsaved staging was not
+retained, recorded before one fresh Red9 draft. First Spin and one Confirm at
+(471,666),21:18:05.325Z to21:18:05.386Z APIreturn, showed23red/BET0/SITOUT/REBET
+without an obscuring modal or SEALED controls. APIreturn is not semantic proof.
+The warm HUD stayed59 and history NO SPINS YET in the retained frames; neither
+was called the final loss/history. The terminal ended that segment before its
+queued Menu/Journal/explicitClose commands; finally closed the owned context.
+Both segments exited1, no outertimeout, owned0; controller failures remain.
+
+A third, strictly read-only same-profile cold segment admitted only Continue,
+Menu/Journal/scroll/close: no table entry, wager, event response or recovery.
+Floor and Menu showed77/Heat0/Day1 7:45PM. Six public journal rows were
+Blackjack-9, Blackjack+0, MachineJam-3/Heat-3, Blackjack+0, Roulette+9, Roulette+0.
+Thus **80-9-3+9=77** confirms the saved financial result of the new control.
+Exactly one explicit Spin and Confirm were sent. The extra+0 row's cause is
+unclassified; do not label it a phase or automatic round, or claim a verified
+authoritative totalround/request count. The read-only Job exited0/no timeout/
+owned0. No captured public rejection/exception, warning, page error or failed
+request occurred across the three segments. All17 own Jobs now have actual
+closed/owned0 receipts; fixtures/profiles and every failed segment are preserved.
+
+Final curated evidence: E:/CodexQA/BTH/Task14Independent/20261104/r08-unobscured-06/evidence/r08-seed-b-final-curated-summary.json
+SHA256375ed29b8ce59f0a47e06ee2681f46e0ed5f1898492f6894c659a4ec86713b77.
+The structured report embeds its public-only facts and proof fingerprints; no
+Save/profile/authority contents or runtimeRNG were committed.
+
+**The parent remains Open, fix_commit=null, with no product change.** The cold
+financial checkpoint is a bounded pass. The full unobscured warm-Web criterion
+remains Open: a coldcheckpoint separated Blackjack from first Confirm, and
+warm payout/history release was not qualified. Native43 still qualifies its
+recorded directwarm host case; it does not supply Webpixels. OriginalR08 remains
+untouched, with its missing firstrejection, Day3/Heat1/CyanDolly/DeltaQueen006
+difference and pending Save/cold/recovery gaps preserved. Next qualify the
+directsame-processWeb bridge/live reveal and capture any firstfailed host
+boundary before another financial input or Save. Do not add speculative
+settlement/retry/cancellation or weaken seals. The existing D disk/export gate
+and paused implementation objectives remain unchanged.
+
+Scope clarification: 'masked' in retained controller summaries is an
+interpretation, not an established cause. The observations are warm59/NO SPINS
+YET after23red and later cold77. Warm display/history progression and its cause
+remain unqualified; no rendering or financial fix is claimed.

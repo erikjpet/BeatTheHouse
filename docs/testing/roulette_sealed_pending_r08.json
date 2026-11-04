@@ -2671,6 +2671,75 @@
         "test": "9ded0649c8a4bc2511d3f5e3925883a71bca5dc1b441179af11b5b4103899328"
       },
       "local_log": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\evidence\\r08-roulette-observe-bj-1.log"
+    },
+    {
+      "label": "r08-roulette-web-prepare-b-1",
+      "classification": "PREPAID_NATIVE_SAVE_CONTINUE_QUALIFIED_SEED_B",
+      "source_base": "05a9e79808d2520583507312a6ffe17ef4ff9621",
+      "command": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        ".",
+        "--script",
+        "res://scripts/tests/roulette_sealed_pending_check.gd",
+        "--",
+        "--prepare-web-b"
+      ],
+      "receipt": {
+        "exit_code": 0,
+        "timed_out": false,
+        "active_at_release": 0,
+        "started_utc": "2026-11-04T20:58:26.814113+00:00",
+        "finished_utc": "2026-11-04T20:58:57.310603+00:00",
+        "cpu_seconds": 14.59375
+      },
+      "checks": 36,
+      "failures": [],
+      "completed": true,
+      "fidelity": "New own explicitly staged generated Riverboat prepaid cash80/min9 floor with shipped three-game set. Official synchronous production-slot Save, own official companion saves, and native normal Continue proof only. Zero game inputs. Reports new private source paths/sizes/hashes for root staging; no asset export, fixture copy, old private fixture access, Web launch, f305 compatibility or deployed acceptance claim.",
+      "facts": {
+        "boundaries": [],
+        "fixture": "New own staged generated Riverboat cash80/min9 with shipped three-game set; prepaid floor only, no game input or normal-travel claim",
+        "fixture_authority": {
+          "continuous_clock_enabled": true,
+          "errors": [],
+          "ok": true,
+          "publication_checked": 1,
+          "publication_generation": 1
+        },
+        "mode": "prepare-web-b-prepaid-floor",
+        "original_state_used": false,
+        "outcome_selection": false,
+        "practice_used": false,
+        "preparation_limit": "Own new files remain in the native private root; no bundle copy, asset export, Web launch or f305 Continue claim. Root stages only these files after validating this job.",
+        "retry_or_cancel_used": false,
+        "seed": "BTH061-ROULETTE-SEALED-PENDING-001-B",
+        "web_fixture_preparation": {
+          "facts": {
+            "cash": 80,
+            "game_inputs": 0,
+            "generated_table_name": "Copper Rotor",
+            "outside_minimum": 9,
+            "room_authority_valid": true,
+            "seed": "BTH061-ROULETTE-SEALED-PENDING-001-B",
+            "spin_count": 0
+          },
+          "native_continue_validated": true,
+          "file_count": 5,
+          "total_bytes": 105934,
+          "limit": "Only new own seed-B fixture; save/profile/authority bytes and private source paths excluded from committed report."
+        }
+      },
+      "source_sha256": {
+        "foundation": "85fa91fd979c99c84e986ee915642c9030de93a5e318f4fc28627f5ac8b93ee6",
+        "host": "8b9711b7d220688286b2e0d2db097b33b50b7428b101485940a6681f45482241",
+        "roulette": "cb4de4f65f44eba538e7cf466a90d15485c1d95d4a9bbe1af1c7e5db5ab0451c",
+        "test": "f7650d183acca32a325efdd9bc5a96fa3b4376d0b17c0a158a035285dbbfef12"
+      },
+      "local_log": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-1.log"
     }
   ],
   "web": [
@@ -3416,6 +3485,453 @@
           "sha256": "ed43782b5a9bf0dff5adaaeed199d6d62a35d5b6cbc350fe7eedc753bff47ee1"
         }
       }
+    },
+    {
+      "summary": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-partial-summary.json",
+      "summary_sha256": "7c5b36da968f2ac89b7fe71cc8330fa689036264bcb273563b97155cf1573197",
+      "data": {
+        "task_id": "BTH061-ROULETTE-SEALED-PENDING-001",
+        "status": "OriginalOpen; seedB firstConfirm advanced withoutmodal, finalwallet/Journal/Recent unverified",
+        "seed": "BTH061-ROULETTE-SEALED-PENDING-001-B",
+        "source_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+        "fixture_manifest_sha256": "57f94de7af9e07a7c76583e00d538ff820bfcd1ad07757010588d427716e44a2",
+        "scope": "ExactlyonepredeclarednewsyntheticseedB, nativeSave/Continue36checkszeroGameinputs, ownEprofile, no seedsearch/outcomefilter/reset/BJorWaitreplay; ordinaryexistingeventplaytestingauthorized, no namedscenarioimplementation",
+        "review_outcomes": [
+          "Initialbrowserlaunchrejectedbeforeprocessstart for insufficientexplicitvirtual-onlyproof; no execution",
+          "Rootnewlyverifiedsyntheticcounters/networkisolation proof supportedONEexactlaunchretry; approved, samecommand/limits/profile",
+          "Continuationchip-before-draft batch rejectedbeforeexecution; saferEnter+screenshotonlyapproved; chipdenominationselectedonlyafterpublicBET0proof"
+        ],
+        "segment6": {
+          "profile": "b-r08-unobscured-06",
+          "initial_cash": 80,
+          "blackjack": "One9Deal ->71, player18; oneStand ->dealer20/player18loss9",
+          "machine_jam": "RootattestedmodalPNG6f416a718d716c1f37221132bf47d8e6fcc69e19f495b65b3e65c63884cc1b2c; exactlyoneWait afterStand, fee3/Heat-3",
+          "actual_post_hand_cash": 68,
+          "roulette": "NaturalCopperRotor/Americandoublezero/scatter24; oneuncommittedRed9draftcash68/BET9",
+          "stop": "Workreserve270s rejectedSpincommand014beforedispatch; NO Spin/Confirm; nofinalManualSave"
+        },
+        "segment7": {
+          "mode": "sameownprofileresume/plainURL/no preload",
+          "cold_proof": "cash68/Day1 2:30PM, JournalBJ-9,BJ+0,MachineJam-3/Heat-3,BJ+0,noRoulettetransaction",
+          "restored_draft": "PublicBET0/NO SPINS/SITOUT,noSEALED: previousunsavedstaginglost BEFORE input; onefreshRed9explicitlyallowed, not a second committedwager",
+          "spin_inputs": 1,
+          "confirm_inputs": 1,
+          "confirm_started_utc": "2026-11-04T21:18:05.3250000Z",
+          "confirm_returned_utc": "2026-11-04T21:18:05.3860000Z",
+          "api_semantics": "not_asserted",
+          "visible_after": "Clear23red/BET0/SITOUT+REBET/noModal/noSEALED; HUD59maybestake-masked; RecentstillNO SPINS YET",
+          "not_qualified": "Do NOT callfinalcash59 orloss. Fullpayout/actualwallet/Journal/Recent acceptance remainsunverified.",
+          "stop": "Terminal285s closedbeforequeued016Menu/017Journaldispatch; EXPLICIT_CLOSE_REQUIRED; no more financialinputs"
+        },
+        "public_diagnostics": [
+          {
+            "segment": 6,
+            "errors": [],
+            "page_errors": [],
+            "request_failures": []
+          },
+          {
+            "segment": 7,
+            "errors": [],
+            "page_errors": [],
+            "request_failures": [],
+            "first_console": {
+              "at_ms": 1793826864639,
+              "type": "log",
+              "text": "Godot Engine v4.6.stable.custom_build.89cea1439 (2026-01-25 12:41:41 UTC) - https://godotengine.org",
+              "location": {
+                "url": "http://localhost:8088/p/beat-the-house/play/dev/f3058b6daab820e9d747c4c4aabc2d983e9ae32e/index.js",
+                "line": 451,
+                "column": 15,
+                "lineNumber": 451,
+                "columnNumber": 15
+              }
+            }
+          }
+        ],
+        "receipts": [
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-web-6.json",
+            "sha256": "221afde09abda2d76c53839dfa77af29d062fea4651bc31e19ccd4f47b2bbef3",
+            "exit_code": 1,
+            "timed_out": false,
+            "active_at_release": 0,
+            "started_utc": "2026-11-04T15:05:30.120283-06:00",
+            "finished_utc": "2026-11-04T15:10:10.043387-06:00",
+            "limits": {
+              "control_flags": 5,
+              "cpu_rate": 1200,
+              "aggregate_job_cpu_percent": 12.0,
+              "kill_on_close": true,
+              "breakaway_allowed": false,
+              "job_memory_limit_bytes": 2147483648,
+              "active_processes": 0
+            }
+          },
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-checkpoint-7.json",
+            "sha256": "6c901c0dfb59d9751c9a93f9188fb872c36b025abe2217ca3d9b0e1e8820c2f7",
+            "exit_code": 1,
+            "timed_out": false,
+            "active_at_release": 0,
+            "started_utc": "2026-11-04T15:14:22.269285-06:00",
+            "finished_utc": "2026-11-04T15:19:08.737616-06:00",
+            "limits": {
+              "control_flags": 5,
+              "cpu_rate": 1200,
+              "aggregate_job_cpu_percent": 12.0,
+              "kill_on_close": true,
+              "breakaway_allowed": false,
+              "job_memory_limit_bytes": 2147483648,
+              "active_processes": 0
+            }
+          }
+        ],
+        "all_owned_zero": true,
+        "artifacts": [
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-session-06\\b-blackjack-terms.png",
+            "name": "b-blackjack-terms.png",
+            "sha256": "9543fb302e053e9688aacf405d9350bff8123d34b9e5b62d22a313601d7f7028"
+          },
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-session-06\\b-after-one-deal.png",
+            "name": "b-after-one-deal.png",
+            "sha256": "65a23410bb51216fae37c773ef99afcb9a533243137c1c04061ad2a0ecb637fd"
+          },
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-session-06\\b-after-one-stand.png",
+            "name": "b-after-one-stand.png",
+            "sha256": "6f416a718d716c1f37221132bf47d8e6fcc69e19f495b65b3e65c63884cc1b2c"
+          },
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-session-06\\b-after-one-wait-and-reveal.png",
+            "name": "b-after-one-wait-and-reveal.png",
+            "sha256": "3527e42c89abdc397afaf2322012a44de89fd6358bb20b1d307e83bb78507df5"
+          },
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-session-06\\b-floor-after-hand-and-fee.png",
+            "name": "b-floor-after-hand-and-fee.png",
+            "sha256": "52dadf4d53198f8cbfdc1d9b3891ea95088bed2c44d6ab5e1faa0b64f6896234"
+          },
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-session-06\\b-red-nine-terms.png",
+            "name": "b-red-nine-terms.png",
+            "sha256": "61c8ddf20d227016668c05f28656d6b3e3d003efed8b0565b6291c329fabca46"
+          },
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-session-06\\b-one-red-nine.png",
+            "name": "b-one-red-nine.png",
+            "sha256": "b7a0c7c0a7d0dea80bd120027e0053a209bcf3b8cf9b1696c34430e5dd02e5d6"
+          },
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-session-06\\state.json",
+            "name": "state.json",
+            "sha256": "1a5929b74e14cc91d4af3f4091b40ea26c7fef76952d25111e742afa87715613"
+          },
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-session-06\\machine-jam-wait-proof.json",
+            "name": "machine-jam-wait-proof.json",
+            "sha256": "3176bc65b92c46ca65cc335a643b881ce18adbea5a2be5e478f80c3f0caf14ae"
+          },
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-checkpoint-07\\b-cold-floor.png",
+            "name": "b-cold-floor.png",
+            "sha256": "02a49c7e840f16eef623323b3d583b9509489b3f35dfb41a2f87513fc05ec445"
+          },
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-checkpoint-07\\b-cold-journal.png",
+            "name": "b-cold-journal.png",
+            "sha256": "86fe9a94b8b664ede1505feab4661ca716c3e85cd3572bdb843b63e470e9064a"
+          },
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-checkpoint-07\\b-restored-draft-proof.png",
+            "name": "b-restored-draft-proof.png",
+            "sha256": "39e3838465f72216603243c30e1fc9096267d272e4ed46f5af4a8be906f046f6"
+          },
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-checkpoint-07\\b-reviewed-empty-draft.png",
+            "name": "b-reviewed-empty-draft.png",
+            "sha256": "3aa52a4bce0b95fd1884feb1736726abecf4ec07b305c9bee9ec70a9771d30c9"
+          },
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-checkpoint-07\\b-fresh-red-nine.png",
+            "name": "b-fresh-red-nine.png",
+            "sha256": "014c545d6c6337222c15ba03326217c6ce709ebab0a2ece882f9bf6880ba4514"
+          },
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-checkpoint-07\\b-first-confirm-proof.png",
+            "name": "b-first-confirm-proof.png",
+            "sha256": "cbb4ff33a3fd14775f5d1571519e171fce8834a3ff6e4e3d6c80425e44974b38"
+          },
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-checkpoint-07\\b-after-first-confirm.png",
+            "name": "b-after-first-confirm.png",
+            "sha256": "a8f9fb154bf488bc708f679d0c8428eb8af4c2008e8052df54a4e6986e1b2f28"
+          },
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-checkpoint-07\\b-clear-roulette-result.png",
+            "name": "b-clear-roulette-result.png",
+            "sha256": "95b56a2956be9c32aa4e883babe16f954cabc3d19595d3fe122164564150596d"
+          },
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-checkpoint-07\\state.json",
+            "name": "state.json",
+            "sha256": "601c81ec85dca358619279a3840c4385ffd57d127c7c422f7e81378e6ea0d71b"
+          },
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-checkpoint-07\\post-bj-persistence-proof.json",
+            "name": "post-bj-persistence-proof.json",
+            "sha256": "b3fd24182af6eb5967a1ecd82b5bf6774d29901088fc1f269a45655f97128a9f"
+          },
+          {
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-checkpoint-07\\roulette-draft-proof.json",
+            "name": "roulette-draft-proof.json",
+            "sha256": "7d03280e2595552273d38ac5d23e4e8267cad240693fb84c99b91487b3cb6906"
+          }
+        ],
+        "no_original_state_or_profile_access": true,
+        "no_export_assetcopy_or_product_changes": true
+      },
+      "interpretation_note": "The captured controller summary's word 'masked' is retained as its interpretation, not an established cause. Actual observations are warmHUD59/NO SPINS YET after23red and latercold77. Warm display progression/cause remains unqualified."
+    },
+    {
+      "summary": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-final-curated-summary.json",
+      "summary_sha256": "375ed29b8ce59f0a47e06ee2681f46e0ed5f1898492f6894c659a4ec86713b77",
+      "data": {
+        "task_id": "BTH061-ROULETTE-SEALED-PENDING-001",
+        "result": "INDEPENDENT_SEED_B_FINANCIAL_SETTLEMENT_AND_COLD_CHECKPOINT_QUALIFIED",
+        "original_status": "Open; original R08 pending action untouched and root cause not reproduced",
+        "seed": "BTH061-ROULETTE-SEALED-PENDING-001-B",
+        "runtime_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e",
+        "runtime_source_tree": "4c4ec494b5c22b1a5c57cc1e8bbf73041140a753",
+        "fixture_manifest_sha256": "57f94de7af9e07a7c76583e00d538ff820bfcd1ad07757010588d427716e44a2",
+        "profile": "b-r08-unobscured-06",
+        "scope": "Exactlyone predeclared independentseedB/native36checkszero-inputfixture; naturalCopperRotor/Americandoublezero/scatter24; stagedcash80/min9/shippedRiverboat3games; no seedsearch,outcomefilter,clock/event/RNGedit,originalcampaign/profile access,export or runtimeassetcopy",
+        "segments": [
+          {
+            "session": "r08-seed-b-session-06",
+            "result": "One9BJDeal80->71, player18; oneStanddealer20/player18loss9. RootattestedMachineJamWaitafterStandONCEcost3->68. NormalLeave/actualCopperRotor; uncommittedRed9draft.270sworkreserve rejectedSpinbeforedispatch; noSpin/Confirm."
+          },
+          {
+            "session": "r08-seed-b-checkpoint-07",
+            "result": "Sameprofilecoldcash68+BJloss9+separateWaitfee3/noRjournalverified. EntryBET0/NO SPINS/noSEALED provedpriorunsavedstaginglost BEFOREinput. OnefreshRed9explicitlyallowed, thenfirstSpin+Confirmonce. Clear23red/BET0/SITOUT+REBET/noModal/noSEALED, HUD59/NoSpinsstillmasked. Terminal285s closedbeforeMenu/Journal; no finalwalletclaim fromthissegment."
+          },
+          {
+            "session": "r08-seed-b-readonly-08",
+            "result": "SameprofilecoldplainURL/no preload: normalContinuefloor+Menu77/Heat0/Day1 7:45PM; publicJournal6rows retained; zero gameplay/eventinputs, no tableentry, explicitclose."
+          }
+        ],
+        "one_wait": {
+          "placement": "after-stand",
+          "prechoice_cash": 71,
+          "expected_fee": 3,
+          "root_attested": true,
+          "modal_png_sha256": "6f416a718d716c1f37221132bf47d8e6fcc69e19f495b65b3e65c63884cc1b2c",
+          "wait_point": [
+            640,
+            356
+          ],
+          "count": 1
+        },
+        "first_confirm": {
+          "point": [
+            471,
+            666
+          ],
+          "started_utc": "2026-11-04T21:18:05.325Z",
+          "returned_utc": "2026-11-04T21:18:05.386Z",
+          "api_semantics": "not_asserted",
+          "explicit_spin_inputs": 1,
+          "explicit_confirm_inputs": 1,
+          "warm_visible_marker": "23red",
+          "warm_bet": 0,
+          "warm_controls": "SITOUT/REBET; no SEALED/no obscuringmodal"
+        },
+        "final_public_accounting": {
+          "cold_floor_cash": 77,
+          "cold_menu_bankroll": 77,
+          "journal_rows": [
+            "Blackjack-9;Bankroll-9",
+            "Blackjack+0;Bankroll+0",
+            "MachineJamWait;Bankroll-3/Heat-3",
+            "Blackjack+0;Bankroll+0",
+            "Roulette+9;recordedchange+9",
+            "Roulette+0"
+          ],
+          "equation": "80-9-3+9=77",
+          "roulette_positive_net_rows": 1,
+          "zero_row_limit": "CauseofRoulette+0row UNKNOWN; no phase/autoplay or authoritative total-round-count claim. ExplicitSpin/Confirminputs1each."
+        },
+        "qualification_limits": [
+          "FirstConfirm followed a coldcheckpoint between BJ andRoulette; directsame-process WebBJ->Roulette bridge remainsunqualified",
+          "WarmHUD59/NO SPINS YET stayedmasked evenafteradditionalno-inputframe. Coldmodel77 verified; thisdoesnotprovewarmanimation/historyreleased",
+          "No engineauthority/pending-ledger/runtimeRNG introspection; publicfinancialevidence only",
+          "OriginalDay3/Heat1/DeltaQueen006/CyanDolly state not reconstructed; independentDay1/Heat0/DeltaQueen001/CopperRotor case",
+          "NoBJorWaitreplay; no repeatedexplicitSpin/Confirminput; stagingloss documentedbeforefreshdraft. No authoritative total-round/wager-count claim.",
+          "No lateMenu/Journal acceptance assumed fromfailedsegments; readonlycoldproofisdistinct"
+        ],
+        "public_diagnostics": [
+          {
+            "segment": 6,
+            "console_count": 4,
+            "console_warning_error_count": 0,
+            "page_errors": 0,
+            "request_failures": 0
+          },
+          {
+            "segment": 7,
+            "console_count": 3,
+            "console_warning_error_count": 0,
+            "page_errors": 0,
+            "request_failures": 0
+          },
+          {
+            "segment": 8,
+            "console_count": 3,
+            "console_warning_error_count": 0,
+            "page_errors": 0,
+            "request_failures": 0
+          }
+        ],
+        "readonly_inputs": {
+          "paid_commands": 0,
+          "table_entry": 0,
+          "event_choices": 0,
+          "fixture_preload": false,
+          "fixture_urls_requested": []
+        },
+        "review_outcomes": [
+          "Launchinitiallydeniedbeforeexecution; oneexactretryapprovedafternewexplicitvirtual-only/source/networkisolationproof",
+          "Continuationchip-before-draft batchdeniedbeforeexecution; saferEnter+screenshotonlyapproved; denominationselectiononlyafterBET0proof"
+        ],
+        "guards": {
+          "cpu_percent": 12,
+          "memory_bytes": 2147483648,
+          "job_timeout_seconds": 300,
+          "chromium_sandbox": true,
+          "all_profile_temp_cache_evidence_receipts_on_E": true,
+          "all_owned_zero": true,
+          "no_further_jobs": true,
+          "profile_bytes": 18082662.0
+        },
+        "closure_receipts": [
+          {
+            "label": "r08-seed-b-web-6",
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-web-6.json",
+            "sha256": "221afde09abda2d76c53839dfa77af29d062fea4651bc31e19ccd4f47b2bbef3",
+            "exit_code": 1,
+            "timed_out": false,
+            "active_at_release": 0,
+            "started_utc": "2026-11-04T15:05:30.120283-06:00",
+            "finished_utc": "2026-11-04T15:10:10.043387-06:00"
+          },
+          {
+            "label": "r08-seed-b-checkpoint-7",
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-checkpoint-7.json",
+            "sha256": "6c901c0dfb59d9751c9a93f9188fb872c36b025abe2217ca3d9b0e1e8820c2f7",
+            "exit_code": 1,
+            "timed_out": false,
+            "active_at_release": 0,
+            "started_utc": "2026-11-04T15:14:22.269285-06:00",
+            "finished_utc": "2026-11-04T15:19:08.737616-06:00"
+          },
+          {
+            "label": "r08-seed-b-readonly-8",
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-readonly-8.json",
+            "sha256": "d4771de5d41f33058d57bdf92692ccfc659d6f21ae035024b30586d05cde8c81",
+            "exit_code": 0,
+            "timed_out": false,
+            "active_at_release": 0,
+            "started_utc": "2026-11-04T15:23:16.174634-06:00",
+            "finished_utc": "2026-11-04T15:24:34.462482-06:00"
+          }
+        ],
+        "proofs": [
+          {
+            "session": "r08-seed-b-session-06",
+            "name": "b-after-one-stand.png",
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-session-06\\b-after-one-stand.png",
+            "sha256": "6f416a718d716c1f37221132bf47d8e6fcc69e19f495b65b3e65c63884cc1b2c"
+          },
+          {
+            "session": "r08-seed-b-session-06",
+            "name": "b-after-one-wait-and-reveal.png",
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-session-06\\b-after-one-wait-and-reveal.png",
+            "sha256": "3527e42c89abdc397afaf2322012a44de89fd6358bb20b1d307e83bb78507df5"
+          },
+          {
+            "session": "r08-seed-b-session-06",
+            "name": "b-one-red-nine.png",
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-session-06\\b-one-red-nine.png",
+            "sha256": "b7a0c7c0a7d0dea80bd120027e0053a209bcf3b8cf9b1696c34430e5dd02e5d6"
+          },
+          {
+            "session": "r08-seed-b-checkpoint-07",
+            "name": "b-cold-journal.png",
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-checkpoint-07\\b-cold-journal.png",
+            "sha256": "86fe9a94b8b664ede1505feab4661ca716c3e85cd3572bdb843b63e470e9064a"
+          },
+          {
+            "session": "r08-seed-b-checkpoint-07",
+            "name": "b-restored-draft-proof.png",
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-checkpoint-07\\b-restored-draft-proof.png",
+            "sha256": "39e3838465f72216603243c30e1fc9096267d272e4ed46f5af4a8be906f046f6"
+          },
+          {
+            "session": "r08-seed-b-checkpoint-07",
+            "name": "b-fresh-red-nine.png",
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-checkpoint-07\\b-fresh-red-nine.png",
+            "sha256": "014c545d6c6337222c15ba03326217c6ce709ebab0a2ece882f9bf6880ba4514"
+          },
+          {
+            "session": "r08-seed-b-checkpoint-07",
+            "name": "b-first-confirm-proof.png",
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-checkpoint-07\\b-first-confirm-proof.png",
+            "sha256": "cbb4ff33a3fd14775f5d1571519e171fce8834a3ff6e4e3d6c80425e44974b38"
+          },
+          {
+            "session": "r08-seed-b-checkpoint-07",
+            "name": "b-after-first-confirm.png",
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-checkpoint-07\\b-after-first-confirm.png",
+            "sha256": "a8f9fb154bf488bc708f679d0c8428eb8af4c2008e8052df54a4e6986e1b2f28"
+          },
+          {
+            "session": "r08-seed-b-checkpoint-07",
+            "name": "b-clear-roulette-result.png",
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-checkpoint-07\\b-clear-roulette-result.png",
+            "sha256": "95b56a2956be9c32aa4e883babe16f954cabc3d19595d3fe122164564150596d"
+          },
+          {
+            "session": "r08-seed-b-readonly-08",
+            "name": "b-final-cold-floor.png",
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-readonly-08\\b-final-cold-floor.png",
+            "sha256": "eee6d94bcdc12eb10d4caa46efdf9ed9c516692809dc14ceb24e9c7d86bff11c"
+          },
+          {
+            "session": "r08-seed-b-readonly-08",
+            "name": "b-final-cold-menu.png",
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-readonly-08\\b-final-cold-menu.png",
+            "sha256": "b81c9857ec1e2ba7c48bea7a3b38bbd9be52590608d3c7a50e7fd97d0826f672"
+          },
+          {
+            "session": "r08-seed-b-readonly-08",
+            "name": "b-final-cold-journal.png",
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-readonly-08\\b-final-cold-journal.png",
+            "sha256": "e7938dc066a6201eff6e373d37ddd95d3a2c79bf64dd9f2ff94b98b20ca261fb"
+          },
+          {
+            "session": "r08-seed-b-readonly-08",
+            "name": "b-final-journal-before-close.png",
+            "path": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\sessions\\r08-seed-b-readonly-08\\b-final-journal-before-close.png",
+            "sha256": "9d071170ff56855d40df53275872f93ca07984213a6d9c1ffc58db33554fbf60"
+          }
+        ],
+        "product_changes": false,
+        "named_paused_scenario_implementation": false,
+        "warm_same_process_web_acceptance": "Open; onlyboundedcoldfinancialcheckpointqualified"
+      },
+      "interpretation_note": "The captured controller summary's word 'masked' is retained as its interpretation, not an established cause. Actual observations are warmHUD59/NO SPINS YET after23red and latercold77. Warm display progression/cause remains unqualified."
     }
   ],
   "product_changes": [],
@@ -3427,9 +3943,84 @@
     "Independent staged fixtures remain Day1/Heat0, not the original Day3/Heat1 campaign or normal-travel acceptance.",
     "The original first unsuccessful host boundary/public Godot rejection or exception was not captured; original JavaScript page_errors0 cannot supply it.",
     "No independently reproduced pending request exists for new pending-state Save/cold/recovery qualification; no Retry/Cancel or manufactured fault.",
-    "No product, animation/scheduling, seal, accounting or resource-guard change. Existing NEXT disk reserve retains f305."
+    "No product, animation/scheduling, seal, accounting or resource-guard change. Existing NEXT disk reserve retains f305.",
+    "Seed-B first Confirm occurred after a public cold checkpoint; direct same-process Web Blackjack-to-Roulette bridge remains unqualified.",
+    "Seed-B warm result showed23red/BET0/SITOUT/REBET, but HUD59 and NO SPINS YET remained displayed. Cold77/publicJournal verify saved financial settlement, not the cause or release of that warm display.",
+    "The extra Roulette+0 journal row is observed; its cause and authoritative total round/request count are unclassified. Exactly one explicit Spin and one explicit Confirm were sent."
   ],
-  "updated_at": "2026-11-04T20:45:24.625482+00:00",
+  "updated_at": "2026-11-04T21:29:20.269427+00:00",
   "continuation_source_base": "25b2f152cc7d82ddf86990c94e290fb401efa5e7",
-  "continuation_investigation_commit": "7648f1d908468fd783cd19bc5c4562ab69573be1"
+  "continuation_investigation_commit": "7648f1d908468fd783cd19bc5c4562ab69573be1",
+  "unobscured_web_continuation": {
+    "state": "seed_B_cold_financial_checkpoint_qualified_warm_same_process_open",
+    "predeclared_seed": "BTH061-ROULETTE-SEALED-PENDING-001-B",
+    "seed_iteration": false,
+    "event_or_clock_or_rng_edit": false,
+    "ordinary_existing_machine_jam_wait_limit": 1,
+    "pause_scope": "Named implementation objectives paused; existing pause record expressly permits playtesting.",
+    "storage_root": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06",
+    "original_pending_untouched": true,
+    "warm_case": {
+      "receipt": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-web-6.json",
+      "paid_command_ids": [
+        "deal-bj-once",
+        "stand-bj-once",
+        "event-wait-once",
+        "one-red-chip"
+      ],
+      "result": "One Deal/Stand naturalBJloss9; one ordinaryMachineJamWaitfee3; clearreveal20vs18/cash68, normalLeave andCopperRotorentry, oneRed9draft. Workreserve rejectedqueuedSpin beforedispatch. NoSpin/Confirm, no manualSave claim; postclosurepersistedcheckpoint notyetqualified.",
+      "public_errors": [],
+      "console_warnings_errors": [],
+      "exit_code": 1,
+      "timed_out": false,
+      "active_at_release": 0
+    },
+    "review_history": {
+      "first_launch": "Automatic review denied beforeexecution, claiming missingexactfinancial/gameplay authorization.",
+      "new_material_proof": "Rootverified generatedRunState80virtualcounters and localhost-onlyGETassetwhitelist/allWebSocketsclosed; no realfinancial/payment/account/userprofile.",
+      "same_operation_retry": "Exactlyone same-command review approved on newly explicit low-riskproof; one actual browser Job executed. No workaround or further retry."
+    },
+    "resume_plan": "Same ownEprofile/plainURL/no preload. Require public68/BJloss9/Waitfee3/noRoulettetransaction orSEALED; preserveBET9draft or explicitlydocumentBET0unsavedstagingloss beforeonefreshdraft. FirstSpin/Confirm only; noBJ/Wait/newrun/import/reset. Stopfirsterror/inconsistentcheckpoint/unknownorseconddecision.",
+    "summary": "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-final-curated-summary.json",
+    "summary_sha256": "375ed29b8ce59f0a47e06ee2681f46e0ed5f1898492f6894c659a4ec86713b77",
+    "first_confirm": {
+      "point": [
+        471,
+        666
+      ],
+      "started_utc": "2026-11-04T21:18:05.325Z",
+      "returned_utc": "2026-11-04T21:18:05.386Z",
+      "api_semantics": "not_asserted",
+      "explicit_spin_inputs": 1,
+      "explicit_confirm_inputs": 1,
+      "warm_visible_marker": "23red",
+      "warm_bet": 0,
+      "warm_controls": "SITOUT/REBET; no SEALED/no obscuringmodal"
+    },
+    "final_public_accounting": {
+      "cold_floor_cash": 77,
+      "cold_menu_bankroll": 77,
+      "journal_rows": [
+        "Blackjack-9;Bankroll-9",
+        "Blackjack+0;Bankroll+0",
+        "MachineJamWait;Bankroll-3/Heat-3",
+        "Blackjack+0;Bankroll+0",
+        "Roulette+9;recordedchange+9",
+        "Roulette+0"
+      ],
+      "equation": "80-9-3+9=77",
+      "roulette_positive_net_rows": 1,
+      "zero_row_limit": "CauseofRoulette+0row UNKNOWN; no phase/autoplay or authoritative total-round-count claim. ExplicitSpin/Confirminputs1each."
+    },
+    "qualification_limits": [
+      "FirstConfirm followed a coldcheckpoint between BJ andRoulette; directsame-process WebBJ->Roulette bridge remainsunqualified",
+      "WarmHUD59/NO SPINS YET remained displayed in retained frames; cold77 is verified, but warm display/history progression and cause are unqualified.",
+      "No engineauthority/pending-ledger/runtimeRNG introspection; publicfinancialevidence only",
+      "OriginalDay3/Heat1/DeltaQueen006/CyanDolly state not reconstructed; independentDay1/Heat0/DeltaQueen001/CopperRotor case",
+      "NoBJorWaitreplay; no repeatedexplicitSpin/Confirminput; stagingloss documentedbeforefreshdraft. No authoritative total-round/wager-count claim.",
+      "No lateMenu/Journal acceptance assumed fromfailedsegments; readonlycoldproofisdistinct"
+    ],
+    "fix_commit": null
+  },
+  "unobscured_source_base": "05a9e79808d2520583507312a6ffe17ef4ff9621"
 }

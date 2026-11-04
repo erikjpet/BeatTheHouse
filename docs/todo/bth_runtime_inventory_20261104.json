@@ -1,6 +1,6 @@
 {
   "schema": "bth.runtime_inventory/v1",
-  "observed_at": "2026-11-04T20:40:39.211843+00:00",
+  "observed_at": "2026-11-04T21:27:04.369247+00:00",
   "scope": {
     "description": "5 unresolved legacy job receipts, one denied browser cleanup outcome, two preserved shared services and three retained profiles. No live process inventory. Plus three nonce-bound task6 Bar Dice journal jobs with actual closed Job receipts; prior records are unchanged and not re-observed. Plus six nonce-bound task6 Coin Pusher price jobs with actual closed Job receipts, including expected baseline and diagnostic cold failure. Prior records remain unchanged and were not re-observed. Plus 7 actual nonce-bound task6 Roulette currency jobs with closed Job receipts; baseline and harness diagnostic failures retained. Other records were not re-observed. Plus seven fresh nonce-bound merged-source Quarter Falls/Roulette release jobs; prior thirteen records unchanged and not re-observed. Plus task14 R08 private test Jobs with actual no-reuse launch-label identity and owned-zero closure receipts; no other runtime was re-observed.",
     "complete": false,
@@ -3607,6 +3607,354 @@
           "docs/testing/roulette_sealed_pending_r08.json"
         ],
         "limit": "Own bounded test Job only. Setup failures are retained. Private fixtures/profiles preserved; original pending action and shared resources untouched."
+      }
+    },
+    {
+      "instance_id": "task14:r08-roulette-web-prepare-b-1",
+      "task_id": "BTH061-ROULETTE-SEALED-PENDING-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "r08-roulette-web-prepare-b-1",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-1.start.json:pid:36124",
+        "started_at": "2026-11-04T20:58:26.814113+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Actual no-reuse pre-execution launch label, not retrospective random nonce/global census."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T20:58:57.310603+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-1.start.json:pid:36124",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Only the owned Job drained active_at_release=0 before release."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T20:58:57.310603+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-1.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-1.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-1.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-1.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T20:58:57.310603+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "r08-roulette-web-prepare-b-1",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-1.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-1.start.json",
+            "docs/testing/roulette_sealed_pending_r08.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T20:58:57.310603+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-1.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-roulette-web-prepare-b-1.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ],
+        "limit": "Own bounded E-storage test only. All fixtures/profiles/evidence preserved, no original/shared cleanup or D reserve bypass."
+      }
+    },
+    {
+      "instance_id": "task14:r08-seed-b-web-6",
+      "task_id": "BTH061-ROULETTE-SEALED-PENDING-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "r08-seed-b-web-6",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-web-6.start.json:pid:31396",
+        "started_at": "2026-11-04T21:05:30.120283+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-web-6.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-web-6.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Actual no-reuse pre-execution launch label, not retrospective random nonce/global census."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T21:10:10.043387+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-web-6.start.json:pid:31396",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-web-6.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-web-6.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Only the owned Job drained active_at_release=0 before release."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T21:10:10.043387+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-web-6.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-web-6.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-web-6.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-web-6.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-web-6.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-web-6.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T21:10:10.043387+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "r08-seed-b-web-6",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-web-6.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-web-6.start.json",
+            "docs/testing/roulette_sealed_pending_r08.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T21:10:10.043387+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-web-6.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-web-6.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ],
+        "limit": "Own bounded E-storage test only. All fixtures/profiles/evidence preserved, no original/shared cleanup or D reserve bypass."
+      }
+    },
+    {
+      "instance_id": "task14:r08-seed-b-checkpoint-7",
+      "task_id": "BTH061-ROULETTE-SEALED-PENDING-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "r08-seed-b-checkpoint-7",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-checkpoint-7.start.json:pid:15668",
+        "started_at": "2026-11-04T21:14:22.269285+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-checkpoint-7.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-checkpoint-7.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Actual no-reuse pre-execution launch label, not retrospective random nonce/global census."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T21:19:08.737616+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-checkpoint-7.start.json:pid:15668",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-checkpoint-7.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-checkpoint-7.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Only the owned Job drained active_at_release=0 before release."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T21:19:08.737616+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-checkpoint-7.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-checkpoint-7.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-checkpoint-7.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-checkpoint-7.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-checkpoint-7.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-checkpoint-7.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T21:19:08.737616+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "r08-seed-b-checkpoint-7",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-checkpoint-7.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-checkpoint-7.start.json",
+            "docs/testing/roulette_sealed_pending_r08.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T21:19:08.737616+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-checkpoint-7.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-checkpoint-7.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ],
+        "limit": "Own bounded E-storage test only. All fixtures/profiles/evidence preserved, no original/shared cleanup or D reserve bypass."
+      }
+    },
+    {
+      "instance_id": "task14:r08-seed-b-readonly-8",
+      "task_id": "BTH061-ROULETTE-SEALED-PENDING-001",
+      "owner_task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
+      "kind": "test_job",
+      "ownership": "task_owned",
+      "state": "ended",
+      "launch_identity": {
+        "nonce": "r08-seed-b-readonly-8",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-readonly-8.start.json:pid:25040",
+        "started_at": "2026-11-04T21:23:16.174634+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-readonly-8.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-readonly-8.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Actual no-reuse pre-execution launch label, not retrospective random nonce/global census."
+        ]
+      },
+      "current_identity": {
+        "state": "absent",
+        "observed_at": "2026-11-04T21:24:34.462482+00:00",
+        "key": "owned-job:E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-readonly-8.start.json:pid:25040",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-readonly-8.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-readonly-8.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json",
+          "Only the owned Job drained active_at_release=0 before release."
+        ]
+      },
+      "activity": {
+        "state": "idle",
+        "observed_at": "2026-11-04T21:24:34.462482+00:00",
+        "lease_until": null,
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-readonly-8.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-readonly-8.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ]
+      },
+      "protected": {
+        "saves": true,
+        "shared_resources": false
+      },
+      "cleanup": {
+        "contract": {
+          "success": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-readonly-8.json"
+          ],
+          "failure": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-readonly-8.json"
+          ],
+          "timeout": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-readonly-8.json"
+          ],
+          "interruption": [
+            "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-14\\run_owned.py",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-readonly-8.json"
+          ]
+        },
+        "receipt": {
+          "observed_at": "2026-11-04T21:24:34.462482+00:00",
+          "outcome": "verified_closed",
+          "identity_nonce": "r08-seed-b-readonly-8",
+          "remaining_count": 0,
+          "evidence": [
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-readonly-8.json",
+            "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-readonly-8.start.json",
+            "docs/testing/roulette_sealed_pending_r08.json"
+          ]
+        }
+      },
+      "closure_review": {
+        "state": "closed",
+        "currently_running": false,
+        "cleanly_closed": true,
+        "observed_at": "2026-11-04T21:24:34.462482+00:00",
+        "evidence": [
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-readonly-8.json",
+          "E:\\CodexQA\\BTH\\Task14Independent\\20261104\\r08-unobscured-06\\evidence\\r08-seed-b-readonly-8.start.json",
+          "docs/testing/roulette_sealed_pending_r08.json"
+        ],
+        "limit": "Own bounded E-storage test only. All fixtures/profiles/evidence preserved, no original/shared cleanup or D reserve bypass."
       }
     }
   ],

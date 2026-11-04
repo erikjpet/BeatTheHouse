@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-04T20:45:24.625482+00:00",
+  "updated_at": "2026-11-04T21:29:20.269427+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -19514,7 +19514,7 @@
       "group": "current",
       "objective": {
         "text": "Investigate R08 cash Roulette BET9 on Red: one Spin arms Confirm, one Confirm click returns but no settlement/debit occurs, and Save/refresh/cold entry exposes SEALED ACTION. Preserve the original pending request and all evidence without Retry, Cancel, repeat Confirm, original profile/save/authority/key/RNG access or action replay. Reconstruct independently, classify the exact failure, and fix/test only a confirmed defect while preserving rules, economy, RNG, semantic seals, exactly-once delivery and persistence. A bounded fixture is not the original campaign. Respect item/scenario pause and existing resource/disk gates.",
-        "source": "Trusted parent delegation2026-11-04; E:/CodexQA/BTH/Broad/r08-20261104/evidence/r08-roulette-sealed-pending-917918-observation.json (SHA256 b304b248d4777152111943eaf74b10da05e41c340586e3151b95b4c5ae7afd7a); original source f3058b6daab820e9d747c4c4aabc2d983e9ae32e. Trusted parent continuation2026-11-04: resolve the independent prior-Blackjack setup failures and test that path without touching R08 original pending request; capture first public rejection/exception before further input; keep Open absent causal evidence; retain pauses and storage guard.",
+        "source": "Trusted parent delegation2026-11-04; E:/CodexQA/BTH/Broad/r08-20261104/evidence/r08-roulette-sealed-pending-917918-observation.json (SHA256 b304b248d4777152111943eaf74b10da05e41c340586e3151b95b4c5ae7afd7a); original source f3058b6daab820e9d747c4c4aabc2d983e9ae32e. Trusted parent continuation2026-11-04: resolve the independent prior-Blackjack setup failures and test that path without touching R08 original pending request; capture first public rejection/exception before further input; keep Open absent causal evidence; retain pauses and storage guard. Trusted parent continuation2026-11-04: address obscured Web result through a new independent legitimate prior-Blackjack→Roulette case; original R08 untouched/no replay; capture first rejection/exception; keep Open absent causal evidence; preserve pauses/disk gate.",
         "scope_confirmed": true,
         "acceptance": [
           {
@@ -19578,6 +19578,26 @@
               "docs/testing/roulette_sealed_pending_r08.md",
               "docs/testing/roulette_sealed_pending_r08.json"
             ]
+          },
+          {
+            "id": "unobscured-web-prior-blackjack",
+            "description": "Use a new independent legitimate Web fixture/profile for one Blackjack Deal/Stand, normal Leave and first Roulette Red9 Confirm, without manipulating clocks/events/RNG or replaying original pending. Observe final result/history and accounting unobscured if feasible; capture first public rejection/exception before more input. Retain any new modal/resource limitation; no speculative fix/closure. Exactly one predeclared B case, no seed iteration. Ordinary existing Machine Jam Wait may clear a blocking prompt with its3fee recorded separately; this is permitted playtesting, not implementation of paused objectives.",
+            "required": true,
+            "state": "open",
+            "evidence": [
+              "docs/testing/roulette_sealed_pending_r08.md",
+              "docs/testing/roulette_sealed_pending_r08.json"
+            ]
+          },
+          {
+            "id": "seed-b-cold-financial-checkpoint",
+            "description": "Bounded independent predeclared B control: legitimate Blackjack loss9, one ordinaryMachineJamfee3, actual68 checkpoint; first explicitRouletteSpin/Confirm23red, clearBET0/SITOUT/REBET; readonlycold77 and journalBJ-9/Wait-3/R+9/R+0. Equation80-9-3+9=77. This does not qualify directsame-processWeb bridge, warmHUD/historyrelease, originalcause or totalroundcount.",
+            "required": false,
+            "state": "pass",
+            "evidence": [
+              "docs/testing/roulette_sealed_pending_r08.md",
+              "docs/testing/roulette_sealed_pending_r08.json"
+            ]
           }
         ],
         "coverage": {
@@ -19587,7 +19607,7 @@
         }
       },
       "state": "open",
-      "status": "OPEN_PRIOR_BLACKJACK_PATH_TESTED_ORIGINAL_CAUSE_UNCLASSIFIED",
+      "status": "OPEN_SEED_B_COLD_SETTLEMENT_VERIFIED_WARM_WEB_GAP",
       "owner": {
         "name": "R08 Roulette investigation (task-14)",
         "task_ref": "01a1a3d4-5524-759f-969d-678fdcb0a0ca",
@@ -19643,26 +19663,31 @@
           "summary": "28 count-only native checks establish dealt canonical hand and deferred canvas refresh; corrected native path passes43 with exactly one Deal/Stand, normal Leave and one Cyan Dolly Red9 Confirm, cash80→71→80, one spin/receipt/no pending. Web official Save/cold bootstrap and persisted legitimate hand qualify first-Confirm input, cash71→62/BET0; Machine Jam obscures final result/history/pending controls, so full Web settlement is not claimed. Original setup/controller failures retained. No production fix."
         },
         {
+          "kind": "seed_b_cold_financial_control",
+          "reference": "docs/testing/roulette_sealed_pending_r08.json",
+          "summary": "Newpredeclared B native36 Save/Continue preparation. Three ownWebsegments: oneBJDeal/Stand+oneWait80-9-3=68; publiccold68/history then firstSpin/Confirm23red; readonlycold77/JournalR+9,R+0 verifies80-9-3+9=77. Warm59/NoSpins display unqualified anddirectsame-processWebbridge remainunqualified; zeroRrowcause unknown. Failedcontrollersegments retained, no public rejection/exception, no originaldata/replay/productfix."
+        },
+        {
           "kind": "runtime_closure",
           "reference": "docs/todo/bth_runtime_inventory_20261104.json",
-          "summary": "13 task14 native/browser Jobs have actual no-reuse pre-execution label identity and owned-zero closure receipts; failed setup/controller cases and all private profiles preserved. No shared/original cleanup."
+          "summary": "17 actual owned test Jobs have closed/owned0 receipts, including all failed controller segments. Initial denied launch did not execute and is not counted as a runtime. All private profiles/evidence preserved; no original/shared cleanup or D gate bypass."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Keep original R08 pending request untouched. On the next independently observed same-shape first-Confirm failure, capture public Godot rejection/exception and first unsuccessful host boundary, build/seed/table/wager/cash/time and first unchanged frame before additional financial input or Save; compare with direct and prior-Blackjack native/Web controls. Change only a reproduced responsible contract, then qualify material pending persistence/recovery and NEXT. No original Retry/Cancel/replay or speculative automatic settlement.",
+      "next_action": "Qualify the remaining direct same-process Web Blackjack-to-Roulette first-Confirm and warm payout/history progression using an independent legitimate fixture with public result/console/journal captured before cold reset. Preserve the documented cold77 financial control, unknown+0 row and earlier failures. Keep originalR08 pending untouched; capture first public rejection/exception and first unsuccessful host boundary before more financial input or Save, fix only a reproduced responsible contract, then qualify pending persistence/recovery and NEXT.",
       "blocker": {
         "state": "active",
-        "kind": "unclassified_original_rejection",
-        "description": "Prior-Blackjack independent setup/path coverage is resolved, but the original R08 rejection or exception remains unrecorded and no responsible production defect is reproduced. Original Day3/Heat1 campaign and pending persistence/recovery are not qualified by Day1/Heat0 passing controls. No permission, scheduling or personal-save wait; NEXT export remains subject to its existing disk guard.",
+        "kind": "unqualified_warm_web_and_original_rejection",
+        "description": "New seed-B financial settlement is verified after cold, but Jobwork/terminal boundaries separated Blackjack and firstRouletteConfirm and prevented warmfinalJournal. WarmHUD59/NoSpins progression remains unqualified; directsame-processWeb bridge and livehistoryrelease are unqualified. OriginalDay3/Heat1 rejection stillnotcaptured; no responsibleproductdefect proven. No permission/scheduling/user-save wait. Existing NEXTdiskgate remainsunchanged.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T20:40:39.322793+00:00",
+        "observed_at": "2026-11-04T21:29:20.269427+00:00",
         "evidence": [
           "docs/testing/roulette_sealed_pending_r08.md",
           "docs/testing/roulette_sealed_pending_r08.json"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T20:45:24.625482+00:00"
+      "updated_at": "2026-11-04T21:29:20.269427+00:00"
     }
   ],
   "batches": [

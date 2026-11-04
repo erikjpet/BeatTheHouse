@@ -7,25 +7,31 @@ extends SceneTree
 const MainScene := preload("res://scenes/main.tscn")
 const Authority := preload("res://scripts/core/blackjack_action_authority.gd")
 const SEED := "BTH061-ROULETTE-SEALED-PENDING-001-A"
+const WEB_SEED_B := "BTH061-ROULETTE-SEALED-PENDING-001-B"
 const STAKE := 9
 
+var fixture_seed := SEED
 var private_root := ""
 var checks := 0
 var failures: Array[String] = []
-var facts: Dictionary = {"seed": SEED, "fixture": "Explicit staged generated Riverboat cash80/min9, Roulette only; no normal-travel claim", "original_state_used": false, "practice_used": false, "outcome_selection": false, "retry_or_cancel_used": false, "boundaries": []}
+var facts: Dictionary = {"seed": fixture_seed, "fixture": "Explicit staged generated Riverboat cash80/min9, Roulette only; no normal-travel claim", "original_state_used": false, "practice_used": false, "outcome_selection": false, "retry_or_cancel_used": false, "boundaries": []}
 var completed := false
 var paced := false
 var after_blackjack := false
 var prepare_web := false
+var prepare_web_b := false
 var observe_blackjack := false
 
 
 func _initialize() -> void:
-	prepare_web = OS.get_cmdline_user_args().has("--prepare-web")
+	prepare_web_b = OS.get_cmdline_user_args().has("--prepare-web-b")
+	prepare_web = prepare_web_b or OS.get_cmdline_user_args().has("--prepare-web")
+	fixture_seed = WEB_SEED_B if prepare_web_b else SEED
+	facts["seed"] = fixture_seed
 	after_blackjack = OS.get_cmdline_user_args().has("--after-blackjack")
 	observe_blackjack = OS.get_cmdline_user_args().has("--observe-blackjack")
 	paced = after_blackjack or OS.get_cmdline_user_args().has("--paced")
-	facts["mode"] = "observe-blackjack-counts" if observe_blackjack else "prepare-web-prepaid-floor" if prepare_web else "after-blackjack-frame-paced" if after_blackjack else "frame-paced" if paced else "immediate"
+	facts["mode"] = "observe-blackjack-counts" if observe_blackjack else "prepare-web-b-prepaid-floor" if prepare_web_b else "prepare-web-prepaid-floor" if prepare_web else "after-blackjack-frame-paced" if after_blackjack else "frame-paced" if paced else "immediate"
 	if observe_blackjack:
 		facts["fixture"] = "New own staged generated Riverboat cash80/min9 with shipped three-game set; one declared Blackjack Deal then count-only observation, no Stand or Roulette input"
 	elif prepare_web:
@@ -34,6 +40,10 @@ func _initialize() -> void:
 		facts["fixture"] = "Explicit staged generated Riverboat initial cash80/min9, shipped Blackjack/Roulette/VideoPoker game set; one natural Blackjack hand then paced Roulette with actual remaining wallet/RNG, no normal-travel claim"
 	private_root = OS.get_environment("BTH_R08_ROULETTE_PRIVATE_ROOT").replace("\\", "/").simplify_path().trim_suffix("/")
 	if not _private_paths():
+		_finish()
+		return
+	if prepare_web_b and (observe_blackjack or after_blackjack or paced):
+		_check(false, "Predeclared Web seed B preparation must run separately from gameplay/observation modes")
 		_finish()
 		return
 	if observe_blackjack and not _check(not (prepare_web or after_blackjack or paced), "Count-only Blackjack observation must run separately from all other diagnostic modes"):
@@ -90,7 +100,7 @@ func _case() -> void:
 		return
 	var library: ContentLibrary = app.get("library")
 	var run := RunState.new()
-	run.start_new(SEED)
+	run.start_new(fixture_seed)
 	run.begin_act(1)
 	run.bankroll = 80
 	run.grand_casino_chips = 0
@@ -249,7 +259,7 @@ func _prepare_web_fixture(app: Control) -> void:
 	var loaded: RunState = app.get("run_state")
 	var proof := loaded.validate_room_action_authority()
 	var loaded_table := _table(loaded)
-	if not _check(loaded != run and loaded.seed_text == SEED and loaded.bankroll == 80 and loaded.grand_casino_chips == 0 and loaded.rng_state == before_rng and loaded.game_clock_minutes == before_clock and int(loaded_table.get("spin_count", -1)) == 0 and int(loaded_table.get("rules", {}).get("outside_min_each", -1)) == STAKE and not _has_pending(loaded) and _pending_total(loaded) == 0 and bool(proof.get("ok", false)), "Official Continue preserves prepaid wallet/RNG/clock/min9/spin0 and full room authority"):
+	if not _check(loaded != run and loaded.seed_text == fixture_seed and loaded.bankroll == 80 and loaded.grand_casino_chips == 0 and loaded.rng_state == before_rng and loaded.game_clock_minutes == before_clock and int(loaded_table.get("spin_count", -1)) == 0 and int(loaded_table.get("rules", {}).get("outside_min_each", -1)) == STAKE and not _has_pending(loaded) and _pending_total(loaded) == 0 and bool(proof.get("ok", false)), "Official Continue preserves prepaid wallet/RNG/clock/min9/spin0 and full room authority"):
 		return
 	var runtime_root := "/userfs/godot/app_userdata/Beat the House"
 	var specifications := [
@@ -270,7 +280,7 @@ func _prepare_web_fixture(app: Control) -> void:
 		var size := file.get_length()
 		file.close()
 		files.append({"url": specification[0], "source_path": path, "runtime_path": runtime_root + str(specification[2]), "bytes": size, "sha256": FileAccess.get_sha256(path)})
-	facts["web_fixture_manifest"] = {"task_id": "BTH061-ROULETTE-SEALED-PENDING-001", "original_campaign_accessed": false, "prepaid_fixture": true, "native_continue_validated": true, "runtime_source_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e", "runtime_compatibility_tested": false, "facts": {"seed": SEED, "cash": loaded.bankroll, "outside_minimum": STAKE, "spin_count": 0, "room_authority_valid": true, "generated_table_name": loaded_table.get("table_name", ""), "game_inputs": 0}, "files": files}
+	facts["web_fixture_manifest"] = {"task_id": "BTH061-ROULETTE-SEALED-PENDING-001", "original_campaign_accessed": false, "prepaid_fixture": true, "native_continue_validated": true, "runtime_source_commit": "f3058b6daab820e9d747c4c4aabc2d983e9ae32e", "runtime_compatibility_tested": false, "facts": {"seed": fixture_seed, "cash": loaded.bankroll, "outside_minimum": STAKE, "spin_count": 0, "room_authority_valid": true, "generated_table_name": loaded_table.get("table_name", ""), "game_inputs": 0}, "files": files}
 	facts["preparation_limit"] = "Own new files remain in the native private root; no bundle copy, asset export, Web launch or f305 Continue claim. Root stages only these files after validating this job."
 
 
