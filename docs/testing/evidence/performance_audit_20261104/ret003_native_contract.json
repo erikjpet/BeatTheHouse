@@ -1,0 +1,14 @@
+{
+  "authored_tick_preserved": true,
+  "compaction_threshold": 1024,
+  "exit_settlement_preserved": true,
+  "failures": [],
+  "legacy_session_count_preserved": true,
+  "mixed_pending_suffix_preserved": true,
+  "no_replay_next_tick": true,
+  "ok": true,
+  "pending_inputs_consumed_once": true,
+  "rejected_drop_rollback_preserved": true,
+  "solver_backend": "native_v3",
+  "web_feature": false
+}

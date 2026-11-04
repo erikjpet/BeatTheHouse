@@ -1,0 +1,77 @@
+{
+  "baseline_static_memory_bytes": 92751038,
+  "body_count": 0,
+  "diagnostic_release": {
+    "consumed_entries_before": 30000,
+    "growth_remaining_bytes": 5408,
+    "released_bytes": 18861976,
+    "static_memory_after_bytes": 92756446,
+    "static_memory_before_bytes": 111618422
+  },
+  "elapsed_wall_usec": 3067344,
+  "events": 30000,
+  "failures": [],
+  "fidelity": "synthetic 60Hz carriage inputs through real queue_input/advance; zero-body native cabinet; retained-state attribution only",
+  "invariants": {
+    "active": 0,
+    "collected": 0,
+    "conservation_ok": true,
+    "cup_consumed": 0,
+    "energy_ok": true,
+    "gutter": 0,
+    "origin": 0,
+    "refused": 0,
+    "tray": 0
+  },
+  "max_backlog_ticks": 0,
+  "ok": true,
+  "platform": "Windows",
+  "samples": [
+    {
+      "events_queued": 0,
+      "input_cursor": 0,
+      "pending_input_count": 0,
+      "retained_input_count": 0,
+      "static_memory_bytes": 92751038,
+      "static_memory_growth_bytes": 0,
+      "total_input_count": 0
+    },
+    {
+      "authority_ticks_since_baseline": 1000,
+      "elapsed_wall_usec": 632700,
+      "events_queued": 1000,
+      "input_cursor": 1000,
+      "pending_input_count": 0,
+      "retained_input_count": 1000,
+      "static_memory_bytes": 93374238,
+      "static_memory_growth_bytes": 623200,
+      "total_input_count": 1000
+    },
+    {
+      "authority_ticks_since_baseline": 10000,
+      "elapsed_wall_usec": 1361907,
+      "events_queued": 10000,
+      "input_cursor": 10000,
+      "pending_input_count": 0,
+      "retained_input_count": 10000,
+      "static_memory_bytes": 99005074,
+      "static_memory_growth_bytes": 6254036,
+      "total_input_count": 10000
+    },
+    {
+      "authority_ticks_since_baseline": 30000,
+      "elapsed_wall_usec": 3053653,
+      "events_queued": 30000,
+      "input_cursor": 30000,
+      "pending_input_count": 0,
+      "retained_input_count": 30000,
+      "static_memory_bytes": 111617926,
+      "static_memory_growth_bytes": 18866888,
+      "total_input_count": 30000
+    }
+  ],
+  "solver_backend": "native_v3",
+  "synthetic_duration_msec": 500000,
+  "warmup_frames": 60,
+  "web_feature": false
+}

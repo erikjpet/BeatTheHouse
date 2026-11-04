@@ -1,0 +1,119 @@
+{
+  "failures": [],
+  "generated_cases": [
+    {
+      "cabinet_id": "jacks_or_better",
+      "expected_holds": [
+        1,
+        4
+      ],
+      "hand": [
+        {
+          "deck": 0,
+          "rank": 7,
+          "suit": 2
+        },
+        {
+          "deck": 0,
+          "rank": 13,
+          "suit": 3
+        },
+        {
+          "deck": 0,
+          "rank": 2,
+          "suit": 3
+        },
+        {
+          "deck": 0,
+          "rank": 5,
+          "suit": 2
+        },
+        {
+          "deck": 0,
+          "rank": 12,
+          "suit": 1
+        }
+      ],
+      "mask_count": 32,
+      "seed": "BTH-PERF-002-PARITY-0"
+    },
+    {
+      "cabinet_id": "double_deuces",
+      "expected_holds": [
+        1,
+        2,
+        4
+      ],
+      "hand": [
+        {
+          "deck": 0,
+          "rank": 5,
+          "suit": 1
+        },
+        {
+          "deck": 0,
+          "rank": 10,
+          "suit": 0
+        },
+        {
+          "deck": 0,
+          "rank": 10,
+          "suit": 1
+        },
+        {
+          "deck": 0,
+          "rank": 4,
+          "suit": 0
+        },
+        {
+          "deck": 0,
+          "rank": 2,
+          "suit": 0
+        }
+      ],
+      "mask_count": 32,
+      "seed": "BTH-PERF-002-PARITY-2"
+    },
+    {
+      "cabinet_id": "triple_double_bonus",
+      "expected_holds": [
+        3
+      ],
+      "hand": [
+        {
+          "deck": 0,
+          "rank": 8,
+          "suit": 0
+        },
+        {
+          "deck": 0,
+          "rank": 13,
+          "suit": 0
+        },
+        {
+          "deck": 0,
+          "rank": 10,
+          "suit": 2
+        },
+        {
+          "deck": 0,
+          "rank": 11,
+          "suit": 3
+        },
+        {
+          "deck": 0,
+          "rank": 4,
+          "suit": 1
+        }
+      ],
+      "mask_count": 32,
+      "seed": "BTH-PERF-002-PARITY-6"
+    }
+  ],
+  "mask_checks": 96,
+  "method": "exact old payout/category oracle and old deterministic completion loop",
+  "passed": true,
+  "payout_checks": 1083,
+  "reference_source": "dc15b7d369f435d50fbf16e37af33952a4c58760",
+  "source_sha_reported_by_runner": ""
+}

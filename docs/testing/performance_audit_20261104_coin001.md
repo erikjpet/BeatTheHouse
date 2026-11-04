@@ -2,7 +2,7 @@
 
 Parent: [BTH-PERF-20261104](../plans/performance_audit_2026-11-04.md), which
 remains OPEN. First finding is fixed in source and measured; main/NEXT delivery
-and normal-input runtime acceptance are recorded separately. No player save was
+is verified below; broader normal-input runtime acceptance stays separate. No player save was
 needed or accessed. Stable, itch and hosting audience are outside this change.
 
 ## Reproduction and cause
@@ -92,8 +92,17 @@ profile stays disposable. Those failures are not product regressions.
 
 ## Remaining acceptance
 
-Publish the scoped fix through main and observe the existing NEXT watcher.
-Verify served identity/basic launch and sustained normal player drag on that
-build. Broader actual native and Web runtime profiling, other cabinets, long
+Implementation is on main as `ea136553ce3f33236aa3ea22d23921e6f957e7a2`.
+Existing cold-import qualification consumed the exact `247ebe3277cee8bc46fc3cff084607441fa296d4`
+request and promoted that descendant at2026-11-04T00:52:33Z. Its tree is
+`d6666d67326787155852e0fc51a91c354946e8ff`; archive SHA256 is
+`4973723cb4141541868fd6597a2bd61f2a71abfb78d63eb0627c81930c0ef0e1`.
+Served redirect/metadata,PCK/native bytes,engine sizes and fresh isolated menu
+startup pass with no page or request failures. No manual build or guard bypass
+was used. Later NEXT heads may supersede that observed receipt.
+
+Sustained normal player drag in the full served host remains a broader sampled
+play acceptance; the faithful module reproduction is labeled above.
+Broader actual native and Web runtime profiling, other cabinets, long
 session retention and other games remain in the parent coverage plan. The
 separate Video Poker and retained-input candidates are not closed here.

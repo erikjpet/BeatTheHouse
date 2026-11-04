@@ -8,6 +8,10 @@ const FIXED_HZ := 60
 const DROP_RELEASE_INTERVAL_TICKS := 20
 const MAX_CATCH_UP_TICKS := 4
 const MAX_SETTLE_TICKS := 1200
+# Retain a small recent consumed prefix for diagnostics, then release it in one
+# batch. At 60 accepted moves per second, keeping the full history retained
+# about 19 MB after 30,000 inputs despite the solver consuming every event.
+const INPUT_TRACE_COMPACT_MIN_CONSUMED := 1024
 # The renderer's packed native batch keeps a published frame bounded. The old
 # 1.1-second Web throttle predated that path and made the cabinet visibly update
 # at less than one frame per second even when the solver itself stayed healthy.
@@ -75,6 +79,7 @@ static func begin(machine: Dictionary, machine_definition: Dictionary, seed: int
 		"accumulator_units": 0,
 		"input_trace": [],
 		"input_cursor": 0,
+		"input_count": 0,
 		"rng": rng.snapshot(),
 		"start_snapshot": CoinPusherSolverScript.canonical_digest(simulation),
 		"liveness_ticks": 0,
@@ -124,7 +129,9 @@ static func queue_input(machine: Dictionary, input: Dictionary) -> Dictionary:
 		return {}
 	var event := input.duplicate(true)
 	event["tick"] = int(simulation.get("tick", 0))
-	(session["input_trace"] as Array).append(event)
+	var trace: Array = session["input_trace"]
+	session["input_count"] = maxi(int(session.get("input_count", 0)), trace.size()) + 1
+	trace.append(event)
 	# Controls acknowledge immediately through their action patch. Dense coin
 	# views keep the cadence of the last actual publication: resetting that clock
 	# for every input would postpone them forever during continuous rail motion.
@@ -142,6 +149,12 @@ static func presentation_publish_due(machine: Dictionary, now_msec: int) -> bool
 		return true
 	var last_publish_msec := int(session.get("presentation_last_publish_msec", -1))
 	return last_publish_msec < 0 or now_msec - last_publish_msec >= WEB_PRESENTATION_INTERVAL_MSEC
+
+
+static func total_input_count(machine: Dictionary) -> int:
+	var session: Dictionary = machine.get("live_session", {})
+	var trace: Array = session.get("input_trace", [])
+	return maxi(int(session.get("input_count", 0)), trace.size())
 
 
 static func mark_presentation_published(machine: Dictionary, now_msec: int) -> void:
@@ -205,7 +218,23 @@ static func advance(machine: Dictionary, now_msec: int, capture_presentation: bo
 	var stepped := _step_traced_ticks(machine, due, capture_presentation)
 	units -= due * 1000
 	session["accumulator_units"] = units
+	_compact_consumed_input_trace(session)
 	return {"ticks": due, "events": stepped.get("events", []), "backlog_ticks": units / 1000}
+
+
+static func _compact_consumed_input_trace(session: Dictionary) -> void:
+	var cursor := int(session.get("input_cursor", 0))
+	if cursor < INPUT_TRACE_COMPACT_MIN_CONSUMED:
+		return
+	var trace: Array = session.get("input_trace", [])
+	if cursor > trace.size():
+		return
+	session["input_count"] = maxi(int(session.get("input_count", 0)), trace.size())
+	# Normal advance owns this boundary after the synchronous solver call has
+	# released its input context. Preserve every future event and its order. The
+	# exit settlement path keeps its existing drain/trace ownership unchanged.
+	session["input_trace"] = trace.slice(cursor) if cursor < trace.size() else []
+	session["input_cursor"] = 0
 
 
 static func begin_chunked_settle(machine: Dictionary) -> Dictionary:

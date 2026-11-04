@@ -1,0 +1,398 @@
+{
+  "parent": "BTH-PERF-20261104",
+  "scope": "Finding002 partial work reduction; finding003 bounded transient retention; full audit remains Open",
+  "diagnostic_limits": "5% aggregate CPU,2GiB; synthetic/module checks distinct from rendered host/native or actual player-route qualification",
+  "files": {
+    "vp002_native_before.json": "8a25db46c9f6e1da4817b12e36363cf46b4236fc0a29eeda7d863c90554964dd",
+    "vp002_native_after.json": "7d9849ae542d8d20cdf40cfda212ab07eba63606dcb29432828a3d063cac8c28",
+    "vp002_native_parity.json": "5ddbd046985de8f1216928cc591c4057a048040113ea411630406d5fc2342e84",
+    "vp002_web_before.json": "7ec5f2bee20cc047ac78f82fb739f5df6417febae915da7ca597bb24647075be",
+    "vp002_web_after.json": "872c41bf9ab2d93bc1cbeae8820ff602ef74170c577bd5c319c4f8714b7ff35c",
+    "ret003_native_before.json": "d4c688f7c9d7d33421719935a8f514eabdf14a0617b2928dbc596f69b6e87013",
+    "ret003_native_after.json": "26d4b0555c28a6e14e33c11fbe920a31c128cf3ce55c94399d2110b25a3e76ea",
+    "ret003_native_contract.json": "3a9445d9ff74d28b12770aef7baa352ddcd538a4b786c84879ab4d046201ea54",
+    "ret003_web_before.json": "f91d73dc450da64108cc1164193e373546ce4c6d3668ce4055b60a9c7b7cf447",
+    "ret003_web_after.json": "2e03975261415fe4c6dcd25fc59f11326e9b11b11e0d8b2223ea04b0c7093564",
+    "ret003_web_contract.json": "6a8c86a005473c0f3bec201c1f14e006efcc260e4b591ce8389b655f327729a0"
+  },
+  "web_payloads": {
+    "vp-baseline": {
+      "index.pck": "f937e6a5088fe3034c8c26603fe489d299965fe78a31847db5ac36d28bad78d0",
+      "probe_source.gd.txt": "0be3a6b084ed83db61f98b4bae251dc054273c8810e41d98e686a61bd7911e9a"
+    },
+    "vp-fixed": {
+      "index.pck": "eb6d670b739df651fba9635c6c2c680f2199e4602fb6b0a5e3ce3ef0749ab605",
+      "probe_source.gd.txt": "0be3a6b084ed83db61f98b4bae251dc054273c8810e41d98e686a61bd7911e9a"
+    },
+    "retention-before": {
+      "index.pck": "d63646b47f8f8263ebf3b8813c21660135b39e241ab65b12f06c3037618eb700",
+      "probe_source.gd.txt": "ec907a8b8887e2c58ad0fdd221ab3eaf2cc065c9250d955ff3e85cbe367c8d0d"
+    },
+    "retention-after": {
+      "index.pck": "cb2c1a90080c0c7a1665dd59c94c4ec74e0466f920ba94e8cc0deabb5c2e9023",
+      "probe_source.gd.txt": "ec907a8b8887e2c58ad0fdd221ab3eaf2cc065c9250d955ff3e85cbe367c8d0d"
+    },
+    "compaction-after": {
+      "index.pck": "93450c5e400649156a4cdb62115584855c31dc0266d0be9d17d795c316a9688f",
+      "probe_source.gd.txt": "ed456c08df44ce65bb92de53a6b4c7fb532cde26359d37a999db2d6c44e644a3"
+    }
+  },
+  "native_jobs": {
+    "vp-native-parity": {
+      "label": "vp-native-parity",
+      "args": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\source-vp",
+        "--script",
+        "res://scripts/tests/video_poker_strategy_parity_check.gd"
+      ],
+      "timeout": 180,
+      "source_head": "cd20650a3e63709407122c48015acf483064305d",
+      "source_diff_sha256": "dfeeee04c9df954dc336c32be5e1bafe8c9464bb5e4c08dee856b0dec727d66b",
+      "private_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\private\\vp-native-parity",
+      "error": null,
+      "evidence_kind": "scripted-native-runtime",
+      "started_utc": "2026-11-04T00:48:20.000219+00:00",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "owner_membership": {
+        "supervisor_in_this_private_job": false,
+        "supervisor_in_any_ancestor_job": true
+      },
+      "pid": 39000,
+      "assigned_before_execution": true,
+      "timed_out": false,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cpu_seconds": 20.34375,
+      "finished_utc": "2026-11-04T00:48:46.476118+00:00"
+    },
+    "vp-native-after": {
+      "label": "vp-native-after",
+      "args": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--headless",
+        "--audio-driver",
+        "Dummy",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\source-vp",
+        "--script",
+        "res://tools/video_poker_hat_timing_probe.gd"
+      ],
+      "timeout": 120,
+      "source_head": "cd20650a3e63709407122c48015acf483064305d",
+      "source_diff_sha256": "dfeeee04c9df954dc336c32be5e1bafe8c9464bb5e4c08dee856b0dec727d66b",
+      "private_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\private\\vp-native-after",
+      "error": null,
+      "evidence_kind": "scripted-native-runtime",
+      "started_utc": "2026-11-04T00:49:05.700608+00:00",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "owner_membership": {
+        "supervisor_in_this_private_job": false,
+        "supervisor_in_any_ancestor_job": true
+      },
+      "pid": 38208,
+      "assigned_before_execution": true,
+      "timed_out": false,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cpu_seconds": 10.875,
+      "finished_utc": "2026-11-04T00:49:19.098088+00:00"
+    },
+    "vp-baseline-web": {
+      "label": "vp-baseline-web",
+      "args": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\capture_probe.cjs",
+        "vp-baseline",
+        "browser_report",
+        "vp"
+      ],
+      "timeout": 150,
+      "source_head": "cd20650a3e63709407122c48015acf483064305d",
+      "source_diff_sha256": "66dc7a12cec16c194c257cb023a09c9822edf7d4dcbdd830d7be84a049406260",
+      "private_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\private\\vp-baseline-web",
+      "error": null,
+      "evidence_kind": "scripted-web-runtime",
+      "started_utc": "2026-11-04T00:45:46.658863+00:00",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "owner_membership": {
+        "supervisor_in_this_private_job": false,
+        "supervisor_in_any_ancestor_job": true
+      },
+      "pid": 16708,
+      "assigned_before_execution": true,
+      "timed_out": false,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cpu_seconds": 18.203125,
+      "finished_utc": "2026-11-04T00:46:10.847935+00:00"
+    },
+    "vp-fixed-web": {
+      "label": "vp-fixed-web",
+      "args": [
+        "C:\\Program Files\\nodejs\\node.exe",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\capture_probe.cjs",
+        "vp-fixed",
+        "browser_report",
+        "vp"
+      ],
+      "timeout": 150,
+      "source_head": "cd20650a3e63709407122c48015acf483064305d",
+      "source_diff_sha256": "dfeeee04c9df954dc336c32be5e1bafe8c9464bb5e4c08dee856b0dec727d66b",
+      "private_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\private\\vp-fixed-web",
+      "error": null,
+      "evidence_kind": "scripted-web-runtime",
+      "started_utc": "2026-11-04T00:52:36.854260+00:00",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "owner_membership": {
+        "supervisor_in_this_private_job": false,
+        "supervisor_in_any_ancestor_job": true
+      },
+      "pid": 36316,
+      "assigned_before_execution": true,
+      "timed_out": false,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cpu_seconds": 13.328125,
+      "finished_utc": "2026-11-04T00:52:52.971407+00:00"
+    },
+    "retention-web-preparation": {
+      "label": "retention-web-preparation",
+      "args": [
+        "D:\\Projects\\Beat-The-House\\.tools\\native_solver\\python\\python.exe",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\retention_web_builds.py"
+      ],
+      "timeout": 300,
+      "source_head": "cd20650a3e63709407122c48015acf483064305d",
+      "source_diff_sha256": "73e59f8dd7ca4062b877bea3ebb09428b6ff1f80e59ff94ec1f69bd4eab6b66b",
+      "private_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\private\\retention-web-preparation",
+      "error": null,
+      "evidence_kind": "scripted-native-runtime",
+      "started_utc": "2026-11-04T01:04:18.930457+00:00",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "owner_membership": {
+        "supervisor_in_this_private_job": false,
+        "supervisor_in_any_ancestor_job": true
+      },
+      "pid": 37816,
+      "assigned_before_execution": true,
+      "timed_out": false,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cpu_seconds": 64.046875,
+      "finished_utc": "2026-11-04T01:05:40.947760+00:00"
+    },
+    "retention-web-checks": {
+      "label": "retention-web-checks",
+      "args": [
+        "D:\\Projects\\Beat-The-House\\.tools\\native_solver\\python\\python.exe",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\retention_web_capture.py"
+      ],
+      "timeout": 300,
+      "source_head": "cd20650a3e63709407122c48015acf483064305d",
+      "source_diff_sha256": "73e59f8dd7ca4062b877bea3ebb09428b6ff1f80e59ff94ec1f69bd4eab6b66b",
+      "private_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\private\\retention-web-checks",
+      "error": null,
+      "evidence_kind": "scripted-web-runtime",
+      "started_utc": "2026-11-04T01:06:59.772118+00:00",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "owner_membership": {
+        "supervisor_in_this_private_job": false,
+        "supervisor_in_any_ancestor_job": true
+      },
+      "pid": 23812,
+      "assigned_before_execution": true,
+      "timed_out": false,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cpu_seconds": 44.96875,
+      "finished_utc": "2026-11-04T01:07:57.160060+00:00"
+    },
+    "retention-native-checks": {
+      "label": "retention-native-checks",
+      "args": [
+        "D:\\Projects\\Beat-The-House\\.tools\\native_solver\\python\\python.exe",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\retention_checks.py"
+      ],
+      "timeout": 180,
+      "source_head": "cd20650a3e63709407122c48015acf483064305d",
+      "source_diff_sha256": "f7f6893f4bbdbf5c345d440ef79337edcc1fd52b7eaec51dd1ebe608e130eb55",
+      "private_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\private\\retention-native-checks",
+      "error": null,
+      "evidence_kind": "scripted-native-runtime",
+      "started_utc": "2026-11-04T00:55:59.745766+00:00",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "owner_membership": {
+        "supervisor_in_this_private_job": false,
+        "supervisor_in_any_ancestor_job": true
+      },
+      "pid": 19056,
+      "assigned_before_execution": true,
+      "timed_out": false,
+      "exit_code": 0,
+      "active_at_release": 0,
+      "cpu_seconds": 31.59375,
+      "finished_utc": "2026-11-04T00:56:40.388378+00:00"
+    },
+    "native-rendered-l02": {
+      "label": "native-rendered-l02",
+      "args": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\source",
+        "--rendering-method",
+        "gl_compatibility",
+        "--",
+        "--bth_perf=1",
+        "--bth_perf_plan=l02",
+        "--bth_perf_auto_quit=1",
+        "--bth_perf_frames=30",
+        "--bth_perf_active_frames=30",
+        "--bth_perf_memory_seconds=20",
+        "--bth_perf_report=C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\evidence\\native-rendered-l02-report.json",
+        "--bth_perf_source_commit=dc15b7d369f435d50fbf16e37af33952a4c58760",
+        "--bth_perf_evidence_profile=diagnostic-native-rendered-5percent"
+      ],
+      "timeout": 300,
+      "source_head": "dc15b7d369f435d50fbf16e37af33952a4c58760",
+      "source_diff_sha256": "147f8bbaa811e40d3b20d59633ab8e55417bb66346b9b778b428020a77c95178",
+      "private_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\private\\native-rendered-l02",
+      "error": null,
+      "evidence_kind": "scripted-native-runtime",
+      "started_utc": "2026-11-04T00:33:06.500666+00:00",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "owner_membership": {
+        "supervisor_in_this_private_job": false,
+        "supervisor_in_any_ancestor_job": true
+      },
+      "pid": 20552,
+      "assigned_before_execution": true,
+      "timed_out": true,
+      "exit_code": 1,
+      "active_at_release": 0,
+      "cpu_seconds": 261.421875,
+      "finished_utc": "2026-11-04T00:38:06.587345+00:00"
+    },
+    "native-rendered-remaining": {
+      "label": "native-rendered-remaining",
+      "args": [
+        "D:\\Projects\\Beat-The-House\\.tools\\godot-4.6-stable\\Godot_v4.6-stable_win64_console.exe",
+        "--path",
+        "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\source",
+        "--rendering-method",
+        "gl_compatibility",
+        "--script",
+        "res://tools/performance_audit_remaining_runtime_probe.gd",
+        "--",
+        "--bth_perf=1",
+        "--bth_perf_plan=audit_remaining_games",
+        "--bth_perf_frames=30",
+        "--bth_perf_active_frames=30",
+        "--bth_perf_stride=1",
+        "--bth_perf_memory_seconds=10",
+        "--bth_perf_report=C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\evidence\\native-rendered-remaining-report.json",
+        "--bth_perf_evidence_profile=diagnostic-native-rendered-5percent"
+      ],
+      "timeout": 240,
+      "source_head": "cd20650a3e63709407122c48015acf483064305d",
+      "source_diff_sha256": "73e59f8dd7ca4062b877bea3ebb09428b6ff1f80e59ff94ec1f69bd4eab6b66b",
+      "private_root": "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-18\\private\\native-rendered-remaining",
+      "error": null,
+      "evidence_kind": "scripted-native-runtime",
+      "started_utc": "2026-11-04T00:57:22.063596+00:00",
+      "limits": {
+        "control_flags": 5,
+        "cpu_rate": 500,
+        "aggregate_job_cpu_percent": 5.0,
+        "kill_on_close": true,
+        "breakaway_allowed": false,
+        "job_memory_limit_bytes": 2147483648,
+        "active_processes": 0
+      },
+      "owner_membership": {
+        "supervisor_in_this_private_job": false,
+        "supervisor_in_any_ancestor_job": true
+      },
+      "pid": 26508,
+      "assigned_before_execution": true,
+      "timed_out": true,
+      "exit_code": 1,
+      "active_at_release": 0,
+      "cpu_seconds": 201.984375,
+      "finished_utc": "2026-11-04T01:01:22.160331+00:00"
+    }
+  },
+  "product_blobs": {
+    "scripts/games/coin_pusher.gd": "ed37411270bb16f088b7936d64b78a4eeae42d36",
+    "scripts/games/coin_pusher/coin_pusher_live_session.gd": "a64dc96a01613346ecbfc5fea96ef7ce7eb18d86",
+    "scripts/games/video_poker.gd": "3b1bcb29fc586caef1c459b82e9e858b0c43cf32"
+  }
+}
