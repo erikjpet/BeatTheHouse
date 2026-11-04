@@ -593,7 +593,7 @@ var run_menu_main_menu_button: Button
 var run_menu_skip_tutorial_button: Button
 var run_menu_family_repay_button: Button
 var _web_manual_save_pending := false
-var _web_manual_save_error := ""
+var _manual_save_error := ""
 var _web_save_durability_bridge: Variant = null
 var tutorial_skip_dialog: ConfirmationDialog
 var settings_overlay: Control
@@ -1290,6 +1290,7 @@ func start_foundation_run(seed_text: String = DEFAULT_SEED, challenge_config: Di
 		resolved_seed = DEFAULT_SEED
 	var resolved_challenge_config := _challenge_with_meta_home_for_run(resolved_seed, challenge_config) if include_meta_home_modifiers else RunState.normalize_challenge(resolved_seed, challenge_config)
 	run_state = RunState.new()
+	_manual_save_error = ""
 	run_state.start_new(resolved_seed, resolved_challenge_config)
 	# A generator may retain failed-install diagnostics from a previous run. New
 	# run generation owns a fresh generator just as it owns a fresh RunState.
@@ -7267,6 +7268,7 @@ func _load_foundation_run_from_slot(return_to_start_on_missing: bool) -> bool:
 	environment_runtime_active_keys_scratch.clear()
 	environment_runtime_scheduler.clear()
 	run_state = loaded
+	_manual_save_error = ""
 	environment_clock_epoch_offset_msec = 0
 	var loaded_terminal := run_state.is_terminal()
 	var recovered_broken_environment := false
@@ -7418,14 +7420,20 @@ func repay_family_loan_from_menu() -> void:
 func save_run_from_menu() -> void:
 	if _web_manual_save_pending:
 		return
-	_web_manual_save_error = ""
+	_manual_save_error = ""
 	if run_state == null:
 		save_status_message = "No active run to save."
+		_manual_save_error = "Not saved. " + save_status_message
 		_show_message("No active run to save.")
 		_refresh_run_menu()
 		return
 	var web_save := OS.has_feature("web")
 	if not _autosave_foundation_run("Saving to Resume Slot..." if web_save else "Saved to Resume Slot.", true):
+		# The status message outside this modal is hidden. Keep a refused manual
+		# attempt visible here, including the normal exit path for live physics.
+		_manual_save_error = "Not saved. " + save_status_message
+		if current_game != null and not current_game.foundation_save_ready(run_state, run_state.current_environment):
+			_manual_save_error = "Not saved. Resume, then Leave the machine and save from the floor."
 		_show_message(save_status_message)
 		_refresh()
 		return
@@ -7444,13 +7452,13 @@ func save_run_from_menu() -> void:
 			result = _web_save_durability_bridge.poll()
 		_web_manual_save_pending = false
 		if run_state != saved_run or autosave_slot_id != saved_slot:
-			_web_manual_save_error = "Save was interrupted. Choose Save to retry."
-			save_status_message = _web_manual_save_error
+			_manual_save_error = "Save was interrupted. Choose Save to retry."
+			save_status_message = _manual_save_error
 			_refresh_run_menu()
 			return
 		if not bool(result.get("ok", false)):
-			_web_manual_save_error = "Could not finish saving. Keep this tab open and choose Save to retry."
-			save_status_message = _web_manual_save_error
+			_manual_save_error = "Could not finish saving. Keep this tab open and choose Save to retry."
+			save_status_message = _manual_save_error
 			_refresh_run_menu()
 			_show_message(save_status_message)
 			_refresh()
@@ -7517,7 +7525,7 @@ func _foundation_lifecycle_snapshot() -> Dictionary:
 		"game_surface_session_generation", "deferred_coach_refresh_active_generation", "tutorial_action_resume_active_generation", "deferred_embedded_refresh_generation", "deferred_embedded_refresh_pending", "deferred_embedded_refresh_run_state", "deferred_embedded_refresh_game", "deferred_embedded_refresh_environment", "deferred_embedded_refresh_result", "deferred_embedded_refresh_canvas", "deferred_embedded_refresh_game_state_key", "deferred_embedded_refresh_surface_session_generation",
 		"game_surface_auto_resolving", "last_game_surface_realtime_refresh_msec", "surface_feature_music_active", "surface_feature_music_ducking", "drunk_time_anchor_real_msec", "drunk_time_anchor_scaled_msec", "drunk_time_last_scale",
 		"pending_autosave", "pending_autosave_status_text", "pending_autosave_after_frame", "pending_autosave_not_before_msec", "pending_autosave_first_queued_msec",
-		"autosave_dirty_generation", "autosave_inflight_generation", "autosave_completed_generation", "save_status_message",
+		"autosave_dirty_generation", "autosave_inflight_generation", "autosave_completed_generation", "save_status_message", "_manual_save_error",
 		"autosave_failure_generation", "autosave_failure_count", "autosave_last_error", "autosave_last_error_code", "autosave_retry_blocked",
 	]:
 		var value: Variant = get(field_name)
@@ -20850,8 +20858,8 @@ func _refresh_run_menu() -> void:
 			run_menu_status_label.text = "%s | %s\nProgress here saves automatically. %s" % [location_label, venue, resume_note]
 		else:
 			run_menu_status_label.text = "%s\n%s Save overwrites this slot; Load replaces this run." % [status, save_note]
-		if not _web_manual_save_error.is_empty():
-			run_menu_status_label.text += "\n" + _web_manual_save_error
+		if not _manual_save_error.is_empty():
+			run_menu_status_label.text += "\n" + _manual_save_error
 	if run_menu_resume_button != null:
 		run_menu_resume_button.disabled = false
 	if run_menu_save_button != null:
