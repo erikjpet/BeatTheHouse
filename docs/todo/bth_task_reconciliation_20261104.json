@@ -1,7 +1,7 @@
 {
   "schema": "bth.task_reconciliation/v1",
-  "checked_at": "2026-11-04T16:23:30.953079Z",
-  "ledger_updated_at": "2026-11-04T16:23:29.672223+00:00",
+  "checked_at": "2026-11-04T17:06:20.728100Z",
+  "ledger_updated_at": "2026-11-04T17:06:19.637296+00:00",
   "group": "current",
   "owner_snapshot_supplied": true,
   "runtime_inventory_supplied": true,
@@ -87,7 +87,7 @@
   ],
   "git_verification_requested": false,
   "markdown_checked": true,
-  "markdown_rows_checked": 212,
+  "markdown_rows_checked": 220,
   "freshness_limit_hours": 24,
   "user_requested_pauses": [
     {
@@ -118,16 +118,16 @@
     }
   ],
   "summary": {
-    "objectives_checked": 61,
-    "batches_checked": 7,
-    "open_objectives": 26,
-    "open_batches": 3,
-    "open_work_items": 29,
+    "objectives_checked": 68,
+    "batches_checked": 8,
+    "open_objectives": 33,
+    "open_batches": 4,
+    "open_work_items": 37,
     "user_paused_items": 8,
     "complete_objectives": 35,
-    "errors": 51,
+    "errors": 57,
     "warnings": 0,
-    "tasks_with_errors": 14
+    "tasks_with_errors": 20
   },
   "findings": [
     {
@@ -192,6 +192,50 @@
       "evidence": [
         "01a16736-0a2f-7668-8ad8-a6074981c01e",
         "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message"
+      ]
+    },
+    {
+      "code": "OBJECTIVE_SCOPE_UNCONFIRMED",
+      "severity": "error",
+      "task_id": "BTH-PERF-20261104-004",
+      "message": "Full parent scope is not confirmed; keep it open and reconcile the source request.",
+      "evidence": []
+    },
+    {
+      "code": "OBJECTIVE_SCOPE_UNCONFIRMED",
+      "severity": "error",
+      "task_id": "BTH-PERF-20261104-005",
+      "message": "Full parent scope is not confirmed; keep it open and reconcile the source request.",
+      "evidence": []
+    },
+    {
+      "code": "OBJECTIVE_SCOPE_UNCONFIRMED",
+      "severity": "error",
+      "task_id": "BTH-PERF-20261104-006",
+      "message": "Full parent scope is not confirmed; keep it open and reconcile the source request.",
+      "evidence": []
+    },
+    {
+      "code": "OBJECTIVE_SCOPE_UNCONFIRMED",
+      "severity": "error",
+      "task_id": "BTH-PERF-20261104-007",
+      "message": "Full parent scope is not confirmed; keep it open and reconcile the source request.",
+      "evidence": []
+    },
+    {
+      "code": "OBJECTIVE_SCOPE_UNCONFIRMED",
+      "severity": "error",
+      "task_id": "BTH-PERF-20261104-008",
+      "message": "Full parent scope is not confirmed; keep it open and reconcile the source request.",
+      "evidence": []
+    },
+    {
+      "code": "BATCH_NOT_LINKED_BY_PARENT",
+      "severity": "error",
+      "task_id": "BTH-PERF-20261104-009",
+      "message": "The parent does not list this implementation batch.",
+      "evidence": [
+        "BTH-PERF-20261104"
       ]
     },
     {
@@ -4287,7 +4331,7 @@
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
-      "status": "COMMITTED_TESTED_PUBLICATION_RETRY_AUTHORIZED_NEXT_UNVERIFIED",
+      "status": "MAIN_PUBLISHED_REMOTE_VERIFIED_NEXT_DISK_GUARD_PENDING",
       "pause": null,
       "pause_supported": false,
       "commits": [
@@ -4297,6 +4341,13 @@
             "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
+        },
+        {
+          "sha": "43a3901b8054b1a839d4ef93dd7423e578cd0e5d",
+          "evidence": [
+            "https://github.com/erikjpet/BeatTheHouse/commit/43a3901b8054b1a839d4ef93dd7423e578cd0e5d",
+            "docs/todo/bth_task_publication_20261104.json"
+          ]
         }
       ],
       "deployment": {
@@ -4304,9 +4355,9 @@
         "state": "pending",
         "commit": null,
         "evidence": [
-          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          "docs/todo/bth_task_publication_20261104.json"
         ],
-        "scope": "Publication retry is newly authorized, but main/NEXT delivery is not yet verified."
+        "scope": "Main43a3901b and23remote blob identities verified. Existing NEXT retains f3058b6daab820e9d747c4c4aabc2d983e9ae32e; new implementation has not been promoted."
       },
       "progress_scope_id": "BTH-TODO-RELIABILITY-001",
       "acceptance": [
@@ -4314,46 +4365,52 @@
           "id": "preservation",
           "description": "Preserve all recovered/current IDs, full objectives, sources, evidence and parent/batch scope without replacing original requirements with a completed finite batch.",
           "required": true,
-          "state": "open",
-          "evidence": []
+          "state": "pass",
+          "evidence": [
+            "docs/todo/bth_task_publication_20261104.json"
+          ]
         },
         {
           "id": "manual-checks",
           "description": "Versioned structured ledger, checker and operator documentation detect owner/blocker/commit/evidence/deployment/coverage/drift gaps and pass meaningful regression tests.",
           "required": true,
-          "state": "open",
-          "evidence": []
+          "state": "pass",
+          "evidence": [
+            "docs/todo/bth_task_publication_20261104.json"
+          ]
         },
         {
           "id": "policies",
           "description": "Remove false holds and gone-user-save waits, preserve retained captures/QA profiles and actual TLS/security approval blockers; no portrait app changes.",
           "required": true,
-          "state": "open",
-          "evidence": []
+          "state": "pass",
+          "evidence": [
+            "docs/todo/bth_task_publication_20261104.json"
+          ]
         },
         {
           "id": "runtime",
           "description": "Integrate explicit read-only runtime identity/use/cleanup-on-success/failure/timeout/interruption findings with no worker management, live discovery, automatic cleanup, messaging or scheduling.",
           "required": true,
-          "state": "open",
-          "evidence": []
+          "state": "pass",
+          "evidence": [
+            "docs/todo/bth_task_publication_20261104.json"
+          ]
         },
         {
           "id": "publication",
           "description": "Commit and publish the reviewed/tested scoped artifacts to main, verify remote readback and existing NEXT as applicable, then record the actual associated implementation commit.",
           "required": true,
           "state": "open",
-          "evidence": []
+          "evidence": [
+            "docs/todo/bth_task_publication_20261104.json"
+          ]
         }
       ],
       "acceptance_progress": {
         "required_total": 5,
-        "passed_with_evidence": 0,
+        "passed_with_evidence": 4,
         "remaining_ids": [
-          "preservation",
-          "manual-checks",
-          "policies",
-          "runtime",
           "publication"
         ]
       },
@@ -4369,14 +4426,16 @@
         "reviewed_with_evidence": 0,
         "remaining_ids": []
       },
-      "next_action": "Reconcile tested scoped artifacts with current main, then perform the single newly authorized publication retry and verify remote/main/existing NEXT. Stop on a further denial. Remain Open until actual associated implementation/delivery acceptance is recorded; no cleanup or full-audit closure is implied.",
+      "next_action": "Finish normal existing NEXT qualification/promotion after BTH-NEXT-DISK-RESERVE-001 is resolved; maintain exact-input cold import request for the actual latest target, then verify served identity/assets/basic startup. Keep this implementation Open until delivery is observed; full audit/runtime parents and user pauses remain Open.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "New explicit user instruction authorizes publication of finished work. Earlier rejected push did not execute; tested publication/readback/NEXT verification remain unfinished.",
+        "state": "active",
+        "kind": "disk_reserve",
+        "description": "Insufficient shared disk reserve for export: 13074595840 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
-        "evidence": []
+        "observed_at": "2026-11-04T16:41:19.512207+00:00",
+        "evidence": [
+          "docs/todo/bth_task_publication_20261104.json"
+        ]
       },
       "completed_batch_ids": []
     },
@@ -4767,6 +4826,624 @@
       "completed_batch_ids": []
     },
     {
+      "id": "BTH-NEXT-DISK-RESERVE-001",
+      "name": "Restore normal NEXT disk admission and verify pending promotion",
+      "state": "open",
+      "item_type": "objective",
+      "kind": "operation",
+      "parent_ids": [
+        "BTH-TODO-RELIABILITY-001"
+      ],
+      "full_objective": {
+        "text": "Restore enough capacity for the existing NEXT watcher disk-reserve admission, preserving retained builds, source/evidence, profiles and saves and leaving CPU/memory/disk/import/export guards unchanged; then verify the pending task-ledger implementation reaches served NEXT through normal qualification.",
+        "source": "docs/todo/bth_task_publication_20261104.json",
+        "scope_confirmed": true
+      },
+      "batch_scope": [],
+      "owner": {
+        "name": "Reconcile named todo queue",
+        "task_ref": "01a1a36a-b7dd-709a-b4a0-b93eca365000",
+        "observed_state": "active",
+        "observed_at": "2026-11-04T15:55:05Z",
+        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
+        "observation_stale": false
+      },
+      "status": "OPEN_EXISTING_NEXT_DISK_RESERVE_GUARD_BLOCKS_ADMISSION",
+      "pause": null,
+      "pause_supported": false,
+      "commits": [],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/todo/bth_task_publication_20261104.json"
+        ]
+      },
+      "progress_scope_id": "BTH-NEXT-DISK-RESERVE-001",
+      "acceptance": [
+        {
+          "id": "disk-admission",
+          "description": "Existing watcher accepts the actual available disk under its unchanged current reserve requirement.",
+          "required": true,
+          "state": "open",
+          "evidence": [
+            "docs/todo/bth_task_publication_20261104.json"
+          ]
+        },
+        {
+          "id": "normal-qualified-export",
+          "description": "Exact latest target receives its normal cache-free import qualification where required and completes export/PCK checks through the existing watcher.",
+          "required": true,
+          "state": "open",
+          "evidence": [
+            "docs/todo/bth_task_publication_20261104.json"
+          ]
+        },
+        {
+          "id": "served-next",
+          "description": "Promoted/served source contains the published implementation; identity/assets and exact basic launch are verified.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        }
+      ],
+      "acceptance_progress": {
+        "required_total": 3,
+        "passed_with_evidence": 0,
+        "remaining_ids": [
+          "disk-admission",
+          "normal-qualified-export",
+          "served-next"
+        ]
+      },
+      "coverage": {
+        "required": false,
+        "complete": false,
+        "areas": []
+      },
+      "coverage_progress": {
+        "required": false,
+        "declared_complete": false,
+        "total_areas": 0,
+        "reviewed_with_evidence": 0,
+        "remaining_ids": []
+      },
+      "next_action": "Report the exact capacity dependency and use an approved recoverable storage/capacity workflow to satisfy the existing reserve; do not delete retained evidence/builds/profiles or change guards. Once capacity is available, observe the existing watcher, update exact-input qualification for the actual latest target if needed, and verify promotion/startup.",
+      "blocker": {
+        "state": "active",
+        "kind": "disk_reserve",
+        "description": "Insufficient shared disk reserve for export: 13074595840 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T16:41:19.512207+00:00",
+        "evidence": [
+          "docs/todo/bth_task_publication_20261104.json"
+        ]
+      },
+      "completed_batch_ids": []
+    },
+    {
+      "id": "BTH-PERF-20261104-004",
+      "name": "Recover referenced performance task004 scope",
+      "state": "open",
+      "item_type": "objective",
+      "kind": "observation",
+      "parent_ids": [
+        "BTH-PERF-20261104"
+      ],
+      "full_objective": {
+        "text": "The009 footer only reports004 as paused; full scope and the supporting user instruction are absent. Preserve this reference without inventing a new pause or resuming unknown work.",
+        "source": "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md#release-and-remaining-audit-work",
+        "scope_confirmed": false
+      },
+      "batch_scope": [],
+      "owner": {
+        "name": "Audit gameplay performance",
+        "task_ref": "01a1a3e8-562c-7169-a765-f4b4f9ae60cc",
+        "observed_state": "active",
+        "observed_at": "2026-11-04T15:55:05Z",
+        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
+        "observation_stale": false
+      },
+      "status": "OPEN_REFERENCED_PERFORMANCE_SCOPE_RECOVERY",
+      "pause": null,
+      "pause_supported": false,
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "unknown",
+        "commit": null,
+        "evidence": [
+          "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md"
+        ]
+      },
+      "progress_scope_id": "BTH-PERF-20261104-004",
+      "acceptance": [
+        {
+          "id": "original-scope-recovery",
+          "description": "Recover the full original requested scope and required acceptance from retained performance task/evidence; preserve the cited unfinished reference.",
+          "required": true,
+          "state": "unknown",
+          "evidence": [
+            "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md"
+          ]
+        }
+      ],
+      "acceptance_progress": {
+        "required_total": 1,
+        "passed_with_evidence": 0,
+        "remaining_ids": [
+          "original-scope-recovery"
+        ]
+      },
+      "coverage": {
+        "required": false,
+        "complete": false,
+        "areas": []
+      },
+      "coverage_progress": {
+        "required": false,
+        "declared_complete": false,
+        "total_areas": 0,
+        "reviewed_with_evidence": 0,
+        "remaining_ids": []
+      },
+      "next_action": "Recover the full original scope/evidence and applicable current user item/scenario boundary from the existing performance task; then record concrete remaining acceptance and any actual implementation/commit. The009 footer only reports004 as paused; full scope and the supporting user instruction are absent. Preserve this reference without inventing a new pause or resuming unknown work.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "Source provenance/scope recovery is unfinished work; no invented user decision, added pause or generic publication permission is established.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T16:56:54.750756+00:00",
+        "evidence": [
+          "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md"
+        ]
+      },
+      "completed_batch_ids": []
+    },
+    {
+      "id": "BTH-PERF-20261104-005",
+      "name": "Recover Web authority cadence and aged-input scope",
+      "state": "open",
+      "item_type": "objective",
+      "kind": "observation",
+      "parent_ids": [
+        "BTH-PERF-20261104"
+      ],
+      "full_objective": {
+        "text": "The009 report retains unscaled Web48Hz/144drawnframes backlog and001/005 Web authority cadence, aged-play and strict-input coverage as separate unfinished work. Full original005 acceptance is not supplied.",
+        "source": "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md#release-and-remaining-audit-work",
+        "scope_confirmed": false
+      },
+      "batch_scope": [],
+      "owner": {
+        "name": "Audit gameplay performance",
+        "task_ref": "01a1a3e8-562c-7169-a765-f4b4f9ae60cc",
+        "observed_state": "active",
+        "observed_at": "2026-11-04T15:55:05Z",
+        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
+        "observation_stale": false
+      },
+      "status": "OPEN_REFERENCED_PERFORMANCE_SCOPE_RECOVERY",
+      "pause": null,
+      "pause_supported": false,
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "unknown",
+        "commit": null,
+        "evidence": [
+          "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md"
+        ]
+      },
+      "progress_scope_id": "BTH-PERF-20261104-005",
+      "acceptance": [
+        {
+          "id": "original-scope-recovery",
+          "description": "Recover the full original requested scope and required acceptance from retained performance task/evidence; preserve the cited unfinished reference.",
+          "required": true,
+          "state": "unknown",
+          "evidence": [
+            "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md"
+          ]
+        }
+      ],
+      "acceptance_progress": {
+        "required_total": 1,
+        "passed_with_evidence": 0,
+        "remaining_ids": [
+          "original-scope-recovery"
+        ]
+      },
+      "coverage": {
+        "required": false,
+        "complete": false,
+        "areas": []
+      },
+      "coverage_progress": {
+        "required": false,
+        "declared_complete": false,
+        "total_areas": 0,
+        "reviewed_with_evidence": 0,
+        "remaining_ids": []
+      },
+      "next_action": "Recover the full original scope/evidence and applicable current user item/scenario boundary from the existing performance task; then record concrete remaining acceptance and any actual implementation/commit. The009 report retains unscaled Web48Hz/144drawnframes backlog and001/005 Web authority cadence, aged-play and strict-input coverage as separate unfinished work. Full original005 acceptance is not supplied.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "Source provenance/scope recovery is unfinished work; no invented user decision, added pause or generic publication permission is established.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T16:56:54.750756+00:00",
+        "evidence": [
+          "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md"
+        ]
+      },
+      "completed_batch_ids": []
+    },
+    {
+      "id": "BTH-PERF-20261104-006",
+      "name": "Recover broader memory and native-release audit scope",
+      "state": "open",
+      "item_type": "objective",
+      "kind": "observation",
+      "parent_ids": [
+        "BTH-PERF-20261104"
+      ],
+      "full_objective": {
+        "text": "The009 footer retains006 broader memory, other games, ordinary campaign and native release. Native source/debug/dummy-audio and unloaded-profile arms do not supply Windows release, real audio or loaded-campaign qualification.",
+        "source": "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md#release-and-remaining-audit-work",
+        "scope_confirmed": false
+      },
+      "batch_scope": [],
+      "owner": {
+        "name": "Audit gameplay performance",
+        "task_ref": "01a1a3e8-562c-7169-a765-f4b4f9ae60cc",
+        "observed_state": "active",
+        "observed_at": "2026-11-04T15:55:05Z",
+        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
+        "observation_stale": false
+      },
+      "status": "OPEN_REFERENCED_PERFORMANCE_SCOPE_RECOVERY",
+      "pause": null,
+      "pause_supported": false,
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "unknown",
+        "commit": null,
+        "evidence": [
+          "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md"
+        ]
+      },
+      "progress_scope_id": "BTH-PERF-20261104-006",
+      "acceptance": [
+        {
+          "id": "original-scope-recovery",
+          "description": "Recover the full original requested scope and required acceptance from retained performance task/evidence; preserve the cited unfinished reference.",
+          "required": true,
+          "state": "unknown",
+          "evidence": [
+            "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md"
+          ]
+        }
+      ],
+      "acceptance_progress": {
+        "required_total": 1,
+        "passed_with_evidence": 0,
+        "remaining_ids": [
+          "original-scope-recovery"
+        ]
+      },
+      "coverage": {
+        "required": false,
+        "complete": false,
+        "areas": []
+      },
+      "coverage_progress": {
+        "required": false,
+        "declared_complete": false,
+        "total_areas": 0,
+        "reviewed_with_evidence": 0,
+        "remaining_ids": []
+      },
+      "next_action": "Recover the full original scope/evidence and applicable current user item/scenario boundary from the existing performance task; then record concrete remaining acceptance and any actual implementation/commit. The009 footer retains006 broader memory, other games, ordinary campaign and native release. Native source/debug/dummy-audio and unloaded-profile arms do not supply Windows release, real audio or loaded-campaign qualification.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "Source provenance/scope recovery is unfinished work; no invented user decision, added pause or generic publication permission is established.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T16:56:54.750756+00:00",
+        "evidence": [
+          "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md"
+        ]
+      },
+      "completed_batch_ids": []
+    },
+    {
+      "id": "BTH-PERF-20261104-007",
+      "name": "Recover referenced performance publication-denial scope",
+      "state": "open",
+      "item_type": "objective",
+      "kind": "observation",
+      "parent_ids": [
+        "BTH-PERF-20261104"
+      ],
+      "full_objective": {
+        "text": "The009 footer mentions007 publication denials without identifying the full objective or denied operation. Preserve the reference; do not retry an unspecified denied action or infer completion.",
+        "source": "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md#release-and-remaining-audit-work",
+        "scope_confirmed": false
+      },
+      "batch_scope": [],
+      "owner": {
+        "name": "Audit gameplay performance",
+        "task_ref": "01a1a3e8-562c-7169-a765-f4b4f9ae60cc",
+        "observed_state": "active",
+        "observed_at": "2026-11-04T15:55:05Z",
+        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
+        "observation_stale": false
+      },
+      "status": "OPEN_REFERENCED_PERFORMANCE_SCOPE_RECOVERY",
+      "pause": null,
+      "pause_supported": false,
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "unknown",
+        "commit": null,
+        "evidence": [
+          "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md"
+        ]
+      },
+      "progress_scope_id": "BTH-PERF-20261104-007",
+      "acceptance": [
+        {
+          "id": "original-scope-recovery",
+          "description": "Recover the full original requested scope and required acceptance from retained performance task/evidence; preserve the cited unfinished reference.",
+          "required": true,
+          "state": "unknown",
+          "evidence": [
+            "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md"
+          ]
+        }
+      ],
+      "acceptance_progress": {
+        "required_total": 1,
+        "passed_with_evidence": 0,
+        "remaining_ids": [
+          "original-scope-recovery"
+        ]
+      },
+      "coverage": {
+        "required": false,
+        "complete": false,
+        "areas": []
+      },
+      "coverage_progress": {
+        "required": false,
+        "declared_complete": false,
+        "total_areas": 0,
+        "reviewed_with_evidence": 0,
+        "remaining_ids": []
+      },
+      "next_action": "Recover the full original scope/evidence and applicable current user item/scenario boundary from the existing performance task; then record concrete remaining acceptance and any actual implementation/commit. The009 footer mentions007 publication denials without identifying the full objective or denied operation. Preserve the reference; do not retry an unspecified denied action or infer completion.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "Source provenance/scope recovery is unfinished work; no invented user decision, added pause or generic publication permission is established.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T16:56:54.750756+00:00",
+        "evidence": [
+          "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md"
+        ]
+      },
+      "completed_batch_ids": []
+    },
+    {
+      "id": "BTH-PERF-20261104-008",
+      "name": "Recover intermittent menu-text finding scope",
+      "state": "open",
+      "item_type": "objective",
+      "kind": "observation",
+      "parent_ids": [
+        "BTH-PERF-20261104"
+      ],
+      "full_objective": {
+        "text": "The009 footer names008 intermittent menu text without its reproduction, complete acceptance or fix commit. Preserve the finding and recover the actual source/evidence before qualification.",
+        "source": "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md#release-and-remaining-audit-work",
+        "scope_confirmed": false
+      },
+      "batch_scope": [],
+      "owner": {
+        "name": "Audit gameplay performance",
+        "task_ref": "01a1a3e8-562c-7169-a765-f4b4f9ae60cc",
+        "observed_state": "active",
+        "observed_at": "2026-11-04T15:55:05Z",
+        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
+        "observation_stale": false
+      },
+      "status": "OPEN_REFERENCED_PERFORMANCE_SCOPE_RECOVERY",
+      "pause": null,
+      "pause_supported": false,
+      "commits": [],
+      "deployment": {
+        "required": false,
+        "state": "unknown",
+        "commit": null,
+        "evidence": [
+          "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md"
+        ]
+      },
+      "progress_scope_id": "BTH-PERF-20261104-008",
+      "acceptance": [
+        {
+          "id": "original-scope-recovery",
+          "description": "Recover the full original requested scope and required acceptance from retained performance task/evidence; preserve the cited unfinished reference.",
+          "required": true,
+          "state": "unknown",
+          "evidence": [
+            "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md"
+          ]
+        }
+      ],
+      "acceptance_progress": {
+        "required_total": 1,
+        "passed_with_evidence": 0,
+        "remaining_ids": [
+          "original-scope-recovery"
+        ]
+      },
+      "coverage": {
+        "required": false,
+        "complete": false,
+        "areas": []
+      },
+      "coverage_progress": {
+        "required": false,
+        "declared_complete": false,
+        "total_areas": 0,
+        "reviewed_with_evidence": 0,
+        "remaining_ids": []
+      },
+      "next_action": "Recover the full original scope/evidence and applicable current user item/scenario boundary from the existing performance task; then record concrete remaining acceptance and any actual implementation/commit. The009 footer names008 intermittent menu text without its reproduction, complete acceptance or fix commit. Preserve the finding and recover the actual source/evidence before qualification.",
+      "blocker": {
+        "state": "none",
+        "kind": null,
+        "description": "Source provenance/scope recovery is unfinished work; no invented user decision, added pause or generic publication permission is established.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T16:56:54.750756+00:00",
+        "evidence": [
+          "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md"
+        ]
+      },
+      "completed_batch_ids": []
+    },
+    {
+      "id": "BTH-BARDICE-JOURNAL-CURRENCY-001",
+      "name": "Record actual currency in new Bar Dice journal receipts",
+      "state": "open",
+      "item_type": "objective",
+      "kind": "objective",
+      "parent_ids": [],
+      "full_objective": {
+        "text": "Investigate and correct missing currency on new Bar Dice journal receipts, including the related Press producer, while preserving wallet accounting, stake/settlement exactly once, RNG/clocks, authority, existing game rules and historical unknown-unit rows. Reproduce safely, test and commit the isolated correction. Authorized release follow-through must publish the independently reviewed tested commit and verify exact NEXT identity/startup when the existing disk reserve allows, keeping acceptance Open until deployed and tested.",
+        "source": "E:/CodexQA/BTH/Broad/r07-20261104/evidence/qa-r07-bardice-journal-currency-observation-878.json; trusted parent delegation 2026-11-04 requesting investigation, isolated correction, tests and commit; trusted parent delegation carrying explicit user approval to push finished work to NEXT, received2026-11-04",
+        "scope_confirmed": true
+      },
+      "batch_scope": [],
+      "owner": {
+        "name": "Fix Back Alley travel / Bar Dice journal follow-up",
+        "task_ref": "01a1a32b-2cdf-7739-9efc-be105cb10001",
+        "observed_state": "active",
+        "observed_at": "2026-11-04T15:55:05Z",
+        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
+        "observation_stale": false
+      },
+      "status": "PUBLISHED_MAIN_NATIVE299_PASS_NEXT_RESERVE_PENDING",
+      "pause": null,
+      "pause_supported": false,
+      "commits": [
+        {
+          "sha": "1e38b7885db21c5bee1d19a897c129ddf680b1f6",
+          "evidence": [
+            "docs/testing/bar_dice_journal_currency.md",
+            "docs/testing/bar_dice_journal_currency_20261104.json"
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/testing/bar_dice_journal_currency.md"
+        ],
+        "scope": "Authorized main/NEXT publication follow-through underway; native299 qualifies changed behavior, not deployed Web play. Acceptance stays Open until served identity/startup verified."
+      },
+      "progress_scope_id": "BTH-BARDICE-JOURNAL-CURRENCY-001",
+      "acceptance": [
+        {
+          "id": "reproduce",
+          "description": "Reproduce the new cash loss journal omission at a labeled production boundary without replaying original R07 hand.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/bar_dice_journal_currency.md",
+            "docs/testing/bar_dice_journal_currency_20261104.json"
+          ]
+        },
+        {
+          "id": "producer_currency",
+          "description": "New round/Press rows record actual action-time cash/chip unit and current-action net; explicit truezero is source-reviewed unconditional metadata but not materialized by the eight ordinary cases. Preserve wallets/authority/rules and old unknown history.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/bar_dice_journal_currency.md",
+            "docs/testing/bar_dice_journal_currency_20261104.json"
+          ]
+        },
+        {
+          "id": "save_cold",
+          "description": "Focused normal Host and official Save/cold checks preserve settled table, wallets, RNG/clocks and history, with no repeat settlement or read-time transaction.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/bar_dice_journal_currency.md",
+            "docs/testing/bar_dice_journal_currency_20261104.json"
+          ]
+        },
+        {
+          "id": "review_commit",
+          "description": "Independent scoped review, tested implementation commit and both ledger views associated; report local/deployed evidence distinctly.",
+          "required": true,
+          "state": "pass",
+          "evidence": [
+            "docs/testing/bar_dice_journal_currency.md",
+            "docs/testing/bar_dice_journal_currency_20261104.json",
+            "commit:1e38b7885db21c5bee1d19a897c129ddf680b1f6"
+          ]
+        },
+        {
+          "id": "exact_next",
+          "description": "Publish reviewed fix under existing approval, preserve reserve and resource gates, then verify exact deployed source/tree/assets and correct-version startup with the native299 changed-behavior evidence retained.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        }
+      ],
+      "acceptance_progress": {
+        "required_total": 5,
+        "passed_with_evidence": 4,
+        "remaining_ids": [
+          "exact_next"
+        ]
+      },
+      "coverage": {
+        "required": false,
+        "complete": false,
+        "areas": []
+      },
+      "coverage_progress": {
+        "required": false,
+        "declared_complete": false,
+        "total_areas": 0,
+        "reviewed_with_evidence": 0,
+        "remaining_ids": []
+      },
+      "next_action": "Observe the existing watcher for published Bar Dice journal fix; once the unchanged reserve admits its build, verify actual promoted SHA/tree/assets/PCK and fresh correct-version startup. Keep task Open until that deployed acceptance is recorded.",
+      "blocker": {
+        "state": "active",
+        "kind": "next_disk_reserve",
+        "description": "Insufficient shared disk reserve for export: 13115047936 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T16:57:12.765384+00:00",
+        "evidence": [
+          "C:/Users/theep/Documents/Codex/2026-11-03/task-6/evidence/bardice-journal-watcher-before-publication.json",
+          "docs/testing/bar_dice_journal_currency.md"
+        ]
+      },
+      "completed_batch_ids": []
+    },
+    {
       "id": "BTH-RUNTIME-CLEANUP-001-BATCH-001",
       "name": "Manual runtime-inventory checker integration",
       "state": "open",
@@ -4793,7 +5470,7 @@
         "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
         "observation_stale": false
       },
-      "status": "COMMITTED_TESTED_PUBLICATION_RETRY_AUTHORIZED_NEXT_UNVERIFIED",
+      "status": "MAIN_PUBLISHED_REMOTE_VERIFIED_NEXT_DISK_GUARD_PENDING",
       "pause": null,
       "pause_supported": false,
       "commits": [
@@ -4810,6 +5487,13 @@
             "published_durable_ledger_association",
             "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
           ]
+        },
+        {
+          "sha": "43a3901b8054b1a839d4ef93dd7423e578cd0e5d",
+          "evidence": [
+            "https://github.com/erikjpet/BeatTheHouse/commit/43a3901b8054b1a839d4ef93dd7423e578cd0e5d",
+            "docs/todo/bth_task_publication_20261104.json"
+          ]
         }
       ],
       "deployment": {
@@ -4817,9 +5501,9 @@
         "state": "pending",
         "commit": null,
         "evidence": [
-          "docs/plans/0.6.1_stability_release_plan.md#named-playtest-task-ledger"
+          "docs/todo/bth_task_publication_20261104.json"
         ],
-        "scope": "Publication retry is newly authorized, but main/NEXT delivery is not yet verified."
+        "scope": "Main43a3901b and23remote blob identities verified. Existing NEXT retains f3058b6daab820e9d747c4c4aabc2d983e9ae32e; new implementation has not been promoted."
       },
       "progress_scope_id": "BTH-RUNTIME-CLEANUP-001",
       "acceptance": [
@@ -4930,14 +5614,16 @@
           "success-failure-timeout-interruption-cleanup-coverage"
         ]
       },
-      "next_action": "Reconcile tested scoped artifacts with current main, then perform the single newly authorized publication retry and verify remote/main/existing NEXT. Stop on a further denial. Remain Open until actual associated implementation/delivery acceptance is recorded; no cleanup or full-audit closure is implied.",
+      "next_action": "Finish normal existing NEXT qualification/promotion after BTH-NEXT-DISK-RESERVE-001 is resolved; maintain exact-input cold import request for the actual latest target, then verify served identity/assets/basic startup. Keep this implementation Open until delivery is observed; full audit/runtime parents and user pauses remain Open.",
       "blocker": {
-        "state": "none",
-        "kind": null,
-        "description": "New explicit user instruction authorizes publication of finished work. Earlier rejected push did not execute; tested publication/readback/NEXT verification remain unfinished.",
+        "state": "active",
+        "kind": "disk_reserve",
+        "description": "Insufficient shared disk reserve for export: 13074595840 bytes free; 13958643712 required (service reserve + safety margin + export budget); retaining NEXT",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T16:23:29.672223+00:00",
-        "evidence": []
+        "observed_at": "2026-11-04T16:41:19.512207+00:00",
+        "evidence": [
+          "docs/todo/bth_task_publication_20261104.json"
+        ]
       },
       "completed_batch_ids": []
     },
@@ -5181,6 +5867,448 @@
         "observed_at": "2026-11-04T02:07:49.868676+00:00",
         "evidence": [
           "docs/todo/bth_user_item_scenario_pause_20261104.json"
+        ]
+      },
+      "completed_batch_ids": []
+    },
+    {
+      "id": "BTH-PERF-20261104-009",
+      "name": "Web GL registry accumulation mitigation and release qualification",
+      "state": "open",
+      "item_type": "implementation_batch",
+      "kind": "implementation_batch",
+      "parent_ids": [
+        "BTH-PERF-20261104"
+      ],
+      "full_objective": {
+        "text": "Find and solve substantial avoidable performance hits and sustained memory or\nresource leaks in typical play. Prioritize Web discovery without neglecting\nnative. Measure both platforms for major findings. Record actual runtime play\nseparately from synthetic/module checks and rendered automation. Preserve\nauthoritative ticks, RNG/economy, save compatibility, input/touch/focus, fixed\n16:9, and no-input animation. Keep existing budgets.\n\nThe parent remains OPEN until each coverage row has current evidence or a\nspecific disposition, all substantial confirmed findings have a fix or a\ngenuine blocker, focused regressions and main/NEXT receipts are recorded, and\nthe full scope is reconciled. A delivered finding is a child batch only.\nCompleted todos require an associated commit; no rows are complete initially. Full Web plus actual native runtime coverage remains distinct from module/unit checks and from BTH061-009/010/011, BTH-05 or deprecated-code cleanup.",
+        "source": "docs/plans/performance_audit_2026-11-04.md",
+        "scope_confirmed": true
+      },
+      "batch_scope": [
+        "Recycle only deleted buffer/texture/VAO/sync IDs within their own namespaces while preserving other allocation/deletion semantics.",
+        "Preserve pinned exporter policy/receipt validation and record the scoped Node/WebGL/Web/native measurements at their original identity.",
+        "Finish exact main/NEXT source, public receipt and patched-JS identity plus external consumer enforcement. Preserve context-loss/multiple-context and broader native/campaign limitations as explicit follow-ups."
+      ],
+      "owner": {
+        "name": "Audit gameplay performance",
+        "task_ref": "01a1a3e8-562c-7169-a765-f4b4f9ae60cc",
+        "observed_state": "active",
+        "observed_at": "2026-11-04T15:55:05Z",
+        "source": "Codex list_threads read-only task lifecycle snapshot; no state inferred from title or final message",
+        "observation_stale": false
+      },
+      "status": "MAIN_IMPLEMENTATION_COMMITTED_NEXT_GL_RELEASE_QUALIFICATION_OPEN",
+      "pause": null,
+      "pause_supported": false,
+      "commits": [
+        {
+          "sha": "9d20b10345db553816ad1a0d0502d3ef368e0998",
+          "evidence": [
+            "https://github.com/erikjpet/BeatTheHouse/commit/9d20b10345db553816ad1a0d0502d3ef368e0998",
+            "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md",
+            "Actual merge adds the eight reviewed GL implementation/exporter/test/doc paths; comparison sourcef876 is not mislabeled as the fix."
+          ]
+        }
+      ],
+      "deployment": {
+        "required": true,
+        "state": "pending",
+        "commit": null,
+        "evidence": [
+          "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md",
+          "docs/todo/bth_task_publication_20261104.json"
+        ]
+      },
+      "progress_scope_id": "BTH-PERF-20261104",
+      "acceptance": [
+        {
+          "id": "web-1",
+          "description": "Coin Pusher: idle, drops, sustained nozzle drag, release; all three cabinets; actual Web runtime evidence remains required. Record source/build, route/start state, platform/hardware/profile, warmup/window, mean/p95/max frame timing, actual progress/liveness and memory/object/resource retention evidence; capped synthetic timing is diagnostic.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "native-runtime-1",
+          "description": "Coin Pusher: idle, drops, sustained nozzle drag, release; all three cabinets; actual Native runtime runtime evidence remains required. Record source/build, route/start state, platform/hardware/profile, warmup/window, mean/p95/max frame timing, actual progress/liveness and memory/object/resource retention evidence; capped synthetic timing is diagnostic.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "web-2",
+          "description": "Scratch Tickets and Pull Tabs: dispense/open/scratch/discard/reentry; actual Web runtime evidence remains required. Record source/build, route/start state, platform/hardware/profile, warmup/window, mean/p95/max frame timing, actual progress/liveness and memory/object/resource retention evidence; capped synthetic timing is diagnostic.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "native-runtime-2",
+          "description": "Scratch Tickets and Pull Tabs: dispense/open/scratch/discard/reentry; actual Native runtime runtime evidence remains required. Record source/build, route/start state, platform/hardware/profile, warmup/window, mean/p95/max frame timing, actual progress/liveness and memory/object/resource retention evidence; capped synthetic timing is diagnostic.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "web-3",
+          "description": "Slots: regular/autoplay, Buffalo, bonus and Pinball; actual Web runtime evidence remains required. Record source/build, route/start state, platform/hardware/profile, warmup/window, mean/p95/max frame timing, actual progress/liveness and memory/object/resource retention evidence; capped synthetic timing is diagnostic.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "native-runtime-3",
+          "description": "Slots: regular/autoplay, Buffalo, bonus and Pinball; actual Native runtime runtime evidence remains required. Record source/build, route/start state, platform/hardware/profile, warmup/window, mean/p95/max frame timing, actual progress/liveness and memory/object/resource retention evidence; capped synthetic timing is diagnostic.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "web-4",
+          "description": "Blackjack, Baccarat, Roulette: live deal/spin/settlement; actual Web runtime evidence remains required. Record source/build, route/start state, platform/hardware/profile, warmup/window, mean/p95/max frame timing, actual progress/liveness and memory/object/resource retention evidence; capped synthetic timing is diagnostic.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "native-runtime-4",
+          "description": "Blackjack, Baccarat, Roulette: live deal/spin/settlement; actual Native runtime runtime evidence remains required. Record source/build, route/start state, platform/hardware/profile, warmup/window, mean/p95/max frame timing, actual progress/liveness and memory/object/resource retention evidence; capped synthetic timing is diagnostic.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "web-5",
+          "description": "Bar Dice, Craps and Crew Hold'em: ordinary rounds/street/AI turns; actual Web runtime evidence remains required. Record source/build, route/start state, platform/hardware/profile, warmup/window, mean/p95/max frame timing, actual progress/liveness and memory/object/resource retention evidence; capped synthetic timing is diagnostic.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "native-runtime-5",
+          "description": "Bar Dice, Craps and Crew Hold'em: ordinary rounds/street/AI turns; actual Native runtime runtime evidence remains required. Record source/build, route/start state, platform/hardware/profile, warmup/window, mean/p95/max frame timing, actual progress/liveness and memory/object/resource retention evidence; capped synthetic timing is diagnostic.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "web-6",
+          "description": "Video Poker: ordinary deal/draw, Fred's hat hint, multi-hand/double-up; actual Web runtime evidence remains required. Record source/build, route/start state, platform/hardware/profile, warmup/window, mean/p95/max frame timing, actual progress/liveness and memory/object/resource retention evidence; capped synthetic timing is diagnostic.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "native-runtime-6",
+          "description": "Video Poker: ordinary deal/draw, Fred's hat hint, multi-hand/double-up; actual Native runtime runtime evidence remains required. Record source/build, route/start state, platform/hardware/profile, warmup/window, mean/p95/max frame timing, actual progress/liveness and memory/object/resource retention evidence; capped synthetic timing is diagnostic.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "web-7",
+          "description": "Rooms: quiet/crowded actors, placement overlay, focus/touch; actual Web runtime evidence remains required. Record source/build, route/start state, platform/hardware/profile, warmup/window, mean/p95/max frame timing, actual progress/liveness and memory/object/resource retention evidence; capped synthetic timing is diagnostic.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "native-runtime-7",
+          "description": "Rooms: quiet/crowded actors, placement overlay, focus/touch; actual Native runtime runtime evidence remains required. Record source/build, route/start state, platform/hardware/profile, warmup/window, mean/p95/max frame timing, actual progress/liveness and memory/object/resource retention evidence; capped synthetic timing is diagnostic.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "web-8",
+          "description": "Map, travel, scenarios, Crew/dialogue, inventory/services; actual Web runtime evidence remains required. Record source/build, route/start state, platform/hardware/profile, warmup/window, mean/p95/max frame timing, actual progress/liveness and memory/object/resource retention evidence; capped synthetic timing is diagnostic.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "native-runtime-8",
+          "description": "Map, travel, scenarios, Crew/dialogue, inventory/services; actual Native runtime runtime evidence remains required. Record source/build, route/start state, platform/hardware/profile, warmup/window, mean/p95/max frame timing, actual progress/liveness and memory/object/resource retention evidence; capped synthetic timing is diagnostic.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "web-9",
+          "description": "Save/Continue, menu/run restart, aged normal saves; actual Web runtime evidence remains required. Record source/build, route/start state, platform/hardware/profile, warmup/window, mean/p95/max frame timing, actual progress/liveness and memory/object/resource retention evidence; capped synthetic timing is diagnostic.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "native-runtime-9",
+          "description": "Save/Continue, menu/run restart, aged normal saves; actual Native runtime runtime evidence remains required. Record source/build, route/start state, platform/hardware/profile, warmup/window, mean/p95/max frame timing, actual progress/liveness and memory/object/resource retention evidence; capped synthetic timing is diagnostic.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "web-10",
+          "description": "Audio on/off, repeated room/game/menu/Continue cycles; actual Web runtime evidence remains required. Record source/build, route/start state, platform/hardware/profile, warmup/window, mean/p95/max frame timing, actual progress/liveness and memory/object/resource retention evidence; capped synthetic timing is diagnostic.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "native-runtime-10",
+          "description": "Audio on/off, repeated room/game/menu/Continue cycles; actual Native runtime runtime evidence remains required. Record source/build, route/start state, platform/hardware/profile, warmup/window, mean/p95/max frame timing, actual progress/liveness and memory/object/resource retention evidence; capped synthetic timing is diagnostic.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "findings",
+          "description": "Every substantial confirmed finding receives a behavior-preserving measured fix, focused regressions/main/NEXT acceptance or an explicit current evidence-backed blocker/disposition.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        },
+        {
+          "id": "parent",
+          "description": "Reconcile all original coverage and child findings independently before closing the parent; one delivered finding does not close whole-game scope.",
+          "required": true,
+          "state": "open",
+          "evidence": []
+        }
+      ],
+      "acceptance_progress": {
+        "required_total": 22,
+        "passed_with_evidence": 0,
+        "remaining_ids": [
+          "web-1",
+          "native-runtime-1",
+          "web-2",
+          "native-runtime-2",
+          "web-3",
+          "native-runtime-3",
+          "web-4",
+          "native-runtime-4",
+          "web-5",
+          "native-runtime-5",
+          "web-6",
+          "native-runtime-6",
+          "web-7",
+          "native-runtime-7",
+          "web-8",
+          "native-runtime-8",
+          "web-9",
+          "native-runtime-9",
+          "web-10",
+          "native-runtime-10",
+          "findings",
+          "parent"
+        ]
+      },
+      "coverage": {
+        "required": true,
+        "complete": false,
+        "areas": [
+          {
+            "id": "web-1",
+            "state": "remaining",
+            "evidence": [
+              "docs/plans/performance_audit_2026-11-04.md"
+            ],
+            "scope": "Coin Pusher: idle, drops, sustained nozzle drag, release; all three cabinets; actual Web runtime evidence remains required."
+          },
+          {
+            "id": "native-runtime-1",
+            "state": "remaining",
+            "evidence": [
+              "docs/plans/performance_audit_2026-11-04.md"
+            ],
+            "scope": "Coin Pusher: idle, drops, sustained nozzle drag, release; all three cabinets; actual Native runtime runtime evidence remains required."
+          },
+          {
+            "id": "web-2",
+            "state": "remaining",
+            "evidence": [
+              "docs/plans/performance_audit_2026-11-04.md"
+            ],
+            "scope": "Scratch Tickets and Pull Tabs: dispense/open/scratch/discard/reentry; actual Web runtime evidence remains required."
+          },
+          {
+            "id": "native-runtime-2",
+            "state": "remaining",
+            "evidence": [
+              "docs/plans/performance_audit_2026-11-04.md"
+            ],
+            "scope": "Scratch Tickets and Pull Tabs: dispense/open/scratch/discard/reentry; actual Native runtime runtime evidence remains required."
+          },
+          {
+            "id": "web-3",
+            "state": "remaining",
+            "evidence": [
+              "docs/plans/performance_audit_2026-11-04.md"
+            ],
+            "scope": "Slots: regular/autoplay, Buffalo, bonus and Pinball; actual Web runtime evidence remains required."
+          },
+          {
+            "id": "native-runtime-3",
+            "state": "remaining",
+            "evidence": [
+              "docs/plans/performance_audit_2026-11-04.md"
+            ],
+            "scope": "Slots: regular/autoplay, Buffalo, bonus and Pinball; actual Native runtime runtime evidence remains required."
+          },
+          {
+            "id": "web-4",
+            "state": "remaining",
+            "evidence": [
+              "docs/plans/performance_audit_2026-11-04.md"
+            ],
+            "scope": "Blackjack, Baccarat, Roulette: live deal/spin/settlement; actual Web runtime evidence remains required."
+          },
+          {
+            "id": "native-runtime-4",
+            "state": "remaining",
+            "evidence": [
+              "docs/plans/performance_audit_2026-11-04.md"
+            ],
+            "scope": "Blackjack, Baccarat, Roulette: live deal/spin/settlement; actual Native runtime runtime evidence remains required."
+          },
+          {
+            "id": "web-5",
+            "state": "remaining",
+            "evidence": [
+              "docs/plans/performance_audit_2026-11-04.md"
+            ],
+            "scope": "Bar Dice, Craps and Crew Hold'em: ordinary rounds/street/AI turns; actual Web runtime evidence remains required."
+          },
+          {
+            "id": "native-runtime-5",
+            "state": "remaining",
+            "evidence": [
+              "docs/plans/performance_audit_2026-11-04.md"
+            ],
+            "scope": "Bar Dice, Craps and Crew Hold'em: ordinary rounds/street/AI turns; actual Native runtime runtime evidence remains required."
+          },
+          {
+            "id": "web-6",
+            "state": "remaining",
+            "evidence": [
+              "docs/plans/performance_audit_2026-11-04.md"
+            ],
+            "scope": "Video Poker: ordinary deal/draw, Fred's hat hint, multi-hand/double-up; actual Web runtime evidence remains required."
+          },
+          {
+            "id": "native-runtime-6",
+            "state": "remaining",
+            "evidence": [
+              "docs/plans/performance_audit_2026-11-04.md"
+            ],
+            "scope": "Video Poker: ordinary deal/draw, Fred's hat hint, multi-hand/double-up; actual Native runtime runtime evidence remains required."
+          },
+          {
+            "id": "web-7",
+            "state": "remaining",
+            "evidence": [
+              "docs/plans/performance_audit_2026-11-04.md"
+            ],
+            "scope": "Rooms: quiet/crowded actors, placement overlay, focus/touch; actual Web runtime evidence remains required."
+          },
+          {
+            "id": "native-runtime-7",
+            "state": "remaining",
+            "evidence": [
+              "docs/plans/performance_audit_2026-11-04.md"
+            ],
+            "scope": "Rooms: quiet/crowded actors, placement overlay, focus/touch; actual Native runtime runtime evidence remains required."
+          },
+          {
+            "id": "web-8",
+            "state": "remaining",
+            "evidence": [
+              "docs/plans/performance_audit_2026-11-04.md"
+            ],
+            "scope": "Map, travel, scenarios, Crew/dialogue, inventory/services; actual Web runtime evidence remains required."
+          },
+          {
+            "id": "native-runtime-8",
+            "state": "remaining",
+            "evidence": [
+              "docs/plans/performance_audit_2026-11-04.md"
+            ],
+            "scope": "Map, travel, scenarios, Crew/dialogue, inventory/services; actual Native runtime runtime evidence remains required."
+          },
+          {
+            "id": "web-9",
+            "state": "remaining",
+            "evidence": [
+              "docs/plans/performance_audit_2026-11-04.md"
+            ],
+            "scope": "Save/Continue, menu/run restart, aged normal saves; actual Web runtime evidence remains required."
+          },
+          {
+            "id": "native-runtime-9",
+            "state": "remaining",
+            "evidence": [
+              "docs/plans/performance_audit_2026-11-04.md"
+            ],
+            "scope": "Save/Continue, menu/run restart, aged normal saves; actual Native runtime runtime evidence remains required."
+          },
+          {
+            "id": "web-10",
+            "state": "remaining",
+            "evidence": [
+              "docs/plans/performance_audit_2026-11-04.md"
+            ],
+            "scope": "Audio on/off, repeated room/game/menu/Continue cycles; actual Web runtime evidence remains required."
+          },
+          {
+            "id": "native-runtime-10",
+            "state": "remaining",
+            "evidence": [
+              "docs/plans/performance_audit_2026-11-04.md"
+            ],
+            "scope": "Audio on/off, repeated room/game/menu/Continue cycles; actual Native runtime runtime evidence remains required."
+          }
+        ]
+      },
+      "coverage_progress": {
+        "required": true,
+        "declared_complete": false,
+        "total_areas": 20,
+        "reviewed_with_evidence": 0,
+        "remaining_ids": [
+          "web-1",
+          "native-runtime-1",
+          "web-2",
+          "native-runtime-2",
+          "web-3",
+          "native-runtime-3",
+          "web-4",
+          "native-runtime-4",
+          "web-5",
+          "native-runtime-5",
+          "web-6",
+          "native-runtime-6",
+          "web-7",
+          "native-runtime-7",
+          "web-8",
+          "native-runtime-8",
+          "web-9",
+          "native-runtime-9",
+          "web-10",
+          "native-runtime-10"
+        ]
+      },
+      "next_action": "Follow the tested actual public code through normal NEXT after disk admission, verify deployed source/receipt/served patched-JS identity and external consumer enforcement. Classify retained context-loss/multiple-context gaps and keep broader005/006/008/full-parent work visible; never deploy the private comparison PCK.",
+      "blocker": {
+        "state": "active",
+        "kind": "disk_reserve",
+        "description": "Current NEXT disk admission is blocked; GL-specific release/source/output/consumer qualification is not yet recorded. No existing cap, trust or guard is bypassed.",
+        "requires_user_input": false,
+        "observed_at": "2026-11-04T16:56:54.750756+00:00",
+        "evidence": [
+          "docs/todo/bth_task_publication_20261104.json",
+          "docs/performance_audit/BTH-PERF-20261104-009-gl-registry.md"
         ]
       },
       "completed_batch_ids": []
