@@ -1209,7 +1209,92 @@
   "unlanded_generic_helper_proposals": true,
   "original_guards_and_all_selected_assertions_preserved": true,
   "source_only_commit_association": "6eba32814477ae7d379d8eb13e7c16ccdf6fa950",
-  "next_delivery": "Open: scoped source committed, normal publication and existing watcher follow-through pending. Separate donor owner unchanged.",
+  "next_delivery": {
+    "verified_commit": "0c0952594ec93fb892db807bbeaffef801a9f6a0",
+    "source_tree": "02e0f2124346a37b20d22e300f8ea05e68827f68",
+    "archive_sha256": "043facbeb287347eb29f5fc137e36d62ad39bab8b1cfc9cacf6f6e9103081ac1",
+    "asset_checks": [
+      {
+        "status": 200,
+        "served_check": "HEAD size/MIME joined to exact-build export hashes",
+        "bytes": 47206552,
+        "path": "index.pck",
+        "pipeline_sha256": "ad8206d779370a25c73d472d3c0d2330d40e81fcb7a9d126fbe2d997660643b2"
+      },
+      {
+        "status": 200,
+        "served_check": "HEAD size/MIME joined to exact-build export hashes",
+        "bytes": 1508237,
+        "path": "index.wasm",
+        "pipeline_sha256": "58263765a7f63d873211210ba389dce0b7bb45c0e50a67e978ea081ec9f1e8e8"
+      },
+      {
+        "status": 200,
+        "served_check": "HEAD size/MIME joined to exact-build export hashes",
+        "bytes": 21802358,
+        "path": "index.side.wasm",
+        "pipeline_sha256": "f344425186abd04d042ee9fe50439a27bb71936fb7c439ed79a3d827c2cfc5f0"
+      },
+      {
+        "status": 200,
+        "served_check": "HEAD size/MIME joined to exact-build export hashes",
+        "bytes": 340886,
+        "path": "coin_pusher_native_v3_10.web.template_release.wasm32.nothreads.wasm",
+        "pipeline_sha256": "82c71b7d743027817c8f5041ad2f052565bf27fe43ec60312a2473af08957943"
+      }
+    ],
+    "pck_audit": {
+      "package_sha256": "ad8206d779370a25c73d472d3c0d2330d40e81fcb7a9d126fbe2d997660643b2",
+      "changed_ui_present": [
+        "scripts/core/scenario_sequence_runtime.gdc"
+      ],
+      "file_count": 1166,
+      "passed": true
+    },
+    "basic_launch": {
+      "task": "BTH061-AUDIT-COMMAND-CHANGE-DETECTOR-008",
+      "verified_at": "2026-11-05T00:32:51.161088+00:00",
+      "source_commit": "0c0952594ec93fb892db807bbeaffef801a9f6a0",
+      "source_tree": "02e0f2124346a37b20d22e300f8ea05e68827f68",
+      "url": "http://localhost:8088/p/beat-the-house/play/dev/0c0952594ec93fb892db807bbeaffef801a9f6a0/index.html",
+      "browser": "Task-owned in-app browser, metadata codexSessionId01a1a35e-7e93-7049-869b-6bba043aa01f; browser2/tab1",
+      "method": "Purpose-built browser tool; originalpersonalChromeprofile untouched. New temporary task tab opened thenclosed.",
+      "observations": [
+        "Beat the House rendered menu visible in screenshot",
+        "Visible version0.6.0-dev+0c0952594ec9",
+        "Exact target URL/title confirmed",
+        "Captured error log list empty"
+      ],
+      "captured_error_logs": [],
+      "gameplay_inputs": 0,
+      "save_profile_transfer": false,
+      "temporary_tab_closed": true,
+      "security_settings_or_browser_flags_changed": false,
+      "screenshot_evidence": "Inline computer-use tool screenshot in this task; no local screenshot file claimed.",
+      "limits": "Basic visual launch only; no changed Web gameplay, physical phone, browser audio or browser timing claim. No pageerror instrumentation beyond captured error logs."
+    },
+    "scoped_tasks_closed": [
+      "BTH061-AUDIT-VALIDATOR-001",
+      "BTH061-AUDIT-HOST-HELPERS-003",
+      "BTH061-AUDIT-UI-LITERAL-003",
+      "BTH061-AUDIT-MONEY-FIXTURE-003",
+      "BTH061-AUDIT-GENERIC-CONTROLS-004",
+      "BTH061-AUDIT-SLOT-TICK-004",
+      "BTH061-AUDIT-REPORT-FALLBACK-004",
+      "BTH061-AUDIT-SLOT-LEGACY-FAMILY-004",
+      "BTH061-AUDIT-AUDIO-LEGACY-006",
+      "BTH061-AUDIT-SCRATCH-HELD-SALE-006",
+      "BTH061-AUDIT-COMMAND-CHANGE-DETECTOR-008",
+      "BTH061-AUDIT-PUBLISH-NEXT-007",
+      "BTH061-AUDIT-GAME-PATHS-004",
+      "BTH061-AUDIT-HOST-GAMEPLAY-004",
+      "BTH061-AUDIT-REPORT-MODELS-004",
+      "BTH061-AUDIT-AUDIO-INFRA-006",
+      "BTH061-AUDIT-TOOL-RUNTIME-006",
+      "BTH061-AUDIT-INSTANT-GAMES-006"
+    ],
+    "full_gameplay_claimed": false
+  },
   "proposal_source_proof_at_preparation": {
     "task": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
     "prepared_at": "2026-11-04T23:45:57.252539+00:00",

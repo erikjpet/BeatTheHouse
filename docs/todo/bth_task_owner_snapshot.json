@@ -1,13 +1,13 @@
 {
   "schema": "bth.owner_snapshot/v1",
-  "observed_at": "2026-11-05T00:18:39.362436+00:00",
+  "observed_at": "2026-11-05T00:34:22.991838+00:00",
   "tasks": [
     {
       "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
       "title": "Audit obsolete game code",
       "state": "active",
-      "observed_at": "2026-11-05T00:18:39.362436+00:00",
-      "source": "Actual008 final qualification: narrowperformancefix113othermethodsrawexact; canonicalcapacity16.957s,546fullVariantpairs,new14checkcontract,livenessPASS. All38stepsreturnwithinoriginal180flow; latersemanticgroupstillcensored. ExactoriginalRuntimecanonicalcaseconfirmsidentical19assertions; testedcandidateexactlyrestored.15ownJobsclosed0; preparingcodecommit/publication, parentauditOpen. SeparateNEXTdonorownerpreserved."
+      "observed_at": "2026-11-05T00:34:22.991838+00:00",
+      "source": "Actual008 exactNEXT0c095259 verified:archive/redirect/PCK/4assets pluscorrect-versionrenderedtaskbrowsermenu,0capturederrors,tabclosed,15ownednativeJobs0. Code6eba3281qualifiedanddeployed; scopedassociateddeliveriesclosingwithcommits. Fullaudit/latersemantic180cap/19exactbaselineassertions/aggregateacceptanceOpen. Finalreconciliationandtrackingpublicationunderway; no pipelinechanges."
     },
     {
       "task_ref": "01a1a364-2b54-75bb-b041-31cd0f3fd02f",

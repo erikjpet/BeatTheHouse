@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T00:21:38.293030+00:00",
+  "updated_at": "2026-11-05T00:32:51.161088+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -13718,7 +13718,7 @@
       "implementation_batches": [
         "BTH061-AUDIT-001-BATCH-001"
       ],
-      "next_action": "Continue remaining current body/consumer review outside the explicit item/scenario implementation boundary, using exact inherited evidence. Next bounded candidates: numeric JSON and money archive scoped-only branches; remaining sequence38-step timings if required. Keep full audit, baseline follow-ups and incomplete delivery acceptance Open.",
+      "next_action": "Continue incomplete current source/consumer audit and separately tracked baseline findings outside paused feature work. Current008sourcefix isdelivered; CONTENT006latersemantic timeout and SEQUENCEBASELINE008nineteenassertions remainOpen; no new intentionalhold.",
       "blocker": {
         "state": "none",
         "kind": null,
@@ -13728,7 +13728,7 @@
         "evidence": []
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T00:16:40.251041+00:00"
+      "updated_at": "2026-11-05T00:32:51.161088+00:00"
     },
     {
       "id": "CREW-JAZZ-SERVICE-001",
@@ -15183,9 +15183,10 @@
             "id": "scoped-publication-next",
             "description": "Required scoped publication/NEXT identity and acceptance are recorded, including completion of the current UI-LITERAL-003 child; aggregate pass alone does not close delivery.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_003.md"
+              "docs/testing/deprecated_code_audit_continuation_003.md",
+              "docs/testing/deprecated_code_audit_continuation_008.md"
             ]
           }
         ],
@@ -15195,8 +15196,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "EXACT_NEXT_ARTIFACT_VERIFIED_BROWSER_PREFLIGHT_OPEN",
+      "state": "complete",
+      "status": "FOCUSED_ACCEPTANCE_AND_EXACT_NEXT_VERIFIED",
       "owner": {
         "name": "Audit tooling repair",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -15221,16 +15222,19 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": "aece9cffa8c17c53f90943e108e1194403a496db",
+        "state": "verified",
+        "commit": "0c0952594ec93fb892db807bbeaffef801a9f6a0",
         "evidence": [
           "docs/testing/deprecated_code_audit_2026_11_04.md",
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
           "docs/testing/deprecated_code_audit_continuation_003.md",
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json",
-          "docs/testing/deprecated_code_audit_continuation_007.md"
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\approved-audit-next-identity-008-r1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation008-exact-task-browser-startup-r1.json"
         ],
-        "scope": "Existing watcher deployed aece9cff at22:14:29Z; exact served commit/tree/redirect/archive provenance/PCK/four asset size+MIME checks pass. Basic Web launch remains unverified: fresh owned sandboxed-browser request reports sandboxed=false/WebGL disabled and exits before navigation. No gameplay failure or passed startup claimed."
+        "scope": "Associated sourcecommit(s) are ancestors of exact served0c095259, tree02e0f2124346a37b20d22e300f8ea05e68827f68. Metadata/redirect/archive provenance/PCK/four asset heads and renderedcorrect-versiontask-browsermenu withno captured errors verified. Changed behavior uses the recorded focused native qualification; no new broad aggregate, physical/Web gameplay or audio claim."
       },
       "evidence": [
         {
@@ -15247,24 +15251,27 @@
           "kind": "exact_artifact_delivery_startup_unverified",
           "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
           "summary": "Current exact aece9cff served metadata/redirect/provenance/PCK/four assets PASS; historical stopped watcher/capacity blocker superseded. Basic browser launch unverified due pre-navigation GPU sandbox/WebGL environment failure; all own Jobs closed0."
+        },
+        {
+          "kind": "exact_next_delivery_and_basic_task_browser_launch",
+          "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
+          "summary": "Exact0c095259 servedidentity/tree/redirect/archive/PCK/4assets andvisualcorrect-versionmenuverified inownIABtab;0captured errors,0gameplayinputs,tabclosed. Existingfocusedqualificationretainedatitsoriginalsource/scope. EarlierCLIpreflightfailure remainshistorical, no security weakening or machinery change."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Obtain trustworthy exact-build basic launch with working sandboxed WebGL, or reuse an available exact-build startup receipt; retain focused native qualification and historical failed attempts. No watcher restart, reserve change, unsafe browser flag or broad regression rerun is indicated.",
+      "next_action": "Scoped associated source and focused acceptance are delivered in exactNEXT0c0952594ec93fb892db807bbeaffef801a9f6a0; preserve stated test/coverage limits. Separate full audit/catalog/baseline tasks remain Open.",
       "blocker": {
-        "state": "active",
-        "kind": "browser_gpu_preflight",
-        "description": "Fresh disposable Chromium requested sandboxing but SystemInfo reports GPU sandboxed=false, no renderer and WebGL disabled. Startup guard rejected before page creation/navigation; diagnostic probe also could not complete after its browser closed. Exact archive/assets verified. This is a verification-environment boundary, not proof the game fails to launch. No sandbox/TLS/CPU/resource guard was relaxed.",
+        "state": "none",
+        "kind": "none",
+        "description": "Historical watcher/capacity/donor/browser observations superseded for this scoped delivery byexact0c095259artifact+taskbrowserlaunch. Separatecurrentfullauditfindings retained.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T22:56:16.910464+00:00",
+        "observed_at": "2026-11-05T00:32:51.161088+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_007.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\startup.json",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\result.json"
+          "docs/testing/deprecated_code_audit_continuation_008.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T22:56:16.910464+00:00"
+      "updated_at": "2026-11-05T00:32:51.161088+00:00"
     },
     {
       "id": "BTH061-AUDIT-MOBILE-CONTRACT-001",
@@ -18024,8 +18031,10 @@
             "id": "next-current",
             "description": "Associated cleanup commit is delivered and exact current NEXT identity/behavior evidence recorded.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_008.md"
+            ]
           }
         ],
         "coverage": {
@@ -18034,8 +18043,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "EXACT_NEXT_ARTIFACT_VERIFIED_BROWSER_PREFLIGHT_OPEN",
+      "state": "complete",
+      "status": "FOCUSED_ACCEPTANCE_AND_EXACT_NEXT_VERIFIED",
       "owner": {
         "name": "Audit host helper review",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -18052,15 +18061,18 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": "aece9cffa8c17c53f90943e108e1194403a496db",
+        "state": "verified",
+        "commit": "0c0952594ec93fb892db807bbeaffef801a9f6a0",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_003.md",
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json",
-          "docs/testing/deprecated_code_audit_continuation_007.md"
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\approved-audit-next-identity-008-r1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation008-exact-task-browser-startup-r1.json"
         ],
-        "scope": "Existing watcher deployed aece9cff at22:14:29Z; exact served commit/tree/redirect/archive provenance/PCK/four asset size+MIME checks pass. Basic Web launch remains unverified: fresh owned sandboxed-browser request reports sandboxed=false/WebGL disabled and exits before navigation. No gameplay failure or passed startup claimed."
+        "scope": "Associated sourcecommit(s) are ancestors of exact served0c095259, tree02e0f2124346a37b20d22e300f8ea05e68827f68. Metadata/redirect/archive provenance/PCK/four asset heads and renderedcorrect-versiontask-browsermenu withno captured errors verified. Changed behavior uses the recorded focused native qualification; no new broad aggregate, physical/Web gameplay or audio claim."
       },
       "evidence": [
         {
@@ -18077,24 +18089,27 @@
           "kind": "exact_artifact_delivery_startup_unverified",
           "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
           "summary": "Current exact aece9cff served metadata/redirect/provenance/PCK/four assets PASS; historical stopped watcher/capacity blocker superseded. Basic browser launch unverified due pre-navigation GPU sandbox/WebGL environment failure; all own Jobs closed0."
+        },
+        {
+          "kind": "exact_next_delivery_and_basic_task_browser_launch",
+          "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
+          "summary": "Exact0c095259 servedidentity/tree/redirect/archive/PCK/4assets andvisualcorrect-versionmenuverified inownIABtab;0captured errors,0gameplayinputs,tabclosed. Existingfocusedqualificationretainedatitsoriginalsource/scope. EarlierCLIpreflightfailure remainshistorical, no security weakening or machinery change."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Obtain trustworthy exact-build basic launch with working sandboxed WebGL, or reuse an available exact-build startup receipt; retain focused native qualification and historical failed attempts. No watcher restart, reserve change, unsafe browser flag or broad regression rerun is indicated.",
+      "next_action": "Scoped associated source and focused acceptance are delivered in exactNEXT0c0952594ec93fb892db807bbeaffef801a9f6a0; preserve stated test/coverage limits. Separate full audit/catalog/baseline tasks remain Open.",
       "blocker": {
-        "state": "active",
-        "kind": "browser_gpu_preflight",
-        "description": "Fresh disposable Chromium requested sandboxing but SystemInfo reports GPU sandboxed=false, no renderer and WebGL disabled. Startup guard rejected before page creation/navigation; diagnostic probe also could not complete after its browser closed. Exact archive/assets verified. This is a verification-environment boundary, not proof the game fails to launch. No sandbox/TLS/CPU/resource guard was relaxed.",
+        "state": "none",
+        "kind": "none",
+        "description": "Historical watcher/capacity/donor/browser observations superseded for this scoped delivery byexact0c095259artifact+taskbrowserlaunch. Separatecurrentfullauditfindings retained.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T22:56:16.910464+00:00",
+        "observed_at": "2026-11-05T00:32:51.161088+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_007.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\startup.json",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\result.json"
+          "docs/testing/deprecated_code_audit_continuation_008.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T22:56:16.910464+00:00"
+      "updated_at": "2026-11-05T00:32:51.161088+00:00"
     },
     {
       "id": "BTH061-AUDIT-UI-LITERAL-003",
@@ -18133,8 +18148,10 @@
             "id": "next-current",
             "description": "Associated classifier commit is published and exact current NEXT identity/evidence is recorded.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_008.md"
+            ]
           }
         ],
         "coverage": {
@@ -18143,8 +18160,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "EXACT_NEXT_ARTIFACT_VERIFIED_BROWSER_PREFLIGHT_OPEN",
+      "state": "complete",
+      "status": "FOCUSED_ACCEPTANCE_AND_EXACT_NEXT_VERIFIED",
       "owner": {
         "name": "Audit validator regression follow-up",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -18161,15 +18178,18 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": "aece9cffa8c17c53f90943e108e1194403a496db",
+        "state": "verified",
+        "commit": "0c0952594ec93fb892db807bbeaffef801a9f6a0",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_003.md",
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json",
-          "docs/testing/deprecated_code_audit_continuation_007.md"
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\approved-audit-next-identity-008-r1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation008-exact-task-browser-startup-r1.json"
         ],
-        "scope": "Existing watcher deployed aece9cff at22:14:29Z; exact served commit/tree/redirect/archive provenance/PCK/four asset size+MIME checks pass. Basic Web launch remains unverified: fresh owned sandboxed-browser request reports sandboxed=false/WebGL disabled and exits before navigation. No gameplay failure or passed startup claimed."
+        "scope": "Associated sourcecommit(s) are ancestors of exact served0c095259, tree02e0f2124346a37b20d22e300f8ea05e68827f68. Metadata/redirect/archive provenance/PCK/four asset heads and renderedcorrect-versiontask-browsermenu withno captured errors verified. Changed behavior uses the recorded focused native qualification; no new broad aggregate, physical/Web gameplay or audio claim."
       },
       "evidence": [
         {
@@ -18186,24 +18206,27 @@
           "kind": "exact_artifact_delivery_startup_unverified",
           "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
           "summary": "Current exact aece9cff served metadata/redirect/provenance/PCK/four assets PASS; historical stopped watcher/capacity blocker superseded. Basic browser launch unverified due pre-navigation GPU sandbox/WebGL environment failure; all own Jobs closed0."
+        },
+        {
+          "kind": "exact_next_delivery_and_basic_task_browser_launch",
+          "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
+          "summary": "Exact0c095259 servedidentity/tree/redirect/archive/PCK/4assets andvisualcorrect-versionmenuverified inownIABtab;0captured errors,0gameplayinputs,tabclosed. Existingfocusedqualificationretainedatitsoriginalsource/scope. EarlierCLIpreflightfailure remainshistorical, no security weakening or machinery change."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Obtain trustworthy exact-build basic launch with working sandboxed WebGL, or reuse an available exact-build startup receipt; retain focused native qualification and historical failed attempts. No watcher restart, reserve change, unsafe browser flag or broad regression rerun is indicated.",
+      "next_action": "Scoped associated source and focused acceptance are delivered in exactNEXT0c0952594ec93fb892db807bbeaffef801a9f6a0; preserve stated test/coverage limits. Separate full audit/catalog/baseline tasks remain Open.",
       "blocker": {
-        "state": "active",
-        "kind": "browser_gpu_preflight",
-        "description": "Fresh disposable Chromium requested sandboxing but SystemInfo reports GPU sandboxed=false, no renderer and WebGL disabled. Startup guard rejected before page creation/navigation; diagnostic probe also could not complete after its browser closed. Exact archive/assets verified. This is a verification-environment boundary, not proof the game fails to launch. No sandbox/TLS/CPU/resource guard was relaxed.",
+        "state": "none",
+        "kind": "none",
+        "description": "Historical watcher/capacity/donor/browser observations superseded for this scoped delivery byexact0c095259artifact+taskbrowserlaunch. Separatecurrentfullauditfindings retained.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T22:56:16.910464+00:00",
+        "observed_at": "2026-11-05T00:32:51.161088+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_007.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\startup.json",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\result.json"
+          "docs/testing/deprecated_code_audit_continuation_008.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T22:56:16.910464+00:00"
+      "updated_at": "2026-11-05T00:32:51.161088+00:00"
     },
     {
       "id": "BTH061-AUDIT-MONEY-FIXTURE-003",
@@ -18242,8 +18265,10 @@
             "id": "next-current",
             "description": "Associated fixture repair is published and exact current NEXT identity/evidence is recorded.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_008.md"
+            ]
           }
         ],
         "coverage": {
@@ -18252,8 +18277,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "EXACT_NEXT_ARTIFACT_VERIFIED_BROWSER_PREFLIGHT_OPEN",
+      "state": "complete",
+      "status": "FOCUSED_ACCEPTANCE_AND_EXACT_NEXT_VERIFIED",
       "owner": {
         "name": "Audit focused fixture follow-up",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -18270,15 +18295,18 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": "aece9cffa8c17c53f90943e108e1194403a496db",
+        "state": "verified",
+        "commit": "0c0952594ec93fb892db807bbeaffef801a9f6a0",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_003.md",
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-capacity-checkpoint-r1.json",
           "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation003-source-publication-r1.json",
-          "docs/testing/deprecated_code_audit_continuation_007.md"
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\approved-audit-next-identity-008-r1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation008-exact-task-browser-startup-r1.json"
         ],
-        "scope": "Existing watcher deployed aece9cff at22:14:29Z; exact served commit/tree/redirect/archive provenance/PCK/four asset size+MIME checks pass. Basic Web launch remains unverified: fresh owned sandboxed-browser request reports sandboxed=false/WebGL disabled and exits before navigation. No gameplay failure or passed startup claimed."
+        "scope": "Associated sourcecommit(s) are ancestors of exact served0c095259, tree02e0f2124346a37b20d22e300f8ea05e68827f68. Metadata/redirect/archive provenance/PCK/four asset heads and renderedcorrect-versiontask-browsermenu withno captured errors verified. Changed behavior uses the recorded focused native qualification; no new broad aggregate, physical/Web gameplay or audio claim."
       },
       "evidence": [
         {
@@ -18295,24 +18323,27 @@
           "kind": "exact_artifact_delivery_startup_unverified",
           "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
           "summary": "Current exact aece9cff served metadata/redirect/provenance/PCK/four assets PASS; historical stopped watcher/capacity blocker superseded. Basic browser launch unverified due pre-navigation GPU sandbox/WebGL environment failure; all own Jobs closed0."
+        },
+        {
+          "kind": "exact_next_delivery_and_basic_task_browser_launch",
+          "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
+          "summary": "Exact0c095259 servedidentity/tree/redirect/archive/PCK/4assets andvisualcorrect-versionmenuverified inownIABtab;0captured errors,0gameplayinputs,tabclosed. Existingfocusedqualificationretainedatitsoriginalsource/scope. EarlierCLIpreflightfailure remainshistorical, no security weakening or machinery change."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Obtain trustworthy exact-build basic launch with working sandboxed WebGL, or reuse an available exact-build startup receipt; retain focused native qualification and historical failed attempts. No watcher restart, reserve change, unsafe browser flag or broad regression rerun is indicated.",
+      "next_action": "Scoped associated source and focused acceptance are delivered in exactNEXT0c0952594ec93fb892db807bbeaffef801a9f6a0; preserve stated test/coverage limits. Separate full audit/catalog/baseline tasks remain Open.",
       "blocker": {
-        "state": "active",
-        "kind": "browser_gpu_preflight",
-        "description": "Fresh disposable Chromium requested sandboxing but SystemInfo reports GPU sandboxed=false, no renderer and WebGL disabled. Startup guard rejected before page creation/navigation; diagnostic probe also could not complete after its browser closed. Exact archive/assets verified. This is a verification-environment boundary, not proof the game fails to launch. No sandbox/TLS/CPU/resource guard was relaxed.",
+        "state": "none",
+        "kind": "none",
+        "description": "Historical watcher/capacity/donor/browser observations superseded for this scoped delivery byexact0c095259artifact+taskbrowserlaunch. Separatecurrentfullauditfindings retained.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T22:56:16.910464+00:00",
+        "observed_at": "2026-11-05T00:32:51.161088+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_007.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\startup.json",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\result.json"
+          "docs/testing/deprecated_code_audit_continuation_008.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T22:56:16.910464+00:00"
+      "updated_at": "2026-11-05T00:32:51.161088+00:00"
     },
     {
       "id": "BTH061-AUDIT-CORE-CONTROLLERS-003",
@@ -18421,8 +18452,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "BOUNDED_REVIEW_COMMITTED_REQUIRED_CHILDREN_OPEN",
+      "state": "complete",
+      "status": "BOUNDED_REVIEW_AND_REQUIRED_CHILD_DELIVERY_VERIFIED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -18458,20 +18489,27 @@
           "kind": "qualified_slot_child_with_delivery_open",
           "reference": "docs/testing/slot_legacy_family_recovery.md",
           "summary": "Slot missing-family replacement and4button deletion qualified and published at81f3ecf69a70bcbdc7d4d1d6c71efd1668e8c54c; NEXT capacity gate and broadcoverage remainOpen. New aggregate-time-budget follow-up retains current maintained stage failure."
+        },
+        {
+          "kind": "bounded_children_delivered",
+          "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
+          "summary": "ActualrequiredchildrenBTH061-AUDIT-SLOT-LEGACY-FAMILY-004delivered/verified in0c095259; originalreviewcommit/depthlimitsretained. Thisdoesnotclosefull-codebaseaudit."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Bounded review and Slot legacy-family replacement/removal are committed; finish separately named required child NEXT delivery after capacity admission, retaining full-codebase audit Open.",
+      "next_action": "This committed bounded review and its separately qualified source children are complete; full-codebase/current consumer remainder stays with BTH061-AUDIT-001.",
       "blocker": {
         "state": "none",
-        "kind": null,
-        "description": null,
+        "kind": "none",
+        "description": "Bounded review and required child deliveries complete; whole audit remains separately Open.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:59:41.789985+00:00",
-        "evidence": []
+        "observed_at": "2026-11-05T00:32:51.161088+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T19:59:38.708404+00:00"
+      "updated_at": "2026-11-05T00:32:51.161088+00:00"
     },
     {
       "id": "BTH061-AUDIT-HOST-GAMEPLAY-004",
@@ -18503,8 +18541,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "BOUNDED_REVIEW_COMMITTED_REQUIRED_CHILDREN_OPEN",
+      "state": "complete",
+      "status": "BOUNDED_REVIEW_AND_REQUIRED_CHILD_DELIVERY_VERIFIED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -18535,20 +18573,27 @@
           "kind": "bounded_review_evidence_with_open_children",
           "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
           "summary": "Bounded review evidence committed in e3fd55cad883a67e40000a90b15549b62eadeb1b. Required child removal/delivery and legacy-family work remain Open; reconciliation therefore retains this review parent Open despite its completed read-only disposition."
+        },
+        {
+          "kind": "bounded_children_delivered",
+          "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
+          "summary": "ActualrequiredchildrenBTH061-AUDIT-GENERIC-CONTROLS-004,BTH061-AUDIT-SLOT-TICK-004delivered/verified in0c095259; originalreviewcommit/depthlimitsretained. Thisdoesnotclosefull-codebaseaudit."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Bounded read-only review evidence is committed. Complete the separately named removal/delivery and legacy-family required child work before closing this record; the full-codebase audit remains Open.",
+      "next_action": "This committed bounded review and its separately qualified source children are complete; full-codebase/current consumer remainder stays with BTH061-AUDIT-001.",
       "blocker": {
         "state": "none",
-        "kind": null,
-        "description": null,
+        "kind": "none",
+        "description": "Bounded review and required child deliveries complete; whole audit remains separately Open.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:59:41.789985+00:00",
-        "evidence": []
+        "observed_at": "2026-11-05T00:32:51.161088+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T18:00:40.852984+00:00"
+      "updated_at": "2026-11-05T00:32:51.161088+00:00"
     },
     {
       "id": "BTH061-AUDIT-REPORT-MODELS-004",
@@ -18580,8 +18625,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "BOUNDED_REVIEW_COMMITTED_REQUIRED_CHILDREN_OPEN",
+      "state": "complete",
+      "status": "BOUNDED_REVIEW_AND_REQUIRED_CHILD_DELIVERY_VERIFIED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -18612,20 +18657,27 @@
           "kind": "bounded_review_evidence_with_open_children",
           "reference": "docs/testing/deprecated_code_audit_continuation_004.md",
           "summary": "Bounded review evidence committed in e3fd55cad883a67e40000a90b15549b62eadeb1b. Required child removal/delivery and legacy-family work remain Open; reconciliation therefore retains this review parent Open despite its completed read-only disposition."
+        },
+        {
+          "kind": "bounded_children_delivered",
+          "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
+          "summary": "ActualrequiredchildrenBTH061-AUDIT-REPORT-FALLBACK-004delivered/verified in0c095259; originalreviewcommit/depthlimitsretained. Thisdoesnotclosefull-codebaseaudit."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Bounded read-only review evidence is committed. Complete the separately named removal/delivery and legacy-family required child work before closing this record; the full-codebase audit remains Open.",
+      "next_action": "This committed bounded review and its separately qualified source children are complete; full-codebase/current consumer remainder stays with BTH061-AUDIT-001.",
       "blocker": {
         "state": "none",
-        "kind": null,
-        "description": null,
+        "kind": "none",
+        "description": "Bounded review and required child deliveries complete; whole audit remains separately Open.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T17:59:41.789985+00:00",
-        "evidence": []
+        "observed_at": "2026-11-05T00:32:51.161088+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T18:00:40.852984+00:00"
+      "updated_at": "2026-11-05T00:32:51.161088+00:00"
     },
     {
       "id": "BTH061-AUDIT-GENERIC-CONTROLS-004",
@@ -18655,8 +18707,10 @@
             "id": "next-current",
             "description": "Associated cleanup commit is delivered and exact NEXT identity and available behavior evidence recorded.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_008.md"
+            ]
           }
         ],
         "coverage": {
@@ -18665,8 +18719,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "EXACT_NEXT_ARTIFACT_VERIFIED_BROWSER_PREFLIGHT_OPEN",
+      "state": "complete",
+      "status": "FOCUSED_ACCEPTANCE_AND_EXACT_NEXT_VERIFIED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -18682,14 +18736,17 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": "aece9cffa8c17c53f90943e108e1194403a496db",
+        "state": "verified",
+        "commit": "0c0952594ec93fb892db807bbeaffef801a9f6a0",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_004.md",
           "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json",
-          "docs/testing/deprecated_code_audit_continuation_007.md"
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\approved-audit-next-identity-008-r1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation008-exact-task-browser-startup-r1.json"
         ],
-        "scope": "Existing watcher deployed aece9cff at22:14:29Z; exact served commit/tree/redirect/archive provenance/PCK/four asset size+MIME checks pass. Basic Web launch remains unverified: fresh owned sandboxed-browser request reports sandboxed=false/WebGL disabled and exits before navigation. No gameplay failure or passed startup claimed."
+        "scope": "Associated sourcecommit(s) are ancestors of exact served0c095259, tree02e0f2124346a37b20d22e300f8ea05e68827f68. Metadata/redirect/archive provenance/PCK/four asset heads and renderedcorrect-versiontask-browsermenu withno captured errors verified. Changed behavior uses the recorded focused native qualification; no new broad aggregate, physical/Web gameplay or audio claim."
       },
       "evidence": [
         {
@@ -18711,24 +18768,27 @@
           "kind": "exact_artifact_delivery_startup_unverified",
           "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
           "summary": "Current exact aece9cff served metadata/redirect/provenance/PCK/four assets PASS; historical stopped watcher/capacity blocker superseded. Basic browser launch unverified due pre-navigation GPU sandbox/WebGL environment failure; all own Jobs closed0."
+        },
+        {
+          "kind": "exact_next_delivery_and_basic_task_browser_launch",
+          "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
+          "summary": "Exact0c095259 servedidentity/tree/redirect/archive/PCK/4assets andvisualcorrect-versionmenuverified inownIABtab;0captured errors,0gameplayinputs,tabclosed. Existingfocusedqualificationretainedatitsoriginalsource/scope. EarlierCLIpreflightfailure remainshistorical, no security weakening or machinery change."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Obtain trustworthy exact-build basic launch with working sandboxed WebGL, or reuse an available exact-build startup receipt; retain focused native qualification and historical failed attempts. No watcher restart, reserve change, unsafe browser flag or broad regression rerun is indicated.",
+      "next_action": "Scoped associated source and focused acceptance are delivered in exactNEXT0c0952594ec93fb892db807bbeaffef801a9f6a0; preserve stated test/coverage limits. Separate full audit/catalog/baseline tasks remain Open.",
       "blocker": {
-        "state": "active",
-        "kind": "browser_gpu_preflight",
-        "description": "Fresh disposable Chromium requested sandboxing but SystemInfo reports GPU sandboxed=false, no renderer and WebGL disabled. Startup guard rejected before page creation/navigation; diagnostic probe also could not complete after its browser closed. Exact archive/assets verified. This is a verification-environment boundary, not proof the game fails to launch. No sandbox/TLS/CPU/resource guard was relaxed.",
+        "state": "none",
+        "kind": "none",
+        "description": "Historical watcher/capacity/donor/browser observations superseded for this scoped delivery byexact0c095259artifact+taskbrowserlaunch. Separatecurrentfullauditfindings retained.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T22:56:16.910464+00:00",
+        "observed_at": "2026-11-05T00:32:51.161088+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_007.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\startup.json",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\result.json"
+          "docs/testing/deprecated_code_audit_continuation_008.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T22:56:16.910464+00:00"
+      "updated_at": "2026-11-05T00:32:51.161088+00:00"
     },
     {
       "id": "BTH061-AUDIT-SLOT-TICK-004",
@@ -18758,8 +18818,10 @@
             "id": "next-current",
             "description": "Associated cleanup commit is delivered and exact NEXT identity and available behavior evidence recorded.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_008.md"
+            ]
           }
         ],
         "coverage": {
@@ -18768,8 +18830,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "EXACT_NEXT_ARTIFACT_VERIFIED_BROWSER_PREFLIGHT_OPEN",
+      "state": "complete",
+      "status": "FOCUSED_ACCEPTANCE_AND_EXACT_NEXT_VERIFIED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -18785,14 +18847,17 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": "aece9cffa8c17c53f90943e108e1194403a496db",
+        "state": "verified",
+        "commit": "0c0952594ec93fb892db807bbeaffef801a9f6a0",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_004.md",
           "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json",
-          "docs/testing/deprecated_code_audit_continuation_007.md"
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\approved-audit-next-identity-008-r1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation008-exact-task-browser-startup-r1.json"
         ],
-        "scope": "Existing watcher deployed aece9cff at22:14:29Z; exact served commit/tree/redirect/archive provenance/PCK/four asset size+MIME checks pass. Basic Web launch remains unverified: fresh owned sandboxed-browser request reports sandboxed=false/WebGL disabled and exits before navigation. No gameplay failure or passed startup claimed."
+        "scope": "Associated sourcecommit(s) are ancestors of exact served0c095259, tree02e0f2124346a37b20d22e300f8ea05e68827f68. Metadata/redirect/archive provenance/PCK/four asset heads and renderedcorrect-versiontask-browsermenu withno captured errors verified. Changed behavior uses the recorded focused native qualification; no new broad aggregate, physical/Web gameplay or audio claim."
       },
       "evidence": [
         {
@@ -18814,24 +18879,27 @@
           "kind": "exact_artifact_delivery_startup_unverified",
           "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
           "summary": "Current exact aece9cff served metadata/redirect/provenance/PCK/four assets PASS; historical stopped watcher/capacity blocker superseded. Basic browser launch unverified due pre-navigation GPU sandbox/WebGL environment failure; all own Jobs closed0."
+        },
+        {
+          "kind": "exact_next_delivery_and_basic_task_browser_launch",
+          "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
+          "summary": "Exact0c095259 servedidentity/tree/redirect/archive/PCK/4assets andvisualcorrect-versionmenuverified inownIABtab;0captured errors,0gameplayinputs,tabclosed. Existingfocusedqualificationretainedatitsoriginalsource/scope. EarlierCLIpreflightfailure remainshistorical, no security weakening or machinery change."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Obtain trustworthy exact-build basic launch with working sandboxed WebGL, or reuse an available exact-build startup receipt; retain focused native qualification and historical failed attempts. No watcher restart, reserve change, unsafe browser flag or broad regression rerun is indicated.",
+      "next_action": "Scoped associated source and focused acceptance are delivered in exactNEXT0c0952594ec93fb892db807bbeaffef801a9f6a0; preserve stated test/coverage limits. Separate full audit/catalog/baseline tasks remain Open.",
       "blocker": {
-        "state": "active",
-        "kind": "browser_gpu_preflight",
-        "description": "Fresh disposable Chromium requested sandboxing but SystemInfo reports GPU sandboxed=false, no renderer and WebGL disabled. Startup guard rejected before page creation/navigation; diagnostic probe also could not complete after its browser closed. Exact archive/assets verified. This is a verification-environment boundary, not proof the game fails to launch. No sandbox/TLS/CPU/resource guard was relaxed.",
+        "state": "none",
+        "kind": "none",
+        "description": "Historical watcher/capacity/donor/browser observations superseded for this scoped delivery byexact0c095259artifact+taskbrowserlaunch. Separatecurrentfullauditfindings retained.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T22:56:16.910464+00:00",
+        "observed_at": "2026-11-05T00:32:51.161088+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_007.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\startup.json",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\result.json"
+          "docs/testing/deprecated_code_audit_continuation_008.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T22:56:16.910464+00:00"
+      "updated_at": "2026-11-05T00:32:51.161088+00:00"
     },
     {
       "id": "BTH061-AUDIT-REPORT-FALLBACK-004",
@@ -18861,8 +18929,10 @@
             "id": "next-current",
             "description": "Associated cleanup commit is delivered and exact NEXT identity and available behavior evidence recorded.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_008.md"
+            ]
           }
         ],
         "coverage": {
@@ -18871,8 +18941,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "EXACT_NEXT_ARTIFACT_VERIFIED_BROWSER_PREFLIGHT_OPEN",
+      "state": "complete",
+      "status": "FOCUSED_ACCEPTANCE_AND_EXACT_NEXT_VERIFIED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -18888,14 +18958,17 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": "aece9cffa8c17c53f90943e108e1194403a496db",
+        "state": "verified",
+        "commit": "0c0952594ec93fb892db807bbeaffef801a9f6a0",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_004.md",
           "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation004-source-publication-r1.json",
-          "docs/testing/deprecated_code_audit_continuation_007.md"
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\approved-audit-next-identity-008-r1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation008-exact-task-browser-startup-r1.json"
         ],
-        "scope": "Existing watcher deployed aece9cff at22:14:29Z; exact served commit/tree/redirect/archive provenance/PCK/four asset size+MIME checks pass. Basic Web launch remains unverified: fresh owned sandboxed-browser request reports sandboxed=false/WebGL disabled and exits before navigation. No gameplay failure or passed startup claimed."
+        "scope": "Associated sourcecommit(s) are ancestors of exact served0c095259, tree02e0f2124346a37b20d22e300f8ea05e68827f68. Metadata/redirect/archive provenance/PCK/four asset heads and renderedcorrect-versiontask-browsermenu withno captured errors verified. Changed behavior uses the recorded focused native qualification; no new broad aggregate, physical/Web gameplay or audio claim."
       },
       "evidence": [
         {
@@ -18917,24 +18990,27 @@
           "kind": "exact_artifact_delivery_startup_unverified",
           "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
           "summary": "Current exact aece9cff served metadata/redirect/provenance/PCK/four assets PASS; historical stopped watcher/capacity blocker superseded. Basic browser launch unverified due pre-navigation GPU sandbox/WebGL environment failure; all own Jobs closed0."
+        },
+        {
+          "kind": "exact_next_delivery_and_basic_task_browser_launch",
+          "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
+          "summary": "Exact0c095259 servedidentity/tree/redirect/archive/PCK/4assets andvisualcorrect-versionmenuverified inownIABtab;0captured errors,0gameplayinputs,tabclosed. Existingfocusedqualificationretainedatitsoriginalsource/scope. EarlierCLIpreflightfailure remainshistorical, no security weakening or machinery change."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Obtain trustworthy exact-build basic launch with working sandboxed WebGL, or reuse an available exact-build startup receipt; retain focused native qualification and historical failed attempts. No watcher restart, reserve change, unsafe browser flag or broad regression rerun is indicated.",
+      "next_action": "Scoped associated source and focused acceptance are delivered in exactNEXT0c0952594ec93fb892db807bbeaffef801a9f6a0; preserve stated test/coverage limits. Separate full audit/catalog/baseline tasks remain Open.",
       "blocker": {
-        "state": "active",
-        "kind": "browser_gpu_preflight",
-        "description": "Fresh disposable Chromium requested sandboxing but SystemInfo reports GPU sandboxed=false, no renderer and WebGL disabled. Startup guard rejected before page creation/navigation; diagnostic probe also could not complete after its browser closed. Exact archive/assets verified. This is a verification-environment boundary, not proof the game fails to launch. No sandbox/TLS/CPU/resource guard was relaxed.",
+        "state": "none",
+        "kind": "none",
+        "description": "Historical watcher/capacity/donor/browser observations superseded for this scoped delivery byexact0c095259artifact+taskbrowserlaunch. Separatecurrentfullauditfindings retained.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T22:56:16.910464+00:00",
+        "observed_at": "2026-11-05T00:32:51.161088+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_007.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\startup.json",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\result.json"
+          "docs/testing/deprecated_code_audit_continuation_008.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T22:56:16.910464+00:00"
+      "updated_at": "2026-11-05T00:32:51.161088+00:00"
     },
     {
       "id": "BTH061-AUDIT-SLOT-LEGACY-FAMILY-004",
@@ -18963,8 +19039,10 @@
             "id": "next-current",
             "description": "Associated fix is committed, delivered and relevant NEXT acceptance recorded.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_008.md"
+            ]
           }
         ],
         "coverage": {
@@ -18973,8 +19051,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "EXACT_NEXT_ARTIFACT_VERIFIED_BROWSER_PREFLIGHT_OPEN",
+      "state": "complete",
+      "status": "FOCUSED_ACCEPTANCE_AND_EXACT_NEXT_VERIFIED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -18996,16 +19074,19 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": "aece9cffa8c17c53f90943e108e1194403a496db",
+        "state": "verified",
+        "commit": "0c0952594ec93fb892db807bbeaffef801a9f6a0",
         "evidence": [
           "docs/testing/slot_legacy_family_recovery.md",
           "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/slot-family005-source-publication-r1.json",
           "docs/testing/deprecated_code_audit_continuation_006.md",
           "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json",
-          "docs/testing/deprecated_code_audit_continuation_007.md"
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\approved-audit-next-identity-008-r1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation008-exact-task-browser-startup-r1.json"
         ],
-        "scope": "Existing watcher deployed aece9cff at22:14:29Z; exact served commit/tree/redirect/archive provenance/PCK/four asset size+MIME checks pass. Basic Web launch remains unverified: fresh owned sandboxed-browser request reports sandboxed=false/WebGL disabled and exits before navigation. No gameplay failure or passed startup claimed."
+        "scope": "Associated sourcecommit(s) are ancestors of exact served0c095259, tree02e0f2124346a37b20d22e300f8ea05e68827f68. Metadata/redirect/archive provenance/PCK/four asset heads and renderedcorrect-versiontask-browsermenu withno captured errors verified. Changed behavior uses the recorded focused native qualification; no new broad aggregate, physical/Web gameplay or audio claim."
       },
       "evidence": [
         {
@@ -19047,24 +19128,27 @@
           "kind": "exact_artifact_delivery_startup_unverified",
           "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
           "summary": "Current exact aece9cff served metadata/redirect/provenance/PCK/four assets PASS; historical stopped watcher/capacity blocker superseded. Basic browser launch unverified due pre-navigation GPU sandbox/WebGL environment failure; all own Jobs closed0."
+        },
+        {
+          "kind": "exact_next_delivery_and_basic_task_browser_launch",
+          "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
+          "summary": "Exact0c095259 servedidentity/tree/redirect/archive/PCK/4assets andvisualcorrect-versionmenuverified inownIABtab;0captured errors,0gameplayinputs,tabclosed. Existingfocusedqualificationretainedatitsoriginalsource/scope. EarlierCLIpreflightfailure remainshistorical, no security weakening or machinery change."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Obtain trustworthy exact-build basic launch with working sandboxed WebGL, or reuse an available exact-build startup receipt; retain focused native qualification and historical failed attempts. No watcher restart, reserve change, unsafe browser flag or broad regression rerun is indicated.",
+      "next_action": "Scoped associated source and focused acceptance are delivered in exactNEXT0c0952594ec93fb892db807bbeaffef801a9f6a0; preserve stated test/coverage limits. Separate full audit/catalog/baseline tasks remain Open.",
       "blocker": {
-        "state": "active",
-        "kind": "browser_gpu_preflight",
-        "description": "Fresh disposable Chromium requested sandboxing but SystemInfo reports GPU sandboxed=false, no renderer and WebGL disabled. Startup guard rejected before page creation/navigation; diagnostic probe also could not complete after its browser closed. Exact archive/assets verified. This is a verification-environment boundary, not proof the game fails to launch. No sandbox/TLS/CPU/resource guard was relaxed.",
+        "state": "none",
+        "kind": "none",
+        "description": "Historical watcher/capacity/donor/browser observations superseded for this scoped delivery byexact0c095259artifact+taskbrowserlaunch. Separatecurrentfullauditfindings retained.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T22:56:16.910464+00:00",
+        "observed_at": "2026-11-05T00:32:51.161088+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_007.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\startup.json",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\result.json"
+          "docs/testing/deprecated_code_audit_continuation_008.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T22:56:16.910464+00:00"
+      "updated_at": "2026-11-05T00:32:51.161088+00:00"
     },
     {
       "id": "BTH061-AUDIT-BLACKJACK-BASELINE-004",
@@ -19868,8 +19952,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "BOUNDED_REVIEW_COMMITTED_REQUIRED_CHILD_DELIVERY_OPEN",
+      "state": "complete",
+      "status": "BOUNDED_REVIEW_AND_REQUIRED_CHILD_DELIVERY_VERIFIED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -19900,20 +19984,27 @@
           "kind": "bounded_semantic_dispositions",
           "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
           "summary": "Sixinfrastructurefiles/68GDmethods+embeddedJS fullyreviewed bycore; eightaudioBuilders/13functions allactive and36targetedruntime methods separatelyreviewed bytools. Combinedsourcechild42eafd35 qualified; remainingPMP/SFX bodies andwholecodebase notclaimedreviewed. RequiredchildNEXT acceptance remainsOpen."
+        },
+        {
+          "kind": "bounded_children_delivered",
+          "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
+          "summary": "ActualrequiredchildrenBTH061-AUDIT-AUDIO-LEGACY-006delivered/verified in0c095259; originalreviewcommit/depthlimitsretained. Thisdoesnotclosefull-codebaseaudit."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Commit bounded evidence and finish the separately named qualifiedaudio child delivery aftercapacityadmission. Continue remaining nonpaused semanticcoverage; do notcloseparentwithOpenchild.",
+      "next_action": "This committed bounded review and its separately qualified source children are complete; full-codebase/current consumer remainder stays with BTH061-AUDIT-001.",
       "blocker": {
         "state": "none",
-        "kind": null,
-        "description": null,
+        "kind": "none",
+        "description": "Bounded review and required child deliveries complete; whole audit remains separately Open.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T20:06:53.044637+00:00",
-        "evidence": []
+        "observed_at": "2026-11-05T00:32:51.161088+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T21:37:03.797570+00:00"
+      "updated_at": "2026-11-05T00:32:51.161088+00:00"
     },
     {
       "id": "BTH061-AUDIT-TOOL-RUNTIME-006",
@@ -19945,8 +20036,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "BOUNDED_REVIEW_COMMITTED_REQUIRED_CHILD_DELIVERY_OPEN",
+      "state": "complete",
+      "status": "BOUNDED_REVIEW_AND_REQUIRED_CHILD_DELIVERY_VERIFIED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -19977,20 +20068,27 @@
           "kind": "bounded_semantic_dispositions",
           "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
           "summary": "Sixinfrastructurefiles/68GDmethods+embeddedJS fullyreviewed bycore; eightaudioBuilders/13functions allactive and36targetedruntime methods separatelyreviewed bytools. Combinedsourcechild42eafd35 qualified; remainingPMP/SFX bodies andwholecodebase notclaimedreviewed. RequiredchildNEXT acceptance remainsOpen."
+        },
+        {
+          "kind": "bounded_children_delivered",
+          "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
+          "summary": "ActualrequiredchildrenBTH061-AUDIT-AUDIO-LEGACY-006delivered/verified in0c095259; originalreviewcommit/depthlimitsretained. Thisdoesnotclosefull-codebaseaudit."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Commit bounded evidence and finish the separately named qualifiedaudio child delivery aftercapacityadmission. Continue remaining nonpaused semanticcoverage; do notcloseparentwithOpenchild.",
+      "next_action": "This committed bounded review and its separately qualified source children are complete; full-codebase/current consumer remainder stays with BTH061-AUDIT-001.",
       "blocker": {
         "state": "none",
-        "kind": null,
-        "description": null,
+        "kind": "none",
+        "description": "Bounded review and required child deliveries complete; whole audit remains separately Open.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T20:06:53.044637+00:00",
-        "evidence": []
+        "observed_at": "2026-11-05T00:32:51.161088+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T21:37:03.797570+00:00"
+      "updated_at": "2026-11-05T00:32:51.161088+00:00"
     },
     {
       "id": "BTH061-AUDIT-INSTANT-GAMES-006",
@@ -20022,8 +20120,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "BOUNDED_REVIEW_COMMITTED_REQUIRED_CHILD_DELIVERY_OPEN",
+      "state": "complete",
+      "status": "BOUNDED_REVIEW_AND_REQUIRED_CHILD_DELIVERY_VERIFIED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -20054,20 +20152,27 @@
           "kind": "bounded_instant_game_dispositions",
           "reference": "docs/testing/deprecated_code_audit_continuation_006.md",
           "summary": "Eightfile447methodinventory isnotfullbodycoverage. Purchase/custody/render/save families traced; activePullTabs legacyrender/save compatibilityretained. RetiredScratchholdpolicy closedandqualified inchildfabd74951bc75ad832832da96b11afeea6acf2d9;140otherproduction/57test/72perfmethodsections exact;5pausedboundary methods exact. RequiredchildNEXT stillOpen."
+        },
+        {
+          "kind": "bounded_children_delivered",
+          "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
+          "summary": "ActualrequiredchildrenBTH061-AUDIT-SCRATCH-HELD-SALE-006delivered/verified in0c095259; originalreviewcommit/depthlimitsretained. Thisdoesnotclosefull-codebaseaudit."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Commit bounded reviewevidence and finish childNEXT acceptance aftercapacityadmission. Continue remainingnonpaused codebasecoverage; keepactiveacceptedlegacy/publicrender paths until replacement authority qualifies.",
+      "next_action": "This committed bounded review and its separately qualified source children are complete; full-codebase/current consumer remainder stays with BTH061-AUDIT-001.",
       "blocker": {
         "state": "none",
-        "kind": null,
-        "description": null,
+        "kind": "none",
+        "description": "Bounded review and required child deliveries complete; whole audit remains separately Open.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T20:06:53.044637+00:00",
-        "evidence": []
+        "observed_at": "2026-11-05T00:32:51.161088+00:00",
+        "evidence": [
+          "docs/testing/deprecated_code_audit_continuation_008.md"
+        ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T21:37:03.797570+00:00"
+      "updated_at": "2026-11-05T00:32:51.161088+00:00"
     },
     {
       "id": "BTH061-AUDIT-AUDIO-LEGACY-006",
@@ -20097,8 +20202,10 @@
             "id": "next-current",
             "description": "Published source is delivered through existing NEXT watcher and relevant exact deployment/assets/behavior acceptance is recorded.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_008.md"
+            ]
           }
         ],
         "coverage": {
@@ -20107,8 +20214,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "EXACT_NEXT_ARTIFACT_VERIFIED_BROWSER_PREFLIGHT_OPEN",
+      "state": "complete",
+      "status": "FOCUSED_ACCEPTANCE_AND_EXACT_NEXT_VERIFIED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -20124,14 +20231,17 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": "aece9cffa8c17c53f90943e108e1194403a496db",
+        "state": "verified",
+        "commit": "0c0952594ec93fb892db807bbeaffef801a9f6a0",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_006.md",
           "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json",
-          "docs/testing/deprecated_code_audit_continuation_007.md"
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\approved-audit-next-identity-008-r1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation008-exact-task-browser-startup-r1.json"
         ],
-        "scope": "Existing watcher deployed aece9cff at22:14:29Z; exact served commit/tree/redirect/archive provenance/PCK/four asset size+MIME checks pass. Basic Web launch remains unverified: fresh owned sandboxed-browser request reports sandboxed=false/WebGL disabled and exits before navigation. No gameplay failure or passed startup claimed."
+        "scope": "Associated sourcecommit(s) are ancestors of exact served0c095259, tree02e0f2124346a37b20d22e300f8ea05e68827f68. Metadata/redirect/archive provenance/PCK/four asset heads and renderedcorrect-versiontask-browsermenu withno captured errors verified. Changed behavior uses the recorded focused native qualification; no new broad aggregate, physical/Web gameplay or audio claim."
       },
       "evidence": [
         {
@@ -20153,24 +20263,27 @@
           "kind": "exact_artifact_delivery_startup_unverified",
           "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
           "summary": "Current exact aece9cff served metadata/redirect/provenance/PCK/four assets PASS; historical stopped watcher/capacity blocker superseded. Basic browser launch unverified due pre-navigation GPU sandbox/WebGL environment failure; all own Jobs closed0."
+        },
+        {
+          "kind": "exact_next_delivery_and_basic_task_browser_launch",
+          "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
+          "summary": "Exact0c095259 servedidentity/tree/redirect/archive/PCK/4assets andvisualcorrect-versionmenuverified inownIABtab;0captured errors,0gameplayinputs,tabclosed. Existingfocusedqualificationretainedatitsoriginalsource/scope. EarlierCLIpreflightfailure remainshistorical, no security weakening or machinery change."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Obtain trustworthy exact-build basic launch with working sandboxed WebGL, or reuse an available exact-build startup receipt; retain focused native qualification and historical failed attempts. No watcher restart, reserve change, unsafe browser flag or broad regression rerun is indicated.",
+      "next_action": "Scoped associated source and focused acceptance are delivered in exactNEXT0c0952594ec93fb892db807bbeaffef801a9f6a0; preserve stated test/coverage limits. Separate full audit/catalog/baseline tasks remain Open.",
       "blocker": {
-        "state": "active",
-        "kind": "browser_gpu_preflight",
-        "description": "Fresh disposable Chromium requested sandboxing but SystemInfo reports GPU sandboxed=false, no renderer and WebGL disabled. Startup guard rejected before page creation/navigation; diagnostic probe also could not complete after its browser closed. Exact archive/assets verified. This is a verification-environment boundary, not proof the game fails to launch. No sandbox/TLS/CPU/resource guard was relaxed.",
+        "state": "none",
+        "kind": "none",
+        "description": "Historical watcher/capacity/donor/browser observations superseded for this scoped delivery byexact0c095259artifact+taskbrowserlaunch. Separatecurrentfullauditfindings retained.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T22:56:16.910464+00:00",
+        "observed_at": "2026-11-05T00:32:51.161088+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_007.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\startup.json",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\result.json"
+          "docs/testing/deprecated_code_audit_continuation_008.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T22:56:16.910464+00:00"
+      "updated_at": "2026-11-05T00:32:51.161088+00:00"
     },
     {
       "id": "BTH061-AUDIT-SCRATCH-HELD-SALE-006",
@@ -20199,8 +20312,10 @@
             "id": "next-current",
             "description": "Published source is delivered through existing NEXT watcher and relevant exact deployment/assets/behavior acceptance is recorded.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_008.md"
+            ]
           }
         ],
         "coverage": {
@@ -20209,8 +20324,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "EXACT_NEXT_ARTIFACT_VERIFIED_BROWSER_PREFLIGHT_OPEN",
+      "state": "complete",
+      "status": "FOCUSED_ACCEPTANCE_AND_EXACT_NEXT_VERIFIED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -20226,14 +20341,17 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": "aece9cffa8c17c53f90943e108e1194403a496db",
+        "state": "verified",
+        "commit": "0c0952594ec93fb892db807bbeaffef801a9f6a0",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_006.md",
           "C:/Users/theep/Documents/Codex/2026-11-03/task-9/evidence/continuation006-source-publication-r1.json",
-          "docs/testing/deprecated_code_audit_continuation_007.md"
+          "docs/testing/deprecated_code_audit_continuation_007.md",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\approved-audit-next-identity-008-r1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation008-exact-task-browser-startup-r1.json"
         ],
-        "scope": "Existing watcher deployed aece9cff at22:14:29Z; exact served commit/tree/redirect/archive provenance/PCK/four asset size+MIME checks pass. Basic Web launch remains unverified: fresh owned sandboxed-browser request reports sandboxed=false/WebGL disabled and exits before navigation. No gameplay failure or passed startup claimed."
+        "scope": "Associated sourcecommit(s) are ancestors of exact served0c095259, tree02e0f2124346a37b20d22e300f8ea05e68827f68. Metadata/redirect/archive provenance/PCK/four asset heads and renderedcorrect-versiontask-browsermenu withno captured errors verified. Changed behavior uses the recorded focused native qualification; no new broad aggregate, physical/Web gameplay or audio claim."
       },
       "evidence": [
         {
@@ -20260,24 +20378,27 @@
           "kind": "exact_artifact_delivery_startup_unverified",
           "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
           "summary": "Current exact aece9cff served metadata/redirect/provenance/PCK/four assets PASS; historical stopped watcher/capacity blocker superseded. Basic browser launch unverified due pre-navigation GPU sandbox/WebGL environment failure; all own Jobs closed0."
+        },
+        {
+          "kind": "exact_next_delivery_and_basic_task_browser_launch",
+          "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
+          "summary": "Exact0c095259 servedidentity/tree/redirect/archive/PCK/4assets andvisualcorrect-versionmenuverified inownIABtab;0captured errors,0gameplayinputs,tabclosed. Existingfocusedqualificationretainedatitsoriginalsource/scope. EarlierCLIpreflightfailure remainshistorical, no security weakening or machinery change."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Obtain trustworthy exact-build basic launch with working sandboxed WebGL, or reuse an available exact-build startup receipt; retain focused native qualification and historical failed attempts. No watcher restart, reserve change, unsafe browser flag or broad regression rerun is indicated.",
+      "next_action": "Scoped associated source and focused acceptance are delivered in exactNEXT0c0952594ec93fb892db807bbeaffef801a9f6a0; preserve stated test/coverage limits. Separate full audit/catalog/baseline tasks remain Open.",
       "blocker": {
-        "state": "active",
-        "kind": "browser_gpu_preflight",
-        "description": "Fresh disposable Chromium requested sandboxing but SystemInfo reports GPU sandboxed=false, no renderer and WebGL disabled. Startup guard rejected before page creation/navigation; diagnostic probe also could not complete after its browser closed. Exact archive/assets verified. This is a verification-environment boundary, not proof the game fails to launch. No sandbox/TLS/CPU/resource guard was relaxed.",
+        "state": "none",
+        "kind": "none",
+        "description": "Historical watcher/capacity/donor/browser observations superseded for this scoped delivery byexact0c095259artifact+taskbrowserlaunch. Separatecurrentfullauditfindings retained.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T22:56:16.910464+00:00",
+        "observed_at": "2026-11-05T00:32:51.161088+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_007.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\next-startup-audit007-r1\\startup.json",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\gpu007-probe-r2\\result.json"
+          "docs/testing/deprecated_code_audit_continuation_008.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T22:56:16.910464+00:00"
+      "updated_at": "2026-11-05T00:32:51.161088+00:00"
     },
     {
       "id": "BTH061-AUDIT-CONTENT-TIMEOUT-006",
@@ -20787,9 +20908,10 @@
             "id": "next-artifact",
             "description": "Existing watcher qualifies lifecycle and deploys the exact published descendant, or retains precise factual blocker without bypass.",
             "required": true,
-            "state": "open",
+            "state": "pass",
             "evidence": [
-              "docs/testing/deprecated_code_audit_continuation_007.md"
+              "docs/testing/deprecated_code_audit_continuation_007.md",
+              "docs/testing/deprecated_code_audit_continuation_008.md"
             ]
           }
         ],
@@ -20799,8 +20921,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "MAIN_PUBLISHED_NEXT_DONOR_LIFECYCLE_GUARD_BLOCKED",
+      "state": "complete",
+      "status": "FOCUSED_ACCEPTANCE_AND_EXACT_NEXT_VERIFIED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -20822,36 +20944,43 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
+        "state": "verified",
+        "commit": "0c0952594ec93fb892db807bbeaffef801a9f6a0",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_007.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation007-next-donor-block-r1.json"
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation007-next-donor-block-r1.json",
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\approved-audit-next-identity-008-r1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation008-exact-task-browser-startup-r1.json"
         ],
-        "scope": "Main5647e6a8 observed; import-cache lifecycle admissionfailsbeforeexport. Stillservedaece9cff exactassetsverified. New007doc deployment andbasicbrowserlaunch unverified."
+        "scope": "Associated sourcecommit(s) are ancestors of exact served0c095259, tree02e0f2124346a37b20d22e300f8ea05e68827f68. Metadata/redirect/archive provenance/PCK/four asset heads and renderedcorrect-versiontask-browsermenu withno captured errors verified. Changed behavior uses the recorded focused native qualification; no new broad aggregate, physical/Web gameplay or audio claim."
       },
       "evidence": [
         {
           "kind": "actual_next_admission_failure",
           "reference": "docs/testing/deprecated_code_audit_continuation_007.md",
           "summary": "Watcher acknowledges5647e6a8 thenfailsbeforeexport with No qualified owned lifecycle release for this donor. Currentaece donor differsfromimmutablef305 releaseproof. Lastgoodaece retained; no pipelineedit/retry/guardchange."
+        },
+        {
+          "kind": "exact_next_delivery_and_basic_task_browser_launch",
+          "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
+          "summary": "Exact0c095259 servedidentity/tree/redirect/archive/PCK/4assets andvisualcorrect-versionmenuverified inownIABtab;0captured errors,0gameplayinputs,tabclosed. Existingfocusedqualificationretainedatitsoriginalsource/scope. EarlierCLIpreflightfailure remainshistorical, no security weakening or machinery change."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Report exact current donor release mismatch to parent/pipeline owner through task handoff. Continue independent audit; await actual qualified lifecycle evidence through existing machinery, then verify resulting exact served identity. Do not create a second watcher, force cold import, change reserves or synthesize a release proof.",
+      "next_action": "Scoped associated source and focused acceptance are delivered in exactNEXT0c0952594ec93fb892db807bbeaffef801a9f6a0; preserve stated test/coverage limits. Separate full audit/catalog/baseline tasks remain Open.",
       "blocker": {
-        "state": "active",
-        "kind": "next_donor_lifecycle_release",
-        "description": "Currentaece9cff donor has no qualified lifecycle release in the maintained verifier; its immutable proof accepts only f3058b6d donor/attempt/archive. Watcher raises No qualified owned lifecycle release for this donor before new export. Requires pipeline-owned lifecycle qualification; audit must not alter proof/guards or stop workers. Independent audit work can continue.",
+        "state": "none",
+        "kind": "none",
+        "description": "Historical watcher/capacity/donor/browser observations superseded for this scoped delivery byexact0c095259artifact+taskbrowserlaunch. Separatecurrentfullauditfindings retained.",
         "requires_user_input": false,
-        "observed_at": "2026-11-04T23:07:45.294490+00:00",
+        "observed_at": "2026-11-05T00:32:51.161088+00:00",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_007.md",
-          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation007-next-donor-block-r1.json"
+          "docs/testing/deprecated_code_audit_continuation_008.md"
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-04T23:07:45.294490+00:00"
+      "updated_at": "2026-11-05T00:32:51.161088+00:00"
     },
     {
       "id": "BTH061-AUDIT-COMMAND-CHANGE-DETECTOR-008",
@@ -20889,8 +21018,10 @@
             "id": "scoped-source-next",
             "description": "Qualified scoped source commit and required NEXT identity/delivery acceptance are recorded without closing broader catalog work.",
             "required": true,
-            "state": "open",
-            "evidence": []
+            "state": "pass",
+            "evidence": [
+              "docs/testing/deprecated_code_audit_continuation_008.md"
+            ]
           }
         ],
         "coverage": {
@@ -20899,8 +21030,8 @@
           "areas": []
         }
       },
-      "state": "open",
-      "status": "FOCUSED_NATIVE_COMMITTED_NEXT_DELIVERY_OPEN",
+      "state": "complete",
+      "status": "FOCUSED_ACCEPTANCE_AND_EXACT_NEXT_VERIFIED",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
@@ -20916,12 +21047,14 @@
       ],
       "deployment": {
         "required": true,
-        "state": "pending",
-        "commit": null,
+        "state": "verified",
+        "commit": "0c0952594ec93fb892db807bbeaffef801a9f6a0",
         "evidence": [
-          "docs/testing/deprecated_code_audit_continuation_008.md"
+          "docs/testing/deprecated_code_audit_continuation_008.md",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\approved-audit-next-identity-008-r1.json",
+          "C:\\Users\\theep\\Documents\\Codex\\2026-11-03\\task-9\\evidence\\continuation008-exact-task-browser-startup-r1.json"
         ],
-        "scope": "Codecommit6eba32814477ae7d379d8eb13e7c16ccdf6fa950 is focusedqualified and associated. Main publication/exactNEXTdelivery pending; no new browser/gameplay claim."
+        "scope": "Associated sourcecommit(s) are ancestors of exact served0c095259, tree02e0f2124346a37b20d22e300f8ea05e68827f68. Metadata/redirect/archive provenance/PCK/four asset heads and renderedcorrect-versiontask-browsermenu withno captured errors verified. Changed behavior uses the recorded focused native qualification; no new broad aggregate, physical/Web gameplay or audio claim."
       },
       "evidence": [
         {
@@ -20938,16 +21071,21 @@
           "kind": "canonical_and_full_sequence_nonregression",
           "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
           "summary": "Canonicalcapacity16.957039s vs29.477874s; copiedcontrolledpair28.292947→17.084278s.546completeVariant/281resultpairs/256acceptedcommands pass incllegacyfalse,14malformed,rollback/inputownership. Newcontract14checks+liveness PASS. Exactoriginal/candidate maintainedselectorbothsameordered19failures; candidatecheck63.633s vs73.036s. Full180profileafterfixreturnsall38thenlatersemanticpresentationcensored. Allguards/calls/assertions retained."
+        },
+        {
+          "kind": "exact_next_delivery_and_basic_task_browser_launch",
+          "reference": "docs/testing/deprecated_code_audit_continuation_008.md",
+          "summary": "Exact0c095259 servedidentity/tree/redirect/archive/PCK/4assets andvisualcorrect-versionmenuverified inownIABtab;0captured errors,0gameplayinputs,tabclosed. Existingfocusedqualificationretainedatitsoriginalsource/scope. EarlierCLIpreflightfailure remainshistorical, no security weakening or machinery change."
         }
       ],
       "implementation_batches": [],
-      "next_action": "Publish scoped codecommit6eba32814477ae7d379d8eb13e7c16ccdf6fa950 through normal main, then verify actual existing NEXT identity/assets/available acceptance without modifying separately owned donor qualification. Preserve Open broader catalog and19baseline findings.",
+      "next_action": "Scoped associated source and focused acceptance are delivered in exactNEXT0c0952594ec93fb892db807bbeaffef801a9f6a0; preserve stated test/coverage limits. Separate full audit/catalog/baseline tasks remain Open.",
       "blocker": {
         "state": "none",
         "kind": "none",
-        "description": "No scoped implementation blocker; commit/publication next. Full catalog acceptance and inherited19errors stay Open separately.",
+        "description": "Historical watcher/capacity/donor/browser observations superseded for this scoped delivery byexact0c095259artifact+taskbrowserlaunch. Separatecurrentfullauditfindings retained.",
         "requires_user_input": false,
-        "observed_at": "2026-11-05T00:16:40.251041+00:00",
+        "observed_at": "2026-11-05T00:32:51.161088+00:00",
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_008.md"
         ]
@@ -20955,7 +21093,7 @@
       "planned_app_changes": [
         "Remove redundant whole-state comparison in successful command result construction; preserve all validation, receipts, rollback and all paused feature work."
       ],
-      "updated_at": "2026-11-05T00:21:38.293030+00:00"
+      "updated_at": "2026-11-05T00:32:51.161088+00:00"
     },
     {
       "id": "BTH061-AUDIT-SEQUENCE-BASELINE-008",
