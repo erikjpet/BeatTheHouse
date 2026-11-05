@@ -39,3 +39,5 @@ The generic seen-Dictionary proposal passed 108 cases/16,731 primitive checks bu
 ## Evidence
 
 [Portable measured receipt](deprecated_code_audit_continuation_008.json) accompanies this report. Private task evidence remains under `evidence/content008-*`, `content-command008-proposal`, `content-command008-review`, `content-command008-diff-proposal`, `content-capacity008-telemetry-root-r1` and the rejected helper proposal directories. Original failures, source copies, fixtures and saves are retained. Both ledger views and the runtime inventory retain the exact task IDs, source status and owned closures; no task is marked Complete without an associated commit and required acceptance.
+
+Associated scoped source commit: `6eba32814477ae7d379d8eb13e7c16ccdf6fa950`. The removal child remains Open for required NEXT delivery; the catalog and inherited 19 assertion triage remain Open. Manual reconciliation before association has zero audit/task9 findings; 54 current and 520 all findings remain outside this scope. All 15 owned 008 Jobs are closed with zero processes.

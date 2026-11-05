@@ -1,6 +1,6 @@
 {
   "schema": "bth.task_ledger/v1",
-  "updated_at": "2026-11-05T00:16:40.251041+00:00",
+  "updated_at": "2026-11-05T00:21:38.293030+00:00",
   "policies": {
     "completion_requires_commit": true,
     "no_intentional_holds": true,
@@ -20329,6 +20329,12 @@
           "evidence": [
             "docs/testing/deprecated_code_audit_continuation_007.md"
           ]
+        },
+        {
+          "sha": "6eba32814477ae7d379d8eb13e7c16ccdf6fa950",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_008.md"
+          ]
         }
       ],
       "deployment": {
@@ -20393,7 +20399,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T00:16:40.251041+00:00"
+      "updated_at": "2026-11-05T00:21:38.293030+00:00"
     },
     {
       "id": "BTH061-ROULETTE-SEALED-PENDING-001",
@@ -20894,13 +20900,20 @@
         }
       },
       "state": "open",
-      "status": "FOCUSED_NATIVE_QUALIFIED_BASELINE_NONREGRESSION_READY_TO_COMMIT",
+      "status": "FOCUSED_NATIVE_COMMITTED_NEXT_DELIVERY_OPEN",
       "owner": {
         "name": "Audit obsolete production code",
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "6eba32814477ae7d379d8eb13e7c16ccdf6fa950",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_008.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": true,
         "state": "pending",
@@ -20908,7 +20921,7 @@
         "evidence": [
           "docs/testing/deprecated_code_audit_continuation_008.md"
         ],
-        "scope": "Qualified canonical source applied, ready for associated code commit. NEXT donor qualification is separately assigned; no new artifact/behavior delivery claimed."
+        "scope": "Codecommit6eba32814477ae7d379d8eb13e7c16ccdf6fa950 is focusedqualified and associated. Main publication/exactNEXTdelivery pending; no new browser/gameplay claim."
       },
       "evidence": [
         {
@@ -20928,7 +20941,7 @@
         }
       ],
       "implementation_batches": [],
-      "next_action": "Commit the narrow qualified comparison removal and regression contract, associate its actual commit, then follow existing NEXT. Retain all19inheritedsequence failures and later fullcatalog semantic timeout as separate Open acceptance. No pipeline changes.",
+      "next_action": "Publish scoped codecommit6eba32814477ae7d379d8eb13e7c16ccdf6fa950 through normal main, then verify actual existing NEXT identity/assets/available acceptance without modifying separately owned donor qualification. Preserve Open broader catalog and19baseline findings.",
       "blocker": {
         "state": "none",
         "kind": "none",
@@ -20942,7 +20955,7 @@
       "planned_app_changes": [
         "Remove redundant whole-state comparison in successful command result construction; preserve all validation, receipts, rollback and all paused feature work."
       ],
-      "updated_at": "2026-11-05T00:16:40.251041+00:00"
+      "updated_at": "2026-11-05T00:21:38.293030+00:00"
     },
     {
       "id": "BTH061-AUDIT-SEQUENCE-BASELINE-008",
@@ -20988,7 +21001,14 @@
         "task_ref": "01a1a35e-7e93-7049-869b-6bba043aa01f",
         "assignment_state": "assigned"
       },
-      "commits": [],
+      "commits": [
+        {
+          "sha": "6eba32814477ae7d379d8eb13e7c16ccdf6fa950",
+          "evidence": [
+            "docs/testing/deprecated_code_audit_continuation_008.md"
+          ]
+        }
+      ],
       "deployment": {
         "required": false,
         "state": "not_applicable",
@@ -21018,7 +21038,7 @@
         ]
       },
       "planned_app_changes": [],
-      "updated_at": "2026-11-05T00:16:40.251041+00:00"
+      "updated_at": "2026-11-05T00:21:38.293030+00:00"
     }
   ],
   "batches": [
