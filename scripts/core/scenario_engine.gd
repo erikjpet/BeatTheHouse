@@ -182,9 +182,8 @@ static func sequence_definition_for_environment(environment: Dictionary, preferr
 	if SequenceSchemaScript.is_sequence(candidate):
 		var errors := SequenceSchemaScript.validate_definition(candidate, OperationRegistryScript)
 		if candidate.has("sequence_package_id"):
-			var catalog := SequenceCatalogScript.default_catalog_snapshot()
-			var registered_overlay := SequenceCatalogScript.overlay_for(scenario_id, catalog)
-			if not bool(catalog.get("ok", false)) or registered_overlay.is_empty() or str(registered_overlay.get("package_id", "")) != str(candidate.get("sequence_package_id", "")):
+			var registered_overlay := SequenceCatalogScript.overlay_for(scenario_id)
+			if registered_overlay.is_empty() or str(registered_overlay.get("package_id", "")) != str(candidate.get("sequence_package_id", "")):
 				errors.append("scenario sequence package is not active in the fail-closed content catalog")
 			errors.append_array(ScenarioExtensionDispatchScript.validate_package_extensions(
 				str(candidate.get("sequence_package_id", "")),
