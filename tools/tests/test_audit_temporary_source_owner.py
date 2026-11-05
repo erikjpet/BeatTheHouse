@@ -546,5 +546,74 @@ raise OSError('runner cpu accounting failed before final record')
             self.assertEqual(target.read_bytes(), self.candidates[relative])
 
 
+    def test_owned_180_recipe_preserves_pinned_snapshot_guards_and_restoration(self):
+        spec = json.loads(self.spec.read_text())
+        spec["limit"] = 180
+        self.spec.write_text(json.dumps(spec), encoding="utf-8")
+        expected = self.spec.read_bytes()
+        self.set_runner(before_finish="import sys, json\nfrom pathlib import Path\nretained = json.loads(Path(sys.argv[1]).read_bytes())\nassert type(retained['limit']) is int and retained['limit'] == 180\n")
+        test = self
+
+        class SpecWriterIO(TrackingIO):
+            def atomic_replace(self, path, data, **kwargs):
+                super().atomic_replace(path, data, **kwargs)
+                if path == test.targets[test.second] and data == test.candidates[test.second]:
+                    changed = json.loads(test.spec.read_text())
+                    changed["limit"] = 999
+                    test.spec.write_text(json.dumps(changed), encoding="utf-8")
+
+        result = self.run_owner(SpecWriterIO(), expect_run=True)
+        self.assertEqual(result["owner_exit"], 0, result["errors"])
+        self.assertTrue(result["closure"]["verified"])
+        self.assertTrue(result["closure"]["guards_qualified"])
+        self.assertEqual(result["closure"]["limits"], LIMITS)
+        self.assertTrue(result["restoration_complete"])
+        self.assertEqual(Path(result["executed_spec"]).read_bytes(), expected)
+        self.assertEqual(json.loads(self.spec.read_text())["limit"], 999)
+        self.assert_originals()
+        self.assert_backups()
+
+    def test_unreviewed_deadline_types_and_values_reject_before_mutation(self):
+        rejected = [True, False, 180.0, 330.0, float("nan"), float("inf"),
+                    None, "180", "330", 0, -1, 179, 181, 329, 331, 999,
+                    [], [180], {}, {"limit": 180}]
+        for limit in rejected:
+            with self.subTest(limit=repr(limit)):
+                spec = json.loads(self.spec.read_text())
+                spec["limit"] = limit
+                self.spec.write_text(json.dumps(spec), encoding="utf-8")
+                tracking = TrackingIO()
+                with self.assertRaisesRegex(owner.OwnerError, "exact integer 180 or 330"):
+                    self.run_owner(tracking)
+                self.assert_originals()
+                self.assertEqual(tracking.events, [])
+                self.assertFalse((self.root / "evidence/dummy-owner").exists())
+                self.assertFalse((self.root / "evidence/dummy-stage").exists())
+
+    def test_owned_deadlines_still_require_exact_guards_family(self):
+        for limit in (180, 330):
+            for family in ("content", "guards ", "Guards", None, False):
+                with self.subTest(limit=limit, family=family):
+                    spec = json.loads(self.spec.read_text())
+                    spec.update(limit=limit, family=family)
+                    self.spec.write_text(json.dumps(spec), encoding="utf-8")
+                    with self.assertRaisesRegex(owner.OwnerError, "guards-family"):
+                        self.run_owner()
+                    self.assert_originals()
+                    self.assertFalse((self.root / "evidence/dummy-owner").exists())
+
+    def test_180_deadline_does_not_authorize_schema_receiver(self):
+        spec = json.loads(self.spec.read_text())
+        spec["limit"] = 180
+        self.spec.write_text(json.dumps(spec), encoding="utf-8")
+        manifest = json.loads(self.manifest.read_text())
+        manifest["files"]["scripts/core/scenario_sequence_schema.gd"] = {}
+        self.manifest.write_text(json.dumps(manifest), encoding="utf-8")
+        with self.assertRaisesRegex(owner.OwnerError, "reviewed two/three"):
+            self.run_owner()
+        self.assert_originals()
+        self.assertFalse((self.root / "evidence/dummy-owner").exists())
+
+
 if __name__ == "__main__":
     unittest.main()

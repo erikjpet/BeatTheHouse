@@ -248,8 +248,10 @@ def run_owner(*, task_root: Path, manifest_path: Path, spec_path: Path,
     if set(manifest["files"]) not in REVIEWED_SOURCE_SETS:
         raise OwnerError("Manifest must name an exact reviewed two/three receiver set")
     if (not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9_-]*", spec["name"])
-            or spec.get("family") != "guards" or spec.get("limit") != 330):
-        raise OwnerError("Expected the unchanged guards-family 330-second owned recipe")
+            or spec.get("family") != "guards"
+            or type(spec.get("limit")) is not int
+            or spec["limit"] not in (180, 330)):
+        raise OwnerError("Expected a guards-family owned recipe with exact integer 180 or 330 seconds")
     evidence = inside(root / "evidence", root)
     owner = inside(evidence / owner_name, evidence)
     if owner_name == spec["name"]:
