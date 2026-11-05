@@ -2919,7 +2919,11 @@ func _check_generic_game_module_contract(game: GameModule, failures: Array) -> v
 		var resolve_rng := run_state.create_rng("%s_generic_resolve" % game_id)
 		var result := game.resolve_with_context(action_id, 1, run_state, environment, resolve_rng, {})
 		if bool(result.get("ok", false)):
-			call("_check_action_result_shape", result, str(result.get("action_kind", "legal")), failures)
+			if (game_id == "roulette" and action_id == "spin_roulette") or (game_id == "video_poker" and action_id == "draw"):
+				call("_check_host_response_action_result_shape", result, str(result.get("action_kind", "legal")), failures, game_id, action_id, {}, "generic %s/%s" % [game_id, action_id])
+				call("_check_host_response_action_result_controls", result, str(result.get("action_kind", "legal")), failures, game_id, action_id)
+			else:
+				call("_check_action_result_shape", result, str(result.get("action_kind", "legal")), failures)
 			if game_id == "blackjack":
 				GameModule.apply_result(run_state, result, resolve_rng)
 				if JSON.stringify(run_state.to_save_snapshot()) != before_serialized:

@@ -711,8 +711,33 @@ func _check_craps_cheat_contract(game: GameModule, failures: Array) -> void:
 	var setting := game.resolve_with_context("dice_setting", 5, run_state, run_state.current_environment, run_state.create_rng("craps_setting"), setting_ui)
 	if not bool(setting.get("skill_cheat_contract", false)) or str(setting.get("skill_grade", "")) != "perfect" or int(setting.get("base_suspicion_delta", 0)) <= 0:
 		failures.append("Craps dice setting did not expose the shared skill-cheat contract and security-scaled cost.")
-	if bool(game.surface_state(run_state, run_state.current_environment, setting_ui).get("surface_realtime_state_refresh", false)):
-		failures.append("Resolved Craps timing state kept rebuilding full snapshots after its action boundary.")
+	var resolved_surface := game.surface_state(run_state, run_state.current_environment, setting_ui)
+	var resolved_channels := _craps_array(resolved_surface.get("surface_animation_channels", []))
+	var resolved_channel := _craps_dict(resolved_channels[0]) if not resolved_channels.is_empty() else {}
+	var roll_started_msec := int(resolved_channel.get("started_msec", 0))
+	var roll_duration_msec := int(resolved_channel.get("duration_msec", 0))
+	var roll_active_id := str(resolved_channel.get("active_id", ""))
+	if str(resolved_surface.get("phase", "")) != "rolling" or not bool(resolved_surface.get("surface_realtime_state_refresh", false)) or _craps_array(resolved_surface.get("native_selected_surface_actions", [])).has("craps_setting"):
+		failures.append("Resolved Craps timing must stop selecting the graded meter while its new roll keeps the required realtime refresh.")
+	if roll_active_id.is_empty() or str(resolved_channel.get("id", "")).is_empty() or str(resolved_channel.get("clock_source", "")) != "surface" or roll_started_msec != int(setting_ui["surface_time_msec"]) or roll_duration_msec <= 0:
+		failures.append("Resolved Craps roll did not expose a finite animation channel on the authoritative surface clock.")
+	else:
+		var last_active_ui := setting_ui.duplicate(true)
+		last_active_ui["surface_time_msec"] = roll_started_msec + roll_duration_msec - 1
+		var last_active_surface := game.surface_state(run_state, run_state.current_environment, last_active_ui)
+		var last_active_channels := _craps_array(last_active_surface.get("surface_animation_channels", []))
+		var last_active_channel := _craps_dict(last_active_channels[0]) if not last_active_channels.is_empty() else {}
+		if str(last_active_surface.get("phase", "")) != "rolling" or not bool(last_active_surface.get("surface_realtime_state_refresh", false)) or str(last_active_channel.get("active_id", "")) != roll_active_id:
+			failures.append("Craps roll stopped its realtime refresh or animation before the actual channel expiry.")
+		var expired_ui := setting_ui.duplicate(true)
+		expired_ui["surface_time_msec"] = roll_started_msec + roll_duration_msec
+		var expired_surface := game.surface_state(run_state, run_state.current_environment, expired_ui)
+		if bool(expired_surface.get("surface_realtime_state_refresh", false)):
+			failures.append("Resolved Craps timing state kept rebuilding full snapshots after its action boundary.")
+		var expired_channels := _craps_array(expired_surface.get("surface_animation_channels", []))
+		var expired_channel := _craps_dict(expired_channels[0]) if not expired_channels.is_empty() else {}
+		if str(expired_surface.get("phase", "")) != "betting" or not str(expired_channel.get("active_id", "")).is_empty():
+			failures.append("Craps completed roll did not publish betting and clear its finite channel at the exact expiry.")
 	var untrained: RunState = RunStateScript.new()
 	untrained.start_new("CRAPS-SETTING-GATE")
 	untrained.bankroll = 100000
@@ -2368,7 +2393,8 @@ func _check_roulette_surface_contract(game: GameModule, failures: Array, library
 		failures.append("Roulette second spin click did not resolve the confirmed spin.")
 	var before := _run_state_result_snapshot(run_state)
 	var result := _resolve_table_game_surface_contract(game, "spin_roulette", contract_chip, run_state, environment, run_state.create_rng("roulette_contract_spin"), confirm_spin.get("ui_state", {}))
-	call("_check_action_result_shape", result, "legal", failures)
+	call("_check_host_response_action_result_shape", result, "legal", failures, "roulette", "spin_roulette", confirm_spin.get("ui_state", {}), "roulette surface spin")
+	call("_check_host_response_action_result_controls", result, "legal", failures, "roulette", "spin_roulette", confirm_spin.get("ui_state", {}))
 	call("_check_action_result_application_contract", before, run_state, result, "roulette spin result", failures)
 	if not wheel_sequence.has(str(result.get("roulette_winning_number", ""))):
 		failures.append("Roulette spin landed on a number outside the table wheel sequence.")
@@ -4778,6 +4804,11 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Blackjack all-in opening wager did not report the debited stake.")
 	if (all_in_bet_ui.get("player_hands", []) as Array).is_empty():
 		failures.append("Blackjack all-in upfront wager did not keep the dealt hand in surface state.")
+	# The sealed host commits the game action; Foundation evaluates terminal
+	# policy afterward. The live paid hand must still defer that same policy.
+	var all_in_paid_terminal := RunTerminalEvaluatorScript.evaluate_terminal(all_in_run_state, _foundation_content_library_ref)
+	if not all_in_run_state.has_pending_paid_game_resolution() or bool(all_in_paid_terminal.get("failed", false)) or bool(all_in_paid_terminal.get("terminal", false)) or not bool(all_in_paid_terminal.get("bankroll_zero_deferred", false)):
+		failures.append("Blackjack paid all-in hand did not retain public terminal-policy deferral before settlement.")
 	var all_in_stand := game.surface_action_command("blackjack_stand", 0, true, all_in_bet_ui, all_in_run_state, all_in_environment)
 	var all_in_result := _blackjack_authority_resolve(game, "play_basic", 10, all_in_run_state, all_in_environment, all_in_run_state.create_rng("blackjack_all_in_settle"), all_in_stand.get("ui_state", {}))
 	if int(all_in_result.get("blackjack_wager_debited", 0)) != 10:
@@ -4786,6 +4817,20 @@ func _check_blackjack_surface_contract(game: GameModule, failures: Array) -> voi
 		failures.append("Blackjack all-in losing settlement charged the already-debited wager again.")
 	if all_in_run_state.bankroll != 0:
 		failures.append("Blackjack all-in losing settlement left an unexpected bankroll value.")
+	# Complete the existing Foundation post-commit terminal-policy boundary
+	# before asserting the full original zero-funds completion contract.
+	var all_in_settled_states: Dictionary = all_in_run_state.current_environment.get("game_states", {})
+	var all_in_settled_table: Dictionary = all_in_settled_states.get("blackjack", {})
+	var all_in_settled_ledger: Dictionary = all_in_settled_table.get("_blackjack_action_authority", {})
+	var all_in_settled_session: Variant = all_in_settled_ledger.get("session")
+	var all_in_pending_delivery: Variant = all_in_settled_ledger.get("pending_delivery")
+	if not bool(all_in_settled_ledger.get("initialized", false)) or typeof(all_in_settled_session) != TYPE_DICTIONARY or not (all_in_settled_session as Dictionary).is_empty() or typeof(all_in_pending_delivery) != TYPE_DICTIONARY or not (all_in_pending_delivery as Dictionary).is_empty() or all_in_run_state.has_pending_paid_game_resolution():
+		failures.append("Blackjack settled all-in hand retained a live or pending paid authority session.")
+	var all_in_terminal_money := [all_in_run_state.bankroll, all_in_run_state.grand_casino_chips]
+	var all_in_terminal_rng := [all_in_run_state.rng_seed, all_in_run_state.rng_state]
+	RunTerminalEvaluatorScript.evaluate_terminal_and_apply(all_in_run_state, _foundation_content_library_ref)
+	if [all_in_run_state.bankroll, all_in_run_state.grand_casino_chips] != all_in_terminal_money or [all_in_run_state.rng_seed, all_in_run_state.rng_state] != all_in_terminal_rng:
+		failures.append("Blackjack post-settlement terminal policy changed committed money or RNG.")
 	if not all_in_run_state.is_terminal() or all_in_run_state.run_failure_reason != RunState.FAILURE_BANKROLL_ZERO:
 		failures.append("Blackjack all-in losing settlement did not fail the run after the unresolved hand completed at zero bankroll.")
 
@@ -5428,9 +5473,18 @@ func _check_blackjack_split_policy_matrix(game: GameModule, base_table: Dictiona
 	if int(split_ace_21_surface.get("active_hand_index", -1)) != 1 or int(split_ace_21_surface.get("blackjack_total", 0)) != 17 or not bool(split_ace_21_surface.get("can_hit", false)) or not bool(split_ace_21_surface.get("can_stand", false)):
 		failures.append("Blackjack split ace 21 did not advance to the next playable split hand.")
 	var split_ace_result := _blackjack_authority_resolve(game, "play_basic", 5, split_ace_21_run_state, split_ace_21_environment, split_ace_21_run_state.create_rng("blackjack_rule_split_aces"), split_ace_21_ui)
-	for hand_value in split_ace_result.get("blackjack_hand_results", []) as Array:
-		if typeof(hand_value) == TYPE_DICTIONARY and bool((hand_value as Dictionary).get("blackjack", false)):
-			failures.append("Blackjack treated a split-ace 21 as a natural blackjack.")
+	# Current split-Ace policy was published in6e68785b; preserve its separate
+	# natural-hand acceptance owner and the whole-dollar3:2 payout rule.
+	var split_ace_hand_results: Array = split_ace_result.get("blackjack_hand_results", [])
+	if split_ace_hand_results.size() != 2:
+		failures.append("Blackjack split-Ace policy fixture did not settle both hands.")
+	else:
+		var split_ace_natural: Dictionary = split_ace_hand_results[0] if typeof(split_ace_hand_results[0]) == TYPE_DICTIONARY else {}
+		var split_ace_sibling: Dictionary = split_ace_hand_results[1] if typeof(split_ace_hand_results[1]) == TYPE_DICTIONARY else {}
+		if not bool(split_ace_natural.get("blackjack", false)) or str(split_ace_natural.get("outcome", "")) != "blackjack" or int(split_ace_natural.get("wager", 0)) != 5 or int(split_ace_natural.get("bankroll_delta", 0)) != 7:
+			failures.append("Blackjack Ace-origin split21 did not retain its whole-dollar3:2 natural payout.")
+		if bool(split_ace_sibling.get("blackjack", false)) or int(split_ace_sibling.get("wager", 0)) != 5 or int(split_ace_sibling.get("bankroll_delta", 0)) != -5 or int(split_ace_result.get("blackjack_main_delta", 0)) != 2:
+			failures.append("Blackjack split-Ace natural changed the ordinary losing sibling or aggregate net.")
 
 	var resplit_table := _blackjack_rule_table(base_table, {"dealer_hits_soft_17": false, "double_after_split": true, "split_aces_one_card": true, "max_split_hands": 4, "late_surrender": true}, [
 		{"rank": 8, "suit": 0}, {"rank": 5, "suit": 1}, {"rank": 8, "suit": 2}, {"rank": 6, "suit": 3},
@@ -5466,8 +5520,11 @@ func _check_blackjack_split_policy_matrix(game: GameModule, base_table: Dictiona
 	var no_das_fixture := _blackjack_rule_fixture(game, "BLACKJACK-RULE-NODAS", no_das_table, 5)
 	var no_das_split := game.surface_action_command("blackjack_split", 0, false, no_das_fixture.get("ui", {}), no_das_fixture.get("run_state", null), no_das_fixture.get("environment", {}))
 	var no_das_surface := game.surface_state(no_das_fixture.get("run_state", null), no_das_fixture.get("environment", {}), no_das_split.get("ui_state", {}))
-	if bool(no_das_surface.get("can_double", false)):
-		failures.append("Blackjack allowed double after split on a no-DAS table.")
+	# Saved no-DAS flags normalize to the current split-double policy; funding,
+	# sibling routing and Save/Continue remain covered by the dedicated matrix.
+	var no_das_effective_rules: Dictionary = game.call("_table_rules", no_das_table)
+	if not bool(no_das_effective_rules.get("double_after_split", false)) or not bool(no_das_surface.get("can_double", false)):
+		failures.append("Blackjack did not preserve current double-after-split policy for a legacy no-DAS table.")
 
 	var no_surrender_table := _blackjack_rule_table(base_table, {"dealer_hits_soft_17": false, "double_after_split": true, "split_aces_one_card": true, "max_split_hands": 4, "late_surrender": false}, [
 		{"rank": 10, "suit": 0}, {"rank": 9, "suit": 1}, {"rank": 6, "suit": 2}, {"rank": 7, "suit": 3}
@@ -6178,7 +6235,8 @@ func _check_video_poker_cheat(game: GameModule, failures: Array) -> void:
 	var deal_cmd := game.surface_action_command("video_poker_deal", 0, false, {}, run_state, run_state.current_environment)
 	var ui: Dictionary = _video_poker_holdout_timed_ui(game, run_state, deal_cmd.get("ui_state", {}), 0)
 	var cheat_result := game.resolve_with_context("mark_holds", 5, run_state, run_state.current_environment, run_state.create_rng("vp_cheat_resolve"), ui)
-	call("_check_action_result_shape", cheat_result, "cheat", failures)
+	call("_check_host_response_action_result_shape", cheat_result, "cheat", failures, "video_poker", "mark_holds", ui, "video poker surface holdout")
+	call("_check_host_response_action_result_controls", cheat_result, "cheat", failures, "video_poker", "mark_holds", ui)
 	if int(cheat_result.get("suspicion_delta", 0)) <= 0:
 		failures.append("Video poker holdout did not raise suspicion heat.")
 	if not bool(cheat_result.get("video_poker_cheated", false)):
@@ -6841,6 +6899,8 @@ func _check_pull_tabs_surface_contract(game: GameModule, failures: Array) -> voi
 	call("_set_pull_tab_loser_count", environment, 3)
 	call("_inject_pull_tab_winner", environment, _pull_tab_test_ticket_result("clean", 5))
 	run_state.capture_portable_ticket_piles_from_environment(environment)
+	# Counter redemption occurs in this fixture venue, including its local Heat.
+	run_state.current_environment = environment
 	var redeem_before := _run_state_result_snapshot(run_state)
 	var redeem_command := game.environment_action_command("ticket_redeemer", "redeem_pull_tab_winners", run_state, environment, run_state.create_rng("pull_tab_redeem"))
 	if not bool(redeem_command.get("handled", false)):

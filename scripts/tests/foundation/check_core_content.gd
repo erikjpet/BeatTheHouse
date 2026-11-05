@@ -9069,3 +9069,174 @@ func _harness_arrive(generator: RunGenerator, run_state: RunState, failures: Arr
 	var environment_value: Variant = result.get("environment", run_state.current_environment)
 	var environment: Dictionary = environment_value if typeof(environment_value) == TYPE_DICTIONARY else run_state.current_environment
 	return EnvironmentInstance.from_dict(environment)
+
+
+# Resolver responses may carry an explicit next surface session. These fixture
+# boundaries validate that session before checking the unchanged shared core.
+# Never apply this projection to production responses or to undeclared actions.
+func _check_host_response_action_result_shape(result: Dictionary, expected_kind: String, failures: Array, expected_game_id: String, expected_action_id: String, supplied_ui: Dictionary = {}, context: String = "") -> void:
+	var label := "%s/%s" % [expected_game_id, expected_action_id]
+	var supported := (expected_game_id == "roulette" and expected_action_id == "spin_roulette") or (expected_game_id == "video_poker" and expected_action_id in ["draw", "mark_holds"])
+	if not supported or typeof(result.get("game_id")) != TYPE_STRING or result.get("game_id") != expected_game_id or typeof(result.get("action_id")) != TYPE_STRING or result.get("action_id") != expected_action_id:
+		failures.append("Host response producer/action mismatch: %s." % label)
+		_check_action_result_shape(result, expected_kind, failures, context)
+		return
+	if typeof(result.get("ui_state")) != TYPE_DICTIONARY:
+		failures.append("Host response requires a Dictionary ui_state: %s." % label)
+		_check_action_result_shape(result, expected_kind, failures, context)
+		return
+	var ui: Dictionary = result.get("ui_state")
+	if not _host_response_fixture_ui_is_plain(ui):
+		failures.append("Host response ui_state is not bounded plain data: %s." % label)
+		_check_action_result_shape(result, expected_kind, failures, context)
+		return
+	var settled := true
+	if expected_game_id == "roulette":
+		for key in ["roulette_bets", "locked_bets", "roulette_undo_stack"]:
+			if typeof(ui.get(key)) != TYPE_ARRAY or not (ui.get(key) as Array).is_empty():
+				settled = false
+		if typeof(ui.get("roulette_spin_armed")) != TYPE_BOOL or ui.get("roulette_spin_armed") != false or typeof(ui.get("roulette_sit_out")) != TYPE_BOOL or ui.get("roulette_sit_out") != true or typeof(ui.get("roulette_focused_stack_id")) != TYPE_STRING or ui.get("roulette_focused_stack_id") != "":
+			settled = false
+		if typeof(result.get("roulette_bets")) != TYPE_ARRAY:
+			settled = false
+		var supplied_bets: Variant = supplied_ui.get("roulette_bets", [])
+		if typeof(supplied_bets) != TYPE_ARRAY:
+			settled = false
+		elif not (supplied_bets as Array).is_empty() and (typeof(ui.get("roulette_rebet")) != TYPE_ARRAY or ui.get("roulette_rebet") != result.get("roulette_bets")):
+			settled = false
+	else:
+		if ui.size() != 2 or typeof(ui.get("bet_level")) != TYPE_INT or int(ui.get("bet_level", -1)) < 0 or int(ui.get("bet_level", -1)) > 4 or typeof(ui.get("denomination_index")) != TYPE_INT or int(ui.get("denomination_index", -1)) < 0:
+			settled = false
+		if typeof(result.get("preserve_surface_ui_state")) != TYPE_BOOL or result.get("preserve_surface_ui_state") != false or typeof(result.get("video_poker_hand")) != TYPE_ARRAY or (result.get("video_poker_hand") as Array).size() != 5:
+			settled = false
+	if not settled:
+		failures.append("Host response did not retire the settled surface session: %s." % label)
+		_check_action_result_shape(result, expected_kind, failures, context)
+		return
+	# A shallow top-level copy preserves every original value, including deltas.
+	# Only the already-validated presentation field is absent from the core view.
+	var core := result.duplicate(false)
+	core.erase("ui_state")
+	if core.size() != result.size() - 1:
+		failures.append("Host response core projection changed its field population: %s." % label)
+	for key in result.keys():
+		if key != "ui_state" and (not core.has(key) or not is_same(core[key], result[key])):
+			failures.append("Host response core projection changed original field %s: %s." % [str(key), label])
+	_check_action_result_shape(core, expected_kind, failures, context)
+
+
+# A fixture-only admission check: finite JSON-style values, at most 16,384
+# visited key/value nodes, depth 32, and 262,144 String codepoints. Containers
+# are borrowed read-only; cycles fail the same fixed bounds without encoding.
+func _host_response_fixture_ui_is_plain(value: Dictionary) -> bool:
+	var pending: Array = [value]
+	var depths: Array[int] = [0]
+	var visited := 0
+	var text_units := 0
+	while not pending.is_empty():
+		var current: Variant = pending.pop_back()
+		var depth: int = depths.pop_back()
+		visited += 1
+		if visited > 16384 or depth > 32:
+			return false
+		match typeof(current):
+			TYPE_NIL, TYPE_BOOL, TYPE_INT:
+				pass
+			TYPE_FLOAT:
+				if not is_finite(float(current)):
+					return false
+			TYPE_STRING:
+				text_units += (current as String).length()
+				if text_units > 262144:
+					return false
+			TYPE_ARRAY:
+				var items: Array = current
+				if items.size() > 16384 - visited - pending.size():
+					return false
+				for item in items:
+					pending.append(item)
+					depths.append(depth + 1)
+			TYPE_DICTIONARY:
+				var fields: Dictionary = current
+				if fields.size() * 2 > 16384 - visited - pending.size():
+					return false
+				for key in fields.keys():
+					if typeof(key) != TYPE_STRING:
+						return false
+					pending.append(key)
+					depths.append(depth + 1)
+					pending.append(fields[key])
+					depths.append(depth + 1)
+			_:
+				return false
+	return true
+
+
+# Mutation controls use the actual successful response, not a normalized remake.
+func _check_host_response_action_result_controls(result: Dictionary, expected_kind: String, failures: Array, expected_game_id: String, expected_action_id: String, supplied_ui: Dictionary = {}) -> void:
+	var original_bytes := var_to_bytes(result)
+	var supplied_bytes := var_to_bytes(supplied_ui)
+	var original_ui: Variant = result.get("ui_state")
+	var original_deltas: Variant = result.get("deltas")
+	var raw_guard_failures: Array = []
+	_check_action_result_shape(result, expected_kind, raw_guard_failures)
+	if not raw_guard_failures.has("ActionResult leaked UI state key: ui_state."):
+		failures.append("The unchanged raw ActionResult guard accepted an undeclared UI-bearing response.")
+	var positive_failures: Array = []
+	_check_host_response_action_result_shape(result, expected_kind, positive_failures, expected_game_id, expected_action_id, supplied_ui)
+	if not positive_failures.is_empty():
+		failures.append("Host response negative controls require a qualified positive response: %s/%s." % [expected_game_id, expected_action_id])
+		return
+	var missing_ui := result.duplicate(true)
+	missing_ui.erase("ui_state")
+	_expect_host_response_action_result_rejection(missing_ui, expected_kind, failures, expected_game_id, expected_action_id, supplied_ui, "requires a Dictionary ui_state", "missing ui_state")
+	for invalid_ui in [null, false, 1, "synthetic UI", []]:
+		var malformed := result.duplicate(true)
+		malformed["ui_state"] = invalid_ui
+		_expect_host_response_action_result_rejection(malformed, expected_kind, failures, expected_game_id, expected_action_id, supplied_ui, "requires a Dictionary ui_state", "malformed ui_state")
+	var nonplain_ui := result.duplicate(true)
+	(nonplain_ui["ui_state"] as Dictionary)["synthetic_nonplain"] = Vector2.ZERO
+	_expect_host_response_action_result_rejection(nonplain_ui, expected_kind, failures, expected_game_id, expected_action_id, supplied_ui, "ui_state is not bounded plain data", "nonplain nested UI value")
+	for key in ["host", "button_metadata", "overlay_state", "focus", "hover"]:
+		var top_leak := result.duplicate(true)
+		top_leak[key] = {"synthetic": true}
+		_expect_host_response_action_result_rejection(top_leak, expected_kind, failures, expected_game_id, expected_action_id, supplied_ui, "ActionResult leaked UI state key: %s." % key, "top-level " + key)
+		var delta_leak := result.duplicate(true)
+		(delta_leak["deltas"] as Dictionary)[key] = {"synthetic": true}
+		_expect_host_response_action_result_rejection(delta_leak, expected_kind, failures, expected_game_id, expected_action_id, supplied_ui, "ActionResult leaked UI state key: %s." % key, "delta " + key)
+	var delta_ui := result.duplicate(true)
+	(delta_ui["deltas"] as Dictionary)["ui_state"] = {"synthetic": true}
+	_expect_host_response_action_result_rejection(delta_ui, expected_kind, failures, expected_game_id, expected_action_id, supplied_ui, "ActionResult leaked UI state key: ui_state.", "delta ui_state")
+	var missing_delta := result.duplicate(true)
+	(missing_delta["deltas"] as Dictionary).erase("bankroll_delta")
+	_expect_host_response_action_result_rejection(missing_delta, expected_kind, failures, expected_game_id, expected_action_id, supplied_ui, "ActionResult deltas missing key: bankroll_delta.", "missing original delta")
+	var mismatched_delta := result.duplicate(true)
+	mismatched_delta["bankroll_delta"] = int(mismatched_delta.get("bankroll_delta", 0)) + 1
+	_expect_host_response_action_result_rejection(mismatched_delta, expected_kind, failures, expected_game_id, expected_action_id, supplied_ui, "ActionResult top-level bankroll_delta does not match deltas.", "mismatched original delta")
+	for identity_key in ["game_id", "action_id"]:
+		var wrong_identity := result.duplicate(true)
+		wrong_identity[identity_key] = "synthetic unexpected producer"
+		_expect_host_response_action_result_rejection(wrong_identity, expected_kind, failures, expected_game_id, expected_action_id, supplied_ui, "Host response producer/action mismatch", "wrong " + identity_key)
+	var active_ui := result.duplicate(true)
+	if expected_game_id == "roulette":
+		(active_ui["ui_state"] as Dictionary)["roulette_bets"] = [{"synthetic": true}]
+	else:
+		(active_ui["ui_state"] as Dictionary)["hand_active"] = true
+	_expect_host_response_action_result_rejection(active_ui, expected_kind, failures, expected_game_id, expected_action_id, supplied_ui, "did not retire the settled surface session", "unretired session")
+	if var_to_bytes(result) != original_bytes or var_to_bytes(supplied_ui) != supplied_bytes or not is_same(result.get("ui_state"), original_ui) or not is_same(result.get("deltas"), original_deltas):
+		failures.append("Host response checks changed caller inputs or borrowed UI/delta ownership.")
+
+
+func _expect_host_response_action_result_rejection(result: Dictionary, expected_kind: String, failures: Array, expected_game_id: String, expected_action_id: String, supplied_ui: Dictionary, expected_diagnostic: String, label: String) -> void:
+	var result_before := var_to_bytes(result)
+	var supplied_before := var_to_bytes(supplied_ui)
+	var ui_before: Variant = result.get("ui_state")
+	var deltas_before: Variant = result.get("deltas")
+	var observed: Array = []
+	_check_host_response_action_result_shape(result, expected_kind, observed, expected_game_id, expected_action_id, supplied_ui)
+	if var_to_bytes(result) != result_before or var_to_bytes(supplied_ui) != supplied_before or not is_same(result.get("ui_state"), ui_before) or not is_same(result.get("deltas"), deltas_before):
+		failures.append("Host response rejection control changed caller inputs or borrowed ownership: %s." % label)
+	for diagnostic in observed:
+		if str(diagnostic).contains(expected_diagnostic):
+			return
+	failures.append("Host response guard control did not reject %s with its original diagnostic." % label)
